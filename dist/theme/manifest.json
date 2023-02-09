@@ -1,0 +1,13 @@
+{
+  "name": "Dark Discord",
+  "id": "eternal.dark-discord",
+  "description": "black",
+  "version": "1.0.0",
+  "bundle": "http://192.168.0.35:8080/theme/theme.json",
+  "authors": [
+    {
+      "name": "eternal",
+      "id": "263689920210534400"
+    }
+  ]
+}
