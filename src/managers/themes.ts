@@ -14,32 +14,6 @@ class Themes extends Manager {
     this.initialize();
   }
 
-  override load(bundle: string, manifest: Manifest) {
-    const data = { failed: false, instance: null };
-
-    try {
-      const res = this.handleBundle(bundle);
-      if (!res) this.handleInvalidBundle();
-
-      data.instance = res;
-    } catch (e) {
-      this.logger.error(`Failed to execute ${manifest.id}:`, e.message);
-      data.failed = true;
-    }
-
-    const addon = {
-      data: manifest,
-      instance: data.instance,
-      started: false
-    } as Addon;
-
-    this.entities.set(manifest.id, addon);
-
-    if (this.settings.get(manifest.id, false)) {
-      this.start(addon);
-    }
-  }
-
   override start(addon: Resolveable) {
     const entity = this.resolve(addon);
     if (!entity) return;
