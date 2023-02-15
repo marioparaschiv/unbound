@@ -1,8 +1,8 @@
 import type { Addon, Manifest, Resolveable } from '@typings/managers';
 import { EventEmitter } from '@metro/common';
-import { createLogger } from '@logger';
 import { capitalize } from '@utilities';
-import { makeStore } from '@api/storage';
+import { getStore } from '@api/storage';
+import { createLogger } from '@logger';
 
 export enum ManagerType {
   Plugins = 'plugin',
@@ -11,7 +11,7 @@ export enum ManagerType {
 
 class Manager extends EventEmitter {
   public logger: ReturnType<typeof createLogger>;
-  public settings: ReturnType<typeof makeStore>;
+  public settings: ReturnType<typeof getStore>;
   public id: 'plugin' | 'theme';
   public entities = new Map();
   public started = new Set();
@@ -25,7 +25,9 @@ class Manager extends EventEmitter {
     this.name = capitalize(type) + 's';
 
     this.logger = createLogger('Manager', this.name);
-    this.settings = makeStore(`${type}-states`);
+    this.settings = getStore(`${type}-states`);
+
+    this.setMaxListeners(Infinity);
   }
 
   async install(url: string): Promise<Error | void> {
@@ -38,6 +40,35 @@ class Manager extends EventEmitter {
     this.logger.debug('Done fetching...');
 
     this.load(bundle, manifest);
+  }
+
+  initialize() {
+    const status = { failed: 0 };
+
+    const { ENMITY_PLUGINS } = globalThis;
+    if (!ENMITY_PLUGINS) return;
+
+    // const contents = ;
+
+
+    // const entities = contents.filter(e => {
+    //   try {
+    //     const item = resolve(this.folder, e);
+    //     return fs.statSync(item).isDirectory();
+    //   } catch {
+    //     return false;
+    //   }
+    // });
+
+    // for (const id of ENMITY_PLUGINS) {
+    //   try {
+    //     const entity = this.load(id);
+    //     if (entity?.failed) status.failed++;
+    //   } catch (e) {
+    //     status.failed++;
+    //     this.logger.error(e);
+    //   }
+    // }
   }
 
   load(bundle: string, manifest: Manifest) {
@@ -90,6 +121,40 @@ class Manager extends EventEmitter {
       this.logger.error(`Failed to stop ${entity.data.id}:`, e.message);
       entity.started = true;
     }
+  }
+
+  enable(addon: Resolveable) {
+    const entity = this.resolve(addon);
+    if (!entity) return;
+
+    try {
+      this.settings.set(entity.id, true);
+
+      if (!entity.started) {
+        this.start(entity);
+      }
+    } catch (e) {
+      this.logger.error(`Failed to enable ${entity.data.id}:`, e.message);
+    }
+  }
+
+  disable(addon: Resolveable) {
+    const entity = this.resolve(addon);
+    if (!entity) return;
+
+    try {
+      this.settings.set(entity.id, false);
+
+      if (entity.started) {
+        this.stop(entity);
+      }
+    } catch (e) {
+      this.logger.error(`Failed to stop ${entity.data.id}:`, e.message);
+    }
+  }
+
+  isEnabled(id: string): boolean {
+    return this.settings.get(id, false);
   }
 
   unload(addon: Resolveable) {

@@ -1,3 +1,9 @@
+interface Addon {
+  contents: string;
+  path: string;
+}
+
+
 declare global {
   const __r: {
     importAll: Fn;
@@ -6,6 +12,9 @@ declare global {
 
   var enmity: typeof import('@api');
   var nativeLoggingHook: Fn;
+
+  var ENMITY_SETTINGS: Addon[];
+  var ENMITY_PLUGINS: String;
   var ENMITY_DEV_IP: String;
 }
 

@@ -1,7 +1,7 @@
 export * as assets from './assets';
 
-export { default as patcher } from './patcher';
 export * as managers from './managers';
+export * as patcher from './patcher';
 
 export { default as toasts } from './toasts';
 export * as components from './components';

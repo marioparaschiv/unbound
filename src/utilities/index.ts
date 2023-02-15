@@ -3,5 +3,7 @@ export { default as capitalize } from './capitalize';
 export { default as findInTree } from './findInTree';
 export { default as debounce } from './debounce';
 export { default as colorize } from './colorize';
+export { default as attempt } from './attempt';
 export { default as isEmpty } from './isEmpty';
+export { default as noop } from './noop';
 export { default as uuid } from './uuid';

@@ -1,5 +1,5 @@
-import { findByName } from '@metro';
 import { i18n, React, ReactNative as RN } from '@metro/common';
+import { Search } from '@metro/components';
 import { Addon } from '@typings/managers';
 import AddonCard from './addoncard';
 
@@ -8,7 +8,6 @@ interface AddonListProps {
   type: 'themes' | 'plugins';
 }
 
-const Search = findByName('StaticSearchBarContainer');
 
 export default function ({ addons, type }: AddonListProps) {
   const [search, setSearch] = React.useState('');

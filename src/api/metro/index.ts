@@ -1,5 +1,14 @@
+import Filters from './filters';
+  if (!filter) throw new Error('You must provide a filter to search by.');
+
+  const {
+    all = false,
+  const result = { found: initial ?? [], errored: false };
+
+      console.error(
 import type { SearchOptions, BulkItem, StoreOptions, InternalOptions } from '@typings/api/metro';
 import type { Filter } from '@typings/api/metro/filters';
+import { isEmpty } from '@utilities';
 import Filters from './filters';
 
 const data = {
@@ -31,7 +40,9 @@ export function find(filter: Filter, options: SearchOptions = {}) {
       console.error(
         'Search filter threw an error, degrading performance.',
         'This will create a bad experience for the user including lag spikes, a slow startup, etc.',
-        'Please fix this as soon as possible.'
+        'Please fix this as soon as possible.',
+        '\n',
+        e.stack
       );
     }
   };
@@ -49,7 +60,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 
     const mdl = modules[id].publicModule.exports;
 
-    if (!mdl || mdl === window || mdl[Symbol()] === null) {
+    if (!mdl || mdl === window || mdl[Symbol()] === null || isEmpty(mdl)) {
       deenumerate(id);
       continue;
     }
@@ -139,6 +150,7 @@ export function findStore(...args) {
 };
 
 export function findByName(...args) {
+  console.log(...args);
   const [name, options] = parseOptions<InternalOptions>(args);
 
   return search(name, options, 'byName');
@@ -181,7 +193,7 @@ function search(args: any[], options: InternalOptions, filter: Fn | string) {
 
   if (options.bulk) {
     return bulk(...args.map(payload => {
-      if (!Array.isArray(payload) && typeof payload === 'object') {
+      if (!Array.isArray(payload) && typeof payload === 'object' && payload.params) {
         return {
           filter: (filter as Filter)(...payload.params as [any, any]),
           ...payload

@@ -1,6 +1,6 @@
 import { Constants, i18n, React, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Forms, Navigation } from '@metro/components';
-import { Invite, Links } from '@constants';
+import { Invite, Links, Screens } from '@constants';
 import { Invites } from '@metro/actions';
 import Developer from './developer';
 import * as Icon from '@ui/icons';
@@ -44,7 +44,7 @@ function General() {
           label={i18n.Messages.ENMITY_TOAST_SETTINGS}
           leading={<Forms.FormRow.Icon source={Icons.Toasts} />}
           trailing={Forms.FormRow.Arrow}
-          onPress={() => navigation.push('Custom', {
+          onPress={() => navigation.push(Screens.Custom, {
             title: i18n.Messages.ENMITY_TOAST_SETTINGS,
             render: Developer
           })}
@@ -54,7 +54,7 @@ function General() {
           label={i18n.Messages.ENMITY_DEVELOPMENT_SETTINGS}
           leading={<Forms.FormRow.Icon source={Icons.Development} />}
           trailing={Forms.FormRow.Arrow}
-          onPress={() => navigation.push('Custom', {
+          onPress={() => navigation.push(Screens.Custom, {
             title: i18n.Messages.ENMITY_DEVELOPMENT_SETTINGS,
             render: Developer
           })}
