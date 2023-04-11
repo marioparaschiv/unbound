@@ -1,6 +1,6 @@
 import { React, ReactNative as RN } from '@metro/common';
 import { Navigation } from '@metro/components';
-import Addons from '../partials/addons';
+import Addons from '../components/addons';
 
 import Themes from '@managers/themes';
 

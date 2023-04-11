@@ -1,4 +1,4 @@
-import { Constants, i18n, React, ReactNative as RN, StyleSheet } from '@metro/common';
+import { Theme, i18n, React, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Forms, Navigation } from '@metro/components';
 import { Invite, Links, Screens } from '@constants';
 import { Invites } from '@metro/actions';
@@ -9,11 +9,11 @@ import Assets from '@api/assets';
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 
-const { ThemeColorMap } = Constants;
+const { colors } = Theme;
 
 const styles = StyleSheet.createThemedStyleSheet({
   trailingText: {
-    color: ThemeColorMap.TEXT_MUTED
+    color: colors.TEXT_MUTED
   },
   container: {
     marginBottom: 50

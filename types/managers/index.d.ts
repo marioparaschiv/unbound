@@ -9,7 +9,6 @@ export interface Manifest {
   description: string;
   authors: Author[];
   version: string;
-  bundle: string;
 }
 
 export interface Addon {

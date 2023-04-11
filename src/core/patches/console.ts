@@ -22,17 +22,13 @@ export function apply() {
       const payload = [];
 
       for (let i = 0, len = args.length; len > i; i++) {
-        payload.push(typeof args[i] === 'string' ? args[i] : Util.inspect(args[i]));
+        payload.push(typeof args[i] === 'string' ? args[i] : Util.inspect?.(args[i]) ?? args[i].toString());
       }
 
       const output = payload.join(' ');
 
-      addLog({
-        message: output,
-        level: Levels[method]
-      });
-
-      nativeLoggingHook(output, Levels[method] ?? Levels.info);
+      addLog({ message: output, level: Levels[method] });
+      window.nativeLoggingHook(output, Levels[method] ?? Levels.info);
     };
   }
 }

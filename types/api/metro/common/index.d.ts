@@ -1,10 +1,10 @@
-import type { StyleProp, TextStyle, ViewStyle, ImageProps, StyleSheet } from 'react-native';
+import type { StyleProp, TextStyle, ViewStyle, StyleSheet, ImageStyle } from 'react-native';
 import type moment from './moment';
 
 export namespace Common {
   export interface StyleSheets {
-    createThemedStyleSheet: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageProps>>>(style: T) => T;
-    getThemedStylesheet: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageProps>>>(style: T) => {
+    createThemedStyleSheet: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => T;
+    getThemedStylesheet: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => {
       mergedDarkStyles: StyleSheet,
       mergedLightStyles: StyleSheet;
     };
@@ -12,6 +12,7 @@ export namespace Common {
 
   export type React = typeof import('react');
   export type ReactNative = typeof import('react-native');
+  export type Chroma = typeof import('chroma-js');
 
   export interface Dispatcher {
     dispatch(payload: Record<string, any>): Promise<void>;

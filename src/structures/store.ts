@@ -1,4 +1,4 @@
-import { React } from "@metro/common";
+import { React } from '@metro/common';
 
 /**
  * Creates a updateable react store with a remote api.

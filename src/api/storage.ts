@@ -1,5 +1,6 @@
-import { EventEmitter, React, ReactNative } from '@metro/common';
+import { React, ReactNative } from '@metro/common';
 import { isEmpty, debounce } from '@utilities';
+import EventEmitter from '@structures/emitter';
 
 const { DCDFileManager } = ReactNative.NativeModules;
 const Events = new EventEmitter();
@@ -8,7 +9,6 @@ export const settings = globalThis.ENMITY_SETTINGS ?? {};
 
 export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
-export const once = Events.once.bind(Events);
 
 export function get(store: string, key: string, def: any) {
   return settings[store]?.[key] ?? def;
@@ -83,6 +83,4 @@ Events.on('changed', debounce(() => {
   DCDFileManager.writeFile('documents', path, payload, 'utf8');
 }, 250));
 
-Events.setMaxListeners(Infinity);
-
-export default { useSettingsStore, getStore, get, set, remove, on, off, once };
+export default { useSettingsStore, getStore, get, set, remove, on, off };

@@ -2,9 +2,20 @@ import BuiltIns from '@core/builtins';
 import Patches from '@core/patches';
 import * as API from '@api';
 
+import '@api/components';
+
 export async function initialize() {
-  Patches.apply();
-  BuiltIns.initialize();
+  try {
+    Patches.apply();
+  } catch (e) {
+    alert('Failed to apply patches: ' + e.message);
+  }
+
+  try {
+    BuiltIns.initialize();
+  } catch (e) {
+    alert('Failed to apply builtins: ' + e.message);
+  }
 
   window.enmity = API;
 

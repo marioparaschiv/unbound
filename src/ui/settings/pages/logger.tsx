@@ -1,9 +1,10 @@
-import { ReactNative as RN, React, StyleSheet, Constants, Moment, i18n } from '@metro/common';
+import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme } from '@metro/common';
 import { Forms, Navigation } from '@metro/components';
 import Logger from '@stores/logger';
 import Assets from '@api/assets';
 
-const { ThemeColorMap, Fonts } = Constants;
+const { Fonts } = Constants;
+const { colors } = Theme;
 
 export default function () {
 
@@ -29,9 +30,9 @@ export default function () {
             color: (() => {
               switch (item.level) {
                 case 1:
-                  return ThemeColorMap.TEXT_NORMAL;
+                  return colors.TEXT_NORMAL;
                 case 0:
-                  return ThemeColorMap.TEXT_MUTED;
+                  return colors.TEXT_MUTED;
                 case 2:
                   return 'yellow';
                 case 3:
@@ -42,7 +43,7 @@ export default function () {
           time: {
             fontSize: 16,
             fontFamily: Fonts.DISPLAY_SEMIBOLD,
-            color: ThemeColorMap.TEXT_MUTED
+            color: colors.TEXT_MUTED
           }
         });
 
@@ -63,7 +64,7 @@ const styles = StyleSheet.createThemedStyleSheet({
     marginRight: 10
   },
   image: {
-    tintColor: ThemeColorMap.TEXT_NORMAL
+    tintColor: colors.TEXT_NORMAL
   }
 });
 

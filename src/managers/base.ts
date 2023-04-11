@@ -1,8 +1,11 @@
 import type { Addon, Manifest, Resolveable } from '@typings/managers';
-import { EventEmitter } from '@metro/common';
+import EventEmitter from '@structures/emitter';
+import { ReactNative } from '@metro/common';
 import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
 import { createLogger } from '@logger';
+
+const { DCDFileManager } = ReactNative.NativeModules;
 
 export enum ManagerType {
   Plugins = 'plugin',
@@ -16,6 +19,7 @@ class Manager extends EventEmitter {
   public entities = new Map();
   public started = new Set();
   public type: ManagerType;
+  public path: string;
   public name: string;
 
   constructor(type: ManagerType) {
@@ -27,48 +31,30 @@ class Manager extends EventEmitter {
     this.logger = createLogger('Manager', this.name);
     this.settings = getStore(`${type}-states`);
 
-    this.setMaxListeners(Infinity);
+    this.path = ReactNative.Platform.select({
+      ios: 'Documents/Enmity/Plugins',
+      default: 'Enmity/Plugins'
+    });
   }
 
   async install(url: string): Promise<Error | void> {
     this.logger.debug(`Fetching ${url} for manifest...`);
     const manifest = await fetch(url, { cache: 'no-cache' }).then(r => r.json()) as Manifest;
 
-    this.logger.debug(`Fetching bundle from ${manifest.bundle}...`);
-    const bundle = await fetch(manifest.bundle, { cache: 'no-cache' }).then(r => r.text());
+    this.logger.debug(`Fetching bundle from ${(manifest as any).bundle}...`);
+    const bundle = await fetch((manifest as any).bundle, { cache: 'no-cache' }).then(r => r.text());
 
     this.logger.debug('Done fetching...');
 
+    this.logger.debug('Saving...');
+    this.save(bundle, manifest);
+    this.logger.debug('Loading...');
     this.load(bundle, manifest);
   }
 
-  initialize() {
-    const status = { failed: 0 };
-
-    const { ENMITY_PLUGINS } = globalThis;
-    if (!ENMITY_PLUGINS) return;
-
-    // const contents = ;
-
-
-    // const entities = contents.filter(e => {
-    //   try {
-    //     const item = resolve(this.folder, e);
-    //     return fs.statSync(item).isDirectory();
-    //   } catch {
-    //     return false;
-    //   }
-    // });
-
-    // for (const id of ENMITY_PLUGINS) {
-    //   try {
-    //     const entity = this.load(id);
-    //     if (entity?.failed) status.failed++;
-    //   } catch (e) {
-    //     status.failed++;
-    //     this.logger.error(e);
-    //   }
-    // }
+  save(bundle: string, manifest: Manifest) {
+    DCDFileManager.writeFile('documents', `${this.path}/${manifest.name}/bundle.js`, bundle, 'utf8');
+    DCDFileManager.writeFile('documents', `${this.path}/${manifest.name}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
   }
 
   load(bundle: string, manifest: Manifest) {

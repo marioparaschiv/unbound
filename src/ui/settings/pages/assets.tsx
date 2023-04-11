@@ -1,6 +1,6 @@
 import { React, ReactNative as RN, i18n } from '@metro/common';
 import { Forms, Search } from '@metro/components';
-import Asset from '@ui/settings/partials/asset';
+import Asset from '@ui/settings/components/asset';
 
 import { assets } from '@api/assets';
 

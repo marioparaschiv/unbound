@@ -19,7 +19,7 @@ export default function ({ addons, type }: AddonListProps) {
       if (
         addon.data.name.toLowerCase().includes(search) ||
         addon.data.description.toLowerCase().includes(search) ||
-        addon.data.authors.some(a => typeof a === 'string' ? a.includes(search) : a.name.includes(search))
+        addon.data.authors.some(a => a.name.includes(search))
       ) {
         data.push(addon);
       }

@@ -46,7 +46,7 @@ function addStrings(locale: string, strings: LocaleStrings) {
   state.messages[locale] ??= {};
   Object.assign(state.messages[locale], strings);
 
-  inject();
+  i18n.loadPromise.then(inject);
 }
 
 function inject() {

@@ -1,14 +1,15 @@
-import { Constants, React, ReactNative as RN, StyleSheet } from '@metro/common';
-import { Addon, Author } from '@typings/managers';
+import { Constants, Theme, React, ReactNative as RN, StyleSheet, i18n } from '@metro/common';
+import { Addon } from '@typings/managers';
 import { AsyncUsers } from '@metro/api';
-import { Profiles } from '@metro/ui';
 import { Users } from '@metro/stores';
+import { Profiles } from '@metro/ui';
 
 interface AddonCardProps {
   addon: Addon;
 }
 
-const { ThemeColorMap, Fonts } = Constants;
+const { Fonts } = Constants;
+const { colors } = Theme;
 
 export default class extends React.Component<AddonCardProps> {
   render() {
@@ -32,7 +33,7 @@ export default class extends React.Component<AddonCardProps> {
         {addon.data.name}
       </RN.Text>
       <RN.Text style={this.styles.version}>
-        {addon.data.version}
+        {addon.data.version ?? '?.?.?'}
       </RN.Text>
     </>;
   }
@@ -43,12 +44,12 @@ export default class extends React.Component<AddonCardProps> {
     return <>
       <RN.Text style={this.styles.by}>by</RN.Text>
       <RN.FlatList
-        data={addon.data.authors}
+        data={addon.data.authors ?? [{ name: '???' }]}
         horizontal
         style={{ flex: 1 }}
         keyExtractor={(_, idx) => String(idx)}
         renderItem={({ item, index }) => {
-          const isLast = index === addon.data.authors.length - 1;
+          const isLast = index === (addon.data.authors ?? [{ name: '???' }]).length - 1;
 
           const divider = !isLast && <RN.Text style={this.styles.authors}>
             {', '}
@@ -78,7 +79,7 @@ export default class extends React.Component<AddonCardProps> {
     const { addon } = this.props;
 
     return <RN.Text style={this.styles.description}>
-      {addon.data.description}
+      {addon.data.description ?? i18n.Messages.ENMITY_ADDON_NO_DESCRIPTION}
     </RN.Text>;
   }
 
@@ -92,13 +93,13 @@ export default class extends React.Component<AddonCardProps> {
 
   styles = StyleSheet.createThemedStyleSheet({
     card: {
-      backgroundColor: ThemeColorMap.BACKGROUND_SECONDARY,
+      backgroundColor: colors.BACKGROUND_SECONDARY,
       marginHorizontal: 10,
       borderRadius: 5,
       marginTop: 10
     },
     header: {
-      backgroundColor: ThemeColorMap.BACKGROUND_TERTIARY,
+      backgroundColor: colors.BACKGROUND_TERTIARY,
       borderTopRightRadius: 5,
       borderTopLeftRadius: 5,
       paddingHorizontal: 15,
@@ -108,26 +109,26 @@ export default class extends React.Component<AddonCardProps> {
       flex: 1
     },
     name: {
-      color: ThemeColorMap.TEXT_NORMAL,
+      color: colors.TEXT_NORMAL,
       fontFamily: Fonts.PRIMARY_BOLD,
       marginRight: 2.5,
       fontSize: 16,
     },
     version: {
       fontFamily: Fonts.PRIMARY_SEMIBOLD,
-      color: ThemeColorMap.TEXT_MUTED,
+      color: colors.TEXT_MUTED,
       marginRight: 2.5,
       fontSize: 14
     },
     by: {
       fontFamily: Fonts.PRIMARY_NORMAL,
-      color: ThemeColorMap.TEXT_MUTED,
+      color: colors.TEXT_MUTED,
       marginRight: 2.5,
       fontSize: 14
     },
     authors: {
       fontFamily: Fonts.PRIMARY_SEMIBOLD,
-      color: ThemeColorMap.TEXT_MUTED,
+      color: colors.TEXT_MUTED,
       fontSize: 14,
       flex: 1
     },
@@ -135,14 +136,14 @@ export default class extends React.Component<AddonCardProps> {
       flexDirection: 'row'
     },
     touchable: {
-      color: ThemeColorMap.TEXT_NORMAL
+      color: colors.TEXT_NORMAL
     },
     info: {
       padding: 15,
     },
     description: {
       fontFamily: Fonts.PRIMARY_SEMIBOLD,
-      color: ThemeColorMap.TEXT_NORMAL,
+      color: colors.TEXT_NORMAL,
       fontSize: 14,
     }
   });

@@ -20,7 +20,7 @@ const config: RollupOptions = {
   input: 'src/index.ts',
   output: [
     {
-      file: 'dist/Enmity.js',
+      file: 'dist/bundle.js',
       format: 'esm',
       inlineDynamicImports: true,
       strict: false

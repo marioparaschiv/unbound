@@ -1,11 +1,3 @@
-import Filters from './filters';
-  if (!filter) throw new Error('You must provide a filter to search by.');
-
-  const {
-    all = false,
-  const result = { found: initial ?? [], errored: false };
-
-      console.error(
 import type { SearchOptions, BulkItem, StoreOptions, InternalOptions } from '@typings/api/metro';
 import type { Filter } from '@typings/api/metro/filters';
 import { isEmpty } from '@utilities';

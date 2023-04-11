@@ -1,23 +1,36 @@
+import { Manifest } from '@typings/managers';
+
 interface Addon {
   contents: string;
   path: string;
 }
 
-
 declare global {
-  const __r: {
-    importAll: Fn;
-  } & ((id: number) => void);
-  const modules: { [id: number]: any; };
+  interface Window {
+    modules: { [id: number]: any; };
+    nativeLoggingHook: Fn;
+    __r: {
+      importAll: Fn;
+    } & ((id: number) => void);
 
-  var enmity: typeof import('@api');
-  var nativeLoggingHook: Fn;
+    React: typeof import('react');
+    ReactNative: typeof import('react-native');
+    Chroma: typeof import('chroma-js');
 
-  var ENMITY_SETTINGS: Addon[];
-  var ENMITY_PLUGINS: String;
-  var ENMITY_DEV_IP: String;
+    enmity: typeof import('@api');
+
+    ENMITY_DEV_IP: string;
+    ENMITY_SETTINGS: Addon[];
+    ENMITY_PLUGINS: {
+      manifest: Manifest,
+      bundle: string;
+    }[];
+
+    ENMITY_THEMES: {
+      applied: Record<any, any>;
+      list: Record<any, any>[];
+    };
+  }
 }
-
-import './modules';
 
 export { };

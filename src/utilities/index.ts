@@ -1,4 +1,5 @@
 export { default as findInReactTree } from './findInReactTree';
+export { default as forceRender } from './forceRender';
 export { default as capitalize } from './capitalize';
 export { default as findInTree } from './findInTree';
 export { default as debounce } from './debounce';
