@@ -49,7 +49,9 @@ Patcher.before(window.React, 'createElement', (_, args) => {
 
   if (component) traverse(component);
 
+  // @ts-expect-error
   if (typeof component === 'function' && component.renderPatched !== void 0) {
+    // @ts-expect-error
     args[0] = component.renderPatched;
   }
 
