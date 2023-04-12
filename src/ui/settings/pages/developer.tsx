@@ -43,6 +43,7 @@ export default function () {
           render: AssetBrowser
         })}
       />
+      <Forms.FormDivider />
       <Forms.FormRow
         label={i18n.Messages.ENMITY_DEBUG_LOGS}
         leading={<Forms.FormRow.Icon source={Icons.Debug} />}

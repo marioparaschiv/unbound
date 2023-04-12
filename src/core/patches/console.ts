@@ -28,7 +28,7 @@ export function apply() {
       const output = payload.join(' ');
 
       addLog({ message: output, level: Levels[method] });
-      window.nativeLoggingHook(output, Levels[method] ?? Levels.info);
+      nativeLoggingHook(output, Levels[method] ?? Levels.info);
     };
   }
 }

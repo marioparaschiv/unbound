@@ -2,12 +2,14 @@ import { Theme, i18n, React, ReactNative as RN, StyleSheet } from '@metro/common
 import { Forms, Navigation } from '@metro/components';
 import { Invite, Links, Screens } from '@constants';
 import { Invites } from '@metro/actions';
-import Developer from './developer';
 import * as Icon from '@ui/icons';
 import Assets from '@api/assets';
 
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
+
+import Developer from './developer';
+import Toasts from './toasts';
 
 const { colors } = Theme;
 
@@ -46,7 +48,7 @@ function General() {
           trailing={Forms.FormRow.Arrow}
           onPress={() => navigation.push(Screens.Custom, {
             title: i18n.Messages.ENMITY_TOAST_SETTINGS,
-            render: Developer
+            render: Toasts
           })}
         />
         <Forms.FormDivider />

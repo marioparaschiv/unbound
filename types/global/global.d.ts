@@ -6,13 +6,13 @@ interface Addon {
 }
 
 declare global {
-  interface Window {
-    modules: { [id: number]: any; };
-    nativeLoggingHook: Fn;
-    __r: {
-      importAll: Fn;
-    } & ((id: number) => void);
+  const modules: { [id: number]: any; };
+  const nativeLoggingHook: Fn;
+  const __r: {
+    importAll: Fn;
+  } & ((id: number) => void);
 
+  interface Window {
     React: typeof import('react');
     ReactNative: typeof import('react-native');
     Chroma: typeof import('chroma-js');

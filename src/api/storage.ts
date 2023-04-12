@@ -75,10 +75,7 @@ export function useSettingsStore(store: string) {
 
 Events.on('changed', debounce(() => {
   const payload = JSON.stringify(settings);
-  const path = ReactNative.Platform.select({
-    ios: 'Documents/Enmity',
-    default: 'Enmity'
-  }) + '/settings.json';
+  const path = 'Enmity/settings.json';
 
   DCDFileManager.writeFile('documents', path, payload, 'utf8');
 }, 250));

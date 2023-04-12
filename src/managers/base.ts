@@ -34,22 +34,22 @@ class Manager extends EventEmitter {
     this.logger = createLogger('Manager', this.name);
     this.settings = getStore(`${type}-states`);
 
-    this.path = ReactNative.Platform.select({
-      ios: `Documents/Enmity/${this.name}`,
-      default: `Enmity/${this.name}`
-    });
+    this.path = `Enmity/${this.name}`;
   }
 
   async install(url: string): Promise<Error | void> {
     this.logger.debug(`Fetching ${url} for manifest...`);
     const manifest = await fetch(url, { cache: 'no-cache' }).then(r => r.json()) as Manifest;
 
+    try {
+      this.logger.debug('Validating manifest...');
+      this.validateManifest(manifest as Manifest);
+    } catch (e) {
+      return this.logger.debug('Failed to validate manifest:', e.message);
+    }
+
     this.logger.debug(`Fetching bundle from ${(manifest as any).bundle}...`);
-
-    this.validateManifest(manifest as Manifest);
-
     const bundle = await fetch((manifest as any).bundle, { cache: 'no-cache' }).then(r => r.text());
-
     this.logger.debug('Done fetching...');
 
     this.logger.debug('Saving...');

@@ -112,7 +112,7 @@ export function bulk(...items: BulkItem[]) {
         res[i] = mdl;
       }
 
-      if (mdl.default !== void 0 && item.filter(mdl.default, id)) {
+      if (mdl.default && item.filter(mdl.default, id)) {
         res[i] = (item.interop ?? true) ? mdl.default : mdl;
       }
     }
@@ -142,7 +142,6 @@ export function findStore(...args) {
 };
 
 export function findByName(...args) {
-  console.log(...args);
   const [name, options] = parseOptions<InternalOptions>(args);
 
   return search(name, options, 'byName');
@@ -187,7 +186,7 @@ function search(args: any[], options: InternalOptions, filter: Fn | string) {
     return bulk(...args.map(payload => {
       if (!Array.isArray(payload) && typeof payload === 'object' && payload.params) {
         return {
-          filter: (filter as Filter)(...payload.params as [any, any]),
+          filter: (filter as Filter)(...(payload.params ?? []) as [any, any]),
           ...payload
         };
       }
