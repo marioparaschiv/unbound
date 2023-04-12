@@ -12,3 +12,7 @@ export const Screens = {
   Updater: 'ENMITY_UPDATER',
   Custom: 'CUSTOM'
 } as const;
+
+export const Regex = {
+  SemanticVersioning: /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/i
+} as const;

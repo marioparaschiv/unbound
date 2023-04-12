@@ -4,7 +4,11 @@ import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';
 import { Profiles } from '@metro/ui';
 
+import Plugins from '@managers/plugins';
+import Themes from '@managers/themes';
+
 interface AddonCardProps {
+  manager: typeof Plugins | typeof Themes;
   addon: Addon;
 }
 
@@ -13,7 +17,10 @@ const { colors } = Theme;
 
 export default class extends React.Component<AddonCardProps> {
   render() {
-    return <RN.View style={this.styles.card}>
+    const { addon, manager } = this.props;
+
+
+    return <RN.View style={{ ...this.styles.card, ...(addon.failed ? this.styles.failed : {}) }}>
       <RN.View style={this.styles.header}>
         {this.renderMetadata()}
         {this.renderAuthors()}
@@ -76,11 +83,18 @@ export default class extends React.Component<AddonCardProps> {
   }
 
   renderBody() {
-    const { addon } = this.props;
+    const { addon, manager } = this.props;
 
-    return <RN.Text style={this.styles.description}>
-      {addon.data.description ?? i18n.Messages.ENMITY_ADDON_NO_DESCRIPTION}
-    </RN.Text>;
+    const error = manager.errors.get(addon.id ?? addon.data.path);
+
+    return <>
+      <RN.Text style={this.styles.description}>
+        {addon.data.description ?? i18n.Messages.ENMITY_ADDON_NO_DESCRIPTION}
+      </RN.Text>
+      {addon.failed && <RN.Text style={{ ...this.styles.description, ...this.styles.error }}>
+        {i18n.Messages.ENMITY_ADDON_FAILED.format({ error: error.message })}
+      </RN.Text>}
+    </>;
   }
 
   async onTapAuthor(item) {
@@ -96,6 +110,13 @@ export default class extends React.Component<AddonCardProps> {
       backgroundColor: colors.BACKGROUND_SECONDARY,
       marginHorizontal: 10,
       borderRadius: 5,
+      marginTop: 10
+    },
+    failed: {
+      opacity: 0.5
+    },
+    error: {
+      color: 'red',
       marginTop: 10
     },
     header: {
@@ -144,7 +165,7 @@ export default class extends React.Component<AddonCardProps> {
     description: {
       fontFamily: Fonts.PRIMARY_SEMIBOLD,
       color: colors.TEXT_NORMAL,
-      fontSize: 14,
+      fontSize: 14
     }
   });
 }

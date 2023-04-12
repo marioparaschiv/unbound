@@ -1,6 +1,6 @@
 export type Author = {
   name: string;
-  id?: `${number}`;
+  id: `${number}`;
 };
 
 export interface Manifest {
@@ -8,7 +8,10 @@ export interface Manifest {
   name: string;
   description: string;
   authors: Author[];
+  updates: string;
   version: string;
+  folder: string;
+  path: string;
 }
 
 export interface Addon {

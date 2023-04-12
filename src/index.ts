@@ -1,11 +1,8 @@
 try {
   const find = (prop: string) => Object.values(window.modules).find(m => m?.publicModule.exports?.[prop])?.publicModule?.exports;
 
-  window.React = find('createElement');
   window.ReactNative = find('AppState');
-
-  import('@api/components');
-
+  window.React = find('createElement');
 
   try {
     const Core = import('@core');

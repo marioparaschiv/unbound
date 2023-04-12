@@ -4,6 +4,7 @@ import { ReactNative } from '@metro/common';
 import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
 import { createLogger } from '@logger';
+import { Regex } from '@constants';
 
 const { DCDFileManager } = ReactNative.NativeModules;
 
@@ -18,7 +19,9 @@ class Manager extends EventEmitter {
   public id: 'plugin' | 'theme';
   public entities = new Map();
   public started = new Set();
+  public errors = new Map();
   public type: ManagerType;
+  public extension: string;
   public path: string;
   public name: string;
 
@@ -32,8 +35,8 @@ class Manager extends EventEmitter {
     this.settings = getStore(`${type}-states`);
 
     this.path = ReactNative.Platform.select({
-      ios: 'Documents/Enmity/Plugins',
-      default: 'Enmity/Plugins'
+      ios: `Documents/Enmity/${this.name}`,
+      default: `Enmity/${this.name}`
     });
   }
 
@@ -42,6 +45,9 @@ class Manager extends EventEmitter {
     const manifest = await fetch(url, { cache: 'no-cache' }).then(r => r.json()) as Manifest;
 
     this.logger.debug(`Fetching bundle from ${(manifest as any).bundle}...`);
+
+    this.validateManifest(manifest as Manifest);
+
     const bundle = await fetch((manifest as any).bundle, { cache: 'no-cache' }).then(r => r.text());
 
     this.logger.debug('Done fetching...');
@@ -53,7 +59,7 @@ class Manager extends EventEmitter {
   }
 
   save(bundle: string, manifest: Manifest) {
-    DCDFileManager.writeFile('documents', `${this.path}/${manifest.name}/bundle.js`, bundle, 'utf8');
+    DCDFileManager.writeFile('documents', `${this.path}/${manifest.name}/bundle.${this.extension}`, bundle, 'utf8');
     DCDFileManager.writeFile('documents', `${this.path}/${manifest.name}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
   }
 
@@ -61,18 +67,28 @@ class Manager extends EventEmitter {
     const data = { failed: false, instance: null };
 
     try {
+      this.validateManifest(manifest);
+
       const res = this.handleBundle(bundle);
       if (!res) this.handleInvalidBundle();
 
       data.instance = res;
-    } catch (e) {
-      this.logger.error(`Failed to execute ${manifest.id}:`, e.message);
+
+      if (this.errors.has(manifest.id) || this.errors.has(manifest.path)) {
+        this.errors.delete(manifest.id);
+        this.errors.delete(manifest.path);
+      }
+    } catch (error) {
       data.failed = true;
+      this.logger.error(`Failed to execute ${manifest.id}:`, error.message);
+      this.errors.set(manifest.id ?? manifest.path, error);
     }
 
     const addon = {
       data: manifest,
       instance: data.instance,
+      id: manifest.id,
+      failed: data.failed,
       started: false
     } as Addon;
 
@@ -80,6 +96,18 @@ class Manager extends EventEmitter {
 
     if (this.settings.get(manifest.id, false)) {
       this.start(addon);
+    }
+  }
+
+  delete(addon: Resolveable) {
+    const entity = this.resolve(addon);
+    if (!entity) return;
+
+    try {
+      this.unload(entity);
+    } catch (e) {
+      this.logger.error(`Failed to start ${entity.data.id}:`, e.message);
+      entity.started = false;
     }
   }
 
@@ -168,8 +196,26 @@ class Manager extends EventEmitter {
     }
   }
 
+  validateManifest(manifest: Manifest) {
+    if (!manifest.name || typeof manifest.name !== 'string') {
+      throw new Error('Manifest property "name" must be of type string.');
+    } else if (!manifest.description || typeof manifest.description !== 'string') {
+      throw new Error('Manifest property "description" must be of type string.');
+    } else if (!manifest.authors || (typeof manifest.name !== 'object' && !Array.isArray(manifest.authors))) {
+      throw new Error('Manifest property "authors" must be of type array.');
+    } else if (!manifest.version || typeof manifest.version !== 'string' || !Regex.SemanticVersioning.test(manifest.version)) {
+      throw new Error('Manifest property "version" must be of type string and match the semantic versioning pattern.');
+    } else if (!manifest.id || typeof manifest.id !== 'string' || manifest.id.split('.').length >= 2) {
+      throw new Error('Manifest property "id" must be of type string and match a "eternal.enmity" pattern.');
+    }
+  }
+
   handleBundle(bundle: string) {
-    return eval(bundle);
+    const iife = eval(`() => { return ${bundle} }`);
+    const payload = iife();
+    const res = typeof payload === 'function' ? payload() : payload;
+
+    return res.default ?? res;
   }
 
   handleInvalidBundle() {

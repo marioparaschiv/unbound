@@ -84,10 +84,9 @@ function patchSettings(instance) {
     const { navigation } = self.props;
     const { children } = res.props;
 
-    const searchable = [i18n.Messages.BILLING_SETTINGS, i18n.Messages.PREMIUM_SETTINGS];
-    const index = children.findIndex(c => ~searchable.indexOf(c.props.title));
+    const index = children.findIndex(c => c?.props?.title === i18n.Messages.PREMIUM_SETTINGS_GENERIC);
 
-    children.splice(index === -1 ? 4 : index, 0, <>
+    children.splice(index, 0, <>
       <Forms.FormSection key='Enmity' title='Enmity'>
         <Forms.FormRow
           label={i18n.Messages.ENMITY_GENERAL}
@@ -120,7 +119,7 @@ function patchSettings(instance) {
     </>);
 
     // Remove "Upload Debug Logs" button
-    const support = children.find(c => c.props.title === i18n.Messages.SUPPORT);
+    const support = children.find(c => c?.props.title === i18n.Messages.SUPPORT);
     const entries = support?.props.children;
 
     if (entries) {

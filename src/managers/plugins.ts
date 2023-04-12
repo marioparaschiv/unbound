@@ -1,6 +1,8 @@
 import Manager, { ManagerType } from './base';
 
 class Plugins extends Manager {
+  public extension: string = 'js';
+
   constructor() {
     super(ManagerType.Plugins);
 

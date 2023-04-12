@@ -2,6 +2,7 @@ import { i18n, React, ReactNative as RN } from '@metro/common';
 import { Search } from '@metro/components';
 import { Addon } from '@typings/managers';
 import AddonCard from './addoncard';
+import { managers } from '@api';
 
 interface AddonListProps {
   addons: Addon[];
@@ -36,7 +37,7 @@ export default function ({ addons, type }: AddonListProps) {
       />
       <RN.FlatList
         data={data}
-        renderItem={(item) => <AddonCard addon={item.item} />}
+        renderItem={(item) => <AddonCard manager={managers[type]} addon={item.item} />}
         keyExtractor={(_, idx) => String(idx)}
       />
     </RN.View>

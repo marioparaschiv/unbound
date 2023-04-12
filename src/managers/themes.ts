@@ -6,6 +6,7 @@ const Patcher = createPatcher('Themer');
 
 class Themes extends Manager {
   public original: Record<any, any>;
+  public extension: string = 'json';
 
   constructor() {
     super(ManagerType.Themes);
