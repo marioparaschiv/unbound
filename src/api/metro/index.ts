@@ -1,11 +1,13 @@
 import type { SearchOptions, BulkItem, StoreOptions, InternalOptions } from '@typings/api/metro';
 import type { Filter } from '@typings/api/metro/filters';
+import Themes from '@managers/themes';
 import { isEmpty } from '@utilities';
 import Filters from './filters';
 
 const data = {
   cache: [],
-  patchedMoment: false
+  patchedMoment: false,
+  patchedThemes: false
 };
 
 export function find(filter: Filter, options: SearchOptions = {}) {
@@ -71,6 +73,16 @@ export function find(filter: Filter, options: SearchOptions = {}) {
       };
 
       data.patchedMoment = true;
+    }
+
+    if (!data.patchedThemes && mdl.SemanticColor) {
+      try {
+        Themes.initialize(mdl);
+      } catch (e) {
+        console.error('Failed to patch themes:', e.message);
+      }
+
+      data.patchedThemes = true;
     }
 
     if (search(mdl, id)) {

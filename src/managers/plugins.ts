@@ -10,7 +10,7 @@ class Plugins extends Manager {
   }
 
   initialize() {
-    for (const plugin of window.ENMITY_PLUGINS) {
+    for (const plugin of window.ENMITY_PLUGINS ?? []) {
       const { manifest, bundle } = plugin;
 
       this.load(bundle, manifest);

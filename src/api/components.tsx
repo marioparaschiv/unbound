@@ -58,21 +58,9 @@ Patcher.before(window.React, 'createElement', (_, args) => {
   return args;
 });
 
-Patcher.after(window.React, 'createElement', (_, __, res) => {
+Patcher.after(React, 'createElement', (_, __, res) => {
   if (res) traverse(res);
 });
-
-for (const method of ['forEach', 'map']) {
-  Patcher.after(window.React.Children, method as any, (_, args, res) => {
-    const [components] = args as unknown as [React.ComponentType[]];
-
-    for (const child of components ?? []) {
-      traverse(child);
-    }
-
-    return res;
-  });
-}
 
 export function add(name, component) {
   if (!named.get(name)) {

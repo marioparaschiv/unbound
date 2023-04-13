@@ -1,6 +1,5 @@
 import type { Addon, Manifest, Resolveable } from '@typings/managers';
 import EventEmitter from '@structures/emitter';
-import { ReactNative } from '@metro/common';
 import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
 import { createLogger } from '@logger';
@@ -97,91 +96,110 @@ class Manager extends EventEmitter {
     if (this.settings.get(manifest.id, false)) {
       this.start(addon);
     }
+
+    this.emit('updated');
   }
 
-  delete(addon: Resolveable) {
-    const entity = this.resolve(addon);
-    if (!entity) return;
+  delete(entity: Resolveable) {
+    const addon = this.resolve(entity);
+    if (!addon) return;
 
     try {
-      this.unload(entity);
+      this.unload(addon);
+      DCDFileManager.writeFile('documents', `${this.path}/${addon.data.name}/.delete`, '', 'utf8');
     } catch (e) {
-      this.logger.error(`Failed to start ${entity.data.id}:`, e.message);
-      entity.started = false;
+      this.logger.error(`Failed to delete ${addon.data.id}:`, e.message);
     }
   }
 
-  start(addon: Resolveable) {
-    const entity = this.resolve(addon);
-    if (!entity) return;
+  start(entity: Resolveable) {
+    const addon = this.resolve(entity);
+    if (!addon) return;
 
     try {
-      entity.instance.start?.();
-      entity.started = true;
+      addon.instance.start?.();
+      addon.started = true;
     } catch (e) {
-      this.logger.error(`Failed to start ${entity.data.id}:`, e.message);
-      entity.started = false;
+      this.logger.error(`Failed to start ${addon.data.id}:`, e.message);
+      addon.started = false;
     }
   }
 
-  stop(addon: Resolveable) {
-    const entity = this.resolve(addon);
-    if (!entity) return;
+  stop(entity: Resolveable) {
+    const addon = this.resolve(entity);
+    if (!addon) return;
 
     try {
-      entity.instance.stop?.();
-      entity.started = false;
+      addon.instance.stop?.();
+      addon.started = false;
     } catch (e) {
-      this.logger.error(`Failed to stop ${entity.data.id}:`, e.message);
-      entity.started = true;
+      this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
+      addon.started = true;
     }
   }
 
-  enable(addon: Resolveable) {
-    const entity = this.resolve(addon);
-    if (!entity) return;
+  toggle(entity: Resolveable) {
+    const addon = this.resolve(entity);
+    if (!addon) return;
+
+    const enabled = this.isEnabled(addon.id);
+
+    if (!enabled) {
+      this.enable(addon);
+    } else {
+      this.disable(addon);
+    }
+
+    this.emit('toggle');
+  }
+
+  enable(entity: Resolveable) {
+    const addon = this.resolve(entity);
+    if (!addon) return;
 
     try {
-      this.settings.set(entity.id, true);
+      this.settings.set(addon.id, true);
 
-      if (!entity.started) {
-        this.start(entity);
+      if (!addon.started) {
+        this.start(addon);
       }
     } catch (e) {
-      this.logger.error(`Failed to enable ${entity.data.id}:`, e.message);
+      this.logger.error(`Failed to enable ${addon.data.id}:`, e.message);
     }
   }
 
-  disable(addon: Resolveable) {
-    const entity = this.resolve(addon);
-    if (!entity) return;
+  disable(entity: Resolveable) {
+    const addon = this.resolve(entity);
+    if (!addon) return;
 
     try {
-      this.settings.set(entity.id, false);
+      this.settings.set(addon.id, false);
 
-      if (entity.started) {
-        this.stop(entity);
+      if (addon.started) {
+        this.stop(addon);
       }
     } catch (e) {
-      this.logger.error(`Failed to stop ${entity.data.id}:`, e.message);
+      this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
     }
   }
 
   isEnabled(id: string): boolean {
-    return this.settings.get(id, false);
+    return this.errors.has(id) ? false : this.settings.get(id, false);
   }
 
-  unload(addon: Resolveable) {
-    const entity = this.resolve(addon);
-    if (!entity) return;
+  unload(entity: Resolveable) {
+    const addon = this.resolve(entity);
+    if (!addon) return;
 
     try {
-      this.stop(entity);
+      if (addon.started) {
+        this.stop(addon);
+      }
 
-      this.entities.delete(entity.id);
+      this.entities.delete(addon.id);
       this.emit('updated');
     } catch (e) {
-      this.logger.error(`FATAL: ${entity.id} was not able to unload properly, a full app restart is recommended.`, e);
+      this.logger.error(`FATAL: ${addon.id} was not able to unload properly, a full app restart is recommended.`, e);
     }
   }
 
@@ -205,7 +223,7 @@ class Manager extends EventEmitter {
       throw new Error('Manifest property "authors" must be of type array.');
     } else if (!manifest.version || typeof manifest.version !== 'string' || !Regex.SemanticVersioning.test(manifest.version)) {
       throw new Error('Manifest property "version" must be of type string and match the semantic versioning pattern.');
-    } else if (!manifest.id || typeof manifest.id !== 'string' || manifest.id.split('.').length >= 2) {
+    } else if (!manifest.id || typeof manifest.id !== 'string') {
       throw new Error('Manifest property "id" must be of type string and match a "eternal.enmity" pattern.');
     }
   }
@@ -223,7 +241,7 @@ class Manager extends EventEmitter {
   }
 
   resolve(id: any): Addon | void {
-    if (id.instance) return id;
+    if (id.data) return id;
 
     const storage = this.entities.get(id);
     if (storage) return storage;
@@ -231,6 +249,26 @@ class Manager extends EventEmitter {
     const entities = [...this.entities.values()];
     const name = entities.find(e => e.data.name === id);
     if (name) return name;
+  }
+
+  useEntities() {
+    const [, forceUpdate] = React.useState({});
+
+    React.useEffect(() => {
+      function handler() {
+        forceUpdate({});
+      }
+
+      this.on('updated', handler);
+      this.on('toggle', handler);
+
+      return () => {
+        this.off('updated', handler);
+        this.off('toggle', handler);
+      };
+    }, []);
+
+    return this.addons;
   }
 
   get addons() {

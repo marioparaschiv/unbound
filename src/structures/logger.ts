@@ -1,5 +1,3 @@
-import colorize from '@utilities/colorize';
-
 export function log(...args: string[]): void {
   return console.log('»', ...args);
 }

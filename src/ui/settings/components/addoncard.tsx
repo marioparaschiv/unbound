@@ -1,14 +1,16 @@
 import { Constants, Theme, React, ReactNative as RN, StyleSheet, i18n } from '@metro/common';
+import { Dialog, Profiles } from '@metro/ui';
 import { Addon } from '@typings/managers';
 import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';
-import { Profiles } from '@metro/ui';
+import { reload } from '@api/native';
 
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 
 interface AddonCardProps {
   manager: typeof Plugins | typeof Themes;
+  shouldRestart: boolean;
   addon: Addon;
 }
 
@@ -17,14 +19,28 @@ const { colors } = Theme;
 
 export default class extends React.Component<AddonCardProps> {
   render() {
-    const { addon, manager } = this.props;
-
+    const { addon, manager, shouldRestart } = this.props;
 
     return <RN.View style={{ ...this.styles.card, ...(addon.failed ? this.styles.failed : {}) }}>
       <RN.View style={this.styles.header}>
         {this.renderMetadata()}
         {this.renderAuthors()}
-        <RN.Switch />
+        <RN.Switch
+          onChange={() => {
+            manager.toggle(addon.id);
+
+            if (shouldRestart) {
+              Dialog.confirm({
+                title: i18n.Messages.ENMITY_CHANGE_RESTART,
+                body: i18n.Messages.ENMITY_CHANGE_RESTART_DESC,
+                confirmText: i18n.Messages.ENMITY_RESTART,
+                onConfirm: async () => await reload()
+              });
+            }
+          }}
+          disabled={addon.failed}
+          value={manager.isEnabled(addon.id)}
+        />
       </RN.View>
       <RN.View style={this.styles.info}>
         {this.renderBody()}

@@ -1,4 +1,3 @@
-import { React, ReactNative } from '@metro/common';
 import { isEmpty, debounce } from '@utilities';
 import EventEmitter from '@structures/emitter';
 

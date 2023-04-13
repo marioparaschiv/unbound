@@ -1,60 +1,43 @@
-import { i18n, React, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
+import { i18n, React, ReactNative as RN } from '@metro/common';
 import { Navigation } from '@metro/components';
-import Addons from '../components/addons';
-
 import Plugins from '@managers/plugins';
-import assets from '@api/assets';
+import { Icons } from '@api/assets';
 import { Dialog } from '@metro/ui';
 
-const styles = StyleSheet.createThemedStyleSheet({
-  input: {
-    height: 40,
-    margin: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.INTERACTIVE_NORMAL,
-    padding: 10,
-  }
-});
+import InstallModal from '../components/installmodal';
+import Addons from '../components/addons';
 
 export default () => {
   const navigation = Navigation.useNavigation();
+  const addons = Plugins.useEntities();
 
   React.useEffect(() => {
-    navigation.setOptions({ headerRight: () => <Add /> });
+    navigation.setOptions({ headerRight: () => <HeaderRight /> });
   }, []);
 
   return <RN.View style={{ flex: 1 }}>
     <Addons
       type='plugins'
-      addons={Plugins.addons}
+      addons={addons}
     />
   </RN.View>;
 };
 
-function Add() {
-  return <RN.TouchableOpacity style={{ marginRight: 20 }} onPress={() => {
-    Dialog.confirm({
-      title: i18n.Messages.ENMITY_INSTALL_TITLE.format({ type: 'plugin' }),
-      body: <InstallModal key='install-input' />,
-      confirmText: i18n.Messages.ENMITY_INSTALL,
-      onConfirm: () => alert('hi')
-    });
-  }}>
-    <RN.Image source={assets.getIDByName('ic_add_circle')} />
+function HeaderRight() {
+  const ref = React.useRef<InstanceType<typeof InstallModal>>();
+  const url = React.useCallback(() => ref.current?.getInput(), [ref.current]);
+
+  return <RN.TouchableOpacity
+    style={{ marginRight: 20 }}
+    onPress={() => {
+      Dialog.confirm({
+        title: i18n.Messages.ENMITY_INSTALL_TITLE.format({ type: 'plugin' }),
+        children: <InstallModal manager={Plugins} ref={ref} />,
+        confirmText: i18n.Messages.ENMITY_INSTALL,
+        onConfirm: () => url() && Plugins.install(url())
+      });
+    }}
+  >
+    <RN.Image source={Icons['ic_add_circle']} />
   </RN.TouchableOpacity>;
-}
-
-class InstallModal extends React.PureComponent {
-  state = { url: '' };
-
-  render() {
-    return <RN.View>
-      <RN.TextInput
-        onChangeText={url => this.setState({ url })}
-        value={this.state.url}
-        style={styles.input}
-        placeholder='https://example.com'
-      />
-    </RN.View>;
-  }
 }

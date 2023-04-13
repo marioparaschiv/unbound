@@ -1,5 +1,5 @@
 try {
-  const find = (prop: string) => Object.values(window.modules).find(m => m?.publicModule.exports?.[prop])?.publicModule?.exports;
+  const find = (prop: string) => Object.values(modules).find(m => m?.publicModule.exports?.[prop])?.publicModule?.exports;
 
   window.ReactNative = find('AppState');
   window.React = find('createElement');

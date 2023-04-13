@@ -12,11 +12,11 @@ declare global {
     importAll: Fn;
   } & ((id: number) => void);
 
-  interface Window {
-    React: typeof import('react');
-    ReactNative: typeof import('react-native');
-    Chroma: typeof import('chroma-js');
+  var React: typeof import('react');
+  var ReactNative: typeof import('react-native');
+  var Chroma: typeof import('chroma-js');
 
+  interface Window {
     enmity: typeof import('@api');
 
     ENMITY_DEV_IP: string;
@@ -27,9 +27,9 @@ declare global {
     }[];
 
     ENMITY_THEMES: {
-      applied: Record<any, any>;
-      list: Record<any, any>[];
-    };
+      manifest: Manifest,
+      bundle: string;
+    }[];
   }
 }
 

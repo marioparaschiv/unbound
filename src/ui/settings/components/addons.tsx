@@ -5,12 +5,13 @@ import AddonCard from './addoncard';
 import { managers } from '@api';
 
 interface AddonListProps {
-  addons: Addon[];
   type: 'themes' | 'plugins';
+  shouldRestart: boolean;
+  addons: Addon[];
 }
 
 
-export default function ({ addons, type }: AddonListProps) {
+export default function ({ addons, type, shouldRestart }: AddonListProps) {
   const [search, setSearch] = React.useState('');
 
   const data = search ? [] : addons;
@@ -37,7 +38,11 @@ export default function ({ addons, type }: AddonListProps) {
       />
       <RN.FlatList
         data={data}
-        renderItem={(item) => <AddonCard manager={managers[type]} addon={item.item} />}
+        renderItem={(item) => <AddonCard
+          shouldRestart={shouldRestart}
+          manager={managers[type]}
+          addon={item.item}
+        />}
         keyExtractor={(_, idx) => String(idx)}
       />
     </RN.View>
