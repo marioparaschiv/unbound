@@ -223,7 +223,7 @@ function push(mdl: Record<string, any> | Function, func: string): Patch {
       configurable: true,
       enumerable: false
     },
-    __original: {
+    __ORIGINAL__: {
       value: patch.original,
       configurable: true,
       enumerable: false

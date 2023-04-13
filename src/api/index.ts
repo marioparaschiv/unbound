@@ -1,11 +1,11 @@
 export * as components from './components';
 
-
 export * as managers from './managers';
 export * as patcher from './patcher';
 export * as assets from './assets';
 
 export * as utilities from './utilities';
+export * as commands from './commands';
 export * as storage from './storage';
 export * as toasts from './toasts';
 export * as native from './native';
