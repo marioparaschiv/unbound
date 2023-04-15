@@ -31,13 +31,15 @@ export function apply() {
     unpatch();
   });
 
-  Patcher.after(Scenes, 'default', (_, args, res) => {
+  Patcher.after(Scenes, 'default', (_, __, res) => {
     return {
       ...res,
       [Screens.General]: {
         key: Screens.General,
-        title: 'Enmity',
-        render: General
+        render: General,
+        get title() {
+          return i18n.Messages.SETTINGS;
+        },
       },
       [Screens.Plugins]: {
         key: Screens.Plugins,
@@ -89,7 +91,7 @@ function patchSettings(instance) {
     children.splice(index, 0, <>
       <Forms.FormSection key='Enmity' title='Enmity'>
         <Forms.FormRow
-          label={i18n.Messages.ENMITY_GENERAL}
+          label={i18n.Messages.SETTINGS}
           leading={<Forms.FormRow.Icon source={Icons['settings']} />}
           trailing={<Forms.FormArrow />}
           onPress={() => navigation.push(Screens.General, { ...self.props, ...res.props })}

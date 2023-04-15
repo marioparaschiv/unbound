@@ -42,8 +42,7 @@ export default function () {
           onValueChange={() => settings.toggle('dev.errorBoundaryEnabled', true)}
         />}
       />
-    </Forms.FormSection>
-    <Forms.FormSection>
+      <Forms.FormDivider />
       <Forms.FormRow
         label={i18n.Messages.ENMITY_ASSET_BROWSER}
         leading={<Forms.FormRow.Icon source={Icons.Debug} />}

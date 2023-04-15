@@ -32,7 +32,9 @@ function General() {
     GitHub: Assets.getIDByName('img_account_sync_github_white'),
     Development: Assets.getIDByName('ic_progress_wrench_24px'),
     Toasts: Assets.getIDByName('ic_notification_settings'),
+    Retry: Assets.getIDByName('ic_message_retry'),
     Discord: Assets.getIDByName('Discord'),
+    Debug: Assets.getIDByName('debug')
   };
 
   return <RN.ScrollView>
@@ -43,6 +45,25 @@ function General() {
       keyboardVerticalOffset={100}
       contentContainerStyle={{ backfaceVisibility: 'hidden' }}
     >
+      <Forms.FormSection>
+        <Forms.FormRow
+          label={i18n.Messages.ENMITY_RECOVERY_MODE}
+          subLabel={i18n.Messages.ENMITY_RECOVERY_MODE_DESC}
+          leading={<Forms.FormRow.Icon source={Icons.Retry} />}
+          trailing={<Forms.FormSwitch
+            value={settings.get('recovery', false)}
+            onValueChange={() => {
+              settings.toggle('recovery', false);
+              Dialog.confirm({
+                title: i18n.Messages.ENMITY_CHANGE_RESTART,
+                body: i18n.Messages.ENMITY_CHANGE_RESTART_DESC,
+                confirmText: i18n.Messages.ENMITY_RESTART,
+                onConfirm: async () => await reload()
+              });
+            }}
+          />}
+        />
+      </Forms.FormSection>
       <Forms.FormSection>
         <Forms.FormRow
           label={i18n.Messages.ENMITY_TOAST_SETTINGS}
@@ -63,23 +84,15 @@ function General() {
             render: Developer
           })}
         />
-      </Forms.FormSection>
-      <Forms.FormSection>
+        <Forms.FormDivider />
         <Forms.FormRow
-          label={i18n.Messages.ENMITY_RECOVERY_MODE}
-          subLabel={i18n.Messages.ENMITY_RECOVERY_MODE_DESC}
-          trailing={<Forms.FormSwitch
-            value={settings.get('recovery', false)}
-            onValueChange={() => {
-              settings.toggle('recovery', false);
-              Dialog.confirm({
-                title: i18n.Messages.ENMITY_CHANGE_RESTART,
-                body: i18n.Messages.ENMITY_CHANGE_RESTART_DESC,
-                confirmText: i18n.Messages.ENMITY_RESTART,
-                onConfirm: async () => await reload()
-              });
-            }}
-          />}
+          label={i18n.Messages.ENMITY_MODULE_SETTINGS}
+          leading={<Forms.FormRow.Icon source={Icons.Debug} />}
+          trailing={Forms.FormRow.Arrow}
+          onPress={() => navigation.push(Screens.Custom, {
+            title: i18n.Messages.ENMITY_MODULE_SETTINGS,
+            render: () => <RN.Text>Placeholder</RN.Text>
+          })}
         />
       </Forms.FormSection>
       <Forms.FormSection title={i18n.Messages.ENMITY_STATS}>
