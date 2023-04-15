@@ -19,6 +19,7 @@ export default function () {
     <RN.FlatList
       data={store.logs.sort((a, b) => a.time - b.time)}
       keyExtractor={(_, idx) => String(idx)}
+      /* TODO: Empty Placeholder */
       ListEmptyComponent={() => <RN.Text>nothing here!</RN.Text>}
       ItemSeparatorComponent={Forms.FormDivider}
       renderItem={({ item }) => {

@@ -1,6 +1,7 @@
 import { Constants, Theme, React, ReactNative as RN, StyleSheet, i18n } from '@metro/common';
+import { Addon, Author } from '@typings/managers';
 import { Dialog, Profiles } from '@metro/ui';
-import { Addon } from '@typings/managers';
+import { mergeStyles } from '@utilities';
 import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';
 import { reload } from '@api/native';
@@ -11,36 +12,19 @@ import Themes from '@managers/themes';
 interface AddonCardProps {
   manager: typeof Plugins | typeof Themes;
   shouldRestart: boolean;
+  recovery: boolean;
   addon: Addon;
 }
 
-const { Fonts } = Constants;
-const { colors } = Theme;
-
 export default class extends React.Component<AddonCardProps> {
   render() {
-    const { addon, manager, shouldRestart } = this.props;
+    const { addon, recovery } = this.props;
 
-    return <RN.View style={{ ...this.styles.card, ...(addon.failed ? this.styles.failed : {}) }}>
+    return <RN.View style={mergeStyles(this.styles.card, addon.failed && this.styles.failed, recovery && this.styles.recovery)}>
       <RN.View style={this.styles.header}>
         {this.renderMetadata()}
         {this.renderAuthors()}
-        <RN.Switch
-          onChange={() => {
-            manager.toggle(addon.id);
-
-            if (shouldRestart) {
-              Dialog.confirm({
-                title: i18n.Messages.ENMITY_CHANGE_RESTART,
-                body: i18n.Messages.ENMITY_CHANGE_RESTART_DESC,
-                confirmText: i18n.Messages.ENMITY_RESTART,
-                onConfirm: async () => await reload()
-              });
-            }
-          }}
-          disabled={addon.failed}
-          value={manager.isEnabled(addon.id)}
-        />
+        {this.renderSwitch()}
       </RN.View>
       <RN.View style={this.styles.info}>
         {this.renderBody()}
@@ -67,12 +51,12 @@ export default class extends React.Component<AddonCardProps> {
     return <>
       <RN.Text style={this.styles.by}>by</RN.Text>
       <RN.FlatList
-        data={addon.data.authors ?? [{ name: '???' }]}
+        data={addon.data.authors ?? [{ name: '???' }] as any}
         horizontal
         style={{ flex: 1 }}
         keyExtractor={(_, idx) => String(idx)}
         renderItem={({ item, index }) => {
-          const isLast = index === (addon.data.authors ?? [{ name: '???' }]).length - 1;
+          const isLast = index === (addon.data.authors?.length || 1) - 1;
 
           const divider = !isLast && <RN.Text style={this.styles.authors}>
             {', '}
@@ -80,7 +64,7 @@ export default class extends React.Component<AddonCardProps> {
 
           if (item.name && item.id) {
             return <RN.TouchableOpacity style={this.styles.authorContainer} onPress={this.onTapAuthor.bind(this, item)}>
-              <RN.Text style={{ ...this.styles.authors, ...this.styles.touchable }}>
+              <RN.Text style={mergeStyles(this.styles.authors, this.styles.touchable)}>
                 {item.name}
               </RN.Text>
               {divider}
@@ -98,6 +82,27 @@ export default class extends React.Component<AddonCardProps> {
     </>;
   }
 
+  renderSwitch() {
+    const { addon, manager, shouldRestart, recovery } = this.props;
+
+    return <RN.Switch
+      disabled={addon.failed || recovery}
+      value={manager.isEnabled(addon.id)}
+      onChange={() => {
+        manager.toggle(addon.id);
+
+        if (shouldRestart) {
+          Dialog.confirm({
+            title: i18n.Messages.ENMITY_CHANGE_RESTART,
+            body: i18n.Messages.ENMITY_CHANGE_RESTART_DESC,
+            confirmText: i18n.Messages.ENMITY_RESTART,
+            onConfirm: async () => await reload()
+          });
+        }
+      }}
+    />;
+  }
+
   renderBody() {
     const { addon, manager } = this.props;
 
@@ -107,23 +112,23 @@ export default class extends React.Component<AddonCardProps> {
       <RN.Text style={this.styles.description}>
         {addon.data.description ?? i18n.Messages.ENMITY_ADDON_NO_DESCRIPTION}
       </RN.Text>
-      {addon.failed && <RN.Text style={{ ...this.styles.description, ...this.styles.error }}>
+      {addon.failed && <RN.Text style={mergeStyles(this.styles.description, this.styles.error)}>
         {i18n.Messages.ENMITY_ADDON_FAILED.format({ error: error.message })}
       </RN.Text>}
     </>;
   }
 
-  async onTapAuthor(item) {
-    if (!Users.getUser(item.id)) {
-      await AsyncUsers.fetchProfile(item.id);
+  async onTapAuthor(author: Author) {
+    if (!Users.getUser(author.id)) {
+      await AsyncUsers.fetchProfile(author.id);
     }
 
-    Profiles.showUserProfile({ userId: item.id });
+    Profiles.showUserProfile({ userId: author.id });
   }
 
   styles = StyleSheet.createThemedStyleSheet({
     card: {
-      backgroundColor: colors.BACKGROUND_SECONDARY,
+      backgroundColor: Theme.colors.BACKGROUND_SECONDARY,
       marginHorizontal: 10,
       borderRadius: 5,
       marginTop: 10
@@ -136,7 +141,7 @@ export default class extends React.Component<AddonCardProps> {
       marginTop: 10
     },
     header: {
-      backgroundColor: colors.BACKGROUND_TERTIARY,
+      backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
       borderTopRightRadius: 5,
       borderTopLeftRadius: 5,
       paddingHorizontal: 15,
@@ -146,26 +151,26 @@ export default class extends React.Component<AddonCardProps> {
       flex: 1
     },
     name: {
-      color: colors.TEXT_NORMAL,
-      fontFamily: Fonts.PRIMARY_BOLD,
+      color: Theme.colors.TEXT_NORMAL,
+      fontFamily: Constants.Fonts.PRIMARY_BOLD,
       marginRight: 2.5,
       fontSize: 16,
     },
     version: {
-      fontFamily: Fonts.PRIMARY_SEMIBOLD,
-      color: colors.TEXT_MUTED,
+      fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
+      color: Theme.colors.TEXT_MUTED,
       marginRight: 2.5,
       fontSize: 14
     },
     by: {
-      fontFamily: Fonts.PRIMARY_NORMAL,
-      color: colors.TEXT_MUTED,
+      fontFamily: Constants.Fonts.PRIMARY_NORMAL,
+      color: Theme.colors.TEXT_MUTED,
       marginRight: 2.5,
       fontSize: 14
     },
     authors: {
-      fontFamily: Fonts.PRIMARY_SEMIBOLD,
-      color: colors.TEXT_MUTED,
+      fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
+      color: Theme.colors.TEXT_MUTED,
       fontSize: 14,
       flex: 1
     },
@@ -173,15 +178,19 @@ export default class extends React.Component<AddonCardProps> {
       flexDirection: 'row'
     },
     touchable: {
-      color: colors.TEXT_NORMAL
+      color: Theme.colors.TEXT_NORMAL
     },
     info: {
       padding: 15,
     },
     description: {
-      fontFamily: Fonts.PRIMARY_SEMIBOLD,
-      color: colors.TEXT_NORMAL,
+      fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
+      color: Theme.colors.TEXT_NORMAL,
       fontSize: 14
+    },
+    recovery: {
+      opacity: 0.5,
+      pointerEvents: 'none'
     }
   });
 }

@@ -1,9 +1,9 @@
-import { Forms, Navigation } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { React, i18n } from '@metro/common';
 import { Screens } from '@constants';
 import Assets from '@api/assets';
 
+import { Forms, Navigation } from '@metro/components';
 import AssetBrowser from './assets';
 import Logs from './logger';
 
@@ -32,6 +32,16 @@ export default function () {
           title={i18n.Messages.ENMITY_DEBUG_BRIDGE_IP}
         />
       </>}
+    </Forms.FormSection>
+    <Forms.FormSection title={i18n.Messages.ENMITY_MISC}>
+      <Forms.FormRow
+        label={i18n.Messages.ENMITY_ERROR_BOUNDARY}
+        subLabel={i18n.Messages.ENMITY_ERROR_BOUNDARY_DESC}
+        trailing={<Forms.FormSwitch
+          value={settings.get('dev.errorBoundaryEnabled', true)}
+          onValueChange={() => settings.toggle('dev.errorBoundaryEnabled', true)}
+        />}
+      />
     </Forms.FormSection>
     <Forms.FormSection>
       <Forms.FormRow

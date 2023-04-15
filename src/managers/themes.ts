@@ -1,6 +1,7 @@
 import { Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
-1;
+import Storage from '@api/storage';
+
 class Themes extends Manager {
   public original: Record<any, any>;
   public extension: string = 'json';
@@ -22,7 +23,7 @@ class Themes extends Manager {
 
   override start(entity: Resolveable) {
     const addon = this.resolve(entity);
-    if (!addon || addon.failed || !this.isEnabled(addon.id)) return;
+    if (!addon || addon.failed || !this.isEnabled(addon.id) || Storage.get('enmity', 'recovery', false)) return;
 
     try {
       if (addon.instance.raw) {

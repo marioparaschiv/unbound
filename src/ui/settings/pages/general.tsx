@@ -1,21 +1,22 @@
 import { Theme, i18n, React, ReactNative as RN, StyleSheet } from '@metro/common';
-import { Forms, Navigation } from '@metro/components';
 import { Invite, Links, Screens } from '@constants';
+import { useSettingsStore } from '@api/storage';
 import { Invites } from '@metro/actions';
+import { reload } from '@api/native';
+import { Dialog } from '@metro/ui';
 import * as Icon from '@ui/icons';
 import Assets from '@api/assets';
 
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 
+import { Forms, Navigation } from '@metro/components';
 import Developer from './developer';
 import Toasts from './toasts';
 
-const { colors } = Theme;
-
 const styles = StyleSheet.createThemedStyleSheet({
   trailingText: {
-    color: colors.TEXT_MUTED
+    color: Theme.colors.TEXT_MUTED
   },
   container: {
     marginBottom: 50
@@ -24,6 +25,7 @@ const styles = StyleSheet.createThemedStyleSheet({
 
 function General() {
   const navigation = Navigation.useNavigation();
+  const settings = useSettingsStore('enmity');
 
   const Icons = {
     Twitter: Assets.getIDByName('img_account_sync_twitter_white'),
@@ -62,7 +64,25 @@ function General() {
           })}
         />
       </Forms.FormSection>
-      <Forms.FormSection title='Stats'>
+      <Forms.FormSection>
+        <Forms.FormRow
+          label={i18n.Messages.ENMITY_RECOVERY_MODE}
+          subLabel={i18n.Messages.ENMITY_RECOVERY_MODE_DESC}
+          trailing={<Forms.FormSwitch
+            value={settings.get('recovery', false)}
+            onValueChange={() => {
+              settings.toggle('recovery', false);
+              Dialog.confirm({
+                title: i18n.Messages.ENMITY_CHANGE_RESTART,
+                body: i18n.Messages.ENMITY_CHANGE_RESTART_DESC,
+                confirmText: i18n.Messages.ENMITY_RESTART,
+                onConfirm: async () => await reload()
+              });
+            }}
+          />}
+        />
+      </Forms.FormSection>
+      <Forms.FormSection title={i18n.Messages.ENMITY_STATS}>
         <Forms.FormRow
           label='Installed Plugins'
           leading={<Icon.Puzzle width={24} height={24} />}

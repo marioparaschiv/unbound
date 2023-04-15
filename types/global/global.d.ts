@@ -16,8 +16,13 @@ declare global {
   var Chroma: typeof import('chroma-js');
   var nativeLoggingHook: Fn;
 
+
   interface Window {
-    enmity: typeof import('@api');
+    enmity: typeof import('@api') & { version: string; };
+    loader: {
+      type: string;
+      version: string;
+    };
 
     ENMITY_DEV_IP: string;
     ENMITY_SETTINGS: Addon[];

@@ -2,13 +2,10 @@ import { Constants, React, ReactNative as RN, StyleSheet, Theme } from '@metro/c
 import { Forms, Media } from '@metro/components';
 import { Asset } from '@typings/api/assets';
 
-const { Fonts } = Constants;
-const { colors } = Theme;
-
 const styles = StyleSheet.createThemedStyleSheet({
   label: {
-    fontFamily: Fonts.DISPLAY_SEMIBOLD,
-    color: colors.TEXT_NORMAL,
+    fontFamily: Constants.Fonts.DISPLAY_SEMIBOLD,
+    color: Theme.colors.TEXT_NORMAL,
     fontSize: 16
   },
   image: {
@@ -31,7 +28,8 @@ export default class extends React.PureComponent<{ item: Asset; }> {
     />;
   }
 
+  /* TODO: find a way to make this viewable */
   open() {
-    Media.openMediaModal;
+    // Media.openMediaModal;
   }
 }

@@ -1,13 +1,12 @@
 import { i18n, React, ReactNative as RN } from '@metro/common';
-import { Navigation } from '@metro/components';
 import Themes from '@managers/themes';
+import { Screens } from '@constants';
 import { Icons } from '@api/assets';
 import { Dialog } from '@metro/ui';
 
 import InstallModal from '../components/installmodal';
+import { Navigation } from '@metro/components';
 import Addons from '../components/addons';
-import ErrorBoundary from '@ui/components/ErrorBoundary';
-import { Screens } from '@constants';
 
 export default () => {
   const navigation = Navigation.useNavigation();
@@ -18,20 +17,19 @@ export default () => {
     navigation.setOptions({ headerRight: () => <Add /> });
   }, []);
 
-  return <ErrorBoundary>
-    <RN.View style={{ flex: 1 }}>
-      <Addons
-        shouldRestart={true}
-        type='themes'
-        addons={addons}
-      />
-    </RN.View>
-  </ErrorBoundary>;
+  return <RN.View style={{ flex: 1 }}>
+    <Addons
+      shouldRestart={true}
+      type='themes'
+      addons={addons}
+    />
+  </RN.View>;
 };
 
 function Add() {
   const navigation = Navigation.useNavigation();
-  const ref = React.useRef();
+  const ref = React.useRef<InstanceType<typeof InstallModal>>();
+  const url = React.useCallback(() => ref.current?.getInput(), [ref.current]);
 
   return <RN.TouchableOpacity style={{ marginRight: 20 }} onPress={() => {
     Dialog.confirm({
@@ -52,13 +50,10 @@ function Add() {
       // On theme import
       onCancel: () => {
         Dialog.confirm({
-          title: i18n.Messages.ENMITY_INSTALL_TITLE.format({ type: 'plugin' }),
+          title: i18n.Messages.ENMITY_INSTALL_TITLE.format({ type: 'theme' }),
           children: <InstallModal manager={Themes} ref={ref} />,
           confirmText: i18n.Messages.ENMITY_INSTALL,
-          onConfirm: () => {
-            alert(ref?.current?.getInput());
-            // Themes.install(ref?.current?.getInput())
-          }
+          onConfirm: () => url() && Themes.install(url())
         });
       }
     });

@@ -229,11 +229,7 @@ class Manager extends EventEmitter {
   }
 
   handleBundle(bundle: string) {
-    const iife = eval(`() => { return ${bundle} }`);
-    const payload = iife();
-    const res = typeof payload === 'function' ? payload() : payload;
-
-    return res.default ?? res;
+    return '';
   }
 
   handleInvalidBundle() {

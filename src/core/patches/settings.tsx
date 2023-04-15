@@ -1,12 +1,12 @@
-import { Forms, Navigation } from '@metro/components';
 import { findInReactTree } from '@utilities';
 import { React, i18n } from '@metro/common';
 import { createPatcher } from '@patcher';
 import { Screens } from '@constants';
 import { findByName } from '@metro';
-import { Icons } from 'api/assets';
+import { Icons } from '@api/assets';
 import * as Icon from '@ui/icons';
 
+import { Forms, Navigation } from '@metro/components';
 import General from '@ui/settings/pages/general';
 import Plugins from '@ui/settings/pages/plugins';
 import Themes from '@ui/settings/pages/themes';
@@ -90,7 +90,7 @@ function patchSettings(instance) {
       <Forms.FormSection key='Enmity' title='Enmity'>
         <Forms.FormRow
           label={i18n.Messages.ENMITY_GENERAL}
-          leading={<Forms.FormRow.Icon source={{ uri: 'https://files.enmity.app/icon-64.png' }} />}
+          leading={<Forms.FormRow.Icon source={Icons['settings']} />}
           trailing={<Forms.FormArrow />}
           onPress={() => navigation.push(Screens.General, { ...self.props, ...res.props })}
         />

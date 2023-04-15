@@ -7,12 +7,14 @@ interface ErrorBoundaryProps extends React.PropsWithChildren {
   };
 }
 
+
+/* TODO: finish this */
 export default class ErrorBoundary extends React.PureComponent<ErrorBoundaryProps> {
   render() {
     const { state } = this.props;
 
     if (state?.error) {
-      return <ReactNative.ScrollView style={{ backgroundColor: 'white', color: 'black' }}>
+      return <ReactNative.ScrollView style={{ backgroundColor: 'white' }}>
         <ReactNative.Text>
           {state.error.message}
         </ReactNative.Text>

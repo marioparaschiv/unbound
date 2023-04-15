@@ -1,10 +1,41 @@
+import type { ApplicationCommand } from '@typings/api/commands';
 import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
 import filters from '@metro/filters';
 import { bulk } from '@metro';
 
+import CoreCommands from '@core/commands';
+
 const Patcher = createPatcher('enmity-commands');
 const Logger = createLogger('Commands');
+
+export enum ApplicationCommandType {
+  CHAT = 1,
+  USER,
+  MESSAGE
+}
+
+export enum ApplicationCommandInputType {
+  BUILT_IN,
+  BUILT_IN_TEXT,
+  BUILT_IN_INTEGRATION,
+  BOT,
+  PLACEHOLDER
+}
+
+export enum ApplicationCommandOptionType {
+  SUB_COMMAND = 1,
+  SUB_COMMAND_GROUP,
+  STRING = 3,
+  INTEGER,
+  BOOLEAN,
+  USER,
+  CHANNEL,
+  ROLE,
+  MENTIONABLE,
+  NUMBER,
+  ATTACHMENT
+}
 
 const [
   Commands,
@@ -32,7 +63,7 @@ try {
   Logger.error('Failed to patch commands:', e.message);
 }
 
-export function registerCommands(caller: string, cmds): void {
+export function registerCommands(caller: string, cmds: ApplicationCommand[]): void {
   if (!caller || typeof caller !== 'string') {
     throw new TypeError('first argument caller must be of type string');
   } else if (!cmds || !Array.isArray(cmds)) {
@@ -50,6 +81,7 @@ export function registerCommands(caller: string, cmds): void {
       applicationId: data.section.id,
       ...cmd,
 
+      // @ts-expect-error
       __ENMITY__: true,
       caller: caller
     };
@@ -69,6 +101,8 @@ export function unregisterCommands(caller: string): void {
 
 function initialize() {
   Commands.BUILT_IN_SECTIONS['enmity'] = data.section;
+
+  registerCommands('enmity', CoreCommands);
 
   try {
     Patcher.after(SearchStore.default, 'getQueryCommands', (_, [, , query], res) => {
@@ -94,7 +128,7 @@ function initialize() {
   }
 
   try {
-    Patcher.instead(SearchStore.default, 'getApplicationdata.sections', (_, args, orig) => {
+    Patcher.instead(SearchStore.default, 'getApplicationSections', (_, args, orig) => {
       try {
         const res = orig.apply(self, args) ?? [];
 
@@ -108,20 +142,20 @@ function initialize() {
       }
     });
   } catch {
-    Logger.error('Patching getApplicationdata.sections failed.');
+    Logger.error('Patching getApplicationSections failed.');
   }
 
   try {
     Patcher.after(SearchStore, 'useDiscoveryState', (_, [, type], res) => {
       if (type !== 1) return;
 
-      if (!res.data.sectionDescriptors?.find?.(s => s.id === data.section.id)) {
-        res.data.sectionDescriptors ??= [];
-        res.data.sectionDescriptors.push(data.section);
+      if (!res.sectionDescriptors?.find?.(s => s.id === data.section.id)) {
+        res.sectionDescriptors ??= [];
+        res.sectionDescriptors.push(data.section);
       }
 
-      if ((!res.filtereddata.sectionId || res.filtereddata.sectionId === data.section.id) && !res.activedata.sections.find(s => s.id === data.section.id)) {
-        res.activedata.sections.push(data.section);
+      if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && !res.activeSections.find(s => s.id === data.section.id)) {
+        res.activeSections.push(data.section);
       }
 
       if (data.commands.some(c => !res.commands?.find?.(r => r.id === c.id))) {
@@ -132,28 +166,28 @@ function initialize() {
         res.commands = [...new Set(collection).values()];
       }
 
-      if ((!res.filtereddata.sectionId || res.filtereddata.sectionId === data.section.id) && !res.commandsByActivedata.section.find(r => r.data.section.id === data.section.id)) {
-        res.commandsByActivedata.section.push({
+      if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && !res.commandsByActiveSection.find(r => r.section.id === data.section.id)) {
+        res.commandsByActiveSection.push({
           section: data.section,
           data: data.commands
         });
       }
 
-      const active = res.commandsByActivedata.section.find(r => r.data.section.id === data.section.id);
-      if ((!res.filtereddata.sectionId || res.filtereddata.sectionId === data.section.id) && active && active.data.length === 0 && data.commands.length !== 0) {
+      const active = res.commandsByActiveSection.find(r => r.section.id === data.section.id);
+      if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && active && active.data.length === 0 && data.commands.length !== 0) {
         active.data = data.commands;
       }
 
       /*
-       * Filter out duplicate built-in data.sections due to a bug that causes
-       * the getApplicationdata.sections path to add another built-in commands
-       * data.section to the data.section rail
+       * Filter out duplicate built-in sections due to a bug that causes
+       * the getApplicationSections path to add another built-in commands
+       * section to the section rail
        */
 
-      const builtIn = res.data.sectionDescriptors.filter(s => s.id === '-1');
+      const builtIn = res.sectionDescriptors.filter(s => s.id === '-1');
       if (builtIn.length > 1) {
-        res.data.sectionDescriptors = res.data.sectionDescriptors.filter(s => s.id !== '-1');
-        res.data.sectionDescriptors.push(builtIn.find(r => r.id === '-1'));
+        res.sectionDescriptors = res.sectionDescriptors.filter(s => s.id !== '-1');
+        res.sectionDescriptors.push(builtIn.find(r => r.id === '-1'));
       }
     });
   } catch {

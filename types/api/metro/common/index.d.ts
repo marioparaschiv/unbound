@@ -1,4 +1,4 @@
-import type { StyleProp, TextStyle, ViewStyle, StyleSheet, ImageStyle } from 'react-native';
+import type { StyleProp, TextStyle, ViewStyle, ImageStyle } from 'react-native';
 import type moment from './moment';
 
 export namespace Common {

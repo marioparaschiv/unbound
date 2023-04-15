@@ -1,10 +1,10 @@
 import { i18n, React, ReactNative as RN } from '@metro/common';
-import { Navigation } from '@metro/components';
 import Plugins from '@managers/plugins';
 import { Icons } from '@api/assets';
 import { Dialog } from '@metro/ui';
 
 import InstallModal from '../components/installmodal';
+import { Navigation } from '@metro/components';
 import Addons from '../components/addons';
 
 export default () => {

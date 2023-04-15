@@ -4,11 +4,11 @@ import { createLogger } from '@logger';
 import BuiltIns from '@core/builtins';
 import Patches from '@core/patches';
 
-import * as Commands from './commands';
+import * as Managers from '@api/managers';
+import Patcher from '@api/patcher';
 import * as API from '@api';
 
 const Logger = createLogger('Core');
-
 
 export async function initialize() {
   try {
@@ -23,26 +23,16 @@ export async function initialize() {
     Logger.error('Failed to apply built-ins:', e.message);
   }
 
-  try {
-    const { commands } = API;
-
-    commands.registerCommands('enmity', Commands);
-  } catch (e) {
-    Logger.error('Failed to register built-in commands:', e.message);
-  }
-
-  window.enmity = API;
+  window.enmity = Object.assign(API, { version: '__VERSION__' });
 
   return API;
 }
 
 export async function shutdown() {
-  const { patcher } = API;
+  Patcher.unpatchAll();
 
-  patcher.unpatchAll();
-
-  for (const type in API.managers) {
-    const manager = API.managers[type];
+  for (const type in Managers) {
+    const manager = Managers[type];
     await manager.shutdown();
   }
 

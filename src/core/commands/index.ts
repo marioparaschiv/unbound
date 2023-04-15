@@ -1,1 +1,5 @@
-export { default as debug } from './debug';
+import { default as debug } from './debug';
+
+export default [
+  debug
+];

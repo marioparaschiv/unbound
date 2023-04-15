@@ -1,8 +1,8 @@
 import { React, ReactNative as RN, i18n } from '@metro/common';
+import { assets } from '@api/assets';
+
 import { Forms, Search } from '@metro/components';
 import Asset from '@ui/settings/components/asset';
-
-import { assets } from '@api/assets';
 
 export default function () {
   const [search, setSearch] = React.useState<string>();
