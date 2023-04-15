@@ -1,8 +1,10 @@
 import { createPatcher } from '@patcher';
+import { createLogger } from '@logger';
 import filters from '@metro/filters';
 import { bulk } from '@metro';
 
 const Patcher = createPatcher('enmity-commands');
+const Logger = createLogger('Commands');
 
 const [
   Commands,
@@ -14,21 +16,20 @@ const [
   { filter: m => m.default?.getQueryCommands && m.useDiscoveryState }
 );
 
-export const modules = { Commands, Assets, SearchStore };
-
-let commands = [];
-
-export const section = {
-  id: 'enmity',
-  type: 1,
-  name: 'Enmity',
-  icon: 'https://files.enmity.app/icon.png'
+export const data = {
+  commands: [],
+  section: {
+    id: 'enmity',
+    type: 1,
+    name: 'Enmity',
+    icon: 'https://files.enmity.app/icon.png'
+  }
 };
 
 try {
   initialize();
 } catch (e) {
-  console.error('Failed to patch commands: ', e.message);
+  Logger.error('Failed to patch commands:', e.message);
 }
 
 export function registerCommands(caller: string, cmds): void {
@@ -46,15 +47,15 @@ export function registerCommands(caller: string, cmds): void {
       type: 2,
       inputType: 1,
       id: `enmity-${cmd.name.replaceAll(' ', '-')}`,
-      applicationId: section.id,
+      applicationId: data.section.id,
       ...cmd,
-      // @ts-ignore
-      __enmity: true,
+
+      __ENMITY__: true,
       caller: caller
     };
   }
 
-  commands.push(...cmds);
+  data.commands.push(...cmds);
 }
 
 export function unregisterCommands(caller: string): void {
@@ -67,15 +68,14 @@ export function unregisterCommands(caller: string): void {
 }
 
 function initialize() {
-  setTimeout(() => console.log(Commands, Assets, SearchStore), 1000);
-  Commands.BUILT_IN_SECTIONS['enmity'] = section;
+  Commands.BUILT_IN_SECTIONS['enmity'] = data.section;
 
   try {
     Patcher.after(SearchStore.default, 'getQueryCommands', (_, [, , query], res) => {
       if (!query || query.startsWith('/')) return;
       res ??= [];
 
-      for (const command of commands) {
+      for (const command of data.commands) {
         if (!~command.name?.indexOf(query) || res.some(e => e.__enmity && e.id === command.id)) {
           continue;
         }
@@ -90,16 +90,16 @@ function initialize() {
       }
     });
   } catch {
-    console.error('Patching getQueryCommands failed.');
+    Logger.error('Patching getQueryCommands failed.');
   }
 
   try {
-    Patcher.instead(SearchStore.default, 'getApplicationSections', (_, args, orig) => {
+    Patcher.instead(SearchStore.default, 'getApplicationdata.sections', (_, args, orig) => {
       try {
         const res = orig.apply(self, args) ?? [];
 
-        if (!res.find(r => r.id === section.id) && commands.length) {
-          res.push(section);
+        if (!res.find(r => r.id === data.section.id) && data.commands.length) {
+          res.push(data.section);
         };
 
         return res;
@@ -108,65 +108,65 @@ function initialize() {
       }
     });
   } catch {
-    console.error('Patching getApplicationSections failed.');
+    Logger.error('Patching getApplicationdata.sections failed.');
   }
 
   try {
     Patcher.after(SearchStore, 'useDiscoveryState', (_, [, type], res) => {
       if (type !== 1) return;
 
-      if (!res.sectionDescriptors?.find?.(s => s.id === section.id)) {
-        res.sectionDescriptors ??= [];
-        res.sectionDescriptors.push(section);
+      if (!res.data.sectionDescriptors?.find?.(s => s.id === data.section.id)) {
+        res.data.sectionDescriptors ??= [];
+        res.data.sectionDescriptors.push(data.section);
       }
 
-      if ((!res.filteredSectionId || res.filteredSectionId === section.id) && !res.activeSections.find(s => s.id === section.id)) {
-        res.activeSections.push(section);
+      if ((!res.filtereddata.sectionId || res.filtereddata.sectionId === data.section.id) && !res.activedata.sections.find(s => s.id === data.section.id)) {
+        res.activedata.sections.push(data.section);
       }
 
-      if (commands.some(c => !res.commands?.find?.(r => r.id === c.id))) {
+      if (data.commands.some(c => !res.commands?.find?.(r => r.id === c.id))) {
         res.commands ??= [];
 
         // De-duplicate commands
-        const collection = [...res.commands, ...commands];
+        const collection = [...res.commands, ...data.commands];
         res.commands = [...new Set(collection).values()];
       }
 
-      if ((!res.filteredSectionId || res.filteredSectionId === section.id) && !res.commandsByActiveSection.find(r => r.section.id === section.id)) {
-        res.commandsByActiveSection.push({
-          section: section,
-          data: commands
+      if ((!res.filtereddata.sectionId || res.filtereddata.sectionId === data.section.id) && !res.commandsByActivedata.section.find(r => r.data.section.id === data.section.id)) {
+        res.commandsByActivedata.section.push({
+          section: data.section,
+          data: data.commands
         });
       }
 
-      const active = res.commandsByActiveSection.find(r => r.section.id === section.id);
-      if ((!res.filteredSectionId || res.filteredSectionId === section.id) && active && active.data.length === 0 && commands.length !== 0) {
-        active.data = commands;
+      const active = res.commandsByActivedata.section.find(r => r.data.section.id === data.section.id);
+      if ((!res.filtereddata.sectionId || res.filtereddata.sectionId === data.section.id) && active && active.data.length === 0 && data.commands.length !== 0) {
+        active.data = data.commands;
       }
 
       /*
-       * Filter out duplicate built-in sections due to a bug that causes
-       * the getApplicationSections path to add another built-in commands
-       * section to the section rail
+       * Filter out duplicate built-in data.sections due to a bug that causes
+       * the getApplicationdata.sections path to add another built-in commands
+       * data.section to the data.section rail
        */
 
-      const builtIn = res.sectionDescriptors.filter(s => s.id === '-1');
+      const builtIn = res.data.sectionDescriptors.filter(s => s.id === '-1');
       if (builtIn.length > 1) {
-        res.sectionDescriptors = res.sectionDescriptors.filter(s => s.id !== '-1');
-        res.sectionDescriptors.push(builtIn.find(r => r.id === '-1'));
+        res.data.sectionDescriptors = res.data.sectionDescriptors.filter(s => s.id !== '-1');
+        res.data.sectionDescriptors.push(builtIn.find(r => r.id === '-1'));
       }
     });
   } catch {
-    console.error('Patching useDiscoveryState failed.');
+    Logger.error('Patching useDiscoveryState failed.');
   }
 
   try {
     Patcher.after(Assets, 'getApplicationIconURL', (_, [props], res) => {
       if (props.id === 'enmity') {
-        return section.icon;
+        return data.section.icon;
       }
     });
   } catch {
-    console.error('Patching getApplicationIconURL failed.');
+    Logger.error('Patching getApplicationIconURL failed.');
   }
 }

@@ -1,4 +1,5 @@
 {
+  "name": "@enmity/bundle",
   "scripts": {
     "build": "rollup -c --configPlugin rollup-plugin-swc3"
   },

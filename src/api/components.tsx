@@ -1,6 +1,8 @@
-import { createPatcher } from './patcher';
+import { createPatcher } from '@patcher';
+import { createLogger } from '@logger';
 
 const Patcher = createPatcher('components');
+const Logger = createLogger('Components');
 
 const unknown = new Set();
 const named = new Map();
@@ -44,23 +46,27 @@ function traverse(element) {
   }
 }
 
-Patcher.before(window.React, 'createElement', (_, args) => {
-  const [component] = args;
+try {
+  Patcher.before(window.React, 'createElement', (_, args) => {
+    const [component] = args;
 
-  if (component) traverse(component);
+    if (component) traverse(component);
 
-  // @ts-expect-error
-  if (typeof component === 'function' && component.renderPatched !== void 0) {
     // @ts-expect-error
-    args[0] = component.renderPatched;
-  }
+    if (typeof component === 'function' && component.renderPatched !== void 0) {
+      // @ts-expect-error
+      args[0] = component.renderPatched;
+    }
 
-  return args;
-});
+    return args;
+  });
 
-Patcher.after(React, 'createElement', (_, __, res) => {
-  if (res) traverse(res);
-});
+  Patcher.after(React, 'createElement', (_, __, res) => {
+    if (res) traverse(res);
+  });
+} catch (e) {
+  Logger.error('Failed to intercept React.createElement:', e.message);
+}
 
 export function add(name, component) {
   if (!named.get(name)) {

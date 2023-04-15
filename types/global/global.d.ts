@@ -7,7 +7,6 @@ interface Addon {
 
 declare global {
   const modules: { [id: number]: any; };
-  const nativeLoggingHook: Fn;
   const __r: {
     importAll: Fn;
   } & ((id: number) => void);
@@ -15,6 +14,7 @@ declare global {
   var React: typeof import('react');
   var ReactNative: typeof import('react-native');
   var Chroma: typeof import('chroma-js');
+  var nativeLoggingHook: Fn;
 
   interface Window {
     enmity: typeof import('@api');

@@ -24,34 +24,38 @@ class Themes extends Manager {
     const addon = this.resolve(entity);
     if (!addon || addon.failed || !this.isEnabled(addon.id)) return;
 
-    if (addon.instance.raw) {
-      if (!addon.instance.raw.PRIMARY_660) {
-        addon.instance.raw.PRIMARY_660 = addon.instance?.semantic?.BACKGROUND_PRIMARY[0];
-      }
-
-      const entries = Object.entries(addon.instance.raw);
-
-      for (const [key, value] of entries) {
-        this.module.RawColor[key] = value;
-        this.module.default.unsafe_rawColors[key] = value;
-      }
-    }
-
-    if (addon.instance.semantic) {
-      const orig = this.module.default.meta.resolveSemanticColor;
-
-      this.module.default.meta.resolveSemanticColor = function (theme: string, ref: { [key: symbol]: string; }) {
-        const key = ref[Object.getOwnPropertySymbols(ref)[0]];
-
-        if (addon.instance.semantic[key]) {
-          const index = { dark: 0, light: 1, amoled: 2 }[theme.toLowerCase()] || 0;
-          const color = addon.instance.semantic[key][index];
-
-          if (color) return color;
+    try {
+      if (addon.instance.raw) {
+        if (!addon.instance.raw.PRIMARY_660) {
+          addon.instance.raw.PRIMARY_660 = addon.instance?.semantic?.BACKGROUND_PRIMARY[0];
         }
 
-        return orig.call(this, theme, ref);
-      };
+        const entries = Object.entries(addon.instance.raw);
+
+        for (const [key, value] of entries) {
+          this.module.RawColor[key] = value;
+          this.module.default.unsafe_rawColors[key] = value;
+        }
+      }
+
+      if (addon.instance.semantic) {
+        const orig = this.module.default.meta.resolveSemanticColor;
+
+        this.module.default.meta.resolveSemanticColor = function (theme: string, ref: { [key: symbol]: string; }) {
+          const key = ref[Object.getOwnPropertySymbols(ref)[0]];
+
+          if (addon.instance.semantic[key]) {
+            const index = { dark: 0, light: 1, amoled: 2 }[theme.toLowerCase()] || 0;
+            const color = addon.instance.semantic[key][index];
+
+            if (color) return color;
+          }
+
+          return orig.call(this, theme, ref);
+        };
+      }
+    } catch (e) {
+      this.logger.error('Failed to apply theme:', e.message);
     }
 
     this.emit('applied', addon);

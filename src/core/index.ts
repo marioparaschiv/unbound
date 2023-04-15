@@ -1,20 +1,34 @@
+import '@api/components';
+
+import { createLogger } from '@logger';
 import BuiltIns from '@core/builtins';
 import Patches from '@core/patches';
+
+import * as Commands from './commands';
 import * as API from '@api';
 
-import '@api/components';
+const Logger = createLogger('Core');
+
 
 export async function initialize() {
   try {
     Patches.apply();
   } catch (e) {
-    alert('Failed to apply patches: ' + e.message);
+    Logger.error('Failed to apply patches:', e.message);
   }
 
   try {
     BuiltIns.initialize();
   } catch (e) {
-    alert('Failed to apply builtins: ' + e.message);
+    Logger.error('Failed to apply built-ins:', e.message);
+  }
+
+  try {
+    const { commands } = API;
+
+    commands.registerCommands('enmity', Commands);
+  } catch (e) {
+    Logger.error('Failed to register built-in commands:', e.message);
   }
 
   window.enmity = API;

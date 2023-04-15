@@ -1,24 +1,27 @@
-import { React, ReactNative } from '@metro/common';
+import type { ErrorInfo } from 'react';
 
-export default class extends React.PureComponent {
-  state = { error: null, errorInfo: null };
+interface ErrorBoundaryProps extends React.PropsWithChildren {
+  state: {
+    error: Error;
+    info: ErrorInfo;
+  };
+}
 
+export default class ErrorBoundary extends React.PureComponent<ErrorBoundaryProps> {
   render() {
-    if (this.state.error) {
-      return <ReactNative.ScrollView>
+    const { state } = this.props;
+
+    if (state?.error) {
+      return <ReactNative.ScrollView style={{ backgroundColor: 'white', color: 'black' }}>
         <ReactNative.Text>
-          {this.state.error}
+          {state.error.message}
         </ReactNative.Text>
         <ReactNative.Text style={{ marginTop: 10 }}>
-          {this.state.errorInfo}
+          {state.info.componentStack}
         </ReactNative.Text>
       </ReactNative.ScrollView>;
     }
 
     return this.props.children;
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    this.setState({ error: error.message, errorInfo: errorInfo.componentStack });
   }
 }

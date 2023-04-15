@@ -11,5 +11,5 @@ try {
     alert('Enmity failed to initialize: ' + e.message);
   }
 } catch (e) {
-  alert('Enmity failed to initialize: ' + e.message);
+  alert('Enmity failed to pre-initialize: ' + e.message);
 }

@@ -12,8 +12,8 @@ export const Chroma: Common.Chroma = window.Chroma;
 
 // Discord
 export const StyleSheet: Common.StyleSheets = findByProps('createThemedStyleSheet', { lazy: true });
-export const Constants = findByProps('API_HOST', 'Endpoints', { lazy: true });
 export const Dispatcher: Common.Dispatcher = findByProps('_dispatch', { lazy: true });
+export const Constants = findByProps('API_HOST', 'Endpoints', { lazy: true });
 export const Theme = findByProps('colors', 'meta', { lazy: true });
 export const REST = findByProps('getAPIBaseURL', { lazy: true });
 export const i18n = findByProps('Messages', { lazy: true });

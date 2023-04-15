@@ -1,4 +1,10 @@
-import { AfterOverwrite, BeforeOverwrite, InsteadOverwrite, Patch, Patcher, Type } from '@typings/api/patcher';
+import type { AfterOverwrite, BeforeOverwrite, InsteadOverwrite, Patch, Patcher } from '@typings/api/patcher';
+
+export enum Type {
+  Before = 'before',
+  Instead = 'instead',
+  After = 'after',
+}
 
 export const patches: Patch[] = [];
 
