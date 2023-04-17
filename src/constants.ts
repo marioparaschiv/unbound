@@ -1,4 +1,4 @@
-export const Invite = 'enmity' as const;
+export const Invite = 'enmityapp' as const;
 
 export const Links = {
   GitHub: 'https://github.com/enmity-mod',

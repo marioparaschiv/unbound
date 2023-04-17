@@ -9,6 +9,8 @@ import CoreCommands from '@core/commands';
 const Patcher = createPatcher('enmity-commands');
 const Logger = createLogger('Commands');
 
+export { ApplicationCommand };
+
 export enum ApplicationCommandType {
   CHAT = 1,
   USER,

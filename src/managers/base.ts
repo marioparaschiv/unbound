@@ -93,7 +93,7 @@ class Manager extends EventEmitter {
 
     this.entities.set(manifest.id, addon);
 
-    if (this.settings.get(manifest.id, false)) {
+    if (this.isEnabled(addon.id)) {
       this.start(addon);
     }
 

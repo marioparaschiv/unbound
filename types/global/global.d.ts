@@ -13,7 +13,6 @@ declare global {
 
   var React: typeof import('react');
   var ReactNative: typeof import('react-native');
-  var Chroma: typeof import('chroma-js');
   var nativeLoggingHook: Fn;
 
 

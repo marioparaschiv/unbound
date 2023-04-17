@@ -7,8 +7,8 @@ export const Moment: Common.Moment = findByProps('isMoment');
 
 // Preloaded modules
 export const ReactNative: Common.ReactNative = window.ReactNative;
+export const Chroma: Common.Chroma = findByProps('brewer');
 export const React: Common.React = window.React;
-export const Chroma: Common.Chroma = window.Chroma;
 
 // Discord
 export const StyleSheet: Common.StyleSheets = findByProps('createThemedStyleSheet', { lazy: true });

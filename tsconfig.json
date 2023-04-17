@@ -64,5 +64,8 @@
         "../types/*"
       ]
     }
-  }
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }
