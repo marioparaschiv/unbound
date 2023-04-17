@@ -5,13 +5,13 @@ import { Themes } from '@metro/ui';
 export function apply() {
   if (!Dispatcher?.subscribe) return;
 
-  Dispatcher.subscribe('CONNECTION_OPEN', handler);
+  Dispatcher.subscribe('I18N_LOAD_SUCCESS', handler);
 }
 
 export function remove() {
   if (!Dispatcher?.subscribe) return;
 
-  Dispatcher.unsubscribe('CONNECTION_OPEN', handler);
+  Dispatcher.unsubscribe('I18N_LOAD_SUCCESS', handler);
 }
 
 function handler() {
