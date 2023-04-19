@@ -8,21 +8,20 @@ const Patcher = createPatcher('error-boundary');
 const Boundary = findByName('ErrorBoundary');
 
 export const data: BuiltIn['data'] = {
-  id: 'dev.errorBoundary',
-  settings: ['dev.errorBoundaryEnabled'],
-  default: true
+	id: 'dev.errorBoundary',
+	default: true
 };
 
 export function initialize() {
-  if (!Boundary) return;
+	if (!Boundary) return;
 
-  Patcher.after(Boundary.prototype, 'render', (self, _, res) => {
-    return <ErrorBoundary state={self.state}>
-      {res}
-    </ErrorBoundary>;
-  });
+	Patcher.after(Boundary.prototype, 'render', (self, _, res) => {
+		return <ErrorBoundary state={self.state}>
+			{res}
+		</ErrorBoundary>;
+	});
 }
 
 export function shutdown() {
-  Patcher.unpatchAll();
+	Patcher.unpatchAll();
 }

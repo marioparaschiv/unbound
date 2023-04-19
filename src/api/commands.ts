@@ -98,7 +98,7 @@ export function unregisterCommands(caller: string): void {
   }
 
   // @ts-ignore
-  commands = commands.filter(c => c.caller !== caller);
+  data.commands = data.commands.filter(c => c.caller !== caller);
 }
 
 function initialize() {

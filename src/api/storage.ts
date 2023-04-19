@@ -10,22 +10,42 @@ export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
 
 export function get(store: string, key: string, def: any) {
-  return settings[store]?.[key] ?? def;
+  const keys = key.split('.');
+  const data = { result: settings[store] };
+
+  for (const key of keys) {
+    if (data.result === void 0 || data.result[key] === void 0) {
+      data.result = def;
+      break;
+    }
+
+    data.result = data.result[key];
+  }
+
+  return data.result;
 }
 
 export function set(store: string, key: string, value: any) {
-  settings[store] ??= {};
-  settings[store][key] = value;
+  const keys = key.split('.');
+  const data = { current: settings[store] ??= {} };
+
+  for (let i = 0; keys.length > i; i++) {
+    data.current[keys[i]] ??= {};
+
+    if ((keys.length - 1) === i) {
+      data.current[keys[i]] = value;
+    } else {
+      data.current = data.current[keys[i]];
+    }
+  }
 
   Events.emit('changed', { store, key, value });
   Events.emit('set', { store, key, value });
 }
 
 export function toggle(store: string, key: string, def: any) {
-  settings[store] ??= {};
-
-  const prev = settings[store][key] ?? def;
-  settings[store][key] = !prev;
+  const prev = get(store, key, def);
+  set(store, key, !prev);
 
   Events.emit('changed', { store, key, value: !prev });
   Events.emit('toggled', { store, key, prev, value: !prev });
@@ -73,7 +93,7 @@ export function useSettingsStore(store: string) {
 }
 
 Events.on('changed', debounce(() => {
-  const payload = JSON.stringify(settings);
+  const payload = JSON.stringify(settings, null, 2);
   const path = 'Enmity/settings.json';
 
   DCDFileManager.writeFile('documents', path, payload, 'utf8');

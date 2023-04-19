@@ -57,7 +57,6 @@ class Themes extends Manager {
 
             if (key === 'CHAT_BACKGROUND' && typeof instance.background?.opacity === 'number') {
               return (color ?? '#000000') + Math.round(instance.background.opacity * 255).toString(16);
-              // return Common.Chroma(color ?? 'black').alpha(1 - instance.background.opacity).hex('rgba');
             }
 
             if (color) return color;
