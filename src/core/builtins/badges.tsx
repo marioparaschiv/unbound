@@ -44,7 +44,7 @@ export function initialize() {
 
 			if (res?.props.badges) {
 				res.props.badges.push(...payload);
-			} else {
+			} else if (res?.props.children) {
 				res?.props.children.push(...payload);
 			}
 		});

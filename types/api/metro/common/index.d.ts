@@ -2,36 +2,37 @@ import type { StyleProp, TextStyle, ViewStyle, ImageStyle } from 'react-native';
 import type moment from './moment';
 
 export namespace Common {
-  export interface StyleSheets {
-    createThemedStyleSheet: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => T;
-    getThemedStylesheet: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => {
-      mergedDarkStyles: StyleSheet,
-      mergedLightStyles: StyleSheet;
-    };
-  }
+	export interface StyleSheets {
+		createThemedStyleSheet: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => T;
+		getThemedStylesheet: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => {
+			mergedDarkStyles: StyleSheet,
+			mergedLightStyles: StyleSheet;
+		};
+	}
 
-  export type React = typeof import('react');
-  export type ReactNative = typeof import('react-native');
-  export type Chroma = typeof import('chroma-js');
+	export type React = typeof import('react');
+	export type ReactNative = typeof import('react-native');
 
-  export interface Dispatcher {
-    dispatch(payload: Record<string, any>): Promise<void>;
-    unsubscribe(event: string, handler: Fn): void;
-    subscribe(event: string, handler: Fn): void;
-  }
+	export interface Dispatcher {
+		dispatch(payload: Record<string, any>): Promise<void>;
+		unsubscribe(event: string, handler: Fn): void;
+		subscribe(event: string, handler: Fn): void;
+	}
 
-  export interface Flux {
-    Store: (new (dispatcher: Dispatcher, listeners: Record<string, ({ [key: string]: any; })>) => any);
-    connectStores: Fn;
-  }
+	export interface Flux {
+		Store: (new (dispatcher: Dispatcher, listeners: Record<string, ({ [key: string]: any; })>) => any);
+		connectStores: Fn;
+	}
 
-  export type Moment = typeof moment;
+	export type Moment = typeof moment;
 
-  export type Events = typeof import('events');
+	export type Events = typeof import('events');
 
-  // Discord
+	export type Spring = typeof import('@react-spring/native');
 
-  // export const REST = findByProps('getAPIBaseURL', { lazy: true });
-  // export const i18n = findByProps('Messages', { lazy: true });
+	// Discord
+
+	// export const REST = findByProps('getAPIBaseURL', { lazy: true });
+	// export const i18n = findByProps('Messages', { lazy: true });
 
 }

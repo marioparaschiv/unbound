@@ -1,71 +1,71 @@
 {
-  "compilerOptions": {
-    "downlevelIteration": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "target": "es2022",
-    "resolveJsonModule": true,
-    "module": "es2022",
-    "jsx": "react",
-    "baseUrl": "src",
-    "paths": {
-      "@core": [
-        "core/index.ts"
-      ],
-      "@logger": [
-        "structures/logger.ts"
-      ],
-      "@metro": [
-        "api/metro/index.ts"
-      ],
-      "@api": [
-        "api/index.ts"
-      ],
-      "@utilities": [
-        "utilities/index.ts"
-      ],
-      "@patcher": [
-        "api/patcher.ts"
-      ],
-      "@ui": [
-        "ui/index.ts"
-      ],
-      "@constants": [
-        "constants.ts"
-      ],
-      "@ui/*": [
-        "ui/*"
-      ],
-      "@core/*": [
-        "core/*"
-      ],
-      "@builtins/*": [
-        "builtins/*"
-      ],
-      "@managers/*": [
-        "managers/*"
-      ],
-      "@metro/*": [
-        "api/metro/*"
-      ],
-      "@stores/*": [
-        "stores/*"
-      ],
-      "@structures/*": [
-        "structures/*"
-      ],
-      "@utilities/*": [
-        "utilities/*"
-      ],
-      "@api/*": [
-        "api/*"
-      ],
-      "@typings/*": [
-        "../types/*"
-      ]
-    }
-  },
-  "exclude": [
-    "node_modules"
-  ]
+	"compilerOptions": {
+		"downlevelIteration": true,
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"target": "es2022",
+		"resolveJsonModule": true,
+		"module": "es2022",
+		"jsx": "react",
+		"baseUrl": "src",
+		"paths": {
+			"@core": [
+				"core/index.ts"
+			],
+			"@logger": [
+				"structures/logger.ts"
+			],
+			"@metro": [
+				"api/metro/index.ts"
+			],
+			"@api": [
+				"api/index.ts"
+			],
+			"@utilities": [
+				"utilities/index.ts"
+			],
+			"@patcher": [
+				"api/patcher.ts"
+			],
+			"@ui": [
+				"ui/index.ts"
+			],
+			"@constants": [
+				"constants.ts"
+			],
+			"@ui/*": [
+				"ui/*"
+			],
+			"@core/*": [
+				"core/*"
+			],
+			"@builtins/*": [
+				"builtins/*"
+			],
+			"@managers/*": [
+				"managers/*"
+			],
+			"@metro/*": [
+				"api/metro/*"
+			],
+			"@stores/*": [
+				"stores/*"
+			],
+			"@structures/*": [
+				"structures/*"
+			],
+			"@utilities/*": [
+				"utilities/*"
+			],
+			"@api/*": [
+				"api/*"
+			],
+			"@typings/*": [
+				"../types/*"
+			]
+		}
+	},
+	"exclude": [
+		"node_modules"
+	]
 }

@@ -7,6 +7,7 @@ export * as assets from './assets';
 export * as utilities from './utilities';
 export * as commands from './commands';
 export * as storage from './storage';
+export * as dialogs from './dialogs';
 export * as toasts from './toasts';
 export * as native from './native';
 export * as i18n from './i18n';
@@ -24,11 +25,11 @@ import * as API from '@metro/api';
 import * as UI from '@metro/ui';
 
 export const metro = Object.assign(Modules, {
-  components: Components,
-  filters: Filters,
-  actions: Actions,
-  common: Common,
-  stores: Stores,
-  api: API,
-  ui: UI
+	components: Components,
+	filters: Filters,
+	actions: Actions,
+	common: Common,
+	stores: Stores,
+	api: API,
+	ui: UI
 });

@@ -5,64 +5,68 @@ import { React } from '@metro/common';
  * @param {Any} state Intitial State of your store
  */
 export default function createStore(state): any {
-  const listeners = new Set<Function>();
+	const listeners = new Set<Function>();
 
-  const API = Object.freeze({
-    getState(factory = _ => _) {
-      return factory(state);
-    },
+	const API = Object.freeze({
+		getState(factory = _ => _) {
+			return factory(state);
+		},
 
-    setState(partial) {
-      const partialState = typeof partial === 'function' ? partial(state) : partial;
-      if (Object.is(state, partialState)) return;
+		setState(partial) {
+			const partialState = typeof partial === 'function' ? partial(state) : partial;
+			/* This causes issues when modifying the object directly such as deleting an entity, not sure if I should keep it */
+			// if (Object.is(state, partialState)) return;
 
-      state = Object.assign({}, state, partialState);
+			state = Object.assign({}, state, partialState);
 
-      for (const listener of listeners) {
-        try {
-          listener(state);
-        } catch {
-          console.error('Failed to fire listener in zustand store.');
-        }
-      }
-    },
+			for (const listener of listeners) {
+				try {
+					listener(state);
+				} catch {
+					console.error('Failed to fire listener in zustand store.');
+				}
+			}
+		},
 
-    addListener(listener) {
-      if (listeners.has(listener)) return;
-      listeners.add(listener);
+		addListener(listener) {
+			if (listeners.has(listener)) return;
+			listeners.add(listener);
 
-      return () => listeners.delete(listener);
-    },
+			return () => listeners.delete(listener);
+		},
 
-    removeListener(listener) {
-      return listeners.delete(listener);
-    },
+		removeListener(listener) {
+			return listeners.delete(listener);
+		},
 
-    get listeners() {
-      return listeners;
-    }
-  });
+		get listeners() {
+			return listeners;
+		}
+	});
 
-  function useState(factory = _ => _) {
-    const [, forceUpdate] = React.useReducer(e => e + 1, 0);
+	function useState(factory = _ => _) {
+		const [, forceUpdate] = React.useReducer(e => e + 1, 0);
 
-    React.useEffect(() => {
-      const handler = () => forceUpdate();
+		React.useEffect(() => {
+			const handler = () => {
+				console.log('force updated');
+				forceUpdate();
+			};
 
-      listeners.add(handler);
+			listeners.add(handler);
 
-      return () => void listeners.delete(handler);
-    }, []);
+			return () => void listeners.delete(handler);
+		}, []);
 
-    return API.getState(factory);
-  }
+		return API.getState(factory);
+	}
 
-  Object.assign(useState, API, {
-    *[Symbol.iterator]() {
-      yield API;
-      yield useState;
-    }
-  });
+	Object.assign(useState, API, {
+		*[Symbol.iterator]() {
+			yield API;
+			yield useState;
+		}
+	});
 
-  return useState;
+	return useState;
 }

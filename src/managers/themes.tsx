@@ -4,146 +4,146 @@ import { createPatcher } from '@patcher';
 import Storage from '@api/storage';
 
 class Themes extends Manager {
-  public patcher: ReturnType<typeof createPatcher>;
-  public original: Record<any, any>;
-  public extension: string = 'json';
-  public module: any;
+	public patcher: ReturnType<typeof createPatcher>;
+	public original: Record<any, any>;
+	public extension: string = 'json';
+	public module: any;
 
-  constructor() {
-    super(ManagerType.Themes);
+	constructor() {
+		super(ManagerType.Themes);
 
-    this.patcher = createPatcher('themes');
-  }
+		this.patcher = createPatcher('themes');
+	}
 
-  initialize(mdl: any): void {
-    this.module = mdl;
+	initialize(mdl: any): void {
+		this.module = mdl;
 
-    for (const theme of window.ENMITY_THEMES ?? []) {
-      const { manifest, bundle } = theme;
+		for (const theme of window.ENMITY_THEMES ?? []) {
+			const { manifest, bundle } = theme;
 
-      this.load(bundle, manifest);
-    }
-  }
+			this.load(bundle, manifest);
+		}
+	}
 
-  override async start(entity: Resolveable): Promise<void> {
-    const addon = this.resolve(entity);
-    if (!addon || addon.failed || Storage.get('enmity', 'recovery', false)) return;
+	override async start(entity: Resolveable): Promise<void> {
+		const addon = this.resolve(entity);
+		if (!addon || addon.failed || Storage.get('enmity', 'recovery', false)) return;
 
-    try {
-      const { instance } = addon;
+		try {
+			const { instance } = addon;
 
-      if (instance.raw) {
-        if (!instance.raw.PRIMARY_660) {
-          instance.raw.PRIMARY_660 = instance?.semantic?.BACKGROUND_PRIMARY[0];
-        }
+			if (instance.raw) {
+				if (!instance.raw.PRIMARY_660) {
+					instance.raw.PRIMARY_660 = instance?.semantic?.BACKGROUND_PRIMARY[0];
+				}
 
-        const entries = Object.entries(instance.raw);
+				const entries = Object.entries(instance.raw);
 
-        for (const [key, value] of entries) {
-          this.module.RawColor[key] = value;
-          this.module.default.unsafe_rawColors[key] = value;
-        }
-      }
+				for (const [key, value] of entries) {
+					this.module.RawColor[key] = value;
+					this.module.default.unsafe_rawColors[key] = value;
+				}
+			}
 
-      if (instance.semantic) {
-        const orig = this.module.default.meta.resolveSemanticColor;
+			if (instance.semantic) {
+				const orig = this.module.default.meta.resolveSemanticColor;
 
-        this.module.default.meta.resolveSemanticColor = function (theme: string, ref: { [key: symbol]: string; }) {
-          const key = ref[Object.getOwnPropertySymbols(ref)[0]];
+				this.module.default.meta.resolveSemanticColor = function (theme: string, ref: { [key: symbol]: string; }) {
+					const key = ref[Object.getOwnPropertySymbols(ref)[0]];
 
-          if (instance.semantic[key]) {
-            const index = { dark: 0, light: 1, amoled: 2 }[theme.toLowerCase()] || 0;
-            const color = instance.semantic[key][index];
+					if (instance.semantic[key]) {
+						const index = { dark: 0, light: 1, amoled: 2 }[theme.toLowerCase()] || 0;
+						const color = instance.semantic[key][index];
 
-            if (key === 'CHAT_BACKGROUND' && typeof instance.background?.opacity === 'number') {
-              return (color ?? '#000000') + Math.round(instance.background.opacity * 255).toString(16);
-            }
+						if (key === 'CHAT_BACKGROUND' && typeof instance.background?.opacity === 'number') {
+							return (color ?? '#000000') + Math.round(instance.background.opacity * 255).toString(16);
+						}
 
-            if (color) return color;
-          }
+						if (color) return color;
+					}
 
-          return orig.call(this, theme, ref);
-        };
-      }
+					return orig.call(this, theme, ref);
+				};
+			}
 
-      if (instance.background) this.applyBackground(addon);
-    } catch (e) {
-      this.logger.error('Failed to apply theme:', e.message);
-    }
+			if (instance.background) this.applyBackground(addon);
+		} catch (e) {
+			this.logger.error('Failed to apply theme:', e.message);
+		}
 
-    this.emit('applied', addon);
-    this.logger.log(`${addon.id} started.`);
-  }
+		this.emit('applied', addon);
+		this.logger.log(`${addon.id} started.`);
+	}
 
-  async applyBackground(addon: Addon) {
-    // Avoid circular dependency
-    const { findByName } = await import('@metro');
-    const { instance: { background } } = addon;
+	async applyBackground(addon: Addon) {
+		// Avoid circular dependency
+		const { findByName } = await import('@metro');
+		const { instance: { background } } = addon;
 
-    const Chat = findByName('MessagesWrapperConnected', { interop: false });
+		const Chat = findByName('MessagesWrapperConnected', { interop: false });
 
-    this.patcher.after(Chat, 'default', (_, __, res) => {
-      return <ReactNative.ImageBackground
-        blurRadius={typeof background.blur === 'number' ? background.blur : 0}
-        style={{ flex: 1, height: '100%' }}
-        source={{ uri: background.url }}
-        children={res}
-      />;
-    });
-  }
+		this.patcher.after(Chat, 'default', (_, __, res) => {
+			return <ReactNative.ImageBackground
+				blurRadius={typeof background.blur === 'number' ? background.blur : 0}
+				style={{ flex: 1, height: '100%' }}
+				source={{ uri: background.url }}
+				children={res}
+			/>;
+		});
+	}
 
-  override toggle(entity: Resolveable): void {
-    const addon = this.resolve(entity);
-    if (!addon) return;
+	override toggle(entity: Resolveable): void {
+		const addon = this.resolve(entity);
+		if (!addon) return;
 
-    const enabled = this.isEnabled(addon.id);
+		const enabled = this.isEnabled(addon.id);
 
-    if (!enabled) {
-      this.enable(addon);
-    } else {
-      this.disable(addon);
-    }
+		if (!enabled) {
+			this.enable(addon);
+		} else {
+			this.disable(addon);
+		}
 
-    this.emit('toggle');
-  }
+		this.emit('toggle');
+	}
 
-  override enable(entity: Resolveable): void {
-    const addon = this.resolve(entity);
-    if (!addon) return;
+	override enable(entity: Resolveable): void {
+		const addon = this.resolve(entity);
+		if (!addon) return;
 
-    try {
-      this.settings.set('applied', addon.id);
+		try {
+			this.settings.set('applied', addon.id);
 
-      if (!addon.started) {
-        this.start(addon);
-      }
-    } catch (e) {
-      this.logger.error(`Failed to enable ${addon.data.id}:`, e.message);
-    }
-  }
+			if (!addon.started) {
+				this.start(addon);
+			}
+		} catch (e) {
+			this.logger.error(`Failed to enable ${addon.data.id}:`, e.message);
+		}
+	}
 
-  override disable(entity: Resolveable): void {
-    const addon = this.resolve(entity);
-    if (!addon) return;
+	override disable(entity: Resolveable): void {
+		const addon = this.resolve(entity);
+		if (!addon) return;
 
-    try {
-      this.settings.set('applied', null);
+		try {
+			this.settings.set('applied', null);
 
-      if (addon.started) {
-        this.stop(addon);
-      }
-    } catch (e) {
-      this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
-    }
-  }
+			if (addon.started) {
+				this.stop(addon);
+			}
+		} catch (e) {
+			this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
+		}
+	}
 
-  override isEnabled(id: string): boolean {
-    return this.settings.get('applied', null) === id;
-  }
+	override isEnabled(id: string): boolean {
+		return this.settings.get('applied', null) === id;
+	}
 
-  override handleBundle(bundle: string): any {
-    return typeof bundle === 'object' ? bundle : JSON.parse(bundle);
-  }
+	override handleBundle(bundle: string): any {
+		return typeof bundle === 'object' ? bundle : JSON.parse(bundle);
+	}
 }
 
-export default new Themes();;
+export default new Themes();

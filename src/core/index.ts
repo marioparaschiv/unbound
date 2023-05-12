@@ -11,35 +11,37 @@ import * as API from '@api';
 const Logger = createLogger('Core');
 
 export async function initialize() {
-  try {
-    Patches.apply();
-  } catch (e) {
-    Logger.error('Failed to apply patches:', e.message);
-  }
+	try {
+		Patches.apply();
+	} catch (e) {
+		Logger.error('Failed to apply patches:', e.message);
+	}
 
-  try {
-    BuiltIns.initialize();
-  } catch (e) {
-    Logger.error('Failed to apply built-ins:', e.message);
-  }
+	try {
+		BuiltIns.initialize();
+	} catch (e) {
+		Logger.error('Failed to apply built-ins:', e.message);
+	}
 
-  window.enmity = Object.assign(API, { version: '__VERSION__' });
+	window.enmity = Object.assign(API, { version: '__VERSION__' });
 
-  return API;
+	Managers.plugins.initialize();
+
+	return API;
 }
 
 export async function shutdown() {
-  Patcher.unpatchAll();
+	Patcher.unpatchAll();
 
-  for (const type in Managers) {
-    const manager = Managers[type];
-    await manager.shutdown();
-  }
+	for (const type in Managers) {
+		const manager = Managers[type];
+		await manager.shutdown();
+	}
 
-  Patches.remove();
-  BuiltIns.shutdown();
+	Patches.remove();
+	BuiltIns.shutdown();
 
-  delete window.enmity;
+	delete window.enmity;
 }
 
 export default { initialize, shutdown };
