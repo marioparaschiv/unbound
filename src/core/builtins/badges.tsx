@@ -21,9 +21,9 @@ export function initialize() {
 	const Badges = findByName('ProfileBadges', { all: true, interop: false });
 
 	for (const Badge of Badges) {
-		Patcher.after(Badge, 'default', (_, [{ user, isEnmity, style, ...rest }], res) => {
+		Patcher.after(Badge, 'default', (_, [{ user, isUnbound, style, ...rest }], res) => {
 			const [badges, setBadges] = React.useState({ data: [] });
-			if (isEnmity) return res;
+			if (isUnbound) return res;
 
 			React.useEffect(() => {
 				try {
@@ -80,7 +80,7 @@ async function fetchUserBadges(id: string): Promise<string[]> {
 const makeBadge = (badge, style): JSX.Element => {
 	return <ReactNative.View
 		/* @ts-expect-error */
-		enmity={true}
+		unbound={true}
 		key={badge}
 		style={{
 			alignItems: 'center',

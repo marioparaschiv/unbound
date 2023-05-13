@@ -92,9 +92,9 @@ export default class extends React.Component<AddonCardProps> {
 				activeOpacity={0.5}
 				onPress={() => {
 					showConfirmationAlert({
-						title: i18n.Messages.ENMITY_UNINSTALL_ADDON.format({ type: capitalize(manager.type) }),
-						content: i18n.Messages.ENMITY_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
-						confirmText: i18n.Messages.ENMITY_UNINSTALL,
+						title: i18n.Messages.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(manager.type) }),
+						content: i18n.Messages.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
+						confirmText: i18n.Messages.UNBOUND_UNINSTALL,
 						onConfirm: async () => await manager.delete(addon.id)
 					});
 				}}
@@ -109,9 +109,9 @@ export default class extends React.Component<AddonCardProps> {
 
 					if (shouldRestart) {
 						showConfirmationAlert({
-							title: i18n.Messages.ENMITY_CHANGE_RESTART,
-							content: i18n.Messages.ENMITY_CHANGE_RESTART_DESC,
-							confirmText: i18n.Messages.ENMITY_RESTART,
+							title: i18n.Messages.UNBOUND_CHANGE_RESTART,
+							content: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
+							confirmText: i18n.Messages.UNBOUND_RESTART,
 							onConfirm: async () => await reload()
 						});
 					}
@@ -127,10 +127,10 @@ export default class extends React.Component<AddonCardProps> {
 
 		return <>
 			<RN.Text style={this.styles.description}>
-				{addon.data.description ?? i18n.Messages.ENMITY_ADDON_NO_DESCRIPTION}
+				{addon.data.description ?? i18n.Messages.UNBOUND_ADDON_NO_DESCRIPTION}
 			</RN.Text>
 			{addon.failed && <RN.Text style={mergeStyles(this.styles.description, this.styles.error)}>
-				{i18n.Messages.ENMITY_ADDON_FAILED.format({ error: error.message })}
+				{i18n.Messages.UNBOUND_ADDON_FAILED.format({ error: error.message })}
 			</RN.Text>}
 		</>;
 	}

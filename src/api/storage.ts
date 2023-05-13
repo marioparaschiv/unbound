@@ -4,7 +4,7 @@ import EventEmitter from '@structures/emitter';
 const Files = ReactNative.NativeModules.DCDFileManager ?? ReactNative.NativeModules.RTNFileManager;
 const Events = new EventEmitter();
 
-export const settings = globalThis.ENMITY_SETTINGS ?? {};
+export const settings = globalThis.UNBOUND_SETTINGS ?? {};
 
 export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
@@ -94,7 +94,7 @@ export function useSettingsStore(store: string) {
 
 Events.on('changed', debounce(() => {
 	const payload = JSON.stringify(settings, null, 2);
-	const path = 'Enmity/settings.json';
+	const path = 'Unbound/settings.json';
 
 
 	Files.writeFile('documents', path, payload, 'utf8');

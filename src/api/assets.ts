@@ -1,24 +1,30 @@
 import { Asset } from '@typings/api/assets';
 import { findByProps } from '@metro';
 import Patcher from '@patcher';
+import { createLogger } from '@logger';
+
 
 export const assets = new Set<Asset>();
 export const registry = findByProps('registerAsset');
 
-Patcher.after('enmity-assets', registry, 'registerAsset', (_, [asset]: [Asset], id: number) => {
-	Object.assign(asset, { id });
-	assets.add(asset);
-});
+const Logger = createLogger('Assets');
 
-// Capture all assets that loaded before our patch
-for (let id = 1; ; id++) {
-	const asset = registry.getAssetByID(id);
-	if (!asset) break;
+function initialize() {
+	Patcher.after('unbound-assets', registry, 'registerAsset', (_, [asset]: [Asset], id: number) => {
+		Object.assign(asset, { id });
+		assets.add(asset);
+	});
 
-	if (assets.has(asset)) continue;
+	// Capture all assets that loaded before our patch
+	for (let id = 1; ; id++) {
+		const asset = registry.getAssetByID(id);
+		if (!asset) break;
 
-	Object.assign(asset, { id });
-	assets.add(asset);
+		if (assets.has(asset)) continue;
+
+		Object.assign(asset, { id });
+		assets.add(asset);
+	}
 }
 
 export function find(filter): Asset | null {
@@ -46,5 +52,11 @@ export const Icons: Record<any, any> = new Proxy({}, {
 		return getIDByName(name);
 	}
 });
+
+try {
+	initialize();
+} catch (e) {
+	Logger.error('Failed to initialize assets:', e.message);
+}
 
 export default { assets, getByName, getByID, getIDByName };

@@ -6,203 +6,203 @@ import { bulk } from '@metro';
 
 import CoreCommands from '@core/commands';
 
-const Patcher = createPatcher('enmity-commands');
+const Patcher = createPatcher('unbound-commands');
 const Logger = createLogger('Commands');
 
 export { ApplicationCommand };
 
 export enum ApplicationCommandType {
-  CHAT = 1,
-  USER,
-  MESSAGE
+	CHAT = 1,
+	USER,
+	MESSAGE
 }
 
 export enum ApplicationCommandInputType {
-  BUILT_IN,
-  BUILT_IN_TEXT,
-  BUILT_IN_INTEGRATION,
-  BOT,
-  PLACEHOLDER
+	BUILT_IN,
+	BUILT_IN_TEXT,
+	BUILT_IN_INTEGRATION,
+	BOT,
+	PLACEHOLDER
 }
 
 export enum ApplicationCommandOptionType {
-  SUB_COMMAND = 1,
-  SUB_COMMAND_GROUP,
-  STRING = 3,
-  INTEGER,
-  BOOLEAN,
-  USER,
-  CHANNEL,
-  ROLE,
-  MENTIONABLE,
-  NUMBER,
-  ATTACHMENT
+	SUB_COMMAND = 1,
+	SUB_COMMAND_GROUP,
+	STRING = 3,
+	INTEGER,
+	BOOLEAN,
+	USER,
+	CHANNEL,
+	ROLE,
+	MENTIONABLE,
+	NUMBER,
+	ATTACHMENT
 }
 
 const [
-  Commands,
-  Assets,
-  SearchStore
+	Commands,
+	Assets,
+	SearchStore
 ] = bulk(
-  { filter: filters.byProps('getBuiltInCommands') },
-  { filter: filters.byProps('getApplicationIconURL') },
-  { filter: m => m.default?.getQueryCommands && m.useDiscoveryState }
+	{ filter: filters.byProps('getBuiltInCommands') },
+	{ filter: filters.byProps('getApplicationIconURL') },
+	{ filter: m => m.default?.getQueryCommands && m.useDiscoveryState }
 );
 
 export const data = {
-  commands: [],
-  section: {
-    id: 'enmity',
-    type: 1,
-    name: 'Enmity',
-    icon: 'https://files.enmity.app/icon.png'
-  }
+	commands: [],
+	section: {
+		id: 'unbound',
+		type: 1,
+		name: 'Unbound',
+		icon: 'https://files.unbound.app/icon.png'
+	}
 };
 
-try {
-  initialize();
-} catch (e) {
-  Logger.error('Failed to patch commands:', e.message);
-}
-
 export function registerCommands(caller: string, cmds: ApplicationCommand[]): void {
-  if (!caller || typeof caller !== 'string') {
-    throw new TypeError('first argument caller must be of type string');
-  } else if (!cmds || !Array.isArray(cmds)) {
-    throw new TypeError('second argument cmds must be of type array');
-  }
+	if (!caller || typeof caller !== 'string') {
+		throw new TypeError('first argument caller must be of type string');
+	} else if (!cmds || !Array.isArray(cmds)) {
+		throw new TypeError('second argument cmds must be of type array');
+	}
 
-  for (const command in cmds) {
-    const cmd = cmds[command];
-    cmds[command] = {
-      displayName: cmd.name,
-      displayDescription: cmd.description,
-      type: 2,
-      inputType: 1,
-      id: `enmity-${cmd.name.replaceAll(' ', '-')}`,
-      applicationId: data.section.id,
-      ...cmd,
+	for (const command in cmds) {
+		const cmd = cmds[command];
+		cmds[command] = {
+			displayName: cmd.name,
+			displayDescription: cmd.description,
+			type: 2,
+			inputType: 1,
+			id: `unbound-${cmd.name.replaceAll(' ', '-')}`,
+			applicationId: data.section.id,
+			...cmd,
 
-      // @ts-expect-error
-      __ENMITY__: true,
-      caller: caller
-    };
-  }
+			// @ts-expect-error
+			__UNBOUND__: true,
+			caller: caller
+		};
+	}
 
-  data.commands.push(...cmds);
+	data.commands.push(...cmds);
 }
 
 export function unregisterCommands(caller: string): void {
-  if (!caller || typeof caller !== 'string') {
-    throw new TypeError('first argument caller must be of type string');
-  }
+	if (!caller || typeof caller !== 'string') {
+		throw new TypeError('first argument caller must be of type string');
+	}
 
-  // @ts-ignore
-  data.commands = data.commands.filter(c => c.caller !== caller);
+	// @ts-ignore
+	data.commands = data.commands.filter(c => c.caller !== caller);
 }
 
 function initialize() {
-  Commands.BUILT_IN_SECTIONS['enmity'] = data.section;
+	Commands.BUILT_IN_SECTIONS['unbound'] = data.section;
 
-  registerCommands('enmity', CoreCommands);
+	registerCommands('unbound', CoreCommands);
 
-  try {
-    Patcher.after(SearchStore.default, 'getQueryCommands', (_, [, , query], res) => {
-      if (!query || query.startsWith('/')) return;
-      res ??= [];
+	try {
+		Patcher.after(SearchStore.default, 'getQueryCommands', (_, [, , query], res) => {
+			if (!query || query.startsWith('/')) return;
+			res ??= [];
 
-      for (const command of data.commands) {
-        if (!~command.name?.indexOf(query) || res.some(e => e.__enmity && e.id === command.id)) {
-          continue;
-        }
+			for (const command of data.commands) {
+				if (!~command.name?.indexOf(query) || res.some(e => e.__unbound && e.id === command.id)) {
+					continue;
+				}
 
-        try {
-          res.unshift(command);
-        } catch {
-          // Discord calls Object.preventExtensions on the result when switching channels
-          // Therefore, re-making the result array is required.
-          res = [...res, command];
-        }
-      }
-    });
-  } catch {
-    Logger.error('Patching getQueryCommands failed.');
-  }
+				try {
+					res.unshift(command);
+				} catch {
+					// Discord calls Object.preventExtensions on the result when switching channels
+					// Therefore, re-making the result array is required.
+					res = [...res, command];
+				}
+			}
+		});
+	} catch {
+		Logger.error('Patching getQueryCommands failed.');
+	}
 
-  try {
-    Patcher.instead(SearchStore.default, 'getApplicationSections', (_, args, orig) => {
-      try {
-        const res = orig.apply(self, args) ?? [];
+	try {
+		Patcher.instead(SearchStore.default, 'getApplicationSections', (_, args, orig) => {
+			try {
+				const res = orig.apply(self, args) ?? [];
 
-        if (!res.find(r => r.id === data.section.id) && data.commands.length) {
-          res.push(data.section);
-        };
+				if (!res.find(r => r.id === data.section.id) && data.commands.length) {
+					res.push(data.section);
+				};
 
-        return res;
-      } catch {
-        return [];
-      }
-    });
-  } catch {
-    Logger.error('Patching getApplicationSections failed.');
-  }
+				return res;
+			} catch {
+				return [];
+			}
+		});
+	} catch {
+		Logger.error('Patching getApplicationSections failed.');
+	}
 
-  try {
-    Patcher.after(SearchStore, 'useDiscoveryState', (_, [, type], res) => {
-      if (type !== 1) return;
+	try {
+		Patcher.after(SearchStore, 'useDiscoveryState', (_, [, type], res) => {
+			if (type !== 1) return;
 
-      if (!res.sectionDescriptors?.find?.(s => s.id === data.section.id)) {
-        res.sectionDescriptors ??= [];
-        res.sectionDescriptors.push(data.section);
-      }
+			if (!res.sectionDescriptors?.find?.(s => s.id === data.section.id)) {
+				res.sectionDescriptors ??= [];
+				res.sectionDescriptors.push(data.section);
+			}
 
-      if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && !res.activeSections.find(s => s.id === data.section.id)) {
-        res.activeSections.push(data.section);
-      }
+			if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && !res.activeSections.find(s => s.id === data.section.id)) {
+				res.activeSections.push(data.section);
+			}
 
-      if (data.commands.some(c => !res.commands?.find?.(r => r.id === c.id))) {
-        res.commands ??= [];
+			if (data.commands.some(c => !res.commands?.find?.(r => r.id === c.id))) {
+				res.commands ??= [];
 
-        // De-duplicate commands
-        const collection = [...res.commands, ...data.commands];
-        res.commands = [...new Set(collection).values()];
-      }
+				// De-duplicate commands
+				const collection = [...res.commands, ...data.commands];
+				res.commands = [...new Set(collection).values()];
+			}
 
-      if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && !res.commandsByActiveSection.find(r => r.section.id === data.section.id)) {
-        res.commandsByActiveSection.push({
-          section: data.section,
-          data: data.commands
-        });
-      }
+			if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && !res.commandsByActiveSection.find(r => r.section.id === data.section.id)) {
+				res.commandsByActiveSection.push({
+					section: data.section,
+					data: data.commands
+				});
+			}
 
-      const active = res.commandsByActiveSection.find(r => r.section.id === data.section.id);
-      if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && active && active.data.length === 0 && data.commands.length !== 0) {
-        active.data = data.commands;
-      }
+			const active = res.commandsByActiveSection.find(r => r.section.id === data.section.id);
+			if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && active && active.data.length === 0 && data.commands.length !== 0) {
+				active.data = data.commands;
+			}
 
-      /*
-       * Filter out duplicate built-in sections due to a bug that causes
-       * the getApplicationSections path to add another built-in commands
-       * section to the section rail
-       */
+			/*
+			 * Filter out duplicate built-in sections due to a bug that causes
+			 * the getApplicationSections path to add another built-in commands
+			 * section to the section rail
+			 */
 
-      const builtIn = res.sectionDescriptors.filter(s => s.id === '-1');
-      if (builtIn.length > 1) {
-        res.sectionDescriptors = res.sectionDescriptors.filter(s => s.id !== '-1');
-        res.sectionDescriptors.push(builtIn.find(r => r.id === '-1'));
-      }
-    });
-  } catch {
-    Logger.error('Patching useDiscoveryState failed.');
-  }
+			const builtIn = res.sectionDescriptors.filter(s => s.id === '-1');
+			if (builtIn.length > 1) {
+				res.sectionDescriptors = res.sectionDescriptors.filter(s => s.id !== '-1');
+				res.sectionDescriptors.push(builtIn.find(r => r.id === '-1'));
+			}
+		});
+	} catch {
+		Logger.error('Patching useDiscoveryState failed.');
+	}
 
-  try {
-    Patcher.after(Assets, 'getApplicationIconURL', (_, [props], res) => {
-      if (props.id === 'enmity') {
-        return data.section.icon;
-      }
-    });
-  } catch {
-    Logger.error('Patching getApplicationIconURL failed.');
-  }
+	try {
+		Patcher.after(Assets, 'getApplicationIconURL', (_, [props], res) => {
+			if (props.id === 'unbound') {
+				return data.section.icon;
+			}
+		});
+	} catch {
+		Logger.error('Patching getApplicationIconURL failed.');
+	}
+}
+
+try {
+	initialize();
+} catch (e) {
+	Logger.error('Failed to initialize commands:', e.message);
 }

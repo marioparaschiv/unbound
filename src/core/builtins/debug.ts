@@ -14,7 +14,7 @@ export const data: BuiltIn['data'] = {
 export let ws: WebSocket;
 
 export function initialize(isReconnect = false) {
-	const settings = getStore('enmity');
+	const settings = getStore('unbound');
 
 	try {
 		ws = new WebSocket(`ws://${settings.get('dev.debugBridge.host', '192.168.0.35:9090')}`);

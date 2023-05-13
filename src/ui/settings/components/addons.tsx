@@ -42,7 +42,7 @@ const styles = StyleSheet.createThemedStyleSheet({
 
 export default function ({ addons, type, shouldRestart }: AddonListProps) {
 	const [search, setSearch] = React.useState('');
-	const settings = useSettingsStore('enmity');
+	const settings = useSettingsStore('unbound');
 
 	const data = search ? [] : addons;
 	const isRecovery = settings.get('recovery', false);
@@ -62,14 +62,14 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 	return <RN.SafeAreaView style={styles.root}>
 		<RN.View style={styles.root}>
 			<Search
-				placeholder={i18n.Messages[`ENMITY_SEARCH_${type.toUpperCase()}`]}
+				placeholder={i18n.Messages[`UNBOUND_SEARCH_${type.toUpperCase()}`]}
 				onChangeText={search => setSearch(search)}
 				onClear={() => setSearch('')}
 				value={search}
 			/>
 			{isRecovery && <RN.View style={styles.recoveryContainer}>
 				<HelpMessage messageType={0}>
-					{i18n.Messages.ENMITY_RECOVERY_MODE_ENABLED}
+					{i18n.Messages.UNBOUND_RECOVERY_MODE_ENABLED}
 				</HelpMessage>
 			</RN.View>}
 			<RN.FlatList
@@ -87,7 +87,7 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 						source={Icons['img_connection_empty_dark']}
 					/>
 					<RN.Text style={styles.emptyMessage}>
-						{i18n.Messages.ENMITY_ADDONS_EMPTY.format({ type: managers[type].name.toLowerCase() })}
+						{i18n.Messages.UNBOUND_ADDONS_EMPTY.format({ type: managers[type].name.toLowerCase() })}
 					</RN.Text>
 				</RN.View>}
 			/>

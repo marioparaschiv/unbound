@@ -5,7 +5,7 @@ import Assets from '@api/assets';
 
 
 export default function () {
-	const settings = useSettingsStore('enmity');
+	const settings = useSettingsStore('unbound');
 
 	const Icons = {
 		Debug: Assets.getIDByName('debug'),
@@ -13,7 +13,7 @@ export default function () {
 	};
 
 	return <ReactNative.ScrollView>
-		<Forms.FormSection title={i18n.Messages.ENMITY_DEBUG_BRIDGE}>
+		<Forms.FormSection title={i18n.Messages.UNBOUND_DEBUG_BRIDGE}>
 
 		</Forms.FormSection>
 	</ReactNative.ScrollView>;

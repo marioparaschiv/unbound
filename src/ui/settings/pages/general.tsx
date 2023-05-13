@@ -25,7 +25,7 @@ const styles = StyleSheet.createThemedStyleSheet({
 
 function General() {
 	const navigation = Navigation.useNavigation();
-	const settings = useSettingsStore('enmity');
+	const settings = useSettingsStore('unbound');
 
 	const Icons = {
 		Twitter: Assets.getIDByName('img_account_sync_twitter_white'),
@@ -47,17 +47,17 @@ function General() {
 		>
 			<Forms.FormSection>
 				<Forms.FormRow
-					label={i18n.Messages.ENMITY_RECOVERY_MODE}
-					subLabel={i18n.Messages.ENMITY_RECOVERY_MODE_DESC}
+					label={i18n.Messages.UNBOUND_RECOVERY_MODE}
+					subLabel={i18n.Messages.UNBOUND_RECOVERY_MODE_DESC}
 					leading={<Forms.FormRow.Icon source={Icons.Retry} />}
 					trailing={<Forms.FormSwitch
 						value={settings.get('recovery', false)}
 						onValueChange={() => {
 							settings.toggle('recovery', false);
 							Dialog.confirm({
-								title: i18n.Messages.ENMITY_CHANGE_RESTART,
-								body: i18n.Messages.ENMITY_CHANGE_RESTART_DESC,
-								confirmText: i18n.Messages.ENMITY_RESTART,
+								title: i18n.Messages.UNBOUND_CHANGE_RESTART,
+								body: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
+								confirmText: i18n.Messages.UNBOUND_RESTART,
 								onConfirm: async () => await reload()
 							});
 						}}
@@ -66,36 +66,36 @@ function General() {
 			</Forms.FormSection>
 			<Forms.FormSection>
 				<Forms.FormRow
-					label={i18n.Messages.ENMITY_TOAST_SETTINGS}
+					label={i18n.Messages.UNBOUND_TOAST_SETTINGS}
 					leading={<Forms.FormRow.Icon source={Icons.Toasts} />}
 					trailing={Forms.FormRow.Arrow}
 					onPress={() => navigation.push(Screens.Custom, {
-						title: i18n.Messages.ENMITY_TOAST_SETTINGS,
+						title: i18n.Messages.UNBOUND_TOAST_SETTINGS,
 						render: Toasts
 					})}
 				/>
 				<Forms.FormDivider />
 				<Forms.FormRow
-					label={i18n.Messages.ENMITY_DEVELOPMENT_SETTINGS}
+					label={i18n.Messages.UNBOUND_DEVELOPMENT_SETTINGS}
 					leading={<Forms.FormRow.Icon source={Icons.Development} />}
 					trailing={Forms.FormRow.Arrow}
 					onPress={() => navigation.push(Screens.Custom, {
-						title: i18n.Messages.ENMITY_DEVELOPMENT_SETTINGS,
+						title: i18n.Messages.UNBOUND_DEVELOPMENT_SETTINGS,
 						render: Developer
 					})}
 				/>
 				<Forms.FormDivider />
 				<Forms.FormRow
-					label={i18n.Messages.ENMITY_MODULE_SETTINGS}
+					label={i18n.Messages.UNBOUND_MODULE_SETTINGS}
 					leading={<Forms.FormRow.Icon source={Icons.Debug} />}
 					trailing={Forms.FormRow.Arrow}
 					onPress={() => navigation.push(Screens.Custom, {
-						title: i18n.Messages.ENMITY_MODULE_SETTINGS,
+						title: i18n.Messages.UNBOUND_MODULE_SETTINGS,
 						render: () => <RN.Text>Placeholder</RN.Text>
 					})}
 				/>
 			</Forms.FormSection>
-			<Forms.FormSection title={i18n.Messages.ENMITY_STATS}>
+			<Forms.FormSection title={i18n.Messages.UNBOUND_STATS}>
 				<Forms.FormRow
 					label='Installed Plugins'
 					leading={<Icon.Puzzle width={24} height={24} />}

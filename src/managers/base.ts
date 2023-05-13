@@ -33,7 +33,7 @@ class Manager extends EventEmitter {
 		this.logger = createLogger('Manager', this.name);
 		this.settings = getStore(`${type}-states`);
 
-		this.path = `Enmity/${this.name}`;
+		this.path = `Unbound/${this.name}`;
 	}
 
 	async install(url: string): Promise<Error | void> {
@@ -225,7 +225,7 @@ class Manager extends EventEmitter {
 		} else if (!manifest.version || typeof manifest.version !== 'string' || !Regex.SemanticVersioning.test(manifest.version)) {
 			throw new Error('Manifest property "version" must be of type string and match the semantic versioning pattern.');
 		} else if (!manifest.id || typeof manifest.id !== 'string') {
-			throw new Error('Manifest property "id" must be of type string and match a "eternal.enmity" pattern.');
+			throw new Error('Manifest property "id" must be of type string and match a "eternal.unbound" pattern.');
 		}
 	}
 

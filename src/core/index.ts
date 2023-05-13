@@ -23,7 +23,7 @@ export async function initialize() {
 		Logger.error('Failed to apply built-ins:', e.message);
 	}
 
-	window.enmity = Object.assign(API, { version: '__VERSION__' });
+	window.unbound = Object.assign(API, { version: '__VERSION__' });
 
 	Managers.plugins.initialize();
 
@@ -41,7 +41,7 @@ export async function shutdown() {
 	Patches.remove();
 	BuiltIns.shutdown();
 
-	delete window.enmity;
+	delete window.unbound;
 }
 
 export default { initialize, shutdown };

@@ -4,8 +4,6 @@ import { Dialog } from '@metro/ui';
 export function showConfirmationAlert(options: ConfirmationAlertOptions) {
 	const opts = options as InternalConfirmationAlertOptions;
 
-	console.log(options);
-
 	if (typeof options.content === 'string' || Array.isArray(options.content)) {
 		opts.body = options.content;
 	} else {

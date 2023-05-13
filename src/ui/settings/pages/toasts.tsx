@@ -5,7 +5,7 @@ import { i18n } from '@metro/common';
 import Assets from '@api/assets';
 
 export default function () {
-	const settings = useSettingsStore('enmity');
+	const settings = useSettingsStore('unbound');
 
 	const Icons = {
 		Debug: Assets.getIDByName('debug'),
@@ -15,8 +15,8 @@ export default function () {
 	return <ReactNative.ScrollView>
 		<Forms.FormSection>
 			<Forms.FormRow
-				label={i18n.Messages.ENMITY_ENABLED}
-				subLabel={i18n.Messages.ENMITY_TOASTS_DESC}
+				label={i18n.Messages.UNBOUND_ENABLED}
+				subLabel={i18n.Messages.UNBOUND_TOASTS_DESC}
 				trailing={<Forms.FormSwitch
 					value={settings.get('toasts.enabled', true)}
 					onValueChange={() => settings.toggle('toasts.enabled', true)}
@@ -24,8 +24,8 @@ export default function () {
 			/>
 			<Forms.FormDivider />
 			<Forms.FormRow
-				label={i18n.Messages.ENMITY_TOASTS_ANIMATIONS}
-				subLabel={i18n.Messages.ENMITY_TOASTS_ANIMATIONS_DESC}
+				label={i18n.Messages.UNBOUND_TOASTS_ANIMATIONS}
+				subLabel={i18n.Messages.UNBOUND_TOASTS_ANIMATIONS_DESC}
 				trailing={<Forms.FormSwitch
 					value={settings.get('toasts.animations', true)}
 					onValueChange={() => settings.toggle('toasts.animations', true)}
@@ -34,7 +34,7 @@ export default function () {
 		</Forms.FormSection>
 		<Forms.FormSection>
 			<Forms.FormRow
-				label={i18n.Messages.ENMITY_TOAST_DURATION}
+				label={i18n.Messages.UNBOUND_TOAST_DURATION}
 				trailing={<Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
 					{i18n.Messages.DURATION_SECONDS.format({ seconds: settings.get('toasts.duration', 3) })}
 				</Forms.FormText>}
@@ -50,7 +50,7 @@ export default function () {
 			/>
 		</Forms.FormSection>
 		<Forms.FormHint>
-			{i18n.Messages.ENMITY_TOAST_DURATION_DESC}
+			{i18n.Messages.UNBOUND_TOAST_DURATION_DESC}
 		</Forms.FormHint>
 	</ReactNative.ScrollView>;
 }

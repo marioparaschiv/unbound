@@ -18,7 +18,7 @@ class Themes extends Manager {
 	initialize(mdl: any): void {
 		this.module = mdl;
 
-		for (const theme of window.ENMITY_THEMES ?? []) {
+		for (const theme of window.UNBOUND_THEMES ?? []) {
 			const { manifest, bundle } = theme;
 
 			this.load(bundle, manifest);
@@ -27,7 +27,7 @@ class Themes extends Manager {
 
 	override async start(entity: Resolveable): Promise<void> {
 		const addon = this.resolve(entity);
-		if (!addon || addon.failed || Storage.get('enmity', 'recovery', false)) return;
+		if (!addon || addon.failed || Storage.get('unbound', 'recovery', false)) return;
 
 		try {
 			const { instance } = addon;
@@ -83,6 +83,7 @@ class Themes extends Manager {
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
 
 		this.patcher.after(Chat, 'default', (_, __, res) => {
+			console.log(res);
 			return <ReactNative.ImageBackground
 				blurRadius={typeof background.blur === 'number' ? background.blur : 0}
 				style={{ flex: 1, height: '100%' }}

@@ -1,17 +1,17 @@
-export const Invite = 'enmityapp' as const;
+export const Invite = 'unboundapp' as const;
 
 export const Links = {
-	GitHub: 'https://github.com/enmity-mod',
-	Twitter: 'https://twitter.com/EnmityApp',
-	Bundle: 'https://raw.githubusercontent.com/enmity-mod/enmity/main/dist/bundle.js',
-	Badges: 'https://raw.githubusercontent.com/enmity-mod/badges/main/'
+	GitHub: 'https://github.com/unbound-mod',
+	Twitter: 'https://twitter.com/UnboundApp',
+	Bundle: 'https://raw.githubusercontent.com/unbound-mod/unbound/main/dist/bundle.js',
+	Badges: 'https://raw.githubusercontent.com/unbound-mod/badges/main/'
 } as const;
 
 export const Screens = {
-	General: 'ENMITY_GENERAL',
-	Plugins: 'ENMITY_PLUGINS',
-	Themes: 'ENMITY_THEMES',
-	Updater: 'ENMITY_UPDATER',
+	General: 'UNBOUND_GENERAL',
+	Plugins: 'UNBOUND_PLUGINS',
+	Themes: 'UNBOUND_THEMES',
+	Updater: 'UNBOUND_UPDATER',
 	Custom: 'CUSTOM'
 } as const;
 

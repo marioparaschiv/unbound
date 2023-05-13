@@ -9,7 +9,7 @@ class Plugins extends Manager {
 	}
 
 	initialize() {
-		for (const plugin of window.ENMITY_PLUGINS ?? []) {
+		for (const plugin of window.UNBOUND_PLUGINS ?? []) {
 			const { manifest, bundle } = plugin;
 
 			this.load(bundle, manifest);
@@ -17,7 +17,7 @@ class Plugins extends Manager {
 	}
 
 	handleBundle(bundle: string) {
-		if (Storage.get('enmity', 'recovery', false)) {
+		if (Storage.get('unbound', 'recovery', false)) {
 			return {
 				start: () => { },
 				stop: () => { }

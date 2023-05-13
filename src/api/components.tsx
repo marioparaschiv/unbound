@@ -46,7 +46,7 @@ function traverse(element) {
 	// }
 }
 
-try {
+function initialize() {
 	Patcher.before(window.React, 'createElement', (_, args) => {
 		const [component] = args;
 
@@ -64,8 +64,6 @@ try {
 	Patcher.after(React, 'createElement', (_, __, res) => {
 		if (res) traverse(res);
 	});
-} catch (e) {
-	Logger.error('Failed to intercept React.createElement:', e.message);
 }
 
 export function add(name, component) {
@@ -83,4 +81,10 @@ export function getAll() {
 
 export function getByName(name: string): React.FC | void {
 	return named.get(name);
+}
+
+try {
+	initialize();
+} catch (e) {
+	Logger.error('Failed to intercept React.createElement:', e.message);
 }

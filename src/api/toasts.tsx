@@ -18,7 +18,7 @@ try {
 	const Container = find(m => m.type?.name === 'ToastContainer');
 
 	Patcher.after(Container, 'type', (_, __, res) => {
-		const settings = useSettingsStore('enmity');
+		const settings = useSettingsStore('unbound');
 
 		if (!settings.get('toasts.enabled', true)) {
 			return res;

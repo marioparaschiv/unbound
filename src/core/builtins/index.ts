@@ -5,7 +5,7 @@ import Storage from '@api/storage';
 
 const Logger = createLogger('Core', 'Built-Ins');
 
-export const settings = Storage.getStore('enmity');
+export const settings = Storage.getStore('unbound');
 export const started = new Set<string>();
 
 export function initialize() {
@@ -55,7 +55,7 @@ export function stop(id: string) {
 }
 
 function onSettingsChange({ store, key, value }: { store: string, key: string, value: any; }) {
-	if (store !== 'enmity') return;
+	if (store !== 'unbound') return;
 
 	for (const id in instances) {
 		const instance = instances[id] as BuiltIn;
