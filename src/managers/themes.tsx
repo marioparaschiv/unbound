@@ -83,7 +83,6 @@ class Themes extends Manager {
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
 
 		this.patcher.after(Chat, 'default', (_, __, res) => {
-			console.log(res);
 			return <ReactNative.ImageBackground
 				blurRadius={typeof background.blur === 'number' ? background.blur : 0}
 				style={{ flex: 1, height: '100%' }}

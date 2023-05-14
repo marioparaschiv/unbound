@@ -229,11 +229,3 @@ function deenumerate(id: string | number) {
 		writable: true
 	});
 }
-
-export * as components from './components';
-export * as filters from './filters';
-export * as actions from './actions';
-export * as stores from './stores';
-export * as common from './common';
-export * as api from './api';
-export * as ui from './ui';

@@ -1,14 +1,17 @@
 import { useToasts } from '@stores/toasts';
-import { React } from '@metro/common';
+import { React, Reanimated } from '@metro/common';
 
 import Toast from './Toast';
+import { Animated } from '@metro/components';
 
 function ToastContainer() {
 	const { toasts } = useToasts();
 
-	return <>
-		{Object.values(toasts).map(options => <Toast {...options} />)}
-	</>;
+
+
+	return <ReactNative.View>
+		{Object.values(toasts).reverse().map(options => <Toast {...options} />)}
+	</ReactNative.View>;
 }
 
 export default ToastContainer;

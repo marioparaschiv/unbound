@@ -5,7 +5,10 @@ import { React } from '@metro/common';
 const styles = StyleSheet.createThemedStyleSheet({
 	icon: {
 		color: Theme.colors.INTERACTIVE_NORMAL,
-		opacity: 0.6,
+		opacity: ReactNative.Platform.select({
+			android: 0.6,
+			ios: 0.75
+		}),
 		marginLeft: 0.5
 	}
 });

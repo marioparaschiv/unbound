@@ -88,8 +88,9 @@ export default class extends React.Component<AddonCardProps> {
 		const { addon, manager, shouldRestart, recovery } = this.props;
 
 		return <>
-			<RN.TouchableOpacity
-				activeOpacity={0.5}
+			<RN.Pressable
+				style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1.0, ...this.styles.controlButton })}
+				hitSlop={15}
 				onPress={() => {
 					showConfirmationAlert({
 						title: i18n.Messages.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(manager.type) }),
@@ -100,7 +101,7 @@ export default class extends React.Component<AddonCardProps> {
 				}}
 			>
 				<RN.Image source={Icons['trash']} />
-			</RN.TouchableOpacity>
+			</RN.Pressable>
 			<RN.Switch
 				disabled={addon.failed || recovery}
 				value={manager.isEnabled(addon.id)}
@@ -208,6 +209,12 @@ export default class extends React.Component<AddonCardProps> {
 		recovery: {
 			opacity: 0.5,
 			pointerEvents: 'none'
+		},
+		controlButton: {
+			marginRight: ReactNative.Platform.select({
+				android: 2.5,
+				ios: 10
+			})
 		}
 	});
 }

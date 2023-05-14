@@ -2,6 +2,7 @@ import { Common } from '@typings/api/metro/common';
 import { findByProps } from '@metro';
 
 // Libraries
+export const Reanimated: Common.Reanimated = findByProps('useAnimatedStyle', { lazy: true });
 export const Flux: Common.Flux = findByProps('Store', 'connectStores', { lazy: true });
 export const Moment: Common.Moment = findByProps('isMoment');
 

@@ -8,6 +8,6 @@ export const DeviceInfo = DCDDeviceManager;
 
 export const reload = (): void => BundleUpdaterManager.reload();
 
-ReactNative.Linking.addListener('url', (event) => {
-  console.log(event);
-});
+// ReactNative.Linking.addListener('url', (event) => {
+//   console.log(event);
+// });

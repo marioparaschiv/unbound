@@ -17,7 +17,7 @@ const revision = (() => {
 })();
 
 const config: RollupOptions = {
-	input: 'src/index.ts',
+	input: 'src/preload.ts',
 	output: [
 		{
 			file: 'dist/bundle.js',

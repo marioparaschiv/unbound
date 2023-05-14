@@ -49,7 +49,6 @@ export default function createStore(state): any {
 
 		React.useEffect(() => {
 			const handler = () => {
-				console.log('force updated');
 				forceUpdate();
 			};
 

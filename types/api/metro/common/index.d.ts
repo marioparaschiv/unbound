@@ -12,6 +12,7 @@ export namespace Common {
 
 	export type React = typeof import('react');
 	export type ReactNative = typeof import('react-native');
+	export type Reanimated = typeof import('react-native-reanimated');
 
 	export interface Dispatcher {
 		dispatch(payload: Record<string, any>): Promise<void>;
@@ -27,8 +28,6 @@ export namespace Common {
 	export type Moment = typeof moment;
 
 	export type Events = typeof import('events');
-
-	export type Spring = typeof import('@react-spring/native');
 
 	// Discord
 

@@ -12,7 +12,10 @@ export default () => {
 	const addons = Plugins.useEntities();
 
 	React.useEffect(() => {
-		navigation.setOptions({ headerRight: () => <HeaderRight /> });
+		navigation.setOptions({
+			title: addons.length ? `${i18n.Messages.UNBOUND_PLUGINS} - ${addons.length}` : i18n.Messages.UNBOUND_PLUGINS,
+			headerRight: () => <HeaderRight />
+		});
 	}, []);
 
 	return <RN.View style={{ flex: 1 }}>
@@ -27,8 +30,9 @@ function HeaderRight() {
 	const ref = React.useRef<InstanceType<typeof InstallModal>>();
 	const url = React.useCallback(() => ref.current?.getInput(), [ref.current]);
 
-	return <RN.TouchableOpacity
-		style={{ marginRight: 20 }}
+	return <RN.Pressable
+		hitSlop={25}
+		style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1.0, marginRight: 20 })}
 		onPress={() => {
 			Dialog.confirm({
 				title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'plugin' }),
@@ -39,5 +43,5 @@ function HeaderRight() {
 		}}
 	>
 		<RN.Image source={Icons['ic_add_circle']} />
-	</RN.TouchableOpacity>;
+	</RN.Pressable>;
 }
