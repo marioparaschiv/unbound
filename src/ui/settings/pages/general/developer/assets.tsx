@@ -23,7 +23,7 @@ export default function () {
 
 	return <RN.View>
 		<Search
-			placeholder={i18n.Messages['UNBOUND_SEARCH_ASSETS']}
+			placeholder={i18n.Messages.UNBOUND_SEARCH_ASSETS}
 			onChangeText={search => setSearch(search)}
 			onClear={() => setSearch('')}
 			value={search}
@@ -33,6 +33,7 @@ export default function () {
 				keyExtractor={(_, idx) => String(idx)}
 				data={data}
 				ItemSeparatorComponent={Forms.FormDivider}
+				initialNumToRender={20}
 				renderItem={({ item }) => <Asset item={item} />}
 			/>
 		</Forms.FormSection>

@@ -1,8 +1,8 @@
 import { Theme, i18n, React, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Invite, Links, Screens } from '@constants';
 import { useSettingsStore } from '@api/storage';
+import { BundleManager } from '@api/native';
 import { Invites } from '@metro/actions';
-import { reload } from '@api/native';
 import { Dialog } from '@metro/ui';
 import * as Icon from '@ui/icons';
 import Assets from '@api/assets';
@@ -58,7 +58,7 @@ function General() {
 								title: i18n.Messages.UNBOUND_CHANGE_RESTART,
 								body: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
 								confirmText: i18n.Messages.UNBOUND_RESTART,
-								onConfirm: async () => await reload()
+								onConfirm: BundleManager.reload
 							});
 						}}
 					/>}

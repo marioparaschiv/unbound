@@ -1,10 +1,7 @@
-import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme } from '@metro/common';
+import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme, i18n } from '@metro/common';
 import { Forms, Navigation } from '@metro/components';
+import { Icons } from '@api/assets';
 import Logger from '@stores/logger';
-import Assets from '@api/assets';
-
-const { Fonts } = Constants;
-const { colors } = Theme;
 
 export default function () {
 
@@ -19,21 +16,28 @@ export default function () {
 		<RN.FlatList
 			data={store.logs.sort((a, b) => a.time - b.time)}
 			keyExtractor={(_, idx) => String(idx)}
-			/* TODO: Empty Placeholder */
-			ListEmptyComponent={() => <RN.Text>nothing here!</RN.Text>}
+			ListEmptyComponent={<RN.View style={styles.empty}>
+				<RN.Image
+					style={styles.emptyImage}
+					source={Icons['img_connection_empty_dark']}
+				/>
+				<RN.Text style={styles.emptyMessage}>
+					{i18n.Messages.UNBOUND_LOGS_EMPTY}
+				</RN.Text>
+			</RN.View>}
 			ItemSeparatorComponent={Forms.FormDivider}
 			renderItem={({ item }) => {
 				// to-do: move this out of render to avoid event listener leak
 				const styles = StyleSheet.createThemedStyleSheet({
 					log: {
 						fontSize: 16,
-						fontFamily: Fonts.DISPLAY_SEMIBOLD,
+						fontFamily: Constants.Fonts.DISPLAY_SEMIBOLD,
 						color: (() => {
 							switch (item.level) {
 								case 1:
-									return colors.TEXT_NORMAL;
+									return Theme.colors.TEXT_NORMAL;
 								case 0:
-									return colors.TEXT_MUTED;
+									return Theme.colors.TEXT_MUTED;
 								case 2:
 									return 'yellow';
 								case 3:
@@ -43,8 +47,8 @@ export default function () {
 					},
 					time: {
 						fontSize: 16,
-						fontFamily: Fonts.DISPLAY_SEMIBOLD,
-						color: colors.TEXT_MUTED
+						fontFamily: Constants.Fonts.DISPLAY_SEMIBOLD,
+						color: Theme.colors.TEXT_MUTED
 					}
 				});
 
@@ -65,7 +69,21 @@ const styles = StyleSheet.createThemedStyleSheet({
 		marginRight: 10
 	},
 	image: {
-		tintColor: colors.TEXT_NORMAL
+		tintColor: Theme.colors.TEXT_NORMAL
+	},
+	empty: {
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginTop: '50%'
+	},
+	emptyImage: {
+		marginBottom: 10
+	},
+	emptyMessage: {
+		color: Theme.colors.TEXT_MUTED,
+		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
+		textAlign: 'center',
+		paddingHorizontal: 25
 	}
 });
 
@@ -76,7 +94,7 @@ function HeaderRight() {
 	>
 		<RN.Image
 			style={styles.image}
-			source={Assets.getIDByName('ic_input_clear_24px')}
+			source={Icons['ic_input_clear_24px']}
 		/>
 	</RN.TouchableOpacity>;
 }

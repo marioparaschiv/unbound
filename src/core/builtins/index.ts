@@ -24,37 +24,37 @@ export function shutdown() {
 	}
 }
 
-export function start(id: string) {
+export async function start(id: string) {
 	if (!instances[id]) return;
 	if (started.has(id)) return;
 
 	const instance = instances[id] as BuiltIn;
 
 	try {
-		instance.initialize?.();
+		await instance.initialize?.();
 		started.add(id);
 	} catch (e) {
 		started.delete(id);
-		Logger.error(`Failed to initialize built-in ${id}:`, e.message);
+		Logger.error(`Failed to initialize built-in ${id}: ${e.message}`);
 	}
 }
 
-export function stop(id: string) {
+export async function stop(id: string) {
 	if (!instances[id]) return;
 	if (!started.has(id)) return;
 
 	const instance = instances[id] as BuiltIn;
 
 	try {
-		instance.shutdown?.();
+		await instance.shutdown?.();
 		started.delete(id);
 	} catch (e) {
 		started.add(id);
-		Logger.error(`Failed to shutdown built-in ${id}:`, e.message);
+		Logger.error(`Failed to shutdown built-in ${id}: ${e.message}`);
 	}
 }
 
-function onSettingsChange({ store, key, value }: { store: string, key: string, value: any; }) {
+async function onSettingsChange({ store, key, value }: { store: string, key: string, value: any; }) {
 	if (store !== 'unbound') return;
 
 	for (const id in instances) {
@@ -65,7 +65,7 @@ function onSettingsChange({ store, key, value }: { store: string, key: string, v
 
 			handler(id);
 		} else if (instance.data.settings?.includes(key) && started.has(id)) {
-			stop(id);
+			await stop(id);
 			start(id);
 		};
 	}

@@ -1,11 +1,11 @@
 import { Constants, Theme, React, ReactNative as RN, StyleSheet, i18n } from '@metro/common';
-import { Addon, Author } from '@typings/managers';
 import { capitalize, mergeStyles } from '@utilities';
+import { showConfirmationAlert } from '@api/dialogs';
+import { Addon, Author } from '@typings/managers';
+import { BundleManager } from '@api/native';
 import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';
-import { reload } from '@api/native';
 import { Profiles } from '@metro/ui';
-import Dialog, { showConfirmationAlert } from '@api/dialogs';
 
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
@@ -113,7 +113,7 @@ export default class extends React.Component<AddonCardProps> {
 							title: i18n.Messages.UNBOUND_CHANGE_RESTART,
 							content: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
 							confirmText: i18n.Messages.UNBOUND_RESTART,
-							onConfirm: async () => await reload()
+							onConfirm: BundleManager.reload
 						});
 					}
 				}}
