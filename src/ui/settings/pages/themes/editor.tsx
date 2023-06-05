@@ -16,7 +16,7 @@ export default ({ initial }) => {
 		<Forms.FormSection style={{ flex: 1 }}>
 			{keys.map(k => <Forms.FormRow
 				key={k}
-				label={k.split("_").map(k => capitalize(k.toLowerCase()))}
+				label={k.split('_').map(k => capitalize(k.toLowerCase()))}
 			/>)}
 		</Forms.FormSection>
 	</RN.ScrollView >;

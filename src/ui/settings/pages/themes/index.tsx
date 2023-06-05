@@ -1,4 +1,5 @@
-import { i18n, React, ReactNative as RN } from '@metro/common';
+import { i18n, React, ReactNative as RN, Theme } from '@metro/common';
+import { Theme as ThemeStore } from '@metro/stores';
 import Themes from '@managers/themes';
 import { Screens } from '@constants';
 import { Icons } from '@api/assets';
@@ -8,6 +9,8 @@ import InstallModal from '@ui/settings/components/installmodal';
 import Addons from '@ui/settings/components/addons';
 import { Navigation } from '@metro/components';
 import Editor from './editor';
+
+const { colors, meta: { resolveSemanticColor } } = Theme
 
 export default () => {
 	const navigation = Navigation.useNavigation();
@@ -37,7 +40,11 @@ function Add() {
 
 	return <RN.Pressable
 		hitSlop={25}
-		style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1.0, marginRight: 20 })}
+		style={({ pressed }) => ({ 
+            opacity: pressed ? 0.5 : 1.0, 
+            marginRight: 16, 
+            tintColor: colors.INTERACTIVE_NORMAL 
+        })}
 		onPress={() => {
 			Dialog.confirm({
 				title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
@@ -65,6 +72,9 @@ function Add() {
 				}
 			});
 		}}>
-		<RN.Image source={Icons['ic_add_circle']} />
+		<RN.Image 
+            source={Icons['ic_add_circle']} 
+            style={{ tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL) }} 
+        />
 	</RN.Pressable>;
 }

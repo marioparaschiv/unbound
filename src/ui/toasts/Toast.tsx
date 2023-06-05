@@ -172,7 +172,7 @@ function Toast(options: InternalToastOptions) {
 
 	return (
 		<Animated.View style={[styles.main, styles.container, style]}>
-			<RN.Button onPress={() => (width.value = Math.random() * 300)} title="Hey" />
+			<RN.Button onPress={() => (width.value = Math.random() * 300)} title='Hey' />
 		</Animated.View>
 	);
 	// const [dimensions, setDimensions] = React.useState(null);

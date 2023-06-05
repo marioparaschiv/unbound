@@ -28,7 +28,7 @@ const config: RollupOptions = {
 	],
 
 	plugins: [
-		paths({ preserveExtensions: true, nonRelative: true }),
+		paths({ preserveExtensions: true, nonRelative: false }),
 		node(),
 		json(),
 		replace({ preventAssignment: true, __VERSION__: revision }),

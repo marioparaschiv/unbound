@@ -2,10 +2,9 @@ import type { Addon } from '@typings/managers';
 
 import { Constants, i18n, React, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { useSettingsStore } from '@api/storage';
-import { capitalize } from '@utilities';
 import { managers } from '@api';
 
-import { HelpMessage } from '@metro/components';
+import { HelpMessage, Navigation } from '@metro/components';
 import { Search } from '@ui/components';
 import AddonCard from './addoncard';
 import { Icons } from '@api/assets';
@@ -43,6 +42,7 @@ const styles = StyleSheet.createThemedStyleSheet({
 export default function ({ addons, type, shouldRestart }: AddonListProps) {
 	const [search, setSearch] = React.useState('');
 	const settings = useSettingsStore('unbound');
+    const navigation = Navigation.useNavigation();
 
 	const data = search ? [] : addons;
 	const isRecovery = settings.get('recovery', false);
@@ -80,6 +80,7 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 					shouldRestart={shouldRestart}
 					manager={managers[type]}
 					addon={item.item}
+                    navigation={navigation}
 				/>}
 				ListEmptyComponent={<RN.View style={styles.empty}>
 					<RN.Image

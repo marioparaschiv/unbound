@@ -10,12 +10,15 @@ import { Profiles } from '@metro/ui';
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 import { Icons } from '@api/assets';
+import { ManagerType } from '@managers/base';
+import { Screens } from '@constants';
 
 interface AddonCardProps {
 	manager: typeof Plugins | typeof Themes;
 	shouldRestart: boolean;
 	recovery: boolean;
 	addon: Addon;
+    navigation: any;
 }
 
 export default class extends React.Component<AddonCardProps> {
@@ -88,8 +91,20 @@ export default class extends React.Component<AddonCardProps> {
 		const { addon, manager, shouldRestart, recovery } = this.props;
 
 		return <>
+            {manager.type === ManagerType.Plugins && addon.instance?.settings && <RN.Pressable
+                style={({ pressed }) => ({ opacity: pressed ? 0.25 : 1.0, ...this.styles.controlButton })}
+				hitSlop={15}
+                onPress={() => {
+                    this.props.navigation.push(Screens.Custom, {
+						title: addon.data.name,
+						render: addon.instance.settings
+					})
+                }}
+            >
+                <RN.Image source={Icons['settings']} style={this.styles.icon} />  
+            </RN.Pressable>}
 			<RN.Pressable
-				style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1.0, ...this.styles.controlButton })}
+				style={({ pressed }) => ({ opacity: pressed ? 0.25 : 1.0, ...this.styles.controlButton })}
 				hitSlop={15}
 				onPress={() => {
 					showConfirmationAlert({
@@ -100,11 +115,15 @@ export default class extends React.Component<AddonCardProps> {
 					});
 				}}
 			>
-				<RN.Image source={Icons['trash']} />
+				<RN.Image source={Icons['trash']} style={this.styles.icon} />  
 			</RN.Pressable>
 			<RN.Switch
 				disabled={addon.failed || recovery}
 				value={manager.isEnabled(addon.id)}
+                trackColor={{
+                    false: Theme.colors.BACKGROUND_FLOATING,
+                    true: Theme.colors.HEADER_PRIMARY
+                }}
 				onChange={() => {
 					manager.toggle(addon.id);
 
@@ -215,6 +234,11 @@ export default class extends React.Component<AddonCardProps> {
 				android: 2.5,
 				ios: 10
 			})
-		}
+		},
+        icon: {
+            width: 22,
+            height: 22,
+            tintColor: Theme.colors.INTERACTIVE_NORMAL
+        }
 	});
 }

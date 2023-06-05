@@ -99,5 +99,6 @@ export default function () {
 				})}
 			/>
 		</Forms.FormSection>
+        <ReactNative.View style={{ marginBottom: 50 }} />
 	</ReactNative.ScrollView>;
 }
