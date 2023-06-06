@@ -27,8 +27,8 @@ export class TabsSettings extends Settings {
     };
 
     private patchConstants() {
-        this.Config._SETTING_RENDERER_CONFIGS = this.Config.SETTING_RENDERER_CONFIGS;
-        this.Config._SETTING_RELATIONSHIPS = this.Config.SETTING_RELATIONSHIPS;
+        this.Config._SETTING_RENDERER_CONFIGS = { ...this.Config.SETTING_RENDERER_CONFIGS };
+        this.Config._SETTING_RELATIONSHIPS = { ...this.Config.SETTING_RELATIONSHIPS };
 
         Object.assign(
             this.Config.SETTING_RENDERER_CONFIGS,
