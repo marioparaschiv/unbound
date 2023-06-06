@@ -1,7 +1,7 @@
 import { i18n, React, ReactNative as RN, Theme } from '@metro/common';
 import { Theme as ThemeStore } from '@metro/stores';
 import Themes from '@managers/themes';
-import { Screens } from '@constants';
+import { Keys } from '@constants';
 import { Icons } from '@api/assets';
 import { Dialog } from '@metro/ui';
 
@@ -16,13 +16,13 @@ export default () => {
 	const navigation = Navigation.useNavigation();
 	const addons = Themes.useEntities();
 
-
-	React.useEffect(() => {
-		navigation.setOptions({
-			title: addons.length ? `${i18n.Messages.UNBOUND_THEMES} - ${addons.length}` : i18n.Messages.UNBOUND_THEMES,
-			headerRight: () => <Add />
-		});
-	}, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+        unsubscribe();
+        navigation.setOptions({
+            title: addons.length ? `${i18n.Messages.UNBOUND_THEMES} - ${addons.length}` : i18n.Messages.UNBOUND_THEMES,
+            headerRight: () => <Add />
+        })
+    });
 
 	return <RN.View style={{ flex: 1 }}>
 		<Addons
@@ -55,7 +55,7 @@ function Add() {
 
 				// On theme create
 				onConfirm: () => {
-					navigation.push(Screens.Custom, {
+					navigation.push(Keys.Custom, {
 						title: i18n.Messages.UNBOUND_THEME_EDITOR,
 						render: () => Editor
 					});

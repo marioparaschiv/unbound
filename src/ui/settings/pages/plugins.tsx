@@ -14,12 +14,13 @@ export default () => {
 	const navigation = Navigation.useNavigation();
 	const addons = Plugins.useEntities();
 
-	React.useEffect(() => {
-		navigation.setOptions({
-			title: addons.length ? `${i18n.Messages.UNBOUND_PLUGINS} - ${addons.length}` : i18n.Messages.UNBOUND_PLUGINS,
-			headerRight: () => <HeaderRight />
-		});
-	}, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+        unsubscribe();
+        navigation.setOptions({
+            title: addons.length ? `${i18n.Messages.UNBOUND_PLUGINS} - ${addons.length}` : i18n.Messages.UNBOUND_PLUGINS,
+            headerRight: () => <HeaderRight />
+        })
+    });
 
 	return <RN.View style={{ flex: 1 }}>
 		<Addons

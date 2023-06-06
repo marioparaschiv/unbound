@@ -1,5 +1,5 @@
 import { Theme, i18n, React, ReactNative as RN, StyleSheet } from '@metro/common';
-import { Invite, Links, Screens } from '@constants';
+import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';
 import { BundleManager } from '@api/native';
 import { Invites } from '@metro/actions';
@@ -69,7 +69,7 @@ function General() {
 					label={i18n.Messages.UNBOUND_TOAST_SETTINGS}
 					leading={<Forms.FormRow.Icon source={Icons.Toasts} />}
 					trailing={Forms.FormRow.Arrow}
-					onPress={() => navigation.push(Screens.Custom, {
+					onPress={() => navigation.push(Keys.Custom, {
 						title: i18n.Messages.UNBOUND_TOAST_SETTINGS,
 						render: Toasts
 					})}
@@ -79,7 +79,7 @@ function General() {
 					label={i18n.Messages.UNBOUND_DEVELOPMENT_SETTINGS}
 					leading={<Forms.FormRow.Icon source={Icons.Development} />}
 					trailing={Forms.FormRow.Arrow}
-					onPress={() => navigation.push(Screens.Custom, {
+					onPress={() => navigation.push(Keys.Custom, {
 						title: i18n.Messages.UNBOUND_DEVELOPMENT_SETTINGS,
 						render: Developer
 					})}

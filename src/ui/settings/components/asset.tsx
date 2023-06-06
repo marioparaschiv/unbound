@@ -23,7 +23,7 @@ export default class extends React.PureComponent<{ item: Asset; }> {
         {item.name}
       </RN.Text>}
       leading={() => <RN.Image style={styles.image} source={item.id} />}
-      subLabel={item.type.toUpperCase()}
+      subLabel={`${item.type.toUpperCase()} - ${item.width}x${item.height}`}
       onPress={this.open.bind(this)}
     />;
   }

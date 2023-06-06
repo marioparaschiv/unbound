@@ -11,7 +11,7 @@ import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 import { Icons } from '@api/assets';
 import { ManagerType } from '@managers/base';
-import { Screens } from '@constants';
+import { Keys } from '@constants';
 
 interface AddonCardProps {
 	manager: typeof Plugins | typeof Themes;
@@ -95,7 +95,7 @@ export default class extends React.Component<AddonCardProps> {
                 style={({ pressed }) => ({ opacity: pressed ? 0.25 : 1.0, ...this.styles.controlButton })}
 				hitSlop={15}
                 onPress={() => {
-                    this.props.navigation.push(Screens.Custom, {
+                    this.props.navigation.push(Keys.Custom, {
 						title: addon.data.name,
 						render: addon.instance.settings
 					})

@@ -4,13 +4,13 @@ import { Icons } from '@api/assets';
 import Logger from '@stores/logger';
 
 export default function () {
-
 	const navigation = Navigation.useNavigation();
 	const store = Logger.useStore();
 
-	React.useEffect(() => {
-		navigation.setOptions({ headerRight: HeaderRight });
-	}, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+        unsubscribe();
+        navigation.setOptions({ headerRight: HeaderRight });
+    });
 
 	return <Forms.FormSection style={{ flex: 1 }}>
 		<RN.FlatList
