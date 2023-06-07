@@ -1,11 +1,12 @@
 import { findByName } from '@metro';
-import { Settings } from './base';
 import { findInReactTree } from '@utilities';
 import { i18n } from '@metro/common';
 import { Forms } from '@metro/components';
 import { ClientName, Keys } from '@constants';
 import { Icons } from '@api/assets';
 import * as Icon from '@ui/icons';
+
+import { Settings } from './base';
 
 export class PanelsSettings extends Settings {
     private Settings: { default: any };

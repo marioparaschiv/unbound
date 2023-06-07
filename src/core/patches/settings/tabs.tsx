@@ -1,11 +1,12 @@
-import { Settings } from './base';
 import { Icons } from '@api/assets';
 import { byName, byProps } from '@metro/filters';
-import { bulk } from '@metro';
+import { findByProps, bulk } from '@metro';
 import { ClientName, Keys } from '@constants';
 import { findInReactTree } from '@utilities';
-import { i18n } from '@metro/common';
-import { findByProps } from '@metro';
+import { Theme, i18n } from '@metro/common';
+import { Theme as ThemeStore } from '@metro/stores';
+
+import { Settings } from './base';
 
 export class TabsSettings extends Settings {
     private Config: Record<string, any>;
@@ -41,7 +42,16 @@ export class TabsSettings extends Settings {
                         getComponent: () => ({ route }) => {
                             const Screen = this.Screens[key];
 
-                            return <Screen {...route?.params ?? {}} />;
+                            return <ReactNative.View style={{
+                                width: "100%",
+                                height: "100%",
+                                backgroundColor: Theme.meta.resolveSemanticColor(
+                                    ThemeStore.theme, 
+                                    Theme.colors.BACKGROUND_SECONDARY_ALT
+                                )
+                            }}>
+                                <Screen {...route?.params ?? {}} />
+                            </ReactNative.View>
                         }
                     }
                 }
