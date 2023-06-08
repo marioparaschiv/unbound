@@ -97,7 +97,7 @@ export class TabsSettings extends Settings {
             res.results = res.results.filter(result => !Object.values(Keys).includes(result));
 
             Object.keys(Keys).filter(key => this.Mappables[key]).forEach(key => {
-                if ([Keys.General, this.Titles[key]].some(keyword => keyword.toLowerCase().includes(res.text.toLowerCase()))
+                if ([ClientName, this.Titles[key]].some(keyword => keyword.toLowerCase().includes(res.text.toLowerCase()))
                     && !res.results.find(result => result === Keys[key])) res.results.unshift(Keys[key]);
             });
         });
