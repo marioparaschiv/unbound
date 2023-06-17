@@ -55,9 +55,8 @@ class Manager extends EventEmitter {
 		this.save(bundle, manifest);
 		this.logger.debug('Loading...');
 
-        if (this.entities.has(manifest.id) && this.isEnabled(manifest.id)) {
-            this.logger.debug("Stopping existing instance...");
-            this.entities.get(manifest.id)?.instance?.stop?.();
+        if (this.started.has(manifest.id)) {
+            this.unload(manifest.id);
         }
 
 		this.load(bundle, manifest);
