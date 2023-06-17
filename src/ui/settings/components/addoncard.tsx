@@ -12,6 +12,7 @@ import Themes from '@managers/themes';
 import { Icons } from '@api/assets';
 import { ManagerType } from '@managers/base';
 import { Keys } from '@constants';
+import { get } from '@api/storage';
 
 interface AddonCardProps {
 	manager: typeof Plugins | typeof Themes;
@@ -111,7 +112,30 @@ export default class extends React.Component<AddonCardProps> {
 						title: i18n.Messages.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(manager.type) }),
 						content: i18n.Messages.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
 						confirmText: i18n.Messages.UNBOUND_UNINSTALL,
-						onConfirm: async () => await manager.delete(addon.id)
+						onConfirm: async () => {
+                            await manager.delete(addon.id);
+
+                            // TO-DO: Add these keys to I18N
+                            if (manager.type === ManagerType.Themes && get('theme-states', 'applied', '') === addon.data.id) {
+                                ReactNative.Alert.alert(
+                                    "Restart required",
+                                    "The applied theme was uninstalled. A restart is recommended to unload the theme properly.",
+                                    [
+                                        {
+                                            text: "Later",
+                                            isPreferred: false,
+                                            style: "cancel"
+                                        },
+                                        {
+                                            text: "Restart",
+                                            onPress: BundleManager.reload,
+                                            isPreferred: true,
+                                            style: "destructive"
+                                        }
+                                    ]
+                                )
+                            }
+                        }
 					});
 				}}
 			>

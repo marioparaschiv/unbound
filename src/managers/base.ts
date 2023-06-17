@@ -106,13 +106,13 @@ class Manager extends EventEmitter {
 		this.emit('updated');
 	}
 
-	delete(entity: Resolveable) {
+	async delete(entity: Resolveable) {
 		const addon = this.resolve(entity);
 		if (!addon) return;
 
 		try {
 			this.unload(addon);
-			Files.writeFile('documents', `${this.path}/${addon.data.name}/.delete`, '', 'utf8');
+			await Files.writeFile('documents', `${this.path}/${addon.data.name}/.delete`, '', 'utf8');
 		} catch (e) {
 			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message);
 		}
