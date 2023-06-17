@@ -54,6 +54,12 @@ class Manager extends EventEmitter {
 		this.logger.debug('Saving...');
 		this.save(bundle, manifest);
 		this.logger.debug('Loading...');
+
+        if (this.entities.has(manifest.id) && this.isEnabled(manifest.id)) {
+            this.logger.debug("Stopping existing instance...");
+            this.entities.get(manifest.id)?.instance?.stop?.();
+        }
+
 		this.load(bundle, manifest);
 		this.logger.debug('Loaded.');
 	}
@@ -90,7 +96,7 @@ class Manager extends EventEmitter {
 			id: manifest.id,
 			failed: data.failed,
 			started: false
-		} as Addon;
+		} satisfies Addon;
 
 		this.entities.set(manifest.id, addon);
 

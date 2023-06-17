@@ -47,7 +47,7 @@ export class TabsSettings extends Settings {
                                 height: "100%",
                                 backgroundColor: Theme.meta.resolveSemanticColor(
                                     ThemeStore.theme, 
-                                    Theme.colors.BACKGROUND_SECONDARY_ALT
+                                    Theme.colors.BACKGROUND_MOBILE_PRIMARY
                                 )
                             }}>
                                 <Screen {...route?.params ?? {}} />
@@ -156,8 +156,8 @@ export class TabsSettings extends Settings {
     public override remove() {
         this.patcher.unpatchAll();
 
-        this.Config.SETTING_RENDERER_CONFIGS = this.Config._SETTING_RENDERER_CONFIGS
-        this.Config.SETTING_RELATIONSHIPS = this.Config._SETTING_RELATIONSHIPS
+        this.Config.SETTING_RENDERER_CONFIGS = { ...this.Config._SETTING_RENDERER_CONFIGS }
+        this.Config.SETTING_RELATIONSHIPS = { ...this.Config._SETTING_RELATIONSHIPS }
 
         delete this.Config._SETTING_RENDERER_CONFIGS;
         delete this.Config._SETTING_RELATIONSHIPS;
