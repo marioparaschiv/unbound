@@ -1,4 +1,4 @@
-import { ReactNative as RN, StyleSheet, Theme } from '@metro/common';
+import { Constants, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import type Plugins from '@managers/plugins';
 import type Themes from '@managers/themes';
 
@@ -17,7 +17,8 @@ class InstallModal extends React.PureComponent<InstallModalProps> {
 				value={this.state.url}
 				placeholder='https://example.com/'
 				placeholderTextColor={Theme.unsafe_rawColors.PRIMARY_400}
-				autoFocus
+                autoFocus
+                inputMode={"url"}
 			/>
 		</>;
 	}
@@ -32,7 +33,8 @@ class InstallModal extends React.PureComponent<InstallModalProps> {
 			borderBottomWidth: 2,
 			marginTop: 10,
 			borderBottomColor: Theme.colors.CONTROL_BRAND_FOREGROUND_NEW ?? Theme.colors.CONTROL_BRAND_FOREGROUND,
-			color: Theme.colors.TEXT_NORMAL
+			color: Theme.colors.TEXT_NORMAL,
+            fontFamily: Constants.Fonts.DISPLAY_NORMAL
 		}
 	});
 }

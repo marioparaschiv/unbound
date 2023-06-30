@@ -1,4 +1,5 @@
 export { default as findInReactTree } from './findInReactTree';
+export { default as unprocessColor } from './unprocessColor';
 export { default as forceRender } from './forceRender';
 export { default as mergeStyles } from './mergeStyles';
 export { default as capitalize } from './capitalize';

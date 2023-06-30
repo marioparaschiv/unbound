@@ -7,8 +7,11 @@ import { Dialog } from '@metro/ui';
 
 import InstallModal from '@ui/settings/components/installmodal';
 import Addons from '@ui/settings/components/addons';
+import Home from './editor/home';
+
 import { Navigation } from '@metro/components';
-import Editor from './editor';
+import { useSettingsStore } from '@api/storage';
+import { inputs } from './editor/create';
 
 const { colors, meta: { resolveSemanticColor } } = Theme
 
@@ -35,6 +38,7 @@ export default () => {
 
 function Add() {
 	const navigation = Navigation.useNavigation();
+    const settings = useSettingsStore('create-theme')
 	const ref = React.useRef<InstanceType<typeof InstallModal>>();
 	const url = React.useCallback(() => ref.current?.getInput(), [ref.current]);
 
@@ -48,17 +52,19 @@ function Add() {
 		onPress={() => {
 			Dialog.confirm({
 				title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
-				confirmText: i18n.Messages.UNBOUND_THEME_GET_OPTION_CREATE,
+                // TO-DO: Add this to I18N as a replacement to the current GET_OPTION_CREATE
+				confirmText: "Editor",
 				cancelText: i18n.Messages.UNBOUND_THEME_GET_OPTION_IMPORT,
-
 				body: i18n.Messages.UNBOUND_THEME_GET_DESC,
 
 				// On theme create
 				onConfirm: () => {
 					navigation.push(Keys.Custom, {
 						title: i18n.Messages.UNBOUND_THEME_EDITOR,
-						render: () => Editor
+						render: Home
 					});
+
+                    inputs.forEach(({ key }) => settings.set(key, ""));
 				},
 
 				// On theme import
