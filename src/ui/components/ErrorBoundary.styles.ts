@@ -1,4 +1,4 @@
-import { Constants, StyleSheet, Theme } from "@metro/common";
+import { Constants, StyleSheet, Theme, ReactNative } from "@metro/common";
 
 export default StyleSheet.createThemedStyleSheet({
     container: {
@@ -11,25 +11,13 @@ export default StyleSheet.createThemedStyleSheet({
     },
 
     card: {
-        backgroundColor: Theme.colors.BACKGROUND_SECONDARY,
+        backgroundColor: Theme.colors.BACKGROUND_PRIMARY,
 
         marginHorizontal: 20,
         marginBottom: 20,
         borderRadius: 20,
 
         ...Theme.shadows.SHADOW_LOW
-    },
-
-    headerChainBackground: {
-        opacity: 0.5,
-
-        transform: [
-            { rotateZ: "-20deg" },
-            { scale: 1.6 }
-        ],
-
-        resizeMode: "cover",
-        objectFit: "cover"
     },
 
     headerChainIcon: {
@@ -54,7 +42,7 @@ export default StyleSheet.createThemedStyleSheet({
 
         marginTop: 20,
         marginBottom: 10,
-        marginLeft: 30,
+        marginLeft: 20,
     },
 
     headerBody: {
@@ -65,7 +53,7 @@ export default StyleSheet.createThemedStyleSheet({
         fontFamily: Constants.Fonts.PRIMARY_NORMAL,
 
         marginBottom: 20,
-        marginLeft: 30,
+        marginLeft: 20,
     },
 
     outlineTitle: {
@@ -81,11 +69,10 @@ export default StyleSheet.createThemedStyleSheet({
     },
 
     outlineCodeblock: {
-        height: 400,
-
         marginHorizontal: 10,
         marginBottom: 10,
 
-        borderRadius: 16
+        borderRadius: 16,
+        flexGrow: 1
     }
 })

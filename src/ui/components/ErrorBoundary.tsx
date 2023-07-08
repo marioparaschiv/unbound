@@ -11,6 +11,7 @@ import CodeBlock from "./CodeBlock";
 
 const RedesignComponents = findByProps("SegmentedControl", "Stack", { lazy: true });
 const Clipboard = findByProps("setString", "getString", { lazy: true });
+const { width } = ReactNative.Dimensions.get("window");
 
 interface ErrorBoundaryProps {
     error: Record<string, any>;
@@ -61,10 +62,10 @@ const Header = ({ res }: Pick<ErrorBoundaryProps, "res">) => {
 }
 
 const Outline = ({ state, error }) => {
-    let loadingTimeout;
+    let loadingTimeout: NodeJS.Timeout;
     const [loading, setLoading] = React.useState(false);
 
-    return <Card>
+    return <Card style={{ flexGrow: 1 }}>
         <RN.Text style={styles.outlineTitle}>
             Here's a detailed outline of what happened:
         </RN.Text>
@@ -83,7 +84,7 @@ const Outline = ({ state, error }) => {
                     clearTimeout(loadingTimeout);
 
                     setLoading(previous => !previous);
-                    loadingTimeout = setTimeout(() => setLoading(previous => !previous), 800)
+                    loadingTimeout = setTimeout(() => setLoading(previous => !previous), 400)
 
                     Clipboard.setString(error);
                 }}
@@ -100,7 +101,12 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, "retryRender">
         <RN.View style={{ margin: 10 }}>
             <RedesignComponents.SegmentedControl state={state} />
             <RN.View style={{ marginTop: 10, flexDirection: "row" }}>
-                <RN.View style={{ flexGrow: 1, marginRight: 10 }}>
+                <RN.View 
+                    style={{ 
+                        flexGrow: 1, 
+                        ...!settings.get("recovery", false) ? { marginRight: 10 } : {} 
+                    }}
+                >
                     <RedesignComponents.Button 
                         onPress={retryRender}
                         variant={"danger"}
@@ -110,18 +116,18 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, "retryRender">
                         text={"Retry Render"}
                     />
                 </RN.View>
-                <RedesignComponents.IconButton 
-                    icon={getIDByName("ic_shield_24px")}
-                    variant={"positive"}
-                    size={"md"}
-                    loading={loading}
-                    onPress={() => {
-                        settings.set("recovery", true);
-                        
-                        setLoading(previous => !previous);
-                        setTimeout(BundleManager.reload, 400);
-                    }}
-                />
+                {!settings.get("recovery", false) && (
+                    <RedesignComponents.IconButton 
+                        icon={getIDByName("ic_shield_24px")}
+                        variant={"positive"}
+                        size={"md"}
+                        loading={loading}
+                        onPress={() => {
+                            setLoading(previous => !previous);
+                            setTimeout(() => (settings.set("recovery", true), BundleManager.reload()), 400);
+                        }}
+                    />
+                )}
             </RN.View>
         </RN.View>
     </Card>
@@ -140,26 +146,29 @@ export default ({ error, retryRender, res }: ErrorBoundaryProps) => {
             return {
                 label,
                 id: label.toLowerCase(),
-                page: <CodeBlock selectable style={styles.outlineCodeblock}>
-                    {error}
-                </CodeBlock>
+                page: (
+                    <CodeBlock 
+                        selectable 
+                        style={styles.outlineCodeblock}
+                    >
+                        {error}
+                    </CodeBlock>
+                )
             }
         }),
-        pageWidth: ReactNative.Dimensions.get("window").width - 40,
+        pageWidth: width - 40,
         onPageChange: setIndex
     });
     
     return <RN.SafeAreaView style={styles.container}>
-        <RN.ScrollView>
-            <Header res={res} />
-            <Outline 
-                state={state}
-                error={possibleErrors[Object.keys(possibleErrors)[index]]}
-            />
-            <Actions 
-                retryRender={retryRender}
-                state={state}
-            />
-        </RN.ScrollView>
+        <Header res={res} />
+        <Outline 
+            state={state}
+            error={possibleErrors[Object.keys(possibleErrors)[index]]}
+        />
+        <Actions 
+            retryRender={retryRender}
+            state={state}
+        />
     </RN.SafeAreaView>
 }

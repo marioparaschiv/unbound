@@ -10,13 +10,13 @@ interface CodeblockProps {
 const styles = StyleSheet.createThemedStyleSheet({
     block: {
         fontFamily: Constants.Fonts.CODE_SEMIBOLD,
-        fontSize: 10,
+        fontSize: 12,
 
-        backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
+        backgroundColor: Theme.colors.BACKGROUND_SECONDARY_ALT,
         color: Theme.colors.TEXT_NORMAL,
         
         padding: 10
-    },
+    }
 });
 
 const IosBlock = ({ children, style, ...rest }) => (
