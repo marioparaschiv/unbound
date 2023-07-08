@@ -1,10 +1,9 @@
 import { BuiltIn } from '@typings/core/builtins';
-import { ErrorBoundary } from '@ui/components';
 import { createPatcher } from '@patcher';
 import { findByName } from '@metro';
+import { ErrorBoundary } from '@ui/components';
 
 const Patcher = createPatcher('error-boundary');
-
 const Boundary = findByName('ErrorBoundary');
 
 export const data: BuiltIn['data'] = {
@@ -16,9 +15,15 @@ export function initialize() {
 	if (!Boundary) return;
 
 	Patcher.after(Boundary.prototype, 'render', (self, _, res) => {
-		return <ErrorBoundary state={self.state}>
-			{res}
-		</ErrorBoundary>;
+		if (!self.state.error) return res;
+   
+        return (
+            <ErrorBoundary 
+                error={self.state.error}
+                retryRender={() => self.setState({ error: null, info: null })}
+                res={res} 
+            />
+        )
 	});
 }
 

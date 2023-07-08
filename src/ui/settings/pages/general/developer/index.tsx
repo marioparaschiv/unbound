@@ -78,6 +78,17 @@ export default function () {
                     onValueChange={() => settings.toggle('dev.errorBoundary', true)}
                 />}
             />
+            <Forms.FormRow
+                label={"Trigger ErrorBoundary"}
+                subLabel={"Trips the error boundary on purpose to visualise the effects of it."}
+                trailing={<Forms.FormArrow />}
+                onPress={() => navigation.push(Keys.Custom, {
+                    title: null,
+                    
+                    // @ts-expect-error -- purposefully trip the boundary by rendering undefined
+                    render: () => <undefined />
+                })}
+            />
             <Forms.FormDivider />
             <Forms.FormRow
                 label={i18n.Messages.UNBOUND_ASSET_BROWSER}
