@@ -1,10 +1,9 @@
-import { Constants, StyleSheet, Theme, ReactNative as RN } from "@metro/common";
-import { ViewStyle } from "react-native";
+import { Constants, StyleSheet, Theme, ReactNative as RN } from '@metro/common';
 
 interface CodeblockProps {
     selectable?: boolean;
     children: string
-    style?: ViewStyle;
+    style?: any;
 }
 
 const styles = StyleSheet.createThemedStyleSheet({

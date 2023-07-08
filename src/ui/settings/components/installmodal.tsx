@@ -18,7 +18,7 @@ class InstallModal extends React.PureComponent<InstallModalProps> {
 				placeholder='https://example.com/'
 				placeholderTextColor={Theme.unsafe_rawColors.PRIMARY_400}
                 autoFocus
-                inputMode={"url"}
+                inputMode={'url'}
 			/>
 		</>;
 	}

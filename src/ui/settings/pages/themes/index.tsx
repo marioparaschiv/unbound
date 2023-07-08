@@ -52,8 +52,7 @@ function Add() {
 		onPress={() => {
 			Dialog.confirm({
 				title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
-                // TO-DO: Add this to I18N as a replacement to the current GET_OPTION_CREATE
-				confirmText: "Editor",
+				confirmText: i18n.Messages.UNBOUND_THEME_GET_OPTION_CREATE,
 				cancelText: i18n.Messages.UNBOUND_THEME_GET_OPTION_IMPORT,
 				body: i18n.Messages.UNBOUND_THEME_GET_DESC,
 
@@ -64,7 +63,7 @@ function Add() {
 						render: Home
 					});
 
-                    inputs.forEach(({ key }) => settings.set(key, ""));
+                    inputs.forEach(({ key }) => settings.set(key, ''));
 				},
 
 				// On theme import

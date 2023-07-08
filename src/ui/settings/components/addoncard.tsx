@@ -91,6 +91,13 @@ export default class extends React.Component<AddonCardProps> {
 	renderControls() {
 		const { addon, manager, shouldRestart, recovery } = this.props;
 
+        const showRestartAlert = () => showConfirmationAlert({
+            title: i18n.Messages.UNBOUND_CHANGE_RESTART,
+            content: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
+            confirmText: i18n.Messages.UNBOUND_RESTART,
+            onConfirm: BundleManager.reload
+        });
+
 		return <>
             {manager.type === ManagerType.Plugins && addon.instance?.settings && <RN.Pressable
                 style={({ pressed }) => ({ opacity: pressed ? 0.25 : 1.0, ...this.styles.controlButton })}
@@ -115,25 +122,8 @@ export default class extends React.Component<AddonCardProps> {
 						onConfirm: async () => {
                             await manager.delete(addon.id);
 
-                            // TO-DO: Add these keys to I18N
                             if (manager.type === ManagerType.Themes && get('theme-states', 'applied', '') === addon.data.id) {
-                                ReactNative.Alert.alert(
-                                    "Restart required",
-                                    "The applied theme was uninstalled. A restart is recommended to unload the theme properly.",
-                                    [
-                                        {
-                                            text: "Later",
-                                            isPreferred: false,
-                                            style: "cancel"
-                                        },
-                                        {
-                                            text: "Restart",
-                                            onPress: BundleManager.reload,
-                                            isPreferred: true,
-                                            style: "destructive"
-                                        }
-                                    ]
-                                )
+                                showRestartAlert();
                             }
                         }
 					});
@@ -152,12 +142,7 @@ export default class extends React.Component<AddonCardProps> {
 					manager.toggle(addon.id);
 
 					if (shouldRestart) {
-						showConfirmationAlert({
-							title: i18n.Messages.UNBOUND_CHANGE_RESTART,
-							content: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
-							confirmText: i18n.Messages.UNBOUND_RESTART,
-							onConfirm: BundleManager.reload
-						});
+						showRestartAlert();
 					}
 				}}
 			/>

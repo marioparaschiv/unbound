@@ -1,11 +1,11 @@
-import { Constants, StyleSheet, Theme, ReactNative } from "@metro/common";
+import { Constants, StyleSheet, Theme, ReactNative } from '@metro/common';
 
 export default StyleSheet.createThemedStyleSheet({
     container: {
         backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
   
-        width: "100%",
-        height: "100%",
+        width: '100%',
+        height: '100%',
   
         flex: 1
     },
@@ -22,19 +22,19 @@ export default StyleSheet.createThemedStyleSheet({
 
     headerChainIcon: {
         width: undefined,
-        height: "40%",
+        height: '40%',
         aspectRatio: 1,
 
         right: 30,
-        top: "30%",
+        top: '30%',
 
         borderRadius: 1000,
-        position: "absolute",
+        position: 'absolute',
     },
 
     headerTitle: {
         color: Theme.colors.HEADER_PRIMARY,
-        width: "60%",
+        width: '60%',
 
         fontSize: 22,
         fontFamily: Constants.Fonts.PRIMARY_BOLD,
@@ -47,7 +47,7 @@ export default StyleSheet.createThemedStyleSheet({
 
     headerBody: {
         color: Theme.colors.TEXT_NORMAL,
-        width: "50%",
+        width: '50%',
 
         fontSize: 18,
         fontFamily: Constants.Fonts.PRIMARY_NORMAL,
@@ -58,8 +58,8 @@ export default StyleSheet.createThemedStyleSheet({
 
     outlineTitle: {
         color: Theme.colors.TEXT_NORMAL,
-        width: "100%",
-        textAlign: "center",
+        width: '100%',
+        textAlign: 'center',
 
         fontSize: 18,
         fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,

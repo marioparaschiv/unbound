@@ -43,8 +43,8 @@ export class TabsSettings extends Settings {
                             const Screen = this.Screens[key];
 
                             return <ReactNative.View style={{
-                                width: "100%",
-                                height: "100%",
+                                width: '100%',
+                                height: '100%',
                                 backgroundColor: Theme.meta.resolveSemanticColor(
                                     ThemeStore.theme, 
                                     Theme.colors.BACKGROUND_MOBILE_PRIMARY

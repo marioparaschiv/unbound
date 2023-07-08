@@ -1,14 +1,14 @@
-import { Icons } from "@api/assets";
-import { Constants, StyleSheet, Theme } from "@metro/common";
-import { Forms } from "@metro/components";
+import { Icons } from '@api/assets';
+import { Constants, StyleSheet, Theme } from '@metro/common';
+import { Forms } from '@metro/components';
 
 export const styles = StyleSheet.createThemedStyleSheet({
     background: {
-        height: "100%",
+        height: '100%',
         justifyContent: 'center',
     },
     shadow: {
-        shadowColor: "#000",
+        shadowColor: '#000',
         shadowOffset: {
             width: 1,
             height: 4,
@@ -37,7 +37,7 @@ export const styles = StyleSheet.createThemedStyleSheet({
 
         marginTop: 24,
         marginBottom: 8,
-        textAlign: "center"
+        textAlign: 'center'
     },
     subheader: {
         color: Theme.colors.HEADER_SECONDARY,
@@ -46,7 +46,7 @@ export const styles = StyleSheet.createThemedStyleSheet({
         fontFamily: Constants.Fonts.DISPLAY_NORMAL,
 
         marginHorizontal: 8,
-        textAlign: "center"
+        textAlign: 'center'
     },
     button: {
         borderRadius: 12, 
@@ -58,7 +58,7 @@ export const styles = StyleSheet.createThemedStyleSheet({
         fontSize: 14,
         fontFamily: Constants.Fonts.DISPLAY_BOLD,
 
-        textAlign: "center"
+        textAlign: 'center'
     },
     eyebrow: {
         color: Theme.colors.TEXT_MUTED,
@@ -79,7 +79,7 @@ export const styles = StyleSheet.createThemedStyleSheet({
         borderColor: Theme.colors.HEADER_PRIMARY
     },
     input: {
-        width: "100%",
+        width: '100%',
         height: 40,
         borderBottomWidth: 2,
         marginHorizontal: 8,
@@ -102,10 +102,10 @@ export const ToggleableSection = ({ title, style = {}, children, trailing, ...re
     return <ReactNative.View>
         <Forms.FormRow 
             label={title}
-            trailing={<ReactNative.View style={{ flexDirection: "row" }}>
+            trailing={<ReactNative.View style={{ flexDirection: 'row' }}>
                 {trailing}
                 <Forms.FormRow.Icon 
-                    source={Icons[`ic_arrow${hidden ? "" : "_down"}`]} 
+                    source={Icons[`ic_arrow${hidden ? '' : '_down'}`]} 
                     style={styles.icon}
                 />
             </ReactNative.View>}
@@ -114,8 +114,8 @@ export const ToggleableSection = ({ title, style = {}, children, trailing, ...re
                 ReactNative.LayoutAnimation.configureNext({ 
                     duration: 300,
                     create: { type: 'keyboard', property: 'opacity' },
-                    update: { type: "easeInEaseOut" },
-                    delete: { type: "easeInEaseOut", property: "opacity" }
+                    update: { type: 'easeInEaseOut' },
+                    delete: { type: 'easeInEaseOut', property: 'opacity' }
                 });
             }}
             {...rest}

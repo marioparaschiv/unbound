@@ -79,8 +79,8 @@ export default function () {
                 />}
             />
             <Forms.FormRow
-                label={"Trigger ErrorBoundary"}
-                subLabel={"Trips the error boundary on purpose to visualise the effects of it."}
+                label={i18n.Messages.UNBOUND_ERROR_BOUNDARY_TRIGGER_TITLE}
+                subLabel={i18n.Messages.UNBOUND_ERROR_BOUNDARY_TRIGGER_DESC}
                 trailing={<Forms.FormArrow />}
                 onPress={() => navigation.push(Keys.Custom, {
                     title: null,

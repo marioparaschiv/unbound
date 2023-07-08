@@ -1,17 +1,17 @@
-import { ClientName } from "@constants";
-import { React, ReactNative as RN } from "@metro/common";
-import { findByProps } from "@metro";
+import { ClientName } from '@constants';
+import { i18n, React, ReactNative as RN } from '@metro/common';
+import { findByProps } from '@metro';
 
-import { getIDByName } from "@api/assets";
-import { useSettingsStore } from "@api/storage";
-import { BundleManager } from "@api/native";
+import { getIDByName } from '@api/assets';
+import { useSettingsStore } from '@api/storage';
+import { BundleManager } from '@api/native';
 
-import styles from "./ErrorBoundary.styles";
-import CodeBlock from "./CodeBlock";
+import styles from './ErrorBoundary.styles';
+import CodeBlock from './CodeBlock';
 
-const RedesignComponents = findByProps("SegmentedControl", "Stack", { lazy: true });
-const Clipboard = findByProps("setString", "getString", { lazy: true });
-const { width } = ReactNative.Dimensions.get("window");
+const RedesignComponents = findByProps('SegmentedControl', 'Stack', { lazy: true });
+const Clipboard = findByProps('setString', 'getString', { lazy: true });
+const { width } = ReactNative.Dimensions.get('window');
 
 interface ErrorBoundaryProps {
     error: Record<string, any>;
@@ -31,11 +31,11 @@ const Card = ({ style, ...props }: CardProps) => (
     />
 )
 
-const Header = ({ res }: Pick<ErrorBoundaryProps, "res">) => {
+const Header = ({ res }: Pick<ErrorBoundaryProps, 'res'>) => {
     return <Card>
-        <RN.View style={{ flexDirection: "column" }}>
+        <RN.View style={{ flexDirection: 'column' }}>
             <RN.Text style={styles.headerTitle}>
-                {res.props?.title?.replace("Discord", ClientName)}
+                {res.props?.title?.replace('Discord', ClientName)}
             </RN.Text>
             <RN.Text style={styles.headerBody}>
                 {res.props.body}
@@ -43,19 +43,19 @@ const Header = ({ res }: Pick<ErrorBoundaryProps, "res">) => {
         </RN.View>
 
         <RN.Image 
-            source={{ uri: "https://raw.githubusercontent.com/unbound-mod/assets/main/logo/logo.png" }}
+            source={{ uri: 'https://raw.githubusercontent.com/unbound-mod/assets/main/logo/logo.png' }}
             style={[styles.headerChainIcon, {
                 transform: [
-                    { rotateZ: "20deg" },
+                    { rotateZ: '20deg' },
                     { scale: 1.4 }
                 ],
                 opacity: 0.3,
-                overlayColor: "#00000055"
+                overlayColor: '#00000055'
             }]}
             blurRadius={6}
         />
         <RN.Image 
-            source={{ uri: "https://raw.githubusercontent.com/unbound-mod/assets/main/logo/logo.png" }}
+            source={{ uri: 'https://raw.githubusercontent.com/unbound-mod/assets/main/logo/logo.png' }}
             style={styles.headerChainIcon}
         />
     </Card>
@@ -67,18 +67,18 @@ const Outline = ({ state, error }) => {
 
     return <Card style={{ flexGrow: 1 }}>
         <RN.Text style={styles.outlineTitle}>
-            Here's a detailed outline of what happened:
+            {i18n.Messages.UNBOUND_ERROR_BOUNDARY_OUTLINE_TITLE}
         </RN.Text>
         <RedesignComponents.SegmentedControlPages state={state} />
         <RN.View style={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 20,
             right: 20
         }}>
             <RedesignComponents.IconButton 
-                icon={getIDByName("ic_message_copy")}
-                variant={"primary"}
-                size={"md"}
+                icon={getIDByName('ic_message_copy')}
+                variant={'primary'}
+                size={'md'}
                 loading={loading}
                 onPress={() => {
                     clearTimeout(loadingTimeout);
@@ -93,38 +93,38 @@ const Outline = ({ state, error }) => {
     </Card>
 }
 
-const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, "retryRender"> & { state: any }) => {
+const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'> & { state: any }) => {
     const [loading, setLoading] = React.useState(false);
     const settings = useSettingsStore('unbound');
 
     return <Card>
         <RN.View style={{ margin: 10 }}>
             <RedesignComponents.SegmentedControl state={state} />
-            <RN.View style={{ marginTop: 10, flexDirection: "row" }}>
+            <RN.View style={{ marginTop: 10, flexDirection: 'row' }}>
                 <RN.View 
                     style={{ 
                         flexGrow: 1, 
-                        ...!settings.get("recovery", false) ? { marginRight: 10 } : {} 
+                        ...!settings.get('recovery', false) ? { marginRight: 10 } : {} 
                     }}
                 >
                     <RedesignComponents.Button 
                         onPress={retryRender}
-                        variant={"danger"}
-                        size={"md"}
-                        icon={getIDByName("ic_message_retry")}
-                        iconPosition={"start"}
-                        text={"Retry Render"}
+                        variant={'danger'}
+                        size={'md'}
+                        icon={getIDByName('ic_message_retry')}
+                        iconPosition={'start'}
+                        text={i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_RETRY}
                     />
                 </RN.View>
-                {!settings.get("recovery", false) && (
+                {!settings.get('recovery', false) && (
                     <RedesignComponents.IconButton 
-                        icon={getIDByName("ic_shield_24px")}
-                        variant={"positive"}
-                        size={"md"}
+                        icon={getIDByName('ic_shield_24px')}
+                        variant={'positive'}
+                        size={'md'}
                         loading={loading}
                         onPress={() => {
                             setLoading(previous => !previous);
-                            setTimeout(() => (settings.set("recovery", true), BundleManager.reload()), 400);
+                            setTimeout(() => (settings.set('recovery', true), BundleManager.reload()), 400);
                         }}
                     />
                 )}
@@ -135,8 +135,8 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, "retryRender">
 
 export default ({ error, retryRender, res }: ErrorBoundaryProps) => {
     const possibleErrors = {
-        "Component": error.name + error.componentStack,
-        "Stack Trace": error.stack.replace(/(at .*) \(.*\)/g, "$1")
+        [i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_COMPONENT]: error.name + error.componentStack,
+        [i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_STACK_TRACE]: error.stack.replace(/(at .*) \(.*\)/g, '$1')
     };
 
     const [index, setIndex] = React.useState(0);
