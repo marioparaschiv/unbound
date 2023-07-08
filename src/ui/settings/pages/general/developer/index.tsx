@@ -78,6 +78,7 @@ export default function () {
                     onValueChange={() => settings.toggle('dev.errorBoundary', true)}
                 />}
             />
+            <Forms.FormDivider />
             <Forms.FormRow
                 label={i18n.Messages.UNBOUND_ERROR_BOUNDARY_TRIGGER_TITLE}
                 subLabel={i18n.Messages.UNBOUND_ERROR_BOUNDARY_TRIGGER_DESC}

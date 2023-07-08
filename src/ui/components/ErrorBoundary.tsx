@@ -97,7 +97,7 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'>
     const [loading, setLoading] = React.useState(false);
     const settings = useSettingsStore('unbound');
 
-    return <Card>
+    return <Card style={{ marginBottom: 0 }}>
         <RN.View style={{ margin: 10 }}>
             <RedesignComponents.SegmentedControl state={state} />
             <RN.View style={{ marginTop: 10, flexDirection: 'row' }}>
