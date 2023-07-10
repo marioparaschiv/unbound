@@ -11,7 +11,6 @@ import CodeBlock from './CodeBlock';
 
 const RedesignComponents = findByProps('SegmentedControl', 'Stack', { lazy: true });
 const Clipboard = findByProps('setString', 'getString', { lazy: true });
-const { width } = ReactNative.Dimensions.get('window');
 
 interface ErrorBoundaryProps {
     error: Record<string, any>;
@@ -50,10 +49,10 @@ const Header = ({ res }: Pick<ErrorBoundaryProps, 'res'>) => {
                     { scale: 1.4 }
                 ],
                 opacity: 0.3,
-                overlayColor: '#00000055'
             }]}
             blurRadius={6}
         />
+        
         <RN.Image 
             source={{ uri: 'https://raw.githubusercontent.com/unbound-mod/assets/main/logo/logo.png' }}
             style={styles.headerChainIcon}
@@ -69,7 +68,9 @@ const Outline = ({ state, error }) => {
         <RN.Text style={styles.outlineTitle}>
             {i18n.Messages.UNBOUND_ERROR_BOUNDARY_OUTLINE_TITLE}
         </RN.Text>
+
         <RedesignComponents.SegmentedControlPages state={state} />
+
         <RN.View style={{
             position: 'absolute',
             bottom: 20,
@@ -94,39 +95,34 @@ const Outline = ({ state, error }) => {
 }
 
 const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'> & { state: any }) => {
-    const [loading, setLoading] = React.useState(false);
     const settings = useSettingsStore('unbound');
 
     return <Card style={{ marginBottom: 0 }}>
         <RN.View style={{ margin: 10 }}>
             <RedesignComponents.SegmentedControl state={state} />
+
             <RN.View style={{ marginTop: 10, flexDirection: 'row' }}>
-                <RN.View 
-                    style={{ 
-                        flexGrow: 1, 
-                        ...!settings.get('recovery', false) ? { marginRight: 10 } : {} 
-                    }}
-                >
+                <RN.View style={!settings.get('recovery', false) ? { flex: 0.5, marginRight: 10 }: { flex: 1 }}>
                     <RedesignComponents.Button 
                         onPress={retryRender}
                         variant={'danger'}
                         size={'md'}
                         icon={getIDByName('ic_message_retry')}
                         iconPosition={'start'}
-                        text={i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_RETRY}
+                        text={i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_RETRY_RENDER}
                     />
                 </RN.View>
+
                 {!settings.get('recovery', false) && (
-                    <RedesignComponents.IconButton 
-                        icon={getIDByName('ic_shield_24px')}
-                        variant={'positive'}
-                        size={'md'}
-                        loading={loading}
-                        onPress={() => {
-                            setLoading(previous => !previous);
-                            setTimeout(() => (settings.set('recovery', true), BundleManager.reload()), 400);
-                        }}
-                    />
+                    <RN.View style={{ flex: 0.5 }}>
+                        <RedesignComponents.Button 
+                            onPress={() => (settings.set('recovery', true), BundleManager.reload())}
+                            icon={getIDByName('ic_shield_24px')}
+                            variant={'primary-alt'}
+                            size={'md'}
+                            text={i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_RECOVERY_MODE}
+                        />
+                    </RN.View>
                 )}
             </RN.View>
         </RN.View>
@@ -134,18 +130,26 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'>
 } 
 
 export default ({ error, retryRender, res }: ErrorBoundaryProps) => {
-    const possibleErrors = {
-        [i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_COMPONENT]: error.name + error.componentStack,
-        [i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_STACK_TRACE]: error.stack.replace(/(at .*) \(.*\)/g, '$1')
-    };
+    const possibleErrors = [
+        {
+            id: 'component',
+            label: i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_COMPONENT,
+            error: error.name + error.componentStack
+        },
+        {
+            id: 'stack',
+            label: i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_STACK_TRACE,
+            error: error.stack.replace(/(at .*) \(.*\)/g, '$1')
+        }
+    ]
 
     const [index, setIndex] = React.useState(0);
     const state = RedesignComponents.useSegmentedControlState({
         defaultIndex: 0,
-        items: Object.entries(possibleErrors).map(([label, error]) => {
+        items: possibleErrors.map(({ label, id, error }) => {
             return {
                 label,
-                id: label.toLowerCase(),
+                id,
                 page: (
                     <CodeBlock 
                         selectable 
@@ -156,7 +160,7 @@ export default ({ error, retryRender, res }: ErrorBoundaryProps) => {
                 )
             }
         }),
-        pageWidth: width - 40,
+        pageWidth: ReactNative.Dimensions.get('window').width - 40,
         onPageChange: setIndex
     });
     
@@ -164,7 +168,7 @@ export default ({ error, retryRender, res }: ErrorBoundaryProps) => {
         <Header res={res} />
         <Outline 
             state={state}
-            error={possibleErrors[Object.keys(possibleErrors)[index]]}
+            error={possibleErrors[index].error}
         />
         <Actions 
             retryRender={retryRender}

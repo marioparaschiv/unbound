@@ -18,50 +18,30 @@ const styles = StyleSheet.createThemedStyleSheet({
     }
 });
 
-const IosBlock = ({ children, style, ...rest }) => (
-    <RN.TextInput 
+const IosBlock = ({ children, style, ...rest }: CodeblockProps) => {
+    return <RN.TextInput 
         value={children}
         style={[styles.block, style]}
         editable={false}
         multiline
         {...rest}
     />
-)
+}
 
-const AndroidBlock = ({ selectable, children, style, ...rest }) => (
-    <RN.Text
+const AndroidBlock = ({ selectable, children, style, ...rest }: CodeblockProps) => {
+    return <RN.Text
         children={children} 
         style={[styles.block, style]}
         selectable={selectable}
         {...rest}
     />
-)
+}
 
-export default ({ selectable, children, style, ...rest }: CodeblockProps) => {
-    if (!selectable) return (
-        <AndroidBlock 
-            selectable={selectable} 
-            children={children} 
-            style={style} 
-            {...rest}
-        />
-    )
+export default ({ selectable, ...props }: CodeblockProps) => {
+    if (!selectable) return <AndroidBlock selectable={selectable} {...props} />
 
     return RN.Platform.select({
-        ios: (
-            <IosBlock
-                children={children} 
-                style={style} 
-                {...rest}
-            />
-        ),
-        default: (
-            <AndroidBlock 
-                selectable={selectable}
-                children={children}
-                style={style}
-                {...rest}
-            />
-        )
+        ios: <IosBlock {...props} />,
+        default: <AndroidBlock selectable={selectable} {...props} />
     })
 }

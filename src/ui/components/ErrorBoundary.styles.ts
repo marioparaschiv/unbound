@@ -1,4 +1,4 @@
-import { Constants, StyleSheet, Theme, ReactNative } from '@metro/common';
+import { Constants, StyleSheet, Theme } from '@metro/common';
 
 export default StyleSheet.createThemedStyleSheet({
     container: {
@@ -73,6 +73,8 @@ export default StyleSheet.createThemedStyleSheet({
         marginBottom: 10,
 
         borderRadius: 16,
-        flexGrow: 1
+        flexGrow: 1,
+
+        ...Theme.shadows.SHADOW_LOW
     }
 })
