@@ -13,10 +13,40 @@ export default function () {
 
 	const Icons = {
 		Debug: Assets.getIDByName('debug'),
-		Sparkle: Assets.getIDByName('ic_sparkle3')
+		Sparkle: Assets.getIDByName('ic_sparkle3'),
+        Trash: Assets.getIDByName('trash')
 	};
 
 	return <ReactNative.ScrollView>
+        <Forms.FormSection title={i18n.Messages.UNBOUND_MISC}>
+            <Forms.FormRow
+                label={i18n.Messages.UNBOUND_FORCE_GARBAGE_COLLECTION_TITLE}
+                subLabel={i18n.Messages.UNBOUND_FORCE_GARBAGE_COLLECTION_DESC}
+                leading={<Forms.FormRow.Icon source={Icons.Trash} />}
+                trailing={Forms.FormRow.Arrow}
+                onPress={window.gc}
+            />
+            <Forms.FormDivider />
+            <Forms.FormRow
+                label={i18n.Messages.UNBOUND_ASSET_BROWSER}
+                leading={<Forms.FormRow.Icon source={Icons.Sparkle} />}
+                trailing={Forms.FormRow.Arrow}
+                onPress={() => navigation.push(Keys.Custom, {
+                    title: i18n.Messages.UNBOUND_ASSET_BROWSER,
+                    render: AssetBrowser
+                })}
+            />
+            <Forms.FormDivider />
+            <Forms.FormRow
+                label={i18n.Messages.UNBOUND_DEBUG_LOGS}
+                leading={<Forms.FormRow.Icon source={Icons.Debug} />}
+                trailing={Forms.FormRow.Arrow}
+                onPress={() => navigation.push(Keys.Custom, {
+                    title: i18n.Messages.UNBOUND_DEBUG_LOGS,
+                    render: Logs
+                })}
+            />
+        </Forms.FormSection>
         <Forms.FormSection title={i18n.Messages.UNBOUND_DEBUG_BRIDGE} titleStyleType='no_border_or_margin'>
             <Forms.FormRow
                 label={i18n.Messages.UNBOUND_ENABLED}
@@ -69,7 +99,7 @@ export default function () {
                 title={i18n.Messages.UNBOUND_LOADER_CUSTOM_BUNDLE}
             />
         </Forms.FormSection>
-        <Forms.FormSection title={i18n.Messages.UNBOUND_MISC}>
+        <Forms.FormSection title={i18n.Messages.UNBOUND_ERROR_BOUNDARY}>
             <Forms.FormRow
                 label={i18n.Messages.UNBOUND_ERROR_BOUNDARY}
                 subLabel={i18n.Messages.UNBOUND_ERROR_BOUNDARY_DESC}
@@ -88,26 +118,6 @@ export default function () {
                     
                     // @ts-expect-error -- purposefully trip the boundary by rendering undefined
                     render: () => <undefined />
-                })}
-            />
-            <Forms.FormDivider />
-            <Forms.FormRow
-                label={i18n.Messages.UNBOUND_ASSET_BROWSER}
-                leading={<Forms.FormRow.Icon source={Icons.Sparkle} />}
-                trailing={Forms.FormRow.Arrow}
-                onPress={() => navigation.push(Keys.Custom, {
-                    title: i18n.Messages.UNBOUND_ASSET_BROWSER,
-                    render: AssetBrowser
-                })}
-            />
-            <Forms.FormDivider />
-            <Forms.FormRow
-                label={i18n.Messages.UNBOUND_DEBUG_LOGS}
-                leading={<Forms.FormRow.Icon source={Icons.Debug} />}
-                trailing={Forms.FormRow.Arrow}
-                onPress={() => navigation.push(Keys.Custom, {
-                    title: i18n.Messages.UNBOUND_DEBUG_LOGS,
-                    render: Logs
                 })}
             />
         </Forms.FormSection>

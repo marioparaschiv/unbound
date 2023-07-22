@@ -1,6 +1,6 @@
 import { ClientName } from '@constants';
-import { i18n, React, ReactNative as RN } from '@metro/common';
-import { findByProps } from '@metro';
+import { i18n, React, ReactNative as RN, Clipboard } from '@metro/common';
+import { Redesign } from '@metro/components';
 
 import { getIDByName } from '@api/assets';
 import { useSettingsStore } from '@api/storage';
@@ -8,9 +8,6 @@ import { BundleManager } from '@api/native';
 
 import styles from './ErrorBoundary.styles';
 import CodeBlock from './CodeBlock';
-
-const RedesignComponents = findByProps('SegmentedControl', 'Stack', { lazy: true });
-const Clipboard = findByProps('setString', 'getString', { lazy: true });
 
 interface ErrorBoundaryProps {
     error: Record<string, any>;
@@ -69,14 +66,14 @@ const Outline = ({ state, error }) => {
             {i18n.Messages.UNBOUND_ERROR_BOUNDARY_OUTLINE_TITLE}
         </RN.Text>
 
-        <RedesignComponents.SegmentedControlPages state={state} />
+        <Redesign.SegmentedControlPages state={state} />
 
         <RN.View style={{
             position: 'absolute',
             bottom: 20,
             right: 20
         }}>
-            <RedesignComponents.IconButton 
+            <Redesign.IconButton 
                 icon={getIDByName('ic_message_copy')}
                 variant={'primary'}
                 size={'md'}
@@ -99,11 +96,11 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'>
 
     return <Card style={{ marginBottom: 0 }}>
         <RN.View style={{ margin: 10 }}>
-            <RedesignComponents.SegmentedControl state={state} />
+            <Redesign.SegmentedControl state={state} />
 
             <RN.View style={{ marginTop: 10, flexDirection: 'row' }}>
                 <RN.View style={!settings.get('recovery', false) ? { flex: 0.5, marginRight: 10 }: { flex: 1 }}>
-                    <RedesignComponents.Button 
+                    <Redesign.Button 
                         onPress={retryRender}
                         variant={'danger'}
                         size={'md'}
@@ -115,7 +112,7 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'>
 
                 {!settings.get('recovery', false) && (
                     <RN.View style={{ flex: 0.5 }}>
-                        <RedesignComponents.Button 
+                        <Redesign.Button 
                             onPress={() => (settings.set('recovery', true), BundleManager.reload())}
                             icon={getIDByName('ic_shield_24px')}
                             variant={'primary-alt'}
@@ -144,7 +141,7 @@ export default ({ error, retryRender, res }: ErrorBoundaryProps) => {
     ]
 
     const [index, setIndex] = React.useState(0);
-    const state = RedesignComponents.useSegmentedControlState({
+    const state = Redesign.useSegmentedControlState({
         defaultIndex: 0,
         items: possibleErrors.map(({ label, id, error }) => {
             return {

@@ -29,6 +29,8 @@ export namespace Common {
 
 	export type Events = typeof import('events');
 
+    export type Clipboard = typeof import('@react-native-clipboard/clipboard').default;
+
 	// Discord
 
 	// export const REST = findByProps('getAPIBaseURL', { lazy: true });

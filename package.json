@@ -4,6 +4,7 @@
 		"build": "rollup -c --configPlugin rollup-plugin-swc3"
 	},
 	"devDependencies": {
+		"@react-native-clipboard/clipboard": "^1.11.2",
 		"@rollup/plugin-json": "^6.0.0",
 		"@rollup/plugin-node-resolve": "^15.0.2",
 		"@rollup/plugin-replace": "^5.0.2",

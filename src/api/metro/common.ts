@@ -5,6 +5,7 @@ import { findByProps } from '@metro';
 export const Reanimated: Common.Reanimated = findByProps('useAnimatedStyle', { lazy: true });
 export const Flux: Common.Flux = findByProps('Store', 'connectStores', { lazy: true });
 export const Moment: Common.Moment = findByProps('isMoment');
+export const Clipboard: Common.Clipboard = findByProps('setString', 'getString', 'setImage', 'getImage', { lazy: true });
 
 // Preloaded modules
 export const ReactNative: Common.ReactNative = window.ReactNative;

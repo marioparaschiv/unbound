@@ -1,6 +1,9 @@
 lockfileVersion: '6.0'
 
 devDependencies:
+  '@react-native-clipboard/clipboard':
+    specifier: ^1.11.2
+    version: 1.11.2
   '@rollup/plugin-json':
     specifier: ^6.0.0
     version: 6.0.0(rollup@3.21.8)
@@ -353,6 +356,13 @@ packages:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.0
       '@jridgewell/sourcemap-codec': 1.4.14
+    dev: true
+
+  /@react-native-clipboard/clipboard@1.11.2:
+    resolution: {integrity: sha512-bHyZVW62TuleiZsXNHS1Pv16fWc0fh8O9WvBzl4h2fykqZRW9a+Pv/RGTH56E3X2PqzHP38K5go8zmCZUoIsoQ==}
+    peerDependencies:
+      react: '>=16.0'
+      react-native: '>=0.57.0'
     dev: true
 
   /@react-native/virtualized-lists@0.72.4:
