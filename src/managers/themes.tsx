@@ -78,6 +78,7 @@ class Themes extends Manager {
 	async applyBackground(addon: Addon) {
 		// Avoid circular dependency
 		const { findByName } = await import('@metro');
+        const { Theme } = await import('@metro/stores');
 		const { instance: { background } } = addon;
 
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
@@ -86,7 +87,7 @@ class Themes extends Manager {
 			return <ReactNative.ImageBackground
 				blurRadius={typeof background.blur === 'number' ? background.blur : 0}
 				style={{ flex: 1, height: '100%' }}
-				source={{ uri: background.url }}
+				source={{ uri: typeof background.url === 'string' ? background.url : background.url[Theme.theme]}}
 				children={res}
 			/>;
 		});

@@ -16,9 +16,9 @@ const { NativeModules: { DCDChatManager }, Linking } = ReactNative;
 
 const actions = {
     install(parameters: URLSearchParams) {
-        const [type, url] = getBulkParameters("type", "url", parameters);
+        const [type, url] = getBulkParameters('type', 'url', parameters);
 
-        if (![type, url].every(k => typeof k === "string")) return;
+        if (![type, url].every(k => typeof k === 'string')) return;
 
         const addon = getAppropriateAddon(type);
 
@@ -28,11 +28,11 @@ const actions = {
     },
 
     uninstall(parameters: URLSearchParams) {
-        const [type, name] = getBulkParameters("type", "name", parameters);
+        const [type, name] = getBulkParameters('type', 'name', parameters);
 
-        if (![type, name].every(k => typeof k === "string")) return;
-        
-        let addon = getAppropriateAddon(type)
+        if (![type, name].every(k => typeof k === 'string')) return;
+
+        let addon = getAppropriateAddon(type);
 
         addon.delete(getAddonIdByName(addon.entities, name))
             .then(() => console.log(`Successfully uninstalled ${type}!`))
@@ -41,7 +41,7 @@ const actions = {
 }
 
 export function initialize() {
-    Patcher.before(DCDChatManager, "updateRows", (_, args) => {
+    Patcher.before(DCDChatManager, 'updateRows', (_, args) => {
         const rows = JSON.parse(args[1]);
 
         for (const row of rows) {
@@ -53,11 +53,11 @@ export function initialize() {
         args[1] = JSON.stringify(rows);
     })
 
-    Patcher.instead(Linking, "openURL", (self, args, orig) => {
-        if (!args[0].startsWith("unbound://")) return orig.apply(self, args);
+    Patcher.instead(Linking, 'openURL', (self, args, orig) => {
+        if (!args[0].startsWith('unbound://')) return orig.apply(self, args);
 
-        const parameters = new URLSearchParams(args[0].split("?")[1]);
-        const action = parameters.get("action");
+        const parameters = new URLSearchParams(args[0].split('?')[1]);
+        const action = parameters.get('action');
 
         if (!Object.keys(actions).includes(action)) return orig.apply(self, args);
 
@@ -103,16 +103,16 @@ function getAddonIdByName(entities: Map<string, Addon>, name: string) {
 
 function resolveProtocols(content) {
     return content.map(item => {
-        typeof item.content === "object" 
+        typeof item.content === 'object' 
             && (item.content = resolveProtocols(item.content))
 
-        if (typeof item?.content === "string"
-            && !["codeBlock", "inlineCode"].includes(item?.type)
+        if (typeof item?.content === 'string'
+            && !['codeBlock', 'inlineCode'].includes(item?.type)
             && item?.content?.match(/[a-zA-Z]+\:\/\//g) 
         ) return {
-            type: "link",
+            type: 'link',
             target: item.content,
-            content: [{ type: "text", content: item.content }]
+            content: [{ type: 'text', content: item.content }]
         }
 
         return item;
