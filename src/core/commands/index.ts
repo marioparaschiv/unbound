@@ -1,5 +1,11 @@
-import { default as debug } from './debug';
+import debug from './debug';
+import reload from './reload';
+import recovery from './recovery';
+import evaluate from './eval';
 
 export default [
-  debug
+  debug,
+  reload,
+  recovery,
+  evaluate
 ];

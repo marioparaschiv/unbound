@@ -94,7 +94,6 @@ export class TabsSettings extends Settings {
             { bulk: true }
         )
 
-
         this.patcher.after(SearchResults, 'useSettingSearchResults', (_, __, res) => {
             res = res.filter(result => !Object.values(Keys).includes(result));
 

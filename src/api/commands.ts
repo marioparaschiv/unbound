@@ -68,6 +68,7 @@ export function registerCommands(caller: string, cmds: ApplicationCommand[]): vo
 
 	for (const command in cmds) {
 		const cmd = cmds[command];
+        
 		cmds[command] = {
 			displayName: cmd.name,
 			displayDescription: cmd.description,
@@ -79,7 +80,7 @@ export function registerCommands(caller: string, cmds: ApplicationCommand[]): vo
 
 			// @ts-expect-error
 			__UNBOUND__: true,
-			caller: caller
+			caller
 		};
 	}
 

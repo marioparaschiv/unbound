@@ -3,7 +3,6 @@ import { findByProps } from '@metro';
 import Patcher from '@patcher';
 import { createLogger } from '@logger';
 
-
 export const assets = new Set<Asset>();
 export const registry = findByProps('registerAsset');
 
