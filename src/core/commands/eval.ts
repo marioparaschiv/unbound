@@ -47,15 +47,15 @@ function sendBotMessage(channelId: string, content: (string | object), username 
 
 export default {
 	name: 'eval',
-	description: 'Allows you to execute code through evaluation. DO NOT USE THIS IF YOU DON\'T KNOW WHAT YOU ARE DOING.',
+	description: 'Allows you to execute code through evaluation.',
 
     options: [
         {
             name: "src",
             displayName: "src",
 
-            description: "Source of the code to evaluate",
-            displayDescription: "Source of the code to evaluate",
+            description: "Source of the code to evaluate (BE CAREFUL AS PASTING CODE FROM RANDOM PEOPLE IS DANGEROUS)",
+            displayDescription: "Source of the code to evaluate (BE CAREFUL AS PASTING CODE FROM RANDOM PEOPLE IS DANGEROUS)",
             
             type: 3,
             required: true
