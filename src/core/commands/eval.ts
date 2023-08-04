@@ -7,8 +7,9 @@ const Clyde = findByProps('createBotMessage', { lazy: true });
 
 async function handleEvaluation(src: string) {
     const out = { res: null, err: null, time: null };
+    const isAsync = src.includes("await");
 
-    if (src.includes("await")) {
+    if (isAsync) {
         src = `(async function() { return ${src} })()`;
     }
   
@@ -17,7 +18,7 @@ async function handleEvaluation(src: string) {
     try {
         out.res = eval(src);
 
-        if (out.res instanceof Promise) {
+        if (isAsync) {
             out.res = await out.res;
         }
     } catch(err) {
