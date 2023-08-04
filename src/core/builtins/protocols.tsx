@@ -32,7 +32,7 @@ const actions = {
 
         if (![type, name].every(k => typeof k === 'string')) return;
 
-        let addon = getAppropriateAddon(type);
+        const addon = getAppropriateAddon(type);
 
         addon.delete(getAddonIdByName(addon.entities, name))
             .then(() => console.log(`Successfully uninstalled ${type}!`))

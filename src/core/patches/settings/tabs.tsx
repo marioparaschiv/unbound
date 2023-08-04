@@ -84,32 +84,38 @@ export class TabsSettings extends Settings {
 
     private patchSearch() {
         const [
-            Search,
+            SearchQuery,
+            SearchResults,
             Getters
         ] = findByProps(
-            { params: ['useSettingSearch'] },
-            { params: ['getSettingSearchListItems'] },
+            { params: ['getSettingSearchQuery'] },
+            { params: ['useSettingSearchResults'] },
+            { params: ['getSettingListSearchResultItems'] },
             { bulk: true }
         )
 
 
-        this.patcher.after(Search, 'useSettingSearch', (_, __, res) => {
-            res.results = res.results.filter(result => !Object.values(Keys).includes(result));
+        this.patcher.after(SearchResults, 'useSettingSearchResults', (_, __, res) => {
+            res = res.filter(result => !Object.values(Keys).includes(result));
 
             Object.keys(Keys).filter(key => this.Mappables[key]).forEach(key => {
-                if ([ClientName, this.Titles[key]].some(keyword => keyword.toLowerCase().includes(res.text.toLowerCase()))
-                    && !res.results.find(result => result === Keys[key])) res.results.unshift(Keys[key]);
+                const queryContainsKeyword = [ClientName, this.Titles[key]].some(keyword => 
+                    keyword.toLowerCase().includes(SearchQuery.getSettingSearchQuery().toLowerCase()));
+
+                if (queryContainsKeyword && !res.find(result => result === Keys[key])) res.unshift(Keys[key]);
             });
+
+            return res;
         });
 
-        this.patcher.after(Getters, 'getSettingSearchListItems', (_, [settings], res) => {
+        this.patcher.after(Getters, 'getSettingListSearchResultItems', (_, [settings], res) => {
             res = res.filter(item => !Object.values(Keys).includes(item.setting));
 
             Object.keys(Keys).reverse().forEach(key => {
                 if (settings.includes(Keys[key])) (
                     res.unshift({
                         type: 'setting_search_result',
-                        ancestorRendererData: this.Config.SETTING_RENDERER_CONFIGS[Keys[key]],
+                        ancestorSettingData: this.Config.SETTING_RENDERER_CONFIGS[Keys[key]],
                         setting: Keys[key],
                         title: this.Titles[key],
                         breadcrumbs: this.Breadcrumbs[key],
