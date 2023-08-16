@@ -3,8 +3,7 @@ import { byName, byProps } from '@metro/filters';
 import { findByProps, bulk } from '@metro';
 import { ClientName, Keys } from '@constants';
 import { findInReactTree } from '@utilities';
-import { Theme, i18n } from '@metro/common';
-import { Theme as ThemeStore } from '@metro/stores';
+import { i18n } from '@metro/common';
 
 import { Settings } from './base';
 
@@ -41,17 +40,7 @@ export class TabsSettings extends Settings {
                         route: Keys[key],
                         getComponent: () => ({ route }) => {
                             const Screen = this.Screens[key];
-
-                            return <ReactNative.View style={{
-                                width: '100%',
-                                height: '100%',
-                                backgroundColor: Theme.meta.resolveSemanticColor(
-                                    ThemeStore.theme, 
-                                    Theme.colors.BACKGROUND_MOBILE_PRIMARY
-                                )
-                            }}>
-                                <Screen {...route?.params ?? {}} />
-                            </ReactNative.View>
+                            return <Screen {...route?.params ?? {}} />;
                         }
                     }
                 }

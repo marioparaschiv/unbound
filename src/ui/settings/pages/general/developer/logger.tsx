@@ -1,68 +1,67 @@
 import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme, i18n } from '@metro/common';
-import { Forms, Navigation } from '@metro/components';
+import { Redesign, Navigation } from '@metro/components';
 import { Icons } from '@api/assets';
 import Logger from '@stores/logger';
+import { TableRowGroupWrapper } from '@ui/components';
+import AdvancedSearch, { useAdvancedSearch } from '@ui/components/AdvancedSearch';
+
+const searchContext = { type: "LOGGER" };
+const levelSelection = {
+    variant(level: number) {
+        return ['muted', 'normal', 'warning', 'danger'][level]
+    },
+
+    icon(level: number) {
+        return ['ic_settings', 'ic_chat_bubble_16px', 'ic_warning_24px', 'failure-header'][level]
+    }
+}
 
 export default function () {
 	const navigation = Navigation.useNavigation();
 	const store = Logger.useStore();
+    const [query, controls] = useAdvancedSearch(searchContext)
 
+    const data = React.useMemo(() => store.logs
+        .filter(item => item.message?.toLowerCase()?.includes(query))
+        .sort((a, b) => a.time - b.time), [query])
     const unsubscribe = navigation.addListener('focus', () => {
         unsubscribe();
         navigation.setOptions({ headerRight: HeaderRight });
     });
 
-	return <Forms.FormSection style={{ flex: 1 }}>
-		<RN.FlatList
-			data={store.logs.sort((a, b) => a.time - b.time)}
-			keyExtractor={(_, idx) => String(idx)}
-			ListEmptyComponent={<RN.View style={styles.empty}>
-				<RN.Image
-					style={styles.emptyImage}
-					source={Icons['img_connection_empty_dark']}
-				/>
-				<RN.Text style={styles.emptyMessage}>
-					{i18n.Messages.UNBOUND_LOGS_EMPTY}
-				</RN.Text>
-			</RN.View>}
-			ItemSeparatorComponent={Forms.FormDivider}
-			renderItem={({ item }) => {
-				// to-do: move this out of render to avoid event listener leak
-				const styles = StyleSheet.createThemedStyleSheet({
-					log: {
-						fontSize: 16,
-						fontFamily: Constants.Fonts.DISPLAY_SEMIBOLD,
-						color: (() => {
-							switch (item.level) {
-								case 1:
-									return Theme.colors.TEXT_NORMAL;
-								case 0:
-									return Theme.colors.TEXT_MUTED;
-								case 2:
-									return 'yellow';
-								case 3:
-									return 'red';
-							}
-						})(),
-					},
-					time: {
-						fontSize: 16,
-						fontFamily: Constants.Fonts.DISPLAY_SEMIBOLD,
-						color: Theme.colors.TEXT_MUTED
-					}
-				});
-
-				return <Forms.FormRow
-					label={() => <RN.Text style={styles.log}>
-						{item.message}
-					</RN.Text>}
-					subLabel={Moment(item.time).format('HH:mm:ss.SSS')}
-				/>;
-			}}
-		/>
-	</Forms.FormSection>;
+	return <RN.View>
+        <RN.View style={{ marginHorizontal: 16, marginBottom: 12 }}>
+            <AdvancedSearch 
+                searchContext={searchContext}
+                controls={controls}
+            />
+        </RN.View>
+        <TableRowGroupWrapper style={{ flex: 1, marginBottom: 16 }} margin={false}>
+            <RN.FlatList
+                data={data}
+                keyExtractor={(_, idx) => String(idx)}
+                scrollEnabled={false}
+                ListEmptyComponent={<RN.View style={styles.empty}>
+                    <RN.Image
+                        style={styles.emptyImage}
+                        source={Icons['img_connection_empty_dark']}
+                    />
+                    <RN.Text style={styles.emptyMessage}>
+                        {i18n.Messages.UNBOUND_LOGS_EMPTY}
+                    </RN.Text>
+                </RN.View>}
+                renderItem={({ item }) => {
+                    return <Redesign.TableRow
+                        label={item.message}
+                        subLabel={Moment(item.time).format('HH:mm:ss.SSS')}
+                        variant={levelSelection.variant(item.level)}
+                        icon={<Redesign.TableRowIcon source={Icons[levelSelection.icon(item.level)]} />}
+                    />;
+                }}
+            />
+        </TableRowGroupWrapper>
+    </RN.View>
 }
-
 
 const styles = StyleSheet.createThemedStyleSheet({
 	touchable: {

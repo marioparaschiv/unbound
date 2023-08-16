@@ -2,6 +2,7 @@ import { Addon, Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
 import Storage from '@api/storage';
+import { findInReactTree } from '@utilities';
 
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
@@ -77,11 +78,12 @@ class Themes extends Manager {
 
 	async applyBackground(addon: Addon) {
 		// Avoid circular dependency
-		const { findByName } = await import('@metro');
+		const { findByName, findByProps } = await import('@metro');
         const { Theme } = await import('@metro/stores');
 		const { instance: { background } } = addon;
 
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
+        const { MessagesWrapper } = findByProps('MessagesWrapper');
 
 		this.patcher.after(Chat, 'default', (_, __, res) => {
 			return <ReactNative.ImageBackground
@@ -91,6 +93,17 @@ class Themes extends Manager {
 				children={res}
 			/>;
 		});
+
+        this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {
+            const Messages = findInReactTree(res, x => 
+                'HACK_fixModalInteraction' in x.props 
+                && x.props?.style
+            );
+
+            if (Messages) {
+                Messages.props.style = [Messages.props.style, { backgroundColor: '#00000000' }]
+            }
+        })
 	}
 
 	override toggle(entity: Resolveable): void {

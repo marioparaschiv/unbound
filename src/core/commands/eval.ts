@@ -7,7 +7,7 @@ const Clyde = findByProps('createBotMessage', { lazy: true });
 
 async function handleEvaluation(src: string) {
     const out = { res: null, err: null, time: null };
-    const isAsync = src.includes("await");
+    const isAsync = src.includes('await');
 
     if (isAsync) {
         src = `(async function() { return ${src} })()`;
@@ -51,11 +51,11 @@ export default {
 
     options: [
         {
-            name: "src",
-            displayName: "src",
+            name: 'src',
+            displayName: 'src',
 
-            description: "Source of the code to evaluate (BE CAREFUL AS PASTING CODE FROM RANDOM PEOPLE IS DANGEROUS)",
-            displayDescription: "Source of the code to evaluate (BE CAREFUL AS PASTING CODE FROM RANDOM PEOPLE IS DANGEROUS)",
+            description: 'Source of the code to evaluate (BE CAREFUL AS PASTING CODE FROM RANDOM PEOPLE IS DANGEROUS)',
+            displayDescription: 'Source of the code to evaluate (BE CAREFUL AS PASTING CODE FROM RANDOM PEOPLE IS DANGEROUS)',
             
             type: 3,
             required: true
@@ -63,12 +63,12 @@ export default {
     ],
 
 	async execute(args, context) {
-        const src: string = args.find(x => x.name === "src").value;
+        const src: string = args.find(x => x.name === 'src').value;
         const { res, err, time } = await handleEvaluation(src);
         
         sendBotMessage(
             context.channel.id, 
-            `${err ? "Failed executing" : "Successfully executed"} in ${time}ms
+            `${err ? 'Failed executing' : 'Successfully executed'} in ${time}ms
             \`\`\`js
             ${res}
             \`\`\`

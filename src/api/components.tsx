@@ -66,6 +66,8 @@ function initialize() {
 	});
 }
 
+export * from '@ui/components';
+
 export function add(name, component) {
 	if (!named.get(name)) {
 		named.set(name, component);

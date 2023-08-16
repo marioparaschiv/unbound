@@ -1,41 +1,47 @@
-import { React, ReactNative as RN, i18n } from '@metro/common';
+import { React, ReactNative as RN } from '@metro/common';
 import { assets } from '@api/assets';
 
-import { Forms, Search } from '@metro/components';
 import Asset from '@ui/settings/components/asset';
+import { TableRowGroupWrapper } from '@ui/components';
+import AdvancedSearch, { useAdvancedSearch } from '@ui/components/AdvancedSearch';
+import { findByProps } from '@metro';
+
+const DividerModule = findByProps('TableRowDivider', { lazy: true });
+
+const payload = [...assets.values()].filter(a => a.type === 'png');
+const searchContext = { type: 'ASSETS' }
 
 export default function () {
-	const [search, setSearch] = React.useState<string>();
+    const [query, controls] = useAdvancedSearch(searchContext);
 
-	const payload = [...assets.values()].filter(a => a.type === 'png');
-	const data = search ? [] : payload;
-
-	if (search) {
-		for (const asset of payload) {
-			if (
-				asset.name.toLowerCase().includes(search) ||
-				asset.httpServerLocation.toLowerCase().includes(search)
-			) {
-				data.push(asset);
-			}
-		}
-	}
+    const data = React.useMemo(() => {
+        return payload.filter((asset) => {
+            if (!query) return true;
+            return asset.name.toLowerCase().includes(query.toLowerCase());
+        })
+    }, [query])
 
 	return <RN.View>
-		<Search
-			placeholder={i18n.Messages.UNBOUND_SEARCH_ASSETS}
-			onChangeText={search => setSearch(search)}
-			onClear={() => setSearch('')}
-			value={search}
-		/>
-		<Forms.FormSection style={{ flex: 1 }}>
-			<RN.FlatList
-				keyExtractor={(_, idx) => String(idx)}
-				data={data}
-				ItemSeparatorComponent={Forms.FormDivider}
-				initialNumToRender={20}
-				renderItem={({ item }) => <Asset item={item} />}
-			/>
-		</Forms.FormSection>
+        <RN.View style={{ marginHorizontal: 16, marginBottom: 12 }}>
+            <AdvancedSearch 
+                searchContext={searchContext}
+                controls={controls}
+            />
+        </RN.View>
+        <TableRowGroupWrapper style={{ flex: 1, marginBottom: 160 }} margin={false}>
+            <RN.FlatList
+                keyExtractor={(asset) => asset.id.toString()}
+                data={data}
+                scrollEnabled={false}
+                ItemSeparatorComponent={DividerModule.TableRowDivider}
+                renderItem={({ item, index }) => (
+                    <Asset 
+                        item={item} 
+                        index={index} 
+                        total={data.length} 
+                    />
+                )}
+            />
+        </TableRowGroupWrapper>
 	</RN.View>;
 }

@@ -10,9 +10,12 @@ import Assets from '@api/assets';
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 
-import { Forms, Navigation } from '@metro/components';
+import { Redesign, Navigation } from '@metro/components';
+import { TableRowGroupWrapper } from '@ui/components';
 import Developer from './developer';
 import Toasts from './toasts';
+
+const { TableRow, TableSwitchRow, TableRowIcon } = Redesign;
 
 const styles = StyleSheet.createThemedStyleSheet({
 	trailingText: {
@@ -31,6 +34,8 @@ function General() {
 		Twitter: Assets.getIDByName('img_account_sync_twitter_white'),
 		GitHub: Assets.getIDByName('img_account_sync_github_white'),
 		Development: Assets.getIDByName('ic_progress_wrench_24px'),
+        Plugins: Assets.getIDByName('ic_activity_24px'),
+        Themes: Assets.getIDByName('ic_paint_brush'),
 		Toasts: Assets.getIDByName('ic_notification_settings'),
 		Retry: Assets.getIDByName('ic_message_retry'),
 		Discord: Assets.getIDByName('Discord'),
@@ -45,85 +50,80 @@ function General() {
 			keyboardVerticalOffset={100}
 			contentContainerStyle={{ backfaceVisibility: 'hidden' }}
 		>
-			<Forms.FormSection>
-				<Forms.FormRow
+			<TableRowGroupWrapper>
+				<TableSwitchRow
 					label={i18n.Messages.UNBOUND_RECOVERY_MODE}
 					subLabel={i18n.Messages.UNBOUND_RECOVERY_MODE_DESC}
-					leading={<Forms.FormRow.Icon source={Icons.Retry} />}
-					trailing={<Forms.FormSwitch
-						value={settings.get('recovery', false)}
-						onValueChange={() => {
-							settings.toggle('recovery', false);
-							Dialog.confirm({
-								title: i18n.Messages.UNBOUND_CHANGE_RESTART,
-								body: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
-								confirmText: i18n.Messages.UNBOUND_RESTART,
-								onConfirm: BundleManager.reload
-							});
-						}}
-					/>}
+					icon={<TableRowIcon source={Icons.Retry} />}
+					value={settings.get('recovery', false)}
+                    onValueChange={() => {
+                        settings.toggle('recovery', false);
+                        Dialog.confirm({
+                            title: i18n.Messages.UNBOUND_CHANGE_RESTART,
+                            body: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
+                            confirmText: i18n.Messages.UNBOUND_RESTART,
+                            onConfirm: BundleManager.reload,
+                            onCancel: () => settings.toggle('recovery', false)
+                        });
+                    }}
 				/>
-			</Forms.FormSection>
-			<Forms.FormSection>
-				<Forms.FormRow
+			</TableRowGroupWrapper>
+			<TableRowGroupWrapper>
+				<TableRow
 					label={i18n.Messages.UNBOUND_TOAST_SETTINGS}
-					leading={<Forms.FormRow.Icon source={Icons.Toasts} />}
-					trailing={Forms.FormRow.Arrow}
+					icon={<TableRowIcon source={Icons.Toasts} />}
 					onPress={() => navigation.push(Keys.Custom, {
 						title: i18n.Messages.UNBOUND_TOAST_SETTINGS,
 						render: Toasts
 					})}
+                    arrow
 				/>
-				<Forms.FormDivider />
-				<Forms.FormRow
+				<TableRow
 					label={i18n.Messages.UNBOUND_DEVELOPMENT_SETTINGS}
-					leading={<Forms.FormRow.Icon source={Icons.Development} />}
-					trailing={Forms.FormRow.Arrow}
+					icon={<TableRowIcon source={Icons.Development} />}
 					onPress={() => navigation.push(Keys.Custom, {
 						title: i18n.Messages.UNBOUND_DEVELOPMENT_SETTINGS,
 						render: Developer
 					})}
+                    arrow
 				/>
-			</Forms.FormSection>
-			<Forms.FormSection title={i18n.Messages.UNBOUND_INFO}>
-				<Forms.FormRow
+			</TableRowGroupWrapper>
+			<TableRowGroupWrapper title={i18n.Messages.UNBOUND_INFO}>
+				<TableRow
 					label='Installed Plugins'
-					leading={<Icon.Puzzle width={24} height={24} />}
-					trailing={() => <RN.Text style={styles.trailingText}>
+					icon={<TableRowIcon source={Icons.Plugins} />}
+					trailing={<RN.Text style={styles.trailingText}>
 						{Plugins.addons.length}
 					</RN.Text>}
 				/>
-				<Forms.FormDivider />
-				<Forms.FormRow
+				<TableRow
 					label='Installed Themes'
-					leading={<Icon.Palette width={24} height={24} />}
-					trailing={() => <RN.Text style={styles.trailingText}>
+					icon={<TableRowIcon source={Icons.Themes} />}
+					trailing={<RN.Text style={styles.trailingText}>
 						{Themes.addons.length}
 					</RN.Text>}
 				/>
-			</Forms.FormSection>
-			<Forms.FormSection title='Links'>
-				<Forms.FormRow
+			</TableRowGroupWrapper>
+			<TableRowGroupWrapper title='Links'>
+				<TableRow
 					label='Discord Server'
-					leading={<Forms.FormRow.Icon source={Icons.Discord} />}
-					trailing={Forms.FormRow.Arrow}
+					icon={<TableRowIcon source={Icons.Discord} />}
 					onPress={() => Invites.acceptInviteAndTransitionToInviteChannel({ inviteKey: Invite })}
+                    arrow
 				/>
-				<Forms.FormDivider />
-				<Forms.FormRow
+				<TableRow
 					label='GitHub'
-					leading={<Forms.FormRow.Icon source={Icons.GitHub} />}
-					trailing={Forms.FormRow.Arrow}
+					icon={<TableRowIcon source={Icons.GitHub} />}
 					onPress={() => RN.Linking.openURL(Links.GitHub)}
+                    arrow
 				/>
-				<Forms.FormDivider />
-				<Forms.FormRow
+				<TableRow
 					label='Twitter'
-					leading={<Forms.FormRow.Icon source={Icons.Twitter} />}
-					trailing={Forms.FormRow.Arrow}
+					icon={<TableRowIcon source={Icons.Twitter} />}
 					onPress={() => RN.Linking.openURL(Links.Twitter)}
+                    arrow
 				/>
-			</Forms.FormSection>
+			</TableRowGroupWrapper>
 		</RN.KeyboardAvoidingView>
 	</RN.ScrollView>;
 }

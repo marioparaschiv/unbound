@@ -131,7 +131,7 @@ export default ({ error, retryRender, res }: ErrorBoundaryProps) => {
         {
             id: 'component',
             label: i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_COMPONENT,
-            error: error.name + error.componentStack
+            error: error.toString() + error.componentStack
         },
         {
             id: 'stack',
