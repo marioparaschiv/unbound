@@ -1,5 +1,6 @@
 import { Theme, StyleSheet, React, ReactNative as RN } from '@metro/common';
 import { Redesign } from '@metro/components';
+import type { ViewStyle } from 'react-native';
 
 export const { endStyle } = StyleSheet.createThemedStyleSheet({
     endStyle: {
@@ -11,7 +12,7 @@ export const { endStyle } = StyleSheet.createThemedStyleSheet({
 
 interface TableRowGroupProps {
     children?: React.ReactNode,
-    style?: any;
+    style?: ViewStyle;
     margin?: boolean;
     [k: PropertyKey]: any;
 }

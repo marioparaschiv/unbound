@@ -38,24 +38,21 @@ const styles = StyleSheet.createThemedStyleSheet({
 });
 
 export default function ({ addons, type, shouldRestart }: AddonListProps) {
-	const [search, controls] = useAdvancedSearch(searchContext)
+	const [search, controls] = useAdvancedSearch(searchContext);
 	const settings = useSettingsStore('unbound');
     const navigation = Navigation.useNavigation();
 
-	const data = search ? [] : addons;
-	const isRecovery = settings.get('recovery', false);
+	const data = React.useMemo(() => {
+        if (!search) return addons;
 
-	if (search) {
-		for (const addon of addons) {
-			if (
-				addon.data.name.toLowerCase().includes(search) ||
-				addon.data.description.toLowerCase().includes(search) ||
-				addon.data.authors.some(a => a.name.includes(search))
-			) {
-				data.push(addon);
-			}
-		}
-	}
+        return addons.filter((addon) => {
+            return [addon.data.name, addon.data.description]
+                .some(x => x.toLowerCase().includes(search.toLowerCase()))
+            || addon.data.authors
+                .some(a => a.name.toLowerCase().includes(search.toLowerCase()))
+        })
+    }, [search])
+	const isRecovery = settings.get('recovery', false);
 
 	return <RN.View>
         <RN.View style={{ marginHorizontal: 10 }}>

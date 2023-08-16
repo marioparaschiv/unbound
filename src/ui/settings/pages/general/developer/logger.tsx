@@ -17,13 +17,14 @@ const levelSelection = {
 }
 
 export default function () {
+    const [query, controls] = useAdvancedSearch(searchContext);
 	const navigation = Navigation.useNavigation();
 	const store = Logger.useStore();
-    const [query, controls] = useAdvancedSearch(searchContext)
 
     const data = React.useMemo(() => store.logs
         .filter(item => item.message?.toLowerCase()?.includes(query))
-        .sort((a, b) => a.time - b.time), [query])
+        .sort((a, b) => a.time - b.time), [query]);
+
     const unsubscribe = navigation.addListener('focus', () => {
         unsubscribe();
         navigation.setOptions({ headerRight: HeaderRight });
@@ -36,7 +37,7 @@ export default function () {
                 controls={controls}
             />
         </RN.View>
-        <TableRowGroupWrapper style={{ flex: 1, marginBottom: 16 }} margin={false}>
+        <TableRowGroupWrapper style={{ flex: 1, marginBottom: 108 }} margin={false}>
             <RN.FlatList
                 data={data}
                 keyExtractor={(_, idx) => String(idx)}

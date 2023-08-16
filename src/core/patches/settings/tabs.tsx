@@ -3,7 +3,7 @@ import { byName, byProps } from '@metro/filters';
 import { findByProps, bulk } from '@metro';
 import { ClientName, Keys } from '@constants';
 import { findInReactTree } from '@utilities';
-import { i18n } from '@metro/common';
+import { React, i18n } from '@metro/common';
 
 import { Settings } from './base';
 
@@ -38,10 +38,10 @@ export class TabsSettings extends Settings {
                     icon: this.Icons[key],
                     screen: {
                         route: Keys[key],
-                        getComponent: () => ({ route }) => {
+                        getComponent: () => React.memo(({ route }: any) => {
                             const Screen = this.Screens[key];
                             return <Screen {...route?.params ?? {}} />;
-                        }
+                        })
                     }
                 }
             })).reduce((acc, obj) => ({ ...acc, ...obj }), {})
