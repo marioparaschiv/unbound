@@ -53,8 +53,9 @@ class Themes extends Manager {
 					const key = ref[Object.getOwnPropertySymbols(ref)[0]];
 
 					if (instance.semantic[key]) {
-						const index = { dark: 0, light: 1, amoled: 2 }[theme.toLowerCase()] || 0;
-						const color = instance.semantic[key][index];
+						const index = { dark: 0, light: 1, amoled: 2, darker: 3 }[theme.toLowerCase()] || 0;
+                        const unparsedColor = instance.semantic[key];
+						const color = unparsedColor[index] ?? unparsedColor[0];
 
 						if (key === 'CHAT_BACKGROUND' && typeof instance.background?.opacity === 'number') {
 							return (color ?? '#000000') + Math.round(instance.background.opacity * 255).toString(16);

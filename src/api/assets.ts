@@ -16,7 +16,7 @@ function initialize() {
 
 	// Capture all assets that loaded before our patch
 	for (let id = 1; ; id++) {
-		const asset = registry.getAssetByID(id);
+		const asset: Asset | undefined = registry.getAssetByID(id);
 		if (!asset) break;
 
 		if (assets.has(asset)) continue;

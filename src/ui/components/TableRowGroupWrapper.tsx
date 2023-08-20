@@ -4,7 +4,7 @@ import type { ViewStyle } from 'react-native';
 
 export const { endStyle } = StyleSheet.createThemedStyleSheet({
     endStyle: {
-        backgroundColor: Theme.colors.BACKGROUND_PRIMARY,
+        backgroundColor: Theme.colors.CARD_PRIMARY_BG ?? Theme.colors.BACKGROUND_PRIMARY,
         borderBottomLeftRadius: 16,
         borderBottomRightRadius: 16
     }
