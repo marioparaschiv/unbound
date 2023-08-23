@@ -51,7 +51,7 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
             || addon.data.authors
                 .some(a => a.name.toLowerCase().includes(search.toLowerCase()))
         })
-    }, [search])
+    }, [search, addons])
 	const isRecovery = settings.get('recovery', false);
 
 	return <RN.View>

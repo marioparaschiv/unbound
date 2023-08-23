@@ -64,8 +64,9 @@ class Manager extends EventEmitter {
 	}
 
 	save(bundle: string, manifest: Manifest) {
-		Files.writeFile('documents', `${this.path}/${manifest.name}/bundle.${this.extension}`, bundle, 'utf8');
-		Files.writeFile('documents', `${this.path}/${manifest.name}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
+		Files.writeFile('documents', `${this.path}/${manifest.id}/bundle.${this.extension}`, bundle, 'utf8');
+		Files.writeFile('documents', `${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
+        Files.writeFile('documents', `${this.path}/${manifest.id}/.delete`, 'false', 'utf8')
 	}
 
 	load(bundle: string, manifest: Manifest) {
@@ -112,7 +113,7 @@ class Manager extends EventEmitter {
 
 		try {
 			this.unload(addon);
-			await Files.writeFile('documents', `${this.path}/${addon.data.name}/.delete`, '', 'utf8');
+			await Files.writeFile('documents', `${this.path}/${addon.data.id}/.delete`, 'true', 'utf8');
 		} catch (e) {
 			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message);
 		}
