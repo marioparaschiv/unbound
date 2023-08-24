@@ -28,7 +28,7 @@ const config: RollupOptions = {
 	],
 
 	plugins: [
-		paths({ preserveExtensions: true, nonRelative: false }),
+		paths({ preserveExtensions: true, nonRelative: process.platform === 'darwin' ? false : true }),
 		node(),
 		json(),
 		replace({ preventAssignment: true, __VERSION__: revision }),
