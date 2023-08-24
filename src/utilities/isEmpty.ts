@@ -1,9 +1,9 @@
 function isEmpty(object: Record<any, any>) {
-  for (const _ in object) {
-    return false;
-  }
+	for (const _ in object) {
+		return false;
+	}
 
-  return true;
+	return true;
 }
 
 export default isEmpty;

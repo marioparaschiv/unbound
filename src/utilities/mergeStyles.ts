@@ -5,13 +5,13 @@
  */
 
 function mergeStyles(...styles: (Record<any, any> | boolean)[]) {
-  return styles.reduce((previous, current) => {
-    if (current) {
-      Object.assign(previous, current);
-    }
+	return styles.reduce((previous, current) => {
+		if (current) {
+			Object.assign(previous, current);
+		}
 
-    return previous;
-  }, {}) as Record<any, any>;
+		return previous;
+	}, {}) as Record<any, any>;
 };
 
 export default mergeStyles;

@@ -10,11 +10,11 @@ export const Links = {
 export const ClientName = 'Unbound';
 
 export const Keys = {
-    General: 'UNBOUND_GENERAL',
-    Plugins: 'UNBOUND_PLUGINS',
-    Themes: 'UNBOUND_THEMES',
-    Updater: 'UNBOUND_UPDATER',
-    Custom: 'UNBOUND_CUSTOM'
+	General: 'UNBOUND_GENERAL',
+	Plugins: 'UNBOUND_PLUGINS',
+	Themes: 'UNBOUND_THEMES',
+	Updater: 'UNBOUND_UPDATER',
+	Custom: 'UNBOUND_CUSTOM'
 } as const;
 
 export const Times = {

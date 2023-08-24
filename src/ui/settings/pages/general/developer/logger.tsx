@@ -7,61 +7,61 @@ import AdvancedSearch, { useAdvancedSearch } from '@ui/components/AdvancedSearch
 
 const searchContext = { type: "LOGGER" };
 const levelSelection = {
-    variant(level: number) {
-        return ['muted', 'normal', 'warning', 'danger'][level]
-    },
+	variant(level: number) {
+		return ['muted', 'normal', 'warning', 'danger'][level];
+	},
 
-    icon(level: number) {
-        return ['ic_settings', 'ic_chat_bubble_16px', 'ic_warning_24px', 'failure-header'][level]
-    }
-}
+	icon(level: number) {
+		return ['ic_settings', 'ic_chat_bubble_16px', 'ic_warning_24px', 'failure-header'][level];
+	}
+};
 
 export default function () {
-    const [query, controls] = useAdvancedSearch(searchContext);
+	const [query, controls] = useAdvancedSearch(searchContext);
 	const navigation = Navigation.useNavigation();
 	const store = Logger.useStore();
 
-    const data = React.useMemo(() => store.logs
-        .filter(item => item.message?.toLowerCase()?.includes(query))
-        .sort((a, b) => a.time - b.time), [query]);
+	const data = React.useMemo(() => store.logs
+		.filter(item => item.message?.toLowerCase()?.includes(query))
+		.sort((a, b) => a.time - b.time), [query]);
 
-    const unsubscribe = navigation.addListener('focus', () => {
-        unsubscribe();
-        navigation.setOptions({ headerRight: HeaderRight });
-    });
+	const unsubscribe = navigation.addListener('focus', () => {
+		unsubscribe();
+		navigation.setOptions({ headerRight: HeaderRight });
+	});
 
 	return <RN.View>
-        <RN.View style={{ marginHorizontal: 16, marginBottom: 12 }}>
-            <AdvancedSearch 
-                searchContext={searchContext}
-                controls={controls}
-            />
-        </RN.View>
-        <TableRowGroupWrapper style={{ flex: 1, marginBottom: 108 }} margin={false}>
-            <RN.FlatList
-                data={data}
-                keyExtractor={(_, idx) => String(idx)}
-                scrollEnabled={false}
-                ListEmptyComponent={<RN.View style={styles.empty}>
-                    <RN.Image
-                        style={styles.emptyImage}
-                        source={Icons['img_connection_empty_dark']}
-                    />
-                    <RN.Text style={styles.emptyMessage}>
-                        {i18n.Messages.UNBOUND_LOGS_EMPTY}
-                    </RN.Text>
-                </RN.View>}
-                renderItem={({ item }) => {
-                    return <Redesign.TableRow
-                        label={item.message}
-                        subLabel={Moment(item.time).format('HH:mm:ss.SSS')}
-                        variant={levelSelection.variant(item.level)}
-                        icon={<Redesign.TableRowIcon source={Icons[levelSelection.icon(item.level)]} />}
-                    />;
-                }}
-            />
-        </TableRowGroupWrapper>
-    </RN.View>
+		<RN.View style={{ marginHorizontal: 16, marginBottom: 12 }}>
+			<AdvancedSearch
+				searchContext={searchContext}
+				controls={controls}
+			/>
+		</RN.View>
+		<TableRowGroupWrapper style={{ flex: 1, marginBottom: 108 }} margin={false}>
+			<RN.FlatList
+				data={data}
+				keyExtractor={(_, idx) => String(idx)}
+				scrollEnabled={false}
+				ListEmptyComponent={<RN.View style={styles.empty}>
+					<RN.Image
+						style={styles.emptyImage}
+						source={Icons['img_connection_empty_dark']}
+					/>
+					<RN.Text style={styles.emptyMessage}>
+						{i18n.Messages.UNBOUND_LOGS_EMPTY}
+					</RN.Text>
+				</RN.View>}
+				renderItem={({ item }) => {
+					return <Redesign.TableRow
+						label={item.message}
+						subLabel={Moment(item.time).format('HH:mm:ss.SSS')}
+						variant={levelSelection.variant(item.level)}
+						icon={<Redesign.TableRowIcon source={Icons[levelSelection.icon(item.level)]} />}
+					/>;
+				}}
+			/>
+		</TableRowGroupWrapper>
+	</RN.View>;
 }
 
 const styles = StyleSheet.createThemedStyleSheet({

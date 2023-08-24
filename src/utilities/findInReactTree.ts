@@ -9,7 +9,7 @@ import findInTree from '@utilities/findInTree';
  */
 
 function findInReactTree(tree: object, filter: Function = _ => _, options = {}) {
-  return findInTree(tree, filter, { walkable: ['props', 'children'], ...options });
+	return findInTree(tree, filter, { walkable: ['props', 'children'], ...options });
 };
 
 export default findInReactTree;

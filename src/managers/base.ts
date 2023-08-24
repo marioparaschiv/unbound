@@ -1,4 +1,4 @@
-import type { Addon, Manifest, Resolveable } from '@typings/managers';
+import type { Addon, Manifest, InternalManifest, Resolveable } from '@typings/managers';
 import EventEmitter from '@structures/emitter';
 import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
@@ -38,16 +38,16 @@ class Manager extends EventEmitter {
 
 	async install(url: string): Promise<Error | void> {
 		this.logger.debug(`Fetching ${url} for manifest...`);
-		const manifest = await fetch(url, { cache: 'no-cache' }).then(r => r.json()) as Manifest;
+		const manifest = await fetch(url, { cache: 'no-cache' }).then(r => r.json()) as InternalManifest;
 
 		try {
 			this.logger.debug('Validating manifest...');
-			this.validateManifest(manifest as Manifest);
+			this.validateManifest(manifest as InternalManifest);
 		} catch (e) {
 			return this.logger.debug('Failed to validate manifest:', e.message);
 		}
 
-		this.logger.debug(`Fetching bundle from ${(manifest as any).bundle}...`);
+		this.logger.debug(`Fetching bundle from ${manifest.bundle}...`);
 		const bundle = await fetch((manifest as any).bundle, { cache: 'no-cache' }).then(r => r.text());
 		this.logger.debug('Done fetching...');
 
@@ -55,10 +55,12 @@ class Manager extends EventEmitter {
 		this.save(bundle, manifest);
 		this.logger.debug('Loading...');
 
-        if (this.entities.get(manifest.id).started) {
-            this.logger.debug("Unloading existing...");
-            this.unload(manifest.id);
-        }
+		const existing = this.entities.get(manifest.id);
+
+		if (existing?.started) {
+			this.logger.debug(`Unloading existing instance of ${manifest.id}...`);
+			this.unload(manifest.id);
+		}
 
 		this.load(bundle, manifest);
 		this.logger.debug('Loaded.');
@@ -67,7 +69,7 @@ class Manager extends EventEmitter {
 	save(bundle: string, manifest: Manifest) {
 		Files.writeFile('documents', `${this.path}/${manifest.id}/bundle.${this.extension}`, bundle, 'utf8');
 		Files.writeFile('documents', `${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
-        Files.writeFile('documents', `${this.path}/${manifest.id}/.delete`, 'false', 'utf8')
+		Files.writeFile('documents', `${this.path}/${manifest.id}/.delete`, 'false', 'utf8');
 	}
 
 	load(bundle: string, manifest: Manifest) {

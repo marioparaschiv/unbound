@@ -29,7 +29,7 @@ export namespace Common {
 
 	export type Events = typeof import('events');
 
-    export type Clipboard = typeof import('@react-native-clipboard/clipboard').default;
+	export type Clipboard = typeof import('@react-native-clipboard/clipboard').default;
 
 	// Discord
 

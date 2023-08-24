@@ -68,7 +68,7 @@ export function registerCommands(caller: string, cmds: ApplicationCommand[]): vo
 
 	for (const command in cmds) {
 		const cmd = cmds[command];
-        
+
 		cmds[command] = {
 			displayName: cmd.name,
 			displayDescription: cmd.description,

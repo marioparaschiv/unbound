@@ -3,9 +3,10 @@
 		"downlevelIteration": true,
 		"moduleResolution": "node",
 		"esModuleInterop": true,
-		"target": "es2022",
+		"target": "esnext",
 		"resolveJsonModule": true,
-		"module": "es2022",
+		"noUncheckedIndexedAccess": true,
+		"module": "esnext",
 		"jsx": "react",
 		"baseUrl": "src",
 		"paths": {

@@ -9,7 +9,7 @@ export default {
 	description: 'Toggles recovery mode and reloads unbound.',
 
 	execute: () => {
-        settings.set('recovery', true)
-        BundleManager.reload()
-    }
+		settings.set('recovery', true);
+		BundleManager.reload();
+	}
 } as ApplicationCommand;

@@ -4,8 +4,8 @@ import recovery from './recovery';
 import evaluate from './eval';
 
 export default [
-  debug,
-  reload,
-  recovery,
-  evaluate
+	debug,
+	reload,
+	recovery,
+	evaluate
 ];

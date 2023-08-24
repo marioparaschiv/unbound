@@ -34,8 +34,8 @@ function General() {
 		Twitter: Assets.getIDByName('img_account_sync_twitter_white'),
 		GitHub: Assets.getIDByName('img_account_sync_github_white'),
 		Development: Assets.getIDByName('ic_progress_wrench_24px'),
-        Plugins: Assets.getIDByName('ic_activity_24px'),
-        Themes: Assets.getIDByName('ic_paint_brush'),
+		Plugins: Assets.getIDByName('ic_activity_24px'),
+		Themes: Assets.getIDByName('ic_paint_brush'),
 		Toasts: Assets.getIDByName('ic_notification_settings'),
 		Retry: Assets.getIDByName('ic_message_retry'),
 		Discord: Assets.getIDByName('Discord'),
@@ -56,16 +56,16 @@ function General() {
 					subLabel={i18n.Messages.UNBOUND_RECOVERY_MODE_DESC}
 					icon={<TableRowIcon source={Icons.Retry} />}
 					value={settings.get('recovery', false)}
-                    onValueChange={() => {
-                        settings.toggle('recovery', false);
-                        Dialog.confirm({
-                            title: i18n.Messages.UNBOUND_CHANGE_RESTART,
-                            body: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
-                            confirmText: i18n.Messages.UNBOUND_RESTART,
-                            onConfirm: BundleManager.reload,
-                            onCancel: () => settings.toggle('recovery', false)
-                        });
-                    }}
+					onValueChange={() => {
+						settings.toggle('recovery', false);
+						Dialog.confirm({
+							title: i18n.Messages.UNBOUND_CHANGE_RESTART,
+							body: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
+							confirmText: i18n.Messages.UNBOUND_RESTART,
+							onConfirm: BundleManager.reload,
+							onCancel: () => settings.toggle('recovery', false)
+						});
+					}}
 				/>
 			</TableRowGroupWrapper>
 			<TableRowGroupWrapper>
@@ -76,7 +76,7 @@ function General() {
 						title: i18n.Messages.UNBOUND_TOAST_SETTINGS,
 						render: Toasts
 					})}
-                    arrow
+					arrow
 				/>
 				<TableRow
 					label={i18n.Messages.UNBOUND_DEVELOPMENT_SETTINGS}
@@ -85,7 +85,7 @@ function General() {
 						title: i18n.Messages.UNBOUND_DEVELOPMENT_SETTINGS,
 						render: Developer
 					})}
-                    arrow
+					arrow
 				/>
 			</TableRowGroupWrapper>
 			<TableRowGroupWrapper title={i18n.Messages.UNBOUND_INFO}>
@@ -109,19 +109,19 @@ function General() {
 					label='Discord Server'
 					icon={<TableRowIcon source={Icons.Discord} />}
 					onPress={() => Invites.acceptInviteAndTransitionToInviteChannel({ inviteKey: Invite })}
-                    arrow
+					arrow
 				/>
 				<TableRow
 					label='GitHub'
 					icon={<TableRowIcon source={Icons.GitHub} />}
 					onPress={() => RN.Linking.openURL(Links.GitHub)}
-                    arrow
+					arrow
 				/>
 				<TableRow
 					label='Twitter'
 					icon={<TableRowIcon source={Icons.Twitter} />}
 					onPress={() => RN.Linking.openURL(Links.Twitter)}
-                    arrow
+					arrow
 				/>
 			</TableRowGroupWrapper>
 		</RN.KeyboardAvoidingView>

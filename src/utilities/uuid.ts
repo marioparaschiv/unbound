@@ -6,14 +6,14 @@
  */
 
 function uuid(length: number = 30) {
-  let uuid = '';
+	let uuid = '';
 
-  do {
-    const random = Math.random() * 16 | 0;
-    uuid += (uuid.length == 12 ? 4 : (uuid.length == 16 ? (random & 3 | 8) : random)).toString(16);
-  } while (uuid.length < length);
+	do {
+		const random = Math.random() * 16 | 0;
+		uuid += (uuid.length == 12 ? 4 : (uuid.length == 16 ? (random & 3 | 8) : random)).toString(16);
+	} while (uuid.length < length);
 
-  return uuid;
+	return uuid;
 };
 
 export default uuid;

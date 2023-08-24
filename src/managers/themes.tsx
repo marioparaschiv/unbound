@@ -54,7 +54,7 @@ class Themes extends Manager {
 
 					if (instance.semantic[key]) {
 						const index = { dark: 0, light: 1, amoled: 2, darker: 3 }[theme.toLowerCase()] || 0;
-                        const unparsedColor = instance.semantic[key];
+						const unparsedColor = instance.semantic[key];
 						const color = unparsedColor[index] ?? unparsedColor[0];
 
 						if (key === 'CHAT_BACKGROUND' && typeof instance.background?.opacity === 'number') {
@@ -80,31 +80,31 @@ class Themes extends Manager {
 	async applyBackground(addon: Addon) {
 		// Avoid circular dependency
 		const { findByName, findByProps } = await import('@metro');
-        const { Theme } = await import('@metro/stores');
+		const { Theme } = await import('@metro/stores');
 		const { instance: { background } } = addon;
 
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
-        const { MessagesWrapper } = findByProps('MessagesWrapper');
+		const { MessagesWrapper } = findByProps('MessagesWrapper');
 
 		this.patcher.after(Chat, 'default', (_, __, res) => {
 			return <ReactNative.ImageBackground
 				blurRadius={typeof background.blur === 'number' ? background.blur : 0}
 				style={{ flex: 1, height: '100%' }}
-				source={{ uri: typeof background.url === 'string' ? background.url : background.url[Theme.theme]}}
+				source={{ uri: typeof background.url === 'string' ? background.url : background.url[Theme.theme] }}
 				children={res}
 			/>;
 		});
 
-        this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {
-            const Messages = findInReactTree(res, x => 
-                'HACK_fixModalInteraction' in x.props 
-                && x.props?.style
-            );
+		this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {
+			const Messages = findInReactTree(res, x =>
+				'HACK_fixModalInteraction' in x.props
+				&& x.props?.style
+			);
 
-            if (Messages) {
-                Messages.props.style = [Messages.props.style, { backgroundColor: '#00000000' }]
-            }
-        })
+			if (Messages) {
+				Messages.props.style = [Messages.props.style, { backgroundColor: '#00000000' }];
+			}
+		});
 	}
 
 	override toggle(entity: Resolveable): void {

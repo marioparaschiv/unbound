@@ -1,80 +1,80 @@
 import { Constants, StyleSheet, Theme } from '@metro/common';
 
 export default StyleSheet.createThemedStyleSheet({
-    container: {
-        backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
-  
-        width: '100%',
-        height: '100%',
-  
-        flex: 1
-    },
+	container: {
+		backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
 
-    card: {
-        backgroundColor: Theme.colors.BACKGROUND_PRIMARY,
+		width: '100%',
+		height: '100%',
 
-        marginHorizontal: 20,
-        marginBottom: 20,
-        borderRadius: 20,
+		flex: 1
+	},
 
-        ...Theme.shadows.SHADOW_LOW
-    },
+	card: {
+		backgroundColor: Theme.colors.BACKGROUND_PRIMARY,
 
-    headerChainIcon: {
-        width: undefined,
-        height: '40%',
-        aspectRatio: 1,
+		marginHorizontal: 20,
+		marginBottom: 20,
+		borderRadius: 20,
 
-        right: 30,
-        top: '30%',
+		...Theme.shadows.SHADOW_LOW
+	},
 
-        borderRadius: 1000,
-        position: 'absolute',
-    },
+	headerChainIcon: {
+		width: undefined,
+		height: '40%',
+		aspectRatio: 1,
 
-    headerTitle: {
-        color: Theme.colors.HEADER_PRIMARY,
-        width: '60%',
+		right: 30,
+		top: '30%',
 
-        fontSize: 22,
-        fontFamily: Constants.Fonts.PRIMARY_BOLD,
-        letterSpacing: -0.5,
+		borderRadius: 1000,
+		position: 'absolute',
+	},
 
-        marginTop: 20,
-        marginBottom: 10,
-        marginLeft: 20,
-    },
+	headerTitle: {
+		color: Theme.colors.HEADER_PRIMARY,
+		width: '60%',
 
-    headerBody: {
-        color: Theme.colors.TEXT_NORMAL,
-        width: '50%',
+		fontSize: 22,
+		fontFamily: Constants.Fonts.PRIMARY_BOLD,
+		letterSpacing: -0.5,
 
-        fontSize: 18,
-        fontFamily: Constants.Fonts.PRIMARY_NORMAL,
+		marginTop: 20,
+		marginBottom: 10,
+		marginLeft: 20,
+	},
 
-        marginBottom: 20,
-        marginLeft: 20,
-    },
+	headerBody: {
+		color: Theme.colors.TEXT_NORMAL,
+		width: '50%',
 
-    outlineTitle: {
-        color: Theme.colors.TEXT_NORMAL,
-        width: '100%',
-        textAlign: 'center',
+		fontSize: 18,
+		fontFamily: Constants.Fonts.PRIMARY_NORMAL,
 
-        fontSize: 18,
-        fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-        letterSpacing: -0.5,
+		marginBottom: 20,
+		marginLeft: 20,
+	},
 
-        marginVertical: 10
-    },
+	outlineTitle: {
+		color: Theme.colors.TEXT_NORMAL,
+		width: '100%',
+		textAlign: 'center',
 
-    outlineCodeblock: {
-        marginHorizontal: 10,
-        marginBottom: 10,
+		fontSize: 18,
+		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
+		letterSpacing: -0.5,
 
-        borderRadius: 16,
-        flexGrow: 1,
+		marginVertical: 10
+	},
 
-        ...Theme.shadows.SHADOW_LOW
-    }
-})
+	outlineCodeblock: {
+		marginHorizontal: 10,
+		marginBottom: 10,
+
+		borderRadius: 16,
+		flexGrow: 1,
+
+		...Theme.shadows.SHADOW_LOW
+	}
+});

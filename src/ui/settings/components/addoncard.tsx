@@ -19,7 +19,7 @@ interface AddonCardProps {
 	shouldRestart: boolean;
 	recovery: boolean;
 	addon: Addon;
-    navigation: any;
+	navigation: any;
 }
 
 export default class extends React.Component<AddonCardProps> {
@@ -91,26 +91,26 @@ export default class extends React.Component<AddonCardProps> {
 	renderControls() {
 		const { addon, manager, shouldRestart, recovery } = this.props;
 
-        const showRestartAlert = () => showConfirmationAlert({
-            title: i18n.Messages.UNBOUND_CHANGE_RESTART,
-            content: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
-            confirmText: i18n.Messages.UNBOUND_RESTART,
-            onConfirm: BundleManager.reload
-        });
+		const showRestartAlert = () => showConfirmationAlert({
+			title: i18n.Messages.UNBOUND_CHANGE_RESTART,
+			content: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
+			confirmText: i18n.Messages.UNBOUND_RESTART,
+			onConfirm: BundleManager.reload
+		});
 
 		return <>
-            {manager.type === ManagerType.Plugins && addon.instance?.settings && <RN.Pressable
-                style={({ pressed }) => ({ opacity: pressed ? 0.25 : 1.0, ...this.styles.controlButton })}
+			{manager.type === ManagerType.Plugins && addon.instance?.settings && <RN.Pressable
+				style={({ pressed }) => ({ opacity: pressed ? 0.25 : 1.0, ...this.styles.controlButton })}
 				hitSlop={15}
-                onPress={() => {
-                    this.props.navigation.push(Keys.Custom, {
+				onPress={() => {
+					this.props.navigation.push(Keys.Custom, {
 						title: addon.data.name,
 						render: addon.instance.settings
-					})
-                }}
-            >
-                <RN.Image source={Icons['settings']} style={this.styles.icon} />  
-            </RN.Pressable>}
+					});
+				}}
+			>
+				<RN.Image source={Icons['settings']} style={this.styles.icon} />
+			</RN.Pressable>}
 			<RN.Pressable
 				style={({ pressed }) => ({ opacity: pressed ? 0.25 : 1.0, ...this.styles.controlButton })}
 				hitSlop={15}
@@ -120,24 +120,24 @@ export default class extends React.Component<AddonCardProps> {
 						content: i18n.Messages.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
 						confirmText: i18n.Messages.UNBOUND_UNINSTALL,
 						onConfirm: async () => {
-                            await manager.delete(addon.id);
+							await manager.delete(addon.id);
 
-                            if (manager.type === ManagerType.Themes && get('theme-states', 'applied', '') === addon.data.id) {
-                                showRestartAlert();
-                            }
-                        }
+							if (manager.type === ManagerType.Themes && get('theme-states', 'applied', '') === addon.data.id) {
+								showRestartAlert();
+							}
+						}
 					});
 				}}
 			>
-				<RN.Image source={Icons['trash']} style={this.styles.icon} />  
+				<RN.Image source={Icons['trash']} style={this.styles.icon} />
 			</RN.Pressable>
 			<RN.Switch
 				disabled={addon.failed || recovery}
 				value={manager.isEnabled(addon.id)}
-                trackColor={{
-                    false: Theme.colors.BACKGROUND_FLOATING,
-                    true: Theme.colors.HEADER_PRIMARY
-                }}
+				trackColor={{
+					false: Theme.colors.BACKGROUND_FLOATING,
+					true: Theme.colors.HEADER_PRIMARY
+				}}
 				onChange={() => {
 					manager.toggle(addon.id);
 
@@ -244,10 +244,10 @@ export default class extends React.Component<AddonCardProps> {
 				ios: 10
 			})
 		},
-        icon: {
-            width: 22,
-            height: 22,
-            tintColor: Theme.colors.INTERACTIVE_NORMAL
-        }
+		icon: {
+			width: 22,
+			height: 22,
+			tintColor: Theme.colors.INTERACTIVE_NORMAL
+		}
 	});
 }

@@ -14,13 +14,13 @@ export default () => {
 	const navigation = Navigation.useNavigation();
 	const addons = Plugins.useEntities();
 
-    const unsubscribe = navigation.addListener('focus', () => {
-        unsubscribe();
-        navigation.setOptions({
-            title: addons.length ? `${i18n.Messages.UNBOUND_PLUGINS} - ${addons.length}` : i18n.Messages.UNBOUND_PLUGINS,
-            headerRight: () => <HeaderRight />
-        })
-    });
+	const unsubscribe = navigation.addListener('focus', () => {
+		unsubscribe();
+		navigation.setOptions({
+			title: addons.length ? `${i18n.Messages.UNBOUND_PLUGINS} - ${addons.length}` : i18n.Messages.UNBOUND_PLUGINS,
+			headerRight: () => <HeaderRight />
+		});
+	});
 
 	return <RN.View style={{ flex: 1 }}>
 		<Addons
@@ -46,9 +46,9 @@ function HeaderRight() {
 			});
 		}}
 	>
-		<RN.Image 
-            source={Icons['ic_add_circle']}
-            style={{ tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL) }} 
-        />
+		<RN.Image
+			source={Icons['ic_add_circle']}
+			style={{ tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL) }}
+		/>
 	</RN.Pressable>;
 }

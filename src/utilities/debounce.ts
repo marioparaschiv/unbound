@@ -6,12 +6,12 @@
  */
 
 function debounce(func, ms) {
-  let timer;
+	let timer;
 
-  return function (...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => func.apply(this, args), ms);
-  };
+	return function (...args) {
+		clearTimeout(timer);
+		timer = setTimeout(() => func.apply(this, args), ms);
+	};
 };
 
 export default debounce;

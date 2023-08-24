@@ -1,5 +1,5 @@
 function noop(...args: any) {
-  // No.
+	// No.
 }
 
 export default noop;
