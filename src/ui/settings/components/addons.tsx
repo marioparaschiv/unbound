@@ -66,25 +66,28 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 				{i18n.Messages.UNBOUND_RECOVERY_MODE_ENABLED}
 			</HelpMessage>
 		</RN.View>}
-		<RN.FlatList
-			data={data}
-			keyExtractor={(_, idx) => String(idx)}
-			renderItem={(item) => <AddonCard
-				recovery={isRecovery}
-				shouldRestart={shouldRestart}
-				manager={managers[type]}
-				addon={item.item}
-				navigation={navigation}
-			/>}
-			ListEmptyComponent={<RN.View style={styles.empty}>
-				<RN.Image
-					style={styles.emptyImage}
-					source={Icons['img_connection_empty_dark']}
-				/>
-				<RN.Text style={styles.emptyMessage}>
-					{i18n.Messages.UNBOUND_ADDONS_EMPTY.format({ type: managers[type].name.toLowerCase() })}
-				</RN.Text>
-			</RN.View>}
-		/>
+		<RN.ScrollView style={{ height: "100%" }}>
+            <RN.FlatList
+                data={data}
+                keyExtractor={(_, idx) => String(idx)}
+                scrollEnabled={false}
+                renderItem={(item) => <AddonCard
+                    recovery={isRecovery}
+                    shouldRestart={shouldRestart}
+                    manager={managers[type]}
+                    addon={item.item}
+                    navigation={navigation}
+                />}
+                ListEmptyComponent={<RN.View style={styles.empty}>
+                    <RN.Image
+                        style={styles.emptyImage}
+                        source={Icons['img_connection_empty_dark']}
+                    />
+                    <RN.Text style={styles.emptyMessage}>
+                        {i18n.Messages.UNBOUND_ADDONS_EMPTY.format({ type: managers[type].name.toLowerCase() })}
+                    </RN.Text>
+                </RN.View>}
+            />
+        </RN.ScrollView>
 	</RN.View >;
 }

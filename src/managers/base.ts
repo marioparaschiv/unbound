@@ -6,6 +6,7 @@ import { createLogger } from '@logger';
 import { Regex } from '@constants';
 
 const Files = ReactNative.NativeModules.DCDFileManager ?? ReactNative.NativeModules.RTNFileManager;
+const { LayoutAnimation: { configureNext, Presets } } = ReactNative;
 
 export enum ManagerType {
 	Plugins = 'plugin',
@@ -263,6 +264,7 @@ class Manager extends EventEmitter {
 		React.useEffect(() => {
 			function handler() {
 				forceUpdate({});
+                configureNext(Presets.spring);
 			}
 
 			this.on('updated', handler);

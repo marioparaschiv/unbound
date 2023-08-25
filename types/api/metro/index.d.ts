@@ -25,6 +25,7 @@ export interface BulkItem extends Omit<SearchOptions, 'all' | 'initial' | 'cache
 
 export type StringFindWithOptions<T extends string> = [...T[], Record<string, boolean>];
 export type BulkFind<T extends string> = [...({ params: T[], [k: string]: any })[], { bulk: true }];
+export type AllValues<T extends Record<string, any>, U extends unknown> = T extends { all: true } ? U[] : U;
 
 export type PropertyRecordOrArray<
     T extends any[], 
@@ -44,5 +45,3 @@ export type FunctionSignatureOrArray<T extends any[], U extends string> = T exte
             ? AllValues<Options, ({ default: Fn })>
             : AllValues<Options, Fn>
         : Fn
-
-export type AllValues<T extends Record<string, any>, U extends unknown> = T extends { all: true } ? U[] : U
