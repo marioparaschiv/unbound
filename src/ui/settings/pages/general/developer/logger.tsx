@@ -5,7 +5,7 @@ import Logger from '@stores/logger';
 import { TableRowGroupWrapper } from '@ui/components';
 import AdvancedSearch, { useAdvancedSearch } from '@ui/components/AdvancedSearch';
 
-const searchContext = { type: "LOGGER" };
+const searchContext = { type: 'LOGGER' };
 const levelSelection = {
 	variant(level: number) {
 		return ['muted', 'normal', 'warning', 'danger'][level];

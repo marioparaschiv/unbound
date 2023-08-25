@@ -18,7 +18,7 @@ const cache = {
 };
 
 export function initialize() {
-	const Badges = findByName('ProfileBadges', { all: true, interop: false });
+	const Badges = findByName(('ProfileBadges'), { all: true, interop: false });
 
 	for (const Badge of Badges) {
 		Patcher.after(Badge, 'default', (_, [{ user, isUnbound, style, ...rest }], res) => {
