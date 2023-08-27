@@ -1,9 +1,10 @@
 import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme, i18n } from '@metro/common';
-import { Redesign, Navigation } from '@metro/components';
+import { Navigation } from '@metro/components';
 import { Icons } from '@api/assets';
 import Logger from '@stores/logger';
-import { TableRowGroupWrapper } from '@ui/components';
+import { FormWrappers } from '@ui/components';
 import AdvancedSearch, { useAdvancedSearch } from '@ui/components/AdvancedSearch';
+import { Section, Row, RowIcon } from '@ui/components/FormHandler';
 
 const searchContext = { type: 'LOGGER' };
 const levelSelection = {
@@ -37,7 +38,7 @@ export default function () {
 				controls={controls}
 			/>
 		</RN.View>
-		<TableRowGroupWrapper style={{ flex: 1, marginBottom: 108 }} margin={false}>
+		<Section style={{ flex: 1, marginBottom: 108 }} margin={false}>
 			<RN.FlatList
 				data={data}
 				keyExtractor={(_, idx) => String(idx)}
@@ -52,15 +53,15 @@ export default function () {
 					</RN.Text>
 				</RN.View>}
 				renderItem={({ item }) => {
-					return <Redesign.TableRow
+					return <Row
 						label={item.message}
 						subLabel={Moment(item.time).format('HH:mm:ss.SSS')}
 						variant={levelSelection.variant(item.level)}
-						icon={<Redesign.TableRowIcon source={Icons[levelSelection.icon(item.level)]} />}
+						icon={<RowIcon source={Icons[levelSelection.icon(item.level)]} />}
 					/>;
 				}}
 			/>
-		</TableRowGroupWrapper>
+		</Section>
 	</RN.View>;
 }
 

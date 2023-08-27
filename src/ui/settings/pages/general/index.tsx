@@ -4,18 +4,20 @@ import { useSettingsStore } from '@api/storage';
 import { BundleManager } from '@api/native';
 import { Invites } from '@metro/actions';
 import { Dialog } from '@metro/ui';
-import * as Icon from '@ui/icons';
 import Assets from '@api/assets';
 
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 
-import { Redesign, Navigation } from '@metro/components';
-import { TableRowGroupWrapper } from '@ui/components';
+import { Navigation } from '@metro/components';
+import { 
+    Section,
+    SwitchRow,
+    Row,
+    RowIcon
+} from '@ui/components/FormHandler';
 import Developer from './developer';
 import Toasts from './toasts';
-
-const { TableRow, TableSwitchRow, TableRowIcon } = Redesign;
 
 const styles = StyleSheet.createThemedStyleSheet({
 	trailingText: {
@@ -50,11 +52,11 @@ function General() {
 			keyboardVerticalOffset={100}
 			contentContainerStyle={{ backfaceVisibility: 'hidden' }}
 		>
-			<TableRowGroupWrapper>
-				<TableSwitchRow
+			<Section>
+				<SwitchRow
 					label={i18n.Messages.UNBOUND_RECOVERY_MODE}
 					subLabel={i18n.Messages.UNBOUND_RECOVERY_MODE_DESC}
-					icon={<TableRowIcon source={Icons.Retry} />}
+					icon={<RowIcon source={Icons.Retry} />}
 					value={settings.get('recovery', false)}
 					onValueChange={() => {
 						settings.toggle('recovery', false);
@@ -67,63 +69,63 @@ function General() {
 						});
 					}}
 				/>
-			</TableRowGroupWrapper>
-			<TableRowGroupWrapper>
-				<TableRow
+			</Section>
+			<Section>
+				<Row
 					label={i18n.Messages.UNBOUND_TOAST_SETTINGS}
-					icon={<TableRowIcon source={Icons.Toasts} />}
+					icon={<RowIcon source={Icons.Toasts} />}
 					onPress={() => navigation.push(Keys.Custom, {
 						title: i18n.Messages.UNBOUND_TOAST_SETTINGS,
 						render: Toasts
 					})}
 					arrow
 				/>
-				<TableRow
+				<Row
 					label={i18n.Messages.UNBOUND_DEVELOPMENT_SETTINGS}
-					icon={<TableRowIcon source={Icons.Development} />}
+					icon={<RowIcon source={Icons.Development} />}
 					onPress={() => navigation.push(Keys.Custom, {
 						title: i18n.Messages.UNBOUND_DEVELOPMENT_SETTINGS,
 						render: Developer
 					})}
 					arrow
 				/>
-			</TableRowGroupWrapper>
-			<TableRowGroupWrapper title={i18n.Messages.UNBOUND_INFO}>
-				<TableRow
+			</Section>
+			<Section title={i18n.Messages.UNBOUND_INFO}>
+				<Row
 					label='Installed Plugins'
-					icon={<TableRowIcon source={Icons.Plugins} />}
+					icon={<RowIcon source={Icons.Plugins} />}
 					trailing={<RN.Text style={styles.trailingText}>
 						{Plugins.addons.length}
 					</RN.Text>}
 				/>
-				<TableRow
+				<Row
 					label='Installed Themes'
-					icon={<TableRowIcon source={Icons.Themes} />}
+					icon={<RowIcon source={Icons.Themes} />}
 					trailing={<RN.Text style={styles.trailingText}>
 						{Themes.addons.length}
 					</RN.Text>}
 				/>
-			</TableRowGroupWrapper>
-			<TableRowGroupWrapper title='Links'>
-				<TableRow
+			</Section>
+			<Section title='Links'>
+				<Row
 					label='Discord Server'
-					icon={<TableRowIcon source={Icons.Discord} />}
+					icon={<RowIcon source={Icons.Discord} />}
 					onPress={() => Invites.acceptInviteAndTransitionToInviteChannel({ inviteKey: Invite })}
 					arrow
 				/>
-				<TableRow
+				<Row
 					label='GitHub'
-					icon={<TableRowIcon source={Icons.GitHub} />}
+					icon={<RowIcon source={Icons.GitHub} />}
 					onPress={() => RN.Linking.openURL(Links.GitHub)}
 					arrow
 				/>
-				<TableRow
+				<Row
 					label='Twitter'
-					icon={<TableRowIcon source={Icons.Twitter} />}
+					icon={<RowIcon source={Icons.Twitter} />}
 					onPress={() => RN.Linking.openURL(Links.Twitter)}
 					arrow
 				/>
-			</TableRowGroupWrapper>
+			</Section>
 		</RN.KeyboardAvoidingView>
 	</RN.ScrollView>;
 }

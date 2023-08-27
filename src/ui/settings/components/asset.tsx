@@ -1,17 +1,16 @@
 import { findByProps } from '@metro';
 import { React, ReactNative as RN } from '@metro/common';
-import { Redesign, Media } from '@metro/components';
+import { Media } from '@metro/components';
 import { Asset } from '@typings/api/assets';
 
-const { TableRow } = Redesign;
-const WrappedTableRow = React.memo(TableRow);
+import { Row } from '@ui/components/FormHandler';
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
 
 export default class extends React.PureComponent<{ item: Asset; index: number; total: number; }> {
 	render() {
 		const { item, index, total } = this.props;
 
-		return <WrappedTableRow
+		return <Row
 			label={item.name}
 			subLabel={`${item.type.toUpperCase()} - ${item.width}x${item.height} - ${item.id}`}
 			trailing={<RN.Image

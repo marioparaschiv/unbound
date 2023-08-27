@@ -1,18 +1,23 @@
 import { useSettingsStore } from '@api/storage';
 import { React, i18n } from '@metro/common';
-import TableRowGroupWrapper, { endStyle } from '@ui/components/TableRowGroupWrapper';
 import { Keys, Links } from '@constants';
 import Assets from '@api/assets';
 
-import { Redesign, Forms, Navigation } from '@metro/components';
+import { Forms, Navigation } from '@metro/components';
+import { 
+    Section, 
+    Row,
+    SwitchRow,
+    RowIcon,
+    useEndStyle
+} from '@ui/components/FormHandler';
 import AssetBrowser from './assets';
 import Logs from './logger';
-
-const { TableRow, TableSwitchRow, TableRowIcon } = Redesign;
 
 export default function () {
 	const navigation = Navigation.useNavigation();
 	const settings = useSettingsStore('unbound');
+    const endStyle = useEndStyle();
 
 	const Icons = {
 		Debug: Assets.getIDByName('debug'),
@@ -21,35 +26,35 @@ export default function () {
 	};
 
 	return <ReactNative.ScrollView>
-		<TableRowGroupWrapper title={i18n.Messages.UNBOUND_MISC}>
-			<TableRow
+		<Section title={i18n.Messages.UNBOUND_MISC}>
+			<Row
 				label={i18n.Messages.UNBOUND_FORCE_GARBAGE_COLLECTION_TITLE}
 				subLabel={i18n.Messages.UNBOUND_FORCE_GARBAGE_COLLECTION_DESC}
-				icon={<TableRowIcon source={Icons.Trash} />}
+				icon={<RowIcon source={Icons.Trash} />}
 				onPress={window.gc}
 				arrow
 			/>
-			<TableRow
+			<Row
 				label={i18n.Messages.UNBOUND_ASSET_BROWSER}
-				icon={<TableRowIcon source={Icons.Browser} />}
+				icon={<RowIcon source={Icons.Browser} />}
 				onPress={() => navigation.push(Keys.Custom, {
 					title: i18n.Messages.UNBOUND_ASSET_BROWSER,
 					render: AssetBrowser
 				})}
 				arrow
 			/>
-			<TableRow
+			<Row
 				label={i18n.Messages.UNBOUND_DEBUG_LOGS}
-				icon={<TableRowIcon source={Icons.Debug} />}
+				icon={<RowIcon source={Icons.Debug} />}
 				onPress={() => navigation.push(Keys.Custom, {
 					title: i18n.Messages.UNBOUND_DEBUG_LOGS,
 					render: Logs
 				})}
 				arrow
 			/>
-		</TableRowGroupWrapper>
-		<TableRowGroupWrapper title={i18n.Messages.UNBOUND_DEBUG_BRIDGE}>
-			<TableSwitchRow
+		</Section>
+		<Section title={i18n.Messages.UNBOUND_DEBUG_BRIDGE}>
+			<SwitchRow
 				label={i18n.Messages.UNBOUND_ENABLED}
 				subLabel={i18n.Messages.UNBOUND_DEBUG_BRIDGE_DESC}
 				value={settings.get('dev.debugBridge.enabled', false)}
@@ -62,21 +67,21 @@ export default function () {
 				disabled={!settings.get('dev.debugBridge.enabled', false)}
 				style={endStyle}
 			/>
-		</TableRowGroupWrapper>
-		<TableRowGroupWrapper title={i18n.Messages.UNBOUND_LOADER}>
-			<TableSwitchRow
+		</Section>
+		<Section title={i18n.Messages.UNBOUND_LOADER}>
+			<SwitchRow
 				label={i18n.Messages.UNBOUND_ENABLED}
 				subLabel={i18n.Messages.UNBOUND_LOADER_ENABLED_DESC}
 				value={settings.get('loader.enabled', true)}
 				onValueChange={() => settings.toggle('loader.enabled', true)}
 			/>
-			<TableSwitchRow
+			<SwitchRow
 				label={i18n.Messages.UNBOUND_LOADER_DEVTOOLS}
 				subLabel={i18n.Messages.UNBOUND_LOADER_DEVTOOLS_DESC}
 				value={settings.get('loader.devtools', false)}
 				onValueChange={() => settings.toggle('loader.devtools', false)}
 			/>
-			<TableSwitchRow
+			<SwitchRow
 				label={i18n.Messages.UNBOUND_LOADER_UPDATER_FORCE}
 				subLabel={i18n.Messages.UNBOUND_LOADER_UPDATER_FORCE_DESC}
 				value={settings.get('loader.update.force', false)}
@@ -89,15 +94,15 @@ export default function () {
 				disabled={!settings.get('loader.update.force', false)}
 				style={endStyle}
 			/>
-		</TableRowGroupWrapper>
-		<TableRowGroupWrapper title={i18n.Messages.UNBOUND_ERROR_BOUNDARY}>
-			<TableSwitchRow
+		</Section>
+		<Section title={i18n.Messages.UNBOUND_ERROR_BOUNDARY}>
+			<SwitchRow
 				label={i18n.Messages.UNBOUND_ERROR_BOUNDARY}
 				subLabel={i18n.Messages.UNBOUND_ERROR_BOUNDARY_DESC}
 				value={settings.get('dev.errorBoundary', true)}
 				onValueChange={() => settings.toggle('dev.errorBoundary', true)}
 			/>
-			<TableRow
+			<Row
 				label={i18n.Messages.UNBOUND_ERROR_BOUNDARY_TRIGGER_TITLE}
 				subLabel={i18n.Messages.UNBOUND_ERROR_BOUNDARY_TRIGGER_DESC}
 				onPress={() => navigation.push(Keys.Custom, {
@@ -108,7 +113,7 @@ export default function () {
 				})}
 				arrow
 			/>
-		</TableRowGroupWrapper>
+		</Section>
 		<ReactNative.View style={{ marginBottom: 50 }} />
 	</ReactNative.ScrollView>;
 }

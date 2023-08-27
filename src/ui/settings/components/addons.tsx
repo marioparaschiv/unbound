@@ -66,7 +66,7 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 				{i18n.Messages.UNBOUND_RECOVERY_MODE_ENABLED}
 			</HelpMessage>
 		</RN.View>}
-		<RN.ScrollView style={{ height: "100%" }}>
+		<RN.ScrollView style={{ height: '100%' }}>
             <RN.FlatList
                 data={data}
                 keyExtractor={(_, idx) => String(idx)}

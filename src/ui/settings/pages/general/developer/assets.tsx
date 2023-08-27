@@ -2,9 +2,9 @@ import { React, ReactNative as RN } from '@metro/common';
 import { assets } from '@api/assets';
 
 import Asset from '@ui/settings/components/asset';
-import { TableRowGroupWrapper } from '@ui/components';
 import AdvancedSearch, { useAdvancedSearch } from '@ui/components/AdvancedSearch';
 import { findByProps } from '@metro';
+import { Section } from '@ui/components/FormHandler';
 
 const DividerModule = findByProps('TableRowDivider', { lazy: true });
 
@@ -29,7 +29,7 @@ export default function () {
 				controls={controls}
 			/>
 		</RN.View>
-		<TableRowGroupWrapper style={{ flex: 1, marginBottom: 108 }} margin={false}>
+		<Section style={{ flex: 1, marginBottom: 108 }} margin={false}>
 			<RN.FlatList
 				keyExtractor={(asset) => asset.id.toString()}
 				data={data}
@@ -44,6 +44,6 @@ export default function () {
 					/>
 				)}
 			/>
-		</TableRowGroupWrapper>
+		</Section>
 	</RN.View>;
 }
