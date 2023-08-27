@@ -8,34 +8,35 @@ import { React, i18n } from '@metro/common';
 import { Settings } from './base';
 
 export class TabsSettings extends Settings {
-	private Config: Record<string, any>;
-	private Settings: { default: any; };
+	private Constants: Record<string, any>;
+	private Settings: Record<string, any>;
 
 	constructor() {
 		super('tabs');
 
 		const [
-			Config,
+			Constants,
 			Settings
 		] = bulk(
-			{ filter: byProps('SETTING_RENDERER_CONFIGS', 'SETTING_RELATIONSHIPS'), lazy: true },
-			{ filter: byName('SettingsOverviewScreen'), interop: false }
+			{ filter: byProps('SETTING_RENDERER_CONFIG'), lazy: true },
+			{ filter: byProps('SearchableSettingsList'), lazy: true }
 		);
 
-		this.Config = Config;
+		this.Constants = Constants;
 		this.Settings = Settings;
 	};
 
 	private patchConstants() {
-		this.Config._SETTING_RENDERER_CONFIGS = { ...this.Config.SETTING_RENDERER_CONFIGS };
-		this.Config._SETTING_RELATIONSHIPS = { ...this.Config.SETTING_RELATIONSHIPS };
+		this.Constants._SETTING_RENDERER_CONFIG = { ...this.Constants.SETTING_RENDERER_CONFIG };
 
 		Object.assign(
-			this.Config.SETTING_RENDERER_CONFIGS,
+			this.Constants.SETTING_RENDERER_CONFIG,
 			Object.keys(Keys).map(key => ({
 				[Keys[key]]: {
 					type: 'route',
+                    title: () => this.Titles[key],
 					icon: this.Icons[key],
+                    parent: null,
 					screen: {
 						route: Keys[key],
 						getComponent: () => React.memo(({ route }: any) => {
@@ -46,27 +47,19 @@ export class TabsSettings extends Settings {
 				}
 			})).reduce((acc, obj) => ({ ...acc, ...obj }), {})
 		);
-
-		Object.assign(
-			this.Config.SETTING_RELATIONSHIPS,
-			Object.keys(Keys)
-				.map(key => ({ [Keys[key]]: this.Relationships[key] }))
-				.reduce((acc, obj) => ({ ...acc, ...obj }), {})
-		);
 	};
 
 	private patchSections() {
-		this.patcher.after(this.Settings, 'default', (_, __, res) => {
-			const { sections } = findInReactTree(res, r => r.sections);
+		this.patcher.before(this.Settings.SearchableSettingsList, 'type', (_, [{ sections }]) => {
 			const index = sections?.findIndex(section => section.settings.find(setting => setting === 'ACCOUNT'));
 
-			!sections.find(section => section.title === ClientName) &&
-				sections.splice(index === -1 ? 1 : index + 1, 0, {
-					title: ClientName,
+			!sections.find(section => section.label === ClientName)
+				&& sections.splice(index === -1 ? 1 : index + 1, 0, {
+					label: ClientName,
 					settings: Object.keys(Keys).filter(key => this.Mappables[key]).map(key => Keys[key])
 				});
 
-			const support = sections.find(section => section.title === i18n.Messages.SUPPORT);
+			const support = sections.find(section => section.label === i18n.Messages.SUPPORT);
 			support && (support.settings = support.settings.filter(setting => setting !== 'UPLOAD_DEBUG_LOGS'));
 		});
 	};
@@ -103,7 +96,7 @@ export class TabsSettings extends Settings {
 				if (settings.includes(Keys[key])) (
 					res.unshift({
 						type: 'setting_search_result',
-						ancestorSettingData: this.Config.SETTING_RENDERER_CONFIGS[Keys[key]],
+						ancestorSettingData: this.Constants.SETTING_RENDERER_CONFIG[Keys[key]],
 						setting: Keys[key],
 						title: this.Titles[key],
 						breadcrumbs: this.Breadcrumbs[key],
@@ -121,17 +114,6 @@ export class TabsSettings extends Settings {
 		});
 	};
 
-	private patchTitles() {
-		this.patcher.after(this.Config, 'getSettingTitleConfig', (_, __, res) => {
-			return {
-				...res,
-				...Object.keys(Keys)
-					.map(key => ({ [Keys[key]]: this.Titles[key] }))
-					.reduce((acc, obj) => ({ ...acc, ...obj }), {})
-			};
-		});
-	}
-
 	public override Icons = {
 		General: Icons['settings'],
 		Plugins: Icons['ic_activity_24px'],
@@ -143,17 +125,13 @@ export class TabsSettings extends Settings {
 	public override apply() {
 		this.patchConstants();
 		this.patchSections();
-		this.patchTitles();
 		this.patchSearch();
 	}
 
 	public override remove() {
 		this.patcher.unpatchAll();
 
-		this.Config.SETTING_RENDERER_CONFIGS = { ...this.Config._SETTING_RENDERER_CONFIGS };
-		this.Config.SETTING_RELATIONSHIPS = { ...this.Config._SETTING_RELATIONSHIPS };
-
-		delete this.Config._SETTING_RENDERER_CONFIGS;
-		delete this.Config._SETTING_RELATIONSHIPS;
+		this.Constants.SETTING_RENDERER_CONFIG = { ...this.Constants._SETTING_RENDERER_CONFIG };
+		delete this.Constants._SETTING_RENDERER_CONFIG;
 	}
 }

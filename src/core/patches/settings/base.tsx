@@ -52,14 +52,6 @@ export class Settings {
 		Custom: []
 	};
 
-	public Relationships = {
-		General: null,
-		Plugins: Keys.General,
-		Themes: Keys.General,
-		Updater: Keys.General,
-		Custom: null
-	};
-
 	public Mappables = {
 		General: true,
 		Plugins: true,
