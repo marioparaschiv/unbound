@@ -4,9 +4,8 @@ import Plugins from '@managers/plugins';
 import { Icons } from '@api/assets';
 import { Dialog } from '@metro/ui';
 
-import InstallModal from '../components/installmodal';
+import { Addons, InstallModal } from '../components';
 import { Navigation } from '@metro/components';
-import Addons from '../components/addons';
 
 const { colors, meta: { resolveSemanticColor } } = Theme;
 

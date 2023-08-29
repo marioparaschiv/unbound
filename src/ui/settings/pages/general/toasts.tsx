@@ -1,7 +1,6 @@
-import { Slider, Redesign, Forms } from '@metro/components';
+import { Slider, Forms } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
-import { Constants, Theme } from '@metro/common';
-import { i18n } from '@metro/common';
+import { Constants, Theme, i18n } from '@metro/common';
 import Assets from '@api/assets';
 
 import { 

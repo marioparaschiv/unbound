@@ -4,8 +4,8 @@ import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
 import { createLogger } from '@logger';
 import { Regex } from '@constants';
+import { Files } from '@api/storage';
 
-const Files = ReactNative.NativeModules.DCDFileManager ?? ReactNative.NativeModules.RTNFileManager;
 const { LayoutAnimation: { configureNext, Presets } } = ReactNative;
 
 export enum ManagerType {

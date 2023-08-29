@@ -117,7 +117,7 @@ export class TabsSettings extends Settings {
 	public override Icons = {
 		General: Icons['settings'],
 		Plugins: Icons['ic_activity_24px'],
-		Themes: Icons['ic_paint_brush'],
+		Themes: Icons['CreativeIcon'],
 		Updater: Icons['ic_download_24px'],
 		Custom: null
 	};

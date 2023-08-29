@@ -169,7 +169,7 @@ export function findByPrototypes<U extends string, T extends
 };
 
 export function findStore<U extends string, T extends
-    U[] | StringFindWithOptions<U>
+    U[] | StringFindWithOptions<U, StoreOptions>
 > (
     ...args: T
 ): AnyProps {

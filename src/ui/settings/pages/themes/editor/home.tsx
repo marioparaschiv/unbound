@@ -4,7 +4,7 @@ import { Button, Navigation } from '@metro/components';
 import { Keys } from '@constants';
 import { Dialog } from '@metro/ui';
 
-import InstallModal from '@ui/settings/components/installmodal';
+import { InstallModal } from '@ui/settings/components';
 import Themes from '@managers/themes';
 
 import Create from './create';

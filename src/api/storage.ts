@@ -1,9 +1,9 @@
 import { isEmpty, debounce } from '@utilities';
 import EventEmitter from '@structures/emitter';
 
-const Files = ReactNative.NativeModules.DCDFileManager ?? ReactNative.NativeModules.RTNFileManager;
 const Events = new EventEmitter();
 
+export const Files = ReactNative.NativeModules.DCDFileManager ?? ReactNative.NativeModules.RTNFileManager;
 export const settings = globalThis.UNBOUND_SETTINGS ?? {};
 
 export const on = Events.on.bind(Events);
@@ -92,12 +92,12 @@ export function useSettingsStore(store: string) {
 	return getStore(store);
 }
 
-Events.on('changed', debounce(() => {
+Events.on('changed', debounce(async () => {
 	const payload = JSON.stringify(settings, null, 2);
 	const path = 'Unbound/settings.json';
 
 
-	Files.writeFile('documents', path, payload, 'utf8');
+	await Files.writeFile('documents', path, payload, 'utf8');
 }, 250));
 
 export default { useSettingsStore, getStore, get, set, remove, on, off };

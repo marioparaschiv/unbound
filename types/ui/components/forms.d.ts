@@ -1,18 +1,20 @@
 import type{ ReactNode } from "react";
-import type { ViewStyle } from "react-native";
+import type { ImageSourcePropType, ViewStyle } from "react-native";
 
 type SectionProps = {
+    title?: string;
 	children?: React.ReactNode,
 	style?: ViewStyle;
 	margin?: boolean;
-	[k: PropertyKey]: any;
 }
 
 type RowProps = {
     label: string;
     subLabel?: string;
     onPress?: Fn;
-    icon?: ReactNode | null;
+    icon?: ImageSourcePropType 
+        | ReactNode 
+        | null;
     trailing?: ReactNode;
     variant?: string;
     arrow?: boolean;
@@ -20,13 +22,14 @@ type RowProps = {
     end?: boolean;
 }
 
-type SwitchRowProps = Omit<RowProps, "trailing" | "arrow"> & {
+type SwitchRowProps = Omit<RowProps, "arrow"> & {
     value: any;
     onValueChange: Fn;
 }
 
 type RowIconProps = {
-    // ReactNode includes string | number, etc
-    source: ReactNode;
+    source?: ImageSourcePropType 
+        | ReactNode 
+        | null;
     style?: ViewStyle;
 }

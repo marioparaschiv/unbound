@@ -16,8 +16,10 @@ import {
     Row,
     RowIcon
 } from '@ui/components/FormHandler';
+
 import Developer from './developer';
 import Toasts from './toasts';
+import IconsPage from './icons';
 
 const styles = StyleSheet.createThemedStyleSheet({
 	trailingText: {
@@ -39,8 +41,9 @@ function General() {
 		Plugins: Assets.getIDByName('ic_activity_24px'),
 		Themes: Assets.getIDByName('ic_paint_brush'),
 		Toasts: Assets.getIDByName('ic_notification_settings'),
+        Grid: Assets.getIDByName('GridSquareIcon'),
 		Retry: Assets.getIDByName('ic_message_retry'),
-		Discord: Assets.getIDByName('Discord'),
+		Discord: Assets.getIDByName('logo'),
 		Debug: Assets.getIDByName('debug')
 	};
 
@@ -77,6 +80,15 @@ function General() {
 					onPress={() => navigation.push(Keys.Custom, {
 						title: i18n.Messages.UNBOUND_TOAST_SETTINGS,
 						render: Toasts
+					})}
+					arrow
+				/>
+                <Row
+					label={"Manage Icons"}
+					icon={<RowIcon source={Icons.Grid} />}
+					onPress={() => navigation.push(Keys.Custom, {
+						title: "Manage Icons",
+						render: IconsPage
 					})}
 					arrow
 				/>

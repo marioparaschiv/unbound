@@ -5,8 +5,7 @@ import { Keys } from '@constants';
 import { Icons } from '@api/assets';
 import { Dialog } from '@metro/ui';
 
-import InstallModal from '@ui/settings/components/installmodal';
-import Addons from '@ui/settings/components/addons';
+import { Addons, InstallModal } from '@ui/settings/components';
 import Home from './editor/home';
 
 import { Navigation } from '@metro/components';

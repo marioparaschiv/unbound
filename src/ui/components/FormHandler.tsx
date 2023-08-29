@@ -17,6 +17,7 @@ export const { endStyle } = StyleSheet.createThemedStyleSheet({
 	}
 });
 
+export const Switch = findByProps("FormSwitch", { lazy: true, all: true }).find(x => !("FormTitle" in x))
 export const TabsUIState = findByProps(
     'useInMainTabsExperiment', 
     'isInMainTabsExperiment', 
@@ -51,24 +52,42 @@ export const Row = ({ icon, arrow, trailing, ...shared }: RowProps) => {
     )
 }
 
-export const SwitchRow = ({ icon, value, onValueChange, ...shared }: SwitchRowProps) => {
+export const SwitchRow = ({ icon, trailing, value, onValueChange, ...shared }: SwitchRowProps) => {
     const tabsEnabled = TabsUIState.useInMainTabsExperiment();
 
     return tabsEnabled ? (
-        <Redesign.TableSwitchRow 
+        <Redesign.TableRow
             {...shared}
             icon={icon}
-            value={value}
-            onValueChange={onValueChange}
+            trailing={<RN.View 
+                style={{ 
+                    flexDirection: 'row',
+                    alignItems: 'center'
+                }}
+            >
+                {trailing}
+                <Switch.FormSwitch 
+                    value={value}
+                    onValueChange={onValueChange}
+                />
+            </RN.View>}
         />
     ) : (
         <Row 
             {...shared}
             icon={icon}
-            trailing={<Forms.FormSwitch
-                value={value}
-                onValueChange={onValueChange}
-            />}
+            trailing={<RN.View 
+                style={{ 
+                    flexDirection: 'row',
+                    alignItems: 'center'
+                }}
+            >
+                {trailing}
+                <Forms.FormSwitch
+                    value={value}
+                    onValueChange={onValueChange}
+                />
+            </RN.View>}
         />
     )
 }
