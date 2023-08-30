@@ -2,13 +2,13 @@ import { i18n, React, ReactNative as RN, Theme } from '@metro/common';
 import { Theme as ThemeStore } from '@metro/stores';
 import Themes from '@managers/themes';
 import { Keys } from '@constants';
-import { Icons } from '@api/assets';
+import { getIDByName } from '@api/assets';
 import { Dialog } from '@metro/ui';
 
 import { Addons, InstallModal } from '@ui/settings/components';
 import Home from './editor/home';
 
-import { Navigation } from '@metro/components';
+import { Forms, Navigation } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { inputs } from './editor/create';
 
@@ -22,7 +22,7 @@ export default () => {
 		unsubscribe();
 		navigation.setOptions({
 			title: addons.length ? `${i18n.Messages.UNBOUND_THEMES} - ${addons.length}` : i18n.Messages.UNBOUND_THEMES,
-			headerRight: () => <Add />
+			headerRight: HeaderRight
 		});
 	});
 
@@ -35,19 +35,14 @@ export default () => {
 	</RN.View>;
 };
 
-function Add() {
+function HeaderRight() {
 	const navigation = Navigation.useNavigation();
 	const settings = useSettingsStore('create-theme');
 	const ref = React.useRef<InstanceType<typeof InstallModal>>();
 	const url = React.useCallback(() => ref.current?.getInput(), [ref.current]);
 
-	return <RN.Pressable
-		hitSlop={25}
-		style={({ pressed }) => ({
-			opacity: pressed ? 0.5 : 1.0,
-			marginRight: 16,
-			tintColor: colors.INTERACTIVE_NORMAL
-		})}
+	return <RN.TouchableOpacity
+		style={{ marginRight: 16 }}
 		onPress={() => {
 			Dialog.confirm({
 				title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
@@ -75,10 +70,11 @@ function Add() {
 					});
 				}
 			});
-		}}>
-		<RN.Image
-			source={Icons['ic_add_circle']}
+		}}
+    >
+		<Forms.FormIcon
+			source={getIDByName('ic_add_circle')}
 			style={{ tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL) }}
 		/>
-	</RN.Pressable>;
+	</RN.TouchableOpacity>;
 }

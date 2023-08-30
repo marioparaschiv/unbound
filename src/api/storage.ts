@@ -9,7 +9,7 @@ export const settings = globalThis.UNBOUND_SETTINGS ?? {};
 export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
 
-export function get(store: string, key: string, def: any) {
+export function get<T extends any>(store: string, key: string, def: T): T & {} {
 	const keys = key.split('.');
 	const data = { result: settings[store] };
 
@@ -65,7 +65,7 @@ export function remove(store: string, key: string) {
 export function getStore(store: string) {
 	return {
 		set: (key: string, value: any) => set(store, key, value),
-		get: (key: string, def: any) => get(store, key, def),
+		get: <T extends any>(key: string, def: T): T & {} => get(store, key, def),
 		toggle: (key: string, def: any) => toggle(store, key, def),
 		remove: (key: string) => remove(store, key),
 		useSettingsStore: () => useSettingsStore(store)

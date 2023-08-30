@@ -11,6 +11,11 @@ export interface Asset {
 	 */
 	httpServerLocation?: string;
 
+    /**
+     * Full icon path used for overwriting icons with icon packs.
+     */
+    iconPackPath?: string;
+
 	/**
 	 * Width of the asset.
 	 */

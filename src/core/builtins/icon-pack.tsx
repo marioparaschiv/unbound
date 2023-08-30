@@ -2,7 +2,7 @@ import { BuiltIn } from '@typings/core/builtins';
 import { createPatcher } from '@patcher';
 import { ReactNative as RN } from '@metro/common';
 import { getIDByName, getByID } from '@api/assets';
-import { Files, useSettingsStore } from '@api/storage';
+import { get, off, on } from '@api/storage';
 
 export const paths = {
     base: 'https://github.com/acquitelol/rosiecord/tree/master/Packs',
@@ -31,27 +31,41 @@ export const data: BuiltIn['data'] = {
 	default: true
 };
 
+function handler(originalSource: number, pack: keyof typeof Packs, args: any[]) {
+    if (typeof originalSource !== 'number' || pack === 'default') return;
+
+    const asset = getByID(originalSource);
+
+    if (originalSource === 1205) console.log(asset);
+    
+    if (!asset) return;
+
+    if (asset.iconPackPath) {
+        args[0].source = { uri: `file://${asset.iconPackPath}`};
+    }
+}
+
 export function initialize() {
     // @ts-expect-error - RN.Image has no 'render' method defined on its types
     Patcher.before(RN.Image, 'render', (_, args) => {
-        const [selected, setSelected] = React.useState(args[0].source);
-        const settings = useSettingsStore('unbound');
+        const pack = get('unbound', 'iconpack.name', 'default');
+        const originalSource = React.useMemo(() => args[0].source, []);
+        const [, forceRender] = React.useState({});
 
-        const pack: keyof typeof Packs = settings.get('iconpack.name', 'default');
-        const installedPacks = settings.get('iconpack.installed', []);
+        React.useLayoutEffect(() => {
+            const payload = ({ store, key }) => {
+                if (store === 'unbound' && key === 'iconpack.name') {
+                    handler(originalSource, pack, args);
+                    forceRender({});
+                }
+            }
 
-        if (typeof args[0].source !== 'number' || pack === 'default' || !installedPacks.includes(pack)) return;
-
-        const asset = getByID(args[0].source);
-
-        const path = asset.httpServerLocation.replace(/\/assets\/(.*)/, '$1');
-        const scale = asset.scales.some(x => x > 1) ? `@${Math.max(...asset.scales)}x` : '';
-
-        const exactPath = `${path}/${asset.name}${scale}.${asset.type}`
-        const filePath = `${Files.DocumentsDirPath}/Unbound/Packs/${pack}/${exactPath}`;
-
-        Files.fileExists(filePath).then(res => res && setSelected({ uri: `file://${filePath}` }));
-        args[0].source = selected;
+            on('changed', payload)
+            
+            return () => off('changed', payload)
+        }, [])
+        
+        handler(originalSource, pack, args);
     })
 }
 
