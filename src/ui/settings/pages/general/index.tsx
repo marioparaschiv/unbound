@@ -84,10 +84,10 @@ function General() {
 					arrow
 				/>
                 <Row
-					label={"Manage Icons"}
+					label={i18n.Messages.UNBOUND_MANAGE_ICONS}
 					icon={<RowIcon source={Icons.Grid} />}
 					onPress={() => navigation.push(Keys.Custom, {
-						title: "Manage Icons",
+						title: i18n.Messages.UNBOUND_MANAGE_ICONS,
 						render: IconsPage
 					})}
 					arrow

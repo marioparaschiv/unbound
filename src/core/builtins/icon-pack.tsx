@@ -3,11 +3,7 @@ import { createPatcher } from '@patcher';
 import { ReactNative as RN } from '@metro/common';
 import { getIDByName, getByID } from '@api/assets';
 import { get, off, on } from '@api/storage';
-
-export const paths = {
-    base: 'https://github.com/acquitelol/rosiecord/tree/master/Packs',
-    raw: 'https://raw.githubusercontent.com/acquitelol/rosiecord/master/Packs',
-}
+import { Paths } from '@constants';
 
 export const Packs = {
     default: {
@@ -15,11 +11,11 @@ export const Packs = {
         extension: null
     },
     plumpy: {
-        icon: { uri: paths.raw + '/Plumpy/images/native/premium/perks/img_nitro_star@3x.png' },
+        icon: { uri: Paths.raw + '/Plumpy/images/native/premium/perks/img_nitro_star@3x.png' },
         extension: '/Plumpy'
     },
     iconsax: {
-        icon: { uri: paths.raw + '/Iconsax/images/native/premium/perks/img_nitro_star@3x.png' },
+        icon: { uri: Paths.raw + '/Iconsax/images/native/premium/perks/img_nitro_star@3x.png' },
         extension: '/Iconsax'
     }
 }
@@ -35,13 +31,16 @@ function handler(originalSource: number, pack: keyof typeof Packs, args: any[]) 
     if (typeof originalSource !== 'number' || pack === 'default') return;
 
     const asset = getByID(originalSource);
-
-    if (originalSource === 1205) console.log(asset);
     
     if (!asset) return;
 
     if (asset.iconPackPath) {
-        args[0].source = { uri: `file://${asset.iconPackPath}`};
+        args[0].source = {
+            width: asset.width,
+            height: asset.height,
+            uri: `file://${asset.iconPackPath}`,
+            scale: Math.max(...asset.scales.filter(x => x < 4))
+        };
     }
 }
 
@@ -60,8 +59,7 @@ export function initialize() {
                 }
             }
 
-            on('changed', payload)
-            
+            on('changed', payload);
             return () => off('changed', payload)
         }, [])
         

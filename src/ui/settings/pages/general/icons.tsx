@@ -1,5 +1,5 @@
 import { Files, useSettingsStore } from '@api/storage';
-import { ReactNative as RN } from '@metro/common';
+import { ReactNative as RN, i18n } from '@metro/common';
 
 import { 
     Section,
@@ -7,9 +7,11 @@ import {
     RowIcon
 } from '@ui/components/FormHandler';
 import { capitalize } from '@utilities';
-import { Packs, paths } from '@core/builtins/icon-pack';
+import { Packs } from '@core/builtins/icon-pack';
 import { DownloadButton } from '@ui/settings/components';
 import { Dialog } from '@metro/ui';
+import { Paths } from '@constants';
+import { packExists } from '@api/assets';
 
 interface PackRowProps {
     settings: ReturnType<typeof useSettingsStore>,
@@ -23,21 +25,20 @@ const PackRow = ({ settings, name, pack }: PackRowProps) => {
         icon={<RowIcon source={pack.icon} />}
         value={settings.get('iconpack.name', 'default') === name}
         onValueChange={async () => {
-            settings.set('iconpack.name', name)
+            settings.set('iconpack.name', name);
 
-            Files.fileExists(Files.DocumentsDirPath + `/Unbound/Packs/${name}`).then(res => {
-                (!res && name !== 'default') &&
-                    Dialog.show({
-                        title: "Pack not installed",
-                        body: "The pack you selected is not installed. Icons will be fetched externally, resulting in a poorer experience. Please install the icon pack to refrain from needing to download each asset as it's needed.",
-                        confirmText: "Okay"
-                    })
-            })
+            if (!packExists(settings, name) && name !== 'default') {
+                Dialog.show({
+                    title: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_TITLE,
+                    body: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_DESC,
+                })
+            }
         }}
         trailing={pack.extension && <RN.View style={{ marginRight: 8 }}>
             <DownloadButton 
                 name={name} 
-                url={paths.base + pack.extension}
+                url={Paths.base + pack.extension}
+                settings={settings}
             />
         </RN.View>}
     />
@@ -47,7 +48,7 @@ export default function () {
 	const settings = useSettingsStore('unbound');
 
 	return <ReactNative.ScrollView>
-        <Section title='Default Packs'>
+        <Section title={i18n.Messages.UNBOUND_DEFAULT_PACKS}>
             {Object.entries(Packs).map(([k, v]) => {
                 return <PackRow 
                     settings={settings} 

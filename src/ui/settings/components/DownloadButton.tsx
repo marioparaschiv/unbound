@@ -1,13 +1,15 @@
-import { getIDByName } from "@api/assets";
+import { getIDByName, packExists } from "@api/assets";
 import { Packs } from "@core/builtins/icon-pack";
 import { Redesign } from "@metro/components";
 import { chunkArray } from "@utilities";
-import { ReactNative as RN } from "@metro/common";
+import { ReactNative as RN, i18n } from "@metro/common";
 import { Files, useSettingsStore } from "@api/storage";
+import { Paths } from "@constants";
 
 interface DownloadRowProps {
     name: keyof typeof Packs,
     url: string;
+    settings: ReturnType<typeof useSettingsStore>
 }
 
 async function findFolder(tree: any[], paths: string[]) {
@@ -50,27 +52,22 @@ async function getAssetsForGitRepo(url: DownloadRowProps['url']) {
     return res as typeof res;
 }
 
-
-export default ({ name, url }: DownloadRowProps) => {
+export default ({ name, url, settings }: DownloadRowProps) => {
     const [text, setText] = React.useState<string>(null);
-    const settings = useSettingsStore('unbound');
-    const controller = new AbortController();
 
     React.useLayoutEffect(() => {
         if (text) {
             RN.LayoutAnimation.configureNext(RN.LayoutAnimation.Presets.spring);
         }
-        
-        return () => controller.abort("Component was unmounted");
     }, [text]);
 
     return <Redesign.Button
         text={text}
-        icon={getIDByName(settings.get('iconpack.installed', []).includes(name) ? 'ic_message_retry' : 'ic_download_24px')}
+        icon={getIDByName(packExists(settings, name) ? 'ic_message_retry' : 'ic_download_24px')}
         variant={'primary'}
         size={'sm'}
         onPress={async () => {
-            setText("Fetching...");
+            setText(i18n.Messages.UNBOUND_DOWNLOAD_PACK_FETCHING);
 
             try {
                 const { username, repo, branch, path, tree } = await getAssetsForGitRepo(url);
@@ -83,7 +80,7 @@ export default ({ name, url }: DownloadRowProps) => {
                     await Promise.all(chunks[i].map(async (asset, j) => {
                         const assetUrl = `https://raw.githubusercontent.com/${username}/${repo}/${branch ?? 'main'}/${path ? `${path}/` : ''}${asset.path}`;
                 
-                        const res = await fetch(assetUrl, { signal: controller.signal });
+                        const res = await fetch(assetUrl);
                         const blob = await res.blob();
                 
                         const buf = await new Promise<ArrayBuffer>((resolve, reject) => {
@@ -97,22 +94,26 @@ export default ({ name, url }: DownloadRowProps) => {
                 
                         await Files.writeFile(
                             'documents',
-                            `Unbound/Packs/${name}/${asset.path}`,
+                            `${Paths.local}/${name}/${asset.path}`,
                             data,
                             'base64'
                         );
                 
                         // All chunks previously fetched + the current index of this chunk
-                        setText(`${(i + 1) * 20 + (j + 1)} of ${assets.length}`);
+                        setText(i18n.Messages.UNBOUND_DOWNLOAD_PACK_ITEM.format({ 
+                            current: (i + 1) * 20 + (j + 1),
+                            total: assets.length
+                        }))
                     }));
                 }
             
-                const installed = await Files.fileExists(Files.DocumentsDirPath + `/Unbound/Packs/${name}`);
+                const installed = await Files.fileExists(Files.DocumentsDirPath + `/${Paths.local}/${name}`);
                 installed && settings.set('iconpack.installed', [ ...settings.get('iconpack.installed', []), name ]);
 
                 setText(null);
             } catch (error) {
                 console.error("Getting assets: " + error);
+                setText(null);
             }
         }}
     />

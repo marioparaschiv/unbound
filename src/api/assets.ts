@@ -4,6 +4,7 @@ import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
 import { Files, getStore, on } from './storage';
 import { Packs } from '@core/builtins/icon-pack';
+import { Paths } from '@constants';
 
 export const assets = new Set<Asset>();
 export const registry = findByProps('registerAsset');
@@ -11,9 +12,13 @@ export const registry = findByProps('registerAsset');
 const Logger = createLogger('Assets');
 const Patcher = createPatcher('unbound-assets');
 
+export function packExists(store: ReturnType<typeof getStore>, pack: string) {
+    return store.get('iconpack.installed', []).includes(pack);
+}
+
 export function getRelativeAssetPath(asset: Asset) {
     const path = asset.httpServerLocation.replace(/\/assets\/(.*)/, '$1');
-    const scale = asset.scales.some(x => x > 1) ? `@${Math.max(...asset.scales)}x` : '';
+    const scale = asset.scales.some(x => x > 1) ? `@${Math.max(...asset.scales.filter(x => x < 4))}x` : '';
 
     return `${path}/${asset.name}${scale}.${asset.type}`
 }
@@ -25,7 +30,7 @@ function captureAssets(pack: keyof typeof Packs) {
 		if (!asset) break;
 
         const exactPath = getRelativeAssetPath(asset);
-        const filePath = `${Files.DocumentsDirPath}/Unbound/Packs/${pack}/${exactPath}`;
+        const filePath = `${Files.DocumentsDirPath}/${Paths.local}/${pack}/${exactPath}`;
 
         delete registry.getAssetByID(id).iconPackPath;
         Files.fileExists(filePath).then(fileExists => {
@@ -48,7 +53,7 @@ function initialize() {
     const installedPacks = store.get('iconpack.installed', []);
 
     for (const pack of installedPacks) {
-        Files.fileExists(`${Files.DocumentsDirPath}/Unbound/Packs/${pack}`).then(fileExists => {
+        Files.fileExists(`${Files.DocumentsDirPath}/${Paths.local}/${pack}`).then(fileExists => {
             if (!fileExists) {
                 store.set(
                     'iconpack.installed', 
@@ -60,7 +65,7 @@ function initialize() {
 
 	Patcher.after(registry, 'registerAsset', (_, [asset]: [Asset], id: number) => {
         const exactPath = getRelativeAssetPath(asset);
-        const filePath = `${Files.DocumentsDirPath}/Unbound/Packs/${pack}/${exactPath}`;
+        const filePath = `${Files.DocumentsDirPath}/${Paths.local}/${pack}/${exactPath}`;
 
         delete registry.getAssetByID(id).iconPackPath;
         Files.fileExists(filePath).then(fileExists => {
@@ -77,7 +82,7 @@ function initialize() {
 
 	// Capture all assets that loaded before our patch
     on('changed', ({ store, key, value }) => {
-        if (store === 'unbound' && key === 'iconpack.name') {
+        if (store === 'unbound' && ['iconpack.name', 'iconpack.installed'].includes(key)) {
             captureAssets(value);
         }
     })
