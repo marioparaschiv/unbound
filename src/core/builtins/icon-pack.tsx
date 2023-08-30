@@ -11,11 +11,11 @@ export const Packs = {
         extension: null
     },
     plumpy: {
-        icon: { uri: Paths.raw + '/Plumpy/images/native/premium/perks/img_nitro_star@3x.png' },
+        icon: { uri: Paths.packs.raw + '/Plumpy/images/native/premium/perks/img_nitro_star@3x.png' },
         extension: '/Plumpy'
     },
     iconsax: {
-        icon: { uri: Paths.raw + '/Iconsax/images/native/premium/perks/img_nitro_star@3x.png' },
+        icon: { uri: Paths.packs.raw + '/Iconsax/images/native/premium/perks/img_nitro_star@3x.png' },
         extension: '/Iconsax'
     }
 }
@@ -39,7 +39,7 @@ function handler(originalSource: number, pack: keyof typeof Packs, args: any[]) 
             width: asset.width,
             height: asset.height,
             uri: `file://${asset.iconPackPath}`,
-            scale: Math.max(...asset.scales.filter(x => x < 4))
+            scale: asset.iconPackScale
         };
     }
 }
@@ -48,7 +48,7 @@ export function initialize() {
     // @ts-expect-error - RN.Image has no 'render' method defined on its types
     Patcher.before(RN.Image, 'render', (_, args) => {
         const pack = get('unbound', 'iconpack.name', 'default');
-        const originalSource = React.useMemo(() => args[0].source, []);
+        const originalSource = args[0].source;
         const [, forceRender] = React.useState({});
 
         React.useLayoutEffect(() => {

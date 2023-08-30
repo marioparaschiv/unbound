@@ -16,6 +16,11 @@ export interface Asset {
      */
     iconPackPath?: string;
 
+    /**
+     * Scale decided by finding the largest scale of an asset which is defined in an icon pack.
+     */
+    iconPackScale?: number;
+
 	/**
 	 * Width of the asset.
 	 */

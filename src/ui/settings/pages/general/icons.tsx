@@ -27,17 +27,19 @@ const PackRow = ({ settings, name, pack }: PackRowProps) => {
         onValueChange={async () => {
             settings.set('iconpack.name', name);
 
-            if (!packExists(settings, name) && name !== 'default') {
-                Dialog.show({
-                    title: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_TITLE,
-                    body: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_DESC,
-                })
-            }
+            packExists(settings, name, true).then(exists => {
+                if (!exists) {
+                    Dialog.show({
+                        title: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_TITLE,
+                        body: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_DESC,
+                    })
+                }
+            })
         }}
         trailing={pack.extension && <RN.View style={{ marginRight: 8 }}>
             <DownloadButton 
                 name={name} 
-                url={Paths.base + pack.extension}
+                url={Paths.packs.base + pack.extension}
                 settings={settings}
             />
         </RN.View>}

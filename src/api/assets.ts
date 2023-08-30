@@ -12,15 +12,51 @@ export const registry = findByProps('registerAsset');
 const Logger = createLogger('Assets');
 const Patcher = createPatcher('unbound-assets');
 
-export function packExists(store: ReturnType<typeof getStore>, pack: string) {
-    return store.get('iconpack.installed', []).includes(pack);
+export function packExists<TAsync extends boolean>(
+    store: ReturnType<typeof getStore>, 
+    pack: string, 
+    fs = false as TAsync
+): TAsync extends true ? Promise<boolean> : boolean {
+    if (fs) {
+        const existsPromise = Files.fileExists(`${Files.DocumentsDirPath}/${Paths.packs.local}/${pack}`);
+
+        return existsPromise.then(exists => {
+            if (!exists) {
+                store.set(
+                    'iconpack.installed', 
+                    store.get('iconpack.installed', ['default']).filter(x => x !== pack)
+                )
+            }
+
+            return exists;
+        })
+    }
+
+    return store.get('iconpack.installed', ['default'])
+        .includes(pack) as TAsync extends true ? Promise<boolean> : boolean;
 }
 
-export function getRelativeAssetPath(asset: Asset) {
+export function getRelativeAssetPath(asset: Asset, scale: number) {
     const path = asset.httpServerLocation.replace(/\/assets\/(.*)/, '$1');
-    const scale = asset.scales.some(x => x > 1) ? `@${Math.max(...asset.scales.filter(x => x < 4))}x` : '';
+    return `${path}/${asset.name}${scale > 1 ? `@${scale}x` : ''}.${asset.type}`
+}
 
-    return `${path}/${asset.name}${scale}.${asset.type}`
+export async function applyIconPath(pack: keyof typeof Packs, asset: Asset) {
+    asset.scales.sort((a, b) => b - a);
+
+    for (const scale of asset.scales) {
+        const exactPath = getRelativeAssetPath(asset, scale);
+        const filePath = `${Files.DocumentsDirPath}/${Paths.packs.local}/${pack}/${exactPath}`;
+    
+        delete asset.iconPackPath;
+        const fileExists = await Files.fileExists(filePath);
+    
+        if (fileExists) {
+            asset.iconPackPath = filePath;
+            asset.iconPackScale = scale;
+            break;
+        }
+    }
 }
 
 function captureAssets(pack: keyof typeof Packs) {
@@ -29,20 +65,12 @@ function captureAssets(pack: keyof typeof Packs) {
 
 		if (!asset) break;
 
-        const exactPath = getRelativeAssetPath(asset);
-        const filePath = `${Files.DocumentsDirPath}/${Paths.local}/${pack}/${exactPath}`;
-
-        delete registry.getAssetByID(id).iconPackPath;
-        Files.fileExists(filePath).then(fileExists => {
-            if (fileExists) {
-                registry.getAssetByID(id).iconPackPath = filePath;
-            }
-        });
-
         if (!assets.has(asset)) {
             Object.assign(asset, { id });
 		    assets.add(asset);
         };
+
+        applyIconPath(pack, asset);
 	}
 }
 
@@ -50,39 +78,33 @@ function initialize() {
     const store = getStore('unbound');
     
     const pack = store.get('iconpack.name', 'default');
-    const installedPacks = store.get('iconpack.installed', []);
+    const installedPacks = store.get('iconpack.installed', ['default']);
 
+    // Update iconpack.installed at startup
     for (const pack of installedPacks) {
-        Files.fileExists(`${Files.DocumentsDirPath}/${Paths.local}/${pack}`).then(fileExists => {
-            if (!fileExists) {
+        packExists(store, pack, true).then(fileExists => {
+            if (!fileExists && pack !== 'default') {
                 store.set(
                     'iconpack.installed', 
-                    installedPacks.filter(installedPack => installedPack !== pack)
+                    installedPacks.filter(p => p !== pack)
                 )
             }
         })
     }
 
 	Patcher.after(registry, 'registerAsset', (_, [asset]: [Asset], id: number) => {
-        const exactPath = getRelativeAssetPath(asset);
-        const filePath = `${Files.DocumentsDirPath}/${Paths.local}/${pack}/${exactPath}`;
-
-        delete registry.getAssetByID(id).iconPackPath;
-        Files.fileExists(filePath).then(fileExists => {
-            if (fileExists) {
-                registry.getAssetByID(id).iconPackPath = filePath;
-            }
-        })
-
-		Object.assign(asset, { id });
+        Object.assign(asset, { id });
 		assets.add(asset);
+
+        applyIconPath(pack, asset);
 	});
 
+	// Capture all assets that loaded before our patch
     captureAssets(pack);
 
-	// Capture all assets that loaded before our patch
+    // Listen for changes to the iconpack.name
     on('changed', ({ store, key, value }) => {
-        if (store === 'unbound' && ['iconpack.name', 'iconpack.installed'].includes(key)) {
+        if (store === 'unbound' && key === 'iconpack.name') {
             captureAssets(value);
         }
     })

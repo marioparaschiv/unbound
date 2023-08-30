@@ -54,16 +54,21 @@ async function getAssetsForGitRepo(url: DownloadRowProps['url']) {
 
 export default ({ name, url, settings }: DownloadRowProps) => {
     const [text, setText] = React.useState<string>(null);
+    const [installed, setInstalled] = React.useState(false);
+
+    React.useEffect(() => {
+        packExists(settings, name, true).then(setInstalled)
+    }, [])
 
     React.useLayoutEffect(() => {
-        if (text) {
+        if (text !== null) {
             RN.LayoutAnimation.configureNext(RN.LayoutAnimation.Presets.spring);
         }
     }, [text]);
 
     return <Redesign.Button
         text={text}
-        icon={getIDByName(packExists(settings, name) ? 'ic_message_retry' : 'ic_download_24px')}
+        icon={getIDByName(installed ? 'ic_message_retry' : 'ic_download_24px')}
         variant={'primary'}
         size={'sm'}
         onPress={async () => {
@@ -75,6 +80,8 @@ export default ({ name, url, settings }: DownloadRowProps) => {
             
                 const concurrencyLimit = 20;
                 const chunks = chunkArray(assets, concurrencyLimit);
+
+                let completed = 0;
             
                 for (let i = 0; i < chunks.length; i++) {
                     await Promise.all(chunks[i].map(async (asset, j) => {
@@ -94,26 +101,29 @@ export default ({ name, url, settings }: DownloadRowProps) => {
                 
                         await Files.writeFile(
                             'documents',
-                            `${Paths.local}/${name}/${asset.path}`,
+                            `${Paths.packs.local}/${name}/${asset.path}`,
                             data,
                             'base64'
                         );
                 
                         // All chunks previously fetched + the current index of this chunk
                         setText(i18n.Messages.UNBOUND_DOWNLOAD_PACK_ITEM.format({ 
-                            current: (i + 1) * 20 + (j + 1),
+                            current: completed++,
                             total: assets.length
                         }))
                     }));
                 }
             
-                const installed = await Files.fileExists(Files.DocumentsDirPath + `/${Paths.local}/${name}`);
-                installed && settings.set('iconpack.installed', [ ...settings.get('iconpack.installed', []), name ]);
+                const installed = await Files.fileExists(Files.DocumentsDirPath + `/${Paths.packs.local}/${name}`);
+                installed && settings.set('iconpack.installed', [ ...settings.get('iconpack.installed', ['default']), name ]);
 
-                setText(null);
+                setInstalled(true);
+
+                setText(i18n.Messages.UNBOUND_DOWNLOAD_PACK_DONE);
+                setTimeout(() => setText(''), 1000)
             } catch (error) {
                 console.error("Getting assets: " + error);
-                setText(null);
+                setText('');
             }
         }}
     />

@@ -18,9 +18,11 @@ export const Keys = {
 } as const;
 
 export const Paths = {
-    local: `${ClientName}/Packs`,
-    base: 'https://github.com/acquitelol/rosiecord/tree/master/Packs',
-    raw: 'https://raw.githubusercontent.com/acquitelol/rosiecord/master/Packs',
+    packs: {
+        local: `${ClientName}/Packs`,
+        base: 'https://github.com/acquitelol/rosiecord/tree/master/Packs',
+        raw: 'https://raw.githubusercontent.com/acquitelol/rosiecord/master/Packs',
+    }
 } as const;
 
 export const Times = {
