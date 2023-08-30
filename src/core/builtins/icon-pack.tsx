@@ -7,7 +7,7 @@ import { Paths } from '@constants';
 
 export const Packs = {
     default: {
-        icon: getIDByName("img_nitro_star"),
+        icon: getIDByName('img_nitro_star'),
         extension: null
     },
     plumpy: {
@@ -20,6 +20,8 @@ export const Packs = {
     }
 }
 
+export type Pack = keyof typeof Packs;
+
 const Patcher = createPatcher('iconpack');
 
 export const data: BuiltIn['data'] = {
@@ -27,7 +29,7 @@ export const data: BuiltIn['data'] = {
 	default: true
 };
 
-function handler(originalSource: number, pack: keyof typeof Packs, args: any[]) {
+function handler(originalSource: number, pack: Pack, args: any[]) {
     if (typeof originalSource !== 'number' || pack === 'default') return;
 
     const asset = getByID(originalSource);

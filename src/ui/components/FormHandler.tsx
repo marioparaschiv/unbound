@@ -17,7 +17,7 @@ export const { endStyle } = StyleSheet.createThemedStyleSheet({
 	}
 });
 
-export const Switch = findByProps("FormSwitch", { lazy: true, all: true }).find(x => !("FormTitle" in x))
+export const Switch = findByProps('FormSwitch', { lazy: true, all: true }).find(x => !('FormTitle' in x))
 export const TabsUIState = findByProps(
     'useInMainTabsExperiment', 
     'isInMainTabsExperiment', 

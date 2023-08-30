@@ -7,7 +7,7 @@ import {
     RowIcon
 } from '@ui/components/FormHandler';
 import { capitalize } from '@utilities';
-import { Packs } from '@core/builtins/icon-pack';
+import { Pack, Packs } from '@core/builtins/icon-pack';
 import { DownloadButton } from '@ui/settings/components';
 import { Dialog } from '@metro/ui';
 import { Paths } from '@constants';
@@ -15,19 +15,20 @@ import { packExists } from '@api/assets';
 
 interface PackRowProps {
     settings: ReturnType<typeof useSettingsStore>,
-    name: keyof typeof Packs,
-    pack: typeof Packs[keyof typeof Packs]
+    pack: Pack,
+    data: typeof Packs[Pack],
+    controller: AbortController
 }
 
-const PackRow = ({ settings, name, pack }: PackRowProps) => {
+const PackRow = ({ settings, pack, data, controller }: PackRowProps) => {
     return <SwitchRow 
-        label={capitalize(name)}
-        icon={<RowIcon source={pack.icon} />}
-        value={settings.get('iconpack.name', 'default') === name}
+        label={capitalize(pack)}
+        icon={<RowIcon source={data.icon} />}
+        value={settings.get('iconpack.name', 'default') === pack}
         onValueChange={async () => {
-            settings.set('iconpack.name', name);
+            settings.set('iconpack.name', pack);
 
-            packExists(settings, name, true).then(exists => {
+            packExists(settings, pack, true).then(exists => {
                 if (!exists) {
                     Dialog.show({
                         title: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_TITLE,
@@ -36,11 +37,12 @@ const PackRow = ({ settings, name, pack }: PackRowProps) => {
                 }
             })
         }}
-        trailing={pack.extension && <RN.View style={{ marginRight: 8 }}>
+        trailing={data.extension && <RN.View style={{ marginRight: 8 }}>
             <DownloadButton 
-                name={name} 
-                url={Paths.packs.base + pack.extension}
+                pack={pack} 
+                url={Paths.packs.base + data.extension}
                 settings={settings}
+                controller={controller}
             />
         </RN.View>}
     />
@@ -48,14 +50,18 @@ const PackRow = ({ settings, name, pack }: PackRowProps) => {
 
 export default function () {
 	const settings = useSettingsStore('unbound');
+    const [controller] = React.useState(new AbortController());
+
+    React.useEffect(() => () => controller.abort(), []);
 
 	return <ReactNative.ScrollView>
         <Section title={i18n.Messages.UNBOUND_DEFAULT_PACKS}>
             {Object.entries(Packs).map(([k, v]) => {
                 return <PackRow 
                     settings={settings} 
-                    name={k as keyof typeof Packs} 
-                    pack={v} 
+                    pack={k as Pack} 
+                    data={v}
+                    controller={controller}
                 />
             })}
         </Section>

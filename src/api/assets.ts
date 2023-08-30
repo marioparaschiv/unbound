@@ -3,8 +3,9 @@ import { findByProps } from '@metro';
 import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
 import { Files, getStore, on } from './storage';
-import { Packs } from '@core/builtins/icon-pack';
 import { Paths } from '@constants';
+
+import type { Pack } from '@core/builtins/icon-pack';
 
 export const assets = new Set<Asset>();
 export const registry = findByProps('registerAsset');
@@ -41,7 +42,7 @@ export function getRelativeAssetPath(asset: Asset, scale: number) {
     return `${path}/${asset.name}${scale > 1 ? `@${scale}x` : ''}.${asset.type}`
 }
 
-export async function applyIconPath(pack: keyof typeof Packs, asset: Asset) {
+export async function applyIconPath(pack: Pack, asset: Asset) {
     asset.scales.sort((a, b) => b - a);
 
     for (const scale of asset.scales) {
@@ -59,7 +60,7 @@ export async function applyIconPath(pack: keyof typeof Packs, asset: Asset) {
     }
 }
 
-function captureAssets(pack: keyof typeof Packs) {
+function captureAssets(pack: Pack) {
     for (let id = 1; ; id++) {
 		const asset: Asset | undefined = registry.getAssetByID(id);
 

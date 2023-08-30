@@ -1,15 +1,17 @@
-import { getIDByName, packExists } from "@api/assets";
-import { Packs } from "@core/builtins/icon-pack";
-import { Redesign } from "@metro/components";
-import { chunkArray } from "@utilities";
-import { ReactNative as RN, i18n } from "@metro/common";
-import { Files, useSettingsStore } from "@api/storage";
-import { Paths } from "@constants";
+import { getIDByName, packExists } from '@api/assets';
+import { Redesign } from '@metro/components';
+import { chunkArray } from '@utilities';
+import { ReactNative as RN, i18n } from '@metro/common';
+import { Files, useSettingsStore } from '@api/storage';
+import { Paths } from '@constants';
+
+import type { Pack } from '@core/builtins/icon-pack';
 
 interface DownloadRowProps {
-    name: keyof typeof Packs,
-    url: string;
-    settings: ReturnType<typeof useSettingsStore>
+    pack: Pack,
+    url: string,
+    settings: ReturnType<typeof useSettingsStore>,
+    controller: AbortController
 }
 
 async function findFolder(tree: any[], paths: string[]) {
@@ -37,7 +39,7 @@ async function getAssetsForGitRepo(url: DownloadRowProps['url']) {
         tree: [] as any[]
     }
 
-    const treesApiUrl = `https://api.github.com/repos/${username}/${repo}/git/trees/${branch ?? "main"}?recursive=${Boolean(path)}`
+    const treesApiUrl = `https://api.github.com/repos/${username}/${repo}/git/trees/${branch ?? 'main'}?recursive=${Boolean(path)}`
     const { tree }: { tree: any[] } = await fetch(treesApiUrl).then(x => x.json());
 
     if (!path) {
@@ -45,19 +47,19 @@ async function getAssetsForGitRepo(url: DownloadRowProps['url']) {
         return res;
     };
 
-    const folder = await findFolder(tree, path.split("/"));
+    const folder = await findFolder(tree, path.split('/'));
     const assets = await fetch(folder).then(x => x.json());
 
     res.tree = assets.tree;
     return res as typeof res;
 }
 
-export default ({ name, url, settings }: DownloadRowProps) => {
+export default ({ pack, url, settings, controller }: DownloadRowProps) => {
     const [text, setText] = React.useState<string>(null);
     const [installed, setInstalled] = React.useState(false);
 
     React.useEffect(() => {
-        packExists(settings, name, true).then(setInstalled)
+        packExists(settings, pack, true).then(setInstalled)
     }, [])
 
     React.useLayoutEffect(() => {
@@ -76,7 +78,7 @@ export default ({ name, url, settings }: DownloadRowProps) => {
 
             try {
                 const { username, repo, branch, path, tree } = await getAssetsForGitRepo(url);
-                const assets = tree.filter(x => x.type === "blob");
+                const assets = tree.filter(x => x.type === 'blob');
             
                 const concurrencyLimit = 20;
                 const chunks = chunkArray(assets, concurrencyLimit);
@@ -84,10 +86,10 @@ export default ({ name, url, settings }: DownloadRowProps) => {
                 let completed = 0;
             
                 for (let i = 0; i < chunks.length; i++) {
-                    await Promise.all(chunks[i].map(async (asset, j) => {
+                    await Promise.all(chunks[i].map(async (asset) => {
                         const assetUrl = `https://raw.githubusercontent.com/${username}/${repo}/${branch ?? 'main'}/${path ? `${path}/` : ''}${asset.path}`;
                 
-                        const res = await fetch(assetUrl);
+                        const res = await fetch(assetUrl, { signal: controller.signal });
                         const blob = await res.blob();
                 
                         const buf = await new Promise<ArrayBuffer>((resolve, reject) => {
@@ -106,7 +108,6 @@ export default ({ name, url, settings }: DownloadRowProps) => {
                             'base64'
                         );
                 
-                        // All chunks previously fetched + the current index of this chunk
                         setText(i18n.Messages.UNBOUND_DOWNLOAD_PACK_ITEM.format({ 
                             current: completed++,
                             total: assets.length
@@ -122,7 +123,7 @@ export default ({ name, url, settings }: DownloadRowProps) => {
                 setText(i18n.Messages.UNBOUND_DOWNLOAD_PACK_DONE);
                 setTimeout(() => setText(''), 1000)
             } catch (error) {
-                console.error("Getting assets: " + error);
+                console.error('Getting assets: ' + error.message ?? error);
                 setText('');
             }
         }}
