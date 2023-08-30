@@ -103,7 +103,7 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
                 
                         await Files.writeFile(
                             'documents',
-                            `${Paths.packs.local}/${name}/${asset.path}`,
+                            `${Paths.packs.local}/${pack}/${asset.path}`,
                             data,
                             'base64'
                         );
@@ -115,8 +115,8 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
                     }));
                 }
             
-                const installed = await Files.fileExists(Files.DocumentsDirPath + `/${Paths.packs.local}/${name}`);
-                installed && settings.set('iconpack.installed', [ ...settings.get('iconpack.installed', ['default']), name ]);
+                const installed = await Files.fileExists(Files.DocumentsDirPath + `/${Paths.packs.local}/${pack}`);
+                installed && settings.set('iconpack.installed', [ ...settings.get('iconpack.installed', ['default']), pack ]);
 
                 setInstalled(true);
 
