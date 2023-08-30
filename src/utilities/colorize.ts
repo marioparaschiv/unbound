@@ -9,8 +9,8 @@ export const Colors = {
 
 type Color = keyof typeof Colors;
 
-function colorize(string: string, color: Color = 'reset') {
-	return Colors[color.toLowerCase()] + string + Colors.reset;
+function colorize(input: string, color: Color = 'reset') {
+	return Colors[color.toLowerCase()] + input + Colors.reset;
 };
 
 export default colorize;

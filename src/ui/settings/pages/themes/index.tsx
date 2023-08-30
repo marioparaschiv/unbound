@@ -8,9 +8,10 @@ import { Dialog } from '@metro/ui';
 import { Addons, InstallModal } from '@ui/settings/components';
 import Home from './editor/home';
 
-import { Forms, Navigation } from '@metro/components';
+import { Navigation } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { inputs } from './editor/create';
+import { TabsUIState } from '@ui/components/FormHandler';
 
 const { colors, meta: { resolveSemanticColor } } = Theme;
 
@@ -40,9 +41,10 @@ function HeaderRight() {
 	const settings = useSettingsStore('create-theme');
 	const ref = React.useRef<InstanceType<typeof InstallModal>>();
 	const url = React.useCallback(() => ref.current?.getInput(), [ref.current]);
+    const tabsEnabled = TabsUIState.useInMainTabsExperiment();
 
 	return <RN.TouchableOpacity
-		style={{ marginRight: 16 }}
+        style={tabsEnabled ? {} : { marginRight: 16 }}
 		onPress={() => {
 			Dialog.confirm({
 				title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
@@ -72,7 +74,7 @@ function HeaderRight() {
 			});
 		}}
     >
-		<Forms.FormIcon
+		<RN.Image
 			source={getIDByName('ic_add_circle')}
 			style={{ tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL) }}
 		/>

@@ -1,4 +1,4 @@
-import { Files, useSettingsStore } from '@api/storage';
+import { useSettingsStore } from '@api/storage';
 import { ReactNative as RN, i18n } from '@metro/common';
 
 import { 

@@ -1,8 +1,7 @@
 import { Icons } from '@api/assets';
-import { byName, byProps } from '@metro/filters';
+import { byProps } from '@metro/filters';
 import { findByProps, bulk } from '@metro';
 import { ClientName, Keys } from '@constants';
-import { findInReactTree } from '@utilities';
 import { React, i18n } from '@metro/common';
 
 import { Settings } from './base';
