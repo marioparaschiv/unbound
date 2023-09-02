@@ -64,12 +64,13 @@ export default function () {
 			<ReactNative.View style={endStyle}>
 				<Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
-					value={settings.get('toasts.duration', 3)}
+					value={settings.get('toasts.duration', 1)}
 					onValueChange={v => settings.set('toasts.duration', Math.round(v))}
-					minimumValue={3}
+					minimumValue={1}
 					maximumValue={10}
 					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
 					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
+                    tapToSeek
 				/>
 			</ReactNative.View>
 		</Section>

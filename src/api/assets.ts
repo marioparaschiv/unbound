@@ -22,9 +22,9 @@ export function packExists<TAsync extends boolean>(
         const existsPromise = Files.fileExists(`${Files.DocumentsDirPath}/${Paths.packs.local}/${pack}`);
 
         return existsPromise.then(exists => {
-            if (!exists) {
+            if (!exists && pack !== 'default') {
                 store.set(
-                    'iconpack.installed', 
+                    'iconpack.installed',
                     store.get('iconpack.installed', ['default']).filter(x => x !== pack)
                 )
             }

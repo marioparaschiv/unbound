@@ -12,6 +12,7 @@ import { DownloadButton } from '@ui/settings/components';
 import { Dialog } from '@metro/ui';
 import { Paths } from '@constants';
 import { packExists } from '@api/assets';
+import { showToast } from '@api/toasts';
 
 interface PackRowProps {
     settings: ReturnType<typeof useSettingsStore>,
@@ -28,14 +29,22 @@ const PackRow = ({ settings, pack, data, controller }: PackRowProps) => {
         onValueChange={async () => {
             settings.set('iconpack.name', pack);
 
-            packExists(settings, pack, true).then(exists => {
-                if (!exists) {
-                    Dialog.show({
-                        title: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_TITLE,
-                        body: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_DESC,
+            const exists = packExists(settings, pack)
+
+            if (exists) {
+                setTimeout(() => (
+                    showToast({
+                        title: i18n.Messages.UNBOUND_PACK_APPLYING_TITLE,
+                        content: i18n.Messages.UNBOUND_PACK_APPLYING_DESC.format({ pack: `'${capitalize(pack)}'` }),
+                        icon: 'img_nitro_star'
                     })
-                }
-            })
+                ))
+            } else {
+                Dialog.show({
+                    title: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_TITLE,
+                    body: i18n.Messages.UNBOUND_PACK_NOT_INSTALLED_DESC.format({ pack: `'${capitalize(pack)}'` }),
+                })
+            }
         }}
         trailing={data.extension && <RN.View style={{ marginRight: 8 }}>
             <DownloadButton 
