@@ -5,7 +5,7 @@ import { useSettingsStore } from '@api/storage';
 import { managers } from '@api';
 
 import { HelpMessage, Navigation } from '@metro/components';
-import AddonCard from './addoncard';
+import AddonCard from './AddonCard';
 import { Icons } from '@api/assets';
 import AdvancedSearch, { useAdvancedSearch } from '@ui/components/AdvancedSearch';
 

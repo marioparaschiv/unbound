@@ -1,7 +1,7 @@
 import { Slider, Forms } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { Constants, Theme, i18n } from '@metro/common';
-import Assets from '@api/assets';
+import Assets, { getIDByName } from '@api/assets';
 
 import { 
     Section,
@@ -10,6 +10,7 @@ import {
     RowIcon,
     useEndStyle
 } from '@ui/components/FormHandler';
+import { showToast } from '@api/toasts';
 
 export default function () {
 	const settings = useSettingsStore('unbound');
@@ -38,6 +39,17 @@ export default function () {
 				icon={<RowIcon source={settings.get('toasts.animations', true) ? Icons.Play : Icons.Pause} />}
 				value={settings.get('toasts.animations', true)}
 				onValueChange={() => settings.toggle('toasts.animations', true)}
+			/>
+            <Row
+				label={'Show Toast'}
+                onPress={() => {
+                    showToast({ 
+                        title: 'Test', 
+                        content: 'Toast example',
+                        icon: 'img_nitro_star'
+                    })
+                }}
+                arrow
 			/>
 		</Section>
 		<Section>

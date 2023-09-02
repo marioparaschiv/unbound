@@ -1,7 +1,7 @@
 import { React, ReactNative as RN } from '@metro/common';
 import { assets } from '@api/assets';
 
-import Asset from '@ui/settings/components/asset';
+import Asset from '@ui/settings/components/Asset';
 import AdvancedSearch, { useAdvancedSearch } from '@ui/components/AdvancedSearch';
 import { findByProps } from '@metro';
 import { Section } from '@ui/components/FormHandler';

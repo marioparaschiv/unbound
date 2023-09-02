@@ -3,7 +3,7 @@ import { useSettingsStore } from '@api/storage';
 import { addToast } from '@stores/toasts';
 import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
-import { find } from '@metro';
+import { findByProps } from '@metro';
 
 import { ToastContainer } from '@ui/toasts';
 
@@ -15,7 +15,7 @@ export function showToast(options: ToastOptions) {
 }
 
 try {
-	const Container = find(m => m.type?.name === 'ToastContainer');
+	const { ToastContainer: Container } = findByProps('ToastContainer', { lazy: true });
 
 	Patcher.after(Container, 'type', (_, __, res) => {
 		const settings = useSettingsStore('unbound');
