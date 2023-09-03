@@ -3,6 +3,7 @@
  * @param {function} func - The function to debounce
  * @return {boolean|Promise<boolean>}
  */
+
 function attempt(func: Fn): boolean | Promise<boolean> {
 	try {
 		const res = func();

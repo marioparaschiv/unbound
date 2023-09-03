@@ -1,68 +1,102 @@
+import { ReactNative as RN } from '@metro/common';
 import { BuiltIn } from '@typings/core/builtins';
+import type { Addon } from '@typings/managers';
+import { ManagerType } from '@managers/base';
 import { createPatcher } from '@patcher';
 import plugins from '@managers/plugins';
+import { createLogger } from '@logger';
 import themes from '@managers/themes';
-import { ManagerType } from '@managers/base';
-import { Addon } from '@typings/managers';
+import { findByName } from '@metro';
+import Toasts from '@api/toasts';
 
 const Patcher = createPatcher('protocols');
+const Logger = createLogger('Protocol');
 
 export const data: BuiltIn['data'] = {
 	id: 'modules.protocols',
 	default: true
 };
 
-const { NativeModules: { DCDChatManager }, Linking } = ReactNative;
+const RowManager = findByName('RowManager');
 
 const actions = {
-	install(parameters: URLSearchParams) {
-		const [type, url] = getBulkParameters('type', 'url', parameters);
+	async install(parameters: URLSearchParams, type: ManagerType) {
+		const [url] = getBulkParameters('url', parameters);
+		if (typeof url !== 'string') return Toasts.showToast({
+			title: 'Error',
+			content: 'This URL is malformed.'
+		});
 
-		if (![type, url].every(k => typeof k === 'string')) return;
+		Toasts.showToast({
+			title: 'Installing...',
+			content: 'Attempting to load addon.'
+		});
 
-		const addon = getAppropriateAddon(type);
+		const manager = getManager(type);
 
-		addon.install(url)
-			.then(() => console.log(`Successfully installed ${type}!`))
-			.catch((e) => console.error(`Failed to install ${type}: ${e.message || e}`));
+		try {
+			const addon = await manager.install(url) as Addon;
+			Toasts.showToast({ title: 'Success.', content: `Uninstalled ${addon.data.name}` });
+			Logger.success(`Successfully installed ${type}!`);
+		} catch (e) {
+			Logger.error(`Failed to install ${type}: ${e.message || e}`);
+		}
 	},
 
-	uninstall(parameters: URLSearchParams) {
-		const [type, name] = getBulkParameters('type', 'name', parameters);
+	async uninstall(parameters: URLSearchParams, type: ManagerType) {
+		const [id] = getBulkParameters('id', parameters);
+		if (typeof id !== 'string') return Toasts.showToast({
+			title: 'Error',
+			content: 'This URL is malformed.'
+		});
 
-		if (![type, name].every(k => typeof k === 'string')) return;
+		const manager = getManager(type);
+		const addon = manager.resolve(id);
 
-		const addon = getAppropriateAddon(type);
+		if (!addon) {
+			Logger.warn('Tried to uninstall unknown addon:', id);
+			return Toasts.showToast({
+				title: 'Unknown Addon',
+				content: 'You don\'t have this addon installed.'
+			});
+		}
 
-		addon.delete(getAddonIdByName(addon.entities, name))
-			.then(() => console.log(`Successfully uninstalled ${type}!`))
-			.catch((e) => console.error(`Failed to install ${type}: ${e.message || e}`));
+		try {
+			await manager.delete(id);
+			Toasts.showToast({ title: 'Success.', content: `Uninstalled ${addon.data.name}` });
+			Logger.success(`Successfully uninstalled ${type}!`);
+		} catch (e) {
+			console.error(`Failed to install ${type}: ${e.message || e}`);
+		}
 	}
 };
 
+const ActionTypes = Object.keys(actions);
+
 export function initialize() {
-	Patcher.before(DCDChatManager, 'updateRows', (_, args) => {
-		const rows = JSON.parse(args[1]);
-
-		for (const row of rows) {
-			if (row && row?.message && row?.type === 1 && row.message?.content) {
-				row.message.content = resolveProtocols(row.message.content);
-			}
+	Patcher.after(RowManager.prototype, 'generate', (_, args, res) => {
+		if (res?.type === 1 && res.message.content) {
+			res.message.content = resolveProtocols(res.message.content);
 		}
-
-		args[1] = JSON.stringify(rows);
 	});
 
-	Patcher.instead(Linking, 'openURL', (self, args, orig) => {
-		if (!args[0].startsWith('unbound://')) return orig.apply(self, args);
+	Patcher.instead(RN.Linking, 'openURL', (self, args, orig) => {
+		const [link] = args;
 
-		const parameters = new URLSearchParams(args[0].split('?')[1]);
+		if (!link.startsWith('unbound://')) {
+			return orig.apply(self, args);
+		}
+
+		const [url, params] = link.split('?');
+		const [manager] = url.replace('unbound://', '').split('/');
+		const parameters = new URLSearchParams(params);
 		const action = parameters.get('action');
 
-		if (!Object.keys(actions).includes(action)) return orig.apply(self, args);
+		if (!ActionTypes.includes(action)) {
+			return orig.apply(self, args);
+		}
 
-		// TODO: Open one of our custom toasts confirming that the action has been called
-		return actions[action]?.(parameters);
+		return actions[action]?.(parameters, manager);
 	});
 }
 
@@ -81,7 +115,7 @@ function getBulkParameters(...args: (URLSearchParams | string)[]): any[] {
 	return results;
 }
 
-function getAppropriateAddon(type: string) {
+function getManager(type: string) {
 	switch (type) {
 		case ManagerType.Plugins:
 			return plugins;
@@ -93,28 +127,22 @@ function getAppropriateAddon(type: string) {
 	}
 }
 
-function getAddonIdByName(entities: Map<string, Addon>, name: string) {
-	for (const [key, value] of entities.entries()) {
-		if (value.data.name === name) return key;
-	}
-
-	return null;
-}
-
 function resolveProtocols(content) {
-	return content.map(item => {
-		typeof item.content === 'object'
-			&& (item.content = resolveProtocols(item.content));
+	for (let i = 0; i < content.length; i++) {
+		const item = content[i];
 
-		if (typeof item?.content === 'string'
-			&& !['codeBlock', 'inlineCode'].includes(item?.type)
-			&& item?.content?.match(/[a-zA-Z]+\:\/\//g)
-		) return {
+		if (
+			typeof item?.content !== 'string' ||
+			['codeBlock', 'inlineCode'].includes(item.type) ||
+			!item.content.match(/[a-zA-Z]+\:\/\//g)
+		) continue;
+
+		content[i] = {
 			type: 'link',
 			target: item.content,
 			content: [{ type: 'text', content: item.content }]
 		};
+	}
 
-		return item;
-	});
+	return content;
 }

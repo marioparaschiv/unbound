@@ -4,14 +4,15 @@
  * @param {number} size - The size of each chunk
  * @return {array} Returns the array of chunks
  */
+
 function chunkArray<T>(array: T[], size: number): T[][] {
-    const chunks = [];
+	const chunks = [];
 
-    for (let i = 0; i < array.length; i += size) {
-        chunks.push(array.slice(i, i + size));
-    }
+	for (let i = 0; i < array.length; i += size) {
+		chunks.push(array.slice(i, i + size));
+	}
 
-    return chunks;
+	return chunks;
 }
 
 export default chunkArray;

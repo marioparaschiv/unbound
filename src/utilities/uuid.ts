@@ -4,6 +4,7 @@
  * @param {number} [length=30] - The length of the randomized UUID
  * @return {string} Returns the randomized UUID.
  */
+
 function uuid(length: number = 30) {
 	let uuid = '';
 

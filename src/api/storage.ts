@@ -72,7 +72,13 @@ export function getStore(store: string) {
 	};
 }
 
-export function useSettingsStore(store: string) {
+interface Payload {
+	store: string;
+	key: string;
+	value: any;
+}
+
+export function useSettingsStore(store: string, predicate?: (payload: Payload) => boolean) {
 	const [, forceUpdate] = React.useState({});
 
 	React.useEffect(() => {
@@ -81,7 +87,9 @@ export function useSettingsStore(store: string) {
 				return;
 			}
 
-			forceUpdate({});
+			if (!predicate || predicate(payload)) {
+				forceUpdate({});
+			}
 		}
 
 		Events.on('changed', handler);

@@ -1,7 +1,7 @@
-import debug from './debug';
-import reload from './reload';
 import recovery from './recovery';
 import evaluate from './eval';
+import reload from './reload';
+import debug from './debug';
 
 export default [
 	debug,

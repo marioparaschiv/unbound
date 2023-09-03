@@ -7,7 +7,8 @@ export default StyleSheet.createThemedStyleSheet({
 		width: '100%',
 		height: '100%',
 
-		flex: 1
+		flex: 1,
+		padding: 20
 	},
 
 	card: {

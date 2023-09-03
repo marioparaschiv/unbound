@@ -8,6 +8,7 @@
  * @param {number} [options.maxProperties=100] - The keys to walk/traverse in the search
  * @return {function} Returns the function with a cacheable value
  */
+
 function findInTree(tree: Record<string, any> | any[] = {}, filter: Function = _ => _, { ignore = [], walkable = [], maxProperties = 100 } = {}): any {
 	const stack = [tree];
 	const wrapFilter = function (...args) {

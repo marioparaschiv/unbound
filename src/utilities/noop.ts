@@ -1,4 +1,4 @@
-function noop(...args: any) {
+function noop(...args: any): any {
 	// No.
 }
 

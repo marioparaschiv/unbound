@@ -3,8 +3,8 @@ import EventEmitter from '@structures/emitter';
 import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
 import { createLogger } from '@logger';
-import { Regex } from '@constants';
 import { Files } from '@api/storage';
+import { Regex } from '@constants';
 
 const { LayoutAnimation: { configureNext, Presets } } = ReactNative;
 
@@ -37,7 +37,7 @@ class Manager extends EventEmitter {
 		this.path = `Unbound/${this.name}`;
 	}
 
-	async install(url: string): Promise<Error | void> {
+	async install(url: string): Promise<Error | Addon> {
 		this.logger.debug(`Fetching ${url} for manifest...`);
 		const manifest = await fetch(url, { cache: 'no-cache' }).then(r => r.json()) as InternalManifest;
 
@@ -45,7 +45,8 @@ class Manager extends EventEmitter {
 			this.logger.debug('Validating manifest...');
 			this.validateManifest(manifest as InternalManifest);
 		} catch (e) {
-			return this.logger.debug('Failed to validate manifest:', e.message);
+			this.logger.debug('Failed to validate manifest:', e.message);
+			return;
 		}
 
 		this.logger.debug(`Fetching bundle from ${manifest.bundle}...`);
@@ -63,8 +64,10 @@ class Manager extends EventEmitter {
 			this.unload(manifest.id);
 		}
 
-		this.load(bundle, manifest);
+		const addon = this.load(bundle, manifest);
 		this.logger.debug('Loaded.');
+
+		return addon;
 	}
 
 	save(bundle: string, manifest: Manifest) {
@@ -73,7 +76,7 @@ class Manager extends EventEmitter {
 		Files.writeFile('documents', `${this.path}/${manifest.id}/.delete`, 'false', 'utf8');
 	}
 
-	load(bundle: string, manifest: Manifest) {
+	load(bundle: string, manifest: Manifest): Addon {
 		const data = { failed: false, instance: null };
 
 		try {
@@ -109,6 +112,8 @@ class Manager extends EventEmitter {
 		}
 
 		this.emit('updated');
+
+		return addon;
 	}
 
 	async delete(entity: Resolveable) {
@@ -247,15 +252,15 @@ class Manager extends EventEmitter {
 		throw new Error('Bundle didn\'t return an instance.');
 	}
 
-	resolve(id: any): Addon | void {
-		if (id.data) return id;
+	resolve(id: Resolveable): Addon | void {
+		if ((id as Addon).data) return id as Addon;
 
 		const storage = this.entities.get(id);
-		if (storage) return storage;
+		if (storage) return storage as Addon;
 
 		const entities = [...this.entities.values()];
 		const name = entities.find(e => e.data.name === id);
-		if (name) return name;
+		if (name) return name as Addon;
 	}
 
 	useEntities() {
@@ -264,7 +269,7 @@ class Manager extends EventEmitter {
 		React.useEffect(() => {
 			function handler() {
 				forceUpdate({});
-                configureNext(Presets.spring);
+				configureNext(Presets.spring);
 			}
 
 			this.on('updated', handler);

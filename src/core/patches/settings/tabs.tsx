@@ -33,9 +33,9 @@ export class TabsSettings extends Settings {
 			Object.keys(Keys).map(key => ({
 				[Keys[key]]: {
 					type: 'route',
-                    title: () => this.Titles[key],
+					title: () => this.Titles[key],
 					icon: this.Icons[key],
-                    parent: null,
+					parent: null,
 					screen: {
 						route: Keys[key],
 						getComponent: () => React.memo(({ route }: any) => {

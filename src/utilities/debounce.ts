@@ -4,6 +4,7 @@
  * @param {number} ms - The milliseconds to debounce the function by
  * @return {function} Returns an instance of the function wrapped in a debounce
  */
+
 function debounce(func: Fn, ms: number): Fn {
 	let timer;
 

@@ -3,18 +3,18 @@ import { useSettingsStore } from '@api/storage';
 import { Constants, Theme, i18n } from '@metro/common';
 import Assets, { getIDByName } from '@api/assets';
 
-import { 
-    Section,
-    Row,
-    SwitchRow,
-    RowIcon,
-    useEndStyle
+import {
+	Section,
+	Row,
+	SwitchRow,
+	RowIcon,
+	useEndStyle
 } from '@ui/components/FormHandler';
 import { showToast } from '@api/toasts';
 
 export default function () {
 	const settings = useSettingsStore('unbound');
-    const endStyle = useEndStyle();
+	const endStyle = useEndStyle();
 
 	const Icons = {
 		Tick: Assets.getIDByName('Check'),
@@ -36,30 +36,30 @@ export default function () {
 			<SwitchRow
 				label={i18n.Messages.UNBOUND_TOASTS_ANIMATIONS}
 				subLabel={i18n.Messages.UNBOUND_TOASTS_ANIMATIONS_DESC}
-				icon={<RowIcon source={settings.get('toasts.animations', true) ? Icons.Play : Icons.Pause} />}
+				icon={<RowIcon source={settings.get('toasts.animations', true) ? Icons.Pause : Icons.Play} />}
 				value={settings.get('toasts.animations', true)}
 				onValueChange={() => settings.toggle('toasts.animations', true)}
 			/>
-            <Row
+			<Row
 				label={'Show Toast'}
-                onPress={() => {
-                    showToast({ 
-                        title: 'Test', 
-                        content: 'Toast example',
-                        icon: 'img_nitro_star'
-                    })
-                }}
-                arrow
+				onPress={() => {
+					showToast({
+						title: 'Test',
+						content: 'Toast example',
+						icon: 'img_nitro_star'
+					});
+				}}
+				arrow
 			/>
 		</Section>
 		<Section>
 			<Row
 				label={i18n.Messages.UNBOUND_TOAST_DURATION}
 				trailing={(
-                    <Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
-                        {i18n.Messages.DURATION_SECONDS.format({ seconds: settings.get('toasts.duration', 3) })}
-                    </Forms.FormText>
-                )}
+					<Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
+						{i18n.Messages.DURATION_SECONDS.format({ seconds: settings.get('toasts.duration', 3) })}
+					</Forms.FormText>
+				)}
 			/>
 			<ReactNative.View style={endStyle}>
 				<Slider
@@ -70,7 +70,7 @@ export default function () {
 					maximumValue={10}
 					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
 					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
-                    tapToSeek
+					tapToSeek
 				/>
 			</ReactNative.View>
 		</Section>
