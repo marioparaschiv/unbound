@@ -1,8 +1,8 @@
 {
-  "ignore": [
-    "dist",
-    "rollup.config-*.mjs"
-  ],
-  "exec": "rollup -c --configPlugin rollup-plugin-swc3",
-  "ext": "*.*"
+	"ignore": [
+		"dist",
+		"rollup.config-*.mjs"
+	],
+	"exec": "rollup -c",
+	"ext": "*.*"
 }

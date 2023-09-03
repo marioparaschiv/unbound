@@ -1,4 +1,3 @@
-import type { RollupOptions } from 'rollup';
 import { execSync } from 'child_process';
 
 // Plugins
@@ -16,7 +15,8 @@ const revision = (() => {
 	}
 })();
 
-const config: RollupOptions = {
+/** @type {import('rollup').RollupOptions} */
+const config = {
 	input: 'src/preload.ts',
 	output: [
 		{
@@ -32,7 +32,7 @@ const config: RollupOptions = {
 		node(),
 		json(),
 		replace({ preventAssignment: true, __VERSION__: revision }),
-		swc(),
+		swc({ tsconfig: false }),
 		minify({ compress: true, mangle: true })
 	],
 

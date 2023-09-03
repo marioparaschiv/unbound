@@ -1,5 +1,4 @@
 node_modules
 dist
 typings
-rollup.config*.mjs
 .DS_Store
