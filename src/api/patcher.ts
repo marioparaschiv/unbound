@@ -1,4 +1,7 @@
 import type { AfterOverwrite, BeforeOverwrite, InsteadOverwrite, Patch, Patcher } from '@typings/api/patcher';
+import { createLogger } from '@logger';
+
+const Logger = createLogger('Patcher');
 
 export enum Type {
 	Before = 'before',
@@ -96,11 +99,11 @@ function override(patch: Patch) {
 			if (!instance) continue;
 
 			try {
-				const temp = instance.callback(this, args, patch.original.bind(this));
+				const temp = instance.callback(this, args, patch.original.bind(this), patch.unpatch);
 				if (Array.isArray(temp)) args = temp;
 				if (instance.once) instance.unpatch();
 			} catch (error) {
-				console.error(`Could not fire before patch for ${patch.func} of ${instance.caller}`, error);
+				Logger.error(`Could not fire before patch for ${patch.func} of ${instance.caller}`, error);
 			}
 		}
 
@@ -117,11 +120,11 @@ function override(patch: Patch) {
 				if (!instance) continue;
 
 				try {
-					const ret = instance.callback(this, args, patch.original.bind(this));
+					const ret = instance.callback(this, args, patch.original.bind(this), patch.unpatch);
 					if (typeof ret !== 'undefined') res = ret;
 					if (instance.once) instance.unpatch();
 				} catch (error) {
-					console.error(`Could not fire instead patch for ${patch.func} of ${instance.caller}`, error);
+					Logger.error(`Could not fire instead patch for ${patch.func} of ${instance.caller}`, error);
 				}
 			}
 		}
@@ -132,11 +135,11 @@ function override(patch: Patch) {
 			if (!instance) continue;
 
 			try {
-				const ret = instance.callback(this, args, res, ret => (res = ret));
+				const ret = instance.callback(this, args, res, patch.unpatch);
 				if (typeof ret !== 'undefined') res = ret;
 				if (instance.once) instance.unpatch();
 			} catch (error) {
-				console.error(`Could not fire after patch for ${patch.func} of ${instance.caller}`, error);
+				Logger.error(`Could not fire after patch for ${patch.func} of ${instance.caller}`, error);
 			}
 		}
 
