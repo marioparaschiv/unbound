@@ -31,7 +31,7 @@ export const data: BuiltIn['data'] = {
 
 export function initialize() {
 	// @ts-expect-error - RN.Image has no 'render' method defined in its types
-	Patcher.before(RN.Image, 'render', (_, [_, _, _, _, props]) => {
+	Patcher.before(RN.Image, 'render', (_, [props]) => {
 		const settings = useSettingsStore('unbound', ({ key }) => key === 'iconpack.name');
 		const pack = settings.get('iconpack.name', 'default');
 		const { source } = props;
