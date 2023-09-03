@@ -29,12 +29,13 @@ export class PanelsSettings extends Settings {
 	};
 
 	private patchWrapper() {
-		this.patcher.after(this.Settings, 'default', (_, __, wrapper) => {
+		this.patcher.after(this.Settings, 'default', (_, __, wrapper, unpatch) => {
 			const instance = findInReactTree(wrapper, m => m.type?.name === 'UserSettingsOverview');
 			if (!instance) return wrapper;
 
 			this.patchSettings(instance);
-		}, true);
+			unpatch();
+		});
 	}
 
 	private patchSettings(instance) {
