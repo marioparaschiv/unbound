@@ -6,35 +6,40 @@ import { get, useSettingsStore } from '@api/storage';
 import { RowIcon } from '@ui/components/FormHandler';
 
 const { useSharedValue, withSpring, withTiming, default: { View } } = Reanimated;
+const { LayoutAnimation: { Presets, configureNext } } = RN;
 
 function useToastState(options: ToastOptions) {
 	const [leaving, setLeaving] = React.useState(false);
 
 	const opacity = useSharedValue(0);
-	const marginTop = useSharedValue(0);
+	const marginTop = useSharedValue(-30);
 
 	const settings = useSettingsStore('unbound');
 	const animations = settings.get('toasts.animations', true);
 
 	function enter() {
-		opacity.value = animations ? withTiming(1, { duration: 200 }) : 1;
-		marginTop.value = animations ? withSpring(15) : 15;
+		opacity.value = withTiming(1, { duration: 400 });
+		marginTop.value = withSpring(0);
 	}
 
 	function leave() {
-		opacity.value = animations ? withTiming(0, { duration: 200 }) : 0;
-		marginTop.value = animations ? withSpring(0) : 0;
+        animations && configureNext({ 
+            duration: 1000,
+            update: { 
+                type: 'spring', 
+                springDamping: 0.6
+            },
+            delete: { 
+                type: 'keyboard', 
+                property: 'scaleXY', 
+                duration: 400 
+            }
+        });
 
-		const interval = setInterval(() => {
-			if (opacity.value === 0) {
-				Toasts.store.setState((prev) => {
-					delete prev.toasts[options.id];
-					return prev;
-				});
-
-				clearInterval(interval);
-			}
-		}, animations ? 200 : 0);
+        Toasts.store.setState((prev) => {
+            delete prev.toasts[options.id];
+            return prev;
+        });
 	}
 
 	React.useEffect(() => {
@@ -51,7 +56,11 @@ function useToastState(options: ToastOptions) {
 	}, [leaving]);
 
 	return {
-		style: { opacity, marginTop },
+		style: { 
+            opacity: animations ? opacity : 1, 
+            marginTop: animations ? marginTop : 0,
+            marginBottom: 15
+        },
 		enter,
 		leave
 	};
