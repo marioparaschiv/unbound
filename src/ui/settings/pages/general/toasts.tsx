@@ -28,12 +28,21 @@ function Toasts() {
 			<Row
 				arrow={true}
 				label={'Show Toast'}
+				icon={<RowIcon source={Icons['img_nitro_star']} />}
 				onPress={() => {
-					showToast({
+					const toast = showToast({
 						title: 'Test',
 						content: 'Toast example',
 						icon: 'img_nitro_star'
 					});
+
+					setTimeout(
+						() => toast.update({
+							title: 'Updated',
+							content: 'The toast can update!'
+						}),
+						(settings.get('toasts.duration', 3) - 1) * 1000
+					)
 				}}
 			/>
 		</Section>

@@ -11,7 +11,7 @@ const Patcher = createPatcher('toasts');
 const Logger = createLogger('Toasts');
 
 export function showToast(options: ToastOptions) {
-	addToast(options);
+	return addToast(options);
 }
 
 try {

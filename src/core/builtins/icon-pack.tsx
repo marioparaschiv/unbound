@@ -41,7 +41,7 @@ export function initialize() {
 		const asset = getByID(source);
 		if (!asset) return;
 
-		if (asset.iconPackPath) {
+		if (asset.iconPackPath && asset.iconPackScale) {
 			props.source = {
 				width: asset.width,
 				height: asset.height,

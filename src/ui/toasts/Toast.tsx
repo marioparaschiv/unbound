@@ -1,14 +1,14 @@
 import { Constants, React, Reanimated, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { RowIcon } from '@ui/components/form-handler';
 import { get, useSettingsStore } from '@api/storage';
-import { ToastOptions } from '@typings/api/toasts';
+import { InternalToastOptions } from '@typings/api/toasts';
 import { Icons } from '@api/assets';
 import Toasts from '@stores/toasts';
 
 const { useSharedValue, withSpring, withTiming, default: { View } } = Reanimated;
 const { LayoutAnimation: { configureNext } } = RN;
 
-function useToastState(options: ToastOptions) {
+function useToastState(options: InternalToastOptions) {
 	const [leaving, setLeaving] = React.useState(false);
 
 	const opacity = useSharedValue(0);
@@ -55,6 +55,10 @@ function useToastState(options: ToastOptions) {
 		leaving ? leave() : enter();
 	}, [leaving]);
 
+	React.useEffect(() => {
+		options.closing && leave();
+	}, [options]);
+
 	return {
 		style: {
 			opacity: animations ? opacity : 1,
@@ -66,7 +70,7 @@ function useToastState(options: ToastOptions) {
 	};
 }
 
-function Toast(options: ToastOptions) {
+function Toast(options: InternalToastOptions) {
 	const { style, leave } = useToastState(options);
 	const { icon } = options;
 
@@ -122,11 +126,13 @@ const styles = StyleSheet.createThemedStyleSheet({
 	},
 	title: {
 		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-		color: Theme.colors.TEXT_NORMAL
+		color: Theme.colors.TEXT_NORMAL,
+		fontSize: 14
 	},
 	content: {
-		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-		color: Theme.colors.TEXT_MUTED
+		fontFamily: Constants.Fonts.PRIMARY_NORMAL,
+		color: Theme.colors.TEXT_MUTED,
+		fontSize: 12
 	},
 	icon: {
 		marginVertical: 20,

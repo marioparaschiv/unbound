@@ -45,6 +45,7 @@ export async function applyIconPath(pack: Pack, asset: Asset) {
 		const filePath = `${Files.DocumentsDirPath}/${Paths.packs.local}/${pack}/${exactPath}`;
 
 		delete asset.iconPackPath;
+		delete asset.iconPackScale;
 		const fileExists = await Files.fileExists(filePath);
 
 		if (fileExists) {
