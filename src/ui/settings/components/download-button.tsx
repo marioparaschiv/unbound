@@ -78,9 +78,7 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 			try {
 				const { username, repo, branch, path, tree } = await getAssetsForGitRepo(url);
 				const assets = tree.filter(x => x.type === 'blob');
-
-				const concurrencyLimit = 20;
-				const chunks = chunkArray(assets, concurrencyLimit);
+				const chunks = chunkArray(assets, 40);
 
 				let completed = 0;
 
@@ -107,10 +105,7 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 							'base64'
 						);
 
-						setText(i18n.Messages.UNBOUND_DOWNLOAD_PACK_ITEM.format({
-							current: completed++,
-							total: assets.length
-						}));
+						setText(`${completed++}/${assets.length}`);
 					}));
 				}
 

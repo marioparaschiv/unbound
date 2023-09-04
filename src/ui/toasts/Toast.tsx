@@ -32,7 +32,7 @@ function useToastState(options: ToastOptions) {
 			delete: {
 				type: 'easeInEaseOut',
 				property: 'scaleXY',
-				duration: 400
+				duration: 300
 			}
 		});
 
