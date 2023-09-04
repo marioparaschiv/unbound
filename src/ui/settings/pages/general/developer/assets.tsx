@@ -1,10 +1,10 @@
 import { React, ReactNative as RN } from '@metro/common';
 import { assets } from '@api/assets';
 
-import Asset from '@ui/settings/components/Asset';
-import AdvancedSearch, { useAdvancedSearch } from '@ui/components/AdvancedSearch';
+import Asset from '@ui/settings/components/asset';
+import AdvancedSearch, { useAdvancedSearch } from '@ui/components/advanced-search';
 import { findByProps } from '@metro';
-import { Section } from '@ui/components/FormHandler';
+import { Section } from '@ui/components/form-handler';
 
 const DividerModule = findByProps('TableRowDivider', { lazy: true });
 

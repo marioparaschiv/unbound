@@ -6,13 +6,13 @@ interface Addon {
 }
 
 declare global {
-	const modules: { [id: number]: any; };
 	const __r: {
 		importAll: Fn;
 	} & ((id: number) => void);
 
 	var React: typeof import('react');
 	var ReactNative: typeof import('react-native');
+	var modules: { [id: number]: any; };
 	var nativeLoggingHook: Fn;
 
 

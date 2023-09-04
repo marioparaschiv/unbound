@@ -4,20 +4,20 @@ import { Keys, Links } from '@constants';
 import Assets from '@api/assets';
 
 import { Forms, Navigation } from '@metro/components';
-import { 
-    Section, 
-    Row,
-    SwitchRow,
-    RowIcon,
-    useEndStyle
-} from '@ui/components/FormHandler';
+import {
+	Section,
+	Row,
+	SwitchRow,
+	RowIcon,
+	useEndStyle
+} from '@ui/components/form-handler';
 import AssetBrowser from './assets';
 import Logs from './logger';
 
 export default function () {
 	const navigation = Navigation.useNavigation();
 	const settings = useSettingsStore('unbound');
-    const endStyle = useEndStyle();
+	const endStyle = useEndStyle();
 
 	const Icons = {
 		Debug: Assets.getIDByName('debug'),

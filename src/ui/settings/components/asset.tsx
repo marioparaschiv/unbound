@@ -1,9 +1,10 @@
-import { findByProps } from '@metro';
 import { React, ReactNative as RN } from '@metro/common';
-import { Media } from '@metro/components';
 import { Asset } from '@typings/api/assets';
+import { findByProps } from '@metro';
 
-import { Row } from '@ui/components/FormHandler';
+import { Row } from '@ui/components/form-handler';
+import { Media } from '@metro/components';
+
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
 
 export default class extends React.PureComponent<{ item: Asset; index: number; total: number; }> {
@@ -34,15 +35,17 @@ export default class extends React.PureComponent<{ item: Asset; index: number; t
 					height: 0,
 					x: event.pageX,
 					y: event.pageY,
-					resizeMode: 'fill',
+					resizeMode: 'fill'
 				},
-				initialSources: [{
-					uri,
-					sourceURI: uri,
-					width,
-					height
-				}],
-				initialIndex: 0
+				initialIndex: 0,
+				initialSources: [
+					{
+						uri,
+						sourceURI: uri,
+						width,
+						height
+					}
+				]
 			});
 		});
 	}

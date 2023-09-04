@@ -6,7 +6,7 @@ import { Dialog } from '@metro/ui';
 
 import { Addons, InstallModal } from '../components';
 import { Navigation } from '@metro/components';
-import { TabsUIState } from '@ui/components/FormHandler';
+import { TabsUIState } from '@ui/components/form-handler';
 
 const { colors, meta: { resolveSemanticColor } } = Theme;
 
@@ -33,10 +33,10 @@ export default () => {
 function HeaderRight() {
 	const ref = React.useRef<InstanceType<typeof InstallModal>>();
 	const url = React.useCallback(() => ref.current?.getInput(), [ref.current]);
-    const tabsEnabled = TabsUIState.useInMainTabsExperiment();
-    
+	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
+
 	return <RN.TouchableOpacity
-        style={tabsEnabled ? {} : { marginRight: 16 }}
+		style={tabsEnabled ? {} : { marginRight: 16 }}
 		onPress={() => {
 			Dialog.confirm({
 				title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'plugin' }),

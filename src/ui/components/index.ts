@@ -1,7 +1,5 @@
-import ErrorBoundary from './ErrorBoundary';
-import CodeBlock from './CodeBlock';
-import Search from './Search';
-import AdvancedSearch from './AdvancedSearch';
-import FormWrappers from './FormHandler';
-
-export { ErrorBoundary, CodeBlock, Search, AdvancedSearch, FormWrappers };
+export { default as AdvancedSearch } from './advanced-search';
+export { default as ErrorBoundary } from './error-boundary';
+export { default as FormWrappers } from './form-handler';
+export { default as CodeBlock } from './codeblock';
+export { default as Search } from './search';

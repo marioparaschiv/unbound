@@ -1,13 +1,4 @@
-import type { 
-    SearchOptions, 
-    BulkItem, 
-    StoreOptions, 
-    InternalOptions, 
-    StringFindWithOptions, 
-    BulkFind, 
-    PropertyRecordOrArray,
-    FunctionSignatureOrArray
-} from '@typings/api/metro';
+import type { SearchOptions, BulkItem, StoreOptions, InternalOptions, StringFindWithOptions, BulkFind, PropertyRecordOrArray, FunctionSignatureOrArray } from '@typings/api/metro';
 import type { Filter } from '@typings/api/metro/filters';
 import Themes from '@managers/themes';
 import { isEmpty } from '@utilities';
@@ -144,50 +135,28 @@ export function bulk(...items: BulkItem[]) {
 	return res;
 }
 
-export function findByProps<U extends string, T extends
-    U[] 
-    | StringFindWithOptions<U>
-    | BulkFind<U>
-> (
-    ...args: T
-): PropertyRecordOrArray<T, U> {
-    const [props, options] = parseOptions<InternalOptions, T>(args);
+export function findByProps<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): PropertyRecordOrArray<T, U> {
+	const [props, options] = parseOptions<InternalOptions, T>(args);
 
-    return search(props, options, 'byProps');
+	return search(props, options, 'byProps');
 };
 
-export function findByPrototypes<U extends string, T extends
-    U[] 
-    | StringFindWithOptions<U>
-    | BulkFind<U>
-> (
-    ...args: T
-): AnyProps {
+export function findByPrototypes<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): AnyProps {
 	const [prototypes, options] = parseOptions<InternalOptions, T>(args);
 
 	return search(prototypes, options, 'byPrototypes');
 };
 
-export function findStore<U extends string, T extends
-    U[] | StringFindWithOptions<U, StoreOptions>
-> (
-    ...args: T
-): AnyProps {
+export function findStore<U extends string, T extends U[] | StringFindWithOptions<U, StoreOptions>>(...args: T): AnyProps {
 	const [[name], { short = true, ...options }] = parseOptions<StoreOptions>(args);
 
 	return search([name, short], options as InternalOptions, 'byStore');
 };
 
-export function findByName<U extends string, T extends
-    U[] 
-    | StringFindWithOptions<U>
-    | BulkFind<U>
-> (
-    ...args: T
-): FunctionSignatureOrArray<T, U> {
-    const [name, options] = parseOptions<InternalOptions, T>(args);
+export function findByName<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): FunctionSignatureOrArray<T, U> {
+	const [name, options] = parseOptions<InternalOptions, T>(args);
 
-    return search(name, options, 'byName');
+	return search(name, options, 'byName');
 };
 
 function search(args: any[], options: InternalOptions, filter: Fn | string) {

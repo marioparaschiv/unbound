@@ -1,6 +1,6 @@
+import { React, ReactNative as RN } from '@metro/common';
 import { findByName, findByProps } from '@metro';
 import { noop } from '@utilities';
-import { React, ReactNative as RN } from '@metro/common';
 
 const BaseSearch = findByProps('useSearchControls', { lazy: true });
 const SettingSearch = findByProps('useSettingSearchQuery', { lazy: true });

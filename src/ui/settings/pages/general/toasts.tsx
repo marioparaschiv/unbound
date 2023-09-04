@@ -1,46 +1,32 @@
+import { Section, Row, SwitchRow, RowIcon, useEndStyle } from '@ui/components/form-handler';
+import { Constants, Theme, i18n } from '@metro/common';
 import { Slider, Forms } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
-import { Constants, Theme, i18n } from '@metro/common';
-import Assets, { getIDByName } from '@api/assets';
-
-import {
-	Section,
-	Row,
-	SwitchRow,
-	RowIcon,
-	useEndStyle
-} from '@ui/components/FormHandler';
 import { showToast } from '@api/toasts';
+import { Icons } from '@api/assets';
 
-export default function () {
+function Toasts() {
 	const settings = useSettingsStore('unbound');
 	const endStyle = useEndStyle();
-
-	const Icons = {
-		Tick: Assets.getIDByName('Check'),
-		Cross: Assets.getIDByName('Small'),
-		Play: Assets.getIDByName('play'),
-		Pause: Assets.getIDByName('pause'),
-		Duration: Assets.getIDByName('ic_timer_24px')
-	};
 
 	return <ReactNative.ScrollView>
 		<Section>
 			<SwitchRow
 				label={i18n.Messages.UNBOUND_ENABLED}
 				subLabel={i18n.Messages.UNBOUND_TOASTS_DESC}
-				icon={<RowIcon source={settings.get('toasts.enabled', true) ? Icons.Tick : Icons.Cross} />}
+				icon={<RowIcon source={settings.get('toasts.enabled', true) ? Icons['Check'] : Icons['Small']} />}
 				value={settings.get('toasts.enabled', true)}
 				onValueChange={() => settings.toggle('toasts.enabled', true)}
 			/>
 			<SwitchRow
 				label={i18n.Messages.UNBOUND_TOASTS_ANIMATIONS}
 				subLabel={i18n.Messages.UNBOUND_TOASTS_ANIMATIONS_DESC}
-				icon={<RowIcon source={settings.get('toasts.animations', true) ? Icons.Pause : Icons.Play} />}
+				icon={<RowIcon source={settings.get('toasts.animations', true) ? Icons['pause'] : Icons['play']} />}
 				value={settings.get('toasts.animations', true)}
 				onValueChange={() => settings.toggle('toasts.animations', true)}
 			/>
 			<Row
+				arrow={true}
 				label={'Show Toast'}
 				onPress={() => {
 					showToast({
@@ -49,7 +35,6 @@ export default function () {
 						icon: 'img_nitro_star'
 					});
 				}}
-				arrow
 			/>
 		</Section>
 		<Section>
@@ -79,3 +64,5 @@ export default function () {
 		</Forms.FormHint>
 	</ReactNative.ScrollView>;
 }
+
+export default Toasts;

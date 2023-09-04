@@ -3,7 +3,6 @@
 		"editor.defaultFormatter": "vscode.json-language-features"
 	},
 	"editor.defaultFormatter": "vscode.typescript-language-features",
-	"editor.detectIndentation": true,
 	"editor.formatOnSave": true,
 	"editor.insertSpaces": false,
 	"editor.tabSize": 2,

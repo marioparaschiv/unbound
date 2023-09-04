@@ -45,16 +45,13 @@ const actions = {
 
 	async uninstall(parameters: URLSearchParams, type: ManagerType) {
 		const [id] = getBulkParameters('id', parameters);
-		if (typeof id !== 'string') return Toasts.showToast({
-			title: 'Error',
-			content: 'This URL is malformed.'
-		});
 
 		const manager = getManager(type);
 		const addon = manager.resolve(id);
 
 		if (!addon) {
 			Logger.warn('Tried to uninstall unknown addon:', id);
+
 			return Toasts.showToast({
 				title: 'Unknown Addon',
 				content: 'You don\'t have this addon installed.'

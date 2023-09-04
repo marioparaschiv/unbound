@@ -5,9 +5,9 @@ import { useSettingsStore } from '@api/storage';
 import { managers } from '@api';
 
 import { HelpMessage, Navigation } from '@metro/components';
-import AddonCard from './AddonCard';
+import AddonCard from './addon-card';
 import { Icons } from '@api/assets';
-import AdvancedSearch, { useAdvancedSearch } from '@ui/components/AdvancedSearch';
+import AdvancedSearch, { useAdvancedSearch } from '@ui/components/advanced-search';
 
 interface AddonListProps {
 	type: 'themes' | 'plugins';
@@ -39,20 +39,25 @@ const styles = StyleSheet.createThemedStyleSheet({
 
 export default function ({ addons, type, shouldRestart }: AddonListProps) {
 	const [search, controls] = useAdvancedSearch(searchContext);
-	const settings = useSettingsStore('unbound');
 	const navigation = Navigation.useNavigation();
+	const settings = useSettingsStore('unbound');
 
+	const isRecovery = settings.get('recovery', false);
 	const data = React.useMemo(() => {
 		if (!search) return addons;
 
 		return addons.filter((addon) => {
-			return [addon.data.name, addon.data.description]
-				.some(x => x.toLowerCase().includes(search.toLowerCase()))
-				|| addon.data.authors
-					.some(a => a.name.toLowerCase().includes(search.toLowerCase()));
+			const fields = [addon.data.name, addon.data.description];
+
+			const info = fields.some(x => x.toLowerCase().includes(search.toLowerCase()));
+			if (info) return true;
+
+			const authors = addon.data.authors.some(a => a.name.toLowerCase().includes(search.toLowerCase()));
+			if (authors) return true;
+
+			return false;
 		});
 	}, [search, addons]);
-	const isRecovery = settings.get('recovery', false);
 
 	return <RN.View>
 		<RN.View style={{ marginHorizontal: 10 }}>
@@ -67,27 +72,27 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 			</HelpMessage>
 		</RN.View>}
 		<RN.ScrollView style={{ height: '100%' }}>
-            <RN.FlatList
-                data={data}
-                keyExtractor={(_, idx) => String(idx)}
-                scrollEnabled={false}
-                renderItem={(item) => <AddonCard
-                    recovery={isRecovery}
-                    shouldRestart={shouldRestart}
-                    manager={managers[type]}
-                    addon={item.item}
-                    navigation={navigation}
-                />}
-                ListEmptyComponent={<RN.View style={styles.empty}>
-                    <RN.Image
-                        style={styles.emptyImage}
-                        source={Icons['img_connection_empty_dark']}
-                    />
-                    <RN.Text style={styles.emptyMessage}>
-                        {i18n.Messages.UNBOUND_ADDONS_EMPTY.format({ type: managers[type].name.toLowerCase() })}
-                    </RN.Text>
-                </RN.View>}
-            />
-        </RN.ScrollView>
+			<RN.FlatList
+				data={data}
+				keyExtractor={(_, idx) => String(idx)}
+				scrollEnabled={false}
+				renderItem={(item) => <AddonCard
+					recovery={isRecovery}
+					shouldRestart={shouldRestart}
+					manager={managers[type]}
+					addon={item.item}
+					navigation={navigation}
+				/>}
+				ListEmptyComponent={<RN.View style={styles.empty}>
+					<RN.Image
+						style={styles.emptyImage}
+						source={Icons['img_connection_empty_dark']}
+					/>
+					<RN.Text style={styles.emptyMessage}>
+						{i18n.Messages.UNBOUND_ADDONS_EMPTY.format({ type: managers[type].name.toLowerCase() })}
+					</RN.Text>
+				</RN.View>}
+			/>
+		</RN.ScrollView>
 	</RN.View >;
-}
+};

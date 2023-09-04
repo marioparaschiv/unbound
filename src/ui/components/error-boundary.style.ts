@@ -2,7 +2,7 @@ import { Constants, StyleSheet, Theme } from '@metro/common';
 
 export default StyleSheet.createThemedStyleSheet({
 	container: {
-        backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
+		backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
 
 		width: '100%',
 		height: '100%',

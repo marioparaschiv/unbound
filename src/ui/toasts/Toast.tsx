@@ -1,12 +1,12 @@
 import { Constants, React, Reanimated, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
-import { ToastOptions } from '@typings/api/toasts';
-import Toasts from '@stores/toasts';
-import { Icons } from '@api/assets';
+import { RowIcon } from '@ui/components/form-handler';
 import { get, useSettingsStore } from '@api/storage';
-import { RowIcon } from '@ui/components/FormHandler';
+import { ToastOptions } from '@typings/api/toasts';
+import { Icons } from '@api/assets';
+import Toasts from '@stores/toasts';
 
 const { useSharedValue, withSpring, withTiming, default: { View } } = Reanimated;
-const { LayoutAnimation: { Presets, configureNext } } = RN;
+const { LayoutAnimation: { configureNext } } = RN;
 
 function useToastState(options: ToastOptions) {
 	const [leaving, setLeaving] = React.useState(false);
@@ -23,23 +23,23 @@ function useToastState(options: ToastOptions) {
 	}
 
 	function leave() {
-        animations && configureNext({ 
-            duration: 1000,
-            update: { 
-                type: 'spring', 
-                springDamping: 0.6
-            },
-            delete: { 
-                type: 'keyboard', 
-                property: 'scaleXY', 
-                duration: 400 
-            }
-        });
+		animations && configureNext({
+			duration: 1000,
+			update: {
+				type: 'spring',
+				springDamping: 0.6
+			},
+			delete: {
+				type: 'easeInEaseOut',
+				property: 'scaleXY',
+				duration: 400
+			}
+		});
 
-        Toasts.store.setState((prev) => {
-            delete prev.toasts[options.id];
-            return prev;
-        });
+		Toasts.store.setState((prev) => {
+			delete prev.toasts[options.id];
+			return prev;
+		});
 	}
 
 	React.useEffect(() => {
@@ -56,11 +56,11 @@ function useToastState(options: ToastOptions) {
 	}, [leaving]);
 
 	return {
-		style: { 
-            opacity: animations ? opacity : 1, 
-            marginTop: animations ? marginTop : 0,
-            marginBottom: 15
-        },
+		style: {
+			opacity: animations ? opacity : 1,
+			marginTop: animations ? marginTop : 0,
+			marginBottom: 15
+		},
 		enter,
 		leave
 	};
@@ -71,47 +71,25 @@ function Toast(options: ToastOptions) {
 	const { icon } = options;
 
 	return <View style={style}>
-		<RN.View style={styles.contentContainer}>
-			<RN.View
-				style={{
-					flex: 1,
-					flexDirection: 'row',
-					alignItems: 'center',
-					justifyContent: 'center',
-				}}
-			>
+		<RN.View style={styles.container}>
+			<RN.View style={styles.wrapper}>
 				{icon && <RN.View style={styles.icon}>
-					<RowIcon
-						source={typeof icon === 'string' ? Icons[icon] : icon}
-					/>
+					<RowIcon source={typeof icon === 'string' ? Icons[icon] : icon} />
 				</RN.View>}
-
-				<RN.View
-					style={{
-						marginLeft: 12,
-						flex: 1,
-						flexDirection: 'column',
-						flexGrow: 1
-					}}
-				>
+				<RN.View style={styles.contentContainer}>
 					<RN.Text style={styles.title}>
 						{options.title}
 					</RN.Text>
 					<RN.Text style={styles.content}>
-						{typeof options.content === 'function'
-							? React.createElement(options.content)
-							: options.content}
+						{typeof options.content === 'function' ? React.createElement(options.content) : options.content}
 					</RN.Text>
 				</RN.View>
-
 				<RN.TouchableOpacity
 					style={[styles.icon, { marginRight: 12 }]}
 					activeOpacity={0.5}
 					onPress={leave}
 				>
-					<RowIcon
-						source={Icons['ic_close']}
-					/>
+					<RowIcon source={Icons['ic_close']} />
 				</RN.TouchableOpacity>
 			</RN.View>
 		</RN.View>
@@ -119,7 +97,7 @@ function Toast(options: ToastOptions) {
 }
 
 const styles = StyleSheet.createThemedStyleSheet({
-	contentContainer: {
+	container: {
 		backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
 		alignSelf: 'center',
 		borderRadius: 25,
@@ -130,11 +108,24 @@ const styles = StyleSheet.createThemedStyleSheet({
 		marginHorizontal: 60,
 		...Theme.shadows.SHADOW_BORDER
 	},
+	wrapper: {
+		flex: 1,
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	contentContainer: {
+		marginLeft: 12,
+		flex: 1,
+		flexDirection: 'column',
+		flexGrow: 1
+	},
 	title: {
 		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
 		color: Theme.colors.TEXT_NORMAL
 	},
 	content: {
+		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
 		color: Theme.colors.TEXT_MUTED
 	},
 	icon: {

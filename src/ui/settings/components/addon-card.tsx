@@ -6,13 +6,13 @@ import { BundleManager } from '@api/native';
 import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';
 import { Profiles } from '@metro/ui';
+import { Icons } from '@api/assets';
+import { get } from '@api/storage';
+import { Keys } from '@constants';
 
+import { ManagerType } from '@managers/base';
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
-import { Icons } from '@api/assets';
-import { ManagerType } from '@managers/base';
-import { Keys } from '@constants';
-import { get } from '@api/storage';
 
 interface AddonCardProps {
 	manager: typeof Plugins | typeof Themes;

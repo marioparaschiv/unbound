@@ -1,13 +1,12 @@
-import { ClientName } from '@constants';
 import { i18n, React, ReactNative as RN, Clipboard } from '@metro/common';
-import { Redesign } from '@metro/components';
-
-import { getIDByName } from '@api/assets';
 import { useSettingsStore } from '@api/storage';
+import { Redesign } from '@metro/components';
 import { BundleManager } from '@api/native';
+import { getIDByName } from '@api/assets';
+import { ClientName } from '@constants';
 
-import styles from './ErrorBoundary.styles';
-import CodeBlock from './CodeBlock';
+import styles from './error-boundary.style';
+import CodeBlock from './codeblock';
 
 interface ErrorBoundaryProps {
 	error: Record<string, any>;

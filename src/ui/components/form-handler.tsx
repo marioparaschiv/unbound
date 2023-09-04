@@ -1,13 +1,8 @@
-import { findByProps } from '@metro';
+import type { RowIconProps, RowProps, SectionProps, SwitchRowProps } from '@typings/ui/components/forms';
 import { Theme, StyleSheet, React, ReactNative as RN } from '@metro/common';
 import { Forms, Redesign } from '@metro/components';
+import { findByProps } from '@metro';
 
-import type {
-	RowIconProps,
-	RowProps,
-	SectionProps,
-	SwitchRowProps
-} from '@typings/ui/components/forms';
 
 export const { endStyle } = StyleSheet.createThemedStyleSheet({
 	endStyle: {

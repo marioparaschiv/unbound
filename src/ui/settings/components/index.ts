@@ -1,5 +1,5 @@
-export { default as AddonCard } from './AddonCard';
-export { default as Addons } from './Addons';
-export { default as Asset } from './Asset';
-export { default as InstallModal } from './InstallModal';
-export { default as DownloadButton } from './DownloadButton';
+export { default as DownloadButton } from './download-button';
+export { default as InstallModal } from './install-modal';
+export { default as AddonCard } from './addon-card';
+export { default as Addons } from './addons';
+export { default as Asset } from './asset';

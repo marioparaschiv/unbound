@@ -10,12 +10,12 @@ import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 
 import { Navigation } from '@metro/components';
-import { 
-    Section,
-    SwitchRow,
-    Row,
-    RowIcon
-} from '@ui/components/FormHandler';
+import {
+	Section,
+	SwitchRow,
+	Row,
+	RowIcon
+} from '@ui/components/form-handler';
 
 import Developer from './developer';
 import Toasts from './toasts';
@@ -41,7 +41,7 @@ function General() {
 		Plugins: Assets.getIDByName('ic_activity_24px'),
 		Themes: Assets.getIDByName('ic_paint_brush'),
 		Toasts: Assets.getIDByName('ic_notification_settings'),
-        Grid: Assets.getIDByName('GridSquareIcon'),
+		Grid: Assets.getIDByName('GridSquareIcon'),
 		Retry: Assets.getIDByName('ic_message_retry'),
 		Discord: Assets.getIDByName('logo'),
 		Debug: Assets.getIDByName('debug')
@@ -83,7 +83,7 @@ function General() {
 					})}
 					arrow
 				/>
-                <Row
+				<Row
 					label={i18n.Messages.UNBOUND_MANAGE_ICONS}
 					icon={<RowIcon source={Icons.Grid} />}
 					onPress={() => navigation.push(Keys.Custom, {
