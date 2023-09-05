@@ -9,6 +9,8 @@ function Toasts() {
 	const settings = useSettingsStore('unbound');
 	const endStyle = useEndStyle();
 
+	const duration = settings.get('toasts.duration', 0);
+
 	return <ReactNative.ScrollView>
 		<Section>
 			<SwitchRow
@@ -51,16 +53,16 @@ function Toasts() {
 				label={i18n.Messages.UNBOUND_TOAST_DURATION}
 				trailing={(
 					<Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
-						{i18n.Messages.DURATION_SECONDS.format({ seconds: settings.get('toasts.duration', 3) })}
+						{duration === 0 ? i18n.Messages.UNBOUND_INDEFINITE : i18n.Messages.DURATION_SECONDS.format({ seconds: duration })}
 					</Forms.FormText>
 				)}
 			/>
 			<ReactNative.View style={endStyle}>
 				<Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
-					value={settings.get('toasts.duration', 1)}
+					value={duration}
 					onValueChange={v => settings.set('toasts.duration', Math.round(v))}
-					minimumValue={1}
+					minimumValue={0}
 					maximumValue={10}
 					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
 					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}

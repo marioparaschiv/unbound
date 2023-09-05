@@ -18,7 +18,7 @@ try {
 	const { ToastContainer: Container } = findByProps('ToastContainer', { lazy: true });
 
 	Patcher.after(Container, 'type', (_, __, res) => {
-		const settings = useSettingsStore('unbound');
+		const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('toasts'));
 
 		if (!settings.get('toasts.enabled', true)) {
 			return res;

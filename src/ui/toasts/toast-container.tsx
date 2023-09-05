@@ -1,16 +1,18 @@
+import { React, ReactNative as RN } from '@metro/common';
 import { ToastOptions } from '@typings/api/toasts';
 import { useToasts } from '@stores/toasts';
-import { React } from '@metro/common';
 
 import Toast from './toast';
 
 function ToastContainer() {
 	const { toasts } = useToasts();
 
-	return <ReactNative.SafeAreaView style={{ marginTop: 30 }}>
-		{Object.entries(toasts).map(([id, options]: [string, ToastOptions]) => (
-			<Toast {...options} key={id} />
-		))}
+	return <ReactNative.SafeAreaView>
+		<RN.View style={{ gap: 5 }}>
+			{Object.entries(toasts).map(([id, options]: [string, ToastOptions]) => (
+				<Toast {...options} key={id} />
+			))}
+		</RN.View>
 	</ReactNative.SafeAreaView>;
 }
 
