@@ -19,7 +19,6 @@ import {
 
 import Developer from './developer';
 import Toasts from './toasts';
-import IconsPage from './icons';
 
 const styles = StyleSheet.createThemedStyleSheet({
 	trailingText: {
@@ -80,15 +79,6 @@ function General() {
 					onPress={() => navigation.push(Keys.Custom, {
 						title: i18n.Messages.UNBOUND_TOAST_SETTINGS,
 						render: Toasts
-					})}
-					arrow
-				/>
-				<Row
-					label={i18n.Messages.UNBOUND_MANAGE_ICONS}
-					icon={<RowIcon source={Icons.Grid} />}
-					onPress={() => navigation.push(Keys.Custom, {
-						title: i18n.Messages.UNBOUND_MANAGE_ICONS,
-						render: IconsPage
 					})}
 					arrow
 				/>

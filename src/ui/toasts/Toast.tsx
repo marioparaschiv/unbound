@@ -84,13 +84,13 @@ const styles = StyleSheet.createThemedStyleSheet({
 		fontSize: 12
 	},
 	icon: {
-		marginVertical: 20,
+		marginVertical: 10,
 		marginLeft: 12
 	},
 	buttons: {
 		flexWrap: 'wrap',
 		flexDirection: 'row',
-		marginHorizontal: 8,
+		marginHorizontal: 12,
 		marginBottom: 8,
 		gap: 5
 	},

@@ -1,82 +1,56 @@
-import { i18n, React, ReactNative as RN, Theme } from '@metro/common';
-import { Theme as ThemeStore } from '@metro/stores';
-import Themes from '@managers/themes';
-import { Keys } from '@constants';
-import { getIDByName } from '@api/assets';
-import { Dialog } from '@metro/ui';
+import { Redesign, Navigation } from '@metro/components';
 
-import { Addons, InstallModal } from '@ui/settings/components';
-import Home from './editor/home';
+import Themes from './themes';
+import Icons from './icons';
+import { i18n } from '@metro/common';
 
-import { Navigation } from '@metro/components';
-import { useSettingsStore } from '@api/storage';
-import { inputs } from './editor/create';
-import { TabsUIState } from '@ui/components/form-handler';
+const items = [
+	{
+		get label() {
+			return i18n.Messages.UNBOUND_THEMES;
+		},
 
-const { colors, meta: { resolveSemanticColor } } = Theme;
+		id: 'themes',
+		page: <Themes />
+	},
+	{
+		get label() {
+			return i18n.Messages.UNBOUND_MANAGE_ICONS;
+		},
+
+		id: 'manage_icons',
+		page: <Icons />
+	}
+]
 
 export default () => {
-	const navigation = Navigation.useNavigation();
-	const addons = Themes.useEntities();
-
-	const unsubscribe = navigation.addListener('focus', () => {
-		unsubscribe();
-		navigation.setOptions({
-			title: addons.length ? `${i18n.Messages.UNBOUND_THEMES} - ${addons.length}` : i18n.Messages.UNBOUND_THEMES,
-			headerRight: HeaderRight
-		});
+	const state = Redesign.useSegmentedControlState({
+		defaultIndex: 0,
+		items,
+		pageWidth: ReactNative.Dimensions.get('window').width
 	});
 
-	return <RN.View style={{ flex: 1 }}>
-		<Addons
-			shouldRestart={true}
-			type='themes'
-			addons={addons}
-		/>
-	</RN.View>;
-};
-
-function HeaderRight() {
-	const navigation = Navigation.useNavigation();
-	const settings = useSettingsStore('create-theme');
-	const ref = React.useRef<InstanceType<typeof InstallModal>>();
-	const url = React.useCallback(() => ref.current?.getInput(), [ref.current]);
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
-
-	return <RN.TouchableOpacity
-		style={tabsEnabled ? {} : { marginRight: 16 }}
-		onPress={() => {
-			Dialog.confirm({
-				title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
-				confirmText: i18n.Messages.UNBOUND_THEME_GET_OPTION_CREATE,
-				cancelText: i18n.Messages.UNBOUND_THEME_GET_OPTION_IMPORT,
-				body: i18n.Messages.UNBOUND_THEME_GET_DESC,
-
-				// On theme create
-				onConfirm: () => {
-					navigation.push(Keys.Custom, {
-						title: i18n.Messages.UNBOUND_THEME_EDITOR,
-						render: Home
-					});
-
-					inputs.forEach(({ key }) => settings.set(key, ''));
-				},
-
-				// On theme import
-				onCancel: () => {
-					Dialog.confirm({
-						title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
-						children: <InstallModal manager={Themes} ref={ref} />,
-						confirmText: i18n.Messages.UNBOUND_INSTALL,
-						onConfirm: () => url() && Themes.install(url())
-					});
-				}
-			});
+	return <ReactNative.View
+		style={{
+			flex: 1,
+			flexGrow: 1,
+			justifyContent: 'space-between',
 		}}
 	>
-		<RN.Image
-			source={getIDByName('ic_add_circle')}
-			style={{ tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL) }}
-		/>
-	</RN.TouchableOpacity>;
+		<Redesign.SegmentedControlPages state={state} />
+
+		<ReactNative.View
+			style={{
+				position: 'absolute',
+				left: 0,
+				right: 0,
+				bottom: 0,
+				height: 50,
+				marginBottom: 16,
+				marginHorizontal: 16
+			}}
+		>
+			<Redesign.SegmentedControl state={state} />
+		</ReactNative.View>
+	</ReactNative.View>
 }

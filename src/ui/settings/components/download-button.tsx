@@ -5,6 +5,7 @@ import type { Pack } from '@core/builtins/icon-pack';
 import { Redesign } from '@metro/components';
 import { chunkArray } from '@utilities';
 import { Paths } from '@constants';
+import { showToast } from '@api/toasts';
 
 interface DownloadRowProps {
 	pack: Pack,
@@ -56,6 +57,7 @@ async function getAssetsForGitRepo(url: DownloadRowProps['url']) {
 export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 	const [text, setText] = React.useState<string>(null);
 	const [installed, setInstalled] = React.useState(false);
+	const [loading, setLoading] = React.useState(false);
 
 	React.useEffect(() => {
 		packExists(settings, pack, true).then(setInstalled);
@@ -67,13 +69,32 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 		}
 	}, [text]);
 
-	return <Redesign.Button
+	return <Redesign.IconButton
 		text={text}
 		icon={getIDByName(installed ? 'ic_message_retry' : 'ic_download_24px')}
 		variant={'primary'}
 		size={'sm'}
+		loading={loading}
 		onPress={async () => {
-			setText(i18n.Messages.UNBOUND_DOWNLOAD_PACK_FETCHING);
+			setLoading(true);
+
+			const toast = showToast({
+				title: i18n.Messages.UNBOUND_ICON_PACK_TITLE,
+				content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_FETCHING,
+				icon: 'ic_download_24px',
+				duration: 0
+			})
+
+			toast.update({
+				buttons: [{
+					content: i18n.Messages.CANCEL,
+					onPress() {
+						controller.abort();
+						toast.close();
+						setLoading(false);
+					}
+				}]
+			})
 
 			try {
 				const { username, repo, branch, path, tree } = await getAssetsForGitRepo(url);
@@ -105,17 +126,22 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 							'base64'
 						);
 
-						setText(`${completed++}/${assets.length}`);
+						toast.update({
+							content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_PROGRESS.format({ progress: `${completed++}/${assets.length}` })
+						})
 					}));
 				}
 
 				const installed = await Files.fileExists(Files.DocumentsDirPath + `/${Paths.packs.local}/${pack}`);
 				installed && settings.set('iconpack.installed', [...settings.get('iconpack.installed', ['default']), pack]);
 
-				setInstalled(true);
+				toast.update({
+					content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_DONE
+				})
 
-				setText(i18n.Messages.UNBOUND_DOWNLOAD_PACK_DONE);
-				setTimeout(() => setText(''), 1000);
+				setInstalled(true);
+				setLoading(false);
+				setTimeout(toast.close, 1000);
 			} catch (error) {
 				console.error('Getting assets: ' + error.message ?? error);
 				setText('');

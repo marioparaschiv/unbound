@@ -1,17 +1,18 @@
 import { useSettingsStore } from '@api/storage';
-import { Reanimated } from '@metro/common';
+import { Reanimated, ReactNative } from '@metro/common';
 import Toasts from '@stores/toasts';
 import { InternalToastOptions } from '@typings/api/toasts';
 
 const { useSharedValue, withTiming, withSpring } = Reanimated;
+const { LayoutAnimation: { configureNext } } = ReactNative;
 
 export const useToastState = (options: InternalToastOptions) => {
 	const [leaving, setLeaving] = React.useState(false);
 	const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('toasts'));
 
 	const opacity = useSharedValue(0);
-	const marginTop = useSharedValue(-30);
-	const scale = useSharedValue(1.2);
+	const marginTop = useSharedValue(5);
+	const scale = useSharedValue(0.65);
 	const height = useSharedValue(0);
 
 	function leave() {
@@ -20,7 +21,7 @@ export const useToastState = (options: InternalToastOptions) => {
 		scale.value = withSpring(0.65);
 		height.value = withSpring(0);
 
-		setTimeout(() => setLeaving(true), 300);
+		setTimeout(() => setLeaving(true), 400);
 	}
 
 	React.useEffect(() => {
