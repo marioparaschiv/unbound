@@ -1,4 +1,4 @@
-import { Redesign, Navigation } from '@metro/components';
+import { Redesign } from '@metro/components';
 
 import Themes from './themes';
 import Icons from './icons';
@@ -15,10 +15,10 @@ const items = [
 	},
 	{
 		get label() {
-			return i18n.Messages.UNBOUND_MANAGE_ICONS;
+			return i18n.Messages.UNBOUND_ICONS;
 		},
 
-		id: 'manage_icons',
+		id: 'icons',
 		page: <Icons />
 	}
 ]
@@ -27,7 +27,7 @@ export default () => {
 	const state = Redesign.useSegmentedControlState({
 		defaultIndex: 0,
 		items,
-		pageWidth: ReactNative.Dimensions.get('window').width
+		pageWidth: ReactNative.Dimensions.get('window').width,
 	});
 
 	return <ReactNative.View

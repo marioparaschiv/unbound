@@ -1,5 +1,5 @@
 import { Constants, React, Reanimated, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
-import { RowIcon } from '@ui/components/form-handler';
+import { RowIcon, TabsUIState } from '@ui/components/form-handler';
 import { ToastOptions } from '@typings/api/toasts';
 import { Redesign } from '@metro/components';
 import { Icons } from '@api/assets';
@@ -9,6 +9,7 @@ const { withSpring, default: { View } } = Reanimated;
 
 function Toast(options: ToastOptions) {
 	const { properties: { marginTop, opacity, height, scale }, leave } = useToastState(options);
+	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
 
 	return <View key={options.id} style={{ marginTop, opacity, height, transform: [{ scale }] }}>
 		<RN.View style={styles.container} onLayout={({ nativeEvent }) => height.value = withSpring(nativeEvent.layout.height)}>
@@ -33,17 +34,19 @@ function Toast(options: ToastOptions) {
 					<RowIcon source={Icons['ic_close']} size='small' />
 				</RN.Pressable>
 			</RN.View>
-			{Array.isArray(options.buttons) && <RN.View style={styles.buttons}>
-				{options.buttons.map(button => <Redesign.Button
-					style={styles.button}
-					variant={button.variant || 'primary'}
-					size={button.size || 'sm'}
-					onPress={button.onPress}
-					iconPosition={button.iconPosition || 'start'}
-					icon={button.icon || undefined}
-					text={button.content}
-				/>)}
-			</RN.View>}
+			{Array.isArray(options.buttons) && (
+				<RN.View style={[styles.buttons, { marginTop: tabsEnabled ? 0 : 8 }]}>
+					{options.buttons.map(button => <Redesign.Button
+						style={styles.button}
+						variant={button.variant || 'primary'}
+						size={button.size || 'sm'}
+						onPress={button.onPress}
+						iconPosition={button.iconPosition || 'start'}
+						icon={button.icon || undefined}
+						text={button.content}
+					/>)}
+				</RN.View>
+			)}
 		</RN.View>
 	</View>;
 }
