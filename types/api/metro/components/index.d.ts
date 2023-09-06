@@ -123,6 +123,4 @@ export namespace Components {
 		loadLocalRawResource: React.ComponentType<AnyProps>;
 		parse: React.ComponentType<AnyProps>;
 	};
-
-	export type Animated = typeof import('react-native-reanimated').default;
 }

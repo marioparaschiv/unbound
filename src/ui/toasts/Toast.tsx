@@ -1,51 +1,14 @@
 import { Constants, React, Reanimated, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { RowIcon } from '@ui/components/form-handler';
 import { ToastOptions } from '@typings/api/toasts';
-import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
 import { Icons } from '@api/assets';
-import Toasts from '@stores/toasts';
+import { useToastState } from '@ui/toasts/useToastState';
 
-const { useSharedValue, withTiming, withSpring, default: { View }, runOnJS } = Reanimated;
+const { withSpring, default: { View } } = Reanimated;
 
 function Toast(options: ToastOptions) {
-	const [leaving, setLeaving] = React.useState(false);
-
-	const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('toasts'));
-
-	const marginTop = useSharedValue(-5);
-	const scale = useSharedValue(0.75);
-	const opacity = useSharedValue(0);
-	const height = useSharedValue(0);
-
-	function leave() {
-		marginTop.value = withTiming(-5);
-		scale.value = withTiming(0.75);
-		opacity.value = withTiming(0);
-		height.value = withSpring(0, null, (finished) => finished && runOnJS(setLeaving)(true));
-	}
-
-	React.useEffect(() => {
-		marginTop.value = withTiming(0);
-		opacity.value = withTiming(1);
-		scale.value = withTiming(1);
-
-		const duration = (options.duration ?? settings.get('toasts.duration', 0));
-		if (duration !== 0) {
-			const timeout = setTimeout(leave, duration * 1000);
-			return () => clearTimeout(timeout);
-		}
-	}, []);
-
-	// On hidden
-	React.useEffect(() => {
-		if (leaving) {
-			Toasts.store.setState((prev) => {
-				delete prev.toasts[options.id];
-				return prev;
-			});
-		}
-	}, [leaving]);
+	const { properties: { marginTop, opacity, height, scale }, leave } = useToastState(options);
 
 	return <View key={options.id} style={{ marginTop, opacity, height, transform: [{ scale }] }}>
 		<RN.View style={styles.container} onLayout={({ nativeEvent }) => height.value = withSpring(nativeEvent.layout.height)}>
@@ -73,8 +36,8 @@ function Toast(options: ToastOptions) {
 			{Array.isArray(options.buttons) && <RN.View style={styles.buttons}>
 				{options.buttons.map(button => <Redesign.Button
 					style={styles.button}
-					variant={button.variant?.toUpperCase() || 'primary'}
-					size={button.size?.toUpperCase() || 'sm'}
+					variant={button.variant || 'primary'}
+					size={button.size || 'sm'}
 					onPress={button.onPress}
 					iconPosition={button.iconPosition || 'start'}
 					icon={button.icon || undefined}
@@ -87,17 +50,16 @@ function Toast(options: ToastOptions) {
 
 const styles = StyleSheet.createThemedStyleSheet({
 	container: {
-		backgroundColor: Theme.colors.BACKGROUND_SECONDARY,
-		borderColor: Theme.colors.BACKGROUND_TERTIARY,
-		borderWidth: 1,
+		backgroundColor: Theme.colors.BACKGROUND_PRIMARY,
 		alignSelf: 'center',
-		borderRadius: 15,
+		borderRadius: 18,
 		width: 250,
 		position: 'absolute',
 		zIndex: 2,
 		padding: 2,
 		marginHorizontal: 60,
-		...Theme.shadows.SHADOW_MEDIUM
+		marginTop: 12,
+		...Theme.shadows.SHADOW_BORDER
 	},
 	wrapper: {
 		flex: 1,
@@ -128,6 +90,8 @@ const styles = StyleSheet.createThemedStyleSheet({
 	buttons: {
 		flexWrap: 'wrap',
 		flexDirection: 'row',
+		marginHorizontal: 8,
+		marginBottom: 8,
 		gap: 5
 	},
 	button: {

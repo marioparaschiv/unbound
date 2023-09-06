@@ -4,6 +4,7 @@ import { Slider, Forms } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { showToast } from '@api/toasts';
 import { Icons } from '@api/assets';
+import { noop } from '@utilities';
 
 function Toasts() {
 	const settings = useSettingsStore('unbound');
@@ -37,6 +38,21 @@ function Toasts() {
 						content: 'Toast example',
 						icon: 'img_nitro_star'
 					});
+
+					// Add buttons after the toast has loaded to allow for using toast.close
+					toast.update({
+						buttons: [
+							{
+								content: 'Close',
+								onPress: toast.close,
+							},
+							{
+								content: 'No-op',
+								onPress: noop,
+								variant: 'primary-alt'
+							}
+						]
+					})
 
 					setTimeout(
 						() => toast.update({

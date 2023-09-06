@@ -1,7 +1,6 @@
 import { Components } from '@typings/api/metro/components';
 import { find, findByName, findByProps } from '@metro';
 
-export const Animated = findByProps('Value', 'interpolateNode', 'View', { lazy: true }) as unknown as Components.Animated;
 export const Forms = findByProps('Form', 'FormSection', { lazy: true }) as Components.Forms;
 export const SVG = findByProps('Svg', 'Path', { lazy: true }) as Components.SVG;
 export const Slider = find(m => m.render?.name === 'SliderComponent');

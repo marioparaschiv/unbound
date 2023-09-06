@@ -3,9 +3,9 @@ import type { ImageSourcePropType } from 'react-native';
 
 export interface ToastButton {
 	color?: ButtonColors[keyof ButtonColors];
-	variant?: ButtonLooks[keyof ButtonLooks];
-	size?: ButtonSizes[keyof ButtonSizes];
-	iconPosition: 'start' | 'end';
+	variant?: ButtonLooks[keyof ButtonLooks] | 'primary' | 'primary-alt' | 'secondary' | 'secondary-alt';
+	size?: ButtonSizes[keyof ButtonSizes] | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+	iconPosition?: 'start' | 'end';
 	content: string;
 	icon?: number;
 	onPress: Fn;
