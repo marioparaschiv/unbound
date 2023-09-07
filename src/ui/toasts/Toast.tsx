@@ -53,7 +53,7 @@ function Toast(options: ToastOptions) {
 
 const styles = StyleSheet.createThemedStyleSheet({
 	container: {
-		backgroundColor: Theme.colors.BACKGROUND_PRIMARY,
+		backgroundColor: Theme.colors.BACKGROUND_SECONDARY_ALT,
 		alignSelf: 'center',
 		borderRadius: 18,
 		width: 250,

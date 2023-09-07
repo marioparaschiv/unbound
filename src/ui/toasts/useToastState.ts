@@ -4,7 +4,6 @@ import Toasts from '@stores/toasts';
 import { InternalToastOptions } from '@typings/api/toasts';
 
 const { useSharedValue, withTiming, withSpring } = Reanimated;
-const { LayoutAnimation: { configureNext } } = ReactNative;
 
 export const useToastState = (options: InternalToastOptions) => {
 	const [leaving, setLeaving] = React.useState(false);

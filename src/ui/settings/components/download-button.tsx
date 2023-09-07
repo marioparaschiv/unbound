@@ -3,7 +3,7 @@ import { Files, useSettingsStore } from '@api/storage';
 import { getIDByName, packExists } from '@api/assets';
 import type { Pack } from '@core/builtins/icon-pack';
 import { Redesign } from '@metro/components';
-import { chunkArray } from '@utilities';
+import { capitalize, chunkArray } from '@utilities';
 import { Paths } from '@constants';
 import { showToast } from '@api/toasts';
 
@@ -55,7 +55,6 @@ async function getAssetsForGitRepo(url: DownloadRowProps['url']) {
 }
 
 export default ({ pack, url, settings, controller }: DownloadRowProps) => {
-	const [text, setText] = React.useState<string>(null);
 	const [installed, setInstalled] = React.useState(false);
 	const [loading, setLoading] = React.useState(false);
 
@@ -63,14 +62,7 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 		packExists(settings, pack, true).then(setInstalled);
 	}, []);
 
-	React.useLayoutEffect(() => {
-		if (text !== null) {
-			RN.LayoutAnimation.configureNext(RN.LayoutAnimation.Presets.spring);
-		}
-	}, [text]);
-
 	return <Redesign.IconButton
-		text={text}
 		icon={getIDByName(installed ? 'ic_message_retry' : 'ic_download_24px')}
 		variant={'primary'}
 		size={'sm'}
@@ -136,15 +128,22 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 				installed && settings.set('iconpack.installed', [...settings.get('iconpack.installed', ['default']), pack]);
 
 				toast.update({
-					content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_DONE
+					content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_DONE.format({ pack: `'${capitalize(pack)}'` })
 				})
 
 				setInstalled(true);
 				setLoading(false);
 				setTimeout(toast.close, 1000);
 			} catch (error) {
-				console.error('Getting assets: ' + error.message ?? error);
-				setText('');
+				const getErrorMessage = <T extends keyof DOMException>(property: T): DOMException[T] => {
+					const message = (error as DOMException)[property];
+					return i18n.Messages.UNBOUND_DOWNLOAD_PACK_FAILED.format({ error: message })
+				}
+
+				toast.update({ content: getErrorMessage('name') })
+				console.error(getErrorMessage('stack').replace(/(at .*) \(.*\)/g, '$1'));
+
+				setTimeout(toast.close, 3000);
 			}
 		}}
 	/>;
