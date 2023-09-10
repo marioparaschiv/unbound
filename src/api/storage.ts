@@ -100,12 +100,13 @@ export function useSettingsStore(store: string, predicate?: (payload: Payload) =
 	return getStore(store);
 }
 
-Events.on('changed', debounce(async () => {
+export let pending = null;
+
+Events.on('changed', debounce(() => {
 	const payload = JSON.stringify(settings, null, 2);
 	const path = 'Unbound/settings.json';
 
-
-	await Files.writeFile('documents', path, payload, 'utf8');
+	pending = Files.writeFile('documents', path, payload, 'utf8');
 }, 250));
 
 export default { useSettingsStore, getStore, get, set, remove, on, off };

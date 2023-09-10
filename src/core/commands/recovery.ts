@@ -1,6 +1,6 @@
 import type { ApplicationCommand } from '@typings/api/commands';
-import { BundleManager } from '@api/native';
 import { getStore } from '@api/storage';
+import { reload } from '@api/native';
 
 const settings = getStore('unbound');
 
@@ -10,6 +10,6 @@ export default {
 
 	execute: () => {
 		settings.set('recovery', true);
-		BundleManager.reload();
+		reload();
 	}
 } as ApplicationCommand;

@@ -1,9 +1,9 @@
 import { i18n, React, ReactNative as RN, Clipboard } from '@metro/common';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
-import { BundleManager } from '@api/native';
 import { getIDByName } from '@api/assets';
 import { ClientName } from '@constants';
+import { reload } from '@api/native';
 
 import styles from './error-boundary.style';
 import CodeBlock from './codeblock';
@@ -112,7 +112,7 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'>
 				{!settings.get('recovery', false) && (
 					<RN.View style={{ flex: 0.5 }}>
 						<Redesign.Button
-							onPress={() => (settings.set('recovery', true), BundleManager.reload())}
+							onPress={() => (settings.set('recovery', true), reload())}
 							icon={getIDByName('ic_shield_24px')}
 							variant={'primary-alt'}
 							size={'md'}
