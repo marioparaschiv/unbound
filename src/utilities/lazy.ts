@@ -1,4 +1,4 @@
-export function lazy<T extends object>(initializer: () => T): T {
+function lazy<T extends object>(initializer: () => T): T {
 	let isInitialized = false;
 	let lazyObject: T;
 
@@ -15,3 +15,5 @@ export function lazy<T extends object>(initializer: () => T): T {
 
 	return proxy as T;
 }
+
+export default lazy;
