@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import type { ImageSourcePropType, ViewStyle } from "react-native";
+import type { ReactNode } from 'react';
+import type { ImageSourcePropType, ViewStyle } from 'react-native';
 
 type SectionProps = {
 	title?: string;
@@ -12,9 +12,7 @@ type RowProps = {
 	label: string;
 	subLabel?: string;
 	onPress?: Fn;
-	icon?: ImageSourcePropType
-	| ReactNode
-	| null;
+	icon?: ImageSourcePropType | ReactNode | null;
 	trailing?: ReactNode;
 	variant?: string;
 	arrow?: boolean;
@@ -22,15 +20,13 @@ type RowProps = {
 	end?: boolean;
 };
 
-type SwitchRowProps = Omit<RowProps, "arrow"> & {
+type SwitchRowProps = Omit<RowProps, 'arrow'> & {
 	value: any;
 	onValueChange: Fn;
 };
 
 type RowIconProps = {
-	source?: ImageSourcePropType
-	| ReactNode
-	| null;
+	source?: ImageSourcePropType | ReactNode | null;
 	style?: ViewStyle;
 	size?: 'small' | 'medium' | 'large';
 };

@@ -1,21 +1,14 @@
+import { Section, SwitchRow, Row, Form, RowIcon } from '@ui/components/form';
 import { Theme, i18n, React, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';
+import { Navigation } from '@metro/components';
 import { Invites } from '@metro/actions';
+import Plugins from '@managers/plugins';
+import Themes from '@managers/themes';
 import { reload } from '@api/native';
 import { Dialog } from '@metro/ui';
 import Assets from '@api/assets';
-
-import Plugins from '@managers/plugins';
-import Themes from '@managers/themes';
-
-import { Navigation } from '@metro/components';
-import {
-	Section,
-	SwitchRow,
-	Row,
-	RowIcon
-} from '@ui/components/form-handler';
 
 import Developer from './developer';
 import Toasts from './toasts';
@@ -46,7 +39,7 @@ function General() {
 		Debug: Assets.getIDByName('debug')
 	};
 
-	return <RN.ScrollView>
+	return <Form>
 		<RN.KeyboardAvoidingView
 			enabled={true}
 			behavior='position'
@@ -129,7 +122,7 @@ function General() {
 				/>
 			</Section>
 		</RN.KeyboardAvoidingView>
-	</RN.ScrollView>;
+	</Form>;
 }
 
 export default General;

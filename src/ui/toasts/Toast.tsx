@@ -1,18 +1,18 @@
 import { Constants, React, Reanimated, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
-import { RowIcon, TabsUIState } from '@ui/components/form-handler';
+import { RowIcon, TabsUIState } from '@ui/components/form';
 import { ToastOptions } from '@typings/api/toasts';
 import { Redesign } from '@metro/components';
+import useToastState from './useToastState';
 import { Icons } from '@api/assets';
-import { useToastState } from '@ui/toasts/useToastState';
 
 const { withSpring, default: { View } } = Reanimated;
 
 function Toast(options: ToastOptions) {
-	const { properties: { marginTop, opacity, height, scale }, leave } = useToastState(options);
+	const { properties, leave } = useToastState(options);
 	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
 
-	return <View key={options.id} style={{ marginTop, opacity, height, transform: [{ scale }] }}>
-		<RN.View style={styles.container} onLayout={({ nativeEvent }) => height.value = withSpring(nativeEvent.layout.height)}>
+	return <View key={options.id} style={properties}>
+		<RN.View style={styles.container} onLayout={({ nativeEvent }) => properties.height.value = withSpring(nativeEvent.layout.height)}>
 			<RN.View style={styles.wrapper}>
 				{options.icon && <RN.View style={styles.icon}>
 					<RowIcon source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon} size='small' />

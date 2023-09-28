@@ -10,7 +10,7 @@ import {
 	SwitchRow,
 	RowIcon,
 	useEndStyle
-} from '@ui/components/form-handler';
+} from '@ui/components/form';
 import AssetBrowser from './assets';
 import Logs from './logger';
 

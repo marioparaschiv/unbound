@@ -1,4 +1,4 @@
-import { Section, Row, SwitchRow, RowIcon, useEndStyle } from '@ui/components/form-handler';
+import { Section, Row, SwitchRow, RowIcon, useEndStyle } from '@ui/components/form';
 import { Constants, Theme, i18n } from '@metro/common';
 import { Slider, Forms } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
@@ -52,7 +52,7 @@ function Toasts() {
 								variant: 'primary-alt'
 							}
 						]
-					})
+					});
 
 					setTimeout(
 						() => toast.update({
@@ -60,7 +60,7 @@ function Toasts() {
 							content: 'The toast can update!'
 						}),
 						(settings.get('toasts.duration', 3) - 1) * 1000
-					)
+					);
 				}}
 			/>
 		</Section>

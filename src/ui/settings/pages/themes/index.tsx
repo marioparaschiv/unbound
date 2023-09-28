@@ -1,8 +1,9 @@
 import { Redesign } from '@metro/components';
+import { i18n } from '@metro/common';
 
 import Themes from './themes';
 import Icons from './icons';
-import { i18n } from '@metro/common';
+import Fonts from './fonts';
 
 const items = [
 	{
@@ -20,8 +21,16 @@ const items = [
 
 		id: 'icons',
 		page: <Icons />
+	},
+	{
+		get label() {
+			return i18n.Messages.UNBOUND_FONTS;
+		},
+
+		id: 'fonts',
+		page: <Fonts />
 	}
-]
+];
 
 export default () => {
 	const state = Redesign.useSegmentedControlState({
@@ -38,7 +47,6 @@ export default () => {
 		}}
 	>
 		<Redesign.SegmentedControlPages state={state} />
-
 		<ReactNative.View
 			style={{
 				position: 'absolute',
@@ -52,5 +60,5 @@ export default () => {
 		>
 			<Redesign.SegmentedControl state={state} />
 		</ReactNative.View>
-	</ReactNative.View>
-}
+	</ReactNative.View>;
+};

@@ -2,10 +2,10 @@ import { useSettingsStore } from '@api/storage';
 import { ReactNative as RN, i18n } from '@metro/common';
 
 import {
-    Section,
-    SwitchRow,
-    RowIcon
-} from '@ui/components/form-handler';
+	Section,
+	SwitchRow,
+	RowIcon
+} from '@ui/components/form';
 import { capitalize } from '@utilities';
 import { Pack, Packs } from '@core/builtins/icon-pack';
 import { DownloadButton } from '@ui/settings/components';
@@ -64,13 +64,13 @@ export default function () {
 	const controller = {
 		abort(...args: Arguments<typeof store['controller']['abort']>) {
 			store.controller.abort(...args);
-			setStore({ controller: new AbortController() })
+			setStore({ controller: new AbortController() });
 		},
 
 		get signal() {
 			return store.controller.signal;
 		}
-	}
+	};
 
 	React.useEffect(() => () => store.controller.abort(), []);
 

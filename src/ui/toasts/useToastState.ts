@@ -1,11 +1,11 @@
-import { useSettingsStore } from '@api/storage';
-import { Reanimated, ReactNative } from '@metro/common';
-import Toasts from '@stores/toasts';
 import { InternalToastOptions } from '@typings/api/toasts';
+import { useSettingsStore } from '@api/storage';
+import { Reanimated } from '@metro/common';
+import Toasts from '@stores/toasts';
 
 const { useSharedValue, withTiming, withSpring } = Reanimated;
 
-export const useToastState = (options: InternalToastOptions) => {
+function useToastState(options: InternalToastOptions) {
 	const [leaving, setLeaving] = React.useState(false);
 	const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('toasts'));
 
@@ -51,10 +51,12 @@ export const useToastState = (options: InternalToastOptions) => {
 	return {
 		properties: {
 			marginTop,
-			scale,
 			opacity,
-			height
+			height,
+			transform: [{ scale }],
 		},
 		leave
 	};
 };
+
+export default useToastState;

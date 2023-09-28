@@ -1,9 +1,9 @@
 import { React, ReactNative as RN } from '@metro/common';
+import { Row } from '@ui/components/form';
 import { Asset } from '@typings/api/assets';
+import { Media } from '@metro/components';
 import { findByProps } from '@metro';
 
-import { Row } from '@ui/components/form-handler';
-import { Media } from '@metro/components';
 
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
 

@@ -1,8 +1,8 @@
 import type { RowIconProps, RowProps, SectionProps, SwitchRowProps } from '@typings/ui/components/forms';
 import { Theme, StyleSheet, React, ReactNative as RN } from '@metro/common';
 import { Forms, Redesign } from '@metro/components';
+import { ViewProps } from 'react-native';
 import { findByProps } from '@metro';
-
 
 export const { endStyle } = StyleSheet.createThemedStyleSheet({
 	endStyle: {
@@ -20,15 +20,15 @@ export const TabsUIState = findByProps(
 );
 
 export const useEndStyle = () => {
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
+	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;
 
-	return tabsEnabled && endStyle;
+	return tabs && endStyle;
 };
 
 export const Row = ({ icon, arrow, trailing, ...shared }: RowProps) => {
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
+	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;
 
-	return tabsEnabled ? (
+	return tabs ? (
 		<Redesign.TableRow
 			{...shared}
 			icon={icon}
@@ -47,10 +47,16 @@ export const Row = ({ icon, arrow, trailing, ...shared }: RowProps) => {
 	);
 };
 
-export const SwitchRow = ({ icon, trailing, value, onValueChange, ...shared }: SwitchRowProps) => {
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
+export const Form = (props: React.PropsWithChildren<ViewProps>) => {
+	return <Forms.Form {...props}>
+		{props.children}
+	</Forms.Form>;
+};
 
-	return tabsEnabled ? (
+export const SwitchRow = ({ icon, trailing, value, onValueChange, ...shared }: SwitchRowProps) => {
+	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;
+
+	return tabs ? (
 		<Redesign.TableRow
 			{...shared}
 			icon={icon}
@@ -88,9 +94,9 @@ export const SwitchRow = ({ icon, trailing, value, onValueChange, ...shared }: S
 };
 
 export const RowIcon = (props: RowIconProps) => {
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
+	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;
 
-	return tabsEnabled ? (
+	return tabs ? (
 		<Redesign.TableRowIcon {...props} />
 	) : (
 		<Forms.FormIcon {...props} />
@@ -98,10 +104,10 @@ export const RowIcon = (props: RowIconProps) => {
 };
 
 export const Section = ({ children, style, margin = true, ...props }: SectionProps) => {
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
+	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;
 
 	return <RN.ScrollView>
-		{tabsEnabled ? (
+		{tabs ? (
 			<RN.View
 				style={[
 					style,

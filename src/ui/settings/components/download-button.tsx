@@ -1,11 +1,11 @@
-import { ReactNative as RN, i18n } from '@metro/common';
 import { Files, useSettingsStore } from '@api/storage';
 import { getIDByName, packExists } from '@api/assets';
 import type { Pack } from '@core/builtins/icon-pack';
-import { Redesign } from '@metro/components';
 import { capitalize, chunkArray } from '@utilities';
-import { Paths } from '@constants';
+import { Redesign } from '@metro/components';
 import { showToast } from '@api/toasts';
+import { i18n } from '@metro/common';
+import { Paths } from '@constants';
 
 interface DownloadRowProps {
 	pack: Pack,
@@ -75,7 +75,7 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 				content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_FETCHING,
 				icon: 'ic_download_24px',
 				duration: 0
-			})
+			});
 
 			toast.update({
 				buttons: [{
@@ -86,7 +86,7 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 						setLoading(false);
 					}
 				}]
-			})
+			});
 
 			try {
 				const { username, repo, branch, path, tree } = await getAssetsForGitRepo(url);
@@ -120,7 +120,7 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 
 						toast.update({
 							content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_PROGRESS.format({ progress: `${completed++}/${assets.length}` })
-						})
+						});
 					}));
 				}
 
@@ -129,7 +129,7 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 
 				toast.update({
 					content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_DONE.format({ pack: `'${capitalize(pack)}'` })
-				})
+				});
 
 				setInstalled(true);
 				setLoading(false);
@@ -137,10 +137,10 @@ export default ({ pack, url, settings, controller }: DownloadRowProps) => {
 			} catch (error) {
 				const getErrorMessage = <T extends keyof DOMException>(property: T): DOMException[T] => {
 					const message = (error as DOMException)[property];
-					return i18n.Messages.UNBOUND_DOWNLOAD_PACK_FAILED.format({ error: message })
-				}
+					return i18n.Messages.UNBOUND_DOWNLOAD_PACK_FAILED.format({ error: message });
+				};
 
-				toast.update({ content: getErrorMessage('name') })
+				toast.update({ content: getErrorMessage('name') });
 				console.error(getErrorMessage('stack').replace(/(at .*) \(.*\)/g, '$1'));
 
 				setTimeout(toast.close, 3000);

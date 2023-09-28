@@ -8,10 +8,10 @@ import { Dialog } from '@metro/ui';
 import { Addons, InstallModal } from '@ui/settings/components';
 import Home from './editor/home';
 
-import { Navigation } from '@metro/components';
+import { TabsUIState } from '@ui/components/form';
 import { useSettingsStore } from '@api/storage';
+import { Navigation } from '@metro/components';
 import { inputs } from './editor/create';
-import { TabsUIState } from '@ui/components/form-handler';
 
 const { colors, meta: { resolveSemanticColor } } = Theme;
 

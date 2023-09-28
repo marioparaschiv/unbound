@@ -1,12 +1,11 @@
 import { i18n, React, ReactNative as RN, Theme } from '@metro/common';
-import { Theme as ThemeStore } from '@metro/stores';
-import Plugins from '@managers/plugins';
-import { getIDByName } from '@api/assets';
-
-import { Addons, InstallModal } from '../components';
-import { Navigation } from '@metro/components';
-import { TabsUIState } from '@ui/components/form-handler';
+import { Addons, InstallModal } from '@ui/settings/components';
+import { Form, TabsUIState } from '@ui/components/form';
 import { showConfirmationAlert } from '@api/dialogs';
+import { Theme as ThemeStore } from '@metro/stores';
+import { Navigation } from '@metro/components';
+import { getIDByName } from '@api/assets';
+import Plugins from '@managers/plugins';
 
 const { colors, meta: { resolveSemanticColor } } = Theme;
 
@@ -22,12 +21,12 @@ export default () => {
 		});
 	});
 
-	return <RN.View style={{ flex: 1 }}>
+	return <Form style={{ flex: 1 }}>
 		<Addons
 			type='plugins'
 			addons={addons}
 		/>
-	</RN.View>;
+	</Form>;
 };
 
 function HeaderRight() {

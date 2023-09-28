@@ -30,6 +30,11 @@ declare global {
 			bundle: string;
 		}[];
 
+		UNBOUND_FONTS: {
+			name: string;
+			url: string;
+		}[];
+
 		UNBOUND_THEMES: {
 			manifest: Manifest,
 			bundle: string;
