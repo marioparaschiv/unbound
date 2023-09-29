@@ -59,6 +59,18 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 			continue;
 		}
 
+		if (mdl.default?.name === 'requireNativeComponent') {
+			const orig = mdl.default;
+
+			mdl.default = function (...args) {
+				try {
+					return orig(...args);
+				} catch {
+					return args[0];
+				}
+			};
+		}
+
 		if (!data.patchedMoment && mdl.defineLocale) {
 			const defineLocale = mdl.defineLocale;
 			const locale = mdl.locale();
