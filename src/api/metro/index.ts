@@ -59,16 +59,24 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 			continue;
 		}
 
-		if (mdl.default?.name === 'requireNativeComponent') {
+		if (!mdl.__patched__ && mdl.default?.name === 'requireNativeComponent') {
 			const orig = mdl.default;
 
-			mdl.default = function (...args) {
-				try {
-					return orig(...args);
-				} catch {
-					return args[0];
+			const temp = {
+				requireNativeComponent(...args) {
+					try {
+						return orig(...args);
+					} catch {
+						return args[0];
+					}
 				}
 			};
+
+			Object.assign(temp.requireNativeComponent, orig);
+			Object.assign(mdl, {
+				default: temp.requireNativeComponent,
+				__patched__: true
+			});
 		}
 
 		if (!data.patchedMoment && mdl.defineLocale) {
