@@ -53,7 +53,7 @@ class Themes extends Manager {
 					const key = ref[Object.getOwnPropertySymbols(ref)[0]];
 
 					if (instance.semantic[key]) {
-						const index = { dark: 0, light: 1, amoled: 2, darker: 3 }[theme.toLowerCase()] || 0;
+						const index = { dark: 0, light: 1, amoled: 2 }[theme.toLowerCase()] || 0;
 						const unparsedColor = instance.semantic[key];
 						const color = unparsedColor[index] ?? unparsedColor[0];
 
@@ -64,7 +64,7 @@ class Themes extends Manager {
 						if (color) return color;
 					}
 
-					return orig.call(this, theme, ref);
+					return orig.call(this, theme === 'darker' ? 'dark' : theme, ref);
 				};
 			}
 
@@ -90,7 +90,7 @@ class Themes extends Manager {
 			return <ReactNative.ImageBackground
 				blurRadius={typeof background.blur === 'number' ? background.blur : 0}
 				style={{ flex: 1, height: '100%' }}
-				source={{ uri: typeof background.url === 'string' ? background.url : background.url[Theme.theme] }}
+				source={{ uri: typeof background.url === 'string' ? background.url : background.url[Theme.theme] ?? background.url[0] }}
 				children={res}
 			/>;
 		});

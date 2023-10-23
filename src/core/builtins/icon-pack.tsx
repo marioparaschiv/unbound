@@ -7,7 +7,7 @@ import { Paths } from '@constants';
 
 export const Packs = {
 	default: {
-		icon: getIDByName('img_nitro_star'),
+		icon: getIDByName('feature_star'),
 		extension: null
 	},
 	plumpy: {

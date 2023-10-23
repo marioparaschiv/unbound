@@ -3,7 +3,6 @@ import { Theme as ThemeStore } from '@metro/stores';
 import Themes from '@managers/themes';
 import { Keys } from '@constants';
 import { getIDByName } from '@api/assets';
-import { Dialog } from '@metro/ui';
 
 import { Addons, InstallModal } from '@ui/settings/components';
 import Home from './editor/home';
@@ -12,6 +11,8 @@ import { TabsUIState } from '@ui/components/form';
 import { useSettingsStore } from '@api/storage';
 import { Navigation } from '@metro/components';
 import { inputs } from './editor/create';
+import { showAlert } from '@api/dialogs';
+import { showInstallAlert } from '@ui/settings/components/install-modal';
 
 const { colors, meta: { resolveSemanticColor } } = Theme;
 
@@ -39,39 +40,34 @@ export default () => {
 function HeaderRight() {
 	const navigation = Navigation.useNavigation();
 	const settings = useSettingsStore('create-theme');
-	const ref = React.useRef<InstanceType<typeof InstallModal>>();
-	const url = React.useCallback(() => ref.current?.getInput(), [ref.current]);
+	const ref = React.useRef<InstanceType<typeof InstallModal.InstallInput>>();
 	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
 
 	return <RN.TouchableOpacity
 		style={tabsEnabled ? {} : { marginRight: 16 }}
 		onPress={() => {
-			Dialog.confirm({
+			showAlert({
 				title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
-				confirmText: i18n.Messages.UNBOUND_THEME_GET_OPTION_CREATE,
-				cancelText: i18n.Messages.UNBOUND_THEME_GET_OPTION_IMPORT,
-				body: i18n.Messages.UNBOUND_THEME_GET_DESC,
+				content: i18n.Messages.UNBOUND_THEME_GET_DESC,
+				buttons: [
+					{
+						text: i18n.Messages.UNBOUND_THEME_GET_OPTION_IMPORT,
+						onPress: () => showInstallAlert({ manager: Themes, ref })
+					},
+					{
+						text: i18n.Messages.UNBOUND_THEME_GET_OPTION_CREATE,
+						variant: 'primary-alt',
+						onPress: () => {
+							navigation.push(Keys.Custom, {
+								title: i18n.Messages.UNBOUND_THEME_EDITOR,
+								render: Home
+							});
 
-				// On theme create
-				onConfirm: () => {
-					navigation.push(Keys.Custom, {
-						title: i18n.Messages.UNBOUND_THEME_EDITOR,
-						render: Home
-					});
-
-					inputs.forEach(({ key }) => settings.set(key, ''));
-				},
-
-				// On theme import
-				onCancel: () => {
-					Dialog.confirm({
-						title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
-						children: <InstallModal manager={Themes} ref={ref} />,
-						confirmText: i18n.Messages.UNBOUND_INSTALL,
-						onConfirm: () => url() && Themes.install(url())
-					});
-				}
-			});
+							inputs.forEach(({ key }) => settings.set(key, ''));
+						}
+					},
+				]
+			})
 		}}
 	>
 		<RN.Image

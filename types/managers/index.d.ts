@@ -8,6 +8,7 @@ export interface Manifest {
 	name: string;
 	description: string;
 	authors: Author[];
+	icon: '__custom__' | (string & {});
 	updates: string;
 	version: string;
 	folder: string;

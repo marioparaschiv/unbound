@@ -31,12 +31,12 @@ function Toasts() {
 			<Row
 				arrow={true}
 				label={'Show Toast'}
-				icon={<RowIcon source={Icons['img_nitro_star']} />}
+				icon={<RowIcon source={Icons['feature_star']} />}
 				onPress={() => {
 					const toast = showToast({
 						title: 'Test',
 						content: 'Toast example',
-						icon: 'img_nitro_star'
+						icon: 'feature_star'
 					});
 
 					// Add buttons after the toast has loaded to allow for using toast.close

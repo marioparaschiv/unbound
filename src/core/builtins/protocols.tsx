@@ -22,22 +22,12 @@ const RowManager = findByName('RowManager');
 const actions = {
 	async install(parameters: URLSearchParams, type: ManagerType) {
 		const [url] = getBulkParameters('url', parameters);
-		if (typeof url !== 'string') return Toasts.showToast({
-			title: 'Error',
-			content: 'This URL is malformed.'
-		});
-
-		Toasts.showToast({
-			title: 'Installing...',
-			content: 'Attempting to load addon.'
-		});
-
+		if (typeof url !== 'string') return;
 		const manager = getManager(type);
 
 		try {
-			const addon = await manager.install(url) as Addon;
-			Toasts.showToast({ title: 'Success.', content: `Uninstalled ${addon.data.name}` });
-			Logger.success(`Successfully installed ${type}!`);
+			await manager.install(url, () => {})
+				.then(() => Logger.success(`Successfully installed ${type}!`));
 		} catch (e) {
 			Logger.error(`Failed to install ${type}: ${e.message || e}`);
 		}
@@ -59,9 +49,8 @@ const actions = {
 		}
 
 		try {
-			await manager.delete(id);
-			Toasts.showToast({ title: 'Success.', content: `Uninstalled ${addon.data.name}` });
-			Logger.success(`Successfully uninstalled ${type}!`);
+			await manager.delete(id)
+				.then(() => Logger.success(`Successfully uninstalled ${type}!`));
 		} catch (e) {
 			console.error(`Failed to install ${type}: ${e.message || e}`);
 		}

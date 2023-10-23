@@ -36,7 +36,7 @@ const PackRow = ({ settings, pack, data, controller }: PackRowProps) => {
 					showToast({
 						title: i18n.Messages.UNBOUND_ICON_PACK_TITLE,
 						content: i18n.Messages.UNBOUND_PACK_APPLYING_DESC.format({ pack: `'${capitalize(pack)}'` }),
-						icon: 'img_nitro_star'
+						icon: 'feature_star'
 					})
 				));
 			} else {

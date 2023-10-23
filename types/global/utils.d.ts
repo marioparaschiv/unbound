@@ -1,4 +1,4 @@
-declare type Fn = (...args: any) => any;
+declare type Fn<T = any> = (...args: any) => T;
 
 declare type Constructor = (new () => any);
 

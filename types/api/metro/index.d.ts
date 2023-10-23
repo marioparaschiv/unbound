@@ -40,7 +40,7 @@ export type SingleModuleByName<T extends any[]> = T extends [...any, infer O ext
 
 export type BulkModuleByProperty<T extends any[]> = {
 	[K in keyof T]: AnyProps<{
-		[P in T[K]["params"][number]]: any
+		[P in T[K]['params'][number]]: any
 	}>
 };
 

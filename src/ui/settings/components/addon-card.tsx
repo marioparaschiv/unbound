@@ -1,18 +1,23 @@
 import { Constants, Theme, React, ReactNative as RN, StyleSheet, i18n } from '@metro/common';
 import { capitalize, mergeStyles } from '@utilities';
-import { showConfirmationAlert } from '@api/dialogs';
+import { showAlert } from '@api/dialogs';
 import { Addon, Author } from '@typings/managers';
 import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';
 import { Profiles } from '@metro/ui';
 import { reload } from '@api/native';
-import { Icons } from '@api/assets';
+import { Icons, getIDByName } from '@api/assets';
 import { get } from '@api/storage';
 import { Keys } from '@constants';
+import { Theme as ThemeStore } from '@metro/stores';
 
 import { ManagerType } from '@managers/base';
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
+import Overflow from '@ui/settings/components/overflow';
+import { Redesign } from '@metro/components';
+
+const { colors, meta: { resolveSemanticColor } } = Theme;
 
 interface AddonCardProps {
 	manager: typeof Plugins | typeof Themes;
@@ -22,6 +27,20 @@ interface AddonCardProps {
 	navigation: any;
 }
 
+const showRestartAlert = () => showAlert({
+	title: i18n.Messages.UNBOUND_CHANGE_RESTART,
+	content: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
+	buttons: [
+		{
+			text: i18n.Messages.UNBOUND_RESTART,
+			onPress: () => {
+				Redesign.dismissAlerts();
+				reload();
+			}
+		}
+	]
+});
+
 export default class extends React.Component<AddonCardProps> {
 	render() {
 		const { addon, recovery } = this.props;
@@ -30,7 +49,8 @@ export default class extends React.Component<AddonCardProps> {
 			<RN.View style={this.styles.header}>
 				{this.renderMetadata()}
 				{this.renderAuthors()}
-				{this.renderControls()}
+				{this.renderOverflow()}
+				{this.renderSwitch()}
 			</RN.View>
 			<RN.View style={this.styles.info}>
 				{this.renderBody()}
@@ -38,10 +58,82 @@ export default class extends React.Component<AddonCardProps> {
 		</RN.View>;
 	}
 
+	renderIcon() {
+		const { addon, manager } = this.props;
+
+		if (addon.data.icon === '__custom__'
+			&& addon.instance.icon
+			&& manager.type === ManagerType.Plugins
+		) {
+			return React.createElement(addon.instance.icon);
+		}
+
+		return <RN.Image
+			source={getIDByName((() => {
+				if (addon.data.icon) return addon.data.icon;
+
+				switch (manager.type) {
+					case ManagerType.Plugins:
+						return 'StaffBadgeIcon';
+					case ManagerType.Themes:
+						return 'CreativeIcon';
+					default:
+						return 'CircleQuestionIcon'
+				}
+			})())}
+			style={{
+				width: 16,
+				aspectRatio: 1,
+				marginRight: 8,
+				tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL)
+			}}
+		/>
+	}
+
+	renderOverflow() {
+		const { addon, manager, navigation } = this.props;
+
+		return <Overflow
+			items={[
+				...manager.type === ManagerType.Plugins && addon.instance?.settings ? [
+					{
+						label: i18n.Messages.SETTINGS,
+						iconSource: Icons['settings'],
+						action: () => navigation.push(Keys.Custom, {
+							title: addon.data.name,
+							render: addon.instance.settings
+						})
+					}
+				] : [],
+				{
+					label: i18n.Messages.UNBOUND_UNINSTALL,
+					iconSource: Icons['trash'],
+					action: () => showAlert({
+						title: i18n.Messages.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(manager.type) }),
+						content: i18n.Messages.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
+						buttons: [
+							{
+								text: i18n.Messages.UNBOUND_UNINSTALL,
+								onPress: async () => {
+									await manager.delete(addon.id);
+
+									if (manager.type === ManagerType.Themes && get('theme-states', 'applied', '') === addon.data.id) {
+										showRestartAlert();
+									}
+								}
+							}
+						]
+					})
+				}
+			]}
+		/>
+	}
+
 	renderMetadata() {
 		const { addon } = this.props;
 
 		return <>
+			{this.renderIcon()}
 			<RN.Text style={this.styles.name}>
 				{addon.data.name}
 			</RN.Text>
@@ -88,65 +180,24 @@ export default class extends React.Component<AddonCardProps> {
 		</>;
 	}
 
-	renderControls() {
+	renderSwitch() {
 		const { addon, manager, shouldRestart, recovery } = this.props;
 
-		const showRestartAlert = () => showConfirmationAlert({
-			title: i18n.Messages.UNBOUND_CHANGE_RESTART,
-			content: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
-			confirmText: i18n.Messages.UNBOUND_RESTART,
-			onConfirm: reload
-		});
+		return <RN.Switch
+			disabled={addon.failed || recovery}
+			value={manager.isEnabled(addon.id)}
+			trackColor={{
+				false: Theme.colors.BACKGROUND_FLOATING,
+				true: Theme.colors.HEADER_PRIMARY
+			}}
+			onChange={() => {
+				manager.toggle(addon.id);
 
-		return <>
-			{manager.type === ManagerType.Plugins && addon.instance?.settings && <RN.Pressable
-				style={({ pressed }) => ({ opacity: pressed ? 0.25 : 1.0, ...this.styles.controlButton })}
-				hitSlop={15}
-				onPress={() => {
-					this.props.navigation.push(Keys.Custom, {
-						title: addon.data.name,
-						render: addon.instance.settings
-					});
-				}}
-			>
-				<RN.Image source={Icons['settings']} style={this.styles.icon} />
-			</RN.Pressable>}
-			<RN.Pressable
-				style={({ pressed }) => ({ opacity: pressed ? 0.25 : 1.0, ...this.styles.controlButton })}
-				hitSlop={15}
-				onPress={() => {
-					showConfirmationAlert({
-						title: i18n.Messages.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(manager.type) }),
-						content: i18n.Messages.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
-						confirmText: i18n.Messages.UNBOUND_UNINSTALL,
-						onConfirm: async () => {
-							await manager.delete(addon.id);
-
-							if (manager.type === ManagerType.Themes && get('theme-states', 'applied', '') === addon.data.id) {
-								showRestartAlert();
-							}
-						}
-					});
-				}}
-			>
-				<RN.Image source={Icons['trash']} style={this.styles.icon} />
-			</RN.Pressable>
-			<RN.Switch
-				disabled={addon.failed || recovery}
-				value={manager.isEnabled(addon.id)}
-				trackColor={{
-					false: Theme.colors.BACKGROUND_FLOATING,
-					true: Theme.colors.HEADER_PRIMARY
-				}}
-				onChange={() => {
-					manager.toggle(addon.id);
-
-					if (shouldRestart) {
-						showRestartAlert();
-					}
-				}}
-			/>
-		</>;
+				if (shouldRestart) {
+					showRestartAlert();
+				}
+			}}
+		/>
 	}
 
 	renderBody() {
@@ -176,7 +227,7 @@ export default class extends React.Component<AddonCardProps> {
 		card: {
 			backgroundColor: Theme.colors.BACKGROUND_SECONDARY,
 			marginHorizontal: 10,
-			borderRadius: 5,
+			borderRadius: 12,
 			marginTop: 10
 		},
 		failed: {
@@ -188,8 +239,8 @@ export default class extends React.Component<AddonCardProps> {
 		},
 		header: {
 			backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
-			borderTopRightRadius: 5,
-			borderTopLeftRadius: 5,
+			borderTopRightRadius: 12,
+			borderTopLeftRadius: 12,
 			paddingHorizontal: 15,
 			flexDirection: 'row',
 			alignItems: 'center',

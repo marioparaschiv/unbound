@@ -37,24 +37,60 @@ class Manager extends EventEmitter {
 		this.path = `Unbound/${this.name}`;
 	}
 
-	async install(url: string): Promise<Error | Addon> {
+	async showAddonToast(addon: Addon, message: string) {
+		const { i18n } = await import('@metro/common');
+		const { showToast } = await import('@api/toasts');
+
+		showToast({
+			title: addon.data.name,
+			content: i18n.Messages[message],
+			icon: (() => {
+				if (addon.data.icon && addon.data.icon !== '__custom__') return addon.data.icon;
+
+				switch (this.type) {
+					case ManagerType.Plugins:
+						return 'StaffBadgeIcon';
+					case ManagerType.Themes:
+						return 'CreativeIcon';
+					default:
+						return 'CircleQuestionIcon';
+				}
+			})()
+		});
+	}
+
+	async install(url: string, setState): Promise<Error | Addon> {
 		this.logger.debug(`Fetching ${url} for manifest...`);
-		const manifest = await fetch(url, { cache: 'no-cache' }).then(r => r.json()) as InternalManifest;
+		const manifest = await fetch(url, { cache: 'no-cache' })
+			.then(res => {
+				if (res.ok) return res;
+				setState({ message: `${res.status}: ${res.statusText}` });
+			})
+			.then(res => res.json())
+			.catch(e => setState({ message: e.message })) as InternalManifest;
 
 		try {
 			this.logger.debug('Validating manifest...');
 			this.validateManifest(manifest as InternalManifest);
 		} catch (e) {
 			this.logger.debug('Failed to validate manifest:', e.message);
+			setState({ message: e.message });
 			return;
 		}
 
 		this.logger.debug(`Fetching bundle from ${manifest.bundle}...`);
-		const bundle = await fetch((manifest as any).bundle, { cache: 'no-cache' }).then(r => r.text());
+		const bundle = await fetch((manifest as any).bundle, { cache: 'no-cache' })
+			.then(res => {
+				if (res.ok) return res;
+				setState({ message: `${res.status}: ${res.statusText}` });
+			})
+			.then(r => r.text())
+			.catch(e => setState({ message: e.message }));
+
 		this.logger.debug('Done fetching...');
 
 		this.logger.debug('Saving...');
-		this.save(bundle, manifest);
+		this.save(bundle as string, manifest);
 		this.logger.debug('Loading...');
 
 		const existing = this.entities.get(manifest.id);
@@ -64,9 +100,14 @@ class Manager extends EventEmitter {
 			this.unload(manifest.id);
 		}
 
-		const addon = this.load(bundle, manifest);
+		const addon = this.load(bundle as string, manifest);
 		this.logger.debug('Loaded.');
 
+		const { Redesign } = await import('@metro/components');
+
+		Redesign.dismissAlerts();
+
+		await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_INSTALLED');
 		return addon;
 	}
 
@@ -123,6 +164,7 @@ class Manager extends EventEmitter {
 		try {
 			this.unload(addon);
 			await Files.writeFile('documents', `${this.path}/${addon.data.id}/.delete`, 'true', 'utf8');
+			await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_UNINSTALLED');
 		} catch (e) {
 			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message);
 		}

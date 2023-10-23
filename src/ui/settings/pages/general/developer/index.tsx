@@ -21,7 +21,7 @@ export default function () {
 
 	const Icons = {
 		Debug: Assets.getIDByName('debug'),
-		Browser: Assets.getIDByName('ic_image'),
+		Browser: Assets.getIDByName('ImageTextIcon'),
 		Trash: Assets.getIDByName('trash')
 	};
 

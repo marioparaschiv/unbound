@@ -31,7 +31,7 @@ function General() {
 		GitHub: Assets.getIDByName('img_account_sync_github_white'),
 		Development: Assets.getIDByName('ic_progress_wrench_24px'),
 		Plugins: Assets.getIDByName('ic_activity_24px'),
-		Themes: Assets.getIDByName('ic_paint_brush'),
+		Themes: Assets.getIDByName('CreativeIcon'),
 		Toasts: Assets.getIDByName('ic_notification_settings'),
 		Grid: Assets.getIDByName('GridSquareIcon'),
 		Retry: Assets.getIDByName('ic_message_retry'),
