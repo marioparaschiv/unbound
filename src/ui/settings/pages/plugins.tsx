@@ -1,6 +1,6 @@
 import { i18n, React, ReactNative as RN, Theme } from '@metro/common';
 import { Addons, InstallModal } from '@ui/settings/components';
-import { Form, TabsUIState } from '@ui/components/form';
+import { TabsUIState } from '@ui/components/form';
 import { Theme as ThemeStore } from '@metro/stores';
 import { Navigation } from '@metro/components';
 import { getIDByName } from '@api/assets';
@@ -24,7 +24,7 @@ export default () => {
 
 	return <RN.View style={{ flex: 1 }}>
 		<Addons
-			type={'plugin'}
+			type='plugins'
 			addons={addons}
 		/>
 	</RN.View>;

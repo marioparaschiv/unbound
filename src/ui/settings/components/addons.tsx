@@ -12,7 +12,7 @@ import AdvancedSearch, { useAdvancedSearch } from '@ui/components/advanced-searc
 import InstallModal from './install-modal';
 
 interface AddonListProps {
-	type: 'theme' | 'plugin';
+	type: 'themes' | 'plugins';
 	shouldRestart?: boolean;
 	addons: Addon[];
 }

@@ -25,7 +25,7 @@ export async function initialize() {
 
 	window.unbound = Object.assign(API, { version: '__VERSION__' });
 
-	Managers.plugin.initialize();
+	Managers.plugins.initialize();
 
 	return API;
 }

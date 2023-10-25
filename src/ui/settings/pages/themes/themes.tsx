@@ -32,7 +32,7 @@ export default () => {
 	return <RN.View style={{ flex: 1 }}>
 		<Addons
 			shouldRestart={true}
-			type={'theme'}
+			type='themes'
 			addons={addons}
 		/>
 	</RN.View>

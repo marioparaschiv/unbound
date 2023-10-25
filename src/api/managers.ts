@@ -1,2 +1,2 @@
-export { default as plugin } from '@managers/plugins';
-export { default as theme } from '@managers/themes';
+export { default as plugins } from '@managers/plugins';
+export { default as themes } from '@managers/themes';
