@@ -81,7 +81,7 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 				// We just need access to the onRefresh method to open the install modal
 				refreshing={false}
 				onRefresh={() => showInstallAlert({ manager: managers[type], ref })}
-				title={i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type })}
+				title={i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: managers[type].type })}
 			/>}
 		>
 			<RN.FlatList
