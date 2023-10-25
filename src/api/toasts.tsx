@@ -49,8 +49,8 @@ try {
 				const badStyle = findInReactTree(res.props.style, x => x.tintColor);
 				delete badStyle.tintColor;
 			}
-		})
-	}, true)
+		}, true)
+	})
 } catch (e) {
 	Logger.error('Failed to patch ToastContainer:', e.message);
 }

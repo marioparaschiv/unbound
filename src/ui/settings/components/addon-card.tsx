@@ -1,7 +1,6 @@
 import { Constants, Theme, React, ReactNative as RN, StyleSheet, i18n } from '@metro/common';
 import { capitalize, mergeStyles } from '@utilities';
 import { showAlert } from '@api/dialogs';
-import { Addon, Author } from '@typings/managers';
 import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';
 import { Profiles } from '@metro/ui';
@@ -12,15 +11,17 @@ import { Keys } from '@constants';
 import { Theme as ThemeStore } from '@metro/stores';
 
 import { ManagerType } from '@managers/base';
-import Plugins from '@managers/plugins';
-import Themes from '@managers/themes';
-import Overflow from '@ui/settings/components/overflow';
 import { Redesign } from '@metro/components';
+import Overflow from '@ui/settings/components/overflow';
+
+import type { Addon, Author, Manager } from '@typings/managers';
+import { managers } from '@api';
+import { RowSwitch } from '@ui/components/form';
 
 const { colors, meta: { resolveSemanticColor } } = Theme;
 
 interface AddonCardProps {
-	manager: typeof Plugins | typeof Themes;
+	type: Manager;
 	shouldRestart: boolean;
 	recovery: boolean;
 	addon: Addon;
@@ -42,6 +43,10 @@ const showRestartAlert = () => showAlert({
 });
 
 export default class extends React.Component<AddonCardProps> {
+	get manager() {
+		return managers[this.props.type];
+	}
+
 	render() {
 		const { addon, recovery } = this.props;
 
@@ -59,11 +64,11 @@ export default class extends React.Component<AddonCardProps> {
 	}
 
 	renderIcon() {
-		const { addon, manager } = this.props;
+		const { addon } = this.props;
 
 		if (addon.data.icon === '__custom__'
 			&& addon.instance.icon
-			&& manager.type === ManagerType.Plugins
+			&& this.manager.type === ManagerType.Plugins
 		) {
 			return React.createElement(addon.instance.icon);
 		}
@@ -72,7 +77,7 @@ export default class extends React.Component<AddonCardProps> {
 			source={getIDByName((() => {
 				if (addon.data.icon) return addon.data.icon;
 
-				switch (manager.type) {
+				switch (this.manager.type) {
 					case ManagerType.Plugins:
 						return 'StaffBadgeIcon';
 					case ManagerType.Themes:
@@ -91,11 +96,11 @@ export default class extends React.Component<AddonCardProps> {
 	}
 
 	renderOverflow() {
-		const { addon, manager, navigation } = this.props;
+		const { addon, navigation } = this.props;
 
 		return <Overflow
 			items={[
-				...manager.type === ManagerType.Plugins && addon.instance?.settings ? [
+				...this.manager.type === ManagerType.Plugins && addon.instance?.settings ? [
 					{
 						label: i18n.Messages.SETTINGS,
 						iconSource: Icons['settings'],
@@ -109,15 +114,15 @@ export default class extends React.Component<AddonCardProps> {
 					label: i18n.Messages.UNBOUND_UNINSTALL,
 					iconSource: Icons['trash'],
 					action: () => showAlert({
-						title: i18n.Messages.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(manager.type) }),
+						title: i18n.Messages.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(this.manager.type) }),
 						content: i18n.Messages.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
 						buttons: [
 							{
 								text: i18n.Messages.UNBOUND_UNINSTALL,
 								onPress: async () => {
-									await manager.delete(addon.id);
+									await this.manager.delete(addon.id);
 
-									if (manager.type === ManagerType.Themes && get('theme-states', 'applied', '') === addon.data.id) {
+									if (this.manager.type === ManagerType.Themes && get('theme-states', 'applied', '') === addon.data.id) {
 										showRestartAlert();
 									}
 								}
@@ -181,17 +186,17 @@ export default class extends React.Component<AddonCardProps> {
 	}
 
 	renderSwitch() {
-		const { addon, manager, shouldRestart, recovery } = this.props;
+		const { addon, shouldRestart, recovery } = this.props;
 
-		return <RN.Switch
+		return <RowSwitch
 			disabled={addon.failed || recovery}
-			value={manager.isEnabled(addon.id)}
+			value={this.manager.isEnabled(addon.id)}
 			trackColor={{
 				false: Theme.colors.BACKGROUND_FLOATING,
 				true: Theme.colors.HEADER_PRIMARY
 			}}
-			onChange={() => {
-				manager.toggle(addon.id);
+			onValueChange={() => {
+				this.manager.toggle(addon.id);
 
 				if (shouldRestart) {
 					showRestartAlert();
@@ -201,9 +206,9 @@ export default class extends React.Component<AddonCardProps> {
 	}
 
 	renderBody() {
-		const { addon, manager } = this.props;
+		const { addon } = this.props;
 
-		const error = manager.errors.get(addon.id ?? addon.data.path);
+		const error = this.manager.errors.get(addon.id ?? addon.data.path);
 
 		return <>
 			<RN.Text style={this.styles.description}>

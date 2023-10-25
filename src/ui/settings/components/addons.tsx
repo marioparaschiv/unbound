@@ -1,5 +1,3 @@
-import type { Addon } from '@typings/managers';
-
 import { Constants, i18n, React, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { useSettingsStore } from '@api/storage';
 import { managers } from '@api';
@@ -7,12 +5,14 @@ import { Icons } from '@api/assets';
 import { showInstallAlert } from '@ui/settings/components/install-modal';
 
 import { HelpMessage, Navigation } from '@metro/components';
-import AddonCard from './addon-card';
 import AdvancedSearch, { useAdvancedSearch } from '@ui/components/advanced-search';
+import AddonCard from './addon-card';
 import InstallModal from './install-modal';
 
+import type { Addon, Manager } from '@typings/managers';
+
 interface AddonListProps {
-	type: 'themes' | 'plugins';
+	type: Manager;
 	shouldRestart?: boolean;
 	addons: Addon[];
 }
@@ -80,7 +80,7 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 				// Passing false here is fine because we don't actually need to handle refreshing
 				// We just need access to the onRefresh method to open the install modal
 				refreshing={false}
-				onRefresh={() => showInstallAlert({ manager: managers[type], ref })}
+				onRefresh={() => showInstallAlert({ type, ref })}
 				title={i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: managers[type].type })}
 			/>}
 		>
@@ -91,7 +91,7 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 				renderItem={({ item }) => <AddonCard
 					recovery={isRecovery}
 					shouldRestart={shouldRestart}
-					manager={managers[type]}
+					type={type}
 					addon={item}
 					navigation={navigation}
 				/>}

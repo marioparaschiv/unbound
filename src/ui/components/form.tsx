@@ -1,4 +1,4 @@
-import type { RowIconProps, RowProps, SectionProps, SwitchRowProps } from '@typings/ui/components/forms';
+import type { FormSwitchProps, RowIconProps, RowProps, SectionProps, SwitchRowProps } from '@typings/ui/components/forms';
 import { Theme, StyleSheet, React, ReactNative as RN } from '@metro/common';
 import { Forms, Redesign } from '@metro/components';
 import { ViewProps } from 'react-native';
@@ -54,43 +54,22 @@ export const Form = (props: React.PropsWithChildren<ViewProps>) => {
 };
 
 export const SwitchRow = ({ icon, trailing, value, onValueChange, ...shared }: SwitchRowProps) => {
-	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;
-
-	return tabs ? (
-		<Redesign.TableRow
-			{...shared}
-			icon={icon}
-			trailing={<RN.View
-				style={{
-					flexDirection: 'row',
-					alignItems: 'center'
-				}}
-			>
-				{trailing}
-				<Switch.FormSwitch
-					value={value}
-					onValueChange={onValueChange}
-				/>
-			</RN.View>}
-		/>
-	) : (
-		<Row
-			{...shared}
-			icon={icon}
-			trailing={<RN.View
-				style={{
-					flexDirection: 'row',
-					alignItems: 'center'
-				}}
-			>
-				{trailing}
-				<Forms.FormSwitch
-					value={value}
-					onValueChange={onValueChange}
-				/>
-			</RN.View>}
-		/>
-	);
+	return <Row
+		{...shared}
+		icon={icon}
+		trailing={<RN.View
+			style={{
+				flexDirection: 'row',
+				alignItems: 'center'
+			}}
+		>
+			{trailing}
+			<RowSwitch
+				value={value}
+				onValueChange={onValueChange}
+			/>
+		</RN.View>}
+	/>
 };
 
 export const RowIcon = (props: RowIconProps) => {
@@ -102,6 +81,16 @@ export const RowIcon = (props: RowIconProps) => {
 		<Forms.FormIcon {...props} />
 	);
 };
+
+export const RowSwitch = (props: FormSwitchProps) => {
+	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;
+
+	return tabs ? (
+		<Switch.FormSwitch {...props} />
+	) : (
+		<Forms.FormSwitch {...props} />
+	)
+}
 
 export const Section = ({ children, style, margin = true, ...props }: SectionProps) => {
 	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;

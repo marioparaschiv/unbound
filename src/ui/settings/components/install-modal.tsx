@@ -1,12 +1,13 @@
 import { Clipboard, Constants, ReactNative as RN, StyleSheet, Theme, i18n } from '@metro/common';
-import type Plugins from '@managers/plugins';
-import type Themes from '@managers/themes';
 import { Redesign } from '@metro/components';
 import { showAlert } from '@api/dialogs';
 import { Icons } from '@api/assets';
 
+import type { Manager } from '@typings/managers';
+import { managers } from '@api';
+
 interface InstallModalProps {
-	manager: typeof Plugins | typeof Themes;
+	type: Manager;
 }
 
 type ShowInstallModalProps = InstallModalProps & {
@@ -16,6 +17,10 @@ type ShowInstallModalProps = InstallModalProps & {
 class InstallInput extends React.PureComponent<InstallModalProps> {
 	state = { url: '', loadingPaste: false, loadingInstall: false, message: null };
 
+	get manager() {
+		return managers[this.props.type];
+	}
+
 	render() {
 		return <>
 			{this.renderInput()}
@@ -24,7 +29,6 @@ class InstallInput extends React.PureComponent<InstallModalProps> {
 	}
 
 	renderInput() {
-		const { manager } = this.props;
 		const { message } = this.state;
 
 		return <RN.View style={{ display: 'flex', flexDirection: 'row', marginRight: 50 }}>
@@ -35,7 +39,7 @@ class InstallInput extends React.PureComponent<InstallModalProps> {
 				onChange={url => this.setState({ url })}
 				onClear={() => this.setState({ error: false, message: null })}
 				value={this.state.url}
-				placeholder={`https://${manager.type}.com/manifest.json`}
+				placeholder={`https://${this.manager.type}.com/manifest.json`}
 				placeholderTextColor={Theme.unsafe_rawColors.PRIMARY_400}
 				status={message ? 'error' : 'default'}
 				errorMessage={message || undefined}
@@ -59,7 +63,6 @@ class InstallInput extends React.PureComponent<InstallModalProps> {
 	}
 
 	renderSubmit() {
-		const { manager } = this.props;
 		const { url } = this.state;
 
 		return <Redesign.Button
@@ -70,7 +73,7 @@ class InstallInput extends React.PureComponent<InstallModalProps> {
 				if (url) {
 					this.setState({ loadingInstall: true });
 
-					(manager).install(url, (state) => this.setState(state))
+					(this.manager).install(url, (state) => this.setState(state))
 						.then(() => this.setState({ loadingInstall: false }));
 				}
 			}}
@@ -93,15 +96,17 @@ class InstallInput extends React.PureComponent<InstallModalProps> {
 	});
 }
 
-export function showInstallAlert({ manager, ref }: ShowInstallModalProps) {
-	// This uses a custom button so to prevent closing the dialog after failure
+export function showInstallAlert({ type, ref }: ShowInstallModalProps) {
+	const manager = managers[type];
+
+	// This uses a custom button to prevent closing the dialog after failure
 	// This is also to use a custom loading state for the async install method
 	showAlert({
 		title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: manager.type }),
 		content: i18n.Messages.UNBOUND_ADDON_VALID_MANIFEST.format({ type: manager.type }),
 		component: (
 			<InstallInput
-				manager={manager}
+				type={type}
 				ref={ref}
 			/>
 		),

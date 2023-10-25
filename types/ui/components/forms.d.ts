@@ -20,10 +20,14 @@ type RowProps = {
 	end?: boolean;
 };
 
-type SwitchRowProps = Omit<RowProps, 'arrow'> & {
+type SwitchProps = {
 	value: any;
 	onValueChange: Fn;
 };
+
+type FormSwitchProps = AnyProps<SwitchProps>;
+
+type SwitchRowProps = Omit<RowProps, 'arrow'> & SwitchProps;
 
 type RowIconProps = {
 	source?: ImageSourcePropType | ReactNode | null;

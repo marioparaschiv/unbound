@@ -53,7 +53,7 @@ function HeaderRight() {
 				buttons: [
 					{
 						text: i18n.Messages.UNBOUND_THEME_GET_OPTION_IMPORT,
-						onPress: () => showInstallAlert({ manager: Themes, ref })
+						onPress: () => showInstallAlert({ type: 'themes', ref })
 					},
 					{
 						text: i18n.Messages.UNBOUND_THEME_GET_OPTION_CREATE,

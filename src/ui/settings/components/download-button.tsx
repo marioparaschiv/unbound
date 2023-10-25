@@ -1,11 +1,12 @@
 import { Files, useSettingsStore } from '@api/storage';
 import { getIDByName, packExists } from '@api/assets';
-import type { Pack } from '@core/builtins/icon-pack';
 import { capitalize, chunkArray } from '@utilities';
 import { Redesign } from '@metro/components';
 import { showToast } from '@api/toasts';
 import { i18n } from '@metro/common';
 import { Paths } from '@constants';
+
+import type { Pack } from '@core/builtins/icon-pack';
 
 interface DownloadRowProps {
 	pack: Pack,
@@ -51,7 +52,7 @@ async function getAssetsForGitRepo(url: DownloadRowProps['url']) {
 	const assets = await fetch(folder).then(x => x.json());
 
 	res.tree = assets.tree;
-	return res as typeof res;
+	return res;
 }
 
 export default ({ pack, url, settings, controller }: DownloadRowProps) => {

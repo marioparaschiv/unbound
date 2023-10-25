@@ -37,7 +37,7 @@ function HeaderRight() {
 	return <RN.TouchableOpacity
 		style={tabsEnabled ? {} : { marginRight: 16 }}
 		onPress={() => {
-			showInstallAlert({ manager: Plugins, ref });
+			showInstallAlert({ type: 'plugins', ref });
 		}}
 	>
 		<RN.Image

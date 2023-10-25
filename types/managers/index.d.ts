@@ -28,3 +28,4 @@ export interface Addon {
 }
 
 export type Resolveable = string | Addon;
+export type Manager = 'plugins' | 'themes';
