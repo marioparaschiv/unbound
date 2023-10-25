@@ -3,14 +3,16 @@ import type { Addon } from '@typings/managers';
 import { Constants, i18n, React, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { useSettingsStore } from '@api/storage';
 import { managers } from '@api';
+import { Icons } from '@api/assets';
+import { showInstallAlert } from '@ui/settings/components/install-modal';
 
 import { HelpMessage, Navigation } from '@metro/components';
 import AddonCard from './addon-card';
-import { Icons } from '@api/assets';
 import AdvancedSearch, { useAdvancedSearch } from '@ui/components/advanced-search';
+import InstallModal from './install-modal';
 
 interface AddonListProps {
-	type: 'themes' | 'plugins';
+	type: 'theme' | 'plugin';
 	shouldRestart?: boolean;
 	addons: Addon[];
 }
@@ -39,6 +41,7 @@ const styles = StyleSheet.createThemedStyleSheet({
 
 export default function ({ addons, type, shouldRestart }: AddonListProps) {
 	const [search, controls] = useAdvancedSearch(searchContext);
+	const ref = React.useRef<InstanceType<typeof InstallModal.InstallInput>>();
 	const navigation = Navigation.useNavigation();
 	const settings = useSettingsStore('unbound');
 
@@ -71,16 +74,25 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 				{i18n.Messages.UNBOUND_RECOVERY_MODE_ENABLED}
 			</HelpMessage>
 		</RN.View>}
-		<RN.ScrollView style={{ height: '100%' }}>
+		<RN.ScrollView
+			style={{ height: '100%' }}
+			refreshControl={<RN.RefreshControl
+				// Passing false here is fine because we don't actually need to handle refreshing
+				// We just need access to the onRefresh method to open the install modal
+				refreshing={false}
+				onRefresh={() => showInstallAlert({ manager: managers[type], ref })}
+				title={i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type })}
+			/>}
+		>
 			<RN.FlatList
 				data={data}
 				keyExtractor={(_, idx) => String(idx)}
 				scrollEnabled={false}
-				renderItem={(item) => <AddonCard
+				renderItem={({ item }) => <AddonCard
 					recovery={isRecovery}
 					shouldRestart={shouldRestart}
 					manager={managers[type]}
-					addon={item.item}
+					addon={item}
 					navigation={navigation}
 				/>}
 				ListEmptyComponent={<RN.View style={styles.empty}>
@@ -94,5 +106,5 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 				</RN.View>}
 			/>
 		</RN.ScrollView>
-	</RN.View >;
+	</RN.View>;
 };

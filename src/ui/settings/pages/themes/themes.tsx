@@ -22,6 +22,7 @@ export default () => {
 
 	const unsubscribe = navigation.addListener('focus', () => {
 		unsubscribe();
+
 		navigation.setOptions({
 			title: addons.length ? `${i18n.Messages.UNBOUND_THEMES} - ${addons.length}` : i18n.Messages.UNBOUND_THEMES,
 			headerRight: HeaderRight
@@ -31,10 +32,10 @@ export default () => {
 	return <RN.View style={{ flex: 1 }}>
 		<Addons
 			shouldRestart={true}
-			type='themes'
+			type={'theme'}
 			addons={addons}
 		/>
-	</RN.View>;
+	</RN.View>
 };
 
 function HeaderRight() {

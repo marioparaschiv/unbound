@@ -21,9 +21,9 @@ function Toast(options: ToastOptions) {
 					{options.title && <RN.Text style={styles.title}>
 						{typeof options.title === 'function' ? React.createElement(options.title) : options.title}
 					</RN.Text>}
-					<RN.Text style={styles.content}>
+					{options.content && <RN.Text style={styles.content}>
 						{typeof options.content === 'function' ? React.createElement(options.content) : options.content}
-					</RN.Text>
+					</RN.Text>}
 				</RN.View>
 				<RN.Pressable
 					style={[styles.icon, { marginRight: 12 }]}

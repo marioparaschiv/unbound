@@ -15,18 +15,19 @@ export default () => {
 
 	const unsubscribe = navigation.addListener('focus', () => {
 		unsubscribe();
+
 		navigation.setOptions({
 			title: addons.length ? `${i18n.Messages.UNBOUND_PLUGINS} - ${addons.length}` : i18n.Messages.UNBOUND_PLUGINS,
 			headerRight: HeaderRight
 		});
 	});
 
-	return <Form style={{ flex: 1 }}>
+	return <RN.View style={{ flex: 1 }}>
 		<Addons
-			type='plugins'
+			type={'plugin'}
 			addons={addons}
 		/>
-	</Form>;
+	</RN.View>;
 };
 
 function HeaderRight() {
