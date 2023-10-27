@@ -95,14 +95,14 @@ class Manager extends EventEmitter {
 		).then((addon) => {
 			if (addon instanceof Error) {
 				toast.update({
-					content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_FAILED.format({ error: addon.message })
+					content: i18n.Messages.UNBOUND_DOWNLOAD_ADDON_FAILED.format({ error: addon.message })
 				});
 
 				return;
 			}
 
 			toast.update({
-				content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_DONE.format({ pack: `'${addon.data.name}'` })
+				content: i18n.Messages.UNBOUND_DOWNLOAD_ADDON_DONE.format({ type: this.type, name: `'${addon.data.name}'` })
 			});
 		});
 

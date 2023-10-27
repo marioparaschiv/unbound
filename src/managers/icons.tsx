@@ -6,7 +6,7 @@ import { capitalize, chunkArray } from '@utilities';
 import { i18n } from '@metro/common';
 import { findByProps } from '@metro';
 import { ClientName } from '@constants';
-import downloadFile from '@utilities/downloadImage';
+import downloadFile from '@utilities/downloadFile';
 
 import type { Addon, InternalManifest, Manifest, Resolveable } from '@typings/managers';
 import type { Asset } from '@typings/api/assets';
