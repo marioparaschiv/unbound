@@ -1,3 +1,4 @@
+export { default as readAsArrayBuffer } from './readAsArrayBuffer';
 export { default as findInReactTree } from './findInReactTree';
 export { default as unprocessColor } from './unprocessColor';
 export { default as forceRender } from './forceRender';

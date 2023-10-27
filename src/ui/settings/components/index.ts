@@ -1,4 +1,3 @@
-export { default as DownloadButton } from './download-button';
 export { default as InstallModal } from './install-modal';
 export { default as AddonCard } from './addon-card';
 export { default as Addons } from './addons';

@@ -1,6 +1,7 @@
 import { ReactNative as RN } from '@metro/common';
+import { noop } from '@utilities';
 
-function Fonts() {
+function FontsPage() {
 	const fonts = window.UNBOUND_FONTS ?? [];
 
 	return <RN.View style={{ flex: 1 }}>
@@ -10,4 +11,5 @@ function Fonts() {
 	</RN.View>;
 }
 
-export default Fonts;
+export const callback = noop;
+export default { page: <FontsPage />, callback };

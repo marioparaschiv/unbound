@@ -5,12 +5,14 @@ import { getStore } from '@api/storage';
 import { createLogger } from '@logger';
 import { Files } from '@api/storage';
 import { Regex } from '@constants';
+import { ToastOptions } from '@typings/api/toasts';
 
 const { LayoutAnimation: { configureNext, Presets } } = ReactNative;
 
 export enum ManagerType {
 	Plugins = 'plugin',
-	Themes = 'theme'
+	Themes = 'theme',
+	Icons = 'pack'
 }
 
 class Manager extends EventEmitter {
@@ -24,6 +26,7 @@ class Manager extends EventEmitter {
 	public extension: string;
 	public path: string;
 	public name: string;
+	public icon: string;
 
 	constructor(type: ManagerType) {
 		super();
@@ -47,19 +50,95 @@ class Manager extends EventEmitter {
 			icon: (() => {
 				if (addon.data.icon && addon.data.icon !== '__custom__') return addon.data.icon;
 
-				switch (this.type) {
-					case ManagerType.Plugins:
-						return 'StaffBadgeIcon';
-					case ManagerType.Themes:
-						return 'CreativeIcon';
-					default:
-						return 'CircleQuestionIcon';
-				}
+				return this.icon ?? 'CircleQuestionIcon';
 			})()
 		});
 	}
 
-	async install(url: string, setState): Promise<Error | Addon> {
+	async installWithToast(url: string, addon?: Addon) {
+		const { showToast } = await import('@api/toasts');
+		const { i18n } = await import('@metro/common');
+		const controller = new AbortController();
+		const title = addon ? addon.data.name : this.name;
+
+		const toast = showToast({
+			title,
+			content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_FETCHING,
+			icon: 'ic_download_24px',
+			duration: 0
+		});
+
+		toast.update({
+			buttons: [{
+				content: i18n.Messages.CANCEL,
+				onPress: () => {
+					controller.abort();
+					toast.close();
+
+					showToast({
+						title,
+						content: i18n.Messages.UNBOUND_INSTALL_CANCELLED.format({ type: capitalize(this.type) }),
+						icon: 'CloseLargeIcon'
+					});
+				}
+			}]
+		});
+
+		await this.install(
+			url,
+			({ message }) => {
+				toast.update({
+					content: message
+				});
+			},
+			controller.signal
+		).then((addon) => {
+			if (addon instanceof Error) {
+				toast.update({
+					content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_FAILED.format({ error: addon.message })
+				});
+
+				return;
+			}
+
+			toast.update({
+				content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_DONE.format({ pack: `'${addon.data.name}'` })
+			});
+		});
+
+		toast.close();
+	}
+
+	getBaseContextItems(addon: Addon) {
+		return [
+			{
+				label: 'UNBOUND_UNINSTALL',
+				icon: 'trash',
+				action: async () => {
+					// Avoid circular dependency
+					const { i18n } = await import('@metro/common');
+					const { showAlert } = await import('@api/dialogs');
+
+					showAlert({
+						title: i18n.Messages.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(this.type) }),
+						content: i18n.Messages.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
+						buttons: [
+							{
+								text: i18n.Messages.UNBOUND_UNINSTALL,
+								onPress: () => this.delete(addon.id)
+							}
+						]
+					});
+				}
+			}
+		];
+	}
+
+	getContextItems(addon: Addon, ...args) {
+		return this.getBaseContextItems(addon);
+	}
+
+	async install(url: string, setState: Fn, ...args): Promise<Error | Addon> {
 		this.logger.debug(`Fetching ${url} for manifest...`);
 		const manifest = await fetch(url, { cache: 'no-cache' })
 			.then(res => {
@@ -72,6 +151,8 @@ class Manager extends EventEmitter {
 		try {
 			this.logger.debug('Validating manifest...');
 			this.validateManifest(manifest as InternalManifest);
+
+			manifest.url = url;
 		} catch (e) {
 			this.logger.debug('Failed to validate manifest:', e.message);
 			setState({ message: e.message });
@@ -310,8 +391,8 @@ class Manager extends EventEmitter {
 
 		React.useEffect(() => {
 			function handler() {
-				forceUpdate({});
 				configureNext(Presets.spring);
+				forceUpdate({});
 			}
 
 			this.on('updated', handler);

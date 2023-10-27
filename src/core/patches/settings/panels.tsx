@@ -91,7 +91,7 @@ export class PanelsSettings extends Settings {
 	public override Icons = {
 		General: () => <Forms.FormRow.Icon source={Icons['settings']} />,
 		Plugins: () => <Icon.Puzzle height={24} width={24} />,
-		Themes: () => <Icon.Palette height={24} width={24} />,
+		Design: () => <Icon.Palette height={24} width={24} />,
 		Updater: () => <Forms.FormRow.Icon source={Icons['ic_download_24px']} />,
 		Custom: () => null
 	};

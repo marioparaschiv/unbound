@@ -14,6 +14,7 @@ const styles = StyleSheet.createThemedStyleSheet({
 	icon: {
 		width: 16,
 		aspectRatio: 1,
+		marginLeft: 8,
 		marginRight: 10,
 		tintColor: Theme.colors.INTERACTIVE_NORMAL
 	}
@@ -22,9 +23,9 @@ const styles = StyleSheet.createThemedStyleSheet({
 export default ({ items }: { items: OverflowItem[] }) => {
 	return <Redesign.ContextMenu
 		items={items}
-		children={(args, onPress, accessibilityState, accessibilityActions, onAccessibilityAction) => (
+		children={(props, onPress, accessibilityState, accessibilityActions, onAccessibilityAction) => (
 			<RN.TouchableOpacity
-				{...args}
+				{...props}
 				onPress={onPress}
 				accessibilityState={accessibilityState}
 				accessibilityActions={accessibilityActions}

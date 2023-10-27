@@ -12,17 +12,9 @@ export const ClientName = 'Unbound';
 export const Keys = {
 	General: 'UNBOUND_GENERAL',
 	Plugins: 'UNBOUND_PLUGINS',
-	Themes: 'UNBOUND_THEMES',
+	Design: 'UNBOUND_DESIGN',
 	Updater: 'UNBOUND_UPDATER',
 	Custom: 'UNBOUND_CUSTOM'
-} as const;
-
-export const Paths = {
-	packs: {
-		local: `${ClientName}/Packs`,
-		base: 'https://github.com/acquitelol/rosiecord/tree/master/Packs',
-		raw: 'https://raw.githubusercontent.com/acquitelol/rosiecord/master/Packs',
-	}
 } as const;
 
 export const Times = {

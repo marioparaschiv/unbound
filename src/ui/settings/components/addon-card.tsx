@@ -6,8 +6,6 @@ import { Users } from '@metro/stores';
 import { Profiles } from '@metro/ui';
 import { reload } from '@api/native';
 import { Icons, getIDByName } from '@api/assets';
-import { get } from '@api/storage';
-import { Keys } from '@constants';
 import { Theme as ThemeStore } from '@metro/stores';
 
 import { ManagerType } from '@managers/base';
@@ -47,6 +45,16 @@ export default class extends React.Component<AddonCardProps> {
 		return managers[this.props.type];
 	}
 
+	get source() {
+		const { addon } = this.props;
+
+		return addon.data.icon
+			? typeof addon.data.icon === 'string'
+				? getIDByName(addon.data.icon)
+				: addon.data.icon
+			: getIDByName(this.manager.icon ?? 'CircleQuestionIcon');
+	}
+
 	render() {
 		const { addon, recovery } = this.props;
 
@@ -74,18 +82,7 @@ export default class extends React.Component<AddonCardProps> {
 		}
 
 		return <RN.Image
-			source={getIDByName((() => {
-				if (addon.data.icon) return addon.data.icon;
-
-				switch (this.manager.type) {
-					case ManagerType.Plugins:
-						return 'StaffBadgeIcon';
-					case ManagerType.Themes:
-						return 'CreativeIcon';
-					default:
-						return 'CircleQuestionIcon'
-				}
-			})())}
+			source={this.source}
 			style={{
 				width: 16,
 				aspectRatio: 1,
@@ -99,38 +96,13 @@ export default class extends React.Component<AddonCardProps> {
 		const { addon, navigation } = this.props;
 
 		return <Overflow
-			items={[
-				...this.manager.type === ManagerType.Plugins && addon.instance?.settings ? [
-					{
-						label: i18n.Messages.SETTINGS,
-						iconSource: Icons['settings'],
-						action: () => navigation.push(Keys.Custom, {
-							title: addon.data.name,
-							render: addon.instance.settings
-						})
-					}
-				] : [],
-				{
-					label: i18n.Messages.UNBOUND_UNINSTALL,
-					iconSource: Icons['trash'],
-					action: () => showAlert({
-						title: i18n.Messages.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(this.manager.type) }),
-						content: i18n.Messages.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
-						buttons: [
-							{
-								text: i18n.Messages.UNBOUND_UNINSTALL,
-								onPress: async () => {
-									await this.manager.delete(addon.id);
-
-									if (this.manager.type === ManagerType.Themes && get('theme-states', 'applied', '') === addon.data.id) {
-										showRestartAlert();
-									}
-								}
-							}
-						]
-					})
+			items={this.manager.getContextItems(addon, navigation).map(item => {
+				return {
+					...item,
+					label: i18n.Messages[item.label],
+					iconSource: Icons[item.icon]
 				}
-			]}
+			})}
 		/>
 	}
 

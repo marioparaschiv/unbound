@@ -1,12 +1,12 @@
-import { Addon, Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
 import Storage from '@api/storage';
 import { findInReactTree } from '@utilities';
 
+import type { Addon, Resolveable } from '@typings/managers';
+
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
-	public original: Record<any, any>;
 	public extension: string = 'json';
 	public module: any;
 
@@ -14,6 +14,7 @@ class Themes extends Manager {
 		super(ManagerType.Themes);
 
 		this.patcher = createPatcher('themes');
+		this.icon = 'CreativeIcon';
 	}
 
 	initialize(mdl: any): void {

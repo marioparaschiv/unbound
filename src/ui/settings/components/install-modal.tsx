@@ -5,6 +5,8 @@ import { Icons } from '@api/assets';
 
 import type { Manager } from '@typings/managers';
 import { managers } from '@api';
+import { showToast } from '@api/toasts';
+import { capitalize } from '@utilities';
 
 interface InstallModalProps {
 	type: Manager;
@@ -15,6 +17,7 @@ type ShowInstallModalProps = InstallModalProps & {
 }
 
 class InstallInput extends React.PureComponent<InstallModalProps> {
+	controller = new AbortController();
 	state = { url: '', loadingPaste: false, loadingInstall: false, message: null };
 
 	get manager() {
@@ -24,7 +27,7 @@ class InstallInput extends React.PureComponent<InstallModalProps> {
 	render() {
 		return <>
 			{this.renderInput()}
-			{this.renderSubmit()}
+			{this.renderButtons()}
 		</>
 	}
 
@@ -62,22 +65,42 @@ class InstallInput extends React.PureComponent<InstallModalProps> {
 		</RN.View>
 	}
 
-	renderSubmit() {
+	renderButtons() {
 		const { url } = this.state;
 
-		return <Redesign.Button
-			text={i18n.Messages.UNBOUND_INSTALL}
-			style={{ marginTop: 18 }}
-			loading={this.state.loadingInstall}
-			onPress={() => {
-				if (url) {
-					this.setState({ loadingInstall: true });
+		return <>
+			<Redesign.Button
+				text={i18n.Messages.UNBOUND_INSTALL}
+				style={{ marginTop: 18 }}
+				loading={this.state.loadingInstall}
+				onPress={() => {
+					if (url) {
+						this.setState({ loadingInstall: true });
 
-					(this.manager).install(url, (state) => this.setState(state))
-						.then(() => this.setState({ loadingInstall: false }));
-				}
-			}}
-		/>
+						(this.manager).install(url, (state) => this.setState(state), this.controller.signal)
+							.then(() => this.setState({ loadingInstall: false }));
+					}
+				}}
+			/>
+			<Redesign.Button
+				text={i18n.Messages.CANCEL}
+				style={{ marginTop: 12 }}
+				onPress={() => {
+					Redesign.dismissAlerts();
+
+					if (this.state.loadingInstall) {
+						this.controller.abort();
+
+						showToast({
+							title: this.manager.name,
+							content: i18n.Messages.UNBOUND_INSTALL_CANCELLED.format({ type: capitalize(this.manager.type) }),
+							icon: 'CloseLargeIcon'
+						})
+					}
+				}}
+				variant={'secondary'}
+			/>
+		</>
 	}
 
 	getInput() {
@@ -110,7 +133,8 @@ export function showInstallAlert({ type, ref }: ShowInstallModalProps) {
 				ref={ref}
 			/>
 		),
-		componentMargin: false
+		componentMargin: false,
+		cancelButton: false
 	});
 }
 

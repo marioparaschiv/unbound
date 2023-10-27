@@ -1,6 +1,5 @@
 import { ReactNative as RN } from '@metro/common';
 import { BuiltIn } from '@typings/core/builtins';
-import type { Addon } from '@typings/managers';
 import { ManagerType } from '@managers/base';
 import { createPatcher } from '@patcher';
 import plugins from '@managers/plugins';
@@ -8,6 +7,8 @@ import { createLogger } from '@logger';
 import themes from '@managers/themes';
 import { findByName } from '@metro';
 import Toasts from '@api/toasts';
+import icons from '@managers/icons';
+import { managers } from '@api';
 
 const Patcher = createPatcher('protocols');
 const Logger = createLogger('Protocol');
@@ -26,7 +27,7 @@ const actions = {
 		const manager = getManager(type);
 
 		try {
-			await manager.install(url, () => {})
+			await manager.installWithToast(url)
 				.then(() => Logger.success(`Successfully installed ${type}!`));
 		} catch (e) {
 			Logger.error(`Failed to install ${type}: ${e.message || e}`);
@@ -102,11 +103,16 @@ function getBulkParameters(...args: (URLSearchParams | string)[]): any[] {
 }
 
 function getManager(type: string) {
+	const manager = managers[type];
+	if (manager) return manager;
+
 	switch (type) {
 		case ManagerType.Plugins:
 			return plugins;
 		case ManagerType.Themes:
 			return themes;
+		case ManagerType.Icons:
+			return icons;
 		default:
 			console.warn(`Not a valid type! (${type})`);
 			return;

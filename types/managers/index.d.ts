@@ -1,3 +1,5 @@
+import { ImageSourcePropType } from 'react-native';
+
 export type Author = {
 	name: string;
 	id: `${number}`;
@@ -8,16 +10,22 @@ export interface Manifest {
 	name: string;
 	description: string;
 	authors: Author[];
-	icon: '__custom__' | (string & {});
+	icon: '__custom__' | (string & {}) | { uri: string; };
 	updates: string;
 	version: string;
 	folder: string;
 	path: string;
+	url: string;
 }
 
 export interface InternalManifest extends Manifest {
 	bundle: string;
 }
+
+export type IconpackManifest = Pick<
+	InternalManifest,
+	'id' | 'name' | 'description' | 'bundle' | 'version' | 'updates'
+> & { type: 'github' | 'external'; };
 
 export interface Addon {
 	started: boolean;
@@ -28,4 +36,4 @@ export interface Addon {
 }
 
 export type Resolveable = string | Addon;
-export type Manager = 'plugins' | 'themes';
+export type Manager = 'plugins' | 'themes' | 'icons';

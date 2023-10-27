@@ -1,11 +1,11 @@
-import { ClientName, Keys } from '@constants';
+import { ClientName } from '@constants';
 import { i18n } from '@metro/common';
 import { Navigation } from '@metro/components';
 import { createPatcher } from '@patcher';
 
 import General from '@ui/settings/pages/general';
 import Plugins from '@ui/settings/pages/plugins';
-import Themes from '@ui/settings/pages/themes';
+import Design from '@ui/settings/pages/design';
 
 export class Settings {
 	public patcher: ReturnType<typeof createPatcher>;
@@ -23,8 +23,8 @@ export class Settings {
 			return i18n.Messages.UNBOUND_PLUGINS;
 		},
 
-		get Themes() {
-			return i18n.Messages.UNBOUND_THEMES;
+		get Design() {
+			return i18n.Messages.UNBOUND_DESIGN;
 		},
 
 		get Updater() {
@@ -39,7 +39,7 @@ export class Settings {
 	public Icons = {
 		General: null,
 		Plugins: null,
-		Themes: null,
+		Design: null,
 		Updater: null,
 		Custom: null
 	};
@@ -47,7 +47,7 @@ export class Settings {
 	public Breadcrumbs = {
 		General: [ClientName],
 		Plugins: [ClientName],
-		Themes: [ClientName],
+		Design: [ClientName],
 		Updater: [ClientName],
 		Custom: []
 	};
@@ -55,7 +55,7 @@ export class Settings {
 	public Mappables = {
 		General: true,
 		Plugins: true,
-		Themes: true,
+		Design: true,
 		Updater: true,
 		Custom: false
 	};
@@ -63,7 +63,7 @@ export class Settings {
 	public Screens = {
 		General,
 		Plugins,
-		Themes,
+		Design,
 		Updater: () => null,
 		Custom: ({ title, render: Component, ...props }: { title: string; render: React.ComponentType; }) => {
 			const navigation = Navigation.useNavigation();
