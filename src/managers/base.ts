@@ -3,9 +3,8 @@ import EventEmitter from '@structures/emitter';
 import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
 import { createLogger } from '@logger';
-import { Files } from '@api/storage';
+import { DCDFileManager } from '@api/storage';
 import { Regex } from '@constants';
-import { ToastOptions } from '@typings/api/toasts';
 
 const { LayoutAnimation: { configureNext, Presets } } = ReactNative;
 
@@ -193,9 +192,8 @@ class Manager extends EventEmitter {
 	}
 
 	save(bundle: string, manifest: Manifest) {
-		Files.writeFile('documents', `${this.path}/${manifest.id}/bundle.${this.extension}`, bundle, 'utf8');
-		Files.writeFile('documents', `${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
-		Files.writeFile('documents', `${this.path}/${manifest.id}/.delete`, 'false', 'utf8');
+		DCDFileManager.writeFile('documents', `${this.path}/${manifest.id}/bundle.${this.extension}`, bundle, 'utf8');
+		DCDFileManager.writeFile('documents', `${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
 	}
 
 	load(bundle: string, manifest: Manifest): Addon {
@@ -244,10 +242,10 @@ class Manager extends EventEmitter {
 
 		try {
 			this.unload(addon);
-			await Files.writeFile('documents', `${this.path}/${addon.data.id}/.delete`, 'true', 'utf8');
+			await DCDFileManager.deleteFile('documents', `${this.path}/${addon.data.id}`);
 			await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_UNINSTALLED');
 		} catch (e) {
-			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message);
+			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message ?? e);
 		}
 	}
 
@@ -259,7 +257,7 @@ class Manager extends EventEmitter {
 			addon.instance.start?.();
 			addon.started = true;
 		} catch (e) {
-			this.logger.error(`Failed to start ${addon.data.id}:`, e.message);
+			this.logger.error(`Failed to start ${addon.data.id}:`, e.message ?? e);
 			addon.started = false;
 		}
 	}
@@ -272,7 +270,7 @@ class Manager extends EventEmitter {
 			addon.instance.stop?.();
 			addon.started = false;
 		} catch (e) {
-			this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
+			this.logger.error(`Failed to stop ${addon.data.id}:`, e.message ?? e);
 			addon.started = true;
 		}
 	}
@@ -303,7 +301,7 @@ class Manager extends EventEmitter {
 				this.start(addon);
 			}
 		} catch (e) {
-			this.logger.error(`Failed to enable ${addon.data.id}:`, e.message);
+			this.logger.error(`Failed to enable ${addon.data.id}:`, e.message ?? e);
 		}
 	}
 
@@ -318,7 +316,7 @@ class Manager extends EventEmitter {
 				this.stop(addon);
 			}
 		} catch (e) {
-			this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
+			this.logger.error(`Failed to stop ${addon.data.id}:`, e.message ?? e);
 		}
 	}
 
@@ -347,7 +345,7 @@ class Manager extends EventEmitter {
 			try {
 				this.unload(addon);
 			} catch (e) {
-				this.logger.error(`Failed to stop ${addon.id}. Skipping.`, e.message);
+				this.logger.error(`Failed to stop ${addon.id}. Skipping.`, e.message ?? e);
 				continue;
 			}
 		}

@@ -58,7 +58,7 @@ const styles = StyleSheet.createThemedStyleSheet({
 		borderRadius: 18,
 		width: 250,
 		position: 'absolute',
-		zIndex: 2,
+		zIndex: 200,
 		padding: 2,
 		marginHorizontal: 60,
 		marginTop: 12,

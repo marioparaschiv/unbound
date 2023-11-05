@@ -3,7 +3,7 @@ import { BuiltIn } from '@typings/core/builtins';
 import { createPatcher } from '@patcher';
 import { findByProps } from '@metro';
 import { findInReactTree } from '@utilities';
-import { Files } from '@api/storage';
+import { DCDFileManager } from '@api/storage';
 
 const Patcher = createPatcher('protocols');
 
@@ -32,8 +32,8 @@ export function initialize() {
 
 	// @ts-expect-error - RN.Image has no 'render' method defined in its types
 	Patcher.before(RN.Image, 'render', (_, [props]) => {
+		const documentsPath = DCDFileManager.DocumentsDirPath;
 		const identifier = '{__path__}';
-		const documentsPath = Files.DocumentsDirPath ?? Files.getConstants().DocumentsDirPath;
 		const { source } = props;
 
 		// This is required because the bundle uid changes between versions, so it cannot be hardcoded in the manifest.

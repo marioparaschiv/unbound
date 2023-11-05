@@ -1,4 +1,4 @@
-import { Files } from '@api/storage';
+import { DCDFileManager } from '@api/storage';
 import readAsArrayBuffer from '@utilities/readAsArrayBuffer';
 
 async function downloadFile(url: string, path: string, signal: AbortSignal) {
@@ -7,7 +7,7 @@ async function downloadFile(url: string, path: string, signal: AbortSignal) {
 	const arrayBuffer = await readAsArrayBuffer(blob);
 	const data = Buffer.from(arrayBuffer).toString('base64');
 
-	return await Files.writeFile('documents', path, data, 'base64');
+	return await DCDFileManager.writeFile('documents', path, data, 'base64');
 }
 
 export default downloadFile;

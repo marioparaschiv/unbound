@@ -1,5 +1,5 @@
 import { Constants, Theme, React, ReactNative as RN, StyleSheet, i18n } from '@metro/common';
-import { capitalize, mergeStyles } from '@utilities';
+import { mergeStyles } from '@utilities';
 import { showAlert } from '@api/dialogs';
 import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';

@@ -1,8 +1,8 @@
 import { ReactNative as RN } from '@metro/common';
 import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
-import Storage, { Files } from '@api/storage';
-import { capitalize, chunkArray } from '@utilities';
+import Storage, { DCDFileManager } from '@api/storage';
+import { chunkArray } from '@utilities';
 import { i18n } from '@metro/common';
 import { findByProps } from '@metro';
 import { ClientName } from '@constants';
@@ -151,8 +151,7 @@ class Icons extends Manager {
 	}
 
 	override save(bundle: string, manifest: Manifest) {
-		Files.writeFile('documents', `${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
-		Files.writeFile('documents', `${this.path}/${manifest.id}/.delete`, 'false', 'utf8');
+		DCDFileManager.writeFile('documents', `${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
 	}
 
 	override async start(entity: Resolveable): Promise<void> {
@@ -200,10 +199,10 @@ class Icons extends Manager {
 			}
 
 			await this.unload(addon);
-			await Files.writeFile('documents', `${this.path}/${addon.data.id}/.delete`, 'true', 'utf8');
+			await DCDFileManager.deleteFile('documents',`${this.path}/${addon.data.id}`);
 			await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_UNINSTALLED');
 		} catch (e) {
-			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message);
+			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message ?? e);
 		}
 	}
 
@@ -236,12 +235,8 @@ class Icons extends Manager {
 			}));
 		}
 
-		const installed = await Files.fileExists(Files.DocumentsDirPath + `/${this.path}/${manifest.id}`);
+		const installed = await DCDFileManager.fileExists(DCDFileManager.DocumentsDirPath + `/${this.path}/${manifest.id}`);
 		installed && this.settings.set('packs', [...this.settings.get('packs', [defaultPack]), { bundle: manifest.name, manifest }]);
-
-		setState({
-			message: i18n.Messages.UNBOUND_DOWNLOAD_PACK_DONE.format({ pack: `'${manifest.name}'` })
-		});
 
 		return manifest.name;
 	}
@@ -253,7 +248,7 @@ class Icons extends Manager {
 		const id = (pack as any).data.id || (pack as any).manifest.id
 
 		if (fs) {
-			return Files.fileExists(`${Files.DocumentsDirPath}/${this.path}/${id}`)
+			return DCDFileManager.fileExists(`${DCDFileManager.DocumentsDirPath}/${this.path}/${id}`) as any;
 		}
 
 		return this.settings.get('packs', [defaultPack])
@@ -283,11 +278,11 @@ class Icons extends Manager {
 
 		for (const scale of asset.scales) {
 			const exactPath = this.getRelativeAssetPath(asset, scale);
-			const filePath = `${Files.DocumentsDirPath}/${this.path}/${id}/${exactPath}`;
+			const filePath = `${DCDFileManager.DocumentsDirPath}/${this.path}/${id}/${exactPath}`;
 
 			delete asset.iconPackPath;
 			delete asset.iconPackScale;
-			const fileExists = await Files.fileExists(filePath);
+			const fileExists = await DCDFileManager.fileExists(filePath);
 
 			if (fileExists) {
 				asset.iconPackPath = filePath;

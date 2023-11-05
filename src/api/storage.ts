@@ -1,9 +1,49 @@
 import { isEmpty, debounce } from '@utilities';
 import EventEmitter from '@structures/emitter';
 
+import { DCDPhotosType, DCDFileManagerType } from '@typings/api/native';
+
 const Events = new EventEmitter();
 
-export const Files = ReactNative.NativeModules.DCDFileManager ?? ReactNative.NativeModules.RTNFileManager;
+const { NativeModules, TurboModuleRegistry } = ReactNative;
+
+const findNativeModule = (name: string, secondaryName?: string) => {
+	return [
+		NativeModules[name],
+		NativeModules[secondaryName],
+		TurboModuleRegistry.get(name),
+		TurboModuleRegistry.get(secondaryName)
+	].find(x => x);
+};
+
+export const DCDPhotos: DCDPhotosType = findNativeModule('DCDPhotos', 'DCDPhotosManager');
+export const DCDFileManager: DCDFileManagerType = findNativeModule('DCDFileManager', 'RTNFileManager');
+
+Object.assign(
+	DCDFileManager, {
+	/**
+	 * This is supposed to be a hooked method.
+	 * ---
+	 * All loaders for Unbound need to hook DCDPhotosManager's deletePhotos and parse it like follows:
+	 * - Ensure that 0th item in the uris array is 'unbound' before continuing
+	 * - Use the FileManager implementation of the loader to delete the file
+	 * - Settle the promise by resolving or rejecting based on the operation's success
+	 * - (Optionally, log whether the operation was a success or failure to the native console)
+	 * - Otherwise call the original function with the original parameters.
+	 */
+	async deleteFile(type: 'documents' | 'cache' | 'full', path: string) {
+		const paths = {
+			documents: DCDFileManager.DocumentsDirPath,
+			cache: DCDFileManager.CacheDirPath
+		};
+
+		return DCDPhotos.deletePhotos([
+			'unbound',
+			type === 'full' ? path : `${paths[type]}/${path}`
+		]);
+	}
+});
+
 export const settings = globalThis.UNBOUND_SETTINGS ?? {};
 
 export const on = Events.on.bind(Events);
@@ -106,7 +146,7 @@ Events.on('changed', debounce(() => {
 	const payload = JSON.stringify(settings, null, 2);
 	const path = 'Unbound/settings.json';
 
-	pending = Files.writeFile('documents', path, payload, 'utf8');
+	pending = DCDFileManager.writeFile('documents', path, payload, 'utf8');
 }, 250));
 
 export default { useSettingsStore, getStore, get, set, remove, on, off };
