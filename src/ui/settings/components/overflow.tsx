@@ -10,7 +10,7 @@ interface OverflowItem {
 	action: () => any;
 }
 
-const styles = StyleSheet.createThemedStyleSheet({
+const useStyles = StyleSheet.createStyles({
 	icon: {
 		width: 16,
 		aspectRatio: 1,
@@ -21,6 +21,8 @@ const styles = StyleSheet.createThemedStyleSheet({
 })
 
 export default ({ items }: { items: OverflowItem[] }) => {
+	const styles = useStyles();
+
 	return <Redesign.ContextMenu
 		items={items}
 		children={(props, onPress, accessibilityState, accessibilityActions, onAccessibilityAction) => (

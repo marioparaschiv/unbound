@@ -10,6 +10,7 @@ const { withSpring, default: { View } } = Reanimated;
 function Toast(options: ToastOptions) {
 	const { properties, leave } = useToastState(options);
 	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
+	const styles = useStyles();
 
 	return <View key={options.id} style={properties}>
 		<RN.View style={styles.container} onLayout={({ nativeEvent }) => properties.height.value = withSpring(nativeEvent.layout.height)}>
@@ -51,7 +52,7 @@ function Toast(options: ToastOptions) {
 	</View>;
 }
 
-const styles = StyleSheet.createThemedStyleSheet({
+const useStyles = StyleSheet.createStyles({
 	container: {
 		backgroundColor: Theme.colors.BACKGROUND_SECONDARY_ALT,
 		alignSelf: 'center',

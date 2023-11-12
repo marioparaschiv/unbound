@@ -18,7 +18,7 @@ interface AddonListProps {
 }
 
 const searchContext = { type: 'ADDONS' };
-const styles = StyleSheet.createThemedStyleSheet({
+const useStyles = StyleSheet.createStyles({
 	recoveryContainer: {
 		paddingHorizontal: 10,
 		marginBottom: 10
@@ -41,9 +41,10 @@ const styles = StyleSheet.createThemedStyleSheet({
 
 export default function ({ addons, type, shouldRestart }: AddonListProps) {
 	const [search, controls] = useAdvancedSearch(searchContext);
-	const ref = React.useRef<InstanceType<typeof InstallModal.InstallInput>>();
+	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
 	const navigation = Navigation.useNavigation();
 	const settings = useSettingsStore('unbound');
+	const styles = useStyles();
 
 	const isRecovery = settings.get('recovery', false);
 	const data = React.useMemo(() => {

@@ -4,7 +4,7 @@ import { Forms, Redesign } from '@metro/components';
 import { ViewProps } from 'react-native';
 import { findByProps } from '@metro';
 
-export const { endStyle } = StyleSheet.createThemedStyleSheet({
+export const useStyles = StyleSheet.createStyles({
 	endStyle: {
 		backgroundColor: Theme.colors.CARD_PRIMARY_BG ?? Theme.colors.BACKGROUND_PRIMARY,
 		borderBottomLeftRadius: 16,
@@ -21,6 +21,7 @@ export const TabsUIState = findByProps(
 
 export const useEndStyle = () => {
 	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;
+	const { endStyle } = useStyles();
 
 	return tabs && endStyle;
 };
@@ -127,6 +128,5 @@ export default {
 	RowIcon,
 	SwitchRow,
 	TabsUIState,
-	endStyle,
 	useEndStyle
 };

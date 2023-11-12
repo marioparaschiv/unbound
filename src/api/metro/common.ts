@@ -12,7 +12,7 @@ export const ReactNative: Common.ReactNative = window.ReactNative;
 export const React: Common.React = window.React;
 
 // Discord
-export const StyleSheet = findByProps('createThemedStyleSheet', { lazy: true }) as Common.StyleSheets;
+export const StyleSheet = findByProps('createStyles', { lazy: true }) as Common.StyleSheet;
 export const Dispatcher = findByProps('_dispatch', { lazy: true }) as unknown as Common.Dispatcher;
 export const Constants = findByProps('Fonts', 'Endpoints', { lazy: true });
 export const Theme = findByProps('colors', 'meta', { lazy: true });

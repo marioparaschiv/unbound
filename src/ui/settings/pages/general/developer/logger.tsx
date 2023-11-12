@@ -20,6 +20,7 @@ export default function () {
 	const [query, controls] = useAdvancedSearch(searchContext);
 	const navigation = Navigation.useNavigation();
 	const store = Logger.useStore();
+	const styles = useStyles();
 
 	const data = React.useMemo(() => store.logs
 		.filter(item => item.message?.toLowerCase()?.includes(query))
@@ -64,7 +65,7 @@ export default function () {
 	</RN.View>;
 }
 
-const styles = StyleSheet.createThemedStyleSheet({
+const useStyles = StyleSheet.createStyles({
 	touchable: {
 		marginRight: 10
 	},
@@ -88,6 +89,8 @@ const styles = StyleSheet.createThemedStyleSheet({
 });
 
 function HeaderRight() {
+	const styles = useStyles();
+
 	return <RN.TouchableOpacity
 		style={styles.touchable}
 		onPress={() => Logger.store.setState({ logs: [] })}

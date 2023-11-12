@@ -14,7 +14,7 @@ class Themes extends Manager {
 		super(ManagerType.Themes);
 
 		this.patcher = createPatcher('themes');
-		this.icon = 'CreativeIcon';
+		this.icon = 'ic_paint_brush';
 	}
 
 	initialize(mdl: any): void {

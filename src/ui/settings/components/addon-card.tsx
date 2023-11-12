@@ -26,6 +26,10 @@ interface AddonCardProps {
 	navigation: any;
 }
 
+type InternalAddonCardProps = AddonCardProps & {
+	styles: AnyProps;
+}
+
 const showRestartAlert = () => showAlert({
 	title: i18n.Messages.UNBOUND_CHANGE_RESTART,
 	content: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
@@ -40,7 +44,7 @@ const showRestartAlert = () => showAlert({
 	]
 });
 
-export default class extends React.Component<AddonCardProps> {
+class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 	get manager() {
 		return managers[this.props.type];
 	}
@@ -56,16 +60,16 @@ export default class extends React.Component<AddonCardProps> {
 	}
 
 	render() {
-		const { addon, recovery } = this.props;
+		const { addon, recovery, styles } = this.props;
 
-		return <RN.View style={mergeStyles(this.styles.card, addon.failed && this.styles.failed, recovery && this.styles.recovery)}>
-			<RN.View style={this.styles.header}>
+		return <RN.View style={mergeStyles(styles.card, addon.failed && styles.failed, recovery && styles.recovery)}>
+			<RN.View style={styles.header}>
 				{this.renderMetadata()}
 				{this.renderAuthors()}
 				{this.renderOverflow()}
 				{this.renderSwitch()}
 			</RN.View>
-			<RN.View style={this.styles.info}>
+			<RN.View style={styles.info}>
 				{this.renderBody()}
 			</RN.View>
 		</RN.View>;
@@ -94,6 +98,9 @@ export default class extends React.Component<AddonCardProps> {
 
 	renderOverflow() {
 		const { addon, navigation } = this.props;
+		const items = this.manager.getContextItems(addon, navigation);
+
+		if (!items || items.length < 1) return null;
 
 		return <Overflow
 			items={this.manager.getContextItems(addon, navigation).map(item => {
@@ -107,24 +114,24 @@ export default class extends React.Component<AddonCardProps> {
 	}
 
 	renderMetadata() {
-		const { addon } = this.props;
+		const { addon, styles } = this.props;
 
 		return <>
 			{this.renderIcon()}
-			<RN.Text style={this.styles.name}>
+			<RN.Text style={styles.name}>
 				{addon.data.name}
 			</RN.Text>
-			<RN.Text style={this.styles.version}>
+			<RN.Text style={styles.version}>
 				{addon.data.version ?? '?.?.?'}
 			</RN.Text>
 		</>;
 	}
 
 	renderAuthors() {
-		const { addon } = this.props;
+		const { addon, styles } = this.props;
 
 		return <>
-			<RN.Text style={this.styles.by}>by</RN.Text>
+			<RN.Text style={styles.by}>by</RN.Text>
 			<RN.FlatList
 				data={addon.data.authors ?? [{ name: '???' }] as any}
 				horizontal
@@ -133,20 +140,20 @@ export default class extends React.Component<AddonCardProps> {
 				renderItem={({ item, index }) => {
 					const isLast = index === (addon.data.authors?.length || 1) - 1;
 
-					const divider = !isLast && <RN.Text style={this.styles.authors}>
+					const divider = !isLast && <RN.Text style={styles.authors}>
 						{', '}
 					</RN.Text>;
 
 					if (item.name && item.id) {
-						return <RN.TouchableOpacity style={this.styles.authorContainer} onPress={this.onTapAuthor.bind(this, item)}>
-							<RN.Text style={mergeStyles(this.styles.authors, this.styles.touchable)}>
+						return <RN.TouchableOpacity style={styles.authorContainer} onPress={this.onTapAuthor.bind(this, item)}>
+							<RN.Text style={mergeStyles(styles.authors, styles.touchable)}>
 								{item.name}
 							</RN.Text>
 							{divider}
 						</RN.TouchableOpacity>;
 					} else {
-						return <RN.View style={this.styles.authorContainer}>
-							<RN.Text style={this.styles.authors}>
+						return <RN.View style={styles.authorContainer}>
+							<RN.Text style={styles.authors}>
 								{(item.name ?? item) as String}
 							</RN.Text>
 							{divider}
@@ -178,15 +185,15 @@ export default class extends React.Component<AddonCardProps> {
 	}
 
 	renderBody() {
-		const { addon } = this.props;
+		const { addon, styles } = this.props;
 
 		const error = this.manager.errors.get(addon.id ?? addon.data.path);
 
 		return <>
-			<RN.Text style={this.styles.description}>
+			<RN.Text style={styles.description}>
 				{addon.data.description ?? i18n.Messages.UNBOUND_ADDON_NO_DESCRIPTION}
 			</RN.Text>
-			{addon.failed && <RN.Text style={mergeStyles(this.styles.description, this.styles.error)}>
+			{addon.failed && <RN.Text style={mergeStyles(styles.description, styles.error)}>
 				{i18n.Messages.UNBOUND_ADDON_FAILED.format({ error: error.message })}
 			</RN.Text>}
 		</>;
@@ -199,83 +206,89 @@ export default class extends React.Component<AddonCardProps> {
 
 		Profiles.showUserProfile({ userId: author.id });
 	}
+}
 
-	styles = StyleSheet.createThemedStyleSheet({
-		card: {
-			backgroundColor: Theme.colors.BACKGROUND_SECONDARY,
-			marginHorizontal: 10,
-			borderRadius: 12,
-			marginTop: 10
-		},
-		failed: {
-			opacity: 0.5
-		},
-		error: {
-			color: 'red',
-			marginTop: 10
-		},
-		header: {
-			backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
-			borderTopRightRadius: 12,
-			borderTopLeftRadius: 12,
-			paddingHorizontal: 15,
-			flexDirection: 'row',
-			alignItems: 'center',
-			padding: 10,
-			flex: 1
-		},
-		name: {
-			color: Theme.colors.TEXT_NORMAL,
-			fontFamily: Constants.Fonts.PRIMARY_BOLD,
-			marginRight: 2.5,
-			fontSize: 16,
-		},
-		version: {
-			fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-			color: Theme.colors.TEXT_MUTED,
-			marginRight: 2.5,
-			fontSize: 14
-		},
-		by: {
-			fontFamily: Constants.Fonts.PRIMARY_NORMAL,
-			color: Theme.colors.TEXT_MUTED,
-			marginRight: 2.5,
-			fontSize: 14
-		},
-		authors: {
-			fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-			color: Theme.colors.TEXT_MUTED,
-			fontSize: 14,
-			flex: 1
-		},
-		authorContainer: {
-			flexDirection: 'row'
-		},
-		touchable: {
-			color: Theme.colors.TEXT_NORMAL
-		},
-		info: {
-			padding: 15,
-		},
-		description: {
-			fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-			color: Theme.colors.TEXT_NORMAL,
-			fontSize: 14
-		},
-		recovery: {
-			opacity: 0.5,
-			pointerEvents: 'none'
-		},
-		controlButton: {
-			marginRight: ReactNative.Platform.select({
-				android: 2.5,
-				ios: 10
-			})
-		},
-		icon: {
-			width: 22,
-			height: 22,
-			tintColor: Theme.colors.INTERACTIVE_NORMAL
-		}
-	});
+const useStyles = StyleSheet.createStyles({
+	card: {
+		backgroundColor: Theme.colors.BACKGROUND_SECONDARY,
+		marginHorizontal: 10,
+		borderRadius: 12,
+		marginTop: 10
+	},
+	failed: {
+		opacity: 0.5
+	},
+	error: {
+		color: 'red',
+		marginTop: 10
+	},
+	header: {
+		backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
+		borderTopRightRadius: 12,
+		borderTopLeftRadius: 12,
+		paddingHorizontal: 15,
+		flexDirection: 'row',
+		alignItems: 'center',
+		padding: 10,
+		flex: 1
+	},
+	name: {
+		color: Theme.colors.TEXT_NORMAL,
+		fontFamily: Constants.Fonts.PRIMARY_BOLD,
+		marginRight: 2.5,
+		fontSize: 16,
+	},
+	version: {
+		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
+		color: Theme.colors.TEXT_MUTED,
+		marginRight: 2.5,
+		fontSize: 14
+	},
+	by: {
+		fontFamily: Constants.Fonts.PRIMARY_NORMAL,
+		color: Theme.colors.TEXT_MUTED,
+		marginRight: 2.5,
+		fontSize: 14
+	},
+	authors: {
+		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
+		color: Theme.colors.TEXT_MUTED,
+		fontSize: 14,
+		flex: 1
+	},
+	authorContainer: {
+		flexDirection: 'row'
+	},
+	touchable: {
+		color: Theme.colors.TEXT_NORMAL
+	},
+	info: {
+		padding: 15,
+	},
+	description: {
+		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
+		color: Theme.colors.TEXT_NORMAL,
+		fontSize: 14
+	},
+	recovery: {
+		opacity: 0.5,
+		pointerEvents: 'none'
+	},
+	controlButton: {
+		marginRight: ReactNative.Platform.select({
+			android: 2.5,
+			ios: 10
+		})
+	},
+	icon: {
+		width: 22,
+		height: 22,
+		tintColor: Theme.colors.INTERACTIVE_NORMAL
+	}
+});
+
+export default function(props: AddonCardProps) {
+	const styles = useStyles();
+
+	return <InternalAddonCard styles={styles} {...props} />
 }

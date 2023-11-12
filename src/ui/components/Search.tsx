@@ -4,7 +4,7 @@ import { Search as DiscordSearch } from '@metro/components';
 import { StyleSheet } from '@metro/common';
 import { mergeStyles } from '@utilities';
 
-const styles = StyleSheet.createThemedStyleSheet({
+const useStyles = StyleSheet.createStyles({
 	search: {
 		margin: 0,
 		marginTop: 5,
@@ -20,6 +20,8 @@ interface SearchProps extends TextInputProps {
 }
 
 function Search(props: SearchProps) {
+	const styles = useStyles();
+
 	return <DiscordSearch
 		{...props}
 		style={mergeStyles(styles.search, props.style)}

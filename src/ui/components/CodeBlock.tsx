@@ -6,7 +6,7 @@ interface CodeblockProps {
 	style?: any;
 }
 
-const styles = StyleSheet.createThemedStyleSheet({
+const useStyles = StyleSheet.createStyles({
 	block: {
 		fontFamily: Constants.Fonts.CODE_SEMIBOLD,
 		fontSize: 12,
@@ -19,6 +19,8 @@ const styles = StyleSheet.createThemedStyleSheet({
 });
 
 const IosBlock = ({ children, style, ...rest }: CodeblockProps) => {
+	const styles = useStyles();
+
 	return <RN.TextInput
 		value={children}
 		style={[styles.block, style]}
@@ -29,6 +31,8 @@ const IosBlock = ({ children, style, ...rest }: CodeblockProps) => {
 };
 
 const AndroidBlock = ({ selectable, children, style, ...rest }: CodeblockProps) => {
+	const styles = useStyles();
+
 	return <RN.Text
 		children={children}
 		style={[styles.block, style]}

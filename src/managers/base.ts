@@ -111,6 +111,13 @@ class Manager extends EventEmitter {
 	getBaseContextItems(addon: Addon) {
 		return [
 			{
+				label: 'UNBOUND_REFETCH',
+				icon: 'ic_message_retry',
+				action: async () => {
+					this.installWithToast(addon.data.url, addon);
+				}
+			},
+			{
 				label: 'UNBOUND_UNINSTALL',
 				icon: 'trash',
 				action: async () => {

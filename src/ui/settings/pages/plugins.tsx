@@ -31,7 +31,7 @@ export default () => {
 };
 
 function HeaderRight() {
-	const ref = React.useRef<InstanceType<typeof InstallModal.InstallInput>>();
+	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
 	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
 
 	return <RN.TouchableOpacity

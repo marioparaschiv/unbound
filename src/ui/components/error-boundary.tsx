@@ -5,7 +5,7 @@ import { getIDByName } from '@api/assets';
 import { ClientName } from '@constants';
 import { reload } from '@api/native';
 
-import styles from './error-boundary.style';
+import useStyles from './error-boundary.style';
 import CodeBlock from './codeblock';
 
 interface ErrorBoundaryProps {
@@ -19,14 +19,18 @@ interface CardProps {
 	children: any;
 };
 
-const Card = ({ style, ...props }: CardProps) => (
-	<RN.View
+const Card = ({ style, ...props }: CardProps) => {
+	const styles = useStyles();
+
+	return <RN.View
 		style={[styles.card, style]}
 		{...props}
 	/>
-);
+};
 
 const Header = ({ res }: Pick<ErrorBoundaryProps, 'res'>) => {
+	const styles = useStyles();
+
 	return <Card>
 		<RN.View style={{ flexDirection: 'column' }}>
 			<RN.Text style={styles.headerTitle}>
@@ -57,6 +61,8 @@ const Header = ({ res }: Pick<ErrorBoundaryProps, 'res'>) => {
 };
 
 const Outline = ({ state, error }) => {
+	const styles = useStyles();
+
 	let loadingTimeout: NodeJS.Timeout;
 	const [loading, setLoading] = React.useState(false);
 
@@ -140,6 +146,7 @@ export default ({ error, retryRender, res }: ErrorBoundaryProps) => {
 	];
 
 	const [index, setIndex] = React.useState(0);
+	const styles = useStyles();
 	const state = Redesign.useSegmentedControlState({
 		defaultIndex: 0,
 		items: possibleErrors.map(({ label, id, error }) => {

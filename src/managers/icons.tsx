@@ -64,16 +64,7 @@ class Icons extends Manager {
 		if (addon.data.id === 'default')
 			return [];
 
-		return [
-			{
-				label: 'UNBOUND_REFETCH',
-				icon: 'ic_message_retry',
-				action: async () => {
-					this.installWithToast(addon.data.url, addon);
-				}
-			},
-			...this.getBaseContextItems(addon)
-		]
+		return this.getBaseContextItems(addon)
 	}
 
 	override async install(url: string, setState: Fn, signal: AbortSignal): Promise<Error | Addon> {
@@ -236,7 +227,10 @@ class Icons extends Manager {
 		}
 
 		const installed = await DCDFileManager.fileExists(DCDFileManager.DocumentsDirPath + `/${this.path}/${manifest.id}`);
-		installed && this.settings.set('packs', [...this.settings.get('packs', [defaultPack]), { bundle: manifest.name, manifest }]);
+		installed && this.settings.set('packs', [
+			...this.settings.get('packs', [defaultPack]).filter(x => x.manifest.id !== manifest.id),
+			{ bundle: manifest.name, manifest }
+		]);
 
 		return manifest.name;
 	}

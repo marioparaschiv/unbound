@@ -13,7 +13,7 @@ import Assets from '@api/assets';
 import Developer from './developer';
 import Toasts from './toasts';
 
-const styles = StyleSheet.createThemedStyleSheet({
+const useStyles = StyleSheet.createStyles({
 	trailingText: {
 		color: Theme.colors.TEXT_MUTED
 	},
@@ -25,13 +25,14 @@ const styles = StyleSheet.createThemedStyleSheet({
 function General() {
 	const navigation = Navigation.useNavigation();
 	const settings = useSettingsStore('unbound');
+	const styles = useStyles();
 
 	const Icons = {
 		Twitter: Assets.getIDByName('img_account_sync_twitter_white'),
 		GitHub: Assets.getIDByName('img_account_sync_github_white'),
 		Development: Assets.getIDByName('ic_progress_wrench_24px'),
 		Plugins: Assets.getIDByName('ic_activity_24px'),
-		Themes: Assets.getIDByName('CreativeIcon'),
+		Themes: Assets.getIDByName('ic_paint_brush'),
 		Toasts: Assets.getIDByName('ic_notification_settings'),
 		Grid: Assets.getIDByName('GridSquareIcon'),
 		Retry: Assets.getIDByName('ic_message_retry'),

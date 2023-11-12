@@ -3,12 +3,8 @@ import type Clipboard from '@react-native-clipboard/clipboard';
 import type moment from './moment';
 
 export namespace Common {
-	export interface StyleSheets {
-		createThemedStyleSheet: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => T;
-		getThemedStylesheet: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => {
-			mergedDarkStyles: StyleSheet,
-			mergedLightStyles: StyleSheet;
-		};
+	export interface StyleSheet {
+		createStyles: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => Fn<T>;
 	}
 
 	export type React = typeof import('react');

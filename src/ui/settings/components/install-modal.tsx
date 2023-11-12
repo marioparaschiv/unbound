@@ -10,13 +10,14 @@ import { capitalize } from '@utilities';
 
 interface InstallModalProps {
 	type: Manager;
+	ref: ReturnType<typeof React.useRef<InstanceType<typeof InternalInstallInput>>>
 }
 
-type ShowInstallModalProps = InstallModalProps & {
-	ref: ReturnType<typeof React.useRef<InstanceType<typeof InstallInput>>>
+type InternalInstallModalProps = InstallModalProps & {
+	styles: AnyProps;
 }
 
-class InstallInput extends React.PureComponent<InstallModalProps> {
+export class InternalInstallInput extends React.PureComponent<InternalInstallModalProps> {
 	controller = new AbortController();
 	state = { url: '', loadingPaste: false, loadingInstall: false, message: null };
 
@@ -106,20 +107,26 @@ class InstallInput extends React.PureComponent<InstallModalProps> {
 	getInput() {
 		return this.state.url;
 	}
-
-	styles = StyleSheet.createThemedStyleSheet({
-		input: {
-			height: 40,
-			borderBottomWidth: 2,
-			marginTop: 10,
-			borderBottomColor: Theme.colors.CONTROL_BRAND_FOREGROUND_NEW ?? Theme.colors.CONTROL_BRAND_FOREGROUND,
-			color: Theme.colors.TEXT_NORMAL,
-			fontFamily: Constants.Fonts.DISPLAY_NORMAL
-		}
-	});
 }
 
-export function showInstallAlert({ type, ref }: ShowInstallModalProps) {
+const useStyles = StyleSheet.createStyles({
+	input: {
+		height: 40,
+		borderBottomWidth: 2,
+		marginTop: 10,
+		borderBottomColor: Theme.colors.CONTROL_BRAND_FOREGROUND_NEW ?? Theme.colors.CONTROL_BRAND_FOREGROUND,
+		color: Theme.colors.TEXT_NORMAL,
+		fontFamily: Constants.Fonts.DISPLAY_NORMAL
+	}
+});
+
+function InstallInput(props: InstallModalProps) {
+	const styles = useStyles();
+
+	return <InternalInstallInput styles={styles} {...props} />
+}
+
+export function showInstallAlert({ type, ref }: InstallModalProps) {
 	const manager = managers[type];
 
 	// This uses a custom button to prevent closing the dialog after failure
@@ -138,4 +145,4 @@ export function showInstallAlert({ type, ref }: ShowInstallModalProps) {
 	});
 }
 
-export default { InstallInput };
+export default { InstallInput, InternalInstallInput };

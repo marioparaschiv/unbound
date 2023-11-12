@@ -1,6 +1,6 @@
 import { Constants, StyleSheet, Theme } from '@metro/common';
 
-export default StyleSheet.createThemedStyleSheet({
+export default StyleSheet.createStyles({
 	container: {
 		backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
 
