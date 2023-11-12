@@ -88,10 +88,12 @@ class Themes extends Manager {
 		const { MessagesWrapper } = findByProps('MessagesWrapper');
 
 		this.patcher.after(Chat, 'default', (_, __, res) => {
+			const index = { dark: 0, light: 1, amoled: 2 }[Theme.theme.toLowerCase()] || 0;
+
 			return <ReactNative.ImageBackground
 				blurRadius={typeof background.blur === 'number' ? background.blur : 0}
 				style={{ flex: 1, height: '100%' }}
-				source={{ uri: typeof background.url === 'string' ? background.url : background.url[Theme.theme] ?? background.url[0] }}
+				source={{ uri: typeof background.url === 'string' ? background.url : background.url[index] ?? background.url[0] }}
 				children={res}
 			/>;
 		});
