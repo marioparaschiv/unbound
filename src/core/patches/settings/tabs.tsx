@@ -92,21 +92,21 @@ export class TabsSettings extends Settings {
 			res = res.filter(item => !Object.values(Keys).includes(item.setting));
 
 			Object.keys(Keys).reverse().forEach(key => {
-				if (settings.includes(Keys[key])) (
+				if (settings.includes(Keys[key])) {
 					res.unshift({
 						type: 'setting_search_result',
-						ancestorSettingData: this.Constants.SETTING_RENDERER_CONFIG[Keys[key]],
+						searchResultData: this.Constants.SETTING_RENDERER_CONFIG[Keys[key]],
 						setting: Keys[key],
 						title: this.Titles[key],
 						breadcrumbs: this.Breadcrumbs[key],
 						icon: this.Icons[key]
-					}),
+					});
 
 					res.forEach((value, index: number, parent) => {
 						value.index = index;
 						value.total = parent.length;
 					})
-				);
+				};
 			});
 
 			return res;
