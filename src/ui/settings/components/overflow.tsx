@@ -1,12 +1,11 @@
 import { Icons } from '@api/assets';
 import { ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { Redesign } from '@metro/components';
-import type { ReactElement } from 'react';
 
 interface OverflowItem {
 	label: string;
-	IconComponent?: ReactElement;
-	iconSource: number;
+	IconComponent?: React.ComponentType;
+	iconSource?: number;
 	action: () => any;
 }
 
@@ -20,7 +19,7 @@ const useStyles = StyleSheet.createStyles({
 	}
 })
 
-export default ({ items }: { items: OverflowItem[] }) => {
+export default ({ items, iconSource = Icons['MoreHorizontalIcon'] }: { items: OverflowItem[], iconSource?: number }) => {
 	const styles = useStyles();
 
 	return <Redesign.ContextMenu
@@ -33,7 +32,7 @@ export default ({ items }: { items: OverflowItem[] }) => {
 				accessibilityActions={accessibilityActions}
 				onAccessibilityAction={onAccessibilityAction}
 			>
-				<RN.Image source={Icons['MoreHorizontalIcon']} style={styles.icon} />
+				<RN.Image source={iconSource} style={styles.icon} />
 			</RN.TouchableOpacity>
 		)}
 	/>

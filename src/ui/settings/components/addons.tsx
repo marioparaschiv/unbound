@@ -5,9 +5,11 @@ import { Icons } from '@api/assets';
 import { showInstallAlert } from '@ui/settings/components/install-modal';
 
 import { HelpMessage, Navigation } from '@metro/components';
+import getItems, { resolveType } from '@ui/settings/models/ordering';
 import AdvancedSearch, { useAdvancedSearch } from '@ui/components/advanced-search';
 import AddonCard from './addon-card';
 import InstallModal from './install-modal';
+import HeaderRight from '@ui/settings/components/addon-header';
 
 import type { Addon, Manager } from '@typings/managers';
 
@@ -15,6 +17,8 @@ interface AddonListProps {
 	type: Manager;
 	shouldRestart?: boolean;
 	addons: Addon[];
+	showHeaderRight?: boolean
+	onPressInstall?: ({ ref, settings, type }) => any
 }
 
 const searchContext = { type: 'ADDONS' };
@@ -39,18 +43,42 @@ const useStyles = StyleSheet.createStyles({
 	}
 });
 
-export default function ({ addons, type, shouldRestart }: AddonListProps) {
+export default function ({ addons, type, shouldRestart, showHeaderRight = true, onPressInstall }: AddonListProps) {
 	const [search, controls] = useAdvancedSearch(searchContext);
 	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
 	const navigation = Navigation.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const styles = useStyles();
 
-	const isRecovery = settings.get('recovery', false);
-	const data = React.useMemo(() => {
-		if (!search) return addons;
+	React.useLayoutEffect(() => {
+		if (showHeaderRight) {
+			const unsubscribe = navigation.addListener('focus', () => {
+				unsubscribe();
 
-		return addons.filter((addon) => {
+				navigation.setOptions({
+					headerRight: () => <HeaderRight
+						type={type}
+						settings={settings}
+						onPress={() => onPressInstall({ ref, settings, type })}
+					/>
+				});
+			});
+		}
+	}, [])
+
+	const isRecovery = settings.get('recovery', false);
+	const order = settings.get(`${resolveType(type)}.order`, 'default');
+	const reversed = settings.get(`${resolveType(type)}.reversed`, false);
+
+	const data = React.useMemo(() => {
+		const items = getItems(type, settings);
+		const sorted = items.find(x => x.id === order).ordering(addons.slice());
+
+		reversed && sorted.reverse();
+
+		if (!search) return sorted;
+
+		return sorted.filter((addon) => {
 			const fields = [addon.data.name, addon.data.description];
 
 			const info = fields.some(x => x.toLowerCase().includes(search.toLowerCase()));
@@ -61,7 +89,7 @@ export default function ({ addons, type, shouldRestart }: AddonListProps) {
 
 			return false;
 		});
-	}, [search, addons]);
+	}, [search, addons, order, reversed]);
 
 	return <RN.View>
 		<RN.View style={{ marginHorizontal: 10 }}>

@@ -13,6 +13,7 @@ export const useStyles = StyleSheet.createStyles({
 });
 
 export const Switch = findByProps('FormSwitch', { lazy: true, all: true }).find(x => !('FormTitle' in x));
+export const Checkbox = findByProps('FormCheckbox', { lazy: true, all: true }).find(x => !('FormTitle' in x));
 export const TabsUIState = findByProps(
 	'useInMainTabsExperiment',
 	'isInMainTabsExperiment',
@@ -128,5 +129,7 @@ export default {
 	RowIcon,
 	SwitchRow,
 	TabsUIState,
-	useEndStyle
+	useEndStyle,
+	Switch,
+	Checkbox
 };

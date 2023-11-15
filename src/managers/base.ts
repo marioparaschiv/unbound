@@ -17,7 +17,7 @@ export enum ManagerType {
 class Manager extends EventEmitter {
 	public logger: ReturnType<typeof createLogger>;
 	public settings: ReturnType<typeof getStore>;
-	public id: 'plugin' | 'theme';
+	public id: Manager;
 	public entities = new Map();
 	public started = new Set();
 	public errors = new Map();

@@ -79,7 +79,8 @@ export class TabsSettings extends Settings {
 			res = res.filter(result => !Object.values(Keys).includes(result));
 
 			Object.keys(Keys).filter(key => this.Mappables[key]).forEach(key => {
-				const queryContainsKeyword = [ClientName, this.Titles[key]].some(keyword =>
+				// By default, the client name and the title of the entry are already keywords
+				const queryContainsKeyword = [...this.Keywords[key], ClientName, this.Titles[key]].some(keyword =>
 					keyword.toLowerCase().includes(SearchQuery.getSettingSearchQuery().toLowerCase()));
 
 				if (queryContainsKeyword && !res.find(result => result === Keys[key])) res.unshift(Keys[key]);

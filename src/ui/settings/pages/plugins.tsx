@@ -1,13 +1,8 @@
-import { i18n, React, ReactNative as RN, Theme } from '@metro/common';
-import { Addons, InstallModal } from '@ui/settings/components';
-import { TabsUIState } from '@ui/components/form';
-import { Theme as ThemeStore } from '@metro/stores';
+import { i18n, React, ReactNative as RN } from '@metro/common';
+import { Addons } from '@ui/settings/components';
 import { Navigation } from '@metro/components';
-import { getIDByName } from '@api/assets';
-import Plugins from '@managers/plugins';
 import { showInstallAlert } from '@ui/settings/components/install-modal';
-
-const { colors, meta: { resolveSemanticColor } } = Theme;
+import Plugins from '@managers/plugins';
 
 export default () => {
 	const navigation = Navigation.useNavigation();
@@ -18,7 +13,6 @@ export default () => {
 
 		navigation.setOptions({
 			title: addons.length ? `${i18n.Messages.UNBOUND_PLUGINS} - ${addons.length}` : i18n.Messages.UNBOUND_PLUGINS,
-			headerRight: HeaderRight
 		});
 	});
 
@@ -26,23 +20,8 @@ export default () => {
 		<Addons
 			type='plugins'
 			addons={addons}
+			onPressInstall={({ type, ref }) => showInstallAlert({ type, ref })}
 		/>
 	</RN.View>;
 };
 
-function HeaderRight() {
-	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
-
-	return <RN.TouchableOpacity
-		style={tabsEnabled ? {} : { marginRight: 16 }}
-		onPress={() => {
-			showInstallAlert({ type: 'plugins', ref });
-		}}
-	>
-		<RN.Image
-			source={getIDByName('ic_add_circle')}
-			style={{ tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL) } as any}
-		/>
-	</RN.TouchableOpacity>;
-}

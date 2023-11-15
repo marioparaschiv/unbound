@@ -7,6 +7,13 @@ import General from '@ui/settings/pages/general';
 import Plugins from '@ui/settings/pages/plugins';
 import Design from '@ui/settings/pages/design';
 
+type CustomScreenProps = {
+	title: string;
+	render: React.ComponentType;
+}
+
+const { Messages: M } = i18n;
+
 export class Settings {
 	public patcher: ReturnType<typeof createPatcher>;
 
@@ -16,19 +23,19 @@ export class Settings {
 
 	public Titles = {
 		get General() {
-			return i18n.Messages.SETTINGS;
+			return M.SETTINGS;
 		},
 
 		get Plugins() {
-			return i18n.Messages.UNBOUND_PLUGINS;
+			return M.UNBOUND_PLUGINS;
 		},
 
 		get Design() {
-			return i18n.Messages.UNBOUND_DESIGN;
+			return M.UNBOUND_DESIGN;
 		},
 
 		get Updater() {
-			return i18n.Messages.UNBOUND_UPDATER;
+			return M.UNBOUND_UPDATER;
 		},
 
 		get Custom() {
@@ -52,6 +59,28 @@ export class Settings {
 		Custom: []
 	};
 
+	public Keywords = {
+		get General() {
+			return [M.UNBOUND_GENERAL]
+		},
+
+		get Plugins() {
+			return []
+		},
+
+		get Design() {
+			return [M.UNBOUND_THEMES, M.UNBOUND_ICONS, M.UNBOUND_FONTS]
+		},
+
+		get Updater() {
+			return []
+		},
+
+		get Custom() {
+			return []
+		},
+	}
+
 	public Mappables = {
 		General: true,
 		Plugins: true,
@@ -65,7 +94,7 @@ export class Settings {
 		Plugins,
 		Design,
 		Updater: () => null,
-		Custom: ({ title, render: Component, ...props }: { title: string; render: React.ComponentType; }) => {
+		Custom: ({ title, render: Component, ...props }: CustomScreenProps) => {
 			const navigation = Navigation.useNavigation();
 
 			const unsubscribe = navigation.addListener('focus', () => {

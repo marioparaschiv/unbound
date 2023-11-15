@@ -1,16 +1,12 @@
 import { Navigation, Redesign } from '@metro/components';
-import { Theme, i18n, ReactNative as RN } from '@metro/common';
-import { Theme as ThemeStore } from '@metro/stores';
+import { i18n } from '@metro/common';
 import { InstallModal } from '@ui/settings/components';
-import { TabsUIState } from '@ui/components/form';
-import { getIDByName } from '@api/assets';
 import { useSettingsStore } from '@api/storage';
 
 import Themes from './themes';
 import Icons from './icons';
 import Fonts from './fonts';
-
-const { colors, meta: { resolveSemanticColor } } = Theme;
+import HeaderRight from '@ui/settings/components/addon-header';
 
 const items = [
 	{
@@ -37,37 +33,18 @@ const items = [
 		id: 'fonts',
 		...Fonts
 	}
-];
-
-function HeaderRight({ settings }: { settings: ReturnType<typeof useSettingsStore> }) {
-	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
-
-	return <RN.TouchableOpacity
-		style={tabsEnabled ? {} : { marginRight: 16 }}
-		onPress={() => {
-			const index = settings.get('pageIndex', 0);
-			const item = items[index];
-
-			item.callback({ ref })
-		}}
-	>
-		<RN.Image
-			source={getIDByName('ic_add_circle')}
-			style={{ tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL) }}
-		/>
-	</RN.TouchableOpacity>;
-}
+] as const;
 
 export default () => {
+	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
 	const navigation = Navigation.useNavigation();
-	const settings = useSettingsStore('design');
+	const settings = useSettingsStore('unbound');
 	const state = Redesign.useSegmentedControlState({
-		defaultIndex: 0,
+		defaultIndex: settings.get('designPageIndex', 0),
 		items,
 		pageWidth: ReactNative.Dimensions.get('window').width,
 		onPageChange(index: number) {
-			settings.set('pageIndex', index);
+			settings.set('designPageIndex', index);
 		}
 	});
 
@@ -76,12 +53,20 @@ export default () => {
 			unsubscribe();
 
 			navigation.setOptions({
-				headerRight: () => (
-					<HeaderRight settings={settings} />
-				)
-			})
-		})
+				headerRight: () => <HeaderRight
+					type={() => items[settings.get('designPageIndex', 0)].id}
+					settings={settings}
+					onPress={() => {
+						const index = settings.get('designPageIndex', 0);
+						const item = items[index];
+
+						item.callback({ ref, type: item.id })
+					}}
+				/>
+			});
+		});
 	}, [])
+
 
 	return <ReactNative.View
 		style={{
