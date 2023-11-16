@@ -76,10 +76,12 @@ const radioItems = [
 
 export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSettingsStore>) => [
 	...radioItems.map(item => {
-		return Object.assign(item, {
+		const { icon, label, ...rest } = item;
+
+		const extra = {
 			IconComponent: () => <TrailingIcon
 				selected={settings.get(`${resolveType(entity)}.order`, 'default') === item.id}
-				source={item.icon}
+				source={icon}
 			/>,
 
 			action() {
@@ -87,9 +89,14 @@ export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSe
 			},
 
 			get label() {
-				return i18n.Messages[item.label]
+				return i18n.Messages[label]
 			}
-		})
+		}
+
+		return {
+			...rest,
+			...extra
+		}
 	}),
 	{
 		id: 'reversed',
@@ -100,7 +107,7 @@ export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSe
 
 			return <RN.TouchableOpacity
 				onPress={() => settings.toggle(`${resolveType(entity)}.reversed`, false)}
-				style={{ transform: [{ scale: 0.8 }] }}
+				style={{ transform: [{ scale: 0.8 }, { translateX: 2 }] }}
 			>
 				<Checkbox.FormCheckbox
 					checked={settings.get(`${resolveType(entity)}.reversed`, false)}

@@ -27,8 +27,8 @@ function useToastState(options: InternalToastOptions) {
 				RN.LayoutAnimation.configureNext({
 					duration: 1000,
 					update: {
-						type: 'spring',
-						springDamping: 0.6
+						type: 'easeInEaseOut',
+						duration: 400
 					},
 					delete: {
 						type: 'easeInEaseOut',

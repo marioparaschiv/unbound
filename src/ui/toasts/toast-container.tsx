@@ -7,13 +7,14 @@ import Toast from './Toast';
 function ToastContainer() {
 	const { toasts } = useToasts();
 
-	return <ReactNative.SafeAreaView>
-		<RN.View style={{ gap: 5 }}>
+	return <>
+		<RN.SafeAreaView />
+		<RN.View style={{ gap: 5, height: '100%', pointerEvents: 'box-none' }}>
 			{Object.entries(toasts).map(([id, options]: [string, ToastOptions]) => (
 				<Toast {...options} key={id} />
 			))}
 		</RN.View>
-	</ReactNative.SafeAreaView>;
+	</>;
 }
 
 export default ToastContainer;
