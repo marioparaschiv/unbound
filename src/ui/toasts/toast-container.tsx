@@ -9,7 +9,10 @@ function ToastContainer() {
 
 	return <>
 		<RN.SafeAreaView />
-		<RN.View style={{ gap: 5, height: '100%', pointerEvents: 'box-none' }}>
+		<RN.View
+			style={{ gap: 5, height: '100%' }}
+			pointerEvents='box-none'
+		>
 			{Object.entries(toasts).map(([id, options]: [string, ToastOptions]) => (
 				<Toast {...options} key={id} />
 			))}

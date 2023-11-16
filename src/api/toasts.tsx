@@ -6,6 +6,7 @@ import { createLogger } from '@logger';
 import { find, findByProps } from '@metro';
 
 import { ToastContainer } from '@ui/toasts';
+import { findInReactTree } from '@utilities';
 
 const Patcher = createPatcher('toasts');
 const Logger = createLogger('Toasts');
@@ -30,13 +31,17 @@ try {
 	});
 
 	// Convert Discord's toasts into our toasts
-	Patcher.instead(Toasts, 'open', (_, [options]) => {
+	Patcher.instead(Toasts, 'open', (self, args, orig) => {
 		if (get('unbound', 'toasts.enabled', true)) {
+			const [options] = args;
+
 			options.title = options.content;
 			delete options.content;
 
-			showToast(options);
+			return showToast(options);
 		}
+
+		return orig.apply(self, args);
 	});
 } catch (e) {
 	Logger.error('Failed to patch ToastContainer:', e.message);

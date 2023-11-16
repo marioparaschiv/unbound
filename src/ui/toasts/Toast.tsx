@@ -3,6 +3,7 @@ import { RowIcon, TabsUIState } from '@ui/components/form';
 import { ToastOptions } from '@typings/api/toasts';
 import { Redesign } from '@metro/components';
 import useToastState from './useToastState';
+import Toasts from '@stores/toasts';
 import { Icons } from '@api/assets';
 
 const { withSpring, default: { View } } = Reanimated;
@@ -31,6 +32,18 @@ function Toast(options: ToastOptions) {
 					hitSlop={10}
 					// activeOpacity={0.5}
 					onPress={leave}
+					onLongPress={() => {
+						RN.LayoutAnimation.configureNext({
+							duration: 1000,
+							delete: {
+								type: 'easeInEaseOut',
+								property: 'opacity',
+								duration: 300
+							}
+						});
+
+						Toasts.store.setState(() => ({ toasts: [] }));
+					}}
 				>
 					<RowIcon source={Icons['ic_close']} size='small' />
 				</RN.Pressable>
@@ -59,7 +72,6 @@ const useStyles = StyleSheet.createStyles({
 		borderRadius: 18,
 		width: 250,
 		position: 'absolute',
-		zIndex: 200,
 		padding: 2,
 		marginHorizontal: 60,
 		marginTop: 12,
