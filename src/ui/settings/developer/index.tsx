@@ -1,20 +1,16 @@
-import { useSettingsStore } from '@api/storage';
-import { React, i18n } from '@metro/common';
-import { Keys, Links } from '@constants';
-import Assets from '@api/assets';
-
+import { Form, Section, Row, SwitchRow, RowIcon, useEndStyle } from '@ui/components/form';
+import { React, ReactNative as RN } from '@metro/common';
 import { Forms, Navigation } from '@metro/components';
-import {
-	Section,
-	Row,
-	SwitchRow,
-	RowIcon,
-	useEndStyle
-} from '@ui/components/form';
+import { useSettingsStore } from '@api/storage';
+import { Keys, Links } from '@constants';
+import { Strings } from '@api/i18n';
+import Assets from '@api/assets';
+import Toasts from '@api/toasts';
+
 import AssetBrowser from './assets';
 import Logs from './logger';
 
-export default function () {
+export default function Developer() {
 	const navigation = Navigation.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const endStyle = useEndStyle();
@@ -25,86 +21,92 @@ export default function () {
 		Trash: Assets.getIDByName('trash')
 	};
 
-	return <ReactNative.ScrollView>
-		<Section title={i18n.Messages.UNBOUND_MISC}>
+	return <Form>
+		<Section title={Strings.UNBOUND_MISC}>
 			<Row
-				label={i18n.Messages.UNBOUND_FORCE_GARBAGE_COLLECTION_TITLE}
-				subLabel={i18n.Messages.UNBOUND_FORCE_GARBAGE_COLLECTION_DESC}
+				label={Strings.UNBOUND_FORCE_GARBAGE_COLLECTION}
 				icon={<RowIcon source={Icons.Trash} />}
-				onPress={window.gc}
 				arrow
+				onPress={async () => {
+					await window.gc();
+					Toasts.showToast({
+						title: Strings.UNBOUND_GARBAGE_COLLECTION,
+						content: Strings.UNBOUND_GARBAGE_COLLECTION_TOAST,
+						icon: Icons.Trash
+					});
+				}}
 			/>
 			<Row
-				label={i18n.Messages.UNBOUND_ASSET_BROWSER}
+				label={Strings.UNBOUND_ASSET_BROWSER}
 				icon={<RowIcon source={Icons.Browser} />}
 				onPress={() => navigation.push(Keys.Custom, {
-					title: i18n.Messages.UNBOUND_ASSET_BROWSER,
+					title: Strings.UNBOUND_ASSET_BROWSER,
 					render: AssetBrowser
 				})}
 				arrow
 			/>
 			<Row
-				label={i18n.Messages.UNBOUND_DEBUG_LOGS}
+				label={Strings.UNBOUND_DEBUG_LOGS}
 				icon={<RowIcon source={Icons.Debug} />}
 				onPress={() => navigation.push(Keys.Custom, {
-					title: i18n.Messages.UNBOUND_DEBUG_LOGS,
+					title: Strings.UNBOUND_DEBUG_LOGS,
 					render: Logs
 				})}
 				arrow
 			/>
 		</Section>
-		<Section title={i18n.Messages.UNBOUND_DEBUG_BRIDGE}>
+		<Section title={Strings.UNBOUND_DEBUG_BRIDGE}>
 			<SwitchRow
-				label={i18n.Messages.UNBOUND_ENABLED}
-				subLabel={i18n.Messages.UNBOUND_DEBUG_BRIDGE_DESC}
+				label={Strings.UNBOUND_ENABLED}
+				subLabel={Strings.UNBOUND_DEBUG_BRIDGE_DESC}
 				value={settings.get('dev.debugBridge.enabled', false)}
 				onValueChange={() => settings.toggle('dev.debugBridge.enabled', false)}
 			/>
 			<Forms.FormInput
 				value={settings.get('dev.debugBridge.host', '192.168.0.35:9090')}
 				onChange={v => settings.set('dev.debugBridge.host', v)}
-				title={i18n.Messages.UNBOUND_DEBUG_BRIDGE_IP}
+				title={Strings.UNBOUND_DEBUG_BRIDGE_IP}
 				disabled={!settings.get('dev.debugBridge.enabled', false)}
 				style={endStyle}
 			/>
 		</Section>
-		<Section title={i18n.Messages.UNBOUND_LOADER}>
+		<Section title={Strings.UNBOUND_LOADER}>
 			<SwitchRow
-				label={i18n.Messages.UNBOUND_ENABLED}
-				subLabel={i18n.Messages.UNBOUND_LOADER_ENABLED_DESC}
+				label={Strings.UNBOUND_ENABLED}
+				subLabel={Strings.UNBOUND_LOADER_ENABLED_DESC}
 				value={settings.get('loader.enabled', true)}
 				onValueChange={() => settings.toggle('loader.enabled', true)}
 			/>
 			<SwitchRow
-				label={i18n.Messages.UNBOUND_LOADER_DEVTOOLS}
-				subLabel={i18n.Messages.UNBOUND_LOADER_DEVTOOLS_DESC}
+				label={Strings.UNBOUND_LOADER_DEVTOOLS}
+				subLabel={Strings.UNBOUND_LOADER_DEVTOOLS_DESC}
 				value={settings.get('loader.devtools', false)}
 				onValueChange={() => settings.toggle('loader.devtools', false)}
 			/>
 			<SwitchRow
-				label={i18n.Messages.UNBOUND_LOADER_UPDATER_FORCE}
-				subLabel={i18n.Messages.UNBOUND_LOADER_UPDATER_FORCE_DESC}
+				label={Strings.UNBOUND_LOADER_UPDATER_FORCE}
+				subLabel={Strings.UNBOUND_LOADER_UPDATER_FORCE_DESC}
 				value={settings.get('loader.update.force', false)}
 				onValueChange={() => settings.toggle('loader.update.force', false)}
 			/>
 			<Forms.FormInput
 				value={settings.get('loader.update.url', Links.Bundle)}
 				onChange={v => settings.set('loader.update.url', v)}
-				title={i18n.Messages.UNBOUND_LOADER_CUSTOM_BUNDLE}
+				title={Strings.UNBOUND_LOADER_CUSTOM_BUNDLE}
 				disabled={!settings.get('loader.update.force', false)}
 				style={endStyle}
 			/>
 		</Section>
-		<Section title={i18n.Messages.UNBOUND_ERROR_BOUNDARY}>
+		<Section title={Strings.UNBOUND_ERROR_BOUNDARY}>
 			<SwitchRow
-				label={i18n.Messages.UNBOUND_ERROR_BOUNDARY}
-				subLabel={i18n.Messages.UNBOUND_ERROR_BOUNDARY_DESC}
+				label={Strings.UNBOUND_ERROR_BOUNDARY}
+				subLabel={Strings.UNBOUND_ERROR_BOUNDARY_DESC}
 				value={settings.get('dev.errorBoundary', true)}
 				onValueChange={() => settings.toggle('dev.errorBoundary', true)}
 			/>
 			<Row
-				label={i18n.Messages.UNBOUND_ERROR_BOUNDARY_TRIGGER_TITLE}
-				subLabel={i18n.Messages.UNBOUND_ERROR_BOUNDARY_TRIGGER_DESC}
+				label={Strings.UNBOUND_ERROR_BOUNDARY_TRIGGER_TITLE}
+				subLabel={Strings.UNBOUND_ERROR_BOUNDARY_TRIGGER_DESC}
 				onPress={() => navigation.push(Keys.Custom, {
 					title: null,
 
@@ -114,6 +116,6 @@ export default function () {
 				arrow
 			/>
 		</Section>
-		<ReactNative.View style={{ marginBottom: 50 }} />
-	</ReactNative.ScrollView>;
+		<RN.View style={{ marginBottom: 50 }} />
+	</Form>;
 }

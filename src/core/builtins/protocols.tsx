@@ -1,13 +1,13 @@
+import type { BuiltIn } from '@typings/core/builtins';
 import { ReactNative as RN } from '@metro/common';
-import { BuiltIn } from '@typings/core/builtins';
 import { ManagerType } from '@managers/base';
 import { createPatcher } from '@patcher';
 import plugins from '@managers/plugins';
 import { createLogger } from '@logger';
 import themes from '@managers/themes';
+import icons from '@managers/icons';
 import { findByName } from '@metro';
 import Toasts from '@api/toasts';
-import icons from '@managers/icons';
 import { managers } from '@api';
 
 const Patcher = createPatcher('protocols');
@@ -27,8 +27,8 @@ const actions = {
 		const manager = getManager(type);
 
 		try {
-			await manager.installWithToast(url)
-				.then(() => Logger.success(`Successfully installed ${type}!`));
+			await manager.installWithToast(url);
+			Logger.success(`Successfully installed ${type}!`);
 		} catch (e) {
 			Logger.error(`Failed to install ${type}: ${e.message || e}`);
 		}
@@ -50,8 +50,8 @@ const actions = {
 		}
 
 		try {
-			await manager.delete(id)
-				.then(() => Logger.success(`Successfully uninstalled ${type}!`));
+			await manager.delete(id);
+			Logger.success(`Successfully uninstalled ${type}!`);
 		} catch (e) {
 			console.error(`Failed to install ${type}: ${e.message || e}`);
 		}

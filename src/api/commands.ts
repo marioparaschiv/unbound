@@ -1,15 +1,14 @@
 import type { ApplicationCommand } from '@typings/api/commands';
+import CoreCommands from '@core/commands';
 import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
 import filters from '@metro/filters';
 import { bulk } from '@metro';
 
-import CoreCommands from '@core/commands';
-
 const Patcher = createPatcher('unbound-commands');
 const Logger = createLogger('Commands');
 
-export { ApplicationCommand };
+export type { ApplicationCommand };
 
 export enum ApplicationCommandType {
 	CHAT = 1,

@@ -1,4 +1,4 @@
-import { Common } from '@typings/api/metro/common';
+import type { Common } from '@typings/api/metro/common';
 import { findByProps } from '@metro';
 
 // Libraries

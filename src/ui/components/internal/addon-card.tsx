@@ -10,7 +10,7 @@ import { Theme as ThemeStore } from '@metro/stores';
 
 import { ManagerType } from '@managers/base';
 import { Redesign } from '@metro/components';
-import Overflow from '@ui/settings/components/overflow';
+import Overflow from '@ui/components/internal/overflow';
 
 import type { Addon, Author, Manager } from '@typings/managers';
 import { managers } from '@api';
@@ -28,7 +28,7 @@ interface AddonCardProps {
 
 type InternalAddonCardProps = AddonCardProps & {
 	styles: AnyProps;
-}
+};
 
 const showRestartAlert = () => showAlert({
 	title: i18n.Messages.UNBOUND_CHANGE_RESTART,
@@ -78,10 +78,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 	renderIcon() {
 		const { addon } = this.props;
 
-		if (addon.data.icon === '__custom__'
-			&& addon.instance.icon
-			&& this.manager.type === ManagerType.Plugins
-		) {
+		if (addon.data.icon === '__custom__' && addon.instance.icon && this.manager.type === ManagerType.Plugins) {
 			return React.createElement(addon.instance.icon);
 		}
 
@@ -93,7 +90,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 				marginRight: 8,
 				tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL)
 			}}
-		/>
+		/>;
 	}
 
 	renderOverflow() {
@@ -108,9 +105,9 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 					...item,
 					label: i18n.Messages[item.label],
 					iconSource: Icons[item.icon]
-				}
+				};
 			})}
-		/>
+		/>;
 	}
 
 	renderMetadata() {
@@ -181,7 +178,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 					showRestartAlert();
 				}
 			}}
-		/>
+		/>;
 	}
 
 	renderBody() {
@@ -287,8 +284,8 @@ const useStyles = StyleSheet.createStyles({
 	}
 });
 
-export default function(props: AddonCardProps) {
+export default function AddonCard(props: AddonCardProps) {
 	const styles = useStyles();
 
-	return <InternalAddonCard styles={styles} {...props} />
+	return <InternalAddonCard styles={styles} {...props} />;
 }

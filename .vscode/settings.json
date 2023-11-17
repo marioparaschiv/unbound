@@ -18,7 +18,7 @@
 	"javascript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": true,
 	"javascript.format.insertSpaceBeforeAndAfterBinaryOperators": true,
 	"javascript.format.insertSpaceBeforeFunctionParenthesis": false,
-	"javascript.format.semicolons": "insert",
+	"javascript.format.semicolons": "ignore",
 	"javascript.preferences.importModuleSpecifier": "non-relative",
 	"javascript.preferences.quoteStyle": "single",
 	"javascript.updateImportsOnFileMove.enabled": "always",
@@ -38,8 +38,15 @@
 	"typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": true,
 	"typescript.format.insertSpaceBeforeAndAfterBinaryOperators": true,
 	"typescript.format.insertSpaceBeforeFunctionParenthesis": false,
-	"typescript.format.semicolons": "insert",
+	"typescript.format.semicolons": "ignore",
 	"typescript.preferences.importModuleSpecifier": "non-relative",
 	"typescript.preferences.quoteStyle": "single",
 	"typescript.updateImportsOnFileMove.enabled": "always",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": true
+	},
+	"eslint.validate": [
+		"javascript",
+		"typescript"
+	]
 }

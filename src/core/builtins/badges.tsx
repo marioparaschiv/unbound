@@ -1,5 +1,6 @@
-import { Badge } from '@typings/core/builtins/badges';
-import { BuiltIn } from '@typings/core/builtins';
+import type { Badge } from '@typings/core/builtins/badges';
+import type { BuiltIn } from '@typings/core/builtins';
+import { ReactNative as RN } from '@metro/common';
 import { Links, Times } from '@constants';
 import { createPatcher } from '@patcher';
 import { Theme } from '@metro/stores';
@@ -78,7 +79,7 @@ async function fetchUserBadges(id: string): Promise<string[]> {
 }
 
 const makeBadge = (badge, style): JSX.Element => {
-	return <ReactNative.View
+	return <RN.View
 		/* @ts-expect-error */
 		unbound={true}
 		key={badge}
@@ -99,7 +100,7 @@ const makeBadge = (badge, style): JSX.Element => {
 				? 4
 				: 8}
 		/>
-	</ReactNative.View>;
+	</RN.View>;
 };
 
 
@@ -130,15 +131,15 @@ const Badge = ({ type, size, margin }: { type: string; size: number; margin: num
 
 	const uri = badge.url[Theme.theme];
 
-	return <ReactNative.TouchableOpacity
+	return <RN.TouchableOpacity
 		onPress={() => { }}
 	>
-		<ReactNative.Image
+		<RN.Image
 			// @ts-expect-error
 			style={styles.image}
 			source={{ uri }}
 		/>
-	</ReactNative.TouchableOpacity>;
+	</RN.TouchableOpacity>;
 };
 
 async function fetchBadge(type: string): Promise<Badge> {

@@ -1,6 +1,6 @@
 import { createLogger } from '@logger';
 import { i18n } from '@metro/common';
-import Strings from '../i18n';
+import CoreStrings from '../i18n';
 
 type LocaleStrings = Record<string, Record<string, any>>;
 
@@ -16,7 +16,7 @@ function initialize() {
 	i18n.on('locale', onChange);
 
 	// Add core strings
-	add(Strings);
+	add(CoreStrings);
 }
 
 export function add(strings: LocaleStrings) {
@@ -73,3 +73,5 @@ try {
 } catch (e) {
 	Logger.error('Failed to initialize i18n:', e.message);
 }
+
+export const Strings = i18n.Messages;

@@ -1,9 +1,9 @@
-import { useSettingsStore } from '@api/storage';
-import { Addon, Manager } from '@typings/managers';
+import { TrailingIcon, resolveType } from '@ui/models/ordering/utilities';
 import { ReactNative as RN, React, i18n } from '@metro/common';
+import type { Addon, Manager } from '@typings/managers';
+import { useSettingsStore } from '@api/storage';
 import { Checkbox } from '@ui/components/form';
 
-import { TrailingIcon, resolveType } from '@ui/settings/models/ordering/utilities';
 export { TrailingIcon, resolveType };
 
 const radioItems = [
@@ -13,7 +13,7 @@ const radioItems = [
 		icon: 'PencilSparkleIcon',
 
 		ordering(addons: Addon[]) {
-			return addons
+			return addons;
 		}
 	},
 	{
@@ -22,7 +22,7 @@ const radioItems = [
 		icon: 'feature_star',
 
 		ordering(addons: Addon[]) {
-			return addons.sort((a, b) => a.data.id.localeCompare(b.data.id))
+			return addons.sort((a, b) => a.data.id.localeCompare(b.data.id));
 		}
 	},
 	{
@@ -31,7 +31,7 @@ const radioItems = [
 		icon: 'ic_add_text',
 
 		ordering(addons: Addon[]) {
-			return addons.sort((a, b) => a.data.name.localeCompare(b.data.name))
+			return addons.sort((a, b) => a.data.name.localeCompare(b.data.name));
 		}
 	},
 	{
@@ -40,7 +40,7 @@ const radioItems = [
 		icon: 'BookCheckIcon',
 
 		ordering(addons: Addon[]) {
-			return addons.sort((a, b) => a.data.description.localeCompare(b.data.description))
+			return addons.sort((a, b) => a.data.description.localeCompare(b.data.description));
 		}
 	},
 	{
@@ -49,7 +49,7 @@ const radioItems = [
 		icon: 'ic_group_dm',
 
 		ordering(addons: Addon[]) {
-			return addons.sort((a, b) => a.data.authors.join('').localeCompare(b.data.authors.join('')))
+			return addons.sort((a, b) => a.data.authors.join('').localeCompare(b.data.authors.join('')));
 		}
 	},
 	{
@@ -59,8 +59,8 @@ const radioItems = [
 
 		ordering(addons: Addon[]) {
 			return addons.slice().sort((a, b) => {
-				const versionA = a.data.version.split(".").map(Number);
-				const versionB = b.data.version.split(".").map(Number);
+				const versionA = a.data.version.split('.').map(Number);
+				const versionB = b.data.version.split('.').map(Number);
 
 				for (let i = 0; i < versionA.length; i++) {
 					if (versionA[i] !== versionB[i]) {
@@ -72,7 +72,7 @@ const radioItems = [
 			});
 		}
 	}
-]
+];
 
 export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSettingsStore>) => [
 	...radioItems.map(item => {
@@ -85,18 +85,18 @@ export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSe
 			/>,
 
 			action() {
-				settings.set(`${resolveType(entity)}.order`, item.id)
+				settings.set(`${resolveType(entity)}.order`, item.id);
 			},
 
 			get label() {
-				return i18n.Messages[label]
+				return i18n.Messages[label];
 			}
-		}
+		};
 
 		return {
 			...rest,
 			...extra
-		}
+		};
 	}),
 	{
 		id: 'reversed',
@@ -112,15 +112,15 @@ export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSe
 				<Checkbox.FormCheckbox
 					checked={settings.get(`${resolveType(entity)}.reversed`, false)}
 				/>
-			</RN.TouchableOpacity>
+			</RN.TouchableOpacity>;
 		},
 
 		action() {
-			settings.toggle(`${resolveType(entity)}.reversed`, false)
+			settings.toggle(`${resolveType(entity)}.reversed`, false);
 		},
 
 		ordering(addons: Addon[]) {
-			return addons
+			return addons;
 		}
 	}
 ];

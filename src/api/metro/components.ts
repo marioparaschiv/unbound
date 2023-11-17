@@ -1,4 +1,4 @@
-import { Components } from '@typings/api/metro/components';
+import type { Components } from '@typings/api/metro/components';
 import { find, findByName, findByProps } from '@metro';
 
 export const Forms = findByProps('Form', 'FormSection', { lazy: true }) as Components.Forms;

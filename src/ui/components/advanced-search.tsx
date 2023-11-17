@@ -2,9 +2,9 @@ import { React, ReactNative as RN } from '@metro/common';
 import { findByName, findByProps } from '@metro';
 import { noop } from '@utilities';
 
-const BaseSearch = findByProps('useSearchControls', { lazy: true });
-const SettingSearch = findByProps('useSettingSearchQuery', { lazy: true });
 const SettingSearchBar = findByName('SettingSearchBar', { interop: false, lazy: true });
+const SettingSearch = findByProps('useSettingSearchQuery', { lazy: true });
+const BaseSearch = findByProps('useSearchControls', { lazy: true });
 
 interface SearchContext {
 	type: string;
@@ -40,14 +40,13 @@ export const AdvancedSearch = (({ searchContext, controls }: AdvancedSearchProps
 	// This Search component will not render unless the direct parent or one of the recent parents is a ScrollView.
 	// Therefore, I'm going to get rid of this dependency by using one and setting `scrollEnabled` to false.
 	return (
-		<RN.ScrollView scrollEnabled={false}>
-			<BaseSearch.default
-				searchContext={searchContext}
-				controls={controls}
-			>
-				<SettingSearchBar.default />
-			</BaseSearch.default>
-		</RN.ScrollView>
+		<RN.View>
+			<RN.ScrollView scrollEnabled={false}>
+				<BaseSearch.default searchContext={searchContext} controls={controls}>
+					<SettingSearchBar.default />
+				</BaseSearch.default>
+			</RN.ScrollView>
+		</RN.View>
 	);
 }) as AdvancedSearchType;
 // We can lie to TypeScript saying that `useAdvancedSearch` exists on the function

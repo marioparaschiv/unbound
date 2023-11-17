@@ -6,6 +6,7 @@
 		"target": "esnext",
 		"resolveJsonModule": true,
 		"noUncheckedIndexedAccess": true,
+		"verbatimModuleSyntax": true,
 		"module": "esnext",
 		"jsx": "react",
 		"baseUrl": "src",

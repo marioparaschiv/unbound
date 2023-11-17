@@ -1,8 +1,9 @@
+import { Search as DiscordSearch, Redesign } from '@metro/components';
 import type { TextInputProps } from 'react-native';
-
-import { Search as DiscordSearch } from '@metro/components';
 import { StyleSheet } from '@metro/common';
 import { mergeStyles } from '@utilities';
+import { TabsUIState } from '@ui/components/form';
+import { findByName } from '@metro';
 
 const useStyles = StyleSheet.createStyles({
 	search: {
@@ -19,10 +20,13 @@ interface SearchProps extends TextInputProps {
 	onClear: Fn;
 }
 
+const Test = findByName('Input');
+
 function Search(props: SearchProps) {
+	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
 	const styles = useStyles();
 
-	return <DiscordSearch
+	return tabsEnabled ? <Redesign.TextInput size='md' {...props} /> : <DiscordSearch
 		{...props}
 		style={mergeStyles(styles.search, props.style)}
 	/>;

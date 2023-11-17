@@ -1,9 +1,9 @@
 import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme, i18n } from '@metro/common';
-import { Navigation } from '@metro/components';
-import { Icons } from '@api/assets';
-import Logger from '@stores/logger';
 import AdvancedSearch, { useAdvancedSearch } from '@ui/components/advanced-search';
 import { Section, Row, RowIcon } from '@ui/components/form';
+import { Navigation } from '@metro/components';
+import LoggerStore from '@stores/logger';
+import { Icons } from '@api/assets';
 
 const searchContext = { type: 'LOGGER' };
 const levelSelection = {
@@ -16,10 +16,10 @@ const levelSelection = {
 	}
 };
 
-export default function () {
+export default function Logger() {
 	const [query, controls] = useAdvancedSearch(searchContext);
 	const navigation = Navigation.useNavigation();
-	const store = Logger.useStore();
+	const store = LoggerStore.useStore();
 	const styles = useStyles();
 
 	const data = React.useMemo(() => store.logs
@@ -93,7 +93,7 @@ function HeaderRight() {
 
 	return <RN.TouchableOpacity
 		style={styles.touchable}
-		onPress={() => Logger.store.setState({ logs: [] })}
+		onPress={() => LoggerStore.store.setState({ logs: [] })}
 	>
 		<RN.Image
 			style={styles.image}

@@ -1,6 +1,6 @@
+import { showInstallAlert } from '@ui/components/internal/install-modal';
 import { React, ReactNative as RN } from '@metro/common';
-import { Addons } from '@ui/settings/components';
-import { showInstallAlert } from '@ui/settings/components/install-modal';
+import { Addons } from '@ui/components/internal';
 import Icons from '@managers/icons';
 
 function IconsPage() {
@@ -12,8 +12,8 @@ function IconsPage() {
 			type='icons'
 			addons={addons}
 		/>
-	</RN.View>
+	</RN.View>;
 }
 
-export const callback = ({ type, ref }) => showInstallAlert({ type, ref })
-export default { page: <IconsPage />, callback }
+export const callback = ({ type, ref }) => showInstallAlert({ type, ref });
+export default { page: <IconsPage />, callback };

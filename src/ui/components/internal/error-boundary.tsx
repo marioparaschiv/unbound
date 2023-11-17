@@ -6,7 +6,7 @@ import { ClientName } from '@constants';
 import { reload } from '@api/native';
 
 import useStyles from './error-boundary.style';
-import CodeBlock from './codeblock';
+import CodeBlock from '../codeblock';
 
 interface ErrorBoundaryProps {
 	error: Record<string, any>;
@@ -25,7 +25,7 @@ const Card = ({ style, ...props }: CardProps) => {
 	return <RN.View
 		style={[styles.card, style]}
 		{...props}
-	/>
+	/>;
 };
 
 const Header = ({ res }: Pick<ErrorBoundaryProps, 'res'>) => {
@@ -60,7 +60,7 @@ const Header = ({ res }: Pick<ErrorBoundaryProps, 'res'>) => {
 	</Card>;
 };
 
-const Outline = ({ state, error }) => {
+const Outline = ({ state, error }: any) => {
 	const styles = useStyles();
 
 	let loadingTimeout: NodeJS.Timeout;
@@ -131,7 +131,7 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'>
 	</Card>;
 };
 
-export default ({ error, retryRender, res }: ErrorBoundaryProps) => {
+export default function ErrorBoundary({ error, retryRender, res }: ErrorBoundaryProps) {
 	const possibleErrors = [
 		{
 			id: 'component',

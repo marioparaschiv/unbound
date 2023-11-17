@@ -1,18 +1,16 @@
-import { ClientName } from '@constants';
-import { i18n } from '@metro/common';
 import { Navigation } from '@metro/components';
 import { createPatcher } from '@patcher';
+import { ClientName } from '@constants';
+import { Strings } from '@api/i18n';
 
-import General from '@ui/settings/pages/general';
-import Plugins from '@ui/settings/pages/plugins';
-import Design from '@ui/settings/pages/design';
+import General from '@ui/settings/general';
+import Plugins from '@ui/settings/plugins';
+import Design from '@ui/settings/design';
 
 type CustomScreenProps = {
 	title: string;
 	render: React.ComponentType;
-}
-
-const { Messages: M } = i18n;
+};
 
 export class Settings {
 	public patcher: ReturnType<typeof createPatcher>;
@@ -23,19 +21,19 @@ export class Settings {
 
 	public Titles = {
 		get General() {
-			return M.SETTINGS;
+			return Strings.SETTINGS;
 		},
 
 		get Plugins() {
-			return M.UNBOUND_PLUGINS;
+			return Strings.UNBOUND_PLUGINS;
 		},
 
 		get Design() {
-			return M.UNBOUND_DESIGN;
+			return Strings.UNBOUND_DESIGN;
 		},
 
 		get Updater() {
-			return M.UNBOUND_UPDATER;
+			return Strings.UNBOUND_UPDATER;
 		},
 
 		get Custom() {
@@ -61,25 +59,25 @@ export class Settings {
 
 	public Keywords = {
 		get General() {
-			return [M.UNBOUND_GENERAL]
+			return [Strings.UNBOUND_GENERAL];
 		},
 
 		get Plugins() {
-			return []
+			return [];
 		},
 
 		get Design() {
-			return [M.UNBOUND_THEMES, M.UNBOUND_ICONS, M.UNBOUND_FONTS]
+			return [Strings.UNBOUND_THEMES, Strings.UNBOUND_ICONS, Strings.UNBOUND_FONTS];
 		},
 
 		get Updater() {
-			return []
+			return [];
 		},
 
 		get Custom() {
-			return []
+			return [];
 		},
-	}
+	};
 
 	public Mappables = {
 		General: true,

@@ -22,7 +22,7 @@ export function apply() {
 			const payload = [];
 
 			for (let i = 0, len = args.length; len > i; i++) {
-				payload.push(typeof args[i] === 'string' ? args[i] : Util.inspect?.(args[i]) ?? args[i].toString());
+				payload.push(typeof args[i] === 'string' ? args[i] : Util.inspect?.(args[i], { depth: 10 }) ?? args[i].toString());
 			}
 
 			const output = payload.join(' ');

@@ -1,5 +1,5 @@
-import { BuiltIn } from '@typings/core/builtins';
-import { ErrorBoundary } from '@ui/components';
+import { ErrorBoundary } from '@ui/components/internal';
+import type { BuiltIn } from '@typings/core/builtins';
 import { createPatcher } from '@patcher';
 import { findByName } from '@metro';
 

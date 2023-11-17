@@ -1,7 +1,7 @@
 import type { FormSwitchProps, RowIconProps, RowProps, SectionProps, SwitchRowProps } from '@typings/ui/components/forms';
 import { Theme, StyleSheet, React, ReactNative as RN } from '@metro/common';
 import { Forms, Redesign } from '@metro/components';
-import { ViewProps } from 'react-native';
+import type { ViewProps } from 'react-native';
 import { findByProps } from '@metro';
 
 export const useStyles = StyleSheet.createStyles({
@@ -13,12 +13,8 @@ export const useStyles = StyleSheet.createStyles({
 });
 
 export const Switch = findByProps('FormSwitch', { lazy: true, all: true }).find(x => !('FormTitle' in x));
+export const TabsUIState = findByProps('useInMainTabsExperiment', 'isInMainTabsExperiment', { lazy: true });
 export const Checkbox = findByProps('FormCheckbox', { lazy: true, all: true }).find(x => !('FormTitle' in x));
-export const TabsUIState = findByProps(
-	'useInMainTabsExperiment',
-	'isInMainTabsExperiment',
-	{ lazy: true }
-);
 
 export const useEndStyle = () => {
 	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;
@@ -71,7 +67,7 @@ export const SwitchRow = ({ icon, trailing, value, onValueChange, ...shared }: S
 				onValueChange={onValueChange}
 			/>
 		</RN.View>}
-	/>
+	/>;
 };
 
 export const RowIcon = (props: RowIconProps) => {
@@ -91,8 +87,8 @@ export const RowSwitch = (props: FormSwitchProps) => {
 		<Switch.FormSwitch {...props} />
 	) : (
 		<Forms.FormSwitch {...props} />
-	)
-}
+	);
+};
 
 export const Section = ({ children, style, margin = true, ...props }: SectionProps) => {
 	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;

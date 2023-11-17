@@ -2,7 +2,7 @@ export const Invite = 'unboundapp' as const;
 
 export const Links = {
 	GitHub: 'https://github.com/unbound-mod',
-	Twitter: 'https://twitter.com/UnboundApp',
+	X: 'https://x.com/UnboundApp',
 	Bundle: 'https://raw.githubusercontent.com/unbound-mod/unbound/main/dist/bundle.js',
 	Badges: 'https://raw.githubusercontent.com/unbound-mod/badges/main/'
 } as const;

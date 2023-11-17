@@ -1,9 +1,10 @@
-import { Section, Row, SwitchRow, RowIcon, useEndStyle } from '@ui/components/form';
-import { Constants, Theme, i18n } from '@metro/common';
+import { Section, Row, SwitchRow, RowIcon, useEndStyle, Form } from '@ui/components/form';
+import { Constants, Theme, ReactNative as RN } from '@metro/common';
 import { Slider, Forms } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { showToast } from '@api/toasts';
 import { Icons } from '@api/assets';
+import { Strings } from '@api/i18n';
 import { noop } from '@utilities';
 
 function Toasts() {
@@ -12,18 +13,18 @@ function Toasts() {
 
 	const duration = settings.get('toasts.duration', 0);
 
-	return <ReactNative.ScrollView>
+	return <Form>
 		<Section>
 			<SwitchRow
-				label={i18n.Messages.UNBOUND_ENABLED}
-				subLabel={i18n.Messages.UNBOUND_TOASTS_DESC}
+				label={Strings.UNBOUND_ENABLED}
+				subLabel={Strings.UNBOUND_TOASTS_DESC}
 				icon={<RowIcon source={settings.get('toasts.enabled', true) ? Icons['Check'] : Icons['Small']} />}
 				value={settings.get('toasts.enabled', true)}
 				onValueChange={() => settings.toggle('toasts.enabled', true)}
 			/>
 			<SwitchRow
-				label={i18n.Messages.UNBOUND_TOASTS_ANIMATIONS}
-				subLabel={i18n.Messages.UNBOUND_TOASTS_ANIMATIONS_DESC}
+				label={Strings.UNBOUND_TOASTS_ANIMATIONS}
+				subLabel={Strings.UNBOUND_TOASTS_ANIMATIONS_DESC}
 				icon={<RowIcon source={settings.get('toasts.animations', true) ? Icons['pause'] : Icons['play']} />}
 				value={settings.get('toasts.animations', true)}
 				onValueChange={() => settings.toggle('toasts.animations', true)}
@@ -66,14 +67,14 @@ function Toasts() {
 		</Section>
 		<Section>
 			<Row
-				label={i18n.Messages.UNBOUND_TOAST_DURATION}
+				label={Strings.UNBOUND_TOAST_DURATION}
 				trailing={(
 					<Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
-						{duration === 0 ? i18n.Messages.UNBOUND_INDEFINITE : i18n.Messages.DURATION_SECONDS.format({ seconds: duration })}
+						{duration === 0 ? Strings.UNBOUND_INDEFINITE : Strings.DURATION_SECONDS.format({ seconds: duration })}
 					</Forms.FormText>
 				)}
 			/>
-			<ReactNative.View style={endStyle}>
+			<RN.View style={endStyle}>
 				<Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={duration}
@@ -84,12 +85,12 @@ function Toasts() {
 					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
 					tapToSeek
 				/>
-			</ReactNative.View>
+			</RN.View>
 		</Section>
 		<Forms.FormHint>
-			{i18n.Messages.UNBOUND_TOAST_DURATION_DESC}
+			{Strings.UNBOUND_TOAST_DURATION_DESC}
 		</Forms.FormHint>
-	</ReactNative.ScrollView>;
+	</Form>;
 }
 
 export default Toasts;

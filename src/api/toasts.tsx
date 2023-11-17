@@ -1,12 +1,11 @@
-import { ToastOptions } from '@typings/api/toasts';
-import { useSettingsStore, get } from '@api/storage';
+import type { ToastOptions } from '@typings/api/toasts';
+import { get, useSettingsStore } from '@api/storage';
+import { ToastContainer } from '@ui/toasts';
+import { find, findByProps } from '@metro';
 import { addToast } from '@stores/toasts';
 import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
-import { find, findByProps } from '@metro';
-
-import { ToastContainer } from '@ui/toasts';
-import { findInReactTree } from '@utilities';
+import { forceRender } from '@utilities';
 
 const Patcher = createPatcher('toasts');
 const Logger = createLogger('Toasts');
@@ -20,14 +19,15 @@ try {
 	const Toasts = find(x => x.open && x.close && Object.keys(x).length === 2, { lazy: true });
 
 	// Render our toasts
-	Patcher.after(Container, 'type', (_, __, res) => {
+	Patcher.after(Container, 'type', (_, args, res) => {
 		const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('toasts'));
 
+		console.log(args, res);
 		if (!settings.get('toasts.enabled', true)) {
 			return res;
 		}
 
-		return <ToastContainer />
+		return <ToastContainer />;
 	});
 
 	// Convert Discord's toasts into our toasts
@@ -37,6 +37,8 @@ try {
 
 			options.title = options.content;
 			delete options.content;
+
+			options.duration = 2500;
 
 			return showToast(options);
 		}

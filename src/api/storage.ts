@@ -1,23 +1,12 @@
+import type { DCDPhotosType, DCDFileManagerType } from '@typings/api/native';
 import { isEmpty, debounce } from '@utilities';
 import EventEmitter from '@structures/emitter';
-
-import { DCDPhotosType, DCDFileManagerType } from '@typings/api/native';
+import { getNativeModule } from '@api/native';
 
 const Events = new EventEmitter();
 
-const { NativeModules, TurboModuleRegistry } = ReactNative;
-
-const findNativeModule = (name: string, secondaryName?: string) => {
-	return [
-		NativeModules[name],
-		NativeModules[secondaryName],
-		TurboModuleRegistry.get(name),
-		TurboModuleRegistry.get(secondaryName)
-	].find(x => x);
-};
-
-export const DCDPhotos: DCDPhotosType = findNativeModule('DCDPhotos', 'DCDPhotosManager');
-export const DCDFileManager: DCDFileManagerType = findNativeModule('DCDFileManager', 'RTNFileManager');
+export const DCDPhotos: DCDPhotosType = getNativeModule('DCDPhotos', 'DCDPhotosManager');
+export const DCDFileManager: DCDFileManagerType = getNativeModule('DCDFileManager', 'RTNFileManager');
 
 Object.assign(
 	DCDFileManager, {
@@ -140,13 +129,16 @@ export function useSettingsStore(store: string, predicate?: (payload: Payload) =
 	return getStore(store);
 }
 
-export let pending = null;
+export const pending = new Set();
 
 Events.on('changed', debounce(() => {
 	const payload = JSON.stringify(settings, null, 2);
 	const path = 'Unbound/settings.json';
 
-	pending = DCDFileManager.writeFile('documents', path, payload, 'utf8');
+	const promise = DCDFileManager.writeFile('documents', path, payload, 'utf8');
+
+	pending.add(promise);
+	promise.then(() => pending.delete(promise));
 }, 250));
 
 export default { useSettingsStore, getStore, get, set, remove, on, off };

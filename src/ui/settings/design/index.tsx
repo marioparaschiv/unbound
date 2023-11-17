@@ -1,17 +1,18 @@
+import HeaderRight from '@ui/components/internal/addon-header';
 import { Navigation, Redesign } from '@metro/components';
-import { i18n } from '@metro/common';
-import { InstallModal } from '@ui/settings/components';
+import { InstallModal } from '@ui/components/internal';
+import { ReactNative as RN } from '@metro/common';
 import { useSettingsStore } from '@api/storage';
+import { Strings } from '@api/i18n';
 
 import Themes from './themes';
 import Icons from './icons';
 import Fonts from './fonts';
-import HeaderRight from '@ui/settings/components/addon-header';
 
 const items = [
 	{
 		get label() {
-			return i18n.Messages.UNBOUND_THEMES;
+			return Strings.UNBOUND_THEMES;
 		},
 
 		id: 'themes',
@@ -19,7 +20,7 @@ const items = [
 	},
 	{
 		get label() {
-			return i18n.Messages.UNBOUND_ICONS;
+			return Strings.UNBOUND_ICONS;
 		},
 
 		id: 'icons',
@@ -27,7 +28,7 @@ const items = [
 	},
 	{
 		get label() {
-			return i18n.Messages.UNBOUND_FONTS;
+			return Strings.UNBOUND_FONTS;
 		},
 
 		id: 'fonts',
@@ -35,7 +36,7 @@ const items = [
 	}
 ] as const;
 
-export default () => {
+export default function Design() {
 	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
 	const navigation = Navigation.useNavigation();
 	const settings = useSettingsStore('unbound');
@@ -60,15 +61,15 @@ export default () => {
 						const index = settings.get('designPageIndex', 0);
 						const item = items[index];
 
-						item.callback({ ref, type: item.id })
+						item.callback({ ref, type: item.id });
 					}}
 				/>
 			});
 		});
-	}, [])
+	}, []);
 
 
-	return <ReactNative.View
+	return <RN.View
 		style={{
 			flex: 1,
 			flexGrow: 1,
@@ -76,7 +77,7 @@ export default () => {
 		}}
 	>
 		<Redesign.SegmentedControlPages state={state} />
-		<ReactNative.View
+		<RN.View
 			style={{
 				position: 'absolute',
 				left: 0,
@@ -88,6 +89,6 @@ export default () => {
 			}}
 		>
 			<Redesign.SegmentedControl state={state} />
-		</ReactNative.View>
-	</ReactNative.View>;
+		</RN.View>
+	</RN.View>;
 };

@@ -1,8 +1,10 @@
-import { Constants, React, Reanimated, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
+import { React, Reanimated, ReactNative as RN } from '@metro/common';
 import { RowIcon, TabsUIState } from '@ui/components/form';
-import { ToastOptions } from '@typings/api/toasts';
+import type { ToastOptions } from '@typings/api/toasts';
+import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
 import useToastState from './useToastState';
+import useStyles from './toast.style';
 import Toasts from '@stores/toasts';
 import { Icons } from '@api/assets';
 
@@ -11,10 +13,17 @@ const { withSpring, default: { View } } = Reanimated;
 function Toast(options: ToastOptions) {
 	const { properties, leave } = useToastState(options);
 	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
+	const settings = useSettingsStore('unbound');
 	const styles = useStyles();
 
-	return <View key={options.id} style={properties}>
-		<RN.View style={styles.container} onLayout={({ nativeEvent }) => properties.height.value = withSpring(nativeEvent.layout.height)}>
+	return <View key={options.id} style={properties} pointerEvents='box-none'>
+		<RN.View
+			style={styles.container}
+			onLayout={({ nativeEvent }) => properties.height.value = settings.get('toasts.animations', true) ?
+				withSpring(nativeEvent.layout.height) :
+				nativeEvent.layout.height
+			}
+		>
 			<RN.View style={styles.wrapper}>
 				{options.icon && <RN.View style={styles.icon}>
 					<RowIcon source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon} size='small' />
@@ -30,7 +39,6 @@ function Toast(options: ToastOptions) {
 				<RN.Pressable
 					style={[styles.icon, { marginRight: 12 }]}
 					hitSlop={10}
-					// activeOpacity={0.5}
 					onPress={leave}
 					onLongPress={() => {
 						RN.LayoutAnimation.configureNext({
@@ -38,6 +46,15 @@ function Toast(options: ToastOptions) {
 							delete: {
 								type: 'easeInEaseOut',
 								property: 'opacity',
+								duration: 300
+							}
+						});
+
+						RN.LayoutAnimation.configureNext({
+							duration: 1000,
+							delete: {
+								type: 'easeInEaseOut',
+								property: 'scaleXY',
 								duration: 300
 							}
 						});
@@ -50,7 +67,8 @@ function Toast(options: ToastOptions) {
 			</RN.View>
 			{Array.isArray(options.buttons) && (
 				<RN.View style={[styles.buttons, { marginTop: tabsEnabled ? 0 : 8 }]}>
-					{options.buttons.map(button => <Redesign.Button
+					{options.buttons.map((button, index) => <Redesign.Button
+						key={`${options.id}-button-${index}`}
 						style={styles.button}
 						variant={button.variant || 'primary'}
 						size={button.size || 'sm'}
@@ -64,57 +82,5 @@ function Toast(options: ToastOptions) {
 		</RN.View>
 	</View>;
 }
-
-const useStyles = StyleSheet.createStyles({
-	container: {
-		backgroundColor: Theme.colors.BACKGROUND_SECONDARY_ALT,
-		alignSelf: 'center',
-		borderRadius: 18,
-		width: 250,
-		position: 'absolute',
-		padding: 2,
-		marginHorizontal: 60,
-		marginTop: 12,
-		...Theme.shadows.SHADOW_BORDER
-	},
-	wrapper: {
-		flex: 1,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'center'
-	},
-	contentContainer: {
-		marginLeft: 12,
-		flex: 1,
-		flexDirection: 'column',
-		justifyContent: 'center',
-	},
-	title: {
-		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-		color: Theme.colors.TEXT_NORMAL,
-		fontSize: 14
-	},
-	content: {
-		fontFamily: Constants.Fonts.PRIMARY_NORMAL,
-		color: Theme.colors.TEXT_MUTED,
-		fontSize: 12
-	},
-	icon: {
-		marginVertical: 10,
-		marginLeft: 12
-	},
-	buttons: {
-		flexWrap: 'wrap',
-		flexDirection: 'row',
-		marginHorizontal: 12,
-		marginBottom: 8,
-		gap: 5
-	},
-	button: {
-		width: '45%',
-		flexGrow: 1,
-		justifyContent: 'space-between'
-	}
-});
 
 export default Toast;

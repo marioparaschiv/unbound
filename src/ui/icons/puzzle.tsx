@@ -1,7 +1,6 @@
-import { Theme, StyleSheet } from '@metro/common';
+import { React, ReactNative, Theme, StyleSheet } from '@metro/common';
 import { Theme as ThemeStore } from '@metro/stores';
 import { SVG } from '@metro/components';
-import { React } from '@metro/common';
 
 const { meta: { resolveSemanticColor } } = Theme;
 
@@ -16,7 +15,7 @@ const useStyles = StyleSheet.createStyles({
 	}
 });
 
-export default function ({ height, width, color = resolveSemanticColor(ThemeStore.theme, Theme.colors.INTERACTIVE_NORMAL), ...rest }) {
+export default function Puzzle({ height, width, color = resolveSemanticColor(ThemeStore.theme, Theme.colors.INTERACTIVE_NORMAL), ...rest }) {
 	const styles = useStyles();
 
 	return <SVG.Svg viewBox='0 0 24 24' style={{ height, width, ...styles.icon, color }} fill='currentColor' {...rest}>

@@ -1,21 +1,20 @@
 import { Clipboard, Constants, ReactNative as RN, StyleSheet, Theme, i18n } from '@metro/common';
+import type { Manager } from '@typings/managers';
 import { Redesign } from '@metro/components';
 import { showAlert } from '@api/dialogs';
-import { Icons } from '@api/assets';
-
-import type { Manager } from '@typings/managers';
-import { managers } from '@api';
-import { showToast } from '@api/toasts';
 import { capitalize } from '@utilities';
+import { showToast } from '@api/toasts';
+import { Icons } from '@api/assets';
+import { managers } from '@api';
 
 interface InstallModalProps {
 	type: Manager;
-	ref: ReturnType<typeof React.useRef<InstanceType<typeof InternalInstallInput>>>
+	ref: ReturnType<typeof React.useRef<InstanceType<typeof InternalInstallInput>>>;
 }
 
 type InternalInstallModalProps = InstallModalProps & {
 	styles: AnyProps;
-}
+};
 
 export class InternalInstallInput extends React.PureComponent<InternalInstallModalProps> {
 	controller = new AbortController();
@@ -29,7 +28,7 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 		return <>
 			{this.renderInput()}
 			{this.renderButtons()}
-		</>
+		</>;
 	}
 
 	renderInput() {
@@ -60,10 +59,10 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 
 					Clipboard.getString().then(url => {
 						this.setState({ url, loadingPaste: false });
-					})
+					});
 				}}
 			/>
-		</RN.View>
+		</RN.View>;
 	}
 
 	renderButtons() {
@@ -96,12 +95,12 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 							title: this.manager.name,
 							content: i18n.Messages.UNBOUND_INSTALL_CANCELLED.format({ type: capitalize(this.manager.type) }),
 							icon: 'CloseLargeIcon'
-						})
+						});
 					}
 				}}
 				variant={'secondary'}
 			/>
-		</>
+		</>;
 	}
 
 	getInput() {
@@ -123,7 +122,7 @@ const useStyles = StyleSheet.createStyles({
 function InstallInput(props: InstallModalProps) {
 	const styles = useStyles();
 
-	return <InternalInstallInput styles={styles} {...props} />
+	return <InternalInstallInput styles={styles} {...props} />;
 }
 
 export function showInstallAlert({ type, ref }: InstallModalProps) {

@@ -1,4 +1,4 @@
-import { BuiltIn } from '@typings/core/builtins';
+import type { BuiltIn } from '@typings/core/builtins';
 import { attempt, noop } from '@utilities';
 import { createPatcher } from '@patcher';
 import { findByProps } from '@metro';

@@ -1,4 +1,4 @@
-import { Constants, StyleSheet, Theme, ReactNative as RN } from '@metro/common';
+import { Constants, StyleSheet, Theme, React, ReactNative as RN } from '@metro/common';
 
 interface CodeblockProps {
 	selectable?: boolean;
@@ -18,7 +18,7 @@ const useStyles = StyleSheet.createStyles({
 	}
 });
 
-const IosBlock = ({ children, style, ...rest }: CodeblockProps) => {
+function IosBlock({ children, style, ...rest }: CodeblockProps) {
 	const styles = useStyles();
 
 	return <RN.TextInput
@@ -30,18 +30,19 @@ const IosBlock = ({ children, style, ...rest }: CodeblockProps) => {
 	/>;
 };
 
-const AndroidBlock = ({ selectable, children, style, ...rest }: CodeblockProps) => {
+function AndroidBlock({ selectable, children, style, ...rest }: CodeblockProps) {
 	const styles = useStyles();
 
 	return <RN.Text
-		children={children}
 		style={[styles.block, style]}
 		selectable={selectable}
 		{...rest}
-	/>;
+	>
+		{children}
+	</RN.Text>;
 };
 
-export default ({ selectable, ...props }: CodeblockProps) => {
+export default function CodeBlock({ selectable, ...props }: CodeblockProps) {
 	if (!selectable) return <AndroidBlock selectable={selectable} {...props} />;
 
 	return RN.Platform.select({

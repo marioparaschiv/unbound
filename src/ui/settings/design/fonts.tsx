@@ -5,7 +5,7 @@ function FontsPage() {
 	const fonts = window.UNBOUND_FONTS ?? [];
 
 	return <RN.View style={{ flex: 1 }}>
-		{fonts.map((font) => <RN.View style={{}}>
+		{fonts.map((font) => <RN.View key={font.name}>
 			{font.name}
 		</RN.View>)}
 	</RN.View>;

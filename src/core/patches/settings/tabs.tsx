@@ -52,11 +52,12 @@ export class TabsSettings extends Settings {
 		this.patcher.before(this.Settings.SearchableSettingsList, 'type', (_, [{ sections }]) => {
 			const index = sections?.findIndex(section => section.settings.find(setting => setting === 'ACCOUNT'));
 
-			!sections.find(section => section.label === ClientName)
-				&& sections.splice(index === -1 ? 1 : index + 1, 0, {
+			if (!sections.find(section => section.label === ClientName)) {
+				sections.splice(index === -1 ? 1 : index + 1, 0, {
 					label: ClientName,
 					settings: Object.keys(Keys).filter(key => this.Mappables[key]).map(key => Keys[key])
 				});
+			}
 
 			const support = sections.find(section => section.label === i18n.Messages.SUPPORT);
 			support && (support.settings = support.settings.filter(setting => setting !== 'UPLOAD_DEBUG_LOGS'));
@@ -106,7 +107,7 @@ export class TabsSettings extends Settings {
 					res.forEach((value, index: number, parent) => {
 						value.index = index;
 						value.total = parent.length;
-					})
+					});
 				};
 			});
 

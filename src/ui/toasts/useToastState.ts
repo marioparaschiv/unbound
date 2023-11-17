@@ -1,9 +1,9 @@
-import { InternalToastOptions } from '@typings/api/toasts';
-import { useSettingsStore } from '@api/storage';
+import type { InternalToastOptions } from '@typings/api/toasts';
 import { Reanimated, ReactNative as RN } from '@metro/common';
+import { useSettingsStore } from '@api/storage';
 import Toasts from '@stores/toasts';
 
-const { useSharedValue, withTiming, withSpring } = Reanimated;
+const { runOnJS, useSharedValue, withTiming, withSpring } = Reanimated;
 
 function useToastState(options: InternalToastOptions) {
 	const [leaving, setLeaving] = React.useState(false);
@@ -44,9 +44,7 @@ function useToastState(options: InternalToastOptions) {
 				opacity.value = withTiming(0);
 				marginTop.value = withSpring(-5);
 				scale.value = withSpring(0.65);
-				height.value = withSpring(0);
-
-				setTimeout(() => setLeaving(true), 400);
+				height.value = withSpring(0, {}, (finished) => finished && runOnJS(setLeaving)(true));
 			}
 		})();
 	}
@@ -65,7 +63,7 @@ function useToastState(options: InternalToastOptions) {
 		const duration = (options.duration ?? settings.get('toasts.duration', 0));
 
 		if (duration !== 0) {
-			const timeout = setTimeout(leave, duration * 1000);
+			const timeout = setTimeout(leave, duration);
 			return () => clearTimeout(timeout);
 		}
 	}, []);

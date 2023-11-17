@@ -1,8 +1,8 @@
-import { Asset } from '@typings/api/assets';
+import type { Asset } from '@typings/api/assets';
+import IconManager from '@managers/icons';
 import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
 import { findByProps } from '@metro';
-import IconManager from '@managers/icons';
 
 export const assets = new Set<Asset>();
 export const registry = findByProps('registerAsset');
