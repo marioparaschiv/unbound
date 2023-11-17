@@ -89,8 +89,12 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 		});
 	}, [search, addons, order, reversed]);
 
-	return <RN.View>
-		<Search placeholder='test' value={search} onChange={(e) => setSearch(e.value ?? e)} />
+	return <RN.View style={{ padding: 10 }}>
+		<Search
+			placeholder='test'
+			value={search}
+			onChangeText={setSearch}
+		/>
 		{isRecovery && <RN.View style={styles.recoveryContainer}>
 			<HelpMessage messageType={0}>
 				{i18n.Messages.UNBOUND_RECOVERY_MODE_ENABLED}

@@ -14,7 +14,7 @@ type HeaderRightProps = {
 };
 
 export default function HeaderRight({ type, settings, onPress }: HeaderRightProps) {
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
+	const isTabsV2 = TabsUIState.useInMainTabsExperiment();
 
 	return <RN.View style={{ flexDirection: 'row', alignItems: 'center' }}>
 		<Overflow
@@ -22,7 +22,7 @@ export default function HeaderRight({ type, settings, onPress }: HeaderRightProp
 			iconSource={getIDByName('ic_sort')}
 		/>
 		<RN.TouchableOpacity
-			style={{ ...(tabsEnabled ? {} : { marginRight: 16 }), marginLeft: 4 }}
+			style={{ ...(isTabsV2 ? {} : { marginRight: 16 }), marginLeft: 4 }}
 			onPress={onPress}
 		>
 			<RN.Image

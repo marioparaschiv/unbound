@@ -12,7 +12,7 @@ const { withSpring, default: { View } } = Reanimated;
 
 function Toast(options: ToastOptions) {
 	const { properties, leave } = useToastState(options);
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
+	const isTabsV2 = TabsUIState.useInMainTabsExperiment();
 	const settings = useSettingsStore('unbound');
 	const styles = useStyles();
 
@@ -66,7 +66,7 @@ function Toast(options: ToastOptions) {
 				</RN.Pressable>
 			</RN.View>
 			{Array.isArray(options.buttons) && (
-				<RN.View style={[styles.buttons, { marginTop: tabsEnabled ? 0 : 8 }]}>
+				<RN.View style={[styles.buttons, { marginTop: isTabsV2 ? 0 : 8 }]}>
 					{options.buttons.map((button, index) => <Redesign.Button
 						key={`${options.id}-button-${index}`}
 						style={styles.button}

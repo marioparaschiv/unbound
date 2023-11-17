@@ -208,7 +208,6 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 const useStyles = StyleSheet.createStyles({
 	card: {
 		backgroundColor: Theme.colors.BACKGROUND_SECONDARY,
-		marginHorizontal: 10,
 		borderRadius: 12,
 		marginTop: 10
 	},
