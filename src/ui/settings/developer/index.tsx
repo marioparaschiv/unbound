@@ -1,6 +1,6 @@
 import { Form, Section, Row, SwitchRow, RowIcon, useEndStyle } from '@ui/components/form';
 import { React, ReactNative as RN } from '@metro/common';
-import { Forms, Navigation } from '@metro/components';
+import { Forms, Redesign } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { Keys, Links } from '@constants';
 import { Strings } from '@api/i18n';
@@ -11,7 +11,7 @@ import AssetBrowser from './assets';
 import Logs from './logger';
 
 export default function Developer() {
-	const navigation = Navigation.useNavigation();
+	const navigation = Redesign.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const endStyle = useEndStyle();
 

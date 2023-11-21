@@ -1,9 +1,10 @@
-import { i18n, React, ReactNative as RN, Clipboard } from '@metro/common';
+import { React, ReactNative as RN, Clipboard } from '@metro/common';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
 import { getIDByName } from '@api/assets';
 import { ClientName } from '@constants';
 import { reload } from '@api/native';
+import { Strings } from '@api/i18n';
 
 import useStyles from './error-boundary.style';
 import CodeBlock from '../codeblock';
@@ -68,7 +69,7 @@ const Outline = ({ state, error }: any) => {
 
 	return <Card style={{ flexGrow: 1 }}>
 		<RN.Text style={styles.outlineTitle}>
-			{i18n.Messages.UNBOUND_ERROR_BOUNDARY_OUTLINE_TITLE}
+			{Strings.UNBOUND_ERROR_BOUNDARY_OUTLINE_TITLE}
 		</RN.Text>
 
 		<Redesign.SegmentedControlPages state={state} />
@@ -111,7 +112,7 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'>
 						size={'md'}
 						icon={getIDByName('ic_message_retry')}
 						iconPosition={'start'}
-						text={i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_RETRY_RENDER}
+						text={Strings.UNBOUND_ERROR_BOUNDARY_ACTION_RETRY_RENDER}
 					/>
 				</RN.View>
 
@@ -122,7 +123,7 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'>
 							icon={getIDByName('ic_shield_24px')}
 							variant={'primary-alt'}
 							size={'md'}
-							text={i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_RECOVERY_MODE}
+							text={Strings.UNBOUND_ERROR_BOUNDARY_ACTION_RECOVERY_MODE}
 						/>
 					</RN.View>
 				)}
@@ -135,12 +136,12 @@ export default function ErrorBoundary({ error, retryRender, res }: ErrorBoundary
 	const possibleErrors = [
 		{
 			id: 'component',
-			label: i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_COMPONENT,
+			label: Strings.UNBOUND_ERROR_BOUNDARY_ACTION_COMPONENT,
 			error: error.toString() + error.componentStack
 		},
 		{
 			id: 'stack',
-			label: i18n.Messages.UNBOUND_ERROR_BOUNDARY_ACTION_STACK_TRACE,
+			label: Strings.UNBOUND_ERROR_BOUNDARY_ACTION_STACK_TRACE,
 			error: error.stack.replace(/(at .*) \(.*\)/g, '$1')
 		}
 	];

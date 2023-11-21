@@ -2,8 +2,8 @@ import { Section, SwitchRow, Row, Form, RowIcon } from '@ui/components/form';
 import { Theme, React, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';
-import { Navigation } from '@metro/components';
-import { Invites } from '@metro/actions';
+import { Redesign } from '@metro/components';
+import { Invites, Linking } from '@metro/actions';
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 import { reload } from '@api/native';
@@ -24,7 +24,7 @@ const useStyles = StyleSheet.createStyles({
 });
 
 function General() {
-	const navigation = Navigation.useNavigation();
+	const navigation = Redesign.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const styles = useStyles();
 
@@ -107,17 +107,17 @@ function General() {
 				<Row
 					label={Strings.UNBOUND_DISCORD_SERVER}
 					icon={<RowIcon source={Icons.Discord} />}
-					onPress={() => Invites.acceptInviteAndTransitionToInviteChannel({ inviteKey: Invite })}
+					onPress={() => Linking.openDeeplink(`https://discord.gg/${Invite}`)}
 					arrow
 				/>
 				<Row
-					label='GitHub'
+					label={Strings.UNBOUND_GITHUB}
 					icon={<RowIcon source={Icons.GitHub} />}
 					onPress={() => RN.Linking.openURL(Links.GitHub)}
 					arrow
 				/>
 				<Row
-					label='X'
+					label={`X / ${Strings.UNBOUND_TWITTER}`}
 					icon={<RowIcon source={Icons.X} />}
 					onPress={() => RN.Linking.openURL(Links.X)}
 					arrow

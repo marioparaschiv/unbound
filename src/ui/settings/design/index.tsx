@@ -1,5 +1,5 @@
 import HeaderRight from '@ui/components/internal/addon-header';
-import { Navigation, Redesign } from '@metro/components';
+import { Redesign } from '@metro/components';
 import { InstallModal } from '@ui/components/internal';
 import { ReactNative as RN } from '@metro/common';
 import { useSettingsStore } from '@api/storage';
@@ -38,7 +38,7 @@ const items = [
 
 export default function Design() {
 	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
-	const navigation = Navigation.useNavigation();
+	const navigation = Redesign.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const state = Redesign.useSegmentedControlState({
 		defaultIndex: settings.get('designPageIndex', 0),

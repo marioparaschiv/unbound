@@ -2,13 +2,10 @@ import type { BuiltIn } from '@typings/core/builtins';
 import { ReactNative as RN } from '@metro/common';
 import { ManagerType } from '@managers/base';
 import { createPatcher } from '@patcher';
-import plugins from '@managers/plugins';
 import { createLogger } from '@logger';
-import themes from '@managers/themes';
-import icons from '@managers/icons';
 import { findByName } from '@metro';
-import Toasts from '@api/toasts';
 import { managers } from '@api';
+import Toasts from '@api/toasts';
 
 const Patcher = createPatcher('protocols');
 const Logger = createLogger('Protocol');
@@ -103,20 +100,7 @@ function getBulkParameters(...args: (URLSearchParams | string)[]): any[] {
 }
 
 function getManager(type: string) {
-	const manager = managers[type];
-	if (manager) return manager;
-
-	switch (type) {
-		case ManagerType.Plugins:
-			return plugins;
-		case ManagerType.Themes:
-			return themes;
-		case ManagerType.Icons:
-			return icons;
-		default:
-			console.warn(`Not a valid type! (${type})`);
-			return;
-	}
+	return managers[type] ?? managers[type + 's'];
 }
 
 function resolveProtocols(content) {

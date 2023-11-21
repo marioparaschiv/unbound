@@ -1,12 +1,12 @@
 import { ClientName, Keys } from '@constants';
 import { findInReactTree } from '@utilities';
 import { Forms } from '@metro/components';
-import { i18n } from '@metro/common';
 import { findByName } from '@metro';
 import { Icons } from '@api/assets';
 import * as Icon from '@ui/icons';
 
 import { Settings } from './base';
+import { Strings } from '@api/i18n';
 
 export class PanelsSettings extends Settings {
 	private Settings: { default: any; };
@@ -43,7 +43,7 @@ export class PanelsSettings extends Settings {
 			const { navigation } = self.props;
 			const { children } = res.props;
 
-			const index = children.findIndex(c => c?.props?.title === i18n.Messages.PREMIUM_SETTINGS_GENERIC);
+			const index = children.findIndex(c => c?.props?.title === Strings.PREMIUM_SETTINGS_GENERIC);
 
 			children.splice(index, 0, <>
 				<Forms.FormSection key={ClientName} title={ClientName}>
@@ -62,7 +62,7 @@ export class PanelsSettings extends Settings {
 			</>);
 
 			// Remove 'Upload Debug Logs' button
-			const support = children.find(c => c?.props.title === i18n.Messages.SUPPORT);
+			const support = children.find(c => c?.props.title === Strings.SUPPORT);
 			const entries = support?.props.children;
 
 			if (entries) {

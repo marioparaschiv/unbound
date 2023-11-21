@@ -40,12 +40,12 @@ class Manager extends EventEmitter {
 	}
 
 	async showAddonToast(addon: Addon, message: string) {
-		const { i18n } = await import('@metro/common');
+		const { Strings } = await import('@api/i18n');
 		const { showToast } = await import('@api/toasts');
 
 		showToast({
 			title: addon.data.name,
-			content: i18n.Messages[message],
+			content: Strings[message],
 			icon: (() => {
 				if (addon.data.icon && addon.data.icon !== '__custom__') return addon.data.icon;
 
@@ -56,27 +56,27 @@ class Manager extends EventEmitter {
 
 	async installWithToast(url: string, addon?: Addon) {
 		const { showToast } = await import('@api/toasts');
-		const { i18n } = await import('@metro/common');
+		const { Strings } = await import('@api/i18n');
 		const controller = new AbortController();
 		const title = addon ? addon.data.name : this.name;
 
 		const toast = showToast({
 			title,
-			content: i18n.Messages.UNBOUND_DOWNLOAD_PACK_FETCHING,
+			content: Strings.UNBOUND_DOWNLOAD_PACK_FETCHING,
 			icon: 'ic_download_24px',
 			duration: 0
 		});
 
 		toast.update({
 			buttons: [{
-				content: i18n.Messages.CANCEL,
+				content: Strings.CANCEL,
 				onPress: () => {
 					controller.abort();
 					toast.close();
 
 					showToast({
 						title,
-						content: i18n.Messages.UNBOUND_INSTALL_CANCELLED.format({ type: capitalize(this.type) }),
+						content: Strings.UNBOUND_INSTALL_CANCELLED.format({ type: capitalize(this.type) }),
 						icon: 'CloseLargeIcon'
 					});
 				}
@@ -94,14 +94,14 @@ class Manager extends EventEmitter {
 		).then((addon) => {
 			if (addon instanceof Error) {
 				toast.update({
-					content: i18n.Messages.UNBOUND_DOWNLOAD_ADDON_FAILED.format({ error: addon.message })
+					content: Strings.UNBOUND_DOWNLOAD_ADDON_FAILED.format({ error: addon.message })
 				});
 
 				return;
 			}
 
 			toast.update({
-				content: i18n.Messages.UNBOUND_DOWNLOAD_ADDON_DONE.format({ type: this.type, name: `'${addon.data.name}'` })
+				content: Strings.UNBOUND_DOWNLOAD_ADDON_DONE.format({ type: this.type, name: `'${addon.data.name}'` })
 			});
 		});
 
@@ -122,15 +122,15 @@ class Manager extends EventEmitter {
 				icon: 'trash',
 				action: async () => {
 					// Avoid circular dependency
-					const { i18n } = await import('@metro/common');
+					const { Strings } = await import('@api/i18n');
 					const { showAlert } = await import('@api/dialogs');
 
 					showAlert({
-						title: i18n.Messages.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(this.type) }),
-						content: i18n.Messages.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
+						title: Strings.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(this.type) }),
+						content: Strings.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
 						buttons: [
 							{
-								text: i18n.Messages.UNBOUND_UNINSTALL,
+								text: Strings.UNBOUND_UNINSTALL,
 								onPress: () => this.delete(addon.id)
 							}
 						]

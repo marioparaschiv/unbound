@@ -1,4 +1,4 @@
-import { Constants, Theme, React, ReactNative as RN, StyleSheet, i18n } from '@metro/common';
+import { Constants, Theme, React, ReactNative as RN, StyleSheet } from '@metro/common';
 import { mergeStyles } from '@utilities';
 import { showAlert } from '@api/dialogs';
 import { AsyncUsers } from '@metro/api';
@@ -6,17 +6,15 @@ import { Users } from '@metro/stores';
 import { Profiles } from '@metro/ui';
 import { reload } from '@api/native';
 import { Icons, getIDByName } from '@api/assets';
-import { Theme as ThemeStore } from '@metro/stores';
+import { Strings } from '@api/i18n';
 
 import { ManagerType } from '@managers/base';
 import { Redesign } from '@metro/components';
-import Overflow from '@ui/components/internal/overflow';
+import Overflow from '@ui/components/overflow';
 
 import type { Addon, Author, Manager } from '@typings/managers';
 import { managers } from '@api';
 import { RowSwitch } from '@ui/components/form';
-
-const { colors, meta: { resolveSemanticColor } } = Theme;
 
 interface AddonCardProps {
 	type: Manager;
@@ -27,15 +25,15 @@ interface AddonCardProps {
 }
 
 type InternalAddonCardProps = AddonCardProps & {
-	styles: AnyProps;
+	styles: ReturnType<typeof useStyles>;
 };
 
 const showRestartAlert = () => showAlert({
-	title: i18n.Messages.UNBOUND_CHANGE_RESTART,
-	content: i18n.Messages.UNBOUND_CHANGE_RESTART_DESC,
+	title: Strings.UNBOUND_CHANGE_RESTART,
+	content: Strings.UNBOUND_CHANGE_RESTART_DESC,
 	buttons: [
 		{
-			text: i18n.Messages.UNBOUND_RESTART,
+			text: Strings.UNBOUND_RESTART,
 			onPress: () => {
 				Redesign.dismissAlerts();
 				reload();
@@ -76,7 +74,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 	}
 
 	renderIcon() {
-		const { addon } = this.props;
+		const { addon, styles } = this.props;
 
 		if (addon.data.icon === '__custom__' && addon.instance.icon && this.manager.type === ManagerType.Plugins) {
 			return React.createElement(addon.instance.icon);
@@ -84,12 +82,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 
 		return <RN.Image
 			source={this.source}
-			style={{
-				width: 16,
-				aspectRatio: 1,
-				marginRight: 8,
-				tintColor: resolveSemanticColor(ThemeStore.theme, colors.INTERACTIVE_NORMAL)
-			}}
+			style={styles.icon}
 		/>;
 	}
 
@@ -103,7 +96,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 			items={this.manager.getContextItems(addon, navigation).map(item => {
 				return {
 					...item,
-					label: i18n.Messages[item.label],
+					label: Strings[item.label],
 					iconSource: Icons[item.icon]
 				};
 			})}
@@ -188,10 +181,10 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 
 		return <>
 			<RN.Text style={styles.description}>
-				{addon.data.description ?? i18n.Messages.UNBOUND_ADDON_NO_DESCRIPTION}
+				{addon.data.description ?? Strings.UNBOUND_ADDON_NO_DESCRIPTION}
 			</RN.Text>
 			{addon.failed && <RN.Text style={mergeStyles(styles.description, styles.error)}>
-				{i18n.Messages.UNBOUND_ADDON_FAILED.format({ error: error.message })}
+				{Strings.UNBOUND_ADDON_FAILED.format({ error: error.message })}
 			</RN.Text>}
 		</>;
 	}
@@ -277,8 +270,9 @@ const useStyles = StyleSheet.createStyles({
 		})
 	},
 	icon: {
-		width: 22,
-		height: 22,
+		width: 16,
+		aspectRatio: 1,
+		marginRight: 8,
 		tintColor: Theme.colors.INTERACTIVE_NORMAL
 	}
 });

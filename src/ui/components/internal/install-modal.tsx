@@ -1,4 +1,4 @@
-import { Clipboard, Constants, ReactNative as RN, StyleSheet, Theme, i18n } from '@metro/common';
+import { Clipboard, Constants, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import type { Manager } from '@typings/managers';
 import { Redesign } from '@metro/components';
 import { showAlert } from '@api/dialogs';
@@ -6,6 +6,9 @@ import { capitalize } from '@utilities';
 import { showToast } from '@api/toasts';
 import { Icons } from '@api/assets';
 import { managers } from '@api';
+import { useSettingsStore } from '@api/storage';
+import { Links } from '@constants';
+import { Strings } from '@api/i18n';
 
 interface InstallModalProps {
 	type: Manager;
@@ -13,7 +16,8 @@ interface InstallModalProps {
 }
 
 type InternalInstallModalProps = InstallModalProps & {
-	styles: AnyProps;
+	styles: ReturnType<typeof useStyles>;
+	settings: ReturnType<typeof useSettingsStore>;
 };
 
 export class InternalInstallInput extends React.PureComponent<InternalInstallModalProps> {
@@ -33,6 +37,7 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 
 	renderInput() {
 		const { message } = this.state;
+		const { settings } = this.props;
 
 		return <RN.View style={{ display: 'flex', flexDirection: 'row', marginRight: 50 }}>
 			<Redesign.TextInput
@@ -55,6 +60,11 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 				size={'md'}
 				loading={this.state.loadingPaste}
 				onPress={() => {
+					if (settings.get('onboarding.install', false)) {
+						this.setState({ url: Links.OnboardingPlugin });
+						return;
+					}
+
 					this.setState({ loadingPaste: true });
 
 					Clipboard.getString().then(url => {
@@ -67,10 +77,11 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 
 	renderButtons() {
 		const { url } = this.state;
+		const { settings } = this.props;
 
 		return <>
 			<Redesign.Button
-				text={i18n.Messages.UNBOUND_INSTALL}
+				text={Strings.UNBOUND_INSTALL}
 				style={{ marginTop: 18 }}
 				loading={this.state.loadingInstall}
 				onPress={() => {
@@ -78,12 +89,18 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 						this.setState({ loadingInstall: true });
 
 						(this.manager).install(url, (state) => this.setState(state), this.controller.signal)
-							.then(() => this.setState({ loadingInstall: false }));
+							.then(() => {
+								this.setState({ loadingInstall: false });
+
+								if (settings.get('onboarding.install', false)) {
+									settings.set('onboarding.install', false);
+								}
+							});
 					}
 				}}
 			/>
 			<Redesign.Button
-				text={i18n.Messages.CANCEL}
+				text={Strings.CANCEL}
 				style={{ marginTop: 12 }}
 				onPress={() => {
 					Redesign.dismissAlerts();
@@ -93,7 +110,7 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 
 						showToast({
 							title: this.manager.name,
-							content: i18n.Messages.UNBOUND_INSTALL_CANCELLED.format({ type: capitalize(this.manager.type) }),
+							content: Strings.UNBOUND_INSTALL_CANCELLED.format({ type: capitalize(this.manager.type) }),
 							icon: 'CloseLargeIcon'
 						});
 					}
@@ -120,9 +137,10 @@ const useStyles = StyleSheet.createStyles({
 });
 
 function InstallInput(props: InstallModalProps) {
+	const settings = useSettingsStore('unbound');
 	const styles = useStyles();
 
-	return <InternalInstallInput styles={styles} {...props} />;
+	return <InternalInstallInput styles={styles} settings={settings} {...props} />;
 }
 
 export function showInstallAlert({ type, ref }: InstallModalProps) {
@@ -131,8 +149,8 @@ export function showInstallAlert({ type, ref }: InstallModalProps) {
 	// This uses a custom button to prevent closing the dialog after failure
 	// This is also to use a custom loading state for the async install method
 	showAlert({
-		title: i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: manager.type }),
-		content: i18n.Messages.UNBOUND_ADDON_VALID_MANIFEST.format({ type: manager.type }),
+		title: Strings.UNBOUND_INSTALL_TITLE.format({ type: manager.type }),
+		content: Strings.UNBOUND_ADDON_VALID_MANIFEST.format({ type: manager.type }),
 		component: (
 			<InstallInput
 				type={type}

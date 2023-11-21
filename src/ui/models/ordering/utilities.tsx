@@ -1,7 +1,7 @@
 import { StyleSheet, Theme, ReactNative as RN, React } from '@metro/common';
-import { Manager } from '@typings/managers';
 import { getIDByName } from '@api/assets';
 import { managers } from '@api';
+import type { Manager } from '@typings/managers';
 
 export const resolveType = (entity: Manager | Fn<Manager>) => {
 	const resolved = typeof entity === 'function' ? entity() : entity;

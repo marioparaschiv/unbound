@@ -3,9 +3,9 @@ import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
 import Storage, { DCDFileManager } from '@api/storage';
 import { chunkArray } from '@utilities';
-import { i18n } from '@metro/common';
 import { findByProps } from '@metro';
 import { ClientName } from '@constants';
+import { Strings } from '@api/i18n';
 import downloadFile from '@utilities/downloadFile';
 
 import type { Addon, InternalManifest, Manifest, Resolveable } from '@typings/managers';
@@ -64,7 +64,7 @@ class Icons extends Manager {
 		if (addon.data.id === 'default')
 			return [];
 
-		return this.getBaseContextItems(addon)
+		return this.getBaseContextItems(addon);
 	}
 
 	override async install(url: string, setState: Fn, signal: AbortSignal): Promise<Error | Addon> {
@@ -165,7 +165,7 @@ class Icons extends Manager {
 
 		try {
 			this.settings.set('applied', this.settings.get('packs', [defaultPack])
-				.find(x => x.manifest.id === addon.data.id) || defaultPack)
+				.find(x => x.manifest.id === addon.data.id) || defaultPack);
 
 			if (!addon.started) {
 				this.patcher.unpatchAll();
@@ -183,10 +183,10 @@ class Icons extends Manager {
 		try {
 			if (this.applied.manifest.id === addon.data.id) {
 				this.settings.set('applied', this.settings.get('packs', [defaultPack])
-					.find(x => x.manifest.id === 'default') || defaultPack)
+					.find(x => x.manifest.id === 'default') || defaultPack);
 
 				this.settings.set('packs', this.settings.get('packs', [defaultPack])
-					.filter(x => x.manifest.id !== addon.data.id))
+					.filter(x => x.manifest.id !== addon.data.id));
 			}
 
 			await this.unload(addon);
@@ -220,9 +220,9 @@ class Icons extends Manager {
 				await downloadFile(assetUrl, assetPath, this.signal)
 					.then(() => {
 						setState({
-							message: i18n.Messages.UNBOUND_DOWNLOAD_PACK_PROGRESS.format({ progress: `${completed++}/${assets.length}` })
+							message: Strings.UNBOUND_DOWNLOAD_PACK_PROGRESS.format({ progress: `${completed++}/${assets.length}` })
 						});
-					})
+					});
 			}));
 		}
 
@@ -239,7 +239,7 @@ class Icons extends Manager {
 		pack: Pack | Addon,
 		fs = false as TAsync
 	): TAsync extends true ? Promise<boolean> : boolean {
-		const id = (pack as any).data.id || (pack as any).manifest.id
+		const id = (pack as any).data.id || (pack as any).manifest.id;
 
 		if (fs) {
 			return DCDFileManager.fileExists(`${DCDFileManager.DocumentsDirPath}/${this.path}/${id}`) as any;

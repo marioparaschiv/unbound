@@ -1,8 +1,9 @@
 import { TrailingIcon, resolveType } from '@ui/models/ordering/utilities';
-import { ReactNative as RN, React, i18n } from '@metro/common';
+import { ReactNative as RN, React } from '@metro/common';
 import type { Addon, Manager } from '@typings/managers';
 import { useSettingsStore } from '@api/storage';
 import { Checkbox } from '@ui/components/form';
+import { Strings } from '@api/i18n';
 
 export { TrailingIcon, resolveType };
 
@@ -89,7 +90,7 @@ export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSe
 			},
 
 			get label() {
-				return i18n.Messages[label];
+				return Strings[label];
 			}
 		};
 

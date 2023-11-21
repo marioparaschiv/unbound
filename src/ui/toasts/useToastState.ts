@@ -63,7 +63,7 @@ function useToastState(options: InternalToastOptions) {
 		const duration = (options.duration ?? settings.get('toasts.duration', 0));
 
 		if (duration !== 0) {
-			const timeout = setTimeout(leave, duration);
+			const timeout = setTimeout(leave, duration * 1000);
 			return () => clearTimeout(timeout);
 		}
 	}, []);

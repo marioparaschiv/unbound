@@ -5,7 +5,6 @@ import { find, findByProps } from '@metro';
 import { addToast } from '@stores/toasts';
 import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
-import { forceRender } from '@utilities';
 
 const Patcher = createPatcher('toasts');
 const Logger = createLogger('Toasts');
@@ -22,7 +21,6 @@ try {
 	Patcher.after(Container, 'type', (_, args, res) => {
 		const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('toasts'));
 
-		console.log(args, res);
 		if (!settings.get('toasts.enabled', true)) {
 			return res;
 		}
@@ -37,8 +35,6 @@ try {
 
 			options.title = options.content;
 			delete options.content;
-
-			options.duration = 2500;
 
 			return showToast(options);
 		}

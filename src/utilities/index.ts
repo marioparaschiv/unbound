@@ -1,3 +1,4 @@
+export { default as callbackWithAnimation } from './callbackWithAnimation';
 export { default as findInReactTree } from './findInReactTree';
 export { default as forceRender } from './forceRender';
 export { default as mergeStyles } from './mergeStyles';

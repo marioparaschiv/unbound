@@ -2,7 +2,8 @@ import { Icons } from '@api/assets';
 import { byProps } from '@metro/filters';
 import { findByProps, bulk } from '@metro';
 import { ClientName, Keys } from '@constants';
-import { React, i18n } from '@metro/common';
+import { React } from '@metro/common';
+import { Strings } from '@api/i18n';
 
 import { Settings } from './base';
 
@@ -59,7 +60,7 @@ export class TabsSettings extends Settings {
 				});
 			}
 
-			const support = sections.find(section => section.label === i18n.Messages.SUPPORT);
+			const support = sections.find(section => section.label === Strings.SUPPORT);
 			support && (support.settings = support.settings.filter(setting => setting !== 'UPLOAD_DEBUG_LOGS'));
 		});
 	};

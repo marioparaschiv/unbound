@@ -1,9 +1,7 @@
-import { Constants, i18n, React, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
-import AdvancedSearch, { useAdvancedSearch } from '@ui/components/advanced-search';
-import { Search } from '@ui/components';
+import { Constants, React, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { showInstallAlert } from '@ui/components/internal/install-modal';
 import HeaderRight from '@ui/components/internal/addon-header';
-import { HelpMessage, Navigation } from '@metro/components';
+import { HelpMessage, Redesign } from '@metro/components';
 import getItems, { resolveType } from '@ui/models/ordering';
 import type { Addon, Manager } from '@typings/managers';
 import { useSettingsStore } from '@api/storage';
@@ -11,6 +9,9 @@ import InstallModal from './install-modal';
 import AddonCard from './addon-card';
 import { Icons } from '@api/assets';
 import { managers } from '@api';
+import { callbackWithAnimation, noop } from '@utilities';
+import { Strings } from '@api/i18n';
+import { GeneralSearch } from '@ui/components/search';
 
 interface AddonListProps {
 	type: Manager;
@@ -18,12 +19,12 @@ interface AddonListProps {
 	addons: Addon[];
 	showHeaderRight?: boolean;
 	onPressInstall?: ({ ref, settings, type }) => any;
+	headerRightMargin?: boolean;
 }
 
 const useStyles = StyleSheet.createStyles({
 	recoveryContainer: {
-		paddingHorizontal: 10,
-		marginBottom: 10
+		marginTop: 10
 	},
 	empty: {
 		justifyContent: 'center',
@@ -41,12 +42,13 @@ const useStyles = StyleSheet.createStyles({
 	}
 });
 
-export default function Addons({ addons, type, shouldRestart, showHeaderRight = true, onPressInstall }: AddonListProps) {
+export default function Addons({ addons, type, shouldRestart, showHeaderRight = true, onPressInstall, headerRightMargin }: AddonListProps) {
 	const [search, setSearch] = React.useState('');
 	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
-	const navigation = Navigation.useNavigation();
+	const navigation = Redesign.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const styles = useStyles();
+	const manager = React.useMemo(() => managers[type], [type]);
 
 	React.useLayoutEffect(() => {
 		if (showHeaderRight) {
@@ -58,6 +60,7 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 						type={type}
 						settings={settings}
 						onPress={() => onPressInstall({ ref, settings, type })}
+						margin={headerRightMargin}
 					/>
 				});
 			});
@@ -65,8 +68,13 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 	}, []);
 
 	const isRecovery = settings.get('recovery', false);
+	const isOnboarding = settings.get('onboarding.install', false);
 	const order = settings.get(`${resolveType(type)}.order`, 'default');
 	const reversed = settings.get(`${resolveType(type)}.reversed`, false);
+
+	React.useLayoutEffect(() => {
+		callbackWithAnimation(noop)();
+	}, [isOnboarding]);
 
 	const data = React.useMemo(() => {
 		const items = getItems(type, settings);
@@ -89,15 +97,20 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 		});
 	}, [search, addons, order, reversed]);
 
-	return <RN.View style={{ padding: 10 }}>
-		<Search
-			placeholder='test'
-			value={search}
-			onChangeText={setSearch}
+	return <RN.View style={{ marginHorizontal: 12, marginTop: 12 }}>
+		<GeneralSearch
+			type={manager.name}
+			search={search}
+			setSearch={setSearch}
 		/>
+		{isOnboarding && <RN.View style={styles.recoveryContainer}>
+			<HelpMessage messageType={1}>
+				{Strings.UNBOUND_ONBOARDING_ADDON_PAGE_INFO.format({ type: manager.type })}
+			</HelpMessage>
+		</RN.View>}
 		{isRecovery && <RN.View style={styles.recoveryContainer}>
 			<HelpMessage messageType={0}>
-				{i18n.Messages.UNBOUND_RECOVERY_MODE_ENABLED}
+				{Strings.UNBOUND_RECOVERY_MODE_ENABLED}
 			</HelpMessage>
 		</RN.View>}
 		<RN.ScrollView
@@ -107,7 +120,7 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 				// We just need access to the onRefresh method to open the install modal
 				refreshing={false}
 				onRefresh={() => showInstallAlert({ type, ref })}
-				title={i18n.Messages.UNBOUND_INSTALL_TITLE.format({ type: managers[type].type })}
+				title={Strings.UNBOUND_INSTALL_TITLE.format({ type: manager.type })}
 			/>}
 		>
 			<RN.FlatList
@@ -127,7 +140,7 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 						source={Icons['img_connection_empty_dark']}
 					/>
 					<RN.Text style={styles.emptyMessage}>
-						{i18n.Messages.UNBOUND_ADDONS_EMPTY.format({ type: managers[type].name.toLowerCase() })}
+						{Strings.UNBOUND_ADDONS_EMPTY.format({ type: manager.name.toLowerCase() })}
 					</RN.Text>
 				</RN.View>}
 			/>

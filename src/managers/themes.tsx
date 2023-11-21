@@ -80,6 +80,7 @@ class Themes extends Manager {
 
 	async applyBackground(addon: Addon) {
 		// Avoid circular dependency
+		const { ReactNative: RN } = await import('@metro/common');
 		const { findByName, findByProps } = await import('@metro');
 		const { Theme } = await import('@metro/stores');
 		const { instance: { background } } = addon;
@@ -90,12 +91,11 @@ class Themes extends Manager {
 		this.patcher.after(Chat, 'default', (_, __, res) => {
 			const index = { dark: 0, light: 1, amoled: 2 }[Theme.theme.toLowerCase()] || 0;
 
-			return <ReactNative.ImageBackground
+			return <RN.ImageBackground
 				blurRadius={typeof background.blur === 'number' ? background.blur : 0}
 				style={{ flex: 1, height: '100%' }}
 				source={{ uri: typeof background.url === 'string' ? background.url : background.url[index] ?? background.url[0] }}
-				children={res}
-			/>;
+			>{res}</RN.ImageBackground>;
 		});
 
 		this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {

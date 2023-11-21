@@ -1,4 +1,4 @@
-import { Navigation } from '@metro/components';
+import { Redesign } from '@metro/components';
 import { createPatcher } from '@patcher';
 import { ClientName } from '@constants';
 import { Strings } from '@api/i18n';
@@ -93,7 +93,7 @@ export class Settings {
 		Design,
 		Updater: () => null,
 		Custom: ({ title, render: Component, ...props }: CustomScreenProps) => {
-			const navigation = Navigation.useNavigation();
+			const navigation = Redesign.useNavigation();
 
 			const unsubscribe = navigation.addListener('focus', () => {
 				unsubscribe();

@@ -1,11 +1,11 @@
-import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme, i18n } from '@metro/common';
-import AdvancedSearch, { useAdvancedSearch } from '@ui/components/advanced-search';
+import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme } from '@metro/common';
 import { Section, Row, RowIcon } from '@ui/components/form';
-import { Navigation } from '@metro/components';
+import { Redesign } from '@metro/components';
 import LoggerStore from '@stores/logger';
 import { Icons } from '@api/assets';
+import { Strings } from '@api/i18n';
+import { GeneralSearch } from '@ui/components/search';
 
-const searchContext = { type: 'LOGGER' };
 const levelSelection = {
 	variant(level: number) {
 		return ['muted', 'normal', 'warning', 'danger'][level];
@@ -17,14 +17,14 @@ const levelSelection = {
 };
 
 export default function Logger() {
-	const [query, controls] = useAdvancedSearch(searchContext);
-	const navigation = Navigation.useNavigation();
+	const [search, setSearch] = React.useState('');
+	const navigation = Redesign.useNavigation();
 	const store = LoggerStore.useStore();
 	const styles = useStyles();
 
 	const data = React.useMemo(() => store.logs
-		.filter(item => item.message?.toLowerCase()?.includes(query))
-		.sort((a, b) => a.time - b.time), [query]);
+		.filter(item => item.message?.toLowerCase()?.includes(search))
+		.sort((a, b) => a.time - b.time), [search]);
 
 	const unsubscribe = navigation.addListener('focus', () => {
 		unsubscribe();
@@ -32,10 +32,11 @@ export default function Logger() {
 	});
 
 	return <RN.View>
-		<RN.View style={{ marginHorizontal: 16, marginBottom: 12 }}>
-			<AdvancedSearch
-				searchContext={searchContext}
-				controls={controls}
+		<RN.View style={{ marginHorizontal: 16, marginVertical: 12 }}>
+			<GeneralSearch
+				type={'logs'}
+				search={search}
+				setSearch={setSearch}
 			/>
 		</RN.View>
 		<Section style={{ flex: 1, marginBottom: 108 }} margin={false}>
@@ -49,7 +50,7 @@ export default function Logger() {
 						source={Icons['img_connection_empty_dark']}
 					/>
 					<RN.Text style={styles.emptyMessage}>
-						{i18n.Messages.UNBOUND_LOGS_EMPTY}
+						{Strings.UNBOUND_LOGS_EMPTY}
 					</RN.Text>
 				</RN.View>}
 				renderItem={({ item }) => {

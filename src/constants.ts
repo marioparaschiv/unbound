@@ -4,7 +4,8 @@ export const Links = {
 	GitHub: 'https://github.com/unbound-mod',
 	X: 'https://x.com/UnboundApp',
 	Bundle: 'https://raw.githubusercontent.com/unbound-mod/unbound/main/dist/bundle.js',
-	Badges: 'https://raw.githubusercontent.com/unbound-mod/badges/main/'
+	Badges: 'https://raw.githubusercontent.com/unbound-mod/badges/main/',
+	OnboardingPlugin: 'http://rosies-macbook-air.local:5495/manifest.json'
 } as const;
 
 export const ClientName = 'Unbound';

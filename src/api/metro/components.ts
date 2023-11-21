@@ -9,5 +9,3 @@ export const HelpMessage = findByName('HelpMessage');
 export const Media = findByProps('openMediaModal', { lazy: true });
 export const { default: Button } = findByProps('ButtonColors', 'ButtonLooks', 'ButtonSizes', { lazy: true });
 export const Redesign = findByProps('SegmentedControl', 'Stack', { lazy: true });
-
-export const Navigation = findByProps('useNavigation', { lazy: true });

@@ -6,7 +6,7 @@ import Toast from './toast';
 function ToastContainer() {
 	const { toasts } = useToasts();
 
-	return <RN.SafeAreaView style={{ gap: 5, height: '100%', pointerEvents: 'box-none' }} pointerEvents='box-none'>
+	return <RN.SafeAreaView style={{ gap: 5, height: '100%' }} pointerEvents='box-none'>
 		{Object.entries(toasts).map(([id, options]: [string, ToastOptions]) => (
 			<Toast {...options} key={id} />
 		))}
