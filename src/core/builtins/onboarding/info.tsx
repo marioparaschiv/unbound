@@ -5,7 +5,7 @@ import useStyles from './styles';
 
 import { on, set } from '@api/storage';
 import { Linking } from '@metro/actions';
-import { Invite } from '@constants';
+import { Invite, Links } from '@constants';
 import { Strings } from '@api/i18n';
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -211,13 +211,25 @@ export default [
 			return Strings.UNBOUND_ONBOARDING_PROTOCOLS_SUBTITLE;
 		},
 
-		buttons: [{
-			get text() {
-				return Strings.CONTINUE;
-			},
+		buttons: [
+			{
+				get text() {
+					return Strings.UNBOUND_DOCUMENTATION;
+				},
 
-			icon: 'LinkIcon'
-		}],
+				// TO-DO: Update this to link to the correct page once it's implemented in the docs
+				onPress: () => Linking.openURL(Links.Docs),
+				icon: 'BookCheckIcon',
+				variant: 'primary-alt',
+			},
+			{
+				get text() {
+					return Strings.CONTINUE;
+				},
+
+				icon: 'ic_activity_24px',
+			}
+		],
 
 		callback({ next, setContent }) {
 			setContent({ id: '', instance: null });
@@ -248,7 +260,7 @@ export default [
 				},
 
 				icon: 'StarIcon',
-				variant: 'secondary'
+				variant: 'primary-alt'
 			}
 		],
 		callback({ next }) {

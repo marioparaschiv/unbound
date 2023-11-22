@@ -5,6 +5,7 @@ export const Links = {
 	X: 'https://x.com/UnboundApp',
 	Bundle: 'https://raw.githubusercontent.com/unbound-mod/unbound/main/dist/bundle.js',
 	Badges: 'https://raw.githubusercontent.com/unbound-mod/badges/main/',
+	Docs: 'https://docs.unbound.rip/',
 	OnboardingPlugin: 'http://rosies-macbook-air.local:5495/manifest.json'
 } as const;
 
