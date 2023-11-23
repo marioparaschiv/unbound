@@ -1,7 +1,7 @@
 import { findByName } from '@metro';
 import { createPatcher } from '@patcher';
 import { Reanimated } from '@metro/common';
-import { getStore } from '@api/storage';
+import { getStore, useSettingsStore } from '@api/storage';
 
 import Content from './components/Content';
 import Onboarding from './components/Onboarding';
@@ -28,6 +28,7 @@ export function initialize() {
 
 	Patcher.after(LaunchPadContainer, 'default', (_, __, res) => {
 		const [content, setContent] = React.useState({ id: '', instance: null });
+		const settings = useSettingsStore('unbound');
 		const contentOpacity = useSharedValue(0);
 		const onboardingOpacity = useSharedValue(0);
 
@@ -38,7 +39,7 @@ export function initialize() {
 			});
 		}, []);
 
-		function onComplete(settings) {
+		function onComplete() {
 			contentOpacity.value = withTiming(0, { duration: 500 });
 			onboardingOpacity.value = withTiming(0, { duration: 500 });
 			setTimeout(() => settings.set('onboarding.completed', true), 500);

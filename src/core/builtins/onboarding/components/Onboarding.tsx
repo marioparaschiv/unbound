@@ -14,7 +14,7 @@ type OnboardingProps = {
 	contentId: string;
 	setContent: Fn,
 	opacity: SharedValue<number>,
-	onComplete: (settings: ReturnType<typeof useSettingsStore>) => any
+	onComplete: () => void
 }
 
 const { withTiming, default: { View } } = Reanimated;
@@ -40,7 +40,7 @@ export default function Onboarding({ contentId, setContent, opacity, onComplete 
 			hide: () => toggleHiddenWithOpacity(true),
 			next: callbackWithAnimation(() => settings.set('onboarding.step', (() => {
 				if (!info[step + 1]) {
-					onComplete(settings);
+					onComplete();
 					return step;
 				}
 
@@ -62,7 +62,7 @@ export default function Onboarding({ contentId, setContent, opacity, onComplete 
 						style={{ width: '80%', marginTop: 20 }}
 						variant={'primary-alt'}
 						size={'md'}
-						onPress={() => onComplete(settings)}
+						onPress={onComplete}
 						icon={getIDByName('ic_message_retry')}
 						text={Strings.UNBOUND_SKIP_ONBOARDING}
 					/>}

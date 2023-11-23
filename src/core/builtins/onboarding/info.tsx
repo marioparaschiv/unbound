@@ -143,7 +143,7 @@ export default [
 			icon: 'ClipboardListIcon'
 		}],
 
-		callback({ next, setContent, styles, contentId }) {
+		callback({ next }) {
 			next();
 		}
 	},
@@ -214,6 +214,13 @@ export default [
 		buttons: [
 			{
 				get text() {
+					return Strings.CONTINUE;
+				},
+
+				icon: 'ic_activity_24px',
+			},
+			{
+				get text() {
 					return Strings.UNBOUND_DOCUMENTATION;
 				},
 
@@ -221,13 +228,6 @@ export default [
 				onPress: () => Linking.openURL(Links.Docs),
 				icon: 'BookCheckIcon',
 				variant: 'primary-alt',
-			},
-			{
-				get text() {
-					return Strings.CONTINUE;
-				},
-
-				icon: 'ic_activity_24px',
 			}
 		],
 
