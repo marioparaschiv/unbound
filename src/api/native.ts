@@ -5,10 +5,15 @@ export const BundleInfo = ReactNative.NativeModules.InfoDictionaryManager ?? Rea
 export const BundleManager = BundleUpdaterManager;
 export const DeviceInfo = DCDDeviceManager;
 
-export async function reload() {
-	const { pending } = await import('@api/storage');
+export async function reload(instant = true) {
+	const { pendingReload } = await import('@api/storage');
 
-	Promise.allSettled(pending.values()).then(() => BundleManager.reload());
+	if (instant) {
+		BundleManager.reload();
+		return;
+	}
+
+	pendingReload.value = true;
 }
 
 export function getNativeModule(...names: string[]) {

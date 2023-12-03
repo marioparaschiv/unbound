@@ -119,7 +119,7 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'>
 				{!settings.get('recovery', false) && (
 					<RN.View style={{ flex: 0.5 }}>
 						<Redesign.Button
-							onPress={() => (settings.set('recovery', true), reload())}
+							onPress={() => (settings.set('recovery', true), reload(false))}
 							icon={getIDByName('ic_shield_24px')}
 							variant={'primary-alt'}
 							size={'md'}

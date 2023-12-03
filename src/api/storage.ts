@@ -1,36 +1,39 @@
-import type { DCDPhotosType, DCDFileManagerType } from '@typings/api/native';
+import type { DCDFileManagerType } from '@typings/api/native';
 import { isEmpty, debounce } from '@utilities';
 import EventEmitter from '@structures/emitter';
-import { getNativeModule } from '@api/native';
+import { BundleManager, getNativeModule } from '@api/native';
+import { createPatcher } from '@patcher';
 
 const Events = new EventEmitter();
+const Patcher = createPatcher('unbound-storage');
 
-export const DCDPhotos: DCDPhotosType = getNativeModule('DCDPhotos', 'DCDPhotosManager');
 export const DCDFileManager: DCDFileManagerType = getNativeModule('DCDFileManager', 'RTNFileManager');
 
-Object.assign(
-	DCDFileManager, {
-	/**
-	 * This is supposed to be a hooked method.
-	 * ---
-	 * All loaders for Unbound need to hook DCDPhotosManager's deletePhotos and parse it like follows:
-	 * - Ensure that 0th item in the uris array is 'unbound' before continuing
-	 * - Use the FileManager implementation of the loader to delete the file
-	 * - Settle the promise by resolving or rejecting based on the operation's success
-	 * - (Optionally, log whether the operation was a success or failure to the native console)
-	 * - Otherwise call the original function with the original parameters.
-	 */
-	async deleteFile(type: 'documents' | 'cache' | 'full', path: string) {
-		const paths = {
-			documents: DCDFileManager.DocumentsDirPath,
-			cache: DCDFileManager.CacheDirPath
-		};
+Patcher.after(DCDFileManager, 'removeFile', (_, [type, path], promise) => {
+	return new Promise((resolve, reject) => {
+		promise.then(result => {
+			const paths = {
+				documents: DCDFileManager.DocumentsDirPath,
+				cache: DCDFileManager.CacheDirPath
+			};
 
-		return DCDPhotos.deletePhotos([
-			'unbound',
-			type === 'full' ? path : `${paths[type]}/${path}`
-		]);
-	}
+			const directory = paths[type];
+
+			if (result === null) {
+				resolve(`Successfully deleted dirent at path '${directory}'!`);
+			}
+
+			if (result === false) {
+				DCDFileManager.fileExists(`${directory}/${path}`).then(fileExists => {
+					if (fileExists) {
+						reject(`Failed to delete dirent at path '${directory}' because it doesnt exist!`);
+					} else {
+						reject(`Failed to delete dirent at path '${directory}' due to an unknown reason!`);
+					}
+				});
+			}
+		});
+	});
 });
 
 export const settings = globalThis.UNBOUND_SETTINGS ?? {};
@@ -129,16 +132,14 @@ export function useSettingsStore(store: string, predicate?: (payload: Payload) =
 	return getStore(store);
 }
 
-export const pending = new Set();
+export const pendingReload = { value: false };
 
 Events.on('changed', debounce(() => {
 	const payload = JSON.stringify(settings, null, 2);
 	const path = 'Unbound/settings.json';
 
 	const promise = DCDFileManager.writeFile('documents', path, payload, 'utf8');
-
-	pending.add(promise);
-	promise.then(() => pending.delete(promise));
+	promise.then(() => pendingReload.value && BundleManager.reload());
 }, 250));
 
 export default { useSettingsStore, getStore, get, set, remove, on, off };

@@ -5,5 +5,5 @@ export default {
 	name: 'reload',
 	description: 'Reloads the unbound client to apply changes.',
 
-	execute: reload
+	execute: () => reload()
 } as ApplicationCommand;

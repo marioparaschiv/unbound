@@ -52,11 +52,7 @@ export default {
 	options: [
 		{
 			name: 'src',
-			displayName: 'src',
-
 			description: 'Source of the code to evaluate (BE CAREFUL AS PASTING CODE FROM RANDOM PEOPLE IS DANGEROUS)',
-			displayDescription: 'Source of the code to evaluate (BE CAREFUL AS PASTING CODE FROM RANDOM PEOPLE IS DANGEROUS)',
-
 			type: 3,
 			required: true
 		}

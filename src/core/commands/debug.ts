@@ -10,13 +10,14 @@ export default {
 
 		const Runtime = (HermesInternal as any).getRuntimeProperties();
 
-		payload.push('**Debug Info:**\n');
-		payload.push(`> **Unbound:** ${window.unbound.version}`);
-		payload.push(`> **Loader:** ${window.loader?.version ?? 'N/A'} (${window.loader?.type ?? 'N/A'})`);
-		payload.push(`> **Discord:** ${BundleInfo.Version} (Build ${BundleInfo.Build} on ${BundleInfo.ReleaseChannel})`);
-		payload.push(`> **Hermes:** ${Runtime['OSS Release Version']}`);
-		payload.push(`> **Bytecode:** ${Runtime['Bytecode Version']}`);
-		payload.push(`> **Device:** ${DeviceInfo.device} (${DeviceInfo.systemVersion})`);
+		payload.push('**Debug Info:**');
+		payload.push(`> **Client**: ${window.unbound.version}`);
+		payload.push(`> **Loader**: ${window.loader?.version ?? 'N/A'} (${window.loader?.type ?? 'N/A'})`);
+		payload.push(`> **Discord**: ${BundleInfo.Version}`);
+		payload.push(`> **Build**: ${BundleInfo.Build} on ${BundleInfo.ReleaseChannel}`);
+		payload.push(`> **Hermes**: ${Runtime['OSS Release Version']}`);
+		payload.push(`> **Bytecode**: ${Runtime['Bytecode Version']}`);
+		payload.push(`> **Device**: ${DeviceInfo.device} (${DeviceInfo.systemVersion})`);
 
 		const content = payload.join('\n');
 

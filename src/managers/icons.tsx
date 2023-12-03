@@ -150,7 +150,7 @@ class Icons extends Manager {
 		if (!addon || addon.failed || Storage.get('unbound', 'recovery', false)) return;
 
 		try {
-			this.applyPack(addon.data.id);
+			this.applyPack(addon.id);
 		} catch (e) {
 			this.logger.error('Failed to apply pack:', e.message);
 		}
@@ -190,7 +190,7 @@ class Icons extends Manager {
 			}
 
 			await this.unload(addon);
-			await DCDFileManager.deleteFile('documents',`${this.path}/${addon.data.id}`);
+			await DCDFileManager.removeFile('documents',`${this.path}/${addon.data.id}`);
 			await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_UNINSTALLED');
 		} catch (e) {
 			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message ?? e);
@@ -259,6 +259,7 @@ class Icons extends Manager {
 			this.applyIconPath(packId, asset);
 		}
 
+		this.patcher.unpatchAll();
 		this.applyImagePatch(packId);
 	}
 
@@ -268,6 +269,8 @@ class Icons extends Manager {
 	}
 
 	async applyIconPath(id: string, asset: Asset) {
+		if (id === 'default') return;
+
 		asset.scales.sort((a, b) => b - a);
 
 		for (const scale of asset.scales) {

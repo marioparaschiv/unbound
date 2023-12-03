@@ -39,7 +39,8 @@ export function initialize() {
 		// This is required because the bundle uid changes between versions, so it cannot be hardcoded in the manifest.
 		// Therefore the string {__path__} is put in the manifest instead, and it is hydrated into the proper path below.
 		if (typeof source === 'object' && source.uri && source.uri.includes(identifier)) {
-			source.uri = source.uri.replace(identifier, documentsPath);
+			props.source = { ...props.source };
+			props.source.uri = source.uri.replace(identifier, documentsPath);
 		}
 	});
 }

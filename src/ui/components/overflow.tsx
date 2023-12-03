@@ -1,6 +1,7 @@
 import { ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { Redesign } from '@metro/components';
 import { Icons } from '@api/assets';
+import type { ImageResolvedAssetSource } from 'react-native';
 
 interface OverflowItem {
 	label: string;
@@ -9,9 +10,14 @@ interface OverflowItem {
 	action: () => any;
 }
 
+interface OverflowProps {
+	items: OverflowItem[],
+	iconSource?: number;
+	scale?: number;
+}
+
 const useStyles = StyleSheet.createStyles({
 	icon: {
-		width: 24,
 		aspectRatio: 1,
 		marginLeft: 8,
 		marginRight: 10,
@@ -19,7 +25,7 @@ const useStyles = StyleSheet.createStyles({
 	}
 });
 
-export default function Overflow({ items, iconSource = Icons['MoreHorizontalIcon'] }: { items: OverflowItem[], iconSource?: number; }) {
+export default function Overflow({ items, iconSource = Icons['MoreHorizontalIcon'], scale = 1 }: OverflowProps) {
 	const styles = useStyles();
 
 	return <Redesign.ContextMenu items={items}>
@@ -31,7 +37,10 @@ export default function Overflow({ items, iconSource = Icons['MoreHorizontalIcon
 				accessibilityActions={accessibilityActions}
 				onAccessibilityAction={onAccessibilityAction}
 			>
-				<RN.Image source={iconSource} style={styles.icon} />
+				<RN.Image
+					source={iconSource}
+					style={[styles.icon, { transform: [{ scale }]}]}
+				/>
 			</RN.TouchableOpacity>
 		)}
 	</Redesign.ContextMenu>;

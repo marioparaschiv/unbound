@@ -80,12 +80,10 @@ export default function Design() {
 		<RN.SafeAreaView
 			style={{
 				position: 'absolute',
-				left: 0,
-				right: 0,
-				bottom: 20,
-				height: 50,
-				marginBottom: 16,
-				marginHorizontal: 16
+				bottom: 0,
+				height: 'auto',
+				marginBottom: 36,
+				marginHorizontal: 36
 			}}
 		>
 			<Redesign.SegmentedControl state={state} />

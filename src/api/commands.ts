@@ -2,8 +2,7 @@ import type { ApplicationCommand } from '@typings/api/commands';
 import CoreCommands from '@core/commands';
 import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
-import filters from '@metro/filters';
-import { bulk } from '@metro';
+import { findByProps } from '@metro';
 
 const Patcher = createPatcher('unbound-commands');
 const Logger = createLogger('Commands');
@@ -38,15 +37,7 @@ export enum ApplicationCommandOptionType {
 	ATTACHMENT
 }
 
-const [
-	Commands,
-	Assets,
-	SearchStore
-] = bulk(
-	{ filter: filters.byProps('getBuiltInCommands') },
-	{ filter: filters.byProps('getApplicationIconURL') },
-	{ filter: m => m.default?.getQueryCommands && m.useDiscoveryState }
-);
+const Commands = findByProps('getBuiltInCommands');
 
 export const data = {
 	commands: [],
@@ -66,14 +57,15 @@ export function registerCommands(caller: string, cmds: ApplicationCommand[]): vo
 	}
 
 	for (const command in cmds) {
+		const lastCommand = Commands.getBuiltInCommands(ApplicationCommandType.CHAT, true, false);
 		const cmd = cmds[command];
 
 		cmds[command] = {
 			displayName: cmd.name,
 			displayDescription: cmd.description,
-			type: 2,
+			type: 1,
 			inputType: 1,
-			id: `unbound-${cmd.name.replaceAll(' ', '-')}`,
+			id: `${parseInt(lastCommand.id, 10) - 1}`,
 			applicationId: data.section.id,
 			...cmd,
 
@@ -96,109 +88,113 @@ export function unregisterCommands(caller: string): void {
 }
 
 function initialize() {
-	Commands.BUILT_IN_SECTIONS['unbound'] = data.section;
+	// Commands.BUILT_IN_SECTIONS['unbound'] = data.section;
 
 	registerCommands('unbound', CoreCommands);
 
-	try {
-		Patcher.after(SearchStore.default, 'getQueryCommands', (_, [, , query], res) => {
-			if (!query || query.startsWith('/')) return;
-			res ??= [];
+	Patcher.after(Commands, 'getBuiltInCommands', (_, [type], res: ApplicationCommand[]) => {
+		if (type === ApplicationCommandType.CHAT) return [...res, ...data.commands];
+	});
 
-			for (const command of data.commands) {
-				if (!~command.name?.indexOf(query) || res.some(e => e.__unbound && e.id === command.id)) {
-					continue;
-				}
+	// try {
+	// 	Patcher.after(SearchStore.default, 'getQueryCommands', (_, [, , query], res) => {
+	// 		if (!query || query.startsWith('/')) return;
+	// 		res ??= [];
 
-				try {
-					res.unshift(command);
-				} catch {
-					// Discord calls Object.preventExtensions on the result when switching channels
-					// Therefore, re-making the result array is required.
-					res = [...res, command];
-				}
-			}
-		});
-	} catch {
-		Logger.error('Patching getQueryCommands failed.');
-	}
+	// 		for (const command of data.commands) {
+	// 			if (!~command.name?.indexOf(query) || res.some(e => e.__unbound && e.id === command.id)) {
+	// 				continue;
+	// 			}
 
-	try {
-		Patcher.instead(SearchStore.default, 'getApplicationSections', (_, args, orig) => {
-			try {
-				const res = orig.apply(self, args) ?? [];
+	// 			try {
+	// 				res.unshift(command);
+	// 			} catch {
+	// 				// Discord calls Object.preventExtensions on the result when switching channels
+	// 				// Therefore, re-making the result array is required.
+	// 				res = [...res, command];
+	// 			}
+	// 		}
+	// 	});
+	// } catch {
+	// 	Logger.error('Patching getQueryCommands failed.');
+	// }
 
-				if (!res.find(r => r.id === data.section.id) && data.commands.length) {
-					res.push(data.section);
-				};
+	// try {
+	// 	Patcher.instead(SearchStore.default, 'getApplicationSections', (_, args, orig) => {
+	// 		try {
+	// 			const res = orig.apply(self, args) ?? [];
 
-				return res;
-			} catch {
-				return [];
-			}
-		});
-	} catch {
-		Logger.error('Patching getApplicationSections failed.');
-	}
+	// 			if (!res.find(r => r.id === data.section.id) && data.commands.length) {
+	// 				res.push(data.section);
+	// 			};
 
-	try {
-		Patcher.after(SearchStore, 'useDiscoveryState', (_, [, type], res) => {
-			if (type !== 1) return;
+	// 			return res;
+	// 		} catch {
+	// 			return [];
+	// 		}
+	// 	});
+	// } catch {
+	// 	Logger.error('Patching getApplicationSections failed.');
+	// }
 
-			if (!res.sectionDescriptors?.find?.(s => s.id === data.section.id)) {
-				res.sectionDescriptors ??= [];
-				res.sectionDescriptors.push(data.section);
-			}
+	// try {
+	// 	Patcher.after(SearchStore, 'useDiscoveryState', (_, [, type], res) => {
+	// 		if (type !== 1) return;
 
-			if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && !res.activeSections.find(s => s.id === data.section.id)) {
-				res.activeSections.push(data.section);
-			}
+	// 		if (!res.sectionDescriptors?.find?.(s => s.id === data.section.id)) {
+	// 			res.sectionDescriptors ??= [];
+	// 			res.sectionDescriptors.push(data.section);
+	// 		}
 
-			if (data.commands.some(c => !res.commands?.find?.(r => r.id === c.id))) {
-				res.commands ??= [];
+	// 		if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && !res.activeSections.find(s => s.id === data.section.id)) {
+	// 			res.activeSections.push(data.section);
+	// 		}
 
-				// De-duplicate commands
-				const collection = [...res.commands, ...data.commands];
-				res.commands = [...new Set(collection).values()];
-			}
+	// 		if (data.commands.some(c => !res.commands?.find?.(r => r.id === c.id))) {
+	// 			res.commands ??= [];
 
-			if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && !res.commandsByActiveSection.find(r => r.section.id === data.section.id)) {
-				res.commandsByActiveSection.push({
-					section: data.section,
-					data: data.commands
-				});
-			}
+	// 			// De-duplicate commands
+	// 			const collection = [...res.commands, ...data.commands];
+	// 			res.commands = [...new Set(collection).values()];
+	// 		}
 
-			const active = res.commandsByActiveSection.find(r => r.section.id === data.section.id);
-			if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && active && active.data.length === 0 && data.commands.length !== 0) {
-				active.data = data.commands;
-			}
+	// 		if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && !res.commandsByActiveSection.find(r => r.section.id === data.section.id)) {
+	// 			res.commandsByActiveSection.push({
+	// 				section: data.section,
+	// 				data: data.commands
+	// 			});
+	// 		}
 
-			/*
-			 * Filter out duplicate built-in sections due to a bug that causes
-			 * the getApplicationSections path to add another built-in commands
-			 * section to the section rail
-			 */
+	// 		const active = res.commandsByActiveSection.find(r => r.section.id === data.section.id);
+	// 		if ((!res.filteredSectionId || res.filteredSectionId === data.section.id) && active && active.data.length === 0 && data.commands.length !== 0) {
+	// 			active.data = data.commands;
+	// 		}
 
-			const builtIn = res.sectionDescriptors.filter(s => s.id === '-1');
-			if (builtIn.length > 1) {
-				res.sectionDescriptors = res.sectionDescriptors.filter(s => s.id !== '-1');
-				res.sectionDescriptors.push(builtIn.find(r => r.id === '-1'));
-			}
-		});
-	} catch {
-		Logger.error('Patching useDiscoveryState failed.');
-	}
+	// 		/*
+	// 		 * Filter out duplicate built-in sections due to a bug that causes
+	// 		 * the getApplicationSections path to add another built-in commands
+	// 		 * section to the section rail
+	// 		 */
 
-	try {
-		Patcher.after(Assets, 'getApplicationIconURL', (_, [props], res) => {
-			if (props.id === 'unbound') {
-				return data.section.icon;
-			}
-		});
-	} catch {
-		Logger.error('Patching getApplicationIconURL failed.');
-	}
+	// 		const builtIn = res.sectionDescriptors.filter(s => s.id === '-1');
+	// 		if (builtIn.length > 1) {
+	// 			res.sectionDescriptors = res.sectionDescriptors.filter(s => s.id !== '-1');
+	// 			res.sectionDescriptors.push(builtIn.find(r => r.id === '-1'));
+	// 		}
+	// 	});
+	// } catch {
+	// 	Logger.error('Patching useDiscoveryState failed.');
+	// }
+
+	// try {
+	// 	Patcher.after(Assets, 'getApplicationIconURL', (_, [props], res) => {
+	// 		if (props.id === 'unbound') {
+	// 			return data.section.icon;
+	// 		}
+	// 	});
+	// } catch {
+	// 	Logger.error('Patching getApplicationIconURL failed.');
+	// }
 }
 
 try {

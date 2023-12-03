@@ -50,15 +50,6 @@ function Toast(options: ToastOptions) {
 							}
 						});
 
-						RN.LayoutAnimation.configureNext({
-							duration: 1000,
-							delete: {
-								type: 'easeInEaseOut',
-								property: 'scaleXY',
-								duration: 300
-							}
-						});
-
 						Toasts.store.setState(() => ({ toasts: [] }));
 					}}
 				>

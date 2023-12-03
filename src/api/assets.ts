@@ -3,6 +3,7 @@ import IconManager from '@managers/icons';
 import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
 import { findByProps } from '@metro';
+import { DCDFileManager } from '@api/storage';
 
 export const assets = new Set<Asset>();
 export const registry = findByProps('registerAsset');
@@ -10,12 +11,26 @@ export const registry = findByProps('registerAsset');
 const Logger = createLogger('Assets');
 const Patcher = createPatcher('unbound-assets');
 
+async function handleScales(asset: Asset, id: number) {
+	asset.scales.sort((a, b) => b - a);
+
+	for (const scale of asset.scales) {
+		const uri = ReactNative.Image.resolveAssetSource(id).uri;
+		const fileExists = await DCDFileManager.fileExists(uri.replace('file:/', ''));
+
+		if (!fileExists) {
+			asset.scales = asset.scales.filter(x => x !== scale);
+		};
+	}
+}
+
 function initialize() {
 	IconManager.initialize();
 
 	Patcher.after(registry, 'registerAsset', (_, [asset]: [Asset], id: number) => {
 		Object.assign(asset, { id });
 		assets.add(asset);
+		handleScales(asset, id);
 
 		IconManager.applyIconPath(IconManager.applied.manifest.id, asset);
 	});
@@ -24,6 +39,8 @@ function initialize() {
 		const asset: Asset | undefined = registry.getAssetByID(id);
 
 		if (!asset) break;
+
+		handleScales(asset, id);
 
 		if (!assets.has(asset)) {
 			Object.assign(asset, { id });
