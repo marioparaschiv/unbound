@@ -57,7 +57,10 @@ export function registerCommands(caller: string, cmds: ApplicationCommand[]): vo
 	}
 
 	for (const command in cmds) {
-		const lastCommand = Commands.getBuiltInCommands(ApplicationCommandType.CHAT, true, false);
+		const builtInCommands = Commands.getBuiltInCommands(ApplicationCommandType.CHAT, true, false);
+		builtInCommands.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+
+		const lastCommand = builtInCommands[builtInCommands.length - 1];
 		const cmd = cmds[command];
 
 		cmds[command] = {
