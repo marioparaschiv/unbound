@@ -25,7 +25,7 @@ Patcher.after(DCDFileManager, 'removeFile', (_, [type, path], promise) => {
 
 			if (result === false) {
 				DCDFileManager.fileExists(`${directory}/${path}`).then(fileExists => {
-					if (fileExists) {
+					if (!fileExists) {
 						reject(`Failed to delete dirent at path '${directory}' because it doesnt exist!`);
 					} else {
 						reject(`Failed to delete dirent at path '${directory}' due to an unknown reason!`);
