@@ -25,8 +25,8 @@ export default function HeaderRight({ type, settings, onPress, margin = false }:
 	return <RN.View style={{ flexDirection: 'row', alignItems: 'center', marginRight: margin ? 12 : 0 }}>
 		<Overflow
 			items={getItems(type, settings)}
-			iconSource={getIDByName('ic_filter')}
-			scale={0.9}
+			iconSource={getIDByName('ArrowsUpDownIcon')}
+			scale={0.85}
 		/>
 		<RN.TouchableOpacity
 			style={{ ...(tabsEnabled ? {} : { marginRight: 16 }), marginLeft: 4 }}

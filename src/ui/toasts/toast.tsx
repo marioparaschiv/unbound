@@ -25,7 +25,7 @@ function Toast(options: ToastOptions) {
 	const onGestureEvent = (event) => {
 		if (event.nativeEvent.translationY > 0) return;
 
-		opacity.value = 1 - ((event.nativeEvent.translationY * -1) / 40);
+		opacity.value = 1 - ((event.nativeEvent.translationY * -1) / 30);
 		scale.value = 1 - ((event.nativeEvent.translationY * -1) / 500);
     translateY.value = event.nativeEvent.translationY;
   };
@@ -33,7 +33,7 @@ function Toast(options: ToastOptions) {
   const onHandlerStateChange = (event) => {
 		if (event.nativeEvent.oldState !== State.ACTIVE) return;
 
-		if (event.nativeEvent.translationY < -40) {
+		if (event.nativeEvent.translationY < -30) {
 			leave();
 		} else {
 			scale.value = withTiming(1);
@@ -45,7 +45,7 @@ function Toast(options: ToastOptions) {
 	return <PanGestureHandler onGestureEvent={onGestureEvent} onHandlerStateChange={onHandlerStateChange}>
 		<View key={options.id} style={{ ...style, transform: [{ scale }, { translateY }] }} pointerEvents='box-none'>
 			<RN.View
-				style={[styles.container, { backgroundColor: unprocessColor(ReactNative.processColor(styles.container.backgroundColor)) + 'fe' }]}
+				style={[styles.container, { backgroundColor: unprocessColor(ReactNative.processColor(styles.container.backgroundColor)) + 'fa' }]}
 				onLayout={({ nativeEvent }) => height.value = settings.get('toasts.animations', true) ?
 					withSpring(nativeEvent.layout.height) :
 					nativeEvent.layout.height
@@ -104,7 +104,7 @@ function Toast(options: ToastOptions) {
 							bottom: 0,
 							left: 0,
 							width,
-							height: 4,
+							height: 3,
 							borderRadius: 100000
 						},
 						styles.bar
