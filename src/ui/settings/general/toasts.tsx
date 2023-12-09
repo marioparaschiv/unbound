@@ -8,11 +8,12 @@ import { Strings } from '@api/i18n';
 import { noop } from '@utilities';
 
 function Toasts() {
+	const [alternate, setAlternate] = React.useState(true);
 	const settings = useSettingsStore('unbound');
 	const endStyle = useEndStyle();
-	const [showButtons, setShowButtons] = React.useState(true);
 
 	const duration = settings.get('toasts.duration', 0);
+	const opacity = settings.get('toasts.opacity', 1);
 
 	return <Form>
 		<Section>
@@ -36,22 +37,34 @@ function Toasts() {
 				icon={<RowIcon source={Icons['feature_star']} />}
 				onPress={() => {
 					const toast = showToast({
-						title: 'Test',
-						content: 'Toast example',
-						icon: 'feature_star'
+						get title() {
+							return Strings[`UNBOUND_${alternate ? 'TOASTS' : 'TESTING'}`];
+						},
+
+						get content() {
+							return Strings[`UNBOUND_TOASTS_EXAMPLE_CONTENT_${alternate ? 'ALTERNATE' : 'PRIMARY'}`];
+						},
+
+						icon: alternate ? 'feature_star' : 'StarIcon'
 					});
 
-					setShowButtons(p => !p);
+					setAlternate(p => !p);
 
 					// Add buttons after the toast has loaded to allow for using toast.close
 					toast.update({
-						buttons: showButtons ? [
+						buttons: alternate ? [
 							{
-								content: 'Close',
+								get content() {
+									return Strings.CLOSE;
+								},
+
 								onPress: toast.close,
 							},
 							{
-								content: 'No-op',
+								get content() {
+									return Strings.NONE;
+								},
+
 								onPress: noop,
 								variant: 'primary-alt'
 							}
@@ -60,13 +73,52 @@ function Toasts() {
 
 					setTimeout(
 						() => toast.update({
-							title: 'Updated',
-							content: 'The toast can update!'
+							get title() {
+								return Strings[`UNBOUND_TOASTS_EXAMPLE_TITLE_UPDATE_${alternate ? 'ALTERNATE' : 'PRIMARY'}`];
+							},
+
+							get content() {
+								return Strings[`UNBOUND_TOASTS_EXAMPLE_CONTENT_UPDATE_${alternate ? 'ALTERNATE' : 'PRIMARY'}`];
+							},
+
+							icon: alternate ? 'smile' : 'MusicIcon',
+							buttons: [
+								{
+									get content() {
+										return Strings[alternate ? 'CLOSE' : 'NONE'];
+									},
+
+									onPress: alternate ? toast.close : noop,
+									variant: 'primary-alt'
+								}
+							]
 						}),
-						(settings.get('toasts.duration', 3) - 1) * 1000
+						(settings.get('toasts.duration', 3) * 0.5) * 1000
 					);
 				}}
 			/>
+		</Section>
+		<Section>
+			<Row
+				label={Strings.UNBOUND_TOAST_BACKGROUND_OPACITY}
+				trailing={(
+					<Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
+						{`${Math.round(opacity * 100)}%`}
+					</Forms.FormText>
+				)}
+			/>
+			<RN.View style={endStyle}>
+				<Slider
+					style={{ marginHorizontal: 15, marginVertical: 5 }}
+					value={opacity}
+					onValueChange={v => settings.set('toasts.opacity', Math.round(v * 100) / 100)}
+					minimumValue={0}
+					maximumValue={1}
+					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
+					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
+					tapToSeek
+				/>
+			</RN.View>
 		</Section>
 		<Section>
 			<Row
@@ -81,7 +133,7 @@ function Toasts() {
 				<Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={duration}
-					onValueChange={v => settings.set('toasts.duration', Math.round(v))}
+					onValueChange={v => settings.set('toasts.duration', Math.round(v * 10) / 10)}
 					minimumValue={0}
 					maximumValue={10}
 					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}

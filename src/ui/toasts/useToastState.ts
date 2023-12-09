@@ -31,7 +31,7 @@ function useToastState(options: InternalToastOptions) {
 					duration: 1000,
 					update: {
 						type: 'easeInEaseOut',
-						duration: 400
+						duration: 500
 					},
 					delete: {
 						type: 'easeInEaseOut',

@@ -1,19 +1,22 @@
 import { React, Reanimated, Gestures, ReactNative as RN } from '@metro/common';
 import { RowIcon, TabsUIState } from '@ui/components/form';
-import type { ToastOptions } from '@typings/api/toasts';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
 import useToastState from './useToastState';
 import useStyles from './toast.style';
 import Toasts from '@stores/toasts';
 import { Icons } from '@api/assets';
+import { unitToHex, withoutOpacity } from '@utilities';
+
+import type { ToastOptions } from '@typings/api/toasts';
+import type {
+	GestureEvent,
+	HandlerStateChangeEvent,
+	PanGestureHandlerEventPayload
+} from 'react-native-gesture-handler';
 
 const { withSpring, withTiming, useSharedValue, default: { View } } = Reanimated;
 const { PanGestureHandler, State } = Gestures;
-
-function unprocessColor(int): string {
-	return '#' + ('000000' + int.toString(16)).slice(-6);
-}
 
 function Toast(options: ToastOptions) {
 	const { style, properties: { scale, opacity, height, width }, leave } = useToastState(options);
@@ -22,7 +25,10 @@ function Toast(options: ToastOptions) {
 	const styles = useStyles();
 	const translateY = useSharedValue(0);
 
-	const onGestureEvent = (event) => {
+	// Default for if there is no content at all
+	const [linesLength, setLinesLength] = React.useState(1);
+
+	const onGestureEvent = (event: GestureEvent<PanGestureHandlerEventPayload>) => {
 		if (event.nativeEvent.translationY > 0) return;
 
 		opacity.value = 1 - ((event.nativeEvent.translationY * -1) / 30);
@@ -30,7 +36,7 @@ function Toast(options: ToastOptions) {
     translateY.value = event.nativeEvent.translationY;
   };
 
-  const onHandlerStateChange = (event) => {
+  const onHandlerStateChange = (event: HandlerStateChangeEvent<PanGestureHandlerEventPayload>) => {
 		if (event.nativeEvent.oldState !== State.ACTIVE) return;
 
 		if (event.nativeEvent.translationY < -30) {
@@ -45,26 +51,31 @@ function Toast(options: ToastOptions) {
 	return <PanGestureHandler onGestureEvent={onGestureEvent} onHandlerStateChange={onHandlerStateChange}>
 		<View key={options.id} style={{ ...style, transform: [{ scale }, { translateY }] }} pointerEvents='box-none'>
 			<RN.View
-				style={[styles.container, { backgroundColor: unprocessColor(ReactNative.processColor(styles.container.backgroundColor)) + 'fa' }]}
+				style={[styles.container, { backgroundColor: withoutOpacity(styles.container.backgroundColor) + unitToHex(settings.get('toasts.opacity', 1)) }]}
 				onLayout={({ nativeEvent }) => height.value = settings.get('toasts.animations', true) ?
 					withSpring(nativeEvent.layout.height) :
 					nativeEvent.layout.height
 				}
 			>
 				<RN.View style={styles.wrapper}>
-					{options.icon && <RN.View style={styles.icon}>
+					{options.icon && <RN.View style={[styles.icon, { marginVertical: linesLength * 10 }]}>
 						<RowIcon source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon} size='small' />
 					</RN.View>}
 					<RN.View style={styles.contentContainer}>
 						{options.title && <RN.Text style={styles.title}>
 							{typeof options.title === 'function' ? React.createElement(options.title) : options.title}
 						</RN.Text>}
-						{options.content && <RN.Text style={styles.content}>
+						{options.content && <RN.Text
+							style={styles.content}
+							onTextLayout={({ nativeEvent: { lines: { length } }}) => {
+								setLinesLength(length > 2 ? length + 1 : length);
+							}}
+						>
 							{typeof options.content === 'function' ? React.createElement(options.content) : options.content}
 						</RN.Text>}
 					</RN.View>
 					<RN.Pressable
-						style={[styles.icon, { marginRight: 12 }]}
+						style={[styles.icon, { marginRight: 12, marginVertical: linesLength * 10 }]}
 						hitSlop={10}
 						onPress={leave}
 						onLongPress={() => {

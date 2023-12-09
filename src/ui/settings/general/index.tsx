@@ -3,7 +3,7 @@ import { Theme, React, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
-import { Invites, Linking } from '@metro/actions';
+import { Linking } from '@metro/actions';
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 import { reload } from '@api/native';

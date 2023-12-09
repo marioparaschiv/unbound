@@ -3,6 +3,7 @@ import { Theme, StyleSheet, React, ReactNative as RN } from '@metro/common';
 import { Forms, Redesign } from '@metro/components';
 import type { ViewProps } from 'react-native';
 import { findByProps } from '@metro';
+import type { PropertyRecordOrArray } from '@typings/api/metro';
 
 export const useStyles = StyleSheet.createStyles({
 	endStyle: {
@@ -12,9 +13,22 @@ export const useStyles = StyleSheet.createStyles({
 	}
 });
 
-export const Switch = findByProps('FormSwitch', { lazy: true, all: true }).find(x => !('FormTitle' in x));
+// Improve speeds a small amount by lazily loading these
+// These use .find right after findByProps which negates the lazy primitive, so caching them is best.
+const internalGetLazily = <TName extends string, TFormatted extends `Form${TName}`>(name: TName) => {
+	let cache: PropertyRecordOrArray<TFormatted[], TFormatted>;
+
+	return new Proxy({ __LAZY__: true }, {
+		get(_, prop, receiver) {
+			cache ??= findByProps(`Form${name}`, { all: true }).find(x => !('FormTitle' in x));
+			return Reflect.get(cache, prop, receiver);
+		}
+	}) as unknown as PropertyRecordOrArray<TFormatted[], TFormatted>;
+};
+
+export const Switch = internalGetLazily('Switch');
+export const Checkbox = internalGetLazily('Checkbox');
 export const TabsUIState = findByProps('useInMainTabsExperiment', 'isInMainTabsExperiment', { lazy: true });
-export const Checkbox = findByProps('FormCheckbox', { lazy: true, all: true }).find(x => !('FormTitle' in x));
 
 export const useEndStyle = () => {
 	const tabs = TabsUIState.useInMainTabsExperiment?.() ?? true;

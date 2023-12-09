@@ -1,7 +1,6 @@
 import { ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { Redesign } from '@metro/components';
 import { Icons } from '@api/assets';
-import type { ImageResolvedAssetSource } from 'react-native';
 
 interface OverflowItem {
 	label: string;

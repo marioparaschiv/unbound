@@ -23,7 +23,7 @@ export default StyleSheet.createStyles({
 		marginLeft: 12,
 		flex: 1,
 		flexDirection: 'column',
-		justifyContent: 'center',
+		justifyContent: 'center'
 	},
 	title: {
 		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
@@ -33,10 +33,11 @@ export default StyleSheet.createStyles({
 	content: {
 		fontFamily: Constants.Fonts.PRIMARY_NORMAL,
 		color: Theme.colors.TEXT_MUTED,
-		fontSize: 12
+		fontSize: 12,
+		height: 'auto'
 	},
 	icon: {
-		marginVertical: 10,
+		marginTop: 10,
 		marginLeft: 12
 	},
 	buttons: {

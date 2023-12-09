@@ -22,7 +22,7 @@ const useStyles = StyleSheet.createStyles({
 	}
 });
 
-export const TrailingIcon = ({ selected, source }) => {
+export const TrailingIcon = ({ selected, source }: { selected: boolean; source: string }) => {
 	const styles = useStyles();
 
 	return <RN.View style={styles.trailing}>
