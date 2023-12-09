@@ -10,6 +10,7 @@ import { noop } from '@utilities';
 function Toasts() {
 	const settings = useSettingsStore('unbound');
 	const endStyle = useEndStyle();
+	const [showButtons, setShowButtons] = React.useState(true);
 
 	const duration = settings.get('toasts.duration', 0);
 
@@ -40,9 +41,11 @@ function Toasts() {
 						icon: 'feature_star'
 					});
 
+					setShowButtons(p => !p);
+
 					// Add buttons after the toast has loaded to allow for using toast.close
 					toast.update({
-						buttons: [
+						buttons: showButtons ? [
 							{
 								content: 'Close',
 								onPress: toast.close,
@@ -52,7 +55,7 @@ function Toasts() {
 								onPress: noop,
 								variant: 'primary-alt'
 							}
-						]
+						] : []
 					});
 
 					setTimeout(

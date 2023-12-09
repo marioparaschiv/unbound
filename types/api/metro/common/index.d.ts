@@ -10,6 +10,7 @@ export namespace Common {
 	export type React = typeof import('react');
 	export type ReactNative = typeof import('react-native');
 	export type Reanimated = typeof import('react-native-reanimated');
+	export type Gestures = typeof import('react-native-gesture-handler');
 
 	export interface Dispatcher {
 		dispatch(payload: Record<string, any>): Promise<void>;

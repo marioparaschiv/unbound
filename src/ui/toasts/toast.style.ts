@@ -5,14 +5,13 @@ export default StyleSheet.createStyles({
 		backgroundColor: Theme.colors.BACKGROUND_SECONDARY_ALT,
 		alignSelf: 'center',
 		borderRadius: 18,
-		width: 250,
+		width: '90%',
 		zIndex: 999999,
 		elevation: 999999,
 		position: 'absolute',
 		padding: 2,
-		marginHorizontal: 60,
-		marginTop: 12,
-		...Theme.shadows.SHADOW_BORDER
+		marginTop: 20,
+		overflow: 'hidden'
 	},
 	wrapper: {
 		flex: 1,
@@ -44,12 +43,15 @@ export default StyleSheet.createStyles({
 		flexWrap: 'wrap',
 		flexDirection: 'row',
 		marginHorizontal: 12,
-		marginBottom: 8,
+		marginBottom: 12,
 		gap: 5
 	},
 	button: {
 		width: '45%',
 		flexGrow: 1,
 		justifyContent: 'space-between'
+	},
+	bar: {
+		backgroundColor: Theme.colors.REDESIGN_BUTTON_PRIMARY_BACKGROUND
 	}
 });

@@ -3,7 +3,7 @@ import { Reanimated, ReactNative as RN } from '@metro/common';
 import { useSettingsStore } from '@api/storage';
 import Toasts from '@stores/toasts';
 
-const { runOnJS, useSharedValue, withTiming, withSpring } = Reanimated;
+const { runOnJS, useSharedValue, withTiming, withSpring, Easing } = Reanimated;
 
 function useToastState(options: InternalToastOptions) {
 	const [leaving, setLeaving] = React.useState(false);
@@ -14,6 +14,9 @@ function useToastState(options: InternalToastOptions) {
 	const marginTop = useSharedValue(5);
 	const scale = useSharedValue(0.65);
 	const height = useSharedValue(0);
+
+	// This parent container set to 90% width in the styles
+	const width = useSharedValue(ReactNative.Dimensions.get('window').width * 0.9);
 
 	function leave() {
 		if (!animations) return setLeaving(true);
@@ -60,10 +63,11 @@ function useToastState(options: InternalToastOptions) {
 			scale.value = 1;
 		}
 
-		const duration = (options.duration ?? settings.get('toasts.duration', 0));
+		const duration = (options.duration ?? settings.get('toasts.duration', 0)) * 1000;
 
 		if (duration !== 0) {
-			const timeout = setTimeout(leave, duration * 1000);
+			width.value = withTiming(0, { duration: duration + 100, easing: Easing.linear });
+			const timeout = setTimeout(leave, duration);
 			return () => clearTimeout(timeout);
 		}
 	}, []);
@@ -82,11 +86,18 @@ function useToastState(options: InternalToastOptions) {
 	}, [options.closing]);
 
 	return {
-		properties: {
+		style: {
 			marginTop,
 			opacity,
 			height,
 			transform: [{ scale }],
+		},
+		properties: {
+			marginTop,
+			opacity,
+			height,
+			scale,
+			width
 		},
 		leave
 	};

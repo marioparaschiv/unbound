@@ -1,4 +1,4 @@
-import { Addon } from '@typings/managers';
+import { type Addon } from '@typings/managers';
 import Manager, { ManagerType } from './base';
 import Storage from '@api/storage';
 import { Keys } from '@constants';

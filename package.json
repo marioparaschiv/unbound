@@ -17,6 +17,7 @@
 		"@typescript-eslint/parser": "^6.11.0",
 		"eslint": "^8.53.0",
 		"eslint-plugin-react": "^7.33.2",
+		"react-native-gesture-handler": "^2.14.0",
 		"react-native-reanimated": "^3.4.2",
 		"rollup": "^3.29.1",
 		"rollup-plugin-swc3": "^0.10.1",

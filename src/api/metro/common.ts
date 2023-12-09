@@ -2,7 +2,8 @@ import type { Common } from '@typings/api/metro/common';
 import { findByProps } from '@metro';
 
 // Libraries
-export let Reanimated = findByProps('useAnimatedStyle', 'withSpring', { lazy: true }) as Common.Reanimated;
+export const Reanimated = findByProps('useAnimatedStyle', 'withSpring', { lazy: true }) as Common.Reanimated;
+export const Gestures = findByProps('Gesture', 'GestureDetector', 'createNativeWrapper', { lazy: true }) as Common.Gestures;
 export const Flux = findByProps('Store', 'connectStores', { lazy: true }) as Common.Flux;
 export const Moment = findByProps('isMoment') as Common.Moment;
 export const Clipboard = findByProps('setString', 'getString', 'setImage', 'getImage', { lazy: true }) as unknown as Common.Clipboard;
