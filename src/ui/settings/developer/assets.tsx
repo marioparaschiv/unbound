@@ -33,7 +33,7 @@ const Assets = React.memo(() => {
 				keyExtractor={(asset) => asset.id.toString()}
 				data={data}
 				scrollEnabled={false}
-				initialNumToRender={50}
+				initialNumToRender={15}
 				ItemSeparatorComponent={DividerModule.TableRowDivider}
 				removeClippedSubviews
 				renderItem={({ item, index }) => (
