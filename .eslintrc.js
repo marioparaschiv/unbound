@@ -29,7 +29,9 @@ const config = {
 			'error',
 			'always'
 		],
-		'react/react-in-jsx-scope': 'off'
+		'react/react-in-jsx-scope': 'off',
+		'react/display-name': 'off',
+		'react/prop-types': 'off'
 	}
 };
 

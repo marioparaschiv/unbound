@@ -1,19 +1,27 @@
-import { Icons } from '@api/assets';
-import { byProps } from '@metro/filters';
-import { findByProps, bulk } from '@metro';
 import { ClientName, Keys } from '@constants';
+import { Redesign } from '@metro/components';
+import { findByProps, bulk } from '@metro';
+import { byProps } from '@metro/filters';
+import { createPatcher } from '@patcher';
 import { React } from '@metro/common';
+import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
 
-import { Settings } from './base';
+import General from '@ui/settings/general';
+import Plugins from '@ui/settings/plugins';
+import Design from '@ui/settings/design';
 
-export class TabsSettings extends Settings {
+type CustomScreenProps = {
+	title: string;
+	render: React.ComponentType;
+};
+
+class Settings {
+	public patcher = createPatcher('unbound-settings');
 	private Constants: Record<string, any>;
 	private Settings: Record<string, any>;
 
 	constructor() {
-		super('tabs');
-
 		const [
 			Constants,
 			Settings
@@ -24,6 +32,92 @@ export class TabsSettings extends Settings {
 
 		this.Constants = Constants;
 		this.Settings = Settings;
+	}
+
+
+	public Titles = {
+		get General() {
+			return Strings.SETTINGS;
+		},
+
+		get Plugins() {
+			return Strings.UNBOUND_PLUGINS;
+		},
+
+		get Design() {
+			return Strings.UNBOUND_DESIGN;
+		},
+
+		get Updater() {
+			return Strings.UNBOUND_UPDATER;
+		},
+
+		get Custom() {
+			return 'Page';
+		}
+	};
+
+	public Icons = {
+		General: Icons['settings'],
+		Plugins: Icons['ic_activity_24px'],
+		Design: Icons['ic_paint_brush'],
+		Updater: Icons['ic_download_24px'],
+		Custom: null
+	};
+
+	public Breadcrumbs = {
+		General: [ClientName],
+		Plugins: [ClientName],
+		Design: [ClientName],
+		Updater: [ClientName],
+		Custom: []
+	};
+
+	public Keywords = {
+		get General() {
+			return [Strings.UNBOUND_GENERAL];
+		},
+
+		get Plugins() {
+			return [];
+		},
+
+		get Design() {
+			return [Strings.UNBOUND_THEMES, Strings.UNBOUND_ICONS, Strings.UNBOUND_FONTS];
+		},
+
+		get Updater() {
+			return [];
+		},
+
+		get Custom() {
+			return [];
+		},
+	};
+
+	public Mappables = {
+		General: true,
+		Plugins: true,
+		Design: true,
+		Updater: true,
+		Custom: false
+	};
+
+	public Screens = {
+		General,
+		Plugins,
+		Design,
+		Updater: () => null,
+		Custom: ({ title, render: Component, ...props }: CustomScreenProps) => {
+			const navigation = Redesign.useNavigation();
+
+			const unsubscribe = navigation.addListener('focus', () => {
+				unsubscribe();
+				navigation.setOptions({ title });
+			});
+
+			return <Component {...props} />;
+		}
 	};
 
 	private patchConstants() {
@@ -116,24 +210,21 @@ export class TabsSettings extends Settings {
 		});
 	};
 
-	public override Icons = {
-		General: Icons['settings'],
-		Plugins: Icons['ic_activity_24px'],
-		Design: Icons['ic_paint_brush'],
-		Updater: Icons['ic_download_24px'],
-		Custom: null
-	};
-
-	public override apply() {
+	public apply() {
 		this.patchConstants();
 		this.patchSections();
 		this.patchSearch();
 	}
 
-	public override remove() {
+	public remove() {
 		this.patcher.unpatchAll();
 
 		this.Constants.SETTING_RENDERER_CONFIG = { ...this.Constants._SETTING_RENDERER_CONFIG };
 		delete this.Constants._SETTING_RENDERER_CONFIG;
 	}
 }
+
+const instance = new Settings();
+
+export const apply = instance.apply.bind(instance);
+export const remove = instance.remove.bind(instance);

@@ -9,7 +9,7 @@ import { GeneralSearch } from '@ui/components/search';
 const DividerModule = findByProps('TableRowDivider', { lazy: true });
 const payload = [...assets.values()].filter(a => a.type === 'png');
 
-export default function Assets() {
+const Assets = React.memo(() => {
 	const [search, setSearch] = React.useState('');
 
 	const data = React.useMemo(() => {
@@ -20,7 +20,7 @@ export default function Assets() {
 		});
 	}, [search]);
 
-	return <RN.View>
+	return <RN.View key='unbound-assets'>
 		<RN.View style={{ marginHorizontal: 16, marginVertical: 12 }}>
 			<GeneralSearch
 				type={'assets'}
@@ -33,6 +33,7 @@ export default function Assets() {
 				keyExtractor={(asset) => asset.id.toString()}
 				data={data}
 				scrollEnabled={false}
+				initialNumToRender={50}
 				ItemSeparatorComponent={DividerModule.TableRowDivider}
 				removeClippedSubviews
 				renderItem={({ item, index }) => (
@@ -45,4 +46,6 @@ export default function Assets() {
 			/>
 		</Section>
 	</RN.View>;
-}
+});
+
+export default Assets;

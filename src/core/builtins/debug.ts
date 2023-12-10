@@ -12,6 +12,7 @@ export const data: BuiltIn['data'] = {
 };
 
 export let ws: WebSocket;
+export let connected = false;
 
 export function initialize(isReconnect = false) {
 	const settings = getStore('unbound');
@@ -25,6 +26,11 @@ export function initialize(isReconnect = false) {
 
 	ws?.addEventListener('open', () => {
 		Logger.success(isReconnect ? 'Reconnected.' : 'Connected.');
+		connected = true;
+	});
+
+	ws?.addEventListener('close', () => {
+		connected = false;
 	});
 
 	ws?.addEventListener('message', message => {
@@ -37,7 +43,7 @@ export function initialize(isReconnect = false) {
 
 	globalThis._nativeLoggingHook = nativeLoggingHook;
 	globalThis.nativeLoggingHook = function (message: string, level: string) {
-		if (ws?.readyState === WebSocket.OPEN) {
+		if (ws?.readyState === WebSocket.OPEN && connected) {
 			ws.send(JSON.stringify({ level, message }));
 		}
 
