@@ -52,13 +52,13 @@ function Toast(options: ToastOptions) {
 		<View key={options.id} style={{ ...style, transform: [{ scale }, { translateY }] }} pointerEvents='box-none'>
 			<RN.View style={styles.border}>
 				<RN.View
-					style={[styles.container, { backgroundColor: withoutOpacity(styles.container.backgroundColor) + unitToHex(settings.get('toasts.opacity', 1)) }]}
+					style={[styles.container, { backgroundColor: withoutOpacity(styles.container.backgroundColor) + unitToHex(settings.get('toasts.opacity', 0.8)) }]}
 					onLayout={({ nativeEvent }) => height.value = settings.get('toasts.animations', true) ?
 						withSpring(nativeEvent.layout.height) :
 						nativeEvent.layout.height
 					}
 				>
-					<Redesign.BackgroundBlurFill blurAmount={settings.get('toasts.blur', 1)} />
+					<Redesign.BackgroundBlurFill blurAmount={settings.get('toasts.blur', 0.15)} />
 					<RN.View style={styles.wrapper}>
 						{options.icon && <RN.View style={[styles.icon, { marginVertical: linesLength * 10 }]}>
 							<RowIcon source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon} size='small' />

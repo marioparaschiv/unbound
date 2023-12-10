@@ -13,8 +13,8 @@ function Toasts() {
 	const endStyle = useEndStyle();
 
 	const duration = settings.get('toasts.duration', 0);
-	const opacity = settings.get('toasts.opacity', 1);
-	const blur = settings.get('toasts.blur', 1);
+	const opacity = settings.get('toasts.opacity', 0.8);
+	const blur = settings.get('toasts.blur', 0.15);
 
 	return <Form>
 		<Section>
