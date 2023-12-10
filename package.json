@@ -15,7 +15,7 @@
 		"@types/react-native": "^0.72.2",
 		"@typescript-eslint/eslint-plugin": "^6.11.0",
 		"@typescript-eslint/parser": "^6.11.0",
-		"@unboundmod/rollup-plugin": "^1.0.4",
+		"@unboundmod/rollup-plugin": "^1.0.5",
 		"discord-hermesc": "^1.0.0",
 		"eslint": "^8.53.0",
 		"eslint-plugin-react": "^7.33.2",

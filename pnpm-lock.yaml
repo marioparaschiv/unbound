@@ -36,8 +36,8 @@ devDependencies:
     specifier: ^6.11.0
     version: 6.11.0(eslint@8.53.0)(typescript@5.2.2)
   '@unboundmod/rollup-plugin':
-    specifier: ^1.0.4
-    version: 1.0.4
+    specifier: ^1.0.5
+    version: 1.0.5
   discord-hermesc:
     specifier: ^1.0.0
     version: 1.0.0
@@ -2764,8 +2764,8 @@ packages:
       eslint-visitor-keys: 3.4.3
     dev: true
 
-  /@unboundmod/rollup-plugin@1.0.4:
-    resolution: {integrity: sha512-isUgEFeJOtYSiJZD4Mjx6jcsVh/g6rRZREO0vQiHbXAITdqIL71bfVYB/diMh1/5ZDfKLLqPRvlojCuDtkC3gw==}
+  /@unboundmod/rollup-plugin@1.0.5:
+    resolution: {integrity: sha512-nXIdoSmsI1kIVvFfP8wkh3kZblIFYui2IGRbjhKXlxLNsIfG4Wtq1GDOafYsvdSUz8Nn3vTSBpYwY1ofupClpA==}
     dependencies:
       discord-hermesc: 1.0.0
     dev: true
