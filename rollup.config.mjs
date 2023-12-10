@@ -21,11 +21,11 @@ const hermesc = resolve(process.cwd(), 'node_modules', 'discord-hermesc');
 
 /** @type {import('rollup').RollupOptions} */
 const config = {
-	input: 'src/preload.ts',
+	input: 'src/index.ts',
 	output: [
 		{
 			file: 'dist/unbound.js',
-			format: 'iife',
+			format: 'esm',
 			inlineDynamicImports: true,
 			strict: false
 		}
@@ -38,7 +38,27 @@ const config = {
 		replace({ preventAssignment: true, __VERSION__: revision }),
 		swc({ tsconfig: false }),
 		minify({ compress: true, mangle: true }),
-		hermes({ hermesc })
+		{
+			name: 'iife',
+			async generateBundle(options, bundle) {
+				const out = options.file?.split('/');
+				if (!out) return this.warn('(IIFE) - Output file not found.');
+
+				const file = out.pop();
+
+				const output = bundle[file];
+				if (!output) return this.warn('(IIFE) - Output file not found.');
+
+				output.code = `(() => {
+					try {
+						${output.code}
+					} catch(e) {
+						alert('Unbound failed to initialize: ' + e.message);
+					}
+			 	})();`;
+			}
+		},
+		hermes({ hermesc }),
 	],
 
 	onwarn(warning, warn) {
