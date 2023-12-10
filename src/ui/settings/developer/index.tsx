@@ -93,7 +93,6 @@ export default function Developer() {
 				value={settings.get('loader.update.url', Links.Bundle)}
 				onChange={v => settings.set('loader.update.url', v)}
 				title={Strings.UNBOUND_LOADER_CUSTOM_BUNDLE}
-				disabled={!settings.get('loader.update.force', false)}
 				style={endStyle}
 			/>
 		</Section>
