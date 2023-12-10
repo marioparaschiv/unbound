@@ -1,6 +1,7 @@
 import { Constants, StyleSheet, Theme } from '@metro/common';
 
 export default StyleSheet.createStyles({
+	border: Theme.shadows.SHADOW_BORDER,
 	container: {
 		backgroundColor: Theme.colors.BACKGROUND_SECONDARY_ALT,
 		alignSelf: 'center',

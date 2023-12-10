@@ -14,6 +14,7 @@ function Toasts() {
 
 	const duration = settings.get('toasts.duration', 0);
 	const opacity = settings.get('toasts.opacity', 1);
+	const blur = settings.get('toasts.blur', 1);
 
 	return <Form>
 		<Section>
@@ -89,7 +90,7 @@ function Toasts() {
 									},
 
 									onPress: alternate ? toast.close : noop,
-									variant: 'primary-alt'
+									variant: 'primary'
 								}
 							]
 						}),
@@ -97,6 +98,28 @@ function Toasts() {
 					);
 				}}
 			/>
+		</Section>
+		<Section>
+			<Row
+				label={Strings.UNBOUND_TOAST_BACKGROUND_BLUR}
+				trailing={(
+					<Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
+						{`${Math.round(blur * 100)}%`}
+					</Forms.FormText>
+				)}
+			/>
+			<RN.View style={endStyle}>
+				<Slider
+					style={{ marginHorizontal: 15, marginVertical: 5 }}
+					value={blur}
+					onValueChange={v => settings.set('toasts.blur', Math.round(v * 100) / 100)}
+					minimumValue={0}
+					maximumValue={1}
+					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
+					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
+					tapToSeek
+				/>
+			</RN.View>
 		</Section>
 		<Section>
 			<Row
