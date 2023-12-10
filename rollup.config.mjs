@@ -4,8 +4,10 @@ import { execSync } from 'child_process';
 import { typescriptPaths as paths } from 'rollup-plugin-typescript-paths';
 import { nodeResolve as node } from '@rollup/plugin-node-resolve';
 import { swc, minify } from 'rollup-plugin-swc3';
+import hermes from '@unboundmod/rollup-plugin';
 import replace from '@rollup/plugin-replace';
 import json from '@rollup/plugin-json';
+import { resolve } from 'path';
 
 const revision = (() => {
 	try {
@@ -15,12 +17,14 @@ const revision = (() => {
 	}
 })();
 
+const hermesc = resolve(process.cwd(), 'node_modules', 'discord-hermesc');
+
 /** @type {import('rollup').RollupOptions} */
 const config = {
 	input: 'src/preload.ts',
 	output: [
 		{
-			file: 'dist/bundle.js',
+			file: 'dist/unbound.js',
 			format: 'iife',
 			inlineDynamicImports: true,
 			strict: false
@@ -33,7 +37,8 @@ const config = {
 		json(),
 		replace({ preventAssignment: true, __VERSION__: revision }),
 		swc({ tsconfig: false }),
-		minify({ compress: true, mangle: true })
+		minify({ compress: true, mangle: true }),
+		hermes({ hermesc })
 	],
 
 	onwarn(warning, warn) {
