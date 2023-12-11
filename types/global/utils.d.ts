@@ -11,3 +11,5 @@ declare type PropOf<M> = {
 }[keyof M];
 
 declare type Nullable<T extends Record<string, any>> = { [K in keyof T]?: T[K] };
+
+declare type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>

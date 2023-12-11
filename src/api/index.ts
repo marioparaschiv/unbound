@@ -1,5 +1,3 @@
-export * as components from './components';
-
 export * as managers from './managers';
 export * as patcher from './patcher';
 export * as assets from './assets';

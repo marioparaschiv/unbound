@@ -1,12 +1,12 @@
 import { React, Reanimated, Gestures, ReactNative as RN } from '@metro/common';
 import { RowIcon, TabsUIState } from '@ui/components/form';
+import { unitToHex, withoutOpacity } from '@utilities';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
 import useToastState from './useToastState';
 import useStyles from './toast.style';
-import Toasts from '@stores/toasts';
 import { Icons } from '@api/assets';
-import { unitToHex, withoutOpacity } from '@utilities';
+import Toasts from '@stores/toasts';
 
 import type { ToastOptions } from '@typings/api/toasts';
 import type {
@@ -33,10 +33,10 @@ function Toast(options: ToastOptions) {
 
 		opacity.value = 1 - ((event.nativeEvent.translationY * -1) / 30);
 		scale.value = 1 - ((event.nativeEvent.translationY * -1) / 500);
-    translateY.value = event.nativeEvent.translationY;
-  };
+		translateY.value = event.nativeEvent.translationY;
+	};
 
-  const onHandlerStateChange = (event: HandlerStateChangeEvent<PanGestureHandlerEventPayload>) => {
+	const onHandlerStateChange = (event: HandlerStateChangeEvent<PanGestureHandlerEventPayload>) => {
 		if (event.nativeEvent.oldState !== State.ACTIVE) return;
 
 		if (event.nativeEvent.translationY < -30) {
@@ -46,7 +46,7 @@ function Toast(options: ToastOptions) {
 			opacity.value = withTiming(1);
 			translateY.value = withTiming(0);
 		}
-  };
+	};
 
 	return <PanGestureHandler onGestureEvent={onGestureEvent} onHandlerStateChange={onHandlerStateChange}>
 		<View key={options.id} style={{ ...style, transform: [{ scale }, { translateY }] }} pointerEvents='box-none'>
@@ -69,7 +69,7 @@ function Toast(options: ToastOptions) {
 							</RN.Text>}
 							{options.content && <RN.Text
 								style={styles.content}
-								onTextLayout={({ nativeEvent: { lines: { length } }}) => {
+								onTextLayout={({ nativeEvent: { lines: { length } } }) => {
 									setLinesLength(length > 2 ? length + 1 : length);
 								}}
 							>
@@ -96,7 +96,7 @@ function Toast(options: ToastOptions) {
 							<RowIcon source={Icons['ic_close']} size='small' />
 						</RN.Pressable>
 					</RN.View>
-					{Array.isArray(options.buttons) &&  options.buttons.length > 0 && (
+					{Array.isArray(options.buttons) && options.buttons.length > 0 && (
 						<RN.View style={[styles.buttons, { marginTop: isTabsV2 ? 0 : 8 }]}>
 							{options.buttons.map((button, index) => <Redesign.Button
 								key={`${options.id}-button-${index}`}

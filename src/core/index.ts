@@ -1,5 +1,3 @@
-import '@api/components';
-
 import { createLogger } from '@logger';
 import BuiltIns from '@core/builtins';
 import Patches from '@core/patches';

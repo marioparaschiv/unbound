@@ -1,9 +1,9 @@
 import type { FormSwitchProps, RowIconProps, RowProps, SectionProps, SwitchRowProps } from '@typings/ui/components/forms';
 import { Theme, StyleSheet, React, ReactNative as RN } from '@metro/common';
+import type { PropertyRecordOrArray } from '@typings/api/metro';
 import { Forms, Redesign } from '@metro/components';
 import type { ViewProps } from 'react-native';
 import { findByProps } from '@metro';
-import type { PropertyRecordOrArray } from '@typings/api/metro';
 
 export const useStyles = StyleSheet.createStyles({
 	endStyle: {

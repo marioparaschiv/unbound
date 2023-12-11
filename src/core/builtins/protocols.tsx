@@ -4,8 +4,8 @@ import { ManagerType } from '@managers/base';
 import { createPatcher } from '@patcher';
 import { createLogger } from '@logger';
 import { findByName } from '@metro';
-import { managers } from '@api';
 import Toasts from '@api/toasts';
+import { managers } from '@api';
 
 const Patcher = createPatcher('protocols');
 const Logger = createLogger('Protocol');

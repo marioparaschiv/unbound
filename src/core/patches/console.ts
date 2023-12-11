@@ -1,4 +1,5 @@
 import { addLog } from '@stores/logger';
+import { getStore } from '@api/storage';
 import { findByProps } from '@metro';
 
 export enum Levels {
@@ -10,6 +11,7 @@ export enum Levels {
 	debug = 0,
 };
 
+const settings = getStore('unbound');
 const methods = ['error', 'info', 'log', 'warn', 'trace', 'debug'];
 
 export function apply() {
@@ -22,7 +24,10 @@ export function apply() {
 			const payload = [];
 
 			for (let i = 0, len = args.length; len > i; i++) {
-				payload.push(typeof args[i] === 'string' ? args[i] : Util.inspect?.(args[i], { depth: 10 }) ?? args[i].toString());
+				const item = args[i];
+				const out = typeof item === 'string' ? item : Util.inspect?.(item, { depth: settings.get('dev.logging.depth', 3) });
+
+				payload.push(out ?? args[i].toString());
 			}
 
 			const output = payload.join(' ');

@@ -1,9 +1,8 @@
+import type { Addon, Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
+import { findInReactTree } from '@utilities';
 import { createPatcher } from '@patcher';
 import Storage from '@api/storage';
-import { findInReactTree } from '@utilities';
-
-import type { Addon, Resolveable } from '@typings/managers';
 
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;

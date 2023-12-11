@@ -1,41 +1,11 @@
-import type { DCDFileManagerType } from '@typings/api/native';
+import type { DCDFileManagerType, Payload } from '@typings/api/native';
+import { BundleManager, getNativeModule } from '@api/native';
 import { isEmpty, debounce } from '@utilities';
 import EventEmitter from '@structures/emitter';
-import { BundleManager, getNativeModule } from '@api/native';
-import { createPatcher } from '@patcher';
 
 const Events = new EventEmitter();
-const Patcher = createPatcher('unbound-storage');
 
 export const DCDFileManager: DCDFileManagerType = getNativeModule('DCDFileManager', 'RTNFileManager');
-
-Patcher.after(DCDFileManager, 'removeFile', (_, [type, path], promise) => {
-	return new Promise((resolve, reject) => {
-		promise.then(result => {
-			const paths = {
-				documents: DCDFileManager.DocumentsDirPath,
-				cache: DCDFileManager.CacheDirPath
-			};
-
-			const directory = paths[type];
-
-			if (result === null) {
-				resolve(`Successfully deleted dirent at path '${directory}'!`);
-			}
-
-			if (result === false) {
-				DCDFileManager.fileExists(`${directory}/${path}`).then(fileExists => {
-					if (!fileExists) {
-						reject(`Failed to delete dirent at path '${directory}' because it doesnt exist!`);
-					} else {
-						reject(`Failed to delete dirent at path '${directory}' due to an unknown reason!`);
-					}
-				});
-			}
-		});
-	});
-});
-
 export const settings = globalThis.UNBOUND_SETTINGS ?? {};
 
 export const on = Events.on.bind(Events);
@@ -102,12 +72,6 @@ export function getStore(store: string) {
 		remove: (key: string) => remove(store, key),
 		useSettingsStore: () => useSettingsStore(store)
 	};
-}
-
-interface Payload {
-	store: string;
-	key: string;
-	value: any;
 }
 
 export function useSettingsStore(store: string, predicate?: (payload: Payload) => boolean) {

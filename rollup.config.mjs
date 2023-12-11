@@ -53,7 +53,7 @@ const config = {
 					try {
 						${output.code}
 					} catch(e) {
-						alert('Unbound failed to initialize: ' + e.message);
+						alert('Unbound failed to initialize: ' + e.stack);
 					}
 			 	})();`;
 			}

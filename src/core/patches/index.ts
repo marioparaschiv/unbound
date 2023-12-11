@@ -6,7 +6,6 @@ const Logger = createLogger('Core', 'Patches');
 export function apply() {
 	for (const id in Patches) {
 		const Patch = Patches[id];
-		setTimeout(() => console.log(id, Patch), 500);
 
 		try {
 			Patch.apply?.();

@@ -1,10 +1,10 @@
 import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme } from '@metro/common';
 import { Section, Row, RowIcon } from '@ui/components/form';
+import { GeneralSearch } from '@ui/components/search';
 import { Redesign } from '@metro/components';
 import LoggerStore from '@stores/logger';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
-import { GeneralSearch } from '@ui/components/search';
 
 const levelSelection = {
 	variant(level: number) {

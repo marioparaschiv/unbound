@@ -1,14 +1,86 @@
 import type { SearchOptions, BulkItem, StoreOptions, InternalOptions, StringFindWithOptions, BulkFind, PropertyRecordOrArray, FunctionSignatureOrArray } from '@typings/api/metro';
 import type { Filter } from '@typings/api/metro/filters';
 import Themes from '@managers/themes';
-import { isEmpty } from '@utilities';
 import Filters from './filters';
 
 const data = {
 	cache: [],
 	patchedMoment: false,
-	patchedThemes: false
+	patchedThemes: false,
+	listeners: new Set<(mdl: any) => void>()
 };
+
+// for (const id in modules) {
+// 	const module = modules[id];
+
+// 	if (module.factory) {
+// 		const factory = module.factory;
+
+// 		module.factory = function (...args) {
+// 			const [, , , , , mdl] = args;
+
+// 			try {
+// 				factory.apply(this, args);
+// 			} catch {
+// 				deenumerate(id);
+// 				return;
+// 			}
+
+// 			for (const listener of data.listeners) {
+// 				try {
+// 					listener(mdl);
+// 				} catch (e) {
+// 					console.error('Failed to fire listener:', e);
+// 				}
+// 			}
+// 		};
+// 	}
+// }
+
+function isInvalidExport(mdl: any) {
+	return (
+		!mdl ||
+		mdl === window ||
+		mdl[Symbol()] === null ||
+		typeof mdl === 'boolean' ||
+		typeof mdl === 'number' ||
+		typeof mdl === 'string'
+	);
+}
+
+export function addListener(listener: (mdl: any) => void) {
+	data.listeners.add(listener);
+	return () => data.listeners.delete(listener);
+}
+
+export function removeListener(listener: (mdl: any) => void) {
+	data.listeners.delete(listener);
+}
+
+export const on = addListener;
+export const off = removeListener;
+
+export function findLazy(filter: (mdl: any) => boolean, options?: Omit<SearchOptions, 'lazy' | 'all'>) {
+	const existing = find(filter, options);
+	if (existing !== void 0) return existing;
+
+	return new Promise((resolve) => {
+		function callback(mdl) {
+
+			if (filter(mdl)) {
+				resolve(mdl);
+				remove();
+			}
+
+			if (mdl.default && filter(mdl.default)) {
+				resolve((options.interop ?? true) ? mdl.default : mdl);
+				remove();
+			}
+		}
+
+		const remove = addListener(callback);
+	});
+}
 
 export function find(filter: Filter, options: SearchOptions = {}) {
 	if (!filter) throw new Error('You must provide a filter to search by.');
@@ -54,7 +126,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 
 		const mdl = modules[id].publicModule.exports;
 
-		if (!mdl || mdl === window || mdl[Symbol()] === null || isEmpty(mdl)) {
+		if (isInvalidExport(mdl)) {
 			deenumerate(id);
 			continue;
 		}
@@ -137,7 +209,6 @@ export function bulk(...items: BulkItem[]) {
 	find((mdl, id) => {
 		for (let i = 0, len = items.length; i < len; i++) {
 			const item = items[i];
-
 			if (!item.filter) continue;
 
 			if (item.filter(mdl, id)) {
@@ -150,7 +221,7 @@ export function bulk(...items: BulkItem[]) {
 		}
 
 		return res.filter(String).length === search.length;
-	}, { interop: false, esModules: false });
+	}, { interop: false });
 
 	return res;
 }

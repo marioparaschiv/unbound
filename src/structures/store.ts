@@ -1,5 +1,3 @@
-import { React } from '@metro/common';
-
 /**
  * Creates a updateable react store with a remote api.
  * @param {Any} state Intitial State of your store

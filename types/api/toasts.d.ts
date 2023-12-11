@@ -11,7 +11,9 @@ export interface ToastButton {
 	onPress: Fn;
 }
 
-export interface ToastOptions {
+export type ToastOptions = _ToastOptions | PartialBy<_ToastOptions, 'title'> | PartialBy<_ToastOptions, 'content'>;
+
+interface _ToastOptions {
 	title: string;
 	content: string;
 	duration?: number;
@@ -21,7 +23,7 @@ export interface ToastOptions {
 	buttons?: ToastButton[];
 }
 
-export interface InternalToastOptions extends ToastOptions {
+export type InternalToastOptions = ToastOptions & {
 	closing?: boolean;
 	date?: number;
 }

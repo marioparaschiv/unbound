@@ -1,4 +1,4 @@
-type DCDFileManagerConstants = {
+export type DCDFileManagerConstants = {
 	CacheDirPath: string;
 	DocumentsDirPath: string;
 };
@@ -16,3 +16,9 @@ export type DCDFileManagerType = DCDFileManagerConstants & {
 	DocumentsDirPath: string;
 	getConstants(): DCDFileManagerConstants;
 };
+
+export interface Payload {
+	store: string;
+	key: string;
+	value: any;
+}

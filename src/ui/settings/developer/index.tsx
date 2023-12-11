@@ -1,6 +1,6 @@
 import { Form, Section, Row, SwitchRow, RowIcon, useEndStyle } from '@ui/components/form';
-import { React, ReactNative as RN } from '@metro/common';
-import { Forms, Redesign } from '@metro/components';
+import { Constants, React, ReactNative as RN, Theme } from '@metro/common';
+import { Forms, Redesign, Slider } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { Keys, Links } from '@constants';
 import { Strings } from '@api/i18n';
@@ -22,39 +22,6 @@ export default function Developer() {
 	};
 
 	return <Form>
-		<Section title={Strings.UNBOUND_MISC}>
-			<Row
-				label={Strings.UNBOUND_FORCE_GARBAGE_COLLECTION}
-				icon={<RowIcon source={Icons.Trash} />}
-				arrow
-				onPress={async () => {
-					await window.gc();
-					Toasts.showToast({
-						title: Strings.UNBOUND_GARBAGE_COLLECTION,
-						content: Strings.UNBOUND_GARBAGE_COLLECTION_TOAST,
-						icon: Icons.Trash
-					});
-				}}
-			/>
-			<Row
-				label={Strings.UNBOUND_ASSET_BROWSER}
-				icon={<RowIcon source={Icons.Browser} />}
-				onPress={() => navigation.push(Keys.Custom, {
-					title: Strings.UNBOUND_ASSET_BROWSER,
-					render: AssetBrowser
-				})}
-				arrow
-			/>
-			<Row
-				label={Strings.UNBOUND_DEBUG_LOGS}
-				icon={<RowIcon source={Icons.Debug} />}
-				onPress={() => navigation.push(Keys.Custom, {
-					title: Strings.UNBOUND_DEBUG_LOGS,
-					render: Logs
-				})}
-				arrow
-			/>
-		</Section>
 		<Section title={Strings.UNBOUND_DEBUG_BRIDGE}>
 			<SwitchRow
 				label={Strings.UNBOUND_ENABLED}
@@ -111,6 +78,61 @@ export default function Developer() {
 
 					// @ts-expect-error -- purposefully trip the boundary by rendering undefined
 					render: () => <undefined />
+				})}
+				arrow
+			/>
+		</Section>
+		<Section title={Strings.UNBOUND_LOGGING}>
+			<Row
+				label={Strings.UNBOUND_LOGGING_DEPTH}
+				trailing={(
+					<Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
+						{Strings.UNBOUND_LOGGING_DEPTH_DESC.format({ depth: settings.get('dev.logging.depth', 3) })}
+					</Forms.FormText>
+				)}
+			/>
+			<RN.View style={[endStyle, { borderBottomRightRadius: 0, borderBottomLeftRadius: 0 }]}>
+				<Slider
+					style={{ marginHorizontal: 15, marginVertical: 5 }}
+					value={settings.get('dev.logging.depth', 3)}
+					onValueChange={v => settings.set('dev.logging.depth', Math.round(v))}
+					minimumValue={1}
+					maximumValue={6}
+					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
+					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
+					tapToSeek
+				/>
+			</RN.View>
+			<Row
+				label={Strings.UNBOUND_DEBUG_LOGS}
+				icon={<RowIcon source={Icons.Debug} />}
+				onPress={() => navigation.push(Keys.Custom, {
+					title: Strings.UNBOUND_DEBUG_LOGS,
+					render: Logs
+				})}
+				arrow
+			/>
+		</Section>
+		<Section title={Strings.UNBOUND_MISC}>
+			<Row
+				label={Strings.UNBOUND_FORCE_GARBAGE_COLLECTION}
+				icon={<RowIcon source={Icons.Trash} />}
+				arrow
+				onPress={async () => {
+					await window.gc();
+					Toasts.showToast({
+						title: Strings.UNBOUND_GARBAGE_COLLECTION,
+						content: Strings.UNBOUND_GARBAGE_COLLECTION_TOAST,
+						icon: Icons.Trash
+					});
+				}}
+			/>
+			<Row
+				label={Strings.UNBOUND_ASSET_BROWSER}
+				icon={<RowIcon source={Icons.Browser} />}
+				onPress={() => navigation.push(Keys.Custom, {
+					title: Strings.UNBOUND_ASSET_BROWSER,
+					render: AssetBrowser
 				})}
 				arrow
 			/>

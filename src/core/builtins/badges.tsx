@@ -3,6 +3,7 @@ import type { BuiltIn } from '@typings/core/builtins';
 import { ReactNative as RN } from '@metro/common';
 import { Links, Times } from '@constants';
 import { createPatcher } from '@patcher';
+import { showToast } from '@api/toasts';
 import { Theme } from '@metro/stores';
 import { findByName } from '@metro';
 
@@ -19,7 +20,7 @@ const cache = {
 };
 
 export function initialize() {
-	const Badges = findByName(('ProfileBadges'), { all: true, interop: false });
+	const Badges = findByName('ProfileBadges', { all: true, interop: false });
 
 	for (const Badge of Badges) {
 		Patcher.after(Badge, 'default', (_, [{ user, isUnbound, style, ...rest }], res) => {
@@ -129,11 +130,10 @@ const Badge = ({ type, size, margin }: { type: string; size: number; margin: num
 		}
 	};
 
-	const uri = badge.url[Theme.theme];
+	const uri = badge.url[Theme.theme] ?? badge.url.dark;
+	if (!uri) return null;
 
-	return <RN.TouchableOpacity
-		onPress={() => { }}
-	>
+	return <RN.TouchableOpacity onPress={() => showToast({ title: badge.name, icon: { uri } })}>
 		<RN.Image
 			// @ts-expect-error
 			style={styles.image}

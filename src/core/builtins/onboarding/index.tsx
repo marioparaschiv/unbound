@@ -1,10 +1,10 @@
-import { findByName } from '@metro';
-import { createPatcher } from '@patcher';
-import { Reanimated } from '@metro/common';
 import { getStore, useSettingsStore } from '@api/storage';
+import { Reanimated } from '@metro/common';
+import { createPatcher } from '@patcher';
+import { findByName } from '@metro';
 
-import Content from './components/Content';
 import Onboarding from './components/Onboarding';
+import Content from './components/Content';
 
 const Patcher = createPatcher('onboarding');
 const { useSharedValue, withTiming } = Reanimated;
