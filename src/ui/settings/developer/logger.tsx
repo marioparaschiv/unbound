@@ -1,10 +1,12 @@
 import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme } from '@metro/common';
-import { Section, Row, RowIcon } from '@ui/components/form';
+import { Section } from '@ui/components/form';
 import { GeneralSearch } from '@ui/components/search';
 import { Redesign } from '@metro/components';
 import LoggerStore from '@stores/logger';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
+
+const { TableRow, TableRowIcon } = Redesign;
 
 const levelSelection = {
 	variant(level: number) {
@@ -31,7 +33,7 @@ export default function Logger() {
 		navigation.setOptions({ headerRight: HeaderRight });
 	});
 
-	return <RN.View>
+	return <RN.ScrollView>
 		<RN.View style={{ marginHorizontal: 16, marginVertical: 12 }}>
 			<GeneralSearch
 				type={'logs'}
@@ -54,16 +56,16 @@ export default function Logger() {
 					</RN.Text>
 				</RN.View>}
 				renderItem={({ item }) => {
-					return <Row
+					return <TableRow
 						label={item.message}
 						subLabel={Moment(item.time).format('HH:mm:ss.SSS')}
 						variant={levelSelection.variant(item.level)}
-						icon={<RowIcon source={Icons[levelSelection.icon(item.level)]} />}
+						icon={<TableRowIcon source={Icons[levelSelection.icon(item.level)]} />}
 					/>;
 				}}
 			/>
 		</Section>
-	</RN.View>;
+	</RN.ScrollView>;
 }
 
 const useStyles = StyleSheet.createStyles({

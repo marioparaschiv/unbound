@@ -1,18 +1,20 @@
-import { Section, SwitchRow, Row, Form, RowIcon } from '@ui/components/form';
+import { Section } from '@ui/components/form';
 import { Theme, React, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
-import { Linking } from '@metro/actions';
+import { Linking } from '@metro/api';
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
 import { reload } from '@api/native';
 import { Strings } from '@api/i18n';
-import { Dialog } from '@metro/ui';
 import Assets from '@api/assets';
 
 import Developer from '../developer';
 import Toasts from './toasts';
+import { showAlert } from '@api/dialogs';
+
+const { TableRow, TableSwitchRow, TableRowIcon } = Redesign;
 
 const useStyles = StyleSheet.createStyles({
 	trailingText: {
@@ -41,7 +43,7 @@ function General() {
 		Debug: Assets.getIDByName('debug')
 	};
 
-	return <Form>
+	return <RN.ScrollView>
 		<RN.KeyboardAvoidingView
 			enabled={true}
 			behavior='position'
@@ -50,36 +52,43 @@ function General() {
 			contentContainerStyle={{ backfaceVisibility: 'hidden' }}
 		>
 			<Section>
-				<SwitchRow
+				<TableSwitchRow
 					label={Strings.UNBOUND_RECOVERY_MODE}
 					subLabel={Strings.UNBOUND_RECOVERY_MODE_DESC}
-					icon={<RowIcon source={Icons.Retry} />}
+					icon={<TableRowIcon source={Icons.Retry} />}
 					value={settings.get('recovery', false)}
 					onValueChange={() => {
 						settings.toggle('recovery', false);
-						Dialog.confirm({
+						showAlert({
 							title: Strings.UNBOUND_CHANGE_RESTART,
-							body: Strings.UNBOUND_CHANGE_RESTART_DESC,
-							confirmText: Strings.UNBOUND_RESTART,
-							onConfirm: reload,
-							onCancel: () => settings.toggle('recovery', false)
+							content: Strings.UNBOUND_CHANGE_RESTART_DESC,
+							buttons: [
+								{
+									text: Strings.UNBOUND_RESTART,
+									onPress: reload
+								},
+								{
+									text: Strings.CANCEL,
+									onPress: () => settings.toggle('recovery', false)
+								}
+							]
 						});
 					}}
 				/>
 			</Section>
 			<Section>
-				<Row
+				<TableRow
 					label={Strings.UNBOUND_TOAST_SETTINGS}
-					icon={<RowIcon source={Icons.Toasts} />}
+					icon={<TableRowIcon source={Icons.Toasts} />}
 					onPress={() => navigation.push(Keys.Custom, {
 						title: Strings.UNBOUND_TOAST_SETTINGS,
 						render: Toasts
 					})}
 					arrow
 				/>
-				<Row
+				<TableRow
 					label={Strings.UNBOUND_DEVELOPMENT_SETTINGS}
-					icon={<RowIcon source={Icons.Development} />}
+					icon={<TableRowIcon source={Icons.Development} />}
 					onPress={() => navigation.push(Keys.Custom, {
 						title: Strings.UNBOUND_DEVELOPMENT_SETTINGS,
 						render: Developer
@@ -88,43 +97,43 @@ function General() {
 				/>
 			</Section>
 			<Section title={Strings.UNBOUND_INFO}>
-				<Row
+				<TableRow
 					label={Strings.UNBOUND_INSTALLED_PLUGINS}
-					icon={<RowIcon source={Icons.Plugins} />}
+					icon={<TableRowIcon source={Icons.Plugins} />}
 					trailing={<RN.Text style={styles.trailingText}>
 						{Plugins.addons.length}
 					</RN.Text>}
 				/>
-				<Row
+				<TableRow
 					label={Strings.UNBOUND_INSTALLED_THEMES}
-					icon={<RowIcon source={Icons.Themes} />}
+					icon={<TableRowIcon source={Icons.Themes} />}
 					trailing={<RN.Text style={styles.trailingText}>
 						{Themes.addons.length}
 					</RN.Text>}
 				/>
 			</Section>
 			<Section title='Links'>
-				<Row
+				<TableRow
 					label={Strings.UNBOUND_DISCORD_SERVER}
-					icon={<RowIcon source={Icons.Discord} />}
+					icon={<TableRowIcon source={Icons.Discord} />}
 					onPress={() => Linking.openDeeplink(`https://discord.gg/${Invite}`)}
 					arrow
 				/>
-				<Row
+				<TableRow
 					label={Strings.UNBOUND_GITHUB}
-					icon={<RowIcon source={Icons.GitHub} />}
+					icon={<TableRowIcon source={Icons.GitHub} />}
 					onPress={() => RN.Linking.openURL(Links.GitHub)}
 					arrow
 				/>
-				<Row
+				<TableRow
 					label={`X / ${Strings.UNBOUND_TWITTER}`}
-					icon={<RowIcon source={Icons.X} />}
+					icon={<TableRowIcon source={Icons.X} />}
 					onPress={() => RN.Linking.openURL(Links.X)}
 					arrow
 				/>
 			</Section>
 		</RN.KeyboardAvoidingView>
-	</Form>;
+	</RN.ScrollView>;
 }
 
 export default General;

@@ -1,41 +1,43 @@
-import { Section, Row, SwitchRow, RowIcon, useEndStyle, Form } from '@ui/components/form';
+import { Section, useFormStyles } from '@ui/components/form';
 import { Constants, Theme, ReactNative as RN } from '@metro/common';
-import { Slider, Forms } from '@metro/components';
+import { Redesign, Slider } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { showToast } from '@api/toasts';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
 import { noop } from '@utilities';
 
+const { TableRow, TableSwitchRow, TableRowIcon } = Redesign;
+
 function Toasts() {
 	const [alternate, setAlternate] = React.useState(true);
 	const settings = useSettingsStore('unbound');
-	const endStyle = useEndStyle();
+	const { endStyle, formHint, formText } = useFormStyles();
 
 	const duration = settings.get('toasts.duration', 0);
 	const opacity = settings.get('toasts.opacity', 0.8);
 	const blur = settings.get('toasts.blur', 0.15);
 
-	return <Form>
+	return <RN.ScrollView>
 		<Section>
-			<SwitchRow
+			<TableSwitchRow
 				label={Strings.UNBOUND_ENABLED}
 				subLabel={Strings.UNBOUND_TOASTS_DESC}
-				icon={<RowIcon source={settings.get('toasts.enabled', true) ? Icons['Check'] : Icons['Small']} />}
+				icon={<TableRowIcon source={settings.get('toasts.enabled', true) ? Icons['Check'] : Icons['Small']} />}
 				value={settings.get('toasts.enabled', true)}
 				onValueChange={() => settings.toggle('toasts.enabled', true)}
 			/>
-			<SwitchRow
+			<TableSwitchRow
 				label={Strings.UNBOUND_TOASTS_ANIMATIONS}
 				subLabel={Strings.UNBOUND_TOASTS_ANIMATIONS_DESC}
-				icon={<RowIcon source={settings.get('toasts.animations', true) ? Icons['pause'] : Icons['play']} />}
+				icon={<TableRowIcon source={settings.get('toasts.animations', true) ? Icons['pause'] : Icons['play']} />}
 				value={settings.get('toasts.animations', true)}
 				onValueChange={() => settings.toggle('toasts.animations', true)}
 			/>
-			<Row
+			<TableRow
 				arrow={true}
 				label={'Show Toast'}
-				icon={<RowIcon source={Icons['feature_star']} />}
+				icon={<TableRowIcon source={Icons['feature_star']} />}
 				onPress={() => {
 					const toast = showToast({
 						get title() {
@@ -100,12 +102,12 @@ function Toasts() {
 			/>
 		</Section>
 		<Section>
-			<Row
+			<TableRow
 				label={Strings.UNBOUND_TOAST_BACKGROUND_BLUR}
 				trailing={(
-					<Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
+					<RN.Text style={formText}>
 						{`${Math.round(blur * 100)}%`}
-					</Forms.FormText>
+					</RN.Text>
 				)}
 			/>
 			<RN.View style={endStyle}>
@@ -122,12 +124,12 @@ function Toasts() {
 			</RN.View>
 		</Section>
 		<Section>
-			<Row
+			<TableRow
 				label={Strings.UNBOUND_TOAST_BACKGROUND_OPACITY}
 				trailing={(
-					<Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
+					<RN.Text style={formText}>
 						{`${Math.round(opacity * 100)}%`}
-					</Forms.FormText>
+					</RN.Text>
 				)}
 			/>
 			<RN.View style={endStyle}>
@@ -144,12 +146,12 @@ function Toasts() {
 			</RN.View>
 		</Section>
 		<Section>
-			<Row
+			<TableRow
 				label={Strings.UNBOUND_TOAST_DURATION}
 				trailing={(
-					<Forms.FormText size={Forms.FormTextSizes.MEDIUM}>
+					<RN.Text style={formText}>
 						{duration === 0 ? Strings.UNBOUND_INDEFINITE : Strings.DURATION_SECONDS.format({ seconds: duration })}
-					</Forms.FormText>
+					</RN.Text>
 				)}
 			/>
 			<RN.View style={endStyle}>
@@ -165,10 +167,10 @@ function Toasts() {
 				/>
 			</RN.View>
 		</Section>
-		<Forms.FormHint>
+		<RN.Text style={formHint}>
 			{Strings.UNBOUND_TOAST_DURATION_DESC}
-		</Forms.FormHint>
-	</Form>;
+		</RN.Text>
+	</RN.ScrollView>;
 }
 
 export default Toasts;

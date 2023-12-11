@@ -1,22 +1,11 @@
-import { Search as DiscordSearch, Redesign } from '@metro/components';
+import { Redesign } from '@metro/components';
 import type { TextInputProps } from 'react-native';
 import { StyleSheet, ReactNative as RN, Theme } from '@metro/common';
-import { mergeStyles } from '@utilities';
-import { TabsUIState } from '@ui/components/form';
 import type { Dispatch, SetStateAction } from 'react';
 import { getIDByName } from '@api/assets';
 import { Strings } from '@api/i18n';
 
 const useStyles = StyleSheet.createStyles({
-	search: {
-		margin: 0,
-		marginTop: 5,
-		padding: 10,
-		borderBottomWidth: 0,
-		background: 'none',
-		backgroundColor: 'none',
-	},
-
 	icon: {
 		tintColor: Theme.colors.INTERACTIVE_NORMAL,
 		width: 16,
@@ -38,13 +27,7 @@ interface GeneralSearchProps {
 }
 
 function Search(props: SearchProps) {
-	const tabsEnabled = TabsUIState.useInMainTabsExperiment();
-	const styles = useStyles();
-
-	return tabsEnabled ? <Redesign.TextInput size='md' {...props} /> : <DiscordSearch
-		{...props}
-		style={mergeStyles(styles.search, props.style)}
-	/>;
+	return <Redesign.TextInput size='md' {...props} />;
 }
 
 export function GeneralSearch({ type, search, setSearch }: GeneralSearchProps) {

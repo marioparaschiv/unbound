@@ -1,9 +1,7 @@
 import type { Asset as AssetType } from '@typings/api/assets';
 import { React, ReactNative as RN } from '@metro/common';
-import { Row } from '@ui/components/form';
-import { Media } from '@metro/components';
+import { Media, Redesign } from '@metro/components';
 import { findByProps } from '@metro';
-
 
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
 
@@ -11,7 +9,7 @@ export default class Asset extends React.PureComponent<{ item: AssetType; index:
 	render() {
 		const { item, index, total } = this.props;
 
-		return <Row
+		return <Redesign.TableRow
 			label={item.name}
 			subLabel={`${item.type.toUpperCase()} - ${item.width}x${item.height} - ${item.id}`}
 			trailing={<RN.Image

@@ -4,7 +4,7 @@ import Plugins from '@ui/settings/plugins';
 import useStyles from './styles';
 
 import { on, set } from '@api/storage';
-import { Linking } from '@metro/actions';
+import { Linking } from '@metro/api';
 import { Invite, Links } from '@constants';
 import { Strings } from '@api/i18n';
 import type { Dispatch, SetStateAction } from 'react';

@@ -1,3 +1,1 @@
-import { findByProps } from '@metro';
-
-export const AsyncUsers = findByProps('fetchProfile', { lazy: true });
+export { Linking, AsyncUsers, Profiles } from '@metro/registry';

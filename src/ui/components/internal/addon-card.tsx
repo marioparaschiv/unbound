@@ -3,7 +3,7 @@ import { mergeStyles } from '@utilities';
 import { showAlert } from '@api/dialogs';
 import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';
-import { Profiles } from '@metro/ui';
+import { Profiles } from '@metro/api';
 import { reload } from '@api/native';
 import { Icons, getIDByName } from '@api/assets';
 import { Strings } from '@api/i18n';
@@ -14,7 +14,7 @@ import Overflow from '@ui/components/overflow';
 
 import type { Addon, Author, Manager } from '@typings/managers';
 import { managers } from '@api';
-import { RowSwitch } from '@ui/components/form';
+import { Switch } from '@ui/components/form';
 
 interface AddonCardProps {
 	type: Manager;
@@ -157,7 +157,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 	renderSwitch() {
 		const { addon, shouldRestart, recovery } = this.props;
 
-		return <RowSwitch
+		return <Switch.FormSwitch
 			disabled={addon.failed || recovery}
 			value={this.manager.isEnabled(addon.id)}
 			trackColor={{

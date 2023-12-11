@@ -1,5 +1,4 @@
 import { React, Reanimated, Gestures, ReactNative as RN } from '@metro/common';
-import { RowIcon, TabsUIState } from '@ui/components/form';
 import { unitToHex, withoutOpacity } from '@utilities';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
@@ -20,7 +19,6 @@ const { PanGestureHandler, State } = Gestures;
 
 function Toast(options: ToastOptions) {
 	const { style, properties: { scale, opacity, height, width }, leave } = useToastState(options);
-	const isTabsV2 = TabsUIState.useInMainTabsExperiment();
 	const settings = useSettingsStore('unbound');
 	const styles = useStyles();
 	const translateY = useSharedValue(0);
@@ -61,7 +59,7 @@ function Toast(options: ToastOptions) {
 					<Redesign.BackgroundBlurFill blurAmount={settings.get('toasts.blur', 0.15)} />
 					<RN.View style={styles.wrapper}>
 						{options.icon && <RN.View style={[styles.icon, { marginVertical: linesLength * 10 }]}>
-							<RowIcon source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon} size='small' />
+							<Redesign.TableRowIcon source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon} size='small' />
 						</RN.View>}
 						<RN.View style={styles.contentContainer}>
 							{options.title && <RN.Text style={styles.title}>
@@ -93,11 +91,11 @@ function Toast(options: ToastOptions) {
 								Toasts.store.setState(() => ({ toasts: [] }));
 							}}
 						>
-							<RowIcon source={Icons['ic_close']} size='small' />
+							<Redesign.TableRowIcon source={Icons['ic_close']} size='small' />
 						</RN.Pressable>
 					</RN.View>
 					{Array.isArray(options.buttons) && options.buttons.length > 0 && (
-						<RN.View style={[styles.buttons, { marginTop: isTabsV2 ? 0 : 8 }]}>
+						<RN.View style={[styles.buttons, { marginTop: 0 }]}>
 							{options.buttons.map((button, index) => <Redesign.Button
 								key={`${options.id}-button-${index}`}
 								style={styles.button}
