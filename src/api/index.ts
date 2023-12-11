@@ -9,6 +9,7 @@ export * as dialogs from './dialogs';
 export * as toasts from './toasts';
 export * as native from './native';
 export * as i18n from './i18n';
+export * as components from '@ui/components';
 
 // Metro
 import Filters from '@metro/filters';
