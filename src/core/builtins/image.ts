@@ -3,7 +3,7 @@ import { ReactNative as RN } from '@metro/common';
 import { DCDFileManager } from '@api/storage';
 import { findInReactTree } from '@utilities';
 import { createPatcher } from '@patcher';
-import { findByProps } from '@metro';
+import { internalGetLazily } from '@metro/registry';
 
 const Patcher = createPatcher('protocols');
 
@@ -12,7 +12,7 @@ export const data: BuiltIn['data'] = {
 	default: true
 };
 
-const Icon = findByProps('TableRowIcon', { all: true }).find(x => !('useCoachmark' in x));
+const Icon = internalGetLazily('TableRowIcon', x => !('useCoachmark' in x));
 
 export function initialize() {
 	// Remove tintColor if the icon is a custom image (eg with a uri pointing to a badge)

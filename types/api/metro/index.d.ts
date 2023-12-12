@@ -63,3 +63,5 @@ export type FunctionSignatureOrArray<
 > = T extends BulkFind<U>
 	? BulkModuleByName<T>
 	: SingleModuleByName<T>;
+
+export type Module<TProps extends string> = PropertyRecordOrArray<TProps[], TProps>

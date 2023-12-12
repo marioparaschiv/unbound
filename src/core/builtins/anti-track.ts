@@ -11,16 +11,9 @@ export const data: BuiltIn['data'] = {
 };
 
 export function initialize() {
-	const [
-		Metadata,
-		Analytics,
-		Properties
-	] = findByProps(
-		{ params: ['trackWithMetadata'] },
-		{ params: ['AnalyticsActionHandlers'] },
-		{ params: ['encodeProperties', 'track'] },
-		{ bulk: true }
-	);
+	const Metadata = findByProps('trackWithMetadata', { lazy: true });
+	const Analytics = findByProps('AnalyticsActionHandlers', { lazy: true });
+	const Properties = findByProps('encodeProperties', 'track', { lazy: true });
 
 	attempt(() => Patcher.instead(Metadata, 'trackWithMetadata', noop));
 

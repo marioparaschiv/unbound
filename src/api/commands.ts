@@ -37,7 +37,7 @@ export enum ApplicationCommandOptionType {
 	ATTACHMENT
 }
 
-const Commands = findByProps('getBuiltInCommands');
+const Commands = findByProps('getBuiltInCommands', { lazy: true });
 
 export const data = {
 	commands: [],

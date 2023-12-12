@@ -6,7 +6,7 @@ import { createLogger } from '@logger';
 import { findByProps } from '@metro';
 
 export const assets = new Set<Asset>();
-export const registry = findByProps('registerAsset');
+export const registry = findByProps('registerAsset', { lazy: true });
 
 const Logger = createLogger('Assets');
 const Patcher = createPatcher('unbound-assets');

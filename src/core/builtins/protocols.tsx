@@ -15,8 +15,6 @@ export const data: BuiltIn['data'] = {
 	default: true
 };
 
-const RowManager = findByName('RowManager');
-
 const actions = {
 	async install(parameters: URLSearchParams, type: ManagerType) {
 		const [url] = getBulkParameters('url', parameters);
@@ -58,6 +56,8 @@ const actions = {
 const ActionTypes = Object.keys(actions);
 
 export function initialize() {
+	const RowManager = findByName('RowManager');
+
 	Patcher.after(RowManager.prototype, 'generate', (_, args, res) => {
 		if (res?.type === 1 && res.message.content) {
 			res.message.content = resolveProtocols(res.message.content);

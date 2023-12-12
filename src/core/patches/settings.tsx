@@ -1,7 +1,6 @@
 import { ClientName, Keys } from '@constants';
 import { Redesign } from '@metro/components';
-import { findByProps, bulk } from '@metro';
-import { byProps } from '@metro/filters';
+import { findByProps } from '@metro';
 import { createPatcher } from '@patcher';
 import { React } from '@metro/common';
 import { Icons } from '@api/assets';
@@ -18,22 +17,11 @@ type CustomScreenProps = {
 
 class Settings {
 	public patcher = createPatcher('unbound-settings');
-	private Constants: Record<string, any>;
-	private Settings: Record<string, any>;
-
-	constructor() {
-		const [
-			Constants,
-			Settings
-		] = bulk(
-			{ filter: byProps('SETTING_RENDERER_CONFIG'), lazy: true },
-			{ filter: byProps('SearchableSettingsList'), lazy: true }
-		);
-
-		this.Constants = Constants;
-		this.Settings = Settings;
-	}
-
+	private Constants = findByProps('SETTING_RENDERER_CONFIG', { lazy: true });
+	private Settings = findByProps('SearchableSettingsList', { lazy: true });
+	private SearchQuery = findByProps('getSettingSearchQuery', { lazy: true });
+	private SearchResults = findByProps('useSettingSearchResults', { lazy: true });
+	private Getters = findByProps('getSettingListSearchResultItems', { lazy: true });
 
 	public Titles = {
 		get General() {
@@ -160,24 +148,13 @@ class Settings {
 	};
 
 	private patchSearch() {
-		const [
-			SearchQuery,
-			SearchResults,
-			Getters
-		] = findByProps(
-			{ params: ['getSettingSearchQuery'] },
-			{ params: ['useSettingSearchResults'] },
-			{ params: ['getSettingListSearchResultItems'] },
-			{ bulk: true }
-		);
-
-		this.patcher.after(SearchResults, 'useSettingSearchResults', (_, __, res) => {
+		this.patcher.after(this.SearchResults, 'useSettingSearchResults', (_, __, res) => {
 			res = res.filter(result => !Object.values(Keys).includes(result));
 
 			Object.keys(Keys).filter(key => this.Mappables[key]).forEach(key => {
 				// By default, the client name and the title of the entry are already keywords
 				const queryContainsKeyword = [...this.Keywords[key], ClientName, this.Titles[key]].some(keyword =>
-					keyword.toLowerCase().includes(SearchQuery.getSettingSearchQuery().toLowerCase()));
+					keyword.toLowerCase().includes(this.SearchQuery.getSettingSearchQuery().toLowerCase()));
 
 				if (queryContainsKeyword && !res.find(result => result === Keys[key])) res.unshift(Keys[key]);
 			});
@@ -185,7 +162,7 @@ class Settings {
 			return res;
 		});
 
-		this.patcher.after(Getters, 'getSettingListSearchResultItems', (_, [settings], res) => {
+		this.patcher.after(this.Getters, 'getSettingListSearchResultItems', (_, [settings], res) => {
 			res = res.filter(item => !Object.values(Keys).includes(item.setting));
 
 			Object.keys(Keys).reverse().forEach(key => {
