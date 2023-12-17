@@ -18,7 +18,7 @@ class Manager extends EventEmitter {
 	public logger: ReturnType<typeof createLogger>;
 	public settings: ReturnType<typeof getStore>;
 	public id: Manager;
-	public entities = new Map();
+	public entities = new Map<Manifest['id'], Addon>();
 	public started = new Set();
 	public errors = new Map();
 	public type: ManagerType;
@@ -384,7 +384,7 @@ class Manager extends EventEmitter {
 	resolve(id: Resolveable): Addon | void {
 		if ((id as Addon).data) return id as Addon;
 
-		const storage = this.entities.get(id);
+		const storage = this.entities.get(id as string);
 		if (storage) return storage as Addon;
 
 		const entities = [...this.entities.values()];

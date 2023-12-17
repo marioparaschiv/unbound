@@ -4,4 +4,4 @@ export * as AntiTrack from './anti-track';
 export * as Protocols from './protocols';
 export * as Badges from './badges';
 export * as Debug from './debug';
-export * as Image from './image';
+export * as Misc from './misc';

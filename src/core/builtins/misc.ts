@@ -4,15 +4,18 @@ import { DCDFileManager } from '@api/storage';
 import { findInReactTree } from '@utilities';
 import { createPatcher } from '@patcher';
 import { internalGetLazily } from '@metro/registry';
+import { findByProps } from '@metro';
+import themes from '@managers/themes';
 
-const Patcher = createPatcher('protocols');
+const Patcher = createPatcher('misc');
 
 export const data: BuiltIn['data'] = {
-	id: 'modules.image',
+	id: 'modules.misc',
 	default: true
 };
 
 const Icon = internalGetLazily('TableRowIcon', x => !('useCoachmark' in x));
+const Theming = findByProps('updateTheme', { lazy: true });
 
 export function initialize() {
 	// Remove tintColor if the icon is a custom image (eg with a uri pointing to a badge)
@@ -42,6 +45,11 @@ export function initialize() {
 			props.source = { ...props.source };
 			props.source.uri = source.uri.replace(identifier, documentsPath);
 		}
+	});
+
+	Patcher.before(Theming, 'updateTheme', (_, args) => {
+		const appliedThemeId = themes.settings.get('applied', null);
+		appliedThemeId && !args[0].includes(appliedThemeId) && (args[0] = `${appliedThemeId}-${args[0]}`);
 	});
 }
 

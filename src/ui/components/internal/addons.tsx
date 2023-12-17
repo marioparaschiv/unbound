@@ -68,13 +68,12 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 	}, []);
 
 	const isRecovery = settings.get('recovery', false);
-	const isOnboarding = settings.get('onboarding.install', false);
 	const order = settings.get(`${resolveType(type)}.order`, 'default');
 	const reversed = settings.get(`${resolveType(type)}.reversed`, false);
 
 	React.useLayoutEffect(() => {
 		callbackWithAnimation(noop)();
-	}, [isOnboarding]);
+	}, [settings.get('onboarding.install', false)]);
 
 	const data = React.useMemo(() => {
 		const items = getItems(type, settings);
@@ -103,7 +102,7 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 			search={search}
 			setSearch={setSearch}
 		/>
-		{isOnboarding && <RN.View style={styles.recoveryContainer}>
+		{settings.get('onboarding.install', false) && <RN.View style={styles.recoveryContainer}>
 			<HelpMessage messageType={1}>
 				{Strings.UNBOUND_ONBOARDING_ADDON_PAGE_INFO.format({ type: manager.type })}
 			</HelpMessage>

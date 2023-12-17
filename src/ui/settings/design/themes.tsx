@@ -11,7 +11,6 @@ function ThemesPage() {
 
 	return <RN.View style={{ flex: 1 }}>
 		<Addons
-			shouldRestart={true}
 			showHeaderRight={false}
 			type='themes'
 			addons={addons}

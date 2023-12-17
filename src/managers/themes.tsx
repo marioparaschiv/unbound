@@ -1,8 +1,9 @@
 import type { Addon, Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
-import { findInReactTree } from '@utilities';
+import { findInReactTree, unitToHex, withoutOpacity } from '@utilities';
 import { createPatcher } from '@patcher';
-import Storage from '@api/storage';
+import Storage, { get } from '@api/storage';
+import { findByProps } from '@metro';
 
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
@@ -19,11 +20,86 @@ class Themes extends Manager {
 	initialize(mdl: any): void {
 		this.module = mdl;
 
+		this.module._Theme = { ...this.module.Theme };
+		this.module._RawColor = { ...this.module.RawColor };
+		this.module._unsafe_rawColors = { ...this.module.unsafe_rawColors };
+
 		for (const theme of window.UNBOUND_THEMES ?? []) {
 			const { manifest, bundle } = theme;
+			const parsedId = manifest.id.replace('-', '');
+
+			for (const [key, value] of Object.entries(this.module._Theme)) {
+				this.module.Theme[`${manifest.id}-${key}`] = `${parsedId}-${value}`;
+			}
+
+			for (const value of Object.values(this.module.Shadow)) {
+				for (const [key, shadow] of Object.entries(value)) {
+					value[`${parsedId}-${key}`] = shadow;
+				}
+			}
+
+			for (const value of Object.values(this.module.SemanticColor)) {
+				for (const [key, semanticColor] of Object.entries(value)) {
+					value[`${parsedId}-${key}`] = semanticColor;
+				}
+			}
 
 			this.load(bundle, manifest);
 		}
+
+		const orig = this.module.default.meta.resolveSemanticColor;
+		const self = this;
+
+		this.module.default.meta.resolveSemanticColor = function (theme: string, ref: { [key: symbol]: string; }) {
+			const [id, unparsedName] = theme.split('-');
+
+			if (!unparsedName) {
+				// id is technically the theme name if there isnt a theme passed
+				// because it would now be [0] as the split would just return the full string
+				return orig.call(this, id, ref);
+			}
+
+			const name = unparsedName === 'darker' ? 'dark' : unparsedName;
+
+			if (!Object.values(self.module.Theme).includes(theme)) {
+				return orig.call(this, name, ref);
+			}
+
+			const appliedTheme = self.entities.get(id);
+
+			if (!appliedTheme) {
+				return orig.call(this, name, ref);
+			}
+
+			const { instance } = appliedTheme;
+			const key = ref[Object.getOwnPropertySymbols(ref)[0]];
+			const themeObject = instance.semantic?.[key];
+			const item = themeObject?.[name] ?? themeObject?.['dark'];
+
+			try {
+				let color = null;
+
+				if (!item) color = orig.call(this, name, ref);
+				if (item?.raw) color = self.module.RawColor[item.raw];
+				if (item?.color) {
+					if (item.color === 'transparent') {
+						return 'rgba(0, 0, 0, 0)';
+					}
+
+					color = item.color.replace('transparent', 'rgba(0, 0, 0, 0)');
+				}
+
+				if (key === 'CHAT_BACKGROUND' && typeof instance.background?.opacity === 'number') {
+					return (color ?? '#000000') + Math.round(instance.background.opacity * 255).toString(16);
+				}
+
+				return item?.opacity ? withoutOpacity(color) + unitToHex(item.opacity) : color;;
+			} catch(e) {
+				console.error('Failed to resolve color:', e);
+			}
+
+			return orig.call(this, name, ref);
+		};
 	}
 
 	override async start(entity: Resolveable): Promise<void> {
@@ -34,38 +110,10 @@ class Themes extends Manager {
 			const { instance } = addon;
 
 			if (instance.raw) {
-				if (!instance.raw.PRIMARY_660) {
-					instance.raw.PRIMARY_660 = instance?.semantic?.BACKGROUND_PRIMARY[0];
-				}
-
-				const entries = Object.entries(instance.raw);
-
-				for (const [key, value] of entries) {
+				for (const [key, value] of Object.entries(instance.raw)) {
 					this.module.RawColor[key] = value;
 					this.module.default.unsafe_rawColors[key] = value;
 				}
-			}
-
-			if (instance.semantic) {
-				const orig = this.module.default.meta.resolveSemanticColor;
-
-				this.module.default.meta.resolveSemanticColor = function (theme: string, ref: { [key: symbol]: string; }) {
-					const key = ref[Object.getOwnPropertySymbols(ref)[0]];
-
-					if (instance.semantic[key]) {
-						const index = { dark: 0, light: 1, amoled: 2 }[theme.toLowerCase()] || 0;
-						const unparsedColor = instance.semantic[key];
-						const color = unparsedColor[index] ?? unparsedColor[0];
-
-						if (key === 'CHAT_BACKGROUND' && typeof instance.background?.opacity === 'number') {
-							return (color ?? '#000000') + Math.round(instance.background.opacity * 255).toString(16);
-						}
-
-						if (color) return color;
-					}
-
-					return orig.call(this, theme === 'darker' ? 'dark' : theme, ref);
-				};
 			}
 
 			if (instance.background) this.applyBackground(addon);
@@ -88,16 +136,26 @@ class Themes extends Manager {
 		const { MessagesWrapper } = findByProps('MessagesWrapper');
 
 		this.patcher.after(Chat, 'default', (_, __, res) => {
-			const index = { dark: 0, light: 1, amoled: 2 }[Theme.theme.toLowerCase()] || 0;
+			const applied = this.settings.get('applied', null);
 
-			return <RN.ImageBackground
-				blurRadius={typeof background.blur === 'number' ? background.blur : 0}
-				style={{ flex: 1, height: '100%' }}
-				source={{ uri: typeof background.url === 'string' ? background.url : background.url[index] ?? background.url[0] }}
-			>{res}</RN.ImageBackground>;
+			if (!applied) return res;
+
+			return (
+				<RN.ImageBackground
+					blurRadius={typeof background.blur === 'number' ? background.blur : 0}
+					style={{ flex: 1, height: '100%' }}
+					source={{ uri: typeof background.url === 'string' ? background.url : (background.url[Theme.theme.replace(`${applied}-`, '')] ?? background.url['dark']) }}
+				>
+					{res}
+				</RN.ImageBackground>
+			);
 		});
 
 		this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {
+			const applied = this.settings.get('applied', null);
+
+			if (!applied) return;
+
 			const Messages = findInReactTree(res, x =>
 				'HACK_fixModalInteraction' in x.props
 				&& x.props?.style
@@ -124,31 +182,42 @@ class Themes extends Manager {
 		this.emit('toggle');
 	}
 
-	override enable(entity: Resolveable): void {
+	override async enable(entity: Resolveable): Promise<void> {
 		const addon = this.resolve(entity);
 		if (!addon) return;
 
 		try {
 			this.settings.set('applied', addon.id);
 
-			if (!addon.started) {
-				this.start(addon);
-			}
+			if (!addon.started) this.start(addon);
+
+			const { findByProps } = await import('@metro');
+			const { Theme } = await import('@metro/stores');
+			const { updateTheme } = findByProps('updateTheme');
+
+            updateTheme(`${addon.id.replace('-', '.')}-${Theme.theme.replace(`${addon.id}-`, '')}`);
 		} catch (e) {
 			this.logger.error(`Failed to enable ${addon.data.id}:`, e.message);
 		}
 	}
 
-	override disable(entity: Resolveable): void {
+	override async disable(entity: Resolveable): Promise<void> {
 		const addon = this.resolve(entity);
 		if (!addon) return;
 
 		try {
 			this.settings.set('applied', null);
 
-			if (addon.started) {
-				this.stop(addon);
-			}
+			if (addon.started) this.stop(addon);
+
+			this.module.RawColor = { ...this.module._RawColor };
+			this.module.unsafe_rawColors = { ...this.module._unsafe_rawColors };
+
+			const { findByProps } = await import('@metro');
+			const { Theme } = await import('@metro/stores');
+			const { updateTheme } = findByProps('updateTheme');
+
+			updateTheme(Theme.theme.replace(`${addon.id}-`, ''));
 		} catch (e) {
 			this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
 		}

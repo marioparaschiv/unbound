@@ -155,7 +155,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 	}
 
 	renderSwitch() {
-		const { addon, shouldRestart, recovery } = this.props;
+		const { addon, recovery } = this.props;
 
 		return <Switch.FormSwitch
 			disabled={addon.failed || recovery}
@@ -166,10 +166,6 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 			}}
 			onValueChange={() => {
 				this.manager.toggle(addon.id);
-
-				if (shouldRestart) {
-					showRestartAlert();
-				}
 			}}
 		/>;
 	}
