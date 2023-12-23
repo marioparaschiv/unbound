@@ -90,11 +90,11 @@ class Themes extends Manager {
 		const currentTheme = this.settings.get('applied', null);
 
 		if (!currentTheme) return;
-        
-        if (typeof this.updateTheme !== 'function') {
-            const { findByProps } = await import('@metro');
-            this.updateTheme = findByProps('updateTheme').updateTheme;
-        }
+
+		if (typeof this.updateTheme !== 'function') {
+			const { findByProps } = await import('@metro');
+			this.updateTheme = findByProps('updateTheme').updateTheme;
+		}
 
 		const { Theme } = await import('@metro/stores');
 		this.updateTheme(`${currentTheme.replace('-', '.')}-${Theme.theme.replace(/.*-/g, '')}`);
@@ -207,11 +207,11 @@ class Themes extends Manager {
 			if (!addon.started) this.start(addon);
 
 			if (typeof this.updateTheme !== 'function') {
-                const { findByProps } = await import('@metro');
-                this.updateTheme = findByProps('updateTheme').updateTheme;
-            }
+				const { findByProps } = await import('@metro');
+				this.updateTheme = findByProps('updateTheme').updateTheme;
+			}
 
-            const { Theme } = await import('@metro/stores');
+			const { Theme } = await import('@metro/stores');
 			this.updateTheme(`${addon.id.replaceAll('-', '.')}-${Theme.theme.replace(/.*-/g, '')}`);
 		} catch (e) {
 			this.logger.error(`Failed to enable ${addon.data.id}:`, e.message);
@@ -230,10 +230,10 @@ class Themes extends Manager {
 			this.module.RawColor = { ...this.module._RawColor };
 			this.module.unsafe_rawColors = { ...this.module._unsafe_rawColors };
 
-            if (typeof this.updateTheme !== 'function') {
-                const { findByProps } = await import('@metro');
-                this.updateTheme = findByProps('updateTheme').updateTheme;
-            }
+			if (typeof this.updateTheme !== 'function') {
+				const { findByProps } = await import('@metro');
+				this.updateTheme = findByProps('updateTheme').updateTheme;
+			}
 
 			const { Theme } = await import('@metro/stores');
 			this.updateTheme(Theme.theme.replace(/.*-/g, ''));
