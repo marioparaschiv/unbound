@@ -2,13 +2,13 @@ import type { Addon, Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
 import { findInReactTree, unitToHex, withoutOpacity } from '@utilities';
 import { createPatcher } from '@patcher';
-import Storage, { get } from '@api/storage';
-import { findByProps } from '@metro';
+import Storage from '@api/storage';
 
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
 	public extension: string = 'json';
 	public module: any;
+    private updateTheme: Fn = null;
 
 	constructor() {
 		super(ManagerType.Themes);
@@ -17,7 +17,7 @@ class Themes extends Manager {
 		this.icon = 'ic_paint_brush';
 	}
 
-	initialize(mdl: any): void {
+	async initialize(mdl: any) {
 		this.module = mdl;
 
 		this.module._Theme = { ...this.module.Theme };
@@ -26,23 +26,6 @@ class Themes extends Manager {
 
 		for (const theme of window.UNBOUND_THEMES ?? []) {
 			const { manifest, bundle } = theme;
-			const parsedId = manifest.id.replace('-', '');
-
-			for (const [key, value] of Object.entries(this.module._Theme)) {
-				this.module.Theme[`${manifest.id}-${key}`] = `${parsedId}-${value}`;
-			}
-
-			for (const value of Object.values(this.module.Shadow)) {
-				for (const [key, shadow] of Object.entries(value)) {
-					value[`${parsedId}-${key}`] = shadow;
-				}
-			}
-
-			for (const value of Object.values(this.module.SemanticColor)) {
-				for (const [key, semanticColor] of Object.entries(value)) {
-					value[`${parsedId}-${key}`] = semanticColor;
-				}
-			}
 
 			this.load(bundle, manifest);
 		}
@@ -100,6 +83,21 @@ class Themes extends Manager {
 
 			return orig.call(this, name, ref);
 		};
+
+		// Discord sets the theme to darker if it isn't in the theme object
+		// When this check is ran, our themes haven't initialized yet.
+		// Hence, let's update our theme back to the correct one below.
+		const currentTheme = this.settings.get('applied', null);
+
+		if (!currentTheme) return;
+        
+        if (typeof this.updateTheme !== 'function') {
+            const { findByProps } = await import('@metro');
+            this.updateTheme = findByProps('updateTheme').updateTheme;
+        }
+
+		const { Theme } = await import('@metro/stores');
+		this.updateTheme(`${currentTheme.replace('-', '.')}-${Theme.theme.replace(/.*-/g, '')}`);
 	}
 
 	override async start(entity: Resolveable): Promise<void> {
@@ -107,12 +105,29 @@ class Themes extends Manager {
 		if (!addon || addon.failed || Storage.get('unbound', 'recovery', false)) return;
 
 		try {
-			const { instance } = addon;
+			const { instance, id } = addon;
+			const parsedId = id.replace('-', '');
 
 			if (instance.raw) {
 				for (const [key, value] of Object.entries(instance.raw)) {
 					this.module.RawColor[key] = value;
 					this.module.default.unsafe_rawColors[key] = value;
+				}
+			}
+
+			for (const [key, value] of Object.entries(this.module._Theme)) {
+				this.module.Theme[key] = `${parsedId}-${value}`;
+			}
+
+			for (const value of Object.values(this.module.Shadow)) {
+				for (const [key, shadow] of Object.entries(value)) {
+					value[`${parsedId}-${key}`] = shadow;
+				}
+			}
+
+			for (const value of Object.values(this.module.SemanticColor)) {
+				for (const [key, semanticColor] of Object.entries(value)) {
+					value[`${parsedId}-${key}`] = semanticColor;
 				}
 			}
 
@@ -144,7 +159,7 @@ class Themes extends Manager {
 				<RN.ImageBackground
 					blurRadius={typeof background.blur === 'number' ? background.blur : 0}
 					style={{ flex: 1, height: '100%' }}
-					source={{ uri: typeof background.url === 'string' ? background.url : (background.url[Theme.theme.replace(`${applied}-`, '')] ?? background.url['dark']) }}
+					source={{ uri: typeof background.url === 'string' ? background.url : (background.url[Theme.theme.replace(/.*-/g, '')] ?? background.url['dark']) }}
 				>
 					{res}
 				</RN.ImageBackground>
@@ -191,11 +206,13 @@ class Themes extends Manager {
 
 			if (!addon.started) this.start(addon);
 
-			const { findByProps } = await import('@metro');
-			const { Theme } = await import('@metro/stores');
-			const { updateTheme } = findByProps('updateTheme');
+			if (typeof this.updateTheme !== 'function') {
+                const { findByProps } = await import('@metro');
+                this.updateTheme = findByProps('updateTheme').updateTheme;
+            }
 
-            updateTheme(`${addon.id.replace('-', '.')}-${Theme.theme.replace(`${addon.id}-`, '')}`);
+            const { Theme } = await import('@metro/stores');
+			this.updateTheme(`${addon.id.replaceAll('-', '.')}-${Theme.theme.replace(/.*-/g, '')}`);
 		} catch (e) {
 			this.logger.error(`Failed to enable ${addon.data.id}:`, e.message);
 		}
@@ -213,11 +230,13 @@ class Themes extends Manager {
 			this.module.RawColor = { ...this.module._RawColor };
 			this.module.unsafe_rawColors = { ...this.module._unsafe_rawColors };
 
-			const { findByProps } = await import('@metro');
-			const { Theme } = await import('@metro/stores');
-			const { updateTheme } = findByProps('updateTheme');
+            if (typeof this.updateTheme !== 'function') {
+                const { findByProps } = await import('@metro');
+                this.updateTheme = findByProps('updateTheme').updateTheme;
+            }
 
-			updateTheme(Theme.theme.replace(`${addon.id}-`, ''));
+			const { Theme } = await import('@metro/stores');
+			this.updateTheme(Theme.theme.replace(/.*-/g, ''));
 		} catch (e) {
 			this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
 		}

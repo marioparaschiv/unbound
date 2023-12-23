@@ -47,7 +47,7 @@ class Settings {
 
 	public Icons = {
 		General: Icons['settings'],
-		Plugins: Icons['PuzzlePieceIcon'],
+		Plugins: Icons['ic_wand'],
 		Design: Icons['ic_paint_brush'],
 		Updater: Icons['ic_download_24px'],
 		Custom: null

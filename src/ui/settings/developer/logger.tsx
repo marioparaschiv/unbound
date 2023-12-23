@@ -58,7 +58,7 @@ export default function Logger() {
 				renderItem={({ item }) => {
 					return <TableRow
 						label={item.message}
-						subLabel={Moment(item.time).format('HH:mm:ss.SSS')}
+						subLabel={Moment['module'](item.time).format('HH:mm:ss.SSS')}
 						variant={levelSelection.variant(item.level)}
 						icon={<TableRowIcon source={Icons[levelSelection.icon(item.level)]} />}
 					/>;

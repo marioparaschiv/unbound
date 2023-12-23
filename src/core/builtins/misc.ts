@@ -15,6 +15,7 @@ export const data: BuiltIn['data'] = {
 };
 
 const Icon = internalGetLazily('TableRowIcon', x => !('useCoachmark' in x));
+const ThemeBooleans = findByProps('isThemeDark', { all: true }).filter(x => !('setThemeFlag' in x));
 const Theming = findByProps('updateTheme', { lazy: true });
 
 export function initialize() {
@@ -50,6 +51,15 @@ export function initialize() {
 	Patcher.before(Theming, 'updateTheme', (_, args) => {
 		const appliedThemeId = themes.settings.get('applied', null);
 		appliedThemeId && !args[0].includes(appliedThemeId) && (args[0] = `${appliedThemeId}-${args[0]}`);
+	});
+
+	ThemeBooleans.forEach(ThemeBoolean => {
+		['isThemeDark', 'isThemeLight'].forEach(prop => (
+			Patcher.before(ThemeBoolean, prop, (_, args) => {
+				const appliedThemeId = themes.settings.get('applied', null);
+				appliedThemeId && (args[0] = args[0].replace(`${appliedThemeId}-`, ''));
+			})
+		));
 	});
 }
 

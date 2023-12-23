@@ -20,7 +20,7 @@ const Assets = React.memo(() => {
 		});
 	}, [search]);
 
-	return <RN.View key='unbound-assets'>
+	return <RN.ScrollView key='unbound-assets'>
 		<RN.View style={{ marginHorizontal: 16, marginVertical: 12 }}>
 			<GeneralSearch
 				type={'assets'}
@@ -45,7 +45,7 @@ const Assets = React.memo(() => {
 				)}
 			/>
 		</Section>
-	</RN.View>;
+	</RN.ScrollView>;
 });
 
 export default Assets;
