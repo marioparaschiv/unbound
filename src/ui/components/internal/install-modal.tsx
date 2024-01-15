@@ -39,7 +39,7 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 		const { message } = this.state;
 		const { settings } = this.props;
 
-		return <RN.View style={{ display: 'flex', flexDirection: 'row', marginRight: 50 }}>
+		return <RN.View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
 			<Redesign.TextInput
 				isRound
 				isClearable
@@ -53,7 +53,7 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 				errorMessage={message || undefined}
 			/>
 
-			<Redesign.IconButton
+			{/* <Redesign.IconButton
 				icon={Icons['ClipboardListIcon']}
 				style={{ marginLeft: 8 }}
 				variant={'secondary-input'}
@@ -71,7 +71,7 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 						this.setState({ url, loadingPaste: false });
 					});
 				}}
-			/>
+			/> */}
 		</RN.View>;
 	}
 

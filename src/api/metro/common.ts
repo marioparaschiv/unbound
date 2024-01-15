@@ -26,7 +26,7 @@ export const [
 		findByProps('createStyles', { lazy: true }),
 		findByProps('_dispatch', { lazy: true }),
 		findByProps('Fonts', 'Endpoints', { lazy: true }),
-		findByProps('colors', 'meta', { lazy: true }),
+		findByProps('colors', 'internal', { lazy: true }),
 		findByProps('getAPIBaseURL', { lazy: true }),
 		findByProps('Messages', { lazy: true })
 	];

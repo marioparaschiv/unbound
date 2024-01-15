@@ -30,10 +30,10 @@ class Themes extends Manager {
 			this.load(bundle, manifest);
 		}
 
-		const orig = this.module.default.meta.resolveSemanticColor;
+		const orig = this.module.default.internal.resolveSemanticColor;
 		const self = this;
 
-		this.module.default.meta.resolveSemanticColor = function (theme: string, ref: { [key: symbol]: string; }) {
+		this.module.default.internal.resolveSemanticColor = function (theme: string, ref: { [key: symbol]: string; }) {
 			const [id, unparsedName] = theme.split('-');
 
 			if (!unparsedName) {
