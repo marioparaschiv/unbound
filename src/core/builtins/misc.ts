@@ -1,11 +1,11 @@
 import type { BuiltIn } from '@typings/core/builtins';
+import { internalGetLazily } from '@metro/registry';
 import { ReactNative as RN } from '@metro/common';
 import { DCDFileManager } from '@api/storage';
 import { findInReactTree } from '@utilities';
 import { createPatcher } from '@patcher';
-import { internalGetLazily } from '@metro/registry';
-import { findByProps } from '@metro';
 import themes from '@managers/themes';
+import { findByProps } from '@metro';
 
 const Patcher = createPatcher('misc');
 
