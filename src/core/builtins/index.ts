@@ -1,6 +1,6 @@
 import type { BuiltIn } from '@typings/core/builtins';
 import * as instances from './registry';
-import { createLogger } from '@logger';
+import { createLogger } from '@structures/logger';
 import Storage from '@api/storage';
 
 const Logger = createLogger('Core', 'Built-Ins');

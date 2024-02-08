@@ -1,7 +1,7 @@
 import type { BuiltIn } from '@typings/core/builtins';
 import { ReactNative } from '@metro/common';
 import { getStore } from '@api/storage';
-import { createLogger } from '@logger';
+import { createLogger } from '@structures/logger';
 
 const Logger = createLogger('Debug', 'WebSocket');
 

@@ -1,5 +1,5 @@
 import { Section, useFormStyles } from '@ui/components/form';
-import { Constants, React, ReactNative as RN, Theme } from '@metro/common';
+import { Constants, ReactNative as RN, Theme } from '@metro/common';
 import { Redesign, Slider } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { Keys, Links } from '@constants';
@@ -39,7 +39,8 @@ export default function Developer() {
 			<RN.View style={endStyle}>
 				<RN.View style={{ margin: 8 }}>
 					<TextInput
-						size='lg'
+						isRound
+						size='md'
 						value={settings.get('dev.debugBridge.host', '192.168.0.35:9090')}
 						onChange={v => settings.set('dev.debugBridge.host', v)}
 						label={Strings.UNBOUND_DEBUG_BRIDGE_IP}
@@ -70,7 +71,8 @@ export default function Developer() {
 			<RN.View style={endStyle}>
 				<RN.View style={{ margin: 8 }}>
 					<TextInput
-						size='lg'
+						isRound
+						size='md'
 						value={settings.get('loader.update.url', Links.Bundle)}
 						onChange={v => settings.set('loader.update.url', v)}
 						label={Strings.UNBOUND_LOADER_CUSTOM_BUNDLE}

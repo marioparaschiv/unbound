@@ -38,7 +38,7 @@ export default function Overflow({ items, iconSource = Icons['MoreHorizontalIcon
 			>
 				<RN.Image
 					source={iconSource}
-					style={[styles.icon, { transform: [{ scale }]}]}
+					style={[styles.icon, { transform: [{ scale }] }]}
 				/>
 			</RN.TouchableOpacity>
 		)}

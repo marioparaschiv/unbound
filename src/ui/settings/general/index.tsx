@@ -1,14 +1,15 @@
 import { Section } from '@ui/components/form';
-import { Theme, React, ReactNative as RN, StyleSheet } from '@metro/common';
+import { Theme, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
-import { Linking } from '@metro/api';
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';
+import { Linking } from '@metro/api';
 import { reload } from '@api/native';
 import { Strings } from '@api/i18n';
 import Assets from '@api/assets';
+
 
 import Developer from '../developer';
 import Toasts from './toasts';

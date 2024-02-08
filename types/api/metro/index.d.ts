@@ -20,7 +20,7 @@ export interface StoreOptions extends SearchOptions {
 	short?: boolean;
 }
 
-export interface BulkItem extends Omit<SearchOptions, 'all' | 'initial' | 'cache'> {
+export interface BulkItem extends Omit<SearchOptions, 'initial' | 'cache'> {
 	filter: Filter;
 }
 

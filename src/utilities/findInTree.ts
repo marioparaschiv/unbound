@@ -21,6 +21,7 @@ function findInTree(tree: Record<string, any> | any[] = {}, filter: Function = _
 
 	while (stack.length && maxProperties) {
 		const node = stack.shift();
+		if (!node) continue;
 		if (wrapFilter(node)) return node;
 
 		if (Array.isArray(node)) {

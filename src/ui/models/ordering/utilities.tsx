@@ -1,4 +1,4 @@
-import { StyleSheet, Theme, ReactNative as RN, React } from '@metro/common';
+import { StyleSheet, Theme, ReactNative as RN } from '@metro/common';
 import { getIDByName } from '@api/assets';
 import { managers } from '@api';
 import type { Manager } from '@typings/managers';

@@ -1,11 +1,11 @@
 import type { BuiltIn } from '@typings/core/builtins';
-import { internalGetLazily } from '@metro/registry';
 import { ReactNative as RN } from '@metro/common';
 import { DCDFileManager } from '@api/storage';
 import { findInReactTree } from '@utilities';
 import { createPatcher } from '@patcher';
 import themes from '@managers/themes';
-import { findByProps } from '@metro';
+import { bulk } from '@metro';
+
 
 const Patcher = createPatcher('misc');
 
@@ -14,17 +14,25 @@ export const data: BuiltIn['data'] = {
 	default: true
 };
 
-const Icon = internalGetLazily('TableRowIcon', x => !('useCoachmark' in x));
-const ThemeBooleans = findByProps('isThemeDark', { all: true }).filter(x => !('setThemeFlag' in x));
-const Theming = findByProps('updateTheme', { lazy: true });
-
 export function initialize() {
+	const [
+		Icon,
+		ThemeBooleans,
+		Theming
+	] = bulk(
+		{ filter: m => m.TableRowIcon && !m.useCoachmark },
+		{ filter: m => m.isThemeDark && !m.setThemeFlag },
+		{ filter: m => m.updateTheme }
+	)
+
 	// Remove tintColor if the icon is a custom image (eg with a uri pointing to a badge)
 	Patcher.after(Icon, 'TableRowIcon', (_, __, res) => {
-		if (typeof res.props?.children?.type?.type?.render !== 'function') return;
+		const image = findInReactTree(res, x => x.Sizes?.EXTRA_SMALL);
+		if (typeof image?.type?.render !== 'function') return;
 
-		Patcher.after(res.props.children.type.type, 'render', (_, args, res) => {
-			if (typeof args[0].source !== 'number') {
+
+		Patcher.after(image.type, 'render', (_, [{ source }], res) => {
+			if (typeof source !== 'number') {
 				const badStyle = findInReactTree(res.props.style, x => x.tintColor);
 
 				if (badStyle?.tintColor) {
@@ -53,14 +61,15 @@ export function initialize() {
 		appliedThemeId && !args[0].includes(appliedThemeId) && (args[0] = `${appliedThemeId}-${args[0]}`);
 	});
 
-	ThemeBooleans.forEach(ThemeBoolean => {
-		['isThemeDark', 'isThemeLight'].forEach(prop => (
-			Patcher.before(ThemeBoolean, prop, (_, args) => {
-				const appliedThemeId = themes.settings.get('applied', null);
-				appliedThemeId && (args[0] = args[0].replace(`${appliedThemeId}-`, ''));
-			})
-		));
-	});
+	const methods = Object.keys(ThemeBooleans)
+	for (let i = 0; i < methods.length; i++) {
+		const method = methods[i];
+
+		Patcher.before(ThemeBooleans, method, (_, args) => {
+			const appliedThemeId = themes.settings.get('applied', null);
+			appliedThemeId && (args[0] = args[0].replace(`${appliedThemeId}-`, ''));
+		})
+	}
 }
 
 export function shutdown() {

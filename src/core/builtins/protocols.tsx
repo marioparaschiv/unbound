@@ -2,7 +2,7 @@ import type { BuiltIn } from '@typings/core/builtins';
 import { ReactNative as RN } from '@metro/common';
 import { ManagerType } from '@managers/base';
 import { createPatcher } from '@patcher';
-import { createLogger } from '@logger';
+import { createLogger } from '@structures/logger';
 import { findByName } from '@metro';
 import Toasts from '@api/toasts';
 import { managers } from '@api';

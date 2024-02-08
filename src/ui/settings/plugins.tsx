@@ -1,8 +1,8 @@
 import { showInstallAlert } from '@ui/components/internal/install-modal';
-import { React, ReactNative as RN } from '@metro/common';
+import { ReactNative as RN } from '@metro/common';
 import { Addons } from '@ui/components/internal';
-import { Redesign } from '@metro/components';
 import PluginManager from '@managers/plugins';
+import { Redesign } from '@metro/components';
 import { Strings } from '@api/i18n';
 
 export default function Plugins({ headerRightMargin = false }: { headerRightMargin: boolean }) {

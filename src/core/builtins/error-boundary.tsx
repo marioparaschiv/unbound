@@ -10,6 +10,7 @@ export const data: BuiltIn['data'] = {
 	default: true
 };
 
+
 export function initialize() {
 	const Boundary = findByName('ErrorBoundary');
 	if (!Boundary) return;
@@ -17,13 +18,11 @@ export function initialize() {
 	Patcher.after(Boundary.prototype, 'render', (self, _, res) => {
 		if (!self.state.error) return res;
 
-		return (
-			<ErrorBoundary
-				error={self.state.error}
-				retryRender={() => self.setState({ error: null, info: null })}
-				res={res}
-			/>
-		);
+		return <ErrorBoundary
+			error={self.state.error}
+			retryRender={() => self.setState({ error: null, info: null })}
+			res={res}
+		/>
 	});
 }
 

@@ -3,7 +3,7 @@ import EventEmitter from '@structures/emitter';
 import { DCDFileManager } from '@api/storage';
 import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
-import { createLogger } from '@logger';
+import { createLogger } from '@structures/logger';
 import { Regex } from '@constants';
 
 const { LayoutAnimation: { configureNext, Presets } } = ReactNative;

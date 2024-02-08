@@ -1,6 +1,6 @@
+import { findInReactTree, unitToHex, withoutOpacity } from '@utilities';
 import type { Addon, Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
-import { findInReactTree, unitToHex, withoutOpacity } from '@utilities';
 import { createPatcher } from '@patcher';
 import Storage from '@api/storage';
 
@@ -8,7 +8,7 @@ class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
 	public extension: string = 'json';
 	public module: any;
-    private updateTheme: Fn = null;
+	private updateTheme: Fn = null;
 
 	constructor() {
 		super(ManagerType.Themes);
@@ -77,7 +77,7 @@ class Themes extends Manager {
 				}
 
 				return item?.opacity ? withoutOpacity(color) + unitToHex(item.opacity) : color;;
-			} catch(e) {
+			} catch (e) {
 				console.error('Failed to resolve color:', e);
 			}
 

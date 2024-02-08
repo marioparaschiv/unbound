@@ -1,26 +1,26 @@
-import { createLogger } from '@logger';
+import { createLogger } from '@structures/logger';
 import * as Patches from './registry';
 
 const Logger = createLogger('Core', 'Patches');
 
-export function apply() {
+export async function apply() {
 	for (const id in Patches) {
 		const Patch = Patches[id];
 
 		try {
-			Patch.apply?.();
+			await Patch.apply?.();
 		} catch (e) {
 			Logger.error(`Failed to apply ${id} patch:`, e.message);
 		}
 	}
 }
 
-export function remove() {
+export async function remove() {
 	for (const id in Patches) {
 		const Patch = Patches[id];
 
 		try {
-			Patch.remove?.();
+			await Patch.remove?.();
 		} catch (e) {
 			Logger.error(`Failed to remove ${id} patch:`, e.message);
 		}

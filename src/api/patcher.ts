@@ -1,5 +1,5 @@
 import type { AfterOverwrite, BeforeOverwrite, InsteadOverwrite, Patch, Patcher } from '@typings/api/patcher';
-import { createLogger } from '@logger';
+import { createLogger } from '@structures/logger';
 
 const Logger = createLogger('Patcher');
 

@@ -1,8 +1,8 @@
+import { createLogger } from '@structures/logger';
 import type { Asset } from '@typings/api/assets';
 import { DCDFileManager } from '@api/storage';
 import IconManager from '@managers/icons';
 import { createPatcher } from '@patcher';
-import { createLogger } from '@logger';
 import { findByProps } from '@metro';
 
 export const assets = new Set<Asset>();

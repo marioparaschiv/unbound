@@ -1,7 +1,7 @@
 import type { ApplicationCommand } from '@typings/api/commands';
+import { createLogger } from '@structures/logger';
 import CoreCommands from '@core/commands';
 import { createPatcher } from '@patcher';
-import { createLogger } from '@logger';
 import { findByProps } from '@metro';
 
 const Patcher = createPatcher('unbound-commands');

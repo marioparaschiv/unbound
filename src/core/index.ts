@@ -1,4 +1,4 @@
-import { createLogger } from '@logger';
+import { createLogger } from '@structures/logger';
 import BuiltIns from '@core/builtins';
 import Patches from '@core/patches';
 
@@ -10,13 +10,13 @@ const Logger = createLogger('Core');
 
 export async function initialize() {
 	try {
-		Patches.apply();
+		await Patches.apply();
 	} catch (e) {
 		Logger.error('Failed to apply patches:', e.message);
 	}
 
 	try {
-		BuiltIns.initialize();
+		await BuiltIns.initialize();
 	} catch (e) {
 		Logger.error('Failed to apply built-ins:', e.message);
 	}

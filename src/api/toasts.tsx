@@ -1,10 +1,10 @@
 import type { ToastOptions } from '@typings/api/toasts';
 import { get, useSettingsStore } from '@api/storage';
+import { createLogger } from '@structures/logger';
 import { ToastContainer } from '@ui/toasts';
 import { find, findByProps } from '@metro';
 import { addToast } from '@stores/toasts';
 import { createPatcher } from '@patcher';
-import { createLogger } from '@logger';
 
 const Patcher = createPatcher('toasts');
 const Logger = createLogger('Toasts');

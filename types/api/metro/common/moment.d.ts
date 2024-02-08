@@ -323,9 +323,9 @@ declare namespace moment {
 			"millisecond" | "milliseconds" | "ms"
 		);
 
-		type _quarter = "quarter" | "quarters" | "Q";
-		type _isoWeek = "isoWeek" | "isoWeeks" | "W";
-		type _date = "date" | "dates" | "D";
+		type _quarter = 'quarter" | "quarters" | "Q';
+		type _isoWeek = 'isoWeek" | "isoWeeks" | "W';
+		type _date = 'date" | "dates" | "D';
 		type DurationConstructor = Base | _quarter;
 
 		type DurationAs = Base;
@@ -341,7 +341,7 @@ declare namespace moment {
 			"isoWeekYear" | "isoWeekYears" | "GG" |
 			"dayOfYear" | "dayOfYears" | "DDD" |
 			"weekday" | "weekdays" | "e" |
-			"isoWeekday" | "isoWeekdays" | "E";
+			'isoWeekday" | "isoWeekdays" | "E';
 	}
 
 	interface MomentInputObject {

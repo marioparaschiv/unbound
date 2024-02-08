@@ -1,12 +1,12 @@
+import Storage, { DCDFileManager } from '@api/storage';
+import downloadFile from '@utilities/downloadFile';
 import { ReactNative as RN } from '@metro/common';
 import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
-import Storage, { DCDFileManager } from '@api/storage';
+import { ClientName } from '@constants';
 import { chunkArray } from '@utilities';
 import { findByProps } from '@metro';
-import { ClientName } from '@constants';
 import { Strings } from '@api/i18n';
-import downloadFile from '@utilities/downloadFile';
 
 import type { Addon, InternalManifest, Manifest, Resolveable } from '@typings/managers';
 import type { Asset } from '@typings/api/assets';
@@ -190,7 +190,7 @@ class Icons extends Manager {
 			}
 
 			await this.unload(addon);
-			await DCDFileManager.removeFile('documents',`${this.path}/${addon.data.id}`);
+			await DCDFileManager.removeFile('documents', `${this.path}/${addon.data.id}`);
 			await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_UNINSTALLED');
 		} catch (e) {
 			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message ?? e);

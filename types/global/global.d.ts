@@ -1,14 +1,9 @@
 import { Manifest } from '@typings/managers';
 
-interface Addon {
-	contents: string;
-	path: string;
-}
-
 declare global {
 	const __r: {
 		importAll: Fn;
-	} & ((id: number) => void);
+	} & ((id: number | string) => void);
 
 	var React: typeof import('react');
 	var ReactNative: typeof import('react-native');
@@ -24,7 +19,12 @@ declare global {
 		};
 
 		UNBOUND_DEV_IP: string;
-		UNBOUND_SETTINGS: Addon[];
+
+		UNBOUND_SETTINGS: {
+			contents: string;
+			path: string;
+		}[];
+
 		UNBOUND_PLUGINS: {
 			manifest: Manifest,
 			bundle: string;

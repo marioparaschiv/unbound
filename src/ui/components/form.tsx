@@ -1,4 +1,4 @@
-import { Theme, StyleSheet, React, ReactNative as RN } from '@metro/common';
+import { Theme, StyleSheet, ReactNative as RN } from '@metro/common';
 import { Redesign } from '@metro/components';
 
 import type { SectionProps } from '@typings/ui/components/forms';
@@ -13,7 +13,7 @@ export const useFormStyles = StyleSheet.createStyles({
 
 	formText: {
 		color: Theme.colors.TEXT_NORMAL,
-		fontSize: 16
+		fontSize: 12
 	},
 
 	formHint: {
@@ -27,21 +27,23 @@ export const useFormStyles = StyleSheet.createStyles({
 export const Switch = internalGetLazily('FormSwitch', x => !('FormTitle' in x));
 export const Checkbox = internalGetLazily('FormCheckbox', x => !('FormTitle' in x));
 export const Section = ({ children, style, margin = true, ...props }: SectionProps) => {
-	return <RN.ScrollView scrollEnabled={false}>
-		<RN.View
-			style={[
-				style,
-				{
-					marginHorizontal: 16,
-					...margin ? { marginTop: 16 } : {}
-				},
-			]}
-		>
-			<Redesign.TableRowGroup {...props}>
-				{children}
-			</Redesign.TableRowGroup>
-		</RN.View>
-	</RN.ScrollView>;
+	return (
+		<RN.ScrollView scrollEnabled={false}>
+			<RN.View
+				style={[
+					style,
+					{
+						marginHorizontal: 16,
+						...(margin ? { marginTop: 16 } : {})
+					},
+				]}
+			>
+				<Redesign.TableRowGroup {...props}>
+					{children}
+				</Redesign.TableRowGroup>
+			</RN.View>
+		</RN.ScrollView>
+	);
 };
 
 export default {

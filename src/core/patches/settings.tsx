@@ -6,6 +6,7 @@ import { React } from '@metro/common';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
 
+
 import General from '@ui/settings/general';
 import Plugins from '@ui/settings/plugins';
 import Design from '@ui/settings/design';
@@ -47,7 +48,7 @@ class Settings {
 
 	public Icons = {
 		General: Icons['settings'],
-		Plugins: Icons['ic_wand'],
+		Plugins: Icons['PuzzlePieceIcon'],
 		Design: Icons['ic_paint_brush'],
 		Updater: Icons['ic_download_24px'],
 		Custom: null

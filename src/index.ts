@@ -1,6 +1,6 @@
 async function init() {
 	const Core = await import('@core');
-	Core.initialize();
+	await Core.initialize();
 }
 
 const mdls = Object.values(modules);

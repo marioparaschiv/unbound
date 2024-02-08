@@ -1,4 +1,4 @@
-import { createLogger } from '@logger';
+import { createLogger } from '@structures/logger';
 import { i18n } from '@metro/common';
 import CoreStrings from '../i18n';
 
