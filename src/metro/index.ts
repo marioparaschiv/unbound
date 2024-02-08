@@ -115,7 +115,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 	};
 
 	const store = useCache ? data.cache : modules;
-	const keys = Object.keys(store)
+	const keys = Object.keys(store);
 
 	for (let i = 0, len = keys.length; i < len; i++) {
 		const id = keys[i];
@@ -147,7 +147,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 				} catch {
 					return args[0];
 				}
-			}
+			};
 
 			data.patchedNativeRequire = true;
 		}
@@ -215,13 +215,13 @@ export function bulk(...items: BulkItem[]) {
 
 			if (item.filter(mdl, id)) {
 				if (item.all) {
-					res[i] ??= []
-					res[i].push(mdl)
+					res[i] ??= [];
+					res[i].push(mdl);
 					continue;
 				}
 
 				res[i] = mdl;
-				continue
+				continue;
 			}
 
 			if (mdl.default && item.filter(mdl.default, id)) {
@@ -229,7 +229,7 @@ export function bulk(...items: BulkItem[]) {
 
 				if (item.all) {
 					res[i] ??= [];
-					res[i].push(payload)
+					res[i].push(payload);
 					continue;
 				}
 

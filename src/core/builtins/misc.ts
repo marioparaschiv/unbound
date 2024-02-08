@@ -23,7 +23,7 @@ export function initialize() {
 		{ filter: m => m.TableRowIcon && !m.useCoachmark },
 		{ filter: m => m.isThemeDark && !m.setThemeFlag },
 		{ filter: m => m.updateTheme }
-	)
+	);
 
 	// Remove tintColor if the icon is a custom image (eg with a uri pointing to a badge)
 	Patcher.after(Icon, 'TableRowIcon', (_, __, res) => {
@@ -56,19 +56,19 @@ export function initialize() {
 		}
 	});
 
-	Patcher.before(Theming, 'updateTheme', (_, args) => {
-		const appliedThemeId = themes.settings.get('applied', null);
-		appliedThemeId && !args[0].includes(appliedThemeId) && (args[0] = `${appliedThemeId}-${args[0]}`);
-	});
+	// Patcher.before(Theming, 'updateTheme', (_, args) => {
+	// 	const appliedThemeId = themes.settings.get('applied', null);
+	// 	appliedThemeId && !args[0].includes(appliedThemeId) && (args[0] = `${appliedThemeId}-${args[0]}`);
+	// });
 
-	const methods = Object.keys(ThemeBooleans)
+	const methods = Object.keys(ThemeBooleans);
 	for (let i = 0; i < methods.length; i++) {
 		const method = methods[i];
 
 		Patcher.before(ThemeBooleans, method, (_, args) => {
 			const appliedThemeId = themes.settings.get('applied', null);
 			appliedThemeId && (args[0] = args[0].replace(`${appliedThemeId}-`, ''));
-		})
+		});
 	}
 }
 

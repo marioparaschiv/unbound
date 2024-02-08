@@ -15,7 +15,7 @@ import Overflow from '@ui/components/overflow';
 
 import type { Addon, Author, Manager } from '@typings/managers';
 import { managers } from '@api';
-import { Switch } from '@ui/components/form';
+import { Switch } from '@ui/components/misc';
 
 interface AddonCardProps {
 	type: Manager;

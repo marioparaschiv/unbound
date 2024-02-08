@@ -21,35 +21,20 @@ function useToastState(options: InternalToastOptions) {
 	function leave() {
 		if (!animations) return setLeaving(true);
 
-		RN.Platform.select({
-			// Animating the Reanimated properties causes issues on iOS
-			// This is because we cant use the callback in withXYZ without the app crashing
-			// So, using a setTimeout instead, this causes stuttering
-			// Therefore just use regular LayoutAnimation on iOS until a proper solution is found
-			ios() {
-				RN.LayoutAnimation.configureNext({
-					duration: 1000,
-					update: {
-						type: 'easeInEaseOut',
-						duration: 500
-					},
-					delete: {
-						type: 'easeInEaseOut',
-						property: 'opacity',
-						duration: 300
-					}
-				});
-
-				setLeaving(true);
+		RN.LayoutAnimation.configureNext({
+			duration: 1000,
+			update: {
+				type: 'easeInEaseOut',
+				duration: 500
 			},
-
-			default() {
-				opacity.value = withTiming(0);
-				marginTop.value = withSpring(-5);
-				scale.value = withSpring(0.65);
-				height.value = withSpring(0, {}, (finished) => finished && runOnJS(setLeaving)(true));
+			delete: {
+				type: 'easeInEaseOut',
+				property: 'opacity',
+				duration: 300
 			}
-		})();
+		});
+
+		setLeaving(true);
 	}
 
 	React.useEffect(() => {

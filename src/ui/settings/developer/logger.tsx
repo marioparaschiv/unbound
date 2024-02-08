@@ -1,5 +1,5 @@
 import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme } from '@metro/common';
-import { Section } from '@ui/components/form';
+import { Section } from '@ui/components/misc';
 import { GeneralSearch } from '@ui/components/search';
 import { Redesign } from '@metro/components';
 import LoggerStore from '@stores/logger';

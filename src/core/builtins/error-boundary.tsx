@@ -22,7 +22,7 @@ export function initialize() {
 			error={self.state.error}
 			retryRender={() => self.setState({ error: null, info: null })}
 			res={res}
-		/>
+		/>;
 	});
 }
 

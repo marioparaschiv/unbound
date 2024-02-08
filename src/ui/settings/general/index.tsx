@@ -1,4 +1,4 @@
-import { Section } from '@ui/components/form';
+import { Section } from '@ui/components/misc';
 import { Theme, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';

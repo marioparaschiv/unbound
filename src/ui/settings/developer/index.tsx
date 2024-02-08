@@ -1,4 +1,4 @@
-import { Section, useFormStyles } from '@ui/components/form';
+import { Section, useFormStyles } from '@ui/components/misc';
 import { Constants, ReactNative as RN, Theme } from '@metro/common';
 import { Redesign, Slider } from '@metro/components';
 import { useSettingsStore } from '@api/storage';

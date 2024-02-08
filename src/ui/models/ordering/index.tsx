@@ -2,7 +2,7 @@ import { TrailingIcon, resolveType } from '@ui/models/ordering/utilities';
 import { ReactNative as RN, React } from '@metro/common';
 import type { Addon, Manager } from '@typings/managers';
 import { useSettingsStore } from '@api/storage';
-import { Checkbox } from '@ui/components/form';
+import { Checkbox } from '@ui/components/misc';
 import { Strings } from '@api/i18n';
 
 export { TrailingIcon, resolveType };

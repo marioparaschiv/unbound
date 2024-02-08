@@ -48,8 +48,8 @@ class Settings {
 
 	public Icons = {
 		General: Icons['settings'],
-		Plugins: Icons['PuzzlePieceIcon'],
-		Design: Icons['ic_paint_brush'],
+		Plugins: Icons['debug'],
+		Design: Icons['PencilSparkleIcon'],
 		Updater: Icons['ic_download_24px'],
 		Custom: null
 	};
