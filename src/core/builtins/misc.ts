@@ -17,12 +17,10 @@ export const data: BuiltIn['data'] = {
 export function initialize() {
 	const [
 		Icon,
-		ThemeBooleans,
-		Theming
+		ThemeBooleans
 	] = bulk(
 		{ filter: m => m.TableRowIcon && !m.useCoachmark },
-		{ filter: m => m.isThemeDark && !m.setThemeFlag },
-		{ filter: m => m.updateTheme }
+		{ filter: m => m.isThemeDark && !m.setThemeFlag }
 	);
 
 	// Remove tintColor if the icon is a custom image (eg with a uri pointing to a badge)
@@ -56,20 +54,29 @@ export function initialize() {
 		}
 	});
 
-	// Patcher.before(Theming, 'updateTheme', (_, args) => {
-	// 	const appliedThemeId = themes.settings.get('applied', null);
-	// 	appliedThemeId && !args[0].includes(appliedThemeId) && (args[0] = `${appliedThemeId}-${args[0]}`);
-	// });
+	function handleThemeType(theme: string, orig: Fn, arg: string) {
+		const appliedTheme = themes.entities.get(theme);
 
-	const methods = Object.keys(ThemeBooleans);
-	for (let i = 0; i < methods.length; i++) {
-		const method = methods[i];
+		if (!appliedTheme) {
+			return orig();
+		}
 
-		Patcher.before(ThemeBooleans, method, (_, args) => {
-			const appliedThemeId = themes.settings.get('applied', null);
-			appliedThemeId && (args[0] = args[0].replace(`${appliedThemeId}-`, ''));
-		});
+		const themeType = appliedTheme.instance?.type;
+
+		if (themeType && ['dark', 'light'].includes(themeType)) {
+			return themeType === arg;
+		}
+
+		return orig();
 	}
+
+	Patcher.instead(ThemeBooleans, 'isThemeDark', (self, args, orig) => {
+		return handleThemeType(args[0], () => orig.apply(self, args), 'dark');
+	});
+
+	Patcher.instead(ThemeBooleans, 'isThemeLight', (self, args, orig) => {
+		return handleThemeType(args[0], () => orig.apply(self, args), 'light');
+	});
 }
 
 export function shutdown() {
