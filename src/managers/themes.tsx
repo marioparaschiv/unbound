@@ -97,12 +97,9 @@ class Themes extends Manager {
 		const addon = this.resolve(entity);
 		if (!addon || addon.failed || Storage.get('unbound', 'recovery', false)) return;
 
-		const { Constants } = await import('@metro/common');
-
 		try {
 			const { id } = addon;
 
-			Constants.ThemeTypes[id.toUpperCase().replace('.', '_')] = id;
 			this.module.Theme[id.toUpperCase().replace('.', '_')] = id;
 
 			for (const value of Object.values(this.module.Shadow)) {

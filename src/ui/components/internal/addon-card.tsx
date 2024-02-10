@@ -184,9 +184,10 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 
 const useStyles = StyleSheet.createStyles({
 	card: {
-		backgroundColor: Theme.colors.BACKGROUND_SECONDARY,
-		borderRadius: 12,
-		marginTop: 10
+		backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
+		borderRadius: 16,
+		marginTop: 12,
+		...Theme.shadows.SHADOW_LOW
 	},
 	failed: {
 		opacity: 0.5
@@ -196,14 +197,14 @@ const useStyles = StyleSheet.createStyles({
 		marginTop: 10
 	},
 	header: {
-		backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
-		borderTopRightRadius: 12,
-		borderTopLeftRadius: 12,
+		backgroundColor: Theme.colors.BACKGROUND_SECONDARY,
+		borderRadius: 16,
 		paddingHorizontal: 15,
 		flexDirection: 'row',
 		alignItems: 'center',
 		padding: 10,
-		flex: 1
+		flex: 1,
+		...Theme.shadows.SHADOW_LOW
 	},
 	name: {
 		color: Theme.colors.TEXT_NORMAL,
@@ -240,7 +241,7 @@ const useStyles = StyleSheet.createStyles({
 	},
 	description: {
 		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-		color: Theme.colors.TEXT_NORMAL,
+		color: Theme.colors.TEXT_SECONDARY,
 		fontSize: 14
 	},
 	recovery: {
