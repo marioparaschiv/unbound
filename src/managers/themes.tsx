@@ -3,7 +3,6 @@ import type { Addon, Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
 import Storage from '@api/storage';
-import { Theme } from '@metro/common';
 
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
@@ -98,9 +97,12 @@ class Themes extends Manager {
 		const addon = this.resolve(entity);
 		if (!addon || addon.failed || Storage.get('unbound', 'recovery', false)) return;
 
+		const { Constants } = await import('@metro/common');
+
 		try {
 			const { id } = addon;
 
+			Constants.ThemeTypes[id.toUpperCase().replace('.', '_')] = id;
 			this.module.Theme[id.toUpperCase().replace('.', '_')] = id;
 
 			for (const value of Object.values(this.module.Shadow)) {
@@ -166,7 +168,7 @@ class Themes extends Manager {
 	}
 
 	async applyPatches() {
-		const { findByProps, findByName, find } = await import('@metro');
+		const { findByProps } = await import('@metro');
 		const ThemeConverter = findByProps('convertThemesToAnimatedThemes', { lazy: true });
 		const ThemePresets = findByProps('getMobileThemesPresets', { lazy: true });
 
