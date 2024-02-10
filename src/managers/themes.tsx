@@ -3,6 +3,7 @@ import type { Addon, Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
 import Storage from '@api/storage';
+import { Theme } from '@metro/common';
 
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
@@ -29,15 +30,18 @@ class Themes extends Manager {
 
 		const self = this;
 
+		const { findStore } = await import('@metro');
+		const ThemeStore = findStore('Theme');
+
 		Object.keys(this.module.RawColor).forEach(key => {
 			Object.defineProperty(self.module.RawColor, key, {
 					configurable: true,
 					enumerable: true,
 					get: () => {
-							const applied = self.settings.get('applied', null);
+							const theme = self.entities.get(ThemeStore.theme);
 
-							if (applied) {
-								return self.entities.get(applied).instance.raw?.[key] ?? self.module._RawColor[key];
+							if (theme) {
+								return theme.instance.raw?.[key] ?? self.module._RawColor[key];
 							}
 
 							return self.module._RawColor[key];
@@ -66,8 +70,7 @@ class Themes extends Manager {
 				let color = null;
 
 				if (!item) color = orig.call(this, 'dark', ref);
-				if (item?.type === 'raw') color = self.module.RawColor[item.value];
-				if (item?.type === 'color') color = item.value.replace('transparent', 'rgba(0, 0, 0, 0)');
+				else color = self.parseColor(item);
 
 				if (key === 'CHAT_BACKGROUND' && typeof instance.background?.opacity === 'number') {
 					return (color ?? '#000000') + Math.round(instance.background.opacity * 255).toString(16);
@@ -81,20 +84,14 @@ class Themes extends Manager {
 			return orig.call(this, 'darker', ref);
 		};
 
-		// Discord sets the theme to darker if it isn't in the theme object
-		// When this check is ran, our themes haven't initialized yet.
-		// Hence, let's update our theme back to the correct one below.
-		// const currentTheme = this.settings.get('applied', null);
+		this.applyBackground();
+		this.applyPatches();
+	}
 
-		// if (!currentTheme) return;
-
-		// if (typeof this.updateTheme !== 'function') {
-		// 	const { findByProps } = await import('@metro');
-		// 	this.updateTheme = findByProps('updateTheme').updateTheme;
-		// }
-
-		// const { Theme } = await import('@metro/stores');
-		// this.updateTheme(`${currentTheme.replace('-', '.')}-${Theme.theme.replace(/.*-/g, '')}`);
+	parseColor(item: Record<string, any>) {
+		if (!item?.value) return item;
+		if (item?.type === 'raw') return this.module.RawColor[item.value];
+		if (item?.type === 'color') return item.value.replace('transparent', 'rgba(0, 0, 0, 0)');
 	}
 
 	override async start(entity: Resolveable): Promise<void> {
@@ -102,7 +99,7 @@ class Themes extends Manager {
 		if (!addon || addon.failed || Storage.get('unbound', 'recovery', false)) return;
 
 		try {
-			const { instance, id } = addon;
+			const { id } = addon;
 
 			this.module.Theme[id.toUpperCase().replace('.', '_')] = id;
 
@@ -117,8 +114,6 @@ class Themes extends Manager {
 					value[id] = color;
 				}
 			}
-
-			if (instance.background) this.applyBackground(addon);
 		} catch (e) {
 			this.logger.error('Failed to apply theme:', e.message);
 		}
@@ -127,20 +122,21 @@ class Themes extends Manager {
 		this.logger.log(`${addon.id} started.`);
 	}
 
-	async applyBackground(addon: Addon) {
+	async applyBackground() {
 		// Avoid circular dependency
 		const { ReactNative: RN } = await import('@metro/common');
 		const { findByName, findByProps, findStore } = await import('@metro');
-		const { instance: { background }, id } = addon;
 
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
 		const { MessagesWrapper } = findByProps('MessagesWrapper');
 		const ThemeStore = findStore('Theme');
 
 		this.patcher.after(Chat, 'default', (_, __, res) => {
-			const applied = this.settings.get('applied', null);
+			const theme = this.entities.get(ThemeStore.theme);
 
-			if (!applied || ThemeStore.theme !== id) return res;
+			if (!theme || !theme.instance.background) return res;
+
+			const { instance: { background } } = theme;
 
 			return (
 				<RN.ImageBackground
@@ -154,9 +150,9 @@ class Themes extends Manager {
 		});
 
 		this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {
-			const applied = this.settings.get('applied', null);
+			const theme = this.entities.get(ThemeStore.theme);
 
-			if (!applied || ThemeStore.theme !== id) return;
+			if (!theme || !theme.instance.background) return res;
 
 			const Messages = findInReactTree(res, x =>
 				'HACK_fixModalInteraction' in x.props
@@ -169,19 +165,38 @@ class Themes extends Manager {
 		});
 	}
 
-	override toggle(entity: Resolveable): void {
-		const addon = this.resolve(entity);
-		if (!addon) return;
+	async applyPatches() {
+		const { findByProps, findByName, find } = await import('@metro');
+		const ThemeConverter = findByProps('convertThemesToAnimatedThemes', { lazy: true });
+		const ThemePresets = findByProps('getMobileThemesPresets', { lazy: true });
 
-		const enabled = this.isEnabled(addon.id);
+		this.patcher.after(ThemePresets, 'getMobileThemesPresets', (_, __, res) => {
+			this.entities.forEach(value => {
+				if (res.find(x => x.theme === value.id) || !value.instance?.accent) return;
 
-		if (!enabled) {
-			this.enable(addon);
-		} else {
-			this.disable(addon);
-		}
+				res.unshift({
+					theme: value.id,
+					getName() {
+						return value.data.name;
+					}
+				});
+			});
+		});
 
-		this.emit('toggle');
+		this.patcher.after(ThemeConverter, 'convertThemesToAnimatedThemes', (_, __, res: Record<string, any>[]) => {
+			for (const data of res) {
+				const theme = this.entities.get(data.theme);
+
+				if (theme && theme.instance?.accent) {
+					data.colors = new Array(5).fill(null).map((_, i) => {
+						return {
+							hex: theme.instance.accent,
+							stop: (i + 1) * 20
+						};
+					});
+				}
+			}
+		});
 	}
 
 	override async enable(entity: Resolveable): Promise<void> {
@@ -211,7 +226,7 @@ class Themes extends Manager {
 	}
 
 	override isEnabled(id: string): boolean {
-		return this.settings.get('applied', null) === id;
+		return true;
 	}
 
 	override handleBundle(bundle: string): any {

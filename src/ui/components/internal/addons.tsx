@@ -18,6 +18,7 @@ interface AddonListProps {
 	shouldRestart?: boolean;
 	addons: Addon[];
 	showHeaderRight?: boolean;
+	showToggles?: boolean;
 	onPressInstall?: ({ ref, settings, type }) => any;
 	headerRightMargin?: boolean;
 }
@@ -42,7 +43,7 @@ const useStyles = StyleSheet.createStyles({
 	}
 });
 
-export default function Addons({ addons, type, shouldRestart, showHeaderRight = true, onPressInstall, headerRightMargin }: AddonListProps) {
+export default function Addons({ addons, type, shouldRestart, showHeaderRight = true, showToggles = true, onPressInstall, headerRightMargin }: AddonListProps) {
 	const [search, setSearch] = React.useState('');
 	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
 	const navigation = Redesign.useNavigation();
@@ -129,6 +130,7 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 				renderItem={({ item }) => <AddonCard
 					recovery={isRecovery}
 					shouldRestart={shouldRestart}
+					showToggles={showToggles}
 					type={type}
 					addon={item}
 					navigation={navigation}

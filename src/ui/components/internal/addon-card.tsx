@@ -20,6 +20,7 @@ import { Switch } from '@ui/components/misc';
 interface AddonCardProps {
 	type: Manager;
 	shouldRestart: boolean;
+	showToggles: boolean;
 	recovery: boolean;
 	addon: Addon;
 	navigation: any;
@@ -28,20 +29,6 @@ interface AddonCardProps {
 type InternalAddonCardProps = AddonCardProps & {
 	styles: ReturnType<typeof useStyles>;
 };
-
-const showRestartAlert = () => showAlert({
-	title: Strings.UNBOUND_CHANGE_RESTART,
-	content: Strings.UNBOUND_CHANGE_RESTART_DESC,
-	buttons: [
-		{
-			text: Strings.UNBOUND_RESTART,
-			onPress: () => {
-				Redesign.dismissAlerts();
-				reload();
-			}
-		}
-	]
-});
 
 class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 	get manager() {
@@ -66,7 +53,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 				{this.renderMetadata()}
 				{this.renderAuthors()}
 				{this.renderOverflow()}
-				{this.renderSwitch()}
+				{this.props.showToggles && this.renderSwitch()}
 			</RN.View>
 			<RN.View style={styles.info}>
 				{this.renderBody()}
