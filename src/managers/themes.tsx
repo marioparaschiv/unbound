@@ -80,7 +80,7 @@ class Themes extends Manager {
 				console.error('Failed to resolve color:', e);
 			}
 
-			return orig.call(this, 'darker', ref);
+			return orig.call(this, 'dark', ref);
 		};
 
 		this.applyBackground();
@@ -102,17 +102,13 @@ class Themes extends Manager {
 
 			this.module.Theme[id.toUpperCase().replace('.', '_')] = id;
 
-			for (const value of Object.values(this.module.Shadow)) {
-				for (const shadow of Object.values(value)) {
-					value[id] = shadow;
-				}
-			}
+			Object.keys(this.module.Shadow).forEach(key => {
+				this.module.Shadow[key][id] = this.module.Shadow[key]['darker'];
+			});
 
-			for (const value of Object.values(this.module.SemanticColor)) {
-				for (const color of Object.values(value)) {
-					value[id] = color;
-				}
-			}
+			Object.keys(this.module.SemanticColor).forEach(key => {
+				this.module.SemanticColor[key][id] = this.module.SemanticColor[key]['darker'];
+			});
 		} catch (e) {
 			this.logger.error('Failed to apply theme:', e.message);
 		}
