@@ -4,8 +4,8 @@ import getItems from '@ui/models/ordering';
 import { getIDByName } from '@api/assets';
 
 type HeaderRightProps = {
-	type: Arguments<typeof getItems>[0];
-	settings: Arguments<typeof getItems>[1];
+	type: Parameters<typeof getItems>[0];
+	settings: Parameters<typeof getItems>[1];
 	onPress: Fn;
 	margin?: boolean
 };
