@@ -4,6 +4,7 @@ import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
 import useToastState from './useToastState';
 import useStyles from './toast.style';
+import { findByProps } from '@metro';
 import { Icons } from '@api/assets';
 import Toasts from '@stores/toasts';
 
@@ -14,6 +15,7 @@ import type {
 	PanGestureHandlerEventPayload
 } from 'react-native-gesture-handler';
 
+const { BackgroundBlurFill } = findByProps('BackgroundBlurFill', { lazy: true });
 const { withSpring, withTiming, useSharedValue, default: { View } } = Reanimated;
 const { PanGestureHandler, State } = Gestures;
 
@@ -56,7 +58,7 @@ function Toast(options: ToastOptions) {
 						nativeEvent.layout.height
 					}
 				>
-					<Redesign.BackgroundBlurFill blurAmount={settings.get('toasts.blur', 0.15)} />
+					<BackgroundBlurFill blurAmount={settings.get('toasts.blur', 0.15)} />
 					<RN.View style={styles.wrapper}>
 						{options.icon && <RN.View style={[styles.icon, { marginVertical: linesLength * 10 }]}>
 							<Redesign.TableRowIcon source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon} size='small' />

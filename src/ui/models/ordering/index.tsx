@@ -10,7 +10,7 @@ export { TrailingIcon, resolveType };
 const radioItems = [
 	{
 		id: 'default',
-		label: 'DEFAULT',
+		label: 'UNBOUND_DEFAULT',
 		icon: 'PencilSparkleIcon',
 
 		ordering(addons: Addon[]) {

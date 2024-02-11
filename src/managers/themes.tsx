@@ -29,7 +29,7 @@ class Themes extends Manager {
 
 		const self = this;
 
-		const { findStore } = await import('@metro');
+		const { findStore, findByProps } = await import('@metro');
 		const ThemeStore = findStore('Theme');
 
 		Object.keys(this.module.RawColor).forEach(key => {
@@ -167,7 +167,7 @@ class Themes extends Manager {
 
 		this.patcher.after(ThemePresets, 'getMobileThemesPresets', (_, __, res) => {
 			this.entities.forEach(value => {
-				if (res.find(x => x.theme === value.id) || !value.instance?.accent) return;
+				if (res.find(x => x.theme === value.id)) return;
 
 				res.unshift({
 					theme: value.id,
@@ -178,14 +178,14 @@ class Themes extends Manager {
 			});
 		});
 
-		this.patcher.after(ThemeConverter, 'convertThemesToAnimatedThemes', (_, __, res: Record<string, any>[]) => {
+		this.patcher.after(ThemeConverter, 'convertThemesToAnimatedThemes', (_, args, res: Record<string, any>[]) => {
 			for (const data of res) {
 				const theme = this.entities.get(data.theme);
 
-				if (theme && theme.instance?.accent) {
+				if (theme) {
 					data.colors = new Array(5).fill(null).map((_, i) => {
 						return {
-							hex: theme.instance.accent,
+							hex: this.module.default.internal.resolveSemanticColor(data.theme, this.module.default.colors.BG_BASE_PRIMARY),
 							stop: (i + 1) * 20
 						};
 					});
