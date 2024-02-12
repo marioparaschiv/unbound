@@ -1,3 +1,4 @@
+import type { ImageSourcePropType } from 'react-native';
 import type { BuiltIn } from '@typings/core/builtins';
 import { ReactNative as RN } from '@metro/common';
 import { DCDFileManager } from '@api/storage';
@@ -5,7 +6,6 @@ import { findInReactTree } from '@utilities';
 import { createPatcher } from '@patcher';
 import themes from '@managers/themes';
 import { bulk } from '@metro';
-
 
 const Patcher = createPatcher('misc');
 
@@ -29,7 +29,7 @@ export function initialize() {
 		if (typeof image?.type?.render !== 'function') return;
 
 
-		Patcher.after(image.type, 'render', (_, [{ source }], res) => {
+		Patcher.after(image.type, 'render', (_, [{ source }]: [{ source: ImageSourcePropType; }], res) => {
 			if (typeof source !== 'number') {
 				const badStyle = findInReactTree(res.props.style, x => x.tintColor);
 
@@ -71,11 +71,11 @@ export function initialize() {
 	}
 
 	Patcher.instead(ThemeBooleans, 'isThemeDark', (self, args, orig) => {
-		return handleThemeType(args[0], () => orig.apply(self, args), 'dark');
+		return handleThemeType(args[0] as string, () => orig.apply(self, args), 'dark');
 	});
 
 	Patcher.instead(ThemeBooleans, 'isThemeLight', (self, args, orig) => {
-		return handleThemeType(args[0], () => orig.apply(self, args), 'light');
+		return handleThemeType(args[0] as string, () => orig.apply(self, args), 'light');
 	});
 }
 
