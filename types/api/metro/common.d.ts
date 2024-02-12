@@ -1,6 +1,4 @@
 import type { StyleProp, TextStyle, ViewStyle, ImageStyle } from 'react-native';
-import type Clipboard from '@react-native-clipboard/clipboard';
-import type moment from './moment';
 
 export namespace Common {
 	export interface StyleSheet {
@@ -23,11 +21,11 @@ export namespace Common {
 		connectStores: Fn;
 	}
 
-	export type Moment = typeof moment;
+	export type Moment = typeof import('moment');
 
 	export type Events = typeof import('events');
 
-	export type Clipboard = typeof Clipboard;
+	export type Clipboard = typeof import('@react-native-clipboard/clipboard');
 
 	// Discord
 

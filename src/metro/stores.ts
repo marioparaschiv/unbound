@@ -1,11 +1,5 @@
 import { findStore } from '@metro';
 
-export const [
-	Guilds,
-	Theme,
-	Users
-] = [
-		findStore('Guild', { lazy: true }),
-		findStore('Theme', { lazy: true }),
-		findStore('User', { lazy: true })
-	];
+export const Guilds = findStore('Guilds', { lazy: true });
+export const Theme = findStore('Theme', { lazy: true });
+export const Users = findStore('User', { lazy: true });

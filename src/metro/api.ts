@@ -1,11 +1,5 @@
 import { findByProps } from '@metro';
 
-export const [
-	Linking,
-	AsyncUsers,
-	Profiles
-] = [
-		findByProps('openURL', 'openDeeplink', { lazy: true }),
-		findByProps('fetchProfile', { lazy: true }),
-		findByProps('showUserProfile', { lazy: true })
-	];
+export const Linking = findByProps('openURL', 'openDeeplink', { lazy: true });
+export const AsyncUsers = findByProps('fetchProfile', { lazy: true });
+export const Profiles = findByProps('showUserProfile', { lazy: true });
