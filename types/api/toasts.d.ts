@@ -1,4 +1,4 @@
-import { ButtonColors, ButtonLooks, ButtonSizes } from '@typings/discord';
+import type { ButtonColors, ButtonLooks, ButtonSizes } from '@typings/discord';
 import type { ImageSourcePropType } from 'react-native';
 
 export interface ToastButton {
@@ -26,4 +26,4 @@ interface _ToastOptions {
 export type InternalToastOptions = ToastOptions & {
 	closing?: boolean;
 	date?: number;
-}
+};

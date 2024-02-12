@@ -45,7 +45,7 @@ export const data = {
 		id: 'unbound',
 		type: 1,
 		name: 'Unbound',
-		icon: 'https://files.unbound.app/icon.png'
+		icon: 'https://assets.unbound.rip/logo/logo.png'
 	}
 };
 

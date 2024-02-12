@@ -1,4 +1,4 @@
-import { Manifest } from '@typings/managers';
+import type { Manifest } from '@typings/managers';
 
 declare global {
 	const __r: {
@@ -10,9 +10,9 @@ declare global {
 	var modules: { [id: number]: any; };
 	var nativeLoggingHook: Fn;
 
+	var unbound: typeof import('@api') & { version: string; };
 
 	interface Window {
-		unbound: typeof import('@api') & { version: string; };
 		loader: {
 			type: string;
 			version: string;
@@ -32,7 +32,7 @@ declare global {
 
 		UNBOUND_FONTS: {
 			name: string;
-			url: string;
+			path: string;
 		}[];
 
 		UNBOUND_THEMES: {

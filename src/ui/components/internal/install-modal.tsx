@@ -1,13 +1,11 @@
-import { Clipboard, Constants, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
+import { Constants, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import type { Manager } from '@typings/managers';
 import { Redesign } from '@metro/components';
 import { showAlert } from '@api/dialogs';
 import { capitalize } from '@utilities';
 import { showToast } from '@api/toasts';
-import { Icons } from '@api/assets';
 import { managers } from '@api';
 import { useSettingsStore } from '@api/storage';
-import { Links } from '@constants';
 import { Strings } from '@api/i18n';
 
 interface InstallModalProps {

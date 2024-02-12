@@ -1,16 +1,13 @@
 import { Constants, Theme, React, ReactNative as RN, StyleSheet } from '@metro/common';
 import { mergeStyles } from '@utilities';
-import { showAlert } from '@api/dialogs';
 import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';
 import { Profiles } from '@metro/api';
-import { reload } from '@api/native';
 import { Icons, getIDByName } from '@api/assets';
 import { Strings } from '@api/i18n';
 
 
 import { ManagerType } from '@managers/base';
-import { Redesign } from '@metro/components';
 import Overflow from '@ui/components/overflow';
 
 import type { Addon, Author, Manager } from '@typings/managers';
@@ -186,8 +183,7 @@ const useStyles = StyleSheet.createStyles({
 	card: {
 		backgroundColor: Theme.colors.BACKGROUND_TERTIARY,
 		borderRadius: 16,
-		marginTop: 12,
-		...Theme.shadows.SHADOW_LOW
+		marginTop: 12
 	},
 	failed: {
 		opacity: 0.5
@@ -198,13 +194,13 @@ const useStyles = StyleSheet.createStyles({
 	},
 	header: {
 		backgroundColor: Theme.colors.BACKGROUND_SECONDARY,
-		borderRadius: 16,
+		borderTopRightRadius: 16,
+		borderTopLeftRadius: 16,
 		paddingHorizontal: 15,
 		flexDirection: 'row',
 		alignItems: 'center',
 		padding: 10,
-		flex: 1,
-		...Theme.shadows.SHADOW_LOW
+		flex: 1
 	},
 	name: {
 		color: Theme.colors.TEXT_NORMAL,
