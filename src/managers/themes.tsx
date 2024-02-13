@@ -4,8 +4,6 @@ import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
 import Storage from '@api/storage';
 
-const PREVIEW_TOKEN = 'primary-600';
-
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
 	public extension: string = 'json';
@@ -32,9 +30,8 @@ class Themes extends Manager {
 
 		const self = this;
 
-		const { findStore, findByProps } = await import('@metro');
+		const { findStore } = await import('@metro');
 		const ThemeStore = findStore('Theme');
-		const Coloring = findByProps('ColorDetails', 'Color', { lazy: true });
 
 		this.currentTheme = ThemeStore.theme;
 
@@ -52,22 +49,6 @@ class Themes extends Manager {
 							return self.module._RawColor[key];
 					}
 			});
-		});
-
-		const originalColor = Coloring.ColorDetails[PREVIEW_TOKEN];
-		Object.defineProperty(Coloring.ColorDetails, PREVIEW_TOKEN, {
-				configurable: true,
-				enumerable: true,
-				get: () => {
-						const theme = self.entities.get(self.currentTheme);
-
-						if (theme) {
-							const color = theme.instance.raw?.[PREVIEW_TOKEN.toUpperCase().replace(/-/g, '_')];
-							return color ? { hex: color } : originalColor;
-						}
-
-						return originalColor;
-				}
 		});
 
 		const orig = this.module.default.internal.resolveSemanticColor;
@@ -191,6 +172,7 @@ class Themes extends Manager {
 		const ThemePresets = findByProps('getMobileThemesPresets', { lazy: true });
 		const ThemeIndex = findByProps('getUserThemeIndex', 'handleSaveTheme', { lazy: true });
 		const Can = findByProps('canUseClientThemes', { lazy: true });
+		const Coloring = findByProps('ColorDetails', 'Color', { lazy: true });
 
 		// Ensure the user can use client themes
 		this.patcher.instead(Can, 'canUseClientThemes', () => true);
@@ -200,7 +182,9 @@ class Themes extends Manager {
 			this.entities.forEach(value => {
 				if (res.find(x => x.theme === value.id)) return;
 
-				this.currentTheme = value.id;
+				const color = this.parseColor(value.instance?.semantic['BG_BASE_PRIMARY'], value.id);
+				Coloring.ColorDetails[`${value.id}-accent`] = { hex: color };
+
 				res.unshift({
 					// Use the dark/light original theme modes depending on the type of the custom theme
 					theme: value.instance?.type === 'dark' ? 'darker' : 'light',
@@ -213,7 +197,7 @@ class Themes extends Manager {
 					angle: value.id,
 					colors: [
 						{
-							token: PREVIEW_TOKEN,
+							token: `${value.id}-accent`,
 							stop: 100
 						}
 					],
