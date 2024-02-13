@@ -2,7 +2,7 @@ import { createLogger } from '@structures/logger';
 import BuiltIns from '@core/builtins';
 import Patches from '@core/patches';
 
-import * as Managers from '@api/managers';
+import * as Managers from '@managers';
 import Patcher from '@api/patcher';
 import * as API from '@api';
 
@@ -23,7 +23,7 @@ export async function initialize() {
 
 	window.unbound = Object.assign(API, { version: '__VERSION__' });
 
-	Managers.plugins.initialize();
+	Managers.Plugins.initialize();
 
 	return API;
 }
@@ -33,6 +33,8 @@ export async function shutdown() {
 
 	for (const type in Managers) {
 		const manager = Managers[type];
+		if (!manager.initialized) continue;
+
 		await manager.shutdown();
 	}
 

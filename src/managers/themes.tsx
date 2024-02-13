@@ -1,5 +1,5 @@
 import { findInReactTree, unitToHex, withoutOpacity } from '@utilities';
-import type { Addon, Resolveable } from '@typings/managers';
+import type { Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
 import Storage from '@api/storage';
@@ -37,17 +37,17 @@ class Themes extends Manager {
 
 		Object.keys(this.module.RawColor).forEach(key => {
 			Object.defineProperty(self.module.RawColor, key, {
-					configurable: true,
-					enumerable: true,
-					get: () => {
-							const theme = self.entities.get(self.currentTheme);
+				configurable: true,
+				enumerable: true,
+				get: () => {
+					const theme = self.entities.get(self.currentTheme);
 
-							if (theme) {
-								return theme.instance.raw?.[key] ?? self.module._RawColor[key];
-							}
-
-							return self.module._RawColor[key];
+					if (theme) {
+						return theme.instance.raw?.[key] ?? self.module._RawColor[key];
 					}
+
+					return self.module._RawColor[key];
+				}
 			});
 		});
 
@@ -88,6 +88,7 @@ class Themes extends Manager {
 
 		this.applyBackground();
 		this.applyPatches();
+		this.initialized = true;
 	}
 
 	parseColor(item: Record<string, any>, theme: string) {

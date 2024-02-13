@@ -1,6 +1,6 @@
-import { type Addon } from '@typings/managers';
+import { type Addon, type Manifest } from '@typings/managers';
 import Manager, { ManagerType } from './base';
-import Storage from '@api/storage';
+import Storage, { getStore } from '@api/storage';
 import { Keys } from '@constants';
 
 class Plugins extends Manager {
@@ -18,23 +18,25 @@ class Plugins extends Manager {
 
 			this.load(bundle, manifest);
 		}
+
+		this.initialized = true;
 	}
 
 	override getContextItems(addon: Addon, navigation: any) {
 		return [
-			...addon.instance?.settings ? [{
+			...(addon.instance?.settings ? [{
 				label: 'SETTINGS',
 				icon: 'settings',
 				action: () => navigation.push(Keys.Custom, {
 					title: addon.data.name,
 					render: addon.instance.settings
 				})
-			}] : [],
+			}] : []),
 			...this.getBaseContextItems(addon)
 		];
 	}
 
-	override handleBundle(bundle: string) {
+	override handleBundle(bundle: string, manifest: Manifest) {
 		if (Storage.get('unbound', 'recovery', false)) {
 			return {
 				start: () => { },
@@ -42,8 +44,10 @@ class Plugins extends Manager {
 			};
 		}
 
-		const iife = eval(`() => { return ${bundle} }`);
-		const payload = iife();
+		const iife = eval(`(manifest, settings) => { return ${bundle} }`);
+		const settings = getStore(manifest.id);
+		const payload = iife(manifest, settings);
+
 		const res = typeof payload === 'function' ? payload() : payload;
 
 		return res.default ?? res;

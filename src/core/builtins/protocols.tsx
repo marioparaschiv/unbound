@@ -5,7 +5,7 @@ import { createPatcher } from '@patcher';
 import { createLogger } from '@structures/logger';
 import { findByName } from '@metro';
 import Toasts from '@api/toasts';
-import { managers } from '@api';
+import * as managers from '@managers';
 
 const Patcher = createPatcher('protocols');
 const Logger = createLogger('Protocol');

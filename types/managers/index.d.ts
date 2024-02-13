@@ -10,24 +10,27 @@ export interface Manifest {
 	authors: Author[];
 	icon: '__custom__' | (string & {}) | { uri: string; };
 	updates: string;
+	main: string;
 	version: string;
 	folder: string;
 	path: string;
 	url: string;
 }
 
-export interface InternalManifest extends Manifest {
-	bundle: string;
-}
-
 export type IconpackManifest = Pick<
-	InternalManifest,
-	'id' | 'name' | 'description' | 'bundle' | 'version' | 'updates'
+	Manifest,
+	'id' | 'name' | 'description' | 'version' | 'updates'
 > & { type: 'github' | 'external'; };
+
+declare interface PluginInstance {
+	getSettingsPanel?(): React.ReactNode;
+	start?(): void;
+	stop?(): void;
+}
 
 export interface Addon {
 	started: boolean;
-	instance: any;
+	instance: PluginInstance | any;
 	id: string;
 	failed: boolean;
 	data: Manifest;

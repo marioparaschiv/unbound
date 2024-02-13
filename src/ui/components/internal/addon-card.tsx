@@ -11,7 +11,7 @@ import { ManagerType } from '@managers/base';
 import Overflow from '@ui/components/overflow';
 
 import type { Addon, Author, Manager } from '@typings/managers';
-import { managers } from '@api';
+import * as managers from '@managers';
 import { Switch } from '@ui/components/misc';
 
 interface AddonCardProps {

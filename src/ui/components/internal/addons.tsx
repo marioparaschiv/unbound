@@ -8,7 +8,7 @@ import { useSettingsStore } from '@api/storage';
 import InstallModal from './install-modal';
 import AddonCard from './addon-card';
 import { Icons } from '@api/assets';
-import { managers } from '@api';
+import * as managers from '@managers';
 import { callbackWithAnimation, noop } from '@utilities';
 import { Strings } from '@api/i18n';
 import { GeneralSearch } from '@ui/components/search';

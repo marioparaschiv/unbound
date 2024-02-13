@@ -8,10 +8,10 @@ import { chunkArray } from '@utilities';
 import { findByProps } from '@metro';
 import { Strings } from '@api/i18n';
 
-import type { Addon, InternalManifest, Manifest, Resolveable } from '@typings/managers';
+import type { Addon, Manifest, Resolveable } from '@typings/managers';
 import type { Asset } from '@typings/api/assets';
 
-export type PackManifest = InternalManifest & { type: 'github' | 'other' };
+export type PackManifest = Manifest & { type: 'github' | 'other'; };
 export type Pack = { bundle: string; manifest: PackManifest; };
 export const defaultPack = {
 	manifest: {
@@ -81,7 +81,7 @@ class Icons extends Manager {
 
 		try {
 			this.logger.debug('Validating manifest...');
-			this.validateManifest(manifest as InternalManifest);
+			this.validateManifest(manifest as Manifest);
 
 			if (!manifest.type || !['github', 'other'].includes(manifest.type))
 				manifest.type = /^(https?:\/\/)(www\.)?github\.com/.test(manifest.bundle) ? 'github' : 'other';

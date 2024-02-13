@@ -47,4 +47,9 @@ interface AlertProps {
 	 * @default: true
 	 */
 	cancelButton?: boolean;
+
+	/**
+	 * Optional callback for the press of the `cancel` button
+	 */
+	onCancel?: Fn;
 }

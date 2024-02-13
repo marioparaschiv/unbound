@@ -1,4 +1,4 @@
-import type { Addon, Manifest, InternalManifest, Resolveable } from '@typings/managers';
+import type { Addon, Manifest, Resolveable } from '@typings/managers';
 import EventEmitter from '@structures/emitter';
 import { DCDFileManager } from '@api/storage';
 import { capitalize } from '@utilities';
@@ -15,10 +15,10 @@ export enum ManagerType {
 }
 
 class Manager extends EventEmitter {
+	public entities = new Map<Manifest['id'], Addon>();
 	public logger: ReturnType<typeof createLogger>;
 	public settings: ReturnType<typeof getStore>;
-	public id: Manager;
-	public entities = new Map<Manifest['id'], Addon>();
+	public initialized: boolean = false;
 	public started = new Set();
 	public errors = new Map();
 	public type: ManagerType;
@@ -26,6 +26,7 @@ class Manager extends EventEmitter {
 	public path: string;
 	public name: string;
 	public icon: string;
+	public id: Manager;
 
 	constructor(type: ManagerType) {
 		super();
@@ -153,11 +154,11 @@ class Manager extends EventEmitter {
 				setState({ message: `${res.status}: ${res.statusText}` });
 			})
 			.then(res => res.json())
-			.catch(e => setState({ message: e.message })) as InternalManifest;
+			.catch(e => setState({ message: e.message })) as Manifest;
 
 		try {
 			this.logger.debug('Validating manifest...');
-			this.validateManifest(manifest as InternalManifest);
+			this.validateManifest(manifest as Manifest);
 
 			manifest.url = url;
 		} catch (e) {
@@ -166,14 +167,24 @@ class Manager extends EventEmitter {
 			return;
 		}
 
-		this.logger.debug(`Fetching bundle from ${manifest.bundle}...`);
-		const bundle = await fetch((manifest as any).bundle, { cache: 'no-cache' })
+		const origin = url.split('/');
+
+		// Remove manifest.json at the end of the URL
+		origin.pop();
+
+		const main = origin.join('/') + '/' + manifest.main;
+
+		this.logger.debug(`Fetching bundle from ${main}...`);
+
+		const bundle = await fetch(main, { cache: 'no-cache' })
 			.then(res => {
 				if (res.ok) return res;
 				setState({ message: `${res.status}: ${res.statusText}` });
 			})
-			.then(r => r.text())
+			.then(r => r?.text())
 			.catch(e => setState({ message: e.message }));
+
+		if (!bundle) return;
 
 		this.logger.debug('Done fetching...');
 
@@ -210,7 +221,7 @@ class Manager extends EventEmitter {
 		try {
 			this.validateManifest(manifest);
 
-			const res = this.handleBundle(bundle);
+			const res = this.handleBundle(bundle, manifest);
 			if (!res) this.handleInvalidBundle();
 
 			data.instance = res;
@@ -357,6 +368,8 @@ class Manager extends EventEmitter {
 				continue;
 			}
 		}
+
+		this.initialized = false;
 	}
 
 	validateManifest(manifest: Manifest) {
@@ -373,7 +386,7 @@ class Manager extends EventEmitter {
 		}
 	}
 
-	handleBundle(bundle: string) {
+	handleBundle(bundle: string, manifest: Manifest) {
 		return '';
 	}
 

@@ -1,7 +1,7 @@
 import { StyleSheet, Theme, ReactNative as RN } from '@metro/common';
-import { getIDByName } from '@api/assets';
-import { managers } from '@api';
 import type { Manager } from '@typings/managers';
+import { getIDByName } from '@api/assets';
+import * as managers from '@managers';
 
 export const resolveType = (entity: Manager | Fn<Manager>) => {
 	const resolved = typeof entity === 'function' ? entity() : entity;
@@ -22,7 +22,7 @@ const useStyles = StyleSheet.createStyles({
 	}
 });
 
-export const TrailingIcon = ({ selected, source }: { selected: boolean; source: string }) => {
+export const TrailingIcon = ({ selected, source }: { selected: boolean; source: string; }) => {
 	const styles = useStyles();
 
 	return <RN.View style={styles.trailing}>

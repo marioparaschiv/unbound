@@ -3,6 +3,7 @@ import { Constants, ReactNative as RN, Theme } from '@metro/common';
 import { Redesign, Slider } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { Keys, Links } from '@constants';
+import { reload } from '@api/native';
 import { Strings } from '@api/i18n';
 import Assets from '@api/assets';
 import Toasts from '@api/toasts';
@@ -25,7 +26,8 @@ export default function Developer() {
 	const Icons = {
 		Debug: Assets.getIDByName('debug'),
 		Browser: Assets.getIDByName('ImageTextIcon'),
-		Trash: Assets.getIDByName('trash')
+		Trash: Assets.getIDByName('trash'),
+		Retry: Assets.getIDByName('RetryIcon')
 	};
 
 	return <RN.ScrollView>
@@ -131,6 +133,13 @@ export default function Developer() {
 			/>
 		</Section>
 		<Section title={Strings.UNBOUND_MISC}>
+			<TableRow
+				label={Strings.UNBOUND_RESTART}
+				icon={<TableRowIcon source={Icons.Retry} />}
+				arrow
+				onPress={reload}
+			/>
+
 			<TableRow
 				label={Strings.UNBOUND_FORCE_GARBAGE_COLLECTION}
 				icon={<TableRowIcon source={Icons.Trash} />}

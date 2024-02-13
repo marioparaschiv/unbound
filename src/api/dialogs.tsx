@@ -1,6 +1,7 @@
 import type { AlertProps } from '@typings/api/dialogs';
 import { ReactNative as RN } from '@metro/common';
 import { Redesign } from '@metro/components';
+import { Strings } from '@api/i18n';
 import { uuid } from '@utilities';
 
 export function showAlert(options: AlertProps) {
@@ -26,8 +27,9 @@ export function showAlert(options: AlertProps) {
 				))}
 				{(options.cancelButton ?? true) && (
 					<Redesign.AlertActionButton
-						text={'Cancel'}
-						variant={'secondary'}
+						text={Strings.CANCEL}
+						variant='secondary'
+						onPress={() => options.onCancel?.()}
 					/>
 				)}
 			</>}

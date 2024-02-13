@@ -4,7 +4,7 @@ import { Redesign } from '@metro/components';
 import { showAlert } from '@api/dialogs';
 import { capitalize } from '@utilities';
 import { showToast } from '@api/toasts';
-import { managers } from '@api';
+import * as managers from '@managers';
 import { useSettingsStore } from '@api/storage';
 import { Strings } from '@api/i18n';
 

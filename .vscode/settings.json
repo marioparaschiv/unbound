@@ -24,6 +24,7 @@
 	"javascript.updateImportsOnFileMove.enabled": "always",
 	"js/ts.implicitProjectConfig.strictNullChecks": true,
 	"js/ts.implicitProjectConfig.target": "ESNext",
+	"files.eol": "\n",
 	"scss.format.spaceAroundSelectorSeparator": true,
 	"scssFormatter.singleQuote": true,
 	"scssFormatter.trailingComma": "all",

@@ -63,14 +63,11 @@ function General() {
 						showAlert({
 							title: Strings.UNBOUND_CHANGE_RESTART,
 							content: Strings.UNBOUND_CHANGE_RESTART_DESC,
+							onCancel: () => settings.toggle('recovery', false),
 							buttons: [
 								{
 									text: Strings.UNBOUND_RESTART,
 									onPress: reload
-								},
-								{
-									text: Strings.CANCEL,
-									onPress: () => settings.toggle('recovery', false)
 								}
 							]
 						});

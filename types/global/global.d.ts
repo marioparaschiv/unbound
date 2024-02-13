@@ -1,4 +1,5 @@
 import type { Manifest } from '@typings/managers';
+import type { getStore } from '@api/storage';
 
 declare global {
 	const __r: {
@@ -11,6 +12,8 @@ declare global {
 	var nativeLoggingHook: Fn;
 
 	var unbound: typeof import('@api') & { version: string; };
+	var manifest: Manifest;
+	var settings: ReturnType<typeof getStore>;
 
 	interface Window {
 		loader: {

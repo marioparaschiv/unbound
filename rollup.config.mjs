@@ -52,8 +52,8 @@ const config = {
 				output.code = `(() => {
 					try {
 						${output.code}
-					} catch(e) {
-						alert('Unbound failed to initialize: ' + e.stack);
+					} catch(error) {
+						alert('Unbound failed to initialize: ' + error.stack);
 					}
 			 	})();`;
 			}
