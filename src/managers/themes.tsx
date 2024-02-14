@@ -169,13 +169,16 @@ class Themes extends Manager {
 
 	async applyPatches() {
 		const { findByProps } = await import('@metro');
-		const ThemeConverter = findByProps('convertThemesToAnimatedThemes', { lazy: true });
-		const ThemePresets = findByProps('getMobileThemesPresets', { lazy: true });
-		const ThemeIndex = findByProps('getUserThemeIndex', 'handleSaveTheme', { lazy: true });
-		const Can = findByProps('canUseClientThemes', { lazy: true });
+		const ThemeIndex = findByProps('getUserThemeIndex', 'handleSaveTheme');
+		const ThemeConverter = findByProps('convertThemesToAnimatedThemes');
+		const ThemePresets = findByProps('getMobileThemesPresets');
+		const Can = findByProps('canUseClientThemes');
+
+		// This one can be lazy because it only needs to be updated when the patch actually runs
+		// and the patch only runs when the Theme Picker page is opened.
 		const Coloring = findByProps('ColorDetails', 'Color', { lazy: true });
 
-		// Ensure the user can use client themes
+		// Ensure the user can use client themes otherwise our themes would be locked behind Nitro
 		this.patcher.instead(Can, 'canUseClientThemes', () => true);
 
 		// Add our themes to the list of available themes
