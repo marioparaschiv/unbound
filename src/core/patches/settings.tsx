@@ -132,7 +132,7 @@ class Settings {
 	};
 
 	private patchSections() {
-		this.patcher.before(this.Settings.SearchableSettingsList, 'type', (_, [{ sections }]) => {
+		this.patcher.before(this.Settings.SearchableSettingsList, 'type', (_, [{ sections }]: [{ sections: any[] }]) => {
 			const index = sections?.findIndex(section => section.settings.find(setting => setting === 'ACCOUNT'));
 
 			if (!sections.find(section => section.label === ClientName)) {
@@ -162,7 +162,7 @@ class Settings {
 			return res;
 		});
 
-		this.patcher.after(this.Getters, 'getSettingListSearchResultItems', (_, [settings], res) => {
+		this.patcher.after(this.Getters, 'getSettingListSearchResultItems', (_, [settings]: string[], res) => {
 			res = res.filter(item => !Object.values(Keys).includes(item.setting));
 
 			Object.keys(Keys).reverse().forEach(key => {

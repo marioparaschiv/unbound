@@ -11,23 +11,25 @@ export default StyleSheet.createStyles({
 		paddingVertical: 30
 	},
 
+	cardShadow: Theme.shadows.SHADOW_HIGH,
+
 	card: {
 		backgroundColor: Theme.colors.BACKGROUND_PRIMARY,
 
 		marginHorizontal: 20,
-		marginBottom: 10,
+		marginBottom: 12,
 		borderRadius: 20,
 
-		...Theme.shadows.SHADOW_LOW
+		...Theme.shadows.SHADOW_BORDER
 	},
 
 	headerChainIcon: {
 		width: undefined,
-		height: '40%',
+		height: '45%',
 		aspectRatio: 1,
 
 		right: 30,
-		top: '30%',
+		top: '27.5%',
 
 		borderRadius: 1000,
 		position: 'absolute',
@@ -73,7 +75,7 @@ export default StyleSheet.createStyles({
 		marginHorizontal: 10,
 		marginBottom: 10,
 
-		borderRadius: 16,
+		borderRadius: 20,
 		flexGrow: 1,
 
 		...Theme.shadows.SHADOW_LOW

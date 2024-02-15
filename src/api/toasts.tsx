@@ -29,7 +29,7 @@ try {
 	});
 
 	// Convert Discord's toasts into our toasts
-	Patcher.instead(Toasts, 'open', (self, args, orig) => {
+	Patcher.instead(Toasts, 'open', (self, args: [ToastOptions], orig) => {
 		if (get('unbound', 'toasts.enabled', true)) {
 			const [options] = args;
 

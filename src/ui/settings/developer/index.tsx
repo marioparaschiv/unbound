@@ -4,6 +4,7 @@ import { Redesign, Slider } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { Keys, Links } from '@constants';
 import { reload } from '@api/native';
+import { findByProps } from '@metro';
 import { Strings } from '@api/i18n';
 import Assets from '@api/assets';
 import Toasts from '@api/toasts';
@@ -17,6 +18,8 @@ const {
 	TableRow,
 	TableRowIcon
 } = Redesign;
+
+const Theming = findByProps('updateTheme', { lazy: true });
 
 export default function Developer() {
 	const navigation = Redesign.useNavigation();
@@ -56,7 +59,11 @@ export default function Developer() {
 				label={Strings.UNBOUND_ENABLED}
 				subLabel={Strings.UNBOUND_LOADER_ENABLED_DESC}
 				value={settings.get('loader.enabled', true)}
-				onValueChange={() => settings.toggle('loader.enabled', true)}
+				onValueChange={() => {
+					// Go to an official theme so that Discord doesn't break when we disable loading
+					Theming.updateTheme('darker');
+					settings.toggle('loader.enabled', true);
+				}}
 			/>
 			<TableSwitchRow
 				label={Strings.UNBOUND_LOADER_DEVTOOLS}
