@@ -243,11 +243,12 @@ class Themes extends Manager {
 			return args;
 		});
 
-		this.patcher.after(ThemeIndex, 'getUserThemeIndex', (_, args: [any, boolean, any[], string], res) => {
+		this.patcher.instead(ThemeIndex, 'getUserThemeIndex', (_, args: [any, boolean, any[], string]) => {
 			// Fix for finding the custom theme, as it's now always either "darker" or "light" it won't return the index of the real theme
-			// So therefore we try to find the theme by the angle property first, if it fails we use the original value
-			const index = args[2].findIndex(x => x.angle === args[3]);
-			return index === -1 ? res : index;
+			// So therefore we try to find the theme by the angle property first, if it fails we use the original value ensuring it's not a custom theme
+			const customThemeIndex = args[2].findIndex(x => x.angle === args[3]);
+			const officialThemeIndex = args[2].findIndex(x => x.theme === args[3] && !this.entities.get(x.angle));
+			return customThemeIndex === -1 ? officialThemeIndex : customThemeIndex;
 		});
 	}
 

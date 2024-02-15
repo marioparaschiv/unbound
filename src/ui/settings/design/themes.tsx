@@ -13,7 +13,7 @@ function ThemesPage() {
 		<Addons
 			showHeaderRight={false}
 			showToggles={false}
-			type='themes'
+			type='Themes'
 			addons={addons}
 		/>
 	</RN.View>;

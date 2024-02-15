@@ -15,7 +15,7 @@ const items = [
 			return Strings.UNBOUND_THEMES;
 		},
 
-		id: 'themes',
+		id: 'Themes',
 		...Themes
 	},
 	{
@@ -23,7 +23,7 @@ const items = [
 			return Strings.UNBOUND_ICONS;
 		},
 
-		id: 'icons',
+		id: 'Icons',
 		...Icons
 	},
 	{
@@ -31,7 +31,7 @@ const items = [
 			return Strings.UNBOUND_FONTS;
 		},
 
-		id: 'fonts',
+		id: 'Fonts',
 		...Fonts
 	}
 ] as const;

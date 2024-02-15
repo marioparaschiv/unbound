@@ -9,7 +9,7 @@ function IconsPage() {
 	return <RN.View style={{ flex: 1 }}>
 		<Addons
 			showHeaderRight={false}
-			type='icons'
+			type='Icons'
 			addons={addons}
 		/>
 	</RN.View>;

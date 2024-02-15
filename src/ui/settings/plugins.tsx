@@ -19,7 +19,7 @@ export default function Plugins({ headerRightMargin = false }: { headerRightMarg
 
 	return <RN.View>
 		<Addons
-			type='plugins'
+			type='Plugins'
 			addons={addons}
 			onPressInstall={({ type, ref }) => showInstallAlert({ type, ref })}
 			headerRightMargin={headerRightMargin}
