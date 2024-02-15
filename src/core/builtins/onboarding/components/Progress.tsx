@@ -1,6 +1,6 @@
 import { ReactNative as RN } from '@metro/common';
-import info from '../info';
 import useStyles from '../styles';
+import info from '../info';
 
 export default function Progress({ step }: { step: number }) {
 	const styles = useStyles();

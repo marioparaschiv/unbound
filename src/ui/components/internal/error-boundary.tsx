@@ -1,7 +1,8 @@
 import { React, ReactNative as RN, Clipboard } from '@metro/common';
+import { Icons, getIDByName } from '@api/assets';
+import { TintedIcon } from '@ui/components/misc';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
-import { getIDByName } from '@api/assets';
 import { ClientName } from '@constants';
 import { reload } from '@api/native';
 import { Strings } from '@api/i18n';
@@ -136,11 +137,13 @@ export default function ErrorBoundary({ error, retryRender, res }: ErrorBoundary
 	const possibleErrors = [
 		{
 			id: 'component',
+			icon: <TintedIcon source={Icons['ImageTextIcon']} />,
 			label: Strings.UNBOUND_ERROR_BOUNDARY_ACTION_COMPONENT,
 			error: error.toString() + error.componentStack
 		},
 		{
 			id: 'stack',
+			icon: <TintedIcon source={Icons['ic_category_16px']} />,
 			label: Strings.UNBOUND_ERROR_BOUNDARY_ACTION_STACK_TRACE,
 			error: error.stack.replace(/(at .*) \(.*\)/g, '$1')
 		}
@@ -150,10 +153,11 @@ export default function ErrorBoundary({ error, retryRender, res }: ErrorBoundary
 	const styles = useStyles();
 	const state = Redesign.useSegmentedControlState({
 		defaultIndex: 0,
-		items: possibleErrors.map(({ label, id, error }) => {
+		items: possibleErrors.map(({ label, id, icon, error }) => {
 			return {
 				label,
 				id,
+				icon,
 				page: (
 					<CodeBlock
 						selectable

@@ -1,6 +1,6 @@
 import { type Addon, type Manifest } from '@typings/managers';
-import Manager, { ManagerType } from './base';
 import Storage, { getStore } from '@api/storage';
+import Manager, { ManagerType } from './base';
 import { Keys } from '@constants';
 
 class Plugins extends Manager {

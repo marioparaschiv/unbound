@@ -1,7 +1,7 @@
-import { Section } from '@ui/components/misc';
 import { Theme, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';
+import { Section } from '@ui/components/misc';
 import { Redesign } from '@metro/components';
 import Plugins from '@managers/plugins';
 import Themes from '@managers/themes';

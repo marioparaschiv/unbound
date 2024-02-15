@@ -1,4 +1,5 @@
-import { ReactNative as RN, StyleSheet, Theme } from '@metro/common';
+import { ReactNative as RN } from '@metro/common';
+import { TintedIcon } from '@ui/components/misc';
 import Overflow from '@ui/components/overflow';
 import getItems from '@ui/models/ordering';
 import { getIDByName } from '@api/assets';
@@ -10,15 +11,7 @@ type HeaderRightProps = {
 	margin?: boolean
 };
 
-const useStyles = StyleSheet.createStyles({
-	icon: {
-		tintColor: Theme.colors.INTERACTIVE_NORMAL
-	}
-});
-
 export default function HeaderRight({ type, settings, onPress, margin = false }: HeaderRightProps) {
-	const styles = useStyles();
-
 	return <RN.View style={{ flexDirection: 'row', alignItems: 'center', marginRight: margin ? 12 : 0 }}>
 		<Overflow
 			items={getItems(type, settings)}
@@ -29,10 +22,7 @@ export default function HeaderRight({ type, settings, onPress, margin = false }:
 			style={{ marginLeft: 4 }}
 			onPress={onPress}
 		>
-			<RN.Image
-				source={getIDByName('PlusSmallIcon')}
-				style={styles.icon}
-			/>
+			<TintedIcon source={getIDByName('PlusSmallIcon')} />
 		</RN.TouchableOpacity>
 	</RN.View>;
 }

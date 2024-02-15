@@ -10,7 +10,6 @@ export const data: BuiltIn['data'] = {
 	default: true
 };
 
-
 export function initialize() {
 	const Boundary = findByName('ErrorBoundary');
 	if (!Boundary) return;

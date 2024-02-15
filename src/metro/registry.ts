@@ -1,5 +1,5 @@
-import { bulk, findByProps } from '@metro';
 import type { BulkItem, PropertyRecordOrArray } from '@typings/api/metro';
+import { bulk, findByProps } from '@metro';
 
 /**
  * NOTE:

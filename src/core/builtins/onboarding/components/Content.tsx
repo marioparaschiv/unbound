@@ -1,6 +1,6 @@
+import type { SharedValue } from 'react-native-reanimated';
 import { useSettingsStore } from '@api/storage';
 import { Reanimated } from '@metro/common';
-import type { SharedValue } from 'react-native-reanimated';
 
 const { default: { View } } = Reanimated;
 

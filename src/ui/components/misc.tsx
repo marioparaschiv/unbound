@@ -1,10 +1,9 @@
 import { Theme, StyleSheet, ReactNative as RN, Constants } from '@metro/common';
+import type { IconProps, SectionProps } from '@typings/ui/components/forms';
+import { internalGetLazily } from '@metro/registry';
 import { Redesign } from '@metro/components';
 
-import type { SectionProps } from '@typings/ui/components/forms';
-import { internalGetLazily } from '@metro/registry';
-
-export const useFormStyles = StyleSheet.createStyles({
+export const useFormStyles = StyleSheet.createStyles(({ size = 24 } = { size: 24 }) => ({
 	endStyle: {
 		backgroundColor: Theme.colors.CARD_PRIMARY_BG ?? Theme.colors.BACKGROUND_PRIMARY,
 		borderBottomLeftRadius: 16,
@@ -23,8 +22,20 @@ export const useFormStyles = StyleSheet.createStyles({
 		fontSize: 12,
 		marginTop: 4,
 		marginHorizontal: 16
+	},
+
+	iconTint: {
+		width: size,
+		height: size,
+		tintColor: Theme.colors.INTERACTIVE_NORMAL
 	}
-});
+}));
+
+export const TintedIcon = ({ source, size, style }: IconProps) => {
+	const styles = useFormStyles({ size });
+
+	return <RN.Image source={source} style={[styles.iconTint, style]} />;
+};
 
 export const Switch = internalGetLazily('FormSwitch', x => !('FormTitle' in x));
 export const Checkbox = internalGetLazily('FormCheckbox', x => !('FormTitle' in x));

@@ -3,7 +3,6 @@ import { React, ReactNative as RN } from '@metro/common';
 import { Media, Redesign } from '@metro/components';
 import { findByProps } from '@metro';
 
-
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
 
 export default class Asset extends React.PureComponent<{ item: AssetType; index: number; total: number; }> {

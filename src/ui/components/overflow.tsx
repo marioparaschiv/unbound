@@ -1,4 +1,5 @@
-import { ReactNative as RN, StyleSheet, Theme } from '@metro/common';
+import { ReactNative as RN } from '@metro/common';
+import { TintedIcon } from '@ui/components/misc';
 import { Redesign } from '@metro/components';
 import { Icons } from '@api/assets';
 
@@ -15,18 +16,7 @@ interface OverflowProps {
 	scale?: number;
 }
 
-const useStyles = StyleSheet.createStyles({
-	icon: {
-		aspectRatio: 1,
-		marginLeft: 8,
-		marginRight: 10,
-		tintColor: Theme.colors.INTERACTIVE_NORMAL
-	}
-});
-
 export default function Overflow({ items, iconSource = Icons['MoreHorizontalIcon'], scale = 1 }: OverflowProps) {
-	const styles = useStyles();
-
 	return <Redesign.ContextMenu items={items}>
 		{(props, onPress, accessibilityState, accessibilityActions, onAccessibilityAction) => (
 			<RN.TouchableOpacity
@@ -36,9 +26,13 @@ export default function Overflow({ items, iconSource = Icons['MoreHorizontalIcon
 				accessibilityActions={accessibilityActions}
 				onAccessibilityAction={onAccessibilityAction}
 			>
-				<RN.Image
+				<TintedIcon
 					source={iconSource}
-					style={[styles.icon, { transform: [{ scale }] }]}
+					style={{
+						transform: [{ scale }],
+						marginLeft: 8,
+						marginRight: 10
+					}}
 				/>
 			</RN.TouchableOpacity>
 		)}

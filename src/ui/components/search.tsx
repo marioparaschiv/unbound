@@ -1,17 +1,10 @@
-import { Redesign } from '@metro/components';
-import type { TextInputProps } from 'react-native';
-import { StyleSheet, ReactNative as RN, Theme } from '@metro/common';
 import type { Dispatch, SetStateAction } from 'react';
+import type { TextInputProps } from 'react-native';
+import { ReactNative as RN } from '@metro/common';
+import { TintedIcon } from '@ui/components/misc';
+import { Redesign } from '@metro/components';
 import { getIDByName } from '@api/assets';
 import { Strings } from '@api/i18n';
-
-const useStyles = StyleSheet.createStyles({
-	icon: {
-		tintColor: Theme.colors.INTERACTIVE_NORMAL,
-		width: 16,
-		height: 16
-	}
-});
 
 interface SearchProps extends TextInputProps {
 	onClear: Fn;
@@ -31,8 +24,6 @@ function Search(props: SearchProps) {
 }
 
 export function GeneralSearch({ type, search, setSearch }: GeneralSearchProps) {
-	const styles = useStyles();
-
 	return <Search
 		placeholder={Strings.UNBOUND_SEARCH.format({ type })}
 		value={search}
@@ -41,10 +32,7 @@ export function GeneralSearch({ type, search, setSearch }: GeneralSearchProps) {
 		isClearable
 		leadingIcon={() => {
 			return <RN.View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-				<RN.Image
-					source={getIDByName('Search')}
-					style={styles.icon}
-				/>
+				<TintedIcon source={getIDByName('Search')} size={16} />
 			</RN.View>;
 		}}
 	/>;

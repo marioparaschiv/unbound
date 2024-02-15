@@ -1,14 +1,14 @@
+import { Constants, Reanimated, ReactNative as RN } from '@metro/common';
+import type { SharedValue } from 'react-native-reanimated';
+import { callbackWithAnimation } from '@utilities';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
-import { Constants, Reanimated, ReactNative as RN } from '@metro/common';
-import { callbackWithAnimation } from '@utilities';
-import type { SharedValue } from 'react-native-reanimated';
 import { getIDByName } from '@api/assets';
+import { Strings } from '@api/i18n';
 import useStyles from '../styles';
+import Progress from './Progress';
 import info from '../info';
 
-import Progress from './Progress';
-import { Strings } from '@api/i18n';
 
 type OnboardingProps = {
 	contentId: string;

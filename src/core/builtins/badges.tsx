@@ -7,7 +7,6 @@ import { showToast } from '@api/toasts';
 import { Theme } from '@metro/stores';
 import { findByName } from '@metro';
 
-
 const Patcher = createPatcher('badges');
 
 export const data: BuiltIn['data'] = {

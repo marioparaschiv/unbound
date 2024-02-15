@@ -1,5 +1,6 @@
-import { StyleSheet, Theme, ReactNative as RN } from '@metro/common';
+import { StyleSheet, ReactNative as RN } from '@metro/common';
 import type { Manager } from '@typings/managers';
+import { TintedIcon } from '@ui/components/misc';
 import { getIDByName } from '@api/assets';
 import * as managers from '@managers';
 
@@ -13,12 +14,6 @@ const useStyles = StyleSheet.createStyles({
 		flex: 1,
 		flexDirection: 'row',
 		alignItems: 'center'
-	},
-
-	icon: {
-		tintColor: Theme.colors.INTERACTIVE_NORMAL,
-		width: undefined,
-		aspectRatio: 1
 	}
 });
 
@@ -26,13 +21,15 @@ export const TrailingIcon = ({ selected, source }: { selected: boolean; source: 
 	const styles = useStyles();
 
 	return <RN.View style={styles.trailing}>
-		{selected && <RN.Image
+		{selected && <TintedIcon
 			source={getIDByName('CheckmarkLargeIcon')}
-			style={[styles.icon, { height: 14 }]}
+			size={14}
+			style={{ height: 14 }}
 		/>}
-		<RN.Image
+		<TintedIcon
 			source={getIDByName(source)}
-			style={[styles.icon, { height: 20, marginLeft: 6 }]}
+			size={20}
+			style={{ height: 20, marginLeft: 6 }}
 		/>
 	</RN.View>;
 };

@@ -1,9 +1,9 @@
 import { Constants, Theme, React, ReactNative as RN, StyleSheet } from '@metro/common';
+import { Icons, getIDByName } from '@api/assets';
 import { mergeStyles } from '@utilities';
 import { AsyncUsers } from '@metro/api';
 import { Users } from '@metro/stores';
 import { Profiles } from '@metro/api';
-import { Icons, getIDByName } from '@api/assets';
 import { Strings } from '@api/i18n';
 
 
@@ -12,7 +12,7 @@ import Overflow from '@ui/components/overflow';
 
 import type { Addon, Author, Manager } from '@typings/managers';
 import * as managers from '@managers';
-import { Switch } from '@ui/components/misc';
+import { TintedIcon, Switch } from '@ui/components/misc';
 
 interface AddonCardProps {
 	type: Manager;
@@ -65,9 +65,10 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 			return React.createElement(addon.instance.icon);
 		}
 
-		return <RN.Image
+		return <TintedIcon
 			source={this.source}
-			style={styles.icon}
+			size={16}
+			style={{ marginRight: 8 }}
 		/>;
 	}
 
@@ -249,12 +250,6 @@ const useStyles = StyleSheet.createStyles({
 			android: 2.5,
 			ios: 10
 		})
-	},
-	icon: {
-		width: 16,
-		aspectRatio: 1,
-		marginRight: 8,
-		tintColor: Theme.colors.INTERACTIVE_NORMAL
 	}
 });
 

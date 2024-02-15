@@ -1,5 +1,5 @@
-import { Section, useFormStyles } from '@ui/components/misc';
 import { Constants, Theme, ReactNative as RN } from '@metro/common';
+import { Section, useFormStyles } from '@ui/components/misc';
 import { Redesign, Slider } from '@metro/components';
 import { useSettingsStore } from '@api/storage';
 import { showToast } from '@api/toasts';

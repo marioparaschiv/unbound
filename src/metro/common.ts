@@ -1,5 +1,5 @@
-import { findByProps } from '@metro';
 import type { Common } from '@typings/api/metro/common';
+import { findByProps } from '@metro';
 
 // Preloaded modules
 export const ReactNative = window.ReactNative;

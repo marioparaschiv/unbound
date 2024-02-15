@@ -1,11 +1,11 @@
 import type { BuiltIn } from '@typings/core/builtins';
 import { ReactNative as RN } from '@metro/common';
+import { createLogger } from '@structures/logger';
 import { ManagerType } from '@managers/base';
 import { createPatcher } from '@patcher';
-import { createLogger } from '@structures/logger';
+import * as managers from '@managers';
 import { findByName } from '@metro';
 import Toasts from '@api/toasts';
-import * as managers from '@managers';
 
 const Patcher = createPatcher('protocols');
 const Logger = createLogger('Protocol');

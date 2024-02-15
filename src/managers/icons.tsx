@@ -40,7 +40,7 @@ class Icons extends Manager {
 		super(ManagerType.Icons);
 
 		this.patcher = createPatcher('icons');
-		this.icon = 'Discord';
+		this.icon = 'ic_star_filled';
 
 		// Overwrite the name to 'Icons' as 'Packs' doesn't sound right,
 		// however you want to install a 'pack' not an 'icon',

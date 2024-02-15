@@ -1,8 +1,8 @@
 import HeaderRight from '@ui/components/internal/addon-header';
-import { Redesign } from '@metro/components';
 import { InstallModal } from '@ui/components/internal';
 import { ReactNative as RN } from '@metro/common';
 import { useSettingsStore } from '@api/storage';
+import { Redesign } from '@metro/components';
 import { Strings } from '@api/i18n';
 
 import Themes from './themes';

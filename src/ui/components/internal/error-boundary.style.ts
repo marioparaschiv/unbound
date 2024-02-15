@@ -15,7 +15,7 @@ export default StyleSheet.createStyles({
 		backgroundColor: Theme.colors.BACKGROUND_PRIMARY,
 
 		marginHorizontal: 20,
-		marginBottom: 20,
+		marginBottom: 10,
 		borderRadius: 20,
 
 		...Theme.shadows.SHADOW_LOW

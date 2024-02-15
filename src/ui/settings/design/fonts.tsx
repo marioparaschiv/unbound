@@ -1,4 +1,6 @@
 import { ReactNative as RN } from '@metro/common';
+import { TintedIcon } from '@ui/components/misc';
+import { Icons } from '@api/assets';
 import { noop } from '@utilities';
 
 function FontsPage() {
@@ -12,4 +14,8 @@ function FontsPage() {
 }
 
 export const callback = noop;
-export default { page: <FontsPage />, callback };
+export default {
+	page: <FontsPage />,
+	callback,
+	icon: <TintedIcon source={Icons['ic_add_text']} />
+};

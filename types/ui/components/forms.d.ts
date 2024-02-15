@@ -8,6 +8,12 @@ type SectionProps = {
 	margin?: boolean;
 };
 
+type IconProps = {
+	source: ImageSourcePropType;
+	size?: number;
+	style?: ViewStyle;
+};
+
 type RowProps = {
 	label: string;
 	subLabel?: string;

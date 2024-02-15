@@ -1,11 +1,11 @@
-import { Constants, ReactNative as RN, StyleSheet, Theme, Clipboard } from '@metro/common';
+import { ReactNative as RN, Theme, Clipboard } from '@metro/common';
 import type { Manager } from '@typings/managers';
+import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
 import { showAlert } from '@api/dialogs';
 import { capitalize } from '@utilities';
 import { showToast } from '@api/toasts';
 import * as managers from '@managers';
-import { useSettingsStore } from '@api/storage';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 import { Links } from '@constants';

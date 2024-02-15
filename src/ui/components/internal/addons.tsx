@@ -1,17 +1,17 @@
 import { Constants, React, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { showInstallAlert } from '@ui/components/internal/install-modal';
 import HeaderRight from '@ui/components/internal/addon-header';
-import { HelpMessage, Redesign } from '@metro/components';
 import getItems, { resolveType } from '@ui/models/ordering';
+import { HelpMessage, Redesign } from '@metro/components';
+import { callbackWithAnimation, noop } from '@utilities';
 import type { Addon, Manager } from '@typings/managers';
+import { GeneralSearch } from '@ui/components/search';
 import { useSettingsStore } from '@api/storage';
 import InstallModal from './install-modal';
-import AddonCard from './addon-card';
-import { Icons } from '@api/assets';
 import * as managers from '@managers';
-import { callbackWithAnimation, noop } from '@utilities';
+import AddonCard from './addon-card';
 import { Strings } from '@api/i18n';
-import { GeneralSearch } from '@ui/components/search';
+import { Icons } from '@api/assets';
 
 interface AddonListProps {
 	type: Manager;

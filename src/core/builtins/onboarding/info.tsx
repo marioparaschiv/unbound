@@ -1,13 +1,12 @@
-import { Redesign } from '@metro/components';
+import type { Dispatch, SetStateAction } from 'react';
 import { ReactNative as RN } from '@metro/common';
+import { Redesign } from '@metro/components';
 import Plugins from '@ui/settings/plugins';
-import useStyles from './styles';
-
+import { Invite, Links } from '@constants';
 import { on, set } from '@api/storage';
 import { Linking } from '@metro/api';
-import { Invite, Links } from '@constants';
 import { Strings } from '@api/i18n';
-import type { Dispatch, SetStateAction } from 'react';
+import useStyles from './styles';
 
 type CallbackProps = {
 	show: Fn,

@@ -3,7 +3,6 @@ import { Reanimated } from '@metro/common';
 import { createPatcher } from '@patcher';
 import { findByName } from '@metro';
 
-
 import Onboarding from './components/Onboarding';
 import Content from './components/Content';
 

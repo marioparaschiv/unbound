@@ -1,9 +1,9 @@
 import type { Addon, Manifest, Resolveable } from '@typings/managers';
+import { createLogger } from '@structures/logger';
 import EventEmitter from '@structures/emitter';
 import { DCDFileManager } from '@api/storage';
 import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
-import { createLogger } from '@structures/logger';
 import { Regex } from '@constants';
 
 const { LayoutAnimation: { configureNext, Presets } } = ReactNative;

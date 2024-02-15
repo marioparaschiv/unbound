@@ -1,9 +1,11 @@
 import { showInstallAlert } from '@ui/components/internal/install-modal';
 import { React, ReactNative as RN } from '@metro/common';
 import { Addons } from '@ui/components/internal';
+import { TintedIcon } from '@ui/components/misc';
 import { showAlert } from '@api/dialogs';
 import Themes from '@managers/themes';
 import { Strings } from '@api/i18n';
+import { Icons } from '@api/assets';
 import { noop } from '@utilities';
 
 function ThemesPage() {
@@ -37,4 +39,8 @@ export const callback = ({ type, ref }) => {
 	});
 };
 
-export default { page: <ThemesPage />, callback };
+export default {
+	page: <ThemesPage />,
+	callback,
+	icon: <TintedIcon source={Icons[Themes.icon]} />
+};

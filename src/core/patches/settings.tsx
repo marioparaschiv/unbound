@@ -1,11 +1,10 @@
 import { ClientName, Keys } from '@constants';
 import { Redesign } from '@metro/components';
-import { findByProps } from '@metro';
 import { createPatcher } from '@patcher';
 import { React } from '@metro/common';
+import { findByProps } from '@metro';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
-
 
 import General from '@ui/settings/general';
 import Plugins from '@ui/settings/plugins';

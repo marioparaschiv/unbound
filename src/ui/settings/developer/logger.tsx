@@ -1,5 +1,5 @@
 import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme } from '@metro/common';
-import { Section } from '@ui/components/misc';
+import { TintedIcon, Section } from '@ui/components/misc';
 import { GeneralSearch } from '@ui/components/search';
 import { Redesign } from '@metro/components';
 import LoggerStore from '@stores/logger';
@@ -72,9 +72,6 @@ const useStyles = StyleSheet.createStyles({
 	touchable: {
 		marginRight: 10
 	},
-	image: {
-		tintColor: Theme.colors.TEXT_NORMAL
-	},
 	empty: {
 		justifyContent: 'center',
 		alignItems: 'center',
@@ -98,9 +95,6 @@ function HeaderRight() {
 		style={styles.touchable}
 		onPress={() => LoggerStore.store.setState({ logs: [] })}
 	>
-		<RN.Image
-			style={styles.image}
-			source={Icons['ic_input_clear_24px']}
-		/>
+		<TintedIcon source={Icons['ic_input_clear_24px']} />
 	</RN.TouchableOpacity>;
 }
