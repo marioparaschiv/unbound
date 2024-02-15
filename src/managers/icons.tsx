@@ -84,7 +84,7 @@ class Icons extends Manager {
 			this.validateManifest(manifest as Manifest);
 
 			if (!manifest.type || !['github', 'other'].includes(manifest.type))
-				manifest.type = /^(https?:\/\/)(www\.)?github\.com/.test(manifest.bundle) ? 'github' : 'other';
+				manifest.type = /^(https?:\/\/)(www\.)?github\.com/.test(manifest.main) ? 'github' : 'other';
 
 			manifest.url = url;
 		} catch (e) {
@@ -93,7 +93,7 @@ class Icons extends Manager {
 			return;
 		}
 
-		this.logger.debug(`Fetching bundle from ${manifest.bundle}...`);
+		this.logger.debug(`Fetching bundle from ${manifest.main}...`);
 
 		// If icon is an external image then download it locally and convert the uri to a file:// pointer
 		// The icon is stored under Unbound/Packs/:id/unbound/icon.png
@@ -111,7 +111,7 @@ class Icons extends Manager {
 		const bundle = await (async () => {
 			switch (manifest.type) {
 				case 'github':
-					return await this.installFromGithub(manifest.bundle, setState, manifest);
+					return await this.installFromGithub(manifest.main, setState, manifest);
 				default:
 					return 'default';
 			}

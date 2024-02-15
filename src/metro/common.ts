@@ -7,7 +7,7 @@ export const React = window.React;
 
 export const Reanimated: Common.Reanimated = findByProps('useAnimatedStyle', 'withSpring', { lazy: true }) as Common.Reanimated;
 export const Gestures: Common.Gestures = findByProps('Gesture', 'GestureDetector', 'createNativeWrapper', { lazy: true }) as Common.Gestures;
-export const Clipboard: Common.Clipboard = findByProps('setString', 'getString', 'setImage', 'getImage', { lazy: true }) as Common.Clipboard;
+export const Clipboard = findByProps('setString', 'getString', 'setImage', 'getImage', { lazy: true }) as unknown as Common.Clipboard['default'];
 export const Flux: Common.Flux = findByProps('Store', 'connectStores', { lazy: true }) as Common.Flux;
 export const Moment: Common.Moment = findByProps('isMoment', { lazy: true }) as Common.Moment;
 

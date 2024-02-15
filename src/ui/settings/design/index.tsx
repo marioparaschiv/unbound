@@ -73,7 +73,7 @@ export default function Design() {
 		style={{
 			flex: 1,
 			flexGrow: 1,
-			justifyContent: 'space-between',
+			justifyContent: 'space-between'
 		}}
 	>
 		<Redesign.SegmentedControlPages state={state} />
@@ -86,7 +86,7 @@ export default function Design() {
 				marginHorizontal: 36
 			}}
 		>
-			<Redesign.SegmentedControl state={state} />
+			<Redesign.SegmentedControl state={state} variant={'experimental_Large'} />
 		</RN.SafeAreaView>
 	</RN.View>;
 };

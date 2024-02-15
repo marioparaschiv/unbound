@@ -102,7 +102,7 @@ const Actions = ({ retryRender, state }: Pick<ErrorBoundaryProps, 'retryRender'>
 
 	return <Card style={{ marginBottom: 0 }}>
 		<RN.View style={{ margin: 10 }}>
-			<Redesign.SegmentedControl state={state} />
+			<Redesign.SegmentedControl state={state} variant={'experimental_Large'} />
 
 			<RN.View style={{ marginTop: 10, flexDirection: 'row' }}>
 				<RN.View style={!settings.get('recovery', false) ? { flex: 0.5, marginRight: 10 } : { flex: 1 }}>

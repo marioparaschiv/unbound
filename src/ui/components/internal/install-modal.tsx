@@ -1,4 +1,4 @@
-import { Constants, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
+import { Constants, ReactNative as RN, StyleSheet, Theme, Clipboard } from '@metro/common';
 import type { Manager } from '@typings/managers';
 import { Redesign } from '@metro/components';
 import { showAlert } from '@api/dialogs';
@@ -7,6 +7,8 @@ import { showToast } from '@api/toasts';
 import * as managers from '@managers';
 import { useSettingsStore } from '@api/storage';
 import { Strings } from '@api/i18n';
+import { Icons } from '@api/assets';
+import { Links } from '@constants';
 
 interface InstallModalProps {
 	type: Manager;
@@ -14,7 +16,6 @@ interface InstallModalProps {
 }
 
 type InternalInstallModalProps = InstallModalProps & {
-	styles: ReturnType<typeof useStyles>;
 	settings: ReturnType<typeof useSettingsStore>;
 };
 
@@ -38,20 +39,22 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 		const { settings } = this.props;
 
 		return <RN.View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
-			<Redesign.TextInput
-				isRound
-				isClearable
-				size={'md'}
-				onChange={url => this.setState({ url })}
-				onClear={() => this.setState({ error: false, message: null })}
-				value={this.state.url}
-				placeholder={`https://${this.manager.type}.com/manifest.json`}
-				placeholderTextColor={Theme.unsafe_rawColors.PRIMARY_400}
-				status={message ? 'error' : 'default'}
-				errorMessage={message || undefined}
-			/>
+			<RN.View style={{ flex: 1, flexGrow: 1 }}>
+				<Redesign.TextInput
+					isRound
+					isClearable
+					size={'md'}
+					onChange={url => this.setState({ url })}
+					onClear={() => this.setState({ error: false, message: null })}
+					value={this.state.url}
+					placeholder={`https://${this.manager.type}.com/manifest.json`}
+					placeholderTextColor={Theme.unsafe_rawColors.PRIMARY_400}
+					status={message ? 'error' : 'default'}
+					errorMessage={message || undefined}
+				/>
+			</RN.View>
 
-			{/* <Redesign.IconButton
+			<Redesign.IconButton
 				icon={Icons['ClipboardListIcon']}
 				style={{ marginLeft: 8 }}
 				variant={'secondary-input'}
@@ -69,7 +72,7 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 						this.setState({ url, loadingPaste: false });
 					});
 				}}
-			/> */}
+			/>
 		</RN.View>;
 	}
 
@@ -123,22 +126,10 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 	}
 }
 
-const useStyles = StyleSheet.createStyles({
-	input: {
-		height: 40,
-		borderBottomWidth: 2,
-		marginTop: 10,
-		borderBottomColor: Theme.colors.CONTROL_BRAND_FOREGROUND_NEW ?? Theme.colors.CONTROL_BRAND_FOREGROUND,
-		color: Theme.colors.TEXT_NORMAL,
-		fontFamily: Constants.Fonts.DISPLAY_NORMAL
-	}
-});
-
 function InstallInput(props: InstallModalProps) {
 	const settings = useSettingsStore('unbound');
-	const styles = useStyles();
 
-	return <InternalInstallInput styles={styles} settings={settings} {...props} />;
+	return <InternalInstallInput settings={settings} {...props} />;
 }
 
 export function showInstallAlert({ type, ref }: InstallModalProps) {
