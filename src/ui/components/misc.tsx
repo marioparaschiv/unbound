@@ -1,4 +1,4 @@
-import { Theme, StyleSheet, ReactNative as RN } from '@metro/common';
+import { Theme, StyleSheet, ReactNative as RN, Constants } from '@metro/common';
 import { Redesign } from '@metro/components';
 
 import type { SectionProps } from '@typings/ui/components/forms';
@@ -12,11 +12,13 @@ export const useFormStyles = StyleSheet.createStyles({
 	},
 
 	formText: {
+		fontFamily: Constants.Fonts.PRIMARY_NORMAL,
 		color: Theme.colors.TEXT_NORMAL,
 		fontSize: 12
 	},
 
 	formHint: {
+		fontFamily: Constants.Fonts.PRIMARY_NORMAL,
 		color: Theme.colors.HEADER_PRIMARY,
 		fontSize: 12,
 		marginTop: 4,

@@ -1,6 +1,6 @@
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
-import { Reanimated, ReactNative as RN } from '@metro/common';
+import { Constants, Reanimated, ReactNative as RN } from '@metro/common';
 import { callbackWithAnimation } from '@utilities';
 import type { SharedValue } from 'react-native-reanimated';
 import { getIDByName } from '@api/assets';
@@ -72,7 +72,7 @@ export default function Onboarding({ contentId, setContent, opacity, onComplete 
 					{info[step].title && (
 						<RN.Text style={[{
 							fontSize: 24,
-							fontWeight: 'bold',
+							fontFamily: Constants.Fonts.PRIMARY_BOLD,
 							marginBottom: 18
 						}, styles.title]}>
 							{info[step].title}
@@ -81,6 +81,7 @@ export default function Onboarding({ contentId, setContent, opacity, onComplete 
 					{info[step].subtitle && (
 						<RN.Text style={[{
 							fontSize: 16,
+							fontFamily: Constants.Fonts.PRIMARY_NORMAL,
 							marginTop: -6,
 							marginBottom: 20
 						}, styles.subtitle]}>
