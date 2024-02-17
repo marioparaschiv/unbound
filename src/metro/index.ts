@@ -119,8 +119,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 
 	for (let i = 0, len = keys.length; i < len; i++) {
 		const id = keys[i];
-
-		const rawModule = modules[id];
+		const rawModule = store[id];
 
 		if (!rawModule.isInitialized) {
 			try {
@@ -179,7 +178,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 		}
 
 		if (search(mdl, id)) {
-			data.cache[id] = mdl;
+			data.cache[id] = rawModule;
 
 			const res = raw ? rawModule : mdl;
 			if (!all) return res;
@@ -187,7 +186,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 		}
 
 		if (esModules && mdl.default && search(mdl.default, id)) {
-			data.cache[id] = mdl;
+			data.cache[id] = rawModule;
 
 			const res = raw ? rawModule : interop ? mdl.default : mdl;
 			if (!all) return res;

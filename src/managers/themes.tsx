@@ -92,12 +92,18 @@ class Themes extends Manager {
 	}
 
 	parseColor(item: Record<string, any>, theme: string) {
-		if (!item?.value) return item;
+		if (!item?.value) {
+			return item;
+		}
+
 		if (item?.type === 'raw') {
 			this.currentTheme = theme;
 			return this.module.RawColor[item.value];
 		};
-		if (item?.type === 'color') return item.value.replace('transparent', 'rgba(0, 0, 0, 0)');
+
+		if (item?.type === 'color') {
+			return item.value.replace('transparent', 'rgba(0, 0, 0, 0)');
+		}
 	}
 
 	override async start(entity: Resolveable): Promise<void> {

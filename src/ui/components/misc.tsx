@@ -1,7 +1,7 @@
 import { Theme, StyleSheet, ReactNative as RN, Constants } from '@metro/common';
 import type { IconProps, SectionProps } from '@typings/ui/components/forms';
-import { internalGetLazily } from '@metro/registry';
 import { Redesign } from '@metro/components';
+import { find } from '@metro';
 
 export const useFormStyles = StyleSheet.createStyles(({ size = 24 } = { size: 24 }) => ({
 	endStyle: {
@@ -37,8 +37,8 @@ export const TintedIcon = ({ source, size, style }: IconProps) => {
 	return <RN.Image source={source} style={[styles.iconTint, style]} />;
 };
 
-export const Switch = internalGetLazily('FormSwitch', x => !('FormTitle' in x));
-export const Checkbox = internalGetLazily('FormCheckbox', x => !('FormTitle' in x));
+export const Switch = find(m => m.FormSwitch && !m.FormTitle, { lazy: true });
+export const Checkbox = find(m => m.FormCheckbox && !m.FormTitle, { lazy: true });
 export const Section = ({ children, style, margin = true, ...props }: SectionProps) => {
 	return (
 		<RN.ScrollView scrollEnabled={false}>
