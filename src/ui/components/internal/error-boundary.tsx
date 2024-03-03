@@ -141,13 +141,13 @@ export default function ErrorBoundary({ error, retryRender, res }: ErrorBoundary
 	const possibleErrors = [
 		{
 			id: 'component',
-			icon: <TintedIcon source={Icons['ImageTextIcon']} size={20} />,
+			icon: () => <TintedIcon source={Icons['ImageTextIcon']} size={20} />,
 			label: Strings.UNBOUND_ERROR_BOUNDARY_ACTION_COMPONENT,
 			error: error.toString() + error.componentStack
 		},
 		{
 			id: 'stack',
-			icon: <TintedIcon source={Icons['ic_category_16px']} size={20} />,
+			icon: () => <TintedIcon source={Icons['ic_category_16px']} size={20} />,
 			label: Strings.UNBOUND_ERROR_BOUNDARY_ACTION_STACK_TRACE,
 			error: error.stack.replace(/(at .*) \(.*\)/g, '$1')
 		}
@@ -161,8 +161,8 @@ export default function ErrorBoundary({ error, retryRender, res }: ErrorBoundary
 			return {
 				label,
 				id,
-				icon,
-				page: (
+				renderIcon: icon,
+				renderPage: () => (
 					<CodeBlock
 						selectable
 						style={styles.outlineCodeblock}

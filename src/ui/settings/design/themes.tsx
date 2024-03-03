@@ -40,7 +40,7 @@ export const callback = ({ type, ref }) => {
 };
 
 export default {
-	page: <ThemesPage />,
+	renderPage: () => <ThemesPage />,
 	callback,
-	icon: <TintedIcon source={Icons[Themes.icon]} />
+	renderIcon: () => <TintedIcon source={Icons[Themes.icon]} />
 };
