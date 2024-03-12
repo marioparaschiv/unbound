@@ -1,9 +1,9 @@
 import type { ApplicationCommand } from '@typings/api/commands';
 import { ClientName } from '@constants';
-import { findByProps } from '@metro';
+import { fastFindByProps } from '@metro';
 
-const Messages = findByProps('sendMessage', 'receiveMessage', { lazy: true });
-const Clyde = findByProps('createBotMessage', { lazy: true });
+const Messages = fastFindByProps('sendMessage', 'receiveMessage', { lazy: true });
+const Clyde = fastFindByProps('createBotMessage', { lazy: true });
 
 async function handleEvaluation(src: string) {
 	const out = { res: null, err: null, time: null };

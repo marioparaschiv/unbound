@@ -133,10 +133,10 @@ class Themes extends Manager {
 	async applyBackground() {
 		// Avoid circular dependency
 		const { ReactNative: RN } = await import('@metro/common');
-		const { findByName, findByProps, findStore } = await import('@metro');
+		const { findByName, fastFindByProps, findStore } = await import('@metro');
 
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
-		const { MessagesWrapper } = findByProps('MessagesWrapper');
+		const { MessagesWrapper } = fastFindByProps('MessagesWrapper');
 		const ThemeStore = findStore('Theme');
 
 		this.patcher.after(Chat, 'default', (_, __, res) => {
@@ -174,15 +174,15 @@ class Themes extends Manager {
 	}
 
 	async applyPatches() {
-		const { findByProps } = await import('@metro');
-		const ThemeIndex = findByProps('getUserThemeIndex', 'handleSaveTheme');
-		const ThemeConverter = findByProps('convertThemesToAnimatedThemes');
-		const ThemePresets = findByProps('getMobileThemesPresets');
-		const Can = findByProps('canUseClientThemes');
+		const { fastFindByProps } = await import('@metro');
+		const ThemeIndex = fastFindByProps('getUserThemeIndex', 'handleSaveTheme');
+		const ThemeConverter = fastFindByProps('convertThemesToAnimatedThemes');
+		const ThemePresets = fastFindByProps('getMobileThemesPresets');
+		const Can = fastFindByProps('canUseClientThemes');
 
 		// This one can be lazy because it only needs to be updated when the patch actually runs
 		// and the patch only runs when the Theme Picker page is opened.
-		const Coloring = findByProps('ColorDetails', 'Color', { lazy: true });
+		const Coloring = fastFindByProps('ColorDetails', 'Color', { lazy: true });
 
 		// Ensure the user can use client themes otherwise our themes would be locked behind Nitro
 		this.patcher.instead(Can, 'canUseClientThemes', () => true);

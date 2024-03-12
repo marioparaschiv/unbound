@@ -1,6 +1,6 @@
-import { find, findByName, findByProps } from '@metro';
+import { find, findByName, fastFindByProps } from '@metro';
 
-export const Redesign = findByProps('SegmentedControl', 'Stack', { lazy: true });
+export const Redesign = fastFindByProps('SegmentedControl', 'Stack', { lazy: true });
 export const Slider = find(m => m.render?.name === 'SliderComponent');
-export const Media = findByProps('openMediaModal', { lazy: true });
+export const Media = fastFindByProps('openMediaModal', { lazy: true });
 export const HelpMessage = findByName('HelpMessage');

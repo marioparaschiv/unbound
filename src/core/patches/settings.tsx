@@ -2,7 +2,7 @@ import { ClientName, Keys } from '@constants';
 import { Redesign } from '@metro/components';
 import { createPatcher } from '@patcher';
 import { React } from '@metro/common';
-import { findByProps } from '@metro';
+import { fastFindByProps } from '@metro';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
 
@@ -17,11 +17,11 @@ type CustomScreenProps = {
 
 class Settings {
 	public patcher = createPatcher('unbound-settings');
-	private Constants = findByProps('SETTING_RENDERER_CONFIG', { lazy: true });
-	private Settings = findByProps('SearchableSettingsList', { lazy: true });
-	private SearchQuery = findByProps('getSettingSearchQuery', { lazy: true });
-	private SearchResults = findByProps('useSettingSearchResults', { lazy: true });
-	private Getters = findByProps('getSettingListSearchResultItems', { lazy: true });
+	private Constants = fastFindByProps('SETTING_RENDERER_CONFIG', { lazy: true });
+	private Settings = fastFindByProps('SearchableSettingsList', { lazy: true });
+	private SearchQuery = fastFindByProps('getSettingSearchQuery', { lazy: true });
+	private SearchResults = fastFindByProps('useSettingSearchResults', { lazy: true });
+	private Getters = fastFindByProps('getSettingListSearchResultItems', { lazy: true });
 
 	public Titles = {
 		get General() {

@@ -5,7 +5,7 @@ import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
 import { ClientName } from '@constants';
 import { chunkArray } from '@utilities';
-import { findByProps } from '@metro';
+import { fastFindByProps } from '@metro';
 import { Strings } from '@api/i18n';
 
 import type { Addon, Manifest, Resolveable } from '@typings/managers';
@@ -29,7 +29,7 @@ export const defaultPack = {
 	bundle: 'Default'
 } as unknown as Pack;
 
-const registry = findByProps('registerAsset', { lazy: true });
+const registry = fastFindByProps('registerAsset', { lazy: true });
 
 class Icons extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;

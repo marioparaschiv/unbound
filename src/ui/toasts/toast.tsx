@@ -4,7 +4,7 @@ import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
 import useToastState from './useToastState';
 import useStyles from './toast.style';
-import { findByProps } from '@metro';
+import { fastFindByProps } from '@metro';
 import { Icons } from '@api/assets';
 import Toasts from '@stores/toasts';
 
@@ -15,7 +15,7 @@ import type {
 	PanGestureHandlerEventPayload
 } from 'react-native-gesture-handler';
 
-const { BackgroundBlurFill } = findByProps('BackgroundBlurFill', { lazy: true });
+const { BackgroundBlurFill } = fastFindByProps('BackgroundBlurFill', { lazy: true });
 const { withSpring, withTiming, useSharedValue, default: { View } } = Reanimated;
 const { PanGestureHandler, State } = Gestures;
 

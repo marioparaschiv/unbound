@@ -2,52 +2,9 @@ import type { SearchOptions, BulkItem, StoreOptions, InternalOptions, StringFind
 import type { Filter } from '@typings/api/metro/filters';
 import Themes from '@managers/themes';
 import Filters from './filters';
+import { data, deenumerate, isInvalidExport, parseOptions } from './constants';
 
-const data = {
-	cache: [],
-	patchedMoment: false,
-	patchedThemes: false,
-	patchedNativeRequire: false,
-	listeners: new Set<(mdl: any) => void>()
-};
-
-// for (const id in modules) {
-// 	const module = modules[id];
-
-// 	if (module.factory) {
-// 		const factory = module.factory;
-
-// 		module.factory = function (...args) {
-// 			const [, , , , , mdl] = args;
-
-// 			try {
-// 				factory.apply(this, args);
-// 			} catch {
-// 				deenumerate(id);
-// 				return;
-// 			}
-
-// 			for (const listener of data.listeners) {
-// 				try {
-// 					listener(mdl);
-// 				} catch (e) {
-// 					console.error('Failed to fire listener:', e);
-// 				}
-// 			}
-// 		};
-// 	}
-// }
-
-function isInvalidExport(mdl: any) {
-	return (
-		!mdl ||
-		mdl === window ||
-		mdl[Symbol()] === null ||
-		typeof mdl === 'boolean' ||
-		typeof mdl === 'number' ||
-		typeof mdl === 'string'
-	);
-}
+export { fastFindByProps } from './fastFindByProps';
 
 export function addListener(listener: (mdl: any) => void) {
 	data.listeners.add(listener);
@@ -319,21 +276,4 @@ function search(args: any[], options: InternalOptions, filter: Fn | string) {
 	} else {
 		return find(filter(...args), options as SearchOptions);
 	}
-}
-
-function parseOptions<O, A extends any[] = string[]>(
-	args: [...A, any] | A,
-	filter = (last) => typeof last === 'object' && !Array.isArray(last),
-	fallback = {}
-): [A, O] {
-	return [args as A, filter(args[args.length - 1]) ? args.pop() : fallback];
-}
-
-function deenumerate(id: string | number) {
-	Object.defineProperty(modules, id, {
-		value: modules[id],
-		enumerable: false,
-		configurable: true,
-		writable: true
-	});
 }

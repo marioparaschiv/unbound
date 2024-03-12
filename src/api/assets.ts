@@ -3,10 +3,10 @@ import type { Asset } from '@typings/api/assets';
 import { DCDFileManager } from '@api/storage';
 import IconManager from '@managers/icons';
 import { createPatcher } from '@patcher';
-import { findByProps } from '@metro';
+import { fastFindByProps } from '@metro';
 
 export const assets = new Set<Asset>();
-export const registry = findByProps('registerAsset', { lazy: true });
+export const registry = fastFindByProps('registerAsset', { lazy: true });
 
 const Logger = createLogger('Assets');
 const Patcher = createPatcher('unbound-assets');

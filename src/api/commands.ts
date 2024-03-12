@@ -2,7 +2,7 @@ import type { ApplicationCommand } from '@typings/api/commands';
 import { createLogger } from '@structures/logger';
 import CoreCommands from '@core/commands';
 import { createPatcher } from '@patcher';
-import { findByProps } from '@metro';
+import { fastFindByProps } from '@metro';
 
 const Patcher = createPatcher('unbound-commands');
 const Logger = createLogger('Commands');
@@ -37,7 +37,7 @@ export enum ApplicationCommandOptionType {
 	ATTACHMENT
 }
 
-const Commands = findByProps('getBuiltInCommands', { lazy: true });
+const Commands = fastFindByProps('getBuiltInCommands', { lazy: true });
 
 export const data = {
 	commands: [],

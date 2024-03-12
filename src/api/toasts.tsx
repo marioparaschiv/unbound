@@ -2,7 +2,7 @@ import type { ToastOptions } from '@typings/api/toasts';
 import { get, useSettingsStore } from '@api/storage';
 import { createLogger } from '@structures/logger';
 import { ToastContainer } from '@ui/toasts';
-import { find, findByProps } from '@metro';
+import { find, fastFindByProps } from '@metro';
 import { addToast } from '@stores/toasts';
 import { createPatcher } from '@patcher';
 
@@ -14,7 +14,7 @@ export function showToast(options: ToastOptions) {
 }
 
 try {
-	const { ToastContainer: Container } = findByProps('ToastContainer', { lazy: true });
+	const { ToastContainer: Container } = fastFindByProps('ToastContainer', { lazy: true });
 	const Toasts = find(x => x.open && x.close && Object.keys(x).length === 2, { lazy: true });
 
 	// Render our toasts

@@ -1,9 +1,9 @@
 import type { Asset as AssetType } from '@typings/api/assets';
 import { React, ReactNative as RN } from '@metro/common';
 import { Media, Redesign } from '@metro/components';
-import { findByProps } from '@metro';
+import { fastFindByProps } from '@metro';
 
-const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
+const AssetHandler = fastFindByProps('getAssetUriForEmbed', { lazy: true });
 
 export default class Asset extends React.PureComponent<{ item: AssetType; index: number; total: number; }> {
 	render() {
