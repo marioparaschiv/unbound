@@ -139,8 +139,8 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 				data.patchedThemes = true;
 			}
 
-			const callback = (key: string, type: 'top' | 'default') => {
-				const map = type === 'top' ? parsedModules : parsedDefaultModules;
+			const callback = (key: string, type: ModuleMapType) => {
+				const map = type === ModuleMapType.Base ? parsedModules : parsedDefaultModules;
 				const possibleItem = map.get(key);
 
 				if (!possibleItem || !(possibleItem instanceof Set)) {
@@ -151,12 +151,12 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 			};
 
 			Object.keys(mdl).forEach(key => {
-				callback(key, 'top');
+				callback(key, ModuleMapType.Base);
 			});
 
 			if (mdl.default && typeof mdl.default === 'object') {
 				Object.keys(mdl.default).forEach(key => {
-					callback(key, 'default');
+					callback(key, ModuleMapType.Default);
 				});
 			}
 		}
