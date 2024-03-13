@@ -1,8 +1,8 @@
 /**
  * The @findByProps filter has the potential to be heavily optimized.
  * For this reason, we re-implement all methods inside to provide this optimization.
- * This search does NOT work with stores or bulk searching.
- * Please ensure you use regular @findByProps or @findStore for these circumstances.
+ * This search does NOT work with bulk searching.
+ * Please ensure you use regular @findByProps for this circumstance.
  *
  * @example good usage:
  * fastFindByProps('test', 'otherModule');
@@ -10,7 +10,6 @@
  * @end
  *
  * @example bad usage:
-	* fastFindByProps('getSerializedState'); // Uses store (not possible)
 	* fastFindByProps(
 	*		{ params: ['trackWithMetadata'] },
 	*		{ params: ['AnalyticsActionHandlers'] },
@@ -267,13 +266,19 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 				map.get(key).add(i);
 			};
 
-			for (let i = 0, keys = Object.keys(mdl); i < keys.length; i++) {
+			const getKeys = (object: Record<string, any>) => [
+				...Object.keys(object),
+				...Reflect.ownKeys(object.__proto__ ?? {})
+			] as string[];
+
+
+			for (let i = 0, keys = getKeys(mdl); i < keys.length; i++) {
 				const key = keys[i];
 				callback(key, ModuleMapType.Base);
 			}
 
 			if (mdl.default && typeof mdl.default === 'object') {
-				for (let i = 0, keys = Object.keys(mdl.default); i < keys.length; i++) {
+				for (let i = 0, keys = getKeys(mdl.default); i < keys.length; i++) {
 					const key = keys[i];
 					callback(key, ModuleMapType.Default);
 				}
