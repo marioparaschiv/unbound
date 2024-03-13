@@ -1,5 +1,5 @@
 import type { Common } from '@typings/api/metro/common';
-import { fastFindByProps } from '@metro';
+import { fastFindByProps, findByProps } from '@metro';
 
 // Preloaded modules
 export const ReactNative = window.ReactNative;
@@ -12,7 +12,7 @@ export const Flux: Common.Flux = fastFindByProps('Store', 'connectStores', { laz
 export const Moment: Common.Moment = fastFindByProps('isMoment', { lazy: true }) as Common.Moment;
 
 export const StyleSheet = fastFindByProps('createStyles', { lazy: true });
-export const Dispatcher = fastFindByProps('_dispatch', { lazy: true });
+export const Dispatcher = findByProps('_dispatch', { lazy: true });
 export const Constants = fastFindByProps('Fonts', 'Endpoints', { lazy: true });
 export const Theme = fastFindByProps('colors', 'internal', { lazy: true });
 export const REST = fastFindByProps('getAPIBaseURL', { lazy: true });

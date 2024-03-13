@@ -1,8 +1,7 @@
 import type { SearchOptions, BulkItem, StoreOptions, InternalOptions, StringFindWithOptions, BulkFind, PropertyRecordOrArray, FunctionSignatureOrArray } from '@typings/api/metro';
+import { data, deenumerate, handleFixes, isInvalidExport, parseOptions } from './constants';
 import type { Filter } from '@typings/api/metro/filters';
-import Themes from '@managers/themes';
 import Filters from './filters';
-import { data, deenumerate, isInvalidExport, parseOptions } from './constants';
 
 export { fastFindByProps } from './fastFindByProps';
 
@@ -94,45 +93,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 			continue;
 		}
 
-		if (!data.patchedNativeRequire && mdl.default?.name === 'requireNativeComponent') {
-			const orig = mdl.default;
-
-			mdl.default = function requireNativeComponent(...args) {
-				try {
-					return orig(...args);
-				} catch {
-					return args[0];
-				}
-			};
-
-			data.patchedNativeRequire = true;
-		}
-
-		if (!data.patchedMoment && mdl.defineLocale) {
-			const defineLocale = mdl.defineLocale;
-
-			mdl.defineLocale = function (...args) {
-				try {
-					const locale = mdl.locale();
-					defineLocale.apply(this, args);
-					mdl.locale(locale);
-				} catch (e) {
-					console.error('Failed to define moment locale:', e.message);
-				}
-			};
-
-			data.patchedMoment = true;
-		}
-
-		if (!data.patchedThemes && mdl.SemanticColor) {
-			try {
-				Themes.initialize(mdl);
-			} catch (e) {
-				console.error('Failed to patch themes:', e.message);
-			}
-
-			data.patchedThemes = true;
-		}
+		handleFixes(mdl);
 
 		if (search(mdl, id)) {
 			data.cache[id] = rawModule;

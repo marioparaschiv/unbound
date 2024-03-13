@@ -1,3 +1,5 @@
+import Themes from '@managers/themes';
+
 export const data = {
 	cache: [],
 	patchedMoment: false,
@@ -32,4 +34,46 @@ export function deenumerate(id: string | number) {
 		configurable: true,
 		writable: true
 	});
+}
+
+export function handleFixes(mdl) {
+	if (!data.patchedNativeRequire && mdl.default?.name === 'requireNativeComponent') {
+		const orig = mdl.default;
+
+		mdl.default = function requireNativeComponent(...args) {
+			try {
+				return orig(...args);
+			} catch {
+				return args[0];
+			}
+		};
+
+		data.patchedNativeRequire = true;
+	}
+
+	if (!data.patchedMoment && mdl.defineLocale) {
+		const defineLocale = mdl.defineLocale;
+
+		mdl.defineLocale = function (...args) {
+			try {
+				const locale = mdl.locale();
+				defineLocale.apply(this, args);
+				mdl.locale(locale);
+			} catch (e) {
+				console.error('Failed to define moment locale:', e.message);
+			}
+		};
+
+		data.patchedMoment = true;
+	}
+
+	if (!data.patchedThemes && mdl.SemanticColor) {
+		try {
+			Themes.initialize(mdl);
+		} catch (e) {
+			console.error('Failed to patch themes:', e.message);
+		}
+
+		data.patchedThemes = true;
+	}
 }
