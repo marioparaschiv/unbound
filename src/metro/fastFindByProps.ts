@@ -125,14 +125,14 @@ export function findSharedIndexes(...indexes: Set<number>[]) {
  *
  * @example
  * 		Map (8) {
- * 				"test" => Set (3) {0, 2, 3}
- * 		  	"other" => Set (1) {0}
- * 		  	"hello" => Set (1) {0}
- * 		  	"navigation" => Set (1) {1}
- * 		  	"getNavigation" => Set (1) {1}
- * 		  	"meow" => Set (1) {2}
- * 		  	"items" => Set (1) {2}
- * 		  	"idk" => Set (1) {3}
+ * 			  "test" => Set (3) {0, 2, 3}
+ * 		    "other" => Set (1) {0}
+ * 		    "hello" => Set (1) {0}
+ * 		    "navigation" => Set (1) {1}
+ * 		    "getNavigation" => Set (1) {1}
+ * 		    "meow" => Set (1) {2}
+ * 		    "items" => Set (1) {2}
+ * 		    "idk" => Set (1) {3}
  * 		}
  * @end
  *
@@ -267,14 +267,16 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 				map.get(key).add(i);
 			};
 
-			Object.keys(mdl).forEach(key => {
+			for (let i = 0, keys = Object.keys(mdl); i < keys.length; i++) {
+				const key = keys[i];
 				callback(key, ModuleMapType.Base);
-			});
+			}
 
 			if (mdl.default && typeof mdl.default === 'object') {
-				Object.keys(mdl.default).forEach(key => {
+				for (let i = 0, keys = Object.keys(mdl.default); i < keys.length; i++) {
+					const key = keys[i];
 					callback(key, ModuleMapType.Default);
-				});
+				}
 			}
 		}
 	}
