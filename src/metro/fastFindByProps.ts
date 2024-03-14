@@ -167,6 +167,9 @@ export function findSharedIndexes(...indexes: Set<number>[]) {
  * only needs to happen as many times as there are keys searched for in the
  * function call, and operations to parse the indexes are negligible.
  *
+ * In simler terms, we only need to access the map as many times as there are
+ * properties when calling the function, and accessing maps is O(1).
+ *
  * We have also tested the speed, in a worst case scenario for both cases.
  * First, we create a very large array of objects (of length 100,000).
  * @example
@@ -319,6 +322,14 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 	const validateIndex = index => index && typeof index === 'number';
 
 	const getModule = (type: ModuleMapType, index) => {
+		if (options.raw) {
+			return modules[index];
+		}
+
+		if (!options.interop) {
+			return modules[index].publicModule.exports;
+		}
+
 		if (type === ModuleMapType.Default) {
 			return modules[index].publicModule.exports.default;
 		}
