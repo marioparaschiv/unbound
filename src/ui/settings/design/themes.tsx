@@ -32,7 +32,7 @@ export const callback = ({ type, ref }) => {
 			},
 			{
 				text: Strings.UNBOUND_THEME_GET_OPTION_CREATE,
-				variant: 'primary-alt',
+				variant: 'tertiary',
 				onPress: noop
 			},
 		]

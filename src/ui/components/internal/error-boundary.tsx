@@ -114,7 +114,7 @@ const Actions = ({ retryRender }: Pick<ErrorBoundaryProps, 'retryRender'>) => {
 			<RN.View style={!settings.get('recovery', false) ? { flex: 0.5, marginRight: 10 } : { flex: 1 }}>
 				<Redesign.Button
 					onPress={retryRender}
-					variant={'danger'}
+					variant={'destructive'}
 					size={'md'}
 					icon={getIDByName('ic_message_retry')}
 					iconPosition={'start'}
@@ -127,7 +127,7 @@ const Actions = ({ retryRender }: Pick<ErrorBoundaryProps, 'retryRender'>) => {
 					<Redesign.Button
 						onPress={() => (settings.set('recovery', true), reload(false))}
 						icon={getIDByName('ic_shield_24px')}
-						variant={'primary-alt'}
+						variant={'tertiary'}
 						size={'md'}
 						text={Strings.UNBOUND_ERROR_BOUNDARY_ACTION_RECOVERY_MODE}
 					/>

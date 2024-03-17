@@ -69,7 +69,7 @@ function Toasts() {
 								},
 
 								onPress: noop,
-								variant: 'primary-alt'
+								variant: 'tertiary'
 							}
 						] : []
 					});

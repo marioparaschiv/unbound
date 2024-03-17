@@ -3,7 +3,7 @@ import type { ImageSourcePropType } from 'react-native';
 
 export interface ToastButton {
 	color?: ButtonColors[keyof ButtonColors];
-	variant?: ButtonLooks[keyof ButtonLooks] | 'primary' | 'primary-alt' | 'secondary' | 'secondary-alt';
+	variant?: ButtonLooks[keyof ButtonLooks] | 'primary' | 'secondary' | 'tertiary';
 	size?: ButtonSizes[keyof ButtonSizes] | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 	iconPosition?: 'start' | 'end';
 	content: string;

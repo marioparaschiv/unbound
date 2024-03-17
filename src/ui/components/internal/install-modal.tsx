@@ -57,7 +57,7 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 			<Redesign.IconButton
 				icon={Icons['ClipboardListIcon']}
 				style={{ marginLeft: 8 }}
-				variant={'secondary-input'}
+				variant={'tertiary'}
 				size={'md'}
 				loading={this.state.loadingPaste}
 				onPress={() => {

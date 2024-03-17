@@ -226,7 +226,7 @@ export default [
 				// TO-DO: Update this to link to the correct page once it's implemented in the docs
 				onPress: () => Linking.openURL(Links.Docs),
 				icon: 'BookCheckIcon',
-				variant: 'primary-alt',
+				variant: 'tertiary',
 			}
 		],
 
@@ -259,7 +259,7 @@ export default [
 				},
 
 				icon: 'StarIcon',
-				variant: 'primary-alt'
+				variant: 'secondary'
 			}
 		],
 		callback({ next }) {

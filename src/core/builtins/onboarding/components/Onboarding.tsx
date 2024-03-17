@@ -60,7 +60,7 @@ export default function Onboarding({ contentId, setContent, opacity, onComplete 
 					{info[step + 1] && <Redesign.Button
 						key={'skip'}
 						style={{ width: '80%', marginTop: 20 }}
-						variant={'primary-alt'}
+						variant={'tertiary'}
 						size={'md'}
 						onPress={onComplete}
 						icon={getIDByName('ic_message_retry')}
