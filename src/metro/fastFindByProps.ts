@@ -19,7 +19,7 @@
  * @end
  */
 import type { BulkFind, PropertyRecordOrArray, SearchOptions, StringFindWithOptions } from '@typings/api/metro';
-import { deenumerate, handleFixes, isInvalidExport, parseOptions } from './constants';
+import { deenumerate, handleFixes, initializeModule, isInvalidExport, parseOptions } from './constants';
 
 enum ModuleMapType {
 	Base,
@@ -239,12 +239,8 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 			const rawModule = modules[id];
 
 			if (!rawModule.isInitialized) {
-				try {
-					__r(id);
-				} catch {
-					deenumerate(id);
-					continue;
-				}
+				const success = initializeModule(id);
+				if (!success) continue;
 			}
 
 			const mdl = rawModule.publicModule.exports;
@@ -326,11 +322,7 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 			return modules[index];
 		}
 
-		if (!options.interop) {
-			return modules[index].publicModule.exports;
-		}
-
-		if (type === ModuleMapType.Default) {
+		if (type === ModuleMapType.Default && (options.interop ?? true)) {
 			return modules[index].publicModule.exports.default;
 		}
 

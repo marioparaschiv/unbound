@@ -11,13 +11,14 @@ interface OverflowItem {
 }
 
 interface OverflowProps {
-	items: OverflowItem[],
+	items: OverflowItem[] | Array<OverflowItem[]>,
+	title?: string;
 	iconSource?: number;
 	scale?: number;
 }
 
-export default function Overflow({ items, iconSource = Icons['MoreHorizontalIcon'], scale = 1 }: OverflowProps) {
-	return <Redesign.ContextMenu items={items}>
+export default function Overflow({ items, title, iconSource = Icons['MoreHorizontalIcon'], scale = 1 }: OverflowProps) {
+	return <Redesign.ContextMenu items={items} title={title}>
 		{(props, onPress, accessibilityState, accessibilityActions, onAccessibilityAction) => (
 			<RN.TouchableOpacity
 				{...props}

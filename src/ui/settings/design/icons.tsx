@@ -19,7 +19,7 @@ function IconsPage() {
 
 export const callback = ({ type, ref }) => showInstallAlert({ type, ref });
 export default {
-	renderPage: () => <IconsPage />,
+	page: <IconsPage />,
 	callback,
-	renderIcon: () => <TintedIcon source={IconProxy[Icons.icon]} />
+	icon: <TintedIcon source={IconProxy[Icons.icon]} />
 };

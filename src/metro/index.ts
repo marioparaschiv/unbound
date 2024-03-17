@@ -1,5 +1,5 @@
 import type { SearchOptions, BulkItem, StoreOptions, InternalOptions, StringFindWithOptions, BulkFind, PropertyRecordOrArray, FunctionSignatureOrArray } from '@typings/api/metro';
-import { data, deenumerate, handleFixes, isInvalidExport, parseOptions } from './constants';
+import { data, deenumerate, handleFixes, initializeModule, isInvalidExport, parseOptions } from './constants';
 import type { Filter } from '@typings/api/metro/filters';
 import Filters from './filters';
 
@@ -78,12 +78,8 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 		const rawModule = store[id];
 
 		if (!rawModule.isInitialized) {
-			try {
-				__r(id);
-			} catch {
-				deenumerate(id);
-				continue;
-			}
+			const success = initializeModule(id);
+			if (!success) continue;
 		}
 
 		const mdl = rawModule.publicModule.exports;

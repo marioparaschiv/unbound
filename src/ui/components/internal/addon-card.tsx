@@ -79,6 +79,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 		if (!items || items.length < 1) return null;
 
 		return <Overflow
+			title={addon.data.name}
 			items={this.manager.getContextItems(addon, navigation).map(item => {
 				return {
 					...item,

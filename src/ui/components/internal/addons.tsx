@@ -78,7 +78,7 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 
 	const data = React.useMemo(() => {
 		const items = getItems(type, settings);
-		const sorted = items.find(x => x.id === order).ordering(addons.slice());
+		const sorted = items[0].find(x => x.id === order).ordering(addons.slice());
 
 		reversed && sorted.reverse();
 

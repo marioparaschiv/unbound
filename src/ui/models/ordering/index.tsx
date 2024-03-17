@@ -76,7 +76,7 @@ const radioItems = [
 ];
 
 export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSettingsStore>) => [
-	...radioItems.map(item => {
+	radioItems.map(item => {
 		const { icon, label, ...rest } = item;
 
 		const extra = {
@@ -99,7 +99,7 @@ export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSe
 			...extra
 		};
 	}),
-	{
+	[{
 		id: 'reversed',
 		label: 'Reversed',
 		IconComponent: () => {
@@ -123,5 +123,5 @@ export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSe
 		ordering(addons: Addon[]) {
 			return addons;
 		}
-	}
+	}]
 ];

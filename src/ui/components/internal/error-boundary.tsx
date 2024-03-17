@@ -161,8 +161,8 @@ export default function ErrorBoundary({ error, retryRender, res }: ErrorBoundary
 			return {
 				label,
 				id,
-				renderIcon: icon,
-				renderPage: () => (
+				icon,
+				page: (
 					<CodeBlock
 						selectable
 						style={styles.outlineCodeblock}

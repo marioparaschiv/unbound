@@ -15,7 +15,7 @@ function FontsPage() {
 
 export const callback = noop;
 export default {
-	renderPage: () => <FontsPage />,
+	page: <FontsPage />,
 	callback,
-	renderIcon: () => <TintedIcon source={Icons['ic_add_text']} />
+	icon: <TintedIcon source={Icons['ic_add_text']} />
 };

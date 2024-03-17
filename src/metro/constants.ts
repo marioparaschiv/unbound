@@ -36,6 +36,30 @@ export function deenumerate(id: string | number) {
 	});
 }
 
+export function initializeModule(id) {
+	try {
+		const orig = Function.prototype.toString;
+		Object.defineProperty(Function.prototype, 'toString', {
+			value: orig,
+			configurable: true,
+			writable: false
+		});
+
+		__r(id);
+
+		Object.defineProperty(Function.prototype, 'toString', {
+			value: orig,
+			configurable: true,
+			writable: true
+		});
+
+		return true;
+	} catch {
+		deenumerate(id);
+		return false;
+	}
+}
+
 export function handleFixes(mdl) {
 	if (!data.patchedNativeRequire && mdl.default?.name === 'requireNativeComponent') {
 		const orig = mdl.default;
