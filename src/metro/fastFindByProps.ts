@@ -20,7 +20,6 @@
  */
 import type { BulkFind, PropertyRecordOrArray, SearchOptions, StringFindWithOptions } from '@typings/api/metro';
 import { deenumerate, handleFixes, initializeModule, isInvalidExport, parseOptions } from './constants';
-import assert from 'assert';
 import throwError from '@utilities/throw';
 
 enum ModuleMapType {
@@ -314,7 +313,7 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 					configurable: true
 				});
 
-                return true;
+				return true;
 			}
 		}) as any;
 	}
@@ -334,7 +333,7 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 	};
 
 	const yieldParsedModules = (type: ModuleMapType, parsed: Map<string, Set<number>>) => {
-		const items = props.map((x: unknown) => typeof x === "string" ? parsed.get(x) : throwError<Set<number>>("One of the properties provided is not a string!"));
+		const items = props.map((x: unknown) => typeof x === 'string' ? parsed.get(x) : throwError<Set<number>>('One of the properties provided is not a string!'));
 
 		if (options.all) {
 			const sharedIndexes = findSharedIndexes(...items);
