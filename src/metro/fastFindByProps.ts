@@ -10,16 +10,18 @@
  * @end
  *
  * @example bad usage:
-	* fastFindByProps(
-	*		{ params: ['trackWithMetadata'] },
-	*		{ params: ['AnalyticsActionHandlers'] },
-	*		{ params: ['encodeProperties', 'track'] },
-	*		{ bulk: true }
-	* ); // Uses bulk (not possible)
+ *  fastFindByProps(
+ * 	     { params: ['trackWithMetadata'] },
+ * 	     { params: ['AnalyticsActionHandlers'] },
+ * 	     { params: ['encodeProperties', 'track'] },
+ * 	     { bulk: true }
+ *  ); // Uses bulk (not possible)
  * @end
  */
 import type { BulkFind, PropertyRecordOrArray, SearchOptions, StringFindWithOptions } from '@typings/api/metro';
 import { deenumerate, handleFixes, initializeModule, isInvalidExport, parseOptions } from './constants';
+import assert from 'assert';
+import throwError from '@utilities/throw';
 
 enum ModuleMapType {
 	Base,
@@ -88,51 +90,51 @@ export function findSharedIndexes(...indexes: Set<number>[]) {
  * larger scaled at around 9000 items but this is a small scale example):
  *
  * @example
- * 		const data = [
- *				{
- *						test: 5,
- *						other: 'hello world',
- *						hello: 'world'
- *				},
- *				{
- *						navigation: {
- *								abcd: 5,
- *								testing: 6
- *						},
+ * 	const data = [
+ *		{
+ *			test: 5,
+ *			other: 'hello world',
+ *			hello: 'world'
+ *		},
+ *		{
+ *			navigation: {
+ *				abcd: 5,
+ *				testing: 6
+ *			},
  *
- *						getNavigation() {
- *								return this.navigation
- *						}
- *				},
- *				{
- *						test: 8,
+ *			getNavigation() {
+ *				return this.navigation
+ *			}
+ *		},
+ *		{
+ *			test: 8,
  *
- *						meow() {
- *								console.log('meow');
- *						},
+ *			meow() {
+ *				console.log('meow');
+ *			},
  *
- *						items: [2, 4, 6, 8, 10]
- *				},
- *				{
- *						idk: '4 things',
- *						test: [56, 2]
- *				}
- * 		]
+ *			items: [2, 4, 6, 8, 10]
+ *		},
+ *		{
+ *			idk: '4 things',
+ *			test: [56, 2]
+ *		}
+ * 	]
  * @end
  *
  * If we were to apply the mapping, we would end up with something like:
  *
  * @example
- * 		Map (8) {
- * 			  "test" => Set (3) {0, 2, 3}
- * 		    "other" => Set (1) {0}
- * 		    "hello" => Set (1) {0}
- * 		    "navigation" => Set (1) {1}
- * 		    "getNavigation" => Set (1) {1}
- * 		    "meow" => Set (1) {2}
- * 		    "items" => Set (1) {2}
- * 		    "idk" => Set (1) {3}
- * 		}
+ * 	Map (8) {
+ * 	    "test" => Set (3) {0, 2, 3}
+ * 	    "other" => Set (1) {0}
+ * 	    "hello" => Set (1) {0}
+ * 	    "navigation" => Set (1) {1}
+ * 	    "getNavigation" => Set (1) {1}
+ * 	    "meow" => Set (1) {2}
+ * 	    "items" => Set (1) {2}
+ * 	    "idk" => Set (1) {3}
+ * 	}
  * @end
  *
  * @question So what's the intuition behind this?
@@ -173,33 +175,33 @@ export function findSharedIndexes(...indexes: Set<number>[]) {
  * We have also tested the speed, in a worst case scenario for both cases.
  * First, we create a very large array of objects (of length 100,000).
  * @example
- * 		const data = new Array(1e5).fill(null).map(x => ({}));
+ * 	const data = new Array(1e5).fill(null).map(x => ({}));
  *
- *		data.push({
- *     		prop1: 'assume this is important',
- *		  	test: [56, 2]
- * 		})
+ *	data.push({
+ *       prop1: 'assume this is important',
+ *	     test: [56, 2]
+ * 	})
  * @end
  *
  * Then we test the speed with searching for the very last module in both cases,
  * and we test 1e4 (10,000) times to get a good average result.
  * @example
- *		 function testSpeed(callback: CallableFunction, label: string, iterations = 1e4) {
- *			    const results = [];
+ *	 function testSpeed(callback: CallableFunction, label: string, iterations = 1e4) {
+ *	     const results = [];
  *
- *				  for (let i = 0; i < iterations - 1; i++) {
- *						  const start = performance.now();
- *						  callback('test', 'prop1');
- *						  const end = performance.now();
+ *       for (let i = 0; i < iterations - 1; i++) {
+ *	         const start = performance.now();
+ *	         callback('test', 'prop1');
+ *	         const end = performance.now();
  *
- *						  results.push(end - start);
- *				  }
+ *	         results.push(end - start);
+ *	     }
  *
- *				  console.log(`${label} - ${results.reduce((pre, cur) => pre + cur, 0) / iterations}`);
- *		 }
+ *	     console.log(`${label} - ${results.reduce((pre, cur) => pre + cur, 0) / iterations}`);
+ *	 }
  *
- *		 testSpeed(slowFindByProps, 'Slow');
- *		 testSpeed(fastFindByProps, 'Fast');
+ *   testSpeed(slowFindByProps, 'Slow');
+ *   testSpeed(fastFindByProps, 'Fast');
  * @end
  *
  * The results (rounded, with array size 1e5 and 1e4 iterations):
@@ -267,7 +269,7 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 
 			const getKeys = (object: Record<string, any>) => [
 				...Object.keys(object),
-				...Reflect.ownKeys(object.__proto__ ?? {})
+				...Reflect.ownKeys(object.__proto__ ?? {}),
 			] as string[];
 
 
@@ -288,7 +290,7 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 	const [props, options] = parseOptions<SearchOptions, T>(args);
 
 	if (options.lazy) {
-		let cache;
+		let cache: Record<PropertyKey, any>;
 
 		return new Proxy({ __METRO_LAZY__: true, get module() { return cache; } }, {
 			get(_, prop) {
@@ -306,18 +308,20 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 			set(_, prop, value) {
 				cache ??= fastFindByProps(...[...props, Object.assign(options, { lazy: false })] as any[]);
 
-				return Object.defineProperty(cache ?? {}, prop, {
+				Object.defineProperty(cache ?? {}, prop, {
 					value,
 					writable: true,
 					configurable: true
 				});
+
+                return true;
 			}
 		}) as any;
 	}
 
-	const validateIndex = index => index && typeof index === 'number';
+	const validateIndex = (index: unknown) => index && typeof index === 'number';
 
-	const getModule = (type: ModuleMapType, index) => {
+	const getModule = (type: ModuleMapType, index: number) => {
 		if (options.raw) {
 			return modules[index];
 		}
@@ -330,7 +334,7 @@ export function fastFindByProps<U extends string, T extends U[] | StringFindWith
 	};
 
 	const yieldParsedModules = (type: ModuleMapType, parsed: Map<string, Set<number>>) => {
-		const items = props.map(x => parsed.get(x));
+		const items = props.map((x: unknown) => typeof x === "string" ? parsed.get(x) : throwError<Set<number>>("One of the properties provided is not a string!"));
 
 		if (options.all) {
 			const sharedIndexes = findSharedIndexes(...items);
