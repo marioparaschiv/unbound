@@ -98,12 +98,12 @@ export function useSettingsStore(store: string, predicate?: (payload: Payload) =
 
 export const pendingReload = { value: false };
 
-Events.on('changed', debounce(() => {
+Events.on('changed', () => {
 	const payload = JSON.stringify(settings, null, 2);
 	const path = 'Unbound/settings.json';
 
 	const promise = DCDFileManager.writeFile('documents', path, payload, 'utf8');
 	promise.then(() => pendingReload.value && BundleManager.reload());
-}, 250));
+});
 
 export default { useSettingsStore, getStore, get, set, remove, on, off };
