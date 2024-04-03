@@ -36,23 +36,12 @@ export function deenumerate(id: string | number) {
 	});
 }
 
+const orig = Function.prototype.toString;
 export function initializeModule(id) {
 	try {
-		const orig = Function.prototype.toString;
-		Object.defineProperty(Function.prototype, 'toString', {
-			value: orig,
-			configurable: true,
-			writable: false
-		});
-
 		__r(id);
 
-		Object.defineProperty(Function.prototype, 'toString', {
-			value: orig,
-			configurable: true,
-			writable: true
-		});
-
+		Function.prototype.toString = orig; // In case core-js changed it
 		return true;
 	} catch {
 		deenumerate(id);
