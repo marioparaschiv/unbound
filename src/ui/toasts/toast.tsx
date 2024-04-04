@@ -65,13 +65,12 @@ function Toast(options: ToastOptions) {
 							{(options.tintedIcon ?? true) ? (
 								<TintedIcon
 									source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon}
-									size={26}
 								/>
 							) : (
 								<RN.Image
 									source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon}
 									style={{
-										width: 26,
+										width: 24,
 										aspectRatio: 1
 									}}
 								/>
