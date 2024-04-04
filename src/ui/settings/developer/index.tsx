@@ -59,11 +59,7 @@ export default function Developer() {
 				label={Strings.UNBOUND_ENABLED}
 				subLabel={Strings.UNBOUND_LOADER_ENABLED_DESC}
 				value={settings.get('loader.enabled', true)}
-				onValueChange={() => {
-					// Go to an official theme so that Discord doesn't break when we disable loading
-					Theming.updateTheme('darker');
-					settings.toggle('loader.enabled', true);
-				}}
+				onValueChange={() => settings.toggle('loader.enabled', true)}
 			/>
 			<TableSwitchRow
 				label={Strings.UNBOUND_LOADER_DEVTOOLS}

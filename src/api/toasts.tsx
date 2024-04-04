@@ -1,8 +1,8 @@
 import type { ToastOptions } from '@typings/api/toasts';
 import { get, useSettingsStore } from '@api/storage';
 import { createLogger } from '@structures/logger';
-import { ToastContainer } from '@ui/toasts';
 import { find, fastFindByProps } from '@metro';
+import { ToastContainer } from '@ui/toasts';
 import { addToast } from '@stores/toasts';
 import { createPatcher } from '@patcher';
 
@@ -34,6 +34,7 @@ try {
 			const [options] = args;
 
 			options.title = options.content;
+			options.tintedIcon = false;
 			delete options.content;
 
 			return showToast(options);

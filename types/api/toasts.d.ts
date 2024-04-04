@@ -21,6 +21,7 @@ interface _ToastOptions {
 	icon?: string | number | ImageSourcePropType;
 	id?: any;
 	buttons?: ToastButton[];
+	tintedIcon?: boolean;
 }
 
 export type InternalToastOptions = ToastOptions & {

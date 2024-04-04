@@ -1,10 +1,11 @@
 import { React, Reanimated, Gestures, ReactNative as RN } from '@metro/common';
 import { unitToHex, withoutOpacity } from '@utilities';
+import { TintedIcon } from '@ui/components/misc';
 import { useSettingsStore } from '@api/storage';
 import { Redesign } from '@metro/components';
 import useToastState from './useToastState';
-import useStyles from './toast.style';
 import { fastFindByProps } from '@metro';
+import useStyles from './toast.style';
 import { Icons } from '@api/assets';
 import Toasts from '@stores/toasts';
 
@@ -61,7 +62,20 @@ function Toast(options: ToastOptions) {
 					<BackgroundBlurFill blurAmount={settings.get('toasts.blur', 0.15)} />
 					<RN.View style={styles.wrapper}>
 						{options.icon && <RN.View style={[styles.icon, { marginVertical: linesLength * 10 }]}>
-							<Redesign.TableRowIcon source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon} size='small' />
+							{(options.tintedIcon ?? true) ? (
+								<TintedIcon
+									source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon}
+									size={26}
+								/>
+							) : (
+								<RN.Image
+									source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon}
+									style={{
+										width: 26,
+										aspectRatio: 1
+									}}
+								/>
+							)}
 						</RN.View>}
 						<RN.View style={styles.contentContainer}>
 							{options.title && <RN.Text style={styles.title}>
@@ -93,7 +107,7 @@ function Toast(options: ToastOptions) {
 								Toasts.store.setState(() => ({ toasts: [] }));
 							}}
 						>
-							<Redesign.TableRowIcon source={Icons['ic_close']} size='small' />
+							<TintedIcon source={Icons['ic_close']} />
 						</RN.Pressable>
 					</RN.View>
 					{Array.isArray(options.buttons) && options.buttons.length > 0 && (

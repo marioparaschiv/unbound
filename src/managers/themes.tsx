@@ -8,7 +8,7 @@ class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
 	public extension: string = 'json';
 	public module: any;
-	public currentTheme = null;
+	private currentTheme = null;
 
 	constructor() {
 		super(ManagerType.Themes);
@@ -19,14 +19,14 @@ class Themes extends Manager {
 
 	async initialize(mdl: any) {
 		this.module = mdl;
+		this.module._Theme = { ...this.module.Theme };
+		this.module._RawColor = { ...this.module.RawColor };
 
 		for (const theme of window.UNBOUND_THEMES ?? []) {
 			const { manifest, bundle } = theme;
 
 			this.load(bundle, manifest);
 		}
-
-		this.module._RawColor = { ...this.module.RawColor };
 
 		const self = this;
 
@@ -88,6 +88,7 @@ class Themes extends Manager {
 
 		this.applyBackground();
 		this.applyPatches();
+		this.applyStoragePatch();
 		this.initialized = true;
 	}
 
@@ -137,10 +138,9 @@ class Themes extends Manager {
 
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
 		const { MessagesWrapper } = fastFindByProps('MessagesWrapper');
-		const ThemeStore = findStore('Theme');
 
 		this.patcher.after(Chat, 'default', (_, __, res) => {
-			const theme = this.entities.get(ThemeStore.theme);
+			const theme = this.entities.get(this.settings.get('current', null));
 
 			if (!theme || !theme.instance.background) return res;
 
@@ -158,7 +158,7 @@ class Themes extends Manager {
 		});
 
 		this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {
-			const theme = this.entities.get(ThemeStore.theme);
+			const theme = this.entities.get(this.settings.get('current', null));
 
 			if (!theme || !theme.instance.background) return res;
 
@@ -258,6 +258,68 @@ class Themes extends Manager {
 		});
 	}
 
+	async applyStoragePatch() {
+		const { Theme } = await import('@metro/stores');
+		const { fastFindByProps } = await import('@metro');
+
+		// This whole storage patch inspired by @pylixonly's Bunny implementation
+		// https://github.com/pyoncord/Pyoncord/blob/082e9b2cf9feeb5d448bab6bf923e0ab31ca3887/src/lib/managers/themes.ts#L260-L318
+		const mmkvStorage = fastFindByProps('storage', 'get', 'set', 'parseResolve');
+
+		Theme.addChangeListener(() => {
+			if (Theme.theme) {
+				const enabled = [...this.entities.keys()].includes(Theme.theme);
+				this.settings.set('enabled', enabled);
+				enabled && this.settings.set('current', Theme.theme);
+			}
+		});
+
+		this.patcher.after(mmkvStorage, 'get', (_, [store]: [string], res) => {
+			const storeMap = {
+				SelectivelySyncedUserSettingsStore() {
+					if (!res?._state?.appearance?.settings?.theme) return;
+					res._state.appearance.settings.theme = this.settings.get('current', null);
+				},
+
+				ThemeStore() {
+					if (!res?._state?.theme) return;
+					res._state.theme = this.settings.get('current', null);
+				}
+			};
+
+			if (!this.settings.get('enabled', false) || !(store in storeMap)) return;
+			storeMap[store]();
+		});
+
+		this.patcher.before(mmkvStorage, 'set', (_, [store, unparsedValue]: [string, any]) => {
+			if (!unparsedValue) return;
+			const value = JSON.parse(JSON.stringify(unparsedValue));
+
+			const storeMap = {
+				SelectivelySyncedUserSettingsStore() {
+					if (!value._state?.appearance?.settings?.theme) return;
+					value._state.appearance.settings.theme = this.module.Theme.DARKER;
+				},
+
+				ThemeStore() {
+					if (!value._state?.theme) return;
+					const { theme } = value._state;
+
+					if (this.isDiscordTheme(theme)) {
+						this.settings.set('current', null);
+					} else {
+						value._state.theme = this.module.Theme.DARKER;
+					}
+				}
+			};
+
+			if (!(store in storeMap)) return;
+
+			storeMap[store]();
+			return [store, value];
+		});
+	}
+
 	override async enable(entity: Resolveable): Promise<void> {
 		const addon = this.resolve(entity);
 		if (!addon) return;
@@ -282,6 +344,10 @@ class Themes extends Manager {
 		} catch (e) {
 			this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
 		}
+	}
+
+	isDiscordTheme(id: string) {
+		return Object.values(this.module._Theme).includes(id);
 	}
 
 	override isEnabled(id: string): boolean {

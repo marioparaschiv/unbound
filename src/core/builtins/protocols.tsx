@@ -3,6 +3,7 @@ import { ReactNative as RN } from '@metro/common';
 import { createLogger } from '@structures/logger';
 import { ManagerType } from '@managers/base';
 import { createPatcher } from '@patcher';
+import { capitalize } from '@utilities';
 import * as managers from '@managers';
 import { findByName } from '@metro';
 import Toasts from '@api/toasts';
@@ -100,7 +101,11 @@ function getBulkParameters(...args: (URLSearchParams | string)[]): any[] {
 }
 
 function getManager(type: string) {
-	return managers[type] ?? managers[type + 's'];
+	function internalGetManager(type: string) {
+		return managers[type] ?? managers[type + 's'];
+	}
+
+	return internalGetManager(type) ?? internalGetManager(capitalize(type));
 }
 
 function resolveProtocols(content) {

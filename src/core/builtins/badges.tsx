@@ -133,7 +133,7 @@ const Badge = ({ type, size, margin }: { type: string; size: number; margin: num
 	const uri = badge.url[Theme.theme] ?? badge.url.dark;
 	if (!uri) return null;
 
-	return <RN.TouchableOpacity onPress={() => showToast({ title: badge.name, icon: { uri } })}>
+	return <RN.TouchableOpacity onPress={() => showToast({ title: badge.name, icon: { uri }, tintedIcon: false })}>
 		<RN.Image
 			// @ts-expect-error
 			style={styles.image}

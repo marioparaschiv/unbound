@@ -52,7 +52,8 @@ class Manager extends EventEmitter {
 				if (addon.data.icon && addon.data.icon !== '__custom__') return addon.data.icon;
 
 				return this.icon ?? 'CircleQuestionIcon';
-			})()
+			})(),
+			tintedIcon: addon.data.icon !== '__custom__'
 		});
 	}
 
@@ -151,10 +152,10 @@ class Manager extends EventEmitter {
 		const manifest = await fetch(url, { cache: 'no-cache' })
 			.then(res => {
 				if (res.ok) return res;
-				setState({ message: `${res.status}: ${res.statusText}` });
+				setState({ error: `${res.status}: ${res.statusText}` });
 			})
 			.then(res => res.json())
-			.catch(e => setState({ message: e.message })) as Manifest;
+			.catch(e => setState({ error: e.message })) as Manifest;
 
 		try {
 			this.logger.debug('Validating manifest...');
@@ -163,7 +164,7 @@ class Manager extends EventEmitter {
 			manifest.url = url;
 		} catch (e) {
 			this.logger.debug('Failed to validate manifest:', e.message);
-			setState({ message: e.message });
+			setState({ error: e.message });
 			return;
 		}
 
@@ -179,10 +180,10 @@ class Manager extends EventEmitter {
 		const bundle = await fetch(main, { cache: 'no-cache' })
 			.then(res => {
 				if (res.ok) return res;
-				setState({ message: `${res.status}: ${res.statusText}` });
+				setState({ error: `${res.status}: ${res.statusText}` });
 			})
 			.then(r => r?.text())
-			.catch(e => setState({ message: e.message }));
+			.catch(e => setState({ error: e.message }));
 
 		if (!bundle) return;
 

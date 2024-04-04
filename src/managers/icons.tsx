@@ -3,9 +3,9 @@ import downloadFile from '@utilities/downloadFile';
 import { ReactNative as RN } from '@metro/common';
 import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
+import { fastFindByProps } from '@metro';
 import { ClientName } from '@constants';
 import { chunkArray } from '@utilities';
-import { fastFindByProps } from '@metro';
 import { Strings } from '@api/i18n';
 
 import type { Addon, Manifest, Resolveable } from '@typings/managers';
@@ -74,10 +74,10 @@ class Icons extends Manager {
 		const manifest = await fetch(url, { cache: 'no-cache', signal })
 			.then(res => {
 				if (res.ok) return res;
-				setState({ message: `${res.status}: ${res.statusText}` });
+				setState({ error: `${res.status}: ${res.statusText}` });
 			})
 			.then(res => res.json())
-			.catch(e => setState({ message: e.message })) as PackManifest;
+			.catch(e => setState({ error: e.message })) as PackManifest;
 
 		try {
 			this.logger.debug('Validating manifest...');
@@ -89,7 +89,7 @@ class Icons extends Manager {
 			manifest.url = url;
 		} catch (e) {
 			this.logger.debug('Failed to validate manifest:', e.message);
-			setState({ message: e.message });
+			setState({ error: e.message });
 			return;
 		}
 

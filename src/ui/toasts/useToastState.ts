@@ -1,9 +1,10 @@
 import type { InternalToastOptions } from '@typings/api/toasts';
-import { Reanimated, ReactNative as RN } from '@metro/common';
+import { callbackWithAnimation } from '@utilities';
 import { useSettingsStore } from '@api/storage';
+import { Reanimated } from '@metro/common';
 import Toasts from '@stores/toasts';
 
-const { runOnJS, useSharedValue, withTiming, withSpring, Easing } = Reanimated;
+const { useSharedValue, withTiming, withSpring, Easing } = Reanimated;
 
 function useToastState(options: InternalToastOptions) {
 	const [leaving, setLeaving] = React.useState(false);
@@ -19,21 +20,6 @@ function useToastState(options: InternalToastOptions) {
 	const width = useSharedValue(ReactNative.Dimensions.get('window').width * 0.9);
 
 	function leave() {
-		if (!animations) return setLeaving(true);
-
-		RN.LayoutAnimation.configureNext({
-			duration: 1000,
-			update: {
-				type: 'easeInEaseOut',
-				duration: 500
-			},
-			delete: {
-				type: 'easeInEaseOut',
-				property: 'opacity',
-				duration: 300
-			}
-		});
-
 		setLeaving(true);
 	}
 
@@ -59,7 +45,7 @@ function useToastState(options: InternalToastOptions) {
 
 	React.useEffect(() => {
 		if (leaving) {
-			Toasts.store.setState((prev) => {
+			(animations ? callbackWithAnimation(Toasts.store.setState) : Toasts.store.setState)((prev) => {
 				delete prev.toasts[options.id];
 				return prev;
 			});

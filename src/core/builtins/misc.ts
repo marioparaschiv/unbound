@@ -1,11 +1,9 @@
-import type { ImageSourcePropType } from 'react-native';
 import type { BuiltIn } from '@typings/core/builtins';
 import { ReactNative as RN } from '@metro/common';
 import { DCDFileManager } from '@api/storage';
-import { findInReactTree } from '@utilities';
+import { fastFindByProps } from '@metro';
 import { createPatcher } from '@patcher';
 import themes from '@managers/themes';
-import { bulk } from '@metro';
 
 const Patcher = createPatcher('misc');
 
@@ -15,30 +13,7 @@ export const data: BuiltIn['data'] = {
 };
 
 export function initialize() {
-	const [
-		Icon,
-		ThemeBooleans
-	] = bulk(
-		{ filter: m => m.TableRowIcon && !m.useCoachmark },
-		{ filter: m => m.isThemeDark && !m.setThemeFlag }
-	);
-
-	// Remove tintColor if the icon is a custom image (eg with a uri pointing to a badge)
-	Patcher.after(Icon, 'TableRowIcon', (_, __, res) => {
-		const image = findInReactTree(res, x => x.Sizes?.EXTRA_SMALL);
-		if (typeof image?.type?.render !== 'function') return;
-
-
-		Patcher.after(image.type, 'render', (_, [{ source }]: [{ source: ImageSourcePropType; }], res) => {
-			if (typeof source !== 'number') {
-				const badStyle = findInReactTree(res.props.style, x => x.tintColor);
-
-				if (badStyle?.tintColor) {
-					delete badStyle.tintColor;
-				}
-			}
-		}, true);
-	});
+	const ThemeBooleans = fastFindByProps('isThemeDark', 'isThemeLight');
 
 	// @ts-expect-error - RN.Image has no 'render' method defined in its types
 	Patcher.before(RN.Image, 'render', (_, [props]) => {

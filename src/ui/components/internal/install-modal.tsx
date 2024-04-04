@@ -21,7 +21,7 @@ type InternalInstallModalProps = InstallModalProps & {
 
 export class InternalInstallInput extends React.PureComponent<InternalInstallModalProps> {
 	controller = new AbortController();
-	state = { url: '', loadingPaste: false, loadingInstall: false, message: null };
+	state = { url: '', loadingPaste: false, loadingInstall: false, message: null, error: null };
 
 	get manager() {
 		return managers[this.props.type];
@@ -35,7 +35,7 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 	}
 
 	renderInput() {
-		const { message } = this.state;
+		const { message, error } = this.state;
 		const { settings } = this.props;
 
 		return <RN.View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -45,12 +45,12 @@ export class InternalInstallInput extends React.PureComponent<InternalInstallMod
 					isClearable
 					size={'md'}
 					onChange={url => this.setState({ url })}
-					onClear={() => this.setState({ error: false, message: null })}
+					onClear={() => this.setState({ error: null, message: null })}
 					value={this.state.url}
 					placeholder={`https://${this.manager.type}.com/manifest.json`}
 					placeholderTextColor={Theme.unsafe_rawColors.PRIMARY_400}
-					status={message ? 'error' : 'default'}
-					errorMessage={message || undefined}
+					errorMessage={error}
+					description={message}
 				/>
 			</RN.View>
 
