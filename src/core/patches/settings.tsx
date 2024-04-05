@@ -1,19 +1,9 @@
-import { ClientName, Keys } from '@constants';
-import { Redesign } from '@metro/components';
 import { createPatcher } from '@patcher';
-import { React } from '@metro/common';
 import { fastFindByProps } from '@metro';
-import { Icons } from '@api/assets';
+import { React } from '@metro/common';
 import { Strings } from '@api/i18n';
 
-import General from '@ui/settings/general';
-import Plugins from '@ui/settings/plugins';
-import Design from '@ui/settings/design';
-
-type CustomScreenProps = {
-	title: string;
-	render: React.ComponentType;
-};
+export const settingSections = [];
 
 class Settings {
 	public patcher = createPatcher('unbound-settings');
@@ -23,124 +13,50 @@ class Settings {
 	private SearchResults = fastFindByProps('useSettingSearchResults', { lazy: true });
 	private Getters = fastFindByProps('getSettingListSearchResultItems', { lazy: true });
 
-	public Titles = {
-		get General() {
-			return Strings.SETTINGS;
-		},
-
-		get Plugins() {
-			return Strings.UNBOUND_PLUGINS;
-		},
-
-		get Design() {
-			return Strings.UNBOUND_DESIGN;
-		},
-
-		get Updater() {
-			return Strings.UNBOUND_UPDATER;
-		},
-
-		get Custom() {
-			return 'Page';
-		}
-	};
-
-	public Icons = {
-		General: Icons['settings'],
-		Plugins: Icons['debug'],
-		Design: Icons['PencilSparkleIcon'],
-		Updater: Icons['ic_download_24px'],
-		Custom: null
-	};
-
-	public Breadcrumbs = {
-		General: [ClientName],
-		Plugins: [ClientName],
-		Design: [ClientName],
-		Updater: [ClientName],
-		Custom: []
-	};
-
-	public Keywords = {
-		get General() {
-			return [Strings.UNBOUND_GENERAL];
-		},
-
-		get Plugins() {
-			return [];
-		},
-
-		get Design() {
-			return [Strings.UNBOUND_THEMES, Strings.UNBOUND_ICONS, Strings.UNBOUND_FONTS];
-		},
-
-		get Updater() {
-			return [];
-		},
-
-		get Custom() {
-			return [];
-		},
-	};
-
-	public Mappables = {
-		General: true,
-		Plugins: true,
-		Design: true,
-		Updater: true,
-		Custom: false
-	};
-
-	public Screens = {
-		General,
-		Plugins,
-		Design,
-		Updater: () => null,
-		Custom: ({ title, render: Component, ...props }: CustomScreenProps) => {
-			const navigation = Redesign.useNavigation();
-
-			const unsubscribe = navigation.addListener('focus', () => {
-				unsubscribe();
-				navigation.setOptions({ title });
-			});
-
-			return <Component {...props} />;
-		}
-	};
-
 	private patchConstants() {
 		this.Constants._SETTING_RENDERER_CONFIG = { ...this.Constants.SETTING_RENDERER_CONFIG };
 
-		Object.assign(
-			this.Constants.SETTING_RENDERER_CONFIG,
-			Object.keys(Keys).map(key => ({
-				[Keys[key]]: {
-					type: 'route',
-					title: () => this.Titles[key],
-					icon: this.Icons[key],
-					parent: null,
-					screen: {
-						route: Keys[key],
-						getComponent: () => React.memo(({ route }: any) => {
-							const Screen = this.Screens[key];
-							return <Screen {...route?.params ?? {}} />;
-						})
+		settingSections.map(({ entries }) => {
+			Object.assign(
+				this.Constants.SETTING_RENDERER_CONFIG,
+				entries.map(({ id, title, icon, screen }) => ({
+					[id]: {
+						type: 'route',
+
+						get title() {
+							const maybeTitle = Strings[title];
+							return maybeTitle !== '' ? maybeTitle : title;
+						},
+
+						icon,
+						parent: null,
+						screen: {
+							route: id,
+							getComponent: () => React.memo(({ route }: any) => {
+								const Screen = screen;
+								return <Screen {...route?.params ?? {}} />;
+							})
+						}
 					}
-				}
-			})).reduce((acc, obj) => ({ ...acc, ...obj }), {})
-		);
+				})).reduce((acc, obj) => ({ ...acc, ...obj }), {})
+			);
+		});
 	};
 
 	private patchSections() {
 		this.patcher.before(this.Settings.SearchableSettingsList, 'type', (_, [{ sections }]: [{ sections: any[] }]) => {
 			const index = sections?.findIndex(section => section.settings.find(setting => setting === 'ACCOUNT'));
 
-			if (!sections.find(section => section.label === ClientName)) {
-				sections.splice(index === -1 ? 1 : index + 1, 0, {
-					label: ClientName,
-					settings: Object.keys(Keys).filter(key => this.Mappables[key]).map(key => Keys[key])
-				});
-			}
+			settingSections.reverse().forEach(({ label, entries }) => {
+				if (!sections.find(section => section.label === label)) {
+					sections.splice(index === -1 ? 1 : index + 1, 0, {
+						label,
+						settings: entries.filter(entry => entry.mappable ?? true).map(entry => entry.id)
+					});
+				}
+			});
+
+			settingSections.reverse();
 
 			const support = sections.find(section => section.label === Strings.SUPPORT);
 			support && (support.settings = support.settings.filter(setting => setting !== 'UPLOAD_DEBUG_LOGS'));
@@ -149,38 +65,44 @@ class Settings {
 
 	private patchSearch() {
 		this.patcher.after(this.SearchResults, 'useSettingSearchResults', (_, __, res) => {
-			res = res.filter(result => !Object.values(Keys).includes(result));
+			settingSections.forEach(({ label, entries }) => {
+				res = res.filter(result => !entries.map(entry => entry.id).includes(result));
 
-			Object.keys(Keys).filter(key => this.Mappables[key]).forEach(key => {
-				// By default, the client name and the title of the entry are already keywords
-				const queryContainsKeyword = [...this.Keywords[key], ClientName, this.Titles[key]].some(keyword =>
-					keyword.toLowerCase().includes(this.SearchQuery.getSettingSearchQuery().toLowerCase()));
+				entries.filter(entry => entry.mappable ?? true).forEach(entry => {
+						// By default, the label and the title of the entry are already keywords
+						const queryContainsKeyword = [...entry.keywords ?? [], label, entry.title].some(keyword =>
+							keyword.toLowerCase().includes(this.SearchQuery.getSettingSearchQuery().toLowerCase()));
 
-				if (queryContainsKeyword && !res.find(result => result === Keys[key])) res.unshift(Keys[key]);
+						if (queryContainsKeyword && !res.find(result => result === entry.id)) res.unshift(entry.id);
+				});
 			});
 
 			return res;
 		});
 
 		this.patcher.after(this.Getters, 'getSettingListSearchResultItems', (_, [settings]: string[], res) => {
-			res = res.filter(item => !Object.values(Keys).includes(item.setting));
+			settingSections.forEach(({ label, entries }) => {
+				res = res.filter(item => !entries.map(entry => entry.id).includes(item.setting));
 
-			Object.keys(Keys).reverse().forEach(key => {
-				if (settings.includes(Keys[key])) {
-					res.unshift({
-						type: 'setting_search_result',
-						searchResultData: this.Constants.SETTING_RENDERER_CONFIG[Keys[key]],
-						setting: Keys[key],
-						title: this.Titles[key],
-						breadcrumbs: this.Breadcrumbs[key],
-						icon: this.Icons[key]
-					});
+				entries.reverse().forEach(({ id, title, icon }) => {
+					if (settings.includes(id)) {
+						res.unshift({
+							type: 'setting_search_result',
+							searchResultData: this.Constants.SETTING_RENDERER_CONFIG[id],
+							setting: id,
+							title,
+							breadcrumbs: [label],
+							icon
+						});
 
-					res.forEach((value, index: number, parent) => {
-						value.index = index;
-						value.total = parent.length;
-					});
-				};
+						res.forEach((value, index: number, parent) => {
+							value.index = index;
+							value.total = parent.length;
+						});
+					}
+				});
+
+				entries.reverse();
 			});
 
 			return res;
@@ -201,7 +123,6 @@ class Settings {
 	}
 }
 
-const instance = new Settings();
-
+export const instance = new Settings();
 export const apply = instance.apply.bind(instance);
 export const remove = instance.remove.bind(instance);
