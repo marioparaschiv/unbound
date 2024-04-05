@@ -43,9 +43,9 @@ export function initialize() {
 				screen: Design
 			},
 			{
-				title: 'UNBOUND_UPDATER',
-				id: Keys['Updater'],
-				icon: Icons['ic_download_24px'],
+				title: 'UNBOUND_SOURCES',
+				id: Keys['Sources'],
+				icon: Icons['grid'],
 				screen: () => null
 			},
 			{
@@ -68,5 +68,4 @@ export function initialize() {
 	});
 }
 
-export function shutdown() {
-}
+export function shutdown() {}

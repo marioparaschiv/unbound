@@ -15,7 +15,7 @@ export const Keys = {
 	General: 'UNBOUND_GENERAL',
 	Plugins: 'UNBOUND_PLUGINS',
 	Design: 'UNBOUND_DESIGN',
-	Updater: 'UNBOUND_UPDATER',
+	Sources: 'UNBOUND_SOURCES',
 	Custom: 'UNBOUND_CUSTOM'
 } as const;
 
