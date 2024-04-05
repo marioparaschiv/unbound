@@ -37,4 +37,4 @@ export interface Addon {
 }
 
 export type Resolveable = string | Addon;
-export type Manager = 'Plugins' | 'Themes' | 'Icons';
+export type Manager = 'Plugins' | 'Themes' | 'Icons' | 'Sources';

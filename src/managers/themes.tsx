@@ -320,32 +320,6 @@ class Themes extends Manager {
 		});
 	}
 
-	override async enable(entity: Resolveable): Promise<void> {
-		const addon = this.resolve(entity);
-		if (!addon) return;
-
-		try {
-			this.settings.set('applied', addon.id);
-
-			if (!addon.started) this.start(addon);
-		} catch (e) {
-			this.logger.error(`Failed to enable ${addon.data.id}:`, e.message);
-		}
-	}
-
-	override async disable(entity: Resolveable): Promise<void> {
-		const addon = this.resolve(entity);
-		if (!addon) return;
-
-		try {
-			this.settings.set('applied', null);
-
-			if (addon.started) this.stop(addon);
-		} catch (e) {
-			this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
-		}
-	}
-
 	isDiscordTheme(id: string) {
 		return Object.values(this.module._Theme).includes(id);
 	}

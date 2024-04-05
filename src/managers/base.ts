@@ -11,7 +11,18 @@ const { LayoutAnimation: { configureNext, Presets } } = ReactNative;
 export enum ManagerType {
 	Plugins = 'plugin',
 	Themes = 'theme',
-	Icons = 'pack'
+	Icons = 'pack',
+	Sources = 'source'
+}
+
+export function isValidManager(type: string) {
+	function internalGetManager(type: string) {
+		const blacklist = [ManagerType.Sources];
+		const types = Object.values(ManagerType).filter(type => !blacklist.includes(type));
+		return types[type] ?? types[type + 's'];
+	}
+
+	return internalGetManager(type) ?? internalGetManager(capitalize(type));
 }
 
 class Manager extends EventEmitter {
@@ -147,7 +158,7 @@ class Manager extends EventEmitter {
 		return this.getBaseContextItems(addon);
 	}
 
-	async install(url: string, setState: Fn, ...args): Promise<Error | Addon> {
+	async install(url: string, setState: Fn, signal?: AbortSignal, ...args): Promise<Error | Addon> {
 		this.logger.debug(`Fetching ${url} for manifest...`);
 		const manifest = await fetch(url, { cache: 'no-cache' })
 			.then(res => {
@@ -156,6 +167,8 @@ class Manager extends EventEmitter {
 			})
 			.then(res => res.json())
 			.catch(e => setState({ error: e.message })) as Manifest;
+
+		this.logger.debug({ url, manifest });
 
 		try {
 			this.logger.debug('Validating manifest...');
@@ -168,26 +181,7 @@ class Manager extends EventEmitter {
 			return;
 		}
 
-		const origin = url.split('/');
-
-		// Remove manifest.json at the end of the URL
-		origin.pop();
-
-		const main = origin.join('/') + '/' + manifest.main;
-
-		this.logger.debug(`Fetching bundle from ${main}...`);
-
-		const bundle = await fetch(main, { cache: 'no-cache' })
-			.then(res => {
-				if (res.ok) return res;
-				setState({ error: `${res.status}: ${res.statusText}` });
-			})
-			.then(r => r?.text())
-			.catch(e => setState({ error: e.message }));
-
-		if (!bundle) return;
-
-		this.logger.debug('Done fetching...');
+		const bundle = await this.fetchBundle(url, manifest, setState, signal);
 
 		this.logger.debug('Saving...');
 		this.save(bundle as string, manifest);
@@ -209,6 +203,31 @@ class Manager extends EventEmitter {
 
 		await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_INSTALLED');
 		return addon;
+	}
+
+	async fetchBundle(url: string, manifest: Manifest, setState: Fn, signal: AbortSignal) {
+		const origin = url.split('/');
+
+		// Remove manifest.json at the end of the URL
+		origin.pop();
+
+		const main = origin.join('/') + '/' + manifest.main;
+
+		this.logger.debug(`Fetching bundle from ${main}...`);
+
+		const bundle = await fetch(main, { cache: 'no-cache', signal })
+			.then(res => {
+				if (res.ok) return res;
+				setState({ error: `${res.status}: ${res.statusText}` });
+			})
+			.then(r => r?.text())
+			.catch(e => setState({ error: e.message }));
+
+		if (!bundle) return;
+
+		this.logger.debug('Done fetching...');
+
+		return bundle;
 	}
 
 	save(bundle: string, manifest: Manifest) {

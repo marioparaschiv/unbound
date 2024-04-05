@@ -67,31 +67,9 @@ class Icons extends Manager {
 		return this.getBaseContextItems(addon);
 	}
 
-	override async install(url: string, setState: Fn, signal: AbortSignal): Promise<Error | Addon> {
-		this.signal = signal;
-
-		this.logger.debug(`Fetching ${url} for manifest...`);
-		const manifest = await fetch(url, { cache: 'no-cache', signal })
-			.then(res => {
-				if (res.ok) return res;
-				setState({ error: `${res.status}: ${res.statusText}` });
-			})
-			.then(res => res.json())
-			.catch(e => setState({ error: e.message })) as PackManifest;
-
-		try {
-			this.logger.debug('Validating manifest...');
-			this.validateManifest(manifest as Manifest);
-
-			if (!manifest.type || !['github', 'other'].includes(manifest.type))
+	override async fetchBundle(_: string, manifest: PackManifest, setState: Fn<any>, signal: AbortSignal): Promise<any> {
+		if (!manifest.type || !['github', 'other'].includes(manifest.type))
 				manifest.type = /^(https?:\/\/)(www\.)?github\.com/.test(manifest.main) ? 'github' : 'other';
-
-			manifest.url = url;
-		} catch (e) {
-			this.logger.debug('Failed to validate manifest:', e.message);
-			setState({ error: e.message });
-			return;
-		}
 
 		this.logger.debug(`Fetching bundle from ${manifest.main}...`);
 
@@ -119,26 +97,7 @@ class Icons extends Manager {
 
 		this.logger.debug('Done fetching...');
 
-		this.logger.debug('Saving...');
-		this.save(bundle as string, manifest);
-		this.logger.debug('Loading...');
-
-		const existing = this.entities.get(manifest.id);
-
-		if (existing?.started) {
-			this.logger.debug(`Unloading existing instance of ${manifest.id}...`);
-			this.unload(manifest.id);
-		}
-
-		const addon = this.load(bundle as string, manifest);
-		this.logger.debug('Loaded.');
-
-		const { Redesign } = await import('@metro/components');
-
-		Redesign.dismissAlerts();
-
-		await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_INSTALLED');
-		return addon;
+		return bundle;
 	}
 
 	override save(bundle: string, manifest: Manifest) {
