@@ -16,13 +16,13 @@ export enum ManagerType {
 }
 
 export function isValidManager(type: string) {
-	function internalGetManager(type: string) {
+	function internalManagerValid(type: string) {
 		const blacklist = [ManagerType.Sources];
 		const types = Object.values(ManagerType).filter(type => !blacklist.includes(type));
-		return types[type] ?? types[type + 's'];
+		return Boolean(types.find(x => [type, type + 's'].includes(x)));
 	}
 
-	return internalGetManager(type) ?? internalGetManager(capitalize(type));
+	return internalManagerValid(type) ?? internalManagerValid(capitalize(type));
 }
 
 class Manager extends EventEmitter {
@@ -167,8 +167,6 @@ class Manager extends EventEmitter {
 			})
 			.then(res => res.json())
 			.catch(e => setState({ error: e.message })) as Manifest;
-
-		this.logger.debug({ url, manifest });
 
 		try {
 			this.logger.debug('Validating manifest...');

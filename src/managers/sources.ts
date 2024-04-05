@@ -1,14 +1,10 @@
-import Storage, { DCDFileManager } from '@api/storage';
+import { DCDFileManager } from '@api/storage';
 import downloadFile from '@utilities/downloadFile';
-import { ReactNative as RN } from '@metro/common';
 import Manager, { ManagerType, isValidManager } from './base';
 import { createPatcher } from '@patcher';
-import { fastFindByProps } from '@metro';
-import { ClientName, Regex } from '@constants';
-import { chunkArray } from '@utilities';
-import { Strings, add } from '@api/i18n';
+import { Regex } from '@constants';
 
-import type { Addon, Manifest, Resolveable } from '@typings/managers';
+import type { Manifest } from '@typings/managers';
 
 type SourceManifest = Pick<Manifest, 'id' | 'name' | 'description' | 'icon'> & {
 	iconType?: string;
@@ -63,22 +59,31 @@ class Sources extends Manager {
 		for (const addon of manifest.addons) {
 			const parsed = {} as Bundle[number];
 
-			const manifest = await fetch(addon.manifest, { cache: 'no-cache' })
+			const addonManifest = await fetch(addon.manifest, { cache: 'no-cache' })
 				.then(res => res.json())
-				.catch(console.error);
+				.catch(console.error) as Manifest;
 
-			this.validateAddonManifest(manifest);
+			try {
+				this.validateAddonManifest(addonManifest);
+			} catch (e) {
+				this.logger.error('Failed to validate addon manifest:', e);
+			}
+
 			Object.assign(parsed, { manifest });
 
 			const changelog = await fetch(addon.changelog, { cache: 'no-cache' })
 				.then(res => res.json())
 				.catch(console.error);
 
-			this.validateChangelog(changelog);
+			try {
+				this.validateChangelog(changelog);
+			} catch (e) {
+				this.logger.error('Failed to validate addon changelog:', e);
+			}
 			Object.assign(parsed, { changelog });
 
 			if (addon.readme) {
-				const path = `${this.path}/${manifest.id}/readme.md`;
+				const path = `${this.path}/${manifest.id}/${addonManifest.id}/readme.md`;
 
 				downloadFile(addon.readme, path, null);
 				Object.assign(parsed, { readme: path });
@@ -89,7 +94,7 @@ class Sources extends Manager {
 
 				for (const screenshot of addon.screenshots) {
 					const name = screenshot.substring(screenshot.lastIndexOf('/') + 1);
-					const path = `${this.path}/${manifest.id}/screenshots/${name}`;
+					const path = `${this.path}/${manifest.id}/${addonManifest.id}/screenshots/${name}`;
 					downloadFile(screenshot, path, null);
 
 					screenshots.push(path);
@@ -112,7 +117,7 @@ class Sources extends Manager {
 
 	validateAddonManifest(manifest: Manifest) {
 		if (!manifest.name || typeof manifest.name !== 'string') {
-			throw new Error('Manifest property "name" must be of type string.');
+			throw new Error('Manifest property "name" must be of type string');
 		} else if (!manifest.description || typeof manifest.description !== 'string') {
 			throw new Error('Manifest property "description" must be of type string.');
 		} else if (!manifest.authors || (typeof manifest.name !== 'object' && !Array.isArray(manifest.authors))) {
@@ -140,17 +145,17 @@ class Sources extends Manager {
 			throw new Error('Source property "id" must be of type string and match a "eternal.unbound" pattern.');
 		} else if (manifest.tags && (!Array.isArray(manifest.tags) || !manifest.tags.every(tag => typeof tag === 'string'))) {
 			throw new Error('Source property "tags" must either not exist or be an array of type "string".');
-		} else if (!manifest.addons || manifest.addons.length < 1) {
+		} else if (!manifest.addons || !Array.isArray(manifest.addons) || manifest.addons.length < 1) {
 			throw new Error('Source must contain at least 1 addon.');
 		} else if (manifest.iconType && (typeof manifest.iconType !== 'string' || !['basic', 'custom'].includes(manifest.iconType))) {
 			throw new Error('Source icon type must be of type "string" and must be either "basic" or "custom"');
 		}
 
-		manifest.addons.forEach(addon => {
+		for (const addon of manifest.addons) {
 			if (!addon.name || typeof addon.name !== 'string') {
-				throw new Error('Addon property "name" must be of type string.');
+				throw new Error('Addon property "name" must be of type string');
 			} else if (!addon.type || typeof addon.type !== 'string' || !isValidManager(addon.type)) {
-				throw new Error('Addon property "name" must be of type string.');
+				throw new Error('Addon property "type" must be of type string and must be a valid manager, got ' + addon.type);
 			} else if (addon.iconType && (typeof addon.iconType !== 'string' || !['basic', 'custom'].includes(addon.iconType))) {
 				throw new Error('Addon icon type must be of type "string" and must be either "basic" or "custom"');
 			} else if (addon.changelog && typeof addon.changelog !== 'string') {
@@ -162,7 +167,7 @@ class Sources extends Manager {
 			} else if (addon.screenshots && (!Array.isArray(addon.screenshots) || !addon.screenshots.every(screenshot => typeof screenshot === 'string'))) {
 				throw new Error('Addon property "screenshots" must either not exist or be an array of type "string".');
 			}
-		});
+		}
 	}
 
 	override isEnabled(id: string): boolean {
