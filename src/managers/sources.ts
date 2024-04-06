@@ -1,17 +1,17 @@
-import { DCDFileManager } from '@api/storage';
-import downloadFile from '@utilities/downloadFile';
 import Manager, { ManagerType, isValidManager } from './base';
+import downloadFile from '@utilities/downloadFile';
+import { DCDFileManager } from '@api/storage';
+import { Dispatcher } from '@metro/common';
 import { createPatcher } from '@patcher';
 import { Regex } from '@constants';
 
-import type { Manifest } from '@typings/managers';
+import type { Addon, Manifest } from '@typings/managers';
 
-type SourceManifest = Pick<Manifest, 'id' | 'name' | 'description' | 'icon'> & {
+type SourceManifest = Pick<Manifest, 'id' | 'name' | 'description' | 'icon' | 'url'> & {
 	iconType?: string;
 	tags: string[];
-	addons: (Pick<Manifest, 'name' | 'icon'> & {
+	addons: (Pick<Manifest, 'name'> & {
 		type: string;
-		iconType?: string;
 		screenshots: string[];
 		changelog: string;
 		manifest: string;
@@ -30,6 +30,11 @@ class Sources extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
 	public extension: string = 'json';
 	public signal: AbortSignal;
+	public sources: Record<Manifest['id'], Manifest['url']>;
+
+	// Reload sources after 5 seconds or whenever the user
+	// accesses the Sources page, whichever happens sooner
+	public refreshed = false;
 
 	constructor() {
 		super(ManagerType.Sources);
@@ -43,23 +48,55 @@ class Sources extends Manager {
 	}
 
 	async initialize() {
-		// Load default sources
-		// -
-		// Reload every other source installed at initialization.
-		// This will ensure that the user gets the most up-to-date information
-		// -
-		// Finally load the sources so they can appear in the UI
+		this.sources = this.settings.get('sources', null);
+
+		if (!this.sources) {
+			const defaultSources = this.getDefaultSourceUrls();
+
+			for (const url of defaultSources) {
+				await this.install(url);
+			}
+		}
+
+		for (const source of Object.keys(this.sources)) {
+			const manifest = await DCDFileManager.readFile(`${DCDFileManager.DocumentsDirPath}/${this.path}/${source}/manifest.json`, 'utf8');
+			const bundle = await DCDFileManager.readFile(`${DCDFileManager.DocumentsDirPath}/${this.path}/${source}/bundle.json`, 'utf8');
+
+			this.load(JSON.parse(bundle), JSON.parse(manifest) as Manifest);
+		}
+
+		Dispatcher.subscribe('REFRESH_SOURCES', () => {
+			for (const url of Object.values(this.sources)) {
+				this.install(url);
+			}
+		});
+
+		setTimeout(() => {
+			if (!this.refreshed) {
+				this.refreshed = true;
+				Dispatcher.dispatch({ type: 'REFRESH_SOURCES' });
+			}
+		}, 5000);
+
 		this.initialized = true;
 	}
 
-	override async fetchBundle(_: string, _manifest: Manifest, setState: Fn<any>): Promise<any> {
+	override async onFinishedInstalling(addon: Addon, manifest: SourceManifest): Promise<Addon> {
+		this.sources ??= {};
+		this.sources[manifest.id] = manifest.url;
+		this.settings.set('sources', this.sources);
+
+		return addon;
+	}
+
+	override async fetchBundle(_: string, _manifest: Manifest, signal: AbortSignal, setState?: Fn<any>): Promise<any> {
 		const manifest = _manifest as unknown as SourceManifest;
 		const bundle = [] satisfies Bundle;
 
 		for (const addon of manifest.addons) {
 			const parsed = {} as Bundle[number];
 
-			const addonManifest = await fetch(addon.manifest, { cache: 'no-cache' })
+			const addonManifest = await fetch(addon.manifest, { cache: 'no-cache', signal })
 				.then(res => res.json())
 				.catch(console.error) as Manifest;
 
@@ -69,9 +106,9 @@ class Sources extends Manager {
 				this.logger.error('Failed to validate addon manifest:', e);
 			}
 
-			Object.assign(parsed, { manifest });
+			Object.assign(parsed, { manifest: addonManifest });
 
-			const changelog = await fetch(addon.changelog, { cache: 'no-cache' })
+			const changelog = await fetch(addon.changelog, { cache: 'no-cache', signal })
 				.then(res => res.json())
 				.catch(console.error);
 
@@ -80,12 +117,13 @@ class Sources extends Manager {
 			} catch (e) {
 				this.logger.error('Failed to validate addon changelog:', e);
 			}
+
 			Object.assign(parsed, { changelog });
 
 			if (addon.readme) {
 				const path = `${this.path}/${manifest.id}/${addonManifest.id}/readme.md`;
 
-				downloadFile(addon.readme, path, null);
+				downloadFile(addon.readme, path, signal);
 				Object.assign(parsed, { readme: path });
 			}
 
@@ -95,7 +133,7 @@ class Sources extends Manager {
 				for (const screenshot of addon.screenshots) {
 					const name = screenshot.substring(screenshot.lastIndexOf('/') + 1);
 					const path = `${this.path}/${manifest.id}/${addonManifest.id}/screenshots/${name}`;
-					downloadFile(screenshot, path, null);
+					downloadFile(screenshot, path, signal);
 
 					screenshots.push(path);
 				}
@@ -130,9 +168,10 @@ class Sources extends Manager {
 	}
 
 	validateChangelog(changelog: Record<string, string[]>) {
+		// Ensure every key is a semantic version and every value is an array of strings
 		if (!Object.keys(changelog).every(key => typeof key === 'string' && Regex.SemanticVersioning.test(key))
 			|| !Object.values(changelog).every(value => Array.isArray(value) && value.every(message => typeof message === 'string'))) {
-			throw new Error('The changelog object must be an object of string keys and string values, where the key is the version and the value is an array of strings.');
+			throw new Error('The changelog object must be an object of string keys and string[] values, where the key is the version and the value is an array of strings.');
 		}
 	}
 
@@ -155,9 +194,7 @@ class Sources extends Manager {
 			if (!addon.name || typeof addon.name !== 'string') {
 				throw new Error('Addon property "name" must be of type string');
 			} else if (!addon.type || typeof addon.type !== 'string' || !isValidManager(addon.type)) {
-				throw new Error('Addon property "type" must be of type string and must be a valid manager, got ' + addon.type);
-			} else if (addon.iconType && (typeof addon.iconType !== 'string' || !['basic', 'custom'].includes(addon.iconType))) {
-				throw new Error('Addon icon type must be of type "string" and must be either "basic" or "custom"');
+				throw new Error('Addon property "type" must be of type string and a valid manager, got ' + addon.type);
 			} else if (addon.changelog && typeof addon.changelog !== 'string') {
 				throw new Error('Addon property "changelog" must be of type string.');
 			} else if (addon.readme && typeof addon.readme !== 'string') {
@@ -165,7 +202,7 @@ class Sources extends Manager {
 			} else if (!addon.manifest || typeof addon.manifest !== 'string') {
 				throw new Error('Addon property "manifest" must be of type string.');
 			} else if (addon.screenshots && (!Array.isArray(addon.screenshots) || !addon.screenshots.every(screenshot => typeof screenshot === 'string'))) {
-				throw new Error('Addon property "screenshots" must either not exist or be an array of type "string".');
+				throw new Error('Addon property "screenshots" must either not exist or be an array of "string".');
 			}
 		}
 	}

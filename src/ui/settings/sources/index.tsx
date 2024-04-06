@@ -1,29 +1,21 @@
 import { showInstallAlert } from '@ui/components/internal/install-modal';
-import { ReactNative as RN } from '@metro/common';
+import { Dispatcher, ReactNative as RN } from '@metro/common';
 import { Addons } from '@ui/components/internal';
 import PluginManager from '@managers/plugins';
 import { Redesign } from '@metro/components';
 import { Strings } from '@api/i18n';
+import sources from '@managers/sources';
 
-export default function Plugins({ headerRightMargin = false }: { headerRightMargin: boolean }) {
-	const navigation = Redesign.useNavigation();
-	const addons = PluginManager.useEntities();
-
-	const unsubscribe = navigation.addListener('focus', () => {
-		unsubscribe();
-
-		navigation.setOptions({
-			title: addons.length ? `${Strings.UNBOUND_PLUGINS} - ${addons.length}` : Strings.UNBOUND_PLUGINS,
-		});
-	});
+export default function Sources({ headerRightMargin = false }: { headerRightMargin: boolean }) {
+	React.useEffect(() => {
+		if (!sources.refreshed) {
+			sources.refreshed = true;
+			Dispatcher.dispatch({ type: 'REFRESH_SOURCES' });
+		}
+	}, []);
 
 	return <RN.View>
-		<Addons
-			type='Plugins'
-			addons={addons}
-			onPressInstall={({ type, ref }) => showInstallAlert({ type, ref })}
-			headerRightMargin={headerRightMargin}
-		/>
+		<RN.Text>Hello World!</RN.Text>
 	</RN.View>;
 };
 

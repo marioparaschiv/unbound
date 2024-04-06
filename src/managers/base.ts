@@ -99,9 +99,9 @@ class Manager extends EventEmitter {
 
 		await this.install(
 			url,
-			({ message }) => {
+			({ message, error }) => {
 				toast.update({
-					content: message
+					content: message ?? error
 				});
 			},
 			controller.signal
@@ -158,15 +158,16 @@ class Manager extends EventEmitter {
 		return this.getBaseContextItems(addon);
 	}
 
-	async install(url: string, setState: Fn, signal?: AbortSignal, ...args): Promise<Error | Addon> {
+	async install(url: string, setState?: Fn, signal?: AbortSignal, ...args): Promise<Error | Addon> {
 		this.logger.debug(`Fetching ${url} for manifest...`);
+
 		const manifest = await fetch(url, { cache: 'no-cache' })
 			.then(res => {
 				if (res.ok) return res;
-				setState({ error: `${res.status}: ${res.statusText}` });
+				setState?.({ error: `${res.status}: ${res.statusText}` });
 			})
 			.then(res => res.json())
-			.catch(e => setState({ error: e.message })) as Manifest;
+			.catch(e => setState?.({ error: e.message })) as Manifest;
 
 		try {
 			this.logger.debug('Validating manifest...');
@@ -175,11 +176,11 @@ class Manager extends EventEmitter {
 			manifest.url = url;
 		} catch (e) {
 			this.logger.debug('Failed to validate manifest:', e.message);
-			setState({ error: e.message });
+			setState?.({ error: e.message });
 			return;
 		}
 
-		const bundle = await this.fetchBundle(url, manifest, setState, signal);
+		const bundle = await this.fetchBundle(url, manifest, signal, setState);
 
 		this.logger.debug('Saving...');
 		this.save(bundle as string, manifest);
@@ -195,6 +196,10 @@ class Manager extends EventEmitter {
 		const addon = this.load(bundle as string, manifest);
 		this.logger.debug('Loaded.');
 
+		return this.onFinishedInstalling(addon, manifest);
+	}
+
+	async onFinishedInstalling(addon: Addon, manifest) {
 		const { Redesign } = await import('@metro/components');
 
 		Redesign.dismissAlerts();
@@ -203,7 +208,7 @@ class Manager extends EventEmitter {
 		return addon;
 	}
 
-	async fetchBundle(url: string, manifest: Manifest, setState: Fn, signal: AbortSignal) {
+	async fetchBundle(url: string, manifest: Manifest, signal: AbortSignal, setState?: Fn) {
 		const origin = url.split('/');
 
 		// Remove manifest.json at the end of the URL
@@ -216,10 +221,10 @@ class Manager extends EventEmitter {
 		const bundle = await fetch(main, { cache: 'no-cache', signal })
 			.then(res => {
 				if (res.ok) return res;
-				setState({ error: `${res.status}: ${res.statusText}` });
+				setState?.({ error: `${res.status}: ${res.statusText}` });
 			})
 			.then(r => r?.text())
-			.catch(e => setState({ error: e.message }));
+			.catch(e => setState?.({ error: e.message }));
 
 		if (!bundle) return;
 

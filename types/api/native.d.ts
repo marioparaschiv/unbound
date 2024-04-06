@@ -4,7 +4,7 @@ export type DCDFileManagerConstants = {
 };
 
 export type DCDFileManagerType = DCDFileManagerConstants & {
-	readFile(path: string): Promise<unknown>;
+	readFile(path: string, encoding: 'utf-8' | 'utf8' | 'base64'): Promise<string>;
 	writeFile(type: 'documents' | 'cache', path: string, data: string, encoding: 'utf-8' | 'utf8' | 'base64'): Promise<string>;
 	removeFile(type: 'documents' | 'cache', path: string): Promise<any>;
 	readAsset(): Promise<unknown>;

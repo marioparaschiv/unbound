@@ -1,12 +1,14 @@
-import { Icons } from '@api/assets';
-import { Strings } from '@api/i18n';
+import { registerSettings } from '@utilities/registerSettings';
+import type { BuiltIn } from '@typings/core/builtins';
 import { ClientName, Keys } from '@constants';
 import { Redesign } from '@metro/components';
-import type { BuiltIn } from '@typings/core/builtins';
+import { Strings } from '@api/i18n';
+import { Icons } from '@api/assets';
+
 import Design from '@ui/settings/design';
 import General from '@ui/settings/general';
 import Plugins from '@ui/settings/plugins';
-import { registerSettings } from '@utilities/registerSettings';
+import Sources from '@ui/settings/sources';
 
 type CustomScreenProps = {
 	title: string;
@@ -46,7 +48,7 @@ export function initialize() {
 				title: 'UNBOUND_SOURCES',
 				id: Keys['Sources'],
 				icon: Icons['grid'],
-				screen: () => null
+				screen: Sources
 			},
 			{
 				title: 'Page',

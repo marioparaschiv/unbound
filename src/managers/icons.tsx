@@ -67,7 +67,7 @@ class Icons extends Manager {
 		return this.getBaseContextItems(addon);
 	}
 
-	override async fetchBundle(_: string, manifest: PackManifest, setState: Fn<any>, signal: AbortSignal): Promise<any> {
+	override async fetchBundle(_: string, manifest: PackManifest, signal: AbortSignal, setState?: Fn): Promise<any> {
 		if (!manifest.type || !['github', 'other'].includes(manifest.type))
 				manifest.type = /^(https?:\/\/)(www\.)?github\.com/.test(manifest.main) ? 'github' : 'other';
 

@@ -265,6 +265,7 @@ class Themes extends Manager {
 		// This whole storage patch inspired by @pylixonly's Bunny implementation
 		// https://github.com/pyoncord/Pyoncord/blob/082e9b2cf9feeb5d448bab6bf923e0ab31ca3887/src/lib/managers/themes.ts#L260-L318
 		const mmkvStorage = fastFindByProps('storage', 'get', 'set', 'parseResolve');
+		const self = this;
 
 		Theme.addChangeListener(() => {
 			if (Theme.theme) {
@@ -278,16 +279,16 @@ class Themes extends Manager {
 			const storeMap = {
 				SelectivelySyncedUserSettingsStore() {
 					if (!res?._state?.appearance?.settings?.theme) return;
-					res._state.appearance.settings.theme = this.settings.get('current', null);
+					res._state.appearance.settings.theme = self.settings.get('current', null);
 				},
 
 				ThemeStore() {
 					if (!res?._state?.theme) return;
-					res._state.theme = this.settings.get('current', null);
+					res._state.theme = self.settings.get('current', null);
 				}
 			};
 
-			if (!this.settings.get('enabled', false) || !(store in storeMap)) return;
+			if (!self.settings.get('enabled', false) || !(store in storeMap)) return;
 			storeMap[store]();
 		});
 
@@ -298,7 +299,7 @@ class Themes extends Manager {
 			const storeMap = {
 				SelectivelySyncedUserSettingsStore() {
 					if (!value._state?.appearance?.settings?.theme) return;
-					value._state.appearance.settings.theme = this.module.Theme.DARKER;
+					value._state.appearance.settings.theme = self.module.Theme.DARKER;
 				},
 
 				ThemeStore() {
@@ -306,9 +307,9 @@ class Themes extends Manager {
 					const { theme } = value._state;
 
 					if (this.isDiscordTheme(theme)) {
-						this.settings.set('current', null);
+						self.settings.set('current', null);
 					} else {
-						value._state.theme = this.module.Theme.DARKER;
+						value._state.theme = self.module.Theme.DARKER;
 					}
 				}
 			};
