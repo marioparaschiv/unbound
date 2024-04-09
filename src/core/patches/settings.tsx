@@ -19,7 +19,7 @@ class Settings {
 		settingSections.map(({ entries }) => {
 			Object.assign(
 				this.Constants.SETTING_RENDERER_CONFIG,
-				entries.map(({ id, title, icon, screen }) => ({
+				entries.map(({ id, title, icon, screen, ...rest }) => ({
 					[id]: {
 						type: 'route',
 
@@ -36,7 +36,8 @@ class Settings {
 								const Screen = screen;
 								return <Screen {...route?.params ?? {}} />;
 							})
-						}
+						},
+						...rest
 					}
 				})).reduce((acc, obj) => ({ ...acc, ...obj }), {})
 			);

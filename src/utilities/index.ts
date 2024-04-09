@@ -1,3 +1,4 @@
+export { default as compareSemanticVersions } from './compareSemanticVersions';
 export { default as callbackWithAnimation } from './callbackWithAnimation';
 export { default as findInReactTree } from './findInReactTree';
 export { default as withoutOpacity } from './withoutOpacity';

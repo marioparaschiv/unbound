@@ -75,8 +75,10 @@ const radioItems = [
 	}
 ];
 
+const sourceRadioItems = radioItems.filter(x => ['default', 'identifier', 'name', 'description'].includes(x.id));
+
 export default (entity: Manager | Fn<Manager>, settings: ReturnType<typeof useSettingsStore>) => [
-	radioItems.map(item => {
+	(resolveType(entity) === 'source' ? sourceRadioItems : radioItems).map(item => {
 		const { icon, label, ...rest } = item;
 
 		const extra = {

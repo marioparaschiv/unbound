@@ -3,19 +3,19 @@ import type { ImageSourcePropType } from 'react-native';
 
 type SectionType = {
 	label: string;
-	entries: {
+	entries: AnyProps<{
 		title: string,
 		id: string,
 		icon?: ImageSourcePropType,
 		keywords?: string[],
 		screen: (...args) => JSX.Element,
-		mappable?: boolean
-	}[]
-}
+		mappable?: boolean;
+	}>[];
+};
 
 function validateSection(section: SectionType) {
 	// Ensure the label is a string
-	if (typeof section.label !== 'string')  {
+	if (typeof section.label !== 'string') {
 		console.error(`Section label ${section.label} is not a string!`);
 		return false;
 	}
@@ -24,9 +24,9 @@ function validateSection(section: SectionType) {
 		// Ensure the title and id exist on the section and are strings
 		if (typeof entry.title !== 'string'
 			|| typeof entry.id !== 'string') {
-				console.error(`This entry's id (${entry.id}) or title (${entry.title}) is not a string!`);
-				return false;
-			}
+			console.error(`This entry's id (${entry.id}) or title (${entry.title}) is not a string!`);
+			return false;
+		}
 
 		// If there are keywords passed, ensure they are an array of strings
 		if (entry.keywords && (!Array.isArray(entry.keywords) || !entry.keywords.every(keyword => typeof keyword === 'string'))) {

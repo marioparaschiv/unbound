@@ -1,5 +1,6 @@
 import { ReactNative as RN } from '@metro/common';
 import { TintedIcon } from '@ui/components/misc';
+import type { ViewStyle } from 'react-native';
 import { Redesign } from '@metro/components';
 import { Icons } from '@api/assets';
 
@@ -15,9 +16,10 @@ interface OverflowProps {
 	title?: string;
 	iconSource?: number;
 	scale?: number;
+	style?: ViewStyle
 }
 
-export default function Overflow({ items, title, iconSource = Icons['MoreHorizontalIcon'], scale = 1 }: OverflowProps) {
+export default function Overflow({ items, title, iconSource = Icons['MoreHorizontalIcon'], scale = 1, style = {} }: OverflowProps) {
 	return <Redesign.ContextMenu items={items} title={title}>
 		{(props, onPress, accessibilityState, accessibilityActions, onAccessibilityAction) => (
 			<RN.TouchableOpacity
@@ -32,7 +34,8 @@ export default function Overflow({ items, title, iconSource = Icons['MoreHorizon
 					style={{
 						transform: [{ scale }],
 						marginLeft: 8,
-						marginRight: 10
+						marginRight: 10,
+						...style
 					}}
 				/>
 			</RN.TouchableOpacity>

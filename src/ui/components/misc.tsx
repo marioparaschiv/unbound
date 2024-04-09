@@ -1,6 +1,8 @@
 import { Theme, StyleSheet, ReactNative as RN, Constants } from '@metro/common';
 import type { IconProps, SectionProps } from '@typings/ui/components/forms';
+import type { TextStyle } from 'react-native';
 import { Redesign } from '@metro/components';
+import { Icons } from '@api/assets';
 import { find } from '@metro';
 
 export const useFormStyles = StyleSheet.createStyles(({ size = 24 } = { size: 24 }) => ({
@@ -12,8 +14,8 @@ export const useFormStyles = StyleSheet.createStyles(({ size = 24 } = { size: 24
 
 	formText: {
 		fontFamily: Constants.Fonts.PRIMARY_NORMAL,
-		color: Theme.colors.TEXT_NORMAL,
-		fontSize: 12
+		color: Theme.colors.TEXT_MUTED,
+		fontSize: 14
 	},
 
 	formHint: {
@@ -31,10 +33,16 @@ export const useFormStyles = StyleSheet.createStyles(({ size = 24 } = { size: 24
 	}
 }));
 
-export const TintedIcon = ({ source, size, style }: IconProps) => {
+export const TintedIcon = ({ source, size, style, defaultSource = Icons['MoreHorizontalIcon'] }: IconProps) => {
 	const styles = useFormStyles({ size });
 
-	return <RN.Image source={source} style={[styles.iconTint, style]} />;
+	return <RN.Image source={source} style={[styles.iconTint, style]} defaultSource={defaultSource} />;
+};
+
+export const TrailingText = ({ children, style }: { children: any, style?: TextStyle }) => {
+	const styles = useFormStyles();
+
+	return <RN.Text style={[styles.formText, style]}>{children}</RN.Text>;
 };
 
 export const Switch = find(m => m.FormSwitch && !m.FormTitle, { lazy: true });

@@ -2,11 +2,9 @@ import { React, ReactNative as RN } from '@metro/common';
 import { GeneralSearch } from '@ui/components/search';
 import Asset from '@ui/components/internal/asset';
 import { Section } from '@ui/components/misc';
-import { fastFindByProps } from '@metro';
+import { Redesign } from '@metro/components';
 import { assets } from '@api/assets';
 
-
-const DividerModule = fastFindByProps('TableRowDivider', { lazy: true });
 const payload = [...assets.values()].filter(a => a.type === 'png');
 
 const Assets = React.memo(() => {
@@ -34,7 +32,7 @@ const Assets = React.memo(() => {
 				data={data}
 				scrollEnabled={false}
 				initialNumToRender={15}
-				ItemSeparatorComponent={DividerModule.TableRowDivider}
+				ItemSeparatorComponent={Redesign.TableRowDivider}
 				removeClippedSubviews
 				renderItem={({ item, index }) => (
 					<Asset

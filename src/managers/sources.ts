@@ -4,27 +4,35 @@ import { DCDFileManager } from '@api/storage';
 import { Dispatcher } from '@metro/common';
 import { createPatcher } from '@patcher';
 import { Regex } from '@constants';
+import type { Manager as _Manager } from '@typings/managers';
 
 import type { Addon, Manifest } from '@typings/managers';
+import { Icons } from '@api/assets';
 
-type SourceManifest = Pick<Manifest, 'id' | 'name' | 'description' | 'icon' | 'url'> & {
+export type SourceManifest = Pick<Manifest, 'id' | 'name' | 'description' | 'icon' | 'url'> & {
 	iconType?: string;
 	tags: string[];
-	addons: (Pick<Manifest, 'name'> & {
+	addons: {
 		type: string;
 		screenshots: string[];
 		changelog: string;
 		manifest: string;
 		readme: string;
-	})[];
+	}[];
 };
 
-type Bundle = {
+export type Bundle = {
+	type: _Manager;
+	source: string,
 	manifest: Manifest;
 	changelog: Record<string, string[]>;
 	readme?: string;
 	screenshots?: string[];
 }[];
+
+export function useIcon(icon: Bundle[number]['manifest']['icon']) {
+	return React.useMemo(() => typeof icon === 'string' ? Icons[icon] : icon, [icon]);
+}
 
 class Sources extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
@@ -65,10 +73,12 @@ class Sources extends Manager {
 			this.load(JSON.parse(bundle), JSON.parse(manifest) as Manifest);
 		}
 
-		Dispatcher.subscribe('REFRESH_SOURCES', () => {
+		Dispatcher.subscribe('REFRESH_SOURCES', async () => {
 			for (const url of Object.values(this.sources)) {
-				this.install(url);
+				await this.install(url);
 			}
+
+			Dispatcher.dispatch({ type: 'REFRESH_SOURCES_COMPLETE' });
 		});
 
 		setTimeout(() => {
@@ -96,6 +106,9 @@ class Sources extends Manager {
 		for (const addon of manifest.addons) {
 			const parsed = {} as Bundle[number];
 
+			Object.assign(parsed, { type: addon.type });
+			Object.assign(parsed, { source: manifest.id });
+
 			const addonManifest = await fetch(addon.manifest, { cache: 'no-cache', signal })
 				.then(res => res.json())
 				.catch(console.error) as Manifest;
@@ -106,6 +119,7 @@ class Sources extends Manager {
 				this.logger.error('Failed to validate addon manifest:', e);
 			}
 
+			addonManifest.url = addon.manifest;
 			Object.assign(parsed, { manifest: addonManifest });
 
 			const changelog = await fetch(addon.changelog, { cache: 'no-cache', signal })
@@ -191,9 +205,7 @@ class Sources extends Manager {
 		}
 
 		for (const addon of manifest.addons) {
-			if (!addon.name || typeof addon.name !== 'string') {
-				throw new Error('Addon property "name" must be of type string');
-			} else if (!addon.type || typeof addon.type !== 'string' || !isValidManager(addon.type)) {
+			if (!addon.type || typeof addon.type !== 'string' || !isValidManager(addon.type)) {
 				throw new Error('Addon property "type" must be of type string and a valid manager, got ' + addon.type);
 			} else if (addon.changelog && typeof addon.changelog !== 'string') {
 				throw new Error('Addon property "changelog" must be of type string.');

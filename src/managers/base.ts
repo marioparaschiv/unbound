@@ -16,13 +16,9 @@ export enum ManagerType {
 }
 
 export function isValidManager(type: string) {
-	function internalManagerValid(type: string) {
-		const blacklist = [ManagerType.Sources];
-		const types = Object.values(ManagerType).filter(type => !blacklist.includes(type));
-		return Boolean(types.find(x => [type, type + 's'].includes(x)));
-	}
-
-	return internalManagerValid(type) ?? internalManagerValid(capitalize(type));
+	const blacklist = ['Sources'];
+	const types = Object.keys(ManagerType).filter(type => !blacklist.includes(type));
+	return Boolean(types.includes(type));
 }
 
 class Manager extends EventEmitter {
@@ -54,17 +50,20 @@ class Manager extends EventEmitter {
 	async showAddonToast(addon: Addon, message: string, icon?: string) {
 		const { Strings } = await import('@api/i18n');
 		const { showToast } = await import('@api/toasts');
+		const { Icons } = await import('@api/assets');
 
 		showToast({
 			title: addon.data.name,
 			content: Strings[message],
 			icon: (() => {
 				if (icon) return icon;
-				if (addon.data.icon && addon.data.icon !== '__custom__') return addon.data.icon;
+				if (addon.data.icon) {
+					return typeof addon.data.icon === 'string' ? Icons[addon.data.icon] : addon.data.icon;
+				}
 
 				return this.icon ?? 'CircleQuestionIcon';
 			})(),
-			tintedIcon: addon.data.icon !== '__custom__'
+			tintedIcon: true
 		});
 	}
 

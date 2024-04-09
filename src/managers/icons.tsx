@@ -143,10 +143,10 @@ class Icons extends Manager {
 			if (this.applied.manifest.id === addon.data.id) {
 				this.settings.set('applied', this.settings.get('packs', [defaultPack])
 					.find(x => x.manifest.id === 'default') || defaultPack);
-
-				this.settings.set('packs', this.settings.get('packs', [defaultPack])
-					.filter(x => x.manifest.id !== addon.data.id));
 			}
+
+			this.settings.set('packs', this.settings.get('packs', [defaultPack])
+				.filter(x => x.manifest.id !== addon.data.id));
 
 			await this.unload(addon);
 			await DCDFileManager.removeFile('documents', `${this.path}/${addon.data.id}`);

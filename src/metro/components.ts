@@ -26,8 +26,13 @@ const BasicPartialProps = [
 	'TableRow',
 	'TableSwitchRow',
 	'TableRowIcon',
+	'TableRowDivider',
 	'SegmentedControlPages',
-	'SegmentedControl'
+	'SegmentedControl',
+	'RowButton',
+	'Card',
+	'Pile',
+	'PileOverflow'
 ] as const;
 
 const RenderPartial = RenderPartialProps

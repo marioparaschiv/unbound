@@ -55,11 +55,13 @@ const Header = ({ res }: Pick<ErrorBoundaryProps, 'res'>) => {
 				opacity: 0.3,
 			}]}
 			blurRadius={6}
+			defaultSource={Icons['MoreHorizontalIcon']}
 		/>
 
 		<RN.Image
 			source={{ uri: 'https://raw.githubusercontent.com/unbound-mod/assets/main/logo/logo.png' }}
 			style={styles.headerChainIcon}
+			defaultSource={Icons['MoreHorizontalIcon']}
 		/>
 	</Card>;
 };

@@ -4,6 +4,25 @@ import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
 import Storage from '@api/storage';
 
+type SemanticKey = string;
+type RawKey = string;
+
+interface Theme {
+	semantic: Record<SemanticKey, {
+		type: 'color' | 'raw';
+		value: string;
+		opacity?: number;
+	}>;
+
+	raw: Record<RawKey, string>;
+	type: 'dark' | 'light';
+	background?: {
+		blur?: number;
+		opacity?: number;
+		url: string
+	};
+}
+
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
 	public extension: string = 'json';
@@ -306,7 +325,7 @@ class Themes extends Manager {
 					if (!value._state?.theme) return;
 					const { theme } = value._state;
 
-					if (this.isDiscordTheme(theme)) {
+					if (self.isDiscordTheme(theme)) {
 						self.settings.set('current', null);
 					} else {
 						value._state.theme = self.module.Theme.DARKER;

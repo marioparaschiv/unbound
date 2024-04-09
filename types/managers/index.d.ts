@@ -1,3 +1,5 @@
+import * as Managers from '@managers';
+
 export type Author = {
 	name: string;
 	id: `${number}`;
@@ -8,7 +10,7 @@ export interface Manifest {
 	name: string;
 	description: string;
 	authors: Author[];
-	icon: '__custom__' | (string & {}) | { uri: string; };
+	icon: (string & {}) | { uri: string; };
 	updates: string;
 	main: string;
 	version: string;
@@ -37,4 +39,4 @@ export interface Addon {
 }
 
 export type Resolveable = string | Addon;
-export type Manager = 'Plugins' | 'Themes' | 'Icons' | 'Sources';
+export type Manager = keyof typeof Managers;

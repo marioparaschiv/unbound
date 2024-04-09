@@ -12,6 +12,7 @@ type IconProps = {
 	source: ImageSourcePropType;
 	size?: number;
 	style?: ViewStyle;
+	defaultSource?: number;
 };
 
 type RowProps = {

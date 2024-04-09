@@ -1,21 +1,22 @@
-import { Constants, React, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { showInstallAlert } from '@ui/components/internal/install-modal';
 import HeaderRight from '@ui/components/internal/addon-header';
 import getItems, { resolveType } from '@ui/models/ordering';
 import { HelpMessage, Redesign } from '@metro/components';
+import { Authors } from '@ui/components/internal/authors';
 import { callbackWithAnimation, noop } from '@utilities';
+import { React, ReactNative as RN } from '@metro/common';
 import type { Addon, Manager } from '@typings/managers';
 import { GeneralSearch } from '@ui/components/search';
+import Empty from '@ui/components/internal/empty';
 import { useSettingsStore } from '@api/storage';
+import { ManagerType } from '@managers/base';
 import InstallModal from './install-modal';
 import * as managers from '@managers';
 import AddonCard from './addon-card';
 import { Strings } from '@api/i18n';
-import { Icons } from '@api/assets';
 
 interface AddonListProps {
 	type: Manager;
-	shouldRestart?: boolean;
 	addons: Addon[];
 	showHeaderRight?: boolean;
 	showToggles?: boolean;
@@ -23,32 +24,11 @@ interface AddonListProps {
 	headerRightMargin?: boolean;
 }
 
-const useStyles = StyleSheet.createStyles({
-	recoveryContainer: {
-		marginTop: 10
-	},
-	empty: {
-		justifyContent: 'center',
-		alignItems: 'center',
-		marginTop: '50%'
-	},
-	emptyImage: {
-		marginBottom: 10
-	},
-	emptyMessage: {
-		color: Theme.colors.TEXT_MUTED,
-		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-		textAlign: 'center',
-		paddingHorizontal: 25
-	}
-});
-
-export default function Addons({ addons, type, shouldRestart, showHeaderRight = true, showToggles = true, onPressInstall, headerRightMargin }: AddonListProps) {
+export default function Addons({ addons, type, showHeaderRight = true, showToggles = true, onPressInstall, headerRightMargin }: AddonListProps) {
 	const [search, setSearch] = React.useState('');
 	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
 	const navigation = Redesign.useNavigation();
 	const settings = useSettingsStore('unbound');
-	const styles = useStyles();
 	const manager = React.useMemo(() => managers[type], [type]);
 
 	React.useLayoutEffect(() => {
@@ -104,18 +84,19 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 			search={search}
 			setSearch={setSearch}
 		/>
-		{isOnboarding && <RN.View style={styles.recoveryContainer}>
+		{isOnboarding && <RN.View style={{ marginTop: 10 }}>
 			<HelpMessage messageType={1}>
 				{Strings.UNBOUND_ONBOARDING_ADDON_PAGE_INFO.format({ type: manager.type })}
 			</HelpMessage>
 		</RN.View>}
-		{isRecovery && <RN.View style={styles.recoveryContainer}>
+		{isRecovery && <RN.View style={{ marginTop: 10 }}>
 			<HelpMessage messageType={0}>
 				{Strings.UNBOUND_RECOVERY_MODE_ENABLED}
 			</HelpMessage>
 		</RN.View>}
 		<RN.ScrollView
 			style={{ height: '100%' }}
+			contentContainerStyle={{ paddingBottom: 80 }}
 			refreshControl={<RN.RefreshControl
 				// Passing false here is fine because we don't actually need to handle refreshing
 				// We just need access to the onRefresh method to open the install modal
@@ -130,21 +111,15 @@ export default function Addons({ addons, type, shouldRestart, showHeaderRight = 
 				scrollEnabled={false}
 				renderItem={({ item }) => <AddonCard
 					recovery={isRecovery}
-					shouldRestart={shouldRestart}
 					showToggles={showToggles}
 					type={type}
 					addon={item}
 					navigation={navigation}
+					bottom={manager.type === ManagerType.Icons && item.data.id === 'default' ? null : <Authors addon={item} />}
 				/>}
-				ListEmptyComponent={<RN.View style={styles.empty}>
-					<RN.Image
-						style={styles.emptyImage}
-						source={Icons['img_connection_empty_dark']}
-					/>
-					<RN.Text style={styles.emptyMessage}>
-						{Strings.UNBOUND_ADDONS_EMPTY.format({ type: manager.name.toLowerCase() })}
-					</RN.Text>
-				</RN.View>}
+				ListEmptyComponent={<Empty>
+					{Strings.UNBOUND_ADDONS_EMPTY.format({ type: manager.name.toLowerCase() })}
+				</Empty>}
 			/>
 		</RN.ScrollView>
 	</RN.View>;
