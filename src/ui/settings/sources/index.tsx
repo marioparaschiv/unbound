@@ -95,7 +95,14 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 
 		return sorted.filter((addon) => {
 			const fields = [addon.data.id, addon.data.name, addon.data.description];
-			return fields.some(x => x.toLowerCase().includes(search.toLowerCase()));
+
+			const info = fields.some(x => x.toLowerCase().includes(search.toLowerCase()));
+			if (info) return true;
+
+			const tags = addon.data['tags'].some(tag => tag.toLowerCase().includes(search.toLowerCase()));
+			if (tags) return true;
+
+			return false;
 		});
 	}, [search, addons, order, reversed]);
 
