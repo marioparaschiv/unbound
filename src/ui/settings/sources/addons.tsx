@@ -39,7 +39,7 @@ export function Addons({ source, navigation }: { source: Source, navigation: any
 					</Empty>
 				)}
 			/>
-			<RN.View style={{ marginTop: 16, marginBottom: 8 }}>
+			<RN.View style={{ marginTop: 16, marginBottom: 32 }}>
 				<Redesign.RowButton
 					icon={Icons['activity']}
 					label={Strings['UNBOUND_VIEW_ALL_ADDONS']}
@@ -64,7 +64,7 @@ export function Addons({ source, navigation }: { source: Source, navigation: any
 					arrow
 				/>
 			</Redesign.TableRowGroup>
-			<RN.View style={{ marginBottom: 4 }} />
+			<RN.View style={{ marginBottom: 28 }} />
 			{managers.length > 0 ? (
 				<Redesign.TableRowGroup title={Strings.UNBOUND_ADDONS}>
 					{managers.map(manager => {

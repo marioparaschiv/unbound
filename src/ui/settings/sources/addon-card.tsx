@@ -1,5 +1,4 @@
 import { ReactNative as RN, StyleSheet, Theme, Constants } from '@metro/common';
-import { AddonPage } from '@ui/settings/sources/addon-page';
 import { useIcon, type Bundle } from '@managers/sources';
 import { TintedIcon } from '@ui/components/misc';
 import { Redesign } from '@metro/components';
@@ -36,10 +35,14 @@ export function AddonCard({ addon, navigation }: { addon: Bundle[number], naviga
 		style={{ marginRight: 8 }}
 		onPress={() => navigation.push(Keys.Custom, {
 			title: addon.manifest.name,
-			render: () => <AddonPage
-				addon={addon}
-				navigation={navigation}
-			/>
+			render: () => {
+				const AddonPage = React.lazy(() => import('@ui/settings/sources/addon-page').then(({ AddonPage }) => ({ default: AddonPage })));
+
+				return <AddonPage
+					addon={addon}
+					navigation={navigation}
+				/>;
+			}
 		})}
 	>
 		<RN.View style={{ flexDirection: 'row' }}>

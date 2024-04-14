@@ -32,7 +32,9 @@ const BasicPartialProps = [
 	'RowButton',
 	'Card',
 	'Pile',
-	'PileOverflow'
+	'PileOverflow',
+	'Tabs',
+	'useSegmentedControlState'
 ] as const;
 
 const RenderPartial = RenderPartialProps

@@ -18,6 +18,7 @@ export type SourceManifest = Pick<Manifest, 'id' | 'name' | 'description' | 'ico
 		changelog: string;
 		manifest: string;
 		readme: string;
+		suggest: string[];
 	}[];
 };
 
@@ -28,6 +29,7 @@ export type Bundle = {
 	changelog: Record<string, string[]>;
 	readme?: string;
 	screenshots?: string[];
+	suggest?: string[];
 }[];
 
 export function useIcon(icon: Bundle[number]['manifest']['icon']) {
@@ -101,7 +103,7 @@ class Sources extends Manager {
 
 	override async fetchBundle(_: string, _manifest: Manifest, signal: AbortSignal, setState?: Fn<any>): Promise<any> {
 		const manifest = _manifest as unknown as SourceManifest;
-		const bundle = [] satisfies Bundle;
+		const bundle: Bundle = [];
 
 		for (const addon of manifest.addons) {
 			const parsed = {} as Bundle[number];
@@ -122,23 +124,27 @@ class Sources extends Manager {
 			addonManifest.url = addon.manifest;
 			Object.assign(parsed, { manifest: addonManifest });
 
-			const changelog = await fetch(addon.changelog, { cache: 'no-cache', signal })
-				.then(res => res.json())
-				.catch(console.error);
+			if (addon.changelog) {
+				const changelog = await fetch(addon.changelog, { cache: 'no-cache', signal })
+					.then(res => res.json())
+					.catch(console.error);
 
-			try {
-				this.validateChangelog(changelog);
-			} catch (e) {
-				this.logger.error('Failed to validate addon changelog:', e);
+				try {
+					this.validateChangelog(changelog);
+				} catch (e) {
+					this.logger.error('Failed to validate addon changelog:', e);
+				}
+
+				Object.assign(parsed, { changelog });
 			}
 
-			Object.assign(parsed, { changelog });
-
 			if (addon.readme) {
-				const path = `${this.path}/${manifest.id}/${addonManifest.id}/readme.md`;
+				const readme = await fetch(addon.readme, { cache: 'no-cache', signal })
+					.then(res => res.text())
+					.catch(console.error);
 
-				downloadFile(addon.readme, path, signal);
-				Object.assign(parsed, { readme: path });
+				if (typeof readme !== 'string') throw new Error('Readme must be a string.');
+				Object.assign(parsed, { readme });
 			}
 
 			if (addon.screenshots) {
@@ -155,7 +161,23 @@ class Sources extends Manager {
 				Object.assign(parsed, { screenshots });
 			}
 
+			if (addon.suggest) {
+				if (!Array.isArray(addon.suggest) || !addon.suggest.every(id => id && typeof id === 'string')) {
+					throw new Error('Suggestions must be an array of addon IDs');
+				}
+
+				Object.assign(parsed, { suggest: addon.suggest });
+			}
+
 			bundle.push(parsed);
+		}
+
+		for (const addon of bundle) {
+			for (const id of addon?.suggest ?? []) {
+				if (!bundle.find(addon => addon.manifest.id === id)) {
+					throw new Error(`Suggestion ID ${id} does not point to a valid addon in this repository.`);
+				}
+			}
 		}
 
 		return bundle;
