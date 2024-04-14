@@ -11,6 +11,7 @@ function IconsPage() {
 	return <RN.View style={{ flex: 1 }}>
 		<Addons
 			showHeaderRight={false}
+			showManagerIcon={(addon) => addon.data.id !== 'default'}
 			type='Icons'
 			addons={addons}
 		/>

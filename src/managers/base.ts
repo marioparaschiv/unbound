@@ -47,17 +47,17 @@ class Manager extends EventEmitter {
 		this.path = `Unbound/${this.name}`;
 	}
 
-	async showAddonToast(addon: Addon, message: string, icon?: string) {
+	async showAddonToast(addon: Addon | null, message: string, icon?: string) {
 		const { Strings } = await import('@api/i18n');
 		const { showToast } = await import('@api/toasts');
 		const { Icons } = await import('@api/assets');
 
 		showToast({
-			title: addon.data.name,
+			title: addon?.data?.name ?? this.name,
 			content: Strings[message],
 			icon: (() => {
-				if (icon) return icon;
-				if (addon.data.icon) {
+				if (icon) return Icons[icon];
+				if (addon?.data?.icon) {
 					return typeof addon.data.icon === 'string' ? Icons[addon.data.icon] : addon.data.icon;
 				}
 
@@ -284,7 +284,7 @@ class Manager extends EventEmitter {
 		try {
 			this.unload(addon);
 			await DCDFileManager.removeFile('documents', `${this.path}/${addon.data.id}`);
-			await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_UNINSTALLED', 'CloseSmallIcon');
+			await this.showAddonToast(null, 'UNBOUND_SUCCESSFULLY_UNINSTALLED', 'CloseSmallIcon');
 		} catch (e) {
 			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message ?? e);
 		}

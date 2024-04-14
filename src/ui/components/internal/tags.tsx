@@ -29,7 +29,7 @@ const useStyles = StyleSheet.createStyles({
 export function Tags({ source }: { source: Source }) {
 	const styles = useStyles();
 
-	return <RN.View style={{ marginLeft: 8, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+	return <RN.View style={{ marginLeft: 8, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
 		<TintedIcon
 			source={Icons['ic_tag']}
 			size={16}

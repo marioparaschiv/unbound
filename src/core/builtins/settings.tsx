@@ -13,6 +13,7 @@ import General from '@ui/settings/general';
 import Plugins from '@ui/settings/plugins';
 import Sources from '@ui/settings/sources';
 import { TrailingText, useFormStyles } from '@ui/components/misc';
+import type { Manager } from '@typings/managers';
 
 type CustomScreenProps = {
 	title: string;
@@ -23,6 +24,20 @@ export const data: BuiltIn['data'] = {
 	id: 'modules.misc',
 	default: true
 };
+
+function useAddonsCount(...managers: Manager[]) {
+	return managers.reduce((total, manager) => total + Managers[manager].useEntities().length, 0);
+}
+
+function AddonCount({ managers, manipulator }: { managers: Manager[], manipulator?: Fn }) {
+	const amount = useAddonsCount(...managers);
+
+	return <TrailingText>
+		{Strings.UNBOUND_ADDON_INSTALLED_AMOUNT.format({
+			amount: typeof manipulator === 'function' ? manipulator(amount) : amount
+		})}
+	</TrailingText>;
+}
 
 export function initialize() {
 	registerSettings({
@@ -41,7 +56,7 @@ export function initialize() {
 				id: Keys['Plugins'],
 				icon: Icons['debug'],
 				screen: Plugins,
-				useTrailing: () => <TrailingText>{Strings.UNBOUND_ADDON_INSTALLED_AMOUNT.format({ amount: Managers.Plugins.entities.size })}</TrailingText>
+				useTrailing: () => <AddonCount managers={['Plugins']} />
 			},
 			{
 				title: 'UNBOUND_DESIGN',
@@ -50,14 +65,14 @@ export function initialize() {
 				keywords: [Strings.UNBOUND_THEMES, Strings.UNBOUND_ICONS, Strings.UNBOUND_FONTS],
 				screen: Design,
 				// Themes + Icons installed accounting for the default icon pack
-				useTrailing: () => <TrailingText>{Strings.UNBOUND_ADDON_INSTALLED_AMOUNT.format({ amount: Managers.Themes.entities.size + Managers.Icons.entities.size - 1 })}</TrailingText>
+				useTrailing: () => <AddonCount managers={['Themes', 'Icons']} manipulator={(amount) => amount - 1}/>
 			},
 			{
 				title: 'UNBOUND_SOURCES',
 				id: Keys['Sources'],
 				icon: Icons['grid'],
 				screen: Sources,
-				useTrailing: () => <TrailingText>{Strings.UNBOUND_ADDON_INSTALLED_AMOUNT.format({ amount: Managers.Sources.entities.size })}</TrailingText>
+				useTrailing: () => <AddonCount managers={['Sources']} />
 			},
 			{
 				title: 'Page',

@@ -1,7 +1,8 @@
 {
 	"ignore": [
 		"dist",
-		"rollup.config-*.mjs"
+		"rollup.config-*.mjs",
+		"server"
 	],
 	"exec": "bun run build",
 	"ext": "*.*"

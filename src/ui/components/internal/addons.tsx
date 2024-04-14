@@ -20,11 +20,12 @@ interface AddonListProps {
 	addons: Addon[];
 	showHeaderRight?: boolean;
 	showToggles?: boolean;
+	showManagerIcon?: ((addon: Addon) => boolean) | boolean;
 	onPressInstall?: ({ ref, settings, type }) => any;
 	headerRightMargin?: boolean;
 }
 
-export default function Addons({ addons, type, showHeaderRight = true, showToggles = true, onPressInstall, headerRightMargin }: AddonListProps) {
+export default function Addons({ addons, type, showHeaderRight = true, showToggles = true, showManagerIcon = true, onPressInstall, headerRightMargin }: AddonListProps) {
 	const [search, setSearch] = React.useState('');
 	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
 	const navigation = Redesign.useNavigation();
@@ -112,6 +113,7 @@ export default function Addons({ addons, type, showHeaderRight = true, showToggl
 				renderItem={({ item }) => <AddonCard
 					recovery={isRecovery}
 					showToggles={showToggles}
+					showManagerIcon={showManagerIcon}
 					type={type}
 					addon={item}
 					navigation={navigation}

@@ -1,6 +1,6 @@
 import { Constants, Theme, React, ReactNative as RN, StyleSheet } from '@metro/common';
 import { Icons, getIDByName } from '@api/assets';
-import { Strings } from '@api/i18n';
+import { Strings, add } from '@api/i18n';
 
 import Overflow from '@ui/components/overflow';
 
@@ -13,6 +13,7 @@ import * as managers from '@managers';
 interface AddonCardProps {
 	type: Manager;
 	showToggles: boolean;
+	showManagerIcon?: ((addon: Addon) => boolean) | boolean;
 	recovery: boolean;
 	addon: Addon;
 	navigation: any;
@@ -41,7 +42,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 	}
 
 	render() {
-		const { addon, recovery, onPress, styles, showToggles, bottom, arrow } = this.props;
+		const { addon, recovery, onPress, styles, showToggles, showManagerIcon, bottom, arrow } = this.props;
 		const { name, version, description } = addon.data;
 		const error = this.manager.errors.get(addon.id ?? addon.data.path);
 
@@ -54,15 +55,16 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 				onPress={onPress}
 				style={{
 					marginTop: 12,
+					padding: 12,
 					...(addon.failed ? styles.failed : {}),
 					...(recovery ? styles.recovery : {}),
 				}}
 			>
-				<RN.View style={{ marginLeft: 8, justifyContent: 'center', gap: 10 }}>
+				<RN.View style={{ marginLeft: 8, justifyContent: 'center' }}>
 					<RN.View style={{ flexDirection: 'row', alignItems: 'center' }}>
 						<TintedIcon
 							source={this.source}
-							size={20}
+							size={16}
 						/>
 						<RN.Text style={[styles.header, { marginHorizontal: 8 }]}>
 							{name}
@@ -91,20 +93,22 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 				</RN.View>
 				{bottom}
 				<RN.View style={{ marginBottom: 4 }} />
-				{/* <RN.View style={{
-					position: 'absolute',
-					right: 0,
-					bottom: 0,
-					backgroundColor: Theme.unsafe_rawColors.BRAND_500,
-					borderBottomRightRadius: 10,
-					borderTopLeftRadius: 14,
-					padding: 6
-				}}>
-					<TintedIcon
-						source={this.source}
-						size={20}
-					/>
-				</RN.View> */}
+				{(typeof showManagerIcon === 'function' ? showManagerIcon(addon) : showManagerIcon) && (
+					<RN.View style={{
+						position: 'absolute',
+						right: 0,
+						bottom: 0,
+						backgroundColor: Theme.unsafe_rawColors.BRAND_500,
+						borderBottomRightRadius: 10,
+						borderTopLeftRadius: 14,
+						padding: 6
+					}}>
+						<TintedIcon
+							source={Icons[this.manager.icon]}
+							size={16}
+						/>
+					</RN.View>
+				)}
 			</Redesign.Card>
 		);
 	}

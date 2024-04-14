@@ -150,7 +150,7 @@ class Icons extends Manager {
 
 			await this.unload(addon);
 			await DCDFileManager.removeFile('documents', `${this.path}/${addon.data.id}`);
-			await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_UNINSTALLED');
+			await this.showAddonToast(null, 'UNBOUND_SUCCESSFULLY_UNINSTALLED', 'CloseSmallIcon');
 		} catch (e) {
 			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message ?? e);
 		}

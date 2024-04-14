@@ -167,6 +167,7 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 						type={type}
 						addon={item}
 						navigation={navigation}
+						showManagerIcon
 						bottom={item.data['tags'] && item.data['tags'].length > 0 && <Tags source={item as any} />}
 						onPress={() => navigation.push(Keys.Custom, {
 							title: item.data.name,

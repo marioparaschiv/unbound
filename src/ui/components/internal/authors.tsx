@@ -2,7 +2,7 @@ import { Constants, ReactNative as RN, StyleSheet, Theme } from '@metro/common';
 import { callbackWithAnimation } from '@utilities';
 import { AsyncUsers, Profiles } from '@metro/api';
 import { TintedIcon } from '@ui/components/misc';
-import type { Addon } from '@typings/managers';
+import type { Addon, Author } from '@typings/managers';
 import { Redesign } from '@metro/components';
 import { Users } from '@metro/stores';
 import { Strings } from '@api/i18n';
@@ -20,10 +20,14 @@ const useStyles = StyleSheet.createStyles({
 		fontSize: 16,
 		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
 		marginBottom: 0
+	},
+
+	iconTint: {
+		tintColor: Theme.colors.INTERACTIVE_NORMAL
 	}
 });
 
-function Avatar({ id, size = 24 }: { id: string, size?: number; }) {
+function useUser(id) {
 	const [user, setUser] = React.useState(null);
 
 	React.useEffect(() => {
@@ -38,19 +42,45 @@ function Avatar({ id, size = 24 }: { id: string, size?: number; }) {
 		}
 	}, []);
 
+	return user;
+}
+
+function Avatar({ id, size = 24 }: { id: string, size?: number; }) {
+	const user = useUser(id);
+	const styles = useStyles();
+
 	return <RN.Image
 		source={user ? { uri: user?.getAvatarURL() } : Icons['MoreHorizontalIcon']}
 		style={{
 			width: size,
 			aspectRatio: 1,
-			borderRadius: 9999
+			borderRadius: 9999,
+			...user ? {} : styles.iconTint
 		}}
+	/>;
+}
+
+function AuthorRow({ author }: { author: Author }) {
+	const user = useUser(author.id);
+
+	return <Redesign.TableRow
+		label={author.name}
+		subLabel={`@${user?.username}`}
+		icon={<Avatar id={author.id} size={32} />}
+		onPress={async () => {
+			if (!Users.getUser(author.id)) {
+				await AsyncUsers.fetchProfile(author.id);
+			}
+
+			Profiles.showUserProfile({ userId: author.id });
+		}}
+		arrow
 	/>;
 }
 
 function Unexpanded({ addon, styles, setExpanded }: { addon: Addon, styles: any, setExpanded: Fn; }) {
 	return <RN.TouchableOpacity onPress={() => setExpanded(previous => !previous)}>
-		<RN.View style={{ marginLeft: 8, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+		<RN.View style={{ marginLeft: 8, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
 			<RN.Text style={styles.description}>
 				{Strings.UNBOUND_BY}
 			</RN.Text>
@@ -77,7 +107,7 @@ function Unexpanded({ addon, styles, setExpanded }: { addon: Addon, styles: any,
 function Expanded({ addon, styles, setExpanded }: { addon: Addon, styles: any, setExpanded: Fn; }) {
 	return <RN.View>
 		<RN.TouchableOpacity onPress={() => setExpanded(previous => !previous)}>
-			<RN.View style={{ marginLeft: 8, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+			<RN.View style={{ marginLeft: 8, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
 				<TintedIcon
 					source={Icons['CloseLargeIcon']}
 					size={16}
@@ -89,20 +119,10 @@ function Expanded({ addon, styles, setExpanded }: { addon: Addon, styles: any, s
 		</RN.TouchableOpacity>
 		<Redesign.TableRowGroup>
 			{addon.data.authors.map(author => (
-				<RN.View key={author.id} style={{ marginLeft: -8 }}>
-					<Redesign.TableRow
-						label={author.name}
-						icon={<Avatar id={author.id} size={32} />}
-						onPress={async () => {
-							if (!Users.getUser(author.id)) {
-								await AsyncUsers.fetchProfile(author.id);
-							}
-
-							Profiles.showUserProfile({ userId: author.id });
-						}}
-						arrow
-					/>
-				</RN.View>
+				<AuthorRow
+					author={author}
+					key={author.id}
+				/>
 			))}
 		</Redesign.TableRowGroup>
 	</RN.View>;

@@ -24,6 +24,7 @@ export function Addons({ source, navigation }: { source: Source, navigation: any
 			<RN.FlatList
 				data={source.instance.slice(0, source.instance.length < 6 ? source.instance.length : 5)}
 				horizontal
+				style={{ marginTop: 6 }}
 				keyExtractor={(_, idx) => String(idx)}
 				renderItem={({ item: addon }) => (
 					<AddonCard
