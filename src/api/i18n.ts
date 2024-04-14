@@ -1,6 +1,6 @@
 import { createLogger } from '@structures/logger';
 import { i18n } from '@metro/common';
-import CoreStrings from '../i18n';
+import CoreStrings from '../../i18n';
 
 type LocaleStrings = Record<string, Record<string, any>>;
 
