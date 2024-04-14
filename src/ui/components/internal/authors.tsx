@@ -23,7 +23,7 @@ const useStyles = StyleSheet.createStyles({
 	}
 });
 
-function Avatar({ id, size = 24 }: { id: string, size?: number }) {
+function Avatar({ id, size = 24 }: { id: string, size?: number; }) {
 	const [user, setUser] = React.useState(null);
 
 	React.useEffect(() => {
@@ -48,7 +48,7 @@ function Avatar({ id, size = 24 }: { id: string, size?: number }) {
 	/>;
 }
 
-function Unexpanded({ addon, styles, setExpanded }: { addon: Addon, styles: any, setExpanded: Fn }) {
+function Unexpanded({ addon, styles, setExpanded }: { addon: Addon, styles: any, setExpanded: Fn; }) {
 	return <RN.TouchableOpacity onPress={() => setExpanded(previous => !previous)}>
 		<RN.View style={{ marginLeft: 8, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
 			<RN.Text style={styles.description}>
@@ -74,7 +74,7 @@ function Unexpanded({ addon, styles, setExpanded }: { addon: Addon, styles: any,
 	</RN.TouchableOpacity>;
 }
 
-function Expanded({ addon, styles, setExpanded }: { addon: Addon, styles: any, setExpanded: Fn }) {
+function Expanded({ addon, styles, setExpanded }: { addon: Addon, styles: any, setExpanded: Fn; }) {
 	return <RN.View>
 		<RN.TouchableOpacity onPress={() => setExpanded(previous => !previous)}>
 			<RN.View style={{ marginLeft: 8, marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -92,9 +92,8 @@ function Expanded({ addon, styles, setExpanded }: { addon: Addon, styles: any, s
 				<RN.View key={author.id} style={{ marginLeft: -8 }}>
 					<Redesign.TableRow
 						label={author.name}
-						subLabel={author.id}
 						icon={<Avatar id={author.id} size={32} />}
-						onPress={async function() {
+						onPress={async () => {
 							if (!Users.getUser(author.id)) {
 								await AsyncUsers.fetchProfile(author.id);
 							}
@@ -109,7 +108,7 @@ function Expanded({ addon, styles, setExpanded }: { addon: Addon, styles: any, s
 	</RN.View>;
 }
 
-export function Authors({ addon }: { addon: Addon }) {
+export function Authors({ addon }: { addon: Addon; }) {
 	const [expanded, setExpanded] = React.useState(false);
 	const styles = useStyles();
 

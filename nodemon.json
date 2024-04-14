@@ -3,6 +3,6 @@
 		"dist",
 		"rollup.config-*.mjs"
 	],
-	"exec": "rollup -c",
+	"exec": "bun run build",
 	"ext": "*.*"
 }
