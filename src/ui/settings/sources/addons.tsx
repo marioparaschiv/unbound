@@ -26,6 +26,7 @@ export function Addons({ source, navigation }: { source: Source, navigation: any
 				horizontal
 				style={{ marginTop: 6 }}
 				keyExtractor={(_, idx) => String(idx)}
+				showsHorizontalScrollIndicator={false}
 				renderItem={({ item: addon }) => (
 					<AddonCard
 						key={addon.manifest.id}

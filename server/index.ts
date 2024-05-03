@@ -10,7 +10,7 @@ Bun.serve({
 		const filePath = BASE_PATH + new URL(req.url).pathname;
 		const file = Bun.file(filePath);
 
-		console.info(`\nYielding file:\n    URL: ${req.url}\n    Time: ${getCurrentDate()}`);
+		console.info(`\nYielding file:\n    File: ${filePath}\n    URL: ${req.url}\n    Time: ${getCurrentDate()}`);
 		return new Response(file);
 	},
 

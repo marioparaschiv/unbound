@@ -281,6 +281,8 @@ class Themes extends Manager {
 		const { Theme } = await import('@metro/stores');
 		const { fastFindByProps } = await import('@metro');
 
+		if (settings.get('recovery', false)) return;
+
 		// This whole storage patch inspired by @pylixonly's Bunny implementation
 		// https://github.com/pyoncord/Pyoncord/blob/082e9b2cf9feeb5d448bab6bf923e0ab31ca3887/src/lib/managers/themes.ts#L260-L318
 		const mmkvStorage = fastFindByProps('storage', 'get', 'set', 'parseResolve');

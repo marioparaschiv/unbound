@@ -5,7 +5,7 @@ import { Redesign } from '@metro/components';
 import { Icons } from '@api/assets';
 import { find } from '@metro';
 
-export const useFormStyles = StyleSheet.createStyles(({ size = 24 } = { size: 24 }) => ({
+export const useFormStyles = StyleSheet.createStyles({
 	endStyle: {
 		backgroundColor: Theme.colors.CARD_PRIMARY_BG ?? Theme.colors.BACKGROUND_PRIMARY,
 		borderBottomLeftRadius: 16,
@@ -27,16 +27,22 @@ export const useFormStyles = StyleSheet.createStyles(({ size = 24 } = { size: 24
 	},
 
 	iconTint: {
-		width: size,
-		height: size,
 		tintColor: Theme.colors.INTERACTIVE_NORMAL
 	}
-}));
+});
 
-export const TintedIcon = ({ source, size, style, defaultSource = Icons['MoreHorizontalIcon'] }: IconProps) => {
+export const TintedIcon = ({ source, size = 24, style, defaultSource = Icons['MoreHorizontalIcon'] }: IconProps) => {
 	const styles = useFormStyles({ size });
 
-	return <RN.Image source={source} style={[styles.iconTint, style]} defaultSource={defaultSource} />;
+	return <RN.Image source={source} style={[
+		styles.iconTint,
+		{
+			width: size,
+			height: size,
+		},
+		style]}
+		defaultSource={defaultSource}
+	/>;
 };
 
 export const TrailingText = ({ children, style }: { children: any, style?: TextStyle }) => {

@@ -41,7 +41,12 @@ export function initializeModule(id) {
 	try {
 		__r(id);
 
-		Function.prototype.toString = orig; // In case core-js changed it
+		Object.defineProperty(Function.prototype, 'toString', {
+			value: orig,
+			configurable: true,
+			writable: true
+		});
+
 		return true;
 	} catch {
 		deenumerate(id);

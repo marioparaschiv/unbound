@@ -5,7 +5,6 @@ import { AddonCard } from '@ui/settings/sources/addon-card';
 import { useIcon, type Bundle } from '@managers/sources';
 import { Media, Redesign } from '@metro/components';
 import Empty from '@ui/components/internal/empty';
-import type { Addon } from '@typings/managers';
 import { DCDFileManager } from '@api/storage';
 import { Overflow } from '@ui/components';
 import { fastFindByProps } from '@metro';
@@ -77,6 +76,27 @@ enum StateKind {
 	Uninstall
 }
 
+const getStates = (addon: Bundle[number], manager: typeof Managers[keyof typeof Managers]) => [
+	{
+		text: Strings.UNBOUND_INSTALL,
+		icon: Icons['ic_download_24px'],
+		onPress: () => manager.installWithToast(addon.manifest.url),
+		variant: 'primary'
+	},
+	{
+		text: Strings.UNBOUND_UPDATE,
+		icon: Icons['ic_message_retry'],
+		onPress: () => manager.installWithToast(addon.manifest.url),
+		variant: 'primary'
+	},
+	{
+		text: Strings.UNBOUND_UNINSTALL,
+		icon: Icons['trash'],
+		onPress: () => manager.delete(addon.manifest.id),
+		variant: 'primary'
+	}
+];
+
 function useControlState({ readme, changelog, styles, name }: { readme: string, changelog: Bundle[number]['changelog'], styles: any, name: string }) {
 	const controlState = Redesign.useSegmentedControlState({
 		defaultIndex: 0,
@@ -136,50 +156,23 @@ function Header({ addon, styles }: { addon: Bundle[number], styles: any }) {
 	const manager = React.useMemo(() => Managers[addon.type], []);
 	const entities = manager.useEntities();
 	const icon = useIcon(addon.manifest.icon);
-	const [state, setState] = React.useState({
-		text: Strings.UNBOUND_INSTALL,
-		icon: Icons['ic_download_24px'],
-		onPress: () => void manager.installWithToast(addon.manifest.url),
-		variant: 'primary',
-		kind: StateKind.Install
-	});
+	const [state, setState] = React.useState(StateKind.Install);
 
 	React.useEffect(() => {
 		switch (true) {
 			case !manager.entities.has(addon.manifest.id): {
-				setState({
-					text: Strings.UNBOUND_INSTALL,
-					icon: Icons['ic_download_24px'],
-					onPress: () => manager.installWithToast(addon.manifest.url),
-					variant: 'primary',
-					kind: StateKind.Install
-				});
-
+				setState(StateKind.Install);
 				break;
 			}
 
 			case compareSemanticVersions(addon.manifest.version, manager.entities.get(addon.manifest.id).data.version) > 0: {
-				setState({
-					text: Strings.UNBOUND_UPDATE,
-					icon: Icons['ic_message_retry'],
-					onPress: () => manager.installWithToast(addon.manifest.url),
-					variant: 'primary',
-					kind: StateKind.Update
-				});
-
+				setState(StateKind.Update);
 				break;
 			}
 
 			// If all else fails we can assume the addon should be uninstalled
 			default: {
-				setState({
-					text: Strings.UNBOUND_UNINSTALL,
-					icon: Icons['trash'],
-					onPress: () => manager.delete(addon.manifest.id),
-					variant: 'primary',
-					kind: StateKind.Uninstall
-				});
-
+				setState(StateKind.Uninstall);
 				break;
 			}
 		}
@@ -202,20 +195,20 @@ function Header({ addon, styles }: { addon: Bundle[number], styles: any }) {
 			<RN.View style={{ flexGrow: 1 }} />
 			<Overflow
 				items={[
-					...[StateKind.Install, StateKind.Update].includes(state.kind) ? [
+					...[StateKind.Install, StateKind.Update].includes(state) ? [
 						{
 							get label() {
 								// For searching: UNBOUND_INSTALL_ADDON - UNBOUND_UPDATE_ADDON
-								return Strings[`UNBOUND_${state.kind === StateKind.Install ? 'INSTALL' : 'UPDATE'}_ADDON`].format({ type: addon.manifest.name });
+								return Strings[`UNBOUND_${state === StateKind.Install ? 'INSTALL' : 'UPDATE'}_ADDON`].format({ type: addon.manifest.name });
 							},
 
-							iconSource: Icons[state.kind === StateKind.Install ? 'ic_download_24px' : 'ic_message_retry'],
+							iconSource: Icons[state === StateKind.Install ? 'ic_download_24px' : 'ic_message_retry'],
 							action() {
 								manager.installWithToast(addon.manifest.url);
 							}
 						}
 					] : [],
-					...[StateKind.Uninstall, StateKind.Update].includes(state.kind) ? [
+					...[StateKind.Uninstall, StateKind.Update].includes(state) ? [
 						{
 							get label() {
 								return Strings.UNBOUND_UNINSTALL_ADDON.format({ type: addon.manifest.name });
@@ -253,7 +246,7 @@ function Header({ addon, styles }: { addon: Bundle[number], styles: any }) {
 		<Redesign.Button
 			size={'md'}
 			iconPosition={'start'}
-			{...state}
+			{...getStates(addon, manager)[state]}
 		/>
 	</>;
 }
@@ -288,6 +281,7 @@ function Screenshots({ addon }: { addon: Bundle[number] }) {
 			data={screenshots}
 			horizontal
 			keyExtractor={(_, idx) => String(idx)}
+			showsHorizontalScrollIndicator={false}
 			renderItem={({ item: { uri, width, height }, index }) => {
 				return <RN.TouchableOpacity
 					key={index}
@@ -324,6 +318,7 @@ function Screenshots({ addon }: { addon: Bundle[number] }) {
 							maxWidth: 348 * (width / height),
 							maxHeight: 348,
 							height,
+							borderRadius: 16
 						}}
 					/>
 				</RN.TouchableOpacity>;
@@ -347,7 +342,7 @@ function Control({ readme, changelog, styles, name }) {
 	</>;
 }
 
-function Information({ addon, navigation, source }: { addon: Bundle[number], navigation: any, source: Addon }) {
+function Information({ addon }: { addon: Bundle[number] }) {
 	return <>
 		<Redesign.TableRowGroup title={Strings.UNBOUND_INFORMATION}>
 			<RN.FlatList
@@ -383,24 +378,6 @@ function Information({ addon, navigation, source }: { addon: Bundle[number], nav
 				)}
 			/>
 		</Redesign.TableRowGroup>
-		<Redesign.RowButton
-			icon={Icons['grid']}
-			label={Strings['UNBOUND_ADDON_FROM_SOURCE'].format({ name: addon.manifest.name, source: source.data.name })}
-			subLabel={Strings['UNBOUND_RETURN_TO_SOURCE'].format({ source: source.data.name })}
-			variant={'secondary'}
-			onPress={() => {
-				navigation.push(Keys.Custom, {
-					title: source.data.name,
-					render: () => {
-						const Addons = React.lazy(() => import('@ui/settings/sources/addons').then(({ Addons }) => ({ default: Addons })));
-						return <Addons source={source as any} navigation={navigation} />;
-					}
-				});
-			}}
-		/>
-		<TrailingText style={{ textAlign: 'center', fontSize: 12 }}>
-			{source.data.name} {'→'} {addon.manifest.name}
-		</TrailingText>
 	</>;
 }
 
@@ -417,6 +394,16 @@ export function AddonPage({ addon, navigation }: { addon: Bundle[number], naviga
 					{addon.manifest.description ?? Strings.UNBOUND_ADDON_NO_DESCRIPTION}
 				</RN.Text>
 				<Redesign.TableRowDivider />
+				<Screenshots addon={addon} />
+
+				<Control
+					readme={addon.readme}
+					changelog={addon.changelog}
+					styles={styles}
+					name={addon.manifest.name}
+				/>
+
+				<Information addon={addon} />
 
 				{Array.isArray(addon.suggest) && addon.suggest.length > 0 && (
 					<RN.View style={{ marginTop: 4, marginBottom: 12, gap: 6 }}>
@@ -425,6 +412,7 @@ export function AddonPage({ addon, navigation }: { addon: Bundle[number], naviga
 							data={addon.suggest}
 							keyExtractor={(_, idx) => String(idx)}
 							horizontal
+							showsHorizontalScrollIndicator={false}
 							renderItem={({ item }) => {
 								return <AddonCard
 									addon={source.instance?.find(addon => addon.manifest.id === item)}
@@ -435,20 +423,24 @@ export function AddonPage({ addon, navigation }: { addon: Bundle[number], naviga
 					</RN.View>
 				)}
 
-				<Screenshots addon={addon} />
-
-				<Control
-					readme={addon.readme}
-					changelog={addon.changelog}
-					styles={styles}
-					name={addon.manifest.name}
-				/>
-
-				<Information
-					addon={addon}
-					navigation={navigation}
-					source={source}
-				/>
+			<Redesign.RowButton
+				icon={Icons['grid']}
+				label={Strings['UNBOUND_ADDON_FROM_SOURCE'].format({ name: addon.manifest.name, source: source.data.name })}
+				subLabel={Strings['UNBOUND_RETURN_TO_SOURCE'].format({ source: source.data.name })}
+				variant={'secondary'}
+				onPress={() => {
+					navigation.push(Keys.Custom, {
+						title: source.data.name,
+						render: () => {
+							const Addons = React.lazy(() => import('@ui/settings/sources/addons').then(({ Addons }) => ({ default: Addons })));
+							return <Addons source={source as any} navigation={navigation} />;
+						}
+					});
+				}}
+			/>
+			<TrailingText style={{ textAlign: 'center', fontSize: 12 }}>
+				{source.data.name} {'→'} {addon.manifest.name}
+			</TrailingText>
 			</RN.View>
 		</RN.View>
 	</RN.ScrollView>;

@@ -21,8 +21,8 @@ const useStyles = StyleSheet.createStyles({
 	tag: {
 		color: Theme.colors.TEXT_NORMAL,
 		fontFamily: Constants.Fonts.PRIMARY_BOLD,
-		paddingHorizontal: 10,
-		paddingVertical: 4
+		paddingHorizontal: 8,
+		paddingVertical: 2
 	}
 });
 
