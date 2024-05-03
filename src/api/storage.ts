@@ -1,7 +1,7 @@
 import type { DCDFileManagerType, Payload } from '@typings/api/native';
 import { BundleManager, getNativeModule } from '@api/native';
-import { isEmpty, debounce } from '@utilities';
 import EventEmitter from '@structures/emitter';
+import { isEmpty } from '@utilities';
 
 const Events = new EventEmitter();
 
@@ -93,7 +93,12 @@ export function useSettingsStore(store: string, predicate?: (payload: Payload) =
 		return () => void Events.off('changed', handler);
 	}, []);
 
-	return getStore(store);
+	return {
+		set: (key: string, value: any) => set(store, key, value),
+		get: <T extends any>(key: string, def: T): T & {} => get(store, key, def),
+		toggle: (key: string, def: any) => toggle(store, key, def),
+		remove: (key: string) => remove(store, key),
+	};
 }
 
 export const pendingReload = { value: false };
