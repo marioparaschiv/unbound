@@ -45,5 +45,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          npm unpublish -f @unbound-mod/types@0.1.0
           cd typings-generator/packages/unbound-types
           pnpm publish --access public --no-git-checks
