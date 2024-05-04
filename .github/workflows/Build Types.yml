@@ -38,9 +38,8 @@ jobs:
       - name: Generate Typings
         run: |
           ls
-          ls ..
-          node . ../
-          cd packages/unbound-types
+          node ../typings-generator .
+          cd typings-generator/packages/unbound-types
 
       - name: Publish
         uses: simenandre/publish-with-pnpm@v1
