@@ -36,7 +36,4 @@ jobs:
           pnpm version patch
 
       - name: Commit Changes
-        run: |
-          git add -A
-          git commit -am "[ci] bump version"
-          git push
+        run: git push
