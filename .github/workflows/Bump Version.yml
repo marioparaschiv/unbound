@@ -28,6 +28,11 @@ jobs:
         with:
           version: latest
 
+      - name: Prepare Git
+        run: |
+          git config --local user.email "me@marioparashiv.com"
+          git config --local user.name "GitHub Actions"
+
       - name: Bump Patch Version
         if: ${{ !contains(github.event.head_commit.message, 'major') && !contains(github.event.head_commit.message, 'major') }}
         run: |
@@ -42,7 +47,6 @@ jobs:
         if: contains(github.event.head_commit.message, 'major')
         run: |
           pnpm version major
-
 
       - name: Push Changes
         uses: ad-m/github-push-action@master
