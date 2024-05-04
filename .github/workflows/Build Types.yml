@@ -38,7 +38,7 @@ jobs:
       - name: Generate Typings
         run: |
           ls
-          node ../typings-generator .
+          node typings-generator/dist/index.js .
           cd typings-generator/packages/unbound-types
 
       - name: Publish
