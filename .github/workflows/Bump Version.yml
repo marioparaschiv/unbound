@@ -1,4 +1,4 @@
-name: Build Types
+name: Build Version
 on:
   workflow_dispatch:
   pull_request:
