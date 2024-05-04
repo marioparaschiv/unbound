@@ -1,4 +1,10 @@
 name: Build Version
+permissions:
+  actions: write
+  checks: write
+  contents: write
+  pull-requests: write
+
 on:
   workflow_dispatch:
   pull_request:
