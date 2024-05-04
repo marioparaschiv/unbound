@@ -34,7 +34,10 @@ jobs:
           pnpm build
 
       - name: Generate Typings
-        run: node . ../ && cd packages/unbound-types
+        run: |
+          ls
+          node . ../
+          cd packages/unbound-types
 
       - name: Publish
         uses: simenandre/publish-with-pnpm@v1
