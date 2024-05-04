@@ -35,5 +35,8 @@ jobs:
         run: |
           pnpm version patch
 
-      - name: Commit Changes
-        run: git push
+      - name: Push Changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
