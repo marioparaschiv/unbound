@@ -44,4 +44,6 @@ jobs:
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm publish --access public --no-git-checks
+        run: |
+          cd typings-generator/packages/unbound-types
+          pnpm publish --access public --no-git-checks
