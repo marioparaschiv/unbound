@@ -1,9 +1,4 @@
 name: Build Version
-permissions:
-  actions: write
-  checks: write
-  contents: write
-  pull-requests: write
 
 on:
   workflow_dispatch:
@@ -13,6 +8,13 @@ on:
   push:
     branches:
       - '*'
+
+permissions:
+  actions: write
+  checks: write
+  contents: write
+  pull-requests: write
+
 
 jobs:
   bump:
@@ -45,5 +47,5 @@ jobs:
       - name: Push Changes
         uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.GH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
