@@ -23,7 +23,7 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: pnpm
 
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
         with:
             repository: unbound-mod/typings-generator
             token: ${{ secrets.GH_TOKEN }}
