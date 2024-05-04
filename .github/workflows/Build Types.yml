@@ -1,11 +1,10 @@
 name: Build Types
 on:
-  push:
-    tags:
-      - '*'
+  create:
 
 jobs:
   typings-generator:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
     steps :
       - uses: actions/checkout@v4
