@@ -23,9 +23,13 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: pnpm
 
+      - uses: actions/checkout@v1
+        with:
+            repository: unbound-mod/typings-generator
+            token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Prepare Typings Generator
         run: |
-          git clone https://marioparaschiv:${{ secrets.GITHUB_TOKEN }}@github.com:unbound-mod/typings-generator.git
           pnpm install
           pnpm build
 
