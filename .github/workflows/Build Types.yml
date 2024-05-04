@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v2
         with:
@@ -23,19 +23,20 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: pnpm
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
-            repository: unbound-mod/typings-generator
-            token: ${{ secrets.GH_TOKEN }}
+          repository: unbound-mod/typings-generator
+          path: 'typings-generator'
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Prepare Typings Generator
         run: |
+          cd typings-generator
           pnpm install
           pnpm build
 
       - name: Generate Typings
         run: |
-          ls ..
           node . ../
           cd packages/unbound-types
 
