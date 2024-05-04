@@ -1,14 +1,12 @@
 name: Build Types
 on:
-  workflow_dispatch:
   push:
-    branches:
+    tags:
       - '*'
 
 jobs:
   typings-generator:
     runs-on: ubuntu-latest
-    if: ${{ github.event.head_commit.message == '[ci] bump version' }}
     steps :
       - uses: actions/checkout@v4
 
