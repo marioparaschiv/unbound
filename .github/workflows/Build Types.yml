@@ -8,8 +8,8 @@ on:
 jobs:
   typings-generator:
     runs-on: ubuntu-latest
-
-    steps:
+    if: ${{ github.event.head_commit.message == '[ci] bump version' }}
+    steps :
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v2

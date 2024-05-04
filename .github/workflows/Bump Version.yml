@@ -1,0 +1,41 @@
+name: Build Types
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - '*'
+  push:
+    branches:
+      - '*'
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Bump Minor Version
+        if: ${{ !contains(github.event.head_commit.message, 'major') && !contains(github.event.head_commit.message, 'major') }}
+        run: |
+          pnpm version minor
+
+      - name: Bump Major Version
+        if: contains(github.event.head_commit.message, 'major')
+        run: |
+          pnpm version major
+
+      - name: Bump Patch Version
+        if: contains(github.event.head_commit.message, 'patch')
+        run: |
+          pnpm version patch
+
+      - name: Commit Changes
+        run: |
+          git add -A
+          git commit -am "[ci] bump version"
+          git push
