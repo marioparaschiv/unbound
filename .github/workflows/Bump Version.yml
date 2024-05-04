@@ -26,8 +26,13 @@ jobs:
         with:
           version: latest
 
-      - name: Bump Minor Version
+      - name: Bump Patch Version
         if: ${{ !contains(github.event.head_commit.message, 'major') && !contains(github.event.head_commit.message, 'major') }}
+        run: |
+        pnpm version patch
+
+      - name: Bump Minor Version
+        if: contains(github.event.head_commit.message, 'patch')
         run: |
           pnpm version minor
 
@@ -36,10 +41,6 @@ jobs:
         run: |
           pnpm version major
 
-      - name: Bump Patch Version
-        if: contains(github.event.head_commit.message, 'patch')
-        run: |
-          pnpm version patch
 
       - name: Push Changes
         uses: ad-m/github-push-action@master
