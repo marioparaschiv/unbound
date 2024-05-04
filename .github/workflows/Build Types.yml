@@ -35,7 +35,7 @@ jobs:
 
       - name: Generate Typings
         run: |
-          ls
+          ls ..
           node . ../
           cd packages/unbound-types
 
