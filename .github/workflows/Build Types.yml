@@ -25,7 +25,7 @@ jobs:
 
       - name: Prepare Typings Generator
         run: |
-          git clone git@github.com:unbound-mod/typings-generator.git
+          git clone https://marioparaschiv:${{ secrets.GITHUB_TOKEN }}@github.com:unbound-mod/typings-generator.git
           pnpm install
           pnpm build
 
