@@ -29,7 +29,7 @@ jobs:
       - name: Bump Patch Version
         if: ${{ !contains(github.event.head_commit.message, 'major') && !contains(github.event.head_commit.message, 'major') }}
         run: |
-        pnpm version patch
+          pnpm version patch
 
       - name: Bump Minor Version
         if: contains(github.event.head_commit.message, 'patch')
