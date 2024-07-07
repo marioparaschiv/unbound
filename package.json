@@ -1,6 +1,6 @@
 {
 	"name": "@unbound/client",
-	"version": "1.1.6",
+	"version": "1.1.7",
 	"scripts": {
 		"build": "rollup -c",
 		"build-typings": "rm -rf typings && rm -rf node_modules && npm i && tsc --outDir typings -d --emitDeclarationOnly --skipLibCheck && rm -rf node_modules && pnpm i",
