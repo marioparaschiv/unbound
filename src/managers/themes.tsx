@@ -153,13 +153,14 @@ class Themes extends Manager {
 	async applyBackground() {
 		// Avoid circular dependency
 		const { ReactNative: RN } = await import('@metro/common');
-		const { findByName, fastFindByProps, findStore } = await import('@metro');
+		const { findByName, fastFindByProps } = await import('@metro');
+		const { Theme } = await import('@metro/stores');
 
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
 		const { MessagesWrapper } = fastFindByProps('MessagesWrapper');
 
 		this.patcher.after(Chat, 'default', (_, __, res) => {
-			const theme = this.entities.get(this.settings.get('current', null));
+			const theme = this.entities.get(Theme.theme);
 
 			if (!theme || !theme.instance.background) return res;
 
@@ -177,7 +178,7 @@ class Themes extends Manager {
 		});
 
 		this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {
-			const theme = this.entities.get(this.settings.get('current', null));
+			const theme = this.entities.get(Theme.theme);
 
 			if (!theme || !theme.instance.background) return res;
 
