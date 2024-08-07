@@ -37,7 +37,7 @@ function Toasts() {
 			<TableRow
 				arrow={true}
 				label={'Show Toast'}
-				icon={<TableRowIcon source={Icons['feature_star']} />}
+				icon={<TableRowIcon source={Icons['ic_star_filled']} />}
 				onPress={() => {
 					const toast = showToast({
 						get title() {
@@ -48,7 +48,7 @@ function Toasts() {
 							return Strings[`UNBOUND_TOASTS_EXAMPLE_CONTENT_${alternate ? 'ALTERNATE' : 'PRIMARY'}`];
 						},
 
-						icon: alternate ? 'feature_star' : 'StarIcon'
+						icon: alternate ? 'ic_star_filled' : 'StarIcon'
 					});
 
 					setAlternate(p => !p);

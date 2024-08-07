@@ -20,7 +20,7 @@ const radioItems = [
 	{
 		id: 'identifier',
 		label: 'UNBOUND_IDENTIFIER',
-		icon: 'feature_star',
+		icon: 'ic_star_filled',
 
 		ordering(addons: Addon[]) {
 			return addons.sort((a, b) => a.data.id.localeCompare(b.data.id));

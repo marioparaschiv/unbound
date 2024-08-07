@@ -32,7 +32,7 @@ export function GeneralSearch({ type, search, setSearch }: GeneralSearchProps) {
 		isClearable
 		leadingIcon={() => {
 			return <RN.View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-				<TintedIcon source={getIDByName('Search')} size={16} />
+				<TintedIcon source={getIDByName('ic_search')} size={16} />
 			</RN.View>;
 		}}
 	/>;

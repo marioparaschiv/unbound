@@ -69,7 +69,7 @@ export default [
 				return Strings.GET_STARTED;
 			},
 
-			icon: 'feature_star'
+			icon: 'ic_star_filled'
 		}],
 
 		callback({ next }) {

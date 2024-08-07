@@ -57,7 +57,7 @@ const infoMap = {
 		i18n: 'NAME'
 	},
 	id: {
-		icon: 'feature_star',
+		icon: 'ic_star_filled',
 		i18n: 'IDENTIFIER'
 	},
 	version: {
