@@ -27,12 +27,8 @@ export function initialize() {
   const LaunchPadContainer = findByName('LaunchPadContainer', { interop: false });
 
   Patcher.after(LaunchPadContainer, 'default', (_, __, res) => {
-    const [left, setLeftBase] = React.useState<DimensionValue>(EditorStates.HIDDEN);
-    const setLeft = callbackWithAnimation(setLeftBase);
-
-    function setEditorVisibility(value: EditorState) {
-      setLeft(value);
-    }
+    const [left, setLeft] = React.useState<EditorState>(EditorStates.HIDDEN);
+    const setEditorVisibility = callbackWithAnimation(setLeft);
 
     return <>
       {res}

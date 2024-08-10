@@ -63,7 +63,7 @@ const Draggable = ({ children, layout }: DraggableProps) => {
 
         Animated.spring(pan, {
           toValue: { x, y },
-          useNativeDriver: true,
+          useNativeDriver: false,
         }).start();
       },
     })
