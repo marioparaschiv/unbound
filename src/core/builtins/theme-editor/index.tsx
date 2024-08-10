@@ -8,23 +8,50 @@
 import { React, ReactNative as RN } from '@metro/common';
 import { createPatcher } from '@patcher';
 import { findByName } from '@metro';
+import { Redesign } from '@metro/components';
+import Editor from './editor';
+import { getIDByName } from '@api/assets';
+import { callbackWithAnimation } from '@utilities';
+import type { DimensionValue } from 'react-native';
+import { EditorStates, type EditorState } from './common';
+import { Draggable } from '@ui/components/internal';
+
 const Patcher = createPatcher('onboarding');
 
 export const data = {
-	id: 'modules.editor',
-	default: true
+  id: 'modules.editor',
+  default: true
 };
 
 export function initialize() {
-	const LaunchPadContainer = findByName('LaunchPadContainer', { interop: false });
+  const LaunchPadContainer = findByName('LaunchPadContainer', { interop: false });
 
-	Patcher.after(LaunchPadContainer, 'default', (_, __, res) => {
-		return <>
-			{res}
-		</>;
-	});
+  Patcher.after(LaunchPadContainer, 'default', (_, __, res) => {
+    const [left, setLeftBase] = React.useState<DimensionValue>(EditorStates.HIDDEN);
+    const setLeft = callbackWithAnimation(setLeftBase);
+
+    function setEditorVisibility(value: EditorState) {
+      setLeft(value);
+    }
+
+    return <>
+      {res}
+      <Draggable layout={{ width: 48, height: 48 }}>
+        <Redesign.IconButton
+          onPress={() => setEditorVisibility(EditorStates.VISIBLE)}
+          icon={getIDByName('ic_paint_brush')}
+          variant={'primary'}
+          size={'lg'}
+        />
+      </Draggable>
+      <Editor
+        left={left}
+        setEditorVisibility={setEditorVisibility}
+      />
+    </>;
+  });
 }
 
 export function shutdown() {
-	Patcher.unpatchAll();
+  Patcher.unpatchAll();
 }
