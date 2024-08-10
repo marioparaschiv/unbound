@@ -1,4 +1,5 @@
 export * as ErrorBoundary from './error-boundary';
+export * as ThemeEditor from './theme-editor';
 export * as Onboarding from './onboarding';
 export * as AntiTrack from './anti-track';
 export * as Protocols from './protocols';

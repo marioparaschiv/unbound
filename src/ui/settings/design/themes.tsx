@@ -33,6 +33,7 @@ export const callback = ({ type, ref }) => {
 			{
 				text: Strings.UNBOUND_THEME_GET_OPTION_CREATE,
 				variant: 'tertiary',
+				// Should push editor/index.tsx
 				onPress: noop
 			},
 		]
