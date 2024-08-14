@@ -12,13 +12,14 @@ import * as managers from '@managers';
 
 interface AddonCardProps {
 	type: Manager;
+  showOverflow: boolean;
 	showToggles: boolean;
 	showManagerIcon?: ((addon: Addon) => boolean) | boolean;
 	recovery: boolean;
 	addon: Addon;
 	navigation: any;
 	bottom?: ReactElement;
-	onPress?: Fn;
+	onPress?: (addon: Addon) => void;
 	arrow?: boolean;
 }
 
@@ -42,7 +43,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 	}
 
 	render() {
-		const { addon, recovery, onPress, styles, showToggles, showManagerIcon, bottom, arrow } = this.props;
+		const { addon, recovery, onPress, styles, showOverflow, showToggles, showManagerIcon, bottom, arrow } = this.props;
 		const { name, version, description } = addon.data;
 		const error = this.manager.errors.get(addon.id ?? addon.data.path);
 
@@ -52,7 +53,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 				border={'faint'}
 				shadow={'low'}
 				variant={'primary'}
-				onPress={onPress}
+				onPress={() => onPress(addon)}
 				style={{
 					marginTop: 12,
 					padding: 12,
@@ -73,7 +74,7 @@ class InternalAddonCard extends React.Component<InternalAddonCardProps> {
 							{version}
 						</RN.Text>
 						<RN.View style={{ flexGrow: 1 }} />
-						{this.renderOverflow()}
+						{showOverflow && this.renderOverflow()}
 						{showToggles && this.renderSwitch()}
 						{arrow && (
 							<TintedIcon

@@ -61,7 +61,7 @@ export default function Design() {
 						const index = settings.get('designPageIndex', 0);
 						const item = items[index];
 
-						item.callback({ ref, type: item.id });
+						item.callback({ ref, type: item.id, navigation });
 					}}
 				/>
 			});

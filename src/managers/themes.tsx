@@ -2,7 +2,8 @@ import { findInReactTree, unitToHex, withoutOpacity } from '@utilities';
 import type { Resolveable } from '@typings/managers';
 import Manager, { ManagerType } from './base';
 import { createPatcher } from '@patcher';
-import Storage from '@api/storage';
+import Storage, { getStore } from '@api/storage';
+import { Dispatcher } from '@metro/common';
 
 type SemanticKey = string;
 type RawKey = string;
@@ -108,6 +109,24 @@ class Themes extends Manager {
 		this.applyBackground();
 		this.applyPatches();
 		this.applyStoragePatch();
+
+    const editorSettings = getStore('theme-editor');
+    let previous = null;
+
+		Dispatcher.subscribe('ENABLE_THEME_EDITOR', () => {
+      previous = this.settings.get('current', null);
+
+      import('@metro').then(({ findByProps }) => {
+        findByProps('updateTheme').updateTheme(editorSettings.get('selected', 'dark'));
+      })
+		})
+
+		Dispatcher.subscribe('DISABLE_THEME_EDITOR', () => {
+      import('@metro').then(({ findByProps }) => {
+        findByProps('updateTheme').updateTheme(previous ?? 'dark');
+      })
+		})
+
 		this.initialized = true;
 	}
 

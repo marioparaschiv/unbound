@@ -1,8 +1,10 @@
+import type { useSettingsStore } from '@api/storage';
 import type { DimensionValue } from 'react-native';
 
 export type EditorProps = {
   left: DimensionValue;
   setEditorVisibility: (value: EditorState) => void;
+  settings: ReturnType<typeof useSettingsStore>
 };
 
 export const EditorStates = {

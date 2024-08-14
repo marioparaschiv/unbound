@@ -163,16 +163,17 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 				renderItem={({ item }) => (
 					<AddonCard
 						recovery={isRecovery}
+						showOverflow={true}
 						showToggles={false}
 						type={type}
 						addon={item}
 						navigation={navigation}
 						showManagerIcon
 						bottom={item.data['tags'] && item.data['tags'].length > 0 && <Tags source={item as any} />}
-						onPress={() => navigation.push(Keys.Custom, {
-							title: item.data.name,
+						onPress={addon => navigation.push(Keys.Custom, {
+							title: addon.data.name,
 							render: () => <Addons
-								source={item as any}
+								source={addon as any}
 								navigation={navigation}
 							/>
 						})}
@@ -188,4 +189,3 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 		</RN.ScrollView>
 	</RN.View>;
 };
-

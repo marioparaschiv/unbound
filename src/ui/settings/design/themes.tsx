@@ -7,6 +7,7 @@ import Themes from '@managers/themes';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 import { noop } from '@utilities';
+import { Keys } from '@constants';
 
 function ThemesPage() {
 	const addons = Themes.useEntities();
@@ -21,7 +22,7 @@ function ThemesPage() {
 	</RN.View>;
 };
 
-export const callback = ({ type, ref }) => {
+export const callback = ({ type, ref, navigation }) => {
 	showAlert({
 		title: Strings.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
 		content: Strings.UNBOUND_THEME_GET_DESC,
@@ -34,7 +35,15 @@ export const callback = ({ type, ref }) => {
 				text: Strings.UNBOUND_THEME_GET_OPTION_CREATE,
 				variant: 'tertiary',
 				// Should push editor/index.tsx
-				onPress: noop
+        onPress: () => navigation.push(Keys.Custom, {
+          title: Strings.UNBOUND_THEME_EDITOR,
+          render: () => {
+            const SelectPage = React.lazy(() => import('@ui/settings/design/editor/select')
+								.then(({ SelectPage }) => ({ default: SelectPage })));
+
+							return <SelectPage />;
+          }
+        })
 			},
 		]
 	});

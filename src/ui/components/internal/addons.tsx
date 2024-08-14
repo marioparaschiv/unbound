@@ -18,14 +18,28 @@ import { Strings } from '@api/i18n';
 interface AddonListProps {
 	type: Manager;
 	addons: Addon[];
+  showOverflow?: boolean;
 	showHeaderRight?: boolean;
 	showToggles?: boolean;
 	showManagerIcon?: ((addon: Addon) => boolean) | boolean;
 	onPressInstall?: ({ ref, settings, type }) => any;
+  onPress?: (addon: Addon) => void;
 	headerRightMargin?: boolean;
+	arrow?: boolean,
 }
 
-export default function Addons({ addons, type, showHeaderRight = true, showToggles = true, showManagerIcon = true, onPressInstall, headerRightMargin }: AddonListProps) {
+export default function Addons({
+  addons,
+  type,
+  showHeaderRight = true,
+  showOverflow = true,
+  showToggles = true,
+  showManagerIcon = true,
+  onPressInstall,
+  headerRightMargin,
+  onPress,
+  arrow = false
+}: AddonListProps) {
 	const [search, setSearch] = React.useState('');
 	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
 	const navigation = Redesign.useNavigation();
@@ -112,12 +126,15 @@ export default function Addons({ addons, type, showHeaderRight = true, showToggl
 				scrollEnabled={false}
 				renderItem={({ item }) => <AddonCard
 					recovery={isRecovery}
+					showOverflow={showOverflow}
 					showToggles={showToggles}
 					showManagerIcon={showManagerIcon}
 					type={type}
 					addon={item}
 					navigation={navigation}
 					bottom={manager.type === ManagerType.Icons && item.data.id === 'default' ? null : <Authors addon={item} />}
+					arrow={arrow}
+					onPress={onPress}
 				/>}
 				ListEmptyComponent={<Empty>
 					{Strings.UNBOUND_ADDONS_EMPTY.format({ type: manager.name.toLowerCase() })}

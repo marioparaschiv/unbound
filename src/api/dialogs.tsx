@@ -18,6 +18,7 @@ export function showAlert(options: AlertProps) {
 					}}
 				>
 					{options.component}
+					{options.component}
 				</RN.View>
 				{options.buttons?.length > 0 && options.buttons.map(button => (
 					React.createElement(

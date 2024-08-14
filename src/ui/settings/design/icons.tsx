@@ -18,7 +18,7 @@ function IconsPage() {
 	</RN.View>;
 }
 
-export const callback = ({ type, ref }) => showInstallAlert({ type, ref });
+export const callback = ({ type, ref, navigation: _ }) => showInstallAlert({ type, ref });
 export default {
 	page: <IconsPage />,
 	callback,
