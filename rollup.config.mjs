@@ -4,10 +4,9 @@ import { execSync } from 'child_process';
 import { typescriptPaths as paths } from 'rollup-plugin-typescript-paths';
 import { nodeResolve as node } from '@rollup/plugin-node-resolve';
 import { swc, minify } from 'rollup-plugin-swc3';
-import hermes from '@unboundmod/rollup-plugin';
+import hermes from '@unbound-mod/rollup-plugin';
 import replace from '@rollup/plugin-replace';
 import json from '@rollup/plugin-json';
-import { resolve } from 'path';
 
 const revision = (() => {
 	try {
@@ -17,7 +16,6 @@ const revision = (() => {
 	}
 })();
 
-const hermesc = resolve(process.cwd(), 'node_modules', 'discord-hermesc');
 
 /** @type {import('rollup').RollupOptions} */
 const config = {
@@ -58,7 +56,7 @@ const config = {
 			 	})();`;
 			}
 		},
-		hermes({ hermesc }),
+		hermes(),
 	],
 
 	onwarn(warning, warn) {
