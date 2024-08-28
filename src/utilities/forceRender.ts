@@ -12,7 +12,7 @@ const overrides = {
 
 const keys = Object.keys(overrides);
 
-function forceRender(component) {
+function forceRender(component: Fn) {
 	return (...args) => {
 		const ReactDispatcher = (React as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentDispatcher.current;
 		const originals = keys.map(e => [e, ReactDispatcher[e]]);

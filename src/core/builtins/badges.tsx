@@ -1,6 +1,7 @@
+import { TouchableOpacity, View, Image } from 'react-native';
 import type { Badge } from '@typings/core/builtins/badges';
 import type { BuiltIn } from '@typings/core/builtins';
-import { ReactNative as RN } from '@metro/common';
+import { useEffect, useState } from 'react';
 import { Links, Times } from '@constants';
 import { createPatcher } from '@patcher';
 import { showToast } from '@api/toasts';
@@ -24,10 +25,10 @@ export function initialize() {
 
 	for (const Badge of Badges) {
 		Patcher.after(Badge, 'default', (_, [{ user, isUnbound, style, ...rest }], res) => {
-			const [badges, setBadges] = React.useState({ data: [] });
+			const [badges, setBadges] = useState({ data: [] });
 			if (isUnbound) return res;
 
-			React.useEffect(() => {
+			useEffect(() => {
 				try {
 					fetchUserBadges(user.id).then(badges => setBadges({ data: badges }));
 				} catch (e) {
@@ -80,7 +81,7 @@ async function fetchUserBadges(id: string): Promise<string[]> {
 }
 
 const makeBadge = (badge, style): JSX.Element => {
-	return <RN.View
+	return <View
 		/* @ts-expect-error */
 		unbound={true}
 		key={badge}
@@ -101,14 +102,14 @@ const makeBadge = (badge, style): JSX.Element => {
 				? 4
 				: 8}
 		/>
-	</RN.View>;
+	</View>;
 };
 
 
 const Badge = ({ type, size, margin }: { type: string; size: number; margin: number; }): JSX.Element => {
-	const [badge, setBadge] = React.useState(null);
+	const [badge, setBadge] = useState(null);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		try {
 			fetchBadge(type).then(setBadge);
 		} catch (e) {
@@ -133,13 +134,13 @@ const Badge = ({ type, size, margin }: { type: string; size: number; margin: num
 	const uri = badge.url[Theme.theme] ?? badge.url.dark;
 	if (!uri) return null;
 
-	return <RN.TouchableOpacity onPress={() => showToast({ title: badge.name, icon: { uri }, tintedIcon: false })}>
-		<RN.Image
+	return <TouchableOpacity onPress={() => showToast({ title: badge.name, icon: { uri }, tintedIcon: false })}>
+		<Image
 			// @ts-expect-error
 			style={styles.image}
 			source={{ uri }}
 		/>
-	</RN.TouchableOpacity>;
+	</TouchableOpacity>;
 };
 
 async function fetchBadge(type: string): Promise<Badge> {

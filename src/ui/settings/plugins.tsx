@@ -1,12 +1,12 @@
-import { showInstallAlert } from '@ui/components/internal/install-modal';
-import { ReactNative as RN } from '@metro/common';
-import { Addons } from '@ui/components/internal';
+import { showInstallAlert } from '@ui/addons/install-modal';
 import PluginManager from '@managers/plugins';
-import { Redesign } from '@metro/components';
+import { Design } from '@metro/components';
+import { AddonList } from '@ui/addons';
 import { Strings } from '@api/i18n';
+import { View } from 'react-native';
 
-export default function Plugins({ headerRightMargin = false }: { headerRightMargin: boolean }) {
-	const navigation = Redesign.useNavigation();
+export default function Plugins({ headerRightMargin = false }: { headerRightMargin: boolean; }) {
+	const navigation = Design.useNavigation();
 	const addons = PluginManager.useEntities();
 
 	const unsubscribe = navigation.addListener('focus', () => {
@@ -17,13 +17,13 @@ export default function Plugins({ headerRightMargin = false }: { headerRightMarg
 		});
 	});
 
-	return <RN.View>
-		<Addons
+	return <View>
+		<AddonList
 			type='Plugins'
 			addons={addons}
 			onPressInstall={({ type, ref }) => showInstallAlert({ type, ref })}
 			headerRightMargin={headerRightMargin}
 		/>
-	</RN.View>;
+	</View>;
 };
 

@@ -1,41 +1,56 @@
 import type { ToastOptions } from '@typings/api/toasts';
-import { get, useSettingsStore } from '@api/storage';
 import { createLogger } from '@structures/logger';
-import { find, fastFindByProps } from '@metro';
 import { ToastContainer } from '@ui/toasts';
+import { find, findByProps } from '@metro';
 import { addToast } from '@stores/toasts';
 import { createPatcher } from '@patcher';
+import { getStore } from '@api/storage';
+import { uuid } from '@utilities';
+
+export type * from '@typings/api/toasts';
 
 const Patcher = createPatcher('toasts');
 const Logger = createLogger('Toasts');
+const Settings = getStore('unbound');
 
 export function showToast(options: ToastOptions) {
+	options.id ??= uuid();
+
 	return addToast(options);
 }
 
 try {
-	const { ToastContainer: Container } = fastFindByProps('ToastContainer', { lazy: true });
+	const { ToastContainer: Container } = findByProps('ToastContainer', { lazy: true });
 	const Toasts = find(x => x.open && x.close && Object.keys(x).length === 2, { lazy: true });
 
 	// Render our toasts
-	Patcher.after(Container, 'type', (_, args, res) => {
-		const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('toasts'));
+	Patcher.after(Container, 'type', (_, __, res) => {
+		const settings = Settings.useSettingsStore(({ key }) => key.startsWith('toasts'));
 
 		if (!settings.get('toasts.enabled', true)) {
 			return res;
 		}
 
+		setTimeout(() => console.log(res), 5000);
+
+		// return <Portal.Portal>
 		return <ToastContainer />;
+		// </Portal.Portal>;
 	});
 
 	// Convert Discord's toasts into our toasts
 	Patcher.instead(Toasts, 'open', (self, args: [ToastOptions], orig) => {
-		if (get('unbound', 'toasts.enabled', true)) {
+		if (Settings.get('toasts.enabled', true)) {
 			const [options] = args;
+
+			console.log(options);
 
 			options.title = options.content;
 			options.tintedIcon = false;
 			delete options.content;
+
+			// Set default duration for discord toasts such as badges.
+			options.duration ??= 5000;
 
 			return showToast(options);
 		}

@@ -1,56 +1,50 @@
-import type { AfterOverwrite, BeforeOverwrite, InsteadOverwrite, Patch, Patcher } from '@typings/api/patcher';
+import type { AfterCallback, BeforeCallback, InsteadCallback, PatchOverwrite, Patch } from '@typings/api/patcher';
 import { createLogger } from '@structures/logger';
+
+export type * from '@typings/api/patcher';
+
 
 const Logger = createLogger('Patcher');
 
-export enum Type {
+export enum PatchType {
 	Before = 'before',
 	Instead = 'instead',
 	After = 'after',
 }
 
-export const patches: Patch[] = [];
+export const patches: PatchOverwrite[] = [];
 
-export function before<
-	M extends Record<P, Fn>,
-	P extends PropOf<M>
->(caller: string, mdl: M, func: P, callback: BeforeOverwrite<M[P]>, once: boolean = false): () => void {
-	return patch(caller, mdl, func, callback, Type.Before, once);
+export function before<M extends Record<P, Fn>, P extends PropOf<M>>(caller: string, mdl: M, func: P, callback: BeforeCallback<M[P]>, once: boolean = false): () => void {
+	return patch(caller, mdl, func, callback, PatchType.Before, once);
 }
 
-export function instead<
-	M extends Record<P, Fn>,
-	P extends PropOf<M>
->(caller: string, mdl: M, func: P, callback: InsteadOverwrite<M[P]>, once: boolean = false): () => void {
-	return patch(caller, mdl, func, callback, Type.Instead, once);
+export function instead<M extends Record<P, Fn>, P extends PropOf<M>>(caller: string, mdl: M, func: P, callback: InsteadCallback<M[P]>, once: boolean = false): () => void {
+	return patch(caller, mdl, func, callback, PatchType.Instead, once);
 }
 
-export function after<
-	M extends Record<P, Fn>,
-	P extends PropOf<M>
->(caller: string, mdl: M, func: P, callback: AfterOverwrite<M[P]>, once: boolean = false): () => void {
-	return patch(caller, mdl, func, callback, Type.After, once);
+export function after<M extends Record<P, Fn>, P extends PropOf<M>>(caller: string, mdl: M, func: P, callback: AfterCallback<M[P]>, once: boolean = false): () => void {
+	return patch(caller, mdl, func, callback, PatchType.After, once);
 }
 
 export function createPatcher(name: string) {
 	return {
 		getPatchesByCaller,
-		before<M extends Record<P, Fn>, P extends PropOf<M>>(mdl: M, func: P, callback: BeforeOverwrite<M[P]>, once: boolean = false) {
+		unpatchAll: () => unpatchAll(name),
+		before<M extends Record<P, Fn>, P extends PropOf<M>>(mdl: M, func: P, callback: BeforeCallback<M[P]>, once: boolean = false) {
 			return before(name, mdl, func, callback, once);
 		},
-		instead<M extends Record<P, Fn>, P extends PropOf<M>>(mdl: M, func: P, callback: InsteadOverwrite<M[P]>, once: boolean = false) {
-			return instead(name, mdl, func, callback, once);
-		},
-		after<M extends Record<P, Fn>, P extends PropOf<M>>(mdl: M, func: P, callback: AfterOverwrite<M[P]>, once: boolean = false) {
+		after<M extends Record<P, Fn>, P extends PropOf<M>>(mdl: M, func: P, callback: AfterCallback<M[P]>, once: boolean = false) {
 			return after(name, mdl, func, callback, once);
 		},
-		unpatchAll: () => unpatchAll(name),
+		instead<M extends Record<P, Fn>, P extends PropOf<M>>(mdl: M, func: P, callback: InsteadCallback<M[P]>, once: boolean = false) {
+			return instead(name, mdl, func, callback, once);
+		},
 	};
 }
 
 export function getPatchesByCaller(id?: string) {
 	if (!id) return [];
-	const payload: Patcher[] = [];
+	const payload: Patch[] = [];
 
 	for (const entry of patches) {
 		const store = [
@@ -78,7 +72,7 @@ export function unpatchAll(caller?: string): void {
 	}
 }
 
-function override(patch: Patch) {
+function override(patch: PatchOverwrite) {
 	return function () {
 		if (
 			!patch?.patches?.before.length &&
@@ -147,7 +141,7 @@ function override(patch: Patch) {
 	};
 }
 
-function push(mdl: Record<string, any> | Function, func: string): Patch {
+function push(mdl: Record<string, any> | Function, func: string): PatchOverwrite {
 	// Detect functional component patches
 	if (func === 'renderPatched') {
 		mdl[func] = function (...args) {
@@ -215,7 +209,7 @@ function get(mdl: Record<string, any> | Function, func: string) {
 	return push(mdl, func);
 }
 
-function patch<F extends Fn>(caller: string, mdl: Record<string, any> | Function, func: string, callback: BeforeOverwrite<F> | InsteadOverwrite<F> | AfterOverwrite<F>, type = Type.After, once = false): () => void {
+function patch<F extends Fn>(caller: string, mdl: Record<string, any> | Function, func: string, callback: BeforeCallback<F> | InsteadCallback<F> | AfterCallback<F>, type: PatchType = PatchType.After, once = false): () => void {
 	if (!caller || typeof caller !== 'string') {
 		throw new TypeError('first argument "caller" must be of type string');
 	} else if (!mdl || !['function', 'object'].includes(typeof mdl)) {
@@ -230,7 +224,7 @@ function patch<F extends Fn>(caller: string, mdl: Record<string, any> | Function
 
 	const current = get(mdl, func);
 
-	const patch = {
+	const patch: Patch = {
 		caller,
 		once,
 		type,

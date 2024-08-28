@@ -1,12 +1,12 @@
 import type { Addon, Manifest, Resolveable } from '@typings/managers';
 import { createLogger } from '@structures/logger';
 import EventEmitter from '@structures/emitter';
-import { DCDFileManager } from '@api/storage';
+import { LayoutAnimation } from 'react-native';
+import { useEffect, useState } from 'react';
 import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
 import { Regex } from '@constants';
-
-const { LayoutAnimation: { configureNext, Presets } } = ReactNative;
+import fs from '@api/fs';
 
 export enum ManagerType {
 	Plugins = 'plugin',
@@ -133,12 +133,13 @@ class Manager extends EventEmitter {
 			{
 				label: 'UNBOUND_UNINSTALL',
 				icon: 'trash',
+				variant: 'destructive',
 				action: async () => {
 					// Avoid circular dependency
 					const { Strings } = await import('@api/i18n');
-					const { showAlert } = await import('@api/dialogs');
+					const { showDialog } = await import('@api/dialogs');
 
-					showAlert({
+					showDialog({
 						title: Strings.UNBOUND_UNINSTALL_ADDON.format({ type: capitalize(this.type) }),
 						content: Strings.UNBOUND_UNINSTALL_ADDON_DESC.format({ name: addon.data.name }),
 						buttons: [
@@ -199,9 +200,9 @@ class Manager extends EventEmitter {
 	}
 
 	async onFinishedInstalling(addon: Addon, manifest) {
-		const { Redesign } = await import('@metro/components');
+		const { Design } = await import('@metro/components');
 
-		Redesign.dismissAlerts();
+		Design.dismissAlerts();
 
 		await this.showAddonToast(addon, 'UNBOUND_SUCCESSFULLY_INSTALLED');
 		return addon;
@@ -233,8 +234,8 @@ class Manager extends EventEmitter {
 	}
 
 	save(bundle: string, manifest: Manifest) {
-		DCDFileManager.writeFile('documents', `${this.path}/${manifest.id}/bundle.${this.extension}`, bundle, 'utf8');
-		DCDFileManager.writeFile('documents', `${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
+		fs.write(`${this.path}/${manifest.id}/bundle.${this.extension}`, bundle);
+		fs.write(`${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2));
 	}
 
 	load(bundle: string, manifest: Manifest): Addon {
@@ -283,7 +284,7 @@ class Manager extends EventEmitter {
 
 		try {
 			this.unload(addon);
-			await DCDFileManager.removeFile('documents', `${this.path}/${addon.data.id}`);
+			await fs.rm(`${this.path}/${addon.data.id}`);
 			await this.showAddonToast(null, 'UNBOUND_SUCCESSFULLY_UNINSTALLED', 'CloseSmallIcon');
 		} catch (e) {
 			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message ?? e);
@@ -428,11 +429,11 @@ class Manager extends EventEmitter {
 	}
 
 	useEntities() {
-		const [, forceUpdate] = React.useState({});
+		const [, forceUpdate] = useState({});
 
-		React.useEffect(() => {
+		useEffect(() => {
 			function handler() {
-				configureNext(Presets.spring);
+				LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
 				forceUpdate({});
 			}
 

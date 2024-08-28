@@ -3,7 +3,6 @@
  * @param {function} func - The function to debounce
  * @return {boolean|Promise<boolean>}
  */
-
 function attempt(func: Fn): boolean | Promise<boolean> {
 	try {
 		const res = func();
@@ -13,7 +12,7 @@ function attempt(func: Fn): boolean | Promise<boolean> {
 		}
 
 		return true;
-	} catch {
+	} catch (error) {
 		// Bail.
 		return false;
 	}

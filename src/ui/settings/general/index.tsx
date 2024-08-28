@@ -1,21 +1,21 @@
-import { Theme, ReactNative as RN, StyleSheet } from '@metro/common';
+import { KeyboardAvoidingView, ScrollView, Text } from 'react-native';
+import { Theme, StyleSheet } from '@metro/common';
+import { BundleInfo, reload } from '@api/native';
 import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';
-import { Section } from '@ui/components/misc';
-import { Redesign } from '@metro/components';
-import Plugins from '@managers/plugins';
-import Themes from '@managers/themes';
+import { Design } from '@metro/components';
+import { showDialog } from '@api/dialogs';
+import { Section } from '@ui/misc/forms';
+import Unbound from '@ui/icons/unbound';
 import { Linking } from '@metro/api';
-import { reload } from '@api/native';
 import { Strings } from '@api/i18n';
 import Assets from '@api/assets';
-
+import { useMemo } from 'react';
 
 import Developer from '../developer';
 import Toasts from './toasts';
-import { showAlert } from '@api/dialogs';
 
-const { TableRow, TableSwitchRow, TableRowIcon } = Redesign;
+const { TableRow, TableSwitchRow, TableRowIcon } = Design;
 
 const useStyles = StyleSheet.createStyles({
 	trailingText: {
@@ -27,7 +27,8 @@ const useStyles = StyleSheet.createStyles({
 });
 
 function General() {
-	const navigation = Redesign.useNavigation();
+	const properties = useMemo(() => (HermesInternal as any).getRuntimeProperties(), []);
+	const navigation = Design.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const styles = useStyles();
 
@@ -36,16 +37,17 @@ function General() {
 		GitHub: Assets.getIDByName('img_account_sync_github_white'),
 		Development: Assets.getIDByName('ic_progress_wrench_24px'),
 		Plugins: Assets.getIDByName('ic_wand'),
-		Themes: Assets.getIDByName('ic_paint_brush'),
 		Toasts: Assets.getIDByName('ic_notification_settings'),
 		Grid: Assets.getIDByName('GridSquareIcon'),
-		Retry: Assets.getIDByName('ic_message_retry'),
+		Shield: Assets.getIDByName('ShieldIcon'),
+		Refresh: Assets.getIDByName('RefreshIcon'),
 		Discord: Assets.getIDByName('logo'),
+		HammerAndChisel: Assets.getIDByName('ic_hammer_and_chisel_24px'),
 		Debug: Assets.getIDByName('debug')
 	};
 
-	return <RN.ScrollView>
-		<RN.KeyboardAvoidingView
+	return <ScrollView>
+		<KeyboardAvoidingView
 			enabled={true}
 			behavior='position'
 			style={styles.container}
@@ -56,11 +58,11 @@ function General() {
 				<TableSwitchRow
 					label={Strings.UNBOUND_RECOVERY_MODE}
 					subLabel={Strings.UNBOUND_RECOVERY_MODE_DESC}
-					icon={<TableRowIcon source={Icons.Retry} />}
+					icon={<TableRowIcon source={Icons.Shield} />}
 					value={settings.get('recovery', false)}
 					onValueChange={() => {
 						settings.toggle('recovery', false);
-						showAlert({
+						showDialog({
 							title: Strings.UNBOUND_CHANGE_RESTART,
 							content: Strings.UNBOUND_CHANGE_RESTART_DESC,
 							onCancel: () => settings.toggle('recovery', false),
@@ -72,6 +74,12 @@ function General() {
 							]
 						});
 					}}
+				/>
+				<TableRow
+					label={Strings.UNBOUND_RESTART}
+					icon={<TableRowIcon source={Icons.Refresh} />}
+					arrow
+					onPress={reload}
 				/>
 			</Section>
 			<Section>
@@ -85,29 +93,13 @@ function General() {
 					arrow
 				/>
 				<TableRow
-					label={Strings.UNBOUND_DEVELOPMENT_SETTINGS}
+					label={Strings.UNBOUND_DEVELOPER_SETTINGS}
 					icon={<TableRowIcon source={Icons.Development} />}
 					onPress={() => navigation.push(Keys.Custom, {
-						title: Strings.UNBOUND_DEVELOPMENT_SETTINGS,
+						title: Strings.UNBOUND_DEVELOPER_SETTINGS,
 						render: Developer
 					})}
 					arrow
-				/>
-			</Section>
-			<Section title={Strings.UNBOUND_INFO}>
-				<TableRow
-					label={Strings.UNBOUND_INSTALLED_PLUGINS}
-					icon={<TableRowIcon source={Icons.Plugins} />}
-					trailing={<RN.Text style={styles.trailingText}>
-						{Plugins.addons.length}
-					</RN.Text>}
-				/>
-				<TableRow
-					label={Strings.UNBOUND_INSTALLED_THEMES}
-					icon={<TableRowIcon source={Icons.Themes} />}
-					trailing={<RN.Text style={styles.trailingText}>
-						{Themes.addons.length}
-					</RN.Text>}
 				/>
 			</Section>
 			<Section title='Links'>
@@ -120,18 +112,36 @@ function General() {
 				<TableRow
 					label={Strings.UNBOUND_GITHUB}
 					icon={<TableRowIcon source={Icons.GitHub} />}
-					onPress={() => RN.Linking.openURL(Links.GitHub)}
-					arrow
-				/>
-				<TableRow
-					label={`X / ${Strings.UNBOUND_TWITTER}`}
-					icon={<TableRowIcon source={Icons.X} />}
-					onPress={() => RN.Linking.openURL(Links.X)}
+					onPress={() => Linking.openURL(Links.GitHub)}
 					arrow
 				/>
 			</Section>
-		</RN.KeyboardAvoidingView>
-	</RN.ScrollView>;
+			<Section title={Strings.UNBOUND_INFO}>
+				<TableRow
+					label={Strings.UNBOUND_UNBOUND_VERSION}
+					onPress={() => Linking.openURL(`https://github.com/unbound-mod/client/commit/${window.unbound.version}`)}
+					icon={<TableRowIcon IconComponent={Unbound} />}
+					trailing={<Text style={styles.trailingText}>
+						{window.unbound.version}
+					</Text>}
+				/>
+				<TableRow
+					label={Strings.UNBOUND_DISCORD_VERSION}
+					icon={<TableRowIcon source={Icons.Discord} />}
+					trailing={<Text style={styles.trailingText}>
+						{BundleInfo.Version}
+					</Text>}
+				/>
+				<TableRow
+					label={Strings.UNBOUND_BYTECODE_VERSION}
+					icon={<TableRowIcon source={Icons.HammerAndChisel} />}
+					trailing={<Text style={styles.trailingText}>
+						{properties['Bytecode Version']}
+					</Text>}
+				/>
+			</Section>
+		</KeyboardAvoidingView>
+	</ScrollView>;
 }
 
 export default General;

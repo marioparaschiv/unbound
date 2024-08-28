@@ -1,29 +1,25 @@
-export enum Type {
-	Before = 'before',
-	Instead = 'instead',
-	After = 'after',
-}
+import type { PatchType } from '@api/patcher';
 
-export type BeforeOverwrite<F extends Fn> = (context?: any, args?: Parameters<F>, original?: F, unpatch?: () => void) => Parameters<F> | void;
-export type InsteadOverwrite<F extends Fn> = (context?: any, args?: Parameters<F>, original?: F, unpatch?: () => void) => ReturnType<F> | void;
-export type AfterOverwrite<F extends Fn> = (context?: any, args?: Parameters<F>, result?: ReturnType<F>, unpatch?: () => void) => ReturnType<F> | void;
+export type BeforeCallback<F extends Fn> = (context?: any, args?: Parameters<F>, original?: F, unpatch?: () => void) => Parameters<F> | void;
+export type InsteadCallback<F extends Fn> = (context?: any, args?: Parameters<F>, original?: F, unpatch?: () => void) => ReturnType<F> | void;
+export type AfterCallback<F extends Fn> = (context?: any, args?: Parameters<F>, result?: ReturnType<F>, unpatch?: () => void) => ReturnType<F> | void;
 
-export interface Patch {
+export interface PatchOverwrite {
 	mdl: Record<string, any> | Function;
 	func: string;
 	original: Function;
 	unpatch: () => void;
 	patches: {
-		before: Patcher[];
-		after: Patcher[];
-		instead: Patcher[];
+		before: Patch[];
+		after: Patch[];
+		instead: Patch[];
 	};
 }
 
-export interface Patcher {
+export interface Patch {
 	caller: string;
 	once: boolean;
-	type: Type;
+	type: PatchType;
 	id: number;
 	callback: any;
 	unpatch: () => void;

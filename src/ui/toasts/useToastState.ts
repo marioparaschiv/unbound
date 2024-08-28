@@ -1,13 +1,15 @@
 import type { InternalToastOptions } from '@typings/api/toasts';
 import { callbackWithAnimation } from '@utilities';
 import { useSettingsStore } from '@api/storage';
+import { useEffect, useState } from 'react';
 import { Reanimated } from '@metro/common';
+import { Dimensions } from 'react-native';
 import Toasts from '@stores/toasts';
 
 const { useSharedValue, withTiming, withSpring, Easing } = Reanimated;
 
 function useToastState(options: InternalToastOptions) {
-	const [leaving, setLeaving] = React.useState(false);
+	const [leaving, setLeaving] = useState(false);
 	const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('toasts'));
 	const animations = settings.get('toasts.animations', true);
 
@@ -17,13 +19,13 @@ function useToastState(options: InternalToastOptions) {
 	const height = useSharedValue(0);
 
 	// This parent container set to 90% width in the styles
-	const width = useSharedValue(ReactNative.Dimensions.get('window').width * 0.9);
+	const width = useSharedValue(Dimensions.get('window').width * 0.9);
 
 	function leave() {
 		setLeaving(true);
 	}
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (animations) {
 			opacity.value = withTiming(1);
 			marginTop.value = withTiming(0);
@@ -34,7 +36,7 @@ function useToastState(options: InternalToastOptions) {
 			scale.value = 1;
 		}
 
-		const duration = (options.duration ?? settings.get('toasts.duration', 0)) * 1000;
+		const duration = (options.duration ?? (settings.get('toasts.duration', 0) * 1000));
 
 		if (duration !== 0) {
 			width.value = withTiming(0, { duration: duration + 100, easing: Easing.linear });
@@ -43,7 +45,7 @@ function useToastState(options: InternalToastOptions) {
 		}
 	}, []);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (leaving) {
 			(animations ? callbackWithAnimation(Toasts.store.setState) : Toasts.store.setState)((prev) => {
 				delete prev.toasts[options.id];
@@ -52,7 +54,7 @@ function useToastState(options: InternalToastOptions) {
 		}
 	}, [leaving]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		options.closing && leave();
 	}, [options.closing]);
 

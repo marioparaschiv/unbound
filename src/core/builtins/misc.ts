@@ -1,9 +1,9 @@
 import type { BuiltIn } from '@typings/core/builtins';
-import { ReactNative as RN } from '@metro/common';
-import { DCDFileManager } from '@api/storage';
-import { fastFindByProps } from '@metro';
 import { createPatcher } from '@patcher';
 import themes from '@managers/themes';
+import { findByProps } from '@metro';
+import { Image } from 'react-native';
+import { Documents } from '@api/fs';
 
 const Patcher = createPatcher('misc');
 
@@ -13,11 +13,10 @@ export const data: BuiltIn['data'] = {
 };
 
 export function initialize() {
-	const ThemeBooleans = fastFindByProps('isThemeDark', 'isThemeLight');
+	const ThemeBooleans = findByProps('isThemeDark', 'isThemeLight');
 
 	// @ts-expect-error - RN.Image has no 'render' method defined in its types
-	Patcher.before(RN.Image, 'render', (_, [props]) => {
-		const documentsPath = DCDFileManager.DocumentsDirPath;
+	Patcher.before(Image, 'render', (_, [props]) => {
 		const identifier = '{__path__}';
 		const { source } = props;
 
@@ -25,7 +24,7 @@ export function initialize() {
 		// Therefore the string {__path__} is put in the manifest instead, and it is hydrated into the proper path below.
 		if (typeof source === 'object' && source.uri && source.uri.includes(identifier)) {
 			props.source = { ...props.source };
-			props.source.uri = source.uri.replace(identifier, documentsPath);
+			props.source.uri = source.uri.replace(identifier, Documents);
 		}
 	});
 

@@ -4,6 +4,6 @@
 		"rollup.config-*.mjs",
 		"server"
 	],
-	"exec": "bun run build",
+	"exec": "rollup -c",
 	"ext": "*.*"
 }

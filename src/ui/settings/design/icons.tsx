@@ -1,21 +1,21 @@
-import { showInstallAlert } from '@ui/components/internal/install-modal';
-import { React, ReactNative as RN } from '@metro/common';
-import { Addons } from '@ui/components/internal';
+import { showInstallAlert } from '@ui/addons/install-modal';
 import { Icons as IconProxy } from '@api/assets';
-import { TintedIcon } from '@ui/components/misc';
+import { TintedIcon } from '@ui/misc/forms';
+import { AddonList } from '@ui/addons';
 import Icons from '@managers/icons';
+import { View } from 'react-native';
 
 function IconsPage() {
 	const addons = Icons.useEntities();
 
-	return <RN.View style={{ flex: 1 }}>
-		<Addons
+	return <View style={{ flex: 1 }}>
+		<AddonList
 			showHeaderRight={false}
 			showManagerIcon={(addon) => addon.data.id !== 'default'}
 			type='Icons'
 			addons={addons}
 		/>
-	</RN.View>;
+	</View>;
 }
 
 export const callback = ({ type, ref }) => showInstallAlert({ type, ref });

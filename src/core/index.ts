@@ -1,8 +1,7 @@
 import { createLogger } from '@structures/logger';
+import * as Managers from '@managers';
 import BuiltIns from '@core/builtins';
 import Patches from '@core/patches';
-
-import * as Managers from '@managers';
 import Patcher from '@api/patcher';
 import * as API from '@api';
 

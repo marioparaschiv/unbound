@@ -1,3 +1,5 @@
+import { useEffect, useReducer } from 'react';
+
 /**
  * Creates a updateable react store with a remote api.
  * @param {Any} state Intitial State of your store
@@ -43,9 +45,9 @@ export default function createStore(state): any {
 	});
 
 	function useState(factory = _ => _) {
-		const [, forceUpdate] = React.useReducer(e => e + 1, 0);
+		const [, forceUpdate] = useReducer(e => e + 1, 0);
 
-		React.useEffect(() => {
+		useEffect(() => {
 			const handler = () => {
 				forceUpdate();
 			};

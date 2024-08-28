@@ -8,7 +8,6 @@
  * @param {T extends string} versionB
  * @return {number}
  */
-
 function compareSemanticVersions(versionA: string, versionB: string): number {
 	const [majorA, minorA, patchA] = versionA.split('.').map(Number);
 	const [majorB, minorB, patchB] = versionB.split('.').map(Number);

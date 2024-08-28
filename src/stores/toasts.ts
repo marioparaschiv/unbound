@@ -1,6 +1,6 @@
 import type { InternalToastOptions, ToastOptions } from '@typings/api/toasts';
-import createStore from '@structures/store';
 import { callbackWithAnimation, uuid } from '@utilities';
+import createStore from '@structures/store';
 
 const [store, useStore] = createStore({ toasts: {} });
 
@@ -9,12 +9,12 @@ function updateToastWithOptions(id: any, options: Nullable<InternalToastOptions>
 		store.setState(prev => ({
 			toasts: {
 				...prev.toasts,
-				...prev.toasts[id] ? {
+				...(prev.toasts[id] ? {
 					[id]: {
 						...prev.toasts[id],
 						...options
 					}
-				} : {}
+				} : {})
 			}
 		}))
 	), 300)();

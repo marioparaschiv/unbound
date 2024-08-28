@@ -1,17 +1,20 @@
-const { DCDDeviceManager, BundleUpdaterManager } = ReactNative.NativeModules;
-const { NativeModules, TurboModuleRegistry } = ReactNative;
+import type { BundleInfoType, BundleManagerType, DeviceInfoType } from '@typings/api/native';
+import { NativeModules, TurboModuleRegistry } from 'react-native';
 
-export const BundleInfo = ReactNative.NativeModules.InfoDictionaryManager ?? ReactNative.NativeModules.RTNClientInfoManager;
-export const BundleManager = BundleUpdaterManager;
-export const DeviceInfo = DCDDeviceManager;
+export type * from '@typings/api/native';
+
+
+export const BundleInfo: BundleInfoType = NativeModules.InfoDictionaryManager ?? NativeModules.RTNClientInfoManager;
+export const BundleManager: BundleManagerType = getNativeModule('BundleUpdaterManager');
+export const DeviceInfo: DeviceInfoType = getNativeModule('DCDDeviceManager');
 
 export async function reload(instant = true) {
-	const { pendingReload } = await import('@api/storage');
-
 	if (instant) {
 		BundleManager.reload();
 		return;
 	}
+
+	const { pendingReload } = await import('@api/storage');
 
 	pendingReload.value = true;
 }
@@ -21,4 +24,4 @@ export function getNativeModule(...names: string[]) {
 		...names.map(n => NativeModules[n]),
 		...names.map(n => TurboModuleRegistry.get(n))
 	].find(x => x);
-};
+}

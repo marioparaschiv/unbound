@@ -4,7 +4,6 @@
  * @param {number} size - The size of each chunk
  * @return {array} Returns the array of chunks
  */
-
 function chunkArray<T>(array: T[], size: number): T[][] {
 	const chunks = [];
 

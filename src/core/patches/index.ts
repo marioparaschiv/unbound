@@ -1,4 +1,5 @@
 import { createLogger } from '@structures/logger';
+
 import * as Patches from './registry';
 
 const Logger = createLogger('Core', 'Patches');

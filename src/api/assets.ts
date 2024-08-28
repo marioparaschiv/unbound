@@ -1,28 +1,18 @@
 import { createLogger } from '@structures/logger';
 import type { Asset } from '@typings/api/assets';
-import { DCDFileManager } from '@api/storage';
 import IconManager from '@managers/icons';
 import { createPatcher } from '@patcher';
-import { fastFindByProps } from '@metro';
+import { findByProps } from '@metro';
+import { Image } from 'react-native';
+import fs from '@api/fs';
+
+export type * from '@typings/api/assets';
 
 export const assets = new Set<Asset>();
-export const registry = fastFindByProps('registerAsset', { lazy: true });
+export const registry = findByProps('registerAsset', { lazy: true });
 
 const Logger = createLogger('Assets');
 const Patcher = createPatcher('unbound-assets');
-
-async function handleScales(asset: Asset, id: number) {
-	asset.scales.sort((a, b) => b - a);
-
-	for (const scale of asset.scales) {
-		const uri = ReactNative.Image.resolveAssetSource(id).uri;
-		const fileExists = await DCDFileManager.fileExists(uri.replace('file:/', ''));
-
-		if (!fileExists) {
-			asset.scales = asset.scales.filter(x => x !== scale);
-		};
-	}
-}
 
 function initialize() {
 	IconManager.initialize();
@@ -51,6 +41,19 @@ function initialize() {
 	}
 
 	IconManager.applyImagePatch(IconManager.applied.manifest.id);
+}
+
+async function handleScales(asset: Asset, id: number) {
+	asset.scales.sort((a, b) => b - a);
+
+	for (const scale of asset.scales) {
+		const uri = Image.resolveAssetSource(id).uri;
+		const fileExists = await fs.exists(uri.replace('file:/', ''), false);
+
+		if (!fileExists) {
+			asset.scales = asset.scales.filter(x => x !== scale);
+		};
+	}
 }
 
 export function find(filter): Asset | null {

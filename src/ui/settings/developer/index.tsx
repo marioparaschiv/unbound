@@ -1,9 +1,9 @@
-import { Constants, ReactNative as RN, Theme } from '@metro/common';
-import { Section, useFormStyles } from '@ui/components/misc';
-import { Redesign, Slider } from '@metro/components';
+import { Section, useFormStyles } from '@ui/misc/forms';
+import { ScrollView, View, Text } from 'react-native';
+import { Design, Slider } from '@metro/components';
+import { Constants, Theme } from '@metro/common';
 import { useSettingsStore } from '@api/storage';
 import { Keys, Links } from '@constants';
-import { reload } from '@api/native';
 import { Strings } from '@api/i18n';
 import Assets from '@api/assets';
 import Toasts from '@api/toasts';
@@ -16,10 +16,10 @@ const {
 	TextInput,
 	TableRow,
 	TableRowIcon
-} = Redesign;
+} = Design;
 
 export default function Developer() {
-	const navigation = Redesign.useNavigation();
+	const navigation = Design.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const { endStyle, formText } = useFormStyles();
 
@@ -30,7 +30,7 @@ export default function Developer() {
 		Retry: Assets.getIDByName('RetryIcon')
 	};
 
-	return <RN.ScrollView>
+	return <ScrollView>
 		<Section title={Strings.UNBOUND_DEBUG_BRIDGE}>
 			<TableSwitchRow
 				label={Strings.UNBOUND_ENABLED}
@@ -38,8 +38,8 @@ export default function Developer() {
 				value={settings.get('dev.debugBridge.enabled', false)}
 				onValueChange={() => settings.toggle('dev.debugBridge.enabled', false)}
 			/>
-			<RN.View style={endStyle}>
-				<RN.View style={{ margin: 8 }}>
+			<View style={endStyle}>
+				<View style={{ margin: 8 }}>
 					<TextInput
 						isRound
 						size='md'
@@ -48,8 +48,8 @@ export default function Developer() {
 						label={Strings.UNBOUND_DEBUG_BRIDGE_IP}
 						disabled={!settings.get('dev.debugBridge.enabled', false)}
 					/>
-				</RN.View>
-			</RN.View>
+				</View>
+			</View>
 		</Section>
 		<Section title={Strings.UNBOUND_LOADER}>
 			<TableSwitchRow
@@ -70,8 +70,8 @@ export default function Developer() {
 				value={settings.get('loader.update.force', false)}
 				onValueChange={() => settings.toggle('loader.update.force', false)}
 			/>
-			<RN.View style={endStyle}>
-				<RN.View style={{ margin: 8 }}>
+			<View style={endStyle}>
+				<View style={{ margin: 8 }}>
 					<TextInput
 						isRound
 						size='md'
@@ -79,8 +79,8 @@ export default function Developer() {
 						onChange={v => settings.set('loader.update.url', v)}
 						label={Strings.UNBOUND_LOADER_CUSTOM_BUNDLE}
 					/>
-				</RN.View>
-			</RN.View>
+				</View>
+			</View>
 		</Section>
 		<Section title={Strings.UNBOUND_ERROR_BOUNDARY}>
 			<TableSwitchRow
@@ -105,12 +105,12 @@ export default function Developer() {
 			<TableRow
 				label={Strings.UNBOUND_LOGGING_DEPTH}
 				trailing={(
-					<RN.Text style={formText}>
+					<Text style={formText}>
 						{Strings.UNBOUND_LOGGING_DEPTH_DESC.format({ depth: settings.get('dev.logging.depth', 3) })}
-					</RN.Text>
+					</Text>
 				)}
 			/>
-			<RN.View style={[endStyle, { borderBottomRightRadius: 0, borderBottomLeftRadius: 0 }]}>
+			<View style={[endStyle, { borderBottomRightRadius: 0, borderBottomLeftRadius: 0 }]}>
 				<Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={settings.get('dev.logging.depth', 3)}
@@ -121,7 +121,7 @@ export default function Developer() {
 					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
 					tapToSeek
 				/>
-			</RN.View>
+			</View>
 			<TableRow
 				label={Strings.UNBOUND_DEBUG_LOGS}
 				icon={<TableRowIcon source={Icons.Debug} />}
@@ -133,13 +133,6 @@ export default function Developer() {
 			/>
 		</Section>
 		<Section title={Strings.UNBOUND_MISC}>
-			<TableRow
-				label={Strings.UNBOUND_RESTART}
-				icon={<TableRowIcon source={Icons.Retry} />}
-				arrow
-				onPress={reload}
-			/>
-
 			<TableRow
 				label={Strings.UNBOUND_FORCE_GARBAGE_COLLECTION}
 				icon={<TableRowIcon source={Icons.Trash} />}
@@ -163,6 +156,6 @@ export default function Developer() {
 				arrow
 			/>
 		</Section>
-		<RN.View style={{ marginBottom: 50 }} />
-	</RN.ScrollView>;
+		<View style={{ marginBottom: 50 }} />
+	</ScrollView>;
 }

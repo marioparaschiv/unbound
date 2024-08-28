@@ -3,10 +3,12 @@ import { execSync } from 'child_process';
 // Plugins
 import { typescriptPaths as paths } from 'rollup-plugin-typescript-paths';
 import { nodeResolve as node } from '@rollup/plugin-node-resolve';
-import { swc, minify } from 'rollup-plugin-swc3';
 import hermes from '@unbound-mod/rollup-plugin';
 import replace from '@rollup/plugin-replace';
+import { minify } from 'rollup-plugin-swc3';
+import { swc } from 'rollup-plugin-swc3';
 import json from '@rollup/plugin-json';
+import { readFileSync } from 'fs';
 
 const revision = (() => {
 	try {
@@ -16,18 +18,29 @@ const revision = (() => {
 	}
 })();
 
+const preinit = readFileSync('./preinit.js');
+
+// These must exist in
+const importsMap = {
+	'react': 'window.React',
+	'react-native': 'window.ReactNative'
+};
 
 /** @type {import('rollup').RollupOptions} */
 const config = {
 	input: 'src/index.ts',
+	external: Object.keys(importsMap),
 	output: [
 		{
 			file: 'dist/unbound.js',
-			format: 'esm',
+			format: 'iife',
 			inlineDynamicImports: true,
-			strict: false
+			strict: false,
+			globals: importsMap
 		}
 	],
+
+
 
 	plugins: [
 		paths({ preserveExtensions: true, nonRelative: process.platform === 'darwin' ? false : true }),
@@ -49,6 +62,7 @@ const config = {
 
 				output.code = `(() => {
 					try {
+						${preinit}
 						${output.code}
 					} catch(error) {
 						alert('Unbound failed to initialize: ' + error.stack);

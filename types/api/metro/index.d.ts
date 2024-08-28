@@ -64,4 +64,4 @@ export type FunctionSignatureOrArray<
 	? BulkModuleByName<T>
 	: SingleModuleByName<T>;
 
-export type Module<TProps extends string> = PropertyRecordOrArray<TProps[], TProps>
+export type Module<TProps extends string> = PropertyRecordOrArray<TProps[], TProps>;

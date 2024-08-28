@@ -1,6 +1,6 @@
-import { addLog } from '@stores/logger';
 import { getStore } from '@api/storage';
-import { fastFindByProps } from '@metro';
+import { addLog } from '@stores/logger';
+import { findByProps } from '@metro';
 
 export enum Levels {
 	error = 3,
@@ -15,7 +15,7 @@ const settings = getStore('unbound');
 const methods = ['error', 'info', 'log', 'warn', 'trace', 'debug'];
 
 export function apply() {
-	const Util = fastFindByProps('inspect', { lazy: true });
+	const Util = findByProps('inspect', { lazy: true });
 
 	for (const method of methods) {
 		console[method].__ORIGINAL__ = console[method];
@@ -27,7 +27,7 @@ export function apply() {
 				const item = args[i];
 				const out = typeof item === 'string' ? item : Util.inspect?.(item, { depth: settings.get('dev.logging.depth', 3) });
 
-				payload.push(out ?? args[i].toString());
+				payload.push(out ?? item.toString());
 			}
 
 			const output = payload.join(' ');

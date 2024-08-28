@@ -1,11 +1,15 @@
-import type { DCDFileManagerType, Payload } from '@typings/api/native';
-import { BundleManager, getNativeModule } from '@api/native';
+import type { SettingsPayload } from '@typings/api/storage';
 import EventEmitter from '@structures/emitter';
+import { BundleManager } from '@api/native';
+import { useEffect, useState } from 'react';
 import { isEmpty } from '@utilities';
+import fs from '@api/fs';
+
+export type * from '@typings/api/storage';
+
 
 const Events = new EventEmitter();
 
-export const DCDFileManager: DCDFileManagerType = getNativeModule('DCDFileManager', 'RTNFileManager');
 export const settings = globalThis.UNBOUND_SETTINGS ?? {};
 
 export const on = Events.on.bind(Events);
@@ -70,18 +74,16 @@ export function getStore(store: string) {
 		get: <T extends any>(key: string, def: T): T & {} => get(store, key, def),
 		toggle: (key: string, def: any) => toggle(store, key, def),
 		remove: (key: string) => remove(store, key),
-		useSettingsStore: () => useSettingsStore(store)
+		useSettingsStore: (predicate?: (payload: SettingsPayload) => boolean) => useSettingsStore(store, predicate)
 	};
 }
 
-export function useSettingsStore(store: string, predicate?: (payload: Payload) => boolean) {
-	const [, forceUpdate] = React.useState({});
+export function useSettingsStore(store: string, predicate?: (payload: SettingsPayload) => boolean) {
+	const [, forceUpdate] = useState({});
 
-	React.useEffect(() => {
+	useEffect(() => {
 		function handler(payload) {
-			if (payload.store !== store) {
-				return;
-			}
+			if (payload.store !== store) return;
 
 			if (!predicate || predicate(payload)) {
 				forceUpdate({});
@@ -105,9 +107,8 @@ export const pendingReload = { value: false };
 
 Events.on('changed', () => {
 	const payload = JSON.stringify(settings, null, 2);
-	const path = 'Unbound/settings.json';
+	const promise = fs.write('Unbound/settings.json', payload);
 
-	const promise = DCDFileManager.writeFile('documents', path, payload, 'utf8');
 	promise.then(() => pendingReload.value && BundleManager.reload());
 });
 

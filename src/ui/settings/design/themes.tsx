@@ -1,9 +1,9 @@
-import { showInstallAlert } from '@ui/components/internal/install-modal';
-import { React, ReactNative as RN } from '@metro/common';
-import { Addons } from '@ui/components/internal';
-import { TintedIcon } from '@ui/components/misc';
-import { showAlert } from '@api/dialogs';
+import { showInstallAlert } from '@ui/addons/install-modal';
+import { TintedIcon } from '@ui/misc/forms';
+import { showDialog } from '@api/dialogs';
+import { AddonList } from '@ui/addons';
 import Themes from '@managers/themes';
+import { View } from 'react-native';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 import { noop } from '@utilities';
@@ -11,18 +11,18 @@ import { noop } from '@utilities';
 function ThemesPage() {
 	const addons = Themes.useEntities();
 
-	return <RN.View style={{ flex: 1 }}>
-		<Addons
+	return <View style={{ flex: 1 }}>
+		<AddonList
 			showHeaderRight={false}
 			showToggles={false}
 			type='Themes'
 			addons={addons}
 		/>
-	</RN.View>;
+	</View>;
 };
 
 export const callback = ({ type, ref }) => {
-	showAlert({
+	showDialog({
 		title: Strings.UNBOUND_INSTALL_TITLE.format({ type: 'theme' }),
 		content: Strings.UNBOUND_THEME_GET_DESC,
 		buttons: [

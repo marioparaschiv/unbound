@@ -1,4 +1,5 @@
 declare type Fn<T = any> = (...args: any) => T;
+declare type PromiseFn<T = Promise<any>> = (...args: any) => T;
 
 declare type Constructor = (new () => any);
 
@@ -10,4 +11,4 @@ declare type PropOf<M> = {
 
 declare type Nullable<T extends Record<string, any>> = { [K in keyof T]?: T[K] };
 
-declare type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
+declare type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;

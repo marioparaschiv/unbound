@@ -1,13 +1,14 @@
-import Manager, { ManagerType, isValidManager } from './base';
+import type { Addon, Manifest } from '@typings/managers';
 import downloadFile from '@utilities/downloadFile';
-import { DCDFileManager } from '@api/storage';
+import type { Manager } from '@typings/managers';
 import { Dispatcher } from '@metro/common';
 import { createPatcher } from '@patcher';
-import { Regex } from '@constants';
-import type { Manager as _Manager } from '@typings/managers';
-
-import type { Addon, Manifest } from '@typings/managers';
 import { Icons } from '@api/assets';
+import { Regex } from '@constants';
+import { useMemo } from 'react';
+import fs from '@api/fs';
+
+import BaseManager, { ManagerType, isValidManager } from './base';
 
 export type SourceManifest = Pick<Manifest, 'id' | 'name' | 'description' | 'icon' | 'url'> & {
 	iconType?: string;
@@ -23,7 +24,7 @@ export type SourceManifest = Pick<Manifest, 'id' | 'name' | 'description' | 'ico
 };
 
 export type Bundle = {
-	type: _Manager;
+	type: Manager;
 	source: string,
 	manifest: Manifest;
 	changelog: Record<string, string[]>;
@@ -33,10 +34,10 @@ export type Bundle = {
 }[];
 
 export function useIcon(icon: Bundle[number]['manifest']['icon']) {
-	return React.useMemo(() => typeof icon === 'string' ? Icons[icon] : icon, [icon]);
+	return useMemo(() => typeof icon === 'string' ? Icons[icon] : icon, [icon]);
 }
 
-class Sources extends Manager {
+class Sources extends BaseManager {
 	public patcher: ReturnType<typeof createPatcher>;
 	public extension: string = 'json';
 	public signal: AbortSignal;
@@ -69,8 +70,8 @@ class Sources extends Manager {
 		}
 
 		for (const source of Object.keys(this.sources)) {
-			const manifest = await DCDFileManager.readFile(`${DCDFileManager.DocumentsDirPath}/${this.path}/${source}/manifest.json`, 'utf8');
-			const bundle = await DCDFileManager.readFile(`${DCDFileManager.DocumentsDirPath}/${this.path}/${source}/bundle.json`, 'utf8');
+			const manifest = await fs.read(`${fs.Documents}/${this.path}/${source}/manifest.json`);
+			const bundle = await fs.read(`${fs.Documents}/${this.path}/${source}/bundle.json`);
 
 			this.load(JSON.parse(bundle), JSON.parse(manifest) as Manifest);
 		}
@@ -185,8 +186,8 @@ class Sources extends Manager {
 
 	override save(_bundle: string, manifest: Manifest) {
 		const bundle = _bundle as unknown as Bundle;
-		DCDFileManager.writeFile('documents', `${this.path}/${manifest.id}/bundle.json`, JSON.stringify(bundle, null, 2), 'utf8');
-		DCDFileManager.writeFile('documents', `${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
+		fs.write(`${this.path}/${manifest.id}/bundle.json`, JSON.stringify(bundle, null, 2));
+		fs.write(`${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2));
 	}
 
 	validateAddonManifest(manifest: Manifest) {

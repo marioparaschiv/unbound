@@ -2,7 +2,6 @@ import Themes from '@managers/themes';
 
 export const data = {
 	cache: [],
-	patchedMoment: false,
 	patchedThemes: false,
 	patchedNativeRequire: false,
 	listeners: new Set<(mdl: any) => void>()
@@ -67,22 +66,6 @@ export function handleFixes(mdl) {
 		};
 
 		data.patchedNativeRequire = true;
-	}
-
-	if (!data.patchedMoment && mdl.defineLocale) {
-		const defineLocale = mdl.defineLocale;
-
-		mdl.defineLocale = function (...args) {
-			try {
-				const locale = mdl.locale();
-				defineLocale.apply(this, args);
-				mdl.locale(locale);
-			} catch (e) {
-				console.error('Failed to define moment locale:', e.message);
-			}
-		};
-
-		data.patchedMoment = true;
 	}
 
 	if (!data.patchedThemes && mdl.SemanticColor) {

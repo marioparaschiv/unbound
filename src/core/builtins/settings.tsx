@@ -1,19 +1,16 @@
-import { registerSettings } from '@utilities/registerSettings';
 import type { BuiltIn } from '@typings/core/builtins';
-import { ReactNative as RN } from '@metro/common';
+import type { Manager } from '@typings/managers';
+import { registerSettings } from '@api/settings';
+import * as Components from '@metro/components';
+import { TrailingText } from '@ui/misc/forms';
 import { ClientName, Keys } from '@constants';
-import { Redesign } from '@metro/components';
-import * as Managers from '@managers';
-import { Strings } from '@api/i18n';
-import { Icons } from '@api/assets';
-
-
-import Design from '@ui/settings/design';
 import General from '@ui/settings/general';
 import Plugins from '@ui/settings/plugins';
 import Sources from '@ui/settings/sources';
-import { TrailingText, useFormStyles } from '@ui/components/misc';
-import type { Manager } from '@typings/managers';
+import Design from '@ui/settings/design';
+import * as Managers from '@managers';
+import { Strings } from '@api/i18n';
+import { Icons } from '@api/assets';
 
 type CustomScreenProps = {
 	title: string;
@@ -29,13 +26,15 @@ function useAddonsCount(...managers: Manager[]) {
 	return managers.reduce((total, manager) => total + Managers[manager].useEntities().length, 0);
 }
 
-function AddonCount({ managers, manipulator }: { managers: Manager[], manipulator?: Fn }) {
+function AddonCount({ managers, manipulator }: { managers: Manager[], manipulator?: Fn; }) {
 	const amount = useAddonsCount(...managers);
+	const value = typeof manipulator === 'function' ? manipulator(amount) : amount;
+
+	// When there are no entities, do not render a count.
+	if (!value) return null;
 
 	return <TrailingText>
-		{Strings.UNBOUND_ADDON_INSTALLED_AMOUNT.format({
-			amount: typeof manipulator === 'function' ? manipulator(amount) : amount
-		})}
+		{Strings.UNBOUND_ADDON_INSTALLED_AMOUNT.format({ amount: value })}
 	</TrailingText>;
 }
 
@@ -61,11 +60,11 @@ export function initialize() {
 			{
 				title: 'UNBOUND_DESIGN',
 				id: Keys['Design'],
-				icon: Icons['PencilSparkleIcon'],
+				icon: Icons['ic_theme_24px'],
 				keywords: [Strings.UNBOUND_THEMES, Strings.UNBOUND_ICONS, Strings.UNBOUND_FONTS],
 				screen: Design,
 				// Themes + Icons installed accounting for the default icon pack
-				useTrailing: () => <AddonCount managers={['Themes', 'Icons']} manipulator={(amount) => amount - 1}/>
+				useTrailing: () => <AddonCount managers={['Themes', 'Icons']} manipulator={(amount) => amount - 1} />
 			},
 			{
 				title: 'UNBOUND_SOURCES',
@@ -80,18 +79,18 @@ export function initialize() {
 				icon: null,
 				mappable: false,
 				screen: ({ title, render: Component, ...props }: CustomScreenProps) => {
-					const navigation = Redesign.useNavigation();
+					const navigation = Components.Design.useNavigation();
 
 					const unsubscribe = navigation.addListener('focus', () => {
 						unsubscribe();
 						navigation.setOptions({ title });
 					});
 
-					return <Component { ...props } />;
+					return <Component {...props} />;
 				}
 			}
 		]
 	});
 }
 
-export function shutdown() {}
+export function shutdown() { }

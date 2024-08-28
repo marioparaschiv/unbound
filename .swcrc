@@ -1,10 +1,15 @@
 {
 	"sourceMaps": false,
+	"minify": false,
 	"jsc": {
 		"parser": {
 			"syntax": "typescript",
 			"tsx": true,
 			"dynamicImport": true
+		},
+		"minify": {
+			"mangle": false,
+			"compress": false
 		}
 	},
 	"env": {

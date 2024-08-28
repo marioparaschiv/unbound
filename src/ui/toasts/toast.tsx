@@ -1,33 +1,31 @@
-import { React, Reanimated, Gestures, ReactNative as RN } from '@metro/common';
+import type { GestureEvent, HandlerStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
+import { View, Image, Text, Pressable, LayoutAnimation } from 'react-native';
+import { React, Reanimated, Gestures } from '@metro/common';
+import type { ToastOptions } from '@typings/api/toasts';
 import { unitToHex, withoutOpacity } from '@utilities';
-import { TintedIcon } from '@ui/components/misc';
 import { useSettingsStore } from '@api/storage';
-import { Redesign } from '@metro/components';
-import useToastState from './useToastState';
-import { fastFindByProps } from '@metro';
-import useStyles from './toast.style';
+import { createElement, useState } from 'react';
+import { TintedIcon } from '@ui/misc/forms';
+import { Design } from '@metro/components';
+import { findByProps } from '@metro';
 import { Icons } from '@api/assets';
 import Toasts from '@stores/toasts';
 
-import type { ToastOptions } from '@typings/api/toasts';
-import type {
-	GestureEvent,
-	HandlerStateChangeEvent,
-	PanGestureHandlerEventPayload
-} from 'react-native-gesture-handler';
+import useToastState from './useToastState';
+import useStyles from './toast.style';
 
-const { BackgroundBlurFill } = fastFindByProps('BackgroundBlurFill', { lazy: true });
-const { withSpring, withTiming, useSharedValue, default: { View } } = Reanimated;
+const { BackgroundBlurFill } = findByProps('BackgroundBlurFill', { lazy: true });
+const { withSpring, withTiming, useSharedValue, default: Animated } = Reanimated;
 const { PanGestureHandler, State } = Gestures;
 
 function Toast(options: ToastOptions) {
 	const { style, properties: { scale, opacity, height, width }, leave } = useToastState(options);
 	const settings = useSettingsStore('unbound');
-	const styles = useStyles();
 	const translateY = useSharedValue(0);
+	const styles = useStyles();
 
 	// Default for if there is no content at all
-	const [linesLength, setLinesLength] = React.useState(1);
+	const [linesLength, setLinesLength] = useState(1);
 
 	const onGestureEvent = (event: GestureEvent<PanGestureHandlerEventPayload>) => {
 		if (event.nativeEvent.translationY > 0) return;
@@ -50,9 +48,9 @@ function Toast(options: ToastOptions) {
 	};
 
 	return <PanGestureHandler onGestureEvent={onGestureEvent} onHandlerStateChange={onHandlerStateChange}>
-		<View key={options.id} style={{ ...style, transform: [{ scale }, { translateY }] }} pointerEvents='box-none'>
-			<RN.View style={styles.border}>
-				<RN.View
+		<Animated.View key={options.id} style={[{ ...style, transform: [{ scale }, { translateY }] }]} pointerEvents='box-none'>
+			<View style={styles.toastShadow}>
+				<View
 					style={[styles.container, { backgroundColor: withoutOpacity(styles.container.backgroundColor) + unitToHex(settings.get('toasts.opacity', 0.8)) }]}
 					onLayout={({ nativeEvent }) => height.value = settings.get('toasts.animations', true) ?
 						withSpring(nativeEvent.layout.height) :
@@ -60,14 +58,14 @@ function Toast(options: ToastOptions) {
 					}
 				>
 					<BackgroundBlurFill blurAmount={settings.get('toasts.blur', 0.15)} />
-					<RN.View style={styles.wrapper}>
-						{options.icon && <RN.View style={[styles.icon, { marginVertical: linesLength * 10 }]}>
+					<View style={styles.wrapper}>
+						{options.icon && <View style={[styles.icon, { marginVertical: linesLength * 10 }]}>
 							{(options.tintedIcon ?? true) ? (
 								<TintedIcon
 									source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon}
 								/>
 							) : (
-								<RN.Image
+								<Image
 									source={typeof options.icon === 'string' ? Icons[options.icon] : options.icon}
 									style={{
 										width: 24,
@@ -75,26 +73,26 @@ function Toast(options: ToastOptions) {
 									}}
 								/>
 							)}
-						</RN.View>}
-						<RN.View style={styles.contentContainer}>
-							{options.title && <RN.Text style={styles.title}>
-								{typeof options.title === 'function' ? React.createElement(options.title) : options.title}
-							</RN.Text>}
-							{options.content && <RN.Text
+						</View>}
+						<View style={styles.contentContainer}>
+							{options.title && <Text style={styles.title}>
+								{typeof options.title === 'function' ? createElement(options.title) : options.title}
+							</Text>}
+							{options.content && <Text
 								style={styles.content}
 								onTextLayout={({ nativeEvent: { lines: { length } } }) => {
 									setLinesLength(length > 2 ? length + 1 : length);
 								}}
 							>
-								{typeof options.content === 'function' ? React.createElement(options.content) : options.content}
-							</RN.Text>}
-						</RN.View>
-						<RN.Pressable
+								{typeof options.content === 'function' ? createElement(options.content) : options.content}
+							</Text>}
+						</View>
+						<Pressable
 							style={[styles.icon, { marginRight: 12, marginVertical: linesLength * 10 }]}
 							hitSlop={10}
 							onPress={leave}
 							onLongPress={() => {
-								RN.LayoutAnimation.configureNext({
+								LayoutAnimation.configureNext({
 									duration: 1000,
 									delete: {
 										type: 'easeInEaseOut',
@@ -107,11 +105,11 @@ function Toast(options: ToastOptions) {
 							}}
 						>
 							<TintedIcon source={Icons['ic_close']} />
-						</RN.Pressable>
-					</RN.View>
+						</Pressable>
+					</View>
 					{Array.isArray(options.buttons) && options.buttons.length > 0 && (
-						<RN.View style={[styles.buttons, { marginTop: 0 }]}>
-							{options.buttons.map((button, index) => <Redesign.Button
+						<View style={[styles.buttons, { marginTop: 0 }]}>
+							{options.buttons.map((button, index) => <Design.Button
 								key={`${options.id}-button-${index}`}
 								style={styles.button}
 								variant={button.variant || 'primary'}
@@ -121,9 +119,9 @@ function Toast(options: ToastOptions) {
 								icon={button.icon || undefined}
 								text={button.content}
 							/>)}
-						</RN.View>
+						</View>
 					)}
-					{(options.duration ?? settings.get('toasts.duration', 0)) > 0 && settings.get('toasts.animations', true) && <View
+					{(options.duration ?? settings.get('toasts.duration', 0)) > 0 && settings.get('toasts.animations', true) && <Animated.View
 						style={[
 							{
 								position: 'absolute',
@@ -136,9 +134,9 @@ function Toast(options: ToastOptions) {
 							styles.bar
 						]}
 					/>}
-				</RN.View>
-			</RN.View>
-		</View>
+				</View>
+			</View>
+		</Animated.View>
 	</PanGestureHandler>;
 }
 

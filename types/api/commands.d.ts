@@ -10,7 +10,10 @@ export interface ApplicationCommand {
 	inputType?: ApplicationCommandInputType;
 	type?: ApplicationCommandType;
 	applicationId?: string;
+	__UNBOUND__?: boolean;
+	__CALLER__?: string;
 	id?: string;
+
 
 	options?: ApplicationCommandOption[];
 	execute: (args: any[], ctx: CommandContext) => CommandResult | void | Promise<CommandResult> | Promise<void>;

@@ -2,11 +2,12 @@ import type { Manifest } from '@typings/managers';
 import type { getStore } from '@api/storage';
 
 declare global {
+	namespace React { }
+
 	const __r: {
 		importAll: Fn;
 	} & ((id: number | string) => void);
 
-	var React: typeof import('react');
 	var ReactNative: typeof import('react-native');
 	var modules: { [id: number]: any; };
 	var nativeLoggingHook: Fn;
@@ -16,6 +17,13 @@ declare global {
 	var settings: ReturnType<typeof getStore>;
 
 	interface Window {
+		DevTools: null | {
+			connect: (options: {
+				host: string;
+				port?: string;
+			}) => void;
+		};
+
 		loader: {
 			type: string;
 			version: string;

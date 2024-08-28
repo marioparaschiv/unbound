@@ -1,12 +1,15 @@
 import { Constants, StyleSheet, Theme } from '@metro/common';
 
 export default StyleSheet.createStyles({
-	border: Theme.shadows.SHADOW_BORDER,
+	toastShadow: Theme.shadows.SHADOW_MEDIUM,
 	container: {
-		backgroundColor: Theme.colors.BACKGROUND_SECONDARY_ALT,
+		backgroundColor: Theme.colors.TOAST_BG,
+		borderWidth: 1,
+		borderColor: Theme.colors.BORDER_STRONG,
 		alignSelf: 'center',
-		borderRadius: 18,
+		borderRadius: 14,
 		width: '90%',
+		maxWidth: 500,
 		zIndex: 999999,
 		elevation: 999999,
 		position: 'absolute',

@@ -1,9 +1,9 @@
 import type { BuiltIn } from '@typings/core/builtins';
-import { ReactNative as RN } from '@metro/common';
 import { createLogger } from '@structures/logger';
 import { ManagerType } from '@managers/base';
 import { createPatcher } from '@patcher';
 import { capitalize } from '@utilities';
+import { Linking } from 'react-native';
 import * as managers from '@managers';
 import { findByName } from '@metro';
 import Toasts from '@api/toasts';
@@ -65,7 +65,7 @@ export function initialize() {
 		}
 	});
 
-	Patcher.instead(RN.Linking, 'openURL', (self, args, orig) => {
+	Patcher.instead(Linking, 'openURL', (self, args, orig) => {
 		const [link] = args;
 
 		if (!link.startsWith('unbound://')) {

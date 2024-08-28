@@ -1,12 +1,14 @@
-import { ReactNative as RN, React, StyleSheet, Constants, Moment, Theme } from '@metro/common';
-import { TintedIcon, Section } from '@ui/components/misc';
-import { GeneralSearch } from '@ui/components/search';
-import { Redesign } from '@metro/components';
+import { FlatList, ScrollView, View, Image, Text, TouchableOpacity } from 'react-native';
+import { React, StyleSheet, Constants, Moment, Theme } from '@metro/common';
+import { TintedIcon, Section } from '@ui/misc/forms';
+import { GeneralSearch } from '@ui/misc/search';
+import { Design } from '@metro/components';
+import { useMemo, useState } from 'react';
 import LoggerStore from '@stores/logger';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
 
-const { TableRow, TableRowIcon } = Redesign;
+const { TableRow, TableRowIcon } = Design;
 
 const levelSelection = {
 	variant(level: number) {
@@ -19,12 +21,12 @@ const levelSelection = {
 };
 
 export default function Logger() {
-	const [search, setSearch] = React.useState('');
-	const navigation = Redesign.useNavigation();
+	const [search, setSearch] = useState('');
+	const navigation = Design.useNavigation();
 	const store = LoggerStore.useStore();
 	const styles = useStyles();
 
-	const data = React.useMemo(() => store.logs
+	const data = useMemo(() => store.logs
 		.filter(item => item.message?.toLowerCase()?.includes(search))
 		.sort((a, b) => a.time - b.time), [search]);
 
@@ -33,28 +35,28 @@ export default function Logger() {
 		navigation.setOptions({ headerRight: HeaderRight });
 	});
 
-	return <RN.ScrollView>
-		<RN.View style={{ marginHorizontal: 16, marginVertical: 12 }}>
+	return <ScrollView>
+		<View style={{ marginHorizontal: 16, marginVertical: 12 }}>
 			<GeneralSearch
 				type={'logs'}
 				search={search}
 				setSearch={setSearch}
 			/>
-		</RN.View>
+		</View>
 		<Section style={{ flex: 1, marginBottom: 108 }} margin={false}>
-			<RN.FlatList
+			<FlatList
 				data={data}
 				keyExtractor={(_, idx) => String(idx)}
 				scrollEnabled={false}
-				ListEmptyComponent={<RN.View style={styles.empty}>
-					<RN.Image
+				ListEmptyComponent={<View style={styles.empty}>
+					<Image
 						style={styles.emptyImage}
 						source={Icons['img_connection_empty_dark']}
 					/>
-					<RN.Text style={styles.emptyMessage}>
+					<Text style={styles.emptyMessage}>
 						{Strings.UNBOUND_LOGS_EMPTY}
-					</RN.Text>
-				</RN.View>}
+					</Text>
+				</View>}
 				renderItem={({ item }) => {
 					return <TableRow
 						label={item.message}
@@ -65,7 +67,7 @@ export default function Logger() {
 				}}
 			/>
 		</Section>
-	</RN.ScrollView>;
+	</ScrollView>;
 }
 
 const useStyles = StyleSheet.createStyles({
@@ -91,10 +93,10 @@ const useStyles = StyleSheet.createStyles({
 function HeaderRight() {
 	const styles = useStyles();
 
-	return <RN.TouchableOpacity
+	return <TouchableOpacity
 		style={styles.touchable}
 		onPress={() => LoggerStore.store.setState({ logs: [] })}
 	>
 		<TintedIcon source={Icons['ic_input_clear_24px']} />
-	</RN.TouchableOpacity>;
+	</TouchableOpacity>;
 }

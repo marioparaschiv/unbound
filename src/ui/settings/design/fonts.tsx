@@ -1,16 +1,16 @@
-import { ReactNative as RN } from '@metro/common';
-import { TintedIcon } from '@ui/components/misc';
+import { TintedIcon } from '@ui/misc/forms';
+import { View } from 'react-native';
 import { Icons } from '@api/assets';
 import { noop } from '@utilities';
 
 function FontsPage() {
 	const fonts = window.UNBOUND_FONTS ?? [];
 
-	return <RN.View style={{ flex: 1 }}>
-		{fonts.map((font) => <RN.View key={font.name}>
+	return <View style={{ flex: 1 }}>
+		{fonts.map((font) => <View key={font.name}>
 			{font.name}
-		</RN.View>)}
-	</RN.View>;
+		</View>)}
+	</View>;
 }
 
 export const callback = noop;

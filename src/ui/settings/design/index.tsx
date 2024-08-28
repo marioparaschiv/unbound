@@ -1,8 +1,9 @@
-import HeaderRight from '@ui/components/internal/addon-header';
-import { InstallModal } from '@ui/components/internal';
-import { ReactNative as RN } from '@metro/common';
+import { Dimensions, SafeAreaView, View } from 'react-native';
+import { Design as DiscordDesign } from '@metro/components';
+import InstallModal from '@ui/addons/install-modal';
+import HeaderRight from '@ui/addons/addon-header';
 import { useSettingsStore } from '@api/storage';
-import { Redesign } from '@metro/components';
+import { useLayoutEffect, useRef } from 'react';
 import { Strings } from '@api/i18n';
 
 import Themes from './themes';
@@ -37,19 +38,19 @@ const items = [
 ] as const;
 
 export default function Design() {
-	const ref = React.useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
-	const navigation = Redesign.useNavigation();
+	const ref = useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
+	const navigation = DiscordDesign.useNavigation();
 	const settings = useSettingsStore('unbound');
-	const state = Redesign.useSegmentedControlState({
+	const state = DiscordDesign.useSegmentedControlState({
 		defaultIndex: settings.get('designPageIndex', 0),
 		items,
-		pageWidth: ReactNative.Dimensions.get('window').width,
+		pageWidth: Dimensions.get('window').width,
 		onPageChange(index: number) {
 			settings.set('designPageIndex', index);
 		}
 	});
 
-	React.useLayoutEffect(() => {
+	useLayoutEffect(() => {
 		const unsubscribe = navigation.addListener('focus', () => {
 			unsubscribe();
 
@@ -69,15 +70,15 @@ export default function Design() {
 	}, []);
 
 
-	return <RN.View
+	return <View
 		style={{
 			flex: 1,
 			flexGrow: 1,
 			justifyContent: 'space-between'
 		}}
 	>
-		<Redesign.SegmentedControlPages state={state} />
-		<RN.SafeAreaView
+		<DiscordDesign.SegmentedControlPages state={state} />
+		<SafeAreaView
 			style={{
 				position: 'absolute',
 				bottom: 0,
@@ -86,7 +87,7 @@ export default function Design() {
 				marginHorizontal: 36
 			}}
 		>
-			<Redesign.SegmentedControl state={state} variant={'experimental_Large'} />
-		</RN.SafeAreaView>
-	</RN.View>;
+			<DiscordDesign.SegmentedControl state={state} variant={'experimental_Large'} />
+		</SafeAreaView>
+	</View>;
 };

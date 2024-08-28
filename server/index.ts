@@ -1,5 +1,5 @@
 const BASE_PATH = './dist';
-const PORT = Bun.argv[2];
+const PORT = Bun.argv[2] ?? 8080;
 
 const getCurrentDate = () => new Date().toTimeString().split(' ')[0];
 
@@ -10,7 +10,14 @@ Bun.serve({
 		const filePath = BASE_PATH + new URL(req.url).pathname;
 		const file = Bun.file(filePath);
 
-		console.info(`\nYielding file:\n    File: ${filePath}\n    URL: ${req.url}\n    Time: ${getCurrentDate()}`);
+		console.info([
+			'',
+			`Yielding file:`,
+			`File: ${filePath}`,
+			`URL: ${req.url}`,
+			`Time: ${getCurrentDate()}`
+		].join('\n'));
+
 		return new Response(file);
 	},
 

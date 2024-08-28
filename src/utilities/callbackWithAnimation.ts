@@ -1,3 +1,5 @@
+import { LayoutAnimation } from 'react-native';
+
 export default function callbackWithAnimation<T extends Fn>(callback: T, duration = 500) {
 	const easing = {
 		type: 'easeInEaseOut',
@@ -6,7 +8,7 @@ export default function callbackWithAnimation<T extends Fn>(callback: T, duratio
 	} as const;
 
 	return ((...args) => {
-		ReactNative.LayoutAnimation.configureNext({
+		LayoutAnimation.configureNext({
 			duration,
 			...['create', 'update', 'delete'].reduce((pre, cur) => {
 				return {

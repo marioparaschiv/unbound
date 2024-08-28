@@ -6,7 +6,7 @@ const settings = getStore('unbound');
 
 export default {
 	name: 'recovery',
-	description: 'Toggles recovery mode and reloads unbound.',
+	description: 'Toggle recovery mode and reload the app.',
 
 	execute: () => {
 		settings.toggle('recovery', false);

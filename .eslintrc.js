@@ -1,4 +1,3 @@
-
 /** @type { import('eslint').Linter.Config } */
 const config = {
 	env: {

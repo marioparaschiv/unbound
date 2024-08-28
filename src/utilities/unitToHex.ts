@@ -1,5 +1,5 @@
 /**
- * Maps a nunber from 0 to 1 into a 2-character hex string.
+ * Maps a number from 0 to 1 into a 2-character hex string.
  * @param number The number to parse into a hex string
  * @returns string
  */

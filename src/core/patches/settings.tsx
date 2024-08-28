@@ -1,17 +1,19 @@
 import { createPatcher } from '@patcher';
-import { fastFindByProps } from '@metro';
 import { React } from '@metro/common';
+import { findByProps } from '@metro';
 import { Strings } from '@api/i18n';
+import { memo } from 'react';
 
 export const settingSections = [];
 
 class Settings {
 	public patcher = createPatcher('unbound-settings');
-	private Constants = fastFindByProps('SETTING_RENDERER_CONFIG', { lazy: true });
-	private Settings = fastFindByProps('SearchableSettingsList', { lazy: true });
-	private SearchQuery = fastFindByProps('getSettingSearchQuery', { lazy: true });
-	private SearchResults = fastFindByProps('useSettingSearchResults', { lazy: true });
-	private Getters = fastFindByProps('getSettingListSearchResultItems', { lazy: true });
+
+	private Constants = findByProps('SETTING_RENDERER_CONFIG', { lazy: true });
+	private Settings = findByProps('SearchableSettingsList', { lazy: true });
+	private SearchQuery = findByProps('getSettingSearchQuery', { lazy: true });
+	private SearchResults = findByProps('useSettingSearchResults', { lazy: true });
+	private Getters = findByProps('getSettingListSearchResultItems', { lazy: true });
 
 	private patchConstants() {
 		this.Constants._SETTING_RENDERER_CONFIG = { ...this.Constants.SETTING_RENDERER_CONFIG };
@@ -32,7 +34,7 @@ class Settings {
 						parent: null,
 						screen: {
 							route: id,
-							getComponent: () => React.memo(({ route }: any) => {
+							getComponent: () => memo(({ route }: any) => {
 								const Screen = screen;
 								return <Screen {...route?.params ?? {}} />;
 							})
@@ -45,19 +47,14 @@ class Settings {
 	};
 
 	private patchSections() {
-		this.patcher.before(this.Settings.SearchableSettingsList, 'type', (_, [{ sections }]: [{ sections: any[] }]) => {
-			const index = sections?.findIndex(section => section.settings.find(setting => setting === 'ACCOUNT'));
-
-			settingSections.reverse().forEach(({ label, entries }) => {
+		this.patcher.before(this.Settings.SearchableSettingsList, 'type', (_, [{ sections }]: [{ sections: any[]; }]) => {
+			for (const { label, entries } of settingSections) {
 				if (!sections.find(section => section.label === label)) {
-					sections.splice(index === -1 ? 1 : index + 1, 0, {
-						label,
-						settings: entries.filter(entry => entry.mappable ?? true).map(entry => entry.id)
-					});
-				}
-			});
+					const mappable = entries.filter(entry => entry.mappable ?? true).map(entry => entry.id);
 
-			settingSections.reverse();
+					sections.splice(0, 0, { label, settings: mappable });
+				}
+			}
 
 			const support = sections.find(section => section.label === Strings.SUPPORT);
 			support && (support.settings = support.settings.filter(setting => setting !== 'UPLOAD_DEBUG_LOGS'));
@@ -66,45 +63,68 @@ class Settings {
 
 	private patchSearch() {
 		this.patcher.after(this.SearchResults, 'useSettingSearchResults', (_, __, res) => {
-			settingSections.forEach(({ label, entries }) => {
+			const query = this.SearchQuery.getSettingSearchQuery().toLowerCase();
+
+			for (const { label, entries } of settingSections) {
 				res = res.filter(result => !entries.map(entry => entry.id).includes(result));
 
-				entries.filter(entry => entry.mappable ?? true).forEach(entry => {
-						// By default, the label and the title of the entry are already keywords
-						const queryContainsKeyword = [...entry.keywords ?? [], label, entry.title].some(keyword =>
-							keyword.toLowerCase().includes(this.SearchQuery.getSettingSearchQuery().toLowerCase()));
+				const mappable = entries.filter(entry => entry.mappable ?? true);
 
-						if (queryContainsKeyword && !res.find(result => result === entry.id)) res.unshift(entry.id);
-				});
-			});
+				for (const entry of mappable) {
+					// By default, the label and the title of the entry are already keywords
+					const queryContainsKeyword = [
+						...(entry.keywords ?? []),
+						label,
+						entry.title
+					].some(keyword => keyword.toLowerCase().includes(query));
+
+					if (queryContainsKeyword && !res.find(result => result === entry.id)) {
+						res.unshift(entry.id);
+					}
+				}
+			}
 
 			return res;
 		});
 
 		this.patcher.after(this.Getters, 'getSettingListSearchResultItems', (_, [settings]: string[], res) => {
-			settingSections.forEach(({ label, entries }) => {
-				res = res.filter(item => !entries.map(entry => entry.id).includes(item.setting));
+			for (const { label, entries } of settingSections) {
+				const entryIds = entries.map(entry => entry.id);
+				res = res.filter(item => !entryIds.includes(item.setting));
 
-				entries.reverse().forEach(({ id, title, icon }) => {
-					if (settings.includes(id)) {
-						res.unshift({
-							type: 'setting_search_result',
-							searchResultData: this.Constants.SETTING_RENDERER_CONFIG[id],
-							setting: id,
-							title,
-							breadcrumbs: [label],
-							icon
-						});
+				for (const { id, title, icon } of [...entries].reverse()) {
+					if (!settings.includes(id)) continue;
 
-						res.forEach((value, index: number, parent) => {
-							value.index = index;
-							value.total = parent.length;
-						});
+					// Normal object getters just crash.
+					// This needs a proxy for i18n otherwise it doesn't work..?
+					const resultItem = new Proxy({
+						title,
+						type: 'setting_search_result',
+						searchResultData: this.Constants.SETTING_RENDERER_CONFIG[id],
+						setting: id,
+						breadcrumbs: [label],
+						icon
+					}, {
+						get(target, prop) {
+							if (prop === 'title') {
+								const maybeTitle = Strings[title];
+								return maybeTitle !== '' ? maybeTitle : title;
+							}
+
+							return target[prop];
+						}
+					});
+
+					res.unshift(resultItem);
+
+					for (let i = 0; i < res.length; i++) {
+						const entry = res[i];
+
+						entry.index = i;
+						entry.total = res.length;
 					}
-				});
-
-				entries.reverse();
-			});
+				}
+			}
 
 			return res;
 		});

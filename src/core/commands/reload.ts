@@ -3,7 +3,7 @@ import { reload } from '@api/native';
 
 export default {
 	name: 'reload',
-	description: 'Reloads the unbound client to apply changes.',
+	description: 'Reloads the app.',
 
 	execute: () => reload()
 } as ApplicationCommand;

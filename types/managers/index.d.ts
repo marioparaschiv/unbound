@@ -25,9 +25,9 @@ export type IconpackManifest = Pick<
 > & { type: 'github' | 'external'; };
 
 declare interface PluginInstance {
-	getSettingsPanel?(): React.ReactNode;
 	start?(): void;
 	stop?(): void;
+	getSettingsPanel?(): React.ReactNode;
 }
 
 export interface Addon {

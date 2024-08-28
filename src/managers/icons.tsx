@@ -1,15 +1,16 @@
-import Storage, { DCDFileManager } from '@api/storage';
+import type { Addon, Manifest, Resolveable } from '@typings/managers';
 import downloadFile from '@utilities/downloadFile';
-import { ReactNative as RN } from '@metro/common';
-import Manager, { ManagerType } from './base';
+import type { Asset } from '@typings/api/assets';
 import { createPatcher } from '@patcher';
-import { fastFindByProps } from '@metro';
 import { ClientName } from '@constants';
 import { chunkArray } from '@utilities';
+import { findByProps } from '@metro';
+import { Image } from 'react-native';
 import { Strings } from '@api/i18n';
+import Storage from '@api/storage';
+import fs from '@api/fs';
 
-import type { Addon, Manifest, Resolveable } from '@typings/managers';
-import type { Asset } from '@typings/api/assets';
+import Manager, { ManagerType } from './base';
 
 export type PackManifest = Manifest & { type: 'github' | 'other'; };
 export type Pack = { bundle: string; manifest: PackManifest; };
@@ -29,7 +30,7 @@ export const defaultPack = {
 	bundle: 'Default'
 } as unknown as Pack;
 
-const registry = fastFindByProps('registerAsset', { lazy: true });
+const registry = findByProps('registerAsset', { lazy: true });
 
 class Icons extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
@@ -69,7 +70,7 @@ class Icons extends Manager {
 
 	override async fetchBundle(_: string, manifest: PackManifest, signal: AbortSignal, setState?: Fn): Promise<any> {
 		if (!manifest.type || !['github', 'other'].includes(manifest.type))
-				manifest.type = /^(https?:\/\/)(www\.)?github\.com/.test(manifest.main) ? 'github' : 'other';
+			manifest.type = /^(https?:\/\/)(www\.)?github\.com/.test(manifest.main) ? 'github' : 'other';
 
 		this.logger.debug(`Fetching bundle from ${manifest.main}...`);
 
@@ -101,7 +102,7 @@ class Icons extends Manager {
 	}
 
 	override save(bundle: string, manifest: Manifest) {
-		DCDFileManager.writeFile('documents', `${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2), 'utf8');
+		fs.write(`${this.path}/${manifest.id}/manifest.json`, JSON.stringify(manifest, null, 2));
 	}
 
 	override async start(entity: Resolveable): Promise<void> {
@@ -149,7 +150,7 @@ class Icons extends Manager {
 				.filter(x => x.manifest.id !== addon.data.id));
 
 			await this.unload(addon);
-			await DCDFileManager.removeFile('documents', `${this.path}/${addon.data.id}`);
+			await fs.rm(`${this.path}/${addon.data.id}`);
 			await this.showAddonToast(null, 'UNBOUND_SUCCESSFULLY_UNINSTALLED', 'CloseSmallIcon');
 		} catch (e) {
 			this.logger.error(`Failed to delete ${addon.data.id}:`, e.message ?? e);
@@ -185,7 +186,7 @@ class Icons extends Manager {
 			}));
 		}
 
-		const installed = await DCDFileManager.fileExists(DCDFileManager.DocumentsDirPath + `/${this.path}/${manifest.id}`);
+		const installed = await fs.exists(`${this.path}/${manifest.id}`);
 		installed && this.settings.set('packs', [
 			...this.settings.get('packs', [defaultPack]).filter(x => x.manifest.id !== manifest.id),
 			{ bundle: manifest.name, manifest }
@@ -196,12 +197,12 @@ class Icons extends Manager {
 
 	packExists<TAsync extends boolean>(
 		pack: Pack | Addon,
-		fs = false as TAsync
+		filesystem = false as TAsync
 	): TAsync extends true ? Promise<boolean> : boolean {
 		const id = (pack as any).data.id || (pack as any).manifest.id;
 
-		if (fs) {
-			return DCDFileManager.fileExists(`${DCDFileManager.DocumentsDirPath}/${this.path}/${id}`) as any;
+		if (filesystem) {
+			return fs.exists(`${this.path}/${id}`) as any;
 		}
 
 		return this.settings.get('packs', [defaultPack])
@@ -234,12 +235,12 @@ class Icons extends Manager {
 
 		for (const scale of asset.scales) {
 			const exactPath = this.getRelativeAssetPath(asset, scale);
-			const filePath = `${DCDFileManager.DocumentsDirPath}/${this.path}/${id}/${exactPath}`;
+			const filePath = `${this.path}/${id}/${exactPath}`;
 
 			delete asset.iconPackPath;
 			delete asset.iconPackScale;
-			const fileExists = await DCDFileManager.fileExists(filePath);
 
+			const fileExists = await fs.exists(filePath);
 			if (fileExists) {
 				asset.iconPackPath = filePath;
 				asset.iconPackScale = scale;
@@ -250,7 +251,7 @@ class Icons extends Manager {
 
 	async applyImagePatch(id: string) {
 		// @ts-expect-error - RN.Image has no 'render' method defined in its types
-		this.patcher.before(RN.Image, 'render', (_, [props]) => {
+		this.patcher.before(Image, 'render', (_, [props]) => {
 			const { source } = props;
 
 			if (typeof source !== 'number' || id === 'default') return;

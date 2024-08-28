@@ -3,7 +3,6 @@
  * @param {...object} styles - Style objects
  * @return {object} Returns a merged style object.
  */
-
 function mergeStyles(...styles: (Record<any, any> | boolean)[]) {
 	return styles.reduce((previous, current) => {
 		if (current) {

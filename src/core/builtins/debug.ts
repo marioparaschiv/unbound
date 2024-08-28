@@ -1,7 +1,7 @@
 import type { BuiltIn } from '@typings/core/builtins';
-import { ReactNative } from '@metro/common';
-import { getStore } from '@api/storage';
 import { createLogger } from '@structures/logger';
+import { getStore } from '@api/storage';
+import { AppState } from 'react-native';
 
 const Logger = createLogger('Debug', 'WebSocket');
 
@@ -50,7 +50,7 @@ export function initialize(isReconnect = false) {
 		return globalThis._nativeLoggingHook.apply(this, arguments);
 	};
 
-	const { remove } = ReactNative.AppState?.addEventListener('change', (state) => {
+	const { remove } = AppState.addEventListener('change', (state) => {
 		switch (state) {
 			case 'active':
 				if (ws || ws?.readyState === WebSocket.OPEN) {

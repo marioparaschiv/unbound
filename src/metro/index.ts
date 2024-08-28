@@ -1,9 +1,8 @@
 import type { SearchOptions, BulkItem, StoreOptions, InternalOptions, StringFindWithOptions, BulkFind, PropertyRecordOrArray, FunctionSignatureOrArray } from '@typings/api/metro';
-import { data, deenumerate, handleFixes, initializeModule, isInvalidExport, parseOptions } from './constants';
 import type { Filter } from '@typings/api/metro/filters';
-import Filters from './filters';
 
-export { fastFindByProps } from './fastFindByProps';
+import { data, deenumerate, handleFixes, initializeModule, isInvalidExport, parseOptions } from './constants';
+import Filters from './filters';
 
 export function addListener(listener: (mdl: any) => void) {
 	data.listeners.add(listener);
@@ -75,6 +74,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 
 	for (let i = 0, len = keys.length; i < len; i++) {
 		const id = keys[i];
+
 		const rawModule = store[id];
 
 		if (!rawModule.isInitialized) {

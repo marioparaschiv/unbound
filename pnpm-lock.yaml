@@ -45,8 +45,8 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       '@unbound-mod/rollup-plugin':
-        specifier: 1.0.7
-        version: 1.0.7
+        specifier: 1.1.1
+        version: 1.1.1
       eslint:
         specifier: ^9.9.1
         version: 9.9.1
@@ -1612,8 +1612,8 @@ packages:
   '@unbound-mod/hermesc@1.0.1':
     resolution: {integrity: sha512-iST8FgdSdqD9O1uw4vVMOIq2I/X7g4ECXt0V/LyJ2Z5cyEtMRyKSdShAk3RRkfc3j4+hBgBnHqdLx5uVeAAiIA==}
 
-  '@unbound-mod/rollup-plugin@1.0.7':
-    resolution: {integrity: sha512-HS4rEtZsvKHCD627DNfhZDl6rB7wBodChYrDwCZdwUTnT73XHrhKu81+9L4FzptRcJFE28WPT5k7SJiy9WoMdQ==}
+  '@unbound-mod/rollup-plugin@1.1.1':
+    resolution: {integrity: sha512-kil42CamHAo7VKXiwXLegZsYXEwMiaogiD3YFEv5VuoKIXttn59kOD2lEfPqmCFRgh+o3e56YVuM9twG3CdOFA==}
 
   '@xmldom/xmldom@0.7.13':
     resolution: {integrity: sha512-lm2GW5PkosIzccsaZIz7tp8cPADSIlIHWDFTR1N0SzfinhhYgeIQjFMz4rYzanCScr3DqQLeomUDArp6MWKm+g==}
@@ -4119,7 +4119,7 @@ snapshots:
       '@azure/abort-controller': 1.1.0
       '@azure/core-auth': 1.5.0
       '@azure/core-tracing': 1.1.2
-      '@azure/core-util': 1.2.0
+      '@azure/core-util': 1.9.2
       '@azure/logger': 1.1.4
       form-data: 4.0.0
       http-proxy-agent: 5.0.0
@@ -6356,7 +6356,7 @@ snapshots:
 
   '@unbound-mod/hermesc@1.0.1': {}
 
-  '@unbound-mod/rollup-plugin@1.0.7':
+  '@unbound-mod/rollup-plugin@1.1.1':
     dependencies:
       '@unbound-mod/hermesc': 1.0.1
 
