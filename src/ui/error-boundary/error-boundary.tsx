@@ -1,9 +1,9 @@
 import { View, Text, Image, SafeAreaView, Dimensions } from 'react-native';
 import { Icons, getIDByName } from '@api/assets';
 import { useSettingsStore } from '@api/storage';
+import { Design } from '@api/metro/components';
+import { Clipboard } from '@api/metro/common';
 import { TintedIcon } from '@ui/misc/forms';
-import { Design } from '@metro/components';
-import { Clipboard } from '@metro/common';
 import { ClientName } from '@constants';
 import { CodeBlock } from '@ui/misc';
 import { reload } from '@api/native';

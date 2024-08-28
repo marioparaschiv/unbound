@@ -1,7 +1,7 @@
 import type { BuiltIn } from '@typings/core/builtins';
 import { createPatcher } from '@patcher';
+import { findByProps } from '@api/metro';
 import themes from '@managers/themes';
-import { findByProps } from '@metro';
 import { Image } from 'react-native';
 import { Documents } from '@api/fs';
 

@@ -3,7 +3,6 @@ import { createLogger } from '@structures/logger';
 
 export type * from '@typings/api/patcher';
 
-
 const Logger = createLogger('Patcher');
 
 export enum PatchType {

@@ -2,16 +2,15 @@ import { FlatList, RefreshControl, ScrollView, View } from 'react-native';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import getItems, { resolveType } from '@ui/addons/addon-ordering';
 import { showInstallAlert } from '@ui/addons/install-modal';
-import { callbackWithAnimation, noop } from '@utilities';
+import { HelpMessage, Design } from '@api/metro/components';
 import type { Addon, Manager } from '@typings/managers';
-import { HelpMessage, Design } from '@metro/components';
 import { Authors } from '@ui/addons/addon-authors';
 import HeaderRight from '@ui/addons/addon-header';
 import { GeneralSearch } from '@ui/misc/search';
 import { useSettingsStore } from '@api/storage';
 import { ManagerType } from '@managers/base';
+import { animate, noop } from '@utilities';
 import Empty from '@ui/misc/empty-state';
-import { React } from '@metro/common';
 import * as managers from '@managers';
 import { Strings } from '@api/i18n';
 
@@ -58,7 +57,7 @@ export default function AddonList({ addons, type, showHeaderRight = true, showTo
 	const reversed = settings.get(`${resolveType(type)}.reversed`, false);
 
 	useLayoutEffect(() => {
-		isOnboarding && callbackWithAnimation(noop)();
+		isOnboarding && animate(noop)();
 	}, [isOnboarding]);
 
 	const data = useMemo(() => {

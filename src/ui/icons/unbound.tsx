@@ -1,4 +1,4 @@
-import { SVG } from '@metro/common';
+import { SVG } from '@api/metro/common';
 
 function Unbound(props) {
 	return (

@@ -1,7 +1,7 @@
 import { Section, useFormStyles } from '@ui/misc/forms';
+import { Design, Slider } from '@api/metro/components';
 import { ScrollView, Text, View } from 'react-native';
-import { Design, Slider } from '@metro/components';
-import { Constants, Theme } from '@metro/common';
+import { Constants, Theme } from '@api/metro/common';
 import { useSettingsStore } from '@api/storage';
 import { showToast } from '@api/toasts';
 import { Icons } from '@api/assets';
@@ -169,7 +169,7 @@ function Toasts() {
 								}
 							]
 						}),
-						(settings.get('toasts.duration', 3) * 0.5) * 1000
+						1000
 					);
 				}}
 			/>

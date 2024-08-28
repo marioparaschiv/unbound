@@ -1,7 +1,7 @@
 import { View, type TextInputProps } from 'react-native';
 import type { Dispatch, SetStateAction } from 'react';
+import { Design } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
-import { Design } from '@metro/components';
 import { getIDByName } from '@api/assets';
 import { Strings } from '@api/i18n';
 

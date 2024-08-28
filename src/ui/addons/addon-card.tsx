@@ -1,9 +1,9 @@
-import { Constants, Theme, React } from '@metro/common';
 import type { Addon, Manager } from '@typings/managers';
+import { Constants, Theme } from '@api/metro/common';
 import { Component, type ReactElement } from 'react';
 import { TintedIcon, Switch } from '@ui/misc/forms';
 import { Icons, getIDByName } from '@api/assets';
-import { Design } from '@metro/components';
+import { Design } from '@api/metro/components';
 import { Text, View } from 'react-native';
 import Overflow from '@ui/misc/overflow';
 import * as managers from '@managers';

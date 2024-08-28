@@ -3,7 +3,6 @@ import type { Addon, Manager } from '@typings/managers';
 import { useSettingsStore } from '@api/storage';
 import { TouchableOpacity } from 'react-native';
 import { Checkbox } from '@ui/misc/forms';
-import { React } from '@metro/common';
 import { Strings } from '@api/i18n';
 
 export { TrailingIcon, resolveType };

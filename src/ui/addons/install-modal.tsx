@@ -1,8 +1,8 @@
+import { Theme, Clipboard } from '@api/metro/common';
 import { PureComponent, type useRef } from 'react';
-import { Theme, Clipboard } from '@metro/common';
 import type { Manager } from '@typings/managers';
 import { useSettingsStore } from '@api/storage';
-import { Design } from '@metro/components';
+import { Design } from '@api/metro/components';
 import { showDialog } from '@api/dialogs';
 import { capitalize } from '@utilities';
 import { showToast } from '@api/toasts';

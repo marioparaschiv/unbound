@@ -7,7 +7,6 @@ import fs from '@api/fs';
 
 export type * from '@typings/api/storage';
 
-
 const Events = new EventEmitter();
 
 export const settings = globalThis.UNBOUND_SETTINGS ?? {};

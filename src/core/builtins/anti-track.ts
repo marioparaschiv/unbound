@@ -1,7 +1,7 @@
 import type { BuiltIn } from '@typings/core/builtins';
 import { attempt, noop } from '@utilities';
 import { createPatcher } from '@patcher';
-import { findByProps } from '@metro';
+import { findByProps } from '@api/metro';
 
 const Patcher = createPatcher('no-track');
 

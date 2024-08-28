@@ -1,7 +1,7 @@
 import { TintedIcon, TrailingText } from '@ui/misc/forms';
 import { useIcon, type Bundle } from '@managers/sources';
 import { AddonPage } from '@ui/sources/addon-page';
-import { Design } from '@metro/components';
+import { Design } from '@api/metro/components';
 import * as Managers from '@managers';
 import { Icons } from '@api/assets';
 import { View } from 'react-native';

@@ -1,8 +1,8 @@
 import { FlatList, ScrollView, View, Image, Text, TouchableOpacity } from 'react-native';
-import { React, StyleSheet, Constants, Moment, Theme } from '@metro/common';
+import { StyleSheet, Constants, Moment, Theme } from '@api/metro/common';
 import { TintedIcon, Section } from '@ui/misc/forms';
 import { GeneralSearch } from '@ui/misc/search';
-import { Design } from '@metro/components';
+import { Design } from '@api/metro/components';
 import { useMemo, useState } from 'react';
 import LoggerStore from '@stores/logger';
 import { Icons } from '@api/assets';

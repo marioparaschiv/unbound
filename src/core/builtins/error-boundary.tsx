@@ -1,7 +1,7 @@
 import type { BuiltIn } from '@typings/core/builtins';
 import { ErrorBoundary } from '@ui/error-boundary';
 import { createPatcher } from '@patcher';
-import { findByName } from '@metro';
+import { findByName } from '@api/metro';
 
 const Patcher = createPatcher('error-boundary');
 

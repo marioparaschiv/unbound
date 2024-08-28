@@ -1,6 +1,6 @@
 import { showInstallAlert } from '@ui/addons/install-modal';
+import { Design } from '@api/metro/components';
 import PluginManager from '@managers/plugins';
-import { Design } from '@metro/components';
 import { AddonList } from '@ui/addons';
 import { Strings } from '@api/i18n';
 import { View } from 'react-native';

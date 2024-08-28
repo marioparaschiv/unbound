@@ -1,8 +1,8 @@
 import type { IconProps, SectionProps, SvgIconProps } from '@typings/ui/forms';
 import { Text, View, ScrollView, Image, type TextStyle } from 'react-native';
-import { Design } from '@metro/components';
+import { Design } from '@api/metro/components';
 import { Icons } from '@api/assets';
-import { find } from '@metro';
+import { find } from '@api/metro';
 
 import useStyles from './forms.style';
 

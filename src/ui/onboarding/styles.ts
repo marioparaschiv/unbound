@@ -1,4 +1,4 @@
-import { StyleSheet, Theme } from '@metro/common';
+import { StyleSheet, Theme } from '@api/metro/common';
 
 export default StyleSheet.createStyles({
 	container: {

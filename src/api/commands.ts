@@ -2,7 +2,7 @@ import type { ApplicationCommand } from '@typings/api/commands';
 import { createLogger } from '@structures/logger';
 import CoreCommands from '@core/commands';
 import { createPatcher } from '@patcher';
-import { findByProps } from '@metro';
+import { findByProps } from '@api/metro';
 import { uuid } from '@utilities';
 
 export type * from '@typings/api/commands';

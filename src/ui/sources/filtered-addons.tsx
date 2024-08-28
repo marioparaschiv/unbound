@@ -3,7 +3,7 @@ import { createElement, useMemo, useState } from 'react';
 import type { Manager } from '@typings/managers';
 import { GeneralSearch } from '@ui/misc/search';
 import type { Bundle } from '@managers/sources';
-import { Design } from '@metro/components';
+import { Design } from '@api/metro/components';
 import { Addon } from '@ui/sources/addon';
 import Empty from '@ui/misc/empty-state';
 import { Strings } from '@api/i18n';

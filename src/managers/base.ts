@@ -200,7 +200,7 @@ class Manager extends EventEmitter {
 	}
 
 	async onFinishedInstalling(addon: Addon, manifest) {
-		const { Design } = await import('@metro/components');
+		const { Design } = await import('@api/metro/components');
 
 		Design.dismissAlerts();
 

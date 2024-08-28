@@ -1,18 +1,22 @@
+import type { FindInTreeOptions, FindInTreePredicate } from '@typings/utilities/findInTree';
+
 /**
- * @description Searches through the walkables provided inside a tree.
- * @param {object|array} tree - The tree to search
- * @param {function} filter - The filter to use to resolve the search
- * @param {object} options - The options for the search
- * @param {array} [options.ignore=[]] - The keys to ignore in the search
- * @param {array} [options.walkable=[]] - The keys to walk/traverse in the search
- * @param {number} [options.maxProperties=100] - The keys to walk/traverse in the search
- * @return {function} Returns the function with a cacheable value
+ * @description Traverses through a tree through provided walkables, aiming to find a specific item using a predicate.
+ * @template T The type of the result you expect. Please keep in mind that the value might be null, wrapping your type in Nullable<T> is advised.
+ * @param tree The tree to traverse.
+ * @param predicate Predicate function to decide whether the current item in the search stack should be returned.
+ * @param options The options for the search.
+ * @param options.ignore The keys to ignore during traversal.
+ * @param options.walkable The keys to walk/traverse in the search.
+ * @param options.maxProperties The maximum properties to traverse through before bailing.
+ * @return The value found by the predicate if one is found.
  */
-function findInTree(tree: Record<string, any> | any[] = {}, filter: Function = _ => _, { ignore = [], walkable = [], maxProperties = 100 } = {}): any {
-	const stack = [tree];
-	const wrapFilter = function (...args) {
+function findInTree<T = any>(tree: Record<any, any> | unknown[], predicate: FindInTreePredicate, { ignore = [], walkable, maxProperties = 100 }: FindInTreeOptions): T {
+	const stack: unknown[] = [tree];
+
+	const filter = function (node: unknown) {
 		try {
-			return Reflect.apply(filter, this, args);
+			return predicate.call(this, node);
 		} catch {
 			return false;
 		}
@@ -21,7 +25,10 @@ function findInTree(tree: Record<string, any> | any[] = {}, filter: Function = _
 	while (stack.length && maxProperties) {
 		const node = stack.shift();
 		if (!node) continue;
-		if (wrapFilter(node)) return node;
+
+		if (filter(node)) {
+			return node as T;
+		}
 
 		if (Array.isArray(node)) {
 			stack.push(...node);

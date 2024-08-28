@@ -1,5 +1,3 @@
-export { default as compareSemanticVersions } from './compareSemanticVersions';
-export { default as callbackWithAnimation } from './callbackWithAnimation';
 export { default as findInReactTree } from './findInReactTree';
 export { default as withoutOpacity } from './withoutOpacity';
 export { default as forceRender } from './forceRender';
@@ -9,7 +7,10 @@ export { default as capitalize } from './capitalize';
 export { default as findInTree } from './findInTree';
 export { default as unitToHex } from './unitToHex';
 export { default as debounce } from './debounce';
+export { default as download } from './download';
 export { default as attempt } from './attempt';
 export { default as isEmpty } from './isEmpty';
+export { default as animate } from './animate';
+export { default as Semver } from './semver';
 export { default as noop } from './noop';
 export { default as uuid } from './uuid';

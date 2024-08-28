@@ -1,10 +1,10 @@
 import type { Dispatch, SetStateAction } from 'react';
+import { Design } from '@api/metro/components';
 import { SafeAreaView } from 'react-native';
-import { Design } from '@metro/components';
 import Plugins from '@ui/settings/plugins';
 import { Invite, Links } from '@constants';
+import { Linking } from '@api/metro/api';
 import { on, set } from '@api/storage';
-import { Linking } from '@metro/api';
 import { Strings } from '@api/i18n';
 
 import useStyles from './styles';

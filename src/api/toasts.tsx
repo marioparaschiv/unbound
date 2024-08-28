@@ -1,7 +1,7 @@
 import type { ToastOptions } from '@typings/api/toasts';
 import { createLogger } from '@structures/logger';
+import { find, findByProps } from '@api/metro';
 import { ToastContainer } from '@ui/toasts';
-import { find, findByProps } from '@metro';
 import { addToast } from '@stores/toasts';
 import { createPatcher } from '@patcher';
 import { getStore } from '@api/storage';
@@ -31,19 +31,13 @@ try {
 			return res;
 		}
 
-		setTimeout(() => console.log(res), 5000);
-
-		// return <Portal.Portal>
 		return <ToastContainer />;
-		// </Portal.Portal>;
 	});
 
 	// Convert Discord's toasts into our toasts
 	Patcher.instead(Toasts, 'open', (self, args: [ToastOptions], orig) => {
 		if (Settings.get('toasts.enabled', true)) {
 			const [options] = args;
-
-			console.log(options);
 
 			options.title = options.content;
 			options.tintedIcon = false;

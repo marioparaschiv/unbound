@@ -1,9 +1,9 @@
 import type { InternalToastOptions } from '@typings/api/toasts';
-import { callbackWithAnimation } from '@utilities';
 import { useSettingsStore } from '@api/storage';
+import { Reanimated } from '@api/metro/common';
 import { useEffect, useState } from 'react';
-import { Reanimated } from '@metro/common';
 import { Dimensions } from 'react-native';
+import { animate } from '@utilities';
 import Toasts from '@stores/toasts';
 
 const { useSharedValue, withTiming, withSpring, Easing } = Reanimated;
@@ -47,7 +47,7 @@ function useToastState(options: InternalToastOptions) {
 
 	useEffect(() => {
 		if (leaving) {
-			(animations ? callbackWithAnimation(Toasts.store.setState) : Toasts.store.setState)((prev) => {
+			(animations ? animate(Toasts.store.setState) : Toasts.store.setState)((prev) => {
 				delete prev.toasts[options.id];
 				return prev;
 			});

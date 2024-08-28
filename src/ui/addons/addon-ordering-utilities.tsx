@@ -1,6 +1,6 @@
 import type { Manager } from '@typings/managers';
+import { StyleSheet } from '@api/metro/common';
 import { TintedIcon } from '@ui/misc/forms';
-import { StyleSheet } from '@metro/common';
 import { getIDByName } from '@api/assets';
 import * as managers from '@managers';
 import { View } from 'react-native';

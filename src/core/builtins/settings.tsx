@@ -1,7 +1,7 @@
 import type { BuiltIn } from '@typings/core/builtins';
+import * as Components from '@api/metro/components';
 import type { Manager } from '@typings/managers';
 import { registerSettings } from '@api/settings';
-import * as Components from '@metro/components';
 import { TrailingText } from '@ui/misc/forms';
 import { ClientName, Keys } from '@constants';
 import General from '@ui/settings/general';

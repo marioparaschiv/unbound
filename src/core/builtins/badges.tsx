@@ -3,10 +3,10 @@ import type { Badge } from '@typings/core/builtins/badges';
 import type { BuiltIn } from '@typings/core/builtins';
 import { useEffect, useState } from 'react';
 import { Links, Times } from '@constants';
+import { Theme } from '@api/metro/stores';
 import { createPatcher } from '@patcher';
 import { showToast } from '@api/toasts';
-import { Theme } from '@metro/stores';
-import { findByName } from '@metro';
+import { findByName } from '@api/metro';
 
 const Patcher = createPatcher('badges');
 

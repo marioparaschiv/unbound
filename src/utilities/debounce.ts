@@ -1,13 +1,14 @@
 /**
- * @description Throttles a function by the provided milliseconds
- * @param {function} func - The function to debounce
- * @param {number} ms - The milliseconds to debounce the function by
- * @return {function} Returns an instance of the function wrapped in a debounce
+ * @description Throttles a function by the provided milliseconds.
+ * @template T The function's type. Used to provide autocomplete for function arguments.
+ * @param func The function to debounce.
+ * @param ms The milliseconds to debounce the function by.
+ * @return An instance of the function wrapped in a debounce timer.
  */
-function debounce(func: Fn, ms: number): Fn {
+function debounce<T extends Fn>(func: T, ms: number): (...args: Parameters<T>) => void {
 	let timer;
 
-	return function (...args) {
+	return function (...args: Parameters<T>) {
 		clearTimeout(timer);
 		timer = setTimeout(() => func.apply(this, args), ms);
 	};

@@ -3,7 +3,6 @@ import { NativeModules, TurboModuleRegistry } from 'react-native';
 
 export type * from '@typings/api/native';
 
-
 export const BundleInfo: BundleInfoType = NativeModules.InfoDictionaryManager ?? NativeModules.RTNClientInfoManager;
 export const BundleManager: BundleManagerType = getNativeModule('BundleUpdaterManager');
 export const DeviceInfo: DeviceInfoType = getNativeModule('DCDDeviceManager');

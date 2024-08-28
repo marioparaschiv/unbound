@@ -1,9 +1,9 @@
 import { getStore, useSettingsStore } from '@api/storage';
 import { Onboarding, Content } from '@ui/onboarding';
+import { Reanimated } from '@api/metro/common';
 import { useEffect, useState } from 'react';
-import { Reanimated } from '@metro/common';
 import { createPatcher } from '@patcher';
-import { findByName } from '@metro';
+import { findByName } from '@api/metro';
 
 const Patcher = createPatcher('onboarding');
 const { useSharedValue, withTiming } = Reanimated;

@@ -51,7 +51,7 @@ class Themes extends Manager {
 
 		const self = this;
 
-		const { findStore } = await import('@metro');
+		const { findStore } = await import('@api/metro');
 		const ThemeStore = findStore('Theme');
 
 		this.currentTheme = ThemeStore.theme;
@@ -152,8 +152,8 @@ class Themes extends Manager {
 
 	async applyBackground() {
 		// Avoid circular dependency
-		const { findByName, findByProps } = await import('@metro');
-		const { Theme } = await import('@metro/stores');
+		const { findByName, findByProps } = await import('@api/metro');
+		const { Theme } = await import('@api/metro/stores');
 
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
 		const { MessagesWrapper } = findByProps('MessagesWrapper');

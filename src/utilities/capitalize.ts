@@ -1,12 +1,11 @@
 /**
- * @name capitalize
  * @description Capitalizes the first letter of a string.
- * @param {string} string - The string to capitalize the first letter of
- * @return {string} Returns a string with an uppercased first letter
+ * @param input The string to capitalize.
+ * @returns The capitalized string.
  */
 function capitalize(input: string): string {
 	if (typeof input !== 'string') {
-		throw new TypeError('capitalize\'s first argument must be of type string');
+		throw new TypeError('The first argument for "capitalize" must be of type string');
 	}
 
 	return input.charAt(0).toUpperCase() + input.slice(1);

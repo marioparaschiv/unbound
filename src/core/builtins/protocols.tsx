@@ -3,9 +3,9 @@ import { createLogger } from '@structures/logger';
 import { ManagerType } from '@managers/base';
 import { createPatcher } from '@patcher';
 import { capitalize } from '@utilities';
+import { findByName } from '@api/metro';
 import { Linking } from 'react-native';
 import * as managers from '@managers';
-import { findByName } from '@metro';
 import Toasts from '@api/toasts';
 
 const Patcher = createPatcher('protocols');

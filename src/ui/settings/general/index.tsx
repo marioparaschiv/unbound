@@ -1,13 +1,13 @@
 import { KeyboardAvoidingView, ScrollView, Text } from 'react-native';
-import { Theme, StyleSheet } from '@metro/common';
+import { Theme, StyleSheet } from '@api/metro/common';
 import { BundleInfo, reload } from '@api/native';
 import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';
-import { Design } from '@metro/components';
+import { Design } from '@api/metro/components';
 import { showDialog } from '@api/dialogs';
 import { Section } from '@ui/misc/forms';
+import { Linking } from '@api/metro/api';
 import Unbound from '@ui/icons/unbound';
-import { Linking } from '@metro/api';
 import { Strings } from '@api/i18n';
 import Assets from '@api/assets';
 import { useMemo } from 'react';

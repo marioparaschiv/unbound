@@ -3,19 +3,19 @@ import { FlatList, RefreshControl, ScrollView, View } from 'react-native';
 import InstallModal, { showInstallAlert } from '@ui/addons/install-modal';
 import getItems, { resolveType } from '@ui/addons/addon-ordering';
 import SourceManager, { type Bundle } from '@managers/sources';
-import { callbackWithAnimation, noop } from '@utilities';
-import { HelpMessage, Design } from '@metro/components';
-import { compareSemanticVersions } from '@utilities';
+import { HelpMessage, Design } from '@api/metro/components';
 import { AddonCard } from '@ui/sources/addon-card';
 import HeaderRight from '@ui/addons/addon-header';
 import { useSettingsStore } from '@api/storage';
 import { GeneralSearch } from '@ui/misc/search';
+import { Dispatcher } from '@api/metro/common';
 import { Tags } from '@ui/sources/addon-tags';
 import { Addons } from '@ui/sources/addons';
-import { Dispatcher } from '@metro/common';
+import { animate, noop } from '@utilities';
 import Empty from '@ui/misc/empty-state';
 import sources from '@managers/sources';
 import * as Managers from '@managers';
+import { Semver } from '@utilities';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
 import { Keys } from '@constants';
@@ -59,9 +59,9 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 			for (const source of addons) {
 				for (const addon of source.instance as Bundle) {
 					const existingAddon = Managers[addon.type].entities.get(addon.manifest.id);
-
 					if (!existingAddon) return;
-					if (compareSemanticVersions(addon.manifest.version, existingAddon.data.version) > 0) {
+
+					if (Semver.isGreater(addon.manifest.version, existingAddon.data.version)) {
 						updates.push(addon);
 					}
 				}
@@ -84,7 +84,7 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 	const reversed = settings.get(`${resolveType(type)}.reversed`, false);
 
 	useLayoutEffect(() => {
-		isOnboarding && callbackWithAnimation(noop)();
+		isOnboarding && animate(noop)();
 	}, [isOnboarding]);
 
 	const data = useMemo(() => {

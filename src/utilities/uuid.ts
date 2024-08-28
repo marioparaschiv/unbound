@@ -1,10 +1,9 @@
 /**
- * @name uuid
- * @description Returns a UUID with the length provided (default: 30)
- * @param {number} [length=30] - The length of the randomized UUID
- * @return {string} Returns the randomized UUID.
+ * @description Returns a UUID of the requested length. (default: 30)
+ * @param length The length of the randomized UUID.
+ * @return Returns a random UUID.
  */
-function uuid(length: number = 30) {
+function uuid(length: number = 30): string {
 	let uuid = '';
 
 	do {

@@ -1,6 +1,5 @@
 import { createPatcher } from '@patcher';
-import { React } from '@metro/common';
-import { findByProps } from '@metro';
+import { findByProps } from '@api/metro';
 import { Strings } from '@api/i18n';
 import { memo } from 'react';
 

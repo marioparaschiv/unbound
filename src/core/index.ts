@@ -23,7 +23,7 @@ export async function initialize() {
 	window.unbound = Object.assign(API, { version: '__VERSION__' });
 
 	Managers.Plugins.initialize();
-	await Managers.Sources.initialize();
+	Managers.Sources.initialize();
 
 	return API;
 }

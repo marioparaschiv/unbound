@@ -1,20 +1,20 @@
 /**
- * @description Attempts calling a function and bails if it fails
- * @param {function} func - The function to debounce
- * @return {boolean|Promise<boolean>}
+ * @description Attempts calling a function and bails if it fails.
+ * @template T Your function's type. Used for inferring the return type.
+ * @param callback The function to attempt calling.
+ * @returns The function result or an Error instance.
  */
-function attempt(func: Fn): boolean | Promise<boolean> {
+function attempt<T extends Fn>(callback: T): ReturnType<T> | Error {
 	try {
-		const res = func();
+		const res = callback();
 
-		if (res instanceof Promise) {
-			return res.then(() => true);
+		if ((res satisfies Promise<any>) instanceof Promise) {
+			return res;
 		}
 
-		return true;
+		return res;
 	} catch (error) {
-		// Bail.
-		return false;
+		return error;
 	}
 };
 

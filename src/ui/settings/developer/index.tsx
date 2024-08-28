@@ -1,7 +1,7 @@
 import { Section, useFormStyles } from '@ui/misc/forms';
+import { Design, Slider } from '@api/metro/components';
 import { ScrollView, View, Text } from 'react-native';
-import { Design, Slider } from '@metro/components';
-import { Constants, Theme } from '@metro/common';
+import { Constants, Theme } from '@api/metro/common';
 import { useSettingsStore } from '@api/storage';
 import { Keys, Links } from '@constants';
 import { Strings } from '@api/i18n';

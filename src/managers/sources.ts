@@ -1,8 +1,8 @@
 import type { Addon, Manifest } from '@typings/managers';
-import downloadFile from '@utilities/downloadFile';
 import type { Manager } from '@typings/managers';
-import { Dispatcher } from '@metro/common';
+import { Dispatcher } from '@api/metro/common';
 import { createPatcher } from '@patcher';
+import { download } from '@utilities';
 import { Icons } from '@api/assets';
 import { Regex } from '@constants';
 import { useMemo } from 'react';
@@ -154,7 +154,7 @@ class Sources extends BaseManager {
 				for (const screenshot of addon.screenshots) {
 					const name = screenshot.substring(screenshot.lastIndexOf('/') + 1);
 					const path = `${this.path}/${manifest.id}/${addonManifest.id}/screenshots/${name}`;
-					downloadFile(screenshot, path, signal);
+					download(screenshot, path, 'base64', signal);
 
 					screenshots.push(path);
 				}

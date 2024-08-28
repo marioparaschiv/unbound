@@ -1,4 +1,4 @@
-import { Constants, StyleSheet, Theme } from '@metro/common';
+import { Constants, StyleSheet, Theme } from '@api/metro/common';
 
 export default StyleSheet.createStyles({
 	endStyle: {

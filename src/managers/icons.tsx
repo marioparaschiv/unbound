@@ -1,10 +1,10 @@
 import type { Addon, Manifest, Resolveable } from '@typings/managers';
-import downloadFile from '@utilities/downloadFile';
 import type { Asset } from '@typings/api/assets';
 import { createPatcher } from '@patcher';
+import { findByProps } from '@api/metro';
 import { ClientName } from '@constants';
 import { chunkArray } from '@utilities';
-import { findByProps } from '@metro';
+import { download } from '@utilities';
 import { Image } from 'react-native';
 import { Strings } from '@api/i18n';
 import Storage from '@api/storage';
@@ -79,7 +79,7 @@ class Icons extends Manager {
 		if (typeof manifest.icon === 'object' && manifest.icon.uri) {
 			const path = `${this.path}/${manifest.id}/${ClientName.toLowerCase()}/icon.png`;
 
-			await downloadFile(manifest.icon.uri, path, signal)
+			await download(manifest.icon.uri, path, 'base64', signal)
 				.then(() => {
 					if (typeof manifest.icon === 'object') {
 						manifest.icon.uri = `file://{__path__}/${path}`;
@@ -177,7 +177,7 @@ class Icons extends Manager {
 				const assetUrl = `https://raw.githubusercontent.com/${username}/${repo}/${branch ?? 'main'}/${path ? `${path}/` : ''}${asset.path}`;
 				const assetPath = `${this.path}/${manifest.id}/${asset.path}`;
 
-				await downloadFile(assetUrl, assetPath, this.signal)
+				await download(assetUrl, assetPath, 'base64', this.signal)
 					.then(() => {
 						setState({
 							message: Strings.UNBOUND_DOWNLOAD_PACK_PROGRESS.format({ progress: `${completed++}/${assets.length}` })

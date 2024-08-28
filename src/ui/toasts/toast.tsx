@@ -1,20 +1,18 @@
 import type { GestureEvent, HandlerStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import { View, Image, Text, Pressable, LayoutAnimation } from 'react-native';
-import { React, Reanimated, Gestures } from '@metro/common';
+import { Reanimated, Gestures } from '@api/metro/common';
 import type { ToastOptions } from '@typings/api/toasts';
 import { unitToHex, withoutOpacity } from '@utilities';
 import { useSettingsStore } from '@api/storage';
 import { createElement, useState } from 'react';
+import { Design } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
-import { Design } from '@metro/components';
-import { findByProps } from '@metro';
 import { Icons } from '@api/assets';
 import Toasts from '@stores/toasts';
 
 import useToastState from './useToastState';
 import useStyles from './toast.style';
 
-const { BackgroundBlurFill } = findByProps('BackgroundBlurFill', { lazy: true });
 const { withSpring, withTiming, useSharedValue, default: Animated } = Reanimated;
 const { PanGestureHandler, State } = Gestures;
 
@@ -57,7 +55,7 @@ function Toast(options: ToastOptions) {
 						nativeEvent.layout.height
 					}
 				>
-					<BackgroundBlurFill blurAmount={settings.get('toasts.blur', 0.15)} />
+					<Design.BackgroundBlurFill blurAmount={settings.get('toasts.blur', 0.15)} />
 					<View style={styles.wrapper}>
 						{options.icon && <View style={[styles.icon, { marginVertical: linesLength * 10 }]}>
 							{(options.tintedIcon ?? true) ? (

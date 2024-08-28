@@ -1,7 +1,7 @@
 import { useIcon, type Bundle } from '@managers/sources';
-import { Theme, Constants } from '@metro/common';
+import { Theme, Constants } from '@api/metro/common';
+import { Design } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
-import { Design } from '@metro/components';
 import { View, Text } from 'react-native';
 import * as Managers from '@managers';
 import { Icons } from '@api/assets';

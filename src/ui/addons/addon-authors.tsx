@@ -1,11 +1,11 @@
 import { TouchableOpacity, View, Text, Image } from 'react-native';
 import { createElement, useEffect, useState } from 'react';
 import type { Addon, Author } from '@typings/managers';
-import { callbackWithAnimation } from '@utilities';
-import { AsyncUsers, Profiles } from '@metro/api';
+import { AsyncUsers, Profiles } from '@api/metro/api';
+import { Design } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
-import { Design } from '@metro/components';
-import { Users } from '@metro/stores';
+import { Users } from '@api/metro/stores';
+import { animate } from '@utilities';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 
@@ -119,7 +119,7 @@ export function Authors({ addon }: { addon: Addon; }) {
 	return createElement(expanded ? Expanded : Unexpanded, {
 		addon,
 		styles,
-		setExpanded: callbackWithAnimation(setExpanded)
+		setExpanded: animate(setExpanded)
 	});
 }
 

@@ -1,10 +1,10 @@
 import type { SharedValue } from 'react-native-reanimated';
-import { Constants, Reanimated } from '@metro/common';
-import { callbackWithAnimation } from '@utilities';
+import { Constants, Reanimated } from '@api/metro/common';
 import { SafeAreaView, Text } from 'react-native';
 import { useSettingsStore } from '@api/storage';
-import { Design } from '@metro/components';
+import { Design } from '@api/metro/components';
 import { getIDByName } from '@api/assets';
+import { animate } from '@utilities';
 import { Strings } from '@api/i18n';
 
 import Progress from './progress';
@@ -39,7 +39,7 @@ export default function Onboarding({ contentId, setContent, opacity, onComplete 
 		info[step].callback({
 			show: () => toggleHiddenWithOpacity(false),
 			hide: () => toggleHiddenWithOpacity(true),
-			next: callbackWithAnimation(() => settings.set('onboarding.step', (() => {
+			next: animate(() => settings.set('onboarding.step', (() => {
 				if (!info[step + 1]) {
 					onComplete();
 					return step;
@@ -48,7 +48,7 @@ export default function Onboarding({ contentId, setContent, opacity, onComplete 
 				return step + 1;
 			})())),
 			contentId,
-			setContent: callbackWithAnimation(setContent),
+			setContent: animate(setContent),
 			styles
 		});
 	}

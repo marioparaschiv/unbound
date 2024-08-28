@@ -1,14 +1,15 @@
-import { View, Text, Image, Dimensions, TouchableOpacity, FlatList, Linking, ScrollView } from 'react-native';
+import { View, Text, Image, Dimensions, TouchableOpacity, FlatList, ScrollView } from 'react-native';
+import { Semver } from '@utilities';
 import { lazy, useEffect, useMemo, useState } from 'react';
 import { TintedIcon, TrailingText } from '@ui/misc/forms';
 import { useIcon, type Bundle } from '@managers/sources';
-import { compareSemanticVersions } from '@utilities';
+import { Media, Design } from '@api/metro/components';
 import { AddonCard } from '@ui/sources/addon-card';
-import { Media, Design } from '@metro/components';
-import { Constants } from '@metro/common';
+import { Constants } from '@api/metro/common';
 import Empty from '@ui/misc/empty-state';
+import { findByProps } from '@api/metro';
+import { Linking } from '@api/metro/api';
 import * as Managers from '@managers';
-import { findByProps } from '@metro';
 import { Overflow } from '@ui/misc';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
@@ -145,13 +146,15 @@ function Header({ addon, styles }: { addon: Bundle[number], styles: any; }) {
 	const [state, setState] = useState(StateKind.Install);
 
 	useEffect(() => {
+		const entity = manager.entities.get(addon.manifest.id);
+
 		switch (true) {
-			case !manager.entities.has(addon.manifest.id): {
+			case !entity: {
 				setState(StateKind.Install);
 				break;
 			}
 
-			case compareSemanticVersions(addon.manifest.version, manager.entities.get(addon.manifest.id).data.version) > 0: {
+			case Semver.isGreater(addon.manifest.version, entity.data.version): {
 				setState(StateKind.Update);
 				break;
 			}

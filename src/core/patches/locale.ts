@@ -1,11 +1,11 @@
-import { Moment, Dispatcher } from '@metro/common';
+import { Moment, Dispatcher } from '@api/metro/common';
 
 function onDispatch(payload: { locale: string; }) {
 	const { locale } = payload;
 
 	Moment.locale(locale.toLowerCase());
 
-	Dispatcher.unsubscribe("I18N_LOAD_SUCCESS", onDispatch);
+	Dispatcher.unsubscribe('I18N_LOAD_SUCCESS', onDispatch);
 }
 
 export function apply() {

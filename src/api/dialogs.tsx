@@ -1,5 +1,5 @@
 import type { AlertProps } from '@typings/api/dialogs';
-import { Design } from '@metro/components';
+import { Design } from '@api/metro/components';
 import { createElement } from 'react';
 import { View } from 'react-native';
 import { Strings } from '@api/i18n';

@@ -1,6 +1,6 @@
 import type { LocaleStrings } from '@typings/api/i18n';
 import { createLogger } from '@structures/logger';
-import { i18n } from '@metro/common';
+import { i18n } from '@api/metro/common';
 
 import CoreStrings from '../../i18n';
 

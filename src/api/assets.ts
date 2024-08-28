@@ -2,7 +2,7 @@ import { createLogger } from '@structures/logger';
 import type { Asset } from '@typings/api/assets';
 import IconManager from '@managers/icons';
 import { createPatcher } from '@patcher';
-import { findByProps } from '@metro';
+import { findByProps } from '@api/metro';
 import { Image } from 'react-native';
 import fs from '@api/fs';
 

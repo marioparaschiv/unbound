@@ -1,6 +1,6 @@
+import { findByProps } from '@api/metro';
 import { getStore } from '@api/storage';
 import { addLog } from '@stores/logger';
-import { findByProps } from '@metro';
 
 export enum Levels {
 	error = 3,

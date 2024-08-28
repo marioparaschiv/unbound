@@ -1,5 +1,5 @@
+import { Design as DiscordDesign } from '@api/metro/components';
 import { Dimensions, SafeAreaView, View } from 'react-native';
-import { Design as DiscordDesign } from '@metro/components';
 import InstallModal from '@ui/addons/install-modal';
 import HeaderRight from '@ui/addons/addon-header';
 import { useSettingsStore } from '@api/storage';

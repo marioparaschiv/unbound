@@ -2,11 +2,10 @@ import { FlatList, ScrollView, View, Image } from 'react-native';
 import { memo, PureComponent, useMemo, useState } from 'react';
 import type { Asset as AssetType } from '@typings/api/assets';
 import { GeneralSearch } from '@ui/misc/search';
-import { Design } from '@metro/components';
-import { Media } from '@metro/components';
+import { Design } from '@api/metro/components';
+import { Media } from '@api/metro/components';
 import { Section } from '@ui/misc/forms';
-import { React } from '@metro/common';
-import { findByProps } from '@metro';
+import { findByProps } from '@api/metro';
 import { assets } from '@api/assets';
 
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
