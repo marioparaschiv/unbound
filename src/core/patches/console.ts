@@ -25,7 +25,7 @@ export function apply() {
 
 			for (let i = 0, len = args.length; len > i; i++) {
 				const item = args[i];
-				const out = typeof item === 'string' ? item : Util.inspect?.(item, { depth: settings.get('dev.logging.depth', 3) });
+				const out = typeof item === 'string' ? item : Util.inspect?.(item, { depth: settings.get('dev.logging.depth', 2) });
 
 				payload.push(out ?? item.toString());
 			}

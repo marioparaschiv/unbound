@@ -1,12 +1,12 @@
 import createStore from '@structures/store';
 
-const [store, useStore] = createStore({ logs: [] });
+const store = createStore({ logs: [] });
 
 export function addLog({ message, level }) {
 	store.setState(prev => ({
 		logs: [
-			// Store a maximum of 50 logs at once to avoid memory leaks
-			...prev.logs.slice(prev.logs.length - 49),
+			// Store a maximum of 50 logs at once to avoid using up too much memory.
+			...prev.logs.slice(-50),
 			{
 				time: Date.now(),
 				message,
@@ -16,5 +16,4 @@ export function addLog({ message, level }) {
 	}));
 }
 
-export { store as logger, useStore as useLogger };
-export default { store, useStore };
+export default store;

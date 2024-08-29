@@ -4,9 +4,9 @@ import { TintedIcon, Section } from '@ui/misc/forms';
 import { GeneralSearch } from '@ui/misc/search';
 import { Design } from '@api/metro/components';
 import { useMemo, useState } from 'react';
-import LoggerStore from '@stores/logger';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
+import Logs from '@stores/logger';
 
 const { TableRow, TableRowIcon } = Design;
 
@@ -23,7 +23,7 @@ const levelSelection = {
 export default function Logger() {
 	const [search, setSearch] = useState('');
 	const navigation = Design.useNavigation();
-	const store = LoggerStore.useStore();
+	const store = Logs.useState();
 	const styles = useStyles();
 
 	const data = useMemo(() => store.logs
@@ -95,7 +95,7 @@ function HeaderRight() {
 
 	return <TouchableOpacity
 		style={styles.touchable}
-		onPress={() => LoggerStore.store.setState({ logs: [] })}
+		onPress={() => Logs.setState({ logs: [] })}
 	>
 		<TintedIcon source={Icons['ic_input_clear_24px']} />
 	</TouchableOpacity>;

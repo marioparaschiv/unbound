@@ -13,7 +13,6 @@ export const Clipboard = findByProps('setString', 'getString', 'setImage', 'getI
 export const Flux = findByProps('Store', 'connectStores', { lazy: true }) as Common.Flux;
 export const Moment = findByProps('isMoment', { lazy: true }) as Common.Moment;
 export const Screens = findByProps('FullWindowOverlay', { lazy: true });
-export const Portal = findByProps('PortalHost', 'Portal', { lazy: true });
 export const SVG = findByProps('Svg', 'Path', { lazy: true });
 
 export const StyleSheet = findByProps('createStyles', { lazy: true }) as Common.StyleSheet;

@@ -47,8 +47,7 @@ export function initialize() {
 				id: Keys['General'],
 				icon: Icons['settings'],
 				keywords: [Strings.UNBOUND_GENERAL],
-				screen: General,
-				useTrailing: () => <TrailingText>{window.unbound.version}</TrailingText>
+				screen: General
 			},
 			{
 				title: 'UNBOUND_PLUGINS',

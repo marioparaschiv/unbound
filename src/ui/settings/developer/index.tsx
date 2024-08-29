@@ -106,14 +106,14 @@ export default function Developer() {
 				label={Strings.UNBOUND_LOGGING_DEPTH}
 				trailing={(
 					<Text style={formText}>
-						{Strings.UNBOUND_LOGGING_DEPTH_DESC.format({ depth: settings.get('dev.logging.depth', 3) })}
+						{Strings.UNBOUND_LOGGING_DEPTH_DESC.format({ depth: settings.get('dev.logging.depth', 2) })}
 					</Text>
 				)}
 			/>
 			<View style={[endStyle, { borderBottomRightRadius: 0, borderBottomLeftRadius: 0 }]}>
 				<Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
-					value={settings.get('dev.logging.depth', 3)}
+					value={settings.get('dev.logging.depth', 2)}
 					onValueChange={v => settings.set('dev.logging.depth', Math.round(v))}
 					minimumValue={1}
 					maximumValue={6}

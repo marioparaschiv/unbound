@@ -20,12 +20,14 @@ export async function initialize() {
 		Logger.error('Failed to apply built-ins:', e.message);
 	}
 
-	window.unbound = Object.assign(API, { version: '__VERSION__' });
+	const instance = Object.assign(API, { version: '__VERSION__' });
+
+	window.unbound ??= instance;
 
 	Managers.Plugins.initialize();
 	Managers.Sources.initialize();
 
-	return API;
+	return instance;
 }
 
 export async function shutdown() {
@@ -40,8 +42,6 @@ export async function shutdown() {
 
 	Patches.remove();
 	BuiltIns.shutdown();
-
-	delete window.unbound;
 }
 
 export default { initialize, shutdown };
