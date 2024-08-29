@@ -24,14 +24,14 @@ try {
 	const Toasts = find(x => x.open && x.close && Object.keys(x).length === 2, { lazy: true });
 
 	// Render our toasts
-	Patcher.instead(Container, 'type', (self, args, orig) => {
+	Patcher.after(Container, 'type', (_, __, res) => {
 		const settings = Settings.useSettingsStore(({ key }) => key.startsWith('toasts'));
 
-		if (!settings.get('toasts.enabled', true)) {
-			return orig.apply(self, args);
+		if (settings.get('toasts.enabled', true)) {
+			return <ToastContainer />;
 		}
 
-		return <ToastContainer />;
+		return res;
 	});
 
 	// Convert Discord's toasts into our toasts
