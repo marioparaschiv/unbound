@@ -70,8 +70,8 @@ class Sources extends BaseManager {
 		}
 
 		for (const source of Object.keys(this.sources)) {
-			const manifest = await fs.read(`${fs.Documents}/${this.path}/${source}/manifest.json`);
-			const bundle = await fs.read(`${fs.Documents}/${this.path}/${source}/bundle.json`);
+			const manifest = await fs.read(`${this.path}/${source}/manifest.json`);
+			const bundle = await fs.read(`${this.path}/${source}/bundle.json`);
 
 			this.load(JSON.parse(bundle), JSON.parse(manifest) as Manifest);
 		}

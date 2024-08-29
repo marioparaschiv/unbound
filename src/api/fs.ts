@@ -7,7 +7,7 @@ const FileManager: FileManagerType = getNativeModule('DCDFileManager', 'RTNFileM
 
 export const Documents = FileManager.DocumentsDirPath;
 
-export function read(path: string, encoding: FileManagerEncoding = 'utf8', inDocuments = true) {
+export function read(path: string, encoding: FileManagerEncoding = 'utf8', inDocuments: boolean = true) {
 	return FileManager.readFile(inDocuments ? `${Documents}/${path}` : path, encoding);
 }
 
@@ -19,7 +19,7 @@ export function rm(path: string): Promise<boolean> {
 	return FileManager.removeFile('documents', path);
 }
 
-export function exists(path: string, inDocuments = true): Promise<boolean> {
+export function exists(path: string, inDocuments: boolean = true): Promise<boolean> {
 	return FileManager.fileExists(inDocuments ? `${Documents}/${path}` : path);
 }
 

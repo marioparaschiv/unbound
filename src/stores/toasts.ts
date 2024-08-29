@@ -17,7 +17,7 @@ function updateToastWithOptions(id: any, options: Nullable<InternalToastOptions>
 				} : {})
 			}
 		}))
-	), 300)();
+	), { duration: 300 })();
 }
 
 export function addToast(options: InternalToastOptions) {

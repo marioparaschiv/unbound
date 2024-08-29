@@ -1,11 +1,11 @@
 import type { GestureEvent, HandlerStateChangeEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import { View, Image, Text, Pressable, LayoutAnimation } from 'react-native';
+import { BackdropFilters, Design } from '@api/metro/components';
 import { Reanimated, Gestures } from '@api/metro/common';
 import type { ToastOptions } from '@typings/api/toasts';
 import { unitToHex, withoutOpacity } from '@utilities';
 import { useSettingsStore } from '@api/storage';
 import { createElement, useState } from 'react';
-import { Design } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
 import { Icons } from '@api/assets';
 import Toasts from '@stores/toasts';
@@ -55,7 +55,7 @@ function Toast(options: ToastOptions) {
 						nativeEvent.layout.height
 					}
 				>
-					<Design.BackgroundBlurFill blurAmount={settings.get('toasts.blur', 0.15)} />
+					<BackdropFilters.BackgroundBlurFill blurAmount={settings.get('toasts.blur', 0.15)} />
 					<View style={styles.wrapper}>
 						{options.icon && <View style={[styles.icon, { marginVertical: linesLength * 10 }]}>
 							{(options.tintedIcon ?? true) ? (
