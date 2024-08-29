@@ -1,28 +1,33 @@
 import type { InternalToastOptions, ToastOptions } from '@typings/api/toasts';
 import createStore from '@structures/store';
-import { animate, uuid } from '@utilities';
+import { uuid } from '@utilities';
 
-const [store, useStore] = createStore({ toasts: {} });
+const store = createStore<{
+	toasts: {
+		[key: PropertyKey]: InternalToastOptions;
+	};
+}>({ toasts: {} });
 
 function updateToastWithOptions(id: any, options: Nullable<InternalToastOptions>) {
-	animate(() => (
-		store.setState(prev => ({
-			toasts: {
-				...prev.toasts,
-				...(prev.toasts[id] ? {
-					[id]: {
-						...prev.toasts[id],
-						...options
-					}
-				} : {})
+	store.setState(prev => {
+		const existing = prev.toasts[id];
+		if (!existing) return prev;
+
+		const toasts = {
+			...prev.toasts,
+			[id]: {
+				...existing,
+				...options
 			}
-		}))
-	), { duration: 300 })();
+		};
+
+		return { toasts };
+	});
 }
 
 export function addToast(options: InternalToastOptions) {
-	if (!options.id) options.id = uuid();
-	if (!options.date) options.date = Date.now();
+	options.id ??= uuid();
+	options.date ??= Date.now();
 
 	store.setState(prev => ({
 		toasts: {
@@ -42,5 +47,4 @@ export function addToast(options: InternalToastOptions) {
 	};
 }
 
-export { store as toasts, useStore as useToasts };
-export default { store, useStore };
+export default store;

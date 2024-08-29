@@ -15,9 +15,9 @@ export default StyleSheet.createStyles({
 
 	formHint: {
 		fontFamily: Constants.Fonts.PRIMARY_NORMAL,
-		color: Theme.colors.HEADER_PRIMARY,
+		color: Theme.colors.TEXT_MUTED,
 		fontSize: 12,
-		marginTop: 4,
+		marginTop: 10,
 		marginHorizontal: 16
 	},
 

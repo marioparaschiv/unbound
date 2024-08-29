@@ -1,39 +1,54 @@
 import type { InternalToastOptions } from '@typings/api/toasts';
+import type { WithTimingConfig } from 'react-native-reanimated';
 import { useSettingsStore } from '@api/storage';
 import { Reanimated } from '@api/metro/common';
 import { useEffect, useState } from 'react';
 import { Dimensions } from 'react-native';
-import { animate } from '@utilities';
 import Toasts from '@stores/toasts';
 
-const { useSharedValue, withTiming, withSpring, Easing } = Reanimated;
+const { useSharedValue, withTiming, Easing } = Reanimated;
+
+const MOUNT_CHANGE_CONFIG: WithTimingConfig = { duration: 400, easing: Easing.inOut(Easing.poly(4)) };
 
 function useToastState(options: InternalToastOptions) {
+	const [closing, setClosing] = useState(options.closing);
 	const [leaving, setLeaving] = useState(false);
+
 	const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('toasts'));
 	const animations = settings.get('toasts.animations', true);
 
 	const opacity = useSharedValue(0);
-	const marginTop = useSharedValue(5);
-	const scale = useSharedValue(0.65);
+	const marginVertical = useSharedValue(0);
+	const scale = useSharedValue(0.75);
 	const height = useSharedValue(0);
+	const translateY = useSharedValue(0);
 
 	// This parent container set to 90% width in the styles
 	const width = useSharedValue(Dimensions.get('window').width * 0.9);
 
 	function leave() {
-		setLeaving(true);
+		setClosing(true);
+
+		marginVertical.value = animations ? withTiming(0, MOUNT_CHANGE_CONFIG) : 0;
+		height.value = animations ? withTiming(0, MOUNT_CHANGE_CONFIG) : 0;
+		scale.value = animations ? withTiming(0.75, MOUNT_CHANGE_CONFIG) : 0.75;
+		translateY.value = animations ? withTiming(-40, MOUNT_CHANGE_CONFIG) : -40;
+		opacity.value = animations ? withTiming(0, MOUNT_CHANGE_CONFIG) : 0;
+
+		setTimeout(() => setLeaving(true), MOUNT_CHANGE_CONFIG.duration);
 	}
 
 	useEffect(() => {
 		if (animations) {
-			opacity.value = withTiming(1);
-			marginTop.value = withTiming(0);
-			scale.value = withSpring(1);
+			opacity.value = withTiming(1, MOUNT_CHANGE_CONFIG);
+			translateY.value = withTiming(0, MOUNT_CHANGE_CONFIG);
+			scale.value = withTiming(1, MOUNT_CHANGE_CONFIG);
+			marginVertical.value = withTiming(5, MOUNT_CHANGE_CONFIG);
 		} else {
 			opacity.value = 1;
-			marginTop.value = 0;
+			translateY.value = 0;
 			scale.value = 1;
+			marginVertical.value = 5;
 		}
 
 		const duration = (options.duration ?? (settings.get('toasts.duration', 0) * 1000));
@@ -47,32 +62,39 @@ function useToastState(options: InternalToastOptions) {
 
 	useEffect(() => {
 		if (leaving) {
-			(animations ? animate(Toasts.store.setState) : Toasts.store.setState)((prev) => {
-				delete prev.toasts[options.id];
-				return prev;
+			Toasts.setState((prev) => {
+				const toasts = { ...prev.toasts };
+				delete toasts[options.id];
+
+				return { toasts };
 			});
 		}
 	}, [leaving]);
 
 	useEffect(() => {
-		options.closing && leave();
+		if (options.closing) {
+			setClosing(true);
+		}
 	}, [options.closing]);
 
 	return {
 		style: {
-			marginTop,
 			opacity,
 			height,
-			transform: [{ scale }],
+			transform: [{ scale, translateY }],
+			marginVertical
 		},
 		properties: {
-			marginTop,
 			opacity,
 			height,
 			scale,
-			width
+			translateY,
+			width,
+			marginVertical
 		},
-		leave
+		leave,
+		leaving,
+		closing
 	};
 };
 

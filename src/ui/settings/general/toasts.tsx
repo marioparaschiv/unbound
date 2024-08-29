@@ -16,6 +16,7 @@ function Toasts() {
 	const settings = useSettingsStore('unbound');
 	const { endStyle, formHint, formText } = useFormStyles();
 
+	const maxOnScreen = settings.get('toasts.maxOnScreen', 3);
 	const duration = settings.get('toasts.duration', 0);
 	const opacity = settings.get('toasts.opacity', 0.8);
 	const blur = settings.get('toasts.blur', 0.15);
@@ -36,80 +37,9 @@ function Toasts() {
 				value={settings.get('toasts.animations', true)}
 				onValueChange={() => settings.toggle('toasts.animations', true)}
 			/>
-		</Section>
-		<Section>
-			<TableRow
-				label={Strings.UNBOUND_TOAST_BACKGROUND_BLUR}
-				trailing={(
-					<Text style={formText}>
-						{`${Math.round(blur * 100)}%`}
-					</Text>
-				)}
-			/>
-			<View style={endStyle}>
-				<Slider
-					style={{ marginHorizontal: 15, marginVertical: 5 }}
-					value={blur}
-					onValueChange={v => settings.set('toasts.blur', Math.round(v * 100) / 100)}
-					minimumValue={0}
-					maximumValue={1}
-					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
-					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
-					tapToSeek
-				/>
-			</View>
-		</Section>
-		<Section>
-			<TableRow
-				label={Strings.UNBOUND_TOAST_BACKGROUND_OPACITY}
-				trailing={(
-					<Text style={formText}>
-						{`${Math.round(opacity * 100)}%`}
-					</Text>
-				)}
-			/>
-			<View style={endStyle}>
-				<Slider
-					style={{ marginHorizontal: 15, marginVertical: 5 }}
-					value={opacity}
-					onValueChange={v => settings.set('toasts.opacity', Math.round(v * 100) / 100)}
-					minimumValue={0}
-					maximumValue={1}
-					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
-					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
-					tapToSeek
-				/>
-			</View>
-		</Section>
-		<Section>
-			<TableRow
-				label={Strings.UNBOUND_TOAST_DURATION}
-				trailing={(
-					<Text style={formText}>
-						{duration === 0 ? Strings.UNBOUND_INDEFINITE : Strings.DURATION_SECONDS.format({ seconds: duration })}
-					</Text>
-				)}
-			/>
-			<View style={endStyle}>
-				<Slider
-					style={{ marginHorizontal: 15, marginVertical: 5 }}
-					value={duration}
-					onValueChange={v => settings.set('toasts.duration', Math.round(v * 10) / 10)}
-					minimumValue={0}
-					maximumValue={10}
-					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
-					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
-					tapToSeek
-				/>
-			</View>
-		</Section>
-		<Text style={formHint}>
-			{Strings.UNBOUND_TOAST_DURATION_DESC}
-		</Text>
-		<Section>
 			<TableRow
 				arrow={true}
-				label={'Show Toast'}
+				label={Strings.UNBOUND_SHOW_TOAST}
 				icon={<TableRowIcon source={Icons['ic_star_filled']} />}
 				onPress={() => {
 					const toast = showToast({
@@ -174,6 +104,100 @@ function Toasts() {
 				}}
 			/>
 		</Section>
+		<Section title={Strings.APPEARANCE}>
+			<TableRow
+				label={Strings.UNBOUND_TOAST_BACKGROUND_BLUR}
+				trailing={(
+					<Text style={formText}>
+						{`${Math.round(blur * 100)}%`}
+					</Text>
+				)}
+			/>
+			<View style={endStyle}>
+				<Slider
+					style={{ marginHorizontal: 15, marginVertical: 5 }}
+					value={blur}
+					onValueChange={v => settings.set('toasts.blur', Math.round(v * 100) / 100)}
+					minimumValue={0}
+					maximumValue={1}
+					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
+					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
+					tapToSeek
+				/>
+			</View>
+		</Section>
+		<Section>
+			<TableRow
+				label={Strings.UNBOUND_TOAST_BACKGROUND_OPACITY}
+				trailing={(
+					<Text style={formText}>
+						{`${Math.round(opacity * 100)}%`}
+					</Text>
+				)}
+			/>
+			<View style={endStyle}>
+				<Slider
+					style={{ marginHorizontal: 15, marginVertical: 5 }}
+					value={opacity}
+					onValueChange={v => settings.set('toasts.opacity', Math.round(v * 100) / 100)}
+					minimumValue={0}
+					maximumValue={1}
+					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
+					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
+					tapToSeek
+				/>
+			</View>
+		</Section>
+
+
+		<Section title={Strings.UNBOUND_BEHAVIOUR}>
+			<TableRow
+				label={Strings.UNBOUND_TOAST_MAX_ON_SCREEN}
+				trailing={(
+					<Text style={formText}>
+						{maxOnScreen === 0 ? Strings.UNBOUND_INFINITE : maxOnScreen}
+					</Text>
+				)}
+			/>
+			<View style={endStyle}>
+				<Slider
+					style={{ marginHorizontal: 15, marginVertical: 5 }}
+					value={maxOnScreen}
+					onValueChange={v => settings.set('toasts.maxOnScreen', Math.round(v))}
+					minimumValue={0}
+					maximumValue={6}
+					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
+					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
+					tapToSeek
+				/>
+			</View>
+		</Section>
+
+		<Section>
+			<TableRow
+				label={Strings.UNBOUND_TOAST_DURATION}
+				trailing={(
+					<Text style={formText}>
+						{duration === 0 ? Strings.UNBOUND_INDEFINITE : Strings.DURATION_SECONDS.format({ seconds: duration })}
+					</Text>
+				)}
+			/>
+			<View style={endStyle}>
+				<Slider
+					style={{ marginHorizontal: 15, marginVertical: 5 }}
+					value={duration}
+					onValueChange={v => settings.set('toasts.duration', Math.round(v * 10) / 10)}
+					minimumValue={0}
+					maximumValue={10}
+					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
+					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
+					tapToSeek
+				/>
+			</View>
+		</Section>
+		<Text style={formHint}>
+			{Strings.UNBOUND_TOAST_DURATION_DESC}
+		</Text>
 	</ScrollView>;
 }
 

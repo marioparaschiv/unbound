@@ -24,7 +24,7 @@ try {
 	const Toasts = find(x => x.open && x.close && Object.keys(x).length === 2, { lazy: true });
 
 	// Render our toasts
-	Patcher.after(Container, 'type', (_, __, res) => {
+	Patcher.instead(Container, 'type', (_, __, res) => {
 		const settings = Settings.useSettingsStore(({ key }) => key.startsWith('toasts'));
 
 		if (!settings.get('toasts.enabled', true)) {

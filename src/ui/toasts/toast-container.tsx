@@ -1,29 +1,29 @@
-import type { ToastOptions } from '@typings/api/toasts';
+import type { InternalToastOptions } from '@typings/api/toasts';
+import { useSettingsStore } from '@api/storage';
 import { SafeAreaView } from 'react-native';
-import { useToasts } from '@stores/toasts';
+import { Screens } from '@api/metro/common';
+import Toasts from '@stores/toasts';
 import { useMemo } from 'react';
 
 import useStyles from './toast-container.style';
 import Toast from './toast';
 
 function ToastContainer() {
-	const { toasts } = useToasts();
+	const settings = useSettingsStore('unbound', ({ key }) => key === 'toasts.maxOnScreen');
+	const { toasts } = Toasts.useState();
 	const styles = useStyles();
 
-	const entries: [string, ToastOptions][] = useMemo(() => Object.entries(toasts), [toasts]);
+	console.log('updating');
 
-	return <SafeAreaView style={styles.safeArea} pointerEvents='box-none'>
-		{entries.map(([id, options]) => <Toast {...options} key={id} />)}
-	</SafeAreaView>;
+	const maxOnScreen = settings.get<number>('toasts.maxOnScreen', 3);
+	const entries: [string, InternalToastOptions][] = useMemo(() => Object.entries(toasts), [toasts]);
+	const sorted = useMemo(() => entries.sort(([, a], [, b]) => b.date - a.date).slice(0, maxOnScreen === 0 ? Infinity : maxOnScreen), [entries, maxOnScreen]);
 
-	// return entries.map(([id, options]) => <Toast {...options} key={id} />)
-	// return <Portal.Portal style={{ zIndex: 999999, width: '100%', height: '100%' }}>
-	// 	<Screens.FullWindowOverlay style={{ zIndex: 999999, width: '100%', height: '100%' }}>
-	// 		<SafeAreaView style={styles.safeArea} pointerEvents='box-none'>
-	// 			{entries.map(([id, options]) => <Toast {...options} key={id} />)}
-	// 		</SafeAreaView>
-	// 	</Screens.FullWindowOverlay>
-	// </Portal.Portal>;
+	return <Screens.FullWindowOverlay>
+		<SafeAreaView style={styles.safeArea} pointerEvents='box-none'>
+			{sorted.map(([id, options]) => <Toast {...options} key={id} />)}
+		</SafeAreaView>
+	</Screens.FullWindowOverlay>;
 }
 
 export default ToastContainer;

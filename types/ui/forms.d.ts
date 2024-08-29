@@ -11,7 +11,7 @@ type SectionProps = {
 type SvgIconProps = {
 	size?: number;
 	style?: ImageStyle;
-	icon?: React.ComponentType;
+	icon?: React.ComponentType<any>;
 };
 
 type IconProps = {
