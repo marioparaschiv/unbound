@@ -35,7 +35,7 @@ function Toast(options: InternalToastOptions) {
 			<View
 				style={[styles.container, styles.toastShadow, { backgroundColor: withoutOpacity(styles.container.backgroundColor) + unitToHex(settings.get('toasts.opacity', 0.8)) }]}
 				onLayout={({ nativeEvent }) => {
-					if (closing) return;
+					if (closing || nativeEvent.layout.height === height.value) return;
 
 					if (!settings.get('toasts.animations', true)) {
 						height.value = nativeEvent.layout.height;

@@ -1,5 +1,5 @@
+import { type WithTimingConfig } from 'react-native-reanimated';
 import type { InternalToastOptions } from '@typings/api/toasts';
-import type { WithTimingConfig } from 'react-native-reanimated';
 import { useSettingsStore } from '@api/storage';
 import { Reanimated } from '@api/metro/common';
 import { useEffect, useState } from 'react';
@@ -8,7 +8,7 @@ import Toasts from '@stores/toasts';
 
 const { useSharedValue, withTiming, Easing } = Reanimated;
 
-const MOUNT_CHANGE_CONFIG: WithTimingConfig = { duration: 400, easing: Easing.inOut(Easing.poly(4)) };
+const MOUNT_CHANGE_CONFIG: WithTimingConfig = { duration: 325, easing: Easing.inOut(Easing.cubic) };
 
 function useToastState(options: InternalToastOptions) {
 	const [closing, setClosing] = useState(options.closing);
@@ -29,11 +29,12 @@ function useToastState(options: InternalToastOptions) {
 	function leave() {
 		setClosing(true);
 
-		marginVertical.value = animations ? withTiming(0, MOUNT_CHANGE_CONFIG) : 0;
 		height.value = animations ? withTiming(0, MOUNT_CHANGE_CONFIG) : 0;
-		scale.value = animations ? withTiming(0.75, MOUNT_CHANGE_CONFIG) : 0.75;
-		translateY.value = animations ? withTiming(-40, MOUNT_CHANGE_CONFIG) : -40;
 		opacity.value = animations ? withTiming(0, MOUNT_CHANGE_CONFIG) : 0;
+		scale.value = animations ? withTiming(0.75, MOUNT_CHANGE_CONFIG) : 0.75;
+
+		marginVertical.value = animations ? withTiming(0, MOUNT_CHANGE_CONFIG) : 0;
+		translateY.value = animations ? withTiming(-40, MOUNT_CHANGE_CONFIG) : -40;
 
 		setTimeout(() => setLeaving(true), MOUNT_CHANGE_CONFIG.duration);
 	}

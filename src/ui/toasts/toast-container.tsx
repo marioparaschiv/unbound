@@ -13,8 +13,6 @@ function ToastContainer() {
 	const { toasts } = Toasts.useState();
 	const styles = useStyles();
 
-	console.log('updating');
-
 	const maxOnScreen = settings.get<number>('toasts.maxOnScreen', 3);
 	const entries: [string, InternalToastOptions][] = useMemo(() => Object.entries(toasts), [toasts]);
 	const sorted = useMemo(() => entries.sort(([, a], [, b]) => b.date - a.date).slice(0, maxOnScreen === 0 ? Infinity : maxOnScreen), [entries, maxOnScreen]);
