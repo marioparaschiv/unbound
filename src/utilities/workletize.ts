@@ -2,10 +2,11 @@ import type { WorkletizedFunction } from '@typings/utilities/workletize';
 
 /**
  * @description Turns a function into a worklet for use within React Native Reanimated runOnUI, runOnJS, and worklet runtime calls.
- * - This aims to be a replacement for the compile-time workletization React Native Reanimated's Babel plugin provides.
+ * - This aims to be a replacement for the compile-time workletization React Native Reanimated's Babel plugin provides (https://docs.swmansion.com/react-native-reanimated/docs/2.x/fundamentals/worklets/).
  * - Any variable referenced inside of the function code MUST be added to the closure object.
  * - Any functions inside of the closure object must also be workletized. Common functions like console.log already exist.
- * - Please also ensure that all code inside of the worklet is compatible with [Hermes](https://github.com/facebook/hermes/blob/main/doc/Features.md) (our JS runtime)
+ * - Ensure that all code inside of the worklet is compatible with [Hermes](https://github.com/facebook/hermes/blob/main/doc/Features.md) (our JS runtime)
+ * - Some globals may not be available. This consists of mostly React Native specific globals that are not part of the globals that Hermes provides out of the box (e.g. window.alert())
  * - Hermes does not have .toString() compatibility as it executes from bytecode. Due to this, you have to pass the function code as a raw string argument (func.toString() will not work).
  * - To check if the function is running on the UI thread, please use `if (_WORKLET)`
  * @param instance The function instance you would like to workletize.
