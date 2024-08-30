@@ -5,6 +5,7 @@ export { default as mergeStyles } from './mergeStyles';
 export { default as chunkArray } from './chunkArray';
 export { default as capitalize } from './capitalize';
 export { default as findInTree } from './findInTree';
+export { default as workletize } from './workletize';
 export { default as unitToHex } from './unitToHex';
 export { default as debounce } from './debounce';
 export { default as download } from './download';
