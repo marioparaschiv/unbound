@@ -1,6 +1,6 @@
 export interface FindInTreeOptions {
 	ignore?: (string | symbol)[];
-	walkable: (string | symbol)[];
+	walkable?: (string | symbol)[];
 	maxProperties?: number;
 }
 

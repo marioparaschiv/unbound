@@ -11,7 +11,8 @@ import type { FindInTreeOptions, FindInTreePredicate } from '@typings/utilities/
  * @param options.maxProperties The maximum properties to traverse through before bailing.
  * @return The value found by the predicate if one is found.
  */
-function findInTree<T = any>(tree: Record<any, any> | unknown[], predicate: FindInTreePredicate, { ignore = [], walkable, maxProperties = 100 }: FindInTreeOptions): T {
+function findInTree<T = any>(tree: Record<any, any> | unknown[], predicate: FindInTreePredicate, options?: FindInTreeOptions): T {
+	let { ignore = [], walkable = [], maxProperties = 100 } = options ?? {};
 	const stack: unknown[] = [tree];
 
 	const filter = function (node: unknown) {
@@ -34,19 +35,23 @@ function findInTree<T = any>(tree: Record<any, any> | unknown[], predicate: Find
 			stack.push(...node);
 		} else if (typeof node === 'object' && node !== null) {
 			if (walkable.length) {
-				const keys = Reflect.ownKeys(node);
+				const keys = [...Reflect.ownKeys(node), '__proto__'];
 
 				for (const key of keys) {
 					const value = node[key];
+					if (value === void 0) continue;
+
 					if (walkable.includes(key) && !ignore.includes(key)) {
 						stack.push(value);
 					}
 				}
 			} else {
-				const keys = Reflect.ownKeys(node);
+				const keys = [...Reflect.ownKeys(node), '__proto__'];
 
 				for (const key of keys) {
 					const value = node[key];
+					if (value === void 0) continue;
+
 					if (node && ignore.includes(key)) continue;
 
 					stack.push(value);
