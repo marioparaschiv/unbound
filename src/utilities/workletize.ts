@@ -2,6 +2,7 @@ import type { WorkletizedFunction } from '@typings/utilities/workletize';
 
 /**
  * @description Turns a function into a worklet for use within React Native Reanimated runOnUI, runOnJS, and worklet runtime calls.
+ * - This is **VERY FRAGILE**. Expect crashes initially. You can view worklet errors by filtering logs containing "crash" in the syslog viewer of your choice (e.g. idevicesyslog)
  * - This aims to be a replacement for the compile-time workletization React Native Reanimated's Babel plugin provides (https://docs.swmansion.com/react-native-reanimated/docs/2.x/fundamentals/worklets/).
  * - Any variable referenced inside of the function code MUST be added to the closure object.
  * - Any functions inside of the closure object must also be workletized. Common functions like console.log already exist.
