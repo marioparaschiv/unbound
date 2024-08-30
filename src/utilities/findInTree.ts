@@ -34,16 +34,20 @@ function findInTree<T = any>(tree: Record<any, any> | unknown[], predicate: Find
 			stack.push(...node);
 		} else if (typeof node === 'object' && node !== null) {
 			if (walkable.length) {
-				for (const key in node) {
+				const keys = Reflect.ownKeys(node);
+
+				for (const key of keys) {
 					const value = node[key];
-					if (~walkable.indexOf(key) && !~ignore.indexOf(key)) {
+					if (walkable.includes(key) && !ignore.includes(key)) {
 						stack.push(value);
 					}
 				}
 			} else {
-				for (const key in node) {
+				const keys = Reflect.ownKeys(node);
+
+				for (const key of keys) {
 					const value = node[key];
-					if (node && ~ignore.indexOf(key)) continue;
+					if (node && ignore.includes(key)) continue;
 
 					stack.push(value);
 				}
