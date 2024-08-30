@@ -1,6 +1,7 @@
 export * as managers from '@managers';
 
 export * as metro from './metro/exports';
+export * as utilities from './utilities';
 export * as commands from './commands';
 export * as settings from './settings';
 export * as patcher from './patcher';
