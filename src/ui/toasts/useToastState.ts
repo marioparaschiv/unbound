@@ -74,7 +74,7 @@ function useToastState(options: InternalToastOptions) {
 
 	useEffect(() => {
 		if (options.closing) {
-			setClosing(true);
+			leave();
 		}
 	}, [options.closing]);
 
