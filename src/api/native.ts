@@ -13,9 +13,9 @@ export async function reload(instant = true) {
 		return;
 	}
 
-	const { pendingReload } = await import('@api/storage');
-
-	pendingReload.value = true;
+	// Avoid circular dependency
+	const { data } = await import('@api/storage');
+	data.isPendingReload = true;
 }
 
 export function getNativeModule(...names: string[]) {

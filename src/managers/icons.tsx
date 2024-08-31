@@ -10,7 +10,7 @@ import { Strings } from '@api/i18n';
 import Storage from '@api/storage';
 import fs from '@api/fs';
 
-import Manager, { ManagerType } from './base';
+import Manager, { ManagerKind } from './base';
 
 export type PackManifest = Manifest & { type: 'github' | 'other'; };
 export type Pack = { bundle: string; manifest: PackManifest; };
@@ -38,7 +38,7 @@ class Icons extends Manager {
 	public signal: AbortSignal;
 
 	constructor() {
-		super(ManagerType.Icons);
+		super(ManagerKind.ICONS);
 
 		this.patcher = createPatcher('icons');
 		this.icon = 'ic_star_filled';
@@ -69,8 +69,9 @@ class Icons extends Manager {
 	}
 
 	override async fetchBundle(_: string, manifest: PackManifest, signal: AbortSignal, setState?: Fn): Promise<any> {
-		if (!manifest.type || !['github', 'other'].includes(manifest.type))
+		if (!manifest.type || !['github', 'other'].includes(manifest.type)) {
 			manifest.type = /^(https?:\/\/)(www\.)?github\.com/.test(manifest.main) ? 'github' : 'other';
+		}
 
 		this.logger.debug(`Fetching bundle from ${manifest.main}...`);
 
@@ -79,12 +80,11 @@ class Icons extends Manager {
 		if (typeof manifest.icon === 'object' && manifest.icon.uri) {
 			const path = `${this.path}/${manifest.id}/${ClientName.toLowerCase()}/icon.png`;
 
-			await download(manifest.icon.uri, path, 'base64', signal)
-				.then(() => {
-					if (typeof manifest.icon === 'object') {
-						manifest.icon.uri = `file://{__path__}/${path}`;
-					}
-				});
+			await download(manifest.icon.uri, path, 'base64', signal).then(() => {
+				if (typeof manifest.icon === 'object') {
+					manifest.icon.uri = `file://{__path__}/${path}`;
+				}
+			});
 		}
 
 		const bundle = await (async () => {
@@ -99,6 +99,35 @@ class Icons extends Manager {
 		this.logger.debug('Done fetching...');
 
 		return bundle;
+	}
+
+	async handleAsset(asset: Asset, id: number) {
+		this.handleScales(asset, id);
+
+		// Avoid circular dependencies
+		const { assets } = await import('@api/assets');
+
+		if (!assets.has(id)) {
+			Object.assign(asset, { id });
+			assets.set(id, asset);
+		};
+
+		if (this.applied) {
+			this.applyIconPath(this.applied.manifest.id, asset);
+		}
+	}
+
+	async handleScales(asset: Asset, id: number) {
+		asset.scales.sort((a, b) => b - a);
+
+		for (const scale of asset.scales) {
+			const uri = Image.resolveAssetSource(id).uri;
+			const fileExists = await fs.exists(uri.replace('file:/', ''), false);
+
+			if (!fileExists) {
+				asset.scales = asset.scales.filter(x => x !== scale);
+			};
+		}
 	}
 
 	override save(bundle: string, manifest: Manifest) {

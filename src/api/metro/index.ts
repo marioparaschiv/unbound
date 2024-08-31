@@ -1,5 +1,6 @@
 import type { SearchOptions, BulkItem, StoreOptions, InternalOptions, StringFindWithOptions, BulkFind, PropertyRecordOrArray, FunctionSignatureOrArray } from '@typings/api/metro';
 import type { Filter } from '@typings/api/metro/filters';
+import { createLogger } from '@structures/logger';
 
 import Filters from './filters';
 
@@ -9,8 +10,11 @@ export const data = {
 	cache: [],
 	patchedThemes: false,
 	patchedNativeRequire: false,
+	patchedThemeStore: false,
 	listeners: new Set<(mdl: any) => void>()
 };
+
+const logger = createLogger('Metro');
 
 
 export function addListener(listener: (mdl: any) => void) {
@@ -96,7 +100,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 			if (result.errored) return;
 
 			result.errored = true;
-			console.error(
+			logger.error(
 				'Search filter threw an error, degrading performance.',
 				'This will create a bad experience for the user including lag spikes, a slow startup, etc.',
 				'Please fix this as soon as possible.',
@@ -157,10 +161,21 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 				const manager = import('@managers/themes');
 				manager.then(({ default: Themes }) => Themes.initialize(mdl));
 			} catch (e) {
-				console.error('Failed to patch themes:', e.message);
+				logger.error('Failed to patch themes:', e.message);
 			}
 
 			data.patchedThemes = true;
+		}
+
+		if (!data.patchedThemeStore && mdl.default?.getName?.() === 'ThemeStore') {
+			try {
+				const manager = import('@managers/themes');
+				manager.then(({ default: Themes }) => Themes.patchThemeStore(mdl.default));
+			} catch (e) {
+				logger.error('Failed to patch themes:', e.message);
+			}
+
+			data.patchedThemeStore = true;
 		}
 
 		if (search(mdl, id)) {

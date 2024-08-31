@@ -1,6 +1,7 @@
 import { TouchableOpacity, View, Image } from 'react-native';
 import type { Badge } from '@typings/core/builtins/badges';
 import type { BuiltIn } from '@typings/core/builtins';
+import { createLogger } from '@structures/logger';
 import { useEffect, useState } from 'react';
 import { Links, Times } from '@constants';
 import { Theme } from '@api/metro/stores';
@@ -9,6 +10,7 @@ import { showToast } from '@api/toasts';
 import { findByName } from '@api/metro';
 
 const Patcher = createPatcher('badges');
+const Logger = createLogger('Built-Ins', 'Badges');
 
 export const data: BuiltIn['data'] = {
 	id: 'modules.badges',
@@ -32,7 +34,7 @@ export function initialize() {
 				try {
 					fetchUserBadges(user.id).then(badges => setBadges({ data: badges }));
 				} catch (e) {
-					console.error(`Failed to request/parse badges for ${user.id}`);
+					Logger.error(`Failed to request/parse badges for ${user.id}`);
 				}
 			}, []);
 
@@ -113,7 +115,7 @@ const Badge = ({ type, size, margin }: { type: string; size: number; margin: num
 		try {
 			fetchBadge(type).then(setBadge);
 		} catch (e) {
-			console.error(`Failed to get badge data for ${type}.`, e.message);
+			Logger.error(`Failed to get badge data for ${type}.`, e.message);
 		}
 	}, []);
 

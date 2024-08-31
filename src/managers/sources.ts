@@ -8,13 +8,13 @@ import { Regex } from '@constants';
 import { useMemo } from 'react';
 import fs from '@api/fs';
 
-import BaseManager, { ManagerType, isValidManager } from './base';
+import BaseManager, { ManagerEntity, ManagerKind } from './base';
 
 export type SourceManifest = Pick<Manifest, 'id' | 'name' | 'description' | 'icon' | 'url'> & {
 	iconType?: string;
 	tags: string[];
 	addons: {
-		type: string;
+		type: ManagerEntity;
 		screenshots: string[];
 		changelog: string;
 		manifest: string;
@@ -48,7 +48,7 @@ class Sources extends BaseManager {
 	public refreshed = false;
 
 	constructor() {
-		super(ManagerType.Sources);
+		super(ManagerKind.SOURCES);
 
 		this.patcher = createPatcher('sources');
 		this.icon = 'grid';
@@ -228,7 +228,7 @@ class Sources extends BaseManager {
 		}
 
 		for (const addon of manifest.addons) {
-			if (!addon.type || typeof addon.type !== 'string' || !isValidManager(addon.type)) {
+			if (!addon.type || typeof addon.type !== 'string' || addon.type === ManagerEntity.SOURCES || !BaseManager.isValidManagerEntity(addon.type)) {
 				throw new Error('Addon property "type" must be of type string and a valid manager, got ' + addon.type);
 			} else if (addon.changelog && typeof addon.changelog !== 'string') {
 				throw new Error('Addon property "changelog" must be of type string.');

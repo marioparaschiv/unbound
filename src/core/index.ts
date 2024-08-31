@@ -25,7 +25,7 @@ export async function initialize() {
 	window.unbound ??= instance;
 
 	Managers.Plugins.initialize();
-	Managers.Sources.initialize();
+	// Managers.Sources.initialize();
 
 	return instance;
 }

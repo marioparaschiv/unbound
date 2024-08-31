@@ -4,7 +4,7 @@ import { createLogger } from '@structures/logger';
 
 export type * from '@typings/api/settings';
 
-const Logger = createLogger('Settings');
+const Logger = createLogger('API', 'Settings');
 
 export const settings = settingSections;
 

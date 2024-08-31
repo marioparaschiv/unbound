@@ -115,8 +115,8 @@ class InternalAddonCard extends Component<InternalAddonCardProps> {
 	}
 
 	renderOverflow() {
-		const { addon, navigation } = this.props;
-		const items = this.manager.getContextItems(addon, navigation);
+		const { addon } = this.props;
+		const items = this.manager.getContextItems(addon);
 
 		if (!items || items.length < 1) return null;
 
@@ -137,6 +137,7 @@ class InternalAddonCard extends Component<InternalAddonCardProps> {
 
 		return <Switch.FormSwitch
 			disabled={addon.failed || recovery}
+			// default={this.manager.isEnabled(addon.id)}
 			value={this.manager.isEnabled(addon.id)}
 			trackColor={{
 				false: Theme.colors.BACKGROUND_FLOATING,

@@ -1,6 +1,6 @@
 import type { BuiltIn } from '@typings/core/builtins';
 import { createLogger } from '@structures/logger';
-import { ManagerType } from '@managers/base';
+import { ManagerKind } from '@managers/base';
 import { createPatcher } from '@patcher';
 import { capitalize } from '@utilities';
 import { findByName } from '@api/metro';
@@ -17,7 +17,7 @@ export const data: BuiltIn['data'] = {
 };
 
 const actions = {
-	async install(parameters: URLSearchParams, type: ManagerType) {
+	async install(parameters: URLSearchParams, type: ManagerKind) {
 		const [url] = getBulkParameters('url', parameters);
 		if (typeof url !== 'string') return;
 		const manager = getManager(type);
@@ -30,7 +30,7 @@ const actions = {
 		}
 	},
 
-	async uninstall(parameters: URLSearchParams, type: ManagerType) {
+	async uninstall(parameters: URLSearchParams, type: ManagerKind) {
 		const [id] = getBulkParameters('id', parameters);
 
 		const manager = getManager(type);

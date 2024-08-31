@@ -10,6 +10,7 @@ export type * from '@typings/api/storage';
 const Events = new EventEmitter();
 
 export const settings = globalThis.UNBOUND_SETTINGS ?? {};
+export const data = { isPendingReload: false };
 
 export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
@@ -110,13 +111,11 @@ export function useSettingsStore(store: string, predicate?: (payload: SettingsPa
 	};
 }
 
-export const pendingReload = { value: false };
-
 Events.on('changed', () => {
 	const payload = JSON.stringify(settings, null, 2);
 	const promise = fs.write('Unbound/settings.json', payload);
 
-	promise.then(() => pendingReload.value && BundleManager.reload());
+	promise.then(() => data.isPendingReload && BundleManager.reload());
 });
 
 export default { useSettingsStore, getStore, get, set, remove, on, off };

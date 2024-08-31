@@ -1,7 +1,7 @@
 declare type Fn<T = any> = (...args: any) => T;
 declare type PromiseFn<T = Promise<any>> = (...args: any) => T;
 
-declare type Constructor<T extends any> = (new () => T);
+declare type Constructor<T extends any = any> = (new () => T);
 
 declare type AnyProps<T extends Record<string, any> = Record<string, any>> = T & Record<PropertyKey, any>;
 

@@ -4,13 +4,11 @@ import type { Asset as AssetType } from '@typings/api/assets';
 import { GeneralSearch } from '@ui/misc/search';
 import { Design } from '@api/metro/components';
 import { Media } from '@api/metro/components';
+import { assets, getAll } from '@api/assets';
 import { Section } from '@ui/misc/forms';
 import { findByProps } from '@api/metro';
-import { assets } from '@api/assets';
 
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
-
-const payload = [...assets.values()].filter(a => a.type === 'png');
 
 class Asset extends PureComponent<{ item: AssetType; index: number; total: number; }> {
 	render() {
@@ -58,6 +56,8 @@ class Asset extends PureComponent<{ item: AssetType; index: number; total: numbe
 
 const Assets = memo(() => {
 	const [search, setSearch] = useState('');
+
+	const payload = useMemo(() => getAll().filter(a => a.type === 'png'), [assets.size]);
 
 	const data = useMemo(() => {
 		if (!search) return payload;

@@ -8,7 +8,7 @@ import { Authors } from '@ui/addons/addon-authors';
 import HeaderRight from '@ui/addons/addon-header';
 import { GeneralSearch } from '@ui/misc/search';
 import { useSettingsStore } from '@api/storage';
-import { ManagerType } from '@managers/base';
+import { ManagerKind } from '@managers/base';
 import { animate, noop } from '@utilities';
 import Empty from '@ui/misc/empty-state';
 import * as managers from '@managers';
@@ -119,7 +119,7 @@ export default function AddonList({ addons, type, showHeaderRight = true, showTo
 					type={type}
 					addon={item}
 					navigation={navigation}
-					bottom={manager.type === ManagerType.Icons && item.data.id === 'default' ? null : <Authors addon={item} />}
+					bottom={manager.type === ManagerKind.ICONS && item.data.id === 'default' ? null : <Authors addon={item} />}
 				/>}
 				ListEmptyComponent={<Empty>
 					{Strings.UNBOUND_ADDONS_EMPTY.format({ type: manager.name.toLowerCase() })}

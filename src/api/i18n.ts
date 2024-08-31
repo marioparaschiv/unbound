@@ -7,7 +7,7 @@ import CoreStrings from '../../i18n';
 export type * from '@typings/api/i18n';
 
 
-const Logger = createLogger('Components');
+const Logger = createLogger('API', 'i18n');
 
 export const state = {
 	locale: 'en-US',

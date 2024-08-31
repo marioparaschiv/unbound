@@ -14,7 +14,7 @@ function ThemesPage() {
 	return <View style={{ flex: 1 }}>
 		<AddonList
 			showHeaderRight={false}
-			showToggles={false}
+			showToggles={true}
 			type='Themes'
 			addons={addons}
 		/>

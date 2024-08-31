@@ -1,14 +1,9 @@
 import type { ApplicationCommand } from '@typings/api/commands';
-import { createLogger } from '@structures/logger';
 import CoreCommands from '@core/commands';
-import { createPatcher } from '@patcher';
 import { findByProps } from '@api/metro';
 import { uuid } from '@utilities';
 
 export type * from '@typings/api/commands';
-
-const Patcher = createPatcher('unbound-commands');
-const Logger = createLogger('Commands');
 
 
 export enum ApplicationCommandType {
@@ -45,21 +40,7 @@ export const data = {
 	commands: []
 };
 
-function initialize() {
-	registerCommands('unbound', CoreCommands);
-
-	Patcher.after(Commands, 'getBuiltInCommands', (_, [type], res: ApplicationCommand[]) => {
-		if (type === ApplicationCommandType.CHAT || (Array.isArray(type) && type.includes(ApplicationCommandType.CHAT))) {
-			for (const command of data.commands) {
-				if (!res.find(c => c.id === command.id)) {
-					res.push(command);
-				}
-			}
-		}
-
-		return res;
-	});
-}
+registerCommands('unbound', CoreCommands);
 
 export function registerCommands(caller: string, cmds: Omit<ApplicationCommand, '__CALLER__' | '__UNBOUND__'>[]): void {
 	if (!caller || typeof caller !== 'string') {
@@ -97,10 +78,4 @@ export function unregisterCommands(caller: string): void {
 	}
 
 	data.commands = data.commands.filter(c => c.__CALLER__ !== caller);
-}
-
-try {
-	initialize();
-} catch (e) {
-	Logger.error('Failed to initialize commands:', e.message);
 }

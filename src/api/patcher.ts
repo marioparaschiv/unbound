@@ -3,7 +3,7 @@ import { createLogger } from '@structures/logger';
 
 export type * from '@typings/api/patcher';
 
-const Logger = createLogger('Patcher');
+const Logger = createLogger('API', 'Patcher');
 
 export enum PatchType {
 	Before = 'before',
@@ -141,27 +141,12 @@ function override(patch: PatchOverwrite) {
 }
 
 function push(mdl: Record<string, any> | Function, func: string): PatchOverwrite {
-	// Detect functional component patches
-	if (func === 'renderPatched') {
-		mdl[func] = function (...args) {
-			if (new.target) {
-				return new (mdl as Constructor)(...args as any as []);
-			}
-
-			return (mdl as Fn).apply(this, args);
-		};
-	}
-
 	const patch = {
 		mdl,
 		func,
 		original: mdl[func],
 		unpatch: () => {
-			if (patch.func === 'renderPatched') {
-				delete (patch.mdl as any).renderPatched;
-			} else {
-				patch.mdl[patch.func] = patch.original;
-			}
+			patch.mdl[patch.func] = patch.original;
 
 			patch.patches = {
 				before: [],
