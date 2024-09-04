@@ -91,7 +91,7 @@ class Sources extends BaseManager {
 			}
 		}, 5000);
 
-		this.patched = true;
+		this.initialized = true;
 	}
 
 	override async onFinishedInstalling(addon: Addon, manifest: SourceManifest): Promise<Addon> {

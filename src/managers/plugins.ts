@@ -19,7 +19,7 @@ class Plugins extends Manager {
 			this.load(bundle, manifest);
 		}
 
-		this.patched = true;
+		this.initialized = true;
 	}
 
 	override getContextItems(addon: Addon) {

@@ -10,9 +10,7 @@ export type * from '@typings/api/metro';
 
 export const data = {
 	cache: {},
-	patchedThemes: false,
 	patchedNativeRequire: false,
-	patchedThemeStore: false,
 	patchedRTNProfiler: false,
 	origToString: Function.prototype.toString,
 	listeners: new Set<(mdl: any, id: string) => void>()
@@ -33,35 +31,7 @@ for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 		const orig = mdl.factory;
 
 		mdl.factory = function (...args) {
-			const { 1: metroRequire, 4: moduleObject } = args;
-
-			args[2 /* metroImportDefault */] = id => {
-				const exps = metroRequire(id);
-
-				if (!data.patchedThemes && exps.RawColor) {
-					try {
-						const manager = import('@managers/themes');
-						manager.then(({ default: Themes }) => Themes.setThemingModule(exps));
-					} catch (e) {
-						Logger.error('Failed to patch themes:', e.message);
-					}
-
-					data.patchedThemes = true;
-				}
-
-				return exps && exps.__esModule ? exps.default : exps;
-			};
-
-			args[3 /* metroImportAll */] = id => {
-				const exps = metroRequire(id);
-
-				if (exps && exps.__esModule) return exps;
-
-				const importAll: Record<string, any> = {};
-				if (exps) Object.assign(importAll, exps);
-				importAll.default = exps;
-				return importAll;
-			};
+			const [, , , , moduleObject] = args;
 
 			orig.apply(self, args);
 
@@ -71,7 +41,6 @@ for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 				Cache.addModuleFlag(moduleObject.id, ModuleFlags.BLACKLISTED);
 				deenumerate(moduleObject.id);
 			} else {
-
 				// TODO: Fix android.
 				// if (!data.patchedRTNProfiler && exported.default?.reactProfilingEnabled) {
 				// 	const offender = (Number(id) + 1).toString();
@@ -95,17 +64,6 @@ for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 					};
 
 					data.patchedNativeRequire = true;
-				}
-
-				if (!data.patchedThemeStore && exported.default?.getName?.() === 'ThemeStore') {
-					try {
-						const manager = import('@managers/themes');
-						manager.then(({ default: Themes }) => Themes.patchThemeStore(exported.default));
-					} catch (e) {
-						Logger.error('Failed to patch theme store:', e.message);
-					}
-
-					data.patchedThemeStore = true;
 				}
 			}
 		};
@@ -297,8 +255,6 @@ export function findByName<U extends string, T extends U[] | StringFindWithOptio
 };
 
 export function initializeModule(id: string) {
-	if (id == 224) return;
-
 	try {
 		__r(id);
 

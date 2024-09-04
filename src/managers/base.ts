@@ -38,7 +38,7 @@ class Manager extends EventEmitter {
 	public id: Manager;
 
 	public entities = new Map<string, Addon>();
-	public patched: boolean = false;
+	public initialized: boolean = false;
 	public started = new Set();
 	public errors = new Map();
 
@@ -417,7 +417,7 @@ class Manager extends EventEmitter {
 			}
 		}
 
-		this.patched = false;
+		this.initialized = false;
 	}
 
 	validateManifest(manifest: Manifest) {

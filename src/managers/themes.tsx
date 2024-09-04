@@ -1,9 +1,9 @@
 import { findInReactTree, findInTree, unitToHex, withoutOpacity } from '@utilities';
 import { ImageBackground, LayoutAnimation } from 'react-native';
+import { findByName, findByProps, findStore } from '@api/metro';
 import type { Manifest, Resolveable } from '@typings/managers';
 import Storage, { useSettingsStore } from '@api/storage';
 import type { Theme } from '@typings/managers/themes';
-import { findByName, findByProps } from '@api/metro';
 import { useEffect, useState } from 'react';
 import { createPatcher } from '@patcher';
 
@@ -12,7 +12,7 @@ import Manager, { ManagerKind } from './base';
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
 	public extension: string = 'json';
-	public patched = false;
+	public initialized = false;
 	public module: any;
 
 	constructor() {
@@ -30,10 +30,12 @@ class Themes extends Manager {
 
 			this.load(bundle, manifest);
 		}
-	}
 
-	async setThemingModule(mdl: any) {
-		this.module = mdl;
+
+		this.module = findByProps('RawColor', 'Theme');
+		if (!this.module) {
+			return this.logger.error('Failed to find theming module. Themes will not function as expected.');
+		}
 
 		this.module._Theme = { ...this.module.Theme };
 		this.module._RawColor = { ...this.module.RawColor };
@@ -45,8 +47,9 @@ class Themes extends Manager {
 
 		this.patchColors();
 		this.patchChatBackground();
+		this.patchThemeStore();
 
-		this.patched = true;
+		this.initialized = true;
 	}
 
 	patchColors() {
@@ -71,7 +74,9 @@ class Themes extends Manager {
 		}
 
 		const InternalResolver = findInTree(this.module, m => m?.resolveSemanticColor);
-		if (!InternalResolver) return;
+		if (!InternalResolver) {
+			return this.logger.error('Failed to find semantic colour resolver. Themes will not function as expected.');
+		}
 
 		this.patcher.instead(InternalResolver, 'resolveSemanticColor', (self, args: [theme: string, ref: { [key: symbol]: string; }], orig) => {
 			const [theme, ref, ...rest] = args;
@@ -110,47 +115,61 @@ class Themes extends Manager {
 	async patchChatBackground() {
 		const Chat = findByName('MessagesWrapperConnected', { interop: false });
 
-		this.patcher.after(Chat, 'default', (_, __, res) => {
-			const settings = useSettingsStore('theme-states');
-			const applied = settings.get('applied', null);
-			if (!applied) return res;
+		if (Chat) {
+			this.patcher.after(Chat, 'default', (_, __, res) => {
+				const settings = useSettingsStore('theme-states');
+				const applied = settings.get('applied', null);
+				if (!applied) return res;
 
-			const theme = this.entities.get(applied);
-			if (!theme || !theme.instance.background) return res;
+				const theme = this.entities.get(applied);
+				if (!theme || !theme.instance.background) return res;
 
-			const { instance: { background } } = theme;
+				const { instance: { background } } = theme;
 
-			return (
-				<ImageBackground
-					blurRadius={typeof background.blur === 'number' ? background.blur : 0}
-					style={{ flex: 1, height: '100%', width: '100%' }}
-					source={{ uri: background.url }}
-				>
-					{res}
-				</ImageBackground>
-			);
-		});
+				return (
+					<ImageBackground
+						blurRadius={typeof background.blur === 'number' ? background.blur : 0}
+						style={{ flex: 1, height: '100%', width: '100%' }}
+						source={{ uri: background.url }}
+					>
+						{res}
+					</ImageBackground>
+				);
+			});
+		} else {
+			this.logger.error('Failed to find MessagesWrapperConnected. Theme backgrounds may not function as expected.');
+		}
 
-		const { MessagesWrapper } = findByProps('MessagesWrapper');
-		this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {
-			const applied = this.settings.get('applied', null);
-			if (!applied) return res;
+		const { MessagesWrapper } = findByProps('MessagesWrapper') ?? {};
 
-			const theme = this.entities.get(applied);
-			if (!theme || !theme.instance.background) return res;
+		if (MessagesWrapper) {
+			this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {
+				const applied = this.settings.get('applied', null);
+				if (!applied) return res;
 
-			const Messages = findInReactTree(res, x =>
-				'HACK_fixModalInteraction' in x.props
-				&& x.props?.style
-			);
+				const theme = this.entities.get(applied);
+				if (!theme || !theme.instance.background) return res;
 
-			if (Messages) {
-				Messages.props.style = [Messages.props.style, { backgroundColor: '#00000000' }];
-			}
-		});
+				const Messages = findInReactTree(res, x =>
+					'HACK_fixModalInteraction' in x.props
+					&& x.props?.style
+				);
+
+				if (Messages) {
+					Messages.props.style = [Messages.props.style, { backgroundColor: '#00000000' }];
+				}
+			});
+		} else {
+			this.logger.error('Failed to find MessagesWrapper. Theme backgrounds may not function as expected.');
+		}
 	}
 
-	patchThemeStore(store) {
+	patchThemeStore() {
+		const store = findStore('Theme');
+		if (!store) {
+			return this.logger.error('Failed to find ThemeStore. Themes will not function as expected.');
+		}
+
 		// Traverse prototype to find theme getter.
 		const proto = findInTree(store, m => m?.hasOwnProperty('theme'), { walkable: ['__proto__'] });
 		if (!proto) return this.logger.error(`Failed to patch theme store. Could not find resolveSemanticColor.`);
@@ -163,15 +182,21 @@ class Themes extends Manager {
 		Object.defineProperty(proto, 'theme', {
 			get: () => {
 				const applied = this.settings.get('applied', null);
-				if (applied && this.patched) return applied;
+				if (applied && this.initialized) {
+					console.log('returning', applied);
+					return applied;
+				}
 
+				console.log('returning', store.__theme);
 				return store.__theme;
 			}
 		});
 
 		// On theme change, emit a store change to force all components (mainly RootThemeContextProvider) to access our getter override and update their state.
-		this.on('started', () => store.emitChange());
-		this.on('stopped', () => store.emitChange());
+		this.on('enabled', () => store.emitChange());
+		this.on('disabled', () => store.emitChange());
+
+		store.emitChange();
 	}
 
 	registerValues(theme: Theme) {
@@ -242,7 +267,7 @@ class Themes extends Manager {
 			this.start(addon);
 		}
 
-		this.emit('updated');
+		this.emit('updated', addon);
 
 		return addon;
 	}
@@ -256,6 +281,7 @@ class Themes extends Manager {
 			if (prev) this.stop(prev);
 			this.settings.set('applied', addon.id);
 			if (!addon.started) this.start(addon);
+			this.emit('enabled', addon);
 		} catch (e) {
 			this.logger.error(`Failed to enable ${addon.data.id}:`, e.message);
 		}
@@ -268,6 +294,7 @@ class Themes extends Manager {
 		try {
 			this.settings.set('applied', null);
 			if (addon.started) this.stop(addon);
+			this.emit('disabled', addon);
 		} catch (e) {
 			this.logger.error(`Failed to stop ${addon.data.id}:`, e.message);
 		}
@@ -279,8 +306,8 @@ class Themes extends Manager {
 
 		try {
 			addon.started = true;
-			this.emit('started');
 			this.logger.log(`${addon.id} applied.`);
+			this.emit('disabled', addon);
 		} catch (e) {
 			this.logger.error('Failed to apply theme:', e.message);
 		}
