@@ -1,75 +1,142 @@
 import type { SearchOptions, BulkItem, StoreOptions, InternalOptions, StringFindWithOptions, BulkFind, PropertyRecordOrArray, FunctionSignatureOrArray } from '@typings/api/metro';
-import type { Filter } from '@typings/api/metro/filters';
+import type { Filter, FilterWithCacheKey } from '@typings/api/metro/filters';
 import { createLogger } from '@structures/logger';
+import Cache, { ModuleFlags } from '@core/cache';
+import { METRO_CACHE_KEY } from '@constants';
 
 import Filters from './filters';
 
 export type * from '@typings/api/metro';
 
 export const data = {
-	cache: [],
+	cache: {},
 	patchedThemes: false,
 	patchedNativeRequire: false,
 	patchedThemeStore: false,
-	listeners: new Set<(mdl: any) => void>()
+	patchedRTNProfiler: false,
+	origToString: Function.prototype.toString,
+	listeners: new Set<(mdl: any, id: string) => void>()
 };
 
-const logger = createLogger('Metro');
+const Logger = createLogger('Metro');
+
+for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
+	const id = Cache.moduleIds[i];
+	const mdl = modules[id];
+
+	if (Cache.hasModuleFlag(id, ModuleFlags.BLACKLISTED)) {
+		deenumerate(id);
+		continue;
+	}
+
+	if (mdl.factory) {
+		const orig = mdl.factory;
+
+		mdl.factory = function (...args) {
+			const { 1: metroRequire, 4: moduleObject } = args;
+
+			args[2 /* metroImportDefault */] = id => {
+				const exps = metroRequire(id);
+
+				if (!data.patchedThemes && exps.RawColor) {
+					try {
+						const manager = import('@managers/themes');
+						manager.then(({ default: Themes }) => Themes.setThemingModule(exps));
+					} catch (e) {
+						Logger.error('Failed to patch themes:', e.message);
+					}
+
+					data.patchedThemes = true;
+				}
+
+				return exps && exps.__esModule ? exps.default : exps;
+			};
+
+			args[3 /* metroImportAll */] = id => {
+				const exps = metroRequire(id);
+
+				if (exps && exps.__esModule) return exps;
+
+				const importAll: Record<string, any> = {};
+				if (exps) Object.assign(importAll, exps);
+				importAll.default = exps;
+				return importAll;
+			};
+
+			orig.apply(self, args);
+
+			const exported = moduleObject.exports;
+
+			if (isInvalidExport(exported)) {
+				Cache.addModuleFlag(moduleObject.id, ModuleFlags.BLACKLISTED);
+				deenumerate(moduleObject.id);
+			} else {
+
+				// TODO: Fix android.
+				// if (!data.patchedRTNProfiler && exported.default?.reactProfilingEnabled) {
+				// 	const offender = (Number(id) + 1).toString();
+
+				// 	Cacher.addFlag(offender, ModuleFlags.BLACKLISTED);
+				// 	deenumerate(offender);
+				// 	i++;
+
+				// 	data.patchedRTNProfiler = true;
+				// }
+
+				if (!data.patchedNativeRequire && exported.default?.name === 'requireNativeComponent') {
+					const orig = exported.default;
+
+					exported.default = function requireNativeComponent(...args) {
+						try {
+							return orig.apply(this, args);
+						} catch {
+							return args[0];
+						}
+					};
+
+					data.patchedNativeRequire = true;
+				}
+
+				if (!data.patchedThemeStore && exported.default?.getName?.() === 'ThemeStore') {
+					try {
+						const manager = import('@managers/themes');
+						manager.then(({ default: Themes }) => Themes.patchThemeStore(exported.default));
+					} catch (e) {
+						Logger.error('Failed to patch theme store:', e.message);
+					}
+
+					data.patchedThemeStore = true;
+				}
+			}
+		};
+	}
+}
 
 
-export function addListener(listener: (mdl: any) => void) {
+export function addListener(listener: (mdl: any, id: string) => void) {
 	data.listeners.add(listener);
 	return () => data.listeners.delete(listener);
 }
 
-export function removeListener(listener: (mdl: any) => void) {
+export function removeListener(listener: (mdl: any, id: string) => void) {
 	data.listeners.delete(listener);
-}
-
-function isInvalidExport(mdl: any) {
-	return (
-		!mdl ||
-		mdl === window ||
-		mdl[Symbol()] === null ||
-		typeof mdl === 'boolean' ||
-		typeof mdl === 'number' ||
-		typeof mdl === 'string'
-	);
-}
-
-function deenumerate(id: string | number) {
-	Object.defineProperty(modules, id, {
-		value: modules[id],
-		enumerable: false,
-		configurable: true,
-		writable: true
-	});
-}
-
-function parseOptions<O, A extends any[] = string[]>(
-	args: [...A, any] | A,
-	filter = (last) => typeof last === 'object' && !Array.isArray(last),
-	fallback = {}
-): [A, O] {
-	return [args as A, filter(args[args.length - 1]) ? args.pop() : fallback];
 }
 
 export const on = addListener;
 export const off = removeListener;
 
-export function findLazy(filter: (mdl: any) => boolean, options?: Omit<SearchOptions, 'lazy' | 'all'>) {
+export function findLazy(filter: Filter | FilterWithCacheKey, options?: Omit<SearchOptions, 'lazy' | 'all'>) {
 	const existing = find(filter, options);
 	if (existing !== void 0) return existing;
 
 	return new Promise((resolve) => {
-		function callback(mdl) {
-
-			if (filter(mdl)) {
+		function callback(mdl, id) {
+			if (filter(mdl, id)) {
 				resolve(mdl);
 				remove();
 			}
 
-			if (mdl.default && filter(mdl.default)) {
+			if (mdl.default && filter(mdl.default, id)) {
 				resolve((options.interop ?? true) ? mdl.default : mdl);
 				remove();
 			}
@@ -79,7 +146,7 @@ export function findLazy(filter: (mdl: any) => boolean, options?: Omit<SearchOpt
 	});
 }
 
-export function find(filter: Filter, options: SearchOptions = {}) {
+export function find(filter: Filter | FilterWithCacheKey, options: SearchOptions = {}) {
 	if (!filter) throw new Error('You must provide a filter to search by.');
 
 	const {
@@ -100,7 +167,7 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 			if (result.errored) return;
 
 			result.errored = true;
-			logger.error(
+			Logger.error(
 				'Search filter threw an error, degrading performance.',
 				'This will create a bad experience for the user including lag spikes, a slow startup, etc.',
 				'Please fix this as soon as possible.',
@@ -110,89 +177,50 @@ export function find(filter: Filter, options: SearchOptions = {}) {
 		}
 	};
 
+	if (filter[METRO_CACHE_KEY]) {
+		search[METRO_CACHE_KEY] = filter[METRO_CACHE_KEY];
+	}
+
+	/****** CACHE ******/
+	const cache = Cache.getModuleCacheForKey(filter[METRO_CACHE_KEY]);
+	if (cache) {
+		for (const id of cache) {
+			const rawModule = modules[id];
+			if (!rawModule) continue;
+
+			if (!rawModule.isInitialized) {
+				const initialized = initializeModule(id);
+				if (!initialized) continue;
+			}
+
+			const found = searchExports(search, rawModule, id, esModules, interop, raw);
+			if (!found) continue;
+
+			if (!all) return found;
+			result.found.push(found);
+		}
+
+		return all ? result.found : null;
+	}
+	/****** END CACHE ******/
+
 	const store = useCache ? data.cache : modules;
-	const keys = Object.keys(store);
+	const keys = useCache ? Object.keys(store) : Cache.moduleIds;
 
 	for (let i = 0, len = keys.length; i < len; i++) {
 		const id = keys[i];
-
 		const rawModule = store[id];
 
 		if (!rawModule.isInitialized) {
-			try {
-				const orig = Function.prototype.toString;
-
-				__r(id);
-
-				Object.defineProperty(Function.prototype, 'toString', {
-					value: orig,
-					configurable: true,
-					writable: true
-				});
-			} catch {
-				deenumerate(id);
-				continue;
-			}
+			const initialized = initializeModule(id);
+			if (!initialized) continue;
 		}
 
-		const mdl = rawModule.publicModule.exports;
+		const found = searchExports(search, rawModule, id, esModules, interop, raw);
+		if (!found) continue;
 
-		if (isInvalidExport(mdl)) {
-			deenumerate(id);
-			continue;
-		}
-
-		if (!data.patchedNativeRequire && mdl.default?.name === 'requireNativeComponent') {
-			const orig = mdl.default;
-
-			mdl.default = function requireNativeComponent(...args) {
-				try {
-					return orig(...args);
-				} catch {
-					return args[0];
-				}
-			};
-
-			data.patchedNativeRequire = true;
-		}
-
-		if (!data.patchedThemes && mdl.SemanticColor) {
-			try {
-				const manager = import('@managers/themes');
-				manager.then(({ default: Themes }) => Themes.initialize(mdl));
-			} catch (e) {
-				logger.error('Failed to patch themes:', e.message);
-			}
-
-			data.patchedThemes = true;
-		}
-
-		if (!data.patchedThemeStore && mdl.default?.getName?.() === 'ThemeStore') {
-			try {
-				const manager = import('@managers/themes');
-				manager.then(({ default: Themes }) => Themes.patchThemeStore(mdl.default));
-			} catch (e) {
-				logger.error('Failed to patch themes:', e.message);
-			}
-
-			data.patchedThemeStore = true;
-		}
-
-		if (search(mdl, id)) {
-			data.cache[id] = rawModule;
-
-			const res = raw ? rawModule : mdl;
-			if (!all) return res;
-			result.found.push(res);
-		}
-
-		if (esModules && mdl.default && search(mdl.default, id)) {
-			data.cache[id] = rawModule;
-
-			const res = raw ? rawModule : interop ? mdl.default : mdl;
-			if (!all) return res;
-			result.found.push(res);
-		}
+		if (!all) return found;
+		result.found.push(found);
 	}
 
 	if (useCache && !all && !result.found.length) {
@@ -238,7 +266,7 @@ export function bulk(...items: BulkItem[]) {
 		}
 
 		// Loop through whole registry if any of the items have "all" as an option
-		return hasAll ? false : res.filter(Boolean).length === search.length;
+		return hasAll ? false : res.filter(Boolean).length === items.length;
 	}, { interop: false });
 
 	return res;
@@ -247,28 +275,79 @@ export function bulk(...items: BulkItem[]) {
 export function findByProps<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): PropertyRecordOrArray<T, U> {
 	const [props, options] = parseOptions<InternalOptions, T>(args);
 
-	return search(props, options, 'byProps');
+	return searchWithOptions(props, options, 'byProps');
 };
 
 export function findByPrototypes<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): AnyProps {
 	const [prototypes, options] = parseOptions<InternalOptions, T>(args);
 
-	return search(prototypes, options, 'byPrototypes');
+	return searchWithOptions(prototypes, options, 'byPrototypes');
 };
 
 export function findStore<U extends string, T extends U[] | StringFindWithOptions<U, StoreOptions>>(...args: T): AnyProps {
 	const [[name], { short = true, ...options }] = parseOptions<StoreOptions>(args);
 
-	return search([name, short], options as InternalOptions, 'byStore');
+	return searchWithOptions([name, short], options as InternalOptions, 'byStore');
 };
 
 export function findByName<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): FunctionSignatureOrArray<T, U> {
 	const [name, options] = parseOptions<InternalOptions, T>(args);
 
-	return search(name, options, 'byName');
+	return searchWithOptions(name, options, 'byName');
 };
 
-function search(args: any[], options: InternalOptions, filter: Fn | string) {
+export function initializeModule(id: string) {
+	if (id == 224) return;
+
+	try {
+		__r(id);
+
+		Object.defineProperty(Function.prototype, 'toString', {
+			value: data.origToString,
+			configurable: true,
+			writable: true
+		});
+
+		return true;
+	} catch (e) {
+		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
+		deenumerate(id);
+		return false;
+	}
+}
+
+function searchExports(filter: Fn, rawModule: any, id: string, esModules: boolean = true, interop: boolean = true, raw: boolean = false) {
+	const mdl = rawModule.publicModule.exports;
+	if (!mdl) return null;
+
+	if (isInvalidExport(mdl)) {
+		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
+		deenumerate(id);
+		return null;
+	}
+
+	if (filter(mdl, id)) {
+		if (filter[METRO_CACHE_KEY]) {
+			Cache.addCachedIDForKey(filter[METRO_CACHE_KEY], id);
+		}
+
+		data.cache[id] = rawModule;
+
+		return raw ? rawModule : mdl;
+	}
+
+	if (esModules && mdl.default && filter(mdl.default, id)) {
+		if (filter[METRO_CACHE_KEY]) {
+			Cache.addCachedIDForKey(filter[METRO_CACHE_KEY], id);
+		}
+
+		data.cache[id] = rawModule;
+
+		return raw ? rawModule : interop ? mdl.default : mdl;
+	}
+}
+
+function searchWithOptions(args: any[], options: InternalOptions, filter: Fn | string) {
 	if (options.lazy) {
 		let cache;
 
@@ -276,7 +355,7 @@ function search(args: any[], options: InternalOptions, filter: Fn | string) {
 			get(_, prop) {
 				if (!prop || typeof prop !== 'string') return;
 
-				cache ??= search(args, Object.assign(options, { lazy: false }), filter);
+				cache ??= searchWithOptions(args, Object.assign(options, { lazy: false }), filter);
 
 				if (prop === 'module') {
 					return cache;
@@ -286,7 +365,7 @@ function search(args: any[], options: InternalOptions, filter: Fn | string) {
 			},
 
 			set(_, prop, value) {
-				cache ??= search(args, Object.assign(options, { lazy: false }), filter);
+				cache ??= searchWithOptions(args, Object.assign(options, { lazy: false }), filter);
 
 				return Object.defineProperty(cache ?? {}, prop, {
 					value,
@@ -317,7 +396,32 @@ function search(args: any[], options: InternalOptions, filter: Fn | string) {
 				interop: true
 			};
 		}));
-	} else {
-		return find(filter(...args), options as SearchOptions);
 	}
+
+	return find(filter(...args), options as SearchOptions);
+}
+
+function isInvalidExport(mdl: any) {
+	return (
+		!mdl ||
+		mdl === window ||
+		mdl[Symbol()] === null
+	);
+}
+
+function deenumerate(id: string | number) {
+	Object.defineProperty(modules, id, {
+		value: modules[id],
+		enumerable: false,
+		configurable: true,
+		writable: true
+	});
+}
+
+function parseOptions<O, A extends any[] = string[]>(
+	args: [...A, any] | A,
+	filter = (last) => typeof last === 'object' && !Array.isArray(last),
+	fallback = {}
+): [A, O] {
+	return [args as A, filter(args[args.length - 1]) ? args.pop() : fallback];
 }

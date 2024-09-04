@@ -45,9 +45,4 @@ export interface Asset {
 	 * File extension of the asset.
 	 */
 	type: string;
-
-	/**
-	 * ID of the asset.
-	 */
-	id: number;
 }

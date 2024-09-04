@@ -1,3 +1,6 @@
+export const METRO_CACHE_VERSION = 1 as const;
+export const METRO_CACHE_KEY = Symbol.for('metro.cache');
+
 export const Invite = 'unboundapp' as const;
 
 export const Links = {

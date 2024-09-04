@@ -4,7 +4,6 @@ import type { Manifest, Resolveable } from '@typings/managers';
 import Storage, { useSettingsStore } from '@api/storage';
 import type { Theme } from '@typings/managers/themes';
 import { findByName, findByProps } from '@api/metro';
-import { getNativeModule } from '@api/native';
 import { useEffect, useState } from 'react';
 import { createPatcher } from '@patcher';
 
@@ -12,8 +11,8 @@ import Manager, { ManagerKind } from './base';
 
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
-	public nativeModule = getNativeModule('DCDTheme');
 	public extension: string = 'json';
+	public patched = false;
 	public module: any;
 
 	constructor() {
@@ -21,24 +20,33 @@ class Themes extends Manager {
 
 		this.patcher = createPatcher('themes');
 		this.icon = 'ic_paint_brush';
+
+		this.initialize();
 	}
 
-	async initialize(mdl: any) {
-		this.module = mdl;
-
-		this.module._Theme = { ...this.module.Theme };
-		this.module._RawColor = { ...this.module.RawColor };
-
+	async initialize() {
 		for (const theme of window.UNBOUND_THEMES ?? []) {
 			const { manifest, bundle } = theme;
 
 			this.load(bundle, manifest);
 		}
+	}
+
+	async setThemingModule(mdl: any) {
+		this.module = mdl;
+
+		this.module._Theme = { ...this.module.Theme };
+		this.module._RawColor = { ...this.module.RawColor };
+
+
+		for (const addon of this.entities.values()) {
+			this.registerValues(addon);
+		}
 
 		this.patchColors();
 		this.patchChatBackground();
 
-		this.initialized = true;
+		this.patched = true;
 	}
 
 	patchColors() {
@@ -63,6 +71,8 @@ class Themes extends Manager {
 		}
 
 		const InternalResolver = findInTree(this.module, m => m?.resolveSemanticColor);
+		if (!InternalResolver) return;
+
 		this.patcher.instead(InternalResolver, 'resolveSemanticColor', (self, args: [theme: string, ref: { [key: symbol]: string; }], orig) => {
 			const [theme, ref, ...rest] = args;
 
@@ -153,7 +163,7 @@ class Themes extends Manager {
 		Object.defineProperty(proto, 'theme', {
 			get: () => {
 				const applied = this.settings.get('applied', null);
-				if (applied) return applied;
+				if (applied && this.patched) return applied;
 
 				return store.__theme;
 			}
@@ -227,7 +237,6 @@ class Themes extends Manager {
 		};
 
 		this.entities.set(manifest.id, addon);
-		this.registerValues(addon);
 
 		if (this.isEnabled(addon.id)) {
 			this.start(addon);
@@ -247,7 +256,6 @@ class Themes extends Manager {
 			if (prev) this.stop(prev);
 			this.settings.set('applied', addon.id);
 			if (!addon.started) this.start(addon);
-			this.nativeModule.updateTheme(addon.id);
 		} catch (e) {
 			this.logger.error(`Failed to enable ${addon.data.id}:`, e.message);
 		}

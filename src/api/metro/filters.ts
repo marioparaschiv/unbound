@@ -1,9 +1,10 @@
-import type { Filter } from '@typings/api/metro/filters';
+import type { FilterWithCacheKey } from '@typings/api/metro/filters';
+import { METRO_CACHE_KEY } from '@constants';
 
 export type * from '@typings/api/metro/filters';
 
-export function byProps(...props: string[]): Filter {
-	return (mdl: any) => {
+export function byProps(...props: string[]): FilterWithCacheKey {
+	const filter = (mdl: any) => {
 		if (props.length === 1) {
 			return mdl[props[0]] !== void 0;
 		}
@@ -16,10 +17,14 @@ export function byProps(...props: string[]): Filter {
 
 		return true;
 	};
+
+	filter[METRO_CACHE_KEY] = `byProps::${props.sort().join('::')}`;
+
+	return filter;
 }
 
-export function byPrototypes(...prototypes: string[]): Filter {
-	return (mdl: any) => {
+export function byPrototypes(...prototypes: string[]): FilterWithCacheKey {
+	const filter = (mdl: any) => {
 		if (!mdl.prototype) return false;
 
 		for (let i = 0, len = prototypes.length; i < len; i++) {
@@ -30,18 +35,35 @@ export function byPrototypes(...prototypes: string[]): Filter {
 
 		return true;
 	};
+
+	filter[METRO_CACHE_KEY] = `byPrototypes::${prototypes.sort().join('::')}`;
+
+	return filter;
 }
 
-export function byDisplayName(name: string): Filter {
-	return (mdl: any) => mdl.displayName === name;
+export function byDisplayName(name: string): FilterWithCacheKey {
+	const filter = (mdl: any) => mdl.displayName === name;
+
+	filter[METRO_CACHE_KEY] = `byDisplayName::${name}`;
+
+	return filter;
 }
 
-export function byName(name: string): Filter {
-	return (mdl: any) => mdl.name === name;
+export function byName(name: string): FilterWithCacheKey {
+	const filter = (mdl: any) => mdl.name === name;
+
+	filter[METRO_CACHE_KEY] = `byName::${name}`;
+
+	return filter;
 }
 
-export function byStore(name: string, short: boolean = true): Filter {
-	return (mdl: any) => mdl._dispatcher && mdl.getName?.() === (short ? name + 'Store' : name);
+export function byStore(name: string, short: boolean = true): FilterWithCacheKey {
+	const named = (short ? name + 'Store' : name);
+	const filter = (mdl: any) => mdl._dispatcher && mdl.getName?.() === named;
+
+	filter[METRO_CACHE_KEY] = `byStore::${named}`;
+
+	return filter;
 }
 
 export default { byProps, byDisplayName, byPrototypes, byName, byStore };

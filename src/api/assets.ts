@@ -1,16 +1,39 @@
-import { createLogger } from '@structures/logger';
 import type { Asset } from '@typings/api/assets';
+import { initializeModule } from '@api/metro';
 import { Assets } from '@api/metro/common';
-import IconManager from '@managers/icons';
+import Cache from '@core/cache';
 
 export type * from '@typings/api/assets';
 
 export const assets = new Map<number, Asset>();
 
-const Logger = createLogger('API', 'Assets');
+const cached = Cache.getCachedAssets();
 
-function initialize() {
-	IconManager.initialize();
+if (cached.length) {
+	for (const id of cached) {
+		const initialized = initializeModule(id);
+		if (!initialized) continue;
+
+		const exported = modules[id].publicModule.exports;
+		const asset = Assets.getAssetByID(exported);
+		if (!asset) continue;
+
+		assets.set(exported, asset);
+	}
+} else {
+	for (const id in window.modules) {
+		const initialized = initializeModule(id);
+		if (!initialized) continue;
+
+		const exported = modules[id].publicModule.exports;
+		if (typeof exported !== 'number') continue;
+
+		const asset = Assets.getAssetByID(exported);
+		if (!asset) continue;
+
+		Cache.addAssetToCache(id);
+		assets.set(exported, asset);
+	}
 }
 
 export function find(filter): Asset | null {
@@ -22,11 +45,12 @@ export function getByName(name: string, type: 'svg' | 'png' = 'png'): Asset | nu
 }
 
 export function getByID(id: number): Asset | null {
-	return Assets.getAssetByID(id);
+	return assets.get(id);
 }
 
 export function getIDByName(name: string, type: 'svg' | 'png' = 'png'): number | null {
-	return getByName(name, type)?.id;
+	const entry = [...assets.entries()].find(([, asset]) => asset.name === name && asset.type === type);
+	return entry?.[0];
 }
 
 export function getAll() {
@@ -38,11 +62,5 @@ export const Icons: Record<any, any> = new Proxy({}, {
 		return getIDByName(name);
 	}
 });
-
-try {
-	initialize();
-} catch (e) {
-	Logger.error('Failed to initialize assets:', e.message);
-}
 
 export default { assets, getByName, getByID, getIDByName };

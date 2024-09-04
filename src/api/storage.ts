@@ -1,8 +1,8 @@
 import type { SettingsPayload } from '@typings/api/storage';
 import EventEmitter from '@structures/emitter';
+import { debounce, isEmpty } from '@utilities';
 import { BundleManager } from '@api/native';
 import { useEffect, useState } from 'react';
-import { isEmpty } from '@utilities';
 import fs from '@api/fs';
 
 export type * from '@typings/api/storage';
@@ -39,26 +39,21 @@ export function set(store: string, key: string, value: any) {
 		data.current[keys[i]] ??= {};
 
 		if ((keys.length - 1) === i) {
-			const prev = data.current[keys[i]];
-			if (Object.is(prev, value)) break;
-
 			data.current[keys[i]] = value;
-			data.changed = true;
 		} else {
 			data.current = data.current[keys[i]];
 		}
 	}
 
-	if (data.changed) {
-		Events.emit('changed', { store, key, value });
-		Events.emit('set', { store, key, value });
-	}
+	Events.emit('changed', { store, key, value });
+	Events.emit('set', { store, key, value });
 }
 
 export function toggle(store: string, key: string, def: any) {
 	const prev = get(store, key, def);
 	set(store, key, !prev);
 
+	Events.emit('changed', { store, key, value: !prev });
 	Events.emit('toggled', { store, key, prev, value: !prev });
 }
 
@@ -75,12 +70,22 @@ export function remove(store: string, key: string) {
 	Events.emit('removed', { store, key });
 }
 
+export function clear(store: string) {
+	if (!settings[store]) return;
+
+	delete settings[store];
+
+	Events.emit('changed', { store, key: null, value: undefined });
+	Events.emit('cleared', { store, key: null });
+}
+
 export function getStore(store: string) {
 	return {
 		set: (key: string, value: any) => set(store, key, value),
 		get: <T extends any>(key: string, def: T): T & {} => get(store, key, def),
 		toggle: (key: string, def: any) => toggle(store, key, def),
 		remove: (key: string) => remove(store, key),
+		clear: () => clear(store),
 		useSettingsStore: (predicate?: (payload: SettingsPayload) => boolean) => useSettingsStore(store, predicate)
 	};
 }
@@ -111,11 +116,11 @@ export function useSettingsStore(store: string, predicate?: (payload: SettingsPa
 	};
 }
 
-Events.on('changed', () => {
+Events.on('changed', debounce(() => {
 	const payload = JSON.stringify(settings, null, 2);
 	const promise = fs.write('Unbound/settings.json', payload);
 
 	promise.then(() => data.isPendingReload && BundleManager.reload());
-});
+}, 100));
 
 export default { useSettingsStore, getStore, get, set, remove, on, off };

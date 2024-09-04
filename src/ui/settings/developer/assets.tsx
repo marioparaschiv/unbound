@@ -4,27 +4,27 @@ import type { Asset as AssetType } from '@typings/api/assets';
 import { GeneralSearch } from '@ui/misc/search';
 import { Design } from '@api/metro/components';
 import { Media } from '@api/metro/components';
-import { assets, getAll } from '@api/assets';
 import { Section } from '@ui/misc/forms';
 import { findByProps } from '@api/metro';
+import { assets } from '@api/assets';
 
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
 
-class Asset extends PureComponent<{ item: AssetType; index: number; total: number; }> {
+class Asset extends PureComponent<{ item: AssetType; id: number; index: number; total: number; }> {
 	render() {
-		const { item, index, total } = this.props;
+		const { item, index, total, id } = this.props;
 
 		return <Design.TableRow
 			label={item.name}
-			subLabel={`${item.type.toUpperCase()} - ${item.width}x${item.height} - ${item.id}`}
+			subLabel={`${item.type.toUpperCase()} - ${item.width}x${item.height} - ${id}`}
 			trailing={<Image
-				source={item.id}
+				source={id}
 				style={{
 					width: 24,
 					height: 24
 				}}
 			/>}
-			onPress={({ nativeEvent }) => this.open(AssetHandler.getAssetUriForEmbed(item.id), nativeEvent)}
+			onPress={({ nativeEvent }) => this.open(AssetHandler.getAssetUriForEmbed(id), nativeEvent)}
 			start={index === 0}
 			end={index === total - 1}
 		/>;
@@ -57,14 +57,12 @@ class Asset extends PureComponent<{ item: AssetType; index: number; total: numbe
 const Assets = memo(() => {
 	const [search, setSearch] = useState('');
 
-	const payload = useMemo(() => getAll().filter(a => a.type === 'png'), [assets.size]);
+	const payload = useMemo(() => [...assets.entries()].filter(([, a]) => a.type === 'png'), [assets.size]);
 
 	const data = useMemo(() => {
 		if (!search) return payload;
 
-		return payload.filter((asset) => {
-			return asset.name.toLowerCase().includes(search.toLowerCase());
-		});
+		return payload.filter((([, asset]) => asset.name.toLowerCase().includes(search.toLowerCase())));
 	}, [search]);
 
 	return <ScrollView key='unbound-assets'>
@@ -77,15 +75,16 @@ const Assets = memo(() => {
 		</View>
 		<Section style={{ flex: 1, marginBottom: 108 }} margin={false}>
 			<FlatList
-				keyExtractor={(asset) => asset.id.toString()}
+				keyExtractor={(_, idx) => idx.toString()}
 				data={data}
 				scrollEnabled={false}
 				initialNumToRender={15}
 				ItemSeparatorComponent={Design.TableRowDivider}
 				removeClippedSubviews
-				renderItem={({ item, index }) => (
+				renderItem={({ item: [id, asset], index }) => (
 					<Asset
-						item={item}
+						id={id}
+						item={asset}
 						index={index}
 						total={data.length}
 					/>
