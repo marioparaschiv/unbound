@@ -1,11 +1,12 @@
 import { TouchableOpacity, type ImageStyle } from 'react-native';
 import { Design } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
+import type { ComponentType } from 'react';
 import { Icons } from '@api/assets';
 
 interface OverflowItem {
 	label: string;
-	IconComponent?: React.ComponentType;
+	IconComponent?: ComponentType;
 	iconSource?: number;
 	action: () => any;
 }

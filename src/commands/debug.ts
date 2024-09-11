@@ -12,7 +12,7 @@ export default {
 
 		payload.push('**Debug Info:**');
 		payload.push(`> **Client**: ${window.unbound.version}`);
-		payload.push(`> **Loader**: ${window.loader?.version ?? 'N/A'} (${window.loader?.type ?? 'N/A'})`);
+		payload.push(`> **Loader**: ${window.UNBOUND_LOADER?.origin ?? 'N/A'} - ${window.UNBOUND_LOADER?.platform ?? 'N/A'} (Version ${window.UNBOUND_LOADER?.version ?? 'N/A'})`);
 		payload.push(`> **Discord**: ${BundleInfo.Version}`);
 		payload.push(`> **Build**: ${BundleInfo.Build} on ${BundleInfo.ReleaseChannel}`);
 		payload.push(`> **Hermes**: ${Runtime['OSS Release Version']}`);

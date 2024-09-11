@@ -7,9 +7,8 @@ export type Theme = Addon & {
 			value: string;
 			opacity?: number;
 		}>;
-
 		raw: Record<PropertyKey, string>;
-		type: 'dark' | 'light';
+		type: 'midnight' | 'darker' | 'light';
 		background?: {
 			blur?: number;
 			opacity?: number;

@@ -1,5 +1,5 @@
 import { type Addon, type Manifest } from '@typings/managers';
-import Storage, { getStore } from '@api/storage';
+import Storage from '@api/storage';
 
 import Manager, { ManagerKind } from './base';
 
@@ -46,9 +46,8 @@ class Plugins extends Manager {
 			};
 		}
 
-		const iife = eval(`(manifest, settings) => { return ${bundle} }`);
-		const settings = getStore(manifest.id);
-		const payload = iife(manifest, settings);
+		const iife = eval(`() => { return ${bundle} }`);
+		const payload = iife();
 
 		const res = typeof payload === 'function' ? payload() : payload;
 

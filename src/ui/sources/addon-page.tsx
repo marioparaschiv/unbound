@@ -1,19 +1,19 @@
 import { View, Text, Image, Dimensions, TouchableOpacity, FlatList, ScrollView } from 'react-native';
-import { Semver } from '@utilities';
 import { lazy, useEffect, useMemo, useState } from 'react';
 import { TintedIcon, TrailingText } from '@ui/misc/forms';
 import { useIcon, type Bundle } from '@managers/sources';
 import { Media, Design } from '@api/metro/components';
 import { AddonCard } from '@ui/sources/addon-card';
 import { Constants } from '@api/metro/common';
+import { SETTINGS_KEYS } from '@constants';
 import Empty from '@ui/misc/empty-state';
 import { findByProps } from '@api/metro';
 import { Linking } from '@api/metro/api';
 import * as Managers from '@managers';
+import { Semver } from '@utilities';
 import { Overflow } from '@ui/misc';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
-import { Keys } from '@constants';
 import fs from '@api/fs';
 
 import useStyles from './addon-page.style';
@@ -417,7 +417,7 @@ export function AddonPage({ addon, navigation }: { addon: Bundle[number], naviga
 					subLabel={Strings['UNBOUND_RETURN_TO_SOURCE'].format({ source: source.data.name })}
 					variant={'secondary'}
 					onPress={() => {
-						navigation.push(Keys.Custom, {
+						navigation.push(SETTINGS_KEYS.Custom, {
 							title: source.data.name,
 							render: () => {
 								const Addons = lazy(() => import('@ui/sources/addons').then(({ Addons }) => ({ default: Addons })));

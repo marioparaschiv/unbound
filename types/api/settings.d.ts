@@ -1,13 +1,22 @@
 import type { ImageSourcePropType } from 'react-native';
+import type { ComponentType } from 'react';
 
-export interface SectionType {
-	label: string;
-	entries: AnyProps<{
-		title: string;
-		id: string;
-		icon?: ImageSourcePropType;
-		keywords?: string[];
-		screen: (...args) => JSX.Element;
-		mappable?: boolean;
-	}>[];
-};
+export interface SettingsEntry {
+	type?: string;
+	title: string;
+	key: string;
+	parent?: string;
+	section?: string;
+	excludeFromDisplay?: boolean;
+	icon?: ImageSourcePropType;
+	IconComponent?: ComponentType;
+	screen: {
+		route: string,
+		getComponent: () => ComponentType;
+	};
+}
+
+export interface RegisterSettingsEntriesPayload {
+	type: string;
+	entries: SettingsEntry[];
+}

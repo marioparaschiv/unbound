@@ -1,28 +1,26 @@
 import type { Manifest } from '@typings/managers';
-import type { getStore } from '@api/storage';
 
 declare global {
+	// React is already defined as a namespace globally. This will expose it and allow it to be a mutable global.
 	namespace React { }
 
 	const __r: {
 		importAll: Fn;
 	} & ((id: number | string) => void);
 
+	var nativeLoggingHook: (message: string, level: string) => void;
 	var ReactNative: typeof import('react-native');
-	var modules: { [id: number]: any; };
-	var nativeLoggingHook: Fn;
-
 	var unbound: typeof import('@api') & { version: string; };
-	var manifest: Manifest;
-	var settings: ReturnType<typeof getStore>;
 
 	interface Window {
-		DevTools: null | {
+		modules: { [id: number]: any; };
+
+		DevTools: {
 			connect: (options: {
 				host: string;
 				port?: string;
 			}) => void;
-		};
+		} | null;
 
 		loader: {
 			type: string;
@@ -30,6 +28,12 @@ declare global {
 		};
 
 		UNBOUND_DEV_IP: string;
+
+		UNBOUND_LOADER: {
+			platform: string;
+			origin: string;
+			version: number;
+		};
 
 		UNBOUND_SETTINGS: {
 			contents: string;

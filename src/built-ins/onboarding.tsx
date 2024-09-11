@@ -1,33 +1,32 @@
 import { getStore, useSettingsStore } from '@api/storage';
+import type { BuiltInData } from '@typings/built-ins';
 import { Onboarding, Content } from '@ui/onboarding';
 import { Reanimated } from '@api/metro/common';
 import { useEffect, useState } from 'react';
 import { createPatcher } from '@patcher';
 import { findByName } from '@api/metro';
 
-const Patcher = createPatcher('onboarding');
+const Patcher = createPatcher('unbound::onboarding');
+const Settings = getStore('unbound');
+
 const { useSharedValue, withTiming } = Reanimated;
 
-export const data = {
-	id: 'modules.onboarding',
-	default: true
+export const data: BuiltInData = {
+	name: 'Onboarding',
+	shouldInitialize: () => !Settings.get('onboarding.completed', false)
 };
 
-export function initialize() {
-	const store = getStore('unbound');
-
-	if (!store.get('onboarding.completed', false)) {
-		store.set('onboarding.hidden', false);
-		store.set('onboarding.install', false);
-	} else {
-		return;
-	};
+export function start() {
+	if (!Settings.get('onboarding.completed', false)) {
+		Settings.set('onboarding.hidden', false);
+		Settings.set('onboarding.install', false);
+	}
 
 	const LaunchPadContainer = findByName('LaunchPadContainer', { interop: false });
 
 	Patcher.after(LaunchPadContainer, 'default', (_, __, res) => {
+		const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('onboarding'));
 		const [content, setContent] = useState({ id: '', instance: null });
-		const settings = useSettingsStore('unbound');
 		const contentOpacity = useSharedValue(0);
 		const onboardingOpacity = useSharedValue(0);
 
@@ -60,6 +59,6 @@ export function initialize() {
 	});
 }
 
-export function shutdown() {
+export function stop() {
 	Patcher.unpatchAll();
 }

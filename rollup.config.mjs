@@ -32,6 +32,7 @@ const config = {
 	external: Object.keys(importsMap),
 	output: [
 		{
+			footer: '//# sourceURL=unbound',
 			file: 'dist/unbound.js',
 			format: 'iife',
 			inlineDynamicImports: true,

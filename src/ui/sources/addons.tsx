@@ -4,11 +4,11 @@ import { FlatList, ScrollView, View } from 'react-native';
 import { AddonCard } from '@ui/sources/addon-card';
 import { Design } from '@api/metro/components';
 import { TrailingText } from '@ui/misc/forms';
+import { SETTINGS_KEYS } from '@constants';
 import Empty from '@ui/misc/empty-state';
 import * as Managers from '@managers';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
-import { Keys } from '@constants';
 import { useMemo } from 'react';
 
 import useStyles from './addons.style';
@@ -50,7 +50,7 @@ export function Addons({ source, navigation }: { source: Source, navigation: any
 					label={Strings['UNBOUND_VIEW_ALL_ADDONS']}
 					subLabel={Strings['UNBOUND_VIEW_ALL'].format({ source: `${source.data.name} (${source.instance.length})` })}
 					variant={'primary'}
-					onPress={() => navigation.push(Keys.Custom, {
+					onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 						title: Strings['UNBOUND_ALL_ADDONS'],
 						render: () => <FilteredAddons addons={source.instance} />
 					})}
@@ -62,7 +62,7 @@ export function Addons({ source, navigation }: { source: Source, navigation: any
 					label={Strings['UNBOUND_INSTALLED_ADDONS']}
 					subLabel={Strings['UNBOUND_INSTALLED_ADDONS_INFO'].format({ source: source.data.name })}
 					trailing={<TrailingText>{installed.length}</TrailingText>}
-					onPress={() => navigation.push(Keys.Custom, {
+					onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 						title: Strings['UNBOUND_INSTALLED_ADDONS'],
 						render: () => <FilteredAddons addons={installed} />
 					})}
@@ -81,7 +81,7 @@ export function Addons({ source, navigation }: { source: Source, navigation: any
 							label={Strings[`UNBOUND_${name.toUpperCase()}`]}
 							icon={<Design.TableRowIcon source={Icons[icon]} />}
 							trailing={<TrailingText>{filteredAddons.length}</TrailingText>}
-							onPress={() => navigation.push(Keys.Custom, {
+							onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 								title: Strings[`UNBOUND_${name.toUpperCase()}`],
 								render: () => <FilteredAddons addons={filteredAddons} />
 							})}

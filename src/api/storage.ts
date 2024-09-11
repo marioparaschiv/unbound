@@ -94,7 +94,7 @@ export function useSettingsStore(store: string, predicate?: (payload: SettingsPa
 	const [, forceUpdate] = useState({});
 
 	useEffect(() => {
-		function handler(payload) {
+		function handler(payload: SettingsPayload) {
 			if (payload.store !== store) return;
 
 			if (!predicate || predicate(payload)) {

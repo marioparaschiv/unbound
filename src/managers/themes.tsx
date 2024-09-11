@@ -12,7 +12,6 @@ import Manager, { ManagerKind } from './base';
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
 	public extension: string = 'json';
-	public initialized = false;
 	public module: any;
 
 	constructor() {
@@ -182,12 +181,8 @@ class Themes extends Manager {
 		Object.defineProperty(proto, 'theme', {
 			get: () => {
 				const applied = this.settings.get('applied', null);
-				if (applied && this.initialized) {
-					console.log('returning', applied);
-					return applied;
-				}
+				if (applied && this.initialized) return applied;
 
-				console.log('returning', store.__theme);
 				return store.__theme;
 			}
 		});
@@ -195,8 +190,6 @@ class Themes extends Manager {
 		// On theme change, emit a store change to force all components (mainly RootThemeContextProvider) to access our getter override and update their state.
 		this.on('enabled', () => store.emitChange());
 		this.on('disabled', () => store.emitChange());
-
-		store.emitChange();
 	}
 
 	registerValues(theme: Theme) {

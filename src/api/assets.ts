@@ -1,7 +1,7 @@
 import type { Asset } from '@typings/api/assets';
 import { initializeModule } from '@api/metro';
 import { Assets } from '@api/metro/common';
-import Cache from '@core/cache';
+import Cache from '@cache';
 
 export type * from '@typings/api/assets';
 
@@ -14,7 +14,7 @@ if (cached.length) {
 		const initialized = initializeModule(id);
 		if (!initialized) continue;
 
-		const exported = modules[id].publicModule.exports;
+		const exported = window.modules[id].publicModule.exports;
 		const asset = Assets.getAssetByID(exported);
 		if (!asset) continue;
 
@@ -25,7 +25,7 @@ if (cached.length) {
 		const initialized = initializeModule(id);
 		if (!initialized) continue;
 
-		const exported = modules[id].publicModule.exports;
+		const exported = window.modules[id].publicModule.exports;
 		if (typeof exported !== 'number') continue;
 
 		const asset = Assets.getAssetByID(exported);

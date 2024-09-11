@@ -1,9 +1,5 @@
 import type { ApplicationCommand } from '@typings/api/commands';
-import { findByProps } from '@api/metro';
-import { ClientName } from '@constants';
-
-const Messages = findByProps('sendMessage', 'receiveMessage', { lazy: true });
-const Clyde = findByProps('createBotMessage', { lazy: true });
+import { Messages } from '@api/metro/api';
 
 async function handleEvaluation(src: string) {
 	const out = { res: null, err: null, time: null };
@@ -31,20 +27,6 @@ async function handleEvaluation(src: string) {
 	return out;
 }
 
-function sendBotMessage(channelId: string, content: (string | object), username = ClientName): void {
-	const message = Clyde.createBotMessage({ channelId, content: '' });
-
-	message.author.username = username;
-
-	if (typeof content === 'string') {
-		message.content = content;
-	} else {
-		Object.assign(message, content);
-	}
-
-	Messages.receiveMessage(channelId, message);
-}
-
 export default {
 	name: 'eval',
 	description: 'Allows you to execute code through evaluation.',
@@ -62,13 +44,15 @@ export default {
 		const src: string = args.find(x => x.name === 'src').value;
 		const { res, err, time } = await handleEvaluation(src);
 
-		sendBotMessage(
-			context.channel.id,
-			`${err ? 'Failed executing' : 'Successfully executed'} in ${time}ms
-            \`\`\`js
-            ${res}
-            \`\`\`
-            `.split('\n').map(line => line.trim()).join('\n')
-		);
+		const status = err ? 'Failed executing' : 'Successfully executed';
+
+		console.log(res);
+
+		Messages.sendBotMessage(context.channel.id, [
+			`${status} in ${time}ms`,
+			'\`\`\`js',
+			res ? res.toString().trim() : 'undefined',
+			'\`\`\`',
+		].join('\n'));
 	}
 } as ApplicationCommand;

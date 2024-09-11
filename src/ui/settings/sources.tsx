@@ -12,13 +12,13 @@ import { Dispatcher } from '@api/metro/common';
 import { Tags } from '@ui/sources/addon-tags';
 import { Addons } from '@ui/sources/addons';
 import { animate, noop } from '@utilities';
+import { SETTINGS_KEYS } from '@constants';
 import Empty from '@ui/misc/empty-state';
 import sources from '@managers/sources';
 import * as Managers from '@managers';
 import { Semver } from '@utilities';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
-import { Keys } from '@constants';
 
 const type = 'Sources';
 export default function Sources({ headerRightMargin = false }: { headerRightMargin: boolean; }) {
@@ -134,7 +134,7 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 					})}
 					subLabel={Strings['UNBOUND_VIEW_UPDATES']}
 					variant={'primary'}
-					onPress={() => navigation.push(Keys.Custom, {
+					onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 						title: Strings['UNBOUND_UPDATE_ADDONS'],
 						render: () => {
 							const FilteredAddons = lazy(() => import('@ui/sources/filtered-addons')
@@ -171,7 +171,7 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 						navigation={navigation}
 						showManagerIcon
 						bottom={item.data['tags'] && item.data['tags'].length > 0 && <Tags source={item.data['tags']} />}
-						onPress={() => navigation.push(Keys.Custom, {
+						onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 							title: item.data.name,
 							render: () => <Addons
 								source={item as any}

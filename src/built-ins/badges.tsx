@@ -1,20 +1,19 @@
-import { TouchableOpacity, View, Image } from 'react-native';
+import { View, Image, TouchableOpacity } from 'react-native';
 import type { Badge } from '@typings/core/builtins/badges';
-import type { BuiltIn } from '@typings/core/builtins';
+import type { BuiltInData } from '@typings/built-ins';
 import { createLogger } from '@structures/logger';
+import { SOCIAL_LINKS, TIMES } from '@constants';
 import { useEffect, useState } from 'react';
-import { Links, Times } from '@constants';
 import { Theme } from '@api/metro/stores';
 import { createPatcher } from '@patcher';
 import { showToast } from '@api/toasts';
 import { findByName } from '@api/metro';
 
-const Patcher = createPatcher('badges');
-const Logger = createLogger('Built-Ins', 'Badges');
+const Patcher = createPatcher('unbound::badges');
+const Logger = createLogger('Core', 'Badges');
 
-export const data: BuiltIn['data'] = {
-	id: 'modules.badges',
-	default: true
+export const data: BuiltInData = {
+	name: 'Badges'
 };
 
 const cache = {
@@ -22,7 +21,7 @@ const cache = {
 	badges: {}
 };
 
-export function initialize() {
+export function start() {
 	const Badges = findByName('ProfileBadges', { all: true, interop: false });
 
 	for (const Badge of Badges) {
@@ -56,17 +55,17 @@ export function initialize() {
 	}
 }
 
-export function shutdown() {
+export function stop() {
 	Patcher.unpatchAll();
 }
 
 async function fetchUserBadges(id: string): Promise<string[]> {
 	// Refresh badge cache hourly
-	if (cache.user[id]?.date && (Date.now() - cache.user[id].date) < Times.HOUR) {
+	if (cache.user[id]?.date && (Date.now() - cache.user[id].date) < TIMES.HOUR) {
 		return cache.user[id].badges;
 	}
 
-	const res = await fetch(Links.Badges + id + '.json', {
+	const res = await fetch(SOCIAL_LINKS.Badges + id + '.json', {
 		headers: {
 			'Cache-Control': 'no-cache'
 		}
@@ -91,18 +90,19 @@ const makeBadge = (badge, style): JSX.Element => {
 			alignItems: 'center',
 			flexDirection: 'row',
 			justifyContent: 'flex-end'
-		}}
+		}
+		}
 	>
 		<Badge
 			type={badge}
-			size={Array.isArray(style)
-				? style.find(r => r.paddingVertical && r.paddingHorizontal)
-					? 18
-					: 24
-				: 20}
-			margin={Array.isArray(style)
-				? 4
-				: 8}
+			size={
+				Array.isArray(style)
+					? style.find(r => r.paddingVertical && r.paddingHorizontal)
+						? 18
+						: 24
+					: 20
+			}
+			margin={Array.isArray(style) ? 4 : 8}
 		/>
 	</View>;
 };
@@ -140,18 +140,19 @@ const Badge = ({ type, size, margin }: { type: string; size: number; margin: num
 		<Image
 			// @ts-expect-error
 			style={styles.image}
-			source={{ uri }}
+			source={{ uri }
+			}
 		/>
-	</TouchableOpacity>;
+	</TouchableOpacity >;
 };
 
 async function fetchBadge(type: string): Promise<Badge> {
 	// Refresh badge cache hourly
-	if (cache.badges[type]?.date && (Date.now() - cache.badges[type].date) < Times.HOUR) {
+	if (cache.badges[type]?.date && (Date.now() - cache.badges[type].date) < TIMES.HOUR) {
 		return cache.badges[type].data;
 	}
 
-	const res = await fetch(Links.Badges + `data/${type}.json`, {
+	const res = await fetch(SOCIAL_LINKS.Badges + `data/${type}.json`, {
 		headers: {
 			'Cache-Control': 'no-cache'
 		}

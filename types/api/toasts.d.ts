@@ -1,5 +1,6 @@
-import type { ButtonColors, ButtonLooks, ButtonSizes } from '@typings/discord';
+import type { ButtonColors, ButtonLooks, ButtonSizes } from '@typings/discord/button';
 import type { ImageSourcePropType } from 'react-native';
+import type { ComponentType } from 'react';
 
 export interface ToastButton {
 	color?: ButtonColors[keyof ButtonColors];
@@ -14,7 +15,7 @@ export interface ToastButton {
 export type ToastOptions = _ToastOptions | PartialBy<_ToastOptions, 'title'> | PartialBy<_ToastOptions, 'content'>;
 
 interface _ToastOptions {
-	title: string;
+	title: string | ComponentType;
 	content: string;
 	duration?: number;
 	onTimeout?: Fn;
@@ -24,6 +25,9 @@ interface _ToastOptions {
 	tintedIcon?: boolean;
 }
 
+/**
+ * @private
+ */
 export type InternalToastOptions = ToastOptions & {
 	closing?: boolean;
 	date?: number;

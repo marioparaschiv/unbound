@@ -1,4 +1,5 @@
 declare type Fn<T = any> = (...args: any) => T;
+
 declare type PromiseFn<T = Promise<any>> = (...args: any) => T;
 
 declare type Constructor<T extends any = any> = (new () => T);

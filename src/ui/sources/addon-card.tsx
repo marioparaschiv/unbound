@@ -2,10 +2,10 @@ import { useIcon, type Bundle } from '@managers/sources';
 import { Theme, Constants } from '@api/metro/common';
 import { Design } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
+import { SETTINGS_KEYS } from '@constants';
 import { View, Text } from 'react-native';
 import * as Managers from '@managers';
 import { Icons } from '@api/assets';
-import { Keys } from '@constants';
 import { lazy } from 'react';
 
 import useStyles from './addon-card.style';
@@ -21,7 +21,7 @@ export function AddonCard({ addon, navigation }: { addon: Bundle[number], naviga
 		shadow='low'
 		variant='primary'
 		style={styles.card}
-		onPress={() => navigation.push(Keys.Custom, {
+		onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 			title: addon.manifest.name,
 			render: () => {
 				const AddonPage = lazy(() => import('@ui/sources/addon-page').then(({ AddonPage }) => ({ default: AddonPage })));

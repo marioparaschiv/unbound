@@ -1,35 +1,31 @@
-import type { StyleProp, TextStyle, ViewStyle, ImageStyle } from 'react-native';
+import type { StyleSheetModule, Theming } from '@typings/discord/theming';
+import type { FluxDispatcher } from '@typings/discord/flux-dispatcher';
+import type { ClydeModule } from '@typings/discord/messages';
+import type { AssetsModule } from '@typings/discord/assets';
+import type { FluxModule } from '@typings/discord/flux';
+import type { APIModule } from '@typings/discord/api';
+import type { i18n } from '@typings/discord/i18n';
 
-export namespace Common {
-	export interface StyleSheet {
-		createStyles: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => Fn<T>;
-	}
-
-	export type React = typeof import('react');
-	export type ReactNative = typeof import('react-native');
-	export type Reanimated = typeof import('react-native-reanimated');
-	export type Gestures = typeof import('react-native-gesture-handler');
-
-	export interface Dispatcher {
-		dispatch(payload: Record<string, any>): Promise<void>;
-		unsubscribe(event: string, handler: Fn): void;
-		subscribe(event: string, handler: Fn): void;
-	}
-
-	export interface Flux {
-		Store: (new (dispatcher: Dispatcher, listeners: Record<string, ({ [key: string]: any; })>) => any);
-		connectStores: Fn;
-	}
-
-	export type Moment = typeof import('moment');
-
-	export type Events = typeof import('events');
-
-	export type Clipboard = typeof import('@react-native-clipboard/clipboard');
-
-	// Discord
-
-	// export const REST = findByProps('getAPIBaseURL', { lazy: true });
-	// export const i18n = findByProps('Messages', { lazy: true });
-
+export interface ConstantsModule {
+	[key: PropertyKey]: any;
 }
+
+export type ReanimatedModule = typeof import('react-native-reanimated');
+export type GesturesModule = typeof import('react-native-gesture-handler');
+export type MomentModule = typeof import('moment');
+export type EventsModule = typeof import('events');
+export type ClipboardModule = typeof import('@react-native-clipboard/clipboard')['default'];
+export type SVGModule = typeof import('react-native-svg');
+export type ScreensModule = typeof import('react-native-screens');
+
+
+export {
+	FluxDispatcher as DispatcherModule,
+	i18n as i18nModule,
+	AssetsModule,
+	Theming as ThemingModule,
+	FluxModule,
+	StyleSheetModule,
+	APIModule,
+	ClydeModule
+};

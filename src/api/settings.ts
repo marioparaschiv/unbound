@@ -1,50 +1,27 @@
-import { settingSections, apply, remove } from '@core/patches/settings';
-import type { SectionType } from '@typings/api/settings';
+import type { SettingsEntry } from '@typings/api/settings';
 import { createLogger } from '@structures/logger';
+import { Dispatcher } from '@api/metro/common';
+import { DISPATCH_TYPES } from '@constants';
+import { data } from '@built-ins/settings';
 
 export type * from '@typings/api/settings';
 
 const Logger = createLogger('API', 'Settings');
 
-export const settings = settingSections;
-
-function validateSection(section: SectionType) {
-	// Ensure the label is a string
-	if (typeof section.label !== 'string') {
-		Logger.error(`Section label ${section.label} is not a string!`);
-		return false;
+export const store = {
+	get sections() {
+		return data.sections;
 	}
+};
 
-	return section.entries.every(entry => {
-		// Ensure the title and id exist on the section and are strings
-		if (typeof entry.title !== 'string' || typeof entry.id !== 'string') {
-			Logger.error(`This entry's id (${entry.id}) or title (${entry.title}) is not a string!`);
-			return false;
-		}
+function validateEntry(section: SettingsEntry) {
+	Logger.info('hi');
 
-		// If there are keywords passed, ensure they are an array of strings
-		if (entry.keywords && (!Array.isArray(entry.keywords) || !entry.keywords.every(keyword => typeof keyword === 'string'))) {
-			Logger.error(`Keywords ${entry.keywords} are not a valid array of strings!`);
-			return false;
-		}
-
-		// Ensure the screen is a function
-		if (typeof entry.screen !== 'function') {
-			Logger.error(`Screen ${entry.screen} is not a function (it is ${typeof entry.screen})!`);
-			return false;
-		}
-
-		if (entry.mappable && typeof entry.mappable !== 'boolean') {
-			Logger.error(`Entry ${entry.id} has mappable and it is not a boolean (it is ${entry.mappable})!`);
-			return false;
-		}
-
-		return true;
-	});
+	return true;
 }
 
-export function registerSettings(...sections: SectionType[]) {
-	remove();
-	settingSections.push(...sections.filter(validateSection));
-	apply();
+export function registerSettings(...entries: SettingsEntry[]) {
+	const validated = entries.filter(entry => validateEntry(entry));
+
+	Dispatcher.dispatch({ type: DISPATCH_TYPES.REGISTER_SETTINGS_ENTRIES, entries: validated });
 };

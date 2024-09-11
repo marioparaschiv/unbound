@@ -1,5 +1,9 @@
 import * as Managers from '@managers';
 
+export type * from './plugins';
+export type * from './themes';
+export type * from './icons';
+
 export type Author = {
 	name: string;
 	id: `${number}`;
@@ -19,20 +23,9 @@ export interface Manifest {
 	url: string;
 }
 
-export type IconpackManifest = Pick<
-	Manifest,
-	'id' | 'name' | 'description' | 'version' | 'updates'
-> & { type: 'github' | 'external'; };
-
-declare interface PluginInstance {
-	start?(): void;
-	stop?(): void;
-	getSettingsPanel?(): React.ReactNode;
-}
-
 export interface Addon {
 	started: boolean;
-	instance: PluginInstance | any;
+	instance: any;
 	id: string;
 	failed: boolean;
 	data: Manifest;

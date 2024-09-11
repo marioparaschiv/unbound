@@ -1,20 +1,26 @@
-import type { BuiltIn } from '@typings/core/builtins';
+import type { BuiltInData } from '@typings/built-ins';
 import { createPatcher } from '@patcher';
 import { findByProps } from '@api/metro';
 import themes from '@managers/themes';
 import { Image } from 'react-native';
 import { Documents } from '@api/fs';
 
-const Patcher = createPatcher('misc');
+const Patcher = createPatcher('unbound::design');
 
-export const data: BuiltIn['data'] = {
-	id: 'modules.misc',
-	default: true
+export const data: BuiltInData = {
+	name: 'Design'
 };
 
-export function initialize() {
-	const ThemeBooleans = findByProps('isThemeDark', 'isThemeLight');
+export function start() {
+	patchImageResolver();
+	patchThemeChacteristics();
+}
 
+export function stop() {
+	Patcher.unpatchAll();
+}
+
+function patchImageResolver() {
 	// @ts-expect-error - RN.Image has no 'render' method defined in its types
 	Patcher.before(Image, 'render', (_, [props]) => {
 		const identifier = '{__path__}';
@@ -27,6 +33,10 @@ export function initialize() {
 			props.source.uri = source.uri.replace(identifier, Documents);
 		}
 	});
+}
+
+function patchThemeChacteristics() {
+	const ThemeBooleans = findByProps('isThemeDark', 'isThemeLight');
 
 	function handleThemeType(theme: string, orig: Fn, arg: string) {
 		const appliedTheme = themes.entities.get(theme);
@@ -37,11 +47,16 @@ export function initialize() {
 
 		const themeType = appliedTheme.instance?.type;
 
-		if (themeType && ['dark', 'light'].includes(themeType)) {
-			return themeType === arg;
+		switch (themeType) {
+			case 'midnight':
+			case 'darker':
+			case 'amoled':
+				return arg === 'dark';
+			case 'light':
+				return arg === 'light';
+			default:
+				return orig();
 		}
-
-		return orig();
 	}
 
 	Patcher.instead(ThemeBooleans, 'isThemeDark', (self, args, orig) => {
@@ -51,8 +66,4 @@ export function initialize() {
 	Patcher.instead(ThemeBooleans, 'isThemeLight', (self, args, orig) => {
 		return handleThemeType(args[0] as string, () => orig.apply(self, args), 'light');
 	});
-}
-
-export function shutdown() {
-	Patcher.unpatchAll();
 }

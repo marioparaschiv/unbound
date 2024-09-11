@@ -4,13 +4,13 @@ import type { Manager } from '@typings/managers';
 import { useSettingsStore } from '@api/storage';
 import { Design } from '@api/metro/components';
 import { showDialog } from '@api/dialogs';
+import { SOCIAL_LINKS } from '@constants';
 import { capitalize } from '@utilities';
 import { showToast } from '@api/toasts';
 import * as managers from '@managers';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 import { View } from 'react-native';
-import { Links } from '@constants';
 
 interface InstallModalProps {
 	type: Manager;
@@ -64,7 +64,7 @@ export class InternalInstallInput extends PureComponent<InternalInstallModalProp
 				loading={this.state.loadingPaste}
 				onPress={() => {
 					if (settings.get('onboarding.install', false)) {
-						this.setState({ url: Links.OnboardingPlugin });
+						this.setState({ url: SOCIAL_LINKS.OnboardingPlugin });
 						return;
 					}
 

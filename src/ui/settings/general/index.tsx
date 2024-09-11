@@ -1,7 +1,7 @@
+import { DISCORD_INVITE, SETTINGS_KEYS, SOCIAL_LINKS } from '@constants';
 import { KeyboardAvoidingView, ScrollView, Text } from 'react-native';
 import { Theme, StyleSheet } from '@api/metro/common';
 import { BundleInfo, reload } from '@api/native';
-import { Invite, Keys, Links } from '@constants';
 import { useSettingsStore } from '@api/storage';
 import { Design } from '@api/metro/components';
 import { showDialog } from '@api/dialogs';
@@ -43,7 +43,8 @@ function General() {
 		Refresh: Assets.getIDByName('RefreshIcon'),
 		Discord: Assets.getIDByName('logo'),
 		HammerAndChisel: Assets.getIDByName('ic_hammer_and_chisel_24px'),
-		Debug: Assets.getIDByName('debug')
+		Debug: Assets.getIDByName('debug'),
+		Information: Assets.getIDByName('ic_information_24px')
 	};
 
 	return <ScrollView>
@@ -86,7 +87,7 @@ function General() {
 				<TableRow
 					label={Strings.UNBOUND_TOAST_SETTINGS}
 					icon={<TableRowIcon source={Icons.Toasts} />}
-					onPress={() => navigation.push(Keys.Custom, {
+					onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 						title: Strings.UNBOUND_TOAST_SETTINGS,
 						render: Toasts
 					})}
@@ -95,24 +96,33 @@ function General() {
 				<TableRow
 					label={Strings.UNBOUND_DEVELOPER_SETTINGS}
 					icon={<TableRowIcon source={Icons.Development} />}
-					onPress={() => navigation.push(Keys.Custom, {
+					onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 						title: Strings.UNBOUND_DEVELOPER_SETTINGS,
 						render: Developer
 					})}
 					arrow
 				/>
 			</Section>
+			<Section>
+				<TableSwitchRow
+					label={Strings.UNBOUND_EXPERIMENTS_TITLE}
+					subLabel={Strings.UNBOUND_EXPERIMENTS_DESC}
+					icon={<TableRowIcon source={Icons.HammerAndChisel} />}
+					value={settings.get('experiments', false)}
+					onValueChange={() => settings.toggle('experiments', false)}
+				/>
+			</Section>
 			<Section title='Links'>
 				<TableRow
 					label={Strings.UNBOUND_DISCORD_SERVER}
 					icon={<TableRowIcon source={Icons.Discord} />}
-					onPress={() => Linking.openDeeplink(`https://discord.gg/${Invite}`)}
+					onPress={() => Linking.openDeeplink(`https://discord.gg/${DISCORD_INVITE}`)}
 					arrow
 				/>
 				<TableRow
 					label={Strings.UNBOUND_GITHUB}
 					icon={<TableRowIcon source={Icons.GitHub} />}
-					onPress={() => Linking.openURL(Links.GitHub)}
+					onPress={() => Linking.openURL(SOCIAL_LINKS.GitHub)}
 					arrow
 				/>
 			</Section>
@@ -134,7 +144,7 @@ function General() {
 				/>
 				<TableRow
 					label={Strings.UNBOUND_BYTECODE_VERSION}
-					icon={<TableRowIcon source={Icons.HammerAndChisel} />}
+					icon={<TableRowIcon source={Icons.Information} />}
 					trailing={<Text style={styles.trailingText}>
 						{properties['Bytecode Version']}
 					</Text>}

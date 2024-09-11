@@ -1,8 +1,7 @@
 import { Section, useFormStyles } from '@ui/misc/forms';
-import { Design, Slider } from '@api/metro/components';
 import { ScrollView, Text, View } from 'react-native';
-import { Constants, Theme } from '@api/metro/common';
 import { useSettingsStore } from '@api/storage';
+import { Design } from '@api/metro/components';
 import { showToast } from '@api/toasts';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
@@ -114,14 +113,12 @@ function Toasts() {
 				)}
 			/>
 			<View style={endStyle}>
-				<Slider
+				<Design.Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={blur}
 					onValueChange={v => settings.set('toasts.blur', Math.round(v * 100) / 100)}
 					minimumValue={0}
 					maximumValue={1}
-					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
-					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
 					tapToSeek
 				/>
 			</View>
@@ -136,14 +133,12 @@ function Toasts() {
 				)}
 			/>
 			<View style={endStyle}>
-				<Slider
+				<Design.Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={opacity}
 					onValueChange={v => settings.set('toasts.opacity', Math.round(v * 100) / 100)}
 					minimumValue={0}
 					maximumValue={1}
-					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
-					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
 					tapToSeek
 				/>
 			</View>
@@ -160,14 +155,12 @@ function Toasts() {
 				)}
 			/>
 			<View style={endStyle}>
-				<Slider
+				<Design.Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={maxOnScreen}
 					onValueChange={v => settings.set('toasts.maxOnScreen', Math.round(v))}
 					minimumValue={0}
 					maximumValue={6}
-					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
-					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
 					tapToSeek
 				/>
 			</View>
@@ -183,14 +176,12 @@ function Toasts() {
 				)}
 			/>
 			<View style={endStyle}>
-				<Slider
+				<Design.Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={duration}
 					onValueChange={v => settings.set('toasts.duration', Math.round(v * 10) / 10)}
 					minimumValue={0}
 					maximumValue={10}
-					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
-					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
 					tapToSeek
 				/>
 			</View>

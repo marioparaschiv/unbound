@@ -1,8 +1,8 @@
+import { DISCORD_INVITE, SOCIAL_LINKS } from '@constants';
 import type { Dispatch, SetStateAction } from 'react';
 import { Design } from '@api/metro/components';
 import { SafeAreaView } from 'react-native';
 import Plugins from '@ui/settings/plugins';
-import { Invite, Links } from '@constants';
 import { Linking } from '@api/metro/api';
 import { on, set } from '@api/storage';
 import { Strings } from '@api/i18n';
@@ -227,7 +227,7 @@ export default [
 				},
 
 				// TO-DO: Update this to link to the correct page once it's implemented in the docs
-				onPress: () => Linking.openURL(Links.Docs),
+				onPress: () => Linking.openURL(SOCIAL_LINKS.Docs),
 				icon: 'BookCheckIcon',
 				variant: 'tertiary',
 			}
@@ -254,7 +254,7 @@ export default [
 				},
 
 				icon: 'add',
-				onPress: () => Linking.openDeeplink(`https://discord.gg/${Invite}`)
+				onPress: () => Linking.openDeeplink(`https://discord.gg/${DISCORD_INVITE}`)
 			},
 			{
 				get text() {

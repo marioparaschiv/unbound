@@ -12,3 +12,6 @@ export * as toasts from './toasts';
 export * as native from './native';
 export * as i18n from './i18n';
 export * as fs from './fs';
+
+
+export const version = '__VERSION__';

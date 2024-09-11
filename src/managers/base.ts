@@ -4,7 +4,7 @@ import EventEmitter from '@structures/emitter';
 import { useEffect, useState } from 'react';
 import { capitalize } from '@utilities';
 import { getStore } from '@api/storage';
-import { Regex } from '@constants';
+import { REGEX } from '@constants';
 import fs from '@api/fs';
 
 export enum ManagerKind {
@@ -427,7 +427,7 @@ class Manager extends EventEmitter {
 			throw new Error('Manifest property "description" must be of type string.');
 		} else if (!manifest.authors || (typeof manifest.name !== 'object' && !Array.isArray(manifest.authors))) {
 			throw new Error('Manifest property "authors" must be of type array.');
-		} else if (!manifest.version || typeof manifest.version !== 'string' || !Regex.SemanticVersioning.test(manifest.version)) {
+		} else if (!manifest.version || typeof manifest.version !== 'string' || !REGEX.SemanticVersioning.test(manifest.version)) {
 			throw new Error('Manifest property "version" must be of type string and match the semantic versioning pattern.');
 		} else if (!manifest.id || typeof manifest.id !== 'string') {
 			throw new Error('Manifest property "id" must be of type string and match a "eternal.unbound" pattern.');

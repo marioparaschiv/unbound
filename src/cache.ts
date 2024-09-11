@@ -1,4 +1,4 @@
-import { METRO_CACHE_VERSION } from '@constants';
+import { CACHE_VERSION } from '@constants';
 import { BundleInfo } from '@api/native';
 import { getStore } from '@api/storage';
 
@@ -9,12 +9,12 @@ export enum ModuleFlags {
 export const moduleIds = Object.keys(window.modules);
 
 const CurrentCacheInfo = {
-	cacheVersion: METRO_CACHE_VERSION,
+	cacheVersion: CACHE_VERSION,
 	buildNumber: BundleInfo.Build,
 	moduleCount: moduleIds.length
 };
 
-const storage = getStore('unbound::metro');
+const storage = getStore('unbound::cache');
 
 export const state = {
 	info: storage.get('info', CurrentCacheInfo),
@@ -106,7 +106,7 @@ function isValidCache() {
 		return false;
 	}
 
-	if (METRO_CACHE_VERSION !== state.info.cacheVersion) {
+	if (CACHE_VERSION !== state.info.cacheVersion) {
 		return false;
 	}
 

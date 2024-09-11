@@ -2,7 +2,7 @@ import type { Addon, Manifest, Resolveable } from '@typings/managers';
 import type { Asset } from '@typings/api/assets';
 import { createPatcher } from '@patcher';
 import { findByProps } from '@api/metro';
-import { ClientName } from '@constants';
+import { CLIENT_NAME } from '@constants';
 import { chunkArray } from '@utilities';
 import { download } from '@utilities';
 import { Image } from 'react-native';
@@ -78,7 +78,7 @@ class Icons extends Manager {
 		// If icon is an external image then download it locally and convert the uri to a file:// pointer
 		// The icon is stored under Unbound/Packs/:id/unbound/icon.png
 		if (typeof manifest.icon === 'object' && manifest.icon.uri) {
-			const path = `${this.path}/${manifest.id}/${ClientName.toLowerCase()}/icon.png`;
+			const path = `${this.path}/${manifest.id}/${CLIENT_NAME.toLowerCase()}/icon.png`;
 
 			await download(manifest.icon.uri, path, 'base64', signal).then(() => {
 				if (typeof manifest.icon === 'object') {

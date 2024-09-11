@@ -1,11 +1,12 @@
 import type { SearchOptions, BulkItem, StoreOptions, InternalOptions, StringFindWithOptions, BulkFind, PropertyRecordOrArray, FunctionSignatureOrArray } from '@typings/api/metro';
-import type { Filter, FilterWithCacheKey } from '@typings/api/metro/filters';
+import type { Filter } from '@typings/api/metro/filters';
 import { createLogger } from '@structures/logger';
-import Cache, { ModuleFlags } from '@core/cache';
-import { METRO_CACHE_KEY } from '@constants';
+import Cache, { ModuleFlags } from '@cache';
+import { CACHE_KEY } from '@constants';
 
 import Filters from './filters';
 
+export { CACHE_KEY as METRO_CACHE_KEY } from '@constants';
 export type * from '@typings/api/metro';
 
 export const data = {
@@ -20,7 +21,7 @@ const Logger = createLogger('Metro');
 
 for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 	const id = Cache.moduleIds[i];
-	const mdl = modules[id];
+	const mdl = window.modules[id];
 
 	if (Cache.hasModuleFlag(id, ModuleFlags.BLACKLISTED)) {
 		deenumerate(id);
@@ -83,7 +84,7 @@ export function removeListener(listener: (mdl: any, id: string) => void) {
 export const on = addListener;
 export const off = removeListener;
 
-export function findLazy(filter: Filter | FilterWithCacheKey, options?: Omit<SearchOptions, 'lazy' | 'all'>) {
+export function findLazy(filter: Filter | Filter, options?: Omit<SearchOptions, 'lazy' | 'all'>) {
 	const existing = find(filter, options);
 	if (existing !== void 0) return existing;
 
@@ -104,7 +105,7 @@ export function findLazy(filter: Filter | FilterWithCacheKey, options?: Omit<Sea
 	});
 }
 
-export function find(filter: Filter | FilterWithCacheKey, options: SearchOptions = {}) {
+export function find(filter: Filter | Filter, options: SearchOptions = {}) {
 	if (!filter) throw new Error('You must provide a filter to search by.');
 
 	const {
@@ -135,15 +136,15 @@ export function find(filter: Filter | FilterWithCacheKey, options: SearchOptions
 		}
 	};
 
-	if (filter[METRO_CACHE_KEY]) {
-		search[METRO_CACHE_KEY] = filter[METRO_CACHE_KEY];
+	if (filter[CACHE_KEY]) {
+		search[CACHE_KEY] = filter[CACHE_KEY];
 	}
 
 	/****** CACHE ******/
-	const cache = Cache.getModuleCacheForKey(filter[METRO_CACHE_KEY]);
+	const cache = Cache.getModuleCacheForKey(filter[CACHE_KEY]);
 	if (cache) {
 		for (const id of cache) {
-			const rawModule = modules[id];
+			const rawModule = window.modules[id];
 			if (!rawModule) continue;
 
 			if (!rawModule.isInitialized) {
@@ -162,7 +163,7 @@ export function find(filter: Filter | FilterWithCacheKey, options: SearchOptions
 	}
 	/****** END CACHE ******/
 
-	const store = useCache ? data.cache : modules;
+	const store = useCache ? data.cache : window.modules;
 	const keys = useCache ? Object.keys(store) : Cache.moduleIds;
 
 	for (let i = 0, len = keys.length; i < len; i++) {
@@ -230,7 +231,7 @@ export function bulk(...items: BulkItem[]) {
 	return res;
 }
 
-export function findByProps<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): PropertyRecordOrArray<T, U> {
+export function findByProps<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): PropertyRecordOrArray<T, U> & {} {
 	const [props, options] = parseOptions<InternalOptions, T>(args);
 
 	return searchWithOptions(props, options, 'byProps');
@@ -283,8 +284,8 @@ function searchExports(filter: Fn, rawModule: any, id: string, esModules: boolea
 	}
 
 	if (filter(mdl, id)) {
-		if (filter[METRO_CACHE_KEY]) {
-			Cache.addCachedIDForKey(filter[METRO_CACHE_KEY], id);
+		if (filter[CACHE_KEY]) {
+			Cache.addCachedIDForKey(filter[CACHE_KEY], id);
 		}
 
 		data.cache[id] = rawModule;
@@ -293,8 +294,8 @@ function searchExports(filter: Fn, rawModule: any, id: string, esModules: boolea
 	}
 
 	if (esModules && mdl.default && filter(mdl.default, id)) {
-		if (filter[METRO_CACHE_KEY]) {
-			Cache.addCachedIDForKey(filter[METRO_CACHE_KEY], id);
+		if (filter[CACHE_KEY]) {
+			Cache.addCachedIDForKey(filter[CACHE_KEY], id);
 		}
 
 		data.cache[id] = rawModule;
@@ -366,8 +367,8 @@ function isInvalidExport(mdl: any) {
 }
 
 function deenumerate(id: string | number) {
-	Object.defineProperty(modules, id, {
-		value: modules[id],
+	Object.defineProperty(window.modules, id, {
+		value: window.modules[id],
 		enumerable: false,
 		configurable: true,
 		writable: true

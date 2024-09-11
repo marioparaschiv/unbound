@@ -1,13 +1,20 @@
-import type { BuiltIn } from '@typings/core/builtins';
+import type { BuiltInData } from '@typings/built-ins';
 import { ErrorBoundary } from '@ui/error-boundary';
 import { createPatcher } from '@patcher';
 import { findByName } from '@api/metro';
+import { getStore } from '@api/storage';
 
-const Patcher = createPatcher('error-boundary');
+const Patcher = createPatcher('unbound::error-boundary');
+const Settings = getStore('unbound');
 
-export const data: BuiltIn['data'] = {
-	id: 'dev.errorBoundary',
-	default: true
+export const data: BuiltInData = {
+	name: 'Error Boundary',
+	shouldInitialize: () => Settings.get('error-boundary', true),
+	settings: {
+		monitor: [
+			'error-boundary'
+		],
+	}
 };
 
 export function initialize() {

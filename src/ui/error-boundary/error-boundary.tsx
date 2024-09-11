@@ -4,7 +4,7 @@ import { useSettingsStore } from '@api/storage';
 import { Design } from '@api/metro/components';
 import { Clipboard } from '@api/metro/common';
 import { TintedIcon } from '@ui/misc/forms';
-import { ClientName } from '@constants';
+import { CLIENT_NAME } from '@constants';
 import { CodeBlock } from '@ui/misc';
 import { reload } from '@api/native';
 import { Strings } from '@api/i18n';
@@ -40,7 +40,7 @@ const Header = ({ res }: Pick<ErrorBoundaryProps, 'res'>) => {
 	return <Card>
 		<View style={{ flexDirection: 'column' }}>
 			<Text style={styles.headerTitle}>
-				{res.props?.title?.replace('Discord', ClientName)}
+				{res.props?.title?.replace('Discord', CLIENT_NAME)}
 			</Text>
 			<Text style={styles.headerBody}>
 				{res.props.body}

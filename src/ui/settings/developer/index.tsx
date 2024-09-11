@@ -1,9 +1,8 @@
+import { SETTINGS_KEYS, SOCIAL_LINKS } from '@constants';
 import { Section, useFormStyles } from '@ui/misc/forms';
-import { Design, Slider } from '@api/metro/components';
 import { ScrollView, View, Text } from 'react-native';
-import { Constants, Theme } from '@api/metro/common';
 import { useSettingsStore } from '@api/storage';
-import { Keys, Links } from '@constants';
+import { Design } from '@api/metro/components';
 import { Strings } from '@api/i18n';
 import Assets from '@api/assets';
 import Toasts from '@api/toasts';
@@ -35,18 +34,18 @@ export default function Developer() {
 			<TableSwitchRow
 				label={Strings.UNBOUND_ENABLED}
 				subLabel={Strings.UNBOUND_DEBUG_BRIDGE_DESC}
-				value={settings.get('dev.debugBridge.enabled', false)}
-				onValueChange={() => settings.toggle('dev.debugBridge.enabled', false)}
+				value={settings.get('debug-bridge.enabled', false)}
+				onValueChange={() => settings.toggle('debug-bridge.enabled', false)}
 			/>
 			<View style={endStyle}>
 				<View style={{ margin: 8 }}>
 					<TextInput
 						isRound
 						size='md'
-						value={settings.get('dev.debugBridge.host', '192.168.0.35:9090')}
-						onChange={v => settings.set('dev.debugBridge.host', v)}
+						value={settings.get('debug-bridge.address', '192.168.0.35:9090')}
+						onChange={v => settings.set('debug-bridge.address', v)}
 						label={Strings.UNBOUND_DEBUG_BRIDGE_IP}
-						disabled={!settings.get('dev.debugBridge.enabled', false)}
+						disabled={!settings.get('debug-bridge.enabled', false)}
 					/>
 				</View>
 			</View>
@@ -75,7 +74,7 @@ export default function Developer() {
 					<TextInput
 						isRound
 						size='md'
-						value={settings.get('loader.update.url', Links.Bundle)}
+						value={settings.get('loader.update.url', SOCIAL_LINKS.Bundle)}
 						onChange={v => settings.set('loader.update.url', v)}
 						label={Strings.UNBOUND_LOADER_CUSTOM_BUNDLE}
 					/>
@@ -86,13 +85,13 @@ export default function Developer() {
 			<TableSwitchRow
 				label={Strings.UNBOUND_ERROR_BOUNDARY}
 				subLabel={Strings.UNBOUND_ERROR_BOUNDARY_DESC}
-				value={settings.get('dev.errorBoundary', true)}
-				onValueChange={() => settings.toggle('dev.errorBoundary', true)}
+				value={settings.get('error-boundary', true)}
+				onValueChange={() => settings.toggle('error-boundary', true)}
 			/>
 			<TableRow
 				label={Strings.UNBOUND_ERROR_BOUNDARY_TRIGGER_TITLE}
 				subLabel={Strings.UNBOUND_ERROR_BOUNDARY_TRIGGER_DESC}
-				onPress={() => navigation.push(Keys.Custom, {
+				onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 					title: null,
 
 					// @ts-expect-error -- purposefully trip the boundary by rendering undefined
@@ -106,26 +105,24 @@ export default function Developer() {
 				label={Strings.UNBOUND_LOGGING_DEPTH}
 				trailing={(
 					<Text style={formText}>
-						{Strings.UNBOUND_LOGGING_DEPTH_DESC.format({ depth: settings.get('dev.logging.depth', 2) })}
+						{Strings.UNBOUND_LOGGING_DEPTH_DESC.format({ depth: settings.get('logging.depth', 2) })}
 					</Text>
 				)}
 			/>
 			<View style={[endStyle, { borderBottomRightRadius: 0, borderBottomLeftRadius: 0 }]}>
-				<Slider
+				<Design.Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
-					value={settings.get('dev.logging.depth', 2)}
-					onValueChange={v => settings.set('dev.logging.depth', Math.round(v))}
+					value={settings.get('logging.depth', 2)}
+					onValueChange={v => settings.set('logging.depth', Math.round(v))}
 					minimumValue={1}
 					maximumValue={6}
-					minimumTrackTintColor={Theme.unsafe_rawColors.BRAND_500}
-					maximumTrackTintColor={Constants.UNSAFE_Colors.GREY2}
 					tapToSeek
 				/>
 			</View>
 			<TableRow
 				label={Strings.UNBOUND_DEBUG_LOGS}
 				icon={<TableRowIcon source={Icons.Debug} />}
-				onPress={() => navigation.push(Keys.Custom, {
+				onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 					title: Strings.UNBOUND_DEBUG_LOGS,
 					render: Logs
 				})}
@@ -149,7 +146,7 @@ export default function Developer() {
 			<TableRow
 				label={Strings.UNBOUND_ASSET_BROWSER}
 				icon={<TableRowIcon source={Icons.Browser} />}
-				onPress={() => navigation.push(Keys.Custom, {
+				onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 					title: Strings.UNBOUND_ASSET_BROWSER,
 					render: AssetBrowser
 				})}

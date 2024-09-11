@@ -1,9 +1,9 @@
 import type { ImageSourcePropType, ImageStyle, ViewStyle } from 'react-native';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 type SectionProps = {
 	title?: string;
-	children?: React.ReactNode,
+	children?: ReactNode,
 	style?: ViewStyle;
 	margin?: boolean;
 };
@@ -11,7 +11,7 @@ type SectionProps = {
 type SvgIconProps = {
 	size?: number;
 	style?: ImageStyle;
-	icon?: React.ComponentType<any>;
+	icon?: ComponentType<any>;
 };
 
 type IconProps = {

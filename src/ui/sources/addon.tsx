@@ -2,10 +2,10 @@ import { TintedIcon, TrailingText } from '@ui/misc/forms';
 import { useIcon, type Bundle } from '@managers/sources';
 import { AddonPage } from '@ui/sources/addon-page';
 import { Design } from '@api/metro/components';
+import { SETTINGS_KEYS } from '@constants';
 import * as Managers from '@managers';
 import { Icons } from '@api/assets';
 import { View } from 'react-native';
-import { Keys } from '@constants';
 
 export function Addon({ addon, navigation }: { addon: Bundle[number], navigation: any; }) {
 	const { manifest: { id, icon: _icon, name, description, version }, type } = addon;
@@ -29,7 +29,7 @@ export function Addon({ addon, navigation }: { addon: Bundle[number], navigation
 			/>
 		</View>}
 		arrow
-		onPress={() => navigation.push(Keys.Custom, {
+		onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
 			title: name,
 			render: () => <AddonPage
 				addon={addon}

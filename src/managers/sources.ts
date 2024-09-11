@@ -4,7 +4,7 @@ import { Dispatcher } from '@api/metro/common';
 import { createPatcher } from '@patcher';
 import { download } from '@utilities';
 import { Icons } from '@api/assets';
-import { Regex } from '@constants';
+import { REGEX } from '@constants';
 import { useMemo } from 'react';
 import fs from '@api/fs';
 
@@ -197,7 +197,7 @@ class Sources extends BaseManager {
 			throw new Error('Manifest property "description" must be of type string.');
 		} else if (!manifest.authors || (typeof manifest.name !== 'object' && !Array.isArray(manifest.authors))) {
 			throw new Error('Manifest property "authors" must be of type array.');
-		} else if (!manifest.version || typeof manifest.version !== 'string' || !Regex.SemanticVersioning.test(manifest.version)) {
+		} else if (!manifest.version || typeof manifest.version !== 'string' || !REGEX.SemanticVersioning.test(manifest.version)) {
 			throw new Error('Manifest property "version" must be of type string and match the semantic versioning pattern.');
 		} else if (!manifest.id || typeof manifest.id !== 'string') {
 			throw new Error('Manifest property "id" must be of type string and match a "eternal.unbound" pattern.');
@@ -206,7 +206,7 @@ class Sources extends BaseManager {
 
 	validateChangelog(changelog: Record<string, string[]>) {
 		// Ensure every key is a semantic version and every value is an array of strings
-		if (!Object.keys(changelog).every(key => typeof key === 'string' && Regex.SemanticVersioning.test(key))
+		if (!Object.keys(changelog).every(key => typeof key === 'string' && REGEX.SemanticVersioning.test(key))
 			|| !Object.values(changelog).every(value => Array.isArray(value) && value.every(message => typeof message === 'string'))) {
 			throw new Error('The changelog object must be an object of string keys and string[] values, where the key is the version and the value is an array of strings.');
 		}
