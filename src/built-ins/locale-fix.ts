@@ -6,18 +6,18 @@ export const data: BuiltInData = {
 	name: 'Locale Fix'
 };
 
-function onDispatch(payload: i18nLoadedPayload) {
-	const { locale } = payload;
-
-	Moment.locale(locale.toLowerCase());
-
-	Dispatcher.unsubscribe('I18N_LOAD_SUCCESS', onDispatch);
-}
-
 export function start() {
 	Dispatcher.subscribe<i18nLoadedPayload>('I18N_LOAD_SUCCESS', onDispatch);
 }
 
 export function stop() {
 	Dispatcher.unsubscribe<i18nLoadedPayload>('I18N_LOAD_SUCCESS', onDispatch);
+}
+
+function onDispatch(payload: i18nLoadedPayload) {
+	const { locale } = payload;
+
+	Moment.locale(locale.toLowerCase());
+
+	Dispatcher.unsubscribe('I18N_LOAD_SUCCESS', onDispatch);
 }

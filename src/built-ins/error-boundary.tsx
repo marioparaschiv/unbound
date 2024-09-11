@@ -17,7 +17,7 @@ export const data: BuiltInData = {
 	}
 };
 
-export function initialize() {
+export function start() {
 	const Boundary = findByName('ErrorBoundary');
 	if (!Boundary) return;
 
@@ -32,6 +32,6 @@ export function initialize() {
 	});
 }
 
-export function shutdown() {
+export function stop() {
 	Patcher.unpatchAll();
 }
