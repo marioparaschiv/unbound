@@ -3,9 +3,11 @@ import type { ApplicationCommandType, ApplicationCommandInputType, ApplicationCo
 export interface ApplicationCommand {
 	name: string;
 	displayName?: string;
+	untranslatedName?: string;
 
 	description: string;
 	displayDescription?: string;
+	untranslatedDescription?: string;
 
 	inputType?: ApplicationCommandInputType;
 	type?: ApplicationCommandType;

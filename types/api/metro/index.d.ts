@@ -26,11 +26,11 @@ export interface BulkItem extends Omit<SearchOptions, 'initial' | 'cache'> {
 
 export type StringFindWithOptions<T extends string, Options = SearchOptions> = [...T[], Options];
 export type BulkFind<T extends string> = [...AnyProps<{ params: T[]; }>[], AnyProps<{ bulk: true; }>];
-export type AllValues<T extends Record<string, any>, U extends unknown> = T extends { all: true; } ? U[] : U;
+export type AllValues<T extends Record<PropertyKey, any>, U extends unknown> = T extends { all: true; } ? U[] : U;
 
 export type SingleModuleByProperty<T extends any[]> = T extends [...any, infer O extends SearchOptions]
-	? AllValues<O, AnyProps<{ [k in Exclude<T[number], Record<string, any>>]: any }>>
-	: AnyProps<{ [k in Exclude<T[number], Record<string, any>>]: any }>;
+	? AllValues<O, AnyProps<{ [k in Exclude<T[number], Record<PropertyKey, any>>]: any }>>
+	: AnyProps<{ [k in Exclude<T[number], Record<PropertyKey, any>>]: any }>;
 
 export type SingleModuleByName<T extends any[]> = T extends [...any, infer O extends SearchOptions]
 	? AllValues<O, O extends { interop: false; }
