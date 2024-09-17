@@ -67,8 +67,15 @@ async function onSettingsChange({ store, key }: { store: string, key: string; })
 		const monitors = mdl.data.settings.monitor;
 		if (!monitors?.length || !monitors.includes(key)) continue;
 
-		await stop(mdl);
-		start(mdl);
+		if (started.has(mdl.data.name)) {
+			await stop(mdl);
+		}
+
+		const predicate = mdl.data.shouldInitialize ?? true;
+
+		if (typeof predicate === 'function' ? predicate() : predicate) {
+			start(mdl);
+		};
 	}
 }
 
