@@ -13,7 +13,6 @@ export let ws: WebSocket;
 export const data: BuiltInData = {
 	name: 'Debug Bridge',
 	shouldInitialize: () => Settings.get('debug-bridge.enabled', false),
-	unpatches: [],
 	settings: {
 		monitor: [
 			'debug-bridge.enabled',
@@ -58,8 +57,6 @@ export function stop() {
 		ws.close();
 		ws = null;
 	}
-
-	data.unpatches.map(unpatch => unpatch());
 }
 
 function patchLoggingHook() {
@@ -92,6 +89,4 @@ function attachAppStateListener() {
 				break;
 		}
 	});
-
-	data.unpatches.push(() => remove());
 }
