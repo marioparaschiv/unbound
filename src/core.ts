@@ -15,18 +15,15 @@ export async function initialize() {
 
 	window.unbound ??= API;
 
-	// Managers.Plugins.initialize();
-	// Managers.Sources.initialize();
-
+	Managers.Plugins.initialize();
+	Managers.Sources.initialize();
 }
 
 export async function shutdown() {
 	Patcher.unpatchAll();
 
-	for (const type in Managers) {
-		const manager = Managers[type];
+	for (const manager of Object.values(Managers)) {
 		if (!manager.initialized) continue;
-
 		await manager.shutdown();
 	}
 
