@@ -1,5 +1,4 @@
 import type { ApplicationCommand } from '@typings/api/commands';
-import { CLIENT_NAME } from '@constants';
 import { uuid } from '@utilities';
 
 export type * from '@typings/api/commands';
@@ -33,24 +32,6 @@ export enum ApplicationCommandOptionType {
 	ATTACHMENT
 }
 
-export const data: {
-	section: {
-		id: string;
-		type: number;
-		name: string;
-	};
-} = {
-	section: {
-		id: '-3',
-		type: 0,
-		name: CLIENT_NAME
-	}
-};
-
-// if (Commands?.BUILT_IN_SECTIONS) {
-// 	Commands.BUILT_IN_SECTIONS[data.section.id] = data.section;
-// }
-
 export function buildCommands(caller: string, cmds: Omit<ApplicationCommand, '__CALLER__' | '__UNBOUND__'>[]): ApplicationCommand[] {
 	if (!caller || typeof caller !== 'string') {
 		throw new TypeError('first argument caller must be of type string');
@@ -60,30 +41,26 @@ export function buildCommands(caller: string, cmds: Omit<ApplicationCommand, '__
 
 	const result: ApplicationCommand[] = [];
 
-	for (const cmd of cmds) {
-		result.push({
-			type: 1,
-			inputType: 1,
-			id: uuid(),
-			applicationId: '-3',
-			// applicationId: data.section.id,
-			...cmd,
+	for (const cmd of cmds as ApplicationCommand[]) {
+		cmd.type ??= 1;
+		cmd.inputType ??= 1;
+		cmd.id ??= uuid();
+		cmd.applicationId ??= '-1';
+		cmd.displayName ??= cmd.name;
+		cmd.displayDescription ??= cmd.description;
+		cmd.untranslatedName ??= cmd.name;
+		cmd.untranslatedDescription ??= cmd.description;
 
-			name: cmd.name ?? cmd.displayName,
-			description: cmd.description ?? cmd.displayDescription,
-			displayName: cmd.displayName ?? cmd.name,
-			displayDescription: cmd.displayDescription ?? cmd.description,
 
-			__UNBOUND__: true,
-			__CALLER__: caller,
-			options: cmd.options?.map(option => ({
-				...option,
-				name: option.name ?? option.displayName,
-				description: option.description ?? option.displayDescription,
-				displayName: option.displayName ?? option.name,
-				displayDescription: option.displayDescription ?? option.description
-			})),
-		});
+		cmd.__UNBOUND__ = true;
+		cmd.__CALLER__ = caller;
+		cmd.options = cmd.options?.map(option => ({
+			...option,
+			displayName: option.name,
+			displayDescription: option.description
+		}));
+
+		result.push(cmd);
 	}
 
 	return result;
