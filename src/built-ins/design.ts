@@ -55,7 +55,7 @@ function patchThemeChacteristics() {
 			case 'light':
 				return arg === 'light';
 			default:
-				return orig();
+				return themeType;
 		}
 	}
 
