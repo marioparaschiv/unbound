@@ -22,6 +22,7 @@ export function start() {
 
 export function stop() {
 	data.unpatches.map(unpatch => unpatch());
+	Patcher.unpatchAll();
 }
 
 function patchDeveloperStore() {
@@ -33,7 +34,7 @@ function patchDeveloperStore() {
 
 		Object.defineProperties(self, {
 			isDeveloper: {
-				configurable: !1,
+				configurable: false,
 				get: () => Settings.get('experiments', false),
 				set: () => { }
 			}
