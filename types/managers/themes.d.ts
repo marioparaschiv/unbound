@@ -1,6 +1,7 @@
 import type { Addon } from '@typings/managers';
 
 export type Theme = Addon & {
+	registered: boolean;
 	instance: {
 		semantic: Record<PropertyKey, {
 			type: 'color' | 'raw';

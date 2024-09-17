@@ -11,6 +11,7 @@ import Manager, { ManagerKind } from './base';
 
 class Themes extends Manager {
 	public patcher: ReturnType<typeof createPatcher>;
+	public entities = new Map<string, Theme>();
 	public extension: string = 'json';
 	public module: any;
 
@@ -39,8 +40,8 @@ class Themes extends Manager {
 		this.module._Theme = { ...this.module.Theme };
 		this.module._RawColor = { ...this.module.RawColor };
 
-
 		for (const addon of this.entities.values()) {
+			if (addon.registered) continue;
 			this.registerValues(addon);
 		}
 
@@ -208,6 +209,8 @@ class Themes extends Manager {
 			const value = SemanticColor[key];
 			value[data.id] = instance.shadows?.[key] ?? SemanticColor[key][instance.type ?? 'darker'];
 		}
+
+		theme.registered = true;
 	}
 
 	parseColor(item: Record<string, any>) {
@@ -234,6 +237,7 @@ class Themes extends Manager {
 			const res = this.handleBundle(bundle);
 			if (!res) this.handleInvalidBundle();
 
+
 			data.instance = res;
 
 			if (this.errors.has(manifest.id) || this.errors.has(manifest.path)) {
@@ -251,10 +255,15 @@ class Themes extends Manager {
 			instance: data.instance,
 			id: manifest.id,
 			failed: data.failed,
+			registered: false,
 			started: false
 		};
 
 		this.entities.set(manifest.id, addon);
+
+		if (this.initialized) {
+			this.registerValues(addon);
+		}
 
 		if (this.isEnabled(addon.id)) {
 			this.start(addon);
