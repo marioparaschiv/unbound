@@ -53,7 +53,6 @@ export function toggle(store: string, key: string, def: any) {
 	const prev = get(store, key, def);
 	set(store, key, !prev);
 
-	Events.emit('changed', { store, key, value: !prev });
 	Events.emit('toggled', { store, key, prev, value: !prev });
 }
 
