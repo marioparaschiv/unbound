@@ -5,8 +5,7 @@ import { typescriptPaths as paths } from 'rollup-plugin-typescript-paths';
 import { nodeResolve as node } from '@rollup/plugin-node-resolve';
 import hermes from '@unbound-mod/rollup-plugin';
 import replace from '@rollup/plugin-replace';
-import { minify } from 'rollup-plugin-swc3';
-import { swc } from 'rollup-plugin-swc3';
+import { minify, swc } from 'rollup-plugin-swc3';
 import json from '@rollup/plugin-json';
 import { readFileSync } from 'fs';
 
@@ -49,28 +48,20 @@ const config = {
 		json(),
 		replace({ preventAssignment: true, __VERSION__: revision }),
 		swc({ tsconfig: false }),
-		minify({ compress: true, mangle: true }),
 		{
 			name: 'iife',
-			async generateBundle(options, bundle) {
-				const out = options.file?.split('/');
-				if (!out) return this.warn('(IIFE) - Output file not found.');
-
-				const file = out.pop();
-
-				const output = bundle[file];
-				if (!output) return this.warn('(IIFE) - Output file not found.');
-
-				output.code = `(() => {
+			renderChunk(code) {
+				return `(() => {
 					try {
 						${preinit}
-						${output.code}
+						${code}
 					} catch(error) {
 						alert('Unbound failed to initialize: ' + error.stack);
 					}
 			 	})();`;
 			}
 		},
+		minify({ compress: true, mangle: true }),
 		hermes(),
 	],
 
