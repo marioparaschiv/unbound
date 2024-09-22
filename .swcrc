@@ -2,10 +2,16 @@
 	"sourceMaps": false,
 	"minify": false,
 	"jsc": {
+		"externalHelpers": false,
 		"parser": {
 			"syntax": "typescript",
 			"tsx": true,
 			"dynamicImport": true
+		},
+		"transform": {
+			"react": {
+				"runtime": "automatic"
+			}
 		},
 		"minify": {
 			"mangle": false,
@@ -13,44 +19,22 @@
 		}
 	},
 	"env": {
+		"targets": "fully supports es6",
 		"include": [
 			"transform-block-scoping",
-			"proposal-class-properties",
 			"transform-classes",
-			"transform-async-to-generator"
+			"transform-async-to-generator",
+			"transform-async-generator-functions"
 		],
 		"exclude": [
-			"bugfix/transform-edge-default-parameters",
-			"bugfix/transform-async-arrows-in-class",
-			"bugfix/transform-tagged-template-caching",
-			"bugfix/transform-safari-id-destructuring-collision-in-function-expression",
-			"proposal-class-static-block",
-			"proposal-private-property-in-object",
-			"proposal-logical-assignment-operators",
-			"proposal-export-namespace-from",
-			"proposal-nullish-coalescing-operator",
-			"proposal-optional-chaining",
-			"proposal-optional-catch-binding",
-			"proposal-object-rest-spread",
-			"transform-exponentiation-operator",
-			"transform-block-scoped-functions",
-			"transform-template-literals",
-			"transform-spread",
-			"transform-function-name",
-			"transform-arrow-functions",
-			"transform-duplicate-keys",
-			"transform-sticky-regex",
-			"transform-typeof-symbol",
-			"transform-shorthand-properties",
 			"transform-parameters",
-			"transform-for-of",
-			"transform-computed-properties",
-			"transform-regenerator",
-			"transform-new-target",
-			"transform-property-literals",
-			"transform-member-expression-literals",
-			"transform-reserved-words",
-			"transform-destructuring"
+			"transform-template-literals",
+			"transform-exponentiation-operator",
+			"transform-named-capturing-groups-regex",
+			"transform-nullish-coalescing-operator",
+			"transform-object-rest-spread",
+			"transform-optional-chaining",
+			"transform-logical-assignment-operators"
 		]
 	}
 }
