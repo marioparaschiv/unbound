@@ -5,7 +5,7 @@ import { getStore } from '@api/storage';
 import { AppState } from 'react-native';
 
 
-const Patcher = createPatcher('unbound::badges');
+const Patcher = createPatcher('unbound::debug-bridge');
 const Logger = createLogger('Core', 'Debug Bridge');
 const Settings = getStore('unbound');
 

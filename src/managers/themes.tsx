@@ -237,13 +237,11 @@ class Themes extends Addons<Theme> {
 
 	patchThemeStore() {
 		const store = findStore('Theme');
-		if (!store) {
-			return this.logger.error('Failed to find ThemeStore. Themes will not function as expected.');
-		}
+		if (!store) return this.logger.error('Failed to find ThemeStore. Themes will not function as expected.');
 
 		// Traverse prototype to find theme getter.
 		const proto = findInTree(store, m => m?.hasOwnProperty('theme'), { walkable: ['__proto__'] });
-		if (!proto) return this.logger.error(`Failed to patch theme store. Could not find resolveSemanticColor.`);
+		if (!proto) return this.logger.error(`Failed to patch theme store. Could not find theme getter in store prototype.`);
 
 		// Back up original theme getter
 		const descriptor = Object.getOwnPropertyDescriptor(proto, 'theme');
