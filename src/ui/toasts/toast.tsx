@@ -1,17 +1,18 @@
 import type { GestureEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
+import { BackdropFilters, Discord } from '@api/metro/components';
 import type { InternalToastOptions } from '@typings/api/toasts';
-import { BackdropFilters, Design } from '@api/metro/components';
 import { View, Image, Text, Pressable } from 'react-native';
 import { Reanimated, Gestures } from '@api/metro/common';
 import { unitToHex, withoutOpacity } from '@utilities';
-import { createElement, useState } from 'react';
 import { useSettingsStore } from '@api/storage';
+import { createElement, useState } from 'react';
 import { TintedIcon } from '@ui/misc/forms';
-import { Icons } from '@api/assets';
 import Toasts from '@stores/toasts';
+import { Icons } from '@api/assets';
 
 import useToastState from './useToastState';
 import useStyles from './toast.style';
+
 
 const { withSpring, default: Animated } = Reanimated;
 const { PanGestureHandler } = Gestures;
@@ -40,13 +41,7 @@ function Toast(options: InternalToastOptions) {
 					if (!settings.get('toasts.animations', true)) {
 						height.value = nativeEvent.layout.height;
 					} else {
-						height.value = withSpring(nativeEvent.layout.height, {
-							// overshootClamping: true,
-							// restDisplacementThreshold: 0.01,
-							// restSpeedThreshold: 2,
-							damping: 11,
-							// stiffness: 150
-						});
+						height.value = withSpring(nativeEvent.layout.height, { damping: 11 });
 					}
 				}}
 			>
@@ -68,16 +63,16 @@ function Toast(options: InternalToastOptions) {
 						)}
 					</View>}
 					<View style={styles.contentContainer}>
-						{options.title && <Text style={styles.title}>
-							{typeof options.title === 'function' ? createElement(options.title) : options.title}
+						{options.title && typeof options.title === 'function' ? createElement(options.title) : <Text style={styles.title}>
+							{options.title as string}
 						</Text>}
-						{options.content && <Text
+						{options.content && typeof options.content === 'function' ? createElement(options.content) : <Text
 							style={styles.content}
 							onTextLayout={({ nativeEvent: { lines: { length } } }) => {
 								setLinesLength(length > 2 ? length + 1 : length);
 							}}
 						>
-							{typeof options.content === 'function' ? createElement(options.content) : options.content}
+							{options.content as string}
 						</Text>}
 					</View>
 					<Pressable
@@ -103,7 +98,7 @@ function Toast(options: InternalToastOptions) {
 				</View>
 				{Array.isArray(options.buttons) && options.buttons.length !== 0 && (
 					<View style={[styles.buttons, { marginTop: 5 }]}>
-						{options.buttons.map((button, index) => <Design.Button
+						{options.buttons.map((button, index) => <Discord.Button
 							key={`${options.id}-button-${index}`}
 							style={styles.button}
 							variant={button.variant || 'primary'}

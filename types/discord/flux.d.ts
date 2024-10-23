@@ -1,4 +1,4 @@
-import type { DispatchBand, FluxDispatcher as Dispatcher } from '@typings/discord/flux-dispatcher';
+import type { DispatchBand, DispatcherModule as Dispatcher } from '@typings/discord/flux-dispatcher';
 import type { ComponentClass, ComponentType } from 'react';
 
 type DispatchToken = string;
@@ -8,7 +8,7 @@ export interface Action {
 	type: ActionType;
 }
 
-export type ActionHandler<A extends Action = any> = (action: A) => boolean | void;
+export type ActionHandler<A extends Action = any> = (action: A) => any;
 
 export type ActionHandlerRecord = {
 	[A in ActionType]: ActionHandler<{ type: A;[key: string]: any; }>;

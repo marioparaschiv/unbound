@@ -4,6 +4,7 @@ import Patcher from '@api/patcher';
 import BuiltIns from '@built-ins';
 import * as API from '@api';
 
+
 const Logger = createLogger('Core');
 
 export async function initialize() {
@@ -16,16 +17,14 @@ export async function initialize() {
 	window.unbound ??= API;
 
 	Managers.Plugins.initialize();
-	Managers.Sources.initialize();
+	Managers.Themes.initialize();
 }
 
 export async function shutdown() {
 	Patcher.unpatchAll();
 
-	for (const manager of Object.values(Managers)) {
-		if (!manager.initialized) continue;
-		await manager.shutdown();
-	}
+	Managers.Plugins.shutdown();
+	Managers.Themes.shutdown();
 
 	BuiltIns.shutdown();
 }

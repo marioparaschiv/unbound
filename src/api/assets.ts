@@ -3,6 +3,7 @@ import { initializeModule } from '@api/metro';
 import { Assets } from '@api/metro/common';
 import Cache from '@cache';
 
+
 export type * from '@typings/api/assets';
 
 export const assets = new Map<number, Asset>();

@@ -2,7 +2,7 @@ import { FlatList, ScrollView, View, Image } from 'react-native';
 import { memo, PureComponent, useMemo, useState } from 'react';
 import type { Asset as AssetType } from '@typings/api/assets';
 import { GeneralSearch } from '@ui/misc/search';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { Media } from '@api/metro/components';
 import { Section } from '@ui/misc/forms';
 import { findByProps } from '@api/metro';
@@ -14,7 +14,7 @@ class Asset extends PureComponent<{ item: AssetType; id: number; index: number; 
 	render() {
 		const { item, index, total, id } = this.props;
 
-		return <Design.TableRow
+		return <Discord.TableRow
 			label={item.name}
 			subLabel={`${item.type.toUpperCase()} - ${item.width}x${item.height} - ${id}`}
 			trailing={<Image
@@ -79,7 +79,7 @@ const Assets = memo(() => {
 				data={data}
 				scrollEnabled={false}
 				initialNumToRender={15}
-				ItemSeparatorComponent={Design.TableRowDivider}
+				ItemSeparatorComponent={Discord.TableRowDivider}
 				removeClippedSubviews
 				renderItem={({ item: [id, asset], index }) => (
 					<Asset

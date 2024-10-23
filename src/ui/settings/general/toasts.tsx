@@ -1,14 +1,14 @@
 import { Section, useFormStyles } from '@ui/misc/forms';
 import { ScrollView, Text, View } from 'react-native';
 import { useSettingsStore } from '@api/storage';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { showToast } from '@api/toasts';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
 import { noop } from '@utilities';
 import { useState } from 'react';
 
-const { TableRow, TableSwitchRow, TableRowIcon } = Design;
+const { TableRow, TableSwitchRow, TableRowIcon } = Discord;
 
 function Toasts() {
 	const [alternate, setAlternate] = useState(true);
@@ -113,7 +113,7 @@ function Toasts() {
 				)}
 			/>
 			<View style={endStyle}>
-				<Design.Slider
+				<Discord.Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={blur}
 					onValueChange={v => settings.set('toasts.blur', Math.round(v * 100) / 100)}
@@ -133,7 +133,7 @@ function Toasts() {
 				)}
 			/>
 			<View style={endStyle}>
-				<Design.Slider
+				<Discord.Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={opacity}
 					onValueChange={v => settings.set('toasts.opacity', Math.round(v * 100) / 100)}
@@ -155,7 +155,7 @@ function Toasts() {
 				)}
 			/>
 			<View style={endStyle}>
-				<Design.Slider
+				<Discord.Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={maxOnScreen}
 					onValueChange={v => settings.set('toasts.maxOnScreen', Math.round(v))}
@@ -176,7 +176,7 @@ function Toasts() {
 				)}
 			/>
 			<View style={endStyle}>
-				<Design.Slider
+				<Discord.Slider
 					style={{ marginHorizontal: 15, marginVertical: 5 }}
 					value={duration}
 					onValueChange={v => settings.set('toasts.duration', Math.round(v * 10) / 10)}

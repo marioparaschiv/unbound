@@ -1,9 +1,10 @@
 import Storage, { getStore, type SettingsPayload } from '@api/storage';
 import type { BuiltInData } from '@typings/built-ins';
-import { createLogger } from '@structures/logger';
 import { Guilds, Users } from '@api/metro/stores';
+import { createLogger } from '@structures/logger';
 import { createPatcher } from '@api/patcher';
 import { findStore } from '@api/metro';
+
 
 const Patcher = createPatcher('unbound::experiments');
 const Logger = createLogger('Core', 'Experiments');
@@ -27,7 +28,7 @@ export function stop() {
 
 function patchDeveloperStore() {
 	const Store = findStore('DeveloperExperiment');
-	if (!Store) return Logger.error('Failed to find DeveloperExperimentStore');
+	if (!Store) return Logger.error('Failed to find DeveloperExperimentStore.');
 
 	Patcher.instead(Store, 'initialize', (self, args, orig) => {
 		self.waitFor(Users, Guilds);

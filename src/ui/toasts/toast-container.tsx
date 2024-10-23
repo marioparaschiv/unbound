@@ -1,12 +1,13 @@
 import type { InternalToastOptions } from '@typings/api/toasts';
 import { useSettingsStore } from '@api/storage';
-import { SafeAreaView } from 'react-native';
 import { Screens } from '@api/metro/common';
+import { SafeAreaView } from 'react-native';
 import Toasts from '@stores/toasts';
 import { useMemo } from 'react';
 
 import useStyles from './toast-container.style';
 import Toast from './toast';
+
 
 function ToastContainer() {
 	const settings = useSettingsStore('unbound', ({ key }) => key === 'toasts.maxOnScreen');

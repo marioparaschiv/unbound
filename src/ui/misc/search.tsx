@@ -1,9 +1,10 @@
 import { View, type TextInputProps } from 'react-native';
 import type { Dispatch, SetStateAction } from 'react';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
 import { getIDByName } from '@api/assets';
 import { Strings } from '@api/i18n';
+
 
 interface SearchProps extends TextInputProps {
 	onClear: Fn;
@@ -19,7 +20,7 @@ interface GeneralSearchProps {
 }
 
 function Search(props: SearchProps) {
-	return <Design.TextInput size='md' {...props} />;
+	return <Discord.TextInput size='md' {...props} />;
 }
 
 export function GeneralSearch({ type, search, setSearch }: GeneralSearchProps) {

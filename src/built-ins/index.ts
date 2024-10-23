@@ -1,8 +1,8 @@
 import type { BuiltIn } from '@typings/built-ins';
 import { createLogger } from '@structures/logger';
+import * as instances from './registry';
 import Storage from '@api/storage';
 
-import * as instances from './registry';
 
 export const started = new Set<string>();
 

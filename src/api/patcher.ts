@@ -1,6 +1,7 @@
 import type { AfterCallback, BeforeCallback, InsteadCallback, PatchOverwrite, Patch } from '@typings/api/patcher';
 import { createLogger } from '@structures/logger';
 
+
 export type * from '@typings/api/patcher';
 
 const Logger = createLogger('API', 'Patcher');

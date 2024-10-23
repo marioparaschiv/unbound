@@ -1,6 +1,8 @@
-import { StyleSheet, Theme } from '@api/metro/common';
+import { Discord } from '@api/metro/components';
+import { Theme } from '@api/metro/common';
 
-export default StyleSheet.createStyles({
+
+export default Discord.createStyles({
 	container: {
 		flex: 1,
 		flexGrow: 1,

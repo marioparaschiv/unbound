@@ -1,6 +1,8 @@
-import { Constants, StyleSheet, Theme } from '@api/metro/common';
+import { Constants, Theme } from '@api/metro/common';
+import { Discord } from '@api/metro/components';
 
-export default StyleSheet.createStyles({
+
+export default Discord.createStyles({
 	toastShadow: Theme.shadows.SHADOW_MEDIUM,
 	container: {
 		backgroundColor: Theme.colors.TOAST_BG,

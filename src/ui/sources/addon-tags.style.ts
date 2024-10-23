@@ -1,6 +1,7 @@
-import { Constants, StyleSheet, Theme } from '@api/metro/common';
+import { Constants, Theme } from '@api/metro/common';
+import { Discord } from '@api/metro/components';
 
-export default StyleSheet.createStyles({
+export default Discord.createStyles({
 	container: {
 		marginLeft: 8,
 		marginTop: 4,

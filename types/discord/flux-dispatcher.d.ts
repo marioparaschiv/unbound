@@ -123,7 +123,7 @@ export interface SentryUtils {
 	addBreadcrumb: (breadcrumb: Breadcrumb) => void;
 }
 
-export interface FluxDispatcher {
+export interface DispatcherModule {
 	_actionHandlers: ActionHandlersGraph;
 	_currentDispatchActionType: string | null;
 	_defaultBand: DispatchBand;

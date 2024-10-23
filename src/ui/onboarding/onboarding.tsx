@@ -2,7 +2,7 @@ import type { SharedValue } from 'react-native-reanimated';
 import { Constants, Reanimated } from '@api/metro/common';
 import { SafeAreaView, Text } from 'react-native';
 import { useSettingsStore } from '@api/storage';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { getIDByName } from '@api/assets';
 import { animate } from '@utilities';
 import { Strings } from '@api/i18n';
@@ -10,6 +10,7 @@ import { Strings } from '@api/i18n';
 import Progress from './progress';
 import useStyles from './styles';
 import info from './info';
+
 
 type OnboardingProps = {
 	contentId: string;
@@ -53,12 +54,12 @@ export default function Onboarding({ contentId, setContent, opacity, onComplete 
 		});
 	}
 
-	return !completed && !hidden && <Design.Backdrop blur={info[step + 1] ? 'strong' : 'subtle'} style={{ opacity }}>
+	return !completed && !hidden && <Discord.Backdrop blur={info[step + 1] ? 'strong' : 'subtle'} style={{ opacity }}>
 		<View style={{ opacity, height: '100%' }}>
 			<SafeAreaView style={styles.container}>
 				<View style={styles.innerContainer}>
 					<Progress step={step} />
-					{info[step + 1] && <Design.Button
+					{info[step + 1] && <Discord.Button
 						key={'skip'}
 						style={{ width: '80%', marginTop: 20 }}
 						variant={'tertiary'}
@@ -90,7 +91,7 @@ export default function Onboarding({ contentId, setContent, opacity, onComplete 
 						</Text>
 					)}
 					{info[step].buttons.map(({ variant = 'primary', iconPosition = 'start', icon, text, onPress = onContinue }, i, array) => (
-						<Design.Button
+						<Discord.Button
 							key={'continue'}
 							style={{ width: '100%', marginBottom: i !== array.length - 1 ? 16 : 0 }}
 							variant={variant}
@@ -104,5 +105,5 @@ export default function Onboarding({ contentId, setContent, opacity, onComplete 
 				</View>
 			</SafeAreaView>
 		</View>
-	</Design.Backdrop>;
+	</Discord.Backdrop>;
 }

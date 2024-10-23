@@ -3,13 +3,14 @@ import { Constants, Theme } from '@api/metro/common';
 import { Component, type ReactElement } from 'react';
 import { TintedIcon, Switch } from '@ui/misc/forms';
 import { Icons, getIDByName } from '@api/assets';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { Text, View } from 'react-native';
 import Overflow from '@ui/misc/overflow';
 import * as managers from '@managers';
 import { Strings } from '@api/i18n';
 
 import useStyles from './addon-card.style';
+
 
 interface AddonCardProps {
 	type: Manager;
@@ -48,11 +49,11 @@ class InternalAddonCard extends Component<InternalAddonCardProps> {
 		const error = this.manager.errors.get(addon.id ?? addon.data.path);
 
 		return (
-			<Design.Card
+			<Discord.Card
 				key={addon.data.id}
-				border={'faint'}
-				shadow={'low'}
-				variant={'primary'}
+				border='faint'
+				shadow='low'
+				variant='primary'
 				onPress={onPress}
 				style={{
 					marginTop: 12,
@@ -110,13 +111,13 @@ class InternalAddonCard extends Component<InternalAddonCardProps> {
 						/>
 					</View>
 				)}
-			</Design.Card>
+			</Discord.Card>
 		);
 	}
 
 	renderOverflow() {
 		const { addon } = this.props;
-		const items = this.manager.getContextItems(addon);
+		const items = this.manager.getContextItems?.(addon) ?? [];
 
 		if (!items || items.length < 1) return null;
 

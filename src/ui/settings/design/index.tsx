@@ -1,4 +1,4 @@
-import { Design as DiscordDesign } from '@api/metro/components';
+import { Discord as DiscordDesign } from '@api/metro/components';
 import { Dimensions, SafeAreaView, View } from 'react-native';
 import InstallModal from '@ui/addons/install-modal';
 import HeaderRight from '@ui/addons/addon-header';
@@ -6,9 +6,9 @@ import { useSettingsStore } from '@api/storage';
 import { useLayoutEffect, useRef } from 'react';
 import { Strings } from '@api/i18n';
 
+// import Icons from './icons';
+// import Fonts from './fonts';
 import Themes from './themes';
-import Icons from './icons';
-import Fonts from './fonts';
 
 const items = [
 	{
@@ -25,7 +25,8 @@ const items = [
 		},
 
 		id: 'Icons',
-		...Icons
+		page: () => null
+		// ...Icons
 	},
 	{
 		get label() {
@@ -33,7 +34,8 @@ const items = [
 		},
 
 		id: 'Fonts',
-		...Fonts
+		page: () => null
+		// ...Fonts
 	}
 ] as const;
 

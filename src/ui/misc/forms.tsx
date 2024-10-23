@@ -1,10 +1,11 @@
 import type { IconProps, SectionProps, SvgIconProps } from '@typings/ui/forms';
 import { Text, View, ScrollView, Image, type TextStyle } from 'react-native';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { Icons } from '@api/assets';
 import { find } from '@api/metro';
 
 import useStyles from './forms.style';
+
 
 export const useFormStyles = useStyles;
 
@@ -49,9 +50,9 @@ export const Section = ({ children, style, margin = true, ...props }: SectionPro
 
 	return <ScrollView scrollEnabled={false}>
 		<View style={[style, styles.sectionWrapper, { ...(margin ? { marginTop: 16 } : {}) }]}>
-			<Design.TableRowGroup {...props}>
+			<Discord.TableRowGroup {...props}>
 				{children}
-			</Design.TableRowGroup>
+			</Discord.TableRowGroup>
 		</View>
 	</ScrollView>;
 };

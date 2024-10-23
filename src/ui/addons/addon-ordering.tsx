@@ -5,6 +5,7 @@ import { TouchableOpacity } from 'react-native';
 import { Checkbox } from '@ui/misc/forms';
 import { Strings } from '@api/i18n';
 
+
 export { TrailingIcon, resolveType };
 
 const radioItems = [

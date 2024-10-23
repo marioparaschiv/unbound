@@ -182,7 +182,7 @@ export interface IntlMessageObject {
 export type Message = string & IntlMessageObject;
 export type Messages = Record<string, Message>;
 
-export interface i18n extends EventEmitter {
+export interface i18nModule extends EventEmitter {
 	Messages: Messages;
 	loadPromise: Promise<void>;
 	_chosenLocale: string | undefined;

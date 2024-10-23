@@ -1,8 +1,8 @@
 import { useIcon, type Bundle } from '@managers/sources';
 import { Theme, Constants } from '@api/metro/common';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
-import { SETTINGS_KEYS } from '@constants';
+import { SettingsKeys } from '@constants';
 import { View, Text } from 'react-native';
 import * as Managers from '@managers';
 import { Icons } from '@api/assets';
@@ -15,13 +15,13 @@ export function AddonCard({ addon, navigation }: { addon: Bundle[number], naviga
 	const icon = useIcon(_icon);
 	const styles = useStyles();
 
-	return <Design.Card
+	return <Discord.Card
 		key={id}
 		border='faint'
 		shadow='low'
 		variant='primary'
 		style={styles.card}
-		onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
+		onPress={() => navigation.push(SettingsKeys.Custom, {
 			title: addon.manifest.name,
 			render: () => {
 				const AddonPage = lazy(() => import('@ui/sources/addon-page').then(({ AddonPage }) => ({ default: AddonPage })));
@@ -65,5 +65,5 @@ export function AddonCard({ addon, navigation }: { addon: Bundle[number], naviga
 				size={12}
 			/>
 		</View>
-	</Design.Card>;
+	</Discord.Card>;
 }

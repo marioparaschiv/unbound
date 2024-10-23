@@ -1,6 +1,6 @@
-import { StyleSheet } from '@api/metro/common';
+import { Discord } from '@api/metro/components';
 
-export default StyleSheet.createStyles({
+export default Discord.createStyles({
 	container: {
 		marginHorizontal: 12,
 		marginTop: 12
@@ -8,7 +8,10 @@ export default StyleSheet.createStyles({
 
 	scrollView: {
 		height: '100%',
-		marginTop: 16
+		marginTop: 16,
+		test: {
+			discord: 'test'
+		}
 	},
 
 	contentContainer: {

@@ -1,9 +1,9 @@
-import { DISCORD_INVITE, SETTINGS_KEYS, SOCIAL_LINKS } from '@constants';
+import { DISCORD_INVITE, SettingsKeys, SocialLinks } from '@constants';
 import { KeyboardAvoidingView, ScrollView, Text } from 'react-native';
-import { Theme, StyleSheet } from '@api/metro/common';
+import { Theme } from '@api/metro/common';
 import { BundleInfo, reload } from '@api/native';
 import { useSettingsStore } from '@api/storage';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { showDialog } from '@api/dialogs';
 import { Section } from '@ui/misc/forms';
 import { Linking } from '@api/metro/api';
@@ -15,9 +15,9 @@ import { useMemo } from 'react';
 import Developer from '../developer';
 import Toasts from './toasts';
 
-const { TableRow, TableSwitchRow, TableRowIcon } = Design;
+const { TableRow, TableSwitchRow, TableRowIcon } = Discord;
 
-const useStyles = StyleSheet.createStyles({
+const useStyles = Discord.createStyles({
 	trailingText: {
 		color: Theme.colors.TEXT_MUTED
 	},
@@ -28,7 +28,7 @@ const useStyles = StyleSheet.createStyles({
 
 function General() {
 	const properties = useMemo(() => (HermesInternal as any).getRuntimeProperties(), []);
-	const navigation = Design.useNavigation();
+	const navigation = Discord.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const styles = useStyles();
 
@@ -87,7 +87,7 @@ function General() {
 				<TableRow
 					label={Strings.UNBOUND_TOAST_SETTINGS}
 					icon={<TableRowIcon source={Icons.Toasts} />}
-					onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
+					onPress={() => navigation.push(SettingsKeys.Custom, {
 						title: Strings.UNBOUND_TOAST_SETTINGS,
 						render: Toasts
 					})}
@@ -96,7 +96,7 @@ function General() {
 				<TableRow
 					label={Strings.UNBOUND_DEVELOPER_SETTINGS}
 					icon={<TableRowIcon source={Icons.Development} />}
-					onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
+					onPress={() => navigation.push(SettingsKeys.Custom, {
 						title: Strings.UNBOUND_DEVELOPER_SETTINGS,
 						render: Developer
 					})}
@@ -122,7 +122,7 @@ function General() {
 				<TableRow
 					label={Strings.UNBOUND_GITHUB}
 					icon={<TableRowIcon source={Icons.GitHub} />}
-					onPress={() => Linking.openURL(SOCIAL_LINKS.GitHub)}
+					onPress={() => Linking.openURL(SocialLinks.GitHub)}
 					arrow
 				/>
 			</Section>

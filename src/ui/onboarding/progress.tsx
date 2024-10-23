@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import useStyles from './styles';
 import info from './info';
 
+
 export default function Progress({ step }: { step: number; }) {
 	const styles = useStyles();
 

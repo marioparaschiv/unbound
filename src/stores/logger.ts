@@ -1,5 +1,6 @@
 import createStore from '@structures/store';
 
+
 const store = createStore({ logs: [] });
 
 export function addLog({ message, level }) {

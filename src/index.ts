@@ -4,4 +4,3 @@ async function init() {
 }
 
 init();
-

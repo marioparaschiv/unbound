@@ -1,18 +1,16 @@
-import { type Addon, type Manifest } from '@typings/managers';
+import type { Plugin } from '@typings/managers/plugins';
+import { ManagerKind } from '@constants';
+import Addons from '@managers/addons';
 import Storage from '@api/storage';
 
-import Manager, { ManagerKind } from './base';
-
-class Plugins extends Manager {
-	public extension: string = 'js';
+class Plugins extends Addons<Plugin> {
+	extension: string = 'js';
 
 	constructor() {
 		super(ManagerKind.PLUGINS);
-
-		this.icon = 'StaffBadgeIcon';
 	}
 
-	initialize() {
+	override initialize() {
 		for (const plugin of window.UNBOUND_PLUGINS ?? []) {
 			const { manifest, bundle } = plugin;
 
@@ -22,23 +20,7 @@ class Plugins extends Manager {
 		this.initialized = true;
 	}
 
-	override getContextItems(addon: Addon) {
-		// const navigation = Design.useNavigation();
-
-		return [
-			addon.instance?.settings ? {
-				label: 'SETTINGS',
-				icon: 'settings',
-				action: () => { }/* navigation.push(Keys.Custom, {
-					title: addon.data.name,
-					render: addon.instance.settings
-				}) */
-			} : null,
-			...this.getBaseContextItems(addon)
-		].filter(Boolean);
-	}
-
-	override handleBundle(bundle: string, manifest: Manifest) {
+	override handleBundle(bundle: string) {
 		if (Storage.get('unbound', 'recovery', false)) {
 			return {
 				start: () => { },

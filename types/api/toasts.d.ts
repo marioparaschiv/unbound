@@ -1,4 +1,4 @@
-import type { ButtonColors, ButtonLooks, ButtonSizes } from '@typings/discord/button';
+import type { ButtonColors, ButtonLooks, ButtonSizes } from '@typings/discord/components';
 import type { ImageSourcePropType } from 'react-native';
 import type { ComponentType } from 'react';
 

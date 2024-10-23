@@ -1,13 +1,13 @@
-import { showInstallAlert } from '@ui/addons/install-modal';
-import { Design } from '@api/metro/components';
-import PluginManager from '@managers/plugins';
-import { AddonList } from '@ui/addons';
+import { Discord } from '@api/metro/components';
+import { AddonList } from '@ui/new-addons';
+import { ManagerKind } from '@constants';
+import { useAddons } from '@ui/hooks';
 import { Strings } from '@api/i18n';
 import { View } from 'react-native';
 
 export default function Plugins({ headerRightMargin = false }: { headerRightMargin: boolean; }) {
-	const navigation = Design.useNavigation();
-	const addons = PluginManager.useEntities();
+	const navigation = Discord.useNavigation();
+	const addons = useAddons('Plugins');
 
 	const unsubscribe = navigation.addListener('focus', () => {
 		unsubscribe();
@@ -19,10 +19,10 @@ export default function Plugins({ headerRightMargin = false }: { headerRightMarg
 
 	return <View>
 		<AddonList
-			type='Plugins'
+			kind={ManagerKind.PLUGINS}
 			addons={addons}
-			onPressInstall={({ type, ref }) => showInstallAlert({ type, ref })}
-			headerRightMargin={headerRightMargin}
+		// onPressInstall={({ type, ref }) => showInstallAlert({ type, ref })}
+		// headerRightMargin={headerRightMargin}
 		/>
 	</View>;
 };

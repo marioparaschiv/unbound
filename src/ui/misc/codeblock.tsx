@@ -2,6 +2,7 @@ import { Platform, TextInput, Text } from 'react-native';
 
 import useStyles from './codeblock.style';
 
+
 interface CodeblockProps {
 	selectable?: boolean;
 	children: string;

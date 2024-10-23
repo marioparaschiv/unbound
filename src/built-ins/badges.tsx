@@ -1,13 +1,14 @@
 import { View, Image, TouchableOpacity } from 'react-native';
-import type { Badge } from '@typings/core/builtins/badges';
+import type { Badge } from '@typings/built-ins/badges';
 import type { BuiltInData } from '@typings/built-ins';
 import { createLogger } from '@structures/logger';
-import { SOCIAL_LINKS, TIMES } from '@constants';
+import { SocialLinks, Times } from '@constants';
 import { useEffect, useState } from 'react';
 import { Theme } from '@api/metro/stores';
 import { createPatcher } from '@patcher';
 import { showToast } from '@api/toasts';
 import { findByName } from '@api/metro';
+
 
 const Patcher = createPatcher('unbound::badges');
 const Logger = createLogger('Core', 'Badges');
@@ -61,11 +62,11 @@ export function stop() {
 
 async function fetchUserBadges(id: string): Promise<string[]> {
 	// Refresh badge cache hourly
-	if (cache.user[id]?.date && (Date.now() - cache.user[id].date) < TIMES.HOUR) {
+	if (cache.user[id]?.date && (Date.now() - cache.user[id].date) < Times.HOUR) {
 		return cache.user[id].badges;
 	}
 
-	const res = await fetch(SOCIAL_LINKS.Badges + id + '.json', {
+	const res = await fetch(SocialLinks.Badges + id + '.json', {
 		headers: {
 			'Cache-Control': 'no-cache'
 		}
@@ -148,11 +149,11 @@ const Badge = ({ type, size, margin }: { type: string; size: number; margin: num
 
 async function fetchBadge(type: string): Promise<Badge> {
 	// Refresh badge cache hourly
-	if (cache.badges[type]?.date && (Date.now() - cache.badges[type].date) < TIMES.HOUR) {
+	if (cache.badges[type]?.date && (Date.now() - cache.badges[type].date) < Times.HOUR) {
 		return cache.badges[type].data;
 	}
 
-	const res = await fetch(SOCIAL_LINKS.Badges + `data/${type}.json`, {
+	const res = await fetch(SocialLinks.Badges + `data/${type}.json`, {
 		headers: {
 			'Cache-Control': 'no-cache'
 		}

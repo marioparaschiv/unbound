@@ -16,7 +16,7 @@ interface AlertProps {
 	 * Can partially be a React Component however some things don't render.
 	 * @optional
 	 */
-	content?: ReactElement;
+	content?: string | ReactElement;
 	/**
 	 * Extra content which renders in the `actions` prop above the button.
 	 * If there is no `content` prop passed then this is rendered with no margin.

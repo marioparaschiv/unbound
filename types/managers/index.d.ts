@@ -1,9 +1,3 @@
-import * as Managers from '@managers';
-
-export type * from './plugins';
-export type * from './themes';
-export type * from './icons';
-
 export type Author = {
 	name: string;
 	id: `${number}`;
@@ -32,4 +26,3 @@ export interface Addon {
 }
 
 export type Resolveable = string | Addon;
-export type Manager = keyof typeof Managers;

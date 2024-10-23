@@ -1,20 +1,23 @@
 import { getStore, useSettingsStore } from '@api/storage';
 import type { BuiltInData } from '@typings/built-ins';
 import { Onboarding, Content } from '@ui/onboarding';
+import { createLogger } from '@structures/logger';
 import { Reanimated } from '@api/metro/common';
 import { useEffect, useState } from 'react';
 import { createPatcher } from '@patcher';
 import { findByName } from '@api/metro';
 
-const Patcher = createPatcher('unbound::onboarding');
-const Settings = getStore('unbound');
-
-const { useSharedValue, withTiming } = Reanimated;
 
 export const data: BuiltInData = {
 	name: 'Onboarding',
 	shouldInitialize: () => !Settings.get('onboarding.completed', false)
 };
+
+const Patcher = createPatcher('unbound::onboarding');
+const Logger = createLogger('Core', 'Onboarding');
+const Settings = getStore('unbound');
+
+const { useSharedValue, withTiming } = Reanimated;
 
 export function start() {
 	if (!Settings.get('onboarding.completed', false)) {
@@ -22,7 +25,16 @@ export function start() {
 		Settings.set('onboarding.install', false);
 	}
 
+	patchLaunchPadContainer();
+}
+
+export function stop() {
+	Patcher.unpatchAll();
+}
+
+function patchLaunchPadContainer() {
 	const LaunchPadContainer = findByName('LaunchPadContainer', { interop: false });
+	if (!LaunchPadContainer) return Logger.error('Failed to find LaunchPadContainer.');
 
 	Patcher.after(LaunchPadContainer, 'default', (_, __, res) => {
 		const settings = useSettingsStore('unbound', ({ key }) => key.startsWith('onboarding'));
@@ -57,8 +69,4 @@ export function start() {
 			/>
 		</>;
 	});
-}
-
-export function stop() {
-	Patcher.unpatchAll();
 }

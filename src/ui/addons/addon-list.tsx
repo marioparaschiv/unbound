@@ -1,21 +1,22 @@
 import { FlatList, RefreshControl, ScrollView, View } from 'react-native';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import getItems, { resolveType } from '@ui/addons/addon-ordering';
+import { HelpMessage, Discord } from '@api/metro/components';
 import { showInstallAlert } from '@ui/addons/install-modal';
-import { HelpMessage, Design } from '@api/metro/components';
 import type { Addon, Manager } from '@typings/managers';
 import { Authors } from '@ui/addons/addon-authors';
 import HeaderRight from '@ui/addons/addon-header';
-import { GeneralSearch } from '@ui/misc/search';
 import { useSettingsStore } from '@api/storage';
-import { ManagerKind } from '@managers/base';
+import { GeneralSearch } from '@ui/misc/search';
 import { animate, noop } from '@utilities';
 import Empty from '@ui/misc/empty-state';
+import { ManagerKind } from '@constants';
 import * as managers from '@managers';
 import { Strings } from '@api/i18n';
 
 import InstallModal from './install-modal';
 import AddonCard from './addon-card';
+
 
 interface AddonListProps {
 	type: Manager;
@@ -30,7 +31,7 @@ interface AddonListProps {
 export default function AddonList({ addons, type, showHeaderRight = true, showToggles = true, showManagerIcon = true, onPressInstall, headerRightMargin }: AddonListProps) {
 	const [search, setSearch] = useState('');
 	const ref = useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
-	const navigation = Design.useNavigation();
+	const navigation = Discord.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const manager = useMemo(() => managers[type], [type]);
 

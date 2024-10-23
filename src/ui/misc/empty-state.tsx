@@ -3,6 +3,7 @@ import { Icons } from '@api/assets';
 
 import useStyles from './empty-state.style';
 
+
 export const Empty = ({ children }) => {
 	const styles = useStyles();
 

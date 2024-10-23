@@ -1,6 +1,8 @@
-import { Constants, StyleSheet, Theme } from '@api/metro/common';
+import { Constants, Theme } from '@api/metro/common';
+import { Discord } from '@api/metro/components';
 
-export default StyleSheet.createStyles({
+
+export default Discord.createStyles({
 	endStyle: {
 		backgroundColor: Theme.colors.CARD_PRIMARY_BG ?? Theme.colors.BACKGROUND_PRIMARY,
 		borderBottomLeftRadius: 16,

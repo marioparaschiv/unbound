@@ -1,3 +1,4 @@
+export { default as createTimeoutSignal } from './createTimeoutSignal';
 export { default as findInReactTree } from './findInReactTree';
 export { default as withoutOpacity } from './withoutOpacity';
 export { default as forceRender } from './forceRender';

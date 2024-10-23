@@ -6,6 +6,7 @@
 		"@rollup/plugin-json": "^6.1.0",
 		"@rollup/plugin-node-resolve": "^15.2.3",
 		"@rollup/plugin-replace": "^5.0.7",
+		"@shopify/flash-list": "^1.7.1",
 		"@swc/core": "^1.7.18",
 		"@types/bun": "^1.1.9",
 		"@types/node": "^22.5.0",

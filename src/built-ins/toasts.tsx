@@ -6,6 +6,7 @@ import { createPatcher } from '@api/patcher';
 import { ToastContainer } from '@ui/toasts';
 import { getStore } from '@api/storage';
 
+
 const Patcher = createPatcher('unbound::toasts');
 const Logger = createLogger('Core', 'Toasts');
 const Settings = getStore('unbound');
@@ -13,7 +14,6 @@ const Settings = getStore('unbound');
 export const data: BuiltInData = {
 	name: 'Toasts'
 };
-
 
 export function start() {
 	patchToastContainer();

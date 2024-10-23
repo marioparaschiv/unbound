@@ -1,6 +1,8 @@
-import type { ImageStyle, StyleProp, TextStyle, ViewStyle } from 'react-native';
+import type { ThemeColors } from '@typings/discord/constants';
 
-export type ThemingColors = Record<PropertyKey, Record<PropertyKey, any>>;
+export type SemanticColors = {
+	[P in keyof ThemeColors]: Record<PropertyKey, any>;
+};
 
 export type ShadowResolver = { resolve: (theme: string) => any; };
 
@@ -15,14 +17,14 @@ export type Shadows = Record<PropertyKey, {
 export interface InternalResolvers {
 	isSemanticColor: (...args: any[]) => boolean;
 	getSemanticColorName: Fn;
-	resolveSemanticColor: (theme: string, ref: Theming['colors'][keyof Theming['colors']]) => string;
+	resolveSemanticColor: (theme: string, ref: ThemingModule['colors'][keyof ThemingModule['colors']]) => string;
 	adjustColorSaturation: Fn;
 	adjustColorContrast: Fn;
 }
 
-export interface Theming {
+export interface ThemingModule {
 	themes: Record<PropertyKey, string>;
-	colors: ThemingColors;
+	colors: SemanticColors;
 	unsafe_rawColors: Record<PropertyKey, string>;
 	shadows: Shadows;
 	internal: InternalResolvers;
@@ -51,12 +53,6 @@ export interface Theming {
 		PX_80: number;
 		PX_96: number;
 	};
-
-	[key: PropertyKey]: any;
-}
-
-export interface StyleSheetModule {
-	createStyles: <T extends Record<string, StyleProp<ViewStyle | TextStyle | ImageStyle>>>(style: T) => Fn<T>;
 
 	[key: PropertyKey]: any;
 }

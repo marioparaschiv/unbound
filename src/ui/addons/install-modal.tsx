@@ -2,15 +2,16 @@ import { Theme, Clipboard } from '@api/metro/common';
 import { PureComponent, type useRef } from 'react';
 import type { Manager } from '@typings/managers';
 import { useSettingsStore } from '@api/storage';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { showDialog } from '@api/dialogs';
-import { SOCIAL_LINKS } from '@constants';
-import { capitalize } from '@utilities';
+import { SocialLinks } from '@constants';
 import { showToast } from '@api/toasts';
+import { capitalize } from '@utilities';
 import * as managers from '@managers';
+import { View } from 'react-native';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
-import { View } from 'react-native';
+
 
 interface InstallModalProps {
 	type: Manager;
@@ -42,7 +43,7 @@ export class InternalInstallInput extends PureComponent<InternalInstallModalProp
 
 		return <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
 			<View style={{ flex: 1, flexGrow: 1 }}>
-				<Design.TextInput
+				<Discord.TextInput
 					isRound
 					isClearable
 					size={'md'}
@@ -56,7 +57,7 @@ export class InternalInstallInput extends PureComponent<InternalInstallModalProp
 				/>
 			</View>
 
-			<Design.IconButton
+			<Discord.IconButton
 				icon={Icons['ClipboardListIcon']}
 				style={{ marginLeft: 8 }}
 				variant={'tertiary'}
@@ -64,7 +65,7 @@ export class InternalInstallInput extends PureComponent<InternalInstallModalProp
 				loading={this.state.loadingPaste}
 				onPress={() => {
 					if (settings.get('onboarding.install', false)) {
-						this.setState({ url: SOCIAL_LINKS.OnboardingPlugin });
+						this.setState({ url: SocialLinks.OnboardingPlugin });
 						return;
 					}
 
@@ -83,7 +84,7 @@ export class InternalInstallInput extends PureComponent<InternalInstallModalProp
 		const { settings } = this.props;
 
 		return <>
-			<Design.Button
+			<Discord.Button
 				text={Strings.UNBOUND_INSTALL}
 				style={{ marginTop: 18 }}
 				loading={this.state.loadingInstall}
@@ -102,11 +103,11 @@ export class InternalInstallInput extends PureComponent<InternalInstallModalProp
 					}
 				}}
 			/>
-			<Design.Button
+			<Discord.Button
 				text={Strings.CANCEL}
 				style={{ marginTop: 12 }}
 				onPress={() => {
-					Design.dismissAlerts();
+					Discord.dismissAlerts();
 
 					if (this.state.loadingInstall) {
 						this.controller.abort();

@@ -1,10 +1,11 @@
-import type { StyleSheetModule, Theming } from '@typings/discord/theming';
-import type { FluxDispatcher } from '@typings/discord/flux-dispatcher';
+import type { MarkdownParserModule } from '@typings/discord/markdown-parser';
+import type { DispatcherModule } from '@typings/discord/flux-dispatcher';
+import type { ThemingModule } from '@typings/discord/theming';
 import type { ClydeModule } from '@typings/discord/messages';
 import type { AssetsModule } from '@typings/discord/assets';
 import type { FluxModule } from '@typings/discord/flux';
+import type { i18nModule } from '@typings/discord/i18n';
 import type { APIModule } from '@typings/discord/api';
-import type { i18n } from '@typings/discord/i18n';
 
 export interface ConstantsModule {
 	[key: PropertyKey]: any;
@@ -18,14 +19,13 @@ export type ClipboardModule = typeof import('@react-native-clipboard/clipboard')
 export type SVGModule = typeof import('react-native-svg');
 export type ScreensModule = typeof import('react-native-screens');
 
-
 export {
-	FluxDispatcher as DispatcherModule,
-	i18n as i18nModule,
+	DispatcherModule,
+	i18nModule,
 	AssetsModule,
-	Theming as ThemingModule,
+	ThemingModule,
+	MarkdownParserModule,
 	FluxModule,
-	StyleSheetModule,
 	APIModule,
 	ClydeModule
 };

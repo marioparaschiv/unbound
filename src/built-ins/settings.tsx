@@ -1,21 +1,23 @@
 import type { RegisterSettingsEntriesPayload, SettingsEntry } from '@typings/api/settings';
-import { CLIENT_NAME, DISPATCH_TYPES, SETTINGS_KEYS } from '@constants';
+import { CLIENT_NAME, DispatchTypes, SettingsKeys } from '@constants';
 import type { CustomScreenProps } from '@typings/built-ins/settings';
 import type { BuiltInData } from '@typings/built-ins';
 import { findByName, findByProps } from '@api/metro';
 import { createLogger } from '@structures/logger';
-import { Design } from '@api/metro/components';
-import GeneralPage from '@ui/settings/general';
+import { Discord } from '@api/metro/components';
 import PluginsPage from '@ui/settings/plugins';
-import SourcesPage from '@ui/settings/sources';
-import { Dispatcher } from '@api/metro/common';
+import GeneralPage from '@ui/settings/general';
 import EventEmitter from '@structures/emitter';
-import { createPatcher } from '@api/patcher';
+import { Dispatcher } from '@api/metro/common';
 import DesignPage from '@ui/settings/design';
+import { createPatcher } from '@api/patcher';
 import { useEffect, useState } from 'react';
 import Unbound from '@ui/icons/unbound';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
+
+
+/* import SourcesPage from '@ui/settings/sources'; */
 
 const Events = new EventEmitter();
 
@@ -30,25 +32,25 @@ export const data: BuiltInData & {
 	name: 'Settings',
 	unpatches: [],
 	entries: {
-		[SETTINGS_KEYS.General]: {
+		[SettingsKeys.General]: {
 			type: 'route',
 			title: CLIENT_NAME,
-			key: SETTINGS_KEYS.General,
+			key: SettingsKeys.General,
 			parent: null,
 			icon: Icons['settings'],
-			IconComponent: () => <Design.TableRowIcon IconComponent={Unbound} />,
+			IconComponent: () => <Discord.TableRowIcon IconComponent={Unbound} />,
 			screen: {
 				route: 'unbound',
 				getComponent: () => GeneralPage
 			}
 		},
 
-		[SETTINGS_KEYS.Plugins]: {
+		[SettingsKeys.Plugins]: {
 			type: 'route',
 			get title() {
 				return Strings.UNBOUND_PLUGINS;
 			},
-			key: SETTINGS_KEYS.Plugins,
+			key: SettingsKeys.Plugins,
 			parent: null,
 			icon: Icons['debug'],
 			screen: {
@@ -57,12 +59,12 @@ export const data: BuiltInData & {
 			}
 		},
 
-		[SETTINGS_KEYS.Design]: {
+		[SettingsKeys.Design]: {
 			type: 'route',
 			get title() {
 				return Strings.UNBOUND_DESIGN;
 			},
-			key: SETTINGS_KEYS.Design,
+			key: SettingsKeys.Design,
 			parent: null,
 			icon: Icons['ic_theme_24px'],
 			screen: {
@@ -71,33 +73,33 @@ export const data: BuiltInData & {
 			}
 		},
 
-		[SETTINGS_KEYS.Sources]: {
+		/* [SettingsKeys.Sources]: {
 			type: 'route',
 			get title() {
 				return Strings.UNBOUND_SOURCES;
 			},
-			key: SETTINGS_KEYS.Sources,
+			key: SettingsKeys.Sources,
 			parent: null,
 			icon: Icons['grid'],
 			screen: {
 				route: 'unbound/sources',
 				getComponent: () => SourcesPage
 			}
-		},
+		}, */
 
-		[SETTINGS_KEYS.Custom]: {
+		[SettingsKeys.Custom]: {
 			type: 'route',
 			title: 'Page',
-			key: SETTINGS_KEYS.Custom,
+			key: SettingsKeys.Custom,
 			excludeFromDisplay: true,
 			parent: null,
 			icon: null,
 			screen: {
-				route: SETTINGS_KEYS.Custom,
+				route: SettingsKeys.Custom,
 				getComponent: () => ({ route }: { route: { params: CustomScreenProps; }; }) => {
 					const { render: Component, title, ...props } = route.params ?? {};
 
-					const navigation = Design.useNavigation();
+					const navigation = Discord.useNavigation();
 					const unsubscribe = navigation.addListener('focus', () => {
 						unsubscribe();
 						navigation.setOptions({ title });
@@ -114,12 +116,12 @@ export function start() {
 	patchSettingsConfig();
 	patchSettingsOverview();
 
-	Dispatcher.subscribe(DISPATCH_TYPES.REGISTER_SETTINGS_ENTRIES, onRegisterEntry);
+	Dispatcher.subscribe(DispatchTypes.REGISTER_SETTINGS_ENTRIES, onRegisterEntry);
 }
 
 export function stop() {
 	data.unpatches.map(unpatch => unpatch());
-	Dispatcher.unsubscribe(DISPATCH_TYPES.REGISTER_SETTINGS_ENTRIES, onRegisterEntry);
+	Dispatcher.unsubscribe(DispatchTypes.REGISTER_SETTINGS_ENTRIES, onRegisterEntry);
 	Patcher.unpatchAll();
 }
 

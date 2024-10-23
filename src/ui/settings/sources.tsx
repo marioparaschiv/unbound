@@ -2,17 +2,17 @@ import { lazy, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'rea
 import { FlatList, RefreshControl, ScrollView, View } from 'react-native';
 import InstallModal, { showInstallAlert } from '@ui/addons/install-modal';
 import getItems, { resolveType } from '@ui/addons/addon-ordering';
-import SourceManager, { type Bundle } from '@managers/sources';
-import { HelpMessage, Design } from '@api/metro/components';
+import { HelpMessage, Discord } from '@api/metro/components';
 import { AddonCard } from '@ui/sources/addon-card';
 import HeaderRight from '@ui/addons/addon-header';
 import { useSettingsStore } from '@api/storage';
 import { GeneralSearch } from '@ui/misc/search';
 import { Dispatcher } from '@api/metro/common';
+import SourceManager from '@managers/sources';
 import { Tags } from '@ui/sources/addon-tags';
 import { Addons } from '@ui/sources/addons';
 import { animate, noop } from '@utilities';
-import { SETTINGS_KEYS } from '@constants';
+import { SettingsKeys } from '@constants';
 import Empty from '@ui/misc/empty-state';
 import sources from '@managers/sources';
 import * as Managers from '@managers';
@@ -27,7 +27,7 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 	const [refreshing, setRefreshing] = useState(false);
 	const ref = useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
 	const settings = useSettingsStore('unbound');
-	const navigation = Design.useNavigation();
+	const navigation = Discord.useNavigation();
 	const addons = SourceManager.useEntities();
 
 	useLayoutEffect(() => {
@@ -57,7 +57,7 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 			const updates = [];
 
 			for (const source of addons) {
-				for (const addon of source.instance as Bundle) {
+				for (const addon of source.instance) {
 					const existingAddon = Managers[addon.type].entities.get(addon.manifest.id);
 					if (!existingAddon) return;
 
@@ -126,7 +126,7 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 		</View>}
 		{updates && updates.length > 0 && (
 			<View style={{ marginTop: 8 }}>
-				<Design.RowButton
+				<Discord.RowButton
 					icon={Icons['DownloadIcon']}
 					label={Strings['UNBOUND_SOURCE_ADDONS_UPDATES'].format({
 						number: updates.length,
@@ -134,7 +134,7 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 					})}
 					subLabel={Strings['UNBOUND_VIEW_UPDATES']}
 					variant={'primary'}
-					onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
+					onPress={() => navigation.push(SettingsKeys.Custom, {
 						title: Strings['UNBOUND_UPDATE_ADDONS'],
 						render: () => {
 							const FilteredAddons = lazy(() => import('@ui/sources/filtered-addons')
@@ -171,7 +171,7 @@ export default function Sources({ headerRightMargin = false }: { headerRightMarg
 						navigation={navigation}
 						showManagerIcon
 						bottom={item.data['tags'] && item.data['tags'].length > 0 && <Tags source={item.data['tags']} />}
-						onPress={() => navigation.push(SETTINGS_KEYS.Custom, {
+						onPress={() => navigation.push(SettingsKeys.Custom, {
 							title: item.data.name,
 							render: () => <Addons
 								source={item as any}

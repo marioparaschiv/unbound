@@ -2,6 +2,7 @@ import type { InternalToastOptions, ToastOptions } from '@typings/api/toasts';
 import createStore from '@structures/store';
 import { uuid } from '@utilities';
 
+
 const store = createStore<{
 	toasts: {
 		[key: PropertyKey]: InternalToastOptions;

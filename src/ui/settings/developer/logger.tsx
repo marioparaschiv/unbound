@@ -1,14 +1,14 @@
 import { FlatList, ScrollView, View, Image, Text, TouchableOpacity } from 'react-native';
-import { StyleSheet, Constants, Moment, Theme } from '@api/metro/common';
+import { Constants, Moment, Theme } from '@api/metro/common';
 import { TintedIcon, Section } from '@ui/misc/forms';
 import { GeneralSearch } from '@ui/misc/search';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { useMemo, useState } from 'react';
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
 import Logs from '@stores/logger';
 
-const { TableRow, TableRowIcon } = Design;
+const { TableRow, TableRowIcon } = Discord;
 
 const levelSelection = {
 	variant(level: number) {
@@ -22,13 +22,14 @@ const levelSelection = {
 
 export default function Logger() {
 	const [search, setSearch] = useState('');
-	const navigation = Design.useNavigation();
+	const navigation = Discord.useNavigation();
 	const store = Logs.useState();
 	const styles = useStyles();
 
 	const data = useMemo(() => store.logs
 		.filter(item => item.message?.toLowerCase()?.includes(search))
-		.sort((a, b) => a.time - b.time), [search]);
+		.sort((a, b) => a.time - b.time),
+		[search]);
 
 	const unsubscribe = navigation.addListener('focus', () => {
 		unsubscribe();
@@ -70,7 +71,7 @@ export default function Logger() {
 	</ScrollView>;
 }
 
-const useStyles = StyleSheet.createStyles({
+const useStyles = Discord.createStyles({
 	touchable: {
 		marginRight: 10
 	},

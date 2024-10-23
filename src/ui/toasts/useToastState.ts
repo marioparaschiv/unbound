@@ -1,10 +1,11 @@
-import { type WithTimingConfig } from 'react-native-reanimated';
 import type { InternalToastOptions } from '@typings/api/toasts';
+import { type WithTimingConfig } from 'react-native-reanimated';
 import { useSettingsStore } from '@api/storage';
 import { Reanimated } from '@api/metro/common';
 import { useEffect, useState } from 'react';
 import { Dimensions } from 'react-native';
 import Toasts from '@stores/toasts';
+
 
 const { useSharedValue, withTiming, Easing } = Reanimated;
 

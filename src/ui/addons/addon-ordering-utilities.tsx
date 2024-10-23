@@ -1,16 +1,17 @@
 import type { Manager } from '@typings/managers';
-import { StyleSheet } from '@api/metro/common';
+import { Discord } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
 import { getIDByName } from '@api/assets';
 import * as managers from '@managers';
 import { View } from 'react-native';
+
 
 export const resolveType = (entity: Manager | Fn<Manager>) => {
 	const resolved = typeof entity === 'function' ? entity() : entity;
 	return managers[resolved].type;
 };
 
-const useStyles = StyleSheet.createStyles({
+const useStyles = Discord.createStyles({
 	trailing: {
 		flex: 1,
 		flexDirection: 'row',

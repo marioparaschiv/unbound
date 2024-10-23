@@ -1,6 +1,7 @@
 import type { FileManagerEncoding, FileManagerType } from '@typings/api/fs';
 import { getNativeModule } from '@api/native';
 
+
 export type * from '@typings/api/fs';
 
 const FileManager: FileManagerType = getNativeModule('DCDFileManager', 'RTNFileManager');

@@ -1,8 +1,9 @@
 import { TouchableOpacity, type ImageStyle } from 'react-native';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
 import type { ComponentType } from 'react';
 import { Icons } from '@api/assets';
+
 
 interface OverflowItem {
 	label: string;
@@ -22,7 +23,7 @@ interface OverflowProps {
 export default function Overflow(props: OverflowProps) {
 	const { items, title, iconSource = Icons['MoreHorizontalIcon'], scale = 1, style = {} } = props;
 
-	return <Design.ContextMenu items={items} title={title}>
+	return <Discord.ContextMenu items={items} title={title}>
 		{(props, onPress, accessibilityState, accessibilityActions, onAccessibilityAction) => (
 			<TouchableOpacity
 				{...props}
@@ -42,5 +43,5 @@ export default function Overflow(props: OverflowProps) {
 				/>
 			</TouchableOpacity>
 		)}
-	</Design.ContextMenu>;
+	</Discord.ContextMenu>;
 };

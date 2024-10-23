@@ -1,11 +1,14 @@
 import type { BuiltInData } from '@typings/built-ins';
-import { createPatcher } from '@patcher';
+import { createLogger } from '@structures/logger';
 import { findByProps } from '@api/metro';
+import { createPatcher } from '@patcher';
 import themes from '@managers/themes';
 import { Image } from 'react-native';
 import { Documents } from '@api/fs';
 
+
 const Patcher = createPatcher('unbound::design');
+const Logger = createLogger('Core', 'Design');
 
 export const data: BuiltInData = {
 	name: 'Design'
@@ -37,6 +40,7 @@ function patchImageResolver() {
 
 function patchThemeChacteristics() {
 	const ThemeBooleans = findByProps('isThemeDark', 'isThemeLight');
+	if (!ThemeBooleans) return Logger.error('Failed to find ThemeBooleans.');
 
 	function handleThemeType(theme: string, orig: Fn, arg: string) {
 		const appliedTheme = themes.entities.get(theme);

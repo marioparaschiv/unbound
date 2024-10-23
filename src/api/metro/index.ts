@@ -6,7 +6,8 @@ import { CACHE_KEY } from '@constants';
 
 import Filters from './filters';
 
-export { CACHE_KEY as METRO_CACHE_KEY } from '@constants';
+
+export { CACHE_KEY } from '@constants';
 export type * from '@typings/api/metro';
 
 export const data = {

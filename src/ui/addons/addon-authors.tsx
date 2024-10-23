@@ -2,7 +2,7 @@ import { TouchableOpacity, View, Text, Image } from 'react-native';
 import { createElement, useEffect, useState } from 'react';
 import type { Addon, Author } from '@typings/managers';
 import { AsyncUsers, Profiles } from '@api/metro/api';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
 import { Users } from '@api/metro/stores';
 import { animate } from '@utilities';
@@ -10,6 +10,7 @@ import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 
 import useStyles from './addon-authors.style';
+
 
 function useUser(id) {
 	const [user, setUser] = useState(null);
@@ -47,7 +48,7 @@ function Avatar({ id, size = 24 }: { id: string, size?: number; }) {
 function AuthorRow({ author }: { author: Author; }) {
 	const user = useUser(author.id);
 
-	return <Design.TableRow
+	return <Discord.TableRow
 		label={author.name}
 		subLabel={`@${user?.username}`}
 		icon={<Avatar id={author.id} size={32} />}
@@ -69,13 +70,13 @@ function Unexpanded({ addon, styles, setExpanded }: { addon: Addon, styles: any,
 				{Strings.UNBOUND_BY}
 			</Text>
 			<Text style={[styles.description, styles.authors]}>
-				{Design.AvatarPile({
+				{Discord.AvatarPile({
 					size: 'xsmall',
 					names: addon.data.authors.map(author => author.name).slice(0, 3),
 					totalCount: addon.data.authors.length
 				}).props['aria-label']}
 			</Text>
-			<Design.AvatarPile
+			<Discord.AvatarPile
 				size={'xsmall'} // 24 x 24
 				names={addon.data.authors.map(author => author.name).slice(0, 2)}
 				totalCount={addon.data.authors.length}
@@ -83,7 +84,7 @@ function Unexpanded({ addon, styles, setExpanded }: { addon: Addon, styles: any,
 				{addon.data.authors.map(author => (
 					<Avatar key={author.id} id={author.id} />
 				))}
-			</Design.AvatarPile>
+			</Discord.AvatarPile>
 		</View>
 	</TouchableOpacity>;
 }
@@ -101,14 +102,14 @@ function Expanded({ addon, styles, setExpanded }: { addon: Addon, styles: any, s
 				</Text>
 			</View>
 		</TouchableOpacity>
-		<Design.TableRowGroup>
+		<Discord.TableRowGroup>
 			{addon.data.authors.map(author => (
 				<AuthorRow
 					author={author}
 					key={author.id}
 				/>
 			))}
-		</Design.TableRowGroup>
+		</Discord.TableRowGroup>
 	</View>;
 }
 

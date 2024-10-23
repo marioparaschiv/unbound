@@ -1,4 +1,5 @@
 export * as managers from '@managers';
+export * as newManagers from '@managers';
 
 export * as metro from './metro/exports';
 export * as utilities from './utilities';

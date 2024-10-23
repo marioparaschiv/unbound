@@ -2,10 +2,10 @@ import { View, Text, Image, Dimensions, TouchableOpacity, FlatList, ScrollView }
 import { lazy, useEffect, useMemo, useState } from 'react';
 import { TintedIcon, TrailingText } from '@ui/misc/forms';
 import { useIcon, type Bundle } from '@managers/sources';
-import { Media, Design } from '@api/metro/components';
+import { Media, Discord } from '@api/metro/components';
 import { AddonCard } from '@ui/sources/addon-card';
 import { Constants } from '@api/metro/common';
-import { SETTINGS_KEYS } from '@constants';
+import { SettingsKeys } from '@constants';
 import Empty from '@ui/misc/empty-state';
 import { findByProps } from '@api/metro';
 import { Linking } from '@api/metro/api';
@@ -28,13 +28,13 @@ function parse({ text }: { text: string; }) {
 		allowLinks: true,
 		allowList: true,
 	}).map(node => typeof node === 'string' ? (
-		<Design.Text
+		<Discord.Text
 			key={node}
-			variant={'text-md/normal'}
-			color={'text-normal'}
+			variant='text-md/normal'
+			color='text-normal'
 		>
 			{node}
-		</Design.Text>
+		</Discord.Text>
 	) : node);
 }
 
@@ -85,21 +85,21 @@ const getStates = (addon: Bundle[number], manager: typeof Managers[keyof typeof 
 ];
 
 function useControlState({ readme, changelog, styles, name }: { readme: string, changelog: Bundle[number]['changelog'], styles: any, name: string; }) {
-	const controlState = Design.useSegmentedControlState({
+	const controlState = Discord.useSegmentedControlState({
 		defaultIndex: 0,
 		items: [
 			{
 				label: Strings.UNBOUND_INFORMATION,
 				id: 'information',
 				page: typeof readme === 'string' && readme !== '' ? (
-					<Design.Card
+					<Discord.Card
 						border={'faint'}
 						shadow={'low'}
 						variant={'primary'}
 						style={{ margin: 14 }}
 					>
 						{parse({ text: readme })}
-					</Design.Card>
+					</Discord.Card>
 				) : (
 					<Empty>
 						{Strings.UNBOUND_ADDON_NO_README.format({ name })}
@@ -110,7 +110,7 @@ function useControlState({ readme, changelog, styles, name }: { readme: string, 
 				label: Strings.UNBOUND_CHANGELOG,
 				id: 'changelog',
 				page: typeof changelog === 'object' ? (
-					<Design.Card
+					<Discord.Card
 						border={'faint'}
 						shadow={'low'}
 						variant={'primary'}
@@ -125,7 +125,7 @@ function useControlState({ readme, changelog, styles, name }: { readme: string, 
 								{parse({ text: changes.map(change => `* ${change}`).join('\n') })}
 							</View>;
 						})}
-					</Design.Card>
+					</Discord.Card>
 				) : (
 					<Empty>
 						{Strings.UNBOUND_ADDON_NO_CHANGELOG.format({ name })}
@@ -232,7 +232,7 @@ function Header({ addon, styles }: { addon: Bundle[number], styles: any; }) {
 				]}
 			/>
 		</View>
-		<Design.Button
+		<Discord.Button
 			size={'md'}
 			iconPosition={'start'}
 			{...getStates(addon, manager)[state]}
@@ -313,7 +313,7 @@ function Screenshots({ addon }: { addon: Bundle[number]; }) {
 				</TouchableOpacity>;
 			}}
 		/>
-		{screenshots.length > 0 && <Design.TableRowDivider />}
+		{screenshots.length > 0 && <Discord.TableRowDivider />}
 	</>;
 }
 
@@ -321,25 +321,25 @@ function Control({ readme, changelog, styles, name }) {
 	const controlState = useControlState({ readme, changelog, styles, name });
 
 	return <>
-		<Design.Tabs state={controlState} />
+		<Discord.Tabs state={controlState} />
 
 		{/* Undo the margins that the view higher applies */}
 		<View style={{ marginHorizontal: -14 }}>
-			<Design.SegmentedControlPages state={controlState} />
+			<Discord.SegmentedControlPages state={controlState} />
 		</View>
 	</>;
 }
 
 function Information({ addon }: { addon: Bundle[number]; }) {
 	return <>
-		<Design.TableRowGroup title={Strings.UNBOUND_INFORMATION}>
+		<Discord.TableRowGroup title={Strings.UNBOUND_INFORMATION}>
 			<FlatList
 				data={Object.entries(infoMap)}
 				keyExtractor={(_, idx) => String(idx)}
 				scrollEnabled={false}
-				ItemSeparatorComponent={Design.TableRowDivider}
+				ItemSeparatorComponent={Discord.TableRowDivider}
 				renderItem={({ item: [prop, { icon, i18n }] }) => (
-					<Design.TableRow
+					<Discord.TableRow
 						key={prop}
 						label={Strings[`UNBOUND_${i18n}`]}
 						trailing={(
@@ -356,7 +356,7 @@ function Information({ addon }: { addon: Bundle[number]; }) {
 								})()}
 							</TrailingText>
 						)}
-						icon={<Design.TableRowIcon source={Icons[icon]} />}
+						icon={<Discord.TableRowIcon source={Icons[icon]} />}
 					/>
 				)}
 				ListEmptyComponent={(
@@ -365,7 +365,7 @@ function Information({ addon }: { addon: Bundle[number]; }) {
 					</Empty>
 				)}
 			/>
-		</Design.TableRowGroup>
+		</Discord.TableRowGroup>
 	</>;
 }
 
@@ -377,11 +377,11 @@ export function AddonPage({ addon, navigation }: { addon: Bundle[number], naviga
 		<View style={{ marginTop: 12, marginHorizontal: 14 }}>
 			<Header addon={addon} styles={styles} />
 			<View style={{ marginVertical: 16, gap: 10 }}>
-				<Design.TableRowDivider />
+				<Discord.TableRowDivider />
 				<Text style={[styles.header, { fontSize: 18, fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD, textAlign: 'center' }]}>
 					{addon.manifest.description ?? Strings.UNBOUND_ADDON_NO_DESCRIPTION}
 				</Text>
-				<Design.TableRowDivider />
+				<Discord.TableRowDivider />
 				<Screenshots addon={addon} />
 
 				<Control
@@ -411,13 +411,13 @@ export function AddonPage({ addon, navigation }: { addon: Bundle[number], naviga
 					</View>
 				)}
 
-				<Design.RowButton
+				<Discord.RowButton
 					icon={Icons['grid']}
 					label={Strings['UNBOUND_ADDON_FROM_SOURCE'].format({ name: addon.manifest.name, source: source.data.name })}
 					subLabel={Strings['UNBOUND_RETURN_TO_SOURCE'].format({ source: source.data.name })}
 					variant={'secondary'}
 					onPress={() => {
-						navigation.push(SETTINGS_KEYS.Custom, {
+						navigation.push(SettingsKeys.Custom, {
 							title: source.data.name,
 							render: () => {
 								const Addons = lazy(() => import('@ui/sources/addons').then(({ Addons }) => ({ default: Addons })));

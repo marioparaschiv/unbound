@@ -1,6 +1,7 @@
 import type { ApplicationCommand } from '@typings/api/commands';
 import { uuid } from '@utilities';
 
+
 export type * from '@typings/api/commands';
 
 

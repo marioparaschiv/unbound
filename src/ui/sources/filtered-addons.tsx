@@ -1,9 +1,9 @@
 import { ScrollView, View, FlatList } from 'react-native';
 import { createElement, useMemo, useState } from 'react';
 import type { Manager } from '@typings/managers';
-import { GeneralSearch } from '@ui/misc/search';
 import type { Bundle } from '@managers/sources';
-import { Design } from '@api/metro/components';
+import { GeneralSearch } from '@ui/misc/search';
+import { Discord } from '@api/metro/components';
 import { Addon } from '@ui/sources/addon';
 import Empty from '@ui/misc/empty-state';
 import { Strings } from '@api/i18n';
@@ -12,7 +12,7 @@ import useStyles from './filtered-addons.style';
 
 export function FilteredAddons({ addons }: { addons: Bundle; }) {
 	const [search, setSearch] = useState('');
-	const navigation = Design.useNavigation();
+	const navigation = Discord.useNavigation();
 	const styles = useStyles();
 
 	const data = useMemo(() => {
@@ -47,12 +47,12 @@ export function FilteredAddons({ addons }: { addons: Bundle; }) {
 				}, [addons]);
 
 				return allAddonsOneType ? (
-					<Design.TableRowGroup>
+					<Discord.TableRowGroup>
 						<FlatList
 							data={data}
 							keyExtractor={(_, idx) => String(idx)}
 							scrollEnabled={false}
-							ItemSeparatorComponent={Design.TableRowDivider}
+							ItemSeparatorComponent={Discord.TableRowDivider}
 							renderItem={({ item: addon }) => (
 								<Addon
 									key={addon.manifest.id}
@@ -66,16 +66,16 @@ export function FilteredAddons({ addons }: { addons: Bundle; }) {
 								</Empty>
 							)}
 						/>
-					</Design.TableRowGroup>
+					</Discord.TableRowGroup>
 				) : (
 					addonTypes.map(type => (
 						<View key={type} style={styles.addonTypeContainer}>
-							<Design.TableRowGroup title={Strings[`UNBOUND_${type.toUpperCase()}`]}>
+							<Discord.TableRowGroup title={Strings[`UNBOUND_${type.toUpperCase()}`]}>
 								<FlatList
 									data={data.filter(addon => addon.type === type)}
 									keyExtractor={(_, idx) => String(idx)}
 									scrollEnabled={false}
-									ItemSeparatorComponent={Design.TableRowDivider}
+									ItemSeparatorComponent={Discord.TableRowDivider}
 									renderItem={({ item: addon }) => (
 										<Addon
 											key={addon.manifest.id}
@@ -89,7 +89,7 @@ export function FilteredAddons({ addons }: { addons: Bundle; }) {
 										</Empty>
 									)}
 								/>
-							</Design.TableRowGroup>
+							</Discord.TableRowGroup>
 						</View>
 					))
 				);

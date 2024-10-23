@@ -1,6 +1,6 @@
-import { DISCORD_INVITE, SOCIAL_LINKS } from '@constants';
+import { DISCORD_INVITE, SocialLinks } from '@constants';
 import type { Dispatch, SetStateAction } from 'react';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { SafeAreaView } from 'react-native';
 import Plugins from '@ui/settings/plugins';
 import { Linking } from '@api/metro/api';
@@ -8,6 +8,7 @@ import { on, set } from '@api/storage';
 import { Strings } from '@api/i18n';
 
 import useStyles from './styles';
+
 
 type CallbackProps = {
 	show: Fn,
@@ -45,7 +46,7 @@ function showPluginsPage(setContent: Dispatch<SetStateAction<{ id: string; insta
 				right: 0
 			}, styles.page]}
 		>
-			<Design.Navigator
+			<Discord.Navigator
 				initialRouteName='PLUGINS_ONBOARDING'
 				screens={{
 					PLUGINS_ONBOARDING: {
@@ -227,7 +228,7 @@ export default [
 				},
 
 				// TO-DO: Update this to link to the correct page once it's implemented in the docs
-				onPress: () => Linking.openURL(SOCIAL_LINKS.Docs),
+				onPress: () => Linking.openURL(SocialLinks.Docs),
 				icon: 'BookCheckIcon',
 				variant: 'tertiary',
 			}

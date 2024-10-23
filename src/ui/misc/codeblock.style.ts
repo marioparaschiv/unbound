@@ -1,6 +1,8 @@
-import { Constants, StyleSheet, Theme } from '@api/metro/common';
+import { Constants, Theme } from '@api/metro/common';
+import { Discord } from '@api/metro/components';
 
-export default StyleSheet.createStyles({
+
+export default Discord.createStyles({
 	block: {
 		fontFamily: Constants.Fonts.CODE_SEMIBOLD,
 		fontSize: 12,

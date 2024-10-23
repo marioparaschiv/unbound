@@ -1,16 +1,17 @@
 import { View, Text, Image, SafeAreaView, Dimensions } from 'react-native';
 import { Icons, getIDByName } from '@api/assets';
 import { useSettingsStore } from '@api/storage';
-import { Design } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { Clipboard } from '@api/metro/common';
 import { TintedIcon } from '@ui/misc/forms';
 import { CLIENT_NAME } from '@constants';
-import { CodeBlock } from '@ui/misc';
 import { reload } from '@api/native';
+import { CodeBlock } from '@ui/misc';
 import { Strings } from '@api/i18n';
 import { useState } from 'react';
 
 import useStyles from './error-boundary.style';
+
 
 interface ErrorBoundaryProps {
 	error: Record<string, any>;
@@ -80,14 +81,14 @@ const Outline = ({ state, error }: any) => {
 		</Text>
 
 		<View style={{ flexGrow: 1 }}>
-			<Design.SegmentedControlPages state={state} />
+			<Discord.SegmentedControlPages state={state} />
 
 			<View style={{
 				position: 'absolute',
 				bottom: 20,
 				right: 20
 			}}>
-				<Design.IconButton
+				<Discord.IconButton
 					icon={getIDByName('ic_message_copy')}
 					variant={'primary'}
 					size={'md'}
@@ -105,7 +106,7 @@ const Outline = ({ state, error }: any) => {
 		</View>
 
 		<View style={{ margin: 10, marginTop: 0 }}>
-			<Design.SegmentedControl state={state} variant={'experimental_Large'} />
+			<Discord.SegmentedControl state={state} variant={'experimental_Large'} />
 		</View>
 	</Card>;
 };
@@ -116,7 +117,7 @@ const Actions = ({ retryRender }: Pick<ErrorBoundaryProps, 'retryRender'>) => {
 	return <Card style={{ marginBottom: 0 }}>
 		<View style={{ flexDirection: 'row', margin: 10 }}>
 			<View style={!settings.get('recovery', false) ? { flex: 0.5, marginRight: 10 } : { flex: 1 }}>
-				<Design.Button
+				<Discord.Button
 					onPress={retryRender}
 					variant={'destructive'}
 					size={'md'}
@@ -128,7 +129,7 @@ const Actions = ({ retryRender }: Pick<ErrorBoundaryProps, 'retryRender'>) => {
 
 			{!settings.get('recovery', false) && (
 				<View style={{ flex: 0.5 }}>
-					<Design.Button
+					<Discord.Button
 						onPress={() => (settings.set('recovery', true), reload(false))}
 						icon={getIDByName('ic_shield_24px')}
 						variant={'tertiary'}
@@ -159,7 +160,7 @@ export default function ErrorBoundary({ error, retryRender, res }: ErrorBoundary
 
 	const [index, setIndex] = useState(0);
 	const styles = useStyles();
-	const state = Design.useSegmentedControlState({
+	const state = Discord.useSegmentedControlState({
 		defaultIndex: 0,
 		items: possibleErrors.map(({ label, id, icon, error }) => {
 			return {

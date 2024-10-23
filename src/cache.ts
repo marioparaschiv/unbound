@@ -2,6 +2,7 @@ import { CACHE_VERSION } from '@constants';
 import { BundleInfo } from '@api/native';
 import { getStore } from '@api/storage';
 
+
 export enum ModuleFlags {
 	BLACKLISTED = 1 << 0,
 }

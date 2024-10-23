@@ -6,6 +6,7 @@ import Overflow from '@ui/misc/overflow';
 import { capitalize } from '@utilities';
 import { Strings } from '@api/i18n';
 
+
 type HeaderRightProps = {
 	type: Parameters<typeof getItems>[0];
 	settings: Parameters<typeof getItems>[1];

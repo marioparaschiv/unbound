@@ -1,7 +1,8 @@
 import type { BuiltInData } from '@typings/built-ins';
 import { Util } from '@api/metro/common';
-import { addLog } from '@stores/logger';
 import { getStore } from '@api/storage';
+import { addLog } from '@stores/logger';
+
 
 export const data: BuiltInData = {
 	name: 'Console'
