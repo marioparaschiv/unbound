@@ -142,7 +142,7 @@ class Addons<T extends Addon> extends Base<T> {
 				throw new Error(`Failed to fetch bundle URL (${bundleRequest.status}: ${bundleRequest.statusText ?? 'No status text.'})`);
 			}
 
-			const bundle = await manifestRequest.text();
+			const bundle = await bundleRequest.text();
 			if (!bundle) throw new Error('Addon bundle was empty.');
 
 			fs.write(`${this.path}/${manifest.id}/bundle.${this.extension}`, bundle);

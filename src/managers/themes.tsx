@@ -189,8 +189,7 @@ class Themes extends Addons<Theme> {
 
 		if (Chat) {
 			this.patcher.after(Chat, 'default', (_, __, res) => {
-				const settings = useSettingsStore('theme-states');
-				const applied = settings.get('applied', null);
+				const applied = this.settings.get('applied', null);
 				if (!applied) return res;
 
 				const theme = this.entities.get(applied);
