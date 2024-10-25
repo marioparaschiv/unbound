@@ -4,6 +4,7 @@ import { createTimeoutSignal } from '@utilities';
 import Base from '@managers/base';
 import fs from '@api/fs';
 
+
 class Addons<T extends Addon> extends Base<T> {
 	type: ManagerType = ManagerType.ADDON;
 	extension: string;

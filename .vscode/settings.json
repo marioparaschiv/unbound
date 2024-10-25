@@ -26,8 +26,6 @@
 	"js/ts.implicitProjectConfig.target": "ESNext",
 	"files.eol": "\n",
 	"scss.format.spaceAroundSelectorSeparator": true,
-	"scssFormatter.singleQuote": true,
-	"scssFormatter.trailingComma": "all",
 	"typescript.autoClosingTags": true,
 	"typescript.format.enable": true,
 	"typescript.format.insertSpaceAfterCommaDelimiter": true,
@@ -44,10 +42,6 @@
 	"typescript.preferences.quoteStyle": "single",
 	"typescript.updateImportsOnFileMove.enabled": "always",
 	"editor.codeActionsOnSave": {
-		"source.fixAll.eslint": "explicit"
-	},
-	"eslint.validate": [
-		"javascript",
-		"typescript"
-	]
+		"source.removeUnusedImports": "always"
+	}
 }

@@ -1,5 +1,6 @@
 import type { WorkletizedFunction } from '@typings/utilities/workletize';
 
+
 /**
  * @description Turns a function into a worklet for use within React Native Reanimated runOnUI, runOnJS, and worklet runtime calls.
  * - This is **VERY FRAGILE**. Expect crashes initially. You can view worklet errors by filtering logs containing "crash" in the syslog viewer of your choice (e.g. idevicesyslog)

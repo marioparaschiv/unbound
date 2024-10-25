@@ -1,5 +1,6 @@
 import { LayoutAnimation, type LayoutAnimationConfig } from 'react-native';
 
+
 export const DEFAULT_ANIMATION = {
 	type: 'easeInEaseOut',
 	property: 'opacity'

@@ -2,11 +2,11 @@ import { findInReactTree, findInTree, unitToHex, withoutOpacity } from '@utiliti
 import { findByName, findByProps, findStore } from '@api/metro';
 import type { Theme } from '@typings/managers/themes';
 import type { Resolveable } from '@typings/managers';
-import { useSettingsStore } from '@api/storage';
 import { ImageBackground } from 'react-native';
 import type { Manifest } from '@managers';
 import { ManagerKind } from '@constants';
 import Addons from '@managers/addons';
+
 
 class Themes extends Addons<Theme> {
 	module: Record<PropertyKey, any>;

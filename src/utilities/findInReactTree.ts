@@ -1,6 +1,7 @@
 import type { FindInTreeOptions, FindInTreePredicate } from '@typings/utilities/findInTree';
 import findInTree from '@utilities/findInTree';
 
+
 /**
  * @description Traverses through a React node to find a specific item using a predicate, useful for searching children in node trees that might change as Discord gets updated.
  * @template T The type of the result you expect. Please keep in mind that the value might be null, wrapping your type in Nullable<T> is advised.

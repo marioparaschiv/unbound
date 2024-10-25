@@ -1,5 +1,6 @@
 import { processColor, type ColorValue } from 'react-native';
 
+
 /**
  * @description Removes opacity from a color. Note: This will convert the color to a hex.
  * @param color The color to remove opacity from.

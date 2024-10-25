@@ -3,6 +3,7 @@ import { ManagerKind } from '@constants';
 import Addons from '@managers/addons';
 import Storage from '@api/storage';
 
+
 class Plugins extends Addons<Plugin> {
 	extension: string = 'js';
 

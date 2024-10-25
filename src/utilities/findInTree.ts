@@ -1,5 +1,6 @@
 import type { FindInTreeOptions, FindInTreePredicate } from '@typings/utilities/findInTree';
 
+
 /**
  * @description Traverses through a tree through provided walkables, aiming to find a specific item using a predicate.
  * @template T The type of the result you expect. Please keep in mind that the value might be null, wrapping your type in Nullable<T> is advised.

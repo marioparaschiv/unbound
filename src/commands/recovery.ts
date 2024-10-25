@@ -2,6 +2,7 @@ import type { ApplicationCommand } from '@typings/api/commands';
 import { getStore } from '@api/storage';
 import { reload } from '@api/native';
 
+
 const settings = getStore('unbound');
 
 export default {

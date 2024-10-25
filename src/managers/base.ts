@@ -4,6 +4,7 @@ import EventEmitter from '@structures/emitter';
 import { createPatcher } from '@api/patcher';
 import { getStore } from '@api/storage';
 
+
 class Manager<T extends any> extends EventEmitter {
 	type: ManagerType = ManagerType.BASE;
 	initialized: boolean = false;

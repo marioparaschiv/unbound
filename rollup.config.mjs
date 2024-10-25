@@ -1,13 +1,13 @@
-import { execSync } from 'child_process';
-
 // Plugins
 import { typescriptPaths as paths } from 'rollup-plugin-typescript-paths';
 import { nodeResolve as node } from '@rollup/plugin-node-resolve';
+import { minify, swc } from 'rollup-plugin-swc3';
 import hermes from '@unbound-mod/rollup-plugin';
 import replace from '@rollup/plugin-replace';
-import { minify, swc } from 'rollup-plugin-swc3';
+import { execSync } from 'child_process';
 import json from '@rollup/plugin-json';
 import { readFileSync } from 'fs';
+
 
 const revision = (() => {
 	try {

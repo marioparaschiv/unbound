@@ -1,5 +1,6 @@
 import fs, { type FileManagerEncoding } from '@api/fs';
 
+
 /**
  * @description Downloads a file to the specified path in the specified encoding (utf8 by default).
  * @param url The URL of the file you would like to download.

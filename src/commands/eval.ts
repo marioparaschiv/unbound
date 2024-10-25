@@ -1,6 +1,7 @@
 import type { ApplicationCommand } from '@typings/api/commands';
 import { Messages } from '@api/metro/api';
 
+
 async function handleEvaluation(src: string) {
 	const out = { res: null, err: null, time: null };
 	const isAsync = src.includes('await');
