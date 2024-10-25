@@ -4,8 +4,9 @@ import { AddonPage } from '@ui/sources/addon-page';
 import { Discord } from '@api/metro/components';
 import { SettingsKeys } from '@constants';
 import * as Managers from '@managers';
-import { Icons } from '@api/assets';
 import { View } from 'react-native';
+import { Icons } from '@api/assets';
+
 
 export function Addon({ addon, navigation }: { addon: Bundle[number], navigation: any; }) {
 	const { manifest: { id, icon: _icon, name, description, version }, type } = addon;

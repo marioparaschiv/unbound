@@ -7,16 +7,17 @@ import { AddonCard } from '@ui/sources/addon-card';
 import { Constants } from '@api/metro/common';
 import { SettingsKeys } from '@constants';
 import Empty from '@ui/misc/empty-state';
-import { findByProps } from '@api/metro';
 import { Linking } from '@api/metro/api';
+import { findByProps } from '@api/metro';
 import * as Managers from '@managers';
+import { Strings } from '@api/i18n';
 import { Semver } from '@utilities';
 import { Overflow } from '@ui/misc';
-import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 import fs from '@api/fs';
 
 import useStyles from './addon-page.style';
+
 
 const parser = findByProps('parse', 'parseToAST', 'reactParserFor', { lazy: true });
 

@@ -6,6 +6,7 @@ import { Icons } from '@api/assets';
 
 import useStyles from './addon-tags.style';
 
+
 export function Tags({ source: tags }: { source: Source['data']['tags']; }) {
 	const styles = useStyles();
 

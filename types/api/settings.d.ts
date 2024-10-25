@@ -1,6 +1,7 @@
 import type { ImageSourcePropType } from 'react-native';
 import type { ComponentType } from 'react';
 
+
 export interface SettingsEntry {
 	type?: string;
 	title: string;

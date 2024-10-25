@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 
+
 interface AlertProps {
 	/**
 	 * Key of the alert

@@ -1,6 +1,7 @@
 import type { DispatchBand, DispatcherModule as Dispatcher } from '@typings/discord/flux-dispatcher';
 import type { ComponentClass, ComponentType } from 'react';
 
+
 type DispatchToken = string;
 type ActionType = string;
 

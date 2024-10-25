@@ -1,6 +1,6 @@
 import { lazy, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, RefreshControl, ScrollView, View } from 'react-native';
 import InstallModal, { showInstallAlert } from '@ui/addons/install-modal';
+import { FlatList, RefreshControl, ScrollView, View } from 'react-native';
 import getItems, { resolveType } from '@ui/addons/addon-ordering';
 import { HelpMessage, Discord } from '@api/metro/components';
 import { AddonCard } from '@ui/sources/addon-card';
@@ -16,9 +16,10 @@ import { SettingsKeys } from '@constants';
 import Empty from '@ui/misc/empty-state';
 import sources from '@managers/sources';
 import * as Managers from '@managers';
+import { Strings } from '@api/i18n';
 import { Semver } from '@utilities';
 import { Icons } from '@api/assets';
-import { Strings } from '@api/i18n';
+
 
 const type = 'Sources';
 export default function Sources({ headerRightMargin = false }: { headerRightMargin: boolean; }) {

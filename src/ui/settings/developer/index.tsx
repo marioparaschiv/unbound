@@ -4,11 +4,12 @@ import { ScrollView, View, Text } from 'react-native';
 import { useSettingsStore } from '@api/storage';
 import { Discord } from '@api/metro/components';
 import { Strings } from '@api/i18n';
-import Assets from '@api/assets';
 import Toasts from '@api/toasts';
+import Assets from '@api/assets';
 
 import AssetBrowser from './assets';
 import Logs from './logger';
+
 
 const {
 	TableSwitchRow,

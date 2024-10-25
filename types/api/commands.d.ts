@@ -1,5 +1,6 @@
 import type { ApplicationCommandType, ApplicationCommandInputType, ApplicationCommandOptionType } from '@api/commands';
 
+
 export interface ApplicationCommand {
 	name: string;
 	displayName?: string;

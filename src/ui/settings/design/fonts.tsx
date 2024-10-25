@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Icons } from '@api/assets';
 import { noop } from '@utilities';
 
+
 function FontsPage() {
 	const fonts = window.UNBOUND_FONTS ?? [];
 

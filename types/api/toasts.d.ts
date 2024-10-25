@@ -2,6 +2,7 @@ import type { ButtonColors, ButtonLooks, ButtonSizes } from '@typings/discord/co
 import type { ImageSourcePropType } from 'react-native';
 import type { ComponentType } from 'react';
 
+
 export interface ToastButton {
 	color?: ButtonColors[keyof ButtonColors];
 	variant?: ButtonLooks[keyof ButtonLooks] | 'primary' | 'secondary' | 'tertiary';

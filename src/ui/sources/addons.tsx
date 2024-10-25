@@ -6,11 +6,12 @@ import { TrailingText } from '@ui/misc/forms';
 import { SettingsKeys } from '@constants';
 import Empty from '@ui/misc/empty-state';
 import * as Managers from '@managers';
-import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
+import { Icons } from '@api/assets';
 import { useMemo } from 'react';
 
 import useStyles from './addons.style';
+
 
 *import { Discord } from '@api/metro/components';
 

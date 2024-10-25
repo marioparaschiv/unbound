@@ -1,6 +1,7 @@
 import type { ActionHandler, ActionHandlerRecord } from '@typings/discord/flux';
 import type EventEmitter from 'events';
 
+
 export enum DispatchBand {
 	Early,
 	Database,

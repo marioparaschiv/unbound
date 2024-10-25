@@ -1,5 +1,6 @@
 import type SimpleMarkdown from 'simple-markdown';
 
+
 export type DefaultRules = Pick<
 	SimpleMarkdown.DefaultRules,
 	| 'newline'

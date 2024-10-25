@@ -5,6 +5,7 @@ import { AddonList } from '@ui/addons';
 import Icons from '@managers/icons';
 import { View } from 'react-native';
 
+
 function IconsPage() {
 	const addons = Icons.useEntities();
 

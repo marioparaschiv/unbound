@@ -10,6 +10,7 @@ import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 import { noop } from '@utilities';
 
+
 function ThemesPage() {
 	const addons = useAddons('Themes');
 

@@ -1,9 +1,9 @@
 import { DISCORD_INVITE, SettingsKeys, SocialLinks } from '@constants';
 import { KeyboardAvoidingView, ScrollView, Text } from 'react-native';
-import { Theme } from '@api/metro/common';
 import { BundleInfo, reload } from '@api/native';
 import { useSettingsStore } from '@api/storage';
 import { Discord } from '@api/metro/components';
+import { Theme } from '@api/metro/common';
 import { showDialog } from '@api/dialogs';
 import { Section } from '@ui/misc/forms';
 import { Linking } from '@api/metro/api';
@@ -14,6 +14,7 @@ import { useMemo } from 'react';
 
 import Developer from '../developer';
 import Toasts from './toasts';
+
 
 const { TableRow, TableSwitchRow, TableRowIcon } = Discord;
 

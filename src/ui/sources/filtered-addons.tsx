@@ -10,6 +10,7 @@ import { Strings } from '@api/i18n';
 
 import useStyles from './filtered-addons.style';
 
+
 export function FilteredAddons({ addons }: { addons: Bundle; }) {
 	const [search, setSearch] = useState('');
 	const navigation = Discord.useNavigation();

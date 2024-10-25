@@ -1,5 +1,6 @@
 import type { ThemeColors } from '@typings/discord/constants';
 
+
 export type SemanticColors = {
 	[P in keyof ThemeColors]: Record<PropertyKey, any>;
 };

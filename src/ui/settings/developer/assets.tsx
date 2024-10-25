@@ -8,6 +8,7 @@ import { Section } from '@ui/misc/forms';
 import { findByProps } from '@api/metro';
 import { assets } from '@api/assets';
 
+
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
 
 class Asset extends PureComponent<{ item: AssetType; id: number; index: number; total: number; }> {

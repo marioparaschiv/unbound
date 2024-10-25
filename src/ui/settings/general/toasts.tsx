@@ -3,10 +3,11 @@ import { ScrollView, Text, View } from 'react-native';
 import { useSettingsStore } from '@api/storage';
 import { Discord } from '@api/metro/components';
 import { showToast } from '@api/toasts';
-import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
+import { Icons } from '@api/assets';
 import { noop } from '@utilities';
 import { useState } from 'react';
+
 
 const { TableRow, TableSwitchRow, TableRowIcon } = Discord;
 

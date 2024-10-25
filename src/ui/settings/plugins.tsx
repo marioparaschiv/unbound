@@ -2,8 +2,9 @@ import { Discord } from '@api/metro/components';
 import { AddonList } from '@ui/new-addons';
 import { ManagerKind } from '@constants';
 import { useAddons } from '@ui/hooks';
-import { Strings } from '@api/i18n';
 import { View } from 'react-native';
+import { Strings } from '@api/i18n';
+
 
 export default function Plugins({ headerRightMargin = false }: { headerRightMargin: boolean; }) {
 	const navigation = Discord.useNavigation();

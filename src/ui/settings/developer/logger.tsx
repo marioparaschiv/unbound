@@ -4,9 +4,10 @@ import { TintedIcon, Section } from '@ui/misc/forms';
 import { GeneralSearch } from '@ui/misc/search';
 import { Discord } from '@api/metro/components';
 import { useMemo, useState } from 'react';
-import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
+import { Icons } from '@api/assets';
 import Logs from '@stores/logger';
+
 
 const { TableRow, TableRowIcon } = Discord;
 

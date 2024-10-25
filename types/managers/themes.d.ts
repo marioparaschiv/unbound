@@ -1,5 +1,6 @@
 import type { Addon } from '@typings/managers';
 
+
 export type Theme = Addon & {
 	registered: boolean;
 	instance: {

@@ -3,9 +3,10 @@ import type { DispatcherModule } from '@typings/discord/flux-dispatcher';
 import type { ThemingModule } from '@typings/discord/theming';
 import type { ClydeModule } from '@typings/discord/messages';
 import type { AssetsModule } from '@typings/discord/assets';
-import type { FluxModule } from '@typings/discord/flux';
 import type { i18nModule } from '@typings/discord/i18n';
+import type { FluxModule } from '@typings/discord/flux';
 import type { APIModule } from '@typings/discord/api';
+
 
 export interface ConstantsModule {
 	[key: PropertyKey]: any;

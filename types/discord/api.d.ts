@@ -1,5 +1,6 @@
 import type { ProgressEvent, Request, Response } from 'superagent';
 
+
 export interface HTTPAttachment {
 	file: string | Blob | Buffer;
 	filename: string;

@@ -1,6 +1,7 @@
 import type { Store } from '@typings/discord/flux';
 import type { DependencyList } from 'react';
 
+
 export interface FluxHooks {
 	useStateFromStores: <T>(
 		stores: Store[],

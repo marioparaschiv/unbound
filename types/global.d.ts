@@ -1,5 +1,6 @@
 import type { Manifest } from '@typings/managers';
 
+
 declare global {
 	// React is already defined as a namespace globally. This will expose it and allow it to be a mutable global.
 	namespace React { }

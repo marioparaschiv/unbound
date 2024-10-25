@@ -2,6 +2,7 @@ import type SimpleMarkdown from 'simple-markdown';
 import type { Primitive } from 'type-fest';
 import type EventEmitter from 'events';
 
+
 export type LocaleCallback = (locale?: string) => void;
 export type ProxyCallback = (context?: ProviderContext) => ProxyConstructor;
 

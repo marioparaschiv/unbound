@@ -2,13 +2,14 @@ import { useIcon, type Bundle } from '@managers/sources';
 import { Theme, Constants } from '@api/metro/common';
 import { Discord } from '@api/metro/components';
 import { TintedIcon } from '@ui/misc/forms';
-import { SettingsKeys } from '@constants';
 import { View, Text } from 'react-native';
+import { SettingsKeys } from '@constants';
 import * as Managers from '@managers';
 import { Icons } from '@api/assets';
 import { lazy } from 'react';
 
 import useStyles from './addon-card.style';
+
 
 export function AddonCard({ addon, navigation }: { addon: Bundle[number], navigation: any; }) {
 	const { manifest: { id, icon: _icon, name, description, version }, type } = addon;

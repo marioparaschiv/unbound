@@ -1,5 +1,6 @@
 import type { Filter } from './filters';
 
+
 export type InternalOptions = {
 	bulk?: boolean;
 	lazy?: boolean;

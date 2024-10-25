@@ -1,6 +1,7 @@
 import type { ImageSourcePropType, ImageStyle, ViewStyle } from 'react-native';
 import type { ComponentType, ReactNode } from 'react';
 
+
 type SectionProps = {
 	title?: string;
 	children?: ReactNode,

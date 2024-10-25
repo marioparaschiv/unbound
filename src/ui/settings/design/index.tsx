@@ -10,6 +10,7 @@ import { Strings } from '@api/i18n';
 // import Fonts from './fonts';
 import Themes from './themes';
 
+
 const items = [
 	{
 		get label() {
