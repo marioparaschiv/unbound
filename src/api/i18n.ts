@@ -2,15 +2,7 @@ import type { LocaleStrings } from "@typings/api/i18n";
 import { createLogger } from "@structures/logger";
 import { i18n } from "@api/metro/common";
 
-// import CoreStrings from '../../i18n';
-
-import enUS from "../../i18n/en-US.json" assert { type: "json" };
-import enGB from "../../i18n/en-GB.json" assert { type: "json" };
-
-const CoreStrings = {
-  "en-US": enUS,
-  "en-GB": enGB,
-};
+import CoreStrings from "@i18n";
 
 export type * from "@typings/api/i18n";
 
