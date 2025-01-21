@@ -43,7 +43,7 @@ export const DefaultSources = [
 
 export const SocialLinks = {
 	GitHub: 'https://github.com/unbound-mod',
-	Bundle: 'https://raw.githubusercontent.com/unbound-mod/unbound/main/dist/bundle.js',
+	Bundle: 'https://raw.githubusercontent.com/unbound-mod/builds/main/unbound.js',
 	Badges: 'https://raw.githubusercontent.com/unbound-mod/badges/main/',
 	Docs: 'https://docs.unbound.rip/',
 	OnboardingPlugin: 'http://rosies-macbook-air.local:5495/manifest.json'
