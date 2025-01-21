@@ -12,7 +12,6 @@ permissions:
   contents: write
   pull-requests: write
 
-
 jobs:
   bump:
     runs-on: ubuntu-latest
@@ -20,6 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: fregante/setup-git-user@v1
+      - uses: actions/checkout@v3
+        with:
+          repository: "unbound-mod/builds"
+          path: "builds"
+          token: ${{ secrets.GH_TOKEN }}
 
       - uses: pnpm/action-setup@v2
         with:
@@ -45,8 +49,11 @@ jobs:
         run: |
           pnpm version major
 
-      - name: Push Changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: ${{ github.ref }}
+      - name: Push to builds repo
+        run: |
+          rm -f $GITHUB_WORKSPACE/builds/*
+          cp -r dist/* $GITHUB_WORKSPACE/builds
+          cd $GITHUB_WORKSPACE/builds
+          git add .
+          git commit -m "$GITHUB_SHA"
+          git push
