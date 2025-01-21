@@ -50,7 +50,10 @@ jobs:
           pnpm i
 
       - name: Build bundle
-        run: pnpm build
+        run: |
+          git submodule init
+          git submodule update --remote --merge
+          pnpm build
 
       - name: Push to builds repo
         run: |
