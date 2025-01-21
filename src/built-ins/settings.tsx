@@ -5,6 +5,7 @@ import type { BuiltInData } from '@typings/built-ins';
 import { findByName, findByProps } from '@api/metro';
 import { createLogger } from '@structures/logger';
 import { Discord } from '@api/metro/components';
+import SourcesPage from '@ui/settings/sources';
 import PluginsPage from '@ui/settings/plugins';
 import GeneralPage from '@ui/settings/general';
 import EventEmitter from '@structures/emitter';
@@ -16,8 +17,6 @@ import Unbound from '@ui/icons/unbound';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 
-
-/* import SourcesPage from '@ui/settings/sources'; */
 
 const Events = new EventEmitter();
 
@@ -79,7 +78,7 @@ export const data: BuiltInData & {
 			}
 		},
 
-		/* [SettingsKeys.Sources]: {
+		[SettingsKeys.Sources]: {
 			type: 'route',
 			get title() {
 				return Strings.UNBOUND_SOURCES;
@@ -91,7 +90,7 @@ export const data: BuiltInData & {
 				route: 'unbound/sources',
 				getComponent: () => SourcesPage
 			}
-		}, */
+		},
 
 		[SettingsKeys.Custom]: {
 			type: 'route',

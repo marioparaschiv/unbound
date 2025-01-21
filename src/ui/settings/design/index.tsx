@@ -6,9 +6,9 @@ import { useSettingsStore } from '@api/storage';
 import { useLayoutEffect, useRef } from 'react';
 import { Strings } from '@api/i18n';
 
-// import Icons from './icons';
-// import Fonts from './fonts';
 import Themes from './themes';
+import Icons from './icons';
+import Fonts from './fonts';
 
 
 const items = [
@@ -26,8 +26,8 @@ const items = [
 		},
 
 		id: 'Icons',
-		page: () => null
-		// ...Icons
+		page: () => null,
+		...Icons
 	},
 	{
 		get label() {
@@ -35,13 +35,13 @@ const items = [
 		},
 
 		id: 'Fonts',
-		page: () => null
-		// ...Fonts
+		page: () => null,
+		...Fonts
 	}
 ] as const;
 
 export default function Design() {
-	const ref = useRef<InstanceType<typeof InstallModal.InternalInstallInput>>();
+	const ref = useRef<InstanceType<typeof InstallModal.InternalInstallInput>>(null);
 	const navigation = DiscordDesign.useNavigation();
 	const settings = useSettingsStore('unbound');
 	const state = DiscordDesign.useSegmentedControlState({
