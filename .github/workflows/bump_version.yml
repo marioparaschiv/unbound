@@ -49,8 +49,8 @@ jobs:
           rm -f $GITHUB_WORKSPACE/builds/*
           cp -r dist/* $GITHUB_WORKSPACE/builds
           cd $GITHUB_WORKSPACE/builds
-          git config --local user.email "me@marioparashiv.com"
-          git config --local user.name "GitHub Actions"
+          git config --local user.email "${{ github.event.head_commit.author.email }}"
+          git config --local user.name "${{ github.event.head_commit.author.name }}"
           git add .
           git commit -m "$GITHUB_SHA"
           git push
