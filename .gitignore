@@ -1,5 +1,4 @@
 node_modules
-dist
 typings
 .DS_Store
 rollup.config-*.*
