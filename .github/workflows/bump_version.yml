@@ -29,11 +29,6 @@ jobs:
         with:
           version: latest
 
-      - name: Prepare Git
-        run: |
-          git config --local user.email "me@marioparashiv.com"
-          git config --local user.name "GitHub Actions"
-
       - name: Bump Patch Version
         if: ${{ !contains(github.event.head_commit.message, 'major') && !contains(github.event.head_commit.message, 'major') }}
         run: |
@@ -54,6 +49,8 @@ jobs:
           rm -f $GITHUB_WORKSPACE/builds/*
           cp -r dist/* $GITHUB_WORKSPACE/builds
           cd $GITHUB_WORKSPACE/builds
+          git config --local user.email "me@marioparashiv.com"
+          git config --local user.name "GitHub Actions"
           git add .
           git commit -m "$GITHUB_SHA"
           git push
