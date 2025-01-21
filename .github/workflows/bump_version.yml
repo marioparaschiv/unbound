@@ -44,6 +44,14 @@ jobs:
         run: |
           pnpm version major
 
+      - name: Install dependencies
+        run: |
+          npm i -g pnpm
+          pnpm i
+
+      - name: Build bundle
+        run: pnpm build
+
       - name: Push to builds repo
         run: |
           rm -f $GITHUB_WORKSPACE/builds/*
