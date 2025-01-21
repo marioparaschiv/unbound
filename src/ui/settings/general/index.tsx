@@ -8,6 +8,7 @@ import { showDialog } from '@api/dialogs';
 import { Section } from '@ui/misc/forms';
 import { Linking } from '@api/metro/api';
 import Unbound from '@ui/icons/unbound';
+import { showToast } from '@api/toasts';
 import { Strings } from '@api/i18n';
 import Assets from '@api/assets';
 import { useMemo } from 'react';
@@ -34,17 +35,14 @@ function General() {
 	const styles = useStyles();
 
 	const Icons = {
-		X: Assets.getIDByName('img_account_sync_x_white'),
 		GitHub: Assets.getIDByName('img_account_sync_github_white'),
 		Development: Assets.getIDByName('ic_progress_wrench_24px'),
-		Plugins: Assets.getIDByName('ic_wand'),
 		Toasts: Assets.getIDByName('ic_notification_settings'),
-		Grid: Assets.getIDByName('GridSquareIcon'),
+		Trash: Assets.getIDByName('trash'),
 		Shield: Assets.getIDByName('ShieldIcon'),
 		Refresh: Assets.getIDByName('RefreshIcon'),
 		Discord: Assets.getIDByName('logo'),
-		HammerAndChisel: Assets.getIDByName('ic_hammer_and_chisel_24px'),
-		Debug: Assets.getIDByName('debug'),
+		Staff: Assets.getIDByName('ic_badge_staff'),
 		Information: Assets.getIDByName('ic_information_24px')
 	};
 
@@ -83,6 +81,18 @@ function General() {
 					arrow
 					onPress={reload}
 				/>
+				<TableRow
+					label={Strings.UNBOUND_CLEAR_CACHES}
+					icon={<TableRowIcon source={Icons.Trash} />}
+					arrow
+					onPress={() => {
+						showToast({
+							title: Strings.UNBOUND_CACHE_CLEARED_TITLE,
+							content: Strings.UNBOUND_CACHE_CLEARED_DESCRIPTION,
+							icon: 'trash'
+						});
+					}}
+				/>
 			</Section>
 			<Section>
 				<TableRow
@@ -106,11 +116,11 @@ function General() {
 			</Section>
 			<Section>
 				<TableSwitchRow
-					label={Strings.UNBOUND_EXPERIMENTS_TITLE}
-					subLabel={Strings.UNBOUND_EXPERIMENTS_DESC}
-					icon={<TableRowIcon source={Icons.HammerAndChisel} />}
-					value={settings.get('experiments', false)}
-					onValueChange={() => settings.toggle('experiments', false)}
+					label={Strings.UNBOUND_STAFF_MODE_TITLE}
+					subLabel={Strings.UNBOUND_STAFF_MODE_DESC}
+					icon={<TableRowIcon source={Icons.Staff} />}
+					value={settings.get('staff-mode', false)}
+					onValueChange={() => settings.toggle('staff-mode', false)}
 				/>
 			</Section>
 			<Section title='Links'>

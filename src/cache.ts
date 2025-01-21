@@ -7,7 +7,7 @@ export enum ModuleFlags {
 	BLACKLISTED = 1 << 0,
 }
 
-export const moduleIds = Object.keys(window.modules);
+export const moduleIds = [...window.modules.keys()];
 
 const CurrentCacheInfo = {
 	cacheVersion: CACHE_VERSION,
@@ -25,6 +25,10 @@ export const state = {
 };
 
 if (!isValidCache()) {
+	invalidateCache();
+}
+
+export function invalidateCache() {
 	state.info = CurrentCacheInfo;
 	state.modules = {};
 	state.moduleFlags = {};
@@ -37,12 +41,12 @@ export function getCachedAssets() {
 	return state.assets;
 }
 
-export function addAssetToCache(moduleId: string) {
+export function addAssetToCache(moduleId: number) {
 	state.assets.push(moduleId);
 	save();
 }
 
-export function removeAssetFromCache(moduleId: string) {
+export function removeAssetFromCache(moduleId: number) {
 	const idx = state.assets.indexOf(moduleId);
 	if (~idx) state.assets.splice(idx, 1);
 	save();
@@ -52,7 +56,7 @@ export function getModuleCacheForKey(key: string) {
 	return state.modules[key];
 }
 
-export function addCachedIDForKey(key: string, item: string) {
+export function addCachedIDForKey(key: string, item: number) {
 	state.modules[key] ??= [];
 
 
@@ -64,7 +68,7 @@ export function addCachedIDForKey(key: string, item: string) {
 	save();
 }
 
-export function removeCachedIDForKey(key: string, item: string) {
+export function removeCachedIDForKey(key: string, item: number) {
 	const store = state.modules[key];
 	if (!store) return true;
 
@@ -80,19 +84,19 @@ export function removeCachedIDForKey(key: string, item: string) {
 	return true;
 }
 
-export function addModuleFlag(id: string, flag: ModuleFlags) {
+export function addModuleFlag(id: number, flag: ModuleFlags) {
 	state.moduleFlags[id] |= flag;
 	save();
 }
 
-export function removeModuleFlag(id: string, flag: ModuleFlags) {
+export function removeModuleFlag(id: number, flag: ModuleFlags) {
 	if (!state.moduleFlags[id]) return true;
 
 	state.moduleFlags[id] &= ~flag;
 	save();
 }
 
-export function hasModuleFlag(id: string, flag: ModuleFlags) {
+export function hasModuleFlag(id: number, flag: ModuleFlags) {
 	if (!state.moduleFlags[id]) return false;
 
 	return Boolean(state.moduleFlags[id] & flag);

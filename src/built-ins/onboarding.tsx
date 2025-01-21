@@ -20,12 +20,12 @@ const Settings = getStore('unbound');
 const { useSharedValue, withTiming } = Reanimated;
 
 export function start() {
-	if (!Settings.get('onboarding.completed', false)) {
-		Settings.set('onboarding.hidden', false);
-		Settings.set('onboarding.install', false);
-	}
+	// if (!Settings.get('onboarding.completed', false)) {
+	// 	Settings.set('onboarding.hidden', false);
+	// 	Settings.set('onboarding.install', false);
+	// }
 
-	patchLaunchPadContainer();
+	// patchLaunchPadContainer();
 }
 
 export function stop() {

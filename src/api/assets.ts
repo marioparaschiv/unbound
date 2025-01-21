@@ -15,18 +15,18 @@ if (cached.length) {
 		const initialized = initializeModule(id);
 		if (!initialized) continue;
 
-		const exported = window.modules[id].publicModule.exports;
+		const exported = window.modules.get(id).publicModule.exports;
 		const asset = Assets.getAssetByID(exported);
 		if (!asset) continue;
 
 		assets.set(exported, asset);
 	}
 } else {
-	for (const id in window.modules) {
+	for (const id of [...window.modules.keys()]) {
 		const initialized = initializeModule(id);
 		if (!initialized) continue;
 
-		const exported = window.modules[id].publicModule.exports;
+		const exported = window.modules.get(id).publicModule.exports;
 		if (typeof exported !== 'number') continue;
 
 		const asset = Assets.getAssetByID(exported);
@@ -50,8 +50,9 @@ export function getByID(id: number): Asset | null {
 }
 
 export function getIDByName(name: string, type: 'svg' | 'png' = 'png'): number | null {
-	const entry = [...assets.entries()].find(([, asset]) => asset.name === name && asset.type === type);
-	return entry?.[0];
+	const [id] = [...assets.entries()].find(([, asset]) => asset.name === name && asset.type === type) ?? [];
+
+	return id;
 }
 
 export function getAll() {

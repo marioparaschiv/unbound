@@ -6,14 +6,14 @@ import { createPatcher } from '@api/patcher';
 import { findStore } from '@api/metro';
 
 
-const Patcher = createPatcher('unbound::experiments');
-const Logger = createLogger('Core', 'Experiments');
+const Patcher = createPatcher('unbound::staff');
+const Logger = createLogger('Core', 'Staff Mode');
 const Settings = getStore('unbound');
 
 export let ws: WebSocket;
 
 export const data: BuiltInData = {
-	name: 'Experiments',
+	name: 'Staff Mode',
 	unpatches: []
 };
 
@@ -36,14 +36,14 @@ function patchDeveloperStore() {
 		Object.defineProperties(self, {
 			isDeveloper: {
 				configurable: false,
-				get: () => Settings.get('experiments', false),
+				get: () => Settings.get('staff-mode', false),
 				set: () => { }
 			}
 		});
 	});
 
 	function handler({ store, key }: SettingsPayload) {
-		if (store !== 'unbound' || key !== 'experiments') return;
+		if (store !== 'unbound' || key !== 'staff-mode') return;
 
 		Store.emitChange();
 	}

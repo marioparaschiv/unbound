@@ -7,11 +7,13 @@ import { CACHE_KEY } from '@constants';
 import Filters from './filters';
 
 
+const blacklist = [];
+
 export { CACHE_KEY } from '@constants';
 export type * from '@typings/api/metro';
 
 export const data = {
-	cache: {},
+	cache: new Map(),
 	patchedNativeRequire: false,
 	patchedRTNProfiler: false,
 	origToString: Function.prototype.toString,
@@ -22,10 +24,10 @@ const Logger = createLogger('Metro');
 
 for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 	const id = Cache.moduleIds[i];
-	const mdl = window.modules[id];
+	const mdl = window.modules.get(id);
 
 	if (Cache.hasModuleFlag(id, ModuleFlags.BLACKLISTED)) {
-		deenumerate(id);
+		blacklist.push(id);
 		continue;
 	}
 
@@ -41,7 +43,7 @@ for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 
 			if (isInvalidExport(exported)) {
 				Cache.addModuleFlag(moduleObject.id, ModuleFlags.BLACKLISTED);
-				deenumerate(moduleObject.id);
+				blacklist.push(moduleObject.id);
 			} else {
 				// TODO: Fix android.
 				// if (!data.patchedRTNProfiler && exported.default?.reactProfilingEnabled) {
@@ -145,8 +147,10 @@ export function find(filter: Filter | Filter, options: SearchOptions = {}) {
 	const cache = Cache.getModuleCacheForKey(filter[CACHE_KEY]);
 	if (cache) {
 		for (const id of cache) {
-			const rawModule = window.modules[id];
+			const rawModule = window.modules.get(id);
 			if (!rawModule) continue;
+
+			if (blacklist.includes(id)) continue;
 
 			if (!rawModule.isInitialized) {
 				const initialized = initializeModule(id);
@@ -165,11 +169,11 @@ export function find(filter: Filter | Filter, options: SearchOptions = {}) {
 	/****** END CACHE ******/
 
 	const store = useCache ? data.cache : window.modules;
-	const keys = useCache ? Object.keys(store) : Cache.moduleIds;
+	const keys = useCache ? [...store.keys()] : Cache.moduleIds;
 
 	for (let i = 0, len = keys.length; i < len; i++) {
 		const id = keys[i];
-		const rawModule = store[id];
+		const rawModule = store.get(id);
 
 		if (!rawModule.isInitialized) {
 			const initialized = initializeModule(id);
@@ -256,7 +260,7 @@ export function findByName<U extends string, T extends U[] | StringFindWithOptio
 	return searchWithOptions(name, options, 'byName');
 };
 
-export function initializeModule(id: string) {
+export function initializeModule(id: number) {
 	try {
 		__r(id);
 
@@ -269,18 +273,18 @@ export function initializeModule(id: string) {
 		return true;
 	} catch (e) {
 		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
-		deenumerate(id);
+		blacklist.push(id);
 		return false;
 	}
 }
 
-function searchExports(filter: Fn, rawModule: any, id: string, esModules: boolean = true, interop: boolean = true, raw: boolean = false) {
+function searchExports(filter: Fn, rawModule: any, id: number, esModules: boolean = true, interop: boolean = true, raw: boolean = false) {
 	const mdl = rawModule.publicModule.exports;
 	if (!mdl) return null;
 
 	if (isInvalidExport(mdl)) {
 		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
-		deenumerate(id);
+		blacklist.push(id);
 		return null;
 	}
 
@@ -365,15 +369,6 @@ function isInvalidExport(mdl: any) {
 		mdl === window ||
 		mdl[Symbol()] === null
 	);
-}
-
-function deenumerate(id: string | number) {
-	Object.defineProperty(window.modules, id, {
-		value: window.modules[id],
-		enumerable: false,
-		configurable: true,
-		writable: true
-	});
 }
 
 function parseOptions<O, A extends any[] = string[]>(

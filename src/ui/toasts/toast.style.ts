@@ -13,7 +13,7 @@ export default Discord.createStyles({
 		width: '90%',
 		maxWidth: 500,
 		position: 'absolute',
-		padding: 2,
+		padding: 4,
 		marginTop: 20,
 		overflow: 'hidden'
 	},

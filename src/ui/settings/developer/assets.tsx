@@ -69,7 +69,7 @@ const Assets = memo(() => {
 	return <ScrollView key='unbound-assets'>
 		<View style={{ marginHorizontal: 16, marginVertical: 12 }}>
 			<GeneralSearch
-				type={'assets'}
+				type='assets'
 				search={search}
 				setSearch={setSearch}
 			/>
@@ -82,14 +82,12 @@ const Assets = memo(() => {
 				initialNumToRender={15}
 				ItemSeparatorComponent={Discord.TableRowDivider}
 				removeClippedSubviews
-				renderItem={({ item: [id, asset], index }) => (
-					<Asset
-						id={id}
-						item={asset}
-						index={index}
-						total={data.length}
-					/>
-				)}
+				renderItem={({ item: [id, asset], index }) => <Asset
+					id={id}
+					item={asset}
+					index={index}
+					total={data.length}
+				/>}
 			/>
 		</Section>
 	</ScrollView>;

@@ -16,6 +16,7 @@ export const store = {
 };
 
 function validateEntry(section: SettingsEntry) {
+	// TODO: Add validation
 	Logger.info('hi');
 
 	return true;

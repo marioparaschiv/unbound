@@ -13,7 +13,7 @@ declare global {
 	var unbound: typeof import('@api') & { version: string; };
 
 	interface Window {
-		modules: { [id: number]: any; };
+		modules: Map<number, any>;
 
 		DevTools: {
 			connect: (options: {

@@ -37,7 +37,9 @@ export const data: BuiltInData & {
 			title: CLIENT_NAME,
 			key: SettingsKeys.General,
 			parent: null,
-			icon: Icons['settings'],
+			get icon() {
+				return Icons['settings'];
+			},
 			IconComponent: () => <Discord.TableRowIcon IconComponent={Unbound} />,
 			screen: {
 				route: 'unbound',
@@ -52,7 +54,9 @@ export const data: BuiltInData & {
 			},
 			key: SettingsKeys.Plugins,
 			parent: null,
-			icon: Icons['debug'],
+			get icon() {
+				return Icons['debug'];
+			},
 			screen: {
 				route: 'unbound/plugins',
 				getComponent: () => PluginsPage
@@ -66,7 +70,9 @@ export const data: BuiltInData & {
 			},
 			key: SettingsKeys.Design,
 			parent: null,
-			icon: Icons['ic_theme_24px'],
+			get icon() {
+				return Icons['ic_theme_24px'];
+			},
 			screen: {
 				route: 'unbound/design',
 				getComponent: () => DesignPage
