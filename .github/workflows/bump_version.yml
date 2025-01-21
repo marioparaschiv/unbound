@@ -52,5 +52,5 @@ jobs:
           git config --local user.email "${{ github.event.head_commit.author.email }}"
           git config --local user.name "${{ github.event.head_commit.author.name }}"
           git add .
-          git commit -m "$GITHUB_SHA"
+          git commit -m "$GITHUB_SHA" || exit 0
           git push
