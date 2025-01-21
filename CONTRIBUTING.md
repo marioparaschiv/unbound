@@ -106,7 +106,7 @@ All of these methods should open a local server on port [PORT] which hosts the f
 In your existing Unbound installation:
 
 1. Go to `Discord Settings` > `Unbound` > `Developer Settings`
-2. Change `Custom Bundle URL` to `http://[LOCAL_IP]:[PORT]/unbound.js
+2. Change `Custom Bundle URL` to `http://[LOCAL_IP]:[PORT]/unbound.js`
 3. Enable `Force Update`
 4. Restart your Discord app
 

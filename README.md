@@ -6,7 +6,7 @@
 
 This repository holds only the source code for the client itself.
 
-- To install Unbound, please read our [documentation](https://docs.unbound.rip/overview) to install the loader for your respective platfor.
+- To install Unbound, please read our [documentation](https://docs.unbound.rip/overview) to install the loader for your respective platform.
 - To contribute to Unbound, please read our [contribution guide](https://github.com/unbound-mod/client/blob/main/CONTRIBUTING.md).
 
 ### 📖 Licensing
