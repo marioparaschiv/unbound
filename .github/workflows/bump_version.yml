@@ -30,8 +30,8 @@ jobs:
 
       - name: Setup Git User
         run: |
-          git config user.email "${{ github.event.head_commit.author.email }}"
-          git config user.name "${{ github.event.head_commit.author.name }}"
+          git config --global user.email "${{ github.event.head_commit.author.email }}"
+          git config --global user.name "${{ github.event.head_commit.author.name }}"
 
       - name: Bump Patch Version
         if: ${{ !contains(github.event.head_commit.message, 'major') && !contains(github.event.head_commit.message, 'major') }}
