@@ -29,7 +29,7 @@ export function showDialog(options: AlertProps) {
 			))}
 			{(options.cancelButton ?? true) && (
 				<Discord.AlertActionButton
-					text={Strings.CANCEL}
+					text={Strings.UNBOUND_CANCEL}
 					variant='secondary'
 					onPress={() => options.onCancel?.()}
 				/>

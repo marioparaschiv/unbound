@@ -104,7 +104,7 @@ export class InternalInstallInput extends PureComponent<InternalInstallModalProp
 				}}
 			/>
 			<Discord.Button
-				text={Strings.CANCEL}
+				text={Strings.UNBOUND_CANCEL}
 				style={{ marginTop: 12 }}
 				onPress={() => {
 					Discord.dismissAlerts();
