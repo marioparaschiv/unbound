@@ -35,10 +35,17 @@ pnpm build
 1. Clone the client repository to your local machine:
 
 ```console
-git clone https://github.com/[YOU]/client --recursive
+$ git clone https://github.com/[YOU]/client --recursive
 ```
 
 (Note `--recursive` to also clone the i18n submodule)
+
+If you cloned the repository without installing the submodule, do so now:
+
+```console
+$ git submodule init
+$ git submodule update --remote --merge
+```
 
 2. Move to the directory you just cloned:
 
@@ -100,8 +107,7 @@ In your existing Unbound installation:
 
 1. Go to `Discord Settings` > `Unbound` > `Developer Settings`
 2. Change `Custom Bundle URL` to `http://[LOCAL_IP]:[PORT]/unbound.js`
-3. Enable `Force Update`
-4. Restart your Discord app
+3. Restart your Discord app
 
 <hr />
 
