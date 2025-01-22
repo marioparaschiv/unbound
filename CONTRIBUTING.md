@@ -40,17 +40,17 @@ $ git clone https://github.com/[YOU]/client --recursive
 
 (Note `--recursive` to also clone the i18n submodule)
 
+2. Move to the directory you just cloned:
+
+```console
+$ cd client
+```
+
 If you cloned the repository without installing the submodule, do so now:
 
 ```console
 $ git submodule init
 $ git submodule update --remote --merge
-```
-
-2. Move to the directory you just cloned:
-
-```console
-$ cd client
 ```
 
 3. Install dependencies:
