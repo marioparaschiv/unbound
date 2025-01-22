@@ -24,11 +24,9 @@ We're so glad you want to contribute! We're sure your contribution will be amazi
 First, make sure you have forked [the repository](https://github.com/unbound-mod/client) so that you have write access.
 
 ```console
-git clone https://github.com/[YOU]/client
+git clone https://github.com/[YOU]/client --recursive
 cd client
 pnpm i
-git submodule init
-git submodule update --remote --merge
 pnpm build
 ```
 
@@ -37,8 +35,10 @@ pnpm build
 1. Clone the client repository to your local machine:
 
 ```console
-git clone https://github.com/[YOU]/client
+git clone https://github.com/[YOU]/client --recursive
 ```
+
+(Note `--recursive` to also clone the i18n submodule)
 
 2. Move to the directory you just cloned:
 
@@ -54,14 +54,7 @@ $ cd client
 $ pnpm i
 ```
 
-4. Initialize the i18n submodule:
-
-```console
-$ git submodule init
-$ git submodule update --remote --merge
-```
-
-5. Build the project:
+4. Build the project:
 
 ```console
 $ pnpm build
