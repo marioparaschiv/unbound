@@ -129,7 +129,7 @@ class Addons<T extends Addon> extends Base<T> {
 			// Replace manifest.json at the end of the URL with the relative bundle file
 			const origin = url.split('/');
 			origin.pop();
-			const main = new URL(manifest.main, origin.join('/'));
+			const main = new URL(manifest.main, origin.join('/') + '/');
 
 			const bundleRequest = await fetch(main, { cache: 'no-cache', signal: createTimeoutSignal() }).catch((error) => {
 				this.logger.error('Failed to fetch bundle URL:', error.message);
