@@ -4,7 +4,7 @@ import { getNativeModule } from '@api/native';
 
 export type * from '@typings/api/fs';
 
-const FileManager: FileManagerType = getNativeModule('DCDFileManager', 'RTNFileManager');
+const FileManager: FileManagerType = getNativeModule('NativeFileModule', 'DCDFileManager', 'RTNFileManager');
 
 export const Documents = FileManager.DocumentsDirPath;
 

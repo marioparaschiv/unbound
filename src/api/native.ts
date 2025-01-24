@@ -4,9 +4,9 @@ import { NativeModules, TurboModuleRegistry } from 'react-native';
 
 export type * from '@typings/api/native';
 
-export const BundleInfo: BundleInfoType = NativeModules.InfoDictionaryManager ?? NativeModules.RTNClientInfoManager;
+export const BundleInfo: BundleInfoType = getNativeModule('NativeClientInfoModule', 'InfoDictionaryManager', 'RTNClientInfoManager');
 export const BundleManager: BundleManagerType = getNativeModule('BundleUpdaterManager');
-export const DeviceInfo: DeviceInfoType = getNativeModule('DCDDeviceManager');
+export const DeviceInfo: DeviceInfoType = getNativeModule('NativeDeviceModule', 'DCDDeviceManager');
 
 export async function reload(instant = true) {
 	if (instant) {
