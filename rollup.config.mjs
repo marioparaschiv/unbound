@@ -43,7 +43,7 @@ const config = {
 
 
 	plugins: [
-		paths({ preserveExtensions: true, nonRelative: process.platform === 'darwin' ? false : true }),
+		paths({ preserveExtensions: true, nonRelative: !(process.platform === 'darwin' || process.platform === 'linux') }),
 		node(),
 		json(),
 		replace({ preventAssignment: true, __VERSION__: revision }),
