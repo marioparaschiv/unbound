@@ -1,3 +1,5 @@
+console.clear();
+
 const BASE_PATH = './dist';
 const PORT = Bun.argv[2] ?? 8080;
 

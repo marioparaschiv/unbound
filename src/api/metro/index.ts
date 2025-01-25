@@ -7,7 +7,7 @@ import { CACHE_KEY } from '@constants';
 import Filters from './filters';
 
 
-const blacklist = [];
+const blacklist = new Set();
 
 export { CACHE_KEY } from '@constants';
 export type * from '@typings/api/metro';
@@ -27,7 +27,7 @@ for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 	const mdl = window.modules.get(id);
 
 	if (Cache.hasModuleFlag(id, ModuleFlags.BLACKLISTED)) {
-		blacklist.push(id);
+		blacklist.add(id);
 		continue;
 	}
 
@@ -43,18 +43,19 @@ for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 
 			if (isInvalidExport(exported)) {
 				Cache.addModuleFlag(moduleObject.id, ModuleFlags.BLACKLISTED);
-				blacklist.push(moduleObject.id);
+				blacklist.add(moduleObject.id);
 			} else {
-				// TODO: Fix android.
-				// if (!data.patchedRTNProfiler && exported.default?.reactProfilingEnabled) {
-				// 	const offender = (Number(id) + 1).toString();
+				if (!data.patchedRTNProfiler && exported.default?.reactProfilingEnabled) {
+					const offender = id + 1;
 
-				// 	Cacher.addFlag(offender, ModuleFlags.BLACKLISTED);
-				// 	deenumerate(offender);
-				// 	i++;
+					if (!window.modules.get(offender)?.isInitialized) {
+						Cache.addModuleFlag(offender, ModuleFlags.BLACKLISTED);
+						blacklist.add(offender);
+						i++;
 
-				// 	data.patchedRTNProfiler = true;
-				// }
+						data.patchedRTNProfiler = true;
+					}
+				}
 
 				if (!data.patchedNativeRequire && exported.default?.name === 'requireNativeComponent') {
 					const orig = exported.default;
@@ -149,8 +150,6 @@ export function find(filter: Filter | Filter, options: SearchOptions = {}) {
 		for (const id of cache) {
 			const rawModule = window.modules.get(id);
 			if (!rawModule) continue;
-
-			if (blacklist.includes(id)) continue;
 
 			if (!rawModule.isInitialized) {
 				const initialized = initializeModule(id);
@@ -261,6 +260,8 @@ export function findByName<U extends string, T extends U[] | StringFindWithOptio
 };
 
 export function initializeModule(id: number) {
+	if (blacklist.has(id)) return;
+
 	try {
 		__r(id);
 
@@ -273,7 +274,7 @@ export function initializeModule(id: number) {
 		return true;
 	} catch (e) {
 		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
-		blacklist.push(id);
+		blacklist.add(id);
 		return false;
 	}
 }
@@ -284,7 +285,7 @@ function searchExports(filter: Fn, rawModule: any, id: number, esModules: boolea
 
 	if (isInvalidExport(mdl)) {
 		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
-		blacklist.push(id);
+		blacklist.add(id);
 		return null;
 	}
 

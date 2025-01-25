@@ -30,7 +30,7 @@
 	},
 	"scripts": {
 		"build": "rollup -c",
-		"serve": "clear && bun run server/index.ts"
+		"serve": "bun run server/index.ts"
 	},
 	"dependencies": {
 		"react-native-svg": "^15.11.1"
