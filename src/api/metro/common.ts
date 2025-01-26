@@ -28,3 +28,4 @@ export const Constants = findByProps('Fonts', 'Endpoints', { lazy: true }) as Co
 export const Theme = findByProps('colors', 'internal', { lazy: true }) as ThemingModule;
 export const REST = findByProps('getAPIBaseURL', { lazy: true }) as APIModule;
 export const i18n = findByProps('Messages', '_requestedLocale', { lazy: true }) as i18nModule;
+export const Navigation = findByProps('pushLazy', { lazy: true });
