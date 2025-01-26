@@ -117,7 +117,7 @@ export function start() {
                 </ScrollView>
                 <Discord.ModalFooter>
                   <Discord.ModalDisclaimer>
-                    Continue to discover how to use Unbound to its fullest potential.
+                    {Strings.UNBOUND_CONTINUE_DISCOVER}
                   </Discord.ModalDisclaimer>
                   <Discord.ModalActionButton
                     text={"Continue"}
