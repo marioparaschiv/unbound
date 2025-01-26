@@ -32,13 +32,13 @@ const useStyles = Discord.createStyles({
 })
 
 export function start() {
-  window.openOnboardingModal = () => Navigation.push(() => (
+  window.openOnboardingModal = () => Navigation.push(({ onClose }) => (
     <Discord.StepModal
       initialRouteName='welcome'
       screens={{
         welcome: {
           headerLeft() {
-            return React.createElement(Discord.getHeaderCloseButton(Navigation.pop));
+            return React.createElement(Discord.getHeaderCloseButton(onClose));
           },
           render(_, navigation) {
             const styles = useStyles();
@@ -120,7 +120,7 @@ export function start() {
         },
         test: {
           headerLeft() {
-            return React.createElement(Discord.getHeaderCloseButton(Navigation.pop));
+            return React.createElement(Discord.getHeaderCloseButton(onClose));
           },
           render(_, navigation) {
             return <Discord.ModalScreen>
