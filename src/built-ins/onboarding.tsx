@@ -163,7 +163,7 @@ export function start() {
     callbacks: {}
   });
 
-  window.meow();
+  setTimeout(() => window.meow(), 1000);
 }
 
 export function stop() {

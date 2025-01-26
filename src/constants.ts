@@ -1,5 +1,3 @@
-import Manager from "@managers/base";
-
 export const CLIENT_NAME = 'Unbound';
 export const CACHE_KEY: unique symbol = Symbol.for('metro.cache');
 export const CACHE_VERSION = 1 as const;
