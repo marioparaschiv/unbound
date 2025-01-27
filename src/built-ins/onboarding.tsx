@@ -1,13 +1,12 @@
 import { Icons } from '@api/assets';
 import { Strings } from '@api/i18n';
-import { findByProps } from '@api/metro';
 import { Constants, Navigation, Theme } from '@api/metro/common';
-import { Discord, Forms } from '@api/metro/components';
+import { Discord } from '@api/metro/components';
 import { ManagerIcons, ManagerKind } from '@constants';
 import type { BuiltInData } from '@typings/built-ins';
 import { Section } from '@ui/misc/forms';
 import { noop } from '@utilities';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, Text, View } from 'react-native';
 
 export const data: BuiltInData = {
 	name: 'Onboarding'
@@ -32,7 +31,7 @@ const useStyles = Discord.createStyles({
 })
 
 export function start() {
-  window.openOnboardingModal = () => Navigation.push(({ onClose }) => (
+  window.openOnboardingModal = () => Navigation.pushLazy(() => Promise.resolve(({ onClose }) => (
     <Discord.StepModal
       initialRouteName='welcome'
       screens={{
@@ -127,7 +126,7 @@ export function start() {
               <ScrollView style={{ flex: 1 }} />
               <Discord.ModalFooter>
                 <Discord.ModalActionButton
-                  text={'Go back'}
+                  text={'Go back!'}
                   variant={'primary'}
                   onPress={navigation.goBack}
                 />
@@ -143,9 +142,9 @@ export function start() {
       }}
       steps={['welcome', 'test']}
     />
-  ));
+  )));
 
-  setTimeout(() => window.openOnboardingModal(), 1000);
+  window.openOnboardingModal();
 }
 
 export function stop() {
