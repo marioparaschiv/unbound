@@ -36,9 +36,7 @@ export function start() {
       initialRouteName='welcome'
       screens={{
         welcome: {
-          headerLeft(...args) {
-            console.log({ args });
-            window.x = args;
+          headerLeft() {
             return React.createElement(Discord.getHeaderCloseButton(onClose));
           },
           render(_, navigation) {
@@ -146,7 +144,7 @@ export function start() {
     />
   )));
 
-  // window.openOnboardingModal();
+  window.openOnboardingModal();
 }
 
 export function stop() {
