@@ -1,3 +1,4 @@
+export * as ConnectingFix from './connecting-fix';
 export * as ErrorBoundary from './error-boundary';
 export * as DebugBridge from './debug-bridge';
 export * as Onboarding from './onboarding';
