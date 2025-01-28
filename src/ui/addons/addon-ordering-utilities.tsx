@@ -8,7 +8,7 @@ import { View } from 'react-native';
 
 export const resolveType = (entity: Manager | Fn<Manager>) => {
 	const resolved = typeof entity === 'function' ? entity() : entity;
-	return managers[resolved].type;
+	return managers[resolved]?.type;
 };
 
 const useStyles = Discord.createStyles({
