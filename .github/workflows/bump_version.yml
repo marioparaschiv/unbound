@@ -22,7 +22,7 @@ jobs:
         with:
           repository: "unbound-mod/builds"
           path: "builds"
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.ROSIE_TOKEN }}
 
       - uses: pnpm/action-setup@v2
         with:
