@@ -367,8 +367,9 @@ function searchWithOptions(args: any[], options: InternalOptions, filter: Fn | s
 function isInvalidExport(mdl: any) {
 	return (
 		!mdl ||
-		mdl === window ||
-		mdl[Symbol()] === null
+		mdl === globalThis ||
+		mdl[Symbol()] !== undefined ||
+		mdl.default?.[Symbol()] !== undefined
 	);
 }
 

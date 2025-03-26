@@ -9,7 +9,7 @@ export const ReactNative: typeof import('react-native') = window.ReactNative;
 export const React: typeof import('react') = window.React;
 
 // Typed Libraries
-export const Reanimated = findByProps('useAnimatedStyle', 'withSpring', { lazy: true }) as ReanimatedModule;
+export const Reanimated = findByProps('useAnimatedStyle', 'useSharedValue', { lazy: true }) as ReanimatedModule;
 export const Gestures = findByProps('Gesture', 'GestureDetector', 'createNativeWrapper', { lazy: true }) as GesturesModule;
 export const Clipboard = findByProps('setString', 'getString', 'setImage', 'getImage', { lazy: true }) as ClipboardModule;
 export const MarkdownParser = findByProps('parse', 'parseToAST', 'reactParserFor', { lazy: true }) as MarkdownParserModule;
