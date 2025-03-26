@@ -1,21 +1,21 @@
-import type { LocaleStrings } from "@typings/api/i18n";
-import { createLogger } from "@structures/logger";
-import { i18n } from "@api/metro/common";
-import CoreStrings from "@i18n";
+import type { LocaleStrings } from '@typings/api/i18n';
+import { createLogger } from '@structures/logger';
+import { i18n } from '@api/metro/common';
+import CoreStrings from '@i18n';
 
 
-export type * from "@typings/api/i18n";
+export type * from '@typings/api/i18n';
 
-const Logger = createLogger("API", "i18n");
+const Logger = createLogger('API', 'i18n');
 
 export const state = {
-	locale: "en-US",
+	locale: 'en-US',
 	messages: {},
 };
 
 function initialize() {
-	state.locale = i18n.getLocale() ?? "en-US";
-	i18n.on("locale", onChange);
+	state.locale = i18n.getLocale() ?? 'en-US';
+	i18n.on('locale', onChange);
 
 	// Add core strings
 	add(CoreStrings);
@@ -36,7 +36,7 @@ function inject() {
 	const context = i18n._provider._context;
 
 	Object.assign(context.messages, state.messages[state.locale] ?? {});
-	Object.assign(context.defaultMessages, state.messages["en-US"] ?? {});
+	Object.assign(context.defaultMessages, state.messages['en-US'] ?? {});
 }
 
 async function onChange(locale) {
@@ -47,9 +47,9 @@ async function onChange(locale) {
 }
 
 export function add(strings: LocaleStrings) {
-	if (typeof strings !== "object" || Array.isArray(strings)) {
+	if (typeof strings !== 'object' || Array.isArray(strings)) {
 		throw new Error(
-			"Locale strings must be an object with languages and strings.",
+			'Locale strings must be an object with languages and strings.',
 		);
 	}
 
@@ -75,13 +75,9 @@ export function add(strings: LocaleStrings) {
 try {
 	initialize();
 } catch (e) {
-	Logger.error("Failed to initialize i18n:", e.message);
+	Logger.error('Failed to initialize i18n:', e.message);
 }
 
-export const Strings = new Proxy({}, {
-	get() {
-		return 'i18n is borked';
-	}
-});
+export const Strings = CoreStrings['en-US'];
 
 // i18n?.Messages ?? {};
