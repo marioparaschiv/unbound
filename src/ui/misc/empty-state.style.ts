@@ -1,25 +1,20 @@
-import { Constants, Theme } from '@api/metro/common';
 import { Discord } from '@api/metro/components';
 
 
 export default Discord.createStyles({
-	recoveryContainer: {
-		marginTop: 10
-	},
-
 	empty: {
 		justifyContent: 'center',
 		alignItems: 'center',
-		marginVertical: 40
+		flex: 1
 	},
 
 	emptyImage: {
-		marginBottom: 10
+		marginBottom: 10,
+		height: '50%',
+		aspectRatio: 1,
 	},
 
 	emptyMessage: {
-		color: Theme.colors.TEXT_MUTED,
-		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
 		textAlign: 'center',
 		paddingHorizontal: 25
 	}

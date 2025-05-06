@@ -1,3 +1,6 @@
+import type { JSX } from 'react';
+
+
 const overrides = {
 	useMemo: factory => factory(),
 	useState: s => [s, () => void 0],

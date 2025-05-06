@@ -1,6 +1,5 @@
 import type { GestureResponderEvent, ImageStyle, TextStyle, ViewProps, ViewStyle } from 'react-native';
 import type { ThemeColorsLiterals } from '@typings/discord/constants';
-import type { SemanticColors } from '@typings/discord/theming';
 import type { PropsWithChildren, ReactElement } from 'react';
 
 
@@ -116,12 +115,12 @@ export type TextVariants = |
 	'code';
 
 export interface ComponentsModule {
-	createStyles: <T extends Record<string, ViewStyle | TextStyle | ImageStyle | SemanticColors | Record<PropertyKey, any>>>(style: T) => Fn<{
+	createStyles: <T extends Record<string, ViewStyle | TextStyle | ImageStyle | Record<PropertyKey, any>>>(style: T) => Fn<{
 		[P in keyof T]:
 		T[P] extends ImageStyle ? ImageStyle :
 		T[P] extends ViewStyle ? ViewStyle :
 		T[P] extends TextStyle ? TextStyle :
-		T[P] extends SemanticColors ? SemanticColors :
+		T[P] extends Record<PropertyKey, any> ? ViewStyle :
 		never;
 	}>;
 

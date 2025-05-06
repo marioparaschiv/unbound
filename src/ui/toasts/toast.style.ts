@@ -25,6 +25,7 @@ export default Discord.createStyles({
 	},
 	contentContainer: {
 		marginLeft: 12,
+		marginVertical: 8,
 		flex: 1,
 		flexDirection: 'column',
 		justifyContent: 'center'
@@ -35,9 +36,6 @@ export default Discord.createStyles({
 		fontSize: 14
 	},
 	content: {
-		fontFamily: Constants.Fonts.PRIMARY_NORMAL,
-		color: Theme.colors.TEXT_MUTED,
-		fontSize: 12,
 		height: 'auto'
 	},
 	icon: {

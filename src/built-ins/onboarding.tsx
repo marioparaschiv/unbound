@@ -3,8 +3,8 @@ import type { BuiltInData } from '@typings/built-ins';
 import { Onboarding, Content } from '@ui/onboarding';
 import { createLogger } from '@structures/logger';
 import { Reanimated } from '@api/metro/common';
+import { createPatcher } from '@api/patcher';
 import { useEffect, useState } from 'react';
-import { createPatcher } from '@patcher';
 import { findByName } from '@api/metro';
 
 

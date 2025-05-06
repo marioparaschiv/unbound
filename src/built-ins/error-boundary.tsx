@@ -1,7 +1,7 @@
 import type { BuiltInData } from '@typings/built-ins';
-import { ErrorBoundary } from '@ui/error-boundary';
 import { createLogger } from '@structures/logger';
-import { createPatcher } from '@patcher';
+import ErrorBoundary from '@ui/error-boundary';
+import { createPatcher } from '@api/patcher';
 import { getStore } from '@api/storage';
 import { findByName } from '@api/metro';
 

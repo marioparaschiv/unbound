@@ -1,5 +1,5 @@
 import type { IconProps, SectionProps, SvgIconProps } from '@typings/ui/forms';
-import { Text, View, ScrollView, Image, type TextStyle } from 'react-native';
+import { View, ScrollView, Image } from 'react-native';
 import { Discord } from '@api/metro/components';
 import { Icons } from '@api/assets';
 import { find } from '@api/metro';
@@ -35,20 +35,12 @@ export const TintedSvgIcon = ({ size = 24, style, icon: Icon }: SvgIconProps) =>
 	/>;
 };
 
-export const TrailingText = ({ children, style }: { children: any, style?: TextStyle; }) => {
-	const styles = useStyles();
-
-	return <Text style={[styles.formText, style]}>
-		{children}
-	</Text>;
-};
-
 export const Switch = find(m => m.FormSwitch && !m.FormTitle, { lazy: true });
 export const Checkbox = find(m => m.FormCheckbox && !m.FormTitle, { lazy: true });
 export const Section = ({ children, style, margin = true, ...props }: SectionProps) => {
 	const styles = useStyles();
 
-	return <ScrollView scrollEnabled={false}>
+	return <ScrollView>
 		<View style={[style, styles.sectionWrapper, { ...(margin ? { marginTop: 16 } : {}) }]}>
 			<Discord.TableRowGroup {...props}>
 				{children}

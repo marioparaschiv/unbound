@@ -1,4 +1,5 @@
-import { View, Text, Image } from 'react-native';
+import { Discord } from '@api/metro/components';
+import { View, Image } from 'react-native';
 import { Icons } from '@api/assets';
 
 import useStyles from './empty-state.style';
@@ -10,11 +11,11 @@ export const Empty = ({ children }) => {
 	return <View style={styles.empty}>
 		<Image
 			style={styles.emptyImage}
-			source={Icons['img_connection_empty_dark']}
+			source={Icons['img_search_empty_dark']}
 		/>
-		<Text style={styles.emptyMessage}>
+		<Discord.Text variant='text-md/semibold' color='text-muted' style={styles.emptyMessage}>
 			{children}
-		</Text>
+		</Discord.Text>
 	</View>;
 };
 

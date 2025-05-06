@@ -1,7 +1,7 @@
 import type { BuiltInData } from '@typings/built-ins';
+import LoggerStore from '@stores/logger';
 import { Util } from '@api/metro/common';
 import { getStore } from '@api/storage';
-import { addLog } from '@stores/logger';
 
 
 export const data: BuiltInData = {
@@ -23,6 +23,8 @@ export function start() {
 	for (const method of ['error', 'info', 'log', 'warn', 'trace', 'debug']) {
 		console[method].__ORIGINAL__ = console[method];
 
+		const store = LoggerStore.getInitialState();
+
 		console[method] = (...args) => {
 			const depth = Settings.get('logging.depth', 2);
 			const payload = [];
@@ -36,8 +38,8 @@ export function start() {
 
 			const output = payload.join(' ');
 
-			addLog({ message: output, level: Levels[method] });
-			window.nativeLoggingHook(output, Levels[method] ?? Levels.info);
+			store.addLog(output, Levels[method] ?? Levels.info);
+			nativeLoggingHook(output, Levels[method] ?? Levels.info);
 		};
 	}
 }

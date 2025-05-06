@@ -8,13 +8,19 @@ importers:
 
   .:
     dependencies:
+      possess:
+        specifier: ^1.0.3
+        version: 1.0.3(@swc/core@1.10.9)(tslib@2.8.1)(typescript@5.7.3)
       react-native-svg:
         specifier: ^15.11.1
-        version: 15.11.1(react-native@0.77.0)(react@18.3.1)
+        version: 15.11.1(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)
+      zustand:
+        specifier: ^5.0.3
+        version: 5.0.3(@types/react@19.0.7)(react@18.3.1)
     devDependencies:
       '@react-native-clipboard/clipboard':
         specifier: ^1.16.1
-        version: 1.16.1(react-native@0.77.0)(react@18.3.1)
+        version: 1.16.1(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)
       '@rollup/plugin-json':
         specifier: ^6.1.0
         version: 6.1.0(rollup@4.31.0)
@@ -26,7 +32,7 @@ importers:
         version: 6.0.2(rollup@4.31.0)
       '@shopify/flash-list':
         specifier: ^1.7.2
-        version: 1.7.2(@babel/runtime@7.26.0)(react-native@0.77.0)(react@18.3.1)
+        version: 1.7.2(@babel/runtime@7.26.0)(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)
       '@swc/core':
         specifier: ^1.10.9
         version: 1.10.9
@@ -41,7 +47,7 @@ importers:
         version: 19.0.7
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.21.0
-        version: 8.21.0(@typescript-eslint/parser@8.21.0)(eslint@9.18.0)(typescript@5.7.3)
+        version: 8.21.0(@typescript-eslint/parser@8.21.0(eslint@9.18.0)(typescript@5.7.3))(eslint@9.18.0)(typescript@5.7.3)
       '@typescript-eslint/parser':
         specifier: ^8.21.0
         version: 8.21.0(eslint@9.18.0)(typescript@5.7.3)
@@ -56,16 +62,16 @@ importers:
         version: 2.30.1
       react-native:
         specifier: ^0.77.0
-        version: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@19.0.7)(react@18.3.1)
+        version: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1)
       react-native-gesture-handler:
         specifier: ^2.22.0
-        version: 2.22.0(react-native@0.77.0)(react@18.3.1)
+        version: 2.22.0(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)
       react-native-reanimated:
         specifier: ^3.16.7
-        version: 3.16.7(@babel/core@7.26.0)(react-native@0.77.0)(react@18.3.1)
+        version: 3.16.7(@babel/core@7.26.0)(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)
       react-native-screens:
         specifier: ^4.5.0
-        version: 4.5.0(react-native@0.77.0)(react@18.3.1)
+        version: 4.5.0(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)
       rollup:
         specifier: ^4.31.0
         version: 4.31.0
@@ -985,6 +991,19 @@ packages:
       rollup:
         optional: true
 
+  '@rollup/plugin-typescript@12.1.2':
+    resolution: {integrity: sha512-cdtSp154H5sv637uMr1a8OTWB0L1SWDSm1rDGiyfcGcvQ6cuTs4MDk2BVEBGysUWago4OJN4EQZqOTl/QY3Jgg==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^2.14.0||^3.0.0||^4.0.0
+      tslib: '*'
+      typescript: '>=3.7.0'
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+      tslib:
+        optional: true
+
   '@rollup/pluginutils@5.1.4':
     resolution: {integrity: sha512-USm05zrsFxYLPdWWq+K3STlWiT/3ELn3RcV5hJMghpeAIhxfsUIg6mt12CBJBInWMV4VneoV7SfGv8xIwo2qNQ==}
     engines: {node: '>=14.0.0'}
@@ -999,8 +1018,18 @@ packages:
     cpu: [arm]
     os: [android]
 
+  '@rollup/rollup-android-arm-eabi@4.37.0':
+    resolution: {integrity: sha512-l7StVw6WAa8l3vA1ov80jyetOAEo1FtHvZDbzXDO/02Sq/QVvqlHkYoFwDJPIMj0GKiistsBudfx5tGFnwYWDQ==}
+    cpu: [arm]
+    os: [android]
+
   '@rollup/rollup-android-arm64@4.31.0':
     resolution: {integrity: sha512-iBbODqT86YBFHajxxF8ebj2hwKm1k8PTBQSojSt3d1FFt1gN+xf4CowE47iN0vOSdnd+5ierMHBbu/rHc7nq5g==}
+    cpu: [arm64]
+    os: [android]
+
+  '@rollup/rollup-android-arm64@4.37.0':
+    resolution: {integrity: sha512-6U3SlVyMxezt8Y+/iEBcbp945uZjJwjZimu76xoG7tO1av9VO691z8PkhzQ85ith2I8R2RddEPeSfcbyPfD4hA==}
     cpu: [arm64]
     os: [android]
 
@@ -1009,8 +1038,18 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
+  '@rollup/rollup-darwin-arm64@4.37.0':
+    resolution: {integrity: sha512-+iTQ5YHuGmPt10NTzEyMPbayiNTcOZDWsbxZYR1ZnmLnZxG17ivrPSWFO9j6GalY0+gV3Jtwrrs12DBscxnlYA==}
+    cpu: [arm64]
+    os: [darwin]
+
   '@rollup/rollup-darwin-x64@4.31.0':
     resolution: {integrity: sha512-hrWL7uQacTEF8gdrQAqcDy9xllQ0w0zuL1wk1HV8wKGSGbKPVjVUv/DEwT2+Asabf8Dh/As+IvfdU+H8hhzrQQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@rollup/rollup-darwin-x64@4.37.0':
+    resolution: {integrity: sha512-m8W2UbxLDcmRKVjgl5J/k4B8d7qX2EcJve3Sut7YGrQoPtCIQGPH5AMzuFvYRWZi0FVS0zEY4c8uttPfX6bwYQ==}
     cpu: [x64]
     os: [darwin]
 
@@ -1019,8 +1058,18 @@ packages:
     cpu: [arm64]
     os: [freebsd]
 
+  '@rollup/rollup-freebsd-arm64@4.37.0':
+    resolution: {integrity: sha512-FOMXGmH15OmtQWEt174v9P1JqqhlgYge/bUjIbiVD1nI1NeJ30HYT9SJlZMqdo1uQFyt9cz748F1BHghWaDnVA==}
+    cpu: [arm64]
+    os: [freebsd]
+
   '@rollup/rollup-freebsd-x64@4.31.0':
     resolution: {integrity: sha512-pCANqpynRS4Jirn4IKZH4tnm2+2CqCNLKD7gAdEjzdLGbH1iO0zouHz4mxqg0uEMpO030ejJ0aA6e1PJo2xrPA==}
+    cpu: [x64]
+    os: [freebsd]
+
+  '@rollup/rollup-freebsd-x64@4.37.0':
+    resolution: {integrity: sha512-SZMxNttjPKvV14Hjck5t70xS3l63sbVwl98g3FlVVx2YIDmfUIy29jQrsw06ewEYQ8lQSuY9mpAPlmgRD2iSsA==}
     cpu: [x64]
     os: [freebsd]
 
@@ -1029,8 +1078,18 @@ packages:
     cpu: [arm]
     os: [linux]
 
+  '@rollup/rollup-linux-arm-gnueabihf@4.37.0':
+    resolution: {integrity: sha512-hhAALKJPidCwZcj+g+iN+38SIOkhK2a9bqtJR+EtyxrKKSt1ynCBeqrQy31z0oWU6thRZzdx53hVgEbRkuI19w==}
+    cpu: [arm]
+    os: [linux]
+
   '@rollup/rollup-linux-arm-musleabihf@4.31.0':
     resolution: {integrity: sha512-w5IzG0wTVv7B0/SwDnMYmbr2uERQp999q8FMkKG1I+j8hpPX2BYFjWe69xbhbP6J9h2gId/7ogesl9hwblFwwg==}
+    cpu: [arm]
+    os: [linux]
+
+  '@rollup/rollup-linux-arm-musleabihf@4.37.0':
+    resolution: {integrity: sha512-jUb/kmn/Gd8epbHKEqkRAxq5c2EwRt0DqhSGWjPFxLeFvldFdHQs/n8lQ9x85oAeVb6bHcS8irhTJX2FCOd8Ag==}
     cpu: [arm]
     os: [linux]
 
@@ -1039,8 +1098,18 @@ packages:
     cpu: [arm64]
     os: [linux]
 
+  '@rollup/rollup-linux-arm64-gnu@4.37.0':
+    resolution: {integrity: sha512-oNrJxcQT9IcbcmKlkF+Yz2tmOxZgG9D9GRq+1OE6XCQwCVwxixYAa38Z8qqPzQvzt1FCfmrHX03E0pWoXm1DqA==}
+    cpu: [arm64]
+    os: [linux]
+
   '@rollup/rollup-linux-arm64-musl@4.31.0':
     resolution: {integrity: sha512-kpQXQ0UPFeMPmPYksiBL9WS/BDiQEjRGMfklVIsA0Sng347H8W2iexch+IEwaR7OVSKtr2ZFxggt11zVIlZ25g==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@rollup/rollup-linux-arm64-musl@4.37.0':
+    resolution: {integrity: sha512-pfxLBMls+28Ey2enpX3JvjEjaJMBX5XlPCZNGxj4kdJyHduPBXtxYeb8alo0a7bqOoWZW2uKynhHxF/MWoHaGQ==}
     cpu: [arm64]
     os: [linux]
 
@@ -1049,8 +1118,18 @@ packages:
     cpu: [loong64]
     os: [linux]
 
+  '@rollup/rollup-linux-loongarch64-gnu@4.37.0':
+    resolution: {integrity: sha512-yCE0NnutTC/7IGUq/PUHmoeZbIwq3KRh02e9SfFh7Vmc1Z7atuJRYWhRME5fKgT8aS20mwi1RyChA23qSyRGpA==}
+    cpu: [loong64]
+    os: [linux]
+
   '@rollup/rollup-linux-powerpc64le-gnu@4.31.0':
     resolution: {integrity: sha512-D7TXT7I/uKEuWiRkEFbed1UUYZwcJDU4vZQdPTcepK7ecPhzKOYk4Er2YR4uHKme4qDeIh6N3XrLfpuM7vzRWQ==}
+    cpu: [ppc64]
+    os: [linux]
+
+  '@rollup/rollup-linux-powerpc64le-gnu@4.37.0':
+    resolution: {integrity: sha512-NxcICptHk06E2Lh3a4Pu+2PEdZ6ahNHuK7o6Np9zcWkrBMuv21j10SQDJW3C9Yf/A/P7cutWoC/DptNLVsZ0VQ==}
     cpu: [ppc64]
     os: [linux]
 
@@ -1059,8 +1138,23 @@ packages:
     cpu: [riscv64]
     os: [linux]
 
+  '@rollup/rollup-linux-riscv64-gnu@4.37.0':
+    resolution: {integrity: sha512-PpWwHMPCVpFZLTfLq7EWJWvrmEuLdGn1GMYcm5MV7PaRgwCEYJAwiN94uBuZev0/J/hFIIJCsYw4nLmXA9J7Pw==}
+    cpu: [riscv64]
+    os: [linux]
+
+  '@rollup/rollup-linux-riscv64-musl@4.37.0':
+    resolution: {integrity: sha512-DTNwl6a3CfhGTAOYZ4KtYbdS8b+275LSLqJVJIrPa5/JuIufWWZ/QFvkxp52gpmguN95eujrM68ZG+zVxa8zHA==}
+    cpu: [riscv64]
+    os: [linux]
+
   '@rollup/rollup-linux-s390x-gnu@4.31.0':
     resolution: {integrity: sha512-O1o5EUI0+RRMkK9wiTVpk2tyzXdXefHtRTIjBbmFREmNMy7pFeYXCFGbhKFwISA3UOExlo5GGUuuj3oMKdK6JQ==}
+    cpu: [s390x]
+    os: [linux]
+
+  '@rollup/rollup-linux-s390x-gnu@4.37.0':
+    resolution: {integrity: sha512-hZDDU5fgWvDdHFuExN1gBOhCuzo/8TMpidfOR+1cPZJflcEzXdCy1LjnklQdW8/Et9sryOPJAKAQRw8Jq7Tg+A==}
     cpu: [s390x]
     os: [linux]
 
@@ -1069,8 +1163,18 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@rollup/rollup-linux-x64-gnu@4.37.0':
+    resolution: {integrity: sha512-pKivGpgJM5g8dwj0ywBwe/HeVAUSuVVJhUTa/URXjxvoyTT/AxsLTAbkHkDHG7qQxLoW2s3apEIl26uUe08LVQ==}
+    cpu: [x64]
+    os: [linux]
+
   '@rollup/rollup-linux-x64-musl@4.31.0':
     resolution: {integrity: sha512-ypB/HMtcSGhKUQNiFwqgdclWNRrAYDH8iMYH4etw/ZlGwiTVxBz2tDrGRrPlfZu6QjXwtd+C3Zib5pFqID97ZA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@rollup/rollup-linux-x64-musl@4.37.0':
+    resolution: {integrity: sha512-E2lPrLKE8sQbY/2bEkVTGDEk4/49UYRVWgj90MY8yPjpnGBQ+Xi1Qnr7b7UIWw1NOggdFQFOLZ8+5CzCiz143w==}
     cpu: [x64]
     os: [linux]
 
@@ -1079,13 +1183,28 @@ packages:
     cpu: [arm64]
     os: [win32]
 
+  '@rollup/rollup-win32-arm64-msvc@4.37.0':
+    resolution: {integrity: sha512-Jm7biMazjNzTU4PrQtr7VS8ibeys9Pn29/1bm4ph7CP2kf21950LgN+BaE2mJ1QujnvOc6p54eWWiVvn05SOBg==}
+    cpu: [arm64]
+    os: [win32]
+
   '@rollup/rollup-win32-ia32-msvc@4.31.0':
     resolution: {integrity: sha512-U1xZZXYkvdf5MIWmftU8wrM5PPXzyaY1nGCI4KI4BFfoZxHamsIe+BtnPLIvvPykvQWlVbqUXdLa4aJUuilwLQ==}
     cpu: [ia32]
     os: [win32]
 
+  '@rollup/rollup-win32-ia32-msvc@4.37.0':
+    resolution: {integrity: sha512-e3/1SFm1OjefWICB2Ucstg2dxYDkDTZGDYgwufcbsxTHyqQps1UQf33dFEChBNmeSsTOyrjw2JJq0zbG5GF6RA==}
+    cpu: [ia32]
+    os: [win32]
+
   '@rollup/rollup-win32-x64-msvc@4.31.0':
     resolution: {integrity: sha512-ul8rnCsUumNln5YWwz0ted2ZHFhzhRRnkpBZ+YRuHoRAlUji9KChpOUOndY7uykrPEPXVbHLlsdo6v5yXo/TXw==}
+    cpu: [x64]
+    os: [win32]
+
+  '@rollup/rollup-win32-x64-msvc@4.37.0':
+    resolution: {integrity: sha512-LWbXUBwn/bcLx2sSsqy7pK5o+Nr+VCoRoAohfJ5C/aBio9nfJmGQqHAhU6pwxV/RmyTk5AqdySma7uwWGlmeuA==}
     cpu: [x64]
     os: [win32]
 
@@ -2414,6 +2533,11 @@ packages:
     resolution: {integrity: sha512-/E57AYkoeQ25qkxMj5PBOVgF8Kiu/h7cYS30Z5+R7WaiCCBfLq58ZI/dSeaEKb9WVJV5n/03QwrN3IeWIFllvw==}
     engines: {node: '>=6'}
 
+  possess@1.0.3:
+    resolution: {integrity: sha512-cku4v0mflgP6vV501OyLaquyBbfv1wLyxa3HBacuX4pAAl7wqbqm6ZA8cqoT3/j3jXXNTLKD6Dm/VpISMKXVrA==}
+    peerDependencies:
+      typescript: ^5
+
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -2584,6 +2708,13 @@ packages:
     deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
 
+  rollup-plugin-dts@6.2.1:
+    resolution: {integrity: sha512-sR3CxYUl7i2CHa0O7bA45mCrgADyAQ0tVtGSqi3yvH28M+eg1+g5d7kQ9hLvEz5dorK3XVsH5L2jwHLQf72DzA==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      rollup: ^3.29.4 || ^4
+      typescript: ^4.5 || ^5.0
+
   rollup-plugin-swc3@0.12.1:
     resolution: {integrity: sha512-iNV1T432XvyejZ19/41C2gLbXxEOiiJynPPAFF0WzwwFT5FHx7SstAp0yjJRLyrbZjfIhoWJVl3hX3c3Stv/GQ==}
     engines: {node: '>=16'}
@@ -2603,6 +2734,11 @@ packages:
 
   rollup@4.31.0:
     resolution: {integrity: sha512-9cCE8P4rZLx9+PjoyqHLs31V9a9Vpvfo4qNcs6JCiGWYhw2gijSetFbH6SSy1whnkgcefnUwr8sad7tgqsGvnw==}
+    engines: {node: '>=18.0.0', npm: '>=8.0.0'}
+    hasBin: true
+
+  rollup@4.37.0:
+    resolution: {integrity: sha512-iAtQy/L4QFU+rTJ1YUjXqJOJzuwEghqWzCEYD2FEghT7Gsy1VdABntrO4CLopA5IkflTyqNiLNwPcOJ3S7UKLg==}
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
@@ -2949,6 +3085,24 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
+
+  zustand@5.0.3:
+    resolution: {integrity: sha512-14fwWQtU3pH4dE0dOpdMiWjddcH+QzKIgk1cl8epwSE7yag43k/AD/m4L6+K7DytAOr9gGBe3/EXj9g7cdostg==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: '>=18.0.0'
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
 
 snapshots:
 
@@ -3940,22 +4094,22 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.18.0
 
-  '@react-native-clipboard/clipboard@1.16.1(react-native@0.77.0)(react@18.3.1)':
+  '@react-native-clipboard/clipboard@1.16.1(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)':
     dependencies:
       react: 18.3.1
-      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@19.0.7)(react@18.3.1)
+      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1)
 
   '@react-native/assets-registry@0.77.0': {}
 
-  '@react-native/babel-plugin-codegen@0.77.0(@babel/preset-env@7.26.0)':
+  '@react-native/babel-plugin-codegen@0.77.0(@babel/preset-env@7.26.0(@babel/core@7.26.0))':
     dependencies:
       '@babel/traverse': 7.26.5
-      '@react-native/codegen': 0.77.0(@babel/preset-env@7.26.0)
+      '@react-native/codegen': 0.77.0(@babel/preset-env@7.26.0(@babel/core@7.26.0))
     transitivePeerDependencies:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/babel-preset@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)':
+  '@react-native/babel-preset@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/plugin-proposal-export-default-from': 7.25.9(@babel/core@7.26.0)
@@ -3998,7 +4152,7 @@ snapshots:
       '@babel/plugin-transform-typescript': 7.26.5(@babel/core@7.26.0)
       '@babel/plugin-transform-unicode-regex': 7.25.9(@babel/core@7.26.0)
       '@babel/template': 7.25.9
-      '@react-native/babel-plugin-codegen': 0.77.0(@babel/preset-env@7.26.0)
+      '@react-native/babel-plugin-codegen': 0.77.0(@babel/preset-env@7.26.0(@babel/core@7.26.0))
       babel-plugin-syntax-hermes-parser: 0.25.1
       babel-plugin-transform-flow-enums: 0.0.2(@babel/core@7.26.0)
       react-refresh: 0.14.2
@@ -4006,23 +4160,23 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/codegen@0.77.0(@babel/preset-env@7.26.0)':
+  '@react-native/codegen@0.77.0(@babel/preset-env@7.26.0(@babel/core@7.26.0))':
     dependencies:
       '@babel/parser': 7.26.5
       '@babel/preset-env': 7.26.0(@babel/core@7.26.0)
       glob: 7.2.3
       hermes-parser: 0.25.1
       invariant: 2.2.4
-      jscodeshift: 17.1.2(@babel/preset-env@7.26.0)
+      jscodeshift: 17.1.2(@babel/preset-env@7.26.0(@babel/core@7.26.0))
       nullthrows: 1.1.1
       yargs: 17.7.2
     transitivePeerDependencies:
       - supports-color
 
-  '@react-native/community-cli-plugin@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)':
+  '@react-native/community-cli-plugin@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))':
     dependencies:
       '@react-native/dev-middleware': 0.77.0
-      '@react-native/metro-babel-transformer': 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)
+      '@react-native/metro-babel-transformer': 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))
       chalk: 4.1.2
       debug: 2.6.9
       invariant: 2.2.4
@@ -4062,10 +4216,10 @@ snapshots:
 
   '@react-native/js-polyfills@0.77.0': {}
 
-  '@react-native/metro-babel-transformer@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)':
+  '@react-native/metro-babel-transformer@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))':
     dependencies:
       '@babel/core': 7.26.0
-      '@react-native/babel-preset': 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)
+      '@react-native/babel-preset': 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))
       hermes-parser: 0.25.1
       nullthrows: 1.1.1
     transitivePeerDependencies:
@@ -4074,17 +4228,19 @@ snapshots:
 
   '@react-native/normalize-colors@0.77.0': {}
 
-  '@react-native/virtualized-lists@0.77.0(@types/react@19.0.7)(react-native@0.77.0)(react@18.3.1)':
+  '@react-native/virtualized-lists@0.77.0(@types/react@19.0.7)(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@types/react': 19.0.7
       invariant: 2.2.4
       nullthrows: 1.1.1
       react: 18.3.1
-      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@19.0.7)(react@18.3.1)
+      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1)
+    optionalDependencies:
+      '@types/react': 19.0.7
 
   '@rollup/plugin-json@6.1.0(rollup@4.31.0)':
     dependencies:
       '@rollup/pluginutils': 5.1.4(rollup@4.31.0)
+    optionalDependencies:
       rollup: 4.31.0
 
   '@rollup/plugin-node-resolve@16.0.0(rollup@4.31.0)':
@@ -4094,84 +4250,164 @@ snapshots:
       deepmerge: 4.3.1
       is-module: 1.0.0
       resolve: 1.22.10
+    optionalDependencies:
       rollup: 4.31.0
 
   '@rollup/plugin-replace@6.0.2(rollup@4.31.0)':
     dependencies:
       '@rollup/pluginutils': 5.1.4(rollup@4.31.0)
       magic-string: 0.30.17
+    optionalDependencies:
       rollup: 4.31.0
+
+  '@rollup/plugin-typescript@12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@5.7.3)':
+    dependencies:
+      '@rollup/pluginutils': 5.1.4(rollup@4.37.0)
+      resolve: 1.22.10
+      typescript: 5.7.3
+    optionalDependencies:
+      rollup: 4.37.0
+      tslib: 2.8.1
 
   '@rollup/pluginutils@5.1.4(rollup@4.31.0)':
     dependencies:
       '@types/estree': 1.0.6
       estree-walker: 2.0.2
       picomatch: 4.0.2
+    optionalDependencies:
       rollup: 4.31.0
 
+  '@rollup/pluginutils@5.1.4(rollup@4.37.0)':
+    dependencies:
+      '@types/estree': 1.0.6
+      estree-walker: 2.0.2
+      picomatch: 4.0.2
+    optionalDependencies:
+      rollup: 4.37.0
+
   '@rollup/rollup-android-arm-eabi@4.31.0':
+    optional: true
+
+  '@rollup/rollup-android-arm-eabi@4.37.0':
     optional: true
 
   '@rollup/rollup-android-arm64@4.31.0':
     optional: true
 
+  '@rollup/rollup-android-arm64@4.37.0':
+    optional: true
+
   '@rollup/rollup-darwin-arm64@4.31.0':
+    optional: true
+
+  '@rollup/rollup-darwin-arm64@4.37.0':
     optional: true
 
   '@rollup/rollup-darwin-x64@4.31.0':
     optional: true
 
+  '@rollup/rollup-darwin-x64@4.37.0':
+    optional: true
+
   '@rollup/rollup-freebsd-arm64@4.31.0':
+    optional: true
+
+  '@rollup/rollup-freebsd-arm64@4.37.0':
     optional: true
 
   '@rollup/rollup-freebsd-x64@4.31.0':
     optional: true
 
+  '@rollup/rollup-freebsd-x64@4.37.0':
+    optional: true
+
   '@rollup/rollup-linux-arm-gnueabihf@4.31.0':
+    optional: true
+
+  '@rollup/rollup-linux-arm-gnueabihf@4.37.0':
     optional: true
 
   '@rollup/rollup-linux-arm-musleabihf@4.31.0':
     optional: true
 
+  '@rollup/rollup-linux-arm-musleabihf@4.37.0':
+    optional: true
+
   '@rollup/rollup-linux-arm64-gnu@4.31.0':
+    optional: true
+
+  '@rollup/rollup-linux-arm64-gnu@4.37.0':
     optional: true
 
   '@rollup/rollup-linux-arm64-musl@4.31.0':
     optional: true
 
+  '@rollup/rollup-linux-arm64-musl@4.37.0':
+    optional: true
+
   '@rollup/rollup-linux-loongarch64-gnu@4.31.0':
+    optional: true
+
+  '@rollup/rollup-linux-loongarch64-gnu@4.37.0':
     optional: true
 
   '@rollup/rollup-linux-powerpc64le-gnu@4.31.0':
     optional: true
 
+  '@rollup/rollup-linux-powerpc64le-gnu@4.37.0':
+    optional: true
+
   '@rollup/rollup-linux-riscv64-gnu@4.31.0':
+    optional: true
+
+  '@rollup/rollup-linux-riscv64-gnu@4.37.0':
+    optional: true
+
+  '@rollup/rollup-linux-riscv64-musl@4.37.0':
     optional: true
 
   '@rollup/rollup-linux-s390x-gnu@4.31.0':
     optional: true
 
+  '@rollup/rollup-linux-s390x-gnu@4.37.0':
+    optional: true
+
   '@rollup/rollup-linux-x64-gnu@4.31.0':
+    optional: true
+
+  '@rollup/rollup-linux-x64-gnu@4.37.0':
     optional: true
 
   '@rollup/rollup-linux-x64-musl@4.31.0':
     optional: true
 
+  '@rollup/rollup-linux-x64-musl@4.37.0':
+    optional: true
+
   '@rollup/rollup-win32-arm64-msvc@4.31.0':
+    optional: true
+
+  '@rollup/rollup-win32-arm64-msvc@4.37.0':
     optional: true
 
   '@rollup/rollup-win32-ia32-msvc@4.31.0':
     optional: true
 
+  '@rollup/rollup-win32-ia32-msvc@4.37.0':
+    optional: true
+
   '@rollup/rollup-win32-x64-msvc@4.31.0':
     optional: true
 
-  '@shopify/flash-list@1.7.2(@babel/runtime@7.26.0)(react-native@0.77.0)(react@18.3.1)':
+  '@rollup/rollup-win32-x64-msvc@4.37.0':
+    optional: true
+
+  '@shopify/flash-list@1.7.2(@babel/runtime@7.26.0)(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.26.0
       react: 18.3.1
-      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@19.0.7)(react@18.3.1)
-      recyclerlistview: 4.2.1(react-native@0.77.0)(react@18.3.1)
+      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1)
+      recyclerlistview: 4.2.1(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)
       tslib: 2.6.3
 
   '@sinclair/typebox@0.27.8': {}
@@ -4311,7 +4547,7 @@ snapshots:
     dependencies:
       '@types/yargs-parser': 21.0.3
 
-  '@typescript-eslint/eslint-plugin@8.21.0(@typescript-eslint/parser@8.21.0)(eslint@9.18.0)(typescript@5.7.3)':
+  '@typescript-eslint/eslint-plugin@8.21.0(@typescript-eslint/parser@8.21.0(eslint@9.18.0)(typescript@5.7.3))(eslint@9.18.0)(typescript@5.7.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.1
       '@typescript-eslint/parser': 8.21.0(eslint@9.18.0)(typescript@5.7.3)
@@ -5221,7 +5457,7 @@ snapshots:
 
   jsc-safe-url@0.2.4: {}
 
-  jscodeshift@17.1.2(@babel/preset-env@7.26.0):
+  jscodeshift@17.1.2(@babel/preset-env@7.26.0(@babel/core@7.26.0)):
     dependencies:
       '@babel/core': 7.26.0
       '@babel/parser': 7.26.5
@@ -5230,7 +5466,6 @@ snapshots:
       '@babel/plugin-transform-nullish-coalescing-operator': 7.26.6(@babel/core@7.26.0)
       '@babel/plugin-transform-optional-chaining': 7.25.9(@babel/core@7.26.0)
       '@babel/plugin-transform-private-methods': 7.25.9(@babel/core@7.26.0)
-      '@babel/preset-env': 7.26.0(@babel/core@7.26.0)
       '@babel/preset-flow': 7.25.9(@babel/core@7.26.0)
       '@babel/preset-typescript': 7.26.0(@babel/core@7.26.0)
       '@babel/register': 7.25.9(@babel/core@7.26.0)
@@ -5242,6 +5477,8 @@ snapshots:
       recast: 0.23.9
       tmp: 0.2.3
       write-file-atomic: 5.0.1
+    optionalDependencies:
+      '@babel/preset-env': 7.26.0(@babel/core@7.26.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -5656,6 +5893,17 @@ snapshots:
     dependencies:
       find-up: 3.0.0
 
+  possess@1.0.3(@swc/core@1.10.9)(tslib@2.8.1)(typescript@5.7.3):
+    dependencies:
+      '@rollup/plugin-typescript': 12.1.2(rollup@4.37.0)(tslib@2.8.1)(typescript@5.7.3)
+      rollup: 4.37.0
+      rollup-plugin-dts: 6.2.1(rollup@4.37.0)(typescript@5.7.3)
+      rollup-plugin-swc3: 0.12.1(@swc/core@1.10.9)(rollup@4.37.0)
+      typescript: 5.7.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - tslib
+
   prelude-ls@1.2.1: {}
 
   pretty-format@29.7.0:
@@ -5706,15 +5954,15 @@ snapshots:
 
   react-is@18.3.1: {}
 
-  react-native-gesture-handler@2.22.0(react-native@0.77.0)(react@18.3.1):
+  react-native-gesture-handler@2.22.0(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1):
     dependencies:
       '@egjs/hammerjs': 2.0.17
       hoist-non-react-statics: 3.3.2
       invariant: 2.2.4
       react: 18.3.1
-      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@19.0.7)(react@18.3.1)
+      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1)
 
-  react-native-reanimated@3.16.7(@babel/core@7.26.0)(react-native@0.77.0)(react@18.3.1):
+  react-native-reanimated@3.16.7(@babel/core@7.26.0)(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1):
     dependencies:
       '@babel/core': 7.26.0
       '@babel/plugin-transform-arrow-functions': 7.25.9(@babel/core@7.26.0)
@@ -5729,36 +5977,35 @@ snapshots:
       convert-source-map: 2.0.0
       invariant: 2.2.4
       react: 18.3.1
-      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@19.0.7)(react@18.3.1)
+      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1)
     transitivePeerDependencies:
       - supports-color
 
-  react-native-screens@4.5.0(react-native@0.77.0)(react@18.3.1):
+  react-native-screens@4.5.0(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
       react-freeze: 1.0.4(react@18.3.1)
-      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@19.0.7)(react@18.3.1)
+      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1)
       warn-once: 0.1.1
 
-  react-native-svg@15.11.1(react-native@0.77.0)(react@18.3.1):
+  react-native-svg@15.11.1(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1):
     dependencies:
       css-select: 5.1.0
       css-tree: 1.1.3
       react: 18.3.1
-      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@19.0.7)(react@18.3.1)
+      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1)
       warn-once: 0.1.1
 
-  react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@19.0.7)(react@18.3.1):
+  react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1):
     dependencies:
       '@jest/create-cache-key-function': 29.7.0
       '@react-native/assets-registry': 0.77.0
-      '@react-native/codegen': 0.77.0(@babel/preset-env@7.26.0)
-      '@react-native/community-cli-plugin': 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)
+      '@react-native/codegen': 0.77.0(@babel/preset-env@7.26.0(@babel/core@7.26.0))
+      '@react-native/community-cli-plugin': 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))
       '@react-native/gradle-plugin': 0.77.0
       '@react-native/js-polyfills': 0.77.0
       '@react-native/normalize-colors': 0.77.0
-      '@react-native/virtualized-lists': 0.77.0(@types/react@19.0.7)(react-native@0.77.0)(react@18.3.1)
-      '@types/react': 19.0.7
+      '@react-native/virtualized-lists': 0.77.0(@types/react@19.0.7)(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1)
       abort-controller: 3.0.0
       anser: 1.4.10
       ansi-regex: 5.0.1
@@ -5789,6 +6036,8 @@ snapshots:
       whatwg-fetch: 3.6.20
       ws: 6.2.3
       yargs: 17.7.2
+    optionalDependencies:
+      '@types/react': 19.0.7
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
@@ -5823,12 +6072,12 @@ snapshots:
       tiny-invariant: 1.3.3
       tslib: 2.8.1
 
-  recyclerlistview@4.2.1(react-native@0.77.0)(react@18.3.1):
+  recyclerlistview@4.2.1(react-native@0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1))(react@18.3.1):
     dependencies:
       lodash.debounce: 4.0.8
       prop-types: 15.8.1
       react: 18.3.1
-      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0)(@types/react@19.0.7)(react@18.3.1)
+      react-native: 0.77.0(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@19.0.7)(react@18.3.1)
       ts-object-utils: 0.0.5
 
   regenerate-unicode-properties@10.2.0:
@@ -5882,6 +6131,14 @@ snapshots:
     dependencies:
       glob: 7.2.3
 
+  rollup-plugin-dts@6.2.1(rollup@4.37.0)(typescript@5.7.3):
+    dependencies:
+      magic-string: 0.30.17
+      rollup: 4.37.0
+      typescript: 5.7.3
+    optionalDependencies:
+      '@babel/code-frame': 7.26.2
+
   rollup-plugin-swc3@0.12.1(@swc/core@1.10.9)(rollup@4.31.0):
     dependencies:
       '@dual-bundle/import-meta-resolve': 4.1.0
@@ -5892,6 +6149,16 @@ snapshots:
       rollup: 4.31.0
       rollup-preserve-directives: 1.1.3(rollup@4.31.0)
 
+  rollup-plugin-swc3@0.12.1(@swc/core@1.10.9)(rollup@4.37.0):
+    dependencies:
+      '@dual-bundle/import-meta-resolve': 4.1.0
+      '@fastify/deepmerge': 2.0.1
+      '@rollup/pluginutils': 5.1.4(rollup@4.37.0)
+      '@swc/core': 1.10.9
+      get-tsconfig: 4.10.0
+      rollup: 4.37.0
+      rollup-preserve-directives: 1.1.3(rollup@4.37.0)
+
   rollup-plugin-typescript-paths@1.5.0(typescript@5.7.3):
     dependencies:
       typescript: 5.7.3
@@ -5900,6 +6167,11 @@ snapshots:
     dependencies:
       magic-string: 0.30.17
       rollup: 4.31.0
+
+  rollup-preserve-directives@1.1.3(rollup@4.37.0):
+    dependencies:
+      magic-string: 0.30.17
+      rollup: 4.37.0
 
   rollup@4.31.0:
     dependencies:
@@ -5924,6 +6196,32 @@ snapshots:
       '@rollup/rollup-win32-arm64-msvc': 4.31.0
       '@rollup/rollup-win32-ia32-msvc': 4.31.0
       '@rollup/rollup-win32-x64-msvc': 4.31.0
+      fsevents: 2.3.3
+
+  rollup@4.37.0:
+    dependencies:
+      '@types/estree': 1.0.6
+    optionalDependencies:
+      '@rollup/rollup-android-arm-eabi': 4.37.0
+      '@rollup/rollup-android-arm64': 4.37.0
+      '@rollup/rollup-darwin-arm64': 4.37.0
+      '@rollup/rollup-darwin-x64': 4.37.0
+      '@rollup/rollup-freebsd-arm64': 4.37.0
+      '@rollup/rollup-freebsd-x64': 4.37.0
+      '@rollup/rollup-linux-arm-gnueabihf': 4.37.0
+      '@rollup/rollup-linux-arm-musleabihf': 4.37.0
+      '@rollup/rollup-linux-arm64-gnu': 4.37.0
+      '@rollup/rollup-linux-arm64-musl': 4.37.0
+      '@rollup/rollup-linux-loongarch64-gnu': 4.37.0
+      '@rollup/rollup-linux-powerpc64le-gnu': 4.37.0
+      '@rollup/rollup-linux-riscv64-gnu': 4.37.0
+      '@rollup/rollup-linux-riscv64-musl': 4.37.0
+      '@rollup/rollup-linux-s390x-gnu': 4.37.0
+      '@rollup/rollup-linux-x64-gnu': 4.37.0
+      '@rollup/rollup-linux-x64-musl': 4.37.0
+      '@rollup/rollup-win32-arm64-msvc': 4.37.0
+      '@rollup/rollup-win32-ia32-msvc': 4.37.0
+      '@rollup/rollup-win32-x64-msvc': 4.37.0
       fsevents: 2.3.3
 
   run-parallel@1.2.0:
@@ -6237,3 +6535,8 @@ snapshots:
       yargs-parser: 21.1.1
 
   yocto-queue@0.1.0: {}
+
+  zustand@5.0.3(@types/react@19.0.7)(react@18.3.1):
+    optionalDependencies:
+      '@types/react': 19.0.7
+      react: 18.3.1

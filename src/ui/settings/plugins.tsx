@@ -1,12 +1,12 @@
 import { Discord } from '@api/metro/components';
-import { AddonList } from '@ui/new-addons';
+import AddonList from '@ui/addons/addon-list';
 import { ManagerKind } from '@constants';
 import { useAddons } from '@ui/hooks';
 import { View } from 'react-native';
 import { Strings } from '@api/i18n';
 
 
-export default function Plugins({ headerRightMargin = false }: { headerRightMargin: boolean; }) {
+export default function Plugins() {
 	const navigation = Discord.useNavigation();
 	const addons = useAddons('Plugins');
 
@@ -22,8 +22,6 @@ export default function Plugins({ headerRightMargin = false }: { headerRightMarg
 		<AddonList
 			kind={ManagerKind.PLUGINS}
 			addons={addons}
-		// onPressInstall={({ type, ref }) => showInstallAlert({ type, ref })}
-		// headerRightMargin={headerRightMargin}
 		/>
 	</View>;
 };

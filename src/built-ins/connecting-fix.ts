@@ -1,10 +1,10 @@
 import type { BuiltInData } from '@typings/built-ins';
 import { findByProps, findStore } from '@api/metro';
 import { Dispatcher } from '@api/metro/common';
-import { createPatcher } from '@patcher';
+import { createPatcher } from '@api/patcher';
 
 
-const Patcher = createPatcher('unbound::connecting_fix');
+const Patcher = createPatcher('unbound::connecting-fix');
 
 export const data: BuiltInData = {
 	name: 'Connecting Fix'
@@ -23,7 +23,7 @@ export function start() {
 				Dispatcher.dispatch({ type: 'APP_STATE_UPDATE', state: 'background' });
 				Dispatcher.dispatch({ type: 'APP_STATE_UPDATE', state: 'active' });
 			}
-		}, 300);
+		}, 250);
 	}, true);
 }
 

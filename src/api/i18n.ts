@@ -28,7 +28,7 @@ try {
 	Logger.error('Failed to initialize i18n:', e.message);
 }
 
-export const Strings = new Proxy({}, {
+export const Strings: Record<string, any> = new Proxy({}, {
 	get(_, prop) {
 		return CoreStrings[state.locale]?.[prop] || 'MISSING_STRING';
 	}

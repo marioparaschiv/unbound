@@ -1,51 +1,50 @@
 import type { InternalToastOptions, ToastOptions } from '@typings/api/toasts';
-import createStore from '@structures/store';
+import type { ToastStoreState } from '@typings/stores/toasts';
 import { uuid } from '@utilities';
+import { create } from 'zustand';
 
 
-const store = createStore<{
-	toasts: {
-		[key: PropertyKey]: InternalToastOptions;
-	};
-}>({ toasts: {} });
+const ToastStore = create<ToastStoreState>((set, get) => ({
+	toasts: {},
 
-function updateToastWithOptions(id: any, options: Nullable<InternalToastOptions>) {
-	store.setState(prev => {
-		const existing = prev.toasts[id];
-		if (!existing) return prev;
+	addToast(options: InternalToastOptions) {
+		options.id ??= uuid();
+		options.date ??= Date.now();
 
-		const toasts = {
-			...prev.toasts,
-			[id]: {
-				...existing,
-				...options
+		set(prev => ({
+			toasts: {
+				...prev.toasts,
+				[options.id]: options
+			}
+		}));
+
+		return {
+			update(newOptions: Nullable<ToastOptions>) {
+				get().updateToastWithOptions(options.id, newOptions);
+			},
+
+			close() {
+				get().updateToastWithOptions(options.id, { closing: true });
 			}
 		};
+	},
 
-		return { toasts };
-	});
-}
+	updateToastWithOptions(id: Required<InternalToastOptions['id']>, options: Partial<InternalToastOptions>) {
+		set((prev) => {
+			const existing = prev.toasts[id];
+			if (!existing) return prev;
 
-export function addToast(options: InternalToastOptions) {
-	options.id ??= uuid();
-	options.date ??= Date.now();
+			const toasts = {
+				...prev.toasts,
+				[id]: {
+					...existing,
+					...options
+				}
+			};
 
-	store.setState(prev => ({
-		toasts: {
-			...prev.toasts,
-			[options.id]: options
-		}
-	}));
+			return { toasts };
+		});
+	}
+}));
 
-	return {
-		update(newOptions: Nullable<ToastOptions>) {
-			updateToastWithOptions(options.id, newOptions);
-		},
-
-		close() {
-			updateToastWithOptions(options.id, { closing: true });
-		}
-	};
-}
-
-export default store;
+export default ToastStore;

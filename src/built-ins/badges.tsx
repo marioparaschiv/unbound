@@ -1,11 +1,11 @@
 import { View, Image, TouchableOpacity } from 'react-native';
 import type { Badge } from '@typings/built-ins/badges';
 import type { BuiltInData } from '@typings/built-ins';
+import { useEffect, useState, type JSX } from 'react';
 import { createLogger } from '@structures/logger';
 import { SocialLinks, Times } from '@constants';
-import { useEffect, useState } from 'react';
+import { createPatcher } from '@api/patcher';
 import { Theme } from '@api/metro/stores';
-import { createPatcher } from '@patcher';
 import { showToast } from '@api/toasts';
 import { findByName } from '@api/metro';
 

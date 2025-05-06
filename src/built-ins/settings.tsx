@@ -1,19 +1,22 @@
 import type { RegisterSettingsEntriesPayload, SettingsEntry } from '@typings/api/settings';
-import { CLIENT_NAME, DispatchTypes, SettingsKeys } from '@constants';
-import type { CustomScreenProps } from '@typings/built-ins/settings';
+import { CLIENT_NAME, DispatchTypes, Screens } from '@constants';
+import MarketplacePage from '@ui/settings/marketplace';
 import type { BuiltInData } from '@typings/built-ins';
 import { findByName, findByProps } from '@api/metro';
+import DeveloperPage from '@ui/settings/developer';
 import { createLogger } from '@structures/logger';
 import { Discord } from '@api/metro/components';
-import SourcesPage from '@ui/settings/sources';
 import PluginsPage from '@ui/settings/plugins';
 import GeneralPage from '@ui/settings/general';
 import EventEmitter from '@structures/emitter';
+import CustomScreen from '@ui/settings/custom';
 import { Dispatcher } from '@api/metro/common';
+import ToastsPage from '@ui/settings/toasts';
 import DesignPage from '@ui/settings/design';
+import AssetsPage from '@ui/settings/assets';
 import { createPatcher } from '@api/patcher';
 import { useEffect, useState } from 'react';
-import Unbound from '@ui/icons/unbound';
+import LogsPage from '@ui/settings/logs';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 
@@ -31,87 +34,136 @@ export const data: BuiltInData & {
 	name: 'Settings',
 	unpatches: [],
 	entries: {
-		[SettingsKeys.General]: {
+		[Screens.General]: {
 			type: 'route',
-			title: CLIENT_NAME,
-			key: SettingsKeys.General,
-			parent: null,
-			get icon() {
-				return Icons['settings'];
+			get title() {
+				return Strings.UNBOUND_GENERAL;
 			},
-			IconComponent: () => <Discord.TableRowIcon IconComponent={Unbound} />,
+			key: Screens.General,
+			parent: null,
+			section: CLIENT_NAME,
+			IconComponent: () => <Discord.TableRowIcon source={Icons['ic_cog_24px']} />,
 			screen: {
-				route: 'unbound',
+				route: Screens.General,
 				getComponent: () => GeneralPage
 			}
 		},
 
-		[SettingsKeys.Plugins]: {
+		[Screens.Plugins]: {
 			type: 'route',
 			get title() {
 				return Strings.UNBOUND_PLUGINS;
 			},
-			key: SettingsKeys.Plugins,
+			key: Screens.Plugins,
 			parent: null,
-			get icon() {
-				return Icons['debug'];
-			},
+			section: CLIENT_NAME,
+			IconComponent: () => <Discord.TableRowIcon source={Icons['debug']} />,
 			screen: {
-				route: 'unbound/plugins',
+				route: Screens.Plugins,
 				getComponent: () => PluginsPage
 			}
 		},
 
-		[SettingsKeys.Design]: {
+		[Screens.Design]: {
 			type: 'route',
 			get title() {
 				return Strings.UNBOUND_DESIGN;
 			},
-			key: SettingsKeys.Design,
+			key: Screens.Design,
 			parent: null,
-			get icon() {
-				return Icons['ic_theme_24px'];
-			},
+			section: CLIENT_NAME,
+			IconComponent: () => <Discord.TableRowIcon source={Icons['PaintPaletteIcon']} />,
 			screen: {
-				route: 'unbound/design',
+				route: Screens.Design,
 				getComponent: () => DesignPage
 			}
 		},
 
-		[SettingsKeys.Sources]: {
+		[Screens.Marketplace]: {
 			type: 'route',
 			get title() {
-				return Strings.UNBOUND_SOURCES;
+				return Strings.UNBOUND_MARKETPLACE;
 			},
-			key: SettingsKeys.Sources,
+			key: Screens.Marketplace,
 			parent: null,
-			icon: Icons['grid'],
+			section: CLIENT_NAME,
+			IconComponent: () => <Discord.TableRowIcon source={Icons['img_collectibles_shop']} />,
 			screen: {
-				route: 'unbound/sources',
-				getComponent: () => SourcesPage
+				route: Screens.Marketplace,
+				getComponent: () => MarketplacePage
 			}
 		},
 
-		[SettingsKeys.Custom]: {
+		[Screens.Developer]: {
+			type: 'route',
+			excludeFromDisplay: true,
+			get title() {
+				return Strings.UNBOUND_DEVELOPER_SETTINGS;
+			},
+			key: Screens.Developer,
+			parent: null,
+			section: CLIENT_NAME,
+			screen: {
+				route: Screens.Developer,
+				getComponent: () => DeveloperPage
+			}
+		},
+
+		[Screens.Toasts]: {
+			type: 'route',
+			excludeFromDisplay: true,
+			get title() {
+				return Strings.UNBOUND_TOAST_SETTINGS;
+			},
+			key: Screens.Toasts,
+			parent: null,
+			section: CLIENT_NAME,
+			screen: {
+				route: Screens.Toasts,
+				getComponent: () => ToastsPage
+			}
+		},
+
+		[Screens.Logs]: {
+			type: 'route',
+			excludeFromDisplay: true,
+			get title() {
+				return Strings.UNBOUND_DEBUG_LOGS;
+			},
+			key: Screens.Logs,
+			parent: null,
+			section: CLIENT_NAME,
+			screen: {
+				route: Screens.Logs,
+				getComponent: () => LogsPage
+			}
+		},
+
+		[Screens.Assets]: {
+			type: 'route',
+			excludeFromDisplay: true,
+			get title() {
+				return Strings.UNBOUND_ASSET_BROWSER;
+			},
+			key: Screens.Assets,
+			parent: null,
+			section: CLIENT_NAME,
+			screen: {
+				route: Screens.Assets,
+				getComponent: () => AssetsPage
+			}
+		},
+
+		[Screens.Custom]: {
 			type: 'route',
 			title: 'Page',
-			key: SettingsKeys.Custom,
+			key: Screens.Custom,
 			excludeFromDisplay: true,
 			parent: null,
 			icon: null,
 			screen: {
-				route: SettingsKeys.Custom,
-				getComponent: () => ({ route }: { route: { params: CustomScreenProps; }; }) => {
-					const { render: Component, title, ...props } = route.params ?? {};
-
-					const navigation = Discord.useNavigation();
-					const unsubscribe = navigation.addListener('focus', () => {
-						unsubscribe();
-						navigation.setOptions({ title });
-					});
-
-					return <Component {...props} />;
-				}
+				route: Screens.Custom,
+				getComponent: () => CustomScreen
 			}
 		}
 	},

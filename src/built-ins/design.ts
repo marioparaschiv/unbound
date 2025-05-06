@@ -1,7 +1,7 @@
 import type { BuiltInData } from '@typings/built-ins';
 import { createLogger } from '@structures/logger';
+import { createPatcher } from '@api/patcher';
 import { findByProps } from '@api/metro';
-import { createPatcher } from '@patcher';
 import themes from '@managers/themes';
 import { Image } from 'react-native';
 import { Documents } from '@api/fs';

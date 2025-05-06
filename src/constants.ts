@@ -1,6 +1,6 @@
 export const CLIENT_NAME = 'Unbound';
-export const CACHE_KEY: unique symbol = Symbol.for('metro.cache');
-export const CACHE_VERSION = 1 as const;
+export const CACHE_KEY = Symbol.for('metro.cache');
+export const CACHE_VERSION = 1;
 
 export enum ManagerKind {
 	PLUGINS,
@@ -28,13 +28,6 @@ export const ManagerEntity = {
 	[ManagerKind.ICONS]: 'icon-pack',
 };
 
-export const ManagerIcons = {
-	[ManagerKind.PLUGINS]: 'StaffBadgeIcon',
-	[ManagerKind.THEMES]: 'ic_paint_brush',
-	[ManagerKind.ICONS]: 'ic_star_filled',
-	[ManagerKind.SOURCES]: 'grid',
-};
-
 export const DISCORD_INVITE = 'unboundapp' as const;
 
 export const DefaultSources = [
@@ -54,11 +47,15 @@ export enum DispatchTypes {
 	REGISTER_SETTINGS_ENTRIES = 'UB_REGISTER_SETTINGS_ENTRIES'
 }
 
-export const SettingsKeys = {
+export const Screens = {
 	General: 'UNBOUND_GENERAL',
 	Plugins: 'UNBOUND_PLUGINS',
 	Design: 'UNBOUND_DESIGN',
-	Sources: 'UNBOUND_SOURCES',
+	Marketplace: 'UNBOUND_MARKETPLACE',
+	Developer: 'UNBOUND_DEVELOPER',
+	Toasts: 'UNBOUND_TOASTS',
+	Logs: 'UNBOUND_LOGS',
+	Assets: 'UNBOUND_ASSETS',
 	Custom: 'UNBOUND_CUSTOM'
 } as const;
 

@@ -14,9 +14,9 @@ export const Gestures = findByProps('Gesture', 'GestureDetector', 'createNativeW
 export const Clipboard = findByProps('setString', 'getString', 'setImage', 'getImage', { lazy: true }) as ClipboardModule;
 export const MarkdownParser = findByProps('parse', 'parseToAST', 'reactParserFor', { lazy: true }) as MarkdownParserModule;
 export const Screens = findByProps('FullWindowOverlay', { lazy: true }) as ScreensModule;
-export const Moment = findByProps('isMoment', { lazy: true }) as MomentModule;
 export const SVG = findByProps('Svg', 'Path', { lazy: true }) as SVGModule;
 export const Commands = findByProps('getBuiltInCommands', { lazy: true });
+export const Moment = findByProps('isMoment') as MomentModule;
 
 // Modules
 export const Util = findByProps('inspect', { lazy: true });

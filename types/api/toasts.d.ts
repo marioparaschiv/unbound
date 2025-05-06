@@ -21,7 +21,7 @@ interface _ToastOptions {
 	duration?: number;
 	onTimeout?: Fn;
 	icon?: string | number | ImageSourcePropType;
-	id?: any;
+	id?: string;
 	buttons?: ToastButton[];
 	tintedIcon?: boolean;
 }

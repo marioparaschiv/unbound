@@ -1,5 +1,6 @@
 import type { FindInTreeOptions, FindInTreePredicate } from '@typings/utilities/findInTree';
 import findInTree from '@utilities/findInTree';
+import type { JSX } from 'react';
 
 
 /**

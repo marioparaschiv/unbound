@@ -1,9 +1,9 @@
 import type { GestureEvent, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import { BackdropFilters, Discord } from '@api/metro/components';
 import type { InternalToastOptions } from '@typings/api/toasts';
-import { View, Image, Text, Pressable } from 'react-native';
 import { Reanimated, Gestures } from '@api/metro/common';
 import { unitToHex, withoutOpacity } from '@utilities';
+import { View, Image, Pressable } from 'react-native';
 import { useSettingsStore } from '@api/storage';
 import { createElement, useState } from 'react';
 import { TintedIcon } from '@ui/misc/forms';
@@ -63,17 +63,16 @@ function Toast(options: InternalToastOptions) {
 						)}
 					</View>}
 					<View style={styles.contentContainer}>
-						{options.title && typeof options.title === 'function' ? createElement(options.title) : <Text style={styles.title}>
+						{options.title && typeof options.title === 'function' ? createElement(options.title) : <Discord.Text variant='text-sm/semibold'>
 							{options.title as string}
-						</Text>}
-						{options.content && typeof options.content === 'function' ? createElement(options.content) : <Text
+						</Discord.Text>}
+						{options.content && typeof options.content === 'function' ? createElement(options.content) : <Discord.Text
 							style={styles.content}
-							onTextLayout={({ nativeEvent: { lines: { length } } }) => {
-								setLinesLength(length > 2 ? length + 1 : length);
-							}}
+							variant='text-sm/normal'
+							color='text-muted'
 						>
 							{options.content as string}
-						</Text>}
+						</Discord.Text>}
 					</View>
 					<Pressable
 						style={[styles.icon, { marginRight: 12, marginVertical: linesLength * 10 }]}
