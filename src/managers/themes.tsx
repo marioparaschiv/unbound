@@ -1,8 +1,8 @@
 import { findInReactTree, findInTree, unitToHex, withoutOpacity } from '@utilities';
-import { findByName, findByProps, findStore } from '@api/metro';
+import { findByFilePath, findByProps, findStore } from '@api/metro';
+import { ImageBackground, StyleSheet } from 'react-native';
 import type { Theme } from '@typings/managers/themes';
 import type { Resolveable } from '@typings/managers';
-import { ImageBackground } from 'react-native';
 import type { Manifest } from '@managers';
 import { ManagerKind } from '@constants';
 import Addons from '@managers/addons';
@@ -185,15 +185,27 @@ class Themes extends Addons<Theme> {
 	}
 
 	async patchChatBackground() {
-		const Chat = findByName('MessagesWrapperConnected', { interop: false });
+		const { default: Messages } = findByFilePath('components_native/chat/Messages.tsx') ?? {};
 
-		if (Chat) {
-			this.patcher.after(Chat, 'default', (_, __, res) => {
+		if (Messages) {
+			this.patcher.after(Messages, 'render', (_, __, res) => {
 				const applied = this.settings.get('applied', null);
 				if (!applied) return res;
 
 				const theme = this.entities.get(applied);
 				if (!theme || !theme.instance.background) return res;
+
+				const Messages = findInReactTree(res, x =>
+					'HACK_fixModalInteraction' in x.props
+					&& x.props?.style
+				);
+
+				if (Messages) {
+					Messages.props.style = StyleSheet.flatten([
+						Messages.props.style,
+						{ backgroundColor: '#00000000' }
+					]);
+				}
 
 				const { instance: { background } } = theme;
 
@@ -208,30 +220,7 @@ class Themes extends Addons<Theme> {
 				);
 			});
 		} else {
-			this.logger.error('Failed to find MessagesWrapperConnected. Theme backgrounds may not function as expected.');
-		}
-
-		const { MessagesWrapper } = findByProps('MessagesWrapper') ?? {};
-
-		if (MessagesWrapper) {
-			this.patcher.after(MessagesWrapper.prototype, 'render', (_, __, res) => {
-				const applied = this.settings.get('applied', null);
-				if (!applied) return res;
-
-				const theme = this.entities.get(applied);
-				if (!theme || !theme.instance.background) return res;
-
-				const Messages = findInReactTree(res, x =>
-					'HACK_fixModalInteraction' in x.props
-					&& x.props?.style
-				);
-
-				if (Messages) {
-					Messages.props.style = [Messages.props.style, { backgroundColor: '#00000000' }];
-				}
-			});
-		} else {
-			this.logger.error('Failed to find MessagesWrapper. Theme backgrounds may not function as expected.');
+			this.logger.error('Failed to find Messages. Theme backgrounds may not function as expected.');
 		}
 	}
 

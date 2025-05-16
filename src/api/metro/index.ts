@@ -277,10 +277,8 @@ export function findByProps<U extends string, T extends U[] | StringFindWithOpti
 	return searchWithOptions(props, options, 'byProps');
 };
 
-export function findByFilePath<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): FunctionSignatureOrArray<T, U> {
+export function findByFilePath<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): AnyProps {
 	const [name, options] = parseOptions<InternalOptions, T>(args);
-
-	console.log(name, options);
 
 	return searchWithOptions(name, options, 'byFilePath');
 };
