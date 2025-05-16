@@ -18,7 +18,7 @@ export default function Plugins() {
 		});
 	});
 
-	return <View>
+	return <View style={{ flex: 1 }}>
 		<AddonList
 			kind={ManagerKind.PLUGINS}
 			addons={addons}

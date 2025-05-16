@@ -1,10 +1,12 @@
 import { Discord } from '@api/metro/components';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
+import { Icons } from '@api/assets';
 
 
 function MarketplacePage() {
-	return <View>
-		<Discord.Text>Under construction.</Discord.Text>
+	return <View style={{ flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+		<Image source={Icons['danger-dave']} />
+		<Discord.Text variant='heading-md/bold'>Coming Soon.</Discord.Text>
 	</View>;
 };
 

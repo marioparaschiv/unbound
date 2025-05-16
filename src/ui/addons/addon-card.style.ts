@@ -7,5 +7,11 @@ export default Discord.createStyles({
 	},
 	card: {
 		flexDirection: 'column'
+	},
+	header: {
+		flexDirection: 'row',
+		gap: 4,
+		justifyContent: 'space-between',
+		alignItems: 'center'
 	}
 });

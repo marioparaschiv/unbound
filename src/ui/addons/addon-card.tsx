@@ -21,7 +21,7 @@ function AddonCard(props: AddonCardProps) {
 
 	return <View style={styles.container}>
 		<Discord.Card style={styles.card}>
-			<View>
+			<View style={styles.header}>
 				<Discord.Text color='text-normal' variant='text-lg/bold'>
 					{addon.data.name}
 				</Discord.Text>
