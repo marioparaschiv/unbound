@@ -14,8 +14,10 @@ export type * from '@typings/api/metro';
 
 export const data = {
 	cache: new Map(),
+	importingModuleId: -1,
 	patchedNativeRequire: false,
 	patchedRTNProfiler: false,
+	patchedImportTracker: false,
 	origToString: Function.prototype.toString,
 	listeners: new Set<(mdl: any, id: string) => void>()
 };
@@ -35,6 +37,9 @@ for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 		const orig = mdl.factory;
 
 		mdl.factory = function (...args) {
+			const originalImportingId = data.importingModuleId;
+			data.importingModuleId = id;
+
 			const [, , , , moduleObject] = args;
 
 			orig.apply(self, args);
@@ -45,36 +50,63 @@ for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 				Cache.addModuleFlag(moduleObject.id, ModuleFlags.BLACKLISTED);
 				blacklist.add(moduleObject.id);
 			} else {
-				if (!data.patchedRTNProfiler && exported.default?.reactProfilingEnabled) {
-					const offender = id + 1;
-
-					if (!window.modules.get(offender)?.isInitialized) {
-						Cache.addModuleFlag(offender, ModuleFlags.BLACKLISTED);
-						blacklist.add(offender);
-						i++;
-
-						data.patchedRTNProfiler = true;
-					}
-				}
-
-				if (!data.patchedNativeRequire && exported.default?.name === 'requireNativeComponent') {
-					const orig = exported.default;
-
-					exported.default = function requireNativeComponent(...args) {
-						try {
-							return orig.apply(this, args);
-						} catch {
-							return args[0];
-						}
-					};
-
-					data.patchedNativeRequire = true;
-				}
+				onModuleRequire(exported, id);
 			}
+
+			data.importingModuleId = originalImportingId;
 		};
+	} else {
+		const exported = mdl.publicModule?.exports;
+		onModuleRequire(exported, id);
 	}
 }
 
+function onModuleRequire(exports: any, id: number) {
+	if (!data.patchedRTNProfiler && exports.default?.reactProfilingEnabled) {
+		const offender = id + 1;
+
+		if (!window.modules.get(offender)?.isInitialized) {
+			Cache.addModuleFlag(offender, ModuleFlags.BLACKLISTED);
+			blacklist.add(offender);
+
+			data.patchedRTNProfiler = true;
+		}
+	}
+
+	if (!data.patchedNativeRequire && exports.default?.name === 'requireNativeComponent') {
+		const orig = exports.default;
+
+		exports.default = function requireNativeComponent(...args) {
+			try {
+				return orig.apply(this, args);
+			} catch {
+				return args[0];
+			}
+		};
+
+		data.patchedNativeRequire = true;
+	}
+
+	if (!data.patchedImportTracker && exports.fileFinishedImporting) {
+		const orig = exports.fileFinishedImporting;
+
+		exports.fileFinishedImporting = function (...args) {
+			const [filePath] = args;
+
+			if (filePath && data.importingModuleId !== -1) {
+				const module = window.modules.get(data.importingModuleId);
+				module.__filePath = filePath;
+			}
+
+			const result = orig.apply(this, args);
+
+
+			return result;
+		};
+
+		data.patchedImportTracker = true;
+	}
+}
 
 export function addListener(listener: (mdl: any, id: string) => void) {
 	data.listeners.add(listener);
@@ -109,7 +141,7 @@ export function findLazy(filter: Filter | Filter, options?: Omit<SearchOptions, 
 	});
 }
 
-export function find(filter: Filter | Filter, options: SearchOptions = {}) {
+export function find(filter: Filter, options: SearchOptions = {}) {
 	if (!filter) throw new Error('You must provide a filter to search by.');
 
 	const {
@@ -142,6 +174,10 @@ export function find(filter: Filter | Filter, options: SearchOptions = {}) {
 
 	if (filter[CACHE_KEY]) {
 		search[CACHE_KEY] = filter[CACHE_KEY];
+	}
+
+	if (filter.isRaw) {
+		search.isRaw = true;
 	}
 
 	/****** CACHE ******/
@@ -241,6 +277,14 @@ export function findByProps<U extends string, T extends U[] | StringFindWithOpti
 	return searchWithOptions(props, options, 'byProps');
 };
 
+export function findByFilePath<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): FunctionSignatureOrArray<T, U> {
+	const [name, options] = parseOptions<InternalOptions, T>(args);
+
+	console.log(name, options);
+
+	return searchWithOptions(name, options, 'byFilePath');
+};
+
 export function findByPrototypes<U extends string, T extends U[] | StringFindWithOptions<U> | BulkFind<U>>(...args: T): AnyProps {
 	const [prototypes, options] = parseOptions<InternalOptions, T>(args);
 
@@ -279,7 +323,7 @@ export function initializeModule(id: number) {
 	}
 }
 
-function searchExports(filter: Fn, rawModule: any, id: number, esModules: boolean = true, interop: boolean = true, raw: boolean = false) {
+function searchExports(filter: Filter, rawModule: any, id: number, esModules: boolean = true, interop: boolean = true, raw: boolean = false) {
 	const mdl = rawModule.publicModule.exports;
 	if (!mdl) return null;
 
@@ -289,7 +333,7 @@ function searchExports(filter: Fn, rawModule: any, id: number, esModules: boolea
 		return null;
 	}
 
-	if (filter(mdl, id)) {
+	if (filter(filter.isRaw ? rawModule : mdl, id)) {
 		if (filter[CACHE_KEY]) {
 			Cache.addCachedIDForKey(filter[CACHE_KEY], id);
 		}
@@ -299,7 +343,7 @@ function searchExports(filter: Fn, rawModule: any, id: number, esModules: boolea
 		return raw ? rawModule : mdl;
 	}
 
-	if (esModules && mdl.default && filter(mdl.default, id)) {
+	if (!filter.isRaw && esModules && mdl.default && filter(mdl.default, id)) {
 		if (filter[CACHE_KEY]) {
 			Cache.addCachedIDForKey(filter[CACHE_KEY], id);
 		}
@@ -368,8 +412,8 @@ function isInvalidExport(mdl: any) {
 	return (
 		!mdl ||
 		mdl === globalThis ||
-		mdl[Symbol()] !== undefined ||
-		mdl.default?.[Symbol()] !== undefined
+		mdl[Symbol()] === null ||
+		(mdl.default?.[Symbol.toStringTag] === 'IntlMessagesProxy')
 	);
 }
 

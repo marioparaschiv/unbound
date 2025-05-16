@@ -24,6 +24,15 @@ export function byProps(...props: string[]): Filter {
 	return filter;
 }
 
+export function byFilePath(path: string[]): Filter {
+	const filter = (mdl: any) => mdl.__filePath === path;
+
+	filter[CACHE_KEY] = `byFilePath::${path}`;
+	filter.isRaw = true;
+
+	return filter;
+}
+
 export function byPrototypes(...prototypes: string[]): Filter {
 	const filter = (mdl: any) => {
 		if (!mdl.prototype) return false;
@@ -67,4 +76,4 @@ export function byStore(name: string, short: boolean = true): Filter {
 	return filter;
 }
 
-export default { byProps, byDisplayName, byPrototypes, byName, byStore };
+export default { byProps, byDisplayName, byPrototypes, byName, byStore, byFilePath };
