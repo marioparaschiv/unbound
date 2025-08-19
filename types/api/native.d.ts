@@ -71,8 +71,6 @@ export interface UnboundNativePluginAPIType {
 		sound?: boolean,
 		notificationId?: string
 	) => Promise<any>;
-	enableScreenCaptureProtection: () => Promise<any>;
-	disableScreenCaptureProtection: () => Promise<any>;
 }
 
 export interface UnboundNativeChatUIType {

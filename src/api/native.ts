@@ -155,14 +155,6 @@ export const UnboundNative = {
 				notificationId
 			]);
 		},
-
-		enableScreenCaptureProtection: () => {
-			return NativeBridge.call('PluginAPI', 'enableScreenCaptureProtection', []);
-		},
-
-		disableScreenCaptureProtection: () => {
-			return NativeBridge.call('PluginAPI', 'disableScreenCaptureProtection', []);
-		}
 	},
 
 	chatUI: {
