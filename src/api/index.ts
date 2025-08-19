@@ -11,7 +11,6 @@ export * as storage from './storage';
 export * as dialogs from './dialogs';
 export * as toasts from './toasts';
 export * as native from './native';
-export { UnboundNative } from './native';
 export * as i18n from './i18n';
 export * as fs from './fs';
 
