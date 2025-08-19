@@ -38,3 +38,56 @@ export interface BundleManagerType {
 	addListener: Fn;
 	removeListeners: Fn;
 };
+
+export interface NativeBridgeType {
+	call: (module: string, method: string, args?: any[]) => Promise<any>;
+}
+
+export interface UnboundNativeUtilitiesType {
+	getDeviceModel: () => Promise<string>;
+	getDeviceModelIdentifier: () => Promise<string>;
+	getIOSVersionString: () => Promise<string>;
+	getHermesBytecodeVersion: () => Promise<string>;
+	isJailbroken: () => Promise<boolean>;
+	isSystemApp: () => Promise<boolean>;
+	isVerifiedBuild: () => Promise<boolean>;
+	isAppStoreApp: () => Promise<boolean>;
+	isTestFlightApp: () => Promise<boolean>;
+	isTrollStoreApp: () => Promise<boolean>;
+	getTrollStoreVariant: () => Promise<string>;
+	getApplicationEntitlements: () => Promise<any>;
+	formatEntitlementsAsPlist: (entitlements: any) => Promise<string>;
+	showAlert: (message: string, title?: string) => Promise<any>;
+	getAppRegistrationType: () => Promise<'System' | 'User'>;
+	getAppSource: () => Promise<string>;
+	getEntitlementsAsPlist: () => Promise<string>;
+}
+
+export interface UnboundNativePluginAPIType {
+	showNotification: (
+		title: string,
+		content: string,
+		scheduledTime?: number,
+		sound?: boolean,
+		notificationId?: string
+	) => Promise<any>;
+	enableScreenCaptureProtection: () => Promise<any>;
+	disableScreenCaptureProtection: () => Promise<any>;
+}
+
+export interface UnboundNativeChatUIType {
+	setAvatarCornerRadius: (radius: number) => Promise<any>;
+	resetAvatarCornerRadius: () => Promise<any>;
+	getAvatarCornerRadius: () => Promise<number>;
+	setMessageBubblesEnabled: (enabled: boolean, lightColor?: string, darkColor?: string) => Promise<any>;
+	setMessageBubbleColors: (lightColor: string, darkColor: string) => Promise<any>;
+	getMessageBubbleLightColor: () => Promise<string>;
+	getMessageBubbleDarkColor: () => Promise<string>;
+}
+
+export interface UnboundNativeType {
+	bridge: NativeBridgeType;
+	utilities: UnboundNativeUtilitiesType;
+	pluginAPI: UnboundNativePluginAPIType;
+	chatUI: UnboundNativeChatUIType;
+}

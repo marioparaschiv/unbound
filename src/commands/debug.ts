@@ -1,14 +1,14 @@
 import type { ApplicationCommand } from '@typings/api/commands';
-import { DeviceInfo, BundleInfo } from '@api/native';
+import { DeviceInfo, BundleInfo, UnboundNative } from '@api/native';
+import { Platform } from 'react-native';
 
 
 export default {
 	name: 'debug',
 	description: 'Prints out information to help debug unbound.',
 
-	execute: () => {
+	execute: async () => {
 		const payload = [];
-
 		const Runtime = (HermesInternal as any).getRuntimeProperties();
 
 		payload.push('**Debug Info:**');
@@ -18,7 +18,52 @@ export default {
 		payload.push(`> **Build**: ${BundleInfo.Build} on ${BundleInfo.ReleaseChannel}`);
 		payload.push(`> **Hermes**: ${Runtime['OSS Release Version']}`);
 		payload.push(`> **Bytecode**: ${Runtime['Bytecode Version']}`);
-		payload.push(`> **Device**: ${DeviceInfo.device} (${DeviceInfo.systemVersion})`);
+
+		if (Platform.OS !== 'ios') {
+			payload.push(`> **Device**: ${DeviceInfo.device} (${DeviceInfo.systemVersion})`);
+		}
+
+		let files: any[] = [];
+
+		if (Platform.OS === 'ios') {
+			try {
+				const [
+					deviceModel,
+					iosVersion,
+					appSource,
+					appRegistrationType,
+					isJailbroken,
+					isVerified
+				] = await Promise.all([
+					UnboundNative.utilities.getDeviceModel(),
+					UnboundNative.utilities.getIOSVersionString(),
+					UnboundNative.utilities.getAppSource(),
+					UnboundNative.utilities.getAppRegistrationType(),
+					UnboundNative.utilities.isJailbroken(),
+					UnboundNative.utilities.isVerifiedBuild()
+				]);
+
+				const verificationStatus = isVerified
+					? '☑️ Verified Unbound build signature'
+					: '❌ Not a verified Unbound build';
+
+				payload.push(`> **Device Model**: ${deviceModel}`);
+				payload.push(`> **iOS Version**: ${iosVersion}`);
+				payload.push(`> **App Source**: ${appSource}`);
+				payload.push(`> **App Registration**: ${appRegistrationType}`);
+				payload.push(`> **Jailbroken**: ${isJailbroken ? 'Yes' : 'No'}`);
+				payload.push(`> **Build Verification**: ${verificationStatus}`);
+
+				try {
+					const entitlementsPlist = await UnboundNative.utilities.getEntitlementsAsPlist();
+					if (entitlementsPlist) {
+						// TODO: someone needs to tell me how I attach a file to the command response lol
+					}
+				} catch (error) {
+				}
+			} catch (error) {
+			}
+		}
 
 		const content = payload.join('\n');
 
