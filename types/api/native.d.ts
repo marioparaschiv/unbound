@@ -9,7 +9,7 @@ export interface BundleInfoType {
 	SentryStaffDsn: string;
 	Identifier: string;
 	SentryAlphaBetaDsn: string;
-};
+}
 
 export interface DeviceInfoType {
 	isTaskBarEnabled: boolean;
@@ -24,7 +24,7 @@ export interface DeviceInfoType {
 	deviceBrand: string;
 	ramSize: string;
 	device: string;
-};
+}
 
 export interface BundleManagerType {
 	getInitialBundleDownloaded: PromiseFn;
@@ -37,7 +37,7 @@ export interface BundleManagerType {
 	getManifestInfo: PromiseFn;
 	addListener: Fn;
 	removeListeners: Fn;
-};
+}
 
 export interface NativeBridgeType {
 	call: (module: string, method: string, args?: any[]) => Promise<any>;
@@ -46,7 +46,7 @@ export interface NativeBridgeType {
 export interface UnboundNativeUtilitiesType {
 	getDeviceModel: () => Promise<string>;
 	getDeviceModelIdentifier: () => Promise<string>;
-	getIOSVersionString: () => Promise<string>;
+	getiOSVersionString: () => Promise<string>;
 	getHermesBytecodeVersion: () => Promise<string>;
 	isJailbroken: () => Promise<boolean>;
 	isSystemApp: () => Promise<boolean>;
@@ -56,8 +56,6 @@ export interface UnboundNativeUtilitiesType {
 	isTrollStoreApp: () => Promise<boolean>;
 	getTrollStoreVariant: () => Promise<string>;
 	getApplicationEntitlements: () => Promise<any>;
-	formatEntitlementsAsPlist: (entitlements: any) => Promise<string>;
-	showAlert: (message: string, title?: string) => Promise<any>;
 	getAppRegistrationType: () => Promise<'System' | 'User'>;
 	getAppSource: () => Promise<string>;
 	getEntitlementsAsPlist: () => Promise<string>;

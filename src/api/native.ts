@@ -66,7 +66,7 @@ export const UnboundNative = {
 			return NativeBridge.call('Utilities', 'getDeviceModelIdentifier', []);
 		},
 
-		getIOSVersionString: () => {
+		getiOSVersionString: () => {
 			return NativeBridge.call('Utilities', 'getIOSVersionString', []);
 		},
 
@@ -100,14 +100,6 @@ export const UnboundNative = {
 
 		getApplicationEntitlements: () => {
 			return NativeBridge.call('Utilities', 'getApplicationEntitlements', []);
-		},
-
-		formatEntitlementsAsPlist: (entitlements: any) => {
-			return NativeBridge.call('Utilities', 'formatEntitlementsAsPlist', [entitlements]);
-		},
-
-		showAlert: (message: string, title = 'Alert') => {
-			return NativeBridge.call('Utilities', 'alert', [message, title]);
 		},
 
 		getAppRegistrationType: async (): Promise<'System' | 'User'> => {

@@ -20,7 +20,7 @@ export default {
 		payload.push(`- **Hermes:** ${Runtime['OSS Release Version']}`);
 		payload.push(`- **Bytecode:** ${Runtime['Bytecode Version']}`);
 
-		let files: any[] = [];
+		let attachments: any[] = [];
 
 		if (Platform.OS === 'ios') {
 			try {
@@ -33,7 +33,7 @@ export default {
 					isVerified
 				] = await Promise.all([
 					UnboundNative.utilities.getDeviceModel(),
-					UnboundNative.utilities.getIOSVersionString(),
+					UnboundNative.utilities.getiOSVersionString(),
 					UnboundNative.utilities.getAppSource(),
 					UnboundNative.utilities.getAppRegistrationType(),
 					UnboundNative.utilities.isJailbroken(),
