@@ -20,7 +20,7 @@ export default {
 		payload.push(`- **Hermes:** ${Runtime['OSS Release Version']}`);
 		payload.push(`- **Bytecode:** ${Runtime['Bytecode Version']}`);
 
-		let attachments: any[] = [];
+		let files: any[] = [];
 
 		if (Platform.OS === 'ios') {
 			try {
@@ -51,6 +51,8 @@ export default {
 					const entitlementsPlist = await UnboundNative.utilities.getEntitlementsAsPlist();
 					if (entitlementsPlist) {
 						// TODO: someone needs to tell me how to attach files to the command response lol
+						const blob = new Blob([entitlementsPlist], { type: 'text/xml' });
+						files.push(blob);
 					}
 				} catch (error) {
 				}
@@ -63,6 +65,6 @@ export default {
 
 		const content = payload.join('\n');
 
-		return { content };
+		return { content, files: files.length ? files : undefined };
 	}
 } as ApplicationCommand;

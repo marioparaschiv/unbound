@@ -45,7 +45,6 @@ export interface NativeBridgeType {
 
 export interface UnboundNativeUtilitiesType {
 	getDeviceModel: () => Promise<string>;
-	getDeviceModelIdentifier: () => Promise<string>;
 	getiOSVersionString: () => Promise<string>;
 	getHermesBytecodeVersion: () => Promise<string>;
 	isJailbroken: () => Promise<boolean>;

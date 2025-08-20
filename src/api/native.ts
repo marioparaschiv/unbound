@@ -62,12 +62,8 @@ export const UnboundNative = {
 			return NativeBridge.call('Utilities', 'getDeviceModel', []);
 		},
 
-		getDeviceModelIdentifier: () => {
-			return NativeBridge.call('Utilities', 'getDeviceModelIdentifier', []);
-		},
-
 		getiOSVersionString: () => {
-			return NativeBridge.call('Utilities', 'getIOSVersionString', []);
+			return NativeBridge.call('Utilities', 'getiOSVersionString', []);
 		},
 
 		isJailbroken: () => {
