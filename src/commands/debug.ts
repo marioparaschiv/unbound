@@ -44,8 +44,8 @@ export default {
 				]);
 
 				const verificationStatus = isVerified
-					? '☑️ Verified Unbound build signature'
-					: '❌ Not a verified Unbound build';
+					? '☑️ Verified build signature'
+					: '❌ Not a verified build';
 
 				payload.push(`> **Device Model**: ${deviceModel}`);
 				payload.push(`> **iOS Version**: ${iosVersion}`);
