@@ -11,17 +11,14 @@ export default {
 		const payload = [];
 		const Runtime = (HermesInternal as any).getRuntimeProperties();
 
-		payload.push('**Debug Info:**');
-		payload.push(`> **Client**: ${window.unbound.version}`);
-		payload.push(`> **Loader**: ${window.UNBOUND_LOADER?.origin ?? 'N/A'} - ${window.UNBOUND_LOADER?.platform ?? 'N/A'} (Version ${window.UNBOUND_LOADER?.version ?? 'N/A'})`);
-		payload.push(`> **Discord**: ${BundleInfo.Version}`);
-		payload.push(`> **Build**: ${BundleInfo.Build} on ${BundleInfo.ReleaseChannel}`);
-		payload.push(`> **Hermes**: ${Runtime['OSS Release Version']}`);
-		payload.push(`> **Bytecode**: ${Runtime['Bytecode Version']}`);
-
-		if (Platform.OS !== 'ios') {
-			payload.push(`> **Device**: ${DeviceInfo.device} (${DeviceInfo.systemVersion})`);
-		}
+		payload.push('**Debug Info**:');
+		payload.push('');
+		payload.push(`- **Client:** ${window.unbound.version}`);
+		payload.push(`- **Discord:** ${BundleInfo.Version}`);
+		payload.push(`- **Build:** ${BundleInfo.Build} on ${BundleInfo.ReleaseChannel}`);
+		payload.push(`- **Loader:** ${window.UNBOUND_LOADER?.origin ?? 'N/A'} - ${window.UNBOUND_LOADER?.platform ?? 'N/A'} (${window.UNBOUND_LOADER?.version ?? 'N/A'})`);
+		payload.push(`- **Hermes:** ${Runtime['OSS Release Version']}`);
+		payload.push(`- **Bytecode:** ${Runtime['Bytecode Version']}`);
 
 		let files: any[] = [];
 
@@ -43,26 +40,25 @@ export default {
 					UnboundNative.utilities.isVerifiedBuild()
 				]);
 
-				const verificationStatus = isVerified
-					? '☑️ Verified build signature'
-					: '❌ Not a verified build';
-
-				payload.push(`> **Device Model**: ${deviceModel}`);
-				payload.push(`> **iOS Version**: ${iosVersion}`);
-				payload.push(`> **App Source**: ${appSource}`);
-				payload.push(`> **App Registration**: ${appRegistrationType}`);
-				payload.push(`> **Jailbroken**: ${isJailbroken ? 'Yes' : 'No'}`);
-				payload.push(`> **Build Verification**: ${verificationStatus}`);
+				payload.push(`- **Device:** ${deviceModel}`);
+				payload.push(`- **iOS:** ${iosVersion}`);
+				payload.push(`- **Jailbroken:** ${isJailbroken ? '✅' : '❌'}`);
+				payload.push(`- **Source:** ${appSource}`);
+				payload.push(`- **Registration:** ${appRegistrationType}`);
+				payload.push(`- **Verified:** ${isVerified ? '✅' : '❌'}`);
 
 				try {
 					const entitlementsPlist = await UnboundNative.utilities.getEntitlementsAsPlist();
 					if (entitlementsPlist) {
-						// TODO: someone needs to tell me how I attach a file to the command response lol
+						// TODO: someone needs to tell me how to attach files to the command response lol
 					}
 				} catch (error) {
 				}
 			} catch (error) {
 			}
+		} else {
+			payload.push(`- **Device:** ${DeviceInfo.device}`);
+			payload.push(`- **OS:** ${DeviceInfo.systemVersion}`);
 		}
 
 		const content = payload.join('\n');
