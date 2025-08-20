@@ -16,7 +16,7 @@ export default {
 		payload.push(`- **Client:** ${window.unbound.version}`);
 		payload.push(`- **Discord:** ${BundleInfo.Version}`);
 		payload.push(`- **Build:** ${BundleInfo.Build} on ${BundleInfo.ReleaseChannel}`);
-		payload.push(`- **Loader:** ${window.UNBOUND_LOADER?.origin ?? 'N/A'} - ${window.UNBOUND_LOADER?.platform ?? 'N/A'} (${window.UNBOUND_LOADER?.version ?? 'N/A'})`);
+		payload.push(`- **Loader:** ${window.UNBOUND_LOADER?.origin ?? 'N/A'} (${window.UNBOUND_LOADER?.version ?? 'N/A'})`);
 		payload.push(`- **Hermes:** ${Runtime['OSS Release Version']}`);
 		payload.push(`- **Bytecode:** ${Runtime['Bytecode Version']}`);
 
