@@ -55,8 +55,6 @@ const NativeBridge = {
 };
 
 export const UnboundNative = {
-	bridge: NativeBridge,
-
 	utilities: {
 		getDeviceModel: () => {
 			return NativeBridge.call('Utilities', 'getDeviceModel', []);
