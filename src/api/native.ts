@@ -1,7 +1,6 @@
 import type { BundleInfoType, BundleManagerType, DeviceInfoType } from '@typings/api/native';
 import { NativeModules, TurboModuleRegistry, Platform } from 'react-native';
 
-
 export type * from '@typings/api/native';
 
 export const BundleInfo: BundleInfoType = getNativeModule('NativeClientInfoModule', 'InfoDictionaryManager', 'RTNClientInfoManager');
@@ -57,55 +56,55 @@ const NativeBridge = {
 export const UnboundNative = {
 	utilities: {
 		getDeviceModel: () => {
-			return NativeBridge.call('Utilities', 'getDeviceModel', []);
+			return NativeBridge.call('Utilities', 'getDeviceModel');
 		},
 
 		getiOSVersionString: () => {
-			return NativeBridge.call('Utilities', 'getiOSVersionString', []);
+			return NativeBridge.call('Utilities', 'getiOSVersionString');
 		},
 
 		isJailbroken: () => {
-			return NativeBridge.call('Utilities', 'isJailbroken', []);
+			return NativeBridge.call('Utilities', 'isJailbroken');
 		},
 
 		isSystemApp: () => {
-			return NativeBridge.call('Utilities', 'isSystemApp', []);
+			return NativeBridge.call('Utilities', 'isSystemApp');
 		},
 
 		isVerifiedBuild: () => {
-			return NativeBridge.call('Utilities', 'isVerifiedBuild', []);
+			return NativeBridge.call('Utilities', 'isVerifiedBuild');
 		},
 
 		isAppStoreApp: () => {
-			return NativeBridge.call('Utilities', 'isAppStoreApp', []);
+			return NativeBridge.call('Utilities', 'isAppStoreApp');
 		},
 
 		isTestFlightApp: () => {
-			return NativeBridge.call('Utilities', 'isTestFlightApp', []);
+			return NativeBridge.call('Utilities', 'isTestFlightApp');
 		},
 
 		isTrollStoreApp: () => {
-			return NativeBridge.call('Utilities', 'isTrollStoreApp', []);
+			return NativeBridge.call('Utilities', 'isTrollStoreApp');
 		},
 
 		getTrollStoreVariant: () => {
-			return NativeBridge.call('Utilities', 'getTrollStoreVariant', []);
+			return NativeBridge.call('Utilities', 'getTrollStoreVariant');
 		},
 
 		getApplicationEntitlements: () => {
-			return NativeBridge.call('Utilities', 'getApplicationEntitlements', []);
+			return NativeBridge.call('Utilities', 'getApplicationEntitlements');
 		},
 
 		getAppRegistrationType: async (): Promise<'System' | 'User'> => {
-			const isSystem = await NativeBridge.call('Utilities', 'isSystemApp', []);
+			const isSystem = await NativeBridge.call('Utilities', 'isSystemApp');
 			return isSystem ? 'System' : 'User';
 		},
 
 		getAppSource: async (): Promise<string> => {
 			const [isAppStore, isTestFlight, isTrollStore] = await Promise.all([
-				NativeBridge.call('Utilities', 'isAppStoreApp', []),
-				NativeBridge.call('Utilities', 'isTestFlightApp', []),
-				NativeBridge.call('Utilities', 'isTrollStoreApp', [])
+				NativeBridge.call('Utilities', 'isAppStoreApp'),
+				NativeBridge.call('Utilities', 'isTestFlightApp'),
+				NativeBridge.call('Utilities', 'isTrollStoreApp')
 			]);
 
 			if (isAppStore) {
@@ -113,14 +112,14 @@ export const UnboundNative = {
 			} else if (isTestFlight) {
 				return 'TestFlight';
 			} else if (isTrollStore) {
-				return await NativeBridge.call('Utilities', 'getTrollStoreVariant', []);
+				return await NativeBridge.call('Utilities', 'getTrollStoreVariant');
 			} else {
 				return 'Sideloaded';
 			}
 		},
 
 		getEntitlementsAsPlist: async (): Promise<string> => {
-			const entitlements = await NativeBridge.call('Utilities', 'getApplicationEntitlements', []);
+			const entitlements = await NativeBridge.call('Utilities', 'getApplicationEntitlements');
 			return await NativeBridge.call('Utilities', 'formatEntitlementsAsPlist', [entitlements]);
 		}
 	},
@@ -149,11 +148,11 @@ export const UnboundNative = {
 		},
 
 		resetAvatarCornerRadius: () => {
-			return NativeBridge.call('ChatUI', 'resetAvatarCornerRadius', []);
+			return NativeBridge.call('ChatUI', 'resetAvatarCornerRadius');
 		},
 
 		getAvatarCornerRadius: () => {
-			return NativeBridge.call('ChatUI', 'getAvatarCornerRadius', []);
+			return NativeBridge.call('ChatUI', 'getAvatarCornerRadius');
 		},
 
 		setMessageBubblesEnabled: (enabled: boolean, lightColor?: string, darkColor?: string) => {
@@ -168,11 +167,11 @@ export const UnboundNative = {
 		},
 
 		getMessageBubbleLightColor: () => {
-			return NativeBridge.call('ChatUI', 'getMessageBubbleLightColor', []);
+			return NativeBridge.call('ChatUI', 'getMessageBubbleLightColor');
 		},
 
 		getMessageBubbleDarkColor: () => {
-			return NativeBridge.call('ChatUI', 'getMessageBubbleDarkColor', []);
+			return NativeBridge.call('ChatUI', 'getMessageBubbleDarkColor');
 		}
 	}
 };
