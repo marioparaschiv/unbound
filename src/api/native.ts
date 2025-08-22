@@ -1,4 +1,4 @@
-import type { BundleInfoType, BundleManagerType, DeviceInfoType } from '@typings/api/native';
+import type { BundleInfoType, BundleManagerType, ColorString, DeviceInfoType } from '@typings/api/native';
 import { NativeModules, TurboModuleRegistry, Platform } from 'react-native';
 
 export type * from '@typings/api/native';
@@ -155,14 +155,14 @@ export const UnboundNative = {
 			return NativeBridge.call('ChatUI', 'getAvatarCornerRadius');
 		},
 
-		setMessageBubblesEnabled: (enabled: boolean, lightColor?: string, darkColor?: string) => {
+		setMessageBubblesEnabled: (enabled: boolean, lightColor?: ColorString, darkColor?: ColorString) => {
 			const args: any[] = [enabled];
 			if (lightColor !== undefined) args.push(lightColor);
 			if (darkColor !== undefined) args.push(darkColor);
 			return NativeBridge.call('ChatUI', 'setMessageBubblesEnabled', args);
 		},
 
-		setMessageBubbleColors: (lightColor: string, darkColor: string) => {
+		setMessageBubbleColors: (lightColor: ColorString, darkColor: ColorString) => {
 			return NativeBridge.call('ChatUI', 'setMessageBubbleColors', [lightColor, darkColor]);
 		},
 
@@ -172,6 +172,22 @@ export const UnboundNative = {
 
 		getMessageBubbleDarkColor: () => {
 			return NativeBridge.call('ChatUI', 'getMessageBubbleDarkColor');
+		},
+
+		getMessageBubblesEnabled: () => {
+			return NativeBridge.call('ChatUI', 'getMessageBubblesEnabled');
+		},
+
+		getMessageBubbleCornerRadius: () => {
+			return NativeBridge.call('ChatUI', 'getMessageBubbleCornerRadius');
+		},
+
+		setMessageBubbleCornerRadius: (radius: number) => {
+			return NativeBridge.call('ChatUI', 'setMessageBubbleCornerRadius', [radius]);
+		},
+
+		resetMessageBubbles: () => {
+			return NativeBridge.call('ChatUI', 'resetMessageBubbles');
 		}
 	}
 };

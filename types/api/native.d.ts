@@ -46,7 +46,6 @@ export interface NativeBridgeType {
 export interface UnboundNativeUtilitiesType {
 	getDeviceModel: () => Promise<string>;
 	getiOSVersionString: () => Promise<string>;
-	getHermesBytecodeVersion: () => Promise<string>;
 	isJailbroken: () => Promise<boolean>;
 	isSystemApp: () => Promise<boolean>;
 	isVerifiedBuild: () => Promise<boolean>;
@@ -54,7 +53,7 @@ export interface UnboundNativeUtilitiesType {
 	isTestFlightApp: () => Promise<boolean>;
 	isTrollStoreApp: () => Promise<boolean>;
 	getTrollStoreVariant: () => Promise<string>;
-	getApplicationEntitlements: () => Promise<any>;
+	getApplicationEntitlements: () => Promise<Record<string, object>>;
 	getAppRegistrationType: () => Promise<'System' | 'User'>;
 	getAppSource: () => Promise<string>;
 	getEntitlementsAsPlist: () => Promise<string>;
@@ -67,17 +66,25 @@ export interface UnboundNativePluginAPIType {
 		scheduledTime?: number,
 		sound?: boolean,
 		notificationId?: string
-	) => Promise<any>;
+	) => Promise<string>;
 }
 
+export type HexColor = `#${string}`;
+export type RgbaColor = `rgba(${string})`;
+export type ColorString = HexColor | RgbaColor;
+
 export interface UnboundNativeChatUIType {
-	setAvatarCornerRadius: (radius: number) => Promise<any>;
-	resetAvatarCornerRadius: () => Promise<any>;
+	setAvatarCornerRadius: (radius: number) => Promise<void>;
+	resetAvatarCornerRadius: () => Promise<void>;
 	getAvatarCornerRadius: () => Promise<number>;
-	setMessageBubblesEnabled: (enabled: boolean, lightColor?: string, darkColor?: string) => Promise<any>;
-	setMessageBubbleColors: (lightColor: string, darkColor: string) => Promise<any>;
-	getMessageBubbleLightColor: () => Promise<string>;
-	getMessageBubbleDarkColor: () => Promise<string>;
+	setMessageBubblesEnabled: (enabled: boolean, lightColor?: ColorString, darkColor?: ColorString) => Promise<void>;
+	setMessageBubbleColors: (lightColor: ColorString, darkColor: ColorString) => Promise<void>;
+	getMessageBubbleLightColor: () => Promise<ColorString | null>;
+	getMessageBubbleDarkColor: () => Promise<ColorString | null>;
+	getMessageBubblesEnabled: () => Promise<boolean>;
+	getMessageBubbleCornerRadius: () => Promise<number>;
+	setMessageBubbleCornerRadius: (radius: number) => Promise<void>;
+	resetMessageBubbles: () => Promise<void>;
 }
 
 export interface UnboundNativeType {
