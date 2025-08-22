@@ -20,8 +20,6 @@ export default {
 		payload.push(`- **Hermes:** ${Runtime['OSS Release Version']}`);
 		payload.push(`- **Bytecode:** ${Runtime['Bytecode Version']}`);
 
-		let files: any[] = [];
-
 		if (Platform.OS === 'ios') {
 			try {
 				const [
@@ -42,15 +40,16 @@ export default {
 
 				payload.push(`- **Device:** ${deviceModel}`);
 				payload.push(`- **iOS:** ${iosVersion}`);
-				payload.push(`- **Jailbroken:** ${isJailbroken ? '✅' : '❌'}`);
+				payload.push(`- **State:** ${isJailbroken ? 'Jailbroken' : 'Jailed'}`);
 				payload.push(`- **Source:** ${appSource}`);
 				payload.push(`- **Registration:** ${appRegistrationType}`);
-				payload.push(`- **Verified:** ${isVerified ? '✅' : '❌'}`);
+				payload.push(`- **Verification:** ${isVerified ? 'Valid Signature' : 'Invalid Signature'}`);
 
 				try {
 					const entitlementsPlist = await UnboundNative.utilities.getEntitlementsAsPlist();
 					if (entitlementsPlist) {
 						// TODO: someone needs to tell me how to attach files to the command response lol
+						// I'm guessing Messages#sendMessage() is involved
 					}
 				} catch (error) {
 				}
