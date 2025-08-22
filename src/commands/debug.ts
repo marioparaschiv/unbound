@@ -2,7 +2,6 @@ import type { ApplicationCommand } from '@typings/api/commands';
 import { DeviceInfo, BundleInfo, UnboundNative } from '@api/native';
 import { Platform } from 'react-native';
 
-
 export default {
 	name: 'debug',
 	description: 'Prints out information to help debug unbound.',
