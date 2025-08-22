@@ -81,7 +81,6 @@ export interface UnboundNativeChatUIType {
 }
 
 export interface UnboundNativeType {
-	bridge: NativeBridgeType;
 	utilities: UnboundNativeUtilitiesType;
 	pluginAPI: UnboundNativePluginAPIType;
 	chatUI: UnboundNativeChatUIType;
