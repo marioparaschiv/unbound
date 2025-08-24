@@ -31,9 +31,8 @@ declare global {
 		UNBOUND_DEV_IP: string;
 
 		UNBOUND_LOADER: {
-			platform: string;
 			origin: string;
-			version: number;
+			version: string;
 		};
 
 		UNBOUND_SETTINGS: {
