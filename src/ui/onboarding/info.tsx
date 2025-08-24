@@ -2,7 +2,7 @@ import { DISCORD_INVITE, SocialLinks } from '@constants';
 import type { Dispatch, SetStateAction } from 'react';
 import { Discord } from '@api/metro/components';
 import { SafeAreaView } from 'react-native';
-import Plugins from '@ui/settings/plugins';
+import Plugins from '@ui/screens/plugins';
 import { Linking } from '@api/metro/api';
 import { on, set } from '@api/storage';
 import { Strings } from '@api/i18n';

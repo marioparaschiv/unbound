@@ -1,5 +1,6 @@
 export type Author = {
 	name: string;
+	role: string;
 	id: `${number}`;
 };
 

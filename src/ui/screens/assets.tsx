@@ -66,7 +66,7 @@ const Assets = memo(() => {
 		if (!search) return payload;
 
 		return payload.filter((([, asset]) => asset.name.toLowerCase().includes(search.toLowerCase())));
-	}, [search]);
+	}, [payload, search]);
 
 	return <View style={styles.container}>
 		<GeneralSearch

@@ -22,7 +22,7 @@ export default function Developer() {
 
 	const Icons = {
 		AuditLog: Assets.getIDByName('ic_audit_log_24px'),
-		Assets: Assets.getIDByName('StarIcon'),
+		Assets: Assets.getIDByName('ImageTextIcon'),
 		Trash: Assets.getIDByName('trash'),
 		Retry: Assets.getIDByName('RetryIcon')
 	};

@@ -75,8 +75,8 @@ const Outline = ({ state, error }: any) => {
 			}}>
 				<Discord.IconButton
 					icon={getIDByName('ic_message_copy')}
-					variant={'primary'}
-					size={'md'}
+					variant='secondary'
+					size='md'
 					loading={loading}
 					onPress={() => {
 						clearTimeout(loadingTimeout);

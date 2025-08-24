@@ -20,7 +20,7 @@ export const Moment = findByProps('isMoment') as MomentModule;
 
 // Modules
 export const Util = findByProps('inspect', { lazy: true });
-export const Flux = findByProps('Store', 'connectStores', { lazy: true }) as FluxModule;
+export const Flux = findByProps('Store', 'connectStores', { lazy: true, interop: false }) as FluxModule;
 export const Assets = findByProps('registerAsset', { lazy: true }) as AssetsModule;
 export const Clyde = findByProps('createBotMessage', { lazy: true }) as ClydeModule;
 export const Dispatcher = findByProps('dispatch', 'subscribe', { lazy: true }) as DispatcherModule;

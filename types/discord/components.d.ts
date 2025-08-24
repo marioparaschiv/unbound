@@ -1,4 +1,4 @@
-import type { GestureResponderEvent, ImageStyle, TextStyle, ViewProps, ViewStyle } from 'react-native';
+import type { GestureResponderEvent, TextProps, ImageStyle, TextStyle, ViewProps, ViewStyle } from 'react-native';
 import type { ThemeColorsLiterals } from '@typings/discord/constants';
 import type { PropsWithChildren, ReactElement } from 'react';
 
@@ -43,7 +43,7 @@ export interface CardProps extends PropsWithChildren, ViewProps {
 }
 
 export type TextColors = ThemeColorsLiterals[keyof ThemeColorsLiterals];
-export interface TextProps extends PropsWithChildren, ViewProps {
+export interface DiscordTextProps extends PropsWithChildren, TextProps {
 	color?: TextColors | AnyString;
 	variant?: TextVariants | AnyString;
 }
@@ -114,6 +114,21 @@ export type TextVariants = |
 	'display-lg' |
 	'code';
 
+export interface ContextMenuItem {
+	label: string;
+	variant?: LiteralUnion<'destructive', string>;
+	iconSource?: number;
+	action: () => unknown;
+}
+
+interface ContextMenuProps {
+	triggerOnLongPress?: boolean;
+	items: ContextMenuItem[] | ContextMenuItem[][];
+	align?: 'left' | 'right' | 'above' | 'below' | 'auto' | null;
+	title?: string;
+	children: React.FC<Record<'onPress' | 'onLongPress' | 'accessibilityActions' | 'onAccessibilityAction', any>>;
+}
+
 export interface ComponentsModule {
 	createStyles: <T extends Record<string, ViewStyle | TextStyle | ImageStyle | Record<PropertyKey, any>>>(style: T) => Fn<{
 		[P in keyof T]:
@@ -124,8 +139,9 @@ export interface ComponentsModule {
 		never;
 	}>;
 
-	Text: (props: TextProps) => ReactElement;
+	Text: (props: DiscordTextProps) => ReactElement;
 	Card: (props: CardProps) => ReactElement;
+	ContextMenu: (props: ContextMenuProps) => ReactElement;
 
 	[key: PropertyKey]: any;
 }

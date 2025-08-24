@@ -1,22 +1,22 @@
 import type { RegisterSettingsEntriesPayload, SettingsEntry } from '@typings/api/settings';
 import { CLIENT_NAME, DispatchTypes, Screens } from '@constants';
-import MarketplacePage from '@ui/settings/marketplace';
 import type { BuiltInData } from '@typings/built-ins';
+import MarketplacePage from '@ui/screens/marketplace';
 import { findByName, findByProps } from '@api/metro';
-import DeveloperPage from '@ui/settings/developer';
+import DeveloperPage from '@ui/screens/developer';
 import { createLogger } from '@structures/logger';
 import { Discord } from '@api/metro/components';
-import PluginsPage from '@ui/settings/plugins';
-import GeneralPage from '@ui/settings/general';
 import EventEmitter from '@structures/emitter';
-import CustomScreen from '@ui/settings/custom';
 import { Dispatcher } from '@api/metro/common';
-import ToastsPage from '@ui/settings/toasts';
-import DesignPage from '@ui/settings/design';
-import AssetsPage from '@ui/settings/assets';
+import PluginsPage from '@ui/screens/plugins';
+import GeneralPage from '@ui/screens/general';
+import CustomScreen from '@ui/screens/custom';
 import { createPatcher } from '@api/patcher';
+import ToastsPage from '@ui/screens/toasts';
+import DesignPage from '@ui/screens/design';
+import AssetsPage from '@ui/screens/assets';
 import { useEffect, useState } from 'react';
-import LogsPage from '@ui/settings/logs';
+import LogsPage from '@ui/screens/logs';
 import { Strings } from '@api/i18n';
 import { Icons } from '@api/assets';
 
@@ -87,7 +87,7 @@ export const data: BuiltInData & {
 			key: Screens.Marketplace,
 			parent: null,
 			section: CLIENT_NAME,
-			IconComponent: () => <Discord.TableRowIcon source={Icons['img_collectibles_shop']} />,
+			IconComponent: () => <Discord.TableRowIcon source={Icons['ShopSparkleIcon']} />,
 			screen: {
 				route: Screens.Marketplace,
 				getComponent: () => MarketplacePage

@@ -28,6 +28,12 @@ export const ManagerEntity = {
 	[ManagerKind.ICONS]: 'icon-pack',
 };
 
+export const ManagerEntityNames = {
+	[ManagerKind.PLUGINS]: 'Plugin',
+	[ManagerKind.THEMES]: 'Theme',
+	[ManagerKind.ICONS]: 'Icon Pack',
+};
+
 export const DISCORD_INVITE = 'unboundapp' as const;
 
 export const DefaultSources = [

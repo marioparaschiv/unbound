@@ -4,6 +4,8 @@ declare type PromiseFn<T = Promise<any>> = (...args: any) => T;
 
 declare type Constructor<T extends any = any> = (new () => T);
 
+declare type LiteralUnion<T extends U, U = string> = T | (U & Record<never, never>);
+
 declare type AnyProps<T extends Record<PropertyKey, any> = Record<PropertyKey, any>> = T & Record<PropertyKey, any>;
 
 declare type PropOf<M> = {

@@ -1,4 +1,5 @@
 import type { DispatchBand, DispatcherModule as Dispatcher } from '@typings/discord/flux-dispatcher';
+import type { FluxHooks } from '@typings/discord/flux-hooks';
 import type { ComponentClass, ComponentType } from 'react';
 
 
@@ -98,6 +99,8 @@ export class Store {
 	public registerActionHandlers(actionHandlers: ActionHandlerRecord, band?: DispatchBand): void;
 
 	public __getLocalVars?(): Record<string, unknown>;
+
+	[key: PropertyKey]: any;
 }
 
 interface ClearOptions {
@@ -168,7 +171,7 @@ export class SnapshotStore<Data = Record<string, unknown>> extends Store {
 	public save: () => void;
 }
 
-export interface FluxModule {
+export interface FluxModule extends FluxHooks {
 	DeviceSettingsStore: DeviceSettingsStore;
 	Emitter: Emitter;
 	OfflineCacheStore: OfflineCacheStore;

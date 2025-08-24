@@ -10,7 +10,7 @@ import { TintedIcon } from '@ui/misc/forms';
 import Toasts from '@stores/toasts';
 import { Icons } from '@api/assets';
 
-import useToastState from './useToastState';
+import useToastState from '../hooks/use-toast-state';
 import useStyles from './toast.style';
 
 

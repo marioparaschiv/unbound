@@ -5,4 +5,5 @@ import type { ManagerKind } from '@constants';
 export interface AddonListProps {
 	addons: Addon[];
 	kind: ManagerKind;
+	isSearch?: boolean;
 }

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import useForceUpdate from './use-force-update';
 
 
-function useAddons(type: keyof typeof Managers) {
+function useAddons(type: keyof typeof Managers, search: string = '') {
 	const forceUpdate = useForceUpdate();
 
 	const manager = Managers[type];
@@ -27,7 +27,13 @@ function useAddons(type: keyof typeof Managers) {
 
 	if (!manager) return [];
 
-	return manager.getEntities();
+	const entities = manager.getEntities();
+
+	if (search) {
+		return entities.filter((entity) => entity.data.name.toLowerCase().includes(search.toLowerCase()));
+	} else {
+		return entities;
+	}
 }
 
 export default useAddons;
