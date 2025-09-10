@@ -6,8 +6,8 @@ import hermes from '@unbound-mod/rollup-plugin';
 import replace from '@rollup/plugin-replace';
 import { execSync } from 'child_process';
 import json from '@rollup/plugin-json';
-import { readFileSync } from 'fs';
-
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { resolve } from 'path';
 
 const revision = (() => {
 	try {
@@ -25,6 +25,37 @@ const importsMap = {
 	'react-native': 'window.ReactNative'
 };
 
+const generateManifest = () => ({
+	name: 'generate-manifest',
+	writeBundle() {
+		const bundlePath = resolve('dist/unbound.bundle');
+		const manifestPath = resolve('dist/manifest.json');
+
+		let bytecodeVersion = null;
+
+		if (existsSync(bundlePath)) {
+			try {
+				const fileOutput = execSync(`file "${bundlePath}"`).toString();
+				const versionMatch = fileOutput.match(/version (\d+)/);
+				if (versionMatch) {
+					bytecodeVersion = parseInt(versionMatch[1], 10);
+				}
+			} catch (error) {
+				console.warn('Failed to detect bytecode version:', error.message);
+			}
+		}
+
+		const manifest = {
+			revision,
+			buildTime: new Date().toISOString(),
+			bytecodeVersion,
+		};
+
+		writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+		console.log('Generated manifest.json with bytecode version:', bytecodeVersion);
+	}
+});
+
 /** @type {import('rollup').RollupOptions} */
 const config = {
 	input: 'src/index.ts',
@@ -39,8 +70,6 @@ const config = {
 			globals: importsMap
 		}
 	],
-
-
 
 	plugins: [
 		paths({ preserveExtensions: true, nonRelative: !(process.platform === 'darwin' || process.platform === 'linux') }),
@@ -63,6 +92,7 @@ const config = {
 		},
 		minify({ compress: true, mangle: true }),
 		hermes(),
+		generateManifest(),
 	],
 
 	onwarn(warning, warn) {

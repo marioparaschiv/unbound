@@ -87,6 +87,10 @@ export const UnboundNative = {
 			return NativeBridge.call('Utilities', 'isTrollStoreApp');
 		},
 
+		isLiveContainerApp: () => {
+			return NativeBridge.call('Utilities', 'isLiveContainerApp');
+		},
+
 		getTrollStoreVariant: () => {
 			return NativeBridge.call('Utilities', 'getTrollStoreVariant');
 		},
@@ -100,22 +104,8 @@ export const UnboundNative = {
 			return isSystem ? 'System' : 'User';
 		},
 
-		getAppSource: async (): Promise<string> => {
-			const [isAppStore, isTestFlight, isTrollStore] = await Promise.all([
-				NativeBridge.call('Utilities', 'isAppStoreApp'),
-				NativeBridge.call('Utilities', 'isTestFlightApp'),
-				NativeBridge.call('Utilities', 'isTrollStoreApp')
-			]);
-
-			if (isAppStore) {
-				return 'App Store';
-			} else if (isTestFlight) {
-				return 'TestFlight';
-			} else if (isTrollStore) {
-				return await NativeBridge.call('Utilities', 'getTrollStoreVariant');
-			} else {
-				return 'Sideloaded';
-			}
+		getAppSource: () => {
+			return NativeBridge.call('Utilities', 'getAppSource');
 		},
 
 		getEntitlementsAsPlist: async (): Promise<string> => {

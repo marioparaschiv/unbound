@@ -52,6 +52,7 @@ export interface UnboundNativeUtilitiesType {
 	isAppStoreApp: () => Promise<boolean>;
 	isTestFlightApp: () => Promise<boolean>;
 	isTrollStoreApp: () => Promise<boolean>;
+	isLiveContainerApp: () => Promise<boolean>;
 	getTrollStoreVariant: () => Promise<string>;
 	getApplicationEntitlements: () => Promise<Record<string, object>>;
 	getAppRegistrationType: () => Promise<'System' | 'User'>;
