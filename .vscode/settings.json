@@ -52,7 +52,7 @@
 		},
 		{
 			"label": "$(play) Serve",
-			"task": "Serve Dev Server",
+			"task": "Start Dev Server",
 			"tooltip": "Start the development server"
 		}
 	]
