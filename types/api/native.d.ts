@@ -61,6 +61,7 @@ export interface UnboundNativeUtilitiesType {
 	getAppRegistrationType: () => Promise<'System' | 'User'>;
 	getAppSource: () => Promise<string>;
 	getEntitlementsAsPlist: () => Promise<string>;
+	showToolboxMenu: () => Promise<void>;
 }
 
 export interface UnboundNativePluginAPIType {
@@ -71,7 +72,6 @@ export interface UnboundNativePluginAPIType {
 		sound?: boolean,
 		notificationId?: string
 	) => Promise<string>;
-	showToolboxMenu: () => Promise<void>;
 	playPiPVideo: (videoURL: string) => Promise<string>;
 }
 

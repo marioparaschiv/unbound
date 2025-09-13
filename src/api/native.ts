@@ -125,7 +125,11 @@ export const UnboundNative = {
 		getEntitlementsAsPlist: async (): Promise<string> => {
 			const entitlements = await NativeBridge.call('Utilities', 'getApplicationEntitlements');
 			return await NativeBridge.call('Utilities', 'formatEntitlementsAsPlist', [entitlements]);
-		}
+		},
+
+		showToolboxMenu: () => {
+			return NativeBridge.call('Toolbox', 'showToolboxMenu');
+		},
 	},
 
 	pluginAPI: {
@@ -143,10 +147,6 @@ export const UnboundNative = {
 				sound,
 				notificationId
 			]);
-		},
-
-		showToolboxMenu: () => {
-			return NativeBridge.call('showToolboxMenu');
 		},
 
 		playPiPVideo: (videoURL: string) => {
