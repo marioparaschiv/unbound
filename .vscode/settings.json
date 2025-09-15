@@ -43,5 +43,17 @@
 	"typescript.updateImportsOnFileMove.enabled": "always",
 	"editor.codeActionsOnSave": {
 		"source.removeUnusedImports": "always"
-	}
+	},
+	"VsCodeTaskButtons.tasks": [
+		{
+			"label": "$(tools) Build",
+			"task": "Build Unbound",
+			"tooltip": "Build the Unbound client bundle"
+		},
+		{
+			"label": "$(play) Serve",
+			"task": "Start Dev Server",
+			"tooltip": "Start the development server"
+		}
+	]
 }

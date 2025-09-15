@@ -26,7 +26,7 @@ export function getNativeModule(...names: string[]) {
 }
 
 const NativeBridge = {
-	call: async (module: string, method: string, args: any[] = []) => {
+	call: async (moduleOrMethod: string, methodOrArgs?: string | any[], args?: any[]) => {
 		if (Platform.OS !== 'ios') {
 			throw new Error('UnsupportedPlatformError: Native bridge is only supported on iOS');
 		}
@@ -38,16 +38,30 @@ const NativeBridge = {
 				throw new Error('DCDStrongboxManager not found or getItem is not a function');
 			}
 
+			let module: string;
+			let method: string;
+			let finalArgs: any[];
+
+			if (typeof methodOrArgs === 'string') {
+				module = moduleOrMethod;
+				method = methodOrArgs;
+				finalArgs = args || [];
+			} else {
+				module = '';
+				method = moduleOrMethod;
+				finalArgs = methodOrArgs || [];
+			}
+
 			const bridgeCommand = {
 				'$$unbound$$': true,
 				module,
 				method,
-				args
+				args: finalArgs
 			};
 
 			return await StrongboxManager.getItem(bridgeCommand);
 		} catch (error) {
-			console.error(`Error calling native method ${module}.${method}:`, error);
+			console.error(`Error calling native method ${moduleOrMethod}.${methodOrArgs}:`, error);
 			throw error;
 		}
 	}
@@ -111,7 +125,11 @@ export const UnboundNative = {
 		getEntitlementsAsPlist: async (): Promise<string> => {
 			const entitlements = await NativeBridge.call('Utilities', 'getApplicationEntitlements');
 			return await NativeBridge.call('Utilities', 'formatEntitlementsAsPlist', [entitlements]);
-		}
+		},
+
+		showToolboxMenu: () => {
+			return NativeBridge.call('Toolbox', 'showToolboxMenu');
+		},
 	},
 
 	pluginAPI: {
@@ -122,7 +140,7 @@ export const UnboundNative = {
 			sound = true,
 			notificationId = `notification-${Date.now()}`
 		) => {
-			return NativeBridge.call('PluginAPI', 'showNotification', [
+			return NativeBridge.call('showNotification', [
 				title,
 				content,
 				scheduledTime,
@@ -130,54 +148,58 @@ export const UnboundNative = {
 				notificationId
 			]);
 		},
+
+		playPiPVideo: (videoURL: string) => {
+			return NativeBridge.call('playPiPVideo', [videoURL]);
+		},
 	},
 
 	chatUI: {
 		setAvatarCornerRadius: (radius: number) => {
-			return NativeBridge.call('ChatUI', 'setAvatarCornerRadius', [radius]);
+			return NativeBridge.call('setAvatarCornerRadius', [radius]);
 		},
 
 		resetAvatarCornerRadius: () => {
-			return NativeBridge.call('ChatUI', 'resetAvatarCornerRadius');
+			return NativeBridge.call('resetAvatarCornerRadius');
 		},
 
 		getAvatarCornerRadius: () => {
-			return NativeBridge.call('ChatUI', 'getAvatarCornerRadius');
+			return NativeBridge.call('getAvatarCornerRadius');
 		},
 
 		setMessageBubblesEnabled: (enabled: boolean, lightColor?: ColorString, darkColor?: ColorString) => {
 			const args: any[] = [enabled];
 			if (lightColor !== undefined) args.push(lightColor);
 			if (darkColor !== undefined) args.push(darkColor);
-			return NativeBridge.call('ChatUI', 'setMessageBubblesEnabled', args);
+			return NativeBridge.call('setMessageBubblesEnabled', args);
 		},
 
 		setMessageBubbleColors: (lightColor: ColorString, darkColor: ColorString) => {
-			return NativeBridge.call('ChatUI', 'setMessageBubbleColors', [lightColor, darkColor]);
+			return NativeBridge.call('setMessageBubbleColors', [lightColor, darkColor]);
 		},
 
 		getMessageBubbleLightColor: () => {
-			return NativeBridge.call('ChatUI', 'getMessageBubbleLightColor');
+			return NativeBridge.call('getMessageBubbleLightColor');
 		},
 
 		getMessageBubbleDarkColor: () => {
-			return NativeBridge.call('ChatUI', 'getMessageBubbleDarkColor');
+			return NativeBridge.call('getMessageBubbleDarkColor');
 		},
 
 		getMessageBubblesEnabled: () => {
-			return NativeBridge.call('ChatUI', 'getMessageBubblesEnabled');
+			return NativeBridge.call('getMessageBubblesEnabled');
 		},
 
 		getMessageBubbleCornerRadius: () => {
-			return NativeBridge.call('ChatUI', 'getMessageBubbleCornerRadius');
+			return NativeBridge.call('getMessageBubbleCornerRadius');
 		},
 
 		setMessageBubbleCornerRadius: (radius: number) => {
-			return NativeBridge.call('ChatUI', 'setMessageBubbleCornerRadius', [radius]);
+			return NativeBridge.call('setMessageBubbleCornerRadius', [radius]);
 		},
 
 		resetMessageBubbles: () => {
-			return NativeBridge.call('ChatUI', 'resetMessageBubbles');
+			return NativeBridge.call('resetMessageBubbles');
 		}
 	}
 };
