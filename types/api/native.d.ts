@@ -40,7 +40,10 @@ export interface BundleManagerType {
 }
 
 export interface NativeBridgeType {
-	call: (module: string, method: string, args?: any[]) => Promise<any>;
+	call: {
+		(module: string, method: string, args?: any[]): Promise<any>;
+		(method: string, args?: any[]): Promise<any>;
+	};
 }
 
 export interface UnboundNativeUtilitiesType {
@@ -58,6 +61,7 @@ export interface UnboundNativeUtilitiesType {
 	getAppRegistrationType: () => Promise<'System' | 'User'>;
 	getAppSource: () => Promise<string>;
 	getEntitlementsAsPlist: () => Promise<string>;
+	showToolboxMenu: () => Promise<void>;
 }
 
 export interface UnboundNativePluginAPIType {
@@ -68,6 +72,7 @@ export interface UnboundNativePluginAPIType {
 		sound?: boolean,
 		notificationId?: string
 	) => Promise<string>;
+	playPiPVideo: (videoURL: string) => Promise<string>;
 }
 
 export type HexColor = `#${string}`;

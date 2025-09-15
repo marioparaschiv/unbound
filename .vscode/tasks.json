@@ -1,0 +1,59 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Build Unbound",
+			"command": "bun",
+			"args": [
+				"run",
+				"build"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": true,
+				"close": true,
+				"reveal": "always",
+				"focus": true
+			},
+			"problemMatcher": {
+				"owner": "typescript",
+				"pattern": {
+					"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					"message": 5
+				}
+			}
+		},
+		{
+			"type": "shell",
+			"label": "Start Dev Server",
+			"command": "bun",
+			"args": [
+				"run",
+				"serve"
+			],
+			"group": "build",
+			"presentation": {
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": true,
+				"close": false,
+				"reveal": "always",
+				"focus": true
+			},
+			"isBackground": true,
+			"runOptions": {
+				"instanceLimit": 1
+			}
+		}
+	]
+}
