@@ -39,13 +39,6 @@ export interface BundleManagerType {
 	removeListeners: Fn;
 }
 
-export interface NativeBridgeType {
-	call: {
-		(module: string, method: string, args?: any[]): Promise<any>;
-		(method: string, args?: any[]): Promise<any>;
-	};
-}
-
 export interface UnboundNativeUtilitiesType {
 	getDeviceModel: () => Promise<string>;
 	getiOSVersionString: () => Promise<string>;
