@@ -4,12 +4,12 @@ Thank you for your interest in helping translate Unbound! This guide will help y
 
 ## 📋 Table of Contents
 
-- [Getting Started](#getting-started)
-- [How to Contribute](#how-to-contribute)
-- [Translation Guidelines](#translation-guidelines)
-- [Adding a New Language](#adding-a-new-language)
-- [Translation Keys](#translation-keys)
-- [Testing Your Translations](#testing-your-translations)
+- [Getting Started](#-getting-started)
+- [How to Contribute](#-how-to-contribute)
+- [Translation Guidelines](#-translation-guidelines)
+- [Adding a New Language](#-adding-a-new-language)
+- [Translation Keys](#-translation-keys)
+- [Testing Your Translations](#-testing-your-translations)
 
 ## 🚀 Getting Started
 

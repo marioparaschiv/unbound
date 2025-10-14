@@ -4,13 +4,13 @@ Thank you for your interest in contributing to the Unbound Debugger! This tool p
 
 ## 📋 Table of Contents
 
-- [What is the Debugger?](#what-is-the-debugger)
-- [Getting Started](#getting-started)
-- [Architecture Overview](#architecture-overview)
-- [Development Workflow](#development-workflow)
-- [Adding Features](#adding-features)
-- [Testing](#testing)
-- [Common Tasks](#common-tasks)
+- [What is the Debugger?](#-what-is-the-debugger)
+- [Getting Started](#-getting-started)
+- [Architecture Overview](#-architecture-overview)
+- [Development Workflow](#-development-workflow)
+- [Adding Features](#-adding-features)
+- [Testing](#-testing)
+- [Common Tasks](#-common-tasks)
 
 ## 🔍 What is the Debugger?
 
@@ -55,9 +55,6 @@ bun run src/index.ts
 
 # With custom port
 bun run src/index.ts --port 9090
-
-# With custom host
-bun run src/index.ts --host 192.168.1.100
 ```
 
 ## 🏗️ Architecture Overview
@@ -67,7 +64,7 @@ The debugger consists of several key components:
 - **WebSocket Server** - Manages client connections (one at a time) and handles bidirectional communication with Unbound instances
 - **REPL Interface** - Provides an interactive command prompt for executing code in the connected client
 - **History Management** - Persists command history to disk and allows navigation with arrow keys
-- **CLI Parsing** - Handles command-line arguments like port and host configuration
+- **CLI Parsing** - Handles command-line arguments like port configuration
 - **Message Handling** - Color-codes and displays log messages by severity level
 
 The flow is simple: user enters command → sent via WebSocket → executed in Discord → results sent back → displayed in terminal.
@@ -303,7 +300,7 @@ wscat -c ws://localhost:9229
 
 ### Q: Can I run the debugger on a different machine?
 
-**A:** Yes! Use the `--host` flag to bind to a network interface, but be careful about security - there's no authentication.
+**A:** The debugger binds to `localhost` by default. To access it from other machines, you would need to modify the WebSocket server configuration. Be careful about security - there's no authentication.
 
 ## 💬 Need Help?
 
