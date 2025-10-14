@@ -103,157 +103,27 @@ The flow is simple: user enters command → sent via WebSocket → executed in D
 
 ## Adding Features
 
-### Adding a New CLI Flag
+The debugger is designed to be simple and extensible. Common areas for enhancement:
 
-Edit `src/lib/cli.ts`:
+- **CLI flags** - Add new command-line options in the CLI parser
+- **Special commands** - Add dot commands (like `.help`, `.clear`) in the REPL handler
+- **Message formatting** - Customize how log messages are displayed in the terminal
+- **History management** - Add filters or enhancement for command history
+- **Multi-client support** - Extend the WebSocket server to handle multiple connections
 
-```typescript
-import { cli } from 'cleye';
-
-export default cli({
-  flags: {
-    port: {
-      type: Number,
-      default: 9229,
-      description: 'Port to listen on',
-    },
-    // Add your new flag here
-    yourFlag: {
-      type: String,
-      default: 'default-value',
-      description: 'Description of your flag',
-    },
-  },
-});
-```
-
-### Adding a New Command
-
-Edit `src/lib/repl.ts` to handle special commands:
-
-```typescript
-export async function takeReplInput() {
-  // ... existing code ...
-
-  state.repl = terminal.inputField({
-    minLength: 1,
-    history
-  }, (error, input) => {
-    if (error) return console.error(error);
-    if (!input) return;
-
-    // Handle special commands
-    if (input.startsWith('.')) {
-      handleSpecialCommand(input);
-      return;
-    }
-
-    // Send to WebSocket client
-    addHistoryItem(input);
-    send(input);
-    takeReplInput();
-  });
-}
-
-function handleSpecialCommand(command: string) {
-  switch (command) {
-    case '.help':
-      terminal.yellow('Available commands:\n');
-      terminal.gray('  .help  - Show this help\n');
-      break;
-    // Add your commands here
-  }
-  takeReplInput();
-}
-```
-
-### Enhancing Message Display
-
-Edit `src/lib/ws.ts` to customize how messages are displayed:
-
-```typescript
-message(_, message: string) {
-  const payload: SocketMessage = JSON.parse(message);
-  const level = MESSAGE_LEVELS[payload.level] ?? terminal.white;
-
-  abortCurrentReplInput();
-
-  // Customize formatting here
-  level(`${payload.message}\n`);
-
-  takeReplInput();
-}
-```
-
-### Adding History Filters
-
-Edit `src/lib/history.ts` to filter what gets saved:
-
-```typescript
-export function addHistoryItem(command: string) {
-  // Filter out sensitive commands
-  if (command.includes('password')) return;
-
-  // Filter duplicates
-  if (history[history.length - 1] === command) return;
-
-  history.push(command);
-  saveHistory();
-}
-```
+Explore the codebase to understand how these components work together.
 
 ## Testing
 
 ### Manual Testing
 
-1. **Start the debugger:**
-   ```bash
-   bun run src/index.ts
-   ```
+1. Run the debugger with `bun run src/index.ts`
+2. Connect from Unbound (enable debug mode in settings)
+3. Test REPL commands and verify they execute correctly
+4. Test command history navigation with arrow keys
+5. Verify WebSocket connection handling and disconnection
 
-2. **Connect from Unbound:**
-   - Enable debug mode in Unbound settings
-   - Unbound will connect to `localhost:9229`
-
-3. **Test REPL commands:**
-   ```javascript
-   // Execute JavaScript in Discord context
-   console.log('Hello from debugger!')
-
-   // Inspect objects
-   window.unbound
-
-   // Test arrow key history navigation
-   // Press up/down to navigate previous commands
-   ```
-
-### Testing WebSocket Connection
-
-Create a test client:
-
-```typescript
-// test-client.ts
-const ws = new WebSocket('ws://localhost:9229');
-
-ws.onopen = () => {
-  console.log('Connected to debugger');
-};
-
-ws.onmessage = (event) => {
-  console.log('Received:', event.data);
-  // Execute the code and send back results
-};
-```
-
-## Common Tasks
-
-### Adding Multiple Client Support
-
-Currently, the debugger only supports one client at a time. To add multi-client support:
-
-1. Change `state.socket` to an array/map
-2. Update message handlers to broadcast to all clients
-3. Add client identification and management
+You can also create a simple test WebSocket client to verify the server behavior independently of Unbound.
 
 ## Best Practices
 
@@ -267,16 +137,10 @@ Currently, the debugger only supports one client at a time. To add multi-client 
 
 If the debugger itself has issues:
 
-```bash
-# Check if port is already in use
-lsof -i :9229
-
-# Run with verbose logging
-# (Add your own debug logs to the code)
-
-# Test WebSocket connection
-wscat -c ws://localhost:9229
-```
+- Check if the port is already in use
+- Add debug logging to track execution flow
+- Test the WebSocket connection independently with a tool like `wscat`
+- Verify command history file permissions and location
 
 ## Dependencies
 
