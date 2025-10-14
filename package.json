@@ -1,0 +1,10 @@
+{
+	"name": "unbound",
+	"private": true,
+	"workspaces": [
+		"packages/bundle",
+		"packages/debugger",
+		"packages/i18n",
+		"packages/types"
+	]
+}

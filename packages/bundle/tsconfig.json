@@ -1,14 +1,10 @@
 {
+	"extends": ["../../tsconfig.base.json"],
 	"compilerOptions": {
-		"skipLibCheck": true /* Skip type checking all .d.ts files. */,
 		"downlevelIteration": true,
-		"moduleResolution": "bundler",
 		"esModuleInterop": true,
-		"target": "esnext",
-		"resolveJsonModule": true,
 		"noUncheckedIndexedAccess": true,
 		"verbatimModuleSyntax": true,
-		"module": "esnext",
 		"jsx": "preserve",
 		"baseUrl": "src",
 		"types": ["@unbound-app/types"],
