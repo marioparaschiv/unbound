@@ -2,16 +2,16 @@
 
 Thank you for your interest in helping translate Unbound! This guide will help you contribute translations in your language.
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Getting Started](#-getting-started)
-- [How to Contribute](#-how-to-contribute)
-- [Translation Guidelines](#-translation-guidelines)
-- [Adding a New Language](#-adding-a-new-language)
-- [Translation Keys](#-translation-keys)
-- [Testing Your Translations](#-testing-your-translations)
+- [Getting Started](#getting-started)
+- [How to Contribute](#how-to-contribute)
+- [Translation Guidelines](#translation-guidelines)
+- [Adding a New Language](#adding-a-new-language)
+- [Translation Keys](#translation-keys)
+- [Quality Checklist](#quality-checklist)
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -19,7 +19,7 @@ Thank you for your interest in helping translate Unbound! This guide will help y
 - Familiarity with your target language
 - A text editor (VS Code recommended)
 
-## 📝 How to Contribute
+## How to Contribute
 
 ### 1. Fork & Clone
 
@@ -63,7 +63,7 @@ git push origin translations/your-language
 
 Then open a PR on GitHub!
 
-## 📖 Translation Guidelines
+## Translation Guidelines
 
 ### General Rules
 
@@ -101,7 +101,7 @@ Common placeholders (DO NOT TRANSLATE):
 - `{source}` - Source name
 - `{version}` - Version number
 
-## 🌍 Adding a New Language
+## Adding a New Language
 
 ### 1. Create the Locale File
 
@@ -130,7 +130,7 @@ const locales = {
 };
 ```
 
-## 🔑 Translation Keys
+## Translation Keys
 
 Keys follow this naming convention:
 
@@ -147,7 +147,7 @@ UNBOUND_[CATEGORY]_[SPECIFIC_NAME]
 - `UNBOUND_TOAST_*` - Toast notifications
 - `UNBOUND_DIALOG_*` - Dialog boxes
 
-## ✅ Quality Checklist
+## Quality Checklist
 
 Before submitting your translation, verify:
 
@@ -160,7 +160,7 @@ Before submitting your translation, verify:
 
 **Note:** You don't need to translate every key! Missing keys will automatically fall back to English.
 
-## ❓ FAQ
+## FAQ
 
 ### Q: Do I need to translate every key?
 
@@ -186,13 +186,13 @@ Before submitting your translation, verify:
 
 **A:** Currently, Unbound uses simple string replacement. Try to write translations that work for both singular and plural, or use generic terms.
 
-## 💬 Need Help?
+## Need Help?
 
 - **Found missing keys?** Check if they exist in `en-US.json` first
 - **Unsure about context?** Ask in the PR or open an issue
 - **Technical issues?** See the main [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
-## 🎉 Thank You!
+## Thank You!
 
 Every translation makes Unbound accessible to more people. Your contribution is greatly appreciated!
 

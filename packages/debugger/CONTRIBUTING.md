@@ -2,17 +2,17 @@
 
 Thank you for your interest in contributing to the Unbound Debugger! This tool provides a REPL (Read-Eval-Print Loop) interface for debugging Unbound instances in real-time.
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [What is the Debugger?](#-what-is-the-debugger)
-- [Getting Started](#-getting-started)
-- [Architecture Overview](#-architecture-overview)
-- [Development Workflow](#-development-workflow)
-- [Adding Features](#-adding-features)
-- [Testing](#-testing)
-- [Common Tasks](#-common-tasks)
+- [What is the Debugger?](#what-is-the-debugger)
+- [Getting Started](#getting-started)
+- [Architecture Overview](#architecture-overview)
+- [Development Workflow](#development-workflow)
+- [Adding Features](#adding-features)
+- [Testing](#testing)
+- [Common Tasks](#common-tasks)
 
-## 🔍 What is the Debugger?
+## What is the Debugger?
 
 The Unbound Debugger is a command-line REPL tool that connects to running Unbound instances via WebSocket. It allows developers to:
 
@@ -22,7 +22,7 @@ The Unbound Debugger is a command-line REPL tool that connects to running Unboun
 - Debug issues in real-time
 - Maintain command history across sessions
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -57,7 +57,7 @@ bun run src/index.ts
 bun run src/index.ts --port 9090
 ```
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 The debugger consists of several key components:
 
@@ -69,7 +69,7 @@ The debugger consists of several key components:
 
 The flow is simple: user enters command → sent via WebSocket → executed in Discord → results sent back → displayed in terminal.
 
-## 🛠️ Development Workflow
+## Development Workflow
 
 ### Making Changes
 
@@ -101,7 +101,7 @@ The flow is simple: user enters command → sent via WebSocket → executed in D
 
 5. **Open a Pull Request**
 
-## ✨ Adding Features
+## Adding Features
 
 ### Adding a New CLI Flag
 
@@ -202,7 +202,7 @@ export function addHistoryItem(command: string) {
 }
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Manual Testing
 
@@ -245,7 +245,7 @@ ws.onmessage = (event) => {
 };
 ```
 
-## 📝 Common Tasks
+## Common Tasks
 
 ### Adding Multiple Client Support
 
@@ -255,7 +255,7 @@ Currently, the debugger only supports one client at a time. To add multi-client 
 2. Update message handlers to broadcast to all clients
 3. Add client identification and management
 
-## 💡 Best Practices
+## Best Practices
 
 1. **Keep it simple** - The debugger should be lightweight and fast
 2. **Handle errors gracefully** - Network issues and disconnections are common
@@ -263,7 +263,7 @@ Currently, the debugger only supports one client at a time. To add multi-client 
 4. **Use colors meaningfully** - Help users distinguish message types at a glance
 5. **Document CLI flags** - Make options discoverable with `--help`
 
-## 🐛 Debugging the Debugger
+## Debugging the Debugger
 
 If the debugger itself has issues:
 
@@ -278,13 +278,13 @@ lsof -i :9229
 wscat -c ws://localhost:9229
 ```
 
-## 📚 Dependencies
+## Dependencies
 
 - **[Bun](https://bun.sh)** - Runtime and WebSocket server
 - **[terminal-kit](https://github.com/cronvel/terminal-kit)** - Terminal UI and input handling
 - **[cleye](https://github.com/privatenumber/cleye)** - CLI argument parsing
 
-## ❓ FAQ
+## FAQ
 
 ### Q: Why use Bun instead of Node.js?
 
@@ -302,13 +302,13 @@ wscat -c ws://localhost:9229
 
 **A:** The debugger binds to `localhost` by default. To access it from other machines, you would need to modify the WebSocket server configuration. Be careful about security - there's no authentication.
 
-## 💬 Need Help?
+## Need Help?
 
 - **Found a bug?** Open an issue on GitHub
 - **Have a feature idea?** Start a discussion
 - **Need clarification?** Ask in your PR or issue
 
-## 🎉 Thank You!
+## Thank You!
 
 Your contributions help make Unbound development easier for everyone!
 
