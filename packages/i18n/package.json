@@ -1,0 +1,15 @@
+{
+	"name": "@unbound-app/i18n",
+	"version": "1.0.0",
+	"type": "module",
+	"module": "index.ts",
+	"exports": {
+		".": {
+			"import": "./index.ts",
+			"types": "./index.ts"
+		}
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}

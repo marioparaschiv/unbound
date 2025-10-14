@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"skipLibCheck": false /* Skip type checking all .d.ts files. */,
+		"downlevelIteration": true,
+		"moduleResolution": "bundler",
+		"esModuleInterop": true,
+		"target": "esnext",
+		"resolveJsonModule": true,
+		"noUncheckedIndexedAccess": true,
+		"verbatimModuleSyntax": true,
+		"module": "esnext",
+		"jsx": "react",
+		"types": ["@unbound-app/types"],
+		"baseUrl": "src",
+		"paths": {
+			"~/*": ["*"]
+		}
+	}
+}

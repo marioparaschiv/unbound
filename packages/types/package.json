@@ -1,0 +1,67 @@
+{
+	"name": "@unbound-app/types",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "index.d.ts",
+	"types": "index.d.ts",
+	"typesVersions": {
+		"*": {
+			"*": [
+				"modules/*"
+			]
+		}
+	},
+	"exports": {
+		".": {
+			"types": "./index.d.ts",
+			"default": "./index.d.ts"
+		},
+		"./api": {
+			"types": "./modules/api/index.d.ts",
+			"default": "./modules/api/index.d.ts"
+		},
+		"./built-ins": {
+			"types": "./modules/built-ins/index.d.ts",
+			"default": "./modules/built-ins/index.d.ts"
+		},
+		"./discord": {
+			"types": "./modules/discord/index.d.ts",
+			"default": "./modules/discord/index.d.ts"
+		},
+		"./managers": {
+			"types": "./modules/managers/index.d.ts",
+			"default": "./modules/managers/index.d.ts"
+		},
+		"./stores": {
+			"types": "./modules/stores/index.d.ts",
+			"default": "./modules/stores/index.d.ts"
+		},
+		"./ui": {
+			"types": "./modules/ui/index.d.ts",
+			"default": "./modules/ui/index.d.ts"
+		},
+		"./utilities": {
+			"types": "./modules/utilities/index.d.ts",
+			"default": "./modules/utilities/index.d.ts"
+		},
+		"./modules/*": {
+			"types": "./modules/*.d.ts",
+			"default": "./modules/*"
+		},
+		"./*": {
+			"types": "./modules/*.d.ts",
+			"default": "./modules/*"
+		}
+	},
+	"dependencies": {
+		"@types/react": "^19.2.2",
+		"superagent": "^10.2.3",
+		"type-fest": "^4.33.0"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.3.0"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}
