@@ -1,0 +1,1 @@
+export type i18nLocaleStrings = Record<string, Record<string, any>>;

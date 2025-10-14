@@ -1,7 +1,11 @@
 import { Discord } from '~/api/metro/components';
+import type { ComponentType } from 'react';
 
-import type { CustomScreenProps } from '../@unbound-app/types/ui/settings/custom';
 
+export interface CustomScreenProps {
+	title: string;
+	render: ComponentType<any>;
+}
 
 function Custom({ route }: { route: { params: CustomScreenProps; }; }) {
 	const { render: Component, title, ...props } = route.params ?? {};

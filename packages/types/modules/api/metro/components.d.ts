@@ -1,8 +1,0 @@
-import { ComponentsModule } from '../../discord/components';
-
-
-export type FlashListModule = typeof import('@shopify/flash-list');
-
-export {
-	ComponentsModule
-};

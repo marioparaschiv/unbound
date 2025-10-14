@@ -2,6 +2,7 @@ export const CLIENT_NAME = 'Unbound';
 export const CACHE_KEY = Symbol.for('metro.cache');
 export const CACHE_VERSION = 1;
 
+// TODO: Move to types (maybe)
 export enum ManagerKind {
 	PLUGINS,
 	THEMES,

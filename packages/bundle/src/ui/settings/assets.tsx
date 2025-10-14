@@ -1,13 +1,21 @@
 import { Image, ScrollView, View, type GestureResponderEvent, type NativeTouchEvent } from 'react-native';
 import { memo, PureComponent, useMemo, useState } from 'react';
+import type { UnboundAsset } from '@unbound-app/types/assets';
 import { Discord, FlashList } from '~/api/metro/components';
 import { GeneralSearch } from '~/ui/misc/search';
 import { Media } from '~/api/metro/components';
 import { findByProps } from '~/api/metro';
 import { assets } from '~/api/assets';
 
-import type { AssetProps } from '../@unbound-app/types/ui/settings/assets';
 import useStyles from './assets.style';
+
+
+export interface AssetProps {
+	item: UnboundAsset;
+	id: number;
+	index: number;
+	total: number;
+}
 
 
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });

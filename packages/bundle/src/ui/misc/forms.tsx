@@ -1,11 +1,32 @@
+import type { ImageSourcePropType, ImageStyle, ViewStyle } from 'react-native';
 import { View, ScrollView, Image } from 'react-native';
+import type { ComponentType, ReactNode } from 'react';
 import { Discord } from '~/api/metro/components';
 import { Icons } from '~/api/assets';
 import { find } from '~/api/metro';
 
-import type { IconProps, SectionProps, SvgIconProps } from '../@unbound-app/types/ui/forms';
 import useStyles from './forms.style';
 
+
+type SectionProps = {
+	title?: string;
+	children?: ReactNode,
+	style?: ViewStyle;
+	margin?: boolean;
+};
+
+type SvgIconProps = {
+	size?: number;
+	style?: ImageStyle;
+	icon?: ComponentType<any>;
+};
+
+type IconProps = {
+	source: ImageSourcePropType;
+	size?: number;
+	style?: ImageStyle;
+	defaultSource?: number;
+};
 
 export const useFormStyles = useStyles;
 

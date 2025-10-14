@@ -1,0 +1,1 @@
+export const CACHE_KEY = Symbol.for('metro.cache');

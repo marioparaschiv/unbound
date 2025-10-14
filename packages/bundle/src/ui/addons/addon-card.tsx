@@ -1,14 +1,20 @@
+import { ManagerNames, type ManagerKind } from '~/lib/constants';
+import type { Addon } from '@unbound-app/types/managers';
+import type { Values } from '@unbound-app/types/utils';
 import { useSettingsStore } from '~/api/storage';
 import { Discord } from '~/api/metro/components';
-import { ManagerNames } from '~/lib/constants';
 import { Switch } from '~/ui/misc/forms';
 import * as Managers from '~/managers';
 import { View } from 'react-native';
 import { useMemo } from 'react';
 
-import type { AddonCardProps } from '../@unbound-app/types/ui/addons/addon-card';
 import useStyles from './addon-card.style';
 
+
+export interface AddonCardProps {
+	addon: Addon;
+	kind: ManagerKind;
+}
 
 function AddonCard(props: AddonCardProps) {
 	const { addon, kind } = props;

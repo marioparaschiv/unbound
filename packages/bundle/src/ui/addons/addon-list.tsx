@@ -1,10 +1,16 @@
+import type { Addon } from '@unbound-app/types/managers';
+import type { ManagerKind } from '~/lib/constants';
 import { FlashList } from '~/api/metro/components';
 import AddonCard from '~/ui/addons/addon-card';
 import { View } from 'react-native';
 
-import type { AddonListProps } from '../@unbound-app/types/ui/addons/addon-list';
 import useStyles from './addon-list.style';
 
+
+export interface AddonListProps {
+	addons: Addon[];
+	kind: ManagerKind;
+}
 
 function AddonList(props: AddonListProps) {
 	const styles = useStyles();
