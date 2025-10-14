@@ -2,7 +2,7 @@
 	"name": "unbound",
 	"private": true,
 	"workspaces": [
-		"packages/bundle",
+		"packages/client",
 		"packages/debugger",
 		"packages/i18n",
 		"packages/types"

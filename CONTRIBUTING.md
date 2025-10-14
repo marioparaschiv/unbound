@@ -25,7 +25,7 @@ First, make sure you have forked [the repository](https://github.com/marioparasc
 
 ```console
 git clone https://github.com/[YOU]/client
-cd unbound/packages/bundle
+cd unbound/packages/client
 bun i
 bun run build
 ```
@@ -41,7 +41,7 @@ $	git clone https://github.com/[YOU]/client
 2. Move to the directory you just cloned:
 
 ```console
-$ cd unbound/packages/bundle
+$ cd unbound/packages/client
 ```
 
 3. Install dependencies:

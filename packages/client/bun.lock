@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "@unbound-app/bundle",
+      "name": "@unbound-app/client",
       "dependencies": {
         "@unbound-app/i18n": "link:@unbound-app/i18n",
         "@unbound-app/types": "link:@unbound-app/types",

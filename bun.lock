@@ -4,8 +4,8 @@
     "": {
       "name": "unbound",
     },
-    "packages/bundle": {
-      "name": "@unbound-app/bundle",
+    "packages/client": {
+      "name": "@unbound-app/client",
       "version": "1.1.11",
       "dependencies": {
         "@unbound-app/i18n": "link:@unbound-app/i18n",
@@ -334,7 +334,7 @@
 
     "@types/yargs-parser": ["@types/yargs-parser@21.0.3", "", {}, "sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ=="],
 
-    "@unbound-app/bundle": ["@unbound-app/bundle@workspace:packages/bundle"],
+    "@unbound-app/client": ["@unbound-app/client@workspace:packages/client"],
 
     "@unbound-app/debugger": ["@unbound-app/debugger@workspace:packages/debugger"],
 
@@ -966,9 +966,9 @@
 
     "@istanbuljs/load-nyc-config/camelcase": ["camelcase@5.3.1", "", {}, "sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg=="],
 
-    "@unbound-app/bundle/@unbound-app/i18n": ["@unbound-app/i18n@link:@unbound-app/i18n", {}],
+    "@unbound-app/client/@unbound-app/i18n": ["@unbound-app/i18n@link:@unbound-app/i18n", {}],
 
-    "@unbound-app/bundle/@unbound-app/types": ["@unbound-app/types@link:@unbound-app/types", {}],
+    "@unbound-app/client/@unbound-app/types": ["@unbound-app/types@link:@unbound-app/types", {}],
 
     "anymatch/picomatch": ["picomatch@2.3.1", "", {}, "sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA=="],
 
