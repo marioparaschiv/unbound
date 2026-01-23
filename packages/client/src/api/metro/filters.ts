@@ -1,11 +1,11 @@
 import { CACHE_KEY } from '~/lib/constants';
 
-import type { Filter } from '../@unbound-app/types/api/metro/filters';
+export type MetroFilter = ((mdl: any, id: number | string) => boolean | never) & {
+	[CACHE_KEY]: string;
+	isRaw?: boolean;
+};
 
-
-export type * from '../@unbound-app/types/api/metro/filters';
-
-export function byProps(...props: string[]): Filter {
+export function byProps(...props: string[]): MetroFilter {
 	const filter = (mdl: any) => {
 		if (props.length === 1) {
 			return mdl[props[0]] !== void 0;
@@ -25,7 +25,7 @@ export function byProps(...props: string[]): Filter {
 	return filter;
 }
 
-export function byFilePath(path: string[]): Filter {
+export function byFilePath(path: string[]): MetroFilter {
 	const filter = (mdl: any) => mdl.__filePath === path;
 
 	filter[CACHE_KEY] = `byFilePath::${path}`;
@@ -34,7 +34,7 @@ export function byFilePath(path: string[]): Filter {
 	return filter;
 }
 
-export function byPrototypes(...prototypes: string[]): Filter {
+export function byPrototypes(...prototypes: string[]): MetroFilter {
 	const filter = (mdl: any) => {
 		if (!mdl.prototype) return false;
 
@@ -52,7 +52,7 @@ export function byPrototypes(...prototypes: string[]): Filter {
 	return filter;
 }
 
-export function byDisplayName(name: string): Filter {
+export function byDisplayName(name: string): MetroFilter {
 	const filter = (mdl: any) => mdl.displayName === name;
 
 	filter[CACHE_KEY] = `byDisplayName::${name}`;
@@ -60,7 +60,7 @@ export function byDisplayName(name: string): Filter {
 	return filter;
 }
 
-export function byName(name: string): Filter {
+export function byName(name: string): MetroFilter {
 	const filter = (mdl: any) => mdl.name === name;
 
 	filter[CACHE_KEY] = `byName::${name}`;
@@ -68,8 +68,8 @@ export function byName(name: string): Filter {
 	return filter;
 }
 
-export function byStore(name: string, short: boolean = true): Filter {
-	const named = (short ? name + 'Store' : name);
+export function byStore(name: string, short: boolean = true): MetroFilter {
+	const named = short ? name + 'Store' : name;
 	const filter = (mdl: any) => mdl._dispatcher && mdl.getName?.() === named;
 
 	filter[CACHE_KEY] = `byStore::${named}`;

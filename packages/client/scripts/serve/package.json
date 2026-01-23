@@ -1,0 +1,18 @@
+{
+	"name": "@unbound-app/client-serve",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"module": "index.ts",
+	"scripts": {
+		"start": "bun index.ts"
+	},
+	"dependencies": {
+		"@unbound-app/logger": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "catalog:",
+		"date-fns": "^4.1.0",
+		"typescript": "catalog:"
+	}
+}

@@ -1,17 +1,27 @@
-import type { SettingsPayload } from '@unbound-app/types/api/storage';
-import EventEmitter from '~/structures/emitter';
-import { debounce, isEmpty } from '~/utilities';
-import { BundleManager } from '~/api/native';
+import debounce from '@unbound-app/utils/debounce';
+import isEmpty from '@unbound-app/utils/is-empty';
 import { useEffect, useState } from 'react';
+import { EventEmitter } from 'tseep';
+
 import fs from '~/api/fs';
 
+export interface SettingsPayload {
+	store: string;
+	key: string | null;
+	value: any;
+}
 
-export type * from '@unbound-app/types/api/storage';
+type EventMap = {
+	set: (payload: { store: string; key: string; value: any }) => void;
+	changed: (payload: SettingsPayload) => void;
+	cleared: (payload: { store: string }) => void;
+	removed: (payload: { store: string; key: string }) => void;
+	toggled: (payload: { store: string; key: string; prev: any; value: any }) => void;
+};
 
-const Events = new EventEmitter();
+const Events = new EventEmitter<EventMap>();
 
 export const settings = globalThis.UNBOUND_SETTINGS ?? {};
-export const data = { isPendingReload: false };
 
 export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
@@ -34,12 +44,12 @@ export function get<T extends any>(store: string, key: string, def: T): T & {} {
 
 export function set(store: string, key: string, value: any) {
 	const keys = key.split('.');
-	const data = { current: settings[store] ??= {}, changed: false };
+	const data = { current: (settings[store] ??= {}), changed: false };
 
 	for (let i = 0; keys.length > i; i++) {
 		data.current[keys[i]] ??= {};
 
-		if ((keys.length - 1) === i) {
+		if (keys.length - 1 === i) {
 			data.current[keys[i]] = value;
 		} else {
 			data.current = data.current[keys[i]];
@@ -76,7 +86,7 @@ export function clear(store: string) {
 	delete settings[store];
 
 	Events.emit('changed', { store, key: null, value: undefined });
-	Events.emit('cleared', { store, key: null });
+	Events.emit('cleared', { store });
 }
 
 export function getStore(store: string) {
@@ -86,7 +96,8 @@ export function getStore(store: string) {
 		toggle: (key: string, def: any) => toggle(store, key, def),
 		remove: (key: string) => remove(store, key),
 		clear: () => clear(store),
-		useSettingsStore: (predicate?: (payload: SettingsPayload) => boolean) => useSettingsStore(store, predicate)
+		useSettingsStore: (predicate?: (payload: SettingsPayload) => boolean) =>
+			useSettingsStore(store, predicate),
 	};
 }
 
@@ -107,7 +118,6 @@ export function useSettingsStore(store: string, predicate?: (payload: SettingsPa
 		return () => void Events.off('changed', handler);
 	}, []);
 
-
 	return {
 		set: (key: string, value: any) => set(store, key, value),
 		get: <T = any>(key: string, def: NoInfer<T>): T => get(store, key, def),
@@ -116,11 +126,11 @@ export function useSettingsStore(store: string, predicate?: (payload: SettingsPa
 	};
 }
 
-Events.on('changed', debounce(() => {
+export async function persist() {
 	const payload = JSON.stringify(settings, null, 2);
-	const promise = fs.write('Unbound/settings.json', payload);
+	await fs.write('Unbound/settings.json', payload);
+}
 
-	promise.then(() => data.isPendingReload && BundleManager.reload());
-}, 100));
+Events.on('changed', debounce(persist, 100));
 
-export default { useSettingsStore, getStore, get, set, remove, on, off };
+export default { useSettingsStore, getStore, get, set, remove, on, off, persist };

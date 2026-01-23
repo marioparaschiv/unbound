@@ -1,34 +1,100 @@
-import type { BundleInfoType, BundleManagerType, ColorString, DeviceInfoType } from '@unbound-app/types/api/native';
 import { NativeModules, TurboModuleRegistry, Platform } from 'react-native';
+import type { ColorString, Fn, PromiseFn } from '@unbound-app/types/utils';
 
+export type DCDFileManagerEncoding = 'utf-8' | 'utf8' | 'base64';
 
-export type * from '@unbound-app/types/api/native';
+export interface DCDFileManagerConstants {
+	CacheDirPath: string;
+	DocumentsDirPath: string;
+}
 
-export const BundleInfo: BundleInfoType = getNativeModule('NativeClientInfoModule', 'InfoDictionaryManager', 'RTNClientInfoManager');
-export const BundleManager: BundleManagerType = getNativeModule('BundleUpdaterManager');
+export interface DCDFileManagerType extends DCDFileManagerConstants {
+	readFile(path: string, encoding: DCDFileManagerEncoding): Promise<string>;
+	writeFile(
+		type: 'documents' | 'cache',
+		path: string,
+		data: string,
+		encoding: DCDFileManagerEncoding,
+	): Promise<string>;
+	removeFile(type: 'documents' | 'cache', path: string): Promise<any>;
+	readAsset(): Promise<unknown>;
+	getSize(): Promise<unknown>;
+	getVideoDimensions(): Promise<unknown>;
+	fileExists(path: string): Promise<boolean>;
+	saveFileToGallery(): Promise<unknown>;
+	getConstants(): DCDFileManagerConstants;
+}
+
+export interface BundleInfoType {
+	Version: string;
+	ReleaseChannel: string;
+	Manifest: string;
+	Build: string;
+	SentryDsn: string;
+	DeviceVendorID: string;
+	OTABuild: string;
+	SentryStaffDsn: string;
+	Identifier: string;
+	SentryAlphaBetaDsn: string;
+}
+
+export interface DeviceInfoType {
+	isTaskBarEnabled: boolean;
+	maxCpuFreq: string;
+	socName: string;
+	deviceModel: string;
+	isTablet: boolean;
+	isGestureNavigationEnabled: boolean;
+	deviceProduct: string;
+	systemVersion: string;
+	deviceManufacturer: string;
+	deviceBrand: string;
+	ramSize: string;
+	device: string;
+}
+
+export interface DCDBundleManagerType {
+	getInitialBundleDownloaded: PromiseFn;
+	getInitialOtaUpdateChecked: PromiseFn;
+	checkForUpdateAndReload: Fn;
+	reload: Fn;
+	getOtaRootPath: PromiseFn;
+	getBuildOverrideCookieContents: PromiseFn;
+	setBuildOverrideCookieHeader: PromiseFn;
+	getManifestInfo: PromiseFn;
+	addListener: Fn;
+	removeListeners: Fn;
+}
+
+export const BundleInfo: BundleInfoType = getNativeModule(
+	'NativeClientInfoModule',
+	'InfoDictionaryManager',
+	'RTNClientInfoManager',
+);
+export const BundleManager: DCDBundleManagerType = getNativeModule('BundleUpdaterManager');
 export const DeviceInfo: DeviceInfoType = getNativeModule('NativeDeviceModule', 'DCDDeviceManager');
 
-export async function reload(instant = true) {
-	if (instant) {
-		BundleManager.reload();
-		return;
-	}
-
+export async function reload() {
 	// Avoid circular dependency
-	const { data } = await import('~/api/storage');
-	data.isPendingReload = true;
+	const { persist } = await import('~/api/storage');
+
+	await persist();
+
+	BundleManager.reload();
 }
 
 export function getNativeModule<T = any>(...names: string[]): T {
 	return [
-		...names.map(n => NativeModules[n]),
-		...names.map(n => TurboModuleRegistry.get?.(n))
-	].find(x => x) as T;
+		...names.map((n) => NativeModules[n]),
+		...names.map((n) => TurboModuleRegistry.get?.(n)),
+	].find((x) => x) as T;
 }
 
-const RNUnboundNative = Platform.OS === 'ios' ? getNativeModule('UnboundNative') : null;
+const canUseUnboundNative = Platform.OS === 'ios';
 
-if (Platform.OS === 'ios' && !RNUnboundNative) {
+const RNUnboundNative = canUseUnboundNative ? getNativeModule('UnboundNative') : null;
+
+if (canUseUnboundNative && !RNUnboundNative) {
 	throw new Error('UnboundNative module not found');
 }
 
@@ -51,7 +117,7 @@ export const UnboundNative = {
 		},
 		getAppSource: () => RNUnboundNative.getAppSource(),
 		getEntitlementsAsPlist: () => RNUnboundNative.getEntitlementsAsPlist(),
-		showToolboxMenu: () => RNUnboundNative.showToolboxMenu()
+		showToolboxMenu: () => RNUnboundNative.showToolboxMenu(),
 	},
 
 	pluginAPI: {
@@ -60,10 +126,10 @@ export const UnboundNative = {
 			content: string,
 			scheduledTime = 1,
 			sound = true,
-			notificationId = `notification-${Date.now()}`
+			notificationId = `notification-${Date.now()}`,
 		) => RNUnboundNative.showNotification(title, content, scheduledTime, sound, notificationId),
 
-		playPiPVideo: (videoURL: string) => RNUnboundNative.playPiPVideo(videoURL)
+		playPiPVideo: (videoURL: string) => RNUnboundNative.playPiPVideo(videoURL),
 	},
 
 	chatUI: {
@@ -71,7 +137,11 @@ export const UnboundNative = {
 		resetAvatarCornerRadius: () => RNUnboundNative.resetAvatarCornerRadius(),
 		getAvatarCornerRadius: () => RNUnboundNative.getAvatarCornerRadius(),
 
-		setMessageBubblesEnabled: (enabled: boolean, lightColor?: ColorString, darkColor?: ColorString) => {
+		setMessageBubblesEnabled: (
+			enabled: boolean,
+			lightColor?: ColorString,
+			darkColor?: ColorString,
+		) => {
 			if (lightColor !== undefined || darkColor !== undefined) {
 				return RNUnboundNative.setMessageBubblesEnabled(enabled, lightColor, darkColor);
 			}
@@ -85,7 +155,8 @@ export const UnboundNative = {
 		getMessageBubbleDarkColor: () => RNUnboundNative.getMessageBubbleDarkColor(),
 		getMessageBubblesEnabled: () => RNUnboundNative.getMessageBubblesEnabled(),
 		getMessageBubbleCornerRadius: () => RNUnboundNative.getMessageBubbleCornerRadius(),
-		setMessageBubbleCornerRadius: (radius: number) => RNUnboundNative.setMessageBubbleCornerRadius(radius),
-		resetMessageBubbles: () => RNUnboundNative.resetMessageBubbles()
-	}
+		setMessageBubbleCornerRadius: (radius: number) =>
+			RNUnboundNative.setMessageBubbleCornerRadius(radius),
+		resetMessageBubbles: () => RNUnboundNative.resetMessageBubbles(),
+	},
 };

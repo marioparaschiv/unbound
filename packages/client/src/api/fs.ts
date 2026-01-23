@@ -1,18 +1,26 @@
-import type { FileManagerEncoding, FileManagerType } from '@unbound-app/types/api/fs';
-import { getNativeModule } from '~/api/native';
+import {
+	getNativeModule,
+	type DCDFileManagerEncoding,
+	type DCDFileManagerType,
+} from '~/api/native';
 
-
-export type * from '@unbound-app/types/api/fs';
-
-const FileManager: FileManagerType = getNativeModule('NativeFileModule', 'DCDFileManager', 'RTNFileManager');
+const FileManager: DCDFileManagerType = getNativeModule(
+	'NativeFileModule',
+	'DCDFileManager',
+	'RTNFileManager',
+);
 
 export const Documents = FileManager.DocumentsDirPath;
 
-export function read(path: string, encoding: FileManagerEncoding = 'utf8', inDocuments: boolean = true) {
+export function read(
+	path: string,
+	encoding: DCDFileManagerEncoding = 'utf8',
+	inDocuments: boolean = true,
+) {
 	return FileManager.readFile(inDocuments ? `${Documents}/${path}` : path, encoding);
 }
 
-export function write(path: string, content: string, encoding: FileManagerEncoding = 'utf8') {
+export function write(path: string, content: string, encoding: DCDFileManagerEncoding = 'utf8') {
 	return FileManager.writeFile('documents', path, content, encoding);
 }
 

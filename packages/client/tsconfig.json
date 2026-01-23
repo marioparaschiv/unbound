@@ -1,15 +1,13 @@
 {
-	"extends": ["../../tsconfig.base.json"],
+	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"downlevelIteration": true,
-		"esModuleInterop": true,
-		"noUncheckedIndexedAccess": true,
-		"verbatimModuleSyntax": true,
-		"jsx": "preserve",
-		"baseUrl": "src",
+		"lib": ["ESNext", "DOM"],
+		"declarationDir": "temp-types",
+		"emitDeclarationOnly": true,
+		"noEmit": false,
 		"types": ["@unbound-app/types"],
 		"paths": {
-			"~/*": ["*"]
+			"~/*": ["./src/*"]
 		}
 	}
 }

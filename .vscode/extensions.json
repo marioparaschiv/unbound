@@ -1,6 +1,5 @@
 {
 	"recommendations": [
-		"eternal.ts-js-import-sorter",
-		"spencerwmiles.vscode-task-buttons"
+		"oxc.oxc-vscode"
 	]
 }

@@ -1,6 +1,13 @@
-async function init() {
-	const Core = await import('~/lib/core');
-	await Core.initialize();
+import { start } from '~/debug';
+
+import * as api from './api';
+
+declare global {
+	var unbound: typeof api;
 }
 
-init();
+start();
+
+window.unbound = api;
+
+export default api;

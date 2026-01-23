@@ -2,7 +2,6 @@ import { CACHE_VERSION } from '~/lib/constants';
 import { BundleInfo } from '~/api/native';
 import { getStore } from '~/api/storage';
 
-
 export enum ModuleFlags {
 	BLACKLISTED = 1 << 0,
 }
@@ -12,16 +11,23 @@ export const moduleIds = [...window.modules.keys()];
 const CurrentCacheInfo = {
 	cacheVersion: CACHE_VERSION,
 	buildNumber: BundleInfo.Build,
-	moduleCount: moduleIds.length
+	moduleCount: moduleIds.length,
 };
 
 const storage = getStore('unbound::cache');
 
-export const state = {
+interface CacheState {
+	info: typeof CurrentCacheInfo;
+	modules: Record<string, number[]>;
+	moduleFlags: Record<number, number>;
+	assets: number[];
+}
+
+export const state: CacheState = {
 	info: storage.get('info', CurrentCacheInfo),
 	modules: storage.get('modules', {}),
 	moduleFlags: storage.get('moduleFlags', {}),
-	assets: storage.get('assets', [])
+	assets: storage.get('assets', []),
 };
 
 if (!isValidCache()) {
@@ -58,7 +64,6 @@ export function getModuleCacheForKey(key: string) {
 
 export function addCachedIDForKey(key: string, item: number) {
 	state.modules[key] ??= [];
-
 
 	if (state.modules[key].includes(item)) {
 		return true;
@@ -137,5 +142,5 @@ export default {
 	addModuleFlag,
 	hasModuleFlag,
 	removeModuleFlag,
-	save
+	save,
 };

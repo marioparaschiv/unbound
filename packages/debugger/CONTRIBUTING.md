@@ -74,30 +74,33 @@ The flow is simple: user enters command → sent via WebSocket → executed in D
 ### Making Changes
 
 1. **Create a feature branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
 
 2. **Make your changes**
-   - Edit files in `src/`
-   - Follow existing code style
-   - Add TypeScript types where needed
+    - Edit files in `src/`
+    - Follow existing code style
+    - Add TypeScript types where needed
 
 3. **Test your changes**
-   ```bash
-   # Run the debugger
-   bun run src/index.ts
 
-   # In the Unbound app, connect through settings
-   # (requires a running Unbound instance)
-   ```
+    ```bash
+    # Run the debugger
+    bun run src/index.ts
+
+    # In the Unbound app, connect through settings
+    # (requires a running Unbound instance)
+    ```
 
 4. **Commit and push**
-   ```bash
-   git add .
-   git commit -m "feat(debugger): add your feature"
-   git push origin feature/your-feature-name
-   ```
+
+    ```bash
+    git add .
+    git commit -m "feat(debugger): add your feature"
+    git push origin feature/your-feature-name
+    ```
 
 5. **Open a Pull Request**
 

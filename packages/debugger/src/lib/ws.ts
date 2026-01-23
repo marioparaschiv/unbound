@@ -4,24 +4,23 @@ import os from 'node:os';
 import { abortCurrentReplInput, setupReplListeners, takeReplInput } from './repl';
 import argv from './cli';
 
-
 interface SocketMessage {
 	level: 1 | 2 | 3;
 	message: string;
 }
 
 export const state: {
-	isInitialized: boolean,
+	isInitialized: boolean;
 	socket: Bun.ServerWebSocket | null;
 } = {
 	isInitialized: false,
-	socket: null
+	socket: null,
 };
 
 export const MESSAGE_LEVELS = {
 	1: terminal.gray,
 	2: terminal.yellow,
-	3: terminal.red
+	3: terminal.red,
 };
 
 export function setupWebSocket() {
@@ -31,10 +30,9 @@ export function setupWebSocket() {
 		port: argv.flags.port,
 		fetch(request, server) {
 			if (state.socket) {
-				return new Response(
-					JSON.stringify({ error: 'Debugger is busy.' }),
-					{ status: 503 }
-				);
+				return new Response(JSON.stringify({ error: 'Debugger is busy.' }), {
+					status: 503,
+				});
 			}
 
 			server.upgrade(request);
@@ -50,7 +48,8 @@ export function setupWebSocket() {
 			message(_, message: string) {
 				try {
 					const payload: SocketMessage = JSON.parse(message);
-					abortCurrentReplInput(true);
+
+					abortCurrentReplInput();
 
 					MESSAGE_LEVELS[payload.level](`« ${payload.message}\n`);
 
@@ -61,15 +60,17 @@ export function setupWebSocket() {
 			},
 			close() {
 				state.socket = null;
-				abortCurrentReplInput(true);
+				abortCurrentReplInput({ deletePrompt: true, deleteCurrentInput: true });
 				terminal.red('Client disconnected.\n');
-			}
-		}
+			},
+		},
 	});
 
 	const localAddress = getLocalAddress();
 
-	terminal.gray(`Unbound's Debugger is now active. Connect using ${localAddress}:${argv.flags.port}\n`);
+	terminal.gray(
+		`Unbound's Debugger is now active. Connect using ${localAddress}:${argv.flags.port}\n`,
+	);
 }
 
 export function getLocalAddress() {
@@ -85,8 +86,7 @@ export function getLocalAddress() {
 			}
 		}
 	}
-};
-
+}
 
 export function send(...payload: Parameters<Bun.ServerWebSocket['send']>) {
 	if (!state.socket) {

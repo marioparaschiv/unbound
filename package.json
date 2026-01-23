@@ -1,10 +1,47 @@
 {
 	"name": "unbound",
 	"private": true,
-	"workspaces": [
-		"packages/client",
-		"packages/debugger",
-		"packages/i18n",
-		"packages/types"
-	]
+	"workspaces": {
+		"packages": [
+			"packages/client",
+			"packages/debugger",
+			"packages/types",
+			"packages/api",
+			"packages/plugin-test",
+			"packages/utils",
+			"packages/logger",
+			"packages/client/scripts/build",
+			"packages/client/scripts/serve"
+		],
+		"catalog": {
+			"typescript": "^5.9.3",
+			"possess": "^1.0.8",
+			"@types/bun": "latest"
+		},
+		"catalogs": {
+			"react": {
+				"@types/react": "^19.2.7",
+				"react": "^19.2.3",
+				"react-native": "^0.83.0"
+			}
+		}
+	},
+	"scripts": {
+		"generate-sdk": "bun scripts/generate-plugin-sdk.ts",
+		"lint": "oxlint --config .oxlintrc.json apps packages",
+		"lint:fix": "oxlint --config .oxlintrc.json --fix-dangerously apps packages",
+		"fmt": "oxfmt --config .oxfmtrc.json apps packages",
+		"fmt:check": "oxfmt --config .oxfmtrc.json --check apps packages"
+	},
+	"devDependencies": {
+		"dts-bundle-generator": "^9.5.1",
+		"oxfmt": "^0.26.0",
+		"oxlint": "^1.41.0",
+		"oxlint-tsgolint": "^0.11.1",
+		"ts-morph": "^27.0.2"
+	},
+	"dependencies": {
+		"@typescript/native-preview": "^7.0.0-dev.20260123.3",
+		"eslint-plugin-perfectionist": "^5.4.0"
+	}
 }

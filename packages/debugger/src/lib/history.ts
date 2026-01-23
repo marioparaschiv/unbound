@@ -1,7 +1,6 @@
 import { terminal } from 'terminal-kit';
 import { join } from 'node:path';
 
-
 type History = string[];
 
 const HISTORY_PATH = join(__dirname, '..', '..', '.history.json');
