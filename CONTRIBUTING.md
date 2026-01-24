@@ -9,8 +9,8 @@ We're so glad you want to contribute! We're sure your contribution will be amazi
 ## Let's set some rules to follow when contributing:
 
 1. Please follow the syntax styles defined by the files you're working in. If you create a PR with inconsistent coding styles (*yes this may mean tabs vs spaces*) you may be asked to change your formatting before your PR is accepted.
-2. Please write clear, concise commit messages that describe the changes you've made. This helps reviewers understand your work quickly without needing to decypher your changes.
-3. Please test your code. Ensure that it, at the very least, builds. We'll explain how to do this later in this page.
+2. Please write clear, concise commit messages that describe the changes you've made. This helps reviewers understand your work quickly without needing to decipher your changes.
+3. Please test your code. Ensure that it, at the very least, builds. We'll explain how to do this later in this contribution guide.
 4. Please keep your PR focused. By this, we mean for you not to go into a rabbit hole where you fix 100 other issues, but rather stick to the problem that your changes are supposed to fix.
 5. Please stay up to date with the `main` branch. This may mean needing to resolve merge conflicts.
 6. Building on point 2, please document the changes you've made. Creating a small message which you update to detail the overall progress of your PR is helpful for reviewers to quickly understand how close your PR is to completion.
@@ -21,13 +21,13 @@ We're so glad you want to contribute! We're sure your contribution will be amazi
 
 ### Quick start:
 
-First, make sure you have forked [the repository](https://github.com/unbound-mod/client) so that you have write access.
+First, make sure you have forked [the repository](https://github.com/marioparaschiv/unbound) so that you have write access.
 
 ```console
-git clone https://github.com/[YOU]/client --recursive
-cd client
-pnpm i
-pnpm build
+git clone https://github.com/[YOU]/client
+cd unbound/packages/client
+bun i
+bun run build
 ```
 
 ### Full explanation:
@@ -35,42 +35,31 @@ pnpm build
 1. Clone the client repository to your local machine:
 
 ```console
-$ git clone https://github.com/[YOU]/client --recursive
+$	git clone https://github.com/[YOU]/client
 ```
-
-(Note `--recursive` to also clone the i18n submodule)
 
 2. Move to the directory you just cloned:
 
 ```console
-$ cd client
-```
-
-If you cloned the repository without installing the submodule, do so now:
-
-```console
-$ git submodule init
-$ git submodule update --remote --merge
+$ cd unbound/packages/client
 ```
 
 3. Install dependencies:
 
-(You may need to run `npm i -g pnpm` first to install `pnpm`)
-
 ```console
-$ pnpm i
+$ bun i
 ```
 
 4. Build the project:
 
 ```console
-$ pnpm build
+$ bun run build
 ```
 
-If you have `nodemon` installed, you can also just run it:
+If you wish to rebuild upon changes, you may use the following:
 
 ```console
-$ nodemon
+$ bun run dev
 ```
 
 to automatically rebuild upon changes.
@@ -106,7 +95,7 @@ All of these methods should open a local server on port [PORT] which hosts the f
 In your existing Unbound installation:
 
 1. Go to `Discord Settings` > `Unbound` > `Developer Settings`
-2. Change `Custom Bundle URL` to `http://[LOCAL_IP]:[PORT]/unbound.js`
+2. Change `Custom Bundle URL` to `http://[LOCAL_IP]:[PORT]/`
 3. Restart your Discord app
 
 <hr />

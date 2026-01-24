@@ -1,0 +1,14 @@
+{
+	"extends": ["../../tsconfig.base.json"],
+	"compilerOptions": {
+		"downlevelIteration": true,
+		"esModuleInterop": true,
+		"noUncheckedIndexedAccess": true,
+		"verbatimModuleSyntax": true,
+		"jsx": "preserve",
+		"types": ["@unbound-app/types"],
+		"paths": {
+			"~/*": ["./src/*"]
+		}
+	}
+}

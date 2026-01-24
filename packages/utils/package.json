@@ -1,0 +1,16 @@
+{
+	"name": "@unbound-app/utils",
+	"version": "1.0.0",
+	"private": true,
+	"author": {
+		"name": "Mario P.",
+		"email": "contact@marioparaschiv.com",
+		"url": "https://github.com/marioparaschiv"
+	},
+	"exports": {
+		"./*": "./src/*.ts"
+	},
+	"dependencies": {
+		"@unbound-app/types": "workspace:*"
+	}
+}

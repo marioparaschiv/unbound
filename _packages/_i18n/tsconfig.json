@@ -1,0 +1,10 @@
+
+{
+	"extends": ["../../tsconfig.base.json"],
+	"compilerOptions": {
+		"module": "preserve",
+		"verbatimModuleSyntax": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true
+	}
+}

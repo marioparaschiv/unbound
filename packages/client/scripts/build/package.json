@@ -1,0 +1,22 @@
+{
+	"name": "@unbound-app/client-build",
+	"private": true,
+	"type": "module",
+	"module": "index.ts",
+	"devDependencies": {
+		"@babel/core": "^7.28.6",
+		"@babel/plugin-transform-block-scoping": "^7.28.6",
+		"@rollup/plugin-replace": "^6.0.3",
+		"@types/babel__core": "^7.20.5",
+		"@types/bun": "catalog:",
+		"@unbound-mod/rollup-plugin": "^1.1.1",
+		"rolldown": "^1.0.0-beta.55",
+		"rollup-plugin-swc3": "^0.12.1"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	},
+	"trustedDependencies": [
+		"@swc/core"
+	]
+}

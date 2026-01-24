@@ -1,9 +1,0 @@
-{
-	"ignore": [
-		"dist",
-		"rollup.config-*.mjs",
-		"server"
-	],
-	"exec": "rollup -c",
-	"ext": "*.*"
-}
