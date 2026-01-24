@@ -10,7 +10,12 @@ const Settings = storage.getStore('unbound');
 let ws: WebSocket | null = null;
 let appStateSubscription: { remove: () => void } | null = null;
 
+const listeners = new Set<(payload: any) => void>();
+
 export function start(isReconnect = false) {
+	const enabled = Settings.get('debugger.enabled', false);
+	if (!enabled) return;
+
 	const address = Settings.get<string | null>('debugger.address', null);
 
 	if (!address) {
@@ -42,6 +47,7 @@ export function start(isReconnect = false) {
 	});
 
 	attachAppStateListener();
+	attachSettingsListener();
 }
 
 export function stop() {
@@ -56,6 +62,12 @@ export function stop() {
 		appStateSubscription.remove();
 		appStateSubscription = null;
 	}
+
+	for (const listener of listeners) {
+		storage.removeListener(listener);
+	}
+
+	listeners.clear();
 }
 
 function patchLoggingHook() {
@@ -89,3 +101,28 @@ function attachAppStateListener() {
 		}
 	});
 }
+
+function attachSettingsListener() {
+	const handler = (payload: any) => {
+		if (!payload.key?.startsWith('debugger.')) return;
+
+		if (payload.key === 'debugger.enabled') {
+			if (payload.value) {
+				start();
+			} else {
+				stop();
+			}
+		} else if (payload.key === 'debugger.address') {
+			if (ws?.readyState === WebSocket.OPEN) {
+				Logger.info('Address changed, reconnecting...');
+				stop();
+				start(true);
+			}
+		}
+	};
+
+	storage.on('changed', handler);
+	listeners.add(handler);
+}
+
+export default { start, stop };

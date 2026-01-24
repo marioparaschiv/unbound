@@ -1,22 +1,68 @@
-import * as debug from './builtins/debugger';
-import { plugins, themes } from './managers';
-import storage from './api/storage';
-import * as api from './api';
+import { createLogger } from '@unbound-app/logger';
+
+import { builtins, plugins, themes } from '~/managers';
+import storage from '~/api/storage';
+import * as api from '~/api';
+
+export interface UnboundWindowObject extends Omit<typeof api, 'default'> {
+	initialize: typeof initialize;
+	shutdown: typeof shutdown;
+}
 
 declare global {
-	var unbound: typeof api;
+	var unbound: UnboundWindowObject;
 }
 
-const Settings = storage.getStore('unbound');
-const debugEnabled = Settings.get('debugger.enabled', false);
+const Logger = createLogger('Core');
 
-if (debugEnabled) {
-	debug.start();
+let initialized = false;
+
+export function initialize() {
+	if (initialized) {
+		Logger.warn('Unbound already initialized');
+		return;
+	}
+
+	Logger.info('Initializing Unbound...');
+
+	builtins.initialize();
+	plugins.initialize();
+	themes.initialize();
+
+	initialized = true;
+	Logger.info('Unbound initialized');
 }
 
-plugins.initialize();
-themes.initialize();
+export async function shutdown() {
+	if (!initialized) {
+		Logger.warn('Unbound not initialized');
+		return;
+	}
 
-window.unbound = api;
+	Logger.info('Shutting down Unbound...');
+
+	builtins.shutdown();
+	themes.shutdown();
+	plugins.shutdown();
+
+	await storage.persist();
+
+	initialized = false;
+
+	window.unbound = {
+		initialize,
+		shutdown,
+	} as any;
+
+	Logger.info('Unbound shutdown complete');
+}
+
+initialize();
+
+window.unbound = {
+	...api,
+	initialize,
+	shutdown,
+};
 
 export default api;

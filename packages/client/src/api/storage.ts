@@ -1,3 +1,4 @@
+import type { PredicateResult } from '@unbound-app/types/global';
 import debounce from '@unbound-app/utils/debounce';
 import isEmpty from '@unbound-app/utils/is-empty';
 import { useEffect, useState } from 'react';
@@ -25,6 +26,25 @@ export const settings = globalThis.UNBOUND_SETTINGS ?? {};
 
 export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
+
+export function addListener(
+	predicate: (payload: SettingsPayload) => PredicateResult,
+	callback: (payload: SettingsPayload) => void,
+) {
+	function handler(payload: SettingsPayload) {
+		if (predicate(payload)) {
+			callback(payload);
+		}
+	}
+
+	Events.on('changed', handler);
+
+	return () => Events.off('changed', handler);
+}
+
+export function removeListener(callback: (payload: SettingsPayload) => void) {
+	Events.off('changed', callback);
+}
 
 export function get<T extends any>(store: string, key: string, def: T): T & {} {
 	const keys = key.split('.');
@@ -96,12 +116,30 @@ export function getStore(store: string) {
 		toggle: (key: string, def: any) => toggle(store, key, def),
 		remove: (key: string) => remove(store, key),
 		clear: () => clear(store),
-		useSettingsStore: (predicate?: (payload: SettingsPayload) => boolean) =>
+		useSettingsStore: (predicate?: (payload: SettingsPayload) => PredicateResult) =>
 			useSettingsStore(store, predicate),
+		addListener: (
+			predicate: (payload: SettingsPayload) => PredicateResult,
+			callback: (payload: SettingsPayload) => void,
+		) => {
+			function handler(payload: SettingsPayload) {
+				if (payload.store !== store) return;
+				if (predicate(payload)) {
+					callback(payload);
+				}
+			}
+
+			Events.on('changed', handler);
+
+			return () => Events.off('changed', handler);
+		},
 	};
 }
 
-export function useSettingsStore(store: string, predicate?: (payload: SettingsPayload) => boolean) {
+export function useSettingsStore(
+	store: string,
+	predicate?: (payload: SettingsPayload) => PredicateResult,
+) {
 	const [, forceUpdate] = useState({});
 
 	useEffect(() => {
@@ -133,4 +171,15 @@ export async function persist() {
 
 Events.on('changed', debounce(persist, 100));
 
-export default { useSettingsStore, getStore, get, set, remove, on, off, persist };
+export default {
+	addListener,
+	get,
+	getStore,
+	off,
+	on,
+	persist,
+	remove,
+	removeListener,
+	set,
+	useSettingsStore,
+};

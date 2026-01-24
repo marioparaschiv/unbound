@@ -1116,6 +1116,8 @@ export function set(store: string, key: string, value: any): void;
 
 **Reality Check:** Unbound runs in the same JavaScript context as Discord. There is no sandboxing, no isolation, no security boundary.
 
+- We can add light protections like blocking searches to getToken by props.
+
 ### What We Actually Need
 
 1. **Code Review Culture**

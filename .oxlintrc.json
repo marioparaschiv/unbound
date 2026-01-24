@@ -128,7 +128,19 @@
 					"unknown"
 				]
 			}
-		]
+		],
+		"perfectionist/sort-exports": [
+			"error",
+			{
+				"type": "line-length",
+				"fallbackSort": {
+					"type": "alphabetical",
+					"order": "asc"
+				},
+				"order": "desc",
+				"newlinesBetween": 1
+			}
+		],
 	},
 	"settings": {
 		"jsx-a11y": {

@@ -1,2 +1,3 @@
-export { plugins } from './plugins';
-export { themes } from './themes';
+export { builtins } from '~/managers/builtins';
+export { plugins } from '~/managers/plugins';
+export { themes } from '~/managers/themes';

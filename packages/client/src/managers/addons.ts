@@ -1,9 +1,8 @@
 import type { Addon, AddonManifest } from '@unbound-app/types';
 import noop from '@unbound-app/utils/noop';
 
+import { Manager } from '~/managers/base';
 import storage from '~/api/storage';
-
-import { Manager } from './base';
 
 type AddonResolveable = string | Addon;
 

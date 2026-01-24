@@ -1,6 +1,11 @@
 import type { AddonManifest } from './typings/addons';
 import type { Fn } from './typings/utils';
 
+export type Falsy = false | 0 | '' | null | undefined;
+export type Truthy = true | number | string | object | symbol | bigint;
+export type Nullable<T> = T | null | undefined;
+export type PredicateResult = boolean | Falsy;
+
 declare global {
 	var nativeLoggingHook: (message: string, level: any) => void;
 	var React: typeof import('react');
@@ -39,5 +44,3 @@ declare global {
 		}[];
 	}
 }
-
-export {};

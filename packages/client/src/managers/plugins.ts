@@ -1,7 +1,7 @@
 import type { Plugin, PluginEntity } from '@unbound-app/types';
 
-import { ManagerType } from './base';
-import { Addons } from './addons';
+import { ManagerType } from '~/managers/base';
+import { Addons } from '~/managers/addons';
 
 export class Plugins extends Addons<PluginEntity> {
 	constructor() {

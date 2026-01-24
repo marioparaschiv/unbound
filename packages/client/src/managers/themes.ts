@@ -1,9 +1,8 @@
 import type { Theme, ThemeEntity } from '@unbound-app/types';
 
+import { ManagerType } from '~/managers/base';
+import { Addons } from '~/managers/addons';
 import ThemeStore from '~/stores/themes';
-
-import { ManagerType } from './base';
-import { Addons } from './addons';
 
 export class Themes extends Addons<ThemeEntity> {
 	constructor() {

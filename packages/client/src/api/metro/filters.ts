@@ -1,6 +1,8 @@
+import type { PredicateResult } from '@unbound-app/types/global';
+
 import { CACHE_KEY } from '~/lib/constants';
 
-export type MetroFilter = ((mdl: any, id: number | string) => boolean | never) & {
+export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) & {
 	[CACHE_KEY]: string;
 	isRaw?: boolean;
 };
