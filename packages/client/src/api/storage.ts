@@ -1,4 +1,4 @@
-import type { PredicateResult } from '@unbound-app/types/global';
+import type { PredicateResult } from '@unbound-app/types';
 import debounce from '@unbound-app/utils/debounce';
 import isEmpty from '@unbound-app/utils/is-empty';
 import { useEffect, useState } from 'react';

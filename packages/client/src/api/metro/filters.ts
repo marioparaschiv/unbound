@@ -1,5 +1,4 @@
-import type { PredicateResult } from '@unbound-app/types/global';
-
+import type { PredicateResult } from '@unbound-app/types';
 import { CACHE_KEY } from '~/lib/constants';
 
 export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) & {
