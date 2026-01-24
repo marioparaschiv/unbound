@@ -1,15 +1,13 @@
 import { rolldown, type RolldownOptions } from 'rolldown';
-import { minify, swc } from 'rollup-plugin-swc3';
 import hermes from '@unbound-mod/rollup-plugin';
 import replace from '@rollup/plugin-replace';
 import Logger from '@unbound-app/logger';
 import { execSync } from 'child_process';
-import { readFileSync } from 'fs';
+import { swc } from 'rollup-plugin-swc3';
 import { join } from 'node:path';
 
 import generateManifest from './plugins/manifest';
 import worklets from './plugins/worklets';
-import iifeWrapper from './plugins/iife';
 import globals from './plugins/globals';
 
 const revision = (() => {
