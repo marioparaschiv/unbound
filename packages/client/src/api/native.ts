@@ -1,5 +1,5 @@
-import { NativeModules, TurboModuleRegistry, Platform } from 'react-native';
-import type { ColorString, Fn, PromiseFn } from '@unbound-app/types/utils';
+import { NativeModules, Platform, TurboModuleRegistry } from 'react-native';
+import type { ColorString, Fn, PromiseFn } from '@unbound-app/types';
 
 export type DCDFileManagerEncoding = 'utf-8' | 'utf8' | 'base64';
 
@@ -66,6 +66,13 @@ export interface DCDBundleManagerType {
 	removeListeners: Fn;
 }
 
+export function getNativeModule<T = any>(...names: string[]): T {
+	return [
+		...names.map((n) => NativeModules[n]),
+		...names.map((n) => TurboModuleRegistry.get?.(n)),
+	].find((x) => x) as T;
+}
+
 export const BundleInfo: BundleInfoType = getNativeModule(
 	'NativeClientInfoModule',
 	'InfoDictionaryManager',
@@ -75,23 +82,12 @@ export const BundleManager: DCDBundleManagerType = getNativeModule('BundleUpdate
 export const DeviceInfo: DeviceInfoType = getNativeModule('NativeDeviceModule', 'DCDDeviceManager');
 
 export async function reload() {
-	// Avoid circular dependency
 	const { persist } = await import('~/api/storage');
-
 	await persist();
-
 	BundleManager.reload();
 }
 
-export function getNativeModule<T = any>(...names: string[]): T {
-	return [
-		...names.map((n) => NativeModules[n]),
-		...names.map((n) => TurboModuleRegistry.get?.(n)),
-	].find((x) => x) as T;
-}
-
 const canUseUnboundNative = Platform.OS === 'ios';
-
 const RNUnboundNative = canUseUnboundNative ? getNativeModule('UnboundNative') : null;
 
 if (canUseUnboundNative && !RNUnboundNative) {
@@ -100,24 +96,24 @@ if (canUseUnboundNative && !RNUnboundNative) {
 
 export const UnboundNative = {
 	utilities: {
-		getDeviceModel: () => RNUnboundNative.getDeviceModel(),
-		getiOSVersionString: () => RNUnboundNative.getiOSVersionString(),
-		isJailbroken: () => RNUnboundNative.isJailbroken(),
-		isSystemApp: () => RNUnboundNative.isSystemApp(),
-		isVerifiedBuild: () => RNUnboundNative.isVerifiedBuild(),
-		isAppStoreApp: () => RNUnboundNative.isAppStoreApp(),
-		isTestFlightApp: () => RNUnboundNative.isTestFlightApp(),
-		isTrollStoreApp: () => RNUnboundNative.isTrollStoreApp(),
-		isLiveContainerApp: () => RNUnboundNative.isLiveContainerApp(),
-		getTrollStoreVariant: () => RNUnboundNative.getTrollStoreVariant(),
-		getApplicationEntitlements: () => RNUnboundNative.getApplicationEntitlements(),
+		getDeviceModel: () => RNUnboundNative?.getDeviceModel(),
+		getiOSVersionString: () => RNUnboundNative?.getiOSVersionString(),
+		isJailbroken: () => RNUnboundNative?.isJailbroken(),
+		isSystemApp: () => RNUnboundNative?.isSystemApp(),
+		isVerifiedBuild: () => RNUnboundNative?.isVerifiedBuild(),
+		isAppStoreApp: () => RNUnboundNative?.isAppStoreApp(),
+		isTestFlightApp: () => RNUnboundNative?.isTestFlightApp(),
+		isTrollStoreApp: () => RNUnboundNative?.isTrollStoreApp(),
+		isLiveContainerApp: () => RNUnboundNative?.isLiveContainerApp(),
+		getTrollStoreVariant: () => RNUnboundNative?.getTrollStoreVariant(),
+		getApplicationEntitlements: () => RNUnboundNative?.getApplicationEntitlements(),
 		getAppRegistrationType: async (): Promise<'System' | 'User'> => {
-			const isSystem = await RNUnboundNative.isSystemApp();
+			const isSystem = await RNUnboundNative?.isSystemApp();
 			return isSystem ? 'System' : 'User';
 		},
-		getAppSource: () => RNUnboundNative.getAppSource(),
-		getEntitlementsAsPlist: () => RNUnboundNative.getEntitlementsAsPlist(),
-		showToolboxMenu: () => RNUnboundNative.showToolboxMenu(),
+		getAppSource: () => RNUnboundNative?.getAppSource(),
+		getEntitlementsAsPlist: () => RNUnboundNative?.getEntitlementsAsPlist(),
+		showToolboxMenu: () => RNUnboundNative?.showToolboxMenu(),
 	},
 
 	pluginAPI: {
@@ -127,15 +123,16 @@ export const UnboundNative = {
 			scheduledTime = 1,
 			sound = true,
 			notificationId = `notification-${Date.now()}`,
-		) => RNUnboundNative.showNotification(title, content, scheduledTime, sound, notificationId),
+		) =>
+			RNUnboundNative?.showNotification(title, content, scheduledTime, sound, notificationId),
 
-		playPiPVideo: (videoURL: string) => RNUnboundNative.playPiPVideo(videoURL),
+		playPiPVideo: (videoURL: string) => RNUnboundNative?.playPiPVideo(videoURL),
 	},
 
 	chatUI: {
-		setAvatarCornerRadius: (radius: number) => RNUnboundNative.setAvatarCornerRadius(radius),
-		resetAvatarCornerRadius: () => RNUnboundNative.resetAvatarCornerRadius(),
-		getAvatarCornerRadius: () => RNUnboundNative.getAvatarCornerRadius(),
+		setAvatarCornerRadius: (radius: number) => RNUnboundNative?.setAvatarCornerRadius(radius),
+		resetAvatarCornerRadius: () => RNUnboundNative?.resetAvatarCornerRadius(),
+		getAvatarCornerRadius: () => RNUnboundNative?.getAvatarCornerRadius(),
 
 		setMessageBubblesEnabled: (
 			enabled: boolean,
@@ -143,20 +140,20 @@ export const UnboundNative = {
 			darkColor?: ColorString,
 		) => {
 			if (lightColor !== undefined || darkColor !== undefined) {
-				return RNUnboundNative.setMessageBubblesEnabled(enabled, lightColor, darkColor);
+				return RNUnboundNative?.setMessageBubblesEnabled(enabled, lightColor, darkColor);
 			}
-			return RNUnboundNative.setMessageBubblesEnabled(enabled);
+			return RNUnboundNative?.setMessageBubblesEnabled(enabled);
 		},
 
 		setMessageBubbleColors: (lightColor: ColorString, darkColor: ColorString) =>
-			RNUnboundNative.setMessageBubbleColors(lightColor, darkColor),
+			RNUnboundNative?.setMessageBubbleColors(lightColor, darkColor),
 
-		getMessageBubbleLightColor: () => RNUnboundNative.getMessageBubbleLightColor(),
-		getMessageBubbleDarkColor: () => RNUnboundNative.getMessageBubbleDarkColor(),
-		getMessageBubblesEnabled: () => RNUnboundNative.getMessageBubblesEnabled(),
-		getMessageBubbleCornerRadius: () => RNUnboundNative.getMessageBubbleCornerRadius(),
+		getMessageBubbleLightColor: () => RNUnboundNative?.getMessageBubbleLightColor(),
+		getMessageBubbleDarkColor: () => RNUnboundNative?.getMessageBubbleDarkColor(),
+		getMessageBubblesEnabled: () => RNUnboundNative?.getMessageBubblesEnabled(),
+		getMessageBubbleCornerRadius: () => RNUnboundNative?.getMessageBubbleCornerRadius(),
 		setMessageBubbleCornerRadius: (radius: number) =>
-			RNUnboundNative.setMessageBubbleCornerRadius(radius),
-		resetMessageBubbles: () => RNUnboundNative.resetMessageBubbles(),
+			RNUnboundNative?.setMessageBubbleCornerRadius(radius),
+		resetMessageBubbles: () => RNUnboundNative?.resetMessageBubbles(),
 	},
 };

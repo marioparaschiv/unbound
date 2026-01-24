@@ -9,5 +9,3 @@ declare global {
 
 	declare const unbound: Window['unbound'];
 }
-
-

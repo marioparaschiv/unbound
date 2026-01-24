@@ -132,5 +132,3 @@ type MetroFilter = ((mdl: any, id: number | string) => boolean | never) & {
 };
 
 export * as filters from './filters';
-
-

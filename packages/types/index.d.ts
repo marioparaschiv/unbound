@@ -4,3 +4,6 @@
 // The triple-slash directives above tell TypeScript to include React and React Native
 // type definitions from this package's node_modules.
 import './global';
+
+export * from './typings/addons';
+export * from './typings/utils';

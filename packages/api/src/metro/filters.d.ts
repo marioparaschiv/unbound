@@ -19,5 +19,3 @@ export type MetroFilter = ((mdl: any, id: number | string) => boolean | never) &
 };
 
 export { _default as default };
-
-

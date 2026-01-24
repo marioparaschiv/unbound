@@ -1,9 +1,12 @@
-## Plan Mode
+# Plan Mode
 
 - Make the plan extremely concise. Sacrifice grammar for the sake of concision.
 - At the end of each plan, give me a list of unresolved questions to answer, if any.
 
 # Custom Instructions for Claude Code
+
+# Implementation
+- Always use bun fmt and bun lint:fix after implementing a fix/feature.
 
 ## Communication Style
 
