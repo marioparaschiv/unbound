@@ -1,0 +1,12 @@
+pre-commit:
+  commands:
+    format:
+      glob: '*.{ts,tsx,js,mjs,json}'
+      run: pnpm fmt:check
+
+commit-msg:
+  commands:
+    commitlint:
+      env:
+        PATH: "./node_modules/.bin:$PATH"
+      run: commitlint --edit "{1}"

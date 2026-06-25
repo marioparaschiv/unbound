@@ -1,0 +1,13 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["ESNext", "DOM"],
+		"declarationDir": "temp-types",
+		"emitDeclarationOnly": true,
+		"noEmit": false,
+		"types": ["@unbound-app/types"],
+		"paths": {
+			"~/*": ["./src/*"]
+		}
+	}
+}

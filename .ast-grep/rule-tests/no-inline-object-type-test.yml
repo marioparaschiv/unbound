@@ -1,0 +1,25 @@
+id: no-inline-object-type
+valid:
+  - 'type A = { id: string };'
+  - 'function f(x: Args): Ret { return y; }'
+  - 'const v: { a: number } = obj;'
+  - 'interface I { a: number }'
+  - 'const e = x as Args;'
+invalid:
+  - 'function f(x: { id: string }) {}'
+  - 'function g(): { id: string } { return z; }'
+  - 'const h = (a: { n: number }) => a;'
+  - 'let p: Promise<{ id: string }>;'
+  - 'class K { m(z: { q: string }) {} }'
+---
+id: no-inline-object-type-tsx
+valid:
+  - 'type A = { id: string };'
+  - 'function f(x: Args): Ret { return y; }'
+  - 'const v: { a: number } = obj;'
+  - 'interface I { a: number }'
+invalid:
+  - 'function f(x: { id: string }) {}'
+  - 'function g(): { id: string } { return z; }'
+  - 'const h = (a: { n: number }) => a;'
+  - 'let p: Promise<{ id: string }>;'

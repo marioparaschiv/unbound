@@ -1,0 +1,16 @@
+id: no-unnecessary-usestate-type
+snapshots:
+  useState<number>(0):
+    fixed: useState(0)
+    labels:
+    - source: useState<number>(0)
+      style: primary
+      start: 0
+      end: 19
+  useState<string>('a'):
+    fixed: useState('a')
+    labels:
+    - source: useState<string>('a')
+      style: primary
+      start: 0
+      end: 21

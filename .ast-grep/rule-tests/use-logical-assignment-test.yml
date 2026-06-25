@@ -1,0 +1,36 @@
+id: prefer-or-assignment
+valid:
+  - 'let a = a || b'
+  - 'a = c || b'
+invalid:
+  - 'a = a || b'
+---
+id: prefer-and-assignment
+valid:
+  - 'a = c && b'
+invalid:
+  - 'a = a && b'
+---
+id: prefer-nullish-assignment
+valid:
+  - 'a = c ?? b'
+invalid:
+  - 'a = a ?? b'
+---
+id: prefer-or-assignment-tsx
+valid:
+  - 'a = c || b'
+invalid:
+  - 'a = a || b'
+---
+id: prefer-and-assignment-tsx
+valid:
+  - 'a = c && b'
+invalid:
+  - 'a = a && b'
+---
+id: prefer-nullish-assignment-tsx
+valid:
+  - 'a = c ?? b'
+invalid:
+  - 'a = a ?? b'

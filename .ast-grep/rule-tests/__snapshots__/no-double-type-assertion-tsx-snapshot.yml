@@ -1,0 +1,14 @@
+id: no-double-type-assertion-tsx
+snapshots:
+  const c = x as unknown as Args;:
+    labels:
+    - source: x as unknown as Args
+      style: primary
+      start: 10
+      end: 30
+  const d = x as any as Args;:
+    labels:
+    - source: x as any as Args
+      style: primary
+      start: 10
+      end: 26

@@ -1,0 +1,13 @@
+id: no-await-in-promise-all
+snapshots:
+  Promise.all([await foo(), bar()]):
+    fixed: Promise.all([foo(), bar()])
+    labels:
+    - source: await foo()
+      style: primary
+      start: 13
+      end: 24
+    - source: Promise.all([await foo(), bar()])
+      style: secondary
+      start: 0
+      end: 33

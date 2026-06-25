@@ -1,0 +1,12 @@
+# ast-grep catalog: drop useState<T> when T is a primitive TS can infer from
+# the initial value. Auto-fixable. tsx only (React hooks).
+id: no-unnecessary-usestate-type
+language: tsx
+severity: warning
+message: 'Unnecessary `useState` type argument - TypeScript infers the primitive from the initial value (ast-grep catalog).'
+rule:
+    any:
+        - pattern: useState<number>($A)
+        - pattern: useState<string>($A)
+        - pattern: useState<boolean>($A)
+fix: useState($A)

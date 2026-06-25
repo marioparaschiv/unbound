@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "semi": true,
+  "singleQuote": true,
+  "jsxSingleQuote": true,
+  "bracketSpacing": true,
+  "useTabs": true,
+  "tabWidth": 4,
+  "printWidth": 100,
+  "trailingComma": "all",
+  "ignorePatterns": ["*.gen.ts"]
+}

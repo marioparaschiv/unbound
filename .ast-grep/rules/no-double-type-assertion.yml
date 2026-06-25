@@ -1,0 +1,25 @@
+# Two near-identical rules: ast-grep binds one `language` per rule, so the
+# `typescript` (.ts/.mts/.cts) and `tsx` (.tsx) variants must be kept in sync.
+id: no-double-type-assertion
+language: typescript
+severity: error
+message: 'Double type assertion (`as unknown as` / `as any as`) is a silent cast and is banned - fix the underlying type instead (AGENTS.md).'
+note: |
+    Bad:  const x = value as unknown as Target;
+    Good: narrow or correct the type so the value is assignable to Target.
+rule:
+    any:
+        - pattern: $A as unknown as $B
+        - pattern: $A as any as $B
+---
+id: no-double-type-assertion-tsx
+language: tsx
+severity: error
+message: 'Double type assertion (`as unknown as` / `as any as`) is a silent cast and is banned - fix the underlying type instead (AGENTS.md).'
+note: |
+    Bad:  const x = value as unknown as Target;
+    Good: narrow or correct the type so the value is assignable to Target.
+rule:
+    any:
+        - pattern: $A as unknown as $B
+        - pattern: $A as any as $B

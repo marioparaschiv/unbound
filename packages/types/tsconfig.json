@@ -1,0 +1,9 @@
+{
+	"extends": ["../../tsconfig.base.json"],
+	"compilerOptions": {
+		"verbatimModuleSyntax": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+		"types": ["react", "react-native"]
+	}
+}

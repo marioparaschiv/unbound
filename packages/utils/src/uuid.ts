@@ -1,0 +1,19 @@
+/**
+ * @description Generates a pseudo-random hexadecimal id of the given length.
+ * @param length The number of characters the generated id should contain.
+ * @returns The generated id string.
+ */
+function uuid(length: number = 30): string {
+	let uuid = '';
+
+	do {
+		const random = (Math.random() * 16) | 0;
+		uuid += (uuid.length === 12 ? 4 : uuid.length === 16 ? (random & 3) | 8 : random).toString(
+			16,
+		);
+	} while (uuid.length < length);
+
+	return uuid;
+}
+
+export default uuid;

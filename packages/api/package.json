@@ -1,0 +1,15 @@
+{
+	"name": "@unbound-app/api",
+	"version": "1.0.0-d0f6b5e6bee60c386ef2680a75f54a699d7d81ca547534f263ee76996392d719",
+	"author": {
+		"name": "Mario P.",
+		"email": "contact@marioparaschiv.com",
+		"url": "https://github.com/marioparaschiv"
+	},
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./metro": "./src/metro/index.d.ts",
+		"./metro/filters": "./src/metro/filters.d.ts"
+	}
+}

@@ -1,0 +1,17 @@
+# ast-grep catalog: optional chaining ("null propagation"). Auto-fixable.
+# typescript + tsx variants kept in sync (one `language` per rule).
+id: prefer-optional-chaining
+language: typescript
+severity: warning
+message: 'Prefer optional chaining: `$PROP && $PROP()` is the same as `$PROP?.()` (ast-grep catalog).'
+rule:
+  pattern: $PROP && $PROP()
+fix: $PROP?.()
+---
+id: prefer-optional-chaining-tsx
+language: tsx
+severity: warning
+message: 'Prefer optional chaining: `$PROP && $PROP()` is the same as `$PROP?.()` (ast-grep catalog).'
+rule:
+  pattern: $PROP && $PROP()
+fix: $PROP?.()

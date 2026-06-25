@@ -1,0 +1,67 @@
+# Two near-identical rules: ast-grep binds one `language` per rule, so the
+# `typescript` (.ts/.mts/.cts) and `tsx` (.tsx) variants must be kept in sync.
+id: no-inline-object-type
+language: typescript
+severity: error
+message: 'Inline object type banned in parameters, return types, and type arguments - extract it to a top-level `type` alias (AGENTS.md).'
+note: |
+    Bad:  function f(x: { id: string }) {}
+    Good: type Args = { id: string };
+          function f(x: Args) {}
+rule:
+    kind: object_type
+    any:
+        - inside:
+              kind: type_annotation
+              inside:
+                  any:
+                      - kind: required_parameter
+                      - kind: optional_parameter
+        - inside:
+              kind: type_annotation
+              inside:
+                  any:
+                      - kind: function_declaration
+                      - kind: function_expression
+                      - kind: arrow_function
+                      - kind: generator_function
+                      - kind: generator_function_declaration
+                      - kind: method_definition
+                      - kind: method_signature
+                      - kind: function_signature
+                      - kind: abstract_method_signature
+        - inside:
+              kind: type_arguments
+---
+id: no-inline-object-type-tsx
+language: tsx
+severity: error
+message: 'Inline object type banned in parameters, return types, and type arguments - extract it to a top-level `type` alias (AGENTS.md).'
+note: |
+    Bad:  function f(x: { id: string }) {}
+    Good: type Args = { id: string };
+          function f(x: Args) {}
+rule:
+    kind: object_type
+    any:
+        - inside:
+              kind: type_annotation
+              inside:
+                  any:
+                      - kind: required_parameter
+                      - kind: optional_parameter
+        - inside:
+              kind: type_annotation
+              inside:
+                  any:
+                      - kind: function_declaration
+                      - kind: function_expression
+                      - kind: arrow_function
+                      - kind: generator_function
+                      - kind: generator_function_declaration
+                      - kind: method_definition
+                      - kind: method_signature
+                      - kind: function_signature
+                      - kind: abstract_method_signature
+        - inside:
+              kind: type_arguments

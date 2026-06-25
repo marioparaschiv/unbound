@@ -1,0 +1,13 @@
+id: no-await-in-promise-all
+valid:
+  - 'const x = await foo()'
+  - 'Promise.all([foo(), bar()])'
+invalid:
+  - 'Promise.all([await foo(), bar()])'
+---
+id: no-await-in-promise-all-tsx
+valid:
+  - 'const x = await foo()'
+  - 'Promise.all([foo(), bar()])'
+invalid:
+  - 'Promise.all([await foo(), bar()])'

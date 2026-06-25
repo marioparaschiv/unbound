@@ -1,0 +1,45 @@
+{
+	"name": "@unbound-app/types",
+	"version": "1.0.0",
+	"author": {
+		"name": "Mario P.",
+		"email": "contact@marioparaschiv.com",
+		"url": "https://github.com/marioparaschiv"
+	},
+	"type": "module",
+	"main": "index.d.ts",
+	"types": "index.d.ts",
+	"exports": {
+		".": {
+			"types": "./index.d.ts",
+			"default": "./index.d.ts"
+		},
+		"./*": {
+			"types": "./typings/*.ts",
+			"default": "./typings/*"
+		}
+	},
+	"dependencies": {
+		"possess": "catalog:"
+	},
+	"peerDependencies": {
+		"@types/react": "catalog:react",
+		"react": "catalog:react",
+		"react-native": "catalog:react",
+		"typescript": "catalog:"
+	},
+	"peerDependenciesMeta": {
+		"react": {
+			"optional": false
+		},
+		"@types/react": {
+			"optional": false
+		},
+		"react-native": {
+			"optional": false
+		},
+		"typescript": {
+			"optional": false
+		}
+	}
+}

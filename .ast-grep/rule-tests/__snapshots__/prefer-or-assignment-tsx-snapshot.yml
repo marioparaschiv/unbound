@@ -1,0 +1,9 @@
+id: prefer-or-assignment-tsx
+snapshots:
+  a = a || b:
+    fixed: a ||= b
+    labels:
+    - source: a = a || b
+      style: primary
+      start: 0
+      end: 10

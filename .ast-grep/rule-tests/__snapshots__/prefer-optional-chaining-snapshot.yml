@@ -1,0 +1,9 @@
+id: prefer-optional-chaining
+snapshots:
+  obj.fn && obj.fn():
+    fixed: obj.fn?.()
+    labels:
+    - source: obj.fn && obj.fn()
+      style: primary
+      start: 0
+      end: 18

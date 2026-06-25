@@ -1,0 +1,12 @@
+id: no-nested-links
+snapshots:
+  <a href="/x"><a href="/y">bad</a></a>:
+    labels:
+    - source: <a href="/x"><a href="/y">bad</a></a>
+      style: primary
+      start: 0
+      end: 37
+    - source: <a href="/y">bad</a>
+      style: secondary
+      start: 13
+      end: 33

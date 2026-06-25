@@ -1,0 +1,6 @@
+id: jsx-no-conditional-leak
+valid:
+  - '<div>{x ? <p/> : null}</div>'
+  - '<Comp prop={a && b}/>'
+invalid:
+  - '<div>{x && <p/>}</div>'

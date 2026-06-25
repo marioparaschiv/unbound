@@ -1,0 +1,2 @@
+- Add this as an installable global binary.
+- .help, .clearhistory, etc.

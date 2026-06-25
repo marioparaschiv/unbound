@@ -1,0 +1,14 @@
+# ast-grep catalog: avoid `&&` short-circuit in JSX (a falsy 0/'' leaks into
+# the render). Auto-fixable to a ternary. tsx only (JSX).
+id: jsx-no-conditional-leak
+language: tsx
+severity: warning
+message: "Avoid `&&` short-circuit in JSX - a falsy `0`/`'` renders instead of nothing; use a ternary (ast-grep catalog)."
+rule:
+    kind: jsx_expression
+    has:
+        pattern: $A && $B
+    not:
+        inside:
+            kind: jsx_attribute
+fix: '{$A ? $B : null}'

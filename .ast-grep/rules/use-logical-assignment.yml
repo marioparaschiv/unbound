@@ -1,0 +1,49 @@
+# ast-grep catalog: logical assignment operators (||=, &&=, ??=). Auto-fixable.
+# typescript + tsx variants kept in sync (one `language` per rule).
+id: prefer-or-assignment
+language: typescript
+severity: warning
+message: 'Use logical OR assignment: `$A = $A || $B` is `$A ||= $B` (ast-grep catalog).'
+rule:
+  pattern: $A = $A || $B
+fix: $A ||= $B
+---
+id: prefer-and-assignment
+language: typescript
+severity: warning
+message: 'Use logical AND assignment: `$A = $A && $B` is `$A &&= $B` (ast-grep catalog).'
+rule:
+  pattern: $A = $A && $B
+fix: $A &&= $B
+---
+id: prefer-nullish-assignment
+language: typescript
+severity: warning
+message: 'Use nullish assignment: `$A = $A ?? $B` is `$A ??= $B` (ast-grep catalog).'
+rule:
+  pattern: $A = $A ?? $B
+fix: $A ??= $B
+---
+id: prefer-or-assignment-tsx
+language: tsx
+severity: warning
+message: 'Use logical OR assignment: `$A = $A || $B` is `$A ||= $B` (ast-grep catalog).'
+rule:
+  pattern: $A = $A || $B
+fix: $A ||= $B
+---
+id: prefer-and-assignment-tsx
+language: tsx
+severity: warning
+message: 'Use logical AND assignment: `$A = $A && $B` is `$A &&= $B` (ast-grep catalog).'
+rule:
+  pattern: $A = $A && $B
+fix: $A &&= $B
+---
+id: prefer-nullish-assignment-tsx
+language: tsx
+severity: warning
+message: 'Use nullish assignment: `$A = $A ?? $B` is `$A ??= $B` (ast-grep catalog).'
+rule:
+  pattern: $A = $A ?? $B
+fix: $A ??= $B

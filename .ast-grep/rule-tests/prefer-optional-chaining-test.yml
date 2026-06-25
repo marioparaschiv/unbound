@@ -1,0 +1,12 @@
+id: prefer-optional-chaining
+valid:
+  - 'obj.fn?.()'
+  - 'a || b'
+invalid:
+  - 'obj.fn && obj.fn()'
+---
+id: prefer-optional-chaining-tsx
+valid:
+  - 'obj.fn?.()'
+invalid:
+  - 'obj.fn && obj.fn()'

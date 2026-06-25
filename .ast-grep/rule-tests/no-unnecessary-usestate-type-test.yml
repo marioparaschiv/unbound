@@ -1,0 +1,7 @@
+id: no-unnecessary-usestate-type
+valid:
+  - 'useState(0)'
+  - 'useState<Foo>(x)'
+invalid:
+  - "useState<string>('a')"
+  - 'useState<number>(0)'

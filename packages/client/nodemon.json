@@ -1,0 +1,5 @@
+{
+	"ignore": ["dist"],
+	"exec": "bun --bun scripts/build/index.ts --dev",
+	"ext": "tsx,ts,js,jsx,json"
+}

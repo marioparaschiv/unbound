@@ -1,0 +1,68 @@
+id: no-inline-object-type
+snapshots:
+  'class K { m(z: { q: string }) {} }':
+    labels:
+    - source: '{ q: string }'
+      style: primary
+      start: 15
+      end: 28
+    - source: 'z: { q: string }'
+      style: secondary
+      start: 12
+      end: 28
+    - source: ': { q: string }'
+      style: secondary
+      start: 13
+      end: 28
+  'const h = (a: { n: number }) => a;':
+    labels:
+    - source: '{ n: number }'
+      style: primary
+      start: 14
+      end: 27
+    - source: 'a: { n: number }'
+      style: secondary
+      start: 11
+      end: 27
+    - source: ': { n: number }'
+      style: secondary
+      start: 12
+      end: 27
+  'function f(x: { id: string }) {}':
+    labels:
+    - source: '{ id: string }'
+      style: primary
+      start: 14
+      end: 28
+    - source: 'x: { id: string }'
+      style: secondary
+      start: 11
+      end: 28
+    - source: ': { id: string }'
+      style: secondary
+      start: 12
+      end: 28
+  'function g(): { id: string } { return z; }':
+    labels:
+    - source: '{ id: string }'
+      style: primary
+      start: 14
+      end: 28
+    - source: 'function g(): { id: string } { return z; }'
+      style: secondary
+      start: 0
+      end: 42
+    - source: ': { id: string }'
+      style: secondary
+      start: 12
+      end: 28
+  'let p: Promise<{ id: string }>;':
+    labels:
+    - source: '{ id: string }'
+      style: primary
+      start: 15
+      end: 29
+    - source: '<{ id: string }>'
+      style: secondary
+      start: 14
+      end: 30

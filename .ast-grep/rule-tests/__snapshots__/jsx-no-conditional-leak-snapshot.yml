@@ -1,0 +1,13 @@
+id: jsx-no-conditional-leak
+snapshots:
+  <div>{x && <p/>}</div>:
+    fixed: '<div>{x ? <p/> : null}</div>'
+    labels:
+    - source: '{x && <p/>}'
+      style: primary
+      start: 5
+      end: 16
+    - source: x && <p/>
+      style: secondary
+      start: 6
+      end: 15

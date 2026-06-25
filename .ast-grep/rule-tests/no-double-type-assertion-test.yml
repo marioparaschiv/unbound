@@ -1,0 +1,15 @@
+id: no-double-type-assertion
+valid:
+  - 'const e = x as Args;'
+  - 'const n = x as unknown;'
+invalid:
+  - 'const c = x as unknown as Args;'
+  - 'const d = x as any as Args;'
+---
+id: no-double-type-assertion-tsx
+valid:
+  - 'const e = x as Args;'
+  - 'const n = x as unknown;'
+invalid:
+  - 'const c = x as unknown as Args;'
+  - 'const d = x as any as Args;'

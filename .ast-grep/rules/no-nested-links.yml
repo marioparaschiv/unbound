@@ -1,0 +1,11 @@
+# ast-grep catalog: nested <a> elements are invalid HTML and warn in React.
+# No safe automatic fix - blocking only. tsx only (JSX).
+id: no-nested-links
+language: tsx
+severity: error
+message: 'Nested `<a>` elements are invalid HTML and trigger a React warning - restructure so anchors are not nested (ast-grep catalog).'
+rule:
+    pattern: <a $$$>$$$A</a>
+    has:
+        pattern: <a $$$>$$$</a>
+        stopBy: end

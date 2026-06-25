@@ -1,0 +1,16 @@
+{
+	"name": "@unbound-app/logger",
+	"version": "1.0.0",
+	"private": true,
+	"author": {
+		"name": "Mario P.",
+		"email": "contact@marioparaschiv.com",
+		"url": "https://github.com/marioparaschiv"
+	},
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"devDependencies": {
+		"@types/bun": "catalog:"
+	}
+}
