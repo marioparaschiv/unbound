@@ -163,7 +163,13 @@ for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 		};
 	} else {
 		const exported = mdl.publicModule?.exports;
-		onModuleRequire(exported, id);
+
+		if (isInvalidExport(exported)) {
+			Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
+			blacklist.add(id);
+		} else {
+			onModuleRequire(exported, id);
+		}
 	}
 }
 
@@ -174,6 +180,8 @@ for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
  * @param id The id of the module being required.
  */
 function onModuleRequire(exports: any, id: number) {
+	if (!exports) return;
+
 	if (!data.patchedRTNProfiler && exports?.getEnforcing && exports?.get) {
 		const offender = id + 1;
 
@@ -663,12 +671,32 @@ function searchWithOptions(args: any[], options: MetroInternalOptions, filter: F
 	return find(filter(...args), options as MetroSearchOptions);
 }
 
-// Instead of creating a symbol each time, use a pre-defined one for performance gains.
-const INVALID_EXPORT_SYMBOL = Symbol('isInvalidExport');
+// Sentinel key no real module owns, used to detect catch-all proxies. Defined once so the probe is
+// a plain property lookup with no per-call allocation.
+const INVALID_EXPORT_SYMBOL = Symbol('is-invalid-export');
+
+/**
+ * @description Detects a "catch-all" proxy: an object whose `has` trap claims it contains keys it
+ * does not actually own. Discord ships dozens of these (e.g. TurboModule proxies), and because
+ * `in` property reads against them return truthy stubs for arbitrary names, they false-match
+ * property-based filters (`findByProps('Messages', ...)` etc.) and poison searches. We probe with a
+ * sentinel key that no real module could own.
+ * @param mdl The exports to test.
+ * @returns `true` if `mdl` is a catch-all proxy.
+ */
+function isCatchAllProxy(mdl: any): boolean {
+	if (!mdl || typeof mdl !== 'object') return false;
+
+	try {
+		return INVALID_EXPORT_SYMBOL in mdl && !Object.hasOwn(mdl, INVALID_EXPORT_SYMBOL);
+	} catch {
+		return false;
+	}
+}
 
 /**
  * @description Guards against exports that must never be returned from a search (nullish, the
- * global object, explicitly-marked invalid modules, or the intl messages proxy).
+ * global object, explicitly-marked invalid modules, catch-all proxies, or the intl messages proxy).
  * @param mdl The exports to test.
  * @returns `true` if the exports are invalid and should be skipped.
  */
@@ -677,7 +705,9 @@ function isInvalidExport(mdl: any) {
 		!mdl ||
 		mdl === globalThis ||
 		mdl[INVALID_EXPORT_SYMBOL] === null ||
-		mdl.default?.[Symbol.toStringTag] === 'IntlMessagesProxy'
+		mdl.default?.[Symbol.toStringTag] === 'IntlMessagesProxy' ||
+		isCatchAllProxy(mdl) ||
+		isCatchAllProxy(mdl.default)
 	);
 }
 

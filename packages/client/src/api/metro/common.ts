@@ -20,4 +20,4 @@ export const Dispatcher = findByPropsLazy('dispatch', 'subscribe');
 export const Constants = findByPropsLazy('Fonts', 'Endpoints');
 export const Theme = findByPropsLazy('colors', 'internal');
 export const REST = findByPropsLazy('getAPIBaseURL');
-export const i18n = findByPropsLazy('Messages', '_requestedLocale');
+export const i18n = findByPropsLazy('getLanguages', 'getSystemLocale', 'intl');
