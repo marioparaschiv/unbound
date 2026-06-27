@@ -9,7 +9,7 @@
 		"@rollup/plugin-replace": "^6.0.3",
 		"@types/babel__core": "^7.20.5",
 		"@types/bun": "catalog:",
-		"@unbound-mod/rollup-plugin": "^1.1.1",
+		"@unbound-mod/rollup-plugin": "^1.1.2",
 		"rolldown": "^1.0.0-beta.55",
 		"rollup-plugin-swc3": "^0.12.1"
 	},

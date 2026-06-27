@@ -1,43 +1,26 @@
-import { rolldown, type RolldownOptions } from 'rolldown';
+import { rolldown, watch, type RolldownOptions } from 'rolldown';
 import { cp, mkdir, rm } from 'node:fs/promises';
+import { minify, swc } from 'rollup-plugin-swc3';
 import hermes from '@unbound-mod/rollup-plugin';
 import replace from '@rollup/plugin-replace';
 import Logger from '@unbound-app/logger';
-import { execSync } from 'child_process';
-import { swc } from 'rollup-plugin-swc3';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
+import {
+	IS_DEV_BUILD,
+	GIT_REVISION,
+	I18N_BASE_URL,
+	DEV_SERVER_URL,
+	IGNORED_WARNINGS,
+	DEBUGGER_ADDRESS,
+} from './constants';
 import globals, { shimmedModules } from './plugins/globals';
-import { resolveDevServerUrl } from '../dev-host';
 import generateManifest from './plugins/manifest';
 import worklets from './plugins/worklets';
 
-const revision = (() => {
-	try {
-		return execSync('git rev-parse --short HEAD').toString().trim();
-	} catch {
-		return 'N/A';
-	}
-})();
-
 const logger = Logger.create('Build');
 const pluginLoggers: Map<PropertyKey, Logger> = new Map();
-
-const IGNORED_WARNINGS = ['PLUGIN_TIMINGS', 'EVAL', 'MISSING_NAME_OPTION_FOR_IIFE_EXPORT'];
-
-const PROD_I18N_BASE_URL = 'https://raw.githubusercontent.com/marioparaschiv/unbound/main/i18n';
-
-const dev = process.env.UNBOUND_DEV === '1' || process.argv.includes('--dev');
-
-// The `serve` script's origin, baked into the bundle so the device can fetch
-// locale tables and the hot-reload stream. Resolved from `--host <ip>`, then
-// `DEV_HOST`/`DEV_SERVER_URL`, then the auto-detected LAN IP - a physical device
-// can't reach `localhost` (that's the phone itself), so the LAN IP is the default.
-const DEV_SERVER_URL = dev ? resolveDevServerUrl() : '';
-const I18N_BASE_URL = dev
-	? process.env.I18N_DEV_URL || `${DEV_SERVER_URL}/i18n`
-	: PROD_I18N_BASE_URL;
 
 const config: RolldownOptions = {
 	input: 'src/entry.ts',
@@ -46,6 +29,13 @@ const config: RolldownOptions = {
 	resolve: {
 		alias: {
 			'#shims#': './src/shims',
+		},
+	},
+	// `$$DEV$$` is replaced by Oxc's transformer (rolldown's `transform.define`), so `if ($$DEV$$)`
+	// folds to `if (false)` and DCE prunes the branch.
+	transform: {
+		define: {
+			$$DEV$$: JSON.stringify(IS_DEV_BUILD),
 		},
 	},
 	output: [
@@ -70,16 +60,14 @@ const config: RolldownOptions = {
 		worklets(),
 		replace({
 			preventAssignment: true,
-			$$VERSION$$: revision,
-			$$DEV$$: JSON.stringify(dev),
+			$$VERSION$$: GIT_REVISION,
 			$$I18N_BASE_URL$$: I18N_BASE_URL,
-			$$DEV_SERVER_URL$$: DEV_SERVER_URL,
+			$$DEBUGGER_ADDRESS$$: DEBUGGER_ADDRESS,
 		}),
-		swc({ tsconfig: false, swcrc: true }),
-		// iifeWrapper(preinit),
-		// minify({ compress: true, mangle: true }),
+		swc({ tsconfig: false, swcrc: true, exclude: /node_modules\/(?!\.bun\/possess|possess)/ }),
+		minify({ compress: true, mangle: true }),
 		hermes(),
-		generateManifest(revision),
+		generateManifest(GIT_REVISION),
 	],
 
 	onLog(level, log) {
@@ -126,9 +114,9 @@ async function build() {
 
 	try {
 		logger.debug('Building Unbound...');
-		logger.info('Revision:', revision);
+		logger.info('Revision:', GIT_REVISION);
 
-		if (dev) logger.info('Dev mode - device will connect to:', DEV_SERVER_URL);
+		if (IS_DEV_BUILD) logger.info('Dev mode - device will connect to:', DEV_SERVER_URL);
 
 		const bundle = await rolldown(config);
 
@@ -142,7 +130,7 @@ async function build() {
 
 		await bundle.close();
 
-		if (dev) await copyLocales();
+		if (IS_DEV_BUILD) await copyLocales();
 
 		const endTime = performance.now();
 		const duration = (endTime - startTime).toFixed(2);
@@ -157,4 +145,38 @@ async function build() {
 	}
 }
 
-build();
+/**
+ * Builds in watch mode: rebuilds on every `src/` change and logs each cycle's start, duration, and
+ * errors. Returns the `RolldownWatcher` so an orchestrator can close it on shutdown.
+ */
+function watchBuild() {
+	const watcher = watch(config);
+
+	watcher.on('event', (event) => {
+		switch (event.code) {
+			case 'BUNDLE_START':
+				logger.debug('Rebuilding Unbound...');
+				break;
+			case 'BUNDLE_END':
+				logger.success(`Build completed successfully in ${event.duration.toFixed(2)}ms`);
+				break;
+			case 'ERROR':
+				logger.error('Build failed:', event.error);
+				break;
+		}
+	});
+
+	return watcher;
+}
+
+export { config, build, watchBuild };
+
+// Only dispatch when run directly (`bun scripts/build`); stays inert when the dev orchestrator
+// imports `watchBuild`.
+if (import.meta.main) {
+	if (process.argv.includes('--watch')) {
+		watchBuild();
+	} else {
+		build();
+	}
+}
