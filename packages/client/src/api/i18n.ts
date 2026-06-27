@@ -136,7 +136,7 @@ export function defineLocalizations(table: StringStore): Localizations {
  * @returns A promise that resolves once the initial locales have been ensured and the subscription is wired.
  */
 export async function init(): Promise<void> {
-	const locale = Discord.getLocale?.() ?? Discord._requestedLocale ?? null;
+	const locale = Discord.intl?.currentLocale ?? Discord.getSystemLocale?.() ?? null;
 
 	await ensureLocale('en-US');
 
