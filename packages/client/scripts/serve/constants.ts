@@ -10,8 +10,6 @@ export const DIST_DIR = join(__dirname, '..', '..', 'dist');
 // bakes into the bundle, so the two never drift.
 export const LAN_URL = resolveDevServerUrl();
 
-export const KEEPALIVE_INTERVAL = 5000;
-export const WS_IDLE_TIMEOUT = 60;
 export const WATCH_DEBOUNCE = 100;
 
 /** The name of the built bundle file inside `DIST_DIR`. */
@@ -22,8 +20,6 @@ export default {
 	HOST,
 	DIST_DIR,
 	LAN_URL,
-	KEEPALIVE_INTERVAL,
-	WS_IDLE_TIMEOUT,
 	WATCH_DEBOUNCE,
 	BUNDLE_NAME,
 };

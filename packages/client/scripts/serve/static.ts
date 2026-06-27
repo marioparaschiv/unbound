@@ -1,9 +1,9 @@
 import Logger from '@unbound-app/logger';
 import { format } from 'date-fns';
 import { join } from 'node:path';
-import { file } from 'bun';
 
-import { DIST_DIR } from './constants';
+import { DIST_DIR, BUNDLE_NAME } from './constants';
+import { bundleEtag } from './hot-reload';
 
 const logger = Logger.create('Serve');
 
@@ -39,8 +39,8 @@ export async function serveStatic(pathname: string): Promise<Response> {
 			return new Response('Forbidden', { status: 403 });
 		}
 
-		const f = file(filePath);
-		const exists = await f.exists();
+		const file = Bun.file(filePath);
+		const exists = await file.exists();
 
 		if (!exists) {
 			logger.warn(`GET ${pathname} - File not found`);
@@ -50,15 +50,22 @@ export async function serveStatic(pathname: string): Promise<Response> {
 		const duration = (performance.now() - startTime).toFixed(2);
 
 		logger.success(
-			`(${format(Date.now(), 'HH:mm:ss')}) GET ${pathname} - ${formatBytes(f.size)} in ${duration}ms`,
+			`(${format(Date.now(), 'HH:mm:ss')}) GET ${pathname} - ${formatBytes(file.size)} in ${duration}ms`,
 		);
 
-		return new Response(f, {
-			headers: {
-				'Content-Type': f.type,
-				'Access-Control-Allow-Origin': '*',
-			},
-		});
+		const headers: Record<string, string> = {
+			'Content-Type': file.type,
+			'Access-Control-Allow-Origin': '*',
+		};
+
+		// Tag the bundle with its content hash - the SSE `reload` carries the same value, so the
+		// device can compare the two. `no-cache` forces the device to always revalidate.
+		if (pathname.slice(1) === BUNDLE_NAME) {
+			headers['ETag'] = `"${bundleEtag()}"`;
+			headers['Cache-Control'] = 'no-cache';
+		}
+
+		return new Response(file, { headers });
 	} catch (error: any) {
 		const duration = (performance.now() - startTime).toFixed(2);
 		logger.error(`GET ${pathname} - Error after ${duration}ms:`, error.message);

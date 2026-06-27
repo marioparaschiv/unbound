@@ -1,22 +1,22 @@
 import { mkdirSync, readFileSync, watch } from 'node:fs';
-import type { ServerWebSocket } from 'bun';
 import Logger from '@unbound-app/logger';
 import { join } from 'node:path';
 
-import { DIST_DIR, BUNDLE_NAME, WATCH_DEBOUNCE, KEEPALIVE_INTERVAL } from './constants';
+import { DIST_DIR, BUNDLE_NAME, WATCH_DEBOUNCE } from './constants';
 
 const logger = Logger.create('Serve');
 
-const hotClients = new Set<ServerWebSocket>();
+const encoder = new TextEncoder();
+
+const hotClients = new Set<ReadableStreamDefaultController<Uint8Array>>();
 
 let etag = bundleEtag();
 
 /**
- * @description Hashes the built bundle into a non-cryptographic etag. A content hash rather than
- * mtime so a rebuild that produces identical output doesn't reload clients.
+ * @description Hashes the built bundle into an etag, so an identical rebuild doesn't reload clients.
  * @returns The bundle's content hash, or '' if it has not been built yet.
  */
-function bundleEtag(): string {
+export function bundleEtag(): string {
 	try {
 		return Bun.hash(readFileSync(join(DIST_DIR, BUNDLE_NAME))).toString(16);
 	} catch {
@@ -25,77 +25,71 @@ function bundleEtag(): string {
 }
 
 /**
- * @description Sends a JSON frame to a client, dropping it from the registry if the send throws.
- * @param ws The client socket.
- * @param frame The serialised frame to send.
+ * @description Serialises a named SSE event with a JSON payload into wire framing.
+ * @param event The SSE event name (e.g. `reload`).
+ * @param data The payload object, serialised as the `data:` line.
+ * @returns The encoded frame ready to enqueue.
  */
-function send(ws: ServerWebSocket, frame: string) {
+function frame(event: string, data: unknown): Uint8Array {
+	return encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+}
+
+/**
+ * @description Enqueues a frame to a client, dropping it from the registry if the stream is closed.
+ * @param controller The client's stream controller.
+ * @param payload The encoded frame to enqueue.
+ */
+function send(controller: ReadableStreamDefaultController<Uint8Array>, payload: Uint8Array) {
 	try {
-		ws.send(frame);
+		controller.enqueue(payload);
 	} catch {
-		hotClients.delete(ws);
+		hotClients.delete(controller);
 	}
 }
 
 /** @description Broadcasts the current bundle etag to every connected hot-reload client. */
 function broadcast() {
-	const frame = JSON.stringify({ type: 'reload', etag });
+	const payload = frame('reload', { etag });
 
-	for (const ws of hotClients) send(ws, frame);
+	for (const controller of hotClients) send(controller, payload);
 }
 
 /**
- * @description Registers a connected client and hands it the current etag so a client that missed a
- * build while disconnected catches up.
- * @param ws The newly connected client socket.
+ * @description Handles an SSE connection on `/__hot`: registers the client's stream, sends it the
+ * current etag so it catches up on any build it missed, and deregisters it when the request aborts.
+ * @param req The inbound request.
+ * @returns A streaming `text/event-stream` response.
  */
-export function open(ws: ServerWebSocket) {
-	hotClients.add(ws);
-	logger.info(`Hot-reload client connected (${hotClients.size} total).`);
+export function handleHot(req: Request): Response {
+	let controller: ReadableStreamDefaultController<Uint8Array>;
 
-	ws.send(JSON.stringify({ type: 'reload', etag }));
-}
+	const stream = new ReadableStream<Uint8Array>({
+		start(c) {
+			controller = c;
+			hotClients.add(controller);
+			logger.info(`Hot-reload client connected (${hotClients.size} total).`);
 
-/**
- * @description Removes a disconnected client from the registry.
- * @param ws The disconnected client socket.
- */
-export function close(ws: ServerWebSocket) {
-	hotClients.delete(ws);
-	logger.info(`Hot-reload client disconnected (${hotClients.size} total).`);
-}
+			send(controller, frame('reload', { etag }));
+		},
+		cancel() {
+			hotClients.delete(controller);
+			logger.info(`Hot-reload client disconnected (${hotClients.size} total).`);
+		},
+	});
 
-/**
- * @description Handles an inbound client message. RN does not surface WS protocol pings, so the
- * client speaks JSON ping/pong; reply to its ping and ignore its pong.
- * @param ws The client socket the message came from.
- * @param raw The raw message payload.
- */
-export function message(ws: ServerWebSocket, raw: string | Buffer) {
-	let payload: { type?: string } | null = null;
+	req.signal.addEventListener('abort', () => {
+		hotClients.delete(controller);
+		logger.info(`Hot-reload client disconnected (${hotClients.size} total).`);
+	});
 
-	try {
-		payload = JSON.parse(String(raw));
-	} catch {
-		payload = null;
-	}
-
-	if (payload?.type === 'ping') {
-		ws.send(JSON.stringify({ type: 'pong' }));
-	}
-}
-
-/**
- * @description Starts the app-level keepalive. RN silently drops sockets that look idle, so a JSON
- * ping is sent on an interval to keep the connection warm.
- * @returns The interval handle.
- */
-export function startKeepAlive(): ReturnType<typeof setInterval> {
-	const frame = JSON.stringify({ type: 'ping' });
-
-	return setInterval(() => {
-		for (const ws of hotClients) send(ws, frame);
-	}, KEEPALIVE_INTERVAL);
+	return new Response(stream, {
+		headers: {
+			'Content-Type': 'text/event-stream',
+			'Cache-Control': 'no-cache',
+			Connection: 'keep-alive',
+			'Access-Control-Allow-Origin': '*',
+		},
+	});
 }
 
 /**
@@ -127,4 +121,4 @@ export function watchBundle() {
 	});
 }
 
-export default { open, close, message, startKeepAlive, watchBundle };
+export default { bundleEtag, handleHot, watchBundle };
