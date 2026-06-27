@@ -10,8 +10,8 @@
 	"scripts": {
 		"build": "bun --bun scripts/build/index.ts",
 		"build:dev": "bun --bun scripts/build/index.ts --dev",
-		"dev": "bun --bun run nodemon",
-		"serve": "bun scripts/serve"
+		"dev": "bun --bun scripts/dev",
+		"serve": "bun scripts/serve/start.ts"
 	},
 	"dependencies": {
 		"@unbound-app/logger": "workspace:*",
@@ -25,7 +25,6 @@
 		"@swc/core": "^1.15.10",
 		"@types/bun": "catalog:",
 		"@types/react": "catalog:react",
-		"nodemon": "^3.1.11",
 		"react": "catalog:react",
 		"react-native": "catalog:react",
 		"react-native-gesture-handler": "^2.30.0",
