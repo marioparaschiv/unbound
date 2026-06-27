@@ -1,6 +1,5 @@
 export { default as connectingFix } from '~/builtins/connecting-fix';
 export { default as errorBoundary } from '~/builtins/error-boundary';
-export { default as devReload } from '~/builtins/dev-reload';
 export { default as staffMode } from '~/builtins/staff-mode';
 export { default as tracking } from '~/builtins/tracking';
 export { default as debug } from '~/builtins/debugger';

@@ -1,5 +1,5 @@
-import { NativeModules, Platform, TurboModuleRegistry } from 'react-native';
-import type { ColorString, Fn, PromiseFn } from '@unbound-app/types';
+import { NativeModules, TurboModuleRegistry } from 'react-native';
+import type { Fn, PromiseFn } from '@unbound-app/types';
 
 /** The text encodings accepted by the native `DCDFileManager` read/write operations. */
 export type DCDFileManagerEncoding = 'utf-8' | 'utf8' | 'base64';
@@ -105,74 +105,11 @@ export async function reload() {
 	BundleManager.reload();
 }
 
-const canUseUnboundNative = Platform.OS === 'ios';
-const RNUnboundNative = canUseUnboundNative ? getNativeModule('UnboundNative') : null;
+/** The raw `UnboundNative` JSI bridge installed on the global by the platform loader. */
+export const UnboundNative = globalThis.UnboundNative;
 
-if (canUseUnboundNative && !RNUnboundNative) {
-	throw new Error('UnboundNative module not found');
+if (!UnboundNative) {
+	alert(
+		'UnboundNative is not present in this environment. Please report this issue immediately.',
+	);
 }
-
-/** iOS-only wrapper around the `UnboundNative` module, grouping its utility, plugin, and chat UI bridges. */
-export const UnboundNative = {
-	utilities: {
-		getDeviceModel: () => RNUnboundNative?.getDeviceModel(),
-		getiOSVersionString: () => RNUnboundNative?.getiOSVersionString(),
-		isJailbroken: () => RNUnboundNative?.isJailbroken(),
-		isSystemApp: () => RNUnboundNative?.isSystemApp(),
-		isVerifiedBuild: () => RNUnboundNative?.isVerifiedBuild(),
-		isAppStoreApp: () => RNUnboundNative?.isAppStoreApp(),
-		isTestFlightApp: () => RNUnboundNative?.isTestFlightApp(),
-		isTrollStoreApp: () => RNUnboundNative?.isTrollStoreApp(),
-		isLiveContainerApp: () => RNUnboundNative?.isLiveContainerApp(),
-		getTrollStoreVariant: () => RNUnboundNative?.getTrollStoreVariant(),
-		getApplicationEntitlements: () => RNUnboundNative?.getApplicationEntitlements(),
-		getAppRegistrationType: async (): Promise<'System' | 'User'> => {
-			const isSystem = await RNUnboundNative?.isSystemApp();
-			return isSystem ? 'System' : 'User';
-		},
-		getAppSource: () => RNUnboundNative?.getAppSource(),
-		getEntitlementsAsPlist: () => RNUnboundNative?.getEntitlementsAsPlist(),
-		showToolboxMenu: () => RNUnboundNative?.showToolboxMenu(),
-	},
-
-	pluginAPI: {
-		showNotification: (
-			title: string,
-			content: string,
-			scheduledTime = 1,
-			sound = true,
-			notificationId = `notification-${Date.now()}`,
-		) =>
-			RNUnboundNative?.showNotification(title, content, scheduledTime, sound, notificationId),
-
-		playPiPVideo: (videoURL: string) => RNUnboundNative?.playPiPVideo(videoURL),
-	},
-
-	chatUI: {
-		setAvatarCornerRadius: (radius: number) => RNUnboundNative?.setAvatarCornerRadius(radius),
-		resetAvatarCornerRadius: () => RNUnboundNative?.resetAvatarCornerRadius(),
-		getAvatarCornerRadius: () => RNUnboundNative?.getAvatarCornerRadius(),
-
-		setMessageBubblesEnabled: (
-			enabled: boolean,
-			lightColor?: ColorString,
-			darkColor?: ColorString,
-		) => {
-			if (lightColor !== undefined || darkColor !== undefined) {
-				return RNUnboundNative?.setMessageBubblesEnabled(enabled, lightColor, darkColor);
-			}
-			return RNUnboundNative?.setMessageBubblesEnabled(enabled);
-		},
-
-		setMessageBubbleColors: (lightColor: ColorString, darkColor: ColorString) =>
-			RNUnboundNative?.setMessageBubbleColors(lightColor, darkColor),
-
-		getMessageBubbleLightColor: () => RNUnboundNative?.getMessageBubbleLightColor(),
-		getMessageBubbleDarkColor: () => RNUnboundNative?.getMessageBubbleDarkColor(),
-		getMessageBubblesEnabled: () => RNUnboundNative?.getMessageBubblesEnabled(),
-		getMessageBubbleCornerRadius: () => RNUnboundNative?.getMessageBubbleCornerRadius(),
-		setMessageBubbleCornerRadius: (radius: number) =>
-			RNUnboundNative?.setMessageBubbleCornerRadius(radius),
-		resetMessageBubbles: () => RNUnboundNative?.resetMessageBubbles(),
-	},
-};

@@ -4,7 +4,7 @@ declare const $$DEV$$: boolean;
 export const CACHE_KEY = Symbol.for('metro.cache');
 export const CACHE_VERSION = 1;
 
-/** Whether this is a development build. Replaced at build time by the `replace` plugin. */
+/** Whether this is a development build. Replaced at build time by the build's `transform.define`. */
 export const DEV: boolean = $$DEV$$;
 
 /**
@@ -14,7 +14,8 @@ export const DEV: boolean = $$DEV$$;
 export const I18N_BASE_URL = '$$I18N_BASE_URL$$';
 
 /**
- * Origin of the local `serve` dev server (locale tables + hot-reload stream). Replaced at build
- * time; only used by dev builds. Override with `DEV_SERVER_URL` for a physical device on the LAN.
+ * `host:port` of the REPL/MCP debugger server (`@unbound-app/debugger`). Replaced at build time
+ * with the dev host (so it tracks the same machine as the dev server). Empty in production.
+ * Override the host with `DEV_HOST` / `--host`, or the whole value with `DEBUGGER_ADDRESS`.
  */
-export const DEV_SERVER_URL = '$$DEV_SERVER_URL$$';
+export const DEBUGGER_ADDRESS = '$$DEBUGGER_ADDRESS$$';
