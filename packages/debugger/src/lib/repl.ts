@@ -1,7 +1,7 @@
 import { terminal } from 'terminal-kit';
 
 import { addHistoryItem, history } from './history';
-import { send } from './ws';
+import * as session from './session';
 
 export const state: {
 	repl: ReturnType<typeof terminal.inputField> | null;
@@ -36,14 +36,21 @@ export async function takeReplInput() {
 			abortCurrentReplInput({ deletePrompt: true });
 			terminal.white.bold(`» ${input}\n`);
 			addHistoryItem(input);
-			send(input);
 
-			takeReplInput();
+			// Evaluate on the device and print the id-correlated result, then re-prompt.
+			session.evaluate(input).then((result) => {
+				if (result.ok) {
+					terminal.gray(`« ${result.value}\n`);
+				} else {
+					terminal.red(`« ${result.error}\n`);
+				}
+
+				takeReplInput();
+			});
 		},
 	);
 
-	const r = await state.repl.promise;
-	console.log(r);
+	await state.repl.promise;
 }
 
 interface AbortOptions {
