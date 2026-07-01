@@ -1,3 +1,5 @@
+// TODO: Rewrite this dogshit
+
 import { createLogger } from '@unbound-app/logger';
 import { createPatcher } from 'possess';
 
@@ -5,18 +7,27 @@ import storage, { type SettingsPayload } from '~/api/storage';
 
 // TEMP: forced on with a hardcoded address until the settings UI is ported. Edit this to point the
 // debugger at your machine.
-const DEBUGGER_ADDRESS = '192.168.0.135:9090';
+const DEBUGGER_ADDRESS = '192.168.64.1:9090';
 
 const Patcher = createPatcher('Debugger');
 const Logger = createLogger('Debugger');
 
+// How long to wait before re-dialling the bridge after a drop or failed attempt, so a reloaded app
+// or a restarted bridge reconnects on its own without waiting for the next AppState transition.
+const RECONNECT_DELAY_MS = 2000;
+
 let ws: WebSocket | null = null;
 let sending = false;
+let stopped = false;
+let backgrounded = false;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let appStateSubscription: { remove: () => void } | null = null;
 
 const listeners = new Set<(payload: any) => void>();
 
 export function start() {
+	stopped = false;
+
 	patchLoggingHook();
 	attachAppStateListener();
 	attachSettingsListener();
@@ -28,7 +39,13 @@ export function start() {
 
 function connect(isReconnect = false) {
 	// Already connected or a connection is in flight.
-	if (ws) return;
+	if (ws || stopped) return;
+
+	// A retry beat us to it; the pending attempt will run instead.
+	if (reconnectTimer) {
+		clearTimeout(reconnectTimer);
+		reconnectTimer = null;
+	}
 
 	ws = new WebSocket(`ws://${DEBUGGER_ADDRESS}`);
 
@@ -36,28 +53,96 @@ function connect(isReconnect = false) {
 		Logger.success(isReconnect ? 'Reconnected' : 'Connected');
 	});
 
+	// Clear the socket and retry on both error and close: on failure RN may fire only one of them,
+	// and leaving `ws` non-null would wedge the `if (ws) return` guard so no future attempt runs.
 	ws.addEventListener('error', (event: any) => {
 		Logger.error('Socket error:', event?.message ?? event);
+		ws = null;
+		scheduleReconnect();
 	});
 
 	ws.addEventListener('close', ({ code }) => {
 		Logger.warn(`Socket closed with code ${code}`);
 		ws = null;
+		scheduleReconnect();
 	});
 
 	ws.addEventListener('message', (message) => {
-		try {
-			// oxlint-disable-next-line no-eval
-			const result = eval(message.data);
-			console.log(result);
-		} catch (e) {
-			console.error(e);
-		}
+		handleEvalRequest(message.data);
 	});
 }
 
+function scheduleReconnect() {
+	// Don't retry after an explicit stop, while backgrounded, while a socket is live, or if one is
+	// already scheduled. Coming back to `active` re-drives the connection.
+	if (stopped || backgrounded || ws || reconnectTimer) return;
+
+	reconnectTimer = setTimeout(() => {
+		reconnectTimer = null;
+		connect(true);
+	}, RECONNECT_DELAY_MS);
+}
+
+type EvalRequest = { type: 'eval'; id: string; code: string };
+
+function handleEvalRequest(raw: any) {
+	let request: EvalRequest;
+
+	try {
+		request = JSON.parse(raw);
+	} catch {
+		return;
+	}
+
+	if (request?.type !== 'eval') return;
+
+	// Await thenables so `await`-style expressions resolve to their value, not a pending Promise.
+	Promise.resolve()
+		.then(() => {
+			// oxlint-disable-next-line no-eval
+			return (0, eval)(request.code);
+		})
+		.then(
+			(value) =>
+				reply({ type: 'eval-result', id: request.id, ok: true, value: inspect(value) }),
+			(error) =>
+				reply({ type: 'eval-result', id: request.id, ok: false, error: inspect(error) }),
+		);
+}
+
+function reply(payload: object) {
+	if (ws?.readyState !== WebSocket.OPEN) return;
+
+	try {
+		ws.send(JSON.stringify(payload));
+	} catch {
+		// Swallow: reporting the failure would route through the logging hook and could recurse.
+	}
+}
+
+function inspect(value: any): string {
+	if (value instanceof Error)
+		return `${value.name}: ${value.message}\n${value.stack ?? ''}`.trim();
+	if (typeof value === 'string') return value;
+	// Hermes can't stringify function sources, so summarise by name instead of `.toString()`.
+	if (typeof value === 'function') return value.name ? `[Function ${value.name}]` : '[Function]';
+	if (value === undefined) return 'undefined';
+
+	try {
+		return JSON.stringify(value, null, 2) ?? String(value);
+	} catch {
+		return String(value);
+	}
+}
+
 export function stop() {
+	stopped = true;
 	Patcher.unpatchAll();
+
+	if (reconnectTimer) {
+		clearTimeout(reconnectTimer);
+		reconnectTimer = null;
+	}
 
 	if (ws) {
 		if (ws.readyState === WebSocket.OPEN) ws.close();
@@ -90,7 +175,7 @@ function patchLoggingHook() {
 		if (ws?.readyState === WebSocket.OPEN && !sending) {
 			sending = true;
 			try {
-				ws.send(JSON.stringify({ level, message }));
+				ws.send(JSON.stringify({ type: 'log', level, message }));
 			} catch {
 				// Swallow: logging the failure here would re-enter this hook and loop.
 			} finally {
@@ -108,9 +193,15 @@ function attachAppStateListener() {
 	appStateSubscription = AppState.addEventListener('change', (state: string) => {
 		switch (state) {
 			case 'active':
+				backgrounded = false;
 				connect(true);
 				break;
 			case 'background':
+				backgrounded = true;
+				if (reconnectTimer) {
+					clearTimeout(reconnectTimer);
+					reconnectTimer = null;
+				}
 				if (ws?.readyState === WebSocket.OPEN) ws.close();
 				break;
 		}
