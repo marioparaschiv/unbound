@@ -1,12 +1,10 @@
 import type { Addon } from '@unbound-app/types';
 import { useEffect } from 'react';
 
-import { ManagerKind, ManagerNames } from '~/lib/constants';
-import { Plugins, Themes } from '~/managers';
+import { ManagerKind } from '~/lib/constants';
+import { getManager } from '~/managers/utils';
 
 import useForceUpdate from './use-force-update';
-
-const Managers = { Plugins, Themes };
 
 /**
  * @description Returns the entities of the manager for the given kind, re-rendering when they change.
@@ -14,7 +12,7 @@ const Managers = { Plugins, Themes };
  * @returns The current addon entities governed by that manager.
  */
 function useAddons(kind: ManagerKind): Addon[] {
-	const manager = Managers[ManagerNames[kind]];
+	const manager = getManager(kind);
 	const forceUpdate = useForceUpdate();
 
 	useEffect(() => {

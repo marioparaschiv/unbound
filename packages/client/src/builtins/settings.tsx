@@ -1,13 +1,18 @@
 import type { SettingsEntry } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 import { useState, useEffect } from 'react';
+import type { ComponentType } from 'react';
 import { createPatcher } from 'possess';
 
+import MarketplacePage from '~/ui/settings/marketplace';
 import { Screens, CLIENT_NAME } from '~/lib/constants';
 import { findByProps, findByName } from '~/api/metro';
 import { Discord } from '~/api/metro/components';
+import CustomScreen from '~/ui/settings/custom';
 import GeneralPage from '~/ui/settings/general';
+import PluginsPage from '~/ui/settings/plugins';
 import SettingsStore from '~/stores/settings';
+import DesignPage from '~/ui/settings/design';
 import { getIDByName } from '~/api/assets';
 import { Messages } from '~/api/i18n';
 
@@ -16,17 +21,64 @@ const Logger = createLogger('Core', 'Settings');
 
 const unpatches: Array<() => void> = [];
 
+type RouteOptions = {
+	key: string;
+	useTitle: () => string;
+	getComponent: () => ComponentType<any>;
+	icon?: string;
+	hidden?: boolean;
+};
+
+/**
+ * @description Builds a settings route entry in Discord's `SETTING_RENDERER_CONFIG` shape.
+ * @param options The route's key, title hook, component, and optional icon/visibility.
+ * @returns A {@link SettingsEntry} ready to register.
+ */
+function route({ key, useTitle, getComponent, icon, hidden }: RouteOptions): SettingsEntry {
+	return {
+		type: 'route',
+		key,
+		useTitle,
+		parent: null,
+		section: hidden ? undefined : CLIENT_NAME,
+		excludeFromDisplay: hidden,
+		IconComponent: icon ? () => <Discord.TableRowIcon source={getIDByName(icon)} /> : undefined,
+		screen: { route: key, getComponent },
+	};
+}
+
 /** The built-in Unbound settings entries, keyed by route. */
 const builtInEntries: Record<string, SettingsEntry> = {
-	[Screens.General]: {
-		type: 'route',
+	[Screens.General]: route({
 		key: Screens.General,
 		useTitle: () => Messages.UNBOUND_GENERAL,
-		parent: null,
-		section: CLIENT_NAME,
-		IconComponent: () => <Discord.TableRowIcon source={getIDByName('SettingsIcon')} />,
-		screen: { route: Screens.General, getComponent: () => GeneralPage },
-	},
+		getComponent: () => GeneralPage,
+		icon: 'SettingsIcon',
+	}),
+	[Screens.Plugins]: route({
+		key: Screens.Plugins,
+		useTitle: () => Messages.UNBOUND_PLUGINS,
+		getComponent: () => PluginsPage,
+		icon: 'PuzzlePieceIcon',
+	}),
+	[Screens.Design]: route({
+		key: Screens.Design,
+		useTitle: () => Messages.UNBOUND_DESIGN,
+		getComponent: () => DesignPage,
+		icon: 'PaintPaletteIcon',
+	}),
+	[Screens.Marketplace]: route({
+		key: Screens.Marketplace,
+		useTitle: () => Messages.UNBOUND_MARKETPLACE,
+		getComponent: () => MarketplacePage,
+		icon: 'img_collectibles_shop',
+	}),
+	[Screens.Custom]: route({
+		key: Screens.Custom,
+		useTitle: () => Messages.UNBOUND_CUSTOM,
+		getComponent: () => CustomScreen,
+		hidden: true,
+	}),
 };
 
 /** Merges the built-in entries with any registered via the public API. */
