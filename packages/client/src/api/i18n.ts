@@ -1,8 +1,8 @@
 import { createLogger } from '@unbound-app/logger';
 
 import { Dispatcher, i18n as Discord } from '~/api/metro/common';
-import { findByNameLazy } from '~/api/metro/wrappers';
 import { DEV, I18N_BASE_URL } from '~/lib/constants';
+import { findByName } from '~/api/metro';
 import { getStore } from '~/api/storage';
 import fs from '~/api/fs';
 
@@ -22,7 +22,17 @@ const strings: StringStore = {};
 const storage = getStore('unbound::i18n');
 const logger = createLogger('i18n');
 
-const MessageFormat = findByNameLazy('MessageFormat');
+let MessageFormat: any;
+
+/**
+ * @description Resolves and memoises the `MessageFormat` constructor. Uses `findByName` (which unwraps
+ * the module's default export) because the value is used with `new`; a lazy proxy cannot be constructed.
+ * @returns The `MessageFormat` constructor.
+ */
+function getMessageFormat() {
+	MessageFormat ??= findByName('MessageFormat');
+	return MessageFormat;
+}
 
 const subscriptions: Array<() => void> = [];
 
@@ -113,6 +123,7 @@ export const Messages = createMessages(strings, () => currentLocale);
  * @returns The formatted string.
  */
 export function format(key: string, vars?: FormatVars): string {
+	const MessageFormat = getMessageFormat();
 	return new MessageFormat(Messages[key]).format(vars);
 }
 
@@ -125,6 +136,7 @@ export function defineLocalizations(table: StringStore): Localizations {
 	const Messages = createMessages(table, () => currentLocale);
 
 	function format(key: string, vars?: FormatVars): string {
+		const MessageFormat = getMessageFormat();
 		return new MessageFormat(Messages[key]).format(vars);
 	}
 
