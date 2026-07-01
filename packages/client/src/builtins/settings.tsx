@@ -137,7 +137,10 @@ function patchOverview() {
 			.filter((entry) => !entry.excludeFromDisplay)
 			.map((entry) => entry.key);
 
-		node.sections = [{ label: CLIENT_NAME, settings: keys }, ...node.sections];
+		// Rebuild from the native sections only (dropping any Unbound section a prior render of this
+		// same memoised node already prepended) so re-renders don't stack duplicate sections.
+		const native = node.sections.filter((section: any) => section.label !== CLIENT_NAME);
+		node.sections = [{ label: CLIENT_NAME, settings: keys }, ...native];
 
 		return result;
 	});
