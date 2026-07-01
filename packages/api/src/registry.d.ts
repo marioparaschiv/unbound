@@ -7,5 +7,5 @@ declare global {
 		unbound: UnboundGlobal;
 	}
 
-	declare const unbound: Window['unbound'];
+	const unbound: Window['unbound'];
 }
