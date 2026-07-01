@@ -19,3 +19,39 @@ export const I18N_BASE_URL = '$$I18N_BASE_URL$$';
  * Override the host with `DEV_HOST` / `--host`, or the whole value with `DEBUGGER_ADDRESS`.
  */
 export const DEBUGGER_ADDRESS = '$$DEBUGGER_ADDRESS$$';
+
+/** Display name of the client, used as the settings section label. */
+export const CLIENT_NAME = 'Unbound';
+
+/** Route keys for every built-in Unbound settings screen. Values double as `SETTING_RENDERER_CONFIG` keys. */
+export const Screens = {
+	General: 'UNBOUND_GENERAL',
+	Plugins: 'UNBOUND_PLUGINS',
+	Design: 'UNBOUND_DESIGN',
+	Developer: 'UNBOUND_DEVELOPER',
+	Assets: 'UNBOUND_ASSETS',
+	Toasts: 'UNBOUND_TOASTS',
+	Marketplace: 'UNBOUND_MARKETPLACE',
+	Custom: 'UNBOUND_CUSTOM',
+} as const;
+
+/** External links surfaced on the General settings page. */
+export const SOCIAL_LINKS = {
+	GitHub: 'https://github.com/unbound-mod',
+	Docs: 'https://docs.unbound.rip/',
+} as const;
+
+/** Discord invite code for the support server, opened as a deep link from the General page. */
+export const DISCORD_INVITE = 'unboundapp';
+
+/** Discriminates which addon manager a UI surface (addon card/list) is bound to. */
+export enum ManagerKind {
+	Plugins,
+	Themes,
+}
+
+/** Maps a {@link ManagerKind} to its manager export name on `~/managers`. */
+export const ManagerNames: Record<ManagerKind, 'Plugins' | 'Themes'> = {
+	[ManagerKind.Plugins]: 'Plugins',
+	[ManagerKind.Themes]: 'Themes',
+};

@@ -7,5 +7,6 @@ import './global';
 
 export * from './typings/addons';
 export * from './typings/assets';
+export * from './typings/settings';
 export * from './typings/toasts';
 export * from './typings/utils';
