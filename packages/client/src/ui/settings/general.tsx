@@ -37,12 +37,6 @@ function GeneralPage() {
 					arrow
 					onPress={() => navigation.push(Screens.Toasts)}
 				/>
-				<Discord.TableRow
-					label={Messages.UNBOUND_DEVELOPER}
-					icon={<Discord.TableRowIcon source={getIDByName('WrenchIcon')} />}
-					arrow
-					onPress={() => navigation.push(Screens.Developer)}
-				/>
 			</Discord.TableRowGroup>
 
 			<Discord.TableRowGroup title={Messages.UNBOUND_STAFF_MODE}>

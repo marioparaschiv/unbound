@@ -7,12 +7,15 @@ import { createPatcher } from 'possess';
 import MarketplacePage from '~/ui/settings/marketplace';
 import { Screens, CLIENT_NAME } from '~/lib/constants';
 import { findByProps, findByName } from '~/api/metro';
+import DeveloperPage from '~/ui/settings/developer';
 import { Discord } from '~/api/metro/components';
 import CustomScreen from '~/ui/settings/custom';
 import GeneralPage from '~/ui/settings/general';
 import PluginsPage from '~/ui/settings/plugins';
 import SettingsStore from '~/stores/settings';
+import AssetsPage from '~/ui/settings/assets';
 import DesignPage from '~/ui/settings/design';
+import ToastsPage from '~/ui/settings/toasts';
 import { getIDByName } from '~/api/assets';
 import { Messages } from '~/api/i18n';
 
@@ -67,11 +70,29 @@ const builtInEntries: Record<string, SettingsEntry> = {
 		getComponent: () => DesignPage,
 		icon: 'PaintPaletteIcon',
 	}),
+	[Screens.Developer]: route({
+		key: Screens.Developer,
+		useTitle: () => Messages.UNBOUND_DEVELOPER,
+		getComponent: () => DeveloperPage,
+		icon: 'WrenchIcon',
+	}),
 	[Screens.Marketplace]: route({
 		key: Screens.Marketplace,
 		useTitle: () => Messages.UNBOUND_MARKETPLACE,
 		getComponent: () => MarketplacePage,
 		icon: 'img_collectibles_shop',
+	}),
+	[Screens.Toasts]: route({
+		key: Screens.Toasts,
+		useTitle: () => Messages.UNBOUND_TOAST_SETTINGS,
+		getComponent: () => ToastsPage,
+		hidden: true,
+	}),
+	[Screens.Assets]: route({
+		key: Screens.Assets,
+		useTitle: () => Messages.UNBOUND_ASSET_BROWSER,
+		getComponent: () => AssetsPage,
+		hidden: true,
 	}),
 	[Screens.Custom]: route({
 		key: Screens.Custom,
