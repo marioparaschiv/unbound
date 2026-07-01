@@ -1,8 +1,6 @@
-import { ScrollView } from 'react-native';
-
 import AddonList from '~/ui/addons/addon-list';
 import { ManagerKind } from '~/lib/constants';
-import { Empty } from '~/ui/components';
+import { Empty, Page } from '~/ui/components';
 import { useAddons } from '~/ui/hooks';
 import { format } from '~/api/i18n';
 
@@ -17,9 +15,9 @@ function PluginsPage() {
 	}
 
 	return (
-		<ScrollView>
+		<Page>
 			<AddonList addons={addons} kind={ManagerKind.Plugins} />
-		</ScrollView>
+		</Page>
 	);
 }
 
