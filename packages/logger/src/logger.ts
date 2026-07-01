@@ -1,12 +1,21 @@
 /// <reference types="bun" />
 
-import colorize from './colorize';
+import colorize, { type Color } from './colorize';
 
 type InspectorFn = (primitive: any) => string;
 
+// Hermes/RN consoles don't render ANSI codes and the debugger relays log lines raw, so only
+// colorize when writing to a real terminal. `process.stdout` is absent under React Native's
+// process polyfill, which makes this false in the client.
+const supportsColor =
+	typeof process !== 'undefined' &&
+	Boolean(process.stdout?.isTTY) &&
+	process.env?.NO_COLOR === undefined &&
+	process.env?.TERM !== 'dumb';
+
 /**
- * @description A scoped, colorized console logger that prefixes every line with its caller chain and tints output
- * per log level.
+ * @description A scoped console logger that prefixes every line with its caller chain, tinting
+ * output per log level when the environment supports ANSI colors.
  */
 class Logger {
 	private static inspector: InspectorFn | null = null;
@@ -51,6 +60,10 @@ class Logger {
 		return Logger.inspector ? Logger.inspector(arg) : JSON.stringify(arg);
 	}
 
+	private _paint(string: string, color: Color): string {
+		return supportsColor ? colorize(string, color) : string;
+	}
+
 	/**
 	 * @description Prints a blank line to the console.
 	 */
@@ -66,7 +79,7 @@ class Logger {
 		console.log(
 			'»',
 			this._getPrefix('log'),
-			...args.map((arg) => colorize(this._inspect(arg), this._getColor('log'))),
+			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('log'))),
 		);
 	}
 
@@ -78,7 +91,7 @@ class Logger {
 		console.error(
 			'»',
 			this._getPrefix('error'),
-			...args.map((arg) => colorize(this._inspect(arg), this._getColor('error'))),
+			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('error'))),
 		);
 	}
 
@@ -90,7 +103,7 @@ class Logger {
 		console.info(
 			'»',
 			this._getPrefix('success'),
-			...args.map((arg) => colorize(this._inspect(arg), this._getColor('success'))),
+			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('success'))),
 		);
 	}
 
@@ -102,7 +115,7 @@ class Logger {
 		console.warn(
 			'»',
 			this._getPrefix('warn'),
-			...args.map((arg) => colorize(this._inspect(arg), this._getColor('warn'))),
+			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('warn'))),
 		);
 	}
 
@@ -114,7 +127,7 @@ class Logger {
 		console.debug(
 			'»',
 			this._getPrefix('debug'),
-			...args.map((arg) => colorize(this._inspect(arg), this._getColor('debug'))),
+			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('debug'))),
 		);
 	}
 
@@ -126,17 +139,20 @@ class Logger {
 		console.info(
 			'»',
 			this._getPrefix('info'),
-			...args.map((arg) => colorize(this._inspect(arg), this._getColor('info'))),
+			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('info'))),
 		);
 	}
 
 	/**
-	 * @description Builds the bold, colorized caller-chain prefix for a log line.
+	 * @description Builds the caller-chain prefix for a log line, bold and colorized when supported.
 	 * @param type The log level whose color to apply.
-	 * @returns The colorized prefix string.
+	 * @returns The prefix string.
 	 */
 	_getPrefix(type: 'log' | 'error' | 'success' | 'warn' | 'debug' | 'info') {
-		return colorize(colorize(`[${this.caller.join(' → ')}]`, this._getColor(type)), 'bold');
+		return this._paint(
+			this._paint(`[${this.caller.join(' → ')}]`, this._getColor(type)),
+			'bold',
+		);
 	}
 
 	/**
@@ -144,7 +160,7 @@ class Logger {
 	 * @param type The log level.
 	 * @returns The ANSI color name for the level.
 	 */
-	_getColor(type: 'log' | 'error' | 'success' | 'warn' | 'debug' | 'info') {
+	_getColor(type: 'log' | 'error' | 'success' | 'warn' | 'debug' | 'info'): Color {
 		switch (type) {
 			case 'log':
 				return 'gray';
