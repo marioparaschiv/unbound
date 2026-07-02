@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Dimensions } from 'react-native';
 
 import { useSettingsStore } from '~/api/storage';
-import ToastStore from '~/stores/toasts';
+import useToastStore from '~/stores/toasts';
 
 function useToastState(options: InternalToastOptions) {
 	const [closing, setClosing] = useState(options.closing);
@@ -82,7 +82,7 @@ function useToastState(options: InternalToastOptions) {
 
 	useEffect(() => {
 		if (leaving) {
-			ToastStore.setState((prev) => {
+			useToastStore.setState((prev) => {
 				const toasts = { ...prev.toasts };
 				delete toasts[options.id];
 				return { toasts };
