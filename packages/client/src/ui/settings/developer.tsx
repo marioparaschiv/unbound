@@ -27,10 +27,6 @@ function DeveloperPage() {
 				<Discord.TableRow
 					label={Messages.UNBOUND_DEBUGGER_ADDRESS}
 					icon={<Discord.TableRowIcon source={getIDByName('LinkIcon')} />}
-					subLabel={
-						settings.get('debugger.address', '') ||
-						Messages.UNBOUND_DEBUGGER_ADDRESS_PLACEHOLDER
-					}
 				>
 					<Discord.TextInput
 						value={settings.get('debugger.address', '')}
