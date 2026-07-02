@@ -20,11 +20,13 @@ function DeveloperPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_DEBUGGER}>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_DEBUGGER_ENABLED}
+					icon={<Discord.TableRowIcon source={getIDByName('BugIcon')} />}
 					value={settings.get('debugger.enabled', false)}
 					onValueChange={() => settings.toggle('debugger.enabled', false)}
 				/>
 				<Discord.TableRow
 					label={Messages.UNBOUND_DEBUGGER_ADDRESS}
+					icon={<Discord.TableRowIcon source={getIDByName('LinkIcon')} />}
 					subLabel={
 						settings.get('debugger.address', '') ||
 						Messages.UNBOUND_DEBUGGER_ADDRESS_PLACEHOLDER
@@ -41,6 +43,7 @@ function DeveloperPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_ERROR_BOUNDARY}>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_ERROR_BOUNDARY}
+					icon={<Discord.TableRowIcon source={getIDByName('WarningIcon')} />}
 					value={settings.get('error-boundary.enabled', true)}
 					onValueChange={() => settings.toggle('error-boundary.enabled', true)}
 				/>

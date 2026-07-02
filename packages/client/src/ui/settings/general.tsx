@@ -34,6 +34,7 @@ function GeneralPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_TOASTS}>
 				<Discord.TableRow
 					label={Messages.UNBOUND_TOASTS}
+					icon={<Discord.TableRowIcon source={getIDByName('BellIcon')} />}
 					arrow
 					onPress={() => navigation.push(Screens.Toasts)}
 				/>
@@ -43,6 +44,7 @@ function GeneralPage() {
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_STAFF_MODE}
 					subLabel={Messages.UNBOUND_STAFF_MODE_DESC}
+					icon={<Discord.TableRowIcon source={getIDByName('EyeIcon')} />}
 					value={settings.get('staff-mode.enabled', false)}
 					onValueChange={() => settings.toggle('staff-mode.enabled', false)}
 				/>
@@ -51,20 +53,27 @@ function GeneralPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_LINKS}>
 				<Discord.TableRow
 					label={Messages.UNBOUND_GITHUB}
+					icon={<Discord.TableRowIcon source={getIDByName('LinkIcon')} />}
 					onPress={() => Linking.openURL(SOCIAL_LINKS.GitHub)}
 				/>
 				<Discord.TableRow
 					label={Messages.UNBOUND_DOCS}
+					icon={<Discord.TableRowIcon source={getIDByName('BookCheckIcon')} />}
 					onPress={() => Linking.openURL(SOCIAL_LINKS.Docs)}
 				/>
 				<Discord.TableRow
 					label={Messages.UNBOUND_SUPPORT_SERVER}
+					icon={<Discord.TableRowIcon source={getIDByName('GlobeEarthIcon')} />}
 					onPress={() => Linking.openURL(`https://discord.gg/${DISCORD_INVITE}`)}
 				/>
 			</Discord.TableRowGroup>
 
 			<Discord.TableRowGroup title={Messages.UNBOUND_VERSION}>
-				<Discord.TableRow label='Discord' subLabel={BundleInfo.Version} />
+				<Discord.TableRow
+					label='Discord'
+					subLabel={BundleInfo.Version}
+					icon={<Discord.TableRowIcon source={getIDByName('ic_information_24px')} />}
+				/>
 			</Discord.TableRowGroup>
 		</Page>
 	);
