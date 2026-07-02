@@ -8,10 +8,13 @@ export default {
 	get 'react-native'() {
 		return globalThis.ReactNative;
 	},
-	'react-native-reanimated': findByPropsLazy('useSharedValue', 'useAnimatedStyle'),
+	'react-native-reanimated': findByPropsLazy('useSharedValue', 'useAnimatedStyle', {
+		interop: false,
+	}),
 	'react-native-gesture-handler': findByPropsLazy(
 		'Gesture',
 		'GestureDetector',
 		'createNativeWrapper',
+		{ interop: false },
 	),
 };
