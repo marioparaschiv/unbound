@@ -14,11 +14,10 @@ type EmptyProps = {
  */
 function Empty({ children }: EmptyProps) {
 	const styles = useStyles();
-	const source = Icons['img_search_empty_dark'];
 
 	return (
 		<View style={styles.container}>
-			{source ? <Image source={source} style={styles.image} /> : null}
+			<Image source={Icons['img_search_empty_dark']} style={styles.image} />
 			<Discord.Text variant='text-md/medium' color='text-muted'>
 				{children}
 			</Discord.Text>
