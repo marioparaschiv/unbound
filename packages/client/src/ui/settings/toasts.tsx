@@ -2,9 +2,9 @@ import { View } from 'react-native';
 
 import { Discord } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
-import { getIDByName } from '~/api/assets';
 import { Page } from '~/ui/components';
 import { Messages } from '~/api/i18n';
+import { Icons } from '~/api/assets';
 
 /**
  * @description Settings page controlling toast behaviour and appearance.
@@ -17,13 +17,13 @@ function ToastsPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_TOAST_SETTINGS}>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_TOASTS_ENABLED}
-					icon={<Discord.TableRowIcon source={getIDByName('BellIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.BellIcon} />}
 					value={settings.get('toasts.enabled', true)}
 					onValueChange={() => settings.toggle('toasts.enabled', true)}
 				/>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_TOASTS_ANIMATIONS}
-					icon={<Discord.TableRowIcon source={getIDByName('EyeIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.EyeIcon} />}
 					value={settings.get('toasts.animations', true)}
 					onValueChange={() => settings.toggle('toasts.animations', true)}
 				/>

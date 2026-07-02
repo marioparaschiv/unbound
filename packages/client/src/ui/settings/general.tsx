@@ -6,10 +6,10 @@ import { BundleInfo, reload, getRuntimeProperties } from '~/api/native';
 import { Linking, Invites } from '~/api/metro/api';
 import { Discord } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
-import { getIDByName } from '~/api/assets';
 import Unbound from '~/ui/icons/unbound';
 import { Page } from '~/ui/components';
 import { Messages } from '~/api/i18n';
+import { Icons } from '~/api/assets';
 
 type InfoRowProps = {
 	label: string;
@@ -44,13 +44,13 @@ function GeneralPage() {
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_RECOVERY_MODE}
 					subLabel={Messages.UNBOUND_RECOVERY_MODE_DESC}
-					icon={<Discord.TableRowIcon source={getIDByName('WrenchIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.WrenchIcon} />}
 					value={settings.get('recovery', false)}
 					onValueChange={() => settings.toggle('recovery', false)}
 				/>
 				<Discord.TableRow
 					label={Messages.UNBOUND_RESTART}
-					icon={<Discord.TableRowIcon source={getIDByName('RetryIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.RetryIcon} />}
 					onPress={() => reload()}
 				/>
 			</Discord.TableRowGroup>
@@ -58,7 +58,7 @@ function GeneralPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_TOASTS}>
 				<Discord.TableRow
 					label={Messages.UNBOUND_TOASTS}
-					icon={<Discord.TableRowIcon source={getIDByName('BellIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.BellIcon} />}
 					arrow
 					onPress={() => navigation.push(Screens.Toasts)}
 				/>
@@ -68,7 +68,7 @@ function GeneralPage() {
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_STAFF_MODE}
 					subLabel={Messages.UNBOUND_STAFF_MODE_DESC}
-					icon={<Discord.TableRowIcon source={getIDByName('EyeIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.EyeIcon} />}
 					value={settings.get('staff-mode', false)}
 					onValueChange={() => settings.toggle('staff-mode', false)}
 				/>
@@ -77,21 +77,17 @@ function GeneralPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_LINKS}>
 				<Discord.TableRow
 					label={Messages.UNBOUND_GITHUB}
-					icon={
-						<Discord.TableRowIcon
-							source={getIDByName('img_account_sync_github_white')}
-						/>
-					}
+					icon={<Discord.TableRowIcon source={Icons['img_account_sync_github_white']} />}
 					onPress={() => Linking.openURL(SOCIAL_LINKS.GitHub)}
 				/>
 				<Discord.TableRow
 					label={Messages.UNBOUND_DOCS}
-					icon={<Discord.TableRowIcon source={getIDByName('BookCheckIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.BookCheckIcon} />}
 					onPress={() => Linking.openURL(SOCIAL_LINKS.Docs)}
 				/>
 				<Discord.TableRow
 					label={Messages.UNBOUND_SUPPORT_SERVER}
-					icon={<Discord.TableRowIcon source={getIDByName('ClydeIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.ClydeIcon} />}
 					onPress={() =>
 						Invites.acceptInviteAndTransitionToInviteChannel({
 							inviteKey: DISCORD_INVITE,
@@ -113,12 +109,12 @@ function GeneralPage() {
 				<InfoRow
 					label={Messages.UNBOUND_DISCORD_VERSION}
 					value={`${BundleInfo.Version} (${BundleInfo.Build})`}
-					icon={<Discord.TableRowIcon source={getIDByName('ClydeIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.ClydeIcon} />}
 				/>
 				<InfoRow
 					label={Messages.UNBOUND_BYTECODE_VERSION}
 					value={String(bytecode)}
-					icon={<Discord.TableRowIcon source={getIDByName('ic_information_24px')} />}
+					icon={<Discord.TableRowIcon source={Icons['ic_information_24px']} />}
 				/>
 			</Discord.TableRowGroup>
 		</Page>

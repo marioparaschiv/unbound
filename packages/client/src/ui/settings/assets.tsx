@@ -3,7 +3,7 @@ import { Image, View } from 'react-native';
 import { useMemo, useState } from 'react';
 
 import { Discord, FlashList } from '~/api/metro/components';
-import { getAll, getIDByName } from '~/api/assets';
+import { getAll, getIDByName, Icons } from '~/api/assets';
 import { Messages, format } from '~/api/i18n';
 import { Radius } from '~/api/metro/common';
 import { Empty } from '~/ui/components';
@@ -31,9 +31,7 @@ function AssetsPage() {
 				isClearable
 				borderRadius={Radius.Radius.lg}
 				placeholder={format('UNBOUND_SEARCH', { type: Messages.UNBOUND_ASSETS })}
-				leadingIcon={() => (
-					<Discord.TableRowIcon source={getIDByName('MagnifyingGlassIcon')} />
-				)}
+				leadingIcon={() => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon} />}
 			/>
 			{filtered.length ? (
 				<FlashList.FlashList

@@ -1,7 +1,7 @@
 import { View, Image } from 'react-native';
 
 import { Discord } from '~/api/metro/components';
-import { getIDByName } from '~/api/assets';
+import { Icons } from '~/api/assets';
 
 import useStyles from './empty-state.style';
 
@@ -14,7 +14,7 @@ type EmptyProps = {
  */
 function Empty({ children }: EmptyProps) {
 	const styles = useStyles();
-	const source = getIDByName('img_search_empty_dark');
+	const source = Icons['img_search_empty_dark'];
 
 	return (
 		<View style={styles.container}>

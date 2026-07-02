@@ -1,9 +1,9 @@
 import { Discord } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
-import { getIDByName } from '~/api/assets';
 import { Screens } from '~/lib/constants';
 import { Page } from '~/ui/components';
 import { Messages } from '~/api/i18n';
+import { Icons } from '~/api/assets';
 
 /**
  * @description Developer settings: debugger connection, error boundary, and links to developer subpages.
@@ -20,13 +20,13 @@ function DeveloperPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_DEBUGGER}>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_DEBUGGER_ENABLED}
-					icon={<Discord.TableRowIcon source={getIDByName('BugIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.BugIcon} />}
 					value={settings.get('debugger.enabled', false)}
 					onValueChange={() => settings.toggle('debugger.enabled', false)}
 				/>
 				<Discord.TableRow
 					label={Messages.UNBOUND_DEBUGGER_ADDRESS}
-					icon={<Discord.TableRowIcon source={getIDByName('LinkIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.LinkIcon} />}
 				>
 					<Discord.TextInput
 						value={settings.get('debugger.address', '')}
@@ -39,7 +39,7 @@ function DeveloperPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_ERROR_BOUNDARY}>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_ERROR_BOUNDARY}
-					icon={<Discord.TableRowIcon source={getIDByName('WarningIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.WarningIcon} />}
 					value={settings.get('error-boundary.enabled', true)}
 					onValueChange={() => settings.toggle('error-boundary.enabled', true)}
 				/>
@@ -48,7 +48,7 @@ function DeveloperPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_ASSET_BROWSER}>
 				<Discord.TableRow
 					label={Messages.UNBOUND_ASSET_BROWSER}
-					icon={<Discord.TableRowIcon source={getIDByName('ImageIcon')} />}
+					icon={<Discord.TableRowIcon source={Icons.ImageIcon} />}
 					arrow
 					onPress={() => navigation.push(Screens.Assets)}
 				/>
