@@ -7,9 +7,9 @@ type PageProps = {
 };
 
 /**
- * @description The standard settings page wrapper, mirroring Discord's own settings screens: a scroll
- * view padded to 16 with a bottom safe-area inset, and a 24px gap between form groups. Use it as the
- * root of every settings page so spacing matches the native settings screens.
+ * @description The standard settings page wrapper. A scroll view padded to 16 with a bottom safe-area
+ * inset and a 24px gap between form groups, matching how Discord lays out its own settings screens. Use
+ * it as the root of every settings page.
  */
 function Page({ children }: PageProps) {
 	return (

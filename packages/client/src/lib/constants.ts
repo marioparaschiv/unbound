@@ -23,6 +23,9 @@ export const DEBUGGER_ADDRESS = '$$DEBUGGER_ADDRESS$$';
 /** Display name of the client, used as the settings section label. */
 export const CLIENT_NAME = 'Unbound';
 
+/** Short git revision this bundle was built from. Replaced at build time; `N/A` when git is unavailable. */
+export const VERSION = '$$VERSION$$';
+
 /** Route keys for every built-in Unbound settings screen. Values double as `SETTING_RENDERER_CONFIG` keys. */
 export const Screens = {
 	General: 'UNBOUND_GENERAL',
@@ -42,7 +45,7 @@ export const SOCIAL_LINKS = {
 } as const;
 
 /** Discord invite code for the support server, opened as a deep link from the General page. */
-export const DISCORD_INVITE = 'unboundapp';
+export const DISCORD_INVITE = 'rMdzhWUaGTx';
 
 /** Discriminates which addon manager a UI surface (addon card/list) is bound to. */
 export enum ManagerKind {

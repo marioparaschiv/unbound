@@ -102,7 +102,18 @@ export const DeviceInfo: DeviceInfoType = getNativeModule('NativeDeviceModule', 
 export async function reload() {
 	const { persist } = await import('~/api/storage');
 	await persist();
+
 	BundleManager.reload();
+}
+
+/**
+ * @description Reads Hermes' runtime metadata, such as the bytecode version, GC, and build channel.
+ * React Native types the global `HermesInternal` as `null | {}`, so this reads it via
+ * `window.HermesInternal` where our own typing wins.
+ * @returns The runtime property map, or an empty object when Hermes internals are unavailable.
+ */
+export function getRuntimeProperties(): Record<string, any> {
+	return window.HermesInternal?.getRuntimeProperties() ?? {};
 }
 
 /** The raw `UnboundNative` JSI bridge installed on the global by the platform loader. */
