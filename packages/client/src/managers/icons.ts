@@ -49,7 +49,9 @@ export class Icons extends Addons<Addon> {
 			this.load(pack.bundle, pack.manifest);
 		}
 
-		this.applyPack(this.applied.manifest.id);
+		this.applyPack(this.applied.manifest.id).catch((error: any) => {
+			this.logger.error('Failed to apply icon pack on init:', error);
+		});
 		this.initialized = true;
 	}
 
@@ -61,7 +63,7 @@ export class Icons extends Addons<Addon> {
 		return this.applied.manifest.id === id;
 	}
 
-	enable(entity: string | Addon) {
+	async enable(entity: string | Addon) {
 		const resolved = this.resolve(entity);
 		if (!resolved) return;
 
@@ -71,7 +73,7 @@ export class Icons extends Addons<Addon> {
 			this.settings.set('applied', pack);
 
 			this.patcher.unpatchAll();
-			this.applyPack(resolved.id);
+			await this.applyPack(resolved.id);
 
 			this.emit('enabled', resolved);
 		} catch (error: any) {
