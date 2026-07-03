@@ -20,7 +20,7 @@ function AddonCardHeader({ addon }: AddonCardHeaderProps) {
 
 	return (
 		<View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-			<TintedIcon source={Icons['PuzzlePieceIcon']!} size={20} />
+			<TintedIcon source={Icons['PuzzlePieceIcon'] ?? 0} size={20} />
 			<View style={{ flex: 1, gap: 2 }}>
 				<Discord.Text variant='text-md/semibold' color='header-primary'>
 					{name}
