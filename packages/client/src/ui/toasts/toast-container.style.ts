@@ -1,7 +1,10 @@
 import { Discord } from '~/api/metro/components';
 
 export default Discord.createStyles({
-	safeArea: {
-		height: 'auto',
+	container: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
 	},
 });

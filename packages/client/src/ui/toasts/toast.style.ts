@@ -4,7 +4,7 @@ import { Discord } from '~/api/metro/components';
 export default Discord.createStyles({
 	toastShadow: Theme.shadows.SHADOW_MEDIUM,
 	container: {
-		backgroundColor: Theme.colors.TOAST_BG,
+		backgroundColor: Theme.colors.BACKGROUND_SURFACE_HIGH,
 		borderWidth: 1,
 		borderColor: Theme.colors.BORDER_STRONG,
 		alignSelf: 'center',
@@ -31,18 +31,20 @@ export default Discord.createStyles({
 	},
 	title: {
 		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-		color: Theme.colors.TEXT_NORMAL,
+		color: Theme.colors.TEXT_DEFAULT,
 		fontSize: 14,
 	},
 	content: {
 		height: 'auto',
 	},
 	icon: {
-		marginTop: 10,
+		marginVertical: 10,
 		marginLeft: 12,
 	},
-	iconTint: {
-		tintColor: Theme.colors.INTERACTIVE_NORMAL,
+	closeButton: {
+		marginVertical: 10,
+		marginLeft: 12,
+		marginRight: 12,
 	},
 	buttons: {
 		flexWrap: 'wrap',
@@ -56,7 +58,14 @@ export default Discord.createStyles({
 		flexGrow: 1,
 		justifyContent: 'space-between',
 	},
+	progressBar: {
+		position: 'absolute',
+		bottom: 0,
+		left: 0,
+		height: 3,
+		borderRadius: 100000,
+	},
 	bar: {
-		backgroundColor: Theme.colors.REDESIGN_BUTTON_PRIMARY_BACKGROUND,
+		backgroundColor: Theme.colors.BACKGROUND_BRAND,
 	},
 });

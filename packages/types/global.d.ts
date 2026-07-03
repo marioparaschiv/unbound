@@ -71,13 +71,18 @@ declare global {
 
 	/**
 	 * Build-time token, replaced with a boolean literal by the build's `transform.define`. Folds at
-	 * the module-graph level so `if ($$DEV$$)` branches - and any imports inside them - are dead-code
+	 * the module-graph level so `if ($$DEV$$)` branches (and any imports inside them) are dead-code
 	 * eliminated from production bundles entirely. Use it (not a runtime check) to gate dev-only code.
 	 */
 	var $$DEV$$: boolean;
 
 	/** The raw `UnboundNative` JSI bridge, installed on the global by the platform loader. */
 	var UnboundNative: UnboundNativeModule | undefined;
+
+	/** Hermes engine internals, exposing runtime metadata (bytecode version, GC, build). */
+	interface HermesInternalObject {
+		getRuntimeProperties(): Record<string, any>;
+	}
 
 	var nativeLoggingHook: (message: string, level: any) => void;
 	var React: typeof import('react');
@@ -87,6 +92,9 @@ declare global {
 
 	interface Window {
 		modules: Map<number, any>;
+
+		/** Hermes engine internals; access via `window.HermesInternal` so our typing wins over RN's `null | {}`. */
+		HermesInternal: HermesInternalObject | null;
 
 		__r?: MetroRequire;
 		__d?: MetroDefine;

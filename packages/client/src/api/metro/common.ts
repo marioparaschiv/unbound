@@ -18,6 +18,7 @@ export const Assets = findByPropsLazy('registerAsset');
 export const Clyde = findByPropsLazy('createBotMessage');
 export const Dispatcher = findByPropsLazy('dispatch', 'subscribe');
 export const Constants = findByPropsLazy('Fonts', 'Endpoints');
+export const Radius = findByPropsLazy('Radius');
 export const Theme = findByPropsLazy('colors', 'internal');
 export const REST = findByPropsLazy('getAPIBaseURL');
 export const i18n = findByPropsLazy('getLanguages', 'getSystemLocale', 'intl');

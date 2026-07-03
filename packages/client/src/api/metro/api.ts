@@ -4,3 +4,4 @@ export const Messages = findByPropsLazy('sendMessage', 'receiveMessage');
 export const Linking = findByPropsLazy('openURL', 'openSettings');
 export const Profiles = findByPropsLazy('showUserProfile');
 export const AsyncUsers = findByPropsLazy('fetchProfile');
+export const Invites = findByPropsLazy('acceptInviteAndTransitionToInviteChannel');
