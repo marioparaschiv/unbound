@@ -101,8 +101,17 @@ export type ResolvedStyles<T extends StyleSheetSpec> = {
 			: ViewStyle;
 };
 
-/** The style factory: takes a stylesheet spec and returns a hook resolving each key to its style. */
-export type CreateStyles = <T extends StyleSheetSpec>(styles: T) => Fn<ResolvedStyles<T>>;
+/** A stylesheet spec, or a function producing one (Discord accepts both forms). */
+export type StyleSheetSpecOrFactory<T extends StyleSheetSpec> = T | ((...args: any[]) => T);
+
+/**
+ * The style factory. Accepts a spec object (or a function returning one) and returns a hook. The
+ * hook subscribes to the theme context and lazily resolves each key on access, so it must be called
+ * inside a component body: `const styles = useStyles();`.
+ */
+export type CreateStyles = <T extends StyleSheetSpec>(
+	styles: StyleSheetSpecOrFactory<T>,
+) => Fn<ResolvedStyles<T>>;
 
 /* ------------------------------------------------------------------ *
  * Typography
