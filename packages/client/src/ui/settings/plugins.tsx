@@ -1,22 +1,16 @@
-import AddonList from '~/ui/addons/addon-list';
+import { AddonList, InstallButton } from '~/ui/addons';
 import { ManagerKind } from '~/lib/constants';
-import { Empty, Page } from '~/ui/components';
-import { useAddons } from '~/ui/hooks';
-import { format } from '~/api/i18n';
+import { Page } from '~/ui/components';
 
 /**
- * @description Settings page listing installed plugins.
+ * @description The Plugins settings page: the shared addon list bound to the Plugins manager, with a
+ * floating install button. The card holds the richness, so this page is thin.
  */
 function PluginsPage() {
-	const addons = useAddons(ManagerKind.Plugins);
-
-	if (!addons.length) {
-		return <Empty>{format('UNBOUND_NO_ADDONS', { type: 'plugins' })}</Empty>;
-	}
-
 	return (
 		<Page>
-			<AddonList addons={addons} kind={ManagerKind.Plugins} />
+			<AddonList kind={ManagerKind.Plugins} />
+			<InstallButton kind={ManagerKind.Plugins} />
 		</Page>
 	);
 }
