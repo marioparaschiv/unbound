@@ -43,8 +43,10 @@ function DesignPage() {
 		<SafeArea.SafeAreaPaddingView bottom style={{ flex: 1 }}>
 			<View style={{ flex: 1 }}>
 				<Discord.SegmentedControl state={state} />
-				<Discord.SegmentedControlPages state={state} style={{ flex: 1 }} />
-				{tab === 2 ? null : <InstallButton kind={TAB_KINDS[tab]} />}
+				<View style={{ flex: 1 }}>
+					<Discord.SegmentedControlPages state={state} />
+					{tab === 2 ? null : <InstallButton kind={TAB_KINDS[tab]} />}
+				</View>
 			</View>
 		</SafeArea.SafeAreaPaddingView>
 	);
