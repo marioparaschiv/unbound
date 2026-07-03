@@ -8,7 +8,7 @@ import { getManager } from '~/managers/utils';
 
 type AddonListProps = {
 	addons: Addon[];
-	kind: ManagerKind;
+	kind: ManagerKind.Plugins | ManagerKind.Themes;
 };
 
 /**

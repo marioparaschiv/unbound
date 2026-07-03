@@ -11,7 +11,7 @@ import useForceUpdate from './use-force-update';
  * @param kind The manager kind to read addons from.
  * @returns The current addon entities governed by that manager.
  */
-function useAddons(kind: ManagerKind): Addon[] {
+function useAddons(kind: ManagerKind.Plugins | ManagerKind.Themes): Addon[] {
 	const manager = getManager(kind);
 	const forceUpdate = useForceUpdate();
 
