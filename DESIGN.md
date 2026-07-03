@@ -69,11 +69,12 @@ The table-row family is the backbone of every settings page.
 
 | Primitive | Notes |
 | --- | --- |
-| `TextInput` | Discord's **own** form-style input, not React Native's. `onChange` receives the raw **string** value (not an event). Own props: `value`, `placeholder`, `title`, `helpText`, `error`, `disabled`, `showBorder`, `multiline`, `clearButtonVisibility`, `allowRedesignTextInput`. Its redesign path also accepts `size`, `isClearable`, `leadingIcon`, `borderRadius` (what the asset browser uses). |
-| `TextField` / `TextArea` / `TextAreaField` | The newer field components with label/clear chrome. `size`, `status`, `isClearable`, `leadingIcon`, `onChange(value)`, `onClear`. |
-| `SplitTextInput` | Segmented input (e.g. codes). |
-| `SearchField` | Thin wrapper over `TextField` that hardcodes the search icon + clear button. (Asset browser deliberately uses `TextInput size='md'` instead, to match row roundness.) |
-| `GhostInput` | Borderless inline input; bridges to the `useTextField` / `InputProps` family. |
+| `TextInput` | Discord's **own** form-style input, not React Native's. `onChange` receives the raw **string** value (not an event). Own props (read verbatim): `value`, `placeholder`, `title`, `helpText`, `error`, `disabled`, `multiline`, `numberOfLines`, `autoFocus`, `secureTextEntry`, `clearButtonVisibility`, `showBorder`, `showCharactersRemaining`, `allowRedesignTextInput`. It does **not** read `size`/`isClearable`/`leadingIcon` — those are `TextField` props and are silently dropped here. Any prop it does not own is spread onto the underlying native input. |
+| `TextField` | The redesign field, where the `size` / `status` / `isClearable` / `isRound` / `leadingIcon` / `trailingIcon` / `leadingText` chrome actually lives. `onChange(value: string)`, `onClear`. This is what the asset browser search uses. |
+| `TextArea` / `TextAreaField` | `TextField` plus `maxLength` and a character-limit indicator. |
+| `SplitTextInput` | Segmented input (e.g. verification codes): `size`, `isRound`, `leadingText`. |
+| `SearchField` | `TextField` variant that hardcodes the magnifying-glass icon, clear button, and `autoCorrect`/`autoCapitalize` off. Driven by a search-state controller. |
+| `GhostInput` | Borderless field: `size`, `status`, `isCentered`, `autoFocus`, `containerStyle`; bridges to the `useTextField` hook. |
 | `Checkbox`, `Slider`, `SegmentedControl` (+ `SegmentedControlItem`, `SegmentedControlPages`), `Tabs` | Selection controls. |
 | `InputSize`, `InputStatus` | Type-level enums (undefined at runtime). |
 
