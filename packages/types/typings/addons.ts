@@ -9,6 +9,8 @@ export type AddonAuthor = {
 /** The manifest describing an addon's metadata, entry point, and source. */
 export interface AddonManifest {
 	id: string;
+	/** The addon kind this manifest describes; used to validate installs. */
+	type?: 'plugin' | 'theme' | 'icon-pack' | 'font';
 	name: string;
 	description: string;
 	authors: AddonAuthor[];
@@ -70,3 +72,25 @@ export interface Theme {
 		url: string;
 	};
 }
+
+/** An icon pack's manifest: an {@link AddonManifest} tagged with its source kind. */
+export type IconPackManifest = AddonManifest & {
+	type: 'icon-pack';
+	source: 'github' | 'other';
+};
+
+/** A loaded icon pack: its bundle marker and {@link IconPackManifest}. */
+export type IconPack = {
+	bundle: string;
+	manifest: IconPackManifest;
+};
+
+/** A custom font the native loader has registered, as injected on `window.UNBOUND_FONTS`. */
+export type FontDescriptor = {
+	name: string;
+	file: string;
+	path: string;
+};
+
+/** A font managed by the Fonts manager: currently identical to its {@link FontDescriptor}. */
+export type FontEntity = FontDescriptor;
