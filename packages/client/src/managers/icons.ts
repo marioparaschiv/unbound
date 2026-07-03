@@ -5,6 +5,12 @@ import { ManagerType } from '~/managers/base';
 import { Addons } from '~/managers/addons';
 import fs from '~/api/fs';
 
+/** A single entry in a GitHub repo's recursive tree listing. */
+type GitTreeNode = {
+	path: string;
+	type: string;
+};
+
 /** The built-in pack: a no-op passthrough that renders Discord's own icons. */
 export const defaultPack: IconPack = {
 	bundle: 'Default',
@@ -185,6 +191,81 @@ export class Icons extends Addons<Addon> {
 	protected relativeAssetPath(asset: any, scale: number): string {
 		const dir = asset.httpServerLocation.replace(/\/assets\/(.*)/, '$1');
 		return `${dir}/${asset.name}${scale > 1 ? `@${scale}x` : ''}.${asset.type}`;
+	}
+
+	/**
+	 * @description Installs an icon pack. GitHub manifests download the repo's image tree into the pack
+	 * folder; other manifests fall back to the shared bundle install.
+	 * @param url The manifest URL.
+	 * @returns The loaded pack entity, or `undefined` on failure.
+	 */
+	async install(url: string): Promise<Addon | undefined> {
+		try {
+			const manifest: IconPackManifest = await fetch(url, { cache: 'no-cache' }).then(
+				(res) => {
+					if (!res.ok) throw new Error(`Failed to fetch manifest (${res.status}).`);
+					return res.json();
+				},
+			);
+
+			this.validateManifest(manifest);
+			manifest.source ??= /^https?:\/\/(www\.)?github\.com/.test(manifest.main)
+				? 'github'
+				: 'other';
+
+			if (manifest.source !== 'github') return super.install(url);
+
+			await this.downloadTree(manifest);
+
+			const packs = this.settings.get<IconPack[]>('packs', [defaultPack]);
+			this.settings.set('packs', [
+				...packs.filter((p) => p.manifest.id !== manifest.id),
+				{ bundle: manifest.name, manifest },
+			]);
+
+			this.load(manifest.name, manifest);
+			const entity = this.getEntity(manifest.id);
+			if (entity) this.emit('installed', entity);
+
+			return entity;
+		} catch (error: any) {
+			this.logger.error('Failed to install icon pack:', error);
+			this.emit('install-error', error);
+			return undefined;
+		}
+	}
+
+	/**
+	 * @description Downloads every blob under a GitHub repo path into the pack folder, in batches.
+	 * @param manifest The pack manifest whose `main` is a GitHub URL.
+	 */
+	protected async downloadTree(manifest: IconPackManifest) {
+		const match = manifest.main.match(
+			/https:\/\/github\.com\/([^/]+)\/([^/]+)(?:\/tree\/([^/]+))?\/?(.*)?/,
+		);
+		if (!match) throw new Error('Not a GitHub repo URL.');
+
+		const [, user, repo, branch = 'main', path = ''] = match;
+		const api = `https://api.github.com/repos/${user}/${repo}/git/trees/${branch}?recursive=1`;
+		const tree: GitTreeNode[] = await fetch(api)
+			.then((res) => res.json())
+			.then((json) => json.tree ?? []);
+
+		const blobs = tree.filter(
+			(node) => node.type === 'blob' && (!path || node.path.startsWith(`${path}/`)),
+		);
+
+		for (let i = 0; i < blobs.length; i += 50) {
+			const batch = blobs.slice(i, i + 50);
+			await Promise.all(
+				batch.map(async (node) => {
+					const raw = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${node.path}`;
+					const relative = path ? node.path.slice(path.length + 1) : node.path;
+					const data = await fetch(raw).then((res) => res.text());
+					await fs.write(`Unbound/Icons/${manifest.id}/${relative}`, data);
+				}),
+			);
+		}
 	}
 }
 
