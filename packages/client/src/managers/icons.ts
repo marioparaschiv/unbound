@@ -209,6 +209,11 @@ export class Icons extends Addons<Addon> {
 			);
 
 			this.validateManifest(manifest);
+
+			if (manifest.type && manifest.type !== this.entityType) {
+				throw new Error(`Expected a ${this.entityType} manifest, got ${manifest.type}.`);
+			}
+
 			manifest.source ??= /^https?:\/\/(www\.)?github\.com/.test(manifest.main)
 				? 'github'
 				: 'other';
@@ -245,24 +250,28 @@ export class Icons extends Addons<Addon> {
 		);
 		if (!match) throw new Error('Not a GitHub repo URL.');
 
-		const [, user, repo, branch = 'main', path = ''] = match;
-		const api = `https://api.github.com/repos/${user}/${repo}/git/trees/${branch}?recursive=1`;
+		const [, user, repo, branch, path] = match;
+		const ref = branch ?? 'main';
+		const sub = path ?? '';
+
+		const api = `https://api.github.com/repos/${user}/${repo}/git/trees/${ref}?recursive=1`;
 		const tree: GitTreeNode[] = await fetch(api)
 			.then((res) => res.json())
 			.then((json) => json.tree ?? []);
 
 		const blobs = tree.filter(
-			(node) => node.type === 'blob' && (!path || node.path.startsWith(`${path}/`)),
+			(node) => node.type === 'blob' && (!sub || node.path.startsWith(`${sub}/`)),
 		);
 
 		for (let i = 0; i < blobs.length; i += 50) {
 			const batch = blobs.slice(i, i + 50);
 			await Promise.all(
 				batch.map(async (node) => {
-					const raw = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${node.path}`;
-					const relative = path ? node.path.slice(path.length + 1) : node.path;
-					const data = await fetch(raw).then((res) => res.text());
-					await fs.write(`Unbound/Icons/${manifest.id}/${relative}`, data);
+					const raw = `https://raw.githubusercontent.com/${user}/${repo}/${ref}/${node.path}`;
+					const relative = sub ? node.path.slice(sub.length + 1) : node.path;
+					const buf = await fetch(raw).then((res) => res.arrayBuffer());
+					const data = Buffer.from(buf).toString('base64');
+					await fs.write(`Unbound/Icons/${manifest.id}/${relative}`, data, 'base64');
 				}),
 			);
 		}
