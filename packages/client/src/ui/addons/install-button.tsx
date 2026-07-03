@@ -21,7 +21,7 @@ function InstallButton({ kind }: InstallButtonProps) {
 	function open() {
 		Discord.openAlert(
 			'unbound-install',
-			<InstallUrlModal kind={kind} onClose={() => Discord.dismissAlerts()} />,
+			<InstallUrlModal kind={kind} onClose={() => Discord.dismissAlert('unbound-install')} />,
 		);
 	}
 
