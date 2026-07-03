@@ -1,3 +1,5 @@
+import type { ColorValue } from 'react-native';
+
 /**
  * @description Converts a 0-1 opacity unit into a two-digit hex alpha channel.
  * @param unit The opacity as a fraction between 0 and 1.
@@ -14,9 +16,9 @@ export function unitToHex(unit: number): string {
  * @param color An `rgb(a)` or hex colour string; a missing theme token resolves to `undefined`.
  * @returns The colour without its alpha, or an empty string when the colour is missing.
  */
-export function withoutOpacity(color: string): string {
+export function withoutOpacity(color: ColorValue | undefined): string {
 	// A missing theme token resolves to undefined; degrade to an empty string rather than crash the toast.
-	if (!color) return '';
+	if (!color || typeof color !== 'string') return '';
 
 	if (color.startsWith('rgba')) {
 		const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
