@@ -1,3 +1,4 @@
+import { ScrollView } from 'react-native';
 import { useMemo } from 'react';
 
 import { Discord } from '~/api/metro/components';
@@ -16,18 +17,20 @@ function FontsTab() {
 	const targets = useMemo(() => fonts.getTargets(), [fonts]);
 
 	return (
-		<Discord.TableRowGroup
-			title={format('UNBOUND_FONTS')}
-			description={format('UNBOUND_FONTS_HINT')}
-		>
-			{targets.map((target) => (
-				<FontOverrideRow
-					key={target.group}
-					group={target.group}
-					families={target.families}
-				/>
-			))}
-		</Discord.TableRowGroup>
+		<ScrollView contentContainerStyle={{ padding: 16 }}>
+			<Discord.TableRowGroup
+				title={format('UNBOUND_FONTS')}
+				description={format('UNBOUND_FONTS_HINT')}
+			>
+				{targets.map((target) => (
+					<FontOverrideRow
+						key={target.group}
+						group={target.group}
+						families={target.families}
+					/>
+				))}
+			</Discord.TableRowGroup>
+		</ScrollView>
 	);
 }
 

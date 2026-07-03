@@ -44,7 +44,7 @@ function FontPickerSheet({ family, onClose }: FontPickerSheetProps) {
 				isClearable
 				isRound
 				placeholder={format('UNBOUND_SEARCH', { type: format('UNBOUND_FONTS') })}
-				leadingIcon={() => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon} />}
+				leadingIcon={() => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon ?? 0} />}
 			/>
 			<Discord.ActionSheetRow label={format('UNBOUND_RESET')} onPress={reset} />
 			{names.map((name) => (

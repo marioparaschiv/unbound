@@ -1,10 +1,9 @@
+import { Dimensions, View } from 'react-native';
 import { useMemo, useState } from 'react';
-import { Dimensions } from 'react-native';
 
+import { Discord, SafeArea } from '~/api/metro/components';
 import InstallButton from '~/ui/addons/install-button';
-import { Discord } from '~/api/metro/components';
 import { ManagerKind } from '~/lib/constants';
-import { Page } from '~/ui/components';
 import storage from '~/api/storage';
 
 import ThemesTab from './themes';
@@ -41,11 +40,13 @@ function DesignPage() {
 	});
 
 	return (
-		<Page>
-			<Discord.SegmentedControl state={state} />
-			<Discord.SegmentedControlPages state={state} />
-			{tab === 2 ? null : <InstallButton kind={TAB_KINDS[tab]} />}
-		</Page>
+		<SafeArea.SafeAreaPaddingView bottom style={{ flex: 1 }}>
+			<View style={{ flex: 1 }}>
+				<Discord.SegmentedControl state={state} />
+				<Discord.SegmentedControlPages state={state} style={{ flex: 1 }} />
+				{tab === 2 ? null : <InstallButton kind={TAB_KINDS[tab]} />}
+			</View>
+		</SafeArea.SafeAreaPaddingView>
 	);
 }
 

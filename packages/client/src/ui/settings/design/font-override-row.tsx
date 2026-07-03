@@ -1,6 +1,7 @@
 import { memo } from 'react';
 
 import { Discord } from '~/api/metro/components';
+import { useSettingsStore } from '~/api/storage';
 import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
 import { findByProps } from '~/api/metro';
@@ -19,6 +20,7 @@ type FontOverrideRowProps = {
  */
 function FontOverrideRow({ group, families }: FontOverrideRowProps) {
 	const fonts = getManager(ManagerKind.Fonts);
+	useSettingsStore('unbound', ({ key }) => key === 'font-states');
 	const overrides = fonts.getOverrides();
 	const current =
 		families.map((family) => overrides[family]).find(Boolean) ?? format('UNBOUND_DEFAULT');
