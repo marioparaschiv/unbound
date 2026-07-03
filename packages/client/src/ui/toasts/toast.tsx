@@ -7,6 +7,7 @@ import { memo, useCallback } from 'react';
 
 import { BackdropFilters } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
+import { TintedIcon } from '~/ui/components';
 import useToastStore from '~/stores/toasts';
 import { Icons } from '~/api/assets';
 
@@ -15,7 +16,6 @@ import useToastState from './use-toast-state';
 import ToastProgress from './toast-progress';
 import ToastButtons from './toast-buttons';
 import ToastContent from './toast-content';
-import TintedIcon from './tinted-icon';
 import useStyles from './toast.style';
 import ToastIcon from './toast-icon';
 

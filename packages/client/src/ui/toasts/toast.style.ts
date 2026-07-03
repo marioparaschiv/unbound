@@ -46,9 +46,6 @@ export default Discord.createStyles({
 		marginLeft: 12,
 		marginRight: 12,
 	},
-	iconTint: {
-		tintColor: Theme.colors.INTERACTIVE_ICON_DEFAULT,
-	},
 	buttons: {
 		flexWrap: 'wrap',
 		flexDirection: 'row',

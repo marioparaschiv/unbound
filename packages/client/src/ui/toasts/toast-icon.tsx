@@ -2,9 +2,9 @@ import type { ImageSourcePropType } from 'react-native';
 import { View, Image } from 'react-native';
 import { memo } from 'react';
 
+import { TintedIcon } from '~/ui/components';
 import { Icons } from '~/api/assets';
 
-import TintedIcon from './tinted-icon';
 import useStyles from './toast.style';
 
 type ToastIconProps = {
