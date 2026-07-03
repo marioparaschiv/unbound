@@ -17,8 +17,8 @@ export type FontTarget = {
 
 /**
  * @description Manages custom fonts. The native layer applies fonts by reading the `font-states`
- * setting and hooking `UIFont`; this manager only lists fonts and writes that setting. It patches
- * nothing in JS.
+ * setting and hooking the platform font loader; this manager only lists fonts and writes that
+ * setting. It patches nothing in JS.
  */
 export class Fonts extends Manager<FontEntity, FontsEvents> {
 	constructor() {
