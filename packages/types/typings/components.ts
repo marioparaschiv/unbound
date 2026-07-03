@@ -47,9 +47,11 @@ export interface DesignModule {
 	/* Inputs */
 	TextInput: ComponentType<TextInputProps>;
 	TextField: ComponentType<TextFieldProps>;
-	TextArea: ComponentType<TextFieldProps>;
+	TextArea: ComponentType<TextAreaProps>;
+	TextAreaField: ComponentType<TextAreaProps>;
 	SearchField: ComponentType<Omit<TextFieldProps, 'leadingIcon'>>;
-	GhostInput: ComponentType<TextFieldProps>;
+	GhostInput: ComponentType<GhostInputProps>;
+	SplitTextInput: ComponentType<SplitTextInputProps>;
 	Slider: ComponentType<SliderProps>;
 	Checkbox: ComponentType<CheckboxProps>;
 	SegmentedControl: ComponentType<SegmentedControlProps>;
@@ -284,91 +286,158 @@ export interface IconButtonProps {
  * Inputs
  * ------------------------------------------------------------------ */
 
+/** Input sizing, shared by the whole `TextField`/`Input` family. */
 export type InputSize = LiteralUnion<'sm' | 'md' | 'lg'>;
+/** Input status. `focused` is an internal state and is not user-settable. */
 export type InputStatus = LiteralUnion<'default' | 'error'>;
+/** Icon slot: a rendered node, a component, or a render function. */
+export type IconSlot = ReactNode | ComponentType<any> | Fn<ReactNode>;
 
 /**
- * Discord's own form-style `TextInput` (not React Native's). Its `onChange` receives the raw string
- * value, not an event. A few `TextField`-style props (`size`, `isClearable`, `leadingIcon`,
- * `borderRadius`) are accepted through its redesign render path, so they are included here too. The
- * standard RN input props it forwards (`maxLength`, `selectionColor`, …) come from the intersection
- * with {@link RNInputPassthrough}.
+ * Discord's own form-style `TextInput` (`TextInput.native`), not React Native's. Its `onChange`
+ * receives the raw string value, not an event. These are the props it reads verbatim off its props
+ * object; every other prop is collected and spread onto the underlying native input via
+ * {@link TextInputPassthrough}.
  */
-export type TextInputProps = DesignTextInputProps & RedesignTextInputProps & RNInputPassthrough;
-
-/** The `TextInput.native` component's own props, read verbatim off its props object. */
-export interface DesignTextInputProps {
+export interface TextInputProps extends TextInputPassthrough {
 	value?: string;
+	/** @default '' */
 	placeholder?: string;
-	/** Field label rendered above the input. */
+	/** Field label rendered above the input. @default '' */
 	title?: string;
+	/** @default '' */
 	helpText?: string;
 	/** Error message, or `true` to show the error state without text. */
 	error?: string | boolean;
+	/** @default false */
 	disabled?: boolean;
+	/** @default false */
 	multiline?: boolean;
+	/** @default 1 */
 	numberOfLines?: number;
+	/** @default false */
 	autoFocus?: boolean;
+	/** @default false */
 	secureTextEntry?: boolean;
-	returnKeyType?: RNTextInputProps['returnKeyType'];
 	keyboardType?: RNTextInputProps['keyboardType'];
 	keyboardAppearance?: RNTextInputProps['keyboardAppearance'];
 	autoCapitalize?: RNTextInputProps['autoCapitalize'];
 	autoCorrect?: boolean;
+	/** iOS clear-button mode; forwarded to the native input. */
 	clearButtonVisibility?: LiteralUnion<'never' | 'always' | 'unless-editing' | 'while-editing'>;
 	showBorder?: boolean;
+	/** @default false */
 	showCharactersRemaining?: boolean;
 	inputTextStyle?: StyleProp<TextStyle>;
 	style?: StyleProp<ViewStyle>;
+	/** @default false */
 	enableAndroidSanitizedInputWorkaround?: boolean;
-	/** Switches between the legacy and redesign render paths. */
+	/** Switches between the legacy and redesign render paths. @default true */
 	allowRedesignTextInput?: boolean;
 	onChange?: (value: string) => void;
 }
 
-/** `TextField`-family props the redesign `TextInput` path also accepts. */
-export interface RedesignTextInputProps {
+/**
+ * Native `TextInput` props forwarded through `TextInput`. Everything the DS component does not read
+ * itself (`maxLength`, `selectionColor`, `onFocus`, …) is spread onto the underlying native input,
+ * so it accepts the RN surface too, minus the members `TextInput` overrides with its own semantics.
+ */
+export type TextInputPassthrough = Omit<
+	RNTextInputProps,
+	| 'value'
+	| 'placeholder'
+	| 'multiline'
+	| 'numberOfLines'
+	| 'autoFocus'
+	| 'secureTextEntry'
+	| 'keyboardType'
+	| 'keyboardAppearance'
+	| 'autoCapitalize'
+	| 'autoCorrect'
+	| 'style'
+	| 'onChange'
+>;
+
+/**
+ * The redesign `TextField` and its siblings (`TextArea`, `SearchField`, `GhostInput`,
+ * `SplitTextInput`). This is where the `size` / `status` / `isClearable` / `leadingIcon` chrome
+ * actually lives, unlike {@link TextInputProps}. `onChange` receives the string value.
+ */
+export interface TextFieldProps {
+	value?: string;
+	defaultValue?: string;
+	placeholder?: string;
 	size?: InputSize;
+	/** @default 'default' */
 	status?: InputStatus;
 	isClearable?: boolean;
 	isDisabled?: boolean;
 	isRound?: boolean;
-	borderRadius?: number;
-	leadingIcon?: ComponentType<any> | ReactNode | Fn<ReactNode>;
-	trailingIcon?: ComponentType<any> | ReactNode | Fn<ReactNode>;
+	grow?: boolean;
+	leadingIcon?: IconSlot;
+	trailingIcon?: IconSlot;
 	leadingText?: string;
 	trailingText?: string;
-}
-
-/** The subset of native `TextInput` props forwarded through to the underlying input. */
-export type RNInputPassthrough = Omit<
-	RNTextInputProps,
-	keyof DesignTextInputProps | keyof RedesignTextInputProps | 'onChange'
->;
-
-/** The newer `TextField` component. Shares the redesign surface; adds label/clear chrome. */
-export interface TextFieldProps extends RedesignTextInputProps, RNInputPassthrough {
-	value?: string;
-	defaultValue?: string;
-	placeholder?: string;
-	label?: string;
-	description?: string;
-	errorMessage?: string;
-	grow?: boolean;
+	leadingPressableProps?: Record<string, any>;
+	trailingPressableProps?: Record<string, any>;
+	secureTextEntry?: boolean;
+	keyboardType?: RNTextInputProps['keyboardType'];
+	autoComplete?: RNTextInputProps['autoComplete'];
+	returnKeyType?: RNTextInputProps['returnKeyType'];
+	maxLength?: number;
+	enableAndroidSanitizedInputWorkaround?: boolean;
+	style?: StyleProp<ViewStyle>;
+	inputStyle?: StyleProp<TextStyle>;
+	children?: ReactNode;
 	onChange?: (value: string) => void;
 	onClear?: Fn<void>;
+	onFocus?: RNTextInputProps['onFocus'];
+	onBlur?: RNTextInputProps['onBlur'];
 }
 
+/** `TextArea` extends the field family with a character limit. */
+export interface TextAreaProps extends TextFieldProps {
+	maxLength?: number;
+}
+
+/** `GhostInput`: a borderless field bridging to the `useTextField` hook. */
+export interface GhostInputProps extends TextFieldProps {
+	isCentered?: boolean;
+	autoFocus?: boolean;
+	containerStyle?: StyleProp<ViewStyle>;
+}
+
+/** `SplitTextInput` / `SplitTextField`: a segmented input (e.g. verification codes). */
+export interface SplitTextInputProps extends TextFieldProps {
+	isRound?: boolean;
+	leadingText?: string;
+	leadingPressableProps?: Record<string, any>;
+}
+
+/**
+ * The DS `Slider`. It reads only `startIcon` / `endIcon` / `style` / `onValueChange` / `step`; the
+ * remaining slider props (`value`, bounds, tint colours) are spread onto the underlying RN slider.
+ */
 export interface SliderProps {
 	value?: number;
+	defaultValue?: number;
 	minimumValue?: number;
 	maximumValue?: number;
 	step?: number;
 	disabled?: boolean;
+	inverted?: boolean;
+	tapToSeek?: boolean;
+	lowerLimit?: number;
+	upperLimit?: number;
 	startIcon?: ReactNode;
 	endIcon?: ReactNode;
+	valueLabel?: ReactNode;
+	minimumTrackTintColor?: string;
+	maximumTrackTintColor?: string;
 	style?: StyleProp<ViewStyle>;
 	onValueChange?: (value: number) => void;
+	onSlidingStart?: (value: number) => void;
+	onSlidingComplete?: (value: number) => void;
 }
 
 export interface CheckboxProps {
@@ -376,12 +445,24 @@ export interface CheckboxProps {
 	description?: ReactNode;
 	checked: boolean;
 	required?: boolean;
+	accessibilityRole?: string;
+	accessibilityState?: Record<string, any>;
 	onToggle: Fn<void>;
 }
 
 export interface SegmentedControlProps {
-	state: any;
+	/** The controller returned by `useSegmentedControlState`. */
+	state: SegmentedControlState;
+	/** @default 'default' */
 	variant?: LiteralUnion<'default'>;
+	keyboardShouldPersistTaps?: boolean | 'always' | 'never' | 'handled';
+}
+
+/** The state controller a `SegmentedControl` is driven by. */
+export interface SegmentedControlState {
+	activeIndex: number;
+	items: any[];
+	setActiveIndex: (index: number) => void;
 }
 
 /* ------------------------------------------------------------------ *
