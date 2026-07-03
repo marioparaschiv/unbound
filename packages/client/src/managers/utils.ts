@@ -13,6 +13,9 @@ import { icons } from '~/managers/icons';
 export function getManager(
 	kind: ManagerKind.Plugins | ManagerKind.Themes,
 ): typeof plugins | typeof themes;
+export function getManager(
+	kind: ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons,
+): typeof plugins | typeof themes | typeof icons;
 export function getManager(kind: ManagerKind.Icons): typeof icons;
 export function getManager(kind: ManagerKind.Fonts): typeof fonts;
 export function getManager(
