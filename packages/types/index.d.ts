@@ -5,6 +5,7 @@
 // type definitions from this package's node_modules.
 import './global';
 
+export * from './typings/components';
 export * from './typings/settings';
 export * from './typings/addons';
 export * from './typings/assets';

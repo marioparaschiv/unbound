@@ -7,6 +7,13 @@ export type PromiseFn<T = Promise<any>> = (...args: any) => T;
 export type AnyProps<T extends Record<PropertyKey, any> = Record<PropertyKey, any>> = T &
 	Record<PropertyKey, any>;
 
+/**
+ * A string union that keeps `T`'s literals for autocomplete while still accepting any other string.
+ * Use this for Discord's open-ended enums (typography variants, colour tokens, sizes) so newly added
+ * values keep type-checking without an update here.
+ */
+export type LiteralUnion<T extends string> = T | (string & {});
+
 /** A hexadecimal colour string prefixed with `#`. */
 export type HexColor = `#${string}`;
 /** An `rgba(...)` colour string. */
