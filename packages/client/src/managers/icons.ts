@@ -69,6 +69,25 @@ export class Icons extends Addons<Addon> {
 		return this.applied.manifest.id === id;
 	}
 
+	/**
+	 * @description Enables the pack if it isn't applied, disables it if it is, and emits `toggled`.
+	 * Icons are single-select: the applied pack lives in `applied`, not the base `states` map, so
+	 * {@link isEnabled} decides the direction here.
+	 * @param entity The pack to toggle, as its id or the entity itself.
+	 */
+	toggle(entity: string | Addon) {
+		const resolved = this.resolve(entity);
+		if (!resolved) return;
+
+		if (this.isEnabled(resolved.id)) {
+			this.disable(resolved);
+		} else {
+			this.enable(resolved);
+		}
+
+		this.emit('toggled', resolved);
+	}
+
 	async enable(entity: string | Addon) {
 		const resolved = this.resolve(entity);
 		if (!resolved) return;
