@@ -5,7 +5,6 @@ import { useMemo, useState } from 'react';
 import { Discord, FlashList } from '~/api/metro/components';
 import { getAll, getIDByName, Icons } from '~/api/assets';
 import { Messages, format } from '~/api/i18n';
-import { Radius } from '~/api/metro/common';
 import { Empty } from '~/ui/components';
 
 type AssetRowInfo = { item: UnboundAsset; index: number };
@@ -24,12 +23,12 @@ function AssetsPage() {
 
 	return (
 		<View style={{ flex: 1, padding: 16, gap: 12 }}>
-			<Discord.TextInput
+			<Discord.TextField
 				size='md'
 				value={search}
 				onChange={setSearch}
 				isClearable
-				borderRadius={Radius.Radius.lg}
+				isRound
 				placeholder={format('UNBOUND_SEARCH', { type: Messages.UNBOUND_ASSETS })}
 				leadingIcon={() => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon} />}
 			/>
