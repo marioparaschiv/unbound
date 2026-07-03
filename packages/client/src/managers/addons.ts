@@ -1,8 +1,9 @@
 import type { Addon, AddonManifest } from '@unbound-app/types';
 import noop from '@unbound-app/utils/noop';
 
-import { Manager } from '~/managers/base';
+import { Manager, ManagerType } from '~/managers/base';
 import storage from '~/api/storage';
+import fs from '~/api/fs';
 
 type AddonResolveable = string | Addon;
 
@@ -15,6 +16,9 @@ type AddonEvents<T extends Addon> = {
 	disabled: (entity: T) => void;
 	toggled: (entity: T) => void;
 	reloaded: (entity: T) => void;
+	installed: (entity: T) => void;
+	'install-error': (error: Error) => void;
+	deleted: (entity: T) => void;
 };
 
 /**
@@ -29,6 +33,9 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	 * @returns The addon's instance.
 	 */
 	protected abstract handleBundle(bundle: string): any;
+
+	/** The manifest `type` value this manager installs; used to reject mismatched installs. */
+	protected abstract get entityType(): NonNullable<AddonManifest['type']>;
 
 	/**
 	 * @description Loads an addon into the manager from its bundle and manifest, starting it if its
@@ -82,6 +89,71 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			this.emit('unloaded', resolved);
 		} catch (error: any) {
 			this.logger.error(`Failed to unload addon ${resolved.id}:`, error);
+			this.errors.set(resolved.id, error);
+		}
+	}
+
+	/**
+	 * @description Installs an addon from a manifest URL: fetches and validates the manifest, downloads
+	 * the bundle, loads it, and emits `installed`. Twin of {@link delete}.
+	 * @param url The manifest URL to install from.
+	 * @returns The loaded addon, or `undefined` on failure.
+	 */
+	async install(url: string): Promise<T | undefined> {
+		try {
+			const manifest: AddonManifest = await fetch(url, { cache: 'no-cache' }).then((res) => {
+				if (!res.ok) throw new Error(`Failed to fetch manifest (${res.status}).`);
+				return res.json();
+			});
+
+			this.validateManifest(manifest);
+
+			if (manifest.type && manifest.type !== this.entityType) {
+				throw new Error(`Expected a ${this.entityType} manifest, got ${manifest.type}.`);
+			}
+
+			const origin = url.split('/').slice(0, -1).join('/');
+			const bundleUrl = new URL(manifest.main, `${origin}/`).toString();
+			const bundle = await fetch(bundleUrl, { cache: 'no-cache' }).then((res) => {
+				if (!res.ok) throw new Error(`Failed to fetch bundle (${res.status}).`);
+				return res.text();
+			});
+
+			await fs.write(
+				`Unbound/${ManagerType[this.type]}/${manifest.id}/manifest.json`,
+				JSON.stringify(manifest),
+			);
+			await fs.write(
+				`Unbound/${ManagerType[this.type]}/${manifest.id}/${manifest.main}`,
+				bundle,
+			);
+
+			this.load(bundle, manifest);
+			const entity = this.getEntity(manifest.id);
+			if (entity) this.emit('installed', entity);
+
+			return entity;
+		} catch (error: any) {
+			this.logger.error('Failed to install addon:', error);
+			this.emit('install-error', error);
+			return undefined;
+		}
+	}
+
+	/**
+	 * @description Deletes an installed addon: unloads it and removes its folder from disk, emitting `deleted`.
+	 * @param entity The addon to delete, as its id or the entity itself.
+	 */
+	async delete(entity: AddonResolveable): Promise<void> {
+		const resolved = this.resolve(entity);
+		if (!resolved) return;
+
+		try {
+			this.unload(resolved);
+			await fs.rm(`Unbound/${ManagerType[this.type]}/${resolved.id}`);
+			this.emit('deleted', resolved);
+		} catch (error: any) {
+			this.logger.error(`Failed to delete addon ${resolved.id}:`, error);
 			this.errors.set(resolved.id, error);
 		}
 	}
