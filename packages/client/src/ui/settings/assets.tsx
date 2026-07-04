@@ -8,6 +8,8 @@ import { Messages, format } from '~/api/i18n';
 import { findByProps } from '~/api/metro';
 import { Empty } from '~/ui/components';
 
+import useStyles from './assets.style';
+
 /** An asset paired with its resolved id and a pre-lowercased name, computed once for the whole list. */
 type IndexedAsset = {
 	asset: UnboundAsset;
@@ -18,11 +20,6 @@ type IndexedAsset = {
 type AssetRowInfo = { item: IndexedAsset; index: number };
 
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
-
-const THUMBNAIL_SIZE = 24;
-const thumbnailStyle = { width: THUMBNAIL_SIZE, height: THUMBNAIL_SIZE } as const;
-
-const searchIcon = () => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon} />;
 
 /**
  * @description Opens an asset in Discord's fullscreen media viewer (pinch-to-zoom). The viewer grows
@@ -53,6 +50,7 @@ type AssetRowProps = {
  * it, so the open animation grows from the thumbnail.
  */
 function AssetRow({ item, index, total }: AssetRowProps) {
+	const styles = useStyles();
 	const ref = useRef<View>(null);
 	const { asset, id } = item;
 
@@ -69,7 +67,7 @@ function AssetRow({ item, index, total }: AssetRowProps) {
 			trailing={<Discord.TableRow.TrailingText text={`${asset.width}×${asset.height}`} />}
 			icon={
 				<View ref={ref} collapsable={false}>
-					<Image source={id} style={thumbnailStyle} />
+					<Image source={id} style={styles.thumbnail} />
 				</View>
 			}
 		/>
@@ -82,6 +80,7 @@ const MemoAssetRow = memo(AssetRow);
  * @description Searchable browser over registered PNG assets, previewing each as a thumbnail.
  */
 function AssetsPage() {
+	const styles = useStyles();
 	const [search, setSearch] = useState('');
 
 	// Resolve ids and pre-lowercase names once, dropping assets that don't resolve, so neither the
@@ -111,8 +110,8 @@ function AssetsPage() {
 	const total = filtered.length;
 
 	return (
-		<View style={{ flex: 1, padding: 16, gap: 12 }}>
-			<View style={{ flexGrow: 0, flexShrink: 0 }}>
+		<View style={styles.container}>
+			<View style={styles.search}>
 				<Discord.TextField
 					size='md'
 					value={search}
@@ -120,7 +119,7 @@ function AssetsPage() {
 					isClearable
 					isRound
 					placeholder={format('UNBOUND_SEARCH', { type: Messages.UNBOUND_ASSETS })}
-					leadingIcon={searchIcon}
+					leadingIcon={() => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon} />}
 				/>
 			</View>
 			{total ? (
