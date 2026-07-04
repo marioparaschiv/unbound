@@ -9,8 +9,8 @@ export default Discord.createStyles({
 		padding: 32,
 	},
 	image: {
-		width: 160,
-		height: 160,
+		width: 240,
+		height: 240,
 		resizeMode: 'contain',
 	},
 });
