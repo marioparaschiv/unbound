@@ -28,6 +28,7 @@ function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 		<Pressable
 			disabled={disabled}
 			hitSlop={8}
+			style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}
 			onPress={() => (enabled ? manager.disable(addon.id) : manager.enable(addon.id))}
 		>
 			{enabled ? <TintedIcon source={Icons['CircleCheckIcon'] ?? 0} size={20} /> : null}
