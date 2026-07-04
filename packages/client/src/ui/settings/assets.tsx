@@ -23,15 +23,17 @@ function AssetsPage() {
 
 	return (
 		<View style={{ flex: 1, padding: 16, gap: 12 }}>
-			<Discord.TextField
-				size='md'
-				value={search}
-				onChange={setSearch}
-				isClearable
-				isRound
-				placeholder={format('UNBOUND_SEARCH', { type: Messages.UNBOUND_ASSETS })}
-				leadingIcon={() => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon} />}
-			/>
+			<View style={{ flexGrow: 0, flexShrink: 0 }}>
+				<Discord.TextField
+					size='md'
+					value={search}
+					onChange={setSearch}
+					isClearable
+					isRound
+					placeholder={format('UNBOUND_SEARCH', { type: Messages.UNBOUND_ASSETS })}
+					leadingIcon={() => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon} />}
+				/>
+			</View>
 			{filtered.length ? (
 				<FlashList.FlashList
 					data={filtered}
