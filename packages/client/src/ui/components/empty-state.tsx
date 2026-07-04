@@ -20,7 +20,7 @@ function Empty({ children, image = 'empty_state_image' }: EmptyProps) {
 
 	return (
 		<View style={styles.container}>
-			<Image source={Icons[image] ?? 0} style={styles.image} />
+			<Image source={Icons[image] ?? 0} />
 			<Discord.Text variant='text-md/medium' style={{ color: Theme.colors.TEXT_MUTED }}>
 				{children}
 			</Discord.Text>
