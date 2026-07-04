@@ -132,7 +132,7 @@ function AssetsPage() {
 					)}
 				/>
 			) : (
-				<Empty>
+				<Empty image={search ? 'sticker_search_empty' : 'empty_permission'}>
 					{search ? Messages.UNBOUND_EMPTY_RESULTS : Messages.UNBOUND_NO_ASSETS}
 				</Empty>
 			)}
