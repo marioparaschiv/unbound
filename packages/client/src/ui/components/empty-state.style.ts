@@ -8,4 +8,9 @@ export default Discord.createStyles({
 		gap: 12,
 		padding: 32,
 	},
+	image: {
+		width: 160,
+		height: 160,
+		resizeMode: 'contain',
+	},
 });
