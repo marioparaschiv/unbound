@@ -1,0 +1,153 @@
+---
+title: 'Metro'
+description: 'The module manager. Locate the exact Discord module you need before you patch it.'
+icon: 'box-taped'
+---
+
+### What is Metro?
+
+Discord's mobile app is a React Native bundle: thousands of [Metro](https://metrobundler.dev) modules packed into one file. Nothing is global. Every store, component, and helper lives behind an opaque numeric module id.
+
+To change how something behaves, you first have to find the exact module that owns it. That is what `metro` does. It walks the registry and hands you back the module matching your description. It's also the layer everything else builds on: `assets`, `i18n`, the common handles, flux stores, and your own addons all reach for Metro first.
+
+```ts
+import { metro } from '@unbound-app/api';
+
+// Find the module that owns message sending by the props it exposes.
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+Messages.sendMessage(channelId, { content: 'Hello from Unbound' });
+```
+
+<Note>
+	Metro is the foundation. If you only learn one module, learn this one. The patterns here recur everywhere.
+</Note>
+
+### Finding modules
+
+You rarely know a module's id, but you usually know its _shape_. Metro gives you a `findBy*` helper for each kind of fingerprint a module leaves behind.
+
+<Tabs>
+	<Tab title='By props'>
+		Match a module by the properties it exposes. The most common search by far.
+
+		```ts
+		const Clipboard = metro.findByProps('setString', 'getString');
+		```
+	</Tab>
+	<Tab title='By name'>
+		Match a function or component by the name of its default export.
+
+		```ts
+		const Button = metro.findByName('Button');
+		```
+	</Tab>
+	<Tab title='By store'>
+		Match a flux store by name. `Store` is appended for you.
+
+		```ts
+		const UserStore = metro.findStore('User');
+		const me = UserStore.getCurrentUser();
+		```
+	</Tab>
+</Tabs>
+
+The full family:
+
+| Helper | Matches on |
+| --- | --- |
+| `findByProps(...names)` | Properties present on the export |
+| `findByName(name)` | The name of the default export |
+| `findByDisplayName(name)` | The export's `displayName` |
+| `findByFilePath(path)` | The source file a module was imported from |
+| `findByPrototypes(...names)` | Methods present on the export's prototype |
+| `findStore(name)` | A flux store's registered name |
+
+<Note>
+	On mobile, most components are matched by their `name`, so `findByName` is the one you'll reach for. `findByDisplayName` exists for the cases where a component sets a `displayName`, but those are less common here than on desktop.
+</Note>
+
+<Warning>
+	There is no search by source string on mobile. On desktop clients you can match a module by string literals found in its source, which is the usual way to pin down a function component. The mobile bundle doesn't expose module source the same way, so that technique isn't available. When a component has no props, prototype, or name to match on, reach it through its parent instead. See [Reaching into a render](/plugins/react-patching#reaching-into-a-render).
+</Warning>
+
+### Filters
+
+Every `findBy*` helper is sugar over a _filter_: a predicate that returns `true` for the module you want. They live on `metro.filters`, and when the built-in helpers don't fit a shape you can build your own and hand it to `find` (or `findLazy`).
+
+```ts
+import { metro } from '@unbound-app/api';
+
+// findByProps under the hood is just this:
+const filter = metro.filters.byProps('sendMessage', 'receiveMessage');
+const Messages = metro.find(filter);
+```
+
+<Tip>
+	Reach for `find` plus a raw filter only when no `findBy*` helper expresses what you need, such as matching on a combination of conditions. For everything else the helpers are shorter and cache better.
+</Tip>
+
+### Lazy resolution & caching
+
+Two things keep startup fast.
+
+**Caching.** Every filter carries a cache key, so a successful search is remembered. The second time you search for the same shape, Metro skips the registry walk and resolves from cache.
+
+**Lazy resolution.** Pass `{ lazy: true }` (or use a `*Lazy` wrapper) to get back a proxy instead of running the search now. The search runs the _first time you touch the result_, so a module you reference at the top of a file but only use inside a rarely-called function costs nothing until then.
+
+```ts
+// Deferred: the search runs the first time you touch `Clipboard`.
+const Clipboard = metro.findByProps('setString', 'getString', { lazy: true });
+
+// ...later, on demand:
+Clipboard.setString('copied!');
+```
+
+<Note>
+	Prefer lazy for module handles you declare at module scope. It's why Unbound can reference dozens of modules without paying for all of them at launch.
+</Note>
+
+### Caching custom filters
+
+The `findBy*` helpers build their cache key by serializing their arguments, so their results are remembered across cold starts. A raw filter function you write yourself has no such key, so Metro can't cache it: every cold start re-runs your predicate against the whole registry, which is the one search shape that stays slow.
+
+`createCacheable` fixes that. Wrap your filter and give it a serialization of its arguments, and Metro caches the result under that key just like a built-in filter.
+
+```ts
+import { metro } from '@unbound-app/api';
+
+// A custom filter, made cacheable by serializing its inputs into a key.
+const byActionHandler = metro.filters.createCacheable(
+	(name: string) => (mdl) => mdl?.actionHandler?.[name],
+	(name) => `byActionHandler::${name}`,
+);
+
+const handler = metro.find(byActionHandler('MESSAGE_CREATE'));
+```
+
+<Tip>
+	Make the key fully describe the filter's inputs. Two searches that should return different modules must produce different keys, or they'll collide in the cache.
+</Tip>
+
+### Common modules & stores
+
+The modules everyone needs (React, React Native, the dispatcher, constants, the big flux stores) are pre-resolved for you. Reach for these instead of re-finding them.
+
+<AccordionGroup>
+	<Accordion title='metro.common: shared modules' icon='cubes'>
+		Framework and app-level handles you'd otherwise `findByProps` constantly: `React`, `ReactNative`, `Dispatcher`, `Constants`, `Clipboard`, `Theme`, `Flux`, `Assets`, `i18n`, and more.
+
+		```ts
+		const { React, Dispatcher } = metro.common;
+		```
+	</Accordion>
+	<Accordion title='metro.stores: flux stores' icon='database'>
+		Pre-resolved flux stores such as `Users`, `Guilds`, and `Theme`.
+
+		```ts
+		const me = metro.stores.Users.getCurrentUser();
+		```
+	</Accordion>
+	<Accordion title='metro.api: request helpers' icon='cloud'>
+		Action-creator modules like `Messages`, `Linking`, and `Profiles` for driving the app.
+	</Accordion>
+</AccordionGroup>

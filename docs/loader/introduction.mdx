@@ -1,0 +1,11 @@
+---
+title: 'Introduction'
+description: 'In order for Unbound to inject into Discord, it requires a loader.'
+icon: 'loader'
+---
+
+A loader is a native tweak/module that patches certain native functions in order to achieve JavaScript execution. This is used to later load Unbound's JavaScript bundle which provides in-app access and functionality.
+
+As Discord is a React Native application, we have several attack vectors for code execution.
+
+**Although loaders are platform specific, we aim to provide the same consistent experience across all platforms.**

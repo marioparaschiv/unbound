@@ -1,0 +1,75 @@
+---
+title: 'Theme Types'
+description: 'The palette that makes up a theme: semantic colors, raw colors, and the base type.'
+icon: 'palette'
+---
+
+### The shape of a theme
+
+A theme definition has three parts that decide its colors: a base `type`, a set of `semantic` colors, and a set of `raw` colors. Together they override Discord's palette.
+
+```ts
+{
+	type: 'darker',
+	semantic: { /* ... */ },
+	raw: { /* ... */ },
+	background: { /* optional, see Backgrounds */ },
+}
+```
+
+### Base type
+
+`type` picks the foundation your theme builds on. You only override the colors you care about, and everything else falls back to this base.
+
+<Tabs>
+	<Tab title='midnight'>
+		A pure-black base, for OLED/AMOLED-style themes.
+	</Tab>
+	<Tab title='darker'>
+		A dark base, deeper than Discord's default dark.
+	</Tab>
+	<Tab title='light'>
+		A light base.
+	</Tab>
+</Tabs>
+
+### Semantic colors
+
+**Semantic** colors are Discord's named roles: `BACKGROUND_PRIMARY`, `TEXT_NORMAL`, and so on. Theming by role means a single value recolors everywhere that role is used, so the result stays consistent across the app.
+
+Each entry is an object: a `type` of `color` (a literal color) or `raw` (a reference to a raw color), the `value`, and an optional `opacity`.
+
+```ts
+semantic: {
+	BACKGROUND_PRIMARY: { type: 'color', value: '#0c0c0c' },
+	TEXT_NORMAL:        { type: 'color', value: '#fcfcfc', opacity: 1 },
+}
+```
+
+<ResponseField name='type' type="'color' | 'raw'">
+	`color` is a literal value; `raw` points at one of your raw colors so many roles can share it.
+</ResponseField>
+<ResponseField name='value' type='string'>
+	The color, or the raw key when `type` is `raw`.
+</ResponseField>
+<ResponseField name='opacity' type='number'>
+	Optional opacity applied to the color.
+</ResponseField>
+
+### Raw colors
+
+**Raw** colors are a flat map of your own named values: your palette's source of truth. Define a color once here, then point semantic roles at it with `type: 'raw'`. Change the raw value and every role referencing it updates together.
+
+```ts
+raw: {
+	ACCENT: '#c74050',
+}
+// ...then reference it:
+semantic: {
+	BUTTON_BACKGROUND: { type: 'raw', value: 'ACCENT' },
+}
+```
+
+<Tip>
+	Put your brand colors in `raw` and wire `semantic` roles to them. It keeps a theme DRY, so one edit recolors everything that shares a value.
+</Tip>

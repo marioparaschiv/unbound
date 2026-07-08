@@ -1,0 +1,91 @@
+---
+title: 'Introduction'
+description: 'What plugins are, how they run, and how to keep them fast.'
+icon: 'plug'
+---
+
+A plugin is a bundle of JavaScript that Unbound loads, evaluates, and runs inside Discord. It builds on the [Developer API](/modules/introduction) (Metro to find Discord's internals, storage for settings, the [patcher](/plugins/patching) to change behavior) to add functionality the base app doesn't ship.
+
+### The shape of a plugin
+
+A plugin is an object with optional lifecycle hooks. Unbound calls `start` when the plugin is enabled and `stop` when it's disabled, so everything a plugin does (its patches, listeners, subscriptions) is set up in `start` and torn back down in `stop`.
+
+```ts
+export default {
+	start() {
+		// set up patches, listeners, subscriptions
+	},
+	stop() {
+		// undo everything start() did
+	},
+};
+```
+
+<Note>
+	Whatever you create in `start`, undo in `stop`. A plugin that's toggled off should leave no trace running. Dangling patches and listeners are the most common source of bugs after a disable.
+</Note>
+
+### How plugins are loaded
+
+Here's the part that shapes how you should write one: **every installed plugin's bundle is loaded and evaluated at startup, whether or not it's enabled.** Being disabled means Unbound never calls your `start`; it does *not* mean your bundle's top-level code is skipped.
+
+So anything you do at the top level of your bundle runs for every user on every launch, even with your plugin turned off.
+
+<Warning>
+	Do not run [Metro](/modules/metro) searches at the top level of your plugin. `findByProps`, `findByName`, and friends walk the module registry. Paying that cost at import time, for a plugin that may be disabled, slows everyone's startup.
+</Warning>
+
+### Writing a fast plugin
+
+Two techniques keep a plugin's startup cost near zero until it's actually enabled and used.
+
+<Steps>
+	<Step title='Defer module lookups with lazy' icon='clock'>
+		Wrap top-level Metro handles in `lazy` (from `unbound.utils`) or use the `{ lazy: true }` search option. The search then runs the first time you *touch* the result (inside `start`, or even later inside a handler) instead of at import.
+
+		```ts
+		import { metro, utils } from '@unbound-app/api';
+
+		// Deferred: resolves on first access, not at import.
+		const Messages = utils.lazy(() =>
+			metro.findByProps('sendMessage', 'receiveMessage'),
+		);
+		```
+	</Step>
+	<Step title='Split heavy work behind a dynamic import' icon='code-branch'>
+		Keep your bundle's entry tiny. Move the parts that pull in lots of modules into separate files and `import()` them from inside `start`, so that code only loads when the plugin actually runs.
+
+		```ts
+		export default {
+			async start() {
+				const { apply } = await import('./patches');
+				apply();
+			},
+		};
+		```
+	</Step>
+</Steps>
+
+<Tip>
+	Think of your plugin as a small entry point plus modular pieces it pulls in on demand. The entry should do almost nothing at import time: just declare lazy handles and wait for `start`.
+</Tip>
+
+### Where to go next
+
+<CardGroup cols={2}>
+	<Card title='Manifest' icon='circle-info' href='/addons/manifest'>
+		The metadata every addon ships and how it's validated.
+	</Card>
+	<Card title='Function Patching' icon='object-subtract' href='/plugins/patching'>
+		Intercept and modify any function with the patcher.
+	</Card>
+	<Card title='Patching Components' icon='react' href='/plugins/react-patching'>
+		Change what Discord's components render.
+	</Card>
+	<Card title='Flux Stores' icon='box' href='/plugins/flux'>
+		React to Discord's internal events and stores.
+	</Card>
+	<Card title='Debugging' icon='bug' href='/plugins/debugger'>
+		Tools for developing and inspecting your plugin.
+	</Card>
+</CardGroup>
