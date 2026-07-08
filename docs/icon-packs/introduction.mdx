@@ -1,0 +1,32 @@
+---
+title: 'Introduction'
+description: "Replace Discord's icons with your own set."
+icon: 'icons'
+---
+
+An icon pack swaps Discord's built-in icons for your own. Like a [theme](/themes/introduction), it's a restyling addon. Where a theme recolors the interface, an icon pack replaces the *images* Discord renders for its icons.
+
+### How icon packs work
+
+Discord refers to each icon by name and resolves it to a bundled [asset](/modules/assets). An icon pack hooks that resolution: for every icon name it provides a replacement for, Unbound redirects the asset to your image instead of Discord's. Names you don't override fall through to Discord's originals, so a pack can be as small as a handful of icons or as complete as you like.
+
+Internally each overridden asset carries an `iconPackPath` (where your replacement image lives) and an `iconPackScale` (the density it's authored at), which is how Unbound resolves your image at the right resolution.
+
+<Note>
+	An icon pack overrides icons *by name*. The same asset names the [assets](/modules/assets) module discovers are the ones you target, so the naming you see there is the naming a pack overrides.
+</Note>
+
+### What an icon pack ships
+
+<CardGroup cols={2}>
+	<Card title='Manifest' icon='circle-info' href='/addons/manifest'>
+		Metadata identifying the pack: name, authors, version.
+	</Card>
+	<Card title='Assets' icon='face-smile' href='/modules/assets'>
+		How Discord's icons are named and discovered: the names a pack overrides.
+	</Card>
+</CardGroup>
+
+<Tip>
+	Match Discord's icon names exactly. An override only applies when its name lines up with the asset Discord is asking for. A mismatched name simply does nothing.
+</Tip>

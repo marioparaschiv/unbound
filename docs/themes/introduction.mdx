@@ -1,0 +1,31 @@
+---
+title: 'Introduction'
+description: "Recolor Discord's interface with a theme."
+icon: 'paintbrush'
+---
+
+A theme changes how Discord looks. Where a [plugin](/plugins/introduction) is code that runs, a theme is **data**: a JSON definition of colors (and an optional background) that Unbound applies to Discord's interface.
+
+### How themes work
+
+Discord styles its UI from a palette of named colors. A theme overrides that palette: you provide values for the color names you want to change, Unbound parses your definition, and the theme store pushes it into the app. Because a theme is just parsed JSON with no `start`/`stop` to run, applying or removing one is instant.
+
+Themes are governed by the same [manager](/modules/managers) as plugins. They are loaded, enabled, disabled, and persisted through the same lifecycle. The one difference is that enabling a theme *applies* it: only one theme is active at a time, so enabling a new one replaces the previous.
+
+### What a theme defines
+
+<CardGroup cols={2}>
+	<Card title='Manifest' icon='circle-info' href='/addons/manifest'>
+		Metadata (name, authors, version) identifying your theme.
+	</Card>
+	<Card title='Theme Types' icon='palette' href='/themes/types'>
+		The semantic and raw colors that make up the palette, and the base type they extend.
+	</Card>
+	<Card title='Backgrounds' icon='image' href='/themes/backgrounds'>
+		An optional image behind the interface, with blur and opacity.
+	</Card>
+</CardGroup>
+
+<Note>
+	A theme can't run logic or patch components; it only restyles. If you need behavior, that's a [plugin](/plugins/introduction).
+</Note>

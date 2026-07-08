@@ -1,0 +1,69 @@
+---
+title: 'Flux Stores'
+description: "Read Discord's state and react to its internal events."
+icon: 'box'
+---
+
+### What is Flux?
+
+Discord manages its state with **Flux**: a central dispatcher broadcasts actions (a message arrives, a channel is selected, the user's settings change), and **stores** listen for those actions and hold the resulting state. If you want to know *what* Discord currently knows (the current user, a guild, the selected channel) you read a store. If you want to know *when* something happens, you subscribe to the dispatcher.
+
+Both come from [Metro](/modules/metro): stores via `findStore`, the dispatcher and common stores pre-resolved on `metro.common` and `metro.stores`.
+
+### Reading stores
+
+A store is a singleton exposing getters over Discord's state. Find it once (lazily, so you don't search at import) and read from it whenever you need.
+
+```ts
+import { metro, utils } from '@unbound-app/api';
+
+const UserStore = utils.lazy(() => metro.findStore('User'));
+
+// later, inside start() or a handler:
+const me = UserStore.getCurrentUser();
+```
+
+<Tip>
+	The stores you'll reach for most (`Users`, `Guilds`, `Theme`) are already resolved on `metro.stores`, so you can skip the search entirely.
+</Tip>
+
+### Subscribing to events
+
+The dispatcher emits a stream of typed actions. Subscribe to one by its type to run code whenever Discord fires it, then unsubscribe when your plugin stops.
+
+```ts
+import { metro } from '@unbound-app/api';
+
+export default {
+	start() {
+		this.handler = ({ channelId }) => {
+			console.log('Channel selected:', channelId);
+		};
+
+		metro.common.Dispatcher.subscribe('CHANNEL_SELECT', this.handler);
+	},
+	stop() {
+		metro.common.Dispatcher.unsubscribe('CHANNEL_SELECT', this.handler);
+	},
+};
+```
+
+<Warning>
+	Always `unsubscribe` in `stop` with the *same* handler reference you subscribed with. A subscription that outlives a disabled plugin keeps firing, and keeps your plugin's code running when it shouldn't be.
+</Warning>
+
+### Common action types
+
+Discord dispatches hundreds of action types. A few you'll see often:
+
+<AccordionGroup>
+	<Accordion title='Messages' icon='message'>
+		`MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE`, fired as messages come and go.
+	</Accordion>
+	<Accordion title='Navigation' icon='compass'>
+		`CHANNEL_SELECT`, `GUILD_SELECT`, fired when the user moves around the app.
+	</Accordion>
+	<Accordion title='Connection' icon='wifi'>
+		`CONNECTION_OPEN`, fired once the client is connected and stores are populated. A good moment for setup that needs live state.
+	</Accordion>
+</AccordionGroup>

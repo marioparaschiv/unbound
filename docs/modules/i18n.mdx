@@ -1,0 +1,49 @@
+---
+title: 'i18n'
+description: "Localize your addon so it renders in the user's Discord language."
+icon: 'globe'
+---
+
+### What is i18n?
+
+`i18n` is Unbound's localization layer. It loads string tables for the user's active Discord locale, falls back to `en-US`, and gives you a `Messages` proxy and a `format` function to render those strings, so your addon speaks the user's language without you wiring up locale detection yourself.
+
+### The Messages proxy
+
+`Messages` is a proxy over the loaded string tables. Read a key off it and it resolves through three layers in order: the **active locale**, then **en-US**, then the **key itself** (so a missing translation degrades to something readable instead of `undefined`).
+
+```ts
+import { i18n } from '@unbound-app/api';
+
+i18n.Messages.SETTINGS; // → "Settings" in the user's language
+```
+
+### Formatting
+
+When a string has placeholders, use `format`. It resolves the key through `Messages`, then interpolates your variables using [ICU MessageFormat](https://formatjs.io/docs/core-concepts/icu-syntax/), so plurals, selects, and named slots all work.
+
+```ts
+import { i18n } from '@unbound-app/api';
+
+// string: "Deleted {count, plural, one {# message} other {# messages}}"
+i18n.format('MESSAGES_DELETED', { count: 3 }); // → "Deleted 3 messages"
+```
+
+### Addon localizations
+
+Your addon ships its own strings, and `defineLocalizations` gives it an isolated `Messages`/`format` pair over a table you provide. It shares the active locale with core, so your strings switch languages in lockstep with Discord, but your keys stay your own.
+
+```ts
+import { i18n } from '@unbound-app/api';
+
+const { Messages, format } = i18n.defineLocalizations({
+	'en-US': { GREETING: 'Hello, {name}!' },
+	'fr':    { GREETING: 'Bonjour, {name} !' },
+});
+
+format('GREETING', { name: 'Mario' });
+```
+
+<Tip>
+	Always include an `en-US` table. It's the fallback every other locale resolves to when a key is missing.
+</Tip>

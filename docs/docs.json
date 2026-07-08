@@ -1,0 +1,140 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Unbound",
+  "colors": {
+    "primary": "#c74050",
+    "light": "#c74050",
+    "dark": "#c74050"
+  },
+  "favicon": "/logo/dark.svg",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Overview",
+        "pages": [
+          "overview",
+          "roadmap"
+        ]
+      },
+      {
+        "group": "Loader",
+        "icon": "arrow-right-to-bracket",
+        "pages": [
+          "loader/introduction",
+          "loader/configuration",
+          "loader/local-build",
+          "loader/ios"
+        ]
+      },
+      {
+        "group": "Addons",
+        "icon": "puzzle-piece",
+        "pages": [
+          "addons/introduction",
+          "addons/creating",
+          "addons/manifest"
+        ]
+      },
+      {
+        "group": "Plugins",
+        "icon": "paintbrush",
+        "pages": [
+          "plugins/introduction",
+          "plugins/debugger",
+          "plugins/flux",
+          "plugins/patching",
+          "plugins/react-patching"
+        ]
+      },
+      {
+        "group": "Themes",
+        "icon": "paintbrush",
+        "pages": [
+          "themes/introduction",
+          "themes/backgrounds",
+          "themes/types"
+        ]
+      },
+      {
+        "group": "Icon Packs",
+        "icon": "package",
+        "pages": [
+          "icon-packs/introduction"
+        ]
+      },
+      {
+        "group": "Developer API",
+        "icon": "folder-tree",
+        "pages": [
+          "modules/introduction",
+          "modules/i18n",
+          "modules/metro",
+          "modules/patcher",
+          "modules/storage",
+          "modules/assets",
+          "modules/toasts",
+          "modules/dialogs",
+          "modules/commands",
+          "modules/native",
+          "modules/utilities",
+          "modules/components",
+          "modules/fs",
+          "modules/managers"
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Discord Community",
+          "href": "https://discord.gg/unbound",
+          "icon": "discord"
+        },
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/unbound-app",
+          "icon": "github"
+        }
+      ]
+    }
+  },
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/overview"
+    }
+  ],
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "api": {
+    "mdx": {
+      "auth": {
+        "method": "bearer"
+      }
+    }
+  },
+  "appearance": {
+    "default": "dark",
+    "strict": true
+  },
+  "background": {
+    "decoration": "grid",
+    "color": {
+      "light": "#fcfcfc",
+      "dark": "#0c0c0c"
+    }
+  },
+  "search": {
+    "prompt": "Search documentation..."
+  },
+  "footer": {
+    "socials": {
+      "x": "https://twitter.com/UnboundClient",
+      "github": "https://github.com/unbound-app",
+      "discord": "https://discord.gg/unbound"
+    }
+  }
+}

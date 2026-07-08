@@ -1,0 +1,64 @@
+---
+title: 'Native'
+description: "Bridge to the app's native iOS and Android modules."
+icon: 'file-code'
+---
+
+### What is the native bridge?
+
+Some capabilities don't live in JavaScript at all: reading files, fetching device and build info, reloading the bundle. They live in **native modules**, compiled into the app and exposed to JS through React Native's bridge.
+
+`native` is how you reach them. It resolves native modules by name and ships a handful of pre-resolved handles for the ones Unbound needs most.
+
+### Resolving native modules
+
+A native module's name varies across platforms and Discord versions. The iOS file manager might be `DCDFileManager` on one build and `RTNFileManager` on another. So `getNativeModule` takes a list of candidate names and returns the first one that resolves, checking both `NativeModules` and the TurboModule registry.
+
+```ts
+import { native } from '@unbound-app/api';
+
+const FileManager = native.getNativeModule(
+	'NativeFileModule',
+	'DCDFileManager',
+	'RTNFileManager',
+);
+```
+
+<Warning>
+	Always pass every name you know a module by. A single name that's right on your device may be wrong on someone else's. The candidate list is what makes a module resolve everywhere.
+</Warning>
+
+### Built-in handles
+
+The native modules Unbound depends on are already resolved for you:
+
+<AccordionGroup>
+	<Accordion title='BundleInfo' icon='circle-info'>
+		Build and release metadata: version, release channel, build number, identifier.
+	</Accordion>
+	<Accordion title='BundleManager' icon='rotate'>
+		The bundle updater. Drives OTA update checks and reloads (see below).
+	</Accordion>
+	<Accordion title='DeviceInfo' icon='mobile'>
+		Hardware and OS details: device model, manufacturer, system version, RAM.
+	</Accordion>
+	<Accordion title='File manager' icon='folder'>
+		The native file module the [fs](/modules/fs) module is built on. Prefer `fs` for file work, since it resolves paths and defaults encodings for you.
+	</Accordion>
+</AccordionGroup>
+
+### Reloading & UnboundNative
+
+`reload()` is the safe way to restart the bundle: it persists pending settings first, then reloads, so nothing in flight is lost.
+
+```ts
+import { native } from '@unbound-app/api';
+
+await native.reload(); // persists settings, then reloads
+```
+
+`UnboundNative` is the raw JSI bridge the platform loader installs on the global. The higher-level handles above are built on top of it, and you generally won't touch it directly.
+
+<Note>
+	If `UnboundNative` is missing, the environment isn't a real Unbound install and most native features won't work. That's a bug worth reporting, not a state to handle in your addon.
+</Note>

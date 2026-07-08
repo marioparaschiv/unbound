@@ -1,0 +1,60 @@
+---
+title: 'File System'
+description: 'Read, write, and check files against the documents directory.'
+icon: 'folder'
+---
+
+### What is the file system module?
+
+`fs` is a small wrapper over the native file manager for reading, writing, removing, and checking files. By default every path resolves against the platform's **documents directory** (the private, persistent folder Unbound stores its data in), so you work with short relative paths instead of absolute ones.
+
+It's built on the [native](/modules/native) bridge, and it's the layer [storage](/modules/storage) and [i18n](/modules/i18n) persist through. When you `storage.set` something, this is what eventually writes it to disk.
+
+```ts
+import { fs } from '@unbound-app/api';
+
+await fs.write('my-plugin/data.json', JSON.stringify({ count: 1 }));
+const raw = await fs.read('my-plugin/data.json');
+```
+
+### Reading & writing
+
+`read` and `write` default to `utf8`. `read` resolves to the file's contents; `write` resolves once the file is on disk. `fs.Documents` holds the absolute documents path if you need it.
+
+<CodeGroup>
+```ts write
+import { fs } from '@unbound-app/api';
+
+await fs.write('my-plugin/notes.txt', 'hello');
+```
+
+```ts read
+const contents = await fs.read('my-plugin/notes.txt');
+// contents === 'hello'
+```
+
+```ts base64
+// Pass an encoding when you're not working with text.
+await fs.write('my-plugin/icon.png', base64Data, 'base64');
+```
+</CodeGroup>
+
+<Note>
+	Relative paths resolve against `fs.Documents`. To read a file elsewhere on disk, pass an absolute path and `false` as the `inDocuments` argument: `fs.read('/abs/path', 'utf8', false)`.
+</Note>
+
+### Checking & removing
+
+`exists` tells you whether a file is there; `rm` deletes it. Both resolve to a boolean.
+
+```ts
+import { fs } from '@unbound-app/api';
+
+if (await fs.exists('my-plugin/data.json')) {
+	await fs.rm('my-plugin/data.json');
+}
+```
+
+<Tip>
+	You rarely need this for configuration; let [storage](/modules/storage) own that. Reach for `fs` directly when an addon ships its own data files (caches, exports, downloaded assets) that don't belong in the settings store.
+</Tip>
