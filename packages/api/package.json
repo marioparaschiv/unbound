@@ -6,10 +6,32 @@
 		"email": "contact@marioparaschiv.com",
 		"url": "https://github.com/marioparaschiv"
 	},
-	"types": "./src/index.ts",
+	"files": [
+		"src"
+	],
+	"types": "./src/index.d.ts",
 	"exports": {
-		".": "./src/index.ts",
-		"./metro": "./src/metro/index.d.ts",
-		"./metro/filters": "./src/metro/filters.d.ts"
+		".": "./src/index.d.ts",
+		"./global": "./src/global.d.ts"
+	},
+	"peerDependencies": {
+		"@types/react": "catalog:react",
+		"react": "catalog:react",
+		"react-native": "catalog:react",
+		"typescript": "catalog:"
+	},
+	"peerDependenciesMeta": {
+		"react": {
+			"optional": false
+		},
+		"@types/react": {
+			"optional": false
+		},
+		"react-native": {
+			"optional": false
+		},
+		"typescript": {
+			"optional": false
+		}
 	}
 }
