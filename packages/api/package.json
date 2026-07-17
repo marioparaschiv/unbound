@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/api",
-	"version": "1.0.0-d0f6b5e6bee60c386ef2680a75f54a699d7d81ca547534f263ee76996392d719",
+	"version": "1.0.0-23e97f30a63d2ad071051c6459cbd32c8d31ca5f402fa7fbaf1b017a80a8ff86",
 	"author": {
 		"name": "Mario P.",
 		"email": "contact@marioparaschiv.com",
@@ -12,7 +12,17 @@
 	"types": "./src/index.d.ts",
 	"exports": {
 		".": "./src/index.d.ts",
-		"./global": "./src/global.d.ts"
+		"./assets": "./src/assets.d.ts",
+		"./fs": "./src/fs.d.ts",
+		"./global": "./src/global.d.ts",
+		"./i18n": "./src/i18n.d.ts",
+		"./metro": "./src/metro/index.d.ts",
+		"./metro/filters": "./src/metro/filters.d.ts",
+		"./native": "./src/native.d.ts",
+		"./patcher": "./src/patcher.d.ts",
+		"./settings": "./src/settings.d.ts",
+		"./storage": "./src/storage.d.ts",
+		"./toasts": "./src/toasts.d.ts"
 	},
 	"peerDependencies": {
 		"@types/react": "catalog:react",
