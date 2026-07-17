@@ -155,7 +155,6 @@ declare const on: <EventKey extends keyof EventMap = string>(
 	listener: EventMap[EventKey],
 ) => EventEmitter<EventMap>;
 declare const patches: PatchedModule[];
-declare const settings: any;
 
 declare enum PatchType {
 	Before = 0,
@@ -783,7 +782,6 @@ declare namespace storage {
 		remove,
 		removeListener,
 		set,
-		settings,
 		toggle,
 		useSettingsStore,
 	};
@@ -813,7 +811,6 @@ declare namespace toasts {
 }
 declare namespace metro {
 	export {
-		CACHE_KEY,
 		MetroAllValues,
 		MetroBulkFind,
 		MetroBulkItem,

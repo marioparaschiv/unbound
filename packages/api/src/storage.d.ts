@@ -148,7 +148,6 @@ export declare const on: <EventKey extends keyof EventMap = string>(
 	event: EventKey,
 	listener: EventMap[EventKey],
 ) => EventEmitter<EventMap>;
-export declare const settings: any;
 /**
  * @description Registers a callback invoked on every settings change matching the predicate.
  * @param predicate Decides whether a given change should fire the callback.
