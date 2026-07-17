@@ -110,7 +110,11 @@ function isInternal(node: Node): boolean {
 
 /**
  * @description Recursively removes `@internal`-tagged declarations from a statement container,
- * descending into `declare global`/module bodies and pruning `@internal` interface members.
+ * descending into `declare global`/module bodies and pruning `@internal` interface members. An
+ * `@internal` declaration is retained when a surviving (non-`@internal`) statement in the same
+ * container still references its name - a public type may keep a bare backing declaration structurally
+ * alive (e.g. `MetroFilter` referencing the internal `[CACHE_KEY]` symbol), and removing it would
+ * leave a dangling reference. Keeping such a declaration is not a leak: it wears no `export` modifier.
  * @param container A source file or module body exposing `getStatements`.
  * @param internalNames Collects the names of removed top-level declarations so namespace re-export
  * lists referencing them can be pruned afterwards.
@@ -118,13 +122,16 @@ function isInternal(node: Node): boolean {
 function stripInternal(container: Node, internalNames: Set<string>) {
 	if (!Node.isStatemented(container)) return;
 
+	const candidates = new Map<Node, string[]>();
+	const survivors: Node[] = [];
+
 	for (const statement of container.getStatements()) {
 		if (isInternal(statement)) {
-			for (const name of declaredNames(statement)) internalNames.add(name);
-
-			statement.remove();
+			candidates.set(statement, declaredNames(statement));
 			continue;
 		}
+
+		survivors.push(statement);
 
 		if (Node.isModuleDeclaration(statement)) {
 			const body = statement.getBody();
@@ -137,6 +144,64 @@ function stripInternal(container: Node, internalNames: Set<string>) {
 			}
 		}
 	}
+
+	const referenced = collectReferencedNames(survivors);
+
+	for (const [statement, names] of candidates) {
+		if (names.some((name) => referenced.has(name))) {
+			// A retained backing declaration must not be part of the module's public surface: drop its
+			// `export` so it stays an ambient `declare`, matching how the same symbol appears in the
+			// bundles that never re-export it (e.g. `metro/filters.d.ts`, root `index.d.ts`).
+			if (Node.isModifierable(statement)) statement.toggleModifier('export', false);
+			continue;
+		}
+
+		for (const name of names) internalNames.add(name);
+
+		statement.remove();
+	}
+}
+
+/**
+ * @description Collects every top-level declaration name that the given statements reference. Uses
+ * the same reference classification as the root tree-shaker: aliased/import specifier names and a
+ * declaration's own name node don't count, but a computed `[X]` property name is a real reference.
+ * @param statements The surviving statements to scan for references.
+ * @returns The set of referenced identifier texts.
+ */
+function collectReferencedNames(statements: Node[]): Set<string> {
+	const referenced = new Set<string>();
+
+	for (const statement of statements) {
+		for (const reference of statement.getDescendantsOfKind(SyntaxKind.Identifier)) {
+			if (!isReference(reference)) continue;
+
+			referenced.add(reference.getText());
+		}
+	}
+
+	return referenced;
+}
+
+/**
+ * @description Reports whether an identifier is a genuine reference to a declaration rather than a
+ * binding or specifier name. An aliased export specifier (`X as Y`) references only `X`; an import
+ * specifier's names are re-bindings, not references; a declaration's own name node is not a
+ * reference. A computed `[X]` property name stays a reference (handled by `isDeclarationName`).
+ * @param reference The identifier to classify.
+ */
+function isReference(reference: Node): boolean {
+	const parent = reference.getParent();
+
+	if (Node.isExportSpecifier(parent)) {
+		if (parent.getAliasNode() === reference) return false;
+	} else if (Node.isImportSpecifier(parent)) {
+		return false;
+	} else if (isDeclarationName(reference)) {
+		return false;
+	}
+
+	return true;
 }
 
 /**
