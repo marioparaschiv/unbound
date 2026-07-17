@@ -3,7 +3,11 @@
 	"compilerOptions": {
 		"composite": false,
 		"paths": {
-			"~/*": ["./src/*"]
+			"~/*": ["./src/*"],
+			"@unbound-app/types": ["../types/index.d.ts"],
+			"@unbound-app/types/*": ["../types/typings/*.ts"],
+			"@unbound-app/logger": ["../logger/src/index.ts"],
+			"@unbound-app/utils/*": ["../utils/src/*.ts"]
 		}
 	}
 }
