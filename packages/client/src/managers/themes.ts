@@ -105,4 +105,5 @@ export class Themes extends Addons<ThemeEntity> {
 	}
 }
 
+/** @internal */
 export const themes = new Themes();

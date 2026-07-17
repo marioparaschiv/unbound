@@ -44,4 +44,5 @@ export class Plugins extends Addons<PluginEntity> {
 	}
 }
 
+/** @internal */
 export const plugins = new Plugins();

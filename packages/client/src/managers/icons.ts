@@ -297,4 +297,5 @@ export class Icons extends Addons<Addon> {
 	}
 }
 
+/** @internal */
 export const icons = new Icons();

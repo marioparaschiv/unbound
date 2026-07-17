@@ -131,4 +131,5 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	}
 }
 
+/** @internal */
 export const fonts = new Fonts();
