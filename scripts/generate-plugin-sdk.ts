@@ -201,6 +201,22 @@ function pruneNamespaceMembers(sourceFile: Node, internalByModule: Map<string, S
 }
 
 /**
+ * @description Reports whether an identifier is the declared name of its parent (a parameter,
+ * a property/method signature, a property/variable name, ...) rather than a reference to a
+ * declaration. ts-morph exposes the declared name via `getNameNode`, so an identifier that is
+ * exactly its parent's name node is a declaration name. A computed `[X]` property name is a real
+ * reference to `X`, so it is excluded.
+ * @param reference The identifier to classify.
+ */
+function isDeclarationName(reference: Node): boolean {
+	const parent = reference.getParent() as { getNameNode?: () => Node | undefined };
+	if (typeof parent.getNameNode !== 'function') return false;
+	if (parent.getNameNode() !== reference) return false;
+
+	return !Node.isComputedPropertyName(reference.getParent());
+}
+
+/**
  * @description Tree-shakes the root bundle against its real public surface. The api barrel exports
  * only its capability namespaces, so the true roots are the final `export { ... }` block and the
  * `declare namespace` re-exports. Every top-level declaration dts-bundle-generator hoisted (whether
@@ -252,6 +268,11 @@ function pruneUnreferenced(sourceFile: Node) {
 			} else if (isRoot && Node.isModuleDeclaration(statement)) {
 				// The namespace's own name and its `declare namespace` keyword aren't references.
 				if (parent === statement) continue;
+			} else if (isDeclarationName(reference)) {
+				// The identifier that names a declaration (a parameter, a property/method signature, or a
+				// property/variable name) is the declared name, not a reference to one, so it must not mark
+				// a same-named top-level declaration reachable. Computed `[X]` names stay references.
+				continue;
 			}
 
 			const targets = byName.get(reference.getText());
