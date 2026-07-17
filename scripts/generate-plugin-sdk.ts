@@ -118,8 +118,15 @@ function isInternal(node: Node): boolean {
  * @param container A source file or module body exposing `getStatements`.
  * @param internalNames Collects the names of removed top-level declarations so namespace re-export
  * lists referencing them can be pruned afterwards.
+ * @param retainedInternalNames Collects the names of `@internal` declarations that were kept as
+ * ambient backing declarations. They are retained for structural type resolution only, never to be
+ * re-exported, so namespace re-export lists referencing them must still be pruned.
  */
-function stripInternal(container: Node, internalNames: Set<string>) {
+function stripInternal(
+	container: Node,
+	internalNames: Set<string>,
+	retainedInternalNames: Set<string>,
+) {
 	if (!Node.isStatemented(container)) return;
 
 	const candidates = new Map<Node, string[]>();
@@ -135,7 +142,7 @@ function stripInternal(container: Node, internalNames: Set<string>) {
 
 		if (Node.isModuleDeclaration(statement)) {
 			const body = statement.getBody();
-			if (body) stripInternal(body, internalNames);
+			if (body) stripInternal(body, internalNames, retainedInternalNames);
 		}
 
 		if (Node.isInterfaceDeclaration(statement)) {
@@ -153,6 +160,9 @@ function stripInternal(container: Node, internalNames: Set<string>) {
 			// `export` so it stays an ambient `declare`, matching how the same symbol appears in the
 			// bundles that never re-export it (e.g. `metro/filters.d.ts`, root `index.d.ts`).
 			if (Node.isModifierable(statement)) statement.toggleModifier('export', false);
+
+			for (const name of names) retainedInternalNames.add(name);
+
 			continue;
 		}
 
@@ -232,24 +242,42 @@ function declaredNames(statement: Node): string[] {
  * @description Removes named specifiers from `declare namespace X { export { ... } }` re-export lists
  * whose exported name matches an `@internal` binding stripped from that module's own bundle. The
  * root bundle re-exports each capability as a namespace, where the inlined member's `@internal`
- * JSDoc is lost, so the tag can no longer be honoured directly.
+ * JSDoc is lost, so the tag can no longer be honoured directly. A retained-internal symbol - kept as
+ * an ambient backing declaration for structural type resolution (e.g. `CACHE_KEY` backing the public
+ * `MetroFilter`) - is likewise pruned from the list: it survives the bundle to resolve a type, not to
+ * be re-exported on the namespace.
  * @param sourceFile The parsed root bundle.
  * @param internalByModule A map of capability module name to the set of `@internal` member names
  * collected while stripping that module's own bundle.
+ * @param retainedByModule A map of capability module name to the set of `@internal` member names that
+ * were retained as backing declarations while stripping that module's own bundle.
  */
-function pruneNamespaceMembers(sourceFile: Node, internalByModule: Map<string, Set<string>>) {
+function pruneNamespaceMembers(
+	sourceFile: Node,
+	internalByModule: Map<string, Set<string>>,
+	retainedByModule: Map<string, Set<string>>,
+) {
 	if (!Node.isStatemented(sourceFile)) return;
 
 	const internalEverywhere = new Set<string>();
 	for (const names of internalByModule.values()) {
 		for (const name of names) internalEverywhere.add(name);
 	}
+	for (const names of retainedByModule.values()) {
+		for (const name of names) internalEverywhere.add(name);
+	}
 
 	for (const statement of sourceFile.getStatements()) {
 		if (!Node.isModuleDeclaration(statement)) continue;
 
-		const scoped = internalByModule.get(statement.getName());
-		const forbidden = scoped ?? internalEverywhere;
+		const name = statement.getName();
+		const scoped = internalByModule.get(name);
+		const retained = retainedByModule.get(name);
+
+		const forbidden =
+			scoped || retained
+				? new Set([...(scoped ?? []), ...(retained ?? [])])
+				: internalEverywhere;
 
 		const body = statement.getBody();
 		if (!body || !Node.isStatemented(body)) continue;
@@ -362,16 +390,21 @@ function pruneUnreferenced(sourceFile: Node) {
  * @description Parses a bundle, strips its `@internal` declarations, and returns the cleaned text
  * alongside the set of `@internal` names removed.
  * @param text The raw bundle text.
- * @returns The stripped text and the collected internal names.
+ * @returns The stripped text, the collected internal names, and the retained-internal names.
  */
-function strip(text: string): { text: string; internalNames: Set<string> } {
+function strip(text: string): {
+	text: string;
+	internalNames: Set<string>;
+	retainedInternalNames: Set<string>;
+} {
 	const project = new Project({ useInMemoryFileSystem: true });
 	const sourceFile = project.createSourceFile('bundle.d.ts', text);
 
 	const internalNames = new Set<string>();
-	stripInternal(sourceFile, internalNames);
+	const retainedInternalNames = new Set<string>();
+	stripInternal(sourceFile, internalNames, retainedInternalNames);
 
-	return { text: sourceFile.getFullText(), internalNames };
+	return { text: sourceFile.getFullText(), internalNames, retainedInternalNames };
 }
 
 /**
@@ -379,14 +412,19 @@ function strip(text: string): { text: string; internalNames: Set<string> } {
  * matching members from its capability namespaces, then tree-shakes the now-dead declarations.
  * @param text The raw root bundle text.
  * @param internalByModule Internal member names collected per capability module.
+ * @param retainedByModule Retained-internal member names collected per capability module.
  * @returns The cleaned root bundle text.
  */
-function stripRoot(text: string, internalByModule: Map<string, Set<string>>): string {
+function stripRoot(
+	text: string,
+	internalByModule: Map<string, Set<string>>,
+	retainedByModule: Map<string, Set<string>>,
+): string {
 	const project = new Project({ useInMemoryFileSystem: true });
 	const sourceFile = project.createSourceFile('index.d.ts', text);
 
-	stripInternal(sourceFile, new Set<string>());
-	pruneNamespaceMembers(sourceFile, internalByModule);
+	stripInternal(sourceFile, new Set<string>(), new Set<string>());
+	pruneNamespaceMembers(sourceFile, internalByModule, retainedByModule);
 	pruneUnreferenced(sourceFile);
 
 	return sourceFile.getFullText();
@@ -484,19 +522,21 @@ async function generate() {
 	const entries = buildEntries();
 
 	const internalByModule = new Map<string, Set<string>>();
+	const retainedByModule = new Map<string, Set<string>>();
 	const outputs = new Map<string, string>();
 
 	for (const entry of entries) {
 		if (entry.name === '.') continue;
 
-		const { text, internalNames } = strip(bundle(entry.source));
+		const { text, internalNames, retainedInternalNames } = strip(bundle(entry.source));
 
 		internalByModule.set(entry.name, internalNames);
+		retainedByModule.set(entry.name, retainedInternalNames);
 		outputs.set(entry.out, text);
 	}
 
 	const root = entries.find((entry) => entry.name === '.')!;
-	outputs.set(root.out, stripRoot(bundle(root.source), internalByModule));
+	outputs.set(root.out, stripRoot(bundle(root.source), internalByModule, retainedByModule));
 
 	outputs.set(join(API_SRC, 'global.d.ts'), buildGlobal());
 

@@ -28,6 +28,7 @@ type EventMap = {
 
 const Events = new EventEmitter<EventMap>();
 
+/** @internal */
 export const settings = globalThis.UNBOUND_SETTINGS ?? {};
 
 export const on = Events.on.bind(Events);
