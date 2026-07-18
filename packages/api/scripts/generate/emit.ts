@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
-import { Project, Node } from 'ts-morph';
 import { join, relative } from 'node:path';
+import { Project, Node } from 'ts-morph';
 
 import {
 	API_SRC,
@@ -10,7 +10,7 @@ import {
 	relativeSpecifier,
 	type ModuleEntry,
 } from './paths';
-import { stripInternal, hoistLibraries, declaredNames } from './transform';
+import { stripInternal, declaredNames } from './transform';
 import { bundle } from './bundle';
 
 /**

@@ -1,8 +1,8 @@
-import { createRequire } from 'node:module';
 import { join, dirname, resolve, relative } from 'node:path';
+import { createRequire } from 'node:module';
+import Logger from '@unbound-app/logger';
 
 import { config } from '../../sdk.config.ts';
-import Logger from '@unbound-app/logger';
 
 export const logger = Logger.create('SDK');
 

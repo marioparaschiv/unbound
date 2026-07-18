@@ -1,6 +1,6 @@
 import { Project, Node, SyntaxKind } from 'ts-morph';
 
-import { API_SRC, UTILITIES_OUT, relativeSpecifier, type ModuleEntry } from './paths';
+import { relativeSpecifier, type ModuleEntry } from './paths';
 
 /**
  * @description Tests whether a JSDocable node carries an `@internal` tag in its leading documentation.
