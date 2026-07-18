@@ -19,6 +19,31 @@ import { buildOwnership } from './ownership';
 import { buildEntries } from './entries';
 import { strip } from './transform';
 
+function format(paths: string) {
+	execSync(`oxfmt --config .oxfmtrc.json ${paths}`, { cwd: ROOT, stdio: 'inherit' });
+}
+
+/**
+ * @description Applies oxlint's autofixes to the generated files (import/export ordering the emitters
+ * leave for the linter to own), then verifies the result lints clean. The fix pass exits non-zero when
+ * it reports the violations it just fixed, so it is run tolerantly; the follow-up check must pass, and
+ * throws otherwise, so any unfixable violation still fails generation.
+ * @param paths The space-joined, quoted file paths to lint.
+ */
+function lint(paths: string) {
+	try {
+		execSync(`oxlint --config .oxlintrc.json --fix-dangerously ${paths}`, {
+			cwd: ROOT,
+			stdio: 'inherit',
+		});
+	} catch {
+		// Non-zero here means oxlint reported the violations it just autofixed; the check below is the
+		// gate that fails generation on anything left unfixed.
+	}
+
+	execSync(`oxlint --config .oxlintrc.json ${paths}`, { cwd: ROOT, stdio: 'inherit' });
+}
+
 async function generate() {
 	const start = performance.now();
 
@@ -96,13 +121,12 @@ async function generate() {
 		writeFileSync(path, `${BANNER}\n\n${text.trimStart()}`);
 	}
 
-	execSync(
-		`oxfmt --config .oxfmtrc.json ${[...outputs.keys()].map((path) => `"${path}"`).join(' ')}`,
-		{
-			cwd: ROOT,
-			stdio: 'inherit',
-		},
-	);
+	const paths = [...outputs.keys()].map((path) => `"${path}"`).join(' ');
+
+	// Lint then format so import/export ordering and any autofixable violations land in the hashed
+	// output, matching how the rest of the repo is linted then formatted.
+	lint(paths);
+	format(paths);
 
 	const hash = createHash('sha256');
 	for (const path of [...outputs.keys()].sort()) {
@@ -114,10 +138,7 @@ async function generate() {
 
 	writeManifest(version, entries);
 
-	execSync(`oxfmt --config .oxfmtrc.json "${join(ROOT, 'packages', 'api', 'package.json')}"`, {
-		cwd: ROOT,
-		stdio: 'inherit',
-	});
+	format(`"${join(ROOT, 'packages', 'api', 'package.json')}"`);
 
 	const duration = (performance.now() - start).toFixed(2);
 
