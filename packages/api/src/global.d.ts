@@ -710,15 +710,15 @@ export { Navigation$1 as Navigation, Plugin$1 as Plugin };
 export {};
 
 export interface UnboundGlobal {
-	settings: typeof import('./settings.d.ts');
-	patcher: typeof import('./patcher.d.ts');
-	storage: typeof import('./storage.d.ts');
 	assets: typeof import('./assets.d.ts');
-	native: typeof import('./native.d.ts');
-	toasts: typeof import('./toasts.d.ts');
-	metro: typeof import('./metro/index.d.ts');
-	i18n: typeof import('./i18n.d.ts');
 	fs: typeof import('./fs.d.ts');
+	i18n: typeof import('./i18n.d.ts');
+	metro: typeof import('./metro/index.d.ts');
+	native: typeof import('./native.d.ts');
+	patcher: typeof import('./patcher.d.ts');
+	settings: typeof import('./settings.d.ts');
+	storage: typeof import('./storage.d.ts');
+	toasts: typeof import('./toasts.d.ts');
 }
 
 declare global {
