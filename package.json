@@ -7,6 +7,7 @@
 			"packages/debugger",
 			"packages/types",
 			"packages/api",
+			"packages/api/scripts/generate",
 			"packages/plugin-test",
 			"packages/utils",
 			"packages/logger",

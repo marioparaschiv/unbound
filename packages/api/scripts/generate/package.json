@@ -1,0 +1,19 @@
+{
+	"name": "@unbound-app/sdk-generator",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"module": "index.ts",
+	"scripts": {
+		"generate": "bun index.ts"
+	},
+	"dependencies": {
+		"@unbound-app/logger": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "catalog:",
+		"dts-bundle-generator": "^9.5.1",
+		"ts-morph": "^28.0.0",
+		"typescript": "catalog:"
+	}
+}
