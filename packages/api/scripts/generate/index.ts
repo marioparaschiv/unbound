@@ -3,9 +3,19 @@ import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 
-import { logger, API_SRC, UTILITIES_OUT, BANNER, ROOT, CLIENT, type ModuleEntry } from './paths';
+import {
+	logger,
+	API_SRC,
+	INTERNAL_OUT,
+	BANNER,
+	ROOT,
+	CLIENT,
+	relativeSpecifier,
+	type ModuleEntry,
+} from './paths';
 import { buildRoot, buildGlobal, writeManifest, normalizeForHash } from './emit';
 import { buildHoistFiles, bundle } from './bundle';
+import { buildOwnership } from './ownership';
 import { buildEntries } from './entries';
 import { strip } from './transform';
 
@@ -18,6 +28,8 @@ async function generate() {
 	mkdirSync(API_SRC, { recursive: true });
 
 	const entries = buildEntries();
+
+	const ownedByModule = buildOwnership(entries);
 
 	const { files: hoistFiles, ownerByName } = buildHoistFiles();
 
@@ -38,22 +50,46 @@ async function generate() {
 
 		outputs.set(
 			entry.out,
-			strip(bundle(entry.source), entry.out, children, ownerByName, usedOwners),
+			strip(
+				bundle(entry.source),
+				entry.out,
+				children,
+				ownerByName,
+				usedOwners,
+				ownedByModule.get(entry.out) ?? new Set<string>(),
+			),
 		);
 	}
 
 	const root = entries.find((entry) => entry.name === '.')!;
 	outputs.set(root.out, buildRoot(entries));
 
-	// The utilities file is always emitted (`global.d.ts` re-exports it); any other hoist file is kept
-	// only when a module actually imports from it, so unreferenced ones (e.g. `logger`) are dropped.
-	const utilities = hoistFiles.find((file) => file.out === UTILITIES_OUT)!;
-	for (const file of hoistFiles) {
-		if (file.out === UTILITIES_OUT || usedOwners.has(file.out))
-			outputs.set(file.out, file.text);
+	// The `_internal` file is always emitted (`global.d.ts` re-exports it); any other hoist file
+	// (including `utils.d.ts`) is kept only when a module actually imports from it, so unreferenced
+	// ones are dropped. A hoist file that another emitted hoist file imports from is pulled in too, so
+	// `_internal.d.ts`'s import of the utils names always brings `utils.d.ts` along.
+	const emitted = new Set<string>([INTERNAL_OUT, ...usedOwners]);
+	for (let added = true; added; ) {
+		added = false;
+		for (const file of hoistFiles) {
+			if (!emitted.has(file.out)) continue;
+
+			for (const other of hoistFiles) {
+				if (emitted.has(other.out)) continue;
+				if (!file.text.includes(`'${relativeSpecifier(file.out, other.out)}'`)) continue;
+
+				emitted.add(other.out);
+				added = true;
+			}
+		}
 	}
 
-	outputs.set(join(API_SRC, 'global.d.ts'), buildGlobal(entries, utilities.names));
+	const internal = hoistFiles.find((file) => file.out === INTERNAL_OUT)!;
+	for (const file of hoistFiles) {
+		if (emitted.has(file.out)) outputs.set(file.out, file.text);
+	}
+
+	outputs.set(join(API_SRC, 'global.d.ts'), buildGlobal(entries, internal.names));
 
 	for (const [path, text] of outputs) {
 		mkdirSync(dirname(path), { recursive: true });

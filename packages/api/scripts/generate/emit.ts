@@ -4,7 +4,7 @@ import { Project, Node } from 'ts-morph';
 
 import {
 	API_SRC,
-	UTILITIES_OUT,
+	INTERNAL_OUT,
 	TYPES_INDEX,
 	ROOT,
 	relativeSpecifier,
@@ -50,11 +50,11 @@ export function buildRoot(entries: ModuleEntry[]): string {
 /**
  * @description Emits the SDK's `global.d.ts`: the addon-facing ambient globals (`$$DEV$$`,
  * `UnboundNative`, `React`, …) from the `@unbound-app/types` `declare global` block, a re-export of the
- * shared types (so `@unbound-app/api/global` stays their public home even though `utilities.d.ts` is
+ * shared types (so `@unbound-app/api/global` stays their public home even though `_internal.d.ts` is
  * unlisted), and the `UnboundGlobal` interface that types `window.unbound` and the ambient `unbound`
- * const. Shared types are never re-declared here - they are imported from `utilities.d.ts`.
+ * const. Shared types are never re-declared here - they are imported from `_internal.d.ts`.
  * @param entries The emitted module entries; only top-level capability modules appear on `unbound.*`.
- * @param utilitiesNames The names the utilities hoist file declares, re-exported for public access.
+ * @param utilitiesNames The names the `_internal.d.ts` hoist file declares, re-exported for public access.
  * @returns The `global.d.ts` file text (unformatted, no banner).
  */
 export function buildGlobal(entries: ModuleEntry[], utilitiesNames: Set<string>): string {
@@ -64,7 +64,7 @@ export function buildGlobal(entries: ModuleEntry[], utilitiesNames: Set<string>)
 
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 
-	// Keep only the ambient `declare global` block; the named type surface lives in `utilities.d.ts`.
+	// Keep only the ambient `declare global` block; the named type surface lives in `_internal.d.ts`.
 	for (const statement of sourceFile.getStatements()) {
 		if (Node.isModuleDeclaration(statement) && statement.hasDeclareKeyword()) continue;
 		if (declaredNames(statement).length > 0 || Node.isExportDeclaration(statement)) {
@@ -74,7 +74,7 @@ export function buildGlobal(entries: ModuleEntry[], utilitiesNames: Set<string>)
 
 	const ambient = sourceFile.getFullText().trim();
 
-	const specifier = relativeSpecifier(outPath, UTILITIES_OUT);
+	const specifier = relativeSpecifier(outPath, INTERNAL_OUT);
 	const reexport = `export type { ${[...utilitiesNames].sort().join(', ')} } from '${specifier}';`;
 
 	const members = entries
