@@ -7,12 +7,15 @@ import {
 	SDK_TSCONFIG,
 	INLINED_LIBRARIES,
 	TYPES_INDEX,
-	UTILITIES_OUT,
+	UTILS_INDEX,
+	UTILS_OUT,
+	INTERNAL_OUT,
 	API_SRC,
+	relativeSpecifier,
 	clientRequire,
 	logger,
 } from './paths';
-import { stripInternal, declaredNames } from './transform';
+import { stripInternal, declaredNames, collectReferencedNames } from './transform';
 
 export type HoistFile = {
 	/** The absolute output path of the generated hoist file. */
@@ -58,9 +61,19 @@ export function bundle(source: string, inlineDeclareGlobals: boolean = false): s
  * module was pulled in from this library, so it is removed from the module and imported from the
  * library's hoist file instead - the type never lands on a consuming module's own surface.
  * @param library The library specifier to bundle (an inlined library, or the `@unbound-app/types` index path).
+ * @param out The absolute output path of this hoist file, used to resolve relative import specifiers.
+ * @param ownerByName Names already owned by an earlier hoist file. Declarations for these names are
+ * pruned so each shared type is declared in exactly one file (e.g. the utils names claimed by
+ * `utils.d.ts` are removed from the `@unbound-app/types` index bundle that would otherwise re-declare
+ * them in `_internal.d.ts`); any pruned name still referenced by a surviving declaration is imported
+ * from its owning hoist file so the reference resolves.
  * @returns The bundle text and the set of names it declares, or `undefined` if it has no typings.
  */
-export function bundleLibrary(library: string): LibraryBundle | undefined {
+export function bundleLibrary(
+	library: string,
+	out: string,
+	ownerByName: Map<string, string> = new Map<string, string>(),
+): LibraryBundle | undefined {
 	let entry: string;
 	if (library.endsWith('.d.ts')) {
 		entry = library;
@@ -83,14 +96,46 @@ export function bundleLibrary(library: string): LibraryBundle | undefined {
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 
 	// The `declare global` block (ambient `$$DEV$$`, `UnboundNative`, `React`, …) belongs to
-	// `global.d.ts`, not to a hoist file whose job is the library's named type surface.
+	// `global.d.ts`, not to a hoist file whose job is the library's named type surface. Declarations
+	// already claimed by an earlier hoist file are pruned so no shared type is declared twice.
 	for (const statement of sourceFile.getStatements()) {
-		if (Node.isModuleDeclaration(statement) && statement.hasDeclareKeyword())
+		if (Node.isModuleDeclaration(statement) && statement.hasDeclareKeyword()) {
+			statement.remove();
+			continue;
+		}
+
+		const declared = declaredNames(statement);
+		if (declared.length > 0 && declared.every((name) => ownerByName.has(name)))
 			statement.remove();
 	}
 
+	const survivors = sourceFile.getStatements();
+
+	// A pruned name still referenced by a surviving declaration must be imported from its owning hoist
+	// file so the reference resolves (e.g. `_internal.d.ts` referencing `Fn`, now owned by `utils.d.ts`).
+	const referenced = collectReferencedNames(survivors);
+	const importsByOwner = new Map<string, Set<string>>();
+
+	for (const name of referenced) {
+		const owner = ownerByName.get(name);
+		if (owner === void 0 || owner === out) continue;
+
+		const bucket = importsByOwner.get(owner) ?? new Set<string>();
+		bucket.add(name);
+		importsByOwner.set(owner, bucket);
+	}
+
+	const imports = [...importsByOwner.entries()]
+		.map(([owner, importedNames]) => {
+			const specifier = relativeSpecifier(out, owner);
+			return `import type { ${[...importedNames].sort().join(', ')} } from '${specifier}';`;
+		})
+		.sort();
+
+	if (imports.length > 0) sourceFile.insertStatements(0, imports.join('\n'));
+
 	const names = new Set<string>();
-	for (const statement of sourceFile.getStatements()) {
+	for (const statement of survivors) {
 		for (const name of declaredNames(statement)) names.add(name);
 	}
 
@@ -109,10 +154,12 @@ export function buildHoistFiles(): HoistFiles {
 	const files: HoistFile[] = [];
 	const ownerByName = new Map<string, string>();
 
-	// `@unbound-app/types` is hoisted under the fixed `utilities.d.ts` home (it also feeds `global.d.ts`),
-	// so it is excluded from the per-library pass to avoid emitting a duplicate `types.d.ts`.
+	// The utils typings are hoisted first so their names (`Fn`, `Widen`, …) claim the public `utils.d.ts`
+	// home before the full `@unbound-app/types` index bundle claims the remaining names for `_internal.d.ts`
+	// (both feed `global.d.ts`), so each shared type has exactly one home and neither duplicates a `types.d.ts`.
 	const sources: { library: string; out: string }[] = [
-		{ library: TYPES_INDEX, out: UTILITIES_OUT },
+		{ library: UTILS_INDEX, out: UTILS_OUT },
+		{ library: TYPES_INDEX, out: INTERNAL_OUT },
 		...INLINED_LIBRARIES.filter((library) => library !== '@unbound-app/types').map(
 			(library) => ({
 				library,
@@ -130,7 +177,7 @@ export function buildHoistFiles(): HoistFiles {
 	for (const { library, out } of sources) {
 		if (files.some((file) => file.out === out)) continue;
 
-		const bundled = bundleLibrary(library);
+		const bundled = bundleLibrary(library, out, ownerByName);
 		if (!bundled) continue;
 
 		files.push({ out, text: bundled.text, names: bundled.names });
