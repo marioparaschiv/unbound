@@ -1,10 +1,10 @@
 /// <reference types="@unbound-app/api/global" />
 
-import type { DesignModule } from '@unbound-app/api/global';
 import { getNativeModule, reload, BundleInfo } from '@unbound-app/api/native';
 import { findByName, findByProps, findStore } from '@unbound-app/api/metro';
 import { byProps, byName } from '@unbound-app/api/metro/filters';
 import { getStore, get, set } from '@unbound-app/api/storage';
+import type { DesignModule } from '@unbound-app/api/global';
 import { showToast } from '@unbound-app/api/toasts';
 
 const SomeComponent = findByName('SomeComponent');
