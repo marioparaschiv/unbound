@@ -1,4 +1,4 @@
-import { Project, Node, SyntaxKind } from 'ts-morph';
+import { Project, Node, SyntaxKind, type Statement } from 'ts-morph';
 
 import { relativeSpecifier, type ModuleEntry } from './paths';
 
@@ -36,8 +36,8 @@ export function stripInternal(
 ) {
 	if (!Node.isStatemented(container)) return;
 
-	const candidates = new Map<Node, string[]>();
-	const survivors: Node[] = [];
+	const candidates = new Map<Statement, string[]>();
+	const survivors: Statement[] = [];
 
 	for (const statement of container.getStatements()) {
 		if (isInternal(statement)) {
@@ -266,8 +266,8 @@ export function hoistLibraries(
 ) {
 	if (!Node.isStatemented(sourceFile)) return;
 
-	const hoisted: Node[] = [];
-	const survivors: Node[] = [];
+	const hoisted: Statement[] = [];
+	const survivors: Statement[] = [];
 
 	for (const statement of sourceFile.getStatements()) {
 		const names = declaredNames(statement);
