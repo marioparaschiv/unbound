@@ -69,7 +69,6 @@ export type {
 	TransitionState,
 	UnboundAsset,
 } from './_internal';
-
 import { ComponentType, ReactNode } from 'react';
 import {
 	ImageSourcePropType,

@@ -1,6 +1,6 @@
+import { Project, Node, ModuleDeclarationKind, VariableDeclarationKind } from 'ts-morph';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { Project, Node } from 'ts-morph';
 
 import {
 	API_SRC,
@@ -72,34 +72,43 @@ export function buildGlobal(entries: ModuleEntry[], utilitiesNames: Set<string>)
 		}
 	}
 
-	const ambient = sourceFile.getFullText().trim();
+	const reexport = sourceFile.addExportDeclaration({
+		isTypeOnly: true,
+		namedExports: [...utilitiesNames].sort().map((name) => ({ name })),
+		moduleSpecifier: relativeSpecifier(outPath, INTERNAL_OUT),
+	});
 
-	const specifier = relativeSpecifier(outPath, INTERNAL_OUT);
-	const reexport = `export type { ${[...utilitiesNames].sort().join(', ')} } from '${specifier}';`;
+	// Sort ahead of the ambient block kept from the bundle.
+	reexport.setOrder(0);
 
-	const members = entries
-		.filter((entry) => entry.topLevel)
-		.map((entry) => {
-			const path = './' + relative(API_SRC, entry.out).split('\\').join('/');
-			return `\t${entry.name}: typeof import('${path}');`;
-		})
-		.join('\n');
+	sourceFile.addInterface({
+		isExported: true,
+		name: 'UnboundGlobal',
+		properties: entries
+			.filter((entry) => entry.topLevel)
+			.map((entry) => {
+				const path = './' + relative(API_SRC, entry.out).split('\\').join('/');
+				return { name: entry.name, type: `typeof import('${path}')` };
+			}),
+	});
 
-	const registry = [
-		'export interface UnboundGlobal {',
-		members,
-		'}',
-		'',
-		'declare global {',
-		'\tinterface Window {',
-		'\t\tunbound: UnboundGlobal;',
-		'\t}',
-		'',
-		"\tconst unbound: Window['unbound'];",
-		'}',
-	].join('\n');
+	const global = sourceFile.addModule({
+		hasDeclareKeyword: true,
+		declarationKind: ModuleDeclarationKind.Global,
+		name: 'global',
+	});
 
-	return `${reexport}\n\n${ambient}\n\n${registry}\n`;
+	global.addInterface({
+		name: 'Window',
+		properties: [{ name: 'unbound', type: 'UnboundGlobal' }],
+	});
+
+	global.addVariableStatement({
+		declarationKind: VariableDeclarationKind.Const,
+		declarations: [{ name: 'unbound', type: "Window['unbound']" }],
+	});
+
+	return `${sourceFile.getFullText().trim()}\n`;
 }
 
 /**
