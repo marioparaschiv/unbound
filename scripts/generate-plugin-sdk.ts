@@ -372,6 +372,22 @@ function collectReferencedNames(statements: Node[]): Set<string> {
 }
 
 /**
+ * @description Reports whether an identifier is the declared name of its parent (a parameter,
+ * a property/method signature, a property/variable name, ...) rather than a reference to a
+ * declaration. ts-morph exposes the declared name via `getNameNode`, so an identifier that is
+ * exactly its parent's name node is a declaration name. A computed `[X]` property name is a real
+ * reference to `X`, so it is excluded.
+ * @param reference The identifier to classify.
+ */
+function isDeclarationName(reference: Node): boolean {
+	const parent = reference.getParent() as { getNameNode?: () => Node | undefined };
+	if (typeof parent.getNameNode !== 'function') return false;
+	if (parent.getNameNode() !== reference) return false;
+
+	return !Node.isComputedPropertyName(reference.getParent());
+}
+
+/**
  * @description Reports whether an identifier is a genuine reference to a declaration rather than a
  * binding or specifier name. An aliased export specifier (`X as Y`) references only `X`; an import
  * specifier's names are re-bindings, not references; a declaration's own name node is not a
@@ -417,182 +433,48 @@ function declaredNames(statement: Node): string[] {
 }
 
 /**
- * @description Removes named specifiers from `declare namespace X { export { ... } }` re-export lists
- * whose exported name matches an `@internal` binding stripped from that module's own bundle. The
- * root bundle re-exports each capability as a namespace, where the inlined member's `@internal`
- * JSDoc is lost, so the tag can no longer be honoured directly. A retained-internal symbol - kept as
- * an ambient backing declaration for structural type resolution (e.g. `CACHE_KEY` backing the public
- * `MetroFilter`) - is likewise pruned from the list: it survives the bundle to resolve a type, not to
- * be re-exported on the namespace.
- * @param sourceFile The parsed root bundle.
- * @param internalByModule A map of capability module name to the set of `@internal` member names
- * collected while stripping that module's own bundle.
- * @param retainedByModule A map of capability module name to the set of `@internal` member names that
- * were retained as backing declarations while stripping that module's own bundle.
- */
-function pruneNamespaceMembers(
-	sourceFile: Node,
-	internalByModule: Map<string, Set<string>>,
-	retainedByModule: Map<string, Set<string>>,
-) {
-	if (!Node.isStatemented(sourceFile)) return;
-
-	const internalEverywhere = new Set<string>();
-	for (const names of internalByModule.values()) {
-		for (const name of names) internalEverywhere.add(name);
-	}
-	for (const names of retainedByModule.values()) {
-		for (const name of names) internalEverywhere.add(name);
-	}
-
-	for (const statement of sourceFile.getStatements()) {
-		if (!Node.isModuleDeclaration(statement)) continue;
-
-		const name = statement.getName();
-		const scoped = internalByModule.get(name);
-		const retained = retainedByModule.get(name);
-
-		const forbidden =
-			scoped || retained
-				? new Set([...(scoped ?? []), ...(retained ?? [])])
-				: internalEverywhere;
-
-		const body = statement.getBody();
-		if (!body || !Node.isStatemented(body)) continue;
-
-		for (const inner of body.getStatements()) {
-			if (!Node.isExportDeclaration(inner)) continue;
-
-			for (const specifier of inner.getNamedExports()) {
-				const exported = specifier.getAliasNode()?.getText() ?? specifier.getName();
-				if (forbidden.has(exported)) specifier.remove();
-			}
-		}
-	}
-}
-
-/**
- * @description Reports whether an identifier is the declared name of its parent (a parameter,
- * a property/method signature, a property/variable name, ...) rather than a reference to a
- * declaration. ts-morph exposes the declared name via `getNameNode`, so an identifier that is
- * exactly its parent's name node is a declaration name. A computed `[X]` property name is a real
- * reference to `X`, so it is excluded.
- * @param reference The identifier to classify.
- */
-function isDeclarationName(reference: Node): boolean {
-	const parent = reference.getParent() as { getNameNode?: () => Node | undefined };
-	if (typeof parent.getNameNode !== 'function') return false;
-	if (parent.getNameNode() !== reference) return false;
-
-	return !Node.isComputedPropertyName(reference.getParent());
-}
-
-/**
- * @description Tree-shakes the root bundle against its real public surface. The api barrel exports
- * only its capability namespaces, so the true roots are the final `export { ... }` block and the
- * `declare namespace` re-exports. Every top-level declaration dts-bundle-generator hoisted (whether
- * or not it wears an `export` modifier) is kept only when reachable from those roots; the rest -
- * notably the manager types orphaned once the `@internal` manager consts are stripped - are removed.
- * @param sourceFile The parsed root bundle to tree-shake.
- */
-function pruneUnreferenced(sourceFile: Node) {
-	if (!Node.isStatemented(sourceFile)) return;
-
-	const byName = new Map<string, Node[]>();
-
-	for (const statement of sourceFile.getStatements()) {
-		for (const name of declaredNames(statement)) {
-			const bucket = byName.get(name) ?? [];
-			bucket.push(statement);
-			byName.set(name, bucket);
-		}
-	}
-
-	const roots: Node[] = [];
-	for (const statement of sourceFile.getStatements()) {
-		if (Node.isExportDeclaration(statement) || Node.isModuleDeclaration(statement)) {
-			roots.push(statement);
-		}
-	}
-
-	const reachable = new Set<Node>();
-	const queue = [...roots];
-
-	while (queue.length) {
-		const statement = queue.pop()!;
-		if (reachable.has(statement)) continue;
-		reachable.add(statement);
-
-		const isRoot = roots.includes(statement);
-
-		for (const reference of statement.getDescendantsOfKind(SyntaxKind.Identifier)) {
-			const parent = reference.getParent();
-
-			// A namespace/export re-export lists its members by their local name; those specifier
-			// identifiers are real references. But an aliased specifier (`X as Y`) references only
-			// `X`, never `Y` - skip the alias so an aliased public name can't resurrect an internal
-			// declaration that merely shares it.
-			if (Node.isExportSpecifier(parent)) {
-				if (parent.getAliasNode() === reference) continue;
-			} else if (Node.isImportSpecifier(parent)) {
-				continue;
-			} else if (isRoot && Node.isModuleDeclaration(statement)) {
-				// The namespace's own name and its `declare namespace` keyword aren't references.
-				if (parent === statement) continue;
-			} else if (isDeclarationName(reference)) {
-				// The identifier that names a declaration (a parameter, a property/method signature, or a
-				// property/variable name) is the declared name, not a reference to one, so it must not mark
-				// a same-named top-level declaration reachable. Computed `[X]` names stay references.
-				continue;
-			}
-
-			const targets = byName.get(reference.getText());
-			if (!targets) continue;
-
-			for (const target of targets) {
-				if (target === statement) continue;
-				if (!reachable.has(target)) queue.push(target);
-			}
-		}
-	}
-
-	for (const statement of sourceFile.getStatements()) {
-		if (declaredNames(statement).length === 0) continue;
-		if (reachable.has(statement)) continue;
-
-		statement.remove();
-	}
-}
-
-type StripResult = {
-	text: string;
-	internalNames: Set<string>;
-	retainedInternalNames: Set<string>;
-};
-
-/**
- * @description Parses a bundle, strips its `@internal` declarations, hoists inlined library
- * declarations into per-library imports, and returns the cleaned text alongside the collected names.
+ * @description Parses a per-module bundle, strips its `@internal` declarations, hoists inlined library
+ * declarations into per-library imports, and returns the cleaned text.
  * @param text The raw bundle text.
  * @param outPath The module's absolute output path, used to resolve relative hoist-file specifiers.
  * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file.
- * @returns The stripped text, the collected internal names, and the retained-internal names.
+ * @param usedOwners Collects the hoist-file paths actually imported from, so orphan files aren't emitted.
+ * @returns The stripped, hoisted module text.
  */
 function strip(
 	text: string,
 	outPath: string,
 	ownerByName: Map<string, string>,
 	usedOwners: Set<string>,
-): StripResult {
+): string {
 	const project = new Project({ useInMemoryFileSystem: true });
 	const sourceFile = project.createSourceFile('bundle.d.ts', text);
 
-	const internalNames = new Set<string>();
-	const retainedInternalNames = new Set<string>();
-	stripInternal(sourceFile, internalNames, retainedInternalNames);
+	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 	hoistLibraries(sourceFile, outPath, ownerByName, usedOwners);
 
-	return { text: sourceFile.getFullText(), internalNames, retainedInternalNames };
+	return sourceFile.getFullText();
+}
+
+/**
+ * @description Builds the root `index.d.ts` as pure re-exports of the top-level capability modules
+ * (`export * as <name> from './<name>'`), so the barrel references the already-emitted, already-stripped
+ * per-module files instead of re-flattening every declaration. Managers and other `@internal` barrel
+ * members are absent because they never appear as `export * as` (they use `export { … }`), so the
+ * top-level entry list never includes them.
+ * @param entries The emitted module entries; only top-level capability modules are re-exported.
+ * @returns The root `index.d.ts` text (unformatted, no banner).
+ */
+function buildRoot(entries: ModuleEntry[]): string {
+	const lines = entries
+		.filter((entry) => entry.topLevel)
+		.map((entry) => {
+			const specifier = relativeSpecifier(join(API_SRC, 'index.d.ts'), entry.out);
+			return `export * as ${entry.name} from '${specifier}';`;
+		})
+		.sort();
+
+	return `${lines.join('\n')}\n`;
 }
 
 /**
@@ -677,37 +559,6 @@ function hoistLibraries(
 		.sort();
 
 	if (lines.length > 0) sourceFile.insertStatements(0, lines.join('\n'));
-}
-
-/**
- * @description Strips the root bundle: removes `@internal` top-level declarations, prunes the
- * matching members from its capability namespaces, tree-shakes the now-dead declarations, then hoists
- * inlined library declarations into per-library imports.
- * @param text The raw root bundle text.
- * @param outPath The root bundle's absolute output path, used to resolve relative hoist-file specifiers.
- * @param internalByModule Internal member names collected per capability module.
- * @param retainedByModule Retained-internal member names collected per capability module.
- * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file.
- * @param usedOwners Collects the hoist-file paths actually imported from, so orphan files aren't emitted.
- * @returns The cleaned root bundle text.
- */
-function stripRoot(
-	text: string,
-	outPath: string,
-	internalByModule: Map<string, Set<string>>,
-	retainedByModule: Map<string, Set<string>>,
-	ownerByName: Map<string, string>,
-	usedOwners: Set<string>,
-): string {
-	const project = new Project({ useInMemoryFileSystem: true });
-	const sourceFile = project.createSourceFile('index.d.ts', text);
-
-	stripInternal(sourceFile, new Set<string>(), new Set<string>());
-	pruneNamespaceMembers(sourceFile, internalByModule, retainedByModule);
-	pruneUnreferenced(sourceFile);
-	hoistLibraries(sourceFile, outPath, ownerByName, usedOwners);
-
-	return sourceFile.getFullText();
 }
 
 /**
@@ -821,38 +672,17 @@ async function generate() {
 
 	const { files: hoistFiles, ownerByName } = buildHoistFiles();
 
-	const internalByModule = new Map<string, Set<string>>();
-	const retainedByModule = new Map<string, Set<string>>();
 	const usedOwners = new Set<string>();
 	const outputs = new Map<string, string>();
 
 	for (const entry of entries) {
 		if (entry.name === '.') continue;
 
-		const { text, internalNames, retainedInternalNames } = strip(
-			bundle(entry.source),
-			entry.out,
-			ownerByName,
-			usedOwners,
-		);
-
-		internalByModule.set(entry.name, internalNames);
-		retainedByModule.set(entry.name, retainedInternalNames);
-		outputs.set(entry.out, text);
+		outputs.set(entry.out, strip(bundle(entry.source), entry.out, ownerByName, usedOwners));
 	}
 
 	const root = entries.find((entry) => entry.name === '.')!;
-	outputs.set(
-		root.out,
-		stripRoot(
-			bundle(root.source),
-			root.out,
-			internalByModule,
-			retainedByModule,
-			ownerByName,
-			usedOwners,
-		),
-	);
+	outputs.set(root.out, buildRoot(entries));
 
 	// The utilities file is always emitted (`global.d.ts` re-exports it); any other hoist file is kept
 	// only when a module actually imports from it, so unreferenced ones (e.g. `logger`) are dropped.
