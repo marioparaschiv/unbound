@@ -50,5 +50,3 @@ export declare function write(
 export type DCDFileManagerEncoding = 'utf-8' | 'utf8' | 'base64';
 
 export { _default as default };
-
-export {};

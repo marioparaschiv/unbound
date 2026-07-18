@@ -173,5 +173,3 @@ export type DefaultEventMap = {
 	__proto__?: never;
 };
 export type Listener = (...args: any[]) => Promise<any> | void;
-
-export {};

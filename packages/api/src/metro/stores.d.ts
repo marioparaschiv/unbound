@@ -2,5 +2,3 @@
 
 export declare const Guilds: any;
 export declare const Users: any;
-
-export {};

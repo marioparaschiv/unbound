@@ -53,5 +53,3 @@ export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) &
 	isRaw?: boolean;
 };
 export { _default as default };
-
-export {};

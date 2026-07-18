@@ -33,5 +33,3 @@ export type Widen<T> = T extends number
 		: T extends boolean
 			? boolean
 			: T;
-
-export {};

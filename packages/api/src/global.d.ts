@@ -69,7 +69,6 @@ export type {
 	TransitionState,
 	UnboundAsset,
 } from './_internal';
-import { ComponentType, ReactNode } from 'react';
 import {
 	ImageSourcePropType,
 	ImageStyle,
@@ -79,6 +78,7 @@ import {
 	ViewProps,
 	ViewStyle,
 } from 'react-native';
+import { ComponentType, ReactNode } from 'react';
 
 declare global {
 	/** The raw `UnboundNative` JSI bridge the tweak installs directly on the JS global. */
