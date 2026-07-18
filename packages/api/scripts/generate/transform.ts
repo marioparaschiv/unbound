@@ -254,12 +254,15 @@ export function collapseNamespaces(
  * @param outPath The module's absolute output path, used to resolve relative hoist-file specifiers.
  * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file.
  * @param usedOwners Collects the hoist-file paths actually imported from, so orphan files aren't emitted.
+ * @param owned The names this module owns: emitted as `export type { … }` from their owner (so they
+ * surface on the module's public entry point) instead of the bare `import type { … }` used otherwise.
  */
 export function hoistLibraries(
 	sourceFile: Node,
 	outPath: string,
 	ownerByName: Map<string, string>,
 	usedOwners: Set<string>,
+	owned: Set<string>,
 ) {
 	if (!Node.isStatemented(sourceFile)) return;
 
@@ -285,27 +288,35 @@ export function hoistLibraries(
 
 	const referenced = collectReferencedNames(survivors);
 	const importsByOwner = new Map<string, Set<string>>();
+	const exportsByOwner = new Map<string, Set<string>>();
 
 	for (const statement of hoisted) {
 		for (const name of declaredNames(statement)) {
-			if (!referenced.has(name)) continue;
+			// An owned type is re-exported from this module even when no surviving declaration uses it,
+			// so the public surface is stable; a non-owned type is only imported where genuinely referenced.
+			const bucket = owned.has(name) ? exportsByOwner : importsByOwner;
+			if (bucket === importsByOwner && !referenced.has(name)) continue;
 
 			const owner = ownerByName.get(name)!;
-			const bucket = importsByOwner.get(owner) ?? new Set<string>();
-			bucket.add(name);
-			importsByOwner.set(owner, bucket);
+			const set = bucket.get(owner) ?? new Set<string>();
+			set.add(name);
+			bucket.set(owner, set);
 			usedOwners.add(owner);
 		}
 
 		statement.remove();
 	}
 
-	const lines = [...importsByOwner.entries()]
-		.map(([owner, names]) => {
+	const lines = [
+		...[...importsByOwner.entries()].map(([owner, names]) => {
 			const specifier = relativeSpecifier(outPath, owner);
 			return `import type { ${[...names].sort().join(', ')} } from '${specifier}';`;
-		})
-		.sort();
+		}),
+		...[...exportsByOwner.entries()].map(([owner, names]) => {
+			const specifier = relativeSpecifier(outPath, owner);
+			return `export type { ${[...names].sort().join(', ')} } from '${specifier}';`;
+		}),
+	].sort();
 
 	if (lines.length > 0) sourceFile.insertStatements(0, lines.join('\n'));
 }
@@ -327,13 +338,14 @@ export function strip(
 	children: Map<string, ModuleEntry>,
 	ownerByName: Map<string, string>,
 	usedOwners: Set<string>,
+	owned: Set<string>,
 ): string {
 	const project = new Project({ useInMemoryFileSystem: true });
 	const sourceFile = project.createSourceFile('bundle.d.ts', text);
 
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 	collapseNamespaces(sourceFile, outPath, children);
-	hoistLibraries(sourceFile, outPath, ownerByName, usedOwners);
+	hoistLibraries(sourceFile, outPath, ownerByName, usedOwners, owned);
 
 	return sourceFile.getFullText();
 }
