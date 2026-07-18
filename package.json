@@ -30,7 +30,7 @@
 	},
 	"scripts": {
 		"prepare": "lefthook install --reset-hooks-path",
-		"generate-sdk": "bun scripts/generate-plugin-sdk.ts",
+		"generate-sdk": "bun packages/api/scripts/generate/index.ts",
 		"lint": "oxlint --config .oxlintrc.json apps packages",
 		"lint:fix": "oxlint --config .oxlintrc.json --fix-dangerously apps packages",
 		"fmt": "oxfmt --config .oxfmtrc.json apps packages",
