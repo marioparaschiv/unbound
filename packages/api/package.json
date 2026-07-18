@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/api",
-	"version": "1.0.0-8212740a9389c615482eae77719353079985c68d51fba16ccefc15eaa2a529ab",
+	"version": "1.0.0-34d50e9f0f5f3eabc1d6ab7558cc7df1707883f6189b4eaaff2f40982924646d",
 	"author": {
 		"name": "Mario P.",
 		"email": "contact@marioparaschiv.com",
@@ -19,6 +19,7 @@
 		"./metro": "./src/metro/index.d.ts",
 		"./metro/api": "./src/metro/api.d.ts",
 		"./metro/common": "./src/metro/common.d.ts",
+		"./metro/components": "./src/metro/components.d.ts",
 		"./metro/filters": "./src/metro/filters.d.ts",
 		"./metro/stores": "./src/metro/stores.d.ts",
 		"./native": "./src/native.d.ts",
