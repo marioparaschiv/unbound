@@ -433,17 +433,97 @@ function declaredNames(statement: Node): string[] {
 }
 
 /**
- * @description Parses a per-module bundle, strips its `@internal` declarations, hoists inlined library
- * declarations into per-library imports, and returns the cleaned text.
+ * @description Collapses the flattened `declare namespace X { export { ... } }` blocks that
+ * `dts-bundle-generator` emits for a folder module's nested `export * as X` re-exports back into
+ * `export * as X from './X'` re-exports of the already-emitted child files. The block's backing
+ * declarations - top-level `declare`s that exist only to feed the namespace - are removed once no
+ * surviving statement references them. This is the per-folder analogue of the re-export root: metro's
+ * `common`/`stores`/`api`/`filters` become imports of their own files instead of inlined copies.
+ * @param sourceFile The parsed module bundle to rewrite.
+ * @param outPath The module's absolute output path (a folder module's `index.d.ts`).
+ * @param children The nested subpath entries whose parent is this module, keyed for namespace lookup.
+ */
+function collapseNamespaces(sourceFile: Node, outPath: string, children: Map<string, ModuleEntry>) {
+	if (!Node.isStatemented(sourceFile)) return;
+
+	const collapsed = new Set<string>();
+	const backingNames = new Set<string>();
+
+	for (const statement of sourceFile.getStatements()) {
+		if (!Node.isModuleDeclaration(statement)) continue;
+
+		const child = children.get(statement.getName());
+		if (!child) continue;
+
+		const body = statement.getBody();
+		if (body && Node.isStatemented(body)) {
+			for (const inner of body.getStatements()) {
+				if (!Node.isExportDeclaration(inner)) continue;
+
+				for (const specifier of inner.getNamedExports()) {
+					backingNames.add(specifier.getName());
+				}
+			}
+		}
+
+		collapsed.add(statement.getName());
+		statement.remove();
+	}
+
+	if (collapsed.size === 0) return;
+
+	// Drop the aggregate `export { api, common, ... }` specifiers for the collapsed namespaces, and any
+	// now-orphaned backing declaration no surviving statement still references.
+	const survivors = sourceFile
+		.getStatements()
+		.filter((statement) => !Node.isExportDeclaration(statement));
+
+	const referenced = collectReferencedNames(survivors);
+
+	for (const statement of sourceFile.getStatements()) {
+		if (Node.isExportDeclaration(statement) && !statement.getModuleSpecifier()) {
+			for (const specifier of statement.getNamedExports()) {
+				if (collapsed.has(specifier.getName())) specifier.remove();
+			}
+
+			if (statement.getNamedExports().length === 0) statement.remove();
+
+			continue;
+		}
+
+		const names = declaredNames(statement);
+		if (names.length === 0) continue;
+		if (names.some((name) => !backingNames.has(name) || referenced.has(name))) continue;
+
+		statement.remove();
+	}
+
+	const lines = [...collapsed]
+		.sort()
+		.map((name) => {
+			const specifier = relativeSpecifier(outPath, children.get(name)!.out);
+			return `export * as ${name} from '${specifier}';`;
+		})
+		.join('\n');
+
+	sourceFile.insertStatements(sourceFile.getStatements().length, lines);
+}
+
+/**
+ * @description Parses a per-module bundle, strips its `@internal` declarations, collapses nested
+ * namespace re-exports into imports of their child files, hoists inlined library declarations into
+ * per-library imports, and returns the cleaned text.
  * @param text The raw bundle text.
- * @param outPath The module's absolute output path, used to resolve relative hoist-file specifiers.
+ * @param outPath The module's absolute output path, used to resolve relative specifiers.
+ * @param children The nested subpath entries whose parent is this module.
  * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file.
  * @param usedOwners Collects the hoist-file paths actually imported from, so orphan files aren't emitted.
- * @returns The stripped, hoisted module text.
+ * @returns The stripped, collapsed, hoisted module text.
  */
 function strip(
 	text: string,
 	outPath: string,
+	children: Map<string, ModuleEntry>,
 	ownerByName: Map<string, string>,
 	usedOwners: Set<string>,
 ): string {
@@ -451,6 +531,7 @@ function strip(
 	const sourceFile = project.createSourceFile('bundle.d.ts', text);
 
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
+	collapseNamespaces(sourceFile, outPath, children);
 	hoistLibraries(sourceFile, outPath, ownerByName, usedOwners);
 
 	return sourceFile.getFullText();
@@ -678,7 +759,19 @@ async function generate() {
 	for (const entry of entries) {
 		if (entry.name === '.') continue;
 
-		outputs.set(entry.out, strip(bundle(entry.source), entry.out, ownerByName, usedOwners));
+		// A folder module's direct children (`metro/common` under `metro`) become `export * as` imports
+		// instead of inlined namespaces.
+		const children = new Map<string, ModuleEntry>();
+		for (const candidate of entries) {
+			if (dirname(candidate.name) === entry.name) {
+				children.set(candidate.name.slice(entry.name.length + 1), candidate);
+			}
+		}
+
+		outputs.set(
+			entry.out,
+			strip(bundle(entry.source), entry.out, children, ownerByName, usedOwners),
+		);
 	}
 
 	const root = entries.find((entry) => entry.name === '.')!;
