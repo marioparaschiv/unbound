@@ -1,6 +1,7 @@
 {
 	"name": "@unbound-app/types",
 	"version": "0.1.0",
+	"private": true,
 	"author": {
 		"name": "Mario P.",
 		"email": "contact@marioparaschiv.com",

@@ -1,6 +1,7 @@
 {
 	"name": "plugin-sdk-test",
 	"version": "0.1.0",
+	"private": true,
 	"description": "Plugin SDK test.",
 	"main": "src/index.ts",
 	"dependencies": {
