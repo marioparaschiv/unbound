@@ -1,5 +1,5 @@
 import { mkdirSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 
@@ -10,6 +10,7 @@ import {
 	BANNER,
 	ROOT,
 	CLIENT,
+	readJson,
 	relativeSpecifier,
 	type ModuleEntry,
 } from './paths';
@@ -19,8 +20,8 @@ import { buildOwnership } from './ownership';
 import { buildEntries } from './entries';
 import { strip } from './transform';
 
-function format(paths: string) {
-	execSync(`oxfmt --config .oxfmtrc.json ${paths}`, { cwd: ROOT, stdio: 'inherit' });
+function format(paths: string[]) {
+	execFileSync('oxfmt', ['--config', '.oxfmtrc.json', ...paths], { cwd: ROOT, stdio: 'inherit' });
 }
 
 /**
@@ -28,11 +29,11 @@ function format(paths: string) {
  * leave for the linter to own), then verifies the result lints clean. The fix pass exits non-zero when
  * it reports the violations it just fixed, so it is run tolerantly; the follow-up check must pass, and
  * throws otherwise, so any unfixable violation still fails generation.
- * @param paths The space-joined, quoted file paths to lint.
+ * @param paths The absolute file paths to lint.
  */
-function lint(paths: string) {
+function lint(paths: string[]) {
 	try {
-		execSync(`oxlint --config .oxlintrc.json --fix-dangerously ${paths}`, {
+		execFileSync('oxlint', ['--config', '.oxlintrc.json', '--fix-dangerously', ...paths], {
 			cwd: ROOT,
 			stdio: 'inherit',
 		});
@@ -41,7 +42,10 @@ function lint(paths: string) {
 		// gate that fails generation on anything left unfixed.
 	}
 
-	execSync(`oxlint --config .oxlintrc.json ${paths}`, { cwd: ROOT, stdio: 'inherit' });
+	execFileSync('oxlint', ['--config', '.oxlintrc.json', ...paths], {
+		cwd: ROOT,
+		stdio: 'inherit',
+	});
 }
 
 async function generate() {
@@ -121,7 +125,7 @@ async function generate() {
 		writeFileSync(path, `${BANNER}\n\n${text.trimStart()}`);
 	}
 
-	const paths = [...outputs.keys()].map((path) => `"${path}"`).join(' ');
+	const paths = [...outputs.keys()];
 
 	// Lint then format so import/export ordering and any autofixable violations land in the hashed
 	// output, matching how the rest of the repo is linted then formatted.
@@ -133,12 +137,16 @@ async function generate() {
 		hash.update(normalizeForHash(readFileSync(path, 'utf8')));
 	}
 
-	const clientVersion = JSON.parse(readFileSync(join(CLIENT, 'package.json'), 'utf8')).version;
+	const clientVersion = readJson(join(CLIENT, 'package.json')).version;
+	if (typeof clientVersion !== 'string' || clientVersion.length === 0) {
+		throw new Error(`The client manifest at '${join(CLIENT, 'package.json')}' has no version.`);
+	}
+
 	const version = `${clientVersion}-${hash.digest('hex')}`;
 
 	writeManifest(version, entries);
 
-	format(`"${join(ROOT, 'packages', 'api', 'package.json')}"`);
+	format([join(ROOT, 'packages', 'api', 'package.json')]);
 
 	const duration = (performance.now() - start).toFixed(2);
 

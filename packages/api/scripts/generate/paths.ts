@@ -1,5 +1,6 @@
-import { join, dirname, resolve, relative } from 'node:path';
+import { join, dirname, resolve, relative, sep } from 'node:path';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 import Logger from '@unbound-app/logger';
 
 import { config } from '../../sdk.config.ts';
@@ -8,7 +9,7 @@ export const logger = Logger.create('SDK');
 
 export const ROOT = join(__dirname, '..', '..', '..', '..');
 export const CLIENT = join(ROOT, 'packages', 'client');
-export const API_SRC = resolve(ROOT, config.outDir);
+export const API_SRC = resolveOutDir(ROOT, config.outDir);
 export const SDK_TSCONFIG = join(CLIENT, 'tsconfig.sdk.json');
 export const BARREL = resolve(ROOT, config.barrelPath);
 
@@ -56,4 +57,46 @@ export function relativeSpecifier(fromOut: string, toOut: string): string {
 		.join('/');
 
 	return rel.startsWith('.') ? rel : `./${rel}`;
+}
+
+/**
+ * @description Resolves the configured output directory and guards the generator's destructive
+ * clean step: the resolved path must sit strictly inside the repository, so a misconfigured
+ * `outDir` can never point `rmSync` at the repo root or anything outside it.
+ * @param root The absolute repository root.
+ * @param outDir The configured output directory, relative to the repository root.
+ * @returns The validated absolute output directory.
+ */
+export function resolveOutDir(root: string, outDir: string): string {
+	const resolved = resolve(root, outDir);
+
+	if (resolved === root || !resolved.startsWith(root + sep)) {
+		throw new Error(
+			`config.outDir must resolve to a directory inside the repository, got '${resolved}'.`,
+		);
+	}
+
+	return resolved;
+}
+
+/**
+ * @description Reads and parses a JSON object file, naming the file in the error so a malformed
+ * or non-object manifest is attributable at a glance.
+ * @param path The absolute path of the JSON file to read.
+ * @returns The parsed object.
+ */
+export function readJson(path: string): Record<string, any> {
+	let parsed: unknown;
+
+	try {
+		parsed = JSON.parse(readFileSync(path, 'utf8'));
+	} catch (error: any) {
+		throw new Error(`Failed to parse JSON from '${path}': ${error.message}`);
+	}
+
+	if (parsed === null || typeof parsed !== 'object') {
+		throw new Error(`Expected a JSON object in '${path}'.`);
+	}
+
+	return parsed as Record<string, any>;
 }

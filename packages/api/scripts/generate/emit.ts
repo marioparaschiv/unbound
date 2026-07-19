@@ -1,5 +1,5 @@
 import { Project, Node, ModuleDeclarationKind, VariableDeclarationKind } from 'ts-morph';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 import {
@@ -7,6 +7,7 @@ import {
 	INTERNAL_OUT,
 	TYPES_INDEX,
 	ROOT,
+	readJson,
 	relativeSpecifier,
 	type ModuleEntry,
 } from './paths';
@@ -119,7 +120,7 @@ export function buildGlobal(entries: ModuleEntry[], utilitiesNames: Set<string>)
  */
 export function writeManifest(version: string, entries: ModuleEntry[]) {
 	const manifestPath = join(ROOT, 'packages', 'api', 'package.json');
-	const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+	const manifest = readJson(manifestPath);
 
 	const exports: Record<string, string> = {
 		'.': './src/index.d.ts',
