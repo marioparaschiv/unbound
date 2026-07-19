@@ -14,6 +14,7 @@
 		"serve": "bun scripts/serve/start.ts"
 	},
 	"dependencies": {
+		"@unbound-app/debugger-protocol": "workspace:*",
 		"@unbound-app/logger": "workspace:*",
 		"@unbound-app/types": "workspace:*",
 		"@unbound-app/utils": "workspace:*",

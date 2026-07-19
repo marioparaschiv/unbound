@@ -1,5 +1,6 @@
 // TODO: Rewrite this dogshit
 
+import { parseMessage } from '@unbound-app/debugger-protocol';
 import { createLogger } from '@unbound-app/logger';
 import { createPatcher } from 'possess';
 
@@ -83,16 +84,8 @@ function scheduleReconnect() {
 	}, RECONNECT_DELAY_MS);
 }
 
-type EvalRequest = { type: 'eval'; id: string; code: string };
-
 function handleEvalRequest(raw: any) {
-	let request: EvalRequest;
-
-	try {
-		request = JSON.parse(raw);
-	} catch {
-		return;
-	}
+	const request = parseMessage(raw);
 
 	if (request?.type !== 'eval') return;
 
