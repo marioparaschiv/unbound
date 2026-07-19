@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { Project } from 'ts-morph';
 
-import { ALIAS_ROOT, BARREL, API_SRC, type ModuleEntry } from './paths';
+import { ALIAS_ROOT, BARREL, API_SRC, logger, type ModuleEntry } from './paths';
 import { config } from '../../sdk.config.ts';
 import { isInternal } from './transform';
 
@@ -64,37 +64,59 @@ export function readNamespaceExports(barrel: string): { name: string; source: st
  * modules for their nested `export * as` sub-namespaces (e.g. `metro/filters`). A module is a folder
  * when its source resolves to an `index.ts`; each nested namespace becomes a `<parent>/<child>`
  * subpath entry. Auto-derived subpaths in `config.excludeSubpaths` are skipped; `config.additionalSubpaths`
- * are appended.
+ * are appended. Stale excludeSubpaths entries are reported; an unresolvable additional subpath fails
+ * generation.
  * @returns The entry descriptors (root first) sorted so the output is deterministic across runs.
  */
 export function buildEntries(): ModuleEntry[] {
 	const entries: ModuleEntry[] = [];
+	const unusedExcludes = new Set(config.excludeSubpaths);
 
 	const outFor = (name: string) => join(API_SRC, ...name.split('/')) + '.d.ts';
+
+	function push(name: string, source: string, topLevel: boolean) {
+		const isFolder = source.endsWith('index.ts');
+		const out = isFolder ? join(API_SRC, ...name.split('/'), 'index.d.ts') : outFor(name);
+
+		entries.push({ name, source, out, topLevel });
+
+		if (isFolder) walk(source, name, false);
+	}
 
 	function walk(barrel: string, prefix: string, topLevel: boolean) {
 		for (const { name, source } of readNamespaceExports(barrel)) {
 			const subpath = prefix ? `${prefix}/${name}` : name;
-			if (config.excludeSubpaths.includes(subpath)) continue;
+			if (config.excludeSubpaths.includes(subpath)) {
+				unusedExcludes.delete(subpath);
+				continue;
+			}
 
-			const isFolder = source.endsWith('index.ts');
-			const out = isFolder
-				? join(API_SRC, ...subpath.split('/'), 'index.d.ts')
-				: outFor(subpath);
-
-			entries.push({ name: subpath, source, out, topLevel });
-
-			if (isFolder) walk(source, subpath, false);
+			push(subpath, source, topLevel);
 		}
 	}
 
 	walk(BARREL, '', true);
 
 	for (const extra of config.additionalSubpaths) {
-		const source = resolve(dirname(BARREL), extra.source);
-		if (config.excludeSubpaths.includes(extra.name)) continue;
+		if (config.excludeSubpaths.includes(extra.name)) {
+			unusedExcludes.delete(extra.name);
+			continue;
+		}
 
-		entries.push({ name: extra.name, source, out: outFor(extra.name), topLevel: false });
+		const source = resolveSource(extra.source, dirname(BARREL));
+		if (!source) {
+			throw new Error(
+				`additionalSubpaths entry '${extra.name}' does not resolve: '${extra.source}'.`,
+			);
+		}
+
+		push(extra.name, source, false);
+	}
+
+	if (unusedExcludes.size > 0) {
+		logger.warn(
+			`excludeSubpaths entries matched no subpath: ${[...unusedExcludes].sort().join(', ')}.`,
+		);
 	}
 
 	const root: ModuleEntry = {

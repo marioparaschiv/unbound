@@ -36,6 +36,10 @@ export function buildOwnership(entries: ModuleEntry[]): Map<string, Set<string>>
 			if (!match) continue;
 			if (match[1] === 'utils') continue;
 
+			// A namespace import cannot map to per-name ownership; default and named imports can.
+			const defaultImport = declaration.getDefaultImport();
+			if (defaultImport) names.add(defaultImport.getText());
+
 			for (const named of declaration.getNamedImports()) {
 				names.add(named.getName());
 			}
