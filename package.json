@@ -5,6 +5,7 @@
 		"packages": [
 			"packages/client",
 			"packages/debugger",
+			"packages/debugger-protocol",
 			"packages/types",
 			"packages/api",
 			"packages/plugin-test",

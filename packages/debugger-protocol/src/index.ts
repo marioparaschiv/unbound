@@ -6,6 +6,8 @@
  *   - control: a controller issues an {@link EvalRequest}; the device answers with the matching
  *     {@link EvalResult} (correlated by `id`).
  *   - telemetry: the device streams {@link LogMessage}s, broadcast to every controller.
+ *
+ * Device-safe and dependency-free so it can be bundled into the React Native client.
  */
 
 /** A request to evaluate code on the device, sent controller → bridge → device. */
@@ -50,3 +52,56 @@ export interface DeviceStatus {
 
 /** Every framed message on the wire. */
 export type BridgeMessage = EvalRequest | EvalResult | LogMessage | DeviceStatus;
+
+/** The default port the bridge listens on and controllers dial. */
+export const DEFAULT_BRIDGE_PORT = 9090;
+
+/** The query marker a controller appends to its URL so the bridge routes it as a controller, not a device. */
+export const CONTROLLER_ENDPOINT_MARKER = 'mcp';
+
+const MESSAGE_TYPES = new Set<BridgeMessage['type']>([
+	'eval',
+	'eval-result',
+	'log',
+	'device-status',
+]);
+
+/**
+ * @description Safely parses a raw wire frame into a {@link BridgeMessage}, guarding against invalid
+ * JSON and unknown shapes so both ends can trust what they route.
+ * @param raw The JSON string received off the socket.
+ * @returns The parsed message, or `undefined` if it isn't a recognised frame.
+ */
+export function parseMessage(raw: string): BridgeMessage | undefined {
+	let value: unknown;
+
+	try {
+		value = JSON.parse(raw);
+	} catch {
+		return void 0;
+	}
+
+	if (typeof value !== 'object' || value === null) return void 0;
+
+	const type = (value as { type?: unknown }).type;
+	if (typeof type !== 'string' || !MESSAGE_TYPES.has(type as BridgeMessage['type']))
+		return void 0;
+
+	return value as BridgeMessage;
+}
+
+/**
+ * @description Serialises a {@link BridgeMessage} into its wire form. Inverse of {@link parseMessage}.
+ * @param message The message to frame.
+ * @returns The JSON string to send over the socket.
+ */
+export function serializeMessage(message: BridgeMessage): string {
+	return JSON.stringify(message);
+}
+
+export default {
+	DEFAULT_BRIDGE_PORT,
+	CONTROLLER_ENDPOINT_MARKER,
+	parseMessage,
+	serializeMessage,
+};
