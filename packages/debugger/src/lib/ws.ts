@@ -1,5 +1,5 @@
-import type { BridgeMessage, EvalRequest } from '@unbound-app/debugger-protocol';
 import { terminal, stripEscapeSequences } from 'terminal-kit';
+import { parseMessage } from '@unbound-app/debugger-protocol';
 import os from 'node:os';
 
 import { abortCurrentReplInput, setupReplListeners, takeReplInput } from './repl';
@@ -173,33 +173,24 @@ export function setupWebSocket() {
 }
 
 function handleDeviceMessage(raw: string) {
-	let parsed: BridgeMessage;
+	const message = parseMessage(raw);
 
-	try {
-		parsed = JSON.parse(raw);
-	} catch {
+	if (!message) {
 		system('red', 'Parsing failed on message from device');
 		return;
 	}
 
-	session.handleDeviceMessage(parsed);
+	session.handleDeviceMessage(message);
 }
 
 function handleControllerMessage(ws: session.SocketLike, raw: string) {
-	let parsed: any;
-
-	try {
-		parsed = JSON.parse(raw);
-	} catch {
-		return;
-	}
+	const message = parseMessage(raw);
 
 	// The only thing a controller sends is an eval request; run it and deliver the id-correlated
 	// result back over this same controller's socket.
-	if (parsed?.type !== 'eval') return;
+	if (message?.type !== 'eval') return;
 
-	const request = parsed as EvalRequest;
-	session.evaluateForController(ws, request.id, request.code);
+	session.evaluateForController(ws, message.id, message.code);
 }
 
 export function getLocalAddress() {
