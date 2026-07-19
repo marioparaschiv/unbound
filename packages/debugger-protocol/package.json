@@ -1,0 +1,32 @@
+{
+	"name": "@unbound-app/debugger-protocol",
+	"version": "1.0.0",
+	"description": "The wire protocol and controller client shared by the debugger bridge, the on-device client, and the CLI.",
+	"author": {
+		"name": "Mario P.",
+		"email": "contact@marioparaschiv.com",
+		"url": "https://github.com/marioparaschiv"
+	},
+	"files": [
+		"dist"
+	],
+	"type": "module",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./controller": "./src/controller.ts",
+		"./registry": "./src/registry.ts"
+	},
+	"scripts": {
+		"build": "tsdown"
+	},
+	"dependencies": {
+		"zod": "^4.0.0"
+	},
+	"devDependencies": {
+		"tsdown": "^0.22.9"
+	},
+	"peerDependencies": {
+		"typescript": "catalog:"
+	}
+}

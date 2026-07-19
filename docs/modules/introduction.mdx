@@ -1,0 +1,48 @@
+---
+title: 'Introduction'
+description: 'The Developer API: the modules your addons build on.'
+icon: 'folder-tree'
+---
+
+Unbound exposes a set of modules for building addons: finding Discord's internals, persisting settings, localizing strings, showing toasts, and more. Together they're the **Developer API**.
+
+Every module is published in the `@unbound-app/api` package. Import what you need by name, and if you prefer, each module is also a subpath. The whole surface mirrors the `unbound` global at runtime.
+
+```ts
+import { metro, storage } from '@unbound-app/api';
+// equivalent: import metro from '@unbound-app/api/metro';
+// runtime global: unbound.metro
+```
+
+<Note>
+	[Metro](/modules/metro) is the foundation. Almost everything else (assets, i18n, stores, your own addons) locates Discord's modules through it first. If you're new here, start there.
+</Note>
+
+### Modules
+
+<CardGroup cols={2}>
+	<Card title='Metro' icon='box-taped' href='/modules/metro'>
+		Locate the exact Discord module you need before you patch it.
+	</Card>
+	<Card title='Storage' icon='database' href='/modules/storage'>
+		Reactive, persisted settings: read, write, and re-render on change.
+	</Card>
+	<Card title='Assets' icon='face-smile' href='/modules/assets'>
+		Discover Discord's bundled images and icons by name.
+	</Card>
+	<Card title='Native' icon='file-code' href='/modules/native'>
+		Bridge to the app's native iOS and Android modules.
+	</Card>
+	<Card title='Toasts' icon='bells' href='/modules/toasts'>
+		Show transient, non-blocking notifications.
+	</Card>
+	<Card title='i18n' icon='globe' href='/modules/i18n'>
+		Localize your addon to the user's Discord language.
+	</Card>
+	<Card title='File System' icon='folder' href='/modules/fs'>
+		Read, write, and check files against the documents directory.
+	</Card>
+	<Card title='Managers' icon='layer-group' href='/modules/managers'>
+		How plugins and themes are loaded, started, and persisted.
+	</Card>
+</CardGroup>

@@ -1,0 +1,17 @@
+---
+title: 'Local Builds'
+description: 'If you would like to contribute to Unbound, you will need to set up your own bundle locally.'
+icon: 'network-wired'
+---
+
+<Steps>
+  <Step title='Building'>
+    The Unbound client bundle comes with an npm script for building it: `bun run build`. You can also use `nodemon` to watch over code changes and automatically build.
+  </Step>
+  <Step title='Hosting'>
+    Next, you must obtain a valid URL that points to the bundle. You can serve Unbound's client bundle with `bun run serve` which will provide you with the link to use in the next step.
+  </Step>
+  <Step title='Configuring'>
+		Finally, you must configure the loader key `update.url` to our own, locally hosted version of the bundle. Please see the [loader configuration page](/loader/configuration) for more information.
+  </Step>
+</Steps>

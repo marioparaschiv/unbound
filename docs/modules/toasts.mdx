@@ -1,0 +1,32 @@
+---
+title: 'Toasts'
+description: 'Show transient, non-blocking notifications to the user.'
+icon: 'bells'
+---
+
+### Showing a toast
+
+A toast is a brief, non-blocking message that slides in, lingers, and slides out: the right tool for "Copied!" or "Settings saved" feedback. `showToast` displays one and returns a handle for controlling it. If you don't pass an `id`, one is generated for you.
+
+```ts
+import { toasts } from '@unbound-app/api';
+
+toasts.showToast({ content: 'Copied to clipboard' });
+```
+
+### Toast handles
+
+The returned handle is your reference to the toast after it's shown. Use it to dismiss the toast early instead of waiting for it to time out.
+
+```ts
+import { toasts } from '@unbound-app/api';
+
+const toast = toasts.showToast({ content: 'Uploading...' });
+
+// later, once the work finishes:
+toast.close();
+```
+
+<Tip>
+	Pass a stable `id` when a toast should _replace_ a previous one rather than stack, handy for progress updates that shouldn't pile up on screen.
+</Tip>

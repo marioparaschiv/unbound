@@ -82,13 +82,11 @@ export declare function findByPrototypes<
 /**
  * @description Resolves a module matching `filter`, waiting for it to load if it is not yet present.
  * @param filter The filter to match against.
- * @param options Search options, excluding `lazy` and `all`.
- * @returns The matched module, or a promise that resolves once a matching module is required.
+ * @param options Search options, excluding `lazy` and `all`, plus an optional `signal` to abort the wait.
+ * @returns The matched module, or a promise that resolves once a matching module is required, or
+ * `undefined` if the supplied signal aborts first.
  */
-export declare function findLazy(
-	filter: MetroFilter,
-	options?: Omit<MetroSearchOptions, 'lazy' | 'all'>,
-): any;
+export declare function findLazy(filter: MetroFilter, options?: MetroLazySearchOptions): any;
 /**
  * @description Finds a flux store by name.
  * @template U The union of requested store names.
@@ -115,6 +113,10 @@ export declare function removeListener(listener: (mdl: any, id: string) => void)
 /** A single entry in a {@link bulk} search: a filter plus its per-item options. */
 export interface MetroBulkItem extends Omit<MetroSearchOptions, 'initial' | 'cache'> {
 	filter: MetroFilter;
+}
+/** Search options for {@link findLazy}, adding a `signal` that abandons the wait when aborted. */
+export interface MetroLazySearchOptions extends Omit<MetroSearchOptions, 'lazy' | 'all'> {
+	signal?: AbortSignal;
 }
 /** Search options for {@link findStore}, adding the `short` name-matching toggle. */
 export interface MetroStoreOptions extends MetroSearchOptions {

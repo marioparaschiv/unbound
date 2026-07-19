@@ -1,0 +1,85 @@
+---
+title: 'Storage'
+description: 'Reactive, persisted settings: read, write, and re-render on change.'
+icon: 'database'
+---
+
+### What is Storage?
+
+`storage` is Unbound's settings store. Anything you write is held in memory, broadcast as an event, and saved to disk for you, so your addon's configuration survives a reload without you ever touching a file.
+
+Writes are debounced and serialized to `Unbound/settings.json` in the documents directory (via the [fs](/modules/fs) module). You never call `read` or `write` yourself; you just `get` and `set`.
+
+```ts
+import { storage } from '@unbound-app/api';
+
+storage.set('my-plugin', 'enabled', true);
+storage.get('my-plugin', 'enabled', false); // → true
+```
+
+### Stores & keys
+
+Settings are namespaced into **stores**, one per addon, keyed by a name you pick (usually your plugin's id). Within a store, keys are **dot-paths**: `set('appearance.compact', true)` writes `{ appearance: { compact: true } }`, creating the intermediate objects for you.
+
+Rather than repeat the store name on every call, grab a scoped facade with `getStore` and call `get`/`set`/`toggle`/`remove` on it directly.
+
+```ts
+import { storage } from '@unbound-app/api';
+
+// Scope every call to one store so you never repeat its name.
+const settings = storage.getStore('my-plugin');
+settings.set('appearance.compact', true);   // dot-path key
+settings.get('appearance.compact', false);  // with a default
+```
+
+### Reading & writing
+
+Every read takes a default, returned when the key isn't set yet, so `get` never surprises you with `undefined`.
+
+<CodeGroup>
+```ts get & set
+const settings = storage.getStore('my-plugin');
+
+settings.set('volume', 0.8);
+const volume = settings.get('volume', 1); // default 1 if unset
+```
+
+```ts toggle
+// Flip a boolean against its current (or default) value.
+settings.toggle('muted', false);
+```
+
+```ts remove & clear
+settings.remove('volume'); // delete one key
+settings.clear();          // drop the whole store
+```
+</CodeGroup>
+
+<Note>
+	`get` requires a default as its last argument. It's how the store stays predictable, keeping `undefined` out of your UI.
+</Note>
+
+### Reactivity
+
+Every change emits a `changed` event, and stores emit `set`, `toggled`, `removed`, and `cleared` too. In React, that means your settings UI can stay in sync for free: `useSettingsStore` subscribes the component and re-renders it whenever a matching change lands. Pass an optional predicate to narrow _which_ changes trigger a re-render.
+
+```tsx
+import { storage } from '@unbound-app/api';
+
+// Re-renders the component whenever this store changes.
+function Toggle() {
+	const store = storage.useSettingsStore('my-plugin');
+	const compact = store.get('appearance.compact', false);
+
+	return (
+		<Switch
+			value={compact}
+			onValueChange={(v) => store.set('appearance.compact', v)}
+		/>
+	);
+}
+```
+
+<Tip>
+	Outside React, subscribe imperatively with `storage.addListener(predicate, callback)`. It returns an unsubscribe function. Clean it up when your addon stops.
+</Tip>

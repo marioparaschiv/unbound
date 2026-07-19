@@ -1,0 +1,10 @@
+{
+	"type": "darker",
+	"semantic": {
+		"BACKGROUND_PRIMARY": {
+			"type": "color",
+			"value": "#1a1a2e"
+		}
+	},
+	"raw": {}
+}

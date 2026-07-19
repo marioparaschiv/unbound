@@ -1,0 +1,144 @@
+---
+title: 'Creating an Addon'
+description: 'Build a plugin from an empty folder, step by step.'
+icon: 'wand-magic-sparkles'
+---
+
+This walks through building a small plugin end to end. Plugins are the richest addon kind, so they make the best example; themes and icon packs follow the same manifest and lifecycle with their own content. By the end you'll have a working plugin that finds a Discord module, patches it, and stores a setting.
+
+<Steps>
+	<Step title='Describe it with a manifest' icon='circle-info'>
+		Every addon starts with a [manifest](/addons/manifest): the metadata Unbound uses to list, attribute, and validate it. Create a `manifest.json` with at least the required fields.
+
+		```json manifest.json
+		{
+			"id": "hello-world",
+			"name": "Hello World",
+			"description": "Logs a greeting when a message is sent.",
+			"authors": [{ "name": "you", "id": "1234567890" }],
+			"version": "1.0.0",
+			"main": "index.js"
+		}
+		```
+
+		<Note>
+			`main` points at your entry file, and `id` is the name you'll use everywhere else. See [the manifest](/addons/manifest) for the full field list.
+		</Note>
+	</Step>
+
+	<Step title='Write the entry point' icon='file-code'>
+		Your `main` file exports a default object with optional `start` and `stop` hooks. Unbound calls `start` when the plugin is enabled and `stop` when it's disabled. Set everything up in `start`; undo it all in `stop`.
+
+		```ts index.ts
+		export default {
+			start() {
+				// set up patches, listeners, subscriptions
+			},
+			stop() {
+				// undo everything start() did
+			},
+		};
+		```
+
+		<Warning>
+			Your bundle is evaluated at startup even while the plugin is disabled. Keep the top level cheap and do real work inside `start`. See [how plugins are loaded](/plugins/introduction#how-plugins-are-loaded).
+		</Warning>
+	</Step>
+
+	<Step title='Find what you want to change' icon='magnifying-glass'>
+		Use [Metro](/modules/metro) to locate the Discord module you need. Declare the handle lazily so the search doesn't run until the plugin is actually active.
+
+		```ts
+		import { metro, utils } from '@unbound-app/api';
+
+		const Messages = utils.lazy(() =>
+			metro.findByProps('sendMessage', 'receiveMessage'),
+		);
+		```
+	</Step>
+
+	<Step title='Patch it' icon='object-subtract'>
+		Wrap the function with the [patcher](/plugins/patching). Create a patcher scoped to your plugin so every patch can be reverted together.
+
+		```ts
+		import { patcher } from '@unbound-app/api';
+
+		const Patcher = patcher.createPatcher('hello-world');
+
+		// inside start():
+		Patcher.before(Messages, 'sendMessage', ({ args }) => {
+			console.log('Sending message to channel', args[0]);
+		});
+		```
+	</Step>
+
+	<Step title='Remember a setting' icon='database'>
+		Persist configuration with [storage](/modules/storage). Scope a store to your plugin id and read or write keys on it. Values survive a reload for free.
+
+		```ts
+		import { storage } from '@unbound-app/api';
+
+		const settings = storage.getStore('hello-world');
+		settings.set('greeting', 'Hello from Unbound');
+		settings.get('greeting', 'Hi'); // default if unset
+		```
+	</Step>
+
+	<Step title='Clean up in stop' icon='broom'>
+		When the plugin is disabled, revert everything. One `unpatchAll` call undoes every patch the patcher made.
+
+		```ts
+		stop() {
+			Patcher.unpatchAll();
+		}
+		```
+
+		<Warning>
+			A patch that outlives a disabled plugin keeps running with nothing behind it. Cleaning up in `stop` is not optional. If you patched a component's render, also force a re-render. See [cleaning up](/plugins/react-patching#cleaning-up).
+		</Warning>
+	</Step>
+</Steps>
+
+### The full plugin
+
+Putting the steps together:
+
+```ts index.ts
+import { metro, patcher, storage, utils } from '@unbound-app/api';
+
+const Patcher = patcher.createPatcher('hello-world');
+const settings = storage.getStore('hello-world');
+
+const Messages = utils.lazy(() =>
+	metro.findByProps('sendMessage', 'receiveMessage'),
+);
+
+export default {
+	start() {
+		Patcher.before(Messages, 'sendMessage', ({ args }) => {
+			const greeting = settings.get('greeting', 'Hi');
+			console.log(greeting, '→ channel', args[0]);
+		});
+	},
+	stop() {
+		Patcher.unpatchAll();
+	},
+};
+```
+
+### Where to go next
+
+<CardGroup cols={2}>
+	<Card title='Function Patching' icon='object-subtract' href='/plugins/patching'>
+		The full patcher API: before, after, instead, and typing.
+	</Card>
+	<Card title='Patching Components' icon='react' href='/plugins/react-patching'>
+		Change what Discord's components render.
+	</Card>
+	<Card title='Flux Stores' icon='box' href='/plugins/flux'>
+		Read Discord's state and react to its events.
+	</Card>
+	<Card title='Debugging' icon='bug' href='/plugins/debugger'>
+		Tools for developing and inspecting your addon.
+	</Card>
+</CardGroup>

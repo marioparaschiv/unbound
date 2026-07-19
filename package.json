@@ -4,7 +4,9 @@
 	"workspaces": {
 		"packages": [
 			"packages/client",
+			"packages/cli",
 			"packages/debugger",
+			"packages/debugger-protocol",
 			"packages/types",
 			"packages/api",
 			"apps/sdk-generator",

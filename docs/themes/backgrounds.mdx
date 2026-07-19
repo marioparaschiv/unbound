@@ -1,0 +1,42 @@
+---
+title: 'Backgrounds'
+description: 'Place an image behind the interface, with blur and opacity.'
+icon: 'image'
+---
+
+### Adding a background
+
+A theme can put an image behind Discord's interface. Add an optional `background` object to your theme definition with the image `url`, and tune how it sits behind the UI with `blur` and `opacity`.
+
+```ts
+{
+	type: 'midnight',
+	semantic: { /* ... */ },
+	raw: { /* ... */ },
+	background: {
+		url: 'https://example.com/wallpaper.png',
+		blur: 4,
+		opacity: 0.5,
+	},
+}
+```
+
+### Fields
+
+<ResponseField name='url' type='string' required>
+	The image to display behind the interface.
+</ResponseField>
+<ResponseField name='blur' type='number'>
+	How much to blur the image. Higher values soften it so foreground text stays readable.
+</ResponseField>
+<ResponseField name='opacity' type='number'>
+	How visible the image is behind the UI, from `0` (hidden) to `1` (fully opaque).
+</ResponseField>
+
+<Warning>
+	A background competes with your text for legibility. Pair it with semantic colors that hold up over the image, and lean on `blur` and a lower `opacity` so the interface stays readable.
+</Warning>
+
+<Tip>
+	Make the surfaces above the background semi-transparent in your [semantic colors](/themes/types#semantic-colors) so the image shows through. A fully opaque `BACKGROUND_PRIMARY` will hide it entirely.
+</Tip>

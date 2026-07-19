@@ -27,6 +27,7 @@ type EventMap = {
 };
 
 const Events = new EventEmitter<EventMap>();
+const handlers = new Map<(payload: SettingsPayload) => void, (payload: SettingsPayload) => void>();
 
 /** @internal */
 export const settings = globalThis.UNBOUND_SETTINGS ?? {};
@@ -50,9 +51,10 @@ export function addListener(
 		}
 	}
 
+	handlers.set(callback, handler);
 	Events.on('changed', handler);
 
-	return () => Events.off('changed', handler);
+	return () => removeListener(callback);
 }
 
 /**
@@ -60,7 +62,11 @@ export function addListener(
  * @param callback The listener to remove.
  */
 export function removeListener(callback: (payload: SettingsPayload) => void) {
-	Events.off('changed', callback);
+	const handler = handlers.get(callback);
+	if (!handler) return;
+
+	handlers.delete(callback);
+	Events.off('changed', handler);
 }
 
 /**

@@ -42,7 +42,7 @@ export declare const on: <EventKey extends keyof EventMap = string>(
 export declare function addListener(
 	predicate: (payload: SettingsPayload) => PredicateResult,
 	callback: (payload: SettingsPayload) => void,
-): () => EventEmitter<EventMap>;
+): () => void;
 /**
  * @description Reads a value from a store by dot-separated key path, falling back to a default when absent.
  * @template T The type of the default value.

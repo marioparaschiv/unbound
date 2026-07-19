@@ -1,0 +1,36 @@
+---
+title: 'Introduction'
+description: 'What addons are, the kinds Unbound supports, and what they share.'
+icon: 'puzzle-piece'
+---
+
+An **addon** is something you install into Unbound to change Discord. They come in three kinds, but they're built and managed the same way: each ships a [manifest](/addons/manifest), is governed by the same [lifecycle](/modules/managers), and is enabled, disabled, and persisted through the same machinery.
+
+### The kinds
+
+<CardGroup cols={3}>
+	<Card title='Plugins' icon='plug' href='/plugins/introduction'>
+		Code that runs. Add functionality by finding and patching Discord's internals.
+	</Card>
+	<Card title='Themes' icon='paintbrush' href='/themes/introduction'>
+		Data that restyles. A palette (and optional background) Unbound applies to the UI.
+	</Card>
+	<Card title='Icon Packs' icon='icons' href='/icon-packs/introduction'>
+		Image overrides. Swap Discord's built-in icons for your own.
+	</Card>
+</CardGroup>
+
+### What every addon shares
+
+<CardGroup cols={2}>
+	<Card title='Creating an addon' icon='wand-magic-sparkles' href='/addons/creating'>
+		A step-by-step walkthrough of building one from an empty folder.
+	</Card>
+	<Card title='The manifest' icon='circle-info' href='/addons/manifest'>
+		The metadata every addon ships, and how it's validated.
+	</Card>
+</CardGroup>
+
+<Note>
+	Plugins are the richest kind and the rest of this section leans on them for examples, but the manifest, lifecycle, and enable/disable model are identical across all three. See [Managers](/modules/managers) for how that lifecycle works under the hood.
+</Note>

@@ -1,0 +1,90 @@
+---
+title: 'The Manifest'
+description: 'The shared metadata every addon ships, and how Unbound validates it.'
+icon: 'circle-info'
+---
+
+Every addon (a [plugin](/plugins/introduction), [theme](/themes/introduction), or [icon pack](/icon-packs/introduction)) ships a **manifest**: a block of metadata that describes it. They all use the **same shape**, validated by the same [manager](/modules/managers) before the addon loads. This page is the single source of truth for that shape; each addon kind documents only what's specific to it.
+
+### Required fields
+
+These must be present and defined, or the addon is rejected when it loads.
+
+<ParamField path='id' type='string' required>
+	A unique identifier for the addon. Used as its key in every manager operation and as its [storage](/modules/storage) namespace, so keep it stable across versions.
+</ParamField>
+<ParamField path='name' type='string' required>
+	The human-readable name shown in settings.
+</ParamField>
+<ParamField path='description' type='string' required>
+	A short summary of what the addon does.
+</ParamField>
+<ParamField path='authors' type='AddonAuthor[]' required>
+	A non-empty array of authors. An empty array fails validation just like a missing field.
+
+	<Expandable title='AddonAuthor'>
+		<ParamField path='name' type='string' required>
+			The author's display name.
+		</ParamField>
+		<ParamField path='id' type='string' required>
+			The author's Discord user id.
+		</ParamField>
+	</Expandable>
+</ParamField>
+<ParamField path='version' type='string' required>
+	The addon's version. Bump it on every release so clients can detect updates.
+</ParamField>
+<ParamField path='main' type='string' required>
+	The entry point the bundle is built from.
+</ParamField>
+
+### Optional fields
+
+Used for display and updates. Leaving them out is fine.
+
+<ParamField path='icon' type='string | { uri: string }'>
+	The addon's icon: an [asset](/modules/assets) name, or an object with a `uri` for a remote image.
+</ParamField>
+<ParamField path='updates' type='string'>
+	A URL Unbound checks to discover newer versions.
+</ParamField>
+<ParamField path='url' type='string'>
+	Where the addon's bundle is hosted.
+</ParamField>
+
+### Example
+
+```json manifest.json
+{
+	"id": "my-plugin",
+	"name": "My Plugin",
+	"description": "Adds something useful to Discord.",
+	"authors": [{ "name": "you", "id": "1234567890" }],
+	"version": "1.0.0",
+	"main": "index.js"
+}
+```
+
+<Warning>
+	The manifest is validated the moment the addon loads. Any required field that's missing or undefined rejects it, and `authors` must be a non-empty array.
+</Warning>
+
+<Note>
+	The `id` is the field you reference everywhere else: manager calls like `plugins.toggle('my-plugin')`, your [storage](/modules/storage) store name, and the addon's entry in the enabled-state map. Pick it once and never change it.
+</Note>
+
+### Per-addon details
+
+The shape is shared, but a couple of fields carry extra meaning depending on the addon kind.
+
+<AccordionGroup>
+	<Accordion title='Plugins' icon='plug'>
+		`main` is the entry your bundle is built from, and Unbound evaluates it into your plugin's running instance. See [Creating an Addon](/addons/creating).
+	</Accordion>
+	<Accordion title='Themes' icon='paintbrush'>
+		Besides identifying the theme, its `id` is the value stored as `applied` while it's the active theme. Only one theme is applied at a time, so this is how Unbound remembers which. The theme's actual palette and background live in its definition, not the manifest. See [Theme Types](/themes/types).
+	</Accordion>
+	<Accordion title='Icon Packs' icon='icons'>
+		Icon packs are still being reimplemented in the current client rewrite. They use the shared manifest above; pack-specific fields, such as how icon overrides are listed, will be documented once that surface lands.
+	</Accordion>
+</AccordionGroup>

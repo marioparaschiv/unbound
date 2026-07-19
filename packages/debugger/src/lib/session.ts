@@ -1,6 +1,4 @@
-import uuid from '@unbound-app/utils/uuid';
-
-import type { BridgeMessage, EvalResult, LogMessage } from './protocol';
+import type { BridgeMessage, EvalResult, LogMessage } from '@unbound-app/debugger-protocol';
 
 /**
  * The bridge's routing core, transport-agnostic. Holds the single device socket and the set of
@@ -134,7 +132,7 @@ export function evaluateForController(socket: SocketLike, id: string, code: stri
  */
 export function evaluate(code: string): Promise<EvalResult> {
 	return new Promise<EvalResult>((resolve) => {
-		dispatch(uuid(), code, resolve);
+		dispatch(crypto.randomUUID(), code, resolve);
 	});
 }
 

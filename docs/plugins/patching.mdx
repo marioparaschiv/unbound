@@ -1,0 +1,290 @@
+---
+title: 'Function Patching'
+description: "Intercept and modify any function, including Discord's own."
+icon: 'object-subtract'
+---
+
+### What is patching?
+
+Patching (sometimes called monkey-patching) lets you wrap an existing function with your own logic: run code before it, after it, or in place of it. It's how a plugin changes behavior it doesn't own, from a Discord method deep in a module to a [component's render](/plugins/react-patching).
+
+The idea is simple. If a function lives on an object, you can replace that property with your own wrapper that calls the original. Doing this by hand is fiddly: you have to keep a reference to the original, restore it later, and cooperate with other plugins patching the same function. The `patcher` does all of that for you.
+
+It's available as `unbound.patcher` and from `@unbound-app/api`.
+
+```ts
+import { patcher } from '@unbound-app/api';
+```
+
+The patcher does more than wrap a function. A few things it handles for you:
+
+<CardGroup cols={2}>
+	<Card title='Full type inference' icon='code'>
+		`args`, `result`, and `this` are typed from the target automatically. See [Typing a patch](#typing-a-patch).
+	</Card>
+	<Card title='Scoped cleanup' icon='broom'>
+		Patches grouped under a name revert together in one call.
+	</Card>
+	<Card title='Error isolation' icon='shield'>
+		Each callback runs in its own try/catch, so one bad patch won't break the rest.
+	</Card>
+	<Card title='Garbage-collection safe' icon='recycle'>
+		Targets are held weakly, so patching an object never keeps it alive on its own.
+	</Card>
+</CardGroup>
+
+### Creating a patcher
+
+Call `createPatcher` with a name to get an instance scoped to your plugin. The name labels your patches so they can be reverted together. Every patch you apply through this instance is tracked, and one call reverts all of them.
+
+```ts
+import { patcher } from '@unbound-app/api';
+
+const Patcher = patcher.createPatcher('my-plugin');
+```
+
+<Note>
+	Give the patcher the same name as your plugin's `id`. It keeps your patches grouped under one label and makes them easy to clean up in `stop`.
+</Note>
+
+### The three patch types
+
+You hook a function at one of three points. Each takes the parent object, the method name on it, and a callback that receives a context object.
+
+<Tabs>
+	<Tab title='before'>
+		Runs *before* the original. The callback gets `args`, which you can mutate to change what the original receives. Useful for rewriting inputs or blocking a call.
+
+		```ts
+		Patcher.before(Module, 'method', ({ args, this: self }) => {
+			args[0] = 'replaced';
+		});
+		```
+	</Tab>
+	<Tab title='after'>
+		Runs *after* the original and receives its `result`. Return a new value to replace what the original produced; return nothing to leave it untouched. This is the most common patch.
+
+		```ts
+		Patcher.after(Module, 'method', ({ args, result }) => {
+			return transform(result);
+		});
+		```
+	</Tab>
+	<Tab title='instead'>
+		Replaces the original entirely. You get `args`, `this`, and `original`. Nothing runs unless you call `original` yourself, so you decide whether, when, and how the original executes.
+
+		```ts
+		Patcher.instead(Module, 'method', ({ args, original, this: self }) => {
+			if (shouldBlock(args)) return;
+			return original.apply(self, args);
+		});
+		```
+	</Tab>
+</Tabs>
+
+### The patch context
+
+Every callback receives one context object. Which fields are meaningful depends on the patch type.
+
+<ParamField path='args' type='any[]'>
+	The arguments passed to the function. Mutate this in a `before` patch to change what the original receives.
+</ParamField>
+<ParamField path='result' type='any'>
+	The original's return value. Available in `after` patches; return a value to replace it.
+</ParamField>
+<ParamField path='original' type='function'>
+	The unpatched function. Call it yourself in an `instead` patch to run the original behavior.
+</ParamField>
+<ParamField path='this' type='any'>
+	The `this` the function was called with. Bind it when you call `original` (`original.apply(self, args)`).
+</ParamField>
+
+<Note>
+	To pass data from a `before` patch to an `after` patch on the same call, stash it on `this` (or on an argument object) in `before` and read it back in `after`. The two callbacks share the same context for a given call.
+</Note>
+
+### The `this` context
+
+`ctx.this` is whatever the function was called with, exactly as JavaScript resolved it at the call site. What that is depends on how the function was invoked.
+
+<Tabs>
+	<Tab title='class method'>
+		Patching a method on a class prototype, `this` is the **instance** the method was called on. Read its `props`, `state`, or fields through `ctx.this`.
+
+		```ts
+		Patcher.after(Component.prototype, 'render', ({ this: self, result }) => {
+			// self is the component instance
+			if (self.props.hidden) return null;
+			return result;
+		});
+		```
+	</Tab>
+	<Tab title='object method'>
+		Patching a method on a plain object, `this` is usually that **object**, since `obj.method()` binds `this` to `obj`.
+
+		```ts
+		Patcher.before(Store, 'getValue', ({ this: self }) => {
+			// self is typically the Store object
+		});
+		```
+	</Tab>
+	<Tab title='bound function'>
+		Some functions are bound to a fixed context ahead of time (with `.bind(...)`, or by being stored as an already-bound reference). For those, `this` is the **value they were bound to**, not the object you reached the function through. It may even be `undefined` for a standalone or arrow function.
+
+		```ts
+		Patcher.instead(Module, 'handler', ({ args, original, this: self }) => {
+			// self is whatever the function was bound to, which may differ
+			// from Module, or be undefined.
+			return original.apply(self, args);
+		});
+		```
+	</Tab>
+</Tabs>
+
+<Warning>
+	When you call `original` from an `instead` patch, pass `ctx.this` so the original keeps the right context: `original.apply(self, args)`. Calling `original(...args)` drops `this`, which breaks any function that relies on it (most class and object methods do).
+</Warning>
+
+### Returning values
+
+Each patch type has two ways to change the call, and they're interchangeable: pick whichever reads cleaner.
+
+| Patch | Mutate in place | Or return |
+| --- | --- | --- |
+| `before` | edit `ctx.args` | a new `args` array |
+| `after` | set `ctx.result` | the replacement result |
+| `instead` | _(n/a)_ | the function's return value |
+
+A `before` patch can change the arguments either by editing `ctx.args` or by returning a fresh array. An `after` patch can set `ctx.result` or return a new value; returning nothing keeps the original result. An `instead` patch's return value *is* the function's return value, so to keep the original behavior you must call `original` and return what it gives you.
+
+<Warning>
+	In an `instead` patch, forgetting to call `original` silently replaces the function with one that returns `undefined`. Only use `instead` when you actually intend to take over the call.
+</Warning>
+
+### Typing a patch
+
+The patcher infers types from the function you target. Point it at a typed module and `args`, `result`, and `this` are all typed for you, with no annotations.
+
+```ts
+// Given getUser(id: number): { name: string; age: number }
+Patcher.after(Module, 'getUser', (ctx) => {
+	ctx.args;   // [id: number]
+	ctx.this;   // typeof Module
+	ctx.result; // { name: string; age: number } | null
+});
+```
+
+When you define a callback separately from the patch call, type it with `PatchContext<Args, Result, Self>`. All three parameters are optional and default to `any`, so pass only the ones you need.
+
+```ts
+import { patcher, type PatchContext } from '@unbound-app/api/patcher';
+
+function logUser(ctx: PatchContext<[id: number], { name: string }>) {
+	console.log(ctx.args[0]);   // number
+	console.log(ctx.result);    // { name: string } | null
+}
+
+Patcher.after(Module, 'getUser', logUser);
+```
+
+<Note>
+	`ctx.result` is `Res | null`. It's `null` in `before` and `instead` callbacks (the original hasn't run yet) and populated in `after`. Reach for it only in `after` patches.
+</Note>
+
+### One-time patches
+
+Pass `{ once: true }` as a fourth argument and the patch reverts itself automatically after it fires once. This is the right tool for reaching a value that only exists for a single render or call, such as patching a child component created fresh on each parent render (see [Temporary patches from a parent](/plugins/react-patching#temporary-patches-from-a-parent)).
+
+```ts
+Patcher.after(Module, 'method', ({ result }) => {
+	return result;
+}, { once: true });
+```
+
+Every patch call also returns an unpatch function, so you can revert a single patch yourself without waiting for it to fire.
+
+```ts
+const unpatch = Patcher.after(Module, 'method', callback);
+// ...later:
+unpatch();
+```
+
+### Patching classes
+
+The same three methods work on constructors. Patch the class on its parent module by name, and the context behaves the same: `args` are the constructor arguments, and in an `after` patch `result` is the new instance.
+
+```ts
+// Module.User is a class.
+
+// Rewrite constructor arguments.
+Patcher.before(Module, 'User', () => ['Jeff']);
+
+// Take over construction.
+Patcher.instead(Module, 'User', ({ args, original }) => {
+	const instance = original(...args);
+	instance.name = 'Intercepted';
+	return instance;
+});
+
+// Adjust the instance after it's built.
+Patcher.after(Module, 'User', ({ result }) => {
+	result.name = result.name.toUpperCase();
+	return result;
+});
+```
+
+### Execution order
+
+When several patches target the same function, they run in a fixed order:
+
+<Steps>
+	<Step title='before' icon='1'>
+		Every `before` patch runs, in the order they were registered.
+	</Step>
+	<Step title='instead (or the original)' icon='2'>
+		The `instead` patches run. If there are none, the original function runs here.
+	</Step>
+	<Step title='after' icon='3'>
+		Every `after` patch runs, in registration order, each seeing the result so far.
+	</Step>
+</Steps>
+
+<Note>
+	Each callback runs inside its own try/catch. If one patch throws, the error is logged and the remaining patches still run, so a single broken plugin won't take down everyone else's patches on the same function.
+</Note>
+
+### Cleaning up
+
+Call `unpatchAll` in your plugin's `stop` to revert every patch the instance applied. This restores each function to its original and lets the next plugin (or a re-enable of yours) patch cleanly.
+
+```ts
+import { patcher } from '@unbound-app/api';
+
+const Patcher = patcher.createPatcher('my-plugin');
+
+export default {
+	start() {
+		Patcher.after(Module, 'method', ({ result }) => transform(result));
+	},
+	stop() {
+		Patcher.unpatchAll();
+	},
+};
+```
+
+<Warning>
+	A patch that outlives a disabled plugin keeps running with nothing behind it. `unpatchAll` in `stop` is not optional. If you patched a component's render, also force a re-render so the original UI returns. See [cleaning up](/plugins/react-patching#cleaning-up).
+</Warning>
+
+You can also revert patches without holding the instance. `patcher.unpatchAllByCaller(name)` removes every patch registered under a caller name, and `patcher.unpatchAll()` (the module-level function, not the instance method) removes every patch globally.
+
+```ts
+import { patcher } from '@unbound-app/api';
+
+// Revert just one plugin's patches by its caller name.
+patcher.unpatchAllByCaller('my-plugin');
+```
+
+<Tip>
+	The `caller` name a patch is grouped under comes from the name you passed to `createPatcher`. Use your plugin `id` consistently and `unpatchAllByCaller` lets anything clean up your patches by that id.
+</Tip>
