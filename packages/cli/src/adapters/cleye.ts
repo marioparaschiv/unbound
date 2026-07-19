@@ -78,8 +78,8 @@ async function run(
 		process.exit(2);
 	}
 
-	const port = (parsed.data as { port?: number }).port;
-	const context = createContext(port ?? Number.NaN);
+	const port = (parsed.data as { port: number }).port;
+	const context = createContext(port);
 
 	try {
 		const output = await definition.handler(parsed.data, context);

@@ -11,6 +11,6 @@ const argv = cli({
 	commands: [...commands.map(toCleyeCommand), mcpCommand],
 });
 
-if (!argv.command && argv._.length === 0 && !argv.flags.help && !argv.flags.version) {
+if (!argv.command && argv._.length === 0) {
 	process.stdout.write(`${renderMenu()}\n`);
 }

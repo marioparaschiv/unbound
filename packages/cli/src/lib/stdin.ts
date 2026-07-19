@@ -18,5 +18,3 @@ export async function readStdin(): Promise<string> {
 
 	return Buffer.concat(chunks).toString('utf8').trim();
 }
-
-export default { isStdinPiped, readStdin };
