@@ -38,7 +38,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "peerDependencies": {
         "@types/react": "catalog:react",
         "react": "catalog:react",
@@ -48,7 +48,7 @@
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "bin": {
         "ubd": "src/index.ts",
       },
@@ -150,7 +150,7 @@
     },
     "packages/debugger-protocol": {
       "name": "@unbound-app/debugger-protocol",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "dependencies": {
         "zod": "^4.0.0",
       },
