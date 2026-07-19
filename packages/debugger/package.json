@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/debugger",
-	"version": "0.1.0",
+	"version": "0.1.4",
 	"description": "A REPL debugger for @unbound-app/client runtime instances.",
 	"author": {
 		"name": "Mario P.",

@@ -38,7 +38,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -135,7 +135,7 @@
     },
     "packages/debugger": {
       "name": "@unbound-app/debugger",
-      "version": "0.1.0",
+      "version": "0.1.4",
       "bin": {
         "ub-debugger": "src/index.ts",
       },
@@ -175,14 +175,14 @@
     },
     "packages/plugin-test": {
       "name": "plugin-sdk-test",
-      "version": "0.1.0",
+      "version": "0.1.4",
       "dependencies": {
         "@unbound-app/api": "workspace:*",
       },
     },
     "packages/types": {
       "name": "@unbound-app/types",
-      "version": "0.1.0",
+      "version": "0.1.4",
       "dependencies": {
         "possess": "catalog:",
       },
