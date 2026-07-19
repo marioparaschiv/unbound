@@ -3,8 +3,8 @@ import { join, dirname, resolve } from 'node:path';
 
 import { ALIAS_ROOT, BARREL, API_SRC, logger, type ModuleEntry } from './paths';
 import { config } from '../../sdk.config.ts';
-import { parseSource } from './project';
 import { isInternal } from './transform';
+import { parseSource } from './project';
 
 /**
  * @description Resolves a module specifier from a barrel to its source `.ts` file. Handles the `~/`

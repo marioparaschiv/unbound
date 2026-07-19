@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 
 import type { ModuleEntry } from './paths';
+
 import { parseSource } from './project';
 
 /** Matches `@unbound-app/types/<subpath>` and captures `<subpath>` (the barrel `@unbound-app/types` has no subpath and is skipped). */

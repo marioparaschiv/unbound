@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import type { ModuleEntry } from './paths';
+
 import { buildOwnership } from './ownership';
 
 function moduleEntry(source: string): ModuleEntry {

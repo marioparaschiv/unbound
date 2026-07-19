@@ -1,6 +1,6 @@
 import { join, dirname, resolve, relative, sep } from 'node:path';
-import { readFileSync } from 'node:fs';
 import Logger from '@unbound-app/logger';
+import { readFileSync } from 'node:fs';
 
 import { config } from '../../sdk.config.ts';
 

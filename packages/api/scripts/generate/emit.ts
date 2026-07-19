@@ -1,6 +1,6 @@
 import { Node, ModuleDeclarationKind, VariableDeclarationKind, ts } from 'ts-morph';
-import { writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { writeFileSync } from 'node:fs';
 
 import {
 	API_SRC,
