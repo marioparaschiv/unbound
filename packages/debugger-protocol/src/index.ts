@@ -98,3 +98,9 @@ export function parseMessage(raw: string): BridgeMessage | undefined {
 export function serializeMessage(message: BridgeMessage): string {
 	return JSON.stringify(message);
 }
+export default {
+	DEFAULT_BRIDGE_PORT,
+	CONTROLLER_ENDPOINT_MARKER,
+	parseMessage,
+	serializeMessage,
+};

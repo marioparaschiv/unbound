@@ -1,6 +1,6 @@
 import type { EvalResult, LogMessage } from './index';
 
-import { serializeMessage, parseMessage } from './index.ts';
+import { serializeMessage, parseMessage } from './index';
 
 /**
  * The controller half of the bridge, from a separate process. Dials the bridge's `?mcp` endpoint,

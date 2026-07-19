@@ -1,3 +1,4 @@
+import type { BridgeMessage, EvalRequest } from '@unbound-app/debugger-protocol';
 import { terminal, stripEscapeSequences } from 'terminal-kit';
 import { parseMessage } from '@unbound-app/debugger-protocol';
 import os from 'node:os';

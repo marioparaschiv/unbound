@@ -1,1 +1,0 @@
-import './registry.d.ts';

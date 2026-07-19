@@ -1,15 +1,51 @@
 {
 	"name": "@unbound-app/api",
-	"version": "1.0.0-d0f6b5e6bee60c386ef2680a75f54a699d7d81ca547534f263ee76996392d719",
+	"version": "1.0.0-c9183ddae1b454e49f8b55a76184c8908b5407ae87593c57254eac6fbddcd113",
 	"author": {
 		"name": "Mario P.",
 		"email": "contact@marioparaschiv.com",
 		"url": "https://github.com/marioparaschiv"
 	},
-	"types": "./src/index.ts",
+	"files": [
+		"src"
+	],
+	"types": "./src/index.d.ts",
 	"exports": {
-		".": "./src/index.ts",
+		".": "./src/index.d.ts",
+		"./assets": "./src/assets.d.ts",
+		"./fs": "./src/fs.d.ts",
+		"./global": "./src/global.d.ts",
+		"./i18n": "./src/i18n.d.ts",
 		"./metro": "./src/metro/index.d.ts",
-		"./metro/filters": "./src/metro/filters.d.ts"
+		"./metro/api": "./src/metro/api.d.ts",
+		"./metro/common": "./src/metro/common.d.ts",
+		"./metro/components": "./src/metro/components.d.ts",
+		"./metro/filters": "./src/metro/filters.d.ts",
+		"./metro/stores": "./src/metro/stores.d.ts",
+		"./native": "./src/native.d.ts",
+		"./patcher": "./src/patcher.d.ts",
+		"./settings": "./src/settings.d.ts",
+		"./storage": "./src/storage.d.ts",
+		"./toasts": "./src/toasts.d.ts"
+	},
+	"peerDependencies": {
+		"@types/react": "catalog:react",
+		"react": "catalog:react",
+		"react-native": "catalog:react",
+		"typescript": "catalog:"
+	},
+	"peerDependenciesMeta": {
+		"react": {
+			"optional": false
+		},
+		"@types/react": {
+			"optional": false
+		},
+		"react-native": {
+			"optional": false
+		},
+		"typescript": {
+			"optional": false
+		}
 	}
 }

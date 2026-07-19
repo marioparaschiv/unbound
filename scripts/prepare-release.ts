@@ -1,12 +1,9 @@
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 
 const ROOT = join(import.meta.dir, '..');
 const API = 'packages/api';
-
-/** The generator that stamps `packages/api` with a hashed SDK version; absent on branches without it. */
-const GENERATE_SDK_SCRIPT = 'scripts/generate-plugin-sdk.ts';
 
 // Published unconditionally by release.config.mjs, so their version must move every release even
 // when unchanged; otherwise the publish step reuses an already-published version and 409s.
@@ -52,11 +49,7 @@ function prepare() {
 	setVersion('packages/debugger-protocol', version);
 	setVersion('packages/cli', version);
 
-	if (existsSync(join(ROOT, GENERATE_SDK_SCRIPT))) {
-		execFileSync('bun', ['run', 'generate-sdk'], { cwd: ROOT, stdio: 'inherit' });
-	} else {
-		console.warn(`generate-sdk skipped: ${GENERATE_SDK_SCRIPT} not on this branch`);
-	}
+	execFileSync('bun', ['run', 'generate-sdk'], { cwd: ROOT, stdio: 'inherit' });
 
 	// The generator emits `<client version>-<content hash>`, which npm treats as a prerelease
 	// that ranges like `^1.1.0` never match; the published manifest carries the plain version.

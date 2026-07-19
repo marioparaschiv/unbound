@@ -32,3 +32,4 @@ export function formatLog(log: LogMessage): string {
 
 	return `[${label}] ${log.message}`;
 }
+export default { formatResult, formatLog };

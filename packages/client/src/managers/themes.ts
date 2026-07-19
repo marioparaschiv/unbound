@@ -36,6 +36,10 @@ export class Themes extends Addons<ThemeEntity> {
 		return JSON.parse(bundle);
 	}
 
+	protected get entityType() {
+		return 'theme' as const;
+	}
+
 	/**
 	 * @description Enables a theme, overriding the base implementation: stops any previously applied theme, records
 	 * this one as `applied`, starts it if needed, and pushes it onto {@link ThemeStore}. Twin of {@link disable}.
@@ -101,4 +105,5 @@ export class Themes extends Addons<ThemeEntity> {
 	}
 }
 
+/** @internal */
 export const themes = new Themes();

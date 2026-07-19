@@ -1,4 +1,4 @@
-import type { SettingsEntry } from '@unbound-app/types';
+import type { SettingsEntry } from '@unbound-app/types/settings';
 import { createLogger } from '@unbound-app/logger';
 
 import SettingsStore from '~/stores/settings';
