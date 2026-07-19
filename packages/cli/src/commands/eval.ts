@@ -2,6 +2,7 @@ import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry'
 import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import { z } from 'zod';
 
+import { waitForDevice } from '~/lib/context';
 import { formatResult } from '~/lib/format';
 
 const schema = z.object({
@@ -23,6 +24,8 @@ const evalCommand: CommandDefinition<typeof schema> = {
 	schema,
 	cli: { positionals: ['code'] },
 	async handler({ code }, { client }) {
+		await waitForDevice(client);
+
 		if (!client.isDeviceConnected) {
 			return {
 				ok: false,

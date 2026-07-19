@@ -9,18 +9,44 @@ const DEVICE_WAIT_TIMEOUT_MS = 2_000;
 const DEVICE_WAIT_POLL_MS = 50;
 
 /**
- * @description Builds a {@link CommandContext} whose controller dials the bridge on the given port,
- * attaching as a controller through the shared endpoint marker rather than as a device.
- * @param port The port the bridge listens on.
- * @returns A context holding a connected {@link ControllerClient}.
+ * A {@link CommandContext} whose controller is dialed lazily: commands that never touch the bridge
+ * (`build`, `dev`) trigger no connection, so they run with no bridge present. `close` tears the
+ * client down only if it was ever created.
  */
-export function createContext(port: number): CommandContext {
+export type LazyContext = CommandContext & {
+	/** Whether the controller was ever dialed, i.e. the command actually used the bridge. */
+	readonly connected: boolean;
+	close(): void;
+};
+
+/**
+ * @description Builds a {@link LazyContext} whose controller dials the bridge on the given port on
+ * first access to `client`, attaching as a controller through the shared endpoint marker rather than
+ * as a device. Commands that never read `client` never connect.
+ * @param port The port the bridge listens on.
+ * @returns A context that connects on demand.
+ */
+export function createContext(port: number): LazyContext {
 	const url = `ws://127.0.0.1:${port}?${CONTROLLER_ENDPOINT_MARKER}`;
-	const client = new ControllerClient(url);
 
-	client.connect();
+	let client: ControllerClient | undefined;
 
-	return { client };
+	return {
+		get client(): ControllerClient {
+			if (client) return client;
+
+			client = new ControllerClient(url);
+			client.connect();
+
+			return client;
+		},
+		get connected(): boolean {
+			return client !== void 0;
+		},
+		close() {
+			client?.close();
+		},
+	};
 }
 
 /**

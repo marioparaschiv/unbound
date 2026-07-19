@@ -2,8 +2,9 @@ import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry'
 import { command, type Command } from 'cleye';
 import { z } from 'zod';
 
-import { createContext, waitForDevice } from '~/lib/context';
 import { readStdin, isStdinPiped } from '~/lib/stdin';
+import { CONFIG_FILENAME } from '~/lib/config';
+import { createContext } from '~/lib/context';
 import { fieldToFlag } from '~/lib/zod-flags';
 
 /** The value that marks a positional as fed from stdin instead of the command line. */
@@ -81,8 +82,6 @@ async function run(
 	const context = createContext(port ?? Number.NaN);
 
 	try {
-		await waitForDevice(context.client);
-
 		const output = await definition.handler(parsed.data, context);
 
 		if (json) {
@@ -95,9 +94,18 @@ async function run(
 
 		if (output.ok) process.exit(0);
 
-		process.exit(context.client.isDeviceConnected ? 1 : 2);
+		const connectionError = context.connected && !context.client.isDeviceConnected;
+
+		process.exit(connectionError ? 2 : 1);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			process.stderr.write(`Invalid ${CONFIG_FILENAME}:\n${z.prettifyError(error)}\n`);
+			process.exit(2);
+		}
+
+		throw error;
 	} finally {
-		context.client.close();
+		context.close();
 	}
 }
 
