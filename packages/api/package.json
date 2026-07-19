@@ -6,6 +6,11 @@
 		"email": "contact@marioparaschiv.com",
 		"url": "https://github.com/marioparaschiv"
 	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/marioparaschiv/unbound.git",
+		"directory": "packages/api"
+	},
 	"files": [
 		"src"
 	],
