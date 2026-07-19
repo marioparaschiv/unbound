@@ -59,7 +59,17 @@ export function readAddon(addonDir: string, output: string): DiscoveredAddon | u
 	const manifestPath = join(addonDir, 'manifest.json');
 	if (!existsSync(manifestPath)) return void 0;
 
-	const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+	let manifest: { id?: unknown; main?: unknown };
+
+	try {
+		manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+	} catch (error) {
+		process.stderr.write(
+			`Skipping ${addonDir}: its manifest.json could not be read: ${error}\n`,
+		);
+		return void 0;
+	}
+
 	if (typeof manifest.id !== 'string' || typeof manifest.main !== 'string') return void 0;
 
 	const kind = manifest.main.endsWith('.json') ? 'theme' : 'plugin';
