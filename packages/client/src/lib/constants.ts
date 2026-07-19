@@ -51,10 +51,14 @@ export const DISCORD_INVITE = 'rMdzhWUaGTx';
 export enum ManagerKind {
 	Plugins,
 	Themes,
+	Icons,
+	Fonts,
 }
 
 /** Maps a {@link ManagerKind} to its manager export name on `~/managers`. */
-export const ManagerNames: Record<ManagerKind, 'Plugins' | 'Themes'> = {
+export const ManagerNames: Record<ManagerKind, 'Plugins' | 'Themes' | 'Icons' | 'Fonts'> = {
 	[ManagerKind.Plugins]: 'Plugins',
 	[ManagerKind.Themes]: 'Themes',
+	[ManagerKind.Icons]: 'Icons',
+	[ManagerKind.Fonts]: 'Fonts',
 };

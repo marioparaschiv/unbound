@@ -38,6 +38,10 @@ export class Plugins extends Addons<PluginEntity> {
 
 		return instance?.default ?? instance;
 	}
+
+	protected get entityType() {
+		return 'plugin' as const;
+	}
 }
 
 export const plugins = new Plugins();

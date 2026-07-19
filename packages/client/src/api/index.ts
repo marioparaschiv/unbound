@@ -1,4 +1,4 @@
-export { Plugins as plugins, Themes as themes } from '~/managers';
+export { Plugins as plugins, Themes as themes, Icons as icons, Fonts as fonts } from '~/managers';
 export * as settings from '~/api/settings';
 export * as patcher from '~/api/patcher';
 export * as storage from '~/api/storage';

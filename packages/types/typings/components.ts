@@ -42,7 +42,7 @@ export interface DesignModule {
 	Button: ButtonComponent;
 	IconButton: ComponentType<IconButtonProps>;
 	ImageButton: ComponentType<ViewProps>;
-	FloatingActionButton: ComponentType<ViewProps>;
+	FloatingActionButton: ComponentType<FloatingActionButtonProps>;
 
 	/* Inputs */
 	TextInput: ComponentType<TextInputProps>;
@@ -291,6 +291,13 @@ export interface IconButtonProps {
 	onPress?: Fn<void>;
 }
 
+/** `FloatingActionButton`: a single-icon FAB, typically pinned to a screen corner. */
+export interface FloatingActionButtonProps {
+	icon?: ReactNode | number;
+	style?: StyleProp<ViewStyle>;
+	onPress?: Fn<void>;
+}
+
 /* ------------------------------------------------------------------ *
  * Inputs
  * ------------------------------------------------------------------ */
@@ -376,6 +383,7 @@ export interface TextFieldProps {
 	value?: string;
 	defaultValue?: string;
 	placeholder?: string;
+	autoFocus?: boolean;
 	size?: InputSize;
 	/** @default 'default' */
 	status?: InputStatus;
@@ -412,7 +420,6 @@ export interface TextAreaProps extends TextFieldProps {
 /** `GhostInput`: a borderless field bridging to the `useTextField` hook. */
 export interface GhostInputProps extends TextFieldProps {
 	isCentered?: boolean;
-	autoFocus?: boolean;
 	containerStyle?: StyleProp<ViewStyle>;
 }
 

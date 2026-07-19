@@ -124,7 +124,15 @@ declare global {
 
 		UNBOUND_FONTS: {
 			name: string;
+			file: string;
 			path: string;
+		}[];
+
+		UNBOUND_AVAILABLE_FONTS: string[];
+
+		UNBOUND_ICONS: {
+			manifest: AddonManifest;
+			bundle: string;
 		}[];
 	}
 }
