@@ -1,5 +1,4 @@
 import { join, dirname, resolve, relative, sep } from 'node:path';
-import { createRequire } from 'node:module';
 import { readFileSync } from 'node:fs';
 import Logger from '@unbound-app/logger';
 
@@ -31,9 +30,6 @@ export const UTILS_OUT = join(API_SRC, 'utils.d.ts');
 
 /** The generated home for the non-public shared `@unbound-app/types` surface; also feeds `global.d.ts`. */
 export const INTERNAL_OUT = join(API_SRC, '_internal.d.ts');
-
-/** Resolves a bare module specifier from the client package, where the inlined libraries are installed. */
-export const clientRequire = createRequire(join(CLIENT, 'package.json'));
 
 export type ModuleEntry = {
 	name: string;
