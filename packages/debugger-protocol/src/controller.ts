@@ -26,8 +26,11 @@ export class ControllerClient {
 	private readonly pending = new Map<string, PendingEval>();
 	private deviceConnected = false;
 	private closed = false;
+	private readonly url: string;
 
-	constructor(private readonly url: string) {}
+	constructor(url: string) {
+		this.url = url;
+	}
 
 	/** @description Opens the socket and keeps it open, reconnecting on drop until {@link close}d. */
 	connect() {
