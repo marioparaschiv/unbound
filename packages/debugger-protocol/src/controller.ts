@@ -1,6 +1,6 @@
 import type { EvalResult, LogMessage } from './index';
 
-import { serializeMessage, parseMessage } from './index';
+import { serializeMessage, parseMessage } from './index.ts';
 
 /**
  * The controller half of the bridge, from a separate process. Dials the bridge's `?mcp` endpoint,
@@ -26,8 +26,11 @@ export class ControllerClient {
 	private readonly pending = new Map<string, PendingEval>();
 	private deviceConnected = false;
 	private closed = false;
+	private readonly url: string;
 
-	constructor(private readonly url: string) {}
+	constructor(url: string) {
+		this.url = url;
+	}
 
 	/** @description Opens the socket and keeps it open, reconnecting on drop until {@link close}d. */
 	connect() {
