@@ -16,6 +16,9 @@
 	],
 	"type": "module",
 	"module": "src/index.ts",
+	"scripts": {
+		"build": "tsdown"
+	},
 	"dependencies": {
 		"@clack/prompts": "^1.7.0",
 		"@modelcontextprotocol/sdk": "^1.29.0",
@@ -25,7 +28,8 @@
 		"zod": "^4.0.0"
 	},
 	"devDependencies": {
-		"@types/bun": "latest"
+		"@types/bun": "latest",
+		"tsdown": "^0.22.9"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"

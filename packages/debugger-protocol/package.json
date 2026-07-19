@@ -7,6 +7,9 @@
 		"email": "contact@marioparaschiv.com",
 		"url": "https://github.com/marioparaschiv"
 	},
+	"files": [
+		"dist"
+	],
 	"type": "module",
 	"types": "./src/index.ts",
 	"exports": {
@@ -14,8 +17,14 @@
 		"./controller": "./src/controller.ts",
 		"./registry": "./src/registry.ts"
 	},
+	"scripts": {
+		"build": "tsdown"
+	},
 	"dependencies": {
 		"zod": "^4.0.0"
+	},
+	"devDependencies": {
+		"tsdown": "^0.22.9"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"
