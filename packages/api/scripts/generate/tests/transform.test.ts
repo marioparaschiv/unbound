@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
+import type { ModuleEntry } from '../paths';
+
 import {
 	collapseNamespaces,
 	collectReferencedNames,
@@ -8,7 +10,6 @@ import {
 	hoistLibraries,
 	stripInternal,
 } from '../transform';
-import type { ModuleEntry } from '../paths';
 import { parseSource } from '../project';
 
 describe('exportedNames', () => {
