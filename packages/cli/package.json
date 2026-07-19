@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/cli",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "The `ubd` command line for the Unbound client: evaluate on-device code and serve the debugger as an MCP.",
 	"author": {
 		"name": "Mario P.",

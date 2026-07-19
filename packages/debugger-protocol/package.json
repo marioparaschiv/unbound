@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/debugger-protocol",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "The wire protocol and controller client shared by the debugger bridge, the on-device client, and the CLI.",
 	"author": {
 		"name": "Mario P.",
