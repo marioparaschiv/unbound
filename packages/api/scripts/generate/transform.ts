@@ -163,6 +163,39 @@ export function declaredNames(statement: Node): string[] {
 }
 
 /**
+ * @description Lists the names a statement container exports from its own statements: declarations
+ * wearing an `export` modifier plus `export { A as B }` specifiers, under their exported alias.
+ * Re-exports from other modules count (they are part of the surface); `export *` cannot be
+ * enumerated statically and is ignored.
+ * @param container A source file or module body exposing `getStatements`.
+ * @returns The set of exported names.
+ */
+export function exportedNames(container: Node): Set<string> {
+	const names = new Set<string>();
+
+	if (!Node.isStatemented(container)) return names;
+
+	for (const statement of container.getStatements()) {
+		if (Node.isExportDeclaration(statement)) {
+			for (const specifier of statement.getNamedExports()) {
+				names.add(specifier.getAliasNode()?.getText() ?? specifier.getName());
+			}
+
+			const namespaceExport = statement.getNamespaceExport();
+			if (namespaceExport) names.add(namespaceExport.getName());
+
+			continue;
+		}
+
+		if (Node.isExportable(statement) && statement.hasExportKeyword()) {
+			for (const name of declaredNames(statement)) names.add(name);
+		}
+	}
+
+	return names;
+}
+
+/**
  * @description Collapses the flattened `declare namespace X { export { ... } }` blocks that
  * `dts-bundle-generator` emits for a folder module's nested `export * as X` re-exports back into
  * `export * as X from './X'` re-exports of the already-emitted child files. The block's backing
@@ -255,8 +288,8 @@ export function collapseNamespaces(
  * @param outPath The module's absolute output path, used to resolve relative hoist-file specifiers.
  * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file.
  * @param usedOwners Collects the hoist-file paths actually imported from, so orphan files aren't emitted.
- * @param owned The names this module owns: emitted as `export type { … }` from their owner (so they
- * surface on the module's public entry point) instead of the bare `import type { … }` used otherwise.
+ * @param owned The names this module owns: re-exported from their owner (so they surface on the
+ * module's public entry point) and additionally imported when the module references them.
  */
 export function hoistLibraries(
 	sourceFile: Node,
@@ -293,16 +326,25 @@ export function hoistLibraries(
 
 	for (const statement of hoisted) {
 		for (const name of declaredNames(statement)) {
-			// An owned type is re-exported from this module even when no surviving declaration uses it,
-			// so the public surface is stable; a non-owned type is only imported where genuinely referenced.
-			const bucket = owned.has(name) ? exportsByOwner : importsByOwner;
-			if (bucket === importsByOwner && !referenced.has(name)) continue;
-
 			const owner = ownerByName.get(name)!;
-			const set = bucket.get(owner) ?? new Set<string>();
-			set.add(name);
-			bucket.set(owner, set);
-			usedOwners.add(owner);
+
+			// An owned type is re-exported from this module even when no surviving declaration uses it,
+			// so the public surface is stable. A re-export creates no local binding, so a name the
+			// module also references is imported besides; a non-owned type is only imported where
+			// genuinely referenced.
+			if (owned.has(name)) {
+				const exports = exportsByOwner.get(owner) ?? new Set<string>();
+				exports.add(name);
+				exportsByOwner.set(owner, exports);
+				usedOwners.add(owner);
+			}
+
+			if (referenced.has(name)) {
+				const imports = importsByOwner.get(owner) ?? new Set<string>();
+				imports.add(name);
+				importsByOwner.set(owner, imports);
+				usedOwners.add(owner);
+			}
 		}
 
 		statement.remove();

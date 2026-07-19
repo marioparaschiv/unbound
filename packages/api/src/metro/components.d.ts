@@ -10,6 +10,8 @@ import {
 	ViewStyle,
 } from 'react-native';
 import { ComponentType, ReactNode } from 'react';
+
+import type { DesignModule } from '../_internal';
 export declare const BackdropFilters: any;
 export declare const Discord: DesignModule;
 export declare const FlashList: any;

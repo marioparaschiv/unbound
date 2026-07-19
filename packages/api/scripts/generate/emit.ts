@@ -11,7 +11,7 @@ import {
 	relativeSpecifier,
 	type ModuleEntry,
 } from './paths';
-import { stripInternal, declaredNames } from './transform';
+import { stripInternal, declaredNames, collectReferencedNames } from './transform';
 import { parseSource } from './project';
 import { bundle } from './bundle';
 
@@ -62,26 +62,100 @@ export function buildRoot(entries: ModuleEntry[]): string {
  * unlisted), and the `UnboundGlobal` interface that types `window.unbound` and the ambient `unbound`
  * const. Shared types are never re-declared here - they are imported from `_internal.d.ts`.
  * @param entries The emitted module entries; only top-level capability modules appear on `unbound.*`.
- * @param utilitiesNames The names the `_internal.d.ts` hoist file declares, re-exported for public access.
+ * @param internalExports The names the `_internal.d.ts` hoist file exports, re-exported for public access.
+ * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file, used
+ * to import names the ambient block references.
  * @returns The `global.d.ts` file text (unformatted, no banner).
  */
-export function buildGlobal(entries: ModuleEntry[], utilitiesNames: Set<string>): string {
+export function buildGlobal(
+	entries: ModuleEntry[],
+	internalExports: Set<string>,
+	ownerByName: Map<string, string>,
+): string {
 	const outPath = join(API_SRC, 'global.d.ts');
 	const sourceFile = parseSource('global.d.ts', bundle(TYPES_INDEX, true));
 
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 
-	// Keep only the ambient `declare global` block; the named type surface lives in `_internal.d.ts`.
+	// Keep only the ambient `declare global` blocks and the imports that may feed them; the named
+	// type surface lives in `_internal.d.ts`.
 	for (const statement of sourceFile.getStatements()) {
 		if (Node.isModuleDeclaration(statement) && statement.hasDeclareKeyword()) continue;
+		if (Node.isImportDeclaration(statement)) continue;
+
 		if (declaredNames(statement).length > 0 || Node.isExportDeclaration(statement)) {
 			statement.remove();
 		}
 	}
 
+	const ambient = sourceFile.getStatements().filter(Node.isModuleDeclaration);
+
+	const referenced = collectReferencedNames(ambient);
+	const declaredInAmbient = new Set<string>();
+
+	for (const statement of ambient) {
+		const body = statement.getBody();
+		if (!body || !Node.isStatemented(body)) continue;
+
+		for (const inner of body.getStatements()) {
+			for (const name of declaredNames(inner)) declaredInAmbient.add(name);
+		}
+	}
+
+	// A re-export creates no local binding, so every name the ambient block references must resolve
+	// through a real import or a local declaration. Existing imports are pruned to the referenced
+	// names; names owned by a hoist file are imported from their owner; anything left resolves
+	// ambiently (TypeScript lib globals such as `Promise`).
+	const bound = new Set<string>();
+
+	for (const statement of sourceFile.getStatements()) {
+		if (!Node.isImportDeclaration(statement)) continue;
+
+		const defaultImport = statement.getDefaultImport();
+		if (defaultImport) {
+			if (referenced.has(defaultImport.getText())) bound.add(defaultImport.getText());
+			else statement.removeDefaultImport();
+		}
+
+		for (const specifier of statement.getNamedImports()) {
+			const local = specifier.getAliasNode()?.getText() ?? specifier.getName();
+			if (referenced.has(local)) bound.add(local);
+			else specifier.remove();
+		}
+
+		if (
+			!statement.getDefaultImport() &&
+			!statement.getNamespaceImport() &&
+			statement.getNamedImports().length === 0
+		) {
+			statement.remove();
+		}
+	}
+
+	const importsByOwner = new Map<string, Set<string>>();
+
+	for (const name of referenced) {
+		if (declaredInAmbient.has(name) || bound.has(name)) continue;
+
+		const owner = ownerByName.get(name);
+		if (owner === void 0) continue;
+
+		const bucket = importsByOwner.get(owner) ?? new Set<string>();
+		bucket.add(name);
+		importsByOwner.set(owner, bucket);
+	}
+
+	for (const [owner, names] of importsByOwner) {
+		const specifier = relativeSpecifier(outPath, owner);
+		sourceFile.insertStatements(
+			0,
+			`import type { ${[...names].sort().join(', ')} } from '${specifier}';`,
+		);
+	}
+
 	const reexport = sourceFile.addExportDeclaration({
 		isTypeOnly: true,
-		namedExports: [...utilitiesNames].sort().map((name) => ({ name })),
+		namedExports: [...internalExports].sort().map((name) => ({ name })),
 		moduleSpecifier: relativeSpecifier(outPath, INTERNAL_OUT),
 	});
 

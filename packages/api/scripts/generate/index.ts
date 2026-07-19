@@ -11,7 +11,6 @@ import {
 	ROOT,
 	CLIENT,
 	readJson,
-	relativeSpecifier,
 	type ModuleEntry,
 } from './paths';
 import { buildRoot, buildGlobal, writeManifest, normalizeForHash } from './emit';
@@ -62,6 +61,31 @@ async function generate() {
 
 	const { files: hoistFiles, ownerByName } = buildHoistFiles();
 
+	// Every output path must have exactly one producer; a barrel namespace named like a reserved
+	// file (`global`, a hoist file) or a duplicated additional subpath would silently overwrite it.
+	const producers = new Map<string, string>([
+		[join(API_SRC, 'global.d.ts'), 'the globals file'],
+		...hoistFiles.map((file) => [file.out, 'a hoist file'] as [string, string]),
+	]);
+
+	for (const entry of entries) {
+		const producer = producers.get(entry.out);
+		if (producer) {
+			throw new Error(
+				`Module '${entry.name}' output '${entry.out}' collides with ${producer}.`,
+			);
+		}
+
+		producers.set(entry.out, `module '${entry.name}'`);
+	}
+
+	const internal = hoistFiles.find((file) => file.out === INTERNAL_OUT);
+	if (!internal) {
+		throw new Error(
+			`The '@unbound-app/types' bundle surfaced no declarations for '${INTERNAL_OUT}'.`,
+		);
+	}
+
 	const usedOwners = new Set<string>();
 	const outputs = new Map<string, string>();
 
@@ -95,30 +119,31 @@ async function generate() {
 
 	// The `_internal` file is always emitted (`global.d.ts` re-exports it); any other hoist file
 	// (including `utils.d.ts`) is kept only when a module actually imports from it, so unreferenced
-	// ones are dropped. A hoist file that another emitted hoist file imports from is pulled in too, so
-	// `_internal.d.ts`'s import of the utils names always brings `utils.d.ts` along.
+	// ones are dropped. A hoist file another emitted hoist file imports from is pulled in through its
+	// structural deps, so `_internal.d.ts`'s import of the utils names always brings `utils.d.ts` along.
 	const emitted = new Set<string>([INTERNAL_OUT, ...usedOwners]);
 	for (let added = true; added; ) {
 		added = false;
 		for (const file of hoistFiles) {
 			if (!emitted.has(file.out)) continue;
 
-			for (const other of hoistFiles) {
-				if (emitted.has(other.out)) continue;
-				if (!file.text.includes(`'${relativeSpecifier(file.out, other.out)}'`)) continue;
+			for (const dep of file.deps) {
+				if (emitted.has(dep)) continue;
 
-				emitted.add(other.out);
+				emitted.add(dep);
 				added = true;
 			}
 		}
 	}
 
-	const internal = hoistFiles.find((file) => file.out === INTERNAL_OUT)!;
 	for (const file of hoistFiles) {
 		if (emitted.has(file.out)) outputs.set(file.out, file.text);
 	}
 
-	outputs.set(join(API_SRC, 'global.d.ts'), buildGlobal(entries, internal.names));
+	outputs.set(
+		join(API_SRC, 'global.d.ts'),
+		buildGlobal(entries, internal.exportedNames, ownerByName),
+	);
 
 	for (const [path, text] of outputs) {
 		mkdirSync(dirname(path), { recursive: true });

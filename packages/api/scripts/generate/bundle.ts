@@ -15,7 +15,7 @@ import {
 	clientRequire,
 	logger,
 } from './paths';
-import { stripInternal, declaredNames, collectReferencedNames } from './transform';
+import { stripInternal, declaredNames, exportedNames, collectReferencedNames } from './transform';
 import { parseSource } from './project';
 
 export type HoistFile = {
@@ -25,11 +25,19 @@ export type HoistFile = {
 	text: string;
 	/** The names the hoist file declares, used to attribute inlined declarations back to their owner. */
 	names: Set<string>;
+	/** The names the hoist file exports - the surface other files may legally re-export. */
+	exportedNames: Set<string>;
+	/** The hoist files this file imports from, so reachability keeps its dependencies emitted. */
+	deps: Set<string>;
 };
 
 export type LibraryBundle = {
 	text: string;
 	names: Set<string>;
+	/** The names the hoist file exports - the surface other files may legally re-export. */
+	exportedNames: Set<string>;
+	/** The hoist files this file imports from, so reachability keeps its dependencies emitted. */
+	deps: Set<string>;
 };
 
 export type HoistFiles = {
@@ -141,7 +149,12 @@ export function bundleLibrary(
 
 	if (names.size === 0) return void 0;
 
-	return { text: sourceFile.getFullText(), names };
+	return {
+		text: sourceFile.getFullText(),
+		names,
+		exportedNames: exportedNames(sourceFile),
+		deps: new Set(importsByOwner.keys()),
+	};
 }
 
 /**
@@ -180,7 +193,13 @@ export function buildHoistFiles(): HoistFiles {
 		const bundled = bundleLibrary(library, out, ownerByName);
 		if (!bundled) continue;
 
-		files.push({ out, text: bundled.text, names: bundled.names });
+		files.push({
+			out,
+			text: bundled.text,
+			names: bundled.names,
+			exportedNames: bundled.exportedNames,
+			deps: bundled.deps,
+		});
 
 		for (const name of bundled.names) {
 			if (!ownerByName.has(name)) ownerByName.set(name, out);

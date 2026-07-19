@@ -3,6 +3,8 @@
 export type { SettingsEntry } from './_internal';
 import { ComponentType } from 'react';
 
+import type { SettingsEntry } from './_internal';
+
 declare const _default: {
 	registerSettings: typeof registerSettings;
 	removeSettings: typeof removeSettings;

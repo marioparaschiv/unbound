@@ -27,8 +27,8 @@ export type {
 	InputSize,
 	InputStatus,
 	InternalToastOptions,
-	Navigation$1,
-	Plugin$1,
+	Navigation,
+	Plugin,
 	PluginEntity,
 	ResolvedStyles,
 	RowButtonProps,
@@ -41,8 +41,6 @@ export type {
 	StackProps,
 	StyleSheetSpec,
 	StyleSheetSpecOrFactory,
-	THEME_FLAG_KEYS,
-	TRANSITION_STATE_KEYS,
 	TableCheckboxRowProps,
 	TableRadioRowProps,
 	TableRowComponent,
@@ -69,17 +67,7 @@ export type {
 	TransitionState,
 	UnboundAsset,
 } from './_internal';
-import {
-	ImageSourcePropType,
-	ImageStyle,
-	StyleProp,
-	TextInputProps as RNTextInputProps,
-	TextStyle,
-	ViewProps,
-	ViewStyle,
-} from 'react-native';
-import { ComponentType, ReactNode } from 'react';
-
+import type { ColorString } from './utils';
 declare global {
 	/** The raw `UnboundNative` JSI bridge the tweak installs directly on the JS global. */
 	type UnboundNativeModule = {

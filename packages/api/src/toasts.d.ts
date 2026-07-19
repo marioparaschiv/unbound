@@ -4,6 +4,8 @@ export type { ToastHandle, ToastOptions } from './_internal';
 import { ImageSourcePropType } from 'react-native';
 import { ComponentType } from 'react';
 
+import type { ToastHandle, ToastOptions } from './_internal';
+
 declare const _default: {
 	showToast: typeof showToast;
 };
