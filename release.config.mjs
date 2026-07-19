@@ -23,7 +23,8 @@ const config = {
 				verifyConditionsCmd: 'test -n "$NPM_CONFIG_TOKEN"',
 				prepareCmd:
 					"bun scripts/prepare-release.ts ${nextRelease.version} '${lastRelease.gitTag}'",
-				publishCmd: 'cd packages/api && bun publish --access public',
+				publishCmd:
+					'bun scripts/publish-package.ts packages/debugger-protocol && bun scripts/publish-package.ts packages/cli && cd packages/api && bun publish --access public',
 			},
 		],
 		[
