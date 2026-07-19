@@ -15,6 +15,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  id-token: write
 
 concurrency:
   group: release
@@ -36,7 +37,10 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
+      # Publishing uses npm trusted publishing (OIDC), which needs npm >= 11.5.1; the runner's
+      # preinstalled npm is older.
+      - run: npm install --global npm@latest
+
       - run: bun run release ${{ inputs.dry-run == true && '--dry-run' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

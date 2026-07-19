@@ -5,8 +5,16 @@ import { join } from 'node:path';
 const ROOT = join(import.meta.dir, '..');
 
 type Manifest = Record<string, any>;
+type DependencyMap = Record<string, string>;
 
-// bun publish does not honour `publishConfig` field overrides (oven-sh/bun#19205), so the
+const DEPENDENCY_FIELDS = [
+	'dependencies',
+	'devDependencies',
+	'peerDependencies',
+	'optionalDependencies',
+];
+
+// npm publish does not honour `publishConfig` field overrides for entry points, so the
 // src-pointing exports the in-repo dev flow relies on are swapped to the built dist here and
 // restored afterwards, keeping the committed manifest usable without a prior build.
 function toDist(entry: string): string {
@@ -41,6 +49,46 @@ function distManifest(manifest: Manifest): Manifest {
 	return next;
 }
 
+// The publish runs through the npm CLI for trusted publishing (bun publish has no OIDC support,
+// oven-sh/bun#22423), and npm does not understand bun's workspace/catalog specifiers, so they
+// are materialised to the concrete versions bun would have written at pack time.
+function resolveSpecifiers(manifest: Manifest, version: string): Manifest {
+	const root: Manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+	const next: Manifest = { ...manifest };
+
+	for (const field of DEPENDENCY_FIELDS) {
+		const dependencies: DependencyMap = next[field];
+		if (!dependencies) continue;
+
+		next[field] = Object.fromEntries(
+			Object.entries(dependencies).map(([name, specifier]) => [
+				name,
+				resolveSpecifier(root, name, specifier, version),
+			]),
+		);
+	}
+
+	return next;
+}
+
+function resolveSpecifier(root: Manifest, name: string, specifier: string, version: string) {
+	if (specifier.startsWith('workspace:')) return version;
+
+	if (specifier.startsWith('catalog:')) {
+		const catalog = specifier.slice('catalog:'.length);
+
+		const resolved = catalog
+			? root.workspaces.catalogs?.[catalog]?.[name]
+			: root.workspaces.catalog?.[name];
+
+		if (!resolved) throw new Error(`No catalog entry resolves ${name}@${specifier}.`);
+
+		return resolved;
+	}
+
+	return specifier;
+}
+
 function publish() {
 	const [dir] = process.argv.slice(2);
 	if (!dir) throw new Error('You must provide the package directory to publish.');
@@ -49,12 +97,15 @@ function publish() {
 	const original = readFileSync(path, 'utf8');
 	const manifest: Manifest = JSON.parse(original);
 
-	execFileSync('bun', ['run', 'build'], { cwd: join(ROOT, dir), stdio: 'inherit' });
+	const built = Boolean(manifest.scripts?.build);
+	if (built) execFileSync('bun', ['run', 'build'], { cwd: join(ROOT, dir), stdio: 'inherit' });
 
-	writeFileSync(path, JSON.stringify(distManifest(manifest), null, '\t') + '\n');
+	const prepared = resolveSpecifiers(built ? distManifest(manifest) : manifest, manifest.version);
+
+	writeFileSync(path, JSON.stringify(prepared, null, '\t') + '\n');
 
 	try {
-		execFileSync('bun', ['publish', '--access', 'public'], {
+		execFileSync('npm', ['publish', '--access', 'public'], {
 			cwd: join(ROOT, dir),
 			stdio: 'inherit',
 		});
