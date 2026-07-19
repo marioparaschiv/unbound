@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 
 import { ALIAS_ROOT, BARREL, API_SRC, logger, type ModuleEntry } from './paths';
-import { config } from '../../packages/api/sdk.config.ts';
+import { config } from '../../../packages/api/sdk.config.ts';
 import { isInternal } from './transform';
 import { parseSource } from './project';
 

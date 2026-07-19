@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { ModuleEntry } from '../paths';
+import type { ModuleEntry } from '../src/paths';
 
 import {
 	collapseNamespaces,
@@ -9,8 +9,8 @@ import {
 	exportedNames,
 	hoistLibraries,
 	stripInternal,
-} from '../transform';
-import { parseSource } from '../project';
+} from '../src/transform';
+import { parseSource } from '../src/project';
 
 describe('exportedNames', () => {
 	test('collects export-modifier declarations and aliased export specifiers', () => {

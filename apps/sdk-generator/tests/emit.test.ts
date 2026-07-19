@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import type { ModuleEntry } from '../paths';
+import type { ModuleEntry } from '../src/paths';
 
-import { buildRoot, normalizeForHash } from '../emit';
-import { API_SRC } from '../paths';
+import { buildRoot, normalizeForHash } from '../src/emit';
+import { API_SRC } from '../src/paths';
 
 describe('normalizeForHash', () => {
 	test('preserves string-literal types containing //', () => {

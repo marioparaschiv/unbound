@@ -3,9 +3,9 @@ import { describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { ModuleEntry } from '../paths';
+import type { ModuleEntry } from '../src/paths';
 
-import { buildOwnership } from '../ownership';
+import { buildOwnership } from '../src/ownership';
 
 function moduleEntry(source: string): ModuleEntry {
 	return { name: 'sample', source, out: '/api/src/sample.d.ts', topLevel: true };

@@ -3,9 +3,9 @@
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
-	"module": "index.ts",
+	"module": "src/index.ts",
 	"scripts": {
-		"generate": "bun index.ts"
+		"generate": "bun src/index.ts"
 	},
 	"dependencies": {
 		"@unbound-app/logger": "workspace:*"
