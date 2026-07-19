@@ -30,6 +30,11 @@ export interface MetroStoreOptions extends MetroSearchOptions {
 	short?: boolean;
 }
 
+/** Search options for {@link findLazy}, adding a `signal` that abandons the wait when aborted. */
+export interface MetroLazySearchOptions extends Omit<MetroSearchOptions, 'lazy' | 'all'> {
+	signal?: AbortSignal;
+}
+
 /** A single entry in a {@link bulk} search: a filter plus its per-item options. */
 export interface MetroBulkItem extends Omit<MetroSearchOptions, 'initial' | 'cache'> {
 	filter: MetroFilter;
@@ -248,30 +253,38 @@ export const off = removeListener;
 /**
  * @description Resolves a module matching `filter`, waiting for it to load if it is not yet present.
  * @param filter The filter to match against.
- * @param options Search options, excluding `lazy` and `all`.
- * @returns The matched module, or a promise that resolves once a matching module is required.
+ * @param options Search options, excluding `lazy` and `all`, plus an optional `signal` to abort the wait.
+ * @returns The matched module, or a promise that resolves once a matching module is required, or
+ * `undefined` if the supplied signal aborts first.
  */
-export function findLazy(
-	filter: MetroFilter,
-	options: Omit<MetroSearchOptions, 'lazy' | 'all'> = {},
-) {
+export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = {}) {
 	const existing = find(filter, options);
 	if (existing !== void 0) return existing;
 
-	return new Promise((resolve) => {
-		function callback(mdl, id) {
-			if (filter(mdl, id)) {
-				resolve(mdl);
-				remove();
-			}
+	const { signal } = options;
+	if (signal?.aborted) return Promise.resolve(void 0);
 
+	return new Promise((resolve) => {
+		function settle(mdl: any) {
+			remove();
+			signal?.removeEventListener('abort', abort);
+			resolve(mdl);
+		}
+
+		function abort() {
+			settle(void 0);
+		}
+
+		function callback(mdl, id) {
+			if (filter(mdl, id)) return settle(mdl);
 			if (mdl.default && filter(mdl.default, id)) {
-				resolve((options.interop ?? true) ? mdl.default : mdl);
-				remove();
+				return settle((options.interop ?? true) ? mdl.default : mdl);
 			}
 		}
 
 		const remove = addListener(callback);
+
+		signal?.addEventListener('abort', abort, { once: true });
 	});
 }
 
