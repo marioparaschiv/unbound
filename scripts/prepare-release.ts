@@ -7,7 +7,7 @@ const API = 'packages/api';
 
 // Published unconditionally by release.config.mjs, so their version must move every release even
 // when unchanged; otherwise the publish step reuses an already-published version and 409s.
-const ALWAYS = [API, 'packages/debugger-protocol', 'packages/cli'];
+const ALWAYS = [API, 'packages/debugger-protocol', 'packages/debugger', 'packages/cli'];
 
 type Manifest = Record<string, any>;
 
@@ -47,6 +47,7 @@ function prepare() {
 	}
 
 	setVersion('packages/debugger-protocol', version);
+	setVersion('packages/debugger', version);
 	setVersion('packages/cli', version);
 
 	execFileSync('bun', ['run', 'generate-sdk'], { cwd: ROOT, stdio: 'inherit' });

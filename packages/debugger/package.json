@@ -7,11 +7,22 @@
 		"email": "contact@marioparaschiv.com",
 		"url": "https://github.com/marioparaschiv"
 	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/marioparaschiv/unbound.git",
+		"directory": "packages/debugger"
+	},
 	"bin": {
 		"ub-debugger": "src/index.ts"
 	},
+	"files": [
+		"dist"
+	],
 	"type": "module",
 	"module": "src/index.ts",
+	"scripts": {
+		"build": "tsdown"
+	},
 	"dependencies": {
 		"@unbound-app/debugger-protocol": "workspace:*",
 		"cleye": "^1.3.4",
@@ -19,7 +30,8 @@
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
-		"@types/terminal-kit": "^2.5.7"
+		"@types/terminal-kit": "^2.5.7",
+		"tsdown": "^0.22.9"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"
