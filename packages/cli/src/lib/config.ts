@@ -1,5 +1,5 @@
-import { dirname, resolve } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { z } from 'zod';
 
 /** The filename walked up the directory tree to locate a workspace root. */

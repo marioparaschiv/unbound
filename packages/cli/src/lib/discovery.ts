@@ -1,5 +1,5 @@
-import { resolve, join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
+import { resolve, join } from 'node:path';
 import { glob } from 'node:fs/promises';
 
 import type { ResolvedConfig } from '~/lib/config';

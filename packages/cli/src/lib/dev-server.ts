@@ -1,10 +1,9 @@
-import { resolve, join, sep } from 'node:path';
 import { watch, type FSWatcher } from 'node:fs';
+import { resolve, join, sep } from 'node:path';
 
+import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import type { ResolvedConfig } from '~/lib/config';
-import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
-
 import { discoverAddons } from '~/lib/discovery';
 import { buildAddon } from '~/lib/build-addon';
 

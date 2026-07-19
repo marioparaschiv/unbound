@@ -1,6 +1,5 @@
-import type { BridgeMessage, EvalRequest } from '@unbound-app/debugger-protocol';
-import { terminal, stripEscapeSequences } from 'terminal-kit';
 import { parseMessage } from '@unbound-app/debugger-protocol';
+import { terminal, stripEscapeSequences } from 'terminal-kit';
 import os from 'node:os';
 
 import { abortCurrentReplInput, setupReplListeners, takeReplInput } from './repl';
