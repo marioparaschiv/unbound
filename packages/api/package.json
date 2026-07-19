@@ -33,6 +33,10 @@
 		"./storage": "./src/storage.d.ts",
 		"./toasts": "./src/toasts.d.ts"
 	},
+	"devDependencies": {
+		"@unbound-app/client": "workspace:*",
+		"@unbound-app/sdk-generator": "workspace:*"
+	},
 	"peerDependencies": {
 		"@types/react": "catalog:react",
 		"react": "catalog:react",
