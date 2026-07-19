@@ -52,8 +52,8 @@ const createCommand: CommandDefinition<typeof schema> = {
 			printOutro(result);
 
 			return { ok: true, text: '' };
-		} catch (error: any) {
-			return { ok: false, text: error?.message ?? String(error) };
+		} catch (error) {
+			return { ok: false, text: error instanceof Error ? error.message : String(error) };
 		}
 	},
 };
