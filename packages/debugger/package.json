@@ -8,17 +8,14 @@
 		"url": "https://github.com/marioparaschiv"
 	},
 	"bin": {
-		"ub-debugger": "src/index.ts",
-		"ub-debugger-mcp": "src/mcp.ts"
+		"ub-debugger": "src/index.ts"
 	},
 	"type": "module",
 	"module": "src/index.ts",
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "^1.29.0",
-		"@unbound-app/utils": "workspace:*",
+		"@unbound-app/debugger-protocol": "workspace:*",
 		"cleye": "^1.3.4",
-		"terminal-kit": "^3.1.2",
-		"zod": "^4.0.0"
+		"terminal-kit": "^3.1.2"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",

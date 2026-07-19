@@ -8,5 +8,5 @@
   "tabWidth": 4,
   "printWidth": 100,
   "trailingComma": "all",
-  "ignorePatterns": ["*.gen.ts"]
+  "ignorePatterns": ["*.gen.ts", "packages/cli/templates/**"]
 }

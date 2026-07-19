@@ -1,6 +1,6 @@
-import uuid from '@unbound-app/utils/uuid';
+import type { EvalResult, LogMessage } from './index';
 
-import type { BridgeMessage, EvalResult, LogMessage } from './protocol';
+import { serializeMessage, parseMessage } from './index';
 
 /**
  * The controller half of the bridge, from a separate process. Dials the bridge's `?mcp` endpoint,
@@ -71,7 +71,7 @@ export class ControllerClient {
 	 * @returns The device's {@link EvalResult}.
 	 */
 	evaluate(code: string): Promise<EvalResult> {
-		const id = uuid();
+		const id = crypto.randomUUID();
 
 		return new Promise<EvalResult>((resolve) => {
 			if (this.ws?.readyState !== WebSocket.OPEN) {
@@ -98,18 +98,13 @@ export class ControllerClient {
 			}, EVAL_TIMEOUT_MS);
 
 			this.pending.set(id, { resolve, timer, logs });
-			this.ws.send(JSON.stringify({ type: 'eval', id, code }));
+			this.ws.send(serializeMessage({ type: 'eval', id, code }));
 		});
 	}
 
 	private onMessage(raw: string) {
-		let message: BridgeMessage;
-
-		try {
-			message = JSON.parse(raw);
-		} catch {
-			return;
-		}
+		const message = parseMessage(raw);
+		if (!message) return;
 
 		if (message.type === 'device-status') {
 			this.deviceConnected = message.connected;

@@ -1,0 +1,6 @@
+{
+	"$schema": "https://docs.unbound.rip/schemas/config.json",
+	"addons": ["plugins/*", "themes/*"],
+	"build": "bun run build",
+	"output": "dist"
+}
