@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { resolveOutDir, readJson } from './paths';
+import { resolveOutDir, readJson } from '../paths';
 
 function tempFile(name: string, content: string): string {
 	const dir = mkdtempSync(join(tmpdir(), 'sdk-generate-'));

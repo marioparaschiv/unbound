@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { exportedNames } from './transform';
-import { parseSource } from './project';
+import { exportedNames } from '../transform';
+import { parseSource } from '../project';
 
 describe('exportedNames', () => {
 	test('collects export-modifier declarations and aliased export specifiers', () => {

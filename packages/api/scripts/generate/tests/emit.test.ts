@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { normalizeForHash } from './emit';
+import { normalizeForHash } from '../emit';
 
 describe('normalizeForHash', () => {
 	test('preserves string-literal types containing //', () => {

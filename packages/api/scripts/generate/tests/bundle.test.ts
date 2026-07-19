@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { resolveLibraryTypes } from './bundle';
+import { resolveLibraryTypes } from '../bundle';
 
 describe('resolveLibraryTypes', () => {
 	test('resolves a types-field package (tseep)', () => {
