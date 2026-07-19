@@ -1,22 +1,10 @@
-import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const ROOT = join(import.meta.dir, '..');
+import { ROOT, readManifest, loadWorkspaces, workspaceDependencies } from './workspaces';
+
 const API = 'packages/api';
-
-const DEPENDENCY_FIELDS = [
-	'dependencies',
-	'devDependencies',
-	'peerDependencies',
-	'optionalDependencies',
-];
-
-type Manifest = Record<string, any>;
-
-function readManifest(path: string): Manifest {
-	return JSON.parse(readFileSync(path, 'utf8'));
-}
 
 function setVersion(dir: string, version: string) {
 	const path = join(ROOT, dir, 'package.json');
@@ -35,51 +23,34 @@ function changedSince(tag: string): string[] {
 	return output.split('\n').filter(Boolean);
 }
 
-function workspaceDependencies(manifest: Manifest, dirs: Map<string, string>): string[] {
-	const dependencies: string[] = [];
-
-	for (const field of DEPENDENCY_FIELDS) {
-		for (const [name, specifier] of Object.entries<string>(manifest[field] ?? {})) {
-			if (!specifier.startsWith('workspace:')) continue;
-
-			const dir = dirs.get(name);
-			if (!dir) throw new Error(`No workspace package resolves ${name}@${specifier}.`);
-
-			dependencies.push(dir);
-		}
-	}
-
-	return dependencies;
-}
-
 function prepare() {
 	const [version, lastTag] = process.argv.slice(2);
 	if (!version) throw new Error('You must provide the release version to prepare.');
 
-	const workspaces: string[] = readManifest(join(ROOT, 'package.json')).workspaces.packages;
-
-	const manifests = new Map<string, Manifest>();
-	const dirs = new Map<string, string>();
-
-	for (const dir of workspaces) {
-		const manifest = readManifest(join(ROOT, dir, 'package.json'));
-
-		manifests.set(dir, manifest);
-		dirs.set(manifest.name, dir);
-	}
+	const { manifests, dirs } = loadWorkspaces();
 
 	const changed = lastTag ? changedSince(lastTag) : null;
 	const touched = (dir: string) => !changed || changed.some((file) => file.startsWith(`${dir}/`));
 
-	const bumped: string[] = [];
+	const bumped = new Set<string>();
 
-	for (const [dir, manifest] of manifests) {
-		// A published package also moves when a direct workspace dependency moved, so its
-		// exact-version pins stay in lockstep with what actually shipped.
-		const cascaded = !manifest.private && workspaceDependencies(manifest, dirs).some(touched);
-		if (!touched(dir) && !cascaded) continue;
+	// Iterated to a fixpoint so cascades chain: a published package moves when a direct workspace
+	// dependency moved or was itself cascaded, keeping exact-version pins in lockstep with what
+	// actually shipped (e.g. client -> api -> anything depending on api).
+	let expanded = true;
+	while (expanded) {
+		expanded = false;
 
-		bumped.push(dir);
+		for (const [dir, manifest] of manifests) {
+			if (bumped.has(dir)) continue;
+
+			const moved = (dep: string) => touched(dep) || bumped.has(dep);
+			const cascaded = !manifest.private && workspaceDependencies(manifest, dirs).some(moved);
+			if (!touched(dir) && !cascaded) continue;
+
+			bumped.add(dir);
+			expanded = true;
+		}
 	}
 
 	for (const dir of bumped) {
@@ -88,7 +59,7 @@ function prepare() {
 		setVersion(dir, version);
 	}
 
-	if (bumped.includes(API)) {
+	if (bumped.has(API)) {
 		execFileSync('bun', ['run', 'generate-sdk'], { cwd: ROOT, stdio: 'inherit' });
 
 		// The generator emits `<client version>-<content hash>`, which npm treats as a prerelease
