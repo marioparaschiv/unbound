@@ -1,0 +1,13 @@
+{
+	"id": "{{id}}",
+	"name": "{{displayName}}",
+	"description": "{{description}}",
+	"authors": [
+		{
+			"name": "{{authorName}}",
+			"id": "{{authorId}}"
+		}
+	],
+	"version": "1.0.0",
+	"main": "{{main}}.json"
+}

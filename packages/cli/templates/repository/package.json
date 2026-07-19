@@ -1,0 +1,17 @@
+{
+	"name": "{{name}}",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"workspaces": [
+		"plugins/*",
+		"themes/*"
+	],
+	"scripts": {
+		"dev": "ubd dev",
+		"build": "ubd build"
+	},
+	"devDependencies": {
+		"@unbound-app/cli": "^1.0.0"
+	}
+}
