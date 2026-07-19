@@ -1,9 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
-import { Project } from 'ts-morph';
 
 import { ALIAS_ROOT, BARREL, API_SRC, logger, type ModuleEntry } from './paths';
 import { config } from '../../sdk.config.ts';
+import { parseSource } from './project';
 import { isInternal } from './transform';
 
 /**
@@ -33,8 +33,7 @@ export function resolveSource(specifier: string, fromDir: string): string | unde
  * @returns The namespace name and resolved source for each surviving re-export.
  */
 export function readNamespaceExports(barrel: string): { name: string; source: string }[] {
-	const project = new Project({ useInMemoryFileSystem: true });
-	const sourceFile = project.createSourceFile('barrel.ts', readFileSync(barrel, 'utf8'));
+	const sourceFile = parseSource('barrel.ts', readFileSync(barrel, 'utf8'));
 	const fromDir = dirname(barrel);
 
 	const namespaces: { name: string; source: string }[] = [];

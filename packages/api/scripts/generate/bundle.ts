@@ -1,6 +1,6 @@
 import { generateDtsBundle, type EntryPointConfig } from 'dts-bundle-generator';
-import { Project, Node } from 'ts-morph';
 import { existsSync } from 'node:fs';
+import { Node } from 'ts-morph';
 import { join } from 'node:path';
 
 import {
@@ -16,6 +16,7 @@ import {
 	logger,
 } from './paths';
 import { stripInternal, declaredNames, collectReferencedNames } from './transform';
+import { parseSource } from './project';
 
 export type HoistFile = {
 	/** The absolute output path of the generated hoist file. */
@@ -90,8 +91,7 @@ export function bundleLibrary(
 
 	if (!existsSync(entry)) return void 0;
 
-	const project = new Project({ useInMemoryFileSystem: true });
-	const sourceFile = project.createSourceFile('lib.d.ts', bundle(entry, true));
+	const sourceFile = parseSource('lib.d.ts', bundle(entry, true));
 
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 

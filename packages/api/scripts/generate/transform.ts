@@ -1,6 +1,7 @@
-import { Project, Node, SyntaxKind, type Statement } from 'ts-morph';
+import { Node, SyntaxKind, type Statement } from 'ts-morph';
 
 import { relativeSpecifier, type ModuleEntry } from './paths';
+import { parseSource } from './project';
 
 /**
  * @description Tests whether a JSDocable node carries an `@internal` tag in its leading documentation.
@@ -340,8 +341,7 @@ export function strip(
 	usedOwners: Set<string>,
 	owned: Set<string>,
 ): string {
-	const project = new Project({ useInMemoryFileSystem: true });
-	const sourceFile = project.createSourceFile('bundle.d.ts', text);
+	const sourceFile = parseSource('bundle.d.ts', text);
 
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 	collapseNamespaces(sourceFile, outPath, children);

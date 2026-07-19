@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
-import { Project } from 'ts-morph';
 
 import type { ModuleEntry } from './paths';
+import { parseSource } from './project';
 
 /** Matches `@unbound-app/types/<subpath>` and captures `<subpath>` (the barrel `@unbound-app/types` has no subpath and is skipped). */
 const TYPES_SUBPATH = /^@unbound-app\/types\/([^/]+)$/;
@@ -22,11 +22,7 @@ export function buildOwnership(entries: ModuleEntry[]): Map<string, Set<string>>
 	for (const entry of entries) {
 		if (entry.name === '.') continue;
 
-		const project = new Project({ useInMemoryFileSystem: true });
-		const sourceFile = project.createSourceFile(
-			'module.ts',
-			readFileSync(entry.source, 'utf8'),
-		);
+		const sourceFile = parseSource('module.ts', readFileSync(entry.source, 'utf8'));
 
 		const names = new Set<string>();
 

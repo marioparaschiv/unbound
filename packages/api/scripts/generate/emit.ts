@@ -1,4 +1,4 @@
-import { Project, Node, ModuleDeclarationKind, VariableDeclarationKind, ts } from 'ts-morph';
+import { Node, ModuleDeclarationKind, VariableDeclarationKind, ts } from 'ts-morph';
 import { writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -12,6 +12,7 @@ import {
 	type ModuleEntry,
 } from './paths';
 import { stripInternal, declaredNames } from './transform';
+import { parseSource } from './project';
 import { bundle } from './bundle';
 
 /**
@@ -66,8 +67,7 @@ export function buildRoot(entries: ModuleEntry[]): string {
  */
 export function buildGlobal(entries: ModuleEntry[], utilitiesNames: Set<string>): string {
 	const outPath = join(API_SRC, 'global.d.ts');
-	const project = new Project({ useInMemoryFileSystem: true });
-	const sourceFile = project.createSourceFile('global.d.ts', bundle(TYPES_INDEX, true));
+	const sourceFile = parseSource('global.d.ts', bundle(TYPES_INDEX, true));
 
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 
