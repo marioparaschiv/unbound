@@ -20,6 +20,12 @@ function toDts(entry: string): string {
 	return entry.replace(/^(?:\.\/)?src\//, './dist/').replace(/\.ts$/, '.d.mts');
 }
 
+// npm treats a `./`-prefixed bin path as invalid and strips the whole entry at publish
+// ("script name dist/index.mjs was invalid and removed"), so bin paths stay bare.
+function toBin(entry: string): string {
+	return toDist(entry).replace(/^\.\//, '');
+}
+
 function distManifest(manifest: Manifest): Manifest {
 	const next: Manifest = { ...manifest };
 
@@ -28,7 +34,7 @@ function distManifest(manifest: Manifest): Manifest {
 
 	if (next.bin) {
 		next.bin = Object.fromEntries(
-			Object.entries<string>(next.bin).map(([name, path]) => [name, toDist(path)]),
+			Object.entries<string>(next.bin).map(([name, path]) => [name, toBin(path)]),
 		);
 	}
 
@@ -148,7 +154,9 @@ function publish() {
 	writeFileSync(path, JSON.stringify(prepared, null, '\t') + '\n');
 
 	try {
-		execFileSync('npm', ['publish', '--access', 'public'], {
+		// The tag is explicit because npm refuses to implicitly move `latest` below an already
+		// published higher version (the stale @unbound-app/debugger 1.0.x publishes).
+		execFileSync('npm', ['publish', '--access', 'public', '--tag', 'latest'], {
 			cwd: target,
 			stdio: 'inherit',
 		});
