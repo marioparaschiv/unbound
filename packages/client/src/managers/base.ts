@@ -8,6 +8,8 @@ import storage from '~/api/storage';
 export enum ManagerType {
 	PLUGINS,
 	THEMES,
+	ICONS,
+	FONTS,
 }
 
 type BaseManagerEvents<T> = {

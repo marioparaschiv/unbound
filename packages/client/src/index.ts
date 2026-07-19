@@ -4,7 +4,7 @@ import '~/api/metro';
 
 import { createLogger } from '@unbound-app/logger';
 
-import { BuiltIns, Plugins, Themes } from '~/managers';
+import { BuiltIns, Plugins, Themes, Icons, Fonts } from '~/managers';
 import storage from '~/api/storage';
 import * as api from '~/api';
 
@@ -37,6 +37,8 @@ export function initialize() {
 	BuiltIns.initialize();
 	Plugins.initialize();
 	Themes.initialize();
+	Icons.initialize();
+	Fonts.initialize();
 
 	initialized = true;
 	Logger.info('Unbound initialized');
@@ -58,6 +60,8 @@ export async function shutdown() {
 	BuiltIns.shutdown();
 	Plugins.shutdown();
 	Themes.shutdown();
+	Icons.shutdown();
+	Fonts.shutdown();
 
 	await storage.persist();
 

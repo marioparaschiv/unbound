@@ -9,7 +9,7 @@ export default Discord.createStyles({
 		padding: 32,
 	},
 	image: {
-		width: 128,
-		height: 128,
+		width: 220,
+		height: 220,
 	},
 });

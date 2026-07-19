@@ -23,9 +23,28 @@
         "ts-morph": "^28.0.0",
       },
     },
+    "apps/sdk-generator": {
+      "name": "@unbound-app/sdk-generator",
+      "version": "1.0.0",
+      "dependencies": {
+        "@unbound-app/logger": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "dts-bundle-generator": "^9.5.1",
+        "ts-morph": "^28.0.0",
+        "typescript": "catalog:",
+      },
+    },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "1.0.0-d0f6b5e6bee60c386ef2680a75f54a699d7d81ca547534f263ee76996392d719",
+      "version": "1.0.0-1c0025640532e989633bf5d230dbc1dde5cb9737d482252b3ec0ecd82b92793c",
+      "peerDependencies": {
+        "@types/react": "catalog:react",
+        "react": "catalog:react",
+        "react-native": "catalog:react",
+        "typescript": "catalog:",
+      },
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
@@ -880,6 +899,8 @@
     "@unbound-app/debugger-protocol": ["@unbound-app/debugger-protocol@workspace:packages/debugger-protocol"],
 
     "@unbound-app/logger": ["@unbound-app/logger@workspace:packages/logger"],
+
+    "@unbound-app/sdk-generator": ["@unbound-app/sdk-generator@workspace:apps/sdk-generator"],
 
     "@unbound-app/types": ["@unbound-app/types@workspace:packages/types"],
 

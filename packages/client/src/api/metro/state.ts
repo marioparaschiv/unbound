@@ -1,5 +1,7 @@
+/** @internal */
 export const blacklist = new Set<number>();
 
+/** @internal */
 export const data = {
 	cache: new Map(),
 	importingModuleId: -1,

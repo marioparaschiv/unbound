@@ -741,6 +741,7 @@ function parseOptions<O, A extends any[] = string[]>(
 	return [args as A, filter(args[args.length - 1]) ? args.pop() : fallback];
 }
 
+export * as components from '~/api/metro/components';
 export { blacklist, data } from '~/api/metro/state';
 export * as filters from '~/api/metro/filters';
 export * as common from '~/api/metro/common';

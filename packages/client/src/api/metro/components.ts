@@ -1,4 +1,4 @@
-import type { DesignModule } from '@unbound-app/types';
+import type { DesignModule } from '@unbound-app/types/components';
 
 import { findByPropsLazy, findByNameLazy } from '~/api/metro/wrappers';
 

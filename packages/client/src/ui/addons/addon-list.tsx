@@ -1,47 +1,35 @@
-import type { Addon } from '@unbound-app/types';
-import { useMemo } from 'react';
+import { memo } from 'react';
 
 import { ManagerKind, ManagerNames } from '~/lib/constants';
-import { Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
-import { getManager } from '~/managers/utils';
+import { Empty } from '~/ui/components';
+import { useAddons } from '~/ui/hooks';
+import { format } from '~/api/i18n';
+
+import AddonCard from './addon-card';
 
 type AddonListProps = {
-	addons: Addon[];
-	kind: ManagerKind;
+	kind: ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons;
 };
 
 /**
- * @description Renders a group of addons as switch rows, each toggling its addon through the manager.
+ * @description Renders a manager's addons as cards, or an empty state when there are none. Subscribes
+ * to the manager through {@link useAddons}, so installs, deletes, and toggles reflect automatically.
  */
-function AddonList({ addons, kind }: AddonListProps) {
-	const manager = getManager(kind);
-	const storeName = ManagerNames[kind].toLowerCase();
+function AddonList({ kind }: AddonListProps) {
+	const addons = useAddons(kind);
 
-	const settings = useSettingsStore(storeName, ({ key }) => key === 'states');
-	const recovery = useSettingsStore('unbound', ({ key }) => key === 'recovery').get(
-		'recovery',
-		false,
+	if (!addons.length) {
+		const type = ManagerNames[kind].toLowerCase();
+		return <Empty image='empty_permission'>{format('UNBOUND_NO_ADDONS', { type })}</Empty>;
+	}
+
+	return (
+		<>
+			{addons.map((addon) => (
+				<AddonCard key={addon.id} addon={addon} kind={kind} />
+			))}
+		</>
 	);
-
-	const states = settings.get<Record<string, boolean>>('states', {});
-
-	const rows = useMemo(
-		() =>
-			addons.map((addon) => (
-				<Discord.TableSwitchRow
-					key={addon.id}
-					label={addon.data.name}
-					subLabel={addon.data.description}
-					value={Boolean(states[addon.id])}
-					disabled={addon.failed || recovery}
-					onValueChange={() => manager.toggle(addon.id)}
-				/>
-			)),
-		[addons, states, recovery, manager],
-	);
-
-	return <Discord.TableRowGroup>{rows}</Discord.TableRowGroup>;
 }
 
-export default AddonList;
+export default memo(AddonList);
