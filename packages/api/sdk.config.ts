@@ -1,5 +1,5 @@
 /**
- * Configuration for the plugin SDK generator (`packages/api/scripts/generate`).
+ * Configuration for the plugin SDK generator (`apps/sdk-generator`).
  *
  * The generator derives the module surface by parsing the api barrel's `export * as <name>`
  * specifiers (recursively, for folder modules), so adding a public module never touches the

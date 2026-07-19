@@ -2,11 +2,11 @@ import { join, dirname, resolve, relative, sep } from 'node:path';
 import Logger from '@unbound-app/logger';
 import { readFileSync } from 'node:fs';
 
-import { config } from '../../sdk.config.ts';
+import { config } from '../../packages/api/sdk.config.ts';
 
 export const logger = Logger.create('SDK');
 
-export const ROOT = join(__dirname, '..', '..', '..', '..');
+export const ROOT = join(__dirname, '..', '..');
 export const CLIENT = join(ROOT, 'packages', 'client');
 export const API_SRC = resolveOutDir(ROOT, config.outDir);
 export const SDK_TSCONFIG = join(CLIENT, 'tsconfig.sdk.json');

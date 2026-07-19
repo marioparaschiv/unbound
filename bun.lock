@@ -20,17 +20,7 @@
         "ts-morph": "^28.0.0",
       },
     },
-    "packages/api": {
-      "name": "@unbound-app/api",
-      "version": "1.0.0-8212740a9389c615482eae77719353079985c68d51fba16ccefc15eaa2a529ab",
-      "peerDependencies": {
-        "@types/react": "catalog:react",
-        "react": "catalog:react",
-        "react-native": "catalog:react",
-        "typescript": "catalog:",
-      },
-    },
-    "packages/api/scripts/generate": {
+    "apps/sdk-generator": {
       "name": "@unbound-app/sdk-generator",
       "version": "1.0.0",
       "dependencies": {
@@ -40,6 +30,16 @@
         "@types/bun": "catalog:",
         "dts-bundle-generator": "^9.5.1",
         "ts-morph": "^28.0.0",
+        "typescript": "catalog:",
+      },
+    },
+    "packages/api": {
+      "name": "@unbound-app/api",
+      "version": "1.0.0-1c0025640532e989633bf5d230dbc1dde5cb9737d482252b3ec0ecd82b92793c",
+      "peerDependencies": {
+        "@types/react": "catalog:react",
+        "react": "catalog:react",
+        "react-native": "catalog:react",
         "typescript": "catalog:",
       },
     },
@@ -794,7 +794,7 @@
 
     "@unbound-app/logger": ["@unbound-app/logger@workspace:packages/logger"],
 
-    "@unbound-app/sdk-generator": ["@unbound-app/sdk-generator@workspace:packages/api/scripts/generate"],
+    "@unbound-app/sdk-generator": ["@unbound-app/sdk-generator@workspace:apps/sdk-generator"],
 
     "@unbound-app/types": ["@unbound-app/types@workspace:packages/types"],
 
