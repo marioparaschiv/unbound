@@ -5,6 +5,10 @@ import { join } from 'node:path';
 const ROOT = join(import.meta.dir, '..');
 const API = 'packages/api';
 
+// Published unconditionally by release.config.mjs, so their version must move every release even
+// when unchanged; otherwise the publish step reuses an already-published version and 409s.
+const ALWAYS = [API, 'packages/debugger-protocol', 'packages/cli'];
+
 type Manifest = Record<string, any>;
 
 function readManifest(path: string): Manifest {
@@ -36,11 +40,14 @@ function prepare() {
 	const changed = lastTag ? changedSince(lastTag) : null;
 
 	for (const dir of workspaces) {
-		if (dir === API) continue;
+		if (ALWAYS.includes(dir)) continue;
 		if (changed && !changed.some((file) => file.startsWith(`${dir}/`))) continue;
 
 		setVersion(dir, version);
 	}
+
+	setVersion('packages/debugger-protocol', version);
+	setVersion('packages/cli', version);
 
 	execFileSync('bun', ['run', 'generate-sdk'], { cwd: ROOT, stdio: 'inherit' });
 
