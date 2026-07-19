@@ -1,4 +1,4 @@
-import { Project, Node, ModuleDeclarationKind, VariableDeclarationKind } from 'ts-morph';
+import { Project, Node, ModuleDeclarationKind, VariableDeclarationKind, ts } from 'ts-morph';
 import { writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -15,16 +15,22 @@ import { stripInternal, declaredNames } from './transform';
 import { bundle } from './bundle';
 
 /**
- * @description Normalises a `.d.ts` file down to its structural surface: `@internal` already
- * stripped, all comments/JSDoc removed, whitespace collapsed. Used only for hashing so JSDoc and
- * formatting edits never flip the version hash.
+ * @description Normalises a `.d.ts` file down to its structural surface for hashing: the text is
+ * reprinted through the TypeScript printer with comments removed, so JSDoc and formatting edits
+ * never flip the version hash while string literals (which may contain `//`) survive untouched.
  * @param text The formatted file text.
- * @returns The comment-free, whitespace-collapsed declaration text.
+ * @returns The comment-free, canonically printed declaration text.
  */
 export function normalizeForHash(text: string): string {
-	const withoutComments = text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+	const sourceFile = ts.createSourceFile(
+		'hash.d.ts',
+		text,
+		ts.ScriptTarget.Latest,
+		false,
+		ts.ScriptKind.TS,
+	);
 
-	return withoutComments.replace(/\s+/g, ' ').trim();
+	return ts.createPrinter({ removeComments: true }).printFile(sourceFile);
 }
 
 /**
