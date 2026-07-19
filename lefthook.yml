@@ -2,7 +2,7 @@ pre-commit:
   commands:
     format:
       glob: '*.{ts,tsx,js,mjs,json}'
-      run: pnpm fmt:check
+      run: bun run fmt:check
 
 commit-msg:
   commands:
