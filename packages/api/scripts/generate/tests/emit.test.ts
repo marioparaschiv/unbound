@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
+import { join } from 'node:path';
 
-import { normalizeForHash } from '../emit';
+import type { ModuleEntry } from '../paths';
+
+import { buildRoot, normalizeForHash } from '../emit';
+import { API_SRC } from '../paths';
 
 describe('normalizeForHash', () => {
 	test('preserves string-literal types containing //', () => {
@@ -29,5 +33,29 @@ describe('normalizeForHash', () => {
 
 	test('distinguishes string literals differing only in whitespace', () => {
 		expect(normalizeForHash("type A = 'a  b';")).not.toBe(normalizeForHash("type A = 'a b';"));
+	});
+});
+
+describe('buildRoot', () => {
+	test('re-exports only top-level modules, sorted, without extensions', () => {
+		const entries: ModuleEntry[] = [
+			{
+				name: 'metro',
+				source: '',
+				out: join(API_SRC, 'metro', 'index.d.ts'),
+				topLevel: true,
+			},
+			{ name: 'assets', source: '', out: join(API_SRC, 'assets.d.ts'), topLevel: true },
+			{
+				name: 'metro/filters',
+				source: '',
+				out: join(API_SRC, 'metro', 'filters.d.ts'),
+				topLevel: false,
+			},
+		];
+
+		expect(buildRoot(entries)).toBe(
+			"export * as assets from './assets';\nexport * as metro from './metro/index';\n",
+		);
 	});
 });
