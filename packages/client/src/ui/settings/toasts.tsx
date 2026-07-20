@@ -39,8 +39,11 @@ function ToastsPage() {
 			<Discord.TableRowGroup title={Messages.UNBOUND_TOAST_SETTINGS}>
 				<Discord.TableRow
 					label={
-						<View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-							<Discord.Text variant='text-sm/medium'>
+						<View style={{ width: '100%', flexDirection: 'row', alignItems: 'center' }}>
+							<Discord.Text
+								variant='text-md/semibold'
+								color='mobile-text-heading-primary'
+							>
 								{Messages.UNBOUND_TOASTS_MAX_ON_SCREEN}
 							</Discord.Text>
 							<Discord.Text
@@ -65,8 +68,11 @@ function ToastsPage() {
 				/>
 				<Discord.TableRow
 					label={
-						<View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-							<Discord.Text variant='text-sm/medium'>
+						<View style={{ width: '100%', flexDirection: 'row', alignItems: 'center' }}>
+							<Discord.Text
+								variant='text-md/semibold'
+								color='mobile-text-heading-primary'
+							>
 								{Messages.UNBOUND_TOASTS_DURATION}
 							</Discord.Text>
 							<Discord.Text
