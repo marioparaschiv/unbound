@@ -38,7 +38,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -74,7 +74,7 @@
     },
     "packages/client": {
       "name": "@unbound-app/client",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@unbound-app/debugger-protocol": "workspace:*",
         "@unbound-app/logger": "workspace:*",
@@ -182,7 +182,7 @@
     },
     "packages/types": {
       "name": "@unbound-app/types",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "dependencies": {
         "possess": "catalog:",
       },
