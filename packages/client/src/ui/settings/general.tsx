@@ -53,6 +53,13 @@ function GeneralPage() {
 					icon={<Discord.TableRowIcon source={Icons.RetryIcon} />}
 					onPress={() => reload()}
 				/>
+				<Discord.TableSwitchRow
+					label={Messages.UNBOUND_DEVELOPER_MODE}
+					subLabel={Messages.UNBOUND_DEVELOPER_MODE_DESC}
+					icon={<Discord.TableRowIcon source={Icons.WrenchIcon} />}
+					value={settings.get('developer-mode', false)}
+					onValueChange={() => settings.toggle('developer-mode', false)}
+				/>
 			</Discord.TableRowGroup>
 
 			<Discord.TableRowGroup title={Messages.UNBOUND_TOASTS}>

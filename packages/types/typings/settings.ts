@@ -11,6 +11,7 @@ export interface SettingsEntry {
 	type: 'route';
 	key: string;
 	useTitle: () => string;
+	usePredicate?: () => boolean;
 	parent: string | null;
 	section?: string;
 	excludeFromDisplay?: boolean;

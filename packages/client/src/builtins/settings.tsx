@@ -17,10 +17,12 @@ import AssetsPage from '~/ui/settings/assets';
 import DesignPage from '~/ui/settings/design';
 import ToastsPage from '~/ui/settings/toasts';
 import { getIDByName } from '~/api/assets';
+import { getStore } from '~/api/storage';
 import { Messages } from '~/api/i18n';
 
 const Patcher = createPatcher('unbound::settings');
 const Logger = createLogger('Core', 'Settings');
+const Storage = getStore('unbound');
 
 const unpatches: Array<() => void> = [];
 
@@ -28,6 +30,7 @@ type RouteOptions = {
 	key: string;
 	useTitle: () => string;
 	getComponent: () => ComponentType<any>;
+	usePredicate?: () => boolean;
 	icon?: string;
 	hidden?: boolean;
 };
@@ -37,11 +40,19 @@ type RouteOptions = {
  * @param options The route's key, title hook, component, and optional icon/visibility.
  * @returns A {@link SettingsEntry} ready to register.
  */
-function route({ key, useTitle, getComponent, icon, hidden }: RouteOptions): SettingsEntry {
+function route({
+	key,
+	useTitle,
+	getComponent,
+	usePredicate,
+	icon,
+	hidden,
+}: RouteOptions): SettingsEntry {
 	return {
 		type: 'route',
 		key,
 		useTitle,
+		usePredicate,
 		parent: null,
 		section: hidden ? undefined : CLIENT_NAME,
 		excludeFromDisplay: hidden,
@@ -74,6 +85,11 @@ const builtInEntries: Record<string, SettingsEntry> = {
 		key: Screens.Developer,
 		useTitle: () => Messages.UNBOUND_DEVELOPER,
 		getComponent: () => DeveloperPage,
+		usePredicate: () =>
+			Storage.useSettingsStore(({ key }) => key === 'developer-mode').get(
+				'developer-mode',
+				false,
+			),
 		icon: 'WrenchIcon',
 	}),
 	[Screens.Marketplace]: route({

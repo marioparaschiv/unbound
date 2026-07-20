@@ -10,6 +10,8 @@
 	"UNBOUND_CUSTOM": "Page",
 	"UNBOUND_RECOVERY_MODE": "Recovery Mode",
 	"UNBOUND_RECOVERY_MODE_DESC": "Disables all addons on next restart. Use if the app is unstable.",
+	"UNBOUND_DEVELOPER_MODE": "Developer Mode",
+	"UNBOUND_DEVELOPER_MODE_DESC": "Shows developer settings.",
 	"UNBOUND_RESTART": "Restart",
 	"UNBOUND_STAFF_MODE": "Discord Staff Settings",
 	"UNBOUND_STAFF_MODE_DESC": "Enables Discord's internal staff-only settings.",
