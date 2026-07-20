@@ -3,10 +3,8 @@ import { View } from 'react-native';
 import { Discord } from '~/api/metro/components';
 import { Messages } from '~/api/i18n';
 
-/**
- * @description Placeholder marketplace page.
- */
-function MarketplacePage() {
+/** @description Placeholder for the upcoming Cloud Sync settings. */
+function CloudSyncPage() {
 	return (
 		<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
 			<Discord.Text variant='text-lg/semibold' color='text-muted'>
@@ -16,4 +14,4 @@ function MarketplacePage() {
 	);
 }
 
-export default MarketplacePage;
+export default CloudSyncPage;

@@ -55,7 +55,7 @@ function GeneralPage() {
 
 	return (
 		<Page>
-			<Discord.TableRowGroup title={Messages.UNBOUND_GENERAL}>
+			<Discord.TableRowGroup>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_RECOVERY_MODE}
 					subLabel={Messages.UNBOUND_RECOVERY_MODE_DESC}
@@ -70,12 +70,18 @@ function GeneralPage() {
 				/>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup title={Messages.UNBOUND_TOASTS}>
+			<Discord.TableRowGroup>
 				<Discord.TableRow
 					label={Messages.UNBOUND_TOASTS}
 					icon={<Discord.TableRowIcon source={Icons.BellIcon} />}
 					arrow
 					onPress={() => navigation.push(Screens.Toasts)}
+				/>
+				<Discord.TableRow
+					label={Messages.UNBOUND_CLOUD_SYNC}
+					icon={<Discord.TableRowIcon source={Icons.CloudIcon} />}
+					arrow
+					onPress={() => navigation.push(Screens.CloudSync)}
 				/>
 			</Discord.TableRowGroup>
 

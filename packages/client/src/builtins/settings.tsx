@@ -7,6 +7,7 @@ import { createPatcher } from 'possess';
 import MarketplacePage from '~/ui/settings/marketplace';
 import { Screens, CLIENT_NAME } from '~/lib/constants';
 import { findByProps, findByName } from '~/api/metro';
+import CloudSyncPage from '~/ui/settings/cloud-sync';
 import DeveloperPage from '~/ui/settings/developer';
 import { Discord } from '~/api/metro/components';
 import CustomScreen from '~/ui/settings/custom';
@@ -102,6 +103,12 @@ const builtInEntries: Record<string, SettingsEntry> = {
 		key: Screens.Toasts,
 		useTitle: () => Messages.UNBOUND_TOAST_SETTINGS,
 		getComponent: () => ToastsPage,
+		hidden: true,
+	}),
+	[Screens.CloudSync]: route({
+		key: Screens.CloudSync,
+		useTitle: () => Messages.UNBOUND_CLOUD_SYNC,
+		getComponent: () => CloudSyncPage,
 		hidden: true,
 	}),
 	[Screens.Assets]: route({
