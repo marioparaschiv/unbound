@@ -53,13 +53,6 @@ function GeneralPage() {
 					icon={<Discord.TableRowIcon source={Icons.RetryIcon} />}
 					onPress={() => reload()}
 				/>
-				<Discord.TableSwitchRow
-					label={Messages.UNBOUND_DEVELOPER_MODE}
-					subLabel={Messages.UNBOUND_DEVELOPER_MODE_DESC}
-					icon={<Discord.TableRowIcon source={Icons.WrenchIcon} />}
-					value={settings.get('developer-mode', false)}
-					onValueChange={() => settings.toggle('developer-mode', false)}
-				/>
 			</Discord.TableRowGroup>
 
 			<Discord.TableRowGroup title={Messages.UNBOUND_TOASTS}>
@@ -71,13 +64,18 @@ function GeneralPage() {
 				/>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup title={Messages.UNBOUND_STAFF_MODE}>
+			<Discord.TableRowGroup title={Messages.UNBOUND_ADVANCED}>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_STAFF_MODE}
-					subLabel={Messages.UNBOUND_STAFF_MODE_DESC}
 					icon={<Discord.TableRowIcon source={Icons.EyeIcon} />}
 					value={settings.get('staff-mode', false)}
 					onValueChange={() => settings.toggle('staff-mode', false)}
+				/>
+				<Discord.TableSwitchRow
+					label={Messages.UNBOUND_DEVELOPER_MODE}
+					icon={<Discord.TableRowIcon source={Icons.WrenchIcon} />}
+					value={settings.get('developer-mode', false)}
+					onValueChange={() => settings.toggle('developer-mode', false)}
 				/>
 			</Discord.TableRowGroup>
 
