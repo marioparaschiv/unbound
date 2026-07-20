@@ -124,6 +124,8 @@ export const Messages = createMessages(strings, () => currentLocale);
  */
 export function format(key: string, vars?: FormatVars): string {
 	const MessageFormat = getMessageFormat();
+	if (!MessageFormat) return Messages[key];
+
 	return new MessageFormat(Messages[key]).format(vars);
 }
 
@@ -137,6 +139,8 @@ export function defineLocalizations(table: StringStore): Localizations {
 
 	function format(key: string, vars?: FormatVars): string {
 		const MessageFormat = getMessageFormat();
+		if (!MessageFormat) return Messages[key];
+
 		return new MessageFormat(Messages[key]).format(vars);
 	}
 
