@@ -1,10 +1,10 @@
-import { rolldown, watch, type RolldownOptions } from 'rolldown';
+import { rolldown, watch, type RolldownOptions, type Plugin } from 'rolldown';
+import { existsSync, readdirSync } from 'node:fs';
 import { cp, mkdir, rm } from 'node:fs/promises';
 import { minify, swc } from 'rollup-plugin-swc3';
 import hermes from '@unbound-mod/rollup-plugin';
 import replace from '@rollup/plugin-replace';
 import Logger from '@unbound-app/logger';
-import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -21,6 +21,8 @@ import worklets from './plugins/worklets';
 
 const logger = Logger.create('Build');
 const pluginLoggers: Map<PropertyKey, Logger> = new Map();
+const localeSource = join(__dirname, '..', '..', '..', '..', 'i18n');
+const localeTarget = join(__dirname, '..', '..', 'dist', 'i18n');
 
 const config: RolldownOptions = {
 	input: 'src/entry.ts',
@@ -68,6 +70,7 @@ const config: RolldownOptions = {
 		minify({ compress: true, mangle: true }),
 		hermes(),
 		generateManifest(GIT_REVISION),
+		...(IS_DEV_BUILD ? [locales()] : []),
 	],
 
 	onLog(level, log) {
@@ -94,19 +97,31 @@ const config: RolldownOptions = {
  * builds fetch from GitHub raw instead.
  */
 async function copyLocales() {
-	const source = join(__dirname, '..', '..', '..', '..', 'i18n');
-	const target = join(__dirname, '..', '..', 'dist', 'i18n');
-
-	if (!existsSync(source)) {
-		logger.warn(`No i18n/ directory at ${source}; skipping locale copy.`);
+	if (!existsSync(localeSource)) {
+		logger.warn(`No i18n/ directory at ${localeSource}; skipping locale copy.`);
 		return;
 	}
 
-	await rm(target, { recursive: true, force: true });
-	await mkdir(target, { recursive: true });
-	await cp(source, target, { recursive: true });
+	await rm(localeTarget, { recursive: true, force: true });
+	await mkdir(localeTarget, { recursive: true });
+	await cp(localeSource, localeTarget, { recursive: true });
 
 	logger.success('Copied i18n/ locale tables into dist/i18n.');
+}
+
+/** Watches and copies the locale tables as part of every dev build cycle. */
+function locales(): Plugin {
+	return {
+		name: 'locales',
+		buildStart() {
+			if (!existsSync(localeSource)) return;
+
+			for (const file of readdirSync(localeSource).filter((file) => file.endsWith('.json'))) {
+				this.addWatchFile(join(localeSource, file));
+			}
+		},
+		writeBundle: copyLocales,
+	};
 }
 
 async function build() {
@@ -129,8 +144,6 @@ async function build() {
 		}
 
 		await bundle.close();
-
-		if (IS_DEV_BUILD) await copyLocales();
 
 		const endTime = performance.now();
 		const duration = (endTime - startTime).toFixed(2);
