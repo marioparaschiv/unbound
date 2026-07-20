@@ -12,6 +12,7 @@
 	"UNBOUND_RECOVERY_MODE_DESC": "Prevents all addons from loading while enabled.",
 	"UNBOUND_DEVELOPER_MODE": "Developer Mode",
 	"UNBOUND_RESTART": "Restart",
+	"UNBOUND_RESTART_CONFIRM": "Are you sure you want to restart the app?",
 	"UNBOUND_ADVANCED": "Advanced",
 	"UNBOUND_STAFF_MODE": "Discord Staff Settings",
 	"UNBOUND_TOAST_SETTINGS": "Toast Settings",

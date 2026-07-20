@@ -38,6 +38,21 @@ function GeneralPage() {
 	const settings = useSettingsStore('unbound');
 	const bytecode = useMemo(() => getRuntimeProperties()['Bytecode Version'], []);
 
+	function confirmRestart() {
+		Discord.showConfirmModal({
+			title: Messages.UNBOUND_RESTART,
+			content: Messages.UNBOUND_RESTART_CONFIRM,
+			confirmText: Messages.UNBOUND_RESTART,
+			cancelText: Messages.UNBOUND_CANCEL,
+			onConfirm: reload,
+		});
+	}
+
+	function setRecoveryMode(value: boolean) {
+		settings.set('recovery', value);
+		confirmRestart();
+	}
+
 	return (
 		<Page>
 			<Discord.TableRowGroup title={Messages.UNBOUND_GENERAL}>
@@ -46,12 +61,12 @@ function GeneralPage() {
 					subLabel={Messages.UNBOUND_RECOVERY_MODE_DESC}
 					icon={<Discord.TableRowIcon source={Icons.WrenchIcon} />}
 					value={settings.get('recovery', false)}
-					onValueChange={() => settings.toggle('recovery', false)}
+					onValueChange={setRecoveryMode}
 				/>
 				<Discord.TableRow
 					label={Messages.UNBOUND_RESTART}
 					icon={<Discord.TableRowIcon source={Icons.RetryIcon} />}
-					onPress={() => reload()}
+					onPress={confirmRestart}
 				/>
 			</Discord.TableRowGroup>
 
