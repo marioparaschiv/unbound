@@ -4,13 +4,14 @@ import type { PluginEntity } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 import { createPatcher } from 'possess';
 
-import storage, { type SettingsPayload } from '~/api/storage';
 import { DEBUGGER_ADDRESS } from '~/lib/constants';
 import { plugins } from '~/managers/plugins';
 import { showToast } from '~/api/toasts';
+import storage from '~/api/storage';
 
 const Patcher = createPatcher('Debugger');
 const Logger = createLogger('Debugger');
+const Settings = storage.getStore('unbound');
 
 // How long to wait before re-dialling the bridge after a drop or failed attempt, so a reloaded app
 // or a restarted bridge reconnects on its own without waiting for the next AppState transition.
@@ -21,23 +22,40 @@ let sending = false;
 let stopped = false;
 let backgrounded = false;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-let appStateSubscription: { remove: () => void } | null = null;
 
-const listeners = new Set<(payload: any) => void>();
-// Unsubscribes for the reload toast wiring, torn down alongside the socket in stop().
-const reloadUnsubscribers = new Set<() => void>();
+const disposers = new Set<() => void>();
 
 export function start() {
 	stopped = false;
 
 	patchLoggingHook();
-	attachAppStateListener();
-	attachSettingsListener();
-	attachReloadToasts();
+
+	// start() is re-entered by the settings listener on toggle; the disposers already registered mean
+	// the subscriptions below are live, and stacking a second set would fire every toast twice.
+	if (!disposers.size) {
+		disposers.add(listenToAppState());
+		disposers.add(listenToSettings());
+		for (const dispose of listenToReloads()) disposers.add(dispose);
+	}
 
 	// The socket only carries data reliably once the app is interactive, so connect on AppState
 	// `active`. Attempt once now too, in case the app is already active and won't fire a transition.
 	connect();
+}
+
+export function stop() {
+	stopped = true;
+	Patcher.unpatchAll();
+
+	clearReconnectTimer();
+	closeSocket();
+
+	for (const dispose of disposers) dispose();
+	disposers.clear();
+}
+
+export function shouldStart() {
+	return Settings.get('debugger.enabled', false);
 }
 
 function connect(isReconnect = false) {
@@ -45,10 +63,7 @@ function connect(isReconnect = false) {
 	if (ws || stopped) return;
 
 	// A retry beat us to it; the pending attempt will run instead.
-	if (reconnectTimer) {
-		clearTimeout(reconnectTimer);
-		reconnectTimer = null;
-	}
+	clearReconnectTimer();
 
 	const address = resolveAddress();
 
@@ -88,7 +103,7 @@ function connect(isReconnect = false) {
 // reconnect the change triggers. Falls back to the address baked in at build time, which tracks the
 // dev host and is empty in production builds.
 function resolveAddress() {
-	return storage.get('unbound', 'debugger.address', '') || DEBUGGER_ADDRESS;
+	return Settings.get('debugger.address', '') || DEBUGGER_ADDRESS;
 }
 
 function scheduleReconnect() {
@@ -100,6 +115,20 @@ function scheduleReconnect() {
 		reconnectTimer = null;
 		connect(true);
 	}, RECONNECT_DELAY_MS);
+}
+
+function clearReconnectTimer() {
+	if (!reconnectTimer) return;
+
+	clearTimeout(reconnectTimer);
+	reconnectTimer = null;
+}
+
+function closeSocket() {
+	if (!ws) return;
+
+	if (ws.readyState === WebSocket.OPEN) ws.close();
+	ws = null;
 }
 
 function handleMessage(raw: any) {
@@ -169,39 +198,6 @@ function inspect(value: any): string {
 	}
 }
 
-export function stop() {
-	stopped = true;
-	Patcher.unpatchAll();
-
-	if (reconnectTimer) {
-		clearTimeout(reconnectTimer);
-		reconnectTimer = null;
-	}
-
-	if (ws) {
-		if (ws.readyState === WebSocket.OPEN) ws.close();
-		ws = null;
-	}
-
-	if (appStateSubscription) {
-		appStateSubscription.remove();
-		appStateSubscription = null;
-	}
-
-	for (const listener of listeners) {
-		storage.removeListener(listener);
-	}
-
-	listeners.clear();
-
-	for (const unsubscribe of reloadUnsubscribers) unsubscribe();
-	reloadUnsubscribers.clear();
-}
-
-export function shouldStart() {
-	return storage.get('unbound', 'debugger.enabled', false);
-}
-
 function patchLoggingHook() {
 	Patcher.before(globalThis, 'nativeLoggingHook', ({ args }) => {
 		const [message, level] = args;
@@ -223,10 +219,10 @@ function patchLoggingHook() {
 	});
 }
 
-function attachAppStateListener() {
+function listenToAppState() {
 	const { AppState } = globalThis.ReactNative;
 
-	appStateSubscription = AppState.addEventListener('change', (state: string) => {
+	const subscription = AppState.addEventListener('change', (state: string) => {
 		switch (state) {
 			case 'active':
 				backgrounded = false;
@@ -234,48 +230,43 @@ function attachAppStateListener() {
 				break;
 			case 'background':
 				backgrounded = true;
-				if (reconnectTimer) {
-					clearTimeout(reconnectTimer);
-					reconnectTimer = null;
-				}
+				clearReconnectTimer();
 				if (ws?.readyState === WebSocket.OPEN) ws.close();
 				break;
 		}
 	});
+
+	return () => subscription.remove();
 }
 
-function attachSettingsListener() {
-	const handler = (payload: SettingsPayload) => {
-		if (!payload.key?.startsWith('debugger.')) return;
+function listenToSettings() {
+	return Settings.addListener(
+		(payload) => Boolean(payload.key?.startsWith('debugger.')),
+		(payload) => {
+			if (payload.key === 'debugger.enabled') {
+				if (payload.value) {
+					start();
+				} else {
+					stop();
+				}
 
-		if (payload.key === 'debugger.enabled') {
-			if (payload.value) {
-				start();
-			} else {
-				stop();
+				return;
 			}
-		} else if (payload.key === 'debugger.address') {
-			if (ws?.readyState === WebSocket.OPEN) {
+
+			if (payload.key === 'debugger.address' && ws?.readyState === WebSocket.OPEN) {
 				Logger.info('Address changed, reconnecting...');
 				// The close handler clears `ws` and schedules the retry; dialling here would hit the
 				// `if (ws) return` guard, since `close()` doesn't clear the socket synchronously.
 				ws.close();
 			}
-		}
-	};
-
-	storage.on('changed', handler);
-	listeners.add(handler);
+		},
+	);
 }
 
 // Surface hot reloads on the device itself: the debugger builtin only runs when the debugger is
 // enabled, so this is inherently dev-gated. A push-driven reload emits `reloaded`/`reload-error` on
 // the plugins manager; turn each into a toast naming the plugin.
-function attachReloadToasts() {
-	// start() isn't idempotent (the settings listener re-enters it on toggle), so guard against
-	// stacking a second listener pair that would fire every toast twice.
-	if (reloadUnsubscribers.size) return;
-
+function listenToReloads() {
 	const onReloaded = (entity: PluginEntity) => {
 		showToast({
 			id: `reload:${entity.id}`,
@@ -295,8 +286,10 @@ function attachReloadToasts() {
 	plugins.on('reloaded', onReloaded);
 	plugins.on('reload-error', onReloadError);
 
-	reloadUnsubscribers.add(() => void plugins.off('reloaded', onReloaded));
-	reloadUnsubscribers.add(() => void plugins.off('reload-error', onReloadError));
+	return [
+		() => void plugins.off('reloaded', onReloaded),
+		() => void plugins.off('reload-error', onReloadError),
+	];
 }
 
 export default { start, stop, shouldStart };
