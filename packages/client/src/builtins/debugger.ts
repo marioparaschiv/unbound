@@ -276,19 +276,21 @@ function attachReloadToasts() {
 	// stacking a second listener pair that would fire every toast twice.
 	if (reloadUnsubscribers.size) return;
 
-	const onReloaded = (entity: PluginEntity) =>
+	const onReloaded = (entity: PluginEntity) => {
 		showToast({
 			id: `reload:${entity.id}`,
 			title: 'Hot reload',
 			content: `Reloaded ${entity.data.name}.`,
 		});
+	};
 
-	const onReloadError = (entity: PluginEntity, error: Error) =>
+	const onReloadError = (entity: PluginEntity, error: Error) => {
 		showToast({
 			id: `reload:${entity.id}`,
 			title: 'Hot reload failed',
 			content: `${entity.data.name} failed to reload: ${error.message}`,
 		});
+	};
 
 	plugins.on('reloaded', onReloaded);
 	plugins.on('reload-error', onReloadError);
