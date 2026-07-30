@@ -58,7 +58,7 @@ export function createContext(port: number): LazyContext {
  * @returns Whether a device connected within the timeout.
  */
 export function waitForDevice(
-	client: ControllerClient,
+	client: Pick<ControllerClient, 'isDeviceConnected'>,
 	timeoutMs: number = DEVICE_WAIT_TIMEOUT_MS,
 ): Promise<boolean> {
 	return new Promise((resolve) => {

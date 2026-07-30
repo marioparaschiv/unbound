@@ -131,7 +131,13 @@ function isManifestPath(changedPath: string): boolean {
 }
 
 function toBuiltAddon(addon: DiscoveredAddon): BuiltAddon {
-	return { id: addon.id, kind: addon.kind, dir: addon.dir, output: addon.output };
+	return {
+		id: addon.id,
+		kind: addon.kind,
+		dir: addon.dir,
+		output: addon.output,
+		static: addon.static,
+	};
 }
 
 export default DevServer;
