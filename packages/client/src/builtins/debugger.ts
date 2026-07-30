@@ -4,7 +4,6 @@ import type { PluginEntity } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 import { createPatcher } from 'possess';
 
-import { reloadToast, reloadErrorToast } from '~/builtins/reload-toasts';
 import storage, { type SettingsPayload } from '~/api/storage';
 import { DEBUGGER_ADDRESS } from '~/lib/constants';
 import { plugins } from '~/managers/plugins';
@@ -277,9 +276,19 @@ function attachReloadToasts() {
 	// stacking a second listener pair that would fire every toast twice.
 	if (reloadUnsubscribers.size) return;
 
-	const onReloaded = (entity: PluginEntity) => showToast(reloadToast(entity));
+	const onReloaded = (entity: PluginEntity) =>
+		showToast({
+			id: `reload:${entity.id}`,
+			title: 'Hot reload',
+			content: `Reloaded ${entity.data.name}.`,
+		});
+
 	const onReloadError = (entity: PluginEntity, error: Error) =>
-		showToast(reloadErrorToast(entity, error));
+		showToast({
+			id: `reload:${entity.id}`,
+			title: 'Hot reload failed',
+			content: `${entity.data.name} failed to reload: ${error.message}`,
+		});
 
 	plugins.on('reloaded', onReloaded);
 	plugins.on('reload-error', onReloadError);
