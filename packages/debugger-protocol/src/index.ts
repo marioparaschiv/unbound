@@ -1,13 +1,16 @@
+import type { AddonManifest } from '@unbound-app/types';
+
 /**
  * The wire protocol shared by the bridge, the on-device debugger, and any controller (the terminal
  * REPL or an MCP client). Everything crossing a socket is a JSON-encoded {@link BridgeMessage}.
  *
  * Two planes travel over the single device socket:
- *   - control: a controller issues an {@link EvalRequest}; the device answers with the matching
- *     {@link EvalResult} (correlated by `id`).
+ *   - control: a controller issues an {@link EvalRequest} or {@link PluginPushRequest}; the device
+ *     answers with the matching {@link EvalResult} / {@link PluginPushResult} (correlated by `id`).
  *   - telemetry: the device streams {@link LogMessage}s, broadcast to every controller.
  *
- * Device-safe and dependency-free so it can be bundled into the React Native client.
+ * Device-safe and dependency-free at runtime (the manifest type is import-erased) so it can be
+ * bundled into the React Native client.
  */
 
 /** A request to evaluate code on the device, sent controller → bridge → device. */
@@ -36,6 +39,29 @@ export interface EvalResult {
 	logs?: LogMessage[];
 }
 
+/**
+ * A request to hot-reload a plugin on the device, sent controller → bridge → device. Carries the
+ * freshly built bundle and manifest so the device swaps them in without a re-fetch.
+ */
+export interface PluginPushRequest {
+	type: 'plugin-push';
+	/** Correlation id echoed back on the matching {@link PluginPushResult}. */
+	id: string;
+	addonId: string;
+	bundle: string;
+	manifest: AddonManifest;
+}
+
+/** The outcome of a {@link PluginPushRequest}, sent device → bridge → the one waiting controller. */
+export interface PluginPushResult {
+	type: 'plugin-push-result';
+	/** The `id` of the {@link PluginPushRequest} this answers. */
+	id: string;
+	ok: boolean;
+	/** Present when `!ok`; the reload failure, inspected. */
+	error?: string;
+}
+
 /** A `console.*` / `nativeLoggingHook` line, streamed device → bridge → all controllers. */
 export interface LogMessage {
 	type: 'log';
@@ -51,7 +77,13 @@ export interface DeviceStatus {
 }
 
 /** Every framed message on the wire. */
-export type BridgeMessage = EvalRequest | EvalResult | LogMessage | DeviceStatus;
+export type BridgeMessage =
+	| EvalRequest
+	| EvalResult
+	| PluginPushRequest
+	| PluginPushResult
+	| LogMessage
+	| DeviceStatus;
 
 /** The default port the bridge listens on and controllers dial. */
 export const DEFAULT_BRIDGE_PORT = 9090;
@@ -62,6 +94,8 @@ export const CONTROLLER_ENDPOINT_MARKER = 'mcp';
 const MESSAGE_TYPES = new Set<BridgeMessage['type']>([
 	'eval',
 	'eval-result',
+	'plugin-push',
+	'plugin-push-result',
 	'log',
 	'device-status',
 ]);

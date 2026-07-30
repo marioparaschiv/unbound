@@ -1,4 +1,6 @@
-import type { EvalResult, LogMessage } from './index';
+import type { AddonManifest } from '@unbound-app/types';
+
+import type { EvalResult, LogMessage, PluginPushResult } from './index';
 
 import { serializeMessage, parseMessage } from './index';
 
@@ -15,6 +17,18 @@ interface PendingEval {
 	logs: LogMessage[];
 }
 
+interface PendingPush {
+	resolve: (result: PluginPushResult) => void;
+	timer: ReturnType<typeof setTimeout>;
+}
+
+/** The bundle and manifest to hot-reload for a single plugin, correlated to its result by id. */
+type PluginPush = {
+	addonId: string;
+	bundle: string;
+	manifest: AddonManifest;
+};
+
 /** How long the client waits for a result before failing an eval (must exceed the bridge's own). */
 const EVAL_TIMEOUT_MS = 15_000;
 
@@ -24,6 +38,7 @@ const RECONNECT_DELAY_MS = 1_000;
 export class ControllerClient {
 	private ws: WebSocket | null = null;
 	private readonly pending = new Map<string, PendingEval>();
+	private readonly pendingPushes = new Map<string, PendingPush>();
 	private deviceConnected = false;
 	private closed = false;
 	private readonly url: string;
@@ -59,7 +74,18 @@ export class ControllerClient {
 			});
 		}
 
+		for (const [id, entry] of this.pendingPushes) {
+			clearTimeout(entry.timer);
+			entry.resolve({
+				type: 'plugin-push-result',
+				id,
+				ok: false,
+				error: 'Debugger client shut down.',
+			});
+		}
+
 		this.pending.clear();
+		this.pendingPushes.clear();
 	}
 
 	/** @description Whether a device is currently connected to the bridge. */
@@ -105,6 +131,41 @@ export class ControllerClient {
 		});
 	}
 
+	/**
+	 * @description Pushes a freshly built plugin to the device via the bridge and resolves with the
+	 * device's reload outcome. Fails fast if the socket isn't open or the bridge doesn't answer in time.
+	 * @param push The addon id plus the built bundle and manifest to swap in.
+	 * @returns The device's {@link PluginPushResult}.
+	 */
+	pushPlugin(push: PluginPush): Promise<PluginPushResult> {
+		const id = crypto.randomUUID();
+
+		return new Promise<PluginPushResult>((resolve) => {
+			if (this.ws?.readyState !== WebSocket.OPEN) {
+				resolve({
+					type: 'plugin-push-result',
+					id,
+					ok: false,
+					error: 'Not connected to the debugger bridge.',
+				});
+				return;
+			}
+
+			const timer = setTimeout(() => {
+				this.pendingPushes.delete(id);
+				resolve({
+					type: 'plugin-push-result',
+					id,
+					ok: false,
+					error: `Plugin push timed out after ${EVAL_TIMEOUT_MS}ms.`,
+				});
+			}, EVAL_TIMEOUT_MS);
+
+			this.pendingPushes.set(id, { resolve, timer });
+			this.ws.send(serializeMessage({ type: 'plugin-push', id, ...push }));
+		});
+	}
+
 	private onMessage(raw: string) {
 		const message = parseMessage(raw);
 		if (!message) return;
@@ -130,6 +191,16 @@ export class ControllerClient {
 			this.pending.delete(message.id);
 			// Return the captured side-effect logs alongside the value.
 			entry.resolve({ ...message, logs: entry.logs });
+			return;
+		}
+
+		if (message.type === 'plugin-push-result') {
+			const entry = this.pendingPushes.get(message.id);
+			if (!entry) return;
+
+			clearTimeout(entry.timer);
+			this.pendingPushes.delete(message.id);
+			entry.resolve(message);
 		}
 	}
 

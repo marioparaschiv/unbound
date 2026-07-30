@@ -1,4 +1,10 @@
-import type { BridgeMessage, EvalResult, LogMessage } from '@unbound-app/debugger-protocol';
+import type {
+	LogMessage,
+	EvalResult,
+	BridgeMessage,
+	PluginPushResult,
+	PluginPushRequest,
+} from '@unbound-app/debugger-protocol';
 
 /**
  * The bridge's routing core, transport-agnostic. Holds the single device socket and the set of
@@ -19,6 +25,14 @@ interface PendingEval {
 	timer: ReturnType<typeof setTimeout>;
 }
 
+interface PendingPush {
+	/** Delivers the device's reload outcome back to the controller that issued the push. */
+	deliver: (result: PluginPushResult) => void;
+	timer: ReturnType<typeof setTimeout>;
+	/** The controller that issued this push, so a controller detach can fail its in-flight pushes. */
+	origin: SocketLike;
+}
+
 export const state: {
 	device: SocketLike | null;
 	controllers: Set<SocketLike>;
@@ -28,6 +42,7 @@ export const state: {
 };
 
 const pending = new Map<string, PendingEval>();
+const pendingPushes = new Map<string, PendingPush>();
 const logListeners = new Set<(log: LogMessage) => void>();
 const deviceListeners = new Set<(connected: boolean) => void>();
 const evalListeners = new Set<(code: string) => void>();
@@ -73,6 +88,17 @@ export function detachDevice(socket: SocketLike) {
 		pending.delete(id);
 	}
 
+	for (const [id, entry] of pendingPushes) {
+		clearTimeout(entry.timer);
+		entry.deliver({
+			type: 'plugin-push-result',
+			id,
+			ok: false,
+			error: 'Device disconnected before the reload completed.',
+		});
+		pendingPushes.delete(id);
+	}
+
 	broadcastDeviceStatus(false);
 }
 
@@ -98,6 +124,12 @@ export function detachController(socket: SocketLike) {
 		pending.delete(id);
 	}
 
+	for (const [id, entry] of pendingPushes) {
+		if (entry.origin !== socket) continue;
+		clearTimeout(entry.timer);
+		pendingPushes.delete(id);
+	}
+
 	controllerDelivery.delete(socket);
 
 	for (const listener of controllerListeners) listener(false, state.controllers.size);
@@ -121,6 +153,40 @@ export function evaluateForController(socket: SocketLike, id: string, code: stri
 		for (const listener of resultListeners) listener(result);
 		deliver(result);
 	});
+}
+
+/**
+ * @description Forwards a controller's {@link PluginPushRequest} to the device and delivers the
+ * id-correlated {@link PluginPushResult} back over that same controller's socket. Replies with an
+ * error frame instead if no device is connected or it doesn't answer within {@link EVAL_TIMEOUT_MS}.
+ * @param socket The controller that issued the push.
+ * @param request The push to forward verbatim; its `id` correlates the result.
+ */
+export function pushPluginForController(socket: SocketLike, request: PluginPushRequest) {
+	const deliver = getControllerPushDelivery(socket);
+
+	if (!state.device) {
+		deliver({
+			type: 'plugin-push-result',
+			id: request.id,
+			ok: false,
+			error: 'No device is connected to the debugger.',
+		});
+		return;
+	}
+
+	const timer = setTimeout(() => {
+		pendingPushes.delete(request.id);
+		deliver({
+			type: 'plugin-push-result',
+			id: request.id,
+			ok: false,
+			error: `Plugin push timed out after ${EVAL_TIMEOUT_MS}ms.`,
+		});
+	}, EVAL_TIMEOUT_MS);
+
+	pendingPushes.set(request.id, { deliver, timer, origin: socket });
+	state.device.send(JSON.stringify(request));
 }
 
 /**
@@ -178,6 +244,17 @@ export function handleDeviceMessage(message: BridgeMessage) {
 		return;
 	}
 
+	if (message.type === 'plugin-push-result') {
+		const entry = pendingPushes.get(message.id);
+		if (!entry) return;
+
+		clearTimeout(entry.timer);
+		pendingPushes.delete(message.id);
+		entry.deliver(message);
+
+		return;
+	}
+
 	if (message.type === 'log') {
 		for (const socket of state.controllers) socket.send(JSON.stringify(message));
 		for (const listener of logListeners) listener(message);
@@ -228,6 +305,12 @@ function getControllerDelivery(socket: SocketLike): (result: EvalResult) => void
 	controllerDelivery.set(socket, deliver);
 
 	return deliver;
+}
+
+// Pushes correlate to their controller by the pending entry's `origin`, so unlike eval delivery this
+// needn't be a stable per-socket closure — a fresh sender is fine.
+function getControllerPushDelivery(socket: SocketLike): (result: PluginPushResult) => void {
+	return (result) => socket.send(JSON.stringify(result));
 }
 
 function sendDeviceStatus(socket: SocketLike, connected: boolean) {

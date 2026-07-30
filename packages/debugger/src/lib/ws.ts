@@ -186,11 +186,16 @@ function handleDeviceMessage(raw: string) {
 function handleControllerMessage(ws: session.SocketLike, raw: string) {
 	const message = parseMessage(raw);
 
-	// The only thing a controller sends is an eval request; run it and deliver the id-correlated
+	// A controller sends either an eval request or a plugin-push; run it and deliver the id-correlated
 	// result back over this same controller's socket.
-	if (message?.type !== 'eval') return;
+	if (message?.type === 'eval') {
+		session.evaluateForController(ws, message.id, message.code);
+		return;
+	}
 
-	session.evaluateForController(ws, message.id, message.code);
+	if (message?.type === 'plugin-push') {
+		session.pushPluginForController(ws, message);
+	}
 }
 
 export function getLocalAddress() {
