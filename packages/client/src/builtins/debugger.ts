@@ -1,9 +1,14 @@
+import type { PluginPushRequest } from '@unbound-app/debugger-protocol';
 import { parseMessage } from '@unbound-app/debugger-protocol';
+import type { PluginEntity } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 import { createPatcher } from 'possess';
 
+import { reloadToast, reloadErrorToast } from '~/builtins/reload-toasts';
 import storage, { type SettingsPayload } from '~/api/storage';
 import { DEBUGGER_ADDRESS } from '~/lib/constants';
+import { plugins } from '~/managers/plugins';
+import { showToast } from '~/api/toasts';
 
 const Patcher = createPatcher('Debugger');
 const Logger = createLogger('Debugger');
@@ -20,6 +25,8 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let appStateSubscription: { remove: () => void } | null = null;
 
 const listeners = new Set<(payload: any) => void>();
+// Unsubscribes for the reload toast wiring, torn down alongside the socket in stop().
+const reloadUnsubscribers = new Set<() => void>();
 
 export function start() {
 	stopped = false;
@@ -27,6 +34,7 @@ export function start() {
 	patchLoggingHook();
 	attachAppStateListener();
 	attachSettingsListener();
+	attachReloadToasts();
 
 	// The socket only carries data reliably once the app is interactive, so connect on AppState
 	// `active`. Attempt once now too, in case the app is already active and won't fire a transition.
@@ -73,7 +81,7 @@ function connect(isReconnect = false) {
 	});
 
 	ws.addEventListener('message', (message) => {
-		handleEvalRequest(message.data);
+		handleMessage(message.data);
 	});
 }
 
@@ -95,23 +103,46 @@ function scheduleReconnect() {
 	}, RECONNECT_DELAY_MS);
 }
 
-function handleEvalRequest(raw: any) {
+function handleMessage(raw: any) {
 	const request = parseMessage(raw);
 
-	if (request?.type !== 'eval') return;
+	if (request?.type === 'eval') {
+		handleEvalRequest(request.id, request.code);
+		return;
+	}
 
+	if (request?.type === 'plugin-push') {
+		handlePluginPush(request);
+	}
+}
+
+function handleEvalRequest(id: string, code: string) {
 	// Await thenables so `await`-style expressions resolve to their value, not a pending Promise.
 	Promise.resolve()
 		.then(() => {
 			// oxlint-disable-next-line no-eval
-			return (0, eval)(request.code);
+			return (0, eval)(code);
 		})
 		.then(
-			(value) =>
-				reply({ type: 'eval-result', id: request.id, ok: true, value: inspect(value) }),
-			(error) =>
-				reply({ type: 'eval-result', id: request.id, ok: false, error: inspect(error) }),
+			(value) => reply({ type: 'eval-result', id, ok: true, value: inspect(value) }),
+			(error) => reply({ type: 'eval-result', id, ok: false, error: inspect(error) }),
 		);
+}
+
+// A thin transport caller: the reload lifecycle lives on the Plugins manager. Report the manager's
+// own returned outcome straight back over the wire so the CLI stages the reload result.
+function handlePluginPush(request: PluginPushRequest) {
+	plugins.reload(request.addonId, request.bundle, request.manifest).then(
+		(result) =>
+			reply({
+				type: 'plugin-push-result',
+				id: request.id,
+				ok: result.ok,
+				error: result.ok ? void 0 : inspect(result.error),
+			}),
+		(error) =>
+			reply({ type: 'plugin-push-result', id: request.id, ok: false, error: inspect(error) }),
+	);
 }
 
 function reply(payload: object) {
@@ -163,6 +194,9 @@ export function stop() {
 	}
 
 	listeners.clear();
+
+	for (const unsubscribe of reloadUnsubscribers) unsubscribe();
+	reloadUnsubscribers.clear();
 }
 
 export function shouldStart() {
@@ -233,6 +267,25 @@ function attachSettingsListener() {
 
 	storage.on('changed', handler);
 	listeners.add(handler);
+}
+
+// Surface hot reloads on the device itself: the debugger builtin only runs when the debugger is
+// enabled, so this is inherently dev-gated. A push-driven reload emits `reloaded`/`reload-error` on
+// the plugins manager; turn each into a toast naming the plugin.
+function attachReloadToasts() {
+	// start() isn't idempotent (the settings listener re-enters it on toggle), so guard against
+	// stacking a second listener pair that would fire every toast twice.
+	if (reloadUnsubscribers.size) return;
+
+	const onReloaded = (entity: PluginEntity) => showToast(reloadToast(entity));
+	const onReloadError = (entity: PluginEntity, error: Error) =>
+		showToast(reloadErrorToast(entity, error));
+
+	plugins.on('reloaded', onReloaded);
+	plugins.on('reload-error', onReloadError);
+
+	reloadUnsubscribers.add(() => void plugins.off('reloaded', onReloaded));
+	reloadUnsubscribers.add(() => void plugins.off('reload-error', onReloadError));
 }
 
 export default { start, stop, shouldStart };
