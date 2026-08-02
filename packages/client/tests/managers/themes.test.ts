@@ -1,5 +1,7 @@
 import { describe, expect, test, mock, beforeEach } from 'bun:test';
 
+import { installLoggerRecorder } from '../helpers/logger-fixture';
+
 // `themes.ts` builds a module-level singleton at import, which reaches storage for its settings
 // store; the stubs must land before the dynamic import even for tests using a fresh instance.
 const settings: Record<string, unknown> = {};
@@ -44,6 +46,8 @@ import ThemeStore from '~/stores/themes';
 
 import { defineGlobal } from '../helpers/metro-fixture';
 import { resetStore } from '../helpers/store-fixture';
+
+installLoggerRecorder();
 
 const { Themes } = await import('~/managers/themes');
 
