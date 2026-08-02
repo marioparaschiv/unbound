@@ -1,5 +1,7 @@
 import { describe, expect, test, mock, beforeEach } from 'bun:test';
 
+import { installLoggerRecorder } from './helpers/logger-fixture';
+
 // The base Addons manager reaches native FS and storage through these modules, which pull in
 // react-native. Stub both so the pure lifecycle logic loads under bun with no device harness.
 const writes: string[] = [];
@@ -28,6 +30,8 @@ mock.module('~/api/storage', () => {
 });
 
 import type { Addon, AddonManifest } from '@unbound-app/types';
+
+installLoggerRecorder();
 
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.

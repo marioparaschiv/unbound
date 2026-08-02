@@ -1,5 +1,6 @@
 import { describe, expect, test, beforeEach } from 'bun:test';
 
+import { installLoggerRecorder } from '../helpers/logger-fixture';
 import { defineGlobal } from '../helpers/metro-fixture';
 
 // Split from `loader.test.ts`: `deferUntilReady` short-circuits on a pre-existing `__r`, and the
@@ -14,6 +15,8 @@ existingRequire.importAll = existingRequire;
 defineGlobal<Record<string, unknown>>('window', { __r: existingRequire });
 defineGlobal<MetroRequire>('__r', existingRequire);
 defineGlobal<(message: string) => void>('alert', (message) => void alerts.push(message));
+
+installLoggerRecorder();
 
 const deferUntilReady = (await import('~/lib/loader')).default;
 
