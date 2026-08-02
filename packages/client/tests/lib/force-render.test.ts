@@ -5,6 +5,7 @@ import * as React from 'react';
 // The unit reads React's private dispatcher slot, which is `null` outside a render pass. Install a
 // sentinel object there so every key it swaps has a distinguishable original to restore.
 type Dispatcher = Record<string, unknown>;
+type ContextObject = { _currentValue: unknown };
 type ReactInternals = { H: Dispatcher | null };
 type ReactWithInternals = typeof React & {
 	__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE: ReactInternals;
@@ -277,7 +278,7 @@ describe('hook overrides seen from inside a component', () => {
 		let read: unknown;
 
 		forceRender(() => {
-			const useContext = hook<(context: { _currentValue: unknown }) => unknown>('useContext');
+			const useContext = hook<(context: ContextObject) => unknown>('useContext');
 			read = useContext({ _currentValue: 'provided' });
 
 			return element(null);

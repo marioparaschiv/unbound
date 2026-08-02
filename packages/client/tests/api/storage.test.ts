@@ -17,6 +17,8 @@ const Storage = await import('~/api/storage');
 
 type RecordableEvent = 'changed' | 'set' | 'removed' | 'cleared';
 
+type ToggledPayload = { prev: unknown; value: unknown };
+
 /** Records every settings event by name, preserving emission order. */
 function recordEvents(names: RecordableEvent[]) {
 	const log: string[] = [];
@@ -144,8 +146,8 @@ describe('toggle', () => {
 	test('the toggled payload carries the previous and next value', () => {
 		Storage.set('app', 'enabled', true);
 
-		let payload: { prev: unknown; value: unknown } | undefined;
-		function handler(p: { prev: unknown; value: unknown }) {
+		let payload: ToggledPayload | undefined;
+		function handler(p: ToggledPayload) {
 			payload = p;
 		}
 
