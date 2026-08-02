@@ -135,42 +135,41 @@ function handleMessage(raw: any) {
 	const request = parseMessage(raw);
 
 	if (request?.type === 'eval') {
-		handleEvalRequest(request.id, request.code);
+		void handleEvalRequest(request.id, request.code);
 		return;
 	}
 
 	if (request?.type === 'plugin-push') {
-		handlePluginPush(request);
+		void handlePluginPush(request);
 	}
 }
 
-function handleEvalRequest(id: string, code: string) {
-	// Await thenables so `await`-style expressions resolve to their value, not a pending Promise.
-	Promise.resolve()
-		.then(() => {
-			// oxlint-disable-next-line no-eval
-			return (0, eval)(code);
-		})
-		.then(
-			(value) => reply({ type: 'eval-result', id, ok: true, value: inspect(value) }),
-			(error) => reply({ type: 'eval-result', id, ok: false, error: inspect(error) }),
-		);
+async function handleEvalRequest(id: string, code: string) {
+	try {
+		// Await so `await`-style expressions resolve to their value, not a pending Promise.
+		// oxlint-disable-next-line no-eval
+		const value = await (0, eval)(code);
+		reply({ type: 'eval-result', id, ok: true, value: inspect(value) });
+	} catch (error: any) {
+		reply({ type: 'eval-result', id, ok: false, error: inspect(error) });
+	}
 }
 
 // A thin transport caller: the reload lifecycle lives on the Plugins manager. Report the manager's
 // own returned outcome straight back over the wire so the CLI stages the reload result.
-function handlePluginPush(request: PluginPushRequest) {
-	plugins.reload(request.addonId, request.bundle, request.manifest).then(
-		(result) =>
-			reply({
-				type: 'plugin-push-result',
-				id: request.id,
-				ok: result.ok,
-				error: result.ok ? void 0 : inspect(result.error),
-			}),
-		(error) =>
-			reply({ type: 'plugin-push-result', id: request.id, ok: false, error: inspect(error) }),
-	);
+async function handlePluginPush(request: PluginPushRequest) {
+	try {
+		const result = await plugins.reload(request.addonId, request.bundle, request.manifest);
+
+		reply({
+			type: 'plugin-push-result',
+			id: request.id,
+			ok: result.ok,
+			error: result.ok ? void 0 : inspect(result.error),
+		});
+	} catch (error: any) {
+		reply({ type: 'plugin-push-result', id: request.id, ok: false, error: inspect(error) });
+	}
 }
 
 function reply(payload: object) {
