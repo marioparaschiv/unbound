@@ -1,5 +1,6 @@
 import { describe, expect, test, beforeEach } from 'bun:test';
 
+import { installLoggerRecorder } from '../helpers/logger-fixture';
 import { defineGlobal } from '../helpers/metro-fixture';
 
 /** The host globals `~/lib/loader` reads: the registry factory plus both native entry points. */
@@ -16,6 +17,8 @@ const alerts: string[] = [];
 const loaderWindow: LoaderWindow = { Object };
 defineGlobal<LoaderWindow>('window', loaderWindow);
 defineGlobal<(message: string) => void>('alert', (message) => void alerts.push(message));
+
+installLoggerRecorder();
 
 const deferUntilReady = (await import('~/lib/loader')).default;
 
