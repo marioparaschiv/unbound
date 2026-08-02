@@ -117,6 +117,21 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	): Promise<ReloadResult> {
 		const resolved = this.resolve(entity);
 
+		// The target id and the manifest's id must agree: everything past here keys off `manifest.id`
+		// (persist, load, getEntity), so a mismatch would install a second addon under the new id and
+		// leave the old one running. Renaming an addon's id is out of scope for a hot swap — it changes
+		// the persisted state, on-disk folder, and settings key.
+		const targetId = typeof entity === 'string' ? entity : entity.id;
+
+		if (targetId !== manifest.id) {
+			const error = new Error(
+				`Push targeted ${targetId} but the manifest declares ${manifest.id}.`,
+			);
+			this.logger.error(`Failed to reload addon ${targetId}:`, error);
+
+			return { ok: false, error };
+		}
+
 		// Absent addon: install path over the socket bytes — load it fresh and persist it. load()
 		// consults the persisted state and starts it only if enabled.
 		if (!resolved) {

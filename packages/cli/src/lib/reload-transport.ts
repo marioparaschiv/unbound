@@ -1,7 +1,7 @@
 import type { ControllerClient } from '@unbound-app/debugger-protocol/controller';
 import type { AddonManifest } from '@unbound-app/types';
+import { readFileSync, existsSync } from 'node:fs';
 import { basename, join } from 'node:path';
-import { readFileSync } from 'node:fs';
 
 import { waitForDevice } from '~/lib/context';
 
@@ -106,7 +106,17 @@ function readBuiltAddon(addon: BuiltAddon): ReadAddon {
 	const bundleName = addon.static
 		? manifest.main
 		: basename(manifest.main).replace(/\.\w+$/, '.js');
-	const bundle = readFileSync(join(addon.output, bundleName), 'utf8');
+	const bundlePath = join(addon.output, bundleName);
+
+	// Hot reload assumes the build emits `<main-basename>.js` into `output`; a differently-named
+	// entry would otherwise surface as a bare ENOENT.
+	if (!existsSync(bundlePath)) {
+		throw new Error(
+			`Built bundle not found at ${bundlePath}. Hot reload expects the build to emit ${bundleName} into ${addon.output}.`,
+		);
+	}
+
+	const bundle = readFileSync(bundlePath, 'utf8');
 
 	return { manifest, bundle };
 }

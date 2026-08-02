@@ -118,4 +118,27 @@ describe('createReloadTransport', () => {
 
 		expect(client.pushes).toEqual([]);
 	});
+
+	test('a build that emits a differently-named bundle is reported with the expected path', async () => {
+		const client: FakeClient = { isDeviceConnected: true, pushes: [], result: ok };
+		const plugin = builtPlugin();
+
+		// The transport expects `index.js` (from `main: index.tsx`); the build wrote `bundle.js` instead.
+		rmSync(join(plugin.output, 'index.js'));
+		writeFileSync(join(plugin.output, 'bundle.js'), 'module.exports = {};');
+
+		const errors: string[] = [];
+		const original = process.stderr.write.bind(process.stderr);
+		process.stderr.write = ((chunk: any) => void errors.push(String(chunk))) as any;
+
+		try {
+			const transport = createReloadTransport(fakeContext(client));
+			await transport.reload(plugin);
+		} finally {
+			process.stderr.write = original;
+		}
+
+		expect(client.pushes).toEqual([]);
+		expect(errors.join('')).toContain(join(plugin.output, 'index.js'));
+	});
 });

@@ -192,6 +192,33 @@ describe('Addons.reload', () => {
 		expect(failure).toBeInstanceOf(Error);
 		expect(manager.errors.get('d')).toBeDefined();
 	});
+
+	test('a manifest id that differs from the target fails without touching the seeded addon', async () => {
+		const manifest = makeManifest('a');
+		manager.seed({
+			id: 'a',
+			data: manifest,
+			bundle: 'old',
+			instance: makeInstance('old', manager.log),
+			started: true,
+			failed: false,
+		});
+
+		const result = await manager.reload('a', 'new', makeManifest('renamed'));
+
+		expect(result.ok).toBe(false);
+		expect(manager.log).toEqual([]);
+		expect(manager.getEntity('a')?.bundle).toBe('old');
+		expect(manager.getEntity('renamed')).toBeUndefined();
+	});
+
+	test('a manifest id that differs from the target creates no phantom addon on the load path', async () => {
+		const result = await manager.reload('f', 'fresh', makeManifest('renamed'));
+
+		expect(result.ok).toBe(false);
+		expect(manager.entities.size).toBe(0);
+		expect(writes).toEqual([]);
+	});
 });
 
 describe('Manager wiring', () => {

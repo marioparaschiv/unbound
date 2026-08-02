@@ -163,7 +163,7 @@ export function evaluateForController(socket: SocketLike, id: string, code: stri
  * @param request The push to forward verbatim; its `id` correlates the result.
  */
 export function pushPluginForController(socket: SocketLike, request: PluginPushRequest) {
-	const deliver = getControllerPushDelivery(socket);
+	const deliver = (result: PluginPushResult) => socket.send(JSON.stringify(result));
 
 	if (!state.device) {
 		deliver({
@@ -305,12 +305,6 @@ function getControllerDelivery(socket: SocketLike): (result: EvalResult) => void
 	controllerDelivery.set(socket, deliver);
 
 	return deliver;
-}
-
-// Pushes correlate to their controller by the pending entry's `origin`, so unlike eval delivery this
-// needn't be a stable per-socket closure — a fresh sender is fine.
-function getControllerPushDelivery(socket: SocketLike): (result: PluginPushResult) => void {
-	return (result) => socket.send(JSON.stringify(result));
 }
 
 function sendDeviceStatus(socket: SocketLike, connected: boolean) {
