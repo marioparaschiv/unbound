@@ -11,7 +11,8 @@
 		"build": "bun --bun scripts/build/index.ts",
 		"build:dev": "bun --bun scripts/build/index.ts --dev",
 		"dev": "bun --bun scripts/dev",
-		"serve": "bun scripts/serve/start.ts"
+		"serve": "bun scripts/serve/start.ts",
+		"test": "bun test --isolate"
 	},
 	"dependencies": {
 		"@unbound-app/debugger-protocol": "workspace:*",

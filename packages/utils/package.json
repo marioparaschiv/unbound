@@ -10,6 +10,9 @@
 	"exports": {
 		"./*": "./src/*.ts"
 	},
+	"scripts": {
+		"test": "bun test"
+	},
 	"dependencies": {
 		"@unbound-app/types": "workspace:*"
 	}
