@@ -1,6 +1,6 @@
 {
 	"name": "@unbound/client",
-	"version": "1.1.13",
+	"version": "1.1.14",
 	"scripts": {
 		"build": "rollup -c",
 		"serve": "clear && bun run server/index.ts"
@@ -17,8 +17,8 @@
 		"@types/react-native": "^0.73.0",
 		"@typescript-eslint/eslint-plugin": "^8.2.0",
 		"@typescript-eslint/parser": "^8.2.0",
-		"@unbound-mod/rollup-plugin": "1.1.1",
 		"@unbound-mod/hermesc": "^1.0.1",
+		"@unbound-mod/rollup-plugin": "1.1.1",
 		"eslint": "^9.9.1",
 		"eslint-plugin-react": "^7.35.0",
 		"moment": "^2.30.1",
