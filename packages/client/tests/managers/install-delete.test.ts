@@ -1,5 +1,7 @@
 import { describe, expect, test, mock, beforeEach, afterEach } from 'bun:test';
 
+import { installLoggerRecorder } from '../helpers/logger-fixture';
+
 // The managers reach native FS and storage through these modules, which pull in react-native. Both
 // are stubbed before the dynamic import below: `~/api/native` alerts at eval and `~/api/fs` reads
 // `FileManager.DocumentsDirPath`, and the manager modules construct singletons at import that call
@@ -40,6 +42,8 @@ mock.module('~/api/storage', () => {
 import type { Addon, AddonManifest } from '@unbound-app/types';
 
 import { installFetchMock, type FetchMock, type RouteMap } from '../helpers/fetch-fixture';
+
+installLoggerRecorder();
 
 const { ManagerType } = await import('~/managers/base');
 const { Addons } = await import('~/managers/addons');

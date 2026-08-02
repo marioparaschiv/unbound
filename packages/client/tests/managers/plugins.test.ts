@@ -1,5 +1,7 @@
 import { describe, expect, test, mock, beforeEach } from 'bun:test';
 
+import { installLoggerRecorder } from '../helpers/logger-fixture';
+
 // `plugins.ts` builds a module-level singleton at import, which reaches storage for its settings
 // store; the stubs must land before the dynamic import even for tests using a fresh instance.
 const states: Record<string, boolean> = {};
@@ -38,6 +40,8 @@ import type { AddonManifest, PluginEntity } from '@unbound-app/types';
 import type { Plugins as PluginsManager } from '~/managers/plugins';
 
 import { defineGlobal } from '../helpers/metro-fixture';
+
+installLoggerRecorder();
 
 const { Plugins } = await import('~/managers/plugins');
 

@@ -1,5 +1,7 @@
 import { type Mock, describe, expect, test, mock, beforeEach } from 'bun:test';
 
+import { installLoggerRecorder } from '../helpers/logger-fixture';
+
 // Stub the RN-backed fs/storage deps so the lifecycle logic loads under bun; `states` backs
 // enable/disable persistence. Mirrors reload.test.ts.
 const states: Record<string, boolean> = {};
@@ -27,6 +29,8 @@ mock.module('~/api/storage', () => {
 });
 
 import type { Addon, AddonManifest } from '@unbound-app/types';
+
+installLoggerRecorder();
 
 const { ManagerType } = await import('~/managers/base');
 const { Addons } = await import('~/managers/addons');

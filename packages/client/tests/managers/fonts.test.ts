@@ -9,6 +9,7 @@ import {
 	installFsMock,
 	SYNTHETIC_FONTS,
 } from '../helpers/discord-fixture';
+import { installLoggerRecorder } from '../helpers/logger-fixture';
 import { defineGlobal } from '../helpers/metro-fixture';
 
 // Covers the Fonts manager: the `Constants.Fonts` grouping in `getTargets`, the injected-global
@@ -32,6 +33,7 @@ defineGlobal<FontWindow>('window', hostWindow);
 
 const common = installCommonMock();
 const fsMock = installFsMock();
+installLoggerRecorder();
 
 const { Fonts } = await import('~/managers/fonts');
 

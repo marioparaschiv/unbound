@@ -12,6 +12,7 @@ import {
 	type ImageProps,
 	type ImageSource,
 } from '../helpers/discord-fixture';
+import { installLoggerRecorder } from '../helpers/logger-fixture';
 import { defineGlobal } from '../helpers/metro-fixture';
 
 // Covers the Icons manager: the single-select `applied` pack and its enable/disable/toggle
@@ -28,6 +29,7 @@ defineGlobal('UNBOUND_SETTINGS', settings);
 const assets: AssetMap = {};
 const common = installCommonMock({}, assets);
 const fsMock = installFsMock();
+installLoggerRecorder();
 
 const { Icons, defaultPack } = await import('~/managers/icons');
 
