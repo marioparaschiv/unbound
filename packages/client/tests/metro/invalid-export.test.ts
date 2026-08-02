@@ -2,9 +2,8 @@ import { describe, expect, test, beforeEach } from 'bun:test';
 
 import { installMetroGlobals } from '../helpers/metro-fixture';
 
-// Sentinel matching the engine's own probe: a key no real module owns. A catch-all proxy answers its
-// `has` trap truthy for arbitrary keys without owning them, which is exactly what `isCatchAllProxy`
-// detects. We hand-build one here to test the *mechanism*, carrying no Discord proxy names.
+// A catch-all proxy whose `has` trap is truthy for any key it does not own - the shape
+// `isCatchAllProxy` guards against. Hand-built to test the mechanism, carrying no Discord proxy names.
 const catchAll = new Proxy(
 	{},
 	{
@@ -16,11 +15,8 @@ const catchAll = new Proxy(
 
 installMetroGlobals({
 	modules: {
-		// A real object that legitimately matches a props filter.
 		1: { exports: { marker: 1 } },
-		// A catch-all proxy: `in` is truthy for any key, so it would false-match a props filter.
 		2: { factory: (_g, _r, _d, _a, moduleObject) => void (moduleObject.exports = catchAll) },
-		// Exports that are the global object.
 		3: { factory: (_g, _r, _d, _a, moduleObject) => void (moduleObject.exports = globalThis) },
 	},
 });
@@ -45,7 +41,6 @@ describe('isInvalidExport mechanism', () => {
 	});
 
 	test('a catch-all proxy is rejected and blacklisted despite a truthy `in`', () => {
-		// `'anything' in catchAll` is truthy, so without the guard this props filter would match it.
 		expect('anything' in catchAll).toBe(true);
 
 		Metro.find(byProps('anything'), { cache: false });
@@ -60,7 +55,6 @@ describe('isInvalidExport mechanism', () => {
 	});
 
 	test('exports that are the global object are rejected and blacklisted', () => {
-		// globalThis carries loads of props; without the guard `byProps` on a global key would match.
 		Metro.find(byProps('Object'), { cache: false });
 
 		expect(blacklist.has(3)).toBe(true);

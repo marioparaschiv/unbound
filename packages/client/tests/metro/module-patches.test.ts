@@ -1,4 +1,4 @@
-// Untested by design — these branch on Discord bundle facts that drift between builds; a green test
+// Untested by design - these branch on Discord bundle facts that drift between builds; a green test
 // would only assert the code restates its own assumption:
 //   - the `id + 1` RTN-profiler blacklisting (index.ts ~190-197),
 //   - the `IntlMessagesProxy` string check (index.ts ~721),
@@ -10,15 +10,11 @@ import { describe, expect, test } from 'bun:test';
 
 import { installMetroGlobals } from '../helpers/metro-fixture';
 
-// Each module's factory installs an export whose *name* or *method* triggers one of the container
-// patches when the module is required. Names (`requireNativeComponent`, `fileFinishedImporting`) are
-// stable RN/Hermes contracts, not Discord facts.
 let nativeCalls = 0;
 let trackerReturn: unknown;
 
 installMetroGlobals({
 	modules: {
-		// A `default` export named `requireNativeComponent` that throws — the patch must swallow it.
 		1: {
 			factory: (_g, _r, _d, _a, moduleObject) => {
 				moduleObject.exports = {
@@ -29,7 +25,6 @@ installMetroGlobals({
 				};
 			},
 		},
-		// A module exposing `fileFinishedImporting` — the patch wraps it to stamp `__filePath`.
 		2: {
 			factory: (_g, _r, _d, _a, moduleObject) => {
 				moduleObject.exports = {
@@ -46,7 +41,7 @@ installMetroGlobals({
 const Metro = await import('~/api/metro');
 const { data } = await import('~/api/metro/state');
 
-// Force both modules to initialise so the import-time-wrapped factories run and the patches apply.
+// Initialise both so the import-time-wrapped factories run and the patches apply.
 Metro.initializeModule(1);
 Metro.initializeModule(2);
 
@@ -64,7 +59,6 @@ describe('requireNativeComponent hardening', () => {
 	test('patchedNativeRequire latches so the wrap is applied once', () => {
 		expect(data.patchedNativeRequire).toBe(true);
 
-		// Re-running the module require must not re-wrap: the export is already our wrapper.
 		const before = mod1.default;
 		Metro.initializeModule(1);
 		expect(window.modules.get(1)!.publicModule.exports.default).toBe(before);
@@ -73,7 +67,6 @@ describe('requireNativeComponent hardening', () => {
 
 describe('fileFinishedImporting tracker', () => {
 	test('stamps __filePath on the importing module and passes the return through', () => {
-		// A module is mid-import: set the tracked id and give it a record to stamp.
 		data.importingModuleId = 2;
 
 		const ret = mod2.fileFinishedImporting(['some', 'path']);

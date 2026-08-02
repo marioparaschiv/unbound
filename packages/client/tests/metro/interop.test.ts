@@ -2,9 +2,8 @@ import { describe, expect, test, beforeEach } from 'bun:test';
 
 import { installMetroGlobals } from '../helpers/metro-fixture';
 
-// One esModule-shaped module whose real payload lives on `.default`. The filter matches only that
-// inner object, so every test forces the engine down its default-probe unwrap path and then varies
-// interop/esModules/raw to pick which shape comes back.
+// One esModule-shaped module whose payload lives on `.default`, so `byProps('inner')` only matches
+// via the default-probe unwrap path.
 installMetroGlobals({
 	modules: {
 		1: { esModule: true, exports: { default: { inner: 1 } } },

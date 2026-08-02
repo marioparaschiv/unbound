@@ -22,7 +22,7 @@ describe('lazy', () => {
 
 	test('forwards has, ownKeys, and getOwnPropertyDescriptor to the real object', () => {
 		// The ESM/CJS interop helpers enumerate own keys to copy named exports, so these traps must
-		// reflect the underlying object — not the empty proxy target — or exports get dropped.
+		// reflect the underlying object - not the empty proxy target - or exports get dropped.
 		const obj = lazy(() => ({ named: 1, second: 2 }));
 
 		expect('named' in obj).toBe(true);
@@ -59,7 +59,6 @@ describe('debounce', () => {
 		debounced(2);
 		debounced(3);
 
-		// Each call clears the prior timer, so before the window elapses nothing has fired.
 		jest.advanceTimersByTime(99);
 		expect(fn).toHaveBeenCalledTimes(0);
 

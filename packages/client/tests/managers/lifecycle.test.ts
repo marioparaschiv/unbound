@@ -1,8 +1,7 @@
 import { type Mock, describe, expect, test, mock, beforeEach } from 'bun:test';
 
-// The base manager reaches native FS and storage through these modules, which pull in react-native.
-// Stub both — an in-memory `states` map backs enable/disable persistence — so the pure lifecycle logic
-// loads under bun with no device harness. Mirrors the harness in reload.test.ts.
+// Stub the RN-backed fs/storage deps so the lifecycle logic loads under bun; `states` backs
+// enable/disable persistence. Mirrors reload.test.ts.
 const states: Record<string, boolean> = {};
 
 mock.module('~/api/fs', () => ({
@@ -75,8 +74,7 @@ class FakeAddons extends Addons<Addon> {
 		this.entities.set(entity.id, entity);
 	}
 
-	// `patcher` is protected on the base Manager; a subclass may reach it to install a spy in place of
-	// the real `unpatchAll`, so the test can assert shutdown calls it.
+	// `patcher` is protected; a subclass can reach it to spy on `unpatchAll`.
 	stubUnpatchAll(): Mock<() => void> {
 		const spy = mock(() => {});
 		this.patcher.unpatchAll = spy;

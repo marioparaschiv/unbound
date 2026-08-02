@@ -2,16 +2,14 @@ import { describe, expect, test, beforeEach } from 'bun:test';
 
 import { installMetroGlobals } from '../helpers/metro-fixture';
 
-// Two modules: one matched by prop name, one matched by function name. Each test drives the `findBy*`
-// surface — the only public entry into `parseOptions` — and reads back whether the trailing argument
-// was split off as options or kept as a search term.
+// `findBy*` is the only public entry into `parseOptions`; each test reads back whether the trailing
+// argument was split off as options or kept as a search term.
 function named() {}
 
 installMetroGlobals({
 	modules: {
 		1: { exports: { alpha: 1 } },
 		2: { exports: { alpha: 1, extra: true } },
-		// Exports that *are* a function (assigned by reference; the fixture handles non-plain exports).
 		3: { exports: named },
 	},
 });
@@ -28,8 +26,6 @@ beforeEach(() => {
 
 describe('parseOptions via findBy*', () => {
 	test('a trailing plain object is detected as options, not a search term', () => {
-		// If `{ all: true }` were treated as a prop name, no module would match and the result would be
-		// an empty array; instead it is split off as options, so `all` collects every `alpha` module.
 		const found = Metro.findByProps('alpha', { all: true });
 
 		expect(Array.isArray(found)).toBe(true);
@@ -37,15 +33,12 @@ describe('parseOptions via findBy*', () => {
 	});
 
 	test('with no trailing object, every argument is a search term', () => {
-		// Both props required; only module 2 exposes `extra`.
 		const found = Metro.findByProps('alpha', 'extra');
 
 		expect(found).toEqual({ alpha: 1, extra: true });
 	});
 
 	test('findByName splits its trailing options object off the name terms', () => {
-		// The trailing `{ cache: true }` must be consumed as options, leaving `'named'` as the only
-		// term; the module whose export is the function `named` is then matched by name.
 		const found = Metro.findByName('named', { cache: true });
 
 		expect(found).toBe(named);
