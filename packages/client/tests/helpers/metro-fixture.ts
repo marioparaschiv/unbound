@@ -35,7 +35,7 @@ export interface ErrorUtilsShape {
  * @param name The global property name.
  * @param value The typed value to install.
  */
-function defineGlobal<T>(name: string, value: T): void {
+export function defineGlobal<T>(name: string, value: T): void {
 	(globalThis as Record<string, unknown>)[name] = value;
 }
 
@@ -223,5 +223,6 @@ export default {
 	installCacheGlobals,
 	installBuildTokens,
 	installSubstrateMocks,
+	defineGlobal,
 	makeModule,
 };
