@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { installBuildTokens } from '../helpers/metro-fixture';
 
-// filters.ts is pure — no metro substrate — but it imports `~/lib/constants` for `CACHE_KEY`, which
+// filters.ts is pure - no metro substrate - but it imports `~/lib/constants` for `CACHE_KEY`, which
 // references the build-time `$$DEV$$` token. Define it before the dynamic import so constants evals.
 installBuildTokens();
 
@@ -90,7 +90,7 @@ describe('byFilePath', () => {
 });
 
 describe('byStore', () => {
-	// Only the cache-key string is asserted here — that is our engine's own logic. The predicate's
+	// Only the cache-key string is asserted here - that is our engine's own logic. The predicate's
 	// match body reads a flux store's `_dispatcher`/`getName()` shape, which is a Discord bundle fact
 	// that drifts between builds; asserting against it is cut by design.
 	test('short (default) appends `Store` to the cache key', () => {

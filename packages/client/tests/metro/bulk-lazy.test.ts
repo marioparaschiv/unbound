@@ -46,16 +46,12 @@ describe('findLazy', () => {
 	test('resolves synchronously when a match already exists', () => {
 		const result = Metro.findLazy(byProps('alpha'));
 
-		// A synchronous hit returns the module itself, not a promise.
 		expect(result).toEqual({ alpha: 1 });
 	});
 
 	test('FINDING: a miss short-circuits to find()’s null, never entering the wait', () => {
-		// find() returns `null` (not `undefined`) on no-match, but findLazy only treats `undefined` as
-		// "not found" (`if (existing !== void 0) return existing`). Since find never yields `undefined`,
-		// the listener-wait and signal-abort branches below the guard are unreachable: findLazy resolves
-		// synchronously to `null` and registers no listener. Documented so restoring the wait (guarding
-		// on `!= null` / falsy) is a deliberate change with a red test to flip.
+		// find() returns `null` on no-match, but findLazy's guard only treats `undefined` as "not found"
+		// (`existing !== void 0`), so its listener-wait and signal-abort branches are unreachable.
 		const result = Metro.findLazy(byProps('deferred'));
 
 		expect(result).toBeNull();

@@ -404,9 +404,8 @@ Actions live _in_ the store (method shorthand `addToast(options) { … }` for on
      * @returns An object that appears empty but has the same properties as the object returned from the initializer.
      */
     ```
-- **Inline comments explain _why_, sparingly**, and often carry a performance rationale: `// Instead of creating a symbol each time, use a pre-defined one for performance gains.`, `// Loop through whole registry if any of the items have "all" as an option`.
+- **Where the code explains itself, write no comment.** Delete any comment that restates what the next line, a descriptive name, or a test's own title already says. A comment earns its place only by carrying what the code cannot - a non-obvious _why_, a performance rationale, a constraint - never by narrating _what_: `// Instead of creating a symbol each time, use a pre-defined one for performance gains.`, `// Loop through whole registry if any of the items have "all" as an option`. When in doubt, cut it and let the code speak.
 - **No commented-out code.** No decorative banners except the deliberate `/****** CACHE ******/` section markers used in the dense metro `find` to delimit the cache fast-path - reserve that for genuinely long, branchy functions.
-- Don't document the obvious. A one-line `noop` gets `// No.` and that's the whole point.
 
 ---
 

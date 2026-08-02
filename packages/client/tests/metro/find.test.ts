@@ -4,9 +4,6 @@ import type { MetroFilter } from '~/api/metro/filters';
 
 import { installMetroGlobals } from '../helpers/metro-fixture';
 
-// Fixed registry: three factory-backed, plain-object modules. Every test below varies a `find` option
-// over this same input so each assertion exercises a distinct branch of the engine — not a
-// planted-module tautology.
 installMetroGlobals({
 	modules: {
 		1: { exports: { alpha: 1 } },
@@ -20,9 +17,7 @@ const { data, blacklist } = await import('~/api/metro/state');
 const Cache = (await import('~/lib/cache')).default;
 const { byProps } = await import('~/api/metro/filters');
 
-// The per-key cache (`state.modules`), the resolved-module cache (`data.cache`), and the blacklist are
-// module-level singletons that persist across finds by design. Reset them per test so each starts from
-// a cold cache and the branch under test is the one exercised, not a hit left by a neighbour.
+// Reset the module-level cache/blacklist singletons so each test starts from a cold cache.
 beforeEach(() => {
 	Cache.state.modules = {};
 	data.cache.clear();
@@ -58,13 +53,10 @@ describe('find', () => {
 	});
 
 	test('a warmed per-key cache serves later finds from the fast path', () => {
-		// First find populates `state.modules[cacheKey]` with the matching id.
 		Metro.find(byProps('gamma'));
 		expect(Cache.getModuleCacheForKey('byProps::gamma')).toEqual([3]);
 
-		// Second find with the same key takes the cache branch: it walks only the cached id, so if we
-		// blank the resolved-module cache but leave the per-key cache, it still resolves from the
-		// registry via that id.
+		// Clearing only the resolved-module cache forces the second find down the per-key cache branch.
 		data.cache.clear();
 		const found = Metro.find(byProps('gamma'));
 
@@ -72,9 +64,8 @@ describe('find', () => {
 	});
 
 	test('MUTATION PROBE: a cache-miss find mutates the caller-owned options object', () => {
-		// On a cache miss, find()'s fallback recurses with `Object.assign(options, { cache: false })`,
-		// writing through the caller's object rather than a copy. Documented so a refactor to a
-		// non-mutating spread is a deliberate, visible change, not a silent regression.
+		// find()'s cache-miss fallback recurses with `Object.assign(options, { cache: false })`, writing
+		// through the caller's object. A non-mutating refactor should flip this deliberately.
 		const options: { cache: boolean } = { cache: true };
 		Metro.find(byProps('alpha'), options);
 
@@ -94,8 +85,6 @@ describe('find', () => {
 			const found = Metro.find(thrower);
 
 			expect(found).toBeNull();
-			// The `errored` latch short-circuits every filter call after the first throw within the
-			// registry scan, so the walk keeps running to completion but only one error is logged.
 			expect(calls).toBeGreaterThanOrEqual(1);
 			expect(errorSpy).toHaveBeenCalledTimes(1);
 		} finally {

@@ -2,14 +2,10 @@ import { describe, expect, test, beforeEach } from 'bun:test';
 
 import { installSubstrateMocks, installCacheGlobals } from './helpers/metro-fixture';
 
-// cache.ts reads `window.modules` (for the id count) and native `BundleInfo.Build` at eval, and pulls
-// in `~/lib/constants` for `CACHE_VERSION`. Install a minimal substrate carrying only the container
-// contract — a two-module registry and a fixed build — with NO Discord facts.
 const settings = installCacheGlobals(2);
 
-// Seed the persisted cache with a build number that disagrees with the native module below, plus a
-// stale per-key entry. The import-time `isValidCache()` must see the build mismatch and invalidate,
-// wiping the seeded modules.
+// Seed persisted cache whose build disagrees with the native module below, so the import-time
+// `isValidCache()` invalidates it.
 settings['unbound::cache'] = {
 	info: { cacheVersion: 1, buildNumber: 'STALE', moduleCount: 2 },
 	modules: { 'byProps::gone': [7] },
@@ -61,7 +57,6 @@ describe('addCachedIDForKey / removeCachedIDForKey twins', () => {
 		Cache.addCachedIDForKey('k', 1);
 		expect(Cache.getModuleCacheForKey('k')).toEqual([1]);
 
-		// Dedupe: a repeat add reports "already present" and does not grow the list.
 		Cache.addCachedIDForKey('k', 1);
 		expect(Cache.getModuleCacheForKey('k')).toEqual([1]);
 
@@ -71,7 +66,6 @@ describe('addCachedIDForKey / removeCachedIDForKey twins', () => {
 		Cache.removeCachedIDForKey('k', 1);
 		expect(Cache.getModuleCacheForKey('k')).toEqual([2]);
 
-		// Removing the last id drops the key entirely rather than leaving an empty array.
 		Cache.removeCachedIDForKey('k', 2);
 		expect(Cache.getModuleCacheForKey('k')).toBeUndefined();
 	});
