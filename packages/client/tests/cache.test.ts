@@ -1,23 +1,16 @@
 import { describe, expect, test, beforeEach } from 'bun:test';
 
-import { installSubstrateMocks, installBuildTokens } from './helpers/metro-fixture';
+import { installSubstrateMocks, installCacheGlobals } from './helpers/metro-fixture';
 
 // cache.ts reads `window.modules` (for the id count) and native `BundleInfo.Build` at eval, and pulls
 // in `~/lib/constants` for `CACHE_VERSION`. Install a minimal substrate carrying only the container
 // contract — a two-module registry and a fixed build — with NO Discord facts.
-installBuildTokens();
-(globalThis as any).window = {
-	modules: new Map([
-		[1, {}],
-		[2, {}],
-	]),
-};
-(globalThis as any).UNBOUND_SETTINGS = {};
+const settings = installCacheGlobals(2);
 
 // Seed the persisted cache with a build number that disagrees with the native module below, plus a
 // stale per-key entry. The import-time `isValidCache()` must see the build mismatch and invalidate,
 // wiping the seeded modules.
-(globalThis as any).UNBOUND_SETTINGS['unbound::cache'] = {
+settings['unbound::cache'] = {
 	info: { cacheVersion: 1, buildNumber: 'STALE', moduleCount: 2 },
 	modules: { 'byProps::gone': [7] },
 	moduleFlags: { 5: 1 },

@@ -22,7 +22,7 @@ installMetroGlobals({
 		1: {
 			factory: (_g, _r, _d, _a, moduleObject) => {
 				moduleObject.exports = {
-					default: function requireNativeComponent(...args: any[]) {
+					default: function requireNativeComponent(..._args: unknown[]) {
 						nativeCalls++;
 						throw new Error('native lookup failed');
 					},

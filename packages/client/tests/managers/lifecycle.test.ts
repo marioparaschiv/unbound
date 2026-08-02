@@ -1,4 +1,4 @@
-import { describe, expect, test, mock, beforeEach } from 'bun:test';
+import { type Mock, describe, expect, test, mock, beforeEach } from 'bun:test';
 
 // The base manager reaches native FS and storage through these modules, which pull in react-native.
 // Stub both — an in-memory `states` map backs enable/disable persistence — so the pure lifecycle logic
@@ -73,6 +73,14 @@ class FakeAddons extends Addons<Addon> {
 
 	seed(entity: Addon) {
 		this.entities.set(entity.id, entity);
+	}
+
+	// `patcher` is protected on the base Manager; a subclass may reach it to install a spy in place of
+	// the real `unpatchAll`, so the test can assert shutdown calls it.
+	stubUnpatchAll(): Mock<() => void> {
+		const spy = mock(() => {});
+		this.patcher.unpatchAll = spy;
+		return spy;
 	}
 }
 
@@ -238,8 +246,7 @@ describe('lookups and shutdown', () => {
 		manager.errors.set('z', new Error('x'));
 		manager.initialized = true;
 
-		const unpatchAll = mock(() => {});
-		(manager as any).patcher.unpatchAll = unpatchAll;
+		const unpatchAll = manager.stubUnpatchAll();
 
 		manager.shutdown();
 

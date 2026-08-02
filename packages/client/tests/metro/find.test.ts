@@ -1,5 +1,7 @@
 import { describe, expect, test, spyOn, beforeEach } from 'bun:test';
 
+import type { MetroFilter } from '~/api/metro/filters';
+
 import { installMetroGlobals } from '../helpers/metro-fixture';
 
 // Fixed registry: three factory-backed, plain-object modules. Every test below varies a `find` option
@@ -84,10 +86,10 @@ describe('find', () => {
 
 		try {
 			let calls = 0;
-			const thrower = (() => {
+			const thrower: MetroFilter = () => {
 				calls++;
 				throw new Error('boom');
-			}) as any;
+			};
 
 			const found = Metro.find(thrower);
 

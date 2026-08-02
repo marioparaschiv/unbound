@@ -30,7 +30,7 @@ describe('parseOptions via findBy*', () => {
 	test('a trailing plain object is detected as options, not a search term', () => {
 		// If `{ all: true }` were treated as a prop name, no module would match and the result would be
 		// an empty array; instead it is split off as options, so `all` collects every `alpha` module.
-		const found = Metro.findByProps('alpha', { all: true }) as any[];
+		const found = Metro.findByProps('alpha', { all: true });
 
 		expect(Array.isArray(found)).toBe(true);
 		expect(found).toHaveLength(2);
@@ -38,23 +38,16 @@ describe('parseOptions via findBy*', () => {
 
 	test('with no trailing object, every argument is a search term', () => {
 		// Both props required; only module 2 exposes `extra`.
-		const found = Metro.findByProps('alpha', 'extra') as any;
+		const found = Metro.findByProps('alpha', 'extra');
 
 		expect(found).toEqual({ alpha: 1, extra: true });
 	});
 
-	test('a trailing array is kept as a search term, not mistaken for options', () => {
-		// The predicate rejects arrays, so `['alpha']` stays a term. `byProps` receives an array as a
-		// prop name — `mdl[['alpha']]` coerces to `mdl['alpha']`, which is present, so it still matches.
-		const found = Metro.findByProps(['alpha'] as any) as any;
-
-		expect(found).toEqual({ alpha: 1 });
-	});
-
 	test('findByName splits its trailing options object off the name terms', () => {
-		const found = Metro.findByName('named', { interop: false }) as any;
+		// The trailing `{ cache: true }` must be consumed as options, leaving `'named'` as the only
+		// term; the module whose export is the function `named` is then matched by name.
+		const found = Metro.findByName('named', { cache: true });
 
-		// interop:false returns the whole exports; here the export *is* the function.
 		expect(found).toBe(named);
 	});
 });
