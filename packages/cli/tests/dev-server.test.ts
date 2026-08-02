@@ -14,7 +14,6 @@ afterEach(() => {
 	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-/** Builds a workspace root holding one plugin whose `build` command is caller-controlled. */
 function workspace(build: string): string {
 	const root = mkdtempSync(join(tmpdir(), 'ubd-dev-'));
 	roots.push(root);
@@ -47,7 +46,6 @@ function workspace(build: string): string {
 	return root;
 }
 
-/** A transport that records every addon handed to it, so a test can assert whether push happened. */
 function recordingTransport(): ReloadTransport & { calls: BuiltAddon[] } {
 	const calls: BuiltAddon[] = [];
 
@@ -84,8 +82,6 @@ describe('DevServer build-failure isolation', () => {
 });
 
 describe('DevServer rebuild debounce', () => {
-	// A single rebuild pass builds each discovered addon exactly once; the per-addon debounce map
-	// coalesces bursts so a run never fans out into multiple rebuilds of the same addon.
 	test('the initial pass rebuilds each addon exactly once', async () => {
 		const resolved = loadConfig(workspace('true'));
 		const transport = recordingTransport();

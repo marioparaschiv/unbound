@@ -22,7 +22,6 @@ interface PendingPush {
 	timer: ReturnType<typeof setTimeout>;
 }
 
-/** The bundle and manifest to hot-reload for a single plugin, correlated to its result by id. */
 type PluginPush = {
 	addonId: string;
 	bundle: string;

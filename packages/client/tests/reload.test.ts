@@ -50,7 +50,6 @@ function makeManifest(id: string): AddonManifest {
 	};
 }
 
-/** A fake plugin instance recording its lifecycle calls into a shared ordering log. */
 function makeInstance(id: string, log: string[], stopThrows = false) {
 	return {
 		start: () => void log.push(`start:${id}`),
@@ -62,9 +61,7 @@ function makeInstance(id: string, log: string[], stopThrows = false) {
 }
 
 class FakeAddons extends Addons<Addon> {
-	/** The lifecycle-call ordering log the current test asserts against. */
 	log: string[] = [];
-	/** When set, the next handleBundle throws, simulating a bundle that fails to evaluate. */
 	nextStartFails = false;
 
 	constructor() {
@@ -121,7 +118,7 @@ describe('Addons.reload', () => {
 
 	test('an absent addon takes the load path and persists to disk', async () => {
 		const manifest = makeManifest('b');
-		// Enabled state so load() starts it, exercising the fresh-install branch end to end.
+		// Enabled so load() starts it, exercising the fresh-install branch through start.
 		states['b'] = true;
 
 		let reloaded: Addon | undefined;
@@ -160,7 +157,6 @@ describe('Addons.reload', () => {
 			id: 'c',
 			data: manifest,
 			bundle: 'old',
-			// The old instance's teardown throws; the swap must proceed regardless.
 			instance: makeInstance('old', manager.log, true),
 			started: true,
 			failed: false,
@@ -171,7 +167,6 @@ describe('Addons.reload', () => {
 		expect(result.ok).toBe(true);
 		expect(manager.log).toContain('start:new');
 		expect(manager.getEntity('c')?.bundle).toBe('new');
-		// A successful reload leaves no lingering error: stop's failure was logged, not left recorded.
 		expect(manager.errors.get('c')).toBeUndefined();
 	});
 

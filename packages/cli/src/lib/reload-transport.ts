@@ -5,13 +5,10 @@ import { readFileSync } from 'node:fs';
 
 import { waitForDevice } from '~/lib/context';
 
-/** The slice of the bridge client a reload needs: device presence plus the plugin push. */
 export type ReloadClient = Pick<ControllerClient, 'isDeviceConnected' | 'pushPlugin'>;
 
-/** The context a reload runs against: any bearer of a {@link ReloadClient}. */
 export type ReloadContext = { client: ReloadClient };
 
-/** An addon that has just built successfully, ready to be handed to a {@link ReloadTransport}. */
 export type BuiltAddon = {
 	id: string;
 	kind: 'plugin' | 'theme';
@@ -27,7 +24,6 @@ export interface ReloadTransport {
 	reload(addon: BuiltAddon): Promise<void>;
 }
 
-/** A built addon read off disk: its parsed manifest and the bundle source to push. */
 type ReadAddon = { manifest: AddonManifest; bundle: string };
 
 /**

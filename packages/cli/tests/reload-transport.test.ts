@@ -8,7 +8,6 @@ import type { ReloadContext, BuiltAddon } from '../src/lib/reload-transport';
 
 import { createReloadTransport } from '../src/lib/reload-transport';
 
-/** A push the fake client recorded, so a test can assert what reached the wire. */
 type RecordedPush = { addonId: string; bundle: string };
 
 const roots: string[] = [];
@@ -17,7 +16,6 @@ afterEach(() => {
 	for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-/** Writes a built plugin to disk and returns the {@link BuiltAddon} pointing at it. */
 function builtPlugin(): BuiltAddon {
 	const dir = mkdtempSync(join(tmpdir(), 'ubd-push-'));
 	roots.push(dir);
@@ -48,7 +46,6 @@ type FakeClient = {
 	result: PluginPushResult;
 };
 
-/** A stand-in for the bridge client that records pushes and returns a canned result. */
 function fakeContext(client: FakeClient): ReloadContext {
 	return {
 		client: {
@@ -94,7 +91,6 @@ describe('createReloadTransport', () => {
 
 		const transport = createReloadTransport(fakeContext(client), 100);
 
-		// Resolves (no throw) after the bounded wait; nothing is pushed.
 		await transport.reload(builtPlugin());
 
 		expect(client.pushes).toEqual([]);
