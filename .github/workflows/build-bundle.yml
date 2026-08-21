@@ -1,0 +1,67 @@
+name: Build Bundle
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - packages/client/src/**
+      - packages/client/scripts/build/**
+  repository_dispatch:
+    types:
+      - rollup-plugin-updated
+      - hermesc-published
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-bundle
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
+      # canary's frozen-lockfile check fails on a self-generated lockfile (round-trip bug),
+      # so install without it until stable 1.4 lands.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: canary
+
+      - run: bun install
+
+      - run: bun run --cwd packages/client build
+
+      - name: Publish bundles to builds branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          dist="$(pwd)/packages/client/dist"
+          publish="$(mktemp -d)"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          git worktree add --detach "$publish"
+          cd "$publish"
+
+          git checkout --orphan builds
+          git reset --hard
+
+          cp -r "$dist"/. .
+
+          git add -A
+          git commit -m "build: publish bundles for ${GITHUB_SHA}"
+
+          remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force "$remote" builds
