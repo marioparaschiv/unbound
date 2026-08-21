@@ -10,7 +10,7 @@
 		"@rollup/plugin-replace": "^6.0.3",
 		"@types/babel__core": "^7.20.5",
 		"@types/bun": "catalog:",
-		"@unbound-app/rollup-plugin-hermes": "^1.1.3",
+		"@unbound-app/rollup-plugin-hermes": "^1.2.0",
 		"rolldown": "^1.0.0-beta.55",
 		"rollup-plugin-swc3": "^0.12.1"
 	},

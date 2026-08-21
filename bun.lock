@@ -103,7 +103,7 @@
         "@rollup/plugin-replace": "^6.0.3",
         "@types/babel__core": "^7.20.5",
         "@types/bun": "catalog:",
-        "@unbound-app/rollup-plugin-hermes": "^1.1.3",
+        "@unbound-app/rollup-plugin-hermes": "^1.2.0",
         "rolldown": "^1.0.0-beta.55",
         "rollup-plugin-swc3": "^0.12.1",
       },
@@ -898,7 +898,7 @@
 
     "@unbound-app/logger": ["@unbound-app/logger@workspace:packages/logger"],
 
-    "@unbound-app/rollup-plugin-hermes": ["@unbound-app/rollup-plugin-hermes@1.1.3", "", { "dependencies": { "hermesc-94": "npm:@unbound-app/hermesc@94.0.0", "hermesc-96": "npm:@unbound-app/hermesc@96.0.0", "hermesc-98": "npm:@unbound-app/hermesc@98.0.0" } }, "sha512-46ekXhR/DXDpCDyLGi6HZ5r0ckAt7oJ28VOoHeFW7uc5MMIQNuJ6wZ3sUJ+1ZDNQvevHsx+CHRtYx09c9ZQSSw=="],
+    "@unbound-app/rollup-plugin-hermes": ["@unbound-app/rollup-plugin-hermes@1.2.0", "", {}, "sha512-0r4SNop1PcpWBqUQIA45Q/RhdmtrHfikq5OMutuqotGZV0pWUFyUlVn3D+aGAJRYrTNCtp1pTB90frhmtalv8w=="],
 
     "@unbound-app/sdk-generator": ["@unbound-app/sdk-generator@workspace:apps/sdk-generator"],
 
@@ -1329,12 +1329,6 @@
     "hermes-estree": ["hermes-estree@0.32.0", "", {}, "sha512-KWn3BqnlDOl97Xe1Yviur6NbgIZ+IP+UVSpshlZWkq+EtoHg6/cwiDj/osP9PCEgFE15KBm1O55JRwbMEm5ejQ=="],
 
     "hermes-parser": ["hermes-parser@0.32.0", "", { "dependencies": { "hermes-estree": "0.32.0" } }, "sha512-g4nBOWFpuiTqjR3LZdRxKUkij9iyveWeuks7INEsMX741f3r9xxrOe8TeQfUxtda0eXmiIFiMQzoeSQEno33Hw=="],
-
-    "hermesc-94": ["@unbound-app/hermesc@94.0.0", "", {}, "sha512-bVCcl+Mj9IpmKiDFbZO8BX4cHqD1qIgnbpTkC6w2C33yvjo8p9IbQWWiaSx6zHSYgJJCR06IR+jogf097mzSTg=="],
-
-    "hermesc-96": ["@unbound-app/hermesc@96.0.0", "", {}, "sha512-m1ge+K0385/4KHmxxKau+QKghAIRxo1nhoSiJ6SWe7adT3X4gw0ZD37T+cSzDFvYXy4VzcrfC57at/LTh5dQJQ=="],
-
-    "hermesc-98": ["@unbound-app/hermesc@98.0.0", "", {}, "sha512-e1/Qo5YjFCpBh+t8xBFgDzUcovIShC0BIooKI53dbKAG2rCkBXvsru1qyw8BMsW5g5cZDlvN4L+XrEhJzRAcNQ=="],
 
     "highlight.js": ["highlight.js@10.7.3", "", {}, "sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A=="],
 
