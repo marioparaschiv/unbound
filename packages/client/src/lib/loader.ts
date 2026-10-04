@@ -6,6 +6,31 @@ globalThis.window ??= globalThis as typeof window;
 
 const logger = createLogger('Loader');
 
+type ReadyCallback = () => void;
+
+type ReadyState = {
+	ready: boolean;
+	callbacks: ReadyCallback[];
+};
+
+type RuntimeGlobal = typeof globalThis & {
+	__unboundReady?: ReadyState;
+};
+
+const runtimeGlobal = globalThis as RuntimeGlobal;
+const readyState = (runtimeGlobal.__unboundReady ??= {
+	ready: false,
+	callbacks: [],
+});
+
+export function markReady(): void {
+	if (readyState.ready) return;
+
+	readyState.ready = true;
+
+	for (const callback of readyState.callbacks.splice(0)) callback();
+}
+
 /** A native → JS call held back until our initialization has finished. */
 type DeferredCall = {
 	object: any;
@@ -24,9 +49,13 @@ const unpatches: (() => void)[] = [];
  * @param onReady Runs once the registry is ready; resolve it before Discord and deferred calls flush.
  */
 export default function deferUntilReady(onReady: () => Promise<void>): void {
+	ensureModules();
+
 	// `__r` already exists: the hook point is gone (legacy Vendetta-style loader). Initialize now.
 	if (typeof window.__r !== 'undefined') {
-		void runReady(onReady);
+		void runReady(onReady).then((initialized) => {
+			if (initialized) markReady();
+		});
 		return;
 	}
 
@@ -76,22 +105,25 @@ function onRunApplication(original: MetroRequire, onReady: () => Promise<void>) 
 	ensureModules();
 	holdNativeCalls();
 
-	void runReady(onReady).then(() => {
+	void runReady(onReady).then((initialized) => {
 		for (const unpatch of unpatches.splice(0)) unpatch();
 
 		original(0);
 		resumeDeferred();
+		if (initialized) markReady();
 	});
 }
 
 /** Runs the readiness callback, surfacing any failure the same way the entry point used to. */
-async function runReady(onReady: () => Promise<void>) {
+async function runReady(onReady: () => Promise<void>): Promise<boolean> {
 	try {
 		await onReady();
+		return true;
 	} catch (error: any) {
 		const message = 'stack' in error ? error.stack : String(error);
 		logger.error('Failed to initialize Unbound:', error);
 		alert(`Unbound failed to initialize: ${message}`);
+		return false;
 	}
 }
 
