@@ -24,7 +24,7 @@
     },
     "apps/sdk-generator": {
       "name": "@unbound-app/sdk-generator",
-      "version": "0.1.0",
+      "version": "0.6.0",
       "dependencies": {
         "@unbound-app/logger": "workspace:*",
       },
@@ -37,7 +37,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.5.3",
+      "version": "0.6.0",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -51,7 +51,7 @@
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
-      "version": "0.4.0",
+      "version": "0.6.0",
       "bin": {
         "ubd": "src/index.ts",
       },
@@ -74,7 +74,7 @@
     },
     "packages/client": {
       "name": "@unbound-app/client",
-      "version": "0.5.3",
+      "version": "0.6.0",
       "dependencies": {
         "@unbound-app/debugger-protocol": "workspace:*",
         "@unbound-app/logger": "workspace:*",
@@ -96,7 +96,7 @@
     },
     "packages/client/scripts/build": {
       "name": "@unbound-app/client-build",
-      "version": "0.5.3",
+      "version": "0.6.0",
       "devDependencies": {
         "@babel/core": "^7.28.6",
         "@babel/plugin-transform-block-scoping": "^7.28.6",
@@ -136,7 +136,7 @@
     },
     "packages/debugger": {
       "name": "@unbound-app/debugger",
-      "version": "0.4.0",
+      "version": "0.6.0",
       "bin": {
         "ub-debugger": "src/index.ts",
       },
@@ -156,7 +156,7 @@
     },
     "packages/debugger-protocol": {
       "name": "@unbound-app/debugger-protocol",
-      "version": "0.4.0",
+      "version": "0.6.0",
       "dependencies": {
         "@unbound-app/types": "workspace:*",
         "zod": "^4.0.0",
@@ -184,7 +184,7 @@
     },
     "packages/types": {
       "name": "@unbound-app/types",
-      "version": "0.4.0",
+      "version": "0.6.0",
       "dependencies": {
         "possess": "catalog:",
       },
