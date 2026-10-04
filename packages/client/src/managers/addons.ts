@@ -1,11 +1,19 @@
-import type { Addon, AddonManifest } from '@unbound-app/types';
+import type { Addon, AddonManifest, PluginContext } from '@unbound-app/types';
 import noop from '@unbound-app/utils/noop';
 
+import { validateNativePluginRequirements } from '~/api/native-runtime';
 import { Manager, ManagerType } from '~/managers/base';
 import storage from '~/api/storage';
 import fs from '~/api/fs';
 
 type AddonResolveable = string | Addon;
+
+const managerDirectories: Record<ManagerType, string> = {
+	[ManagerType.PLUGINS]: 'Plugins',
+	[ManagerType.THEMES]: 'Themes',
+	[ManagerType.ICONS]: 'Icons',
+	[ManagerType.FONTS]: 'Fonts',
+};
 
 /** The outcome of {@link Addons.reload}: success, or failure carrying the recorded error. */
 export type ReloadResult = { ok: true } | { ok: false; error: Error };
@@ -40,6 +48,11 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 	/** The manifest `type` value this manager installs; used to reject mismatched installs. */
 	protected abstract get entityType(): NonNullable<AddonManifest['type']>;
+
+	protected createContext(entity: T): PluginContext | undefined {
+		void entity;
+		return undefined;
+	}
 
 	/**
 	 * @description Loads an addon into the manager from its bundle and manifest, starting it if its
@@ -165,6 +178,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			// Restart only what was running, mirroring enable/disable: a save must not start an addon the
 			// user has explicitly disabled.
 			const wasStarted = resolved.started;
+			await this.persist(bundle, manifest);
 
 			// A throwing stop() must not abort the swap; stop() catches and records internally, so its
 			// failure surfaces as a recorded error rather than a throw.
@@ -180,8 +194,6 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			resolved.data = manifest;
 			resolved.failed = false;
 			this.errors.delete(resolved.id);
-
-			await this.persist(bundle, manifest);
 
 			if (wasStarted) this.start(resolved);
 
@@ -278,11 +290,14 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 				resolved.instance = instance;
 			}
 
-			resolved.instance?.start?.();
+			resolved.context = this.createContext(resolved);
+			resolved.instance?.start?.(resolved.context);
 			resolved.started = true;
 
 			this.emit('started', resolved);
 		} catch (error: any) {
+			resolved.context?.dispose();
+			resolved.context = undefined;
 			this.logger.error(`Failed to start addon ${resolved.id}:`, error);
 			this.errors.set(resolved.id, error);
 			resolved.failed = true;
@@ -299,11 +314,15 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 		try {
 			resolved.instance?.stop?.();
+			resolved.context?.dispose();
+			resolved.context = undefined;
 			resolved.instance = null;
 			resolved.started = false;
 
 			this.emit('stopped', resolved);
 		} catch (error: any) {
+			resolved.context?.dispose();
+			resolved.context = undefined;
 			this.logger.error(`Failed to stop addon ${resolved.id}:`, error);
 			this.errors.set(resolved.id, error);
 		}
@@ -382,7 +401,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	 * @param manifest The addon's validated manifest.
 	 */
 	protected async persist(bundle: string, manifest: AddonManifest): Promise<void> {
-		const dir = `Unbound/${ManagerType[this.type]}/${manifest.id}`;
+		const dir = `Unbound/${managerDirectories[this.type]}/${manifest.id}`;
 
 		await fs.write(`${dir}/manifest.json`, JSON.stringify(manifest));
 		await fs.write(`${dir}/${manifest.main}`, bundle);
@@ -437,6 +456,14 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 		if (!Array.isArray(manifest.authors) || manifest.authors.length === 0) {
 			throw new Error('Manifest authors must be a non-empty array');
+		}
+
+		if (manifest.capabilities !== undefined && !Array.isArray(manifest.capabilities)) {
+			throw new Error('Manifest capabilities must be an array');
+		}
+
+		if (manifest.capabilities || manifest.minNativePluginApi) {
+			validateNativePluginRequirements(manifest.capabilities, manifest.minNativePluginApi);
 		}
 	}
 }

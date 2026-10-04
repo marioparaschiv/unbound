@@ -4,7 +4,7 @@ export const ReactNative: typeof import('react-native') = window.ReactNative;
 export const React: typeof import('react') = window.React;
 
 export const Reanimated = findByPropsLazy('useAnimatedStyle', 'useSharedValue');
-export const Gestures = findByPropsLazy('Gesture', 'GestureDetector', 'createNativeWrapper');
+export const Gestures = findByPropsLazy('PanGestureHandler');
 export const Clipboard = findByPropsLazy('setString', 'getString', 'setImage', 'getImage');
 export const MarkdownParser = findByPropsLazy('parse', 'parseToAST', 'reactParserFor');
 export const Screens = findByPropsLazy('FullWindowOverlay');

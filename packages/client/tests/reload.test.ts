@@ -27,7 +27,12 @@ mock.module('~/api/storage', () => {
 	};
 });
 
-import type { Addon, AddonManifest } from '@unbound-app/types';
+mock.module('react-native', () => ({
+	NativeModules: {},
+	TurboModuleRegistry: { get: () => undefined },
+}));
+
+import type { Addon, AddonManifest, PluginContext } from '@unbound-app/types';
 
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.
@@ -62,7 +67,9 @@ function makeInstance(id: string, log: string[], stopThrows = false) {
 
 class FakeAddons extends Addons<Addon> {
 	log: string[] = [];
+	contexts: { disposed: boolean }[] = [];
 	nextStartFails = false;
+	nextInstanceStartFails = false;
 
 	constructor() {
 		super(ManagerType.PLUGINS);
@@ -73,15 +80,41 @@ class FakeAddons extends Addons<Addon> {
 	protected handleBundle(bundle: string) {
 		if (this.nextStartFails) throw new Error('bundle threw on eval');
 
-		return makeInstance(bundle, this.log);
+		return {
+			...makeInstance(bundle, this.log),
+			start: () => {
+				this.log.push(`start:${bundle}`);
+				if (this.nextInstanceStartFails) throw new Error('instance start failed');
+			},
+		};
 	}
 
 	protected get entityType() {
 		return 'plugin' as const;
 	}
 
+	protected createContext(): PluginContext {
+		const state = { disposed: false };
+		this.contexts.push(state);
+		return {
+			manifest: makeManifest('test'),
+			id: 'test',
+			capabilities: [],
+			native: {} as any,
+			dispose: () => void (state.disposed = true),
+		};
+	}
+
 	seed(entity: Addon) {
 		this.entities.set(entity.id, entity);
+	}
+}
+
+class PersistingAddons extends FakeAddons {
+	protected override async persist(bundle: string): Promise<void> {
+		this.log.push(`persist:start:${bundle}`);
+		await Promise.resolve();
+		this.log.push(`persist:finish:${bundle}`);
 	}
 }
 
@@ -94,6 +127,29 @@ beforeEach(() => {
 });
 
 describe('Addons.reload', () => {
+	test('persists a running addon update before stopping the active instance', async () => {
+		const localManager = new PersistingAddons();
+		const manifest = makeManifest('a');
+		localManager.seed({
+			id: 'a',
+			data: manifest,
+			bundle: 'old',
+			instance: makeInstance('old', localManager.log),
+			started: true,
+			failed: false,
+		});
+
+		const result = await localManager.reload('a', 'new', manifest);
+
+		expect(result.ok).toBe(true);
+		expect(localManager.log).toEqual([
+			'persist:start:new',
+			'persist:finish:new',
+			'stop:old',
+			'start:new',
+		]);
+	});
+
 	test('a loaded addon is stopped then started and emits reloaded', async () => {
 		const manifest = makeManifest('a');
 		manager.seed({
@@ -129,7 +185,7 @@ describe('Addons.reload', () => {
 		expect(result.ok).toBe(true);
 		expect(manager.getEntity('b')).toBeDefined();
 		expect(reloaded?.id).toBe('b');
-		expect(writes).toEqual(['Unbound/PLUGINS/b/manifest.json', 'Unbound/PLUGINS/b/index.js']);
+		expect(writes).toEqual(['Unbound/Plugins/b/manifest.json', 'Unbound/Plugins/b/index.js']);
 	});
 
 	test('a disabled addon is swapped but not started', async () => {
@@ -191,6 +247,42 @@ describe('Addons.reload', () => {
 		if (!result.ok) expect(result.error).toBeInstanceOf(Error);
 		expect(failure).toBeInstanceOf(Error);
 		expect(manager.errors.get('d')).toBeDefined();
+	});
+
+	test('stopping a running addon disposes its scoped native context', () => {
+		const manifest = makeManifest('g');
+		manager.seed({
+			id: 'g',
+			data: manifest,
+			bundle: 'old',
+			instance: null,
+			started: false,
+			failed: false,
+		});
+
+		manager.start('g');
+		manager.stop('g');
+
+		expect(manager.contexts).toHaveLength(1);
+		expect(manager.contexts[0]?.disposed).toBe(true);
+	});
+
+	test('a plugin start failure disposes the context before recording the error', () => {
+		const manifest = makeManifest('h');
+		manager.seed({
+			id: 'h',
+			data: manifest,
+			bundle: 'old',
+			instance: null,
+			started: false,
+			failed: false,
+		});
+		manager.nextInstanceStartFails = true;
+
+		manager.start('h');
+
+		expect(manager.contexts[0]?.disposed).toBe(true);
+		expect(manager.errors.get('h')).toBeInstanceOf(Error);
 	});
 
 	test('a manifest id that differs from the target fails without touching the seeded addon', async () => {

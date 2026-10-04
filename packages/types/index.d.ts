@@ -9,5 +9,6 @@ export * from './typings/components';
 export * from './typings/settings';
 export * from './typings/addons';
 export * from './typings/assets';
+export * from './typings/native';
 export * from './typings/toasts';
 export * from './typings/utils';

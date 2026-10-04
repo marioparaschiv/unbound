@@ -12,6 +12,8 @@ import { Dimensions } from 'react-native';
 import { useSettingsStore } from '~/api/storage';
 import useToastStore from '~/stores/toasts';
 
+import toastDuration from './toast-duration';
+
 function useToastState(options: InternalToastOptions) {
 	const [closing, setClosing] = useState(options.closing);
 	const [leaving, setLeaving] = useState(false);
@@ -71,7 +73,7 @@ function useToastState(options: InternalToastOptions) {
 			marginVertical.value = 5;
 		}
 
-		const duration = options.duration ?? settings.get('toasts.duration', 0) * 1000;
+		const duration = toastDuration(options.duration, settings.get('toasts.duration', 5000));
 
 		if (duration !== 0) {
 			width.value = withTiming(0, { duration, easing: Easing.linear }, () => {

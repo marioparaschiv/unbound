@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import type { NativePluginCapability, PluginContext } from './native';
+
 /** The author of an addon: a display name and a numeric user id. */
 export type AddonAuthor = {
 	name: string;
@@ -21,12 +23,15 @@ export interface AddonManifest {
 	folder: string;
 	path: string;
 	url: string;
+	capabilities?: NativePluginCapability[];
+	minNativePluginApi?: string;
 }
 
 /** A loaded addon entity: its runtime state, instance, source bundle, and {@link AddonManifest}. */
 export interface Addon {
 	started: boolean;
 	instance: any;
+	context?: PluginContext;
 	id: string;
 	failed: boolean;
 	data: AddonManifest;
@@ -43,7 +48,7 @@ export type PluginEntity = Addon & {
 
 /** The lifecycle and settings contract implemented by a plugin. */
 export interface Plugin {
-	start?(): void;
+	start?(context?: PluginContext): void;
 	stop?(): void;
 	getSettingsPanel?(): ReactNode;
 }

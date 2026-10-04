@@ -30,6 +30,7 @@ type PluginPush = {
 
 /** How long the client waits for a result before failing an eval (must exceed the bridge's own). */
 const EVAL_TIMEOUT_MS = 15_000;
+const PLUGIN_PUSH_TIMEOUT_MS = 75_000;
 
 /** How long to wait between reconnection attempts when the bridge is unreachable. */
 const RECONNECT_DELAY_MS = 1_000;
@@ -156,9 +157,9 @@ export class ControllerClient {
 					type: 'plugin-push-result',
 					id,
 					ok: false,
-					error: `Plugin push timed out after ${EVAL_TIMEOUT_MS}ms.`,
+					error: `Plugin push timed out after ${PLUGIN_PUSH_TIMEOUT_MS}ms.`,
 				});
-			}, EVAL_TIMEOUT_MS);
+			}, PLUGIN_PUSH_TIMEOUT_MS);
 
 			this.pendingPushes.set(id, { resolve, timer });
 			this.ws.send(serializeMessage({ type: 'plugin-push', id, ...push }));

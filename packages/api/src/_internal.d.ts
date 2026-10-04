@@ -26,6 +26,7 @@ declare const TRANSITION_STATE_KEYS: readonly ['MOUNTED', 'ENTERED', 'YEETED'];
 export interface Addon {
 	started: boolean;
 	instance: any;
+	context?: PluginContext;
 	id: string;
 	failed: boolean;
 	data: AddonManifest;
@@ -50,6 +51,8 @@ export interface AddonManifest {
 	folder: string;
 	path: string;
 	url: string;
+	capabilities?: NativePluginCapability[];
+	minNativePluginApi?: string;
 }
 /** The native module used to register and resolve {@link DiscordAsset}s by id. */
 export interface AssetsModule {
@@ -188,6 +191,146 @@ export interface InternalToastOptions extends ToastOptions {
 	closing?: boolean;
 	date?: number;
 }
+export interface NativeCallOptions {
+	thread?: NativeThreadPolicy;
+}
+export interface NativeFFIBridge {
+	symbol(name: string, image?: string): NativePointer | null;
+	call(pointer: NativePointer, signature: NativeFFISignature, ...args: unknown[]): unknown;
+}
+export interface NativeFFISignature {
+	returnType: NativeFFIType;
+	args: NativeFFIType[];
+}
+export interface NativeFabricBridge {
+	mount(
+		container: NativeObjectHandle,
+		moduleName: string,
+		properties?: Record<string, unknown>,
+	): NativeFabricSurface;
+	update(surface: NativeFabricSurface, properties: Record<string, unknown>): void;
+	setSize(
+		surface: NativeFabricSurface,
+		minimumSize: NativeFabricSize,
+		maximumSize: NativeFabricSize,
+	): void;
+	setFrame(surface: NativeFabricSurface, frame: NativeFabricFrame): void;
+	measure(view: NativeObjectHandle): NativeFabricFrame;
+	unmount(surface: NativeFabricSurface): void;
+}
+export interface NativeFabricFrame {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+export interface NativeFabricSize {
+	width: number;
+	height: number;
+}
+export interface NativeHookContext {
+	self: NativeObjectHandle;
+	selector: string;
+	args: unknown[];
+	original: (...args: unknown[]) => unknown;
+	replaceObjectArgument(index: number, value: NativeObjectHandle | null): void;
+}
+export interface NativeHookHandlers {
+	before?: (context: NativeHookContext) => void | Promise<void>;
+	after?: (context: NativeHookContext) => void | Promise<void>;
+	replace?: (context: NativeHookContext) => unknown;
+}
+export interface NativeHookOptions extends NativeCallOptions {
+	cacheOnly?: boolean;
+	instance?: NativeObjectHandle;
+	once?: boolean;
+}
+export interface NativeHookToken {
+	readonly active: boolean;
+	setReturnValue(self: NativeObjectHandle, args: unknown[], value: unknown): void;
+	removeReturnValue(self: NativeObjectHandle, args: unknown[]): void;
+	clearReturnValues(): void;
+	remove(): void;
+}
+export interface NativeObjCBridge {
+	getClass(name: string): NativeClassHandle | null;
+	alloc(classOrName: string | NativeClassHandle): NativeObjectHandle;
+	className(handle: NativeHandle): string | null;
+	respondsTo(handle: NativeHandle, selector: string): boolean;
+	call(handle: NativeHandle, selector: string, ...args: unknown[]): unknown;
+	callSuper(
+		handle: NativeObjectHandle,
+		currentClass: NativeClassHandle | string,
+		selector: string,
+		...args: unknown[]
+	): unknown;
+	invoke(
+		handle: NativeObjectHandle,
+		selector: string,
+		args: unknown[],
+		options?: NativeCallOptions,
+	): unknown;
+	invokeSuper(
+		handle: NativeObjectHandle,
+		currentClass: NativeClassHandle | string,
+		selector: string,
+		args: unknown[],
+		options?: NativeCallOptions,
+	): unknown;
+	getIvar(handle: NativeObjectHandle, name: string): unknown;
+	setIvar(handle: NativeObjectHandle, name: string, value: unknown): void;
+	createAssociationKey(): NativeAssociationKey;
+	getAssociatedObject(handle: NativeObjectHandle, key: NativeAssociationKey): unknown;
+	setAssociatedObject(
+		handle: NativeObjectHandle,
+		key: NativeAssociationKey,
+		value: unknown,
+		policy?: string,
+	): void;
+	struct<T extends object = Record<string, unknown>>(name: string, fields: T): NativeStruct<T>;
+	array(handle: NativeObjectHandle): unknown[];
+	data(value: ArrayBuffer | Uint8Array): NativeObjectHandle;
+	hook(
+		className: string,
+		selector: string,
+		handlers: NativeHookHandlers,
+		options?: NativeHookOptions,
+	): NativeHookToken;
+}
+export interface NativePlatformApp {
+	getAppSource(): string;
+}
+export interface NativePlatformBridge {
+	evaluateBytecode(bytecode: ArrayBuffer, tag?: string): unknown;
+	readonly device: NativePlatformDevice;
+	readonly app: NativePlatformApp;
+}
+export interface NativePlatformDevice {
+	getDeviceModel(): string;
+	getiOSVersionString(): string;
+	isJailbroken(): boolean;
+	isSystemApp(): boolean;
+	isVerifiedBuild(): boolean;
+	getEntitlements(): Record<string, any>;
+	getEntitlementsAsPlist(): string;
+}
+export interface NativePluginBridge {
+	readonly apiVersion: string;
+	readonly abiVersion: string;
+	readonly capabilities: readonly NativePluginCapability[];
+	readonly objc: NativeObjCBridge;
+	readonly ffi: NativeFFIBridge;
+	readonly fabric: NativeFabricBridge;
+}
+export interface NativePluginError {
+	code: NativePluginErrorCode;
+	message: string;
+	capability?: NativePluginCapability;
+}
+export interface NativeStruct<T extends object = Record<string, unknown>> extends NativeHandle {
+	readonly name: string;
+	readonly value?: T;
+}
 export interface Navigation<T = any> {
 	push: (route: string, params?: T) => void;
 	pop: () => void;
@@ -196,6 +339,13 @@ export interface Navigation<T = any> {
 	setOptions: (options: Record<string, any>) => void;
 	addListener: (event: string, callback: Fn) => Fn<void>;
 	[key: string]: any;
+}
+export interface PluginContext {
+	readonly manifest: AddonManifest;
+	readonly id: string;
+	readonly capabilities: readonly NativePluginCapability[];
+	readonly native: NativePluginBridge;
+	dispose(): void;
 }
 export interface RowButtonProps {
 	label?: ReactNode;
@@ -536,6 +686,51 @@ export type IconSlot = ReactNode | ComponentType<any> | Fn<ReactNode>;
 export type InputSize = LiteralUnion<'sm' | 'md' | 'lg'>;
 /** Input status. `focused` is an internal state and is not user-settable. */
 export type InputStatus = LiteralUnion<'default' | 'error'>;
+export type NativeAssociationKey = NativeHandle;
+export type NativeClassHandle = NativeHandle;
+export type NativeFFIType =
+	| NativeFFITypeName
+	| {
+			struct: string;
+	  };
+export type NativeFFITypeName =
+	| 'void'
+	| 'bool'
+	| 'i8'
+	| 'u8'
+	| 'i16'
+	| 'u16'
+	| 'i32'
+	| 'u32'
+	| 'i64'
+	| 'u64'
+	| 'float'
+	| 'double'
+	| 'cstring'
+	| 'pointer'
+	| 'object'
+	| 'class'
+	| 'selector';
+export type NativeFabricSurface = NativeHandle;
+export type NativeHandle = object;
+export type NativeObjectHandle = NativeHandle;
+export type NativePluginCapability =
+	| 'native.objc.classes'
+	| 'native.objc.invoke'
+	| 'native.objc.ivars'
+	| 'native.objc.associations'
+	| 'native.objc.hooks'
+	| 'native.ffi.symbols'
+	| 'native.ffi.call'
+	| 'native.fabric.mount';
+export type NativePluginErrorCode =
+	| 'NATIVE_BRIDGE_ERROR'
+	| 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED'
+	| 'NATIVE_PLUGIN_CAPABILITY_DENIED'
+	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
+	| 'NATIVE_PLUGIN_UNAVAILABLE';
+export type NativePointer = NativeHandle;
+export type NativeThreadPolicy = 'current' | 'main';
 /** An {@link Addon} whose instance is a {@link Plugin}. */
 export type PluginEntity = Addon & {
 	instance: Plugin$1 | null;
@@ -621,7 +816,7 @@ export type UnboundAsset = DiscordAsset & {
 
 /** The lifecycle and settings contract implemented by a plugin. */
 interface Plugin$1 {
-	start?(): void;
+	start?(context?: PluginContext): void;
 	stop?(): void;
 	getSettingsPanel?(): ReactNode;
 }

@@ -1,0 +1,26 @@
+name: Client CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: canary
+      - run: bun install
+      - run: bun run fmt:check
+      - run: bun run lint
+      - run: bun test
+      - run: bun run generate-sdk
+      - run: git diff --exit-code -- packages/api/src packages/api/package.json
+      - run: bun run --cwd packages/client build

@@ -2,9 +2,9 @@ import { rolldown, watch, type RolldownOptions, type Plugin } from 'rolldown';
 import hermes from '@unbound-app/rollup-plugin-hermes';
 import { existsSync, readdirSync } from 'node:fs';
 import { cp, mkdir, rm } from 'node:fs/promises';
-import { swc } from 'rollup-plugin-swc3';
 import replace from '@rollup/plugin-replace';
 import Logger from '@unbound-app/logger';
+import { swc } from 'rollup-plugin-swc3';
 import { join } from 'node:path';
 
 import {

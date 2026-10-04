@@ -51,6 +51,7 @@ const controllerListeners = new Set<(connected: boolean, count: number) => void>
 
 /** How long to wait for a device to answer an eval before failing it. */
 export const EVAL_TIMEOUT_MS = 10_000;
+const PLUGIN_PUSH_TIMEOUT_MS = 60_000;
 
 /**
  * @description Registers the connected device, rejecting a second one so eval routing stays
@@ -158,7 +159,7 @@ export function evaluateForController(socket: SocketLike, id: string, code: stri
 /**
  * @description Forwards a controller's {@link PluginPushRequest} to the device and delivers the
  * id-correlated {@link PluginPushResult} back over that same controller's socket. Replies with an
- * error frame instead if no device is connected or it doesn't answer within {@link EVAL_TIMEOUT_MS}.
+ * error frame instead if no device is connected or it doesn't answer within {@link PLUGIN_PUSH_TIMEOUT_MS}.
  * @param socket The controller that issued the push.
  * @param request The push to forward verbatim; its `id` correlates the result.
  */
@@ -181,9 +182,9 @@ export function pushPluginForController(socket: SocketLike, request: PluginPushR
 			type: 'plugin-push-result',
 			id: request.id,
 			ok: false,
-			error: `Plugin push timed out after ${EVAL_TIMEOUT_MS}ms.`,
+			error: `Plugin push timed out after ${PLUGIN_PUSH_TIMEOUT_MS}ms.`,
 		});
-	}, EVAL_TIMEOUT_MS);
+	}, PLUGIN_PUSH_TIMEOUT_MS);
 
 	pendingPushes.set(request.id, { deliver, timer, origin: socket });
 	state.device.send(JSON.stringify(request));

@@ -11,7 +11,8 @@ const FileManager: DCDFileManagerType = getNativeModule(
 );
 
 /** Absolute path to the platform's documents directory. */
-export const Documents = FileManager.DocumentsDirPath;
+export const Documents =
+	FileManager.DocumentsDirPath ?? FileManager.getConstants().DocumentsDirPath;
 
 /**
  * @description Reads a file's contents, resolving relative paths against {@link Documents}.

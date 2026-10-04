@@ -13,6 +13,7 @@ import { Icons } from '~/api/assets';
 
 import { unitToHex, withoutOpacity } from './color';
 import useToastState from './use-toast-state';
+import toastDuration from './toast-duration';
 import ToastProgress from './toast-progress';
 import ToastButtons from './toast-buttons';
 import ToastContent from './toast-content';
@@ -73,7 +74,7 @@ function Toast({ id }: ToastProps) {
 	// The store entry is gone the instant this toast is removed; skip a final empty render.
 	if (!options) return null;
 
-	const duration = options.duration ?? settings.get('toasts.duration', 3000);
+	const duration = toastDuration(options.duration, settings.get('toasts.duration', 5000));
 	const background = withoutOpacity(styles.container.backgroundColor) + unitToHex(opacity);
 
 	return (

@@ -42,6 +42,16 @@ export function buildOwnership(entries: ModuleEntry[]): Map<string, Set<string>>
 			}
 		}
 
+		for (const declaration of sourceFile.getExportDeclarations()) {
+			const specifier = declaration.getModuleSpecifierValue();
+			const match = TYPES_SUBPATH.exec(specifier ?? '');
+			if (!match || match[1] === 'utils') continue;
+
+			for (const named of declaration.getNamedExports()) {
+				names.add(named.getAliasNode()?.getText() ?? named.getName());
+			}
+		}
+
 		if (names.size > 0) owned.set(entry.out, names);
 	}
 

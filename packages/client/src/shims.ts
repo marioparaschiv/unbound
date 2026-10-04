@@ -11,10 +11,5 @@ export default {
 	'react-native-reanimated': findByPropsLazy('useSharedValue', 'useAnimatedStyle', {
 		interop: false,
 	}),
-	'react-native-gesture-handler': findByPropsLazy(
-		'Gesture',
-		'GestureDetector',
-		'createNativeWrapper',
-		{ interop: false },
-	),
+	'react-native-gesture-handler': findByPropsLazy('PanGestureHandler', { interop: false }),
 };

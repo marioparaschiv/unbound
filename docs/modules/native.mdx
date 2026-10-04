@@ -1,295 +1,167 @@
 ---
 title: 'Native'
-description: "Bridge to the app's native iOS and Android modules, and to Unbound's own native surface."
+description: "Bridge to the app's native iOS and Android modules, and to Unbound's generic native plugin runtime."
 icon: 'file-code'
 ---
 
 ### What is the native bridge?
 
-Some capabilities don't live in JavaScript at all: reading files, fetching device and build info, reloading the bundle. They live in **native modules**, compiled into the app and exposed to JS through React Native's bridge.
+Some capabilities live in React Native modules rather than JavaScript. The `native` API resolves those modules and exposes the handles Unbound uses most often.
 
-`native` is how you reach them. It resolves native modules by name and ships a handful of pre-resolved handles for the ones Unbound needs most.
+The loader also installs two JSI globals:
 
-Separately, the Unbound loader installs its own JSI object on the global as `UnboundNative`. That one is not a Discord module. It's Unbound's own native surface, and it carries a versioned feature API you should query before you call into it.
+- `NativePlugin` is the versioned generic native plugin bridge.
+- `NativePlatform` contains platform-wide helpers that are not plugin-specific.
+
+Feature-specific native implementations do not belong in either global. Plugins use the generic bridge to implement their own behavior in JavaScript.
 
 ### Resolving native modules
 
-A native module's name varies across platforms and Discord versions. The iOS file manager might be `DCDFileManager` on one build and `RTNFileManager` on another. So `getNativeModule` takes a list of candidate names and returns the first one that resolves, checking both `NativeModules` and the TurboModule registry.
+A native module's name varies across Discord versions. `getNativeModule` checks each candidate in order against both `NativeModules` and the TurboModule registry.
 
 ```ts
 import { native } from '@unbound-app/api';
 
-const FileManager = native.getNativeModule(
-	'NativeFileModule',
-	'DCDFileManager',
-	'RTNFileManager',
-);
+const FileManager = native.getNativeModule('NativeFileModule', 'DCDFileManager', 'RTNFileManager');
 ```
-
-<Warning>
-	Always pass every name you know a module by. A single name that's right on your device may be wrong on someone else's. The candidate list is what makes a module resolve everywhere.
-</Warning>
 
 ### Built-in handles
 
-The native modules Unbound depends on are already resolved for you:
-
-<AccordionGroup>
-	<Accordion title='BundleInfo' icon='circle-info'>
-		Build and release metadata: version, release channel, build number, identifier.
-	</Accordion>
-	<Accordion title='BundleManager' icon='rotate'>
-		The bundle updater. Drives OTA update checks and reloads (see below).
-	</Accordion>
-	<Accordion title='DeviceInfo' icon='mobile'>
-		Hardware and OS details: device model, manufacturer, system version, RAM.
-	</Accordion>
-	<Accordion title='File manager' icon='folder'>
-		The native file module the [fs](/modules/fs) module is built on. Prefer `fs` for file work, since it resolves paths and defaults encodings for you.
-	</Accordion>
-</AccordionGroup>
+`BundleInfo`, `BundleManager`, `DeviceInfo`, and the file manager are resolved for you. Prefer `fs` for file operations because it handles paths and encodings.
 
 ### Reloading
 
-`reload()` is the safe way to restart the bundle: it persists pending settings first, then reloads, so nothing in flight is lost.
+`reload()` persists pending settings before asking the bundle manager to reload.
 
 ```ts
 import { native } from '@unbound-app/api';
 
-await native.reload(); // persists settings, then reloads
+await native.reload();
 ```
 
-### UnboundNative
+### Platform helpers
 
-`UnboundNative` is the JSI object the [iOS loader](/loader/ios) installs directly on the JS global. It is re-exported from the native module so you can reach it through the API:
+`NativePlatform` is optional because it is only present inside a running Unbound loader environment. It exposes device information, app provenance, and Hermes bytecode evaluation.
 
 ```ts
 import { native } from '@unbound-app/api';
 
-const model = native.UnboundNative?.device.getModel();
+const model = native.NativePlatform?.device.getDeviceModel();
+const source = native.NativePlatform?.app.getAppSource();
 ```
 
-It is organized into a top-level introspection surface plus six namespaces.
+`NativePlatform.evaluateBytecode` accepts a Hermes `ArrayBuffer` and evaluates it in the current runtime. It throws when the argument is not valid Hermes bytecode or when evaluation fails.
 
-<AccordionGroup>
-	<Accordion title='Top level: version & features' icon='tag'>
-		Eight feature-lifecycle functions, described below, let you ask what this build actually supports: `getNativeModuleVersion`, `supportsFeature`, `getFeatureInfo`, `isFeatureDeprecated`, `isFeatureRemoved`, `getSupportedFeatures`, `getDeprecatedFeatures`, and `getRemovedFeatures`. `evaluateBytecode` also lives here.
-	</Accordion>
-	<Accordion title='device' icon='mobile'>
-		Hardware, OS and install-integrity details about the device Unbound is running on.
+### Generic plugin bridge
 
-		<ParamField path='getModel()' type='string'>
-			The device model identifier.
-		</ParamField>
-		<ParamField path='getiOSVersionString()' type='string'>
-			The iOS version as a string.
-		</ParamField>
-		<ParamField path='isJailbroken()' type='boolean'>
-			Whether the device is jailbroken.
-		</ParamField>
-		<ParamField path='isSystemApp()' type='boolean'>
-			Whether the app is installed as a system app.
-		</ParamField>
-		<ParamField path='isVerifiedBuild()' type='boolean'>
-			Whether the running build passes the loader's signature check.
-		</ParamField>
-		<ParamField path='getEntitlements()' type='object'>
-			The application's entitlements as an object. Returns an empty object when they can't be read.
-		</ParamField>
-		<ParamField path='getEntitlementsAsPlist()' type='string'>
-			The same entitlements formatted as a plist string, for display or export.
-		</ParamField>
-	</Accordion>
-	<Accordion title='app' icon='box'>
-		<ParamField path='getSource()' type='string'>
-			How this copy of the app was installed. Useful when a feature depends on the install method rather than on the device.
-		</ParamField>
-	</Accordion>
-	<Accordion title='notifications' icon='bell'>
-		<ParamField path='show(title, body, timeDelay, soundEnabled, identifier)' type='string'>
-			Schedules a local notification and returns its identifier. Every argument is optional: `title` falls back to `"Notification"`, `body` to an empty string, `timeDelay` to `1`, `soundEnabled` to `true`, and `identifier` to a freshly generated UUID. Since the generated identifier is returned, capture it if you need to reference the notification later.
-		</ParamField>
-	</Accordion>
-	<Accordion title='pip' icon='clapperboard-play'>
-		<ParamField path='playVideo(url)' type='string | null'>
-			Starts picture-in-picture playback for a video URL and returns a playback identifier. Returns `null` when the URL is missing or empty, so check the result rather than assuming playback started.
-		</ParamField>
-	</Accordion>
-	<Accordion title='chat' icon='comment'>
-		Native chat appearance controls. The getters read current state synchronously; the setters are fire-and-forget (see the warning below).
-
-		<ParamField path='getAvatarCornerRadius()' type='number'>
-			The current avatar corner radius, or `-1` when none is set.
-		</ParamField>
-		<ParamField path='setAvatarCornerRadius(radius)' type='undefined'>
-			Sets the avatar corner radius. Defaults to `0` when the argument is missing.
-		</ParamField>
-		<ParamField path='resetAvatarCornerRadius()' type='undefined'>
-			Clears the avatar corner radius override.
-		</ParamField>
-		<ParamField path='getMessageBubblesEnabled()' type='boolean'>
-			Whether message bubbles are on. Defaults to `false` when unset.
-		</ParamField>
-		<ParamField path='getMessageBubbleLightColor()' type='string'>
-			The light-theme bubble color.
-		</ParamField>
-		<ParamField path='getMessageBubbleDarkColor()' type='string'>
-			The dark-theme bubble color.
-		</ParamField>
-		<ParamField path='getMessageBubbleCornerRadius()' type='number'>
-			The bubble corner radius, defaulting to `10` when unset.
-		</ParamField>
-		<ParamField path='setMessageBubblesEnabled(enabled, lightColor, darkColor)' type='undefined'>
-			Toggles message bubbles. The two color arguments are optional; pass neither and only the enabled flag is applied.
-		</ParamField>
-		<ParamField path='setMessageBubbleColors(lightColor, darkColor)' type='undefined'>
-			Sets both bubble colors. Missing arguments are sent as empty strings.
-		</ParamField>
-		<ParamField path='setMessageBubbleCornerRadius(radius)' type='undefined'>
-			Sets the bubble corner radius. Defaults to `10` when the argument is missing.
-		</ParamField>
-		<ParamField path='resetMessageBubbles()' type='undefined'>
-			Clears every message bubble override.
-		</ParamField>
-	</Accordion>
-	<Accordion title='toolbox' icon='screwdriver-wrench'>
-		<ParamField path='showMenu()' type='undefined'>
-			Opens the native toolbox menu. Fire-and-forget (see the warning below).
-		</ParamField>
-	</Accordion>
-</AccordionGroup>
-
-<Warning>
-	**The setters are fire-and-forget.** `chat.setAvatarCornerRadius`, `chat.resetAvatarCornerRadius`, `chat.setMessageBubblesEnabled`, `chat.setMessageBubbleColors`, `chat.setMessageBubbleCornerRadius`, `chat.resetMessageBubbles`, and `toolbox.showMenu` all hop to the main queue and return `undefined` immediately. There is no promise to await and no error to catch. Reading a value back on the next line can still return the old one, because the write hasn't landed yet. Treat your own state as the source of truth rather than reading it back from native.
-</Warning>
-
-<Note>
-	If `UnboundNative` is missing, the environment isn't a real Unbound install and most native features won't work. That's a bug worth reporting, not a state to handle in your addon. The feature API below is for handling *older* Unbound installs, which is a real and expected case.
-</Note>
-
-### Feature lifecycle
-
-The native surface changes between loader releases. Rather than making you sniff for the presence of a function, `UnboundNative` publishes a version and a table of named features, each tagged with the versions it was introduced, deprecated, and removed in. Ask before you call, and your addon keeps working on installs both older and newer than the one you developed against.
-
-The features named in the current table are `device.info`, `device.entitlements`, `app.source`, `notifications`, `pip.video`, `chat.avatar`, `chat.messageBubbles`, `toolbox.menu`, and `native.evaluateBytecode`. All nine were introduced in `1.0.0`, and none are currently deprecated or removed.
+`NativePlugin` is the public JavaScript view of the native ABI. The loader publishes it as `globalThis.NativePlugin`; the client scopes it to each plugin according to the manifest capabilities.
 
 ```ts
 import { native } from '@unbound-app/api';
 
-const UN = native.UnboundNative;
+export default {
+	start(context) {
+		const bridge = context?.native;
+		if (!bridge) return;
 
-if (UN?.supportsFeature('pip.video')) {
-	UN.pip.playVideo(url);
+		const messageClass = bridge.objc.getClass('DCDMessage');
+		if (!messageClass) return;
+		const message = bridge.objc.alloc(messageClass);
+		bridge.objc.call(message, 'content');
+	},
+};
+```
+
+The bridge exposes these version and capability fields:
+
+<ParamField path='apiVersion' type='string'>
+	The version of the JavaScript API consumed by plugins.
+</ParamField>
+<ParamField path='abiVersion' type='string'>
+	The version of the native ABI implemented by the loader.
+</ParamField>
+<ParamField path='capabilities' type='string[]'>
+	The native capabilities available in this loader build.
+</ParamField>
+
+### Objective-C operations
+
+The `objc` namespace supports class lookup, allocation, selector calls, superclass calls, ivar access, associated objects, registered structs, arrays, data conversion, and generic hooks.
+
+```ts
+const { native } = pluginContext;
+const cell = native.objc.getClass('DCDMessageTableViewCell');
+
+const token = native.objc.hook(cellName, 'prepareForReuse', {
+	before(context) {
+		const viewModel = native.objc.getIvar(context.self, '_viewModel');
+		if (viewModel) native.objc.call(viewModel, 'description');
+	},
+});
+```
+
+Hook arguments are borrowed until the callback returns. Retain values explicitly when they need to outlive the callback. `original()` is synchronous only when the callback runs on the hook thread; cross-thread calls fail closed to avoid deadlocks. Disposing a plugin context removes its hooks, associations, and bridge resources, and all later calls through that context are rejected.
+
+`call` runs on the current runtime thread. `invoke` accepts an explicit thread policy such as `current` or `main`; unsupported synchronous crossings fail with a structured error.
+
+Objective-C `NSData` results are returned as `Uint8Array` values. Native bridge failures are JavaScript errors with a stable `code` property; native runtime failures use `NATIVE_BRIDGE_ERROR`. Client-side negotiation errors distinguish unavailable bridges, missing capabilities, disposed scopes, and unsupported minimum API versions through their respective error codes.
+
+### Raw FFI operations
+
+The `ffi` namespace resolves symbols from already-loaded images and invokes non-variadic signatures made from supported scalar, pointer, Objective-C, and registered struct types.
+
+```ts
+const symbol = native.ffi.symbol('SomeLoadedSymbol');
+if (symbol) {
+	const value = native.ffi.call(
+		symbol,
+		{
+			returnType: 'i32',
+			args: ['pointer'],
+		},
+		pointer,
+	);
 }
 ```
 
-<AccordionGroup>
-	<Accordion title='Asking about one feature' icon='magnifying-glass'>
-		<ParamField path='supportsFeature(name)' type='boolean'>
-			`true` when the feature is known, has an `introduced` version this build is at or past, and has not been removed. This is the check to gate a call on.
-		</ParamField>
-		<ParamField path='isFeatureDeprecated(name)' type='boolean'>
-			`true` when the build is at or past the feature's `deprecated` version and the feature has not yet been removed. A deprecated feature still works, so this is a signal to migrate, not to stop calling.
-		</ParamField>
-		<ParamField path='isFeatureRemoved(name)' type='boolean'>
-			`true` when the build is at or past the feature's `removed` version. A removed feature never reports as supported.
-		</ParamField>
-		<ParamField path='getFeatureInfo(name)' type='object'>
-			The full metadata record for a feature.
+The v1 bridge does not expose arbitrary memory access, `dlopen`, variadic calls, unknown structs, vectors, unions, bitfields, or plugin-supplied native closures.
 
-			<Expandable title='fields'>
-				<ParamField path='name' type='string'>
-					The feature name you asked about. An empty string if you passed nothing.
-				</ParamField>
-				<ParamField path='known' type='boolean'>
-					Whether the feature exists in this build's table at all.
-				</ParamField>
-				<ParamField path='status' type='string'>
-					One of the five statuses below.
-				</ParamField>
-				<ParamField path='supported' type='boolean'>
-					The same answer `supportsFeature` gives. Only present when the feature is known.
-				</ParamField>
-				<ParamField path='introducedIn' type='string'>
-					The version the feature first appeared in. Only present when the feature is known.
-				</ParamField>
-				<ParamField path='deprecatedIn' type='string'>
-					The version the feature was deprecated in. Absent when it has never been deprecated.
-				</ParamField>
-				<ParamField path='removedIn' type='string'>
-					The version the feature was removed in. Absent when it has never been removed.
-				</ParamField>
-				<ParamField path='replacement' type='string'>
-					The feature to migrate to. Absent when there is no replacement.
-				</ParamField>
-			</Expandable>
-		</ParamField>
-	</Accordion>
-	<Accordion title='Asking about all features' icon='list'>
-		<ParamField path='getNativeModuleVersion()' type='string'>
-			The native module's own semver version. This is the version every feature check is evaluated against.
-		</ParamField>
-		<ParamField path='getSupportedFeatures()' type='string[]'>
-			Every feature currently supported, sorted alphabetically.
-		</ParamField>
-		<ParamField path='getDeprecatedFeatures()' type='string[]'>
-			Every feature currently deprecated, sorted alphabetically.
-		</ParamField>
-		<ParamField path='getRemovedFeatures()' type='string[]'>
-			Every feature already removed, sorted alphabetically.
-		</ParamField>
-	</Accordion>
-</AccordionGroup>
+### Fabric surfaces
 
-#### The five statuses
-
-`getFeatureInfo(...).status` resolves to exactly one of these, checked in this order:
-
-| Status | Meaning |
-| --- | --- |
-| `unknown` | The name isn't in this build's feature table. Either you typo'd it or this loader predates the feature. |
-| `removed` | The build is at or past the feature's `removed` version. |
-| `deprecated` | The build is at or past the feature's `deprecated` version, and it hasn't been removed. |
-| `supported` | Introduced at or before this version, and not removed. Safe to call. |
-| `unavailable` | Known to the table, but this build is older than the feature's `introduced` version. |
-
-<Note>
-	`unknown` and `unavailable` mean different things but call for the same handling: don't call the feature. Only `supported` and `deprecated` are safe to call. Branch on `supportsFeature` for the decision, and read `status` when you want to tell the user *why* something is off.
-</Note>
-
-#### How versions are compared
-
-The comparison is strict, and knowing the rule saves you from a surprising result:
-
-- A version must be exactly **three dot-separated components**. `1.0` and `1.0.0.1` are both invalid.
-- Every component must be **digits only and non-empty**. `1.0.0-beta`, `v1.0.0`, and `1..0` are all invalid.
-- Valid versions compare numerically, component by component, left to right. So `1.10.0` is newer than `1.9.0`, not older.
-- **A malformed version sorts below a valid one.** If one side is malformed and the other isn't, the malformed side is treated as older. Two malformed versions compare equal.
-
-The practical consequence: a feature whose `introduced` value is malformed can never report as supported, because `supportsFeature` requires a parseable `introduced` string before it will compare anything. Prerelease tags aren't a thing here.
-
-### Running precompiled bytecode
-
-`evaluateBytecode` runs Hermes bytecode inside the app's JS runtime and returns whatever the bytecode evaluates to. It's how you ship an addon as precompiled bytecode instead of source, skipping parse and compile at load time.
+The `fabric` namespace mounts a registered React Native component into an existing UIKit view. This is the bridge used when a plugin needs Discord's real native message component rather than a second JavaScript-only approximation.
 
 ```ts
-import { native } from '@unbound-app/api';
+const surface = native.fabric.mount(container, 'MessageLinkSurface', {
+	surfaceId,
+	targetMessageId,
+});
 
-declare const bytecode: ArrayBuffer; // your compiled Hermes bytecode
-const result = native.UnboundNative?.evaluateBytecode(bytecode, 'my-plugin');
+const bounds = native.fabric.measure(container);
+native.fabric.setSize(
+	surface,
+	{ width: bounds.width, height: 1 },
+	{ width: bounds.width, height: 480 },
+);
+native.fabric.setFrame(surface, { x: 0, y: 120, width: bounds.width, height: 168 });
+native.fabric.update(surface, { targetMessageId });
+native.fabric.unmount(surface);
 ```
 
-<ParamField path='bytecode' type='ArrayBuffer' required>
-	The Hermes bytecode to run. Must be an `ArrayBuffer`.
-</ParamField>
-<ParamField path='tag' type='string'>
-	A label for the evaluation, used in stack traces and loader logs. Defaults to `UnboundNative.evaluateBytecode`. Pass your addon's id so failures are traceable to you.
-</ParamField>
+Fabric surfaces are created and destroyed on the UIKit main thread, while the JavaScript API remains synchronous and fail-closed on timeout. Surface handles are owned by the plugin scope and are unmounted automatically when the scope is disposed.
 
-<Warning>
-	`evaluateBytecode` throws rather than returning an error value. It throws when the first argument isn't an `ArrayBuffer`, when the buffer is empty, and when the bytes aren't recognized as Hermes bytecode. Anything the bytecode itself throws propagates to your call site too. Wrap the call and fall back to shipping source if you can't guarantee the target runtime.
-</Warning>
+### Capabilities and lifecycle
 
-<Note>
-	Gate this one behind `supportsFeature('native.evaluateBytecode')` like any other feature. Note that [fs](/modules/fs) reads return strings, not `ArrayBuffer`s, so you'll need to produce the buffer yourself. See [managers](/modules/managers) for how addon bundles are loaded in the first place.
-</Note>
+Declare only the capabilities a plugin needs in its manifest:
+
+- `native.objc.classes`
+- `native.objc.invoke`
+- `native.objc.ivars`
+- `native.objc.associations`
+- `native.objc.hooks`
+- `native.ffi.symbols`
+- `native.ffi.call`
+- `native.fabric.mount`
+
+The addon manager validates capability names and the optional minimum API version before calling `start(context)`. `context.native` is scoped to the plugin. `context.dispose()` is called during stop, unload, reload, and failed startup cleanup.
+
+Existing plugins can continue to accept a context-less `start` function, but new plugins should use the scoped context so native resources cannot escape their lifecycle.

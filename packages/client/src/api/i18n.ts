@@ -1,10 +1,15 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { Dispatcher, i18n as Discord } from '~/api/metro/common';
+import { Dispatcher, i18n as Discord, Moment } from '~/api/metro/common';
 import { DEV, I18N_BASE_URL } from '~/lib/constants';
 import { findByName } from '~/api/metro';
 import { getStore } from '~/api/storage';
 import fs from '~/api/fs';
+
+import createMomentCalendarLocale from './create-moment-calendar-locale';
+import createMomentLocaleSetter from './create-moment-locale-setter';
+import resolveMomentLocale from './resolve-moment-locale';
+import enUS from '../../../../i18n/en-US.json';
 
 type LocaleStrings = Record<string, string>;
 type StringStore = Record<string, LocaleStrings>;
@@ -18,9 +23,16 @@ type Localizations = {
 
 let currentLocale: string | null = null;
 
-const strings: StringStore = {};
+const strings: StringStore = { 'en-US': enUS };
 const storage = getStore('unbound::i18n');
 const logger = createLogger('i18n');
+let previousMomentLocale: string | null = null;
+let originalMomentLocaleSetter: ((...args: any[]) => any) | null = null;
+let wrappedMomentLocaleSetter: ((...args: any[]) => any) | null = null;
+let originalMomentInstanceLocaleSetter: ((...args: any[]) => any) | null = null;
+let wrappedMomentInstanceLocaleSetter: ((...args: any[]) => any) | null = null;
+let originalMomentCalendar: ((...args: any[]) => any) | null = null;
+let wrappedMomentCalendar: ((...args: any[]) => any) | null = null;
 
 let MessageFormat: any;
 
@@ -32,6 +44,49 @@ let MessageFormat: any;
 function getMessageFormat() {
 	MessageFormat ??= findByName('MessageFormat');
 	return MessageFormat;
+}
+
+function syncMomentLocale(locale: string): void {
+	if (typeof Moment?.locale !== 'function' || typeof Moment?.locales !== 'function') return;
+
+	previousMomentLocale ||= Moment.locale();
+
+	if (!originalMomentLocaleSetter) {
+		const localeSetter = Moment.locale;
+		originalMomentLocaleSetter = localeSetter;
+		wrappedMomentLocaleSetter = createMomentLocaleSetter(
+			localeSetter,
+			() => currentLocale ?? Discord.intl?.currentLocale ?? locale,
+			() => Moment.locales(),
+		);
+		Moment.locale = wrappedMomentLocaleSetter;
+
+		if (typeof Moment.prototype?.locale === 'function') {
+			const instanceLocaleSetter = Moment.prototype.locale;
+			originalMomentInstanceLocaleSetter = instanceLocaleSetter;
+			wrappedMomentInstanceLocaleSetter = createMomentLocaleSetter(
+				instanceLocaleSetter,
+				() => currentLocale ?? Discord.intl?.currentLocale ?? locale,
+				() => Moment.locales(),
+			);
+			Moment.prototype.locale = wrappedMomentInstanceLocaleSetter;
+		}
+
+		const calendar = Moment.prototype?.calendar;
+		const instanceLocale = Moment.prototype?.locale;
+		if (typeof calendar === 'function' && typeof instanceLocale === 'function') {
+			originalMomentCalendar = calendar;
+			wrappedMomentCalendar = createMomentCalendarLocale(
+				calendar,
+				() => currentLocale ?? Discord.intl?.currentLocale ?? locale,
+				() => Moment.locales(),
+				instanceLocale,
+			);
+			Moment.prototype.calendar = wrappedMomentCalendar;
+		}
+	}
+
+	Moment.locale(resolveMomentLocale(locale, Moment.locales()));
 }
 
 const subscriptions: Array<() => void> = [];
@@ -153,25 +208,29 @@ export function defineLocalizations(table: StringStore): Localizations {
  */
 export async function init(): Promise<void> {
 	const locale = Discord.intl?.currentLocale ?? Discord.getSystemLocale?.() ?? null;
-
-	await ensureLocale('en-US');
-
-	if (locale && locale !== 'en-US') {
-		await ensureLocale(locale);
-		currentLocale = locale;
-	} else {
-		currentLocale = 'en-US';
-	}
+	const initialLocale = locale ?? 'en-US';
+	currentLocale = initialLocale;
+	syncMomentLocale(initialLocale);
 
 	async function handler({ locale }: I18nLoadSuccess) {
 		if (!locale) return;
 
-		await ensureLocale(locale);
-		currentLocale = locale;
+		const activeLocale = Discord.intl?.currentLocale ?? locale;
+		currentLocale = activeLocale;
+		syncMomentLocale(activeLocale);
+		await ensureLocale(activeLocale);
 	}
 
 	Dispatcher.subscribe('I18N_LOAD_SUCCESS', handler);
 	subscriptions.push(() => Dispatcher.unsubscribe('I18N_LOAD_SUCCESS', handler));
+
+	await ensureLocale('en-US');
+
+	const activeLocale = Discord.intl?.currentLocale ?? currentLocale ?? 'en-US';
+	if (activeLocale !== 'en-US') await ensureLocale(activeLocale);
+
+	currentLocale = activeLocale;
+	syncMomentLocale(activeLocale);
 }
 
 /**
@@ -179,6 +238,37 @@ export async function init(): Promise<void> {
  */
 export function destroy() {
 	subscriptions.splice(0).map((unsubscribe) => unsubscribe());
+	if (
+		originalMomentLocaleSetter &&
+		wrappedMomentLocaleSetter &&
+		Moment?.locale === wrappedMomentLocaleSetter
+	) {
+		Moment.locale = originalMomentLocaleSetter;
+	}
+	if (
+		originalMomentInstanceLocaleSetter &&
+		wrappedMomentInstanceLocaleSetter &&
+		Moment?.prototype?.locale === wrappedMomentInstanceLocaleSetter
+	) {
+		Moment.prototype.locale = originalMomentInstanceLocaleSetter;
+	}
+	if (
+		originalMomentCalendar &&
+		wrappedMomentCalendar &&
+		Moment?.prototype?.calendar === wrappedMomentCalendar
+	) {
+		Moment.prototype.calendar = originalMomentCalendar;
+	}
+	if (previousMomentLocale && originalMomentLocaleSetter) {
+		Reflect.apply(originalMomentLocaleSetter, Moment, [previousMomentLocale]);
+	}
+	previousMomentLocale = null;
+	originalMomentLocaleSetter = null;
+	wrappedMomentLocaleSetter = null;
+	originalMomentInstanceLocaleSetter = null;
+	wrappedMomentInstanceLocaleSetter = null;
+	originalMomentCalendar = null;
+	wrappedMomentCalendar = null;
 }
 
 export default { Messages, format, defineLocalizations, init, destroy };

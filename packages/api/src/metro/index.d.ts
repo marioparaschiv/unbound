@@ -20,7 +20,7 @@ export declare const on: typeof addListener;
  * @param listener Callback receiving the module exports and its id.
  * @returns A function that removes the listener.
  */
-export declare function addListener(listener: (mdl: any, id: string) => void): () => boolean;
+export declare function addListener(listener: (mdl: any, id: number) => void): () => boolean;
 /**
  * @description Runs several filters in a single registry pass, returning one result per item.
  * @param items The filters to resolve, each with its own per-item options.
@@ -108,7 +108,7 @@ export declare function initializeModule(id: number): boolean;
  * @description Removes a previously registered module listener.
  * @param listener The listener to remove.
  */
-export declare function removeListener(listener: (mdl: any, id: string) => void): void;
+export declare function removeListener(listener: (mdl: any, id: number) => void): void;
 
 /** A single entry in a {@link bulk} search: a filter plus its per-item options. */
 export interface MetroBulkItem extends Omit<MetroSearchOptions, 'initial' | 'cache'> {
@@ -191,6 +191,7 @@ export type MetroSearchOptions = {
 	lazy?: boolean;
 	raw?: boolean;
 	all?: boolean;
+	cacheOnly?: boolean;
 	initialize?: boolean;
 };
 /** Result shape of a by-name search: the matched function (or its default export). */

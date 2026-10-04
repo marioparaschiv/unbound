@@ -22,6 +22,7 @@ export type MetroSearchOptions = {
 	lazy?: boolean;
 	raw?: boolean;
 	all?: boolean;
+	cacheOnly?: boolean;
 	initialize?: boolean;
 };
 
@@ -227,6 +228,15 @@ function onModuleRequire(exports: any, id: number) {
 
 		data.patchedImportTracker = true;
 	}
+
+	if (data.listeners.size === 0) return;
+	for (const listener of data.listeners) {
+		try {
+			listener(exports, id);
+		} catch (error) {
+			Logger.error(`Failed to notify Metro module listener for ${id}:`, error);
+		}
+	}
 }
 
 /**
@@ -234,7 +244,7 @@ function onModuleRequire(exports: any, id: number) {
  * @param listener Callback receiving the module exports and its id.
  * @returns A function that removes the listener.
  */
-export function addListener(listener: (mdl: any, id: string) => void) {
+export function addListener(listener: (mdl: any, id: number) => void) {
 	data.listeners.add(listener);
 	return () => data.listeners.delete(listener);
 }
@@ -243,7 +253,7 @@ export function addListener(listener: (mdl: any, id: string) => void) {
  * @description Removes a previously registered module listener.
  * @param listener The listener to remove.
  */
-export function removeListener(listener: (mdl: any, id: string) => void) {
+export function removeListener(listener: (mdl: any, id: number) => void) {
 	data.listeners.delete(listener);
 }
 
@@ -300,10 +310,12 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 
 	const {
 		all = false,
+		cacheOnly = false,
 		interop = true,
 		cache: useCache = true,
 		initial = null,
 		esModules = true,
+		initialize: initializeModules = true,
 		raw = false,
 	} = options;
 
@@ -346,6 +358,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 			if (blacklist.has(id)) continue;
 
 			if (!rawModule.isInitialized) {
+				if (!initializeModules) continue;
 				const initialized = initializeModule(id);
 				if (!initialized) continue;
 			}
@@ -360,6 +373,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 		return all ? result.found : null;
 	}
 	/****** END CACHE ******/
+	if (cacheOnly) return all ? result.found : null;
 
 	const store = useCache ? data.cache : window.modules;
 	const keys = useCache ? [...store.keys()] : Cache.moduleIds;
@@ -370,6 +384,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 		if (blacklist.has(id)) continue;
 
 		if (!rawModule.isInitialized) {
+			if (!initializeModules) continue;
 			const initialized = initializeModule(id);
 			if (!initialized) continue;
 		}

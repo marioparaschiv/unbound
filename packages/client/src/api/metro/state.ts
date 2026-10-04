@@ -9,5 +9,5 @@ export const data = {
 	patchedRTNProfiler: false,
 	patchedImportTracker: false,
 	origToString: Function.prototype.toString,
-	listeners: new Set<(mdl: any, id: string) => void>(),
+	listeners: new Set<(mdl: any, id: number) => void>(),
 };

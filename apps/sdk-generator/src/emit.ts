@@ -57,7 +57,7 @@ export function buildRoot(entries: ModuleEntry[]): string {
 
 /**
  * @description Emits the SDK's `global.d.ts`: the addon-facing ambient globals (`$$DEV$$`,
- * `UnboundNative`, `React`, …) from the `@unbound-app/types` `declare global` block, a re-export of the
+ * `NativePlugin`, `React`, …) from the `@unbound-app/types` `declare global` block, a re-export of the
  * shared types (so `@unbound-app/api/global` stays their public home even though `_internal.d.ts` is
  * unlisted), and the `UnboundGlobal` interface that types `window.unbound` and the ambient `unbound`
  * const. Shared types are never re-declared here - they are imported from `_internal.d.ts`.
