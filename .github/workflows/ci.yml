@@ -22,5 +22,6 @@ jobs:
       - run: bun run lint
       - run: bun test
       - run: bun run generate-sdk
-      - run: git diff --exit-code -- packages/api/src packages/api/package.json
+      # Releases replace the generated `<version>-<hash>` with the plain release version.
+      - run: git diff --exit-code -I '^\s*"version": ' -- packages/api/src packages/api/package.json
       - run: bun run --cwd packages/client build
