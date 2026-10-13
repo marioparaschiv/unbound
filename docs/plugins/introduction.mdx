@@ -43,15 +43,13 @@ Two techniques keep a plugin's startup cost near zero until it's enabled and use
 
 <Steps>
 	<Step title='Defer module lookups with lazy' icon='clock'>
-		Wrap top-level Metro handles in `lazy` (from `unbound.utils`), or pass the `{ lazy: true }` search option. The search then runs the first time you *access* the result (inside `start`, or later inside a handler) instead of at import.
+		Pass the `{ lazy: true }` search option to top-level Metro lookups. The search then runs the first time you *access* the result (inside `start`, or later inside a handler) instead of at import.
 
 		```ts
-		import { metro, utils } from '@unbound-app/api';
+		import { metro } from '@unbound-app/api';
 
 		// Deferred: resolves on first access, not at import.
-		const Messages = utils.lazy(() =>
-			metro.findByProps('sendMessage', 'receiveMessage'),
-		);
+		const Messages = metro.findByProps('sendMessage', 'receiveMessage', { lazy: true });
 		```
 	</Step>
 	<Step title='Split heavy work behind a dynamic import' icon='code-branch'>

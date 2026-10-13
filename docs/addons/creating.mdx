@@ -51,14 +51,12 @@ Plugins have the most features of any addon kind, so they make the best example.
 	</Step>
 
 	<Step title='Find what you want to change' icon='magnifying-glass'>
-		Use [Metro](/modules/metro) to find the Discord module you need. Wrap the lookup in `utils.lazy` so the search only runs the first time a property on it is accessed.
+		Use [Metro](/modules/metro) to find the Discord module you need. Pass `{ lazy: true }` so the search only runs the first time a property on it is accessed.
 
 		```ts
-		import { metro, utils } from '@unbound-app/api';
+		import { metro } from '@unbound-app/api';
 
-		const Messages = utils.lazy(() =>
-			metro.findByProps('sendMessage', 'receiveMessage'),
-		);
+		const Messages = metro.findByProps('sendMessage', 'receiveMessage', { lazy: true });
 		```
 	</Step>
 
@@ -109,14 +107,12 @@ Plugins have the most features of any addon kind, so they make the best example.
 All the steps combined into one file:
 
 ```ts index.ts
-import { metro, patcher, storage, utils } from '@unbound-app/api';
+import { metro, patcher, storage } from '@unbound-app/api';
 
 const Patcher = patcher.createPatcher('hello-world');
 const settings = storage.getStore('hello-world');
 
-const Messages = utils.lazy(() =>
-	metro.findByProps('sendMessage', 'receiveMessage'),
-);
+const Messages = metro.findByProps('sendMessage', 'receiveMessage', { lazy: true });
 
 export default {
 	start() {

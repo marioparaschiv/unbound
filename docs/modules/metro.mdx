@@ -96,7 +96,7 @@ Metro keeps startup fast in two ways: it caches search results, and it can defer
 
 Every filter has a cache key, so Metro remembers a successful search. The next search for the same shape resolves from the cache instead of walking the registry.
 
-To defer a search, pass `{ lazy: true }` or use a `*Lazy` wrapper. You get a proxy back, and the search runs the _first time you access it_. A module referenced at the top of a file but used only inside a rarely called function costs nothing until that function runs.
+To defer a search, pass `{ lazy: true }`. You get a proxy back, and the search runs the _first time you access it_. A module referenced at the top of a file but used only inside a rarely called function costs nothing until that function runs.
 
 ```ts
 // Deferred: the search runs the first time you touch `Clipboard`.

@@ -18,9 +18,9 @@ Both come from [Metro](/modules/metro). Find stores with `findStore`. The dispat
 A store is a singleton with getters for Discord's state. Find it once, lazily so the search doesn't run at import, then read from it whenever you need to.
 
 ```ts
-import { metro, utils } from '@unbound-app/api';
+import { metro } from '@unbound-app/api';
 
-const UserStore = utils.lazy(() => metro.findStore('User'));
+const UserStore = metro.findStore('User', { lazy: true });
 
 // later, inside start() or a handler:
 const me = UserStore.getCurrentUser();

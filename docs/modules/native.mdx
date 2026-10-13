@@ -95,7 +95,7 @@ The `objc` namespace supports:
 
 ```ts
 const { native } = pluginContext;
-const cell = native.objc.getClass('DCDMessageTableViewCell');
+const cellName = 'DCDMessageTableViewCell';
 
 const token = native.objc.hook(cellName, 'prepareForReuse', {
 	before(context) {

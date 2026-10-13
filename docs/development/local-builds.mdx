@@ -1,17 +1,34 @@
 ---
 title: 'Local Builds'
-description: 'To contribute to Unbound, you need to build and serve the bundle locally.'
+description: 'Build and serve the Unbound bundle locally so you can test your changes on a device.'
 icon: 'network-wired'
 ---
 
 <Steps>
-  <Step title='Building'>
-    Run `bun run build` to build the Unbound client bundle. To rebuild automatically when the code changes, use `nodemon` to watch the source.
-  </Step>
-  <Step title='Hosting'>
-    Run `bun run serve` to serve the bundle. It prints the URL you need for the next step.
-  </Step>
-  <Step title='Configuring'>
-		Set the loader key `update.url` to the URL of your locally hosted bundle. See the [loader configuration page](/loader/configuration) for details.
-  </Step>
+	<Step title='Install Dependencies'>
+		From the root of the Unbound repository, install the workspace dependencies.
+
+		```bash
+		bun install
+		```
+	</Step>
+	<Step title='Start the Dev Server'>
+		Run the client's `dev` script. It rebuilds the bundle whenever the source changes and serves it over HTTP.
+
+		```bash
+		bun run --filter @unbound-app/client dev
+		```
+
+		On startup it prints the address that devices on your network should connect to (`Devices on the LAN should connect to: ...`). Copy that address for the next step.
+	</Step>
+	<Step title='Point the Loader at Your Bundle'>
+		Set the loader key `update.url` to the address from the previous step. See the [loader configuration page](/loader/configuration) for details.
+	</Step>
 </Steps>
+
+To build once without watching, run `build`, then `serve` to host the result:
+
+```bash
+bun run --filter @unbound-app/client build
+bun run --filter @unbound-app/client serve
+```
