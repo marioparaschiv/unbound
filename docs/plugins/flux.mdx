@@ -6,13 +6,16 @@ icon: 'box'
 
 ### What is Flux?
 
-Discord manages its state with **Flux**: a central dispatcher broadcasts actions (a message arrives, a channel is selected, the user's settings change), and **stores** listen for those actions and hold the resulting state. If you want to know *what* Discord currently knows (the current user, a guild, the selected channel) you read a store. If you want to know *when* something happens, you subscribe to the dispatcher.
+Flux is how Discord manages its state. A central dispatcher broadcasts actions, such as a message arriving, a channel being selected, or the user's settings changing. Stores listen for those actions and hold the resulting state.
 
-Both come from [Metro](/modules/metro): stores via `findStore`, the dispatcher and common stores pre-resolved on `metro.common` and `metro.stores`.
+- To get *what* Discord currently knows (the current user, a guild, the selected channel), read a store.
+- To run code *when* something happens, subscribe to the dispatcher.
+
+Both come from [Metro](/modules/metro). Find stores with `findStore`. The dispatcher and common stores are already resolved on `metro.common` and `metro.stores`.
 
 ### Reading stores
 
-A store is a singleton exposing getters over Discord's state. Find it once (lazily, so you don't search at import) and read from it whenever you need.
+A store is a singleton with getters for Discord's state. Find it once, lazily so the search doesn't run at import, then read from it whenever you need to.
 
 ```ts
 import { metro, utils } from '@unbound-app/api';
@@ -24,12 +27,12 @@ const me = UserStore.getCurrentUser();
 ```
 
 <Tip>
-	The stores you'll reach for most (`Users`, `Guilds`, `Theme`) are already resolved on `metro.stores`, so you can skip the search entirely.
+	The most commonly used stores (`Users`, `Guilds`, `Theme`) are already resolved on `metro.stores`, so you don't need to search for them.
 </Tip>
 
 ### Subscribing to events
 
-The dispatcher emits a stream of typed actions. Subscribe to one by its type to run code whenever Discord fires it, then unsubscribe when your plugin stops.
+The dispatcher emits typed actions. Subscribe to an action type to run code each time Discord dispatches it, and unsubscribe when your plugin stops.
 
 ```ts
 import { metro } from '@unbound-app/api';
@@ -49,21 +52,21 @@ export default {
 ```
 
 <Warning>
-	Always `unsubscribe` in `stop` with the *same* handler reference you subscribed with. A subscription that outlives a disabled plugin keeps firing, and keeps your plugin's code running when it shouldn't be.
+	Always `unsubscribe` in `stop`, passing the *same* handler reference you subscribed with. A subscription that outlives a disabled plugin keeps firing, so your plugin's code keeps running after the plugin is turned off.
 </Warning>
 
 ### Common action types
 
-Discord dispatches hundreds of action types. A few you'll see often:
+Discord dispatches hundreds of action types. These are some you'll see often:
 
 <AccordionGroup>
 	<Accordion title='Messages' icon='message'>
-		`MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE`, fired as messages come and go.
+		`MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE`, fired when messages are sent, edited, or deleted.
 	</Accordion>
 	<Accordion title='Navigation' icon='compass'>
-		`CHANNEL_SELECT`, `GUILD_SELECT`, fired when the user moves around the app.
+		`CHANNEL_SELECT`, `GUILD_SELECT`, fired when the user switches channels or servers.
 	</Accordion>
 	<Accordion title='Connection' icon='wifi'>
-		`CONNECTION_OPEN`, fired once the client is connected and stores are populated. A good moment for setup that needs live state.
+		`CONNECTION_OPEN`, fired once the client is connected and stores are populated. Use it for setup that needs live state.
 	</Accordion>
 </AccordionGroup>

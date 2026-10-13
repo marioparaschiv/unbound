@@ -6,9 +6,9 @@ icon: 'layer-group'
 
 ### What are managers?
 
-`plugins` and `themes` are the two **addon managers**. They govern every addon of their kind through one shared lifecycle: loading a bundle, running it, persisting whether it's on, and tearing it down.
+`plugins` and `themes` are the two addon managers. Each one runs every addon of its kind through the same lifecycle: load the bundle, run it, persist whether it's enabled, and tear it down.
 
-Both extend a single base addon manager and behave identically. They differ in just one place: how a raw bundle becomes a running instance. They're exposed as `unbound.plugins` and `unbound.themes` (and importable from `@unbound-app/api`).
+Both extend the same base addon manager and behave the same way, except in one step: how a raw bundle becomes a running instance. They're available as `unbound.plugins` and `unbound.themes`, and you can import them from `@unbound-app/api`.
 
 ```ts
 import { plugins, themes } from '@unbound-app/api';
@@ -16,30 +16,35 @@ import { plugins, themes } from '@unbound-app/api';
 
 ### The addon lifecycle
 
-Every addon moves through the same stages. The key distinction is **runtime** vs **intent**: starting and stopping control whether the addon is _executing right now_; enabling and disabling control whether it _should_, a persisted preference restored on the next launch.
+Every addon goes through the same stages. The key distinction is between two kinds of state:
+
+- Runtime: starting and stopping control whether the addon is _running right now_.
+- Intent: enabling and disabling control whether it _should_ run. This is a persisted preference, restored on the next launch.
 
 <Steps>
 	<Step title='Load' icon='download'>
-		The bundle and manifest enter the manager. If the addon's persisted state is enabled, it starts immediately.
+		The manager takes in the bundle and manifest. If the addon's persisted state is enabled, it starts right away.
 	</Step>
 	<Step title='Start / Stop' icon='play'>
-		**Runtime.** `start` turns the bundle into an instance and runs it; `stop` tears that instance down. Not persisted, purely "is it running this session?".
+		Runtime state. `start` turns the bundle into an instance and runs it. `stop` tears that instance down. This isn't persisted; it only tracks whether the addon is running in this session.
 	</Step>
 	<Step title='Enable / Disable / Toggle' icon='toggle-on'>
-		**Intent.** `enable` persists the addon as on (and starts it); `disable` persists it as off (and stops it); `toggle` flips between them. This is what survives a reload.
+		Intent state. `enable` saves the addon as on and starts it. `disable` saves it as off and stops it. `toggle` switches between the two. This is the state that survives a reload.
 	</Step>
 	<Step title='Unload' icon='trash'>
-		The addon leaves the manager entirely, stopping first if it was running.
+		The addon is removed from the manager. If it's running, it stops first.
 	</Step>
 </Steps>
 
 <Note>
-	Because enabled-state is persisted, the manager restores it on launch: an enabled addon auto-starts during **Load**. That's the whole point of separating intent from runtime.
+	Because enabled-state is persisted, the manager restores it on launch: an enabled addon starts automatically during Load. This is the reason intent and runtime are kept separate.
 </Note>
 
 ### Manifests & validation
 
-Every addon ships a **manifest** describing itself, and the manager validates it before loading. A missing or undefined required field rejects the addon. The shared schema (`id`, `name`, `description`, `authors`, `version`, `main`, plus the optional `icon`, `updates`, and `url`) is documented once:
+Every addon ships a manifest that describes it. The manager validates the manifest before loading and rejects the addon if any required field is missing or undefined.
+
+The shared schema covers `id`, `name`, `description`, `authors`, `version`, and `main`, plus the optional `icon`, `updates`, and `url`. It's documented on one page:
 
 <Card title='The manifest' icon='circle-info' href='/addons/manifest'>
 	The shared addon manifest schema and validation rules.
@@ -47,7 +52,14 @@ Every addon ships a **manifest** describing itself, and the manager validates it
 
 ### Events & state
 
-Managers are event emitters. Subscribe to lifecycle events to react when addons change: `loaded`, `unloaded`, `started`, `stopped`, `enabled`, `disabled`, `toggled`, `reloaded`. Enabled-state is persisted through [storage](/modules/storage), which is how it's restored next launch.
+Managers are event emitters. Subscribe to lifecycle events to react when addons change:
+
+- `loaded`, `unloaded`
+- `started`, `stopped`
+- `enabled`, `disabled`, `toggled`
+- `reloaded`
+
+Enabled-state is persisted through [storage](/modules/storage), which is how it's restored on the next launch.
 
 ```ts
 import { plugins } from '@unbound-app/api';
@@ -61,4 +73,9 @@ plugins.toggle('my-plugin');
 
 ### Plugins vs themes
 
-Same lifecycle, one difference: what `handleBundle` does with a bundle. **Plugins** `eval` their bundle into a running instance with `start`/`stop` hooks. **Themes** parse their bundle as JSON and drive the theme store, applying the selected theme's colors. Everything else (loading, validation, enable/disable, persistence, events) is shared.
+Plugins and themes share the lifecycle. The only difference is what `handleBundle` does with a bundle:
+
+- Plugins `eval` their bundle into a running instance with `start`/`stop` hooks.
+- Themes parse their bundle as JSON and drive the theme store, which applies the selected theme's colors.
+
+Everything else is shared: loading, validation, enable/disable, persistence, and events.

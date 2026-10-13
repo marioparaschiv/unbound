@@ -1,0 +1,77 @@
+---
+title: 'iOS Extensions'
+description: 'Open Discord links from Safari in the app, and share photos and files to Discord.'
+icon: 'apple'
+---
+
+The Unbound app file comes with two app extensions:
+
+- **OpenInDiscord**, a Safari extension that opens Discord links in the app.
+- A share extension that sends photos, videos, and files from other apps to Discord.
+
+If your sideloading tool removed them, Unbound shows a **Missing Safari Extension** or **Missing Share Extension** alert when it launches. See [Keep the app extensions](/user-guide/installing#keep-the-app-extensions) for how to avoid that.
+
+### Turn on the Safari extension
+
+iOS keeps Safari extensions off until you turn them on.
+
+<Steps>
+	<Step title='Open Safari Extensions'>
+		In the iOS Settings app, go to **Apps** > **Safari** > **Extensions**.
+	</Step>
+	<Step title='Turn On OpenInDiscord'>
+		Tap **OpenInDiscord** and turn it on.
+	</Step>
+</Steps>
+
+### What Open in Discord does
+
+The extension handles links to `discord.com` and `discord.gg`. These kinds of links open in the app:
+
+- Invites, both `discord.gg` links and `discord.com/invite` links.
+- User profiles.
+- Channels.
+- Favorites.
+
+When you tap a Discord link on any website, the link opens in the app instead of in Safari.
+
+When you open a Discord page in Safari directly, what happens depends on the link:
+
+- An invite opens in the app right away.
+- Other pages show a banner at the top that says "Open in the Discord app". Tap **OPEN** to switch to the app.
+
+### Change how it opens links
+
+Open **OpenInDiscord** from Safari's extensions menu to change its settings.
+
+- **Show Open in App banner** shows the banner on Discord pages. It's on by default.
+- **Instantly prompt to open Discord** opens every Discord page in the app right away, not only invites. It's off by default.
+- Under **Enable URL Types**, turn off **Discord Invites**, **User Profiles**, **Channels**, or **Favorites** to keep those links in Safari.
+
+You can't turn off both the banner and the instant prompt. Turning off one turns the other on.
+
+Leave **Discord URL Scheme** as it is unless you know you need a different one.
+
+### Log in with a passkey
+
+In a sideloaded app, logging in with a passkey goes through Safari, and it needs the Safari extension turned on.
+
+<Steps>
+	<Step title='Start the Passkey Login'>
+		When Discord asks for your passkey, it opens Discord's login page in Safari instead.
+	</Step>
+	<Step title='Log In in Safari'>
+		A box at the top of the page says "Waiting for the Discord browser session…" until you're logged in.
+	</Step>
+	<Step title='Go Back to the App'>
+		Safari switches back to Discord on its own. If it doesn't, tap **RETURN TO DISCORD** in the box.
+	</Step>
+</Steps>
+
+If the extension is missing, Discord shows a **Safari Extension Required** alert. If it's installed but turned off, you may see **Safari Extension Disabled** instead. Turn it on as shown above, then try again.
+
+### Share to Discord
+
+Use the share sheet in Photos, Files, or any other app to send up to 10 items to Discord. Pick the app in the share sheet, and the extension opens Discord and hands the items over.
+
+The share extension passes on photos, GIFs, videos, audio, and PDFs. Text and links aren't passed on.

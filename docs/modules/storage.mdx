@@ -6,9 +6,9 @@ icon: 'database'
 
 ### What is Storage?
 
-`storage` is Unbound's settings store. Anything you write is held in memory, broadcast as an event, and saved to disk for you, so your addon's configuration survives a reload without you ever touching a file.
+`storage` is Unbound's settings store. Values you write are held in memory, broadcast as an event, and saved to disk, so your addon's configuration survives a reload without any file handling on your part.
 
-Writes are debounced and serialized to `Unbound/settings.json` in the documents directory (via the [fs](/modules/fs) module). You never call `read` or `write` yourself; you just `get` and `set`.
+Writes are debounced and serialized to `Unbound/settings.json` in the documents directory, using the [fs](/modules/fs) module. You don't call `read` or `write` yourself. Use `get` and `set`.
 
 ```ts
 import { storage } from '@unbound-app/api';
@@ -19,9 +19,11 @@ storage.get('my-plugin', 'enabled', false); // → true
 
 ### Stores & keys
 
-Settings are namespaced into **stores**, one per addon, keyed by a name you pick (usually your plugin's id). Within a store, keys are **dot-paths**: `set('appearance.compact', true)` writes `{ appearance: { compact: true } }`, creating the intermediate objects for you.
+Settings are grouped into stores, one per addon. You pick each store's name, usually your plugin's id.
 
-Rather than repeat the store name on every call, grab a scoped facade with `getStore` and call `get`/`set`/`toggle`/`remove` on it directly.
+Keys inside a store are dot-paths. `set('appearance.compact', true)` writes `{ appearance: { compact: true } }` and creates the intermediate objects for you.
+
+To avoid repeating the store name on every call, use `getStore` to get a facade scoped to one store. Then call `get`, `set`, `toggle`, or `remove` on it directly.
 
 ```ts
 import { storage } from '@unbound-app/api';
@@ -34,7 +36,7 @@ settings.get('appearance.compact', false);  // with a default
 
 ### Reading & writing
 
-Every read takes a default, returned when the key isn't set yet, so `get` never surprises you with `undefined`.
+Every read takes a default value, which is returned when the key isn't set yet. This means `get` never returns an unexpected `undefined`.
 
 <CodeGroup>
 ```ts get & set
@@ -56,12 +58,14 @@ settings.clear();          // drop the whole store
 </CodeGroup>
 
 <Note>
-	`get` requires a default as its last argument. It's how the store stays predictable, keeping `undefined` out of your UI.
+	`get` requires a default as its last argument. This keeps the store predictable and keeps `undefined` out of your UI.
 </Note>
 
 ### Reactivity
 
-Every change emits a `changed` event, and stores emit `set`, `toggled`, `removed`, and `cleared` too. In React, that means your settings UI can stay in sync for free: `useSettingsStore` subscribes the component and re-renders it whenever a matching change lands. Pass an optional predicate to narrow _which_ changes trigger a re-render.
+In React, `useSettingsStore` subscribes a component to a store and re-renders it whenever a matching change happens. Pass an optional predicate to narrow _which_ changes trigger a re-render.
+
+Every change emits a `changed` event. Stores also emit `set`, `toggled`, `removed`, and `cleared`.
 
 ```tsx
 import { storage } from '@unbound-app/api';
@@ -81,9 +85,9 @@ function Toggle() {
 ```
 
 <Tip>
-	Outside React, subscribe imperatively with `storage.addListener(predicate, callback)`. It returns an unsubscribe function. Clean it up when your addon stops.
+	Outside React, subscribe with `storage.addListener(predicate, callback)`. It returns an unsubscribe function. Call it when your addon stops.
 </Tip>
 
 <Note>
-	This module owns the values. To give your addon a screen of its own in Discord's settings list, see [settings](/modules/settings). The keys the loader itself reads from the same file are listed in the [settings reference](/loader/settings).
+	This module owns the values. To give your addon its own screen in Discord's settings list, see [settings](/modules/settings). The keys the loader reads from the same file are listed in the [settings reference](/loader/settings).
 </Note>

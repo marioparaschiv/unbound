@@ -1,14 +1,16 @@
 ---
 title: 'Metro'
-description: 'The module manager. Locate the exact Discord module you need before you patch it.'
+description: 'The module finder. Locate the Discord module you need before you patch it.'
 icon: 'box-taped'
 ---
 
 ### What is Metro?
 
-Discord's mobile app is a React Native bundle: thousands of [Metro](https://metrobundler.dev) modules packed into one file. Nothing is global. Every store, component, and helper lives behind an opaque numeric module id.
+`metro` finds Discord's internal modules for you. It walks the module registry and returns the module that matches the description you give it.
 
-To change how something behaves, you first have to find the exact module that owns it. That is what `metro` does. It walks the registry and hands you back the module matching your description. It's also the layer everything else builds on: `assets`, `i18n`, the common handles, flux stores, and your own addons all reach for Metro first.
+Discord's mobile app is a React Native bundle: thousands of [Metro](https://metrobundler.dev) modules packed into one file. Nothing is global. Every store, component, and helper sits behind an opaque numeric module id, so before you can change a behavior you have to find the module that owns it.
+
+Other parts of the API depend on Metro too. `assets`, `i18n`, the common handles, flux stores, and your own addons all use it to locate modules.
 
 ```ts
 import { metro } from '@unbound-app/api';
@@ -19,16 +21,16 @@ Messages.sendMessage(channelId, { content: 'Hello from Unbound' });
 ```
 
 <Note>
-	Metro is the foundation. If you only learn one module, learn this one. The patterns here recur everywhere.
+	Learn this module first. The search patterns on this page come up throughout the rest of the API.
 </Note>
 
 ### Finding modules
 
-You rarely know a module's id, but you usually know its _shape_. Metro gives you a `findBy*` helper for each kind of fingerprint a module leaves behind.
+Each `findBy*` helper matches a module by one kind of identifying trait, such as its properties, its name, or its prototype. You rarely know a module's id, but you usually know one of these.
 
 <Tabs>
 	<Tab title='By props'>
-		Match a module by the properties it exposes. The most common search by far.
+		Match a module by the properties it exposes. This is the most common search.
 
 		```ts
 		const Clipboard = metro.findByProps('setString', 'getString');
@@ -51,7 +53,7 @@ You rarely know a module's id, but you usually know its _shape_. Metro gives you
 	</Tab>
 </Tabs>
 
-The full family:
+All search helpers:
 
 | Helper | Matches on |
 | --- | --- |
@@ -63,16 +65,18 @@ The full family:
 | `findStore(name)` | A flux store's registered name |
 
 <Note>
-	On mobile, most components are matched by their `name`, so `findByName` is the one you'll reach for. `findByDisplayName` exists for the cases where a component sets a `displayName`, but those are less common here than on desktop.
+	On mobile, use `findByName` for components, since most are identified by their `name`. `findByDisplayName` covers components that set a `displayName`, which is less common on mobile than on desktop.
 </Note>
 
 <Warning>
-	There is no search by source string on mobile. On desktop clients you can match a module by string literals found in its source, which is the usual way to pin down a function component. The mobile bundle doesn't expose module source the same way, so that technique isn't available. When a component has no props, prototype, or name to match on, reach it through its parent instead. See [Reaching into a render](/plugins/react-patching#reaching-into-a-render).
+	Mobile has no search by source string. Desktop clients can match a module by string literals in its source, which is the usual way to find a function component there. The mobile bundle doesn't expose module source in the same way, so this technique isn't available. If a component has no props, prototype, or name to match on, reach it through its parent instead. See [Reaching into a render](/plugins/react-patching#reaching-into-a-render).
 </Warning>
 
 ### Filters
 
-Every `findBy*` helper is sugar over a _filter_: a predicate that returns `true` for the module you want. They live on `metro.filters`, and when the built-in helpers don't fit a shape you can build your own and hand it to `find` (or `findLazy`).
+A filter is a predicate that returns `true` for the module you want. Every `findBy*` helper is a shortcut for a filter.
+
+Filters live on `metro.filters`. If the built-in helpers don't fit the shape you need, build your own filter and pass it to `find` (or `findLazy`).
 
 ```ts
 import { metro } from '@unbound-app/api';
@@ -83,16 +87,16 @@ const Messages = metro.find(filter);
 ```
 
 <Tip>
-	Reach for `find` plus a raw filter only when no `findBy*` helper expresses what you need, such as matching on a combination of conditions. For everything else the helpers are shorter and cache better.
+	Use `find` with a raw filter only when no `findBy*` helper can express the match, for example a combination of conditions. Otherwise use the helpers: they're shorter and cache better.
 </Tip>
 
 ### Lazy resolution & caching
 
-Two things keep startup fast.
+Metro keeps startup fast in two ways: it caches search results, and it can defer a search until you use the result.
 
-**Caching.** Every filter carries a cache key, so a successful search is remembered. The second time you search for the same shape, Metro skips the registry walk and resolves from cache.
+Every filter has a cache key, so Metro remembers a successful search. The next search for the same shape resolves from the cache instead of walking the registry.
 
-**Lazy resolution.** Pass `{ lazy: true }` (or use a `*Lazy` wrapper) to get back a proxy instead of running the search now. The search runs the _first time you touch the result_, so a module you reference at the top of a file but only use inside a rarely-called function costs nothing until then.
+To defer a search, pass `{ lazy: true }` or use a `*Lazy` wrapper. You get a proxy back, and the search runs the _first time you access it_. A module referenced at the top of a file but used only inside a rarely called function costs nothing until that function runs.
 
 ```ts
 // Deferred: the search runs the first time you touch `Clipboard`.
@@ -103,14 +107,14 @@ Clipboard.setString('copied!');
 ```
 
 <Note>
-	Prefer lazy for module handles you declare at module scope. It's why Unbound can reference dozens of modules without paying for all of them at launch.
+	Use lazy resolution for module handles declared at module scope. This is how Unbound references dozens of modules without paying for all of them at launch.
 </Note>
 
 ### Caching custom filters
 
-The `findBy*` helpers build their cache key by serializing their arguments, so their results are remembered across cold starts. A raw filter function you write yourself has no such key, so Metro can't cache it: every cold start re-runs your predicate against the whole registry, which is the one search shape that stays slow.
+The `findBy*` helpers build their cache key by serializing their arguments, so their results are remembered across cold starts. A filter function you write yourself has no key, so Metro can't cache it. Every cold start re-runs your predicate against the whole registry, which makes it the one kind of search that stays slow.
 
-`createCacheable` fixes that. Wrap your filter and give it a serialization of its arguments, and Metro caches the result under that key just like a built-in filter.
+To fix this, wrap your filter in `createCacheable` and pass a second function that serializes the filter's arguments into a key. Metro then caches the result under that key, the same way it does for a built-in filter.
 
 ```ts
 import { metro } from '@unbound-app/api';
@@ -125,16 +129,16 @@ const handler = metro.find(byActionHandler('MESSAGE_CREATE'));
 ```
 
 <Tip>
-	Make the key fully describe the filter's inputs. Two searches that should return different modules must produce different keys, or they'll collide in the cache.
+	The key must fully describe the filter's inputs. If two searches should return different modules, they need different keys. Otherwise they collide in the cache.
 </Tip>
 
 ### Common modules & stores
 
-The modules everyone needs (React, React Native, the dispatcher, constants, the big flux stores) are pre-resolved for you. Reach for these instead of re-finding them.
+Metro pre-resolves the modules most addons need: React, React Native, the dispatcher, constants, and the main flux stores. Use these instead of searching for them again.
 
 <AccordionGroup>
 	<Accordion title='metro.common: shared modules' icon='cubes'>
-		Framework and app-level handles you'd otherwise `findByProps` constantly: `React`, `ReactNative`, `Dispatcher`, `Constants`, `Clipboard`, `Theme`, `Flux`, `Assets`, `i18n`, and more.
+		Framework and app-level handles you would otherwise look up with `findByProps` again and again: `React`, `ReactNative`, `Dispatcher`, `Constants`, `Clipboard`, `Theme`, `Flux`, `Assets`, `i18n`, and more.
 
 		```ts
 		const { React, Dispatcher } = metro.common;
@@ -148,6 +152,6 @@ The modules everyone needs (React, React Native, the dispatcher, constants, the 
 		```
 	</Accordion>
 	<Accordion title='metro.api: request helpers' icon='cloud'>
-		Action-creator modules like `Messages`, `Linking`, and `Profiles` for driving the app.
+		Action-creator modules such as `Messages`, `Linking`, and `Profiles`, used to trigger actions in the app.
 	</Accordion>
 </AccordionGroup>

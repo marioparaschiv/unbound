@@ -1,18 +1,25 @@
 # Native plugin ABI
 
-The native plugin system lets trusted JavaScript plugins use approved Objective-C runtime operations without shipping a plugin dylib. The loader contains the signed runtime primitives; the plugin supplies policy, state, rendering decisions, and lifecycle code.
+The native plugin system lets trusted JavaScript plugins run approved Objective-C runtime operations without shipping a plugin dylib. The loader contains the signed runtime primitives. The plugin supplies policy, state, rendering decisions, and lifecycle code.
 
-The native layer is an ABI. Plugins consume it through the versioned JavaScript API exposed as `context.native`.
+The native layer is an ABI. Plugins use it through the versioned JavaScript API exposed as `context.native`.
 
 ## Runtime boundary
 
-The loader publishes a generic bridge as `globalThis.NativePlugin`. It contains only the ABI version, JavaScript API version, capability list, Objective-C operations, and raw FFI operations. Platform-wide helpers such as device information and notifications live under `globalThis.NativePlatform`.
+The loader publishes a generic bridge as `globalThis.NativePlugin`. It contains only:
 
-Feature-specific native classes, caches, network clients, renderers, and hooks are not part of the loader surface. A plugin owns that behavior and uses the generic bridge to reach the app's existing Objective-C objects.
+- the ABI version and the JavaScript API version
+- the capability list
+- Objective-C operations
+- raw FFI operations
+
+Platform-wide helpers, such as device information and notifications, live under `globalThis.NativePlatform`.
+
+The loader surface does not include feature-specific native classes, caches, network clients, renderers, or hooks. A plugin owns that behavior and uses the generic bridge to reach the app's existing Objective-C objects.
 
 ## Plugin scope
 
-The addon manager validates the manifest before starting a plugin and creates a scoped context:
+The addon manager validates the manifest before starting a plugin, then creates a scoped context:
 
 ```ts
 const context = native.createPluginContext('mention-avatars', [
@@ -24,44 +31,101 @@ const context = native.createPluginContext('mention-avatars', [
 ]);
 ```
 
-The scope gates each operation, owns hook tokens and association keys, and disposes all resources when the plugin stops, unloads, reloads, or fails during startup.
+The scope gates each operation and owns the plugin's hook tokens and association keys. It disposes all of the plugin's resources when the plugin stops, unloads, reloads, or fails during startup.
 
 ## Objective-C bridge
 
-`objc.getClass`, `alloc`, `className`, `respondsTo`, `call`, `callSuper`, `invoke`, `invokeSuper`, `getIvar`, `setIvar`, `createAssociationKey`, `getAssociatedObject`, `setAssociatedObject`, `struct`, `array`, and `data` cover the supported runtime surface. The loader parses method encodings and rejects unsupported arguments or results before invoking a method.
+These operations make up the supported runtime surface:
 
-Handles are opaque retained host objects. Hook arguments are borrowed until the callback returns. Values that escape a callback must be explicitly retained through the supported bridge operations. Every call runs inside an autorelease pool.
+- Classes and objects: `objc.getClass`, `alloc`, `className`, `respondsTo`
+- Method calls: `call`, `callSuper`, `invoke`, `invokeSuper`
+- Instance variables: `getIvar`, `setIvar`
+- Associated objects: `createAssociationKey`, `getAssociatedObject`, `setAssociatedObject`
+- Value conversion: `struct`, `array`, `data`
 
-Hooks are registered by `(Class, SEL)`. One loader-owned dispatcher preserves the original implementation, calls handlers in registration order, and restores the implementation only if the dispatcher is still installed. Hook tokens are idempotent.
+The loader parses method encodings and rejects unsupported arguments or results before it invokes a method.
 
-`call` uses the current runtime thread. `invoke` and `invokeSuper` accept an explicit `current` or `main` thread policy. Unsupported synchronous crossings fail with a structured error instead of blocking the runtime indefinitely.
+Handles are opaque, retained host objects. Hook arguments are borrowed until the callback returns. A value that escapes a callback must be retained explicitly through the supported bridge operations. Every call runs inside an autorelease pool.
+
+Hooks are registered per `(Class, SEL)` pair. A single loader-owned dispatcher preserves the original implementation and calls handlers in registration order. It restores the original implementation only if the dispatcher is still installed. Hook tokens are idempotent.
+
+`call` runs on the current runtime thread. `invoke` and `invokeSuper` take an explicit thread policy, either `current` or `main`. Unsupported synchronous thread crossings fail with a structured error instead of blocking the runtime indefinitely.
 
 ## Raw FFI
 
-`ffi.symbol` resolves symbols from already-loaded images. `ffi.call` accepts explicit non-variadic signatures containing supported scalar types, pointers, Objective-C object/class/selector pointers, and registered structs.
+`ffi.symbol` resolves symbols from images that are already loaded.
 
-The v1 contract excludes arbitrary memory access, pointer dereference, arbitrary `dlopen`, variadic calls, unknown structs, vectors, unions, bitfields, and plugin-supplied native closures.
+`ffi.call` takes an explicit, non-variadic signature. A signature can contain:
+
+- supported scalar types
+- pointers
+- Objective-C object, class, and selector pointers
+- registered structs
+
+The v1 contract excludes:
+
+- arbitrary memory access and pointer dereference
+- arbitrary `dlopen`
+- variadic calls
+- unknown structs, vectors, unions, and bitfields
+- plugin-supplied native closures
 
 ## Fabric surfaces
 
-The `fabric` namespace lets a plugin register a React Native component and mount its real Fabric view inside an existing UIKit container. `mount` starts the surface with initial properties, `update` sends new properties, `setSize` supplies surface constraints, `setFrame` positions the view, `measure` returns the container frame, and `unmount` stops and removes it. All UIKit work is marshalled to the main thread and surface handles are scoped to the plugin.
+The `fabric` namespace lets a plugin register a React Native component and mount its real Fabric view inside an existing UIKit container.
 
-The `native.fabric.mount` capability is required for every Fabric operation. A plugin should mount into the host view that owns the message layout, not create a window-level overlay.
+- `mount` starts the surface with initial properties.
+- `update` sends new properties.
+- `setSize` supplies surface constraints.
+- `setFrame` positions the view.
+- `measure` returns the container frame.
+- `unmount` stops the surface and removes it.
+
+All UIKit work is marshalled to the main thread, and surface handles are scoped to the plugin.
+
+Every Fabric operation requires the `native.fabric.mount` capability. A plugin should mount into the host view that owns the message layout, rather than create a window-level overlay.
 
 ## Mention avatars migration
 
-Mention avatars are the first complete proof of the boundary. The plugin keeps message and member state, mention matching, role resolution, avatar URL caching, image conversion, attributed-string construction, attachment/run-delegate setup, reuse handling, and rerender scheduling in JavaScript.
+Mention avatars are the first feature built entirely on this boundary. The plugin keeps all of the following in JavaScript:
 
-The plugin uses generic class lookup, selector calls, ivar traversal, registered structs, data conversion, and hooks on message cells. It does not call feature-specific native methods because none exist in the loader anymore.
+- message and member state
+- mention matching and role resolution
+- avatar URL caching and image conversion
+- attributed-string construction and attachment/run-delegate setup
+- reuse handling and rerender scheduling
 
-The migration is successful when the plugin can be stopped and restarted without leaked hooks, retained objects, stale associated values, or native feature state. The packaged loader must contain no mention-avatar symbols or strings.
+The plugin uses generic class lookup, selector calls, ivar traversal, registered structs, data conversion, and hooks on message cells. It does not call feature-specific native methods, because the loader no longer contains any.
+
+The migration is successful when the plugin can be stopped and restarted without leaving leaked hooks, retained objects, stale associated values, or native feature state behind. The packaged loader must contain no mention-avatar symbols or strings.
 
 ## Safety and diagnostics
 
-Capabilities are explicit and unknown names fail manifest validation. Diagnostics report bridge-version mismatches, missing capabilities, wrong-thread calls, unsupported encodings, symbol failures, hook failures, and handler exceptions. Failures are converted to structured JavaScript errors wherever possible.
+Capabilities are explicit. An unknown capability name fails manifest validation.
 
-The bridge is intended for approved trusted plugins. Capability declarations provide least-privilege scoping, but they are not a sandbox against a plugin that is already authorized to invoke native operations.
+Diagnostics report:
+
+- version and capability problems: bridge-version mismatches, missing capabilities
+- call problems: wrong-thread calls, unsupported encodings, symbol failures
+- hook problems: hook failures, handler exceptions
+
+Wherever possible, failures are converted to structured JavaScript errors.
+
+The bridge is intended for approved, trusted plugins. Capability declarations provide least-privilege scoping, but they are not a sandbox. They do not restrict a plugin that is already authorized to invoke native operations.
 
 ## Verification
 
-Host tests cover encoding parsing, scalar/object/struct conversion, 64-bit integer handling, FFI signatures, symbol lookup, handle lifetime, association cleanup, hook chaining, and implementation restoration. Device acceptance on a real arm64 or arm64e Discord build covers runtime compatibility, thread behavior, launch stability, plugin restart, scrolling, cell reuse, and performance.
+Host tests cover:
+
+- encoding parsing
+- scalar, object, and struct conversion
+- 64-bit integer handling
+- FFI signatures and symbol lookup
+- handle lifetime and association cleanup
+- hook chaining and implementation restoration
+
+Device acceptance testing on a real arm64 or arm64e Discord build covers:
+
+- runtime compatibility and thread behavior
+- launch stability and plugin restart
+- scrolling, cell reuse, and performance

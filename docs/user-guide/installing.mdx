@@ -1,0 +1,157 @@
+---
+title: 'Installing Unbound'
+description: 'How to install Unbound on your iPhone, iPad, or Android device.'
+icon: 'download'
+---
+
+Pick your platform below. On iOS you can install Unbound with or without a jailbreak.
+
+Unbound runs inside the Discord app, so you install a modified Discord rather than a separate app.
+
+<Tabs>
+	<Tab title='iOS'>
+		### Sideloaded (no jailbreak)
+
+		Use this if your device is not jailbroken. You need a sideloading tool such as SideStore, Feather, or AltStore.
+
+		If your tool supports sources, add Unbound's source. If it doesn't, install the app file directly.
+
+		#### Install from the source
+
+		<Steps>
+			<Step title='Open Your Sideloading Tool'>
+				Open SideStore, Feather, AltStore, or another sideloading tool that supports sources.
+			</Step>
+			<Step title='Add the Unbound Source'>
+				Add this source URL:
+
+				```
+				https://repo.unbound.rip/app-repo.json
+				```
+			</Step>
+			<Step title='Install Unbound'>
+				Find **Unbound** in the source and install it. Pick plain **Unbound** unless you want the beta.
+
+				The source also lists **Unbound (TestFlight)**, which is built on Discord's TestFlight beta.
+			</Step>
+			<Step title='Open the App'>
+				Open the newly installed app and log in to Discord.
+			</Step>
+		</Steps>
+
+		#### Install the app file
+
+		<Steps>
+			<Step title='Download the App File'>
+				Download [Unbound.ipa](https://github.com/unbound-app/loader-ios/releases/latest/download/Unbound.ipa) from Unbound's GitHub releases.
+			</Step>
+			<Step title='Install It with Your Sideloading Tool'>
+				Open the file in your sideloading tool and install it.
+			</Step>
+			<Step title='Open the App'>
+				Open the newly installed app and log in to Discord.
+			</Step>
+		</Steps>
+
+		<Warning>
+			Always sideload the ready-made **Unbound.ipa**, or install from the source above. Don't inject Unbound into a Discord app yourself.
+
+			Unbound is built for the ElleKit tweak runtime, and other tweak runtimes will likely break features. If Unbound is not loaded through ElleKit, the app shows a **Runtime Detection** alert saying that functionality is not guaranteed.
+		</Warning>
+
+		#### Keep the app extensions
+
+		Some sideloading tools offer to remove app extensions. Keep them if you want these features:
+
+		- Opening Discord links from Safari in the app.
+		- Sharing photos and files to Discord from other apps.
+
+		If you remove them, Unbound shows a **Missing Safari Extension** or **Missing Share Extension** alert on launch, and those features won't work.
+
+		### Jailbroken
+
+		Use this if your device has a rootless jailbreak. The package is called **Unbound**. Your package manager also installs ElleKit if you don't have it yet.
+
+		<Steps>
+			<Step title='Open Your Package Manager'>
+				Open the package manager that came with your jailbreak, such as Sileo.
+			</Step>
+			<Step title='Add the Unbound Repo'>
+				Add this repo:
+
+				```
+				https://repo.unbound.rip
+				```
+			</Step>
+			<Step title='Install Unbound'>
+				Remove Enmity, Vendetta, or Pyoncord first if you have them. Unbound can't be installed alongside them.
+
+				Then search for **Unbound** and install it.
+			</Step>
+			<Step title='Open Discord'>
+				Close Discord if it was running, then open it again.
+			</Step>
+		</Steps>
+
+		To install without the repo, download the package file from the [latest GitHub release](https://github.com/unbound-app/loader-ios/releases/latest) and open it in your package manager. The file is named like `app.unbound.ios_<version>_iphoneos-arm64.deb`.
+
+		If Discord shows the alert **This version of Discord is incompatible with this version of the Tweak.**, your Discord app is too old or too new for the installed Unbound version. Unbound will not load.
+	</Tab>
+	<Tab title='Android'>
+		<Note>
+			Android support is at an early stage, and there is no official download page for the Android module yet. The Android version doesn't have the recovery menu (toolbox), custom fonts, or the extra Sentry and Firebase blocking yet. See [Privacy](/user-guide/privacy).
+		</Note>
+
+		On Android, Unbound is an Xposed module. You need:
+
+		- Android 7.0 or later.
+		- An Xposed framework, such as LSPosed, that supports Xposed API version 82 or later.
+		- The official Discord app (`com.discord`).
+
+		<Steps>
+			<Step title='Install the Module'>
+				Install the Unbound module APK like any other Android app.
+			</Step>
+			<Step title='Enable the Module'>
+				Open your Xposed manager and enable the **Unbound** module.
+			</Step>
+			<Step title='Scope It to Discord'>
+				Make sure **Discord** (`com.discord`) is selected in the module's scope. Unbound only works inside Discord.
+			</Step>
+			<Step title='Restart Discord'>
+				Force stop Discord from Android's app settings, then open it again.
+			</Step>
+		</Steps>
+	</Tab>
+</Tabs>
+
+## After installing
+
+Make sure you're online the first time you open Discord with Unbound. That's when it downloads Unbound's latest version.
+
+On later launches it checks for a newer version and downloads it only when one is available. You don't need to update Unbound by hand for these updates.
+
+### Check that Unbound is working
+
+Open Discord's settings. A new **Unbound** section appears at the top of the list, with these pages:
+
+- **General**
+- **Plugins**
+- **Design**
+- **Marketplace**
+
+If the Unbound section is missing, Unbound didn't load.
+
+If the download fails and no earlier copy is saved on your device, Discord shows an alert and opens without Unbound. On iOS the alert reads **Failed to load Unbound's bundle. Please report this to the developers.**
+
+### If you see a security warning
+
+<Warning>
+	Only install Unbound from the sources on this page. On iOS, if the app shows a **SECURITY WARNING** alert saying the injected tweak failed Unbound's integrity verification, you can't be sure the copy you have is free of malware. Uninstall it and reinstall from one of the sources above.
+</Warning>
+
+### Open the recovery menu on iOS
+
+Shake your device for between half a second and two seconds, or hold three fingers on the screen for half a second.
+
+This menu, called the toolbox, works even when the rest of Unbound fails to load. See [Troubleshooting](/user-guide/troubleshooting) for what it can do and how to fix other problems.

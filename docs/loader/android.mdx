@@ -1,7 +1,169 @@
 ---
 title: 'Android'
-description: ''
+description: 'How the Android loader injects Unbound into Discord, where it keeps your files, and how it updates the bundle.'
 icon: 'android'
 ---
 
-TODO
+The Android loader is an Xposed module. It hooks Discord's React Native runtime, runs a few small scripts before Discord's own JavaScript, and then runs Unbound's bundle right after it. It also applies the selected theme's native colors.
+
+### Requirements
+
+The loader is an APK that declares itself an Xposed module, with these requirements:
+
+- Scope: `com.discord`. The loader only targets Discord. It ignores the Android System WebView packages (`com.android.webview` and `com.google.android.webview`) even if they end up in scope.
+- Minimum Xposed API version: 82.
+- Minimum Android version: 7.0 (API 24).
+
+To turn it on:
+
+1. In your Xposed manager, enable the module for Discord.
+2. Force stop Discord.
+3. Reopen Discord.
+
+### What happens at startup
+
+When Discord starts, the loader does the following before any JavaScript runs:
+
+1. Creates the storage folders listed under [Storage](#storage) if they don't exist.
+2. Reads `settings.json`.
+3. Reads every installed plugin and theme from disk.
+4. Resolves the applied theme and prepares its native colors, unless the loader is disabled or recovery mode is on. See [Themes](#themes).
+5. Checks `loader.enabled`. If it is `false`, the loader logs `Loader is disabled, skipping injection.` and stops here. Discord then loads normally with no Unbound code.
+6. Hooks the two methods Discord uses to run its JavaScript bundle, `jniLoadScriptFromAssets` and `jniLoadScriptFromFile` on `com.facebook.react.bridge.CatalystInstanceImpl`.
+
+When Discord then loads its bundle, the hook runs scripts before and after it.
+
+#### Before Discord's bundle
+
+1. `modules.js`, shipped inside the module. It exposes Metro's module registry as `globalThis.modules` so the bundle can reach Discord's modules.
+2. `devtools.js`, also shipped inside the module, but only when `loader.devtools` is `true`. This is what lets React DevTools attach.
+3. A generated preload script that defines these globals:
+
+| Global | Contents |
+| --- | --- |
+| `UNBOUND_SETTINGS` | The full contents of `settings.json`. |
+| `UNBOUND_PLUGINS` | An array of installed plugins. Each entry has a `manifest` object and a `bundle` string with the plugin's code. |
+| `UNBOUND_THEMES` | An array of installed themes. Each entry has a `manifest` object and a `bundle` object with the theme's `raw`, `semantic`, and `background` fields. |
+| `UNBOUND_LOADER` | `{ platform: 'Android', origin: 'Xposed' }` |
+
+The preload script is written to `cache/preload.js` in Discord's data directory and run from there.
+
+#### After Discord's bundle
+
+1. Checks for a bundle update and downloads it if needed. See [Bundle updates](#bundle-updates).
+2. Runs `unbound.bundle`.
+3. Deletes the `cache` folder in Discord's data directory, which removes `preload.js`. This is the app's whole cache folder, so anything else Discord stored there is also cleared on every launch.
+
+Each step has its own error handling. If `modules.js`, DevTools, or the preload script fails, the loader logs the error and moves on to the next step.
+
+<Note>
+	The loader never runs plugin code itself. It only reads plugin files and hands them to Unbound's JavaScript through `UNBOUND_PLUGINS`. Starting and stopping plugins happens in the bundle.
+</Note>
+
+### Storage
+
+All of Unbound's files are in an `Unbound` folder inside Discord's private data directory:
+
+```
+<data dir>/files/Unbound
+```
+
+On most devices `<data dir>` is `/data/data/com.discord` (or the same path under `/data/user/0`). It is private to Discord, so you need root access to browse it.
+
+<AccordionGroup>
+	<Accordion title='Addons' icon='puzzle-piece'>
+		Each addon type has its own directory:
+
+		| Directory | Contents |
+		| --- | --- |
+		| `Plugins/<id>` | An installed [plugin](/addons/introduction): a `manifest.json` and a `bundle.js`. |
+		| `Themes/<id>` | An installed [theme](/themes/introduction): a `manifest.json` and a `bundle.json`. |
+		| `Fonts` | Created at startup but not read. The Android loader doesn't load fonts yet. |
+
+		The loader scans `Plugins` and `Themes` once at startup, so changes take effect only after Discord restarts. It skips an entry without failing the whole scan when:
+
+		- the entry is a file rather than a folder,
+		- the folder has no `manifest.json`,
+		- the folder has no bundle file with the expected name, or
+		- the manifest or bundle can't be parsed. The error is logged.
+
+		The loader reads these manifest fields: `name`, `id`, `description`, `version`, `authors` (each with `name` and `id`), and `bundle`.
+	</Accordion>
+	<Accordion title='Settings' icon='gear'>
+		`settings.json` holds every Unbound setting, including the [loader configuration flags](/loader/configuration) and everything in the [settings reference](/loader/settings).
+
+		If the file doesn't exist, the loader creates it with the contents `{}`. If it exists but isn't valid JSON, the loader uses empty settings for that launch, so every key falls back to its default. It doesn't back up or replace the broken file.
+
+		The loader reads settings once at startup. Edits to the file apply on the next launch.
+	</Accordion>
+	<Accordion title='Bundle' icon='box'>
+		`unbound.bundle` is the JavaScript bundle the loader runs after Discord's. It is always saved under this name, whatever the source URL ends in. Delete it to make the loader download a fresh copy on the next launch.
+	</Accordion>
+</AccordionGroup>
+
+### Settings the loader reads
+
+The loader reads these keys. Their meaning is the same as on other platforms, so see [configuration](/loader/configuration) and the [settings reference](/loader/settings) for details.
+
+| Store | Key | Default | Used for |
+| --- | --- | --- | --- |
+| `unbound` | `loader.enabled` | `true` | Whether to inject anything at all. |
+| `unbound` | `loader.devtools` | `false` | Whether to run the DevTools script. |
+| `unbound` | `loader.update.url` | `https://raw.githubusercontent.com/unbound-mod/builds/refs/heads/main/unbound.js` | The bundle source. |
+| `unbound` | `loader.update.force` | `false` | Download the bundle on every launch. |
+| `unbound` | `loader.update.etag` | none | The ETag of the last downloaded bundle. Written by the loader. |
+| `unbound` | `recovery` | `false` | Skips applying native theme colors. |
+| `theme-states` | `applied` | none | The id of the theme to apply. |
+
+`loader.update.url` is used exactly as given. The loader doesn't append a filename to it, so it must point at the bundle file itself.
+
+### Bundle updates
+
+After Discord's bundle has run, the loader decides whether to download `unbound.bundle`:
+
+1. If `unbound.bundle` doesn't exist, it downloads the bundle from `loader.update.url`.
+2. If it exists and `loader.update.force` is `true`, it downloads the bundle again.
+3. Otherwise it sends a `HEAD` request to `loader.update.url` and compares the response's `ETag` header with the stored `loader.update.etag`. If they differ, it downloads the bundle.
+
+After a successful download, the loader saves the new ETag to `loader.update.etag`.
+
+Requests have a 2 second connect timeout and a 2 second read timeout, and any status other than `200` counts as a failure. When a download fails:
+
+- If an older `unbound.bundle` exists, the loader shows an alert and runs the old bundle.
+- If no bundle exists, the loader shows an alert and stops. Discord runs without Unbound.
+
+If the `HEAD` request fails, the loader shows an alert and keeps the existing bundle.
+
+<Note>
+	The update check only works over HTTPS. With a plain `http://` URL, such as a local development server, the check always fails and the existing bundle is kept. Set `loader.update.force` to `true` to download from an HTTP source on every launch.
+</Note>
+
+### Themes
+
+The loader applies one theme natively: the one whose manifest `id` matches `theme-states` -> `applied`. It does nothing when `loader.enabled` is `false` or `recovery` is `true`.
+
+A theme's `bundle.json` can contain three fields:
+
+<ResponseField name='raw' type='object'>
+	Maps Discord color resource names to colors. The loader lowercases each name and replaces Discord's color resource of the same name with the given value.
+</ResponseField>
+<ResponseField name='semantic' type='object'>
+	Maps semantic color names to an array of `[dark, light]` colors. For each name, the loader converts it to a getter name and overrides that getter on Discord's dark and light theme classes. For example, `BACKGROUND_PRIMARY` overrides `getBackgroundPrimary`. Index `0` applies to the dark theme and index `1` to the light theme. The `KEYBOARD` key is skipped.
+</ResponseField>
+<ResponseField name='background' type='object'>
+	Not used by the loader. It is passed to Unbound's JavaScript in `UNBOUND_THEMES` like the rest of the theme.
+</ResponseField>
+
+Colours are CSS color strings, such as hex values or `rgb()`. A color that can't be parsed is skipped. A semantic color that fails to apply is logged and skipped.
+
+Themes are applied once at startup. Changing the applied theme takes effect after Discord restarts.
+
+For the alert messages the loader can show and how to collect logs, see [Troubleshooting](/user-guide/troubleshooting).
+
+<Note>
+	These items from the [roadmap](/roadmap) are not implemented in the Android loader yet:
+
+	- The native module, fonts loading, and the tracking blocker.
+	- Live reload of native theme colors, the file system watcher, and hot reload (HMR).
+	- The toolbox or recovery menu.
+</Note>

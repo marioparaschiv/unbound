@@ -1,0 +1,171 @@
+---
+title: 'Debugging'
+description: 'Run JavaScript on a device and read its console output from a terminal REPL.'
+icon: 'bug'
+---
+
+The debugger is a REPL that runs on your computer and talks to Unbound on your phone over a WebSocket. Each line you type is evaluated inside Discord's JavaScript runtime, and the result is printed back in your terminal. Everything the app writes to the console is streamed to the same terminal.
+
+It has two parts:
+
+- `ub-debugger`, the CLI from the [`@unbound-app/debugger`](https://www.npmjs.com/package/@unbound-app/debugger) npm package. It hosts a WebSocket server (the bridge) and draws the REPL.
+- The debugger built-in in the client. When enabled, it dials the bridge, runs the code it receives, and forwards console output.
+
+### Running the debugger
+
+Start the bridge on your computer, then point the phone at it. `ub-debugger` is published on npm as `@unbound-app/debugger` and needs [Bun](https://bun.sh), because it uses Bun's WebSocket server and file APIs.
+
+<Steps>
+	<Step title='Start the bridge'>
+		Run the package with `bunx`. It listens on port `9090` unless you pass `--port`.
+
+		```bash
+		bunx @unbound-app/debugger
+		bunx @unbound-app/debugger --port 9191
+		```
+
+		To keep `ub-debugger` on your `PATH` instead, install it globally:
+
+		```bash
+		bun add -g @unbound-app/debugger
+		ub-debugger
+		```
+	</Step>
+	<Step title='Note the device address'>
+		On startup the CLI prints a banner with two addresses:
+
+		- `Devices` is `<LAN IP>:<port>`. This is what the phone connects to.
+		- `MCP` is `ws://127.0.0.1:<port>?mcp`, for other tools on the same computer (see [other tools on the bridge](#other-tools-on-the-bridge)).
+	</Step>
+	<Step title='Enable the debugger on the device'>
+		On the phone, turn on the debugger and point it at the `Devices` address, as described in [connecting a device](#connecting-a-device). The terminal prints `Device connected` and shows the `»` prompt.
+	</Step>
+</Steps>
+
+Pass `--help` to list the flags. `--port` is the only one.
+
+<Note>
+	The `Devices` address is the first non-internal IPv4 address the CLI finds. If your computer has several network interfaces (a VPN, Docker, WSL), it may print one the phone can't reach. Use the address of the interface the phone shares a network with.
+</Note>
+
+### Connecting a device
+
+Turn on `debugger.enabled` and set `debugger.address` to the bridge's `Devices` address. Both keys are in the `unbound` store of `settings.json`. See the [settings reference](/loader/settings#structure) for where that file lives and how keys map to it.
+
+To change them from the app instead:
+
+1. In Unbound's **General** settings, turn on **Developer Mode**.
+2. Open the **Developer** screen.
+3. In the **Debugger** section, turn on **Enable Debugger**.
+4. Enter the address in **Debugger Address**.
+
+<ParamField path="debugger.enabled" type="boolean" default="false">
+	Starts the debugger built-in. The client checks this key once at startup, so turning it on takes effect the next time the app starts. Turning it off while the app is running disconnects from the bridge right away and stops forwarding logs.
+</ParamField>
+
+<ParamField path="debugger.address" type="string" default="''">
+	The bridge's `host:port`, for example `192.168.1.20:9090`. Leave out the scheme: the client connects to `ws://<address>`.
+
+	When this is empty, the client uses the address baked into the bundle at build time. Development builds (`UNBOUND_DEV=1` or `--dev`) bake in the dev host on port `9090`, so they usually work without setting this key. Production builds bake in an empty address, so you have to set it.
+
+	Changing the address while connected closes the socket and reconnects to the new address.
+</ParamField>
+
+<Tip>
+	For development builds, the baked-in address follows the dev server host. Override the host with `DEV_HOST` or `--host`, the port with `DEBUGGER_PORT`, or the whole value with `DEBUGGER_ADDRESS` when you build.
+</Tip>
+
+Once enabled, the client reconnects on its own:
+
+- If the socket fails or closes, it retries every 2 seconds.
+- When the app goes to the background, it closes the socket and stops retrying. It reconnects when the app becomes active again.
+
+### Using the REPL
+
+Type JavaScript at the `»` prompt and press Enter. The client evaluates it in the global scope of Discord's runtime and sends back the result, which is printed after `«`. Errors are printed in red.
+
+```js
+» 1 + 1
+« 2
+» globalThis.ReactNative.Platform.OS
+« ios
+```
+
+Every line you enter is sent to the device as code. The REPL has no commands of its own.
+
+#### How results are shown
+
+The client converts the result to text before sending it:
+
+- Strings are printed as-is, without quotes.
+- Functions print as `[Function name]`, because Hermes can't return function source.
+- Errors print as `Name: message` followed by the stack trace.
+- `undefined` prints as `undefined`.
+- Everything else goes through `JSON.stringify` with 2-space indentation. Values it can't serialize, such as objects with circular references, fall back to `String(value)`, which usually prints `[object Object]`.
+
+If the code evaluates to a Promise, the client waits for it and returns the resolved value, or the rejection as an error.
+
+<Warning>
+	The bridge waits 10 seconds for each result. A slow Promise fails with `Evaluation timed out after 10000ms.` even if the device finishes later.
+</Warning>
+
+#### Console output
+
+While connected, every line Discord's runtime logs (all `console.*` calls) appears in the terminal, prefixed with `«`. Lines are coloured by level: grey for logs, yellow for warnings, red for errors.
+
+Output logged before the device connects is not buffered or replayed.
+
+#### History
+
+Press the up and down arrow keys to recall earlier inputs. Every line you evaluate is saved to a `.history.json` file, so history carries over between sessions.
+
+For an npm install, the file is written to the `node_modules/@unbound-app` folder that contains `@unbound-app/debugger`.
+
+Press `Ctrl+C` to quit.
+
+### Other tools on the bridge
+
+Other programs on your computer can connect to the bridge as controllers at `ws://127.0.0.1:<port>?mcp`. Any number of controllers can attach at once. A controller can:
+
+- Evaluate code on the device. The terminal mirrors the request in magenta, tagged `[mcp]`, followed by the result.
+- Receive the device's console output and connection status.
+- Push a freshly built plugin bundle and manifest. The device reloads that plugin and shows a **Hot reload** toast, or **Hot reload failed** with the error message.
+
+The terminal prints `MCP connected` and `MCP disconnected` with the number of attached controllers.
+
+### Wire protocol
+
+`@unbound-app/debugger-protocol` defines the messages shared by the bridge, the client, and controllers. Every frame is a JSON object with a `type` field. Frames that don't parse or have an unknown `type` are dropped.
+
+| `type` | Direction | Contents |
+| --- | --- | --- |
+| `eval` | Controller to device | `id`, `code` |
+| `eval-result` | Device to the controller that asked | `id`, `ok`, `value` or `error` |
+| `plugin-push` | Controller to device | `id`, `addonId`, `bundle`, `manifest` |
+| `plugin-push-result` | Device to the controller that asked | `id`, `ok`, `error` |
+| `log` | Device to all controllers | `level` (`1` log, `2` warn, `3` error), `message` |
+| `device-status` | Bridge to controllers | `connected` |
+
+The `id` on a request is echoed on its result, which is how the bridge routes each result back to the controller that sent the request.
+
+### Troubleshooting
+
+<AccordionGroup>
+	<Accordion title='The terminal never shows "Device connected"' icon='plug-circle-xmark'>
+		1. Check that `debugger.enabled` was on when the app started. Turning it on later only applies after a restart.
+		2. Check the address. The phone must reach the computer's LAN IP on the bridge's port.
+		3. In a production build, check that `debugger.address` is set. If it's empty, the client logs `No debugger address configured; set debugger.address in developer settings.` and doesn't connect.
+	</Accordion>
+	<Accordion title='"A device is already connected."' icon='mobile'>
+		The bridge accepts one device at a time. A second device is refused with HTTP `503` and this message until the first one disconnects.
+	</Accordion>
+	<Accordion title='"No device is connected to the debugger."' icon='link-slash'>
+		The bridge has no device socket, so there's nothing to run the code on. Wait for `Device connected` before evaluating.
+	</Accordion>
+	<Accordion title='"Device disconnected before the evaluation completed."' icon='circle-xmark'>
+		The device dropped while code was running, for example because the app went to the background. Every pending evaluation fails with this message. The client reconnects when the app is active again.
+	</Accordion>
+	<Accordion title='"Parsing failed on message from device"' icon='triangle-exclamation'>
+		The bridge received a frame that isn't valid JSON or isn't a known message type. It ignores the frame and keeps the connection open.
+	</Accordion>
+</AccordionGroup>

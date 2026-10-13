@@ -1,0 +1,144 @@
+---
+title: 'Managing Addons'
+description: 'Install, turn on, apply, and remove plugins, themes, and icon packs.'
+icon: 'puzzle-piece'
+---
+
+Manage your addons from the **Unbound** section at the top of Discord's settings. Addons change how Discord works or looks.
+
+### Plugins, themes, and icon packs
+
+A plugin adds a feature to Discord or changes how part of it behaves. You can run as many plugins as you want at the same time, and you turn each one on or off with its own switch.
+
+A theme changes Discord's colors, and some themes also add a background image. Only one theme can be applied at a time.
+
+An icon pack replaces Discord's icons with a different set of images. Only one icon pack can be applied at a time. Any icon the pack doesn't include keeps its normal look.
+
+### Where to find your addons
+
+Plugins are on the **Plugins** page. Themes and icon packs are on the **Design** page, under the **Themes** and **Icons** tabs.
+
+Each addon shows up as a card with its name, version, author, and description. The bottom row of the card has these controls:
+
+- On the left, a **⋯** button that opens a menu with **Delete**. Plugin cards also have a settings button (a gear) here.
+- On the right, a switch for plugins, or a check mark on the theme or icon pack that's applied.
+
+If a page has no addons, it says so, for example "You have no plugins installed."
+
+### Install an addon
+
+You need a link from the addon's author. The link points to the addon's manifest, a small file that describes it.
+
+<Note>
+	The [Marketplace](/user-guide/marketplace) page shows "Coming Soon" and doesn't list addons yet.
+</Note>
+
+<Steps>
+	<Step title='Open the Page for the Addon Kind'>
+		Go to **Plugins** for a plugin. For a theme or icon pack, go to **Design** and pick the **Themes** or **Icons** tab.
+	</Step>
+	<Step title='Tap the + Button'>
+		It's in the bottom right corner of the page. The **Install** dialog opens.
+	</Step>
+	<Step title='Paste the Link'>
+		Paste the manifest link into the text field.
+	</Step>
+	<Step title='Tap Install'>
+		The dialog closes when the install finishes, and the addon appears as a new card.
+	</Step>
+</Steps>
+
+A new addon starts turned off. Turn on a plugin with its switch, or apply a theme or icon pack as described below.
+
+<Warning>
+	Install from the page or tab that matches the addon. The **+** button installs into the page or tab you're on, so a theme link pasted on the **Plugins** page won't install.
+
+	If an install fails, the dialog closes and no new card appears. Check that the link points to the manifest and that you're on the right page, then try again.
+</Warning>
+
+The **Fonts** tab on the **Design** page has no **+** button.
+
+### Turn a plugin on or off
+
+Tap the switch on the right side of the plugin's card. The change takes effect right away, and you don't need to restart Discord.
+
+### Change a plugin's settings
+
+Tap the gear button at the bottom left of the plugin's card. The button is grayed out if the plugin has no settings, or if the plugin is turned off.
+
+### Apply a theme
+
+<Steps>
+	<Step title='Open the Themes Tab'>
+		Go to **Design** and pick **Themes**.
+	</Step>
+	<Step title='Select the Theme'>
+		Tap the right end of the theme's card, across from the **⋯** button. A check mark appears there, and any theme that was applied before is unselected.
+	</Step>
+	<Step title='Restart Discord'>
+		Go to **General**, tap **Restart**, then tap **Restart** again to confirm.
+	</Step>
+</Steps>
+
+<Note>
+	Selecting, switching, or removing a theme only changes what you see after a restart. Unbound sets a theme's colors when Discord starts.
+</Note>
+
+To go back to Discord's own colors, tap the check mark on the applied theme to unselect it, then restart Discord.
+
+### Apply an icon pack
+
+<Steps>
+	<Step title='Open the Icons Tab'>
+		Go to **Design** and pick **Icons**.
+	</Step>
+	<Step title='Select the Icon Pack'>
+		Tap the right end of the pack's card, across from the **⋯** button. A check mark appears there, and the pack that was applied before is unselected.
+	</Step>
+</Steps>
+
+An icon pack applies without a restart.
+
+To go back to Discord's icons, select the **Default** card, or tap the check mark on the applied pack to unselect it. The **Icons** tab always has a **Default** card, which is Discord's own icon set.
+
+### Update an addon
+
+Install the addon again from the same link, then restart Discord so the new version loads. Unbound has no update button.
+
+### Remove an addon
+
+<Steps>
+	<Step title='Open the Menu'>
+		Tap the **⋯** button on the addon's card.
+	</Step>
+	<Step title='Tap Delete'>
+		Unbound removes the addon and its files right away. There is no confirmation.
+	</Step>
+</Steps>
+
+What happens next depends on the kind of addon:
+
+- A deleted plugin stops running immediately.
+- If you delete the applied icon pack, Discord's own icons come back.
+- If you delete the applied theme, its colors stay until you restart Discord.
+
+### When an addon breaks
+
+If an addon fails to start, its card is dimmed and shows the error in red. Its switch or check mark and its settings button stop responding, but you can still delete it from the **⋯** menu.
+
+If a plugin stops Discord from working properly, use **Recovery Mode**. Its description on the **General** page reads "Prevents all addons from loading while enabled."
+
+<Steps>
+	<Step title='Turn On Recovery Mode'>
+		Go to **General** and turn on **Recovery Mode**.
+	</Step>
+	<Step title='Restart Discord'>
+		Unbound asks you to restart so the change takes effect.
+	</Step>
+	<Step title='Delete the Broken Addon'>
+		Delete it from the **⋯** menu on its card. While **Recovery Mode** is on, you can't turn addons on or off, but you can still delete them.
+	</Step>
+	<Step title='Turn Off Recovery Mode'>
+		Turn it off when you're done, then restart again.
+	</Step>
+</Steps>

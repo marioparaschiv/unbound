@@ -6,21 +6,21 @@ icon: 'react'
 
 ### Why patch?
 
-Discord's UI is built from React components you don't own. To add a button to a menu, hide an element, or wrap a screen in your own, you **patch** the component: intercept it as it renders and adjust the output. Patching is the core technique behind most visual plugins.
+To change Discord's UI, you **patch** the component that renders it: intercept the component as it renders and adjust the output. Use this to add a button to a menu, hide an element, or wrap a screen in your own. Discord's UI is made of React components your plugin doesn't own, so most visual plugins work this way.
 
-You patch with a **patcher**: an object that wraps a target's method (including a component's render) with your own logic, and can revert every patch it made in one call. If you're new to it, read [Function Patching](/plugins/patching) first; this page applies the same patcher to React components.
+Patches are applied with a **patcher**. A patcher wraps a target's method, including a component's render, with your own code, and can revert all of its patches in one call. If you haven't used it before, read [Patcher](/modules/patcher) first. This page applies the same patcher to React components.
 
 <Note>
-	Everything your plugin shows on screen reaches the UI by patching a component Discord already renders. You return modified elements from inside Discord's own render, so your UI sits in Discord's real tree and has access to its context.
+	Everything your plugin shows on screen gets there by patching a component Discord already renders. You return modified elements from inside Discord's own render, so your UI is part of Discord's real tree and can access its context.
 </Note>
 
 ### The three patch types
 
-A patch hooks a function at one of three points:
+A patch hooks a function at one of three points.
 
 <Tabs>
-	<Tab title='after'>
-		Runs *after* the original and receives its `result`. Return a new value to replace what it produced, the usual choice for editing a component's rendered output.
+	<Tab title='After'>
+		Runs *after* the original and receives its `result`. Return a new value to replace the original's output. This is the usual choice for editing what a component renders.
 
 		```ts
 		Patcher.after(Component, 'type', ({ result }) => {
@@ -29,8 +29,8 @@ A patch hooks a function at one of three points:
 		});
 		```
 	</Tab>
-	<Tab title='before'>
-		Runs *before* the original and receives its `args`. Mutate the arguments, or block the call. Good for changing inputs.
+	<Tab title='Before'>
+		Runs *before* the original and receives its `args`. Mutate the arguments or block the call. Use it to change inputs.
 
 		```ts
 		Patcher.before(Component, 'type', ({ args }) => {
@@ -38,8 +38,8 @@ A patch hooks a function at one of three points:
 		});
 		```
 	</Tab>
-	<Tab title='instead'>
-		Replaces the original entirely. You get `args`, `original`, and `this`: call `original` yourself if and when you want the default behavior.
+	<Tab title='Instead'>
+		Replaces the original. You get `args`, `original`, and `this`. Call `original` yourself if and when you want the default behavior.
 
 		```ts
 		Patcher.instead(target, 'method', ({ args, original, this: self }) => {
@@ -51,7 +51,11 @@ A patch hooks a function at one of three points:
 
 ### Patching a component's render
 
-A React component renders through its `type` (or `render`) function. Find the module that owns the component, then patch that function with `after` and return your modified tree.
+A React component renders through its `type` (or `render`) function. To patch it:
+
+1. Find the module that owns the component.
+2. Patch its `type` or `render` function with `after`.
+3. Return your modified tree from the callback.
 
 ```tsx
 import { metro, patcher } from '@unbound-app/api';
@@ -74,16 +78,16 @@ export default {
 ```
 
 <Note>
-	`findByProps` and the other `findBy*` helpers cache their results, so finding the same component a second time is cheap. The searches that stay slow are ones with a manual filter function, which can't be cached by default. If you need one, wrap it with [`createCacheable`](/modules/metro#caching-custom-filters) so its result is remembered after the first cold start.
+	`findByProps` and the other `findBy*` helpers cache their results, so a repeat lookup of the same component is cheap. Searches with a manual filter function stay slow, because they can't be cached by default. If you need one, wrap it with [`createCacheable`](/modules/metro#caching-custom-filters) so its result is remembered after the first cold start.
 </Note>
 
 ### Component kinds
 
-Where you point a patch depends on what kind of component it is. The render function lives in a different place for each.
+Each kind of component keeps its render function in a different place, so where you patch depends on the kind.
 
 <Tabs>
-	<Tab title='memo'>
-		A `React.memo` component wraps the real component and stores it on `.type`. Patch `.type`, not the memo wrapper itself.
+	<Tab title='Memo'>
+		A `React.memo` component wraps the real component and stores it on `.type`. Patch `.type`, not the memo wrapper.
 
 		```tsx
 		const Component = metro.findByProps('SomeMemoComponent').SomeMemoComponent;
@@ -94,7 +98,7 @@ Where you point a patch depends on what kind of component it is. The render func
 		});
 		```
 	</Tab>
-	<Tab title='class'>
+	<Tab title='Class'>
 		A class component renders through `render` on its prototype. Patch `prototype.render`. The component instance is available as `this`, so you can read its `props` and `state`.
 
 		```tsx
@@ -106,20 +110,32 @@ Where you point a patch depends on what kind of component it is. The render func
 		});
 		```
 	</Tab>
-	<Tab title='function'>
-		A plain function component has no stable handle to patch directly. It has no prototype, often no useful `name` or `displayName`, and there's no source-string search on mobile to pin it down. You reach it through the **parent module that renders it**: patch the parent's render, find the child in its output, and patch the child from there (see [Reaching into a render](#reaching-into-a-render)).
+	<Tab title='Function'>
+		A plain function component has no stable handle you can patch directly. It has no prototype, often has no useful `name` or `displayName`, and mobile has no source-string search to locate it. Reach it through the **parent module that renders it**:
+
+		1. Patch the parent's render.
+		2. Find the child in the parent's output.
+		3. Patch the child from there.
+
+		See [Reaching into a render](#reaching-into-a-render).
 	</Tab>
 </Tabs>
 
 <Warning>
-	Patch a memo on `.type`, not on the memo object. Patching the wrapper does nothing, because React calls the inner component on `.type`, not the wrapper's own (non-existent) render.
+	Patch a memo on `.type`, not on the memo object. Patching the wrapper has no effect, because React calls the inner component on `.type`. The wrapper has no render of its own.
 </Warning>
 
 ### Reaching into a render
 
-Many components are never returned by a Metro search. They are defined inside another component's module and only exist as elements inside its rendered output. To patch one of these, patch a component you *can* find, then walk its `result` to reach the child.
+To patch a component that Metro search can't find, patch a component you *can* find, then walk its `result` to reach the child. Many components are like this: they are defined inside another component's module and only exist as elements in its rendered output.
 
-The result of a render is a tree of React elements. Each element's component is on its `type`, its props are on `props`, and its rendered children are on `props.children`. Walk that tree to find the element you want.
+A render result is a tree of React elements. On each element:
+
+- `type` holds the component.
+- `props` holds its props.
+- `props.children` holds its rendered children.
+
+Walk that tree to find the element you want.
 
 ```tsx
 function findInTree(node, predicate) {
@@ -153,17 +169,19 @@ Patcher.after(Parent, 'type', ({ result }) => {
 ```
 
 <Note>
-	Write tree patches to coexist with other plugins. Your plugin won't be the only one patching a given component, so:
+	Other plugins may patch the same component, so write tree patches that work alongside them:
 
-	- Guard every tree lookup with optional chaining and a null check. `findInTree` returns `null` when Discord's structure shifts, and another plugin may have already reshaped the tree you're walking.
-	- Add to `children`, don't replace it. When you insert an element, push onto the existing children array (or make `children` an array if it isn't one) instead of overwriting it, so an earlier plugin's additions survive.
+	- Guard every tree lookup with optional chaining and a null check. `findInTree` returns `null` when Discord's structure changes, and another plugin may have already changed the tree you're walking.
+	- Add to `children` instead of replacing it. To insert an element, push onto the existing children array (or make `children` an array if it isn't one). Overwriting it would remove an earlier plugin's additions.
 </Note>
 
 ### Temporary patches from a parent
 
-Sometimes the child you want isn't an element you can edit in place, but a component whose own render you need to patch, and it has no stable reference Metro can find. The component is created fresh on the parent's render, so a patch you leave on it would target a reference that is gone on the next render.
+To patch a child component's own render when Metro can't find a stable reference to it, patch the **stable parent**. Inside that patch, apply a **one-time patch to the child** that only lasts for that render.
 
-The pattern: patch the **stable parent**, and from inside that patch apply a **one-shot patch to the child** for that render only. Every patch call returns an unpatch function, and `possess` accepts a `{ once: true }` option that reverts the patch automatically after it fires once.
+This is needed when the child is created fresh on each parent render. A patch left on it would target a reference that no longer exists on the next render.
+
+Every patch call returns an unpatch function, and the patcher (built on `possess`) accepts a `{ once: true }` option that reverts the patch automatically after it fires once.
 
 ```tsx
 Patcher.after(Parent, 'type', ({ result }) => {
@@ -181,7 +199,7 @@ Patcher.after(Parent, 'type', ({ result }) => {
 ```
 
 <Note>
-	`{ once: true }` is what keeps this safe: the child reference is new on every parent render, so the patch must not outlive the render that created it. If you need finer control, capture the unpatch function each patch call returns and call it yourself.
+	`{ once: true }` is what makes this safe. The child reference is new on every parent render, so the patch must not outlive the render that created it. For finer control, keep the unpatch function the patch call returns and call it yourself.
 
 	```tsx
 	const unpatch = Patcher.after(child.type, 'type', cb);
@@ -192,14 +210,17 @@ Patcher.after(Parent, 'type', ({ result }) => {
 
 ### Cleaning up
 
-Every patcher tracks the patches it applied. Call `unpatchAll` in `stop` and the component reverts to Discord's original render: no leftover wrappers, no double-patching when the plugin is re-enabled.
+Cleaning up takes two steps:
 
-Unpatching only restores the original function. Components that already rendered with your patch keep showing the patched output until React renders them again, so a screen that's currently mounted won't update on its own. After you unpatch on shutdown, force the affected components to re-render so the original UI comes back without the user navigating away and returning.
+1. Call `unpatchAll` in `stop`. The component goes back to Discord's original render, with no leftover wrappers and no double-patching when the plugin is re-enabled.
+2. Force the affected components to re-render.
 
-How you force that re-render depends on the kind of component you patched.
+The second step is needed because unpatching only restores the original function. Components that already rendered with your patch keep showing the patched output until React renders them again, so a mounted screen won't update on its own. Forcing a re-render brings back the original UI without the user having to navigate away and back.
+
+How you force the re-render depends on the kind of component you patched.
 
 <Tabs>
-	<Tab title='class'>
+	<Tab title='Class'>
 		A class component instance has a built-in `forceUpdate` method. If your patch captured the instance through `this`, call `self.forceUpdate()` to re-render it.
 
 		```tsx
@@ -212,10 +233,15 @@ How you force that re-render depends on the kind of component you patched.
 		instance?.forceUpdate();
 		```
 	</Tab>
-	<Tab title='function'>
-		A function component has no `forceUpdate`. You also can't just re-run its render if your patch added or removed an element that holds hooks, because the hook call count would differ between renders and React throws a "rendered more/fewer hooks than expected" error.
+	<Tab title='Function'>
+		A function component has no `forceUpdate`. If your patch added or removed an element that holds hooks, you also can't simply re-run its render. The number of hook calls would differ between renders, and React throws a "rendered more/fewer hooks than expected" error.
 
-		Instead, have your patch attach a `useEffect` that listens for your plugin stopping, and change the **`key`** of the element you return when that fires. A changed key makes React unmount the old element and mount a fresh one, which sidesteps the hook-count mismatch entirely.
+		Instead:
+
+		1. In your patch, add a `useEffect` that listens for your plugin stopping.
+		2. When it fires, change the **`key`** of the element you return.
+
+		A new key makes React unmount the old element and mount a fresh one, which avoids the hook-count mismatch.
 
 		```tsx
 		Patcher.after(Component, 'type', ({ result }) => {
@@ -236,9 +262,9 @@ How you force that re-render depends on the kind of component you patched.
 </Tabs>
 
 <Warning>
-	A render patch that survives a disable leaves modified UI on screen with no running plugin behind it. `unpatchAll` in `stop` is not optional, and neither is forcing a re-render afterward. Until something re-renders, the old patched output stays on screen even though the patch is gone.
+	A render patch that survives a disable leaves modified UI on screen with no running plugin behind it. You must call `unpatchAll` in `stop` and then force a re-render. Until something re-renders, the patched output stays on screen even though the patch is gone.
 </Warning>
 
 <Tip>
-	Patch the smallest target that gets the job done. Wrapping a deep, frequently-rendered component runs your code on every render. Find the specific element you need and patch there.
+	Patch the smallest target that does the job. Wrapping a deep, frequently rendered component runs your code on every render. Find the specific element you need and patch it there.
 </Tip>

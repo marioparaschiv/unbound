@@ -1,0 +1,206 @@
+---
+title: 'Troubleshooting'
+description: 'Fix Unbound when Discord crashes or the app stops loading, and collect logs for a bug report.'
+icon: 'life-ring'
+---
+
+If Discord crashes or Unbound doesn't load, start with the first section. To clear out addons, see [An addon keeps breaking the app](#an-addon-keeps-breaking-the-app). If nothing here helps, [report a bug](#report-a-bug).
+
+### Discord crashes or Unbound won't load
+
+On iOS, open the toolbox and work through the fixes in it. On Android, match the error dialog against the [Android error messages](#android-shows-an-unbound-error-dialog).
+
+Unbound itself is a single JavaScript file called the bundle. The loader downloads it and runs it inside Discord. Most of these fixes replace or reset that file.
+
+#### Open the toolbox on iOS
+
+Use either gesture. Both are on by default, and both give a short haptic tap when they fire.
+
+- **Shake the device** continuously for **0.5 to 2 seconds**, then stop. A shake shorter than half a second does nothing. A shake longer than two seconds is ignored, so ordinary jostling in a pocket or a car doesn't open the menu.
+- **Hold three fingers** anywhere on screen for **0.5 seconds**. The toolbox opens as soon as the half second is up. You don't need to lift your fingers.
+
+The toolbox is a menu built into the iOS loader. Discord and Unbound's JavaScript don't draw it, so it opens even when the bundle failed to download, failed to run, or crashes the app on launch. You can use it to undo the damage without reinstalling.
+
+Destructive actions are shown in red and ask for confirmation before they run. Most actions restart the app when they finish.
+
+#### Fix it from the toolbox
+
+Work through these in order and stop once the app works again.
+
+<Steps>
+	<Step title='Refetch the Bundle'>
+		In the **Bundle** section, tap **Refetch Bundle**. It checks the current source, downloads the bundle only if it changed, and restarts the app. Try this first when Unbound loads but misbehaves.
+	</Step>
+	<Step title='Turn On Recovery Mode'>
+		In the **Utilities** section, tap **Enable Recovery Mode**. The app restarts. This only helps if the bundle itself runs, as the warning below explains.
+
+		While recovery mode is on, the label reads **Disable Recovery Mode**. Tap it again to turn recovery mode off.
+	</Step>
+	<Step title='Go Back to the Official Bundle'>
+		If you loaded a custom bundle, tap **Delete Bundle** in the **Bundle** section. It deletes the downloaded bundle and clears your custom bundle source, which puts you back on the official bundle.
+	</Step>
+	<Step title='Remove Your Addons'>
+		If an addon is still breaking the app, wipe it with the actions in [An addon keeps breaking the app](#an-addon-keeps-breaking-the-app).
+	</Step>
+</Steps>
+
+<Warning>
+	**Recovery mode won't help if the bundle itself is broken.** Use **Refetch Bundle**, **Delete Bundle**, or the wipe actions instead.
+
+	On its own, the iOS loader changes only one thing when recovery mode is on: it stops theming the interface's system colors.
+
+	Everything else recovery mode does happens in Unbound's JavaScript. Addons load as no-ops instead of running, and addon cards can't be interacted with. All of that depends on the bundle running in the first place.
+</Warning>
+
+#### Bundle actions
+
+The toolbox's **Bundle** section has these actions.
+
+<ResponseField name='Refetch Bundle'>
+	Checks the currently configured source, downloads the bundle only if it changed, and restarts. It won't replace a damaged copy if the source hasn't changed; use **Delete Bundle** for that.
+</ResponseField>
+<ResponseField name='Delete Bundle'>
+	**Destructive.** Deletes the downloaded bundle and clears your custom `loader.update.url` and `loader.update.force` settings, which puts you back on the official bundle. Use this to undo a bad custom bundle.
+</ResponseField>
+<ResponseField name='Switch Bundle Version'>
+	Lists the branches of Unbound's builds repository. After you pick a branch, it lists that branch's last 10 commits by short commit hash and date. Pick a commit to pin that exact build.
+</ResponseField>
+<ResponseField name='Load Custom Bundle'>
+	Asks for a URL, downloads the bundle from it, and pins you to that source. Mainly used to test your own builds. Use **Delete Bundle** to go back to the official bundle.
+</ResponseField>
+
+#### Toolbox settings
+
+The toolbox's own **Settings** section has these switches.
+
+<ResponseField name='Enable Shake Motion'>
+	Turns the shake gesture on or off.
+</ResponseField>
+<ResponseField name='Enable Three Finger Press'>
+	Turns the three finger press gesture on or off.
+</ResponseField>
+<ResponseField name='Use Unbound Icon'>
+	Replaces the app icon with Unbound's. Only shown when the app was not installed from the App Store or TestFlight, because alternate icons aren't available there.
+</ResponseField>
+
+<Note>
+	You can turn off either gesture, but not both. Turning one off automatically turns the other back on, so you can't lock yourself out of the toolbox.
+</Note>
+
+#### Android shows an Unbound error dialog
+
+Find the message in the table below. When a message asks you to report it, tap **Discord Server** or follow [Report a bug](#report-a-bug).
+
+The Android loader doesn't have a toolbox yet. When something goes wrong while loading the bundle, it shows a dialog titled **Unbound** with an **Okay** button and a **Discord Server** button that opens Unbound's Discord invite.
+
+| Message | What it means |
+| --- | --- |
+| `Bundle failed to download, please report this to the developers.` | Unbound has no bundle yet and the download failed. Unbound doesn't load. |
+| `Bundle failed to update, loading out of date bundle.` | A download failed, but an older bundle is still on the device, so Unbound loads that one. |
+| `Bundle not found, please report this to the developers.` | No bundle is on the device after the update step. Unbound doesn't load. |
+| `Failed to load Unbound's bundle. Please report this to the developers.` | The bundle was found but hit an error while running. |
+| `[Updater] Failed to check for updates, bundle may be out of date. Please report this to the developers.` | The check for a newer bundle failed. Unbound keeps the bundle it already has. |
+
+### An addon keeps breaking the app
+
+On iOS, the toolbox's **Addons** section deletes every addon of one type at once. To remove only one addon, see [Remove a single addon on iOS](#remove-a-single-addon-on-ios).
+
+<Warning>
+	There is no undo, and installed addons are not backed up anywhere.
+</Warning>
+
+<ResponseField name='Wipe Plugins'>
+	**Destructive.** Deletes every installed plugin.
+</ResponseField>
+<ResponseField name='Wipe Themes'>
+	**Destructive.** Deletes every installed theme.
+</ResponseField>
+<ResponseField name='Wipe Fonts'>
+	**Destructive.** Deletes every installed font pack.
+</ResponseField>
+<ResponseField name='Wipe Icon Packs'>
+	**Destructive.** Deletes every installed icon pack.
+</ResponseField>
+
+The **Utilities** section has one more reset.
+
+<ResponseField name='Factory Reset'>
+	**Destructive.** Deletes the entire `Unbound` folder: every addon, your `settings.json`, and the bundle. Use it only as a last resort, since nothing is kept.
+</ResponseField>
+
+#### Remove a single addon on iOS
+
+<Steps>
+	<Step title='Open the Unbound Folder'>
+		In the toolbox's **Utilities** section, tap **Open App Folder**.
+
+		On a jailbroken device with Filza installed, the folder opens in Filza. Otherwise it opens in the Files app, under `On My iPhone` -> `<App Name>` -> `Unbound`.
+	</Step>
+	<Step title='Delete the Addon'>
+		Plugins are in `Plugins`, themes in `Themes`, and icon packs in `Icons`, each in a folder named after the addon's id. Delete that folder.
+
+		Fonts are stored directly in `Fonts`, so delete the font file itself.
+	</Step>
+	<Step title='Restart the App'>
+		Unbound only looks for addons when the app starts, so the change takes effect after a restart.
+	</Step>
+</Steps>
+
+<Note>
+	On Android, addons are stored in Discord's private data folder. You need root access to browse it.
+</Note>
+
+### Report a bug
+
+Include logs from the moment the problem happened. Neither loader writes a log file, so you need a computer to read the logs.
+
+<Tabs>
+	<Tab title='iOS'>
+		You need a Mac. The iOS loader sends its logs to Apple's unified logging system under the subsystem `app.unbound`, and you read them with Console.app.
+
+		<Steps>
+			<Step title='Connect the Device to a Mac'>
+				Connect your device to the Mac.
+			</Step>
+			<Step title='Start Streaming in Console.app'>
+				Open Console.app, select your device in the sidebar, and press Start streaming.
+			</Step>
+			<Step title='Filter for Unbound'>
+				Filter on the subsystem `app.unbound`.
+
+				Each message also has a category that shows which part of the loader logged it: `plugins`, `themes`, `settings`, `filesystem`, `updater`, `utilities`, `toolbox`, `fonts`, `chatui`, `pluginapi`, or `default`.
+			</Step>
+			<Step title='Reproduce the Problem'>
+				Trigger the problem while the stream is running, then copy out the relevant messages.
+			</Step>
+			<Step title='Open a New Issue'>
+				In the toolbox's **Utilities** section, tap **Open GitHub Issue**. It opens a new issue on the loader repository in an in-app browser, already filled in with:
+
+				- Device model
+				- iOS version
+				- App version and build
+				- App source
+				- Whether the app is registered as a system or user app
+				- The app's entitlements
+			</Step>
+			<Step title='Fill In the Issue'>
+				Add a title, paste the logs, and describe what happened.
+			</Step>
+		</Steps>
+	</Tab>
+	<Tab title='Android'>
+		The Android loader writes its logs to logcat under the tag `Unbound`. Serious errors are logged at the assert level, so they stand out from normal messages.
+
+		<Steps>
+			<Step title='Connect the Device'>
+				Connect the device to a computer with USB debugging turned on, and check that `adb devices` lists it.
+			</Step>
+			<Step title='Stream the Logs'>
+				Run `adb logcat -s Unbound` to show only the loader's messages.
+			</Step>
+			<Step title='Reproduce the Problem'>
+				Force stop Discord, open it again, and trigger the problem while the stream is running. Then copy out the relevant messages.
+			</Step>
+		</Steps>
+	</Tab>
+</Tabs>

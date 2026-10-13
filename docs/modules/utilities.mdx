@@ -1,6 +1,62 @@
 ---
 title: 'Utilities'
-description: ''
+description: 'Shared helper types that appear in the signatures of the other API modules.'
 icon: 'wrench'
 ---
 
+### What are the utility types?
+
+The utility types are TypeScript aliases that the other API modules use in their signatures. They exist only at the type level, so none of them is a value you can call at runtime.
+
+They describe function shapes, predicate results, color strings, and open-ended string unions.
+
+`@unbound-app/api` declares them, using the definitions from `@unbound-app/types`.
+
+<Warning>
+	The `@unbound-app/api` package does not export a `./utils` subpath, and the top-level entry does not re-export these types. You can't import them by name from a plugin today. You'll only meet them when you hover over an API function that uses them, or in a type error from one.
+</Warning>
+
+### Type reference
+
+| Type | Definition | Meaning |
+| --- | --- | --- |
+| `Fn<T = any>` | `(...args: any) => T` | Any function, returning `T`. |
+| `PromiseFn<T = Promise<any>>` | `(...args: any) => T` | Any function that returns a promise. |
+| `AnyProps<T>` | `T & Record<PropertyKey, any>` | An object of shape `T` that also accepts any other key. |
+| `LiteralUnion<T extends string>` | `T \| (string & {})` | Keeps the literals in `T` for autocomplete but accepts any string. |
+| `HexColor` | `` `#${string}` `` | A hex color string such as `'#5865f2'`. |
+| `RgbaColor` | `` `rgba(${string})` `` | An `rgba(...)` color string. |
+| `ColorString` | `HexColor \| RgbaColor` | Either color form. |
+| `Falsy` | `false \| 0 \| '' \| null \| undefined` | Every falsy value. |
+| `Truthy` | `true \| number \| string \| object \| symbol \| bigint` | Every truthy value. |
+| `PredicateResult` | `Truthy \| Falsy` | What a predicate may return. Any value works and is tested for truthiness. |
+| `Widen<T>` | Conditional type | Turns a literal into its primitive: `1` to `number`, `'a'` to `string`, `true` to `boolean`. Other types pass through. |
+
+### Where you'll see them
+
+`storage.get` returns `Widen<T>`, where `T` is the type of the default you pass. The default `false` would otherwise infer as the literal type `false`, so the result is widened to `boolean` to allow for the stored value.
+
+```ts
+import { storage } from '@unbound-app/api';
+
+const enabled = storage.get('my-plugin', 'enabled', false); // boolean, not false
+const count = storage.get('my-plugin', 'count', 0); // number, not 0
+```
+
+`MetroFilter` and the predicates accepted by `storage` return `PredicateResult`. A filter doesn't have to return a strict boolean. Returning the property you're checking for is enough.
+
+```ts
+import { metro } from '@unbound-app/api';
+
+const Clipboard = metro.find((mdl) => mdl?.setString && mdl?.getString);
+```
+
+Component props for Discord's open-ended enums, such as `variant`, `border`, and `shadow`, use `LiteralUnion`. Your editor suggests the known values (`'primary'`, `'secondary'`, and so on), and a value Discord adds in a later build still type-checks.
+
+The `native` module types loosely modeled native methods as `Fn` and `PromiseFn` when their exact arguments aren't known.
+
+<Note>
+	Runtime helpers such as `lazy`, `debounce`, and `uuid` are internal to the Unbound client and are not exposed to plugins.
+
+	To defer a module lookup, pass `{ lazy: true }` to a [Metro](/modules/metro) search: the search runs the first time you access the result. To wait for a module that hasn't loaded yet, use `metro.findLazy(filter)`, which returns the module if it's already present or a promise that resolves once it loads.
+</Note>

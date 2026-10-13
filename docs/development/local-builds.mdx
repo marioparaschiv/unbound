@@ -1,0 +1,17 @@
+---
+title: 'Local Builds'
+description: 'To contribute to Unbound, you need to build and serve the bundle locally.'
+icon: 'network-wired'
+---
+
+<Steps>
+  <Step title='Building'>
+    Run `bun run build` to build the Unbound client bundle. To rebuild automatically when the code changes, use `nodemon` to watch the source.
+  </Step>
+  <Step title='Hosting'>
+    Run `bun run serve` to serve the bundle. It prints the URL you need for the next step.
+  </Step>
+  <Step title='Configuring'>
+		Set the loader key `update.url` to the URL of your locally hosted bundle. See the [loader configuration page](/loader/configuration) for details.
+  </Step>
+</Steps>

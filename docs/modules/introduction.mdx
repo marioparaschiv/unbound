@@ -4,9 +4,9 @@ description: 'The Developer API: the modules your addons build on.'
 icon: 'folder-tree'
 ---
 
-Unbound exposes a set of modules for building addons: finding Discord's internals, persisting settings, localizing strings, showing toasts, and more. Together they're the **Developer API**.
+The **Developer API** is the set of modules Unbound provides for building addons. They cover finding Discord's internals, persisting settings, localizing strings, showing toasts, and more.
 
-Every module is published in the `@unbound-app/api` package. Import what you need by name, and if you prefer, each module is also a subpath. The whole surface mirrors the `unbound` global at runtime.
+Every module is published in the `@unbound-app/api` package. Import modules by name from the package root, or import each one from its own subpath. At runtime, the same modules are available on the `unbound` global.
 
 ```ts
 import { metro, storage } from '@unbound-app/api';
@@ -15,14 +15,14 @@ import { metro, storage } from '@unbound-app/api';
 ```
 
 <Note>
-	[Metro](/modules/metro) is the foundation. Almost everything else (assets, i18n, stores, your own addons) locates Discord's modules through it first. If you're new here, start there.
+	If you're new, start with [Metro](/modules/metro). Almost everything else, including assets, i18n, stores, and your own addons, uses it to locate Discord's modules.
 </Note>
 
 ### Modules
 
 <CardGroup cols={2}>
 	<Card title='Metro' icon='box-taped' href='/modules/metro'>
-		Locate the exact Discord module you need before you patch it.
+		Find the Discord module you need before you patch it.
 	</Card>
 	<Card title='Storage' icon='database' href='/modules/storage'>
 		Reactive, persisted settings: read, write, and re-render on change.
@@ -31,7 +31,7 @@ import { metro, storage } from '@unbound-app/api';
 		Register your own screens into Discord's settings navigation.
 	</Card>
 	<Card title='Assets' icon='face-smile' href='/modules/assets'>
-		Discover Discord's bundled images and icons by name.
+		Look up Discord's bundled images and icons by name.
 	</Card>
 	<Card title='Native' icon='file-code' href='/modules/native'>
 		Bridge to the app's native iOS and Android modules.

@@ -4,18 +4,20 @@ description: 'The shared metadata every addon ships, and how Unbound validates i
 icon: 'circle-info'
 ---
 
-Every addon (a [plugin](/plugins/introduction), [theme](/themes/introduction), or [icon pack](/icon-packs/introduction)) ships a **manifest**: a block of metadata that describes it. They all use the **same shape**, validated by the same [manager](/modules/managers) before the addon loads. This page is the single source of truth for that shape; each addon kind documents only what's specific to it.
+A **manifest** is the block of metadata that describes an addon. Every [plugin](/plugins/introduction), [theme](/themes/introduction), and [icon pack](/icon-packs/introduction) ships one.
+
+All addon kinds use the **same shape**, and the same [manager](/modules/managers) validates it before the addon loads. This page documents the full shape. The page for each addon kind covers only what is specific to that kind.
 
 <Note>
-	Fonts are the exception. A font is a bare file dropped in the `Fonts` folder, with no manifest and no folder of its own. See [Fonts](#fonts) below.
+	Fonts are the exception. A font is a single file placed in the `Fonts` folder, with no manifest and no folder of its own. See [Fonts](#fonts) below.
 </Note>
 
 ### Required fields
 
-These must be present and defined, or the addon is rejected when it loads.
+Each of these must be present and not undefined. Otherwise the addon is rejected when it loads.
 
 <ParamField path='id' type='string' required>
-	A unique identifier for the addon. Used as its key in every manager operation and as its [storage](/modules/storage) namespace, so keep it stable across versions.
+	A unique identifier for the addon. It is the addon's key in every manager operation and its [storage](/modules/storage) namespace, so keep it the same across versions.
 </ParamField>
 <ParamField path='name' type='string' required>
 	The human-readable name shown in settings.
@@ -24,7 +26,7 @@ These must be present and defined, or the addon is rejected when it loads.
 	A short summary of what the addon does.
 </ParamField>
 <ParamField path='authors' type='AddonAuthor[]' required>
-	A non-empty array of authors. An empty array fails validation just like a missing field.
+	A non-empty array of authors. An empty array fails validation, the same as a missing field.
 
 	<Expandable title='AddonAuthor'>
 		<ParamField path='name' type='string' required>
@@ -36,15 +38,15 @@ These must be present and defined, or the addon is rejected when it loads.
 	</Expandable>
 </ParamField>
 <ParamField path='version' type='string' required>
-	The addon's version. Bump it on every release so clients can detect updates.
+	The addon's version. Increase it on every release so clients can detect updates.
 </ParamField>
 <ParamField path='main' type='string' required>
-	The entry point the bundle is built from. Themes ignore this field; see [Themes](#themes) below.
+	The entry point the bundle is built from. Themes ignore this field. See [Themes](#themes) below.
 </ParamField>
 
 ### Optional fields
 
-Used for display and updates. Leaving them out is fine.
+Used for display and updates. You can leave them out.
 
 <ParamField path='icon' type='string | { uri: string }'>
 	The addon's icon: an [asset](/modules/assets) name, or an object with a `uri` for a remote image.
@@ -70,56 +72,72 @@ Used for display and updates. Leaving them out is fine.
 ```
 
 <Warning>
-	The manifest is validated the moment the addon loads. Any required field that's missing or undefined rejects it, and `authors` must be a non-empty array.
+	The manifest is validated as soon as the addon loads. The addon is rejected if any required field is missing or undefined, or if `authors` is empty.
 </Warning>
 
 <Note>
-	The `id` is the field you reference everywhere else: manager calls like `plugins.toggle('my-plugin')`, your [storage](/modules/storage) store name, and the addon's entry in the enabled-state map. Pick it once and never change it.
+	You reference the `id` in several places:
+
+	- Manager calls such as `plugins.toggle('my-plugin')`.
+	- Your [storage](/modules/storage) store name.
+	- The addon's entry in the enabled-state map.
+
+	Choose it once and don't change it.
 </Note>
 
 ### Per-addon details
 
-The shape is shared, but the addon kinds diverge in what they need on disk and which fields actually do anything. The loader scans `Plugins`, `Themes`, and `Fonts` at startup, while icon packs are installed by the client under `Unbound/Icons`. See [iOS](/loader/ios) for where these live on device.
+Every kind uses the same manifest shape, but each needs different files on disk and uses different fields.
+
+- At startup, the loader scans the `Plugins`, `Themes`, and `Fonts` folders.
+- Icon packs are installed by the client under `Unbound/Icons`.
+
+See [iOS](/loader/ios) for where these folders are on the device.
 
 <AccordionGroup>
 	<Accordion title='Plugins' icon='plug'>
-		A plugin is a **directory** inside `Plugins` containing a `manifest.json`. Entries that aren't directories, or that have no manifest, are skipped.
+		A plugin is a **directory** inside `Plugins` that contains a `manifest.json`. The loader skips entries that aren't directories or have no manifest.
 
-		`main` is required and must resolve to a real file. Resolution works one of two ways:
+		`main` is required and must resolve to a real file. It resolves in one of two ways:
 
 		- A value starting with `/` is treated as an **absolute path** and used as-is.
 		- Anything else resolves **relative to the plugin's own folder**.
 
-		Either way the resolved path must exist and must not be a directory, otherwise the plugin is skipped. Unbound reads that file and evaluates it into your plugin's running instance. See [Creating an Addon](/addons/creating).
+		In both cases the resolved path must exist and must not be a directory. Otherwise the plugin is skipped. Unbound reads that file and evaluates it to create your plugin's running instance. See [Creating an Addon](/addons/creating).
 	</Accordion>
 	<Accordion title='Themes' icon='paintbrush'>
-		A theme is a **directory** containing both a `manifest.json` and a **`bundle.json`**. The bundle file name is fixed: the loader looks for exactly `bundle.json` next to the manifest, and skips the theme if it isn't there or isn't a JSON object.
+		A theme is a **directory** that contains both a `manifest.json` and a **`bundle.json`**. The bundle file name is fixed. The loader looks for exactly `bundle.json` next to the manifest, and skips the theme if that file is missing or isn't a JSON object.
 
 		<Warning>
-			**Themes ignore `main` entirely.** The field is still required by manifest validation, but the loader never reads it when locating a theme's bundle. Pointing it at a differently named file does nothing; rename the file to `bundle.json` instead.
+			**Themes ignore `main` entirely.** Manifest validation still requires the field, but the loader never reads it when locating a theme's bundle. Pointing `main` at a file with a different name does nothing. Rename the file to `bundle.json` instead.
 		</Warning>
 
-		Besides identifying the theme, its `id` is the value stored as `applied` while it's the active theme. Only one theme is applied at a time, so this is how Unbound remembers which. The palette and background live in `bundle.json`, not the manifest. See [Theme Types](/themes/types).
+		While a theme is active, its `id` is stored as `applied`. Only one theme is applied at a time, and this value is how Unbound remembers which one. The palette and background live in `bundle.json`, not in the manifest. See [Theme Types](/themes/types).
 	</Accordion>
 	<Accordion title='Icon Packs' icon='icons'>
-		An icon pack is a **folder of image files** mirroring Discord's asset tree, installed under `Unbound/Icons/<id>`. It uses the shared manifest above, plus two fields of its own:
+		An icon pack is a **folder of image files** with the same layout as Discord's asset tree, installed under `Unbound/Icons/<id>`. It uses the shared manifest above, plus two fields of its own:
 
 		<ParamField path='type' type="'icon-pack'">
-			Tags the manifest as an icon pack. When present on install it must match, otherwise the install is rejected.
+			Marks the manifest as an icon pack. If the field is present at install time, it must be `'icon-pack'`, or the install is rejected.
 		</ParamField>
 		<ParamField path='source' type="'github' | 'other'">
-			How the pack's files are fetched. If omitted, it's inferred from `main`: a `github.com` URL means `github`, anything else means `other`.
+			How the pack's files are fetched. If omitted, it is inferred from `main`: a `github.com` URL means `github`, and anything else means `other`.
 		</ParamField>
 
-		For a `github` pack, `main` is the repo URL (optionally with a `/tree/<branch>/<path>` suffix) and Unbound downloads that tree's images into the pack folder. For `other`, the pack installs through the shared bundle path like any other addon. See [Icon Packs](/icon-packs/introduction).
+		How `main` is used depends on `source`:
+
+		- `github`: `main` is the repo URL, optionally with a `/tree/<branch>/<path>` suffix. Unbound downloads the images in that tree into the pack folder.
+		- `other`: the pack installs through the shared bundle path, like any other addon.
+
+		See [Icon Packs](/icon-packs/introduction).
 	</Accordion>
 	<Accordion title='Fonts' icon='font'>
-		A font has **no manifest and no folder**. It's a single font file dropped directly into the `Fonts` directory, and the loader registers it by reading the font's own internal full name, not its file name.
+		A font has **no manifest and no folder**. It is a single font file placed directly in the `Fonts` directory. The loader registers it under the full name stored inside the font file, not under its file name.
 
-		Registering a font does not apply it. Fonts only take effect through the `unbound.font-states` setting, which maps a font family name to the name of the font to use instead. See [Settings](/loader/settings) for that key.
+		Registering a font does not apply it. A font only takes effect through the `unbound.font-states` setting, which maps a font family name to the name of the font to use in its place. See [Settings](/loader/settings) for that key.
 
 		<Warning>
-			The key `"*"` in `font-states` is a wildcard that overrides **every** font request in the app, ignoring whatever family was asked for. If a wildcard entry is set, per-family entries never take effect.
+			The key `"*"` in `font-states` is a wildcard. It overrides **every** font request in the app, whatever family was requested. If a wildcard entry is set, per-family entries never take effect.
 		</Warning>
 	</Accordion>
 </AccordionGroup>

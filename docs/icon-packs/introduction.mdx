@@ -4,59 +4,67 @@ description: "Replace Discord's icons with your own set."
 icon: 'icons'
 ---
 
-An icon pack swaps Discord's built-in icons for your own. Like a [theme](/themes/introduction), it's a restyling addon. Where a theme recolors the interface, an icon pack replaces the *images* Discord renders for its icons.
+An icon pack replaces Discord's built-in icons with your own. Like a [theme](/themes/introduction), it's a restyling addon. A theme recolors the interface, and an icon pack replaces the *images* Discord renders for its icons.
 
 ### How icon packs work
 
-Discord refers to each icon by name and resolves it to a bundled [asset](/modules/assets). An icon pack hooks that resolution: for every icon name it provides a replacement for, Unbound redirects the asset to your image instead of Discord's. Names you don't override fall through to Discord's originals, so a pack can be as small as a handful of icons or as complete as you like.
+Discord refers to each icon by name and resolves it to a bundled [asset](/modules/assets). An icon pack hooks into that step. For each icon name the pack replaces, Unbound points the asset at your image instead of Discord's.
 
-Internally each overridden asset carries an `iconPackPath` (where your replacement image lives) and an `iconPackScale` (the density it's authored at), which is how Unbound resolves your image at the right resolution.
+Names you don't override fall through to Discord's originals, so a pack can replace a few icons or all of them.
+
+Internally, each overridden asset has an `iconPackPath` (where your replacement image is) and an `iconPackScale` (the density the image was made for). Unbound uses these to load your image at the right resolution.
 
 <Note>
-	An icon pack overrides icons *by name*. The same asset names the [assets](/modules/assets) module discovers are the ones you target, so the naming you see there is the naming a pack overrides.
+	An icon pack overrides icons *by name*. The asset names that the [assets](/modules/assets) module discovers are the same names a pack targets.
 </Note>
 
 ### What an icon pack ships
 
-Unlike a [plugin](/plugins/introduction), a pack ships no code. It's a folder of image files mirroring Discord's asset tree, installed under `Unbound/Icons/<id>` (see [iOS](/loader/ios) for where that is on device).
+Unlike a [plugin](/plugins/introduction), a pack ships no code. It's a folder of image files that mirrors Discord's asset tree, installed under `Unbound/Icons/<id>`. See [iOS](/loader/ios) for where that folder is on the device.
 
 <CardGroup cols={2}>
 	<Card title='Manifest' icon='circle-info' href='/addons/manifest'>
 		Metadata identifying the pack: name, authors, version, plus `type` and `source`.
 	</Card>
 	<Card title='Assets' icon='face-smile' href='/modules/assets'>
-		How Discord's icons are named and discovered: the names a pack overrides.
+		How Discord's icons are named and discovered. These are the names a pack overrides.
 	</Card>
 </CardGroup>
 
 ### File layout
 
-Each image mirrors the asset it replaces. The path is the asset's own location with the leading `assets/` stripped, then the asset name, then its extension:
+Each image's path mirrors the asset it replaces. To build it:
+
+1. Take the asset's location and strip the leading `assets/`.
+2. Add the asset name.
+3. Add the extension.
+
+For example:
 
 ```
 Unbound/Icons/my-pack/images/ic_message_delete.png
 Unbound/Icons/my-pack/images/ic_message_delete@2x.png
 ```
 
-Scale variants use the `@2x`, `@3x` suffix, and the bare name is scale `1`. Unbound picks the **highest** scale present for each asset, so shipping only an `@3x` file is fine. An asset with no matching file in the pack keeps Discord's original.
+Scale variants use the `@2x` and `@3x` suffixes. A file with no suffix is scale `1`. Unbound picks the **highest** scale present for each asset, so shipping only an `@3x` file is fine. An asset with no matching file in the pack keeps Discord's original.
 
-### Installing
+### How installation resolves files
 
-Packs install from a manifest URL. The `source` field decides how the files are fetched:
+Unbound installs a pack from its manifest URL. The manifest's `source` field sets how the files are downloaded. For the in-app install steps, see [Managing Addons](/user-guide/managing-addons).
 
 <AccordionGroup>
-	<Accordion title='github' icon='github'>
-		`main` is the repo URL, optionally narrowed with `/tree/<branch>/<subpath>`. Unbound reads the repo's file tree and downloads every file under that path into the pack folder. If `source` is omitted and `main` is a `github.com` URL, this is what's used.
+	<Accordion title='GitHub' icon='github'>
+		`main` is the repo URL. You can narrow it to a branch and folder with `/tree/<branch>/<subpath>`. Unbound reads the repo's file tree and downloads every file under that path into the pack folder. If `source` is omitted and `main` is a `github.com` URL, this method is used.
 	</Accordion>
-	<Accordion title='other' icon='link'>
-		The pack installs through the same bundle download path as any other addon.
+	<Accordion title='Other' icon='link'>
+		The pack installs through the same bundle download path as other addons.
 	</Accordion>
 </AccordionGroup>
 
 <Note>
-	Only one pack applies at a time, like a [theme](/themes/introduction). Enabling a pack replaces the applied one, and disabling falls back to the built-in `default` pack, which renders Discord's own icons. See [managers](/modules/managers) for the toggle surface.
+	Only one pack applies at a time, like a [theme](/themes/introduction). Enabling a pack replaces the applied one. Disabling it falls back to the built-in `default` pack, which renders Discord's own icons. See [managers](/modules/managers) for the methods that toggle packs.
 </Note>
 
 <Tip>
-	Match Discord's icon names exactly. An override only applies when its name lines up with the asset Discord is asking for. A mismatched name simply does nothing.
+	Match Discord's icon names exactly. An override applies only when its name matches the asset Discord requests. A mismatched name does nothing.
 </Tip>

@@ -6,7 +6,7 @@ icon: 'image'
 
 ### Adding a background
 
-A theme can put an image behind Discord's interface. Add an optional `background` object to your theme definition with the image `url`, and tune how it sits behind the UI with `blur` and `opacity`.
+To put an image behind Discord's interface, add an optional `background` object to your theme definition. Set the image `url`, then adjust how it looks behind the UI with `blur` and `opacity`.
 
 ```ts
 {
@@ -34,9 +34,9 @@ A theme can put an image behind Discord's interface. Add an optional `background
 </ResponseField>
 
 <Warning>
-	A background competes with your text for legibility. Pair it with semantic colors that hold up over the image, and lean on `blur` and a lower `opacity` so the interface stays readable.
+	A background can make text harder to read. Choose semantic colors that stay readable over the image, and use `blur` and a lower `opacity` to keep the interface legible.
 </Warning>
 
 <Tip>
-	Make the surfaces above the background semi-transparent in your [semantic colors](/themes/types#semantic-colors) so the image shows through. A fully opaque `BACKGROUND_PRIMARY` will hide it entirely.
+	To let the image show through, make the surfaces above it semi-transparent in your [semantic colors](/themes/types#semantic-colors). A fully opaque `BACKGROUND_PRIMARY` hides it entirely.
 </Tip>

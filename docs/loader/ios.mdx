@@ -1,144 +1,42 @@
 ---
 title: 'iOS'
-description: 'Where Unbound keeps your files on iOS, and how to recover when the app breaks.'
+description: 'Where the iOS loader keeps Unbound files.'
 icon: 'apple'
 ---
 
-The iOS loader keeps everything it owns in one folder inside the app's own storage, and ships a native toolbox you can open even when Unbound's JavaScript never finishes loading.
+The iOS loader keeps all of Unbound's files in a single `Unbound` folder in the app's Documents directory.
 
 ### Storage
 
-All of Unbound's files live in a single `Unbound` folder inside the app's Documents directory. In the Files app you will find it at `On My iPhone` -> `<App Name>` -> `Unbound`.
+To browse the folder in the Files app, open `On My iPhone` -> `<App Name>` -> `Unbound`.
 
 <AccordionGroup>
 	<Accordion title='Addons' icon='puzzle-piece'>
-		Each addon type gets its own directory:
+		Each addon type has its own directory:
 
 		| Directory | Contents |
 		| --- | --- |
 		| `Plugins/<id>` | An installed [plugin](/addons/introduction): its `manifest.json` and bundle, in a folder named after the plugin's id. |
 		| `Themes/<id>` | An installed [theme](/themes/introduction): its `manifest.json` and bundle, in a folder named after the theme's id. |
-		| `Fonts` | Installed font files, sitting directly in this folder rather than in subfolders. |
-		| `Icons/<id>` | An installed icon pack, its images laid out mirroring Discord's asset tree, in a folder named after the pack's id. |
+		| `Fonts` | Installed font files, stored directly in this folder with no subfolders. |
+		| `Icons/<id>` | An installed icon pack, in a folder named after the pack's id. Its images follow the same layout as Discord's asset tree. |
 
-		Deleting an addon's folder removes it. The loader scans these directories at startup, so a change only takes effect after the app restarts.
+		To remove an addon, delete its folder. The loader scans these directories at startup, so changes take effect only after the app restarts.
+
+		The toolbox's **Wipe Plugins**, **Wipe Themes**, **Wipe Fonts**, and **Wipe Icon Packs** actions each permanently delete the matching directory. **Factory Reset** deletes the entire `Unbound` folder, including `settings.json` and the bundle.
 	</Accordion>
 	<Accordion title='Settings' icon='gear'>
-		`settings.json` holds every Unbound setting, including the [loader configuration flags](/loader/configuration) and everything on the [settings reference](/loader/settings).
+		`settings.json` holds every Unbound setting, including the [loader configuration flags](/loader/configuration) and everything in the [settings reference](/loader/settings).
 
-		If this file is ever unreadable or not valid JSON, the loader copies it to `settings.json.corrupt-<timestamp>` and starts from a fresh one rather than refusing to boot. If you lose your settings unexpectedly, look for that backup.
+		If this file can't be read or isn't valid JSON, the loader copies it to `settings.json.corrupt-<timestamp>` and starts with a fresh file instead of refusing to boot. If your settings disappear unexpectedly, look for that backup.
 	</Accordion>
 	<Accordion title='Bundle' icon='box'>
-		`unbound.bundle` (or `unbound.js`, depending on the source you point at) is the JavaScript bundle the loader injects. You do not need to manage this by hand. Use the toolbox's bundle actions instead.
+		`unbound.bundle` (or `unbound.js`, depending on the source you point at) is the JavaScript bundle the loader injects. Don't manage it by hand. Use the toolbox's bundle actions instead. **Delete Bundle** deletes this file and also clears `loader.update.url` and `loader.update.force`.
 	</Accordion>
 </AccordionGroup>
 
 <Note>
-	`Icons` is where icon packs live on disk even though the toolbox labels the wipe action "Wipe Icon Packs".
+	Icon packs are stored in `Icons`, even though the toolbox's wipe action is labelled "Wipe Icon Packs".
 </Note>
 
-### The toolbox
-
-The toolbox is a native menu. It is drawn by the loader itself, not by Discord and not by Unbound's JavaScript, so it opens even when the bundle failed to download, failed to run, or is crashing the app on launch. That is what makes it the recovery path: if Unbound broke your app, the toolbox is how you undo it without reinstalling.
-
-Both gestures are enabled by default, and both give a short haptic tap when they fire.
-
-<Steps>
-	<Step title='Shake the device'>
-		Shake and keep shaking for between **0.5 and 2 seconds**, then stop. The loader measures the time between the shake starting and ending. A flick shorter than half a second does nothing, and a shake you hold past two seconds is ignored too, so that ordinary jostling in a pocket or in a car does not open the menu.
-	</Step>
-	<Step title='Or press with three fingers'>
-		Hold **three fingers** anywhere on screen for **0.5 seconds**. Unlike the shake, this one fires as soon as the half second elapses. You do not need to lift your fingers.
-	</Step>
-</Steps>
-
-<Note>
-	You can turn either gesture off from the toolbox's own **Settings** section, but not both. Disabling one automatically re-enables the other, so you can never lock yourself out of the toolbox.
-</Note>
-
-### Toolbox actions
-
-Actions marked destructive are shown in red and ask for confirmation before they run. Most actions restart the app when they finish.
-
-<AccordionGroup>
-	<Accordion title='Bundle' icon='box'>
-		<ResponseField name='Refetch Bundle'>
-			Redownloads the bundle from whatever source is currently configured and restarts. The first thing to try when Unbound loads but misbehaves.
-		</ResponseField>
-		<ResponseField name='Delete Bundle'>
-			**Destructive.** Deletes the downloaded bundle and clears your custom `loader.update.url` and `loader.update.force` settings, returning you to the official bundle. Use this to undo a bad custom bundle.
-		</ResponseField>
-		<ResponseField name='Switch Bundle Version'>
-			Lists the branches of Unbound's builds repository, then the last 10 commits on the branch you pick, each shown by short commit hash and date. Choosing one pins you to that exact build.
-		</ResponseField>
-		<ResponseField name='Load Custom Bundle'>
-			Prompts for a URL, downloads the bundle from it and pins you to that source. Mainly for testing your own builds. See [configuration](/loader/configuration) for the equivalent settings.
-		</ResponseField>
-	</Accordion>
-	<Accordion title='Addons' icon='puzzle-piece'>
-		Each of these permanently deletes the matching directory described above. There is no undo, and installed addons are not backed up anywhere.
-
-		<ResponseField name='Wipe Plugins'>
-			**Destructive.** Deletes every installed plugin.
-		</ResponseField>
-		<ResponseField name='Wipe Themes'>
-			**Destructive.** Deletes every installed theme.
-		</ResponseField>
-		<ResponseField name='Wipe Fonts'>
-			**Destructive.** Deletes every installed font pack.
-		</ResponseField>
-		<ResponseField name='Wipe Icon Packs'>
-			**Destructive.** Deletes every installed icon pack.
-		</ResponseField>
-	</Accordion>
-	<Accordion title='Utilities' icon='wrench'>
-		<ResponseField name='Enable / Disable Recovery Mode'>
-			Toggles recovery mode and restarts. The label reflects the current state. Read the warning below before relying on it.
-		</ResponseField>
-		<ResponseField name='Factory Reset'>
-			**Destructive.** Deletes the entire `Unbound` folder: every addon, your `settings.json`, and the bundle. This is the last resort, and it takes everything with it.
-		</ResponseField>
-		<ResponseField name='Open App Folder'>
-			Opens the `Unbound` folder directly. On a jailbroken device it opens in Filza if installed, otherwise it opens in the Files app.
-		</ResponseField>
-		<ResponseField name='Open GitHub Issue'>
-			Opens a new issue on the loader repository in an in-app browser, pre-filled with your device model, iOS version, app version and build, app source, whether the app is registered as a system or user app, and the app's entitlements. You fill in the title and the description.
-		</ResponseField>
-	</Accordion>
-	<Accordion title='Settings' icon='sliders'>
-		<ResponseField name='Enable Shake Motion'>
-			Toggles the shake gesture.
-		</ResponseField>
-		<ResponseField name='Enable Three Finger Press'>
-			Toggles the three finger press gesture.
-		</ResponseField>
-		<ResponseField name='Use Unbound Icon'>
-			Swaps the app icon for Unbound's. Only shown when the app was not installed from the App Store or TestFlight, since alternate icons are unavailable there.
-		</ResponseField>
-	</Accordion>
-</AccordionGroup>
-
-<Warning>
-	**Recovery mode does far less natively than its name suggests.** The only thing the loader itself changes when recovery mode is on is that it skips swizzling semantic colours, which is the part of theming that recolours the interface's system colours.
-
-	Everything else recovery mode appears to do happens in Unbound's JavaScript: addons are loaded as no-ops instead of being run, and addon cards become non-interactive. All of that depends on the bundle running in the first place. If the bundle is what is broken, recovery mode will not save you, and you want **Refetch Bundle**, **Delete Bundle**, or the wipe actions instead.
-</Warning>
-
-### Getting logs for a bug report
-
-The iOS loader does not write a log file. Everything it logs goes to Apple's unified logging system under the subsystem `app.unbound`, so you read it from a computer rather than from the device.
-
-<Steps>
-	<Step title='Connect the device to a Mac'>
-		Open Console.app, pick your device in the sidebar, and press Start streaming.
-	</Step>
-	<Step title='Filter for Unbound'>
-		Filter on the subsystem `app.unbound`. Each message is also tagged with a category telling you which part of the loader produced it: `plugins`, `themes`, `settings`, `filesystem`, `updater`, `utilities`, `toolbox`, `fonts`, `chatui`, `pluginapi`, or `default`.
-	</Step>
-	<Step title='Reproduce the problem'>
-		Trigger whatever is going wrong while the stream is running, then copy the relevant messages out.
-	</Step>
-	<Step title='File the issue'>
-		Use **Open GitHub Issue** in the toolbox. It fills in your device and app details for you, so you only need to paste the logs and describe what happened.
-	</Step>
-</Steps>
+For the toolbox, recovery mode, and bug reports, see [Troubleshooting](/user-guide/troubleshooting).

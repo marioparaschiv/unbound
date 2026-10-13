@@ -6,9 +6,9 @@ icon: 'folder'
 
 ### What is the file system module?
 
-`fs` is a small wrapper over the native file manager for reading, writing, removing, and checking files. By default every path resolves against the platform's **documents directory** (the private, persistent folder Unbound stores its data in), so you work with short relative paths instead of absolute ones.
+`fs` is a small wrapper over the native file manager. Use it to read, write, remove, and check files. By default, every path resolves against the platform's **documents directory** (the private, persistent folder where Unbound stores its data), so you can use short relative paths instead of absolute ones.
 
-It's built on the [native](/modules/native) bridge, and it's the layer [storage](/modules/storage) and [i18n](/modules/i18n) persist through. When you `storage.set` something, this is what eventually writes it to disk.
+`fs` is built on the [native](/modules/native) bridge. [storage](/modules/storage) and [i18n](/modules/i18n) persist their data through it: when you call `storage.set`, `fs` is what eventually writes the value to disk.
 
 ```ts
 import { fs } from '@unbound-app/api';
@@ -19,7 +19,7 @@ const raw = await fs.read('my-plugin/data.json');
 
 ### Reading & writing
 
-`read` and `write` default to `utf8`. `read` resolves to the file's contents; `write` resolves once the file is on disk. `fs.Documents` holds the absolute documents path if you need it.
+`read` and `write` default to `utf8` encoding. `read` resolves to the file's contents, and `write` resolves once the file is on disk. If you need the absolute documents path, it's in `fs.Documents`.
 
 <CodeGroup>
 ```ts write
@@ -45,7 +45,7 @@ await fs.write('my-plugin/icon.png', base64Data, 'base64');
 
 ### Checking & removing
 
-`exists` tells you whether a file is there; `rm` deletes it. Both resolve to a boolean.
+`exists` checks whether a file exists, and `rm` deletes it. Both resolve to a boolean.
 
 ```ts
 import { fs } from '@unbound-app/api';
@@ -56,5 +56,5 @@ if (await fs.exists('my-plugin/data.json')) {
 ```
 
 <Tip>
-	You rarely need this for configuration; let [storage](/modules/storage) own that. Reach for `fs` directly when an addon ships its own data files (caches, exports, downloaded assets) that don't belong in the settings store.
+	For configuration, use [storage](/modules/storage) instead. Use `fs` directly when an addon ships its own data files, such as caches, exports, or downloaded assets, that don't belong in the settings store.
 </Tip>

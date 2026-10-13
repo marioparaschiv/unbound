@@ -6,13 +6,13 @@ icon: 'face-smile'
 
 ### What are assets?
 
-Discord ships its images and icons as Metro modules, each one exporting a numeric id that the app resolves into an actual image. Components that render an icon want that id, but ids change between versions, so hardcoding one is fragile.
+`assets` lets you look up Discord's bundled images and icons by name. At startup it indexes every bundled asset by name, so you can ask for `'ChatIcon'` and get the correct id for the current build.
 
-`assets` solves this. At startup it indexes every bundled asset by name, so you can ask for `'ChatIcon'` and get back the right id today, on this build.
+Discord ships each image and icon as a Metro module that exports a numeric id, and the app resolves that id into an image. Components that render an icon take the id. Ids change between Discord versions, so a hardcoded id is unreliable.
 
 ### Looking up assets
 
-Each lookup is keyed by name and type (`png` or `svg`, defaulting to `png`).
+Look up an asset by name and type (`png` or `svg`). The type defaults to `png`.
 
 ```ts
 import { assets } from '@unbound-app/api';
@@ -32,7 +32,7 @@ const byId = assets.getByID(id);               // back the other way
 
 ### The Icons proxy
 
-For the common case (turning a name into an id), `assets.Icons` is the shortcut. Read any property off it and it resolves that name to its id on access.
+`assets.Icons` is a shortcut for the common case of turning a name into an id. Reading any property on it returns the id for that name.
 
 ```tsx
 import { Icons } from '@unbound-app/api/assets';
@@ -42,5 +42,5 @@ import { Icons } from '@unbound-app/api/assets';
 ```
 
 <Tip>
-	`Icons` is just sugar over `getIDByName`. Use it when you want an id inline; use `getByName` when you need the full record (name, type, dimensions).
+	`Icons` is shorthand for `getIDByName`. Use it when you want an id inline. Use `getByName` when you need the full record (name, type, dimensions).
 </Tip>

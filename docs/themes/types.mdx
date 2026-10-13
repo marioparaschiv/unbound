@@ -6,15 +6,17 @@ icon: 'palette'
 
 ### Where a theme lives
 
-A theme is a folder holding two files: its [`manifest.json`](/addons/manifest) and a **`bundle.json`** holding the definition below. The bundle's name is fixed. The loader looks for exactly `bundle.json` beside the manifest, and skips the theme if the file is missing or doesn't parse into a JSON object.
+A theme is a folder with two files: its [`manifest.json`](/addons/manifest) and a **`bundle.json`** that contains the definition below.
+
+The bundle's filename is fixed. The loader looks for exactly `bundle.json` next to the manifest. It skips the theme if the file is missing or doesn't parse into a JSON object.
 
 <Warning>
-	Unlike plugins, themes **ignore the manifest's `main` field**. It's still required for the manifest to validate, but nothing reads it when locating the bundle. If your colors aren't applying, check the file is named `bundle.json`, not whatever `main` points at.
+	Unlike plugins, themes **ignore the manifest's `main` field**. The field is still required for the manifest to validate, but nothing reads it when locating the bundle. If your colors aren't applying, check that the file is named `bundle.json`, not whatever `main` points to.
 </Warning>
 
 ### The shape of a theme
 
-A theme definition has three parts that decide its colors: a base `type`, a set of `semantic` colors, and a set of `raw` colors. Together they override Discord's palette.
+A theme definition has three parts that set its colors: a base `type`, `semantic` colors, and `raw` colors. Together they override Discord's palette.
 
 ```json bundle.json
 {
@@ -27,27 +29,27 @@ A theme definition has three parts that decide its colors: a base `type`, a set 
 
 ### Base type
 
-`type` picks the foundation your theme builds on. You only override the colors you care about, and everything else falls back to this base.
+`type` sets the base palette your theme builds on. Override only the colors you want to change. Everything else falls back to this base.
 
 <Tabs>
-	<Tab title='midnight'>
+	<Tab title='Midnight'>
 		A pure-black base, for OLED/AMOLED-style themes.
 	</Tab>
-	<Tab title='darker'>
+	<Tab title='Darker'>
 		A dark base, deeper than Discord's default dark.
 	</Tab>
-	<Tab title='light'>
+	<Tab title='Light'>
 		A light base.
 	</Tab>
 </Tabs>
 
 ### Semantic colors
 
-**Semantic** colors are Discord's named roles: `BACKGROUND_PRIMARY`, `TEXT_NORMAL`, and so on. Theming by role means a single value recolors everywhere that role is used, so the result stays consistent across the app.
+**Semantic** colors are Discord's named color roles, such as `BACKGROUND_PRIMARY` and `TEXT_NORMAL`. Setting a role recolors every place that role is used, so the result stays consistent across the app.
 
-Each key is the **selector name** of the color Unbound hooks. A key that doesn't match any selector is inert: it's never looked up, and nothing warns you about it.
+Each key is the **selector name** of the color Unbound hooks. A key that doesn't match any selector does nothing. It's never looked up, and you get no warning.
 
-Each entry is an object: a `type` of `color` (a literal color) or `raw` (a reference to a raw color), the `value`, and an optional `opacity`.
+Each entry is an object with a `type` (`color` for a literal color, or `raw` to reference a raw color), a `value`, and an optional `opacity`.
 
 ```ts
 semantic: {
@@ -57,20 +59,20 @@ semantic: {
 ```
 
 <ResponseField name='type' type="'color' | 'raw'">
-	`color` is a literal value; `raw` points at one of your raw colors so many roles can share it.
+	`color` is a literal value. `raw` points to one of your raw colors, so several roles can share it.
 </ResponseField>
 <ResponseField name='value' type='string'>
 	The color, or the raw key when `type` is `raw`.
 </ResponseField>
 <ResponseField name='opacity' type='number'>
-	Optional opacity from `0` to `1`, applied on top of the parsed color. It replaces any alpha the color string already carried, and is ignored when `type` is `raw`.
+	Optional opacity from `0` to `1`, applied on top of the parsed color. It replaces any alpha already in the color string. It's ignored when `type` is `raw`.
 </ResponseField>
 
-An entry missing `type` or `value` is skipped and the role keeps its original color.
+If an entry is missing `type` or `value`, it's skipped and the role keeps its original color.
 
 ### Raw colors
 
-**Raw** colors are a flat map keyed by the **selector name** of a system color, such as `systemBlueColor`. Setting one replaces that color everywhere the app asks for it, below the level of Discord's roles. Point semantic roles at one with `type: 'raw'` and they share whatever it resolves to.
+**Raw** colors are a flat map keyed by the **selector name** of a system color, such as `systemBlueColor`. Setting one replaces that color everywhere the app uses it, below the level of Discord's roles. Semantic roles that point to a raw color with `type: 'raw'` all share its value.
 
 ```json
 {
@@ -83,15 +85,15 @@ An entry missing `type` or `value` is skipped and the role keeps its original co
 }
 ```
 
-Raw overrides are swapped in when the theme is applied and restored when you switch away, so only the applied theme's raw colors are ever in effect.
+Raw overrides are swapped in when the theme is applied and restored when you switch to another theme, so only the applied theme's raw colors are in effect.
 
 <Tip>
-	Put your brand colors in `raw` and wire `semantic` roles to them. It keeps a theme DRY, so one edit recolors everything that shares a value.
+	Put your brand colors in `raw` and point `semantic` roles at them. This keeps the theme DRY: one edit recolors everything that shares that value.
 </Tip>
 
 ### Color formats
 
-Every color string, in `raw` or in a semantic `color` entry, is parsed the same way. Three formats are accepted:
+Every color string, whether in `raw` or in a semantic `color` entry, is parsed the same way. These formats are accepted:
 
 <ParamField path='#RRGGBB' type='hex'>
 	Six-digit hex. Alpha is treated as fully opaque.
@@ -107,13 +109,19 @@ Every color string, in `raw` or in a semantic `color` entry, is parsed the same 
 </ParamField>
 
 <Warning>
-	In `rgba`, **alpha is a `0` to `1` fraction while `r`, `g` and `b` are `0` to `255`.** Writing `rgba(255, 0, 0, 255)` does not give you opaque red, and a `0` alpha silently renders the color fully transparent rather than failing. Use `rgba(255, 0, 0, 1)`.
+	In `rgba`, **alpha is a fraction from `0` to `1`, while `r`, `g`, and `b` go from `0` to `255`.** `rgba(255, 0, 0, 255)` does not give you opaque red. A `0` alpha renders the color fully transparent without any error. For opaque red, use `rgba(255, 0, 0, 1)`.
 </Warning>
 
-An `rgba` string with fewer than four values, or an `rgb` string with fewer than three, fails to parse, as does any string that doesn't start with `#`, `rgb`, or `rgba`. Named CSS colors like `red` are not supported.
+These strings fail to parse:
+
+- An `rgba` string with fewer than four values.
+- An `rgb` string with fewer than three values.
+- Any string that doesn't start with `#`, `rgb`, or `rgba`.
+
+Named CSS colors like `red` are not supported.
 
 <Note>
-	A color that fails to parse is not an error you'll see. Unbound falls back to the original color for that entry and the app keeps rendering, so a malformed value looks like an override that simply didn't apply. Check the format first when a color won't take.
+	A color that fails to parse doesn't show an error. Unbound falls back to the original color for that entry and the app keeps rendering, so a malformed value looks like an override that didn't apply. When a color doesn't change, check its format first.
 </Note>
 
 See [Creating an Addon](/addons/creating) for building and installing a theme, and [The Manifest](/addons/manifest) for the metadata that ships beside the bundle.

@@ -1,7 +1,184 @@
 ---
 title: 'Components'
-description: ''
+description: "Handles to Discord's UI components and design system, for building settings screens and addon UI."
 icon: 'code'
-
 ---
 
+### What are components?
+
+`metro.components` holds ready-made handles to the Discord modules that render UI. Use them to build settings panels, screens, and anything else your addon draws, so it matches Discord's own look.
+
+Each handle is found through [Metro](/modules/metro). Most are lazy: the search runs the first time you read a property, so importing them costs nothing at startup.
+
+```ts
+import { metro } from '@unbound-app/api';
+
+const { Discord } = metro.components;
+// equivalent: import { Discord } from '@unbound-app/api/metro/components';
+// runtime global: unbound.metro.components
+```
+
+### Available handles
+
+| Export | Type | Found by |
+| --- | --- | --- |
+| `Discord` | `DesignModule` | props `createStyles`, `dismissAlerts`, `ContextMenu` |
+| `Switch` | `ComponentType<SwitchProps>` | name `Switch` |
+| `BackdropFilters` | `any` | props `BackgroundBlurFill` |
+| `SafeArea` | `any` | props `SafeAreaPaddingView` |
+| `Portal` | `any` | props `PortalHost`, `Portal` |
+| `Media` | `any` | props `openMediaModal` |
+| `FlashList` | `any` | props `FlashList` |
+| `Forms` | `any` | props `FormSliderRow` |
+| `HelpMessage` | `any` | name `HelpMessage` |
+
+Only `Discord` and `Switch` are typed. The rest are typed `any`, so check their props against Discord's build before you rely on them.
+
+<Note>
+	`Switch` is the only handle searched for eagerly, when Unbound loads. Every other handle is a lazy proxy that resolves on first property access.
+</Note>
+
+### The Discord design system
+
+Build most addon UI from `Discord`. It is Discord's mobile design system: a single module that holds its components, style factory, alert helpers, and color utilities.
+
+```tsx
+import { metro, storage, assets } from '@unbound-app/api';
+
+const { Discord } = metro.components;
+const store = storage.getStore('my-plugin');
+
+function SettingsPanel() {
+	const settings = store.useSettingsStore();
+
+	return (
+		<Discord.TableRowGroup title='General'>
+			<Discord.TableSwitchRow
+				label='Enabled'
+				subLabel='Turn the plugin on or off.'
+				icon={<Discord.TableRowIcon source={assets.getIDByName('WrenchIcon')} />}
+				value={settings.get('enabled', true)}
+				onValueChange={() => settings.toggle('enabled', true)}
+			/>
+			<Discord.TableRow
+				label='Version'
+				trailing={<Discord.TableRow.TrailingText text='1.0.0' />}
+			/>
+		</Discord.TableRowGroup>
+	);
+}
+```
+
+The typed members, by group:
+
+<AccordionGroup>
+	<Accordion title='Text' icon='font'>
+		- `Text` and `Heading` take a `variant` (such as `'text-md/semibold'` or `'heading-lg/bold'`), a `color`, `lineClamp`, and the usual view props.
+		- `TextStyleSheet` maps each variant name to its `TextStyle`, for when you need the style object instead of a component.
+	</Accordion>
+	<Accordion title='Tables and Rows' icon='table-rows'>
+		- `TableRowGroup` is the rounded container for a list of rows. It takes `title`, `description`, and `helperText`.
+		- `TableRow` is the basic row: `label`, `subLabel`, `icon`, `trailing`, `arrow`, `variant`, and `onPress`. It has three statics: `TableRow.Icon`, `TableRow.Arrow`, and `TableRow.TrailingText`.
+		- `TableSwitchRow`, `TableCheckboxRow`, and `TableRadioRow` are rows with a built-in control.
+		- `TableRowIcon` renders an icon from an asset id (`source`) or a component (`IconComponent`).
+		- `TableRowGroupTitle`, `RowButton`, and `RowGroup` cover headings and button rows.
+	</Accordion>
+	<Accordion title='Buttons' icon='hand-pointer'>
+		- `Button` takes `text`, `variant`, `size`, `icon`, `loading`, `disabled`, and `onPress`. It has a `Button.Icon` static.
+		- `IconButton`, `ImageButton`, and `FloatingActionButton` are the icon-only variants.
+	</Accordion>
+	<Accordion title='Inputs' icon='keyboard'>
+		- `TextField`, `TextArea`, `TextAreaField`, `SearchField`, `GhostInput`, and `SplitTextInput` are the text field family. They share `size`, `status`, `isClearable`, and leading and trailing icons or text.
+		- `TextInput` is Discord's own form input, not React Native's. It takes `title`, `helpText`, and `error`.
+		- `Slider`, `Checkbox`, and `SegmentedControl` cover the remaining controls. `SegmentedControl` is driven by a `state` object.
+	</Accordion>
+	<Accordion title='Layout' icon='table-layout'>
+		- `Stack` spaces its children along a `direction` with a given `spacing`.
+		- `Card` is a surface with `variant`, `border`, `shadow`, and `radius`.
+	</Accordion>
+	<Accordion title='Alerts, Sheets, and Navigation' icon='window-restore'>
+		- `openAlert`, `dismissAlert(key)`, `dismissAlerts`, `showConfirmModal`, `showSimpleActionSheet`, and `hideContextMenu` open and close Discord's overlays.
+		- `useNavigation()` is a hook that returns the current navigator, with `push`, `pop`, `navigate`, `goBack`, and `setOptions`.
+	</Accordion>
+	<Accordion title='Color Helpers and Enums' icon='palette'>
+		- `setColorOpacity`, `darkenColor`, `brightenColor`, and `getContrastingColor` take and return color strings.
+		- `TransitionStates`, `ThemeContextFlags`, and `WCAGContrastRatios` expose Discord's matching constants.
+	</Accordion>
+</AccordionGroup>
+
+<Warning>
+	The `onChange` of `TextInput` and of the `TextField` family receives the new string, not a React Native change event.
+</Warning>
+
+`DesignModule` also has an index signature, so members that aren't listed above are still reachable, typed as `any`. Discord's `ContextMenu` is one of them.
+
+### Styles
+
+`Discord.createStyles` builds a stylesheet that follows the current theme. Pass it a style object (or a function returning one) and it returns a hook. Call that hook inside your component to get the resolved styles.
+
+```tsx
+import { metro } from '@unbound-app/api';
+
+const { Discord } = metro.components;
+const { ReactNative } = metro.common;
+
+const useStyles = Discord.createStyles({
+	container: {
+		flex: 1,
+		padding: 16,
+		gap: 12,
+	},
+});
+
+function Screen() {
+	const styles = useStyles();
+
+	return <ReactNative.View style={styles.container} />;
+}
+```
+
+<Warning>
+	The function returned by `createStyles` is a hook. It subscribes to the theme, so call it only from a component body.
+</Warning>
+
+### Switch
+
+`Switch` is Discord's standalone toggle. Use it when you need a switch outside a `TableSwitchRow`.
+
+<ParamField path='value' type='boolean' required>
+	Whether the switch is on.
+</ParamField>
+<ParamField path='onValueChange' type='(value: boolean) => void' required>
+	Called with the new value when the user flips the switch.
+</ParamField>
+<ParamField path='disabled' type='boolean'>
+	Prevents interaction.
+</ParamField>
+<ParamField path='accessibilityLabel' type='string'>
+	Label read by screen readers.
+</ParamField>
+
+```tsx
+import { metro } from '@unbound-app/api';
+
+const { Switch } = metro.components;
+
+<Switch value={enabled} onValueChange={setEnabled} accessibilityLabel='Enable feature' />;
+```
+
+### Other handles
+
+These handles are untyped modules. The table shows the member Unbound uses from each one in its own UI:
+
+| Handle | Member Unbound uses | Used for |
+| --- | --- | --- |
+| `BackdropFilters` | `BackgroundBlurFill` | A blurred background, sized by `blurAmount` |
+| `SafeArea` | `SafeAreaPaddingView` | Padding a screen clear of the safe area, for example with `bottom` |
+| `Media` | `openMediaModal` | Opening the full-screen media viewer |
+| `FlashList` | `FlashList` | Long, virtualized lists |
+
+`Portal`, `Forms`, and `HelpMessage` aren't used by Unbound itself. The table in [Available handles](#available-handles) lists the props or name each one is found by.
+
+<Tip>
+	If the component you need isn't here, find it yourself with [Metro](/modules/metro), for example `metro.findByName('ComponentName')`. To change a component Discord renders, rather than render it yourself, see [Patching components](/plugins/react-patching).
+</Tip>

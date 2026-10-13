@@ -6,18 +6,18 @@ icon: 'file-code'
 
 ### What is the native bridge?
 
-Some capabilities live in React Native modules rather than JavaScript. The `native` API resolves those modules and exposes the handles Unbound uses most often.
+The `native` API resolves the app's React Native native modules and exposes the ones Unbound uses most often. Use it for capabilities that live in native code rather than in JavaScript.
 
 The loader also installs two JSI globals:
 
 - `NativePlugin` is the versioned generic native plugin bridge.
 - `NativePlatform` contains platform-wide helpers that are not plugin-specific.
 
-Feature-specific native implementations do not belong in either global. Plugins use the generic bridge to implement their own behavior in JavaScript.
+Neither global contains feature-specific native code. Plugins build their own behavior in JavaScript on top of the generic bridge.
 
 ### Resolving native modules
 
-A native module's name varies across Discord versions. `getNativeModule` checks each candidate in order against both `NativeModules` and the TurboModule registry.
+Native module names change between Discord versions, so `getNativeModule` accepts several candidate names in priority order. It checks them against both `NativeModules` and the TurboModule registry and returns the first match.
 
 ```ts
 import { native } from '@unbound-app/api';
@@ -27,11 +27,11 @@ const FileManager = native.getNativeModule('NativeFileModule', 'DCDFileManager',
 
 ### Built-in handles
 
-`BundleInfo`, `BundleManager`, `DeviceInfo`, and the file manager are resolved for you. Prefer `fs` for file operations because it handles paths and encodings.
+Unbound resolves `BundleInfo`, `BundleManager`, `DeviceInfo`, and the file manager for you. For file operations, use `fs` instead of the file manager directly, because `fs` handles paths and encodings.
 
 ### Reloading
 
-`reload()` persists pending settings before asking the bundle manager to reload.
+`reload()` saves pending settings, then asks the bundle manager to reload.
 
 ```ts
 import { native } from '@unbound-app/api';
@@ -41,7 +41,7 @@ await native.reload();
 
 ### Platform helpers
 
-`NativePlatform` is optional because it is only present inside a running Unbound loader environment. It exposes device information, app provenance, and Hermes bytecode evaluation.
+`NativePlatform` exposes device information, app provenance, and Hermes bytecode evaluation. It is optional because it exists only inside a running Unbound loader environment.
 
 ```ts
 import { native } from '@unbound-app/api';
@@ -50,11 +50,11 @@ const model = native.NativePlatform?.device.getDeviceModel();
 const source = native.NativePlatform?.app.getAppSource();
 ```
 
-`NativePlatform.evaluateBytecode` accepts a Hermes `ArrayBuffer` and evaluates it in the current runtime. It throws when the argument is not valid Hermes bytecode or when evaluation fails.
+`NativePlatform.evaluateBytecode` takes a Hermes `ArrayBuffer` and evaluates it in the current runtime. It throws if the argument is not valid Hermes bytecode or if evaluation fails.
 
 ### Generic plugin bridge
 
-`NativePlugin` is the public JavaScript view of the native ABI. The loader publishes it as `globalThis.NativePlugin`; the client scopes it to each plugin according to the manifest capabilities.
+`NativePlugin` is the public JavaScript interface to the native ABI. The loader publishes it as `globalThis.NativePlugin`. The client then scopes it to each plugin based on the capabilities in that plugin's manifest.
 
 ```ts
 import { native } from '@unbound-app/api';
@@ -75,10 +75,10 @@ export default {
 The bridge exposes these version and capability fields:
 
 <ParamField path='apiVersion' type='string'>
-	The version of the JavaScript API consumed by plugins.
+	The version of the JavaScript API that plugins use.
 </ParamField>
 <ParamField path='abiVersion' type='string'>
-	The version of the native ABI implemented by the loader.
+	The version of the native ABI that the loader implements.
 </ParamField>
 <ParamField path='capabilities' type='string[]'>
 	The native capabilities available in this loader build.
@@ -86,7 +86,12 @@ The bridge exposes these version and capability fields:
 
 ### Objective-C operations
 
-The `objc` namespace supports class lookup, allocation, selector calls, superclass calls, ivar access, associated objects, registered structs, arrays, data conversion, and generic hooks.
+The `objc` namespace supports:
+
+- Class lookup, allocation, selector calls, and superclass calls
+- Ivar access and associated objects
+- Registered structs, arrays, and data conversion
+- Generic hooks
 
 ```ts
 const { native } = pluginContext;
@@ -100,15 +105,23 @@ const token = native.objc.hook(cellName, 'prepareForReuse', {
 });
 ```
 
-Hook arguments are borrowed until the callback returns. Retain values explicitly when they need to outlive the callback. `original()` is synchronous only when the callback runs on the hook thread; cross-thread calls fail closed to avoid deadlocks. Disposing a plugin context removes its hooks, associations, and bridge resources, and all later calls through that context are rejected.
+Hooks follow these rules:
 
-`call` runs on the current runtime thread. `invoke` accepts an explicit thread policy such as `current` or `main`; unsupported synchronous crossings fail with a structured error.
+- Hook arguments are borrowed until the callback returns. Retain any value that needs to outlive the callback.
+- `original()` is synchronous only when the callback runs on the hook thread. Calls from another thread fail closed to avoid deadlocks.
+- Disposing a plugin context removes its hooks, associations, and bridge resources. Any later call through that context is rejected.
 
-Objective-C `NSData` results are returned as `Uint8Array` values. Native bridge failures are JavaScript errors with a stable `code` property; native runtime failures use `NATIVE_BRIDGE_ERROR`. Client-side negotiation errors distinguish unavailable bridges, missing capabilities, disposed scopes, and unsupported minimum API versions through their respective error codes.
+`call` runs on the current runtime thread. `invoke` takes an explicit thread policy, such as `current` or `main`. A synchronous call across threads that the bridge doesn't support fails with a structured error.
+
+Results and errors:
+
+- Objective-C `NSData` results are returned as `Uint8Array` values.
+- Native bridge failures are JavaScript errors with a stable `code` property. Native runtime failures use the code `NATIVE_BRIDGE_ERROR`.
+- Client-side negotiation errors have their own codes for unavailable bridges, missing capabilities, disposed scopes, and unsupported minimum API versions.
 
 ### Raw FFI operations
 
-The `ffi` namespace resolves symbols from already-loaded images and invokes non-variadic signatures made from supported scalar, pointer, Objective-C, and registered struct types.
+The `ffi` namespace resolves symbols from images that are already loaded and calls them. Call signatures must be non-variadic and can use scalar, pointer, Objective-C, and registered struct types.
 
 ```ts
 const symbol = native.ffi.symbol('SomeLoadedSymbol');
@@ -124,11 +137,15 @@ if (symbol) {
 }
 ```
 
-The v1 bridge does not expose arbitrary memory access, `dlopen`, variadic calls, unknown structs, vectors, unions, bitfields, or plugin-supplied native closures.
+The v1 bridge does not expose:
+
+- Arbitrary memory access or `dlopen`
+- Variadic calls or plugin-supplied native closures
+- Unknown structs, vectors, unions, or bitfields
 
 ### Fabric surfaces
 
-The `fabric` namespace mounts a registered React Native component into an existing UIKit view. This is the bridge used when a plugin needs Discord's real native message component rather than a second JavaScript-only approximation.
+The `fabric` namespace mounts a registered React Native component inside an existing UIKit view. Plugins use it to show Discord's real native message component instead of a second, JavaScript-only approximation.
 
 ```ts
 const surface = native.fabric.mount(container, 'MessageLinkSurface', {
@@ -147,21 +164,18 @@ native.fabric.update(surface, { targetMessageId });
 native.fabric.unmount(surface);
 ```
 
-Fabric surfaces are created and destroyed on the UIKit main thread, while the JavaScript API remains synchronous and fail-closed on timeout. Surface handles are owned by the plugin scope and are unmounted automatically when the scope is disposed.
+Fabric surfaces are created and destroyed on the UIKit main thread. The JavaScript API stays synchronous and fails closed on timeout.
+
+Surface handles belong to the plugin scope. They are unmounted automatically when the scope is disposed.
 
 ### Capabilities and lifecycle
 
-Declare only the capabilities a plugin needs in its manifest:
+In the plugin manifest, declare only the capabilities the plugin needs:
 
-- `native.objc.classes`
-- `native.objc.invoke`
-- `native.objc.ivars`
-- `native.objc.associations`
-- `native.objc.hooks`
-- `native.ffi.symbols`
-- `native.ffi.call`
-- `native.fabric.mount`
+- Objective-C: `native.objc.classes`, `native.objc.invoke`, `native.objc.ivars`, `native.objc.associations`, `native.objc.hooks`
+- FFI: `native.ffi.symbols`, `native.ffi.call`
+- Fabric: `native.fabric.mount`
 
-The addon manager validates capability names and the optional minimum API version before calling `start(context)`. `context.native` is scoped to the plugin. `context.dispose()` is called during stop, unload, reload, and failed startup cleanup.
+Before calling `start(context)`, the addon manager validates the capability names and the optional minimum API version. `context.native` is scoped to the plugin. `context.dispose()` is called during stop, unload, reload, and cleanup after a failed start.
 
-Existing plugins can continue to accept a context-less `start` function, but new plugins should use the scoped context so native resources cannot escape their lifecycle.
+Existing plugins whose `start` function takes no context still work. New plugins should use the scoped context so native resources can't outlive the plugin's lifecycle.

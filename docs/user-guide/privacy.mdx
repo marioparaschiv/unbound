@@ -1,0 +1,55 @@
+---
+title: 'Privacy'
+description: 'What Unbound stops Discord from sending, and which servers Unbound itself contacts.'
+icon: 'shield'
+---
+
+Unbound blocks part of Discord's analytics and, on iOS, its crash reporting. It doesn't make you invisible to Discord. Discord still needs your account, messages, and connection to work, and it still sees all of that.
+
+### What Unbound blocks on both platforms
+
+This part runs inside Discord on iOS and Android. It stops Discord's app from sending:
+
+- **Usage analytics.** These are the reports Discord's app sends about what you do in it, such as screens you open and buttons you tap, including the extra details it attaches about where you were in the app.
+- **Connection analytics.** These are the reports sent when the app connects to or disconnects from Discord's servers.
+- **Fingerprint analytics.** Discord's app records an analytics fingerprint for your device. Unbound turns off the part of the app that handles it.
+
+If a Discord update moves one of these, Unbound can't find it and that part isn't blocked. Unbound only notes this in its logs, so you won't see a message.
+
+### What the iOS loader also blocks
+
+On iOS, the loader also blocks two services built into Discord's app:
+
+- **Sentry**, the service Discord's app uses to send crash and error reports.
+- **Firebase Installations**, a Google Firebase component that registers an ID for each app install.
+
+The Android loader doesn't block these yet.
+
+### What Unbound doesn't block
+
+Discord still gets everything it needs to run the app. That includes your account, your messages, the servers and channels you open, your IP address, and the device and app details Discord's app sends with its normal requests.
+
+### Turning it off
+
+You can't. There is no setting for the blocking, and it stays on in **Recovery Mode** too.
+
+### What Unbound itself contacts
+
+Unbound has no analytics of its own. It contacts these servers to download files, and doesn't attach your Discord account to these requests. Like any download, the server can see your IP address.
+
+<Tabs>
+	<Tab title='iOS'>
+		- **Every launch:** `builds.unbound.rip`, to check for a newer bundle. It downloads the bundle only when there is a new one.
+		- **When you pick a version** with **Switch Bundle Version:** GitHub, to list the builds, and then on every launch to download the build you picked.
+		- **When you use Load Custom Bundle:** the address you entered, on every launch until you tap **Delete Bundle**.
+		- **When you tap Open GitHub Issue:** GitHub, in a browser. The issue isn't sent until you submit it yourself.
+	</Tab>
+	<Tab title='Android'>
+		- **Every launch:** GitHub, to check for a newer bundle. It downloads the bundle only when there is a new one.
+	</Tab>
+</Tabs>
+
+On both platforms, Unbound also contacts:
+
+- **GitHub, every launch**, to update its own translations. It downloads the English text, and the text for your Discord language if that's different. The request includes your language code, like `de-DE`.
+- **The link you paste when you install an addon**, plus the addon's files from wherever its author hosts them. Icon packs hosted on GitHub are downloaded through GitHub. This happens only when you install.

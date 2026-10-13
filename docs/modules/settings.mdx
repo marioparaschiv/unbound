@@ -1,14 +1,14 @@
 ---
 title: 'Settings'
-description: "Register your own screens into Discord's settings navigation."
+description: "Register your own screens in Discord's settings navigation."
 icon: 'sliders'
 ---
 
 ### What is Settings?
 
-`settings` is the registry of **settings screens**. Register an entry and it becomes a real route in Discord's settings navigation, listed under the Unbound section alongside the built-in General, Plugins, Design, and Developer pages.
+`settings` is a registry of settings screens. Each entry you register becomes a real route in Discord's settings navigation, listed in the Unbound section next to the built-in General, Plugins, Design, and Developer pages.
 
-It is a registry of _screens_, not of values. Persisting what those screens read and write is [storage](/modules/storage)'s job.
+It registers _screens_, not values. [storage](/modules/storage) persists the values those screens read and write.
 
 ```ts
 import { settings } from '@unbound-app/api';
@@ -17,12 +17,12 @@ import { settings } from '@unbound-app/api';
 ```
 
 <Note>
-	Most plugins don't need this module. A plugin that exports `getSettingsPanel` already gets a settings button on its card in the Plugins list, and Unbound renders the returned node on a screen for you. Reach for `registerSettings` when you want a **top-level entry of your own** in the settings list, separate from your plugin's card.
+	Most plugins don't need this module. If a plugin exports `getSettingsPanel`, its card in the Plugins list already gets a settings button, and Unbound renders the returned node on a screen for you. Use `registerSettings` when you want a top-level entry of your own in the settings list, separate from your plugin's card.
 </Note>
 
 ### Registering a screen
 
-`registerSettings` takes one or more entries and adds them to the registry. Entries are keyed, so registering the same key twice overwrites the previous entry and logs a warning.
+`registerSettings` adds one or more entries to the registry. Entries are keyed: registering the same key again overwrites the previous entry and logs a warning.
 
 ```tsx
 import { settings } from '@unbound-app/api';
@@ -43,23 +43,26 @@ settings.registerSettings({
 ```
 
 <Warning>
-	Register in your plugin's `start` and call `removeSettings` with the same key in `stop`. Entries are not cleaned up for you, so a disabled plugin otherwise leaves a dead route behind.
+	Entries are not cleaned up for you. To avoid leaving a dead route behind when your plugin is disabled:
+
+	1. Call `registerSettings` in your plugin's `start`.
+	2. Call `removeSettings` with the same key in `stop`.
 </Warning>
 
 ### The entry shape
 
-An entry mirrors Discord's `SETTING_RENDERER_CONFIG` route shape, which is why it looks the way it does.
+An entry uses the same shape as a route in Discord's `SETTING_RENDERER_CONFIG`.
 
 <ParamField path="type" type="'route'" required>
-	Always `'route'`. Routes are the only entry kind Unbound registers.
+	Always `'route'`. Routes are the only kind of entry Unbound registers.
 </ParamField>
 
 <ParamField path="key" type="string" required>
-	Unique identifier for the entry, and the key `removeSettings` deletes by. Built-ins use screaming snake case (`UNBOUND_GENERAL`); namespace yours so it can't collide.
+	Unique identifier for the entry. `removeSettings` deletes entries by this key. Built-ins use screaming snake case (`UNBOUND_GENERAL`). Namespace your keys so they can't collide.
 </ParamField>
 
 <ParamField path="useTitle" type="() => string" required>
-	Hook returning the title shown in the list and the screen header. Being a hook, it can pull from [i18n](/modules/i18n) or from storage and re-render when either changes.
+	Hook that returns the title shown in the list and in the screen header. Because it's a hook, it can read from [i18n](/modules/i18n) or from storage and re-render when either changes.
 </ParamField>
 
 <ParamField path="parent" type="string | null" required>
@@ -75,7 +78,7 @@ An entry mirrors Discord's `SETTING_RENDERER_CONFIG` route shape, which is why i
 		</ParamField>
 
 		<ParamField path="getComponent" type="() => ComponentType<any>" required>
-			Returns the component to render. Called lazily, so the component is only resolved when the screen is opened.
+			Returns the component to render. It's called lazily, so the component is resolved only when the screen opens.
 		</ParamField>
 	</Expandable>
 </ParamField>
@@ -85,11 +88,11 @@ An entry mirrors Discord's `SETTING_RENDERER_CONFIG` route shape, which is why i
 </ParamField>
 
 <ParamField path="usePredicate" type="() => boolean">
-	Hook deciding whether the entry is shown. The built-in Developer page uses this to appear only while developer mode is on.
+	Hook that decides whether the entry is shown. The built-in Developer page uses it to appear only while developer mode is on.
 </ParamField>
 
 <ParamField path="excludeFromDisplay" type="boolean">
-	Hides the entry from the settings list while keeping the route navigable. Use it for screens you push to programmatically rather than ones the user picks from a list.
+	Hides the entry from the settings list but keeps the route navigable. Use it for screens you open from code, not ones the user picks from a list.
 </ParamField>
 
 <ParamField path="IconComponent" type="ComponentType<any>">
@@ -98,7 +101,7 @@ An entry mirrors Discord's `SETTING_RENDERER_CONFIG` route shape, which is why i
 
 ### Conditional and hidden entries
 
-`usePredicate` is a hook, so it can subscribe to storage and hide or show the entry as settings change. This is how the Developer page appears only once developer mode is enabled.
+`usePredicate` is a hook, so it can subscribe to storage and show or hide the entry as settings change. The built-in Developer page uses this to appear only after developer mode is enabled.
 
 ```tsx
 import { settings, storage, assets } from '@unbound-app/api';
@@ -136,12 +139,12 @@ const registered = settings.sections();
 </CodeGroup>
 
 <Note>
-	`sections()` returns only entries registered through this API. Unbound's own built-in screens are merged in separately when the navigation config is read, so they don't appear in the result.
+	`sections()` returns only entries registered through this API. Unbound's built-in screens are merged in separately when the navigation config is read, so they aren't in the result.
 </Note>
 
 ### Settings vs storage
 
-The two modules are complementary and it's worth keeping them straight:
+The two modules do different jobs:
 
 | | [settings](/modules/settings) | [storage](/modules/storage) |
 | --- | --- | --- |
@@ -149,4 +152,8 @@ The two modules are complementary and it's worth keeping them straight:
 | Written to disk | No | Yes, to `settings.json` |
 | Reactive | Via `useTitle` / `usePredicate` hooks | Via `useSettingsStore` and change events |
 
-A settings screen almost always uses both: `settings` puts the screen in the list, and `storage` holds what the controls on it read and write. Build the screen itself out of [components](/modules/components), and see [creating an addon](/addons/creating) for where the registration goes in a plugin's lifecycle. Addon enabled-state is persisted by the [managers](/modules/managers), not by this module.
+A settings screen almost always uses both. `settings` puts the screen in the list, and `storage` holds the values its controls read and write.
+
+Build the screen itself from [components](/modules/components). See [creating an addon](/addons/creating) for where the registration goes in a plugin's lifecycle.
+
+Addon enabled-state is persisted by the [managers](/modules/managers), not by this module.
