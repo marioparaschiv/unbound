@@ -25,17 +25,15 @@ test('releases readiness callbacks after Discord startup resumes', async () => {
 	const runtime = globalThis as RuntimeWithLoaderHooks;
 	const requireDescriptor = Object.getOwnPropertyDescriptor(runtime, '__r');
 	const defineDescriptor = Object.getOwnPropertyDescriptor(runtime, '__d');
-	delete runtime.__r;
-	delete runtime.__d;
+	Reflect.deleteProperty(runtime, '__r');
+	Reflect.deleteProperty(runtime, '__d');
 
 	try {
 		deferUntilReady(async () => {
 			events.push('initialize');
 		});
 
-		runtime.__r = (id) => {
-			events.push(`discord:${id}`);
-		};
+		Reflect.set(runtime, '__r', (id: number) => events.push(`discord:${id}`));
 		runtime.__r?.(0);
 
 		await new Promise((resolve) => setTimeout(resolve, 0));
@@ -44,8 +42,8 @@ test('releases readiness callbacks after Discord startup resumes', async () => {
 		expect(state.ready).toBe(true);
 		expect(state.callbacks).toHaveLength(0);
 	} finally {
-		delete runtime.__r;
-		delete runtime.__d;
+		Reflect.deleteProperty(runtime, '__r');
+		Reflect.deleteProperty(runtime, '__d');
 		if (requireDescriptor) Object.defineProperty(runtime, '__r', requireDescriptor);
 		if (defineDescriptor) Object.defineProperty(runtime, '__d', defineDescriptor);
 		state.ready = false;
@@ -70,7 +68,7 @@ test('materializes Metro modules before initializing when require already exists
 		events.push('collect');
 		return new Map();
 	};
-	runtime.__r = () => undefined;
+	Reflect.set(runtime, '__r', () => undefined);
 
 	try {
 		deferUntilReady(async () => {
@@ -86,6 +84,6 @@ test('materializes Metro modules before initializing when require already exists
 		if (previousModules) runtime.modules = previousModules;
 		else delete runtime.modules;
 		if (previousRequire) runtime.__r = previousRequire;
-		else delete runtime.__r;
+		else Reflect.deleteProperty(runtime, '__r');
 	}
 });

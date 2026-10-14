@@ -2,17 +2,17 @@ import type { SettingsEntry } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 import { useState, useEffect } from 'react';
 import type { ComponentType } from 'react';
-import { createPatcher } from 'possess';
 
+import { findByProps, findByName, findByFilePath } from '~/api/metro';
 import MarketplacePage from '~/ui/settings/marketplace';
 import { Screens, CLIENT_NAME } from '~/lib/constants';
-import { findByProps, findByName } from '~/api/metro';
 import CloudSyncPage from '~/ui/settings/cloud-sync';
 import DeveloperPage from '~/ui/settings/developer';
 import { Discord } from '~/api/metro/components';
 import CustomScreen from '~/ui/settings/custom';
 import GeneralPage from '~/ui/settings/general';
 import PluginsPage from '~/ui/settings/plugins';
+import { createPatcher } from '~/api/patcher';
 import SettingsStore from '~/stores/settings';
 import AssetsPage from '~/ui/settings/assets';
 import DesignPage from '~/ui/settings/design';
@@ -20,6 +20,8 @@ import ToastsPage from '~/ui/settings/toasts';
 import { getIDByName } from '~/api/assets';
 import { getStore } from '~/api/storage';
 import { Messages } from '~/api/i18n';
+
+import findSettingsOverview from './find-settings-overview';
 
 const Patcher = createPatcher('unbound::settings');
 const Logger = createLogger('Core', 'Settings');
@@ -163,7 +165,7 @@ function patchRendererConfig() {
 }
 
 function patchOverview() {
-	const Overview = findByName('SettingsOverviewScreen', { interop: false });
+	const Overview = findSettingsOverview(findByName, findByFilePath);
 	if (!Overview) return Logger.error('Failed to find SettingsOverviewScreen.');
 
 	Patcher.after(Overview, 'default', ({ result }) => {

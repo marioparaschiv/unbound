@@ -1,6 +1,6 @@
 import { createLogger } from '@unbound-app/logger';
-import { createPatcher } from 'possess';
 
+import { createPatcher } from '~/api/patcher';
 import { findByName } from '~/api/metro';
 import storage from '~/api/storage';
 

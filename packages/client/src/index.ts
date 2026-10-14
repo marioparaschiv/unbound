@@ -32,6 +32,7 @@ export function initialize() {
 		return;
 	}
 
+	window.unbound = { ...api, initialize, shutdown };
 	Logger.info('Initializing Unbound...');
 
 	BuiltIns.initialize();
@@ -58,8 +59,8 @@ export async function shutdown() {
 	Logger.info('Shutting down Unbound...');
 
 	BuiltIns.shutdown();
-	Plugins.shutdown();
-	Themes.shutdown();
+	await Plugins.shutdown();
+	await Themes.shutdown();
 	Icons.shutdown();
 	Fonts.shutdown();
 
@@ -74,12 +75,6 @@ export async function shutdown() {
 
 	Logger.info('Unbound shutdown complete');
 }
-
-window.unbound = {
-	...api,
-	initialize,
-	shutdown,
-};
 
 initialize();
 

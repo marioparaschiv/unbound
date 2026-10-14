@@ -208,6 +208,22 @@ Patcher.after(Parent, 'type', ({ result }) => {
 	```
 </Note>
 
+### Remounting a mounted component
+
+On a supported Discord renderer build, a trusted plugin with the `native.react.remount` capability can ask the loader to find the React Fiber associated with a native-backed Fabric view and remount its nearest function, class, or memoized component above React Native's built-in view wrappers. This is useful after applying a patch to a component that has already rendered.
+
+```ts
+import type { NativeObjectHandle, PluginContext } from '@unbound-app/api/native';
+
+async function remountView(context: PluginContext, view: NativeObjectHandle): Promise<void> {
+	const fiber = await context.native.react.getFiber(view);
+	if (!fiber) return;
+	await context.native.react.forceRemount(fiber);
+}
+```
+
+Pass a Fabric view handle obtained through the scoped native API. `getFiber` inspects the view asynchronously on the main thread, then returns `null` for views outside Fabric or without a supported component ancestor. A Fiber handle is single-use: acquire a fresh one for each remount. `forceRemount` rejects stale handles after view reuse, navigation, or a client reload. A remount is not a re-render: React unmounts the old component, runs its cleanup, mounts a new instance, and resets local state, focus, effects, and animations. Keep it out of scrolling and synchronous hook paths. The loader requires an idle React root and schedules a targeted transition. Stopping the plugin cancels pending work where React has not committed; a completed remount cannot be rolled back. The promise resolves at the React commit, while Fabric may mount the replacement native view on a later frame. The loader advertises this capability only with a verified Discord app and JavaScript bundle fingerprint. The client checks the active renderer before starting a plugin that requests it.
+
 ### Cleaning up
 
 Cleaning up takes two steps:

@@ -1,8 +1,10 @@
 import type {
 	Fn,
 	NativeAssociationKey,
+	NativeCancelablePromise,
 	NativeFabricBridge,
 	NativeFabricSurface,
+	NativeFiberHandle,
 	NativeFFIBridge,
 	NativeHookHandlers,
 	NativeHookOptions,
@@ -12,6 +14,7 @@ import type {
 	NativePlatformBridge,
 	NativePluginBridge,
 	NativePluginCapability,
+	NativeReactBridge,
 	PluginContext,
 	PromiseFn,
 } from '@unbound-app/types';
@@ -20,12 +23,16 @@ import type { AddonManifest } from '@unbound-app/types/addons';
 
 export type {
 	NativeAssociationKey,
+	NativeBatchReference,
+	NativeBatchStep,
+	NativeCancelablePromise,
 	NativeCallOptions,
 	NativeClassHandle,
 	NativeFabricBridge,
 	NativeFabricFrame,
 	NativeFabricSize,
 	NativeFabricSurface,
+	NativeFiberHandle,
 	NativeFFIBridge,
 	NativeFFISignature,
 	NativeFFIType,
@@ -40,6 +47,7 @@ export type {
 	NativePlatformBridge,
 	NativePluginBridge,
 	NativePluginCapability,
+	NativeReactBridge,
 	NativePluginError,
 	NativePluginErrorCode,
 	NativePointer,
@@ -48,16 +56,13 @@ export type {
 	PluginContext,
 } from '@unbound-app/types/native';
 
-/** The text encodings accepted by the native `DCDFileManager` read/write operations. */
 export type DCDFileManagerEncoding = 'utf-8' | 'utf8' | 'base64';
 
-/** The constant directory paths exposed by the native `DCDFileManager`. */
 export interface DCDFileManagerConstants {
 	CacheDirPath: string;
 	DocumentsDirPath: string;
 }
 
-/** The native `DCDFileManager` module surface for reading, writing, and inspecting files. */
 export interface DCDFileManagerType extends DCDFileManagerConstants {
 	readFile(path: string, encoding: DCDFileManagerEncoding): Promise<string>;
 	writeFile(
@@ -75,7 +80,6 @@ export interface DCDFileManagerType extends DCDFileManagerConstants {
 	getConstants(): DCDFileManagerConstants;
 }
 
-/** Build and release metadata reported by the native client info module. */
 export interface BundleInfoType {
 	Version: string;
 	ReleaseChannel: string;
@@ -89,7 +93,6 @@ export interface BundleInfoType {
 	SentryAlphaBetaDsn: string;
 }
 
-/** Hardware and OS details reported by the native device module. */
 export interface DeviceInfoType {
 	isTaskBarEnabled: boolean;
 	maxCpuFreq: string;
@@ -105,7 +108,6 @@ export interface DeviceInfoType {
 	device: string;
 }
 
-/** The native `BundleUpdaterManager` module surface for OTA updates and reloading the bundle. */
 export interface DCDBundleManagerType {
 	getInitialBundleDownloaded: PromiseFn;
 	getInitialOtaUpdateChecked: PromiseFn;
@@ -119,12 +121,6 @@ export interface DCDBundleManagerType {
 	removeListeners: Fn;
 }
 
-/**
- * @description Resolves the first available native module matching any of the given names, checking both `NativeModules` and the `TurboModuleRegistry`.
- * @template T The type of the resolved native module.
- * @param names The candidate native module names to look up, in priority order.
- * @returns The first matching native module.
- */
 export function getNativeModule<T = any>(...names: string[]): T {
 	return [
 		...names.map((n) => NativeModules[n]),
@@ -132,20 +128,14 @@ export function getNativeModule<T = any>(...names: string[]): T {
 	].find((x) => x) as T;
 }
 
-/** The resolved native client info module, exposing build and release metadata. */
 export const BundleInfo: BundleInfoType = getNativeModule(
 	'NativeClientInfoModule',
 	'InfoDictionaryManager',
 	'RTNClientInfoManager',
 );
-/** The resolved native bundle updater module, used to check for updates and reload the bundle. */
 export const BundleManager: DCDBundleManagerType = getNativeModule('BundleUpdaterManager');
-/** The resolved native device module, exposing hardware and OS details. */
 export const DeviceInfo: DeviceInfoType = getNativeModule('NativeDeviceModule', 'DCDDeviceManager');
 
-/**
- * @description Persists pending settings to storage, then reloads the native bundle.
- */
 export async function reload() {
 	const { persist } = await import('~/api/storage');
 	await persist();
@@ -153,12 +143,6 @@ export async function reload() {
 	BundleManager.reload();
 }
 
-/**
- * @description Reads Hermes' runtime metadata, such as the bytecode version, GC, and build channel.
- * React Native types the global `HermesInternal` as `null | {}`, so this reads it via
- * `window.HermesInternal` where our own typing wins.
- * @returns The runtime property map, or an empty object when Hermes internals are unavailable.
- */
 export function getRuntimeProperties(): Record<string, any> {
 	return window.HermesInternal?.getRuntimeProperties() ?? {};
 }
@@ -169,6 +153,11 @@ type NativePluginRuntimeGlobal = typeof globalThis & { NativePlugin?: NativePlug
 type AssociationBinding = {
 	handle: NativeObjectHandle;
 	key: NativeAssociationKey;
+};
+
+type NativeReactRuntimeBridge = NativeReactBridge & {
+	isSupported?: () => boolean;
+	release?: (fiber: NativeFiberHandle) => void;
 };
 
 const nativePluginGlobal = globalThis as NativePluginRuntimeGlobal;
@@ -190,7 +179,12 @@ const capabilityRequirements: Record<string, NativePluginCapability> = {
 	call: 'native.objc.invoke',
 	callSuper: 'native.objc.invoke',
 	invoke: 'native.objc.invoke',
+	invokeAsync: 'native.objc.invokeAsync',
+	batch: 'native.objc.batch',
+	snapshot: 'native.objc.snapshot',
+	findViews: 'native.objc.snapshot',
 	invokeSuper: 'native.objc.invoke',
+	invokeSuperAsync: 'native.objc.invokeAsync',
 	getIvar: 'native.objc.ivars',
 	setIvar: 'native.objc.ivars',
 	createAssociationKey: 'native.objc.associations',
@@ -201,11 +195,19 @@ const capabilityRequirements: Record<string, NativePluginCapability> = {
 	data: 'native.objc.classes',
 	hook: 'native.objc.hooks',
 	fabricMount: 'native.fabric.mount',
+	fabricMountAsync: 'native.fabric.async',
 	fabricUpdate: 'native.fabric.mount',
+	fabricUpdateAsync: 'native.fabric.async',
 	fabricSetSize: 'native.fabric.mount',
+	fabricSetSizeAsync: 'native.fabric.async',
 	fabricSetFrame: 'native.fabric.mount',
+	fabricSetFrameAsync: 'native.fabric.async',
 	fabricMeasure: 'native.fabric.mount',
+	fabricMeasureAsync: 'native.fabric.async',
 	fabricUnmount: 'native.fabric.mount',
+	fabricUnmountAsync: 'native.fabric.async',
+	reactGetFiber: 'native.react.remount',
+	reactForceRemount: 'native.react.remount',
 };
 
 export class NativePluginUnavailableError extends Error {
@@ -239,6 +241,14 @@ export class NativePluginDisposedError extends Error {
 
 	constructor() {
 		super('The native plugin scope has been disposed.');
+	}
+}
+
+export class NativeReactStaleFiberError extends Error {
+	readonly code = 'NATIVE_REACT_STALE_FIBER';
+
+	constructor() {
+		super('Fiber handle is no longer active in this plugin scope.');
 	}
 }
 
@@ -298,6 +308,7 @@ function unavailableNativePlugin(): NativePluginBridge {
 	const unavailableObjC = new Proxy({}, { get: () => unavailableMethod }) as NativeObjCBridge;
 	const unavailableFFI = new Proxy({}, { get: () => unavailableMethod }) as NativeFFIBridge;
 	const unavailableFabric = new Proxy({}, { get: () => unavailableMethod }) as NativeFabricBridge;
+	const unavailableReact = new Proxy({}, { get: () => unavailableMethod }) as NativeReactBridge;
 
 	return {
 		apiVersion: '0.0.0',
@@ -306,6 +317,7 @@ function unavailableNativePlugin(): NativePluginBridge {
 		objc: unavailableObjC,
 		ffi: unavailableFFI,
 		fabric: unavailableFabric,
+		react: unavailableReact,
 	};
 }
 
@@ -315,12 +327,46 @@ function createScopedNativePlugin(capabilities: readonly NativePluginCapability[
 } {
 	const bridge = getNativePlugin() ?? unavailableNativePlugin();
 	const fabricBridge = bridge.fabric ?? unavailableNativePlugin().fabric;
+	const reactBridge: NativeReactRuntimeBridge = bridge.react ?? unavailableNativePlugin().react;
 	const tokens = new Set<NativeHookToken>();
 	const surfaces = new Set<NativeFabricSurface>();
+	const fibers = new Set<NativeFiberHandle>();
+	const pendingRemounts = new Map<NativeFiberHandle, NativeCancelablePromise<void>>();
+	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
 	const associations: AssociationBinding[] = [];
 	let disposed = false;
 	const scopeMethod = (method: NativeMethod, capability: NativePluginCapability): NativeMethod =>
 		scopedMethod(method, capabilities, capability, () => !disposed);
+	const trackInvocation = <T>(
+		pending: NativeCancelablePromise<T>,
+	): NativeCancelablePromise<T> => {
+		pendingInvocations.add(pending);
+		pending.then(
+			() => pendingInvocations.delete(pending),
+			() => pendingInvocations.delete(pending),
+		);
+		return pending;
+	};
+	const releaseFiber = (fiber: NativeFiberHandle): void => {
+		if (!fibers.delete(fiber)) return;
+		try {
+			reactBridge.release?.(fiber);
+		} catch {
+			return;
+		}
+	};
+	const disposeSurface = (surface: NativeFabricSurface): void => {
+		try {
+			const unmountAsync = fabricBridge.unmountAsync;
+			if (unmountAsync) {
+				void unmountAsync.call(fabricBridge, surface).catch(() => undefined);
+				return;
+			}
+			fabricBridge.unmount(surface);
+		} catch {
+			return;
+		}
+	};
 
 	const objc: NativeObjCBridge = {
 		getClass: scopeMethod(
@@ -351,10 +397,51 @@ function createScopedNativePlugin(capabilities: readonly NativePluginCapability[
 			bridge.objc.invoke.bind(bridge.objc),
 			capabilityRequirements.invoke,
 		) as NativeObjCBridge['invoke'],
+		invokeAsync: ((handle, selector, args) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.invokeAsync);
+			const invoke = bridge.objc.invokeAsync;
+			if (!invoke)
+				throw new NativePluginUnavailableError('Async native invocation is unavailable.');
+			return trackInvocation(invoke.call(bridge.objc, handle, selector, args));
+		}) as NativeObjCBridge['invokeAsync'],
+		batch: ((steps) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.batch);
+			const batch = bridge.objc.batch;
+			if (!batch) throw new NativePluginUnavailableError('Native batch is unavailable.');
+			return trackInvocation(batch.call(bridge.objc, steps));
+		}) as NativeObjCBridge['batch'],
+		snapshot: ((root, options) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.snapshot);
+			const snapshot = bridge.objc.snapshot;
+			if (!snapshot)
+				throw new NativePluginUnavailableError('Native UI snapshot is unavailable.');
+			return trackInvocation(snapshot.call(bridge.objc, root, options));
+		}) as NativeObjCBridge['snapshot'],
+		findViews: ((root, className, options) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.findViews);
+			const findViews = bridge.objc.findViews;
+			if (!findViews)
+				throw new NativePluginUnavailableError('Native view search is unavailable.');
+			return trackInvocation(findViews.call(bridge.objc, root, className, options));
+		}) as NativeObjCBridge['findViews'],
 		invokeSuper: scopeMethod(
 			bridge.objc.invokeSuper.bind(bridge.objc),
 			capabilityRequirements.invokeSuper,
 		) as NativeObjCBridge['invokeSuper'],
+		invokeSuperAsync: ((handle, currentClass, selector, args) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.invokeSuperAsync);
+			const invoke = bridge.objc.invokeSuperAsync;
+			if (!invoke)
+				throw new NativePluginUnavailableError(
+					'Async native super invocation is unavailable.',
+				);
+			return trackInvocation(invoke.call(bridge.objc, handle, currentClass, selector, args));
+		}) as NativeObjCBridge['invokeSuperAsync'],
 		getIvar: scopeMethod(
 			bridge.objc.getIvar.bind(bridge.objc),
 			capabilityRequirements.getIvar,
@@ -423,6 +510,14 @@ function createScopedNativePlugin(capabilities: readonly NativePluginCapability[
 					if (disposed) throw new NativePluginDisposedError();
 					token.clearReturnValues();
 				},
+				setSizeHeightFloor(self, args, floor) {
+					if (disposed) throw new NativePluginDisposedError();
+					token.setSizeHeightFloor(self, args, floor);
+				},
+				removeSizeHeightFloor(self, args) {
+					if (disposed) throw new NativePluginDisposedError();
+					token.removeSizeHeightFloor(self, args);
+				},
 				remove() {
 					token.remove();
 					tokens.delete(token);
@@ -450,46 +545,166 @@ function createScopedNativePlugin(capabilities: readonly NativePluginCapability[
 			surfaces.add(surface);
 			return surface;
 		}) as NativeFabricBridge['mount'],
+		mountAsync: ((container, moduleName, properties) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.fabricMountAsync);
+			const mount = fabricBridge.mountAsync;
+			if (!mount)
+				throw new NativePluginUnavailableError('Async Fabric mounting is unavailable.');
+			const pending = trackInvocation(
+				mount.call(fabricBridge, container, moduleName, properties),
+			);
+			pending.then(
+				(surface) => {
+					if (disposed) disposeSurface(surface);
+					else surfaces.add(surface);
+				},
+				() => undefined,
+			);
+			return pending;
+		}) as NativeFabricBridge['mountAsync'],
 		update: scopeMethod(
 			fabricBridge.update.bind(fabricBridge),
 			capabilityRequirements.fabricUpdate,
 		) as NativeFabricBridge['update'],
+		updateAsync: ((surface, properties) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.fabricUpdateAsync);
+			const update = fabricBridge.updateAsync;
+			if (!update)
+				throw new NativePluginUnavailableError('Async Fabric updates are unavailable.');
+			return trackInvocation(update.call(fabricBridge, surface, properties));
+		}) as NativeFabricBridge['updateAsync'],
 		setSize: scopeMethod(
 			fabricBridge.setSize.bind(fabricBridge),
 			capabilityRequirements.fabricSetSize,
 		) as NativeFabricBridge['setSize'],
+		setSizeAsync: ((surface, minimumSize, maximumSize) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.fabricSetSizeAsync);
+			const setSize = fabricBridge.setSizeAsync;
+			if (!setSize)
+				throw new NativePluginUnavailableError('Async Fabric sizing is unavailable.');
+			return trackInvocation(setSize.call(fabricBridge, surface, minimumSize, maximumSize));
+		}) as NativeFabricBridge['setSizeAsync'],
 		setFrame: scopeMethod(
 			fabricBridge.setFrame.bind(fabricBridge),
 			capabilityRequirements.fabricSetFrame,
 		) as NativeFabricBridge['setFrame'],
+		setFrameAsync: ((surface, frame) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.fabricSetFrameAsync);
+			const setFrame = fabricBridge.setFrameAsync;
+			if (!setFrame)
+				throw new NativePluginUnavailableError(
+					'Async Fabric frame updates are unavailable.',
+				);
+			return trackInvocation(setFrame.call(fabricBridge, surface, frame));
+		}) as NativeFabricBridge['setFrameAsync'],
 		measure: scopeMethod(
 			fabricBridge.measure.bind(fabricBridge),
 			capabilityRequirements.fabricMeasure,
 		) as NativeFabricBridge['measure'],
+		measureAsync: ((view) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.fabricMeasureAsync);
+			const measure = fabricBridge.measureAsync;
+			if (!measure)
+				throw new NativePluginUnavailableError('Async Fabric measurement is unavailable.');
+			return trackInvocation(measure.call(fabricBridge, view));
+		}) as NativeFabricBridge['measureAsync'],
 		unmount: ((surface) => {
 			if (disposed) throw new NativePluginDisposedError();
 			requireCapability(capabilities, capabilityRequirements.fabricUnmount);
 			fabricBridge.unmount(surface);
 			surfaces.delete(surface);
 		}) as NativeFabricBridge['unmount'],
+		unmountAsync: ((surface) => {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.fabricUnmountAsync);
+			const unmount = fabricBridge.unmountAsync;
+			if (!unmount)
+				throw new NativePluginUnavailableError('Async Fabric unmounting is unavailable.');
+			const pending = trackInvocation(unmount.call(fabricBridge, surface));
+			pending.then(
+				() => surfaces.delete(surface),
+				() => undefined,
+			);
+			return pending;
+		}) as NativeFabricBridge['unmountAsync'],
+	};
+
+	const react: NativeReactBridge = {
+		getFiber(view) {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.reactGetFiber);
+			if (
+				!bridge.capabilities.includes('native.react.remount') ||
+				!reactBridge.isSupported?.()
+			)
+				throw new NativePluginUnavailableError('React remounting is unavailable.');
+			const pending = trackInvocation(reactBridge.getFiber(view));
+			pending.then(
+				(fiber) => {
+					if (!fiber) return;
+					if (disposed) {
+						fibers.add(fiber);
+						releaseFiber(fiber);
+						return;
+					}
+					if (fibers.size >= 256) {
+						const oldest = fibers.values().next().value;
+						if (oldest) releaseFiber(oldest);
+					}
+					fibers.add(fiber);
+				},
+				() => undefined,
+			);
+			return pending;
+		},
+		forceRemount(fiber) {
+			if (disposed) throw new NativePluginDisposedError();
+			requireCapability(capabilities, capabilityRequirements.reactForceRemount);
+			if (!fibers.has(fiber)) throw new NativeReactStaleFiberError();
+			const existing = pendingRemounts.get(fiber);
+			if (existing) return existing;
+			const pending = trackInvocation(reactBridge.forceRemount(fiber));
+			pendingRemounts.set(fiber, pending);
+			pending.then(
+				() => {
+					pendingRemounts.delete(fiber);
+					releaseFiber(fiber);
+				},
+				() => {
+					pendingRemounts.delete(fiber);
+					releaseFiber(fiber);
+				},
+			);
+			return pending;
+		},
 	};
 
 	return {
 		bridge: {
 			apiVersion: bridge.apiVersion,
 			abiVersion: bridge.abiVersion,
-			capabilities: bridge.capabilities,
+			capabilities: Object.freeze([...bridge.capabilities]),
 			objc,
 			ffi,
 			fabric,
+			react,
 		},
 		dispose: () => {
 			if (disposed) return;
 			disposed = true;
+			for (const pending of pendingInvocations) pending.cancel();
+			pendingInvocations.clear();
+			pendingRemounts.clear();
 			for (const token of tokens) token.remove();
 			tokens.clear();
-			for (const surface of surfaces) fabricBridge.unmount(surface);
+			for (const surface of surfaces) disposeSurface(surface);
 			surfaces.clear();
+			for (const fiber of fibers) releaseFiber(fiber);
 			for (const binding of associations) {
 				bridge.objc.setAssociatedObject(binding.handle, binding.key, null, 'assign');
 			}
@@ -510,16 +725,21 @@ export function validateNativePluginRequirements(
 		(capability) => !nativePlugin.capabilities.includes(capability),
 	);
 	if (unknown) throw new NativePluginCapabilityError(unknown);
+	if (capabilities.includes('native.react.remount')) {
+		const react = nativePlugin.react as NativeReactRuntimeBridge | undefined;
+		if (!react?.isSupported?.())
+			throw new NativePluginUnavailableError('React remounting is unavailable.');
+	}
 	if (minimumApi && compareVersions(nativePlugin.apiVersion, minimumApi) < 0)
 		throw new NativePluginVersionError(minimumApi, nativePlugin.apiVersion);
 }
 
 export function createPluginContext(manifest: AddonManifest): PluginContext {
-	const capabilities = manifest.capabilities ?? [];
+	const capabilities = Object.freeze([...(manifest.capabilities ?? [])]);
 	validateNativePluginRequirements(capabilities, manifest.minNativePluginApi);
 	const scoped = createScopedNativePlugin(capabilities);
 	return {
-		manifest,
+		manifest: { ...manifest, capabilities: [...capabilities] },
 		id: manifest.id,
 		capabilities,
 		native: scoped.bridge,

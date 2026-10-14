@@ -1,7 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
-import { createPatcher } from 'possess';
 
 import { Guilds, Users } from '~/api/metro/stores';
+import { createPatcher } from '~/api/patcher';
 import { findStore } from '~/api/metro';
 import storage from '~/api/storage';
 

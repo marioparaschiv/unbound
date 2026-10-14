@@ -49,11 +49,19 @@ Handles are opaque, retained host objects. Hook arguments are borrowed until the
 
 Hooks are registered per `(Class, SEL)` pair. A single loader-owned dispatcher preserves the original implementation and calls handlers in registration order. It restores the original implementation only if the dispatcher is still installed. Hook tokens are idempotent.
 
-`call` runs on the current runtime thread. `invoke` and `invokeSuper` take an explicit thread policy, either `current` or `main`. Unsupported synchronous thread crossings fail with a structured error instead of blocking the runtime indefinitely.
+A `cacheOnly` hook can supply an exact return value with `setReturnValue(self, args, value)`. For a method returning `CGSize`, `setSizeHeightFloor(self, args, floor)` instead raises each fresh result of the original method to at least a finite 0–4096-point height without invoking JavaScript in the hook. `removeSizeHeightFloor(self, args)` removes that minimum. Both operations match the target instance and the method's arguments; removing the hook or disposing its plugin scope clears the cached values and minimums. This is useful when asynchronous content changes the base size after a plugin has reserved space.
+
+`call` uses the current runtime thread. `invoke` and `invokeSuper` accept an explicit `current` or `main` thread policy. A synchronous `invokeSuper` call cannot cross to the main thread. Existing synchronous `invoke` calls can still block while crossing to the main thread; new UI work should declare `native.objc.invokeAsync` and use `invokeAsync(handle, selector, args)` or `invokeSuperAsync(handle, currentClass, selector, args)` instead. Both return cancellable promises, run the Objective-C method on the main thread, and convert the result back on the JavaScript runtime thread. Stopping the plugin cancels its pending invocations. The bridge API and ABI version strings remain `1.0.0`; availability is negotiated through the capability.
+
+`objc.batch(steps)` uses the separate `native.objc.batch` capability for dependent main-thread operations. Each step names a target handle, selector, and argument array. A later step can use `{ $nativeBatchResult: index }` as its target or an argument to refer to an earlier result. The bridge limits a batch to 64 steps, each with at most 16 arguments and a 256-character selector. It converts JavaScript inputs before dispatch, executes the sequence in one main-thread operation, and converts results on the runtime executor. The returned promise is cancellable and belongs to the plugin scope. A failed step rejects the batch; earlier side effects are not rolled back. Synchronous hooks and scrolling callbacks must not wait for a batch result. They should use cached decisions, schedule work, and leave the original UI in place until a valid result arrives.
+
+`objc.snapshot(root, options)` uses the separate `native.objc.snapshot` capability to inspect a `UIView` subtree in one asynchronous main-thread pass. It returns nodes in breadth-first order with retained view handles, parent indices, class names, frames, label text, and visibility. The default limits are eight levels and 100 nodes; callers may request at most 12 levels and 256 nodes. A snapshot is only a point-in-time view: plugins must discard results after cell reuse, channel changes, or scope disposal, and must not retain whole snapshots in long-lived caches. The returned promise is cancellable. Plugins should filter for relevant nodes and apply any UI changes through asynchronous calls or batches.
+
+`objc.findViews(root, className, options)` shares the snapshot capability and performs a bounded breadth-first class-name search on the main thread. It returns only matching retained view handles rather than materializing every traversed node. By default it visits at most 512 views to depth 24 and returns at most 64 matches; the maximum limits are 2,048 visits, depth 40, and 256 matches. `attachedOnly` restricts matches to views in a window, and `stopAtMatch` skips descendants of matched views. A plugin must still verify its lifecycle and cell identity after awaiting the result.
 
 ## Raw FFI
 
-`ffi.symbol` resolves symbols from images that are already loaded.
+`ffi.symbol` resolves symbols from already-loaded images. `ffi.call` accepts only executable pointers returned by `ffi.symbol`.
 
 `ffi.call` takes an explicit, non-variadic signature. A signature can contain:
 
@@ -83,7 +91,7 @@ The `fabric` namespace lets a plugin register a React Native component and mount
 
 All UIKit work is marshalled to the main thread, and surface handles are scoped to the plugin.
 
-Every Fabric operation requires the `native.fabric.mount` capability. A plugin should mount into the host view that owns the message layout, rather than create a window-level overlay.
+The `native.fabric.mount` capability gates the synchronous operations. The `native.fabric.async` capability gates `mountAsync`, `updateAsync`, `setSizeAsync`, `setFrameAsync`, `measureAsync`, and `unmountAsync`. These return cancellable promises; queued main-thread work is skipped if the plugin stops or the runtime is replaced. A plugin should mount into the host view that owns the message layout, not create a window-level overlay.
 
 ## Mention avatars migration
 

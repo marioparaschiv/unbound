@@ -1,8 +1,8 @@
 import type { ToastOptions } from '@unbound-app/types/toasts';
 import { createLogger } from '@unbound-app/logger';
-import { createPatcher } from 'possess';
 
 import { find, findByProps } from '~/api/metro';
+import { createPatcher } from '~/api/patcher';
 import { ToastContainer } from '~/ui/toasts';
 import { showToast } from '~/api/toasts';
 import storage from '~/api/storage';

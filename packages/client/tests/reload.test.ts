@@ -65,6 +65,16 @@ function makeInstance(id: string, log: string[], stopThrows = false) {
 	};
 }
 
+function makeContext(id: string, events: string[]): PluginContext {
+	return {
+		manifest: makeManifest(id),
+		id,
+		capabilities: [],
+		native: {} as any,
+		dispose: () => void events.push('dispose'),
+	};
+}
+
 class FakeAddons extends Addons<Addon> {
 	log: string[] = [];
 	contexts: { disposed: boolean }[] = [];
@@ -107,6 +117,10 @@ class FakeAddons extends Addons<Addon> {
 
 	seed(entity: Addon) {
 		this.entities.set(entity.id, entity);
+	}
+
+	setStopTimeout(timeout: number) {
+		this.stopTimeoutMs = timeout;
 	}
 }
 
@@ -265,6 +279,175 @@ describe('Addons.reload', () => {
 
 		expect(manager.contexts).toHaveLength(1);
 		expect(manager.contexts[0]?.disposed).toBe(true);
+	});
+
+	test('keeps a native scope alive until asynchronous plugin cleanup finishes', async () => {
+		const manifest = makeManifest('async');
+		const events: string[] = [];
+		let finishCleanup: (() => void) | undefined;
+		const cleanup = new Promise<void>((resolve) => {
+			finishCleanup = resolve;
+		});
+		const context = makeContext('async', events);
+		manager.seed({
+			id: 'async',
+			data: manifest,
+			bundle: 'old',
+			instance: {
+				stop: () => {
+					events.push('stop');
+					return cleanup;
+				},
+			},
+			context,
+			started: true,
+			failed: false,
+		});
+
+		const reload = manager.reload('async', 'new', manifest);
+		await Bun.sleep(0);
+		expect(events).toEqual(['stop']);
+		expect(manager.getEntity('async')?.bundle).toBe('old');
+
+		finishCleanup?.();
+		expect((await reload).ok).toBe(true);
+		expect(events).toEqual(['stop', 'dispose']);
+		expect(manager.getEntity('async')?.bundle).toBe('new');
+	});
+
+	test('waits for asynchronous cleanup before restarting a rapidly re-enabled addon', async () => {
+		const manifest = makeManifest('rapid');
+		const events: string[] = [];
+		let finishCleanup: (() => void) | undefined;
+		const cleanup = new Promise<void>((resolve) => {
+			finishCleanup = resolve;
+		});
+		manager.seed({
+			id: 'rapid',
+			data: manifest,
+			bundle: 'new',
+			instance: {
+				stop: () => {
+					events.push('stop');
+					return cleanup;
+				},
+			},
+			context: makeContext('rapid', events),
+			started: true,
+			failed: false,
+		});
+
+		manager.disable('rapid');
+		manager.enable('rapid');
+		expect(events).toEqual(['stop']);
+		expect(manager.getEntity('rapid')?.started).toBe(false);
+
+		finishCleanup?.();
+		await Bun.sleep(0);
+		expect(events).toEqual(['stop', 'dispose']);
+		expect(manager.getEntity('rapid')?.started).toBe(true);
+	});
+
+	test('disposes a native scope when asynchronous cleanup never settles', async () => {
+		const manifest = makeManifest('stuck');
+		const events: string[] = [];
+		manager.setStopTimeout(5);
+		manager.seed({
+			id: 'stuck',
+			data: manifest,
+			bundle: 'old',
+			instance: { stop: () => new Promise<void>(() => undefined) },
+			context: makeContext('stuck', events),
+			started: true,
+			failed: false,
+		});
+
+		await manager.stop('stuck');
+		expect(events).toEqual(['dispose']);
+		expect(manager.errors.get('stuck')?.message).toContain('timed out');
+	});
+
+	test('does not restart when an addon is disabled again during asynchronous cleanup', async () => {
+		const manifest = makeManifest('cancelled');
+		let finishCleanup: (() => void) | undefined;
+		const cleanup = new Promise<void>((resolve) => {
+			finishCleanup = resolve;
+		});
+		manager.seed({
+			id: 'cancelled',
+			data: manifest,
+			bundle: 'new',
+			instance: { stop: () => cleanup },
+			context: makeContext('cancelled', []),
+			started: true,
+			failed: false,
+		});
+
+		manager.disable('cancelled');
+		manager.enable('cancelled');
+		manager.disable('cancelled');
+		finishCleanup?.();
+		await Bun.sleep(0);
+		expect(manager.getEntity('cancelled')?.started).toBe(false);
+		expect(manager.log).toEqual([]);
+	});
+
+	test('awaits plugin cleanup before clearing entities during shutdown', async () => {
+		const manifest = makeManifest('shutdown');
+		const events: string[] = [];
+		let finishCleanup: (() => void) | undefined;
+		const cleanup = new Promise<void>((resolve) => {
+			finishCleanup = resolve;
+		});
+		manager.seed({
+			id: 'shutdown',
+			data: manifest,
+			bundle: 'old',
+			instance: {
+				stop: () => {
+					events.push('stop');
+					return cleanup;
+				},
+			},
+			context: makeContext('shutdown', events),
+			started: true,
+			failed: false,
+		});
+
+		const shutdown = manager.shutdown();
+		expect(events).toEqual(['stop']);
+		expect(manager.getEntity('shutdown')).toBeDefined();
+		finishCleanup?.();
+		await shutdown;
+		expect(events).toEqual(['stop', 'dispose']);
+		expect(manager.getEntities()).toEqual([]);
+	});
+
+	test('keeps an addon loaded until asynchronous unload cleanup finishes', async () => {
+		const manifest = makeManifest('unload');
+		const events: string[] = [];
+		let finishCleanup: (() => void) | undefined;
+		const cleanup = new Promise<void>((resolve) => {
+			finishCleanup = resolve;
+		});
+		manager.seed({
+			id: 'unload',
+			data: manifest,
+			bundle: 'old',
+			instance: { stop: () => cleanup },
+			context: makeContext('unload', events),
+			started: true,
+			failed: false,
+		});
+		manager.on('unloaded', () => events.push('unloaded'));
+
+		const unloading = manager.unload('unload');
+		expect(manager.getEntity('unload')).toBeDefined();
+		expect(events).toEqual([]);
+		finishCleanup?.();
+		await unloading;
+		expect(events).toEqual(['dispose', 'unloaded']);
+		expect(manager.getEntity('unload')).toBeUndefined();
 	});
 
 	test('a plugin start failure disposes the context before recording the error', () => {

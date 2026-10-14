@@ -49,7 +49,7 @@ export type PluginEntity = Addon & {
 /** The lifecycle and settings contract implemented by a plugin. */
 export interface Plugin {
 	start?(context?: PluginContext): void;
-	stop?(): void;
+	stop?(): void | Promise<void>;
 	getSettingsPanel?(): ReactNode;
 }
 

@@ -2,9 +2,9 @@ import type { PluginPushRequest } from '@unbound-app/debugger-protocol';
 import { parseMessage } from '@unbound-app/debugger-protocol';
 import type { PluginEntity } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
-import { createPatcher } from 'possess';
 
 import { DEBUGGER_ADDRESS } from '~/lib/constants';
+import { createPatcher } from '~/api/patcher';
 import { plugins } from '~/managers/plugins';
 import { showToast } from '~/api/toasts';
 import storage from '~/api/storage';

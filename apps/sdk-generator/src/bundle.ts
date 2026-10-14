@@ -166,9 +166,6 @@ export function bundleLibrary(
 
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 
-	// The `declare global` block (ambient `$$DEV$$`, `NativePlugin`, `React`, …) belongs to
-	// `global.d.ts`, not to a hoist file whose job is the library's named type surface. Declarations
-	// already claimed by an earlier hoist file are pruned so no shared type is declared twice.
 	for (const statement of sourceFile.getStatements()) {
 		if (Node.isModuleDeclaration(statement) && statement.hasDeclareKeyword()) {
 			statement.remove();

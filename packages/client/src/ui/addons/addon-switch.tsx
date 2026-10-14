@@ -1,4 +1,5 @@
 import type { Addon } from '@unbound-app/types';
+import { Pressable, View } from 'react-native';
 import { useState, memo } from 'react';
 
 import { Switch } from '~/api/metro/components';
@@ -20,6 +21,7 @@ function AddonSwitch({ addon, kind, disabled }: AddonSwitchProps) {
 	const { enabled } = useAddonState(kind, addon.id);
 	const [transitioning, setTransitioning] = useState(false);
 	const manager = getManager(kind);
+	const unavailable = disabled || transitioning;
 
 	async function handleValueChange() {
 		setTransitioning(true);
@@ -33,12 +35,17 @@ function AddonSwitch({ addon, kind, disabled }: AddonSwitchProps) {
 	}
 
 	return (
-		<Switch
-			value={enabled}
-			disabled={disabled || transitioning}
+		<Pressable
+			accessibilityRole='switch'
+			accessibilityState={{ checked: enabled, disabled: unavailable }}
 			accessibilityLabel={`${addon.data.name} enabled`}
-			onValueChange={handleValueChange}
-		/>
+			disabled={unavailable}
+			onPress={handleValueChange}
+		>
+			<View pointerEvents='none'>
+				<Switch value={enabled} disabled={unavailable} onValueChange={handleValueChange} />
+			</View>
+		</Pressable>
 	);
 }
 

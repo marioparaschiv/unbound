@@ -46,7 +46,6 @@ export declare function write(
 	content: string,
 	encoding?: DCDFileManagerEncoding,
 ): Promise<string>;
-/** The text encodings accepted by the native `DCDFileManager` read/write operations. */
 export type DCDFileManagerEncoding = 'utf-8' | 'utf8' | 'base64';
 
 export { _default as default };

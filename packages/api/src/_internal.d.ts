@@ -191,6 +191,14 @@ export interface InternalToastOptions extends ToastOptions {
 	closing?: boolean;
 	date?: number;
 }
+export interface NativeBatchReference {
+	readonly $nativeBatchResult: number;
+}
+export interface NativeBatchStep {
+	target: NativeObjectHandle | NativeBatchReference;
+	selector: string;
+	args: unknown[];
+}
 export interface NativeCallOptions {
 	thread?: NativeThreadPolicy;
 }
@@ -208,15 +216,35 @@ export interface NativeFabricBridge {
 		moduleName: string,
 		properties?: Record<string, unknown>,
 	): NativeFabricSurface;
+	mountAsync(
+		container: NativeObjectHandle,
+		moduleName: string,
+		properties?: Record<string, unknown>,
+	): NativeCancelablePromise<NativeFabricSurface>;
 	update(surface: NativeFabricSurface, properties: Record<string, unknown>): void;
+	updateAsync(
+		surface: NativeFabricSurface,
+		properties: Record<string, unknown>,
+	): NativeCancelablePromise<void>;
 	setSize(
 		surface: NativeFabricSurface,
 		minimumSize: NativeFabricSize,
 		maximumSize: NativeFabricSize,
 	): void;
+	setSizeAsync(
+		surface: NativeFabricSurface,
+		minimumSize: NativeFabricSize,
+		maximumSize: NativeFabricSize,
+	): NativeCancelablePromise<void>;
 	setFrame(surface: NativeFabricSurface, frame: NativeFabricFrame): void;
+	setFrameAsync(
+		surface: NativeFabricSurface,
+		frame: NativeFabricFrame,
+	): NativeCancelablePromise<void>;
 	measure(view: NativeObjectHandle): NativeFabricFrame;
+	measureAsync(view: NativeObjectHandle): NativeCancelablePromise<NativeFabricFrame>;
 	unmount(surface: NativeFabricSurface): void;
+	unmountAsync(surface: NativeFabricSurface): NativeCancelablePromise<void>;
 }
 export interface NativeFabricFrame {
 	x: number;
@@ -250,6 +278,8 @@ export interface NativeHookToken {
 	setReturnValue(self: NativeObjectHandle, args: unknown[], value: unknown): void;
 	removeReturnValue(self: NativeObjectHandle, args: unknown[]): void;
 	clearReturnValues(): void;
+	setSizeHeightFloor(self: NativeObjectHandle, args: unknown[], floor: number): void;
+	removeSizeHeightFloor(self: NativeObjectHandle, args: unknown[]): void;
 	remove(): void;
 }
 export interface NativeObjCBridge {
@@ -270,6 +300,21 @@ export interface NativeObjCBridge {
 		args: unknown[],
 		options?: NativeCallOptions,
 	): unknown;
+	invokeAsync(
+		handle: NativeObjectHandle,
+		selector: string,
+		args: unknown[],
+	): NativeCancelablePromise<unknown>;
+	batch(steps: readonly NativeBatchStep[]): NativeCancelablePromise<unknown[]>;
+	snapshot(
+		root: NativeObjectHandle,
+		options?: NativeViewSnapshotOptions,
+	): NativeCancelablePromise<NativeViewSnapshotNode[]>;
+	findViews(
+		root: NativeObjectHandle,
+		className: string,
+		options?: NativeViewSearchOptions,
+	): NativeCancelablePromise<NativeObjectHandle[]>;
 	invokeSuper(
 		handle: NativeObjectHandle,
 		currentClass: NativeClassHandle | string,
@@ -277,6 +322,12 @@ export interface NativeObjCBridge {
 		args: unknown[],
 		options?: NativeCallOptions,
 	): unknown;
+	invokeSuperAsync(
+		handle: NativeObjectHandle,
+		currentClass: NativeClassHandle | string,
+		selector: string,
+		args: unknown[],
+	): NativeCancelablePromise<unknown>;
 	getIvar(handle: NativeObjectHandle, name: string): unknown;
 	setIvar(handle: NativeObjectHandle, name: string, value: unknown): void;
 	createAssociationKey(): NativeAssociationKey;
@@ -321,15 +372,41 @@ export interface NativePluginBridge {
 	readonly objc: NativeObjCBridge;
 	readonly ffi: NativeFFIBridge;
 	readonly fabric: NativeFabricBridge;
+	readonly react: NativeReactBridge;
 }
 export interface NativePluginError {
 	code: NativePluginErrorCode;
 	message: string;
 	capability?: NativePluginCapability;
 }
+export interface NativeReactBridge {
+	getFiber(view: NativeObjectHandle): NativeCancelablePromise<NativeFiberHandle | null>;
+	forceRemount(fiber: NativeFiberHandle): NativeCancelablePromise<void>;
+}
 export interface NativeStruct<T extends object = Record<string, unknown>> extends NativeHandle {
 	readonly name: string;
 	readonly value?: T;
+}
+export interface NativeViewSearchOptions {
+	maxDepth?: number;
+	maxVisited?: number;
+	maxResults?: number;
+	attachedOnly?: boolean;
+	stopAtMatch?: boolean;
+	direction?: 'ancestors' | 'descendants';
+}
+export interface NativeViewSnapshotNode {
+	view: NativeObjectHandle;
+	parent: number;
+	depth: number;
+	className: string;
+	frame: NativeFabricFrame;
+	text: string | null;
+	visible: boolean;
+}
+export interface NativeViewSnapshotOptions {
+	maxDepth?: number;
+	maxNodes?: number;
 }
 export interface Navigation<T = any> {
 	push: (route: string, params?: T) => void;
@@ -687,6 +764,9 @@ export type InputSize = LiteralUnion<'sm' | 'md' | 'lg'>;
 /** Input status. `focused` is an internal state and is not user-settable. */
 export type InputStatus = LiteralUnion<'default' | 'error'>;
 export type NativeAssociationKey = NativeHandle;
+export type NativeCancelablePromise<T> = Promise<T> & {
+	cancel(): void;
+};
 export type NativeClassHandle = NativeHandle;
 export type NativeFFIType =
 	| NativeFFITypeName
@@ -712,23 +792,35 @@ export type NativeFFITypeName =
 	| 'class'
 	| 'selector';
 export type NativeFabricSurface = NativeHandle;
+export type NativeFiberHandle = NativeHandle;
 export type NativeHandle = object;
 export type NativeObjectHandle = NativeHandle;
 export type NativePluginCapability =
 	| 'native.objc.classes'
 	| 'native.objc.invoke'
+	| 'native.objc.invokeAsync'
+	| 'native.objc.batch'
+	| 'native.objc.snapshot'
 	| 'native.objc.ivars'
 	| 'native.objc.associations'
 	| 'native.objc.hooks'
 	| 'native.ffi.symbols'
 	| 'native.ffi.call'
-	| 'native.fabric.mount';
+	| 'native.fabric.mount'
+	| 'native.fabric.async'
+	| 'native.react.remount';
 export type NativePluginErrorCode =
 	| 'NATIVE_BRIDGE_ERROR'
+	| 'NATIVE_WRONG_THREAD'
+	| 'NATIVE_MAIN_THREAD_TIMEOUT'
 	| 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED'
 	| 'NATIVE_PLUGIN_CAPABILITY_DENIED'
 	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
-	| 'NATIVE_PLUGIN_UNAVAILABLE';
+	| 'NATIVE_PLUGIN_UNAVAILABLE'
+	| 'NATIVE_REACT_UNSUPPORTED_RENDERER'
+	| 'NATIVE_REACT_STALE_FIBER'
+	| 'NATIVE_REACT_BUSY'
+	| 'NATIVE_REACT_TIMEOUT';
 export type NativePointer = NativeHandle;
 export type NativeThreadPolicy = 'current' | 'main';
 /** An {@link Addon} whose instance is a {@link Plugin}. */
@@ -817,7 +909,7 @@ export type UnboundAsset = DiscordAsset & {
 /** The lifecycle and settings contract implemented by a plugin. */
 interface Plugin$1 {
 	start?(context?: PluginContext): void;
-	stop?(): void;
+	stop?(): void | Promise<void>;
 	getSettingsPanel?(): ReactNode;
 }
 

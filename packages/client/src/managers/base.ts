@@ -1,7 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
-import { createPatcher } from 'possess';
 import { EventEmitter } from 'tseep';
 
+import { createPatcher } from '~/api/patcher';
 import storage from '~/api/storage';
 
 /** Discriminates the kind of addon a {@link Manager} subclass governs. */

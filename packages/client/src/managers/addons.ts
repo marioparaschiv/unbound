@@ -39,6 +39,23 @@ type AddonEvents<T extends Addon> = {
  * @template T The addon entity type this manager governs.
  */
 export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>> {
+	private pendingStops = new Map<string, Promise<void>>();
+	private pendingStarts = new Set<string>();
+	protected stopTimeoutMs = 5000;
+
+	async shutdown(): Promise<void> {
+		this.pendingStarts.clear();
+		const pending = [...this.pendingStops.values()];
+		const stops = this.getEntities().map((entity) => this.stop(entity));
+		try {
+			await Promise.all([...pending, ...stops]);
+		} finally {
+			this.pendingStops.clear();
+			this.pendingStarts.clear();
+			super.shutdown();
+		}
+	}
+
 	/**
 	 * @description Evaluates an addon's bundle source into a running instance. Implemented by each subclass.
 	 * @param bundle The addon's bundle source.
@@ -91,22 +108,31 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	 * @description Unloads an addon from the manager, stopping it if running, and emits `unloaded`.
 	 * @param entity The addon to unload, as its id or the entity itself.
 	 */
-	unload(entity: AddonResolveable) {
+	unload(entity: AddonResolveable): void | Promise<void> {
 		const resolved = this.resolve(entity);
 		if (!resolved) return;
 
 		try {
-			if (resolved.started) {
-				this.stop(resolved);
-			}
-
-			this.entities.delete(resolved.id);
-			this.errors.delete(resolved.id);
-
-			this.emit('unloaded', resolved);
+			this.pendingStarts.delete(resolved.id);
+			const stopping = this.stop(resolved);
+			if (stopping) return stopping.then(() => this.finishUnload(resolved));
+			this.finishUnload(resolved);
 		} catch (error: any) {
 			this.logger.error(`Failed to unload addon ${resolved.id}:`, error);
 			this.errors.set(resolved.id, error);
+		}
+	}
+
+	private finishUnload(resolved: T): void {
+		if (this.entities.get(resolved.id) !== resolved) return;
+		try {
+			this.entities.delete(resolved.id);
+			this.errors.delete(resolved.id);
+			this.emit('unloaded', resolved);
+		} catch (error) {
+			const failure = error instanceof Error ? error : new Error(String(error));
+			this.logger.error(`Failed to unload addon ${resolved.id}:`, failure);
+			this.errors.set(resolved.id, failure);
 		}
 	}
 
@@ -177,16 +203,13 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 			// Restart only what was running, mirroring enable/disable: a save must not start an addon the
 			// user has explicitly disabled.
-			const wasStarted = resolved.started;
+			const wasStarted = resolved.started || this.pendingStarts.has(resolved.id);
 			await this.persist(bundle, manifest);
 
-			// A throwing stop() must not abort the swap; stop() catches and records internally, so its
-			// failure surfaces as a recorded error rather than a throw.
-			if (wasStarted) this.stop(resolved);
+			this.pendingStarts.delete(resolved.id);
+			if (resolved.started) await this.stop(resolved);
+			else await this.pendingStops.get(resolved.id);
 
-			// A throwing stop() leaves `started`/`instance` untouched (stop() bails before clearing them),
-			// which would wedge start()'s `already started` guard. Force a stopped state so the new bundle
-			// always starts, and clear any recorded stop error so start()'s own failure is detected cleanly.
 			resolved.started = false;
 			resolved.instance = null;
 
@@ -263,7 +286,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		if (!resolved) return;
 
 		try {
-			this.unload(resolved);
+			await this.unload(resolved);
 			await fs.rm(`Unbound/${ManagerType[this.type]}/${resolved.id}`);
 			this.emit('deleted', resolved);
 		} catch (error: any) {
@@ -279,6 +302,17 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	start(entity: AddonResolveable) {
 		const resolved = this.resolve(entity);
 		if (!resolved || resolved.started) return;
+		const pendingStop = this.pendingStops.get(resolved.id);
+		if (pendingStop) {
+			if (!this.pendingStarts.has(resolved.id)) {
+				this.pendingStarts.add(resolved.id);
+				void pendingStop.then(() => {
+					if (!this.pendingStarts.delete(resolved.id)) return;
+					if (this.entities.get(resolved.id) === resolved) this.start(resolved);
+				});
+			}
+			return;
+		}
 
 		try {
 			const recoveryMode = storage.get('unbound', 'recovery', false);
@@ -308,23 +342,66 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	 * @description Stops an addon, tearing down its instance, and emits `stopped`.
 	 * @param entity The addon to stop, as its id or the entity itself.
 	 */
-	stop(entity: AddonResolveable) {
+	stop(entity: AddonResolveable): void | Promise<void> {
 		const resolved = this.resolve(entity);
-		if (!resolved || !resolved.started) return;
+		if (!resolved) return;
+		this.pendingStarts.delete(resolved.id);
+		if (!resolved.started) return this.pendingStops.get(resolved.id);
+
+		const instance = resolved.instance;
+		const context = resolved.context;
+		resolved.instance = null;
+		resolved.context = undefined;
+		resolved.started = false;
 
 		try {
-			resolved.instance?.stop?.();
-			resolved.context?.dispose();
-			resolved.context = undefined;
-			resolved.instance = null;
-			resolved.started = false;
-
-			this.emit('stopped', resolved);
+			const result = instance?.stop?.();
+			if (result && typeof result.then === 'function') {
+				let timer: ReturnType<typeof setTimeout> | undefined;
+				const timeout = new Promise<never>((_, reject) => {
+					timer = setTimeout(
+						() => reject(new Error(`Addon ${resolved.id} cleanup timed out`)),
+						this.stopTimeoutMs,
+					);
+				});
+				const pending = Promise.race([Promise.resolve(result), timeout])
+					.then(
+						() => this.finishStop(resolved, context),
+						(error) => this.finishStop(resolved, context, error),
+					)
+					.finally(() => {
+						if (timer) clearTimeout(timer);
+						if (this.pendingStops.get(resolved.id) === pending) {
+							this.pendingStops.delete(resolved.id);
+						}
+					});
+				this.pendingStops.set(resolved.id, pending);
+				return pending;
+			}
+			this.finishStop(resolved, context);
 		} catch (error: any) {
-			resolved.context?.dispose();
-			resolved.context = undefined;
-			this.logger.error(`Failed to stop addon ${resolved.id}:`, error);
-			this.errors.set(resolved.id, error);
+			this.finishStop(resolved, context, error);
+		}
+	}
+
+	private finishStop(resolved: T, context: PluginContext | undefined, error?: unknown): void {
+		try {
+			context?.dispose();
+		} catch (disposeError) {
+			error ??= disposeError;
+		}
+		if (error) {
+			const failure = error instanceof Error ? error : new Error(String(error));
+			this.logger.error(`Failed to stop addon ${resolved.id}:`, failure);
+			this.errors.set(resolved.id, failure);
+			return;
+		}
+		try {
+			this.emit('stopped', resolved);
+		} catch (emitError) {
+			const failure = emitError instanceof Error ? emitError : new Error(String(emitError));
+			this.logger.error(`Failed to stop addon ${resolved.id}:`, failure);
+			this.errors.set(resolved.id, failure);
 		}
 	}
 
@@ -361,6 +438,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		if (!resolved) return;
 
 		try {
+			this.pendingStarts.delete(resolved.id);
 			const states = this.getStates();
 			states[resolved.id] = false;
 			this.settings.set('states', states);
