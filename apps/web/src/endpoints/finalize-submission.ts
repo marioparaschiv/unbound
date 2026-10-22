@@ -10,7 +10,7 @@ import { requireCaller } from '~/lib/api/caller';
 
 const finalizeSubmissionEndpoint = endpoint(
 	{
-		body: finalizeSubmissionRequestSchema.optional(),
+		body: z.optional(finalizeSubmissionRequestSchema),
 		query: z.undefined(),
 		response: finalizeSubmissionResponseSchema,
 	},

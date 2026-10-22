@@ -1,6 +1,6 @@
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import type { ApiErrorCode } from '@unbound-app/contracts/errors';
-import type { z } from 'zod';
+import type { z } from 'zod/mini';
 
 /** The header `ubd publish` sends an API key in, for CI publishing. */
 export const API_KEY_HEADER = 'x-api-key';
@@ -15,7 +15,7 @@ export type QueryValues = Record<string, string | undefined>;
 export type ApiRoute = {
 	body: unknown;
 	query: QueryValues | undefined;
-	response: z.ZodType;
+	response: z.ZodMiniType;
 };
 
 export type ApiMap = Record<string, ApiRoute>;

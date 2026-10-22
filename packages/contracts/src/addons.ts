@@ -1,12 +1,11 @@
-import { z } from 'zod';
-
 import { addonIdSchema, addonManifestSchema, semverSchema } from './manifest';
 import { userSummarySchema } from './account';
 import { submissionSchema } from './publish';
+import { z } from './zod';
 
 export const sha256Schema = z
 	.string()
-	.regex(/^[0-9a-f]{64}$/, 'Must be a lowercase hex SHA-256 digest.');
+	.check(z.regex(/^[0-9a-f]{64}$/, 'Must be a lowercase hex SHA-256 digest.'));
 
 /** Owners manage maintainers; every maintainer may publish updates. */
 export const maintainerRoleSchema = z.enum(['owner', 'maintainer']);
@@ -15,8 +14,8 @@ export const maintainerRoleSchema = z.enum(['owner', 'maintainer']);
 export const addonVersionSchema = z.object({
 	version: semverSchema,
 	manifest: addonManifestSchema,
-	changelog: z.string().nullable(),
-	bundleSize: z.int().positive(),
+	changelog: z.nullable(z.string()),
+	bundleSize: z.int().check(z.positive()),
 	sha256: sha256Schema,
 	publishedAt: z.iso.datetime(),
 	manifestUrl: z.url(),
@@ -27,33 +26,33 @@ export const addonSchema = z.object({
 	id: addonIdSchema,
 	createdAt: z.iso.datetime(),
 	/** Hidden from listings and update checks; its published files stay up for existing installs. */
-	delistedAt: z.iso.datetime().nullable(),
+	delistedAt: z.nullable(z.iso.datetime()),
 });
 
 export const addonResponseSchema = z.object({
 	addon: addonSchema,
 });
 
-export const addonTypeSchema = addonManifestSchema.shape.type.unwrap();
+export const addonTypeSchema = addonManifestSchema.shape.type.def.innerType;
 
 /** `created` is when the addon was first approved, `updated` when its newest version was. */
 export const addonSortSchema = z.enum(['name', 'created', 'updated']);
 
 export const sortOrderSchema = z.enum(['asc', 'desc']);
 
-export const listAddonsQuerySchema = z
-	.object({
-		type: addonTypeSchema.optional(),
+export const listAddonsQuerySchema = z.optional(
+	z.object({
+		type: z.optional(addonTypeSchema),
 		/** Matches anywhere in the newest version's name or description, case-insensitively. */
-		q: z.string().trim().max(100).optional(),
+		q: z.optional(z.string().check(z.trim(), z.maxLength(100))),
 		/** Defaults to `name`; ties are ordered by id. */
-		sort: addonSortSchema.optional(),
+		sort: z.optional(addonSortSchema),
 		/** Defaults to `asc`. */
-		order: sortOrderSchema.optional(),
+		order: z.optional(sortOrderSchema),
 		/** The previous page's `nextCursor`, requested with the same filters and sort. */
-		cursor: z.string().max(512).optional(),
-	})
-	.optional();
+		cursor: z.optional(z.string().check(z.maxLength(512))),
+	}),
+);
 
 export const listedAddonSchema = z.object({
 	id: addonIdSchema,
@@ -64,7 +63,7 @@ export const listedAddonSchema = z.object({
 /** One page of listed addons, each with its newest version. */
 export const listAddonsResponseSchema = z.object({
 	addons: z.array(listedAddonSchema),
-	nextCursor: z.string().nullable(),
+	nextCursor: z.nullable(z.string()),
 });
 
 /**
@@ -72,17 +71,17 @@ export const listAddonsResponseSchema = z.object({
  * as the response's `ETag`.
  */
 export const catalogResponseSchema = z.object({
-	revision: z.string().min(1),
+	revision: z.string().check(z.minLength(1)),
 	addons: z.array(listedAddonSchema),
 });
 
-export const maintainerSchema = userSummarySchema.extend({
+export const maintainerSchema = z.extend(userSummarySchema, {
 	role: maintainerRoleSchema,
 	addedAt: z.iso.datetime(),
 });
 
 export const addMaintainerRequestSchema = z.object({
-	userId: z.string().min(1),
+	userId: z.string().check(z.minLength(1)),
 });
 
 export const maintainersResponseSchema = z.object({
@@ -90,14 +89,14 @@ export const maintainersResponseSchema = z.object({
 });
 
 export const transferAddonRequestSchema = z.object({
-	userId: z.string().min(1),
+	userId: z.string().check(z.minLength(1)),
 	/** Whether the previous owner stays on as a maintainer. */
-	keepPreviousOwner: z.boolean().default(true),
+	keepPreviousOwner: z._default(z.boolean(), true),
 });
 
-export const maintainedAddonSchema = addonSchema.extend({
+export const maintainedAddonSchema = z.extend(addonSchema, {
 	role: maintainerRoleSchema,
-	latestVersion: addonVersionSchema.nullable(),
+	latestVersion: z.nullable(addonVersionSchema),
 	/** Updates awaiting upload, review or the author's changes. */
 	openSubmissions: z.array(submissionSchema),
 });

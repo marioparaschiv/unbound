@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from './zod';
 
 export const apiErrorCodeSchema = z.enum([
 	'invalid_request',

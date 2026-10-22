@@ -1,7 +1,6 @@
-import { z } from 'zod';
-
 import { addonIdSchema, semverSchema } from './manifest';
 import { addonVersionSchema } from './addons';
+import { z } from './zod';
 
 export const installedAddonSchema = z.object({
 	id: addonIdSchema,
@@ -10,33 +9,43 @@ export const installedAddonSchema = z.object({
 
 export const updatesRequestSchema = z.object({
 	clientVersion: semverSchema,
-	addons: z
-		.array(installedAddonSchema)
-		.max(500)
-		.refine(
+	addons: z.array(installedAddonSchema).check(
+		z.maxLength(500),
+		z.refine(
 			(addons) => new Set(addons.map((addon) => addon.id)).size === addons.length,
 			'Addon ids must be unique.',
 		),
+	),
 });
 
 /** The release a manager installs: where to fetch it and the bundle digest to verify. */
-export const addonReleaseSchema = addonVersionSchema
-	.pick({ version: true, manifestUrl: true, bundleUrl: true, sha256: true, changelog: true })
-	.extend({ id: addonIdSchema });
+export const addonReleaseSchema = z.extend(
+	z.pick(addonVersionSchema, {
+		version: true,
+		manifestUrl: true,
+		bundleUrl: true,
+		sha256: true,
+		changelog: true,
+	}),
+	{ id: addonIdSchema },
+);
 
 /** The most changelogs one update lists. */
 export const MAX_UPDATE_CHANGELOGS = 20;
 
-export const versionChangelogSchema = addonVersionSchema.pick({
+export const versionChangelogSchema = z.pick(addonVersionSchema, {
 	version: true,
 	changelog: true,
 	publishedAt: true,
 });
 
 /** The newest compatible release, with `changelogs` covering every version it skips over. */
-export const addonUpdateSchema = addonReleaseSchema.extend({
+export const addonUpdateSchema = z.extend(addonReleaseSchema, {
 	/** Each version newer than the installed one, up to and including `version`, newest first. */
-	changelogs: z.array(versionChangelogSchema).max(MAX_UPDATE_CHANGELOGS).default([]),
+	changelogs: z._default(
+		z.array(versionChangelogSchema).check(z.maxLength(MAX_UPDATE_CHANGELOGS)),
+		[],
+	),
 });
 
 /** Only addons with a newer approved version compatible with `clientVersion` are listed. */

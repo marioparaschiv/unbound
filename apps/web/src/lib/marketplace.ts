@@ -2,7 +2,7 @@ import type { AddonType, AddonVersion, Maintainer } from '@unbound-app/contracts
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
 import { listAddonsQuerySchema } from '@unbound-app/contracts/addons';
 import { createServerFn } from '@tanstack/react-start';
-import type { z } from 'zod';
+import { z } from 'zod/mini';
 
 import { getAddonDetails, listAddons } from '~/lib/addons';
 import app from '~/lib/app';
@@ -10,9 +10,11 @@ import app from '~/lib/app';
 export type MarketplaceSearch = z.infer<typeof marketplaceSearchSchema>;
 
 /** The `/plugins` and `/themes` URL search parameters. */
-export const marketplaceSearchSchema = listAddonsQuerySchema
-	.unwrap()
-	.pick({ q: true, sort: true, order: true });
+export const marketplaceSearchSchema = z.pick(listAddonsQuerySchema.def.innerType, {
+	q: true,
+	sort: true,
+	order: true,
+});
 
 /** What an addon card shows. Manifests are not passed whole: their passthrough keys cannot be serialized. */
 export type MarketplaceAddon = {

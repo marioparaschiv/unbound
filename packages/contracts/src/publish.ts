@@ -1,6 +1,5 @@
-import { z } from 'zod';
-
 import { addonIdSchema, addonManifestSchema } from './manifest';
+import { z } from './zod';
 
 /** `listing` claims a new addon id; `update` publishes a new version of an addon the caller maintains. */
 export const submissionKindSchema = z.enum(['listing', 'update']);
@@ -19,45 +18,47 @@ export const submissionStatusSchema = z.enum([
 ]);
 
 /** Statuses that keep a submission in the queue: they hold a listing's addon id and count towards the pending caps. */
-export const openSubmissionStatusSchema = submissionStatusSchema.extract([
+export const openSubmissionStatusSchema = z.enum([
 	'awaiting_upload',
 	'pending_review',
 	'changes_requested',
-]);
+] satisfies SubmissionStatus[]);
 
 /** A GitHub repository as `owner/name`. */
 export const repositorySchema = z
 	.string()
-	.regex(
-		/^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\/[A-Za-z0-9._-]+$/,
-		'Must be a GitHub owner/name.',
+	.check(
+		z.regex(
+			/^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\/[A-Za-z0-9._-]+$/,
+			'Must be a GitHub owner/name.',
+		),
 	);
 
 /** The statuses a reviewer's decision moves a pending submission to. */
-export const reviewDecisionSchema = submissionStatusSchema.extract([
+export const reviewDecisionSchema = z.enum([
 	'approved',
 	'rejected',
 	'changes_requested',
-]);
+] satisfies SubmissionStatus[]);
 
 export const submissionReviewSchema = z.object({
 	decision: reviewDecisionSchema,
 	/** The rejection reason or requested changes; optional only on approval. */
-	note: z.string().nullable(),
+	note: z.nullable(z.string()),
 	reviewedAt: z.iso.datetime(),
 });
 
 export const submissionSchema = z.object({
-	id: z.string().min(1),
+	id: z.string().check(z.minLength(1)),
 	addonId: addonIdSchema,
 	version: z.string(),
 	kind: submissionKindSchema,
 	status: submissionStatusSchema,
-	repository: repositorySchema.nullable(),
+	repository: z.nullable(repositorySchema),
 	/** No repository was named, so reviewers cannot tie the artifact to source the author controls. */
 	unverifiedSource: z.boolean(),
 	/** The reviewer's decision, once one was made. */
-	review: submissionReviewSchema.nullable(),
+	review: z.nullable(submissionReviewSchema),
 });
 
 /**
@@ -66,9 +67,9 @@ export const submissionSchema = z.object({
  */
 export const createSubmissionRequestSchema = z.object({
 	manifest: addonManifestSchema,
-	bundleSize: z.int().positive(),
-	repository: repositorySchema.optional(),
-	changelog: z.string().max(10_000).optional(),
+	bundleSize: z.int().check(z.positive()),
+	repository: z.optional(repositorySchema),
+	changelog: z.optional(z.string().check(z.maxLength(10_000))),
 });
 
 /** A presigned upload for the bundle; send exactly `bundleSize` bytes with `headers` before `expiresAt`. */

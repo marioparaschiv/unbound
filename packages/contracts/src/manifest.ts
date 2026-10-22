@@ -1,6 +1,7 @@
 import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
 import { ADDON_TYPES } from '@unbound-app/types/addons';
-import { z } from 'zod';
+
+import { z } from './zod';
 
 /**
  * A strict SemVer 2.0.0 version (the specification's own pattern): no `v` prefix, no leading zeros.
@@ -8,10 +9,12 @@ import { z } from 'zod';
  */
 export const semverSchema = z
 	.string()
-	.max(64)
-	.regex(
-		/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/,
-		'Must be a semver version.',
+	.check(
+		z.maxLength(64),
+		z.regex(
+			/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/,
+			'Must be a semver version.',
+		),
 	);
 
 /**
@@ -20,15 +23,17 @@ export const semverSchema = z
  */
 export const addonIdSchema = z
 	.string()
-	.max(100)
-	.regex(
-		/^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$/,
-		'Must be alphanumeric segments joined by ".", "_" or "-".',
+	.check(
+		z.maxLength(100),
+		z.regex(
+			/^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$/,
+			'Must be alphanumeric segments joined by ".", "_" or "-".',
+		),
 	);
 
 export const addonAuthorSchema = z.object({
-	name: z.string().min(1),
-	id: z.templateLiteral([z.int().nonnegative()]),
+	name: z.string().check(z.minLength(1)),
+	id: z.templateLiteral([z.int().check(z.nonnegative())]),
 });
 
 /**
@@ -37,20 +42,25 @@ export const addonAuthorSchema = z.object({
  */
 export const addonManifestSchema = z.looseObject({
 	id: addonIdSchema,
-	type: z.enum(ADDON_TYPES).optional(),
-	name: z.string().min(1),
+	type: z.optional(z.enum(ADDON_TYPES)),
+	name: z.string().check(z.minLength(1)),
 	description: z.string(),
-	authors: z.array(addonAuthorSchema).min(1),
-	icon: z.union([z.string(), z.object({ uri: z.string() })]).optional(),
+	authors: z.array(addonAuthorSchema).check(z.minLength(1)),
+	icon: z.optional(z.union([z.string(), z.object({ uri: z.string() })])),
 	// The bundle is published next to the manifest at `addons/{id}/{version}/{main}` and resolved
 	// relative to the manifest URL, so `main` may not leave that directory.
 	main: z
 		.string()
-		.regex(/^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*$/, 'Must be a relative path inside the addon.'),
+		.check(
+			z.regex(
+				/^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*$/,
+				'Must be a relative path inside the addon.',
+			),
+		),
 	version: semverSchema,
-	capabilities: z.array(z.enum(NATIVE_PLUGIN_CAPABILITIES)).optional(),
-	minNativePluginApi: z.string().optional(),
-	unbound: z.object({ min: semverSchema.optional() }).optional(),
+	capabilities: z.optional(z.array(z.enum(NATIVE_PLUGIN_CAPABILITIES))),
+	minNativePluginApi: z.optional(z.string()),
+	unbound: z.optional(z.object({ min: z.optional(semverSchema) })),
 });
 
 export type PublishedManifest = z.infer<typeof addonManifestSchema>;

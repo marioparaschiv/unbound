@@ -1,13 +1,13 @@
-import { z } from 'zod';
+import { z } from './zod';
 
 /** A user as other users see them, e.g. a submitter or a maintainer. */
 export const userSummarySchema = z.object({
-	id: z.string().min(1),
+	id: z.string().check(z.minLength(1)),
 	name: z.string(),
-	image: z.string().nullable(),
+	image: z.nullable(z.string()),
 });
 
-export const callerSchema = userSummarySchema.extend({
+export const callerSchema = z.extend(userSummarySchema, {
 	role: z.string(),
 });
 

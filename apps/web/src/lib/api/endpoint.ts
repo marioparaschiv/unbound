@@ -18,9 +18,9 @@ export type EndpointInput<TBody, TQuery> = {
 };
 
 export type EndpointSchemas<
-	TBody extends z.ZodType,
-	TResponse extends z.ZodType,
-	TQuery extends z.ZodType,
+	TBody extends z.core.$ZodType,
+	TResponse extends z.core.$ZodType,
+	TQuery extends z.core.$ZodType,
 > = {
 	/** `z.undefined()` for body-less requests. */
 	body: TBody;
@@ -32,7 +32,7 @@ export type EndpointSchemas<
 	response: TResponse;
 };
 
-export type EndpointOptions<TResponse extends z.ZodType> = {
+export type EndpointOptions<TResponse extends z.core.$ZodType> = {
 	/**
 	 * Derives the response's entity tag. When set, the response carries it as a strong `ETag` and a
 	 * request whose `If-None-Match` lists it is answered `304` with no body.
@@ -42,9 +42,9 @@ export type EndpointOptions<TResponse extends z.ZodType> = {
 
 /** A `/api/v1` handler bound to the contract schemas its request and response follow. */
 export type Endpoint<
-	TBody extends z.ZodType,
-	TResponse extends z.ZodType,
-	TQuery extends z.ZodType,
+	TBody extends z.core.$ZodType,
+	TResponse extends z.core.$ZodType,
+	TQuery extends z.core.$ZodType,
 > = {
 	schemas: EndpointSchemas<TBody, TResponse, TQuery>;
 	handle(ctx: AppContext, request: Request, params?: PathParams): Promise<Response>;
@@ -78,8 +78,11 @@ function matchesIfNoneMatch(request: Request, etag: string): boolean {
 }
 
 // UNKNOWN: request input, validated by the endpoint's schema.
-function parseInput<TSchema extends z.ZodType>(schema: TSchema, input: unknown): z.output<TSchema> {
-	const result = schema.safeParse(input);
+function parseInput<TSchema extends z.core.$ZodType>(
+	schema: TSchema,
+	input: unknown,
+): z.output<TSchema> {
+	const result = z.safeParse(schema, input);
 
 	if (!result.success) {
 		throw new ApiError('invalid_request', z.prettifyError(result.error));
@@ -99,9 +102,9 @@ function parseInput<TSchema extends z.ZodType>(schema: TSchema, input: unknown):
  * @returns The endpoint, served from a route with `serve` and called directly from tests.
  */
 export function endpoint<
-	TBody extends z.ZodType,
-	TResponse extends z.ZodType,
-	TQuery extends z.ZodType,
+	TBody extends z.core.$ZodType,
+	TResponse extends z.core.$ZodType,
+	TQuery extends z.core.$ZodType,
 >(
 	schemas: EndpointSchemas<TBody, TResponse, TQuery>,
 	handler: (
@@ -120,7 +123,8 @@ export function endpoint<
 					schemas.query,
 					searchParams.size > 0 ? Object.fromEntries(searchParams) : undefined,
 				);
-				const result = schemas.response.parse(
+				const result = z.parse(
+					schemas.response,
 					await handler({ ctx, request, params, body, query }),
 				);
 
