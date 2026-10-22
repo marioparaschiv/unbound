@@ -51,9 +51,6 @@ function MarketplaceSkeleton({ count = 3 }: MarketplaceSkeletonProps) {
 							/>
 							<View style={[styles.bar, { width: '64%', height: 14 }]} />
 						</View>
-					</View>
-					<View style={styles.footer}>
-						<View style={[styles.bar, { width: '32%', height: 12 }]} />
 						<View style={styles.button} />
 					</View>
 				</Discord.Card>

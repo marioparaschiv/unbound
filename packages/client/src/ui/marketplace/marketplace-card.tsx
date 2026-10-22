@@ -6,7 +6,6 @@ import AddonCardHeader from '~/ui/addons/addon-card-header';
 import type { InstallStatus } from '~/lib/catalog';
 import { Discord } from '~/api/metro/components';
 import { Messages, format } from '~/api/i18n';
-import { Theme } from '~/api/metro/common';
 import { showToast } from '~/api/toasts';
 
 import type { MarketplaceTab } from './targets';
@@ -33,15 +32,15 @@ const ACTIONS: Record<InstallStatus, StatusAction> = {
 };
 
 /**
- * @description One listed addon: the same header as an installed addon's card, the publish date, and
- * an Install, Update or Installed button judged against the installed copy.
+ * @description One listed addon: the same header as an installed addon's card, with an Install, Update
+ * or Installed button judged against the installed copy at its top right.
  */
 function MarketplaceCard({ addon, tab }: MarketplaceCardProps) {
 	const styles = useStyles();
 	const status = useInstallStatus(tab.kind, addon);
 	// Holds the pressed action until it settles, so the label doesn't flip while the button spins.
 	const [pending, setPending] = useState<InstallStatus | null>(null);
-	const { manifest, publishedAt } = addon.latestVersion;
+	const { manifest } = addon.latestVersion;
 	const action = ACTIONS[pending ?? status];
 
 	async function press() {
@@ -64,17 +63,10 @@ function MarketplaceCard({ addon, tab }: MarketplaceCardProps) {
 
 	return (
 		<Discord.Card variant='primary' border='subtle' shadow='low' style={styles.card}>
-			<AddonCardHeader manifest={manifest} icon={tab.icon} />
-			<View style={styles.footer}>
-				<Discord.Text
-					variant='text-xs/medium'
-					style={[styles.meta, { color: Theme.colors.TEXT_MUTED }]}
-					numberOfLines={1}
-				>
-					{format('UNBOUND_PUBLISHED', {
-						date: new Date(publishedAt).toLocaleDateString(),
-					})}
-				</Discord.Text>
+			<View style={styles.row}>
+				<View style={styles.body}>
+					<AddonCardHeader manifest={manifest} icon={tab.icon} />
+				</View>
 				<Discord.Button
 					size='sm'
 					text={action.label()}
