@@ -16,7 +16,6 @@
 		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p ."
 	},
 	"dependencies": {
-		"@noble/hashes": "^2.4.0",
 		"@unbound-app/contracts": "workspace:*",
 		"@unbound-app/debugger-protocol": "workspace:*",
 		"@unbound-app/logger": "workspace:*",

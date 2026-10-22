@@ -1,8 +1,7 @@
 import type { Addon, AddonManifest, PluginContext } from '@unbound-app/types';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
-import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
 import toError from '@unbound-app/utils/to-error';
-import { sha256 } from '@noble/hashes/sha2.js';
+import sha256 from '@unbound-app/utils/sha256';
 import noop from '@unbound-app/utils/noop';
 
 import { validateNativePluginRequirements } from '~/api/native-runtime';
@@ -291,7 +290,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 			// `fetchBundle` decodes the body as UTF-8; re-encoding gives back the served bytes for
 			// any valid UTF-8 bundle, and anything else fails closed as a mismatch.
-			const digest = bytesToHex(sha256(utf8ToBytes(bundle)));
+			const digest = sha256(bundle);
 
 			if (digest !== update.sha256) {
 				throw new Error(`Bundle SHA-256 ${digest} does not match ${update.sha256}.`);
