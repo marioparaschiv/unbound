@@ -86,7 +86,6 @@
 	"UNBOUND_UPDATES_DOWNLOAD": "Download",
 	"UNBOUND_UPDATES_DOWNLOAD_VERSION": "Download {version}",
 	"UNBOUND_INSTALL_FAILED": "Couldn't install {name}.",
-	"UNBOUND_PUBLISHED": "Published {date}",
 	"UNBOUND_THEMES": "Themes",
 	"UNBOUND_ICONS": "Icons",
 	"UNBOUND_MARKETPLACE_EMPTY": "No {type} are listed yet.",
