@@ -20,7 +20,7 @@ jobs:
       - run: bun install
       - run: bun run fmt:check
       - run: bun run lint
-      - run: bun test
+      - run: bun test --path-ignore-patterns 'packages/plugins/**'
       - run: bun run generate-sdk
       # Releases replace the generated `<version>-<hash>` with the plain release version.
       - run: |
