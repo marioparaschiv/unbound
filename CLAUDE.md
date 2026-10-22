@@ -324,7 +324,7 @@ Used for stateful, identity-bearing things: managers, the `Logger`. Plain functi
 
 ### 7.1 The Manager pattern (read before touching `managers/`)
 
-`Manager<T, EventMap>` extends `EventEmitter` (from `tseep`) and intersects a `BaseManagerEvents<T>` map onto the subclass's event map. Subclasses (`Addons`, then `Plugins`/`Themes`) layer on more events and methods. Every state-changing method:
+`Manager<T, EventMap>` extends `EventEmitter` (from `~/lib/event-emitter`, a port of `tseep`) and intersects a `BaseManagerEvents<T>` map onto the subclass's event map. Subclasses (`Addons`, then `Plugins`/`Themes`) layer on more events and methods. Every state-changing method:
 
 1. Resolves its input via `resolve()` (accepts an id string _or_ the entity).
 2. Guards (`if (!resolved) return;`).
@@ -405,7 +405,7 @@ Actions live _in_ the store (method shorthand `addToast(options) { … }` for on
 - **Error messages name the thing and the id**: `` `Failed to load addon ${manifest.id}:` `` then the error object as a second arg.
 - **try/catch around fallible mutations**, recording rather than throwing where the system should degrade gracefully (managers record to `this.errors`; metro blacklists the offending module and continues). Throw only for programmer errors / contract violations (`throw new Error('You must provide a filter to search by.')`, manifest validation).
 - **`catch (error)`**, left as the compiler's `unknown` - an `any` annotation is a lint error outside the metro layer (§4). An unused catch binding is allowed (`caughtErrors: "none"`). Empty catch bodies carry an explanatory comment (`// Not in Node environment`).
-- **Events use `tseep`'s `EventEmitter`** with a typed event map (`new EventEmitter<EventMap>()`). Expose `on`/`off` by binding (`export const on = Events.on.bind(Events)`). Provide an `addListener(predicate, callback)` that returns an unsubscribe function. Event payloads are a single object argument.
+- **Events use the `EventEmitter` from `~/lib/event-emitter`** (a port of `tseep`) with a typed event map (`new EventEmitter<EventMap>()`). Expose `on`/`off` by binding (`export const on = Events.on.bind(Events)`). Provide an `addListener(predicate, callback)` that returns an unsubscribe function. Event payloads are a single object argument.
 
 ---
 

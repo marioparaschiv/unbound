@@ -1,8 +1,8 @@
 import { createLogger } from '@unbound-app/logger';
-import type { DefaultEventMap } from 'tseep';
 import { createPatcher } from 'possess';
-import { EventEmitter } from 'tseep';
 
+import type { DefaultEventMap } from '~/lib/event-emitter';
+import { EventEmitter } from '~/lib/event-emitter';
 import storage from '~/api/storage';
 
 /** Discriminates the kind of addon a {@link Manager} subclass governs. */
@@ -19,7 +19,7 @@ type BaseManagerEvents<T> = {
 };
 
 /**
- * @description Base contract every addon-style manager subclasses. Extends tseep's `EventEmitter`,
+ * @description Base contract every addon-style manager subclasses. Extends `EventEmitter`,
  * intersecting `BaseManagerEvents<T>` (the `load`/`unload` pair) onto the subclass event map, and
  * holds an `entities` map of governed addons alongside an `errors` map recording per-entity failures.
  * @template T The entity type the manager governs.
