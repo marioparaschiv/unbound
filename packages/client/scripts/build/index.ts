@@ -85,10 +85,13 @@ const config: RolldownOptions = {
 			$$DEBUGGER_ADDRESS$$: DEBUGGER_ADDRESS,
 			$$DEV_SERVER_URL$$: DEV_SERVER_URL,
 		}),
+		// Only strips TS and JSX, and lowers class fields so parameter properties stay assigned before
+		// field initializers. `downlevel` lowers the rest once per chunk, sharing each helper.
 		swc({
 			tsconfig: false,
-			swcrc: true,
+			swcrc: false,
 			exclude: /node_modules/,
+			jsc: { target: 'es2021' },
 		}),
 		downlevel(root),
 		hermes(),
