@@ -25,12 +25,6 @@ export default Discord.createStyles({
 		borderRadius: Theme.radii.lg,
 		backgroundColor: Theme.colors.BACKGROUND_MOD_SUBTLE,
 	},
-	footer: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		minHeight: 32,
-	},
 	button: {
 		width: 64,
 		height: 32,

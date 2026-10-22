@@ -83,7 +83,6 @@
 	"UNBOUND_UPDATES_NO_CHANGELOG": "No changelog provided.",
 	"UNBOUND_UPDATES_UPDATE_TO": "Update to {version}",
 	"UNBOUND_INSTALL_FAILED": "Couldn't install {name}.",
-	"UNBOUND_PUBLISHED": "Published {date}",
 	"UNBOUND_THEMES": "Themes",
 	"UNBOUND_ICONS": "Icons",
 	"UNBOUND_MARKETPLACE_EMPTY": "No {type} are listed yet.",
