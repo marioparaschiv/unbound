@@ -20,6 +20,7 @@ import {
 } from './constants';
 import globals, { shimmedModules } from './plugins/globals';
 import refresh, { refreshRuntime } from './plugins/refresh';
+import downlevel, { lower } from './plugins/downlevel';
 import generateManifest from './plugins/manifest';
 import worklets from './plugins/worklets';
 
@@ -84,12 +85,12 @@ const config: RolldownOptions = {
 			$$DEBUGGER_ADDRESS$$: DEBUGGER_ADDRESS,
 			$$DEV_SERVER_URL$$: DEV_SERVER_URL,
 		}),
-		// Dependencies that ship classes or async functions must be down-levelled for older Hermes.
 		swc({
 			tsconfig: false,
 			swcrc: true,
-			exclude: /node_modules\/(?!(\.bun\/)?(possess|zod|@noble))/,
+			exclude: /node_modules/,
 		}),
+		downlevel(root),
 		hermes(),
 		generateManifest(GIT_REVISION),
 		...(IS_DEV_BUILD ? [locales()] : []),
@@ -252,7 +253,8 @@ async function hotBuild(onUpdate: (update: HotUpdate) => void) {
 						onUpdate({
 							type: 'patch',
 							clientId,
-							code: update.code,
+							// Patches skip `renderChunk`, so the dependency code they carry is lowered here.
+							code: lower(root, update.code),
 							filename: update.filename,
 							changedIds: update.changedIds,
 						});
