@@ -19,20 +19,6 @@ export default Discord.createStyles({
 		flex: 1,
 		gap: 3,
 	},
-	titleRow: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 8,
-	},
-	title: {
-		flexShrink: 1,
-	},
-	versionBadge: {
-		paddingHorizontal: 6,
-		paddingVertical: 2,
-		borderRadius: 6,
-		backgroundColor: Theme.colors.BACKGROUND_SURFACE_HIGH,
-	},
 	description: {
 		marginTop: 5,
 		lineHeight: 19,

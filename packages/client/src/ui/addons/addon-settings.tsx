@@ -3,7 +3,8 @@ import { memo } from 'react';
 
 import { Discord } from '~/api/metro/components';
 import { Screens } from '~/lib/constants';
-import { Icons } from '~/api/assets';
+
+import RoundButton from './round-button';
 
 type AddonSettingsProps = {
 	addon: Addon;
@@ -28,12 +29,10 @@ function AddonSettings({ addon, disabled }: AddonSettingsProps) {
 	}
 
 	return (
-		<Discord.IconButton
-			icon={Icons['SettingsIcon'] ?? 0}
-			variant='tertiary'
-			size='sm'
+		<RoundButton
+			icon='SettingsIcon'
+			label={`${addon.data.name} settings`}
 			disabled={disabled || !instance?.getSettingsPanel}
-			accessibilityLabel={`${addon.data.name} settings`}
 			onPress={handlePress}
 		/>
 	);

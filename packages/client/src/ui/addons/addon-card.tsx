@@ -6,14 +6,17 @@ import { Discord } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
 import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
+import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';
+import { Icons } from '~/api/assets';
 
-import AddonCardHeader from './addon-card-header';
 import AddonOverflow from './addon-overflow';
 import AddonSettings from './addon-settings';
+import AddonAuthors from './addon-authors';
 import useStyles from './addon-card.style';
 import AddonSwitch from './addon-switch';
 import AddonRadio from './addon-radio';
+import AddonTitle from './addon-title';
 
 type AddonCardProps = {
 	addon: Addon;
@@ -21,13 +24,13 @@ type AddonCardProps = {
 };
 
 /**
- * @description One addon card: a header, a kind-specific trailing control, and an overflow menu. The
- * card chooses the trailing element from `kind` once and composes it, rather than branching on a mode
- * flag. Failed addons dim and show the manager's recorded error; recovery mode disables interaction.
+ * @description One addon card: the title, authors and controls on top, the description and icon below.
+ * Failed addons dim and show the manager's recorded error; recovery mode disables interaction.
  */
 function AddonCard({ addon, kind }: AddonCardProps) {
 	const styles = useStyles();
 	const manager = getManager(kind);
+	const { name, version, authors, description } = addon.data;
 
 	const recovery = useSettingsStore('unbound', ({ key }) => key === 'recovery').get(
 		'recovery',
@@ -51,19 +54,37 @@ function AddonCard({ addon, kind }: AddonCardProps) {
 			shadow='low'
 			style={[styles.card, disabled ? styles.failed : null]}
 		>
-			<View style={styles.row}>
-				<View style={styles.body}>
-					<AddonCardHeader manifest={addon.data} />
+			<View style={styles.top}>
+				<View style={styles.heading}>
+					<AddonTitle name={name} version={version} />
+					{authors?.length ? <AddonAuthors authors={authors} /> : null}
 				</View>
-			</View>
-			<View style={styles.footer}>
 				<View style={styles.actions}>
 					{kind === ManagerKind.Plugins ? (
 						<AddonSettings addon={addon} disabled={disabled} />
 					) : null}
 					<AddonOverflow addon={addon} kind={kind} />
+					{trailing}
 				</View>
-				{trailing}
+			</View>
+			<View style={styles.bottom}>
+				{description ? (
+					<Discord.Text
+						variant='text-sm/normal'
+						style={[styles.description, { color: Theme.colors.TEXT_DEFAULT }]}
+					>
+						{description}
+					</Discord.Text>
+				) : (
+					<View style={styles.spacer} />
+				)}
+				<View style={styles.icon}>
+					<TintedIcon
+						source={Icons['PuzzlePieceIcon'] ?? 0}
+						size={18}
+						tint={Theme.colors.TEXT_STRONG}
+					/>
+				</View>
 			</View>
 			{error ? (
 				<Discord.Text

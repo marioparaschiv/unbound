@@ -93,6 +93,8 @@
 	"UNBOUND_MARKETPLACE_REFRESH_FAILED": "Couldn't refresh. Showing the last saved copy.",
 	"UNBOUND_CANCEL": "Cancel",
 	"UNBOUND_DELETE": "Delete",
+	"UNBOUND_AUTHORS": "Authors",
+	"UNBOUND_UNKNOWN_USER": "Unknown User",
 	"UNBOUND_RESET": "Reset",
 	"UNBOUND_DEFAULT": "Default",
 	"UNBOUND_FONTS": "Fonts",

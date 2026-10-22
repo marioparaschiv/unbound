@@ -8,6 +8,7 @@ import { Theme } from '~/api/metro/common';
 import { Icons } from '~/api/assets';
 
 import useStyles from './addon-card-header.style';
+import AddonTitle from './addon-title';
 
 /** The manifest fields a card header shows; an installed addon's and a listed addon's both fit. */
 export type AddonCardManifest = Pick<AddonManifest, 'name' | 'version' | 'authors' | 'description'>;
@@ -33,25 +34,7 @@ function AddonCardHeader({ manifest, icon = 'PuzzlePieceIcon' }: AddonCardHeader
 				<TintedIcon source={Icons[icon] ?? 0} size={22} tint={Theme.colors.TEXT_STRONG} />
 			</View>
 			<View style={styles.content}>
-				<View style={styles.titleRow}>
-					<Discord.Text
-						variant='text-md/semibold'
-						style={[styles.title, { color: Theme.colors.TEXT_STRONG }]}
-						numberOfLines={1}
-					>
-						{name}
-					</Discord.Text>
-					{version ? (
-						<View style={styles.versionBadge}>
-							<Discord.Text
-								variant='text-xxs/semibold'
-								style={{ color: Theme.colors.TEXT_MUTED }}
-							>
-								v{version}
-							</Discord.Text>
-						</View>
-					) : null}
-				</View>
+				<AddonTitle name={name} version={version} />
 				{author ? (
 					<Discord.Text
 						variant='text-xs/medium'

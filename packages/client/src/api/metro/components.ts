@@ -17,3 +17,7 @@ export const FlashList = findByPropsLazy('FlashList');
 export const HelpMessage = findByNameLazy('HelpMessage');
 export const Switch: ComponentType<SwitchProps> = findByName('Switch');
 export const Forms = findByPropsLazy('FormSliderRow');
+export const Avatars = findByPropsLazy('AvatarSizes', 'Avatar');
+export const AvatarPiles = findByPropsLazy('AvatarPile', 'AvatarDuoPile');
+export const DefaultAvatars = findByPropsLazy('DEFAULT_AVATARS', 'DEFAULT_AVATARS_SMALL');
+export const BottomSheets = findByPropsLazy('BottomSheetTitleHeader', 'ActionSheet');

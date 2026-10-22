@@ -1,5 +1,6 @@
+import type { ContextMenuItem } from '@unbound-app/types/components';
+import type { PressableProps } from 'react-native';
 import type { Addon } from '@unbound-app/types';
-import type { ComponentProps } from 'react';
 import { Pressable } from 'react-native';
 import { useMemo, memo } from 'react';
 
@@ -7,26 +8,26 @@ import type { ManagerKind } from '~/lib/constants';
 import { Discord } from '~/api/metro/components';
 import { getManager } from '~/managers/utils';
 import { TintedIcon } from '~/ui/components';
+import { Theme } from '~/api/metro/common';
 import { Icons } from '~/api/assets';
 import { format } from '~/api/i18n';
+
+import useRoundStyles from './round-button.style';
 
 type AddonOverflowProps = {
 	addon: Addon;
 	kind: ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons;
 };
 
-type ContextMenuTriggerProps = ComponentProps<typeof Pressable>;
-
 /**
- * @description The overflow (⋯) menu for an addon card. `Discord.ContextMenu` renders an anchored
- * popover: `children` is a render function that receives the trigger props (ref/onPress/…), and `items`
- * is an array of `{ label, action, variant }` descriptors (not a render function). Tapping the ⋯ opens
- * the menu; the Delete item removes the addon via `manager.delete(addon.id)` and is styled destructive.
+ * @description The round overflow (⋯) button of an addon card, opening a menu whose Delete item removes
+ * the addon through its manager.
  */
 function AddonOverflow({ addon, kind }: AddonOverflowProps) {
+	const styles = useRoundStyles();
 	const manager = getManager(kind);
 
-	const items = useMemo(
+	const items = useMemo<ContextMenuItem[]>(
 		() => [
 			{
 				label: format('UNBOUND_DELETE'),
@@ -37,11 +38,16 @@ function AddonOverflow({ addon, kind }: AddonOverflowProps) {
 		[manager, addon.id],
 	);
 
+	// The menu anchors to the Pressable it renders; wrapping the trigger in a component breaks it.
 	return (
 		<Discord.ContextMenu title={addon.data.name} items={items} triggerOnTap>
-			{(props: ContextMenuTriggerProps) => (
-				<Pressable {...props} hitSlop={8}>
-					<TintedIcon source={Icons['MoreHorizontalIcon'] ?? 0} size={20} />
+			{(props: PressableProps) => (
+				<Pressable {...props} hitSlop={6} style={styles.button}>
+					<TintedIcon
+						source={Icons['MoreHorizontalIcon'] ?? 0}
+						size={16}
+						tint={Theme.colors.CONTROL_SECONDARY_TEXT_DEFAULT}
+					/>
 				</Pressable>
 			)}
 		</Discord.ContextMenu>
