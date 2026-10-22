@@ -1,0 +1,22 @@
+{
+	"name": "@unbound-app/plugins",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bun ../../packages/cli/src/index.ts dev",
+		"build": "bun ../../packages/cli/src/index.ts build",
+		"test": "bun test --isolate",
+		"lint": "oxlint --config .oxlintrc.json .",
+		"validate": "bun scripts/validate-plugins.ts",
+		"catalog": "bun scripts/generate-plugins-readme.ts",
+		"sync-icons": "bun scripts/sync-plugin-icons.ts"
+	},
+	"devDependencies": {
+		"@types/bun": "catalog:",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-app/cli": "workspace:*",
+		"@unbound-app/types": "workspace:*",
+		"@unbound-plugins/rollup-path-aliases": "workspace:*",
+		"react": "catalog:react"
+	}
+}

@@ -17,7 +17,10 @@
 			"packages/logger",
 			"packages/client/scripts/build",
 			"packages/client/scripts/serve",
-			"packages/client/scripts/dev"
+			"packages/client/scripts/dev",
+			"packages/plugins",
+			"packages/plugins/*",
+			"packages/plugins/shared/*"
 		],
 		"catalog": {
 			"typescript": "^5.9.3",
@@ -39,11 +42,18 @@
 		"prepare": "lefthook install --reset-hooks-path",
 		"generate-sdk": "bun apps/sdk-generator/src/index.ts",
 		"test:s3": "bun scripts/test-s3.ts",
-		"lint": "bun run lint:rules && oxlint --config .oxlintrc.json --type-aware apps packages",
+		"lint": "bun run lint:rules && oxlint --config .oxlintrc.json --type-aware apps packages && bun run plugins:lint",
 		"lint:fix": "bun run lint:rules && oxlint --config .oxlintrc.json --type-aware --fix-dangerously apps packages",
 		"lint:rules": "oxc-config-check .oxlintrc.json",
 		"fmt": "oxfmt --config .oxfmtrc.json apps packages",
 		"fmt:check": "oxfmt --config .oxfmtrc.json --check apps packages",
+		"plugins:validate": "bun packages/plugins/scripts/validate-plugins.ts",
+		"plugins:test": "bun test --isolate packages/plugins",
+		"plugins:lint": "bun run --filter @unbound-app/plugins lint",
+		"plugins:build": "cd packages/plugins && bun run build",
+		"plugins:catalog": "bun packages/plugins/scripts/generate-plugins-readme.ts",
+		"plugins:sync-icons": "bun packages/plugins/scripts/sync-plugin-icons.ts",
+		"plugins:device-matrix": "bun packages/plugins/scripts/device-matrix.ts",
 		"release": "semantic-release"
 	},
 	"devDependencies": {

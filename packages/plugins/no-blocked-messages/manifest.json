@@ -1,0 +1,26 @@
+{
+	"id": "unbound.no-blocked-messages",
+	"name": "No Blocked Messages",
+	"description": "Hides messages from blocked users completely.",
+	"authors": [
+		{
+			"name": "rushii",
+			"id": "295190422244950017"
+		},
+		{
+			"name": "Samu",
+			"id": "702973430449832038"
+		},
+		{
+			"name": "jamesbt365",
+			"id": "158567567487795200"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "EyeSlashIcon",
+	"main": "index.tsx"
+}

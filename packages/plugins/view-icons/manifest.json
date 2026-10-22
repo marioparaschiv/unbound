@@ -1,0 +1,30 @@
+{
+	"id": "unbound.view-icons",
+	"name": "View Icons",
+	"description": "View user avatars, banners, server icons, server banners, and group DM icons.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "TheKodeToad",
+			"id": "706152404072267788"
+		},
+		{
+			"name": "Nuckyz",
+			"id": "235834946571337729"
+		},
+		{
+			"name": "verticalsync.",
+			"id": "1207087393929171095"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "ImageIcon",
+	"main": "index.tsx"
+}

@@ -1,0 +1,22 @@
+{
+	"id": "unbound.force-owner-crown",
+	"name": "Force Owner Crown",
+	"description": "Always show the owner crown on the server owner's messages.",
+	"authors": [
+		{
+			"name": "D3SOX",
+			"id": "201052085641281538"
+		},
+		{
+			"name": "Nickyux",
+			"id": "427146305651998721"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "CrownIcon",
+	"main": "index.tsx"
+}

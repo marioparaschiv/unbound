@@ -1,0 +1,21 @@
+{
+	"name": "text-replace",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Replace text in messages before you send them.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c",
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"@rollup/plugin-json": "^6.1.0",
+		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"react-native": "^0.83.0",
+		"rollup": "^4.62.2",
+		"rollup-plugin-iife": "^0.8.0",
+		"rollup-plugin-swc3": "^0.12.1"
+	}
+}

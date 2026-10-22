@@ -11,16 +11,27 @@ mock.module('react-native', () => ({
 const removed: string[] = [];
 const cleared: unknown[] = [];
 const unmounted: NativeFabricSurface[] = [];
+const asynchronouslyUnmounted: NativeFabricSurface[] = [];
+const cancelled: string[] = [];
+const sizeHeightFloors: unknown[][] = [];
 const capabilities = [
 	'native.objc.classes',
 	'native.objc.invoke',
+	'native.objc.invokeAsync',
+	'native.objc.batch',
+	'native.objc.snapshot',
 	'native.objc.ivars',
 	'native.objc.associations',
 	'native.objc.hooks',
 	'native.ffi.symbols',
 	'native.ffi.call',
 	'native.fabric.mount',
+	'native.fabric.async',
 ] as const;
+
+function cancellable<T>(promise: Promise<T>, name: string) {
+	return Object.assign(promise, { cancel: () => cancelled.push(name) });
+}
 
 const bridge = {
 	abiVersion: '1.0.0',
@@ -38,12 +49,19 @@ const bridge = {
 		getClass: () => ({ class: true }),
 		getIvar: () => null,
 		invoke: () => undefined,
+		invokeAsync: () => cancellable(new Promise(() => undefined), 'invoke'),
+		batch: (steps: unknown[]) => cancellable(Promise.resolve(steps), 'batch'),
+		snapshot: () => cancellable(Promise.resolve([]), 'snapshot'),
+		findViews: () => cancellable(Promise.resolve([]), 'findViews'),
 		invokeSuper: () => undefined,
+		invokeSuperAsync: () => cancellable(new Promise(() => undefined), 'invokeSuper'),
 		hook: (...args: string[]) => {
 			void args;
 
 			return {
 				active: true,
+				setSizeHeightFloor: (...values: unknown[]) => sizeHeightFloors.push(values),
+				removeSizeHeightFloor: (...values: unknown[]) => sizeHeightFloors.push(values),
 				remove: () => removed.push('hook'),
 			};
 		},
@@ -58,11 +76,21 @@ const bridge = {
 	},
 	fabric: {
 		mount: () => ({ surface: true }),
+		mountAsync: () => cancellable(Promise.resolve({ asyncSurface: true }), 'mount'),
 		update: () => undefined,
+		updateAsync: () => cancellable(Promise.resolve(), 'update'),
 		setSize: () => undefined,
+		setSizeAsync: () => cancellable(Promise.resolve(), 'size'),
 		setFrame: () => undefined,
+		setFrameAsync: () => cancellable(Promise.resolve(), 'frame'),
 		measure: () => ({ x: 0, y: 0, width: 0, height: 0 }),
+		measureAsync: () => cancellable(new Promise(() => undefined), 'measure'),
 		unmount: (surface: NativeFabricSurface) => unmounted.push(surface),
+		unmountAsync: (surface: NativeFabricSurface) => {
+			asynchronouslyUnmounted.push(surface);
+
+			return cancellable(Promise.resolve(), 'unmount');
+		},
 	},
 };
 
@@ -91,6 +119,9 @@ afterEach(() => {
 	removed.length = 0;
 	cleared.length = 0;
 	unmounted.length = 0;
+	asynchronouslyUnmounted.length = 0;
+	cancelled.length = 0;
+	sizeHeightFloors.length = 0;
 });
 
 describe('native plugin capability scopes', () => {
@@ -125,6 +156,27 @@ describe('native plugin capability scopes', () => {
 		expect(removed).toEqual(['hook']);
 	});
 
+	test('scopes cached height floors to hooks owned by a plugin context', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.objc.classes', 'native.objc.hooks'],
+		});
+		const token = context.native.objc.hook('UIView', 'sizeThatFits:', {}, { cacheOnly: true });
+		const handle = context.native.objc.alloc('NSObject');
+		const args = [{ width: 375, height: 0 }];
+
+		token.setSizeHeightFloor(handle, args, 136);
+		token.removeSizeHeightFloor(handle, args);
+		expect(sizeHeightFloors).toEqual([
+			[handle, args, 136],
+			[handle, args],
+		]);
+		context.dispose();
+		expect(() => token.setSizeHeightFloor(handle, args, 136)).toThrow(
+			NativePluginDisposedError,
+		);
+	});
+
 	test('clears associations and denies calls after disposal', () => {
 		const context = createPluginContext({
 			...manifest,
@@ -157,7 +209,61 @@ describe('native plugin capability scopes', () => {
 
 		context.dispose();
 
-		expect(unmounted).toEqual([surface]);
+		expect(asynchronouslyUnmounted).toEqual([surface]);
+		expect(unmounted).toEqual([]);
+	});
+
+	test('gates asynchronous Objective-C operations by capability', async () => {
+		const denied = createPluginContext({ ...manifest, capabilities: ['native.objc.classes'] });
+		const deniedHandle = denied.native.objc.alloc('NSObject');
+
+		expect(() => denied.native.objc.batch([])).toThrow(NativePluginCapabilityError);
+		expect(() => denied.native.objc.snapshot(deniedHandle)).toThrow(
+			NativePluginCapabilityError,
+		);
+		expect(() => denied.native.objc.findViews(deniedHandle, 'UIView')).toThrow(
+			NativePluginCapabilityError,
+		);
+
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.objc.classes', 'native.objc.batch', 'native.objc.snapshot'],
+		});
+		const handle = context.native.objc.alloc('NSObject');
+
+		expect(await context.native.objc.batch([])).toEqual([]);
+		expect(await context.native.objc.snapshot(handle)).toEqual([]);
+		expect(await context.native.objc.findViews(handle, 'UIView')).toEqual([]);
+		context.dispose();
+	});
+
+	test('cancels pending Objective-C operations when a plugin context stops', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.objc.classes', 'native.objc.invokeAsync', 'native.objc.invoke'],
+		});
+		const handle = context.native.objc.alloc('NSObject');
+
+		context.native.objc.invokeAsync(handle, 'description', []);
+		context.native.objc.invokeSuperAsync(handle, 'NSObject', 'description', []);
+		context.dispose();
+
+		expect(cancelled).toEqual(['invoke', 'invokeSuper']);
+	});
+
+	test('tracks asynchronous Fabric surfaces and cancels pending operations on stop', async () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.objc.classes', 'native.fabric.async'],
+		});
+		const view = context.native.objc.alloc('UIView');
+		const surface = await context.native.fabric.mountAsync(view, 'TestSurface');
+
+		context.native.fabric.measureAsync(view);
+		context.dispose();
+
+		expect(asynchronouslyUnmounted).toEqual([surface]);
+		expect(cancelled).toContain('measure');
 	});
 });
 

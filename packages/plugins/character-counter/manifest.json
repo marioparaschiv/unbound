@@ -1,0 +1,22 @@
+{
+	"id": "unbound.character-counter",
+	"name": "Character Counter",
+	"description": "Shows the current message length and Discord's character limit in the composer.",
+	"authors": [
+		{
+			"name": "thororen",
+			"id": "848339671629299742"
+		},
+		{
+			"name": "creations",
+			"id": "209830981060788225"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}

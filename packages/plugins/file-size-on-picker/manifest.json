@@ -1,0 +1,18 @@
+{
+	"id": "unbound.file-size-on-picker",
+	"name": "File Size On Picker",
+	"description": "Shows file sizes on media picker thumbnails.",
+	"authors": [
+		{
+			"name": "mafu",
+			"id": "519760564755365888"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "ImageIcon",
+	"main": "index.tsx"
+}

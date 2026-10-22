@@ -1,0 +1,26 @@
+{
+	"id": "unbound.role-color-everywhere",
+	"name": "Role Color Everywhere",
+	"description": "Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.",
+	"authors": [
+		{ "name": "King Fish", "id": "499400512559382538" },
+		{ "name": "lewisakura", "id": "96269247411400704" },
+		{ "name": "AutumnVN", "id": "393694671383166998" },
+		{ "name": "Kyuuhachi", "id": "236588665420251137" },
+		{ "name": "jamesbt365", "id": "158567567487795200" },
+		{ "name": "fres", "id": "843448897737064448" },
+		{ "name": "Unbound Team", "id": "0" }
+	],
+	"version": "1.0.0",
+	"icon": "PaintPaletteIcon",
+	"capabilities": [
+		"native.objc.classes",
+		"native.objc.invoke",
+		"native.objc.invokeAsync",
+		"native.objc.snapshot",
+		"native.objc.ivars",
+		"native.objc.hooks"
+	],
+	"minNativePluginApi": "1.0.0",
+	"main": "index.tsx"
+}

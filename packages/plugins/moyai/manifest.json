@@ -1,0 +1,22 @@
+{
+	"id": "unbound.moyai",
+	"name": "Moyai",
+	"description": "Plays a thud when Moyai appears in the current channel or as a reaction.",
+	"authors": [
+		{
+			"name": "Cynosphere",
+			"id": "150745989836308480"
+		},
+		{
+			"name": "kmmiio99o",
+			"id": "879393496627306587"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "MicrophoneIcon",
+	"main": "index.tsx"
+}

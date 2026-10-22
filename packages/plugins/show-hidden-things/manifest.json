@@ -1,0 +1,18 @@
+{
+	"id": "unbound.show-hidden-things",
+	"name": "Show Hidden Things",
+	"description": "Displays hidden and moderator-only features regardless of permissions.",
+	"authors": [
+		{
+			"name": "Dolfies",
+			"id": "852892297661906993"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "EyeIcon",
+	"main": "index.tsx"
+}

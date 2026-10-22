@@ -1,0 +1,41 @@
+name: Plugins
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugins-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run plugins:validate
+      - run: bun run plugins:test
+      - run: bun run plugins:build
+      - run: bun run lint
+      - run: bun run fmt:check
+      - name: Download the latest loader IPA
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          releases="$(curl --fail --silent --show-error --retry 3 \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            'https://api.github.com/repos/unbound-app/loader-ios/releases?per_page=20')"
+          ipa_url="$(printf '%s' "$releases" | jq -er '[.[] | select(.draft == false) | .assets[] | select(.name == "Unbound.ipa")][0].browser_download_url')"
+          curl --fail --location --silent --show-error --retry 3 "$ipa_url" -o "$RUNNER_TEMP/Unbound.ipa"
+      - run: bun packages/plugins/scripts/sync-plugin-icons.ts "$RUNNER_TEMP/Unbound.ipa"
+      - run: bun run plugins:catalog
+      - run: git diff --exit-code -- packages/plugins/README.md packages/plugins/catalog.svg assets/plugins/icons

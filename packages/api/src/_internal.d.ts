@@ -30,12 +30,16 @@ export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'fon
 export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.objc.classes',
 	'native.objc.invoke',
+	'native.objc.invokeAsync',
+	'native.objc.batch',
+	'native.objc.snapshot',
 	'native.objc.ivars',
 	'native.objc.associations',
 	'native.objc.hooks',
 	'native.ffi.symbols',
 	'native.ffi.call',
 	'native.fabric.mount',
+	'native.fabric.async',
 ];
 export type ActionSheetProps = {
 	children?: ReactModule.ReactNode;
@@ -309,8 +313,19 @@ export type InternalToastOptions = {
 	date?: number;
 } & ToastOptions;
 export type NativeAssociationKey = NativeHandle;
+export type NativeBatchReference = {
+	readonly $nativeBatchResult: number;
+};
+export type NativeBatchStep = {
+	target: NativeObjectHandle | NativeBatchReference;
+	selector: string;
+	args: unknown[];
+};
 export type NativeCallOptions = {
 	thread?: NativeThreadPolicy;
+};
+export type NativeCancelablePromise<T> = Promise<T> & {
+	cancel(): void;
 };
 export type NativeClassHandle = NativeHandle;
 export type NativeFFIBridge = {
@@ -350,15 +365,35 @@ export type NativeFabricBridge = {
 		moduleName: string,
 		properties?: NativeSerializableObject,
 	): NativeFabricSurface;
+	mountAsync(
+		container: NativeObjectHandle,
+		moduleName: string,
+		properties?: NativeSerializableObject,
+	): NativeCancelablePromise<NativeFabricSurface>;
 	update(surface: NativeFabricSurface, properties: NativeSerializableObject): void;
+	updateAsync(
+		surface: NativeFabricSurface,
+		properties: NativeSerializableObject,
+	): NativeCancelablePromise<void>;
 	setSize(
 		surface: NativeFabricSurface,
 		minimumSize: NativeFabricSize,
 		maximumSize: NativeFabricSize,
 	): void;
+	setSizeAsync(
+		surface: NativeFabricSurface,
+		minimumSize: NativeFabricSize,
+		maximumSize: NativeFabricSize,
+	): NativeCancelablePromise<void>;
 	setFrame(surface: NativeFabricSurface, frame: NativeFabricFrame): void;
+	setFrameAsync(
+		surface: NativeFabricSurface,
+		frame: NativeFabricFrame,
+	): NativeCancelablePromise<void>;
 	measure(view: NativeObjectHandle): NativeFabricFrame;
+	measureAsync(view: NativeObjectHandle): NativeCancelablePromise<NativeFabricFrame>;
 	unmount(surface: NativeFabricSurface): void;
+	unmountAsync(surface: NativeFabricSurface): NativeCancelablePromise<void>;
 };
 export type NativeFabricFrame = {
 	x: number;
@@ -397,6 +432,8 @@ export type NativeHookToken = {
 	setReturnValue(self: NativeObjectHandle, args: unknown[], value: unknown): void;
 	removeReturnValue(self: NativeObjectHandle, args: unknown[]): void;
 	clearReturnValues(): void;
+	setSizeHeightFloor(self: NativeObjectHandle, args: unknown[], floor: number): void;
+	removeSizeHeightFloor(self: NativeObjectHandle, args: unknown[]): void;
 	remove(): void;
 };
 export type NativeObjCBridge = {
@@ -417,6 +454,21 @@ export type NativeObjCBridge = {
 		args: unknown[],
 		options?: NativeCallOptions,
 	): unknown;
+	invokeAsync(
+		handle: NativeObjectHandle,
+		selector: string,
+		args: unknown[],
+	): NativeCancelablePromise<unknown>;
+	batch(steps: readonly NativeBatchStep[]): NativeCancelablePromise<unknown[]>;
+	snapshot(
+		root: NativeObjectHandle,
+		options?: NativeViewSnapshotOptions,
+	): NativeCancelablePromise<NativeViewSnapshotNode[]>;
+	findViews(
+		root: NativeObjectHandle,
+		className: string,
+		options?: NativeViewSearchOptions,
+	): NativeCancelablePromise<NativeObjectHandle[]>;
 	invokeSuper(
 		handle: NativeObjectHandle,
 		currentClass: NativeClassHandle | string,
@@ -424,6 +476,12 @@ export type NativeObjCBridge = {
 		args: unknown[],
 		options?: NativeCallOptions,
 	): unknown;
+	invokeSuperAsync(
+		handle: NativeObjectHandle,
+		currentClass: NativeClassHandle | string,
+		selector: string,
+		args: unknown[],
+	): NativeCancelablePromise<unknown>;
 	getIvar(handle: NativeObjectHandle, name: string): unknown;
 	setIvar(handle: NativeObjectHandle, name: string, value: unknown): void;
 	createAssociationKey(): NativeAssociationKey;
@@ -507,6 +565,27 @@ export type NativeStructFields = {
 	[field: string]: NativeStructField;
 };
 export type NativeThreadPolicy = 'current' | 'main';
+export type NativeViewSearchOptions = {
+	maxDepth?: number;
+	maxVisited?: number;
+	maxResults?: number;
+	attachedOnly?: boolean;
+	stopAtMatch?: boolean;
+	direction?: 'ancestors' | 'descendants';
+};
+export type NativeViewSnapshotNode = {
+	view: NativeObjectHandle;
+	parent: number;
+	depth: number;
+	className: string;
+	frame: NativeFabricFrame;
+	text: string | null;
+	visible: boolean;
+};
+export type NativeViewSnapshotOptions = {
+	maxDepth?: number;
+	maxNodes?: number;
+};
 export type Navigation<T = any> = {
 	push: (route: string, params?: T) => void;
 	pop: () => void;

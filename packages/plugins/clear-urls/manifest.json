@@ -1,0 +1,22 @@
+{
+	"id": "unbound.clear-urls",
+	"name": "Clear URLs",
+	"description": "Removes tracking garbage from URLs before you send them.",
+	"authors": [
+		{
+			"name": "adryd",
+			"id": "0"
+		},
+		{
+			"name": "thororen",
+			"id": "848339671629299742"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "LinkIcon",
+	"main": "index.tsx"
+}

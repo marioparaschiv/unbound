@@ -1,0 +1,19 @@
+{
+	"name": "sticker-preview",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c"
+	},
+	"devDependencies": {
+		"@rollup/plugin-json": "^6.1.0",
+		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"react-native": "^0.83.0",
+		"rollup": "^4.62.2",
+		"rollup-plugin-iife": "^0.8.0",
+		"rollup-plugin-swc3": "^0.12.1"
+	}
+}

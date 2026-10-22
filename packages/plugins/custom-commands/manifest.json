@@ -1,0 +1,24 @@
+{
+	"id": "unbound.custom-commands",
+	"name": "Custom Commands",
+	"description": "Create slash commands that send saved text, images, and videos.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "Luny",
+			"id": "821472922140803112"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "KeyboardIcon",
+	"main": "index.tsx",
+	"capabilities": ["native.objc.classes", "native.objc.invoke"],
+	"minNativePluginApi": "1.0.0"
+}

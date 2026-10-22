@@ -1,0 +1,18 @@
+{
+	"id": "unbound.preview-message",
+	"name": "Preview Message",
+	"description": "Preview a message before sending it.",
+	"authors": [
+		{
+			"name": "Syncxv",
+			"id": "549244932213309442"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "EyeIcon",
+	"main": "index.tsx"
+}

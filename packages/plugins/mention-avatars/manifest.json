@@ -1,0 +1,32 @@
+{
+	"id": "unbound.mention-avatars",
+	"name": "Mention Avatars",
+	"description": "Shows user avatars and role icons inside mentions.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "SerStars",
+			"id": "861631850681729045"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "UserCircleIcon",
+	"capabilities": [
+		"native.objc.classes",
+		"native.objc.invoke",
+		"native.objc.invokeAsync",
+		"native.objc.batch",
+		"native.objc.snapshot",
+		"native.objc.ivars",
+		"native.objc.hooks"
+	],
+	"minNativePluginApi": "1.0.0",
+	"main": "index.ts"
+}

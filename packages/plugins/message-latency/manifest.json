@@ -1,0 +1,30 @@
+{
+	"id": "unbound.message-latency",
+	"name": "Message Latency",
+	"description": "Marks messages that took at least the selected threshold to send.",
+	"authors": [
+		{
+			"name": "arHSM",
+			"id": "841509053422632990"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "TimerIcon",
+	"capabilities": [
+		"native.objc.classes",
+		"native.objc.invoke",
+		"native.objc.invokeAsync",
+		"native.objc.batch",
+		"native.objc.snapshot",
+		"native.objc.ivars",
+		"native.objc.hooks",
+		"native.fabric.mount",
+		"native.fabric.async"
+	],
+	"minNativePluginApi": "1.0.0",
+	"main": "index.tsx"
+}

@@ -1,0 +1,22 @@
+{
+	"id": "unbound.reviewdb",
+	"name": "ReviewDB",
+	"description": "Leave reviews on other users' profiles and see what others think of you.",
+	"authors": [
+		{
+			"name": "mantikafasi",
+			"id": "287555395151593473"
+		},
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "StarIcon",
+	"main": "index.tsx"
+}

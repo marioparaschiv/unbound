@@ -1,0 +1,22 @@
+{
+	"id": "unbound.text-replace",
+	"name": "Text Replace",
+	"description": "Replace text in messages before you send them.",
+	"authors": [
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "TheKodeToad",
+			"id": "706152404072267788"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}

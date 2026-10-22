@@ -1,0 +1,14 @@
+{
+	"id": "unbound.fix-gif-download",
+	"name": "Fix GIF Downloads",
+	"description": "Save Discord GIFs as GIF files instead of videos.",
+	"authors": [
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "GifIcon",
+	"main": "index.ts"
+}

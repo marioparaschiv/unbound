@@ -1,0 +1,22 @@
+{
+	"name": "message-link-embeds",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Embeds previews of messages that link to other Discord messages.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c",
+		"test": "bun test src/animated-media.test.ts src/link-targets.test.ts src/reaction-state.test.ts src/surface-layout.test.ts"
+	},
+	"devDependencies": {
+		"@rollup/plugin-json": "^6.1.0",
+		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-plugins/rollup-path-aliases": "workspace:*",
+		"react-native": "^0.83.0",
+		"rollup": "^4.62.2",
+		"rollup-plugin-iife": "^0.8.0",
+		"rollup-plugin-swc3": "^0.12.1"
+	}
+}

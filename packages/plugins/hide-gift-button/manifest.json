@@ -1,0 +1,18 @@
+{
+	"id": "unbound.hide-gift-button",
+	"name": "Hide Gift Button",
+	"description": "Hide the gift button from the chat composer.",
+	"authors": [
+		{
+			"name": "ssense",
+			"id": "0"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "GiftIcon",
+	"main": "index.ts"
+}

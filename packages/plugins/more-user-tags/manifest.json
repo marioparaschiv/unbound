@@ -1,0 +1,42 @@
+{
+	"id": "unbound.more-user-tags",
+	"name": "More User Tags",
+	"description": "Adds tags for webhooks and moderative roles.",
+	"authors": [
+		{
+			"name": "Cynosphere",
+			"id": "150745989836308480"
+		},
+		{
+			"name": "sunnie",
+			"id": "406028027768733696"
+		},
+		{
+			"name": "RyanCaoDev",
+			"id": "952235800110694471"
+		},
+		{
+			"name": "LordElias",
+			"id": "319460781567639554"
+		},
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "UserPlusIcon",
+	"capabilities": [
+		"native.objc.classes",
+		"native.objc.invoke",
+		"native.objc.invokeAsync",
+		"native.objc.associations",
+		"native.objc.hooks"
+	],
+	"minNativePluginApi": "1.0.0",
+	"main": "index.tsx"
+}

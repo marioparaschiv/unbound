@@ -1,0 +1,27 @@
+{
+	"id": "unbound.shiki-codeblocks",
+	"name": "Shiki Codeblocks",
+	"description": "Highlights code blocks with VS Code-style syntax colors.",
+	"authors": [
+		{
+			"name": "Vap0r1ze",
+			"id": "454072114492866560"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"capabilities": [
+		"native.objc.classes",
+		"native.objc.invoke",
+		"native.objc.batch",
+		"native.objc.snapshot",
+		"native.objc.ivars",
+		"native.objc.hooks"
+	],
+	"minNativePluginApi": "1.0.0",
+	"version": "1.0.0",
+	"icon": "TextIcon",
+	"main": "index.tsx"
+}

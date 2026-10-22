@@ -1,5 +1,8 @@
 export type {
 	NativeAssociationKey,
+	NativeBatchReference,
+	NativeBatchStep,
+	NativeCancelablePromise,
 	NativeCallOptions,
 	NativeClassHandle,
 	NativeFabricBridge,
@@ -25,6 +28,9 @@ export type {
 	NativePointer,
 	NativeStruct,
 	NativeThreadPolicy,
+	NativeViewSnapshotNode,
+	NativeViewSnapshotOptions,
+	NativeViewSearchOptions,
 	PluginContext,
 } from '@unbound-app/types/native';
 export {

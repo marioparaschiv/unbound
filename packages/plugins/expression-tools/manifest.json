@@ -1,0 +1,26 @@
+{
+	"id": "unbound.expression-tools",
+	"name": "Expression Tools",
+	"description": "Useful tools for custom emojis and stickers.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "Nuckyz",
+			"id": "235834946571337729"
+		},
+		{
+			"name": "Amelia",
+			"id": "1098234477626544180"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "ReactionIcon",
+	"main": "index.tsx"
+}

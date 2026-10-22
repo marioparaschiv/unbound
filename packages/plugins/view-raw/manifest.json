@@ -1,0 +1,30 @@
+{
+	"id": "unbound.view-raw",
+	"name": "View Raw",
+	"description": "View and copy raw data for messages, channels, guilds, and user profiles.",
+	"authors": [
+		{
+			"name": "King Fish",
+			"id": "499400512559382538"
+		},
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "rad",
+			"id": "610945092504780823"
+		},
+		{
+			"name": "lillith <3",
+			"id": "799319081723232267"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "ChevronLargeRightIcon",
+	"main": "index.tsx"
+}

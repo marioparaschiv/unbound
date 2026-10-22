@@ -5,7 +5,13 @@
 		"./node_modules/@marioparaschiv/oxc-config/react.json",
 		"./node_modules/@marioparaschiv/oxc-config/jsdoc.json"
 	],
-	"ignorePatterns": ["dist", "*.gen.ts", "packages/api/src/**", "packages/cli/templates/**"],
+	"ignorePatterns": [
+		"dist",
+		"*.gen.ts",
+		"packages/api/src/**",
+		"packages/cli/templates/**",
+		"packages/plugins/**"
+	],
 	"overrides": [
 		{
 			"files": ["packages/client/src/api/metro/**", "packages/types/typings/components.ts"],

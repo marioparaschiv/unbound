@@ -2,7 +2,10 @@
 
 export type {
 	NativeAssociationKey,
+	NativeBatchReference,
+	NativeBatchStep,
 	NativeCallOptions,
+	NativeCancelablePromise,
 	NativeClassHandle,
 	NativeFFIBridge,
 	NativeFFISignature,
@@ -27,6 +30,9 @@ export type {
 	NativePointer,
 	NativeStruct,
 	NativeThreadPolicy,
+	NativeViewSearchOptions,
+	NativeViewSnapshotNode,
+	NativeViewSnapshotOptions,
 	PluginContext,
 } from './_internal';
 import type { NativePlatformBridge, NativePluginCapability } from './_internal';

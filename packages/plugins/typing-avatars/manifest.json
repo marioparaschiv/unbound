@@ -1,0 +1,22 @@
+{
+	"id": "unbound.typing-avatars",
+	"name": "Typing Avatars",
+	"description": "Shows the avatars of people typing in the channel.",
+	"authors": [
+		{
+			"name": "zt",
+			"id": "289556910426816513"
+		},
+		{
+			"name": "sadan",
+			"id": "521819891141967883"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "KeyboardIcon",
+	"main": "index.tsx"
+}

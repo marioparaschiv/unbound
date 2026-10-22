@@ -1,0 +1,30 @@
+{
+	"id": "unbound.no-reply-mention",
+	"name": "No Reply Mention",
+	"description": "Disable reply mentions by default.",
+	"authors": [
+		{
+			"name": "DustyAngel47",
+			"id": "714583473804935238"
+		},
+		{
+			"name": "rae",
+			"id": "1398136199503282277"
+		},
+		{
+			"name": "pylix",
+			"id": "492949202121261067"
+		},
+		{
+			"name": "outfoxxed",
+			"id": "837425748435796060"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "ic_swipe_reply_24px",
+	"main": "index.tsx"
+}

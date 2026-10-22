@@ -1,0 +1,18 @@
+{
+	"id": "unbound.gif-paste",
+	"name": "GIF Paste",
+	"description": "Makes GIF picker selections paste a link into the chat box instead of sending immediately.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "GifIcon",
+	"main": "index.ts"
+}

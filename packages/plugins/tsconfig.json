@@ -1,0 +1,43 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"lib": ["ESNext"],
+		"jsx": "react-jsx",
+		"strict": true,
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+		"allowImportingTsExtensions": true,
+		"paths": {
+			"@role-color-everywhere/*": ["./role-color-everywhere/src/*"],
+			"@moyai/*": ["./moyai/src/*"],
+			"@channel-typing-indicators/*": ["./channel-typing-indicators/src/*"],
+			"@custom-commands/*": ["./custom-commands/src/*"],
+			"@shiki-codeblocks/*": ["./shiki-codeblocks/src/*"],
+			"@character-counter/*": ["./character-counter/src/*"],
+			"@reaction-avatars/*": ["./reaction-avatars/src/*"],
+			"@mention-avatars/*": ["./mention-avatars/src/*"],
+			"@fix-gif-download/*": ["./fix-gif-download/src/*"],
+			"@shared/*": ["./shared/*"],
+			"@text-replace/*": ["./text-replace/src/*"],
+			"@translate/*": ["./translate/src/*"],
+			"@reviewdb/*": ["./reviewdb/src/*"],
+			"@pronoundb/*": ["./pronoundb/src/*"],
+			"@no-blocked-messages/*": ["./no-blocked-messages/src/*"],
+			"@show-me-your-name/*": ["./show-me-your-name/src/*"],
+			"@force-owner-crown/*": ["./force-owner-crown/src/*"],
+			"@clear-urls/*": ["./clear-urls/src/*"],
+			"@typing-avatars/*": ["./typing-avatars/src/*"],
+			"@no-reply-mention/*": ["./no-reply-mention/src/*"],
+			"@more-user-tags/*": ["./more-user-tags/src/*"],
+			"@preview-message/*": ["./preview-message/src/*"],
+			"@message-link-embeds/*": ["./message-link-embeds/src/*"],
+			"@message-latency/*": ["./message-latency/src/*"],
+			"@scripts/*": ["./scripts/*"]
+		},
+		"noEmit": true
+	},
+	"include": ["*", "shared", "scripts"]
+}

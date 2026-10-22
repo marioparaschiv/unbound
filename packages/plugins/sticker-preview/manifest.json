@@ -1,0 +1,18 @@
+{
+	"id": "unbound.sticker-preview",
+	"name": "Sticker Preview",
+	"description": "Displays a preview of a selected sticker instead of sending it immediately.",
+	"authors": [
+		{
+			"name": "Im_Banana",
+			"id": "635250116688871425"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "StickerIcon",
+	"main": "index.tsx"
+}

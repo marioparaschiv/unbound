@@ -3,6 +3,8 @@ pre-commit:
     format:
       glob: '*.{ts,tsx,js,mjs,json}'
       run: bun run fmt:check
+    plugins:
+      run: bun run plugins:validate
 
 commit-msg:
   commands:

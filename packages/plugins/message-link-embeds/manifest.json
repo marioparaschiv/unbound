@@ -1,0 +1,37 @@
+{
+	"id": "unbound.message-link-embeds",
+	"name": "Message Link Embeds",
+	"description": "Adds previews to messages that link to other Discord messages.",
+	"authors": [
+		{
+			"name": "sunnie",
+			"id": "406028027768733696"
+		},
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "RyanCaoDev",
+			"id": "952235800110694471"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"capabilities": [
+		"native.objc.classes",
+		"native.objc.invoke",
+		"native.objc.invokeAsync",
+		"native.objc.batch",
+		"native.objc.snapshot",
+		"native.objc.ivars",
+		"native.objc.hooks",
+		"native.fabric.mount"
+	],
+	"version": "1.0.0",
+	"minNativePluginApi": "1.0.0",
+	"icon": "LinkIcon",
+	"main": "index.tsx"
+}

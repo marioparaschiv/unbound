@@ -166,7 +166,9 @@ function patchRendererConfig() {
 
 	Object.defineProperty(module, 'SETTING_RENDERER_CONFIG', {
 		configurable: true,
-		set: (value) => (current = value),
+		set: (value) => {
+			current = value;
+		},
 		get: () => ({ ...current, ...allEntries() }),
 	});
 

@@ -1,0 +1,22 @@
+{
+	"id": "unbound.show-timeout-duration",
+	"name": "Show Timeout Duration",
+	"description": "Shows how much longer a user's timeout will last.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "Sqaaakoi",
+			"id": "259558259491340288"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "TimerIcon",
+	"main": "index.tsx"
+}

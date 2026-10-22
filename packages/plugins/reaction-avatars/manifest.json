@@ -1,0 +1,41 @@
+{
+	"id": "unbound.reaction-avatars",
+	"name": "Reaction Avatars",
+	"description": "Shows the people who reacted beside each message reaction.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "Kanna",
+			"id": "317728561106518019"
+		},
+		{
+			"name": "newwares",
+			"id": "421405303951851520"
+		},
+		{
+			"name": "paige",
+			"id": "1375697625864601650"
+		},
+		{
+			"name": "Unbound Team",
+			"id": "0"
+		}
+	],
+	"capabilities": [
+		"native.objc.classes",
+		"native.objc.invoke",
+		"native.objc.invokeAsync",
+		"native.objc.batch",
+		"native.objc.snapshot",
+		"native.objc.ivars",
+		"native.objc.hooks",
+		"native.fabric.mount"
+	],
+	"minNativePluginApi": "1.0.0",
+	"version": "1.0.0",
+	"icon": "ReactionIcon",
+	"main": "index.tsx"
+}
