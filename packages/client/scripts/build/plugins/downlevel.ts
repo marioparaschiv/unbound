@@ -5,7 +5,7 @@ import type { Plugin } from 'rolldown';
 import { join } from 'node:path';
 
 /**
- * @description Lowers bundled code to the `.swcrc` env targets, which older Hermes needs for classes and async functions.
+ * @description Lowers bundled code to the `.swcrc` env targets for older Hermes, and wraps it so its helpers stay scoped.
  * @param root The package root holding the `.swcrc` whose `env` is applied.
  * @param code The bundled code to lower.
  * @returns The lowered code, wrapped in an arrow function so swc's helpers stay out of Discord's globals.
