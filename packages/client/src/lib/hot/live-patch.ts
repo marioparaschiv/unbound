@@ -418,7 +418,10 @@ function renderInstance(instance: Instance, props: Props, secondArg?: SecondArg)
 	if (!render) return null;
 
 	// React empties the work-in-progress hook list before the first pass; a re-render pass keeps it.
-	const strict = fiber.memoizedState !== null && alternate?.memoizedState != null;
+	const strict =
+		fiber.memoizedState !== null &&
+		alternate?.memoizedState !== null &&
+		alternate?.memoizedState !== undefined;
 	const work = fiber.memoizedState === null ? fiber : alternate;
 
 	if (!strict) {

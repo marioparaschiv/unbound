@@ -28,7 +28,7 @@ function splitTopLevel(input: string): string[] | null {
 	let start = 0;
 
 	for (let i = 0, len = input.length; i < len; i++) {
-		const char = input[i];
+		const char = input.charAt(i);
 
 		if (inString) {
 			// Skip an escaped character (e.g. Hermes escapes an inner quote as \').

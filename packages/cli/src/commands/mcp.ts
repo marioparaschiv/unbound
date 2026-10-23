@@ -30,7 +30,7 @@ export const mcpCommand: Command = command(
 			usage: ['ubd mcp [flags]', ...tools.map((tool) => `ubd mcp ${tool.name} --help`)],
 		},
 	},
-	async (parsed) => {
+	(parsed) => {
 		const context = createContext(parsed.flags.port);
 
 		const server = new McpServer({ name: 'ubd', version: '1.0.0' });
@@ -45,7 +45,7 @@ export const mcpCommand: Command = command(
 
 		const transport = new StdioServerTransport();
 
-		await server.connect(transport);
+		void server.connect(transport);
 	},
 );
 

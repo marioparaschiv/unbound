@@ -397,8 +397,9 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	/**
 	 * @description Enables an addon, persisting its state and starting it if not already running, and emits `enabled`.
 	 * @param entity The addon to enable, as its id or the entity itself.
+	 * @returns Nothing here; subclasses that enable asynchronously return a promise.
 	 */
-	enable(entity: AddonResolveable) {
+	enable(entity: AddonResolveable): void | Promise<void> {
 		const resolved = this.resolve(entity);
 
 		if (!resolved) return;

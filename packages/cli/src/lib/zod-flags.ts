@@ -38,7 +38,7 @@ export function fieldToFlag(field: z.ZodType): CleyeFlag {
 			defaultValue = def.defaultValue;
 		}
 
-		def = def.innerType.def as FieldDef;
+		def = def.innerType.def;
 	}
 
 	const type = FLAG_CONSTRUCTORS[def.type as keyof typeof FLAG_CONSTRUCTORS] ?? String;

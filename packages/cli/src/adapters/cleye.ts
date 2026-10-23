@@ -57,7 +57,7 @@ export function toCleyeCommand(definition: CommandDefinition<z.ZodObject<z.ZodRa
 						}
 					: void 0,
 		},
-		async (parsed) => {
+		(parsed) => {
 			const { json, ...flagInput } = parsed.flags;
 			const input: CommandInput = { ...flagInput };
 
@@ -65,7 +65,7 @@ export function toCleyeCommand(definition: CommandDefinition<z.ZodObject<z.ZodRa
 				input[name] = parsed._[name as keyof typeof parsed._];
 			}
 
-			await run(definition, input, positionalNames[0], Boolean(json));
+			void run(definition, input, positionalNames[0], Boolean(json));
 		},
 	);
 }

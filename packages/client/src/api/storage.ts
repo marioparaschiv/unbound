@@ -178,7 +178,7 @@ export function clear(store: string) {
 export function getStore(store: string) {
 	return {
 		set: (key: string, value: SettingsValue) => set(store, key, value),
-		get: <T>(key: string, def: T): Widen<T> => get(store, key, def) as Widen<T>,
+		get: <T>(key: string, def: T): Widen<T> => get(store, key, def),
 		toggle: (key: string, def: boolean) => toggle(store, key, def),
 		remove: (key: string) => remove(store, key),
 		clear: () => clear(store),
@@ -231,7 +231,7 @@ export function useSettingsStore(
 
 	return {
 		set: (key: string, value: SettingsValue) => set(store, key, value),
-		get: <T>(key: string, def: T): Widen<T> => get(store, key, def) as Widen<T>,
+		get: <T>(key: string, def: T): Widen<T> => get(store, key, def),
 		toggle: (key: string, def: boolean) => toggle(store, key, def),
 		remove: (key: string) => remove(store, key),
 	};
@@ -247,7 +247,10 @@ export async function persist() {
 	await fs.write('Unbound/settings.json', payload);
 }
 
-Events.on('changed', debounce(persist, 100));
+Events.on(
+	'changed',
+	debounce(() => void persist(), 100),
+);
 
 export default {
 	addListener,

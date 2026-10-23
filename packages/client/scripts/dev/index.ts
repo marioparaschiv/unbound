@@ -10,7 +10,7 @@ const { hotBuild } = await import('../build');
 const { startServer } = await import('../serve');
 const refresh = await import('../serve/refresh');
 
-const engine = await hotBuild(refresh.deliver);
+const engine = await hotBuild((update) => void refresh.deliver(update));
 
 refresh.attach(engine);
 
@@ -18,11 +18,13 @@ const server = startServer(false);
 
 logger.log('Press Ctrl+C to stop');
 
-process.on('SIGINT', async () => {
+async function shutdown() {
 	logger.newLine();
 	logger.log('Shutting down...');
 	await engine.close();
 	server.stop();
 	logger.success('Stopped');
 	process.exit(0);
-});
+}
+
+process.on('SIGINT', () => void shutdown());

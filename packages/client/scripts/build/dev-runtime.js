@@ -40,7 +40,8 @@ globalThis.__rolldown_runtime__ = (() => {
 	}
 
 	function toESM(mod, isNodeMode) {
-		const target = mod == null ? {} : Object.create(Object.getPrototypeOf(mod));
+		const target =
+			mod === null || mod === undefined ? {} : Object.create(Object.getPrototypeOf(mod));
 
 		if (isNodeMode || !mod || !mod.__esModule || !Object.hasOwn(mod, 'default')) {
 			Object.defineProperty(target, 'default', { value: mod, enumerable: true });

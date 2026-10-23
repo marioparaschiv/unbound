@@ -207,6 +207,8 @@ function watchBuild() {
 			case 'ERROR':
 				logger.error('Build failed:', event.error);
 				break;
+			default:
+				break;
 		}
 	});
 
