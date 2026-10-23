@@ -5,8 +5,8 @@ import {
 import { z } from 'zod';
 
 import endpoint, { requireParam } from '~/lib/api/endpoint';
+import { addMaintainer } from '~/lib/maintainers';
 import { requireCaller } from '~/lib/api/caller';
-import { addMaintainer } from '~/lib/addons';
 
 const addMaintainerEndpoint = endpoint(
 	{ body: addMaintainerRequestSchema, query: z.undefined(), response: maintainersResponseSchema },
