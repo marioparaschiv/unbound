@@ -1,4 +1,5 @@
 import type { AdminUsersSearch } from '@unbound-app/contracts/admin';
+import type { UserSummary } from '@unbound-app/contracts/account';
 import { and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -88,4 +89,29 @@ export async function listAdminUsers(
 	return { ...page, items };
 }
 
-export default { queryAdminUsers, listAdminUsers };
+/**
+ * @description Looks up the user a staff filter names, e.g. the admin addons list's maintainer.
+ * Requires `user:list`.
+ * @param ctx The application context.
+ * @param caller The moderator.
+ * @param id The user id.
+ * @returns The user's id, name and image, or `undefined` when no user has the id.
+ */
+export async function getUserSummary(
+	ctx: AppContext,
+	caller: Caller,
+	id: string,
+): Promise<UserSummary | undefined> {
+	requirePermission(caller, { user: ['list'] });
+
+	const row = await ctx.db.query.user.findFirst({
+		where: { id },
+		columns: { id: true, name: true, image: true },
+	});
+
+	if (!row) return;
+
+	return { id: row.id, name: row.name, image: row.image ?? null };
+}
+
+export default { queryAdminUsers, listAdminUsers, getUserSummary };

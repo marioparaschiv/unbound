@@ -1,0 +1,1 @@
+CREATE INDEX `addon_delisted_createdAt_idx` ON `addon` (`created_at`,`id`) WHERE "addon"."delisted_at" is not null;
