@@ -1,8 +1,3 @@
-// A strict keep-a-changelog subset; `tests/changelog.test.ts` pins every rule. Text before the first
-// `## ` is a preamble, and `## [Unreleased]` is ignored.
-
-// A release body holds `### Added|Changed|Fixed|Removed`, `- `/`* ` bullets with indented continuation
-// lines, blank lines and link definitions. Anything else is an issue.
 import { z } from 'zod';
 
 import { semverSchema } from './manifest';
@@ -49,7 +44,6 @@ const MAX_ITEMS = 50;
 const MAX_ITEM_LENGTH = 500;
 const SECTION_NAMES = 'Added, Changed, Fixed or Removed';
 
-/** keep-a-changelog headings this subset folds into another type. */
 const FOLDED_HEADINGS: Record<string, string> = {
 	security: 'Fixed',
 	deprecated: 'Changed',
@@ -68,7 +62,6 @@ type Item = {
 type OpenSection = {
 	line: number;
 	heading: string;
-	/** `undefined` for a heading already reported as invalid, whose items are dropped. */
 	type: ChangeType | undefined;
 	items: Item[];
 };
@@ -76,7 +69,6 @@ type OpenSection = {
 type OpenRelease = {
 	version: string;
 	date: string | null;
-	/** `false` for a release already reported as invalid, whose body is checked but not kept. */
 	keep: boolean;
 	sections: Map<ChangeType, string[]>;
 };
@@ -88,7 +80,6 @@ type Parser = {
 	block: 'preamble' | 'unreleased' | 'release';
 	release: OpenRelease | undefined;
 	section: OpenSection | undefined;
-	/** The last line was an item or its continuation, so an indented line continues it. */
 	inItem: boolean;
 };
 

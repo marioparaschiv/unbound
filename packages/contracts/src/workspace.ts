@@ -163,8 +163,6 @@ export function findWorkspaceRoot(
 	return void 0;
 }
 
-// Handles both frames `findWorkspaceRoot` walks: absolute disk paths stop at `/` or `C:\`, relative
-// tree paths stop after `''`.
 function getParentDir(dir: string): string | undefined {
 	if (dir === '') return;
 

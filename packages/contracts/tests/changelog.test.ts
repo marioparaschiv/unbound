@@ -44,7 +44,6 @@ anything goes in Unreleased
 type IssueCase = {
 	rule: string;
 	text: string;
-	/** Each issue's line and a phrase its message must contain. */
 	issues: [number, string][];
 };
 
