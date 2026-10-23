@@ -4,8 +4,8 @@ import { useForm } from '@tanstack/react-form';
 import { toast } from 'sonner';
 
 import getApiErrorMessage from '~/lib/api/error-message';
-import { submitAddonEdit } from '~/lib/admin-functions';
 import type { AdminAddonView } from '~/lib/admin-addon';
+import { submitAddonEdit } from '~/lib/admin-functions';
 
 /**
  * @description Creates the addon settings form, which saves through `submitAddonEdit` and reloads the page's data.

@@ -1,5 +1,5 @@
-import { Field, FieldContent, FieldDescription, FieldLabel } from '~/components/ui/field';
 import type { AddonSettingsForm } from '~/components/admin/addon-settings/use-addon-settings-form';
+import { Field, FieldContent, FieldDescription, FieldLabel } from '~/components/ui/field';
 import SettingsPanel from '~/components/admin/addon-settings/settings-panel';
 import Switch from '~/components/ui/switch';
 

@@ -1,5 +1,5 @@
-import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
 import type { AddonSettingsForm } from '~/components/admin/addon-settings/use-addon-settings-form';
+import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
 import SettingsPanel from '~/components/admin/addon-settings/settings-panel';
 import Input from '~/components/ui/input';
 
@@ -17,7 +17,6 @@ function SourcePanel({ form }: SourcePanelProps) {
 						<Input
 							id='edit-repository'
 							placeholder='owner/name'
-							className='md:max-w-sm'
 							value={field.state.value ?? ''}
 							onChange={(event) =>
 								field.handleChange(event.target.value.trim() || null)

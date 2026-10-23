@@ -46,7 +46,7 @@ function PinnableField({
 			<div className='flex items-center gap-2 min-h-6'>
 				<FieldLabel htmlFor={id}>{label}</FieldLabel>
 				<Tag variant={pinned ? 'primary' : 'default'}>
-					{pinned ? 'Override' : 'Manifest'}
+					{pinned ? 'Overridden' : 'From manifest'}
 				</Tag>
 				<Button
 					type='button'

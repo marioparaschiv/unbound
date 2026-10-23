@@ -1,8 +1,8 @@
 import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router';
 import { IconArrowLeft } from '@tabler/icons-react';
 
-import SubmissionHistory from '~/components/admin/submission-history';
 import AddonSettingsForm from '~/components/admin/addon-settings/addon-settings-form';
+import SubmissionHistory from '~/components/admin/submission-history';
 import DetailSection from '~/components/admin/detail-section';
 import AddonActions from '~/components/admin/addon-actions';
 import { formatDate } from '~/components/admin/format-date';
