@@ -7,9 +7,11 @@ import { eq } from 'drizzle-orm';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { addMaintainer, removeMaintainer, transferAddon } from '~/lib/maintainers';
 import { createSubmission, finalizeSubmission } from '~/lib/submissions';
 import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { listEvents, queryEvents } from '~/lib/moderation-events';
+import { delistAddon, relistAddon } from '~/lib/addons';
 import { moderationEvent, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
@@ -18,7 +20,7 @@ import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 
 import { createTestContext, signInWithDiscord, snowflakeAt } from './helpers/context';
-import { manifest } from './helpers/addons';
+import { manifest, seedApprovedAddon } from './helpers/addons';
 
 type PlanStep = {
 	detail: string;
@@ -180,6 +182,92 @@ describe('review decisions', () => {
 				reason: 'Add a README.',
 				createdAt: requestedAt.toISOString(),
 				data: { submissionId: first, decision: 'changes_requested' },
+			},
+		]);
+	});
+});
+
+describe('addon moderation', () => {
+	test('delist and relist each record one event, and a repeated delist records none', async () => {
+		const owner = await signUp();
+		const moderator = await signUp('moderator');
+
+		await seedApprovedAddon(ctx, owner.userId, manifest('events.delist'));
+
+		const delistedAt = tick();
+		const delisted = delistAddon(ctx, moderator.caller, 'events.delist');
+
+		tick();
+
+		const again = delistAddon(ctx, moderator.caller, 'events.delist');
+
+		relistAddon(ctx, moderator.caller, 'events.delist');
+
+		const events = await timeline(moderator, addonSubject('events.delist'));
+
+		expect(again).toEqual(delisted);
+		expect(delisted.addon.delistedAt).toBe(delistedAt.toISOString());
+		expect(events.map((event) => [event.kind, event.actor?.id])).toEqual([
+			['addon.relisted', moderator.userId],
+			['addon.delisted', moderator.userId],
+		]);
+	});
+
+	test('adding and removing a maintainer each record the members before and after', async () => {
+		const owner = await signUp();
+		const helper = await signUp();
+		const moderator = await signUp('moderator');
+
+		await seedApprovedAddon(ctx, owner.userId, manifest('events.members'));
+		await addMaintainer(ctx, owner.caller, 'events.members', helper.userId);
+		await addMaintainer(ctx, owner.caller, 'events.members', helper.userId);
+		await removeMaintainer(ctx, owner.caller, 'events.members', helper.userId);
+
+		const solo = [{ userId: owner.userId, role: 'owner' }];
+		const pair = [...solo, { userId: helper.userId, role: 'maintainer' }];
+
+		expect(await timeline(moderator, addonSubject('events.members'))).toMatchObject([
+			{
+				kind: 'addon.maintainers_changed',
+				actor: { id: owner.userId },
+				data: { before: pair, after: solo },
+			},
+			{
+				kind: 'addon.maintainers_changed',
+				actor: { id: owner.userId },
+				data: { before: solo, after: pair },
+			},
+		]);
+	});
+
+	test('a transfer records one event; refused changes record none', async () => {
+		const owner = await signUp();
+		const successor = await signUp();
+		const admin = await signUp('admin');
+
+		await seedApprovedAddon(ctx, owner.userId, manifest('events.transfer'));
+
+		expect(
+			await rejection(removeMaintainer(ctx, owner.caller, 'events.transfer', owner.userId)),
+		).toMatchObject({ code: 'last_owner' });
+
+		await transferAddon(ctx, admin.caller, 'events.transfer', {
+			userId: successor.userId,
+			keepPreviousOwner: false,
+		});
+		await transferAddon(ctx, admin.caller, 'events.transfer', {
+			userId: successor.userId,
+			keepPreviousOwner: false,
+		});
+
+		expect(await timeline(admin, addonSubject('events.transfer'))).toMatchObject([
+			{
+				kind: 'addon.maintainers_changed',
+				actor: { id: admin.userId },
+				data: {
+					before: [{ userId: owner.userId, role: 'owner' }],
+					after: [{ userId: successor.userId, role: 'owner' }],
+				},
 			},
 		]);
 	});

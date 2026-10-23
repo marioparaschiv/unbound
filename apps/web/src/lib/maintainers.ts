@@ -3,9 +3,13 @@ import type {
 	MaintainersResponse,
 	TransferAddonRequest,
 } from '@unbound-app/contracts/addons';
-import { and, eq, ne } from 'drizzle-orm';
+import type { MaintainerEntry } from '@unbound-app/contracts/admin';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 
+import type { ActionMeta } from '~/lib/moderation-events';
+import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
+import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { addonMaintainer } from '~/db/schema';
@@ -40,6 +44,73 @@ export function toMaintainers(rows: MaintainerRow[]): Maintainer[] {
 				]
 			: [],
 	);
+}
+
+function selectMembers(tx: Transaction, addonId: string): MaintainerEntry[] {
+	return tx
+		.select({ userId: addonMaintainer.userId, role: addonMaintainer.role })
+		.from(addonMaintainer)
+		.where(eq(addonMaintainer.addonId, addonId))
+		.orderBy(desc(addonMaintainer.role), asc(addonMaintainer.createdAt))
+		.all();
+}
+
+/**
+ * @description The one writer of an addon's maintainers: makes the member list exactly `next`,
+ * keeping each remaining member's join date, and records `addon.maintainers_changed` when anything
+ * changed.
+ * @param tx The action's transaction.
+ * @param addonId The addon id.
+ * @param next Every member after the change, each user once.
+ * @param meta Who made the change, when and why.
+ */
+export function replaceMaintainers(
+	tx: Transaction,
+	addonId: string,
+	next: MaintainerEntry[],
+	meta: ActionMeta,
+): void {
+	if (!next.some((member) => member.role === 'owner')) {
+		throw new ApiError(
+			'last_owner',
+			`${addonId} needs another owner before its only owner can leave.`,
+		);
+	}
+
+	const before = selectMembers(tx, addonId);
+	const roles = new Map(before.map((member) => [member.userId, member.role]));
+	const kept = new Set(next.map((member) => member.userId));
+	const removed = before
+		.filter((member) => !kept.has(member.userId))
+		.map((member) => member.userId);
+	const changed = next.filter((member) => roles.get(member.userId) !== member.role);
+
+	if (removed.length === 0 && changed.length === 0) return;
+
+	if (removed.length > 0) {
+		tx.delete(addonMaintainer)
+			.where(
+				and(eq(addonMaintainer.addonId, addonId), inArray(addonMaintainer.userId, removed)),
+			)
+			.run();
+	}
+
+	for (const member of changed) {
+		tx.insert(addonMaintainer)
+			.values({ addonId, ...member, createdAt: meta.at })
+			.onConflictDoUpdate({
+				target: [addonMaintainer.addonId, addonMaintainer.userId],
+				set: { role: member.role },
+			})
+			.run();
+	}
+
+	appendEvent(tx, {
+		...meta,
+		subject: { type: 'addon', id: addonId },
+		kind: 'addon.maintainers_changed',
+		data: { before, after: selectMembers(tx, addonId) },
+	});
 }
 
 async function requireAddon(ctx: AppContext, id: string) {
@@ -114,10 +185,17 @@ export async function addMaintainer(
 	await requireOwner(ctx, caller, addonId);
 	await requireUser(ctx, userId);
 
-	await ctx.db
-		.insert(addonMaintainer)
-		.values({ addonId, userId, role: 'maintainer', createdAt: ctx.now() })
-		.onConflictDoNothing();
+	ctx.db.transaction(
+		(tx) => {
+			const members = selectMembers(tx, addonId);
+			const next: MaintainerEntry[] = members.some((member) => member.userId === userId)
+				? members
+				: [...members, { userId, role: 'maintainer' }];
+
+			replaceMaintainers(tx, addonId, next, { actorId: caller.user.id, at: ctx.now() });
+		},
+		{ behavior: 'immediate' },
+	);
 
 	return listMaintainers(ctx, addonId);
 }
@@ -141,32 +219,18 @@ export async function removeMaintainer(
 
 	ctx.db.transaction(
 		(tx) => {
-			const members = tx
-				.select({ userId: addonMaintainer.userId, role: addonMaintainer.role })
-				.from(addonMaintainer)
-				.where(eq(addonMaintainer.addonId, addonId))
-				.all();
+			const members = selectMembers(tx, addonId);
 
-			const target = members.find((member) => member.userId === userId);
-
-			if (!target) {
+			if (!members.some((member) => member.userId === userId)) {
 				throw new ApiError('not_found', `${userId} is not a maintainer of ${addonId}.`);
 			}
 
-			const owners = members.filter((member) => member.role === 'owner');
-
-			if (target.role === 'owner' && owners.length <= 1) {
-				throw new ApiError(
-					'last_owner',
-					`${addonId} needs another owner before its only owner can leave.`,
-				);
-			}
-
-			tx.delete(addonMaintainer)
-				.where(
-					and(eq(addonMaintainer.addonId, addonId), eq(addonMaintainer.userId, userId)),
-				)
-				.run();
+			replaceMaintainers(
+				tx,
+				addonId,
+				members.filter((member) => member.userId !== userId),
+				{ actorId: caller.user.id, at: ctx.now() },
+			);
 		},
 		{ behavior: 'immediate' },
 	);
@@ -194,27 +258,26 @@ export async function transferAddon(
 	await requireAddon(ctx, addonId);
 	await requireUser(ctx, request.userId);
 
-	const previous = and(
-		eq(addonMaintainer.addonId, addonId),
-		eq(addonMaintainer.role, 'owner'),
-		ne(addonMaintainer.userId, request.userId),
-	);
-
 	ctx.db.transaction(
 		(tx) => {
-			if (request.keepPreviousOwner) {
-				tx.update(addonMaintainer).set({ role: 'maintainer' }).where(previous).run();
-			} else {
-				tx.delete(addonMaintainer).where(previous).run();
-			}
+			const others = selectMembers(tx, addonId).flatMap((member): MaintainerEntry[] => {
+				if (member.userId === request.userId) {
+					return [];
+				}
 
-			tx.insert(addonMaintainer)
-				.values({ addonId, userId: request.userId, role: 'owner', createdAt: ctx.now() })
-				.onConflictDoUpdate({
-					target: [addonMaintainer.addonId, addonMaintainer.userId],
-					set: { role: 'owner' },
-				})
-				.run();
+				if (member.role !== 'owner') {
+					return [member];
+				}
+
+				return request.keepPreviousOwner ? [{ ...member, role: 'maintainer' }] : [];
+			});
+
+			replaceMaintainers(
+				tx,
+				addonId,
+				[{ userId: request.userId, role: 'owner' }, ...others],
+				{ actorId: caller.user.id, at: ctx.now() },
+			);
 		},
 		{ behavior: 'immediate' },
 	);
@@ -225,6 +288,7 @@ export async function transferAddon(
 export default {
 	MAINTAINERS,
 	toMaintainers,
+	replaceMaintainers,
 	listMaintainers,
 	addMaintainer,
 	removeMaintainer,
