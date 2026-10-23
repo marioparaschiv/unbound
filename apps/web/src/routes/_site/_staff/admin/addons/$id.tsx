@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-route
 import { IconArrowLeft } from '@tabler/icons-react';
 
 import SubmissionHistory from '~/components/admin/submission-history';
+import AddonEditForm from '~/components/admin/addon-edit-form';
 import DetailSection from '~/components/admin/detail-section';
 import AddonActions from '~/components/admin/addon-actions';
 import { formatDate } from '~/components/admin/format-date';
@@ -19,7 +20,9 @@ import Tag from '~/components/tag';
 
 function AdminAddonPage() {
 	const { user: viewer } = Route.useRouteContext();
-	const { addon, maintainers, versions, submissions, events } = Route.useLoaderData();
+	const view = Route.useLoaderData();
+	const { addon, maintainers, versions, submissions, events } = view;
+	const canEdit = hasPermission(viewer.role, { addon: ['edit'] });
 	const canDelist = hasPermission(viewer.role, { addon: ['delist'] });
 	const canTransfer = hasPermission(viewer.role, { addon: ['transfer'] });
 	const canServe = hasPermission(viewer.role, { addon: ['rollback'] });
@@ -86,6 +89,12 @@ function AdminAddonPage() {
 					))}
 				</Card>
 			</DetailSection>
+
+			{canEdit ? (
+				<DetailSection title='Edit'>
+					<AddonEditForm key={view.form.revision} view={view} />
+				</DetailSection>
+			) : null}
 
 			<DetailSection title='Versions'>
 				<VersionTable addonId={addon.id} versions={versions} canServe={canServe} />
