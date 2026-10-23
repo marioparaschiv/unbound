@@ -1,4 +1,5 @@
 import type { reviewDecisionSchema } from './publish';
+
 import { submissionKindSchema, submissionSchema } from './publish';
 import { addonVersionSchema, sha256Schema } from './addons';
 import { addonManifestSchema } from './manifest';
