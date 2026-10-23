@@ -1,7 +1,8 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
 import { adminUsersSearchSchema } from '@unbound-app/contracts/admin';
 import { IconBan, IconUserCheck } from '@tabler/icons-react';
 
+import { formatDate } from '~/components/admin/format-date';
 import UserActions from '~/components/admin/user-actions';
 import AdminTable from '~/components/admin/admin-table';
 import SearchForm from '~/components/admin/search-form';
@@ -10,9 +11,6 @@ import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
 import UserAvatar from '~/components/user-avatar';
 import { hasPermission } from '~/lib/auth/access';
 import Text from '~/components/ui/text';
-
-// Fixed to UTC so the server render and the hydrated page print the same day.
-const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 
 const COLUMNS = ['User', 'Email', 'Role', 'Status', 'Joined'];
 
@@ -59,12 +57,16 @@ function UsersPage() {
 				{users.map((user) => (
 					<tr key={user.id} className='hover:bg-muted/30'>
 						<td className='px-4 py-3'>
-							<div className='flex items-center gap-3'>
+							<Link
+								to='/admin/users/$id'
+								params={{ id: user.id }}
+								className='flex items-center gap-3 hover:underline'
+							>
 								<UserAvatar src={user.image} name={user.name} size='sm' />
 								<span className='max-w-[150px] font-medium truncate'>
 									{user.name}
 								</span>
-							</div>
+							</Link>
 						</td>
 						<td className='px-4 py-3 text-muted-foreground text-sm'>
 							<span className='block max-w-[200px] truncate'>{user.email}</span>
@@ -91,7 +93,7 @@ function UsersPage() {
 							)}
 						</td>
 						<td className='px-4 py-3 text-muted-foreground text-sm whitespace-nowrap'>
-							{DATE_FORMAT.format(user.createdAt)}
+							{formatDate(user.createdAt)}
 						</td>
 						<td className='px-4 py-3 whitespace-nowrap'>
 							<UserActions
@@ -108,7 +110,7 @@ function UsersPage() {
 	);
 }
 
-export const Route = createFileRoute('/_site/_staff/admin/users')({
+export const Route = createFileRoute('/_site/_staff/admin/users/')({
 	head: () => ({ meta: [{ title: 'Unbound | Users' }] }),
 	validateSearch: adminUsersSearchSchema,
 	beforeLoad: ({ context }) => {

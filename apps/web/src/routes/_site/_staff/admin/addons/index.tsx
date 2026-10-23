@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
 import { adminAddonsSearchSchema } from '@unbound-app/contracts/admin';
 
 import type { AddonFilterValues } from '~/components/admin/addon-filters';
@@ -63,12 +63,16 @@ function AddonsPage() {
 				{addons.map((addon) => (
 					<tr key={addon.id} className='hover:bg-muted/30'>
 						<td className='px-4 py-3'>
-							<div className='flex flex-col min-w-0'>
+							<Link
+								to='/admin/addons/$id'
+								params={{ id: addon.id }}
+								className='flex flex-col min-w-0 hover:underline'
+							>
 								<span className='font-medium truncate'>{addon.name}</span>
 								<span className='font-mono text-muted-foreground text-xs'>
 									{addon.id}
 								</span>
-							</div>
+							</Link>
 						</td>
 						<td className='px-4 py-3 text-muted-foreground text-sm'>
 							{addon.latestVersion ?? 'None'}
@@ -97,7 +101,7 @@ function AddonsPage() {
 	);
 }
 
-export const Route = createFileRoute('/_site/_staff/admin/addons')({
+export const Route = createFileRoute('/_site/_staff/admin/addons/')({
 	head: () => ({ meta: [{ title: 'Unbound | Addons' }] }),
 	validateSearch: adminAddonsSearchSchema,
 	beforeLoad: ({ context }) => {
