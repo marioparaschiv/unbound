@@ -36,12 +36,16 @@ export const addon = sqliteTable(
 			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
 			.notNull(),
 		delistedAt: integer('delisted_at', { mode: 'timestamp_ms' }),
-		// The newest version's type, name, description and approval time, copied here on approval so
-		// listings filter, search and sort on one table.
+		// The served version's type, name, description and approval time, copied here on approval and
+		// rollback so listings filter, search and sort on one table. A staff edit pins a field instead.
 		type: text('type').$type<AddonType>().notNull(),
 		name: text('name').notNull(),
 		description: text('description').notNull(),
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+		/** `PINNED_FIELDS` bits: the summary columns a staff edit owns, which refreshes leave alone. */
+		pinnedFields: integer('pinned_fields').default(0).notNull(),
+		/** The GitHub `owner/name` of the addon's source. Addon-level, never copied from a manifest. */
+		repository: text('repository'),
 	},
 	(table) => [
 		...LISTING_SORTS.flatMap((key) => [
