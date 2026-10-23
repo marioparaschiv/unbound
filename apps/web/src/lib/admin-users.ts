@@ -15,6 +15,7 @@ import { DEFAULT_ROLE } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
+import { LIVE_VERSIONS } from '~/lib/addons';
 import type { user } from '~/db/schema';
 
 export type AdminUser = {
@@ -135,6 +136,7 @@ function queryMaintainedAddons(ctx: AppContext, userId: string) {
 				with: {
 					versions: {
 						columns: { version: true },
+						where: LIVE_VERSIONS,
 						orderBy: { versionKey: 'desc' },
 						limit: 1,
 					},

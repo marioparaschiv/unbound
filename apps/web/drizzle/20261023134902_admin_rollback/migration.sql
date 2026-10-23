@@ -1,0 +1,2 @@
+ALTER TABLE `addon_version` ADD `withdrawn_by` integer REFERENCES moderation_event(id);--> statement-breakpoint
+CREATE INDEX `addon_version_live_idx` ON `addon_version` (`addon_id`,`version_key`) WHERE "addon_version"."withdrawn_by" is null;

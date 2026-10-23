@@ -16,6 +16,7 @@ import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { defineRelationsPart, sql } from 'drizzle-orm';
 
+import { moderationEvent } from './admin';
 import { user } from './auth';
 
 // Index predicates are stored in the schema verbatim, so the statuses are inlined rather than bound.
@@ -119,7 +120,10 @@ export const submission = sqliteTable(
 	],
 );
 
-/** The approved versions of an addon: the source of truth for what exists and which is latest. */
+/**
+ * The approved versions of an addon: the source of truth for what exists and which is served, the
+ * newest one not withdrawn. Rows are never deleted.
+ */
 export const addonVersion = sqliteTable(
 	'addon_version',
 	{
@@ -141,16 +145,22 @@ export const addonVersion = sqliteTable(
 		publishedAt: integer('published_at', { mode: 'timestamp_ms' })
 			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
 			.notNull(),
+		/** The rollback event that withdrew this version from serving; `null` is live. */
+		withdrawnBy: integer('withdrawn_by').references(() => moderationEvent.id),
 	},
 	(table) => [
 		primaryKey({ columns: [table.addonId, table.version] }),
 		// An addon's newest version, read in version order without sorting.
 		index('addon_version_addonId_versionKey_idx').on(table.addonId, table.versionKey),
+		// The served version and the update check read only live versions.
+		index('addon_version_live_idx')
+			.on(table.addonId, table.versionKey)
+			.where(sql`${table.withdrawnBy} is null`),
 	],
 );
 
 export const addonRelations = defineRelationsPart(
-	{ user, addon, addonMaintainer, submission, addonVersion },
+	{ user, addon, addonMaintainer, submission, addonVersion, moderationEvent },
 	(r) => ({
 		addon: {
 			maintainers: r.many.addonMaintainer({
@@ -186,6 +196,10 @@ export const addonRelations = defineRelationsPart(
 			submission: r.one.submission({
 				from: r.addonVersion.submissionId,
 				to: r.submission.id,
+			}),
+			withdrawal: r.one.moderationEvent({
+				from: r.addonVersion.withdrawnBy,
+				to: r.moderationEvent.id,
 			}),
 		},
 	}),
