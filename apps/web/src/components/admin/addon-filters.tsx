@@ -17,6 +17,7 @@ import DatePicker from '~/components/ui/date-picker';
 import UserAvatar from '~/components/user-avatar';
 import { Button } from '~/components/ui/button';
 import Label from '~/components/ui/label';
+import Text from '~/components/ui/text';
 import cn from '~/lib/cn';
 
 /** The admin addons list's URL search without its paging, which every filter change resets. */
@@ -155,71 +156,81 @@ function AddonFilters({ filters, maintainer, onChange }: AddonFiltersProps) {
 	const filtered = Object.values(filters).some((value) => value !== undefined);
 
 	return (
-		<div className='flex flex-wrap items-end gap-3'>
-			<FilterField id='addon-filter-type' label='Type'>
-				<FilterSelect
-					id='addon-filter-type'
-					value={filters.type}
-					options={TYPE_LABELS}
-					allLabel='All types'
-					className='w-36'
-					onChange={(type) => onChange({ ...filters, type })}
-				/>
-			</FilterField>
-			<FilterField id='addon-filter-status' label='Status'>
-				<FilterSelect
-					id='addon-filter-status'
-					value={filters.status}
-					options={STATUS_LABELS}
-					allLabel='Any status'
-					className='w-52'
-					onChange={(status) => onChange({ ...filters, status })}
-				/>
-			</FilterField>
-			<FilterField id='addon-filter-maintainer' label='Maintainer'>
-				<MaintainerPicker
-					id='addon-filter-maintainer'
-					selected={filters.maintainer}
-					maintainer={maintainer}
-					onChange={(id) => onChange({ ...filters, maintainer: id })}
-				/>
-			</FilterField>
-			<FilterField id='addon-filter-published' label='Published'>
-				<DatePicker
-					id='addon-filter-published'
-					mode='range'
-					className='w-64'
-					value={{
-						from: filters.publishedFrom
-							? parseCalendarDate(filters.publishedFrom)
-							: undefined,
-						to: filters.publishedTo
-							? parseCalendarDate(filters.publishedTo)
-							: undefined,
-					}}
-					onChange={({ from, to }) =>
-						onChange({
-							...filters,
-							publishedFrom: from ? formatCalendarDate(from) : undefined,
-							publishedTo: to ? formatCalendarDate(to) : undefined,
-						})
+		<div className='flex flex-col gap-2'>
+			<div className='flex flex-wrap items-end gap-3'>
+				<FilterField id='addon-filter-type' label='Type'>
+					<FilterSelect
+						id='addon-filter-type'
+						value={filters.type}
+						options={TYPE_LABELS}
+						allLabel='All types'
+						className='w-36'
+						onChange={(type) => onChange({ ...filters, type })}
+					/>
+				</FilterField>
+				<FilterField id='addon-filter-status' label='Status'>
+					<FilterSelect
+						id='addon-filter-status'
+						value={filters.status}
+						options={STATUS_LABELS}
+						allLabel='Any status'
+						className='w-52'
+						onChange={(status) => onChange({ ...filters, status })}
+					/>
+				</FilterField>
+				<FilterField id='addon-filter-maintainer' label='Maintainer'>
+					<MaintainerPicker
+						id='addon-filter-maintainer'
+						selected={filters.maintainer}
+						maintainer={maintainer}
+						onChange={(id) => onChange({ ...filters, maintainer: id })}
+					/>
+				</FilterField>
+				<FilterField id='addon-filter-published' label='Published'>
+					<DatePicker
+						id='addon-filter-published'
+						mode='range'
+						className='w-64'
+						value={{
+							from: filters.publishedFrom
+								? parseCalendarDate(filters.publishedFrom)
+								: undefined,
+							to: filters.publishedTo
+								? parseCalendarDate(filters.publishedTo)
+								: undefined,
+						}}
+						onChange={({ from, to }) =>
+							onChange({
+								...filters,
+								publishedFrom: from ? formatCalendarDate(from) : undefined,
+								publishedTo: to ? formatCalendarDate(to) : undefined,
+							})
+						}
+					/>
+				</FilterField>
+				<Button
+					variant='outline'
+					onClick={() =>
+						onChange({ ...filters, order: order === 'desc' ? 'asc' : undefined })
 					}
-				/>
-			</FilterField>
-			<Button
-				variant='outline'
-				onClick={() =>
-					onChange({ ...filters, order: order === 'desc' ? 'asc' : undefined })
-				}
-			>
-				{order === 'desc' ? <IconSortDescending /> : <IconSortAscending />}
-				{order === 'desc' ? 'Newest first' : 'Oldest first'}
-			</Button>
-			{filtered ? (
-				<Button variant='ghost' onClick={() => onChange({})}>
-					<IconX />
-					Clear filters
+				>
+					{order === 'desc' ? <IconSortDescending /> : <IconSortAscending />}
+					{order === 'desc' ? 'Newest first' : 'Oldest first'}
 				</Button>
+			</div>
+			{filtered ? (
+				<Text variant='text-sm' color='muted'>
+					You have filters applied.{' '}
+					<Button
+						type='button'
+						variant='link'
+						className='px-0 h-auto'
+						onClick={() => onChange({})}
+					>
+						Clear filters
+					</Button>
+					.
+				</Text>
 			) : null}
 		</div>
 	);
