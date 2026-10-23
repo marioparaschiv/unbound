@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { OPEN_SUBMISSION_STATUSES, toSubmission } from '~/lib/submissions';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
 import type { AddonVersionRow } from '~/lib/artifacts';
+import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { likeContains } from '~/lib/like-contains';
 import { addon, addonVersion } from '~/db/schema';
@@ -112,55 +113,70 @@ export function refreshAddonSummary(tx: Transaction, addonId: string) {
 		.run();
 }
 
-async function setDelistedAt(
+// Moving to the state the addon is already in changes nothing and records nothing.
+function setDelistedAt(
 	ctx: AppContext,
 	caller: Caller,
 	addonId: string,
 	delistedAt: Date | null,
-): Promise<AddonResponse> {
+): AddonResponse {
 	requirePermission(caller, { addon: ['delist'] });
 
-	const [updated] = await ctx.db
-		.update(addon)
-		.set({ delistedAt })
-		.where(eq(addon.id, addonId))
-		.returning();
+	const row = ctx.db.transaction(
+		(tx) => {
+			const current = tx.select().from(addon).where(eq(addon.id, addonId)).get();
 
-	if (!updated) {
-		throw new ApiError('not_found', `Addon ${addonId} does not exist.`);
-	}
+			if (!current) {
+				throw new ApiError('not_found', `Addon ${addonId} does not exist.`);
+			}
 
-	return { addon: toAddon(updated) };
+			if ((current.delistedAt === null) === (delistedAt === null)) {
+				return current;
+			}
+
+			appendEvent(tx, {
+				subject: { type: 'addon', id: addonId },
+				actorId: caller.user.id,
+				at: ctx.now(),
+				kind: delistedAt ? 'addon.delisted' : 'addon.relisted',
+				data: {},
+			});
+
+			return tx
+				.update(addon)
+				.set({ delistedAt })
+				.where(eq(addon.id, addonId))
+				.returning()
+				.get();
+		},
+		{ behavior: 'immediate' },
+	);
+
+	return { addon: toAddon(row) };
 }
 
 /**
  * @description Hides an addon from listings and update checks. Its published files stay in the
- * public bucket so existing installs keep working. Requires `addon:delist`. Twin of {@link relistAddon}.
+ * public bucket so existing installs keep working. Delisting a delisted addon changes nothing.
+ * Requires `addon:delist`. Twin of {@link relistAddon}.
  * @param ctx The application context.
  * @param caller The moderator.
  * @param addonId The addon id.
  * @returns The addon.
  */
-export function delistAddon(
-	ctx: AppContext,
-	caller: Caller,
-	addonId: string,
-): Promise<AddonResponse> {
+export function delistAddon(ctx: AppContext, caller: Caller, addonId: string): AddonResponse {
 	return setDelistedAt(ctx, caller, addonId, ctx.now());
 }
 
 /**
- * @description Lists a delisted addon again. Requires `addon:delist`. Twin of {@link delistAddon}.
+ * @description Lists a delisted addon again. Relisting a listed addon changes nothing. Requires
+ * `addon:delist`. Twin of {@link delistAddon}.
  * @param ctx The application context.
  * @param caller The moderator.
  * @param addonId The addon id.
  * @returns The addon.
  */
-export function relistAddon(
-	ctx: AppContext,
-	caller: Caller,
-	addonId: string,
-): Promise<AddonResponse> {
+export function relistAddon(ctx: AppContext, caller: Caller, addonId: string): AddonResponse {
 	return setDelistedAt(ctx, caller, addonId, null);
 }
 
