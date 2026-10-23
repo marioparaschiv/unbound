@@ -52,8 +52,8 @@ function UpdateRow({ entry }: UpdateRowProps) {
 						<Changelog
 							name={entry.name}
 							icon={kindIcon(entry.kind)}
-							from={entry.from}
-							to={update.version}
+							installed={entry.from}
+							offered={update.version}
 							changelogs={update.changelogs}
 						>
 							<UpdateButton

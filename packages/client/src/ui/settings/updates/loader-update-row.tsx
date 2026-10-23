@@ -21,7 +21,6 @@ type DownloadButtonProps = {
 	grow?: boolean;
 };
 
-// A native build cannot install itself, so the user is sent to where the release is published.
 function DownloadButton({ url, text, size = 'sm', grow }: DownloadButtonProps) {
 	return (
 		<Discord.Button
@@ -57,8 +56,8 @@ function LoaderUpdateRow({ update }: LoaderUpdateRowProps) {
 						<Changelog
 							name={Messages.UNBOUND_UPDATES_LOADER}
 							icon={icon}
-							from={from}
-							to={update.version}
+							installed={from}
+							offered={update.version}
 							changelogs={update.changelogs}
 						>
 							<DownloadButton

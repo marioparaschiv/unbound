@@ -4,7 +4,6 @@ import { MAX_UPDATE_CHANGELOGS, versionChangelogSchema } from './updates';
 import { MAX_CHANGELOG_LENGTH } from './publish';
 import { semverSchema } from './manifest';
 
-/** Every platform a native loader ships for. Adding a platform is one entry here. */
 export const loaderPlatformSchema = z.enum(['ios', 'android']);
 
 /** A published native loader build. `url` is where a user gets it: a release page or a direct asset. */

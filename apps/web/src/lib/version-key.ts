@@ -14,13 +14,16 @@ function encodeIdentifier(identifier: string): string {
  * @param version A version accepted by `semverSchema`.
  * @returns The sortable key.
  */
+/** Ends every release key and sorts above every prerelease identifier character. */
+export const RELEASE_KEY_SUFFIX = '~';
+
 export function toVersionKey(version: string): string {
 	const [release = version] = version.split('+');
 	const dash = release.indexOf('-');
 	const core = (dash === -1 ? release : release.slice(0, dash)).split('.').map(encodeNumber);
 
 	if (dash === -1) {
-		return `${core.join('.')}~`;
+		return `${core.join('.')}${RELEASE_KEY_SUFFIX}`;
 	}
 
 	// `!` sorts below every identifier character, so a shorter identifier list sorts first.
@@ -30,6 +33,15 @@ export function toVersionKey(version: string): string {
 		.map(encodeIdentifier);
 
 	return `${core.join('.')}-${prerelease.join('!')}`;
+}
+
+/**
+ * @description Reads whether a version key encodes a release rather than a prerelease.
+ * @param key A key from `toVersionKey`.
+ * @returns Whether the key's version has no prerelease identifiers.
+ */
+export function isReleaseKey(key: string): boolean {
+	return key.endsWith(RELEASE_KEY_SUFFIX);
 }
 
 export default toVersionKey;

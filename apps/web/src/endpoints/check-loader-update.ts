@@ -9,7 +9,6 @@ import endpoint from '~/lib/api/endpoint';
 const checkLoaderUpdateEndpoint = endpoint(
 	{ body: z.undefined(), query: loaderUpdateQuerySchema, response: loaderUpdateResponseSchema },
 	async ({ ctx, request, query }) => {
-		// Without a trustworthy client IP, requests share one bucket rather than going unlimited.
 		const ip = getIP(request, ctx.auth.options) ?? 'unknown';
 
 		consumeRateLimit(ctx, {
