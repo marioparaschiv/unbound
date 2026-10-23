@@ -210,7 +210,8 @@ export default {
 
 		const target = metro.findByName('getTagProperties', { interop: false }) as any;
 		if (typeof target?.default !== 'function') return;
-		tagGradientRenderer = createTagGradientRenderer(context);
+		tagGradientRenderer =
+			context.platform === 'android' ? null : createTagGradientRenderer(context);
 
 		unpatch = patcher.after(target, 'default', (ctx) => {
 			try {

@@ -134,3 +134,33 @@ test('keeps a combined OP and custom tag in the normal tag style when selected',
 	expect(patched.tagBackgroundColor).toBe('#248046');
 	expect(patched.tagTextColor).toBe('#ffffff');
 });
+
+test('applies native tag properties on Android without accessing Objective-C', async () => {
+	useOpTagStyle = false;
+	await plugin.start({
+		platform: 'android',
+		native: {
+			get objc() {
+				throw new Error('Objective-C is unavailable on Android');
+			},
+		},
+	} as any);
+	const nativeTag = { tagText: null };
+
+	const patched = afterHandler?.({
+		args: [
+			{
+				message: {
+					author: { id: 'author', bot: false },
+					channel_id: 'thread',
+				},
+			},
+		],
+		result: nativeTag,
+	});
+
+	expect(patched.tagText).toBe('Staff');
+	expect(patched.tagBackgroundColor).toBe('#248046');
+	expect(patched.tagTextColor).toBe('#ffffff');
+	expect(classLookups).toHaveLength(0);
+});

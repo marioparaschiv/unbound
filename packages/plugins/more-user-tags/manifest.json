@@ -30,13 +30,17 @@
 	],
 	"version": "1.0.0",
 	"icon": "UserPlusIcon",
-	"capabilities": [
-		"native.objc.classes",
-		"native.objc.invoke",
-		"native.objc.invokeAsync",
-		"native.objc.associations",
-		"native.objc.hooks"
-	],
+	"capabilities": [],
+	"platformCapabilities": {
+		"ios": [
+			"native.objc.classes",
+			"native.objc.invoke",
+			"native.objc.invokeAsync",
+			"native.objc.associations",
+			"native.objc.hooks"
+		],
+		"android": []
+	},
 	"minNativePluginApi": "1.0.0",
 	"main": "index.tsx"
 }
