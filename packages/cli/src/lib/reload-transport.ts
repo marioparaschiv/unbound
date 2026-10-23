@@ -1,10 +1,10 @@
 import type { ControllerClient } from '@unbound-app/debugger-protocol/controller';
+import { getBundleName } from '@unbound-app/contracts/workspace';
 import type { AddonManifest } from '@unbound-app/types';
 import { readFileSync, existsSync } from 'node:fs';
 import toError from '@unbound-app/utils/to-error';
 import { join } from 'node:path';
 
-import { getBundleName } from '~/lib/bundle-name';
 import { waitForDevice } from '~/lib/context';
 
 export type ReloadClient = Pick<ControllerClient, 'isDeviceConnected' | 'pushPlugin'>;
@@ -108,7 +108,7 @@ function readBuiltAddon(addon: BuiltAddon): ReadAddon {
 		readFileSync(join(addon.dir, 'manifest.json'), 'utf8'),
 	);
 
-	const bundleName = getBundleName(addon, manifest.main);
+	const bundleName = getBundleName(addon.static, manifest.main);
 	const bundlePath = join(addon.output, bundleName);
 
 	// Hot reload assumes the build emits `<main-basename>.js` into `output`; a differently-named

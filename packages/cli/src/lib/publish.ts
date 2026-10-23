@@ -1,13 +1,13 @@
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { addonManifestSchema } from '@unbound-app/contracts/manifest';
 import type { Submission } from '@unbound-app/contracts/publish';
+import { getBundleName } from '@unbound-app/contracts/workspace';
 import { readFileSync, existsSync, openAsBlob } from 'node:fs';
 import { publishArtifact } from '@unbound-app/web/publish';
 import { join } from 'node:path';
 import { z } from 'zod';
 
 import type { DiscoveredAddon } from '~/lib/discovery';
-import { getBundleName } from '~/lib/bundle-name';
 import { createClient } from '~/lib/api-client';
 import type { Env } from '~/lib/env';
 
@@ -33,7 +33,7 @@ function readArtifact(addon: DiscoveredAddon): Artifact {
 		throw new Error(`Invalid ${path}:\n${z.prettifyError(parsed.error)}`);
 	}
 
-	const main = getBundleName(addon, parsed.data.main);
+	const main = getBundleName(addon.static, parsed.data.main);
 
 	return { manifest: { ...parsed.data, main }, bundlePath: join(addon.output, main) };
 }

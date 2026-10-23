@@ -1,9 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
+import { CONFIG_FILENAME } from '@unbound-app/contracts/workspace';
 import { command, type Command } from 'cleye';
 import { z } from 'zod';
 
 import { readStdin, isStdinPiped } from '~/lib/stdin';
-import { CONFIG_FILENAME } from '~/lib/config';
 import { createContext } from '~/lib/context';
 import { fieldToFlag } from '~/lib/zod-flags';
 
