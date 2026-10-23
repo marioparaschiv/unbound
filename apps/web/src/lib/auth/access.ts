@@ -10,6 +10,8 @@ export const statements = {
 	submission: ['create', 'review'],
 	update: ['create', 'review'],
 	addon: ['delist', 'transfer'],
+	/** Publishing and withdrawing native loader releases; CI holds it through an admin's API key. */
+	loader: ['publish'],
 } as const;
 
 export const ac = createAccessControl(statements);
