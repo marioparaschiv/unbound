@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",
-		"test": "bun test src"
+		"test": "bun test --parallel=1 src"
 	},
 	"devDependencies": {
 		"@rollup/plugin-json": "^6.1.0",

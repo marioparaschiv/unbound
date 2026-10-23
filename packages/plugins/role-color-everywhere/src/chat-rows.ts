@@ -55,7 +55,7 @@ type Oklab = [number, number, number];
 
 export function hexToArgb(hex: string): number | null {
 	if (!/^#[\da-f]{6}$/i.test(hex)) return null;
-	return (0xff000000 | Number.parseInt(hex.slice(1), 16)) >>> 0;
+	return 0xff000000 | Number.parseInt(hex.slice(1), 16);
 }
 
 function toLinear(channel: number): number {
@@ -90,13 +90,13 @@ function fromOklab(color: Oklab, alpha: number): number {
 	const red = fromLinear(4.0767416621 * light - 3.3077115913 * medium + 0.2309699292 * short);
 	const green = fromLinear(-1.2684380046 * light + 2.6097574011 * medium - 0.3413193965 * short);
 	const blue = fromLinear(-0.0041960863 * light - 0.7034186147 * medium + 1.707614701 * short);
-	return ((alpha & 0xff000000) | (red << 16) | (green << 8) | blue) >>> 0;
+	return (alpha & 0xff000000) | (red << 16) | (green << 8) | blue;
 }
 
 export function blendArgb(base: number, role: number, saturation: number): number {
 	const ratio = Math.min(100, Math.max(0, saturation)) / 100;
-	if (ratio === 0) return base >>> 0;
-	if (ratio === 1) return ((base & 0xff000000) | (role & 0x00ffffff)) >>> 0;
+	if (ratio === 0) return base | 0;
+	if (ratio === 1) return (base & 0xff000000) | (role & 0x00ffffff);
 	const original = toOklab(base);
 	const tint = toOklab(role);
 	return fromOklab(

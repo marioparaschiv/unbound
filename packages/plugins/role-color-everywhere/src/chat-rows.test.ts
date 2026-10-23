@@ -18,9 +18,17 @@ const members: MemberStore = {
 
 describe('applyChatRoleColors', () => {
 	test('mixes optional message colors in Oklab like Vencord', () => {
-		expect(blendArgb(0xffffffff, 0xff000000, 50)).toBe(0xff636363);
-		expect(blendArgb(0x80ffffff, 0xff000000, 0)).toBe(0x80ffffff);
-		expect(blendArgb(0x80ffffff, 0xff000000, 100)).toBe(0x80000000);
+		expect(blendArgb(0xffffffff, 0xff000000, 50)).toBe(0xff636363 | 0);
+		expect(blendArgb(0x80ffffff, 0xff000000, 0)).toBe(0x80ffffff | 0);
+		expect(blendArgb(0x80ffffff, 0xff000000, 100)).toBe(0x80000000 | 0);
+	});
+
+	test('keeps colors in the signed 32-bit range used by the Android renderer', () => {
+		const color = blendArgb(0xffeeeeee, 0xff112233, 30);
+
+		expect(color).toBe(color | 0);
+		expect(color).toBeLessThanOrEqual(0x7fffffff);
+		expect(color).toBeGreaterThanOrEqual(-0x80000000);
 	});
 
 	test('keeps message content untinted by default', () => {
@@ -118,11 +126,13 @@ describe('applyChatRoleColors', () => {
 			messageSaturation: 30,
 		});
 		expect(mention).toMatchObject({
+			roleColor: 0xff112233 | 0,
+			color: 0xff112233 | 0,
 			colorString: '#112233',
 			roleColors: {
-				primaryColor: 0xff112233,
-				secondaryColor: 0xff445566,
-				tertiaryColor: 0xff778899,
+				primaryColor: 0xff112233 | 0,
+				secondaryColor: 0xff445566 | 0,
+				tertiaryColor: 0xff778899 | 0,
 			},
 		});
 	});
