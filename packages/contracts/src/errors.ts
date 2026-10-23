@@ -26,6 +26,9 @@ export const apiErrorCodeSchema = z.enum([
 	'github_no_push_access',
 	'sync_conflict',
 	'sync_document_too_large',
+	'sponsorship_required',
+	'badge_rejected',
+	'perk_revoked',
 	'internal_error',
 ]);
 

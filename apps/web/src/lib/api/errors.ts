@@ -26,6 +26,9 @@ const API_ERROR_STATUS: Record<ApiErrorCode, number> = {
 	github_no_push_access: 403,
 	sync_conflict: 409,
 	sync_document_too_large: 413,
+	sponsorship_required: 403,
+	badge_rejected: 400,
+	perk_revoked: 403,
 	internal_error: 500,
 };
 

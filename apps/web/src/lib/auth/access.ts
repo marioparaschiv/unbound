@@ -11,6 +11,7 @@ export const statements = {
 	update: ['create', 'review'],
 	addon: ['delist', 'transfer'],
 	loader: ['publish'],
+	perk: ['revoke'],
 } as const;
 
 export const ac = createAccessControl(statements);
@@ -30,6 +31,7 @@ export const moderator = ac.newRole({
 	submission: ['create', 'review'],
 	update: ['create', 'review'],
 	addon: ['delist'],
+	perk: ['revoke'],
 	user: ['list', 'get', 'ban'],
 	session: ['list', 'revoke'],
 });
