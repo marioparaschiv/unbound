@@ -7,10 +7,10 @@ import type {
 import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm';
 import { createLogger } from '@unbound-app/logger';
 
+import { canClaimPerk, isPerkUnlocked, PERKS } from '~/lib/sponsors/perks';
 import { getUserSponsorship, graceMs } from '~/lib/sponsors/sponsorships';
 import { account, perkClaim, sponsorship, user } from '~/db/schema';
 import { findBadgeLabelProblem } from '~/lib/sponsors/moderation';
-import { canClaimPerk, isPerkUnlocked, PERKS } from '~/lib/sponsors/perks';
 import { requirePermission } from '~/lib/api/caller';
 import { standingOf } from '~/lib/sponsors/standing';
 import type { AppContext } from '~/lib/context';
