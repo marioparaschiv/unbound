@@ -227,7 +227,7 @@ function AddonFilters({ filters, maintainer, onChange }: AddonFiltersProps) {
 						className='px-0 h-auto'
 						onClick={() => onChange({})}
 					>
-						Clear filters
+						Clear Filters
 					</Button>
 				</Text>
 			) : null}
