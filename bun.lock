@@ -87,7 +87,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -101,7 +101,7 @@
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "bin": {
         "ubd": "src/index.ts",
       },
@@ -129,7 +129,7 @@
     },
     "packages/client": {
       "name": "@unbound-app/client",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "dependencies": {
         "@noble/hashes": "^2.4.0",
         "@unbound-app/contracts": "workspace:*",
@@ -158,7 +158,7 @@
     },
     "packages/client/scripts/build": {
       "name": "@unbound-app/client-build",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/logger": "workspace:*",
