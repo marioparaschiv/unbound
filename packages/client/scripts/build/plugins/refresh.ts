@@ -1,8 +1,8 @@
 import { transformSync, type ESTree } from 'rolldown/utils';
 import { dirname, join, relative } from 'node:path';
+import { RolldownMagicString } from 'rolldown';
 import { parseAst } from 'rolldown/parseAst';
 import { createRequire } from 'node:module';
-import { RolldownMagicString } from 'rolldown';
 import type { Plugin } from 'rolldown';
 
 type Program = ESTree.Program;
