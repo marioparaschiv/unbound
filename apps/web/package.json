@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/web",
-	"version": "0.8.0",
+	"version": "0.8.2",
 	"private": true,
 	"type": "module",
 	"exports": {

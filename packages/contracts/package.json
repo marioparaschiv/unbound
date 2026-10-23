@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/contracts",
-	"version": "0.8.0",
+	"version": "0.8.2",
 	"private": true,
 	"description": "Runtime-validated wire contracts shared by the Unbound web server, the CLI and the client.",
 	"author": {
