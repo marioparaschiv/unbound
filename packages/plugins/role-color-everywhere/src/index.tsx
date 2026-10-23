@@ -11,6 +11,7 @@ import { installNativeMentionColors } from '@role-color-everywhere/native-mentio
 import { installComposerMentionColors } from '@role-color-everywhere/composer-mentions';
 import { installTypingNameColors } from '@role-color-everywhere/typing-names';
 import { installVoiceUserColors } from '@role-color-everywhere/voice-users';
+import { getNativeObjC } from '@role-color-everywhere/native-bridge';
 
 import {
 	getSettingsColors,
@@ -207,7 +208,7 @@ export default {
 			unpatchVoiceUsers = installVoiceUserColors(members, () =>
 				STORE.get('voiceUsers', true),
 			);
-		nativeObjC = context?.native.objc ?? null;
+		nativeObjC = getNativeObjC(context);
 		void setNativeMentions(STORE.get('chatMentions', true)).catch((error) => {
 			console.error('Role Color Everywhere native mention startup failed:', error);
 		});
