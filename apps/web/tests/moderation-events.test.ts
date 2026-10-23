@@ -7,10 +7,12 @@ import { eq } from 'drizzle-orm';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { createSubmission, finalizeSubmission } from '~/lib/submissions';
 import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { listEvents, queryEvents } from '~/lib/moderation-events';
 import { moderationEvent, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
+import { reviewSubmission } from '~/lib/review';
 import { createDatabase } from '~/db/database';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
@@ -25,13 +27,47 @@ type PlanStep = {
 // Matched by name, not timestamp, so regenerating the migration on a rebase keeps this test valid.
 const EVENTS_MIGRATION_SUFFIX = '_moderation_events';
 
-const base = createTestContext({ EVENT_PAGE_SIZE: '2' });
+// An in-memory object store answering the path-style requests `Bun.S3Client` and presigned uploads make.
+const objects = new Map<string, ArrayBuffer>();
+const s3 = Bun.serve({
+	port: 0,
+	async fetch(request) {
+		const key = new URL(request.url).pathname;
+
+		if (request.method === 'PUT') {
+			objects.set(key, await request.arrayBuffer());
+
+			return new Response(null);
+		}
+
+		if (request.method === 'DELETE') {
+			objects.delete(key);
+
+			return new Response(null, { status: 204 });
+		}
+
+		const body = objects.get(key);
+
+		if (!body) {
+			return new Response(null, { status: 404 });
+		}
+
+		return new Response(request.method === 'HEAD' ? null : body, {
+			headers: { 'content-length': String(body.byteLength) },
+		});
+	},
+});
+
+const base = createTestContext({ S3_ENDPOINT: s3.url.href, EVENT_PAGE_SIZE: '2' });
 
 let clock = new Date('2026-10-23T12:00:00.000Z');
 
 const ctx: AppContext = { ...base.ctx, now: () => clock };
 
-afterAll(base.close);
+afterAll(async () => {
+	await s3.stop(true);
+	base.close();
+});
 
 let users = 0;
 
@@ -65,6 +101,19 @@ function tick() {
 	return clock;
 }
 
+async function publish(author: Member, id: string) {
+	const bundle = `export default ${JSON.stringify(id)};`;
+	const { submission, upload } = await createSubmission(ctx, author.caller, {
+		manifest: manifest(id),
+		bundleSize: Buffer.byteLength(bundle),
+	});
+
+	await fetch(upload.url, { method: upload.method, headers: upload.headers, body: bundle });
+	await finalizeSubmission(ctx, author.caller, submission.id);
+
+	return submission.id;
+}
+
 async function timeline(viewer: Member, subject: Subject): Promise<ModerationEvent[]> {
 	const items: ModerationEvent[] = [];
 	let before: number | undefined;
@@ -89,6 +138,52 @@ function rejection(request: Promise<object>): Promise<Error | undefined> {
 function addonSubject(id: string): Subject {
 	return { type: 'addon', id };
 }
+
+describe('review decisions', () => {
+	test('a changes requested, republish, approved cycle keeps both decisions in order', async () => {
+		const author = await signUp();
+		const moderator = await signUp('moderator');
+		const first = await publish(author, 'events.cycle');
+		const requestedAt = tick();
+
+		await reviewSubmission(ctx, moderator.caller, first, {
+			decision: 'changes_requested',
+			note: 'Add a README.',
+		});
+
+		const second = await publish(author, 'events.cycle');
+		const approvedAt = tick();
+
+		await reviewSubmission(ctx, moderator.caller, second, {
+			decision: 'approved',
+			note: 'Thanks.',
+		});
+
+		const actor = { id: moderator.userId, name: 'Member 2', image: null };
+
+		expect(await timeline(moderator, addonSubject('events.cycle'))).toMatchObject([
+			{
+				kind: 'review.decided',
+				actor,
+				reason: 'Thanks.',
+				createdAt: approvedAt.toISOString(),
+				data: {
+					submissionId: second,
+					submissionKind: 'listing',
+					version: '1.0.0',
+					decision: 'approved',
+				},
+			},
+			{
+				kind: 'review.decided',
+				actor,
+				reason: 'Add a README.',
+				createdAt: requestedAt.toISOString(),
+				data: { submissionId: first, decision: 'changes_requested' },
+			},
+		]);
+	});
+});
 
 describe('the timeline', () => {
 	test('pages newest first and skips rows that no longer parse', async () => {
