@@ -15,7 +15,6 @@ export type ArgsNum<T extends Listener> = Parameters<T>['length'];
 
 type EventName = keyof DefaultEventMap;
 type Tasks<Func> = Func[] | Func | null;
-// UNKNOWN: listeners receive whatever the emitter was given.
 type Caller = (...args: unknown[]) => void;
 type Fireable = TaskCollection & { call: Caller };
 
@@ -151,13 +150,10 @@ function fit(args: unknown[], length: number) {
 	return fitted;
 }
 
-// Like the arguments array tseep's `emit` builds when a listener takes more than five parameters.
 function tail(args: IArguments, length: number) {
 	return fit(Array.prototype.slice.call(args, 1), length);
 }
 
-// tseep's eval-baked callers call each listener unbound with exactly `argsNum` arguments. A caller
-// per common count does the same without building an argument array, which Hermes pays for per emit.
 // Each listener is read into a local first: `fns[i](a)` would call it with the array as `this`.
 function bake(tasks: Listener[], argsNum: number): Caller {
 	if (tasks.length >= 1500) {
@@ -250,10 +246,8 @@ function warnMax(emitter: EventEmitter, length: number, event: EventName, kind: 
 	}
 }
 
-// Fixed parameters as in tseep: listeners of up to five parameters get them without an arguments
-// array, and `call` runs as a method, so a lone listener sees the collection as `this`.
-// UNKNOWN: listeners receive whatever the emitter was given.
 function emit(this: EventEmitter, event: EventName, ...args: unknown[]): boolean;
+// UNKNOWN: listeners receive whatever the emitter was given.
 function emit(
 	this: EventEmitter,
 	event: EventName,
@@ -278,8 +272,8 @@ function emit(
 	return true;
 }
 
-// UNKNOWN: listeners receive whatever the emitter was given.
 function emitHasOnce(this: EventEmitter, event: EventName, ...args: unknown[]): boolean;
+// UNKNOWN: listeners receive whatever the emitter was given.
 function emitHasOnce(
 	this: EventEmitter,
 	event: EventName,
