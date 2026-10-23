@@ -62,14 +62,14 @@ type Item = {
 type OpenSection = {
 	line: number;
 	heading: string;
-	type: ChangeType | undefined;
+	acceptedType: ChangeType | undefined;
 	items: Item[];
 };
 
 type OpenRelease = {
 	version: string;
 	date: string | null;
-	keep: boolean;
+	valid: boolean;
 	sections: Map<ChangeType, string[]>;
 };
 
@@ -189,35 +189,35 @@ function openRelease(parser: Parser, heading: string, line: number) {
 	const version = match?.[1] ?? match?.[2] ?? heading;
 	const date = match?.[3] ?? null;
 
-	let keep = true;
+	let valid = true;
 
 	if (!match) {
-		keep = false;
+		valid = false;
 		addIssue(
 			parser,
 			line,
 			`Write a release heading as "## [1.2.0] - 2026-05-01", not "## ${heading}".`,
 		);
 	} else if (!semverSchema.safeParse(version).success) {
-		keep = false;
+		valid = false;
 		addIssue(parser, line, `"${version}" is not a semver version.`);
 	} else if (date !== null && !ISO_DATE.safeParse(date).success) {
-		keep = false;
+		valid = false;
 		addIssue(parser, line, `"${date}" is not a date in YYYY-MM-DD form.`);
 	}
 
 	const previous = parser.versionLines.get(version);
 
-	if (keep && previous !== undefined) {
-		keep = false;
+	if (valid && previous !== undefined) {
+		valid = false;
 		addIssue(parser, line, `Version ${version} is already listed on line ${previous}.`);
 	}
 
-	if (keep) {
+	if (valid) {
 		parser.versionLines.set(version, line);
 	}
 
-	parser.release = { version, date, keep, sections: new Map() };
+	parser.release = { version, date, valid, sections: new Map() };
 }
 
 function closeRelease(parser: Parser) {
@@ -228,7 +228,7 @@ function closeRelease(parser: Parser) {
 	parser.release = undefined;
 	parser.inItem = false;
 
-	if (!release?.keep) return;
+	if (!release?.valid) return;
 
 	const sections: ChangelogSection[] = [];
 
@@ -261,7 +261,7 @@ function openSection(parser: Parser, heading: string, line: number) {
 		parser.release?.sections.set(type, []);
 	}
 
-	parser.section = { line, heading, type, items: [] };
+	parser.section = { line, heading, acceptedType: type, items: [] };
 }
 
 function closeSection(parser: Parser) {
@@ -269,13 +269,13 @@ function closeSection(parser: Parser) {
 
 	parser.section = undefined;
 
-	if (!section?.type) return;
+	if (!section?.acceptedType) return;
 
 	if (section.items.length === 0) {
 		addIssue(parser, section.line, `### ${section.heading} has no items.`);
 	}
 
-	const kept = release?.sections.get(section.type);
+	const kept = release?.sections.get(section.acceptedType);
 
 	for (const item of section.items.slice(0, MAX_ITEMS)) {
 		if (item.text.length > MAX_ITEM_LENGTH) {

@@ -1,5 +1,5 @@
-import { repositorySchema } from '@unbound-app/contracts/source';
 import type { Submission } from '@unbound-app/contracts/publish';
+import { repositorySchema } from '@unbound-app/contracts/source';
 import { useId, useState, useTransition } from 'react';
 import { IconUpload } from '@tabler/icons-react';
 import { Link } from '@tanstack/react-router';

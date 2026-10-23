@@ -164,7 +164,7 @@ export function findWorkspaceRoot(
 }
 
 function getParentDir(dir: string): string | undefined {
-	if (dir === '') return;
+	if (isRootDir(dir)) return;
 
 	const index = Math.max(dir.lastIndexOf('/'), dir.lastIndexOf('\\'));
 
@@ -172,11 +172,14 @@ function getParentDir(dir: string): string | undefined {
 		return '';
 	}
 
-	if (index === dir.length - 1) return;
-
 	const parent = dir.slice(0, index);
 
 	return parent === '' || parent.endsWith(':') ? dir.slice(0, index + 1) : parent;
+}
+
+// `''` is a git tree's root; `/` and `C:\` are disk roots.
+function isRootDir(dir: string): boolean {
+	return dir === '' || dir.endsWith('/') || dir.endsWith('\\');
 }
 
 function joinPath(...parts: string[]): string {
