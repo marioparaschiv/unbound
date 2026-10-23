@@ -7,6 +7,7 @@ import DetailSection from '~/components/admin/detail-section';
 import StatusPill from '~/components/dashboard/status-pill';
 import UserActions from '~/components/admin/user-actions';
 import DetailFact from '~/components/admin/detail-fact';
+import StaffNotes from '~/components/admin/staff-notes';
 import { fetchAdminUser } from '~/lib/admin-functions';
 import EventLog from '~/components/admin/event-log';
 import UserAvatar from '~/components/user-avatar';
@@ -17,9 +18,10 @@ import Tag from '~/components/tag';
 
 function AdminUserPage() {
 	const { user: viewer } = Route.useRouteContext();
-	const { user, addons, submissions, events } = Route.useLoaderData();
+	const { user, addons, submissions, events, notes } = Route.useLoaderData();
 	const canSetRole = hasPermission(viewer.role, { user: ['set-role'] });
 	const canBan = hasPermission(viewer.role, { user: ['ban'] });
+	const canWriteNotes = hasPermission(viewer.role, { note: ['write'] });
 
 	return (
 		<div className='flex flex-col gap-8'>
@@ -120,6 +122,14 @@ function AdminUserPage() {
 
 			<DetailSection title='Submissions'>
 				<SubmissionHistory submissions={submissions} label='addon' />
+			</DetailSection>
+
+			<DetailSection title='Staff notes'>
+				<StaffNotes
+					subject={{ type: 'user', id: user.id }}
+					notes={notes}
+					canWrite={canWriteNotes}
+				/>
 			</DetailSection>
 
 			<DetailSection title='Moderation log'>
