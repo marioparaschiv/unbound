@@ -9,7 +9,7 @@ export const statements = {
 	...defaultStatements,
 	submission: ['create', 'review'],
 	update: ['create', 'review'],
-	addon: ['delist', 'transfer'],
+	addon: ['delist', 'transfer', 'rollback'],
 	loader: ['publish'],
 	perk: ['revoke'],
 } as const;

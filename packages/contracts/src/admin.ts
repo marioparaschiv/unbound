@@ -148,6 +148,23 @@ export const adminAddonsSearchSchema = z.object({
 	...keysetSearch,
 });
 
+// ---- Mutations ----
+
+/** The human "why" a staff action records with its event. */
+export const moderationReasonSchema = z
+	.string()
+	.check(
+		z.trim(),
+		z.minLength(1, 'Give a reason.'),
+		z.maxLength(2000, 'Keep the reason under 2000 characters.'),
+	);
+
+/** Makes `version` the one the addon serves; serving the pre-rollback version undoes a rollback. */
+export const serveVersionRequestSchema = z.object({
+	version: semverSchema,
+	reason: moderationReasonSchema,
+});
+
 export type SubjectType = z.infer<typeof subjectTypeSchema>;
 export type Subject = z.infer<typeof subjectSchema>;
 export type MaintainerEntry = z.infer<typeof maintainerEntrySchema>;
@@ -163,6 +180,7 @@ export type PageDirection = z.infer<typeof pageDirectionSchema>;
 export type AdminUsersSearch = z.infer<typeof adminUsersSearchSchema>;
 export type AdminAddonStatus = z.infer<typeof adminAddonStatusSchema>;
 export type AdminAddonsSearch = z.infer<typeof adminAddonsSearchSchema>;
+export type ServeVersionRequest = z.infer<typeof serveVersionRequestSchema>;
 
 export default {
 	subjectTypeSchema,
@@ -180,4 +198,6 @@ export default {
 	adminUsersSearchSchema,
 	adminAddonStatusSchema,
 	adminAddonsSearchSchema,
+	moderationReasonSchema,
+	serveVersionRequestSchema,
 };

@@ -7,7 +7,8 @@ import { eq } from 'drizzle-orm';
 import { findUpdates, newestCompatibleVersions } from '~/lib/updates';
 import checkUpdatesEndpoint from '~/endpoints/check-updates';
 import type { AppContext } from '~/lib/context';
-import { addon } from '~/db/schema';
+import { serveVersion } from '~/lib/rollback';
+import { addon, user } from '~/db/schema';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { createTestContext, signInWithDiscord } from './helpers/context';
@@ -55,6 +56,29 @@ beforeAll(async () => {
 
 	await seedApprovedAddon(ctx, ownerId, manifest('up.unapproved', '1.0.0'));
 	await seedSubmission(ctx, ownerId, manifest('up.unapproved', '1.1.0'), { kind: 'update' });
+
+	await seedApprovedAddon(ctx, ownerId, manifest('up.rolledback', '1.0.0'));
+	await seedVersion(ctx, ownerId, manifest('up.rolledback', '1.1.0'));
+	await seedVersion(ctx, ownerId, manifest('up.rolledback', '1.2.0'));
+
+	const { userId: adminId } = await signInWithDiscord(ctx, {
+		id: '80351110224678921',
+		name: 'Admin',
+		email: 'admin@example.com',
+	});
+
+	await ctx.db.update(user).set({ role: 'admin' }).where(eq(user.id, adminId));
+
+	const admin = await ctx.db.query.user.findFirst({ where: { id: adminId } });
+
+	if (!admin) {
+		throw new Error(`User ${adminId} was not stored.`);
+	}
+
+	serveVersion(ctx, { user: admin, via: 'session' }, 'up.rolledback', {
+		version: '1.0.0',
+		reason: '1.1.0 and 1.2.0 crash',
+	});
 });
 
 // Malformed bodies still fit the type: the schema refuses their values, not their shape.
@@ -224,6 +248,48 @@ describe('findUpdates', () => {
 		} finally {
 			statements.mockRestore();
 		}
+	});
+
+	test('offers the served version to a client on a withdrawn one, in one more statement', async () => {
+		const statements = spyOn(ctx.db.$client, 'query');
+
+		try {
+			const { updates } = await findUpdates(ctx, {
+				clientVersion: '2.0.0',
+				addons: [
+					{ id: 'up.rolledback', version: '1.2.0' },
+					{ id: 'up.current', version: '1.0.0' },
+				],
+			});
+
+			expect(updates).toMatchObject([
+				{
+					id: 'up.rolledback',
+					version: '1.0.0',
+					bundleUrl: `${ctx.env.CDN_URL}/addons/up.rolledback/1.0.0/index.js`,
+					changelogs: [],
+				},
+			]);
+			expect(statements).toHaveBeenCalledTimes(2);
+		} finally {
+			statements.mockRestore();
+		}
+	});
+
+	test('skips withdrawn versions in updates and their changelogs', async () => {
+		const request = (version: string) =>
+			findUpdates(ctx, {
+				clientVersion: '2.0.0',
+				addons: [{ id: 'up.rolledback', version }],
+			});
+
+		expect(await request('1.0.0')).toEqual({ updates: [] });
+		expect(
+			(await request('0.9.0')).updates.map((update) => [
+				update.version,
+				update.changelogs.map((entry) => entry.version),
+			]),
+		).toEqual([['1.0.0', ['1.0.0']]]);
 	});
 
 	test('reads only the listed addons through an index, never a table scan', () => {
