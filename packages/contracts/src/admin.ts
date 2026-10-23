@@ -91,6 +91,12 @@ export const moderationEventPageSchema = z.object({
 	before: z.nullable(z.int()),
 });
 
+/** A page of a subject's events older than `before`, or the newest page without it. */
+export const moderationEventPageRequestSchema = z.object({
+	subject: subjectSchema,
+	before: z.optional(z.int()),
+});
+
 // ---- Admin lists: keyset paging and search (also the admin routes' `validateSearch`) ----
 
 /** Which way to page from `cursor`: `next` reads the rows after it, `prev` the rows before it. */
@@ -152,6 +158,7 @@ export type ModerationEventData = z.infer<typeof moderationEventDataSchema>;
 export type ModerationEventKind = ModerationEventData['kind'];
 export type ModerationEvent = z.infer<typeof moderationEventSchema>;
 export type ModerationEventPage = z.infer<typeof moderationEventPageSchema>;
+export type ModerationEventPageRequest = z.infer<typeof moderationEventPageRequestSchema>;
 export type PageDirection = z.infer<typeof pageDirectionSchema>;
 export type AdminUsersSearch = z.infer<typeof adminUsersSearchSchema>;
 export type AdminAddonStatus = z.infer<typeof adminAddonStatusSchema>;
@@ -167,6 +174,7 @@ export default {
 	moderationEventDataSchema,
 	moderationEventSchema,
 	moderationEventPageSchema,
+	moderationEventPageRequestSchema,
 	pageDirectionSchema,
 	adminSearchTextSchema,
 	adminUsersSearchSchema,

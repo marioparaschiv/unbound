@@ -6,12 +6,14 @@ import type {
 	SubjectType,
 } from '@unbound-app/contracts/admin';
 import { moderationEventSchema } from '@unbound-app/contracts/admin';
+import type { UserSummary } from '@unbound-app/contracts/account';
 import { createLogger } from '@unbound-app/logger';
+import { z } from 'zod';
 
+import type { Database, Transaction } from '~/db/database';
 import type { SubmissionRow } from '~/lib/submissions';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
-import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { moderationEvent } from '~/db/schema';
@@ -27,9 +29,58 @@ export type EventMeta = ActionMeta & { subject: Subject };
 
 export type EventEntry = EventMeta & ModerationEventData;
 
-type EventRow = typeof moderationEvent.$inferSelect & {
+export type EventRow = typeof moderationEvent.$inferSelect & {
 	actor: { id: string; name: string; image: string | null } | null;
 };
+
+export type EventTimeline = ModerationEventPage & {
+	/** The users the events name only by id, such as the members of a maintainer change, by id. */
+	users: Record<string, UserSummary>;
+};
+
+/** A Better Auth admin endpoint call, as its after-hook sees it. */
+export type AuthAdminAction = {
+	/** The endpoint path, e.g. `/admin/ban-user`. */
+	path: string;
+	/** The signed-in staff member who called it. */
+	actorId: string | null;
+	at: Date;
+	/** The request body, as the endpoint accepted it. */
+	body: unknown;
+	/** The endpoint's response; an error when the action failed. */
+	returned: unknown;
+};
+
+type AuthAdminEvent = ModerationEventData & Pick<EventMeta, 'reason'>;
+
+const authUserSchema = z.object({
+	user: z.object({
+		id: z.string().min(1),
+		role: z.string().nullish(),
+		banExpires: z.coerce.date().nullish(),
+	}),
+});
+
+const authBodySchema = z.object({ banReason: z.string().trim().optional() });
+
+type AuthUser = z.infer<typeof authUserSchema>['user'];
+
+type AuthBody = z.infer<typeof authBodySchema>;
+
+const AUTH_ADMIN_EVENTS = {
+	'/admin/ban-user': (target: AuthUser, body: AuthBody): AuthAdminEvent => ({
+		kind: 'user.banned',
+		data: { expiresAt: target.banExpires?.toISOString() ?? null },
+		reason: body.banReason || null,
+	}),
+	'/admin/unban-user': (): AuthAdminEvent => ({ kind: 'user.unbanned', data: {} }),
+	'/admin/set-role': (target: AuthUser): AuthAdminEvent => ({
+		kind: 'user.role_set',
+		data: { role: target.role ?? '' },
+	}),
+};
+
+type AuthAdminPath = keyof typeof AUTH_ADMIN_EVENTS;
 
 const logger = createLogger('Web', 'Moderation');
 
@@ -113,7 +164,12 @@ export function queryEvents(ctx: AppContext, subject: Subject, before?: number) 
 	});
 }
 
-function toEvent(row: EventRow): ModerationEvent | undefined {
+/**
+ * @description Parses a stored event row at the database boundary.
+ * @param row The row, loaded with its actor.
+ * @returns The event, or `undefined` (logged) when the row no longer matches its kind's schema.
+ */
+export function toEvent(row: EventRow): ModerationEvent | undefined {
 	const parsed = moderationEventSchema.safeParse({
 		id: row.id,
 		subject: { type: row.subjectType, id: row.subjectId },
@@ -161,4 +217,88 @@ export async function listEvents(
 	};
 }
 
-export default { appendEvent, recordReviewDecision, queryEvents, listEvents };
+function mentionedUserIds(events: ModerationEvent[]): string[] {
+	const ids = new Set<string>();
+
+	for (const event of events) {
+		if (event.kind !== 'addon.maintainers_changed') {
+			continue;
+		}
+
+		for (const member of [...event.data.before, ...event.data.after]) {
+			ids.add(member.userId);
+		}
+	}
+
+	return [...ids];
+}
+
+/**
+ * @description Lists a page of a subject's events, as {@link listEvents} does, with the users the
+ * events name only by id, so a timeline can show names.
+ * @param ctx The application context.
+ * @param caller The staff member.
+ * @param subject The addon or user.
+ * @param before The previous page's `before`, for older events.
+ * @returns The page and the users it names.
+ */
+export async function getEventTimeline(
+	ctx: AppContext,
+	caller: Caller,
+	subject: Subject,
+	before?: number,
+): Promise<EventTimeline> {
+	const page = await listEvents(ctx, caller, subject, before);
+	const ids = mentionedUserIds(page.items);
+	const rows = ids.length
+		? await ctx.db.query.user.findMany({
+				where: { id: { in: ids } },
+				columns: { id: true, name: true, image: true },
+			})
+		: [];
+
+	const users: Record<string, UserSummary> = {};
+
+	for (const row of rows) {
+		users[row.id] = { id: row.id, name: row.name, image: row.image ?? null };
+	}
+
+	return { ...page, users };
+}
+
+function isAuthAdminPath(path: string): path is AuthAdminPath {
+	return Object.hasOwn(AUTH_ADMIN_EVENTS, path);
+}
+
+/**
+ * @description Records a Better Auth ban, unban or role change against the user it targeted. Calls
+ * to other endpoints, and calls that failed, record nothing.
+ * @param db The database.
+ * @param action The endpoint call.
+ */
+export function recordAuthAdminAction(db: Database, action: AuthAdminAction): void {
+	const { path, actorId, at, body, returned } = action;
+
+	if (!isAuthAdminPath(path)) return;
+
+	const parsed = authUserSchema.safeParse(returned);
+
+	if (!parsed.success) return;
+
+	const target = parsed.data.user;
+	const event = AUTH_ADMIN_EVENTS[path](target, authBodySchema.parse(body));
+
+	db.transaction((tx) => {
+		appendEvent(tx, { subject: { type: 'user', id: target.id }, actorId, at, ...event });
+	});
+}
+
+export default {
+	appendEvent,
+	recordReviewDecision,
+	queryEvents,
+	toEvent,
+	listEvents,
+	getEventTimeline,
+	recordAuthAdminAction,
+};
