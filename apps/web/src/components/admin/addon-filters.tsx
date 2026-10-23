@@ -229,7 +229,6 @@ function AddonFilters({ filters, maintainer, onChange }: AddonFiltersProps) {
 					>
 						Clear filters
 					</Button>
-					.
 				</Text>
 			) : null}
 		</div>
