@@ -16,7 +16,13 @@ function SearchForm({ search, placeholder, onSearch }: SearchFormProps) {
 
 	function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		onSearch(value.trim());
+
+		const trimmed = value.trim();
+
+		// `minLength` counts surrounding spaces, which the search contract trims away.
+		if (trimmed.length > 0 && trimmed.length < 3) return;
+
+		onSearch(trimmed);
 	}
 
 	return (
@@ -27,6 +33,9 @@ function SearchForm({ search, placeholder, onSearch }: SearchFormProps) {
 				</InputGroupAddon>
 				<InputGroupInput
 					placeholder={placeholder}
+					// The search index needs 3 characters; an empty search clears the filter.
+					minLength={3}
+					maxLength={100}
 					value={value}
 					onChange={(event) => setValue(event.target.value)}
 				/>

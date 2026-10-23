@@ -15,6 +15,7 @@ import { and, desc, eq, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { OPEN_SUBMISSION_STATUSES, toSubmission } from '~/lib/submissions';
+import { afterKey, decodeCursor, toKeysetPage } from '~/lib/keyset';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
 import type { AddonVersionRow } from '~/lib/artifacts';
 import { appendEvent } from '~/lib/moderation-events';
@@ -25,6 +26,7 @@ import type { Transaction } from '~/db/database';
 import { toAddonVersion } from '~/lib/artifacts';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
+import type { CursorKey } from '~/lib/keyset';
 import { ApiError } from '~/lib/api/errors';
 
 export type AddonRow = typeof addon.$inferSelect;
@@ -40,8 +42,6 @@ export type AddonDetails = {
 	maintainers: Maintainer[];
 };
 
-type ListingCursor = [value: string | number, id: string];
-
 type ListedAddonRow = Pick<AddonRow, 'id' | 'type'> & { versions: AddonVersionRow[] };
 
 type ManifestTypeFields = Pick<PublishedManifest, 'type' | 'main'>;
@@ -56,7 +56,7 @@ const CURSOR_SCHEMAS = {
 	name: z.tuple([z.string(), addonIdSchema]),
 	created: z.tuple([z.int(), addonIdSchema]),
 	updated: z.tuple([z.int(), addonIdSchema]),
-} satisfies Record<AddonSort, z.ZodType<ListingCursor>>;
+} satisfies Record<AddonSort, z.ZodType<CursorKey>>;
 
 /** The relational `with` that loads an addon's newest version. */
 export const LATEST_VERSION = { versions: { orderBy: { versionKey: 'desc' }, limit: 1 } } as const;
@@ -190,19 +190,10 @@ export function relistAddon(ctx: AppContext, caller: Caller, addonId: string): A
 	return setDelistedAt(ctx, caller, addonId, null);
 }
 
-function encodeCursor(row: AddonRow, sort: AddonSort): string {
+function listingKey(row: AddonRow, sort: AddonSort): CursorKey {
 	const value = row[SORT_COLUMNS[sort]];
-	const cursor: ListingCursor = [value instanceof Date ? value.getTime() : value, row.id];
 
-	return Buffer.from(JSON.stringify(cursor)).toString('base64url');
-}
-
-function decodeCursor(cursor: string, sort: AddonSort): ListingCursor {
-	try {
-		return CURSOR_SCHEMAS[sort].parse(JSON.parse(Buffer.from(cursor, 'base64url').toString()));
-	} catch {
-		throw new ApiError('invalid_request', `The cursor is not a ${sort} listing cursor.`);
-	}
+	return [value instanceof Date ? value.getTime() : value, row.id];
 }
 
 /**
@@ -215,7 +206,7 @@ function decodeCursor(cursor: string, sort: AddonSort): ListingCursor {
 export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) {
 	const { type, q, sort = 'name', order = 'asc', cursor } = query;
 	const column = SORT_COLUMNS[sort];
-	const after = cursor ? decodeCursor(cursor, sort) : undefined;
+	const after = cursor ? decodeCursor(cursor, CURSOR_SCHEMAS[sort]) : undefined;
 
 	return ctx.db.query.addon.findMany({
 		where: {
@@ -226,9 +217,7 @@ export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) 
 					q
 						? or(likeContains(table.name, q), likeContains(table.description, q))
 						: undefined,
-					after
-						? sql`(${table[column]}, ${table.id}) ${order === 'asc' ? sql`>` : sql`<`} (${after[0]}, ${after[1]})`
-						: undefined,
+					after ? afterKey([table[column], table.id], after, order) : undefined,
 				) ?? sql`true`,
 		},
 		with: LATEST_VERSION,
@@ -262,16 +251,12 @@ export async function listAddons(
 	ctx: AppContext,
 	query: ListAddonsQuery = {},
 ): Promise<ListAddonsResponse> {
-	const size = ctx.env.ADDON_LIST_PAGE_SIZE;
 	const rows = await queryListedAddons(ctx, query);
-	const page = rows.slice(0, size);
-	const last = page.at(-1);
-	const addons = toListedAddons(ctx, page);
+	const page = toKeysetPage(rows, ctx.env.ADDON_LIST_PAGE_SIZE, query, (row) =>
+		listingKey(row, query.sort ?? 'name'),
+	);
 
-	return {
-		addons,
-		nextCursor: rows.length > size && last ? encodeCursor(last, query.sort ?? 'name') : null,
-	};
+	return { addons: toListedAddons(ctx, page.items), nextCursor: page.next };
 }
 
 /**

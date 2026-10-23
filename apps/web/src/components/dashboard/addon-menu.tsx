@@ -58,7 +58,7 @@ function AddonMenu({ addon, userId }: AddonMenuProps) {
 						<>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem asChild>
-								<Link to='/admin/addons' search={{ search: addon.id }}>
+								<Link to='/admin/addons' search={{ q: addon.id }}>
 									<IconShield />
 									Manage in admin
 								</Link>

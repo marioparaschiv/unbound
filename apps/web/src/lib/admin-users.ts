@@ -1,12 +1,14 @@
+import type { AdminUsersSearch } from '@unbound-app/contracts/admin';
+import { and, sql } from 'drizzle-orm';
+import { z } from 'zod';
+
+import { afterKey, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
+import { requirePermission } from '~/lib/api/caller';
+import { matchesSearch } from '~/lib/admin-search';
 import { DEFAULT_ROLE } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
-
-export type AdminUsersQuery = {
-	/** Matches anywhere in the user's name. */
-	search: string;
-	/** 1-based. */
-	page: number;
-};
+import type { Caller } from '~/lib/api/caller';
+import type { KeysetPage } from '~/lib/keyset';
 
 export type AdminUser = {
 	id: string;
@@ -19,51 +21,71 @@ export type AdminUser = {
 	createdAt: Date;
 };
 
-export type AdminUsersPage = {
-	users: AdminUser[];
-	total: number;
-	pageSize: number;
-};
+export type AdminUsersPage = KeysetPage<AdminUser>;
+
+const USER_CURSOR = z.tuple([z.int(), z.string().min(1)]);
 
 /**
- * @description Lists one page of users, newest first, through the admin plugin, which requires
- * `user:list` of the signed-in caller.
+ * @description Builds the one statement behind {@link listAdminUsers}: one page plus a lookahead row,
+ * newest first by `(created_at, id)`.
  * @param ctx The application context.
- * @param headers The caller's request headers.
- * @param query The name filter and page number.
- * @returns The page, the total number of matching users and the page size.
+ * @param search The search text and the cursor to page from.
+ * @returns The unexecuted relational query.
+ */
+export function queryAdminUsers(ctx: AppContext, search: AdminUsersSearch = {}) {
+	const { q, cursor, dir } = search;
+	const after = cursor ? decodeCursor(cursor, USER_CURSOR) : undefined;
+	const order = scanOrder('desc', dir);
+
+	return ctx.db.query.user.findMany({
+		where: {
+			RAW: (table) =>
+				and(
+					q ? matchesSearch('user', table.id, q) : undefined,
+					after ? afterKey([table.createdAt, table.id], after, 'desc', dir) : undefined,
+				) ?? sql`true`,
+		},
+		orderBy: (table, operators) => [
+			operators[order](table.createdAt),
+			operators[order](table.id),
+		],
+		limit: ctx.env.USER_LIST_PAGE_SIZE + 1,
+	});
+}
+
+/**
+ * @description Lists one page of users, newest first, optionally only those whose id, name or email
+ * contains the search text. Requires `user:list`.
+ * @param ctx The application context.
+ * @param caller The moderator.
+ * @param search The search text and the cursor to page from.
+ * @returns The page and the cursors on either side of it.
  */
 export async function listAdminUsers(
 	ctx: AppContext,
-	headers: Headers,
-	query: AdminUsersQuery,
+	caller: Caller,
+	search: AdminUsersSearch = {},
 ): Promise<AdminUsersPage> {
-	const pageSize = ctx.env.USER_LIST_PAGE_SIZE;
-	const result = await ctx.auth.api.listUsers({
-		headers,
-		query: {
-			searchValue: query.search || undefined,
-			searchField: 'name',
-			searchOperator: 'contains',
-			sortBy: 'createdAt',
-			sortDirection: 'desc',
-			limit: pageSize,
-			offset: (query.page - 1) * pageSize,
-		},
-	});
+	requirePermission(caller, { user: ['list'] });
 
-	const users = result.users.map((entry) => ({
-		id: entry.id,
-		name: entry.name,
-		email: entry.email,
-		image: entry.image ?? null,
-		role: entry.role ?? DEFAULT_ROLE,
-		banned: entry.banned ?? false,
-		banReason: entry.banReason ?? null,
-		createdAt: entry.createdAt,
+	const rows = await queryAdminUsers(ctx, search);
+	const page = toKeysetPage(rows, ctx.env.USER_LIST_PAGE_SIZE, search, (row) => [
+		row.createdAt.getTime(),
+		row.id,
+	]);
+
+	const items = page.items.map((row) => ({
+		id: row.id,
+		name: row.name,
+		email: row.email,
+		image: row.image ?? null,
+		role: row.role ?? DEFAULT_ROLE,
+		banned: row.banned ?? false,
+		banReason: row.banReason ?? null,
+		createdAt: row.createdAt,
 	}));
 
-	return { users, total: result.total, pageSize };
+	return { ...page, items };
 }
 
-export default { listAdminUsers };
+export default { queryAdminUsers, listAdminUsers };
