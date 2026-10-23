@@ -1,11 +1,20 @@
+import ServeVersionDialog from '~/components/admin/serve-version-dialog';
 import { formatDate } from '~/components/admin/format-date';
 import type { AdminVersion } from '~/lib/admin-addon';
 import Tag from '~/components/tag';
 import cn from '~/lib/cn';
 
 type VersionTableProps = {
-	/** Newest first; the first is the one served. */
+	addonId: string;
+	/** Newest first, withdrawn ones included. */
 	versions: AdminVersion[];
+	/** Whether the viewer may change which version is served. */
+	canServe: boolean;
+};
+
+type VersionStatusProps = {
+	version: AdminVersion;
+	served: boolean;
 };
 
 const COLUMNS = ['Version', 'Published', 'Min client', 'Size', 'Repository', 'SHA-256'];
@@ -18,14 +27,37 @@ function formatSize(bytes: number): string {
 	return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
 }
 
-function VersionTable({ versions }: VersionTableProps) {
+function VersionStatus({ version, served }: VersionStatusProps) {
+	const { withdrawal } = version;
+
+	if (served) {
+		return <Tag variant='primary'>Served</Tag>;
+	}
+
+	if (!withdrawal) return null;
+
+	return (
+		<span className='inline-flex items-center gap-2'>
+			<Tag variant='destructive'>Withdrawn</Tag>
+			<span className='text-muted-foreground text-xs'>
+				by rollback #{withdrawal.eventId}
+				{withdrawal.by ? ` (${withdrawal.by.name})` : ''} on {formatDate(withdrawal.at)}
+			</span>
+		</span>
+	);
+}
+
+function VersionTable({ addonId, versions, canServe }: VersionTableProps) {
+	const served = versions.find((version) => !version.withdrawal)?.version;
+	const columns = canServe ? [...COLUMNS, ''] : COLUMNS;
+
 	return (
 		<div className='bg-card border border-border rounded-lg overflow-hidden'>
 			<div className='overflow-x-auto'>
 				<table className='w-full'>
 					<thead className='bg-muted/50 border-b border-border'>
 						<tr>
-							{COLUMNS.map((column) => (
+							{columns.map((column) => (
 								<th key={column} className={HEADER_CLASS}>
 									{column}
 								</th>
@@ -36,19 +68,28 @@ function VersionTable({ versions }: VersionTableProps) {
 						{versions.length === 0 ? (
 							<tr>
 								<td
-									colSpan={COLUMNS.length}
+									colSpan={columns.length}
 									className='px-4 py-8 text-muted-foreground text-center'
 								>
 									No approved versions.
 								</td>
 							</tr>
 						) : null}
-						{versions.map((version, index) => (
-							<tr key={version.version} className='hover:bg-muted/30'>
+						{versions.map((version) => (
+							<tr
+								key={version.version}
+								className={cn(
+									'hover:bg-muted/30',
+									version.withdrawal && 'opacity-70',
+								)}
+							>
 								<td className={CELL_CLASS}>
 									<span className='inline-flex items-center gap-2'>
 										<span className='font-mono'>{version.version}</span>
-										{index === 0 ? <Tag variant='primary'>Served</Tag> : null}
+										<VersionStatus
+											version={version}
+											served={version.version === served}
+										/>
 									</span>
 								</td>
 								<td className={cn(CELL_CLASS, 'text-muted-foreground')}>
@@ -83,6 +124,17 @@ function VersionTable({ versions }: VersionTableProps) {
 								>
 									{version.sha256.slice(0, 12)}
 								</td>
+								{canServe ? (
+									<td className={cn(CELL_CLASS, 'text-right')}>
+										{version.version === served ? null : (
+											<ServeVersionDialog
+												addonId={addonId}
+												versions={versions}
+												version={version.version}
+											/>
+										)}
+									</td>
+								) : null}
 							</tr>
 						))}
 					</tbody>

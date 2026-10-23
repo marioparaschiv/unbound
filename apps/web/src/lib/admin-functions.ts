@@ -2,22 +2,26 @@ import {
 	adminAddonsSearchSchema,
 	adminUsersSearchSchema,
 	moderationEventPageRequestSchema,
+	serveVersionRequestSchema,
 } from '@unbound-app/contracts/admin';
 import { userSummarySchema } from '@unbound-app/contracts/account';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
+import { z } from 'zod/mini';
 
 import { getAdminUser, getUserSummary, listAdminUsers } from '~/lib/admin-users';
 import type { AdminUserView, AdminUsersPage } from '~/lib/admin-users';
 import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
 import type { AdminAddonsPage } from '~/lib/admin-addons';
+import type { ServeVersionResult } from '~/lib/rollback';
 import type { AdminAddonView } from '~/lib/admin-addon';
 import { listAdminAddons } from '~/lib/admin-addons';
 import { getAdminAddon } from '~/lib/admin-addon';
 import { requireCaller } from '~/lib/api/caller';
+import { serveVersion } from '~/lib/rollback';
 import app from '~/lib/app';
 
 export type AdminAddonsView = AdminAddonsPage & {
@@ -90,4 +94,23 @@ export const fetchEvents = createServerFn({ method: 'GET' })
 		return getEventTimeline(app, caller, data.subject, data.before);
 	});
 
-export default { fetchAdminUsers, fetchAdminAddons, fetchAdminAddon, fetchAdminUser, fetchEvents };
+/**
+ * @description Makes one approved version the one an addon serves, for the signed-in administrator.
+ * @returns What was served before and after, and which versions were withdrawn or restored.
+ */
+export const submitServeVersion = createServerFn({ method: 'POST' })
+	.validator(z.object({ id: addonIdSchema, request: serveVersionRequestSchema }))
+	.handler(async ({ data }): Promise<ServeVersionResult> => {
+		const caller = await requireCaller(app, getRequestHeaders());
+
+		return serveVersion(app, caller, data.id, data.request);
+	});
+
+export default {
+	fetchAdminUsers,
+	fetchAdminAddons,
+	fetchAdminAddon,
+	fetchAdminUser,
+	fetchEvents,
+	submitServeVersion,
+};
