@@ -1,35 +1,21 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
-import { getRequestHeaders } from '@tanstack/react-start/server';
-import { createServerFn } from '@tanstack/react-start';
+import { adminAddonsSearchSchema } from '@unbound-app/contracts/admin';
 
-import { pageSearchSchema, toPageSearch } from '~/lib/page-search';
 import AddonActions from '~/components/admin/addon-actions';
+import { fetchAdminAddons } from '~/lib/admin-functions';
 import AdminTable from '~/components/admin/admin-table';
 import SearchForm from '~/components/admin/search-form';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
-import { listAdminAddons } from '~/lib/admin-addons';
 import { hasPermission } from '~/lib/auth/access';
-import { requireCaller } from '~/lib/api/caller';
 import Text from '~/components/ui/text';
-import app from '~/lib/app';
 
 const COLUMNS = ['Addon', 'Latest', 'Owners', 'Status'];
 
-const fetchAddons = createServerFn({ method: 'GET' })
-	.validator(pageSearchSchema)
-	.handler(async ({ data }) => {
-		const caller = await requireCaller(app, getRequestHeaders());
-
-		return listAdminAddons(app, caller, { search: data.search ?? '', page: data.page ?? 1 });
-	});
-
 function AddonsPage() {
 	const { user: viewer } = Route.useRouteContext();
-	const { addons, total, pageSize } = Route.useLoaderData();
-	const params = Route.useSearch();
+	const { items: addons, next, prev } = Route.useLoaderData();
+	const search = Route.useSearch().q ?? '';
 	const navigate = useNavigate({ from: Route.fullPath });
-	const search = params.search ?? '';
-	const page = params.page ?? 1;
 	const canDelist = hasPermission(viewer.role, { addon: ['delist'] });
 	const canTransfer = hasPermission(viewer.role, { addon: ['transfer'] });
 
@@ -46,17 +32,33 @@ function AddonsPage() {
 				key={search}
 				search={search}
 				placeholder='Search by id or name...'
-				onSearch={(value) => navigate({ search: toPageSearch(value, 1) })}
+				onSearch={(value) =>
+					navigate({
+						search: (current) => ({
+							...current,
+							q: value || undefined,
+							cursor: undefined,
+							dir: undefined,
+						}),
+					})
+				}
 			/>
 
 			<AdminTable
 				columns={COLUMNS}
 				empty={addons.length === 0}
-				page={page}
-				pageSize={pageSize}
-				total={total}
 				noun='addons'
-				onPageChange={(next) => navigate({ search: toPageSearch(search, next) })}
+				next={next}
+				prev={prev}
+				onPageChange={(cursor, dir) =>
+					navigate({
+						search: (current) => ({
+							...current,
+							cursor,
+							dir: dir === 'prev' ? dir : undefined,
+						}),
+					})
+				}
 			>
 				{addons.map((addon) => (
 					<tr key={addon.id} className='hover:bg-muted/30'>
@@ -97,13 +99,13 @@ function AddonsPage() {
 
 export const Route = createFileRoute('/_site/_staff/admin/addons')({
 	head: () => ({ meta: [{ title: 'Unbound | Addons' }] }),
-	validateSearch: pageSearchSchema,
+	validateSearch: adminAddonsSearchSchema,
 	beforeLoad: ({ context }) => {
 		if (!hasPermission(context.user.role, STAFF_SECTIONS.addons.permissions)) {
 			throw redirect({ to: '/' });
 		}
 	},
 	loaderDeps: ({ search }) => search,
-	loader: ({ deps }) => fetchAddons({ data: deps }),
+	loader: ({ deps }) => fetchAdminAddons({ data: deps }),
 	component: AddonsPage,
 });
