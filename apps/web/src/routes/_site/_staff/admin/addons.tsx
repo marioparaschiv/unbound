@@ -1,7 +1,9 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { adminAddonsSearchSchema } from '@unbound-app/contracts/admin';
 
+import type { AddonFilterValues } from '~/components/admin/addon-filters';
 import AddonActions from '~/components/admin/addon-actions';
+import AddonFilters from '~/components/admin/addon-filters';
 import { fetchAdminAddons } from '~/lib/admin-functions';
 import AdminTable from '~/components/admin/admin-table';
 import SearchForm from '~/components/admin/search-form';
@@ -13,8 +15,9 @@ const COLUMNS = ['Addon', 'Latest', 'Owners', 'Status'];
 
 function AddonsPage() {
 	const { user: viewer } = Route.useRouteContext();
-	const { items: addons, next, prev } = Route.useLoaderData();
-	const search = Route.useSearch().q ?? '';
+	const { items: addons, next, prev, maintainer } = Route.useLoaderData();
+	const { q, cursor: _cursor, dir: _dir, ...filters } = Route.useSearch();
+	const search = q ?? '';
 	const navigate = useNavigate({ from: Route.fullPath });
 	const canDelist = hasPermission(viewer.role, { addon: ['delist'] });
 	const canTransfer = hasPermission(viewer.role, { addon: ['transfer'] });
@@ -32,16 +35,13 @@ function AddonsPage() {
 				key={search}
 				search={search}
 				placeholder='Search by id or name...'
-				onSearch={(value) =>
-					navigate({
-						search: (current) => ({
-							...current,
-							q: value || undefined,
-							cursor: undefined,
-							dir: undefined,
-						}),
-					})
-				}
+				onSearch={(value) => navigate({ search: { ...filters, q: value || undefined } })}
+			/>
+
+			<AddonFilters
+				filters={filters}
+				maintainer={maintainer}
+				onChange={(changed: AddonFilterValues) => navigate({ search: { ...changed, q } })}
 			/>
 
 			<AdminTable
