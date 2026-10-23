@@ -49,8 +49,6 @@ const unpatches: (() => void)[] = [];
  * @param onReady Runs once the registry is ready; resolve it before Discord and deferred calls flush.
  */
 export default function deferUntilReady(onReady: () => Promise<void>): void {
-	ensureModules();
-
 	// `__r` already exists: the hook point is gone (legacy Vendetta-style loader). Initialize now.
 	if (typeof window.__r !== 'undefined') {
 		void runReady(onReady).then((initialized) => {
@@ -74,7 +72,6 @@ export default function deferUntilReady(onReady: () => Promise<void>): void {
 						return original(id);
 					}
 
-					ensureModules();
 					onRunApplication(original, onReady);
 					requireFn = original;
 				};
@@ -83,8 +80,6 @@ export default function deferUntilReady(onReady: () => Promise<void>): void {
 		__d: {
 			configurable: true,
 			get() {
-				ensureModules();
-
 				return this.value;
 			},
 			set(value: MetroDefine) {
@@ -94,24 +89,11 @@ export default function deferUntilReady(onReady: () => Promise<void>): void {
 	});
 }
 
-/** Populates `window.modules` from the host registry factory if it has not been materialised yet. */
-function ensureModules() {
-	// `window.Object` is guarded because the host has it momentarily undefined during early boot.
-	if (window.modules || typeof window.Object === 'undefined') return;
-
-	const modules = window.__c?.();
-
-	if (modules) {
-		window.modules = modules;
-	}
-}
-
 /**
  * Handles the native `__r(0)` "run application" call: holds outstanding native calls, runs our
  * initialization, then starts Discord and flushes everything we held back.
  */
 function onRunApplication(original: MetroRequire, onReady: () => Promise<void>) {
-	ensureModules();
 	holdNativeCalls();
 
 	void runReady(onReady).then((initialized) => {

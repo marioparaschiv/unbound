@@ -64,30 +64,33 @@ test('releases readiness callbacks after Discord startup resumes', async () => {
 	}
 });
 
-test('materializes Metro modules before initializing when require already exists', async () => {
+test('preserves the loader-captured Metro registry during initialization', async () => {
 	const previousCollector = globalThis.__c;
 	const previousModules = globalThis.modules;
 	const previousRequire = globalThis.__r;
 	const events: string[] = [];
-
-	Reflect.deleteProperty(globalThis, 'modules');
+	const registry = new Map<number, MetroModuleRecord>();
+	let collectorCalls = 0;
 
 	globalThis.__c = () => {
-		events.push('collect');
+		collectorCalls++;
 
 		return new Map();
 	};
 
+	globalThis.modules = registry;
 	globalThis.__r = createRequire(() => undefined);
 
 	try {
 		deferUntilReady(async () => {
-			events.push(globalThis.modules ? 'initialize' : 'missing');
+			events.push(globalThis.modules === registry ? 'initialize' : 'missing');
 		});
 
 		await new Promise((resolve) => setTimeout(resolve, 0));
 
-		expect(events).toEqual(['collect', 'initialize']);
+		expect(events).toEqual(['initialize']);
+		expect(collectorCalls).toBe(0);
+		expect(globalThis.modules).toBe(registry);
 	} finally {
 		if (previousCollector) {
 			globalThis.__c = previousCollector;
