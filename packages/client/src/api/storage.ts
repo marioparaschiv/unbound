@@ -2,8 +2,8 @@ import type { PredicateResult, SettingsObject, SettingsValue, Widen } from '@unb
 import debounce from '@unbound-app/utils/debounce';
 import isEmpty from '@unbound-app/utils/is-empty';
 import { useEffect, useState } from 'react';
-import { EventEmitter } from 'tseep';
 
+import { EventEmitter } from '~/lib/event-emitter';
 import fs from '~/api/fs';
 
 /** Payload describing a settings change, passed to `changed` listeners and predicates. */

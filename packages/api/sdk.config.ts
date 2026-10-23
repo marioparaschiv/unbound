@@ -35,7 +35,6 @@ export const config: SdkConfig = {
 		'@unbound-app/types',
 		'@unbound-app/logger',
 		'@unbound-app/utils',
-		'tseep',
 		'possess',
 	],
 	barrelPath: 'packages/client/src/api/index.ts',
