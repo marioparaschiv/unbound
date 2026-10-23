@@ -1,4 +1,4 @@
-import { sortOrderSchema } from './addons';
+import { addonTypeSchema, sortOrderSchema } from './addons';
 import { z } from './zod';
 
 // ---- Admin lists: keyset paging and search (also the admin routes' `validateSearch`) ----
@@ -28,9 +28,25 @@ export const adminUsersSearchSchema = z.object({
 	...keysetSearch,
 });
 
-/** The admin addons list, by first approval. `q` matches the id or name. */
+/** `pending_review` and `changes_requested`: the addon has an update submission in that status. */
+export const adminAddonStatusSchema = z.enum([
+	'listed',
+	'delisted',
+	'pending_review',
+	'changes_requested',
+]);
+
+/** The admin addons list, by first approval. Every filter narrows; `q` matches the id or name. */
 export const adminAddonsSearchSchema = z.object({
 	q: z.optional(adminSearchTextSchema),
+	type: z.optional(addonTypeSchema),
+	status: z.optional(adminAddonStatusSchema),
+	/** A user id: the addons they own or maintain. */
+	maintainer: z.optional(z.string().check(z.minLength(1), z.maxLength(64))),
+	/** The first day of first approval, inclusive, in UTC. */
+	publishedFrom: z.optional(z.iso.date()),
+	/** The last day of first approval, inclusive, in UTC. */
+	publishedTo: z.optional(z.iso.date()),
 	/** Defaults to `desc`, newest first. */
 	order: z.optional(sortOrderSchema),
 	...keysetSearch,
@@ -38,11 +54,13 @@ export const adminAddonsSearchSchema = z.object({
 
 export type PageDirection = z.infer<typeof pageDirectionSchema>;
 export type AdminUsersSearch = z.infer<typeof adminUsersSearchSchema>;
+export type AdminAddonStatus = z.infer<typeof adminAddonStatusSchema>;
 export type AdminAddonsSearch = z.infer<typeof adminAddonsSearchSchema>;
 
 export default {
 	pageDirectionSchema,
 	adminSearchTextSchema,
 	adminUsersSearchSchema,
+	adminAddonStatusSchema,
 	adminAddonsSearchSchema,
 };
