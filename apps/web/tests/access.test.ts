@@ -20,12 +20,15 @@ const cases: Case[] = [
 	['moderator', { user: ['set-role'] }, false],
 	['moderator', { addon: ['transfer'] }, false],
 	['moderator', { loader: ['publish'] }, false],
+	['moderator', { note: ['read', 'write'] }, true],
+	['developer', { note: ['read'] }, false],
 	['ci', { loader: ['publish'] }, true],
 	['ci', { submission: ['create'] }, false],
 	['ci', { addon: ['delist'] }, false],
 	['admin', { user: ['set-role'] }, true],
 	['admin', { loader: ['publish'] }, true],
 	['admin', { addon: ['transfer', 'delist'] }, true],
+	['admin', { note: ['read', 'write'] }, true],
 ];
 
 describe('hasPermission', () => {
