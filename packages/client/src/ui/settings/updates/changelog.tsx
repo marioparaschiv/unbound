@@ -1,35 +1,41 @@
+import type { VersionChangelog } from '@unbound-app/contracts/updates';
+import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
-import type { PendingUpdate } from '~/lib/updates';
 import { Discord } from '~/api/metro/components';
-import { Messages, format } from '~/api/i18n';
 import { Page } from '~/ui/components';
+import { Messages } from '~/api/i18n';
 import { Icons } from '~/api/assets';
 
-import { kindIcon, shortDate } from './format';
-import UpdateButton from './update-button';
+import { shortDate } from './format';
 
 type ChangelogProps = {
-	entry: PendingUpdate;
+	name: string;
+	icon: number | undefined;
+	/** The installed version. */
+	from: string;
+	/** The offered version. */
+	to: string;
+	/** Each version the update skips over, newest first. */
+	changelogs: VersionChangelog[];
+	/** The action under the changelog, such as an update button. */
+	children: ReactNode;
 };
 
-/** One pending update: the version jump, every skipped version's changelog, and an update button. */
-function Changelog({ entry }: ChangelogProps) {
-	const navigation = Discord.useNavigation();
-	const { update } = entry;
-
+/** One pending update: the version jump, every skipped version's changelog, and its action. */
+function Changelog({ name, icon, from, to, changelogs, children }: ChangelogProps) {
 	return (
 		<Page>
 			<Discord.TableRowGroup>
 				<Discord.TableRow
-					label={entry.name}
-					subLabel={`${entry.from} → ${update.version}`}
-					icon={<Discord.TableRowIcon source={kindIcon(entry.kind)} />}
+					label={name}
+					subLabel={`${from} → ${to}`}
+					icon={<Discord.TableRowIcon source={icon} />}
 				/>
 			</Discord.TableRowGroup>
 
 			<Discord.TableRowGroup title={Messages.UNBOUND_UPDATES_CHANGELOG}>
-				{update.changelogs.map((version) => (
+				{changelogs.map((version) => (
 					<Discord.TableRow
 						key={version.version}
 						label={version.version}
@@ -42,15 +48,7 @@ function Changelog({ entry }: ChangelogProps) {
 				))}
 			</Discord.TableRowGroup>
 
-			<View>
-				<UpdateButton
-					id={entry.id}
-					size='lg'
-					grow
-					text={format('UNBOUND_UPDATES_UPDATE_TO', { version: update.version })}
-					onUpdated={() => navigation.goBack()}
-				/>
-			</View>
+			<View>{children}</View>
 		</Page>
 	);
 }

@@ -9,6 +9,7 @@ import { Page } from '~/ui/components';
 import { Icons } from '~/api/assets';
 
 import { fromNow, headline, kindIcon } from './format';
+import LoaderUpdateRow from './loader-update-row';
 import UpdateButton from './update-button';
 import Changelog from './changelog';
 
@@ -47,19 +48,39 @@ function UpdateRow({ entry }: UpdateRowProps) {
 			onPress={() =>
 				navigation.push(Screens.Custom, {
 					title: entry.name,
-					render: () => <Changelog entry={entry} />,
+					render: () => (
+						<Changelog
+							name={entry.name}
+							icon={kindIcon(entry.kind)}
+							from={entry.from}
+							to={update.version}
+							changelogs={update.changelogs}
+						>
+							<UpdateButton
+								id={entry.id}
+								size='lg'
+								grow
+								text={format('UNBOUND_UPDATES_UPDATE_TO', {
+									version: update.version,
+								})}
+								onUpdated={() => navigation.goBack()}
+							/>
+						</Changelog>
+					),
 				})
 			}
 		/>
 	);
 }
 
-/** @description Addon updates: check, apply one or all, and read each update's changelog. */
+/** @description Addon and loader updates: check, apply one or all, and read each update's changelog. */
 function UpdatesPage() {
 	const settings = useSettingsStore('unbound');
 	const state = UpdatesStore((store) => store.state);
 	const { check, applyAll } = UpdatesStore.getState();
 	const updates = state.status === 'ready' ? state.updates : [];
+	const loader = state.status === 'ready' ? state.loader : null;
+	const pending = updates.length > 0 || loader !== null;
 
 	return (
 		<Page>
@@ -89,13 +110,13 @@ function UpdatesPage() {
 			{state.status === 'ready' ? (
 				<Discord.TableRowGroup
 					title={Messages.UNBOUND_UPDATES_AVAILABLE}
-					helperText={
-						updates.length ? Messages.UNBOUND_UPDATES_AVAILABLE_DESC : undefined
-					}
+					helperText={pending ? Messages.UNBOUND_UPDATES_AVAILABLE_DESC : undefined}
 				>
-					{updates.length ? (
-						updates.map((entry) => <UpdateRow key={entry.id} entry={entry} />)
-					) : (
+					{loader ? <LoaderUpdateRow update={loader} /> : null}
+					{updates.map((entry) => (
+						<UpdateRow key={entry.id} entry={entry} />
+					))}
+					{pending ? null : (
 						<Discord.TableRow
 							label={Messages.UNBOUND_UPDATES_UP_TO_DATE}
 							icon={<Discord.TableRowIcon source={Icons.CircleCheckIcon} />}
