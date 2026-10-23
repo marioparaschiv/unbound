@@ -143,10 +143,9 @@ describe('admin addons', () => {
 			.set({ delistedAt: new Date() })
 			.where(eq(addon.id, 'staff_search.a'));
 
-		const page = await listAdminAddons(ctx, moderator.caller, { search: '_search', page: 1 });
+		const page = await listAdminAddons(ctx, moderator.caller, { q: '_search' });
 
-		expect(page.total).toBe(1);
-		expect(page.addons).toMatchObject([
+		expect(page.items).toMatchObject([
 			{
 				id: 'staff_search.a',
 				name: 'Hello',
@@ -154,30 +153,14 @@ describe('admin addons', () => {
 				owners: [{ id: owner.userId, name: 'Addon Owner' }],
 			},
 		]);
-		expect(page.addons[0]?.delistedAt).not.toBeNull();
-	});
-
-	test('pages through every addon by id', async () => {
-		const moderator = await signUp('moderator');
-		const owner = await signUp('developer');
-
-		for (const id of ['paged.c', 'paged.a', 'paged.b']) {
-			await seedApprovedAddon(ctx, owner.userId, manifest(id));
-		}
-
-		const second = await listAdminAddons(ctx, moderator.caller, { search: 'paged.', page: 2 });
-
-		expect(second).toMatchObject({ total: 3, pageSize: 2 });
-		expect(second.addons.map((entry) => entry.id)).toEqual(['paged.c']);
+		expect(page.items[0]?.delistedAt).not.toBeNull();
 	});
 
 	test('needs addon:delist', async () => {
 		for (const role of ['user', 'developer'] as const) {
 			const caller = await signUp(role);
 
-			const error = await listAdminAddons(ctx, caller.caller, { search: '', page: 1 }).catch(
-				(caught) => caught,
-			);
+			const error = await listAdminAddons(ctx, caller.caller, {}).catch((caught) => caught);
 
 			expect(error).toMatchObject({ code: 'forbidden' });
 		}
@@ -196,13 +179,9 @@ describe('admin users', () => {
 			.set({ createdAt: new Date('2026-01-01T00:00:00.000Z') })
 			.where(eq(user.id, older.userId));
 
-		const page = await listAdminUsers(ctx, moderator.headers, {
-			search: 'Searchable',
-			page: 1,
-		});
+		const page = await listAdminUsers(ctx, moderator.caller, { q: 'Searchable' });
 
-		expect(page.total).toBe(2);
-		expect(page.users.map((entry) => [entry.id, entry.role, entry.banned])).toEqual([
+		expect(page.items.map((entry) => [entry.id, entry.role, entry.banned])).toEqual([
 			[newer.userId, 'user', false],
 			[older.userId, 'user', false],
 		]);
@@ -212,11 +191,9 @@ describe('admin users', () => {
 		for (const role of ['user', 'developer'] as const) {
 			const caller = await signUp(role);
 
-			const error = await listAdminUsers(ctx, caller.headers, { search: '', page: 1 }).catch(
-				(caught) => caught,
-			);
+			const error = await listAdminUsers(ctx, caller.caller, {}).catch((caught) => caught);
 
-			expect(error).toMatchObject({ statusCode: 403 });
+			expect(error).toMatchObject({ code: 'forbidden' });
 		}
 	});
 
@@ -232,8 +209,7 @@ describe('admin users', () => {
 
 		expect(banned.status).toBe(200);
 		expect(
-			(await listAdminUsers(ctx, moderator.headers, { search: 'Banned Soon', page: 1 }))
-				.users,
+			(await listAdminUsers(ctx, moderator.caller, { q: 'Banned Soon' })).items,
 		).toMatchObject([{ id: target.userId, banned: true, banReason: 'Spam.' }]);
 
 		const unbanned = await authRequest(ctx, '/admin/unban-user', {
