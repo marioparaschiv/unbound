@@ -14,10 +14,12 @@
 	},
 	"dependencies": {
 		"@unbound-app/types": "workspace:*",
+		"picomatch": "^4.0.7",
 		"zod": "^4.0.0"
 	},
 	"devDependencies": {
-		"@types/bun": "catalog:"
+		"@types/bun": "catalog:",
+		"@types/picomatch": "^4.0.3"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"
