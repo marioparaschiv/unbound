@@ -22,7 +22,6 @@ export type SponsorshipPayloadOptions = {
 	effectiveDate?: string;
 };
 
-/** A sponsorship payload, another event's payload such as `ping`, or a raw body. */
 export type WebhookPayload =
 	| ReturnType<typeof sponsorshipPayload>
 	| Record<string, string>

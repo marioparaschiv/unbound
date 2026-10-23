@@ -5,8 +5,6 @@ const profanity = new RegExpMatcher({
 	...englishRecommendedTransformers,
 });
 
-// A badge sits next to a name, so it must not read as a staff or platform title. These match whole
-// words (plurals too), so "Supporter", "Modern" and "Badminton" stay allowed.
 const RESERVED_WORDS = new Set([
 	'staff',
 	'admin',
@@ -21,15 +19,14 @@ const RESERVED_WORDS = new Set([
 	'verified',
 ]);
 
-// Brand names are also refused inside a word, e.g. "UnboundDev".
 const RESERVED_SUBSTRINGS = ['unbound', 'discord', 'moderator', 'official'];
 
 function normalize(label: string): string {
 	return label.normalize('NFKD').replaceAll(/\p{M}/gu, '').toLowerCase();
 }
 
-// Spelled-out labels such as "S t a f f" or "f.u.c.k" join back into one word.
-function words(label: string): string[] {
+// Spelled-out runs such as "S t a f f" or "f.u.c.k" join back into one word.
+function wordsJoiningSpelledLetters(label: string): string[] {
 	const result: string[] = [];
 	let letters = '';
 
@@ -70,7 +67,7 @@ function isReserved(word: string): boolean {
  * @returns Why the label is refused, or `undefined` when it is fine.
  */
 export function findBadgeLabelProblem(label: string): string | undefined {
-	const labelWords = words(label);
+	const labelWords = wordsJoiningSpelledLetters(label);
 
 	if (profanity.hasMatch(label) || profanity.hasMatch(labelWords.join(' '))) {
 		return 'The badge label contains a word that is not allowed.';

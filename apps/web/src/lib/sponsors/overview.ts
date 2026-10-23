@@ -15,12 +15,10 @@ export type PerkStatus = {
 };
 
 export type SponsorOverview = {
-	/** The sponsored account's GitHub Sponsors page, or `null` when Sponsors is not configured. */
 	sponsorUrl: string | null;
 	githubLinked: boolean;
 	sponsorship: Omit<Sponsorship, 'githubId' | 'githubLogin' | 'updatedAt'> | null;
 	standing: SponsorStanding['kind'];
-	/** When perks stop, while the sponsorship has ended but the grace period has not. */
 	graceUntil: Date | null;
 	perks: PerkStatus[];
 	badge: BadgeClaim | null;

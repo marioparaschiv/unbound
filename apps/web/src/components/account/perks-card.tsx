@@ -33,7 +33,6 @@ type PerkRowProps = {
 
 type BadgeEditorProps = {
 	claim: BadgeClaim | null;
-	/** Only an active sponsor may set or change the badge; one in grace keeps the current one. */
 	editable: boolean;
 };
 

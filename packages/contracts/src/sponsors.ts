@@ -29,14 +29,12 @@ export const BADGE_COLORS = [
 
 export const BADGE_LABEL_MAX_LENGTH = 24;
 
-/** Perks a sponsor can unlock; each id is also the `kind` of what it renders publicly. */
 export const perkIdSchema = z.enum(['custom-badge']);
 
 export const badgeIconSchema = z.enum(BADGE_ICONS);
 
 export const badgeColorSchema = z.enum(BADGE_COLORS);
 
-// Latin script only, so look-alike letters from other scripts cannot spell a reserved word.
 export const badgeLabelSchema = z
 	.string()
 	.trim()
@@ -47,7 +45,6 @@ export const badgeLabelSchema = z
 		"Use Latin letters, digits, spaces and . , ' ! & + - _ : only, starting with a letter or digit.",
 	);
 
-/** A custom badge as its owner sets it. */
 export const badgeSchema = z.object({
 	label: badgeLabelSchema,
 	icon: badgeIconSchema,
@@ -55,7 +52,7 @@ export const badgeSchema = z.object({
 });
 
 export const publicBadgeSchema = badgeSchema.extend({
-	kind: z.literal('custom-badge'),
+	kind: perkIdSchema,
 });
 
 /** The badges a user shows next to their name; empty when they have none or it is hidden. */
@@ -63,7 +60,6 @@ export const userBadgesResponseSchema = z.object({
 	badges: z.array(publicBadgeSchema),
 });
 
-/** A user's badge claim, including a staff revocation, which their sponsorship cannot override. */
 export const badgeClaimSchema = badgeSchema.extend({
 	revokedAt: z.iso.datetime().nullable(),
 	revokeReason: z.string().nullable(),

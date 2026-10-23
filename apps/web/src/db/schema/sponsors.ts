@@ -3,10 +3,6 @@ import type { PerkId, SponsorshipState } from '@unbound-app/contracts/sponsors';
 
 import { user } from './auth';
 
-/**
- * A GitHub Sponsors sponsorship of the configured account, keyed by the sponsor's GitHub id. Users
- * reach theirs through their linked GitHub `account`, so linking later or unlinking needs no sync.
- */
 export const sponsorship = sqliteTable('sponsorship', {
 	githubId: text('github_id').primaryKey(),
 	githubLogin: text('github_login').notNull(),
@@ -14,14 +10,11 @@ export const sponsorship = sqliteTable('sponsorship', {
 	tierName: text('tier_name').notNull(),
 	monthlyPriceCents: integer('monthly_price_cents').notNull(),
 	oneTime: integer('one_time', { mode: 'boolean' }).notNull(),
-	/** When the sponsorship was created on GitHub. */
 	since: integer('since', { mode: 'timestamp_ms' }).notNull(),
-	/** When a pending cancellation takes effect, or when the sponsorship was cancelled. */
 	endsAt: integer('ends_at', { mode: 'timestamp_ms' }),
 	updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
-/** Webhook deliveries already applied, so a redelivery changes nothing. */
 export const sponsorWebhookDelivery = sqliteTable(
 	'sponsor_webhook_delivery',
 	{
@@ -32,7 +25,6 @@ export const sponsorWebhookDelivery = sqliteTable(
 	(table) => [index('sponsor_webhook_delivery_receivedAt_idx').on(table.receivedAt)],
 );
 
-/** A perk a user has set up; `config` is validated by the perk's schema in the perk registry. */
 export const perkClaim = sqliteTable(
 	'perk_claim',
 	{

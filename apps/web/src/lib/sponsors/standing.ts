@@ -4,18 +4,15 @@ import type { sponsorship } from '~/db/schema';
 
 export type Sponsorship = typeof sponsorship.$inferSelect;
 
-/** A standing that still carries perks. */
 export type SponsoringStanding =
 	| { kind: 'active'; sponsorship: Sponsorship }
 	| { kind: 'grace'; sponsorship: Sponsorship; until: Date };
 
-/** Where a sponsor stands at a moment: perks follow `active` and `grace`, never `lapsed`. */
 export type SponsorStanding =
 	| { kind: 'none' }
 	| SponsoringStanding
 	| { kind: 'lapsed'; sponsorship: Sponsorship };
 
-// When each state stops counting as active; `null` while it still runs.
 const ENDS_AT: Record<SponsorshipState, (row: Sponsorship) => Date | null> = {
 	active: () => null,
 	pending_cancellation: (row) => row.endsAt,

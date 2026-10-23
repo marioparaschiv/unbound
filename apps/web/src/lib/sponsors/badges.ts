@@ -10,7 +10,7 @@ import { createLogger } from '@unbound-app/logger';
 import { getUserSponsorship, graceMs } from '~/lib/sponsors/sponsorships';
 import { account, perkClaim, sponsorship, user } from '~/db/schema';
 import { findBadgeLabelProblem } from '~/lib/sponsors/moderation';
-import { isPerkUnlocked, PERKS } from '~/lib/sponsors/perks';
+import { canClaimPerk, isPerkUnlocked, PERKS } from '~/lib/sponsors/perks';
 import { requirePermission } from '~/lib/api/caller';
 import { standingOf } from '~/lib/sponsors/standing';
 import type { AppContext } from '~/lib/context';
@@ -85,7 +85,7 @@ export async function claimBadge(
 ): Promise<BadgeClaimResponse> {
 	const { standing } = getUserSponsorship(ctx, userId);
 
-	if (standing.kind !== 'active' || !isPerkUnlocked(PERK_ID, standing)) {
+	if (!canClaimPerk(PERK_ID, standing)) {
 		throw new ApiError(
 			'sponsorship_required',
 			'A monthly GitHub sponsorship of $1 or more unlocks a custom badge.',
@@ -218,7 +218,6 @@ export async function getVisibleBadges(
 				inArray(perkClaim.userId, userIds),
 				eq(perkClaim.perkId, PERK_ID),
 				isNull(perkClaim.revokedAt),
-				// Not banned, as `resolveCaller` judges it: a ban counts until `ban_expires` passes.
 				or(isNull(user.banned), eq(user.banned, false), lte(user.banExpires, now)),
 			),
 		);

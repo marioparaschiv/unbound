@@ -8,9 +8,7 @@ import { isSponsoring } from '~/lib/sponsors/standing';
 export type PerkDefinition = {
 	name: string;
 	description: string;
-	/** Whether a standing unlocks the perk; claiming or editing additionally needs `active`. */
 	eligible: (standing: SponsorStanding) => boolean;
-	/** What the owner sets up, stored as the claim's `config`. */
 	config: z.ZodType;
 };
 
@@ -26,7 +24,6 @@ export function monthlyTierFrom(cents: number): PerkDefinition['eligible'] {
 		standing.sponsorship.monthlyPriceCents >= cents;
 }
 
-/** Every perk; adding one needs an entry here and nothing in the schema. */
 export const PERKS = {
 	'custom-badge': {
 		name: 'Custom badge',
@@ -46,4 +43,15 @@ export function isPerkUnlocked(perkId: PerkId, standing: SponsorStanding): boole
 	return PERKS[perkId].eligible(standing);
 }
 
-export default { PERKS, monthlyTierFrom, isPerkUnlocked };
+/**
+ * @description Checks whether a standing lets the sponsor set up or change a perk. The grace period
+ * only keeps a perk already set up, so this needs an active sponsorship.
+ * @param perkId The perk.
+ * @param standing The sponsor's standing.
+ * @returns Whether the perk can be claimed.
+ */
+export function canClaimPerk(perkId: PerkId, standing: SponsorStanding): boolean {
+	return standing.kind === 'active' && isPerkUnlocked(perkId, standing);
+}
+
+export default { PERKS, monthlyTierFrom, isPerkUnlocked, canClaimPerk };

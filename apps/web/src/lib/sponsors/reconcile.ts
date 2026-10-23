@@ -75,7 +75,6 @@ type SponsorshipsPage = z.infer<
 	typeof pageSchema
 >['data']['repositoryOwner']['sponsorshipsAsMaintainer'];
 
-/** A sponsorship as the GitHub GraphQL API reports it. */
 export type RemoteSponsorship = SponsorshipValues & {
 	active: boolean;
 };
@@ -126,7 +125,7 @@ async function fetchPage(config: SponsorsConfig, after: string | null): Promise<
  * @description Reads every sponsorship of the sponsored account, past ones included, page by page.
  * Any failed or malformed page fails the whole read.
  * @param env The validated environment, with the Sponsors login and token set.
- * @returns The sponsorships by sponsor GitHub id; an active one wins over an older inactive one.
+ * @returns The sponsorships by sponsor GitHub id; an active one wins over an inactive one.
  */
 export async function fetchRemoteSponsorships(env: Env): Promise<Map<string, RemoteSponsorship>> {
 	const config = sponsorsConfig(env);
@@ -191,7 +190,6 @@ function nextLifecycle(
 		return { state: current.state, endsAt: current.endsAt };
 	}
 
-	// Found by reconciliation rather than a webhook, grace starts up to one interval late.
 	return { state: 'cancelled', endsAt: current.endsAt ?? now };
 }
 
@@ -334,7 +332,7 @@ export function startSponsorReconciler(ctx: AppContext): Timer | undefined {
 
 	void reconcile();
 
-	return setInterval(reconcile, ctx.env.SPONSOR_RECONCILE_INTERVAL_SECONDS * 1000);
+	return setInterval(() => void reconcile(), ctx.env.SPONSOR_RECONCILE_INTERVAL_SECONDS * 1000);
 }
 
 export default {
