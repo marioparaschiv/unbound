@@ -575,8 +575,11 @@ export type NativePluginErrorCode =
 	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
 	| 'NATIVE_PLUGIN_UNAVAILABLE';
 export type NativePluginPlatform = 'ios' | 'android';
-export type NativePluginRuntimeBridge = Omit<NativePluginBridge, 'objc' | 'ffi' | 'fabric'> &
-	Partial<Pick<NativePluginBridge, 'objc' | 'ffi' | 'fabric'>>;
+export type NativePluginRuntimeBridge = Pick<
+	NativePluginBridge,
+	'apiVersion' | 'abiVersion' | 'capabilities'
+> &
+	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities'>>;
 export type NativePointer = NativeHandle;
 export type NativeRuntimeBridge = {
 	subscribe(

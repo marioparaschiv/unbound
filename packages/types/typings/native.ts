@@ -417,8 +417,11 @@ export type NativePluginBridge = {
 	readonly media: NativeMediaBridge;
 };
 
-export type NativePluginRuntimeBridge = Omit<NativePluginBridge, 'objc' | 'ffi' | 'fabric'> &
-	Partial<Pick<NativePluginBridge, 'objc' | 'ffi' | 'fabric'>>;
+export type NativePluginRuntimeBridge = Pick<
+	NativePluginBridge,
+	'apiVersion' | 'abiVersion' | 'capabilities'
+> &
+	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities'>>;
 
 export type NativePluginErrorCode =
 	| 'NATIVE_BRIDGE_ERROR'

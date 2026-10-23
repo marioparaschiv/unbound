@@ -153,6 +153,11 @@ const iosSpecificBridges = {
 	ffi: bridge.ffi as NativeFFIBridge,
 	fabric: bridge.fabric as NativeFabricBridge,
 };
+const genericBridges = {
+	runtime: bridge.runtime,
+	ui: bridge.ui,
+	media: bridge.media,
+};
 
 const manifest: AddonManifest = {
 	authors: [{ id: '1', name: 'test' }],
@@ -199,6 +204,7 @@ const { createPluginContext, validateNativePluginRequirements } =
 afterEach(() => {
 	Object.assign(bridge, { capabilities });
 	Object.assign(bridge, iosSpecificBridges);
+	Object.assign(bridge, genericBridges);
 	Object.assign(nativePlatformBridge.device, { platform: 'ios' });
 	Object.assign(nativePlatformBridge, { platform: 'ios' });
 	removed.length = 0;
@@ -428,6 +434,42 @@ describe('native plugin negotiation', () => {
 		context.dispose();
 
 		Object.assign(bridge, iosSpecificBridges);
+	});
+
+	test('supports an Android bridge with only bounded UI lookup operations', async () => {
+		Object.assign(nativePlatformBridge.device, { platform: 'android' });
+		Object.assign(nativePlatformBridge, { platform: 'android' });
+		Object.assign(bridge, {
+			capabilities: ['native.ui.lookup'],
+			objc: undefined,
+			ffi: undefined,
+			fabric: undefined,
+			runtime: undefined,
+			media: undefined,
+			ui: {
+				lookup: () => cancellable(Promise.resolve([nativeHandle]), 'ui-lookup'),
+				snapshot: () =>
+					cancellable(Promise.resolve({ generation: 7, nodes: [] }), 'ui-snapshot'),
+			},
+		});
+
+		const context = createPluginContext({
+			...manifest,
+			platformCapabilities: { android: ['native.ui.lookup'] },
+		});
+
+		expect(await context.native.ui.lookup({ role: 'text' })).toEqual([nativeHandle]);
+		expect(await context.native.ui.snapshot({ role: 'text' })).toEqual({
+			generation: 7,
+			nodes: [],
+		});
+		expect(() => context.native.runtime.subscribe('ui.changed', () => undefined)).toThrow(
+			NativePluginCapabilityError,
+		);
+		expect(() => context.native.media.pick({ mediaTypes: ['image'] })).toThrow(
+			NativePluginCapabilityError,
+		);
+		context.dispose();
 	});
 
 	test('selects capabilities for the current platform', () => {
