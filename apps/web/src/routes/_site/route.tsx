@@ -6,7 +6,7 @@ import Header from '~/components/header';
 function SiteLayout() {
 	return (
 		<>
-			<div className='flex flex-col flex-1 overflow-hidden dotted-bg'>
+			<div className='flex flex-col flex-1 overflow-clip dotted-bg'>
 				<Header />
 				<div className='mb-4' />
 				<Outlet />
