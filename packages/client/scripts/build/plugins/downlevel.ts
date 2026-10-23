@@ -28,6 +28,32 @@ export function lower(root: string, code: string, sourceMaps: boolean = false): 
 // The wrapper keeps swc's helpers out of Discord's globals.
 const WRAPPER_HEAD = '(() => {\n';
 
+export type LoweredChunk = {
+	code: string;
+	map?: string;
+};
+
+/**
+ * @description Lowers a rendered chunk and wraps it in a function scope.
+ * @param root The package root holding the `.swcrc` whose `env` is applied.
+ * @param code The rendered chunk.
+ * @param sourceMaps Whether to also return a source map from the wrapped code back to `code`.
+ * @returns The wrapped code, and its map when asked for.
+ */
+export function lowerChunk(root: string, code: string, sourceMaps: boolean = false): LoweredChunk {
+	const lowered = lower(root, code, sourceMaps);
+	const wrapped = `${WRAPPER_HEAD}${lowered.code}\n})();`;
+
+	if (!lowered.map) {
+		return { code: wrapped };
+	}
+
+	const map = JSON.parse(lowered.map);
+	const headLines = ';'.repeat(WRAPPER_HEAD.split('\n').length - 1);
+
+	return { code: wrapped, map: JSON.stringify({ ...map, mappings: headLines + map.mappings }) };
+}
+
 /**
  * @description Lowers each rendered chunk after tree-shaking and before minification, so dependencies stay tree-shakeable.
  * @param root The package root holding the `.swcrc` whose `env` is applied.
@@ -37,17 +63,7 @@ export default function downlevel(root: string): Plugin {
 	return {
 		name: 'downlevel',
 		renderChunk(code, _chunk, options) {
-			const lowered = lower(root, code, Boolean(options.sourcemap));
-			const wrapped = `${WRAPPER_HEAD}${lowered.code}\n})();`;
-
-			if (!lowered.map) {
-				return wrapped;
-			}
-
-			const map = JSON.parse(lowered.map);
-			const headLines = ';'.repeat(WRAPPER_HEAD.split('\n').length - 1);
-
-			return { code: wrapped, map: { ...map, mappings: headLines + map.mappings } };
+			return lowerChunk(root, code, Boolean(options.sourcemap));
 		},
 	};
 }

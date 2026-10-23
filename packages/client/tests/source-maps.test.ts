@@ -4,41 +4,29 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { lowerChunk } from '../scripts/build/plugins/downlevel';
 import { symbolicate } from '../scripts/build/symbolicate';
-import downlevel from '../scripts/build/plugins/downlevel';
 
 const root = join(import.meta.dir, '..');
 const dist = mkdtempSync(join(tmpdir(), 'unbound-maps-'));
 
 afterAll(() => rmSync(dist, { recursive: true, force: true }));
 
-describe('downlevel', () => {
-	test('maps lowered code inside the wrapper back to the chunk line it came from', async () => {
-		const { renderChunk } = downlevel(root);
-
-		if (typeof renderChunk !== 'function') {
-			throw new Error('downlevel has no renderChunk function.');
-		}
-
+describe('lowerChunk', () => {
+	test('maps lowered code inside the wrapper back to the chunk line it came from', () => {
 		const chunk =
 			'const a = 1;\nclass Parser {\n\tparse() {\n\t\tthrow new Error(a);\n\t}\n}\n';
-		const result = await renderChunk.call(
-			{} as never,
-			chunk,
-			{} as never,
-			{ sourcemap: 'hidden' } as never,
-			{} as never,
-		);
+		const result = lowerChunk(root, chunk, true);
 
-		if (!result || typeof result !== 'object' || !('map' in result)) {
-			throw new Error('downlevel returned no source map.');
+		if (!result.map) {
+			throw new Error('lowerChunk returned no source map.');
 		}
 
-		const lines = String(result.code).split('\n');
+		const lines = result.code.split('\n');
 		const line = lines.findIndex((text) => text.includes('throw new Error(a)'));
-		const position = originalPositionFor(new TraceMap(JSON.stringify(result.map)), {
+		const position = originalPositionFor(new TraceMap(result.map), {
 			line: line + 1,
-			column: lines[line]!.indexOf('throw'),
+			column: lines[line]?.indexOf('throw') ?? 0,
 		});
 
 		expect(position.line).toBe(4);
