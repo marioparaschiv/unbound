@@ -48,6 +48,8 @@ type ListingCursor = [value: string | number, id: string];
 
 type ListedAddonRow = Pick<AddonRow, 'id' | 'type'> & { versions: AddonVersionRow[] };
 
+type ManifestTypeFields = Pick<PublishedManifest, 'type' | 'main'>;
+
 const MAINTAINERS = {
 	with: { user: { columns: { id: true, name: true, image: true } } },
 	orderBy: { role: 'desc', createdAt: 'asc' },
@@ -98,6 +100,15 @@ function toMaintainers(rows: MaintainerRow[]): Maintainer[] {
 }
 
 /**
+ * @description Reads an addon's type from its manifest.
+ * @param manifest The manifest's `type` and `main`.
+ * @returns The declared type, or the type implied by `main`.
+ */
+export function getManifestType({ type, main }: ManifestTypeFields): AddonType {
+	return type ?? (main.endsWith('.json') ? 'theme' : 'plugin');
+}
+
+/**
  * @description Derives the listing columns an addon copies from its newest version.
  * @param manifest The newest version's manifest.
  * @param publishedAt When that version was approved.
@@ -105,8 +116,7 @@ function toMaintainers(rows: MaintainerRow[]): Maintainer[] {
  */
 export function toAddonSummary(manifest: PublishedManifest, publishedAt: Date): AddonSummary {
 	return {
-		// `type` is optional in manifests; themes are the addons whose `main` is a JSON file.
-		type: manifest.type ?? (manifest.main.endsWith('.json') ? 'theme' : 'plugin'),
+		type: getManifestType(manifest),
 		name: manifest.name,
 		description: manifest.description,
 		updatedAt: publishedAt,
@@ -550,6 +560,7 @@ export async function listMyAddons(ctx: AppContext, caller: Caller): Promise<MyA
 export default {
 	LATEST_VERSION,
 	toAddon,
+	getManifestType,
 	toAddonSummary,
 	refreshAddonSummary,
 	listMaintainers,
