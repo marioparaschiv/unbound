@@ -16,6 +16,7 @@ import { fetchMarketplaceAddon } from '~/lib/marketplace';
 import Separator from '~/components/ui/separator';
 import UserAvatar from '~/components/user-avatar';
 import { Button } from '~/components/ui/button';
+import UserBadge from '~/components/user-badge';
 import Text from '~/components/ui/text';
 
 type AddonProps = {
@@ -170,6 +171,9 @@ function AddonPage() {
 									<Text variant='text-sm' className='flex-1 truncate'>
 										{maintainer.name}
 									</Text>
+									{maintainer.badge ? (
+										<UserBadge badge={maintainer.badge} />
+									) : null}
 									<Text variant='text-xs' color='muted' className='capitalize'>
 										{maintainer.role}
 									</Text>

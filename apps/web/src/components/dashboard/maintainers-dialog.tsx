@@ -1,8 +1,8 @@
 import type { Maintainer, MaintainersResponse } from '@unbound-app/contracts/addons';
 import { maintainersResponseSchema } from '@unbound-app/contracts/addons';
-import { IconUserPlus, IconUsers, IconX } from '@tabler/icons-react';
+import { useEffect, useState, useTransition } from 'react';
+import { IconUserPlus, IconX } from '@tabler/icons-react';
 import { useRouter } from '@tanstack/react-router';
-import { useState, useTransition } from 'react';
 import type { FormEvent } from 'react';
 import { toast } from 'sonner';
 
@@ -12,7 +12,6 @@ import {
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-	DialogTrigger,
 } from '~/components/ui/dialog';
 import { createBrowserClient } from '~/lib/api/browser-client';
 import getApiErrorMessage from '~/lib/api/error-message';
@@ -28,6 +27,8 @@ type MaintainersDialogProps = {
 	addonId: string;
 	/** The signed-in owner; removing themselves ends their access to this dialog. */
 	userId: string;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
 };
 
 type MaintainerRowProps = {
@@ -67,9 +68,8 @@ function MaintainerRow({ maintainer, disabled, onRemove }: MaintainerRowProps) {
 	);
 }
 
-function MaintainersDialog({ addonId, userId }: MaintainersDialogProps) {
+function MaintainersDialog({ addonId, userId, open, onOpenChange }: MaintainersDialogProps) {
 	const router = useRouter();
-	const [open, setOpen] = useState(false);
 	const [maintainers, setMaintainers] = useState<Maintainer[] | null>(null);
 	const [newUserId, setNewUserId] = useState('');
 	const [isPending, startTransition] = useTransition();
@@ -86,10 +86,8 @@ function MaintainersDialog({ addonId, userId }: MaintainersDialogProps) {
 		});
 	}
 
-	function handleOpenChange(next: boolean) {
-		setOpen(next);
-
-		if (!next) return;
+	useEffect(() => {
+		if (!open) return;
 
 		run(() =>
 			createBrowserClient()('GET /api/v1/addons/$id/maintainers', {
@@ -97,7 +95,7 @@ function MaintainersDialog({ addonId, userId }: MaintainersDialogProps) {
 				response: maintainersResponseSchema,
 			}),
 		);
-	}
+	}, [open, addonId]);
 
 	function add(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -128,7 +126,7 @@ function MaintainersDialog({ addonId, userId }: MaintainersDialogProps) {
 			);
 
 			if (memberId === userId) {
-				setOpen(false);
+				onOpenChange(false);
 				await router.invalidate();
 			}
 
@@ -137,13 +135,7 @@ function MaintainersDialog({ addonId, userId }: MaintainersDialogProps) {
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={handleOpenChange}>
-			<DialogTrigger asChild>
-				<Button variant='outline' size='sm'>
-					<IconUsers />
-					Maintainers
-				</Button>
-			</DialogTrigger>
+		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Maintainers of {addonId}</DialogTitle>

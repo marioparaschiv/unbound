@@ -4,7 +4,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { lowerChunk } from '../scripts/build/plugins/downlevel';
+import { lower } from '../scripts/build/plugins/downlevel';
 import { symbolicate } from '../scripts/build/symbolicate';
 
 const root = join(import.meta.dir, '..');
@@ -12,14 +12,14 @@ const dist = mkdtempSync(join(tmpdir(), 'unbound-maps-'));
 
 afterAll(() => rmSync(dist, { recursive: true, force: true }));
 
-describe('lowerChunk', () => {
+describe('lower', () => {
 	test('maps lowered code inside the wrapper back to the chunk line it came from', () => {
 		const chunk =
 			'const a = 1;\nclass Parser {\n\tparse() {\n\t\tthrow new Error(a);\n\t}\n}\n';
-		const result = lowerChunk(root, chunk, true);
+		const result = lower(root, chunk, true);
 
 		if (!result.map) {
-			throw new Error('lowerChunk returned no source map.');
+			throw new Error('lower returned no source map.');
 		}
 
 		const lines = result.code.split('\n');

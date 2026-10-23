@@ -31,6 +31,14 @@ export const envSchema = z.object({
 	GITHUB_API_URL: z.url().default('https://api.github.com'),
 	DISCORD_API_URL: z.url().default('https://discord.com/api/v10'),
 
+	/** The sponsored account. The webhook also needs the secret; the reconcile also needs the token. */
+	GITHUB_SPONSORS_LOGIN: z.string().min(1).optional(),
+	/** A token of the sponsored account that can read its sponsorships through GraphQL. */
+	GITHUB_SPONSORS_TOKEN: z.string().min(1).optional(),
+	GITHUB_SPONSORS_WEBHOOK_SECRET: z.string().min(1).optional(),
+	SPONSOR_RECONCILE_INTERVAL_SECONDS: positiveInt.default(3600),
+	SPONSOR_PERK_GRACE_DAYS: z.coerce.number().int().nonnegative().default(7),
+
 	ADDON_MAX_BYTES: positiveInt.default(25 * 1024 * 1024),
 	SUBMISSION_UPLOAD_TTL_SECONDS: positiveInt.default(900),
 	SUBMISSION_MAX_PENDING_LISTINGS: positiveInt.default(2),

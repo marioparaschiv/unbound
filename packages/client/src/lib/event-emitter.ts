@@ -15,6 +15,8 @@ export type ArgsNum<T extends Listener> = Parameters<T>['length'];
 
 type EventName = keyof DefaultEventMap;
 type Tasks<Func> = Func[] | Func | null;
+type Caller = (...args: unknown[]) => void;
+type Fireable = TaskCollection & { call: Caller };
 
 type EventCollections<EventMap extends DefaultEventMap> = {
 	[eventName in keyof EventMap]?: TaskCollection<EventMap[eventName]>;
@@ -148,30 +150,94 @@ function fit(args: unknown[], length: number) {
 	return fitted;
 }
 
-function bake(tasks: Listener[], argsNum: number) {
-	const fns = tasks.slice();
+function tail(args: IArguments, length: number) {
+	return fit(Array.prototype.slice.call(args, 1), length);
+}
 
-	return (...args: unknown[]) => {
+// Each listener is read into a local first: `fns[i](a)` would call it with the array as `this`.
+function bake(tasks: Listener[], argsNum: number): Caller {
+	if (tasks.length >= 1500) {
+		return bakeLive(tasks as Caller[], argsNum);
+	}
+
+	const fns = tasks.slice() as Caller[];
+	const len = fns.length;
+
+	switch (argsNum) {
+		case 0:
+			return () => {
+				for (let i = 0; i < len; i++) {
+					const fn = fns[i];
+
+					fn();
+				}
+			};
+		case 1:
+			return (a) => {
+				for (let i = 0; i < len; i++) {
+					const fn = fns[i];
+
+					fn(a);
+				}
+			};
+		case 2:
+			return (a, b) => {
+				for (let i = 0; i < len; i++) {
+					const fn = fns[i];
+
+					fn(a, b);
+				}
+			};
+		case 3:
+			return (a, b, c) => {
+				for (let i = 0; i < len; i++) {
+					const fn = fns[i];
+
+					fn(a, b, c);
+				}
+			};
+		case 4:
+			return (a, b, c, d) => {
+				for (let i = 0; i < len; i++) {
+					const fn = fns[i];
+
+					fn(a, b, c, d);
+				}
+			};
+		case 5:
+			return (a, b, c, d, e) => {
+				for (let i = 0; i < len; i++) {
+					const fn = fns[i];
+
+					fn(a, b, c, d, e);
+				}
+			};
+	}
+
+	return (...args) => {
 		const fitted = fit(args, argsNum);
 
-		for (let i = 0, len = fns.length; i < len; i++) {
+		for (let i = 0; i < len; i++) {
 			Reflect.apply(fns[i], void 0, fitted);
 		}
 	};
 }
 
-function fire(ev: TaskCollection, args: unknown[]) {
-	if (ev.argsNum < 6) {
-		Reflect.apply(ev.call, ev, fit(args, 5));
+// tseep's caller for 1500+ listeners walks the live array in unrolled steps, calling each listener as
+// a method of it, so listeners added or removed mid-emit are seen and a short last step throws.
+function bakeLive(tasks: Caller[], argsNum: number): Caller {
+	const { length } = tasks;
+	const step = length % 10 === 0 ? 10 : length % 4 === 0 ? 4 : length % 3 === 0 ? 3 : 1;
 
-		return;
-	}
+	return (...args) => {
+		const fitted = fit(args, argsNum);
 
-	const fitted = fit(args, ev.argsNum);
-
-	Reflect.apply(ev.call, void 0, fitted);
-
-	return fitted;
+		for (let i = 0; i < tasks.length; i += step) {
+			for (let j = i; j < i + step; j++) {
+				Reflect.apply(tasks[j], tasks, fitted);
+			}
+		}
+	};
 }
 
 function warnMax(emitter: EventEmitter, length: number, event: EventName, kind: string) {
@@ -180,31 +246,60 @@ function warnMax(emitter: EventEmitter, length: number, event: EventName, kind: 
 	}
 }
 
-function emit(this: EventEmitter, event: EventName, ...args: unknown[]): boolean {
-	const ev = this.events[event];
+function emit(this: EventEmitter, event: EventName, ...args: unknown[]): boolean;
+// UNKNOWN: listeners receive whatever the emitter was given.
+function emit(
+	this: EventEmitter,
+	event: EventName,
+	a?: unknown,
+	b?: unknown,
+	c?: unknown,
+	d?: unknown,
+	e?: unknown,
+): boolean {
+	const ev = this.events[event] as Fireable | undefined;
 
 	if (!ev || ev.length === 0) {
 		return false;
 	}
 
-	fire(ev, args);
+	if (ev.argsNum < 6) {
+		ev.call(a, b, c, d, e);
+	} else {
+		Reflect.apply(ev.call, void 0, tail(arguments, ev.argsNum));
+	}
 
 	return true;
 }
 
-function emitHasOnce(this: EventEmitter, event: EventName, ...args: unknown[]): boolean {
-	const ev = this.events[event];
-	let argsArr: unknown[] | undefined;
+function emitHasOnce(this: EventEmitter, event: EventName, ...args: unknown[]): boolean;
+// UNKNOWN: listeners receive whatever the emitter was given.
+function emitHasOnce(
+	this: EventEmitter,
+	event: EventName,
+	a?: unknown,
+	b?: unknown,
+	c?: unknown,
+	d?: unknown,
+	e?: unknown,
+): boolean {
+	const ev = this.events[event] as Fireable | undefined;
+	let wide: unknown[] | undefined;
 
 	if (ev !== undefined) {
 		if (ev.length === 0) {
 			return false;
 		}
 
-		argsArr = fire(ev, args);
+		if (ev.argsNum < 6) {
+			ev.call(a, b, c, d, e);
+		} else {
+			wide = tail(arguments, ev.argsNum);
+			Reflect.apply(ev.call, void 0, wide);
+		}
 	}
 
-	const oev = this.onceEvents[event];
+	const oev = this.onceEvents[event] as Caller | Caller[] | undefined;
 
 	if (!oev) {
 		return ev !== undefined;
@@ -212,18 +307,31 @@ function emitHasOnce(this: EventEmitter, event: EventName, ...args: unknown[]): 
 
 	this.onceEvents[event] = undefined;
 
-	const short = args.length < 5;
-	const onceArgs = short ? fit(args, 5) : (argsArr ?? args);
+	// Matching tseep, short emits call each listener as a method of the detached once array.
+	if (arguments.length < 6) {
+		if (typeof oev === 'function') {
+			oev(a, b, c, d, e);
 
-	if (typeof oev === 'function') {
-		Reflect.apply(oev, void 0, onceArgs);
+			return true;
+		}
+
+		for (let i = 0; i < oev.length; ++i) {
+			oev[i](a, b, c, d, e);
+		}
 
 		return true;
 	}
 
-	// Matching tseep, short emits call each listener as a method of the detached once array.
+	wide ??= tail(arguments, arguments.length - 1);
+
+	if (typeof oev === 'function') {
+		Reflect.apply(oev, void 0, wide);
+
+		return true;
+	}
+
 	for (let i = 0; i < oev.length; ++i) {
-		Reflect.apply(oev[i], short ? oev : void 0, onceArgs);
+		Reflect.apply(oev[i], void 0, wide);
 	}
 
 	return true;

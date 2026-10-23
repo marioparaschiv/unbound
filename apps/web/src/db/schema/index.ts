@@ -1,3 +1,4 @@
+export * from './sponsors';
 export * from './addons';
 export * from './loader';
 export * from './auth';

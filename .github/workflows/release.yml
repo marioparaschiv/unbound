@@ -1,15 +1,12 @@
 name: Release
 
+# release-please keeps one release PR open against main, versioning only the packages whose files
+# changed (plus their workspace dependents); merging it tags and publishes those packages.
 on:
     push:
         branches:
             - main
     workflow_dispatch:
-        inputs:
-            dry-run:
-                description: Run semantic-release without publishing
-                type: boolean
-                default: true
 
 permissions:
     contents: write
@@ -25,16 +22,47 @@ jobs:
     release:
         runs-on: ubuntu-latest
         outputs:
-            version: ${{ steps.published.outputs.version }}
+            releases-created: ${{ steps.release.outputs.releases_created }}
+            client-released: ${{ steps.release.outputs['packages/client--release_created'] }}
+            client-version: ${{ steps.release.outputs['packages/client--version'] }}
         steps:
-            - uses: actions/checkout@v4
+            - id: release
+              uses: googleapis/release-please-action@v5
+
+            # release-please bumps package.json versions but only knows npm lockfiles, so the
+            # workspace versions recorded in bun.lock are refreshed on the release PR branch.
+            - if: steps.release.outputs.prs_created == 'true'
+              uses: actions/checkout@v4
               with:
-                  fetch-depth: 0
-                  persist-credentials: false
+                  ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
 
             # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
             # canary's frozen-lockfile check fails on a self-generated lockfile (round-trip bug),
             # so install without it until stable 1.4 lands.
+            - if: steps.release.outputs.prs_created == 'true'
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: canary
+
+            - if: steps.release.outputs.prs_created == 'true'
+              run: |
+                  bun install
+                  git diff --quiet -- bun.lock && exit 0
+
+                  git config user.name 'github-actions[bot]'
+                  git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+                  git commit -m 'chore: sync bun.lock with the release versions' -- bun.lock
+                  git push
+
+    publish:
+        needs: release
+        if: needs.release.outputs.releases-created == 'true'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+
             - uses: oven-sh/setup-bun@v2
               with:
                   bun-version: canary
@@ -45,20 +73,13 @@ jobs:
             # preinstalled npm is older.
             - run: npm install --global npm@latest
 
-            - run: bun run release ${{ inputs.dry-run == true && '--dry-run' || '' }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-            # semantic-release tags the release commit it creates; no tag means nothing was released.
-            - id: published
-              run: |
-                  tag="$(git tag --points-at HEAD --list 'v*')"
-                  echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+            # Skips every package whose version is already on npm, so only the released ones publish.
+            - run: bun scripts/publish-all.ts
 
     bundle:
         needs: release
-        if: needs.release.outputs.version != ''
+        if: needs.release.outputs.client-released == 'true'
         uses: ./.github/workflows/build-bundle.yml
         with:
-            version: ${{ needs.release.outputs.version }}
+            version: ${{ needs.release.outputs.client-version }}
         secrets: inherit

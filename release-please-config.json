@@ -1,0 +1,43 @@
+{
+	"$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+	"bootstrap-sha": "9b5f711242bb9cc693f53316282eb0241039ae55",
+	"include-component-in-tag": true,
+	"changelog-sections": [
+		{ "type": "feat", "section": "Features" },
+		{ "type": "fix", "section": "Bug Fixes" },
+		{ "type": "perf", "section": "Performance Improvements" },
+		{ "type": "revert", "section": "Reverts" },
+		{ "type": "refactor", "section": "Code Refactoring" },
+		{ "type": "build", "section": "Build System" },
+		{ "type": "docs", "section": "Documentation" },
+		{ "type": "style", "section": "Styles" },
+		{ "type": "test", "section": "Tests" },
+		{ "type": "ci", "section": "Continuous Integration" },
+		{ "type": "chore", "section": "Miscellaneous Chores", "hidden": true }
+	],
+	"packages": {
+		"packages/client": { "component": "client" },
+		"packages/api": { "component": "api" },
+		"packages/cli": { "component": "cli" },
+		"packages/debugger": { "component": "debugger" },
+		"packages/debugger-protocol": { "component": "debugger-protocol" },
+		"packages/contracts": {
+			"component": "contracts",
+			"draft": true,
+			"force-tag-creation": true
+		},
+		"packages/types": { "component": "types", "draft": true, "force-tag-creation": true },
+		"packages/utils": { "component": "utils", "draft": true, "force-tag-creation": true },
+		"packages/logger": { "component": "logger", "draft": true, "force-tag-creation": true },
+		"apps/web": { "component": "web", "draft": true, "force-tag-creation": true },
+		"apps/sdk-generator": {
+			"component": "sdk-generator",
+			"draft": true,
+			"force-tag-creation": true
+		}
+	},
+	"plugins": [
+		{ "type": "node-workspace", "merge": false },
+		{ "type": "linked-versions", "groupName": "client", "components": ["client", "api"] }
+	]
+}

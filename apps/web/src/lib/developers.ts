@@ -1,7 +1,9 @@
 import { and, asc, count, eq, inArray, isNull, or } from 'drizzle-orm';
+import type { PublicBadge } from '@unbound-app/contracts/sponsors';
 import type { Caller } from '@unbound-app/contracts/account';
 
 import { addon, addonMaintainer, user } from '~/db/schema';
+import { getVisibleBadges } from '~/lib/sponsors/badges';
 import { likeContains } from '~/lib/like-contains';
 import { DEFAULT_ROLE } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
@@ -13,8 +15,12 @@ export type DevelopersQuery = {
 	page: number;
 };
 
+export type Developer = Caller & {
+	badge: PublicBadge | null;
+};
+
 export type DevelopersPage = {
-	developers: Caller[];
+	developers: Developer[];
 	total: number;
 	pageSize: number;
 };
@@ -54,8 +60,17 @@ export async function listDevelopers(
 		ctx.db.select({ total: count() }).from(user).where(where),
 	]);
 
+	const badges = await getVisibleBadges(
+		ctx,
+		rows.map((row) => row.id),
+	);
+
 	return {
-		developers: rows.map((row) => ({ ...row, role: row.role ?? DEFAULT_ROLE })),
+		developers: rows.map((row) => ({
+			...row,
+			role: row.role ?? DEFAULT_ROLE,
+			badge: badges.get(row.id) ?? null,
+		})),
 		total: counted?.total ?? 0,
 		pageSize,
 	};

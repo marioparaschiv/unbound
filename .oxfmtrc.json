@@ -8,5 +8,5 @@
 	"tabWidth": 4,
 	"printWidth": 100,
 	"trailingComma": "all",
-	"ignorePatterns": ["*.gen.ts", "drizzle", "packages/cli/templates/**"]
+	"ignorePatterns": ["*.gen.ts", "drizzle", "packages/cli/templates/**", "CHANGELOG.md"]
 }

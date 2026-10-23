@@ -20,3 +20,11 @@ fi
 : "${UNBOUND_CATALOG_PORT:=3200}"
 : "${UNBOUND_LOG_DIR:=${TMPDIR:-/tmp}}"
 export DEV_HOST UNBOUND_DEV_PORT UNBOUND_BRIDGE_PORT UNBOUND_CATALOG_PORT UNBOUND_LOG_DIR
+
+# The checkout the unbound-dev tmux session serves. Worktrees share one device and one set of session names.
+served_root() {
+	local cwd
+
+	cwd=$(tmux display -p -t '=unbound-dev:' '#{pane_current_path}' 2>/dev/null) || return 0
+	git -C "$cwd" rev-parse --show-toplevel 2>/dev/null || echo "$cwd"
+}

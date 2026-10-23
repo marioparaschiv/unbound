@@ -5,30 +5,68 @@ description: Develop and verify the Unbound client against live Discord on the v
 
 # Unbound development
 
-Discord (`com.hammerandchisel.discord`) runs on the vphone (see the `vphone` skill) with the Unbound loader and a logged-in account. A change counts as **proven** only when the device ran this checkout's build and a screenshot or eval result shows the end state. `scripts/` paths are relative to this skill's directory (`.agents/skills/unbound-dev/`). The scripts run from any working directory.
+Discord (`com.hammerandchisel.discord`) runs on the vphone (see the `vphone` skill) with the Unbound loader and a logged-in account. A change counts as **proven** only when the device ran this checkout's build and a screenshot or eval result shows the end state. `scripts/` paths are relative to `.agents/skills/unbound-dev/` and run from any directory. Ports and `DEV_HOST` come from the gitignored `.env` ([Configuration](SETUP.md#configuration)). Scratch files go in `<worktree>/.scratch/`.
 
-## Configuration
-
-The scripts read these from the environment, else from the repo's gitignored `.env`.
-
-| Variable               | Default                | Meaning                                     |
-| ---------------------- | ---------------------- | ------------------------------------------- |
-| `DEV_HOST`             | the client's LAN guess | Address the device reaches this machine at. |
-| `UNBOUND_DEV_PORT`     | `3000`                 | Bundle server.                              |
-| `UNBOUND_BRIDGE_PORT`  | `9090`                 | Debugger bridge.                            |
-| `UNBOUND_CATALOG_PORT` | `3200`                 | Marketplace catalog stub.                   |
-| `UNBOUND_LOG_DIR`      | `$TMPDIR` or `/tmp`    | Server logs, `<tmux session>.log`.          |
-
-Set `DEV_HOST` on a machine with several networks (Tailscale, Docker). The guess often picks the wrong one.
+**One driver at a time.** Worktrees share one device, one set of tmux sessions and one loader URL. Before a relaunch, reload or restart, check no other thread is mid-proof (doctor's `last device console line`). Put back the served checkout and `loader.update.url` when done.
 
 ## The loop
 
-1. **Start.** `scripts/up.sh` starts the bridge and the dev server in tmux sessions and leaves running ones alone. Add `--restart` after changing configuration.
+1. **Start.** `scripts/up.sh` starts the bridge and the dev server in tmux, leaves running ones alone, and returns once the dev server is up. `--restart=dev` restarts only the dev server, onto this checkout, and keeps the device on the bridge. Bare `--restart` also drops the device.
 2. **Doctor.** `scripts/doctor.sh`. Done when it exits 0. For a `FAIL` line, see [SETUP.md](SETUP.md#recovery).
-3. **Load your build.** The dev server hot-patches component edits in place; other edits reload the app on their own. To load a build by hand, `ubd eval 'unbound.native.reload()'`. With a loader older than `fix/reload-keeps-unbound`, a reload loses Unbound (see Known faults): relaunch instead with vphone `terminate` then `launch` with `bundle_id: com.hammerandchisel.discord`, then `tap_text` `Okay` on the "Missing Safari Extension" alert until `wait` with `gone: true` passes. Done when the doctor's `last device bundle fetch` is newer than your edit.
+3. **Load your build.** Component edits hot-patch in place; see [Hot updates](#hot-updates). To reload by hand, `scripts/ubd reload`, which returns once the fresh bundle reconnects. To relaunch, run [relaunch()](#relaunch). Done when `scripts/ready.sh --fresh` exits 0.
 4. **Navigate** with `ubd mcp open`, never by tapping through settings.
 5. **Act** with `ubd eval` for state and vphone gestures for input.
-6. **Capture evidence** under `/tmp/<task>-evidence/`: a vphone screenshot after a `wait` for the expected text, plus eval output proving side effects.
+6. **Capture evidence** under `/tmp/<task>-evidence/`: a vphone screenshot after a `wait` for the expected text (the vphone skill's `shot()`), plus eval output proving side effects.
+
+`scripts/ready.sh [--fresh] [--timeout <s>]` blocks until `typeof unbound` is `object`, then prints the route. `--fresh` also waits for a bundle fetch newer than the served build. Use it instead of a hand-written poll.
+
+## Relaunch
+
+One codemode call. It kills the old process when `terminate` leaves it running, retries AX queries that fail with `-25215` after `launch`, and dismisses the "Missing Safari Extension" alert, which shows after Unbound is up, or never.
+
+```js
+const vphone =
+	tools[(await searchTools('vphone')).find((t) => t.name.endsWith('__vphone__vphone')).name];
+const ID = 'com.hammerandchisel.discord';
+const say = (r) => r.content.map((c) => c.text ?? '').join('');
+async function pid() {
+	const { processes } = JSON.parse(
+		say(await vphone({ action: 'rpc', args: { method: 'processes.list' } })),
+	);
+	return processes.find((p) => p.bundle_id === ID)?.pid;
+}
+async function relaunch() {
+	const old = await pid();
+	await vphone({ action: 'terminate', args: { bundle_id: ID } });
+	if (old && (await pid()) === old)
+		await vphone({ action: 'shell', args: { command: `kill -9 ${old}`, root: true } });
+	await vphone({ action: 'launch', args: { bundle_id: ID } });
+	const now = await pid();
+	if (!now || now === old) throw new Error(`Discord did not restart: pid ${old} -> ${now}`);
+	const ready = await tools.bash({
+		command: '.agents/skills/unbound-dev/scripts/ready.sh --fresh',
+	});
+	for (let i = 0; i < 6; i++) {
+		const alert = say(
+			await vphone({ action: 'wait', args: { text: 'Okay', match: 'exact', timeout: 3 } }),
+		);
+		if (alert.includes('-25215')) continue;
+		if (!alert.includes('"found": true')) break;
+		await vphone({ action: 'tap_text', args: { text: 'Okay', match: 'exact' } });
+	}
+	return ready;
+}
+return await relaunch();
+```
+
+## Hot updates
+
+`scripts/hot.sh mark` before saving an edit, then `scripts/hot.sh wait <mark>` after. It prints `patched` (with the fiber count), `reloaded` or `failed` from lines logged since the mark, so it cannot miss a fast update. The logs are `<UNBOUND_LOG_DIR>/<tmux session>.log`:
+
+- `unbound-debugger.log` is the device console: `[HotRefresh] Patched <ids>: N fibers`, `... reloading.` and `[HotRefresh] Connected`.
+- `unbound-dev.log` is the server: `Patching <ids>`, `Full reload: <reason>`, `Build failed`, and each `GET /unbound.<v>.bundle`.
+
+`0 fibers` means no mounted component re-rendered: open the screen that shows it. Edits under `scripts/build/**` are not watched: `scripts/up.sh --restart=dev`.
 
 ## ubd
 
@@ -37,24 +75,14 @@ Set `DEV_HOST` on a machine with several networks (Tailscale, Docker). The guess
 | Command                                     | Does                                                                                                                                                                             |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ubd eval '<js>'`                           | Evaluates in Discord's JS runtime and returns the last expression. `unbound` is the client's global (`unbound.metro.findByProps(...)`, managers, storage).                       |
+| `ubd reload`                                | Reloads the JS bundle and returns once the fresh bundle reconnects.                                                                                                              |
 | `ubd mcp open <Screen> [--params '<json>']` | Opens a settings screen. `<Screen>` is a `Screens` key from `packages/client/src/lib/constants.ts` (`Marketplace`, `Plugins`, `Design`, ...) or a `SETTING_RENDERER_CONFIG` key. |
 | `ubd mcp route`                             | Prints `{name, params, path}` of the current screen. Assert on `name` (`mcp open Plugins` gives `UNBOUND_PLUGINS`).                                                              |
 
-Each command is also a tool of the `ubd mcp` server, defined in `packages/cli/src/commands/` and registered in `packages/cli/src/registry.ts`. Add new agent-facing device shortcuts there with `surfaces: { cli: 'mcp', mcp: true }`, which lists them under `ubd mcp`, sending device code through eval instead of shipping it in the client bundle.
+Commands live in `packages/cli/src/commands/`, registered in `packages/cli/src/registry.ts`. Add device shortcuts there with `surfaces: { cli: 'mcp', mcp: true }`.
 
 ## Discord's source
 
 Before calling or patching a Discord API, read how Discord does it with the `hermes` skill, then confirm live with `ubd eval`.
 
-## Known faults
-
-- **JS reload loses Unbound** on loaders without `fix/reload-keeps-unbound` (`loader-ios`): `prepareLoading` ran once per process, so the reloaded instance never got the bundle. Relaunch instead, or install that branch.
-- **`__c()` wipes Discord's modules** when `modules.js` was not injected: the loader's readiness poll and the client's `ensureModules` (`packages/client/src/lib/loader.ts`) call Metro's `__c()`, which is `clear()`. Symptom: Discord renders but never goes live and `ubd eval` finds no device. Fix: [UnboundResources](SETUP.md#unboundresources).
-- **`Addons.delete`** reports success but leaves the addon folder on disk.
-- **Toasts** never appear on the vphone. Check state through eval.
-
-## Marketplace API
-
-`scripts/up.sh --restart catalog` serves `scripts/catalog-stub.ts` (the real `GET /api/v1/catalog` endpoint over seeded SQLite, plus a CDN for the addon files) and rebuilds the client against it. `POST /__approve?id=&version=` publishes a version and `POST /__delist?id=` delists an addon. To hold the client in its loading state, run `PORT=<catalog port> bun scripts/catalog-hang.ts` in place of the stub. It accepts connections and never answers.
-
-Rebuilding the device from nothing: [SETUP.md](SETUP.md).
+Known faults, the marketplace catalog stub and rebuilding the device from nothing: [SETUP.md](SETUP.md).
