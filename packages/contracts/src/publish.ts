@@ -61,6 +61,9 @@ export const submissionSchema = z.object({
 	review: z.nullable(submissionReviewSchema),
 });
 
+/** The most characters a release changelog may hold. */
+export const MAX_CHANGELOG_LENGTH = 10_000;
+
 /**
  * The kind is derived server-side from whether `manifest.id` is an approved addon. Submitting again
  * supersedes the caller's own submission for the addon that awaits its upload or has changes requested.
@@ -69,7 +72,7 @@ export const createSubmissionRequestSchema = z.object({
 	manifest: addonManifestSchema,
 	bundleSize: z.int().check(z.positive()),
 	repository: z.optional(repositorySchema),
-	changelog: z.optional(z.string().check(z.maxLength(10_000))),
+	changelog: z.optional(z.string().check(z.maxLength(MAX_CHANGELOG_LENGTH))),
 });
 
 /** A presigned upload for the bundle; send exactly `bundleSize` bytes with `headers` before `expiresAt`. */
@@ -105,6 +108,7 @@ export type FinalizeSubmissionRequest = z.infer<typeof finalizeSubmissionRequest
 export type FinalizeSubmissionResponse = z.infer<typeof finalizeSubmissionResponseSchema>;
 
 export default {
+	MAX_CHANGELOG_LENGTH,
 	submissionKindSchema,
 	submissionStatusSchema,
 	openSubmissionStatusSchema,
