@@ -18,10 +18,12 @@ const base = createTestContext({
 });
 const ctx = { ...base.ctx, now: () => NOW };
 const unconfigured = createTestContext();
+const withoutLogin = createTestContext({ GITHUB_SPONSORS_WEBHOOK_SECRET: WEBHOOK_SECRET });
 
 afterAll(() => {
 	base.close();
 	unconfigured.close();
+	withoutLogin.close();
 });
 
 async function statusOf(response: Response) {
@@ -56,10 +58,11 @@ describe('webhook authentication', () => {
 		expect(storedSponsorship(ctx, '101')).toBeUndefined();
 	});
 
-	test('the endpoint does not exist without a webhook secret', async () => {
-		const response = await deliver(unconfigured.ctx, payload, { id: 'auth-unset' });
+	test('the endpoint does not exist without a webhook secret and a sponsored login', async () => {
+		const unset = await deliver(unconfigured.ctx, payload, { id: 'auth-unset' });
+		const noLogin = await deliver(withoutLogin.ctx, payload, { id: 'auth-no-login' });
 
-		expect(response.status).toBe(404);
+		expect([unset.status, noLogin.status]).toEqual([404, 404]);
 	});
 
 	test('oversized and non-JSON bodies are refused', async () => {

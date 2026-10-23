@@ -28,7 +28,6 @@ const sponsorshipActionSchema = z.enum([
 
 const githubAccountSchema = z.object({
 	login: z.string(),
-	// Stored as text to match `account.account_id` and GraphQL's `databaseId`.
 	id: z.union([z.int(), z.string()]).transform(String),
 });
 
@@ -66,10 +65,14 @@ function keepState(_event: SponsorshipEvent, current: Sponsorship | undefined) {
 	return { state: current?.state ?? 'active', endsAt: current?.endsAt ?? null };
 }
 
+// Delivery ids stop replays, not reordering: a `created` older than a stored cancellation is stale.
+function isStaleCreation(event: SponsorshipEvent, current: Sponsorship | undefined): boolean {
+	return current?.state === 'cancelled' && event.values.since <= current.since;
+}
+
 const TRANSITIONS: Record<SponsorshipAction, Transition> = {
 	created: (event, current) => {
-		// Delivery ids stop replays, not reordering: a late `created` must not revive a cancellation.
-		if (current?.state === 'cancelled' && event.values.since <= current.since) return;
+		if (isStaleCreation(event, current)) return;
 
 		return { state: 'active', endsAt: null };
 	},
@@ -176,8 +179,9 @@ function applyDelivery(
  */
 export async function handleSponsorsWebhook(ctx: AppContext, request: Request): Promise<Response> {
 	const secret = ctx.env.GITHUB_SPONSORS_WEBHOOK_SECRET;
+	const login = ctx.env.GITHUB_SPONSORS_LOGIN?.toLowerCase();
 
-	if (!secret) {
+	if (!secret || !login) {
 		return new Response(null, { status: 404 });
 	}
 
@@ -211,12 +215,11 @@ export async function handleSponsorsWebhook(ctx: AppContext, request: Request): 
 	}
 
 	const { action, effective_date, sponsorship: remote } = payload.data;
-	const login = ctx.env.GITHUB_SPONSORS_LOGIN?.toLowerCase();
 
 	if (
 		!isSponsorshipAction(action) ||
 		!remote.sponsor ||
-		(login && remote.sponsorable.login.toLowerCase() !== login)
+		remote.sponsorable.login.toLowerCase() !== login
 	) {
 		return status('ignored', 202);
 	}
