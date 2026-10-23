@@ -1,112 +1,76 @@
+import { isWorkspaceAddon, matchAddonDirs, readAddon } from '@unbound-app/contracts/workspace';
+import type { WorkspaceAddon, WorkspaceFiles } from '@unbound-app/contracts/workspace';
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { join, posix, sep } from 'node:path';
 import { glob } from 'node:fs/promises';
 
 import type { ResolvedConfig } from '~/lib/config';
 
-/** A discovered addon: where it lives, what kind it is, and how to build and reload it. */
-export type DiscoveredAddon = {
-	id: string;
-	kind: 'plugin' | 'theme';
+/** A discovered addon, plus the absolute paths the CLI builds, watches and reads it through. */
+export type DiscoveredAddon = WorkspaceAddon & {
 	dir: string;
 	/** The resolved output path; the addon directory itself for static addons. */
 	output: string;
-	/** A static addon has no `package.json` build script, so its files ship as-is. */
-	static: boolean;
 };
 
+/** Directory names never searched for addons. */
+const IGNORED_SEGMENTS = new Set(['node_modules', '.git']);
+
 /**
- * @description Discovers every addon reachable through the config's `addons` globs. A directory is an
- * addon iff it contains a `manifest.json`; its kind is derived from the manifest `main` (a `.json`
- * entry point is a theme, anything else a plugin) and it is static when its directory carries no
- * `package.json` with a `build` script.
+ * @description Discovers every addon the workspace registers, by the shared rules in
+ * `@unbound-app/contracts/workspace`. A registered directory that is not an addon is reported on
+ * stderr and skipped.
  * @param resolved The loaded config paired with the directory its globs resolve relative to.
- * @returns Every discovered addon, keyed implicitly by directory.
+ * @returns Every discovered addon.
  */
 export async function discoverAddons(resolved: ResolvedConfig): Promise<DiscoveredAddon[]> {
-	const { config, dir, bare } = resolved;
+	const { config, dir: root, bare } = resolved;
 
-	const dirs = new Set<string>();
+	const files: WorkspaceFiles = {
+		read(path) {
+			const absolute = join(root, path);
 
-	if (bare) {
-		dirs.add(dir);
-	} else {
-		for (const pattern of config.addons) {
-			for await (const match of glob(pattern, { cwd: dir })) {
-				dirs.add(resolve(dir, match));
-			}
-		}
-	}
+			return existsSync(absolute) ? readFileSync(absolute, 'utf8') : void 0;
+		},
+	};
 
+	const candidates = bare ? listBareCandidates(root) : await listManifestDirs(root);
 	const addons: DiscoveredAddon[] = [];
 
-	for (const addonDir of dirs) {
-		const addon = readAddon(addonDir, config.output);
+	for (const path of matchAddonDirs(config, bare, candidates)) {
+		const result = readAddon(path, files, config);
+		const dir = join(root, path);
 
-		if (addon) {
-			addons.push(addon);
+		if (!isWorkspaceAddon(result)) {
+			process.stderr.write(`Skipping ${dir}: ${result.reason}\n`);
+
+			continue;
 		}
+
+		addons.push({ ...result, dir, output: result.static ? dir : join(dir, config.output) });
 	}
 
 	return addons;
 }
 
-/**
- * @description Reads a single directory as an addon, returning `undefined` when it has no
- * `manifest.json` or the manifest lacks the fields discovery needs.
- * @param addonDir The absolute directory to inspect.
- * @param output The config's output directory, relative to the addon.
- * @returns The discovered addon, or `undefined` if the directory is not an addon.
- */
-export function readAddon(addonDir: string, output: string): DiscoveredAddon | undefined {
-	const manifestPath = join(addonDir, 'manifest.json');
-
-	if (!existsSync(manifestPath)) {
-		return void 0;
-	}
-
-	let manifest: { id?: unknown; main?: unknown };
-
-	try {
-		manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-	} catch (error) {
-		process.stderr.write(
-			`Skipping ${addonDir}: its manifest.json could not be read: ${String(error)}\n`,
-		);
-
-		return void 0;
-	}
-
-	if (typeof manifest.id !== 'string' || typeof manifest.main !== 'string') {
-		return void 0;
-	}
-
-	const kind = manifest.main.endsWith('.json') ? 'theme' : 'plugin';
-	const isStatic = !hasBuildScript(addonDir);
-
-	return {
-		id: manifest.id,
-		kind,
-		dir: addonDir,
-		output: isStatic ? addonDir : join(addonDir, output),
-		static: isStatic,
-	};
+function listBareCandidates(root: string): string[] {
+	return existsSync(join(root, 'manifest.json')) ? [''] : [];
 }
 
-function hasBuildScript(addonDir: string): boolean {
-	const packagePath = join(addonDir, 'package.json');
+async function listManifestDirs(root: string): Promise<string[]> {
+	const dirs: string[] = [];
 
-	if (!existsSync(packagePath)) {
-		return false;
+	for await (const match of glob('**/manifest.json', { cwd: root, exclude: isIgnored })) {
+		const dir = posix.dirname(match.split(sep).join('/'));
+
+		dirs.push(dir === '.' ? '' : dir);
 	}
 
-	try {
-		const pkg = JSON.parse(readFileSync(packagePath, 'utf8'));
+	return dirs;
+}
 
-		return Boolean(pkg.scripts?.build);
-	} catch {
-		return false;
-	}
+function isIgnored(path: string): boolean {
+	return path.split(sep).some((segment) => IGNORED_SEGMENTS.has(segment));
 }
 
 export default discoverAddons;
