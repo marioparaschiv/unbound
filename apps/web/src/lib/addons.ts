@@ -11,7 +11,7 @@ import type {
 	MyAddonsResponse,
 } from '@unbound-app/contracts/addons';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
-import { and, desc, eq, or, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { OPEN_SUBMISSION_STATUSES, toSubmission } from '~/lib/submissions';
@@ -37,7 +37,7 @@ export type AddonDetails = {
 	id: string;
 	type: AddonType;
 	createdAt: string;
-	/** Newest first. */
+	/** Newest first, withdrawn ones left out; the first is served. */
 	versions: AddonVersion[];
 	maintainers: Maintainer[];
 };
@@ -58,8 +58,13 @@ const CURSOR_SCHEMAS = {
 	updated: z.tuple([z.int(), addonIdSchema]),
 } satisfies Record<AddonSort, z.ZodType<CursorKey>>;
 
-/** The relational `with` that loads an addon's newest version. */
-export const LATEST_VERSION = { versions: { orderBy: { versionKey: 'desc' }, limit: 1 } } as const;
+/** Relational filter for the versions an addon can serve: the ones no rollback withdrew. */
+export const LIVE_VERSIONS = { withdrawnBy: { isNull: true } } as const;
+
+/** The relational `with` that loads the version an addon serves: its newest live version. */
+export const LATEST_VERSION = {
+	versions: { where: LIVE_VERSIONS, orderBy: { versionKey: 'desc' }, limit: 1 },
+} as const;
 
 /**
  * @description Serializes an addon row for the API.
@@ -99,22 +104,22 @@ export function toAddonSummary(manifest: PublishedManifest, publishedAt: Date): 
 }
 
 /**
- * @description Copies the addon's newest version's summary onto the addon row, after a version is
- * approved.
- * @param tx The approval transaction.
+ * @description Copies the summary of the version the addon serves onto the addon row, after a version
+ * is approved or a rollback changes which one is served.
+ * @param tx The approval or rollback transaction.
  * @param addonId The addon id.
  */
 export function refreshAddonSummary(tx: Transaction, addonId: string) {
 	const latest = tx
 		.select({ manifest: addonVersion.manifest, publishedAt: addonVersion.publishedAt })
 		.from(addonVersion)
-		.where(eq(addonVersion.addonId, addonId))
+		.where(and(eq(addonVersion.addonId, addonId), isNull(addonVersion.withdrawnBy)))
 		.orderBy(desc(addonVersion.versionKey))
 		.limit(1)
 		.get();
 
 	if (!latest) {
-		throw new Error(`Addon ${addonId} has no approved version to summarize.`);
+		throw new Error(`Addon ${addonId} has no live version to summarize.`);
 	}
 
 	tx.update(addon)
@@ -278,8 +283,8 @@ export async function getCatalog(ctx: AppContext): Promise<CatalogResponse> {
 }
 
 /**
- * @description Loads a listed addon for its public page: every approved version, newest first, and
- * its maintainers, owners first.
+ * @description Loads a listed addon for its public page: every approved version no rollback withdrew,
+ * newest first, and its maintainers, owners first.
  * @param ctx The application context.
  * @param id The addon id.
  * @returns The addon, or `undefined` when it does not exist or is delisted.
@@ -290,7 +295,10 @@ export async function getAddonDetails(
 ): Promise<AddonDetails | undefined> {
 	const row = await ctx.db.query.addon.findFirst({
 		where: { id, delistedAt: { isNull: true } },
-		with: { versions: { orderBy: { versionKey: 'desc' } }, maintainers: MAINTAINERS },
+		with: {
+			versions: { where: LIVE_VERSIONS, orderBy: { versionKey: 'desc' } },
+			maintainers: MAINTAINERS,
+		},
 	});
 
 	if (!row) return;
@@ -353,6 +361,7 @@ export async function listMyAddons(ctx: AppContext, caller: Caller): Promise<MyA
 }
 
 export default {
+	LIVE_VERSIONS,
 	LATEST_VERSION,
 	toAddon,
 	getManifestType,

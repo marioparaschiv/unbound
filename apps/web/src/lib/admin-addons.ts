@@ -9,17 +9,17 @@ import { z } from 'zod';
 import { afterKey, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { addonMaintainer, submission } from '~/db/schema';
 import type { CursorKey, KeysetPage } from '~/lib/keyset';
+import { LIVE_VERSIONS, toAddon } from '~/lib/addons';
 import { requirePermission } from '~/lib/api/caller';
 import { matchesSearch } from '~/lib/admin-search';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { Database } from '~/db/database';
 import type { addon } from '~/db/schema';
-import { toAddon } from '~/lib/addons';
 
 export type AdminAddon = Addon & {
 	name: string;
-	/** The newest approved version. */
+	/** The version it serves: the newest one no rollback withdrew. */
 	latestVersion: string | null;
 	owners: UserSummary[];
 };
@@ -121,7 +121,12 @@ export function queryAdminAddons(ctx: AppContext, search: AdminAddonsSearch = {}
 				) ?? sql`true`,
 		},
 		with: {
-			versions: { columns: { version: true }, orderBy: { versionKey: 'desc' }, limit: 1 },
+			versions: {
+				columns: { version: true },
+				where: LIVE_VERSIONS,
+				orderBy: { versionKey: 'desc' },
+				limit: 1,
+			},
 			maintainers: {
 				where: { role: 'owner' },
 				with: { user: { columns: { id: true, name: true, image: true } } },
