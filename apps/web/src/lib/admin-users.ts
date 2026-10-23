@@ -6,12 +6,14 @@ import { z } from 'zod';
 
 import { afterKey, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
+import { DEFAULT_ROLE, hasPermission } from '~/lib/auth/access';
 import type { AdminSubmission } from '~/lib/admin-submissions';
 import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { matchesSearch } from '~/lib/admin-search';
-import { DEFAULT_ROLE } from '~/lib/auth/access';
+import type { StaffNote } from '~/lib/staff-notes';
+import { listStaffNotes } from '~/lib/staff-notes';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
@@ -54,6 +56,8 @@ export type AdminUserView = {
 	submissions: AdminSubmission[];
 	/** The newest page of the moderation events about them. */
 	events: EventTimeline;
+	/** Staff notes on them, newest first; empty without `note:read`. */
+	notes: StaffNote[];
 };
 
 type UserRow = typeof user.$inferSelect;
@@ -160,11 +164,14 @@ export async function getAdminUser(
 ): Promise<AdminUserView | undefined> {
 	requirePermission(caller, { user: ['get'] });
 
-	const [row, maintained, submissions, events] = await Promise.all([
+	const [row, maintained, submissions, events, notes] = await Promise.all([
 		ctx.db.query.user.findFirst({ where: { id } }),
 		queryMaintainedAddons(ctx, id),
 		listSubmissionHistory(ctx, { authorId: id }),
 		getEventTimeline(ctx, caller, { type: 'user', id }),
+		hasPermission(caller.user.role, { note: ['read'] })
+			? listStaffNotes(ctx, caller, { type: 'user', id })
+			: [],
 	]);
 
 	if (!row) return;
@@ -187,6 +194,7 @@ export async function getAdminUser(
 		),
 		submissions,
 		events,
+		notes,
 	};
 }
 
