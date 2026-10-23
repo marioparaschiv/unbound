@@ -19,7 +19,12 @@ const cases: Case[] = [
 	['moderator', { user: ['ban'] }, true],
 	['moderator', { user: ['set-role'] }, false],
 	['moderator', { addon: ['transfer'] }, false],
+	['moderator', { loader: ['publish'] }, false],
+	['ci', { loader: ['publish'] }, true],
+	['ci', { submission: ['create'] }, false],
+	['ci', { addon: ['delist'] }, false],
 	['admin', { user: ['set-role'] }, true],
+	['admin', { loader: ['publish'] }, true],
 	['admin', { addon: ['transfer', 'delist'] }, true],
 ];
 

@@ -14,7 +14,7 @@ const loginCommand: CommandDefinition<typeof schema> = {
 	description:
 		'Log in to Unbound by approving a code on the website, so `ubd publish` can submit addons. ' +
 		'Not needed in CI when UNBOUND_API_KEY is set.',
-	surfaces: { cli: true, mcp: false },
+	surfaces: { cli: 'root', mcp: false },
 	schema,
 	async handler() {
 		try {

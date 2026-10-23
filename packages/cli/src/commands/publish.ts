@@ -31,7 +31,7 @@ const publishCommand: CommandDefinition<typeof schema> = {
 	description:
 		'Build an addon and submit it for review on Unbound. Authenticates with UNBOUND_API_KEY when ' +
 		'set, otherwise with the `ubd login` session.',
-	surfaces: { cli: true, mcp: false },
+	surfaces: { cli: 'root', mcp: false },
 	schema,
 	async handler({ addon: id, skipBuild, repository, changelog }) {
 		try {

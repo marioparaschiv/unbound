@@ -1,5 +1,10 @@
-import type { UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
-import { and, eq, inArray, isNull, lte, max } from 'drizzle-orm';
+import type {
+	UpdatesRequest,
+	UpdatesResponse,
+	VersionChangelog,
+} from '@unbound-app/contracts/updates';
+import { and, desc, eq, gt, inArray, isNull, lte, max, or } from 'drizzle-orm';
+import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 
 import { getArtifactKeys, getCdnUrl } from '~/lib/artifacts';
 import { addon, addonVersion } from '~/db/schema';
@@ -38,10 +43,67 @@ export function newestCompatibleVersions(ctx: AppContext, request: UpdatesReques
 		.groupBy(addonVersion.addonId);
 }
 
+/** The version range one update spans: newer than `from`, up to and including `to`, as version keys. */
+type UpdateRange = {
+	addonId: string;
+	from: string;
+	to: string;
+};
+
 /**
- * @description Resolves the client's update check in one query: for each installed addon that has a
- * newer approved version compatible with the client, the newest such version and its CDN URLs.
- * Unknown, delisted and up-to-date addons are left out.
+ * @description Reads the changelog of every version each update skips over, in one statement.
+ * @param ctx The application context.
+ * @param ranges The version range of each update.
+ * @returns The changelogs keyed by addon id, newest first, at most `MAX_UPDATE_CHANGELOGS` each.
+ */
+async function changelogsFor(
+	ctx: AppContext,
+	ranges: UpdateRange[],
+): Promise<Map<string, VersionChangelog[]>> {
+	const rows = await ctx.db
+		.select({
+			addonId: addonVersion.addonId,
+			version: addonVersion.version,
+			changelog: addonVersion.changelog,
+			publishedAt: addonVersion.publishedAt,
+		})
+		.from(addonVersion)
+		.where(
+			or(
+				...ranges.map((range) =>
+					and(
+						eq(addonVersion.addonId, range.addonId),
+						gt(addonVersion.versionKey, range.from),
+						lte(addonVersion.versionKey, range.to),
+					),
+				),
+			),
+		)
+		.orderBy(addonVersion.addonId, desc(addonVersion.versionKey));
+
+	const changelogs = new Map<string, VersionChangelog[]>();
+
+	for (const row of rows) {
+		const list = changelogs.get(row.addonId) ?? [];
+
+		if (list.length < MAX_UPDATE_CHANGELOGS) {
+			list.push({
+				version: row.version,
+				changelog: row.changelog,
+				publishedAt: row.publishedAt.toISOString(),
+			});
+		}
+
+		changelogs.set(row.addonId, list);
+	}
+
+	return changelogs;
+}
+
+/**
+ * @description Resolves the client's update check: for each installed addon that has a newer approved
+ * version compatible with the client, the newest such version, its CDN URLs, and the changelogs of
+ * every version it skips over. Unknown, delisted and up-to-date addons are left out.
  * @param ctx The application context.
  * @param request The client version and installed addons.
  * @returns The available updates.
@@ -58,21 +120,33 @@ export async function findUpdates(
 		request.addons.map((entry) => [entry.id, toVersionKey(entry.version)]),
 	);
 	const rows = await newestCompatibleVersions(ctx, request);
+	const newer = rows.flatMap((row) => {
+		const from = installed.get(row.addonId) ?? '';
 
-	const updates = rows
-		.filter((row) => row.versionKey && row.versionKey > (installed.get(row.addonId) ?? ''))
-		.map((row) => {
-			const keys = getArtifactKeys(row.addonId, row.version, row.manifest.main);
+		return row.versionKey && row.versionKey > from
+			? [{ ...row, from, to: row.versionKey }]
+			: [];
+	});
 
-			return {
-				id: row.addonId,
-				version: row.version,
-				manifestUrl: getCdnUrl(ctx.env, keys.manifest),
-				bundleUrl: getCdnUrl(ctx.env, keys.bundle),
-				sha256: row.sha256,
-				changelog: row.changelog,
-			};
-		});
+	if (newer.length === 0) {
+		return { updates: [] };
+	}
+
+	const changelogs = await changelogsFor(ctx, newer);
+
+	const updates = newer.map((row) => {
+		const keys = getArtifactKeys(row.addonId, row.version, row.manifest.main);
+
+		return {
+			id: row.addonId,
+			version: row.version,
+			manifestUrl: getCdnUrl(ctx.env, keys.manifest),
+			bundleUrl: getCdnUrl(ctx.env, keys.bundle),
+			sha256: row.sha256,
+			changelog: row.changelog,
+			changelogs: changelogs.get(row.addonId) ?? [],
+		};
+	});
 
 	return { updates };
 }

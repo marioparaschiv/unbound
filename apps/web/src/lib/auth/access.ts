@@ -10,6 +10,7 @@ export const statements = {
 	submission: ['create', 'review'],
 	update: ['create', 'review'],
 	addon: ['delist', 'transfer'],
+	loader: ['publish'],
 } as const;
 
 export const ac = createAccessControl(statements);
@@ -33,9 +34,14 @@ export const moderator = ac.newRole({
 	session: ['list', 'revoke'],
 });
 
+/** A CI account's role; its API key can publish native loader releases and nothing else. */
+export const ci = ac.newRole({
+	loader: ['publish'],
+});
+
 export const admin = ac.newRole(statements);
 
-export const roles = { user, developer, moderator, admin };
+export const roles = { user, developer, moderator, ci, admin };
 
 export type Role = keyof typeof roles;
 

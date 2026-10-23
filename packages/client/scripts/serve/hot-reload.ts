@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, watch } from 'node:fs';
 import Logger from '@unbound-app/logger';
 import { join } from 'node:path';
 
-import { DIST_DIR, BUNDLE_NAME, WATCH_DEBOUNCE } from './constants';
+import { DIST_DIR, MANIFEST_NAME, SOURCE_BUNDLE_NAME, WATCH_DEBOUNCE } from './constants';
 
 type ReloadPayload = { etag: string };
 
@@ -15,12 +15,13 @@ const hotClients = new Set<ReadableStreamDefaultController<Uint8Array>>();
 let etag = bundleEtag();
 
 /**
- * @description Hashes the built bundle into an etag, so an identical rebuild doesn't reload clients.
- * @returns The bundle's content hash, or '' if it has not been built yet.
+ * @description Hashes the built bundle into a quoted etag, so an identical rebuild doesn't reload clients.
+ * @returns The quoted content hash, or '' if it has not been built yet.
  */
 export function bundleEtag(): string {
 	try {
-		return Bun.hash(readFileSync(join(DIST_DIR, BUNDLE_NAME))).toString(16);
+		// Quoted because the loader compares this byte-for-byte with the `ETag` header it stored.
+		return `"${Bun.hash(readFileSync(join(DIST_DIR, SOURCE_BUNDLE_NAME))).toString(16)}"`;
 	} catch {
 		return '';
 	}
@@ -97,16 +98,17 @@ export function handleHot(req: Request): Response {
 /**
  * @description Watches `dist/` for bundle writes and broadcasts a reload when the content hash
  * changes, recomputing it even with no clients connected so a later-connecting client catches up.
+ * @param reloadOnRebuild Whether to broadcast the new hash. Without it, only clients connecting later catch up.
  * @returns The `FSWatcher`, so the caller can close it on shutdown.
  */
-export function watchBundle() {
+export function watchBundle(reloadOnRebuild: boolean = true) {
 	mkdirSync(DIST_DIR, { recursive: true });
 
 	// Debounced because the bundle write can fire `watch` more than once per build.
 	let watchTimer: ReturnType<typeof setTimeout> | null = null;
 
 	return watch(DIST_DIR, (_event, filename) => {
-		if (filename !== BUNDLE_NAME) return;
+		if (filename !== MANIFEST_NAME) return;
 
 		if (watchTimer) {
 			clearTimeout(watchTimer);
@@ -119,7 +121,7 @@ export function watchBundle() {
 
 			etag = next;
 
-			if (hotClients.size === 0) return;
+			if (!reloadOnRebuild || hotClients.size === 0) return;
 
 			logger.info(`Bundle changed - reloading ${hotClients.size} client(s).`);
 			broadcast();

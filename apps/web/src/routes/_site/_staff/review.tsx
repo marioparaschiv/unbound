@@ -86,7 +86,7 @@ function ReviewPage() {
 
 export const Route = createFileRoute('/_site/_staff/review')({
 	head: () => ({ meta: [{ title: 'Unbound | Review' }] }),
-	validateSearch: reviewQueueQuerySchema.unwrap(),
+	validateSearch: reviewQueueQuerySchema.def.innerType,
 	beforeLoad: ({ context }) => {
 		if (!hasPermission(context.user.role, STAFF_SECTIONS.review.permissions)) {
 			throw redirect({ to: '/' });

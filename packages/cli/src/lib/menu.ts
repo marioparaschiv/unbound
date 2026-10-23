@@ -25,7 +25,8 @@ const ORDER = ['create', 'dev', 'build', 'publish', 'login', 'logout', 'eval', '
  * @returns The menu as a single printable string.
  */
 export function renderMenu(): string {
-	const names = new Set([...commands.map((command) => command.name), 'mcp']);
+	const roots = commands.filter((command) => command.surfaces.cli === 'root');
+	const names = new Set([...roots.map((command) => command.name), 'mcp']);
 	const ordered = [
 		...ORDER.filter((name) => names.has(name)),
 		...[...names].filter((name) => !ORDER.includes(name)),

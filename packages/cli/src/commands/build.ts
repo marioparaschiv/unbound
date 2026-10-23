@@ -11,7 +11,7 @@ const buildCommand: CommandDefinition<typeof schema> = {
 	name: 'build',
 	description:
 		'Build every addon in the workspace once, reporting per-addon success and failure.',
-	surfaces: { cli: true, mcp: false },
+	surfaces: { cli: 'root', mcp: false },
 	schema,
 	async handler() {
 		const resolved = loadConfig();

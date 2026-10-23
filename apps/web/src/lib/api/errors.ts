@@ -24,6 +24,8 @@ const API_ERROR_STATUS: Record<ApiErrorCode, number> = {
 	last_owner: 409,
 	github_not_linked: 403,
 	github_no_push_access: 403,
+	sync_conflict: 409,
+	sync_document_too_large: 413,
 	internal_error: 500,
 };
 

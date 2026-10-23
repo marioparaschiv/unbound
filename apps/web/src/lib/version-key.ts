@@ -7,6 +7,9 @@ function encodeIdentifier(identifier: string): string {
 	return /^\d+$/.test(identifier) ? `0${encodeNumber(identifier)}` : `1${identifier}`;
 }
 
+/** Ends every release key and sorts above every prerelease identifier character. */
+export const RELEASE_KEY_SUFFIX = '~';
+
 /**
  * @description Encodes a semver version so that comparing keys as strings (as SQLite does) follows
  * semver precedence: a release sorts after its prereleases, numeric prerelease identifiers before
@@ -20,7 +23,7 @@ export function toVersionKey(version: string): string {
 	const core = (dash === -1 ? release : release.slice(0, dash)).split('.').map(encodeNumber);
 
 	if (dash === -1) {
-		return `${core.join('.')}~`;
+		return `${core.join('.')}${RELEASE_KEY_SUFFIX}`;
 	}
 
 	// `!` sorts below every identifier character, so a shorter identifier list sorts first.
@@ -30,6 +33,15 @@ export function toVersionKey(version: string): string {
 		.map(encodeIdentifier);
 
 	return `${core.join('.')}-${prerelease.join('!')}`;
+}
+
+/**
+ * @description Reads whether a version key encodes a release rather than a prerelease.
+ * @param key A key from `toVersionKey`.
+ * @returns Whether the key's version has no prerelease identifiers.
+ */
+export function isReleaseKey(key: string): boolean {
+	return key.endsWith(RELEASE_KEY_SUFFIX);
 }
 
 export default toVersionKey;

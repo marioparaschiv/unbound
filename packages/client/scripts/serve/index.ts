@@ -3,32 +3,40 @@ import Logger from '@unbound-app/logger';
 import { PORT, HOST, LAN_URL, DIST_DIR } from './constants';
 import { lanCandidates } from '../dev-host';
 import { serveStatic } from './static';
+import * as refresh from './refresh';
 import * as hot from './hot-reload';
 
 const logger = Logger.create('Serve');
 
 /**
- * @description Starts the dev server: the hot-reload stream at `/__hot` and the built files in `dist/`.
+ * @description Starts the dev server: the loader's reload stream at `/__hot`, the client's hot-patch
+ * socket at `/__refresh`, and the built files in `dist/`.
+ * @param reloadOnRebuild Whether the loader reloads the app after every build. Off when the client takes hot patches.
  * @returns The `Bun.Server`, so an orchestrator can stop it.
  */
-export function startServer() {
+export function startServer(reloadOnRebuild: boolean = true) {
 	const server = Bun.serve({
 		port: PORT,
 		hostname: HOST,
 		// SSE connections are long-lived; never time them out.
 		idleTimeout: 0,
-		fetch(req) {
+		fetch(req, server) {
 			const pathname = new URL(req.url).pathname;
 
 			if (pathname === '/__hot') {
 				return hot.handleHot(req);
 			}
 
+			if (pathname === '/__refresh') {
+				return refresh.upgrade(req, server);
+			}
+
 			return serveStatic(pathname);
 		},
+		websocket: refresh.websocket,
 	});
 
-	hot.watchBundle();
+	hot.watchBundle(reloadOnRebuild);
 
 	logger.info(`Server listening on http://${HOST}:${PORT}/`);
 	logger.info(`Devices on the LAN should connect to: ${LAN_URL}`);

@@ -1,6 +1,7 @@
 import type { SettingsEntry } from '@unbound-app/types/settings';
 import { createLogger } from '@unbound-app/logger';
 
+import { stableType } from '~/lib/hot/runtime';
 import SettingsStore from '~/stores/settings';
 
 const Logger = createLogger('API', 'Settings');
@@ -17,8 +18,17 @@ export function registerSettings(...entries: SettingsEntry[]) {
 			Logger.warn(`Overwriting existing settings entry: ${entry.key}`);
 		}
 
-		registerSection(entry);
+		registerSection(withStableScreen(entry));
 	}
+}
+
+function withStableScreen(entry: SettingsEntry): SettingsEntry {
+	const { getComponent } = entry.screen;
+
+	return {
+		...entry,
+		screen: { ...entry.screen, getComponent: () => stableType(getComponent()) },
+	};
 }
 
 /**

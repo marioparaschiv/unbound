@@ -8,9 +8,14 @@ import type { DiscoveredAddon } from '~/lib/discovery';
  * stdout and stderr are inherited so the build's own output surfaces live.
  * @param addon The addon to build.
  * @param buildCommand The shell command to run in the addon directory.
+ * @param env Variables added to the build's environment.
  * @returns Whether the build succeeded (always `true` for static addons).
  */
-export function buildAddon(addon: DiscoveredAddon, buildCommand: string): Promise<boolean> {
+export function buildAddon(
+	addon: DiscoveredAddon,
+	buildCommand: string,
+	env: Record<string, string> = {},
+): Promise<boolean> {
 	if (addon.static) {
 		return Promise.resolve(true);
 	}
@@ -18,6 +23,7 @@ export function buildAddon(addon: DiscoveredAddon, buildCommand: string): Promis
 	return new Promise((resolve) => {
 		const child = spawn(buildCommand, {
 			cwd: addon.dir,
+			env: { ...process.env, ...env },
 			shell: true,
 			stdio: 'inherit',
 		});

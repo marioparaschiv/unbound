@@ -44,7 +44,7 @@ function DevelopersContent() {
 	const navigateToSearch = useMemo(
 		() =>
 			debounce(
-				(value: string) => navigate({ search: toPageSearch(value, 1) }),
+				(value: string) => void navigate({ search: toPageSearch(value, 1) }),
 				SEARCH_DEBOUNCE_MS,
 			),
 		[navigate],

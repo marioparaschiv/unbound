@@ -1,8 +1,8 @@
 import { createLogger } from '@unbound-app/logger';
-import type { DefaultEventMap } from 'tseep';
 import { createPatcher } from 'possess';
-import { EventEmitter } from 'tseep';
 
+import type { DefaultEventMap } from '~/lib/event-emitter';
+import { EventEmitter } from '~/lib/event-emitter';
 import storage from '~/api/storage';
 
 /** Discriminates the kind of addon a {@link Manager} subclass governs. */
@@ -19,7 +19,7 @@ type BaseManagerEvents<T> = {
 };
 
 /**
- * @description Base contract every addon-style manager subclasses. Extends tseep's `EventEmitter`,
+ * @description Base contract every addon-style manager subclasses. Extends `EventEmitter`,
  * intersecting `BaseManagerEvents<T>` (the `load`/`unload` pair) onto the subclass event map, and
  * holds an `entities` map of governed addons alongside an `errors` map recording per-entity failures.
  * @template T The entity type the manager governs.
@@ -73,6 +73,36 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 	 */
 	getEntity(id: PropertyKey): T | undefined {
 		return this.entities.get(id);
+	}
+
+	/**
+	 * @description Reads the URL each entity was installed from. Entities loaded from disk or pushed
+	 * over the debugger have none.
+	 * @returns A record of entity id to install URL.
+	 */
+	getSources(): Record<string, string> {
+		return this.settings.get('sources', {});
+	}
+
+	/**
+	 * @description Records the URL an entity was installed from. Twin of {@link forgetSource}.
+	 * @param id The entity id.
+	 * @param url The install URL.
+	 */
+	recordSource(id: string, url: string) {
+		this.settings.set('sources', { ...this.getSources(), [id]: url });
+	}
+
+	/**
+	 * @description Forgets the URL an entity was installed from. Twin of {@link recordSource}.
+	 * @param id The entity id.
+	 */
+	forgetSource(id: string) {
+		const { [id]: removed, ...sources } = this.getSources();
+
+		if (removed === undefined) return;
+
+		this.settings.set('sources', sources);
 	}
 
 	/**

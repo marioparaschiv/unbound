@@ -152,6 +152,7 @@ export class Icons extends Addons<Addon> {
 
 			this.unload(resolved);
 			await fs.rm(`Unbound/Icons/${resolved.id}`);
+			this.forgetSource(resolved.id);
 
 			this.emit('deleted', resolved);
 		} catch (error) {
@@ -282,6 +283,7 @@ export class Icons extends Addons<Addon> {
 			const entity = this.getEntity(manifest.id);
 
 			if (entity) {
+				this.recordSource(entity.id, url);
 				this.emit('installed', entity);
 			}
 

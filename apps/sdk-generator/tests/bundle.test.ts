@@ -3,8 +3,10 @@ import { describe, expect, test } from 'bun:test';
 import { resolveLibraryTypes } from '../src/bundle';
 
 describe('resolveLibraryTypes', () => {
-	test('resolves a types-field package (tseep)', () => {
-		expect(resolveLibraryTypes('tseep')).toEndWith('tseep/lib/index.d.ts');
+	test('resolves a types-field package (react-native-gesture-handler)', () => {
+		expect(resolveLibraryTypes('react-native-gesture-handler')).toEndWith(
+			'react-native-gesture-handler/lib/typescript/index.d.ts',
+		);
 	});
 
 	test('resolves a string root export (@unbound-app/logger)', () => {

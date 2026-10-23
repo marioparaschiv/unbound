@@ -1,30 +1,31 @@
-import { z } from 'zod';
+import type { reviewDecisionSchema } from './publish';
 
-import { reviewDecisionSchema, submissionKindSchema, submissionSchema } from './publish';
+import { submissionKindSchema, submissionSchema } from './publish';
 import { addonVersionSchema, sha256Schema } from './addons';
 import { addonManifestSchema } from './manifest';
 import { userSummarySchema } from './account';
+import { z } from './zod';
 
-const noteSchema = z.string().trim().min(1).max(10_000);
+const noteSchema = z.string().check(z.trim(), z.minLength(1), z.maxLength(10_000));
 
-export const reviewQueueQuerySchema = z
-	.object({
-		kind: submissionKindSchema.optional(),
-	})
-	.optional();
+export const reviewQueueQuerySchema = z.optional(
+	z.object({
+		kind: z.optional(submissionKindSchema),
+	}),
+);
 
 export const reviewQueueItemSchema = z.object({
 	submission: submissionSchema,
 	manifest: addonManifestSchema,
-	changelog: z.string().nullable(),
-	bundleSize: z.int().positive(),
+	changelog: z.nullable(z.string()),
+	bundleSize: z.int().check(z.positive()),
 	sha256: sha256Schema,
 	submittedAt: z.iso.datetime(),
 	submitter: userSummarySchema,
 	/** The viewer authored it or maintains the addon, so the server refuses their review with `self_review`. */
 	selfReview: z.boolean(),
 	/** The addon's newest approved version, for updates. */
-	previousVersion: addonVersionSchema.nullable(),
+	previousVersion: z.nullable(addonVersionSchema),
 	/** A short-lived presigned download of the staged bundle. */
 	artifact: z.object({
 		url: z.url(),
@@ -39,11 +40,13 @@ export const reviewQueueResponseSchema = z.object({
 
 export const reviewSubmissionRequestSchema = z.discriminatedUnion('decision', [
 	z.object({
-		decision: reviewDecisionSchema.extract(['approved']),
-		note: noteSchema.optional(),
+		decision: z.enum(['approved'] satisfies z.infer<typeof reviewDecisionSchema>[]),
+		note: z.optional(noteSchema),
 	}),
 	z.object({
-		decision: reviewDecisionSchema.extract(['rejected', 'changes_requested']),
+		decision: z.enum(['rejected', 'changes_requested'] satisfies z.infer<
+			typeof reviewDecisionSchema
+		>[]),
 		/** The rejection reason or the changes the author must make. */
 		note: noteSchema,
 	}),

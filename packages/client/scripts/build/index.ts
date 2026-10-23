@@ -1,8 +1,9 @@
-import { rolldown, watch, type RolldownOptions, type Plugin } from 'rolldown';
+import { rolldown, watch, type RolldownOptions, type OutputOptions, type Plugin } from 'rolldown';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import hermes from '@unbound-app/rollup-plugin-hermes';
-import { existsSync, readdirSync } from 'node:fs';
 import { cp, mkdir, rm } from 'node:fs/promises';
 import replace from '@rollup/plugin-replace';
+import { dev } from 'rolldown/experimental';
 import Logger from '@unbound-app/logger';
 import { swc } from 'rollup-plugin-swc3';
 import { join } from 'node:path';
@@ -18,17 +19,26 @@ import {
 	DEBUGGER_ADDRESS,
 } from './constants';
 import globals, { shimmedModules } from './plugins/globals';
+import refresh, { refreshRuntime } from './plugins/refresh';
+import downlevel, { lower } from './plugins/downlevel';
 import generateManifest from './plugins/manifest';
 import worklets from './plugins/worklets';
+
+/** What the dev engine reports after a source change. */
+export type HotUpdate =
+	| { type: 'patch'; clientId: string; code: string; filename: string; changedIds: string[] }
+	| { type: 'reload' };
 
 const logger = Logger.create('Build');
 const pluginLoggers: Map<PropertyKey, Logger> = new Map();
 const localeSource = join(__dirname, '..', '..', '..', '..', 'i18n');
 const localeTarget = join(__dirname, '..', '..', 'dist', 'i18n');
 
+const root = join(__dirname, '..', '..');
+
 const config: RolldownOptions = {
 	input: 'src/entry.ts',
-	cwd: join(__dirname, '..', '..'),
+	cwd: root,
 	tsconfig: true,
 	resolve: {
 		alias: {
@@ -44,7 +54,7 @@ const config: RolldownOptions = {
 	},
 	output: [
 		{
-			banner: 'var global = globalThis;',
+			postBanner: 'var global = globalThis;',
 			footer: '//# sourceURL=unbound',
 			file: 'dist/unbound.js',
 			format: 'iife',
@@ -54,6 +64,9 @@ const config: RolldownOptions = {
 	],
 
 	plugins: [
+		// Every build carries the refresh runtime: its production entry only throws, and plugins
+		// built by `ubd dev` register their components with it on release clients too.
+		refreshRuntime(root),
 		globals(
 			shimmedModules([
 				'react',
@@ -70,13 +83,17 @@ const config: RolldownOptions = {
 			$$API_URL$$: API_URL,
 			$$I18N_BASE_URL$$: I18N_BASE_URL,
 			$$DEBUGGER_ADDRESS$$: DEBUGGER_ADDRESS,
+			$$DEV_SERVER_URL$$: DEV_SERVER_URL,
 		}),
-		// Dependencies that ship classes or async functions must be down-levelled for older Hermes.
+		// Only strips TS and JSX, and lowers class fields so parameter properties stay assigned before
+		// field initializers. `downlevel` lowers the rest once per chunk, sharing each helper.
 		swc({
 			tsconfig: false,
-			swcrc: true,
-			exclude: /node_modules\/(?!(\.bun\/)?(possess|zod|@noble))/,
+			swcrc: false,
+			exclude: /node_modules/,
+			jsc: { target: 'es2021' },
 		}),
+		downlevel(root),
 		hermes(),
 		generateManifest(GIT_REVISION),
 		...(IS_DEV_BUILD ? [locales()] : []),
@@ -190,16 +207,82 @@ function watchBuild() {
 			case 'ERROR':
 				logger.error('Build failed:', event.error);
 				break;
+			default:
+				break;
 		}
 	});
 
 	return watcher;
 }
 
-export { config, build, watchBuild };
+/**
+ * @description Builds with rolldown's dev engine: the bundle registers every module's exports, and each
+ * source change becomes a hot patch for every connected client, then a rebuild for the next launch.
+ * @param onUpdate Receives each client's patch, or a reload when a change could not be patched.
+ * @returns The dev engine, to register clients with and close on shutdown.
+ */
+async function hotBuild(onUpdate: (update: HotUpdate) => void) {
+	const [output] = Array.isArray(config.output) ? config.output : [config.output];
+	// Rolldown's dev mode only emits ESM.
+	const hotOutput: OutputOptions = { ...output, format: 'esm' };
 
-// Only dispatch when run directly (`bun scripts/build`); stays inert when the dev orchestrator
-// imports `watchBuild`.
+	const engine = await dev(
+		{
+			...config,
+			plugins: [refresh(root, '~/lib/hot/runtime'), config.plugins],
+			experimental: {
+				devMode: {
+					implement: readFileSync(join(__dirname, 'dev-runtime.js'), 'utf8'),
+					// Its classes don't compile with hermesc; dev-runtime.js implements the same surface.
+					skipCommonRuntimeInjection: true,
+				},
+			},
+		},
+		hotOutput,
+		{
+			rebuildStrategy: 'always',
+			onHmrUpdates(result) {
+				if (result instanceof Error) {
+					logger.error('Hot update failed:', result);
+
+					return;
+				}
+
+				for (const { clientId, update } of result.updates) {
+					if (update.type === 'Patch') {
+						onUpdate({
+							type: 'patch',
+							clientId,
+							// Patches skip `renderChunk`, so the dependency code they carry is lowered here.
+							code: lower(root, update.code),
+							filename: update.filename,
+							changedIds: update.changedIds,
+						});
+					} else if (update.type === 'FullReload') {
+						logger.info(`Full reload: ${update.reason ?? 'no reason given'}`);
+						onUpdate({ type: 'reload' });
+					}
+				}
+			},
+			onOutput(result) {
+				if (result instanceof Error) {
+					logger.error('Build failed:', result);
+
+					return;
+				}
+
+				logger.success('Build completed successfully');
+			},
+		},
+	);
+
+	await engine.run();
+
+	return engine;
+}
+
+export { config, build, watchBuild, hotBuild };
+
 if (import.meta.main) {
 	if (process.argv.includes('--watch')) {
 		watchBuild();

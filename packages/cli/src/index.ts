@@ -1,16 +1,20 @@
 #!/usr/bin/env node
 import { cli } from 'cleye';
 
+import { mcpCommand, isMcpTool, runMcpTool } from '~/commands/mcp';
 import { toCleyeCommand } from '~/adapters/cleye';
-import { mcpCommand } from '~/commands/mcp';
 import { renderMenu } from '~/lib/menu';
 import { commands } from '~/registry';
 
-const argv = cli({
-	name: 'ubd',
-	commands: [...commands.map(toCleyeCommand), mcpCommand],
-});
+const [first, ...rest] = process.argv.slice(2);
 
-if (!argv.command && argv._.length === 0 && !argv.flags.help && !argv.flags.version) {
-	process.stdout.write(`${renderMenu()}\n`);
+if (first === 'mcp' && isMcpTool(rest[0])) {
+	runMcpTool(rest);
+} else {
+	const roots = commands.filter((definition) => definition.surfaces.cli === 'root');
+	const argv = cli({ name: 'ubd', commands: [...roots.map(toCleyeCommand), mcpCommand] });
+
+	if (!argv.command && argv._.length === 0 && !argv.flags.help && !argv.flags.version) {
+		process.stdout.write(`${renderMenu()}\n`);
+	}
 }

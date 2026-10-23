@@ -28,14 +28,19 @@ import { Route as SiteStaffReviewRouteImport } from './routes/_site/_staff/revie
 import { Route as SiteAddonsIdRouteImport } from './routes/_site/addons/$id'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1AddonsRouteImport } from './routes/api/v1/addons'
+import { Route as ApiV1CatalogRouteImport } from './routes/api/v1/catalog'
 import { Route as ApiV1MeRouteImport } from './routes/api/v1/me'
 import { Route as ApiV1SubmissionsRouteImport } from './routes/api/v1/submissions'
+import { Route as ApiV1SyncRouteImport } from './routes/api/v1/sync'
 import { Route as ApiV1UpdatesRouteImport } from './routes/api/v1/updates'
 import { Route as SiteStaffAdminIndexRouteImport } from './routes/_site/_staff/admin/index'
 import { Route as SiteStaffAdminAddonsRouteImport } from './routes/_site/_staff/admin/addons'
 import { Route as SiteStaffAdminUsersRouteImport } from './routes/_site/_staff/admin/users'
+import { Route as ApiV1LoaderReleasesRouteImport } from './routes/api/v1/loader/releases'
+import { Route as ApiV1LoaderUpdatesRouteImport } from './routes/api/v1/loader/updates'
 import { Route as ApiV1MeAddonsRouteImport } from './routes/api/v1/me/addons'
 import { Route as ApiV1ReviewQueueRouteImport } from './routes/api/v1/review/queue'
+import { Route as ApiV1SyncOauthRouteImport } from './routes/api/v1/sync/oauth'
 import { Route as ApiV1AddonsIdDelistRouteImport } from './routes/api/v1/addons/$id/delist'
 import { Route as ApiV1AddonsIdMaintainersRouteImport } from './routes/api/v1/addons/$id/maintainers'
 import { Route as ApiV1AddonsIdRelistRouteImport } from './routes/api/v1/addons/$id/relist'
@@ -43,6 +48,7 @@ import { Route as ApiV1AddonsIdTransferRouteImport } from './routes/api/v1/addon
 import { Route as ApiV1SubmissionsIdFinalizeRouteImport } from './routes/api/v1/submissions/$id/finalize'
 import { Route as ApiV1SubmissionsIdReviewRouteImport } from './routes/api/v1/submissions/$id/review'
 import { Route as ApiV1AddonsIdMaintainersUserIdRouteImport } from './routes/api/v1/addons/$id/maintainers/$userId'
+import { Route as ApiV1LoaderReleasesPlatformVersionRouteImport } from './routes/api/v1/loader/releases/$platform/$version'
 
 const SiteRouteRoute = SiteRouteRouteImport.update({
   id: '/_site',
@@ -137,6 +143,11 @@ const ApiV1AddonsRoute = ApiV1AddonsRouteImport.update({
   path: '/api/v1/addons',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1CatalogRoute = ApiV1CatalogRouteImport.update({
+  id: '/api/v1/catalog',
+  path: '/api/v1/catalog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1MeRoute = ApiV1MeRouteImport.update({
   id: '/api/v1/me',
   path: '/api/v1/me',
@@ -145,6 +156,11 @@ const ApiV1MeRoute = ApiV1MeRouteImport.update({
 const ApiV1SubmissionsRoute = ApiV1SubmissionsRouteImport.update({
   id: '/api/v1/submissions',
   path: '/api/v1/submissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1SyncRoute = ApiV1SyncRouteImport.update({
+  id: '/api/v1/sync',
+  path: '/api/v1/sync',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiV1UpdatesRoute = ApiV1UpdatesRouteImport.update({
@@ -167,6 +183,16 @@ const SiteStaffAdminUsersRoute = SiteStaffAdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => SiteStaffRouteRoute,
 } as any)
+const ApiV1LoaderReleasesRoute = ApiV1LoaderReleasesRouteImport.update({
+  id: '/api/v1/loader/releases',
+  path: '/api/v1/loader/releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1LoaderUpdatesRoute = ApiV1LoaderUpdatesRouteImport.update({
+  id: '/api/v1/loader/updates',
+  path: '/api/v1/loader/updates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1MeAddonsRoute = ApiV1MeAddonsRouteImport.update({
   id: '/addons',
   path: '/addons',
@@ -176,6 +202,11 @@ const ApiV1ReviewQueueRoute = ApiV1ReviewQueueRouteImport.update({
   id: '/api/v1/review/queue',
   path: '/api/v1/review/queue',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiV1SyncOauthRoute = ApiV1SyncOauthRouteImport.update({
+  id: '/oauth',
+  path: '/oauth',
+  getParentRoute: () => ApiV1SyncRoute,
 } as any)
 const ApiV1AddonsIdDelistRoute = ApiV1AddonsIdDelistRouteImport.update({
   id: '/$id/delist',
@@ -216,6 +247,12 @@ const ApiV1AddonsIdMaintainersUserIdRoute =
     path: '/$userId',
     getParentRoute: () => ApiV1AddonsIdMaintainersRoute,
   } as any)
+const ApiV1LoaderReleasesPlatformVersionRoute =
+  ApiV1LoaderReleasesPlatformVersionRouteImport.update({
+    id: '/$platform/$version',
+    path: '/$platform/$version',
+    getParentRoute: () => ApiV1LoaderReleasesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof SiteIndexRoute
@@ -235,13 +272,18 @@ export interface FileRoutesByFullPath {
   '/addons/$id': typeof SiteAddonsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
+  '/api/v1/catalog': typeof ApiV1CatalogRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
+  '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/admin/addons': typeof SiteStaffAdminAddonsRoute
   '/admin/users': typeof SiteStaffAdminUsersRoute
+  '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
+  '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
+  '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
   '/admin/': typeof SiteStaffAdminIndexRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
@@ -250,6 +292,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/submissions/$id/finalize': typeof ApiV1SubmissionsIdFinalizeRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/addons/$id/maintainers/$userId': typeof ApiV1AddonsIdMaintainersUserIdRoute
+  '/api/v1/loader/releases/$platform/$version': typeof ApiV1LoaderReleasesPlatformVersionRoute
 }
 export interface FileRoutesByTo {
   '/device': typeof DeviceRoute
@@ -269,13 +312,18 @@ export interface FileRoutesByTo {
   '/addons/$id': typeof SiteAddonsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
+  '/api/v1/catalog': typeof ApiV1CatalogRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
+  '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/admin/addons': typeof SiteStaffAdminAddonsRoute
   '/admin/users': typeof SiteStaffAdminUsersRoute
+  '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
+  '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
+  '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
   '/admin': typeof SiteStaffAdminIndexRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
@@ -284,6 +332,7 @@ export interface FileRoutesByTo {
   '/api/v1/submissions/$id/finalize': typeof ApiV1SubmissionsIdFinalizeRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/addons/$id/maintainers/$userId': typeof ApiV1AddonsIdMaintainersUserIdRoute
+  '/api/v1/loader/releases/$platform/$version': typeof ApiV1LoaderReleasesPlatformVersionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -306,13 +355,18 @@ export interface FileRoutesById {
   '/_site/addons/$id': typeof SiteAddonsIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
+  '/api/v1/catalog': typeof ApiV1CatalogRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
+  '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/_site/_staff/admin/addons': typeof SiteStaffAdminAddonsRoute
   '/_site/_staff/admin/users': typeof SiteStaffAdminUsersRoute
+  '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
+  '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
+  '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
   '/_site/_staff/admin/': typeof SiteStaffAdminIndexRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
@@ -321,6 +375,7 @@ export interface FileRoutesById {
   '/api/v1/submissions/$id/finalize': typeof ApiV1SubmissionsIdFinalizeRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/addons/$id/maintainers/$userId': typeof ApiV1AddonsIdMaintainersUserIdRoute
+  '/api/v1/loader/releases/$platform/$version': typeof ApiV1LoaderReleasesPlatformVersionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -342,13 +397,18 @@ export interface FileRouteTypes {
     | '/addons/$id'
     | '/api/auth/$'
     | '/api/v1/addons'
+    | '/api/v1/catalog'
     | '/api/v1/me'
     | '/api/v1/submissions'
+    | '/api/v1/sync'
     | '/api/v1/updates'
     | '/admin/addons'
     | '/admin/users'
+    | '/api/v1/loader/releases'
+    | '/api/v1/loader/updates'
     | '/api/v1/me/addons'
     | '/api/v1/review/queue'
+    | '/api/v1/sync/oauth'
     | '/admin/'
     | '/api/v1/addons/$id/delist'
     | '/api/v1/addons/$id/maintainers'
@@ -357,6 +417,7 @@ export interface FileRouteTypes {
     | '/api/v1/submissions/$id/finalize'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/addons/$id/maintainers/$userId'
+    | '/api/v1/loader/releases/$platform/$version'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/device'
@@ -376,13 +437,18 @@ export interface FileRouteTypes {
     | '/addons/$id'
     | '/api/auth/$'
     | '/api/v1/addons'
+    | '/api/v1/catalog'
     | '/api/v1/me'
     | '/api/v1/submissions'
+    | '/api/v1/sync'
     | '/api/v1/updates'
     | '/admin/addons'
     | '/admin/users'
+    | '/api/v1/loader/releases'
+    | '/api/v1/loader/updates'
     | '/api/v1/me/addons'
     | '/api/v1/review/queue'
+    | '/api/v1/sync/oauth'
     | '/admin'
     | '/api/v1/addons/$id/delist'
     | '/api/v1/addons/$id/maintainers'
@@ -391,6 +457,7 @@ export interface FileRouteTypes {
     | '/api/v1/submissions/$id/finalize'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/addons/$id/maintainers/$userId'
+    | '/api/v1/loader/releases/$platform/$version'
   id:
     | '__root__'
     | '/_site'
@@ -412,13 +479,18 @@ export interface FileRouteTypes {
     | '/_site/addons/$id'
     | '/api/auth/$'
     | '/api/v1/addons'
+    | '/api/v1/catalog'
     | '/api/v1/me'
     | '/api/v1/submissions'
+    | '/api/v1/sync'
     | '/api/v1/updates'
     | '/_site/_staff/admin/addons'
     | '/_site/_staff/admin/users'
+    | '/api/v1/loader/releases'
+    | '/api/v1/loader/updates'
     | '/api/v1/me/addons'
     | '/api/v1/review/queue'
+    | '/api/v1/sync/oauth'
     | '/_site/_staff/admin/'
     | '/api/v1/addons/$id/delist'
     | '/api/v1/addons/$id/maintainers'
@@ -427,6 +499,7 @@ export interface FileRouteTypes {
     | '/api/v1/submissions/$id/finalize'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/addons/$id/maintainers/$userId'
+    | '/api/v1/loader/releases/$platform/$version'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -435,9 +508,13 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiV1AddonsRoute: typeof ApiV1AddonsRouteWithChildren
+  ApiV1CatalogRoute: typeof ApiV1CatalogRoute
   ApiV1MeRoute: typeof ApiV1MeRouteWithChildren
   ApiV1SubmissionsRoute: typeof ApiV1SubmissionsRouteWithChildren
+  ApiV1SyncRoute: typeof ApiV1SyncRouteWithChildren
   ApiV1UpdatesRoute: typeof ApiV1UpdatesRoute
+  ApiV1LoaderReleasesRoute: typeof ApiV1LoaderReleasesRouteWithChildren
+  ApiV1LoaderUpdatesRoute: typeof ApiV1LoaderUpdatesRoute
   ApiV1ReviewQueueRoute: typeof ApiV1ReviewQueueRoute
 }
 
@@ -576,6 +653,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1AddonsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/catalog': {
+      id: '/api/v1/catalog'
+      path: '/api/v1/catalog'
+      fullPath: '/api/v1/catalog'
+      preLoaderRoute: typeof ApiV1CatalogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/me': {
       id: '/api/v1/me'
       path: '/api/v1/me'
@@ -588,6 +672,13 @@ declare module '@tanstack/react-router' {
       path: '/api/v1/submissions'
       fullPath: '/api/v1/submissions'
       preLoaderRoute: typeof ApiV1SubmissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/sync': {
+      id: '/api/v1/sync'
+      path: '/api/v1/sync'
+      fullPath: '/api/v1/sync'
+      preLoaderRoute: typeof ApiV1SyncRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/v1/updates': {
@@ -618,6 +709,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteStaffAdminUsersRouteImport
       parentRoute: typeof SiteStaffRouteRoute
     }
+    '/api/v1/loader/releases': {
+      id: '/api/v1/loader/releases'
+      path: '/api/v1/loader/releases'
+      fullPath: '/api/v1/loader/releases'
+      preLoaderRoute: typeof ApiV1LoaderReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/loader/updates': {
+      id: '/api/v1/loader/updates'
+      path: '/api/v1/loader/updates'
+      fullPath: '/api/v1/loader/updates'
+      preLoaderRoute: typeof ApiV1LoaderUpdatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/me/addons': {
       id: '/api/v1/me/addons'
       path: '/addons'
@@ -631,6 +736,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/v1/review/queue'
       preLoaderRoute: typeof ApiV1ReviewQueueRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/sync/oauth': {
+      id: '/api/v1/sync/oauth'
+      path: '/oauth'
+      fullPath: '/api/v1/sync/oauth'
+      preLoaderRoute: typeof ApiV1SyncOauthRouteImport
+      parentRoute: typeof ApiV1SyncRoute
     }
     '/api/v1/addons/$id/delist': {
       id: '/api/v1/addons/$id/delist'
@@ -680,6 +792,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/v1/addons/$id/maintainers/$userId'
       preLoaderRoute: typeof ApiV1AddonsIdMaintainersUserIdRouteImport
       parentRoute: typeof ApiV1AddonsIdMaintainersRoute
+    }
+    '/api/v1/loader/releases/$platform/$version': {
+      id: '/api/v1/loader/releases/$platform/$version'
+      path: '/$platform/$version'
+      fullPath: '/api/v1/loader/releases/$platform/$version'
+      preLoaderRoute: typeof ApiV1LoaderReleasesPlatformVersionRouteImport
+      parentRoute: typeof ApiV1LoaderReleasesRoute
     }
   }
 }
@@ -794,15 +913,43 @@ const ApiV1SubmissionsRouteChildren: ApiV1SubmissionsRouteChildren = {
 const ApiV1SubmissionsRouteWithChildren =
   ApiV1SubmissionsRoute._addFileChildren(ApiV1SubmissionsRouteChildren)
 
+interface ApiV1SyncRouteChildren {
+  ApiV1SyncOauthRoute: typeof ApiV1SyncOauthRoute
+}
+
+const ApiV1SyncRouteChildren: ApiV1SyncRouteChildren = {
+  ApiV1SyncOauthRoute: ApiV1SyncOauthRoute,
+}
+
+const ApiV1SyncRouteWithChildren = ApiV1SyncRoute._addFileChildren(
+  ApiV1SyncRouteChildren,
+)
+
+interface ApiV1LoaderReleasesRouteChildren {
+  ApiV1LoaderReleasesPlatformVersionRoute: typeof ApiV1LoaderReleasesPlatformVersionRoute
+}
+
+const ApiV1LoaderReleasesRouteChildren: ApiV1LoaderReleasesRouteChildren = {
+  ApiV1LoaderReleasesPlatformVersionRoute:
+    ApiV1LoaderReleasesPlatformVersionRoute,
+}
+
+const ApiV1LoaderReleasesRouteWithChildren =
+  ApiV1LoaderReleasesRoute._addFileChildren(ApiV1LoaderReleasesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   SiteRouteRoute: SiteRouteRouteWithChildren,
   DeviceRoute: DeviceRoute,
   LoginRoute: LoginRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiV1AddonsRoute: ApiV1AddonsRouteWithChildren,
+  ApiV1CatalogRoute: ApiV1CatalogRoute,
   ApiV1MeRoute: ApiV1MeRouteWithChildren,
   ApiV1SubmissionsRoute: ApiV1SubmissionsRouteWithChildren,
+  ApiV1SyncRoute: ApiV1SyncRouteWithChildren,
   ApiV1UpdatesRoute: ApiV1UpdatesRoute,
+  ApiV1LoaderReleasesRoute: ApiV1LoaderReleasesRouteWithChildren,
+  ApiV1LoaderUpdatesRoute: ApiV1LoaderUpdatesRoute,
   ApiV1ReviewQueueRoute: ApiV1ReviewQueueRoute,
 }
 export const routeTree = rootRouteImport

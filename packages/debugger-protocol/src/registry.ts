@@ -13,12 +13,17 @@ export type CommandContext = { client: ControllerClient };
 /** What a command handler returns: a success flag, human-readable text, and optional structured data. */
 export type CommandOutput = { ok: boolean; text: string; data?: unknown };
 
+/**
+ * Every command is on the CLI: at the root (`ubd eval`), or under `ubd mcp` (`ubd mcp open`) for
+ * agent-facing tools, which must then be MCP tools too.
+ */
+export type CommandSurfaces = { cli: 'root'; mcp: boolean } | { cli: 'mcp'; mcp: true };
+
 /** A command usable from both the CLI and (when opted in) the MCP server. */
 export type CommandDefinition<S extends z.ZodObject<z.ZodRawShape>> = {
 	name: string;
 	description: string;
-	/** MCP ⊂ CLI: every MCP action is a CLI command; not every CLI command is an MCP tool. */
-	surfaces: { cli: true; mcp: boolean };
+	surfaces: CommandSurfaces;
 	/** Used directly as the MCP inputSchema; the CLI adapter derives flags from its fields. */
 	schema: S;
 	/** Which schema fields the CLI presents as positionals; the rest become flags. */

@@ -9,6 +9,7 @@ export declare const Commands: any;
 export declare const Constants: any;
 export declare const Dispatcher: any;
 export declare const Flux: any;
+export declare const FluxHooks: any;
 export declare const Gestures: any;
 export declare const MarkdownParser: any;
 export declare const Moment: any;

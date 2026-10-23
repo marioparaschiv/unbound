@@ -12,8 +12,14 @@ export const LAN_URL = resolveDevServerUrl();
 
 export const WATCH_DEBOUNCE = 100;
 
-/** The name of the built bundle file inside `DIST_DIR`. */
-export const BUNDLE_NAME = 'unbound.bundle';
+/** The JavaScript bundle inside `DIST_DIR`; every Hermes `unbound.<version>.bundle` is compiled from it. */
+export const SOURCE_BUNDLE_NAME = 'unbound.js';
+
+/** Written after every bundle variant, so its change marks a finished build. */
+export const MANIFEST_NAME = 'manifest.json';
+
+/** Matches every bundle variant the loader may download: `unbound.js` or `unbound.<version>.bundle`. */
+export const BUNDLE_PATTERN = /^unbound\.(?:js|\d+\.bundle)$/;
 
 export default {
 	PORT,
@@ -21,5 +27,7 @@ export default {
 	DIST_DIR,
 	LAN_URL,
 	WATCH_DEBOUNCE,
-	BUNDLE_NAME,
+	SOURCE_BUNDLE_NAME,
+	MANIFEST_NAME,
+	BUNDLE_PATTERN,
 };

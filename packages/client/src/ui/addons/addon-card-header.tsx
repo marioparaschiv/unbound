@@ -1,4 +1,4 @@
-import type { Addon } from '@unbound-app/types';
+import type { AddonManifest } from '@unbound-app/types';
 import { View } from 'react-native';
 import { memo } from 'react';
 
@@ -9,27 +9,28 @@ import { Icons } from '~/api/assets';
 
 import useStyles from './addon-card-header.style';
 
+/** The manifest fields a card header shows; an installed addon's and a listed addon's both fit. */
+export type AddonCardManifest = Pick<AddonManifest, 'name' | 'version' | 'authors' | 'description'>;
+
 type AddonCardHeaderProps = {
-	addon: Addon;
+	manifest: AddonCardManifest;
+	/** The asset name of the tinted icon. */
+	icon?: string;
 };
 
 /**
  * @description The top of an addon card: a tinted icon, the addon name with its version, the author,
  * and the description. Pure and memoized; it reads nothing from any manager.
  */
-function AddonCardHeader({ addon }: AddonCardHeaderProps) {
+function AddonCardHeader({ manifest, icon = 'PuzzlePieceIcon' }: AddonCardHeaderProps) {
 	const styles = useStyles();
-	const { name, version, authors, description } = addon.data;
+	const { name, version, authors, description } = manifest;
 	const author = authors?.map((a) => a.name).join(', ');
 
 	return (
 		<View style={styles.container}>
 			<View style={styles.iconContainer}>
-				<TintedIcon
-					source={Icons['PuzzlePieceIcon'] ?? 0}
-					size={22}
-					tint={Theme.colors.TEXT_STRONG}
-				/>
+				<TintedIcon source={Icons[icon] ?? 0} size={22} tint={Theme.colors.TEXT_STRONG} />
 			</View>
 			<View style={styles.content}>
 				<View style={styles.titleRow}>

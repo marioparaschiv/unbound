@@ -5,3 +5,4 @@ export const Linking = findByPropsLazy('openURL', 'openSettings');
 export const Profiles = findByPropsLazy('showUserProfile');
 export const AsyncUsers = findByPropsLazy('fetchProfile');
 export const Invites = findByPropsLazy('acceptInviteAndTransitionToInviteChannel');
+export const OAuth2 = findByPropsLazy('openOAuth2Modal');

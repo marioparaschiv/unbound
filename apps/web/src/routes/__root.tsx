@@ -3,8 +3,7 @@ import type { ReactNode } from 'react';
 
 import { getSession } from '~/lib/auth/session';
 import Toaster from '~/components/ui/sonner';
-
-import stylesheet from '../styles.css?url';
+import stylesheet from '~/styles.css?url';
 
 type RootDocumentProps = {
 	children: ReactNode;

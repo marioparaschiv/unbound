@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Runs an Unbound CLI device command (eval, open, route, reload) against this machine's bridge.
+set -euo pipefail
+. "$(dirname "$0")/env.sh"
+cd "$root"
+exec bun packages/cli/src/index.ts "$@" --port "$UNBOUND_BRIDGE_PORT"

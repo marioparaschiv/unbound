@@ -38,7 +38,7 @@ const createCommand: CommandDefinition<typeof schema> = {
 	description:
 		'Scaffold a new Unbound addon or addon workspace. Prompts for anything left unset, so a ' +
 		'fully-flagged invocation runs without prompts for use in CI.',
-	surfaces: { cli: true, mcp: false },
+	surfaces: { cli: 'root', mcp: false },
 	schema,
 	async handler(input: CreateInput) {
 		const config = loadConfig();

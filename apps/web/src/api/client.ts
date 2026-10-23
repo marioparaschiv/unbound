@@ -1,6 +1,6 @@
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import type { ApiErrorCode } from '@unbound-app/contracts/errors';
-import type { z } from 'zod';
+import type { z } from 'zod/mini';
 
 /** The header `ubd publish` sends an API key in, for CI publishing. */
 export const API_KEY_HEADER = 'x-api-key';
@@ -15,7 +15,7 @@ export type QueryValues = Record<string, string | undefined>;
 export type ApiRoute = {
 	body: unknown;
 	query: QueryValues | undefined;
-	response: z.ZodType;
+	response: z.ZodMiniType;
 };
 
 export type ApiMap = Record<string, ApiRoute>;
@@ -68,6 +68,14 @@ export class ApiRequestError extends Error {
 	}
 }
 
+/** A `304 Not Modified` answer to a conditional request: the copy the caller holds is current. */
+export class NotModifiedError extends Error {
+	constructor() {
+		super('Not modified.');
+		this.name = 'NotModifiedError';
+	}
+}
+
 function buildUrl(
 	baseUrl: string,
 	path: string,
@@ -117,7 +125,7 @@ async function toRequestError(response: Response): Promise<ApiRequestError> {
  * @description Creates a typed client for the Unbound web API. Routes, bodies and responses are
  * checked against the API map exported by `@unbound-app/web/api`; responses are parsed with the
  * route's contract schema and `{ error: { code, message } }` bodies are thrown as
- * {@link ApiRequestError}.
+ * {@link ApiRequestError}. A `304` to a conditional request is thrown as {@link NotModifiedError}.
  * @template Api The API map, `Api` from `@unbound-app/web/api`.
  * @param options The API origin and headers sent with every request (e.g. credentials).
  * @returns A `request(route, options)` function.
@@ -147,6 +155,10 @@ export function createApiClient<Api extends ApiMap>(options: ApiClientOptions) {
 			body: init.body === undefined ? undefined : JSON.stringify(init.body),
 		});
 
+		if (response.status === 304) {
+			throw new NotModifiedError();
+		}
+
 		if (!response.ok) {
 			throw await toRequestError(response);
 		}
@@ -155,4 +167,10 @@ export function createApiClient<Api extends ApiMap>(options: ApiClientOptions) {
 	};
 }
 
-export default { API_KEY_HEADER, CLI_CLIENT_ID, ApiRequestError, createApiClient };
+export default {
+	API_KEY_HEADER,
+	CLI_CLIENT_ID,
+	ApiRequestError,
+	NotModifiedError,
+	createApiClient,
+};

@@ -1,4 +1,6 @@
 export { default as errorBoundary } from '~/builtins/error-boundary';
+export { default as hotRefresh } from '~/builtins/hot-refresh';
+export { default as cloudSync } from '~/builtins/cloud-sync';
 export { default as staffMode } from '~/builtins/staff-mode';
 export { default as settings } from '~/builtins/settings';
 export { default as tracking } from '~/builtins/tracking';

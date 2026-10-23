@@ -2,7 +2,7 @@ import Logger from '@unbound-app/logger';
 import { format } from 'date-fns';
 import { join } from 'node:path';
 
-import { DIST_DIR, BUNDLE_NAME } from './constants';
+import { DIST_DIR, BUNDLE_PATTERN } from './constants';
 import { bundleEtag } from './hot-reload';
 
 const logger = Logger.create('Serve');
@@ -27,7 +27,7 @@ function formatBytes(bytes: number): string {
 /**
  * @description Serves a file from `dist/` for a GET request, guarding against path traversal and
  * logging the outcome.
- * @param pathname The request pathname (e.g. `/unbound.bundle`).
+ * @param pathname The request pathname (e.g. `/unbound.98.bundle`).
  * @returns The file response, or a 403/404/500 on failure.
  */
 export async function serveStatic(pathname: string): Promise<Response> {
@@ -62,10 +62,10 @@ export async function serveStatic(pathname: string): Promise<Response> {
 			'Access-Control-Allow-Origin': '*',
 		};
 
-		// Tag the bundle with its content hash - the SSE `reload` carries the same value, so the
-		// device can compare the two. `no-cache` forces the device to always revalidate.
-		if (pathname.slice(1) === BUNDLE_NAME) {
-			headers['ETag'] = `"${bundleEtag()}"`;
+		// Tag every bundle variant with the build's hash - the SSE `reload` carries the same value, so
+		// the device can compare the two. `no-cache` forces the device to always revalidate.
+		if (BUNDLE_PATTERN.test(pathname.slice(1))) {
+			headers['ETag'] = bundleEtag();
 			headers['Cache-Control'] = 'no-cache';
 		}
 

@@ -5,6 +5,34 @@
 		"./node_modules/@marioparaschiv/oxc-config/react.json",
 		"./node_modules/@marioparaschiv/oxc-config/jsdoc.json"
 	],
+	"plugins": ["unicorn", "typescript", "oxc", "react", "import"],
+	"rules": {
+		"react-hooks/rules-of-hooks": "error",
+		"react/jsx-key": "error",
+		"react/immutability": "off",
+		"react/set-state-in-effect": "off",
+		"react-hooks/exhaustive-deps": "off",
+		"import/no-duplicates": "error",
+		"import/first": "error",
+		"import/no-self-import": "error",
+		"no-var": "error",
+		"prefer-const": "error",
+		"eqeqeq": "error",
+		"unicorn/prefer-node-protocol": "error",
+		"typescript/switch-exhaustiveness-check": [
+			"error",
+			{ "considerDefaultExhaustiveForUnions": true }
+		],
+		"typescript/no-unnecessary-type-assertion": "error",
+		"typescript/no-misused-promises": [
+			"error",
+			{ "checksVoidReturn": { "attributes": false } }
+		],
+		"oxc-config/consistent-import-paths": [
+			"error",
+			{ "alias": "~/", "aliasRoots": ["packages/*/src", "apps/*/src"] }
+		]
+	},
 	"ignorePatterns": ["dist", "*.gen.ts", "packages/api/src/**", "packages/cli/templates/**"],
 	"overrides": [
 		{

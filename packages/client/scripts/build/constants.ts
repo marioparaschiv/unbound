@@ -1,6 +1,6 @@
 import { semverSchema } from '@unbound-app/contracts/manifest';
 import { apiUrlSchema } from '@unbound-app/contracts/api';
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 
 import { resolveDevServerUrl, resolveDevHost } from '../dev-host';
 import { version } from '../../package.json';

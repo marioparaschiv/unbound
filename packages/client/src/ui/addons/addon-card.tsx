@@ -53,7 +53,7 @@ function AddonCard({ addon, kind }: AddonCardProps) {
 		>
 			<View style={styles.row}>
 				<View style={styles.body}>
-					<AddonCardHeader addon={addon} />
+					<AddonCardHeader manifest={addon.data} />
 				</View>
 			</View>
 			<View style={styles.footer}>

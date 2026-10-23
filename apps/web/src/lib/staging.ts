@@ -113,7 +113,7 @@ export function startStagingSweeper(ctx: AppContext): Timer {
 		}
 	}
 
-	return setInterval(sweep, ctx.env.STAGING_SWEEP_INTERVAL_SECONDS * 1000);
+	return setInterval(() => void sweep(), ctx.env.STAGING_SWEEP_INTERVAL_SECONDS * 1000);
 }
 
 /**

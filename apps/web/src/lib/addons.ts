@@ -3,8 +3,10 @@ import type {
 	AddonSort,
 	AddonType,
 	AddonVersion,
+	CatalogResponse,
 	ListAddonsQuery,
 	ListAddonsResponse,
+	ListedAddon,
 	Maintainer,
 	MaintainersResponse,
 	MyAddonsResponse,
@@ -16,6 +18,7 @@ import { z } from 'zod';
 
 import { OPEN_SUBMISSION_STATUSES, toSubmission } from '~/lib/submissions';
 import { addon, addonMaintainer, addonVersion } from '~/db/schema';
+import type { AddonVersionRow } from '~/lib/artifacts';
 import { requirePermission } from '~/lib/api/caller';
 import { likeContains } from '~/lib/like-contains';
 import type { Transaction } from '~/db/database';
@@ -42,6 +45,8 @@ type MaintainerRow = Pick<typeof addonMaintainer.$inferSelect, 'role' | 'created
 };
 
 type ListingCursor = [value: string | number, id: string];
+
+type ListedAddonRow = Pick<AddonRow, 'id' | 'type'> & { versions: AddonVersionRow[] };
 
 type ManifestTypeFields = Pick<PublishedManifest, 'type' | 'main'>;
 
@@ -426,6 +431,17 @@ export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) 
 	});
 }
 
+// An addon row without an approved version has nothing to install, so it is not listed.
+function toListedAddons(ctx: AppContext, rows: ListedAddonRow[]): ListedAddon[] {
+	return rows.flatMap((row) => {
+		const [latest] = row.versions;
+
+		return latest
+			? [{ id: row.id, type: row.type, latestVersion: toAddonVersion(ctx.env, latest) }]
+			: [];
+	});
+}
+
 /**
  * @description Lists one page of approved addons that are not delisted, each with its newest version.
  * @param ctx The application context.
@@ -440,18 +456,30 @@ export async function listAddons(
 	const rows = await queryListedAddons(ctx, query);
 	const page = rows.slice(0, size);
 	const last = page.at(-1);
-	const addons = page.flatMap((row) => {
-		const [latest] = row.versions;
-
-		return latest
-			? [{ id: row.id, type: row.type, latestVersion: toAddonVersion(ctx.env, latest) }]
-			: [];
-	});
+	const addons = toListedAddons(ctx, page);
 
 	return {
 		addons,
 		nextCursor: rows.length > size && last ? encodeCursor(last, query.sort ?? 'name') : null,
 	};
+}
+
+/**
+ * @description Snapshots every listed addon with its newest version, ordered by id. The revision is a
+ * hash of the snapshot, so it changes exactly when an approval, delist or relist changes what is listed.
+ * @param ctx The application context.
+ * @returns The catalog and its revision.
+ */
+export async function getCatalog(ctx: AppContext): Promise<CatalogResponse> {
+	const rows = await ctx.db.query.addon.findMany({
+		where: { delistedAt: { isNull: true } },
+		with: LATEST_VERSION,
+		orderBy: { id: 'asc' },
+	});
+	const addons = toListedAddons(ctx, rows);
+	const revision = new Bun.CryptoHasher('sha256').update(JSON.stringify(addons)).digest('hex');
+
+	return { revision, addons };
 }
 
 /**
@@ -543,6 +571,7 @@ export default {
 	relistAddon,
 	queryListedAddons,
 	listAddons,
+	getCatalog,
 	getAddonDetails,
 	listMyAddons,
 };

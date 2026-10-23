@@ -1,7 +1,7 @@
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import Logger from '@unbound-app/logger';
 import type { Plugin } from 'rolldown';
-import { resolve } from 'path';
+import { resolve } from 'node:path';
 
 const logger = Logger.create('Build', 'Manifest');
 const root = resolve(__dirname, '..', '..', '..');

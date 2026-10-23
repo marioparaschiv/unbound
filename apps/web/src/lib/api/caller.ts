@@ -15,7 +15,13 @@ export type Caller = {
 	via: 'session' | 'api-key';
 };
 
-function isBanned(target: CallerUser, now: Date): boolean {
+/**
+ * @description Reads whether a user is banned at a given time.
+ * @param target The user.
+ * @param now The current time.
+ * @returns Whether a ban is in force: one without an expiry, or one that has not expired yet.
+ */
+export function isBanned(target: CallerUser, now: Date): boolean {
 	if (!target.banned) {
 		return false;
 	}
@@ -96,4 +102,4 @@ export function toCallerProfile({ id, name, image, role }: CallerUser): CallerPr
 	return { id, name, image: image ?? null, role: role ?? DEFAULT_ROLE };
 }
 
-export default { resolveCaller, requireCaller, requirePermission, toCallerProfile };
+export default { isBanned, resolveCaller, requireCaller, requirePermission, toCallerProfile };

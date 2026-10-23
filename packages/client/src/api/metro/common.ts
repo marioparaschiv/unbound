@@ -14,6 +14,7 @@ export const Moment = findByPropsLazy('isMoment');
 
 export const Util = findByPropsLazy('inspect');
 export const Flux = findByPropsLazy('Store', 'connectStores');
+export const FluxHooks = findByPropsLazy('useStateFromStores');
 export const Assets = findByPropsLazy('registerAsset');
 export const Clyde = findByPropsLazy('createBotMessage');
 export const Dispatcher = findByPropsLazy('dispatch', 'subscribe');

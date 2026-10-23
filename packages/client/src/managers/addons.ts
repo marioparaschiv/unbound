@@ -1,8 +1,7 @@
 import type { Addon, AddonManifest, PluginContext } from '@unbound-app/types';
-import type { AddonUpdate } from '@unbound-app/contracts/updates';
-import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
+import type { AddonRelease } from '@unbound-app/contracts/updates';
 import toError from '@unbound-app/utils/to-error';
-import { sha256 } from '@noble/hashes/sha2.js';
+import sha256 from '@unbound-app/utils/sha256';
 import noop from '@unbound-app/utils/noop';
 
 import { validateNativePluginRequirements } from '~/api/native-runtime';
@@ -48,9 +47,10 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	/**
 	 * @description Evaluates an addon's bundle source into a running instance. Implemented by each subclass.
 	 * @param bundle The addon's bundle source.
+	 * @param id The addon's id.
 	 * @returns The addon's instance.
 	 */
-	protected abstract handleBundle(bundle: string): T['instance'];
+	protected abstract handleBundle(bundle: string, id: string): T['instance'];
 
 	/** The manifest `type` value this manager installs; used to reject mismatched installs. */
 	protected abstract get entityType(): NonNullable<AddonManifest['type']>;
@@ -258,6 +258,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			const entity = this.getEntity(manifest.id);
 
 			if (entity) {
+				this.recordSource(entity.id, url);
 				this.emit('installed', entity);
 			}
 
@@ -276,7 +277,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	 * @param entity The addon to update, as its id or the entity itself.
 	 * @param update The release the updater returned for this addon.
 	 */
-	async update(entity: AddonResolveable, update: AddonUpdate): Promise<void> {
+	async update(entity: AddonResolveable, update: AddonRelease): Promise<void> {
 		const resolved = this.resolve(entity);
 
 		if (!resolved) return;
@@ -289,7 +290,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 			// `fetchBundle` decodes the body as UTF-8; re-encoding gives back the served bytes for
 			// any valid UTF-8 bundle, and anything else fails closed as a mismatch.
-			const digest = bytesToHex(sha256(utf8ToBytes(bundle)));
+			const digest = sha256(bundle);
 
 			if (digest !== update.sha256) {
 				throw new Error(`Bundle SHA-256 ${digest} does not match ${update.sha256}.`);
@@ -325,6 +326,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		try {
 			this.unload(resolved);
 			await fs.rm(`Unbound/${ManagerType[this.type]}/${resolved.id}`);
+			this.forgetSource(resolved.id);
 			this.emit('deleted', resolved);
 		} catch (error) {
 			this.logger.error(`Failed to delete addon ${resolved.id}:`, error);
@@ -347,7 +349,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			if (recoveryMode) {
 				resolved.instance = { start: noop, stop: noop };
 			} else {
-				const instance = this.handleBundle(resolved.bundle);
+				const instance = this.handleBundle(resolved.bundle, resolved.id);
 
 				resolved.instance = instance;
 			}
@@ -394,8 +396,9 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	/**
 	 * @description Enables an addon, persisting its state and starting it if not already running, and emits `enabled`.
 	 * @param entity The addon to enable, as its id or the entity itself.
+	 * @returns Nothing here; subclasses that enable asynchronously return a promise.
 	 */
-	enable(entity: AddonResolveable) {
+	enable(entity: AddonResolveable): void | Promise<void> {
 		const resolved = this.resolve(entity);
 
 		if (!resolved) return;

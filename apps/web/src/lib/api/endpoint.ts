@@ -18,9 +18,9 @@ export type EndpointInput<TBody, TQuery> = {
 };
 
 export type EndpointSchemas<
-	TBody extends z.ZodType,
-	TResponse extends z.ZodType,
-	TQuery extends z.ZodType,
+	TBody extends z.core.$ZodType,
+	TResponse extends z.core.$ZodType,
+	TQuery extends z.core.$ZodType,
 > = {
 	/** `z.undefined()` for body-less requests. */
 	body: TBody;
@@ -32,11 +32,19 @@ export type EndpointSchemas<
 	response: TResponse;
 };
 
+export type EndpointOptions<TResponse extends z.core.$ZodType> = {
+	/**
+	 * Derives the response's entity tag. When set, the response carries it as a strong `ETag` and a
+	 * request whose `If-None-Match` lists it is answered `304` with no body.
+	 */
+	etag?: (result: z.output<TResponse>) => string;
+};
+
 /** A `/api/v1` handler bound to the contract schemas its request and response follow. */
 export type Endpoint<
-	TBody extends z.ZodType,
-	TResponse extends z.ZodType,
-	TQuery extends z.ZodType,
+	TBody extends z.core.$ZodType,
+	TResponse extends z.core.$ZodType,
+	TQuery extends z.core.$ZodType,
 > = {
 	schemas: EndpointSchemas<TBody, TResponse, TQuery>;
 	handle(ctx: AppContext, request: Request, params?: PathParams): Promise<Response>;
@@ -56,9 +64,25 @@ async function readJson(request: Request): Promise<unknown> {
 	}
 }
 
+function matchesIfNoneMatch(request: Request, etag: string): boolean {
+	const header = request.headers.get('if-none-match');
+
+	if (!header) {
+		return false;
+	}
+
+	// `If-None-Match` uses the weak comparison, so `W/"x"` matches `"x"`.
+	return header
+		.split(',')
+		.some((tag) => tag.trim() === '*' || tag.trim().replace(/^W\//, '') === etag);
+}
+
 // UNKNOWN: request input, validated by the endpoint's schema.
-function parseInput<TSchema extends z.ZodType>(schema: TSchema, input: unknown): z.output<TSchema> {
-	const result = schema.safeParse(input);
+function parseInput<TSchema extends z.core.$ZodType>(
+	schema: TSchema,
+	input: unknown,
+): z.output<TSchema> {
+	const result = z.safeParse(schema, input);
 
 	if (!result.success) {
 		throw new ApiError('invalid_request', z.prettifyError(result.error));
@@ -74,17 +98,19 @@ function parseInput<TSchema extends z.ZodType>(schema: TSchema, input: unknown):
  * with `internal_error`.
  * @param schemas The request body, query and response schemas.
  * @param handler The endpoint logic.
+ * @param options Conditional-request support, e.g. an `etag` derived from the result.
  * @returns The endpoint, served from a route with `serve` and called directly from tests.
  */
 export function endpoint<
-	TBody extends z.ZodType,
-	TResponse extends z.ZodType,
-	TQuery extends z.ZodType,
+	TBody extends z.core.$ZodType,
+	TResponse extends z.core.$ZodType,
+	TQuery extends z.core.$ZodType,
 >(
 	schemas: EndpointSchemas<TBody, TResponse, TQuery>,
 	handler: (
 		input: EndpointInput<z.output<TBody>, z.output<TQuery>>,
 	) => Promise<z.input<TResponse>>,
+	options: EndpointOptions<TResponse> = {},
 ): Endpoint<TBody, TResponse, TQuery> {
 	return {
 		schemas,
@@ -97,9 +123,24 @@ export function endpoint<
 					schemas.query,
 					searchParams.size > 0 ? Object.fromEntries(searchParams) : undefined,
 				);
-				const result = await handler({ ctx, request, params, body, query });
+				const result = z.parse(
+					schemas.response,
+					await handler({ ctx, request, params, body, query }),
+				);
 
-				return Response.json(schemas.response.parse(result));
+				if (!options.etag) {
+					return Response.json(result);
+				}
+
+				const etag = `"${options.etag(result)}"`;
+				// `no-cache` lets clients keep the body but revalidate it on every use.
+				const headers = { ETag: etag, 'Cache-Control': 'no-cache' };
+
+				if (matchesIfNoneMatch(request, etag)) {
+					return new Response(null, { status: 304, headers });
+				}
+
+				return Response.json(result, { headers });
 			} catch (error) {
 				if (error instanceof ApiError) {
 					return error.toResponse();
@@ -127,6 +168,23 @@ export function requireParam(params: PathParams, name: string): string {
 	}
 
 	return value;
+}
+
+/**
+ * @description Reads a `$param` path segment and parses it, failing with `invalid_request` when it is
+ * missing or the schema refuses it.
+ * @template TSchema The schema the segment must satisfy.
+ * @param params The route's path parameters.
+ * @param name The parameter name.
+ * @param schema The schema the segment must satisfy.
+ * @returns The parsed parameter.
+ */
+export function parseParam<TSchema extends z.core.$ZodType>(
+	params: PathParams,
+	name: string,
+	schema: TSchema,
+): z.output<TSchema> {
+	return parseInput(schema, requireParam(params, name));
 }
 
 export default endpoint;

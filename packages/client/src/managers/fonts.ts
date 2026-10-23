@@ -130,6 +130,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 
 			await fs.write(`Unbound/Fonts/${file}`, base64, 'base64');
 
+			this.recordSource(file, url);
 			this.emit('changed');
 
 			return file;
@@ -137,6 +138,28 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 			this.logger.error('Failed to install font:', error);
 
 			return undefined;
+		}
+	}
+
+	/**
+	 * @description Deletes an installed font file and emits `changed`. Twin of {@link install}. The
+	 * native side drops it from `UNBOUND_FONTS` on the next push or relaunch.
+	 * @param file The installed file name, as {@link install} returned it.
+	 */
+	async delete(file: string): Promise<void> {
+		try {
+			await fs.rm(`Unbound/Fonts/${file}`);
+
+			for (const font of this.getEntities()) {
+				if (font.file === file) {
+					this.entities.delete(font.name);
+				}
+			}
+
+			this.forgetSource(file);
+			this.emit('changed');
+		} catch (error) {
+			this.logger.error(`Failed to delete font ${file}:`, error);
 		}
 	}
 }

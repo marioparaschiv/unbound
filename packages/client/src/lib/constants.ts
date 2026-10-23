@@ -20,6 +20,9 @@ export const I18N_BASE_URL = '$$I18N_BASE_URL$$';
  */
 export const DEBUGGER_ADDRESS = '$$DEBUGGER_ADDRESS$$';
 
+/** Origin of the dev server the bundle was built by, replaced at build time. Empty in production. */
+export const DEV_SERVER_URL = '$$DEV_SERVER_URL$$';
+
 /** Display name of the client, used as the settings section label. */
 export const CLIENT_NAME = 'Unbound';
 
@@ -42,6 +45,7 @@ export const Screens = {
 	Toasts: 'UNBOUND_TOASTS',
 	CloudSync: 'UNBOUND_CLOUD_SYNC',
 	Marketplace: 'UNBOUND_MARKETPLACE',
+	Updates: 'UNBOUND_UPDATES',
 	Custom: 'UNBOUND_CUSTOM',
 } as const;
 

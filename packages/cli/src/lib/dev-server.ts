@@ -7,6 +7,8 @@ import type { ResolvedConfig } from '~/lib/config';
 import { discoverAddons } from '~/lib/discovery';
 import { buildAddon } from '~/lib/build-addon';
 
+const DEV_BUILD_ENV = { UNBOUND_HOT: '1' };
+
 /** How long file changes inside one addon settle before that addon rebuilds. */
 const DEBOUNCE_MS = 150;
 
@@ -85,7 +87,7 @@ export class DevServer {
 			process.stdout.write(`Building ${addon.id}…\n`);
 		}
 
-		const ok = await buildAddon(addon, this.resolved.config.build);
+		const ok = await buildAddon(addon, this.resolved.config.build, DEV_BUILD_ENV);
 
 		if (!ok) {
 			process.stderr.write(`Failed to build ${addon.id}.\n`);

@@ -29,6 +29,7 @@ export const envSchema = z.object({
 	S3_PUBLIC_BUCKET: z.string().min(1),
 
 	GITHUB_API_URL: z.url().default('https://api.github.com'),
+	DISCORD_API_URL: z.url().default('https://discord.com/api/v10'),
 
 	ADDON_MAX_BYTES: positiveInt.default(25 * 1024 * 1024),
 	SUBMISSION_UPLOAD_TTL_SECONDS: positiveInt.default(900),
@@ -46,6 +47,14 @@ export const envSchema = z.object({
 	ADDON_LIST_PAGE_SIZE: positiveInt.default(50),
 	DEVELOPER_LIST_PAGE_SIZE: positiveInt.default(24),
 	USER_LIST_PAGE_SIZE: positiveInt.default(25),
+
+	SYNC_MAX_INSTALLS: positiveInt.default(100),
+	SYNC_MAX_STORE_BYTES: positiveInt.default(32 * 1024),
+	SYNC_MAX_DOCUMENT_BYTES: positiveInt.default(256 * 1024),
+	SYNC_RATE_LIMIT_WINDOW_SECONDS: positiveInt.default(60),
+	SYNC_RATE_LIMIT_MAX: positiveInt.default(30),
+	SYNC_SIGN_IN_RATE_LIMIT_WINDOW_SECONDS: positiveInt.default(60),
+	SYNC_SIGN_IN_RATE_LIMIT_MAX: positiveInt.default(10),
 });
 
 export type Env = z.infer<typeof envSchema>;

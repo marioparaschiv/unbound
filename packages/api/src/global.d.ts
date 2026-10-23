@@ -92,6 +92,7 @@ export type {
 	StyleSheetSpecOrFactory,
 	SwitchProps,
 	TableCheckboxRowProps,
+	TableRadioGroupProps,
 	TableRadioRowProps,
 	TableRowComponent,
 	TableRowGroupProps,

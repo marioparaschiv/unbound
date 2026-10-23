@@ -586,7 +586,7 @@ export function findStore<
 >(...args: T): AnyProps {
 	const [[name], { short = true, ...options }] = parseOptions<MetroStoreOptions>(args);
 
-	return searchWithOptions([name, short], options as MetroInternalOptions, 'byStore');
+	return searchWithOptions([name, short], options, 'byStore');
 }
 
 /**
@@ -777,7 +777,7 @@ function searchWithOptions(
 		);
 	}
 
-	return find(filter(...args), options as MetroSearchOptions);
+	return find(filter(...args), options);
 }
 
 // Sentinel key no real module owns, used to detect catch-all proxies. Defined once so the probe is

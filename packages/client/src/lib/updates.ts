@@ -3,18 +3,19 @@ import {
 	updatesRequestSchema,
 	updatesResponseSchema,
 } from '@unbound-app/contracts/updates';
-import type { InstalledAddon } from '@unbound-app/contracts/updates';
+import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
 import { createApiClient } from '@unbound-app/web/client';
-import { createLogger } from '@unbound-app/logger';
 import type { Addon } from '@unbound-app/types';
 import type { Api } from '@unbound-app/web/api';
 
+import type { ManagerKind } from '~/lib/constants';
 import type { Addons } from '~/managers/addons';
 
-const logger = createLogger('Updater');
+/** Managers whose addons carry a marketplace id and version; fonts have neither. */
+export type UpdatableKind = Exclude<ManagerKind, ManagerKind.Fonts>;
 
 /** The part of an addon manager the updater drives; each manager narrows the entity type. */
-type UpdatableManager = Pick<Addons<Addon>, 'getEntities' | 'update'>;
+export type UpdatableManager = Pick<Addons<Addon>, 'getEntities' | 'getEntity' | 'update'>;
 
 export type UpdateCheckOptions = {
 	/** Origin of the Unbound web API. */
@@ -22,53 +23,142 @@ export type UpdateCheckOptions = {
 	clientVersion: string;
 };
 
-/**
- * @description Sends one `POST /api/v1/updates` for every installed addon across the given
- * managers, then has each owning manager apply its returned update. Addons the server doesn't know
- * are never listed back, so they keep their current version.
- * @param managers The addon managers whose installed addons are checked.
- * @param options The API origin and this client's version.
- */
-export async function checkForUpdates(
-	managers: UpdatableManager[],
-	options: UpdateCheckOptions,
-): Promise<void> {
-	const owners = new Map<string, UpdatableManager>();
-	const addons: InstalledAddon[] = [];
+/** An installed addon as its manager reports it, before its id and version are validated. */
+export type InstalledEntry = {
+	kind: UpdatableKind;
+	id: string;
+	name: string;
+	version: string;
+};
 
-	for (const manager of managers) {
-		for (const entity of manager.getEntities()) {
-			// Locally built addons may not carry a marketplace id or a semver version.
-			const installed = installedAddonSchema.safeParse({
-				id: entity.id,
-				version: entity.data.version,
-			});
+/** An update waiting to be applied: the installed addon and the release it moves to. */
+export type PendingUpdate = {
+	kind: UpdatableKind;
+	id: string;
+	name: string;
+	/** The installed version. */
+	from: string;
+	update: AddonUpdate;
+};
 
-			if (!installed.success || owners.has(installed.data.id)) {
-				continue;
-			}
+// Locally built addons may not carry a marketplace id or a semver version; the first manager to
+// list an id owns it.
+function checkable(entries: InstalledEntry[]): Map<string, InstalledEntry> {
+	const owners = new Map<string, InstalledEntry>();
 
-			owners.set(installed.data.id, manager);
-			addons.push(installed.data);
+	for (const entry of entries) {
+		if (owners.has(entry.id) || !installedAddonSchema.safeParse(entry).success) {
+			continue;
 		}
+
+		owners.set(entry.id, entry);
 	}
+
+	return owners;
+}
+
+/**
+ * @description Builds the body of `POST /api/v1/updates` from every installed addon.
+ * @param entries The installed addons across the updatable managers.
+ * @param clientVersion This client's version.
+ * @returns The request, or `undefined` when no addon can be checked.
+ */
+export function buildUpdatesRequest(
+	entries: InstalledEntry[],
+	clientVersion: string,
+): UpdatesRequest | undefined {
+	const addons = [...checkable(entries).values()].map(({ id, version }) => ({ id, version }));
 
 	if (!addons.length) return;
 
-	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
-
-	try {
-		const { updates } = await request('POST /api/v1/updates', {
-			body: updatesRequestSchema.parse({ clientVersion: options.clientVersion, addons }),
-			response: updatesResponseSchema,
-		});
-
-		await Promise.all(
-			updates.map(async (update) => owners.get(update.id)?.update(update.id, update)),
-		);
-	} catch (error) {
-		logger.error('Failed to check for addon updates:', error);
-	}
+	return updatesRequestSchema.parse({ clientVersion, addons });
 }
 
-export default { checkForUpdates };
+/**
+ * @description Pairs each returned update with the installed addon it applies to, sorted by name.
+ * @param entries The installed addons the request was built from.
+ * @param response The server's answer.
+ * @returns The pending updates; updates for addons no longer installed are dropped.
+ */
+export function toPendingUpdates(
+	entries: InstalledEntry[],
+	response: UpdatesResponse,
+): PendingUpdate[] {
+	const owners = checkable(entries);
+
+	return response.updates
+		.flatMap((update) => {
+			const entry = owners.get(update.id);
+
+			return entry
+				? [
+						{
+							kind: entry.kind,
+							id: entry.id,
+							name: entry.name,
+							from: entry.version,
+							update,
+						},
+					]
+				: [];
+		})
+		.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * @description Lists a manager's installed addons for an update check.
+ * @param kind The manager's kind, carried onto each entry.
+ * @param manager The manager.
+ * @returns One entry per installed addon.
+ */
+export function listInstalled(kind: UpdatableKind, manager: UpdatableManager): InstalledEntry[] {
+	return manager.getEntities().map((entity) => ({
+		kind,
+		id: entity.id,
+		name: entity.data.name,
+		version: entity.data.version,
+	}));
+}
+
+/**
+ * @description Asks `POST /api/v1/updates` which installed addons have updates, in one request.
+ * Addons the server doesn't know are never listed back.
+ * @param entries The installed addons across the updatable managers.
+ * @param options The API origin and this client's version.
+ * @returns The pending updates; rejects when the server can't be reached or answers with an error.
+ */
+export async function fetchUpdates(
+	entries: InstalledEntry[],
+	options: UpdateCheckOptions,
+): Promise<PendingUpdate[]> {
+	const body = buildUpdatesRequest(entries, options.clientVersion);
+
+	if (!body) {
+		return [];
+	}
+
+	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
+	const response = await request('POST /api/v1/updates', {
+		body,
+		response: updatesResponseSchema,
+	});
+
+	return toPendingUpdates(entries, response);
+}
+
+/**
+ * @description Has the owning manager apply a pending update.
+ * @param manager The manager the addon belongs to.
+ * @param pending The update.
+ * @returns Whether the addon now runs the new version; the manager records why when it doesn't.
+ */
+export async function applyUpdate(
+	manager: UpdatableManager,
+	pending: PendingUpdate,
+): Promise<boolean> {
+	await manager.update(pending.id, pending.update);
+
+	return manager.getEntity(pending.id)?.data.version === pending.update.version;
+}
+
+export default { buildUpdatesRequest, toPendingUpdates, listInstalled, fetchUpdates, applyUpdate };

@@ -11,11 +11,15 @@ import { afterAll, beforeAll, beforeEach, describe, expect, spyOn, test } from '
 import { updatesRequestSchema } from '@unbound-app/contracts/updates';
 import type { Addon } from '@unbound-app/types';
 
-import { checkForUpdates } from '~/lib/updates';
+import type { InstalledEntry, PendingUpdate, UpdatableKind } from '~/lib/updates';
+import { applyUpdate, fetchUpdates, listInstalled } from '~/lib/updates';
 
 import { FakeAddons, makeInstance, makeManifest, resetDevice, writes } from './helpers/addons';
 
 const CLIENT_VERSION = '1.0.0';
+
+// `ManagerKind` lives beside build-time tokens that only exist in a client bundle.
+const PLUGINS: UpdatableKind = 0;
 
 // The CDN: real bytes over HTTP, keyed by path, standing in for the public bucket.
 const files = new Map<string, string>();
@@ -104,34 +108,68 @@ function recordEvents(manager: FakeAddons): string[] {
 	return events;
 }
 
-// Runs a check and returns the bodies of the updates requests it sent.
-async function check(managers: FakeAddons[], baseUrl: string = api.url.origin) {
+type CheckResult = {
+	requests: unknown[];
+	pending: PendingUpdate[];
+	applied: boolean[];
+};
+
+// Checks the managers' addons with one request, applies every update through its owning manager,
+// and returns the bodies of the updates requests it sent.
+async function check(
+	managers: FakeAddons[],
+	baseUrl: string = api.url.origin,
+): Promise<CheckResult> {
 	const requests = spyOn(globalThis, 'fetch');
+	const owners = new Map<string, FakeAddons>();
+	const entries: InstalledEntry[] = [];
+
+	for (const manager of managers) {
+		for (const entry of listInstalled(PLUGINS, manager)) {
+			if (!owners.has(entry.id)) {
+				owners.set(entry.id, manager);
+			}
+
+			entries.push(entry);
+		}
+	}
 
 	try {
-		await checkForUpdates(managers, { baseUrl, clientVersion: CLIENT_VERSION });
+		const pending = await fetchUpdates(entries, { baseUrl, clientVersion: CLIENT_VERSION });
+		const applied = await Promise.all(
+			pending.map(async (update) => {
+				const owner = owners.get(update.id);
 
-		const sent = requests.mock.calls
-			.map(([input, init]) => new Request(input, init))
-			.filter((request) => new URL(request.url).pathname === '/api/v1/updates');
-
-		return Promise.all(
-			sent.map(async (request) => updatesRequestSchema.parse(await request.json())),
+				return owner ? applyUpdate(owner, update) : false;
+			}),
 		);
+
+		return { requests: await sentBodies(requests.mock.calls), pending, applied };
 	} finally {
 		requests.mockRestore();
 	}
 }
 
-describe('checkForUpdates', () => {
+async function sentBodies(calls: Parameters<typeof fetch>[]) {
+	const sent = calls
+		.map(([input, init]) => new Request(input, init))
+		.filter((request) => new URL(request.url).pathname === '/api/v1/updates');
+
+	return Promise.all(
+		sent.map(async (request) => updatesRequestSchema.parse(await request.json())),
+	);
+}
+
+describe('fetchUpdates and applyUpdate', () => {
 	test('sends one request when nothing is newer and leaves addons untouched', async () => {
 		const manager = new FakeAddons();
 		const events = recordEvents(manager);
 
 		seed(manager, 'up.current', true);
 
-		const requests = await check([manager]);
+		const { requests, pending } = await check([manager]);
 
+		expect(pending).toEqual([]);
 		expect(requests).toEqual([
 			{ clientVersion: CLIENT_VERSION, addons: [{ id: 'up.current', version: '1.0.0' }] },
 		]);
@@ -152,7 +190,7 @@ describe('checkForUpdates', () => {
 		seed(others, 'up.disabled', false);
 		seed(others, 'local.unversioned', false, 'dev');
 
-		const requests = await check([plugins, others]);
+		const { requests, pending, applied } = await check([plugins, others]);
 
 		expect(requests).toEqual([
 			{
@@ -165,11 +203,24 @@ describe('checkForUpdates', () => {
 			},
 		]);
 
-		const applied = plugins.getEntity('up.applied');
+		expect(
+			pending.map((entry) => [
+				entry.id,
+				entry.from,
+				entry.update.version,
+				entry.update.changelogs.length,
+			]),
+		).toEqual([
+			['up.applied', '1.0.0', '1.1.0', 1],
+			['up.disabled', '1.0.0', '1.1.0', 1],
+		]);
+		expect(applied).toEqual([true, true]);
 
-		expect(applied?.data.version).toBe('1.1.0');
-		expect(applied?.bundle).toBe('applied-1.1.0');
-		expect(applied?.started).toBe(true);
+		const updated = plugins.getEntity('up.applied');
+
+		expect(updated?.data.version).toBe('1.1.0');
+		expect(updated?.bundle).toBe('applied-1.1.0');
+		expect(updated?.started).toBe(true);
 		expect(plugins.log).toEqual(['stop:old', 'start:applied-1.1.0']);
 
 		const disabled = others.getEntity('up.disabled');
@@ -197,7 +248,7 @@ describe('checkForUpdates', () => {
 
 		seed(manager, 'up.tampered', true);
 
-		await check([manager]);
+		expect((await check([manager])).applied).toEqual([false]);
 
 		const tampered = manager.getEntity('up.tampered');
 
@@ -212,13 +263,16 @@ describe('checkForUpdates', () => {
 		);
 	});
 
-	test('logs and changes nothing when the server is unreachable', async () => {
+	test('rejects and changes nothing when the server is unreachable', async () => {
 		const manager = new FakeAddons();
 		const events = recordEvents(manager);
 
 		seed(manager, 'up.applied', true);
 
-		expect(await check([manager], unreachableUrl)).toHaveLength(1);
+		expect(await check([manager], unreachableUrl).catch((error) => error)).toBeInstanceOf(
+			Error,
+		);
+
 		expect(manager.getEntity('up.applied')?.bundle).toBe('old');
 		expect(manager.log).toEqual([]);
 		expect(writes).toEqual([]);

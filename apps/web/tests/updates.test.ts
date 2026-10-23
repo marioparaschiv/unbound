@@ -1,6 +1,6 @@
+import { MAX_UPDATE_CHANGELOGS, updatesResponseSchema } from '@unbound-app/contracts/updates';
 import { afterAll, beforeAll, describe, expect, spyOn, test } from 'bun:test';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
-import { updatesResponseSchema } from '@unbound-app/contracts/updates';
 import type { UpdatesRequest } from '@unbound-app/contracts/updates';
 import { eq } from 'drizzle-orm';
 
@@ -42,6 +42,12 @@ beforeAll(async () => {
 	await seedVersion(ctx, ownerId, manifest('up.compat', '2.0.0', { unbound: { min: '3.0.0' } }));
 
 	await seedApprovedAddon(ctx, ownerId, manifest('up.current', '1.0.0'));
+
+	await seedApprovedAddon(ctx, ownerId, manifest('up.many', '1.0.0'));
+
+	for (let minor = 1; minor <= MAX_UPDATE_CHANGELOGS + 5; minor++) {
+		await seedVersion(ctx, ownerId, manifest('up.many', `1.${minor}.0`));
+	}
 
 	await seedApprovedAddon(ctx, ownerId, manifest('up.delisted', '1.0.0'));
 	await seedVersion(ctx, ownerId, manifest('up.delisted', '1.1.0'));
@@ -96,8 +102,30 @@ describe('POST /api/v1/updates', () => {
 				bundleUrl: `${ctx.env.CDN_URL}/addons/up.newer/1.10.0/index.js`,
 				sha256: row?.sha256 ?? '',
 				changelog: 'Changes in 1.10.0.',
+				changelogs: ['1.10.0', '1.2.0', '1.1.0'].map((version) => ({
+					version,
+					changelog: `Changes in ${version}.`,
+					publishedAt: NOW.toISOString(),
+				})),
 			},
 		]);
+	});
+
+	test('lists the changelogs of only the versions an update skips over, newest first', async () => {
+		async function versions(id: string, version: string, clientVersion: string = '9.0.0') {
+			const [update] = await updatesFor({ clientVersion, addons: [{ id, version }] });
+
+			return update?.changelogs.map((entry) => entry.version);
+		}
+
+		expect(await versions('up.newer', '1.1.0')).toEqual(['1.10.0', '1.2.0']);
+		expect(await versions('up.compat', '1.0.0', '2.5.0')).toEqual(['1.1.0']);
+		expect(await versions('up.many', '1.0.0')).toEqual(
+			Array.from(
+				{ length: MAX_UPDATE_CHANGELOGS },
+				(_, index) => `1.${MAX_UPDATE_CHANGELOGS + 5 - index}.0`,
+			),
+		);
 	});
 
 	test('skips versions that need a newer client for an older compatible one', async () => {
@@ -174,7 +202,7 @@ describe('findUpdates', () => {
 		],
 	};
 
-	test('resolves the whole batch in one statement', async () => {
+	test('resolves the whole batch in two statements, one when nothing is newer', async () => {
 		// Drizzle's bun:sqlite session prepares every statement through `query`.
 		const statements = spyOn(ctx.db.$client, 'query');
 
@@ -182,6 +210,16 @@ describe('findUpdates', () => {
 			const { updates } = await findUpdates(ctx, request);
 
 			expect(updates.map((update) => update.id)).toEqual(['up.compat', 'up.newer']);
+			expect(statements).toHaveBeenCalledTimes(2);
+
+			statements.mockClear();
+
+			expect(
+				await findUpdates(ctx, {
+					...request,
+					addons: [{ id: 'up.current', version: '1.0.0' }],
+				}),
+			).toEqual({ updates: [] });
 			expect(statements).toHaveBeenCalledTimes(1);
 		} finally {
 			statements.mockRestore();

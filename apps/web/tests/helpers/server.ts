@@ -5,7 +5,7 @@ import type { Endpoint } from '~/lib/api/endpoint';
 import type { AppContext } from '~/lib/context';
 import { ApiRequestError } from '~/api/client';
 
-export type AnyEndpoint = Endpoint<z.ZodType, z.ZodType, z.ZodType>;
+export type AnyEndpoint = Endpoint<z.core.$ZodType, z.core.$ZodType, z.core.$ZodType>;
 
 type MethodHandlers = Record<string, (request: Bun.BunRequest) => Promise<Response>>;
 

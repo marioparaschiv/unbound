@@ -3,15 +3,16 @@ import { createLogger } from '@unbound-app/logger';
 import { useState, useEffect } from 'react';
 import { createPatcher } from 'possess';
 
+import { findByProps, findByFilePath } from '~/api/metro';
 import MarketplacePage from '~/ui/settings/marketplace';
 import { Screens, CLIENT_NAME } from '~/lib/constants';
-import { findByProps, findByName } from '~/api/metro';
 import CloudSyncPage from '~/ui/settings/cloud-sync';
 import DeveloperPage from '~/ui/settings/developer';
 import { Discord } from '~/api/metro/components';
 import CustomScreen from '~/ui/settings/custom';
 import GeneralPage from '~/ui/settings/general';
 import PluginsPage from '~/ui/settings/plugins';
+import UpdatesPage from '~/ui/settings/updates';
 import SettingsStore from '~/stores/settings';
 import AssetsPage from '~/ui/settings/assets';
 import DesignPage from '~/ui/settings/design';
@@ -104,6 +105,12 @@ const builtInEntries: Record<string, SettingsEntry> = {
 		getComponent: () => MarketplacePage,
 		icon: 'img_collectibles_shop',
 	}),
+	[Screens.Updates]: route({
+		key: Screens.Updates,
+		useTitle: () => Messages.UNBOUND_UPDATES,
+		getComponent: () => UpdatesPage,
+		icon: 'DownloadIcon',
+	}),
 	[Screens.Toasts]: route({
 		key: Screens.Toasts,
 		useTitle: () => Messages.UNBOUND_TOAST_SETTINGS,
@@ -114,7 +121,7 @@ const builtInEntries: Record<string, SettingsEntry> = {
 		key: Screens.CloudSync,
 		useTitle: () => Messages.UNBOUND_CLOUD_SYNC,
 		getComponent: () => CloudSyncPage,
-		hidden: true,
+		icon: 'CloudIcon',
 	}),
 	[Screens.Assets]: route({
 		key: Screens.Assets,
@@ -173,7 +180,11 @@ function patchRendererConfig() {
 }
 
 function patchOverview() {
-	const Overview = findByName('SettingsOverviewScreen', { interop: false });
+	// Discord 349 exports this screen as an anonymous function, so match its file path instead of a name.
+	const Overview = findByFilePath(
+		'modules/user_settings/overview/native/SettingsOverviewScreen.tsx',
+		{ interop: false },
+	);
 
 	if (!Overview) {
 		return Logger.error('Failed to find SettingsOverviewScreen.');

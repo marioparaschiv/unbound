@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from './zod';
 
 export const apiErrorCodeSchema = z.enum([
 	'invalid_request',
@@ -24,6 +24,8 @@ export const apiErrorCodeSchema = z.enum([
 	'last_owner',
 	'github_not_linked',
 	'github_no_push_access',
+	'sync_conflict',
+	'sync_document_too_large',
 	'internal_error',
 ]);
 

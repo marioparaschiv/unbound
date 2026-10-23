@@ -31,8 +31,10 @@ export type DesignModule = {
 	/* Tables & rows */
 	TableRow: TableRowComponent;
 	TableSwitchRow: ComponentType<TableSwitchRowProps>;
+	FormSwitch: ComponentType<SwitchProps>;
 	TableCheckboxRow: ComponentType<TableCheckboxRowProps>;
 	TableRadioRow: ComponentType<TableRadioRowProps>;
+	TableRadioGroup: ComponentType<TableRadioGroupProps>;
 	TableRowGroup: ComponentType<TableRowGroupProps>;
 	TableRowGroupTitle: ComponentType<TableRowGroupTitleProps>;
 	TableRowIcon: ComponentType<TableRowIconProps>;
@@ -216,11 +218,21 @@ export type TableCheckboxRowProps = {
 
 export type TableRadioRowProps = {
 	label?: ReactNode;
+	icon?: ReactNode;
 	subLabel?: ReactNode;
 	value: any;
 	disabled?: boolean;
 	accessibilityHint?: string;
 	legacyCompat?: boolean;
+};
+
+export type TableRadioGroupProps = {
+	title?: string;
+	description?: string;
+	value: any;
+	hasIcons?: boolean;
+	onChange: (value: any) => void;
+	children?: ReactNode;
 };
 
 export type TableRowGroupProps = {

@@ -5,7 +5,7 @@ This is the canonical style guide for this repository, and the `AGENTS.md` that 
 The hierarchy of authority, highest first:
 
 1. **`oxfmt`** - owns all whitespace, quoting, and line-wrapping. Never fight it; never hand-format. Run it.
-2. **`oxlint`** (`.oxlintrc.json`, run `--type-aware`) - correctness, structural bans (the custom `oxc-config/*` rules), JSDoc shape, statement padding, and import/export ordering via `perfectionist`. Every rule is an `error`. The rules and the commitlint config come from `@marioparaschiv/oxc-config`; `.oxlintrc.json` extends its `base`, `react` and `jsdoc` presets with no local rule overrides, so change a shared rule in that package, not here. The one local override allows `any` in the metro layer and the Discord design-module typings (§4). `bun run lint` also runs `oxc-config-check`, which fails on unknown rule names.
+2. **`oxlint`** (`.oxlintrc.json`, run `--type-aware`) - correctness, structural bans (the custom `oxc-config/*` rules), JSDoc shape, statement padding, and import/export ordering via `perfectionist`. Every rule is an `error`. The rules and the commitlint config come from `@marioparaschiv/oxc-config`; `.oxlintrc.json` extends its `base`, `react` and `jsdoc` presets; change a shared rule in that package, not here. Locally it adds the `react` and `import` plugins and a few repo rules (`eqeqeq`, `switch-exhaustiveness-check`, `no-misused-promises`, and `consistent-import-paths` for the `~/` alias in §3.3). The one local relaxation allows `any` in the metro layer and the Discord design-module typings (§4). `bun run lint` also runs `oxc-config-check`, which fails on unknown rule names.
 3. **This document** - the conventions the tools can't encode: naming, file shape, module structure, the _feel_ of the code.
 
 Fix a lint finding in the code. Don't silence it with a disable comment, a cast, or a config override.
@@ -324,7 +324,7 @@ Used for stateful, identity-bearing things: managers, the `Logger`. Plain functi
 
 ### 7.1 The Manager pattern (read before touching `managers/`)
 
-`Manager<T, EventMap>` extends `EventEmitter` (from `tseep`) and intersects a `BaseManagerEvents<T>` map onto the subclass's event map. Subclasses (`Addons`, then `Plugins`/`Themes`) layer on more events and methods. Every state-changing method:
+`Manager<T, EventMap>` extends `EventEmitter` (from `~/lib/event-emitter`, a port of `tseep`) and intersects a `BaseManagerEvents<T>` map onto the subclass's event map. Subclasses (`Addons`, then `Plugins`/`Themes`) layer on more events and methods. Every state-changing method:
 
 1. Resolves its input via `resolve()` (accepts an id string _or_ the entity).
 2. Guards (`if (!resolved) return;`).
@@ -405,7 +405,7 @@ Actions live _in_ the store (method shorthand `addToast(options) { … }` for on
 - **Error messages name the thing and the id**: `` `Failed to load addon ${manifest.id}:` `` then the error object as a second arg.
 - **try/catch around fallible mutations**, recording rather than throwing where the system should degrade gracefully (managers record to `this.errors`; metro blacklists the offending module and continues). Throw only for programmer errors / contract violations (`throw new Error('You must provide a filter to search by.')`, manifest validation).
 - **`catch (error)`**, left as the compiler's `unknown` - an `any` annotation is a lint error outside the metro layer (§4). An unused catch binding is allowed (`caughtErrors: "none"`). Empty catch bodies carry an explanatory comment (`// Not in Node environment`).
-- **Events use `tseep`'s `EventEmitter`** with a typed event map (`new EventEmitter<EventMap>()`). Expose `on`/`off` by binding (`export const on = Events.on.bind(Events)`). Provide an `addListener(predicate, callback)` that returns an unsubscribe function. Event payloads are a single object argument.
+- **Events use the `EventEmitter` from `~/lib/event-emitter`** (a port of `tseep`) with a typed event map (`new EventEmitter<EventMap>()`). Expose `on`/`off` by binding (`export const on = Events.on.bind(Events)`). Provide an `addListener(predicate, callback)` that returns an unsubscribe function. Event payloads are a single object argument.
 
 ---
 

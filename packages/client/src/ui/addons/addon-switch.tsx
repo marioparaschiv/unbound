@@ -2,7 +2,7 @@ import type { Addon } from '@unbound-app/types';
 import { useState, memo } from 'react';
 
 import type { ManagerKind } from '~/lib/constants';
-import { Switch } from '~/api/metro/components';
+import { Discord } from '~/api/metro/components';
 import { getManager } from '~/managers/utils';
 import { useAddonState } from '~/ui/hooks';
 
@@ -33,7 +33,7 @@ function AddonSwitch({ addon, kind, disabled }: AddonSwitchProps) {
 	}
 
 	return (
-		<Switch
+		<Discord.FormSwitch
 			value={enabled}
 			disabled={disabled || transitioning}
 			accessibilityLabel={`${addon.data.name} enabled`}

@@ -187,8 +187,10 @@ export type DesignModule = {
 	Heading: ReactModule.ComponentType<TextProps>;
 	TableRow: TableRowComponent;
 	TableSwitchRow: ReactModule.ComponentType<TableSwitchRowProps>;
+	FormSwitch: ReactModule.ComponentType<SwitchProps>;
 	TableCheckboxRow: ReactModule.ComponentType<TableCheckboxRowProps>;
 	TableRadioRow: ReactModule.ComponentType<TableRadioRowProps>;
+	TableRadioGroup: ReactModule.ComponentType<TableRadioGroupProps>;
 	TableRowGroup: ReactModule.ComponentType<TableRowGroupProps>;
 	TableRowGroupTitle: ReactModule.ComponentType<TableRowGroupTitleProps>;
 	TableRowIcon: ReactModule.ComponentType<TableRowIconProps>;
@@ -655,8 +657,17 @@ export type TableCheckboxRowProps = {
 	accessibilityHint?: string;
 	onPress: DiscordFunction<void>;
 };
+export type TableRadioGroupProps = {
+	title?: string;
+	description?: string;
+	value: any;
+	hasIcons?: boolean;
+	onChange: (value: any) => void;
+	children?: ReactModule.ReactNode;
+};
 export type TableRadioRowProps = {
 	label?: ReactModule.ReactNode;
+	icon?: ReactModule.ReactNode;
 	subLabel?: ReactModule.ReactNode;
 	value: any;
 	disabled?: boolean;
