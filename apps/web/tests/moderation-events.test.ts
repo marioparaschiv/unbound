@@ -21,6 +21,7 @@ import type { Role } from '~/lib/auth/access';
 
 import { createTestContext, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
+import { serveMemoryS3 } from './helpers/memory-s3';
 
 type PlanStep = {
 	detail: string;
@@ -29,36 +30,7 @@ type PlanStep = {
 // Matched by name, not timestamp, so regenerating the migration on a rebase keeps this test valid.
 const EVENTS_MIGRATION_SUFFIX = '_moderation_events';
 
-// An in-memory object store answering the path-style requests `Bun.S3Client` and presigned uploads make.
-const objects = new Map<string, ArrayBuffer>();
-const s3 = Bun.serve({
-	port: 0,
-	async fetch(request) {
-		const key = new URL(request.url).pathname;
-
-		if (request.method === 'PUT') {
-			objects.set(key, await request.arrayBuffer());
-
-			return new Response(null);
-		}
-
-		if (request.method === 'DELETE') {
-			objects.delete(key);
-
-			return new Response(null, { status: 204 });
-		}
-
-		const body = objects.get(key);
-
-		if (!body) {
-			return new Response(null, { status: 404 });
-		}
-
-		return new Response(request.method === 'HEAD' ? null : body, {
-			headers: { 'content-length': String(body.byteLength) },
-		});
-	},
-});
+const s3 = serveMemoryS3();
 
 const base = createTestContext({ S3_ENDPOINT: s3.url.href, EVENT_PAGE_SIZE: '2' });
 
