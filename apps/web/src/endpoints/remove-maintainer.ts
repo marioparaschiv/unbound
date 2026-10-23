@@ -2,8 +2,8 @@ import { maintainersResponseSchema } from '@unbound-app/contracts/addons';
 import { z } from 'zod';
 
 import endpoint, { requireParam } from '~/lib/api/endpoint';
+import { removeMaintainer } from '~/lib/maintainers';
 import { requireCaller } from '~/lib/api/caller';
-import { removeMaintainer } from '~/lib/addons';
 
 const removeMaintainerEndpoint = endpoint(
 	{ body: z.undefined(), query: z.undefined(), response: maintainersResponseSchema },
