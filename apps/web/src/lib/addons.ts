@@ -11,12 +11,14 @@ import type {
 	MyAddonsResponse,
 } from '@unbound-app/contracts/addons';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
+import type { PinnableField } from '@unbound-app/contracts/admin';
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { OPEN_SUBMISSION_STATUSES, toSubmission } from '~/lib/submissions';
 import { afterKey, decodeCursor, toKeysetPage } from '~/lib/keyset';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
+import type { ActionMeta } from '~/lib/moderation-events';
 import type { AddonVersionRow } from '~/lib/artifacts';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
@@ -36,13 +38,19 @@ export type AddonSummary = Pick<AddonRow, 'type' | 'name' | 'description' | 'upd
 export type AddonDetails = {
 	id: string;
 	type: AddonType;
+	name: string;
+	description: string;
 	createdAt: string;
 	/** Newest first, withdrawn ones left out; the first is served. */
 	versions: AddonVersion[];
 	maintainers: Maintainer[];
 };
 
-type ListedAddonRow = Pick<AddonRow, 'id' | 'type'> & { versions: AddonVersionRow[] };
+type ListedAddonRow = Pick<AddonRow, 'id' | 'type' | 'name' | 'description'> & {
+	versions: AddonVersionRow[];
+};
+
+type PinnableColumn = (typeof addon)[PinnableField];
 
 type ManifestTypeFields = Pick<PublishedManifest, 'type' | 'main'>;
 
@@ -57,6 +65,13 @@ const CURSOR_SCHEMAS = {
 	created: z.tuple([z.int(), addonIdSchema]),
 	updated: z.tuple([z.int(), addonIdSchema]),
 } satisfies Record<AddonSort, z.ZodType<CursorKey>>;
+
+/** The `addon.pinned_fields` bit of each summary field a staff edit can own. */
+export const PINNED_FIELDS = {
+	name: 1 << 0,
+	description: 1 << 1,
+	type: 1 << 2,
+} as const satisfies Record<PinnableField, number>;
 
 /** Relational filter for the versions an addon can serve: the ones no rollback withdrew. */
 export const LIVE_VERSIONS = { withdrawnBy: { isNull: true } } as const;
@@ -103,10 +118,16 @@ export function toAddonSummary(manifest: PublishedManifest, publishedAt: Date): 
 	};
 }
 
+// Keeps the column's value while staff pin it, takes the manifest's otherwise.
+function unlessPinned(field: PinnableField, column: PinnableColumn, value: string) {
+	return sql`iif(${addon.pinnedFields} & ${PINNED_FIELDS[field]}, ${column}, ${value})`;
+}
+
 /**
  * @description Copies the summary of the version the addon serves onto the addon row, after a version
- * is approved or a rollback changes which one is served.
- * @param tx The approval or rollback transaction.
+ * is approved, a rollback changes which one is served or a staff edit unpins a field. Fields staff
+ * pinned keep their value.
+ * @param tx The approval, rollback or edit transaction.
  * @param addonId The addon id.
  */
 export function refreshAddonSummary(tx: Transaction, addonId: string) {
@@ -122,18 +143,58 @@ export function refreshAddonSummary(tx: Transaction, addonId: string) {
 		throw new Error(`Addon ${addonId} has no live version to summarize.`);
 	}
 
+	const summary = toAddonSummary(latest.manifest, latest.publishedAt);
+
 	tx.update(addon)
-		.set(toAddonSummary(latest.manifest, latest.publishedAt))
+		.set({
+			type: unlessPinned('type', addon.type, summary.type),
+			name: unlessPinned('name', addon.name, summary.name),
+			description: unlessPinned('description', addon.description, summary.description),
+			updatedAt: summary.updatedAt,
+		})
 		.where(eq(addon.id, addonId))
 		.run();
 }
 
-// Moving to the state the addon is already in changes nothing and records nothing.
-function setDelistedAt(
+/**
+ * @description The one writer of an addon's delisted state, inside the caller's transaction. Moving to
+ * the state the addon is already in changes nothing and records nothing.
+ * @param tx The action's transaction.
+ * @param current The addon row as the transaction read it.
+ * @param delisted Whether the addon should be delisted.
+ * @param meta Who made the change, when and why.
+ * @returns The addon row after the change.
+ */
+export function writeDelisted(
+	tx: Transaction,
+	current: AddonRow,
+	delisted: boolean,
+	meta: ActionMeta,
+): AddonRow {
+	if ((current.delistedAt !== null) === delisted) {
+		return current;
+	}
+
+	appendEvent(tx, {
+		...meta,
+		subject: { type: 'addon', id: current.id },
+		kind: delisted ? 'addon.delisted' : 'addon.relisted',
+		data: {},
+	});
+
+	return tx
+		.update(addon)
+		.set({ delistedAt: delisted ? meta.at : null })
+		.where(eq(addon.id, current.id))
+		.returning()
+		.get();
+}
+
+function setDelisted(
 	ctx: AppContext,
 	caller: Caller,
 	addonId: string,
-	delistedAt: Date | null,
+	delisted: boolean,
 ): AddonResponse {
 	requirePermission(caller, { addon: ['delist'] });
 
@@ -145,24 +206,7 @@ function setDelistedAt(
 				throw new ApiError('not_found', `Addon ${addonId} does not exist.`);
 			}
 
-			if ((current.delistedAt === null) === (delistedAt === null)) {
-				return current;
-			}
-
-			appendEvent(tx, {
-				subject: { type: 'addon', id: addonId },
-				actorId: caller.user.id,
-				at: ctx.now(),
-				kind: delistedAt ? 'addon.delisted' : 'addon.relisted',
-				data: {},
-			});
-
-			return tx
-				.update(addon)
-				.set({ delistedAt })
-				.where(eq(addon.id, addonId))
-				.returning()
-				.get();
+			return writeDelisted(tx, current, delisted, { actorId: caller.user.id, at: ctx.now() });
 		},
 		{ behavior: 'immediate' },
 	);
@@ -180,7 +224,7 @@ function setDelistedAt(
  * @returns The addon.
  */
 export function delistAddon(ctx: AppContext, caller: Caller, addonId: string): AddonResponse {
-	return setDelistedAt(ctx, caller, addonId, ctx.now());
+	return setDelisted(ctx, caller, addonId, true);
 }
 
 /**
@@ -192,7 +236,7 @@ export function delistAddon(ctx: AppContext, caller: Caller, addonId: string): A
  * @returns The addon.
  */
 export function relistAddon(ctx: AppContext, caller: Caller, addonId: string): AddonResponse {
-	return setDelistedAt(ctx, caller, addonId, null);
+	return setDelisted(ctx, caller, addonId, false);
 }
 
 function listingKey(row: AddonRow, sort: AddonSort): CursorKey {
@@ -241,7 +285,15 @@ function toListedAddons(ctx: AppContext, rows: ListedAddonRow[]): ListedAddon[] 
 		const [latest] = row.versions;
 
 		return latest
-			? [{ id: row.id, type: row.type, latestVersion: toAddonVersion(ctx.env, latest) }]
+			? [
+					{
+						id: row.id,
+						type: row.type,
+						name: row.name,
+						description: row.description,
+						latestVersion: toAddonVersion(ctx.env, latest),
+					},
+				]
 			: [];
 	});
 }
@@ -306,6 +358,8 @@ export async function getAddonDetails(
 	return {
 		id: row.id,
 		type: row.type,
+		name: row.name,
+		description: row.description,
 		createdAt: row.createdAt.toISOString(),
 		versions: row.versions.map((version) => toAddonVersion(ctx.env, version)),
 		maintainers: toMaintainers(row.maintainers),
@@ -361,12 +415,14 @@ export async function listMyAddons(ctx: AppContext, caller: Caller): Promise<MyA
 }
 
 export default {
+	PINNED_FIELDS,
 	LIVE_VERSIONS,
 	LATEST_VERSION,
 	toAddon,
 	getManifestType,
 	toAddonSummary,
 	refreshAddonSummary,
+	writeDelisted,
 	delistAddon,
 	relistAddon,
 	queryListedAddons,

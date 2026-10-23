@@ -57,6 +57,10 @@ export const listAddonsQuerySchema = z.optional(
 export const listedAddonSchema = z.object({
 	id: addonIdSchema,
 	type: addonTypeSchema,
+	/** The addon's display name: the served version's, unless staff pinned another. */
+	name: z.string(),
+	/** The addon's display description: the served version's, unless staff pinned another. */
+	description: z.string(),
 	latestVersion: addonVersionSchema,
 });
 

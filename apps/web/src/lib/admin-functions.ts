@@ -1,6 +1,7 @@
 import {
 	adminAddonsSearchSchema,
 	adminUsersSearchSchema,
+	editAddonRequestSchema,
 	moderationEventPageRequestSchema,
 	serveVersionRequestSchema,
 } from '@unbound-app/contracts/admin';
@@ -13,13 +14,13 @@ import { z } from 'zod/mini';
 
 import { getAdminUser, getUserSummary, listAdminUsers } from '~/lib/admin-users';
 import type { AdminUserView, AdminUsersPage } from '~/lib/admin-users';
+import { editAddon, getAdminAddon } from '~/lib/admin-addon';
 import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
 import type { AdminAddonsPage } from '~/lib/admin-addons';
 import type { ServeVersionResult } from '~/lib/rollback';
 import type { AdminAddonView } from '~/lib/admin-addon';
 import { listAdminAddons } from '~/lib/admin-addons';
-import { getAdminAddon } from '~/lib/admin-addon';
 import { requireCaller } from '~/lib/api/caller';
 import { serveVersion } from '~/lib/rollback';
 import app from '~/lib/app';
@@ -106,6 +107,18 @@ export const submitServeVersion = createServerFn({ method: 'POST' })
 		return serveVersion(app, caller, data.id, data.request);
 	});
 
+/**
+ * @description Applies the staff edit form to an addon for the signed-in staff member.
+ * @returns The addon's view after the edit.
+ */
+export const submitAddonEdit = createServerFn({ method: 'POST' })
+	.validator(z.object({ id: addonIdSchema, edit: editAddonRequestSchema }))
+	.handler(async ({ data }): Promise<AdminAddonView> => {
+		const caller = await requireCaller(app, getRequestHeaders());
+
+		return editAddon(app, caller, data.id, data.edit);
+	});
+
 export default {
 	fetchAdminUsers,
 	fetchAdminAddons,
@@ -113,4 +126,5 @@ export default {
 	fetchAdminUser,
 	fetchEvents,
 	submitServeVersion,
+	submitAddonEdit,
 };

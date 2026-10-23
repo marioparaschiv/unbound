@@ -1,5 +1,5 @@
+import { repositorySchema, reviewDecisionSchema, submissionKindSchema } from './publish';
 import { addonTypeSchema, maintainerRoleSchema, sortOrderSchema } from './addons';
-import { reviewDecisionSchema, submissionKindSchema } from './publish';
 import { userSummarySchema } from './account';
 import { semverSchema } from './manifest';
 import { z } from './zod';
@@ -165,6 +165,44 @@ export const serveVersionRequestSchema = z.object({
 	reason: moderationReasonSchema,
 });
 
+/**
+ * The whole desired state of an addon from the staff edit form. Each changed group needs its own
+ * permission: metadata `addon:edit`, `delisted` `addon:delist`, `maintainers` `addon:transfer`.
+ */
+export const editAddonRequestSchema = z.object({
+	/** The `revision` the form loaded; a mismatch is `edit_conflict`. */
+	revision: z.string().check(z.length(64)),
+	/** `null` unpins: the field follows the served version's manifest again. */
+	name: z.nullable(
+		z
+			.string()
+			.check(
+				z.trim(),
+				z.minLength(1, 'Give a name.'),
+				z.maxLength(100, 'Keep the name under 100 characters.'),
+			),
+	),
+	description: z.nullable(
+		z
+			.string()
+			.check(z.trim(), z.maxLength(1000, 'Keep the description under 1000 characters.')),
+	),
+	type: z.nullable(addonTypeSchema),
+	repository: z.nullable(repositorySchema),
+	delisted: z.boolean(),
+	maintainers: z.array(maintainerEntrySchema).check(
+		z.refine(
+			(list) => new Set(list.map((member) => member.userId)).size === list.length,
+			'List each user once.',
+		),
+		z.refine(
+			(list) => list.some((member) => member.role === 'owner'),
+			'An addon needs an owner.',
+		),
+	),
+	reason: z.optional(moderationReasonSchema),
+});
+
 export type SubjectType = z.infer<typeof subjectTypeSchema>;
 export type Subject = z.infer<typeof subjectSchema>;
 export type MaintainerEntry = z.infer<typeof maintainerEntrySchema>;
@@ -181,6 +219,7 @@ export type AdminUsersSearch = z.infer<typeof adminUsersSearchSchema>;
 export type AdminAddonStatus = z.infer<typeof adminAddonStatusSchema>;
 export type AdminAddonsSearch = z.infer<typeof adminAddonsSearchSchema>;
 export type ServeVersionRequest = z.infer<typeof serveVersionRequestSchema>;
+export type EditAddonRequest = z.infer<typeof editAddonRequestSchema>;
 
 export default {
 	subjectTypeSchema,
@@ -200,4 +239,5 @@ export default {
 	adminAddonsSearchSchema,
 	moderationReasonSchema,
 	serveVersionRequestSchema,
+	editAddonRequestSchema,
 };

@@ -1,4 +1,9 @@
-import type { AddonType, AddonVersion, Maintainer } from '@unbound-app/contracts/addons';
+import type {
+	AddonType,
+	AddonVersion,
+	ListedAddon,
+	Maintainer,
+} from '@unbound-app/contracts/addons';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
 import { listAddonsQuerySchema } from '@unbound-app/contracts/addons';
 import type { PublicBadge } from '@unbound-app/contracts/sponsors';
@@ -29,6 +34,9 @@ export type MarketplaceAddon = {
 	manifestUrl: string;
 };
 
+/** The addon row's display fields, which a staff edit may have pinned over the manifest's. */
+type ListedAddonFields = Pick<ListedAddon, 'id' | 'type' | 'name' | 'description'>;
+
 export type MarketplacePage = {
 	addons: MarketplaceAddon[];
 	nextCursor: string | null;
@@ -50,12 +58,12 @@ export type MarketplaceMaintainer = Maintainer & {
 	badge: PublicBadge | null;
 };
 
-function toMarketplaceAddon(id: string, type: AddonType, latest: AddonVersion): MarketplaceAddon {
+function toMarketplaceAddon(addon: ListedAddonFields, latest: AddonVersion): MarketplaceAddon {
 	return {
-		id,
-		type,
-		name: latest.manifest.name,
-		description: latest.manifest.description,
+		id: addon.id,
+		type: addon.type,
+		name: addon.name,
+		description: addon.description,
 		authors: latest.manifest.authors,
 		version: latest.version,
 		manifestUrl: latest.manifestUrl,
@@ -72,9 +80,7 @@ export const fetchMarketplacePage = createServerFn({ method: 'GET' })
 		const page = await listAddons(app, data);
 
 		return {
-			addons: page.addons.map((entry) =>
-				toMarketplaceAddon(entry.id, entry.type, entry.latestVersion),
-			),
+			addons: page.addons.map((entry) => toMarketplaceAddon(entry, entry.latestVersion)),
 			nextCursor: page.nextCursor,
 		};
 	});
@@ -97,7 +103,7 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 		);
 
 		return {
-			...toMarketplaceAddon(details.id, details.type, latest),
+			...toMarketplaceAddon(details, latest),
 			createdAt: details.createdAt,
 			capabilities: latest.manifest.capabilities ?? [],
 			minClientVersion: latest.manifest.unbound?.min ?? null,

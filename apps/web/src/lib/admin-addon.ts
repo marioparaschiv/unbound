@@ -1,23 +1,60 @@
+import type {
+	EditAddonRequest,
+	FieldChange,
+	MaintainerEntry,
+	PinnableField,
+} from '@unbound-app/contracts/admin';
+import type { AddonType, Maintainer } from '@unbound-app/contracts/addons';
+import { pinnableFieldSchema } from '@unbound-app/contracts/admin';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import type { Maintainer } from '@unbound-app/contracts/addons';
+import { asc, desc, eq, inArray } from 'drizzle-orm';
 
+import {
+	PINNED_FIELDS,
+	getManifestType,
+	refreshAddonSummary,
+	toAddon,
+	writeDelisted,
+} from '~/lib/addons';
+import { MAINTAINERS, replaceMaintainers, toMaintainers } from '~/lib/maintainers';
+import type { ActionMeta, EventTimeline } from '~/lib/moderation-events';
+import { appendEvent, getEventTimeline } from '~/lib/moderation-events';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import type { AdminSubmission } from '~/lib/admin-submissions';
-import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
-import type { EventTimeline } from '~/lib/moderation-events';
-import { getEventTimeline } from '~/lib/moderation-events';
+import { addon, addonMaintainer, user } from '~/db/schema';
 import type { AdminAddon } from '~/lib/admin-addons';
 import { requirePermission } from '~/lib/api/caller';
+import type { Permissions } from '~/lib/auth/access';
+import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { AddonRow } from '~/lib/addons';
-import { toAddon } from '~/lib/addons';
+import { ApiError } from '~/lib/api/errors';
 
 export type AdminAddonRecord = AdminAddon &
-	Pick<AddonRow, 'type' | 'description'> & {
-		/** When the newest version was approved. */
+	Pick<AddonRow, 'type' | 'description' | 'repository'> & {
+		/** When the served version was approved. */
 		updatedAt: string;
+		/** Which summary fields a staff edit owns; the others follow the served version's manifest. */
+		pinned: Record<PinnableField, boolean>;
 	};
+
+/** What the unpinned summary fields follow: the served version's manifest. */
+export type ManifestSummary = {
+	name: string;
+	description: string;
+	type: AddonType;
+};
+
+/** Everything the edit form owns, as the form shows it: `null` follows the manifest. */
+type EditableState = Omit<EditAddonRequest, 'revision' | 'reason'>;
+
+/** What one submit of the edit form changes, by permission group. */
+type EditDiff = {
+	fields: FieldChange[];
+	delisted: boolean;
+	maintainers: boolean;
+};
 
 /** The rollback that withdrew a version. */
 export type Withdrawal = {
@@ -52,7 +89,110 @@ export type AdminAddonView = {
 	submissions: AdminSubmission[];
 	/** The newest page of the addon's moderation events. */
 	events: EventTimeline;
+	/** `null` when no version is live. */
+	manifest: ManifestSummary | null;
+	/** The edit form's starting values, `revision` included. */
+	form: EditAddonRequest;
 };
+
+const PINNABLE_FIELDS = pinnableFieldSchema.options;
+
+const GROUP_PERMISSIONS = {
+	fields: { addon: ['edit'] },
+	delisted: { addon: ['delist'] },
+	maintainers: { addon: ['transfer'] },
+} as const satisfies Record<keyof EditDiff, Permissions>;
+
+function isPinned(row: AddonRow, field: PinnableField): boolean {
+	return Boolean(row.pinnedFields & PINNED_FIELDS[field]);
+}
+
+function byUserId(members: MaintainerEntry[]): MaintainerEntry[] {
+	return members.toSorted((left, right) => left.userId.localeCompare(right.userId));
+}
+
+function toEditableState(row: AddonRow, members: MaintainerEntry[]): EditableState {
+	return {
+		name: isPinned(row, 'name') ? row.name : null,
+		description: isPinned(row, 'description') ? row.description : null,
+		type: isPinned(row, 'type') ? row.type : null,
+		repository: row.repository,
+		delisted: row.delistedAt !== null,
+		maintainers: members,
+	};
+}
+
+// Member order does not change what the state means, so it does not change the revision.
+function revisionOf(state: EditableState): string {
+	const canonical = { ...state, maintainers: byUserId(state.maintainers) };
+
+	return new Bun.CryptoHasher('sha256').update(JSON.stringify(canonical)).digest('hex');
+}
+
+function diffEdit(current: EditableState, edit: EditAddonRequest): EditDiff {
+	const fields: FieldChange[] = [];
+
+	for (const field of [...PINNABLE_FIELDS, 'repository'] as const) {
+		const from = current[field];
+		const to = edit[field];
+
+		if (from !== to) {
+			fields.push({ field, from, to, pinned: field !== 'repository' && to !== null });
+		}
+	}
+
+	return {
+		fields,
+		delisted: current.delisted !== edit.delisted,
+		maintainers:
+			JSON.stringify(byUserId(current.maintainers)) !==
+			JSON.stringify(byUserId(edit.maintainers)),
+	};
+}
+
+function selectMembers(tx: Transaction, addonId: string): MaintainerEntry[] {
+	return tx
+		.select({ userId: addonMaintainer.userId, role: addonMaintainer.role })
+		.from(addonMaintainer)
+		.where(eq(addonMaintainer.addonId, addonId))
+		.orderBy(desc(addonMaintainer.role), asc(addonMaintainer.createdAt))
+		.all();
+}
+
+// Pins every field the edit gives a value, then lets the refresh re-derive the unpinned ones.
+function writeFields(tx: Transaction, addonId: string, edit: EditAddonRequest) {
+	const { name, description, type, repository } = edit;
+	let pinnedFields = 0;
+
+	for (const field of PINNABLE_FIELDS) {
+		if (edit[field] !== null) {
+			pinnedFields |= PINNED_FIELDS[field];
+		}
+	}
+
+	tx.update(addon)
+		.set({
+			pinnedFields,
+			repository,
+			name: name ?? undefined,
+			description: description ?? undefined,
+			type: type ?? undefined,
+		})
+		.where(eq(addon.id, addonId))
+		.run();
+	refreshAddonSummary(tx, addonId);
+}
+
+function requireUsers(tx: Transaction, members: MaintainerEntry[]) {
+	const ids = members.map((member) => member.userId);
+	const found = tx.select({ id: user.id }).from(user).where(inArray(user.id, ids)).all();
+	const known = new Set(found.map((entry) => entry.id));
+	const missing = ids.find((id) => !known.has(id));
+
+	if (missing) {
+		throw new ApiError('not_found', `User ${missing} does not exist.`);
+	}
+}
 
 function queryAddon(ctx: AppContext, id: string) {
 	return ctx.db.query.addon.findFirst({
@@ -107,6 +247,11 @@ export async function getAdminAddon(
 
 	const { maintainers: members, versions, ...rest } = row;
 	const maintainers = toMaintainers(members);
+	const served = versions.find((version) => !version.withdrawal);
+	const state = toEditableState(
+		rest,
+		members.map((member) => ({ userId: member.userId, role: member.role })),
+	);
 
 	return {
 		addon: {
@@ -114,8 +259,14 @@ export async function getAdminAddon(
 			name: rest.name,
 			type: rest.type,
 			description: rest.description,
+			repository: rest.repository,
 			updatedAt: rest.updatedAt.toISOString(),
-			latestVersion: versions.find((version) => !version.withdrawal)?.version ?? null,
+			pinned: {
+				name: isPinned(rest, 'name'),
+				description: isPinned(rest, 'description'),
+				type: isPinned(rest, 'type'),
+			},
+			latestVersion: served?.version ?? null,
 			owners: maintainers
 				.filter((maintainer) => maintainer.role === 'owner')
 				.map(({ id: userId, name, image }) => ({ id: userId, name, image })),
@@ -138,7 +289,101 @@ export async function getAdminAddon(
 		})),
 		submissions,
 		events,
+		manifest: served
+			? {
+					name: served.manifest.name,
+					description: served.manifest.description,
+					type: getManifestType(served.manifest),
+				}
+			: null,
+		form: { ...state, revision: revisionOf(state) },
 	};
 }
 
-export default { getAdminAddon };
+/**
+ * @description Applies the staff edit form: the difference between the addon's current state and
+ * `edit`, in one transaction. Metadata changes need `addon:edit` and record one `addon.edited`;
+ * delisting needs `addon:delist` and maintainer changes `addon:transfer`, and record their own events.
+ * A submit that changes nothing writes nothing.
+ * @param ctx The application context.
+ * @param caller The staff member.
+ * @param id The addon id.
+ * @param edit The whole desired state, with the revision the form loaded.
+ * @returns The addon's view after the edit.
+ */
+export async function editAddon(
+	ctx: AppContext,
+	caller: Caller,
+	id: string,
+	edit: EditAddonRequest,
+): Promise<AdminAddonView> {
+	requirePermission(caller, { addon: ['delist'] });
+
+	ctx.db.transaction(
+		(tx) => {
+			const row = tx.select().from(addon).where(eq(addon.id, id)).get();
+
+			if (!row) {
+				throw new ApiError('not_found', `Addon ${id} does not exist.`);
+			}
+
+			const current = toEditableState(row, selectMembers(tx, id));
+
+			if (revisionOf(current) !== edit.revision) {
+				throw new ApiError(
+					'edit_conflict',
+					`${id} changed since you opened it. Reload to see the changes.`,
+				);
+			}
+
+			const diff = diffEdit(current, edit);
+			const meta: ActionMeta = {
+				actorId: caller.user.id,
+				at: ctx.now(),
+				reason: edit.reason,
+			};
+
+			if (diff.fields.length > 0) {
+				requirePermission(caller, GROUP_PERMISSIONS.fields);
+			}
+
+			if (diff.delisted) {
+				requirePermission(caller, GROUP_PERMISSIONS.delisted);
+			}
+
+			if (diff.maintainers) {
+				requirePermission(caller, GROUP_PERMISSIONS.maintainers);
+				requireUsers(tx, edit.maintainers);
+			}
+
+			if (diff.fields.length > 0) {
+				writeFields(tx, id, edit);
+				appendEvent(tx, {
+					...meta,
+					subject: { type: 'addon', id },
+					kind: 'addon.edited',
+					data: { changes: diff.fields },
+				});
+			}
+
+			if (diff.delisted) {
+				writeDelisted(tx, row, edit.delisted, meta);
+			}
+
+			if (diff.maintainers) {
+				replaceMaintainers(tx, id, edit.maintainers, meta);
+			}
+		},
+		{ behavior: 'immediate' },
+	);
+
+	const view = await getAdminAddon(ctx, caller, id);
+
+	if (!view) {
+		throw new Error(`Addon ${id} vanished after its edit.`);
+	}
+
+	return view;
+}
+
+export default { getAdminAddon, editAddon };
