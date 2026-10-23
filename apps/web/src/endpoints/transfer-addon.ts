@@ -5,8 +5,8 @@ import {
 import { z } from 'zod';
 
 import endpoint, { requireParam } from '~/lib/api/endpoint';
+import { transferAddon } from '~/lib/maintainers';
 import { requireCaller } from '~/lib/api/caller';
-import { transferAddon } from '~/lib/addons';
 
 const transferAddonEndpoint = endpoint(
 	{ body: transferAddonRequestSchema, query: z.undefined(), response: maintainersResponseSchema },
