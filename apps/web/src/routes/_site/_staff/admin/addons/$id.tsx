@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-route
 import { IconArrowLeft } from '@tabler/icons-react';
 
 import SubmissionHistory from '~/components/admin/submission-history';
-import AddonEditForm from '~/components/admin/addon-edit-form';
+import AddonSettingsForm from '~/components/admin/addon-settings/addon-settings-form';
 import DetailSection from '~/components/admin/detail-section';
 import AddonActions from '~/components/admin/addon-actions';
 import { formatDate } from '~/components/admin/format-date';
@@ -71,32 +71,36 @@ function AdminAddonPage() {
 				</Card>
 			</div>
 
-			<DetailSection title='Maintainers'>
-				<Card className='flex-row flex-wrap gap-3 px-5 py-4'>
-					{maintainers.map((maintainer) => (
-						<Link
-							key={maintainer.id}
-							to='/admin/users/$id'
-							params={{ id: maintainer.id }}
-							className='flex items-center gap-2 hover:bg-accent/50 px-2 py-1 rounded-lg'
-						>
-							<UserAvatar src={maintainer.image} name={maintainer.name} size='xs' />
-							<Text as='span' variant='text-sm' className='font-medium'>
-								{maintainer.name}
-							</Text>
-							<Tag variant={maintainer.role === 'owner' ? 'primary' : 'default'}>
-								{maintainer.role}
-							</Tag>
-						</Link>
-					))}
-				</Card>
-			</DetailSection>
-
 			{canEdit ? (
-				<DetailSection title='Edit'>
-					<AddonEditForm key={view.form.revision} view={view} />
+				<DetailSection title='Settings'>
+					<AddonSettingsForm key={view.form.revision} view={view} />
 				</DetailSection>
-			) : null}
+			) : (
+				<DetailSection title='Maintainers'>
+					<Card className='flex-row flex-wrap gap-3 px-5 py-4'>
+						{maintainers.map((maintainer) => (
+							<Link
+								key={maintainer.id}
+								to='/admin/users/$id'
+								params={{ id: maintainer.id }}
+								className='flex items-center gap-2 hover:bg-accent/50 px-2 py-1 rounded-lg'
+							>
+								<UserAvatar
+									src={maintainer.image}
+									name={maintainer.name}
+									size='xs'
+								/>
+								<Text as='span' variant='text-sm' className='font-medium'>
+									{maintainer.name}
+								</Text>
+								<Tag variant={maintainer.role === 'owner' ? 'primary' : 'default'}>
+									{maintainer.role}
+								</Tag>
+							</Link>
+						))}
+					</Card>
+				</DetailSection>
+			)}
 
 			<DetailSection title='Versions'>
 				<VersionTable addonId={addon.id} versions={versions} canServe={canServe} />
