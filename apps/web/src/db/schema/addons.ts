@@ -23,7 +23,10 @@ const OPEN_STATUSES = `(${openSubmissionStatusSchema.options.map((status) => `'$
 
 const LISTING_SORTS = ['name', 'createdAt', 'updatedAt'] as const;
 
-/** An approved addon. The row is created when its first listing is approved; until then a pending listing submission holds the id. */
+/**
+ * An approved addon. The row is created when its first listing is approved; until then a pending listing submission holds the id.
+ * `addon_search` mirrors its id and name for admin search; the `admin_search` migration owns it.
+ */
 export const addon = sqliteTable(
 	'addon',
 	{
@@ -39,8 +42,8 @@ export const addon = sqliteTable(
 		description: text('description').notNull(),
 		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
 	},
-	(table) =>
-		LISTING_SORTS.flatMap((key) => [
+	(table) => [
+		...LISTING_SORTS.flatMap((key) => [
 			index(`addon_listed_${key}_idx`)
 				.on(table[key], table.id)
 				.where(sql`${table.delistedAt} is null`),
@@ -48,6 +51,9 @@ export const addon = sqliteTable(
 				.on(table.type, table[key], table.id)
 				.where(sql`${table.delistedAt} is null`),
 		]),
+		// The admin addons list, delisted ones included; its published-range filter reads it too.
+		index('addon_createdAt_idx').on(table.createdAt, table.id),
+	],
 );
 
 export const addonMaintainer = sqliteTable(
