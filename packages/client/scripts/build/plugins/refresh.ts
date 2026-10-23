@@ -2,6 +2,7 @@ import { transformSync, type ESTree } from 'rolldown/utils';
 import { dirname, join, relative } from 'node:path';
 import { parseAst } from 'rolldown/parseAst';
 import { createRequire } from 'node:module';
+import { RolldownMagicString } from 'rolldown';
 import type { Plugin } from 'rolldown';
 
 type Program = ESTree.Program;
@@ -112,9 +113,17 @@ export function refreshRuntime(root: string): Plugin {
 			return source === 'react-refresh/runtime' ? development : null;
 		},
 		transform(code, id) {
-			return id === development
-				? code.replaceAll('process.env.NODE_ENV', '"development"')
-				: null;
+			if (id !== development) return null;
+
+			const runtime = new RolldownMagicString(code).replaceAll(
+				'process.env.NODE_ENV',
+				'"development"',
+			);
+
+			return {
+				code: runtime.toString(),
+				map: runtime.generateMap({ hires: true }).toString(),
+			};
 		},
 	};
 }

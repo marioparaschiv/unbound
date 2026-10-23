@@ -116,6 +116,7 @@ export default function worklets(): Plugin {
 					filename: id,
 					plugins: [reanimatedPlugin, blockScopingPlugin],
 					parserOpts: { plugins: ['jsx', 'typescript'] },
+					sourceMaps: true,
 				});
 
 				if (result?.code) {
@@ -124,7 +125,7 @@ export default function worklets(): Plugin {
 					logger.warn(`No output for ${filename}`);
 				}
 
-				return result?.code ?? undefined;
+				return result?.code ? { code: result.code, map: result.map } : undefined;
 			},
 		},
 	};
