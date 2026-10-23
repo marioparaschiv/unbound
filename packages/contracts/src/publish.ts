@@ -61,7 +61,6 @@ export const submissionSchema = z.object({
 	review: z.nullable(submissionReviewSchema),
 });
 
-/** The most characters a release changelog may hold. */
 export const MAX_CHANGELOG_LENGTH = 10_000;
 
 /**

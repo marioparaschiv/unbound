@@ -12,24 +12,20 @@ import { shortDate } from './format';
 type ChangelogProps = {
 	name: string;
 	icon: number | undefined;
-	/** The installed version. */
-	from: string;
-	/** The offered version. */
-	to: string;
-	/** Each version the update skips over, newest first. */
+	installed: string;
+	offered: string;
 	changelogs: VersionChangelog[];
-	/** The action under the changelog, such as an update button. */
 	children: ReactNode;
 };
 
 /** One pending update: the version jump, every skipped version's changelog, and its action. */
-function Changelog({ name, icon, from, to, changelogs, children }: ChangelogProps) {
+function Changelog({ name, icon, installed, offered, changelogs, children }: ChangelogProps) {
 	return (
 		<Page>
 			<Discord.TableRowGroup>
 				<Discord.TableRow
 					label={name}
-					subLabel={`${from} → ${to}`}
+					subLabel={`${installed} → ${offered}`}
 					icon={<Discord.TableRowIcon source={icon} />}
 				/>
 			</Discord.TableRowGroup>

@@ -29,7 +29,6 @@ let users = 0;
 let admin = new Headers();
 let member = new Headers();
 
-// CI authenticates with an API key owned by a user of the given role.
 async function apiKeyHeaders(role: Role): Promise<Headers> {
 	users += 1;
 

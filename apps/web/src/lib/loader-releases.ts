@@ -9,16 +9,13 @@ import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 import { and, desc, eq, gt, like } from 'drizzle-orm';
 
 import { requirePermission } from '~/lib/api/caller';
-import { toVersionKey } from '~/lib/version-key';
+import { RELEASE_KEY_SUFFIX, isReleaseKey, toVersionKey } from '~/lib/version-key';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { loaderRelease } from '~/db/schema';
 import { ApiError } from '~/lib/api/errors';
 
 type LoaderReleaseRow = typeof loaderRelease.$inferSelect;
-
-// `toVersionKey` ends every release (non-prerelease) key with `~`.
-const RELEASE_KEY_PATTERN = '%~';
 
 function toLoaderRelease(row: LoaderReleaseRow): LoaderRelease {
 	return {
@@ -108,7 +105,7 @@ export async function withdrawLoaderRelease(
  */
 export function newerLoaderReleases(ctx: AppContext, query: LoaderUpdateQuery) {
 	const installed = toVersionKey(query.version);
-	const onPrerelease = !installed.endsWith('~');
+	const onPrerelease = !isReleaseKey(installed);
 
 	return ctx.db
 		.select()
@@ -117,7 +114,7 @@ export function newerLoaderReleases(ctx: AppContext, query: LoaderUpdateQuery) {
 			and(
 				eq(loaderRelease.platform, query.platform),
 				gt(loaderRelease.versionKey, installed),
-				onPrerelease ? undefined : like(loaderRelease.versionKey, RELEASE_KEY_PATTERN),
+				onPrerelease ? undefined : like(loaderRelease.versionKey, `%${RELEASE_KEY_SUFFIX}`),
 			),
 		)
 		.orderBy(desc(loaderRelease.versionKey))

@@ -31,11 +31,9 @@ export type ApplyStatus = 'updating' | 'failed';
 type UpdatesStore = {
 	state: UpdatesState;
 	applying: Record<string, ApplyStatus>;
-	/** Asks the server which installed addons, and whether the native loader, have updates. Concurrent calls share one check. */
 	check: () => Promise<void>;
 	/** Applies one pending update. Resolves whether the addon now runs the new version. */
 	apply: (id: string) => Promise<boolean>;
-	/** Applies every pending addon update at once. A loader update is installed by the user, never here. */
 	applyAll: () => Promise<void>;
 };
 
@@ -51,8 +49,7 @@ function checkInstalled(): Promise<PendingUpdate[]> {
 	return fetchUpdates(entries, { baseUrl: API_URL, clientVersion: CLIENT_VERSION });
 }
 
-// A failed loader check hides only the loader row, so addon updates still show.
-async function checkLoader(): Promise<LoaderUpdate | null> {
+async function checkLoaderOrNull(): Promise<LoaderUpdate | null> {
 	try {
 		return await fetchLoaderUpdate({
 			baseUrl: API_URL,
@@ -85,7 +82,10 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 				set({ state: { status: 'checking' } });
 
 				try {
-					const [updates, loader] = await Promise.all([checkInstalled(), checkLoader()]);
+					const [updates, loader] = await Promise.all([
+						checkInstalled(),
+						checkLoaderOrNull(),
+					]);
 
 					set({
 						state: {

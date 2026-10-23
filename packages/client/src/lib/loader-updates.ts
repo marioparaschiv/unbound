@@ -4,7 +4,6 @@ import { createApiClient } from '@unbound-app/web/client';
 import type { Api } from '@unbound-app/web/api';
 
 export type LoaderUpdateCheckOptions = {
-	/** Origin of the Unbound web API. */
 	baseUrl: string;
 	/** The OS the client runs on, as React Native's `Platform.OS` names it. */
 	platform: string;
