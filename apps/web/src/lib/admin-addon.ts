@@ -1,3 +1,4 @@
+import type { UserSummary } from '@unbound-app/contracts/account';
 import type { Maintainer } from '@unbound-app/contracts/addons';
 
 import { listSubmissionHistory } from '~/lib/admin-submissions';
@@ -18,6 +19,15 @@ export type AdminAddonRecord = AdminAddon &
 		updatedAt: string;
 	};
 
+/** The rollback that withdrew a version. */
+export type Withdrawal = {
+	eventId: number;
+	at: Date;
+	/** `null` once the acting user is deleted. */
+	by: UserSummary | null;
+	reason: string | null;
+};
+
 export type AdminVersion = {
 	version: string;
 	publishedAt: Date;
@@ -28,13 +38,15 @@ export type AdminVersion = {
 	minClient: string | null;
 	bundleSize: number;
 	sha256: string;
+	/** `null` while it is live. */
+	withdrawal: Withdrawal | null;
 };
 
 export type AdminAddonView = {
 	addon: AdminAddonRecord;
 	/** Owners first. */
 	maintainers: Maintainer[];
-	/** Every approved version, newest first. */
+	/** Every approved version, newest first, withdrawn ones included. */
 	versions: AdminVersion[];
 	/** Every submission for the addon id, newest first, rejected listings included. */
 	submissions: AdminSubmission[];
@@ -56,7 +68,13 @@ function queryAddon(ctx: AppContext, id: string) {
 					bundleSize: true,
 					sha256: true,
 				},
-				with: { submission: { columns: { repository: true } } },
+				with: {
+					submission: { columns: { repository: true } },
+					withdrawal: {
+						columns: { id: true, createdAt: true, reason: true },
+						with: { actor: { columns: { id: true, name: true, image: true } } },
+					},
+				},
 				orderBy: { versionKey: 'desc' },
 			},
 		},
@@ -97,16 +115,26 @@ export async function getAdminAddon(
 			type: rest.type,
 			description: rest.description,
 			updatedAt: rest.updatedAt.toISOString(),
-			latestVersion: versions[0]?.version ?? null,
+			latestVersion: versions.find((version) => !version.withdrawal)?.version ?? null,
 			owners: maintainers
 				.filter((maintainer) => maintainer.role === 'owner')
 				.map(({ id: userId, name, image }) => ({ id: userId, name, image })),
 		},
 		maintainers,
-		versions: versions.map(({ manifest, submission, ...version }) => ({
+		versions: versions.map(({ manifest, submission, withdrawal, ...version }) => ({
 			...version,
 			repository: submission?.repository ?? null,
 			minClient: manifest.unbound?.min ?? null,
+			withdrawal: withdrawal
+				? {
+						eventId: withdrawal.id,
+						at: withdrawal.createdAt,
+						by: withdrawal.actor
+							? { ...withdrawal.actor, image: withdrawal.actor.image ?? null }
+							: null,
+						reason: withdrawal.reason,
+					}
+				: null,
 		})),
 		submissions,
 		events,

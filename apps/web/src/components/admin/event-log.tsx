@@ -163,10 +163,22 @@ function EventSummary({ event, users }: EventSummaryProps) {
 		}
 
 		case 'addon.rollback': {
+			const { from, to, withdrawn, restored } = event.data;
+
 			return (
 				<>
-					rolled back from <span className='font-mono'>{event.data.from ?? 'none'}</span>{' '}
-					to <span className='font-mono'>{event.data.to}</span>
+					served <span className='font-mono'>{to}</span> instead of{' '}
+					<span className='font-mono'>{from ?? 'none'}</span>
+					{withdrawn.length > 0 ? (
+						<>
+							, withdrawing <span className='font-mono'>{withdrawn.join(', ')}</span>
+						</>
+					) : null}
+					{restored.length > 0 ? (
+						<>
+							, restoring <span className='font-mono'>{restored.join(', ')}</span>
+						</>
+					) : null}
 				</>
 			);
 		}

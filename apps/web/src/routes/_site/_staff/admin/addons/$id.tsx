@@ -22,6 +22,7 @@ function AdminAddonPage() {
 	const { addon, maintainers, versions, submissions, events } = Route.useLoaderData();
 	const canDelist = hasPermission(viewer.role, { addon: ['delist'] });
 	const canTransfer = hasPermission(viewer.role, { addon: ['transfer'] });
+	const canServe = hasPermission(viewer.role, { addon: ['rollback'] });
 
 	return (
 		<div className='flex flex-col gap-8'>
@@ -87,7 +88,7 @@ function AdminAddonPage() {
 			</DetailSection>
 
 			<DetailSection title='Versions'>
-				<VersionTable versions={versions} />
+				<VersionTable addonId={addon.id} versions={versions} canServe={canServe} />
 			</DetailSection>
 
 			<DetailSection title='Submissions'>
