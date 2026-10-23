@@ -4,7 +4,9 @@ import { eq } from 'drizzle-orm';
 
 import { createApiClient, NotModifiedError } from '~/api/client';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
-import { addon } from '~/db/schema';
+import type { Caller } from '~/lib/api/caller';
+import { serveVersion } from '~/lib/rollback';
+import { addon, user } from '~/db/schema';
 import type { Api } from '~/api';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
@@ -115,5 +117,38 @@ describe('GET /api/v1/catalog', () => {
 
 		// The revision is derived from the listed set, so relisting restores the earlier one.
 		expect((await get(second)).status).toBe(304);
+	});
+
+	test('serves the rolled-back version under a new revision, and the old one again after undo', async () => {
+		const { userId: adminId } = await signInWithDiscord(ctx, {
+			id: '80351110224679003',
+			name: 'Admin',
+			email: 'catalog-admin@example.com',
+		});
+
+		await ctx.db.update(user).set({ role: 'admin' }).where(eq(user.id, adminId));
+
+		const row = await ctx.db.query.user.findFirst({ where: { id: adminId } });
+
+		if (!row) {
+			throw new Error(`User ${adminId} was not stored.`);
+		}
+
+		const caller: Caller = { user: row, via: 'session' };
+		const before = (await get()).headers.get('etag') ?? '';
+
+		serveVersion(ctx, caller, 'cat.plugin', { version: '1.0.0', reason: 'Broken' });
+
+		const rolledBack = await get(before);
+		const catalog = catalogResponseSchema.parse(await rolledBack.json());
+
+		expect(rolledBack.status).toBe(200);
+		expect(
+			catalog.addons.find((entry) => entry.id === 'cat.plugin')?.latestVersion.version,
+		).toBe('1.0.0');
+
+		serveVersion(ctx, caller, 'cat.plugin', { version: '1.1.0', reason: 'Fixed' });
+
+		expect((await get(before)).status).toBe(304);
 	});
 });
