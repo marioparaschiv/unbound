@@ -32,7 +32,7 @@ export class TaskCollection<Func extends Listener = Listener> {
 	declare argsNum: number;
 	declare _tasks: Tasks<Func>;
 	declare length: number;
-	declare call: (...args: Parameters<Func>) => void;
+	declare call: (...args: Parameters<Func>) => ReturnType<Listener>;
 
 	/**
 	 * @description Creates a collection holding a single listener.
