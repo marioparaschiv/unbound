@@ -7,6 +7,9 @@ import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
 import type { AdminAddon } from '~/lib/admin-addons';
 import { requirePermission } from '~/lib/api/caller';
+import type { StaffNote } from '~/lib/staff-notes';
+import { listStaffNotes } from '~/lib/staff-notes';
+import { hasPermission } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { AddonRow } from '~/lib/addons';
@@ -40,6 +43,8 @@ export type AdminAddonView = {
 	submissions: AdminSubmission[];
 	/** The newest page of the addon's moderation events. */
 	events: EventTimeline;
+	/** Staff notes on the addon, newest first; empty without `note:read`. */
+	notes: StaffNote[];
 };
 
 function queryAddon(ctx: AppContext, id: string) {
@@ -79,10 +84,13 @@ export async function getAdminAddon(
 ): Promise<AdminAddonView | undefined> {
 	requirePermission(caller, { addon: ['delist'] });
 
-	const [row, submissions, events] = await Promise.all([
+	const [row, submissions, events, notes] = await Promise.all([
 		queryAddon(ctx, id),
 		listSubmissionHistory(ctx, { addonId: id }),
 		getEventTimeline(ctx, caller, { type: 'addon', id }),
+		hasPermission(caller.user.role, { note: ['read'] })
+			? listStaffNotes(ctx, caller, { type: 'addon', id })
+			: [],
 	]);
 
 	if (!row) return;
@@ -110,6 +118,7 @@ export async function getAdminAddon(
 		})),
 		submissions,
 		events,
+		notes,
 	};
 }
 

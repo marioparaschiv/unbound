@@ -148,6 +148,33 @@ export const adminAddonsSearchSchema = z.object({
 	...keysetSearch,
 });
 
+// ---- Staff notes ----
+
+export const staffNoteBodySchema = z
+	.string()
+	.check(
+		z.trim(),
+		z.minLength(1, 'Write a note.'),
+		z.maxLength(5000, 'Keep a note to 5000 characters.'),
+	);
+
+export const staffNoteIdSchema = z.int().check(z.positive());
+
+/** A new note on one user or addon. */
+export const createStaffNoteRequestSchema = z.object({
+	subject: subjectSchema,
+	body: staffNoteBodySchema,
+});
+
+/** Replaces the body of the caller's own note. */
+export const editStaffNoteRequestSchema = z.object({
+	id: staffNoteIdSchema,
+	body: staffNoteBodySchema,
+});
+
+/** Deletes the caller's own note. */
+export const deleteStaffNoteRequestSchema = z.object({ id: staffNoteIdSchema });
+
 export type SubjectType = z.infer<typeof subjectTypeSchema>;
 export type Subject = z.infer<typeof subjectSchema>;
 export type MaintainerEntry = z.infer<typeof maintainerEntrySchema>;
@@ -163,6 +190,9 @@ export type PageDirection = z.infer<typeof pageDirectionSchema>;
 export type AdminUsersSearch = z.infer<typeof adminUsersSearchSchema>;
 export type AdminAddonStatus = z.infer<typeof adminAddonStatusSchema>;
 export type AdminAddonsSearch = z.infer<typeof adminAddonsSearchSchema>;
+export type CreateStaffNoteRequest = z.infer<typeof createStaffNoteRequestSchema>;
+export type EditStaffNoteRequest = z.infer<typeof editStaffNoteRequestSchema>;
+export type DeleteStaffNoteRequest = z.infer<typeof deleteStaffNoteRequestSchema>;
 
 export default {
 	subjectTypeSchema,
@@ -180,4 +210,9 @@ export default {
 	adminUsersSearchSchema,
 	adminAddonStatusSchema,
 	adminAddonsSearchSchema,
+	staffNoteBodySchema,
+	staffNoteIdSchema,
+	createStaffNoteRequestSchema,
+	editStaffNoteRequestSchema,
+	deleteStaffNoteRequestSchema,
 };
