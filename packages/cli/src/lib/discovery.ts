@@ -13,7 +13,6 @@ export type DiscoveredAddon = WorkspaceAddon & {
 	output: string;
 };
 
-/** Directory names never searched for addons. */
 const IGNORED_SEGMENTS = new Set(['node_modules', '.git']);
 
 /**
