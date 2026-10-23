@@ -54,7 +54,7 @@ const config: RolldownOptions = {
 	},
 	output: [
 		{
-			banner: 'var global = globalThis;',
+			postBanner: 'var global = globalThis;',
 			footer: '//# sourceURL=unbound',
 			file: 'dist/unbound.js',
 			format: 'iife',
@@ -227,7 +227,7 @@ async function hotBuild(onUpdate: (update: HotUpdate) => void) {
 		...output,
 		format: 'esm',
 		// Dev mode only emits ESM; the wrapper keeps its top-level bindings out of Discord's globals.
-		banner: '(() => { var global = globalThis;',
+		banner: '(() => {',
 		footer: '})();\n//# sourceURL=unbound',
 	};
 
