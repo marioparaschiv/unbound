@@ -166,4 +166,21 @@ export function requireParam(params: PathParams, name: string): string {
 	return value;
 }
 
+/**
+ * @description Reads a `$param` path segment and parses it, failing with `invalid_request` when it is
+ * missing or the schema refuses it.
+ * @template TSchema The schema the segment must satisfy.
+ * @param params The route's path parameters.
+ * @param name The parameter name.
+ * @param schema The schema the segment must satisfy.
+ * @returns The parsed parameter.
+ */
+export function parseParam<TSchema extends z.ZodType>(
+	params: PathParams,
+	name: string,
+	schema: TSchema,
+): z.output<TSchema> {
+	return parseInput(schema, requireParam(params, name));
+}
+
 export default endpoint;
