@@ -1,10 +1,12 @@
 import type { AddonType, AddonVersion, Maintainer } from '@unbound-app/contracts/addons';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
 import { listAddonsQuerySchema } from '@unbound-app/contracts/addons';
+import type { PublicBadge } from '@unbound-app/contracts/sponsors';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod/mini';
 
 import { getAddonDetails, listAddons } from '~/lib/addons';
+import { getVisibleBadges } from '~/lib/sponsors/badges';
 import app from '~/lib/app';
 
 export type MarketplaceSearch = z.infer<typeof marketplaceSearchSchema>;
@@ -41,7 +43,11 @@ export type MarketplaceAddonDetails = MarketplaceAddon & {
 	minClientVersion: string | null;
 	/** Newest first; the first is the one installs get. */
 	versions: MarketplaceVersion[];
-	maintainers: Maintainer[];
+	maintainers: MarketplaceMaintainer[];
+};
+
+export type MarketplaceMaintainer = Maintainer & {
+	badge: PublicBadge | null;
 };
 
 function toMarketplaceAddon(id: string, type: AddonType, latest: AddonVersion): MarketplaceAddon {
@@ -85,13 +91,21 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 
 		if (!details || !latest) return null;
 
+		const badges = await getVisibleBadges(
+			app,
+			details.maintainers.map((maintainer) => maintainer.id),
+		);
+
 		return {
 			...toMarketplaceAddon(details.id, details.type, latest),
 			createdAt: details.createdAt,
 			capabilities: latest.manifest.capabilities ?? [],
 			minClientVersion: latest.manifest.unbound?.min ?? null,
 			versions: details.versions.map(({ manifest: _manifest, ...version }) => version),
-			maintainers: details.maintainers,
+			maintainers: details.maintainers.map((maintainer) => ({
+				...maintainer,
+				badge: badges.get(maintainer.id) ?? null,
+			})),
 		};
 	});
 

@@ -56,8 +56,14 @@ describe('listDevelopers', () => {
 		expect(result.total).toBe(3);
 		expect(result.pageSize).toBe(2);
 		expect(result.developers).toEqual([
-			{ id: expect.any(String), name: 'Alice', image: null, role: 'developer' },
-			{ id: expect.any(String), name: 'Erin 100%', image: null, role: 'developer' },
+			{ id: expect.any(String), name: 'Alice', image: null, role: 'developer', badge: null },
+			{
+				id: expect.any(String),
+				name: 'Erin 100%',
+				image: null,
+				role: 'developer',
+				badge: null,
+			},
 		]);
 		expect(await names('', 2)).toEqual(['Frank']);
 	});

@@ -1,13 +1,14 @@
-import type { Caller } from '@unbound-app/contracts/account';
 import type { ComponentProps } from 'react';
 
 import { Card, CardContent } from '~/components/ui/card';
 import UserAvatar from '~/components/user-avatar';
+import type { Developer } from '~/lib/developers';
+import UserBadge from '~/components/user-badge';
 import Text from '~/components/ui/text';
 import cn from '~/lib/cn';
 
 type DeveloperCardProps = ComponentProps<typeof Card> & {
-	developer: Caller;
+	developer: Developer;
 };
 
 function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
@@ -30,9 +31,12 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 				<Text variant='heading-sm' className='truncate leading-tight!'>
 					{developer.name}
 				</Text>
-				<Text variant='text-xs' color='muted' className='capitalize'>
-					{developer.role}
-				</Text>
+				<div className='flex items-center gap-2 min-w-0'>
+					<Text variant='text-xs' color='muted' className='capitalize'>
+						{developer.role}
+					</Text>
+					{developer.badge ? <UserBadge badge={developer.badge} /> : null}
+				</div>
 			</CardContent>
 		</Card>
 	);
