@@ -7,6 +7,7 @@ import { createLogger } from '@unbound-app/logger';
 import { apiKey } from '@better-auth/api-key';
 import { betterAuth } from 'better-auth';
 
+import { recordAuthAdminAction } from '~/lib/moderation-events';
 import { API_KEY_HEADER, CLI_CLIENT_ID } from '~/api/client';
 import { DEFAULT_ROLE, ac, roles } from '~/lib/auth/access';
 import type { FileRoutesByTo } from '~/routeTree.gen';
@@ -45,7 +46,8 @@ export type Session = Auth['$Infer']['Session'];
 /**
  * @description Builds the Better Auth instance: Discord is the only sign-up path, GitHub can only be
  * linked to an existing session, and the CLI authenticates through device authorization or API keys.
- * Banning a user cancels their open submissions and deletes their staged files.
+ * Banning a user cancels their open submissions and deletes their staged files, and bans, unbans and
+ * role changes are recorded as moderation events.
  * @param db The database the auth tables live in.
  * @param env The validated environment.
  * @param storage The object storage, for purging a banned user's staged files.
@@ -116,6 +118,22 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 				throw new APIError('FORBIDDEN', {
 					message: 'GitHub can only be linked to an existing account.',
 				});
+			}),
+			after: createAuthMiddleware(async (ctx) => {
+				if (!ctx.path.startsWith('/admin/')) return;
+
+				try {
+					recordAuthAdminAction(db, {
+						path: ctx.path,
+						actorId: ctx.context.session?.user.id ?? null,
+						at: new Date(),
+						body: ctx.body,
+						returned: ctx.context.returned,
+					});
+				} catch (error) {
+					// The action itself already committed; a missing record must not fail it.
+					logger.error(`Failed to record the moderation event for ${ctx.path}:`, error);
+				}
 			}),
 		},
 		plugins: [

@@ -1,15 +1,21 @@
+import type { AddonType, MaintainerRole } from '@unbound-app/contracts/addons';
 import type { AdminUsersSearch } from '@unbound-app/contracts/admin';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { afterKey, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
+import { listSubmissionHistory } from '~/lib/admin-submissions';
+import type { AdminSubmission } from '~/lib/admin-submissions';
+import type { EventTimeline } from '~/lib/moderation-events';
+import { getEventTimeline } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { matchesSearch } from '~/lib/admin-search';
 import { DEFAULT_ROLE } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
+import type { user } from '~/db/schema';
 
 export type AdminUser = {
 	id: string;
@@ -24,7 +30,48 @@ export type AdminUser = {
 
 export type AdminUsersPage = KeysetPage<AdminUser>;
 
+export type AdminUserRecord = AdminUser & {
+	/** When a temporary ban lifts; `null` for a permanent ban or none. */
+	banExpires: Date | null;
+};
+
+/** An addon the user owns or maintains. */
+export type MaintainedAddon = {
+	id: string;
+	name: string;
+	type: AddonType;
+	role: MaintainerRole;
+	delistedAt: Date | null;
+	/** The newest approved version. */
+	latestVersion: string | null;
+};
+
+export type AdminUserView = {
+	user: AdminUserRecord;
+	/** Owned addons first, then in the order they joined. */
+	addons: MaintainedAddon[];
+	/** Every submission they made, newest first. */
+	submissions: AdminSubmission[];
+	/** The newest page of the moderation events about them. */
+	events: EventTimeline;
+};
+
+type UserRow = typeof user.$inferSelect;
+
 const USER_CURSOR = z.tuple([z.int(), z.string().min(1)]);
+
+function toAdminUser(row: UserRow): AdminUser {
+	return {
+		id: row.id,
+		name: row.name,
+		email: row.email,
+		image: row.image ?? null,
+		role: row.role ?? DEFAULT_ROLE,
+		banned: row.banned ?? false,
+		banReason: row.banReason ?? null,
+		createdAt: row.createdAt,
+	};
+}
 
 /**
  * @description Builds the one statement behind {@link listAdminUsers}: one page plus a lookahead row,
@@ -75,18 +122,72 @@ export async function listAdminUsers(
 		row.id,
 	]);
 
-	const items = page.items.map((row) => ({
-		id: row.id,
-		name: row.name,
-		email: row.email,
-		image: row.image ?? null,
-		role: row.role ?? DEFAULT_ROLE,
-		banned: row.banned ?? false,
-		banReason: row.banReason ?? null,
-		createdAt: row.createdAt,
-	}));
+	return { ...page, items: page.items.map(toAdminUser) };
+}
 
-	return { ...page, items };
+function queryMaintainedAddons(ctx: AppContext, userId: string) {
+	return ctx.db.query.addonMaintainer.findMany({
+		where: { userId },
+		columns: { role: true },
+		with: {
+			addon: {
+				columns: { id: true, name: true, type: true, delistedAt: true },
+				with: {
+					versions: {
+						columns: { version: true },
+						orderBy: { versionKey: 'desc' },
+						limit: 1,
+					},
+				},
+			},
+		},
+		orderBy: { role: 'desc', createdAt: 'asc' },
+	});
+}
+
+/**
+ * @description Loads everything the admin user page shows: the profile, role and ban state, the
+ * addons they maintain, their submissions and the moderation events about them. Requires `user:get`.
+ * @param ctx The application context.
+ * @param caller The moderator.
+ * @param id The user id.
+ * @returns The view, or `undefined` when no user has the id.
+ */
+export async function getAdminUser(
+	ctx: AppContext,
+	caller: Caller,
+	id: string,
+): Promise<AdminUserView | undefined> {
+	requirePermission(caller, { user: ['get'] });
+
+	const [row, maintained, submissions, events] = await Promise.all([
+		ctx.db.query.user.findFirst({ where: { id } }),
+		queryMaintainedAddons(ctx, id),
+		listSubmissionHistory(ctx, { authorId: id }),
+		getEventTimeline(ctx, caller, { type: 'user', id }),
+	]);
+
+	if (!row) return;
+
+	return {
+		user: { ...toAdminUser(row), banExpires: row.banExpires ?? null },
+		addons: maintained.flatMap(({ role, addon }) =>
+			addon
+				? [
+						{
+							id: addon.id,
+							name: addon.name,
+							type: addon.type,
+							role,
+							delistedAt: addon.delistedAt,
+							latestVersion: addon.versions[0]?.version ?? null,
+						},
+					]
+				: [],
+		),
+		submissions,
+		events,
+	};
 }
 
 /**
@@ -114,4 +215,4 @@ export async function getUserSummary(
 	return { id: row.id, name: row.name, image: row.image ?? null };
 }
 
-export default { queryAdminUsers, listAdminUsers, getUserSummary };
+export default { queryAdminUsers, listAdminUsers, getAdminUser, getUserSummary };
