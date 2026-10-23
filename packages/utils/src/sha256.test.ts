@@ -1,5 +1,5 @@
-import { createHash } from 'node:crypto';
 import { describe, expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
 
 import sha256 from './sha256';
 
