@@ -8,8 +8,8 @@ import type {
 import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 import { and, desc, eq, gt, like } from 'drizzle-orm';
 
-import { requirePermission } from '~/lib/api/caller';
 import { RELEASE_KEY_SUFFIX, isReleaseKey, toVersionKey } from '~/lib/version-key';
+import { requirePermission } from '~/lib/api/caller';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { loaderRelease } from '~/db/schema';

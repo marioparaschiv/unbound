@@ -7,6 +7,9 @@ function encodeIdentifier(identifier: string): string {
 	return /^\d+$/.test(identifier) ? `0${encodeNumber(identifier)}` : `1${identifier}`;
 }
 
+/** Ends every release key and sorts above every prerelease identifier character. */
+export const RELEASE_KEY_SUFFIX = '~';
+
 /**
  * @description Encodes a semver version so that comparing keys as strings (as SQLite does) follows
  * semver precedence: a release sorts after its prereleases, numeric prerelease identifiers before
@@ -14,9 +17,6 @@ function encodeIdentifier(identifier: string): string {
  * @param version A version accepted by `semverSchema`.
  * @returns The sortable key.
  */
-/** Ends every release key and sorts above every prerelease identifier character. */
-export const RELEASE_KEY_SUFFIX = '~';
-
 export function toVersionKey(version: string): string {
 	const [release = version] = version.split('+');
 	const dash = release.indexOf('-');
