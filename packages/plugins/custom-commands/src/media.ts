@@ -1,6 +1,5 @@
 import type { TagMedia } from '@custom-commands/tags';
 import { fs, metro } from '@unbound-app/api';
-import type { PluginContext } from '@unbound-app/api/native';
 
 export type PickedMedia = {
 	duration?: number;
@@ -26,12 +25,6 @@ type MediaPicker = {
 	launchImageLibraryAsync: (options: Record<string, unknown>) => Promise<PickerResult>;
 };
 
-let pluginContext: PluginContext | null = null;
-
-export function setMediaContext(context: PluginContext | null): void {
-	pluginContext = context;
-}
-
 export function mediaUri(media: TagMedia): string {
 	return `file://${fs.Documents}/${media.storedName}`;
 }
@@ -41,8 +34,6 @@ function localPath(uri: string): string {
 }
 
 function resolvePickedMedia(asset: PickerAsset): PickedMedia {
-	const context = pluginContext;
-	if (!context) throw new Error('Custom Commands is not running.');
 	if (typeof asset.uri !== 'string' || !asset.uri.startsWith('file://'))
 		throw new Error('The selected media is unavailable. Choose a local photo or video.');
 
@@ -51,22 +42,31 @@ function resolvePickedMedia(asset: PickerAsset): PickedMedia {
 	if (!fileName)
 		throw new Error('The selected media is unavailable. Choose a local photo or video.');
 
-	const objc = context.native.objc;
-	const fileManagerClass = objc.getClass('NSFileManager');
-	const fileManager = fileManagerClass && objc.call(fileManagerClass, 'defaultManager');
-	const attributes =
-		fileManager && objc.call(fileManager, 'attributesOfItemAtPath:error:', path, null);
-	const file = attributes as Record<string, unknown> | null;
-	const fileSize = Number(file?.NSFileSize);
-	if (file?.NSFileType !== 'NSFileTypeRegular' || !Number.isSafeInteger(fileSize) || fileSize < 0)
-		throw new Error('The selected media is unavailable. Choose a local photo or video.');
+	const fileSize = asset.fileSize;
+	if (!Number.isSafeInteger(fileSize) || fileSize == null || fileSize < 0)
+		throw new Error('The media picker did not provide a valid file size.');
 
 	const extension = fileName.match(/\.([a-z0-9]+)$/i)?.[1];
-	const uniformTypeClass = !asset.type && !asset.mimeType && extension && objc.getClass('UTType');
-	const uniformType =
-		uniformTypeClass && objc.call(uniformTypeClass, 'typeWithFilenameExtension:', extension);
-	const inferredType = uniformType && objc.call(uniformType, 'preferredMIMEType');
-	const type = asset.type || asset.mimeType || inferredType;
+	const providedType = [asset.mimeType, asset.type].find(
+		(value): value is string =>
+			typeof value === 'string' && (value.startsWith('image/') || value.startsWith('video/')),
+	);
+	const type =
+		providedType ??
+		(
+			{
+				gif: 'image/gif',
+				heic: 'image/heic',
+				jpeg: 'image/jpeg',
+				jpg: 'image/jpeg',
+				m4v: 'video/x-m4v',
+				mov: 'video/quicktime',
+				mp4: 'video/mp4',
+				png: 'image/png',
+				webm: 'video/webm',
+				webp: 'image/webp',
+			} as Record<string, string>
+		)[extension?.toLowerCase() ?? ''];
 	if (typeof type !== 'string' || (!type.startsWith('image/') && !type.startsWith('video/')))
 		throw new Error('Choose an image or video attachment.');
 
@@ -97,38 +97,12 @@ export async function pickMedia(): Promise<PickedMedia[]> {
 }
 
 export async function persistMedia(asset: PickedMedia): Promise<TagMedia> {
-	const context = pluginContext;
-	if (!context) throw new Error('Custom Commands is not running.');
 	const extension =
 		asset.fileName.match(/\.([a-z0-9]+)$/i)?.[1] ?? asset.type.split('/')[1] ?? 'bin';
 	const storedName = `custom-commands-${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${extension.toLowerCase()}`;
 	const sourcePath = localPath(asset.uri);
-	const destinationPath = `${fs.Documents}/${storedName}`;
-	let copied = false;
-
-	try {
-		const objc = context.native.objc;
-		const fileManagerClass = objc.getClass('NSFileManager');
-		if (fileManagerClass) {
-			const fileManager = objc.call(fileManagerClass, 'defaultManager');
-			if (fileManager && typeof fileManager === 'object') {
-				copied = Boolean(
-					objc.call(
-						fileManager,
-						'copyItemAtPath:toPath:error:',
-						sourcePath,
-						destinationPath,
-						null,
-					),
-				);
-			}
-		}
-	} catch {}
-
-	if (!copied) {
-		const encoded = await fs.read(sourcePath, 'base64', false);
-		await fs.write(storedName, encoded, 'base64');
-	}
+	const encoded = await fs.read(sourcePath, 'base64', false);
+	await fs.write(storedName, encoded, 'base64');
 
 	return {
 		storedName,

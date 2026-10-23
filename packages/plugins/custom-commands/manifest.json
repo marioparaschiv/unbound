@@ -18,7 +18,5 @@
 	],
 	"version": "1.0.0",
 	"icon": "KeyboardIcon",
-	"main": "index.tsx",
-	"capabilities": ["native.objc.classes", "native.objc.invoke"],
-	"minNativePluginApi": "1.0.0"
+	"main": "index.tsx"
 }

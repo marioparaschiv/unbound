@@ -1,4 +1,4 @@
-import { mediaUri, setMediaContext } from '@custom-commands/media';
+import { mediaUri } from '@custom-commands/media';
 import { appendSavedCommands } from '@custom-commands/registration';
 import { CustomCommandsSettings } from '@custom-commands/settings';
 import {
@@ -11,7 +11,6 @@ import {
 	type Tag,
 } from '@custom-commands/tags';
 import { metro, patcher, storage, toasts } from '@unbound-app/api';
-import type { PluginContext } from '@unbound-app/api/native';
 
 const STORE = storage.getStore('unbound.custom-commands');
 const APPLICATION_ID = '-1';
@@ -196,9 +195,8 @@ async function executeTag(
 	}
 }
 
-function start(context: PluginContext): void {
+function start(): void {
 	if (unpatch) return;
-	setMediaContext(context);
 	const commands = metro.findByProps('getBuiltInCommands') as CommandModule | null;
 	if (!commands) throw new Error('Discord built-in commands are unavailable.');
 
@@ -210,7 +208,6 @@ function start(context: PluginContext): void {
 function stop(): void {
 	unpatch?.();
 	unpatch = null;
-	setMediaContext(null);
 }
 
 export default {
