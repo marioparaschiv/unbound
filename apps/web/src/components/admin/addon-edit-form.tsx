@@ -1,7 +1,6 @@
 import { editAddonRequestSchema } from '@unbound-app/contracts/admin';
 import type { MaintainerEntry } from '@unbound-app/contracts/admin';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { addonTypeSchema } from '@unbound-app/contracts/addons';
 import type { AddonType } from '@unbound-app/contracts/addons';
 import { useRouter } from '@tanstack/react-router';
 import { useForm } from '@tanstack/react-form';
@@ -9,6 +8,13 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '~/components/ui/select';
 import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
 import type { AdminAddonView, ManifestSummary } from '~/lib/admin-addon';
 import MaintainerEditor from '~/components/admin/maintainer-editor';
@@ -46,13 +52,6 @@ const TYPE_LABELS: Record<AddonType, string> = {
 	'icon-pack': 'Icon pack',
 	font: 'Font',
 };
-
-const SELECT_CLASS =
-	'border-input dark:bg-input/30 h-9 rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]';
-
-function parseType(value: string): AddonType {
-	return addonTypeSchema.parse(value);
-}
 
 function PinnableField({
 	id,
@@ -202,20 +201,26 @@ function AddonEditForm({ view }: AddonEditFormProps) {
 							}
 							errors={field.state.meta.errors}
 						>
-							<select
-								id='edit-type'
-								className={SELECT_CLASS}
-								value={field.state.value ?? ''}
-								onChange={(event) =>
-									field.handleChange(parseType(event.target.value))
-								}
+							<Select
+								items={TYPE_LABELS}
+								value={field.state.value}
+								onValueChange={(type) => field.handleChange(type)}
 							>
-								{Object.entries(TYPE_LABELS).map(([type, label]) => (
-									<option key={type} value={type}>
-										{label}
-									</option>
-								))}
-							</select>
+								<SelectTrigger
+									id='edit-type'
+									onBlur={field.handleBlur}
+									aria-invalid={field.state.meta.errors.length > 0}
+								>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{Object.entries(TYPE_LABELS).map(([type, label]) => (
+										<SelectItem key={type} value={type}>
+											{label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</PinnableField>
 					)}
 				</form.Field>

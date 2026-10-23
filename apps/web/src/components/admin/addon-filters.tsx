@@ -1,21 +1,23 @@
 import type { AdminAddonStatus, AdminAddonsSearch } from '@unbound-app/contracts/admin';
 import { IconSortAscending, IconSortDescending, IconX } from '@tabler/icons-react';
-import { adminAddonStatusSchema } from '@unbound-app/contracts/admin';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { addonTypeSchema } from '@unbound-app/contracts/addons';
 import type { AddonType } from '@unbound-app/contracts/addons';
-import { useMemo, useState, useTransition } from 'react';
-import type { ChangeEvent, ReactNode } from 'react';
-import debounce from '@unbound-app/utils/debounce';
-import { toast } from 'sonner';
+import type { ReactNode } from 'react';
 
-import getApiErrorMessage from '~/lib/api/error-message';
-import { fetchAdminUsers } from '~/lib/admin-functions';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '~/components/ui/select';
+import { formatCalendarDate, parseCalendarDate } from '~/lib/calendar-date';
+import UserSearch from '~/components/admin/user-search';
+import DatePicker from '~/components/ui/date-picker';
 import UserAvatar from '~/components/user-avatar';
 import { Button } from '~/components/ui/button';
-import Input from '~/components/ui/input';
 import Label from '~/components/ui/label';
-import Text from '~/components/ui/text';
+import cn from '~/lib/cn';
 
 /** The admin addons list's URL search without its paging, which every filter change resets. */
 type AddonFilterValues = Omit<AdminAddonsSearch, 'q' | 'cursor' | 'dir'>;
@@ -38,9 +40,9 @@ type FilterSelectProps<T extends string> = {
 	id: string;
 	value: T | undefined;
 	options: Record<T, string>;
-	all: string;
+	allLabel: string;
+	className?: string;
 	onChange: (value: T | undefined) => void;
-	parse: (value: string) => T | undefined;
 };
 
 type MaintainerPickerProps = {
@@ -57,19 +59,14 @@ const TYPE_LABELS: Record<AddonType, string> = {
 	font: 'Fonts',
 };
 
+const MAINTAINER_WIDTH = 'w-44';
+
 const STATUS_LABELS: Record<AdminAddonStatus, string> = {
 	listed: 'Listed',
 	delisted: 'Delisted',
 	pending_review: 'Update in review',
 	changes_requested: 'Update needs changes',
 };
-
-const SELECT_CLASS =
-	'border-input dark:bg-input/30 h-9 rounded-md border bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]';
-
-const PICKER_RESULTS = 5;
-
-const SEARCH_DEBOUNCE_MS = 300;
 
 function FilterField({ id, label, children }: FilterFieldProps) {
 	return (
@@ -86,72 +83,50 @@ function FilterSelect<T extends string>({
 	id,
 	value,
 	options,
-	all,
+	allLabel,
+	className,
 	onChange,
-	parse,
 }: FilterSelectProps<T>) {
+	const entries = Object.entries<string>(options);
+	const items = [
+		{ value: null, label: allLabel },
+		...entries.map(([option, label]) => ({ value: option, label })),
+	];
+
 	return (
-		<select
-			id={id}
-			className={SELECT_CLASS}
-			value={value ?? ''}
-			onChange={(event) => onChange(parse(event.target.value))}
+		<Select
+			items={items}
+			value={value ?? null}
+			onValueChange={(next) => onChange(next ?? undefined)}
 		>
-			<option value=''>{all}</option>
-			{Object.entries<string>(options).map(([option, label]) => (
-				<option key={option} value={option}>
-					{label}
-				</option>
-			))}
-		</select>
+			<SelectTrigger id={id} className={className}>
+				<SelectValue />
+			</SelectTrigger>
+			<SelectContent>
+				<SelectItem value={null}>{allLabel}</SelectItem>
+				{entries.map(([option, label]) => (
+					<SelectItem key={option} value={option}>
+						{label}
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
 	);
 }
 
 function MaintainerPicker({ id, selected, maintainer, onChange }: MaintainerPickerProps) {
-	const [query, setQuery] = useState('');
-	const [results, setResults] = useState<UserSummary[]>([]);
-	const [isSearching, startSearch] = useTransition();
-
-	const searchLater = useMemo(
-		() =>
-			debounce((q: string) => {
-				if (q.length < 3) {
-					setResults([]);
-
-					return;
-				}
-
-				startSearch(async () => {
-					try {
-						const page = await fetchAdminUsers({ data: { q } });
-
-						setResults(page.items.slice(0, PICKER_RESULTS));
-					} catch (error) {
-						toast.error(getApiErrorMessage(error));
-					}
-				});
-			}, SEARCH_DEBOUNCE_MS),
-		[],
-	);
-
-	function handleChange(event: ChangeEvent<HTMLInputElement>) {
-		setQuery(event.target.value);
-		searchLater(event.target.value.trim());
-	}
-
-	function pick(user: UserSummary) {
-		setQuery('');
-		setResults([]);
-		onChange(user.id);
-	}
-
 	if (selected) {
 		return (
-			<div className='flex items-center gap-2 px-2 border border-input rounded-md h-9 text-sm'>
+			<div
+				className={cn(
+					'border-input dark:bg-input/30 flex h-9 items-center gap-2 rounded-md border pr-1 pl-2 text-sm shadow-xs',
+					MAINTAINER_WIDTH,
+				)}
+			>
 				{maintainer ? (
 					<UserAvatar src={maintainer.image} name={maintainer.name} size='xs' />
 				) : null}
-				<span className='max-w-[160px] truncate'>{maintainer?.name ?? selected}</span>
+				<span className='single-line min-w-0 flex-1'>{maintainer?.name ?? selected}</span>
 				<Button
 					variant='ghost'
 					size='icon'
@@ -166,51 +141,13 @@ function MaintainerPicker({ id, selected, maintainer, onChange }: MaintainerPick
 	}
 
 	return (
-		<div className='relative'>
-			<Input
-				id={id}
-				className='w-44'
-				placeholder='Search users by name...'
-				value={query}
-				onChange={handleChange}
-				autoComplete='off'
-			/>
-			{results.length > 0 || isSearching ? (
-				<div className='top-full left-0 z-10 absolute flex flex-col gap-1 bg-popover shadow-md mt-1 p-1 border border-border rounded-md w-64'>
-					{isSearching && results.length === 0 ? (
-						<Text variant='text-sm' color='muted' className='px-3 py-2'>
-							Searching...
-						</Text>
-					) : null}
-					{results.map((user) => (
-						<button
-							key={user.id}
-							type='button'
-							onClick={() => pick(user)}
-							className='flex items-center gap-3 hover:bg-accent/50 px-3 py-2 rounded-md text-left transition-colors'
-						>
-							<UserAvatar src={user.image} name={user.name} size='xs' />
-							<Text as='span' variant='text-sm' className='flex-1 truncate'>
-								{user.name}
-							</Text>
-						</button>
-					))}
-				</div>
-			) : null}
-		</div>
+		<UserSearch
+			id={id}
+			className={MAINTAINER_WIDTH}
+			placeholder='Search users...'
+			onPick={(user) => onChange(user.id)}
+		/>
 	);
-}
-
-function parseType(value: string): AddonType | undefined {
-	const parsed = addonTypeSchema.safeParse(value);
-
-	return parsed.success ? parsed.data : undefined;
-}
-
-function parseStatus(value: string): AdminAddonStatus | undefined {
-	const parsed = adminAddonStatusSchema.safeParse(value);
-
-	return parsed.success ? parsed.data : undefined;
 }
 
 function AddonFilters({ filters, maintainer, onChange }: AddonFiltersProps) {
@@ -224,8 +161,8 @@ function AddonFilters({ filters, maintainer, onChange }: AddonFiltersProps) {
 					id='addon-filter-type'
 					value={filters.type}
 					options={TYPE_LABELS}
-					all='All types'
-					parse={parseType}
+					allLabel='All types'
+					className='w-36'
 					onChange={(type) => onChange({ ...filters, type })}
 				/>
 			</FilterField>
@@ -234,8 +171,8 @@ function AddonFilters({ filters, maintainer, onChange }: AddonFiltersProps) {
 					id='addon-filter-status'
 					value={filters.status}
 					options={STATUS_LABELS}
-					all='Any status'
-					parse={parseStatus}
+					allLabel='Any status'
+					className='w-52'
 					onChange={(status) => onChange({ ...filters, status })}
 				/>
 			</FilterField>
@@ -247,25 +184,25 @@ function AddonFilters({ filters, maintainer, onChange }: AddonFiltersProps) {
 					onChange={(id) => onChange({ ...filters, maintainer: id })}
 				/>
 			</FilterField>
-			<FilterField id='addon-filter-from' label='Published from'>
-				<Input
-					id='addon-filter-from'
-					type='date'
-					className='w-36'
-					value={filters.publishedFrom ?? ''}
-					onChange={(event) =>
-						onChange({ ...filters, publishedFrom: event.target.value || undefined })
-					}
-				/>
-			</FilterField>
-			<FilterField id='addon-filter-to' label='Published to'>
-				<Input
-					id='addon-filter-to'
-					type='date'
-					className='w-36'
-					value={filters.publishedTo ?? ''}
-					onChange={(event) =>
-						onChange({ ...filters, publishedTo: event.target.value || undefined })
+			<FilterField id='addon-filter-published' label='Published'>
+				<DatePicker
+					id='addon-filter-published'
+					mode='range'
+					className='w-64'
+					value={{
+						from: filters.publishedFrom
+							? parseCalendarDate(filters.publishedFrom)
+							: undefined,
+						to: filters.publishedTo
+							? parseCalendarDate(filters.publishedTo)
+							: undefined,
+					}}
+					onChange={({ from, to }) =>
+						onChange({
+							...filters,
+							publishedFrom: from ? formatCalendarDate(from) : undefined,
+							publishedTo: to ? formatCalendarDate(to) : undefined,
+						})
 					}
 				/>
 			</FilterField>
