@@ -60,7 +60,7 @@ export function versionPrefix(target: UploadTarget): string {
 }
 
 /**
- * @description Uploads every file in a client build directory to `unbound/{channel}/{version}/`.
+ * @description Uploads every file but the source maps in a client build directory to `unbound/{channel}/{version}/`.
  * Version paths are immutable: an already published version is skipped, never overwritten.
  * @param dir The build output directory, e.g. `packages/client/dist`.
  * @param target The bucket, channel and version to upload to.
@@ -80,7 +80,10 @@ export async function uploadBuild(
 		throw new IncompleteVersionError(prefix);
 	}
 
-	const files = [...new Bun.Glob('**/*').scanSync({ cwd: dir })];
+	// Source maps stay private; CI keeps them as a workflow artifact for `bun run symbolicate`.
+	const files = [...new Bun.Glob('**/*').scanSync({ cwd: dir })].filter(
+		(file) => !file.endsWith('.map'),
+	);
 
 	if (!files.includes(COMPLETION_MARKER)) {
 		throw new Error(`${dir} has no ${COMPLETION_MARKER}; build the client first.`);

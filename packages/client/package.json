@@ -13,6 +13,7 @@
 		"dev": "bun --bun scripts/dev",
 		"serve": "bun scripts/serve/start.ts",
 		"upload": "bun scripts/build/upload.ts",
+		"symbolicate": "bun scripts/build/symbolicate.ts",
 		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p ."
 	},
 	"dependencies": {

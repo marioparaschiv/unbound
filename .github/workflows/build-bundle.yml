@@ -61,6 +61,15 @@ jobs:
 
             - run: bun run --cwd packages/client build
 
+            # Release bytecode is compiled with -g0; these maps turn its traces back into source
+            # positions (`bun run symbolicate`). They are never published with the bundles.
+            - name: Keep source maps
+              uses: actions/upload-artifact@v4
+              with:
+                  name: source-maps-${{ inputs.version || github.sha }}
+                  path: packages/client/dist/*.map
+                  if-no-files-found: error
+
             - name: Publish bundles to builds branch
               if: ${{ !inputs.version }}
               env:
@@ -81,6 +90,7 @@ jobs:
                   git reset --hard
 
                   cp -r "$dist"/. .
+                  find . -name '*.map' -not -path './.git/*' -delete
 
                   echo 'builds.unbound.rip' > CNAME
 

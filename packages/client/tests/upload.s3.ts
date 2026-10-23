@@ -25,6 +25,7 @@ const prefix = `unbound/${target.channel}/${target.version}/`;
 
 await Bun.write(join(dist, 'unbound.js'), 'first build');
 await Bun.write(join(dist, 'unbound.96.bundle'), new Uint8Array([0x1f, 0x19]));
+await Bun.write(join(dist, 'unbound.96.bundle.map'), '{"version":3}');
 await Bun.write(join(dist, 'manifest.json'), JSON.stringify({ revision: target.version }));
 
 afterAll(async () => {

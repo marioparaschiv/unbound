@@ -59,6 +59,8 @@ const config: RolldownOptions = {
 			file: 'dist/unbound.js',
 			format: 'iife',
 			minify: !IS_DEV_BUILD,
+			// Kept out of the published files; `bun run symbolicate` reads it to map a release trace to `src/`.
+			sourcemap: IS_DEV_BUILD ? false : 'hidden',
 			inlineDynamicImports: true,
 		},
 	],
@@ -92,9 +94,11 @@ const config: RolldownOptions = {
 			swcrc: false,
 			exclude: /node_modules/,
 			jsc: { target: 'es2021' },
+			sourceMaps: !IS_DEV_BUILD,
 		}),
 		downlevel(root),
-		hermes(),
+		// `-g0` drops line info from release bytecode; each bundle's `.map` restores it.
+		hermes({ flags: IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map'] }),
 		generateManifest(GIT_REVISION),
 		...(IS_DEV_BUILD ? [locales()] : []),
 	],
@@ -259,7 +263,7 @@ async function hotBuild(onUpdate: (update: HotUpdate) => void) {
 							type: 'patch',
 							clientId,
 							// Patches skip `renderChunk`, so the dependency code they carry is lowered here.
-							code: lower(root, update.code),
+							code: lower(root, update.code).code,
 							filename: update.filename,
 							changedIds: update.changedIds,
 						});

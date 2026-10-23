@@ -1,5 +1,5 @@
+import type { Options, Output } from '@swc/core';
 import { transformSync } from '@swc/core';
-import type { Options } from '@swc/core';
 import { readFileSync } from 'node:fs';
 import type { Plugin } from 'rolldown';
 import { join } from 'node:path';
@@ -8,9 +8,10 @@ import { join } from 'node:path';
  * @description Lowers bundled code to the `.swcrc` env targets, which older Hermes needs for classes and async functions.
  * @param root The package root holding the `.swcrc` whose `env` is applied.
  * @param code The bundled code to lower.
- * @returns The lowered code, with swc's helpers declared at its top level.
+ * @param sourceMaps Whether to also return a source map from the lowered code back to `code`.
+ * @returns The lowered code, with swc's helpers declared at its top level, and its map when asked for.
  */
-export function lower(root: string, code: string): string {
+export function lower(root: string, code: string, sourceMaps: boolean = false): Output {
 	const { env }: Options = JSON.parse(readFileSync(join(root, '.swcrc'), 'utf8'));
 	// Lowered classes carry "use strict", which hermesc rejects in a function with non-simple parameters.
 	const exclude = env?.exclude?.filter((name) => name !== 'transform-parameters');
@@ -18,10 +19,10 @@ export function lower(root: string, code: string): string {
 	return transformSync(code, {
 		swcrc: false,
 		configFile: false,
-		sourceMaps: false,
+		sourceMaps,
 		jsc: { parser: { syntax: 'ecmascript' } },
 		env: { ...env, exclude },
-	}).code;
+	});
 }
 
 /**
@@ -32,9 +33,17 @@ export function lower(root: string, code: string): string {
 export default function downlevel(root: string): Plugin {
 	return {
 		name: 'downlevel',
-		renderChunk(code) {
+		renderChunk(code, _chunk, options) {
+			const lowered = lower(root, code, Boolean(options.sourcemap));
 			// The wrapper keeps swc's helpers out of Discord's globals.
-			return `(() => {\n${lower(root, code)}\n})();`;
+			const wrapped = `(() => {\n${lowered.code}\n})();`;
+
+			if (!lowered.map) return wrapped;
+
+			const map = JSON.parse(lowered.map);
+
+			// The wrapper's first line moves every lowered line down by one.
+			return { code: wrapped, map: { ...map, mappings: `;${map.mappings}` } };
 		},
 	};
 }
