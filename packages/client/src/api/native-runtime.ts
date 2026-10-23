@@ -13,6 +13,7 @@ import type {
 	NativePlatformBridge,
 	NativePluginBridge,
 	NativePluginCapability,
+	NativePluginPlatform,
 	NativePluginRuntimeBridge,
 	NativeRuntimeBridge,
 	NativeRuntimeEventName,
@@ -20,6 +21,10 @@ import type {
 	NativeSerializableObject,
 	NativeUIBridge,
 	NativeUIHandle,
+	NativeUIQuery,
+	NativeUISnapshot,
+	NativeUISnapshotNode,
+	NativeViewSnapshotNode,
 	PluginContext,
 } from '@unbound-app/types';
 import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
@@ -248,17 +253,30 @@ const capabilityRequirements: Record<string, NativePluginCapability> = {
 	fabricMeasureAsync: 'native.fabric.async',
 	fabricUnmountAsync: 'native.fabric.async',
 	subscribe: 'native.runtime.events',
-	lookup: 'native.ui.lookup',
-	snapshotUI: 'native.ui.lookup',
-	mountUI: 'native.ui.mount',
-	updateUI: 'native.ui.mount',
-	setFrameUI: 'native.ui.layout',
-	measureUI: 'native.ui.layout',
-	unmountUI: 'native.ui.mount',
 	pickMedia: 'native.media.pick',
 	inspectMedia: 'native.media.access',
 	copyMedia: 'native.media.access',
 	readMedia: 'native.media.access',
+};
+
+const nativeUICapabilityRequirements: Record<keyof NativeUIBridge, NativePluginCapability> = {
+	lookup: 'native.ui.lookup',
+	snapshot: 'native.ui.lookup',
+	mount: 'native.ui.mount',
+	update: 'native.ui.mount',
+	setFrame: 'native.ui.layout',
+	measure: 'native.ui.layout',
+	unmount: 'native.ui.mount',
+};
+
+const iosNativeUICapabilityRequirements: Record<keyof NativeUIBridge, NativePluginCapability> = {
+	lookup: 'native.objc.snapshot',
+	snapshot: 'native.objc.snapshot',
+	mount: 'native.fabric.async',
+	update: 'native.fabric.async',
+	setFrame: 'native.fabric.async',
+	measure: 'native.fabric.async',
+	unmount: 'native.fabric.async',
 };
 
 export class NativePluginUnavailableError extends Error {
@@ -395,8 +413,153 @@ type ScopedNativePlugin = {
 	dispose: () => void;
 };
 
+function mapCancelable<T, U>(source: NativeCancelablePromise<T>, mapper: (value: T) => U) {
+	const promise = source.then(mapper);
+
+	return Object.assign(promise, { cancel: () => source.cancel() });
+}
+
+function boundedNativeUICount(
+	value: number | undefined,
+	fallback: number,
+	minimum: number,
+	maximum: number,
+): number {
+	if (value === undefined) {
+		return fallback;
+	}
+
+	if (!Number.isInteger(value)) {
+		throw new RangeError('Native UI query limits must be integers.');
+	}
+
+	return Math.max(minimum, Math.min(value, maximum));
+}
+
+function nativeViewRole(className: string): string {
+	const separator = className.lastIndexOf('.');
+	const simpleClassName = className.slice(separator + 1).toLowerCase();
+
+	if (simpleClassName.includes('button') || simpleClassName.includes('control')) {
+		return 'button';
+	}
+
+	if (simpleClassName.includes('image')) {
+		return 'image';
+	}
+
+	if (simpleClassName.includes('text') || simpleClassName.includes('label')) {
+		return 'text';
+	}
+
+	if (simpleClassName.includes('view') || simpleClassName.includes('container')) {
+		return 'container';
+	}
+
+	return 'view';
+}
+
+function nativeViewAttributes(node: NativeViewSnapshotNode): NativeSerializableObject {
+	const separator = node.className.lastIndexOf('.');
+
+	return {
+		className: node.className,
+		simpleClassName: node.className.slice(separator + 1),
+		text: node.text,
+		visible: node.visible,
+	};
+}
+
+function matchesNativeUIQuery(node: NativeUISnapshotNode, query: NativeUIQuery): boolean {
+	const className = node.attributes.className;
+	const simpleClassName = node.attributes.simpleClassName;
+
+	if (
+		query.role !== '*' &&
+		query.role !== node.role &&
+		query.role !== className &&
+		query.role !== simpleClassName
+	) {
+		return false;
+	}
+
+	for (const [key, expected] of Object.entries(query.attributes ?? {})) {
+		if (JSON.stringify(node.attributes[key]) !== JSON.stringify(expected)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function createIOSNativeUIBridge(
+	objc: NativeObjCBridge,
+	fabric: NativeFabricBridge,
+): NativeUIBridge {
+	let generation = 0;
+
+	function snapshot(query: NativeUIQuery): NativeCancelablePromise<NativeUISnapshot> {
+		if (!query.root) {
+			throw new NativePluginUnavailableError('iOS native UI queries require a root handle.');
+		}
+
+		const maxDepth = boundedNativeUICount(query.maxDepth, 8, 0, 12);
+		const maxNodes = boundedNativeUICount(query.maxNodes, 100, 1, 256);
+		const maxResults = boundedNativeUICount(query.maxResults, 128, 1, 256);
+		const currentGeneration = ++generation;
+		const captured = objc.snapshot(query.root, { maxDepth, maxNodes });
+
+		return mapCancelable(captured, (views) => ({
+			generation: currentGeneration,
+			nodes: views
+				.map((view) => {
+					const parent = view.parent >= 0 ? (views[view.parent]?.view ?? null) : null;
+
+					return {
+						id: view.view,
+						parent,
+						role: nativeViewRole(view.className),
+						frame: view.frame,
+						attributes: nativeViewAttributes(view),
+					};
+				})
+				.filter((node) => matchesNativeUIQuery(node, query))
+				.slice(0, maxResults),
+		}));
+	}
+
+	return {
+		lookup(query) {
+			return mapCancelable(snapshot(query), (result) => result.nodes.map((node) => node.id));
+		},
+		snapshot,
+		mount(container, moduleName, properties) {
+			if (!container) {
+				throw new NativePluginUnavailableError(
+					'iOS native UI mounting requires a container.',
+				);
+			}
+
+			return fabric.mountAsync(container, moduleName, properties);
+		},
+		update(surface, properties) {
+			return fabric.updateAsync(surface, properties);
+		},
+		setFrame(surface, frame) {
+			return fabric.setFrameAsync(surface, frame);
+		},
+		measure(view) {
+			return fabric.measureAsync(view);
+		},
+		unmount(surface) {
+			return fabric.unmountAsync(surface);
+		},
+	};
+}
+
 function createScopedNativePlugin(
 	capabilities: readonly NativePluginCapability[],
+	platform?: NativePluginPlatform,
 ): ScopedNativePlugin {
 	const fallbackBridge = unavailableNativePlugin();
 	const bridge = getNativePlugin() ?? fallbackBridge;
@@ -404,7 +567,12 @@ function createScopedNativePlugin(
 	const ffiBridge = bridge.ffi ?? fallbackBridge.ffi;
 	const fabricBridge = bridge.fabric ?? fallbackBridge.fabric;
 	const runtimeBridge = bridge.runtime ?? fallbackBridge.runtime;
-	const uiBridge = bridge.ui ?? fallbackBridge.ui;
+	const uiBridge =
+		platform === 'ios'
+			? createIOSNativeUIBridge(objcBridge, fabricBridge)
+			: (bridge.ui ?? fallbackBridge.ui);
+	const uiCapabilities =
+		platform === 'ios' ? iosNativeUICapabilityRequirements : nativeUICapabilityRequirements;
 	const mediaBridge = bridge.media ?? fallbackBridge.media;
 	const tokens = new Set<NativeHookToken>();
 	const surfaces = new Set<NativeFabricSurface>();
@@ -783,12 +951,12 @@ function createScopedNativePlugin(
 	const ui: NativeUIBridge = {
 		lookup: scopeAsyncMethod(
 			uiBridge.lookup?.bind(uiBridge),
-			capabilityRequirements.lookup,
+			uiCapabilities.lookup,
 			'Native UI lookup is unavailable.',
 		) as NativeUIBridge['lookup'],
 		snapshot: scopeAsyncMethod(
 			uiBridge.snapshot?.bind(uiBridge),
-			capabilityRequirements.snapshotUI,
+			uiCapabilities.snapshot,
 			'Native UI snapshots are unavailable.',
 		) as NativeUIBridge['snapshot'],
 		mount: ((container, moduleName, properties) => {
@@ -796,7 +964,7 @@ function createScopedNativePlugin(
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, capabilityRequirements.mountUI);
+			requireCapability(capabilities, uiCapabilities.mount);
 			const pending = trackInvocation(uiBridge.mount(container, moduleName, properties));
 
 			pending.then(
@@ -816,17 +984,17 @@ function createScopedNativePlugin(
 		}) as NativeUIBridge['mount'],
 		update: scopeAsyncMethod(
 			uiBridge.update?.bind(uiBridge),
-			capabilityRequirements.updateUI,
+			uiCapabilities.update,
 			'Native UI updates are unavailable.',
 		) as NativeUIBridge['update'],
 		setFrame: scopeAsyncMethod(
 			uiBridge.setFrame?.bind(uiBridge),
-			capabilityRequirements.setFrameUI,
+			uiCapabilities.setFrame,
 			'Native UI layout updates are unavailable.',
 		) as NativeUIBridge['setFrame'],
 		measure: scopeAsyncMethod(
 			uiBridge.measure?.bind(uiBridge),
-			capabilityRequirements.measureUI,
+			uiCapabilities.measure,
 			'Native UI measurement is unavailable.',
 		) as NativeUIBridge['measure'],
 		unmount: ((handle) => {
@@ -834,7 +1002,7 @@ function createScopedNativePlugin(
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, capabilityRequirements.unmountUI);
+			requireCapability(capabilities, uiCapabilities.unmount);
 			const pending = trackInvocation(uiBridge.unmount(handle));
 
 			pending.then(
@@ -1004,7 +1172,7 @@ export function createPluginContext(manifest: AddonManifest): PluginContext {
 	]);
 
 	validateNativePluginRequirements(capabilities, manifest.minNativePluginApi);
-	const scoped = createScopedNativePlugin(capabilities);
+	const scoped = createScopedNativePlugin(capabilities, platform);
 
 	return {
 		manifest,

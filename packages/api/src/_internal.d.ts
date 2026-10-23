@@ -624,7 +624,7 @@ export type NativeUIBridge = {
 	lookup(query: NativeUIQuery): NativeCancelablePromise<NativeUIHandle[]>;
 	snapshot(query: NativeUIQuery): NativeCancelablePromise<NativeUISnapshot>;
 	mount(
-		container: NativeUIHandle | null,
+		container: NativeUIHandle,
 		moduleName: string,
 		properties?: NativeSerializableObject,
 	): NativeCancelablePromise<NativeUIHandle>;
@@ -639,7 +639,7 @@ export type NativeUIBridge = {
 export type NativeUIHandle = NativeHandle;
 export type NativeUIQuery = {
 	role: string;
-	root?: NativeUIHandle;
+	root: NativeUIHandle;
 	attributes?: NativeSerializableObject;
 	maxDepth?: number;
 	maxNodes?: number;

@@ -8,6 +8,7 @@ import type {
 	NativeFFIBridge,
 	NativeObjCBridge,
 	NativeUIHandle,
+	NativeViewSnapshotNode,
 } from '@unbound-app/types';
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 
@@ -374,7 +375,7 @@ describe('native plugin capability scopes', () => {
 	test('gates semantic UI and media operations by capability', () => {
 		const context = createPluginContext({ ...manifest, capabilities: [] });
 
-		expect(() => context.native.ui.lookup({ role: 'message' })).toThrow(
+		expect(() => context.native.ui.lookup({ role: 'message', root: nativeHandle })).toThrow(
 			NativePluginCapabilityError,
 		);
 		expect(() => context.native.media.pick({ mediaTypes: ['image'] })).toThrow(
@@ -383,15 +384,127 @@ describe('native plugin capability scopes', () => {
 	});
 
 	test('unmounts semantic UI surfaces when a plugin context stops', async () => {
+		Object.assign(nativePlatformBridge.device, { platform: 'android' });
+		Object.assign(nativePlatformBridge, { platform: 'android' });
 		const context = createPluginContext({
 			...manifest,
 			capabilities: ['native.ui.mount'],
 		});
-		const handle = await context.native.ui.mount(null, 'MessagePreview', { id: 'message-1' });
+		const handle = await context.native.ui.mount(nativeHandle, 'MessagePreview', {
+			id: 'message-1',
+		});
 
 		context.dispose();
 		await Promise.resolve();
 		expect(uiUnmounted).toEqual([handle]);
+	});
+
+	test('adapts iOS snapshots and Fabric operations to the semantic UI bridge', async () => {
+		const root: NativeUIHandle = Object.create(null);
+		const textView: NativeUIHandle = Object.create(null);
+		const snapshotNodes: NativeViewSnapshotNode[] = [
+			{
+				view: root,
+				parent: -1,
+				depth: 0,
+				className: 'UIView',
+				frame: { x: 0, y: 0, width: 300, height: 200 },
+				text: null,
+				visible: true,
+			},
+			{
+				view: textView,
+				parent: 0,
+				depth: 1,
+				className: 'UILabel',
+				frame: { x: 8, y: 10, width: 100, height: 24 },
+				text: 'Ready',
+				visible: true,
+			},
+		];
+		const fabricOperations: string[] = [];
+
+		Object.assign(bridge, {
+			ui: undefined,
+			objc: {
+				...bridge.objc,
+				snapshot: () => cancellable(Promise.resolve(snapshotNodes), 'ios-snapshot'),
+			},
+			fabric: {
+				...bridge.fabric,
+				mountAsync: () => {
+					fabricOperations.push('mount');
+
+					return cancellable(Promise.resolve(nativeHandle), 'ios-mount');
+				},
+				updateAsync: () => {
+					fabricOperations.push('update');
+
+					return cancellable(Promise.resolve(), 'ios-update');
+				},
+				setFrameAsync: () => {
+					fabricOperations.push('setFrame');
+
+					return cancellable(Promise.resolve(), 'ios-setFrame');
+				},
+				measureAsync: () => {
+					fabricOperations.push('measure');
+
+					return cancellable(
+						Promise.resolve({ x: 8, y: 10, width: 100, height: 24 }),
+						'ios-measure',
+					);
+				},
+				unmountAsync: (surface: NativeFabricSurface) => {
+					fabricOperations.push('unmount');
+					asynchronouslyUnmounted.push(surface);
+
+					return cancellable(Promise.resolve(), 'ios-unmount');
+				},
+			},
+		});
+
+		const context = createPluginContext({
+			...manifest,
+			platformCapabilities: {
+				ios: ['native.objc.snapshot', 'native.fabric.async'],
+			},
+		});
+		const query = { role: 'text', root, attributes: { text: 'Ready' }, maxResults: 1 };
+		const snapshot = await context.native.ui.snapshot(query);
+
+		expect(snapshot.nodes).toEqual([
+			{
+				id: textView,
+				parent: root,
+				role: 'text',
+				frame: { x: 8, y: 10, width: 100, height: 24 },
+				attributes: {
+					className: 'UILabel',
+					simpleClassName: 'UILabel',
+					text: 'Ready',
+					visible: true,
+				},
+			},
+		]);
+		expect(await context.native.ui.lookup(query)).toEqual([textView]);
+
+		const surface = await context.native.ui.mount(root, 'MessageCard', { title: 'Test' });
+
+		await context.native.ui.update(surface, { title: 'Updated' });
+		await context.native.ui.setFrame(surface, { x: 8, y: 10, width: 100, height: 24 });
+		expect(await context.native.ui.measure(surface)).toEqual({
+			x: 8,
+			y: 10,
+			width: 100,
+			height: 24,
+		});
+
+		context.dispose();
+		await Promise.resolve();
+
+		expect(fabricOperations).toEqual(['mount', 'update', 'setFrame', 'measure', 'unmount']);
+		expect(asynchronouslyUnmounted).toEqual([nativeHandle]);
 	});
 
 	test('cancels media access operations when a plugin context stops', () => {
@@ -458,8 +571,10 @@ describe('native plugin negotiation', () => {
 			platformCapabilities: { android: ['native.ui.lookup'] },
 		});
 
-		expect(await context.native.ui.lookup({ role: 'text' })).toEqual([nativeHandle]);
-		expect(await context.native.ui.snapshot({ role: 'text' })).toEqual({
+		expect(await context.native.ui.lookup({ role: 'text', root: nativeHandle })).toEqual([
+			nativeHandle,
+		]);
+		expect(await context.native.ui.snapshot({ role: 'text', root: nativeHandle })).toEqual({
 			generation: 7,
 			nodes: [],
 		});
