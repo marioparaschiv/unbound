@@ -11,6 +11,7 @@ import { and, eq } from 'drizzle-orm';
 import { addon, addonMaintainer, addonVersion, submission, user } from '~/db/schema';
 import { LATEST_VERSION, refreshAddonSummary, toAddonSummary } from '~/lib/addons';
 import { getArtifactKeys, toAddonVersion } from '~/lib/artifacts';
+import { recordReviewDecision } from '~/lib/moderation-events';
 import type { SubmissionRow } from '~/lib/submissions';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
@@ -243,6 +244,8 @@ function decide(
 					`Submission ${row.id} was already reviewed.`,
 				);
 			}
+
+			recordReviewDecision(tx, updated);
 
 			if (!sha256) {
 				return updated;
