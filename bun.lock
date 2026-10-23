@@ -141,6 +141,7 @@
         "zustand": "^5.0.10",
       },
       "devDependencies": {
+        "@jridgewell/trace-mapping": "^0.3.31",
         "@swc/core": "^1.15.10",
         "@types/bun": "catalog:",
         "@types/react": "catalog:react",
