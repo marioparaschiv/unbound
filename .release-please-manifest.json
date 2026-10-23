@@ -1,0 +1,13 @@
+{
+	"packages/client": "0.9.0",
+	"packages/api": "0.9.0",
+	"packages/cli": "0.9.0",
+	"packages/debugger": "0.8.0",
+	"packages/debugger-protocol": "0.8.0",
+	"packages/contracts": "0.9.0",
+	"packages/types": "0.8.0",
+	"packages/utils": "0.8.4",
+	"packages/logger": "0.7.0",
+	"apps/web": "0.9.0",
+	"apps/sdk-generator": "0.8.4"
+}

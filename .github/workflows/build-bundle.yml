@@ -1,8 +1,8 @@
 name: Build Bundle
 
 # Every build is uploaded to the public bucket under `unbound/{channel}/{version}/`, served through
-# the CDN: pushes to main publish to `beta` as the commit SHA, releases (called from release.yml)
-# publish to `stable` as the release version. Versions are immutable; a version that is already
+# the CDN: pushes to main publish to `beta` as the commit SHA, client releases (called from
+# release.yml) publish to `stable` as the client version. Versions are immutable; a version that is already
 # published is skipped, never overwritten.
 #
 # Configure in the repository settings:
@@ -24,7 +24,7 @@ on:
     workflow_call:
         inputs:
             version:
-                description: The release version to publish to the stable channel.
+                description: The client release version to publish to the stable channel.
                 type: string
                 required: true
         secrets:
@@ -46,7 +46,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
               with:
-                  ref: ${{ inputs.version && format('v{0}', inputs.version) || '' }}
+                  ref: ${{ inputs.version && format('client-v{0}', inputs.version) || '' }}
                   fetch-depth: 0
                   persist-credentials: false
 
