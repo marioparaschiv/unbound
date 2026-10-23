@@ -47,6 +47,7 @@ export const envSchema = z.object({
 	ADDON_LIST_PAGE_SIZE: positiveInt.default(50),
 	DEVELOPER_LIST_PAGE_SIZE: positiveInt.default(24),
 	USER_LIST_PAGE_SIZE: positiveInt.default(25),
+	EVENT_PAGE_SIZE: positiveInt.default(100),
 
 	SYNC_MAX_INSTALLS: positiveInt.default(100),
 	SYNC_MAX_STORE_BYTES: positiveInt.default(32 * 1024),
