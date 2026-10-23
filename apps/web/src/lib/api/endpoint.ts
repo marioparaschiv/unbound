@@ -179,7 +179,7 @@ export function requireParam(params: PathParams, name: string): string {
  * @param schema The schema the segment must satisfy.
  * @returns The parsed parameter.
  */
-export function parseParam<TSchema extends z.ZodType>(
+export function parseParam<TSchema extends z.core.$ZodType>(
 	params: PathParams,
 	name: string,
 	schema: TSchema,
