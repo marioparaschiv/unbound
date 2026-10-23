@@ -1,49 +1,69 @@
 import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
-import { basename, join, relative, resolve } from 'node:path';
+import { basename, dirname, join, relative } from 'node:path';
 import { readFileSync } from 'node:fs';
 
-// Hermes prints a release frame as `address at <bundle>:<line>:<bytecode offset>`; the offset is the bundle map's column.
+// Hermes prints a release frame as `address at <source URL>:<line>:<bytecode offset>`; the offset is the bundle map's column.
 const FRAME = /address at ([^\s()]+):(\d+):(\d+)/g;
 
-/**
- * @description Rewrites each Hermes bytecode frame in a stack trace to the `src/` position it was compiled from.
- * Chains `<bundle>.map` (bytecode to `unbound.js`) with `unbound.js.map` (`unbound.js` to `src/`).
- * @param trace The stack trace, as Hermes printed it.
- * @param dir The build output holding the bundles' maps, e.g. `packages/client/dist`.
- * @returns The trace with every resolvable frame rewritten; unresolvable frames are left as printed.
- */
-export function symbolicate(trace: string, dir: string): string {
-	const maps = new Map<string, TraceMap>();
+// The loader evaluates the bundle with the source URL `unbound`; the Hermes CLI uses the file name instead.
+const SOURCE_URL = 'unbound';
 
-	function load(file: string): TraceMap {
-		let map = maps.get(file);
+// `unbound.js.map` lists its sources relative to the dist directory it was built into.
+const CLIENT_ROOT = join(import.meta.dir, '..', '..');
+const CLIENT_DIST = join(CLIENT_ROOT, 'dist');
+
+/**
+ * @description Rewrites each frame of one bytecode bundle in a Hermes stack trace to the source position it was compiled from.
+ * @param trace The stack trace, as Hermes printed it.
+ * @param bundle The bundle that threw, e.g. `dist/unbound.98.bundle`, with its `.map` and `unbound.js.map` beside it.
+ * @returns The trace with that bundle's frames rewritten to paths relative to `packages/client`; other frames are left as printed.
+ */
+export function symbolicate(trace: string, bundle: string): string {
+	const bytecode = new TraceMap(readFileSync(`${bundle}.map`, 'utf8'));
+	const chunks = new Map<string, TraceMap>();
+
+	function chunkMap(file: string): TraceMap {
+		let map = chunks.get(file);
 
 		if (!map) {
-			map = new TraceMap(readFileSync(join(dir, file), 'utf8'));
-			maps.set(file, map);
+			map = new TraceMap(readFileSync(join(dirname(bundle), `${file}.map`), 'utf8'));
+			chunks.set(file, map);
 		}
 
 		return map;
 	}
 
-	return trace.replace(FRAME, (frame, bundle: string, line: string, column: string) => {
-		const chunk = originalPositionFor(load(`${basename(bundle)}.map`), {
-			line: Number(line),
-			column: Number(column),
-		});
+	return trace.replace(FRAME, (frame, url: string, line: string, column: string) => {
+		if (url !== SOURCE_URL && basename(url) !== basename(bundle)) {
+			return frame;
+		}
 
-		if (!chunk.source) return frame;
+		const chunk = originalPositionFor(bytecode, { line: Number(line), column: Number(column) });
 
-		const original = originalPositionFor(load(`${chunk.source}.map`), chunk);
+		if (!chunk.source) {
+			return frame;
+		}
 
-		if (!original.source) return frame;
+		const original = originalPositionFor(chunkMap(chunk.source), chunk);
 
-		const source = relative(process.cwd(), resolve(dir, original.source));
+		if (!original.source) {
+			return frame;
+		}
+
+		const source = relative(CLIENT_ROOT, join(CLIENT_DIST, original.source));
 
 		return `${source}:${original.line}:${original.column + 1}`;
 	});
 }
 
 if (import.meta.main) {
-	process.stdout.write(symbolicate(await Bun.stdin.text(), process.argv[2] ?? 'dist'));
+	const bundle = process.argv[2];
+
+	if (!bundle) {
+		throw new Error(
+			'Usage: bun run symbolicate <path to unbound.<version>.bundle> < trace.txt',
+		);
+	}
+
+	process.stdout.write(symbolicate(await Bun.stdin.text(), bundle));
 }

@@ -80,7 +80,6 @@ export async function uploadBuild(
 		throw new IncompleteVersionError(prefix);
 	}
 
-	// Source maps stay private; CI keeps them as a workflow artifact for `bun run symbolicate`.
 	const files = [...new Bun.Glob('**/*').scanSync({ cwd: dir })].filter(
 		(file) => !file.endsWith('.map'),
 	);

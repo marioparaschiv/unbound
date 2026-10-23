@@ -59,7 +59,6 @@ const config: RolldownOptions = {
 			file: 'dist/unbound.js',
 			format: 'iife',
 			minify: !IS_DEV_BUILD,
-			// Kept out of the published files; `bun run symbolicate` reads it to map a release trace to `src/`.
 			sourcemap: IS_DEV_BUILD ? false : 'hidden',
 			inlineDynamicImports: true,
 		},
@@ -97,7 +96,6 @@ const config: RolldownOptions = {
 			sourceMaps: !IS_DEV_BUILD,
 		}),
 		downlevel(root),
-		// `-g0` drops line info from release bytecode; each bundle's `.map` restores it.
 		hermes({ flags: IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map'] }),
 		generateManifest(GIT_REVISION),
 		...(IS_DEV_BUILD ? [locales()] : []),
