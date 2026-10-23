@@ -1,11 +1,17 @@
 import type { Addon, AddonManifest, PluginContext } from '@unbound-app/types';
+import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
 import toError from '@unbound-app/utils/to-error';
 import { sha256 } from '@noble/hashes/sha2.js';
 import noop from '@unbound-app/utils/noop';
 
-import { validateNativePluginRequirements } from '~/api/native-runtime';
+import {
+	NativePlatform,
+	NativePluginCapabilityError,
+	NativePluginPlatformError,
+	validateNativePluginRequirements,
+} from '~/api/native-runtime';
 import { Manager, ManagerType } from '~/managers/base';
 import storage from '~/api/storage';
 import fs from '~/api/fs';
@@ -572,6 +578,44 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			throw new Error('Manifest capabilities must be an array');
 		}
 
+		if (
+			manifest.platformCapabilities !== undefined &&
+			(typeof manifest.platformCapabilities !== 'object' ||
+				manifest.platformCapabilities === null ||
+				Array.isArray(manifest.platformCapabilities))
+		) {
+			throw new Error('Manifest platformCapabilities must be an object');
+		}
+
+		for (const [platform, capabilities] of Object.entries(
+			manifest.platformCapabilities ?? {},
+		)) {
+			if (platform !== 'ios' && platform !== 'android') {
+				throw new Error(
+					`Manifest platformCapabilities has unsupported platform: ${platform}`,
+				);
+			}
+
+			if (!Array.isArray(capabilities)) {
+				throw new Error(`Manifest platformCapabilities.${platform} must be an array`);
+			}
+
+			const unsupported = capabilities.find(
+				(capability) => !NATIVE_PLUGIN_CAPABILITIES.includes(capability),
+			);
+
+			if (unsupported) {
+				throw new NativePluginCapabilityError(unsupported);
+			}
+		}
+
+		const currentPlatform = NativePlatform?.device.platform ?? NativePlatform?.platform;
+		const hasPlatformRequirements = Object.keys(manifest.platformCapabilities ?? {}).length > 0;
+
+		if (hasPlatformRequirements && currentPlatform !== 'ios' && currentPlatform !== 'android') {
+			throw new NativePluginPlatformError();
+		}
+
 		if (manifest.unbound !== undefined) {
 			if (typeof manifest.unbound !== 'object' || manifest.unbound === null) {
 				throw new Error('Manifest unbound must be an object');
@@ -582,8 +626,21 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			}
 		}
 
-		if (manifest.capabilities || manifest.minNativePluginApi) {
-			validateNativePluginRequirements(manifest.capabilities, manifest.minNativePluginApi);
+		if (
+			!manifest.capabilities &&
+			!manifest.minNativePluginApi &&
+			!manifest.platformCapabilities
+		) {
+			return;
 		}
+
+		const capabilities = [
+			...(manifest.capabilities ?? []),
+			...(currentPlatform === 'ios' || currentPlatform === 'android'
+				? (manifest.platformCapabilities?.[currentPlatform] ?? [])
+				: []),
+		];
+
+		validateNativePluginRequirements(capabilities, manifest.minNativePluginApi);
 	}
 }

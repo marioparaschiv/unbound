@@ -29,6 +29,7 @@ export type AddonManifest = {
 	path: string;
 	url: string;
 	capabilities?: NativePluginCapability[];
+	platformCapabilities?: Partial<Record<'ios' | 'android', NativePluginCapability[]>>;
 	minNativePluginApi?: string;
 	/** Requirements on the Unbound client running the addon. */
 	unbound?: {

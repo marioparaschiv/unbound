@@ -1,7 +1,20 @@
-import type { AddonManifest, NativeFabricSurface } from '@unbound-app/types';
+import type {
+	AddonManifest,
+	NativeFabricSurface,
+	NativePluginBridge,
+	NativePluginRuntimeBridge,
+	NativePlatformBridge,
+	NativeFabricBridge,
+	NativeFFIBridge,
+	NativeObjCBridge,
+	NativeUIHandle,
+} from '@unbound-app/types';
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 
-type NativePluginGlobal = typeof globalThis & { NativePlugin?: typeof bridge };
+type NativePluginGlobal = typeof globalThis & {
+	NativePlatform?: NativePlatformBridge;
+	NativePlugin?: NativePluginRuntimeBridge;
+};
 
 mock.module('react-native', () => ({
 	NativeModules: {},
@@ -14,6 +27,9 @@ const unmounted: NativeFabricSurface[] = [];
 const asynchronouslyUnmounted: NativeFabricSurface[] = [];
 const cancelled: string[] = [];
 const sizeHeightFloors: unknown[][] = [];
+const removedSubscriptions: string[] = [];
+const uiUnmounted: NativeUIHandle[] = [];
+const nativeHandle: NativeUIHandle = Object.create(null);
 const capabilities = [
 	'native.objc.classes',
 	'native.objc.invoke',
@@ -27,56 +43,61 @@ const capabilities = [
 	'native.ffi.call',
 	'native.fabric.mount',
 	'native.fabric.async',
+	'native.runtime.events',
+	'native.ui.lookup',
+	'native.ui.mount',
+	'native.ui.layout',
+	'native.media.pick',
+	'native.media.access',
 ] as const;
 
 function cancellable<T>(promise: Promise<T>, name: string) {
 	return Object.assign(promise, { cancel: () => cancelled.push(name) });
 }
 
-const bridge = {
+const bridge: NativePluginBridge = {
 	abiVersion: '1.0.0',
 	apiVersion: '1.0.0',
 	capabilities,
 	objc: {
-		alloc: () => ({ handle: true }),
+		alloc: () => nativeHandle,
 		array: () => [],
 		call: () => undefined,
 		callSuper: () => undefined,
 		className: () => 'NSObject',
-		createAssociationKey: () => ({ key: true }),
-		data: () => ({ data: true }),
+		createAssociationKey: () => nativeHandle,
+		data: () => nativeHandle,
 		getAssociatedObject: () => null,
-		getClass: () => ({ class: true }),
+		getClass: () => nativeHandle,
 		getIvar: () => null,
 		invoke: () => undefined,
 		invokeAsync: () => cancellable(new Promise(() => undefined), 'invoke'),
-		batch: (steps: unknown[]) => cancellable(Promise.resolve(steps), 'batch'),
+		batch: (steps: readonly unknown[]) => cancellable(Promise.resolve([...steps]), 'batch'),
 		snapshot: () => cancellable(Promise.resolve([]), 'snapshot'),
 		findViews: () => cancellable(Promise.resolve([]), 'findViews'),
 		invokeSuper: () => undefined,
 		invokeSuperAsync: () => cancellable(new Promise(() => undefined), 'invokeSuper'),
-		hook: (...args: string[]) => {
-			void args;
-
-			return {
-				active: true,
-				setSizeHeightFloor: (...values: unknown[]) => sizeHeightFloors.push(values),
-				removeSizeHeightFloor: (...values: unknown[]) => sizeHeightFloors.push(values),
-				remove: () => removed.push('hook'),
-			};
-		},
+		hook: () => ({
+			active: true,
+			setReturnValue: () => undefined,
+			removeReturnValue: () => undefined,
+			clearReturnValues: () => undefined,
+			setSizeHeightFloor: (...values: unknown[]) => sizeHeightFloors.push(values),
+			removeSizeHeightFloor: (...values: unknown[]) => sizeHeightFloors.push(values),
+			remove: () => removed.push('hook'),
+		}),
 		respondsTo: () => false,
 		setAssociatedObject: (...args: unknown[]) => cleared.push(args),
 		setIvar: () => undefined,
-		struct: () => ({ struct: true }),
+		struct: () => Object.assign(Object.create(null), { name: 'NSObject' }),
 	},
 	ffi: {
 		call: () => undefined,
 		symbol: () => null,
 	},
 	fabric: {
-		mount: () => ({ surface: true }),
-		mountAsync: () => cancellable(Promise.resolve({ asyncSurface: true }), 'mount'),
+		mount: () => nativeHandle,
+		mountAsync: () => cancellable(Promise.resolve(nativeHandle), 'mount'),
 		update: () => undefined,
 		updateAsync: () => cancellable(Promise.resolve(), 'update'),
 		setSize: () => undefined,
@@ -92,6 +113,45 @@ const bridge = {
 			return cancellable(Promise.resolve(), 'unmount');
 		},
 	},
+	runtime: {
+		subscribe: (event: string) => ({
+			active: true,
+			remove: () => removedSubscriptions.push(event),
+		}),
+	},
+	ui: {
+		lookup: () => cancellable(Promise.resolve([]), 'ui-lookup'),
+		snapshot: () => cancellable(Promise.resolve({ generation: 1, nodes: [] }), 'ui-snapshot'),
+		mount: () => cancellable(Promise.resolve(nativeHandle), 'ui-mount'),
+		update: () => cancellable(Promise.resolve(), 'ui-update'),
+		setFrame: () => cancellable(Promise.resolve(), 'ui-frame'),
+		measure: () =>
+			cancellable(Promise.resolve({ x: 0, y: 0, width: 0, height: 0 }), 'ui-measure'),
+		unmount: (handle: NativeUIHandle) => {
+			uiUnmounted.push(handle);
+
+			return cancellable(Promise.resolve(), 'ui-unmount');
+		},
+	},
+	media: {
+		pick: () => cancellable(Promise.resolve([]), 'media-pick'),
+		inspect: () =>
+			cancellable(
+				Promise.resolve({ uri: '', fileName: '', mimeType: '', fileSize: 0 }),
+				'media-inspect',
+			),
+		copy: () =>
+			cancellable(
+				Promise.resolve({ uri: '', fileName: '', mimeType: '', fileSize: 0 }),
+				'media-copy',
+			),
+		read: () => cancellable(Promise.resolve(new ArrayBuffer(0)), 'media-read'),
+	},
+};
+const iosSpecificBridges = {
+	objc: bridge.objc as NativeObjCBridge,
+	ffi: bridge.ffi as NativeFFIBridge,
+	fabric: bridge.fabric as NativeFabricBridge,
 };
 
 const manifest: AddonManifest = {
@@ -108,20 +168,47 @@ const manifest: AddonManifest = {
 	version: '1.0.0',
 };
 
-(globalThis as NativePluginGlobal).NativePlugin = bridge;
+const nativePlatformBridge: NativePlatformBridge = {
+	platform: 'ios',
+	evaluateBytecode: () => undefined,
+	device: {
+		platform: 'ios',
+		getDeviceModel: () => '',
+		getiOSVersionString: () => '',
+		isJailbroken: () => false,
+		isSystemApp: () => false,
+		isVerifiedBuild: () => false,
+		getEntitlements: () => ({}),
+		getEntitlementsAsPlist: () => '',
+	},
+	app: { getAppSource: () => '' },
+};
 
-const { NativePluginCapabilityError, NativePluginDisposedError, NativePluginVersionError } =
-	await import('~/api/native');
+(globalThis as NativePluginGlobal).NativePlugin = bridge;
+(globalThis as NativePluginGlobal).NativePlatform = nativePlatformBridge;
+
+const {
+	NativePluginCapabilityError,
+	NativePluginDisposedError,
+	NativePluginPlatformError,
+	NativePluginVersionError,
+} = await import('~/api/native');
 const { createPluginContext, validateNativePluginRequirements } =
 	await import('~/api/native-runtime');
 
 afterEach(() => {
+	Object.assign(bridge, { capabilities });
+	Object.assign(bridge, iosSpecificBridges);
+	Object.assign(nativePlatformBridge.device, { platform: 'ios' });
+	Object.assign(nativePlatformBridge, { platform: 'ios' });
 	removed.length = 0;
 	cleared.length = 0;
 	unmounted.length = 0;
 	asynchronouslyUnmounted.length = 0;
 	cancelled.length = 0;
 	sizeHeightFloors.length = 0;
+	removedSubscriptions.length = 0;
+	uiUnmounted.length = 0;
 });
 
 describe('native plugin capability scopes', () => {
@@ -265,9 +352,148 @@ describe('native plugin capability scopes', () => {
 		expect(asynchronouslyUnmounted).toEqual([surface]);
 		expect(cancelled).toContain('measure');
 	});
+
+	test('removes runtime subscriptions when a plugin context stops', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.runtime.events'],
+		});
+		const token = context.native.runtime.subscribe('message.created', () => undefined);
+
+		expect(token.active).toBe(true);
+		context.dispose();
+		expect(removedSubscriptions).toEqual(['message.created']);
+	});
+
+	test('gates semantic UI and media operations by capability', () => {
+		const context = createPluginContext({ ...manifest, capabilities: [] });
+
+		expect(() => context.native.ui.lookup({ role: 'message' })).toThrow(
+			NativePluginCapabilityError,
+		);
+		expect(() => context.native.media.pick({ mediaTypes: ['image'] })).toThrow(
+			NativePluginCapabilityError,
+		);
+	});
+
+	test('unmounts semantic UI surfaces when a plugin context stops', async () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.ui.mount'],
+		});
+		const handle = await context.native.ui.mount(null, 'MessagePreview', { id: 'message-1' });
+
+		context.dispose();
+		await Promise.resolve();
+		expect(uiUnmounted).toEqual([handle]);
+	});
+
+	test('cancels media access operations when a plugin context stops', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.media.pick'],
+		});
+
+		context.native.media.pick({ mediaTypes: ['image', 'video'] });
+		context.dispose();
+		expect(cancelled).toContain('media-pick');
+	});
 });
 
 describe('native plugin negotiation', () => {
+	test('supports a generic bridge without Objective-C, FFI, or Fabric namespaces', () => {
+		Object.assign(nativePlatformBridge.device, { platform: 'android' });
+		Object.assign(nativePlatformBridge, { platform: 'android' });
+		Object.assign(bridge, {
+			capabilities: ['native.runtime.events', 'native.ui.lookup', 'native.media.access'],
+			objc: undefined,
+			ffi: undefined,
+			fabric: undefined,
+		});
+
+		const context = createPluginContext({
+			...manifest,
+			platformCapabilities: { android: ['native.runtime.events'] },
+		});
+
+		expect(context.native.objc).toBeDefined();
+		expect(context.native.ffi).toBeDefined();
+		expect(context.native.fabric).toBeDefined();
+		expect(context.native.runtime).toBeDefined();
+		expect(() => context.native.objc.alloc('NSObject')).toThrow(NativePluginCapabilityError);
+		expect(() => context.native.ffi.symbol('malloc')).toThrow(NativePluginCapabilityError);
+		expect(() => context.native.fabric.mount(nativeHandle, 'TestSurface')).toThrow(
+			NativePluginCapabilityError,
+		);
+		context.dispose();
+
+		Object.assign(bridge, iosSpecificBridges);
+	});
+
+	test('selects capabilities for the current platform', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.runtime.events'],
+			platformCapabilities: {
+				ios: ['native.objc.classes'],
+				android: ['native.ui.lookup'],
+			},
+		});
+
+		expect(context.platform).toBe('ios');
+		expect(context.capabilities).toEqual(['native.runtime.events', 'native.objc.classes']);
+		context.dispose();
+
+		Object.assign(nativePlatformBridge.device, { platform: 'android' });
+		Object.assign(nativePlatformBridge, { platform: 'android' });
+		Object.assign(bridge, {
+			capabilities: ['native.runtime.events', 'native.ui.lookup'],
+		});
+		const androidContext = createPluginContext({
+			...manifest,
+			capabilities: ['native.runtime.events'],
+			platformCapabilities: {
+				ios: ['native.objc.classes'],
+				android: ['native.ui.lookup'],
+			},
+		});
+
+		expect(androidContext.platform).toBe('android');
+		expect(androidContext.capabilities).toEqual(['native.runtime.events', 'native.ui.lookup']);
+		androidContext.dispose();
+	});
+
+	test('rejects capabilities missing from the active platform bridge', () => {
+		Object.assign(nativePlatformBridge.device, { platform: 'android' });
+		Object.assign(nativePlatformBridge, { platform: 'android' });
+		Object.assign(bridge, {
+			capabilities: ['native.runtime.events', 'native.ui.lookup'],
+		});
+
+		expect(() =>
+			createPluginContext({
+				...manifest,
+				platformCapabilities: {
+					android: ['native.media.access'],
+				},
+			}),
+		).toThrow(NativePluginCapabilityError);
+	});
+
+	test('rejects platform-scoped capabilities when the host platform is unknown', () => {
+		Object.assign(nativePlatformBridge.device, { platform: 'unknown' });
+		Object.assign(nativePlatformBridge, { platform: 'unknown' });
+
+		expect(() =>
+			createPluginContext({
+				...manifest,
+				platformCapabilities: {
+					android: ['native.ui.lookup'],
+				},
+			}),
+		).toThrow(NativePluginPlatformError);
+	});
+
 	test('rejects capabilities that the bridge does not advertise', () => {
 		expect(() =>
 			validateNativePluginRequirements(['native.objc.hooks', 'native.ffi.call'], '1.0.0'),

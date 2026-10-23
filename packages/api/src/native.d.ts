@@ -20,6 +20,9 @@ export type {
 	NativeHookHandlers,
 	NativeHookOptions,
 	NativeHookToken,
+	NativeMediaAsset,
+	NativeMediaBridge,
+	NativeMediaPickerOptions,
 	NativeObjCBridge,
 	NativeObjectHandle,
 	NativePlatformBridge,
@@ -28,8 +31,17 @@ export type {
 	NativePluginError,
 	NativePluginErrorCode,
 	NativePointer,
+	NativeRuntimeBridge,
+	NativeRuntimeEventName,
+	NativeRuntimeEventToken,
+	NativeSerializableObject,
 	NativeStruct,
 	NativeThreadPolicy,
+	NativeUIBridge,
+	NativeUIHandle,
+	NativeUIQuery,
+	NativeUISnapshot,
+	NativeUISnapshotNode,
 	NativeViewSearchOptions,
 	NativeViewSnapshotNode,
 	NativeViewSnapshotOptions,
@@ -45,6 +57,10 @@ export declare class NativePluginCapabilityError extends Error {
 }
 export declare class NativePluginDisposedError extends Error {
 	readonly code = 'NATIVE_PLUGIN_SCOPE_DISPOSED';
+	constructor();
+}
+export declare class NativePluginPlatformError extends Error {
+	readonly code = 'NATIVE_PLUGIN_PLATFORM_UNSUPPORTED';
 	constructor();
 }
 export declare class NativePluginUnavailableError extends Error {

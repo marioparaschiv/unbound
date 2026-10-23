@@ -40,6 +40,12 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.ffi.call',
 	'native.fabric.mount',
 	'native.fabric.async',
+	'native.runtime.events',
+	'native.ui.lookup',
+	'native.ui.mount',
+	'native.ui.layout',
+	'native.media.pick',
+	'native.media.access',
 ];
 export type ActionSheetProps = {
 	children?: ReactModule.ReactNode;
@@ -86,6 +92,7 @@ export type AddonManifest = {
 	path: string;
 	url: string;
 	capabilities?: NativePluginCapability[];
+	platformCapabilities?: Partial<Record<'ios' | 'android', NativePluginCapability[]>>;
 	minNativePluginApi?: string;
 	/** Requirements on the Unbound client running the addon. */
 	unbound?: {
@@ -436,6 +443,25 @@ export type NativeHookToken = {
 	removeSizeHeightFloor(self: NativeObjectHandle, args: unknown[]): void;
 	remove(): void;
 };
+export type NativeMediaAsset = {
+	uri: string;
+	fileName: string;
+	mimeType: string;
+	fileSize: number;
+	width?: number;
+	height?: number;
+	duration?: number;
+};
+export type NativeMediaBridge = {
+	pick(options: NativeMediaPickerOptions): NativeCancelablePromise<NativeMediaAsset[]>;
+	inspect(uri: string): NativeCancelablePromise<NativeMediaAsset>;
+	copy(uri: string, destinationName: string): NativeCancelablePromise<NativeMediaAsset>;
+	read(uri: string, maximumBytes: number): NativeCancelablePromise<ArrayBuffer>;
+};
+export type NativeMediaPickerOptions = {
+	mediaTypes: ('image' | 'video')[];
+	maximumSelectionCount?: number;
+};
 export type NativeObjCBridge = {
 	getClass(name: string): NativeClassHandle | null;
 	alloc(classOrName: string | NativeClassHandle): NativeObjectHandle;
@@ -510,11 +536,13 @@ export type NativePlatformApp = {
 	getAppSource(): string;
 };
 export type NativePlatformBridge = {
+	readonly platform: NativePluginPlatform;
 	evaluateBytecode(bytecode: ArrayBuffer, tag?: string): unknown;
 	readonly device: NativePlatformDevice;
 	readonly app: NativePlatformApp;
 };
 export type NativePlatformDevice = {
+	readonly platform: NativePluginPlatform;
 	getDeviceModel(): string;
 	getiOSVersionString(): string;
 	isJailbroken(): boolean;
@@ -530,6 +558,9 @@ export type NativePluginBridge = {
 	readonly objc: NativeObjCBridge;
 	readonly ffi: NativeFFIBridge;
 	readonly fabric: NativeFabricBridge;
+	readonly runtime: NativeRuntimeBridge;
+	readonly ui: NativeUIBridge;
+	readonly media: NativeMediaBridge;
 };
 export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
 export type NativePluginError = {
@@ -543,7 +574,28 @@ export type NativePluginErrorCode =
 	| 'NATIVE_PLUGIN_CAPABILITY_DENIED'
 	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
 	| 'NATIVE_PLUGIN_UNAVAILABLE';
+export type NativePluginPlatform = 'ios' | 'android';
+export type NativePluginRuntimeBridge = Omit<NativePluginBridge, 'objc' | 'ffi' | 'fabric'> &
+	Partial<Pick<NativePluginBridge, 'objc' | 'ffi' | 'fabric'>>;
 export type NativePointer = NativeHandle;
+export type NativeRuntimeBridge = {
+	subscribe(
+		event: NativeRuntimeEventName,
+		listener: (payload: NativeSerializableObject) => void,
+	): NativeRuntimeEventToken;
+};
+export type NativeRuntimeEventName =
+	| 'message.created'
+	| 'message.updated'
+	| 'message.deleted'
+	| 'reaction.updated'
+	| 'channel.changed'
+	| 'composer.changed'
+	| 'ui.changed';
+export type NativeRuntimeEventToken = {
+	readonly active: boolean;
+	remove(): void;
+};
 /** A value the bridge serializes by structure, such as Fabric surface props or a plist. */
 export type NativeSerializable =
 	| string
@@ -565,6 +617,42 @@ export type NativeStructFields = {
 	[field: string]: NativeStructField;
 };
 export type NativeThreadPolicy = 'current' | 'main';
+export type NativeUIBridge = {
+	lookup(query: NativeUIQuery): NativeCancelablePromise<NativeUIHandle[]>;
+	snapshot(query: NativeUIQuery): NativeCancelablePromise<NativeUISnapshot>;
+	mount(
+		container: NativeUIHandle | null,
+		moduleName: string,
+		properties?: NativeSerializableObject,
+	): NativeCancelablePromise<NativeUIHandle>;
+	update(
+		handle: NativeUIHandle,
+		properties: NativeSerializableObject,
+	): NativeCancelablePromise<void>;
+	setFrame(handle: NativeUIHandle, frame: NativeFabricFrame): NativeCancelablePromise<void>;
+	measure(handle: NativeUIHandle): NativeCancelablePromise<NativeFabricFrame>;
+	unmount(handle: NativeUIHandle): NativeCancelablePromise<void>;
+};
+export type NativeUIHandle = NativeHandle;
+export type NativeUIQuery = {
+	role: string;
+	root?: NativeUIHandle;
+	attributes?: NativeSerializableObject;
+	maxDepth?: number;
+	maxNodes?: number;
+	maxResults?: number;
+};
+export type NativeUISnapshot = {
+	generation: number;
+	nodes: NativeUISnapshotNode[];
+};
+export type NativeUISnapshotNode = {
+	id: NativeUIHandle;
+	parent: NativeUIHandle | null;
+	role: string;
+	frame: NativeFabricFrame | null;
+	attributes: NativeSerializableObject;
+};
 export type NativeViewSearchOptions = {
 	maxDepth?: number;
 	maxVisited?: number;
@@ -602,6 +690,7 @@ export type NavigationOptions = {
 export type PluginContext = {
 	readonly manifest: AddonManifest;
 	readonly id: string;
+	readonly platform?: NativePluginPlatform;
 	readonly capabilities: readonly NativePluginCapability[];
 	readonly native: NativePluginBridge;
 	dispose(): void;
