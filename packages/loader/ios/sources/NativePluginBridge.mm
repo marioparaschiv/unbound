@@ -30,6 +30,7 @@
 #import "Logger.h"
 #import "NativeAddressValidation.h"
 #import "NativeConversionBudget.h"
+#import "NativeFFITypes.h"
 #import "NativeEvaluations.h"
 #import "NativePluginFFI.h"
 #import "NativeNumericValidation.h"
@@ -3126,129 +3127,86 @@ static Value structFields(Runtime &runtime, NSString *name, NSValue *value)
     return Value::undefined();
 }
 
-static ffi_type *ffiStructTypeLocked(const std::string &name)
+static ffi_type *libffiScalarType(loader::ffi::Kind kind)
 {
-    auto existing = gFFITypes.find(name);
+    switch (kind)
+    {
+        case loader::ffi::Kind::Void:
+            return &ffi_type_void;
+        case loader::ffi::Kind::Bool:
+        case loader::ffi::Kind::UInt8:
+            return &ffi_type_uint8;
+        case loader::ffi::Kind::Int8:
+            return &ffi_type_sint8;
+        case loader::ffi::Kind::Int16:
+            return &ffi_type_sint16;
+        case loader::ffi::Kind::UInt16:
+            return &ffi_type_uint16;
+        case loader::ffi::Kind::Int32:
+            return &ffi_type_sint32;
+        case loader::ffi::Kind::UInt32:
+            return &ffi_type_uint32;
+        case loader::ffi::Kind::Int64:
+            return &ffi_type_sint64;
+        case loader::ffi::Kind::UInt64:
+            return &ffi_type_uint64;
+        case loader::ffi::Kind::Float:
+            return &ffi_type_float;
+        case loader::ffi::Kind::Double:
+            return &ffi_type_double;
+        case loader::ffi::Kind::CString:
+        case loader::ffi::Kind::Pointer:
+        case loader::ffi::Kind::Struct:
+            return &ffi_type_pointer;
+    }
+    return &ffi_type_pointer;
+}
+
+static ffi_type *ffiStructTypeLocked(const loader::ffi::StructLayout *layout)
+{
+    auto existing = gFFITypes.find(layout->name);
     if (existing != gFFITypes.end())
     {
         return &existing->second->type;
     }
 
     auto definition = std::make_shared<FFITypeDefinition>();
-    if (name == "NSRange")
+    for (const loader::ffi::StructField &field : layout->fields)
     {
-        definition->elements = {&ffi_type_uint64, &ffi_type_uint64, nullptr};
+        definition->elements.push_back(field.type.kind == loader::ffi::Kind::Struct
+                                           ? ffiStructTypeLocked(field.type.layout)
+                                           : libffiScalarType(field.type.kind));
     }
-    else if (name == "CGPoint" || name == "CGSize")
-    {
-        definition->elements = {&ffi_type_double, &ffi_type_double, nullptr};
-    }
-    else if (name == "CGRect")
-    {
-        ffi_type *point = ffiStructTypeLocked("CGPoint");
-        ffi_type *size = ffiStructTypeLocked("CGSize");
-        definition->elements = {point, size, nullptr};
-    }
-    else if (name == "UIEdgeInsets")
-    {
-        definition->elements = {
-            &ffi_type_double,
-            &ffi_type_double,
-            &ffi_type_double,
-            &ffi_type_double,
-            nullptr,
-        };
-    }
-    else if (name == "CGAffineTransform")
-    {
-        definition->elements = {
-            &ffi_type_double,
-            &ffi_type_double,
-            &ffi_type_double,
-            &ffi_type_double,
-            &ffi_type_double,
-            &ffi_type_double,
-            nullptr,
-        };
-    }
-    else
-    {
-        return nullptr;
-    }
-
-    definition->type.type = FFI_TYPE_STRUCT;
+    definition->elements.push_back(nullptr);
+    definition->type.type     = FFI_TYPE_STRUCT;
     definition->type.elements = definition->elements.data();
-    gFFITypes[name] = definition;
+    gFFITypes[layout->name]   = definition;
     return &definition->type;
-}
-
-static ffi_type *ffiStructType(const std::string &name)
-{
-    std::lock_guard<std::mutex> lock(gFFIMutex);
-    return ffiStructTypeLocked(name);
 }
 
 static FFITypeSpec ffiType(Runtime &runtime, const std::string &name)
 {
-    if (name == "void")
-    {
-        return {name, &ffi_type_void};
-    }
-    if (name == "bool" || name == "i8")
-    {
-        return {name, &ffi_type_sint8};
-    }
-    if (name == "u8")
-    {
-        return {name, &ffi_type_uint8};
-    }
-    if (name == "i16")
-    {
-        return {name, &ffi_type_sint16};
-    }
-    if (name == "u16")
-    {
-        return {name, &ffi_type_uint16};
-    }
-    if (name == "i32")
-    {
-        return {name, &ffi_type_sint32};
-    }
-    if (name == "u32")
-    {
-        return {name, &ffi_type_uint32};
-    }
-    if (name == "i64")
-    {
-        return {name, &ffi_type_sint64};
-    }
-    if (name == "u64")
-    {
-        return {name, &ffi_type_uint64};
-    }
-    if (name == "float")
-    {
-        return {name, &ffi_type_float};
-    }
-    if (name == "double")
-    {
-        return {name, &ffi_type_double};
-    }
-    if (name == "cstring" || name == "pointer" || name == "object" || name == "class" ||
-        name == "selector")
+    if (name == "object" || name == "class" || name == "selector")
     {
         return {name, &ffi_type_pointer};
     }
-    if (name.rfind("struct:", 0) == 0)
+
+    std::optional<loader::ffi::Type> type = loader::ffi::parseType(name);
+    if (!type)
     {
-        std::string structName = name.substr(7);
-        if (ffi_type *type = ffiStructType(structName))
-        {
-            return {name, type};
-        }
+        throw JSError(runtime, "Unsupported native FFI type");
+    }
+    if (type->kind != loader::ffi::Kind::Struct)
+    {
+        return {name, libffiScalarType(type->kind)};
+    }
+    if (!structEncoding(type->layout->name))
+    {
+        throw JSError(runtime, "Unsupported native FFI type");
     }
 
-    throw JSError(runtime, "Unsupported native FFI type");
+    std::lock_guard<std::mutex> lock(gFFIMutex);
+    return {name, ffiStructTypeLocked(type->layout)};
 }
 
 static std::string ffiCifKey(const FFITypeSpec &result, const std::vector<FFITypeSpec> &arguments)
