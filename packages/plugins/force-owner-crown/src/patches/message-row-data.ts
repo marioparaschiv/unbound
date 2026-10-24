@@ -1,5 +1,6 @@
+import { androidResourceUri } from '@unbound-plugins/shared/assets/android-resource';
 import { assets } from '@unbound-app/api';
-import { Image } from 'react-native';
+import { Image, Platform } from 'react-native';
 
 import { AssetUris, GuildStore, MessageRowData, Patcher } from '~/modules';
 
@@ -20,6 +21,10 @@ function getCrownSource(): string | number | undefined {
 	const id = assets.getIDByName('ic_crown_16px');
 
 	if (id === undefined) return;
+
+	const asset = assets.getByID(id);
+
+	if (Platform.OS === 'android' && asset?.httpServerLocation) return androidResourceUri(asset);
 
 	// Discord's embed URI stays valid where the native asset's may not.
 	return AssetUris.getAssetUriForEmbed?.(id) || Image.resolveAssetSource(id)?.uri || id;
