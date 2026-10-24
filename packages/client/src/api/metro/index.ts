@@ -289,7 +289,8 @@ export const off = removeListener;
 export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = {}) {
 	const existing = find(filter, options);
 
-	if (existing !== void 0) {
+	// `find` reports a miss as `null`.
+	if (existing !== null && existing !== void 0) {
 		return existing;
 	}
 
@@ -311,6 +312,13 @@ export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = 
 		}
 
 		function callback(mdl, id) {
+			// A raw filter, such as `byFilePath`, reads the module record, as `find` does.
+			if (filter.isRaw) {
+				const record = window.modules.get(id);
+
+				return record && filter(record, id) ? settle(mdl) : void 0;
+			}
+
 			if (filter(mdl, id)) {
 				return settle(mdl);
 			}
@@ -713,6 +721,12 @@ function searchWithOptions(
 	if (options.lazy) {
 		let cache;
 
+		function resolve() {
+			cache ??= searchWithOptions(args, Object.assign(options, { lazy: false }), filter);
+
+			return cache;
+		}
+
 		return new Proxy(
 			{
 				__METRO_LAZY__: true,
@@ -724,11 +738,7 @@ function searchWithOptions(
 				get(_, prop) {
 					if (!prop || typeof prop !== 'string') return;
 
-					cache ??= searchWithOptions(
-						args,
-						Object.assign(options, { lazy: false }),
-						filter,
-					);
+					resolve();
 
 					if (prop === 'module') {
 						return cache;
@@ -737,17 +747,17 @@ function searchWithOptions(
 					return cache?.[prop];
 				},
 				set(_, prop, value) {
-					cache ??= searchWithOptions(
-						args,
-						Object.assign(options, { lazy: false }),
-						filter,
-					);
-
-					return Object.defineProperty(cache ?? {}, prop, {
+					return Object.defineProperty(resolve() ?? {}, prop, {
 						value,
 						writable: true,
 						configurable: true,
 					});
+				},
+				// The patcher installs its wrapper with `Object.defineProperty`, which must reach the real module.
+				defineProperty(_, prop, descriptor) {
+					const module = resolve();
+
+					return Boolean(module) && Reflect.defineProperty(module, prop, descriptor);
 				},
 			},
 		);

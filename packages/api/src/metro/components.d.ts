@@ -14,7 +14,11 @@ import {
 	ViewProps,
 	ViewStyle,
 } from 'react-native';
+export declare const AvatarPiles: any;
+export declare const Avatars: any;
 export declare const BackdropFilters: any;
+export declare const BottomSheets: any;
+export declare const DefaultAvatars: any;
 export declare const Discord: DesignModule;
 export declare const FlashList: any;
 export declare const Forms: any;

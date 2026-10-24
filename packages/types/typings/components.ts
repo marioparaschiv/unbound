@@ -560,6 +560,7 @@ export type AlertActionButtonProps = {
 
 export type ActionSheetProps = {
 	children?: ReactNode;
+	startExpanded?: boolean;
 };
 
 export type ActionSheetRowProps = {

@@ -30,7 +30,11 @@
 		],
 		"oxc-config/consistent-import-paths": [
 			"error",
-			{ "alias": "~/", "aliasRoots": ["packages/*/src", "apps/*/src"] }
+			{
+				"alias": "~/",
+				"aliasRoots": ["packages/*/src", "apps/*/src"],
+				"relativeRoots": ["packages/plugins-shared/src"]
+			}
 		]
 	},
 	"ignorePatterns": [

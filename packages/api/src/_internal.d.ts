@@ -49,6 +49,7 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 ];
 export type ActionSheetProps = {
 	children?: ReactModule.ReactNode;
+	startExpanded?: boolean;
 };
 export type ActionSheetRowProps = {
 	label: ReactModule.ReactNode;
