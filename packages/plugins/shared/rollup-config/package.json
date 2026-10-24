@@ -1,0 +1,14 @@
+{
+	"name": "@unbound-plugins/rollup-config",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"exports": "./index.mjs",
+	"dependencies": {
+		"@rollup/plugin-commonjs": "^29.0.3",
+		"@rollup/plugin-json": "^6.1.0",
+		"@rollup/plugin-node-resolve": "^16.0.3",
+		"rollup-plugin-iife": "^0.8.0",
+		"rollup-plugin-swc3": "^0.12.1"
+	}
+}

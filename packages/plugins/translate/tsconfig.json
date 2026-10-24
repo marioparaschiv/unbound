@@ -1,7 +1,10 @@
 {
 	"extends": "../tsconfig.json",
 	"compilerOptions": {
-		"ignoreDeprecations": "5.0"
+		"types": ["bun"],
+		"paths": {
+			"~/*": ["./src/*"]
+		}
 	},
-	"include": ["src"]
+	"include": ["src/**/*"]
 }

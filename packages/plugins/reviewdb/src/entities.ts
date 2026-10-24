@@ -11,69 +11,37 @@ export enum ReviewType {
 	System = 3,
 }
 
-export enum NotificationType {
-	Info = 0,
-	Ban = 1,
-	Unban = 2,
-	Warning = 3,
-}
-
-export interface Badge {
-	name: string;
-	description: string;
-	icon: string;
-	redirectURL?: string;
-	type: number;
-}
-
-export interface BanInfo {
-	id: string;
-	discordID: string;
-	reviewID: number;
-	reviewContent: string;
-	banEndDate: number;
-}
-
-export interface Notification {
-	id: number;
-	title: string;
-	content: string;
-	type: NotificationType;
-}
-
-export interface ReviewDBUser {
-	ID: number;
+export type ReviewDBUser = {
 	discordID: string;
 	username: string;
-	type: UserType;
 	profilePhoto: string;
-	badges: Badge[];
-}
+	type: UserType;
+};
 
-export interface ReviewDBCurrentUser extends ReviewDBUser {
-	warningCount: number;
-	clientMod: string;
-	banInfo: BanInfo | null;
-	notification: Notification | null;
+export type ReviewDBCurrentUser = ReviewDBUser & {
 	lastReviewID: number;
 	blockedUsers?: string[];
-}
+};
 
-export interface ReviewAuthor {
+export type Review = {
 	id: number;
-	discordID: string;
-	username: string;
-	profilePhoto: string;
-	badges: Badge[];
-}
-
-export interface Review {
-	comment: string;
-	id: number;
+	comment: string | null;
 	score?: number;
-	star: number;
-	sender: ReviewAuthor;
+	sender: Omit<ReviewDBUser, 'type'>;
 	timestamp: number;
 	type?: ReviewType;
+	/** `true` for the viewer's upvote, `false` for a downvote, `null` for no vote. */
 	userVote?: boolean | null;
-}
+};
+
+export type ReviewVote = {
+	reviewID: number;
+	isUpvote: boolean;
+};
+
+export type UserReviewsData = {
+	message: string;
+	reviews: Review[];
+	hasNextPage: boolean;
+	reviewCount: number;
+};

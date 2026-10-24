@@ -16,7 +16,7 @@
 		"@unbound-app/api": "workspace:*",
 		"@unbound-app/cli": "workspace:*",
 		"@unbound-app/types": "workspace:*",
-		"@unbound-plugins/rollup-path-aliases": "workspace:*",
+		"@unbound-plugins/rollup-config": "workspace:*",
 		"react": "catalog:react"
 	}
 }

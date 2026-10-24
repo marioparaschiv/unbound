@@ -1,52 +1,64 @@
+import type { ReviewDBCurrentUser, ReviewDBUser, ReviewVote, UserReviewsData } from '~/entities';
 import { toasts } from '@unbound-app/api';
 
-import { getCurrentUser, getToken, setCurrentUser } from '@reviewdb/auth';
-import type { Review, ReviewDBCurrentUser, ReviewDBUser } from '@reviewdb/entities';
+import { API_URL } from '~/constants';
+import { withVotes } from '~/votes';
+import { settings } from '~/modules';
 
-export const API_URL = 'https://manti.vendicated.dev/api/reviewdb';
-export const REVIEWS_PER_PAGE = 50;
+type Body = Record<string, string | number | boolean>;
 
-export interface UserReviewsData {
-	message: string;
-	reviews: Review[];
-	updated: boolean;
-	hasNextPage: boolean;
-	reviewCount: number;
-	hasOptedOut: boolean;
-}
-
-export interface ReviewVote {
-	reviewID: number;
-	isUpvote: boolean;
-}
-
-interface ReviewVotesData {
+type MessageResponse = {
 	message?: string;
+};
+
+type VotesResponse = {
 	votes: ReviewVote[];
+};
+
+let currentUser: ReviewDBCurrentUser | null = null;
+
+function getToken(): string {
+	return settings.get('token', '');
 }
 
-function showToast(content: string): void {
+function showToast(content: string) {
 	toasts.showToast({ title: 'ReviewDB', content });
 }
 
-async function rdbRequest<T = unknown>(path: string, options: RequestInit = {}): Promise<T | null> {
+/**
+ * @description Returns the signed-in ReviewDB account, once `fetchCurrentUser` has fetched it.
+ * @returns The account, or `null` before sign-in or the first fetch.
+ */
+export function getCurrentUser(): ReviewDBCurrentUser | null {
+	return currentUser;
+}
+
+// Resolves to the parsed body, or `null` after toasting a network or server failure.
+async function request<T>(path: string, method: string = 'GET', body?: Body): Promise<T | null> {
 	const headers: Record<string, string> = {
 		Accept: 'application/json',
 		Authorization: getToken(),
-		...(options.headers as Record<string, string> | undefined),
 	};
 
-	if (options.body) headers['Content-Type'] = 'application/json';
+	if (body) {
+		headers['Content-Type'] = 'application/json';
+	}
 
 	let response: Response;
+
 	try {
-		response = await fetch(`${API_URL}${path}`, { ...options, headers });
+		response = await fetch(`${API_URL}${path}`, {
+			method,
+			headers,
+			body: body && JSON.stringify(body),
+		});
 	} catch {
 		showToast('Network error: Failed to connect to ReviewDB.');
+
 		return null;
 	}
 
-	const data = await response.json().catch(() => null);
+	const data = (await response.json().catch(() => null)) as (T & MessageResponse) | null;
 
 	if (!response.ok) {
 		showToast(
@@ -54,174 +66,196 @@ async function rdbRequest<T = unknown>(path: string, options: RequestInit = {}):
 				? data.message
 				: `ReviewDB: Request failed with status ${response.status}`,
 		);
+
 		return null;
 	}
-
-	return data as T;
-}
-
-export async function getReviews(
-	id: string,
-	{
-		limit,
-		offset = 0,
-		fetchVotes = false,
-	}: { limit?: number; offset?: number; fetchVotes?: boolean } = {},
-): Promise<UserReviewsData> {
-	const params = new URLSearchParams();
-	if (offset) params.append('offset', String(offset));
-	if (limit) params.append('limit', String(limit));
-
-	const votesPromise = fetchVotes
-		? getReviewVotes(id).catch(() => [] as ReviewVote[])
-		: Promise.resolve([] as ReviewVote[]);
-
-	let response: Response;
-	try {
-		response = await fetch(`${API_URL}/users/${id}/reviews?${params}`);
-	} catch {
-		showToast('Network error: Failed to connect to ReviewDB.');
-		return {
-			message: 'Network error.',
-			reviews: [],
-			updated: false,
-			hasNextPage: false,
-			reviewCount: 0,
-			hasOptedOut: false,
-		};
-	}
-
-	if (!response.ok) {
-		const message =
-			response.status === 429
-				? 'You are sending requests too fast. Wait a few seconds and try again.'
-				: 'An error occurred while fetching reviews. Please try again later.';
-		showToast(message);
-		return {
-			message,
-			reviews: [],
-			updated: false,
-			hasNextPage: false,
-			reviewCount: 0,
-			hasOptedOut: false,
-		};
-	}
-
-	const data = (await response.json()) as UserReviewsData;
-	if (!fetchVotes || data.reviews.length === 0) return data;
-
-	const votes = await votesPromise;
-	if (votes.length === 0) return data;
-
-	const voteByReviewId = new Map(votes.map((vote) => [vote.reviewID, vote.isUpvote]));
-	data.reviews = data.reviews.map((review) => ({
-		...review,
-		userVote: voteByReviewId.get(review.id) ?? null,
-	}));
 
 	return data;
 }
 
-export async function getReviewVotes(id: string): Promise<ReviewVote[]> {
+function noReviews(): UserReviewsData {
+	return { message: '', reviews: [], hasNextPage: false, reviewCount: 0 };
+}
+
+async function getReviewVotes(userId: string): Promise<ReviewVote[]> {
 	if (!getToken()) return [];
-	const data = await rdbRequest<ReviewVotesData>(`/users/${id}/reviews/votes`);
+
+	const data = await request<VotesResponse>(`/users/${userId}/reviews/votes`);
+
 	return data?.votes ?? [];
 }
 
-export async function addReview(review: {
-	userid: string;
-	comment: string;
-}): Promise<UserReviewsData | null> {
+/**
+ * @description Fetches a page of reviews on a profile, marked with the viewer's votes.
+ * @param userId The Discord ID of the profile.
+ * @param offset How many reviews to skip.
+ * @returns The page, or an empty page after toasting the failure.
+ */
+export async function getReviews(userId: string, offset: number): Promise<UserReviewsData> {
+	const votes = getReviewVotes(userId);
+	const params = new URLSearchParams();
+
+	if (offset) {
+		params.append('offset', String(offset));
+	}
+
+	params.append('limit', '50');
+
+	let response: Response;
+
+	try {
+		response = await fetch(`${API_URL}/users/${userId}/reviews?${params.toString()}`);
+	} catch {
+		showToast('Network error: Failed to connect to ReviewDB.');
+
+		return noReviews();
+	}
+
+	if (!response.ok) {
+		showToast(
+			response.status === 429
+				? 'You are sending requests too fast. Wait a few seconds and try again.'
+				: 'An error occurred while fetching reviews. Please try again later.',
+		);
+
+		return noReviews();
+	}
+
+	const data = (await response.json()) as UserReviewsData;
+
+	return { ...data, reviews: withVotes(data.reviews, await votes) };
+}
+
+/**
+ * @description Posts the viewer's review on a profile, replacing their earlier one.
+ * @param userId The Discord ID of the profile.
+ * @param comment The review text.
+ * @returns The server's response, or `null` when the review was not posted.
+ */
+export async function addReview(userId: string, comment: string): Promise<UserReviewsData | null> {
 	if (!getToken()) {
 		showToast('Please authorize to add a review.');
+
 		return null;
 	}
 
-	const data = await rdbRequest<UserReviewsData>(`/users/${review.userid}/reviews`, {
-		method: 'PUT',
-		body: JSON.stringify(review),
+	const data = await request<UserReviewsData>(`/users/${userId}/reviews`, 'PUT', {
+		userid: userId,
+		comment,
 	});
 
-	if (data?.message) showToast(data.message);
+	if (data?.message) {
+		showToast(data.message);
+	}
+
 	return data;
 }
 
-export async function deleteReview(id: number): Promise<UserReviewsData | null> {
-	const data = await rdbRequest<UserReviewsData>(`/users/${id}/reviews`, {
-		method: 'DELETE',
-		body: JSON.stringify({ reviewid: id }),
+/**
+ * @description Deletes a review.
+ * @param reviewId The review's ID.
+ * @returns The server's response, or `null` when the review was not deleted.
+ */
+export async function deleteReview(reviewId: number): Promise<UserReviewsData | null> {
+	const data = await request<UserReviewsData>(`/users/${reviewId}/reviews`, 'DELETE', {
+		reviewid: reviewId,
 	});
 
-	if (data?.message) showToast(data.message);
+	if (data?.message) {
+		showToast(data.message);
+	}
+
 	return data;
 }
 
-export async function reportReview(id: number): Promise<void> {
-	const data = await rdbRequest<{ message?: string }>('/reports', {
-		method: 'PUT',
-		body: JSON.stringify({ reviewid: id }),
-	});
+/**
+ * @description Reports a review to ReviewDB's moderators.
+ * @param reviewId The review's ID.
+ */
+export async function reportReview(reviewId: number): Promise<void> {
+	const data = await request<MessageResponse>('/reports', 'PUT', { reviewid: reviewId });
 
-	if (data?.message) showToast(data.message);
+	if (data?.message) {
+		showToast(data.message);
+	}
 }
 
-export async function voteReview(id: number, isUpvote: boolean): Promise<boolean> {
+/**
+ * @description Sets or clears the viewer's vote on a review.
+ * @param reviewId The review's ID.
+ * @param vote `true` to upvote, `false` to downvote, `null` to remove the vote.
+ * @returns Whether ReviewDB accepted the change.
+ */
+export async function setReviewVote(reviewId: number, vote: boolean | null): Promise<boolean> {
 	if (!getToken()) {
 		showToast('Please authorize to vote on reviews.');
+
 		return false;
 	}
 
-	const data = await rdbRequest<{ message?: string }>(`/reviews/${id}/vote`, {
-		method: 'POST',
-		body: JSON.stringify({ isUpvote }),
-	});
+	const data =
+		vote === null
+			? await request(`/reviews/${reviewId}/vote`, 'DELETE')
+			: await request(`/reviews/${reviewId}/vote`, 'POST', { isUpvote: vote });
 
 	return data != null;
 }
 
-export async function deleteReviewVote(id: number): Promise<boolean> {
-	if (!getToken()) {
-		showToast('Please authorize to vote on reviews.');
-		return false;
-	}
-
-	const data = await rdbRequest<{ message?: string }>(`/reviews/${id}/vote`, {
-		method: 'DELETE',
-	});
-	return data != null;
-}
-
-async function patchBlock(action: 'block' | 'unblock', userId: string): Promise<void> {
-	const data = await rdbRequest('/blocks', {
-		method: 'PATCH',
-		body: JSON.stringify({ action, discordId: userId }),
-	});
+/**
+ * @description Blocks or unblocks a user from reviewing the viewer's profile.
+ * @param userId The Discord ID of the user.
+ * @param blocked Whether to block or unblock them.
+ */
+export async function setUserBlocked(userId: string, blocked: boolean): Promise<void> {
+	const action = blocked ? 'block' : 'unblock';
+	const data = await request('/blocks', 'PATCH', { action, discordId: userId });
 
 	if (!data) return;
 
 	showToast(`Successfully ${action}ed user`);
 
-	const user = getCurrentUser();
-	if (user?.blockedUsers) {
-		const blockedUsers =
-			action === 'block'
-				? [...user.blockedUsers, userId]
-				: user.blockedUsers.filter((id) => id !== userId);
-		setCurrentUser({ ...user, blockedUsers });
+	if (!currentUser?.blockedUsers) return;
+
+	currentUser = {
+		...currentUser,
+		blockedUsers: blocked
+			? [...currentUser.blockedUsers, userId]
+			: currentUser.blockedUsers.filter((id) => id !== userId),
+	};
+}
+
+/**
+ * @description Fetches the users the viewer has blocked from reviewing their profile.
+ * @returns The blocked users, or an empty list on failure.
+ */
+export async function getBlockedUsers(): Promise<ReviewDBUser[]> {
+	return (await request<ReviewDBUser[]>('/blocks')) ?? [];
+}
+
+/**
+ * @description Fetches the signed-in ReviewDB account and caches it for the session.
+ * @returns The account, or `null` when the user has not authorized or the request failed.
+ */
+export async function fetchCurrentUser(): Promise<ReviewDBCurrentUser | null> {
+	if (!getToken()) return null;
+
+	const user = await request<ReviewDBCurrentUser>('/users', 'POST');
+
+	if (user) {
+		currentUser = user;
 	}
+
+	return user;
 }
 
-export const blockUser = (userId: string): Promise<void> => patchBlock('block', userId);
-export const unblockUser = (userId: string): Promise<void> => patchBlock('unblock', userId);
-
-export async function fetchBlocks(): Promise<ReviewDBUser[]> {
-	return (await rdbRequest<ReviewDBUser[]>('/blocks')) ?? [];
-}
-
-export function getCurrentUserInfo(): Promise<ReviewDBCurrentUser | null> {
-	return rdbRequest<ReviewDBCurrentUser>('/users', { method: 'POST' });
-}
-
-export async function readNotification(id: number): Promise<void> {
-	await rdbRequest(`/notifications?id=${id}`, { method: 'PATCH' });
-}
+export default {
+	getCurrentUser,
+	getReviews,
+	addReview,
+	deleteReview,
+	reportReview,
+	setReviewVote,
+	setUserBlocked,
+	getBlockedUsers,
+	fetchCurrentUser,
+};

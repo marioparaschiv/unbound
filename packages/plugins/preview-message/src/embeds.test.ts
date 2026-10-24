@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { extractUrls, normalizeDiscordEmbed, parseOpenGraph } from '@preview-message/embeds';
+import { extractUrls, normalizeDiscordEmbed, parseOpenGraph } from '~/embeds';
 
 test('extracts unique links and removes sentence punctuation', () => {
 	expect(extractUrls('See https://example.com/a, then https://example.com/a.')).toEqual([

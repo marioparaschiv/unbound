@@ -1,5 +1,4 @@
-const MESSAGE_LINK_REGEX =
-	/https?:\/\/(?:\w+\.)?discord(?:app)?\.com\/channels\/(?:(?:\d{17,20}|@me)\/)?(\d{17,20})\/(\d{17,20})/g;
+import { MESSAGE_LINK_PATTERN } from '~/constants';
 
 export type LinkTarget = {
 	channelId: string;
@@ -11,63 +10,100 @@ export type TextRange = {
 	length: number;
 };
 
-export function nativeUsernameColor(value: unknown): number | undefined {
-	if (typeof value !== 'string') return;
-	const match = /^#?([0-9a-f]{6})$/i.exec(value.trim());
-	if (!match) return;
-	return Number.parseInt(`ff${match[1]}`, 16);
-}
-
 type MessageLike = {
 	content?: unknown;
 };
 
+/**
+ * @description Builds the key that identifies a linked message across channels.
+ * @param target The linked message.
+ * @returns `channelId:messageId`.
+ */
+export function targetKey({ channelId, messageId }: LinkTarget): string {
+	return `${channelId}:${messageId}`;
+}
+
+/**
+ * @description Converts a Discord role color string into the ARGB number React Native's native text expects.
+ * @param value The `#rrggbb` color string.
+ * @returns The opaque color, or `undefined` for anything that is not six hex digits.
+ */
+export function nativeUsernameColor(value: unknown): number | undefined {
+	if (typeof value !== 'string') return;
+
+	const match = /^#?([0-9a-f]{6})$/i.exec(value.trim());
+
+	if (!match) return;
+
+	return Number.parseInt(`ff${match[1]}`, 16);
+}
+
+/**
+ * @description Flattens message content, plain or parsed into rich nodes, into its text.
+ * @param value The content string or node tree.
+ * @returns The concatenated text, including link targets of link nodes.
+ */
 export function contentText(value: unknown): string {
 	if (typeof value === 'string') return value;
 	if (Array.isArray(value)) return value.map(contentText).join('');
 	if (!value || typeof value !== 'object') return '';
 
-	const record = value as Record<string, unknown>;
-	return `${contentText(record.content)}${typeof record.originalLink === 'string' ? record.originalLink : ''}${typeof record.text === 'string' ? record.text : ''}`;
+	const node = value as { content?: unknown; originalLink?: unknown; text?: unknown };
+	const link = typeof node.originalLink === 'string' ? node.originalLink : '';
+	const text = typeof node.text === 'string' ? node.text : '';
+
+	return `${contentText(node.content)}${link}${text}`;
 }
 
+/**
+ * @description Finds every distinct Discord message link in a message.
+ * @param message The message to scan.
+ * @returns The linked messages, in order of first appearance.
+ */
 export function linkedTargets(message: MessageLike): LinkTarget[] {
-	const text = contentText(message.content);
-	if (!text) return [];
+	const targets = new Map<string, LinkTarget>();
 
-	const targets: LinkTarget[] = [];
-	for (const match of text.matchAll(MESSAGE_LINK_REGEX)) {
-		const target = { channelId: match[1], messageId: match[2] };
-		if (!target.channelId || !target.messageId) continue;
-		if (
-			!targets.some(
-				(item) =>
-					item.channelId === target.channelId && item.messageId === target.messageId,
-			)
-		)
-			targets.push(target);
+	for (const [, channelId, messageId] of contentText(message.content).matchAll(
+		MESSAGE_LINK_PATTERN,
+	)) {
+		const target = { channelId, messageId };
+
+		if (!targets.has(targetKey(target))) targets.set(targetKey(target), target);
 	}
-	return targets;
+
+	return [...targets.values()];
 }
 
+/**
+ * @description Locates the rendered channel mention of a message link inside a label's text.
+ * @param text The label's plain text.
+ * @param channelName The name of the linked message's channel.
+ * @returns The range of the mention, including its attachment and bidi markers, or `undefined`.
+ */
 export function findRenderedLinkRange(text: string, channelName: string): TextRange | undefined {
 	if (!channelName) return;
+
 	let searchFrom = 0;
+
 	while (searchFrom < text.length) {
 		const location = text.indexOf(channelName, searchFrom);
+
 		if (location === -1) return;
+
 		let start = location;
 		let end = location + channelName.length;
+
 		while (start > 0 && '\uFFFC\u2068'.includes(text[start - 1])) start--;
 		while (end < text.length && '\uFFFC\u2068\u2069'.includes(text[end])) end++;
-		const renderedLink = text.slice(start, end);
+
 		if (
-			renderedLink.includes('\uFFFC') &&
+			text.slice(start, end).includes('\uFFFC') &&
 			start < location &&
 			end > location + channelName.length
 		) {
 			return { location: start, length: end - start };
 		}
+
 		searchFrom = location + channelName.length;
 	}
 }

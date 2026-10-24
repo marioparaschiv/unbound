@@ -20,7 +20,8 @@
 			"packages/client/scripts/dev",
 			"packages/plugins",
 			"packages/plugins/*",
-			"packages/plugins/shared/*"
+			"packages/plugins/shared/*",
+			"packages/plugins-shared"
 		],
 		"catalog": {
 			"typescript": "^5.9.3",
@@ -48,7 +49,7 @@
 		"fmt": "oxfmt --config .oxfmtrc.json apps packages",
 		"fmt:check": "oxfmt --config .oxfmtrc.json --check apps packages",
 		"plugins:validate": "bun packages/plugins/scripts/validate-plugins.ts",
-		"plugins:test": "bun test --isolate packages/plugins",
+		"plugins:test": "bun test --isolate packages/plugins packages/plugins-shared",
 		"plugins:lint": "bun run --filter @unbound-app/plugins lint",
 		"plugins:build": "cd packages/plugins && bun run build",
 		"plugins:catalog": "bun packages/plugins/scripts/generate-plugins-readme.ts",

@@ -5,17 +5,18 @@
 	"description": "Translate messages.",
 	"type": "module",
 	"scripts": {
-		"build": "rollup -c"
+		"build": "rollup -c",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@unbound-plugins/shared": "workspace:*"
 	},
 	"devDependencies": {
-		"@rollup/plugin-alias": "^6.0.0",
-		"@rollup/plugin-json": "^6.1.0",
-		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@types/bun": "latest",
 		"@types/react": "^19.2.7",
 		"@unbound-app/api": "workspace:*",
+		"@unbound-plugins/rollup-config": "workspace:*",
 		"react-native": "^0.83.0",
-		"rollup": "^4.62.2",
-		"rollup-plugin-iife": "^0.8.0",
-		"rollup-plugin-swc3": "^0.12.1"
+		"rollup": "^4.62.2"
 	}
 }

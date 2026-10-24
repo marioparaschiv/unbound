@@ -26,5 +26,5 @@
 	],
 	"version": "1.0.0",
 	"icon": "ChevronLargeRightIcon",
-	"main": "index.tsx"
+	"main": "index.ts"
 }

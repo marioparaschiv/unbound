@@ -14,5 +14,5 @@
 	],
 	"version": "1.0.0",
 	"icon": "StickerIcon",
-	"main": "index.tsx"
+	"main": "index.ts"
 }

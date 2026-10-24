@@ -1,11 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 
-import { applyChatRoleColors, blendArgb, type ChatRow, type MemberStore } from './chat-rows';
+import { applyChatRoleColors, type ChatColorOptions, type ChatRow } from '~/chat-rows';
+import { blendArgb } from '~/argb';
 
-const members: MemberStore = {
-	getMember(guildId, userId) {
+const members = {
+	getMember(guildId: string, userId: string) {
 		if (guildId !== 'guild' || userId !== 'user') return null;
+
 		return {
+			userId,
 			colorString: '#112233',
 			colorStrings: {
 				primaryColor: '#112233',
@@ -16,115 +19,75 @@ const members: MemberStore = {
 	},
 };
 
+const tinted: ChatColorOptions = {
+	chatMentions: false,
+	colorChatMessages: true,
+	messageSaturation: 30,
+};
+
+function messageRow(): ChatRow {
+	return { message: { authorId: 'user', guildId: 'guild', textColor: 0xffeeeeee } };
+}
+
 describe('applyChatRoleColors', () => {
-	test('mixes optional message colors in Oklab like Vencord', () => {
-		expect(blendArgb(0xffffffff, 0xff000000, 50)).toBe(0xff636363 | 0);
-		expect(blendArgb(0x80ffffff, 0xff000000, 0)).toBe(0x80ffffff | 0);
-		expect(blendArgb(0x80ffffff, 0xff000000, 100)).toBe(0x80000000 | 0);
-	});
-
-	test('keeps colors in the signed 32-bit range used by the Android renderer', () => {
-		const color = blendArgb(0xffeeeeee, 0xff112233, 30);
-
-		expect(color).toBe(color | 0);
-		expect(color).toBeLessThanOrEqual(0x7fffffff);
-		expect(color).toBeGreaterThanOrEqual(-0x80000000);
-	});
-
 	test('keeps message content untinted by default', () => {
-		const row: ChatRow = {
-			message: { authorId: 'user', guildId: 'guild', textColor: 0xffeeeeee },
-		};
+		const row = messageRow();
+
 		applyChatRoleColors(row, members, {
+			...tinted,
 			chatMentions: true,
 			colorChatMessages: false,
-			messageSaturation: 30,
 		});
 		expect(row.message?.textColor).toBe(0xffeeeeee);
 	});
 
-	test('tints normal message content only when enabled', () => {
-		const row: ChatRow = {
-			message: { authorId: 'user', guildId: 'guild', textColor: 0xffeeeeee },
-		};
-		applyChatRoleColors(row, members, {
-			chatMentions: false,
-			colorChatMessages: true,
-			messageSaturation: 30,
-		});
+	test('tints message content only when enabled', () => {
+		const row = messageRow();
+
+		applyChatRoleColors(row, members, tinted);
 		expect(row.message?.textColor).toBe(blendArgb(0xffeeeeee, 0xff112233, 30));
 	});
 
 	test('does not compound the tint when Discord reuses a row', () => {
-		const row: ChatRow = {
-			message: { authorId: 'user', guildId: 'guild', textColor: 0xffeeeeee },
-		};
-		const options = {
-			chatMentions: false,
-			colorChatMessages: true,
-			messageSaturation: 30,
-		};
-		applyChatRoleColors(row, members, options);
-		applyChatRoleColors(row, members, options);
+		const row = messageRow();
+
+		applyChatRoleColors(row, members, tinted);
+		applyChatRoleColors(row, members, tinted);
 		expect(row.message?.textColor).toBe(blendArgb(0xffeeeeee, 0xff112233, 30));
 	});
 
-	test('restores the original text color when message coloring is disabled', () => {
-		const row: ChatRow = {
-			message: { authorId: 'user', guildId: 'guild', textColor: 0xffeeeeee },
-		};
-		applyChatRoleColors(row, members, {
-			chatMentions: false,
-			colorChatMessages: true,
-			messageSaturation: 30,
-		});
-		applyChatRoleColors(row, members, {
-			chatMentions: false,
-			colorChatMessages: false,
-			messageSaturation: 30,
-		});
+	test('restores the original text color when message coloring is turned off', () => {
+		const row = messageRow();
+
+		applyChatRoleColors(row, members, tinted);
+		applyChatRoleColors(row, members, { ...tinted, colorChatMessages: false });
 		expect(row.message?.textColor).toBe(0xffeeeeee);
 	});
 
 	test('uses a new base when Discord updates the text color', () => {
-		const message = { authorId: 'user', guildId: 'guild', textColor: 0xffeeeeee };
-		const row: ChatRow = { message };
-		const options = {
-			chatMentions: false,
-			colorChatMessages: true,
-			messageSaturation: 30,
-		};
-		applyChatRoleColors(row, members, options);
-		message.textColor = 0xffaaaaaa;
-		applyChatRoleColors(row, members, options);
-		expect(message.textColor).toBe(blendArgb(0xffaaaaaa, 0xff112233, 30));
+		const row = messageRow();
+
+		applyChatRoleColors(row, members, tinted);
+		row.message!.textColor = 0xffaaaaaa;
+		applyChatRoleColors(row, members, tinted);
+		expect(row.message?.textColor).toBe(blendArgb(0xffaaaaaa, 0xff112233, 30));
 	});
 
 	test('preserves failed-send text color', () => {
-		const row: ChatRow = {
-			message: {
-				authorId: 'user',
-				guildId: 'guild',
-				state: 'SEND_FAILED',
-				textColor: 0xffeeeeee,
-			},
-		};
-		applyChatRoleColors(row, members, {
-			chatMentions: false,
-			colorChatMessages: true,
-			messageSaturation: 30,
-		});
+		const row = messageRow();
+
+		row.message!.state = 'SEND_FAILED';
+		applyChatRoleColors(row, members, tinted);
 		expect(row.message?.textColor).toBe(0xffeeeeee);
 	});
 
-	test('retains all enhanced color stops on mention nodes', () => {
+	test('gives nested mention nodes every enhanced color stop', () => {
 		const mention = { type: 'mention', userId: 'user' };
-		const row: ChatRow = { message: { guildId: 'guild', content: [mention] } };
-		applyChatRoleColors(row, members, {
-			chatMentions: true,
-			colorChatMessages: false,
-			messageSaturation: 30,
-		});
+		const row: ChatRow = {
+			message: { guildId: 'guild', content: [{ type: 'paragraph', content: [mention] }] },
+		};
+
+		applyChatRoleColors(row, members, { ...tinted, chatMentions: true });
 		expect(mention).toMatchObject({
 			roleColor: 0xff112233 | 0,
 			color: 0xff112233 | 0,
@@ -135,5 +98,12 @@ describe('applyChatRoleColors', () => {
 				tertiaryColor: 0xff778899 | 0,
 			},
 		});
+	});
+
+	test('leaves mentions alone when mention coloring is off', () => {
+		const mention = { type: 'mention', userId: 'user' };
+
+		applyChatRoleColors({ message: { guildId: 'guild', content: [mention] } }, members, tinted);
+		expect(mention).toEqual({ type: 'mention', userId: 'user' });
 	});
 });

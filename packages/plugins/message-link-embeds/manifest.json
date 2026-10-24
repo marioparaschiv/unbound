@@ -33,5 +33,5 @@
 	"version": "1.0.0",
 	"minNativePluginApi": "1.0.0",
 	"icon": "LinkIcon",
-	"main": "index.tsx"
+	"main": "index.ts"
 }

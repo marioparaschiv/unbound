@@ -9,9 +9,8 @@ import {
 	readSurfaceAnchor,
 	SurfaceHeightCache,
 	type SurfaceLayoutMetrics,
-	shouldRefreshSurfaceRow,
 	surfaceHeightCacheKey,
-} from '@message-link-embeds/surface-layout';
+} from '~/surface-layout';
 
 describe('embedded message width', () => {
 	test('uses the label position relative to the message cell', () => {
@@ -149,16 +148,6 @@ describe('chat bottom anchoring', () => {
 
 		expect(tracker.correction(metrics({ contentHeight: 1640 }), true)).toBeUndefined();
 		expect(tracker.pending).toBe(false);
-	});
-});
-
-describe('embedded row invalidation', () => {
-	test('refreshes a reattached surface even when its height did not change', () => {
-		expect(shouldRefreshSurfaceRow(true, 230, 230)).toBe(true);
-	});
-
-	test('skips duplicate row invalidation when the surface height is unchanged', () => {
-		expect(shouldRefreshSurfaceRow(false, 230, 230)).toBe(false);
 	});
 });
 

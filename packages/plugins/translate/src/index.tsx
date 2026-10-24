@@ -1,24 +1,25 @@
-import { toasts } from '@unbound-app/api';
+import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
-import { startTranslateMenuPatch, stopTranslateMenuPatch } from '@translate/menu';
-import { TranslateSettingsScreen } from '@translate/settings';
+import { patchActionSheets } from '~/patches/action-sheets';
+import SettingsPanel from '~/components/settings-panel';
+import { ActionSheets } from '~/modules';
+
+let dispose = () => {};
+
+function start() {
+	if (!ensureModules('Translate', { ActionSheets })) return;
+
+	dispose = applyFeatures('Translate', [patchActionSheets]);
+}
+
+function stop() {
+	dispose();
+	dispose = () => {};
+}
 
 export default {
-	start() {
-		try {
-			startTranslateMenuPatch();
-		} catch (error) {
-			toasts.showToast({
-				title: 'Translate',
-				content: error instanceof Error ? error.message : String(error),
-			});
-		}
-	},
-
-	stop() {
-		try {
-			stopTranslateMenuPatch();
-		} catch {}
-	},
-	getSettingsPanel: () => <TranslateSettingsScreen />,
+	start,
+	stop,
+	getSettingsPanel: () => <SettingsPanel />,
 };

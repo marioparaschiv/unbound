@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
-import { LANGUAGE_CATALOG_URL } from '../src/catalog';
+import { LANGUAGE_CATALOG_URL } from '../src/constants';
 
 const DEVICON_COMMIT = '7330accdbc47e2dc0c19789a48533c4a3c50fe58';
 const output = resolve(import.meta.dir, '../src/devicons.json');

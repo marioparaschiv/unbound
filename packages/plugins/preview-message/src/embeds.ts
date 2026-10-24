@@ -1,25 +1,61 @@
+import { SizeFields, TextFields } from '~/constants';
+
+type EmbedMedia = {
+	url?: string;
+	proxy_url?: string;
+	width?: number;
+	height?: number;
+};
+
+type EmbedProvider = {
+	name?: string;
+	url?: string;
+};
+
+type MediaKey = 'image' | 'thumbnail' | 'video';
+
 export type LinkEmbed = {
 	type?: string;
 	url: string;
 	title?: string;
 	description?: string;
-	provider?: { name?: string; url?: string };
-	image?: { url?: string; width?: number; height?: number; proxy_url?: string };
-	thumbnail?: { url?: string; width?: number; height?: number; proxy_url?: string };
-	video?: { url?: string; width?: number; height?: number; proxy_url?: string };
-	[key: string]: unknown;
+	provider?: EmbedProvider;
+} & Partial<Record<MediaKey, EmbedMedia>>;
+
+type EmbedText = {
+	name?: string;
+	text?: string;
+	value?: string;
+	timestamp?: string;
 };
 
-type EmbedRequest = {
-	post?: (options: {
-		url: string;
-		body: { urls: string[] };
-	}) => Promise<{ body?: { embeds?: unknown[] } }>;
+// Discord's unfurler also returns the fields after `description`, which the preview drops.
+type ResolvedEmbed = {
+	type?: string;
+	url?: string;
+	title?: string;
+	description?: string;
+	timestamp?: string;
+	provider?: EmbedProvider;
+	author?: EmbedText;
+	footer?: EmbedText;
+	fields?: EmbedText[];
+} & Partial<Record<MediaKey, EmbedMedia | null>>;
+
+type UnfurlRequest = {
+	url: string;
+	body: { urls: string[] };
 };
 
-const EMBED_KEYS = ['type', 'title', 'description'] as const;
+type UnfurlResponse = {
+	body?: { embeds?: ResolvedEmbed[] };
+};
 
-type OpenGraphMetadata = {
+export type EmbedResolver = {
+	post: (request: UnfurlRequest) => Promise<UnfurlResponse>;
+};
+
+type OpenGraph = {
 	title?: string;
 	description?: string;
 	siteName?: string;
@@ -28,11 +64,6 @@ type OpenGraphMetadata = {
 	imageWidth?: number;
 	imageHeight?: number;
 };
-
-const URL_PATTERN = /https?:\/\/[^\s<>()"']+/gi;
-const META_TAG_PATTERN = /<meta\b[^>]*>/gi;
-const ATTRIBUTE_PATTERN = /([:\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
-const TITLE_PATTERN = /<title\b[^>]*>([\s\S]*?)<\/title>/i;
 
 function decodeHtml(value: string): string {
 	return value
@@ -47,173 +78,227 @@ function decodeHtml(value: string): string {
 		);
 }
 
-function cleanValue(value: string | undefined): string | undefined {
-	const cleaned = value ? decodeHtml(value).replace(/\s+/g, ' ').trim() : '';
-	return cleaned || undefined;
+function clean(value: string | undefined): string | undefined {
+	return (value && decodeHtml(value).replace(/\s+/g, ' ').trim()) || undefined;
 }
 
-function parseAttributes(tag: string): Record<string, string> {
-	const attributes: Record<string, string> = {};
-	for (const match of tag.matchAll(ATTRIBUTE_PATTERN)) {
-		const value = match[2] ?? match[3] ?? match[4];
-		if (value !== undefined) attributes[match[1].toLowerCase()] = decodeHtml(value);
+function parseAttributes(tag: string): Map<string, string> {
+	const attributes = new Map<string, string>();
+
+	for (const match of tag.matchAll(/([:\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi)) {
+		attributes.set(match[1].toLowerCase(), decodeHtml(match[2] ?? match[3] ?? match[4]));
 	}
+
 	return attributes;
 }
 
-function readNumber(value: string | undefined): number | undefined {
-	if (!value) return undefined;
-	const parsed = Number.parseInt(value, 10);
-	return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+function readSize(value: string): number | undefined {
+	const size = Number.parseInt(value, 10);
+
+	return size > 0 ? size : undefined;
 }
 
-function resolveUrl(value: string | undefined, sourceUrl: string): string | undefined {
+function resolveUrl(value: string | undefined, base: string): string | undefined {
 	if (!value) return undefined;
+
 	try {
-		return new URL(value, sourceUrl).toString();
+		return new URL(value, base).toString();
 	} catch {
 		return undefined;
 	}
 }
 
-function normalizeMedia(value: unknown): Record<string, unknown> | undefined {
-	if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-	const media = value as Record<string, unknown>;
-	const normalized: Record<string, unknown> = {};
-	if (typeof media.url === 'string') normalized.url = media.url;
-	if (typeof media.proxy_url === 'string') normalized.proxy_url = media.proxy_url;
-	if (typeof media.width === 'number' && Number.isFinite(media.width))
-		normalized.width = media.width;
-	if (typeof media.height === 'number' && Number.isFinite(media.height))
-		normalized.height = media.height;
-	return Object.keys(normalized).length ? normalized : undefined;
-}
+function readOpenGraph(html: string): OpenGraph {
+	const metadata: OpenGraph = {};
 
-export function extractUrls(content: string): string[] {
-	const urls = new Set<string>();
-	for (const match of content.matchAll(URL_PATTERN)) {
-		const start = match.index ?? 0;
-		const end = start + match[0].length;
-		if (content[start - 1] === '<' && content[end] === '>') continue;
+	for (const [tag] of html.matchAll(/<meta\b[^>]*>/gi)) {
+		const attributes = parseAttributes(tag);
+		const key = (attributes.get('property') ?? attributes.get('name') ?? '').toLowerCase();
+		const value = clean(attributes.get('content'));
+		const textField = TextFields.get(key);
+		const sizeField = SizeFields.get(key);
 
-		let url = match[0].replace(/[.,!;:?]+$/, '');
-		while (
-			url.endsWith(')') &&
-			(url.match(/\(/g)?.length ?? 0) < (url.match(/\)/g)?.length ?? 0)
-		)
-			url = url.slice(0, -1);
-		if (url) urls.add(url);
-	}
-	return [...urls];
-}
+		if (!value) {
+			continue;
+		}
 
-export function parseOpenGraph(html: string, sourceUrl: string): LinkEmbed | null {
-	const metadata: OpenGraphMetadata = {};
-	for (const tag of html.matchAll(META_TAG_PATTERN)) {
-		const attributes = parseAttributes(tag[0]);
-		const key = (attributes.property ?? attributes.name ?? '').toLowerCase();
-		const value = cleanValue(attributes.content);
-		if (!key || !value) continue;
-
-		switch (key) {
-			case 'og:title':
-			case 'twitter:title':
-				metadata.title ??= value;
-				break;
-			case 'og:description':
-			case 'twitter:description':
-				metadata.description ??= value;
-				break;
-			case 'og:site_name':
-				metadata.siteName ??= value;
-				break;
-			case 'og:type':
-				metadata.type ??= value;
-				break;
-			case 'og:image':
-			case 'og:image:url':
-			case 'og:image:secure_url':
-			case 'twitter:image':
-				metadata.image ??= value;
-				break;
-			case 'og:image:width':
-			case 'twitter:image:width':
-				metadata.imageWidth ??= readNumber(value);
-				break;
-			case 'og:image:height':
-			case 'twitter:image:height':
-				metadata.imageHeight ??= readNumber(value);
-				break;
+		if (textField) {
+			metadata[textField] ??= value;
+		} else if (sizeField) {
+			metadata[sizeField] ??= readSize(value);
 		}
 	}
 
-	const title = metadata.title ?? cleanValue(html.match(TITLE_PATTERN)?.[1]);
-	const image = resolveUrl(metadata.image, sourceUrl);
-	if (!title && !metadata.description && !image) return null;
+	return metadata;
+}
 
-	const embed: LinkEmbed = {
-		type:
-			metadata.type === 'image' && image && !title && !metadata.description
-				? 'image'
-				: 'article',
-		url: sourceUrl,
-	};
-	if (title) embed.title = title;
-	if (metadata.description) embed.description = metadata.description;
-	if (metadata.siteName) embed.provider = { name: metadata.siteName, url: sourceUrl };
-	if (image)
+function pickMedia(media: EmbedMedia | null | undefined): EmbedMedia | undefined {
+	if (!media || typeof media !== 'object' || Array.isArray(media)) return undefined;
+
+	const picked: EmbedMedia = {};
+
+	if (typeof media.url === 'string') {
+		picked.url = media.url;
+	}
+
+	if (typeof media.proxy_url === 'string') {
+		picked.proxy_url = media.proxy_url;
+	}
+
+	if (Number.isFinite(media.width)) {
+		picked.width = media.width;
+	}
+
+	if (Number.isFinite(media.height)) {
+		picked.height = media.height;
+	}
+
+	return Object.keys(picked).length ? picked : undefined;
+}
+
+/**
+ * @description Finds the links a message would embed, skipping `<suppressed>` links and trailing punctuation.
+ * @param content The message content.
+ * @returns The unique links, in order of appearance.
+ */
+export function extractUrls(content: string): string[] {
+	const urls = new Set<string>();
+
+	for (const match of content.matchAll(/https?:\/\/[^\s<>()"']+/gi)) {
+		const start = match.index;
+		const end = start + match[0].length;
+
+		if (content[start - 1] === '<' && content[end] === '>') {
+			continue;
+		}
+
+		let url = match[0].replace(/[.,!;:?]+$/, '');
+
+		while (url.endsWith(')') && url.split('(').length < url.split(')').length) {
+			url = url.slice(0, -1);
+		}
+
+		if (url) {
+			urls.add(url);
+		}
+	}
+
+	return [...urls];
+}
+
+/**
+ * @description Builds a link embed from a page's Open Graph and Twitter card tags, falling back to its `<title>`.
+ * @param html The page's HTML.
+ * @param sourceUrl The page's URL, used for the embed and to resolve a relative image.
+ * @returns The embed, or `null` when the page has no title, description or image.
+ */
+export function parseOpenGraph(html: string, sourceUrl: string): LinkEmbed | null {
+	const metadata = readOpenGraph(html);
+	const title = metadata.title ?? clean(html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]);
+	const image = resolveUrl(metadata.image, sourceUrl);
+	const { description, siteName } = metadata;
+
+	if (!title && !description && !image) return null;
+
+	const imageOnly = metadata.type === 'image' && image && !title && !description;
+	const embed: LinkEmbed = { type: imageOnly ? 'image' : 'article', url: sourceUrl };
+
+	if (title) {
+		embed.title = title;
+	}
+
+	if (description) {
+		embed.description = description;
+	}
+
+	if (siteName) {
+		embed.provider = { name: siteName, url: sourceUrl };
+	}
+
+	if (image) {
 		embed.image = { url: image, width: metadata.imageWidth, height: metadata.imageHeight };
+	}
+
 	return embed;
 }
 
-export function normalizeDiscordEmbed(value: unknown, url: string): LinkEmbed | null {
-	if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-	const embed = value as Record<string, unknown>;
+/**
+ * @description Keeps only the fields of a Discord unfurler embed that the message row renders safely.
+ * @param embed One embed from Discord's response.
+ * @param url The link it was resolved for, used when the embed has no URL.
+ * @returns The embed, or `null` when it has nothing to show.
+ */
+export function normalizeDiscordEmbed(
+	embed: ResolvedEmbed | null | undefined,
+	url: string,
+): LinkEmbed | null {
+	if (!embed || typeof embed !== 'object' || Array.isArray(embed)) return null;
+
+	const { type, title, description } = embed;
+
 	if (
-		typeof embed.type !== 'string' &&
-		typeof embed.title !== 'string' &&
-		typeof embed.description !== 'string' &&
+		typeof type !== 'string' &&
+		typeof title !== 'string' &&
+		typeof description !== 'string' &&
 		!embed.image &&
 		!embed.thumbnail &&
 		!embed.video
-	)
+	) {
 		return null;
-	const normalized: Record<string, unknown> = {
-		url: typeof embed.url === 'string' ? embed.url : url,
-	};
-	for (const key of EMBED_KEYS) {
-		if (!(key in embed) || key === 'image' || key === 'thumbnail' || key === 'video') continue;
-		normalized[key] = embed[key];
 	}
-	for (const key of ['image', 'thumbnail', 'video']) {
-		const media = normalizeMedia(embed[key]);
-		if (media) normalized[key] = media;
+
+	const normalized: LinkEmbed = { url: typeof embed.url === 'string' ? embed.url : url };
+
+	if ('type' in embed) {
+		normalized.type = type;
 	}
-	return normalized as LinkEmbed;
+
+	if ('title' in embed) {
+		normalized.title = title;
+	}
+
+	if ('description' in embed) {
+		normalized.description = description;
+	}
+
+	for (const key of ['image', 'thumbnail', 'video'] as const) {
+		const media = pickMedia(embed[key]);
+
+		if (media) {
+			normalized[key] = media;
+		}
+	}
+
+	return normalized;
 }
 
+/**
+ * @description Resolves a link's embed through Discord's unfurler, or from the page's own metadata when that fails.
+ * @param url The link.
+ * @param resolver Discord's REST client.
+ * @returns The embed, or `null` when neither source produced one.
+ */
 export async function fetchLinkEmbed(
 	url: string,
-	request?: EmbedRequest | null,
+	resolver: EmbedResolver,
 ): Promise<LinkEmbed | null> {
-	if (typeof request?.post === 'function') {
-		try {
-			const result = await request.post({
-				url: '/unfurler/embed-urls',
-				body: { urls: [url] },
-			});
-			return normalizeDiscordEmbed(result?.body?.embeds?.[0], url);
-		} catch {}
+	try {
+		const result = await resolver.post({ url: '/unfurler/embed-urls', body: { urls: [url] } });
+
+		return normalizeDiscordEmbed(result?.body?.embeds?.[0], url);
+	} catch {
+		// Discord could not resolve it, so read the page instead.
 	}
 
 	try {
 		const response = await fetch(url, {
 			headers: { Accept: 'text/html,application/xhtml+xml' },
 		});
-		if (!response.ok) return null;
-		const html = await response.text();
-		return parseOpenGraph(html, url);
+
+		return response.ok ? parseOpenGraph(await response.text(), url) : null;
 	} catch {
 		return null;
 	}
 }
+
+export default { extractUrls, parseOpenGraph, normalizeDiscordEmbed, fetchLinkEmbed };

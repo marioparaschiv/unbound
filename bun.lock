@@ -92,7 +92,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.9.0",
+      "version": "0.9.0-e1c2bc16e9b6c153538a9ef3a88a69ee6c1aa02f1f4bebb6131ee6d2a507f461",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -278,328 +278,356 @@
         "@unbound-app/api": "workspace:*",
         "@unbound-app/cli": "workspace:*",
         "@unbound-app/types": "workspace:*",
-        "@unbound-plugins/rollup-path-aliases": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react": "catalog:react",
+      },
+    },
+    "packages/plugins-shared": {
+      "name": "@unbound-plugins/shared",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "react-native": "^0.83.0",
       },
     },
     "packages/plugins/channel-typing-indicators": {
       "name": "channel-typing-indicators",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
         "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-path-aliases": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/character-counter": {
       "name": "character-counter",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
         "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-path-aliases": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/clear-urls": {
       "name": "clear-urls",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/custom-commands": {
       "name": "custom-commands",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/expression-tools": {
       "name": "expression-tools",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/file-size-on-picker": {
       "name": "file-size-on-picker",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-path-aliases": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/fix-gif-download": {
       "name": "fix-gif-download",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/force-owner-crown": {
       "name": "force-owner-crown",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/gif-paste": {
       "name": "gif-paste",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/hide-gift-button": {
       "name": "hide-gift-button",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/mention-avatars": {
       "name": "mention-avatars",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/message-latency": {
       "name": "message-latency",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
         "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-path-aliases": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/message-link-embeds": {
       "name": "message-link-embeds",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-path-aliases": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/more-user-tags": {
       "name": "more-user-tags",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/moyai": {
       "name": "moyai",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
         "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-path-aliases": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/no-blocked-messages": {
       "name": "no-blocked-messages",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/no-reply-mention": {
       "name": "no-reply-mention",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/preview-message": {
       "name": "preview-message",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/pronoundb": {
       "name": "pronoundb",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/reaction-avatars": {
       "name": "reaction-avatars",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
         "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-path-aliases": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/reviewdb": {
       "name": "reviewdb",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-alias": "^6.0.0",
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/role-color-everywhere": {
       "name": "role-color-everywhere",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
         "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-path-aliases": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
+      },
+    },
+    "packages/plugins/shared/rollup-config": {
+      "name": "@unbound-plugins/rollup-config",
+      "version": "1.0.0",
+      "dependencies": {
+        "@rollup/plugin-commonjs": "^29.0.3",
+        "@rollup/plugin-json": "^6.1.0",
+        "@rollup/plugin-node-resolve": "^16.0.3",
         "rollup-plugin-iife": "^0.8.0",
         "rollup-plugin-swc3": "^0.12.1",
       },
-    },
-    "packages/plugins/shared/rollup-path-aliases": {
-      "name": "@unbound-plugins/rollup-path-aliases",
-      "version": "1.0.0",
     },
     "packages/plugins/shiki-codeblocks": {
       "name": "shiki-codeblocks",
@@ -607,147 +635,152 @@
       "dependencies": {
         "@shikijs/langs": "4.5.0",
         "@shikijs/themes": "4.5.0",
+        "@unbound-plugins/shared": "workspace:*",
         "highlight.js": "11.12.0",
         "jsonc-parser": "3.2.0",
         "shiki": "4.5.0",
       },
       "devDependencies": {
-        "@rollup/plugin-commonjs": "^29.0.3",
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
         "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-path-aliases": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/show-hidden-things": {
       "name": "show-hidden-things",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/show-me-your-name": {
       "name": "show-me-your-name",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/show-timeout-duration": {
       "name": "show-timeout-duration",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/sticker-preview": {
       "name": "sticker-preview",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/text-replace": {
       "name": "text-replace",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/translate": {
       "name": "translate",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-alias": "^6.0.0",
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/typing-avatars": {
       "name": "typing-avatars",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/view-icons": {
       "name": "view-icons",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/plugins/view-raw": {
       "name": "view-raw",
       "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
       "devDependencies": {
-        "@rollup/plugin-json": "^6.1.0",
-        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.83.0",
         "rollup": "^4.62.2",
-        "rollup-plugin-iife": "^0.8.0",
-        "rollup-plugin-swc3": "^0.12.1",
       },
     },
     "packages/types": {
@@ -1434,8 +1467,6 @@
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.1", "", {}, "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="],
 
-    "@rollup/plugin-alias": ["@rollup/plugin-alias@6.0.1", "", { "peerDependencies": { "rollup": ">=4.0.0" }, "optionalPeers": ["rollup"] }, "sha512-08wjv2HEuyxIuriLELnksoX+so83XnJ5E4hbVeCHkWlwOcaRQaHYxpUTAplnZjrlh/l5mZgvH1itNC9kcTfTTA=="],
-
     "@rollup/plugin-commonjs": ["@rollup/plugin-commonjs@29.0.3", "", { "dependencies": { "@rollup/pluginutils": "^5.0.1", "commondir": "^1.0.1", "estree-walker": "^2.0.2", "fdir": "^6.2.0", "is-reference": "1.2.1", "magic-string": "^0.30.3", "picomatch": "^4.0.2" }, "peerDependencies": { "rollup": "^2.68.0||^3.0.0||^4.0.0" }, "optionalPeers": ["rollup"] }, "sha512-ZaOxZceP7SOUW7Lqw5IRVweSQYWaeIPnXIGLiB690EBA3FGJTO40EEr2L5yZplJWsgTCogILRSpcAe7+U0Otdg=="],
 
     "@rollup/plugin-json": ["@rollup/plugin-json@6.1.0", "", { "dependencies": { "@rollup/pluginutils": "^5.1.0" }, "peerDependencies": { "rollup": "^1.20.0||^2.0.0||^3.0.0||^4.0.0" }, "optionalPeers": ["rollup"] }, "sha512-EGI2te5ENk1coGeADSIwZ7G2Q8CJS2sF120T7jLw4xFw9n7wIOXHo+kIYRAoVpJAN+kmqZSoO3Fp4JtoNF4ReA=="],
@@ -1788,7 +1819,9 @@
 
     "@unbound-app/web": ["@unbound-app/web@workspace:apps/web"],
 
-    "@unbound-plugins/rollup-path-aliases": ["@unbound-plugins/rollup-path-aliases@workspace:packages/plugins/shared/rollup-path-aliases"],
+    "@unbound-plugins/rollup-config": ["@unbound-plugins/rollup-config@workspace:packages/plugins/shared/rollup-config"],
+
+    "@unbound-plugins/shared": ["@unbound-plugins/shared@workspace:packages/plugins-shared"],
 
     "@ungap/structured-clone": ["@ungap/structured-clone@1.4.0", "", {}, "sha512-1mEZtMKPM09vDmQt5y7YvmN2+DFTP7Tg0EWXdic8/C6VRnpb33e4ghisCIE3WZjsE2N8mf+QV1Zqh7ZFYLWInQ=="],
 
@@ -3236,7 +3269,7 @@
 
     "super-regex": ["super-regex@1.1.0", "", { "dependencies": { "function-timeout": "^1.0.1", "make-asynchronous": "^1.0.1", "time-span": "^5.1.0" } }, "sha512-WHkws2ZflZe41zj6AolvvmaTrWds/VuyeYr9iPVv/oQeaIoVxMKaushfFWpOGDT+GuBrM/sVqF8KUCYQlSSTdQ=="],
 
-    "supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
+    "supports-color": ["supports-color@10.2.2", "", {}, "sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g=="],
 
     "supports-hyperlinks": ["supports-hyperlinks@3.2.0", "", { "dependencies": { "has-flag": "^4.0.0", "supports-color": "^7.0.0" } }, "sha512-zFObLMyZeEwzAoKCyu1B91U79K2t7ApXuQfo8OuxwXLDgcKxuwM+YvcbIhm6QWqz7mHUH1TVytR1PwVVjEuMig=="],
 
@@ -3988,6 +4021,8 @@
 
     "strip-ansi/ansi-regex": ["ansi-regex@6.4.0", "", {}, "sha512-KzTVk2tCWAHtYrvvvaP8bJKJq2pVinhLcGEQdtLIYPbmNGNyYe8QwNaTUYQp2J7/vIsUKt5QCqAfUkYyG9DkOw=="],
 
+    "supports-hyperlinks/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
+
     "tempy/is-stream": ["is-stream@3.0.0", "", {}, "sha512-LnQR4bZ9IADDRSkvpqMGvt/tEJWclzklNgSw48V5EAaAeDd6qGvN8ei6k5p0tvxSR171VmGyHuTiAOfxAbr8kA=="],
 
     "tempy/type-fest": ["type-fest@2.19.0", "", {}, "sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA=="],
@@ -4012,7 +4047,11 @@
 
     "@jest/transform/chalk/ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
 
+    "@jest/transform/chalk/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
+
     "@jest/types/chalk/ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
+
+    "@jest/types/chalk/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
 
     "@octokit/plugin-paginate-rest/@octokit/types/@octokit/openapi-types": ["@octokit/openapi-types@28.0.0", "", {}, "sha512-0rFyLuyHvIj6uuZWuDslxkowFYdPXoNIkeAv4b27dzm2Tf4vGWXnPsMcxs7d65kLdMERgP3wc1AEPlqMz8e1cQ=="],
 
@@ -4080,7 +4119,11 @@
 
     "babel-jest/chalk/ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
 
+    "babel-jest/chalk/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
+
     "cli-highlight/chalk/ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
+
+    "cli-highlight/chalk/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
 
     "cli-highlight/yargs/cliui": ["cliui@7.0.4", "", { "dependencies": { "string-width": "^4.2.0", "strip-ansi": "^6.0.0", "wrap-ansi": "^7.0.0" } }, "sha512-OcRE68cOsVMXp1Yvonl/fzkQOyjLSu/8bhPDfQt0e0/Eb283TKP20Fs2MqoPsr9SwA595rRCA+QMzYc9nBP+JQ=="],
 
@@ -4126,9 +4169,15 @@
 
     "jest-message-util/chalk/ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
 
+    "jest-message-util/chalk/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
+
     "jest-util/chalk/ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
 
+    "jest-util/chalk/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
+
     "jest-validate/chalk/ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
+
+    "jest-validate/chalk/supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
 
     "lighthouse-logger/debug/ms": ["ms@2.0.0", "", {}, "sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A=="],
 

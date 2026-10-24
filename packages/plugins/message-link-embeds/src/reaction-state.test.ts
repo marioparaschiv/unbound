@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { reactionSnapshot, stripMessageReactions } from '@message-link-embeds/reaction-state';
+import { reactionSnapshot } from '~/reaction-state';
 
 describe('message reaction snapshots', () => {
 	test('creates a stable snapshot for message reaction changes', () => {
@@ -36,13 +36,5 @@ describe('message reaction snapshots', () => {
 		reactions[0]!.me = true;
 
 		expect(reactionSnapshot(reactions)).not.toBe(initial);
-	});
-
-	test('removes reactions from the embedded message without replacing its identity', () => {
-		const record = { content: 'preview', id: 'message', reactions: [{ count: 1 }] };
-
-		expect(stripMessageReactions(record)).toBe(record);
-		expect(record.reactions).toEqual([]);
-		expect(record.content).toBe('preview');
 	});
 });

@@ -1,0 +1,20 @@
+{
+	"name": "@unbound-plugins/shared",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Code shared by Unbound's first-party plugins.",
+	"type": "module",
+	"exports": {
+		"./components/*": "./src/components/*.tsx",
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"@types/bun": "catalog:",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"react-native": "^0.83.0"
+	}
+}
