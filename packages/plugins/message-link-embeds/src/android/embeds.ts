@@ -240,8 +240,16 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		return true;
 	}
 
+	function isCurrent(embed: Embed): boolean {
+		return (
+			!embed.disposed &&
+			embeds.get(viewKey(embed.messageView as NativeJavaValue) ?? '') === embed &&
+			readViewText(java, embed.textView)?.string === embed.renderedText
+		);
+	}
+
 	async function place(embed: Embed) {
-		if (embed.disposed) return;
+		if (!isCurrent(embed)) return;
 
 		const container = hostContainer(java, embed.textView);
 		const position = reservedPosition(
@@ -260,6 +268,17 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 			{ x: container.offset.x + position.x, y: container.offset.y + position.y },
 			{ width: embed.width * embed.density, height: embed.height * embed.density },
 		);
+
+		if (!isCurrent(embed)) {
+			if (
+				embed.disposed ||
+				embeds.get(viewKey(embed.messageView as NativeJavaValue) ?? '') !== embed
+			) {
+				await removeHost(java, embed.host).catch(() => undefined);
+			}
+
+			return;
+		}
 
 		if (embed.mounting && !embed.disposed) {
 			const mounted = await embed.mounting.catch(() => null);

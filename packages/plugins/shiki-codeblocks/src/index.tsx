@@ -8,6 +8,7 @@ import { messageTextViewClass } from '@unbound-plugins/shared/native/text-attach
 import SettingsPanel from '~/components/settings-panel';
 import { MessageStore, SelectedChannelStore } from '~/modules';
 import { createAndroidCards } from '~/android/cards';
+import { createNativeCards } from '~/android/native-cards';
 import { startRenderer } from '~/native/renderer';
 import { PLUGIN_NAME } from '~/constants';
 
@@ -22,7 +23,7 @@ function start(context: PluginContext) {
 	}
 
 	if (context.platform === 'android') {
-		const cards = createAndroidCards(context.native);
+		const cards = createNativeCards(context.native) ?? createAndroidCards(context.native);
 
 		if (cards) dispose = applyFeatures(PLUGIN_NAME, [() => cards.dispose]);
 

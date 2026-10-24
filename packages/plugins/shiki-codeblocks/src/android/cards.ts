@@ -227,8 +227,17 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		await layoutHostingList(java, entry.textView);
 	}
 
+	function isCurrent(entry: ViewCards, card: Card): boolean {
+		return (
+			!card.disposed &&
+			views.get(viewKey(entry.textView as NativeJavaValue) ?? '') === entry &&
+			entry.cards.includes(card) &&
+			readViewText(java, entry.textView)?.string === entry.renderedText
+		);
+	}
+
 	async function place(entry: ViewCards, card: Card) {
-		if (card.disposed) return;
+		if (!isCurrent(entry, card)) return;
 
 		const height = card.height * entry.density;
 		const container = hostContainer(java, entry.textView);
@@ -246,6 +255,14 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 			},
 			{ width: card.width * entry.density, height },
 		);
+
+		if (!isCurrent(entry, card)) {
+			if (card.disposed || !entry.cards.includes(card)) {
+				await removeHost(java, card.host).catch(() => undefined);
+			}
+
+			return;
+		}
 
 		if (card.mounting && !card.disposed) {
 			const mounted = await card.mounting.catch(() => null);

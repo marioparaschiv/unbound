@@ -21,6 +21,7 @@ import { patchLottieAnimationView } from '~/patches/lottie-animation-view';
 import { patchNativeLottieView } from '~/patches/native-lottie-view';
 import { subscribeMessageStore } from '~/native/message-sync';
 import { createAndroidEmbeds } from '~/android/embeds';
+import { createNativeEmbeds } from '~/android/native-embeds';
 import { patchFastImage } from '~/patches/fast-image';
 import { hookMessageCells } from '~/native/cells';
 import { createSession } from '~/native/session';
@@ -46,7 +47,9 @@ function start(context: PluginContext) {
 			return;
 		}
 
-		const android = createAndroidEmbeds(context.native, renderers as Renderers);
+		const android =
+			createNativeEmbeds(context.native, renderers as Renderers) ??
+			createAndroidEmbeds(context.native, renderers as Renderers);
 
 		if (!android) {
 			console.error('[Message Link Embeds] Skipped, the embed surface did not register.');
