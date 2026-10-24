@@ -56,6 +56,8 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error("default", "Failed to install the Safe Mode shortcut", it) }
         runCatching { Toolbox.install(this) }
             .onFailure { Logger.error("default", "Failed to install the toolbox gestures", it) }
+        runCatching { TextRewrites.install(this) }
+            .onFailure { Logger.error("plugins", "Failed to hook text rewrites", it) }
     }
 
     private fun installHookBridge() {

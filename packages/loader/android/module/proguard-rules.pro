@@ -3,3 +3,5 @@
 -keep class app.unbound.android.Http { *; }
 -keep class app.unbound.android.RuntimeScheduler { *; }
 -keepclasseswithmembernames class * { native <methods>; }
+-keep class app.unbound.android.ActivityTracker { *; }
+-keep class app.unbound.android.TextRewrites { *; }
