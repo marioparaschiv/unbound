@@ -1,6 +1,8 @@
 package app.unbound.android
 
+import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.os.Handler
 import android.os.Looper
@@ -25,6 +27,8 @@ object TextRewrites {
     private const val PLACEHOLDER = '￼'
     private const val RECYCLER_VIEW = "androidx.recyclerview.widget.RecyclerView"
     private const val MAX_ANCESTOR_DEPTH = 12
+    private const val MAX_IMAGES = 128
+    private const val ALIGN_CENTER = 2
 
     private data class Edit(
         val start: Int,
@@ -36,6 +40,12 @@ object TextRewrites {
         val clearFrom: Int,
         val clearTo: Int,
         val collapseNext: Boolean,
+        val imageKey: String?,
+        val imageOffset: Int,
+        val imageSize: Int,
+        val stretchFrom: Int,
+        val stretchTo: Int,
+        val stretchClasses: Set<String>,
     )
 
     private data class Rule(val rendered: String, val edits: List<Edit>)
@@ -68,6 +78,9 @@ object TextRewrites {
     private val groupsById = HashMap<String, Group>()
     private val pendingLayout = WeakHashMap<TextView, Boolean>()
     private val listening = WeakHashMap<TextView, Boolean>()
+    private val images = object : LinkedHashMap<String, Bitmap>(32, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Bitmap>?) = size > MAX_IMAGES
+    }
     private var installed = false
 
     @Volatile
@@ -113,6 +126,12 @@ object TextRewrites {
             renderedTexts.add(rendered)
         }
     }
+
+    fun putImage(key: String, bitmap: Bitmap) {
+        synchronized(lock) { images[key] = bitmap }
+    }
+
+    fun hasImage(key: String): Boolean = synchronized(lock) { images.containsKey(key) }
 
     fun remove(original: String) {
         synchronized(lock) { rules.remove(original)?.let { renderedTexts.remove(it.rendered) } }
@@ -257,7 +276,10 @@ object TextRewrites {
         for (edit in rule.edits) {
             if (edit.end > builder.length || edit.start > edit.end) return null
             clearSpans(builder, edit.clearFrom, edit.clearTo)
+            val stretched = stretchedSpans(builder, edit)
             builder.replace(edit.start, edit.end, edit.text)
+            if (edit.imageKey != null && !insertImage(builder, edit)) return null
+            if (stretched.isNotEmpty()) restretch(builder, edit, stretched)
             val spacer = edit.start + edit.spacerOffset
             if (edit.spacerOffset >= 0 && spacer < builder.length && builder[spacer] == PLACEHOLDER) {
                 builder.setSpan(spacerSpan(edit.width, edit.height), spacer, spacer + 1, SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -267,6 +289,43 @@ object TextRewrites {
             }
         }
         return if (builder.toString() == rule.rendered) builder else null
+    }
+
+    private class Stretched(val span: Any, val flags: Int, val stretch: Boolean)
+
+    private fun stretchedSpans(builder: SpannableStringBuilder, edit: Edit): List<Stretched> {
+        if (edit.stretchClasses.isEmpty() || edit.stretchTo <= edit.stretchFrom) return emptyList()
+        return builder.getSpans(edit.stretchFrom, edit.stretchTo, Any::class.java)
+            .filter { builder.getSpanStart(it) < edit.stretchTo && builder.getSpanEnd(it) > edit.stretchFrom }
+            .map { span -> Stretched(span, builder.getSpanFlags(span), isA(span, edit.stretchClasses)) }
+    }
+
+    private fun isA(span: Any, names: Set<String>): Boolean {
+        var current: Class<*>? = span.javaClass
+        while (current != null) {
+            if (current.name in names) return true
+            current = current.superclass
+        }
+        return false
+    }
+
+    private fun restretch(builder: SpannableStringBuilder, edit: Edit, spans: List<Stretched>) {
+        val grown = edit.text.length - (edit.end - edit.start)
+        for (entry in spans) {
+            val start = if (entry.stretch) edit.stretchFrom else builder.getSpanStart(entry.span)
+            val end = if (entry.stretch) edit.stretchTo + grown else builder.getSpanEnd(entry.span)
+            builder.removeSpan(entry.span)
+            if (start >= 0 && end > start) builder.setSpan(entry.span, start, end, entry.flags)
+        }
+    }
+
+    private fun insertImage(builder: SpannableStringBuilder, edit: Edit): Boolean {
+        val bitmap = synchronized(lock) { images[edit.imageKey] } ?: return false
+        val index = edit.start + edit.imageOffset
+        if (index < 0 || index >= builder.length) return false
+        val drawable = BitmapDrawable(null, bitmap).apply { setBounds(0, 0, edit.imageSize, edit.imageSize) }
+        builder.setSpan(ImageSpan(drawable, ALIGN_CENTER), index, index + 1, SPAN_EXCLUSIVE_EXCLUSIVE)
+        return true
     }
 
     private fun clearSpans(builder: SpannableStringBuilder, from: Int, to: Int) {
@@ -292,6 +351,9 @@ object TextRewrites {
 
             override fun onViewDetachedFromWindow(detached: View) = Unit
         })
+        view.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+            if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) positionAll(view)
+        }
     }
 
     private fun onTextShown(view: TextView, stages: Set<String>) {
@@ -485,6 +547,14 @@ object TextRewrites {
                 clearFrom = edit.optInt("clearFrom", -1),
                 clearTo = edit.optInt("clearTo", -1),
                 collapseNext = edit.optBoolean("collapseNext", false),
+                imageKey = edit.optString("imageKey").takeIf { it.isNotEmpty() },
+                imageOffset = edit.optInt("imageOffset", 0),
+                imageSize = edit.optInt("imageSize", 0),
+                stretchFrom = edit.optInt("stretchFrom", -1),
+                stretchTo = edit.optInt("stretchTo", -1),
+                stretchClasses = edit.optJSONArray("stretchClasses")?.let { classes ->
+                    List(classes.length()) { classes.getString(it) }.toSet()
+                } ?: emptySet(),
             )
         }
     }

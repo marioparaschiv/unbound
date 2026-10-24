@@ -1,6 +1,6 @@
 import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
 
-import { javaReference, javaString } from './java-values';
+import { javaFlag, javaReference, javaString } from './java-values';
 
 export const TEXT_REWRITES_CLASS = 'app.unbound.android.TextRewrites';
 
@@ -14,6 +14,12 @@ export type TextRewriteEdit = {
 	clearFrom?: number;
 	clearTo?: number;
 	collapseNext?: boolean;
+	imageKey?: string;
+	imageOffset?: number;
+	imageSize?: number;
+	stretchFrom?: number;
+	stretchTo?: number;
+	stretchClasses?: string[];
 };
 
 export type TextRewriteAnchor = {
@@ -27,6 +33,8 @@ export type TextRewriteAnchor = {
 export type TextRewrites = {
 	put(original: string, rendered: string, edits: TextRewriteEdit[]): void;
 	remove(original: string): void;
+	putImage(key: string, bitmap: NativeJavaReference): void;
+	hasImage(key: string): boolean;
 	addHost(
 		groupId: string,
 		rendered: string,
@@ -76,6 +84,8 @@ export function connectTextRewrites(
 				javaString(JSON.stringify(edits)),
 			]),
 		remove: (original) => call('remove', [javaString(original)]),
+		putImage: (key, bitmap) => call('putImage', [javaString(key), bitmap]),
+		hasImage: (key) => javaFlag(java.invoke(target, 'hasImage', [javaString(key)])),
 		addHost: (groupId, rendered, host, anchor) =>
 			call('addHost', [
 				javaString(groupId),
