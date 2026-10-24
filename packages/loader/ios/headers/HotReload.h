@@ -14,8 +14,5 @@
 - (void)connect;
 - (void)scheduleReconnect;
 - (NSURL *)resolveHotURL;
-- (void)drainBuffer;
-- (void)handleEvent:(NSString *)event;
-- (void)handleReloadEtag:(NSString *)incoming;
 
 @end

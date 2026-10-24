@@ -3,6 +3,7 @@
 
 #import "Discord.h"
 #import "Unbound.h"
+#import "CoreBridge.h"
 #import "LoaderShared.h"
 
 @interface Themes : NSObject
@@ -20,7 +21,6 @@
 + (NSArray *)getThemes;
 + (NSArray *)reloadThemes;
 + (void)swizzleRawColors:(NSDictionary *)payload;
-+ (UIColor *)parseColor:(NSString *)color;
 + (void)restoreOriginalRawColors;
 + (void)swizzleSemanticColors;
 + (NSString *)makeJSON;

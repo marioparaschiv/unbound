@@ -5,15 +5,13 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
 object NativeBridge {
-    private const val DEV_SERVER_PORT = 3000
-    private const val DEV_SERVER_PROBE = "manifest.json"
     private const val EMULATOR_HOST = "10.0.2.2"
-    private const val DEV_SERVER_PROBE_TIMEOUT_MS = 1500
 
     @JvmStatic
     external fun nativeInitialize(
@@ -38,6 +36,21 @@ object NativeBridge {
 
     @JvmStatic
     external fun nativeDrainMainWork()
+
+    @JvmStatic
+    external fun nativeHermesBytecodeVersion(header: ByteArray): Int
+
+    @JvmStatic
+    external fun nativeHotReloadURL(): String?
+
+    @JvmStatic
+    external fun nativeHotReloadConnected()
+
+    @JvmStatic
+    external fun nativeHotReloadFeed(chunk: String): Boolean
+
+    @JvmStatic
+    external fun nativeHotReloadNextDelayMs(): Long
 
     @JvmStatic
     external fun nativeGetBoolean(store: String, key: String, fallback: Boolean): Boolean
@@ -138,10 +151,10 @@ object NativeBridge {
     fun fabricViewHandle(handleJSON: String): String = NativeFabric.viewHandle(handleJSON)
 
     @JvmStatic
-    fun debugRecordEvaluation(recordJSON: String): Boolean = NativeEvaluations.record(recordJSON)
-
-    @JvmStatic
-    fun debugEnvironment(): String = NativeEvaluations.environment()
+    fun debugEnvironment(): String = JSONObject()
+        .put("isVirtualDevice", Platform.isEmulator())
+        .put("hostAddress", Platform.emulatorHostAddress() ?: JSONObject.NULL)
+        .toString()
 
     @JvmStatic
     fun hooksSetReturnValue(
@@ -250,30 +263,20 @@ object NativeBridge {
     }.onFailure { Logger.error("updater", "Bundle download failed: $it") }.getOrNull()
 
     @JvmStatic
-    fun devServerURL(): String? {
-        if (!Platform.isEmulator()) return null
+    fun devServerHost(): String? = EMULATOR_HOST.takeIf { Platform.isEmulator() }
 
-        val url = "http://$EMULATOR_HOST:$DEV_SERVER_PORT/"
-        val serving = runCatching {
-            val connection = URL(url + DEV_SERVER_PROBE).openConnection() as HttpURLConnection
-            connection.requestMethod = "HEAD"
-            connection.connectTimeout = DEV_SERVER_PROBE_TIMEOUT_MS
-            connection.readTimeout = DEV_SERVER_PROBE_TIMEOUT_MS
-            try {
-                connection.responseCode == HttpURLConnection.HTTP_OK
-            } finally {
-                connection.disconnect()
-            }
-        }.getOrDefault(false)
-
-        if (!serving) {
-            Logger.info("updater", "Emulator: $url is not reachable; using the default update URL.")
-            return null
+    @JvmStatic
+    fun isServing(url: String, timeoutMs: Int): Boolean = runCatching {
+        val connection = URL(url).openConnection() as HttpURLConnection
+        connection.requestMethod = "HEAD"
+        connection.connectTimeout = timeoutMs
+        connection.readTimeout = timeoutMs
+        try {
+            connection.responseCode == HttpURLConnection.HTTP_OK
+        } finally {
+            connection.disconnect()
         }
-
-        Logger.info("updater", "Emulator: using $url.")
-        return url
-    }
+    }.getOrDefault(false)
 
     @JvmStatic
     fun availableFonts(): Array<String> = runCatching {

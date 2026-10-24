@@ -26,11 +26,11 @@
 #import <unordered_map>
 #import <vector>
 
-#import "Evaluations.h"
 #import "JSI.h"
 #import "Logger.h"
 #import "NativeAddressValidation.h"
 #import "NativeConversionBudget.h"
+#import "NativeEvaluations.h"
 #import "NativePluginFFI.h"
 #import "NativeNumericValidation.h"
 #import "NativeOperationGate.h"
@@ -6150,117 +6150,6 @@ static void installFabric(Runtime &runtime, Object &fabric)
     fabric.setProperty(runtime, "unmountAsync", makeFunction("unmountAsync", 1, runtime, fabricUnmountAsync));
 }
 
-static bool isOptionalString(const Value &value)
-{
-    return value.isUndefined() || value.isNull() || value.isString();
-}
-
-static NSString *optionalString(Runtime &runtime, const Value &value)
-{
-    return value.isString() ? [JSI toNSString:value runtime:runtime] : nil;
-}
-
-static EvaluationRecord *evaluationRecord(Runtime &runtime, const Value &value, NSString **failure)
-{
-    if (!value.isObject())
-    {
-        *failure = @"expected an evaluation record object";
-        return nil;
-    }
-
-    Object record     = value.asObject(runtime);
-    Value  identifier = record.getProperty(runtime, "id");
-    Value  code       = record.getProperty(runtime, "code");
-    Value  ok         = record.getProperty(runtime, "ok");
-    Value  result     = record.getProperty(runtime, "value");
-    Value  error      = record.getProperty(runtime, "error");
-    Value  logs       = record.getProperty(runtime, "logs");
-
-    if (!identifier.isString() || !code.isString() || !ok.isBool())
-    {
-        *failure = @"id and code must be strings and ok must be a boolean";
-        return nil;
-    }
-
-    if (!isOptionalString(result) || !isOptionalString(error))
-    {
-        *failure = @"value and error must be strings when present";
-        return nil;
-    }
-
-    NSMutableArray<EvaluationLogLine *> *lines = [NSMutableArray array];
-    if (!logs.isUndefined() && !logs.isNull())
-    {
-        if (!logs.isObject() || !logs.asObject(runtime).isArray(runtime))
-        {
-            *failure = @"logs must be an array when present";
-            return nil;
-        }
-
-        Array entries = logs.asObject(runtime).asArray(runtime);
-        for (size_t index = 0; index < entries.size(runtime); index++)
-        {
-            Value entry = entries.getValueAtIndex(runtime, index);
-            if (!entry.isObject())
-            {
-                *failure = [NSString stringWithFormat:@"logs[%zu] must be an object", index];
-                return nil;
-            }
-
-            Object line    = entry.asObject(runtime);
-            Value  level   = line.getProperty(runtime, "level");
-            Value  message = line.getProperty(runtime, "message");
-            double number  = level.isNumber() ? level.getNumber() : 0;
-            if (!message.isString() || (number != static_cast<double>(EvaluationLogLevelLog) &&
-                                        number != static_cast<double>(EvaluationLogLevelWarn) &&
-                                        number != static_cast<double>(EvaluationLogLevelError)))
-            {
-                *failure = [NSString
-                    stringWithFormat:@"logs[%zu] must have a level of 1, 2 or 3 and a string message",
-                                     index];
-                return nil;
-            }
-
-            [lines addObject:[[EvaluationLogLine alloc]
-                                 initWithLevel:static_cast<EvaluationLogLevel>(number)
-                                       message:[JSI toNSString:message runtime:runtime]]];
-        }
-    }
-
-    return [[EvaluationRecord alloc] initWithIdentifier:[JSI toNSString:identifier runtime:runtime]
-                                                   code:[JSI toNSString:code runtime:runtime]
-                                                     ok:ok.getBool()
-                                                  value:optionalString(runtime, result)
-                                                  error:optionalString(runtime, error)
-                                                   logs:lines];
-}
-
-static Value recordEvaluation(Runtime &runtime, const Value *args, size_t count)
-{
-    NSString *failure = @"expected an evaluation record";
-
-    try
-    {
-        EvaluationRecord *record = count ? evaluationRecord(runtime, args[0], &failure) : nil;
-        if (record)
-        {
-            [Evaluations record:record];
-            return Value(true);
-        }
-    }
-    catch (const std::exception &exception)
-    {
-        failure = @(exception.what());
-    }
-    catch (...)
-    {
-        failure = @"reading the record failed";
-    }
-
-    [Logger error:LOG_CATEGORY_DEBUGGER format:@"Rejected evaluation record: %@", failure];
-    return Value(false);
-}
-
 static Value environment(Runtime &runtime, const Value *, size_t)
 {
     NSString *hostAddress = [Utilities getVirtualDeviceHostAddress];
@@ -6275,8 +6164,7 @@ static Value environment(Runtime &runtime, const Value *, size_t)
 
 static void installDebug(Runtime &runtime, Object &debug)
 {
-    debug.setProperty(runtime, "recordEvaluation",
-                      makeFunction("recordEvaluation", 1, runtime, recordEvaluation));
+    debug.setProperty(runtime, "recordEvaluation", loader::native::makeRecordEvaluationFunction(runtime));
     debug.setProperty(runtime, "environment", makeFunction("environment", 0, runtime, environment));
 }
 

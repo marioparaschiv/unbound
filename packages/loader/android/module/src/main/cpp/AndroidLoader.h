@@ -11,6 +11,7 @@
 
 #include <jsi/jsi.h>
 
+#include "LoaderHotReload.h"
 #include "LoaderPipeline.h"
 #include "LoaderSettings.h"
 #include "LoaderUpdater.h"
@@ -44,7 +45,6 @@ namespace unbound::android
         jmethodID hooksSetReturnValue = nullptr;
         jmethodID hooksRemoveReturnValue = nullptr;
         jmethodID hooksClearReturnValues = nullptr;
-        jmethodID debugRecordEvaluation = nullptr;
         jmethodID debugEnvironment    = nullptr;
         jmethodID javaBatch           = nullptr;
         jmethodID javaCreateAssociationKey = nullptr;
@@ -57,7 +57,8 @@ namespace unbound::android
         jmethodID fabricViewHandle    = nullptr;
         jmethodID fetchText          = nullptr;
         jmethodID download           = nullptr;
-        jmethodID devServerURL       = nullptr;
+        jmethodID devServerHost      = nullptr;
+        jmethodID isServing          = nullptr;
         jmethodID availableFonts     = nullptr;
         jmethodID alert              = nullptr;
         jmethodID onBundleExecuted   = nullptr;
@@ -90,6 +91,10 @@ namespace unbound::android
         std::string toolbox(const std::string &action, const std::string &argument);
         std::string fontsJSON();
         std::string themeColorsJSON(const std::string &themeId);
+        std::optional<std::string> hotReloadURL();
+        void hotReloadConnected();
+        bool hotReloadFeed(const std::string &chunk);
+        double hotReloadNextDelay();
 
         void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) override;
         bool isMainThread() override;
@@ -111,12 +116,16 @@ namespace unbound::android
             const std::string &url, const std::string &destination,
             const std::map<std::string, std::string> &headers);
         nlohmann::json availableFonts();
+        std::optional<std::string> devServerHost();
+        bool isServing(const std::string &url, double timeoutSeconds);
 
         LoaderConfiguration                      configuration_;
         JavaCallbacks                            callbacks_;
         loader::SettingsStore                    settings_;
         std::unique_ptr<loader::BundleUpdater>   updater_;
         std::unique_ptr<loader::LoaderPipeline>  pipeline_;
+        std::unique_ptr<loader::HotReloadStream> hotReloadStream_;
+        loader::HotReloadBackoff                 hotReloadBackoff_;
         std::mutex                               queueMutex_;
         std::deque<std::function<void(facebook::jsi::Runtime &)>> queue_;
         std::mutex                               mainQueueMutex_;

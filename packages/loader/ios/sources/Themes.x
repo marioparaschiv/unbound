@@ -16,6 +16,8 @@ static NSString                                   *lastDiscordThemeId = nil;
 static BOOL                                        semanticColorsSwizzled = NO;
 static BOOL                                        refreshingDiscordTheme = NO;
 static BOOL                                        customThemeActive = NO;
+static NSDictionary<NSString *, UIColor *>        *semanticColors = nil;
+static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
 + (NSString *)makeJSON
 {
@@ -64,14 +66,20 @@ static BOOL                                        customThemeActive = NO;
 
     [Themes restoreOriginalRawColors];
 
-    if ([Settings getBoolean:@"unbound" key:@"recovery" def:NO] || !themeId)
+    NSDictionary *colors = nil;
+    if (themeId && ![Settings getBoolean:@"unbound" key:@"recovery" def:NO])
     {
-        return;
+        colors = [CoreBridge themeColors:[Themes getThemeById:themeId] ?: @{}];
     }
 
-    NSDictionary *theme = [Themes getThemeById:themeId];
-    NSDictionary *raw   = theme[@"bundle"][@"raw"];
-    if (raw)
+    @synchronized([Themes class])
+    {
+        semanticColors = colors[@"semantic"];
+        rawFallbacks   = colors[@"rawFallbacks"];
+    }
+
+    NSDictionary *raw = colors[@"raw"];
+    if (raw.count)
     {
         [Themes swizzleRawColors:raw];
     }
@@ -176,20 +184,8 @@ static BOOL                                        customThemeActive = NO;
 
             __block id (*original)(Class, SEL);
             IMP     replacement = imp_implementationWithBlock(^UIColor *(id self) {
-                @try
-                {
-                    id       color  = payload[raw];
-                    UIColor *parsed = [Themes parseColor:color];
-                    if (parsed)
-                        return parsed;
-                }
-                @catch (NSException *e)
-                {
-                    [Logger error:LOG_CATEGORY_THEMES
-                           format:@"Failed to use modified raw color %@. (%@)", raw, e.reason];
-                }
-
-                return original(instance, selector);
+                UIColor *color = payload[raw];
+                return color ?: original(instance, selector);
                 });
 
             MSHookMessageEx(instance, selector, replacement, (IMP *) &original);
@@ -261,73 +257,33 @@ static BOOL                                        customThemeActive = NO;
 
             __block id (*original)(Class, SEL);
             IMP     replacement = imp_implementationWithBlock(^UIColor *(id self) {
-                if (currentThemeId != nil)
+                UIColor  *themed   = nil;
+                NSString *fallback = nil;
+                @synchronized([Themes class])
                 {
-                    @try
+                    themed   = semanticColors[name];
+                    fallback = themed ? nil : rawFallbacks[name];
+                }
+
+                if (themed)
+                {
+                    return themed;
+                }
+
+                if (fallback)
+                {
+                    SEL   colorSelector = NSSelectorFromString(fallback);
+                    Class colorClass    = object_getClass(NSClassFromString(@"UIColor"));
+                    if ([colorClass respondsToSelector:colorSelector])
                     {
-                        NSDictionary *theme = [Themes getThemeById:currentThemeId];
-                        if (!theme)
-                            return original(instance, selector);
-
-                        NSDictionary *values = theme[@"bundle"][@"semantic"];
-                        if (!values)
-                            return original(instance, selector);
-
-                        NSDictionary *color = values[name];
-                        if (!color || !color[@"type"] || !color[@"value"])
-                        {
-                            return original(instance, selector);
-                        }
-
-                        NSString *colorType    = color[@"type"];
-                        NSString *colorValue   = color[@"value"];
-                        NSNumber *colorOpacity = color[@"opacity"];
-
-                        if ([colorType isEqualToString:@"color"])
-                        {
-                            UIColor *parsed = [Themes parseColor:colorValue];
-
-                            if (parsed)
-                            {
-                                if (colorOpacity)
-                                {
-                                    return
-                                        [parsed colorWithAlphaComponent:[colorOpacity doubleValue]];
-                                }
-
-                                return parsed;
-                            }
-                        }
-
-                        if ([colorType isEqualToString:@"raw"])
-                        {
-                            SEL   colorSelector = NSSelectorFromString(colorValue);
-                            Class instance = object_getClass(NSClassFromString(@"UIColor"));
-
-                            if ([instance respondsToSelector:colorSelector])
-                            {
-                                UIColor *(*getColor)(id, SEL);
-                                getColor =
-                                    (UIColor *
-                                     (*) (id, SEL)) [instance methodForSelector:colorSelector];
-
-                                return getColor(instance, colorSelector);
-                            }
-
-                            return original(instance, selector);
-                        }
-
-                        return original(instance, selector);
-                    }
-                    @catch (NSException *e)
-                    {
-                        [Logger error:LOG_CATEGORY_THEMES
-                               format:@"Failed to use modified color %@. (%@)", name, e.reason];
+                        UIColor *(*getColor)(id, SEL) =
+                            (UIColor * (*) (id, SEL))[colorClass methodForSelector:colorSelector];
+                        return getColor(colorClass, colorSelector);
                     }
                 }
 
                 return original(instance, selector);
-                });
+            });
 
             MSHookMessageEx(instance, selector, replacement, (IMP *) &original);
         }
@@ -340,11 +296,6 @@ static BOOL                                        customThemeActive = NO;
         [Logger error:LOG_CATEGORY_THEMES
                format:@"Failed to swizzle semantic colors. (%@)", e.reason];
     }
-}
-
-+ (UIColor *)parseColor:(NSString *)color
-{
-    return [Utilities parseColor:color];
 }
 @end
 

@@ -1,3 +1,4 @@
+#import "CoreBridge.h"
 #import "RecoveryQuickAction.h"
 #import "Unbound.h"
 
@@ -52,9 +53,7 @@ static NSString *const kRecoveryShortcutType = @"app.unbound.recovery.toggle";
 
 + (BOOL)toggleSafeMode
 {
-    BOOL enabled = ![Utilities isRecoveryModeEnabled];
-    [Settings set:@"unbound" key:@"recovery" value:@(enabled)];
-    [Settings save];
+    BOOL enabled = [CoreBridge toggleRecovery];
     [RecoveryQuickAction refresh];
     return enabled;
 }

@@ -174,21 +174,21 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	}
 	for _, installation := range []string{
 		`bridge.setProperty(runtime, "debug", std::move(debug));`,
-		`makeFunction("recordEvaluation", 1, runtime, recordEvaluation)`,
+		`loader::native::makeRecordEvaluationFunction(runtime)`,
 		`makeFunction("environment", 0, runtime, environment)`,
 	} {
 		if !strings.Contains(sourceText, installation) {
 			t.Fatalf("native debug function %q is not installed on the bridge", installation)
 		}
 	}
-	recordHandler := strings.Index(sourceText, "static Value recordEvaluation(Runtime &runtime")
-	if recordHandler < 0 {
-		t.Fatal("native evaluation record handler is missing")
+	evaluations, err := os.ReadFile(filepath.Join(root, "core", "src", "NativeEvaluations.cpp"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	recordHandlerEnd := strings.Index(sourceText[recordHandler:], "static Value environment(")
-	if recordHandlerEnd < 0 ||
-		!strings.Contains(sourceText[recordHandler:recordHandler+recordHandlerEnd], "catch (...)") ||
-		!strings.Contains(sourceText[recordHandler:recordHandler+recordHandlerEnd], "return Value(false);") {
+	recordFunction := strings.Index(string(evaluations), "jsi::Function makeRecordEvaluationFunction(")
+	if recordFunction < 0 ||
+		!strings.Contains(string(evaluations)[recordFunction:], "catch (...)") ||
+		!strings.Contains(string(evaluations)[recordFunction:], "return jsi::Value(false);") {
 		t.Fatal("native evaluation records can throw into JavaScript on bad input")
 	}
 }

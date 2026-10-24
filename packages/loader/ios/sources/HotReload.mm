@@ -1,7 +1,13 @@
-#import "HotReload.h"
+#include <istream>
+#include <ostream>
+#include <streambuf>
 
-static const NSTimeInterval kReconnectMinDelay = 1.0;
-static const NSTimeInterval kReconnectMaxDelay = 30.0;
+#import "HotReload.h"
+#import "UpdaterCore.h"
+
+#include <memory>
+
+#include "LoaderHotReload.h"
 
 @implementation HotReload
 {
@@ -9,8 +15,8 @@ static const NSTimeInterval kReconnectMaxDelay = 30.0;
     NSURLSession         *_session;
     NSURLSessionDataTask *_task;
     NSURL                *_url;
-    NSMutableData        *_buffer;
-    NSTimeInterval        _reconnectDelay;
+    std::unique_ptr<loader::HotReloadStream> _stream;
+    loader::HotReloadBackoff                 _backoff;
     BOOL                  _running;
     uint64_t              _generation;
 }
@@ -48,8 +54,7 @@ static const NSTimeInterval kReconnectMaxDelay = 30.0;
     if ((self = [super init]))
     {
         _queue          = dispatch_queue_create("app.unbound.hotreload", DISPATCH_QUEUE_SERIAL);
-        _buffer         = [NSMutableData data];
-        _reconnectDelay = kReconnectMinDelay;
+        _stream = std::make_unique<loader::HotReloadStream>(UnboundUpdaterSettings());
     }
 
     return self;
@@ -86,8 +91,8 @@ static const NSTimeInterval kReconnectMaxDelay = 30.0;
         return;
     }
 
-    _running        = YES;
-    _reconnectDelay = kReconnectMinDelay;
+    _running = YES;
+    _backoff.reset();
 
     NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
 
@@ -126,7 +131,7 @@ static const NSTimeInterval kReconnectMaxDelay = 30.0;
     [_session invalidateAndCancel];
     _session = nil;
 
-    [_buffer setLength:0];
+    _stream->reset();
 
     [Logger info:LOG_CATEGORY_UPDATER format:@"Hot-reload: disabled; stream stopped."];
 }
@@ -139,19 +144,8 @@ static const NSTimeInterval kReconnectMaxDelay = 30.0;
         return nil;
     }
 
-    NSURLComponents *components = [NSURLComponents componentsWithString:base];
-    if (!components.scheme || !components.host)
-    {
-        return nil;
-    }
-
-    NSURLComponents *origin = [[NSURLComponents alloc] init];
-    origin.scheme           = components.scheme;
-    origin.host             = components.host;
-    origin.port             = components.port;
-    origin.path             = @"/__hot";
-
-    return origin.URL;
+    std::optional<std::string> url = loader::hotReloadURL(base.UTF8String ?: "");
+    return url ? [NSURL URLWithString:[NSString stringWithUTF8String:url->c_str()]] : nil;
 }
 
 - (void)connect
@@ -161,7 +155,7 @@ static const NSTimeInterval kReconnectMaxDelay = 30.0;
         return;
     }
 
-    [_buffer setLength:0];
+    _stream->reset();
 
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:_url];
     request.cachePolicy          = NSURLRequestReloadIgnoringCacheData;
@@ -179,9 +173,8 @@ static const NSTimeInterval kReconnectMaxDelay = 30.0;
         return;
     }
 
-    NSTimeInterval delay = _reconnectDelay;
-    _reconnectDelay      = MIN(_reconnectDelay * 2.0, kReconnectMaxDelay);
-    uint64_t generation  = _generation;
+    NSTimeInterval delay      = _backoff.next();
+    uint64_t       generation = _generation;
 
     [Logger info:LOG_CATEGORY_UPDATER format:@"Hot-reload: reconnecting in %.0fs.", delay];
 
@@ -192,106 +185,6 @@ static const NSTimeInterval kReconnectMaxDelay = 30.0;
         }
         [self connect];
     });
-}
-
-#pragma mark - SSE parsing
-
-- (void)drainBuffer
-{
-    NSData *separator = [@"\n\n" dataUsingEncoding:NSUTF8StringEncoding];
-
-    while (YES)
-    {
-        NSRange range = [_buffer rangeOfData:separator
-                                     options:0
-                                       range:NSMakeRange(0, _buffer.length)];
-        if (range.location == NSNotFound)
-        {
-            break;
-        }
-
-        NSData   *eventData = [_buffer subdataWithRange:NSMakeRange(0, range.location)];
-        NSString *event = [[NSString alloc] initWithData:eventData encoding:NSUTF8StringEncoding];
-
-        [_buffer replaceBytesInRange:NSMakeRange(0, range.location + range.length)
-                           withBytes:NULL
-                              length:0];
-
-        if (event.length)
-        {
-            [self handleEvent:event];
-        }
-    }
-}
-
-- (void)handleEvent:(NSString *)event
-{
-    NSString *eventName = nil;
-    NSString *eventData = nil;
-
-    for (NSString *line in [event componentsSeparatedByString:@"\n"])
-    {
-        if (line.length == 0 || [line hasPrefix:@":"])
-        {
-            continue;
-        }
-
-        if ([line hasPrefix:@"event:"])
-        {
-            eventName = [[line substringFromIndex:6]
-                stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        }
-        else if ([line hasPrefix:@"data:"])
-        {
-            eventData = [[line substringFromIndex:5]
-                stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        }
-    }
-
-    if (![eventName isEqualToString:@"reload"] || eventData.length == 0)
-    {
-        return;
-    }
-
-    NSData *json    = [eventData dataUsingEncoding:NSUTF8StringEncoding];
-    id      payload = [Utilities parseJSON:json];
-
-    if (![payload isKindOfClass:[NSDictionary class]])
-    {
-        return;
-    }
-
-    NSString *incoming = payload[@"etag"];
-    if (![incoming isKindOfClass:[NSString class]])
-    {
-        return;
-    }
-
-    [self handleReloadEtag:incoming];
-}
-
-static NSString *normalizedEtag(NSString *etag)
-{
-    NSString *value = [etag hasPrefix:@"W/"] ? [etag substringFromIndex:2] : etag;
-    return [value stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\""]];
-}
-
-- (void)handleReloadEtag:(NSString *)incoming
-{
-    NSString *stored = [Settings getString:@"unbound" key:@"loader.update.etag" def:@""];
-
-    if (stored.length > 0 && [normalizedEtag(stored) isEqualToString:normalizedEtag(incoming)])
-    {
-        [Logger info:LOG_CATEGORY_UPDATER
-              format:@"Hot-reload: etag unchanged (%@); skipping reload.", incoming];
-        return;
-    }
-
-    [Logger info:LOG_CATEGORY_UPDATER
-          format:@"Hot-reload: etag mismatch (stored %@, incoming %@) -> reloadApp.",
-                 stored.length ? stored : @"<none>", incoming];
-
-    [Utilities reloadApp];
 }
 
 #pragma mark - NSURLSessionDataDelegate
@@ -305,7 +198,7 @@ static NSString *normalizedEtag(NSString *etag)
 
     if (status == 200)
     {
-        _reconnectDelay = kReconnectMinDelay;
+        _backoff.reset();
         [Logger info:LOG_CATEGORY_UPDATER format:@"Hot-reload: SSE connected."];
         completionHandler(NSURLSessionResponseAllow);
     }
@@ -319,8 +212,11 @@ static NSString *normalizedEtag(NSString *etag)
           dataTask:(NSURLSessionDataTask *)dataTask
     didReceiveData:(NSData *)data
 {
-    [_buffer appendData:data];
-    [self drainBuffer];
+    std::string_view chunk(static_cast<const char *>(data.bytes), data.length);
+    if (_stream->feed(chunk))
+    {
+        [Utilities reloadApp];
+    }
 }
 
 - (void)URLSession:(NSURLSession *)session

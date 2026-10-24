@@ -1,5 +1,6 @@
 #import <jsi/jsi.h>
 
+#import "CoreBridge.h"
 #import "Discord.h"
 #import "HotReload.h"
 #import "JSI.h"
@@ -55,10 +56,10 @@ static void applyPendingBrowserLogin(void)
     NSString *source = [NSString stringWithFormat:
                              @"(function(token){const apply=()=>{const metro=globalThis.unbound?.metro;if(!metro||typeof metro.findByProps!=='function')throw new Error('Metro API unavailable');let auth=metro.findByProps('getAnalyticsToken','setToken');if(!auth)auth=metro.findByProps('getToken','setToken');if(!auth||typeof auth.setToken!=='function')throw new Error('Discord authentication store unavailable');auth.setToken(token);const reload=globalThis.unbound?.native?.reload;if(typeof reload!=='function')throw new Error('Reload API unavailable');Promise.resolve(reload()).catch(()=>{});};const ready=globalThis.__runtimeReady;if(ready?.ready)apply();else if(Array.isArray(ready?.callbacks))ready.callbacks.push(apply);else apply();})(%@);",
                          tokenJSON];
-    NSData *script = [source dataUsingEncoding:NSUTF8StringEncoding];
+    std::string script = source.UTF8String ?: "";
 
     [instance callFunctionOnBufferedRuntimeExecutor:[script, token](jsi::Runtime &runtime) {
-    BOOL applied = [JSI evaluate:script tag:@"browser-login" runtime:runtime];
+        BOOL applied = loader::evaluateScript(runtime, script, "browser-login");
         dispatch_async(dispatch_get_main_queue(), ^{
             gBrowserLoginIsApplying = NO;
             if (applied)
@@ -155,7 +156,7 @@ public:
 
     uint32_t runtimeBytecodeVersion() override
     {
-        return [Utilities getHermesBytecodeVersion];
+        return [CoreBridge mainBundleBytecodeVersion];
     }
 
     loader::PreloadPayload preloadPayload() override

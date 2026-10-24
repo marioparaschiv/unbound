@@ -12,7 +12,6 @@ import java.io.File
 import java.util.zip.ZipFile
 
 object Platform {
-    private const val HERMES_MAGIC = 0x1F1903C103BC1FC6L
     private const val MAIN_BUNDLE_ENTRY = "assets/index.android.bundle"
 
     @Volatile
@@ -77,16 +76,8 @@ object Platform {
                     if (count < 0) return 0
                     read += count
                 }
-                val magic = littleEndianLong(header, 0)
-                if (magic != HERMES_MAGIC) return 0
-                littleEndianInt(header, 8)
+                NativeBridge.nativeHermesBytecodeVersion(header)
             }
         }
     }.getOrDefault(0)
-
-    private fun littleEndianLong(bytes: ByteArray, offset: Int): Long =
-        (0 until 8).fold(0L) { value, index -> value or ((bytes[offset + index].toLong() and 0xFF) shl (8 * index)) }
-
-    private fun littleEndianInt(bytes: ByteArray, offset: Int): Int =
-        (0 until 4).fold(0) { value, index -> value or ((bytes[offset + index].toInt() and 0xFF) shl (8 * index)) }
 }

@@ -538,17 +538,7 @@ static UIWindowScene *activeWindowScene(void)
 
 - (void)deleteBundle
 {
-    [Settings set:@"unbound" key:@"loader.update.url" value:nil];
-    [Settings set:@"unbound" key:@"loader.update.force" value:nil];
-
-    for (NSString *extension in @[ @"bundle", @"js" ])
-    {
-        NSString *path = [NSString pathWithComponents:@[
-            FileSystem.documents, [NSString stringWithFormat:@"unbound.%@", extension]
-        ]];
-        [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
-        [Updater rejectBundle:[path stringByAppendingString:@".candidate"]];
-    }
+    [CoreBridge deleteBundleIn:FileSystem.documents];
     [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
 }
 
@@ -723,14 +713,7 @@ static UIWindowScene *activeWindowScene(void)
                                                                                    @"unbound."
                                                                                    @"bundle",
                                                                                    sha];
-                                                                       [Settings set:@"unbound"
-                                                                                 key:@"loader."
-                                                                                     @"update.url"
-                                                                               value:bundleUrl];
-                                                                       [Settings set:@"unbound"
-                                                                                 key:@"loader."
-                                                                                     @"update.force"
-                                                                               value:@YES];
+                                                                       [CoreBridge useCustomBundle:bundleUrl];
                                                                        [self
                                                                            dismissViewControllerAnimated:
                                                                                YES
@@ -780,14 +763,8 @@ static UIWindowScene *activeWindowScene(void)
                                   UITextField *textField = alert.textFields.firstObject;
                                   NSString    *urlString = textField.text;
 
-                                  if (urlString.length > 0)
+                                  if ([CoreBridge useCustomBundle:urlString])
                                   {
-                                      [Settings set:@"unbound"
-                                                key:@"loader.update.url"
-                                              value:urlString];
-                                      [Settings set:@"unbound"
-                                                key:@"loader.update.force"
-                                              value:@YES];
                                       [self dismissViewControllerAnimated:YES
                                                                   completion:^{
                                                                       [Utilities reloadApp];

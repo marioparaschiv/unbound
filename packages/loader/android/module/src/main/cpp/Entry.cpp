@@ -1,4 +1,5 @@
 #include "AndroidLoader.h"
+#include "HermesBytecodeHeader.h"
 #include "JniEnvironment.h"
 #include "LoaderLog.h"
 #include "LoaderPreload.h"
@@ -130,6 +131,53 @@ static void nativeDrainMainWork(JNIEnv *, jclass)
     }
 }
 
+static jint nativeHermesBytecodeVersion(JNIEnv *env, jclass, jbyteArray header)
+{
+    if (!header)
+    {
+        return 0;
+    }
+
+    jsize length = env->GetArrayLength(header);
+    jbyte *bytes  = env->GetByteArrayElements(header, nullptr);
+    if (!bytes)
+    {
+        return 0;
+    }
+
+    uint32_t version = loader::hermesBytecodeVersion(bytes, static_cast<size_t>(length));
+    env->ReleaseByteArrayElements(header, bytes, JNI_ABORT);
+    return static_cast<jint>(version);
+}
+
+static jstring nativeHotReloadURL(JNIEnv *env, jclass)
+{
+    auto loader = currentLoader();
+    std::optional<std::string> url = loader ? loader->hotReloadURL() : std::nullopt;
+    return url ? toJavaString(env, *url) : nullptr;
+}
+
+static void nativeHotReloadConnected(JNIEnv *, jclass)
+{
+    if (auto loader = currentLoader())
+    {
+        loader->hotReloadConnected();
+    }
+}
+
+static jboolean nativeHotReloadFeed(JNIEnv *env, jclass, jstring chunk)
+{
+    auto loader = currentLoader();
+    return loader && loader->hotReloadFeed(toStdString(env, chunk)) ? JNI_TRUE : JNI_FALSE;
+}
+
+static jlong nativeHotReloadNextDelayMs(JNIEnv *, jclass)
+{
+    auto loader = currentLoader();
+    double seconds = loader ? loader->hotReloadNextDelay() : loader::kHotReloadMaximumDelaySeconds;
+    return static_cast<jlong>(seconds * 1000);
+}
+
 static jboolean nativeGetBoolean(JNIEnv *env, jclass, jstring store, jstring key, jboolean fallback)
 {
     auto loader = currentLoader();
@@ -247,8 +295,6 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.hooksClearReturnValues =
         env->GetStaticMethodID(bridge, "hooksClearReturnValues", "(Ljava/lang/String;)V");
-    gCallbacks.debugRecordEvaluation =
-        env->GetStaticMethodID(bridge, "debugRecordEvaluation", "(Ljava/lang/String;)Z");
     gCallbacks.debugEnvironment =
         env->GetStaticMethodID(bridge, "debugEnvironment", "()Ljava/lang/String;");
     gCallbacks.javaBatch = env->GetStaticMethodID(
@@ -278,7 +324,8 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         bridge, "download",
         "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)[Ljava/lang/"
         "String;");
-    gCallbacks.devServerURL = env->GetStaticMethodID(bridge, "devServerURL", "()Ljava/lang/String;");
+    gCallbacks.devServerHost = env->GetStaticMethodID(bridge, "devServerHost", "()Ljava/lang/String;");
+    gCallbacks.isServing     = env->GetStaticMethodID(bridge, "isServing", "(Ljava/lang/String;I)Z");
     gCallbacks.availableFonts =
         env->GetStaticMethodID(bridge, "availableFonts", "()[Ljava/lang/String;");
     gCallbacks.alert = env->GetStaticMethodID(bridge, "alert", "(Ljava/lang/String;)V");
@@ -292,13 +339,13 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.javaInvoke && gCallbacks.javaGetField && gCallbacks.javaSetField &&
            gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
            gCallbacks.hooksSetReturnValue && gCallbacks.hooksRemoveReturnValue &&
-           gCallbacks.hooksClearReturnValues && gCallbacks.debugRecordEvaluation &&
+           gCallbacks.hooksClearReturnValues &&
            gCallbacks.debugEnvironment && gCallbacks.javaBatch &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
            gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricIsRunning &&
            gCallbacks.fabricViewHandle && gCallbacks.fetchText &&
-           gCallbacks.download && gCallbacks.devServerURL && gCallbacks.availableFonts &&
+           gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing && gCallbacks.availableFonts &&
            gCallbacks.alert && gCallbacks.onBundleExecuted;
 }
 
@@ -332,6 +379,12 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativeDrainMainWork", "()V", reinterpret_cast<void *>(nativeDrainMainWork)},
         {"nativeDispatchHookEvent", "(Ljava/lang/String;Ljava/lang/String;)V",
          reinterpret_cast<void *>(nativeDispatchHookEvent)},
+        {"nativeHermesBytecodeVersion", "([B)I",
+         reinterpret_cast<void *>(nativeHermesBytecodeVersion)},
+        {"nativeHotReloadURL", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeHotReloadURL)},
+        {"nativeHotReloadConnected", "()V", reinterpret_cast<void *>(nativeHotReloadConnected)},
+        {"nativeHotReloadFeed", "(Ljava/lang/String;)Z", reinterpret_cast<void *>(nativeHotReloadFeed)},
+        {"nativeHotReloadNextDelayMs", "()J", reinterpret_cast<void *>(nativeHotReloadNextDelayMs)},
         {"nativeGetBoolean", "(Ljava/lang/String;Ljava/lang/String;Z)Z",
          reinterpret_cast<void *>(nativeGetBoolean)},
         {"nativeSetBoolean", "(Ljava/lang/String;Ljava/lang/String;Z)V",

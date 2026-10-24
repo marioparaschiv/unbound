@@ -30,6 +30,9 @@ int main()
     touch(root / "Themes" / "t.json");
     touch(root / "Icons" / "pack" / "manifest.json");
 
+    assert(loader::toolbox::addonKindNamed("themes") == loader::toolbox::AddonKind::Themes);
+    assert(loader::toolbox::addonKindNamed("Fonts") == loader::toolbox::AddonKind::Fonts);
+    assert(!loader::toolbox::addonKindNamed("Bundles"));
     assert(loader::toolbox::wipeAddons(root.string(), loader::toolbox::AddonKind::Plugins));
     assert(!std::filesystem::exists(root / "Plugins"));
     assert(!std::filesystem::exists(root / "plugins"));

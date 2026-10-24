@@ -4,10 +4,14 @@
 
 #import "CoreBridge.h"
 #import "Logger.h"
+#import "SettingsCore.h"
+#import "UpdaterCore.h"
 
+#include "HermesBytecodeHeader.h"
 #include "LoaderAddons.h"
 #include "LoaderLog.h"
 #include "LoaderPreload.h"
+#include "LoaderThemes.h"
 #include "LoaderToolbox.h"
 
 static std::string toStdString(NSString *value)
@@ -59,6 +63,59 @@ static LogLevel iosLogLevel(loader::LogLevel level)
 
 @implementation CoreBridge
 
++ (uint32_t)mainBundleBytecodeVersion
+{
+    NSString *path    = [NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:@"main.jsbundle"];
+    uint32_t  version = loader::hermesBytecodeVersionOfFile(toStdString(path));
+
+    if (version == 0)
+    {
+        [Logger error:LOG_CATEGORY_UTILITIES format:@"%@ is not a readable Hermes bytecode bundle", path];
+    }
+    return version;
+}
+
+static UIColor *uiColor(const loader::RGBAColor &color)
+{
+    return [UIColor colorWithRed:color.red green:color.green blue:color.blue alpha:color.alpha];
+}
+
+static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string, loader::RGBAColor> &colors)
+{
+    NSMutableDictionary<NSString *, UIColor *> *result = [NSMutableDictionary dictionaryWithCapacity:colors.size()];
+    for (const auto &[name, color] : colors)
+    {
+        result[@(name.c_str())] = uiColor(color);
+    }
+    return result;
+}
+
++ (UIColor *)colorFromString:(NSString *)value
+{
+    std::optional<loader::RGBAColor> color = loader::parseColor(toStdString(value));
+    return color ? uiColor(*color) : nil;
+}
+
++ (NSDictionary *)themeColors:(NSDictionary *)theme
+{
+    NSData *data = [NSJSONSerialization isValidJSONObject:theme]
+                       ? [NSJSONSerialization dataWithJSONObject:theme options:0 error:nil]
+                       : nil;
+    nlohmann::json parsed =
+        data ? nlohmann::json::parse(static_cast<const char *>(data.bytes),
+                                     static_cast<const char *>(data.bytes) + data.length, nullptr, false)
+             : nlohmann::json::object();
+    loader::ThemeColors colors = loader::resolveThemeColors(parsed);
+
+    NSMutableDictionary<NSString *, NSString *> *fallbacks = [NSMutableDictionary dictionary];
+    for (const auto &[name, selector] : colors.rawFallbacks)
+    {
+        fallbacks[@(name.c_str())] = @(selector.c_str());
+    }
+
+    return @{@"semantic" : uiColors(colors.semantic), @"raw" : uiColors(colors.raw), @"rawFallbacks" : fallbacks};
+}
+
 + (void)installLogging
 {
     loader::setLogSink([](loader::LogLevel level, const std::string &category, const std::string &message) {
@@ -90,21 +147,28 @@ static LogLevel iosLogLevel(loader::LogLevel level)
 
 + (BOOL)wipeAddonsNamed:(NSString *)kind in:(NSString *)documents
 {
-    for (auto candidate : {loader::toolbox::AddonKind::Plugins, loader::toolbox::AddonKind::Themes,
-                           loader::toolbox::AddonKind::Icons, loader::toolbox::AddonKind::Fonts})
-    {
-        if ([kind caseInsensitiveCompare:@(loader::toolbox::addonDirectoryName(candidate))] == NSOrderedSame)
-        {
-            return loader::toolbox::wipeAddons(toStdString(documents), candidate);
-        }
-    }
-
-    return NO;
+    auto candidate = loader::toolbox::addonKindNamed(toStdString(kind));
+    return candidate && loader::toolbox::wipeAddons(toStdString(documents), *candidate);
 }
 
 + (BOOL)factoryResetIn:(NSString *)documents
 {
     return loader::toolbox::factoryReset(toStdString(documents));
+}
+
++ (void)deleteBundleIn:(NSString *)documents
+{
+    loader::toolbox::deleteBundle(UnboundSettingsStore(), UnboundBundleUpdater(), toStdString(documents));
+}
+
++ (BOOL)useCustomBundle:(NSString *)url
+{
+    return loader::toolbox::useCustomBundle(UnboundSettingsStore(), toStdString(url));
+}
+
++ (BOOL)toggleRecovery
+{
+    return loader::toolbox::toggleRecovery(UnboundSettingsStore());
 }
 
 + (NSString *)issueURLForPlatform:(NSString *)platform

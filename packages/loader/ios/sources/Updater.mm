@@ -2,22 +2,20 @@
 #include <ostream>
 #include <streambuf>
 
+#import "CoreBridge.h"
+#import "SettingsCore.h"
 #import "Updater.h"
 #import "UpdaterCore.h"
 
+#include "LoaderHotReload.h"
 #include "LoaderUpdater.h"
 
-// `bun run serve` in the client repo serves its build from this port on the Mac.
-static const NSInteger      kDevServerPort         = 3000;
-static NSString *const      kDevServerProbePath    = @"manifest.json";
-static const NSTimeInterval kDevServerProbeTimeout = 1.5;
-
-static BOOL isServingBundle(NSURL *url)
+static bool isServingBundle(NSURL *url, NSTimeInterval timeout)
 {
     NSMutableURLRequest *request =
         [NSMutableURLRequest requestWithURL:url
                                 cachePolicy:NSURLRequestReloadIgnoringCacheData
-                            timeoutInterval:kDevServerProbeTimeout];
+                            timeoutInterval:timeout];
     request.HTTPMethod = @"HEAD";
 
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
@@ -32,8 +30,7 @@ static BOOL isServingBundle(NSURL *url)
     [task resume];
 
     if (dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW,
-                                                         (int64_t) (kDevServerProbeTimeout *
-                                                                    NSEC_PER_SEC))) != 0)
+                                                         (int64_t) (timeout * NSEC_PER_SEC))) != 0)
     {
         [task cancel];
         return NO;
@@ -55,18 +52,7 @@ static NSString *toNSString(const std::string &value)
 
 static loader::UpdaterSettings iosUpdaterSettings()
 {
-    loader::UpdaterSettings settings;
-    settings.getString = [](const std::string &key, const std::string &fallback) {
-        NSString *value = [Settings getString:@"unbound" key:toNSString(key) def:toNSString(fallback)];
-        return [value isKindOfClass:[NSString class]] ? toStdString(value) : fallback;
-    };
-    settings.getBoolean = [](const std::string &key, bool fallback) {
-        return static_cast<bool>([Settings getBoolean:@"unbound" key:toNSString(key) def:fallback]);
-    };
-    settings.setString = [](const std::string &key, const std::string &value) {
-        [Settings set:@"unbound" key:toNSString(key) value:toNSString(value)];
-    };
-    return settings;
+    return loader::updaterSettings(UnboundSettingsStore());
 }
 
 static std::optional<std::string> fetchText(const std::string &url, double timeout)
@@ -150,30 +136,13 @@ std::optional<std::string> UnboundUpdateURL()
 
 + (NSString *)resolveUpdateURL
 {
-    NSString *configuredURL = [Settings getString:@"unbound" key:@"loader.update.url" def:nil];
-    if (configuredURL)
-    {
-        return configuredURL;
-    }
-
-    NSString *hostAddress = [Utilities getVirtualDeviceHostAddress];
-    if (!hostAddress)
-    {
-        return nil;
-    }
-
-    NSString *devServerURL =
-        [NSString stringWithFormat:@"http://%@:%ld/", hostAddress, (long) kDevServerPort];
-    if (!isServingBundle([NSURL URLWithString:[devServerURL stringByAppendingString:kDevServerProbePath]]))
-    {
-        [Logger info:LOG_CATEGORY_UPDATER
-              format:@"Virtual device: %@ is not reachable; using the default update URL.",
-                     devServerURL];
-        return nil;
-    }
-
-    [Logger info:LOG_CATEGORY_UPDATER format:@"Virtual device: using %@.", devServerURL];
-    return devServerURL;
+    NSString                  *hostAddress = [Utilities getVirtualDeviceHostAddress];
+    std::optional<std::string> url         = loader::resolveUpdateURL(
+        iosUpdaterSettings(), hostAddress ? std::optional<std::string>(toStdString(hostAddress)) : std::nullopt,
+        [](const std::string &probe, double timeout) {
+            return isServingBundle([NSURL URLWithString:toNSString(probe)], timeout);
+        });
+    return url ? toNSString(*url) : nil;
 }
 
 + (NSString *)resolveBundlePath
@@ -193,7 +162,7 @@ std::optional<std::string> UnboundUpdateURL()
     try
     {
         return toNSString(bundleUpdater().downloadBundle(toStdString(preferredPath), optionalUpdateURL(),
-                                                         [Utilities getHermesBytecodeVersion]));
+                                                         [CoreBridge mainBundleBytecodeVersion]));
     }
     catch (const std::exception &error)
     {
@@ -219,7 +188,7 @@ std::optional<std::string> UnboundUpdateURL()
 + (NSURL *)getDownloadURL
 {
     return [NSURL URLWithString:toNSString(bundleUpdater().downloadURL(
-                                    optionalUpdateURL(), [Utilities getHermesBytecodeVersion]))];
+                                    optionalUpdateURL(), [CoreBridge mainBundleBytecodeVersion]))];
 }
 
 @end

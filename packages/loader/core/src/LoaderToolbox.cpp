@@ -54,6 +54,18 @@ namespace loader::toolbox
         return "";
     }
 
+    std::optional<AddonKind> addonKindNamed(const std::string &name)
+    {
+        for (auto kind : {AddonKind::Plugins, AddonKind::Themes, AddonKind::Icons, AddonKind::Fonts})
+        {
+            if (lowercase(name) == lowercase(addonDirectoryName(kind)))
+            {
+                return kind;
+            }
+        }
+        return std::nullopt;
+    }
+
     bool wipeAddons(const std::string &documents, AddonKind kind)
     {
         const std::string wanted = lowercase(addonDirectoryName(kind));

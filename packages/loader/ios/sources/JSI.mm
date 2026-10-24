@@ -15,25 +15,6 @@ std::string nsStringToStd(NSString *value)
     return utf8 ? std::string(utf8) : std::string();
 }
 
-class NSDataBuffer : public jsi::Buffer
-{
-public:
-    explicit NSDataBuffer(NSData *data) : data_(data) {}
-
-    size_t size() const override
-    {
-        return data_.length;
-    }
-
-    const uint8_t *data() const override
-    {
-        return static_cast<const uint8_t *>(data_.bytes);
-    }
-
-private:
-    NSData *data_;
-};
-
 }
 
 @implementation JSI
@@ -145,107 +126,6 @@ private:
 {
     return jsi::Function::createFromHostFunction(runtime, jsi::PropNameID::forUtf8(runtime, name),
                                                  argCount, handler);
-}
-
-+ (BOOL)evaluate:(NSData *)scriptData tag:(NSString *)tag runtime:(jsi::Runtime &)runtime
-{
-    if (scriptData.length == 0)
-    {
-        return NO;
-    }
-
-    @try
-    {
-        try
-        {
-            if ([Utilities isHermesBytecode:scriptData])
-            {
-                auto buffer   = std::make_shared<NSDataBuffer>(scriptData);
-                auto prepared = runtime.prepareJavaScript(buffer, std::string(tag.UTF8String));
-                runtime.evaluatePreparedJavaScript(prepared);
-            }
-            else
-            {
-                std::string source((const char *) scriptData.bytes, scriptData.length);
-                auto        buffer = std::make_shared<jsi::StringBuffer>(std::move(source));
-                runtime.evaluateJavaScript(buffer, std::string(tag.UTF8String));
-            }
-            return YES;
-        }
-        catch (const jsi::JSError &e)
-        {
-            [Logger error:LOG_CATEGORY_DEFAULT
-                   format:@"JSI eval of '%@' threw JSError: %s", tag, e.what()];
-            return NO;
-        }
-        catch (const std::exception &e)
-        {
-            [Logger error:LOG_CATEGORY_DEFAULT
-                   format:@"JSI eval of '%@' threw exception: %s", tag, e.what()];
-            return NO;
-        }
-    }
-    @catch (NSException *exception)
-    {
-        [Logger error:LOG_CATEGORY_DEFAULT
-               format:@"JSI eval of '%@' threw NSException %@: %@", tag, exception.name, exception.reason];
-        return NO;
-    }
-}
-
-+ (jsi::Value)evaluateSource:(NSString *)source
-                           tag:(NSString *)tag
-                       runtime:(jsi::Runtime &)runtime
-{
-    if (source.length == 0)
-    {
-        return jsi::Value();
-    }
-
-    @try
-    {
-        try
-        {
-            std::string              text((const char *) source.UTF8String);
-            auto                     buffer = std::make_shared<jsi::StringBuffer>(std::move(text));
-            return runtime.evaluateJavaScript(buffer, std::string(tag.UTF8String));
-        }
-        catch (const jsi::JSError &e)
-        {
-            [Logger error:LOG_CATEGORY_DEFAULT
-                   format:@"JSI source eval of '%@' threw JSError: %s", tag, e.what()];
-        }
-        catch (const std::exception &e)
-        {
-            [Logger error:LOG_CATEGORY_DEFAULT
-                   format:@"JSI source eval of '%@' threw exception: %s", tag, e.what()];
-        }
-    }
-    @catch (NSException *exception)
-    {
-        [Logger error:LOG_CATEGORY_DEFAULT
-               format:@"JSI source eval of '%@' threw NSException %@: %@", tag, exception.name,
-                      exception.reason];
-    }
-
-    return jsi::Value();
-}
-
-+ (jsi::Value)evaluateBytecode:(NSData *)bytecodeData tag:(NSString *)tag runtime:(jsi::Runtime &)runtime
-{
-    if (bytecodeData.length == 0)
-    {
-        throw jsi::JSError(runtime, "evaluateBytecode: bytecode is empty");
-    }
-
-    if (![Utilities isHermesBytecode:bytecodeData])
-    {
-        throw jsi::JSError(runtime, "evaluateBytecode: data is not Hermes bytecode");
-    }
-
-    auto buffer   = std::make_shared<NSDataBuffer>(bytecodeData);
-    auto prepared = runtime.prepareJavaScript(buffer, nsStringToStd(tag));
-    return runtime.evaluatePreparedJavaScript(prepared);
 }
 
 @end

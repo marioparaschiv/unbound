@@ -12,7 +12,6 @@
 #import "FileSystem.h"
 #import "Settings.h"
 #import "Unbound.h"
-#import "HermesBytecode.h"
 
 #define CS_DEBUGGED 0x10000000
 int csops(pid_t pid, unsigned int ops, void *useraddr, size_t usersize);
@@ -113,8 +112,6 @@ extern NSString *const TROLL_STORE_LITE_PATH;
                                    block:(dispatch_block_t)block;
 + (void)runOnMainThread:(dispatch_block_t)block;
 
-+ (uint32_t)getHermesBytecodeVersion;
-+ (BOOL)isHermesBytecode:(NSData *)data;
 + (BOOL)isAppStoreApp;
 + (BOOL)isTestFlightApp;
 + (BOOL)isTrollStoreApp;

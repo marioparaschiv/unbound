@@ -1,3 +1,4 @@
+#import "CoreBridge.h"
 #import "Utilities.h"
 
 #import <arpa/inet.h>
@@ -515,40 +516,6 @@ static NSString *bundle = nil;
     }
 
     return timer;
-}
-
-+ (uint32_t)getHermesBytecodeVersion
-{
-    NSString *bundlePath   = [[NSBundle mainBundle] bundlePath];
-    NSString *jsBundlePath = [bundlePath stringByAppendingPathComponent:@"main.jsbundle"];
-
-    NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:jsBundlePath];
-    if (!handle)
-    {
-        [Logger error:LOG_CATEGORY_UTILITIES
-               format:@"Could not open %@ to read Hermes bytecode version", jsBundlePath];
-        return 0;
-    }
-
-    NSData *prefix = [handle readDataOfLength:sizeof(HermesBytecodeFileHeaderPrefix)];
-    [handle closeFile];
-
-    uint32_t version = HermesDataBytecodeVersion([prefix bytes], [prefix length]);
-    if (version == 0)
-    {
-        [Logger error:LOG_CATEGORY_UTILITIES
-               format:@"%@ is not a Hermes bytecode bundle (read %lu bytes)", jsBundlePath,
-                      (unsigned long) [prefix length]];
-        return 0;
-    }
-
-    [Logger info:LOG_CATEGORY_UTILITIES format:@"Hermes bytecode version: %u", version];
-    return version;
-}
-
-+ (BOOL)isHermesBytecode:(NSData *)data
-{
-    return HermesDataIsBytecode([data bytes], [data length]);
 }
 
 + (BOOL)isRNNewArchEnabled
@@ -1122,121 +1089,9 @@ static __weak DCDBundleUpdaterManager *gBundleUpdater = nil;
     dispatch_async(dispatch_get_main_queue(), ^{ [updater reload]; });
 }
 
-static NSRegularExpression *colorArgsRegex(void)
-{
-    static NSRegularExpression *regex = nil;
-    static dispatch_once_t      onceToken;
-    dispatch_once(&onceToken, ^{
-        regex = [NSRegularExpression regularExpressionWithPattern:@"\\((.*)\\)"
-                                                            options:NSRegularExpressionCaseInsensitive
-                                                              error:nil];
-    });
-    return regex;
-}
-
 + (UIColor *)parseColor:(NSString *)color
 {
-    if ([color hasPrefix:@"#"])
-    {
-        if (color.length == 7)
-        {
-            color = [color stringByAppendingString:@"FF"];
-        }
-
-        NSScanner *scanner = [NSScanner scannerWithString:color];
-        unsigned   res     = 0;
-
-        [scanner setScanLocation:1];
-        [scanner scanHexInt:&res];
-
-        CGFloat r = ((res & 0xFF000000) >> 24) / 255.0;
-        CGFloat g = ((res & 0x00FF0000) >> 16) / 255.0;
-        CGFloat b = ((res & 0x0000FF00) >> 8) / 255.0;
-        CGFloat a = (res & 0x000000FF) / 255.0;
-
-        return [UIColor colorWithRed:r green:g blue:b alpha:a];
-    }
-
-    if ([color hasPrefix:@"rgba"])
-    {
-        NSRegularExpression *regex = colorArgsRegex();
-
-        NSArray  *matches = [regex matchesInString:color
-                                           options:0
-                                             range:NSMakeRange(0, [color length])];
-        NSString *value   = [[NSString alloc] init];
-
-        for (NSTextCheckingResult *match in matches)
-        {
-            NSRange range = [match rangeAtIndex:1];
-            value         = [color substringWithRange:range];
-        }
-
-        NSCharacterSet *whitespaces = [NSCharacterSet whitespaceCharacterSet];
-        NSArray        *values      = [value componentsSeparatedByString:@","];
-        NSMutableArray *res         = [[NSMutableArray alloc] init];
-
-        for (NSString *value in values)
-        {
-            NSString *trimmed = [value stringByTrimmingCharactersInSet:whitespaces];
-            NSNumber *payload = [NSNumber numberWithFloat:[trimmed floatValue]];
-
-            [res addObject:payload];
-        }
-
-        if (res.count < 4)
-        {
-            return nil;
-        }
-
-        CGFloat r = [[res objectAtIndex:0] floatValue] / 255.0f;
-        CGFloat g = [[res objectAtIndex:1] floatValue] / 255.0f;
-        CGFloat b = [[res objectAtIndex:2] floatValue] / 255.0f;
-        CGFloat a = [[res objectAtIndex:3] floatValue];
-
-        return [UIColor colorWithRed:r green:g blue:b alpha:a];
-    }
-
-    if ([color hasPrefix:@"rgb"])
-    {
-        NSRegularExpression *regex = colorArgsRegex();
-
-        NSArray  *matches = [regex matchesInString:color
-                                           options:0
-                                             range:NSMakeRange(0, [color length])];
-        NSString *value   = [[NSString alloc] init];
-
-        for (NSTextCheckingResult *match in matches)
-        {
-            NSRange range = [match rangeAtIndex:1];
-            value         = [color substringWithRange:range];
-        }
-
-        NSCharacterSet *whitespaces = [NSCharacterSet whitespaceCharacterSet];
-        NSArray        *values      = [value componentsSeparatedByString:@","];
-        NSMutableArray *res         = [[NSMutableArray alloc] init];
-
-        for (NSString *value in values)
-        {
-            NSString *trimmed = [value stringByTrimmingCharactersInSet:whitespaces];
-            NSNumber *payload = [NSNumber numberWithFloat:[trimmed floatValue]];
-
-            [res addObject:payload];
-        }
-
-        if (res.count < 3)
-        {
-            return nil;
-        }
-
-        CGFloat r = [[res objectAtIndex:0] floatValue] / 255.0f;
-        CGFloat g = [[res objectAtIndex:1] floatValue] / 255.0f;
-        CGFloat b = [[res objectAtIndex:2] floatValue] / 255.0f;
-
-        return [UIColor colorWithRed:r green:g blue:b alpha:1.0f];
-    }
-
-    return nil;
+    return [color isKindOfClass:[NSString class]] ? [CoreBridge colorFromString:color] : nil;
 }
 
 @end

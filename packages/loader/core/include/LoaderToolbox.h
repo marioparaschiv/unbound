@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -27,6 +28,7 @@ namespace loader::toolbox
     constexpr const char *kIssueRepository = "marioparaschiv/unbound";
 
     const char *addonDirectoryName(AddonKind kind);
+    std::optional<AddonKind> addonKindNamed(const std::string &name);
     bool        wipeAddons(const std::string &documents, AddonKind kind);
     bool        factoryReset(const std::string &documents);
     void        deleteBundle(SettingsStore &settings, BundleUpdater &updater, const std::string &documents);

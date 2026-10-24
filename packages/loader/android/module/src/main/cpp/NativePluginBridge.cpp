@@ -1,6 +1,7 @@
 #include "NativePluginBridge.h"
 
 #include "JniEnvironment.h"
+#include "NativeEvaluations.h"
 #include "NativeFFI.h"
 #include "NativePlatformBridge.h"
 #include "NativePluginVersion.h"
@@ -1577,22 +1578,7 @@ namespace unbound::android
         bridge.setProperty(runtime, "hooks", std::move(hooks));
 
         jsi::Object debug(runtime);
-        debug.setProperty(
-            runtime, "recordEvaluation",
-            loader::native::makeFunction(
-                runtime, "recordEvaluation", 1,
-                [callbacks](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
-                            size_t count) -> jsi::Value {
-                    return guardJava(rt, [&]() -> jsi::Value {
-                        if (count < 1)
-                        {
-                            throw std::invalid_argument("expected an evaluation record");
-                        }
-
-                        return jsi::Value(callJavaBoolean(callbacks, callbacks.debugRecordEvaluation,
-                                                          serializeJavaValue(rt, args[0])));
-                    });
-                }));
+        debug.setProperty(runtime, "recordEvaluation", loader::native::makeRecordEvaluationFunction(runtime));
         debug.setProperty(
             runtime, "environment",
             loader::native::makeFunction(

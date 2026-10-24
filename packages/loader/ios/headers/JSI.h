@@ -25,14 +25,4 @@
                              runtime:(facebook::jsi::Runtime &)runtime
                              handler:(const facebook::jsi::HostFunctionType &)handler;
 
-+ (BOOL)evaluate:(NSData *)scriptData tag:(NSString *)tag runtime:(facebook::jsi::Runtime &)runtime;
-
-+ (facebook::jsi::Value)evaluateSource:(NSString *)source
-                                    tag:(NSString *)tag
-                                runtime:(facebook::jsi::Runtime &)runtime;
-
-+ (facebook::jsi::Value)evaluateBytecode:(NSData *)bytecodeData
-                                      tag:(NSString *)tag
-                                  runtime:(facebook::jsi::Runtime &)runtime;
-
 @end

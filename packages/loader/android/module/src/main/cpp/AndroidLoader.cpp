@@ -5,6 +5,7 @@
 #include "LoaderColor.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
+#include "LoaderThemes.h"
 #include "LoaderToolbox.h"
 #include "NativePlatformBridge.h"
 #include "NativePluginBridge.h"
@@ -54,26 +55,13 @@ namespace unbound::android
         pipeline_ = std::make_unique<loader::LoaderPipeline>(shared_from_this(), loader::updaterSettings(settings_), *updater_);
     }
 
-    static std::optional<loader::toolbox::AddonKind> addonKind(const std::string &name)
-    {
-        for (auto kind : {loader::toolbox::AddonKind::Plugins, loader::toolbox::AddonKind::Themes,
-                          loader::toolbox::AddonKind::Icons, loader::toolbox::AddonKind::Fonts})
-        {
-            if (name == loader::toolbox::addonDirectoryName(kind))
-            {
-                return kind;
-            }
-        }
-        return std::nullopt;
-    }
-
     std::string AndroidLoader::toolbox(const std::string &action, const std::string &argument)
     {
         const std::string &documents = configuration_.documents;
 
         if (action == "wipe")
         {
-            auto kind = addonKind(argument);
+            auto kind = loader::toolbox::addonKindNamed(argument);
             return kind && loader::toolbox::wipeAddons(documents, *kind) ? "true" : "false";
         }
         if (action == "factory-reset")
@@ -139,44 +127,11 @@ namespace unbound::android
     {
         nlohmann::json colors = nlohmann::json::object();
         std::lock_guard<std::mutex> lock(addonsMutex_);
-        for (const nlohmann::json &theme : themes_)
+        if (const nlohmann::json *theme = loader::findTheme(themes_, themeId))
         {
-            if (theme["manifest"].value("id", std::string()) != themeId)
+            for (const auto &[name, color] : loader::resolveThemeColors(*theme).semantic)
             {
-                continue;
-            }
-
-            const nlohmann::json semantic = theme["bundle"].value("semantic", nlohmann::json::object());
-            const nlohmann::json raw      = theme["bundle"].value("raw", nlohmann::json::object());
-            for (auto entry = semantic.begin(); entry != semantic.end(); ++entry)
-            {
-                if (!entry->is_object())
-                {
-                    continue;
-                }
-
-                std::string type  = entry->value("type", std::string());
-                std::string value = entry->value("value", std::string());
-                if (type == "raw")
-                {
-                    value = raw.value(value, std::string());
-                }
-                else if (type != "color")
-                {
-                    continue;
-                }
-
-                std::optional<loader::RGBAColor> color = loader::parseColor(value);
-                if (!color)
-                {
-                    continue;
-                }
-
-                if (entry->contains("opacity") && (*entry)["opacity"].is_number())
-                {
-                    color->alpha = (*entry)["opacity"].get<double>();
-                }
-                colors[entry.key()] = loader::toARGB(*color);
+                colors[name] = loader::toARGB(color);
             }
         }
         return loader::toJSON(colors);
@@ -326,28 +281,70 @@ namespace unbound::android
 
     std::optional<std::string> AndroidLoader::resolveUpdateURL()
     {
-        std::optional<nlohmann::json> configured = settings_.get("unbound", "loader.update.url");
-        if (configured && configured->is_string() && !configured->get<std::string>().empty())
-        {
-            return configured->get<std::string>();
-        }
+        return loader::resolveUpdateURL(
+            loader::updaterSettings(settings_), devServerHost(),
+            [this](const std::string &url, double timeout) { return isServing(url, timeout); });
+    }
 
+    std::optional<std::string> AndroidLoader::devServerHost()
+    {
         JNIEnv *env = currentEnvironment();
         if (!env)
         {
             return std::nullopt;
         }
 
-        auto url = static_cast<jstring>(
-            env->CallStaticObjectMethod(callbacks_.bridgeClass, callbacks_.devServerURL));
-        if (clearPendingException(env) || !url)
+        auto host = static_cast<jstring>(
+            env->CallStaticObjectMethod(callbacks_.bridgeClass, callbacks_.devServerHost));
+        if (clearPendingException(env) || !host)
         {
             return std::nullopt;
         }
 
-        std::string value = toStdString(env, url);
-        env->DeleteLocalRef(url);
+        std::string value = toStdString(env, host);
+        env->DeleteLocalRef(host);
         return value;
+    }
+
+    bool AndroidLoader::isServing(const std::string &url, double timeoutSeconds)
+    {
+        JNIEnv *env = currentEnvironment();
+        if (!env)
+        {
+            return false;
+        }
+
+        jstring  javaURL = toJavaString(env, url);
+        jboolean serving = env->CallStaticBooleanMethod(callbacks_.bridgeClass, callbacks_.isServing, javaURL,
+                                                        static_cast<jint>(timeoutSeconds * 1000));
+        env->DeleteLocalRef(javaURL);
+        return !clearPendingException(env) && serving == JNI_TRUE;
+    }
+
+    std::optional<std::string> AndroidLoader::hotReloadURL()
+    {
+        std::optional<std::string> base = resolveUpdateURL();
+        return base ? loader::hotReloadURL(*base) : std::nullopt;
+    }
+
+    void AndroidLoader::hotReloadConnected()
+    {
+        if (!hotReloadStream_)
+        {
+            hotReloadStream_ = std::make_unique<loader::HotReloadStream>(loader::updaterSettings(settings_));
+        }
+        hotReloadStream_->reset();
+        hotReloadBackoff_.reset();
+    }
+
+    bool AndroidLoader::hotReloadFeed(const std::string &chunk)
+    {
+        return hotReloadStream_ && hotReloadStream_->feed(chunk);
+    }
+
+    double AndroidLoader::hotReloadNextDelay()
+    {
+        return hotReloadBackoff_.next();
     }
 
     uint32_t AndroidLoader::runtimeBytecodeVersion()
