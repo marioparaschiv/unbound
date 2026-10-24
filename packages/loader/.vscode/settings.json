@@ -1,0 +1,42 @@
+{
+	"markdownlint.config": {
+		"MD029": false,
+		"MD033": false,
+		"MD045": false,
+	},
+	"VsCodeTaskButtons.tasks": [
+		{
+			"label": "$(tools) Build Tweak",
+			"task": "Build Tweak",
+			"tooltip": "Default / AirDrop Tweak / Build IPA"
+		}
+	],
+	"externalFormatters.languages": {
+		"logos": {
+			"command": "python3",
+			"arguments": [
+				"../.vscode/logos-format.py",
+				"--assume-filename",
+				"objc"
+			]
+		},
+		"objective-c": {
+			"command": "clang-format",
+			"arguments": [
+				"-style=file"
+			]
+		}
+	},
+	"yaml.schemas": {
+		"https://json.schemastore.org/github-workflow.json": [
+			"*.github/workflows/*.yml",
+		]
+	},
+	"github.copilot.chat.commitMessageGeneration.instructions": [
+		{
+			"file": ".github/instructions/commit-messages.instructions.md"
+		}
+	],
+	"editor.formatOnSave": true,
+	"markdown.validate.enabled": true
+}

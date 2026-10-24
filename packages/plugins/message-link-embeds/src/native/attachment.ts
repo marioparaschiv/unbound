@@ -1,9 +1,17 @@
 import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
 import { safeInvoke } from '@unbound-plugins/shared/native/safe-invoke';
+import {
+	isAttachmentRun,
+	textAttachmentBridge,
+	viewAttachment,
+	type TextEngine,
+} from '@unbound-plugins/shared/native/text-attachments';
 
-import { nativeRange, nativeString } from '~/native/objc';
+import { nativeString } from '~/native/objc';
 import type { TextRange } from '~/link-targets';
 import { Surface } from '~/constants';
+
+type FontRun = { NSFont?: NativeObjectHandle };
 
 type Insertion = {
 	host: NativeObjectHandle;
@@ -12,6 +20,12 @@ type Insertion = {
 	font: NativeObjectHandle | null;
 	width: number;
 	height: number;
+	engine: TextEngine;
+};
+
+export type SurfaceInsertion = {
+	text: NativeObjectHandle;
+	attachmentOffset: number;
 };
 
 /**
@@ -37,9 +51,9 @@ export function linkFont(
 			'attributesAtIndex:effectiveRange:',
 			index,
 			null,
-		) as { YYTextAttachment?: unknown; NSFont?: NativeObjectHandle } | null;
+		);
 
-		if (!attributes || typeof attributes !== 'object' || !attributes.YYTextAttachment) continue;
+		if (!isFontRun(attributes) || !isAttachmentRun(attributes)) continue;
 
 		return attributes.NSFont ?? null;
 	}
@@ -47,42 +61,41 @@ export function linkFont(
 	return null;
 }
 
+function isFontRun(value: unknown): value is FontRun {
+	return typeof value === 'object' && value !== null;
+}
+
+function plainText(objc: NativeObjCBridge, value: string, font: NativeObjectHandle | null) {
+	const text = objc.alloc('NSMutableAttributedString');
+
+	safeInvoke(objc, text, 'initWithString:attributes:', value, font ? { NSFont: font } : {});
+
+	return text;
+}
+
 /**
- * @description Builds the text inserted after a channel mention: a line break, a small spacer line, and an attachment that holds the embed's host view at its size.
+ * @description Builds the text inserted after a channel mention: a line break, a small spacer line, and an attachment reserving the embed's size.
  * @param objc The Objective-C bridge.
- * @param insertion The host view, the label's original text, the mention's range and font, and the embed's size.
- * @returns The attributed string to insert, or `null` when YYText's attachment class is missing.
+ * @param insertion The host view, the label's original text, the mention's range and font, the embed's size and the label's text engine.
+ * @returns The attributed string to insert and where its attachment sits in it, or `null` when the engine's attachment class is missing.
  */
 export function surfaceInsertion(
 	objc: NativeObjCBridge,
-	{ host, original, range, font, width, height }: Insertion,
-): NativeObjectHandle | null {
-	const attachmentClass = objc.getClass('YYTextAttachment');
+	{ host, original, range, font, width, height, engine }: Insertion,
+): SurfaceInsertion | null {
+	const attachment = viewAttachment(textAttachmentBridge(objc), engine, {
+		attributes: font ? { NSFont: font } : {},
+		view: host,
+		width,
+		height,
+	});
 
-	if (!attachmentClass) return null;
-
-	const attachment = objc.alloc(attachmentClass);
-
-	safeInvoke(objc, attachment, 'setValue:forKey:', host, 'content');
-	safeInvoke(objc, attachment, 'setValue:forKey:', 1, 'contentMode');
+	if (!attachment) return null;
 
 	const sourceText = nativeString(objc, safeInvoke(objc, original, 'string')) ?? '';
 	const insertAt = range.location + range.length;
 	const leadingNewline = sourceText[insertAt - 1] === '\n' ? '' : '\n';
 	const trailingNewline = sourceText.slice(insertAt).trim().length > 0 ? '\n' : '';
-	const spacer = '\u200B\n';
-	const spacerLocation = leadingNewline.length;
-	const attachmentLocation = spacerLocation + spacer.length;
-	const insertion = objc.alloc('NSMutableAttributedString');
-
-	safeInvoke(
-		objc,
-		insertion,
-		'initWithString:attributes:',
-		`${leadingNewline}${spacer}\uFFFC${trailingNewline}`,
-		font ? { NSFont: font } : {},
-	);
-
 	const spacerFont = font
 		? (safeInvoke(
 				objc,
@@ -91,50 +104,18 @@ export function surfaceInsertion(
 				Surface.spacerFontSize,
 			) as NativeObjectHandle | null)
 		: null;
+	const insertion = objc.alloc('NSMutableAttributedString');
 
-	if (spacerFont) {
-		safeInvoke(
-			objc,
-			insertion,
-			'addAttribute:value:range:',
-			'NSFont',
-			spacerFont,
-			nativeRange(objc, spacerLocation, spacer.length),
-		);
-	}
+	safeInvoke(objc, insertion, 'init');
 
-	safeInvoke(
-		objc,
-		insertion,
-		'addAttribute:value:range:',
-		'YYTextAttachment',
+	for (const part of [
+		plainText(objc, leadingNewline, font),
+		plainText(objc, '\u200B\n', spacerFont ?? font),
 		attachment,
-		nativeRange(objc, attachmentLocation, 1),
-	);
-
-	// The run delegate reserves the embed's size in the label's layout.
-	const delegateClass = objc.getClass('YYTextRunDelegate');
-
-	if (!delegateClass) return insertion;
-
-	const delegate = objc.alloc(delegateClass);
-
-	safeInvoke(objc, delegate, 'setValue:forKey:', height, 'ascent');
-	safeInvoke(objc, delegate, 'setValue:forKey:', 0, 'descent');
-	safeInvoke(objc, delegate, 'setValue:forKey:', width, 'width');
-
-	const runDelegate = safeInvoke(objc, delegate, 'CTRunDelegate');
-
-	if (runDelegate) {
-		safeInvoke(
-			objc,
-			insertion,
-			'addAttribute:value:range:',
-			'CTRunDelegate',
-			runDelegate,
-			nativeRange(objc, attachmentLocation, 1),
-		);
+		plainText(objc, trailingNewline, font),
+	]) {
+		safeInvoke(objc, insertion, 'appendAttributedString:', part);
 	}
 
-	return insertion;
+	return { text: insertion, attachmentOffset: leadingNewline.length + 2 };
 }

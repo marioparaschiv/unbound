@@ -9,6 +9,7 @@ import {
 	NativePlatform,
 	NativePluginCapabilityError,
 	NativePluginPlatformError,
+	NativePluginUnsupportedPlatformError,
 	validateNativePluginRequirements,
 } from '~/api/native-runtime';
 import { Manager, ManagerType } from '~/managers/base';
@@ -697,6 +698,18 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			throw new Error('Manifest capabilities must be an array');
 		}
 
+		if (manifest.platforms !== undefined) {
+			if (!Array.isArray(manifest.platforms) || manifest.platforms.length === 0) {
+				throw new Error('Manifest platforms must be a non-empty array');
+			}
+
+			for (const platform of manifest.platforms as readonly string[]) {
+				if (platform !== 'ios' && platform !== 'android') {
+					throw new Error(`Manifest platforms has unsupported platform: ${platform}`);
+				}
+			}
+		}
+
 		if (
 			manifest.platformCapabilities !== undefined &&
 			(typeof manifest.platformCapabilities !== 'object' ||
@@ -729,6 +742,14 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		}
 
 		const currentPlatform = NativePlatform?.device.platform ?? NativePlatform?.platform;
+
+		if (manifest.platforms?.length && !manifest.platforms.includes(currentPlatform as never)) {
+			throw new NativePluginUnsupportedPlatformError(
+				manifest.platforms,
+				String(currentPlatform),
+			);
+		}
+
 		const hasPlatformRequirements = Object.keys(manifest.platformCapabilities ?? {}).length > 0;
 
 		if (hasPlatformRequirements && currentPlatform !== 'ios' && currentPlatform !== 'android') {

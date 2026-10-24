@@ -8,6 +8,7 @@ mock.module('~/api/metro/wrappers', () => ({
 const { after, before, createPatcher, instead, patches, unpatchAll } =
 	await import('~/api/patcher');
 const { flush } = await import('~/lib/hot/live-patch');
+const { registerLazyModule } = await import('~/api/metro/lazy-registry');
 
 function createTarget() {
 	const original = (a: number, b: number) => a + b;
@@ -18,6 +19,36 @@ function createTarget() {
 afterEach(() => unpatchAll());
 
 describe('patcher', () => {
+	test('patches made through different lazy proxies of one module all run', () => {
+		const { math } = createTarget();
+
+		function lazyProxy() {
+			const proxy = new Proxy(
+				{},
+				{
+					get: (_, prop) => Reflect.get(math, prop),
+					defineProperty: (_, prop, descriptor) =>
+						Reflect.defineProperty(math, prop, descriptor),
+				},
+			);
+
+			registerLazyModule(proxy, () => math);
+
+			return proxy as typeof math;
+		}
+		const calls: string[] = [];
+
+		createPatcher('first').before(lazyProxy(), 'add', () => {
+			calls.push('first');
+		});
+		createPatcher('second').before(lazyProxy(), 'add', () => {
+			calls.push('second');
+		});
+
+		expect(math.add(1, 2)).toBe(3);
+		expect(calls).toEqual(['first', 'second']);
+	});
+
 	test('before replaces the arguments', () => {
 		const { math } = createTarget();
 

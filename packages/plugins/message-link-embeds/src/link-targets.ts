@@ -26,7 +26,7 @@ export function targetKey({ channelId, messageId }: LinkTarget): string {
 /**
  * @description Converts a Discord role color string into the ARGB number React Native's native text expects.
  * @param value The `#rrggbb` color string.
- * @returns The opaque color, or `undefined` for anything that is not six hex digits.
+ * @returns The opaque color as a signed 32-bit ARGB integer, which Android's row parser requires, or `undefined` for anything that is not six hex digits.
  */
 export function nativeUsernameColor(value: unknown): number | undefined {
 	if (typeof value !== 'string') return;
@@ -35,7 +35,7 @@ export function nativeUsernameColor(value: unknown): number | undefined {
 
 	if (!match) return;
 
-	return Number.parseInt(`ff${match[1]}`, 16);
+	return Number.parseInt(`ff${match[1]}`, 16) | 0;
 }
 
 /**
@@ -74,6 +74,10 @@ export function linkedTargets(message: MessageLike): LinkTarget[] {
 	return [...targets.values()];
 }
 
+const CHIP_OPENING = '\uFFFC\u2068\u2060\u200B';
+const CHIP_CLOSING = '\uFFFC\u2068\u2069\u2060\u2009\u200B';
+const CHIP_ICON = /[\uFFFC\u200B]/;
+
 /**
  * @description Locates the rendered channel mention of a message link inside a label's text.
  * @param text The label's plain text.
@@ -93,11 +97,11 @@ export function findRenderedLinkRange(text: string, channelName: string): TextRa
 		let start = location;
 		let end = location + channelName.length;
 
-		while (start > 0 && '\uFFFC\u2068'.includes(text[start - 1])) start--;
-		while (end < text.length && '\uFFFC\u2068\u2069'.includes(text[end])) end++;
+		while (start > 0 && CHIP_OPENING.includes(text[start - 1])) start--;
+		while (end < text.length && CHIP_CLOSING.includes(text[end])) end++;
 
 		if (
-			text.slice(start, end).includes('\uFFFC') &&
+			CHIP_ICON.test(text.slice(start, end)) &&
 			start < location &&
 			end > location + channelName.length
 		) {

@@ -1,11 +1,12 @@
 import type { NativeObjectHandle } from '@unbound-app/api/native';
+import { viewAttachment } from '@unbound-plugins/shared/native/text-attachments';
 
 import type { LineOverflow } from '~/preferences';
 import type { TokenLines } from '~/highlighter';
 import { buildCodeMarkup } from '~/markup';
 import { Palette } from '~/constants';
 
-import type { Surface } from './session';
+import type { Session, Surface } from './session';
 import type { NativeUI } from './ui';
 
 /**
@@ -84,19 +85,31 @@ export function highlightedCode(
 	}
 }
 
+function separators(surface: Surface, text: string, start: number, end: number, cursor: number) {
+	if (surface.engine === 'yytext') {
+		return {
+			before: start > cursor ? '\n\u200B\n' : '\u200B\n',
+			after: end < text.length ? '\n' : '',
+		};
+	}
+
+	return {
+		before: start > 0 && text[start - 1] !== '\n' ? '\n' : '',
+		after: end < text.length && text[end] !== '\n' ? '\n' : '',
+	};
+}
+
 /**
- * @description Rebuilds a message's attributed text with each code block replaced by its card, as a YYText attachment.
- * @param ui The native helpers.
+ * @description Rebuilds a message's attributed text with each code block replaced by an attachment reserving its card's room, recording where each attachment lands.
+ * @param session The renderer session.
  * @param surface The surface whose parts hold the cards and their ranges in the original text.
- * @returns The new attributed text, or `null` when YYText is missing or a range could not be copied.
+ * @returns The new attributed text, or `null` when the engine's attachment class is missing or a range could not be copied.
  */
-export function textWithCards(ui: NativeUI, surface: Surface): NativeObjectHandle | null {
+export function textWithCards(
+	{ ui, text: bridge }: Session,
+	surface: Surface,
+): NativeObjectHandle | null {
 	const { call, objc, range } = ui;
-	const YYTextAttachment = objc.getClass('YYTextAttachment');
-
-	if (!YYTextAttachment) return null;
-
-	const YYTextRunDelegate = objc.getClass('YYTextRunDelegate');
 
 	function copyOriginal(start: number, end: number) {
 		return ui.view(
@@ -106,8 +119,17 @@ export function textWithCards(ui: NativeUI, surface: Surface): NativeObjectHandl
 		);
 	}
 
+	function appendPlain(attributed: NativeObjectHandle, value: string) {
+		if (!value) return;
+
+		const plain = objc.alloc('NSMutableAttributedString');
+
+		call(plain, 'initWithString:attributes:', value, { NSFont: ui.font(1, 0, false) });
+		call(attributed, 'appendAttributedString:', plain);
+	}
+
 	try {
-		const originalLength = (ui.string(call(surface.original, 'string')) ?? '').length;
+		const originalText = ui.string(call(surface.original, 'string')) ?? '';
 		const attributed = objc.alloc('NSMutableAttributedString');
 		let cursor = 0;
 
@@ -124,50 +146,26 @@ export function textWithCards(ui: NativeUI, surface: Surface): NativeObjectHandl
 				call(attributed, 'appendAttributedString:', before);
 			}
 
-			const attachment = objc.alloc(YYTextAttachment);
+			const attachment = viewAttachment(bridge, surface.engine, {
+				attributes: { NSFont: ui.font(1, 0, false) },
+				view: part.host.host,
+				width: surface.width,
+				height: part.height,
+			});
 
-			call(attachment, 'setValue:forKey:', part.host.host, 'content');
-			call(attachment, 'setValue:forKey:', 1, 'contentMode');
+			if (!attachment) return null;
 
-			// A zero-width space keeps the line before the card from collapsing; U+FFFC is the card itself.
-			const separator = start > cursor ? '\n\u200B\n' : '\u200B\n';
-			const cardRange = range(separator.length, 1);
-			const insertion = objc.alloc('NSMutableAttributedString');
+			const separator = separators(surface, originalText, start, end, cursor);
 
-			call(
-				insertion,
-				'initWithString:attributes:',
-				`${separator}\uFFFC${end < originalLength ? '\n' : ''}`,
-				{ NSFont: ui.font(1, 0, false) },
-			);
-			call(insertion, 'addAttribute:value:range:', 'YYTextAttachment', attachment, cardRange);
-
-			if (YYTextRunDelegate) {
-				const delegate = objc.alloc(YYTextRunDelegate);
-
-				call(delegate, 'setValue:forKey:', part.height, 'ascent');
-				call(delegate, 'setValue:forKey:', 0, 'descent');
-				call(delegate, 'setValue:forKey:', surface.width, 'width');
-
-				const runDelegate = call(delegate, 'CTRunDelegate');
-
-				if (runDelegate) {
-					call(
-						insertion,
-						'addAttribute:value:range:',
-						'CTRunDelegate',
-						runDelegate,
-						cardRange,
-					);
-				}
-			}
-
-			call(attributed, 'appendAttributedString:', insertion);
+			appendPlain(attributed, separator.before);
+			part.attachmentIndex = Number(call(attributed, 'length') ?? 0);
+			call(attributed, 'appendAttributedString:', attachment);
+			appendPlain(attributed, separator.after);
 			cursor = end;
 		}
 
-		if (cursor < originalLength) {
-			const after = copyOriginal(cursor, originalLength);
+		if (cursor < originalText.length) {
+			const after = copyOriginal(cursor, originalText.length);
 
 			if (!after) return null;
 

@@ -1,0 +1,14 @@
+.DS_Store
+apt-ftparchive
+.secrets
+repo/debs/*.deb
+repo/Packages
+repo/Packages.gz
+repo/Packages.xz
+repo/Packages.zst
+repo/Packages.bz2
+repo/Contents-iphoneos-arm
+repo/Contents-iphoneos-arm.*
+repo/Release
+repo/Release.gpg
+repo/InRelease

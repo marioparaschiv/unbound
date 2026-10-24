@@ -19,9 +19,10 @@ import { subscribeChannelChanges } from '~/events/selected-channel-change';
 import { subscribeReactionChanges } from '~/events/message-reaction';
 import { subscribeConnectionOpen } from '~/events/connection-open';
 import { scanInitialCells } from '~/native/visible-cells';
+import { createAndroidReactions } from '~/android/reactions';
 import { createSession } from '~/native/session';
 
-let dispose = () => {};
+let dispose: () => Promise<void> | undefined = () => undefined;
 
 function start(context: PluginContext) {
 	const modules = {
@@ -48,6 +49,14 @@ function start(context: PluginContext) {
 		return;
 	}
 
+	if (context.platform === 'android') {
+		const reactions = createAndroidReactions(context.native, surfaceName);
+
+		dispose = applyFeatures('Reaction Avatars', [() => reactions.dispose]);
+
+		return;
+	}
+
 	const { session, close } = createSession(context.native, surfaceName, renderCell);
 
 	dispose = applyFeatures('Reaction Avatars', [
@@ -62,8 +71,11 @@ function start(context: PluginContext) {
 }
 
 function stop() {
-	dispose();
-	dispose = () => {};
+	const finished = dispose();
+
+	dispose = () => undefined;
+
+	return finished;
 }
 
 export default { start, stop };

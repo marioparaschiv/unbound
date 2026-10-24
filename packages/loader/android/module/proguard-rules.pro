@@ -1,0 +1,5 @@
+-keep class app.unbound.android.Unbound { *; }
+-keep class app.unbound.android.NativeBridge { *; }
+-keep class app.unbound.android.Http { *; }
+-keep class app.unbound.android.RuntimeScheduler { *; }
+-keepclasseswithmembernames class * { native <methods>; }

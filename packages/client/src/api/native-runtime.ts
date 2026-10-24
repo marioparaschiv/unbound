@@ -2,8 +2,18 @@ import type {
 	NativeAssociationKey,
 	NativeCancelablePromise,
 	NativeFabricBridge,
+	NativeFabricSize,
 	NativeFabricSurface,
 	NativeFFIBridge,
+	NativeFFISignature,
+	NativeJavaBridge,
+	NativeJavaHandle,
+	NativeJavaReference,
+	NativePointer,
+	NativeAndroidSurfaceBridge,
+	NativeDebugBridge,
+	NativeJavaHooksBridge,
+	NativeJavaHookToken,
 	NativeMediaBridge,
 	NativeHookHandlers,
 	NativeHookOptions,
@@ -270,6 +280,38 @@ const nativeUICapabilityRequirements: Record<keyof NativeUIBridge, NativePluginC
 	unmount: 'native.ui.mount',
 };
 
+const nativeJavaCapabilityRequirements: Record<keyof NativeJavaBridge, NativePluginCapability> = {
+	getClass: 'native.java.classes',
+	className: 'native.java.classes',
+	construct: 'native.java.construct',
+	respondsTo: 'native.java.classes',
+	invoke: 'native.java.invoke',
+	invokeAsync: 'native.java.invokeAsync',
+	getField: 'native.java.fields',
+	setField: 'native.java.fields',
+	release: 'native.java.classes',
+	batch: 'native.java.batch',
+	createAssociationKey: 'native.java.associations',
+	getAssociatedObject: 'native.java.associations',
+	setAssociatedObject: 'native.java.associations',
+};
+
+const nativeDebugCapabilityRequirements: Record<keyof NativeDebugBridge, NativePluginCapability> = {
+	recordEvaluation: 'native.debug.evaluations',
+	environment: 'native.debug.environment',
+};
+
+const nativeHooksCapabilityRequirements: Record<
+	keyof NativeJavaHooksBridge,
+	NativePluginCapability
+> = {
+	hook: 'native.java.hooks',
+	setReturnValue: 'native.java.hooks',
+	removeReturnValue: 'native.java.hooks',
+	clearReturnValues: 'native.java.hooks',
+	remove: 'native.java.hooks',
+};
+
 const iosNativeUICapabilityRequirements: Record<keyof NativeUIBridge, NativePluginCapability> = {
 	lookup: 'native.objc.snapshot',
 	snapshot: 'native.objc.snapshot',
@@ -299,6 +341,46 @@ export class NativePluginPlatformError extends Error {
 
 	constructor() {
 		super('Platform-specific native plugin capabilities require a recognized host platform.');
+	}
+}
+
+export class NativeJavaError extends Error {
+	readonly code: string;
+
+	constructor(code: string, message: string) {
+		super(message);
+		this.code = code;
+	}
+}
+
+type NativeJavaFailure = {
+	__nativeFailure: { code: string; message: string };
+};
+
+function isNativeJavaFailure(value: unknown): value is NativeJavaFailure {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'__nativeFailure' in value &&
+		typeof (value as NativeJavaFailure).__nativeFailure?.message === 'string'
+	);
+}
+
+function unwrapJava<T>(value: T): T {
+	if (isNativeJavaFailure(value)) {
+		throw new NativeJavaError(value.__nativeFailure.code, value.__nativeFailure.message);
+	}
+
+	return value;
+}
+
+export class NativePluginUnsupportedPlatformError extends Error {
+	readonly code = 'NATIVE_PLUGIN_PLATFORM_EXCLUDED';
+	readonly platforms: readonly NativePluginPlatform[];
+
+	constructor(platforms: readonly NativePluginPlatform[], platform: string) {
+		super(`This plugin supports ${platforms.join(', ')}; the host platform is ${platform}.`);
+		this.platforms = platforms;
 	}
 }
 
@@ -394,6 +476,12 @@ function unavailableNativePlugin() {
 		{ get: () => unavailableMethod },
 	) as NativeRuntimeBridge;
 	const unavailableUI = new Proxy({}, { get: () => unavailableMethod }) as NativeUIBridge;
+	const unavailableJava = new Proxy({}, { get: () => unavailableMethod }) as NativeJavaBridge;
+	const unavailableHooks = new Proxy(
+		{},
+		{ get: () => unavailableMethod },
+	) as NativeJavaHooksBridge;
+	const unavailableDebug = new Proxy({}, { get: () => unavailableMethod }) as NativeDebugBridge;
 	const unavailableMedia = new Proxy({}, { get: () => unavailableMethod }) as NativeMediaBridge;
 
 	return {
@@ -405,6 +493,9 @@ function unavailableNativePlugin() {
 		fabric: unavailableFabric,
 		runtime: unavailableRuntime,
 		ui: unavailableUI,
+		java: unavailableJava,
+		hooks: unavailableHooks,
+		debug: unavailableDebug,
 		media: unavailableMedia,
 	};
 }
@@ -643,6 +734,66 @@ function matchesNativeUIQuery(node: NativeUISnapshotNode, query: NativeUIQuery):
 	return true;
 }
 
+function createAndroidFabricBridge(
+	surfaces: NativeAndroidSurfaceBridge,
+	ui: NativeUIBridge,
+): NativeFabricBridge {
+	function unsupported(): never {
+		throw new NativePluginUnavailableError(
+			'Synchronous React surface operations are unavailable on Android; use the async variants.',
+		);
+	}
+
+	function unwrapAsync<T>(pending: NativeCancelablePromise<T>): NativeCancelablePromise<T> {
+		if (isNativeJavaFailure(pending)) {
+			return unwrapJava(pending);
+		}
+
+		return Object.assign(pending.then(unwrapJava), {
+			cancel: () => pending.cancel(),
+		});
+	}
+
+	function viewOf(surface: NativeFabricSurface): NativeUIHandle {
+		return unwrapJava(surfaces.view(surface));
+	}
+
+	function sizeFrame(
+		surface: NativeFabricSurface,
+		size: NativeFabricSize,
+	): NativeCancelablePromise<void> {
+		const pending = ui.measure(viewOf(surface));
+
+		return Object.assign(
+			pending.then((frame) =>
+				ui.setFrame(viewOf(surface), {
+					x: frame.x,
+					y: frame.y,
+					width: size.width,
+					height: size.height,
+				}),
+			),
+			{ cancel: () => pending.cancel() },
+		);
+	}
+
+	return {
+		mount: unsupported,
+		mountAsync: (container, moduleName, properties) =>
+			unwrapAsync(surfaces.mount(container, moduleName, properties)),
+		update: unsupported,
+		updateAsync: (surface, properties) => unwrapAsync(surfaces.update(surface, properties)),
+		setSize: unsupported,
+		setSizeAsync: (surface, _minimumSize, maximumSize) => sizeFrame(surface, maximumSize),
+		setFrame: unsupported,
+		setFrameAsync: (surface, frame) => ui.setFrame(viewOf(surface), frame),
+		measure: unsupported,
+		measureAsync: (surface) => ui.measure(viewOf(surface)),
+		unmount: unsupported,
+		unmountAsync: (surface) => unwrapAsync(surfaces.unmount(surface)),
+	};
+}
+
 function createIOSNativeUIBridge(
 	objc: NativeObjCBridge,
 	fabric: NativeFabricBridge,
@@ -716,7 +867,11 @@ function createScopedNativePlugin(
 	const bridge = getNativePlugin() ?? fallbackBridge;
 	const objcBridge = bridge.objc ?? fallbackBridge.objc;
 	const ffiBridge = bridge.ffi ?? fallbackBridge.ffi;
-	const fabricBridge = bridge.fabric ?? fallbackBridge.fabric;
+	const surfaceBridge = (bridge as { surfaces?: NativeAndroidSurfaceBridge }).surfaces;
+	const fabricBridge =
+		platform === 'android' && surfaceBridge
+			? createAndroidFabricBridge(surfaceBridge, bridge.ui ?? fallbackBridge.ui)
+			: (bridge.fabric ?? fallbackBridge.fabric);
 	const runtimeBridge =
 		platform === 'android' && capabilities.includes('native.runtime.events')
 			? createFluxRuntimeBridge()
@@ -730,10 +885,15 @@ function createScopedNativePlugin(
 			: (bridge.ui ?? fallbackBridge.ui);
 	const uiCapabilities =
 		platform === 'ios' ? iosNativeUICapabilityRequirements : nativeUICapabilityRequirements;
+	const javaBridge = bridge.java ?? fallbackBridge.java;
+	const hooksBridge = bridge.hooks ?? fallbackBridge.hooks;
+	const debugBridge = bridge.debug ?? fallbackBridge.debug;
 	const mediaBridge = bridge.media ?? fallbackBridge.media;
 	const tokens = new Set<NativeHookToken>();
 	const surfaces = new Set<NativeFabricSurface>();
 	const uiSurfaces = new Set<NativeUIHandle>();
+	const javaHandles = new Set<NativeJavaReference>();
+	const javaHookTokens = new Set<NativeJavaHookToken>();
 	const runtimeTokens = new Set<NativeRuntimeEventToken>();
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
 	const associations: AssociationBinding[] = [];
@@ -939,8 +1099,15 @@ function createScopedNativePlugin(
 	};
 
 	const ffi: NativeFFIBridge = {
-		symbol: scopeMethod(ffiBridge.symbol.bind(ffiBridge), 'native.ffi.symbols'),
-		call: scopeMethod(ffiBridge.call.bind(ffiBridge), 'native.ffi.call'),
+		symbol: scopeMethod(
+			(name: string, image?: string) => unwrapJava(ffiBridge.symbol(name, image)),
+			'native.ffi.symbols',
+		),
+		call: scopeMethod(
+			(pointer: NativePointer, signature: NativeFFISignature, ...args: unknown[]) =>
+				unwrapJava(ffiBridge.call(pointer, signature, ...args)),
+			'native.ffi.call',
+		),
 	};
 
 	const fabric: NativeFabricBridge = {
@@ -1075,6 +1242,174 @@ function createScopedNativePlugin(
 		},
 	};
 
+	function trackJavaHandle(handle: NativeJavaHandle): NativeJavaHandle {
+		javaHandles.add(handle);
+
+		return handle;
+	}
+
+	const java: NativeJavaBridge = {
+		getClass: (name) =>
+			trackJavaHandle(
+				unwrapJava(
+					scopeMethod(
+						javaBridge.getClass.bind(javaBridge),
+						nativeJavaCapabilityRequirements.getClass,
+					)(name),
+				),
+			),
+		className: (handle) =>
+			unwrapJava(
+				scopeMethod(
+					javaBridge.className.bind(javaBridge),
+					nativeJavaCapabilityRequirements.className,
+				)(handle),
+			),
+		construct: (name, args) =>
+			trackJavaHandle(
+				unwrapJava(
+					scopeMethod(
+						javaBridge.construct.bind(javaBridge),
+						nativeJavaCapabilityRequirements.construct,
+					)(name, args ?? []),
+				),
+			),
+		respondsTo: (handle, name, args) =>
+			unwrapJava(
+				scopeMethod(
+					javaBridge.respondsTo.bind(javaBridge),
+					nativeJavaCapabilityRequirements.respondsTo,
+				)(handle, name, args ?? []),
+			),
+		invoke: (handle, name, args) =>
+			unwrapJava(
+				scopeMethod(
+					javaBridge.invoke.bind(javaBridge),
+					nativeJavaCapabilityRequirements.invoke,
+				)(handle, name, args ?? []),
+			),
+		invokeAsync: (handle, name, args) => {
+			const pending = scopeAsyncMethod(
+				javaBridge.invokeAsync?.bind(javaBridge),
+				nativeJavaCapabilityRequirements.invokeAsync,
+				'Asynchronous Java invocation is unavailable.',
+			)(handle, name, args ?? []);
+
+			return Object.assign(pending.then(unwrapJava), { cancel: () => pending.cancel() });
+		},
+		getField: (handle, name) =>
+			unwrapJava(
+				scopeMethod(
+					javaBridge.getField.bind(javaBridge),
+					nativeJavaCapabilityRequirements.getField,
+				)(handle, name),
+			),
+		setField: (handle, name, value) =>
+			unwrapJava(
+				scopeMethod(
+					javaBridge.setField.bind(javaBridge),
+					nativeJavaCapabilityRequirements.setField,
+				)(handle, name, value),
+			),
+		batch: (operations) =>
+			unwrapJava(
+				scopeMethod(
+					javaBridge.batch.bind(javaBridge),
+					nativeJavaCapabilityRequirements.batch,
+				)(operations),
+			),
+		createAssociationKey: () =>
+			unwrapJava(
+				scopeMethod(
+					javaBridge.createAssociationKey.bind(javaBridge),
+					nativeJavaCapabilityRequirements.createAssociationKey,
+				)(),
+			),
+		getAssociatedObject: (handle, key) =>
+			unwrapJava(
+				scopeMethod(
+					javaBridge.getAssociatedObject.bind(javaBridge),
+					nativeJavaCapabilityRequirements.getAssociatedObject,
+				)(handle, key),
+			),
+		setAssociatedObject: (handle, key, value) =>
+			unwrapJava(
+				scopeMethod(
+					javaBridge.setAssociatedObject.bind(javaBridge),
+					nativeJavaCapabilityRequirements.setAssociatedObject,
+				)(handle, key, value),
+			),
+		release: (handle) => {
+			javaHandles.delete(handle);
+			scopeMethod(
+				javaBridge.release.bind(javaBridge),
+				nativeJavaCapabilityRequirements.release,
+			)(handle);
+		},
+	};
+
+	const debug: NativeDebugBridge = {
+		recordEvaluation: (record) =>
+			unwrapJava(
+				scopeMethod(
+					debugBridge.recordEvaluation.bind(debugBridge),
+					nativeDebugCapabilityRequirements.recordEvaluation,
+				)(record),
+			),
+		environment: () =>
+			unwrapJava(
+				scopeMethod(
+					debugBridge.environment.bind(debugBridge),
+					nativeDebugCapabilityRequirements.environment,
+				)(),
+			),
+	};
+
+	const hooks: NativeJavaHooksBridge = {
+		hook: (className, methodName, parameterTypes, options, listener) => {
+			const token = unwrapJava(
+				scopeMethod(
+					hooksBridge.hook.bind(hooksBridge),
+					nativeHooksCapabilityRequirements.hook,
+				)(className, methodName, parameterTypes, options, listener),
+			);
+
+			javaHookTokens.add(token);
+
+			return token;
+		},
+		setReturnValue: (token, self, args, value) =>
+			unwrapJava(
+				scopeMethod(
+					hooksBridge.setReturnValue.bind(hooksBridge),
+					nativeHooksCapabilityRequirements.setReturnValue,
+				)(token, self, args, value),
+			),
+		removeReturnValue: (token, self, args) =>
+			unwrapJava(
+				scopeMethod(
+					hooksBridge.removeReturnValue.bind(hooksBridge),
+					nativeHooksCapabilityRequirements.removeReturnValue,
+				)(token, self, args),
+			),
+		clearReturnValues: (token) =>
+			unwrapJava(
+				scopeMethod(
+					hooksBridge.clearReturnValues.bind(hooksBridge),
+					nativeHooksCapabilityRequirements.clearReturnValues,
+				)(token),
+			),
+		remove: (token) => {
+			javaHookTokens.delete(token);
+			unwrapJava(
+				scopeMethod(
+					hooksBridge.remove.bind(hooksBridge),
+					nativeHooksCapabilityRequirements.remove,
+				)(token),
+			);
+		},
+	};
+
 	const ui: NativeUIBridge = {
 		lookup: scopeAsyncMethod(
 			uiBridge.lookup?.bind(uiBridge),
@@ -1174,6 +1509,9 @@ function createScopedNativePlugin(
 			fabric,
 			runtime,
 			ui,
+			java,
+			hooks,
+			debug,
 			media,
 		},
 		dispose: () => {
@@ -1204,6 +1542,26 @@ function createScopedNativePlugin(
 			}
 
 			uiSurfaces.clear();
+
+			for (const handle of javaHandles) {
+				try {
+					javaBridge.release(handle);
+				} catch {
+					continue;
+				}
+			}
+
+			javaHandles.clear();
+
+			for (const token of javaHookTokens) {
+				try {
+					hooksBridge.remove(token);
+				} catch {
+					continue;
+				}
+			}
+
+			javaHookTokens.clear();
 
 			for (const binding of associations) {
 				objcBridge.setAssociatedObject(binding.handle, binding.key, null, 'assign');
@@ -1293,6 +1651,11 @@ export function validateNativePluginRequirements(
  */
 export function createPluginContext(manifest: AddonManifest): PluginContext {
 	const platform = NativePlatform?.device.platform ?? NativePlatform?.platform;
+
+	if (manifest.platforms?.length && !manifest.platforms.includes(platform as never)) {
+		throw new NativePluginUnsupportedPlatformError(manifest.platforms, String(platform));
+	}
+
 	const platformCapabilities = resolvePlatformCapabilities(manifest.platformCapabilities);
 	const capabilities = Object.freeze([
 		...new Set([...(manifest.capabilities ?? []), ...platformCapabilities]),

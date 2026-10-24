@@ -7,7 +7,8 @@ export const Surface = {
 	maxHeight: 520,
 	bottomTrim: 5,
 	settleDelay: 80,
-	spacerFontSize: 8,
+	spacerFontSize: 3,
+	topGap: 1,
 	background: '#2b2d31',
 };
 

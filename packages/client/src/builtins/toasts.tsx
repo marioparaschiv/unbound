@@ -1,7 +1,7 @@
 import type { ToastOptions } from '@unbound-app/types/toasts';
 import { createLogger } from '@unbound-app/logger';
 
-import { find, findByProps } from '~/api/metro';
+import { find, findByFilePath, findByProps } from '~/api/metro';
 import { createPatcher } from '~/api/patcher';
 import { ToastContainer } from '~/ui/toasts';
 import { showToast } from '~/api/toasts';
@@ -22,16 +22,35 @@ export function stop() {
 	Patcher.unpatchAll();
 }
 
-function patchToastContainer() {
-	const Components = findByProps('ToastContainer');
+type PatchTarget = Record<string, (...args: never[]) => void>;
 
-	if (!Components) {
+function toastContainerTarget(): [PatchTarget, string] | undefined {
+	const App = findByFilePath('modules/toast/native/AppToastContainer.tsx', { interop: false });
+
+	if (typeof App?.default === 'function') {
+		return [App, 'default'];
+	}
+
+	const Components = findByProps('ToastContainer');
+	const container = Components?.ToastContainer;
+
+	if (typeof container?.type === 'function') {
+		return [container, 'type'];
+	}
+
+	return typeof container === 'function' ? [Components, 'ToastContainer'] : undefined;
+}
+
+function patchToastContainer() {
+	const target = toastContainerTarget();
+
+	if (!target) {
 		Logger.error('Failed to find ToastContainer component');
 
 		return;
 	}
 
-	Patcher.after(Components.ToastContainer, 'type', ({ result }) => {
+	Patcher.after(target[0], target[1], ({ result }) => {
 		const settings = Settings.useSettingsStore(({ key }) => key?.startsWith('toasts'));
 
 		if (settings.get('toasts.enabled', true)) {

@@ -1,0 +1,132 @@
+#pragma once
+
+#include <jni.h>
+
+#include <deque>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <string>
+
+#include <jsi/jsi.h>
+
+#include "LoaderPipeline.h"
+#include "LoaderSettings.h"
+#include "LoaderUpdater.h"
+#include "NativePluginRuntime.h"
+
+namespace unbound::android
+{
+    struct JavaCallbacks
+    {
+        jclass    bridgeClass        = nullptr;
+        jmethodID scheduleRuntime    = nullptr;
+        jmethodID scheduleMain       = nullptr;
+        jmethodID isMainThread       = nullptr;
+        jmethodID lookupViews        = nullptr;
+        jmethodID snapshotViews      = nullptr;
+        jmethodID measureView        = nullptr;
+        jmethodID setViewFrame       = nullptr;
+        jmethodID mountView          = nullptr;
+        jmethodID updateView         = nullptr;
+        jmethodID unmountView        = nullptr;
+        jmethodID javaGetClass       = nullptr;
+        jmethodID javaClassName      = nullptr;
+        jmethodID javaConstruct      = nullptr;
+        jmethodID javaRespondsTo     = nullptr;
+        jmethodID javaInvoke         = nullptr;
+        jmethodID javaGetField       = nullptr;
+        jmethodID javaSetField       = nullptr;
+        jmethodID javaRelease        = nullptr;
+        jmethodID hooksInstall       = nullptr;
+        jmethodID hooksRemove        = nullptr;
+        jmethodID hooksSetReturnValue = nullptr;
+        jmethodID hooksRemoveReturnValue = nullptr;
+        jmethodID hooksClearReturnValues = nullptr;
+        jmethodID debugRecordEvaluation = nullptr;
+        jmethodID debugEnvironment    = nullptr;
+        jmethodID javaBatch           = nullptr;
+        jmethodID javaCreateAssociationKey = nullptr;
+        jmethodID javaGetAssociatedObject  = nullptr;
+        jmethodID javaSetAssociatedObject  = nullptr;
+        jmethodID fabricMount         = nullptr;
+        jmethodID fabricUpdate        = nullptr;
+        jmethodID fabricUnmount       = nullptr;
+        jmethodID fabricIsRunning     = nullptr;
+        jmethodID fabricViewHandle    = nullptr;
+        jmethodID fetchText          = nullptr;
+        jmethodID download           = nullptr;
+        jmethodID devServerURL       = nullptr;
+        jmethodID availableFonts     = nullptr;
+        jmethodID alert              = nullptr;
+        jmethodID onBundleExecuted   = nullptr;
+    };
+
+    struct LoaderConfiguration
+    {
+        std::string                documents;
+        std::optional<std::string> devtoolsScript;
+        std::string                origin;
+        uint32_t                   bytecodeVersion = 0;
+        nlohmann::json             platformInfo    = nlohmann::json::object();
+    };
+
+    class AndroidLoader : public loader::LoaderHost,
+                          public loader::native::NativePluginExecutor,
+                          public std::enable_shared_from_this<AndroidLoader>
+    {
+    public:
+        AndroidLoader(LoaderConfiguration configuration, JavaCallbacks callbacks);
+
+        void start();
+        void onLoadJSBundle();
+        void onJSBundleLoaded();
+        void executeBundleNow(facebook::jsi::Runtime &runtime);
+        void drainMainWork();
+        void drainRuntimeWork(facebook::jsi::Runtime &runtime);
+
+        loader::SettingsStore &settings();
+        std::string toolbox(const std::string &action, const std::string &argument);
+        std::string fontsJSON();
+        std::string themeColorsJSON(const std::string &themeId);
+
+        void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) override;
+        bool isMainThread() override;
+        void runOnMain(std::function<void()> work) override;
+        void runAfter(double seconds, std::function<void()> work) override;
+        void runInBackground(std::function<void()> work) override;
+        std::optional<std::string> resource(const std::string &name) override;
+        std::optional<std::string> resolveUpdateURL() override;
+        uint32_t runtimeBytecodeVersion() override;
+        loader::PreloadPayload preloadPayload() override;
+        void installNativeModules(facebook::jsi::Runtime &runtime) override;
+        void onAddonsPrepared() override;
+        void onBundleExecuted() override;
+        void alert(const std::string &message) override;
+
+    private:
+        std::optional<std::string> fetchText(const std::string &url, double timeoutSeconds);
+        std::optional<loader::DownloadResult> download(
+            const std::string &url, const std::string &destination,
+            const std::map<std::string, std::string> &headers);
+        nlohmann::json availableFonts();
+
+        LoaderConfiguration                      configuration_;
+        JavaCallbacks                            callbacks_;
+        loader::SettingsStore                    settings_;
+        std::unique_ptr<loader::BundleUpdater>   updater_;
+        std::unique_ptr<loader::LoaderPipeline>  pipeline_;
+        std::mutex                               queueMutex_;
+        std::deque<std::function<void(facebook::jsi::Runtime &)>> queue_;
+        std::mutex                               mainQueueMutex_;
+        std::deque<std::function<void()>>        mainQueue_;
+        std::mutex                               addonsMutex_;
+        nlohmann::json                           plugins_ = nlohmann::json::array();
+        nlohmann::json                           themes_  = nlohmann::json::array();
+        nlohmann::json                           fonts_   = nlohmann::json::array();
+    };
+
+    std::shared_ptr<AndroidLoader> currentLoader();
+    void setCurrentLoader(std::shared_ptr<AndroidLoader> loader);
+}

@@ -6,3 +6,7 @@ export const TONE_COLORS = {
 	orange: { tokens: ['ORANGE_330', 'ORANGE_300'], fallback: '#f0b232' },
 	red: { tokens: ['RED_360', 'RED_400'], fallback: '#ed4245' },
 };
+
+export const COUNTER_OFFSET = -26;
+
+export const SLOWMODE_ROW_HEIGHT = 18;

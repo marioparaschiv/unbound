@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(unbound_android CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(UNBOUND_REPOSITORY_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../../../)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libffi ${CMAKE_BINARY_DIR}/libffi)
+set(UNBOUND_CORE_FFI_TARGET unbound_ffi CACHE STRING "" FORCE)
+add_subdirectory(${UNBOUND_REPOSITORY_ROOT}/core ${CMAKE_BINARY_DIR}/core)
+
+file(GLOB UNBOUND_ANDROID_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/*.cpp)
+add_library(unbound SHARED ${UNBOUND_ANDROID_SOURCES})
+target_compile_definitions(unbound PRIVATE UNBOUND_VERSION="${UNBOUND_VERSION}")
+target_compile_options(unbound PRIVATE -fvisibility=hidden -fexceptions -frtti)
+target_link_libraries(unbound PRIVATE unbound_core log android)
+target_link_options(unbound PRIVATE -Wl,--gc-sections -Wl,--exclude-libs,ALL)

@@ -1,3 +1,4 @@
+import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import ensureClasses from '@unbound-plugins/shared/native/ensure-classes';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
@@ -5,16 +6,53 @@ import type { PluginContext } from '@unbound-app/api/native';
 
 import { patchMessageRowData } from '~/patches/message-row-data';
 import { subscribeMessageCreate } from '~/events/message-create';
+import { createAndroidIndicators } from '~/android/indicators';
 import { createMessageCells } from '~/native/message-cells';
+import { createAndroidTooltips } from '~/android/tooltip';
 import SettingsPanel from '~/components/settings-panel';
 import { createTooltips } from '~/native/tooltip';
 import { createLatencyRecords } from '~/records';
 import { Theme, UserStore } from '~/modules';
 
-let dispose = () => {};
+let dispose: () => Promise<void> | undefined = () => undefined;
 let settled = () => Promise.resolve();
 
+function startAndroid(context: PluginContext) {
+	if (
+		!ensureCapabilities('Message Latency', context.native, context.capabilities) ||
+		!ensureModules('Message Latency', { UserStore, Theme })
+	) {
+		return;
+	}
+
+	const records = createLatencyRecords();
+	const indicators = createAndroidIndicators(
+		context.native,
+		records,
+		createAndroidTooltips(context.native),
+	);
+
+	if (!indicators) {
+		console.error('[Message Latency] Skipped, the indicator surface did not register.');
+
+		return;
+	}
+
+	dispose = applyFeatures('Message Latency', [
+		() => records.clear,
+		() => indicators.dispose,
+		() => subscribeMessageCreate(records, context),
+		() => patchMessageRowData(records),
+	]);
+}
+
 function start(context: PluginContext) {
+	if (context.platform === 'android') {
+		startAndroid(context);
+
+		return;
+	}
+
 	const { objc, fabric } = context.native;
 
 	if (
@@ -41,11 +79,12 @@ function start(context: PluginContext) {
 	]);
 }
 
-function stop() {
-	dispose();
-	dispose = () => {};
+async function stop() {
+	const finished = dispose();
 
-	return settled();
+	dispose = () => undefined;
+	await finished;
+	await settled();
 }
 
 export default {

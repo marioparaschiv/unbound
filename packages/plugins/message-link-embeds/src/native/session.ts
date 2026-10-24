@@ -2,7 +2,7 @@ import type { NativeFabricBridge, NativeObjCBridge } from '@unbound-app/api/nati
 
 import { removeLabelHooks, wakeWaitingCells, type TrackedCell } from '~/native/cells';
 import { createLinkedMessages, type LinkedMessages } from '~/linked-messages';
-import { teardownSurface, type EmbeddedSurface } from '~/native/surfaces';
+import { reportSurfaceLayout, teardownSurface, type EmbeddedSurface } from '~/native/surfaces';
 import { registerMessageSurface } from '~/components/message-surface';
 import { SurfaceHeightCache } from '~/surface-layout';
 import { createTimers, type Timers } from '~/timers';
@@ -51,7 +51,11 @@ export function createSession(
 		heights: new SurfaceHeightCache(),
 		nextVersion: 0,
 	};
-	const surfaceModule = registerMessageSurface(session);
+	const surfaceModule = registerMessageSurface({
+		renderers: session.renderers,
+		surface: (surfaceId) => session.surfacesById.get(surfaceId),
+		reportLayout: (surfaceId, height) => reportSurfaceLayout(session, surfaceId, height),
+	});
 
 	if (!surfaceModule) return;
 

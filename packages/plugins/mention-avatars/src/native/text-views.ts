@@ -1,3 +1,5 @@
+import { textAttachmentBridge, textEngine } from '@unbound-plugins/shared/native/text-attachments';
+
 import { insertMentionImages } from '~/native/attributed-text';
 import type { ImageCache } from '~/native/image-cache';
 import type { Bridge, Handle } from '~/native/bridge';
@@ -196,6 +198,7 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 				: state;
 		const rendered = insertMentionImages(
 			bridge,
+			textEngine(textAttachmentBridge(bridge.objc), view),
 			base.original,
 			mentions,
 			images.imageFor,

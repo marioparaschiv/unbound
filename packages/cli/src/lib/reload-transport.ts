@@ -26,7 +26,7 @@ export type ReloadTransport = {
 	reload(addon: BuiltAddon): Promise<void>;
 };
 
-type ReadAddon = { manifest: AddonManifest; bundle: string };
+export type ReadAddon = { manifest: AddonManifest; bundle: string };
 
 /**
  * How long the watcher waits for a dropped device to reconnect before dropping a reload. Longer than
@@ -103,7 +103,7 @@ export function createReloadTransport(
  * @param addon The freshly built addon.
  * @returns The parsed manifest and the bundle source.
  */
-function readBuiltAddon(addon: BuiltAddon): ReadAddon {
+export function readBuiltAddon(addon: BuiltAddon): ReadAddon {
 	const manifest: AddonManifest = JSON.parse(
 		readFileSync(join(addon.dir, 'manifest.json'), 'utf8'),
 	);

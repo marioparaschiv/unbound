@@ -3,9 +3,9 @@ import { CONFIG_FILENAME } from '@unbound-app/contracts/workspace';
 import { command, type Command } from 'cleye';
 import { z } from 'zod';
 
+import { fieldToFlag, isArrayField } from '~/lib/zod-flags';
 import { readStdin, isStdinPiped } from '~/lib/stdin';
 import { createContext } from '~/lib/context';
-import { fieldToFlag } from '~/lib/zod-flags';
 
 /** The value that marks a positional as fed from stdin instead of the command line. */
 const STDIN_MARKER = '-';
@@ -45,7 +45,11 @@ export function toCleyeCommand(definition: CommandDefinition<z.ZodObject<z.ZodRa
 		{
 			name: definition.name,
 			description: definition.description,
-			parameters: positionalNames.map((name) => `[${name}]`),
+			parameters: positionalNames.map((name) =>
+				isArrayField(definition.schema.shape[name] as z.ZodType)
+					? `[${name}...]`
+					: `[${name}]`,
+			),
 			flags,
 			// Tools under `ubd mcp` run through a second cleye instance, whose usage line would drop `mcp`.
 			help:

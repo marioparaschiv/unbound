@@ -1,0 +1,110 @@
+name: Loader Poll Discord releases
+
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: discord-release-poll-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: packages/loader
+
+jobs:
+  stable-candidate:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.candidate.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          cache: false
+          go-version-file: packages/loader/go.mod
+      - name: Cache Go builds
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Resolve stable candidate
+        id: candidate
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: go run ./tools release-candidate --channel stable
+
+  testflight-candidate:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.candidate.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          cache: false
+          go-version-file: packages/loader/go.mod
+      - name: Cache Go builds
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Resolve TestFlight candidate
+        id: candidate
+        env:
+          DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+          DKRYPT_BASE_URL: ${{ vars.DKRYPT_BASE_URL || 'https://ipa.dylib.dev' }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: go run ./tools release-candidate --channel testflight
+
+  stable-release:
+    needs: stable-candidate
+    if: needs.stable-candidate.outputs.version != ''
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    uses: ./.github/workflows/loader-build.yml
+    with:
+      version: ${{ needs.stable-candidate.outputs.version }}
+      release: true
+      is_testflight: false
+    secrets: inherit
+
+  testflight-release:
+    needs: [testflight-candidate, stable-release]
+    if: always() && needs.testflight-candidate.outputs.version != ''
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    uses: ./.github/workflows/loader-build.yml
+    with:
+      version: ${{ needs.testflight-candidate.outputs.version }}
+      release: true
+      is_testflight: true
+    secrets: inherit

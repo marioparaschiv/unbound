@@ -14,6 +14,16 @@ export const NATIVE_PLUGIN_CAPABILITIES = [
 	'native.fabric.mount',
 	'native.fabric.async',
 	'native.runtime.events',
+	'native.java.classes',
+	'native.java.construct',
+	'native.java.fields',
+	'native.java.invoke',
+	'native.java.invokeAsync',
+	'native.java.hooks',
+	'native.java.batch',
+	'native.java.associations',
+	'native.debug.evaluations',
+	'native.debug.environment',
 	'native.ui.lookup',
 	'native.ui.mount',
 	'native.ui.layout',
@@ -24,6 +34,46 @@ export const NATIVE_PLUGIN_CAPABILITIES = [
 export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
 
 export type NativePluginPlatform = 'ios' | 'android';
+
+export const NATIVE_PLUGIN_PLATFORM_CAPABILITIES = {
+	android: [
+		'native.java.classes',
+		'native.java.construct',
+		'native.java.fields',
+		'native.java.invoke',
+		'native.fabric.async',
+		'native.fabric.mount',
+		'native.ffi.call',
+		'native.ffi.symbols',
+		'native.java.associations',
+		'native.java.batch',
+		'native.java.hooks',
+		'native.java.invokeAsync',
+		'native.runtime.events',
+		'native.debug.environment',
+		'native.debug.evaluations',
+		'native.ui.layout',
+		'native.ui.lookup',
+		'native.ui.mount',
+	],
+	ios: [
+		'native.fabric.async',
+		'native.fabric.mount',
+		'native.ffi.call',
+		'native.ffi.symbols',
+		'native.objc.associations',
+		'native.objc.batch',
+		'native.objc.classes',
+		'native.objc.hooks',
+		'native.objc.invoke',
+		'native.objc.invokeAsync',
+		'native.objc.ivars',
+		'native.objc.snapshot',
+		'native.debug.environment',
+		'native.debug.evaluations',
+		'native.runtime.events',
+	],
+} as const satisfies Record<NativePluginPlatform, readonly NativePluginCapability[]>;
 
 declare const nativeHandle: unique symbol;
 
@@ -343,6 +393,140 @@ export type NativeUISnapshot = {
 	nodes: NativeUISnapshotNode[];
 };
 
+export type NativeJavaHandle = NativeHandle;
+
+export type NativeJavaValue =
+	| { type: 'null'; class?: string }
+	| NativeJavaHandleValue
+	| { type: 'string'; value: string }
+	| { type: 'boolean'; value: boolean }
+	| { type: 'byte' | 'short' | 'int' | 'long'; value: number }
+	| { type: 'float' | 'double'; value: number }
+	| { type: 'char'; value: string }
+	| {
+			type: 'array';
+			componentType: string;
+			value: (NativeJavaValue | string | number | boolean)[];
+	  };
+
+export type NativeJavaHandleValue = { type: 'handle'; value: string };
+
+export type NativeJavaReference = NativeJavaHandle | NativeJavaHandleValue;
+
+export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
+
+export type NativeJavaHookEvent = {
+	self: NativeJavaValue;
+	args: NativeJavaValue[];
+};
+
+export type NativeJavaHookOptions = {
+	replace?: boolean;
+	notify?: boolean;
+};
+
+export type NativeJavaHookToken = {
+	readonly id: string;
+};
+
+export type NativeJavaHooksBridge = {
+	hook(
+		className: string,
+		methodName: string,
+		parameterTypes: string[],
+		options?: NativeJavaHookOptions,
+		listener?: (event: NativeJavaHookEvent) => void,
+	): NativeJavaHookToken;
+	setReturnValue(
+		token: NativeJavaHookToken,
+		self: NativeJavaValue,
+		args: NativeJavaValue[],
+		value: NativeJavaValue,
+	): void;
+	removeReturnValue(
+		token: NativeJavaHookToken,
+		self: NativeJavaValue,
+		args: NativeJavaValue[],
+	): void;
+	clearReturnValues(token: NativeJavaHookToken): void;
+	remove(token: NativeJavaHookToken): void;
+};
+
+export type NativeJavaBatchOperation = {
+	op: 'invoke' | 'getField' | 'setField' | 'respondsTo';
+	handle: NativeJavaReference;
+	name: string;
+	args?: NativeJavaArgument[];
+	value?: NativeJavaArgument;
+};
+
+export type NativeJavaAssociationKey = NativeHandle;
+
+export type NativeDebugEvaluation = {
+	id: string;
+	code: string;
+	ok: boolean;
+	value?: string;
+	error?: string;
+	logs?: { level: 1 | 2 | 3; message: string }[];
+};
+
+export type NativeDebugEnvironment = {
+	isVirtualDevice: boolean;
+	hostAddress: string | null;
+};
+
+export type NativeDebugBridge = {
+	recordEvaluation(record: NativeDebugEvaluation): boolean;
+	environment(): NativeDebugEnvironment;
+};
+
+export type NativeJavaBridge = {
+	getClass(name: string): NativeJavaHandle;
+	batch(operations: NativeJavaBatchOperation[]): NativeJavaValue[];
+	createAssociationKey(): NativeJavaAssociationKey;
+	getAssociatedObject(
+		handle: NativeJavaReference,
+		key: NativeJavaAssociationKey,
+	): NativeJavaValue;
+	setAssociatedObject(
+		handle: NativeJavaReference,
+		key: NativeJavaAssociationKey,
+		value: NativeJavaArgument,
+	): void;
+	className(handle: NativeJavaReference): NativeJavaValue;
+	construct(name: string, args?: NativeJavaArgument[]): NativeJavaHandle;
+	respondsTo(
+		handle: NativeJavaReference,
+		name: string,
+		args?: NativeJavaArgument[],
+	): NativeJavaValue;
+	invoke(handle: NativeJavaReference, name: string, args?: NativeJavaArgument[]): NativeJavaValue;
+	invokeAsync(
+		handle: NativeJavaReference,
+		name: string,
+		args?: NativeJavaArgument[],
+	): NativeCancelablePromise<NativeJavaValue>;
+	getField(handle: NativeJavaReference, name: string): NativeJavaValue;
+	setField(handle: NativeJavaReference, name: string, value: NativeJavaArgument): void;
+	release(handle: NativeJavaReference): void;
+};
+
+export type NativeAndroidSurfaceBridge = {
+	mount(
+		container: NativeUIHandle | Record<string, never>,
+		moduleName: string,
+		properties?: NativeSerializableObject,
+	): NativeCancelablePromise<NativeFabricSurface>;
+	update(
+		surface: NativeFabricSurface,
+		properties: NativeSerializableObject,
+	): NativeCancelablePromise<void>;
+	unmount(surface: NativeFabricSurface): NativeCancelablePromise<void>;
+	isRunning(surface: NativeFabricSurface): NativeJavaValue;
+	view(surface: NativeFabricSurface): NativeUIHandle;
+};
+
 export type NativeUIBridge = {
 	lookup(query: NativeUIQuery): NativeCancelablePromise<NativeUIHandle[]>;
 	snapshot(query: NativeUIQuery): NativeCancelablePromise<NativeUISnapshot>;
@@ -418,6 +602,9 @@ export type NativePluginBridge = {
 	readonly fabric: NativeFabricBridge;
 	readonly runtime: NativeRuntimeBridge;
 	readonly ui: NativeUIBridge;
+	readonly java: NativeJavaBridge;
+	readonly hooks: NativeJavaHooksBridge;
+	readonly debug: NativeDebugBridge;
 	readonly media: NativeMediaBridge;
 };
 

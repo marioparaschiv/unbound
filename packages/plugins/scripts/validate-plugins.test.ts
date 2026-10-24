@@ -15,7 +15,7 @@ const validManifest = {
 	id: 'unbound.example-plugin',
 	name: 'Example Plugin',
 	description: 'A concise example plugin description.',
-	authors: [{ name: 'Unbound Team', id: '0' }],
+	authors: [{ name: 'adrian', id: '224617799434108928' }],
 	version: '1.0.0',
 	main: 'index.js',
 };
@@ -26,7 +26,7 @@ test('every plugin folder follows the workspace convention', () => {
 	expect(readdirSync(pluginsDirectory)).toContain('hello-there');
 });
 
-test('the workspace contains only Unbound Team plugins', () => {
+test('the workspace contains only first-party plugins', () => {
 	const pluginsDirectory = resolve(import.meta.dir, '..');
 	const plugins = readdirSync(pluginsDirectory, { withFileTypes: true }).filter((entry) => {
 		return entry.isDirectory() && !['node_modules', 'shared', 'scripts'].includes(entry.name);
@@ -38,9 +38,7 @@ test('the workspace contains only Unbound Team plugins', () => {
 			const manifestPath = resolve(pluginsDirectory, plugin.name, 'manifest.json');
 			if (!existsSync(manifestPath)) return plugin.name === 'hello-there';
 			const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-			return manifest.authors.some(
-				(author: { name: string }) => author.name === 'Unbound Team',
-			);
+			return manifest.authors.some((author: { name: string }) => author.name === 'adrian');
 		}),
 	).toBe(true);
 });
@@ -53,6 +51,7 @@ test('accepts declared native capabilities from the client SDK', () => {
 	expect(
 		validatePluginFolder('example-plugin', {
 			...validManifest,
+			platforms: ['ios'],
 			capabilities: ['native.objc.snapshot', 'native.fabric.async'],
 		}),
 	).toEqual([]);
@@ -116,4 +115,99 @@ test('enforces the plugin folder length limit', () => {
 	expect(validatePluginFolder(folder, validManifest)).toContain(
 		`folder must be at most ${PLUGIN_FOLDER_MAX_LENGTH} characters`,
 	);
+});
+
+test('rejects a flat capability that only one platform can provide', () => {
+	expect(
+		validatePluginFolder('example-plugin', {
+			...validManifest,
+			capabilities: ['native.objc.classes'],
+		}),
+	).toContain(
+		'capabilities contains native.objc.classes, which android cannot provide; declare it under platformCapabilities.ios',
+	);
+});
+
+test('accepts a flat capability that every supported platform provides', () => {
+	expect(
+		validatePluginFolder('example-plugin', {
+			...validManifest,
+			capabilities: ['native.runtime.events'],
+		}),
+	).toEqual([]);
+});
+
+test('accepts a platform-exclusive capability declared under its platform', () => {
+	expect(
+		validatePluginFolder('example-plugin', {
+			...validManifest,
+			platforms: ['ios'],
+			platformCapabilities: { ios: ['native.objc.classes', 'native.fabric.mount'] },
+		}),
+	).toEqual([]);
+});
+
+test('accepts a flat capability restricted to the declared platforms', () => {
+	expect(
+		validatePluginFolder('example-plugin', {
+			...validManifest,
+			platforms: ['ios'],
+			capabilities: ['native.objc.classes'],
+		}),
+	).toEqual([]);
+});
+
+test('rejects platforms that are not supported targets', () => {
+	expect(
+		validatePluginFolder('example-plugin', { ...validManifest, platforms: ['web'] }),
+	).toContain('platforms contains an unsupported value: web');
+});
+
+test('rejects an empty platforms list', () => {
+	expect(validatePluginFolder('example-plugin', { ...validManifest, platforms: [] })).toContain(
+		'platforms must not be empty',
+	);
+});
+
+test('rejects duplicate platforms', () => {
+	expect(
+		validatePluginFolder('example-plugin', { ...validManifest, platforms: ['ios', 'ios'] }),
+	).toContain('platforms must not repeat ios');
+});
+
+test('rejects platformCapabilities for a platform the plugin does not support', () => {
+	expect(
+		validatePluginFolder('example-plugin', {
+			...validManifest,
+			platforms: ['ios'],
+			platformCapabilities: { android: ['native.ui.lookup'] },
+		}),
+	).toContain('platformCapabilities declares android, which is not in platforms');
+});
+
+test('rejects a platformCapabilities entry the platform cannot provide', () => {
+	expect(
+		validatePluginFolder('example-plugin', {
+			...validManifest,
+			platformCapabilities: { android: ['native.objc.classes'] },
+		}),
+	).toContain('platformCapabilities.android cannot provide native.objc.classes');
+});
+
+test('rejects platformCapabilities values that are not arrays', () => {
+	expect(
+		validatePluginFolder('example-plugin', {
+			...validManifest,
+			platformCapabilities: { ios: 'native.objc.classes' },
+		}),
+	).toContain('platformCapabilities.ios must be an array');
+});
+
+test('rejects an unknown platformCapabilities platform', () => {
+	expect(
+		validatePluginFolder('example-plugin', {
+			...validManifest,
+			platformCapabilities: { web: ['native.ui.lookup'] },
+		}),
+	).toContain('platformCapabilities contains an unsupported platform: web');
 });

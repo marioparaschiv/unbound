@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "vphone": {
+      "command": "node",
+      "args": [".claude/mcp/vphone/server.mjs"],
+      "env": {
+        "VPHONE_HOST": "127.0.0.1",
+        "VPHONE_PORT": "2222",
+        "VPHONE_USER": "mobile",
+        "VPHONE_PASS": "alpine"
+      }
+    }
+  }
+}

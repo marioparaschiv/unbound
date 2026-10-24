@@ -12,11 +12,24 @@ export type SoundManager = {
 export type Player = ReturnType<typeof createPlayer>;
 
 /**
+ * @description Reads a prepared sound's length, which Discord's iOS sound manager reports in seconds and its Android one in milliseconds.
+ * @param duration The reported duration.
+ * @param platform The platform that reported it.
+ * @returns The length in milliseconds, or `null` when the duration is not usable.
+ */
+export function soundDuration(duration: number | undefined, platform: string): number | null {
+	if (duration === undefined || !Number.isFinite(duration) || duration <= 0) return null;
+
+	return platform === 'android' ? duration : duration * 1000;
+}
+
+/**
  * @description Prepares the Moyai sound with Discord's native sound manager and plays it on demand.
  * @param manager Discord's `DCDSoundManager` native module.
+ * @param platform The platform the manager runs on, which decides the unit it reports durations in.
  * @returns `play` restarts the sound, `dispose` stops it and cancels pending work.
  */
-export function createPlayer(manager: SoundManager) {
+export function createPlayer(manager: SoundManager, platform: string) {
 	let duration: number | null = null;
 	let preparing = false;
 	let disposed = false;
@@ -41,12 +54,7 @@ export function createPlayer(manager: SoundManager) {
 					return;
 				}
 
-				const seconds = metadata?.duration ?? 0;
-
-				duration =
-					Number.isFinite(seconds) && seconds > 0
-						? seconds * 1000
-						: Sound.fallbackDuration;
+				duration = soundDuration(metadata?.duration, platform) ?? Sound.fallbackDuration;
 			});
 		} catch (error) {
 			preparing = false;

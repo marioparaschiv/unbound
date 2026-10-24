@@ -1,0 +1,51 @@
+{
+	"version": "2.0.0",
+	"inputs": [
+		{
+			"id": "inputAction",
+			"type": "pickString",
+			"description": "build actions",
+			"options": [
+				"Install on vphone",
+				"Package",
+				"AirDrop Tweak",
+				"Build IPA"
+			],
+			"default": "Install on vphone"
+		}
+	],
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "Build Tweak",
+			"command": "zsh",
+			"args": [
+				"-c",
+				"chmod +x '${workspaceFolder}/.vscode/build-actions.sh' 2>/dev/null || true; '${workspaceFolder}/.vscode/build-actions.sh' \"${input:inputAction}\""
+			],
+			"problemMatcher": {
+				"owner": "cpp",
+				"pattern": {
+					"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					"message": 5
+				}
+			},
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"panel": "shared",
+				"showReuseMessage": false,
+				"clear": true,
+				"close": true,
+				"reveal": "always",
+				"focus": true
+			}
+		}
+	]
+}

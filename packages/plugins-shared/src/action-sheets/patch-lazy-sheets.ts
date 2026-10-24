@@ -2,9 +2,17 @@ import type { AnyProps } from '@unbound-app/api/metro';
 import type { patcher } from '@unbound-app/api';
 
 import { findRenderTarget } from '../react/render-target';
+import { whenLoaded } from '../metro/when-loaded';
 
 type Cleanup = () => void;
 type Patcher = ReturnType<typeof patcher.createPatcher>;
+
+const DIRECT_SHEETS: readonly (readonly [path: string, key: string])[] = [
+	[
+		'modules/messages/native/long_press/LongPressMessageActionSheet.tsx',
+		'MessageLongPressActionSheet',
+	],
+];
 
 // UNKNOWN: an action sheet may render any node.
 export type SheetRender = (result: unknown) => unknown;
@@ -16,7 +24,7 @@ export type ActionSheetHost<P> = {
 };
 
 /**
- * @description Lets a plugin change the action sheets Discord opens through `openLazy`, patching each sheet component once.
+ * @description Lets a plugin change the action sheets Discord opens through `openLazy`, and the sheets it opens without it, such as Android's message long-press sheet, patching each sheet component once.
  * @template P The sheet props the plugin reads.
  * @param Patcher The plugin's patcher.
  * @param ActionSheets Discord's action sheet module.
@@ -43,6 +51,24 @@ export function patchLazySheets<P>(
 		if (!target) return;
 
 		unpatches.push(Patcher.after(target.holder, target.key, ({ result }) => render(result)));
+	}
+
+	for (const [path, key] of DIRECT_SHEETS) {
+		unpatches.push(
+			whenLoaded<AnyProps>(path, (module) => {
+				const target = findRenderTarget(module);
+
+				if (disposed || !target || patchedModules.has(module)) return;
+
+				patchedModules.add(module);
+
+				return Patcher.after(target.holder, target.key, ({ args: [props], result }) => {
+					const render = props ? onOpen(key, props as P) : undefined;
+
+					return render ? render(result) : result;
+				});
+			}),
+		);
 	}
 
 	unpatches.push(

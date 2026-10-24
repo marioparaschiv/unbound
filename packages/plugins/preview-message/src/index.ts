@@ -2,8 +2,10 @@ import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { Portal } from '@unbound-app/api/metro/components';
 import { assets } from '@unbound-app/api';
+import { Platform } from 'react-native';
 
 import { patchChatInputRightActions } from '~/patches/chat-input-right-actions';
+import { patchChatInputSendButton } from '~/patches/chat-input-send-button';
 import {
 	ChatItem,
 	DraftStore,
@@ -12,7 +14,6 @@ import {
 	PreviewRunning,
 	RowManager,
 	SelectedChannelStore,
-	StickerPreviewStore,
 	Users,
 } from '~/modules';
 
@@ -26,7 +27,6 @@ function start() {
 		MessageRecord,
 		RowManager,
 		DraftStore,
-		StickerPreviewStore,
 		SelectedChannelStore,
 		FluxHooks,
 		Portal,
@@ -43,7 +43,10 @@ function start() {
 
 	dispose = applyFeatures('Preview Message', [
 		PreviewRunning.markRunning,
-		() => patchChatInputRightActions(EyeIcon),
+		() =>
+			Platform.OS === 'android'
+				? patchChatInputSendButton(EyeIcon)
+				: patchChatInputRightActions(EyeIcon),
 	]);
 }
 

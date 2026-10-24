@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Decompile an IPA's Hermes bundle into one file per source module.
+"""Decompile a Discord Hermes bundle into one file per source module.
 
-  decompile.py <app.ipa> <out dir>
+  decompile.py <app.ipa | app.apk | bundle> <out dir> [--skip-decompile]
 
 Writes <out>/main.js (the whole decompile), <out>/dec.log and <out>/mods/<source path>.
 Installs hermes-dec into $HERMES_DEC_VENV (default ~/.cache/unbound/hermes-dec) on first run.
@@ -58,19 +58,38 @@ def split(main_js, mods):
     return count
 
 
+BUNDLE_ENTRY = re.compile(r'Payload/[^/]+\.app/main\.jsbundle|assets/index\.android\.bundle')
+
+
+def extract_bundle(source, out):
+    target = out / 'main.jsbundle'
+
+    if not zipfile.is_zipfile(source):
+        shutil.copyfile(source, target)
+        return target
+
+    with zipfile.ZipFile(source) as archive:
+        name = next(n for n in archive.namelist() if BUNDLE_ENTRY.fullmatch(n))
+        target.write_bytes(archive.read(name))
+
+    return target
+
+
 def main(args):
+    skip = '--skip-decompile' in args
+    args = [arg for arg in args if arg != '--skip-decompile']
+
     if len(args) != 2:
         sys.exit(__doc__)
 
-    ipa, out = Path(args[0]), Path(args[1]).expanduser()
+    source, out = Path(args[0]), Path(args[1]).expanduser()
     out.mkdir(parents=True, exist_ok=True)
 
-    with zipfile.ZipFile(ipa) as archive:
-        name = next(n for n in archive.namelist() if re.fullmatch(r'Payload/[^/]+\.app/main\.jsbundle', n))
-        (out / 'main.jsbundle').write_bytes(archive.read(name))
+    if not skip:
+        bundle = extract_bundle(source, out)
 
-    with (out / 'dec.log').open('w') as log:
-        subprocess.run([decompiler(), out / 'main.jsbundle', out / 'main.js'], stderr=log, check=True)
+        with (out / 'dec.log').open('w') as log:
+            subprocess.run([decompiler(), bundle, out / 'main.js'], stderr=log, check=True)
 
     print(split(out / 'main.js', out / 'mods'), 'modules in', out / 'mods')
 

@@ -7,6 +7,7 @@ import { getStore } from '~/api/storage';
 import fs from '~/api/fs';
 
 import createMomentCalendarLocale from './create-moment-calendar-locale';
+import createMomentLocaleDefiner from './create-moment-locale-definer';
 import createMomentLocaleSetter from './create-moment-locale-setter';
 import resolveMomentLocale from './resolve-moment-locale';
 import enUS from '../../../../i18n/en-US.json';
@@ -42,6 +43,8 @@ let originalMomentInstanceLocaleSetter: MomentMethod | null = null;
 let wrappedMomentInstanceLocaleSetter: MomentMethod | null = null;
 let originalMomentCalendar: MomentMethod | null = null;
 let wrappedMomentCalendar: MomentMethod | null = null;
+let originalMomentDefineLocale: MomentMethod | null = null;
+let wrappedMomentDefineLocale: MomentMethod | null = null;
 
 let MessageFormat: MessageFormatConstructor | undefined;
 
@@ -82,6 +85,19 @@ function syncMomentLocale(locale: string): void {
 				() => Moment.locales(),
 			);
 			Moment.prototype.locale = wrappedMomentInstanceLocaleSetter;
+		}
+
+		if (typeof Moment.defineLocale === 'function') {
+			originalMomentDefineLocale = Moment.defineLocale;
+			wrappedMomentDefineLocale = createMomentLocaleDefiner(Moment.defineLocale, () =>
+				Reflect.apply(localeSetter, Moment, [
+					resolveMomentLocale(
+						currentLocale ?? Discord.intl?.currentLocale ?? locale,
+						Moment.locales(),
+					),
+				]),
+			);
+			Moment.defineLocale = wrappedMomentDefineLocale;
 		}
 
 		const calendar = Moment.prototype?.calendar;
@@ -293,6 +309,14 @@ export function destroy() {
 		Moment.prototype.calendar = originalMomentCalendar;
 	}
 
+	if (
+		originalMomentDefineLocale &&
+		wrappedMomentDefineLocale &&
+		Moment?.defineLocale === wrappedMomentDefineLocale
+	) {
+		Moment.defineLocale = originalMomentDefineLocale;
+	}
+
 	if (previousMomentLocale && originalMomentLocaleSetter) {
 		Reflect.apply(originalMomentLocaleSetter, Moment, [previousMomentLocale]);
 	}
@@ -304,6 +328,8 @@ export function destroy() {
 	wrappedMomentInstanceLocaleSetter = null;
 	originalMomentCalendar = null;
 	wrappedMomentCalendar = null;
+	originalMomentDefineLocale = null;
+	wrappedMomentDefineLocale = null;
 }
 
 export default { Messages, format, defineLocalizations, init, destroy };

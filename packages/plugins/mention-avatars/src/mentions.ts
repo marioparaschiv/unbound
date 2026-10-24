@@ -1,3 +1,5 @@
+import { isTextBoundary } from '@unbound-plugins/shared/native/text-attachments';
+
 export type MentionType = 'role' | 'user';
 
 export type Mention = {
@@ -23,7 +25,7 @@ export type RoleImage = Pick<Mention, 'avatarURL' | 'roleColor'>;
 
 // Discord wraps mention labels in first-strong isolate marks (U+2068, U+2069).
 function endsMention(next: string | undefined): boolean {
-	return !next || next === '\u2068' || next === '\u2069' || /\s/u.test(next);
+	return isTextBoundary(next);
 }
 
 /**

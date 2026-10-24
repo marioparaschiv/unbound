@@ -1,4 +1,9 @@
 import type { NativeHookToken, NativeObjectHandle } from '@unbound-app/api/native';
+import {
+	removeAttachedViews,
+	type TextAttachmentBridge,
+	type TextEngine,
+} from '@unbound-plugins/shared/native/text-attachments';
 
 import type { Highlighter } from '~/highlighter';
 import type { CodeBlockPlacement } from '~/fences';
@@ -14,6 +19,7 @@ export type SurfacePart = {
 	host: CodeHost;
 	height: number;
 	copyHook: NativeHookToken | null;
+	attachmentIndex: number;
 };
 
 /** A message label whose code blocks are replaced by native code cards. */
@@ -22,6 +28,7 @@ export type Surface = {
 	labelKey: string;
 	cell: NativeObjectHandle;
 	cellKey: string;
+	engine: TextEngine;
 	channelId: string;
 	messageId: string;
 	/** The attributed text Discord rendered, restored on stop. */
@@ -38,10 +45,12 @@ export type Surface = {
 	rowCorrectionPending: boolean;
 	rowTimer: ReturnType<typeof setTimeout> | null;
 	settleTimers: ReturnType<typeof setTimeout>[];
+	placing: boolean;
 };
 
 export type Session = {
 	ui: NativeUI;
+	text: TextAttachmentBridge;
 	highlighter: Highlighter;
 	/** Mounted surfaces by label key, oldest first. */
 	surfaces: Map<string, Surface>;
@@ -125,6 +134,13 @@ export function detachSurface(session: Session, surface: Surface): void {
 	for (const part of surface.parts) {
 		part.copyHook?.remove();
 		part.copyHook = null;
+	}
+
+	if (surface.engine === 'textkit') {
+		void removeAttachedViews(
+			session.text,
+			surface.parts.map((part) => part.host.host),
+		);
 	}
 
 	if (isMounted(session, surface)) session.surfaces.delete(surface.labelKey);

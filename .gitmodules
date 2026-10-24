@@ -1,0 +1,9 @@
+[submodule "packages/loader/ios/extensions/OpenInDiscord"]
+	path = packages/loader/ios/extensions/OpenInDiscord
+	url = https://github.com/castdrian/OpenInDiscord
+[submodule "packages/loader/ios/extensions/ShareToDiscord"]
+	path = packages/loader/ios/extensions/ShareToDiscord
+	url = https://github.com/castdrian/ShareToDiscord
+[submodule "packages/loader/vendor/libffi"]
+	path = packages/loader/vendor/libffi
+	url = https://github.com/libffi/libffi.git

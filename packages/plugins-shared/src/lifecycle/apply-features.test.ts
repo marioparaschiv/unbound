@@ -33,4 +33,31 @@ describe('applyFeatures', () => {
 
 		expect(calls).toEqual(['a']);
 	});
+
+	test('returns nothing when every removal is synchronous', () => {
+		expect(applyFeatures('Test', [() => () => undefined])()).toBeUndefined();
+	});
+
+	test('waits for asynchronous removals before resolving', async () => {
+		const calls: string[] = [];
+		let finish = () => {};
+
+		const dispose = applyFeatures('Test', [
+			() => () =>
+				new Promise<void>((resolve) => {
+					finish = () => {
+						calls.push('async');
+						resolve();
+					};
+				}),
+			() => () => calls.push('sync'),
+		]);
+
+		const pending = dispose();
+
+		expect(calls).toEqual(['sync']);
+		finish();
+		await pending;
+		expect(calls).toEqual(['sync', 'async']);
+	});
 });

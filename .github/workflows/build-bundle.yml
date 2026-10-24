@@ -38,13 +38,14 @@ permissions:
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         # A release upload must never be cancelled by a later push.
         concurrency:
             group: build-bundle-${{ inputs.version || 'beta' }}
             cancel-in-progress: ${{ !inputs.version }}
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   ref: ${{ inputs.version && format('client-v{0}', inputs.version) || '' }}
                   fetch-depth: 0
@@ -53,13 +54,23 @@ jobs:
             # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
             # canary's frozen-lockfile check fails on a self-generated lockfile (round-trip bug),
             # so install without it until stable 1.4 lands.
-            - uses: oven-sh/setup-bun@v2
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
               with:
                   bun-version: canary
 
-            - run: bun install
+            - name: Cache Bun installs
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ~/.bun/install/cache
+                  key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+                  restore-keys: bun-${{ runner.os }}-
 
-            - run: bun run --cwd packages/client build
+            - name: Install dependencies
+              run: bun install
+
+            - name: Build the client
+              run: bun run --cwd packages/client build
 
             - name: Check every bundle has a source map
               run: |
@@ -68,7 +79,7 @@ jobs:
                   done
 
             - name: Keep source maps
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: source-maps-${{ inputs.version || github.sha }}
                   path: packages/client/dist/*.map
@@ -83,6 +94,7 @@ jobs:
 
                   dist="$(pwd)/packages/client/dist"
                   publish="$(mktemp -d)"
+                  remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
                   git config user.name 'github-actions[bot]'
                   git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -96,12 +108,15 @@ jobs:
                   cp -r "$dist"/. .
                   find . -name '*.map' -not -path './.git/*' -delete
 
+                  if git fetch --depth 1 "$remote" builds:refs/remotes/publish/builds; then
+                      git checkout refs/remotes/publish/builds -- repo 2>/dev/null || true
+                  fi
+
                   echo 'builds.unbound.rip' > CNAME
 
                   git add -A
                   git commit -m "build: publish bundles for ${GITHUB_SHA}"
 
-                  remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
                   git push --force "$remote" builds
 
             - name: Upload bundles to the public bucket
