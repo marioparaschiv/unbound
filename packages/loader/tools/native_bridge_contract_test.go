@@ -108,7 +108,7 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 		t.Fatal("native Objective-C data constructor does not return an NSData handle")
 	}
 	if !strings.Contains(sourceText, "NATIVE_BRIDGE_ERROR") ||
-		!strings.Contains(sourceText, "attachNativeErrorCode") {
+		!strings.Contains(sourceText, "return loader::native::makeFunction(runtime, name, argCount, std::move(translated));") {
 		t.Fatal("native bridge exceptions are missing structured error codes")
 	}
 	rawFunctionHandler := strings.Index(sourceText, "Value (*handler)(Runtime &, const Value *, size_t)")
@@ -304,8 +304,6 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		"if (code == ':')",
 		"[invocation retainArguments]",
 		"Native super invocation cannot synchronously cross to the main thread",
-		"Native async invocation was cancelled",
-		"__NativePluginPendingInvocations",
 		`"invokeSuperAsync"`,
 		`"mountAsync"`,
 		`"updateAsync"`,
@@ -313,8 +311,6 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		`"setFrameAsync"`,
 		`"measureAsync"`,
 		`"unmountAsync"`,
-		"status->compare_exchange_strong(queued, 3)",
-		"gMainThreadRuntimeWaits.fetch_add(1)",
 		"NATIVE_WRONG_THREAD",
 		"static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)",
 		"Native batch requires at most 64 steps",
@@ -329,6 +325,25 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		if !strings.Contains(string(bridge), required) {
 			t.Fatalf("native bridge safety guard %q is missing", required)
 		}
+	}
+	runtimeSource, err := os.ReadFile(filepath.Join(root, "core", "src", "NativePluginRuntime.cpp"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, required := range []string{
+		"Native async invocation was cancelled",
+		"__NativePluginPendingInvocations",
+		"gate.expire()",
+		"gMainThreadRuntimeWaits.fetch_add(1)",
+		"NATIVE_WRONG_THREAD",
+		"NATIVE_MAIN_THREAD_TIMEOUT",
+	} {
+		if !strings.Contains(string(runtimeSource), required) {
+			t.Fatalf("native runtime safety guard %q is missing", required)
+		}
+	}
+	if !strings.Contains(string(bridge), "loader::native::setExecutor(std::make_shared<IOSNativePluginExecutor>());") {
+		t.Fatal("the iOS bridge does not run on the shared native runtime executor")
 	}
 	if strings.Contains(string(bridge), "result = invokeObject(runtime, target, selector, arguments)") {
 		t.Fatal("Objective-C invocation still creates JSI values on the main thread")

@@ -34,6 +34,7 @@
 #import "NativePluginFFI.h"
 #import "NativeNumericValidation.h"
 #import "NativeOperationGate.h"
+#import "NativePluginRuntime.h"
 #import "NativeTypeEncoding.h"
 
 using namespace facebook;
@@ -346,14 +347,8 @@ static std::mutex gHookMutex;
 static std::unordered_map<std::string, std::shared_ptr<HookDispatcher>> gDispatchers;
 static std::unordered_map<HookDispatcher *, std::shared_ptr<HookDispatcher>> gClosureDispatchers;
 static std::atomic_uint64_t gNextHookIdentifier{1};
-static std::atomic_uint64_t gNextInvocationIdentifier{1};
 static __weak id gRuntimeExecutorInstance = nil;
 static __weak id gFabricHostInstance = nil;
-static std::mutex gNativePluginRuntimeMutex;
-static Runtime *gNativePluginRuntime = nullptr;
-static std::thread::id gNativePluginRuntimeThread;
-static std::atomic_uint64_t gNativePluginRuntimeGeneration{0};
-static std::atomic_uint gMainThreadRuntimeWaits{0};
 static std::mutex gFabricSurfaceMutex;
 static std::unordered_map<FabricSurfaceHost *, std::shared_ptr<FabricSurfaceHost>> gFabricSurfaces;
 
@@ -395,6 +390,7 @@ static void dispatchFFIHookBody(ffi_cif *cif, void *returnValue, void **argument
 static void executeRuntimeAsynchronously(std::function<void(Runtime &)> callback);
 static Value executeMainAsynchronously(Runtime &runtime, std::function<void(void)> operation,
                                        std::function<Value(Runtime &)> result);
+static std::function<void(void)> objcGuarded(std::function<void(void)> operation);
 static void dispatchVoidHook(id object, SEL selector);
 static CGSize dispatchCGSizeHook(id object, SEL selector, CGSize size);
 static CGSize dispatchCGSizeNoArgumentHook(id object, SEL selector);
@@ -427,37 +423,54 @@ static void setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookS
 static void removeHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
                                       const Value *args, size_t count);
 
-static void attachNativeErrorCode(Runtime &runtime, const JSError &error)
-{
-    const Value &value = error.value();
-    if (!value.isObject())
-    {
-        return;
-    }
-
-    Object object = value.asObject(runtime);
-    Value code = object.getProperty(runtime, "code");
-    if (code.isString())
-    {
-        return;
-    }
-
-    object.setProperty(runtime, "code",
-                       String::createFromUtf8(runtime, "NATIVE_BRIDGE_ERROR"));
-}
-
-class NativeWrongThreadError final : public std::runtime_error
+class IOSNativePluginExecutor final : public loader::native::NativePluginExecutor
 {
 public:
-    explicit NativeWrongThreadError(const char *message) : std::runtime_error(message) {}
+    bool isMainThread() override
+    {
+        return [NSThread isMainThread];
+    }
+
+    void runOnMain(std::function<void()> work) override
+    {
+        auto task = std::make_shared<std::function<void()>>(std::move(work));
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @autoreleasepool
+            {
+                (*task)();
+            }
+        });
+    }
+
+    void runOnRuntime(std::function<void(Runtime &)> work) override
+    {
+        id instance = gRuntimeExecutorInstance;
+        if (!instance)
+        {
+            return;
+        }
+
+        [instance callFunctionOnBufferedRuntimeExecutor:[work = std::move(work)](Runtime &runtime) {
+            @autoreleasepool
+            {
+                work(runtime);
+            }
+        }];
+    }
+
+    void runAfter(double seconds, std::function<void()> work) override
+    {
+        auto task = std::make_shared<std::function<void()>>(std::move(work));
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, static_cast<int64_t>(seconds * NSEC_PER_SEC)),
+                       dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+                           (*task)();
+                       });
+    }
 };
 
 [[noreturn]] static void throwWrongThread(Runtime &runtime, const char *message)
 {
-    JSError failure(runtime, message);
-    failure.value().asObject(runtime).setProperty(
-        runtime, "code", String::createFromUtf8(runtime, "NATIVE_WRONG_THREAD"));
-    throw failure;
+    loader::native::throwCoded(runtime, "NATIVE_WRONG_THREAD", message);
 }
 
 static std::mutex gFFIMutex;
@@ -473,45 +486,20 @@ static std::unordered_map<std::string, std::shared_ptr<CachedFFICif>> gFFICifs;
 static Value makeFunction(const char *name, unsigned int argCount, Runtime &runtime,
                           const HostFunctionType &handler)
 {
-    HostFunctionType guardedHandler = [handler](Runtime &rt, const Value &thisValue,
-                                                const Value *args, size_t count) -> Value {
+    HostFunctionType translated = [handler](Runtime &rt, const Value &thisValue, const Value *args,
+                                            size_t count) -> Value {
         @try
         {
-            try
-            {
-                return handler(rt, thisValue, args, count);
-            }
-            catch (const JSError &error)
-            {
-                attachNativeErrorCode(rt, error);
-                throw;
-            }
-            catch (const NativeWrongThreadError &error)
-            {
-                throwWrongThread(rt, error.what());
-            }
-            catch (const std::exception &error)
-            {
-                JSError failure(rt, error.what());
-                attachNativeErrorCode(rt, failure);
-                throw failure;
-            }
-            catch (...)
-            {
-                JSError failure(rt, "Native bridge operation failed");
-                attachNativeErrorCode(rt, failure);
-                throw failure;
-            }
+            return handler(rt, thisValue, args, count);
         }
         @catch (NSException *exception)
         {
-            JSError failure(rt, std::string("Objective-C exception: ") +
-                                     (exception.reason.UTF8String ?: "unknown"));
-            attachNativeErrorCode(rt, failure);
-            throw failure;
+            throw loader::native::NativeCodedError(
+                "NATIVE_BRIDGE_ERROR",
+                std::string("Objective-C exception: ") + (exception.reason.UTF8String ?: "unknown"));
         }
     };
-    return [JSI makeFunction:name argCount:argCount runtime:runtime handler:guardedHandler];
+    return loader::native::makeFunction(runtime, name, argCount, std::move(translated));
 }
 
 static Value makeFunction(const char *name, unsigned int argCount, Runtime &runtime,
@@ -970,57 +958,24 @@ static id valueToObjC(Runtime &runtime, const Value &value)
     return valueToObjCValue(runtime, value, state);
 }
 
+static std::function<void(void)> objcGuarded(std::function<void(void)> operation)
+{
+    return [operation = std::move(operation)]() {
+        @try
+        {
+            operation();
+        }
+        @catch (NSException *exception)
+        {
+            throw std::runtime_error(exception.reason.UTF8String ?: "Native operation failed");
+        }
+    };
+}
+
 static void executeMainSynchronously(std::function<void(void)> callback)
 {
     NativeOperationSignpost signpost("main thread crossing");
-    if ([NSThread isMainThread])
-    {
-        callback();
-        return;
-    }
-    if (gMainThreadRuntimeWaits.load())
-    {
-        throw NativeWrongThreadError("Native operation cannot synchronously cross to a waiting main thread");
-    }
-
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    auto failure = std::make_shared<std::exception_ptr>();
-    auto status = std::make_shared<std::atomic_int>(0);
-    dispatch_async(dispatch_get_main_queue(), ^{
-        @autoreleasepool
-        {
-            int queued = 0;
-            if (!status->compare_exchange_strong(queued, 1))
-            {
-                return;
-            }
-            try
-            {
-                callback();
-            }
-            catch (...)
-            {
-                *failure = std::current_exception();
-            }
-            status->store(2);
-            dispatch_semaphore_signal(semaphore);
-        }
-    });
-
-    if (dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC)) != 0)
-    {
-        int queued = 0;
-        if (status->compare_exchange_strong(queued, 3))
-        {
-            throw std::runtime_error("Native operation timed out on the main thread");
-        }
-        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
-    }
-
-    if (*failure)
-    {
-        std::rethrow_exception(*failure);
-    }
+    loader::native::executeMainSynchronously(objcGuarded(std::move(callback)));
 }
 
 static std::shared_ptr<FabricSurfaceHost> fabricSurfaceHost(Runtime &runtime, const Value &value)
@@ -1127,7 +1082,7 @@ static void fabricMountNative(id host, UIView *containerView, NSString *moduleNa
                               uint64_t generation)
 {
     NativeOperationSignpost signpost("fabric mount");
-    if (generation != gNativePluginRuntimeGeneration.load())
+    if (generation != loader::native::runtimeGeneration())
     {
         throw std::runtime_error("Fabric runtime was replaced before mounting");
     }
@@ -1169,7 +1124,7 @@ static void fabricMountNative(id host, UIView *containerView, NSString *moduleNa
     bool replaced = false;
     {
         std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
-        replaced = generation != gNativePluginRuntimeGeneration.load();
+        replaced = generation != loader::native::runtimeGeneration();
         if (!replaced) gFabricSurfaces[surfaceHost.get()] = surfaceHost;
     }
     if (replaced)
@@ -1203,7 +1158,7 @@ static Value fabricMount(Runtime &runtime, const Value *args, size_t count)
     NSString *moduleName = [JSI toNSString:args[1] runtime:runtime];
     NSDictionary *properties = fabricProperties(runtime, count > 2 ? &args[2] : nullptr);
     auto surfaceHost = std::make_shared<FabricSurfaceHost>();
-    uint64_t generation = gNativePluginRuntimeGeneration.load();
+    uint64_t generation = loader::native::runtimeGeneration();
 
     executeMainSynchronously([host, container, moduleName, properties, surfaceHost, generation]() {
         fabricMountNative(host, (UIView *) container, moduleName, properties, surfaceHost,
@@ -1233,7 +1188,7 @@ static Value fabricMountAsync(Runtime &runtime, const Value *args, size_t count)
     NSString *moduleName = [JSI toNSString:args[1] runtime:runtime];
     NSDictionary *properties = fabricProperties(runtime, count > 2 ? &args[2] : nullptr);
     auto surfaceHost = std::make_shared<FabricSurfaceHost>();
-    uint64_t generation = gNativePluginRuntimeGeneration.load();
+    uint64_t generation = loader::native::runtimeGeneration();
     return executeMainAsynchronously(
         runtime,
         [host, container, moduleName, properties, surfaceHost, generation]() {
@@ -2141,7 +2096,7 @@ static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, N
     {
         throw JSError(runtime, "Unsupported native thread policy");
     }
-    if (gMainThreadRuntimeWaits.load())
+    if (loader::native::mainThreadIsWaitingForRuntime())
     {
         throwWrongThread(runtime, "Objective-C invocation cannot synchronously cross to a waiting main thread");
     }
@@ -2176,154 +2131,11 @@ static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, N
     return result;
 }
 
-static void rejectPendingNativeInvocation(Runtime &runtime, const std::string &identifier,
-                                          const char *code, const char *message)
-{
-    Value pendingValue = runtime.global().getProperty(runtime, "__NativePluginPendingInvocations");
-    if (!pendingValue.isObject()) return;
-    Object pending = pendingValue.asObject(runtime);
-    Value pairValue = pending.getProperty(runtime, identifier.c_str());
-    if (!pairValue.isObject()) return;
-    Object pair = pairValue.asObject(runtime);
-    pending.deleteProperty(runtime, identifier.c_str());
-    Function constructor = runtime.global().getPropertyAsFunction(runtime, "Error");
-    Object error = constructor.callAsConstructor(runtime, String::createFromUtf8(runtime, message))
-                       .asObject(runtime);
-    error.setProperty(runtime, "code", String::createFromUtf8(runtime, code));
-    pair.getPropertyAsFunction(runtime, "reject").call(runtime, std::move(error));
-}
-
 static Value executeMainAsynchronously(Runtime &runtime, std::function<void(void)> operation,
                                        std::function<Value(Runtime &)> result)
 {
-    uint64_t generation = gNativePluginRuntimeGeneration.load();
-    std::string identifier = std::to_string(gNextInvocationIdentifier.fetch_add(1));
-    auto cancelled = std::make_shared<std::atomic_bool>(false);
-    auto gate = std::make_shared<loader::NativeOperationGate>();
-    Object global = runtime.global();
-    Value pendingValue = global.getProperty(runtime, "__NativePluginPendingInvocations");
-    Object pending = pendingValue.isObject() ? pendingValue.asObject(runtime) : Object(runtime);
-    if (!pendingValue.isObject())
-    {
-        global.setProperty(runtime, "__NativePluginPendingInvocations", pending);
-    }
-
-    Function executor = Function::createFromHostFunction(
-        runtime, PropNameID::forUtf8(runtime, "nativeMainExecutor"), 2,
-        [operation = std::move(operation), result = std::move(result), identifier, cancelled, gate,
-         generation](Runtime &rt, const Value &, const Value *callbacks, size_t count) -> Value {
-            if (count < 2 || !callbacks[0].isObject() || !callbacks[1].isObject())
-            {
-                throw JSError(rt, "Native asynchronous operation could not create its promise");
-            }
-            Object pair(rt);
-            pair.setProperty(rt, "resolve", callbacks[0].asObject(rt));
-            pair.setProperty(rt, "reject", callbacks[1].asObject(rt));
-            rt.global().getPropertyAsObject(rt, "__NativePluginPendingInvocations")
-                .setProperty(rt, identifier.c_str(), pair);
-
-            dispatch_async(dispatch_get_main_queue(), ^{
-                @autoreleasepool
-                {
-                    if (cancelled->load() || !gate->start() ||
-                        generation != gNativePluginRuntimeGeneration.load())
-                    {
-                        return;
-                    }
-                    __strong NSString *failure = nil;
-                    @try
-                    {
-                        try
-                        {
-                            operation();
-                        }
-                        catch (const std::exception &exception)
-                        {
-                            failure = [NSString stringWithUTF8String:exception.what()];
-                        }
-                    }
-                    @catch (NSException *exception)
-                    {
-                        failure = exception.reason ?: @"Native operation failed";
-                    }
-                    gate->finish();
-
-                    executeRuntimeAsynchronously(
-                        [identifier, cancelled, generation, result, failure](Runtime &completionRuntime) {
-                            if (generation != gNativePluginRuntimeGeneration.load())
-                            {
-                                return;
-                            }
-                            Object pending = completionRuntime.global().getPropertyAsObject(
-                                completionRuntime, "__NativePluginPendingInvocations");
-                            Value pairValue = pending.getProperty(completionRuntime,
-                                                                   identifier.c_str());
-                            if (!pairValue.isObject())
-                            {
-                                return;
-                            }
-                            Object pair = pairValue.asObject(completionRuntime);
-                            pending.deleteProperty(completionRuntime, identifier.c_str());
-                            if (cancelled->load())
-                            {
-                                return;
-                            }
-                            try
-                            {
-                                if (failure)
-                                {
-                                    throw std::runtime_error(failure.UTF8String ?: "Native operation failed");
-                                }
-                                pair.getPropertyAsFunction(completionRuntime, "resolve")
-                                    .call(completionRuntime, result(completionRuntime));
-                            }
-                            catch (const std::exception &exception)
-                            {
-                                Function errorConstructor = completionRuntime.global()
-                                    .getPropertyAsFunction(completionRuntime, "Error");
-                                Object error = errorConstructor.callAsConstructor(
-                                    completionRuntime,
-                                    String::createFromUtf8(completionRuntime, exception.what()))
-                                                   .asObject(completionRuntime);
-                                error.setProperty(completionRuntime, "code",
-                                                  String::createFromUtf8(completionRuntime,
-                                                                         "NATIVE_BRIDGE_ERROR"));
-                                pair.getPropertyAsFunction(completionRuntime, "reject")
-                                    .call(completionRuntime, std::move(error));
-                            }
-                        });
-                }
-            });
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC),
-                           dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-                if (!gate->expire()) return;
-                cancelled->store(true);
-                executeRuntimeAsynchronously([identifier, generation](Runtime &completionRuntime) {
-                    if (generation != gNativePluginRuntimeGeneration.load()) return;
-                    rejectPendingNativeInvocation(completionRuntime, identifier,
-                                                  "NATIVE_MAIN_THREAD_TIMEOUT",
-                                                  "Native operation timed out before reaching the main thread");
-                });
-            });
-            return Value::undefined();
-        });
-
-    Function constructor = global.getPropertyAsFunction(runtime, "Promise");
-    Object promise = constructor.callAsConstructor(runtime, std::move(executor)).asObject(runtime);
-    Function cancel = Function::createFromHostFunction(
-        runtime, PropNameID::forUtf8(runtime, "cancel"), 0,
-        [identifier, cancelled, gate](Runtime &rt, const Value &, const Value *, size_t) -> Value {
-            gate->expire();
-            if (cancelled->exchange(true))
-            {
-                return Value::undefined();
-            }
-            rejectPendingNativeInvocation(rt, identifier, "NATIVE_PLUGIN_SCOPE_DISPOSED",
-                                          "Native async invocation was cancelled");
-            return Value::undefined();
-        });
-    promise.setProperty(runtime, "cancel", std::move(cancel));
-    return promise;
+    return loader::native::executeMainAsynchronously(runtime, objcGuarded(std::move(operation)),
+                                                     std::move(result));
 }
 
 struct NativeBatchArgument {
@@ -2859,153 +2671,29 @@ static Value findUIViews(Runtime &runtime, const Value *args, size_t count)
         });
 }
 
+struct NativeRetainedObject {
+    __strong id value = nil;
+};
+
 static Value invokeAsync(Runtime &runtime, id target, SEL selector, NSArray *arguments)
 {
-    NSInvocation *invocation = prepareInvocation(target, selector, arguments);
-    uint64_t generation = gNativePluginRuntimeGeneration.load();
-    std::string identifier = std::to_string(gNextInvocationIdentifier.fetch_add(1));
-    auto cancelled = std::make_shared<std::atomic_bool>(false);
-    auto gate = std::make_shared<loader::NativeOperationGate>();
-    Object global = runtime.global();
-    Value pendingValue = global.getProperty(runtime, "__NativePluginPendingInvocations");
-    Object pending = pendingValue.isObject() ? pendingValue.asObject(runtime) : Object(runtime);
-    if (!pendingValue.isObject())
-    {
-        global.setProperty(runtime, "__NativePluginPendingInvocations", pending);
-    }
-
-    Function executor = Function::createFromHostFunction(
-        runtime, PropNameID::forUtf8(runtime, "nativeInvokeExecutor"), 2,
-        [invocation, identifier, cancelled, gate, generation](Runtime &rt, const Value &,
-                                                        const Value *callbacks, size_t count) -> Value {
-            if (count < 2 || !callbacks[0].isObject() || !callbacks[1].isObject())
+    NSInvocation *invocation     = prepareInvocation(target, selector, arguments);
+    auto          retainedResult = std::make_shared<NativeRetainedObject>();
+    return executeMainAsynchronously(
+        runtime,
+        [invocation, retainedResult]() {
+            [invocation invoke];
+            char code = normalizedType(invocation.methodSignature.methodReturnType);
+            if (code == '@' || code == '#')
             {
-                throw JSError(rt, "Native async invocation could not create its promise");
+                __unsafe_unretained id object = nil;
+                [invocation getReturnValue:&object];
+                retainedResult->value = object;
             }
-            Object pair(rt);
-            pair.setProperty(rt, "resolve", callbacks[0].asObject(rt));
-            pair.setProperty(rt, "reject", callbacks[1].asObject(rt));
-            rt.global().getPropertyAsObject(rt, "__NativePluginPendingInvocations")
-                .setProperty(rt, identifier.c_str(), pair);
-
-            dispatch_async(dispatch_get_main_queue(), ^{
-                @autoreleasepool
-                {
-                    if (cancelled->load() || !gate->start() ||
-                        generation != gNativePluginRuntimeGeneration.load())
-                    {
-                        return;
-                    }
-                    __strong id retainedResult = nil;
-                    __strong NSString *failure = nil;
-                    @try
-                    {
-                        [invocation invoke];
-                        char code = normalizedType(invocation.methodSignature.methodReturnType);
-                        if (code == '@' || code == '#')
-                        {
-                            __unsafe_unretained id object = nil;
-                            [invocation getReturnValue:&object];
-                            retainedResult = object;
-                        }
-                    }
-                    @catch (NSException *exception)
-                    {
-                        failure = exception.reason ?: @"Objective-C invocation failed";
-                    }
-                    gate->finish();
-
-                    executeRuntimeAsynchronously(
-                        [invocation, identifier, cancelled, generation, retainedResult,
-                         failure](Runtime &completionRuntime) {
-                            if (generation != gNativePluginRuntimeGeneration.load())
-                            {
-                                return;
-                            }
-                            Object pending = completionRuntime.global().getPropertyAsObject(
-                                completionRuntime, "__NativePluginPendingInvocations");
-                            Value pairValue = pending.getProperty(completionRuntime,
-                                                                   identifier.c_str());
-                            if (!pairValue.isObject())
-                            {
-                                return;
-                            }
-                            Object pair = pairValue.asObject(completionRuntime);
-                            pending.deleteProperty(completionRuntime, identifier.c_str());
-                            if (cancelled->load())
-                            {
-                                return;
-                            }
-                            if (failure)
-                            {
-                                Function errorConstructor = completionRuntime.global()
-                                    .getPropertyAsFunction(completionRuntime, "Error");
-                                Value reason = String::createFromUtf8(completionRuntime,
-                                                                      failure.UTF8String);
-                                Object error = errorConstructor.callAsConstructor(
-                                    completionRuntime, std::move(reason)).asObject(completionRuntime);
-                                error.setProperty(completionRuntime, "code",
-                                                  String::createFromUtf8(completionRuntime,
-                                                                         "NATIVE_BRIDGE_ERROR"));
-                                pair.getPropertyAsFunction(completionRuntime, "reject")
-                                    .call(completionRuntime, std::move(error));
-                                return;
-                            }
-                            try
-                            {
-                                Value result = returnValue(completionRuntime, invocation,
-                                                           invocation.methodSignature);
-                                (void) retainedResult;
-                                pair.getPropertyAsFunction(completionRuntime, "resolve")
-                                    .call(completionRuntime, std::move(result));
-                            }
-                            catch (const std::exception &exception)
-                            {
-                                Function errorConstructor = completionRuntime.global()
-                                    .getPropertyAsFunction(completionRuntime, "Error");
-                                Object error = errorConstructor.callAsConstructor(
-                                    completionRuntime,
-                                    String::createFromUtf8(completionRuntime, exception.what()))
-                                                   .asObject(completionRuntime);
-                                error.setProperty(completionRuntime, "code",
-                                                  String::createFromUtf8(completionRuntime,
-                                                                         "NATIVE_BRIDGE_ERROR"));
-                                pair.getPropertyAsFunction(completionRuntime, "reject")
-                                    .call(completionRuntime, std::move(error));
-                            }
-                        });
-                }
-            });
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC),
-                           dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-                if (!gate->expire()) return;
-                cancelled->store(true);
-                executeRuntimeAsynchronously([identifier, generation](Runtime &completionRuntime) {
-                    if (generation != gNativePluginRuntimeGeneration.load()) return;
-                    rejectPendingNativeInvocation(completionRuntime, identifier,
-                                                  "NATIVE_MAIN_THREAD_TIMEOUT",
-                                                  "Native operation timed out before reaching the main thread");
-                });
-            });
-            return Value::undefined();
+        },
+        [invocation, retainedResult](Runtime &completionRuntime) {
+            return returnValue(completionRuntime, invocation, invocation.methodSignature);
         });
-
-    Function constructor = global.getPropertyAsFunction(runtime, "Promise");
-    Object promise = constructor.callAsConstructor(runtime, std::move(executor)).asObject(runtime);
-    Function cancel = Function::createFromHostFunction(
-        runtime, PropNameID::forUtf8(runtime, "cancel"), 0,
-        [identifier, cancelled, gate](Runtime &rt, const Value &, const Value *, size_t) -> Value {
-            gate->expire();
-            if (cancelled->exchange(true))
-            {
-                return Value::undefined();
-            }
-            rejectPendingNativeInvocation(rt, identifier, "NATIVE_PLUGIN_SCOPE_DISPOSED",
-                                          "Native async invocation was cancelled");
-            return Value::undefined();
-        });
-    promise.setProperty(runtime, "cancel", std::move(cancel));
-    return promise;
 }
 
 struct AsyncSuperCall {
@@ -3828,19 +3516,6 @@ struct HookInvocation {
     std::atomic_bool deferredOriginalRequested{false};
 };
 
-struct RuntimeCallState {
-    explicit RuntimeCallState(std::function<void(Runtime &)> callback)
-        : callback(std::move(callback)), semaphore(dispatch_semaphore_create(0))
-    {
-    }
-
-    std::function<void(Runtime &)> callback;
-    std::exception_ptr failure;
-    dispatch_semaphore_t semaphore;
-    std::atomic_bool cancelled{false};
-    std::atomic_bool completed{false};
-};
-
 static std::shared_ptr<HookInvocation> hookInvocation(const std::shared_ptr<HookDispatcher> &dispatcher,
                                                       void **arguments, void *returnValue)
 {
@@ -4048,98 +3723,12 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
 static bool executeRuntimeSynchronously(std::function<void(Runtime &)> callback)
 {
     NativeOperationSignpost signpost("runtime callback");
-    id instance = gRuntimeExecutorInstance;
-    if (!instance)
-    {
-        return false;
-    }
-
-    Runtime *expectedRuntime = nullptr;
-    std::thread::id expectedThread;
-    {
-        std::lock_guard<std::mutex> lock(gNativePluginRuntimeMutex);
-        expectedRuntime = gNativePluginRuntime;
-        expectedThread = gNativePluginRuntimeThread;
-    }
-    uint64_t generation = gNativePluginRuntimeGeneration.load();
-    if (expectedRuntime && std::this_thread::get_id() == expectedThread)
-    {
-        callback(*expectedRuntime);
-        return true;
-    }
-
-    auto state = std::make_shared<RuntimeCallState>(std::move(callback));
-    [instance callFunctionOnBufferedRuntimeExecutor:[state, expectedRuntime, generation](Runtime &runtime) {
-        @autoreleasepool
-        {
-            if (!state->cancelled.load() && expectedRuntime == &runtime &&
-                generation == gNativePluginRuntimeGeneration.load())
-            {
-                try
-                {
-                    state->callback(runtime);
-                    state->completed.store(true);
-                }
-                catch (...)
-                {
-                    state->failure = std::current_exception();
-                }
-            }
-            dispatch_semaphore_signal(state->semaphore);
-        }
-    }];
-
-    bool mainThread = [NSThread isMainThread];
-    if (mainThread) gMainThreadRuntimeWaits.fetch_add(1);
-    long waitResult = dispatch_semaphore_wait(state->semaphore,
-                                               dispatch_time(DISPATCH_TIME_NOW, 100 * NSEC_PER_MSEC));
-    if (mainThread) gMainThreadRuntimeWaits.fetch_sub(1);
-    if (waitResult != 0)
-    {
-        state->cancelled.store(true);
-        return false;
-    }
-    if (state->failure)
-    {
-        std::rethrow_exception(state->failure);
-    }
-    return state->completed.load();
+    return loader::native::executeRuntimeSynchronously(std::move(callback));
 }
 
 static void executeRuntimeAsynchronously(std::function<void(Runtime &)> callback)
 {
-    id instance = gRuntimeExecutorInstance;
-    if (!instance)
-    {
-        return;
-    }
-
-    Runtime *expectedRuntime = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(gNativePluginRuntimeMutex);
-        expectedRuntime = gNativePluginRuntime;
-    }
-    uint64_t generation = gNativePluginRuntimeGeneration.load();
-    [instance callFunctionOnBufferedRuntimeExecutor:
-        [callback = std::move(callback), expectedRuntime, generation](Runtime &runtime) {
-        @autoreleasepool
-        {
-            if (expectedRuntime != &runtime ||
-                generation != gNativePluginRuntimeGeneration.load())
-            {
-                return;
-            }
-            try
-            {
-                callback(runtime);
-            }
-            catch (const std::exception &exception)
-            {
-                [Logger error:LOG_CATEGORY_PLUGINS
-                        format:@"Native plugin hook failed: %s", exception.what()];
-            }
-        }
-    }];
+    loader::native::executeRuntimeAsynchronously(std::move(callback));
 }
 
 static void invokeHookOriginal(const std::shared_ptr<HookDispatcher> &dispatcher, void **arguments,
@@ -4696,7 +4285,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         std::lock_guard<std::mutex> lock(gHookMutex);
         for (const std::shared_ptr<HookState> &state : dispatcher->hooks)
         {
-            if (state->active && state->runtimeGeneration == gNativePluginRuntimeGeneration.load() &&
+            if (state->active && state->runtimeGeneration == loader::native::runtimeGeneration() &&
                 (!state->instanceTarget || state->instanceTarget == object))
             {
                 hooks.push_back(state);
@@ -5268,7 +4857,7 @@ static void dispatchVoidHook(id object, SEL selector)
             std::lock_guard<std::mutex> lock(gHookMutex);
             for (const std::shared_ptr<HookState> &state : dispatcher->hooks)
             {
-                if (state->active && state->runtimeGeneration == gNativePluginRuntimeGeneration.load() &&
+                if (state->active && state->runtimeGeneration == loader::native::runtimeGeneration() &&
                     (!state->instanceTarget || state->instanceTarget == object))
                 {
                     hooks.push_back(state);
@@ -5562,7 +5151,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     callbacks->replace = std::move(replace);
     auto state = std::make_shared<HookState>();
     state->identifier = gNextHookIdentifier.fetch_add(1);
-    state->runtimeGeneration = gNativePluginRuntimeGeneration.load();
+    state->runtimeGeneration = loader::native::runtimeGeneration();
     state->callbacks = callbacks;
     state->hasBefore = callbacks->before != nullptr;
     state->hasAfter = callbacks->after != nullptr;
@@ -6175,6 +5764,7 @@ namespace loader {
 void setNativePluginRuntimeExecutor(id instance)
 {
     gRuntimeExecutorInstance = instance;
+    loader::native::setExecutor(std::make_shared<IOSNativePluginExecutor>());
 }
 
 void setNativePluginFabricHost(id instance)
@@ -6184,19 +5774,9 @@ void setNativePluginFabricHost(id instance)
 
 void registerNativePluginBridge(Runtime &runtime)
 {
-    bool changed = false;
-    uint64_t generation = gNativePluginRuntimeGeneration.load();
-    {
-        std::lock_guard<std::mutex> lock(gNativePluginRuntimeMutex);
-        if (gNativePluginRuntime != &runtime)
-        {
-            generation = gNativePluginRuntimeGeneration.fetch_add(1) + 1;
-            changed = true;
-        }
-        gNativePluginRuntime = &runtime;
-        gNativePluginRuntimeThread = std::this_thread::get_id();
-    }
-    if (changed)
+    uint64_t previous   = loader::native::runtimeGeneration();
+    uint64_t generation = loader::native::registerRuntime(runtime);
+    if (generation != previous)
     {
         invalidateRuntimeHooks(generation);
         invalidateRuntimeFabricSurfaces(generation);

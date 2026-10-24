@@ -21,6 +21,7 @@ namespace loader::native
     static std::thread::id                       gRuntimeThread;
     static std::atomic_uint64_t                  gGeneration{0};
     static std::atomic_uint64_t                  gNextInvocation{1};
+    static std::atomic_uint                      gMainThreadRuntimeWaits{0};
 
     NativeCodedError::NativeCodedError(std::string code, const std::string &message)
         : std::runtime_error(message), code_(std::move(code))
@@ -65,6 +66,11 @@ namespace loader::native
     {
         std::lock_guard<std::mutex> lock(gStateMutex);
         return gRuntime && std::this_thread::get_id() == gRuntimeThread;
+    }
+
+    bool mainThreadIsWaitingForRuntime()
+    {
+        return gMainThreadRuntimeWaits.load() > 0;
     }
 
     static jsi::Runtime *currentRuntime()
@@ -153,6 +159,11 @@ namespace loader::native
         {
             operation();
             return;
+        }
+        if (mainThreadIsWaitingForRuntime())
+        {
+            throw NativeCodedError("NATIVE_WRONG_THREAD",
+                                   "Native operation cannot synchronously cross to a waiting main thread");
         }
 
         struct State
@@ -444,8 +455,18 @@ namespace loader::native
             state->done.notify_all();
         });
 
+        bool mainThread = target->isMainThread();
+        if (mainThread)
+        {
+            gMainThreadRuntimeWaits.fetch_add(1);
+        }
         std::unique_lock<std::mutex> lock(state->mutex);
-        if (!state->done.wait_for(lock, timeout, [&] { return state->signaled; }))
+        bool signaled = state->done.wait_for(lock, timeout, [&] { return state->signaled; });
+        if (mainThread)
+        {
+            gMainThreadRuntimeWaits.fetch_sub(1);
+        }
+        if (!signaled)
         {
             state->cancelled.store(true);
             return false;

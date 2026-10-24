@@ -38,6 +38,7 @@ namespace loader::native
     uint64_t registerRuntime(facebook::jsi::Runtime &runtime);
     uint64_t runtimeGeneration();
     bool isRuntimeThread();
+    bool mainThreadIsWaitingForRuntime();
 
     facebook::jsi::Function makeFunction(facebook::jsi::Runtime &runtime, const char *name,
                                          unsigned int argumentCount,
