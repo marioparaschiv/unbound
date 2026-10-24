@@ -68,6 +68,11 @@ int main()
     assert(script.find("origin: \"libunbound.so\"") != std::string::npos);
     assert(script.find("a.good") != std::string::npos);
 
+    payload.themes = R"([{"manifest":{"id":"t"},"bundle":{"semantic":{}}},{"manifest":{"id":"s"},"bundle":"{}"}])";
+    script         = loader::buildPreloadScript(payload);
+    assert(script.find(R"("bundle":"{\"semantic\":{}}")") != std::string::npos);
+    assert(script.find(R"("bundle":"{}")") != std::string::npos);
+
     std::filesystem::remove_all(root);
     return 0;
 }
