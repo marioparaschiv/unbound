@@ -271,6 +271,8 @@ export function colorMessageMentions(objc: NativeObjCBridge): () => Promise<void
 
 			void paintCell(cell)
 				.catch((error) => {
+					if (stopped) return;
+
 					console.error(`[${PLUGIN_NAME}] Failed to paint native mentions:`, error);
 				})
 				.finally(() => {
