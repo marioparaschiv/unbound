@@ -32,7 +32,7 @@ function AddonOverflow({ addon, kind }: AddonOverflowProps) {
 			{
 				label: format('UNBOUND_DELETE'),
 				variant: 'destructive',
-				action: () => manager.delete(addon.id),
+				action: () => void manager.delete(addon.id),
 			},
 		],
 		[manager, addon.id],
