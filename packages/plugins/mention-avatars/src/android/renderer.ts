@@ -23,6 +23,11 @@ import {
 	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
 
+import {
+	connectTextRewrites,
+	type TextRewriteEdit,
+} from '@unbound-plugins/shared/native/android/text-rewrites';
+
 import { planPlacements, type Placement, type SpanRange } from '~/android/placements';
 import type { MentionIndex } from '~/mention-index';
 import type { Mention } from '~/mentions';
@@ -72,6 +77,10 @@ export function createAndroidRenderer(
 	const pending = new Set<string>();
 	let imageSize = 0;
 	let disposed = false;
+	const rewrites = connectTextRewrites(java, TEXT_VIEW);
+	const rules = new Set<string>();
+	const renderedTexts = new Set<string>();
+	const registered = new Set<string>();
 
 	function sizeFor(view: NativeJavaReference, resources: NativeJavaReference): number {
 		if (imageSize > 0) return imageSize;
@@ -180,10 +189,50 @@ export function createAndroidRenderer(
 		}
 	}
 
+	function rewriteNatively(
+		view: NativeJavaReference,
+		original: string,
+		ready: { placement: Placement; bitmap: NativeJavaReference }[],
+	) {
+		const active = rewrites!;
+		let rendered = original;
+		const edits: TextRewriteEdit[] = [];
+
+		for (const { placement, bitmap } of ready) {
+			const key = placement.mention.avatarURL!;
+
+			if (!registered.has(key) || !active.hasImage(key)) {
+				active.putImage(key, bitmap);
+				registered.add(key);
+			}
+
+			rendered =
+				rendered.slice(0, placement.replaceStart) +
+				placement.insertion +
+				rendered.slice(placement.replaceEnd);
+			edits.push({
+				start: placement.replaceStart,
+				end: placement.replaceEnd,
+				text: placement.insertion,
+				imageKey: key,
+				imageOffset: placement.imageOffset,
+				imageSize,
+				stretchFrom: placement.range.start,
+				stretchTo: placement.range.end,
+				stretchClasses: [TAPPABLE_SPAN, BACKGROUND_SPAN],
+			});
+		}
+
+		active.put(original, rendered, edits);
+		rules.add(original);
+		renderedTexts.add(rendered);
+		active.reapply(view);
+	}
+
 	function render(view: NativeJavaReference) {
 		const content = readViewText(java, view);
 
-		if (!content?.string.includes('@')) return;
+		if (!content?.string.includes('@') || renderedTexts.has(content.string)) return;
 
 		const { text, string } = content;
 
@@ -211,6 +260,12 @@ export function createAndroidRenderer(
 			);
 
 		if (!ready.length) return;
+
+		if (rewrites) {
+			rewriteNatively(view, string, ready);
+
+			return;
+		}
 
 		const builder = java.construct('android.text.SpannableStringBuilder', [text]);
 
@@ -274,6 +329,13 @@ export function createAndroidRenderer(
 
 			disposed = true;
 			hooks.remove(token);
+
+			for (const original of rules) rewrites?.remove(original);
+
+			if (rules.size) rewrites?.refreshAll();
+
+			rules.clear();
+			renderedTexts.clear();
 			views.clear();
 			images.clear();
 		},
