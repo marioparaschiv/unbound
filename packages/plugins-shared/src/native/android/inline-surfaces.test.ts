@@ -125,7 +125,7 @@ describe('createInlineSurfaces', () => {
 		const { state, surfaces } = setup();
 
 		surfaces!.define(definition);
-		surfaces!.define({ ...definition, slots: [{ ...definition.slots[0]!, height: 40 }] });
+		surfaces!.define({ ...definition, slots: [{ ...definition.slots[0], height: 40 }] });
 
 		expect(methods(state).filter((method) => method === 'updateAnchor')).toHaveLength(2);
 		expect(methods(state)).toContain('refresh');
