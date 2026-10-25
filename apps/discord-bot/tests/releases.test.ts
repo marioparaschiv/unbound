@@ -13,7 +13,7 @@ import {
 	DATABASE_URL,
 	type TestDatabase,
 } from './helpers/database';
-import { createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
+import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord';
 import { RELEASE } from './helpers/feeds';
 
 const TARGET: ReleaseTarget = { channelId: '21', roleId: '31' };
@@ -112,6 +112,18 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		await reconcile();
 		expect(posts()).toHaveLength(1);
 		expect(discord.messages('21')).toHaveLength(0);
+	});
+
+	test('a release with a very long changelog posts within the embed size cap', async () => {
+		const long = { ...RELEASE, changelog: 'c'.repeat(10_000) };
+
+		await ingest(long);
+		await handle(long);
+
+		const [embed] = discord.messages('21')[0]?.embeds ?? [];
+
+		expect(embed).toBeDefined();
+		expect(embedLength(embed ?? {})).toBeLessThanOrEqual(6000);
 	});
 
 	test('reconcile announces every unannounced release in publish order', async () => {

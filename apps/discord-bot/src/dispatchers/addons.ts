@@ -30,9 +30,9 @@ export const ADDON_CHANNELS: AddonChannels = {
 };
 
 const PAGE_LIMIT = 100;
-// Discord rejects a longer value, which would fail the post on every retry.
+// Discord rejects a longer value or an embed over 6000 characters in all, failing every retry.
 const TITLE_LIMIT = 256;
-const DESCRIPTION_LIMIT = 4096;
+const DESCRIPTION_LIMIT = 2048;
 const FIELD_LIMIT = 1024;
 
 function truncate(text: string, max: number) {

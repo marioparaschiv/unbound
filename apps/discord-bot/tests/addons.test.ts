@@ -13,7 +13,7 @@ import {
 	DATABASE_URL,
 	type TestDatabase,
 } from './helpers/database';
-import { createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
+import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord';
 import { ADDON } from './helpers/feeds';
 
 const CHANNELS: AddonChannels = { plugin: '11', theme: '12', 'icon-pack': '13' };
@@ -149,6 +149,24 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 			expect(await rowOf(item.id)).toMatchObject({ channelId, messageId: message?.id });
 		}
+	});
+
+	test('an addon with every text at its longest still posts within the embed size cap', async () => {
+		const long = {
+			...PLUGIN,
+			name: 'n'.repeat(300),
+			description: 'd'.repeat(10_000),
+			version: 'v'.repeat(2000),
+			authors: [{ name: 'a'.repeat(2000), discordId: '1' }],
+		};
+
+		await ingest(long);
+		await sync(long.id);
+
+		const [embed] = messagesOf(long)[0]?.embeds ?? [];
+
+		expect(embed).toBeDefined();
+		expect(embedLength(embed ?? {})).toBeLessThanOrEqual(6000);
 	});
 
 	test('a content change edits the message in place and advances posted_hash', async () => {

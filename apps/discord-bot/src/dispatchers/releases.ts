@@ -33,8 +33,8 @@ const PLATFORM_NAMES: Record<LoaderPlatform, string> = { ios: 'iOS', android: 'A
 const PAGE_LIMIT = 100;
 // An older release is never announced, or a first deploy would ping the role once per historic release.
 const RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-// Discord rejects a longer description, which would fail the post on every retry.
-const DESCRIPTION_LIMIT = 4096;
+// Discord rejects an embed over 6000 characters in all, which would fail the post on every retry.
+const CHANGELOG_LIMIT = 4000;
 
 function truncate(text: string, max: number) {
 	return text.length > max ? `${text.slice(0, max - 1)}…` : text;
@@ -90,7 +90,7 @@ export function renderRelease(
 				title: releaseTitle(release),
 				url: release.url,
 				description: release.changelog
-					? truncate(release.changelog, DESCRIPTION_LIMIT)
+					? truncate(release.changelog, CHANGELOG_LIMIT)
 					: undefined,
 				color: COLOURS.brand,
 				timestamp: release.publishedAt.toISOString(),
