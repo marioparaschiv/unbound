@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"runtime"
 	"strings"
@@ -639,5 +641,211 @@ func TestCompatScanCoversEveryDiscordChannel(t *testing.T) {
 	}
 	if strings.Contains(contents, "% 1000") {
 		t.Fatal("the compat workflow must not derive Android version names from the code by hand")
+	}
+}
+
+type obtainiumTestConfig struct {
+	ID       string
+	URL      string
+	Name     string
+	Settings struct {
+		APKFilterRegEx             string `json:"apkFilterRegEx"`
+		FilterReleaseTitlesByRegEx string `json:"filterReleaseTitlesByRegEx"`
+		IncludePrereleases         bool   `json:"includePrereleases"`
+		FallbackToOlderReleases    bool   `json:"fallbackToOlderReleases"`
+		SortMethodChoice           string `json:"sortMethodChoice"`
+	}
+	raw []byte
+}
+
+func readObtainiumConfig(t *testing.T, name string) obtainiumTestConfig {
+	t.Helper()
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	raw, err := os.ReadFile(filepath.Join(filepath.Dir(filepath.Dir(filename)), name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var file struct {
+		ID                 string `json:"id"`
+		URL                string `json:"url"`
+		Name               string `json:"name"`
+		AdditionalSettings string `json:"additionalSettings"`
+	}
+	if err := json.Unmarshal(raw, &file); err != nil {
+		t.Fatal(err)
+	}
+	config := obtainiumTestConfig{ID: file.ID, URL: file.URL, Name: file.Name, raw: raw}
+	if err := json.Unmarshal([]byte(file.AdditionalSettings), &config.Settings); err != nil {
+		t.Fatal(err)
+	}
+	return config
+}
+
+func TestObtainiumConfigsTrackOneDiscordChannelEach(t *testing.T) {
+	releases := map[string]string{
+		"stable": "loader-v350.8",
+		"beta":   "loader-v351.12-android-beta",
+		"alpha":  "loader-v352.8-android-alpha",
+	}
+	others := []string{"loader-v351.0_118370", "loader-latest", "Unbound loader (latest)", "v0.9.0"}
+	assets := map[string]string{"stable": "Unbound.apks", "beta": "Unbound-beta.apks", "alpha": "Unbound-alpha.apks"}
+	for channel := range releases {
+		config := readObtainiumConfig(t, "obtainium-"+channel+".json")
+		if config.ID != "com.discord" || config.URL != "https://github.com/marioparaschiv/unbound" {
+			t.Fatalf("the %s Obtainium config targets an unexpected app: %+v", channel, config)
+		}
+		if !config.Settings.FallbackToOlderReleases || config.Settings.SortMethodChoice != "date" {
+			t.Fatalf("the %s Obtainium config must look past newer releases of other channels: %+v", channel, config.Settings)
+		}
+		if config.Settings.IncludePrereleases != (channel != "stable") {
+			t.Fatalf("the %s Obtainium config includes prereleases=%t", channel, config.Settings.IncludePrereleases)
+		}
+		titles := regexp.MustCompile(config.Settings.FilterReleaseTitlesByRegEx)
+		apks := regexp.MustCompile(config.Settings.APKFilterRegEx)
+		for other, release := range releases {
+			if titles.MatchString(release) != (other == channel) {
+				t.Fatalf("the %s Obtainium release filter matched %q=%t", channel, release, other == channel)
+			}
+			if apks.MatchString(assets[other]) != (other == channel) {
+				t.Fatalf("the %s Obtainium APK filter matched %q=%t", channel, assets[other], other == channel)
+			}
+		}
+		for _, release := range others {
+			if titles.MatchString(release) {
+				t.Fatalf("the %s Obtainium release filter matched %q", channel, release)
+			}
+		}
+		if apks.MatchString("app.unbound.android.lsposed.apk") {
+			t.Fatalf("the %s Obtainium config would install the LSPosed module", channel)
+		}
+	}
+	module := readObtainiumConfig(t, "obtainium.json")
+	if !module.Settings.FallbackToOlderReleases || module.Settings.IncludePrereleases {
+		t.Fatalf("the module config must skip the rolling and prerelease releases: %+v", module.Settings)
+	}
+}
+
+func TestObtainiumLinksMatchTheirConfigs(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	root := filepath.Dir(filepath.Dir(filename))
+	link := regexp.MustCompile(`obtainium://app/([^)\s"']+)`)
+	for _, document := range []string{filepath.Join(root, "README.md"), filepath.Join(root, "..", "..", "docs", "user-guide", "installing.mdx")} {
+		contents, err := os.ReadFile(document)
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := map[string]bool{}
+		for _, match := range link.FindAllStringSubmatch(string(contents), -1) {
+			decoded, err := url.PathUnescape(match[1])
+			if err != nil {
+				t.Fatalf("%s has an undecodable Obtainium link: %v", document, err)
+			}
+			var linked map[string]any
+			if err := json.Unmarshal([]byte(decoded), &linked); err != nil {
+				t.Fatalf("%s links Obtainium to invalid JSON %q", document, decoded)
+			}
+			matched := ""
+			for _, name := range []string{"obtainium.json", "obtainium-stable.json", "obtainium-beta.json", "obtainium-alpha.json"} {
+				var config map[string]any
+				if err := json.Unmarshal(readObtainiumConfig(t, name).raw, &config); err != nil {
+					t.Fatal(err)
+				}
+				if reflect.DeepEqual(config, linked) {
+					matched = name
+				}
+			}
+			if matched == "" {
+				t.Fatalf("%s has an Obtainium link that matches no config: %s", document, decoded)
+			}
+			found[matched] = true
+		}
+		if len(found) != 4 {
+			t.Fatalf("%s links %d of the 4 Obtainium configs", document, len(found))
+		}
+	}
+}
+
+func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	workflows := filepath.Join(filepath.Dir(filepath.Dir(filename)), "..", "..", ".github", "workflows")
+	read := func(name string) string {
+		contents, err := os.ReadFile(filepath.Join(workflows, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(contents)
+	}
+	poll := read("loader-release-poll.yml")
+	for _, required := range []string{
+		"go run ./tools release-candidate --channel android-beta",
+		"go run ./tools release-candidate --channel android-alpha",
+		"android_code: ${{ steps.candidate.outputs.android_code }}",
+		"needs: [android-beta-candidate, testflight-release]",
+		"needs: [android-alpha-candidate, android-beta-release]",
+		"if: always() && needs.android-beta-candidate.outputs.version != ''",
+		"if: always() && needs.android-alpha-candidate.outputs.version != ''",
+		"android_channel: beta",
+		"android_channel: alpha",
+		"android_code: ${{ needs.android-beta-candidate.outputs.android_code }}",
+		"android_code: ${{ needs.android-alpha-candidate.outputs.android_code }}",
+	} {
+		if !strings.Contains(poll, required) {
+			t.Fatalf("scheduled release polling is missing %q", required)
+		}
+	}
+	build := read("loader-build.yml")
+	for _, required := range []string{
+		"      android_channel:\n",
+		"      android_code:\n",
+		"beta|alpha) ;;",
+		`release=$(go run ./tools discord-apk "${apk_args[@]}")`,
+		"android_code: ${{ steps.resolve.outputs.code }}",
+		"discord_channel: ${{ inputs.android_channel || 'stable' }}",
+		"android_code: ${{ needs.resolve-source.outputs.android_code }}",
+		"if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true",
+		"if: always() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true",
+		"if: always() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'",
+		"name: Publish Android prerelease",
+	} {
+		if !strings.Contains(build, required) {
+			t.Fatalf("the build coordinator is missing Android channel detail %q", required)
+		}
+	}
+	prereleaseStart := strings.Index(build, "  android-prerelease:\n")
+	appRepoStart := strings.Index(build, "  publish-app-repo:\n")
+	if prereleaseStart < 0 || appRepoStart <= prereleaseStart {
+		t.Fatal("the Android prerelease job could not be located")
+	}
+	prerelease := build[prereleaseStart:appRepoStart]
+	for _, required := range []string{"tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}", "prerelease: true", "make_latest: false", "needs.android.outputs.patched_filename", "needs.android.outputs.module_filename"} {
+		if !strings.Contains(prerelease, required) {
+			t.Fatalf("the Android prerelease is missing %q", required)
+		}
+	}
+	for _, forbidden := range []string{"loader-latest", "publish-loader-releases", "needs.ios.outputs"} {
+		if strings.Contains(prerelease, forbidden) {
+			t.Fatalf("an Android prerelease must not touch %q", forbidden)
+		}
+	}
+	android := read("loader-android.yml")
+	for _, required := range []string{
+		"options: [stable, beta, alpha]",
+		"DISCORD_CHANNEL: ${{ inputs.discord_channel || 'stable' }}",
+		"ANDROID_CODE: ${{ inputs.android_code }}",
+		`env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$version" --output-dir discord "${split_args[@]}"`,
+		`if [ "$DISCORD_CHANNEL" != stable ]; then name="Unbound-$DISCORD_CHANNEL.apks"; fi`,
+	} {
+		if !strings.Contains(android, required) {
+			t.Fatalf("the Android workflow is missing channel detail %q", required)
+		}
 	}
 }

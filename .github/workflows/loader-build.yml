@@ -3,7 +3,7 @@ run-name: >-
   ${{
     inputs.only_app_repo == true && 'app-repo deploy' ||
     inputs.only_apt_repo == true && 'apt-repo deploy' ||
-    format('{0} for {1}', (inputs.release == true && 'Release' || 'Build'), (inputs.version != '' && inputs.version || inputs.ipa_url != '' && inputs.ipa_url || 'latest stable'))
+    format('{0} for {1}', (inputs.release == true && 'Release' || 'Build'), (inputs.version != '' && inputs.version || inputs.ipa_url != '' && inputs.ipa_url || inputs.android_channel != '' && format('latest Android {0}', inputs.android_channel) || 'latest stable'))
   }}
 
 on:
@@ -31,6 +31,16 @@ on:
         default: false
         description: "Mark the selected iOS build as a TestFlight release"
         type: boolean
+      android_channel:
+        default: ""
+        description: "Build only Android against Discord's beta or alpha channel and publish it as a prerelease"
+        required: false
+        type: string
+      android_code:
+        default: ""
+        description: "Exact Discord Android version code for an Android channel build; leave empty for the channel's latest"
+        required: false
+        type: string
       authenticated_source:
         default: false
         description: "Authenticate direct IPA source downloads with the dkrypt API key"
@@ -65,6 +75,12 @@ on:
       is_testflight:
         default: false
         type: boolean
+      android_channel:
+        default: ""
+        type: string
+      android_code:
+        default: ""
+        type: string
       authenticated_source:
         default: false
         type: boolean
@@ -125,6 +141,7 @@ jobs:
       version: ${{ steps.resolve.outputs.version }}
       release_version: ${{ steps.resolve.outputs.release_version }}
       is_testflight: ${{ steps.resolve.outputs.is_testflight }}
+      android_code: ${{ steps.resolve.outputs.code }}
     steps:
       - name: Checkout resolver
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -156,8 +173,31 @@ jobs:
           INPUT_AUTHENTICATED_SOURCE: ${{ inputs.authenticated_source }}
           INPUT_DKRYPT_BASE_URL: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
           INPUT_ANDROID_TRACKER: https://tracker.vendetta.rocks/tracker
+          INPUT_ANDROID_CHANNEL: ${{ inputs.android_channel }}
+          INPUT_ANDROID_CODE: ${{ inputs.android_code }}
+          DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
         run: |
           set -euo pipefail
+          if [ -n "$INPUT_ANDROID_CHANNEL" ]; then
+            case "$INPUT_ANDROID_CHANNEL" in
+              beta|alpha) ;;
+              *) echo "::error::Android channel builds are beta or alpha, not $INPUT_ANDROID_CHANNEL"; exit 1 ;;
+            esac
+            if [ "$INPUT_IS_TESTFLIGHT" = true ]; then
+              echo "::error::An Android channel build cannot also be a TestFlight build"
+              exit 1
+            fi
+            apk_args=(--channel "$INPUT_ANDROID_CHANNEL" --android-tracker "$INPUT_ANDROID_TRACKER")
+            if [ -n "$INPUT_ANDROID_CODE" ]; then apk_args+=(--code "$INPUT_ANDROID_CODE"); fi
+            release=$(go run ./tools discord-apk "${apk_args[@]}")
+            release_version=$(jq -r '.releaseVersion' <<< "$release")
+            if [ -n "$INPUT_VERSION" ] && [ "$INPUT_VERSION" != "$release_version" ]; then
+              echo "::error::Android version code $(jq -r '.code' <<< "$release") is $release_version, not the requested $INPUT_VERSION"
+              exit 1
+            fi
+            echo "is_testflight=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           requested_version="$INPUT_VERSION"
           if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ] && [ -z "$requested_version" ] && [ -z "$INPUT_IPA_URL" ]; then
             android_code=$(curl -fsSL "$INPUT_ANDROID_TRACKER/index" | jq -er '.latest.stable | tonumber')
@@ -209,11 +249,13 @@ jobs:
       ios_version: ${{ needs.resolve-source.outputs.version }}
       require_matching_version: ${{ inputs.release == true && inputs.is_testflight != true }}
       release: ${{ inputs.release || false }}
+      discord_channel: ${{ inputs.android_channel || 'stable' }}
+      android_code: ${{ needs.resolve-source.outputs.android_code }}
     secrets: inherit
 
   ios:
     needs: resolve-source
-    if: always() && (inputs.only_app_repo == true || inputs.only_apt_repo == true || needs.resolve-source.result == 'success')
+    if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || needs.resolve-source.result == 'success')
     permissions:
       contents: write
       id-token: write
@@ -233,7 +275,7 @@ jobs:
     secrets: inherit
 
   release:
-    if: always() && inputs.release == true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
+    if: always() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
     needs: [resolve-source, ios, android]
     runs-on: ubuntu-26.04
     permissions:
@@ -360,6 +402,38 @@ jobs:
             --ios-url "$release_url/$IOS_DEB_FILENAME" \
             --android-url "$release_url/$ANDROID_MODULE_FILENAME" \
             --changelog-file release-assets/loader-changelog.md
+
+  android-prerelease:
+    if: always() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'
+    needs: [resolve-source, android]
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download Android LSPosed module
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: android module
+          path: packages/loader/release-assets
+
+      - name: Download patched Android Discord package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: patched discord
+          path: packages/loader/release-assets
+
+      - name: Publish Android prerelease
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+        with:
+          tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}
+          files: |
+            packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
+            packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
+          generate_release_notes: true
+          prerelease: true
+          make_latest: false
+          fail_on_unmatched_files: true
+          token: ${{ github.token }}
 
   publish-app-repo:
     if: always() && inputs.release == true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
