@@ -13,7 +13,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.net.Uri
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.text.InputType
@@ -275,20 +274,11 @@ object Toolbox {
 
     private fun openIssue(activity: Activity, item: JSONObject) {
         val discord = runCatching { activity.packageManager.getPackageInfo(activity.packageName, 0) }.getOrNull()
-        val unbound = runCatching { activity.packageManager.getPackageInfo("app.unbound.android", 0) }.getOrNull()
-        val facts = JSONObject()
-            .put("device", "${Build.MANUFACTURER} ${Build.MODEL}")
-            .put("osVersion", "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
-            .put("discordVersion", "${discord?.versionName} (${discord?.longVersionCode})")
-            .put("unboundVersion", unbound?.versionName ?: "")
-            .put("virtualDevice", Platform.isEmulator())
-        val url = NativeBridge.nativeToolbox(
-            "issue-url",
-            JSONObject().put("facts", facts).toString(),
-        ) ?: return
+        val version = discord?.let { "${it.versionName} (${it.longVersionCode})" }.orEmpty()
 
         runCatching {
-            activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            val url = NativeBridge.nativeToolbox("issue-url", version)
+            activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(requireNotNull(url))))
         }.onFailure {
             Toast.makeText(activity, item.optString("failure"), Toast.LENGTH_LONG).show()
         }

@@ -44,8 +44,34 @@ namespace unbound::android
     {
     }
 
+    static std::shared_ptr<loader::NativePlatformProvider> platformProvider(const LoaderConfiguration &configuration)
+    {
+        const nlohmann::json info = configuration.platformInfo;
+        auto                 text = [info](const char *key) {
+            return [info, key]() { return info.value(key, std::string()); };
+        };
+        auto flag = [info](const char *key) { return [info, key]() { return info.value(key, false); }; };
+
+        auto provider               = std::make_shared<loader::NativePlatformProvider>();
+        provider->platform          = "android";
+        provider->deviceModel       = text("deviceModel");
+        provider->osVersion         = text("osVersion");
+        provider->isRooted          = flag("isRooted");
+        provider->isSystemApp       = flag("isSystemApp");
+        provider->appSource         = text("appSource");
+        provider->isVirtualDevice   = flag("isVirtualDevice");
+        provider->virtualDeviceHost = [info]() -> std::optional<std::string> {
+            const auto host = info.find("virtualDeviceHost");
+            return host != info.end() && host->is_string() ? std::optional<std::string>(host->get<std::string>())
+                                                           : std::nullopt;
+        };
+        provider->documents = configuration.documents;
+        return provider;
+    }
+
     void AndroidLoader::start()
     {
+        loader::setNativePlatformProvider(platformProvider(configuration_));
         loader::createDirectories(configuration_.documents);
         settings_.load();
 
@@ -294,8 +320,7 @@ namespace unbound::android
 
     loader::PreloadPayload AndroidLoader::preloadPayload()
     {
-        return loader::makePreloadPayload(settings_, addons_, availableFonts(), configuration_.origin,
-                                          UNBOUND_VERSION);
+        return loader::makePreloadPayload(settings_, addons_, availableFonts(), configuration_.origin);
     }
 
     void AndroidLoader::installNativeModules(jsi::Runtime &runtime)
@@ -303,27 +328,7 @@ namespace unbound::android
         loader::native::setExecutor(std::static_pointer_cast<loader::native::NativePluginExecutor>(
             shared_from_this()));
         loader::native::registerRuntime(runtime);
-        const nlohmann::json info = configuration_.platformInfo;
-        auto                 text = [info](const char *key) {
-            return [info, key]() { return info.value(key, std::string()); };
-        };
-        auto flag = [info](const char *key) { return [info, key]() { return info.value(key, false); }; };
-
-        auto provider                 = std::make_shared<loader::NativePlatformProvider>();
-        provider->platform            = "android";
-        provider->deviceModel         = text("deviceModel");
-        provider->osVersion           = text("osVersion");
-        provider->isRooted            = flag("isRooted");
-        provider->isSystemApp         = flag("isSystemApp");
-        provider->appSource           = text("appSource");
-        provider->isVirtualDevice     = flag("isVirtualDevice");
-        provider->virtualDeviceHost   = [info]() -> std::optional<std::string> {
-            const auto host = info.find("virtualDeviceHost");
-            return host != info.end() && host->is_string() ? std::optional<std::string>(host->get<std::string>())
-                                                           : std::nullopt;
-        };
-        provider->documents           = configuration_.documents;
-        loader::installNativePlatform(runtime, provider);
+        loader::installNativePlatform(runtime, loader::currentNativePlatformProvider());
         registerNativePluginBridge(runtime, callbacks_);
     }
 

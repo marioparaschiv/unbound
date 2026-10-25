@@ -550,32 +550,9 @@ static NSString *iconForMenuItem(NSString *identifier)
     NSString *appVersion =
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
     NSString *buildNumber = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
-
-    NSDictionary *facts = @{
-        @"device" : [Utilities getDeviceModel] ?: @"",
-        @"osVersion" : [Utilities getiOSVersionString] ?: @"",
-        @"discordVersion" : [NSString stringWithFormat:@"%@ (%@)", appVersion, buildNumber],
-        @"unboundVersion" : PACKAGE_VERSION,
-        @"appSource" : [Utilities getAppSource] ?: @"",
-        @"registration" : [Utilities isSystemApp] ? @"System" : @"User",
-        @"virtualDevice" : @([Utilities isVPhone]),
-    };
-
-    NSMutableArray<NSArray<NSString *> *> *attachments  = [NSMutableArray array];
-    NSDictionary                          *entitlements = [Utilities getApplicationEntitlements];
-    if (entitlements && entitlements.count > 0)
-    {
-        NSString *plist = [Utilities formatEntitlementsAsPlist:entitlements];
-        [attachments addObject:@[ @"Entitlements", plist ]];
-    }
-
-    NSData   *request   = [NSJSONSerialization dataWithJSONObject:@{@"facts" : facts, @"attachments" : attachments}
-                                                         options:0
-                                                           error:nil];
-    NSString *urlString = [CoreBridge toolbox:@"issue-url"
-                                     argument:[[NSString alloc] initWithData:request ?: [NSData data]
-                                                                    encoding:NSUTF8StringEncoding] ?: @"{}"];
-    NSURL    *url       = [NSURL URLWithString:urlString];
+    NSString *discordVersion =
+        appVersion ? [NSString stringWithFormat:@"%@ (%@)", appVersion, buildNumber ?: @""] : @"";
+    NSURL *url = [NSURL URLWithString:[CoreBridge toolbox:@"issue-url" argument:discordVersion]];
 
     if (!url)
     {

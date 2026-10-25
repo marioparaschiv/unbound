@@ -8,6 +8,7 @@
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
+#include "LoaderVersion.h"
 
 namespace loader::toolbox
 {
@@ -378,35 +379,37 @@ namespace loader::toolbox
                 {"sections", std::move(sections)}};
     }
 
-    static std::string text(const nlohmann::json &object, const char *key)
+    static std::string provided(const std::function<std::string()> &value)
     {
-        const auto value = object.find(key);
-        return value != object.end() && value->is_string() ? value->get<std::string>() : std::string();
+        return value ? value() : std::string();
     }
 
-    static IssueReport issueReportFrom(const std::string &platform, const std::string &argument)
+    IssueFacts issueFacts(const NativePlatformProvider &provider, const std::string &platform,
+                          const std::string &discordVersion)
     {
-        const nlohmann::json input = nlohmann::json::parse(argument, nullptr, false);
-        const nlohmann::json facts =
-            input.is_object() && input.contains("facts") && input["facts"].is_object() ? input["facts"]
-                                                                                       : nlohmann::json::object();
-        IssueReport report{platform,
-                           issueEnvironment({platform, text(facts, "device"), text(facts, "osVersion"),
-                                             text(facts, "discordVersion"), text(facts, "unboundVersion"),
-                                             text(facts, "appSource"), text(facts, "registration"),
-                                             facts.value("virtualDevice", false)}),
-                           {}};
-
-        const auto attachments = input.is_object() ? input.find("attachments") : input.end();
-        if (input.is_object() && attachments != input.end() && attachments->is_array())
+        IssueFacts facts{platform,
+                         provided(provider.deviceModel),
+                         provided(provider.osVersion),
+                         discordVersion,
+                         loaderVersion(),
+                         provided(provider.appSource),
+                         "",
+                         provider.isVirtualDevice && provider.isVirtualDevice()};
+        if (provider.isSystemApp)
         {
-            for (const auto &entry : *attachments)
-            {
-                if (entry.is_array() && entry.size() == 2 && entry[0].is_string() && entry[1].is_string())
-                {
-                    report.attachments.emplace_back(entry[0].get<std::string>(), entry[1].get<std::string>());
-                }
-            }
+            facts.registration = provider.isSystemApp() ? "System" : "User";
+        }
+        return facts;
+    }
+
+    IssueReport issueReport(const NativePlatformProvider &provider, const std::string &platform,
+                            const std::string &discordVersion)
+    {
+        IssueReport       report{platform, issueEnvironment(issueFacts(provider, platform, discordVersion)), {}};
+        const std::string entitlements = provided(provider.entitlementsAsPlist);
+        if (!entitlements.empty())
+        {
+            report.attachments.emplace_back("Entitlements", entitlements);
         }
         return report;
     }
@@ -450,7 +453,8 @@ namespace loader::toolbox
         }
         if (action == "issue-url")
         {
-            return issueURL(issueReportFrom(context.platform, argument));
+            const auto provider = currentNativePlatformProvider();
+            return issueURL(issueReport(provider ? *provider : NativePlatformProvider{}, context.platform, argument));
         }
         if (action == "menu")
         {

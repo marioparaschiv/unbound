@@ -162,7 +162,7 @@ public:
             availableFonts.push_back(toStdString(family));
         }
         return loader::makePreloadPayload(UnboundSettingsStore(), UnboundAddonState(), availableFonts,
-                                          toStdString([Utilities getCurrentDylibName]), toStdString(PACKAGE_VERSION));
+                                          toStdString([Utilities getCurrentDylibName]));
     }
 
     void installNativeModules(jsi::Runtime &runtime) override
@@ -345,6 +345,7 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
     [CoreBridge installLogging];
     [FileSystem init];
     [Settings init];
+    loader::registerNativePlatformProvider();
 
     if (![Utilities isRNNewArchEnabled])
     {

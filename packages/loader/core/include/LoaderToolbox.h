@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "LoaderPreferences.h"
+#include "NativePlatformBridge.h"
 #include "LoaderSettings.h"
 #include "LoaderUpdater.h"
 
@@ -121,6 +122,10 @@ namespace loader::toolbox
     MenuOptions              menuOptions(const std::string &json);
     nlohmann::json           menuJSON(const SettingsStore &settings, const MenuOptions &options);
     std::string perform(ToolboxContext &context, const std::string &action, const std::string &argument);
+    IssueFacts  issueFacts(const NativePlatformProvider &provider, const std::string &platform,
+                           const std::string &discordVersion);
+    IssueReport issueReport(const NativePlatformProvider &provider, const std::string &platform,
+                            const std::string &discordVersion);
     std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFacts &facts);
     std::string issueBody(const IssueReport &report);
     std::string issueURL(const IssueReport &report);
