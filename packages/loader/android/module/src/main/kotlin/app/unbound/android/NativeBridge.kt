@@ -55,18 +55,6 @@ object NativeBridge {
     external fun nativeHermesBytecodeVersion(header: ByteArray): Int
 
     @JvmStatic
-    external fun nativeHotReloadURL(): String?
-
-    @JvmStatic
-    external fun nativeHotReloadConnected()
-
-    @JvmStatic
-    external fun nativeHotReloadFeed(chunk: String): Boolean
-
-    @JvmStatic
-    external fun nativeHotReloadNextDelayMs(): Long
-
-    @JvmStatic
     external fun nativeGetBoolean(store: String, key: String, fallback: Boolean): Boolean
 
     @JvmStatic
@@ -335,7 +323,6 @@ object NativeBridge {
     fun onBundleExecuted() {
         Recovery.bundleExecuted = true
         Logger.info("default", "Bundle executed.")
-        HotReload.sync()
     }
 
 
