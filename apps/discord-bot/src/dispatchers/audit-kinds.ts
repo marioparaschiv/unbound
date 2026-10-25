@@ -1,5 +1,10 @@
+import type {
+	MaintainerEntry,
+	ModerationEventData,
+	ModerationEventKind,
+} from '@unbound-app/contracts/admin';
+import { moderationEventDataSchema } from '@unbound-app/contracts/admin';
 import type { APIEmbedField } from 'discord.js';
-import { z } from 'zod';
 
 import { COLOURS } from '~/lib/constants';
 
@@ -11,36 +16,19 @@ export type KindEmbed = {
 	fields: APIEmbedField[];
 };
 
-// UNKNOWN: the stored `data` is per-kind JSON, parsed by the kind's own schema.
-export type KindRenderer = (data: unknown) => KindEmbed | undefined;
+type KindData<K extends ModerationEventKind> = Extract<ModerationEventData, { kind: K }>['data'];
 
-// Mirrors `moderationEventDataSchema` in @unbound-app/contracts/admin.
-const submissionKindSchema = z.enum(['listing', 'update']);
-const maintainerSchema = z.object({ userId: z.string(), role: z.enum(['owner', 'maintainer']) });
-const emptySchema = z.object({});
+type KindRenderers = { [K in ModerationEventKind]: (data: KindData<K>) => KindEmbed };
 
-type Maintainer = z.infer<typeof maintainerSchema>;
+type KindEvent<K extends ModerationEventKind> = { kind: K; data: KindData<K> };
 
-const noteSchema = z.object({ noteId: z.int(), body: z.string() });
-const submissionSchema = z.object({
-	submissionId: z.string(),
-	submissionKind: submissionKindSchema,
-	version: z.string(),
-});
+type SubmissionData = KindData<'submission.cancelled'>;
 
 const DECISIONS = {
 	approved: { title: 'Submission approved', colour: COLOURS.positive },
 	rejected: { title: 'Submission rejected', colour: COLOURS.danger },
 	changes_requested: { title: 'Changes requested', colour: COLOURS.neutral },
 } as const;
-
-function defineKind<T>(schema: z.ZodType<T>, render: (data: T) => KindEmbed): KindRenderer {
-	return (data) => {
-		const result = schema.safeParse(data);
-
-		return result.success ? render(result.data) : undefined;
-	};
-}
 
 function field(name: string, value: string, inline: boolean = true): APIEmbedField {
 	return { name, value: value || 'None', inline };
@@ -50,7 +38,7 @@ function list(values: string[]) {
 	return values.join(', ') || 'None';
 }
 
-function submissionFields(data: z.infer<typeof submissionSchema>) {
+function submissionFields(data: SubmissionData) {
 	return [
 		field('Version', data.version),
 		field('Kind', data.submissionKind),
@@ -58,7 +46,7 @@ function submissionFields(data: z.infer<typeof submissionSchema>) {
 	];
 }
 
-function maintainerChanges(before: Maintainer[], after: Maintainer[]) {
+function maintainerChanges(before: MaintainerEntry[], after: MaintainerEntry[]) {
 	const previous = new Map(before.map((entry) => [entry.userId, entry.role]));
 	const next = new Map(after.map((entry) => [entry.userId, entry.role]));
 	const added = after.filter((entry) => !previous.has(entry.userId));
@@ -83,89 +71,50 @@ function maintainerChanges(before: Maintainer[], after: Maintainer[]) {
 		.map(([name, lines]) => field(name, lines.join('\n'), false));
 }
 
-export const KINDS: Record<string, KindRenderer> = {
-	'review.decided': defineKind(
-		submissionSchema.extend({
-			decision: z.enum(['approved', 'rejected', 'changes_requested']),
-		}),
-		(data) => ({ ...DECISIONS[data.decision], fields: submissionFields(data) }),
-	),
-	'submission.created': defineKind(
-		submissionSchema.extend({ supersededId: z.nullable(z.string()) }),
-		(data) => ({
-			title: 'Submission created',
-			colour: COLOURS.brand,
-			fields: [
-				...submissionFields(data),
-				...(data.supersededId ? [field('Supersedes', data.supersededId)] : []),
-			],
-		}),
-	),
-	'submission.cancelled': defineKind(submissionSchema, (data) => ({
+const RENDERERS: KindRenderers = {
+	'review.decided': (data) => ({ ...DECISIONS[data.decision], fields: submissionFields(data) }),
+	'submission.created': (data) => ({
+		title: 'Submission created',
+		colour: COLOURS.brand,
+		fields: [
+			...submissionFields(data),
+			...(data.supersededId ? [field('Supersedes', data.supersededId)] : []),
+		],
+	}),
+	'submission.cancelled': (data) => ({
 		title: 'Submission cancelled',
 		colour: COLOURS.danger,
 		fields: submissionFields(data),
-	})),
-	'addon.delisted': defineKind(emptySchema, () => ({
-		title: 'Addon delisted',
+	}),
+	'addon.delisted': () => ({ title: 'Addon delisted', colour: COLOURS.danger, fields: [] }),
+	'addon.relisted': () => ({ title: 'Addon relisted', colour: COLOURS.positive, fields: [] }),
+	'addon.maintainers_changed': (data) => ({
+		title: 'Maintainers changed',
+		colour: COLOURS.neutral,
+		fields: maintainerChanges(data.before, data.after),
+	}),
+	'addon.edited': (data) => ({
+		title: 'Addon edited',
+		colour: COLOURS.neutral,
+		fields: data.changes.map((change) =>
+			field(
+				change.pinned ? `${change.field} (pinned)` : change.field,
+				`${change.from ?? 'None'} -> ${change.to ?? 'None'}`,
+				false,
+			),
+		),
+	}),
+	'addon.rollback': (data) => ({
+		title: 'Addon rolled back',
 		colour: COLOURS.danger,
-		fields: [],
-	})),
-	'addon.relisted': defineKind(emptySchema, () => ({
-		title: 'Addon relisted',
-		colour: COLOURS.positive,
-		fields: [],
-	})),
-	'addon.maintainers_changed': defineKind(
-		z.object({ before: z.array(maintainerSchema), after: z.array(maintainerSchema) }),
-		(data) => ({
-			title: 'Maintainers changed',
-			colour: COLOURS.neutral,
-			fields: maintainerChanges(data.before, data.after),
-		}),
-	),
-	'addon.edited': defineKind(
-		z.object({
-			changes: z.array(
-				z.object({
-					field: z.string(),
-					from: z.nullable(z.string()),
-					to: z.nullable(z.string()),
-					pinned: z.boolean(),
-				}),
-			),
-		}),
-		(data) => ({
-			title: 'Addon edited',
-			colour: COLOURS.neutral,
-			fields: data.changes.map((change) =>
-				field(
-					change.pinned ? `${change.field} (pinned)` : change.field,
-					`${change.from ?? 'None'} -> ${change.to ?? 'None'}`,
-					false,
-				),
-			),
-		}),
-	),
-	'addon.rollback': defineKind(
-		z.object({
-			from: z.nullable(z.string()),
-			to: z.string(),
-			withdrawn: z.array(z.string()),
-			restored: z.array(z.string()),
-		}),
-		(data) => ({
-			title: 'Addon rolled back',
-			colour: COLOURS.danger,
-			fields: [
-				field('From', data.from ?? 'None'),
-				field('To', data.to),
-				field('Withdrawn', list(data.withdrawn), false),
-				field('Restored', list(data.restored), false),
-			],
-		}),
-	),
-	'user.banned': defineKind(z.object({ expiresAt: z.nullable(z.iso.datetime()) }), (data) => ({
+		fields: [
+			field('From', data.from ?? 'None'),
+			field('To', data.to),
+			field('Withdrawn', list(data.withdrawn), false),
+			field('Restored', list(data.restored), false),
+		],
+	}),
+	'user.banned': (data) => ({
 		title: 'User banned',
 		colour: COLOURS.danger,
 		fields: [
@@ -176,45 +125,54 @@ export const KINDS: Record<string, KindRenderer> = {
 					: 'Permanent',
 			),
 		],
-	})),
-	'user.unbanned': defineKind(emptySchema, () => ({
-		title: 'User unbanned',
-		colour: COLOURS.positive,
-		fields: [],
-	})),
-	'user.role_set': defineKind(z.object({ role: z.string() }), (data) => ({
+	}),
+	'user.unbanned': () => ({ title: 'User unbanned', colour: COLOURS.positive, fields: [] }),
+	'user.role_set': (data) => ({
 		title: 'Role set',
 		colour: COLOURS.neutral,
 		fields: [field('Role', data.role)],
-	})),
-	'user.deleted': defineKind(
-		z.object({ openSubmissions: z.int().nonnegative(), staffNotes: z.int().nonnegative() }),
-		(data) => ({
-			title: 'User deleted',
-			colour: COLOURS.danger,
-			fields: [
-				field('Open submissions removed', String(data.openSubmissions)),
-				field('Staff notes removed', String(data.staffNotes)),
-			],
-		}),
-	),
-	'note.added': defineKind(noteSchema, (data) => ({
+	}),
+	'user.deleted': (data) => ({
+		title: 'User deleted',
+		colour: COLOURS.danger,
+		fields: [
+			field('Open submissions removed', String(data.openSubmissions)),
+			field('Staff notes removed', String(data.staffNotes)),
+		],
+	}),
+	'note.added': (data) => ({
 		title: 'Note added',
 		colour: COLOURS.brand,
 		description: data.body,
 		fields: [],
-	})),
-	'note.edited': defineKind(noteSchema.extend({ before: z.string() }), (data) => ({
+	}),
+	'note.edited': (data) => ({
 		title: 'Note edited',
 		colour: COLOURS.neutral,
 		fields: [field('Before', data.before, false), field('After', data.body, false)],
-	})),
-	'note.deleted': defineKind(noteSchema, (data) => ({
+	}),
+	'note.deleted': (data) => ({
 		title: 'Note deleted',
 		colour: COLOURS.danger,
 		description: data.body,
 		fields: [],
-	})),
+	}),
 };
 
-export default { KINDS };
+function renderEvent<K extends ModerationEventKind>(event: KindEvent<K>): KindEmbed {
+	return RENDERERS[event.kind](event.data);
+}
+
+/**
+ * @description Renders the kind-specific parts of an audit event, validated by the contract's schema.
+ * @param kind The event's kind.
+ * @param data The event's stored `data`; UNKNOWN: per-kind JSON the contract schema parses.
+ * @returns The kind's embed parts, or `undefined` for an unknown kind or data the schema rejects.
+ */
+export function renderKind(kind: string, data: unknown): KindEmbed | undefined {
+	const parsed = moderationEventDataSchema.safeParse({ kind, data });
+
+	return parsed.success ? renderEvent(parsed.data) : undefined;
+}
+
+export default { renderKind };

@@ -1,6 +1,6 @@
 import type { APIEmbed, APIEmbedField } from 'discord.js';
 
-import { KINDS, type KindEmbed } from '~/dispatchers/audit-kinds';
+import { renderKind, type KindEmbed } from '~/dispatchers/audit-kinds';
 import { COLOURS, SITE_URL } from '~/lib/constants';
 import type { auditEvent } from '~/db/schema';
 
@@ -64,18 +64,6 @@ function escapeLinkText(text: string) {
 	return text.replaceAll(/[\\[\]]/g, '\\$&');
 }
 
-// A plain lookup would resolve kinds like `constructor` to inherited functions.
-function renderKind(event: AuditEventRow) {
-	if (!Object.hasOwn(KINDS, event.kind)) return;
-
-	try {
-		return KINDS[event.kind]?.(event.data);
-	} catch {
-		// A renderer that trips over odd data falls back to the generic embed.
-		return;
-	}
-}
-
 function subjectValue(event: AuditEventRow, url: string | undefined) {
 	const subject = present(truncate(event.subjectName || event.subjectId, EMBED_LIMITS.fieldName));
 	const linked = url ? `[${escapeLinkText(subject)}](${url})` : subject;
@@ -126,7 +114,7 @@ function fitFields(fields: APIEmbedField[], budget: number) {
  * @returns The embed; an unknown kind or malformed data renders the raw kind and data instead.
  */
 export function buildAuditEmbed(event: AuditEventRow): APIEmbed {
-	const kind = renderKind(event) ?? genericKind(event);
+	const kind = renderKind(event.kind, event.data) ?? genericKind(event);
 	const url = subjectLink(event);
 	const reasonAsField = kind.description !== undefined && event.reason;
 	const author = truncate(present(event.actor?.name ?? 'System'), EMBED_LIMITS.authorName);

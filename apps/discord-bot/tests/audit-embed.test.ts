@@ -117,8 +117,8 @@ describe('buildAuditEmbed', () => {
 		const edited = buildAuditEmbed(
 			event('note.edited', { noteId: 1, before: ' ', body: '\n' }, { subjectName: '' }),
 		);
-		const renamed = buildAuditEmbed(
-			event('addon.edited', { changes: [{ field: ' ', from: 'a', to: 'b', pinned: false }] }),
+		const role = buildAuditEmbed(
+			event('user.role_set', { role: ' ' }, { actor: { id: 'staff-1', name: ' ' } }),
 		);
 
 		expect(field(edited, 'Before')).toBe('None');
@@ -126,7 +126,8 @@ describe('buildAuditEmbed', () => {
 		expect(field(edited, 'Subject')).toBe(
 			'[addon-1](https://unbound.rip/admin/addons/addon-1)',
 		);
-		expect(field(renamed, 'None')).toBe('a -> b');
+		expect(field(role, 'Role')).toBe('None');
+		expect(role.author?.name).toBe('None');
 	});
 
 	test('kinds named after object builtins render the generic embed', () => {
