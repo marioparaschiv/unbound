@@ -1,6 +1,6 @@
+import { afterAll, describe, expect, test } from 'bun:test';
 import { cp, mkdtemp, readdir, rm } from 'node:fs/promises';
 import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
-import { afterAll, describe, expect, test } from 'bun:test';
 import { and, eq, max } from 'drizzle-orm';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,8 +16,8 @@ import {
 	user,
 } from '~/db/schema';
 import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
-import type { BotFeed } from '~/db/schema/bot';
 import { createDatabase } from '~/db/database';
+import type { BotFeed } from '~/db/schema/bot';
 
 import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
@@ -28,6 +28,9 @@ const TRIGGERS_MIGRATION_SUFFIX = '_bot_feed_triggers';
 type TriggerRow = {
 	sql: string;
 };
+
+/** A write under test: a query builder, a promise or a synchronous seed. */
+type Change = () => PromiseLike<object | void> | void;
 
 const { ctx, close } = createTestContext();
 
@@ -66,7 +69,7 @@ function latestSeq(feed: BotFeed): number {
 }
 
 /** Whether running `change` moved `key` past every key its feed had before. */
-async function moves(feed: BotFeed, key: string, change: () => unknown): Promise<boolean> {
+async function moves(feed: BotFeed, key: string, change: Change): Promise<boolean> {
 	const before = latestSeq(feed);
 
 	await change();

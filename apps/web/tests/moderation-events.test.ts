@@ -7,8 +7,8 @@ import { eq } from 'drizzle-orm';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { addMaintainer, removeMaintainer, transferAddon } from '~/lib/maintainers';
 import { createStaffNote, deleteStaffNote, editStaffNote } from '~/lib/staff-notes';
+import { addMaintainer, removeMaintainer, transferAddon } from '~/lib/maintainers';
 import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { listEvents, queryEvents } from '~/lib/moderation-events';
 import { delistAddon, relistAddon } from '~/lib/addons';

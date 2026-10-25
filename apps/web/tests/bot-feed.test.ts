@@ -8,13 +8,13 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 
-import { publishLoaderRelease, withdrawLoaderRelease } from '~/lib/loader-releases';
 import { account, addon, addonMaintainer, moderationEvent, user } from '~/db/schema';
+import { publishLoaderRelease, withdrawLoaderRelease } from '~/lib/loader-releases';
 import { API_KEY_HEADER, createApiClient } from '~/api/client';
 import botReleases from '~/endpoints/bot-releases';
 import { mintBotKey } from '~/lib/bot/credential';
-import { resolveCaller } from '~/lib/api/caller';
 import botMembers from '~/endpoints/bot-members';
+import { resolveCaller } from '~/lib/api/caller';
 import botAddons from '~/endpoints/bot-addons';
 import botEvents from '~/endpoints/bot-events';
 import type { Caller } from '~/lib/api/caller';

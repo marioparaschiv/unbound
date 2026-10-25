@@ -1,11 +1,10 @@
+import { BOT_FEED_DEFAULT_LIMIT, botEventSchema } from '@unbound-app/contracts/bot';
 import type { BotEvent } from '@unbound-app/contracts/bot';
-import { botEventSchema } from '@unbound-app/contracts/bot';
 import { createLogger } from '@unbound-app/logger';
 import { z } from 'zod';
 
 import { requireBotReader, toRowPage } from '~/lib/bot/feed';
 import type { FeedPage, FeedRequest } from '~/lib/bot/feed';
-import { BOT_FEED_DEFAULT_LIMIT } from '@unbound-app/contracts/bot';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { decodeCursor } from '~/lib/keyset';

@@ -5,10 +5,10 @@ import { z } from 'zod';
 
 import { afterKey, decodeCursor, encodeCursor } from '~/lib/keyset';
 import { requirePermission } from '~/lib/api/caller';
-import type { BotFeed } from '~/db/schema/bot';
 import type { AppContext } from '~/lib/context';
-import type { CursorKey } from '~/lib/keyset';
+import type { BotFeed } from '~/db/schema/bot';
 import type { Caller } from '~/lib/api/caller';
+import type { CursorKey } from '~/lib/keyset';
 import { botFeedChange } from '~/db/schema';
 
 export type FeedRequest = NonNullable<BotFeedQuery>;

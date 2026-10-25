@@ -1,5 +1,5 @@
-import type { BotMember } from '@unbound-app/contracts/bot';
 import { and, eq, exists, inArray, isNull, sql } from 'drizzle-orm';
+import type { BotMember } from '@unbound-app/contracts/bot';
 import { alias } from 'drizzle-orm/sqlite-core';
 
 import { account, addon, addonMaintainer, addonVersion, sponsorship, user } from '~/db/schema';

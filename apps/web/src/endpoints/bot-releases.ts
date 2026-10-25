@@ -1,9 +1,9 @@
 import { botReleasesResponseSchema, botFeedQuerySchema } from '@unbound-app/contracts/bot';
 import { z } from 'zod';
 
-import { readChangeFeed } from '~/lib/bot/feed';
-import { requireCaller } from '~/lib/api/caller';
 import { releasesFeed } from '~/lib/bot/releases';
+import { requireCaller } from '~/lib/api/caller';
+import { readChangeFeed } from '~/lib/bot/feed';
 import endpoint from '~/lib/api/endpoint';
 
 const botReleasesEndpoint = endpoint(
