@@ -2,6 +2,7 @@
 
 #include "HermesBytecodeHeader.h"
 #include "LoaderLog.h"
+#include "NativePluginRuntime.h"
 
 namespace loader
 {
@@ -150,8 +151,8 @@ namespace loader
                                    std::function<void(jsi::Runtime &)> beforeRun)
     {
         auto name = jsi::PropNameID::forAscii(runtime, "__unboundBeforeRunApplication");
-        auto hook = jsi::Function::createFromHostFunction(
-            runtime, name, 0,
+        auto hook = native::makeFunction(
+            runtime, "__unboundBeforeRunApplication", 0,
             [beforeRun = std::move(beforeRun)](jsi::Runtime &rt, const jsi::Value &,
                                                const jsi::Value *, size_t) -> jsi::Value {
                 beforeRun(rt);

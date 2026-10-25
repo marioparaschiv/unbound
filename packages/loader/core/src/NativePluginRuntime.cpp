@@ -20,6 +20,11 @@ namespace loader::native
     static jsi::Runtime                         *gRuntime = nullptr;
     static std::thread::id                       gRuntimeThread;
     static RuntimeGenerationTracker              gGenerations;
+#if defined(__ANDROID__)
+    static std::atomic<NativeErrorDelivery> gErrorDelivery{NativeErrorDelivery::Envelope};
+#else
+    static std::atomic<NativeErrorDelivery> gErrorDelivery{NativeErrorDelivery::Throw};
+#endif
     static std::atomic_uint64_t                  gNextInvocation{1};
     static std::atomic_uint                      gMainThreadRuntimeWaits{0};
 
@@ -55,6 +60,16 @@ namespace loader::native
         {
         }
         return {kNativeBridgeErrorCode, "Native operation failed"};
+    }
+
+    NativeErrorDelivery nativeErrorDelivery()
+    {
+        return gErrorDelivery.load();
+    }
+
+    void setNativeErrorDelivery(NativeErrorDelivery delivery)
+    {
+        gErrorDelivery.store(delivery);
     }
 
     std::optional<uint64_t> RuntimeGenerationTracker::advance(const void *runtime)
@@ -193,7 +208,38 @@ namespace loader::native
         object.setProperty(runtime, "code", jsi::String::createFromUtf8(runtime, kNativeBridgeErrorCode));
     }
 
-    jsi::Value guard(jsi::Runtime &runtime, const std::function<jsi::Value()> &body)
+    static NativeFailure describeJSError(jsi::Runtime &runtime, const jsi::JSError &error)
+    {
+        NativeFailure failure{kNativeBridgeErrorCode, error.getMessage()};
+        try
+        {
+            const jsi::Value &value = error.value();
+            if (value.isObject())
+            {
+                jsi::Value code = value.asObject(runtime).getProperty(runtime, "code");
+                if (code.isString())
+                {
+                    failure.code = code.getString(runtime).utf8(runtime);
+                }
+            }
+        }
+        catch (...)
+        {
+        }
+        return failure;
+    }
+
+    static jsi::Value failureEnvelope(jsi::Runtime &runtime, const NativeFailure &failure)
+    {
+        jsi::Object details(runtime);
+        details.setProperty(runtime, "code", jsi::String::createFromUtf8(runtime, failure.code));
+        details.setProperty(runtime, "message", jsi::String::createFromUtf8(runtime, failure.message));
+        jsi::Object envelope(runtime);
+        envelope.setProperty(runtime, kNativeFailureEnvelopeKey, std::move(details));
+        return envelope;
+    }
+
+    static jsi::Value throwingGuard(jsi::Runtime &runtime, const std::function<jsi::Value()> &body)
     {
         try
         {
@@ -211,6 +257,43 @@ namespace loader::native
         }
     }
 
+    static jsi::Value envelopingGuard(jsi::Runtime &runtime, const std::function<jsi::Value()> &body)
+    {
+        try
+        {
+            return body();
+        }
+        catch (const jsi::JSError &error)
+        {
+            return failureEnvelope(runtime, describeJSError(runtime, error));
+        }
+        catch (const std::exception &)
+        {
+            return failureEnvelope(runtime, describeFailure(std::current_exception()));
+        }
+    }
+
+    jsi::Value guard(jsi::Runtime &runtime, const std::function<jsi::Value()> &body)
+    {
+        if (nativeErrorDelivery() == NativeErrorDelivery::Envelope)
+        {
+            return envelopingGuard(runtime, body);
+        }
+        return throwingGuard(runtime, body);
+    }
+
+    static jsi::Function failureGuard(jsi::Runtime &runtime)
+    {
+        jsi::Value existing = runtime.global().getProperty(runtime, kNativeFailureGuardName);
+        if (existing.isObject() && existing.asObject(runtime).isFunction(runtime))
+        {
+            return existing.asObject(runtime).asFunction(runtime);
+        }
+        jsi::Value created = runtime.evaluateJavaScript(
+            std::make_shared<jsi::StringBuffer>(kNativeFailureGuardSource), "unbound:native-failure-guard");
+        return created.asObject(runtime).asFunction(runtime);
+    }
+
     jsi::Function makeFunction(jsi::Runtime &runtime, const char *name, unsigned int argumentCount,
                                jsi::HostFunctionType handler)
     {
@@ -220,8 +303,13 @@ namespace loader::native
             return guard(rt, [&]() { return handler(rt, thisValue, args, count); });
         };
 
-        return jsi::Function::createFromHostFunction(runtime, jsi::PropNameID::forUtf8(runtime, name),
-                                                     argumentCount, std::move(guarded));
+        jsi::Function native = jsi::Function::createFromHostFunction(
+            runtime, jsi::PropNameID::forUtf8(runtime, name), argumentCount, std::move(guarded));
+        if (nativeErrorDelivery() == NativeErrorDelivery::Throw)
+        {
+            return native;
+        }
+        return failureGuard(runtime).call(runtime, std::move(native)).asObject(runtime).asFunction(runtime);
     }
 
     void executeMainSynchronously(std::function<void()> operation, std::chrono::milliseconds timeout)
@@ -326,14 +414,15 @@ namespace loader::native
             global.setProperty(runtime, kPendingInvocations, jsi::Object(runtime));
         }
 
-        jsi::Function executorFunction = jsi::Function::createFromHostFunction(
-            runtime, jsi::PropNameID::forUtf8(runtime, "nativeMainExecutor"), 2,
+        jsi::Function executorFunction = makeFunction(
+            runtime, "nativeMainExecutor", 2,
             [target, operation = std::move(operation), result = std::move(result), identifier,
              cancelled, gate, generation](jsi::Runtime &rt, const jsi::Value &,
                                           const jsi::Value *callbacks, size_t count) -> jsi::Value {
                 if (count < 2 || !callbacks[0].isObject() || !callbacks[1].isObject())
                 {
-                    throw jsi::JSError(rt, "Native asynchronous operation could not create its promise");
+                    throw NativeCodedError(kNativeBridgeErrorCode,
+                                           "Native asynchronous operation could not create its promise");
                 }
 
                 jsi::Object pair(rt);
@@ -433,8 +522,8 @@ namespace loader::native
 
         promise.setProperty(
             runtime, "cancel",
-            jsi::Function::createFromHostFunction(
-                runtime, jsi::PropNameID::forUtf8(runtime, "cancel"), 0,
+            makeFunction(
+                runtime, "cancel", 0,
                 [identifier, cancelled, gate](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *,
                                               size_t) -> jsi::Value {
                     gate->expire();
@@ -472,6 +561,10 @@ namespace loader::native
             catch (const std::exception &error)
             {
                 log(LogLevel::Error, "plugins", std::string("Native plugin callback failed: ") + error.what());
+            }
+            catch (...)
+            {
+                log(LogLevel::Error, "plugins", "Native plugin callback failed");
             }
         });
     }

@@ -4,6 +4,7 @@
 
 #include "LoaderFiles.h"
 #include "LoaderJSI.h"
+#include "NativePluginRuntime.h"
 
 namespace loader
 {
@@ -98,17 +99,10 @@ namespace loader
         return result;
     }
 
-    jsi::Function makeHostFunction(jsi::Runtime &runtime, const char *name,
-                                   unsigned int argumentCount, jsi::HostFunctionType handler)
-    {
-        return jsi::Function::createFromHostFunction(runtime, jsi::PropNameID::forUtf8(runtime, name),
-                                                     argumentCount, std::move(handler));
-    }
-
     template <typename Provider>
     static jsi::Function stringGetter(jsi::Runtime &runtime, const char *name, Provider provider)
     {
-        return makeHostFunction(runtime, name, 0,
+        return native::makeFunction(runtime, name, 0,
                                 [provider](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *,
                                            size_t) -> jsi::Value {
                                     return jsi::String::createFromUtf8(rt, provider ? provider() : "");
@@ -118,7 +112,7 @@ namespace loader
     template <typename Provider>
     static jsi::Function booleanGetter(jsi::Runtime &runtime, const char *name, Provider provider)
     {
-        return makeHostFunction(
+        return native::makeFunction(
             runtime, name, 0,
             [provider](jsi::Runtime &, const jsi::Value &, const jsi::Value *, size_t) -> jsi::Value {
                 return jsi::Value(provider ? provider() : false);
@@ -139,7 +133,7 @@ namespace loader
 
         platform.setProperty(
             runtime, "evaluateBytecode",
-            makeHostFunction(runtime, "evaluateBytecode", 2,
+            native::makeFunction(runtime, "evaluateBytecode", 2,
                              [](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
                                 size_t count) -> jsi::Value {
                                  if (count == 0 || !args[0].isObject() ||
@@ -179,7 +173,7 @@ namespace loader
                             booleanGetter(runtime, "isVerifiedBuild", provider->isVerifiedBuild));
             ios.setProperty(
                 runtime, "getEntitlements",
-                makeHostFunction(runtime, "getEntitlements", 0,
+                native::makeFunction(runtime, "getEntitlements", 0,
                                  [provider](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *,
                                             size_t) -> jsi::Value {
                                      return toJSIValue(rt, provider->entitlements
@@ -202,7 +196,7 @@ namespace loader
             jsi::Object files(runtime);
             files.setProperty(
                 runtime, "remove",
-                makeHostFunction(runtime, "remove", 1,
+                native::makeFunction(runtime, "remove", 1,
                                  [provider](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
                                             size_t count) -> jsi::Value {
                                      if (count == 0 || !args[0].isString())

@@ -33,10 +33,6 @@ namespace loader
     facebook::jsi::Value toJSIValue(facebook::jsi::Runtime &runtime, const nlohmann::json &value);
     nlohmann::json fromJSIValue(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
 
-    facebook::jsi::Function makeHostFunction(facebook::jsi::Runtime &runtime, const char *name,
-                                             unsigned int argumentCount,
-                                             facebook::jsi::HostFunctionType handler);
-
     void installNativePlatform(facebook::jsi::Runtime &runtime,
                                std::shared_ptr<NativePlatformProvider> provider);
 }

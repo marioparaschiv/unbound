@@ -47,6 +47,37 @@ namespace loader::native
 
     NativeFailure describeFailure(std::exception_ptr failure);
 
+    enum class NativeErrorDelivery
+    {
+        Throw,
+        Envelope,
+    };
+
+    inline constexpr const char *kNativeFailureEnvelopeKey = "__unboundNativeFailure";
+    inline constexpr const char *kNativeFailureGuardName   = "__unboundGuardNativeFunction";
+    inline constexpr const char *kNativeFailureGuardSource = R"JS((function () {
+  var key = '__unboundNativeFailure';
+  var owns = Object.prototype.hasOwnProperty;
+  var NativeError = Error;
+  var guard = function (native) {
+    return function () {
+      var result = native.apply(this, arguments);
+      if (result !== null && typeof result === 'object' && owns.call(result, key)) {
+        var failure = result[key];
+        var error = new NativeError(String(failure.message));
+        error.code = String(failure.code);
+        throw error;
+      }
+      return result;
+    };
+  };
+  Object.defineProperty(globalThis, '__unboundGuardNativeFunction', { value: guard });
+  return guard;
+})())JS";
+
+    NativeErrorDelivery nativeErrorDelivery();
+    void setNativeErrorDelivery(NativeErrorDelivery delivery);
+
     using RuntimeGenerationListener = std::function<void(uint64_t generation)>;
 
     class RuntimeGenerationTracker
