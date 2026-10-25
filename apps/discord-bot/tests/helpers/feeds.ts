@@ -25,12 +25,12 @@ export const ADDON: AddonFeedItem = {
 
 export const EVENT: EventFeedItem = {
 	id: 1,
-	kind: 'submission.created',
+	kind: 'addon.delisted',
 	subjectType: 'addon',
 	subjectId: 'addon-1',
 	subjectName: 'Silent Typing',
 	actor: { id: 'user-1', name: 'Mario' },
-	data: { version: '1.0.0' },
+	data: {},
 	reason: null,
 	createdAt: '2026-10-01T00:00:00.000Z',
 };
