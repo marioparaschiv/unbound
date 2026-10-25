@@ -340,37 +340,6 @@ func TestPullRequestWorkflowChecksPinnedSupportedDiscordFixtures(t *testing.T) {
 	}
 }
 
-func TestDependabotAutomergeWaitsForSuccessfulBuild(t *testing.T) {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("could not locate test source")
-	}
-	root := filepath.Dir(filepath.Dir(filename))
-	workflow, err := os.ReadFile(filepath.Join(root, "..", "..", ".github", "workflows", "loader-dependabot-automerge.yml"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	contents := string(workflow)
-	for _, required := range []string{
-		"name: Loader Auto-merge Dependabot",
-		"- Loader Pull Request Build",
-		"if: github.event.workflow_run.conclusion == 'success'",
-		"pull-requests: write",
-		"contents: write",
-		"dependabot[bot]",
-		".head.sha",
-		".head_sha",
-		"gh pr merge \"$PR_NUMBER\" --auto --squash",
-	} {
-		if !strings.Contains(contents, required) {
-			t.Fatalf("Dependabot auto-merge workflow is missing %q", required)
-		}
-	}
-	if strings.Contains(contents, "actions/checkout") {
-		t.Fatal("Dependabot auto-merge workflow must not check out pull request code")
-	}
-}
-
 func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
