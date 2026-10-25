@@ -2,20 +2,32 @@ package main
 
 import (
 	"encoding/binary"
+	"sort"
 	"strings"
 	"testing"
 )
 
 func scriptReferences(t *testing.T, path, source string) []*compatReference {
 	t.Helper()
+	return scriptProgramReferences(t, map[string]string{path: source}).sorted()
+}
+
+func scriptProgramReferences(t *testing.T, sources map[string]string) *compatSourceSet {
+	t.Helper()
 	set := newCompatSourceSet()
-	tokens := tokenizeScript(source)
-	constants := map[string]compatValue{}
-	collectScriptConstants(tokens, constants)
-	component, _ := compatComponent(path)
-	file := compatSourceFile{path: path, component: component, platform: compatPlatform(path)}
-	extractScriptReferences(set, file, tokens, compatScope{local: constants})
-	return set.sorted()
+	paths := make([]string, 0, len(sources))
+	for path := range sources {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	var files []*scriptFile
+	for _, path := range paths {
+		component, _ := compatComponent(path)
+		file := compatSourceFile{path: path, component: component, platform: compatPlatform(path)}
+		files = append(files, newScriptFile(file, scriptSourceRoot(path), tokenizeScript(sources[path])))
+	}
+	analyzeScripts(set, files)
+	return set
 }
 
 func findReference(references []*compatReference, kind, name string) *compatReference {
