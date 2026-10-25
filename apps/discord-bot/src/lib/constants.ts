@@ -1,4 +1,4 @@
-export const GUILD_ID = '1173413947186094080';
+export const GUILD_ID = '950850315601711176';
 
 export const COLOURS = {
 	positive: 0x00_ff_00,
@@ -14,9 +14,9 @@ export const ICON_PACKS_CHANNEL_ID = '0';
 export const AUDIT_LOG_CHANNEL_ID = '0';
 export const RELEASES_CHANNEL_ID = '0';
 export const RELEASES_ROLE_ID = '0';
-export const CONTRIBUTOR_ROLE_ID = '0';
-export const ADDON_DEVELOPER_ROLE_ID = '0';
-export const SPONSOR_ROLE_ID = '0';
+export const CONTRIBUTOR_ROLE_ID = '967799585844113418';
+export const ADDON_DEVELOPER_ROLE_ID = '952688684107456612';
+export const SPONSOR_ROLE_ID = '997233808522874910';
 
 export const DISCORD_IDS = {
 	PLUGINS_CHANNEL_ID,
