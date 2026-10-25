@@ -27,6 +27,9 @@ object TextRewrites {
     private const val PLACEHOLDER = '￼'
     private const val RECYCLER_VIEW = "androidx.recyclerview.widget.RecyclerView"
     private const val MAX_ANCESTOR_DEPTH = 12
+    private const val DESCRIBE_DEPTH = 6
+    private const val MAX_CONTENT_RETRIES = 20
+    private const val CONTENT_RETRY_DELAY_MS = 100L
     private const val MAX_IMAGES = 128
     private const val ALIGN_CENTER = 2
 
@@ -77,6 +80,7 @@ object TextRewrites {
     private val groups = HashMap<String, MutableList<Group>>()
     private val groupsById = HashMap<String, Group>()
     private val pendingLayout = WeakHashMap<TextView, Boolean>()
+    private val contentRetries = WeakHashMap<TextView, Int>()
     private val listening = WeakHashMap<TextView, Boolean>()
     private val images = object : LinkedHashMap<String, Bitmap>(32, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Bitmap>?) = size > MAX_IMAGES
@@ -104,7 +108,7 @@ object TextRewrites {
                 val stages = linkedSetOf<String>()
                 val rewritten = rewrite(view, text, stages)
                 val result = if (rewritten !== text) {
-                    chain.proceed(arrayOf(rewritten, chain.getArg(1)))
+                    chain.proceed(arrayOf(rewritten, chain.getArg(1))).also { settleLayout(view) }
                 } else {
                     chain.proceed()
                 }
@@ -174,24 +178,37 @@ object TextRewrites {
         main.post {
             val text = synchronized(lock) { originals[textView] } ?: textView.text
             textView.setText(text, TextView.BufferType.SPANNABLE)
-            relayoutList(textView)
+            settleLayout(textView)
         }
     }
 
-    private fun relayoutList(view: View) {
-        var current = view.parent as? View
-        repeat(MAX_ANCESTOR_DEPTH) {
-            val node = current ?: return
-            val parent = node.parent as? View
-            if (isRecycler(node) && (parent == null || !isRecycler(parent))) {
-                val widthSpec = View.MeasureSpec.makeMeasureSpec(node.width, View.MeasureSpec.EXACTLY)
-                val heightSpec = View.MeasureSpec.makeMeasureSpec(node.height, View.MeasureSpec.EXACTLY)
-                node.measure(widthSpec, heightSpec)
-                node.layout(node.left, node.top, node.right, node.bottom)
-                return
+    private fun settleLayout(view: View) {
+        view.post {
+            if (!view.isAttachedToWindow) return@post
+            val list = outermostList(view) ?: return@post
+            var node: View? = view
+            while (node != null && node !== list) {
+                node.forceLayout()
+                node = node.parent as? View
             }
-            current = parent
+            list.forceLayout()
+            list.measure(
+                View.MeasureSpec.makeMeasureSpec(list.width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(list.height, View.MeasureSpec.EXACTLY),
+            )
+            list.layout(list.left, list.top, list.right, list.bottom)
         }
+    }
+
+    private fun outermostList(view: View): View? {
+        var current = view.parent as? View
+        var outer: View? = null
+        repeat(MAX_ANCESTOR_DEPTH) {
+            val node = current ?: return outer
+            if (isRecycler(node)) outer = node
+            current = node.parent as? View
+        }
+        return outer
     }
 
     fun refresh(rendered: String) {
@@ -227,6 +244,8 @@ object TextRewrites {
                                             .put("attached", slot.host.isAttachedToWindow)
                                             .put("visible", slot.host.visibility == View.VISIBLE)
                                             .put("children", (slot.host as? ViewGroup)?.childCount ?: 0)
+                                            .put("frame", "${slot.host.x.toInt()},${slot.host.y.toInt()} ${slot.host.width}x${slot.host.height}")
+                                            .put("content", describeContent((slot.host as? ViewGroup)?.getChildAt(0)))
                                     },
                                 ),
                             )
@@ -234,6 +253,17 @@ object TextRewrites {
                 ),
             )
             .toString()
+    }
+
+    private fun describeContent(view: View?, depth: Int = 0): String? {
+        view ?: return null
+        val group = view as? ViewGroup
+        val children = group?.childCount ?: 0
+        val requested = if (view.isLayoutRequested) "*" else ""
+        val own = "${view.javaClass.simpleName} ${view.width}x${view.height}$requested children=$children"
+        if (group == null || depth >= DESCRIBE_DEPTH) return own
+        val nested = (0 until children).mapNotNull { describeContent(group.getChildAt(it), depth + 1) }
+        return if (nested.isEmpty()) own else "$own [${nested.joinToString("; ")}]"
     }
 
     fun needsHost(view: TextView, rendered: String) {
@@ -472,13 +502,28 @@ object TextRewrites {
         val owned = synchronized(lock) {
             groupsById.values.filter { it.owner?.get() === view && shown[view]?.contains(it.rendered) == true }
         }
+        var empty = false
         for (group in owned) {
             for (slot in group.slots) {
                 if (position(view, slot) && slot.host.visibility != View.VISIBLE) {
                     slot.host.visibility = View.VISIBLE
                 }
+                empty = empty || hasEmptyContent(slot.host)
             }
         }
+        if (empty) retryEmptyContent(view) else synchronized(lock) { contentRetries.remove(view) }
+    }
+
+    private fun hasEmptyContent(host: View): Boolean {
+        val content = (host as? ViewGroup)?.getChildAt(0) as? ViewGroup ?: return false
+        return host.isAttachedToWindow && content.childCount == 0
+    }
+
+    private fun retryEmptyContent(view: TextView) {
+        val attempts = synchronized(lock) { (contentRetries[view] ?: 0) + 1 }
+        if (attempts > MAX_CONTENT_RETRIES) return
+        synchronized(lock) { contentRetries[view] = attempts }
+        view.postDelayed({ if (view.isAttachedToWindow) positionAll(view) }, CONTENT_RETRY_DELAY_MS)
     }
 
     private fun position(view: TextView, slot: Slot): Boolean {
@@ -515,6 +560,7 @@ object TextRewrites {
         if (host is ViewGroup) {
             for (index in 0 until host.childCount) {
                 val child = host.getChildAt(index)
+                if ((child as? ViewGroup)?.childCount == 0) child.forceLayout()
                 child.measure(widthSpec, heightSpec)
                 child.layout(0, 0, anchor.width, anchor.height)
             }
