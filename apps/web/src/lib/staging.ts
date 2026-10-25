@@ -2,6 +2,7 @@ import { createLogger } from '@unbound-app/logger';
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { OPEN_SUBMISSION_STATUSES } from '~/lib/submissions';
+import { appendEvent } from '~/lib/moderation-events';
 import type { AppContext } from '~/lib/context';
 import { submission } from '~/db/schema';
 
@@ -97,23 +98,44 @@ export function startStagingSweeper(ctx: AppContext): Timer {
 
 /**
  * @description Cancels every open submission of a banned user, which releases the addon ids their
- * listings claimed, and deletes their staged objects.
+ * listings claimed, records a `submission.cancelled` event for each, and deletes their staged objects.
  * @param ctx The database and storage.
  * @param userId The banned user.
  * @returns How many submissions were cancelled.
  */
 export async function purgeUserSubmissions(ctx: StagingContext, userId: string): Promise<number> {
-	const cancelled = ctx.db
-		.update(submission)
-		.set({ status: 'cancelled' })
-		.where(
-			and(
-				eq(submission.authorId, userId),
-				inArray(submission.status, OPEN_SUBMISSION_STATUSES),
-			),
-		)
-		.returning({ key: submission.stagingKey })
-		.all();
+	const at = new Date();
+	const cancelled = ctx.db.transaction((tx) => {
+		const rows = tx
+			.update(submission)
+			.set({ status: 'cancelled' })
+			.where(
+				and(
+					eq(submission.authorId, userId),
+					inArray(submission.status, OPEN_SUBMISSION_STATUSES),
+				),
+			)
+			.returning({
+				id: submission.id,
+				addonId: submission.addonId,
+				kind: submission.kind,
+				version: submission.version,
+				key: submission.stagingKey,
+			})
+			.all();
+
+		for (const row of rows) {
+			appendEvent(tx, {
+				subject: { type: 'addon', id: row.addonId },
+				actorId: null,
+				at,
+				kind: 'submission.cancelled',
+				data: { submissionId: row.id, submissionKind: row.kind, version: row.version },
+			});
+		}
+
+		return rows;
+	});
 
 	await deleteStaged(
 		ctx,

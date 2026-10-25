@@ -1,0 +1,58 @@
+# Publishes every first-party plugin whose manifest version is newer than the live one, without review.
+#
+# Secret `UNBOUND_API_KEY`: an API key of the CI account, whose role is `ci`. To mint it, an admin sets
+# that account's role to `ci` on /admin/users; then, signed in as that account, create the key on
+# /account under API keys. The server must have FIRST_PARTY_REPOSITORY=marioparaschiv/unbound set.
+# Variable `UNBOUND_API_URL`: the backend's base URL, shared with loader-build.yml.
+name: Publish Plugins
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - packages/plugins/**
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+concurrency:
+    group: plugins-publish
+    cancel-in-progress: false
+
+jobs:
+    publish:
+        if: github.repository == 'marioparaschiv/unbound' && github.ref == 'refs/heads/main'
+        runs-on: ubuntu-26.04
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 0
+                  fetch-tags: true
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+            - name: Cache Bun installs
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ~/.bun/install/cache
+                  key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+                  restore-keys: bun-${{ runner.os }}-
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
+            - name: Validate plugins
+              run: bun run plugins:validate
+            - name: Test plugins
+              run: bun run plugins:test
+            - name: Build plugins
+              run: bun run plugins:build
+            - name: Configure git identity
+              run: |
+                  git config user.name 'github-actions[bot]'
+                  git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            - name: Publish plugins
+              env:
+                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+              run: bun packages/plugins/scripts/publish-plugins.ts
