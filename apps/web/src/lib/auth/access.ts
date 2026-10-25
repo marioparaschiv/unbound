@@ -11,6 +11,7 @@ export const statements = {
 	update: ['create', 'review'],
 	addon: ['delist', 'transfer', 'rollback', 'edit'],
 	loader: ['publish'],
+	firstParty: ['publish'],
 	perk: ['revoke'],
 	note: ['read', 'write'],
 	bot: ['read'],
@@ -39,9 +40,10 @@ export const moderator = ac.newRole({
 	note: ['read', 'write'],
 });
 
-/** A CI account's role; its API key can publish native loader releases and nothing else. */
+/** A CI account's role; its API key can publish native loader releases and first-party addons, and nothing else. */
 export const ci = ac.newRole({
 	loader: ['publish'],
+	firstParty: ['publish'],
 });
 
 /** The Discord bot's role; its API key reads the bot feeds and nothing else. */
