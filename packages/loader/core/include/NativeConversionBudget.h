@@ -19,6 +19,8 @@ inline constexpr NativeConversionProfile kNativePropertiesConversion = {8, 512, 
 
 inline constexpr NativeConversionProfile kNativeArgumentsConversion = {8, 512, 16384, 4096, 64};
 
+inline constexpr NativeConversionProfile kNativeBatchConversion = {8, 4096, 65536, 4096, 64};
+
 inline constexpr size_t kMaximumNativeArguments = 16;
 
 class NativeConversionBudget

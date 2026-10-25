@@ -2,6 +2,8 @@
 
 #include <cstddef>
 #include <mutex>
+#include <set>
+#include <string>
 
 namespace loader::native
 {
@@ -40,6 +42,24 @@ namespace loader::native
         bool                  committed_ = false;
     };
 
+    class NativeResourceRegistry
+    {
+    public:
+        explicit NativeResourceRegistry(NativeResourceBudget &budget);
+
+        void   adopt(const std::string &id, NativeResourceReservation &reservation);
+        bool   release(const std::string &id);
+        bool   contains(const std::string &id) const;
+        size_t releaseAll();
+        size_t size() const;
+
+    private:
+        NativeResourceBudget &budget_;
+        mutable std::mutex    mutex_;
+        std::set<std::string> ids_;
+    };
+
     NativeResourceBudget &nativeHookBudget();
     NativeResourceBudget &nativeCachedReturnBudget();
+    NativeResourceBudget &nativeSurfaceBudget();
 }
