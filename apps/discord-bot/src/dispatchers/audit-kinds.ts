@@ -16,11 +16,13 @@ export type KindEmbed = {
 	fields: APIEmbedField[];
 };
 
-type KindData<K extends ModerationEventKind> = Extract<ModerationEventData, { kind: K }>['data'];
+type KindTag<K extends ModerationEventKind> = { kind: K };
+
+type KindData<K extends ModerationEventKind> = Extract<ModerationEventData, KindTag<K>>['data'];
 
 type KindRenderers = { [K in ModerationEventKind]: (data: KindData<K>) => KindEmbed };
 
-type KindEvent<K extends ModerationEventKind> = { kind: K; data: KindData<K> };
+type KindEvent<K extends ModerationEventKind> = KindTag<K> & { data: KindData<K> };
 
 type SubmissionData = KindData<'submission.cancelled'>;
 
@@ -166,9 +168,10 @@ function renderEvent<K extends ModerationEventKind>(event: KindEvent<K>): KindEm
 /**
  * @description Renders the kind-specific parts of an audit event, validated by the contract's schema.
  * @param kind The event's kind.
- * @param data The event's stored `data`; UNKNOWN: per-kind JSON the contract schema parses.
+ * @param data The event's stored `data`.
  * @returns The kind's embed parts, or `undefined` for an unknown kind or data the schema rejects.
  */
+// UNKNOWN: `data` is the stored per-kind JSON; the contract schema parses it here.
 export function renderKind(kind: string, data: unknown): KindEmbed | undefined {
 	const parsed = moderationEventDataSchema.safeParse({ kind, data });
 
