@@ -1,25 +1,50 @@
-#import "CoreBridge.h"
 #include <istream>
 #include <ostream>
 #include <streambuf>
 
 #import "HotReload.h"
+#import "SettingsCore.h"
 #import "UpdaterCore.h"
 
 #include <memory>
 
 #include "LoaderHotReload.h"
 
+@interface HotReload ()
+- (void)openRequest:(const loader::HotReloadRequest &)request;
+- (void)cancelTask;
+@end
+
+class IOSHotReloadTransport final : public loader::HotReloadTransport
+{
+public:
+    explicit IOSHotReloadTransport(HotReload *owner) : owner_(owner) {}
+
+    void open(const loader::HotReloadRequest &request) override
+    {
+        [owner_ openRequest:request];
+    }
+
+    void cancel() override
+    {
+        [owner_ cancelTask];
+    }
+
+private:
+    __weak HotReload *owner_;
+};
+
+static uint64_t connectionOf(NSURLSessionTask *task)
+{
+    return strtoull(task.taskDescription.UTF8String ?: "0", nullptr, 10);
+}
+
 @implementation HotReload
 {
-    dispatch_queue_t      _queue;
-    NSURLSession         *_session;
-    NSURLSessionDataTask *_task;
-    NSURL                *_url;
-    std::unique_ptr<loader::HotReloadStream> _stream;
-    loader::HotReloadBackoff                 _backoff;
-    BOOL                  _running;
-    uint64_t              _generation;
+    dispatch_queue_t                             _queue;
+    NSURLSession                                *_session;
+    NSURLSessionDataTask                        *_task;
+    std::shared_ptr<loader::HotReloadController> _controller;
 }
 
 + (instancetype)shared
@@ -34,15 +59,13 @@
 {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        HotReload *shared = [HotReload shared];
-
-        [[NSNotificationCenter defaultCenter] addObserver:shared
+        [[NSNotificationCenter defaultCenter] addObserver:[HotReload shared]
                                                  selector:@selector(sync)
                                                      name:SettingsDidChangeNotification
                                                    object:nil];
-
-        [shared sync];
     });
+
+    [HotReload sync];
 }
 
 + (void)sync
@@ -54,8 +77,29 @@
 {
     if ((self = [super init]))
     {
-        _queue          = dispatch_queue_create("app.unbound.hotreload", DISPATCH_QUEUE_SERIAL);
-        _stream = std::make_unique<loader::HotReloadStream>(UnboundUpdaterSettings());
+        _queue = dispatch_queue_create("app.unbound.hotreload", DISPATCH_QUEUE_SERIAL);
+
+        NSOperationQueue *delegateQueue           = [[NSOperationQueue alloc] init];
+        delegateQueue.underlyingQueue             = _queue;
+        delegateQueue.maxConcurrentOperationCount = 1;
+
+        NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+        config.timeoutIntervalForResource = DBL_MAX;
+
+        _session = [NSURLSession sessionWithConfiguration:config
+                                                 delegate:self
+                                            delegateQueue:delegateQueue];
+
+        dispatch_queue_t queue = _queue;
+        _controller            = std::make_shared<loader::HotReloadController>(
+            UnboundSettingsStore(), [] { return UnboundUpdateURL(); },
+            std::make_shared<IOSHotReloadTransport>(self),
+            [queue](double seconds, std::function<void()> work) {
+                auto task = std::make_shared<std::function<void()>>(std::move(work));
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (seconds * NSEC_PER_SEC)), queue,
+                               ^{ (*task)(); });
+            },
+            [] { [Utilities reloadApp]; });
     }
 
     return self;
@@ -63,129 +107,36 @@
 
 - (void)sync
 {
-    BOOL enabled = [CoreBridge preferenceEnabled:@"hot-reload"];
-
-    dispatch_async(_queue, ^{
-        if (enabled && !self->_running)
-        {
-            [self start];
-        }
-        else if (!enabled && self->_running)
-        {
-            [self stop];
-        }
-    });
+    _controller->sync();
 }
 
-- (void)start
+- (void)openRequest:(const loader::HotReloadRequest &)request
 {
-    if (_running)
+    NSURL *url = [NSURL URLWithString:@(request.url.c_str())];
+    if (!url)
     {
+        _controller->onClosed(request.connection, std::string("invalid URL"));
         return;
     }
 
-    _url = [self resolveHotURL];
-    if (!_url)
+    NSMutableURLRequest *urlRequest =
+        [NSMutableURLRequest requestWithURL:url
+                                cachePolicy:NSURLRequestReloadIgnoringCacheData
+                            timeoutInterval:request.readTimeoutSeconds];
+    for (const auto &[name, value] : request.headers)
     {
-        [Logger info:LOG_CATEGORY_UPDATER
-              format:@"Hot-reload: no dev server origin resolved; live reload not started."];
-        return;
+        [urlRequest setValue:@(value.c_str()) forHTTPHeaderField:@(name.c_str())];
     }
 
-    _running = YES;
-    _backoff.reset();
-
-    NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
-
-    config.timeoutIntervalForRequest  = 86400.0;
-    config.timeoutIntervalForResource = DBL_MAX;
-    config.HTTPAdditionalHeaders      = @{
-        @"Accept" : @"text/event-stream",
-        @"Cache-Control" : @"no-cache",
-    };
-
-    NSOperationQueue *delegateQueue           = [[NSOperationQueue alloc] init];
-    delegateQueue.underlyingQueue             = _queue;
-    delegateQueue.maxConcurrentOperationCount = 1;
-
-    _session = [NSURLSession sessionWithConfiguration:config
-                                             delegate:self
-                                        delegateQueue:delegateQueue];
-
-    [Logger info:LOG_CATEGORY_UPDATER format:@"Hot-reload: enabled."];
-    [self connect];
-}
-
-- (void)stop
-{
-    if (!_running)
-    {
-        return;
-    }
-
-    _running = NO;
-    _generation++;
-
-    [_task cancel];
-    _task = nil;
-
-    [_session invalidateAndCancel];
-    _session = nil;
-
-    _stream->reset();
-
-    [Logger info:LOG_CATEGORY_UPDATER format:@"Hot-reload: disabled; stream stopped."];
-}
-
-- (NSURL *)resolveHotURL
-{
-    NSString *base = [Updater resolveUpdateURL];
-    if (base.length == 0)
-    {
-        return nil;
-    }
-
-    std::optional<std::string> url = loader::hotReloadURL(base.UTF8String ?: "");
-    return url ? [NSURL URLWithString:[NSString stringWithUTF8String:url->c_str()]] : nil;
-}
-
-- (void)connect
-{
-    if (!_running || !_session)
-    {
-        return;
-    }
-
-    _stream->reset();
-
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:_url];
-    request.cachePolicy          = NSURLRequestReloadIgnoringCacheData;
-
-    [Logger info:LOG_CATEGORY_UPDATER format:@"Hot-reload: connecting SSE to %@", _url];
-
-    _task = [_session dataTaskWithRequest:request];
+    _task                 = [_session dataTaskWithRequest:urlRequest];
+    _task.taskDescription = [NSString stringWithFormat:@"%llu", (unsigned long long) request.connection];
     [_task resume];
 }
 
-- (void)scheduleReconnect
+- (void)cancelTask
 {
-    if (!_running)
-    {
-        return;
-    }
-
-    NSTimeInterval delay      = _backoff.next();
-    uint64_t       generation = _generation;
-
-    [Logger info:LOG_CATEGORY_UPDATER format:@"Hot-reload: reconnecting in %.0fs.", delay];
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (delay * NSEC_PER_SEC)), _queue, ^{
-        if (!self->_running || self->_generation != generation)
-        {
-            return;
-        }
-        [self connect];
-    });
+    [_task cancel];
+    _task = nil;
 }
 
 #pragma mark - NSURLSessionDataDelegate
@@ -195,18 +146,12 @@
     didReceiveResponse:(NSURLResponse *)response
      completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler
 {
-    NSInteger status = [(NSHTTPURLResponse *) response statusCode];
-
-    if (status == 200)
-    {
-        _backoff.reset();
-        [Logger info:LOG_CATEGORY_UPDATER format:@"Hot-reload: SSE connected."];
-        completionHandler(NSURLSessionResponseAllow);
-    }
-    else
-    {
-        completionHandler(NSURLSessionResponseCancel);
-    }
+    NSInteger status = [response isKindOfClass:[NSHTTPURLResponse class]]
+                           ? [(NSHTTPURLResponse *) response statusCode]
+                           : 0;
+    completionHandler(_controller->onResponse(connectionOf(dataTask), static_cast<int>(status))
+                          ? NSURLSessionResponseAllow
+                          : NSURLSessionResponseCancel);
 }
 
 - (void)URLSession:(NSURLSession *)session
@@ -214,9 +159,9 @@
     didReceiveData:(NSData *)data
 {
     std::string_view chunk(static_cast<const char *>(data.bytes), data.length);
-    if (_stream->feed(chunk))
+    if (!_controller->onChunk(connectionOf(dataTask), chunk))
     {
-        [Utilities reloadApp];
+        [dataTask cancel];
     }
 }
 
@@ -224,22 +169,14 @@
                     task:(NSURLSessionTask *)task
     didCompleteWithError:(NSError *)error
 {
-    if (!_running)
+    if (_task == task)
     {
-        return;
+        _task = nil;
     }
 
-    if (error)
-    {
-        [Logger info:LOG_CATEGORY_UPDATER
-              format:@"Hot-reload: SSE disconnected (%@).", error.localizedDescription];
-    }
-    else
-    {
-        [Logger info:LOG_CATEGORY_UPDATER format:@"Hot-reload: SSE stream closed."];
-    }
-
-    [self scheduleReconnect];
+    _controller->onClosed(connectionOf(task),
+                          error ? std::optional<std::string>(error.localizedDescription.UTF8String ?: "")
+                                : std::nullopt);
 }
 
 @end
