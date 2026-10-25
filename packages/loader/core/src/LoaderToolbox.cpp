@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <system_error>
 
+#include "LoaderDevOverlay.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
@@ -469,9 +470,13 @@ namespace loader::toolbox
         {
             return context.settings.serialize();
         }
-        if (action == "replace-settings")
+        if (action == "save-settings")
         {
-            return flag(context.settings.replace(argument) && context.settings.save());
+            return devoverlay::editResultJSON(devoverlay::saveSettings(context.settings, argument)).dump();
+        }
+        if (action == "developer-menu")
+        {
+            return devoverlay::menuJSON(context.settings).dump();
         }
         if (action == "issue-url")
         {

@@ -83,6 +83,18 @@ object NativeBridge {
     external fun nativeLog(level: Int, category: String, message: String)
 
     @JvmStatic
+    external fun nativeDevOverlayButtonSide(): Double
+
+    @JvmStatic
+    external fun nativeDevOverlayCenter(bounds: DoubleArray): DoubleArray?
+
+    @JvmStatic
+    external fun nativeClampDevOverlayCenter(x: Double, y: Double, bounds: DoubleArray): DoubleArray?
+
+    @JvmStatic
+    external fun nativeSaveDevOverlayCenter(x: Double, y: Double, bounds: DoubleArray)
+
+    @JvmStatic
     fun scheduleRuntimeWork() {
         ReactRuntime.post { runtimePointer -> nativeDrainRuntimeWork(runtimePointer) }
     }

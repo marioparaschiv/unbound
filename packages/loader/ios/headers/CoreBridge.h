@@ -26,6 +26,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)preference:(NSString *)action argument:(NSString *)argument;
 + (BOOL)preferenceEnabled:(NSString *)action;
 
++ (CGFloat)devOverlayButtonSide;
++ (CGFloat)devOverlayButtonMargin;
++ (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets;
++ (CGPoint)clampDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds insets:(UIEdgeInsets)insets;
++ (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -110,27 +110,4 @@ loader::SettingsStore &UnboundSettingsStore()
     }
 }
 
-+ (NSString *)getSettings
-{
-    return @(UnboundSettingsStore().serialize().c_str());
-}
-
-+ (BOOL)loadFromJSONString:(NSString *)json error:(NSError **)error
-{
-    if (!UnboundSettingsStore().replace(toStdString(json)))
-    {
-        if (error)
-        {
-            *error = [NSError errorWithDomain:@"Settings"
-                                         code:2
-                                     userInfo:@{NSLocalizedDescriptionKey : @"Root must be a JSON object"}];
-        }
-        return NO;
-    }
-
-    [Settings save];
-    [[NSNotificationCenter defaultCenter] postNotificationName:SettingsDidChangeNotification object:nil];
-    return YES;
-}
-
 @end

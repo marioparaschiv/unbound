@@ -15,6 +15,7 @@
 
 #include "HermesBytecodeHeader.h"
 #include "LoaderAddons.h"
+#include "LoaderDevOverlay.h"
 #include "LoaderFonts.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
@@ -275,6 +276,45 @@ nlohmann::json UnboundFontCatalog()
 + (NSTimeInterval)toolboxHoldDuration
 {
     return loader::toolbox::kThreeFingerHoldMilliseconds / 1000.0;
+}
+
+static loader::devoverlay::Size coreSize(CGSize size)
+{
+    return {size.width, size.height};
+}
+
+static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
+{
+    return {insets.top, insets.left, insets.bottom, insets.right};
+}
+
++ (CGFloat)devOverlayButtonSide
+{
+    return loader::devoverlay::kButtonSide;
+}
+
++ (CGFloat)devOverlayButtonMargin
+{
+    return loader::devoverlay::kButtonMargin;
+}
+
++ (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets
+{
+    loader::devoverlay::Point center =
+        loader::devoverlay::buttonCenter(UnboundSettingsStore(), coreSize(bounds), coreInsets(insets));
+    return CGPointMake(center.x, center.y);
+}
+
++ (CGPoint)clampDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds insets:(UIEdgeInsets)insets
+{
+    loader::devoverlay::Point clamped =
+        loader::devoverlay::clampCenter({center.x, center.y}, coreSize(bounds), coreInsets(insets));
+    return CGPointMake(clamped.x, clamped.y);
+}
+
++ (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds
+{
+    loader::devoverlay::saveButtonCenter(UnboundSettingsStore(), {center.x, center.y}, coreSize(bounds));
 }
 
 @end

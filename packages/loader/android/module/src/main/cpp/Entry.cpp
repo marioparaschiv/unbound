@@ -1,5 +1,6 @@
 #include "AndroidHotReload.h"
 #include "AndroidLoader.h"
+#include "LoaderDevOverlay.h"
 #include "LoaderColor.h"
 #include "LoaderPreferences.h"
 #include "HermesBytecodeHeader.h"
@@ -223,6 +224,70 @@ static void nativePrepareAddons(JNIEnv *, jclass)
     }
 }
 
+static bool readOverlayBounds(JNIEnv *env, jdoubleArray bounds, loader::devoverlay::Size &size,
+                              loader::devoverlay::Insets &insets)
+{
+    if (!bounds || env->GetArrayLength(bounds) < 6)
+    {
+        return false;
+    }
+    jdouble values[6];
+    env->GetDoubleArrayRegion(bounds, 0, 6, values);
+    size   = {values[0], values[1]};
+    insets = {values[2], values[3], values[4], values[5]};
+    return true;
+}
+
+static jdoubleArray toPointArray(JNIEnv *env, loader::devoverlay::Point point)
+{
+    jdoubleArray result = env->NewDoubleArray(2);
+    if (result)
+    {
+        const jdouble values[2] = {point.x, point.y};
+        env->SetDoubleArrayRegion(result, 0, 2, values);
+    }
+    return result;
+}
+
+static jdouble nativeDevOverlayButtonSide(JNIEnv *, jclass)
+{
+    return loader::devoverlay::kButtonSide;
+}
+
+static jdoubleArray nativeDevOverlayCenter(JNIEnv *env, jclass, jdoubleArray bounds)
+{
+    loader::devoverlay::Size   size;
+    loader::devoverlay::Insets insets;
+    auto                       loader = currentLoader();
+    if (!loader || !readOverlayBounds(env, bounds, size, insets))
+    {
+        return nullptr;
+    }
+    return toPointArray(env, loader::devoverlay::buttonCenter(loader->settings(), size, insets));
+}
+
+static jdoubleArray nativeClampDevOverlayCenter(JNIEnv *env, jclass, jdouble x, jdouble y, jdoubleArray bounds)
+{
+    loader::devoverlay::Size   size;
+    loader::devoverlay::Insets insets;
+    if (!readOverlayBounds(env, bounds, size, insets))
+    {
+        return nullptr;
+    }
+    return toPointArray(env, loader::devoverlay::clampCenter({x, y}, size, insets));
+}
+
+static void nativeSaveDevOverlayCenter(JNIEnv *env, jclass, jdouble x, jdouble y, jdoubleArray bounds)
+{
+    loader::devoverlay::Size   size;
+    loader::devoverlay::Insets insets;
+    auto                       loader = currentLoader();
+    if (loader && readOverlayBounds(env, bounds, size, insets))
+    {
+        loader::devoverlay::saveButtonCenter(loader->settings(), {x, y}, size);
+    }
+}
+
 static bool cacheCallbacks(JNIEnv *env, jclass bridge)
 {
     gCallbacks.bridgeClass     = static_cast<jclass>(env->NewGlobalRef(bridge));
@@ -370,6 +435,10 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeThemeColorsJSON)},
         {"nativePrepareAddons", "()V", reinterpret_cast<void *>(nativePrepareAddons)},
         {"nativeLog", "(ILjava/lang/String;Ljava/lang/String;)V", reinterpret_cast<void *>(nativeLog)},
+        {"nativeDevOverlayButtonSide", "()D", reinterpret_cast<void *>(nativeDevOverlayButtonSide)},
+        {"nativeDevOverlayCenter", "([D)[D", reinterpret_cast<void *>(nativeDevOverlayCenter)},
+        {"nativeClampDevOverlayCenter", "(DD[D)[D", reinterpret_cast<void *>(nativeClampDevOverlayCenter)},
+        {"nativeSaveDevOverlayCenter", "(DD[D)V", reinterpret_cast<void *>(nativeSaveDevOverlayCenter)},
     };
 
     if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) != JNI_OK ||
