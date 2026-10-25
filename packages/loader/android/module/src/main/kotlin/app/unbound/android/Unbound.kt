@@ -44,6 +44,9 @@ class Unbound : XposedModule() {
         )
 
         Logger.info("default", "Hermes bytecode version $bytecodeVersion, documents at $documents")
+        DevOverlay.debugBuild = moduleInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+        SettingsWatcher.start(documents)
+        SettingsWatcher.onChange(::onSettingsChanged)
         hookActivityLifecycle()
         hookBundleLoading(param.classLoader)
         Analytics.block(this, param.classLoader)
@@ -59,6 +62,12 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error("chatui", "Failed to hook the chat UI", it) }
         runCatching { TextRewrites.install(this) }
             .onFailure { Logger.error("plugins", "Failed to hook text rewrites", it) }
+    }
+
+    private fun onSettingsChanged() {
+        HotReload.sync()
+        ChatUI.reload()
+        ActivityTracker.currentActivity()?.let(DevOverlay::onResumed)
     }
 
     private fun installHookBridge() {

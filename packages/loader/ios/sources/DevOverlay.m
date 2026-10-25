@@ -242,11 +242,17 @@ static const CGFloat kDevOverlayButtonMargin = 8;
 + (BOOL)shouldShowOverlay
 {
 #ifdef DEBUG
-    return YES;
+    BOOL debugBuild = YES;
 #else
-    return [Utilities isVPhone] ||
-           [CoreBridge preferenceEnabled:@"developer-mode"];
+    BOOL debugBuild = NO;
 #endif
+    NSMutableArray<NSString *> *flags = [NSMutableArray array];
+    if ([Utilities isVPhone])
+        [flags addObject:@"virtual-device"];
+    if (debugBuild)
+        [flags addObject:@"debug-build"];
+    return [[CoreBridge preference:@"dev-overlay" argument:[flags componentsJoinedByString:@","]]
+        isEqualToString:@"true"];
 }
 
 + (UIWindowScene *)activeWindowScene

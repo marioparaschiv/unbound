@@ -31,8 +31,12 @@ object DevOverlay {
 
     private var button: WeakReference<View>? = null
 
-    fun shouldShow(): Boolean =
-        Platform.isEmulator() || NativeBridge.preferenceEnabled("developer-mode")
+    @Volatile var debugBuild = false
+
+    fun shouldShow(): Boolean {
+        val flags = listOfNotNull("virtual-device".takeIf { Platform.isEmulator() }, "debug-build".takeIf { debugBuild })
+        return NativeBridge.nativePreference("dev-overlay", flags.joinToString(",")) == "true"
+    }
 
     fun onResumed(activity: Activity) {
         val decor = activity.window?.decorView as? ViewGroup ?: return
