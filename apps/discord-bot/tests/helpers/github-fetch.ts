@@ -17,7 +17,11 @@ export type FakeGitHubOptions = {
 	contributors: Record<string, ContributorItem[][] | 204>;
 };
 
-export type GitHubCall = { url: string; authorization: string | null };
+export type GitHubCall = {
+	url: string;
+	authorization: string | null;
+	signal: AbortSignal | null | undefined;
+};
 
 export type FakeGitHub = {
 	fetch: Fetch;
@@ -54,7 +58,11 @@ export function fakeGitHub(options: FakeGitHubOptions): FakeGitHub {
 	async function fetch(url: string, init: RequestInit) {
 		const parsed = new URL(url);
 
-		calls.push({ url, authorization: new Headers(init.headers).get('authorization') });
+		calls.push({
+			url,
+			authorization: new Headers(init.headers).get('authorization'),
+			signal: init.signal,
+		});
 
 		if (failure && (!failure.match || url.includes(failure.match))) {
 			return new Response('{}', { status: failure.status, headers: failure.headers });

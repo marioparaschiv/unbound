@@ -54,6 +54,15 @@ describe('fetchContributorIds', () => {
 		);
 	});
 
+	test('every request carries an abort signal, so a hung request cannot stall the refresh', async () => {
+		const github = fakeGitHub(GITHUB);
+
+		await fetchContributorIds(github.fetch);
+
+		expect(github.calls.length).toBeGreaterThan(0);
+		expect(github.calls.every((call) => call.signal instanceof AbortSignal)).toBe(true);
+	});
+
 	test('rejects when any page fails', async () => {
 		const github = fakeGitHub(GITHUB);
 
@@ -66,7 +75,7 @@ describe('fetchContributorIds', () => {
 });
 
 describe('createContributorCache', () => {
-	const warn = spyOn(console, 'warn');
+	const warn = spyOn(console, 'warn').mockImplementation(() => undefined);
 	const info = spyOn(console, 'info').mockImplementation(() => void 0);
 	let clock = 0;
 
@@ -154,6 +163,18 @@ describe('createContributorCache', () => {
 		expect(await cache.get()).toBeUndefined();
 		expect(github.calls).toHaveLength(requests);
 
+		clock = FAILED_REFRESH_RETRY_MS;
+		expect(await cache.get()).toEqual(new Set(['1', '2', '3', '4']));
+	});
+
+	test('an HTTP-date retry-after falls back to the 15 minute retry and get() resolves', async () => {
+		const github = fakeGitHub(GITHUB);
+		const cache = createContributorCache({ fetch: github.fetch, now });
+
+		github.fail({ status: 429, headers: { 'retry-after': 'Wed, 21 Oct 2015 07:28:00 GMT' } });
+		expect(await cache.get()).toBeUndefined();
+
+		github.fail(undefined);
 		clock = FAILED_REFRESH_RETRY_MS;
 		expect(await cache.get()).toEqual(new Set(['1', '2', '3', '4']));
 	});

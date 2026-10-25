@@ -23,6 +23,7 @@ export const ORG = 'unbound-app';
 export const EXTRA_REPOS = ['marioparaschiv/unbound'];
 export const CONTRIBUTOR_REFRESH_MS = 6 * 60 * 60 * 1000;
 export const FAILED_REFRESH_RETRY_MS = 15 * 60 * 1000;
+export const REQUEST_TIMEOUT_MS = 30_000;
 
 const repoSchema = z.object({ full_name: z.string(), fork: z.boolean() });
 const contributorSchema = z.object({ id: z.number() });
@@ -39,17 +40,28 @@ export class GitHubError extends Error {
 	}
 }
 
-function retryAtOf(response: Response, now: () => number): number | undefined {
-	const retryAfter = response.headers.get('retry-after');
-
-	if (retryAfter) {
-		return now() + Number(retryAfter) * 1000;
+// `retry-after` may also be an HTTP-date; anything but a finite number of seconds is ignored.
+function secondsOf(header: string | null): number | undefined {
+	if (!header) {
+		return undefined;
 	}
 
-	const reset = response.headers.get('x-ratelimit-reset');
+	const seconds = Number(header);
 
-	if (reset && response.headers.get('x-ratelimit-remaining') === '0') {
-		return Number(reset) * 1000;
+	return Number.isFinite(seconds) ? seconds : undefined;
+}
+
+function retryAtOf(response: Response, now: () => number): number | undefined {
+	const retryAfter = secondsOf(response.headers.get('retry-after'));
+
+	if (retryAfter !== undefined) {
+		return now() + retryAfter * 1000;
+	}
+
+	const reset = secondsOf(response.headers.get('x-ratelimit-reset'));
+
+	if (reset !== undefined && response.headers.get('x-ratelimit-remaining') === '0') {
+		return reset * 1000;
 	}
 
 	return undefined;
@@ -105,7 +117,7 @@ export async function fetchContributorIds(
 	}
 
 	function request(url: string) {
-		return fetch(url, { headers });
+		return fetch(url, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
 	}
 
 	const repos = await paginate(
@@ -190,6 +202,7 @@ export default {
 	EXTRA_REPOS,
 	CONTRIBUTOR_REFRESH_MS,
 	FAILED_REFRESH_RETRY_MS,
+	REQUEST_TIMEOUT_MS,
 	GitHubError,
 	fetchContributorIds,
 	createContributorCache,
