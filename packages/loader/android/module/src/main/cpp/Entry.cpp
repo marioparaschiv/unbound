@@ -320,6 +320,8 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.hooksClearReturnValues =
         env->GetStaticMethodID(bridge, "hooksClearReturnValues", "(Ljava/lang/String;)V");
+    gCallbacks.hooksUseLimits = env->GetStaticMethodID(bridge, "hooksUseLimits", "(II)V");
+    gCallbacks.runtimeReplaced = env->GetStaticMethodID(bridge, "runtimeReplaced", "()V");
     gCallbacks.debugEnvironment =
         env->GetStaticMethodID(bridge, "debugEnvironment", "()Ljava/lang/String;");
     gCallbacks.javaBatch = env->GetStaticMethodID(
@@ -339,10 +341,12 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         bridge, "fabricUpdate", "(Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.fabricUnmount =
         env->GetStaticMethodID(bridge, "fabricUnmount", "(Ljava/lang/String;)V");
-    gCallbacks.fabricIsRunning = env->GetStaticMethodID(
-        bridge, "fabricIsRunning", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.fabricViewHandle = env->GetStaticMethodID(
-        bridge, "fabricViewHandle", "(Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.fabricSetSize = env->GetStaticMethodID(
+        bridge, "fabricSetSize", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+    gCallbacks.fabricSetFrame = env->GetStaticMethodID(
+        bridge, "fabricSetFrame", "(Ljava/lang/String;Ljava/lang/String;)V");
+    gCallbacks.fabricMeasure = env->GetStaticMethodID(
+        bridge, "fabricMeasure", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.fetchText =
         env->GetStaticMethodID(bridge, "fetchText", "(Ljava/lang/String;I)Ljava/lang/String;");
     gCallbacks.download = env->GetStaticMethodID(
@@ -364,12 +368,12 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.javaInvoke && gCallbacks.javaGetField && gCallbacks.javaSetField &&
            gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
            gCallbacks.hooksSetReturnValue && gCallbacks.hooksRemoveReturnValue &&
-           gCallbacks.hooksClearReturnValues &&
+           gCallbacks.hooksClearReturnValues && gCallbacks.hooksUseLimits && gCallbacks.runtimeReplaced &&
            gCallbacks.debugEnvironment && gCallbacks.javaBatch &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
-           gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricIsRunning &&
-           gCallbacks.fabricViewHandle && gCallbacks.fetchText &&
+           gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&
+           gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure && gCallbacks.fetchText &&
            gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing && gCallbacks.availableFonts &&
            gCallbacks.alert && gCallbacks.onBundleExecuted;
 }

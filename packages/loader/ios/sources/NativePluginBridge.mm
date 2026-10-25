@@ -28,10 +28,13 @@
 #import "NativeConversionBudget.h"
 #import "NativeFFI.h"
 #import "NativeEvaluations.h"
+#import "NativeGeometry.h"
 #import "NativeNumericValidation.h"
 #import "NativeOperationGate.h"
 #import "NativePluginRoot.h"
 #import "NativePluginRuntime.h"
+#import "NativeResourceBudget.h"
+#import "NativeTraversalOptions.h"
 #import "NativeTypeEncoding.h"
 
 using namespace facebook;
@@ -513,6 +516,9 @@ static T loadNativeValue(const uint8_t *source)
 
 struct ConversionState
 {
+    explicit ConversionState(const NativeConversionProfile &profile = kNativeValueConversion)
+        : budget(profile) {}
+
     NativeConversionBudget budget;
     std::vector<const void *> nativePath;
     std::vector<Object> javascriptPath;
@@ -530,6 +536,22 @@ struct ConversionState
         if (!budget.addBytes(count))
         {
             throw JSError(runtime, "Native value exceeds conversion byte limit");
+        }
+    }
+
+    void addString(Runtime &runtime, size_t count)
+    {
+        if (!budget.addString(count))
+        {
+            throw JSError(runtime, "Native value exceeds conversion string limit");
+        }
+    }
+
+    void addName(Runtime &runtime, size_t count)
+    {
+        if (!budget.addName(count))
+        {
+            throw JSError(runtime, "Native value exceeds conversion name limit");
         }
     }
 
@@ -700,7 +722,7 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
     if (value.isString())
     {
         NSString *string = [JSI toNSString:value runtime:runtime];
-        state.addBytes(runtime, [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        state.addString(runtime, [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         return string ?: @"";
     }
 
@@ -782,7 +804,7 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
             continue;
         }
 
-        state.addBytes(runtime, [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        state.addName(runtime, [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         id item = valueToObjCValue(runtime, object.getProperty(runtime, key.UTF8String), state);
         result[key] = item ?: [NSNull null];
     }
@@ -838,7 +860,12 @@ static NSDictionary *fabricProperties(Runtime &runtime, const Value *value)
         return @{};
     }
 
-    id object = valueToObjC(runtime, *value);
+    if (!value->isObject() || value->asObject(runtime).isArray(runtime))
+    {
+        throw JSError(runtime, "fabric surface properties must be an object");
+    }
+    ConversionState state(kNativePropertiesConversion);
+    id object = valueToObjCValue(runtime, *value, state);
     if (![object isKindOfClass:[NSDictionary class]])
     {
         throw JSError(runtime, "fabric surface properties must be an object");
@@ -847,39 +874,16 @@ static NSDictionary *fabricProperties(Runtime &runtime, const Value *value)
     return object;
 }
 
-static double fabricNumber(Runtime &runtime, Object &object, const char *name)
-{
-    Value value = object.getProperty(runtime, name);
-    if (!value.isNumber())
-    {
-        throw JSError(runtime, "fabric dimensions must be numbers");
-    }
-    return value.asNumber();
-}
-
 static CGSize fabricSize(Runtime &runtime, const Value &value)
 {
-    if (!value.isObject())
-    {
-        throw JSError(runtime, "fabric size must be an object");
-    }
-
-    Object object = value.asObject(runtime);
-    return CGSizeMake(fabricNumber(runtime, object, "width"),
-                      fabricNumber(runtime, object, "height"));
+    loader::native::NativeSize size = loader::native::parseSize(runtime, value);
+    return CGSizeMake(size.width, size.height);
 }
 
 static CGRect fabricFrame(Runtime &runtime, const Value &value)
 {
-    if (!value.isObject())
-    {
-        throw JSError(runtime, "fabric frame must be an object");
-    }
-
-    Object object = value.asObject(runtime);
-    return CGRectMake(fabricNumber(runtime, object, "x"), fabricNumber(runtime, object, "y"),
-                      fabricNumber(runtime, object, "width"),
-                      fabricNumber(runtime, object, "height"));
+    loader::native::NativeFrame frame = loader::native::parseFrame(runtime, value);
+    return CGRectMake(frame.x, frame.y, frame.width, frame.height);
 }
 
 static void fabricStart(id surface)
@@ -2270,32 +2274,11 @@ static Value snapshotUI(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "objc.snapshot expects a UIView handle");
     }
 
-    NSUInteger maxDepth = 8;
-    NSUInteger maxNodes = 100;
-    if (count > 1 && args[1].isObject())
-    {
-        Object options = args[1].asObject(runtime);
-        Value depth = options.getProperty(runtime, "maxDepth");
-        Value nodes = options.getProperty(runtime, "maxNodes");
-        if (!depth.isUndefined())
-        {
-            double value = depth.isNumber() ? depth.asNumber() : NAN;
-            if (!std::isfinite(value) || value < 0 || value > 12 || std::floor(value) != value)
-            {
-                throw JSError(runtime, "Native UI snapshot depth must be an integer from 0 to 12");
-            }
-            maxDepth = static_cast<NSUInteger>(value);
-        }
-        if (!nodes.isUndefined())
-        {
-            double value = nodes.isNumber() ? nodes.asNumber() : NAN;
-            if (!std::isfinite(value) || value < 1 || value > 256 || std::floor(value) != value)
-            {
-                throw JSError(runtime, "Native UI snapshot size must be an integer from 1 to 256");
-            }
-            maxNodes = static_cast<NSUInteger>(value);
-        }
-    }
+    Value noOptions = Value::undefined();
+    loader::native::TraversalOptions options = loader::native::parseTraversalOptions(
+        runtime, count > 1 ? args[1] : noOptions, loader::native::TraversalProfile::Snapshot);
+    NSUInteger maxDepth = options.maxDepth;
+    NSUInteger maxNodes = options.maxNodes;
 
     NSMutableArray<NSDictionary *> *captured = [NSMutableArray arrayWithCapacity:maxNodes];
     return executeMainAsynchronously(
@@ -2377,72 +2360,15 @@ static Value findUIViews(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "Native view class name must contain 1 to 128 characters");
     }
 
-    NSUInteger maxDepth = 24;
-    NSUInteger maxVisited = 512;
-    NSUInteger maxResults = 64;
-    bool attachedOnly = false;
-    bool stopAtMatch = false;
-    bool searchAncestors = false;
-    if (count > 2 && args[2].isObject())
-    {
-        Object options = args[2].asObject(runtime);
-        Value depth = options.getProperty(runtime, "maxDepth");
-        Value visited = options.getProperty(runtime, "maxVisited");
-        Value results = options.getProperty(runtime, "maxResults");
-        if (!depth.isUndefined())
-        {
-            double value = depth.isNumber() ? depth.asNumber() : NAN;
-            if (!std::isfinite(value) || value < 0 || value > 40 || std::floor(value) != value)
-            {
-                throw JSError(runtime, "Native view search depth must be an integer from 0 to 40");
-            }
-            maxDepth = static_cast<NSUInteger>(value);
-        }
-        if (!visited.isUndefined())
-        {
-            double value = visited.isNumber() ? visited.asNumber() : NAN;
-            if (!std::isfinite(value) || value < 1 || value > 2048 || std::floor(value) != value)
-            {
-                throw JSError(runtime, "Native view search visit limit must be an integer from 1 to 2048");
-            }
-            maxVisited = static_cast<NSUInteger>(value);
-        }
-        if (!results.isUndefined())
-        {
-            double value = results.isNumber() ? results.asNumber() : NAN;
-            if (!std::isfinite(value) || value < 1 || value > 256 || std::floor(value) != value)
-            {
-                throw JSError(runtime, "Native view search result limit must be an integer from 1 to 256");
-            }
-            maxResults = static_cast<NSUInteger>(value);
-        }
-        Value attached = options.getProperty(runtime, "attachedOnly");
-        Value stop = options.getProperty(runtime, "stopAtMatch");
-        Value direction = options.getProperty(runtime, "direction");
-        if (!attached.isUndefined())
-        {
-            if (!attached.isBool()) throw JSError(runtime, "Native view search attachedOnly must be boolean");
-            attachedOnly = attached.getBool();
-        }
-        if (!stop.isUndefined())
-        {
-            if (!stop.isBool()) throw JSError(runtime, "Native view search stopAtMatch must be boolean");
-            stopAtMatch = stop.getBool();
-        }
-        if (!direction.isUndefined())
-        {
-            if (!direction.isString()) throw JSError(runtime, "Native view search direction is invalid");
-            NSString *name = [JSI toNSString:direction runtime:runtime];
-            if ([name isEqualToString:@"ancestors"])
-            {
-                searchAncestors = true;
-            }
-            else if (![name isEqualToString:@"descendants"])
-            {
-                throw JSError(runtime, "Native view search direction is invalid");
-            }
-        }
-    }
+    Value noOptions = Value::undefined();
+    loader::native::TraversalOptions options = loader::native::parseTraversalOptions(
+        runtime, count > 2 ? args[2] : noOptions, loader::native::TraversalProfile::Search);
+    NSUInteger maxDepth = options.maxDepth;
+    NSUInteger maxVisited = options.maxNodes;
+    NSUInteger maxResults = options.maxResults;
+    bool attachedOnly = options.attachedOnly;
+    bool stopAtMatch = options.stopAtMatch;
+    bool searchAncestors = options.direction == loader::native::TraversalDirection::Ancestors;
 
     NSMutableArray<UIView *> *found = [NSMutableArray arrayWithCapacity:maxResults];
     return executeMainAsynchronously(
@@ -2650,6 +2576,7 @@ static void removeHook(const std::shared_ptr<HookState> &state, bool preserveAft
     {
         return;
     }
+    loader::native::nativeHookBudget().release();
     clearHookReturnCache(state);
 
     std::shared_ptr<HookDispatcher> dispatcher = state->dispatcher.lock();
@@ -3314,6 +3241,30 @@ static NSArray *hookReturnCacheKey(const std::shared_ptr<HookDispatcher> &dispat
     return [components copy];
 }
 
+static void reserveHookCacheEntry(Runtime &runtime, const std::shared_ptr<HookState> &state,
+                                  NSMutableDictionary *cache, NSArray *key)
+{
+    if (!state->active.load())
+    {
+        loader::native::throwCoded(runtime, loader::native::kNativeBridgeErrorCode,
+                                   "Native hook has been removed");
+    }
+    if (cache[key] == nil && !loader::native::nativeCachedReturnBudget().acquire())
+    {
+        loader::native::throwCoded(runtime, loader::native::kNativeBridgeErrorCode,
+                                   "Too many cached native hook results");
+    }
+}
+
+static void releaseHookCacheEntry(NSMutableDictionary *cache, NSArray *key)
+{
+    if (cache[key] != nil)
+    {
+        [cache removeObjectForKey:key];
+        loader::native::nativeCachedReturnBudget().release();
+    }
+}
+
 static void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
                                const Value *args, size_t count)
 {
@@ -3338,6 +3289,7 @@ static void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState
     NSArray *key = hookReturnCacheKey(runtime, state, args, count);
     NSData *value = [NSData dataWithBytes:bytes.data() length:loader::ffi::typeSize(result)];
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
+    reserveHookCacheEntry(runtime, state, state->returnCache, key);
     state->returnCache[key] = value;
 }
 
@@ -3346,7 +3298,7 @@ static void removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookSt
 {
     NSArray *key = hookReturnCacheKey(runtime, state, args, count);
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-    [state->returnCache removeObjectForKey:key];
+    releaseHookCacheEntry(state->returnCache, key);
 }
 
 static void clearHookReturnCache(const std::shared_ptr<HookState> &state)
@@ -3356,6 +3308,8 @@ static void clearHookReturnCache(const std::shared_ptr<HookState> &state)
         return;
     }
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
+    loader::native::nativeCachedReturnBudget().release(state->returnCache.count +
+                                                       state->sizeHeightFloors.count);
     [state->returnCache removeAllObjects];
     [state->sizeHeightFloors removeAllObjects];
 }
@@ -3384,10 +3338,11 @@ static void setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookS
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
     if (floor == 0)
     {
-        [state->sizeHeightFloors removeObjectForKey:key];
+        releaseHookCacheEntry(state->sizeHeightFloors, key);
     }
     else
     {
+        reserveHookCacheEntry(runtime, state, state->sizeHeightFloors, key);
         state->sizeHeightFloors[key] = @(floor);
     }
 }
@@ -3397,7 +3352,7 @@ static void removeHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<Ho
 {
     NSArray *key = hookReturnCacheKey(runtime, state, args, count);
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-    [state->sizeHeightFloors removeObjectForKey:key];
+    releaseHookCacheEntry(state->sizeHeightFloors, key);
 }
 
 static void applyHookSizeHeightFloors(const std::shared_ptr<HookDispatcher> &dispatcher,
@@ -4225,6 +4180,8 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     {
         throw JSError(runtime, "objc.hook expects a class, selector, and handlers");
     }
+    loader::native::NativeResourceReservation reservation(loader::native::nativeHookBudget(),
+                                                          "Too many native hooks are installed");
 
     NSString *className = [JSI toNSString:args[0] runtime:runtime];
     NSString *selectorName = [JSI toNSString:args[1] runtime:runtime];
@@ -4401,6 +4358,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         std::lock_guard<std::mutex> lock(gHookMutex);
         dispatcher->hooks.push_back(state);
     }
+    reservation.commit();
     return Object::createFromHostObject(runtime, std::make_shared<HookTokenHost>(state, callbacks));
 }
 
@@ -5101,35 +5059,39 @@ void setNativePluginFabricHost(id instance)
     gFabricHostInstance = instance;
 }
 
+static void invalidateRuntimeResources(uint64_t generation)
+{
+    invalidateRuntimeHooks(generation);
+    invalidateRuntimeFabricSurfaces(generation);
+}
+
 void registerNativePluginBridge(Runtime &runtime)
 {
     installFFIPlatform();
-    uint64_t previous   = loader::native::runtimeGeneration();
-    uint64_t generation = loader::native::registerRuntime(runtime);
-    if (generation != previous)
-    {
-        invalidateRuntimeHooks(generation);
-        invalidateRuntimeFabricSurfaces(generation);
-    }
-    Object bridge = loader::native::makeNativePluginRoot(runtime, loader::native::kIOSNativePluginCapabilities);
+    static std::once_flag invalidation;
+    std::call_once(invalidation, [] {
+        loader::native::onRuntimeGenerationChanged(invalidateRuntimeResources);
+    });
+    loader::native::registerRuntime(runtime);
+    loader::native::NativePluginRootBuilder bridge(runtime, loader::native::NativePluginPlatform::IOS);
 
     Object objc(runtime);
     installObjC(runtime, objc);
-    bridge.setProperty(runtime, "objc", std::move(objc));
+    bridge.addNamespace("objc", std::move(objc));
 
     Object ffi(runtime);
     installFFI(runtime, ffi);
-    bridge.setProperty(runtime, "ffi", std::move(ffi));
+    bridge.addNamespace("ffi", std::move(ffi));
 
     Object fabric(runtime);
     installFabric(runtime, fabric);
-    bridge.setProperty(runtime, "fabric", std::move(fabric));
+    bridge.addNamespace("fabric", std::move(fabric));
 
     Object debug(runtime);
     installDebug(runtime, debug);
-    bridge.setProperty(runtime, "debug", std::move(debug));
+    bridge.addNamespace("debug", std::move(debug));
 
-    runtime.global().setProperty(runtime, "NativePlugin", std::move(bridge));
+    bridge.install();
 }
 
 }

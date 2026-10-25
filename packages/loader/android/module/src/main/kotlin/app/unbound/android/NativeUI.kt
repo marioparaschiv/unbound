@@ -84,11 +84,11 @@ object NativeUI {
 
     fun measureView(handleJSON: String): String {
         requireMainThread()
-        val handle = parseHandle(handleJSON)
-        val measured = frame(resolve(handle))
-            ?: throw IllegalStateException("The Android native UI view has not been laid out")
-        return measured.toString()
+        return measure(resolve(parseHandle(handleJSON)))
     }
+
+    fun measure(view: View): String = frame(view)?.toString()
+        ?: throw IllegalStateException("The Android native UI view has not been laid out")
 
     fun mountView(containerHandleJSON: String, moduleName: String, propertiesJSON: String): String {
         requireMainThread()
@@ -128,22 +128,25 @@ object NativeUI {
 
     fun setViewFrame(handleJSON: String, frameJSON: String) {
         requireMainThread()
-        val view = resolve(parseHandle(handleJSON))
-        val frame = JSONObject(frameJSON)
-        val x = boundedCoordinate(frame, "x")
-        val y = boundedCoordinate(frame, "y")
-        val width = boundedDimension(frame, "width")
-        val height = boundedDimension(frame, "height")
-        val parameters = view.layoutParams
-            ?: throw IllegalStateException("The Android native UI view has no layout parameters")
+        applyFrame(resolve(parseHandle(handleJSON)), JSONObject(frameJSON))
+    }
+
+    fun applyFrame(view: View, frame: JSONObject) {
+        applySize(view, frame)
         val location = IntArray(2)
         view.getLocationOnScreen(location)
         val density = view.resources.displayMetrics.density
-        parameters.width = ceil(width * density).toInt()
-        parameters.height = ceil(height * density).toInt()
+        view.translationX += (frame.getDouble("x") * density - location[0]).toFloat()
+        view.translationY += (frame.getDouble("y") * density - location[1]).toFloat()
+    }
+
+    fun applySize(view: View, size: JSONObject) {
+        val parameters = view.layoutParams
+            ?: throw IllegalStateException("The Android native UI view has no layout parameters")
+        val density = view.resources.displayMetrics.density
+        parameters.width = ceil(size.getDouble("width") * density).toInt()
+        parameters.height = ceil(size.getDouble("height") * density).toInt()
         view.layoutParams = parameters
-        view.translationX += (x * density - location[0]).toFloat()
-        view.translationY += (y * density - location[1]).toFloat()
     }
 
     private fun parseQuery(queryJSON: String): Query {
@@ -156,15 +159,13 @@ object NativeUI {
             role = role,
             root = rootID,
             attributes = input.optJSONObject("attributes") ?: JSONObject(),
-            maxDepth = input.optInt("maxDepth", 16).coerceIn(1, 64),
-            maxNodes = input.optInt("maxNodes", 512).coerceIn(1, 2000),
-            maxResults = input.optInt("maxResults", 128).coerceIn(1, 500),
+            maxDepth = input.getInt("maxDepth"),
+            maxNodes = input.getInt("maxNodes"),
+            maxResults = input.getInt("maxResults"),
         )
     }
 
     fun viewForHandle(handleJSON: String): View = resolve(parseHandle(handleJSON))
-
-    fun handleForView(view: View): String = JSONObject().put("id", handle(view)).toString()
 
     fun decorView(context: android.content.Context): ViewGroup? =
         (ActivityTracker.currentActivity() ?: context as? Activity)
@@ -175,18 +176,6 @@ object NativeUI {
         val id = JSONObject(handleJSON).optString("id").trim()
         require(id.isNotEmpty() && id.length <= 128)
         return id
-    }
-
-    private fun boundedCoordinate(frame: JSONObject, name: String): Double {
-        val value = frame.optDouble(name, Double.NaN)
-        require(value.isFinite() && value in -100_000.0..100_000.0)
-        return value
-    }
-
-    private fun boundedDimension(frame: JSONObject, name: String): Double {
-        val value = frame.optDouble(name, Double.NaN)
-        require(value.isFinite() && value > 0 && value <= 32_768.0)
-        return value
     }
 
     private fun traverse(query: Query): List<Visit> {

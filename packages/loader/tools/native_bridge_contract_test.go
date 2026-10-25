@@ -35,8 +35,11 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	if !strings.Contains(headerText, `kNativePluginAbiVersion[] = "1.0.0"`) {
 		t.Fatal("native plugin ABI version is not v1")
 	}
-	if !strings.Contains(sourceText, "loader::native::makeNativePluginRoot(runtime, loader::native::kIOSNativePluginCapabilities)") {
+	if !strings.Contains(sourceText, "loader::native::NativePluginRootBuilder bridge(runtime, loader::native::NativePluginPlatform::IOS);") {
 		t.Fatal("the iOS bridge does not advertise the shared iOS capability list")
+	}
+	if !strings.Contains(sourceText, "loader::native::onRuntimeGenerationChanged(invalidateRuntimeResources);") {
+		t.Fatal("the iOS bridge does not release hooks and surfaces when the runtime is replaced")
 	}
 	for _, symbol := range []string{
 		"ffi_closure_alloc",
@@ -182,7 +185,7 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 		}
 	}
 	for _, installation := range []string{
-		`bridge.setProperty(runtime, "debug", std::move(debug));`,
+		`bridge.addNamespace("debug", std::move(debug));`,
 		`loader::native::makeRecordEvaluationFunction(runtime)`,
 		`makeFunction("environment", 0, runtime, environment)`,
 	} {
@@ -214,42 +217,50 @@ func TestAndroidNativeBridgeContractIsSynchronized(t *testing.T) {
 	}
 	sourceText := string(source)
 	for _, contract := range []string{
-		"loader::native::makeNativePluginRoot(runtime, loader::native::kAndroidNativePluginCapabilities)",
-		`runtime, "lookup",`,
-		`runtime, "snapshot",`,
-		`runtime, "measure",`,
-		`runtime, "setFrame",`,
-		`runtime, "mount",`,
-		`runtime, "update",`,
-		`runtime, "unmount",`,
-		`runtime, "getClass",`,
-		`runtime, "className",`,
-		`runtime, "construct",`,
-		`runtime, "respondsTo",`,
-		`runtime, "invoke",`,
-		`runtime, "invokeAsync",`,
-		`runtime, "getField",`,
-		`runtime, "setField",`,
-		`runtime, "release",`,
-		`bridge.setProperty(runtime, "java"`,
-		`bridge.setProperty(runtime, "hooks"`,
-		`runtime, "setReturnValue",`,
-		`runtime, "removeReturnValue",`,
-		`runtime, "clearReturnValues",`,
+		"loader::native::NativePluginRootBuilder bridge(runtime, loader::native::NativePluginPlatform::Android);",
+		`define(runtime, ui, "lookup",`,
+		`define(runtime, ui, "snapshot",`,
+		`define(runtime, ui, "measure",`,
+		`define(runtime, ui, "setFrame",`,
+		`define(runtime, ui, "mount",`,
+		`define(runtime, ui, "update",`,
+		`define(runtime, ui, "unmount",`,
+		`define(runtime, java, "getClass",`,
+		`define(runtime, java, "className",`,
+		`define(runtime, java, "construct",`,
+		`define(runtime, java, "respondsTo",`,
+		`define(runtime, java, "invoke",`,
+		`define(runtime, java, "invokeAsync",`,
+		`define(runtime, java, "getField",`,
+		`define(runtime, java, "setField",`,
+		`define(runtime, java, "release",`,
+		`define(runtime, java, "batch",`,
+		`define(runtime, java, "createAssociationKey",`,
+		`define(runtime, java, "getAssociatedObject",`,
+		`define(runtime, java, "setAssociatedObject",`,
+		`bridge.addNamespace("java"`,
+		`bridge.addNamespace("hooks"`,
+		`define(runtime, hooks, "hook",`,
+		`define(runtime, hooks, "remove",`,
+		`define(runtime, hooks, "setReturnValue",`,
+		`define(runtime, hooks, "removeReturnValue",`,
+		`define(runtime, hooks, "clearReturnValues",`,
 		"dispatchHookEvent(",
-		`runtime, "batch",`,
-		`runtime, "createAssociationKey",`,
-		`runtime, "getAssociatedObject",`,
-		`runtime, "setAssociatedObject",`,
-		`runtime, "recordEvaluation",`,
-		`runtime, "environment",`,
-		`bridge.setProperty(runtime, "debug"`,
-		`bridge.setProperty(runtime, "surfaces"`,
-		`runtime, "isRunning",`,
-		`runtime, "view",`,
-		"guardedAsync(",
+		`"recordEvaluation"`,
+		`define(runtime, debug, "environment",`,
+		`bridge.addNamespace("debug"`,
+		`bridge.addNamespace("fabric"`,
+		`define(runtime, fabric, "mountAsync",`,
+		`define(runtime, fabric, "updateAsync",`,
+		`define(runtime, fabric, "setSizeAsync",`,
+		`define(runtime, fabric, "setFrameAsync",`,
+		`define(runtime, fabric, "measureAsync",`,
+		`define(runtime, fabric, "unmountAsync",`,
+		"loader::native::onRuntimeGenerationChanged(",
+		"retireHookListeners();",
+		"applyHookLimits(callbacks);",
 		"executeMainAsynchronously(",
-		`runtime.global().setProperty(runtime, "NativePlugin"`,
+		"bridge.install();",
 	} {
 		if !strings.Contains(sourceText, contract) {
 			t.Fatalf("Android native bridge contract %q is missing", contract)
@@ -257,6 +268,8 @@ func TestAndroidNativeBridgeContractIsSynchronized(t *testing.T) {
 	}
 	for _, unsupported := range []string{
 		"native.objc.",
+		"__nativeFailure",
+		`bridge.addNamespace("surfaces"`,
 	} {
 		if strings.Contains(sourceText, unsupported) {
 			t.Fatalf("Android native bridge must not advertise platform-specific capability %q", unsupported)

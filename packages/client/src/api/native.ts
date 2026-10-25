@@ -1,5 +1,4 @@
 export type {
-	NativeAndroidSurfaceBridge,
 	NativeAssociationKey,
 	NativeBatchReference,
 	NativeBatchStep,
@@ -67,7 +66,6 @@ export {
 	BundleManager,
 	DeviceInfo,
 	NativePlatform,
-	NativeJavaError,
 	NativePluginCapabilityError,
 	NativePluginDisposedError,
 	NativePluginPlatformError,

@@ -64,7 +64,6 @@ export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 		'native.java.fields',
 		'native.java.invoke',
 		'native.fabric.async',
-		'native.fabric.mount',
 		'native.ffi.call',
 		'native.ffi.symbols',
 		'native.java.associations',
@@ -370,20 +369,6 @@ export type InternalToastOptions = {
 	closing?: boolean;
 	date?: number;
 } & ToastOptions;
-export type NativeAndroidSurfaceBridge = {
-	mount(
-		container: NativeUIHandle | Record<string, never>,
-		moduleName: string,
-		properties?: NativeSerializableObject,
-	): NativeCancelablePromise<NativeFabricSurface>;
-	update(
-		surface: NativeFabricSurface,
-		properties: NativeSerializableObject,
-	): NativeCancelablePromise<void>;
-	unmount(surface: NativeFabricSurface): NativeCancelablePromise<void>;
-	isRunning(surface: NativeFabricSurface): NativeJavaValue;
-	view(surface: NativeFabricSurface): NativeUIHandle;
-};
 export type NativeAssociationKey = NativeHandle;
 export type NativeBatchReference = {
 	readonly $nativeBatchResult: number;

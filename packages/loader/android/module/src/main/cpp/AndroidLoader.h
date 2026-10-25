@@ -46,6 +46,8 @@ namespace unbound::android
         jmethodID hooksSetReturnValue = nullptr;
         jmethodID hooksRemoveReturnValue = nullptr;
         jmethodID hooksClearReturnValues = nullptr;
+        jmethodID hooksUseLimits      = nullptr;
+        jmethodID runtimeReplaced     = nullptr;
         jmethodID debugEnvironment    = nullptr;
         jmethodID javaBatch           = nullptr;
         jmethodID javaCreateAssociationKey = nullptr;
@@ -54,8 +56,9 @@ namespace unbound::android
         jmethodID fabricMount         = nullptr;
         jmethodID fabricUpdate        = nullptr;
         jmethodID fabricUnmount       = nullptr;
-        jmethodID fabricIsRunning     = nullptr;
-        jmethodID fabricViewHandle    = nullptr;
+        jmethodID fabricSetSize       = nullptr;
+        jmethodID fabricSetFrame      = nullptr;
+        jmethodID fabricMeasure       = nullptr;
         jmethodID fetchText          = nullptr;
         jmethodID download           = nullptr;
         jmethodID devServerHost      = nullptr;

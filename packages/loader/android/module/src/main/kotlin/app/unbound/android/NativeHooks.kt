@@ -6,8 +6,8 @@ import java.lang.reflect.Executable
 import java.lang.reflect.Method
 
 object NativeHooks {
-    private const val MAX_HOOKS = 256
-    private const val MAX_CACHED_RETURNS = 512
+    private var maximumHooks = 0
+    private var maximumCachedReturns = 0
 
     interface Installer {
         fun install(method: Executable, hook: Hook): Removable
@@ -56,12 +56,19 @@ object NativeHooks {
         synchronized(this) { dispatcher = value }
     }
 
+    fun useLimits(hooks: Int, cachedReturns: Int) {
+        synchronized(this) {
+            maximumHooks = hooks
+            maximumCachedReturns = cachedReturns
+        }
+    }
+
     fun hook(className: String, methodName: String, parametersJSON: String, optionsJSON: String): String {
         val installer = synchronized(this) { installer }
             ?: throw IllegalStateException("The Android hook installer is unavailable")
 
         synchronized(this) {
-            require(registrations.size < MAX_HOOKS) { "Too many Android hooks are installed" }
+            require(registrations.size < maximumHooks) { "Too many native hooks are installed" }
         }
 
         val options = JSONObject(optionsJSON)
@@ -108,7 +115,9 @@ object NativeHooks {
     fun setReturnValue(tokenJSON: String, selfJSON: String, argumentsJSON: String, valueJSON: String) {
         val key = cacheKey(parseToken(tokenJSON), selfJSON, argumentsJSON)
         synchronized(this) {
-            require(returnValues.size < MAX_CACHED_RETURNS) { "Too many cached Android hook results" }
+            require(returnValues.containsKey(key) || returnValues.size < maximumCachedReturns) {
+                "Too many cached native hook results"
+            }
             returnValues[key] = NativeJava.decode(valueJSON)
         }
     }

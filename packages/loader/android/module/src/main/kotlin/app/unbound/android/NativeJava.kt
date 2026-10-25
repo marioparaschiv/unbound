@@ -127,19 +127,13 @@ object NativeJava {
                 }
             }
 
-            results.put(
-                outcome.fold(
-                    { JSONObject(it) },
-                    {
-                        JSONObject().put(
-                            "__nativeFailure",
-                            JSONObject()
-                                .put("code", "NATIVE_BRIDGE_ERROR")
-                                .put("message", it.message ?: it.toString()),
-                        )
-                    },
-                ),
-            )
+            val result = outcome.getOrElse {
+                throw IllegalStateException(
+                    "Java batch operation $index failed: ${it.message ?: it.toString()}",
+                    it,
+                )
+            }
+            results.put(JSONObject(result))
         }
 
         return results.toString()

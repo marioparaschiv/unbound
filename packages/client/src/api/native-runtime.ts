@@ -2,15 +2,11 @@ import type {
 	NativeAssociationKey,
 	NativeCancelablePromise,
 	NativeFabricBridge,
-	NativeFabricSize,
 	NativeFabricSurface,
 	NativeFFIBridge,
-	NativeFFISignature,
 	NativeJavaBridge,
 	NativeJavaHandle,
 	NativeJavaReference,
-	NativePointer,
-	NativeAndroidSurfaceBridge,
 	NativeDebugBridge,
 	NativeJavaHooksBridge,
 	NativeJavaHookToken,
@@ -342,36 +338,6 @@ export class NativePluginPlatformError extends Error {
 	constructor() {
 		super('Platform-specific native plugin capabilities require a recognized host platform.');
 	}
-}
-
-export class NativeJavaError extends Error {
-	readonly code: string;
-
-	constructor(code: string, message: string) {
-		super(message);
-		this.code = code;
-	}
-}
-
-type NativeJavaFailure = {
-	__nativeFailure: { code: string; message: string };
-};
-
-function isNativeJavaFailure(value: unknown): value is NativeJavaFailure {
-	return (
-		typeof value === 'object' &&
-		value !== null &&
-		'__nativeFailure' in value &&
-		typeof (value as NativeJavaFailure).__nativeFailure?.message === 'string'
-	);
-}
-
-function unwrapJava<T>(value: T): T {
-	if (isNativeJavaFailure(value)) {
-		throw new NativeJavaError(value.__nativeFailure.code, value.__nativeFailure.message);
-	}
-
-	return value;
 }
 
 export class NativePluginUnsupportedPlatformError extends Error {
@@ -734,64 +700,14 @@ function matchesNativeUIQuery(node: NativeUISnapshotNode, query: NativeUIQuery):
 	return true;
 }
 
-function createAndroidFabricBridge(
-	surfaces: NativeAndroidSurfaceBridge,
-	ui: NativeUIBridge,
-): NativeFabricBridge {
-	function unsupported(): never {
-		throw new NativePluginUnavailableError(
-			'Synchronous React surface operations are unavailable on Android; use the async variants.',
-		);
-	}
+function withFallback<T extends object>(bridge: Partial<T> | undefined, fallback: T): T {
+	return new Proxy(fallback, {
+		get: (target, property) => {
+			const key = property as keyof T;
 
-	function unwrapAsync<T>(pending: NativeCancelablePromise<T>): NativeCancelablePromise<T> {
-		if (isNativeJavaFailure(pending)) {
-			return unwrapJava(pending);
-		}
-
-		return Object.assign(pending.then(unwrapJava), {
-			cancel: () => pending.cancel(),
-		});
-	}
-
-	function viewOf(surface: NativeFabricSurface): NativeUIHandle {
-		return unwrapJava(surfaces.view(surface));
-	}
-
-	function sizeFrame(
-		surface: NativeFabricSurface,
-		size: NativeFabricSize,
-	): NativeCancelablePromise<void> {
-		const pending = ui.measure(viewOf(surface));
-
-		return Object.assign(
-			pending.then((frame) =>
-				ui.setFrame(viewOf(surface), {
-					x: frame.x,
-					y: frame.y,
-					width: size.width,
-					height: size.height,
-				}),
-			),
-			{ cancel: () => pending.cancel() },
-		);
-	}
-
-	return {
-		mount: unsupported,
-		mountAsync: (container, moduleName, properties) =>
-			unwrapAsync(surfaces.mount(container, moduleName, properties)),
-		update: unsupported,
-		updateAsync: (surface, properties) => unwrapAsync(surfaces.update(surface, properties)),
-		setSize: unsupported,
-		setSizeAsync: (surface, _minimumSize, maximumSize) => sizeFrame(surface, maximumSize),
-		setFrame: unsupported,
-		setFrameAsync: (surface, frame) => ui.setFrame(viewOf(surface), frame),
-		measure: unsupported,
-		measureAsync: (surface) => ui.measure(viewOf(surface)),
-		unmount: unsupported,
-		unmountAsync: (surface) => unwrapAsync(surfaces.unmount(surface)),
-	};
+			return bridge?.[key] ?? target[key];
+		},
+	});
 }
 
 function createIOSNativeUIBridge(
@@ -867,11 +783,7 @@ function createScopedNativePlugin(
 	const bridge = getNativePlugin() ?? fallbackBridge;
 	const objcBridge = bridge.objc ?? fallbackBridge.objc;
 	const ffiBridge = bridge.ffi ?? fallbackBridge.ffi;
-	const surfaceBridge = (bridge as { surfaces?: NativeAndroidSurfaceBridge }).surfaces;
-	const fabricBridge =
-		platform === 'android' && surfaceBridge
-			? createAndroidFabricBridge(surfaceBridge, bridge.ui ?? fallbackBridge.ui)
-			: (bridge.fabric ?? fallbackBridge.fabric);
+	const fabricBridge = withFallback(bridge.fabric, fallbackBridge.fabric);
 	const runtimeBridge =
 		platform === 'android' && capabilities.includes('native.runtime.events')
 			? createFluxRuntimeBridge()
@@ -1099,15 +1011,8 @@ function createScopedNativePlugin(
 	};
 
 	const ffi: NativeFFIBridge = {
-		symbol: scopeMethod(
-			(name: string, image?: string) => unwrapJava(ffiBridge.symbol(name, image)),
-			'native.ffi.symbols',
-		),
-		call: scopeMethod(
-			(pointer: NativePointer, signature: NativeFFISignature, ...args: unknown[]) =>
-				unwrapJava(ffiBridge.call(pointer, signature, ...args)),
-			'native.ffi.call',
-		),
+		symbol: scopeMethod(ffiBridge.symbol.bind(ffiBridge), 'native.ffi.symbols'),
+		call: scopeMethod(ffiBridge.call.bind(ffiBridge), 'native.ffi.call'),
 	};
 
 	const fabric: NativeFabricBridge = {
@@ -1251,94 +1156,62 @@ function createScopedNativePlugin(
 	const java: NativeJavaBridge = {
 		getClass: (name) =>
 			trackJavaHandle(
-				unwrapJava(
-					scopeMethod(
-						javaBridge.getClass.bind(javaBridge),
-						nativeJavaCapabilityRequirements.getClass,
-					)(name),
-				),
-			),
-		className: (handle) =>
-			unwrapJava(
 				scopeMethod(
-					javaBridge.className.bind(javaBridge),
-					nativeJavaCapabilityRequirements.className,
-				)(handle),
+					javaBridge.getClass.bind(javaBridge),
+					nativeJavaCapabilityRequirements.getClass,
+				)(name),
 			),
+		className: scopeMethod(
+			javaBridge.className.bind(javaBridge),
+			nativeJavaCapabilityRequirements.className,
+		),
 		construct: (name, args) =>
 			trackJavaHandle(
-				unwrapJava(
-					scopeMethod(
-						javaBridge.construct.bind(javaBridge),
-						nativeJavaCapabilityRequirements.construct,
-					)(name, args ?? []),
-				),
+				scopeMethod(
+					javaBridge.construct.bind(javaBridge),
+					nativeJavaCapabilityRequirements.construct,
+				)(name, args ?? []),
 			),
 		respondsTo: (handle, name, args) =>
-			unwrapJava(
-				scopeMethod(
-					javaBridge.respondsTo.bind(javaBridge),
-					nativeJavaCapabilityRequirements.respondsTo,
-				)(handle, name, args ?? []),
-			),
+			scopeMethod(
+				javaBridge.respondsTo.bind(javaBridge),
+				nativeJavaCapabilityRequirements.respondsTo,
+			)(handle, name, args ?? []),
 		invoke: (handle, name, args) =>
-			unwrapJava(
-				scopeMethod(
-					javaBridge.invoke.bind(javaBridge),
-					nativeJavaCapabilityRequirements.invoke,
-				)(handle, name, args ?? []),
-			),
-		invokeAsync: (handle, name, args) => {
-			const pending = scopeAsyncMethod(
+			scopeMethod(
+				javaBridge.invoke.bind(javaBridge),
+				nativeJavaCapabilityRequirements.invoke,
+			)(handle, name, args ?? []),
+		invokeAsync: (handle, name, args) =>
+			scopeAsyncMethod(
 				javaBridge.invokeAsync?.bind(javaBridge),
 				nativeJavaCapabilityRequirements.invokeAsync,
 				'Asynchronous Java invocation is unavailable.',
-			)(handle, name, args ?? []);
-
-			return Object.assign(pending.then(unwrapJava), { cancel: () => pending.cancel() });
-		},
-		getField: (handle, name) =>
-			unwrapJava(
-				scopeMethod(
-					javaBridge.getField.bind(javaBridge),
-					nativeJavaCapabilityRequirements.getField,
-				)(handle, name),
-			),
-		setField: (handle, name, value) =>
-			unwrapJava(
-				scopeMethod(
-					javaBridge.setField.bind(javaBridge),
-					nativeJavaCapabilityRequirements.setField,
-				)(handle, name, value),
-			),
-		batch: (operations) =>
-			unwrapJava(
-				scopeMethod(
-					javaBridge.batch.bind(javaBridge),
-					nativeJavaCapabilityRequirements.batch,
-				)(operations),
-			),
-		createAssociationKey: () =>
-			unwrapJava(
-				scopeMethod(
-					javaBridge.createAssociationKey.bind(javaBridge),
-					nativeJavaCapabilityRequirements.createAssociationKey,
-				)(),
-			),
-		getAssociatedObject: (handle, key) =>
-			unwrapJava(
-				scopeMethod(
-					javaBridge.getAssociatedObject.bind(javaBridge),
-					nativeJavaCapabilityRequirements.getAssociatedObject,
-				)(handle, key),
-			),
-		setAssociatedObject: (handle, key, value) =>
-			unwrapJava(
-				scopeMethod(
-					javaBridge.setAssociatedObject.bind(javaBridge),
-					nativeJavaCapabilityRequirements.setAssociatedObject,
-				)(handle, key, value),
-			),
+			)(handle, name, args ?? []),
+		getField: scopeMethod(
+			javaBridge.getField.bind(javaBridge),
+			nativeJavaCapabilityRequirements.getField,
+		),
+		setField: scopeMethod(
+			javaBridge.setField.bind(javaBridge),
+			nativeJavaCapabilityRequirements.setField,
+		),
+		batch: scopeMethod(
+			javaBridge.batch.bind(javaBridge),
+			nativeJavaCapabilityRequirements.batch,
+		),
+		createAssociationKey: scopeMethod(
+			javaBridge.createAssociationKey.bind(javaBridge),
+			nativeJavaCapabilityRequirements.createAssociationKey,
+		),
+		getAssociatedObject: scopeMethod(
+			javaBridge.getAssociatedObject.bind(javaBridge),
+			nativeJavaCapabilityRequirements.getAssociatedObject,
+		),
+		setAssociatedObject: scopeMethod(
+			javaBridge.setAssociatedObject.bind(javaBridge),
+			nativeJavaCapabilityRequirements.setAssociatedObject,
+		),
 		release: (handle) => {
 			javaHandles.delete(handle);
 			scopeMethod(
@@ -1349,64 +1222,45 @@ function createScopedNativePlugin(
 	};
 
 	const debug: NativeDebugBridge = {
-		recordEvaluation: (record) =>
-			unwrapJava(
-				scopeMethod(
-					debugBridge.recordEvaluation.bind(debugBridge),
-					nativeDebugCapabilityRequirements.recordEvaluation,
-				)(record),
-			),
-		environment: () =>
-			unwrapJava(
-				scopeMethod(
-					debugBridge.environment.bind(debugBridge),
-					nativeDebugCapabilityRequirements.environment,
-				)(),
-			),
+		recordEvaluation: scopeMethod(
+			debugBridge.recordEvaluation.bind(debugBridge),
+			nativeDebugCapabilityRequirements.recordEvaluation,
+		),
+		environment: scopeMethod(
+			debugBridge.environment.bind(debugBridge),
+			nativeDebugCapabilityRequirements.environment,
+		),
 	};
 
 	const hooks: NativeJavaHooksBridge = {
 		hook: (className, methodName, parameterTypes, options, listener) => {
-			const token = unwrapJava(
-				scopeMethod(
-					hooksBridge.hook.bind(hooksBridge),
-					nativeHooksCapabilityRequirements.hook,
-				)(className, methodName, parameterTypes, options, listener),
-			);
+			const token = scopeMethod(
+				hooksBridge.hook.bind(hooksBridge),
+				nativeHooksCapabilityRequirements.hook,
+			)(className, methodName, parameterTypes, options, listener);
 
 			javaHookTokens.add(token);
 
 			return token;
 		},
-		setReturnValue: (token, self, args, value) =>
-			unwrapJava(
-				scopeMethod(
-					hooksBridge.setReturnValue.bind(hooksBridge),
-					nativeHooksCapabilityRequirements.setReturnValue,
-				)(token, self, args, value),
-			),
-		removeReturnValue: (token, self, args) =>
-			unwrapJava(
-				scopeMethod(
-					hooksBridge.removeReturnValue.bind(hooksBridge),
-					nativeHooksCapabilityRequirements.removeReturnValue,
-				)(token, self, args),
-			),
-		clearReturnValues: (token) =>
-			unwrapJava(
-				scopeMethod(
-					hooksBridge.clearReturnValues.bind(hooksBridge),
-					nativeHooksCapabilityRequirements.clearReturnValues,
-				)(token),
-			),
+		setReturnValue: scopeMethod(
+			hooksBridge.setReturnValue.bind(hooksBridge),
+			nativeHooksCapabilityRequirements.setReturnValue,
+		),
+		removeReturnValue: scopeMethod(
+			hooksBridge.removeReturnValue.bind(hooksBridge),
+			nativeHooksCapabilityRequirements.removeReturnValue,
+		),
+		clearReturnValues: scopeMethod(
+			hooksBridge.clearReturnValues.bind(hooksBridge),
+			nativeHooksCapabilityRequirements.clearReturnValues,
+		),
 		remove: (token) => {
 			javaHookTokens.delete(token);
-			unwrapJava(
-				scopeMethod(
-					hooksBridge.remove.bind(hooksBridge),
-					nativeHooksCapabilityRequirements.remove,
-				)(token),
-			);
+			scopeMethod(
+				hooksBridge.remove.bind(hooksBridge),
+				nativeHooksCapabilityRequirements.remove,
+			)(token);
 		},
 	};
 
