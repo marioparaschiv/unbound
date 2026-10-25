@@ -37,7 +37,7 @@
     },
     "apps/web": {
       "name": "@unbound-app/web",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "dependencies": {
         "@base-ui/react": "^1.9.0",
         "@better-auth/api-key": "1.7.10",
@@ -94,7 +94,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.9.0-88e406b33f33781aa28cc8a1a199c77fd3a1b725bc4a982835812c90bd9dbf2d",
+      "version": "0.10.0",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -108,7 +108,7 @@
     },
     "packages/cli": {
       "name": "@unbound-app/cli",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "bin": {
         "ubd": "src/index.ts",
       },
@@ -136,7 +136,7 @@
     },
     "packages/client": {
       "name": "@unbound-app/client",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/debugger-protocol": "workspace:*",
@@ -210,7 +210,7 @@
     },
     "packages/contracts": {
       "name": "@unbound-app/contracts",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "dependencies": {
         "@unbound-app/types": "workspace:*",
         "picomatch": "^4.0.7",
@@ -226,7 +226,7 @@
     },
     "packages/debugger": {
       "name": "@unbound-app/debugger",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "bin": {
         "ub-debugger": "src/index.ts",
       },
@@ -246,7 +246,7 @@
     },
     "packages/debugger-protocol": {
       "name": "@unbound-app/debugger-protocol",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "dependencies": {
         "zod": "^4.0.0",
       },
@@ -788,7 +788,7 @@
     },
     "packages/types": {
       "name": "@unbound-app/types",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "dependencies": {
         "possess": "catalog:",
       },
@@ -801,7 +801,7 @@
     },
     "packages/utils": {
       "name": "@unbound-app/utils",
-      "version": "0.8.4",
+      "version": "0.9.0",
       "dependencies": {
         "@unbound-app/types": "workspace:*",
       },
