@@ -59,7 +59,9 @@ describe('fetchContributorIds', () => {
 
 		github.fail({ status: 500, match: 'marioparaschiv' });
 
-		await expect(fetchContributorIds(github.fetch)).rejects.toThrow('GitHub responded 500');
+		const outcome = await fetchContributorIds(github.fetch).then(() => 'resolved', String);
+
+		expect(outcome).toContain('GitHub responded 500');
 	});
 });
 
