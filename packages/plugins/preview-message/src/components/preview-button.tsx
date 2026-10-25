@@ -114,6 +114,8 @@ function PreviewButton({ channelId, icon }: PreviewButtonProps) {
 				}}
 			>
 				<Pressable
+					accessibilityRole='button'
+					accessibilityLabel='Preview message'
 					onPress={openPreview}
 					onPressIn={() =>
 						Haptics.triggerHapticFeedback?.(Haptics.HapticFeedbackTypes?.IMPACT_LIGHT)
