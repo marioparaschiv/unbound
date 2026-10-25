@@ -26,7 +26,7 @@ describe('serial queue', () => {
 
 		slow.resolve();
 		await first;
-		await expect(failing).rejects.toThrow('task failed');
+		expect(await failing.then(() => 'resolved', String)).toBe('Error: task failed');
 		await last;
 
 		expect(events).toEqual(['first started', 'first done', 'failing started', 'last ran']);

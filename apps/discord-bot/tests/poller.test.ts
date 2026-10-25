@@ -74,11 +74,13 @@ describe.skipIf(!DATABASE_URL)('poller', () => {
 
 	test('stopping the poller waits for the round in flight', async () => {
 		const gate = Promise.withResolvers<void>();
-		const fetchPage: FetchFeedPage = async () => {
+
+		async function fetchPage() {
 			await gate.promise;
 
 			return { items: [], cursor: null, hasMore: false };
-		};
+		}
+
 		const stop = startPoller({ db: database.db, fetchPage, pageSize: 100, intervalMs: 1000 });
 		let stopped = false;
 
