@@ -81,6 +81,42 @@ export const createSubmissionResponseSchema = z.object({
 	submission: submissionSchema,
 });
 
+/**
+ * One first-party addon at a build commit of the first-party repository. Only CI's API key may send
+ * it; the addon is published without review.
+ */
+export const publishFirstPartyRequestSchema = z.object({
+	repository: repositoryInputSchema,
+	path: addonPathSchema,
+	/** The tag or branch holding the build commit; it must still resolve to `commitSha`. */
+	ref: gitRefSchema,
+	commitSha: commitShaSchema,
+});
+
+/** `unchanged` when that version was already published, so a re-run is a no-op. */
+export const firstPartyPublishStatusSchema = z.enum(['published', 'unchanged']);
+
+export const publishFirstPartyResponseSchema = z.object({
+	status: firstPartyPublishStatusSchema,
+	addonId: addonIdSchema,
+	version: z.string(),
+	/** The SHA-256 of the live bundle of that version. */
+	sha256: z.string(),
+});
+
+/** One addon of the first-party repository, delisted or not, at its newest published version. */
+export const firstPartyAddonSchema = z.object({
+	id: addonIdSchema,
+	/** The newest version ever published, rolled back or not, so it is never published again. */
+	version: z.string(),
+	/** The commit that version was read from, or `null` for a legacy upload. */
+	commitSha: z.nullable(z.string()),
+});
+
+export const listFirstPartyAddonsResponseSchema = z.object({
+	addons: z.array(firstPartyAddonSchema),
+});
+
 export type SubmissionKind = z.infer<typeof submissionKindSchema>;
 export type SubmissionStatus = z.infer<typeof submissionStatusSchema>;
 export type OpenSubmissionStatus = z.infer<typeof openSubmissionStatusSchema>;
@@ -90,6 +126,11 @@ export type Submission = z.infer<typeof submissionSchema>;
 export type SubmissionDetailsOverrides = z.infer<typeof submissionDetailsOverridesSchema>;
 export type CreateSubmissionRequest = z.infer<typeof createSubmissionRequestSchema>;
 export type CreateSubmissionResponse = z.infer<typeof createSubmissionResponseSchema>;
+export type PublishFirstPartyRequest = z.infer<typeof publishFirstPartyRequestSchema>;
+export type FirstPartyPublishStatus = z.infer<typeof firstPartyPublishStatusSchema>;
+export type PublishFirstPartyResponse = z.infer<typeof publishFirstPartyResponseSchema>;
+export type FirstPartyAddon = z.infer<typeof firstPartyAddonSchema>;
+export type ListFirstPartyAddonsResponse = z.infer<typeof listFirstPartyAddonsResponseSchema>;
 
 export default {
 	MAX_CHANGELOG_LENGTH,
@@ -102,4 +143,9 @@ export default {
 	submissionDetailsOverridesSchema,
 	createSubmissionRequestSchema,
 	createSubmissionResponseSchema,
+	publishFirstPartyRequestSchema,
+	firstPartyPublishStatusSchema,
+	publishFirstPartyResponseSchema,
+	firstPartyAddonSchema,
+	listFirstPartyAddonsResponseSchema,
 };

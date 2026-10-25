@@ -100,10 +100,11 @@ async function openCommit(
 	github: GitHubClient,
 	repository: string,
 	ref: string | undefined,
+	requirePush: boolean = true,
 ): Promise<OpenedCommit> {
 	const repo = await github.getRepository(repository);
 
-	if (!repo.canPush) {
+	if (requirePush && !repo.canPush) {
 		throw new ApiError(
 			'github_no_push_access',
 			`Your linked GitHub account cannot push to ${repo.repository}.`,
@@ -475,14 +476,21 @@ export async function listRepositoryAddons(
  * @param ctx The application context.
  * @param github The caller's GitHub client.
  * @param request The repository, addon path, ref, commit and detail overrides.
+ * @param requirePush Whether the client must be able to push; first-party publishing is trusted by its credential instead.
  * @returns The source, its bytes verified against git's blob ids.
  */
 export async function readAddonSource(
 	ctx: AppContext,
 	github: GitHubClient,
 	request: CreateSubmissionRequest,
+	requirePush: boolean = true,
 ): Promise<AddonSource> {
-	const { repo, commitSha } = await openCommit(github, request.repository, request.ref);
+	const { repo, commitSha } = await openCommit(
+		github,
+		request.repository,
+		request.ref,
+		requirePush,
+	);
 	const { repository } = repo;
 	const { path } = request;
 

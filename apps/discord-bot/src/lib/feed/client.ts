@@ -14,7 +14,7 @@ export type FetchFeedPage = <K extends FeedName>(
  * @description Creates the fetcher for the web's bot feed endpoints.
  * @param baseUrl The web origin, `UNBOUND_API_URL`.
  * @param apiKey The bot's API key, `UNBOUND_API_KEY`.
- * @returns `fetchFeedPage(feed, after, limit)`, which throws on a non-2xx response.
+ * @returns `fetchFeedPage(feed, after, limit)`, which throws on a non-2xx response or a page that fails its contract schema.
  */
 export function createFeedClient(baseUrl: string, apiKey: string): FetchFeedPage {
 	return async function fetchFeedPage<K extends FeedName>(
@@ -36,7 +36,15 @@ export function createFeedClient(baseUrl: string, apiKey: string): FetchFeedPage
 			throw new Error(`Feed ${feed} responded ${response.status} ${response.statusText}.`);
 		}
 
-		return (await response.json()) as FeedPage<FeedItems[K]>;
+		const result = feeds[feed].schema.safeParse(await response.json());
+
+		if (!result.success) {
+			throw new Error(
+				`Feed ${feed} returned a page that does not match its contract: ${result.error.message}`,
+			);
+		}
+
+		return result.data;
 	};
 }
 

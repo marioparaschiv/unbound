@@ -13,6 +13,7 @@ import { and, count, eq, gte, inArray, ne } from 'drizzle-orm';
 import { addon, addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
 import type { AddonSource } from '~/lib/addon-source';
+import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Transaction } from '~/db/database';
@@ -239,6 +240,38 @@ function checkClaim(
 	return { kind: approved ? 'update' : 'listing', replaced };
 }
 
+/**
+ * @description Stores the GitHub source a submission was read from.
+ * @param tx The transaction that inserts the submission.
+ * @param submissionId The submission's id.
+ * @param source The addon source.
+ * @returns The stored source row.
+ */
+export function insertSubmissionSource(
+	tx: Transaction,
+	submissionId: string,
+	source: AddonSource,
+): SubmissionSourceRow {
+	const { pin } = source;
+
+	return tx
+		.insert(submissionSource)
+		.values({
+			submissionId,
+			repositoryId: pin.repositoryId,
+			path: pin.path,
+			ref: pin.ref,
+			commitSha: pin.commitSha,
+			bundlePath: pin.bundlePath,
+			bundleBlobSha: pin.bundleBlobSha,
+			addonMd: source.addonMd,
+			changelog: source.changelog,
+			details: source.details,
+		})
+		.returning()
+		.get();
+}
+
 function reserve(
 	ctx: AppContext,
 	caller: Caller,
@@ -279,22 +312,20 @@ function reserve(
 				.returning()
 				.get();
 
-			const row = tx
-				.insert(submissionSource)
-				.values({
+			const row = insertSubmissionSource(tx, staged.id, source);
+
+			appendEvent(tx, {
+				subject: { type: 'addon', id: manifest.id },
+				actorId: caller.user.id,
+				at: now,
+				kind: 'submission.created',
+				data: {
 					submissionId: staged.id,
-					repositoryId: pin.repositoryId,
-					path: pin.path,
-					ref: pin.ref,
-					commitSha: pin.commitSha,
-					bundlePath: pin.bundlePath,
-					bundleBlobSha: pin.bundleBlobSha,
-					addonMd: source.addonMd,
-					changelog: source.changelog,
-					details: source.details,
-				})
-				.returning()
-				.get();
+					submissionKind: kind,
+					version: manifest.version,
+					supersededId: replaced?.id ?? null,
+				},
+			});
 
 			return {
 				created: {
@@ -398,6 +429,7 @@ export default {
 	REPLACEABLE_SUBMISSION_STATUSES,
 	requireSourced,
 	toSubmission,
+	insertSubmissionSource,
 	createSubmission,
 	previewSubmission,
 };
