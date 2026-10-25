@@ -1,5 +1,5 @@
 import type { APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
-import { DiscordAPIError, RESTJSONErrorCodes, Routes } from 'discord.js';
+import { Routes } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
@@ -38,10 +38,6 @@ function truncate(text: string, max: number) {
 	return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
 
-function isUnknownMessage(error: unknown): error is DiscordAPIError {
-	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMessage;
-}
-
 function isPlatform(value: string): value is LoaderPlatform {
 	return Object.hasOwn(PLATFORM_NAMES, value);
 }
@@ -67,6 +63,10 @@ function parseKey(payload: string): ReleaseKey | undefined {
 	return { platform, version: payload.slice(separator + 1) };
 }
 
+function releaseTitle(release: ReleaseRow) {
+	return `Unbound for ${PLATFORM_NAMES[release.platform]} ${release.version}`;
+}
+
 /**
  * @description Renders a loader release announcement that pings only the releases role.
  * @param release The release row.
@@ -81,7 +81,7 @@ export function renderRelease(
 		content: `<@&${roleId}>`,
 		embeds: [
 			{
-				title: `Unbound for ${PLATFORM_NAMES[release.platform]} ${release.version}`,
+				title: releaseTitle(release),
 				url: release.url,
 				description: release.changelog
 					? truncate(release.changelog, DESCRIPTION_LIMIT)
@@ -94,19 +94,9 @@ export function renderRelease(
 	};
 }
 
-async function deleteMessage(rest: REST, channelId: string, messageId: string) {
-	try {
-		await rest.delete(Routes.channelMessage(channelId, messageId));
-	} catch (error) {
-		if (!isUnknownMessage(error)) {
-			throw error;
-		}
-	}
-}
-
-async function ownMessagesAfter(rest: REST, channelId: string, selfId: string, after: string) {
+async function ownMessages(rest: REST, channelId: string, selfId: string) {
 	const own: APIMessage[] = [];
-	let cursor = after;
+	let cursor = '0';
 	let page: APIMessage[];
 
 	do {
@@ -120,34 +110,24 @@ async function ownMessagesAfter(rest: REST, channelId: string, selfId: string, a
 	return own.sort(oldestFirst);
 }
 
-// Posts are serial and a crash stops all posting until the startup reconcile, so an announcement
-// posted without its id being stored is one of ours newer than every stored id in the channel.
+// Our listed announcement whose title names an unannounced release lost its id write, so it is
+// adopted. Nothing here is ever deleted: its ping already happened.
 async function adoptOrphans(db: Database, rest: REST, selfId: string, target: ReleaseTarget) {
-	const releases = await db.select().from(loaderRelease);
-	const unannounced = new Map(
-		releases.filter((row) => !row.messageId).map((row) => [row.url, row]),
-	);
-	const after = newest(
-		releases.flatMap((row) =>
-			row.channelId === target.channelId && row.messageId ? [row.messageId] : [],
-		),
-	);
+	const unannounced = await db
+		.select()
+		.from(loaderRelease)
+		.where(isNull(loaderRelease.messageId));
+	const byTitle = new Map(unannounced.map((row) => [releaseTitle(row), row]));
 
-	for (const message of await ownMessagesAfter(rest, target.channelId, selfId, after)) {
-		const url = message.embeds[0]?.url;
-		const release = url ? unannounced.get(url) : undefined;
+	for (const message of await ownMessages(rest, target.channelId, selfId)) {
+		const title = message.embeds[0]?.title;
+		const release = title ? byTitle.get(title) : undefined;
 
-		// With no stored id the scan starts at the channel's beginning, where an unmatched message
-		// predates this bot's rows (an old bot, a manual post), so only a later one is deleted.
-		if (!url || !release) {
-			if (after !== '0') {
-				await deleteMessage(rest, target.channelId, message.id);
-			}
-
+		if (!title || !release) {
 			continue;
 		}
 
-		unannounced.delete(url);
+		byTitle.delete(title);
 		await db
 			.update(loaderRelease)
 			.set({ channelId: target.channelId, messageId: message.id })

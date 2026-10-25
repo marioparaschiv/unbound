@@ -143,23 +143,25 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		expect(discord.messages('21')).toHaveLength(2);
 	});
 
-	test('reconcile deletes our unmatched messages and leaves other authors alone', async () => {
+	test('reconcile never deletes a message in the releases channel', async () => {
 		await ingest(RELEASE);
 		await handle(RELEASE);
 
-		const stale = discord.seed('21', discord.selfId, { embeds: [{ url: 'https://gone' }] });
-		const human = discord.seed('21', '42', { content: 'when android' });
+		const [announced] = discord.messages('21');
+
+		discord.seed('21', discord.selfId, { embeds: announced?.embeds ?? [] });
+		discord.seed('21', discord.selfId, { embeds: [{ url: 'https://gone' }] });
+		discord.seed('21', '42', { content: 'when android' });
 
 		await reconcile();
 
-		const ids = discord.messages('21').map((message) => message.id);
-
-		expect(ids).toContain(human);
-		expect(ids).not.toContain(stale);
+		expect(discord.messages('21')).toHaveLength(4);
+		expect(discord.requests.map((request) => request.method)).not.toContain('DELETE');
 		expect(posts()).toHaveLength(1);
+		expect(await rowOf(RELEASE)).toMatchObject({ messageId: announced?.id });
 	});
 
-	test('reconcile keeps our unmatched messages in a channel it has never posted in', async () => {
+	test('reconcile keeps an old bot message that names no release', async () => {
 		const old = discord.seed('21', discord.selfId, { embeds: [{ url: 'https://old-bot' }] });
 
 		await ingest(RELEASE);
@@ -189,24 +191,49 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 
 	// The fake Discord's POST handler ends the announcer's own database client before it responds,
 	// so the real post lands and the id write after it fails.
-	test('a crash between the post and the id write converges on reconcile', async () => {
+	async function crashAnnounce(item: ReleaseFeedItem) {
 		const crashing = createDatabase(database.url);
 
-		await ingest(RELEASE);
 		discord.beforePostResponse = () => crashing.$client.end();
+
 		const outcome = await announceRelease(
 			crashing,
 			discord.rest,
-			`ios:${RELEASE.version}`,
+			`${item.platform}:${item.version}`,
 			TARGET,
 		).then(
 			() => 'announced',
 			() => 'failed',
 		);
 
-		expect(outcome).toBe('failed');
 		discord.beforePostResponse = undefined;
 
+		return outcome;
+	}
+
+	test('announcements that lost their id writes are adopted by release, not by a shared url', async () => {
+		const next = { ...ANDROID, version: '1.2.5', publishedAt: '2026-09-02T00:00:00.000Z' };
+
+		await ingest(ANDROID, next);
+
+		expect(await crashAnnounce(ANDROID)).toBe('failed');
+		expect(await crashAnnounce(next)).toBe('failed');
+
+		await reconcile();
+
+		const titles = discord.messages('21').map((message) => message.embeds[0]?.title);
+		const [first, second] = discord.messages('21');
+
+		expect(titles).toEqual(['Unbound for Android 1.2.4', 'Unbound for Android 1.2.5']);
+		expect(posts()).toHaveLength(2);
+		expect((await rowOf(ANDROID))?.messageId).toBe(first?.id);
+		expect((await rowOf(next))?.messageId).toBe(second?.id);
+	});
+
+	test('a crash between the post and the id write converges on reconcile', async () => {
+		await ingest(RELEASE);
+
+		expect(await crashAnnounce(RELEASE)).toBe('failed');
 		expect(discord.messages('21')).toHaveLength(1);
 		expect((await rowOf(RELEASE))?.messageId).toBeNull();
 
