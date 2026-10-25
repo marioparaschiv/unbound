@@ -27,8 +27,6 @@ export const NATIVE_PLUGIN_CAPABILITIES = [
 	'native.ui.lookup',
 	'native.ui.mount',
 	'native.ui.layout',
-	'native.media.pick',
-	'native.media.access',
 ] as const;
 
 export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
@@ -528,28 +526,6 @@ export type NativeUIBridge = {
 	unmount(handle: NativeUIHandle): NativeCancelablePromise<void>;
 };
 
-export type NativeMediaAsset = {
-	uri: string;
-	fileName: string;
-	mimeType: string;
-	fileSize: number;
-	width?: number;
-	height?: number;
-	duration?: number;
-};
-
-export type NativeMediaPickerOptions = {
-	mediaTypes: ('image' | 'video')[];
-	maximumSelectionCount?: number;
-};
-
-export type NativeMediaBridge = {
-	pick(options: NativeMediaPickerOptions): NativeCancelablePromise<NativeMediaAsset[]>;
-	inspect(uri: string): NativeCancelablePromise<NativeMediaAsset>;
-	copy(uri: string, destinationName: string): NativeCancelablePromise<NativeMediaAsset>;
-	read(uri: string, maximumBytes: number): NativeCancelablePromise<ArrayBuffer>;
-};
-
 export type NativePlatformDevice = {
 	readonly platform: NativePluginPlatform;
 	getDeviceModel(): string;
@@ -594,7 +570,6 @@ export type NativePluginBridge = {
 	readonly java: NativeJavaBridge;
 	readonly hooks: NativeJavaHooksBridge;
 	readonly debug: NativeDebugBridge;
-	readonly media: NativeMediaBridge;
 };
 
 export type NativePluginRuntimeBridge = Pick<

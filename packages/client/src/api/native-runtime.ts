@@ -10,7 +10,6 @@ import type {
 	NativeDebugBridge,
 	NativeJavaHooksBridge,
 	NativeJavaHookToken,
-	NativeMediaBridge,
 	NativeHookHandlers,
 	NativeHookOptions,
 	NativeHookToken,
@@ -56,9 +55,6 @@ export type {
 	NativeHookHandlers,
 	NativeHookOptions,
 	NativeHookToken,
-	NativeMediaAsset,
-	NativeMediaBridge,
-	NativeMediaPickerOptions,
 	NativeObjCBridge,
 	NativeObjectHandle,
 	NativePlatformBridge,
@@ -260,10 +256,6 @@ const capabilityRequirements: Record<string, NativePluginCapability> = {
 	fabricMeasureAsync: 'native.fabric.async',
 	fabricUnmountAsync: 'native.fabric.async',
 	subscribe: 'native.runtime.events',
-	pickMedia: 'native.media.pick',
-	inspectMedia: 'native.media.access',
-	copyMedia: 'native.media.access',
-	readMedia: 'native.media.access',
 };
 
 const nativeUICapabilityRequirements: Record<keyof NativeUIBridge, NativePluginCapability> = {
@@ -448,7 +440,6 @@ function unavailableNativePlugin() {
 		{ get: () => unavailableMethod },
 	) as NativeJavaHooksBridge;
 	const unavailableDebug = new Proxy({}, { get: () => unavailableMethod }) as NativeDebugBridge;
-	const unavailableMedia = new Proxy({}, { get: () => unavailableMethod }) as NativeMediaBridge;
 
 	return {
 		apiVersion: '0.0.0',
@@ -462,7 +453,6 @@ function unavailableNativePlugin() {
 		java: unavailableJava,
 		hooks: unavailableHooks,
 		debug: unavailableDebug,
-		media: unavailableMedia,
 	};
 }
 
@@ -800,7 +790,6 @@ function createScopedNativePlugin(
 	const javaBridge = bridge.java ?? fallbackBridge.java;
 	const hooksBridge = bridge.hooks ?? fallbackBridge.hooks;
 	const debugBridge = bridge.debug ?? fallbackBridge.debug;
-	const mediaBridge = bridge.media ?? fallbackBridge.media;
 	const tokens = new Set<NativeHookToken>();
 	const surfaces = new Set<NativeFabricSurface>();
 	const uiSurfaces = new Set<NativeUIHandle>();
@@ -1330,29 +1319,6 @@ function createScopedNativePlugin(
 		},
 	};
 
-	const media: NativeMediaBridge = {
-		pick: scopeAsyncMethod(
-			mediaBridge.pick?.bind(mediaBridge),
-			capabilityRequirements.pickMedia,
-			'Native media picking is unavailable.',
-		),
-		inspect: scopeAsyncMethod(
-			mediaBridge.inspect?.bind(mediaBridge),
-			capabilityRequirements.inspectMedia,
-			'Native media inspection is unavailable.',
-		),
-		copy: scopeAsyncMethod(
-			mediaBridge.copy?.bind(mediaBridge),
-			capabilityRequirements.copyMedia,
-			'Native media copying is unavailable.',
-		),
-		read: scopeAsyncMethod(
-			mediaBridge.read?.bind(mediaBridge),
-			capabilityRequirements.readMedia,
-			'Native media reads are unavailable.',
-		),
-	};
-
 	return {
 		bridge: {
 			apiVersion: bridge.apiVersion,
@@ -1366,7 +1332,6 @@ function createScopedNativePlugin(
 			java,
 			hooks,
 			debug,
-			media,
 		},
 		dispose: () => {
 			if (disposed) return;
