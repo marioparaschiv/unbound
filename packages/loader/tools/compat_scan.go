@@ -46,12 +46,13 @@ type compatPlatformState struct {
 }
 
 type compatResults struct {
-	GeneratedAt string                          `json:"generatedAt"`
-	Channel     string                          `json:"channel,omitempty"`
-	Targets     []*compatTarget                 `json:"targets"`
-	Findings    []compatFinding                 `json:"findings"`
-	Dynamic     map[string]int                  `json:"dynamic"`
-	Platforms   map[string]*compatPlatformState `json:"platforms"`
+	GeneratedAt  string                          `json:"generatedAt"`
+	Channel      string                          `json:"channel,omitempty"`
+	Targets      []*compatTarget                 `json:"targets"`
+	Findings     []compatFinding                 `json:"findings"`
+	Dynamic      map[string]int                  `json:"dynamic"`
+	DynamicSites []compatDynamicSite             `json:"dynamicSites,omitempty"`
+	Platforms    map[string]*compatPlatformState `json:"platforms"`
 }
 
 type stringList []string
@@ -111,6 +112,7 @@ func runCompatScan(args []string) error {
 	results := evaluateCompat(references, targets, baseline)
 	results.Channel = *channel
 	results.Dynamic = sources.dynamic
+	results.DynamicSites = sources.dynamicSites
 	results.GeneratedAt = time.Now().UTC().Format(time.RFC3339)
 
 	report := renderCompatReportWithSource(results, *sourceURL)

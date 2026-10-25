@@ -58,9 +58,16 @@ func (reference compatReference) platforms() []string {
 	return []string{"ios", "android"}
 }
 
+type compatDynamicSite struct {
+	Component string         `json:"component"`
+	Call      string         `json:"call"`
+	Location  compatLocation `json:"location"`
+}
+
 type compatSourceSet struct {
-	references map[string]*compatReference
-	dynamic    map[string]int
+	references   map[string]*compatReference
+	dynamic      map[string]int
+	dynamicSites []compatDynamicSite
 }
 
 func newCompatSourceSet() *compatSourceSet {
@@ -539,7 +546,11 @@ func stringArgument(arguments []compatValue, position int) (string, bool) {
 func extractScriptReferences(set *compatSourceSet, file compatSourceFile, tokens []compatToken, scope compatScope) {
 	base := compatReference{Component: file.component, Platform: file.platform}
 	location := func(line int) compatLocation { return compatLocation{File: file.path, Line: line} }
-	dynamic := func() { set.dynamic[file.component]++ }
+	var call string
+	dynamic := func(line int) {
+		set.dynamic[file.component]++
+		set.dynamicSites = append(set.dynamicSites, compatDynamicSite{Component: file.component, Call: call, Location: location(line)})
+	}
 
 	for index, token := range tokens {
 		if token.kind == tokenString {
@@ -578,11 +589,15 @@ func extractScriptReferences(set *compatSourceSet, file compatSourceFile, tokens
 		}
 		arguments := readCallArguments(tokens, index+1, scope)
 		reference := base
+		call = token.value
+		if owner != "" {
+			call = owner + "." + token.value
+		}
 
 		if kind, ok := scriptLookupCalls[token.value]; ok {
 			values, ok := leadingStrings(arguments)
 			if !ok {
-				dynamic()
+				dynamic(token.line)
 				continue
 			}
 			reference.Kind = kind
@@ -611,7 +626,7 @@ func extractScriptReferences(set *compatSourceSet, file compatSourceFile, tokens
 				reference.Kind, reference.Name = referenceObjCClass, name
 				set.add(reference, location(token.line))
 			} else {
-				dynamic()
+				dynamic(token.line)
 			}
 		case "objc.hook":
 			class, classOK := stringArgument(arguments, 0)
@@ -623,48 +638,48 @@ func extractScriptReferences(set *compatSourceSet, file compatSourceFile, tokens
 				classReference.Kind, classReference.Name, classReference.Strict = referenceObjCClass, class, true
 				set.add(classReference, location(token.line))
 			} else {
-				dynamic()
+				dynamic(token.line)
 			}
 		case "objc.invoke", "objc.invokeAsync", "objc.call", "objc.respondsTo":
 			if selector, ok := stringArgument(arguments, 1); ok {
 				reference.Kind, reference.Name = referenceObjCMethod, selector
 				set.add(reference, location(token.line))
 			} else {
-				dynamic()
+				dynamic(token.line)
 			}
 		case "objc.getIvar", "objc.setIvar":
 			if name, ok := stringArgument(arguments, 1); ok {
 				reference.Kind, reference.Name = referenceObjCIvar, name
 				set.add(reference, location(token.line))
 			} else {
-				dynamic()
+				dynamic(token.line)
 			}
 		case "java.getClass":
 			if name, ok := stringArgument(arguments, 0); ok {
 				reference.Kind, reference.Name = referenceJavaClass, name
 				set.add(reference, location(token.line))
 			} else {
-				dynamic()
+				dynamic(token.line)
 			}
 		case "java.invoke", "java.invokeAsync":
 			if name, ok := stringArgument(arguments, 1); ok {
 				reference.Kind, reference.Name = referenceJavaMethod, name
 				set.add(reference, location(token.line))
 			} else {
-				dynamic()
+				dynamic(token.line)
 			}
 		case "java.getField", "java.setField":
 			if name, ok := stringArgument(arguments, 1); ok {
 				reference.Kind, reference.Name = referenceJavaField, name
 				set.add(reference, location(token.line))
 			} else {
-				dynamic()
+				dynamic(token.line)
 			}
 		case "hooks.hook":
 			class, classOK := stringArgument(arguments, 0)
 			method, methodOK := stringArgument(arguments, 1)
 			if !classOK || !methodOK {
-				dynamic()
+				dynamic(token.line)
 				continue
 			}
 			classReference := base
