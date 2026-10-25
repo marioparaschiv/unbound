@@ -1,20 +1,14 @@
 #include "NativeFFI.h"
 
 #include <dlfcn.h>
-#include <ffi.h>
 
-#include <algorithm>
-#include <cstdint>
-#include <cstring>
-#include <map>
-#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
-#include "NativeFFITypes.h"
-#include "NativeNumericValidation.h"
+#include "NativeAddressValidation.h"
 
 namespace jsi = facebook::jsi;
 
@@ -22,95 +16,20 @@ namespace loader::ffi
 {
     namespace
     {
-        constexpr std::size_t kMaximumArguments = 16;
+        std::mutex          platformMutex;
+        PointerResolver     platformPointerResolver;
+        StructResultFactory platformStructResultFactory;
 
-        class PointerHost final : public jsi::HostObject
+        PointerResolver currentPointerResolver()
         {
-        public:
-            PointerHost(void *value, bool callable) : value_(value), callable_(callable) {}
-
-            void *value() const
-            {
-                return value_;
-            }
-
-            bool callable() const
-            {
-                return callable_;
-            }
-
-        private:
-            void *value_;
-            bool  callable_;
-        };
-
-        struct StructType
-        {
-            ffi_type               type{};
-            std::vector<ffi_type *> elements;
-        };
-
-        std::recursive_mutex                                       structTypeMutex;
-        std::map<const StructLayout *, std::unique_ptr<StructType>> structTypes;
-
-        ffi_type *libffiType(const Type &type);
-
-        ffi_type *structType(const StructLayout *layout)
-        {
-            std::lock_guard<std::recursive_mutex> lock(structTypeMutex);
-            auto                                  existing = structTypes.find(layout);
-            if (existing != structTypes.end())
-            {
-                return &existing->second->type;
-            }
-
-            auto created = std::make_unique<StructType>();
-            for (const StructField &field : layout->fields)
-            {
-                created->elements.push_back(libffiType(field.type));
-            }
-            created->elements.push_back(nullptr);
-            created->type.type      = FFI_TYPE_STRUCT;
-            created->type.elements  = created->elements.data();
-            ffi_type *result        = &created->type;
-            structTypes[layout]     = std::move(created);
-            return result;
+            std::lock_guard<std::mutex> lock(platformMutex);
+            return platformPointerResolver;
         }
 
-        ffi_type *libffiType(const Type &type)
+        StructResultFactory currentStructResultFactory()
         {
-            switch (type.kind)
-            {
-            case Kind::Void:
-                return &ffi_type_void;
-            case Kind::Bool:
-            case Kind::UInt8:
-                return &ffi_type_uint8;
-            case Kind::Int8:
-                return &ffi_type_sint8;
-            case Kind::Int16:
-                return &ffi_type_sint16;
-            case Kind::UInt16:
-                return &ffi_type_uint16;
-            case Kind::Int32:
-                return &ffi_type_sint32;
-            case Kind::UInt32:
-                return &ffi_type_uint32;
-            case Kind::Int64:
-                return &ffi_type_sint64;
-            case Kind::UInt64:
-                return &ffi_type_uint64;
-            case Kind::Float:
-                return &ffi_type_float;
-            case Kind::Double:
-                return &ffi_type_double;
-            case Kind::CString:
-            case Kind::Pointer:
-                return &ffi_type_pointer;
-            case Kind::Struct:
-                return structType(type.layout);
-            }
-            throw std::invalid_argument("Unsupported native FFI type");
+            std::lock_guard<std::mutex> lock(platformMutex);
+            return platformStructResultFactory;
         }
 
         std::string typeName(jsi::Runtime &runtime, const jsi::Value &value)
@@ -136,23 +55,6 @@ namespace loader::ffi
             throw std::invalid_argument("Native FFI type must be a string or type object");
         }
 
-        Type parseValueType(jsi::Runtime &runtime, const jsi::Value &value)
-        {
-            std::string         name = typeName(runtime, value);
-            std::optional<Type> type = parseType(name);
-            if (!type)
-            {
-                throw std::invalid_argument("Unsupported native FFI type " + name + " on this platform");
-            }
-            return *type;
-        }
-
-        struct Signature
-        {
-            Type              result;
-            std::vector<Type> arguments;
-        };
-
         Signature parseSignature(jsi::Runtime &runtime, const jsi::Value &value)
         {
             if (!value.isObject())
@@ -175,255 +77,257 @@ namespace loader::ffi
                 throw std::invalid_argument("Native FFI signature is missing args");
             }
 
-            Signature  parsed{parseValueType(runtime, result), {}};
-            jsi::Array list = arguments.asObject(runtime).asArray(runtime);
-            if (list.size(runtime) > kMaximumArguments)
-            {
-                throw std::invalid_argument("Native FFI signatures take at most 16 arguments");
-            }
+            jsi::Array        list = arguments.asObject(runtime).asArray(runtime);
+            std::vector<Type> types;
+            types.reserve(list.size(runtime));
             for (std::size_t index = 0; index < list.size(runtime); index++)
             {
-                Type argument = parseValueType(runtime, list.getValueAtIndex(runtime, index));
-                if (argument.kind == Kind::Void)
-                {
-                    throw std::invalid_argument("Native FFI arguments cannot be void");
-                }
-                parsed.arguments.push_back(argument);
+                types.push_back(resolveType(typeName(runtime, list.getValueAtIndex(runtime, index))));
             }
-            return parsed;
+            return makeSignature(resolveType(typeName(runtime, result)), std::move(types));
         }
 
-        std::shared_ptr<PointerHost> pointerHost(jsi::Runtime &runtime, const jsi::Value &value)
+        std::optional<void *> resolvedPointer(jsi::Runtime &runtime, const jsi::Value &value)
+        {
+            if (value.isNull() || value.isUndefined())
+            {
+                return nullptr;
+            }
+            if (auto host = pointerHost(runtime, value))
+            {
+                return host->value();
+            }
+            if (value.isObject())
+            {
+                if (PointerResolver resolver = currentPointerResolver())
+                {
+                    return resolver(runtime, value.asObject(runtime));
+                }
+            }
+            return std::nullopt;
+        }
+
+        NativeValue nativeValue(jsi::Runtime &runtime, const jsi::Value &value, const Type &type);
+
+        NativeValue nativeStruct(jsi::Runtime &runtime, const jsi::Value &value, const Type &type)
         {
             if (!value.isObject())
             {
-                return nullptr;
+                throw std::invalid_argument("Native FFI " + type.layout->name + " argument must be an object");
             }
             jsi::Object object = value.asObject(runtime);
-            if (!object.isHostObject<PointerHost>(runtime))
+            jsi::Value  inner  = object.getProperty(runtime, "value");
+            if (inner.isObject() && object.getProperty(runtime, "name").isString())
             {
-                return nullptr;
+                object = inner.asObject(runtime);
             }
-            return object.getHostObject<PointerHost>(runtime);
-        }
 
-        jsi::Value pointerValue(jsi::Runtime &runtime, void *pointer, bool callable)
-        {
-            if (!pointer)
+            NativeFields fields;
+            fields.reserve(type.layout->fields.size());
+            for (const StructField &field : type.layout->fields)
             {
-                return jsi::Value::null();
-            }
-            return jsi::Object::createFromHostObject(runtime, std::make_shared<PointerHost>(pointer, callable));
-        }
-
-        template <typename T> void store(uint8_t *target, T value)
-        {
-            std::memcpy(target, &value, sizeof(value));
-        }
-
-        template <typename T> T load(const uint8_t *source)
-        {
-            T value;
-            std::memcpy(&value, source, sizeof(value));
-            return value;
-        }
-
-        double numericArgument(jsi::Runtime &runtime, const jsi::Value &value, const Type &type)
-        {
-            if (!value.isNumber() || !validNativeNumericValue(value.getNumber(), type.name))
-            {
-                throw std::invalid_argument("Native FFI " + type.name + " argument is out of range");
-            }
-            return value.getNumber();
-        }
-
-        uint64_t wideArgument(jsi::Runtime &runtime, const jsi::Value &value, const Type &type)
-        {
-            if (value.isBigInt())
-            {
-                jsi::BigInt number = value.getBigInt(runtime);
-                if (type.kind == Kind::Int64)
+                jsi::Value fieldValue = object.getProperty(runtime, field.name.c_str());
+                if (fieldValue.isUndefined())
                 {
-                    if (!number.isInt64(runtime))
-                    {
-                        throw std::invalid_argument("Native FFI i64 argument is out of range");
-                    }
-                    return static_cast<uint64_t>(number.getInt64(runtime));
+                    throw std::invalid_argument("Native FFI " + type.layout->name + " is missing " + field.name);
                 }
-                if (!number.isUint64(runtime))
-                {
-                    throw std::invalid_argument("Native FFI u64 argument is out of range");
-                }
-                return number.getUint64(runtime);
+                fields.push_back(nativeValue(runtime, fieldValue, field.type));
             }
-            double number = numericArgument(runtime, value, type);
-            return type.kind == Kind::Int64 ? static_cast<uint64_t>(static_cast<int64_t>(number))
-                                            : static_cast<uint64_t>(number);
+            return {std::move(fields)};
         }
 
-        void writeValue(jsi::Runtime &runtime, const jsi::Value &value, const Type &type, uint8_t *target,
-                        std::vector<std::string> &strings)
+        NativeValue nativeBigInt(jsi::Runtime &runtime, const jsi::Value &value, const Type &type)
+        {
+            jsi::BigInt number = value.getBigInt(runtime);
+            if (number.isInt64(runtime))
+            {
+                return {number.getInt64(runtime)};
+            }
+            if (number.isUint64(runtime))
+            {
+                return {number.getUint64(runtime)};
+            }
+            throw std::invalid_argument("Native FFI " + type.name + " argument is out of range");
+        }
+
+        NativeValue nativeValue(jsi::Runtime &runtime, const jsi::Value &value, const Type &type)
         {
             switch (type.kind)
             {
-            case Kind::Void:
-                return;
-            case Kind::Bool:
-                if (!value.isBool())
+            case Kind::Struct:
+                return nativeStruct(runtime, value, type);
+            case Kind::Pointer:
+                if (std::optional<void *> pointer = resolvedPointer(runtime, value))
                 {
-                    throw std::invalid_argument("Native FFI boolean argument expected");
+                    return *pointer ? NativeValue{NativeAddress{*pointer}} : NativeValue{};
                 }
-                store<uint8_t>(target, value.getBool() ? 1 : 0);
-                return;
-            case Kind::Int8:
-                store<int8_t>(target, static_cast<int8_t>(numericArgument(runtime, value, type)));
-                return;
-            case Kind::UInt8:
-                store<uint8_t>(target, static_cast<uint8_t>(numericArgument(runtime, value, type)));
-                return;
-            case Kind::Int16:
-                store<int16_t>(target, static_cast<int16_t>(numericArgument(runtime, value, type)));
-                return;
-            case Kind::UInt16:
-                store<uint16_t>(target, static_cast<uint16_t>(numericArgument(runtime, value, type)));
-                return;
-            case Kind::Int32:
-                store<int32_t>(target, static_cast<int32_t>(numericArgument(runtime, value, type)));
-                return;
-            case Kind::UInt32:
-                store<uint32_t>(target, static_cast<uint32_t>(numericArgument(runtime, value, type)));
-                return;
-            case Kind::Int64:
-            case Kind::UInt64:
-                store<uint64_t>(target, wideArgument(runtime, value, type));
-                return;
-            case Kind::Float:
-                store<float>(target, static_cast<float>(numericArgument(runtime, value, type)));
-                return;
-            case Kind::Double:
-                store<double>(target, numericArgument(runtime, value, type));
-                return;
+                throw std::invalid_argument("Native FFI pointer argument expected");
             case Kind::CString:
                 if (value.isNull() || value.isUndefined())
                 {
-                    store<const char *>(target, nullptr);
-                    return;
+                    return {};
                 }
                 if (!value.isString())
                 {
                     throw std::invalid_argument("Native FFI cstring argument expected");
                 }
-                strings.push_back(value.getString(runtime).utf8(runtime));
-                store<const char *>(target, strings.back().c_str());
-                return;
-            case Kind::Pointer:
-                if (value.isNull() || value.isUndefined())
-                {
-                    store<void *>(target, nullptr);
-                    return;
-                }
-                if (auto host = pointerHost(runtime, value))
-                {
-                    store<void *>(target, host->value());
-                    return;
-                }
-                throw std::invalid_argument("Native FFI pointer argument expected");
-            case Kind::Struct:
-            {
-                if (!value.isObject())
-                {
-                    throw std::invalid_argument("Native FFI " + type.layout->name + " argument must be an object");
-                }
-                jsi::Object object = value.asObject(runtime);
-                jsi::Value  inner  = object.getProperty(runtime, "value");
-                if (inner.isObject() && object.getProperty(runtime, "name").isString())
-                {
-                    object = inner.asObject(runtime);
-                }
-                for (const StructField &field : type.layout->fields)
-                {
-                    jsi::Value fieldValue = object.getProperty(runtime, field.name.c_str());
-                    if (fieldValue.isUndefined())
-                    {
-                        throw std::invalid_argument("Native FFI " + type.layout->name + " is missing " + field.name);
-                    }
-                    writeValue(runtime, fieldValue, field.type, target + field.offset, strings);
-                }
-                return;
-            }
-            }
-        }
-
-        jsi::Value readValue(jsi::Runtime &runtime, const Type &type, const uint8_t *source);
-
-        jsi::Value readStruct(jsi::Runtime &runtime, const StructLayout *layout, const uint8_t *source)
-        {
-            jsi::Object fields(runtime);
-            for (const StructField &field : layout->fields)
-            {
-                if (field.type.kind == Kind::Struct)
-                {
-                    fields.setProperty(runtime, field.name.c_str(),
-                                       readStruct(runtime, field.type.layout, source + field.offset));
-                }
-                else
-                {
-                    fields.setProperty(runtime, field.name.c_str(), readValue(runtime, field.type, source + field.offset));
-                }
-            }
-            return fields;
-        }
-
-        jsi::Value readValue(jsi::Runtime &runtime, const Type &type, const uint8_t *source)
-        {
-            switch (type.kind)
-            {
-            case Kind::Void:
-                return jsi::Value::undefined();
+                return {value.getString(runtime).utf8(runtime)};
             case Kind::Bool:
-                return jsi::Value(load<uint8_t>(source) != 0);
-            case Kind::Int8:
-                return jsi::Value(static_cast<double>(load<int8_t>(source)));
-            case Kind::UInt8:
-                return jsi::Value(static_cast<double>(load<uint8_t>(source)));
-            case Kind::Int16:
-                return jsi::Value(static_cast<double>(load<int16_t>(source)));
-            case Kind::UInt16:
-                return jsi::Value(static_cast<double>(load<uint16_t>(source)));
-            case Kind::Int32:
-                return jsi::Value(static_cast<double>(load<int32_t>(source)));
-            case Kind::UInt32:
-                return jsi::Value(static_cast<double>(load<uint32_t>(source)));
-            case Kind::Int64:
-                return jsi::BigInt::fromInt64(runtime, load<int64_t>(source));
-            case Kind::UInt64:
-                return jsi::BigInt::fromUint64(runtime, load<uint64_t>(source));
-            case Kind::Float:
-                return jsi::Value(static_cast<double>(load<float>(source)));
-            case Kind::Double:
-                return jsi::Value(load<double>(source));
-            case Kind::CString:
+                if (!value.isBool())
+                {
+                    throw std::invalid_argument("Native FFI boolean argument expected");
+                }
+                return {value.getBool()};
+            default:
+                break;
+            }
+
+            if (value.isNumber())
             {
-                const char *string = load<const char *>(source);
-                return string ? jsi::Value(jsi::String::createFromUtf8(runtime, string)) : jsi::Value::null();
+                return {value.getNumber()};
             }
-            case Kind::Pointer:
-                return pointerValue(runtime, load<void *>(source), false);
-            case Kind::Struct:
+            if (value.isBigInt() && (type.kind == Kind::Int64 || type.kind == Kind::UInt64))
             {
-                jsi::Object result(runtime);
-                result.setProperty(runtime, "name", jsi::String::createFromUtf8(runtime, type.layout->name));
-                result.setProperty(runtime, "value", readStruct(runtime, type.layout, source));
-                return result;
+                return nativeBigInt(runtime, value, type);
             }
-            }
-            return jsi::Value::undefined();
+            throw std::invalid_argument("Native FFI " + type.name + " argument is out of range");
         }
 
-        bool isLoadedCode(void *address)
+        jsi::Value javaScriptValue(jsi::Runtime &runtime, const Type &type, const NativeValue &value);
+
+        jsi::Object structFields(jsi::Runtime &runtime, const StructLayout &layout, const NativeFields &fields)
         {
-            Dl_info info{};
-            return dladdr(address, &info) != 0 && info.dli_fbase != nullptr;
+            jsi::Object result(runtime);
+            for (std::size_t index = 0; index < layout.fields.size(); index++)
+            {
+                const StructField &field = layout.fields[index];
+                result.setProperty(runtime, field.name.c_str(), javaScriptValue(runtime, field.type, fields[index]));
+            }
+            return result;
+        }
+
+        jsi::Value javaScriptValue(jsi::Runtime &runtime, const Type &type, const NativeValue &value)
+        {
+            if (std::holds_alternative<std::monostate>(value.data))
+            {
+                return type.kind == Kind::Void ? jsi::Value::undefined() : jsi::Value::null();
+            }
+            if (const auto *flag = std::get_if<bool>(&value.data))
+            {
+                return jsi::Value(*flag);
+            }
+            if (const auto *number = std::get_if<double>(&value.data))
+            {
+                return jsi::Value(*number);
+            }
+            if (const auto *number = std::get_if<std::int64_t>(&value.data))
+            {
+                return jsi::BigInt::fromInt64(runtime, *number);
+            }
+            if (const auto *number = std::get_if<std::uint64_t>(&value.data))
+            {
+                return jsi::BigInt::fromUint64(runtime, *number);
+            }
+            if (const auto *string = std::get_if<std::string>(&value.data))
+            {
+                return jsi::String::createFromUtf8(runtime, *string);
+            }
+            if (const auto *address = std::get_if<NativeAddress>(&value.data))
+            {
+                return pointerValue(runtime, address->value, false);
+            }
+            return structFields(runtime, *type.layout, std::get<NativeFields>(value.data));
+        }
+
+        jsi::Value structResult(jsi::Runtime &runtime, const Type &type, const std::uint8_t *source)
+        {
+            if (StructResultFactory factory = currentStructResultFactory())
+            {
+                if (std::optional<jsi::Value> result = factory(runtime, *type.layout, source))
+                {
+                    return std::move(*result);
+                }
+            }
+
+            jsi::Object result(runtime);
+            result.setProperty(runtime, "name", jsi::String::createFromUtf8(runtime, type.layout->name));
+            result.setProperty(runtime, "value", javaScriptValue(runtime, type, decodeValue(type, source)));
+            return result;
+        }
+    }
+
+    void setPointerResolver(PointerResolver resolver)
+    {
+        std::lock_guard<std::mutex> lock(platformMutex);
+        platformPointerResolver = std::move(resolver);
+    }
+
+    void setStructResultFactory(StructResultFactory factory)
+    {
+        std::lock_guard<std::mutex> lock(platformMutex);
+        platformStructResultFactory = std::move(factory);
+    }
+
+    Type resolveType(const std::string &name)
+    {
+        std::optional<Type> type = parseType(name);
+        if (!type)
+        {
+            throw std::invalid_argument("Unsupported native FFI type " + name + " on this platform");
+        }
+        return *type;
+    }
+
+    jsi::Value pointerValue(jsi::Runtime &runtime, void *pointer, bool callable)
+    {
+        if (!pointer)
+        {
+            return jsi::Value::null();
+        }
+        return jsi::Object::createFromHostObject(runtime, std::make_shared<PointerHost>(pointer, callable));
+    }
+
+    std::shared_ptr<PointerHost> pointerHost(jsi::Runtime &runtime, const jsi::Value &value)
+    {
+        if (!value.isObject())
+        {
+            return nullptr;
+        }
+        jsi::Object object = value.asObject(runtime);
+        if (!object.isHostObject<PointerHost>(runtime))
+        {
+            return nullptr;
+        }
+        return object.getHostObject<PointerHost>(runtime);
+    }
+
+    void writeValue(jsi::Runtime &runtime, const jsi::Value &value, const Type &type, std::uint8_t *target,
+                    ArgumentStorage &storage)
+    {
+        if (type.kind == Kind::Extension)
+        {
+            type.codec->write(runtime, value, target, storage);
+            return;
+        }
+        if (type.kind == Kind::Void)
+        {
+            return;
+        }
+        encodeValue(type, nativeValue(runtime, value, type), target, storage);
+    }
+
+    jsi::Value readValue(jsi::Runtime &runtime, const Type &type, const std::uint8_t *source)
+    {
+        switch (type.kind)
+        {
+        case Kind::Void:
+            return jsi::Value::undefined();
+        case Kind::Extension:
+            return type.codec->read(runtime, source);
+        case Kind::Struct:
+            return structResult(runtime, type, source);
+        default:
+            return javaScriptValue(runtime, type, decodeValue(type, source));
         }
     }
 
@@ -466,7 +370,7 @@ namespace loader::ffi
         {
             throw std::invalid_argument("ffi.call expects a pointer handle");
         }
-        if (!host->callable() || !isLoadedCode(host->value()))
+        if (!host->callable() || !isCallableSymbolAddress(host->value()))
         {
             throw std::invalid_argument("ffi.call requires an executable symbol pointer");
         }
@@ -477,31 +381,12 @@ namespace loader::ffi
             throw std::invalid_argument("Native FFI argument count does not match the signature");
         }
 
-        std::vector<std::vector<uint64_t>> storage(signature.arguments.size());
-        std::vector<void *>                values(signature.arguments.size());
-        std::vector<ffi_type *>            types(signature.arguments.size());
-        std::vector<std::string>           strings;
-        strings.reserve(signature.arguments.size() * 4);
+        CallFrame frame(callInterface(signature.result, signature.arguments));
         for (std::size_t index = 0; index < signature.arguments.size(); index++)
         {
-            const Type &type = signature.arguments[index];
-            storage[index].assign((typeSize(type) + sizeof(uint64_t) - 1) / sizeof(uint64_t) + 1, 0);
-            auto *bytes = reinterpret_cast<uint8_t *>(storage[index].data());
-            writeValue(runtime, args[index + 2], type, bytes, strings);
-            values[index] = bytes;
-            types[index]  = libffiType(type);
+            writeValue(runtime, args[index + 2], signature.arguments[index], frame.argument(index), frame.storage());
         }
-
-        ffi_cif cif{};
-        if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, static_cast<unsigned>(types.size()), libffiType(signature.result),
-                         types.data()) != FFI_OK)
-        {
-            throw std::invalid_argument("Native FFI signature could not be prepared");
-        }
-
-        std::vector<uint64_t> result((std::max(typeSize(signature.result), sizeof(ffi_arg)) + 7) / 8 + 1, 0);
-        ffi_call(&cif, reinterpret_cast<void (*)()>(host->value()),
-                 signature.result.kind == Kind::Void ? nullptr : result.data(), values.data());
-        return readValue(runtime, signature.result, reinterpret_cast<const uint8_t *>(result.data()));
+        frame.invoke(host->value());
+        return readValue(runtime, signature.result, frame.result());
     }
 }

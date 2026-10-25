@@ -24,7 +24,7 @@ LIBFFI_OUTPUT := $(THEOS_PROJECT_DIR)/.theos/libffi
 LIBFFI_ARCHIVE := $(LIBFFI_OUTPUT)/libffi.a
 LIBFFI_HEADERS := $(LIBFFI_OUTPUT)/include
 
-$(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp)
+$(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp)
 $(TWEAK_NAME)_CFLAGS = $(COMMON_FLAGS)
 # _CCFLAGS (not _CXXFLAGS) is what Theos applies to C++/Objective-C++ compiles.
 $(TWEAK_NAME)_CCFLAGS = $(COMMON_FLAGS) -I$(LIBFFI_HEADERS) -std=c++20 -fno-cxx-modules
