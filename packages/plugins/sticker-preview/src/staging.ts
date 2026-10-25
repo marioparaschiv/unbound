@@ -6,7 +6,9 @@ type SendHandler = (...args: unknown[]) => unknown;
 type SendableInput = ChatInput & { handleSend: SendHandler };
 type SendHook = { input: SendableInput; original: SendHandler; hooked: SendHandler };
 
-export type SendButtonRef = { current?: { setHasText?: (hasText: boolean) => void } | null };
+type SendButton = { setHasText?: (hasText: boolean) => void };
+
+export type SendButtonRef = { current?: SendButton | null };
 export type Staging = ReturnType<typeof createStaging>;
 
 function canSend(input: ChatInput | undefined): input is SendableInput {
@@ -21,6 +23,7 @@ export function createStaging() {
 	const stickers = createStagedStickers();
 	const sendHooks = new Map<string, SendHook>();
 	const sendButtons = new Map<string, SendButtonRef>();
+	const keptOn = new Map<SendButton, (hasText: boolean) => void>();
 	const pending = new Set<string>();
 	let disposed = false;
 
@@ -32,7 +35,19 @@ export function createStaging() {
 		);
 	}
 
+	function keepOnWhileStaged(channelId: string) {
+		const button = sendButtons.get(channelId)?.current;
+		const original = button?.setHasText;
+
+		if (!button || typeof original !== 'function' || keptOn.has(button)) return;
+
+		keptOn.set(button, original);
+		button.setHasText = (hasText: boolean) =>
+			original.call(button, hasText || (!disposed && stickers.get(channelId).length > 0));
+	}
+
 	function setHasText(channelId: string, hasText: boolean) {
+		keepOnWhileStaged(channelId);
 		sendButtons.get(channelId)?.current?.setHasText?.(hasText);
 	}
 
@@ -84,8 +99,14 @@ export function createStaging() {
 		const input = getInput(channelId);
 
 		hookSend(channelId, input);
-		input?.closeCustomKeyboard?.();
 		input?.showSideActions?.();
+
+		if (typeof input?.openSystemKeyboard === 'function') {
+			input.openSystemKeyboard();
+		} else {
+			input?.closeCustomKeyboard?.();
+		}
+
 		setHasText(channelId, true);
 	}
 
@@ -153,6 +174,9 @@ export function createStaging() {
 
 	function trackSendButton(channelId: string, ref: SendButtonRef) {
 		sendButtons.set(channelId, ref);
+		setTimeout(() => {
+			if (!disposed) keepOnWhileStaged(channelId);
+		}, 0);
 	}
 
 	function dispose() {
@@ -164,6 +188,10 @@ export function createStaging() {
 
 		pending.clear();
 		sendButtons.clear();
+
+		for (const [button, original] of keptOn) button.setHasText = original;
+
+		keptOn.clear();
 	}
 
 	return {

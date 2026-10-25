@@ -3,7 +3,7 @@ import type { RenderTarget } from '@unbound-plugins/shared/react/render-target';
 import type { SendButtonRef, Staging } from '~/staging';
 import { Patcher } from '~/modules';
 
-type SendButtonProps = { channel?: { id?: string } };
+type SendButtonProps = { channel?: { id?: string }; ref?: SendButtonRef };
 
 /**
  * @description Lets the send button send a staged sticker, and keeps its ref so the plugin can update it.
@@ -14,7 +14,7 @@ type SendButtonProps = { channel?: { id?: string } };
 export function patchChatInputSendButton(target: RenderTarget, staging: Staging): () => void {
 	return Patcher.before(target.holder, target.key, ({ args }) => {
 		const props = args[0] as SendButtonProps | undefined;
-		const ref = args[1] as SendButtonRef | undefined;
+		const ref = props?.ref ?? (args[1] as SendButtonRef | undefined);
 		const channelId = props?.channel?.id;
 
 		if (!channelId) return;
