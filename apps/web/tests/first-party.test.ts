@@ -1,19 +1,21 @@
-import type { PublishFirstPartyRequest } from '@unbound-app/contracts/publish';
 import { publishFirstPartyResponseSchema } from '@unbound-app/contracts/publish';
-import { catalogResponseSchema } from '@unbound-app/contracts/addons';
+import type { PublishFirstPartyRequest } from '@unbound-app/contracts/publish';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { eq } from 'drizzle-orm';
 
 import publishFirstPartyEndpoint from '~/endpoints/publish-first-party';
+import { API_KEY_HEADER, createApiClient } from '~/api/client';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createSubmission } from '~/lib/submissions';
-import { API_KEY_HEADER, createApiClient } from '~/api/client';
 import { getArtifactKeys } from '~/lib/artifacts';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
 import type { Caller } from '~/lib/api/caller';
 import { addon, user } from '~/db/schema';
 import type { Api } from '~/api';
+
+import type { GitFixture } from './helpers/github';
 
 import {
 	authRequest,
@@ -23,7 +25,6 @@ import {
 	snowflakeAt,
 } from './helpers/context';
 import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
-import type { GitFixture } from './helpers/github';
 import { failure, serveEndpoints } from './helpers/server';
 import { serveMemoryS3 } from './helpers/memory-s3';
 import { serveGitHub } from './helpers/github';

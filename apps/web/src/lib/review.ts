@@ -11,16 +11,16 @@ import { and, eq } from 'drizzle-orm';
 import { addon, addonMaintainer, addonVersion, submission, user } from '~/db/schema';
 import { LATEST_VERSION, refreshAddonSummary, toAddonSummary } from '~/lib/addons';
 import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
-import { toAddonVersion, writeArtifact } from '~/lib/artifacts';
 import { createGitHubClient, getGitHubToken } from '~/lib/github';
 import { requireSourced, toSubmission } from '~/lib/submissions';
+import { toAddonVersion, writeArtifact } from '~/lib/artifacts';
 import { recordReviewDecision } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
 import { hasPermission } from '~/lib/auth/access';
+import type { Transaction } from '~/db/database';
 import { toVersionKey } from '~/lib/version-key';
 import type { AppContext } from '~/lib/context';
-import type { Transaction } from '~/db/database';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
 
@@ -256,10 +256,10 @@ export function publishVersion(
 		.values(toVersionRow(row, sha256, publishedAt))
 		.run();
 
-	if (row.kind === 'update') {
-		tx.update(addon).set({ repository: row.repository }).where(eq(addon.id, row.addonId)).run();
-		refreshAddonSummary(tx, row.addonId);
-	}
+	if (row.kind !== 'update') return;
+
+	tx.update(addon).set({ repository: row.repository }).where(eq(addon.id, row.addonId)).run();
+	refreshAddonSummary(tx, row.addonId);
 }
 
 /**

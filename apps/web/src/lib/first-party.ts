@@ -7,14 +7,14 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { and, eq, inArray, ne } from 'drizzle-orm';
 
 import { OPEN_SUBMISSION_STATUSES, insertSubmissionSource } from '~/lib/submissions';
-import { addon, addonVersion, submission } from '~/db/schema';
 import { createGitHubClient, getGitHubToken } from '~/lib/github';
 import { recordReviewDecision } from '~/lib/moderation-events';
+import { addon, addonVersion, submission } from '~/db/schema';
 import type { AddonSource } from '~/lib/addon-source';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
-import { writeArtifact } from '~/lib/artifacts';
 import type { Transaction } from '~/db/database';
+import { writeArtifact } from '~/lib/artifacts';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { publishVersion } from '~/lib/review';

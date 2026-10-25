@@ -1,6 +1,6 @@
+import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { formatChangelogText } from '@unbound-app/contracts/changelog';
 import type { AddonVersion } from '@unbound-app/contracts/addons';
-import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { SourcePin } from '@unbound-app/contracts/source';
 
 import type { addonVersion, submissionSource } from '~/db/schema';
