@@ -261,6 +261,16 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		expect(messagesOf(PLUGIN)).toHaveLength(1);
 	});
 
+	test('reconcile keeps our unmatched messages in a channel it has never posted in', async () => {
+		const old = discord.seed('11', discord.selfId, { embeds: [{ url: 'https://old-bot' }] });
+
+		await ingest(PLUGIN);
+		await reconcile();
+
+		expect(discord.messages('11').map((message) => message.id)).toContain(old);
+		expect(messagesOf(PLUGIN)).toHaveLength(1);
+	});
+
 	// The fake Discord's POST handler ends the sync's own database client before it responds, so
 	// the real post lands and the row write after it fails.
 	test('a crash between the post and the row write converges on reconcile', async () => {

@@ -144,8 +144,12 @@ async function adoptOrphans(db: Database, rest: REST, selfId: string, channels: 
 			const url = message.embeds[0]?.url;
 			const addonId = url ? unposted.get(url) : undefined;
 
+			// With no stored id the scan starts at the channel's beginning, where an unmatched message
+			// predates this bot's rows (an old bot, a manual post), so only a later one is deleted.
 			if (!url || !addonId) {
-				await deleteMessage(rest, channelId, message.id);
+				if (after !== '0') {
+					await deleteMessage(rest, channelId, message.id);
+				}
 
 				continue;
 			}

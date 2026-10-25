@@ -144,6 +144,16 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		expect(posts()).toHaveLength(1);
 	});
 
+	test('reconcile keeps our unmatched messages in a channel it has never posted in', async () => {
+		const old = discord.seed('21', discord.selfId, { embeds: [{ url: 'https://old-bot' }] });
+
+		await ingest(RELEASE);
+		await reconcile();
+
+		expect(discord.messages('21').map((message) => message.id)).toContain(old);
+		expect(posts()).toHaveLength(1);
+	});
+
 	// The fake Discord's POST handler ends the announcer's own database client before it responds,
 	// so the real post lands and the id write after it fails.
 	test('a crash between the post and the id write converges on reconcile', async () => {
