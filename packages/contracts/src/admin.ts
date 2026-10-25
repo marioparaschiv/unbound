@@ -70,6 +70,37 @@ export const moderationEventDataSchema = z.discriminatedUnion('kind', [
 	}),
 	z.object({ kind: z.literal('user.unbanned'), data: z.object({}) }),
 	z.object({ kind: z.literal('user.role_set'), data: z.object({ role: z.string() }) }),
+	z.object({
+		kind: z.literal('note.added'),
+		data: z.object({ noteId: z.int(), body: z.string() }),
+	}),
+	z.object({
+		kind: z.literal('note.edited'),
+		data: z.object({ noteId: z.int(), before: z.string(), body: z.string() }),
+	}),
+	z.object({
+		kind: z.literal('note.deleted'),
+		data: z.object({ noteId: z.int(), body: z.string() }),
+	}),
+	z.object({
+		kind: z.literal('submission.created'),
+		data: z.object({
+			submissionId: z.string(),
+			submissionKind: submissionKindSchema,
+			version: semverSchema,
+			/** The author's own submission with changes requested that this one replaced. */
+			supersededId: z.nullable(z.string()),
+		}),
+	}),
+	/** Banning the author cancels each of their open submissions; no user acts. */
+	z.object({
+		kind: z.literal('submission.cancelled'),
+		data: z.object({
+			submissionId: z.string(),
+			submissionKind: submissionKindSchema,
+			version: semverSchema,
+		}),
+	}),
 ]);
 
 export const moderationEventSchema = z.intersection(

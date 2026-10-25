@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { addMaintainer, removeMaintainer, transferAddon } from '~/lib/maintainers';
+import { createStaffNote, deleteStaffNote, editStaffNote } from '~/lib/staff-notes';
 import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { listEvents, queryEvents } from '~/lib/moderation-events';
 import { delistAddon, relistAddon } from '~/lib/addons';
@@ -19,7 +20,13 @@ import { createDatabase } from '~/db/database';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 
-import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
+import {
+	authRequest,
+	createTestContext,
+	linkGitHub,
+	signInWithDiscord,
+	snowflakeAt,
+} from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
 import { commitPlugin, serveGitHub } from './helpers/github';
 import { serveMemoryS3 } from './helpers/memory-s3';
@@ -58,7 +65,7 @@ let users = 0;
 async function signUp(role: Role = 'user') {
 	users += 1;
 
-	const { userId } = await signInWithDiscord(ctx, {
+	const { userId, headers } = await signInWithDiscord(ctx, {
 		id: snowflakeAt(new Date('2020-01-01T00:00:00.000Z')),
 		name: `Member ${users}`,
 		email: `events-${users}@example.com`,
@@ -74,7 +81,7 @@ async function signUp(role: Role = 'user') {
 
 	const caller: Caller = { user: row, via: 'session' };
 
-	return { userId, caller };
+	return { userId, headers, caller };
 }
 
 type Member = Awaited<ReturnType<typeof signUp>>;
@@ -109,7 +116,7 @@ async function timeline(viewer: Member, subject: Subject): Promise<ModerationEve
 	return items;
 }
 
-function rejection(request: Promise<object>): Promise<Error | undefined> {
+function rejection(request: Promise<object | void>): Promise<Error | undefined> {
 	return request.then(
 		() => undefined,
 		(error: Error) => error,
@@ -141,6 +148,7 @@ describe('review decisions', () => {
 		});
 
 		const actor = { id: moderator.userId, name: 'Member 2', image: null };
+		const submitter = { id: author.userId, name: 'Member 1', image: null };
 
 		expect(await timeline(moderator, addonSubject('events.cycle'))).toMatchObject([
 			{
@@ -156,12 +164,108 @@ describe('review decisions', () => {
 				},
 			},
 			{
+				kind: 'submission.created',
+				actor: submitter,
+				reason: null,
+				data: {
+					submissionId: second,
+					submissionKind: 'listing',
+					version: '1.0.0',
+					supersededId: first,
+				},
+			},
+			{
 				kind: 'review.decided',
 				actor,
 				reason: 'Add a README.',
 				createdAt: requestedAt.toISOString(),
 				data: { submissionId: first, decision: 'changes_requested' },
 			},
+			{
+				kind: 'submission.created',
+				actor: submitter,
+				data: { submissionId: first, supersededId: null },
+			},
+		]);
+	});
+});
+
+describe('submissions', () => {
+	test('banning the author cancels each open submission and records it without an actor', async () => {
+		const author = await signUp();
+		const admin = await signUp('admin');
+		const listing = await publish(author, 'events.banned');
+
+		const banned = await authRequest(ctx, '/admin/ban-user', {
+			method: 'POST',
+			headers: admin.headers,
+			body: JSON.stringify({ userId: author.userId, banReason: 'Spam' }),
+		});
+
+		expect(banned.status).toBe(200);
+		expect(await timeline(admin, addonSubject('events.banned'))).toMatchObject([
+			{
+				kind: 'submission.cancelled',
+				actor: null,
+				data: { submissionId: listing, submissionKind: 'listing', version: '1.0.0' },
+			},
+			{ kind: 'submission.created', actor: { id: author.userId } },
+		]);
+	});
+});
+
+describe('staff notes', () => {
+	test('adding, editing and deleting a note each record its body on the subject', async () => {
+		const moderator = await signUp('moderator');
+		const other = await signUp('moderator');
+		const target = await signUp();
+		const subject: Subject = { type: 'user', id: target.userId };
+		const note = await createStaffNote(ctx, moderator.caller, {
+			subject,
+			body: 'Alt account.',
+		});
+
+		const forbidden = { code: 'forbidden' };
+
+		expect(
+			await rejection(editStaffNote(ctx, other.caller, { id: note.id, body: 'Not mine.' })),
+		).toMatchObject(forbidden);
+		await editStaffNote(ctx, moderator.caller, { id: note.id, body: 'Alt of a banned user.' });
+		expect(await rejection(deleteStaffNote(ctx, other.caller, { id: note.id }))).toMatchObject(
+			forbidden,
+		);
+		await deleteStaffNote(ctx, moderator.caller, { id: note.id });
+
+		const actor = { id: moderator.userId };
+
+		expect(await timeline(moderator, subject)).toMatchObject([
+			{
+				kind: 'note.deleted',
+				actor,
+				data: { noteId: note.id, body: 'Alt of a banned user.' },
+			},
+			{
+				kind: 'note.edited',
+				actor,
+				data: { noteId: note.id, before: 'Alt account.', body: 'Alt of a banned user.' },
+			},
+			{ kind: 'note.added', actor, data: { noteId: note.id, body: 'Alt account.' } },
+		]);
+		expect(await timeline(moderator, subject)).toHaveLength(3);
+	});
+
+	test('a note on an addon is recorded on the addon', async () => {
+		const owner = await signUp();
+		const moderator = await signUp('moderator');
+
+		await seedApprovedAddon(ctx, owner.userId, manifest('events.noted'));
+		await createStaffNote(ctx, moderator.caller, {
+			subject: addonSubject('events.noted'),
+			body: 'Watch the bundle size.',
+		});
+
+		expect(await timeline(moderator, addonSubject('events.noted'))).toMatchObject([
+			{ kind: 'note.added', data: { body: 'Watch the bundle size.' } },
 		]);
 	});
 });

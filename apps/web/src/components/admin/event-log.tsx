@@ -35,6 +35,11 @@ type MemberNameProps = {
 
 type ActorNameProps = {
 	actor: UserSummary | null;
+	kind: ModerationEvent['kind'];
+};
+
+type QuotedProps = {
+	text: string;
 };
 
 type MemberChange = {
@@ -44,6 +49,11 @@ type MemberChange = {
 	/** `null` when the change removed them. */
 	to: MaintainerRole | null;
 };
+
+/** Kinds no user performs, so a `null` actor is the platform rather than a deleted user. */
+const SYSTEM_KINDS = new Set<ModerationEvent['kind']>(['submission.cancelled']);
+
+const SUBMISSION_NOUNS = { listing: 'the listing', update: 'the update' } as const;
 
 const DECISION_VERBS = {
 	approved: 'approved',
@@ -85,12 +95,20 @@ function MemberName({ userId, users }: MemberNameProps) {
 	);
 }
 
-function ActorName({ actor }: ActorNameProps) {
+function ActorName({ actor, kind }: ActorNameProps) {
 	if (!actor) {
-		return <span className='font-medium text-foreground'>A deleted user</span>;
+		return (
+			<span className='font-medium text-foreground'>
+				{SYSTEM_KINDS.has(kind) ? 'Unbound' : 'A deleted user'}
+			</span>
+		);
 	}
 
 	return <MemberName userId={actor.id} users={{ [actor.id]: actor }} />;
+}
+
+function Quoted({ text }: QuotedProps) {
+	return <span className='text-foreground break-words whitespace-pre-wrap'>“{text}”</span>;
 }
 
 function describeMemberChange(change: MemberChange, users: Users): ReactNode {
@@ -122,8 +140,7 @@ function EventSummary({ event, users }: EventSummaryProps) {
 
 			return (
 				<>
-					{DECISION_VERBS[decision]}{' '}
-					{submissionKind === 'listing' ? 'the listing' : 'the update'}{' '}
+					{DECISION_VERBS[decision]} {SUBMISSION_NOUNS[submissionKind]}{' '}
 					<span className='font-mono'>{version}</span>
 				</>
 			);
@@ -206,6 +223,54 @@ function EventSummary({ event, users }: EventSummaryProps) {
 				</>
 			);
 		}
+
+		case 'note.added': {
+			return (
+				<>
+					added the note <Quoted text={event.data.body} />
+				</>
+			);
+		}
+
+		case 'note.edited': {
+			return (
+				<>
+					edited a note from <Quoted text={event.data.before} /> to{' '}
+					<Quoted text={event.data.body} />
+				</>
+			);
+		}
+
+		case 'note.deleted': {
+			return (
+				<>
+					deleted the note <Quoted text={event.data.body} />
+				</>
+			);
+		}
+
+		case 'submission.created': {
+			const { submissionKind, version, supersededId } = event.data;
+
+			return (
+				<>
+					submitted {SUBMISSION_NOUNS[submissionKind]}{' '}
+					<span className='font-mono'>{version}</span>
+					{supersededId ? ', replacing the submission with changes requested' : null}
+				</>
+			);
+		}
+
+		case 'submission.cancelled': {
+			const { submissionKind, version } = event.data;
+
+			return (
+				<>
+					cancelled {SUBMISSION_NOUNS[submissionKind]}{' '}
+					<span className='font-mono'>{version}</span> because its author was banned
+				</>
+			);
+		}
 	}
 }
 
@@ -252,7 +317,7 @@ function EventLog({ subject, timeline }: EventLogProps) {
 						/>
 						<div className='flex flex-col flex-1 gap-1.5 min-w-0'>
 							<Text variant='text-sm' color='muted'>
-								<ActorName actor={event.actor} />{' '}
+								<ActorName actor={event.actor} kind={event.kind} />{' '}
 								<EventSummary event={event} users={users} />
 							</Text>
 							<Text variant='text-xs' color='muted'>

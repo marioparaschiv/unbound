@@ -14,6 +14,7 @@ import { addon, addonMaintainer, addonVersion, submission, submissionSource } fr
 import type { SubmissionSourceRow } from '~/lib/artifacts';
 import type { AddonSource } from '~/lib/addon-source';
 import { readAddonSource } from '~/lib/addon-source';
+import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import type { Transaction } from '~/db/database';
 import { getSnowflakeDate } from '~/lib/discord';
@@ -295,6 +296,19 @@ function reserve(
 				})
 				.returning()
 				.get();
+
+			appendEvent(tx, {
+				subject: { type: 'addon', id: manifest.id },
+				actorId: caller.user.id,
+				at: now,
+				kind: 'submission.created',
+				data: {
+					submissionId: staged.id,
+					submissionKind: kind,
+					version: manifest.version,
+					supersededId: replaced?.id ?? null,
+				},
+			});
 
 			return {
 				created: {
