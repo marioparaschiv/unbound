@@ -238,7 +238,7 @@ object Toolbox {
                 if (ok) {
                     Platform.restartApp()
                 } else {
-                    Toast.makeText(activity, "The bundle could not be downloaded.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(activity, message("refetch-failed"), Toast.LENGTH_LONG).show()
                 }
             }
         }.start()
@@ -257,11 +257,11 @@ object Toolbox {
             .setView(input)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Download") { _, _ ->
-                if (NativeBridge.nativeToolbox("custom-bundle", input.text.toString().trim()) == "true") {
+                if (NativeBridge.nativeToolbox("custom-bundle", input.text.toString()) == "true") {
                     shown?.dismiss()
                     Platform.restartApp()
                 } else {
-                    Toast.makeText(activity, "Enter an http or https URL.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(activity, message("custom-bundle-invalid"), Toast.LENGTH_LONG).show()
                 }
             }
             .show()
@@ -277,15 +277,15 @@ object Toolbox {
     private fun openIssue(activity: Activity) {
         val discord = runCatching { activity.packageManager.getPackageInfo(activity.packageName, 0) }.getOrNull()
         val unbound = runCatching { activity.packageManager.getPackageInfo("app.unbound.android", 0) }.getOrNull()
-        val environment = JSONObject()
-            .put("Device", "${Build.MANUFACTURER} ${Build.MODEL}")
-            .put("Android Version", "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
-            .put("Discord Version", "${discord?.versionName} (${discord?.longVersionCode})")
-            .put("Unbound Version", unbound?.versionName ?: "unknown")
-            .put("Emulator", if (Platform.isEmulator()) "Yes" else "No")
+        val facts = JSONObject()
+            .put("device", "${Build.MANUFACTURER} ${Build.MODEL}")
+            .put("osVersion", "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
+            .put("discordVersion", "${discord?.versionName} (${discord?.longVersionCode})")
+            .put("unboundVersion", unbound?.versionName ?: "")
+            .put("virtualDevice", Platform.isEmulator())
         val url = NativeBridge.nativeToolbox(
             "issue-url",
-            JSONObject().put("environment", environment).toString(),
+            JSONObject().put("facts", facts).toString(),
         ) ?: return
 
         runCatching {
@@ -294,6 +294,8 @@ object Toolbox {
             Toast.makeText(activity, "No browser can open GitHub.", Toast.LENGTH_LONG).show()
         }
     }
+
+    private fun message(key: String): String = NativeBridge.nativeToolbox("message", key).orEmpty()
 
     private fun dp(context: Context, value: Int): Int =
         (value * context.resources.displayMetrics.density).toInt()

@@ -6,6 +6,7 @@
 #include <system_error>
 
 #include "LoaderFiles.h"
+#include "LoaderLog.h"
 
 namespace loader::toolbox
 {
@@ -115,8 +116,20 @@ namespace loader::toolbox
         }
     }
 
-    bool useCustomBundle(SettingsStore &settings, const std::string &url)
+    static std::string trimmed(const std::string &value)
     {
+        const auto first = value.find_first_not_of(" \t\r\n");
+        if (first == std::string::npos)
+        {
+            return "";
+        }
+        const auto last = value.find_last_not_of(" \t\r\n");
+        return value.substr(first, last - first + 1);
+    }
+
+    bool useCustomBundle(SettingsStore &settings, const std::string &input)
+    {
+        const std::string url    = trimmed(input);
         const std::string scheme = lowercase(url.substr(0, url.find("://")));
 
         if ((scheme != "https" && scheme != "http") || url.find("://") == std::string::npos ||
@@ -137,6 +150,135 @@ namespace loader::toolbox
         settings.set("unbound", "recovery", enabled);
         settings.save();
         return enabled;
+    }
+
+    bool refetchBundle(BundleUpdater &updater, const std::optional<std::string> &updateURL,
+                       uint32_t bytecodeVersion)
+    {
+        try
+        {
+            return fileExists(updater.downloadBundle(updater.resolveBundlePath(), updateURL, bytecodeVersion));
+        }
+        catch (const std::exception &error)
+        {
+            log(LogLevel::Error, "updater", std::string("Refetching the bundle failed: ") + error.what());
+            return false;
+        }
+    }
+
+    static std::string flag(bool value)
+    {
+        return value ? "true" : "false";
+    }
+
+    std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFacts &facts)
+    {
+        const auto known = [](const std::string &value) { return value.empty() ? std::string("unknown") : value; };
+        std::vector<std::pair<std::string, std::string>> rows = {
+            {"Device", known(facts.device)},
+            {facts.platform + " Version", known(facts.osVersion)},
+            {"Discord Version", known(facts.discordVersion)},
+            {"Unbound Version", known(facts.unboundVersion)},
+        };
+
+        if (!facts.appSource.empty())
+        {
+            rows.emplace_back("App Source", facts.appSource);
+        }
+        if (!facts.registration.empty())
+        {
+            rows.emplace_back("App Registration", facts.registration);
+        }
+        rows.emplace_back("Virtual Device", facts.virtualDevice ? "Yes" : "No");
+        return rows;
+    }
+
+    static std::string text(const nlohmann::json &object, const char *key)
+    {
+        const auto value = object.find(key);
+        return value != object.end() && value->is_string() ? value->get<std::string>() : std::string();
+    }
+
+    static IssueReport issueReportFrom(const std::string &platform, const std::string &argument)
+    {
+        const nlohmann::json input = nlohmann::json::parse(argument, nullptr, false);
+        const nlohmann::json facts =
+            input.is_object() && input.contains("facts") && input["facts"].is_object() ? input["facts"]
+                                                                                       : nlohmann::json::object();
+        IssueReport report{platform,
+                           issueEnvironment({platform, text(facts, "device"), text(facts, "osVersion"),
+                                             text(facts, "discordVersion"), text(facts, "unboundVersion"),
+                                             text(facts, "appSource"), text(facts, "registration"),
+                                             facts.value("virtualDevice", false)}),
+                           {}};
+
+        const auto attachments = input.is_object() ? input.find("attachments") : input.end();
+        if (input.is_object() && attachments != input.end() && attachments->is_array())
+        {
+            for (const auto &entry : *attachments)
+            {
+                if (entry.is_array() && entry.size() == 2 && entry[0].is_string() && entry[1].is_string())
+                {
+                    report.attachments.emplace_back(entry[0].get<std::string>(), entry[1].get<std::string>());
+                }
+            }
+        }
+        return report;
+    }
+
+    std::string perform(ToolboxContext &context, const std::string &action, const std::string &argument)
+    {
+        if (action == "wipe")
+        {
+            const auto kind = addonKindNamed(argument);
+            return flag(kind && wipeAddons(context.documents, *kind));
+        }
+        if (action == "factory-reset")
+        {
+            return flag(factoryReset(context.documents));
+        }
+        if (action == "delete-bundle")
+        {
+            deleteBundle(context.settings, context.updater, context.documents);
+            return flag(true);
+        }
+        if (action == "custom-bundle")
+        {
+            return flag(useCustomBundle(context.settings, argument));
+        }
+        if (action == "toggle-recovery")
+        {
+            return flag(toggleRecovery(context.settings));
+        }
+        if (action == "refetch-bundle")
+        {
+            return flag(refetchBundle(context.updater, context.updateURL ? context.updateURL() : std::nullopt,
+                                      context.bytecodeVersion ? context.bytecodeVersion() : 0));
+        }
+        if (action == "settings")
+        {
+            return context.settings.serialize();
+        }
+        if (action == "replace-settings")
+        {
+            return flag(context.settings.replace(argument) && context.settings.save());
+        }
+        if (action == "issue-url")
+        {
+            return issueURL(issueReportFrom(context.platform, argument));
+        }
+        if (action == "message")
+        {
+            if (argument == "refetch-failed")
+            {
+                return kRefetchFailedMessage;
+            }
+            if (argument == "custom-bundle-invalid")
+            {
+                return kCustomBundleInvalidText;
+            }
+        }
+        return "";
     }
 
     std::string issueBody(const IssueReport &report)

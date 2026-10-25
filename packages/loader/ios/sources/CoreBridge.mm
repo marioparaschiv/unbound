@@ -3,6 +3,7 @@
 #include <streambuf>
 
 #import "CoreBridge.h"
+#import "FileSystem.h"
 #import "Logger.h"
 #import "SettingsCore.h"
 #import "UpdaterCore.h"
@@ -28,21 +29,6 @@ static NSMutableArray *mutableArrayFromJSON(const nlohmann::json &value)
                                                      options:NSJSONReadingMutableContainers
                                                        error:nil];
     return [parsed isKindOfClass:[NSMutableArray class]] ? parsed : [NSMutableArray array];
-}
-
-static std::vector<std::pair<std::string, std::string>> pairsFromArray(NSArray<NSArray<NSString *> *> *rows)
-{
-    std::vector<std::pair<std::string, std::string>> pairs;
-
-    for (NSArray<NSString *> *row in rows)
-    {
-        if (row.count == 2)
-        {
-            pairs.emplace_back(toStdString(row[0]), toStdString(row[1]));
-        }
-    }
-
-    return pairs;
 }
 
 static LogLevel iosLogLevel(loader::LogLevel level)
@@ -145,42 +131,26 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
     return mutableArrayFromJSON(loader::scanFonts(toStdString(documents), resolveName));
 }
 
-+ (BOOL)wipeAddonsNamed:(NSString *)kind in:(NSString *)documents
++ (NSString *)toolbox:(NSString *)action argument:(NSString *)argument
 {
-    auto candidate = loader::toolbox::addonKindNamed(toStdString(kind));
-    return candidate && loader::toolbox::wipeAddons(toStdString(documents), *candidate);
+    loader::toolbox::ToolboxContext context{UnboundSettingsStore(),
+                                            UnboundBundleUpdater(),
+                                            toStdString(FileSystem.documents),
+                                            "iOS",
+                                            [] { return UnboundUpdateURL(); },
+                                            [] { return [CoreBridge mainBundleBytecodeVersion]; }};
+    std::string result = loader::toolbox::perform(context, toStdString(action), toStdString(argument));
+    return [NSString stringWithUTF8String:result.c_str()] ?: @"";
 }
 
-+ (BOOL)factoryResetIn:(NSString *)documents
++ (BOOL)toolboxSucceeded:(NSString *)action argument:(NSString *)argument
 {
-    return loader::toolbox::factoryReset(toStdString(documents));
+    return [[self toolbox:action argument:argument] isEqualToString:@"true"];
 }
 
-+ (void)deleteBundleIn:(NSString *)documents
++ (NSString *)toolboxMessage:(NSString *)key
 {
-    loader::toolbox::deleteBundle(UnboundSettingsStore(), UnboundBundleUpdater(), toStdString(documents));
-}
-
-+ (BOOL)useCustomBundle:(NSString *)url
-{
-    return loader::toolbox::useCustomBundle(UnboundSettingsStore(), toStdString(url));
-}
-
-+ (BOOL)toggleRecovery
-{
-    return loader::toolbox::toggleRecovery(UnboundSettingsStore());
-}
-
-+ (NSString *)issueURLForPlatform:(NSString *)platform
-                      environment:(NSArray<NSArray<NSString *> *> *)environment
-                      attachments:(NSArray<NSArray<NSString *> *> *)attachments
-{
-    loader::toolbox::IssueReport report;
-    report.platform    = toStdString(platform);
-    report.environment = pairsFromArray(environment);
-    report.attachments = pairsFromArray(attachments);
-
-    return [NSString stringWithUTF8String:loader::toolbox::issueURL(report).c_str()] ?: @"";
+    return [self toolbox:@"message" argument:key];
 }
 
 @end

@@ -53,7 +53,7 @@ static NSString *const kRecoveryShortcutType = @"app.unbound.recovery.toggle";
 
 + (BOOL)toggleSafeMode
 {
-    BOOL enabled = [CoreBridge toggleRecovery];
+    BOOL enabled = [CoreBridge toolboxSucceeded:@"toggle-recovery" argument:@""];
     [RecoveryQuickAction refresh];
     return enabled;
 }

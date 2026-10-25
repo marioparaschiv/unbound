@@ -523,9 +523,13 @@ static UIWindowScene *activeWindowScene(void)
 - (void)refetchBundle
 {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSString *bundlePath = [Updater resolveBundlePath];
-        [Updater downloadBundle:bundlePath];
+        BOOL downloaded = [CoreBridge toolboxSucceeded:@"refetch-bundle" argument:@""];
         dispatch_async(dispatch_get_main_queue(), ^{
+            if (!downloaded)
+            {
+                [Utilities alert:[CoreBridge toolboxMessage:@"refetch-failed"] title:@"Refetch Bundle"];
+                return;
+            }
             [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
         });
     });
@@ -533,7 +537,7 @@ static UIWindowScene *activeWindowScene(void)
 
 - (void)deleteBundle
 {
-    [CoreBridge deleteBundleIn:FileSystem.documents];
+    [CoreBridge toolbox:@"delete-bundle" argument:@""];
     [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
 }
 
@@ -562,44 +566,47 @@ static UIWindowScene *activeWindowScene(void)
                                   UITextField *textField = alert.textFields.firstObject;
                                   NSString    *urlString = textField.text;
 
-                                  if ([CoreBridge useCustomBundle:urlString])
+                                  if (![CoreBridge toolboxSucceeded:@"custom-bundle" argument:urlString ?: @""])
                                   {
-                                      [self dismissViewControllerAnimated:YES
-                                                                  completion:^{
-                                                                      [Utilities reloadApp];
-                                                                  }];
+                                      [Utilities alert:[CoreBridge toolboxMessage:@"custom-bundle-invalid"]
+                                                 title:@"Custom Bundle URL"];
+                                      return;
                                   }
+                                  [self dismissViewControllerAnimated:YES
+                                                              completion:^{
+                                                                  [Utilities reloadApp];
+                                                              }];
                               }]];
     [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)wipePlugins
 {
-    [CoreBridge wipeAddonsNamed:@"Plugins" in:FileSystem.documents];
+    [CoreBridge toolbox:@"wipe" argument:@"Plugins"];
     [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
 }
 
 - (void)wipeThemes
 {
-    [CoreBridge wipeAddonsNamed:@"Themes" in:FileSystem.documents];
+    [CoreBridge toolbox:@"wipe" argument:@"Themes"];
     [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
 }
 
 - (void)wipeFonts
 {
-    [CoreBridge wipeAddonsNamed:@"Fonts" in:FileSystem.documents];
+    [CoreBridge toolbox:@"wipe" argument:@"Fonts"];
     [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
 }
 
 - (void)wipeIconPacks
 {
-    [CoreBridge wipeAddonsNamed:@"Icons" in:FileSystem.documents];
+    [CoreBridge toolbox:@"wipe" argument:@"Icons"];
     [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
 }
 
 - (void)factoryReset
 {
-    [CoreBridge factoryResetIn:FileSystem.documents];
+    [CoreBridge toolbox:@"factory-reset" argument:@""];
     [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
 }
 
@@ -626,24 +633,19 @@ static UIWindowScene *activeWindowScene(void)
 
 - (void)openGitHubIssue
 {
-    NSString *deviceModel = [Utilities getDeviceModel];
     NSString *appVersion =
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
     NSString *buildNumber = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
 
-    NSString *iosVersionString = [Utilities getiOSVersionString];
-
-    NSString *appSource = [Utilities getAppSource];
-
-    NSString *appRegistrationType = [Utilities isSystemApp] ? @"System" : @"User";
-
-    NSArray<NSArray<NSString *> *> *environment = @[
-        @[ @"Device", deviceModel ?: @"unknown" ],
-        @[ @"iOS Version", iosVersionString ?: @"unknown" ],
-        @[ @"App Version", [NSString stringWithFormat:@"%@ (%@)", appVersion, buildNumber] ],
-        @[ @"App Source", appSource ?: @"unknown" ],
-        @[ @"App Registration", appRegistrationType ],
-    ];
+    NSDictionary *facts = @{
+        @"device" : [Utilities getDeviceModel] ?: @"",
+        @"osVersion" : [Utilities getiOSVersionString] ?: @"",
+        @"discordVersion" : [NSString stringWithFormat:@"%@ (%@)", appVersion, buildNumber],
+        @"unboundVersion" : PACKAGE_VERSION,
+        @"appSource" : [Utilities getAppSource] ?: @"",
+        @"registration" : [Utilities isSystemApp] ? @"System" : @"User",
+        @"virtualDevice" : @([Utilities isVPhone]),
+    };
 
     NSMutableArray<NSArray<NSString *> *> *attachments  = [NSMutableArray array];
     NSDictionary                          *entitlements = [Utilities getApplicationEntitlements];
@@ -653,9 +655,12 @@ static UIWindowScene *activeWindowScene(void)
         [attachments addObject:@[ @"Entitlements", plist ]];
     }
 
-    NSString *urlString = [CoreBridge issueURLForPlatform:@"iOS"
-                                              environment:environment
-                                              attachments:attachments];
+    NSData   *request   = [NSJSONSerialization dataWithJSONObject:@{@"facts" : facts, @"attachments" : attachments}
+                                                         options:0
+                                                           error:nil];
+    NSString *urlString = [CoreBridge toolbox:@"issue-url"
+                                     argument:[[NSString alloc] initWithData:request ?: [NSData data]
+                                                                    encoding:NSUTF8StringEncoding] ?: @"{}"];
     NSURL    *url       = [NSURL URLWithString:urlString];
 
     if (!url)

@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <filesystem>
+#include <stdexcept>
 #include <string>
 #include <unistd.h>
 
@@ -77,6 +78,39 @@ int main()
     const std::string url = loader::toolbox::issueURL(report);
     assert(url.rfind("https://github.com/marioparaschiv/unbound/issues/new?title=bug%28Android%29", 0) == 0);
     assert(url.find(' ') == std::string::npos);
+
+    assert(loader::toolbox::useCustomBundle(settings, "  https://example.com/padded.bundle \n"));
+    assert(settings.getString("unbound", "loader.update.url", "") == "https://example.com/padded.bundle");
+
+    loader::BundleUpdater failing(
+        root.string(), loader::updaterSettings(settings),
+        [](const std::string &, double) -> std::optional<std::string> { return std::nullopt; },
+        [](const std::string &, const std::string &,
+           const std::map<std::string, std::string> &) -> std::optional<loader::DownloadResult> {
+            throw std::runtime_error("offline");
+        });
+    assert(!loader::toolbox::refetchBundle(failing, std::string("https://example.com/unbound.bundle"), 96));
+
+    loader::toolbox::ToolboxContext context{settings, failing, root.string(), "iOS",
+                                            [] { return std::optional<std::string>(); }, [] { return 96u; }};
+    assert(loader::toolbox::perform(context, "refetch-bundle", "") == "false");
+    assert(loader::toolbox::perform(context, "custom-bundle", "ftp://nope") == "false");
+    assert(loader::toolbox::perform(context, "settings", "").find("padded.bundle") != std::string::npos);
+    assert(loader::toolbox::perform(context, "unknown", "").empty());
+    assert(loader::toolbox::perform(context, "message", "refetch-failed") == loader::toolbox::kRefetchFailedMessage);
+    const std::string issue = loader::toolbox::perform(
+        context, "issue-url",
+        R"({"facts":{"device":"iPhone SE","osVersion":"26.0.1","virtualDevice":false},"attachments":[["Entitlements","<plist/>"]]})");
+    assert(issue.find("bug%28iOS%29") != std::string::npos);
+    assert(issue.find("iPhone%20SE") != std::string::npos);
+    assert(issue.find("Device") < issue.find("iOS%20Version"));
+    assert(issue.find("Unbound%20Version%2A%2A%3A%20unknown") != std::string::npos);
+    assert(issue.find("Entitlements") != std::string::npos);
+
+    const auto rows = loader::toolbox::issueEnvironment({"Android", "Pixel", "16", "350.8", "1.0.0", "", "", true});
+    assert(rows.size() == 5);
+    assert(rows[1].first == "Android Version");
+    assert(rows.back().first == "Virtual Device" && rows.back().second == "Yes");
 
     assert(loader::toolbox::factoryReset(root.string()));
     assert(loader::listDirectory(root.string()).empty());

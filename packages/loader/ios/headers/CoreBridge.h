@@ -16,14 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSMutableArray *)scanFontsIn:(NSString *)documents
                    nameResolver:(NSString *_Nullable (^)(NSString *path))resolver;
 
-+ (BOOL)wipeAddonsNamed:(NSString *)kind in:(NSString *)documents;
-+ (BOOL)factoryResetIn:(NSString *)documents;
-+ (void)deleteBundleIn:(NSString *)documents;
-+ (BOOL)useCustomBundle:(NSString *)url;
-+ (BOOL)toggleRecovery;
-+ (NSString *)issueURLForPlatform:(NSString *)platform
-                      environment:(NSArray<NSArray<NSString *> *> *)environment
-                      attachments:(NSArray<NSArray<NSString *> *> *)attachments;
++ (NSString *)toolbox:(NSString *)action argument:(NSString *)argument;
++ (BOOL)toolboxSucceeded:(NSString *)action argument:(NSString *)argument;
++ (NSString *)toolboxMessage:(NSString *)key;
 
 @end
 
