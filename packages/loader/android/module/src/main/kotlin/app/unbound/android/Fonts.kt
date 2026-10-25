@@ -4,7 +4,6 @@ import android.content.res.AssetManager
 import android.graphics.Typeface
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
-import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -12,9 +11,9 @@ import java.util.concurrent.ConcurrentHashMap
 object Fonts {
     private const val FONT_MANAGER = "com.facebook.react.common.assets.ReactFontManager"
     private const val TYPEFACE_STYLE = "com.facebook.react.common.assets.ReactFontManager\$TypefaceStyle"
-    private const val ALL_FAMILIES = "*"
+    private const val ASSET_PREFIX = "asset:"
 
-    private val typefaces = ConcurrentHashMap<String, Typeface>()
+    private val typefaces = ConcurrentHashMap<String, LoadedFont>()
 
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
         val manager = classLoader.loadClass(FONT_MANAGER)
@@ -31,36 +30,42 @@ object Fonts {
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept { chain ->
                 val family = chain.getArg(0) as String
-                val replacement = resolve(family) ?: return@intercept chain.proceed()
+                val replacement = resolve(family, chain.getArg(2) as AssetManager) ?: return@intercept chain.proceed()
                 apply.invoke(chain.getArg(1), replacement)
             }
 
-        Logger.info("fonts", "Hooked ReactFontManager.getTypeface.")
+        Logger.info(LogCategory.FONTS, "Hooked ReactFontManager.getTypeface.")
     }
 
-    private fun resolve(family: String): Typeface? {
-        val overrides = NativeBridge.nativeSettingJSON("unbound", "font-states")
-            ?.let { runCatching { JSONObject(it) }.getOrNull() } ?: return null
-        val target = overrides.optString(ALL_FAMILIES).ifEmpty { overrides.optString(family) }
-        if (target.isEmpty() || target == family) return null
-
-        return typefaces.getOrPut(target) { load(target) ?: return null }
+    private fun resolve(family: String, assets: AssetManager): Typeface? {
+        val font = JSONObject(NativeBridge.nativeResolveFont(family))
+        val name = font.optString("name").takeIf { it.isNotEmpty() } ?: return null
+        val error = font.optString("error").takeIf { it.isNotEmpty() }
+        return typefaces.getOrPut(name) { load(name, font.optString("path"), error, assets) }.typeface
     }
 
-    private fun load(name: String): Typeface? {
-        val fonts = runCatching { JSONArray(NativeBridge.nativeFontsJSON()) }.getOrNull()
-        val custom = (0 until (fonts?.length() ?: 0))
-            .map { fonts!!.getJSONObject(it) }
-            .firstOrNull { it.optString("name") == name }
-
-        if (custom != null) {
-            val file = File(custom.optString("path"))
-            return runCatching { Typeface.createFromFile(file) }
-                .onSuccess { Logger.info("fonts", "Loaded font: $name.") }
-                .onFailure { Logger.error("fonts", "Failed to load font \"$name\"", it) }
-                .getOrNull()
+    private fun load(name: String, path: String, error: String?, assets: AssetManager): LoadedFont {
+        if (error != null) {
+            Logger.error(LogCategory.FONTS, error)
+            return LoadedFont(null)
         }
 
-        return Typeface.create(name, Typeface.NORMAL)
+        val typeface = if (path.isEmpty()) {
+            Typeface.create(name, Typeface.NORMAL)
+        } else {
+            runCatching {
+                if (path.startsWith(ASSET_PREFIX)) {
+                    Typeface.createFromAsset(assets, path.removePrefix(ASSET_PREFIX))
+                } else {
+                    Typeface.createFromFile(File(path))
+                }
+            }
+                .onSuccess { Logger.info(LogCategory.FONTS, "Loaded font: $name.") }
+                .onFailure { Logger.error(LogCategory.FONTS, "Failed to load font \"$name\"", it) }
+                .getOrNull()
+        }
+        return LoadedFont(typeface)
     }
+
+    private class LoadedFont(val typeface: Typeface?)
 }

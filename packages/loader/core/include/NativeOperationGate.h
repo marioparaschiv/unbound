@@ -4,18 +4,20 @@
 
 namespace loader {
 
-enum class NativeOperationPhase {
+enum class NativeOperationPhase
+{
     queued,
     running,
     finished,
     expired,
 };
 
-class NativeOperationGate {
+class NativeOperationGate
+{
 public:
-    bool start();
-    bool expire();
-    void finish();
+    bool                 start();
+    bool                 expire();
+    void                 finish();
     NativeOperationPhase phase() const;
 
 private:

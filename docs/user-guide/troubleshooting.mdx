@@ -101,6 +101,12 @@ The Android loader doesn't have a toolbox yet. When something goes wrong while l
 | `Failed to load Unbound's bundle. Please report this to the developers.` | The bundle was found but hit an error while running. |
 | `[Updater] Failed to check for updates, bundle may be out of date. Please report this to the developers.` | The check for a newer bundle failed. Unbound keeps the bundle it already has. |
 
+### Obtainium doesn't find or install Unbound on Android
+
+- **No releases found, or it offers the wrong channel.** Check the source's options against the table in [Installing](/user-guide/installing). Beta and alpha need **Include prereleases** on, and every channel needs **Fallback to older releases** on, because the newest release on GitHub is often for another channel or for iOS.
+- **The app isn't installed or the update fails.** The patched Discord is signed differently from the Play Store version. Uninstall Play Store Discord, then install from Obtainium again.
+- **Going from alpha or beta back to stable fails.** The installed Discord is newer than the stable build. Uninstall Discord, then install from the stable source.
+
 ### An addon keeps breaking the app
 
 On iOS, the toolbox's **Addons** section deletes every addon of one type at once. To remove only one addon, see [Remove a single addon on iOS](#remove-a-single-addon-on-ios).

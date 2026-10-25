@@ -3,6 +3,7 @@ import {
 	javaReference,
 	javaString,
 } from '@unbound-plugins/shared/native/android/java-values';
+import { currentActivity } from '@unbound-plugins/shared/native/android/views';
 import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
 
 import type { FileSizeLookup } from '~/badges';
@@ -25,9 +26,11 @@ export function createAndroidFileSizes(java: NativeJavaBridge): AndroidFileSizes
 	function contentResolver(): NativeJavaReference | null {
 		if (resolver) return resolver;
 
-		application ??= javaReference(
-			java.invoke(java.getClass('android.app.ActivityThread'), 'currentApplication', []),
-		);
+		const activity = application ? null : currentActivity(java);
+
+		application ??= activity
+			? javaReference(java.invoke(activity, 'getApplicationContext', []))
+			: null;
 		resolver = application
 			? javaReference(java.invoke(application, 'getContentResolver', []))
 			: null;

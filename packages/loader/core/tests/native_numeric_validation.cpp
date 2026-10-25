@@ -1,8 +1,8 @@
-#include "NativeNumericValidation.h"
-
 #include <cassert>
 #include <cmath>
 #include <limits>
+
+#include "NativeNumericValidation.h"
 
 int main()
 {

@@ -3,25 +3,16 @@
 #import <objc/runtime.h>
 #import <substrate.h>
 
-#import "Unbound.h"
 #import "LoaderShared.h"
+#import "Unbound.h"
 
 @interface Fonts : NSObject
-{
-    NSMutableDictionary<NSString *, NSString *>            *overrides;
-    NSMutableArray<NSDictionary<NSString *, NSString *> *> *fonts;
-}
 
 + (void)apply;
 + (void)init;
 + (void)loadFont:(NSString *)path;
-+ (NSString *)getFontName:(NSString *)path;
 + (NSString *)getFontNameByRef:(CGFontRef)ref;
-+ (NSArray *)getAvailableFonts;
 
-+ (NSString *)makeAvailableJSON;
-+ (NSString *)makeJSON;
-
-+ (NSMutableDictionary<NSString *, NSString *> *)overrides;
++ (NSDictionary<NSString *, NSString *> *)overrides;
 
 @end

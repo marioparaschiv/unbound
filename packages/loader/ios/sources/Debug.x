@@ -16,7 +16,8 @@ static BOOL shouldIgnoreError(NSString *domain, NSInteger code, NSDictionary *in
             @"BSActionErrorDomain" : [NSSet setWithObjects:@1, nil],
             @"BSServiceConnectionErrorDomain" : [NSSet setWithObjects:@1, nil],
             @"NSOSStatusErrorDomain" : [NSSet setWithObjects:@(-10813), nil],
-            @"NSCocoaErrorDomain" : [NSSet setWithObjects:@258, @260, @516, @4864, @4, @4099, @3840, nil],
+            @"NSCocoaErrorDomain" :
+                [NSSet setWithObjects:@258, @260, @516, @4864, @4, @4099, @3840, nil],
             @"com.appsflyer.sdk.network" : [NSSet setWithObjects:@50, nil],
             @"AVFoundationErrorDomain" : [NSSet setWithObjects:@(-11800), nil],
             @"kAFAssistantErrorDomain" : [NSSet setWithObjects:@400, @401, nil],

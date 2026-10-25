@@ -1,7 +1,7 @@
 import type { RenderTarget } from '@unbound-plugins/shared/react/render-target';
 
 import { selectedChannelId } from '~/selected-channel';
-import type { Sticker } from '~/staged-stickers';
+import type { Sticker } from '@unbound-plugins/shared/stickers/staged-stickers';
 import type { Staging } from '~/staging';
 import { Patcher } from '~/modules';
 

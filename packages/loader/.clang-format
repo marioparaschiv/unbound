@@ -1,6 +1,5 @@
 # Base Style
 BasedOnStyle: LLVM
-Language: ObjC
 
 # Indentation
 IndentWidth: 4
@@ -10,6 +9,8 @@ ColumnLimit: 100
 AccessModifierOffset: -4
 IndentCaseLabels: true
 NamespaceIndentation: Inner
+FixNamespaceComments: false
+BreakStringLiterals: false
 
 # Alignment
 AlignConsecutiveAssignments: Consecutive
@@ -18,12 +19,6 @@ AlignConsecutiveMacros: Consecutive
 AlignTrailingComments: true
 AlignOperands: true
 AlignAfterOpenBracket: Align
-
-# Objective-C specific
-ObjCSpaceAfterProperty: true
-ObjCSpaceBeforeProtocolList: true
-ObjCBreakBeforeNestedBlockParam: true
-ObjCBinPackProtocolList: Never
 
 # Breaking and wrapping
 AllowShortBlocksOnASingleLine: Empty
@@ -35,14 +30,14 @@ AllowShortLambdasOnASingleLine: Empty
 AllowShortLoopsOnASingleLine: false
 BreakBeforeBraces: Custom
 BraceWrapping:
-  AfterObjCDeclaration: true
-  AfterClass: true
-  AfterControlStatement: true
-  AfterEnum: true
-  AfterFunction: true
-  BeforeCatch: true
-  BeforeElse: true
-  IndentBraces: false
+    AfterObjCDeclaration: true
+    AfterClass: true
+    AfterControlStatement: true
+    AfterEnum: true
+    AfterFunction: true
+    BeforeCatch: true
+    BeforeElse: true
+    IndentBraces: false
 
 # Spaces
 SpaceAfterCStyleCast: true
@@ -57,15 +52,23 @@ SpacesInSquareBrackets: false
 SortIncludes: true
 IncludeBlocks: Regroup
 IncludeCategories:
-  # System headers with brackets
-  - Regex: "^<"
-    Priority: 1
-  # Main header (matching filename)
-  - Regex: '^"[^/]*\.h"$'
-    Priority: 2
-  # Local/Project headers
-  - Regex: '^"'
-    Priority: 3
+    # System headers with brackets
+    - Regex: '^<'
+      Priority: 1
+    # Main header (matching filename)
+    - Regex: '^"[^/]*\.h"$'
+      Priority: 2
+    # Local/Project headers
+    - Regex: '^"'
+      Priority: 3
 
 # File formatting
 InsertNewlineAtEOF: true
+---
+Language: Cpp
+---
+Language: ObjC
+ObjCSpaceAfterProperty: true
+ObjCSpaceBeforeProtocolList: true
+ObjCBreakBeforeNestedBlockParam: true
+ObjCBinPackProtocolList: Never

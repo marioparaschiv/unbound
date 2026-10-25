@@ -1,7 +1,6 @@
 package app.unbound.android
 
 import android.app.Activity
-import android.graphics.Color
 import android.graphics.Rect
 import android.os.Looper
 import android.view.Gravity
@@ -24,6 +23,8 @@ import java.util.WeakHashMap
 import kotlin.math.ceil
 
 object NativeUI {
+    internal var colorParser: (String) -> Int? = NativeBridge::parseColor
+
     private data class Query(
         val role: String,
         val root: String?,
@@ -39,6 +40,7 @@ object NativeUI {
     private val viewsByHandle = HashMap<String, WeakReference<View>>()
     private var handleGeneration = -1L
     private var nextHandle = 1L
+    private val mountedViews = java.util.Collections.newSetFromMap(WeakHashMap<View, Boolean>())
 
     fun lookup(queryJSON: String): String {
         requireMainThread()
@@ -82,16 +84,14 @@ object NativeUI {
 
     fun measureView(handleJSON: String): String {
         requireMainThread()
-        val handle = parseHandle(handleJSON)
-        val measured = frame(resolve(handle))
-            ?: throw IllegalStateException("The Android native UI view has not been laid out")
-        return measured.toString()
+        return measure(resolve(parseHandle(handleJSON)))
     }
+
+    fun measure(view: View): String = frame(view)?.toString()
+        ?: throw IllegalStateException("The Android native UI view has not been laid out")
 
     fun mountView(containerHandleJSON: String, moduleName: String, propertiesJSON: String): String {
         requireMainThread()
-        require(moduleName.length in 1..128)
-
         val activity = ActivityTracker.currentActivity()
             ?: throw IllegalStateException("No resumed Android activity is available")
         val container = if (containerHandleJSON.isBlank()) {
@@ -104,6 +104,7 @@ object NativeUI {
         val view = createView(activity, moduleName)
         applyProperties(view, JSONObject(propertiesJSON))
         container.addView(view, layoutParams(container))
+        mountedViews.add(view)
         return JSONObject().put("id", handle(view)).toString()
     }
 
@@ -118,74 +119,71 @@ object NativeUI {
     fun unmountView(handleJSON: String) {
         requireMainThread()
         val view = resolve(parseHandle(handleJSON))
-        if (view is ImageView) NativeImageLoader.clear(view)
-        (view.parent as? ViewGroup)?.removeView(view)
+        detach(view)
         viewsByObject.remove(view)
         viewsByHandle.remove(parseHandle(handleJSON))
     }
 
+    fun unmountAll() {
+        requireMainThread()
+        for (view in mountedViews.toList()) detach(view)
+        viewsByObject.clear()
+        viewsByHandle.clear()
+    }
+
+    fun mountedCount(): Int = mountedViews.size
+
+    private fun detach(view: View) {
+        if (view is ImageView) NativeImageLoader.clear(view)
+        (view.parent as? ViewGroup)?.removeView(view)
+        mountedViews.remove(view)
+    }
+
     fun setViewFrame(handleJSON: String, frameJSON: String) {
         requireMainThread()
-        val view = resolve(parseHandle(handleJSON))
-        val frame = JSONObject(frameJSON)
-        val x = boundedCoordinate(frame, "x")
-        val y = boundedCoordinate(frame, "y")
-        val width = boundedDimension(frame, "width")
-        val height = boundedDimension(frame, "height")
-        val parameters = view.layoutParams
-            ?: throw IllegalStateException("The Android native UI view has no layout parameters")
+        applyFrame(resolve(parseHandle(handleJSON)), JSONObject(frameJSON))
+    }
+
+    fun applyFrame(view: View, frame: JSONObject) {
+        applySize(view, frame)
         val location = IntArray(2)
         view.getLocationOnScreen(location)
         val density = view.resources.displayMetrics.density
-        parameters.width = ceil(width * density).toInt()
-        parameters.height = ceil(height * density).toInt()
+        view.translationX += (frame.getDouble("x") * density - location[0]).toFloat()
+        view.translationY += (frame.getDouble("y") * density - location[1]).toFloat()
+    }
+
+    fun applySize(view: View, size: JSONObject) {
+        val parameters = view.layoutParams
+            ?: throw IllegalStateException("The Android native UI view has no layout parameters")
+        val density = view.resources.displayMetrics.density
+        parameters.width = ceil(size.getDouble("width") * density).toInt()
+        parameters.height = ceil(size.getDouble("height") * density).toInt()
         view.layoutParams = parameters
-        view.translationX += (x * density - location[0]).toFloat()
-        view.translationY += (y * density - location[1]).toFloat()
     }
 
     private fun parseQuery(queryJSON: String): Query {
         val input = JSONObject(queryJSON)
-        val role = input.optString("role").trim()
-        require(role.isNotEmpty() && role.length <= 128)
-
+        val role = input.getString("role")
         val rootID = input.optJSONObject("root")?.optString("id")?.takeIf { it.isNotEmpty() }
         return Query(
             role = role,
             root = rootID,
             attributes = input.optJSONObject("attributes") ?: JSONObject(),
-            maxDepth = input.optInt("maxDepth", 16).coerceIn(1, 64),
-            maxNodes = input.optInt("maxNodes", 512).coerceIn(1, 2000),
-            maxResults = input.optInt("maxResults", 128).coerceIn(1, 500),
+            maxDepth = input.getInt("maxDepth"),
+            maxNodes = input.getInt("maxNodes"),
+            maxResults = input.getInt("maxResults"),
         )
     }
 
     fun viewForHandle(handleJSON: String): View = resolve(parseHandle(handleJSON))
-
-    fun handleForView(view: View): String = JSONObject().put("id", handle(view)).toString()
 
     fun decorView(context: android.content.Context): ViewGroup? =
         (ActivityTracker.currentActivity() ?: context as? Activity)
             ?.window
             ?.decorView as? ViewGroup
 
-    private fun parseHandle(handleJSON: String): String {
-        val id = JSONObject(handleJSON).optString("id").trim()
-        require(id.isNotEmpty() && id.length <= 128)
-        return id
-    }
-
-    private fun boundedCoordinate(frame: JSONObject, name: String): Double {
-        val value = frame.optDouble(name, Double.NaN)
-        require(value.isFinite() && value in -100_000.0..100_000.0)
-        return value
-    }
-
-    private fun boundedDimension(frame: JSONObject, name: String): Double {
-        val value = frame.optDouble(name, Double.NaN)
-        require(value.isFinite() && value > 0 && value <= 32_768.0)
-        return value
-    }
+    private fun parseHandle(handleJSON: String): String = JSONObject(handleJSON).getString("id")
 
     private fun traverse(query: Query): List<Visit> {
         val activity = ActivityTracker.currentActivity()
@@ -238,9 +236,13 @@ object NativeUI {
     }
 
     private fun matches(view: View, query: Query): Boolean {
-        if (query.role != "*" && query.role != role(view) && query.role != view.javaClass.name &&
+        if (query.role != "*" &&
+            query.role != role(view) &&
+            query.role != view.javaClass.name &&
             query.role != view.javaClass.simpleName
-        ) return false
+        ) {
+            return false
+        }
 
         val values = attributes(view)
         val keys = query.attributes.keys()
@@ -329,9 +331,7 @@ object NativeUI {
             when (key) {
                 "text" -> {
                     require(view is TextView) { "The Android native UI view does not support text" }
-                    val value = properties.optString(key)
-                    require(value.length <= 4096)
-                    view.text = value
+                    view.text = properties.optString(key)
                 }
                 "textColor" -> {
                     require(view is TextView) { "The Android native UI view does not support textColor" }
@@ -421,7 +421,7 @@ object NativeUI {
     private fun parseColor(properties: JSONObject, name: String): Int {
         val value = properties.getString(name)
         require(value.length <= 32)
-        return Color.parseColor(value)
+        return requireNotNull(colorParser(value)) { "Invalid color: $value" }
     }
 
     private fun requireMainThread() {

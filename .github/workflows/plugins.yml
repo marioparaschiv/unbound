@@ -1,69 +1,69 @@
 name: Plugins
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+    push:
+        branches:
+            - main
+    pull_request:
 
 permissions:
-  contents: read
+    contents: read
 
 concurrency:
-  group: plugins-${{ github.ref }}
-  cancel-in-progress: true
+    group: plugins-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
-  validate:
-    runs-on: ubuntu-26.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-      - name: Cache Bun installs
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-      - name: Validate plugins
-        run: bun run plugins:validate
-      - name: Test plugins
-        run: bun run plugins:test
-      - name: Build plugins
-        run: bun run plugins:build
-      - name: Lint
-        run: bun run lint
-      - name: Check formatting
-        run: bun run fmt:check
-      - name: Download the latest loader IPA
-        id: loader-ipa
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          ipa_url=""
-          for repository in "$GITHUB_REPOSITORY" unbound-app/loader-ios; do
-            releases="$(curl --fail --silent --show-error --retry 3 \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer $GITHUB_TOKEN" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              "https://api.github.com/repos/$repository/releases?per_page=50")"
-            ipa_url="$(printf '%s' "$releases" | jq -r '[.[] | select(.draft == false) | select(.tag_name | startswith("loader-v") or (startswith("v") and ($repository != env.GITHUB_REPOSITORY))) | .assets[]? | select(.name == "Unbound.ipa") | .browser_download_url][0] // empty' --arg repository "$repository")"
-            [ -n "$ipa_url" ] && break
-          done
-          if [ -z "$ipa_url" ] || [ "$ipa_url" = "null" ]; then
-            printf 'available=false\n' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          printf 'available=true\n' >> "$GITHUB_OUTPUT"
-          curl --fail --location --silent --show-error --retry 3 "$ipa_url" -o "$RUNNER_TEMP/Unbound.ipa"
-      - name: Sync plugin icons from the loader IPA
-        if: steps.loader-ipa.outputs.available == 'true'
-        run: bun packages/plugins/scripts/sync-plugin-icons.ts "$RUNNER_TEMP/Unbound.ipa"
-      - name: Generate the plugin catalog
-        run: bun run plugins:catalog
-      - name: Check generated plugin files are up to date
-        run: git diff --exit-code -- packages/plugins/README.md packages/plugins/catalog.svg assets/plugins/icons
+    validate:
+        runs-on: ubuntu-26.04
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+            - name: Cache Bun installs
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ~/.bun/install/cache
+                  key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+                  restore-keys: bun-${{ runner.os }}-
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
+            - name: Validate plugins
+              run: bun run plugins:validate
+            - name: Test plugins
+              run: bun run plugins:test
+            - name: Build plugins
+              run: bun run plugins:build
+            - name: Lint
+              run: bun run lint:js
+            - name: Check formatting
+              run: bun run fmt:js:check
+            - name: Download the latest loader IPA
+              id: loader-ipa
+              env:
+                  GITHUB_TOKEN: ${{ github.token }}
+              run: |
+                  ipa_url=""
+                  for repository in "$GITHUB_REPOSITORY" unbound-app/loader-ios; do
+                    releases="$(curl --fail --silent --show-error --retry 3 \
+                      -H "Accept: application/vnd.github+json" \
+                      -H "Authorization: Bearer $GITHUB_TOKEN" \
+                      -H "X-GitHub-Api-Version: 2022-11-28" \
+                      "https://api.github.com/repos/$repository/releases?per_page=50")"
+                    ipa_url="$(printf '%s' "$releases" | jq -r '[.[] | select(.draft == false) | select(.tag_name | startswith("loader-v") or (startswith("v") and ($repository != env.GITHUB_REPOSITORY))) | .assets[]? | select(.name == "Unbound.ipa") | .browser_download_url][0] // empty' --arg repository "$repository")"
+                    [ -n "$ipa_url" ] && break
+                  done
+                  if [ -z "$ipa_url" ] || [ "$ipa_url" = "null" ]; then
+                    printf 'available=false\n' >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+                  printf 'available=true\n' >> "$GITHUB_OUTPUT"
+                  curl --fail --location --silent --show-error --retry 3 "$ipa_url" -o "$RUNNER_TEMP/Unbound.ipa"
+            - name: Sync plugin icons from the loader IPA
+              if: steps.loader-ipa.outputs.available == 'true'
+              run: bun packages/plugins/scripts/sync-plugin-icons.ts "$RUNNER_TEMP/Unbound.ipa"
+            - name: Generate the plugin catalog
+              run: bun run plugins:catalog
+            - name: Check generated plugin files are up to date
+              run: git diff --exit-code -- packages/plugins/README.md packages/plugins/catalog.svg assets/plugins/icons

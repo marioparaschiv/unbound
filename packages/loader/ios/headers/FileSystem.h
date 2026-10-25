@@ -1,6 +1,6 @@
 #import "Unbound.h"
 
-@interface FileMonitor : NSObject
+@interface                           FileMonitor : NSObject
 @property (copy) NSString           *path;
 @property (copy) dispatch_block_t    onChange;
 @property (strong) dispatch_source_t fileSource;
@@ -8,7 +8,7 @@
 @property (strong) dispatch_queue_t  queue;
 @end
 
-@interface DirectoryWatcher : NSObject
+@interface                                   DirectoryWatcher : NSObject
 @property (copy) NSString                   *path;
 @property (strong) dispatch_source_t         source;
 @property (strong) NSMutableSet<NSString *> *files;
@@ -27,8 +27,9 @@
 
 + (NSHTTPURLResponse *)download:(NSURL *)url
                            path:(NSString *)path
-                    withHeaders:(NSDictionary *)headers;
-+ (NSHTTPURLResponse *)download:(NSURL *)url path:(NSString *)path;
+                    withHeaders:(NSDictionary *)headers
+                 requestTimeout:(NSTimeInterval)requestTimeout
+                   totalTimeout:(NSTimeInterval)totalTimeout;
 
 + (void)monitor:(NSString *)filePath onChange:(void (^)())onChange autoRestart:(BOOL)autoRestart;
 + (void)stopMonitoring:(NSString *)path;

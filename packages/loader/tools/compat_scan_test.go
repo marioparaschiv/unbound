@@ -2,20 +2,32 @@ package main
 
 import (
 	"encoding/binary"
+	"sort"
 	"strings"
 	"testing"
 )
 
 func scriptReferences(t *testing.T, path, source string) []*compatReference {
 	t.Helper()
+	return scriptProgramReferences(t, map[string]string{path: source}).sorted()
+}
+
+func scriptProgramReferences(t *testing.T, sources map[string]string) *compatSourceSet {
+	t.Helper()
 	set := newCompatSourceSet()
-	tokens := tokenizeScript(source)
-	constants := map[string]compatValue{}
-	collectScriptConstants(tokens, constants)
-	component, _ := compatComponent(path)
-	file := compatSourceFile{path: path, component: component, platform: compatPlatform(path)}
-	extractScriptReferences(set, file, tokens, compatScope{local: constants})
-	return set.sorted()
+	paths := make([]string, 0, len(sources))
+	for path := range sources {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	var files []*scriptFile
+	for _, path := range paths {
+		component, _ := compatComponent(path)
+		file := compatSourceFile{path: path, component: component, platform: compatPlatform(path)}
+		files = append(files, newScriptFile(file, scriptSourceRoot(path), tokenizeScript(sources[path])))
+	}
+	analyzeScripts(set, files)
+	return set
 }
 
 func findReference(references []*compatReference, kind, name string) *compatReference {
@@ -231,5 +243,42 @@ func TestEvaluateCompat(t *testing.T) {
 	}
 	if !compatHasProblems(regressed) {
 		t.Fatal("problems were not detected")
+	}
+}
+
+func TestEvaluateCompatScansASinglePlatformBuild(t *testing.T) {
+	location := []compatLocation{{File: "a.ts", Line: 1}}
+	references := []*compatReference{
+		{Kind: referenceStore, Name: "UserStore", Component: "client", Locations: location},
+		{Kind: referenceObjCClass, Name: "DCDTheme", Strict: true, Component: "loader-ios", Locations: location},
+		{Kind: referenceJavaMethod, Class: "com.discord.View", Name: "setMessage", Parameters: []string{"com.discord.Message"}, Component: "plugin:demo", Locations: location},
+	}
+	android := compatTestTargets()[1]
+	android.Version = "352.8"
+	baseline := &compatResults{Platforms: map[string]*compatPlatformState{
+		"ios": {Seen: []string{references[1].key()}, Statuses: map[string]string{references[1].key(): compatOK}},
+	}}
+	results := evaluateCompat(references, []*compatTarget{android}, baseline)
+	results.Channel = "alpha"
+	if _, scanned := results.Platforms["ios"]; scanned || results.Platforms["android"] == nil {
+		t.Fatalf("an Android-only scan must only record Android state, got %v", results.Platforms)
+	}
+	for _, finding := range results.Findings {
+		if finding.Platform != "android" {
+			t.Fatalf("an Android-only scan reported %+v", finding)
+		}
+	}
+	if compatHasProblems(results) {
+		t.Fatalf("an Android-only scan must not inherit iOS problems: %+v", results.Findings)
+	}
+	report := renderCompatReport(results)
+	if !strings.Contains(report, "## Discord compatibility scan (alpha)\n\nAndroid 352.8\n") || strings.Contains(report, "| iOS |") {
+		t.Fatalf("the report must only describe the Android build:\n%s", report)
+	}
+	if versions := compatIssueVersions(results); versions != "Android 352.8" {
+		t.Fatalf("issue versions are %q, want Android 352.8", versions)
+	}
+	if plan := planCompatIssue(nil, "alpha", compatIssueVersions(results), true); plan.Title != "Discord compatibility (alpha): Android 352.8" {
+		t.Fatalf("issue title is %q", plan.Title)
 	}
 }

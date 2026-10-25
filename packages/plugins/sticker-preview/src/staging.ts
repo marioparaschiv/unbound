@@ -1,5 +1,8 @@
 import { clearComposer, composerText, type ChatInput } from '~/composer';
-import { createStagedStickers, type Sticker } from '~/staged-stickers';
+import {
+	sharedStagedStickers,
+	type Sticker,
+} from '@unbound-plugins/shared/stickers/staged-stickers';
 import { ChatInputs, MessageActions } from '~/modules';
 
 type SendHandler = (...args: unknown[]) => unknown;
@@ -20,7 +23,7 @@ function canSend(input: ChatInput | undefined): input is SendableInput {
  * @returns The staged stickers, the actions to `stage`, `clear` and `send` them, and `dispose` to undo everything.
  */
 export function createStaging() {
-	const stickers = createStagedStickers();
+	const stickers = sharedStagedStickers();
 	const sendHooks = new Map<string, SendHook>();
 	const sendButtons = new Map<string, SendButtonRef>();
 	const keptOn = new Map<SendButton, (hasText: boolean) => void>();

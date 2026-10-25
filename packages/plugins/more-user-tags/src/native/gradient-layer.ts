@@ -8,6 +8,7 @@ import type {
 	NativeObjectHandle,
 	NativeStruct,
 } from '@unbound-app/api/native';
+import { AccessibilityInfo } from 'react-native';
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/safe-invoke';
 
 import type { NativeColors } from '~/native/colors';
@@ -37,10 +38,13 @@ export type PainterClasses = {
 	CAGradientLayer: NativeClassHandle;
 	CABasicAnimation: NativeClassHandle | null;
 	CAMediaTimingFunction: NativeClassHandle | null;
-	UIAccessibility: NativeClassHandle | null;
 };
 
 export type GradientPainter = ReturnType<typeof createGradientPainter>;
+
+async function reducesMotion(): Promise<boolean> {
+	return AccessibilityInfo.isReduceMotionEnabled().catch(() => false);
+}
 
 function rectSignature(rect: NativeStruct<Rect> | null): string | null {
 	const value = rect?.value;
@@ -64,13 +68,7 @@ export function createGradientPainter(
 	classes: PainterClasses,
 	colors: NativeColors,
 ) {
-	const { CAGradientLayer, CABasicAnimation, CAMediaTimingFunction, UIAccessibility } = classes;
-	const reduceMotion = UIAccessibility
-		? objc
-				.invokeAsync(UIAccessibility, 'isReduceMotionEnabled', [])
-				.then(Boolean)
-				.catch(() => false)
-		: Promise.resolve(false);
+	const { CAGradientLayer, CABasicAnimation, CAMediaTimingFunction } = classes;
 
 	async function pointHorizontally(layer: NativeObjectHandle) {
 		await objc.invokeAsync(layer, 'setStartPoint:', [objc.struct('CGPoint', { x: 0, y: 0 })]);
@@ -147,7 +145,7 @@ export function createGradientPainter(
 	}
 
 	async function createSheen(parent: NativeObjectHandle): Promise<NativeObjectHandle | null> {
-		if (!CABasicAnimation || (await reduceMotion)) return null;
+		if (!CABasicAnimation || (await reducesMotion())) return null;
 
 		let sheen: NativeObjectHandle | null = null;
 

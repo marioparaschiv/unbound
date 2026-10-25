@@ -14,17 +14,7 @@ import java.util.zip.ZipFile
 object Platform {
     private const val MAIN_BUNDLE_ENTRY = "assets/index.android.bundle"
 
-    @Volatile
-    private var cachedApplication: Application? = null
-
-    fun application(): Application? {
-        cachedApplication?.let { return it }
-        return runCatching {
-            Class.forName("android.app.ActivityThread")
-                .getDeclaredMethod("currentApplication")
-                .invoke(null) as? Application
-        }.getOrNull()?.also { cachedApplication = it }
-    }
+    fun application(): Application? = ActivityTracker.application()
 
     private const val EMULATOR_HOST_ADDRESS = "10.0.2.2"
 
@@ -64,6 +54,8 @@ object Platform {
         .put("isRooted", SU_PATHS.any { File(it).exists() })
         .put("isSystemApp", appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0)
         .put("appSource", frameworkName)
+        .put("isVirtualDevice", isEmulator())
+        .put("virtualDeviceHost", emulatorHostAddress() ?: JSONObject.NULL)
 
     fun mainBundleBytecodeVersion(apkPath: String): Int = runCatching {
         ZipFile(apkPath).use { zip ->

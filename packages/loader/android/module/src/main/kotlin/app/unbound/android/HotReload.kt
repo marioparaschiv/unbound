@@ -7,56 +7,78 @@ object HotReload {
     private const val READ_BUFFER_SIZE = 4096
 
     @Volatile
-    private var running = false
+    private var current = 0L
 
-    fun observe() {
-        if (running || !NativeBridge.nativeGetBoolean("unbound", "loader.update.hmr", false)) return
+    @Volatile
+    private var connection: HttpURLConnection? = null
 
-        val url = NativeBridge.nativeHotReloadURL()?.let { runCatching { URL(it) }.getOrNull() }
-        if (url == null) {
-            Logger.info("updater", "Hot-reload: no dev server origin resolved; live reload not started.")
-            return
-        }
+    @JvmStatic
+    external fun nativeSync()
 
-        running = true
-        Logger.info("updater", "Hot-reload: enabled.")
-        Thread({ streamForever(url) }, "unbound-hot-reload").apply { isDaemon = true }.start()
+    @JvmStatic
+    external fun nativeResponse(connection: Long, status: Int): Boolean
+
+    @JvmStatic
+    external fun nativeChunk(connection: Long, chunk: ByteArray, length: Int): Boolean
+
+    @JvmStatic
+    external fun nativeClosed(connection: Long, error: String?)
+
+    fun sync() = nativeSync()
+
+    @JvmStatic
+    fun open(
+        id: Long,
+        url: String,
+        headerKeys: Array<String>,
+        headerValues: Array<String>,
+        connectTimeoutMs: Int,
+        readTimeoutMs: Int,
+    ) {
+        current = id
+        val headers = headerKeys.zip(headerValues)
+        Thread({
+            val failure = runCatching { stream(id, url, headers, connectTimeoutMs, readTimeoutMs) }
+                .exceptionOrNull()
+            nativeClosed(id, failure?.let { it.message ?: it.javaClass.simpleName })
+        }, "unbound-hot-reload").apply { isDaemon = true }.start()
     }
 
-    private fun streamForever(url: URL) {
-        while (running) {
-            runCatching {
-                Logger.info("updater", "Hot-reload: connecting SSE to $url")
-                stream(url)
-                Logger.info("updater", "Hot-reload: SSE stream closed.")
-            }.onFailure { Logger.info("updater", "Hot-reload: SSE disconnected (${it.message}).") }
-
-            val delay = NativeBridge.nativeHotReloadNextDelayMs()
-            Logger.info("updater", "Hot-reload: reconnecting in ${delay / 1000}s.")
-            Thread.sleep(delay)
-        }
+    @JvmStatic
+    fun cancel() {
+        current = 0
+        connection?.disconnect()
     }
 
-    private fun stream(url: URL) {
-        val connection = url.openConnection() as HttpURLConnection
-        connection.setRequestProperty("Accept", "text/event-stream")
-        connection.setRequestProperty("Cache-Control", "no-cache")
-        connection.connectTimeout = 5_000
-        connection.readTimeout = 0
+    @JvmStatic
+    fun reload() = Platform.restartApp()
 
+    private fun stream(
+        id: Long,
+        url: String,
+        headers: List<Pair<String, String>>,
+        connectTimeoutMs: Int,
+        readTimeoutMs: Int,
+    ) {
+        val connection = URL(url).openConnection() as HttpURLConnection
+        this.connection = connection
         try {
-            if (connection.responseCode != HttpURLConnection.HTTP_OK) error("HTTP ${connection.responseCode}")
-            NativeBridge.nativeHotReloadConnected()
-            Logger.info("updater", "Hot-reload: SSE connected.")
-            connection.inputStream.bufferedReader().use { reader ->
-                val buffer = CharArray(READ_BUFFER_SIZE)
-                while (true) {
-                    val count = reader.read(buffer)
+            if (current != id) return
+            headers.forEach { (key, value) -> connection.setRequestProperty(key, value) }
+            connection.connectTimeout = connectTimeoutMs
+            connection.readTimeout = readTimeoutMs
+            if (!nativeResponse(id, connection.responseCode)) return
+
+            connection.inputStream.use { input ->
+                val buffer = ByteArray(READ_BUFFER_SIZE)
+                while (current == id) {
+                    val count = input.read(buffer)
                     if (count < 0) break
-                    if (NativeBridge.nativeHotReloadFeed(String(buffer, 0, count))) Platform.restartApp()
+                    if (!nativeChunk(id, buffer, count)) break
                 }
             }
         } finally {
+            if (this.connection === connection) this.connection = null
             connection.disconnect()
         }
     }

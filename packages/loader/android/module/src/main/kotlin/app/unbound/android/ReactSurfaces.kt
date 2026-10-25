@@ -13,10 +13,7 @@ object ReactSurfaces {
         NativeFabric.useHost(ReflectiveHost(classLoader))
     }
 
-    private class ReflectiveSurface(
-        private val surface: Any,
-        private val surfaceClass: Class<*>,
-    ) : NativeFabric.Surface {
+    private class ReflectiveSurface(private val surface: Any, private val surfaceClass: Class<*>) : NativeFabric.Surface {
         override fun view(): View =
             surfaceClass.getMethod("getView").invoke(surface) as? View
                 ?: throw IllegalStateException("The React surface has no view")

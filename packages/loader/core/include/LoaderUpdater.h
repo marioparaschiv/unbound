@@ -8,54 +8,61 @@
 
 #include "LoaderSettings.h"
 
-namespace loader
+namespace loader {
+struct DownloadResult {
+    int         status = 0;
+    std::string etag;
+};
+
+struct DownloadPolicy {
+    double connectTimeoutSeconds = 15.0;
+    double readTimeoutSeconds    = 30.0;
+    double totalTimeoutSeconds   = 35.0;
+};
+
+constexpr DownloadPolicy kBundleDownloadPolicy{};
+constexpr double         kManifestFetchTimeoutSeconds = 5.0;
+
+bool isAcceptedDownloadStatus(int status);
+
+using TextFetcher =
+    std::function<std::optional<std::string>(const std::string &url, double timeoutSeconds)>;
+using FileDownloader = std::function<std::optional<DownloadResult>(
+    const std::string &url, const std::string &destination,
+    const std::map<std::string, std::string> &headers, const DownloadPolicy &policy)>;
+
+struct UpdaterSettings {
+    std::function<std::string(const std::string &key, const std::string &fallback)> getString;
+    std::function<bool(const std::string &key, bool fallback)>                      getBoolean;
+    std::function<void(const std::string &key, const std::string &value)>           setString;
+};
+
+UpdaterSettings updaterSettings(SettingsStore &store);
+
+constexpr const char *kDefaultBundleBaseURL = "https://builds.unbound.rip/";
+
+class BundleUpdater
 {
-    struct DownloadResult
-    {
-        int         status = 0;
-        std::string etag;
-    };
+public:
+    BundleUpdater(std::string documents, UpdaterSettings settings, TextFetcher fetchText,
+                  FileDownloader download);
 
-    using TextFetcher =
-        std::function<std::optional<std::string>(const std::string &url, double timeoutSeconds)>;
-    using FileDownloader = std::function<std::optional<DownloadResult>(
-        const std::string &url, const std::string &destination,
-        const std::map<std::string, std::string> &headers)>;
+    std::string resolveBundlePath();
+    std::string downloadBundle(const std::string                &preferredPath,
+                               const std::optional<std::string> &updateURL,
+                               uint32_t                          bytecodeVersion);
+    std::string downloadURL(const std::optional<std::string> &updateURL, uint32_t bytecodeVersion);
 
-    struct UpdaterSettings
-    {
-        std::function<std::string(const std::string &key, const std::string &fallback)> getString;
-        std::function<bool(const std::string &key, bool fallback)>                      getBoolean;
-        std::function<void(const std::string &key, const std::string &value)>          setString;
-    };
+    bool markBundleAttempted(const std::string &path);
+    bool acceptBundle(const std::string &path);
+    void rejectBundle(const std::string &path);
 
-    UpdaterSettings updaterSettings(SettingsStore &store);
+private:
+    std::string bundlePath(const std::string &extension) const;
 
-    constexpr const char *kDefaultBundleBaseURL = "https://builds.unbound.rip/";
-
-    class BundleUpdater
-    {
-    public:
-        BundleUpdater(std::string documents, UpdaterSettings settings, TextFetcher fetchText,
-                      FileDownloader download);
-
-        std::string resolveBundlePath();
-        std::string downloadBundle(const std::string &preferredPath,
-                                   const std::optional<std::string> &updateURL,
-                                   uint32_t bytecodeVersion);
-        std::string downloadURL(const std::optional<std::string> &updateURL,
-                                uint32_t bytecodeVersion);
-
-        bool markBundleAttempted(const std::string &path);
-        bool acceptBundle(const std::string &path);
-        void rejectBundle(const std::string &path);
-
-    private:
-        std::string bundlePath(const std::string &extension) const;
-
-        std::string     documents_;
-        UpdaterSettings settings_;
-        TextFetcher     fetchText_;
-        FileDownloader  download_;
-    };
+    std::string     documents_;
+    UpdaterSettings settings_;
+    TextFetcher     fetchText_;
+    FileDownloader  download_;
+};
 }

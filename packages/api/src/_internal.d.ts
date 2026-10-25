@@ -54,8 +54,6 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.ui.lookup',
 	'native.ui.mount',
 	'native.ui.layout',
-	'native.media.pick',
-	'native.media.access',
 ];
 export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 	readonly android: readonly [
@@ -64,7 +62,6 @@ export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 		'native.java.fields',
 		'native.java.invoke',
 		'native.fabric.async',
-		'native.fabric.mount',
 		'native.ffi.call',
 		'native.ffi.symbols',
 		'native.java.associations',
@@ -370,20 +367,6 @@ export type InternalToastOptions = {
 	closing?: boolean;
 	date?: number;
 } & ToastOptions;
-export type NativeAndroidSurfaceBridge = {
-	mount(
-		container: NativeUIHandle | Record<string, never>,
-		moduleName: string,
-		properties?: NativeSerializableObject,
-	): NativeCancelablePromise<NativeFabricSurface>;
-	update(
-		surface: NativeFabricSurface,
-		properties: NativeSerializableObject,
-	): NativeCancelablePromise<void>;
-	unmount(surface: NativeFabricSurface): NativeCancelablePromise<void>;
-	isRunning(surface: NativeFabricSurface): NativeJavaValue;
-	view(surface: NativeFabricSurface): NativeUIHandle;
-};
 export type NativeAssociationKey = NativeHandle;
 export type NativeBatchReference = {
 	readonly $nativeBatchResult: number;
@@ -497,6 +480,15 @@ export type NativeFabricSize = {
 	height: number;
 };
 export type NativeFabricSurface = NativeHandle;
+export type NativeFontEntry = {
+	readonly name: string;
+	readonly displayName: string;
+	readonly family?: string;
+	readonly style?: string;
+	readonly path?: string;
+	readonly source: NativeFontSource;
+};
+export type NativeFontSource = 'app' | 'system' | 'custom';
 /** An opaque reference to a native object. Only the bridge creates handles; plugins pass them back. */
 export type NativeHandle = {
 	readonly [nativeHandle]: true;
@@ -636,25 +628,6 @@ export type NativeJavaValue =
 			componentType: string;
 			value: (NativeJavaValue | string | number | boolean)[];
 	  };
-export type NativeMediaAsset = {
-	uri: string;
-	fileName: string;
-	mimeType: string;
-	fileSize: number;
-	width?: number;
-	height?: number;
-	duration?: number;
-};
-export type NativeMediaBridge = {
-	pick(options: NativeMediaPickerOptions): NativeCancelablePromise<NativeMediaAsset[]>;
-	inspect(uri: string): NativeCancelablePromise<NativeMediaAsset>;
-	copy(uri: string, destinationName: string): NativeCancelablePromise<NativeMediaAsset>;
-	read(uri: string, maximumBytes: number): NativeCancelablePromise<ArrayBuffer>;
-};
-export type NativeMediaPickerOptions = {
-	mediaTypes: ('image' | 'video')[];
-	maximumSelectionCount?: number;
-};
 export type NativeObjCBridge = {
 	getClass(name: string): NativeClassHandle | null;
 	alloc(classOrName: string | NativeClassHandle): NativeObjectHandle;
@@ -734,6 +707,8 @@ export type NativePlatformBridge = {
 	readonly device: NativePlatformDevice;
 	readonly app: NativePlatformApp;
 	readonly files?: NativePlatformFiles;
+	readonly settings?: NativePlatformSettings;
+	readonly fonts?: NativePlatformFonts;
 	readonly ios?: NativePlatformIOSBridge;
 };
 export type NativePlatformDevice = {
@@ -742,14 +717,21 @@ export type NativePlatformDevice = {
 	getOSVersionString(): string;
 	isRooted(): boolean;
 	isSystemApp(): boolean;
+	isVirtualDevice(): boolean;
 };
 export type NativePlatformFiles = {
 	remove(path: string): boolean;
+};
+export type NativePlatformFonts = {
+	list(): NativeFontEntry[];
 };
 export type NativePlatformIOSBridge = {
 	isVerifiedBuild(): boolean;
 	getEntitlements(): NativeSerializableObject;
 	getEntitlementsAsPlist(): string;
+};
+export type NativePlatformSettings = {
+	apply(changes: readonly NativeSettingsChange[]): boolean;
 };
 export type NativePluginBridge = {
 	readonly apiVersion: string;
@@ -763,7 +745,6 @@ export type NativePluginBridge = {
 	readonly java: NativeJavaBridge;
 	readonly hooks: NativeJavaHooksBridge;
 	readonly debug: NativeDebugBridge;
-	readonly media: NativeMediaBridge;
 };
 export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
 export type NativePluginError = {
@@ -813,6 +794,21 @@ export type NativeSerializable =
 export type NativeSerializableObject = {
 	[key: string]: NativeSerializable;
 };
+export type NativeSettingsChange =
+	| {
+			store: string;
+			key: string;
+			value: NativeSerializable;
+	  }
+	| {
+			store: string;
+			key: string;
+			remove: true;
+	  }
+	| {
+			store: string;
+			clear: true;
+	  };
 export type NativeStruct<T extends NativeStructFields = NativeStructFields> = {
 	readonly name: string;
 	readonly value?: T;

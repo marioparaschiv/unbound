@@ -1,21 +1,26 @@
-#import <jsi/jsi.h>
+#import "Unbound.h"
 
+#import <jsi/jsi.h>
+#import <substrate.h>
+
+#import "AddonsCore.h"
 #import "CoreBridge.h"
+#import "CoreConversions.h"
 #import "Discord.h"
 #import "HotReload.h"
-#import "JSI.h"
+#include "LoaderBootstrap.h"
+#include "LoaderFonts.h"
 #import "LoaderJSI.h"
 #import "LoaderPipeline.h"
 #import "LoaderShared.h"
+#import "NativePlatform.h"
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
-#import "Unbound.h"
-#import "NativePlatform.h"
+#import "SettingsCore.h"
 #import "UpdaterCore.h"
 
-#import <substrate.h>
-
-#include <atomic>
+using unbound::ios::toNSString;
+using unbound::ios::toStdString;
 
 using namespace facebook;
 
@@ -26,40 +31,47 @@ using namespace facebook;
 
 #pragma mark - Pre/post bundle injection
 
-static jsi::Runtime *gRuntime = nullptr;
-static __weak id gInstance = nil;
-static NSString *gPendingBrowserLoginToken = nil;
-static BOOL      gBrowserLoginIsApplying    = NO;
-static BOOL      gBundleIsReady             = NO;
-static NSUInteger gBrowserLoginFailureCount = 0;
-static std::atomic_bool gLoaderPrepared{false};
+static jsi::Runtime *gRuntime                  = nullptr;
+static __weak id     gInstance                 = nil;
+static NSString     *gPendingBrowserLoginToken = nil;
+static BOOL          gBrowserLoginIsApplying   = NO;
+static NSUInteger    gBrowserLoginFailureCount = 0;
+
+static loader::LoaderPipeline &pipeline(void);
+
+BOOL UnboundBundleIsReady(void)
+{
+    return pipeline().isBundleReady();
+}
 
 static void applyPendingBrowserLogin(void)
 {
-    id          instance = gInstance;
-    NSString    *token    = gPendingBrowserLoginToken;
-    if (!instance || token.length == 0 || !gBundleIsReady || gBrowserLoginIsApplying)
+    id        instance = gInstance;
+    NSString *token    = gPendingBrowserLoginToken;
+    if (!instance || token.length == 0 || !UnboundBundleIsReady() || gBrowserLoginIsApplying)
     {
         return;
     }
 
     gBrowserLoginIsApplying = YES;
 
-    NSString *tokenJSON =
-        [Utilities JSONStringFromObject:token options:NSJSONWritingFragmentsAllowed fallback:nil];
-    if (!tokenJSON)
-    {
-        gBrowserLoginIsApplying = NO;
-        return;
-    }
+    std::string tokenValue = toStdString(token);
 
-    NSString *source = [NSString stringWithFormat:
-                             @"(function(token){const apply=()=>{const metro=globalThis.unbound?.metro;if(!metro||typeof metro.findByProps!=='function')throw new Error('Metro API unavailable');let auth=metro.findByProps('getAnalyticsToken','setToken');if(!auth)auth=metro.findByProps('getToken','setToken');if(!auth||typeof auth.setToken!=='function')throw new Error('Discord authentication store unavailable');auth.setToken(token);const reload=globalThis.unbound?.native?.reload;if(typeof reload!=='function')throw new Error('Reload API unavailable');Promise.resolve(reload()).catch(()=>{});};const ready=globalThis.__runtimeReady;if(ready?.ready)apply();else if(Array.isArray(ready?.callbacks))ready.callbacks.push(apply);else apply();})(%@);",
-                         tokenJSON];
-    std::string script = source.UTF8String ?: "";
-
-    [instance callFunctionOnBufferedRuntimeExecutor:[script, token](jsi::Runtime &runtime) {
-        BOOL applied = loader::evaluateScript(runtime, script, "browser-login");
+    [instance callFunctionOnBufferedRuntimeExecutor:[tokenValue, token](jsi::Runtime &runtime) {
+        BOOL applied = NO;
+        if (auto login = loader::bootstrap::function(runtime, loader::bootstrap::kBrowserLogin))
+        {
+            try
+            {
+                login->call(runtime, jsi::String::createFromUtf8(runtime, tokenValue));
+                applied = YES;
+            }
+            catch (const std::exception &error)
+            {
+                [Logger error:LOG_CATEGORY_DEFAULT
+                       format:@"Browser login failed. (%s)", error.what()];
+            }
+        }
         dispatch_async(dispatch_get_main_queue(), ^{
             gBrowserLoginIsApplying = NO;
             if (applied)
@@ -69,14 +81,15 @@ static void applyPendingBrowserLogin(void)
                     gPendingBrowserLoginToken = nil;
                 }
                 gBrowserLoginFailureCount = 0;
-                [Logger info:LOG_CATEGORY_DEFAULT format:@"Browser login token application scheduled."];
+                [Logger info:LOG_CATEGORY_DEFAULT
+                      format:@"Browser login token application scheduled."];
                 return;
             }
 
             gBrowserLoginFailureCount++;
             [Logger error:LOG_CATEGORY_DEFAULT
                    format:@"Browser login JavaScript application failed (attempt %lu).",
-                          (unsigned long)gBrowserLoginFailureCount];
+                          (unsigned long) gBrowserLoginFailureCount];
             if (gBrowserLoginFailureCount <= 3)
             {
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC),
@@ -101,17 +114,6 @@ void CompleteBrowserLogin(NSString *token)
     gPendingBrowserLoginToken = [token copy];
     gBrowserLoginFailureCount = 0;
     applyPendingBrowserLogin();
-}
-
-static NSString *nsString(const std::string &value)
-{
-    return [NSString stringWithUTF8String:value.c_str()] ?: @"";
-}
-
-static std::string stdString(NSString *value)
-{
-    const char *utf8 = value.UTF8String;
-    return utf8 ? std::string(utf8) : std::string();
 }
 
 class IOSLoaderHost final : public loader::LoaderHost
@@ -141,7 +143,7 @@ public:
 
     std::optional<std::string> resource(const std::string &name) override
     {
-        NSData *data = [Utilities getResource:nsString(name) data:true ext:@"js"];
+        NSData *data = [Utilities getResource:toNSString(name) data:true ext:@"js"];
         if (data.length == 0)
         {
             return std::nullopt;
@@ -161,15 +163,10 @@ public:
 
     loader::PreloadPayload preloadPayload() override
     {
-        loader::PreloadPayload payload;
-        payload.settings       = stdString([Settings getSettings]);
-        payload.plugins        = stdString([Plugins makeJSON]);
-        payload.themes         = stdString([Themes makeJSON]);
-        payload.fonts          = stdString([Fonts makeJSON]);
-        payload.availableFonts = stdString([Fonts makeAvailableJSON]);
-        payload.origin         = stdString([Utilities getCurrentDylibName]);
-        payload.version        = stdString(PACKAGE_VERSION);
-        return payload;
+        nlohmann::json availableFonts = loader::fontNamesOf(UnboundPlatformFonts());
+        return loader::makePreloadPayload(UnboundSettingsStore(), UnboundAddonState(),
+                                          availableFonts,
+                                          toStdString([Utilities getCurrentDylibName]));
     }
 
     void installNativeModules(jsi::Runtime &runtime) override
@@ -181,22 +178,20 @@ public:
 
     void onAddonsPrepared() override
     {
-        [Plugins init];
+        [CoreBridge scanAddons];
         [Themes init];
         [Fonts init];
     }
 
     void onBundleExecuted() override
     {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            gBundleIsReady = YES;
-            applyPendingBrowserLogin();
-        });
+        [HotReload observe];
+        dispatch_async(dispatch_get_main_queue(), ^{ applyPendingBrowserLogin(); });
     }
 
     void alert(const std::string &message) override
     {
-        NSString *text = nsString(message);
+        NSString *text = toNSString(message);
         dispatch_async(dispatch_get_main_queue(), ^{ [Utilities alert:text]; });
     }
 };
@@ -206,8 +201,8 @@ static loader::LoaderPipeline &pipeline(void)
     static loader::LoaderPipeline *shared = nullptr;
     static dispatch_once_t         onceToken;
     dispatch_once(&onceToken, ^{
-        shared = new loader::LoaderPipeline(std::make_shared<IOSLoaderHost>(), UnboundUpdaterSettings(),
-                                            UnboundBundleUpdater());
+        shared = new loader::LoaderPipeline(std::make_shared<IOSLoaderHost>(),
+                                            UnboundUpdaterSettings(), UnboundBundleUpdater());
     });
     return *shared;
 }
@@ -219,14 +214,8 @@ static void prepareLoading(id instance)
         return;
     }
 
-    gInstance      = instance;
-    gBundleIsReady = NO;
+    gInstance = instance;
     dispatch_async(dispatch_get_main_queue(), ^{ [DevOverlay refreshOverlay]; });
-
-    if ([Settings getBoolean:@"unbound" key:@"loader.enabled" def:YES] && !gLoaderPrepared.exchange(true))
-    {
-        [HotReload observe];
-    }
     pipeline().prepare();
 }
 
@@ -244,10 +233,7 @@ static void enqueueBundle(id instance)
 {
     gRuntime = &runtime;
     [Logger info:LOG_CATEGORY_DEFAULT format:@"RCTHost didInitializeRuntime reached."];
-    if (!loader::installMetroModuleCapture(runtime))
-    {
-        [Logger error:LOG_CATEGORY_DEFAULT format:@"Metro module capture could not be installed."];
-    }
+    pipeline().onRuntimeCreated(runtime);
     loader::setNativePluginFabricHost(self);
     id hostInstance = instance;
     prepareLoading(hostInstance);
@@ -286,7 +272,7 @@ typedef void (*LoadScriptFromSourceIMP)(id, SEL, id);
 
 static LoadJSBundleIMP         gOriginalLoadJSBundle         = NULL;
 static LoadScriptFromSourceIMP gOriginalLoadScriptFromSource = NULL;
-static BOOL                    gRCTInstanceHooksInstalled   = NO;
+static BOOL                    gRCTInstanceHooksInstalled    = NO;
 
 static void loadJSBundle(id self, SEL selector, NSURL *sourceURL)
 {
@@ -321,16 +307,12 @@ static BOOL installRCTInstanceHooks(void)
         return NO;
     }
 
-    MSHookMessageEx(instanceClass,
-                    @selector(_loadJSBundle:),
-                    (IMP)loadJSBundle,
-                    (IMP *)&gOriginalLoadJSBundle);
-    MSHookMessageEx(instanceClass,
-                    @selector(_loadScriptFromSource:),
-                    (IMP)loadScriptFromSource,
-                    (IMP *)&gOriginalLoadScriptFromSource);
-    gRCTInstanceHooksInstalled = gOriginalLoadJSBundle != NULL &&
-                                 gOriginalLoadScriptFromSource != NULL;
+    MSHookMessageEx(instanceClass, @selector(_loadJSBundle:), (IMP) loadJSBundle,
+                    (IMP *) &gOriginalLoadJSBundle);
+    MSHookMessageEx(instanceClass, @selector(_loadScriptFromSource:), (IMP) loadScriptFromSource,
+                    (IMP *) &gOriginalLoadScriptFromSource);
+    gRCTInstanceHooksInstalled =
+        gOriginalLoadJSBundle != NULL && gOriginalLoadScriptFromSource != NULL;
     return gRCTInstanceHooksInstalled;
 }
 
@@ -345,8 +327,7 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
         return;
     }
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC),
-                   dispatch_get_main_queue(),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(),
                    ^{ retryRCTInstanceHooks(attempt + 1); });
 }
 
@@ -355,13 +336,12 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
     [CoreBridge installLogging];
     [FileSystem init];
     [Settings init];
+    loader::registerNativePlatformProvider();
 
     if (![Utilities isRNNewArchEnabled])
     {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [Utilities
-                alert:@"This version of Discord is incompatible with this version of the Tweak."];
-        });
+        dispatch_async(dispatch_get_main_queue(),
+                       ^{ [Utilities alert:[CoreBridge incompatibleHostMessage]]; });
         return;
     }
 
@@ -371,22 +351,23 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
         dispatch_async(dispatch_get_main_queue(), ^{
             if (!verified)
             {
-                [Logger error:LOG_CATEGORY_DEFAULT format:@"Embedded tweak attestation verification failed"];
-                [Utilities alert:@"The injected tweak failed Unbound's embedded integrity verification. "
-                                 @"You cannot be sure that this is free of malware. "
-                                 @"If this app was obtained via 'cypwn' or similar sources "
-                                 @"we heavily recommend you uninstall it immediately."
-                           title:@"⚠️ SECURITY WARNING"
-                         timeout:15
-                         warning:YES];
+                [Logger error:LOG_CATEGORY_DEFAULT
+                       format:@"Embedded tweak attestation verification failed"];
+                [Utilities
+                      alert:@"The injected tweak failed Unbound's embedded integrity verification. "
+                            @"You cannot be sure that this is free of malware. "
+                            @"If this app was obtained via 'cypwn' or similar sources "
+                            @"we heavily recommend you uninstall it immediately."
+                      title:@"⚠️ SECURITY WARNING"
+                    timeout:15
+                    warning:YES];
                 return;
             }
             retryRCTInstanceHooks(0);
         });
     });
 #else
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC),
-                   dispatch_get_main_queue(),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(),
                    ^{ retryRCTInstanceHooks(0); });
 #endif
 

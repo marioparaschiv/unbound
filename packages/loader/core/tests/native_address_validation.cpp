@@ -1,7 +1,7 @@
-#include "NativeAddressValidation.h"
-
 #include <cassert>
 #include <limits>
+
+#include "NativeAddressValidation.h"
 
 int main()
 {

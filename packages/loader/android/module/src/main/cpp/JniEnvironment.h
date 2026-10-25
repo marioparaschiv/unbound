@@ -1,32 +1,30 @@
 #pragma once
 
 #include <jni.h>
-
 #include <optional>
 #include <string>
 #include <vector>
 
-namespace unbound::android
+namespace unbound::android {
+void    setJavaVM(JavaVM *vm);
+JNIEnv *currentEnvironment();
+
+std::string                toStdString(JNIEnv *env, jstring value);
+std::optional<std::string> toOptionalString(JNIEnv *env, jstring value);
+jstring                    toJavaString(JNIEnv *env, const std::string &value);
+jobjectArray               toJavaStringArray(JNIEnv *env, const std::vector<std::string> &values);
+bool                       clearPendingException(JNIEnv *env);
+
+class LocalClass
 {
-    void setJavaVM(JavaVM *vm);
-    JNIEnv *currentEnvironment();
+public:
+    LocalClass(JNIEnv *env, jclass cls);
+    ~LocalClass();
 
-    std::string toStdString(JNIEnv *env, jstring value);
-    std::optional<std::string> toOptionalString(JNIEnv *env, jstring value);
-    jstring toJavaString(JNIEnv *env, const std::string &value);
-    jobjectArray toJavaStringArray(JNIEnv *env, const std::vector<std::string> &values);
-    bool clearPendingException(JNIEnv *env);
+    jclass get() const;
 
-    class LocalClass
-    {
-    public:
-        LocalClass(JNIEnv *env, jclass cls);
-        ~LocalClass();
-
-        jclass get() const;
-
-    private:
-        JNIEnv *env_;
-        jclass  class_;
-    };
+private:
+    JNIEnv *env_;
+    jclass  class_;
+};
 }

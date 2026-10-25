@@ -1,13 +1,18 @@
+#include <android/log.h>
+#include <jni.h>
+
+#include "AndroidHotReload.h"
 #include "AndroidLoader.h"
 #include "HermesBytecodeHeader.h"
 #include "JniEnvironment.h"
-#include "LoaderLog.h"
-#include "LoaderPreload.h"
+#include "LoaderColor.h"
+#include "LoaderDevOverlay.h"
+#include "LoaderDiagnostics.h"
 #include "LoaderJSI.h"
+#include "LoaderLog.h"
+#include "LoaderPreferences.h"
+#include "LoaderPreload.h"
 #include "NativePluginBridge.h"
-
-#include <android/log.h>
-#include <jni.h>
 
 using namespace unbound::android;
 
@@ -31,19 +36,26 @@ static int androidPriority(loader::LogLevel level)
     return ANDROID_LOG_INFO;
 }
 
-static void writeLog(loader::LogLevel level, const std::string &category, const std::string &message)
+static void writeLog(loader::LogLevel level, const std::string &category,
+                     const std::string &message)
 {
-    __android_log_print(androidPriority(level), "Unbound", "[%s] %s", category.c_str(),
-                        message.c_str());
+    __android_log_write(androidPriority(level), "Unbound",
+                        loader::formatLogLine(category, message).c_str());
 }
 
-static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring devtoolsScript,
-                             jstring origin, jint bytecodeVersion,
-                             jstring platformInfo)
+static void nativeLog(JNIEnv *env, jclass, jint level, jstring category, jstring message)
+{
+    loader::logFromPlatform(level, category ? toStdString(env, category) : LOG_CATEGORY_DEFAULT,
+                            message ? toStdString(env, message) : std::string());
+}
+
+static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring bootstrapScripts,
+                             jstring origin, jint bytecodeVersion, jstring platformInfo)
 {
     LoaderConfiguration configuration;
-    configuration.documents       = toStdString(env, documents);
-    configuration.devtoolsScript  = toOptionalString(env, devtoolsScript);
+    configuration.documents = toStdString(env, documents);
+    configuration.bootstrapScripts =
+        nlohmann::json::parse(toStdString(env, bootstrapScripts), nullptr, false);
     configuration.origin          = toStdString(env, origin);
     configuration.bytecodeVersion = static_cast<uint32_t>(bytecodeVersion);
 
@@ -56,7 +68,7 @@ static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring dev
     auto loader = std::make_shared<AndroidLoader>(std::move(configuration), gCallbacks);
     loader->start();
     setCurrentLoader(loader);
-    loader::log(loader::LogLevel::Info, "default", "Native loader initialized.");
+    loader::log(loader::LogLevel::Info, LOG_CATEGORY_DEFAULT, "Native loader initialized.");
 }
 
 static void nativeOnLoadJSBundle(JNIEnv *, jclass)
@@ -82,22 +94,14 @@ static jboolean nativeInstallMetroModuleCapture(JNIEnv *, jclass, jlong runtimeP
         return JNI_FALSE;
     }
 
-    auto *runtime = reinterpret_cast<facebook::jsi::Runtime *>(runtimePointer);
-    bool installed = loader::installMetroModuleCapture(*runtime);
-    loader::log(installed ? loader::LogLevel::Info : loader::LogLevel::Error, "runtime",
-                installed ? "Metro module capture installed before Discord bundle."
-                          : "Metro module capture could not be installed.");
+    auto loader = currentLoader();
+    if (!loader)
+    {
+        return JNI_FALSE;
+    }
 
-    bool gated = loader::installRunApplicationGate(*runtime, [](facebook::jsi::Runtime &rt) {
-        if (auto loader = currentLoader())
-        {
-            loader->executeBundleNow(rt);
-        }
-    });
-    loader::log(gated ? loader::LogLevel::Info : loader::LogLevel::Error, "runtime",
-                gated ? "Unbound will run before Discord's first surface starts."
-                      : "The run-application gate could not be installed.");
-    return installed ? JNI_TRUE : JNI_FALSE;
+    loader->onRuntimeCreated(*reinterpret_cast<facebook::jsi::Runtime *>(runtimePointer));
+    return JNI_TRUE;
 }
 
 static void nativeDrainRuntimeWork(JNIEnv *, jclass, jlong runtimePointer)
@@ -138,7 +142,7 @@ static jint nativeHermesBytecodeVersion(JNIEnv *env, jclass, jbyteArray header)
         return 0;
     }
 
-    jsize length = env->GetArrayLength(header);
+    jsize  length = env->GetArrayLength(header);
     jbyte *bytes  = env->GetByteArrayElements(header, nullptr);
     if (!bytes)
     {
@@ -150,65 +154,16 @@ static jint nativeHermesBytecodeVersion(JNIEnv *env, jclass, jbyteArray header)
     return static_cast<jint>(version);
 }
 
-static jstring nativeHotReloadURL(JNIEnv *env, jclass)
+static jstring nativeHookReturnValue(JNIEnv *env, jclass, jstring token, jstring self,
+                                     jstring arguments)
 {
-    auto loader = currentLoader();
-    std::optional<std::string> url = loader ? loader->hotReloadURL() : std::nullopt;
-    return url ? toJavaString(env, *url) : nullptr;
-}
-
-static void nativeHotReloadConnected(JNIEnv *, jclass)
-{
-    if (auto loader = currentLoader())
-    {
-        loader->hotReloadConnected();
-    }
-}
-
-static jboolean nativeHotReloadFeed(JNIEnv *env, jclass, jstring chunk)
-{
-    auto loader = currentLoader();
-    return loader && loader->hotReloadFeed(toStdString(env, chunk)) ? JNI_TRUE : JNI_FALSE;
-}
-
-static jlong nativeHotReloadNextDelayMs(JNIEnv *, jclass)
-{
-    auto loader = currentLoader();
-    double seconds = loader ? loader->hotReloadNextDelay() : loader::kHotReloadMaximumDelaySeconds;
-    return static_cast<jlong>(seconds * 1000);
-}
-
-static jboolean nativeGetBoolean(JNIEnv *env, jclass, jstring store, jstring key, jboolean fallback)
-{
-    auto loader = currentLoader();
-    if (!loader)
-    {
-        return fallback;
-    }
-    return loader->settings().getBoolean(toStdString(env, store), toStdString(env, key), fallback);
-}
-
-static void nativeSetBoolean(JNIEnv *env, jclass, jstring store, jstring key, jboolean value)
-{
-    auto loader = currentLoader();
-    if (!loader)
-    {
-        return;
-    }
-    loader->settings().set(toStdString(env, store), toStdString(env, key), static_cast<bool>(value));
-    loader->settings().save();
-}
-
-static jstring nativeSettingJSON(JNIEnv *env, jclass, jstring store, jstring key)
-{
-    auto loader = currentLoader();
-    if (!loader)
+    if (!token || !self || !arguments)
     {
         return nullptr;
     }
-    std::optional<nlohmann::json> value =
-        loader->settings().get(toStdString(env, store), toStdString(env, key));
-    return value ? toJavaString(env, loader::toJSON(*value)) : nullptr;
+    std::optional<std::string> value = unbound::android::hookReturnValue(
+        toStdString(env, token), toStdString(env, self), toStdString(env, arguments));
+    return value ? toJavaString(env, *value) : nullptr;
 }
 
 static jstring nativeToolbox(JNIEnv *env, jclass, jstring action, jstring argument)
@@ -218,14 +173,62 @@ static jstring nativeToolbox(JNIEnv *env, jclass, jstring action, jstring argume
     {
         return nullptr;
     }
-    return toJavaString(env, loader->toolbox(toStdString(env, action),
-                                             argument ? toStdString(env, argument) : std::string()));
+    return toJavaString(env,
+                        loader->toolbox(toStdString(env, action),
+                                        argument ? toStdString(env, argument) : std::string()));
 }
 
-static jstring nativeFontsJSON(JNIEnv *env, jclass)
+static jstring nativePreference(JNIEnv *env, jclass, jstring action, jstring argument)
 {
     auto loader = currentLoader();
-    return toJavaString(env, loader ? loader->fontsJSON() : "[]");
+    if (!loader || !action)
+    {
+        return nullptr;
+    }
+    return toJavaString(
+        env, loader::preferences::perform(loader->settings(), toStdString(env, action),
+                                          argument ? toStdString(env, argument) : std::string()));
+}
+
+static jlong nativeParseColor(JNIEnv *env, jclass, jstring value)
+{
+    if (!value)
+    {
+        return -1;
+    }
+    const auto color = loader::parseColor(toStdString(env, value));
+    return color ? static_cast<jlong>(loader::toARGB(*color)) : -1;
+}
+
+static jdoubleArray nativeMessageBubbleStyle(JNIEnv *env, jclass)
+{
+    const auto   &style    = loader::preferences::kMessageBubbleStyle;
+    const jdouble values[] = {
+        style.radius, style.horizontalPadding, style.verticalPadding,
+        static_cast<jdouble>(loader::toARGB(loader::preferences::messageBubbleColor(true))),
+        static_cast<jdouble>(loader::toARGB(loader::preferences::messageBubbleColor(false)))};
+    jdoubleArray result = env->NewDoubleArray(5);
+    if (result)
+    {
+        env->SetDoubleArrayRegion(result, 0, 5, values);
+    }
+    return result;
+}
+
+static jstring nativeResolveFont(JNIEnv *env, jclass, jstring family)
+{
+    auto loader = currentLoader();
+    return toJavaString(env, loader ? loader->resolveFont(toStdString(env, family)) : "{}");
+}
+
+static jstring nativeDocumentsName(JNIEnv *env, jclass)
+{
+    return toJavaString(env, loader::preferences::kDocumentsName);
+}
+
+static jstring nativeSettingsFileName(JNIEnv *env, jclass)
+{
+    return toJavaString(env, loader::preferences::kSettingsFile);
 }
 
 static jstring nativeThemeColorsJSON(JNIEnv *env, jclass, jstring themeId)
@@ -242,31 +245,116 @@ static void nativePrepareAddons(JNIEnv *, jclass)
     }
 }
 
+static bool readOverlayBounds(JNIEnv *env, jdoubleArray bounds, loader::devoverlay::Size &size,
+                              loader::devoverlay::Insets &insets)
+{
+    if (!bounds || env->GetArrayLength(bounds) < 6)
+    {
+        return false;
+    }
+    jdouble values[6];
+    env->GetDoubleArrayRegion(bounds, 0, 6, values);
+    size   = {values[0], values[1]};
+    insets = {values[2], values[3], values[4], values[5]};
+    return true;
+}
+
+static jdoubleArray toPointArray(JNIEnv *env, loader::devoverlay::Point point)
+{
+    jdoubleArray result = env->NewDoubleArray(2);
+    if (result)
+    {
+        const jdouble values[2] = {point.x, point.y};
+        env->SetDoubleArrayRegion(result, 0, 2, values);
+    }
+    return result;
+}
+
+static jdouble nativeDevOverlayButtonSide(JNIEnv *, jclass)
+{
+    return loader::devoverlay::kButtonSide;
+}
+
+static jdoubleArray nativeDevOverlayCenter(JNIEnv *env, jclass, jdoubleArray bounds)
+{
+    loader::devoverlay::Size   size;
+    loader::devoverlay::Insets insets;
+    auto                       loader = currentLoader();
+    if (!loader || !readOverlayBounds(env, bounds, size, insets))
+    {
+        return nullptr;
+    }
+    return toPointArray(env, loader::devoverlay::buttonCenter(loader->settings(), size, insets));
+}
+
+static jdoubleArray nativeClampDevOverlayCenter(JNIEnv *env, jclass, jdouble x, jdouble y,
+                                                jdoubleArray bounds)
+{
+    loader::devoverlay::Size   size;
+    loader::devoverlay::Insets insets;
+    if (!readOverlayBounds(env, bounds, size, insets))
+    {
+        return nullptr;
+    }
+    return toPointArray(env, loader::devoverlay::clampCenter({x, y}, size, insets));
+}
+
+static void nativeSaveDevOverlayCenter(JNIEnv *env, jclass, jdouble x, jdouble y,
+                                       jdoubleArray bounds)
+{
+    loader::devoverlay::Size   size;
+    loader::devoverlay::Insets insets;
+    auto                       loader = currentLoader();
+    if (loader && readOverlayBounds(env, bounds, size, insets))
+    {
+        loader::devoverlay::saveButtonCenter(loader->settings(), {x, y}, size);
+    }
+}
+
+static jstring nativeIncompatibleHostMessage(JNIEnv *env, jclass)
+{
+    return toJavaString(env, loader::diagnostics::kIncompatibleHostMessage);
+}
+
+static jstring nativeDevelopmentBuildBanner(JNIEnv *env, jclass, jstring commit, jstring subject,
+                                            jstring branch, jstring timestamp)
+{
+    const auto text = [env](jstring value) {
+        return value ? toStdString(env, value) : std::string();
+    };
+    return toJavaString(env, loader::diagnostics::developmentBuildBanner(
+                                 {text(commit), text(subject), text(branch), text(timestamp)}));
+}
+
+static jint nativeDevelopmentBuildBannerSeconds(JNIEnv *, jclass)
+{
+    return static_cast<jint>(loader::diagnostics::kBannerSeconds);
+}
+
 static bool cacheCallbacks(JNIEnv *env, jclass bridge)
 {
     gCallbacks.bridgeClass     = static_cast<jclass>(env->NewGlobalRef(bridge));
     gCallbacks.scheduleRuntime = env->GetStaticMethodID(bridge, "scheduleRuntimeWork", "()V");
     gCallbacks.scheduleMain    = env->GetStaticMethodID(bridge, "scheduleMainWork", "()V");
     gCallbacks.isMainThread    = env->GetStaticMethodID(bridge, "isMainThread", "()Z");
-    gCallbacks.lookupViews = env->GetStaticMethodID(
-        bridge, "lookupViews", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.snapshotViews = env->GetStaticMethodID(
-        bridge, "snapshotViews", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.measureView = env->GetStaticMethodID(
-        bridge, "measureView", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.setViewFrame = env->GetStaticMethodID(
-        bridge, "setViewFrame", "(Ljava/lang/String;Ljava/lang/String;)V");
+    gCallbacks.lookupViews =
+        env->GetStaticMethodID(bridge, "lookupViews", "(Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.snapshotViews =
+        env->GetStaticMethodID(bridge, "snapshotViews", "(Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.measureView =
+        env->GetStaticMethodID(bridge, "measureView", "(Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.setViewFrame =
+        env->GetStaticMethodID(bridge, "setViewFrame", "(Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.mountView = env->GetStaticMethodID(
         bridge, "mountView",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.updateView = env->GetStaticMethodID(
-        bridge, "updateView", "(Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.unmountView = env->GetStaticMethodID(
-        bridge, "unmountView", "(Ljava/lang/String;)V");
-    gCallbacks.javaGetClass = env->GetStaticMethodID(
-        bridge, "javaGetClass", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaClassName = env->GetStaticMethodID(
-        bridge, "javaClassName", "(Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.updateView =
+        env->GetStaticMethodID(bridge, "updateView", "(Ljava/lang/String;Ljava/lang/String;)V");
+    gCallbacks.unmountView = env->GetStaticMethodID(bridge, "unmountView", "(Ljava/lang/String;)V");
+    gCallbacks.javaGetClass =
+        env->GetStaticMethodID(bridge, "javaGetClass", "(Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.javaClassName =
+        env->GetStaticMethodID(bridge, "javaClassName", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaConstruct = env->GetStaticMethodID(
         bridge, "javaConstruct", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaRespondsTo = env->GetStaticMethodID(
@@ -279,56 +367,51 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         bridge, "javaGetField", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaSetField = env->GetStaticMethodID(
         bridge, "javaSetField", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.javaRelease =
-        env->GetStaticMethodID(bridge, "javaRelease", "(Ljava/lang/String;)V");
+    gCallbacks.javaRelease = env->GetStaticMethodID(bridge, "javaRelease", "(Ljava/lang/String;)V");
     gCallbacks.hooksInstall = env->GetStaticMethodID(
         bridge, "hooksInstall",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/"
         "String;");
-    gCallbacks.hooksRemove =
-        env->GetStaticMethodID(bridge, "hooksRemove", "(Ljava/lang/String;)V");
-    gCallbacks.hooksSetReturnValue = env->GetStaticMethodID(
-        bridge, "hooksSetReturnValue",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.hooksRemoveReturnValue = env->GetStaticMethodID(
-        bridge, "hooksRemoveReturnValue",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.hooksClearReturnValues =
-        env->GetStaticMethodID(bridge, "hooksClearReturnValues", "(Ljava/lang/String;)V");
-    gCallbacks.debugEnvironment =
-        env->GetStaticMethodID(bridge, "debugEnvironment", "()Ljava/lang/String;");
-    gCallbacks.javaBatch = env->GetStaticMethodID(
-        bridge, "javaBatch", "(Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.hooksRemove = env->GetStaticMethodID(bridge, "hooksRemove", "(Ljava/lang/String;)V");
+    gCallbacks.runtimeReplaced = env->GetStaticMethodID(bridge, "runtimeReplaced", "()V");
+    gCallbacks.javaBatch =
+        env->GetStaticMethodID(bridge, "javaBatch", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaCreateAssociationKey =
         env->GetStaticMethodID(bridge, "javaCreateAssociationKey", "()Ljava/lang/String;");
-    gCallbacks.javaGetAssociatedObject = env->GetStaticMethodID(
-        bridge, "javaGetAssociatedObject",
-        "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.javaSetAssociatedObject = env->GetStaticMethodID(
-        bridge, "javaSetAssociatedObject",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+    gCallbacks.javaGetAssociatedObject =
+        env->GetStaticMethodID(bridge, "javaGetAssociatedObject",
+                               "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.javaSetAssociatedObject =
+        env->GetStaticMethodID(bridge, "javaSetAssociatedObject",
+                               "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V");
     gCallbacks.fabricMount = env->GetStaticMethodID(
         bridge, "fabricMount",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.fabricUpdate = env->GetStaticMethodID(
-        bridge, "fabricUpdate", "(Ljava/lang/String;Ljava/lang/String;)V");
+    gCallbacks.fabricUpdate =
+        env->GetStaticMethodID(bridge, "fabricUpdate", "(Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.fabricUnmount =
-        env->GetStaticMethodID(bridge, "fabricUnmount", "(Ljava/lang/String;)V");
-    gCallbacks.fabricIsRunning = env->GetStaticMethodID(
-        bridge, "fabricIsRunning", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.fabricViewHandle = env->GetStaticMethodID(
-        bridge, "fabricViewHandle", "(Ljava/lang/String;)Ljava/lang/String;");
+        env->GetStaticMethodID(bridge, "fabricUnmount", "(Ljava/lang/String;)Z");
+    gCallbacks.fabricSetSize = env->GetStaticMethodID(
+        bridge, "fabricSetSize", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+    gCallbacks.fabricSetFrame =
+        env->GetStaticMethodID(bridge, "fabricSetFrame", "(Ljava/lang/String;Ljava/lang/String;)V");
+    gCallbacks.fabricMeasure =
+        env->GetStaticMethodID(bridge, "fabricMeasure", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.fetchText =
         env->GetStaticMethodID(bridge, "fetchText", "(Ljava/lang/String;I)Ljava/lang/String;");
     gCallbacks.download = env->GetStaticMethodID(
         bridge, "download",
-        "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)[Ljava/lang/"
+        "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;III)[Ljava/lang/"
         "String;");
-    gCallbacks.devServerHost = env->GetStaticMethodID(bridge, "devServerHost", "()Ljava/lang/String;");
-    gCallbacks.isServing     = env->GetStaticMethodID(bridge, "isServing", "(Ljava/lang/String;I)Z");
+    gCallbacks.devServerHost =
+        env->GetStaticMethodID(bridge, "devServerHost", "()Ljava/lang/String;");
+    gCallbacks.isServing = env->GetStaticMethodID(bridge, "isServing", "(Ljava/lang/String;I)Z");
     gCallbacks.availableFonts =
         env->GetStaticMethodID(bridge, "availableFonts", "()[Ljava/lang/String;");
-    gCallbacks.alert = env->GetStaticMethodID(bridge, "alert", "(Ljava/lang/String;)V");
+    gCallbacks.appFonts = env->GetStaticMethodID(bridge, "appFonts", "()[Ljava/lang/String;");
+    gCallbacks.appFontBytes =
+        env->GetStaticMethodID(bridge, "appFontBytes", "(Ljava/lang/String;)[B");
+    gCallbacks.alert            = env->GetStaticMethodID(bridge, "alert", "(Ljava/lang/String;)V");
     gCallbacks.onBundleExecuted = env->GetStaticMethodID(bridge, "onBundleExecuted", "()V");
 
     return !clearPendingException(env) && gCallbacks.scheduleRuntime && gCallbacks.scheduleMain &&
@@ -338,14 +421,13 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.javaClassName && gCallbacks.javaConstruct && gCallbacks.javaRespondsTo &&
            gCallbacks.javaInvoke && gCallbacks.javaGetField && gCallbacks.javaSetField &&
            gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
-           gCallbacks.hooksSetReturnValue && gCallbacks.hooksRemoveReturnValue &&
-           gCallbacks.hooksClearReturnValues &&
-           gCallbacks.debugEnvironment && gCallbacks.javaBatch &&
+           gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
-           gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricIsRunning &&
-           gCallbacks.fabricViewHandle && gCallbacks.fetchText &&
-           gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing && gCallbacks.availableFonts &&
+           gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&
+           gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure && gCallbacks.fetchText &&
+           gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing &&
+           gCallbacks.availableFonts && gCallbacks.appFonts && gCallbacks.appFontBytes &&
            gCallbacks.alert && gCallbacks.onBundleExecuted;
 }
 
@@ -381,26 +463,44 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeDispatchHookEvent)},
         {"nativeHermesBytecodeVersion", "([B)I",
          reinterpret_cast<void *>(nativeHermesBytecodeVersion)},
-        {"nativeHotReloadURL", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeHotReloadURL)},
-        {"nativeHotReloadConnected", "()V", reinterpret_cast<void *>(nativeHotReloadConnected)},
-        {"nativeHotReloadFeed", "(Ljava/lang/String;)Z", reinterpret_cast<void *>(nativeHotReloadFeed)},
-        {"nativeHotReloadNextDelayMs", "()J", reinterpret_cast<void *>(nativeHotReloadNextDelayMs)},
-        {"nativeGetBoolean", "(Ljava/lang/String;Ljava/lang/String;Z)Z",
-         reinterpret_cast<void *>(nativeGetBoolean)},
-        {"nativeSetBoolean", "(Ljava/lang/String;Ljava/lang/String;Z)V",
-         reinterpret_cast<void *>(nativeSetBoolean)},
-        {"nativeSettingJSON", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeSettingJSON)},
+        {"nativeHookReturnValue",
+         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeHookReturnValue)},
         {"nativeToolbox", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeToolbox)},
-        {"nativeFontsJSON", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeFontsJSON)},
+        {"nativePreference", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativePreference)},
+        {"nativeParseColor", "(Ljava/lang/String;)J", reinterpret_cast<void *>(nativeParseColor)},
+        {"nativeMessageBubbleStyle", "()[D", reinterpret_cast<void *>(nativeMessageBubbleStyle)},
+        {"nativeResolveFont", "(Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeResolveFont)},
+        {"nativeDocumentsName", "()Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeDocumentsName)},
+        {"nativeSettingsFileName", "()Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeSettingsFileName)},
         {"nativeThemeColorsJSON", "(Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeThemeColorsJSON)},
         {"nativePrepareAddons", "()V", reinterpret_cast<void *>(nativePrepareAddons)},
+        {"nativeLog", "(ILjava/lang/String;Ljava/lang/String;)V",
+         reinterpret_cast<void *>(nativeLog)},
+        {"nativeDevOverlayButtonSide", "()D", reinterpret_cast<void *>(nativeDevOverlayButtonSide)},
+        {"nativeIncompatibleHostMessage", "()Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeIncompatibleHostMessage)},
+        {"nativeDevelopmentBuildBanner",
+         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeDevelopmentBuildBanner)},
+        {"nativeDevelopmentBuildBannerSeconds", "()I",
+         reinterpret_cast<void *>(nativeDevelopmentBuildBannerSeconds)},
+        {"nativeDevOverlayCenter", "([D)[D", reinterpret_cast<void *>(nativeDevOverlayCenter)},
+        {"nativeClampDevOverlayCenter", "(DD[D)[D",
+         reinterpret_cast<void *>(nativeClampDevOverlayCenter)},
+        {"nativeSaveDevOverlayCenter", "(DD[D)V",
+         reinterpret_cast<void *>(nativeSaveDevOverlayCenter)},
     };
 
-    if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) != JNI_OK ||
-        !cacheCallbacks(env, bridge.get()))
+    if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) !=
+            JNI_OK ||
+        !cacheCallbacks(env, bridge.get()) || !registerHotReloadNatives(env))
     {
         clearPendingException(env);
         return JNI_ERR;

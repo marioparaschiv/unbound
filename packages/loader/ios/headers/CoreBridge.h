@@ -6,24 +6,40 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)installLogging;
 
++ (NSString *)documentsName;
+
 + (uint32_t)mainBundleBytecodeVersion;
 
 + (nullable UIColor *)colorFromString:(NSString *)value;
-+ (NSDictionary *)themeColors:(NSDictionary *)theme;
++ (BOOL)isDarkColor:(UIColor *)color;
 
-+ (NSMutableArray *)scanPluginsIn:(NSString *)documents;
-+ (NSMutableArray *)scanThemesIn:(NSString *)documents;
-+ (NSMutableArray *)scanFontsIn:(NSString *)documents
-                   nameResolver:(NSString *_Nullable (^)(NSString *path))resolver;
++ (CGFloat)messageBubbleRadius;
++ (CGSize)messageBubblePadding;
++ (UIColor *)messageBubbleColorForDarkTheme:(BOOL)dark;
++ (nullable NSDictionary *)themeColorsForId:(NSString *)themeId;
++ (BOOL)hasTheme:(NSString *)themeId;
 
-+ (BOOL)wipeAddonsNamed:(NSString *)kind in:(NSString *)documents;
-+ (BOOL)factoryResetIn:(NSString *)documents;
-+ (void)deleteBundleIn:(NSString *)documents;
-+ (BOOL)useCustomBundle:(NSString *)url;
-+ (BOOL)toggleRecovery;
-+ (NSString *)issueURLForPlatform:(NSString *)platform
-                      environment:(NSArray<NSArray<NSString *> *> *)environment
-                      attachments:(NSArray<NSArray<NSString *> *> *)attachments;
++ (void)scanAddons;
++ (NSArray *)themes;
++ (NSArray<NSDictionary *> *)fonts;
++ (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets;
+
++ (NSString *)toolbox:(NSString *)action argument:(NSString *)argument;
++ (NSDictionary *)toolboxObject:(NSString *)action argument:(NSString *)argument;
++ (NSDictionary *)toolboxMenu:(NSDictionary *)options;
++ (NSTimeInterval)toolboxHoldDuration;
++ (NSString *)preference:(NSString *)action argument:(NSString *)argument;
++ (BOOL)preferenceEnabled:(NSString *)action;
+
++ (CGFloat)devOverlayButtonSide;
++ (CGFloat)devOverlayButtonMargin;
++ (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets;
++ (CGPoint)clampDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds insets:(UIEdgeInsets)insets;
++ (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds;
+
++ (NSString *)incompatibleHostMessage;
++ (NSString *)developmentBuildBanner;
++ (NSTimeInterval)developmentBuildBannerDuration;
 
 @end
 

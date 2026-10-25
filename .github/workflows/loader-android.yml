@@ -4,42 +4,67 @@ on:
     workflow_dispatch:
         inputs:
             ios_version:
-                description: "Discord app version to match"
+                description: 'Discord app version to match'
                 required: false
                 type: string
             require_matching_version:
-                description: "Fail instead of using a different Android version"
+                description: 'Fail instead of using a different Android version'
                 required: false
                 default: false
                 type: boolean
             release:
-                description: "Require persistent Android release signing"
+                description: 'Require persistent Android release signing'
                 required: false
                 default: false
                 type: boolean
+            discord_channel:
+                description: 'Discord Android channel to patch'
+                required: false
+                default: stable
+                type: choice
+                options: [stable, beta, alpha]
+            android_code:
+                description: 'Exact Discord Android version code to patch'
+                required: false
+                type: string
     workflow_call:
         inputs:
             ios_version:
-                description: "Discord app version to match"
+                description: 'Discord app version to match'
                 required: false
                 type: string
             require_matching_version:
-                description: "Fail instead of using a different Android version"
+                description: 'Fail instead of using a different Android version'
                 required: false
                 default: false
                 type: boolean
             release:
-                description: "Require persistent Android release signing"
+                description: 'Require persistent Android release signing'
                 required: false
                 default: false
                 type: boolean
+            discord_channel:
+                description: 'Discord Android channel to patch'
+                required: false
+                default: stable
+                type: string
+            android_code:
+                description: 'Exact Discord Android version code to patch'
+                required: false
+                type: string
         outputs:
             module_filename:
-                description: "Filename of the LSPosed module APK"
+                description: 'Filename of the LSPosed module APK'
                 value: ${{ jobs.build-module.outputs.module_filename }}
+            module_url:
+                description: 'Download URL for the LSPosed module APK artifact'
+                value: ${{ jobs.build-module.outputs.module_url }}
             patched_filename:
-                description: "Filename of the LSPatch-patched Discord split APKs"
+                description: 'Filename of the LSPatch-patched Discord split APKs'
                 value: ${{ jobs.patch-discord.outputs.patched_filename }}
+            patched_url:
+                description: 'Download URL for the LSPatch-patched Discord artifact'
+                value: ${{ jobs.patch-discord.outputs.patched_url }}
 
 permissions:
     contents: read
@@ -81,6 +106,7 @@ jobs:
             ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         outputs:
             module_filename: ${{ steps.collect.outputs.module_filename }}
+            module_url: ${{ steps.upload-module.outputs.artifact-url }}
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -92,7 +118,7 @@ jobs:
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
               with:
                   distribution: temurin
-                  java-version: "17"
+                  java-version: '17'
 
             - name: Setup Gradle
               uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6
@@ -132,6 +158,7 @@ jobs:
                   echo "module_filename=$name" >> "$GITHUB_OUTPUT"
 
             - name: Upload module
+              id: upload-module
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: android module
@@ -143,20 +170,45 @@ jobs:
         runs-on: ubuntu-26.04
         outputs:
             patched_filename: ${{ steps.patch.outputs.patched_filename }}
+            patched_url: ${{ steps.upload-patched.outputs.artifact-url }}
         env:
             LSPATCH_VERSION: v1.2
             LSPATCH_JAR: lspatch-v1.2-487-release.jar
             LSPATCH_SHA256: d238fdc414d121b7fa454d8b4ccf420df3a8c97d563761861ff92bd9c5da2165
             DISCORD_CERT_SHA256: 3c39d23cf9367849a5c699395647fe0e5bfea5a1f1f40d8c717ddc70f8bfa113
             DISCORD_TRACKER: https://tracker.vendetta.rocks/tracker
+            DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
+            DISCORD_CHANNEL: ${{ inputs.discord_channel || 'stable' }}
+            ANDROID_CODE: ${{ inputs.android_code }}
             IOS_VERSION: ${{ inputs.ios_version }}
             REQUIRE_MATCHING_VERSION: ${{ inputs.require_matching_version }}
         steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 1
+
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
             - name: Setup Java
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
               with:
                   distribution: temurin
-                  java-version: "21"
+                  java-version: '21'
 
             - name: Download module
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
@@ -176,25 +228,30 @@ jobs:
               id: discord
               run: |
                   set -euo pipefail
-                  latest_version=$(curl -fsSL "$DISCORD_TRACKER/index" | jq -r '.latest.stable')
-                  version=""
-                  if [[ "$IOS_VERSION" =~ ^([0-9]+)\.([0-9]+)(\.|_|$) ]]; then
-                      candidate="${BASH_REMATCH[1]}$(printf '%03d' "${BASH_REMATCH[2]}")"
-                      if [ "$REQUIRE_MATCHING_VERSION" = true ]; then
-                          version="$candidate"
-                      elif curl -fsSL --range 0-0 --max-time 15 -o /dev/null "$DISCORD_TRACKER/download/$candidate/base"; then
-                          version="$candidate"
+                  version="$ANDROID_CODE"
+                  if [ -z "$version" ] && [ "$DISCORD_CHANNEL" != stable ]; then
+                      version=$(env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" | jq -er '.code')
+                  elif [ -z "$version" ]; then
+                      latest_version=$(curl -fsSL "$DISCORD_TRACKER/index" | jq -r '.latest.stable')
+                      if [[ "$IOS_VERSION" =~ ^([0-9]+)\.([0-9]+)(\.|_|$) ]]; then
+                          candidate="${BASH_REMATCH[1]}$(printf '%03d' "${BASH_REMATCH[2]}")"
+                          if [ "$REQUIRE_MATCHING_VERSION" = true ]; then
+                              version="$candidate"
+                          elif curl -fsSL --range 0-0 --max-time 15 -o /dev/null "$DISCORD_TRACKER/download/$candidate/base"; then
+                              version="$candidate"
+                          fi
                       fi
+                      if [ "$REQUIRE_MATCHING_VERSION" = true ] && [ -z "$version" ]; then
+                          echo "::error::Cannot derive an Android version matching iOS version $IOS_VERSION"
+                          exit 1
+                      fi
+                      version="${version:-$latest_version}"
                   fi
-                  if [ "$REQUIRE_MATCHING_VERSION" = true ] && [ -z "$version" ]; then
-                      echo "::error::Cannot derive an Android version matching iOS version $IOS_VERSION"
-                      exit 1
-                  fi
-                  version="${version:-$latest_version}"
-                  mkdir discord
+                  split_args=()
                   for split in base config.arm64_v8a config.armeabi_v7a config.xxhdpi config.en; do
-                      curl -fsSL -o "discord/$split.apk" "$DISCORD_TRACKER/download/$version/$split"
+                      split_args+=(--split "$split")
                   done
+                  env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$version" --output-dir discord "${split_args[@]}" > /dev/null
                   build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
                   apk_version_code=$("$build_tools/aapt" dump badging discord/base.apk | sed -n "s/^package: name='com.discord' versionCode='\\([^']*\\)'.*/\\1/p")
                   if [ -z "$apk_version_code" ] || [ "$apk_version_code" != "$version" ]; then
@@ -218,10 +275,12 @@ jobs:
                   mkdir patched
                   java -jar "$LSPATCH_JAR" discord/*.apk -m module/*.apk -l 2 -o patched -f
                   name="Unbound.apks"
+                  if [ "$DISCORD_CHANNEL" != stable ]; then name="Unbound-$DISCORD_CHANNEL.apks"; fi
                   (cd patched && zip -q "../$name" ./*.apk)
                   echo "patched_filename=$name" >> "$GITHUB_OUTPUT"
 
             - name: Upload patched Discord
+              id: upload-patched
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: patched discord

@@ -1,7 +1,7 @@
 {
-  "id": "app.unbound.android",
-  "url": "https://github.com/marioparaschiv/unbound",
-  "author": "unbound-app",
-  "name": "Unbound Loader (LSPosed)",
-  "additionalSettings": "{\"apkFilterRegEx\":\"^app\\\\.unbound\\\\.android\\\\.lsposed\\\\.apk$\",\"filterReleaseTitlesByRegEx\":\"^loader-v\"}"
+	"id": "app.unbound.android",
+	"url": "https://github.com/marioparaschiv/unbound",
+	"author": "unbound-app",
+	"name": "Unbound Loader (LSPosed)",
+	"additionalSettings": "{\"apkFilterRegEx\":\"^app\\\\.unbound\\\\.android\\\\.lsposed\\\\.apk$\",\"filterReleaseTitlesByRegEx\":\"^loader-v\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\"}"
 }

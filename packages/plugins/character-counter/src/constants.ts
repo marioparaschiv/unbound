@@ -7,6 +7,4 @@ export const TONE_COLORS = {
 	red: { tokens: ['RED_360', 'RED_400'], fallback: '#ed4245' },
 };
 
-export const COUNTER_OFFSET = -26;
-
-export const SLOWMODE_ROW_HEIGHT = 18;
+export const COUNTER_HEIGHT = 20;

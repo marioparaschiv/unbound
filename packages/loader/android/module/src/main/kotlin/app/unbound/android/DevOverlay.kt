@@ -3,36 +3,44 @@ package app.unbound.android
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.Context
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.text.InputType
+import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.Toast
+import android.widget.TextView
+import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.ref.WeakReference
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 object DevOverlay {
-    private const val PREFERENCES = "unbound-dev-overlay"
-    private const val X_KEY = "x"
-    private const val Y_KEY = "y"
-    private const val BUTTON_SIDE_DP = 44
-    private const val MARGIN_DP = 8
     private const val DRAG_SLOP_DP = 6
 
-    private var button: WeakReference<View>? = null
+    private const val BANNER_HEIGHT_DP = 52
+    private const val BANNER_FADE_MS = 400L
 
-    fun shouldShow(): Boolean =
-        Platform.isEmulator() || NativeBridge.nativeGetBoolean("unbound", "developer-mode", false)
+    private var button: WeakReference<View>? = null
+    private var bannerShown = false
+
+    @Volatile var debugBuild = false
+
+    fun shouldShow(): Boolean {
+        val flags = listOfNotNull("virtual-device".takeIf { Platform.isEmulator() }, "debug-build".takeIf { debugBuild })
+        return NativeBridge.nativePreference("dev-overlay", flags.joinToString(",")) == "true"
+    }
 
     fun onResumed(activity: Activity) {
         val decor = activity.window?.decorView as? ViewGroup ?: return
@@ -50,15 +58,57 @@ object DevOverlay {
         val view = createButton(activity)
         decor.addView(view)
         button = WeakReference(view)
-        decor.post { place(activity, view, decor) }
+        decor.post { place(view, decor) }
     }
 
-    private fun dp(context: Context, value: Int): Int =
-        (value * context.resources.displayMetrics.density).toInt()
+    fun showDevelopmentBuildBanner(activity: Activity) {
+        if (!debugBuild || bannerShown) return
+        val decor = activity.window?.decorView as? ViewGroup ?: return
+        bannerShown = true
+
+        val banner = TextView(activity).apply {
+            text = NativeBridge.nativeDevelopmentBuildBanner(
+                BuildConfig.COMMIT_SHORT_HASH,
+                BuildConfig.COMMIT_SUBJECT,
+                BuildConfig.COMMIT_BRANCH,
+                BuildConfig.BUILD_TIMESTAMP,
+            )
+            setTextColor(Color.rgb(255, 51, 51))
+            setBackgroundColor(Color.argb(179, 0, 0, 0))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            maxLines = 3
+            ellipsize = TextUtils.TruncateAt.END
+            setShadowLayer(1f, 0f, 1f, Color.BLACK)
+            alpha = 0f
+            elevation = dp(activity, 8).toFloat()
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(activity, BANNER_HEIGHT_DP),
+                Gravity.TOP,
+            )
+        }
+        decor.addView(banner)
+        decor.post {
+            banner.translationY = systemInsets(decor).top.toFloat()
+            banner.animate().alpha(1f).setDuration(BANNER_FADE_MS)
+        }
+        banner.postDelayed({
+            banner.animate().alpha(0f).setDuration(BANNER_FADE_MS).withEndAction {
+                (banner.parent as? ViewGroup)?.removeView(banner)
+            }
+        }, NativeBridge.nativeDevelopmentBuildBannerSeconds() * 1000L)
+    }
+
+    private fun density(view: View): Double = view.resources.displayMetrics.density.toDouble()
+
+    private fun dp(activity: Activity, value: Int): Int =
+        (value * activity.resources.displayMetrics.density).roundToInt()
 
     @SuppressLint("ClickableViewAccessibility")
     private fun createButton(activity: Activity): View {
-        val side = dp(activity, BUTTON_SIDE_DP)
+        val side = (NativeBridge.nativeDevOverlayButtonSide() * activity.resources.displayMetrics.density).roundToInt()
         val view = ImageView(activity).apply {
             setImageResource(android.R.drawable.ic_menu_manage)
             setColorFilter(Color.WHITE)
@@ -75,8 +125,7 @@ object DevOverlay {
         }
         var downX = 0f
         var downY = 0f
-        var startX = 0f
-        var startY = 0f
+        var startCenter = doubleArrayOf(0.0, 0.0)
         var dragging = false
 
         view.setOnTouchListener { touched, event ->
@@ -85,8 +134,7 @@ object DevOverlay {
                 MotionEvent.ACTION_DOWN -> {
                     downX = event.rawX
                     downY = event.rawY
-                    startX = touched.x
-                    startY = touched.y
+                    startCenter = center(touched)
                     dragging = false
                 }
                 MotionEvent.ACTION_MOVE -> {
@@ -96,13 +144,18 @@ object DevOverlay {
                         dragging = true
                     }
                     if (dragging) {
-                        touched.x = clamp(startX + dx, parent.width - touched.width, activity)
-                        touched.y = clamp(startY + dy, parent.height - touched.height, activity)
+                        val density = density(touched)
+                        NativeBridge.nativeClampDevOverlayCenter(
+                            startCenter[0] + dx / density,
+                            startCenter[1] + dy / density,
+                            bounds(parent),
+                        )?.let { moveTo(touched, it) }
                     }
                 }
                 MotionEvent.ACTION_UP -> {
                     if (dragging) {
-                        persist(activity, touched, parent)
+                        val current = center(touched)
+                        NativeBridge.nativeSaveDevOverlayCenter(current[0], current[1], bounds(parent))
                     } else {
                         showMenu(activity)
                     }
@@ -114,51 +167,81 @@ object DevOverlay {
         return view
     }
 
-    private fun clamp(value: Float, limit: Int, context: Context): Float {
-        val margin = dp(context, MARGIN_DP).toFloat()
-        return value.coerceIn(margin, (limit - margin).coerceAtLeast(margin))
+    private fun place(view: View, parent: View) {
+        NativeBridge.nativeDevOverlayCenter(bounds(parent))?.let { moveTo(view, it) }
     }
 
-    private fun place(activity: Activity, view: View, parent: View) {
-        val preferences = activity.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-        val relativeX = preferences.getFloat(X_KEY, 1f)
-        val relativeY = preferences.getFloat(Y_KEY, 0.7f)
+    private fun halfSide(view: View): Float = view.layoutParams.width / 2f
 
-        view.x = clamp(relativeX * (parent.width - view.width), parent.width - view.width, activity)
-        view.y = clamp(relativeY * (parent.height - view.height), parent.height - view.height, activity)
+    private fun center(view: View): DoubleArray {
+        val density = density(view)
+        return doubleArrayOf((view.x + halfSide(view)) / density, (view.y + halfSide(view)) / density)
     }
 
-    private fun persist(activity: Activity, view: View, parent: View) {
-        val width = (parent.width - view.width).coerceAtLeast(1)
-        val height = (parent.height - view.height).coerceAtLeast(1)
-
-        activity.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE).edit()
-            .putFloat(X_KEY, view.x / width)
-            .putFloat(Y_KEY, view.y / height)
-            .apply()
+    private fun moveTo(view: View, center: DoubleArray) {
+        val density = density(view)
+        view.x = (center[0] * density).toFloat() - halfSide(view)
+        view.y = (center[1] * density).toFloat() - halfSide(view)
     }
+
+    private fun bounds(parent: View): DoubleArray {
+        val density = density(parent)
+        val insets = systemInsets(parent)
+        return doubleArrayOf(
+            parent.width / density,
+            parent.height / density,
+            insets.top / density,
+            insets.left / density,
+            insets.bottom / density,
+            insets.right / density,
+        )
+    }
+
+    @Suppress("DEPRECATION")
+    private fun systemInsets(view: View): Rect {
+        val insets = view.rootWindowInsets ?: return Rect()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+            return Rect(bars.left, bars.top, bars.right, bars.bottom)
+        }
+        val cutout = insets.displayCutout
+        return Rect(
+            maxOf(insets.systemWindowInsetLeft, cutout?.safeInsetLeft ?: 0),
+            maxOf(insets.systemWindowInsetTop, cutout?.safeInsetTop ?: 0),
+            maxOf(insets.systemWindowInsetRight, cutout?.safeInsetRight ?: 0),
+            maxOf(insets.systemWindowInsetBottom, cutout?.safeInsetBottom ?: 0),
+        )
+    }
+
+    private fun objects(array: JSONArray?): List<JSONObject> =
+        (0 until (array?.length() ?: 0)).mapNotNull { array?.optJSONObject(it) }
 
     private fun showMenu(activity: Activity) {
-        val items = arrayOf("Reload Bundle", "Edit Settings JSON", "Open Unbound Toolbox")
+        val model = runCatching { JSONObject(NativeBridge.nativeToolbox("developer-menu", null).orEmpty()) }
+            .getOrDefault(JSONObject())
+        val items = objects(model.optJSONArray("items"))
+        val editor = model.optJSONObject("editor") ?: JSONObject()
 
         AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle("Developer")
-            .setItems(items) { _, index ->
-                when (index) {
-                    0 -> Platform.restartApp()
-                    1 -> editSettings(activity)
-                    2 -> Toolbox.show()
-                }
+            .setTitle(model.optString("title"))
+            .setItems(items.map { it.optString("title") }.toTypedArray()) { _, index ->
+                perform(activity, items[index], editor)
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(model.optString("cancel"), null)
             .show()
     }
 
-    private fun editSettings(activity: Activity) {
-        val current = NativeBridge.nativeToolbox("settings", null) ?: "{}"
-        val pretty = runCatching { JSONObject(current).toString(2) }.getOrDefault(current)
-        val editor = EditText(activity).apply {
-            setText(pretty)
+    private fun perform(activity: Activity, item: JSONObject, editor: JSONObject) {
+        when (item.optString("followUp")) {
+            "reload-app" -> Platform.restartApp()
+            "edit-settings" -> editSettings(activity, editor)
+            "open-toolbox" -> Toolbox.show()
+        }
+    }
+
+    private fun editSettings(activity: Activity, editor: JSONObject) {
+        val input = EditText(activity).apply {
+            setText(NativeBridge.nativeToolbox("settings", null) ?: "{}")
             typeface = Typeface.MONOSPACE
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or
@@ -170,20 +253,21 @@ object DevOverlay {
             setHorizontallyScrolling(true)
         }
 
-        AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle("Settings JSON")
-            .setView(editor)
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Save") { _, _ ->
-                val text = editor.text.toString()
-                val valid = runCatching { JSONObject(text) }.isSuccess
+        val dialog = AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
+            .setTitle(editor.optString("title"))
+            .setView(input)
+            .setNegativeButton(editor.optString("cancel"), null)
+            .setPositiveButton(editor.optString("save"), null)
+            .create()
 
-                if (valid && NativeBridge.nativeToolbox("replace-settings", text) == "true") {
-                    Platform.restartApp()
-                } else {
-                    Toast.makeText(activity, "The settings are not valid JSON.", Toast.LENGTH_LONG).show()
-                }
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val result = runCatching {
+                    JSONObject(NativeBridge.nativeToolbox("save-settings", input.text.toString()).orEmpty())
+                }.getOrDefault(JSONObject())
+                if (result.optBoolean("saved")) dialog.dismiss() else input.error = result.optString("error")
             }
-            .show()
+        }
+        dialog.show()
     }
 }

@@ -21,12 +21,18 @@
 		"unicorn/prefer-node-protocol": "error",
 		"typescript/switch-exhaustiveness-check": [
 			"error",
-			{ "considerDefaultExhaustiveForUnions": true }
+			{
+				"considerDefaultExhaustiveForUnions": true
+			}
 		],
 		"typescript/no-unnecessary-type-assertion": "error",
 		"typescript/no-misused-promises": [
 			"error",
-			{ "checksVoidReturn": { "attributes": false } }
+			{
+				"checksVoidReturn": {
+					"attributes": false
+				}
+			}
 		],
 		"oxc-config/consistent-import-paths": [
 			"error",
@@ -43,13 +49,24 @@
 		"packages/api/src/**",
 		"packages/cli/templates/**",
 		"packages/plugins/**",
-		"packages/loader/**"
+		"packages/loader/bootstrap/devtools.js",
+		"packages/loader/vendor/**",
+		"packages/loader/apt-repo/**",
+		"packages/loader/ios/**",
+		"packages/loader/android/**",
+		"packages/loader/build/**"
 	],
 	"overrides": [
 		{
 			"files": ["packages/client/src/api/metro/**", "packages/types/typings/components.ts"],
 			"rules": {
 				"typescript/no-explicit-any": "off"
+			}
+		},
+		{
+			"files": ["packages/loader/bootstrap/*.js"],
+			"rules": {
+				"eslint/no-unused-expressions": "off"
 			}
 		}
 	]

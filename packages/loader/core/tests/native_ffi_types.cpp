@@ -1,5 +1,7 @@
 #include <cassert>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "NativeFFITypes.h"
 
@@ -27,5 +29,34 @@ int main()
     assert(range && range->layout->size == 16 && range->layout->fields[1].offset == 8);
 
     assert(loader::ffi::structLayout("CGPoint") == loader::ffi::structLayout("CGPoint"));
+
+    std::vector<loader::ffi::Type> sixteen(loader::ffi::kMaximumArguments, *integer);
+    auto                           signature = loader::ffi::makeSignature(*integer, sixteen);
+    assert(signature.arguments.size() == 16);
+
+    bool rejectedSeventeen = false;
+    try
+    {
+        loader::ffi::makeSignature(*integer, std::vector<loader::ffi::Type>(17, *integer));
+    }
+    catch (const std::invalid_argument &)
+    {
+        rejectedSeventeen = true;
+    }
+    assert(rejectedSeventeen);
+
+    bool rejectedVoid = false;
+    try
+    {
+        loader::ffi::makeSignature(*integer, {*loader::ffi::parseType("void")});
+    }
+    catch (const std::invalid_argument &)
+    {
+        rejectedVoid = true;
+    }
+    assert(rejectedVoid);
+
+    auto voidResult = loader::ffi::makeSignature(*loader::ffi::parseType("void"), {});
+    assert(voidResult.result.kind == Kind::Void && voidResult.arguments.empty());
     return 0;
 }

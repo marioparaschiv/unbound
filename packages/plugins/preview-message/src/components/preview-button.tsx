@@ -1,18 +1,14 @@
-import { Animated, Pressable, type PressableStateCallbackType } from 'react-native';
+import { sharedStagedStickers } from '@unbound-plugins/shared/stickers/staged-stickers';
+import { Animated, Platform, Pressable, type PressableStateCallbackType } from 'react-native';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Portal } from '@unbound-app/api/metro/components';
-import { useEffect, useRef, useState } from 'react';
 
-import {
-	DraftStore,
-	FluxHooks,
-	Haptics,
-	PreviewRunning,
-	StickerPreviewStore,
-	type Sticker,
-} from '~/modules';
-import { Button, CHANNEL_MESSAGE_DRAFT_TYPE, NO_STICKERS, Timing } from '~/constants';
+import { DraftStore, FluxHooks, Haptics, PreviewRunning, type Sticker } from '~/modules';
+import { Button, CHANNEL_MESSAGE_DRAFT_TYPE, Timing } from '~/constants';
 import PreviewOverlay from '~/components/preview-overlay';
 import { dismissKeyboard } from '~/keyboard';
+
+const trailingGap = Platform.OS === 'android' ? Button.gap : 0;
 
 type PreviewButtonProps = {
 	channelId: string;
@@ -27,11 +23,9 @@ function useDraft(channelId: string): string {
 }
 
 function useStickers(channelId: string): Sticker[] {
-	const [store] = useState(() => (StickerPreviewStore.module ? StickerPreviewStore : null));
-
-	return FluxHooks.useStateFromStores(
-		store ? [store] : [],
-		() => store?.getStickerPreview(channelId, false) ?? NO_STICKERS,
+	return useSyncExternalStore(
+		(onChange) => sharedStagedStickers().subscribe(channelId, onChange),
+		() => sharedStagedStickers().get(channelId),
 	);
 }
 
@@ -105,7 +99,7 @@ function PreviewButton({ channelId, icon }: PreviewButtonProps) {
 			<Animated.View
 				style={{
 					width: slotVisible ? Button.size : 0,
-					marginRight: slotVisible ? 0 : -Button.gap,
+					marginRight: slotVisible ? trailingGap : -Button.gap,
 					height: Button.size,
 					opacity: visible ? progress : 0,
 					overflow: 'hidden',

@@ -18,17 +18,19 @@ void showToolboxSheet(void);
 + (void)showToolboxMenu;
 @end
 
-@interface ToolboxViewController
-    : UIViewController <UITableViewDelegate, UITableViewDataSource, SFSafariViewControllerDelegate,
-                         UIGestureRecognizerDelegate>
+@interface ToolboxViewController : UIViewController <UITableViewDelegate,
+                                                     UITableViewDataSource,
+                                                     SFSafariViewControllerDelegate,
+                                                     UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) UITableView *tableView;
-@property (nonatomic, strong) UIView *cardView;
+@property (nonatomic, strong) UIView      *cardView;
 
 - (void)dismiss;
 
 @end
 
 @interface                                             ToolboxViewController ()
+@property (nonatomic, strong) NSDictionary            *menu;
 @property (nonatomic, strong) NSArray<NSDictionary *> *menuSections;
 @end

@@ -44,7 +44,6 @@
 			"native.java.construct",
 			"native.java.fields",
 			"native.java.hooks",
-			"native.fabric.mount",
 			"native.fabric.async"
 		]
 	},

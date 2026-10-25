@@ -1,9 +1,10 @@
-#import "CoreBridge.h"
 #import "Toolbox.h"
+
+#import "CoreBridge.h"
 #import "DevOverlay.h"
 #import "RecoveryQuickAction.h"
 
-@interface ToolboxViewController ()
+@interface                         ToolboxViewController ()
 @property (nonatomic, assign) BOOL dismissalInProgress;
 @end
 
@@ -34,7 +35,7 @@ static void addSettingsGestureToWindow(UIWindow *window)
         UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc]
             initWithTarget:[UIApplication sharedApplication]
                     action:@selector(handleThreeFingerLongPress:)];
-        longPress.minimumPressDuration          = 0.5;
+        longPress.minimumPressDuration          = [CoreBridge toolboxHoldDuration];
         longPress.numberOfTouchesRequired       = 3;
         [window addGestureRecognizer:longPress];
     }
@@ -66,6 +67,14 @@ static UIWindowScene *activeWindowScene(void)
     return nil;
 }
 
+static NSString *const kShakeGesture       = @"shake";
+static NSString *const kThreeFingerGesture = @"three-finger";
+
+static BOOL toolboxGestureEnabled(NSString *gesture)
+{
+    return [[CoreBridge preference:@"gesture" argument:gesture] isEqualToString:@"true"];
+}
+
 %hook UIWindow
 - (void)becomeKeyWindow
 {
@@ -88,11 +97,7 @@ static UIWindowScene *activeWindowScene(void)
 {
     if (motion == UIEventSubtypeMotionShake && isShaking)
     {
-        NSUserDefaults *defaults  = [NSUserDefaults standardUserDefaults];
-        BOOL            isEnabled = [defaults objectForKey:@"UnboundShakeGestureEnabled"] == nil
-                                        ? YES
-                                        : [defaults boolForKey:@"UnboundShakeGestureEnabled"];
-        if (isEnabled)
+        if (toolboxGestureEnabled(kShakeGesture))
         {
             NSTimeInterval currentTime   = [[NSDate date] timeIntervalSince1970];
             NSTimeInterval shakeDuration = currentTime - shakeStartTime;
@@ -116,11 +121,7 @@ static UIWindowScene *activeWindowScene(void)
 {
     if (gesture.state == UIGestureRecognizerStateBegan)
     {
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        BOOL isEnabled = [defaults objectForKey:@"UnboundThreeFingerGestureEnabled"] == nil
-                             ? YES
-                             : [defaults boolForKey:@"UnboundThreeFingerGestureEnabled"];
-        if (isEnabled)
+        if (toolboxGestureEnabled(kThreeFingerGesture))
         {
             triggerHapticFeedback();
             showToolboxSheet();
@@ -147,38 +148,36 @@ static UIWindowScene *activeWindowScene(void)
     backdropTap.delegate = self;
     [self.view addGestureRecognizer:backdropTap];
 
-    UIVisualEffectView *card = [[UIVisualEffectView alloc]
+    UIVisualEffectView *card                       = [[UIVisualEffectView alloc]
         initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial]];
     card.layer.cornerRadius                        = 28;
     card.layer.cornerCurve                         = kCACornerCurveContinuous;
     card.layer.masksToBounds                       = YES;
     card.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:card];
-    self.cardView = card;
-    card.alpha = 0;
+    self.cardView  = card;
+    card.alpha     = 0;
     card.transform = CGAffineTransformMakeScale(0.97, 0.97);
 
     [NSLayoutConstraint activateConstraints:@[
         [card.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
         [card.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
-        [card.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
-                                        constant:8],
+        [card.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
         [card.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor
-                                           constant:-8],
+                                          constant:-8],
     ]];
 
-    UILabel *titleLabel                                    = [[UILabel alloc] init];
-    titleLabel.text                                        = @"Unbound Toolbox";
-    titleLabel.font                                        = [UIFont systemFontOfSize:20
-                                                    weight:UIFontWeightBold];
-    titleLabel.textColor                                   = UIColor.labelColor;
-    titleLabel.translatesAutoresizingMaskIntoConstraints    = NO;
+    UILabel *titleLabel  = [[UILabel alloc] init];
+    titleLabel.text      = self.menu[@"title"];
+    titleLabel.font      = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
+    titleLabel.textColor = UIColor.labelColor;
+    titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
 
     UIButton *closeButton = [self addCloseButtonToView:card.contentView];
 
-    UIView *divider                                     = [[UIView alloc] init];
-    divider.backgroundColor                             = [UIColor.labelColor colorWithAlphaComponent:0.08];
-    divider.translatesAutoresizingMaskIntoConstraints    = NO;
+    UIView *divider         = [[UIView alloc] init];
+    divider.backgroundColor = [UIColor.labelColor colorWithAlphaComponent:0.08];
+    divider.translatesAutoresizingMaskIntoConstraints = NO;
 
     self.tableView = [[UITableView alloc] initWithFrame:CGRectZero
                                                   style:UITableViewStyleInsetGrouped];
@@ -187,7 +186,7 @@ static UIWindowScene *activeWindowScene(void)
     self.tableView.dataSource                                = self;
     self.tableView.backgroundColor                           = UIColor.clearColor;
     self.tableView.separatorColor = [UIColor.labelColor colorWithAlphaComponent:0.08];
-    self.tableView.separatorInset                            = UIEdgeInsetsMake(0, 20, 0, 20);
+    self.tableView.separatorInset = UIEdgeInsetsMake(0, 20, 0, 20);
 
     [card.contentView addSubview:titleLabel];
     [card.contentView addSubview:divider];
@@ -196,12 +195,12 @@ static UIWindowScene *activeWindowScene(void)
     [NSLayoutConstraint activateConstraints:@[
         [closeButton.topAnchor constraintEqualToAnchor:card.contentView.topAnchor constant:12],
         [closeButton.trailingAnchor constraintEqualToAnchor:card.contentView.trailingAnchor
-                                                     constant:-12],
+                                                   constant:-12],
         [closeButton.widthAnchor constraintEqualToConstant:36],
         [closeButton.heightAnchor constraintEqualToConstant:36],
 
         [titleLabel.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor
-                                                  constant:20],
+                                                 constant:20],
         [titleLabel.centerYAnchor constraintEqualToAnchor:closeButton.centerYAnchor],
 
         [divider.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor],
@@ -225,7 +224,7 @@ static UIWindowScene *activeWindowScene(void)
           initialSpringVelocity:0.2
                         options:UIViewAnimationOptionCurveEaseOut
                      animations:^{
-                         self.cardView.alpha = 1;
+                         self.cardView.alpha     = 1;
                          self.cardView.transform = CGAffineTransformIdentity;
                      }
                      completion:nil];
@@ -241,7 +240,7 @@ static UIWindowScene *activeWindowScene(void)
     UIImageSymbolConfiguration *cfg =
         [UIImageSymbolConfiguration configurationWithPointSize:14 weight:UIImageSymbolWeightBold];
     [button setImage:[UIImage systemImageNamed:@"xmark" withConfiguration:cfg]
-             forState:UIControlStateNormal];
+            forState:UIControlStateNormal];
     [button addTarget:self action:@selector(dismiss) forControlEvents:UIControlEventTouchUpInside];
 
     [container addSubview:button];
@@ -270,111 +269,36 @@ static UIWindowScene *activeWindowScene(void)
 
 - (void)setupMenuItems
 {
-    NSMutableArray *settingsItems =
-        [NSMutableArray arrayWithObjects:@{
-            @"title" : @"Enable Shake Motion",
-            @"icon" : @"iphone.gen3.radiowaves.left.and.right",
-            @"isSwitch" : @YES,
-            @"key" : @"UnboundShakeGestureEnabled"
-        },
-                                         @{
-                                             @"title" : @"Enable Three Finger Press",
-                                             @"icon" : @"hand.tap",
-                                             @"isSwitch" : @YES,
-                                             @"key" : @"UnboundThreeFingerGestureEnabled"
-                                         },
-                                         nil];
+    self.menu         = [CoreBridge toolboxMenu:@{
+        @"openAppFolder" : @YES,
+        @"unboundIcon" : @(![Utilities hasDiscordProductionEntitlements]),
+    }];
+    self.menuSections = self.menu[@"sections"] ?: @[];
+}
 
-    if (![Utilities hasDiscordProductionEntitlements])
-    {
-        [settingsItems addObject:@{
-            @"title" : @"Use Unbound Icon",
-            @"icon" : @"app.badge",
-            @"isSwitch" : @YES,
-            @"key" : @"UnboundAppIconEnabled"
-        }];
-    }
-
-    self.menuSections = @[
-        @{
-            @"title" : @"Bundle",
-            @"items" : @[
-                @{
-                    @"title" : @"Refetch Bundle",
-                    @"icon" : @"arrow.triangle.2.circlepath",
-                    @"selector" : NSStringFromSelector(@selector(refetchBundle))
-                },
-                @{
-                    @"title" : @"Delete Bundle",
-                    @"icon" : @"trash",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(deleteBundle))
-                },
-                @{
-                    @"title" : @"Load Custom Bundle",
-                    @"icon" : @"link.badge.plus",
-                    @"selector" : NSStringFromSelector(@selector(loadCustomBundle))
-                }
-            ]
-        },
-        @{
-            @"title" : @"Addons",
-            @"items" : @[
-                @{
-                    @"title" : @"Wipe Plugins",
-                    @"icon" : @"trash",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(wipePlugins))
-                },
-                @{
-                    @"title" : @"Wipe Themes",
-                    @"icon" : @"trash",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(wipeThemes))
-                },
-                @{
-                    @"title" : @"Wipe Fonts",
-                    @"icon" : @"trash",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(wipeFonts))
-                },
-                @{
-                    @"title" : @"Wipe Icon Packs",
-                    @"icon" : @"trash",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(wipeIconPacks))
-                }
-            ]
-        },
-        @{
-            @"title" : @"Utilities",
-            @"items" : @[
-                @{
-                    @"title" : [Utilities isRecoveryModeEnabled] ? @"Disable Recovery Mode"
-                                                                 : @"Enable Recovery Mode",
-                    @"icon" : @"shield",
-                    @"selector" : NSStringFromSelector(@selector(toggleRecoveryMode))
-                },
-                @{
-                    @"title" : @"Factory Reset",
-                    @"icon" : @"trash.fill",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(factoryReset))
-                },
-                @{
-                    @"title" : @"Open App Folder",
-                    @"icon" : @"folder",
-                    @"selector" : NSStringFromSelector(@selector(openAppFolder))
-                },
-                @{
-                    @"title" : @"Open GitHub Issue",
-                    @"icon" : @"exclamationmark.bubble",
-                    @"selector" : NSStringFromSelector(@selector(openGitHubIssue))
-                }
-            ]
-        },
-        @{@"title" : @"Settings", @"items" : settingsItems}
-    ];
+static NSString *iconForMenuItem(NSString *identifier)
+{
+    static NSDictionary<NSString *, NSString *> *icons = nil;
+    static dispatch_once_t                       onceToken;
+    dispatch_once(&onceToken, ^{
+        icons = @{
+            @"refetch-bundle" : @"arrow.triangle.2.circlepath",
+            @"delete-bundle" : @"trash",
+            @"custom-bundle" : @"link.badge.plus",
+            @"wipe-plugins" : @"trash",
+            @"wipe-themes" : @"trash",
+            @"wipe-fonts" : @"trash",
+            @"wipe-icons" : @"trash",
+            @"toggle-recovery" : @"shield",
+            @"factory-reset" : @"trash.fill",
+            @"open-app-folder" : @"folder",
+            @"open-issue" : @"exclamationmark.bubble",
+            @"gesture-shake" : @"iphone.gen3.radiowaves.left.and.right",
+            @"gesture-three-finger" : @"hand.tap",
+            @"unbound-icon" : @"app.badge",
+        };
+    });
+    return icons[identifier] ?: @"circle";
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -398,11 +322,11 @@ static UIWindowScene *activeWindowScene(void)
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
     if (!cell)
     {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
-                                      reuseIdentifier:@"Cell"];
+        cell                 = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
+                                                      reuseIdentifier:@"Cell"];
         cell.backgroundColor = [UIColor.labelColor colorWithAlphaComponent:0.05];
 
-        UIView *selectedBackground       = [[UIView alloc] init];
+        UIView *selectedBackground         = [[UIView alloc] init];
         selectedBackground.backgroundColor = [UIColor.labelColor colorWithAlphaComponent:0.12];
         cell.selectedBackgroundView        = selectedBackground;
     }
@@ -411,12 +335,13 @@ static UIWindowScene *activeWindowScene(void)
 
     NSDictionary *item = self.menuSections[indexPath.section][@"items"][indexPath.row];
 
-    BOOL isDestructive = [item[@"destructive"] boolValue];
-    UIColor *tint      = isDestructive ? UIColor.systemRedColor : UIColor.labelColor;
+    BOOL     isDestructive = [item[@"destructive"] boolValue];
+    UIColor *tint          = isDestructive ? UIColor.systemRedColor : UIColor.labelColor;
 
     UIImageSymbolConfiguration *symbolConfig =
         [UIImageSymbolConfiguration configurationWithPointSize:18 weight:UIImageSymbolWeightMedium];
-    UIImage *icon = [UIImage systemImageNamed:item[@"icon"] withConfiguration:symbolConfig];
+    UIImage *icon = [UIImage systemImageNamed:iconForMenuItem(item[@"id"])
+                            withConfiguration:symbolConfig];
 
     UIListContentConfiguration *content                  = [cell defaultContentConfiguration];
     content.text                                         = item[@"title"];
@@ -429,26 +354,22 @@ static UIWindowScene *activeWindowScene(void)
     content.imageToTextPadding                           = 14;
     cell.contentConfiguration                            = content;
 
-    if ([item[@"isSwitch"] boolValue])
+    if ([item[@"kind"] isEqualToString:@"toggle"])
     {
-        UISwitch *toggle              = [[UISwitch alloc] init];
-        toggle.accessibilityIdentifier = item[@"key"];
+        UISwitch *toggle               = [[UISwitch alloc] init];
+        toggle.accessibilityIdentifier = item[@"id"];
         [toggle addTarget:self
                       action:@selector(toggleSetting:)
             forControlEvents:UIControlEventValueChanged];
 
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-
-        if ([item[@"key"] isEqualToString:@"UnboundAppIconEnabled"])
+        if ([item[@"id"] isEqualToString:@"unbound-icon"])
         {
             NSString *currentIcon = [[UIApplication sharedApplication] alternateIconName];
             toggle.on             = [currentIcon isEqualToString:@"UnboundIcon"];
         }
         else
         {
-            toggle.on = [defaults objectForKey:item[@"key"]] == nil
-                            ? YES
-                            : [defaults boolForKey:item[@"key"]];
+            toggle.on = [item[@"on"] boolValue];
         }
 
         cell.accessoryView = toggle;
@@ -463,13 +384,18 @@ static UIWindowScene *activeWindowScene(void)
 
     NSDictionary *item = self.menuSections[indexPath.section][@"items"][indexPath.row];
 
+    if ([item[@"kind"] isEqualToString:@"toggle"])
+    {
+        return;
+    }
+
     if ([item[@"destructive"] boolValue])
     {
-        [self showDestructiveConfirmation:item[@"title"] selectorName:item[@"selector"]];
+        [self confirmMenuItem:item];
     }
-    else if (item[@"selector"])
+    else
     {
-        [self executeActionWithSelectorName:item[@"selector"]];
+        [self selectMenuItem:item];
     }
 }
 
@@ -483,124 +409,120 @@ static UIWindowScene *activeWindowScene(void)
     cell.preservesSuperviewLayoutMargins = NO;
 }
 
-- (void)showDestructiveConfirmation:(NSString *)action selectorName:(NSString *)selectorName
+- (void)confirmMenuItem:(NSDictionary *)item
 {
-    NSString *message = @"Are you sure you want to do this?";
+    NSDictionary *confirmation = self.menu[@"confirmation"];
 
     UIAlertController *alert =
-        [UIAlertController alertControllerWithTitle:action
-                                            message:message
+        [UIAlertController alertControllerWithTitle:item[@"title"]
+                                            message:confirmation[@"message"]
                                      preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel"
+    [alert addAction:[UIAlertAction actionWithTitle:confirmation[@"cancel"]
                                               style:UIAlertActionStyleCancel
                                             handler:nil]];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Confirm"
-                                              style:UIAlertActionStyleDestructive
-                                            handler:^(UIAlertAction *action) {
-                                                [self executeActionWithSelectorName:selectorName];
-                                            }]];
+    [alert addAction:[UIAlertAction
+                         actionWithTitle:confirmation[@"confirm"]
+                                   style:UIAlertActionStyleDestructive
+                                 handler:^(UIAlertAction *action) { [self selectMenuItem:item]; }]];
 
     [self presentViewController:alert animated:YES completion:nil];
 }
 
-- (void)executeActionWithSelectorName:(NSString *)selectorName
+- (void)selectMenuItem:(NSDictionary *)item
 {
-    SEL selector = NSSelectorFromString(selectorName);
-    if ([self respondsToSelector:selector])
+    if ([item[@"kind"] isEqualToString:@"platform"])
     {
-        IMP imp               = [self methodForSelector:selector];
-        void (*func)(id, SEL) = (void *) imp;
-        func(self, selector);
+        [self performPlatformMenuItem:item];
+    }
+    else if (item[@"prompt"])
+    {
+        [self promptForMenuItem:item];
+    }
+    else
+    {
+        [self runMenuItem:item argument:item[@"argument"] ?: @""];
     }
 }
 
-- (void)toggleRecoveryMode
+- (void)performPlatformMenuItem:(NSDictionary *)item
 {
-    [RecoveryQuickAction toggleSafeMode];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
+    NSString *identifier = item[@"id"];
+
+    if ([identifier isEqualToString:@"open-app-folder"])
+    {
+        [self openAppFolder];
+    }
+    else if ([identifier isEqualToString:@"open-issue"])
+    {
+        [self openGitHubIssue:item];
+    }
 }
 
-- (void)refetchBundle
+- (void)promptForMenuItem:(NSDictionary *)item
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSString *bundlePath = [Updater resolveBundlePath];
-        [Updater downloadBundle:bundlePath];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
-        });
-    });
-}
-
-- (void)deleteBundle
-{
-    [CoreBridge deleteBundleIn:FileSystem.documents];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
-}
-
-- (void)loadCustomBundle
-{
-    UIAlertController *alert = [UIAlertController
-        alertControllerWithTitle:@"Custom Bundle URL"
-                         message:@"Enter the URL to download a custom bundle from"
-                  preferredStyle:UIAlertControllerStyleAlert];
+    NSDictionary      *prompt = item[@"prompt"];
+    UIAlertController *alert =
+        [UIAlertController alertControllerWithTitle:prompt[@"title"]
+                                            message:prompt[@"message"]
+                                     preferredStyle:UIAlertControllerStyleAlert];
     [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.placeholder            = @"https://example.com/unbound.bundle";
+        textField.placeholder            = prompt[@"placeholder"];
         textField.keyboardType           = UIKeyboardTypeURL;
         textField.autocorrectionType     = UITextAutocorrectionTypeNo;
         textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     }];
 
-    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel"
+    [alert addAction:[UIAlertAction actionWithTitle:prompt[@"cancel"]
                                               style:UIAlertActionStyleCancel
                                             handler:nil]];
-
-    [alert
-        addAction:[UIAlertAction
-                      actionWithTitle:@"Download"
-                                style:UIAlertActionStyleDefault
-                              handler:^(UIAlertAction *action) {
-                                  UITextField *textField = alert.textFields.firstObject;
-                                  NSString    *urlString = textField.text;
-
-                                  if ([CoreBridge useCustomBundle:urlString])
-                                  {
-                                      [self dismissViewControllerAnimated:YES
-                                                                  completion:^{
-                                                                      [Utilities reloadApp];
-                                                                  }];
-                                  }
-                              }]];
+    [alert addAction:[UIAlertAction actionWithTitle:prompt[@"confirm"]
+                                              style:UIAlertActionStyleDefault
+                                            handler:^(UIAlertAction *action) {
+                                                [self runMenuItem:item
+                                                         argument:alert.textFields.firstObject.text
+                                                                      ?: @""];
+                                            }]];
     [self presentViewController:alert animated:YES completion:nil];
 }
 
-- (void)wipePlugins
+- (void)runMenuItem:(NSDictionary *)item argument:(NSString *)argument
 {
-    [CoreBridge wipeAddonsNamed:@"Plugins" in:FileSystem.documents];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
+    UIAlertController *progress = nil;
+    if (item[@"progress"])
+    {
+        progress = [UIAlertController alertControllerWithTitle:item[@"title"]
+                                                       message:item[@"progress"]
+                                                preferredStyle:UIAlertControllerStyleAlert];
+        [self presentViewController:progress animated:YES completion:nil];
+    }
+
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSString *result = [CoreBridge toolbox:item[@"action"] argument:argument];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            void (^finish)(void) = ^{ [self finishMenuItem:item result:result]; };
+            if (progress)
+            {
+                [progress dismissViewControllerAnimated:YES completion:finish];
+                return;
+            }
+            finish();
+        });
+    });
 }
 
-- (void)wipeThemes
+- (void)finishMenuItem:(NSDictionary *)item result:(NSString *)result
 {
-    [CoreBridge wipeAddonsNamed:@"Themes" in:FileSystem.documents];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
-}
+    if (item[@"failure"] && ![result isEqualToString:@"true"])
+    {
+        [Utilities alert:item[@"failure"] title:item[@"title"]];
+        return;
+    }
 
-- (void)wipeFonts
-{
-    [CoreBridge wipeAddonsNamed:@"Fonts" in:FileSystem.documents];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
-}
-
-- (void)wipeIconPacks
-{
-    [CoreBridge wipeAddonsNamed:@"Icons" in:FileSystem.documents];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
-}
-
-- (void)factoryReset
-{
-    [CoreBridge factoryResetIn:FileSystem.documents];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
+    if ([item[@"restartsApp"] boolValue])
+    {
+        [RecoveryQuickAction refresh];
+        [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
+    }
 }
 
 - (void)openAppFolder
@@ -624,43 +546,18 @@ static UIWindowScene *activeWindowScene(void)
     [[UIApplication sharedApplication] openURL:sharedUrl options:@{} completionHandler:nil];
 }
 
-- (void)openGitHubIssue
+- (void)openGitHubIssue:(NSDictionary *)item
 {
-    NSString *deviceModel = [Utilities getDeviceModel];
     NSString *appVersion =
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
     NSString *buildNumber = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
-
-    NSString *iosVersionString = [Utilities getiOSVersionString];
-
-    NSString *appSource = [Utilities getAppSource];
-
-    NSString *appRegistrationType = [Utilities isSystemApp] ? @"System" : @"User";
-
-    NSArray<NSArray<NSString *> *> *environment = @[
-        @[ @"Device", deviceModel ?: @"unknown" ],
-        @[ @"iOS Version", iosVersionString ?: @"unknown" ],
-        @[ @"App Version", [NSString stringWithFormat:@"%@ (%@)", appVersion, buildNumber] ],
-        @[ @"App Source", appSource ?: @"unknown" ],
-        @[ @"App Registration", appRegistrationType ],
-    ];
-
-    NSMutableArray<NSArray<NSString *> *> *attachments  = [NSMutableArray array];
-    NSDictionary                          *entitlements = [Utilities getApplicationEntitlements];
-    if (entitlements && entitlements.count > 0)
-    {
-        NSString *plist = [Utilities formatEntitlementsAsPlist:entitlements];
-        [attachments addObject:@[ @"Entitlements", plist ]];
-    }
-
-    NSString *urlString = [CoreBridge issueURLForPlatform:@"iOS"
-                                              environment:environment
-                                              attachments:attachments];
-    NSURL    *url       = [NSURL URLWithString:urlString];
+    NSString *discordVersion =
+        appVersion ? [NSString stringWithFormat:@"%@ (%@)", appVersion, buildNumber ?: @""] : @"";
+    NSURL *url = [NSURL URLWithString:[CoreBridge toolbox:@"issue-url" argument:discordVersion]];
 
     if (!url)
     {
-        [Utilities alert:@"Failed to create GitHub issue URL" title:@"Error"];
+        [Utilities alert:item[@"failure"] title:item[@"title"]];
         return;
     }
 
@@ -684,30 +581,45 @@ static UIWindowScene *activeWindowScene(void)
     return nil;
 }
 
+- (NSDictionary *)menuItemWithIdentifier:(NSString *)identifier
+{
+    for (NSDictionary *section in self.menuSections)
+    {
+        for (NSDictionary *item in section[@"items"])
+        {
+            if ([item[@"id"] isEqualToString:identifier])
+            {
+                return item;
+            }
+        }
+    }
+    return nil;
+}
+
 - (void)toggleSetting:(UISwitch *)sender
 {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSString       *key      = sender.accessibilityIdentifier;
+    NSString     *identifier = sender.accessibilityIdentifier;
+    NSDictionary *item       = [self menuItemWithIdentifier:identifier];
 
-    if ([key isEqualToString:@"UnboundShakeGestureEnabled"])
+    if (item[@"gesture"])
     {
-        [defaults setBool:sender.on forKey:key];
-        if (!sender.on)
+        [CoreBridge preference:@"set-gesture"
+                      argument:[NSString stringWithFormat:@"%@=%@", item[@"gesture"],
+                                                          sender.on ? @"true" : @"false"]];
+        [self setupMenuItems];
+        for (NSDictionary *section in self.menuSections)
         {
-            [defaults setBool:YES forKey:@"UnboundThreeFingerGestureEnabled"];
-            [[self switchForSettingKey:@"UnboundThreeFingerGestureEnabled"] setOn:YES animated:YES];
+            for (NSDictionary *entry in section[@"items"])
+            {
+                if (entry[@"gesture"])
+                {
+                    [[self switchForSettingKey:entry[@"id"]] setOn:[entry[@"on"] boolValue]
+                                                          animated:YES];
+                }
+            }
         }
     }
-    else if ([key isEqualToString:@"UnboundThreeFingerGestureEnabled"])
-    {
-        [defaults setBool:sender.on forKey:key];
-        if (!sender.on)
-        {
-            [defaults setBool:YES forKey:@"UnboundShakeGestureEnabled"];
-            [[self switchForSettingKey:@"UnboundShakeGestureEnabled"] setOn:YES animated:YES];
-        }
-    }
-    else if ([key isEqualToString:@"UnboundAppIconEnabled"])
+    else if ([identifier isEqualToString:@"unbound-icon"])
     {
         NSString *iconName = sender.on ? @"UnboundIcon" : nil;
 
@@ -721,8 +633,6 @@ static UIWindowScene *activeWindowScene(void)
                                                   }
                                               }];
     }
-
-    [defaults synchronize];
 }
 
 - (void)safariViewControllerDidFinish:(SFSafariViewController *)controller
@@ -740,8 +650,8 @@ static UIWindowScene *activeWindowScene(void)
     self.dismissalInProgress = YES;
     [UIView animateWithDuration:0.16
         animations:^{
-            self.cardView.alpha = 0;
-            self.cardView.transform = CGAffineTransformMakeScale(0.97, 0.97);
+            self.cardView.alpha       = 0;
+            self.cardView.transform   = CGAffineTransformMakeScale(0.97, 0.97);
             self.view.backgroundColor = UIColor.clearColor;
         }
         completion:^(BOOL finished) {
@@ -751,27 +661,26 @@ static UIWindowScene *activeWindowScene(void)
 
 - (void)finishDismissal
 {
-    UIWindow *storedWindow = objc_getAssociatedObject(self, "recoveryTopWindow");
+    UIWindow *storedWindow  = objc_getAssociatedObject(self, "recoveryTopWindow");
     UIWindow *origKeyWindow = objc_getAssociatedObject(self, "recoveryOriginalKeyWindow");
 
     if (storedWindow)
     {
-        storedWindow.hidden = YES;
+        storedWindow.hidden             = YES;
         storedWindow.rootViewController = nil;
     }
 
     [origKeyWindow makeKeyAndVisible];
 
     objc_setAssociatedObject(self, "recoveryTopWindow", nil, OBJC_ASSOCIATION_ASSIGN);
-    objc_setAssociatedObject(self, "recoveryOriginalKeyWindow", nil,
-                             OBJC_ASSOCIATION_ASSIGN);
+    objc_setAssociatedObject(self, "recoveryOriginalKeyWindow", nil, OBJC_ASSOCIATION_ASSIGN);
 }
 
 void showToolboxSheet(void)
 {
     ToolboxViewController *settingsVC = [[ToolboxViewController alloc] init];
-    settingsVC.modalPresentationStyle        = UIModalPresentationOverFullScreen;
-    settingsVC.modalTransitionStyle          = UIModalTransitionStyleCrossDissolve;
+    settingsVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
+    settingsVC.modalTransitionStyle   = UIModalTransitionStyleCrossDissolve;
 
     UIWindowScene *activeScene = activeWindowScene();
     if (!activeScene)

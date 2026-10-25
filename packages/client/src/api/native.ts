@@ -1,5 +1,4 @@
 export type {
-	NativeAndroidSurfaceBridge,
 	NativeAssociationKey,
 	NativeBatchReference,
 	NativeBatchStep,
@@ -34,9 +33,6 @@ export type {
 	NativeJavaHooksBridge,
 	NativeJavaReference,
 	NativeJavaValue,
-	NativeMediaAsset,
-	NativeMediaBridge,
-	NativeMediaPickerOptions,
 	NativeObjCBridge,
 	NativeObjectHandle,
 	NativePlatformBridge,
@@ -67,7 +63,6 @@ export {
 	BundleManager,
 	DeviceInfo,
 	NativePlatform,
-	NativeJavaError,
 	NativePluginCapabilityError,
 	NativePluginDisposedError,
 	NativePluginPlatformError,

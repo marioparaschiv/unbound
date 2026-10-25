@@ -1,42 +1,41 @@
 #import "NativePluginBridge.h"
 
-#import <dlfcn.h>
-#import <mach/mach.h>
-#import <mach-o/loader.h>
-#import <objc/message.h>
-#import <objc/runtime.h>
-#import <os/signpost.h>
-#import <ptrauth.h>
-#import <substrate.h>
 #import <UIKit/UIKit.h>
-
 #import <algorithm>
 #import <atomic>
 #import <cmath>
 #import <cstdint>
 #import <cstring>
-#import <functional>
 #import <exception>
+#import <functional>
 #import <memory>
 #import <mutex>
-#import <sstream>
+#import <objc/message.h>
+#import <objc/runtime.h>
+#import <optional>
+#import <os/signpost.h>
 #import <stdexcept>
 #import <string>
+#import <substrate.h>
 #import <thread>
 #import <unordered_map>
 #import <vector>
 
-#import "JSI.h"
+#import "CoreConversions.h"
 #import "Logger.h"
 #import "NativeAddressValidation.h"
 #import "NativeConversionBudget.h"
-#import "NativeFFITypes.h"
 #import "NativeEvaluations.h"
-#import "NativePluginFFI.h"
+#import "NativeFFI.h"
+#import "NativeGeometry.h"
+#import "NativeLimits.h"
 #import "NativeNumericValidation.h"
 #import "NativeOperationGate.h"
+#import "NativePlatformBridge.h"
 #import "NativePluginRoot.h"
 #import "NativePluginRuntime.h"
+#import "NativeResourceBudget.h"
+#import "NativeTraversalOptions.h"
 #import "NativeTypeEncoding.h"
 
 using namespace facebook;
@@ -49,12 +48,12 @@ using namespace facebook::jsi;
 
 @interface NSObject (FabricHost)
 - (id)createSurfaceWithModuleName:(NSString *)moduleName
-                              mode:(NSInteger)mode
-                 initialProperties:(NSDictionary *)properties;
+                             mode:(NSInteger)mode
+                initialProperties:(NSDictionary *)properties;
 @end
 
-@interface FabricContainer : UIView
-@property(nonatomic, weak) UIView *surfaceView;
+@interface                          FabricContainer : UIView
+@property (nonatomic, weak) UIView *surfaceView;
 - (void)setFabricFrame:(CGRect)frame;
 @end
 
@@ -77,7 +76,7 @@ using namespace facebook::jsi;
 - (void)setFabricFrame:(CGRect)frame
 {
     _fabricFrameProtected = YES;
-    _fabricSettingFrame = YES;
+    _fabricSettingFrame   = YES;
     [super setFrame:frame];
     _fabricSettingFrame = NO;
 }
@@ -89,7 +88,8 @@ using namespace facebook::jsi;
     if (surfaceView)
     {
         surfaceView.frame = self.bounds;
-        surfaceView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        surfaceView.autoresizingMask =
+            UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     }
 }
 
@@ -147,11 +147,11 @@ public:
     void setSurface(id surface, UIView *containerView, UIView *surfaceView, uint64_t generation)
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        surface_ = surface;
-        view_ = containerView;
+        surface_     = surface;
+        view_        = containerView;
         surfaceView_ = surfaceView;
-        generation_ = generation;
-        active_ = true;
+        generation_  = generation;
+        active_      = true;
     }
 
     id surface(void) const
@@ -187,40 +187,22 @@ public:
     void clear(void)
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        surface_ = nil;
-        view_ = nil;
+        surface_     = nil;
+        view_        = nil;
         surfaceView_ = nil;
-        active_ = false;
+        active_      = false;
     }
 
 private:
     mutable std::mutex mutex_;
-    __strong id surface_ = nil;
-    __strong UIView *view_ = nil;
-    __strong UIView *surfaceView_ = nil;
-    bool active_ = false;
-    uint64_t generation_ = 0;
+    __strong id        surface_     = nil;
+    __strong UIView   *view_        = nil;
+    __strong UIView   *surfaceView_ = nil;
+    bool               active_      = false;
+    uint64_t           generation_  = 0;
 };
 
-class PointerHost final : public HostObject
-{
-public:
-    explicit PointerHost(void *value, bool callable = false) : value_(value), callable_(callable) {}
-
-    void *value(void) const
-    {
-        return value_;
-    }
-
-    bool callable(void) const
-    {
-        return callable_;
-    }
-
-private:
-    void *value_;
-    bool callable_;
-};
+using loader::ffi::PointerHost;
 
 static Value structFields(Runtime &runtime, NSString *name, NSValue *value);
 
@@ -243,7 +225,7 @@ public:
 
 private:
     NSString *name_;
-    NSValue *value_;
+    NSValue  *value_;
 };
 
 class AssociationKeyHost final : public HostObject
@@ -260,32 +242,10 @@ private:
     __strong id value_;
 };
 
-struct FFITypeDefinition {
-    ffi_type type{};
-    std::vector<ffi_type *> elements;
-};
-
-struct FFITypeSpec {
-    std::string name;
-    ffi_type *type;
-};
-
-struct FFISignature {
-    FFITypeSpec result;
-    std::vector<FFITypeSpec> arguments;
-};
-
-struct FFICallArgument {
-    std::vector<uint8_t> bytes;
-    std::string string;
-    id object;
-    void *pointer;
-};
-
 struct HookSignature {
-    FFITypeSpec result;
-    std::vector<FFITypeSpec> arguments;
-    ffi_cif cif{};
+    loader::ffi::Type                           result;
+    std::vector<loader::ffi::Type>              arguments;
+    std::shared_ptr<loader::ffi::CallInterface> interface;
 };
 
 struct HookState;
@@ -298,31 +258,33 @@ struct HookCallbacks {
 };
 
 struct HookDispatcher {
-    Class cls;
-    SEL selector;
-    IMP original;
-    std::shared_ptr<HookSignature> signature;
-    ffi_closure *closure = nullptr;
-    void *code = nullptr;
+    Class                                   cls;
+    SEL                                     selector;
+    IMP                                     original;
+    std::shared_ptr<HookSignature>          signature;
+    ffi_closure                            *closure = nullptr;
+    void                                   *code    = nullptr;
     std::vector<std::shared_ptr<HookState>> hooks;
-    std::atomic_uint activeCalls{0};
-    std::atomic_bool retired{false};
+    std::atomic_uint                        activeCalls{0};
+    std::atomic_bool                        retired{false};
 };
 
 struct HookState {
-    uint64_t identifier;
-    uint64_t runtimeGeneration;
-    std::weak_ptr<HookCallbacks> callbacks;
-    bool hasBefore = false;
-    bool hasAfter = false;
-    bool hasReplace = false;
+    uint64_t                      identifier;
+    uint64_t                      runtimeGeneration;
+    std::weak_ptr<HookCallbacks>  callbacks;
+    bool                          hasBefore  = false;
+    bool                          hasAfter   = false;
+    bool                          hasReplace = false;
     std::weak_ptr<HookDispatcher> dispatcher;
-    __strong id instanceTarget = nil;
-    std::mutex returnCacheMutex;
-    __strong NSMutableDictionary<NSArray *, NSData *> *returnCache = [NSMutableDictionary dictionary];
-    __strong NSMutableDictionary<NSArray *, NSNumber *> *sizeHeightFloors = [NSMutableDictionary dictionary];
-    bool cacheOnly = false;
-    bool once = false;
+    __strong id                   instanceTarget = nil;
+    std::mutex                    returnCacheMutex;
+    __strong NSMutableDictionary<NSArray *, NSData *> *returnCache =
+        [NSMutableDictionary dictionary];
+    __strong NSMutableDictionary<NSArray *, NSNumber *> *sizeHeightFloors =
+        [NSMutableDictionary dictionary];
+    bool             cacheOnly = false;
+    bool             once      = false;
     std::atomic_bool active{true};
     std::atomic_bool afterOncePending{false};
 };
@@ -331,7 +293,9 @@ class HookTokenHost final : public HostObject
 {
 public:
     HookTokenHost(std::shared_ptr<HookState> state, std::shared_ptr<HookCallbacks> callbacks)
-        : state_(std::move(state)), callbacks_(std::move(callbacks)) {}
+        : state_(std::move(state)), callbacks_(std::move(callbacks))
+    {
+    }
 
     std::shared_ptr<HookState> state(void) const
     {
@@ -341,16 +305,16 @@ public:
     Value get(Runtime &runtime, const PropNameID &name) override;
 
 private:
-    std::shared_ptr<HookState> state_;
+    std::shared_ptr<HookState>     state_;
     std::shared_ptr<HookCallbacks> callbacks_;
 };
 
-static std::mutex gHookMutex;
-static std::unordered_map<std::string, std::shared_ptr<HookDispatcher>> gDispatchers;
+static std::mutex                                                            gHookMutex;
+static std::unordered_map<std::string, std::shared_ptr<HookDispatcher>>      gDispatchers;
 static std::unordered_map<HookDispatcher *, std::shared_ptr<HookDispatcher>> gClosureDispatchers;
-static std::atomic_uint64_t gNextHookIdentifier{1};
-static __weak id gRuntimeExecutorInstance = nil;
-static __weak id gFabricHostInstance = nil;
+static std::atomic_uint64_t                                                  gNextHookIdentifier{1};
+static __weak id  gRuntimeExecutorInstance = nil;
+static __weak id  gFabricHostInstance      = nil;
 static std::mutex gFabricSurfaceMutex;
 static std::unordered_map<FabricSurfaceHost *, std::shared_ptr<FabricSurfaceHost>> gFabricSurfaces;
 
@@ -366,62 +330,60 @@ public:
     explicit NativeOperationSignpost(const char *operation)
         : log_(nativePerformanceLog()), enabled_(os_signpost_enabled(log_))
     {
-        if (!enabled_) return;
+        if (!enabled_)
+            return;
         identifier_ = os_signpost_id_generate(log_);
-        os_signpost_interval_begin(log_, identifier_, "Native Operation",
-                                   "operation=%{public}s", operation);
+        os_signpost_interval_begin(log_, identifier_, "Native Operation", "operation=%{public}s",
+                                   operation);
     }
 
     ~NativeOperationSignpost()
     {
-        if (enabled_) os_signpost_interval_end(log_, identifier_, "Native Operation");
+        if (enabled_)
+            os_signpost_interval_end(log_, identifier_, "Native Operation");
     }
 
 private:
-    os_log_t log_;
+    os_log_t         log_;
     os_signpost_id_t identifier_ = OS_SIGNPOST_ID_INVALID;
-    bool enabled_;
+    bool             enabled_;
 };
 
-static FFITypeSpec ffiType(Runtime &runtime, const std::string &name);
-static ffi_cif prepareFFICif(Runtime &runtime, const FFITypeSpec &result,
-                             const std::vector<FFITypeSpec> &arguments);
-static Value ffiResult(Runtime &runtime, const FFITypeSpec &spec, const std::vector<uint8_t> &bytes);
-static void dispatchFFIHook(ffi_cif *cif, void *returnValue, void **arguments, void *userData);
-static void dispatchFFIHookBody(ffi_cif *cif, void *returnValue, void **arguments, void *userData);
-static void executeRuntimeAsynchronously(std::function<void(Runtime &)> callback);
+static void  dispatchFFIHook(ffi_cif *cif, void *returnValue, void **arguments, void *userData);
+static void  dispatchFFIHookBody(ffi_cif *cif, void *returnValue, void **arguments, void *userData);
+static void  executeRuntimeAsynchronously(std::function<void(Runtime &)> callback);
 static Value executeMainAsynchronously(Runtime &runtime, std::function<void(void)> operation,
                                        std::function<Value(Runtime &)> result);
 static std::function<void(void)> objcGuarded(std::function<void(void)> operation);
-static void dispatchVoidHook(id object, SEL selector);
-static CGSize dispatchCGSizeHook(id object, SEL selector, CGSize size);
-static CGSize dispatchCGSizeNoArgumentHook(id object, SEL selector);
+static void                      dispatchVoidHook(id object, SEL selector);
+static CGSize                    dispatchCGSizeHook(id object, SEL selector, CGSize size);
+static CGSize                    dispatchCGSizeNoArgumentHook(id object, SEL selector);
 static CGSize dispatchCGSizePriorityHook(id object, SEL selector, CGSize size, float horizontal,
-                                        float vertical);
-static CGSize dispatchCGSizeDoublePriorityHook(id object, SEL selector, CGSize size, double horizontal,
-                                               double vertical);
+                                         float vertical);
+static CGSize dispatchCGSizeDoublePriorityHook(id object, SEL selector, CGSize size,
+                                               double horizontal, double vertical);
 static CGRect dispatchCGRectObjectHook(id object, SEL selector, id indexPath);
 static double dispatchDoubleObjectObjectHook(id object, SEL selector, id tableView, id indexPath);
 static int8_t dispatchBoolObjectObjectHook(id object, SEL selector, id first, id second);
 static int8_t dispatchBoolObjectHook(id object, SEL selector, id value);
 static int8_t dispatchBoolClassHook(id object, SEL selector, Class value);
 static int8_t dispatchBoolSelectorHook(id object, SEL selector, SEL value);
-static void dispatchVoidObjectHook(id object, SEL selector, id value);
-static void dispatchVoidNSUIntegerHook(id object, SEL selector, NSUInteger value);
-static void dispatchVoidObjectObjectHook(id object, SEL selector, id first, id second);
-static void dispatchVoidObjectObjectObjectHook(id object, SEL selector, id tableView, id cell,
-                                               id indexPath);
-static Value makeHook(Runtime &runtime, const Value *args, size_t count);
+static void   dispatchVoidObjectHook(id object, SEL selector, id value);
+static void   dispatchVoidNSUIntegerHook(id object, SEL selector, NSUInteger value);
+static void   dispatchVoidObjectObjectHook(id object, SEL selector, id first, id second);
+static void   dispatchVoidObjectObjectObjectHook(id object, SEL selector, id tableView, id cell,
+                                                 id indexPath);
+static Value  makeHook(Runtime &runtime, const Value *args, size_t count);
 static void invokeHookOriginal(const std::shared_ptr<HookDispatcher> &dispatcher, void **arguments,
                                void *returnValue);
 static const char *structEncoding(const std::string &name);
-static void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                               const Value *args, size_t count);
-static void removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                  const Value *args, size_t count);
-static void clearHookReturnCache(const std::shared_ptr<HookState> &state);
-static void setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                   const Value *args, size_t count);
+static void        setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
+                                      const Value *args, size_t count);
+static void        removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
+                                         const Value *args, size_t count);
+static void        clearHookReturnCache(const std::shared_ptr<HookState> &state);
+static void        setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
+                                          const Value *args, size_t count);
 static void removeHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
                                       const Value *args, size_t count);
 
@@ -463,10 +425,9 @@ public:
     void runAfter(double seconds, std::function<void()> work) override
     {
         auto task = std::make_shared<std::function<void()>>(std::move(work));
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, static_cast<int64_t>(seconds * NSEC_PER_SEC)),
-                       dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-                           (*task)();
-                       });
+        dispatch_after(
+            dispatch_time(DISPATCH_TIME_NOW, static_cast<int64_t>(seconds * NSEC_PER_SEC)),
+            dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{ (*task)(); });
     }
 };
 
@@ -475,15 +436,15 @@ public:
     loader::native::throwCoded(runtime, "NATIVE_WRONG_THREAD", message);
 }
 
-static std::mutex gFFIMutex;
-static std::unordered_map<std::string, std::shared_ptr<FFITypeDefinition>> gFFITypes;
-struct CachedFFICif {
-    ffi_cif cif{};
-    std::vector<ffi_type *> arguments;
-};
+static Value objcJSIValue(Runtime &runtime, id value)
+{
+    return loader::toJSIValue(runtime, unbound::ios::jsonFromObject(value));
+}
 
-static std::mutex gFFICifMutex;
-static std::unordered_map<std::string, std::shared_ptr<CachedFFICif>> gFFICifs;
+static NSString *jsiString(Runtime &runtime, const Value &value)
+{
+    return value.isString() ? unbound::ios::toNSString(value.asString(runtime).utf8(runtime)) : nil;
+}
 
 static Value makeFunction(const char *name, unsigned int argCount, Runtime &runtime,
                           const HostFunctionType &handler)
@@ -496,9 +457,9 @@ static Value makeFunction(const char *name, unsigned int argCount, Runtime &runt
         }
         @catch (NSException *exception)
         {
-            throw loader::native::NativeCodedError(
-                "NATIVE_BRIDGE_ERROR",
-                std::string("Objective-C exception: ") + (exception.reason.UTF8String ?: "unknown"));
+            throw loader::native::NativeCodedError("NATIVE_BRIDGE_ERROR",
+                                                   std::string("Objective-C exception: ") +
+                                                       (exception.reason.UTF8String ?: "unknown"));
         }
     };
     return loader::native::makeFunction(runtime, name, argCount, std::move(translated));
@@ -508,7 +469,7 @@ static Value makeFunction(const char *name, unsigned int argCount, Runtime &runt
                           Value (*handler)(Runtime &, const Value *, size_t))
 {
     HostFunctionType wrappedHandler = [handler](Runtime &rt, const Value &, const Value *args,
-                                                 size_t count) -> Value {
+                                                size_t count) -> Value {
         return handler(rt, args, count);
     };
     return makeFunction(name, argCount, runtime, wrappedHandler);
@@ -517,121 +478,6 @@ static Value makeFunction(const char *name, unsigned int argCount, Runtime &runt
 static std::string hookKey(Class cls, SEL selector)
 {
     return std::string(class_getName(cls)) + ":" + sel_getName(selector);
-}
-
-static bool isInstructionSectionAddress(void *address)
-{
-    Dl_info image{};
-    if (dladdr(address, &image) == 0 || !image.dli_fbase)
-    {
-        return false;
-    }
-
-    const auto *header = reinterpret_cast<const mach_header_64 *>(image.dli_fbase);
-    if (header->magic != MH_MAGIC_64)
-    {
-        return false;
-    }
-
-    const auto *command = reinterpret_cast<const load_command *>(header + 1);
-    std::uintptr_t slide = 0;
-    bool foundText = false;
-    for (uint32_t index = 0; index < header->ncmds; index++)
-    {
-        if (command->cmdsize < sizeof(load_command))
-        {
-            return false;
-        }
-        if (command->cmd == LC_SEGMENT_64)
-        {
-            const auto *segment = reinterpret_cast<const segment_command_64 *>(command);
-            if (command->cmdsize < sizeof(segment_command_64) ||
-                segment->nsects > (command->cmdsize - sizeof(segment_command_64)) /
-                                      sizeof(section_64))
-            {
-                return false;
-            }
-            if (strncmp(segment->segname, SEG_TEXT, sizeof(segment->segname)) == 0)
-            {
-                slide = reinterpret_cast<std::uintptr_t>(header) - segment->vmaddr;
-                foundText = true;
-                break;
-            }
-        }
-        command = reinterpret_cast<const load_command *>(reinterpret_cast<const uint8_t *>(command) +
-                                                          command->cmdsize);
-    }
-    if (!foundText)
-    {
-        return false;
-    }
-
-    command = reinterpret_cast<const load_command *>(header + 1);
-    for (uint32_t index = 0; index < header->ncmds; index++)
-    {
-        if (command->cmd == LC_SEGMENT_64)
-        {
-            const auto *segment = reinterpret_cast<const segment_command_64 *>(command);
-            if ((segment->initprot & VM_PROT_EXECUTE) != 0)
-            {
-                const auto *sections = reinterpret_cast<const section_64 *>(segment + 1);
-                for (uint32_t sectionIndex = 0; sectionIndex < segment->nsects; sectionIndex++)
-                {
-                    const auto &section = sections[sectionIndex];
-                    if ((section.flags & (S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS)) !=
-                            0 &&
-                        addressWithinRegion(reinterpret_cast<std::uintptr_t>(address),
-                                            section.addr + slide, section.size))
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-        command = reinterpret_cast<const load_command *>(reinterpret_cast<const uint8_t *>(command) +
-                                                          command->cmdsize);
-    }
-    return false;
-}
-
-static bool isExecutableAddress(void *address)
-{
-    if (!address)
-    {
-        return false;
-    }
-
-    void *regionAddress = address;
-#if __has_feature(ptrauth_calls)
-    regionAddress = ptrauth_strip(address, ptrauth_key_function_pointer);
-#endif
-    vm_address_t target = reinterpret_cast<vm_address_t>(regionAddress);
-    natural_t depth = 0;
-    for (unsigned int attempt = 0; attempt < 16; attempt++)
-    {
-        vm_address_t region = target;
-        vm_size_t size = 0;
-        vm_region_submap_short_info_data_64_t info{};
-        mach_msg_type_number_t count = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64;
-        kern_return_t result = vm_region_recurse_64(
-            mach_task_self(), &region, &size, &depth,
-            reinterpret_cast<vm_region_recurse_info_t>(&info), &count);
-        if (result != KERN_SUCCESS || !addressWithinRegion(target, region, size))
-        {
-            return false;
-        }
-        if (!info.is_submap)
-        {
-            return (info.protection & VM_PROT_EXECUTE) != 0;
-        }
-        depth++;
-    }
-    return false;
-}
-
-static bool isCallableSymbolAddress(void *address)
-{
-    return isExecutableAddress(address) && isInstructionSectionAddress(address);
 }
 
 static std::shared_ptr<ObjCHandleHost> objcHost(Runtime &runtime, const Value &value)
@@ -666,21 +512,32 @@ static Value objcHandleResult(Runtime &runtime, id value)
     return Object::createFromHostObject(runtime, std::make_shared<ObjCHandleHost>(value));
 }
 
-static Value pointerResult(Runtime &runtime, void *pointer, bool callable = false)
+static Value pointerResult(Runtime &runtime, void *pointer)
 {
-    if (!pointer)
-    {
-        return Value::null();
-    }
-
-    return Object::createFromHostObject(runtime, std::make_shared<PointerHost>(pointer, callable));
+    return loader::ffi::pointerValue(runtime, pointer);
 }
 
-struct ConversionState
+template <typename T> static void storeNativeValue(uint8_t *target, T value)
 {
-    NativeConversionBudget budget;
+    memcpy(target, &value, sizeof(value));
+}
+
+template <typename T> static T loadNativeValue(const uint8_t *source)
+{
+    T value{};
+    memcpy(&value, source, sizeof(value));
+    return value;
+}
+
+struct ConversionState {
+    explicit ConversionState(const NativeConversionProfile &profile = kNativeValueConversion)
+        : budget(profile)
+    {
+    }
+
+    NativeConversionBudget    budget;
     std::vector<const void *> nativePath;
-    std::vector<Object> javascriptPath;
+    std::vector<Object>       javascriptPath;
 
     void enter(Runtime &runtime)
     {
@@ -698,6 +555,22 @@ struct ConversionState
         }
     }
 
+    void addString(Runtime &runtime, size_t count)
+    {
+        if (!budget.addString(count))
+        {
+            throw JSError(runtime, "Native value exceeds conversion string limit");
+        }
+    }
+
+    void addName(Runtime &runtime, size_t count)
+    {
+        if (!budget.addName(count))
+        {
+            throw JSError(runtime, "Native value exceeds conversion name limit");
+        }
+    }
+
     void ensureEntries(Runtime &runtime, size_t count)
     {
         if (!budget.reserveEntries(count))
@@ -707,8 +580,7 @@ struct ConversionState
     }
 };
 
-struct ConversionGuard
-{
+struct ConversionGuard {
     explicit ConversionGuard(Runtime &runtime, ConversionState &state) : state(state)
     {
         state.enter(runtime);
@@ -722,8 +594,7 @@ struct ConversionGuard
     ConversionState &state;
 };
 
-struct NativeConversionVisit
-{
+struct NativeConversionVisit {
     NativeConversionVisit(Runtime &runtime, ConversionState &state, id value) : state(state)
     {
         const void *identity = (__bridge const void *) value;
@@ -743,8 +614,7 @@ struct NativeConversionVisit
     ConversionState &state;
 };
 
-struct JavaScriptConversionVisit
-{
+struct JavaScriptConversionVisit {
     JavaScriptConversionVisit(Runtime &runtime, ConversionState &state, const Value &value)
         : state(state)
     {
@@ -777,14 +647,15 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
 
     if ([value isKindOfClass:[NSString class]])
     {
-        state.addBytes(runtime, [(NSString *) value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-        return [JSI fromObjC:value runtime:runtime];
+        state.addBytes(runtime,
+                       [(NSString *) value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        return objcJSIValue(runtime, value);
     }
 
     if ([value isKindOfClass:[NSNumber class]])
     {
-        NSNumber *number = (NSNumber *) value;
-        const char *type = number.objCType;
+        NSNumber   *number = (NSNumber *) value;
+        const char *type   = number.objCType;
         if (strcmp(type, @encode(long long)) == 0 || strcmp(type, @encode(long)) == 0)
         {
             int64_t integer = number.longLongValue;
@@ -802,13 +673,13 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
                 return Value(runtime, BigInt::fromUint64(runtime, integer));
             }
         }
-        return [JSI fromObjC:value runtime:runtime];
+        return objcJSIValue(runtime, value);
     }
 
     if ([value isKindOfClass:[NSData class]])
     {
         state.addBytes(runtime, [(NSData *) value length]);
-        auto data = std::make_shared<NativeDataBuffer>((NSData *) value);
+        auto        data = std::make_shared<NativeDataBuffer>((NSData *) value);
         ArrayBuffer buffer(runtime, data);
         return Uint8Array(runtime, buffer, 0, buffer.size(runtime));
     }
@@ -816,7 +687,7 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
     if ([value isKindOfClass:[NSArray class]])
     {
         NativeConversionVisit visit(runtime, state, value);
-        NSArray *array = (NSArray *) value;
+        NSArray              *array = (NSArray *) value;
         state.ensureEntries(runtime, array.count);
         Array result(runtime, array.count);
         for (NSUInteger index = 0; index < array.count; index++)
@@ -829,7 +700,7 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
     if ([value isKindOfClass:[NSDictionary class]])
     {
         NativeConversionVisit visit(runtime, state, value);
-        NSDictionary *dictionary = (NSDictionary *) value;
+        NSDictionary         *dictionary = (NSDictionary *) value;
         state.ensureEntries(runtime, dictionary.count);
         Object result(runtime);
         for (id key in dictionary)
@@ -838,7 +709,8 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
             {
                 continue;
             }
-            state.addBytes(runtime, [(NSString *) key lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+            state.addBytes(runtime,
+                           [(NSString *) key lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
             result.setProperty(runtime, ((NSString *) key).UTF8String,
                                objcResultValue(runtime, dictionary[key], state));
         }
@@ -864,8 +736,8 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
 
     if (value.isString())
     {
-        NSString *string = [JSI toNSString:value runtime:runtime];
-        state.addBytes(runtime, [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        NSString *string = jsiString(runtime, value);
+        state.addString(runtime, [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         return string ?: @"";
     }
 
@@ -917,21 +789,23 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
     if (object.isArray(runtime))
     {
         JavaScriptConversionVisit visit(runtime, state, value);
-        Array array = object.asArray(runtime);
-        size_t count = array.size(runtime);
+        Array                     array = object.asArray(runtime);
+        size_t                    count = array.size(runtime);
         state.ensureEntries(runtime, count);
         NSMutableArray *result = [NSMutableArray arrayWithCapacity:count];
         for (size_t index = 0; index < count; index++)
         {
-            [result addObject:valueToObjCValue(runtime, array.getValueAtIndex(runtime, index), state) ?: [NSNull null]];
+            [result
+                addObject:valueToObjCValue(runtime, array.getValueAtIndex(runtime, index), state)
+                              ?: [NSNull null]];
         }
         return result;
     }
 
     JavaScriptConversionVisit visit(runtime, state, value);
-    NSMutableDictionary *result = [NSMutableDictionary dictionary];
-    Array names = object.getPropertyNames(runtime);
-    size_t count = names.size(runtime);
+    NSMutableDictionary      *result = [NSMutableDictionary dictionary];
+    Array                     names  = object.getPropertyNames(runtime);
+    size_t                    count  = names.size(runtime);
     state.ensureEntries(runtime, count);
     for (size_t index = 0; index < count; index++)
     {
@@ -941,14 +815,14 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
             continue;
         }
 
-        NSString *key = [JSI toNSString:name runtime:runtime];
+        NSString *key = jsiString(runtime, name);
         if (key.length == 0)
         {
             continue;
         }
 
-        state.addBytes(runtime, [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-        id item = valueToObjCValue(runtime, object.getProperty(runtime, key.UTF8String), state);
+        state.addName(runtime, [key lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
+        id item     = valueToObjCValue(runtime, object.getProperty(runtime, key.UTF8String), state);
         result[key] = item ?: [NSNull null];
     }
     return result;
@@ -1003,7 +877,12 @@ static NSDictionary *fabricProperties(Runtime &runtime, const Value *value)
         return @{};
     }
 
-    id object = valueToObjC(runtime, *value);
+    if (!value->isObject() || value->asObject(runtime).isArray(runtime))
+    {
+        throw JSError(runtime, "fabric surface properties must be an object");
+    }
+    ConversionState state(kNativePropertiesConversion);
+    id              object = valueToObjCValue(runtime, *value, state);
     if (![object isKindOfClass:[NSDictionary class]])
     {
         throw JSError(runtime, "fabric surface properties must be an object");
@@ -1012,82 +891,77 @@ static NSDictionary *fabricProperties(Runtime &runtime, const Value *value)
     return object;
 }
 
-static double fabricNumber(Runtime &runtime, Object &object, const char *name)
-{
-    Value value = object.getProperty(runtime, name);
-    if (!value.isNumber())
-    {
-        throw JSError(runtime, "fabric dimensions must be numbers");
-    }
-    return value.asNumber();
-}
-
 static CGSize fabricSize(Runtime &runtime, const Value &value)
 {
-    if (!value.isObject())
-    {
-        throw JSError(runtime, "fabric size must be an object");
-    }
-
-    Object object = value.asObject(runtime);
-    return CGSizeMake(fabricNumber(runtime, object, "width"),
-                      fabricNumber(runtime, object, "height"));
+    loader::native::NativeSize size = loader::native::parseSize(runtime, value);
+    return CGSizeMake(size.width, size.height);
 }
 
 static CGRect fabricFrame(Runtime &runtime, const Value &value)
 {
-    if (!value.isObject())
-    {
-        throw JSError(runtime, "fabric frame must be an object");
-    }
-
-    Object object = value.asObject(runtime);
-    return CGRectMake(fabricNumber(runtime, object, "x"), fabricNumber(runtime, object, "y"),
-                      fabricNumber(runtime, object, "width"),
-                      fabricNumber(runtime, object, "height"));
+    loader::native::NativeFrame frame = loader::native::parseFrame(runtime, value);
+    return CGRectMake(frame.x, frame.y, frame.width, frame.height);
 }
 
 static void fabricStart(id surface)
 {
     using Function = void (*)(id, SEL);
-    ((Function)objc_msgSend)(surface, @selector(start));
+    ((Function) objc_msgSend)(surface, @selector(start));
 }
 
 static void fabricStop(id surface)
 {
     using Function = void (*)(id, SEL);
-    ((Function)objc_msgSend)(surface, @selector(stop));
+    ((Function) objc_msgSend)(surface, @selector(stop));
 }
 
 static UIView *fabricView(id surface)
 {
     using Function = UIView *(*)(id, SEL);
-    return ((Function)objc_msgSend)(surface, @selector(view));
+    return ((Function) objc_msgSend)(surface, @selector(view));
 }
 
 static void fabricSetProps(id surface, NSDictionary *properties)
 {
     using Function = void (*)(id, SEL, NSDictionary *);
-    ((Function)objc_msgSend)(surface, @selector(setProps:), properties);
+    ((Function) objc_msgSend)(surface, @selector(setProps:), properties);
 }
 
 static void fabricSetMinimumSize(id surface, CGSize minimumSize, CGSize maximumSize)
 {
     using Function = void (*)(id, SEL, CGSize, CGSize);
-    ((Function)objc_msgSend)(surface, @selector(setMinimumSize:maximumSize:), minimumSize,
-                             maximumSize);
+    ((Function) objc_msgSend)(surface, @selector(setMinimumSize:maximumSize:), minimumSize,
+                              maximumSize);
+}
+
+static void forgetFabricSurface(FabricSurfaceHost *surfaceHost)
+{
+    std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
+    if (gFabricSurfaces.erase(surfaceHost) > 0)
+    {
+        loader::native::nativeSurfaceBudget().release();
+    }
+}
+
+static NSString *fabricModuleName(Runtime &runtime, const Value &value)
+{
+    std::string name = loader::native::parseName(
+        runtime, value, loader::native::kMaximumNativeNameBytes, "A Fabric module name");
+    return [NSString stringWithUTF8String:name.c_str()] ?: @"";
 }
 
 static void fabricMountNative(id host, UIView *containerView, NSString *moduleName,
-                              NSDictionary *properties,
+                              NSDictionary                             *properties,
                               const std::shared_ptr<FabricSurfaceHost> &surfaceHost,
-                              uint64_t generation)
+                              uint64_t                                  generation)
 {
     NativeOperationSignpost signpost("fabric mount");
     if (generation != loader::native::runtimeGeneration())
     {
         throw std::runtime_error("Fabric runtime was replaced before mounting");
     }
+    loader::native::NativeResourceReservation reservation(loader::native::nativeSurfaceBudget(),
+                                                          "Too many React surfaces are mounted");
     if (![host respondsToSelector:@selector(createSurfaceWithModuleName:mode:initialProperties:)])
     {
         throw std::runtime_error("Fabric host does not expose surface creation");
@@ -1111,12 +985,13 @@ static void fabricMountNative(id host, UIView *containerView, NSString *moduleNa
         throw std::runtime_error("Fabric surface did not create a view");
     }
 
-    FabricContainer *surfaceContainer = [[FabricContainer alloc] initWithFrame:containerView.bounds];
+    FabricContainer *surfaceContainer =
+        [[FabricContainer alloc] initWithFrame:containerView.bounds];
     surfaceContainer.clipsToBounds = NO;
     surfaceContainer.autoresizingMask =
         UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     surfaceContainer.surfaceView = view;
-    view.frame = surfaceContainer.bounds;
+    view.frame                   = surfaceContainer.bounds;
     view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [surfaceContainer addSubview:view];
     [containerView addSubview:surfaceContainer];
@@ -1127,7 +1002,11 @@ static void fabricMountNative(id host, UIView *containerView, NSString *moduleNa
     {
         std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
         replaced = generation != loader::native::runtimeGeneration();
-        if (!replaced) gFabricSurfaces[surfaceHost.get()] = surfaceHost;
+        if (!replaced)
+        {
+            gFabricSurfaces[surfaceHost.get()] = surfaceHost;
+            reservation.commit();
+        }
     }
     if (replaced)
     {
@@ -1157,10 +1036,10 @@ static Value fabricMount(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "Fabric host is unavailable");
     }
 
-    NSString *moduleName = [JSI toNSString:args[1] runtime:runtime];
-    NSDictionary *properties = fabricProperties(runtime, count > 2 ? &args[2] : nullptr);
-    auto surfaceHost = std::make_shared<FabricSurfaceHost>();
-    uint64_t generation = loader::native::runtimeGeneration();
+    NSString     *moduleName  = fabricModuleName(runtime, args[1]);
+    NSDictionary *properties  = fabricProperties(runtime, count > 2 ? &args[2] : nullptr);
+    auto          surfaceHost = std::make_shared<FabricSurfaceHost>();
+    uint64_t      generation  = loader::native::runtimeGeneration();
 
     executeMainSynchronously([host, container, moduleName, properties, surfaceHost, generation]() {
         fabricMountNative(host, (UIView *) container, moduleName, properties, surfaceHost,
@@ -1187,10 +1066,10 @@ static Value fabricMountAsync(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "Fabric host is unavailable");
     }
 
-    NSString *moduleName = [JSI toNSString:args[1] runtime:runtime];
-    NSDictionary *properties = fabricProperties(runtime, count > 2 ? &args[2] : nullptr);
-    auto surfaceHost = std::make_shared<FabricSurfaceHost>();
-    uint64_t generation = loader::native::runtimeGeneration();
+    NSString     *moduleName  = fabricModuleName(runtime, args[1]);
+    NSDictionary *properties  = fabricProperties(runtime, count > 2 ? &args[2] : nullptr);
+    auto          surfaceHost = std::make_shared<FabricSurfaceHost>();
+    uint64_t      generation  = loader::native::runtimeGeneration();
     return executeMainAsynchronously(
         runtime,
         [host, container, moduleName, properties, surfaceHost, generation]() {
@@ -1234,7 +1113,8 @@ static void fabricSetFrameNative(UIView *view, UIView *surfaceView, CGRect frame
     if (surfaceView)
     {
         surfaceView.frame = view.bounds;
-        surfaceView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        surfaceView.autoresizingMask =
+            UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     }
 }
 
@@ -1261,23 +1141,27 @@ static void invalidateRuntimeFabricSurfaces(uint64_t generation)
             }
             stale.push_back(iterator->second);
             iterator = gFabricSurfaces.erase(iterator);
+            loader::native::nativeSurfaceBudget().release();
         }
     }
-    if (stale.empty()) return;
+    if (stale.empty())
+        return;
     dispatch_async(dispatch_get_main_queue(), ^{
         @autoreleasepool
         {
             for (const auto &surfaceHost : stale)
             {
-                if (!surfaceHost->active()) continue;
+                if (!surfaceHost->active())
+                    continue;
                 @try
                 {
                     fabricUnmountNative(surfaceHost->surface(), surfaceHost->view());
                 }
                 @catch (NSException *exception)
                 {
-                    [Logger error:LOG_CATEGORY_PLUGINS
-                            format:@"Failed to release a stale Fabric surface: %@", exception.reason];
+                    [Logger
+                         error:LOG_CATEGORY_PLUGINS
+                        format:@"Failed to release a stale Fabric surface: %@", exception.reason];
                 }
                 surfaceHost->clear();
             }
@@ -1293,14 +1177,16 @@ static Value fabricUpdate(Runtime &runtime, const Value *args, size_t count)
     }
 
     std::shared_ptr<FabricSurfaceHost> surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    NSDictionary *properties = fabricProperties(runtime, &args[1]);
-    id surface = surfaceHost->surface();
+    NSDictionary                      *properties  = fabricProperties(runtime, &args[1]);
+    id                                 surface     = surfaceHost->surface();
     if (!surfaceHost->active() || !surface)
     {
         return Value::undefined();
     }
 
-    executeMainSynchronously([surface, properties]() { fabricUpdateNative(surface, properties); });
+    executeMainSynchronously([surface, properties]() {
+        fabricUpdateNative(surface, properties);
+    });
     return Value::undefined();
 }
 
@@ -1312,9 +1198,9 @@ static Value fabricSetSize(Runtime &runtime, const Value *args, size_t count)
     }
 
     std::shared_ptr<FabricSurfaceHost> surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    CGSize minimumSize = fabricSize(runtime, args[1]);
-    CGSize maximumSize = fabricSize(runtime, args[2]);
-    id surface = surfaceHost->surface();
+    CGSize                             minimumSize = fabricSize(runtime, args[1]);
+    CGSize                             maximumSize = fabricSize(runtime, args[2]);
+    id                                 surface     = surfaceHost->surface();
     if (!surfaceHost->active() || !surface)
     {
         return Value::undefined();
@@ -1334,9 +1220,9 @@ static Value fabricSetFrame(Runtime &runtime, const Value *args, size_t count)
     }
 
     std::shared_ptr<FabricSurfaceHost> surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    CGRect frame = fabricFrame(runtime, args[1]);
-    UIView *view = surfaceHost->view();
-    UIView *surfaceView = surfaceHost->surfaceView();
+    CGRect                             frame       = fabricFrame(runtime, args[1]);
+    UIView                            *view        = surfaceHost->view();
+    UIView                            *surfaceView = surfaceHost->surfaceView();
     if (!surfaceHost->active() || !view)
     {
         return Value::undefined();
@@ -1362,7 +1248,9 @@ static Value fabricMeasure(Runtime &runtime, const Value *args, size_t count)
     }
 
     auto frame = std::make_shared<CGRect>(CGRectZero);
-    executeMainSynchronously([object, frame]() { *frame = [(UIView *) object frame]; });
+    executeMainSynchronously([object, frame]() {
+        *frame = [(UIView *) object frame];
+    });
 
     Object result(runtime);
     result.setProperty(runtime, "x", frame->origin.x);
@@ -1380,19 +1268,18 @@ static Value fabricUnmount(Runtime &runtime, const Value *args, size_t count)
     }
 
     std::shared_ptr<FabricSurfaceHost> surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    id surface = surfaceHost->surface();
-    UIView *view = surfaceHost->view();
+    id                                 surface     = surfaceHost->surface();
+    UIView                            *view        = surfaceHost->view();
     if (!surfaceHost->active())
     {
         return Value::undefined();
     }
 
-    executeMainSynchronously([surface, view]() { fabricUnmountNative(surface, view); });
+    executeMainSynchronously([surface, view]() {
+        fabricUnmountNative(surface, view);
+    });
     surfaceHost->clear();
-    {
-        std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
-        gFabricSurfaces.erase(surfaceHost.get());
-    }
+    forgetFabricSurface(surfaceHost.get());
     return Value::undefined();
 }
 
@@ -1407,12 +1294,13 @@ static Value fabricUpdateAsync(Runtime &runtime, const Value *args, size_t count
     {
         throw JSError(runtime, "fabric.updateAsync expects a surface and properties");
     }
-    auto surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    NSDictionary *properties = fabricProperties(runtime, &args[1]);
+    auto          surfaceHost = fabricSurfaceHost(runtime, args[0]);
+    NSDictionary *properties  = fabricProperties(runtime, &args[1]);
     return executeMainAsynchronously(
         runtime,
         [surfaceHost, properties]() {
-            if (surfaceHost->active()) fabricUpdateNative(surfaceHost->surface(), properties);
+            if (surfaceHost->active())
+                fabricUpdateNative(surfaceHost->surface(), properties);
         },
         fabricVoidResult);
 }
@@ -1421,9 +1309,10 @@ static Value fabricSetSizeAsync(Runtime &runtime, const Value *args, size_t coun
 {
     if (count < 3)
     {
-        throw JSError(runtime, "fabric.setSizeAsync expects a surface, minimum size, and maximum size");
+        throw JSError(runtime,
+                      "fabric.setSizeAsync expects a surface, minimum size, and maximum size");
     }
-    auto surfaceHost = fabricSurfaceHost(runtime, args[0]);
+    auto   surfaceHost = fabricSurfaceHost(runtime, args[0]);
     CGSize minimumSize = fabricSize(runtime, args[1]);
     CGSize maximumSize = fabricSize(runtime, args[2]);
     return executeMainAsynchronously(
@@ -1443,8 +1332,8 @@ static Value fabricSetFrameAsync(Runtime &runtime, const Value *args, size_t cou
     {
         throw JSError(runtime, "fabric.setFrameAsync expects a surface and frame");
     }
-    auto surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    CGRect frame = fabricFrame(runtime, args[1]);
+    auto   surfaceHost = fabricSurfaceHost(runtime, args[0]);
+    CGRect frame       = fabricFrame(runtime, args[1]);
     return executeMainAsynchronously(
         runtime,
         [surfaceHost, frame]() {
@@ -1470,7 +1359,9 @@ static Value fabricMeasureAsync(Runtime &runtime, const Value *args, size_t coun
     auto frame = std::make_shared<CGRect>(CGRectZero);
     return executeMainAsynchronously(
         runtime,
-        [object, frame]() { *frame = [(UIView *) object frame]; },
+        [object, frame]() {
+            *frame = [(UIView *) object frame];
+        },
         [frame](Runtime &completionRuntime) {
             Object result(completionRuntime);
             result.setProperty(completionRuntime, "x", frame->origin.x);
@@ -1491,11 +1382,11 @@ static Value fabricUnmountAsync(Runtime &runtime, const Value *args, size_t coun
     return executeMainAsynchronously(
         runtime,
         [surfaceHost]() {
-            if (!surfaceHost->active()) return;
+            if (!surfaceHost->active())
+                return;
             fabricUnmountNative(surfaceHost->surface(), surfaceHost->view());
             surfaceHost->clear();
-            std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
-            gFabricSurfaces.erase(surfaceHost.get());
+            forgetFabricSurface(surfaceHost.get());
         },
         fabricVoidResult);
 }
@@ -1516,10 +1407,10 @@ static id valueToData(Runtime &runtime, const Value &value)
 
     if (object.isTypedArray(runtime))
     {
-        TypedArray array = object.getTypedArray(runtime);
+        TypedArray  array  = object.getTypedArray(runtime);
         ArrayBuffer buffer = array.buffer(runtime);
         return [NSData dataWithBytes:buffer.data(runtime) + array.byteOffset(runtime)
-                               length:array.byteLength(runtime)];
+                              length:array.byteLength(runtime)];
     }
 
     return nil;
@@ -1559,11 +1450,11 @@ static Value structValue(Runtime &runtime, NSString *name, const Value &fields)
     if ([name isEqualToString:@"CGRect"])
     {
         Object origin = object.getPropertyAsObject(runtime, "origin");
-        Object size = object.getPropertyAsObject(runtime, "size");
-        CGRect rect = CGRectMake(origin.getProperty(runtime, "x").asNumber(),
-                                 origin.getProperty(runtime, "y").asNumber(),
-                                 size.getProperty(runtime, "width").asNumber(),
-                                 size.getProperty(runtime, "height").asNumber());
+        Object size   = object.getPropertyAsObject(runtime, "size");
+        CGRect rect   = CGRectMake(origin.getProperty(runtime, "x").asNumber(),
+                                   origin.getProperty(runtime, "y").asNumber(),
+                                   size.getProperty(runtime, "width").asNumber(),
+                                   size.getProperty(runtime, "height").asNumber());
         return structResult(runtime, name, [NSValue valueWithCGRect:rect]);
     }
     if ([name isEqualToString:@"UIEdgeInsets"])
@@ -1576,12 +1467,13 @@ static Value structValue(Runtime &runtime, NSString *name, const Value &fields)
     }
     if ([name isEqualToString:@"CGAffineTransform"])
     {
-        CGAffineTransform transform = CGAffineTransformMake(object.getProperty(runtime, "a").asNumber(),
-                                                            object.getProperty(runtime, "b").asNumber(),
-                                                            object.getProperty(runtime, "c").asNumber(),
-                                                            object.getProperty(runtime, "d").asNumber(),
-                                                            object.getProperty(runtime, "tx").asNumber(),
-                                                            object.getProperty(runtime, "ty").asNumber());
+        CGAffineTransform transform =
+            CGAffineTransformMake(object.getProperty(runtime, "a").asNumber(),
+                                  object.getProperty(runtime, "b").asNumber(),
+                                  object.getProperty(runtime, "c").asNumber(),
+                                  object.getProperty(runtime, "d").asNumber(),
+                                  object.getProperty(runtime, "tx").asNumber(),
+                                  object.getProperty(runtime, "ty").asNumber());
         return structResult(runtime, name, [NSValue valueWithCGAffineTransform:transform]);
     }
 
@@ -1591,8 +1483,10 @@ static Value structValue(Runtime &runtime, NSString *name, const Value &fields)
 static Value returnValue(Runtime &runtime, NSInvocation *invocation, NSMethodSignature *signature)
 {
     std::string name = nativeFFITypeName(signature.methodReturnType);
-    if (name.empty()) throw JSError(runtime, "Unsupported native return type");
-    if (name == "void") return Value::undefined();
+    if (name.empty())
+        throw JSError(runtime, "Unsupported native return type");
+    if (name == "void")
+        return Value::undefined();
 
     NSUInteger length = signature.methodReturnLength;
     if (length == 0 || length > 4096)
@@ -1600,9 +1494,10 @@ static Value returnValue(Runtime &runtime, NSInvocation *invocation, NSMethodSig
         throw JSError(runtime, "Native return value has an invalid size");
     }
 
-    std::vector<uint8_t> bytes(length);
+    loader::ffi::Type    type = loader::ffi::resolveType(name);
+    std::vector<uint8_t> bytes(std::max<size_t>(length, loader::ffi::valueStorageSize(type)));
     [invocation getReturnValue:bytes.data()];
-    return ffiResult(runtime, ffiType(runtime, name), bytes);
+    return loader::ffi::readValue(runtime, type, bytes.data());
 }
 
 static void validateNativeScalarArgument(id value, const std::string &type)
@@ -1615,22 +1510,24 @@ static void validateNativeScalarArgument(id value, const std::string &type)
     if (type == "bool")
     {
         double raw = number.doubleValue;
-        if (raw == 0 || raw == 1) return;
+        if (raw == 0 || raw == 1)
+            return;
         throw std::runtime_error("Native boolean argument is invalid");
     }
     const char *numberType = number.objCType;
-    bool signedInteger = strcmp(numberType, @encode(long long)) == 0 ||
-                         strcmp(numberType, @encode(long)) == 0;
+    bool        signedInteger =
+        strcmp(numberType, @encode(long long)) == 0 || strcmp(numberType, @encode(long)) == 0;
     bool unsignedInteger = strcmp(numberType, @encode(unsigned long long)) == 0 ||
                            strcmp(numberType, @encode(unsigned long)) == 0;
     if (type == "i64")
     {
-        if (signedInteger ||
-            (unsignedInteger && number.unsignedLongLongValue <= INT64_MAX)) return;
+        if (signedInteger || (unsignedInteger && number.unsignedLongLongValue <= INT64_MAX))
+            return;
     }
     if (type == "u64")
     {
-        if (unsignedInteger || (signedInteger && number.longLongValue >= 0)) return;
+        if (unsignedInteger || (signedInteger && number.longLongValue >= 0))
+            return;
     }
     if (!validNativeNumericValue(number.doubleValue, type))
     {
@@ -1640,18 +1537,17 @@ static void validateNativeScalarArgument(id value, const std::string &type)
 
 static bool isNativeScalarType(const std::string &type)
 {
-    return type == "bool" || type == "float" || type == "double" ||
-           type == "i8" || type == "u8" || type == "i16" ||
-           type == "u16" || type == "i32" || type == "u32" ||
-           type == "i64" || type == "u64";
+    return type == "bool" || type == "float" || type == "double" || type == "i8" || type == "u8" ||
+           type == "i16" || type == "u16" || type == "i32" || type == "u32" || type == "i64" ||
+           type == "u64";
 }
 
-static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *signature,
-                                  id object, NSUInteger index, std::vector<id> &retained,
+static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *signature, id object,
+                                  NSUInteger index, std::vector<id> &retained,
                                   std::vector<std::vector<uint8_t>> &storage)
 {
-    const char *type = [signature getArgumentTypeAtIndex:index];
-    char code = normalizedType(type);
+    const char *type       = [signature getArgumentTypeAtIndex:index];
+    char        code       = normalizedType(type);
     std::string scalarType = nativeFFITypeName(type);
     if (isNativeScalarType(scalarType))
     {
@@ -1664,7 +1560,7 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
         if ([object isKindOfClass:[NSValue class]] &&
             strncmp([(NSValue *) object objCType], "^", 1) == 0)
         {
-            argument = (__bridge id) [(NSValue *) object pointerValue];
+            argument = (__bridge id)[(NSValue *) object pointerValue];
         }
         retained.push_back(argument);
         id retainedArgument = retained.back();
@@ -1688,7 +1584,7 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
         }
         else if ([object isKindOfClass:[NSValue class]])
         {
-            argument = (SEL) [(NSValue *) object pointerValue];
+            argument = (SEL)[(NSValue *) object pointerValue];
         }
         [invocation setArgument:&argument atIndex:index];
         return;
@@ -1719,29 +1615,33 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
 
     if (code == 'f')
     {
-        float argument = [object respondsToSelector:@selector(floatValue)] ? [object floatValue] : 0;
+        float argument =
+            [object respondsToSelector:@selector(floatValue)] ? [object floatValue] : 0;
         [invocation setArgument:&argument atIndex:index];
         return;
     }
 
     if (code == 'd')
     {
-        double argument = [object respondsToSelector:@selector(doubleValue)] ? [object doubleValue] : 0;
+        double argument =
+            [object respondsToSelector:@selector(doubleValue)] ? [object doubleValue] : 0;
         [invocation setArgument:&argument atIndex:index];
         return;
     }
 
     if (code == 'q')
     {
-        long long argument = [object respondsToSelector:@selector(longLongValue)] ? [object longLongValue] : 0;
+        long long argument =
+            [object respondsToSelector:@selector(longLongValue)] ? [object longLongValue] : 0;
         [invocation setArgument:&argument atIndex:index];
         return;
     }
 
     if (code == 'Q')
     {
-        unsigned long long argument =
-            [object respondsToSelector:@selector(unsignedLongLongValue)] ? [object unsignedLongLongValue] : 0;
+        unsigned long long argument = [object respondsToSelector:@selector(unsignedLongLongValue)]
+                                          ? [object unsignedLongLongValue]
+                                          : 0;
         [invocation setArgument:&argument atIndex:index];
         return;
     }
@@ -1757,7 +1657,9 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
 
     if (code == 'C')
     {
-        uint8_t argument = [object respondsToSelector:@selector(unsignedCharValue)] ? [object unsignedCharValue] : 0;
+        uint8_t argument = [object respondsToSelector:@selector(unsignedCharValue)]
+                               ? [object unsignedCharValue]
+                               : 0;
         storage.emplace_back(sizeof(argument));
         memcpy(storage.back().data(), &argument, sizeof(argument));
         [invocation setArgument:storage.back().data() atIndex:index];
@@ -1766,7 +1668,8 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
 
     if (code == 's')
     {
-        int16_t argument = [object respondsToSelector:@selector(shortValue)] ? [object shortValue] : 0;
+        int16_t argument =
+            [object respondsToSelector:@selector(shortValue)] ? [object shortValue] : 0;
         storage.emplace_back(sizeof(argument));
         memcpy(storage.back().data(), &argument, sizeof(argument));
         [invocation setArgument:storage.back().data() atIndex:index];
@@ -1775,7 +1678,9 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
 
     if (code == 'S')
     {
-        uint16_t argument = [object respondsToSelector:@selector(unsignedShortValue)] ? [object unsignedShortValue] : 0;
+        uint16_t argument = [object respondsToSelector:@selector(unsignedShortValue)]
+                                ? [object unsignedShortValue]
+                                : 0;
         storage.emplace_back(sizeof(argument));
         memcpy(storage.back().data(), &argument, sizeof(argument));
         [invocation setArgument:storage.back().data() atIndex:index];
@@ -1793,7 +1698,8 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
 
     if (code == 'I')
     {
-        uint32_t argument = [object respondsToSelector:@selector(unsignedIntValue)] ? [object unsignedIntValue] : 0;
+        uint32_t argument =
+            [object respondsToSelector:@selector(unsignedIntValue)] ? [object unsignedIntValue] : 0;
         storage.emplace_back(sizeof(argument));
         memcpy(storage.back().data(), &argument, sizeof(argument));
         [invocation setArgument:storage.back().data() atIndex:index];
@@ -1802,7 +1708,8 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
 
     if (code == 'l' || code == 'q')
     {
-        int64_t argument = [object respondsToSelector:@selector(longLongValue)] ? [object longLongValue] : 0;
+        int64_t argument =
+            [object respondsToSelector:@selector(longLongValue)] ? [object longLongValue] : 0;
         storage.emplace_back(sizeof(argument));
         memcpy(storage.back().data(), &argument, sizeof(argument));
         [invocation setArgument:storage.back().data() atIndex:index];
@@ -1827,9 +1734,9 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
             throw std::runtime_error("Native struct argument expected");
         }
 
-        NSValue *structValue = (NSValue *) object;
-        NSUInteger size = 0;
-        NSUInteger alignment = 0;
+        NSValue   *structValue = (NSValue *) object;
+        NSUInteger size        = 0;
+        NSUInteger alignment   = 0;
         NSGetSizeAndAlignment(type, &size, &alignment);
         storage.emplace_back(size);
         [structValue getValue:storage.back().data() size:size];
@@ -1840,8 +1747,7 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
     throw std::runtime_error("Unsupported native argument type");
 }
 
-static NSInvocation *prepareInvocation(id target, SEL selector,
-                                       NSArray *arguments)
+static NSInvocation *prepareInvocation(id target, SEL selector, NSArray *arguments)
 {
     if (!target || !selector)
     {
@@ -1861,24 +1767,26 @@ static NSInvocation *prepareInvocation(id target, SEL selector,
     }
 
     NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:signature];
-    invocation.target = target;
-    invocation.selector = selector;
+    invocation.target        = target;
+    invocation.selector      = selector;
 
-    std::vector<id> retained;
+    std::vector<id>                   retained;
     std::vector<std::vector<uint8_t>> storage;
     retained.reserve(arguments.count);
     storage.reserve(arguments.count);
 
     for (NSUInteger index = 0; index < arguments.count; index++)
     {
-        setInvocationArgument(invocation, signature, arguments[index], index + 2, retained, storage);
+        setInvocationArgument(invocation, signature, arguments[index], index + 2, retained,
+                              storage);
     }
 
     [invocation retainArguments];
     NSMutableArray *backingArguments = [NSMutableArray arrayWithCapacity:retained.size()];
     for (id argument : retained)
     {
-        if (argument) [backingArguments addObject:argument];
+        if (argument)
+            [backingArguments addObject:argument];
     }
     if (backingArguments.count)
     {
@@ -1896,112 +1804,151 @@ static Value invokeObject(Runtime &runtime, id target, SEL selector, NSArray *ar
     return returnValue(runtime, invocation, invocation.methodSignature);
 }
 
-static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id object,
-                                 FFICallArgument &argument, std::vector<id> &retained)
+static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id object, uint8_t *target,
+                                size_t capacity, loader::ffi::ArgumentStorage &storage,
+                                std::vector<id> &retained)
 {
     std::string scalarType = nativeFFITypeName(encoding);
     if (isNativeScalarType(scalarType))
     {
         validateNativeScalarArgument(object, scalarType);
     }
-    char code = normalizedType(encoding);
-    id value = object == [NSNull null] ? @0 : object;
+    char code  = normalizedType(encoding);
+    id   value = object == [NSNull null] ? @0 : object;
     if (code == '@' || code == '#')
     {
         id retainedValue = object == [NSNull null] ? nil : object;
         retained.push_back(retainedValue);
-        argument.pointer = (__bridge void *) retainedValue;
+        storeNativeValue<void *>(target, (__bridge void *) retainedValue);
         return;
     }
     if (code == ':')
     {
+        SEL selector = NULL;
         if ([value isKindOfClass:[NSString class]])
         {
-            argument.pointer = (void *) sel_registerName([(NSString *) value UTF8String]);
+            selector = sel_registerName([(NSString *) value UTF8String]);
         }
         else if ([value isKindOfClass:[NSValue class]])
         {
-            argument.pointer = [(NSValue *) value pointerValue];
+            selector = (SEL)[(NSValue *) value pointerValue];
         }
+        storeNativeValue<SEL>(target, selector);
         return;
     }
     if (code == '^' || code == '*')
     {
+        const void *pointer = nullptr;
         if (code == '*' && [value isKindOfClass:[NSString class]])
         {
-            argument.string = [(NSString *) value UTF8String] ?: "";
-            argument.pointer = (void *) argument.string.c_str();
+            pointer = storage.keep([(NSString *) value UTF8String] ?: "");
         }
         else if ([value isKindOfClass:[NSValue class]])
         {
-            argument.pointer = [(NSValue *) value pointerValue];
+            pointer = [(NSValue *) value pointerValue];
         }
+        storeNativeValue<const void *>(target, pointer);
         return;
     }
     if (code == 'B')
     {
-        bool scalar = [value boolValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<bool>(target, [value boolValue]);
         return;
     }
     if (code == 'c' || code == 'C')
     {
-        uint8_t scalar = code == 'c' ? (uint8_t) [value charValue] : [value unsignedCharValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<uint8_t>(target, code == 'c' ? (uint8_t) [value charValue]
+                                                      : [value unsignedCharValue]);
         return;
     }
     if (code == 's' || code == 'S')
     {
-        uint16_t scalar = code == 's' ? (uint16_t) [value shortValue] : [value unsignedShortValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<uint16_t>(target, code == 's' ? (uint16_t) [value shortValue]
+                                                       : [value unsignedShortValue]);
         return;
     }
     if (code == 'i' || code == 'I')
     {
-        uint32_t scalar = code == 'i' ? (uint32_t) [value intValue] : [value unsignedIntValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<uint32_t>(target, code == 'i' ? (uint32_t) [value intValue]
+                                                       : [value unsignedIntValue]);
         return;
     }
     if (code == 'l' || code == 'L' || code == 'q' || code == 'Q')
     {
-        uint64_t scalar = code == 'l' || code == 'q' ? (uint64_t) [value longLongValue]
-                                                       : [value unsignedLongLongValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<uint64_t>(target, code == 'l' || code == 'q'
+                                               ? (uint64_t) [value longLongValue]
+                                               : [value unsignedLongLongValue]);
         return;
     }
     if (code == 'f')
     {
-        float scalar = [value floatValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<float>(target, [value floatValue]);
         return;
     }
     if (code == 'd')
     {
-        double scalar = [value doubleValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<double>(target, [value doubleValue]);
         return;
     }
     if (code == '{')
     {
-        NSUInteger size = 0;
+        NSUInteger size      = 0;
         NSUInteger alignment = 0;
         NSGetSizeAndAlignment(encoding, &size, &alignment);
-        if (![value isKindOfClass:[NSValue class]])
+        if (![value isKindOfClass:[NSValue class]] || size > capacity)
         {
             throw JSError(runtime, "Native super struct argument expected");
         }
-        argument.bytes.resize(size);
-        [(NSValue *) value getValue:argument.bytes.data() size:size];
+        [(NSValue *) value getValue:target size:size];
         return;
     }
     throw JSError(runtime, "Unsupported native super argument type");
+}
+
+static std::vector<loader::ffi::Type> superArgumentTypes(Runtime           &runtime,
+                                                         NSMethodSignature *signature)
+{
+    std::vector<loader::ffi::Type> types{loader::ffi::resolveType("pointer"),
+                                         loader::ffi::resolveType("selector")};
+    for (NSUInteger index = 2; index < signature.numberOfArguments; index++)
+    {
+        std::string name = nativeFFITypeName([signature getArgumentTypeAtIndex:index]);
+        if (name.empty())
+        {
+            throw JSError(runtime, "Unsupported native super argument type encoding");
+        }
+        types.push_back(loader::ffi::resolveType(name));
+    }
+    return types;
+}
+
+static std::unique_ptr<loader::ffi::CallFrame> superCallFrame(Runtime           &runtime,
+                                                              NSMethodSignature *signature)
+{
+    std::string resultName = nativeFFITypeName(signature.methodReturnType);
+    if (resultName.empty())
+    {
+        throw JSError(runtime, "Unsupported native super return type encoding");
+    }
+    std::vector<loader::ffi::Type> types = superArgumentTypes(runtime, signature);
+    return std::make_unique<loader::ffi::CallFrame>(
+        loader::ffi::callInterface(loader::ffi::resolveType(resultName), types));
+}
+
+static void setSuperFFIArguments(Runtime &runtime, NSMethodSignature *signature, NSArray *arguments,
+                                 struct objc_super *superInfo, SEL selector,
+                                 loader::ffi::CallFrame &frame, std::vector<id> &retained)
+{
+    storeNativeValue<void *>(frame.argument(0), superInfo);
+    storeNativeValue<SEL>(frame.argument(1), selector);
+    retained.reserve(arguments.count);
+    for (NSUInteger index = 0; index < arguments.count; index++)
+    {
+        setSuperFFIArgument(runtime, [signature getArgumentTypeAtIndex:index + 2], arguments[index],
+                            frame.argument(index + 2),
+                            loader::ffi::valueStorageSize(frame.interface().arguments[index + 2]),
+                            frame.storage(), retained);
+    }
 }
 
 static Value invokeSuperObject(Runtime &runtime, id target, Class currentClass, SEL selector,
@@ -2012,70 +1959,28 @@ static Value invokeSuperObject(Runtime &runtime, id target, Class currentClass, 
         throw JSError(runtime, "Invalid native Objective-C super target");
     }
 
-    Class superclass = class_getSuperclass(currentClass);
-    Method method = superclass ? class_getInstanceMethod(superclass, selector) : NULL;
+    Class  superclass = class_getSuperclass(currentClass);
+    Method method     = superclass ? class_getInstanceMethod(superclass, selector) : NULL;
     if (!method)
     {
         throw JSError(runtime, "Objective-C super selector is not available");
     }
 
-    NSMethodSignature *signature = [NSMethodSignature signatureWithObjCTypes:method_getTypeEncoding(method)];
+    NSMethodSignature *signature =
+        [NSMethodSignature signatureWithObjCTypes:method_getTypeEncoding(method)];
     NSUInteger expected = signature.numberOfArguments >= 2 ? signature.numberOfArguments - 2 : 0;
     if (expected != arguments.count)
     {
-        throw JSError(runtime, "Objective-C super argument count does not match the method signature");
+        throw JSError(runtime,
+                      "Objective-C super argument count does not match the method signature");
     }
 
-    std::vector<FFITypeSpec> types;
-    std::vector<FFICallArgument> values(arguments.count + 2);
-    std::vector<void *> argumentValues(arguments.count + 2);
-    std::vector<id> retained;
-    types.reserve(arguments.count);
-    retained.reserve(arguments.count);
-
-    struct objc_super superInfo = {target, currentClass};
-    values[0].pointer = &superInfo;
-    values[1].pointer = selector;
-    argumentValues[0] = &values[0].pointer;
-    argumentValues[1] = &values[1].pointer;
-
-    for (NSUInteger index = 0; index < arguments.count; index++)
-    {
-        const char *encoding = [signature getArgumentTypeAtIndex:index + 2];
-        std::string name = nativeFFITypeName(encoding);
-        if (name.empty())
-        {
-            throw JSError(runtime, "Unsupported native super argument type encoding");
-        }
-        types.push_back(ffiType(runtime, name));
-        setSuperFFIArgument(runtime, encoding, arguments[index], values[index + 2], retained);
-        if (name == "object" || name == "class" || name == "selector" || name == "pointer")
-        {
-            argumentValues[index + 2] = &values[index + 2].pointer;
-        }
-        else
-        {
-            argumentValues[index + 2] = values[index + 2].bytes.data();
-        }
-    }
-
-    std::string resultName = nativeFFITypeName(signature.methodReturnType);
-    if (resultName.empty())
-    {
-        throw JSError(runtime, "Unsupported native super return type encoding");
-    }
-    FFITypeSpec result = ffiType(runtime, resultName);
-    std::vector<FFITypeSpec> cifArguments;
-    cifArguments.reserve(types.size() + 2);
-    cifArguments.push_back({"pointer", &ffi_type_pointer});
-    cifArguments.push_back({"selector", &ffi_type_pointer});
-    cifArguments.insert(cifArguments.end(), types.begin(), types.end());
-    ffi_cif cif = prepareFFICif(runtime, result, cifArguments);
-
-    std::vector<uint8_t> output(std::max<size_t>(result.type->size, sizeof(void *)));
-    ffi_call(&cif, reinterpret_cast<void (*)(void)>(objc_msgSendSuper),
-             resultName == "void" ? nullptr : output.data(), argumentValues.data());
-    return ffiResult(runtime, result, output);
+    std::unique_ptr<loader::ffi::CallFrame> frame = superCallFrame(runtime, signature);
+    std::vector<id>                         retained;
+    struct objc_super                       superInfo = {target, currentClass};
+    setSuperFFIArguments(runtime, signature, arguments, &superInfo, selector, *frame, retained);
+    frame->invoke((void *) objc_msgSendSuper);
+    return loader::ffi::readValue(runtime, frame->interface().result, frame->result());
 }
 
 static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, NSArray *arguments,
@@ -2087,7 +1992,7 @@ static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, N
         Value thread = options->asObject(runtime).getProperty(runtime, "thread");
         if (thread.isString())
         {
-            policy = [JSI toNSString:thread runtime:runtime].UTF8String;
+            policy = jsiString(runtime, thread).UTF8String;
         }
     }
     if (policy == "current" || ([NSThread isMainThread] && policy == "main"))
@@ -2100,12 +2005,13 @@ static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, N
     }
     if (loader::native::mainThreadIsWaitingForRuntime())
     {
-        throwWrongThread(runtime, "Objective-C invocation cannot synchronously cross to a waiting main thread");
+        throwWrongThread(
+            runtime, "Objective-C invocation cannot synchronously cross to a waiting main thread");
     }
 
-    NSInvocation *invocation = prepareInvocation(target, selector, arguments);
-    __strong id retainedResult = nil;
-    NSException *failure = nil;
+    NSInvocation *invocation     = prepareInvocation(target, selector, arguments);
+    __strong id   retainedResult = nil;
+    NSException  *failure        = nil;
     executeMainSynchronously([&]() {
         @try
         {
@@ -2126,7 +2032,7 @@ static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, N
     if (failure)
     {
         throw JSError(runtime, std::string("Objective-C invocation failed: ") +
-                                 (failure.reason.UTF8String ?: "unknown"));
+                                   (failure.reason.UTF8String ?: "unknown"));
     }
     Value result = returnValue(runtime, invocation, invocation.methodSignature);
     (void) retainedResult;
@@ -2141,14 +2047,14 @@ static Value executeMainAsynchronously(Runtime &runtime, std::function<void(void
 }
 
 struct NativeBatchArgument {
-    __strong id value = nil;
-    NSInteger resultIndex = -1;
+    __strong id value       = nil;
+    NSInteger   resultIndex = -1;
 };
 
 struct NativeBatchStep {
-    __strong id target = nil;
-    NSInteger targetResultIndex = -1;
-    __strong NSString *selector = nil;
+    __strong id                      target            = nil;
+    NSInteger                        targetResultIndex = -1;
+    __strong NSString               *selector          = nil;
     std::vector<NativeBatchArgument> arguments;
 };
 
@@ -2158,8 +2064,8 @@ static NSInteger batchResultIndex(Runtime &runtime, const Value &value, size_t s
     {
         return -1;
     }
-    Object object = value.asObject(runtime);
-    Value reference = object.getProperty(runtime, "$nativeBatchResult");
+    Object object    = value.asObject(runtime);
+    Value  reference = object.getProperty(runtime, "$nativeBatchResult");
     if (reference.isUndefined())
     {
         return -1;
@@ -2169,7 +2075,8 @@ static NSInteger batchResultIndex(Runtime &runtime, const Value &value, size_t s
         throw JSError(runtime, "Native batch result index must be an integer");
     }
     double index = reference.getNumber();
-    if (!(index >= 0 && index < stepIndex) || static_cast<double>(static_cast<size_t>(index)) != index)
+    if (!(index >= 0 && index < stepIndex) ||
+        static_cast<double>(static_cast<size_t>(index)) != index)
     {
         throw JSError(runtime, "Native batch can only reference earlier results");
     }
@@ -2194,12 +2101,14 @@ static void validateBatchArgument(id value, const char *encoding)
     }
     if (type == "class")
     {
-        if (value == [NSNull null] || object_isClass(value)) return;
+        if (value == [NSNull null] || object_isClass(value))
+            return;
         throw std::runtime_error("Native batch class argument is invalid");
     }
     if (type == "selector")
     {
-        if (value == [NSNull null] || [value isKindOfClass:[NSString class]]) return;
+        if (value == [NSNull null] || [value isKindOfClass:[NSString class]])
+            return;
         throw std::runtime_error("Native batch selector argument is invalid");
     }
     if (type == "pointer")
@@ -2207,13 +2116,15 @@ static void validateBatchArgument(id value, const char *encoding)
         if (value == [NSNull null] ||
             ([value isKindOfClass:[NSValue class]] &&
              strncmp([(NSValue *) value objCType], "^", 1) == 0) ||
-            (normalizedType(encoding) == '*' && [value isKindOfClass:[NSString class]])) return;
+            (normalizedType(encoding) == '*' && [value isKindOfClass:[NSString class]]))
+            return;
         throw std::runtime_error("Native batch pointer argument is invalid");
     }
     if (type.starts_with("struct:"))
     {
         if ([value isKindOfClass:[NSValue class]] &&
-            nativeFFITypeName([(NSValue *) value objCType]) == type) return;
+            nativeFFITypeName([(NSValue *) value objCType]) == type)
+            return;
         throw std::runtime_error("Native batch struct argument has the wrong layout");
     }
     validateNativeScalarArgument(value, type);
@@ -2222,8 +2133,8 @@ static void validateBatchArgument(id value, const char *encoding)
 static id batchNativeResult(NSInvocation *invocation)
 {
     NSMethodSignature *signature = invocation.methodSignature;
-    const char *type = signature.methodReturnType;
-    char code = normalizedType(type);
+    const char        *type      = signature.methodReturnType;
+    char               code      = normalizedType(type);
     if (code == 'v' || signature.methodReturnLength == 0)
     {
         return [NSNull null];
@@ -2328,7 +2239,7 @@ static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "objc.batch expects an array of steps");
     }
     Array input = args[0].asObject(runtime).asArray(runtime);
-    if (input.size(runtime) > 64)
+    if (input.size(runtime) > loader::native::kMaximumBatchSteps)
     {
         throw JSError(runtime, "Native batch requires at most 64 steps");
     }
@@ -2342,17 +2253,17 @@ static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)
         {
             throw JSError(runtime, "Native batch step is malformed");
         }
-        Object stepObject = rawStep.asObject(runtime);
-        Value rawTarget = stepObject.getProperty(runtime, "target");
-        Value rawSelector = stepObject.getProperty(runtime, "selector");
-        Value rawArguments = stepObject.getProperty(runtime, "args");
+        Object stepObject   = rawStep.asObject(runtime);
+        Value  rawTarget    = stepObject.getProperty(runtime, "target");
+        Value  rawSelector  = stepObject.getProperty(runtime, "selector");
+        Value  rawArguments = stepObject.getProperty(runtime, "args");
         if (!rawSelector.isString() || !rawArguments.isObject() ||
             !rawArguments.asObject(runtime).isArray(runtime))
         {
             throw JSError(runtime, "Native batch step is malformed");
         }
-        Array arguments = rawArguments.asObject(runtime).asArray(runtime);
-        NSString *selector = [JSI toNSString:rawSelector runtime:runtime];
+        Array     arguments = rawArguments.asObject(runtime).asArray(runtime);
+        NSString *selector  = jsiString(runtime, rawSelector);
         if (selector.length > 256 || arguments.size(runtime) > 16)
         {
             throw JSError(runtime, "Native batch step exceeds its limits");
@@ -2360,7 +2271,7 @@ static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)
 
         NativeBatchStep step;
         step.targetResultIndex = batchResultIndex(runtime, rawTarget, index);
-        step.target = step.targetResultIndex >= 0 ? nil : objcValue(runtime, rawTarget);
+        step.target            = step.targetResultIndex >= 0 ? nil : objcValue(runtime, rawTarget);
         if (step.targetResultIndex < 0 && !step.target)
         {
             throw JSError(runtime, "Native batch target is not an object handle");
@@ -2369,7 +2280,7 @@ static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)
         step.arguments.reserve(arguments.size(runtime));
         for (size_t argumentIndex = 0; argumentIndex < arguments.size(runtime); argumentIndex++)
         {
-            Value rawArgument = arguments.getValueAtIndex(runtime, argumentIndex);
+            Value               rawArgument = arguments.getValueAtIndex(runtime, argumentIndex);
             NativeBatchArgument argument;
             argument.resultIndex = batchResultIndex(runtime, rawArgument, index);
             if (argument.resultIndex < 0)
@@ -2382,25 +2293,27 @@ static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)
     }
 
     NSMutableArray<NSInvocation *> *invocations = [NSMutableArray arrayWithCapacity:steps.size()];
-    NSMutableArray *values = [NSMutableArray arrayWithCapacity:steps.size()];
+    NSMutableArray                 *values      = [NSMutableArray arrayWithCapacity:steps.size()];
     return executeMainAsynchronously(
         runtime,
         [steps = std::move(steps), invocations, values]() {
             for (const NativeBatchStep &step : steps)
             {
-                id target = step.targetResultIndex >= 0 ? values[step.targetResultIndex] : step.target;
+                id target =
+                    step.targetResultIndex >= 0 ? values[step.targetResultIndex] : step.target;
                 if (target == [NSNull null])
                 {
                     throw std::runtime_error("Native batch target is null");
                 }
-                NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:step.arguments.size()];
+                NSMutableArray *arguments =
+                    [NSMutableArray arrayWithCapacity:step.arguments.size()];
                 for (const NativeBatchArgument &argument : step.arguments)
                 {
                     [arguments addObject:argument.resultIndex >= 0
                                              ? values[argument.resultIndex]
                                              : argument.value ?: [NSNull null]];
                 }
-                SEL selector = NSSelectorFromString(step.selector);
+                SEL                selector  = NSSelectorFromString(step.selector);
                 NSMethodSignature *signature = [target methodSignatureForSelector:selector];
                 if (!signature || nativeFFITypeName(signature.methodReturnType).empty())
                 {
@@ -2409,7 +2322,8 @@ static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)
                 if (signature.numberOfArguments < 2 ||
                     signature.numberOfArguments - 2 != arguments.count)
                 {
-                    throw std::runtime_error("Native batch argument count does not match the method signature");
+                    throw std::runtime_error(
+                        "Native batch argument count does not match the method signature");
                 }
                 for (NSUInteger index = 2; index < signature.numberOfArguments; index++)
                 {
@@ -2427,9 +2341,9 @@ static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)
             for (NSUInteger index = 0; index < invocations.count; index++)
             {
                 NSInvocation *invocation = invocations[index];
-                result.setValueAtIndex(completionRuntime, index,
-                                       returnValue(completionRuntime, invocation,
-                                                   invocation.methodSignature));
+                result.setValueAtIndex(
+                    completionRuntime, index,
+                    returnValue(completionRuntime, invocation, invocation.methodSignature));
             }
             (void) values;
             return result;
@@ -2444,70 +2358,56 @@ static Value snapshotUI(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "objc.snapshot expects a UIView handle");
     }
 
-    NSUInteger maxDepth = 8;
-    NSUInteger maxNodes = 100;
-    if (count > 1 && args[1].isObject())
-    {
-        Object options = args[1].asObject(runtime);
-        Value depth = options.getProperty(runtime, "maxDepth");
-        Value nodes = options.getProperty(runtime, "maxNodes");
-        if (!depth.isUndefined())
-        {
-            double value = depth.isNumber() ? depth.asNumber() : NAN;
-            if (!std::isfinite(value) || value < 0 || value > 12 || std::floor(value) != value)
-            {
-                throw JSError(runtime, "Native UI snapshot depth must be an integer from 0 to 12");
-            }
-            maxDepth = static_cast<NSUInteger>(value);
-        }
-        if (!nodes.isUndefined())
-        {
-            double value = nodes.isNumber() ? nodes.asNumber() : NAN;
-            if (!std::isfinite(value) || value < 1 || value > 256 || std::floor(value) != value)
-            {
-                throw JSError(runtime, "Native UI snapshot size must be an integer from 1 to 256");
-            }
-            maxNodes = static_cast<NSUInteger>(value);
-        }
-    }
+    Value                            noOptions = Value::undefined();
+    loader::native::TraversalOptions options   = loader::native::parseTraversalOptions(
+        runtime, count > 1 ? args[1] : noOptions, loader::native::TraversalProfile::Snapshot);
+    NSUInteger maxDepth = options.maxDepth;
+    NSUInteger maxNodes = options.maxNodes;
 
     NSMutableArray<NSDictionary *> *captured = [NSMutableArray arrayWithCapacity:maxNodes];
     return executeMainAsynchronously(
         runtime,
         [root, captured, maxDepth, maxNodes]() {
             NSMutableArray<NSDictionary *> *queue = [NSMutableArray arrayWithCapacity:maxNodes];
-            [queue addObject:@{ @"view": root, @"parent": @(-1), @"depth": @(0) }];
+            [queue addObject:@{@"view" : root, @"parent" : @(-1), @"depth" : @(0)}];
             for (NSUInteger index = 0; index < queue.count && captured.count < maxNodes; index++)
             {
-                NSDictionary *queued = queue[index];
-                UIView *view = queued[@"view"];
-                NSUInteger depth = [queued[@"depth"] unsignedIntegerValue];
-                NSString *text = nil;
-                SEL textSelector = @selector(text);
+                NSDictionary *queued       = queue[index];
+                UIView       *view         = queued[@"view"];
+                NSUInteger    depth        = [queued[@"depth"] unsignedIntegerValue];
+                NSString     *text         = nil;
+                SEL           textSelector = @selector(text);
                 if ([view respondsToSelector:textSelector])
                 {
                     NSMethodSignature *signature = [view methodSignatureForSelector:textSelector];
                     if (signature && normalizedType(signature.methodReturnType) == '@')
                     {
                         id value = ((id (*)(id, SEL)) objc_msgSend)(view, textSelector);
-                        if ([value isKindOfClass:[NSString class]]) text = value;
+                        if ([value isKindOfClass:[NSString class]])
+                            text = value;
                     }
                 }
                 [captured addObject:@{
-                    @"view": view,
-                    @"parent": queued[@"parent"],
-                    @"depth": queued[@"depth"],
-                    @"className": NSStringFromClass([view class]),
-                    @"frame": [NSValue valueWithCGRect:view.frame],
-                    @"text": text ?: [NSNull null],
-                    @"visible": @(!view.hidden && view.alpha > 0 && view.window != nil),
+                    @"view" : view,
+                    @"parent" : queued[@"parent"],
+                    @"depth" : queued[@"depth"],
+                    @"className" : NSStringFromClass([view class]),
+                    @"frame" : [NSValue valueWithCGRect:view.frame],
+                    @"text" : text ?: [NSNull null],
+                    @"visible" : @(!view.hidden && view.alpha > 0 && view.window != nil),
                 }];
-                if (depth >= maxDepth) continue;
+                if (depth >= maxDepth)
+                    continue;
                 NSNumber *parent = @(captured.count - 1);
                 for (UIView *child in view.subviews)
                 {
-                    if (queue.count >= maxNodes) break;
-                    [queue addObject:@{ @"view": child, @"parent": parent, @"depth": @(depth + 1) }];
+                    if (queue.count >= maxNodes)
+                        break;
+                    [queue addObject:@{
+                        @"view" : child,
+                        @"parent" : parent,
+                        @"depth" : @(depth + 1)
+                    }];
                 }
             }
         },
@@ -2515,22 +2415,25 @@ static Value snapshotUI(Runtime &runtime, const Value *args, size_t count)
             Array result(completionRuntime, captured.count);
             for (NSUInteger index = 0; index < captured.count; index++)
             {
-                NSDictionary *node = captured[index];
-                CGRect frame = [node[@"frame"] CGRectValue];
-                Object item(completionRuntime);
-                Object bounds(completionRuntime);
+                NSDictionary *node  = captured[index];
+                CGRect        frame = [node[@"frame"] CGRectValue];
+                Object        item(completionRuntime);
+                Object        bounds(completionRuntime);
                 bounds.setProperty(completionRuntime, "x", Value((double) frame.origin.x));
                 bounds.setProperty(completionRuntime, "y", Value((double) frame.origin.y));
                 bounds.setProperty(completionRuntime, "width", Value((double) frame.size.width));
                 bounds.setProperty(completionRuntime, "height", Value((double) frame.size.height));
-                item.setProperty(completionRuntime, "view", objcHandleResult(completionRuntime, node[@"view"]));
+                item.setProperty(completionRuntime, "view",
+                                 objcHandleResult(completionRuntime, node[@"view"]));
                 item.setProperty(completionRuntime, "parent", Value([node[@"parent"] doubleValue]));
                 item.setProperty(completionRuntime, "depth", Value([node[@"depth"] doubleValue]));
-                item.setProperty(completionRuntime, "className", [JSI fromObjC:node[@"className"] runtime:completionRuntime]);
+                item.setProperty(completionRuntime, "className",
+                                 objcJSIValue(completionRuntime, node[@"className"]));
                 item.setProperty(completionRuntime, "frame", std::move(bounds));
-                item.setProperty(completionRuntime, "text", node[@"text"] == [NSNull null]
-                                                           ? Value::null()
-                                                           : [JSI fromObjC:node[@"text"] runtime:completionRuntime]);
+                item.setProperty(completionRuntime, "text",
+                                 node[@"text"] == [NSNull null]
+                                     ? Value::null()
+                                     : objcJSIValue(completionRuntime, node[@"text"]));
                 item.setProperty(completionRuntime, "visible", Value([node[@"visible"] boolValue]));
                 result.setValueAtIndex(completionRuntime, index, std::move(item));
             }
@@ -2545,78 +2448,21 @@ static Value findUIViews(Runtime &runtime, const Value *args, size_t count)
     {
         throw JSError(runtime, "objc.findViews expects a UIView handle and class name");
     }
-    NSString *className = [JSI toNSString:args[1] runtime:runtime];
+    NSString *className = jsiString(runtime, args[1]);
     if (className.length == 0 || className.length > 128)
     {
         throw JSError(runtime, "Native view class name must contain 1 to 128 characters");
     }
 
-    NSUInteger maxDepth = 24;
-    NSUInteger maxVisited = 512;
-    NSUInteger maxResults = 64;
-    bool attachedOnly = false;
-    bool stopAtMatch = false;
-    bool searchAncestors = false;
-    if (count > 2 && args[2].isObject())
-    {
-        Object options = args[2].asObject(runtime);
-        Value depth = options.getProperty(runtime, "maxDepth");
-        Value visited = options.getProperty(runtime, "maxVisited");
-        Value results = options.getProperty(runtime, "maxResults");
-        if (!depth.isUndefined())
-        {
-            double value = depth.isNumber() ? depth.asNumber() : NAN;
-            if (!std::isfinite(value) || value < 0 || value > 40 || std::floor(value) != value)
-            {
-                throw JSError(runtime, "Native view search depth must be an integer from 0 to 40");
-            }
-            maxDepth = static_cast<NSUInteger>(value);
-        }
-        if (!visited.isUndefined())
-        {
-            double value = visited.isNumber() ? visited.asNumber() : NAN;
-            if (!std::isfinite(value) || value < 1 || value > 2048 || std::floor(value) != value)
-            {
-                throw JSError(runtime, "Native view search visit limit must be an integer from 1 to 2048");
-            }
-            maxVisited = static_cast<NSUInteger>(value);
-        }
-        if (!results.isUndefined())
-        {
-            double value = results.isNumber() ? results.asNumber() : NAN;
-            if (!std::isfinite(value) || value < 1 || value > 256 || std::floor(value) != value)
-            {
-                throw JSError(runtime, "Native view search result limit must be an integer from 1 to 256");
-            }
-            maxResults = static_cast<NSUInteger>(value);
-        }
-        Value attached = options.getProperty(runtime, "attachedOnly");
-        Value stop = options.getProperty(runtime, "stopAtMatch");
-        Value direction = options.getProperty(runtime, "direction");
-        if (!attached.isUndefined())
-        {
-            if (!attached.isBool()) throw JSError(runtime, "Native view search attachedOnly must be boolean");
-            attachedOnly = attached.getBool();
-        }
-        if (!stop.isUndefined())
-        {
-            if (!stop.isBool()) throw JSError(runtime, "Native view search stopAtMatch must be boolean");
-            stopAtMatch = stop.getBool();
-        }
-        if (!direction.isUndefined())
-        {
-            if (!direction.isString()) throw JSError(runtime, "Native view search direction is invalid");
-            NSString *name = [JSI toNSString:direction runtime:runtime];
-            if ([name isEqualToString:@"ancestors"])
-            {
-                searchAncestors = true;
-            }
-            else if (![name isEqualToString:@"descendants"])
-            {
-                throw JSError(runtime, "Native view search direction is invalid");
-            }
-        }
-    }
+    Value                            noOptions = Value::undefined();
+    loader::native::TraversalOptions options   = loader::native::parseTraversalOptions(
+        runtime, count > 2 ? args[2] : noOptions, loader::native::TraversalProfile::Search);
+    NSUInteger maxDepth        = options.maxDepth;
+    NSUInteger maxVisited      = options.maxNodes;
+    NSUInteger maxResults      = options.maxResults;
+    bool       attachedOnly    = options.attachedOnly;
+    bool       stopAtMatch     = options.stopAtMatch;
+    bool       searchAncestors = options.direction == loader::native::TraversalDirection::Ancestors;
 
     NSMutableArray<UIView *> *found = [NSMutableArray arrayWithCapacity:maxResults];
     return executeMainAsynchronously(
@@ -2628,37 +2474,43 @@ static Value findUIViews(Runtime &runtime, const Value *args, size_t count)
             {
                 UIView *view = root;
                 for (NSUInteger depth = 0; view && depth <= maxDepth && depth < maxVisited;
-                     view = view.superview, depth++)
+                     view             = view.superview, depth++)
                 {
-                    bool matches = expectedClass ? [view isKindOfClass:expectedClass]
-                                                 : [NSStringFromClass([view class]) containsString:className];
+                    bool matches = expectedClass
+                                       ? [view isKindOfClass:expectedClass]
+                                       : [NSStringFromClass([view class]) containsString:className];
                     if (matches && (!attachedOnly || view.window != nil))
                     {
                         [found addObject:view];
-                        if (found.count >= maxResults || stopAtMatch) break;
+                        if (found.count >= maxResults || stopAtMatch)
+                            break;
                     }
                 }
                 return;
             }
             NSMutableArray<NSDictionary *> *queue = [NSMutableArray arrayWithCapacity:maxVisited];
-            [queue addObject:@{ @"view": root, @"depth": @(0) }];
+            [queue addObject:@{@"view" : root, @"depth" : @(0)}];
             for (NSUInteger index = 0; index < queue.count && index < maxVisited; index++)
             {
                 NSDictionary *queued = queue[index];
-                UIView *view = queued[@"view"];
-                NSUInteger depth = [queued[@"depth"] unsignedIntegerValue];
-                bool matches = expectedClass ? [view isKindOfClass:expectedClass]
-                                             : [NSStringFromClass([view class]) containsString:className];
+                UIView       *view   = queued[@"view"];
+                NSUInteger    depth  = [queued[@"depth"] unsignedIntegerValue];
+                bool matches = expectedClass
+                                   ? [view isKindOfClass:expectedClass]
+                                   : [NSStringFromClass([view class]) containsString:className];
                 if (matches && (!attachedOnly || view.window != nil))
                 {
                     [found addObject:view];
-                    if (found.count >= maxResults) break;
+                    if (found.count >= maxResults)
+                        break;
                 }
-                if (depth >= maxDepth || (matches && stopAtMatch)) continue;
+                if (depth >= maxDepth || (matches && stopAtMatch))
+                    continue;
                 for (UIView *child in view.subviews)
                 {
-                    if (queue.count >= maxVisited) break;
-                    [queue addObject:@{ @"view": child, @"depth": @(depth + 1) }];
+                    if (queue.count >= maxVisited)
+                        break;
+                    [queue addObject:@{@"view" : child, @"depth" : @(depth + 1)}];
                 }
             }
         },
@@ -2699,15 +2551,11 @@ static Value invokeAsync(Runtime &runtime, id target, SEL selector, NSArray *arg
 }
 
 struct AsyncSuperCall {
-    struct objc_super superInfo{};
-    std::vector<FFICallArgument> values;
-    std::vector<void *> argumentValues;
-    std::vector<id> retainedArguments;
-    FFITypeSpec result;
-    ffi_cif cif{};
-    std::vector<uint8_t> output;
-    __strong id retainedTarget = nil;
-    __strong id retainedResult = nil;
+    struct objc_super                       superInfo{};
+    std::unique_ptr<loader::ffi::CallFrame> frame;
+    std::vector<id>                         retainedArguments;
+    __strong id                             retainedTarget = nil;
+    __strong id                             retainedResult = nil;
 };
 
 static Value invokeSuperAsync(Runtime &runtime, id target, Class currentClass, SEL selector,
@@ -2718,85 +2566,49 @@ static Value invokeSuperAsync(Runtime &runtime, id target, Class currentClass, S
         throw JSError(runtime, "Invalid native Objective-C super target");
     }
 
-    Class superclass = class_getSuperclass(currentClass);
-    Method method = superclass ? class_getInstanceMethod(superclass, selector) : NULL;
+    Class  superclass = class_getSuperclass(currentClass);
+    Method method     = superclass ? class_getInstanceMethod(superclass, selector) : NULL;
     if (!method)
     {
         throw JSError(runtime, "Objective-C super selector is not available");
     }
 
-    NSMethodSignature *signature = [NSMethodSignature signatureWithObjCTypes:method_getTypeEncoding(method)];
+    NSMethodSignature *signature =
+        [NSMethodSignature signatureWithObjCTypes:method_getTypeEncoding(method)];
     NSUInteger expected = signature.numberOfArguments >= 2 ? signature.numberOfArguments - 2 : 0;
     if (expected != arguments.count)
     {
-        throw JSError(runtime, "Objective-C super argument count does not match the method signature");
+        throw JSError(runtime,
+                      "Objective-C super argument count does not match the method signature");
     }
 
-    auto call = std::make_shared<AsyncSuperCall>();
+    auto call            = std::make_shared<AsyncSuperCall>();
     call->retainedTarget = target;
-    call->superInfo = {target, currentClass};
-    call->values.resize(arguments.count + 2);
-    call->argumentValues.resize(arguments.count + 2);
-    call->retainedArguments.reserve(arguments.count);
-    call->values[0].pointer = &call->superInfo;
-    call->values[1].pointer = selector;
-    call->argumentValues[0] = &call->values[0].pointer;
-    call->argumentValues[1] = &call->values[1].pointer;
-
-    std::vector<FFITypeSpec> cifArguments;
-    cifArguments.reserve(arguments.count + 2);
-    cifArguments.push_back({"pointer", &ffi_type_pointer});
-    cifArguments.push_back({"selector", &ffi_type_pointer});
-    for (NSUInteger index = 0; index < arguments.count; index++)
-    {
-        const char *encoding = [signature getArgumentTypeAtIndex:index + 2];
-        std::string name = nativeFFITypeName(encoding);
-        if (name.empty())
-        {
-            throw JSError(runtime, "Unsupported native super argument type encoding");
-        }
-        cifArguments.push_back(ffiType(runtime, name));
-        setSuperFFIArgument(runtime, encoding, arguments[index], call->values[index + 2],
-                            call->retainedArguments);
-        if (name == "object" || name == "class" || name == "selector" || name == "pointer")
-        {
-            call->argumentValues[index + 2] = &call->values[index + 2].pointer;
-        }
-        else
-        {
-            call->argumentValues[index + 2] = call->values[index + 2].bytes.data();
-        }
-    }
-
-    std::string resultName = nativeFFITypeName(signature.methodReturnType);
-    if (resultName.empty())
-    {
-        throw JSError(runtime, "Unsupported native super return type encoding");
-    }
-    call->result = ffiType(runtime, resultName);
-    call->cif = prepareFFICif(runtime, call->result, cifArguments);
-    call->output.resize(std::max<size_t>(call->result.type->size, sizeof(void *)));
+    call->superInfo      = {target, currentClass};
+    call->frame          = superCallFrame(runtime, signature);
+    setSuperFFIArguments(runtime, signature, arguments, &call->superInfo, selector, *call->frame,
+                         call->retainedArguments);
 
     return executeMainAsynchronously(
         runtime,
         [call]() {
-            ffi_call(&call->cif, reinterpret_cast<void (*)(void)>(objc_msgSendSuper),
-                     call->result.name == "void" ? nullptr : call->output.data(),
-                     call->argumentValues.data());
-            if (call->result.name == "object" || call->result.name == "class")
+            call->frame->invoke((void *) objc_msgSendSuper);
+            const loader::ffi::Type &result = call->frame->interface().result;
+            if (result.name == "object" || result.name == "class")
             {
                 __unsafe_unretained id object = nil;
-                memcpy(&object, call->output.data(), sizeof(object));
+                memcpy(&object, call->frame->result(), sizeof(object));
                 call->retainedResult = object;
             }
         },
         [call](Runtime &completionRuntime) {
-            return ffiResult(completionRuntime, call->result, call->output);
+            return loader::ffi::readValue(completionRuntime, call->frame->interface().result,
+                                          call->frame->result());
         });
 }
 
-static Value invokeSuperWithThreadPolicy(Runtime &runtime, id target, Class currentClass, SEL selector,
-                                         NSArray *arguments, const Value *options)
+static Value invokeSuperWithThreadPolicy(Runtime &runtime, id target, Class currentClass,
+                                         SEL selector, NSArray *arguments, const Value *options)
 {
     std::string policy = "current";
     if (options && options->isObject())
@@ -2804,7 +2616,7 @@ static Value invokeSuperWithThreadPolicy(Runtime &runtime, id target, Class curr
         Value thread = options->asObject(runtime).getProperty(runtime, "thread");
         if (thread.isString())
         {
-            policy = [JSI toNSString:thread runtime:runtime].UTF8String;
+            policy = jsiString(runtime, thread).UTF8String;
         }
     }
     if (policy == "current" || ([NSThread isMainThread] && policy == "main"))
@@ -2847,7 +2659,7 @@ static Class classFromValue(Runtime &runtime, const Value &value)
 
     if (value.isString())
     {
-        NSString *name = [JSI toNSString:value runtime:runtime];
+        NSString *name = jsiString(runtime, value);
         return NSClassFromString(name);
     }
 
@@ -2866,6 +2678,7 @@ static void removeHook(const std::shared_ptr<HookState> &state, bool preserveAft
     {
         return;
     }
+    loader::native::nativeHookBudget().release();
     clearHookReturnCache(state);
 
     std::shared_ptr<HookDispatcher> dispatcher = state->dispatcher.lock();
@@ -2884,14 +2697,14 @@ static void removeHook(const std::shared_ptr<HookState> &state, bool preserveAft
 
         if (restoreImplementation && dispatcher->hooks.empty() && !dispatcher->retired.load())
         {
-            Method method = class_getInstanceMethod(dispatcher->cls, dispatcher->selector);
-            IMP current = method ? method_getImplementation(method) : nullptr;
+            Method method  = class_getInstanceMethod(dispatcher->cls, dispatcher->selector);
+            IMP    current = method ? method_getImplementation(method) : nullptr;
             if (!method || current == (IMP) dispatcher->code || current == dispatcher->original)
             {
                 if (method && current == (IMP) dispatcher->code)
                 {
-                    MSHookMessageEx(dispatcher->cls, dispatcher->selector,
-                                    dispatcher->original, nullptr);
+                    MSHookMessageEx(dispatcher->cls, dispatcher->selector, dispatcher->original,
+                                    nullptr);
                 }
                 dispatcher->retired.store(true);
             }
@@ -2908,7 +2721,8 @@ static void invalidateRuntimeHooks(uint64_t generation)
         {
             for (const auto &state : entry.second->hooks)
             {
-                if (state->runtimeGeneration < generation) stale.push_back(state);
+                if (state->runtimeGeneration < generation)
+                    stale.push_back(state);
             }
         }
     }
@@ -3128,372 +2942,41 @@ static Value structFields(Runtime &runtime, NSString *name, NSValue *value)
     return Value::undefined();
 }
 
-static ffi_type *libffiScalarType(loader::ffi::Kind kind)
-{
-    switch (kind)
-    {
-        case loader::ffi::Kind::Void:
-            return &ffi_type_void;
-        case loader::ffi::Kind::Bool:
-        case loader::ffi::Kind::UInt8:
-            return &ffi_type_uint8;
-        case loader::ffi::Kind::Int8:
-            return &ffi_type_sint8;
-        case loader::ffi::Kind::Int16:
-            return &ffi_type_sint16;
-        case loader::ffi::Kind::UInt16:
-            return &ffi_type_uint16;
-        case loader::ffi::Kind::Int32:
-            return &ffi_type_sint32;
-        case loader::ffi::Kind::UInt32:
-            return &ffi_type_uint32;
-        case loader::ffi::Kind::Int64:
-            return &ffi_type_sint64;
-        case loader::ffi::Kind::UInt64:
-            return &ffi_type_uint64;
-        case loader::ffi::Kind::Float:
-            return &ffi_type_float;
-        case loader::ffi::Kind::Double:
-            return &ffi_type_double;
-        case loader::ffi::Kind::CString:
-        case loader::ffi::Kind::Pointer:
-        case loader::ffi::Kind::Struct:
-            return &ffi_type_pointer;
-    }
-    return &ffi_type_pointer;
-}
-
-static ffi_type *ffiStructTypeLocked(const loader::ffi::StructLayout *layout)
-{
-    auto existing = gFFITypes.find(layout->name);
-    if (existing != gFFITypes.end())
-    {
-        return &existing->second->type;
-    }
-
-    auto definition = std::make_shared<FFITypeDefinition>();
-    for (const loader::ffi::StructField &field : layout->fields)
-    {
-        definition->elements.push_back(field.type.kind == loader::ffi::Kind::Struct
-                                           ? ffiStructTypeLocked(field.type.layout)
-                                           : libffiScalarType(field.type.kind));
-    }
-    definition->elements.push_back(nullptr);
-    definition->type.type     = FFI_TYPE_STRUCT;
-    definition->type.elements = definition->elements.data();
-    gFFITypes[layout->name]   = definition;
-    return &definition->type;
-}
-
-static FFITypeSpec ffiType(Runtime &runtime, const std::string &name)
-{
-    if (name == "object" || name == "class" || name == "selector")
-    {
-        return {name, &ffi_type_pointer};
-    }
-
-    std::optional<loader::ffi::Type> type = loader::ffi::parseType(name);
-    if (!type)
-    {
-        throw JSError(runtime, "Unsupported native FFI type");
-    }
-    if (type->kind != loader::ffi::Kind::Struct)
-    {
-        return {name, libffiScalarType(type->kind)};
-    }
-    if (!structEncoding(type->layout->name))
-    {
-        throw JSError(runtime, "Unsupported native FFI type");
-    }
-
-    std::lock_guard<std::mutex> lock(gFFIMutex);
-    return {name, ffiStructTypeLocked(type->layout)};
-}
-
-static std::string ffiCifKey(const FFITypeSpec &result, const std::vector<FFITypeSpec> &arguments)
-{
-    std::ostringstream key;
-    key << result.name;
-    for (const FFITypeSpec &argument : arguments)
-    {
-        key << '\0' << argument.name;
-    }
-    return key.str();
-}
-
-static ffi_cif prepareFFICif(Runtime &runtime, const FFITypeSpec &result,
-                             const std::vector<FFITypeSpec> &arguments)
-{
-    std::string key = ffiCifKey(result, arguments);
-    {
-        std::lock_guard<std::mutex> lock(gFFICifMutex);
-        auto existing = gFFICifs.find(key);
-        if (existing != gFFICifs.end())
-        {
-            return existing->second->cif;
-        }
-    }
-
-    auto cached = std::make_shared<CachedFFICif>();
-    cached->arguments.reserve(arguments.size());
-    for (const FFITypeSpec &argument : arguments)
-    {
-        cached->arguments.push_back(argument.type);
-    }
-
-    if (ffi_prep_cif(&cached->cif, FFI_DEFAULT_ABI, (unsigned) cached->arguments.size(), result.type,
-                     cached->arguments.data()) != FFI_OK)
-    {
-        throw JSError(runtime, "Native FFI signature could not be prepared");
-    }
-
-    std::lock_guard<std::mutex> lock(gFFICifMutex);
-    auto existing = gFFICifs.find(key);
-    if (existing != gFFICifs.end())
-    {
-        return existing->second->cif;
-    }
-    gFFICifs.emplace(std::move(key), cached);
-    return cached->cif;
-}
-
-static std::string ffiTypeName(Runtime &runtime, const Value &value)
-{
-    if (value.isString())
-    {
-        return [JSI toNSString:value runtime:runtime].UTF8String;
-    }
-
-    if (value.isObject())
-    {
-        Object object = value.asObject(runtime);
-        Value structName = object.getProperty(runtime, "struct");
-        if (structName.isString())
-        {
-            return "struct:" + std::string([JSI toNSString:structName runtime:runtime].UTF8String);
-        }
-        Value typeName = object.getProperty(runtime, "type");
-        if (typeName.isString())
-        {
-            return [JSI toNSString:typeName runtime:runtime].UTF8String;
-        }
-    }
-
-    throw JSError(runtime, "Native FFI type must be a string or type object");
-}
-
-static FFISignature parseFFISignature(Runtime &runtime, const Value &value)
-{
-    if (!value.isObject())
-    {
-        throw JSError(runtime, "ffi.call expects a signature object");
-    }
-
-    Object signature = value.asObject(runtime);
-    Value resultValue = signature.getProperty(runtime, "returnType");
-    if (resultValue.isUndefined())
-    {
-        resultValue = signature.getProperty(runtime, "returns");
-    }
-    if (resultValue.isUndefined())
-    {
-        throw JSError(runtime, "Native FFI signature is missing returnType");
-    }
-
-    Value argumentsValue = signature.getProperty(runtime, "args");
-    if (!argumentsValue.isObject() || !argumentsValue.asObject(runtime).isArray(runtime))
-    {
-        throw JSError(runtime, "Native FFI signature is missing args");
-    }
-
-    FFISignature result{ffiType(runtime, ffiTypeName(runtime, resultValue)), {}};
-    Array arguments = argumentsValue.asObject(runtime).asArray(runtime);
-    result.arguments.reserve(arguments.size(runtime));
-    for (size_t index = 0; index < arguments.size(runtime); index++)
-    {
-        result.arguments.push_back(ffiType(runtime, ffiTypeName(runtime, arguments.getValueAtIndex(runtime, index))));
-    }
-    return result;
-}
-
-static void setFFIScalar(Runtime &runtime, const Value &value, const std::string &name,
-                         FFICallArgument &argument)
-{
-    if (name == "bool")
-    {
-        if (!value.isBool())
-        {
-            throw JSError(runtime, "Native FFI boolean argument expected");
-        }
-    }
-    else if (name == "i64" || name == "u64")
-    {
-        if (value.isBigInt())
-        {
-            BigInt bigint = value.asBigInt(runtime);
-            bool inRange = name == "i64" ? runtime.bigintIsInt64(bigint)
-                                          : runtime.bigintIsUint64(bigint);
-            if (!inRange)
-            {
-                throw JSError(runtime, "Native FFI integer exceeds its type range");
-            }
-        }
-        else if (!value.isNumber() || !validNativeNumericValue(value.getNumber(), name))
-        {
-            throw JSError(runtime, "Native FFI integer must be a safe integral value");
-        }
-    }
-    else if (!value.isNumber() || !validNativeNumericValue(value.getNumber(), name))
-    {
-        throw JSError(runtime, "Native FFI numeric argument exceeds its type range");
-    }
-
-    id object = valueToObjC(runtime, value);
-    if (name == "bool" || name == "i8" || name == "u8")
-    {
-        argument.bytes.resize(1);
-        argument.bytes[0] = name == "bool" ? [object boolValue] : [object unsignedCharValue];
-        return;
-    }
-    if (name == "i16" || name == "u16")
-    {
-        argument.bytes.resize(2);
-        uint16_t number = name == "i16" ? (uint16_t) [object shortValue] : [object unsignedShortValue];
-        memcpy(argument.bytes.data(), &number, sizeof(number));
-        return;
-    }
-    if (name == "i32" || name == "u32")
-    {
-        argument.bytes.resize(4);
-        uint32_t number = name == "i32" ? (uint32_t) [object intValue] : [object unsignedIntValue];
-        memcpy(argument.bytes.data(), &number, sizeof(number));
-        return;
-    }
-    if (name == "i64" || name == "u64")
-    {
-        argument.bytes.resize(8);
-        uint64_t number = name == "i64" ? (uint64_t) [object longLongValue]
-                                         : [object unsignedLongLongValue];
-        memcpy(argument.bytes.data(), &number, sizeof(number));
-        return;
-    }
-    if (name == "float")
-    {
-        argument.bytes.resize(sizeof(float));
-        float number = [object floatValue];
-        memcpy(argument.bytes.data(), &number, sizeof(number));
-        return;
-    }
-    if (name == "double")
-    {
-        argument.bytes.resize(sizeof(double));
-        double number = [object doubleValue];
-        memcpy(argument.bytes.data(), &number, sizeof(number));
-        return;
-    }
-}
-
-static void setFFIArgument(Runtime &runtime, const Value &value, const FFITypeSpec &spec,
-                           FFICallArgument &argument)
-{
-    if (spec.name == "cstring")
-    {
-        NSString *string = [JSI toNSString:value runtime:runtime];
-        argument.string = string.UTF8String ?: "";
-        argument.pointer = (void *) argument.string.c_str();
-        return;
-    }
-
-    if (spec.name == "selector")
-    {
-        if (value.isString())
-        {
-            NSString *name = [JSI toNSString:value runtime:runtime];
-            argument.pointer = (void *) NSSelectorFromString(name);
-        }
-        else if (value.isObject())
-        {
-            Object object = value.asObject(runtime);
-            if (object.isHostObject<PointerHost>(runtime))
-            {
-                argument.pointer = object.getHostObject<PointerHost>(runtime)->value();
-            }
-        }
-        return;
-    }
-
-    if (spec.name == "object" && !value.isNull() && !value.isUndefined() &&
-        !(value.isObject() && value.asObject(runtime).isHostObject<PointerHost>(runtime)))
-    {
-        argument.object = valueToObjC(runtime, value);
-        argument.pointer = (__bridge void *) argument.object;
-        return;
-    }
-
-    if (spec.name == "pointer" || spec.name == "object" || spec.name == "class")
-    {
-        argument.pointer = (__bridge void *) objcValue(runtime, value);
-        if (!argument.pointer && value.isObject())
-        {
-            Object object = value.asObject(runtime);
-            if (object.isHostObject<PointerHost>(runtime))
-            {
-                argument.pointer = object.getHostObject<PointerHost>(runtime)->value();
-            }
-        }
-        return;
-    }
-
-    if (spec.name.rfind("struct:", 0) == 0)
-    {
-        id object = valueToObjC(runtime, value);
-        if (![object isKindOfClass:[NSValue class]])
-        {
-            throw JSError(runtime, "Native FFI struct argument expected");
-        }
-        NSUInteger size = spec.type->size;
-        argument.bytes.resize(size);
-        [(NSValue *) object getValue:argument.bytes.data() size:size];
-        return;
-    }
-
-    setFFIScalar(runtime, value, spec.name, argument);
-}
-
 struct HookInvocation {
-    std::shared_ptr<HookDispatcher> dispatcher;
-    std::vector<std::vector<uint8_t>> arguments;
+    std::shared_ptr<HookDispatcher>              dispatcher;
+    std::vector<std::vector<uint8_t>>            arguments;
     std::vector<std::shared_ptr<ObjCHandleHost>> retainedObjects;
-    std::vector<std::string> retainedStrings;
-    std::vector<uint8_t> originalResult;
-    void **nativeArguments = nullptr;
-    void *returnValue = nullptr;
-    std::thread::id hookThread;
-    std::mutex lifecycleMutex;
-    std::atomic_bool active{true};
-    std::atomic_bool originalCalled{false};
-    std::atomic_bool deferredOriginalRequested{false};
+    std::vector<std::string>                     retainedStrings;
+    std::vector<uint8_t>                         originalResult;
+    void                                       **nativeArguments = nullptr;
+    void                                        *returnValue     = nullptr;
+    std::thread::id                              hookThread;
+    std::mutex                                   lifecycleMutex;
+    std::atomic_bool                             active{true};
+    std::atomic_bool                             originalCalled{false};
+    std::atomic_bool                             deferredOriginalRequested{false};
 };
 
-static std::shared_ptr<HookInvocation> hookInvocation(const std::shared_ptr<HookDispatcher> &dispatcher,
-                                                      void **arguments, void *returnValue)
+static std::shared_ptr<HookInvocation>
+hookInvocation(const std::shared_ptr<HookDispatcher> &dispatcher, void **arguments,
+               void *returnValue)
 {
-    auto invocation = std::make_shared<HookInvocation>();
-    invocation->dispatcher = dispatcher;
+    auto invocation             = std::make_shared<HookInvocation>();
+    invocation->dispatcher      = dispatcher;
     invocation->nativeArguments = arguments;
-    invocation->returnValue = returnValue;
-    invocation->hookThread = std::this_thread::get_id();
+    invocation->returnValue     = returnValue;
+    invocation->hookThread      = std::this_thread::get_id();
     invocation->arguments.reserve(dispatcher->signature->arguments.size());
     invocation->retainedObjects.reserve(dispatcher->signature->arguments.size());
     invocation->retainedStrings.reserve(dispatcher->signature->arguments.size());
-    for (const FFITypeSpec &spec : dispatcher->signature->arguments)
+    for (const loader::ffi::Type &spec : dispatcher->signature->arguments)
     {
-        size_t size = std::max<size_t>(spec.type->size, sizeof(void *));
+        size_t size = loader::ffi::valueStorageSize(spec);
         invocation->arguments.emplace_back(size);
-        if (spec.type->size)
+        if (loader::ffi::typeSize(spec))
         {
             memcpy(invocation->arguments.back().data(), arguments[invocation->arguments.size() - 1],
-                   spec.type->size);
+                   loader::ffi::typeSize(spec));
         }
         if (spec.name == "object" || spec.name == "class")
         {
@@ -3528,16 +3011,15 @@ static void copyHookResult(const std::shared_ptr<HookInvocation> &invocation, vo
         return;
     }
 
-    size_t size = std::max<size_t>(invocation->dispatcher->signature->result.type->size, sizeof(void *));
+    size_t size = loader::ffi::valueStorageSize(invocation->dispatcher->signature->result);
     invocation->originalResult.resize(size);
     memcpy(invocation->originalResult.data(), returnValue,
-           invocation->dispatcher->signature->result.type->size);
+           loader::ffi::typeSize(invocation->dispatcher->signature->result));
 }
 
 static bool invokeDeferredHookOriginal(const std::shared_ptr<HookInvocation> &invocation)
 {
-    if (!invocation->deferredOriginalRequested.exchange(false) ||
-        invocation->originalCalled.load())
+    if (!invocation->deferredOriginalRequested.exchange(false) || invocation->originalCalled.load())
     {
         return false;
     }
@@ -3549,43 +3031,54 @@ static bool invokeDeferredHookOriginal(const std::shared_ptr<HookInvocation> &in
     return true;
 }
 
-static std::shared_ptr<std::vector<uint8_t>> hookReturnBuffer(
-    const std::shared_ptr<HookInvocation> &invocation)
+static std::shared_ptr<std::vector<uint8_t>>
+hookReturnBuffer(const std::shared_ptr<HookInvocation> &invocation)
 {
-    size_t size = std::max<size_t>(invocation->dispatcher->signature->result.type->size,
-                                   sizeof(void *));
+    size_t size = loader::ffi::valueStorageSize(invocation->dispatcher->signature->result);
     return std::make_shared<std::vector<uint8_t>>(size);
 }
 
-static void copyHookReturnBuffer(const std::shared_ptr<HookInvocation> &invocation,
+static void copyHookReturnBuffer(const std::shared_ptr<HookInvocation>       &invocation,
                                  const std::shared_ptr<std::vector<uint8_t>> &buffer,
-                                 void *returnValue)
+                                 void                                        *returnValue)
 {
     if (invocation->dispatcher->signature->result.name == "void" || !returnValue)
     {
         return;
     }
 
-    memcpy(returnValue, buffer->data(), invocation->dispatcher->signature->result.type->size);
+    memcpy(returnValue, buffer->data(),
+           loader::ffi::typeSize(invocation->dispatcher->signature->result));
+}
+
+static Value hookValue(Runtime &runtime, const loader::ffi::Type &type,
+                       const std::vector<uint8_t> &bytes)
+{
+    if (type.name != "void" && bytes.size() < loader::ffi::typeSize(type))
+    {
+        throw JSError(runtime, "Native result buffer is too small");
+    }
+    return loader::ffi::readValue(runtime, type, bytes.data());
 }
 
 static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation> &invocation,
                           id object, SEL selector, bool allowOriginal)
 {
     Object context(runtime);
-    context.setProperty(runtime, "self",
-                        Object::createFromHostObject(runtime, std::make_shared<ObjCHandleHost>(object)));
+    context.setProperty(
+        runtime, "self",
+        Object::createFromHostObject(runtime, std::make_shared<ObjCHandleHost>(object)));
     context.setProperty(runtime, "selector",
                         String::createFromUtf8(runtime, sel_getName(selector)));
 
     size_t explicitCount = invocation->dispatcher->signature->arguments.size() - 2;
-    Array values(runtime, explicitCount);
+    Array  values(runtime, explicitCount);
     for (size_t index = 0; index < explicitCount; index++)
     {
-        values.setValueAtIndex(
-            runtime, index,
-            ffiResult(runtime, invocation->dispatcher->signature->arguments[index + 2],
-                      invocation->arguments[index + 2]));
+        values.setValueAtIndex(runtime, index,
+                               hookValue(runtime,
+                                         invocation->dispatcher->signature->arguments[index + 2],
+                                         invocation->arguments[index + 2]));
     }
     context.setProperty(runtime, "args", std::move(values));
 
@@ -3595,11 +3088,12 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
         Function::createFromHostFunction(
             runtime, PropNameID::forUtf8(runtime, "replaceObjectArgument"), 2,
             [original, allowOriginal](Runtime &rt, const Value &, const Value *args,
-                                     size_t count) -> Value {
+                                      size_t count) -> Value {
                 std::lock_guard<std::mutex> lock(original->lifecycleMutex);
                 if (!original->active.load())
                 {
-                    throw JSError(rt, "Native hook arguments are unavailable after the hook returns");
+                    throw JSError(rt,
+                                  "Native hook arguments are unavailable after the hook returns");
                 }
                 if (!allowOriginal)
                 {
@@ -3611,11 +3105,12 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                 }
                 if (count < 2 || !args[0].isNumber())
                 {
-                    throw JSError(rt, "Native hook replaceObjectArgument expects an index and object");
+                    throw JSError(rt,
+                                  "Native hook replaceObjectArgument expects an index and object");
                 }
 
                 double requestedIndex = args[0].getNumber();
-                size_t explicitCount = original->dispatcher->signature->arguments.size() - 2;
+                size_t explicitCount  = original->dispatcher->signature->arguments.size() - 2;
                 if (!(requestedIndex >= 0 && requestedIndex < explicitCount))
                 {
                     throw JSError(rt, "Native hook argument index is out of range");
@@ -3626,18 +3121,20 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                     throw JSError(rt, "Native hook argument index must be an integer");
                 }
 
-                size_t argumentIndex = explicitIndex + 2;
-                const FFITypeSpec &spec = original->dispatcher->signature->arguments[argumentIndex];
+                size_t                   argumentIndex = explicitIndex + 2;
+                const loader::ffi::Type &spec =
+                    original->dispatcher->signature->arguments[argumentIndex];
                 if (spec.name != "object" && spec.name != "class")
                 {
                     throw JSError(rt, "Native hook argument is not an Objective-C object");
                 }
 
-                id object = args[1].isNull() ? nil : objcValue(rt, args[1]);
+                id    object    = args[1].isNull() ? nil : objcValue(rt, args[1]);
                 void *rawObject = (__bridge void *) object;
                 if (object)
                 {
-                    original->retainedObjects.emplace_back(std::make_shared<ObjCHandleHost>(object));
+                    original->retainedObjects.emplace_back(
+                        std::make_shared<ObjCHandleHost>(object));
                 }
                 memcpy(original->arguments[argumentIndex].data(), &rawObject, sizeof(rawObject));
                 memcpy(original->nativeArguments[argumentIndex], &rawObject, sizeof(rawObject));
@@ -3651,7 +3148,8 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                 std::lock_guard<std::mutex> lock(original->lifecycleMutex);
                 if (!original->active.load())
                 {
-                    throw JSError(rt, "Native hook original() is unavailable after the hook returns");
+                    throw JSError(rt,
+                                  "Native hook original() is unavailable after the hook returns");
                 }
                 if (!allowOriginal)
                 {
@@ -3663,7 +3161,8 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                     {
                         if (original->dispatcher->signature->result.name != "void")
                         {
-                            throw JSError(rt, "Native hook original() cannot cross runtime threads");
+                            throw JSError(rt,
+                                          "Native hook original() cannot cross runtime threads");
                         }
                         original->deferredOriginalRequested.store(true);
                         return Value::undefined();
@@ -3674,7 +3173,8 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                     copyHookResult(original, original->returnValue);
                     original->originalCalled.store(true);
                 }
-                return ffiResult(rt, original->dispatcher->signature->result, original->originalResult);
+                return hookValue(rt, original->dispatcher->signature->result,
+                                 original->originalResult);
             }));
     return context;
 }
@@ -3693,11 +3193,11 @@ static void executeRuntimeAsynchronously(std::function<void(Runtime &)> callback
 static void invokeHookOriginal(const std::shared_ptr<HookDispatcher> &dispatcher, void **arguments,
                                void *returnValue)
 {
-    ffi_call(&dispatcher->signature->cif, reinterpret_cast<void (*)(void)>(dispatcher->original),
-             dispatcher->signature->result.name == "void" ? nullptr : returnValue, arguments);
+    loader::ffi::invoke(*dispatcher->signature->interface, (void *) dispatcher->original,
+                        returnValue, arguments);
 }
 
-static bool setHookReturn(Runtime &runtime, const FFITypeSpec &spec, const Value &value,
+static bool setHookReturn(Runtime &runtime, const loader::ffi::Type &spec, const Value &value,
                           void *returnValue)
 {
     if (spec.name == "void")
@@ -3709,95 +3209,82 @@ static bool setHookReturn(Runtime &runtime, const FFITypeSpec &spec, const Value
         return false;
     }
 
-    FFICallArgument argument{};
-    setFFIArgument(runtime, value, spec, argument);
-    if (spec.name == "cstring" || spec.name == "pointer" || spec.name == "object" ||
-        spec.name == "class" || spec.name == "selector")
-    {
-        memcpy(returnValue, &argument.pointer, sizeof(argument.pointer));
-        return true;
-    }
-    if (argument.bytes.size() < spec.type->size)
-    {
-        return false;
-    }
-    memcpy(returnValue, argument.bytes.data(), spec.type->size);
+    std::vector<uint8_t>         bytes(loader::ffi::valueStorageSize(spec));
+    loader::ffi::ArgumentStorage storage;
+    loader::ffi::writeValue(runtime, value, spec, bytes.data(), storage);
+    memcpy(returnValue, bytes.data(), loader::ffi::typeSize(spec));
     return true;
 }
 
-static id hookCacheComponent(const FFITypeSpec &spec, const FFICallArgument &argument)
+static id hookCacheComponent(const loader::ffi::Type &spec, const uint8_t *bytes)
 {
     if (spec.name == "object" || spec.name == "class")
     {
-        id object = (__bridge id) argument.pointer;
+        id object = (__bridge id) loadNativeValue<void *>(bytes);
         return object ?: [NSNull null];
     }
     if (spec.name == "selector")
     {
-        SEL selector = (SEL) argument.pointer;
+        SEL selector = loadNativeValue<SEL>(bytes);
         return selector ? NSStringFromSelector(selector) : [NSNull null];
     }
     if (spec.name == "pointer")
     {
-        return [NSValue valueWithPointer:argument.pointer];
+        return [NSValue valueWithPointer:loadNativeValue<void *>(bytes)];
     }
     if (spec.name == "cstring")
     {
-        const char *string = (const char *) argument.pointer;
+        const char *string = loadNativeValue<const char *>(bytes);
         return string ? ([NSString stringWithUTF8String:string] ?: [NSNull null]) : [NSNull null];
     }
     if (spec.name == "bool")
     {
-        return @(*(const bool *) argument.bytes.data());
+        return @(loadNativeValue<bool>(bytes));
     }
     if (spec.name == "i8")
     {
-        return @(*(const int8_t *) argument.bytes.data());
+        return @(loadNativeValue<int8_t>(bytes));
     }
     if (spec.name == "u8")
     {
-        return @(*(const uint8_t *) argument.bytes.data());
+        return @(loadNativeValue<uint8_t>(bytes));
     }
     if (spec.name == "i16")
     {
-        return @(*(const int16_t *) argument.bytes.data());
+        return @(loadNativeValue<int16_t>(bytes));
     }
     if (spec.name == "u16")
     {
-        return @(*(const uint16_t *) argument.bytes.data());
+        return @(loadNativeValue<uint16_t>(bytes));
     }
     if (spec.name == "i32")
     {
-        return @(*(const int32_t *) argument.bytes.data());
+        return @(loadNativeValue<int32_t>(bytes));
     }
     if (spec.name == "u32")
     {
-        return @(*(const uint32_t *) argument.bytes.data());
+        return @(loadNativeValue<uint32_t>(bytes));
     }
     if (spec.name == "i64")
     {
-        return @(*(const int64_t *) argument.bytes.data());
+        return @(loadNativeValue<int64_t>(bytes));
     }
     if (spec.name == "u64")
     {
-        return @(*(const uint64_t *) argument.bytes.data());
+        return @(loadNativeValue<uint64_t>(bytes));
     }
     if (spec.name == "float")
     {
-        return @(*(const float *) argument.bytes.data());
+        return @(loadNativeValue<float>(bytes));
     }
     if (spec.name == "double")
     {
-        return @(*(const double *) argument.bytes.data());
+        return @(loadNativeValue<double>(bytes));
     }
-    if (spec.name.rfind("struct:", 0) == 0)
+    if (spec.kind == loader::ffi::Kind::Struct)
     {
-        const char *encoding = structEncoding(spec.name.substr(7));
-        if (!encoding || argument.bytes.size() < spec.type->size)
-        {
-            return nil;
-        }
-        return [NSValue value:argument.bytes.data() withObjCType:encoding];
+        const char *encoding = structEncoding(spec.layout->name);
+        return encoding ? [NSValue value:bytes withObjCType:encoding] : nil;
     }
     return nil;
 }
@@ -3817,8 +3304,8 @@ static NSArray *hookReturnCacheKey(Runtime &runtime, const std::shared_ptr<HookS
         throw JSError(runtime, "Native hook has been removed");
     }
 
-    id target = objcValue(runtime, args[0]);
-    Array values = args[1].asObject(runtime).asArray(runtime);
+    id     target   = objcValue(runtime, args[0]);
+    Array  values   = args[1].asObject(runtime).asArray(runtime);
     size_t expected = dispatcher->signature->arguments.size() - 2;
     if (!target || values.size(runtime) != expected)
     {
@@ -3830,10 +3317,12 @@ static NSArray *hookReturnCacheKey(Runtime &runtime, const std::shared_ptr<HookS
     [components addObject:NSStringFromSelector(dispatcher->selector)];
     for (size_t index = 0; index < expected; index++)
     {
-        FFICallArgument argument{};
-        setFFIArgument(runtime, values.getValueAtIndex(runtime, index),
-                       dispatcher->signature->arguments[index + 2], argument);
-        id component = hookCacheComponent(dispatcher->signature->arguments[index + 2], argument);
+        const loader::ffi::Type     &spec = dispatcher->signature->arguments[index + 2];
+        std::vector<uint8_t>         bytes(loader::ffi::valueStorageSize(spec));
+        loader::ffi::ArgumentStorage storage;
+        loader::ffi::writeValue(runtime, values.getValueAtIndex(runtime, index), spec, bytes.data(),
+                                storage);
+        id component = hookCacheComponent(spec, bytes.data());
         if (!component)
         {
             throw JSError(runtime, "Native hook return cache argument type is unsupported");
@@ -3844,7 +3333,7 @@ static NSArray *hookReturnCacheKey(Runtime &runtime, const std::shared_ptr<HookS
 }
 
 static NSArray *hookReturnCacheKey(const std::shared_ptr<HookDispatcher> &dispatcher,
-                                   void **arguments)
+                                   void                                 **arguments)
 {
     if (!dispatcher || !arguments)
     {
@@ -3855,19 +3344,8 @@ static NSArray *hookReturnCacheKey(const std::shared_ptr<HookDispatcher> &dispat
         [NSMutableArray arrayWithCapacity:dispatcher->signature->arguments.size()];
     for (size_t index = 0; index < dispatcher->signature->arguments.size(); index++)
     {
-        const FFITypeSpec &spec = dispatcher->signature->arguments[index];
-        FFICallArgument argument{};
-        if (spec.name == "object" || spec.name == "class" || spec.name == "selector" ||
-            spec.name == "pointer" || spec.name == "cstring")
-        {
-            memcpy(&argument.pointer, arguments[index], sizeof(argument.pointer));
-        }
-        else
-        {
-            argument.bytes.resize(spec.type->size);
-            memcpy(argument.bytes.data(), arguments[index], spec.type->size);
-        }
-        id component = hookCacheComponent(spec, argument);
+        id component = hookCacheComponent(dispatcher->signature->arguments[index],
+                                          static_cast<const uint8_t *>(arguments[index]));
         if (!component)
         {
             return nil;
@@ -3875,6 +3353,30 @@ static NSArray *hookReturnCacheKey(const std::shared_ptr<HookDispatcher> &dispat
         [components addObject:component];
     }
     return [components copy];
+}
+
+static void reserveHookCacheEntry(Runtime &runtime, const std::shared_ptr<HookState> &state,
+                                  NSMutableDictionary *cache, NSArray *key)
+{
+    if (!state->active.load())
+    {
+        loader::native::throwCoded(runtime, loader::native::kNativeBridgeErrorCode,
+                                   "Native hook has been removed");
+    }
+    if (cache[key] == nil && !loader::native::nativeCachedReturnBudget().acquire())
+    {
+        loader::native::throwCoded(runtime, loader::native::kNativeBridgeErrorCode,
+                                   "Too many cached native hook results");
+    }
+}
+
+static void releaseHookCacheEntry(NSMutableDictionary *cache, NSArray *key)
+{
+    if (cache[key] != nil)
+    {
+        [cache removeObjectForKey:key];
+        loader::native::nativeCachedReturnBudget().release();
+    }
 }
 
 static void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
@@ -3891,25 +3393,26 @@ static void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState
         throw JSError(runtime, "Native hook has been removed");
     }
 
-    const FFITypeSpec &result = dispatcher->signature->result;
-    std::vector<uint8_t> bytes(std::max<size_t>(result.type->size, sizeof(void *)));
+    const loader::ffi::Type &result = dispatcher->signature->result;
+    std::vector<uint8_t>     bytes(loader::ffi::valueStorageSize(result));
     if (!setHookReturn(runtime, result, args[2], bytes.data()))
     {
         throw JSError(runtime, "Native hook return value has an unsupported type");
     }
 
-    NSArray *key = hookReturnCacheKey(runtime, state, args, count);
-    NSData *value = [NSData dataWithBytes:bytes.data() length:result.type->size];
+    NSArray *key   = hookReturnCacheKey(runtime, state, args, count);
+    NSData  *value = [NSData dataWithBytes:bytes.data() length:loader::ffi::typeSize(result)];
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
+    reserveHookCacheEntry(runtime, state, state->returnCache, key);
     state->returnCache[key] = value;
 }
 
 static void removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
                                   const Value *args, size_t count)
 {
-    NSArray *key = hookReturnCacheKey(runtime, state, args, count);
+    NSArray                    *key = hookReturnCacheKey(runtime, state, args, count);
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-    [state->returnCache removeObjectForKey:key];
+    releaseHookCacheEntry(state->returnCache, key);
 }
 
 static void clearHookReturnCache(const std::shared_ptr<HookState> &state)
@@ -3919,6 +3422,8 @@ static void clearHookReturnCache(const std::shared_ptr<HookState> &state)
         return;
     }
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
+    loader::native::nativeCachedReturnBudget().release(state->returnCache.count +
+                                                       state->sizeHeightFloors.count);
     [state->returnCache removeAllObjects];
     [state->sizeHeightFloors removeAllObjects];
 }
@@ -3943,14 +3448,15 @@ static void setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookS
         throw JSError(runtime, "Native hook size floor is outside the supported range");
     }
 
-    NSArray *key = hookReturnCacheKey(runtime, state, args, count);
+    NSArray                    *key = hookReturnCacheKey(runtime, state, args, count);
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
     if (floor == 0)
     {
-        [state->sizeHeightFloors removeObjectForKey:key];
+        releaseHookCacheEntry(state->sizeHeightFloors, key);
     }
     else
     {
+        reserveHookCacheEntry(runtime, state, state->sizeHeightFloors, key);
         state->sizeHeightFloors[key] = @(floor);
     }
 }
@@ -3958,23 +3464,23 @@ static void setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookS
 static void removeHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
                                       const Value *args, size_t count)
 {
-    NSArray *key = hookReturnCacheKey(runtime, state, args, count);
+    NSArray                    *key = hookReturnCacheKey(runtime, state, args, count);
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-    [state->sizeHeightFloors removeObjectForKey:key];
+    releaseHookCacheEntry(state->sizeHeightFloors, key);
 }
 
-static void applyHookSizeHeightFloors(const std::shared_ptr<HookDispatcher> &dispatcher,
+static void applyHookSizeHeightFloors(const std::shared_ptr<HookDispatcher>         &dispatcher,
                                       const std::vector<std::shared_ptr<HookState>> &hooks,
                                       void **arguments, void *returnValue)
 {
     if (!returnValue || dispatcher->signature->result.name != "struct:CGSize" ||
-        dispatcher->signature->result.type->size < sizeof(CGSize))
+        loader::ffi::typeSize(dispatcher->signature->result) < sizeof(CGSize))
     {
         return;
     }
 
     NSArray *key = nil;
-    CGSize size{};
+    CGSize   size{};
     memcpy(&size, returnValue, sizeof(size));
     if (!std::isfinite(size.height) || size.height < 0)
     {
@@ -4015,167 +3521,8 @@ static void applyHookSizeHeightFloors(const std::shared_ptr<HookDispatcher> &dis
     memcpy(returnValue, &size, sizeof(size));
 }
 
-template <typename T>
-static T readFFIResult(Runtime &runtime, const std::vector<uint8_t> &bytes)
-{
-    if (bytes.size() < sizeof(T))
-    {
-        throw JSError(runtime, "Native result buffer is too small");
-    }
-    T value{};
-    memcpy(&value, bytes.data(), sizeof(value));
-    return value;
-}
-
-static Value ffiResult(Runtime &runtime, const FFITypeSpec &spec, const std::vector<uint8_t> &bytes)
-{
-    if (spec.name == "void")
-    {
-        return Value::undefined();
-    }
-    if (spec.name == "bool")
-    {
-        return Value(readFFIResult<uint8_t>(runtime, bytes) != 0);
-    }
-    if (spec.name == "i8")
-    {
-        return Value((double) readFFIResult<int8_t>(runtime, bytes));
-    }
-    if (spec.name == "u8")
-    {
-        return Value((double) readFFIResult<uint8_t>(runtime, bytes));
-    }
-    if (spec.name == "i16")
-    {
-        return Value((double) readFFIResult<int16_t>(runtime, bytes));
-    }
-    if (spec.name == "u16")
-    {
-        return Value((double) readFFIResult<uint16_t>(runtime, bytes));
-    }
-    if (spec.name == "i32")
-    {
-        return Value((double) readFFIResult<int32_t>(runtime, bytes));
-    }
-    if (spec.name == "u32")
-    {
-        return Value((double) readFFIResult<uint32_t>(runtime, bytes));
-    }
-    if (spec.name == "i64")
-    {
-        return Value(runtime, BigInt::fromInt64(runtime, readFFIResult<int64_t>(runtime, bytes)));
-    }
-    if (spec.name == "u64")
-    {
-        return Value(runtime, BigInt::fromUint64(runtime, readFFIResult<uint64_t>(runtime, bytes)));
-    }
-    if (spec.name == "float")
-    {
-        return Value((double) readFFIResult<float>(runtime, bytes));
-    }
-    if (spec.name == "double")
-    {
-        return Value(readFFIResult<double>(runtime, bytes));
-    }
-    if (spec.name == "cstring")
-    {
-        const char *string = readFFIResult<const char *>(runtime, bytes);
-        return string ? String::createFromUtf8(runtime, string) : Value::null();
-    }
-    if (spec.name == "object" || spec.name == "class")
-    {
-        if (bytes.size() < sizeof(id)) throw JSError(runtime, "Native result buffer is too small");
-        __unsafe_unretained id object = nil;
-        memcpy(&object, bytes.data(), sizeof(object));
-        return objcResult(runtime, object);
-    }
-    if (spec.name == "selector")
-    {
-        if (bytes.size() < sizeof(SEL)) throw JSError(runtime, "Native result buffer is too small");
-        SEL selector = NULL;
-        memcpy(&selector, bytes.data(), sizeof(selector));
-        return selector ? String::createFromUtf8(runtime, sel_getName(selector)) : Value::null();
-    }
-    if (spec.name == "pointer")
-    {
-        return pointerResult(runtime, readFFIResult<void *>(runtime, bytes));
-    }
-    if (spec.name.rfind("struct:", 0) == 0)
-    {
-        std::string name = spec.name.substr(7);
-        const char *encoding = structEncoding(name);
-        if (!encoding)
-        {
-            throw JSError(runtime, "Native FFI struct result is not registered");
-        }
-        NSUInteger size = 0;
-        NSGetSizeAndAlignment(encoding, &size, nullptr);
-        if (bytes.size() < size) throw JSError(runtime, "Native result buffer is too small");
-        NSValue *value = [NSValue value:bytes.data() withObjCType:encoding];
-        return structResult(runtime, [NSString stringWithUTF8String:name.c_str()] ?: @"", value);
-    }
-    throw JSError(runtime, "Unsupported native FFI result type");
-}
-
-static Value ffiCall(Runtime &runtime, void *pointer, const FFISignature &signature,
-                     const Value *args)
-{
-    std::vector<FFICallArgument> arguments(signature.arguments.size());
-    std::vector<void *> argumentValues(signature.arguments.size());
-    for (size_t index = 0; index < signature.arguments.size(); index++)
-    {
-        setFFIArgument(runtime, args[index], signature.arguments[index], arguments[index]);
-        if (signature.arguments[index].name == "pointer" ||
-            signature.arguments[index].name == "object" || signature.arguments[index].name == "class" ||
-            signature.arguments[index].name == "selector" || signature.arguments[index].name == "cstring")
-        {
-            argumentValues[index] = &arguments[index].pointer;
-        }
-        else
-        {
-            argumentValues[index] = arguments[index].bytes.data();
-        }
-    }
-
-    ffi_cif cif = prepareFFICif(runtime, signature.result, signature.arguments);
-
-    size_t resultSize = signature.result.type->size;
-    std::vector<uint8_t> result(std::max<size_t>(resultSize, sizeof(void *)));
-    ffi_call(&cif, reinterpret_cast<void (*)(void)>(pointer),
-             signature.result.name == "void" ? nullptr : result.data(), argumentValues.data());
-    return ffiResult(runtime, signature.result, result);
-}
-
-static Value ffiCallValue(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count < 2 || !args[0].isObject())
-    {
-        throw JSError(runtime, "ffi.call expects a pointer, signature, and arguments");
-    }
-
-    Object pointer = args[0].asObject(runtime);
-    if (!pointer.isHostObject<PointerHost>(runtime))
-    {
-        throw JSError(runtime, "ffi.call expects a pointer handle");
-    }
-
-    std::shared_ptr<PointerHost> host = pointer.getHostObject<PointerHost>(runtime);
-    void *address = host->value();
-    if (!address || !host->callable() || !isCallableSymbolAddress(address))
-    {
-        throw JSError(runtime, "ffi.call requires an executable symbol pointer");
-    }
-
-    FFISignature signature = parseFFISignature(runtime, args[1]);
-    if (signature.arguments.size() != count - 2)
-    {
-        throw JSError(runtime, "Native FFI argument count does not match the signature");
-    }
-    return ffiCall(runtime, address, signature, args + 2);
-}
-
 static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selector,
-                                                           void *closureData = nullptr)
+                                                          void *closureData = nullptr)
 {
     std::lock_guard<std::mutex> lock(gHookMutex);
     if (closureData)
@@ -4195,7 +3542,7 @@ static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selecto
         while (cls && iterator == gDispatchers.end())
         {
             iterator = gDispatchers.find(hookKey(cls, selector));
-            cls = class_getSuperclass(cls);
+            cls      = class_getSuperclass(cls);
         }
     }
     if (iterator == gDispatchers.end())
@@ -4219,7 +3566,7 @@ struct HookCallGuard {
     }
 
     std::shared_ptr<HookDispatcher> dispatcher;
-    NativeOperationSignpost signpost;
+    NativeOperationSignpost         signpost;
 };
 
 static void logHookFailure(const std::exception &exception)
@@ -4231,14 +3578,14 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
 {
     __unsafe_unretained id object = nil;
     memcpy(&object, arguments[0], sizeof(object));
-    SEL selector = *reinterpret_cast<SEL *>(arguments[1]);
+    SEL  selector   = *reinterpret_cast<SEL *>(arguments[1]);
     auto dispatcher = findHookDispatcher(object, selector, userData);
     if (!dispatcher)
     {
         return;
     }
 
-    HookCallGuard guard(dispatcher);
+    HookCallGuard                           guard(dispatcher);
     std::vector<std::shared_ptr<HookState>> hooks;
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
@@ -4268,7 +3615,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
     }
     if (cacheOnly)
     {
-        bool cachedReturn = false;
+        bool                                    cachedReturn = false;
         std::vector<std::shared_ptr<HookState>> onceHooks;
         for (const std::shared_ptr<HookState> &state : hooks)
         {
@@ -4277,15 +3624,15 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
                 continue;
             }
 
-            NSArray *key = hookReturnCacheKey(dispatcher, arguments);
-            NSData *cached = nil;
+            NSArray *key    = hookReturnCacheKey(dispatcher, arguments);
+            NSData  *cached = nil;
             if (key)
             {
                 std::lock_guard<std::mutex> lock(state->returnCacheMutex);
                 cached = state->returnCache[key];
             }
             if (cached && returnValue &&
-                cached.length == dispatcher->signature->result.type->size)
+                cached.length == loader::ffi::typeSize(dispatcher->signature->result))
             {
                 memcpy(returnValue, cached.bytes, cached.length);
                 cachedReturn = true;
@@ -4310,8 +3657,8 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
 
     auto invocation = hookInvocation(dispatcher, arguments, returnValue);
 
-    bool replacementApplied = false;
-    bool originalCalled = false;
+    bool                                    replacementApplied = false;
+    bool                                    originalCalled     = false;
     std::vector<std::shared_ptr<HookState>> onceHooks;
 
     for (const std::shared_ptr<HookState> &state : hooks)
@@ -4323,15 +3670,15 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
 
         if (state->cacheOnly)
         {
-            NSArray *key = hookReturnCacheKey(dispatcher, arguments);
-            NSData *cached = nil;
+            NSArray *key    = hookReturnCacheKey(dispatcher, arguments);
+            NSData  *cached = nil;
             if (key)
             {
                 std::lock_guard<std::mutex> lock(state->returnCacheMutex);
                 cached = state->returnCache[key];
             }
             if (cached && returnValue &&
-                cached.length == dispatcher->signature->result.type->size)
+                cached.length == loader::ffi::typeSize(dispatcher->signature->result))
             {
                 memcpy(returnValue, cached.bytes, cached.length);
                 replacementApplied = true;
@@ -4347,18 +3694,21 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         {
             try
             {
-                executeRuntimeSynchronously([invocation, object, selector, state](Runtime &runtime) {
-                    auto callbacks = state->callbacks.lock();
-                    if (!callbacks || !callbacks->before) return;
-                    Object context = hookContext(runtime, invocation, object, selector, true);
-                    callbacks->before->call(runtime, context);
-                });
+                executeRuntimeSynchronously(
+                    [invocation, object, selector, state](Runtime &runtime) {
+                        auto callbacks = state->callbacks.lock();
+                        if (!callbacks || !callbacks->before)
+                            return;
+                        Object context = hookContext(runtime, invocation, object, selector, true);
+                        callbacks->before->call(runtime, context);
+                    });
             }
             catch (const std::exception &exception)
             {
                 logHookFailure(exception);
             }
-            if (invokeDeferredHookOriginal(invocation)) originalCalled = true;
+            if (invokeDeferredHookOriginal(invocation))
+                originalCalled = true;
         }
 
         if (invocation->originalCalled.load() && !originalCalled)
@@ -4370,7 +3720,8 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         {
             try
             {
-                std::shared_ptr<std::vector<uint8_t>> replacementResult = hookReturnBuffer(invocation);
+                std::shared_ptr<std::vector<uint8_t>> replacementResult =
+                    hookReturnBuffer(invocation);
                 bool completed = executeRuntimeSynchronously(
                     [invocation, object, selector, state, replacementResult](Runtime &runtime) {
                         auto callbacks = state->callbacks.lock();
@@ -4379,11 +3730,12 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
                             throw std::runtime_error("Native hook callback expired");
                         }
                         Object context = hookContext(runtime, invocation, object, selector, true);
-                        Value result = callbacks->replace->call(runtime, context);
-                        if (!setHookReturn(runtime, invocation->dispatcher->signature->result, result,
-                                           replacementResult->data()))
+                        Value  result  = callbacks->replace->call(runtime, context);
+                        if (!setHookReturn(runtime, invocation->dispatcher->signature->result,
+                                           result, replacementResult->data()))
                         {
-                            throw JSError(runtime, "Native hook replacement returned an unsupported value");
+                            throw JSError(runtime,
+                                          "Native hook replacement returned an unsupported value");
                         }
                     });
                 if (completed)
@@ -4397,7 +3749,8 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             {
                 logHookFailure(exception);
             }
-            if (invokeDeferredHookOriginal(invocation)) originalCalled = true;
+            if (invokeDeferredHookOriginal(invocation))
+                originalCalled = true;
         }
 
         if (state->once)
@@ -4422,17 +3775,19 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         }
 
         __strong id retainedObject = object;
-        executeRuntimeAsynchronously([invocation, retainedObject, selector, state](Runtime &runtime) {
-            bool pending = state->afterOncePending.exchange(false);
-            if (!state->active.load() && !pending)
-            {
-                return;
-            }
-            auto callbacks = state->callbacks.lock();
-            if (!callbacks || !callbacks->after) return;
-            Object context = hookContext(runtime, invocation, retainedObject, selector, false);
-            callbacks->after->call(runtime, context);
-        });
+        executeRuntimeAsynchronously(
+            [invocation, retainedObject, selector, state](Runtime &runtime) {
+                bool pending = state->afterOncePending.exchange(false);
+                if (!state->active.load() && !pending)
+                {
+                    return;
+                }
+                auto callbacks = state->callbacks.lock();
+                if (!callbacks || !callbacks->after)
+                    return;
+                Object context = hookContext(runtime, invocation, retainedObject, selector, false);
+                callbacks->after->call(runtime, context);
+            });
     }
 
     {
@@ -4458,8 +3813,8 @@ static CGSize dispatchCGSizeHook(id object, SEL selector, CGSize size)
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector, &size};
-        CGSize result = CGSizeZero;
+        void  *arguments[] = {&object, &selector, &size};
+        CGSize result      = CGSizeZero;
         dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
         return result;
     }
@@ -4469,32 +3824,32 @@ static CGSize dispatchCGSizeNoArgumentHook(id object, SEL selector)
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector};
-        CGSize result = CGSizeZero;
+        void  *arguments[] = {&object, &selector};
+        CGSize result      = CGSizeZero;
         dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
         return result;
     }
 }
 
 static CGSize dispatchCGSizePriorityHook(id object, SEL selector, CGSize size, float horizontal,
-                                        float vertical)
+                                         float vertical)
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector, &size, &horizontal, &vertical};
-        CGSize result = CGSizeZero;
+        void  *arguments[] = {&object, &selector, &size, &horizontal, &vertical};
+        CGSize result      = CGSizeZero;
         dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
         return result;
     }
 }
 
-static CGSize dispatchCGSizeDoublePriorityHook(id object, SEL selector, CGSize size, double horizontal,
-                                               double vertical)
+static CGSize dispatchCGSizeDoublePriorityHook(id object, SEL selector, CGSize size,
+                                               double horizontal, double vertical)
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector, &size, &horizontal, &vertical};
-        CGSize result = CGSizeZero;
+        void  *arguments[] = {&object, &selector, &size, &horizontal, &vertical};
+        CGSize result      = CGSizeZero;
         dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
         return result;
     }
@@ -4504,8 +3859,8 @@ static CGRect dispatchCGRectObjectHook(id object, SEL selector, id indexPath)
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector, &indexPath};
-        CGRect result = CGRectZero;
+        void  *arguments[] = {&object, &selector, &indexPath};
+        CGRect result      = CGRectZero;
         dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
         return result;
     }
@@ -4515,8 +3870,8 @@ static double dispatchDoubleObjectObjectHook(id object, SEL selector, id tableVi
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector, &tableView, &indexPath};
-        double result = 0;
+        void  *arguments[] = {&object, &selector, &tableView, &indexPath};
+        double result      = 0;
         dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
         return result;
     }
@@ -4563,7 +3918,7 @@ static int8_t dispatchBooleanHook(id object, SEL selector)
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector};
+        void  *arguments[] = {&object, &selector};
         int8_t returnValue = 0;
         dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
         return returnValue;
@@ -4608,7 +3963,7 @@ static int8_t dispatchBoolObjectObjectHook(id object, SEL selector, id first, id
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector, &first, &second};
+        void  *arguments[] = {&object, &selector, &first, &second};
         int8_t returnValue = 0;
         dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
         return returnValue;
@@ -4619,7 +3974,7 @@ static int8_t dispatchBoolObjectHook(id object, SEL selector, id value)
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector, &value};
+        void  *arguments[] = {&object, &selector, &value};
         int8_t returnValue = 0;
         dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
         return returnValue;
@@ -4630,7 +3985,7 @@ static int8_t dispatchBoolClassHook(id object, SEL selector, Class value)
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector, &value};
+        void  *arguments[] = {&object, &selector, &value};
         int8_t returnValue = 0;
         dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
         return returnValue;
@@ -4641,7 +3996,7 @@ static int8_t dispatchBoolSelectorHook(id object, SEL selector, SEL value)
 {
     @autoreleasepool
     {
-        void *arguments[] = {&object, &selector, &value};
+        void  *arguments[] = {&object, &selector, &value};
         int8_t returnValue = 0;
         dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
         return returnValue;
@@ -4688,8 +4043,8 @@ static void *fallbackHookCode(const HookSignature &signature)
     }
 
     if ((signature.result.name == "bool" || signature.result.name == "i8") &&
-        signature.arguments.size() == 4 &&
-        signature.arguments[2].name == "object" && signature.arguments[3].name == "object")
+        signature.arguments.size() == 4 && signature.arguments[2].name == "object" &&
+        signature.arguments[3].name == "object")
     {
         return reinterpret_cast<void *>(dispatchBoolObjectObjectHook);
     }
@@ -4808,15 +4163,16 @@ static void dispatchVoidHook(id object, SEL selector)
         }
 
         HookCallGuard guard(dispatcher);
-        void *arguments[] = {&object, &selector};
-        auto invocation = hookInvocation(dispatcher, arguments, nullptr);
+        void         *arguments[] = {&object, &selector};
+        auto          invocation  = hookInvocation(dispatcher, arguments, nullptr);
 
         std::vector<std::shared_ptr<HookState>> hooks;
         {
             std::lock_guard<std::mutex> lock(gHookMutex);
             for (const std::shared_ptr<HookState> &state : dispatcher->hooks)
             {
-                if (state->active && state->runtimeGeneration == loader::native::runtimeGeneration() &&
+                if (state->active &&
+                    state->runtimeGeneration == loader::native::runtimeGeneration() &&
                     (!state->instanceTarget || state->instanceTarget == object))
                 {
                     hooks.push_back(state);
@@ -4829,8 +4185,8 @@ static void dispatchVoidHook(id object, SEL selector)
             return;
         }
 
-        bool replacementApplied = false;
-        bool originalCalled = false;
+        bool                                    replacementApplied = false;
+        bool                                    originalCalled     = false;
         std::vector<std::shared_ptr<HookState>> onceHooks;
 
         for (const std::shared_ptr<HookState> &state : hooks)
@@ -4844,9 +4200,11 @@ static void dispatchVoidHook(id object, SEL selector)
             {
                 try
                 {
-                    executeRuntimeSynchronously([invocation, object, selector, state](Runtime &runtime) {
+                    executeRuntimeSynchronously([invocation, object, selector,
+                                                 state](Runtime &runtime) {
                         auto callbacks = state->callbacks.lock();
-                        if (!callbacks || !callbacks->before) return;
+                        if (!callbacks || !callbacks->before)
+                            return;
                         Object context = hookContext(runtime, invocation, object, selector, true);
                         callbacks->before->call(runtime, context);
                     });
@@ -4855,7 +4213,8 @@ static void dispatchVoidHook(id object, SEL selector)
                 {
                     logHookFailure(exception);
                 }
-                if (invokeDeferredHookOriginal(invocation)) originalCalled = true;
+                if (invokeDeferredHookOriginal(invocation))
+                    originalCalled = true;
             }
 
             if (invocation->originalCalled.load() && !originalCalled)
@@ -4867,22 +4226,25 @@ static void dispatchVoidHook(id object, SEL selector)
             {
                 try
                 {
-                    std::shared_ptr<std::vector<uint8_t>> replacementResult = hookReturnBuffer(invocation);
-                    bool completed = executeRuntimeSynchronously(
-                        [invocation, object, selector, state, replacementResult](Runtime &runtime) {
-                            auto callbacks = state->callbacks.lock();
-                            if (!callbacks || !callbacks->replace)
-                            {
-                                throw std::runtime_error("Native hook callback expired");
-                            }
-                            Object context = hookContext(runtime, invocation, object, selector, true);
-                            Value result = callbacks->replace->call(runtime, context);
-                            if (!setHookReturn(runtime, invocation->dispatcher->signature->result, result,
-                                               replacementResult->data()))
-                            {
-                                throw JSError(runtime, "Native hook replacement returned an unsupported value");
-                            }
-                        });
+                    std::shared_ptr<std::vector<uint8_t>> replacementResult =
+                        hookReturnBuffer(invocation);
+                    bool completed = executeRuntimeSynchronously([invocation, object, selector,
+                                                                  state, replacementResult](
+                                                                     Runtime &runtime) {
+                        auto callbacks = state->callbacks.lock();
+                        if (!callbacks || !callbacks->replace)
+                        {
+                            throw std::runtime_error("Native hook callback expired");
+                        }
+                        Object context = hookContext(runtime, invocation, object, selector, true);
+                        Value  result  = callbacks->replace->call(runtime, context);
+                        if (!setHookReturn(runtime, invocation->dispatcher->signature->result,
+                                           result, replacementResult->data()))
+                        {
+                            throw JSError(runtime,
+                                          "Native hook replacement returned an unsupported value");
+                        }
+                    });
                     if (completed)
                     {
                         replacementApplied = true;
@@ -4893,7 +4255,8 @@ static void dispatchVoidHook(id object, SEL selector)
                 {
                     logHookFailure(exception);
                 }
-                if (invokeDeferredHookOriginal(invocation)) originalCalled = true;
+                if (invokeDeferredHookOriginal(invocation))
+                    originalCalled = true;
             }
 
             if (state->once)
@@ -4916,14 +4279,16 @@ static void dispatchVoidHook(id object, SEL selector)
             }
 
             __strong id retainedObject = object;
-            executeRuntimeAsynchronously([invocation, retainedObject, selector, state](Runtime &runtime) {
+            executeRuntimeAsynchronously([invocation, retainedObject, selector,
+                                          state](Runtime &runtime) {
                 bool pending = state->afterOncePending.exchange(false);
                 if (!state->active.load() && !pending)
                 {
                     return;
                 }
                 auto callbacks = state->callbacks.lock();
-                if (!callbacks || !callbacks->after) return;
+                if (!callbacks || !callbacks->after)
+                    return;
                 Object context = hookContext(runtime, invocation, retainedObject, selector, false);
                 callbacks->after->call(runtime, context);
             });
@@ -4947,12 +4312,14 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     {
         throw JSError(runtime, "objc.hook expects a class, selector, and handlers");
     }
+    loader::native::NativeResourceReservation reservation(loader::native::nativeHookBudget(),
+                                                          "Too many native hooks are installed");
 
-    NSString *className = [JSI toNSString:args[0] runtime:runtime];
-    NSString *selectorName = [JSI toNSString:args[1] runtime:runtime];
-    Class cls = NSClassFromString(className);
-    SEL selector = NSSelectorFromString(selectorName);
-    Method method = class_getInstanceMethod(cls, selector);
+    NSString *className    = jsiString(runtime, args[0]);
+    NSString *selectorName = jsiString(runtime, args[1]);
+    Class     cls          = NSClassFromString(className);
+    SEL       selector     = NSSelectorFromString(selectorName);
+    Method    method       = class_getInstanceMethod(cls, selector);
     if (!cls || !method)
     {
         throw JSError(runtime, "Objective-C hook target is unavailable");
@@ -4960,13 +4327,13 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
 
     NSMethodSignature *methodSignature =
         [NSMethodSignature signatureWithObjCTypes:method_getTypeEncoding(method)];
-    auto signature = std::make_shared<HookSignature>();
+    auto        signature  = std::make_shared<HookSignature>();
     std::string resultName = nativeFFITypeName(methodSignature.methodReturnType);
     if (resultName.empty())
     {
         throw JSError(runtime, "Unsupported native hook return type encoding");
     }
-    signature->result = ffiType(runtime, resultName);
+    signature->result = loader::ffi::resolveType(resultName);
     for (NSUInteger index = 0; index < methodSignature.numberOfArguments; index++)
     {
         std::string name = nativeFFITypeName([methodSignature getArgumentTypeAtIndex:index]);
@@ -4974,12 +4341,12 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         {
             throw JSError(runtime, "Unsupported native hook argument type encoding");
         }
-        signature->arguments.push_back(ffiType(runtime, name));
+        signature->arguments.push_back(loader::ffi::resolveType(name));
     }
-    signature->cif = prepareFFICif(runtime, signature->result, signature->arguments);
+    signature->interface = loader::ffi::callInterface(signature->result, signature->arguments);
 
-    Object handlers = args[2].asObject(runtime);
-    auto functionFor = [&](const char *name) -> std::shared_ptr<Function> {
+    Object handlers    = args[2].asObject(runtime);
+    auto   functionFor = [&](const char *name) -> std::shared_ptr<Function> {
         Value value = handlers.getProperty(runtime, name);
         if (value.isUndefined() || value.isNull())
         {
@@ -4992,20 +4359,20 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         return std::make_shared<Function>(value.asObject(runtime).getFunction(runtime));
     };
 
-    std::shared_ptr<Function> before = functionFor("before");
-    std::shared_ptr<Function> after = functionFor("after");
-    std::shared_ptr<Function> replace = functionFor("replace");
-    bool once = false;
-    bool cacheOnly = false;
-    id instanceTarget = nil;
+    std::shared_ptr<Function> before         = functionFor("before");
+    std::shared_ptr<Function> after          = functionFor("after");
+    std::shared_ptr<Function> replace        = functionFor("replace");
+    bool                      once           = false;
+    bool                      cacheOnly      = false;
+    id                        instanceTarget = nil;
     if (count > 3 && args[3].isObject())
     {
-        Object options = args[3].asObject(runtime);
-        Value onceValue = options.getProperty(runtime, "once");
-        once = onceValue.isBool() && onceValue.getBool();
+        Object options       = args[3].asObject(runtime);
+        Value  onceValue     = options.getProperty(runtime, "once");
+        once                 = onceValue.isBool() && onceValue.getBool();
         Value cacheOnlyValue = options.getProperty(runtime, "cacheOnly");
-        cacheOnly = cacheOnlyValue.isBool() && cacheOnlyValue.getBool();
-        Value instanceValue = options.getProperty(runtime, "instance");
+        cacheOnly            = cacheOnlyValue.isBool() && cacheOnlyValue.getBool();
+        Value instanceValue  = options.getProperty(runtime, "instance");
         if (!instanceValue.isUndefined() && !instanceValue.isNull())
         {
             instanceTarget = objcValue(runtime, instanceValue);
@@ -5022,40 +4389,43 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     if (cacheOnly)
     {
         const std::string &result = signature->result.name;
-        bool supportedResult = result == "bool" || result == "i8" || result == "u8" ||
-                               result == "i16" || result == "u16" || result == "i32" ||
-                               result == "u32" || result == "i64" || result == "u64" ||
-                               result == "float" || result == "double" ||
-                               result.rfind("struct:", 0) == 0;
+        bool supportedResult      = result == "bool" || result == "i8" || result == "u8" ||
+                                    result == "i16" || result == "u16" || result == "i32" ||
+                                    result == "u32" || result == "i64" || result == "u64" ||
+                                    result == "float" || result == "double" ||
+                                    result.rfind("struct:", 0) == 0;
         if (before || after || replace || !supportedResult)
         {
-            throw JSError(runtime, "Native cache-only hooks require a scalar or struct return type");
+            throw JSError(runtime,
+                          "Native cache-only hooks require a scalar or struct return type");
         }
     }
 
     std::shared_ptr<HookDispatcher> dispatcher;
-    std::string key = hookKey(cls, selector);
+    std::string                     key = hookKey(cls, selector);
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
-        auto iterator = gDispatchers.find(key);
+        auto                        iterator = gDispatchers.find(key);
         if (iterator == gDispatchers.end())
         {
-            dispatcher = std::make_shared<HookDispatcher>();
-            dispatcher->cls = cls;
-            dispatcher->selector = selector;
+            dispatcher            = std::make_shared<HookDispatcher>();
+            dispatcher->cls       = cls;
+            dispatcher->selector  = selector;
             dispatcher->signature = signature;
-            auto prepareClosure = [&]() -> bool {
-                dispatcher->closure = (ffi_closure *) ffi_closure_alloc(sizeof(ffi_closure),
-                                                                          &dispatcher->code);
+            auto prepareClosure   = [&]() -> bool {
+                dispatcher->closure =
+                    (ffi_closure *) ffi_closure_alloc(sizeof(ffi_closure), &dispatcher->code);
                 bool closureReady =
                     dispatcher->closure && isExecutableAddress(dispatcher->code) &&
-                    ffi_prep_closure_loc(dispatcher->closure, &dispatcher->signature->cif,
-                                         dispatchFFIHook, dispatcher.get(), dispatcher->code) == FFI_OK;
+                    ffi_prep_closure_loc(dispatcher->closure,
+                                         &dispatcher->signature->interface->cif, dispatchFFIHook,
+                                         dispatcher.get(), dispatcher->code) == FFI_OK;
                 if (!closureReady)
                 {
-                    if (dispatcher->closure) ffi_closure_free(dispatcher->closure);
+                    if (dispatcher->closure)
+                        ffi_closure_free(dispatcher->closure);
                     dispatcher->closure = nullptr;
-                    dispatcher->code = nullptr;
+                    dispatcher->code    = nullptr;
                 }
                 return closureReady;
             };
@@ -5072,12 +4442,14 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
                     std::string signatureName = dispatcher->signature->result.name + "(";
                     for (size_t index = 0; index < dispatcher->signature->arguments.size(); index++)
                     {
-                        if (index > 0) signatureName += ",";
+                        if (index > 0)
+                            signatureName += ",";
                         signatureName += dispatcher->signature->arguments[index].name;
                     }
                     signatureName += ")";
-                    throw JSError(runtime, "Native hook closure is unavailable on this device for " +
-                                                signatureName);
+                    throw JSError(runtime,
+                                  "Native hook closure is unavailable on this device for " +
+                                      signatureName);
                 }
             }
             if (dispatcher->closure)
@@ -5097,69 +4469,40 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
             }
             if (method_getImplementation(method) == dispatcher->original)
             {
-                MSHookMessageEx(cls, selector, (IMP) dispatcher->code,
-                                &dispatcher->original);
+                MSHookMessageEx(cls, selector, (IMP) dispatcher->code, &dispatcher->original);
             }
             dispatcher->retired.store(false);
         }
     }
 
-    auto callbacks = std::make_shared<HookCallbacks>();
-    callbacks->before = std::move(before);
-    callbacks->after = std::move(after);
-    callbacks->replace = std::move(replace);
-    auto state = std::make_shared<HookState>();
-    state->identifier = gNextHookIdentifier.fetch_add(1);
+    auto callbacks           = std::make_shared<HookCallbacks>();
+    callbacks->before        = std::move(before);
+    callbacks->after         = std::move(after);
+    callbacks->replace       = std::move(replace);
+    auto state               = std::make_shared<HookState>();
+    state->identifier        = gNextHookIdentifier.fetch_add(1);
     state->runtimeGeneration = loader::native::runtimeGeneration();
-    state->callbacks = callbacks;
-    state->hasBefore = callbacks->before != nullptr;
-    state->hasAfter = callbacks->after != nullptr;
-    state->hasReplace = callbacks->replace != nullptr;
-    state->cacheOnly = cacheOnly;
-    state->once = once;
-    state->instanceTarget = instanceTarget;
-    state->dispatcher = dispatcher;
+    state->callbacks         = callbacks;
+    state->hasBefore         = callbacks->before != nullptr;
+    state->hasAfter          = callbacks->after != nullptr;
+    state->hasReplace        = callbacks->replace != nullptr;
+    state->cacheOnly         = cacheOnly;
+    state->once              = once;
+    state->instanceTarget    = instanceTarget;
+    state->dispatcher        = dispatcher;
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
         dispatcher->hooks.push_back(state);
     }
+    reservation.commit();
     return Object::createFromHostObject(runtime, std::make_shared<HookTokenHost>(state, callbacks));
-}
-
-static Value ffiSymbol(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count == 0 || !args[0].isString())
-    {
-        throw JSError(runtime, "ffi.symbol expects a symbol name");
-    }
-
-    NSString *name = [JSI toNSString:args[0] runtime:runtime];
-    void *handle = RTLD_DEFAULT;
-    bool closesHandle = false;
-    if (count > 1 && args[1].isString())
-    {
-        NSString *image = [JSI toNSString:args[1] runtime:runtime];
-        handle = dlopen(image.UTF8String, RTLD_NOLOAD | RTLD_LAZY);
-        if (!handle)
-        {
-            throw JSError(runtime, "ffi.symbol image is not loaded");
-        }
-        closesHandle = true;
-    }
-
-    void *symbol = dlsym(handle, name.UTF8String);
-    if (closesHandle)
-    {
-        dlclose(handle);
-    }
-    return pointerResult(runtime, symbol, true);
 }
 
 static Value objcFunction(Runtime &runtime, const Value &target, const Value &selectorValue,
                           const Value *args, size_t count, size_t start)
 {
-    id object = objcValue(runtime, target);
-    NSString *selectorName = [JSI toNSString:selectorValue runtime:runtime];
+    id        object       = objcValue(runtime, target);
+    NSString *selectorName = jsiString(runtime, selectorValue);
     if (!object || selectorName.length == 0)
     {
         throw JSError(runtime, "objc.call expects an object handle and selector");
@@ -5176,17 +4519,17 @@ static Value getIvar(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "objc.getIvar expects an object and ivar name");
     }
 
-    id object = objcValue(runtime, args[0]);
-    NSString *name = [JSI toNSString:args[1] runtime:runtime];
+    id        object = objcValue(runtime, args[0]);
+    NSString *name   = jsiString(runtime, args[1]);
     Ivar ivar = object ? class_getInstanceVariable(object_getClass(object), name.UTF8String) : NULL;
     if (!ivar)
     {
         return Value::undefined();
     }
 
-    const char *type = ivar_getTypeEncoding(ivar);
-    uint8_t *address = (uint8_t *) (__bridge void *) object + ivar_getOffset(ivar);
-    char code = normalizedType(type);
+    const char *type    = ivar_getTypeEncoding(ivar);
+    uint8_t    *address = (uint8_t *) (__bridge void *) object + ivar_getOffset(ivar);
+    char        code    = normalizedType(type);
     if (!type || !*type)
     {
         return objcResult(runtime, object_getIvar(object, ivar));
@@ -5287,7 +4630,7 @@ static Value getIvar(Runtime &runtime, const Value *args, size_t count)
     }
     if (code == '{')
     {
-        NSUInteger size = 0;
+        NSUInteger size      = 0;
         NSUInteger alignment = 0;
         NSGetSizeAndAlignment(ivar_getTypeEncoding(ivar), &size, &alignment);
         return structResult(runtime, [NSString stringWithUTF8String:type] ?: @"",
@@ -5303,18 +4646,18 @@ static Value setIvar(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "objc.setIvar expects an object, ivar name, and value");
     }
 
-    id object = objcValue(runtime, args[0]);
-    NSString *name = [JSI toNSString:args[1] runtime:runtime];
+    id        object = objcValue(runtime, args[0]);
+    NSString *name   = jsiString(runtime, args[1]);
     Ivar ivar = object ? class_getInstanceVariable(object_getClass(object), name.UTF8String) : NULL;
     if (!ivar)
     {
         throw JSError(runtime, "Objective-C ivar is unavailable");
     }
 
-    uint8_t *address = (uint8_t *) (__bridge void *) object + ivar_getOffset(ivar);
-    char code = normalizedType(ivar_getTypeEncoding(ivar));
-    id value = valueToObjC(runtime, args[2]);
-    id scalarValue = value == [NSNull null] ? @0 : value;
+    uint8_t *address     = (uint8_t *) (__bridge void *) object + ivar_getOffset(ivar);
+    char     code        = normalizedType(ivar_getTypeEncoding(ivar));
+    id       value       = valueToObjC(runtime, args[2]);
+    id       scalarValue = value == [NSNull null] ? @0 : value;
     if (code == '@')
     {
         object_setIvar(object, ivar, value == [NSNull null] ? nil : value);
@@ -5337,7 +4680,7 @@ static Value setIvar(Runtime &runtime, const Value *args, size_t count)
         }
         else if ([value isKindOfClass:[NSValue class]])
         {
-            argument = (SEL) [(NSValue *) value pointerValue];
+            argument = (SEL)[(NSValue *) value pointerValue];
         }
         memcpy(address, &argument, sizeof(argument));
         return Value::undefined();
@@ -5345,7 +4688,8 @@ static Value setIvar(Runtime &runtime, const Value *args, size_t count)
 
     if (code == '^' || code == '*')
     {
-        void *argument = [value isKindOfClass:[NSValue class]] ? [(NSValue *) value pointerValue] : nullptr;
+        void *argument =
+            [value isKindOfClass:[NSValue class]] ? [(NSValue *) value pointerValue] : nullptr;
         memcpy(address, &argument, sizeof(argument));
         return Value::undefined();
     }
@@ -5422,7 +4766,7 @@ static Value setIvar(Runtime &runtime, const Value *args, size_t count)
         {
             throw JSError(runtime, "Native struct ivar value expected");
         }
-        NSUInteger size = 0;
+        NSUInteger size      = 0;
         NSUInteger alignment = 0;
         NSGetSizeAndAlignment(ivar_getTypeEncoding(ivar), &size, &alignment);
         [(NSValue *) value getValue:address size:size];
@@ -5438,7 +4782,7 @@ static objc_AssociationPolicy associationPolicy(Runtime &runtime, const Value *v
         return OBJC_ASSOCIATION_RETAIN_NONATOMIC;
     }
 
-    NSString *name = [JSI toNSString:*value runtime:runtime];
+    NSString *name = jsiString(runtime, *value);
     if ([name isEqualToString:@"assign"])
     {
         return OBJC_ASSOCIATION_ASSIGN;
@@ -5464,255 +4808,433 @@ static objc_AssociationPolicy associationPolicy(Runtime &runtime, const Value *v
 
 static void installObjC(Runtime &runtime, Object &objc)
 {
-    objc.setProperty(runtime, "getClass", makeFunction(
-        "getClass", 1, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count == 0 || !args[0].isString())
-            {
-                return Value::null();
-            }
-            Class cls = NSClassFromString([JSI toNSString:args[0] runtime:rt]);
-            return cls ? Object::createFromHostObject(rt, std::make_shared<ObjCHandleHost>((id) cls))
-                       : Value::null();
-        }));
+    objc.setProperty(
+        runtime, "getClass",
+        makeFunction("getClass", 1, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         if (count == 0 || !args[0].isString())
+                         {
+                             return Value::null();
+                         }
+                         Class cls = NSClassFromString(jsiString(rt, args[0]));
+                         return cls ? Object::createFromHostObject(
+                                          rt, std::make_shared<ObjCHandleHost>((id) cls))
+                                    : Value::null();
+                     }));
 
-    objc.setProperty(runtime, "alloc", makeFunction(
-        "alloc", 1, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            Class cls = count ? classFromValue(rt, args[0]) : Nil;
-            if (!cls)
-            {
-                throw JSError(rt, "objc.alloc expects a class handle or class name");
-            }
-            return objcHandleResult(rt, [[cls alloc] init]);
-        }));
+    objc.setProperty(
+        runtime, "alloc",
+        makeFunction("alloc", 1, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         Class cls = count ? classFromValue(rt, args[0]) : Nil;
+                         if (!cls)
+                         {
+                             throw JSError(rt, "objc.alloc expects a class handle or class name");
+                         }
+                         return objcHandleResult(rt, [[cls alloc] init]);
+                     }));
 
-    objc.setProperty(runtime, "className", makeFunction(
-        "className", 1, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            id object = count ? objcValue(rt, args[0]) : nil;
-            if (!object)
-            {
-                return Value::null();
-            }
-            Class cls = object_isClass(object) ? object : object_getClass(object);
-            return [JSI fromObjC:NSStringFromClass(cls) runtime:rt];
-        }));
+    objc.setProperty(
+        runtime, "className",
+        makeFunction("className", 1, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         id object = count ? objcValue(rt, args[0]) : nil;
+                         if (!object)
+                         {
+                             return Value::null();
+                         }
+                         Class cls = object_isClass(object) ? object : object_getClass(object);
+                         return objcJSIValue(rt, NSStringFromClass(cls));
+                     }));
 
-    objc.setProperty(runtime, "respondsTo", makeFunction(
-        "respondsTo", 2, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count < 2)
-            {
-                return Value(false);
-            }
-            id object = objcValue(rt, args[0]);
-            NSString *name = [JSI toNSString:args[1] runtime:rt];
-            return Value(object && [object respondsToSelector:NSSelectorFromString(name)]);
-        }));
+    objc.setProperty(
+        runtime, "respondsTo",
+        makeFunction("respondsTo", 2, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         if (count < 2)
+                         {
+                             return Value(false);
+                         }
+                         id        object = objcValue(rt, args[0]);
+                         NSString *name   = jsiString(rt, args[1]);
+                         return Value(object &&
+                                      [object respondsToSelector:NSSelectorFromString(name)]);
+                     }));
 
-    objc.setProperty(runtime, "call", makeFunction(
-        "call", 2, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count < 2)
-            {
-                throw JSError(rt, "objc.call expects an object handle and selector");
-            }
-            return objcFunction(rt, args[0], args[1], args, count, 2);
-        }));
+    objc.setProperty(
+        runtime, "call",
+        makeFunction("call", 2, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         if (count < 2)
+                         {
+                             throw JSError(rt, "objc.call expects an object handle and selector");
+                         }
+                         return objcFunction(rt, args[0], args[1], args, count, 2);
+                     }));
 
-    objc.setProperty(runtime, "callSuper", makeFunction(
-        "callSuper", 3, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count < 3)
-            {
-                throw JSError(rt, "objc.callSuper expects an object, class, and selector");
-            }
-            id object = objcValue(rt, args[0]);
-            Class cls = classFromValue(rt, args[1]);
-            NSString *selectorName = [JSI toNSString:args[2] runtime:rt];
-            return invokeSuperObject(rt, object, cls, NSSelectorFromString(selectorName),
-                                     argumentArray(rt, args, count, 3));
-        }));
+    objc.setProperty(
+        runtime, "callSuper",
+        makeFunction(
+            "callSuper", 3, runtime,
+            [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                if (count < 3)
+                {
+                    throw JSError(rt, "objc.callSuper expects an object, class, and selector");
+                }
+                id        object       = objcValue(rt, args[0]);
+                Class     cls          = classFromValue(rt, args[1]);
+                NSString *selectorName = jsiString(rt, args[2]);
+                return invokeSuperObject(rt, object, cls, NSSelectorFromString(selectorName),
+                                         argumentArray(rt, args, count, 3));
+            }));
 
-    objc.setProperty(runtime, "invoke", makeFunction(
-        "invoke", 3, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count < 3 || !args[2].isObject() || !args[2].asObject(rt).isArray(rt))
-            {
-                throw JSError(rt, "objc.invoke expects an object, selector, and argument array");
-            }
-            Array array = args[2].asObject(rt).asArray(rt);
-            NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
-            for (size_t index = 0; index < array.size(rt); index++)
-            {
-                [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index)) ?: [NSNull null]];
-            }
-            id object = objcValue(rt, args[0]);
-            NSString *selectorName = [JSI toNSString:args[1] runtime:rt];
-            return invokeWithThreadPolicy(rt, object, NSSelectorFromString(selectorName), arguments,
-                                          count > 3 ? &args[3] : nullptr);
-        }));
+    objc.setProperty(
+        runtime, "invoke",
+        makeFunction(
+            "invoke", 3, runtime,
+            [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                if (count < 3 || !args[2].isObject() || !args[2].asObject(rt).isArray(rt))
+                {
+                    throw JSError(rt,
+                                  "objc.invoke expects an object, selector, and argument array");
+                }
+                Array           array     = args[2].asObject(rt).asArray(rt);
+                NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
+                for (size_t index = 0; index < array.size(rt); index++)
+                {
+                    [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index))
+                                             ?: [NSNull null]];
+                }
+                id        object       = objcValue(rt, args[0]);
+                NSString *selectorName = jsiString(rt, args[1]);
+                return invokeWithThreadPolicy(rt, object, NSSelectorFromString(selectorName),
+                                              arguments, count > 3 ? &args[3] : nullptr);
+            }));
 
-    objc.setProperty(runtime, "invokeAsync", makeFunction(
-        "invokeAsync", 3, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count < 3 || !args[2].isObject() || !args[2].asObject(rt).isArray(rt))
-            {
-                throw JSError(rt, "objc.invokeAsync expects an object, selector, and argument array");
-            }
-            Array array = args[2].asObject(rt).asArray(rt);
-            NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
-            for (size_t index = 0; index < array.size(rt); index++)
-            {
-                [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index)) ?: [NSNull null]];
-            }
-            id object = objcValue(rt, args[0]);
-            NSString *selectorName = [JSI toNSString:args[1] runtime:rt];
-            return invokeAsync(rt, object, NSSelectorFromString(selectorName), arguments);
-        }));
+    objc.setProperty(
+        runtime, "invokeAsync",
+        makeFunction(
+            "invokeAsync", 3, runtime,
+            [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                if (count < 3 || !args[2].isObject() || !args[2].asObject(rt).isArray(rt))
+                {
+                    throw JSError(
+                        rt, "objc.invokeAsync expects an object, selector, and argument array");
+                }
+                Array           array     = args[2].asObject(rt).asArray(rt);
+                NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
+                for (size_t index = 0; index < array.size(rt); index++)
+                {
+                    [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index))
+                                             ?: [NSNull null]];
+                }
+                id        object       = objcValue(rt, args[0]);
+                NSString *selectorName = jsiString(rt, args[1]);
+                return invokeAsync(rt, object, NSSelectorFromString(selectorName), arguments);
+            }));
 
     objc.setProperty(runtime, "batch", makeFunction("batch", 1, runtime, invokeBatch));
     objc.setProperty(runtime, "snapshot", makeFunction("snapshot", 2, runtime, snapshotUI));
     objc.setProperty(runtime, "findViews", makeFunction("findViews", 3, runtime, findUIViews));
 
-    objc.setProperty(runtime, "invokeSuper", makeFunction(
-        "invokeSuper", 4, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count < 4 || !args[3].isObject() || !args[3].asObject(rt).isArray(rt))
-            {
-                throw JSError(rt, "objc.invokeSuper expects an object, class, selector, and argument array");
-            }
-            id object = objcValue(rt, args[0]);
-            Class cls = classFromValue(rt, args[1]);
-            NSString *selectorName = [JSI toNSString:args[2] runtime:rt];
-            Array array = args[3].asObject(rt).asArray(rt);
-            NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
-            for (size_t index = 0; index < array.size(rt); index++)
-            {
-                [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index)) ?: [NSNull null]];
-            }
-            return invokeSuperWithThreadPolicy(rt, object, cls, NSSelectorFromString(selectorName), arguments,
-                                               count > 4 ? &args[4] : nullptr);
-        }));
+    objc.setProperty(
+        runtime, "invokeSuper",
+        makeFunction(
+            "invokeSuper", 4, runtime,
+            [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                if (count < 4 || !args[3].isObject() || !args[3].asObject(rt).isArray(rt))
+                {
+                    throw JSError(
+                        rt,
+                        "objc.invokeSuper expects an object, class, selector, and argument array");
+                }
+                id              object       = objcValue(rt, args[0]);
+                Class           cls          = classFromValue(rt, args[1]);
+                NSString       *selectorName = jsiString(rt, args[2]);
+                Array           array        = args[3].asObject(rt).asArray(rt);
+                NSMutableArray *arguments    = [NSMutableArray arrayWithCapacity:array.size(rt)];
+                for (size_t index = 0; index < array.size(rt); index++)
+                {
+                    [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index))
+                                             ?: [NSNull null]];
+                }
+                return invokeSuperWithThreadPolicy(rt, object, cls,
+                                                   NSSelectorFromString(selectorName), arguments,
+                                                   count > 4 ? &args[4] : nullptr);
+            }));
 
-    objc.setProperty(runtime, "invokeSuperAsync", makeFunction(
-        "invokeSuperAsync", 4, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count < 4 || !args[3].isObject() || !args[3].asObject(rt).isArray(rt))
-            {
-                throw JSError(rt, "objc.invokeSuperAsync expects an object, class, selector, and argument array");
-            }
-            id object = objcValue(rt, args[0]);
-            Class cls = classFromValue(rt, args[1]);
-            NSString *selectorName = [JSI toNSString:args[2] runtime:rt];
-            Array array = args[3].asObject(rt).asArray(rt);
-            NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
-            for (size_t index = 0; index < array.size(rt); index++)
-            {
-                [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index)) ?: [NSNull null]];
-            }
-            return invokeSuperAsync(rt, object, cls, NSSelectorFromString(selectorName), arguments);
-        }));
+    objc.setProperty(
+        runtime, "invokeSuperAsync",
+        makeFunction(
+            "invokeSuperAsync", 4, runtime,
+            [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                if (count < 4 || !args[3].isObject() || !args[3].asObject(rt).isArray(rt))
+                {
+                    throw JSError(
+                        rt,
+                        "objc.invokeSuperAsync expects an object, class, selector, and argument array");
+                }
+                id              object       = objcValue(rt, args[0]);
+                Class           cls          = classFromValue(rt, args[1]);
+                NSString       *selectorName = jsiString(rt, args[2]);
+                Array           array        = args[3].asObject(rt).asArray(rt);
+                NSMutableArray *arguments    = [NSMutableArray arrayWithCapacity:array.size(rt)];
+                for (size_t index = 0; index < array.size(rt); index++)
+                {
+                    [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index))
+                                             ?: [NSNull null]];
+                }
+                return invokeSuperAsync(rt, object, cls, NSSelectorFromString(selectorName),
+                                        arguments);
+            }));
 
     objc.setProperty(runtime, "getIvar", makeFunction("getIvar", 2, runtime, getIvar));
     objc.setProperty(runtime, "setIvar", makeFunction("setIvar", 3, runtime, setIvar));
 
-    objc.setProperty(runtime, "createAssociationKey", makeFunction(
-        "createAssociationKey", 0, runtime, [](Runtime &rt, const Value &, const Value *, size_t) -> Value {
-            return Object::createFromHostObject(rt,
-                                                std::make_shared<AssociationKeyHost>([NSObject new]));
-        }));
+    objc.setProperty(runtime, "createAssociationKey",
+                     makeFunction("createAssociationKey", 0, runtime,
+                                  [](Runtime &rt, const Value &, const Value *, size_t) -> Value {
+                                      return Object::createFromHostObject(
+                                          rt, std::make_shared<AssociationKeyHost>([NSObject new]));
+                                  }));
 
-    objc.setProperty(runtime, "getAssociatedObject", makeFunction(
-        "getAssociatedObject", 2, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count < 2)
-            {
-                return Value::null();
-            }
-            id object = objcValue(rt, args[0]);
-            if (!args[1].isObject() || !args[1].asObject(rt).isHostObject<AssociationKeyHost>(rt))
-            {
-                return Value::null();
-            }
-            const void *key = args[1].asObject(rt).getHostObject<AssociationKeyHost>(rt)->key();
-            return objcResult(rt, objc_getAssociatedObject(object, key));
-        }));
+    objc.setProperty(
+        runtime, "getAssociatedObject",
+        makeFunction("getAssociatedObject", 2, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         if (count < 2)
+                         {
+                             return Value::null();
+                         }
+                         id object = objcValue(rt, args[0]);
+                         if (!args[1].isObject() ||
+                             !args[1].asObject(rt).isHostObject<AssociationKeyHost>(rt))
+                         {
+                             return Value::null();
+                         }
+                         const void *key =
+                             args[1].asObject(rt).getHostObject<AssociationKeyHost>(rt)->key();
+                         return objcResult(rt, objc_getAssociatedObject(object, key));
+                     }));
 
-    objc.setProperty(runtime, "setAssociatedObject", makeFunction(
-        "setAssociatedObject", 4, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count < 3 || !args[1].isObject() ||
-                !args[1].asObject(rt).isHostObject<AssociationKeyHost>(rt))
-            {
-                throw JSError(rt, "objc.setAssociatedObject expects an object and association key");
-            }
-            id object = objcValue(rt, args[0]);
-            const void *key = args[1].asObject(rt).getHostObject<AssociationKeyHost>(rt)->key();
-            id value = valueToObjC(rt, args[2]);
-            objc_setAssociatedObject(object, key, value == [NSNull null] ? nil : value,
-                                     associationPolicy(rt, count > 3 ? &args[3] : nullptr));
-            return Value::undefined();
-        }));
+    objc.setProperty(
+        runtime, "setAssociatedObject",
+        makeFunction(
+            "setAssociatedObject", 4, runtime,
+            [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                if (count < 3 || !args[1].isObject() ||
+                    !args[1].asObject(rt).isHostObject<AssociationKeyHost>(rt))
+                {
+                    throw JSError(rt,
+                                  "objc.setAssociatedObject expects an object and association key");
+                }
+                id          object = objcValue(rt, args[0]);
+                const void *key = args[1].asObject(rt).getHostObject<AssociationKeyHost>(rt)->key();
+                id          value = valueToObjC(rt, args[2]);
+                objc_setAssociatedObject(object, key, value == [NSNull null] ? nil : value,
+                                         associationPolicy(rt, count > 3 ? &args[3] : nullptr));
+                return Value::undefined();
+            }));
 
-    objc.setProperty(runtime, "struct", makeFunction(
-        "struct", 2, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            if (count < 2 || !args[0].isString())
-            {
-                throw JSError(rt, "objc.struct expects a name and fields");
-            }
-            return structValue(rt, [JSI toNSString:args[0] runtime:rt], args[1]);
-        }));
+    objc.setProperty(
+        runtime, "struct",
+        makeFunction("struct", 2, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         if (count < 2 || !args[0].isString())
+                         {
+                             throw JSError(rt, "objc.struct expects a name and fields");
+                         }
+                         return structValue(rt, jsiString(rt, args[0]), args[1]);
+                     }));
 
-    objc.setProperty(runtime, "array", makeFunction(
-        "array", 1, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            id object = count ? objcValue(rt, args[0]) : nil;
-            if (![object isKindOfClass:[NSArray class]])
-            {
-                return Array(rt, 0);
-            }
-            return objcResult(rt, object);
-        }));
+    objc.setProperty(
+        runtime, "array",
+        makeFunction("array", 1, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         id object = count ? objcValue(rt, args[0]) : nil;
+                         if (![object isKindOfClass:[NSArray class]])
+                         {
+                             return Array(rt, 0);
+                         }
+                         return objcResult(rt, object);
+                     }));
 
-    objc.setProperty(runtime, "data", makeFunction(
-        "data", 1, runtime, [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-            NSData *data = count ? valueToData(rt, args[0]) : nil;
-            if (!data)
-            {
-                throw JSError(rt, "objc.data expects an ArrayBuffer or TypedArray");
-            }
-            return objcHandleResult(rt, data);
-        }));
+    objc.setProperty(
+        runtime, "data",
+        makeFunction("data", 1, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         NSData *data = count ? valueToData(rt, args[0]) : nil;
+                         if (!data)
+                         {
+                             throw JSError(rt, "objc.data expects an ArrayBuffer or TypedArray");
+                         }
+                         return objcHandleResult(rt, data);
+                     }));
 
     objc.setProperty(runtime, "hook", makeFunction("hook", 3, runtime, makeHook));
 }
 
+class ObjectFFICodec final : public loader::ffi::TypeCodec
+{
+public:
+    void write(Runtime &runtime, const Value &value, uint8_t *target,
+               loader::ffi::ArgumentStorage &storage) const override
+    {
+        if (value.isNull() || value.isUndefined())
+        {
+            storeNativeValue<void *>(target, nullptr);
+            return;
+        }
+        if (std::shared_ptr<PointerHost> host = loader::ffi::pointerHost(runtime, value))
+        {
+            storeNativeValue<void *>(target, host->value());
+            return;
+        }
+        id object = valueToObjC(runtime, value);
+        storage.retain(std::make_shared<ObjCHandleHost>(object));
+        storeNativeValue<void *>(target, (__bridge void *) object);
+    }
+
+    Value read(Runtime &runtime, const uint8_t *source) const override
+    {
+        return objcResult(runtime, (__bridge id) loadNativeValue<void *>(source));
+    }
+};
+
+class ClassFFICodec final : public loader::ffi::TypeCodec
+{
+public:
+    void write(Runtime &runtime, const Value &value, uint8_t *target,
+               loader::ffi::ArgumentStorage &) const override
+    {
+        if (value.isNull() || value.isUndefined())
+        {
+            storeNativeValue<void *>(target, nullptr);
+            return;
+        }
+        if (std::shared_ptr<ObjCHandleHost> host = objcHost(runtime, value))
+        {
+            storeNativeValue<void *>(target, (__bridge void *) host->value());
+            return;
+        }
+        if (std::shared_ptr<PointerHost> host = loader::ffi::pointerHost(runtime, value))
+        {
+            storeNativeValue<void *>(target, host->value());
+            return;
+        }
+        throw std::invalid_argument("Native FFI class argument expected");
+    }
+
+    Value read(Runtime &runtime, const uint8_t *source) const override
+    {
+        return objcResult(runtime, (__bridge id) loadNativeValue<void *>(source));
+    }
+};
+
+class SelectorFFICodec final : public loader::ffi::TypeCodec
+{
+public:
+    void write(Runtime &runtime, const Value &value, uint8_t *target,
+               loader::ffi::ArgumentStorage &) const override
+    {
+        if (value.isNull() || value.isUndefined())
+        {
+            storeNativeValue<SEL>(target, NULL);
+            return;
+        }
+        if (value.isString())
+        {
+            storeNativeValue<SEL>(target, NSSelectorFromString(jsiString(runtime, value)));
+            return;
+        }
+        if (std::shared_ptr<PointerHost> host = loader::ffi::pointerHost(runtime, value))
+        {
+            storeNativeValue<void *>(target, host->value());
+            return;
+        }
+        throw std::invalid_argument("Native FFI selector argument expected");
+    }
+
+    Value read(Runtime &runtime, const uint8_t *source) const override
+    {
+        SEL selector = loadNativeValue<SEL>(source);
+        return selector ? Value(String::createFromUtf8(runtime, sel_getName(selector)))
+                        : Value::null();
+    }
+};
+
+static std::optional<void *> objcFFIPointer(Runtime &runtime, const Object &object)
+{
+    if (!object.isHostObject<ObjCHandleHost>(runtime))
+    {
+        return std::nullopt;
+    }
+    return (__bridge void *) object.getHostObject<ObjCHandleHost>(runtime)->value();
+}
+
+static std::optional<Value> objcFFIStructResult(Runtime                         &runtime,
+                                                const loader::ffi::StructLayout &layout,
+                                                const uint8_t                   *source)
+{
+    const char *encoding = structEncoding(layout.name);
+    if (!encoding)
+    {
+        return std::nullopt;
+    }
+    return structResult(runtime, [NSString stringWithUTF8String:layout.name.c_str()] ?: @"",
+                        [NSValue value:source withObjCType:encoding]);
+}
+
+static void installFFIPlatform(void)
+{
+    static std::once_flag installed;
+    std::call_once(installed, [] {
+        loader::ffi::registerExtensionType("object", std::make_shared<ObjectFFICodec>());
+        loader::ffi::registerExtensionType("class", std::make_shared<ClassFFICodec>());
+        loader::ffi::registerExtensionType("selector", std::make_shared<SelectorFFICodec>());
+        loader::ffi::setPointerResolver(objcFFIPointer);
+        loader::ffi::setStructResultFactory(objcFFIStructResult);
+    });
+}
+
 static void installFFI(Runtime &runtime, Object &ffi)
 {
-    ffi.setProperty(runtime, "symbol", makeFunction("symbol", 2, runtime, ffiSymbol));
-    ffi.setProperty(runtime, "call", makeFunction("call", 3, runtime, ffiCallValue));
+    ffi.setProperty(runtime, "symbol",
+                    makeFunction("symbol", 2, runtime, loader::ffi::lookupSymbol));
+    ffi.setProperty(runtime, "call", makeFunction("call", 3, runtime, loader::ffi::callFunction));
 }
 
 static void installFabric(Runtime &runtime, Object &fabric)
 {
     fabric.setProperty(runtime, "mount", makeFunction("mount", 3, runtime, fabricMount));
-    fabric.setProperty(runtime, "mountAsync", makeFunction("mountAsync", 3, runtime, fabricMountAsync));
+    fabric.setProperty(runtime, "mountAsync",
+                       makeFunction("mountAsync", 3, runtime, fabricMountAsync));
     fabric.setProperty(runtime, "update", makeFunction("update", 2, runtime, fabricUpdate));
-    fabric.setProperty(runtime, "updateAsync", makeFunction("updateAsync", 2, runtime, fabricUpdateAsync));
+    fabric.setProperty(runtime, "updateAsync",
+                       makeFunction("updateAsync", 2, runtime, fabricUpdateAsync));
     fabric.setProperty(runtime, "setSize", makeFunction("setSize", 3, runtime, fabricSetSize));
-    fabric.setProperty(runtime, "setSizeAsync", makeFunction("setSizeAsync", 3, runtime, fabricSetSizeAsync));
+    fabric.setProperty(runtime, "setSizeAsync",
+                       makeFunction("setSizeAsync", 3, runtime, fabricSetSizeAsync));
     fabric.setProperty(runtime, "setFrame", makeFunction("setFrame", 2, runtime, fabricSetFrame));
-    fabric.setProperty(runtime, "setFrameAsync", makeFunction("setFrameAsync", 2, runtime, fabricSetFrameAsync));
+    fabric.setProperty(runtime, "setFrameAsync",
+                       makeFunction("setFrameAsync", 2, runtime, fabricSetFrameAsync));
     fabric.setProperty(runtime, "measure", makeFunction("measure", 1, runtime, fabricMeasure));
-    fabric.setProperty(runtime, "measureAsync", makeFunction("measureAsync", 1, runtime, fabricMeasureAsync));
+    fabric.setProperty(runtime, "measureAsync",
+                       makeFunction("measureAsync", 1, runtime, fabricMeasureAsync));
     fabric.setProperty(runtime, "unmount", makeFunction("unmount", 1, runtime, fabricUnmount));
-    fabric.setProperty(runtime, "unmountAsync", makeFunction("unmountAsync", 1, runtime, fabricUnmountAsync));
+    fabric.setProperty(runtime, "unmountAsync",
+                       makeFunction("unmountAsync", 1, runtime, fabricUnmountAsync));
 }
 
 static Value environment(Runtime &runtime, const Value *, size_t)
 {
-    NSString *hostAddress = [Utilities getVirtualDeviceHostAddress];
-
-    Object result(runtime);
-    result.setProperty(runtime, "isVirtualDevice", Value(static_cast<bool>([Utilities isVPhone])));
-    result.setProperty(runtime, "hostAddress",
-                       hostAddress ? Value(String::createFromUtf8(runtime, hostAddress.UTF8String))
-                                   : Value::null());
-    return result;
+    return loader::toJSIValue(runtime, loader::currentDebugEnvironment());
 }
 
 static void installDebug(Runtime &runtime, Object &debug)
 {
-    debug.setProperty(runtime, "recordEvaluation", loader::native::makeRecordEvaluationFunction(runtime));
+    debug.setProperty(runtime, "recordEvaluation",
+                      loader::native::makeRecordEvaluationFunction(runtime));
     debug.setProperty(runtime, "environment", makeFunction("environment", 0, runtime, environment));
 }
 
@@ -5731,34 +5253,40 @@ void setNativePluginFabricHost(id instance)
     gFabricHostInstance = instance;
 }
 
+static void invalidateRuntimeResources(uint64_t generation)
+{
+    invalidateRuntimeHooks(generation);
+    invalidateRuntimeFabricSurfaces(generation);
+}
+
 void registerNativePluginBridge(Runtime &runtime)
 {
-    uint64_t previous   = loader::native::runtimeGeneration();
-    uint64_t generation = loader::native::registerRuntime(runtime);
-    if (generation != previous)
-    {
-        invalidateRuntimeHooks(generation);
-        invalidateRuntimeFabricSurfaces(generation);
-    }
-    Object bridge = loader::native::makeNativePluginRoot(runtime, loader::native::kIOSNativePluginCapabilities);
+    installFFIPlatform();
+    static std::once_flag invalidation;
+    std::call_once(invalidation, [] {
+        loader::native::onRuntimeGenerationChanged(invalidateRuntimeResources);
+    });
+    loader::native::registerRuntime(runtime);
+    loader::native::NativePluginRootBuilder bridge(runtime,
+                                                   loader::native::NativePluginPlatform::IOS);
 
     Object objc(runtime);
     installObjC(runtime, objc);
-    bridge.setProperty(runtime, "objc", std::move(objc));
+    bridge.addNamespace("objc", std::move(objc));
 
     Object ffi(runtime);
     installFFI(runtime, ffi);
-    bridge.setProperty(runtime, "ffi", std::move(ffi));
+    bridge.addNamespace("ffi", std::move(ffi));
 
     Object fabric(runtime);
     installFabric(runtime, fabric);
-    bridge.setProperty(runtime, "fabric", std::move(fabric));
+    bridge.addNamespace("fabric", std::move(fabric));
 
     Object debug(runtime);
     installDebug(runtime, debug);
-    bridge.setProperty(runtime, "debug", std::move(debug));
+    bridge.addNamespace("debug", std::move(debug));
 
-    runtime.global().setProperty(runtime, "NativePlugin", std::move(bridge));
+    bridge.install();
 }
 
 }

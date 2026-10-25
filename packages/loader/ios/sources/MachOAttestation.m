@@ -1,5 +1,3 @@
-#import "Attestation.h"
-
 #import <CommonCrypto/CommonDigest.h>
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
@@ -7,18 +5,17 @@
 #import <mach-o/dyld.h>
 #import <mach-o/fat.h>
 #import <mach-o/loader.h>
-
-#import "Logger.h"
-
 #include <string.h>
+
+#import "Attestation.h"
+#import "Logger.h"
 
 #if ATTESTATION_ENABLED
 __attribute__((section("__TEXT,__attestation"), used))
 const unsigned char AttestationPlaceholder[ATTESTATION_SECTION_SIZE] = {0};
 #endif
 
-typedef struct
-{
+typedef struct {
     size_t        size;
     size_t        boundary;
     size_t        sectionOffset;
@@ -54,8 +51,8 @@ static bool readUInt64(const uint8_t *bytes, size_t length, size_t offset, uint6
 
 static uint32_t readBigEndianUInt32(const uint8_t *bytes)
 {
-    return ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) | ((uint32_t)bytes[2] << 8) |
-           (uint32_t)bytes[3];
+    return ((uint32_t) bytes[0] << 24) | ((uint32_t) bytes[1] << 16) | ((uint32_t) bytes[2] << 8) |
+           (uint32_t) bytes[3];
 }
 
 static uint64_t readBigEndianUInt64(const uint8_t *bytes)
@@ -81,10 +78,11 @@ static bool namesEqual(const uint8_t *bytes, size_t length, size_t offset, const
 
 static bool parseSlice(const uint8_t *bytes, size_t length, AttestationSliceInfo *result)
 {
-    uint32_t magic = 0;
+    uint32_t magic        = 0;
     uint32_t commandCount = 0;
-    uint32_t commandSize = 0;
-    if (!readUInt32(bytes, length, 0, &magic) || magic != MH_MAGIC_64 || length < sizeof(struct mach_header_64))
+    uint32_t commandSize  = 0;
+    if (!readUInt32(bytes, length, 0, &magic) || magic != MH_MAGIC_64 ||
+        length < sizeof(struct mach_header_64))
     {
         return false;
     }
@@ -100,21 +98,24 @@ static bool parseSlice(const uint8_t *bytes, size_t length, AttestationSliceInfo
     }
     memset(result, 0, sizeof(*result));
     result->size = length;
-    memcpy(&result->cpuType, bytes + offsetof(struct mach_header_64, cputype), sizeof(result->cpuType));
-    memcpy(&result->cpuSubtype, bytes + offsetof(struct mach_header_64, cpusubtype), sizeof(result->cpuSubtype));
+    memcpy(&result->cpuType, bytes + offsetof(struct mach_header_64, cputype),
+           sizeof(result->cpuType));
+    memcpy(&result->cpuSubtype, bytes + offsetof(struct mach_header_64, cpusubtype),
+           sizeof(result->cpuSubtype));
     size_t commandOffset = commandsStart;
-    size_t commandEnd = commandsStart + commandSize;
+    size_t commandEnd    = commandsStart + commandSize;
     for (uint32_t index = 0; index < commandCount; index++)
     {
         if (commandOffset > commandEnd || commandEnd - commandOffset < sizeof(struct load_command))
         {
             return false;
         }
-        uint32_t command = 0;
+        uint32_t command            = 0;
         uint32_t currentCommandSize = 0;
         if (!readUInt32(bytes, length, commandOffset, &command) ||
             !readUInt32(bytes, length, commandOffset + sizeof(uint32_t), &currentCommandSize) ||
-            currentCommandSize < sizeof(struct load_command) || currentCommandSize > commandEnd - commandOffset)
+            currentCommandSize < sizeof(struct load_command) ||
+            currentCommandSize > commandEnd - commandOffset)
         {
             return false;
         }
@@ -125,34 +126,47 @@ static bool parseSlice(const uint8_t *bytes, size_t length, AttestationSliceInfo
                 return false;
             }
             uint32_t sectionCount = 0;
-            if (!readUInt32(bytes, length, commandOffset + offsetof(struct segment_command_64, nsects), &sectionCount) ||
-                sectionCount > (currentCommandSize - sizeof(struct segment_command_64)) / sizeof(struct section_64))
+            if (!readUInt32(bytes, length,
+                            commandOffset + offsetof(struct segment_command_64, nsects),
+                            &sectionCount) ||
+                sectionCount > (currentCommandSize - sizeof(struct segment_command_64)) /
+                                   sizeof(struct section_64))
             {
                 return false;
             }
-            if (namesEqual(bytes, length, commandOffset + offsetof(struct segment_command_64, segname), "__LINKEDIT"))
+            if (namesEqual(bytes, length,
+                           commandOffset + offsetof(struct segment_command_64, segname),
+                           "__LINKEDIT"))
             {
                 result->hasLinkedit = true;
-                result->linkeditVmsize = commandOffset + offsetof(struct segment_command_64, vmsize);
-                result->linkeditFilesize = commandOffset + offsetof(struct segment_command_64, filesize);
+                result->linkeditVmsize =
+                    commandOffset + offsetof(struct segment_command_64, vmsize);
+                result->linkeditFilesize =
+                    commandOffset + offsetof(struct segment_command_64, filesize);
             }
             size_t sectionOffset = commandOffset + sizeof(struct segment_command_64);
             for (uint32_t sectionIndex = 0; sectionIndex < sectionCount; sectionIndex++)
             {
-                if (namesEqual(bytes, length, sectionOffset + offsetof(struct section_64, sectname), "__attestation") &&
-                    namesEqual(bytes, length, sectionOffset + offsetof(struct section_64, segname), "__TEXT"))
+                if (namesEqual(bytes, length, sectionOffset + offsetof(struct section_64, sectname),
+                               "__attestation") &&
+                    namesEqual(bytes, length, sectionOffset + offsetof(struct section_64, segname),
+                               "__TEXT"))
                 {
-                    uint64_t sectionSize = 0;
+                    uint64_t sectionSize       = 0;
                     uint32_t sectionFileOffset = 0;
-                    if (!readUInt64(bytes, length, sectionOffset + offsetof(struct section_64, size), &sectionSize) ||
-                        !readUInt32(bytes, length, sectionOffset + offsetof(struct section_64, offset), &sectionFileOffset) ||
+                    if (!readUInt64(bytes, length,
+                                    sectionOffset + offsetof(struct section_64, size),
+                                    &sectionSize) ||
+                        !readUInt32(bytes, length,
+                                    sectionOffset + offsetof(struct section_64, offset),
+                                    &sectionFileOffset) ||
                         sectionSize != ATTESTATION_SECTION_SIZE || sectionFileOffset > length ||
                         sectionSize > length - sectionFileOffset)
                     {
                         return false;
                     }
                     result->sectionOffset = sectionFileOffset;
-                    result->sectionSize = (size_t)sectionSize;
+                    result->sectionSize   = (size_t) sectionSize;
                 }
                 sectionOffset += sizeof(struct section_64);
             }
@@ -164,16 +178,20 @@ static bool parseSlice(const uint8_t *bytes, size_t length, AttestationSliceInfo
                 return false;
             }
             uint32_t dataOffset = 0;
-            uint32_t dataSize = 0;
-            if (!readUInt32(bytes, length, commandOffset + offsetof(struct linkedit_data_command, dataoff), &dataOffset) ||
-                !readUInt32(bytes, length, commandOffset + offsetof(struct linkedit_data_command, datasize), &dataSize) ||
+            uint32_t dataSize   = 0;
+            if (!readUInt32(bytes, length,
+                            commandOffset + offsetof(struct linkedit_data_command, dataoff),
+                            &dataOffset) ||
+                !readUInt32(bytes, length,
+                            commandOffset + offsetof(struct linkedit_data_command, datasize),
+                            &dataSize) ||
                 dataOffset > length || dataSize > length - dataOffset)
             {
                 return false;
             }
-            result->hasCodeSignature = true;
+            result->hasCodeSignature     = true;
             result->codeSignatureCommand = commandOffset;
-            result->boundary = dataOffset;
+            result->boundary             = dataOffset;
         }
         commandOffset += currentCommandSize;
     }
@@ -193,11 +211,8 @@ static bool parseSlice(const uint8_t *bytes, size_t length, AttestationSliceInfo
     return true;
 }
 
-static bool chooseLoadedSlice(const uint8_t *bytes,
-                              size_t length,
-                              cpu_type_t loadedCpuType,
-                              cpu_subtype_t loadedCpuSubtype,
-                              const uint8_t **slice,
+static bool chooseLoadedSlice(const uint8_t *bytes, size_t length, cpu_type_t loadedCpuType,
+                              cpu_subtype_t loadedCpuSubtype, const uint8_t **slice,
                               size_t *sliceLength)
 {
     if (length < sizeof(uint32_t))
@@ -207,7 +222,7 @@ static bool chooseLoadedSlice(const uint8_t *bytes,
     uint32_t magic = readBigEndianUInt32(bytes);
     if (magic != FAT_MAGIC && magic != FAT_MAGIC_64)
     {
-        *slice = bytes;
+        *slice       = bytes;
         *sliceLength = length;
         return true;
     }
@@ -222,15 +237,17 @@ static bool chooseLoadedSlice(const uint8_t *bytes,
     {
         return false;
     }
-    const uint8_t *fallback = NULL;
-    size_t fallbackLength = 0;
+    const uint8_t *fallback       = NULL;
+    size_t         fallbackLength = 0;
     for (uint32_t index = 0; index < architectureCount; index++)
     {
-        const uint8_t *entry = bytes + entriesStart + index * entrySize;
-        cpu_type_t cpuType = (cpu_type_t)readBigEndianUInt32(entry);
-        cpu_subtype_t cpuSubtype = (cpu_subtype_t)readBigEndianUInt32(entry + sizeof(uint32_t));
-        uint64_t offset = magic == FAT_MAGIC_64 ? readBigEndianUInt64(entry + 8) : readBigEndianUInt32(entry + 8);
-        uint64_t size = magic == FAT_MAGIC_64 ? readBigEndianUInt64(entry + 16) : readBigEndianUInt32(entry + 12);
+        const uint8_t *entry      = bytes + entriesStart + index * entrySize;
+        cpu_type_t     cpuType    = (cpu_type_t) readBigEndianUInt32(entry);
+        cpu_subtype_t  cpuSubtype = (cpu_subtype_t) readBigEndianUInt32(entry + sizeof(uint32_t));
+        uint64_t       offset =
+            magic == FAT_MAGIC_64 ? readBigEndianUInt64(entry + 8) : readBigEndianUInt32(entry + 8);
+        uint64_t size = magic == FAT_MAGIC_64 ? readBigEndianUInt64(entry + 16)
+                                              : readBigEndianUInt32(entry + 12);
         if (offset > length || size > length - offset)
         {
             return false;
@@ -238,19 +255,19 @@ static bool chooseLoadedSlice(const uint8_t *bytes,
         if (cpuType == loadedCpuType &&
             (cpuSubtype == loadedCpuSubtype || (cpuSubtype & 0xff) == (loadedCpuSubtype & 0xff)))
         {
-            *slice = bytes + offset;
-            *sliceLength = (size_t)size;
+            *slice       = bytes + offset;
+            *sliceLength = (size_t) size;
             return true;
         }
         if (!fallback && cpuType == loadedCpuType)
         {
-            fallback = bytes + offset;
-            fallbackLength = (size_t)size;
+            fallback       = bytes + offset;
+            fallbackLength = (size_t) size;
         }
     }
     if (fallback)
     {
-        *slice = fallback;
+        *slice       = fallback;
         *sliceLength = fallbackLength;
         return true;
     }
@@ -263,7 +280,7 @@ static bool zeroRange(NSMutableData *data, size_t offset, size_t length)
     {
         return false;
     }
-    memset((uint8_t *)data.mutableBytes + offset, 0, length);
+    memset((uint8_t *) data.mutableBytes + offset, 0, length);
     return true;
 }
 
@@ -292,25 +309,25 @@ static NSData *canonicalDigest(const uint8_t *slice, const AttestationSliceInfo 
         return nil;
     }
     // Re-signers can grow the mapped __LINKEDIT range when the new blob is larger.
-    if (info->hasLinkedit &&
-        (!zeroRange(canonical, info->linkeditFilesize, 8) ||
-         !zeroRange(canonical, info->linkeditVmsize, 8)))
+    if (info->hasLinkedit && (!zeroRange(canonical, info->linkeditFilesize, 8) ||
+                              !zeroRange(canonical, info->linkeditVmsize, 8)))
     {
         return nil;
     }
     uint8_t digest[CC_SHA256_DIGEST_LENGTH] = {0};
-    CC_SHA256(canonical.bytes, (CC_LONG)canonical.length, digest);
+    CC_SHA256(canonical.bytes, (CC_LONG) canonical.length, digest);
     return [NSData dataWithBytes:digest length:sizeof(digest)];
 }
 
 static NSData *publicKeyData(void)
 {
-    static NSData *data = nil;
+    static NSData         *data = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        data = [[NSData alloc] initWithBase64EncodedString:
-                                      @"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEQPX4NgN7w+oQW/t31KTzr45C8edXjinWB2pgvXhOqipWKRJ1wfnlfZmh4PwVtT9C/ng0bDA2RjvzxhHC6z0leA=="
-                                      options:0];
+        data = [[NSData alloc]
+            initWithBase64EncodedString:
+                @"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEQPX4NgN7w+oQW/t31KTzr45C8edXjinWB2pgvXhOqipWKRJ1wfnlfZmh4PwVtT9C/ng0bDA2RjvzxhHC6z0leA=="
+                                options:0];
     });
     return data;
 }
@@ -338,31 +355,29 @@ static bool failVerification(NSString *reason)
 bool VerifyEmbeddedAttestation(void)
 {
     Dl_info imageInfo = {0};
-    if (dladdr((const void *)&VerifyEmbeddedAttestation, &imageInfo) == 0 || !imageInfo.dli_fname)
+    if (dladdr((const void *) &VerifyEmbeddedAttestation, &imageInfo) == 0 || !imageInfo.dli_fname)
     {
         return failVerification(@"unable to resolve the loaded dylib path");
     }
-    struct mach_header_64 *loadedHeader = (struct mach_header_64 *)imageInfo.dli_fbase;
+    struct mach_header_64 *loadedHeader = (struct mach_header_64 *) imageInfo.dli_fbase;
     if (!loadedHeader || loadedHeader->magic != MH_MAGIC_64)
     {
         return failVerification(@"loaded image is not a 64-bit Mach-O");
     }
     NSError *fileError = nil;
-    NSData *fileData = [NSData dataWithContentsOfFile:[NSString stringWithUTF8String:imageInfo.dli_fname]
-                                               options:0
-                                                 error:&fileError];
+    NSData  *fileData =
+        [NSData dataWithContentsOfFile:[NSString stringWithUTF8String:imageInfo.dli_fname]
+                               options:0
+                                 error:&fileError];
     if (!fileData)
     {
-        return failVerification(fileError.localizedDescription ?: @"unable to read the loaded dylib");
+        return failVerification(fileError.localizedDescription
+                                    ?: @"unable to read the loaded dylib");
     }
-    const uint8_t *slice = NULL;
-    size_t sliceLength = 0;
-    if (!chooseLoadedSlice((const uint8_t *)fileData.bytes,
-                           fileData.length,
-                           loadedHeader->cputype,
-                           loadedHeader->cpusubtype,
-                           &slice,
-                           &sliceLength))
+    const uint8_t *slice       = NULL;
+    size_t         sliceLength = 0;
+    if (!chooseLoadedSlice((const uint8_t *) fileData.bytes, fileData.length, loadedHeader->cputype,
+                           loadedHeader->cpusubtype, &slice, &sliceLength))
     {
         return failVerification(@"unable to select the loaded architecture slice");
     }
@@ -377,7 +392,8 @@ bool VerifyEmbeddedAttestation(void)
         attestation.algorithm != ATTESTATION_ALGORITHM_P256_SHA256 ||
         attestation.size != ATTESTATION_SECTION_SIZE || attestation.keyId != ATTESTATION_KEY_ID ||
         attestation.cpuType != info.cpuType || attestation.cpuSubtype != info.cpuSubtype ||
-        attestation.signatureLength == 0 || attestation.signatureLength > ATTESTATION_SIGNATURE_CAPACITY)
+        attestation.signatureLength == 0 ||
+        attestation.signatureLength > ATTESTATION_SIGNATURE_CAPACITY)
     {
         return failVerification(@"attestation metadata is invalid");
     }
@@ -387,37 +403,35 @@ bool VerifyEmbeddedAttestation(void)
         return failVerification(@"Mach-O digest mismatch");
     }
     CFErrorRef keyError = NULL;
-    SecKeyRef publicKey = SecKeyCreateWithData(
-        (__bridge CFDataRef)publicKeyBytes(),
-        (__bridge CFDictionaryRef)@{
-            (__bridge id)kSecAttrKeyType : (__bridge id)kSecAttrKeyTypeECSECPrimeRandom,
-            (__bridge id)kSecAttrKeyClass : (__bridge id)kSecAttrKeyClassPublic,
-            (__bridge id)kSecAttrKeySizeInBits : @256,
+    SecKeyRef  publicKey =
+        SecKeyCreateWithData((__bridge CFDataRef) publicKeyBytes(), (__bridge CFDictionaryRef) @{
+            (__bridge id) kSecAttrKeyType : (__bridge id) kSecAttrKeyTypeECSECPrimeRandom,
+            (__bridge id) kSecAttrKeyClass : (__bridge id) kSecAttrKeyClassPublic,
+            (__bridge id) kSecAttrKeySizeInBits : @256,
         },
-        &keyError);
+                             &keyError);
     if (!publicKey)
     {
-        NSString *reason = keyError ? CFBridgingRelease(keyError) : @"unable to import the P-256 public key";
+        NSString *reason =
+            keyError ? CFBridgingRelease(keyError) : @"unable to import the P-256 public key";
         return failVerification(reason);
     }
-    NSData *signature = [NSData dataWithBytes:attestation.signature length:attestation.signatureLength];
+    NSData    *signature   = [NSData dataWithBytes:attestation.signature
+                                            length:attestation.signatureLength];
     CFErrorRef verifyError = NULL;
-    BOOL verified = SecKeyVerifySignature(publicKey,
-                                          kSecKeyAlgorithmECDSASignatureDigestX962SHA256,
-                                          (__bridge CFDataRef)digest,
-                                          (__bridge CFDataRef)signature,
-                                          &verifyError);
+    BOOL verified = SecKeyVerifySignature(publicKey, kSecKeyAlgorithmECDSASignatureDigestX962SHA256,
+                                          (__bridge CFDataRef) digest,
+                                          (__bridge CFDataRef) signature, &verifyError);
     CFRelease(publicKey);
     if (!verified)
     {
-        NSString *reason = verifyError ? CFBridgingRelease(verifyError) : @"P-256 signature mismatch";
+        NSString *reason =
+            verifyError ? CFBridgingRelease(verifyError) : @"P-256 signature mismatch";
         return failVerification(reason);
     }
     [Logger info:LOG_CATEGORY_UTILITIES
           format:@"Embedded attestation verified for %@/%@ digest %@ commit %s",
-                 @(attestation.cpuType),
-                 @(attestation.cpuSubtype),
-                 hexDigest((const uint8_t *)digest.bytes),
-                 attestation.commitHash];
+                 @(attestation.cpuType), @(attestation.cpuSubtype),
+                 hexDigest((const uint8_t *) digest.bytes), attestation.commitHash];
     return true;
 }

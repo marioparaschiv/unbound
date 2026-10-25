@@ -1,6 +1,6 @@
 import { metro, patcher } from '@unbound-app/api';
 
-import type { Sticker } from '~/staged-stickers';
+import type { Sticker } from '@unbound-plugins/shared/stickers/staged-stickers';
 
 export type StickerProps = { animated: boolean; opaque: boolean; size: number; sticker: Sticker };
 
@@ -22,6 +22,7 @@ export const RequiredModules = [
 export const ChatInputs = metro.findByProps('getBestActiveInputForChannelId', { lazy: true });
 export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
 export const DraftStore = metro.findStore('Draft', { lazy: true });
+export const ChannelStore = metro.findStore('Channel', { lazy: true });
 export const MessageActions = metro.api.Messages;
 
 // Components are found with `interop: false`, by file path first, then by name.

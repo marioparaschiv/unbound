@@ -7,14 +7,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
 object NativeJava {
-    private const val MAX_CLASS_NAME_LENGTH = 256
-    private const val MAX_MEMBER_NAME_LENGTH = 128
-    private const val MAX_ARGUMENTS = 16
-    private const val MAX_ARRAY_LENGTH = 4096
-    private const val MAX_STRING_LENGTH = 1 shl 20
-
-    private const val MAX_BATCH_OPERATIONS = 64
-    private const val MAX_ASSOCIATIONS_PER_OBJECT = 64
+    private const val MAX_RESULT_STRING_LENGTH = 1 shl 20
 
     private val associations = java.util.WeakHashMap<Any, HashMap<String, Any?>>()
     private var nextAssociation = 1L
@@ -61,14 +54,14 @@ object NativeJava {
     fun respondsTo(handleJSON: String, name: String, argumentsJSON: String): String {
         val target = resolve(parseHandle(handleJSON))
         val arguments = parseArguments(argumentsJSON)
-        val found = runCatching { findMethod(target, memberName(name), arguments) }.isSuccess
+        val found = runCatching { findMethod(target, name, arguments) }.isSuccess
         return serialize(found)
     }
 
     fun invoke(handleJSON: String, name: String, argumentsJSON: String): String {
         val target = resolve(parseHandle(handleJSON))
         val arguments = parseArguments(argumentsJSON)
-        val method = findMethod(target, memberName(name), arguments)
+        val method = findMethod(target, name, arguments)
         val receiver = if (Modifier.isStatic(method.modifiers)) null else target
 
         if (receiver == null && target !is Class<*>) {
@@ -81,14 +74,14 @@ object NativeJava {
 
     fun getField(handleJSON: String, name: String): String {
         val target = resolve(parseHandle(handleJSON))
-        val field = findField(target, memberName(name))
+        val field = findField(target, name)
         field.isAccessible = true
         return serialize(field.get(if (Modifier.isStatic(field.modifiers)) null else target))
     }
 
     fun setField(handleJSON: String, name: String, valueJSON: String) {
         val target = resolve(parseHandle(handleJSON))
-        val field = findField(target, memberName(name))
+        val field = findField(target, name)
         field.isAccessible = true
         val argument = parseValue(JSONObject(valueJSON))
         field.set(
@@ -99,26 +92,19 @@ object NativeJava {
 
     fun batch(operationsJSON: String): String {
         val operations = JSONArray(operationsJSON)
-        require(operations.length() <= MAX_BATCH_OPERATIONS) {
-            "The Java batch size is out of bounds"
-        }
-
         val results = JSONArray()
         for (index in 0 until operations.length()) {
             val operation = operations.getJSONObject(index)
             val kind = operation.optString("op")
-            val handle = operation.optJSONObject("handle")?.toString()
-                ?: throw IllegalArgumentException("A Java batch operation needs a handle")
-            val name = operation.optString("name")
+            val handle = operation.getJSONObject("handle").toString()
+            val name = operation.getString("name")
 
             val outcome = runCatching {
                 when (kind) {
                     "invoke" -> invoke(handle, name, operation.optJSONArray("args")?.toString() ?: "[]")
                     "getField" -> getField(handle, name)
                     "setField" -> {
-                        val value = operation.optJSONObject("value")
-                            ?: throw IllegalArgumentException("A Java field write needs a value")
-                        setField(handle, name, value.toString())
+                        setField(handle, name, operation.getJSONObject("value").toString())
                         serialize(null)
                     }
                     "respondsTo" ->
@@ -127,19 +113,13 @@ object NativeJava {
                 }
             }
 
-            results.put(
-                outcome.fold(
-                    { JSONObject(it) },
-                    {
-                        JSONObject().put(
-                            "__nativeFailure",
-                            JSONObject()
-                                .put("code", "NATIVE_BRIDGE_ERROR")
-                                .put("message", it.message ?: it.toString()),
-                        )
-                    },
-                ),
-            )
+            val result = outcome.getOrElse {
+                throw IllegalStateException(
+                    "Java batch operation $index failed: ${it.message ?: it.toString()}",
+                    it,
+                )
+            }
+            results.put(JSONObject(result))
         }
 
         return results.toString()
@@ -151,17 +131,21 @@ object NativeJava {
         return JSONObject().put("id", id).toString()
     }
 
-    fun setAssociatedObject(handleJSON: String, keyJSON: String, valueJSON: String) {
+    fun setAssociatedObject(handleJSON: String, keyJSON: String, valueJSON: String, maximumPerObject: Int) {
         val target = resolve(parseHandle(handleJSON))
         val key = parseHandle(keyJSON)
         val value = decode(valueJSON)
 
         synchronized(this) {
             val bucket = associations.getOrPut(target) { HashMap() }
-            require(bucket.size < MAX_ASSOCIATIONS_PER_OBJECT) {
+            if (value == null) {
+                bucket.remove(key)
+                return
+            }
+            require(bucket.containsKey(key) || bucket.size < maximumPerObject) {
                 "Too many Java associations on one object"
             }
-            if (value == null) bucket.remove(key) else bucket[key] = value
+            bucket[key] = value
         }
     }
 
@@ -209,23 +193,12 @@ object NativeJava {
     fun coerceTo(type: Class<*>, value: Any?): Any? = coerce(type, value)
 
     private fun loadClass(name: String): Class<*> {
-        require(name.isNotEmpty() && name.length <= MAX_CLASS_NAME_LENGTH) {
-            "The Java class name is out of bounds"
-        }
-
         val loaders = listOfNotNull(pluginClassLoader, NativeJava::class.java.classLoader)
         for (loader in loaders) {
             runCatching { return Class.forName(name, false, loader) }
         }
 
         throw IllegalArgumentException("The Java class $name is unavailable")
-    }
-
-    private fun memberName(name: String): String {
-        require(name.isNotEmpty() && name.length <= MAX_MEMBER_NAME_LENGTH) {
-            "The Java member name is out of bounds"
-        }
-        return name
     }
 
     private fun findMethod(target: Any, name: String, arguments: List<Argument>): Method {
@@ -277,25 +250,20 @@ object NativeJava {
 
     private fun parseArguments(argumentsJSON: String): List<Argument> {
         val array = JSONArray(argumentsJSON)
-        require(array.length() <= MAX_ARGUMENTS) { "The Java argument count is out of bounds" }
         return (0 until array.length()).map { parseValue(array.getJSONObject(it)) }
     }
 
     private fun parseValue(value: JSONObject): Argument {
         val type = value.optString("type")
         if (type.isEmpty() && value.has("id")) {
-            return Reference(resolve(boundedHandle(value.optString("id"))))
+            return Reference(resolve(value.getString("id")))
         }
         require(type.isNotEmpty()) { "The Java value has no type" }
 
         return when (type) {
             "null" -> Absent(value.optString("class").takeIf { it.isNotEmpty() }?.let { loadClass(it) })
-            "handle" -> Reference(resolve(boundedHandle(value.optString("value"))))
-            "string" -> {
-                val text = value.optString("value")
-                require(text.length <= MAX_STRING_LENGTH) { "The Java string is out of bounds" }
-                Scalar(text, String::class.java)
-            }
+            "handle" -> Reference(resolve(value.getString("value")))
+            "string" -> Scalar(value.optString("value"), String::class.java)
             "boolean" -> Scalar(value.getBoolean("value"), java.lang.Boolean.TYPE)
             "byte" -> Scalar(boundedLong(value).toByte(), java.lang.Byte.TYPE)
             "short" -> Scalar(boundedLong(value).toShort(), java.lang.Short.TYPE)
@@ -317,7 +285,6 @@ object NativeJava {
         val componentName = value.optString("componentType")
         require(componentName.isNotEmpty()) { "The Java array has no component type" }
         val elements = value.optJSONArray("value") ?: JSONArray()
-        require(elements.length() <= MAX_ARRAY_LENGTH) { "The Java array is out of bounds" }
 
         val component = primitive(componentName) ?: loadClass(componentName)
         val array = java.lang.reflect.Array.newInstance(component, elements.length())
@@ -361,11 +328,6 @@ object NativeJava {
         return number
     }
 
-    private fun boundedHandle(id: String): String {
-        require(id.isNotEmpty() && id.length <= 128) { "The Java handle is out of bounds" }
-        return id
-    }
-
     private fun specificity(parameters: Array<Class<*>>, arguments: List<Argument>): Int =
         parameters.indices.sumOf { distance(parameters[it], arguments[it]) }
 
@@ -397,8 +359,9 @@ object NativeJava {
     }
 
     private fun accepts(parameter: Class<*>, argument: Argument): Boolean = when (argument) {
-        is Absent -> !parameter.isPrimitive &&
-            (argument.declaredType == null || parameter.isAssignableFrom(argument.declaredType))
+        is Absent ->
+            !parameter.isPrimitive &&
+                (argument.declaredType == null || parameter.isAssignableFrom(argument.declaredType))
         is Reference -> parameter.isInstance(argument.target) ||
             (parameter == Class::class.java && argument.target is Class<*>)
         is Scalar -> acceptsScalar(parameter, argument.value)
@@ -454,7 +417,7 @@ object NativeJava {
         is Long -> tagged("long", result)
         is Float -> tagged("float", result.toDouble())
         is Double -> tagged("double", result)
-        is String -> tagged("string", result.take(MAX_STRING_LENGTH))
+        is String -> tagged("string", result.take(MAX_RESULT_STRING_LENGTH))
         else -> tagged("handle", handle(result))
     }
 
@@ -475,7 +438,7 @@ object NativeJava {
     fun objectForHandle(handleJSON: String): Any {
         val value = JSONObject(handleJSON)
         val id = value.optString("id").ifEmpty { value.optString("value") }
-        return resolve(boundedHandle(id.trim()))
+        return resolve(id)
     }
 
     private fun tagged(type: String, value: Any): String =
@@ -485,8 +448,7 @@ object NativeJava {
         objectsByHandle[id] ?: throw IllegalArgumentException("The Java handle is unavailable")
     }
 
-    private fun parseHandle(handleJSON: String): String =
-        boundedHandle(JSONObject(handleJSON).optString("id").trim())
+    private fun parseHandle(handleJSON: String): String = JSONObject(handleJSON).getString("id")
 
     private fun handle(target: Any): String = synchronized(this) {
         val key = IdentityKey(target)

@@ -17,7 +17,7 @@ function SettingsPanel() {
 				/>
 				<Discord.TableSwitchRow
 					label='Show Paused Invites'
-					subLabel='Show paused-invite notices in server views'
+					subLabel='Show the Pause Invites setting in Server Settings to everyone'
 					value={store.get('showInvitesPaused', true)}
 					onValueChange={(value) => store.set('showInvitesPaused', value)}
 				/>

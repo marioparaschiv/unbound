@@ -24,7 +24,7 @@ static bool copyExistingBundle(const char *sourcePath, const char *backupPath)
         return false;
     }
 
-    std::string stagingTemplate = std::string(backupPath) + ".XXXXXX";
+    std::string       stagingTemplate = std::string(backupPath) + ".XXXXXX";
     std::vector<char> staging(stagingTemplate.begin(), stagingTemplate.end());
     staging.push_back('\0');
     int destination = mkstemp(staging.data());
@@ -34,7 +34,7 @@ static bool copyExistingBundle(const char *sourcePath, const char *backupPath)
         return false;
     }
 
-    bool copied = fchmod(destination, metadata.st_mode & 0777) == 0;
+    bool                    copied = fchmod(destination, metadata.st_mode & 0777) == 0;
     std::array<char, 65536> buffer{};
     while (copied)
     {
@@ -88,8 +88,7 @@ static bool copyExistingBundle(const char *sourcePath, const char *backupPath)
     return copied;
 }
 
-bool promoteNativeBundle(const char *candidatePath, const char *targetPath,
-                         const char *backupPath)
+bool promoteNativeBundle(const char *candidatePath, const char *targetPath, const char *backupPath)
 {
     if (!candidatePath || !targetPath || !backupPath || !*candidatePath || !*targetPath ||
         !*backupPath || strcmp(candidatePath, targetPath) == 0 ||
@@ -108,8 +107,7 @@ bool promoteNativeBundle(const char *candidatePath, const char *targetPath,
     struct stat targetMetadata;
     if (lstat(targetPath, &targetMetadata) == 0)
     {
-        if (!S_ISREG(targetMetadata.st_mode) ||
-            !copyExistingBundle(targetPath, backupPath))
+        if (!S_ISREG(targetMetadata.st_mode) || !copyExistingBundle(targetPath, backupPath))
         {
             return false;
         }

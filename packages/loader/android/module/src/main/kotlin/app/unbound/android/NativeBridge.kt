@@ -5,18 +5,30 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 object NativeBridge {
-    private const val EMULATOR_HOST = "10.0.2.2"
+    private val downloadWatchdog = Executors.newSingleThreadScheduledExecutor {
+        Thread(it, "unbound-download-watchdog").apply { isDaemon = true }
+    }
+
+    @JvmStatic
+    external fun nativeDocumentsName(): String
+
+    @JvmStatic
+    external fun nativeSettingsFileName(): String
+
+    @Volatile
+    var documents: String = ""
 
     @JvmStatic
     external fun nativeInitialize(
         documents: String,
-        devtoolsScript: String?,
+        bootstrapScripts: String,
         origin: String,
         bytecodeVersion: Int,
         platformInfo: String,
@@ -41,31 +53,24 @@ object NativeBridge {
     external fun nativeHermesBytecodeVersion(header: ByteArray): Int
 
     @JvmStatic
-    external fun nativeHotReloadURL(): String?
-
-    @JvmStatic
-    external fun nativeHotReloadConnected()
-
-    @JvmStatic
-    external fun nativeHotReloadFeed(chunk: String): Boolean
-
-    @JvmStatic
-    external fun nativeHotReloadNextDelayMs(): Long
-
-    @JvmStatic
-    external fun nativeGetBoolean(store: String, key: String, fallback: Boolean): Boolean
-
-    @JvmStatic
-    external fun nativeSetBoolean(store: String, key: String, value: Boolean)
-
-    @JvmStatic
-    external fun nativeSettingJSON(store: String, key: String): String?
+    external fun nativeHookReturnValue(token: String, selfJSON: String, argumentsJSON: String): String?
 
     @JvmStatic
     external fun nativeToolbox(action: String, argument: String?): String?
+    external fun nativePreference(action: String, argument: String?): String?
+
+    fun preferenceEnabled(action: String, argument: String? = null): Boolean =
+        nativePreference(action, argument) == "true"
+
+    external fun nativeParseColor(value: String): Long
+
+    fun parseColor(value: String): Int? = nativeParseColor(value).takeIf { it >= 0 }?.toInt()
 
     @JvmStatic
-    external fun nativeFontsJSON(): String
+    external fun nativeMessageBubbleStyle(): DoubleArray
+
+    @JvmStatic
+    external fun nativeResolveFont(family: String): String
 
     @JvmStatic
     external fun nativeThemeColorsJSON(themeId: String): String
@@ -74,17 +79,37 @@ object NativeBridge {
     external fun nativePrepareAddons()
 
     @JvmStatic
+    external fun nativeLog(level: Int, category: String, message: String)
+
+    @JvmStatic
+    external fun nativeDevOverlayButtonSide(): Double
+
+    @JvmStatic
+    external fun nativeIncompatibleHostMessage(): String
+
+    @JvmStatic
+    external fun nativeDevelopmentBuildBanner(commit: String, subject: String, branch: String, timestamp: String): String
+
+    @JvmStatic
+    external fun nativeDevelopmentBuildBannerSeconds(): Int
+
+    @JvmStatic
+    external fun nativeDevOverlayCenter(bounds: DoubleArray): DoubleArray?
+
+    @JvmStatic
+    external fun nativeClampDevOverlayCenter(x: Double, y: Double, bounds: DoubleArray): DoubleArray?
+
+    @JvmStatic
+    external fun nativeSaveDevOverlayCenter(x: Double, y: Double, bounds: DoubleArray)
+
+    @JvmStatic
     fun scheduleRuntimeWork() {
         ReactRuntime.post { runtimePointer -> nativeDrainRuntimeWork(runtimePointer) }
     }
 
     @JvmStatic
     fun installMetroModuleCaptureBeforeBundle() {
-        ReactRuntime.runBeforeBundle { runtimePointer ->
-            if (!nativeInstallMetroModuleCapture(runtimePointer)) {
-                Logger.error("runtime", "Metro module capture could not be installed")
-            }
-        }
+        ReactRuntime.runBeforeBundle { runtimePointer -> nativeInstallMetroModuleCapture(runtimePointer) }
     }
 
     @JvmStatic
@@ -142,34 +167,28 @@ object NativeBridge {
         NativeFabric.update(handleJSON, propsJSON)
 
     @JvmStatic
-    fun fabricUnmount(handleJSON: String) = NativeFabric.unmount(handleJSON)
+    fun fabricUnmount(handleJSON: String): Boolean = NativeFabric.unmount(handleJSON)
 
     @JvmStatic
-    fun fabricIsRunning(handleJSON: String): String = NativeFabric.isRunning(handleJSON)
+    fun fabricSetSize(handleJSON: String, minimumJSON: String, maximumJSON: String) =
+        NativeFabric.setSize(handleJSON, minimumJSON, maximumJSON)
 
     @JvmStatic
-    fun fabricViewHandle(handleJSON: String): String = NativeFabric.viewHandle(handleJSON)
+    fun fabricSetFrame(handleJSON: String, frameJSON: String) =
+        NativeFabric.setFrame(handleJSON, frameJSON)
 
     @JvmStatic
-    fun debugEnvironment(): String = JSONObject()
-        .put("isVirtualDevice", Platform.isEmulator())
-        .put("hostAddress", Platform.emulatorHostAddress() ?: JSONObject.NULL)
-        .toString()
+    fun fabricMeasure(handleJSON: String): String = NativeFabric.measure(handleJSON)
 
     @JvmStatic
-    fun hooksSetReturnValue(
-        tokenJSON: String,
-        selfJSON: String,
-        argumentsJSON: String,
-        valueJSON: String,
-    ) = NativeHooks.setReturnValue(tokenJSON, selfJSON, argumentsJSON, valueJSON)
-
-    @JvmStatic
-    fun hooksRemoveReturnValue(tokenJSON: String, selfJSON: String, argumentsJSON: String) =
-        NativeHooks.removeReturnValue(tokenJSON, selfJSON, argumentsJSON)
-
-    @JvmStatic
-    fun hooksClearReturnValues(tokenJSON: String) = NativeHooks.clearReturnValues(tokenJSON)
+    fun runtimeReplaced() {
+        NativeHooks.removeAll()
+        NativeJava.releaseAll()
+        Handler(Looper.getMainLooper()).post {
+            NativeFabric.unmountAll()
+            NativeUI.unmountAll()
+        }
+    }
 
     @JvmStatic
     fun javaGetClass(name: String): String = NativeJava.getClass(name)
@@ -211,8 +230,8 @@ object NativeBridge {
         NativeJava.getAssociatedObject(handleJSON, keyJSON)
 
     @JvmStatic
-    fun javaSetAssociatedObject(handleJSON: String, keyJSON: String, valueJSON: String) =
-        NativeJava.setAssociatedObject(handleJSON, keyJSON, valueJSON)
+    fun javaSetAssociatedObject(handleJSON: String, keyJSON: String, valueJSON: String, maximumPerObject: Int) =
+        NativeJava.setAssociatedObject(handleJSON, keyJSON, valueJSON, maximumPerObject)
 
     @JvmStatic
     fun fetchText(url: String, timeoutMs: Int): String? = runCatching {
@@ -234,12 +253,16 @@ object NativeBridge {
         destination: String,
         headerKeys: Array<String>,
         headerValues: Array<String>,
+        connectTimeoutMs: Int,
+        readTimeoutMs: Int,
+        totalTimeoutMs: Int,
     ): Array<String>? = runCatching {
         val connection = URL(url).openConnection() as HttpURLConnection
-        connection.connectTimeout = 15_000
-        connection.readTimeout = 30_000
+        connection.connectTimeout = connectTimeoutMs
+        connection.readTimeout = readTimeoutMs
         connection.useCaches = false
         headerKeys.zip(headerValues).forEach { (key, value) -> connection.setRequestProperty(key, value) }
+        val deadline = downloadWatchdog.schedule({ connection.disconnect() }, totalTimeoutMs.toLong(), TimeUnit.MILLISECONDS)
 
         try {
             val status = connection.responseCode
@@ -252,18 +275,16 @@ object NativeBridge {
                     staging.delete()
                     return null
                 }
-            } else if (status != HttpURLConnection.HTTP_NOT_MODIFIED) {
-                Logger.error("updater", "Bundle download returned HTTP $status for $url")
-                return null
             }
             arrayOf(status.toString(), connection.getHeaderField("etag") ?: "")
         } finally {
+            deadline.cancel(false)
             connection.disconnect()
         }
-    }.onFailure { Logger.error("updater", "Bundle download failed: $it") }.getOrNull()
+    }.onFailure { Logger.error(LogCategory.UPDATER, "Bundle download failed: $it") }.getOrNull()
 
     @JvmStatic
-    fun devServerHost(): String? = EMULATOR_HOST.takeIf { Platform.isEmulator() }
+    fun devServerHost(): String? = Platform.emulatorHostAddress()
 
     @JvmStatic
     fun isServing(url: String, timeoutMs: Int): Boolean = runCatching {
@@ -278,13 +299,28 @@ object NativeBridge {
         }
     }.getOrDefault(false)
 
+    private const val APP_FONTS_DIRECTORY = "fonts"
+
+    @JvmStatic
+    fun appFonts(): Array<String> = runCatching {
+        val assets = Platform.application()?.assets ?: return emptyArray()
+        assets.list(APP_FONTS_DIRECTORY).orEmpty()
+            .filter { it.endsWith(".ttf", true) || it.endsWith(".otf", true) }
+            .map { "$APP_FONTS_DIRECTORY/$it" }
+            .toTypedArray()
+    }.getOrDefault(emptyArray())
+
+    @JvmStatic
+    fun appFontBytes(path: String): ByteArray? = runCatching {
+        Platform.application()?.assets?.open(path)?.use { it.readBytes() }
+    }.getOrNull()
+
     @JvmStatic
     fun availableFonts(): Array<String> = runCatching {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return emptyArray()
         SystemFonts.getAvailableFonts()
-            .mapNotNull { it.file?.nameWithoutExtension }
+            .mapNotNull { it.file?.absolutePath }
             .distinct()
-            .sorted()
             .toTypedArray()
     }.getOrDefault(emptyArray())
 
@@ -298,10 +334,6 @@ object NativeBridge {
 
     @JvmStatic
     fun onBundleExecuted() {
-        Recovery.bundleExecuted = true
-        Logger.info("default", "Bundle executed.")
-        HotReload.observe()
+        Logger.info(LogCategory.DEFAULT, "Bundle executed.")
     }
-
-
 }

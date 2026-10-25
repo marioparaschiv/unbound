@@ -1,8 +1,26 @@
-#import "CoreBridge.h"
 #import "RecoveryQuickAction.h"
+
+#import "CoreBridge.h"
 #import "Unbound.h"
 
-static NSString *const kRecoveryShortcutType = @"app.unbound.recovery.toggle";
+static NSString *recoveryShortcutType(void)
+{
+    static NSString       *type = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken,
+                  ^{ type = [CoreBridge toolbox:@"recovery-shortcut-action" argument:@""]; });
+    return type;
+}
+
+static void showRecoveryStatus(NSString *status)
+{
+    UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay"
+                                                   style:UIAlertActionStyleDefault
+                                                 handler:nil];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (1.0 * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(),
+                   ^{ [Utilities alert:nil title:status buttons:@[ okay ]]; });
+}
 
 @interface RecoveryQuickAction ()
 + (NSArray<UIApplicationShortcutItem *> *)itemsWithRecoveryAction:
@@ -15,21 +33,20 @@ static NSString *const kRecoveryShortcutType = @"app.unbound.recovery.toggle";
 + (NSArray<UIApplicationShortcutItem *> *)itemsWithRecoveryAction:
     (NSArray<UIApplicationShortcutItem *> *)items
 {
-    BOOL enabled = [Utilities isRecoveryModeEnabled];
-    NSString *title = enabled ? @"Disable Safe Mode" : @"Enable Safe Mode";
+    NSString                  *title = [CoreBridge preference:@"recovery-label" argument:@""];
     UIApplicationShortcutIcon *icon = [UIApplicationShortcutIcon iconWithSystemImageName:@"shield"];
     UIApplicationShortcutItem *recovery =
-        [[UIApplicationShortcutItem alloc] initWithType:kRecoveryShortcutType
-                                        localizedTitle:title
-                                     localizedSubtitle:nil
-                                                  icon:icon
-                                              userInfo:nil];
+        [[UIApplicationShortcutItem alloc] initWithType:recoveryShortcutType()
+                                         localizedTitle:title
+                                      localizedSubtitle:nil
+                                                   icon:icon
+                                               userInfo:nil];
     NSMutableArray<UIApplicationShortcutItem *> *updated =
         [NSMutableArray arrayWithObject:recovery];
 
     for (UIApplicationShortcutItem *item in items)
     {
-        if (![item.type isEqualToString:kRecoveryShortcutType])
+        if (![item.type isEqualToString:recoveryShortcutType()])
         {
             [updated addObject:item];
         }
@@ -40,28 +57,25 @@ static NSString *const kRecoveryShortcutType = @"app.unbound.recovery.toggle";
 
 + (BOOL)handleShortcutItem:(UIApplicationShortcutItem *)item
 {
-    if (![item.type isEqualToString:kRecoveryShortcutType])
+    if (![item.type isEqualToString:recoveryShortcutType()])
     {
         return NO;
     }
 
-    BOOL enabled = [RecoveryQuickAction toggleSafeMode];
-    [Logger info:LOG_CATEGORY_DEFAULT
-          format:@"Home Screen action %@ Safe Mode.", enabled ? @"enabled" : @"disabled"];
-    return YES;
-}
-
-+ (BOOL)toggleSafeMode
-{
-    BOOL enabled = [CoreBridge toggleRecovery];
+    NSDictionary *toggle = [CoreBridge toolboxObject:@"recovery-shortcut" argument:@""];
     [RecoveryQuickAction refresh];
-    return enabled;
+    showRecoveryStatus(toggle[@"status"]);
+    if ([toggle[@"restartRequired"] boolValue])
+    {
+        [Utilities reloadApp];
+    }
+    return YES;
 }
 
 + (void)refresh
 {
     UIApplication *application = [UIApplication sharedApplication];
-    application.shortcutItems = application.shortcutItems ?: @[];
+    application.shortcutItems  = application.shortcutItems ?: @[];
 }
 
 @end
@@ -98,7 +112,7 @@ static NSString *const kRecoveryShortcutType = @"app.unbound.recovery.toggle";
 
 - (void)windowScene:(UIWindowScene *)windowScene
     performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem
-              completionHandler:(void (^)(BOOL succeeded))completionHandler
+               completionHandler:(void (^)(BOOL succeeded))completionHandler
 {
     if ([RecoveryQuickAction handleShortcutItem:shortcutItem])
     {
@@ -106,7 +120,6 @@ static NSString *const kRecoveryShortcutType = @"app.unbound.recovery.toggle";
         {
             completionHandler(YES);
         }
-        [Utilities reloadApp];
         return;
     }
 

@@ -1,9 +1,9 @@
-#include "LoaderFiles.h"
-
 #include <cassert>
 #include <filesystem>
 #include <string>
 #include <unistd.h>
+
+#include "LoaderFiles.h"
 
 static std::filesystem::path makeTemporaryDirectory()
 {

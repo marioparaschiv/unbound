@@ -1,6 +1,7 @@
 package app.unbound.android
 
 import android.app.Activity
+import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -11,15 +12,27 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class NativeUITest {
+    @Before
+    fun useJvmColorParser() {
+        NativeUI.colorParser = { value -> runCatching { Color.parseColor(value) }.getOrNull() }
+    }
+
+    private fun bounded(query: String): String = JSONObject(query).apply {
+        if (!has("maxDepth")) put("maxDepth", 16)
+        if (!has("maxNodes")) put("maxNodes", 512)
+        if (!has("maxResults")) put("maxResults", 128)
+    }.toString()
+
     @Test
     fun lookupReturnsHandlesForMatchingViewsWithinTheResultLimit() {
         val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
@@ -29,7 +42,7 @@ class NativeUITest {
         activity.setContentView(container)
         ActivityTracker.onActivityResumed(activity)
 
-        val response = JSONArray(NativeUI.lookup("""{"role":"text","maxResults":1}"""))
+        val response = JSONArray(NativeUI.lookup(bounded("""{"role":"text","maxResults":1}""")))
 
         assertEquals(1, response.length())
         assertEquals(true, response.getJSONObject(0).getString("id").isNotEmpty())
@@ -44,9 +57,9 @@ class NativeUITest {
         activity.setContentView(container)
         ActivityTracker.onActivityResumed(activity)
 
-        val handle = JSONArray(NativeUI.lookup("""{"role":"text"}""")).getJSONObject(0)
+        val handle = JSONArray(NativeUI.lookup(bounded("""{"role":"text"}"""))).getJSONObject(0)
         val snapshot = JSONObject(
-            NativeUI.snapshot("""{"role":"text","root":${handle}}"""),
+            NativeUI.snapshot(bounded("""{"role":"text","root":$handle}""")),
         )
         val node = snapshot.getJSONArray("nodes").getJSONObject(0)
 
@@ -60,14 +73,14 @@ class NativeUITest {
         val firstActivity = Robolectric.buildActivity(Activity::class.java).setup().get()
         firstActivity.setContentView(TextView(firstActivity).apply { text = "First" })
         ActivityTracker.onActivityResumed(firstActivity)
-        val handle = JSONArray(NativeUI.lookup("""{"role":"text"}""")).getJSONObject(0)
+        val handle = JSONArray(NativeUI.lookup(bounded("""{"role":"text"}"""))).getJSONObject(0)
 
         val secondActivity = Robolectric.buildActivity(Activity::class.java).setup().get()
         secondActivity.setContentView(TextView(secondActivity).apply { text = "Second" })
         ActivityTracker.onActivityResumed(secondActivity)
 
         assertThrows(IllegalArgumentException::class.java) {
-            NativeUI.snapshot("""{"role":"text","root":${handle}}""")
+            NativeUI.snapshot(bounded("""{"role":"text","root":$handle}"""))
         }
     }
 
@@ -78,7 +91,7 @@ class NativeUITest {
         activity.setContentView(label)
         ActivityTracker.onActivityResumed(activity)
         label.layout(0, 0, 120, 40)
-        val handle = JSONArray(NativeUI.lookup("""{"role":"text"}""")).getJSONObject(0)
+        val handle = JSONArray(NativeUI.lookup(bounded("""{"role":"text"}"""))).getJSONObject(0)
 
         val measured = JSONObject(NativeUI.measureView(handle.toString()))
 
@@ -91,7 +104,7 @@ class NativeUITest {
         val firstActivity = Robolectric.buildActivity(Activity::class.java).setup().get()
         firstActivity.setContentView(TextView(firstActivity).apply { text = "First" })
         ActivityTracker.onActivityResumed(firstActivity)
-        val handle = JSONArray(NativeUI.lookup("""{"role":"text"}""")).getJSONObject(0)
+        val handle = JSONArray(NativeUI.lookup(bounded("""{"role":"text"}"""))).getJSONObject(0)
 
         val secondActivity = Robolectric.buildActivity(Activity::class.java).setup().get()
         secondActivity.setContentView(TextView(secondActivity).apply { text = "Second" })
@@ -103,12 +116,12 @@ class NativeUITest {
     }
 
     @Test
-    fun frameUpdateValidatesAndAppliesBoundedDimensions() {
+    fun frameUpdateAppliesTheValidatedDimensions() {
         val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
         val label = TextView(activity).apply { text = "Resizable" }
         activity.setContentView(label)
         ActivityTracker.onActivityResumed(activity)
-        val handle = JSONArray(NativeUI.lookup("""{"role":"text"}""")).getJSONObject(0)
+        val handle = JSONArray(NativeUI.lookup(bounded("""{"role":"text"}"""))).getJSONObject(0)
 
         NativeUI.setViewFrame(
             handle.toString(),
@@ -117,9 +130,10 @@ class NativeUITest {
 
         assertEquals(80, label.layoutParams.width)
         assertEquals(24, label.layoutParams.height)
-        assertThrows(IllegalArgumentException::class.java) {
-            NativeUI.setViewFrame(handle.toString(), """{"x":0,"y":0,"width":0,"height":24}""")
-        }
+
+        NativeUI.setViewFrame(handle.toString(), """{"x":0,"y":0,"width":0,"height":24}""")
+
+        assertEquals(0, label.layoutParams.width)
     }
 
     @Test
@@ -135,16 +149,33 @@ class NativeUITest {
         NativeUI.updateView(text.toString(), """{"text":"After","textColor":"#FFFFFF"}""")
 
         val matching = JSONArray(
-            NativeUI.lookup("""{"role":"text","attributes":{"text":"After"}}"""),
+            NativeUI.lookup(bounded("""{"role":"text","attributes":{"text":"After"}}""")),
         )
 
         assertEquals(1, matching.length())
         NativeUI.unmountView(text.toString())
         assertEquals(
             0,
-            JSONArray(NativeUI.lookup("""{"role":"text","attributes":{"text":"After"}}""")).length(),
+            JSONArray(NativeUI.lookup(bounded("""{"role":"text","attributes":{"text":"After"}}"""))).length(),
         )
         NativeUI.unmountView(container.toString())
+    }
+
+    @Test
+    fun unmountAllDetachesEveryMountedView() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val root = FrameLayout(activity)
+        activity.setContentView(root)
+        ActivityTracker.onActivityResumed(activity)
+        val container = JSONObject(NativeUI.mountView("", "View", "{}"))
+        NativeUI.mountView(container.toString(), "Text", """{"text":"Mounted"}""")
+
+        NativeUI.unmountAll()
+
+        assertEquals(0, NativeUI.mountedCount())
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeUI.measureView(container.toString())
+        }
     }
 
     @Test
@@ -177,7 +208,7 @@ class NativeUITest {
         val image = findImageView(activity.window.decorView)
         val mounted = JSONArray(
             NativeUI.lookup(
-                """{"role":"image","attributes":{"contentDescription":"native-image-test"}}""",
+                bounded("""{"role":"image","attributes":{"contentDescription":"native-image-test"}}"""),
             ),
         )
 
@@ -192,7 +223,7 @@ class NativeUITest {
             0,
             JSONArray(
                 NativeUI.lookup(
-                    """{"role":"image","attributes":{"contentDescription":"native-image-test"}}""",
+                    bounded("""{"role":"image","attributes":{"contentDescription":"native-image-test"}}"""),
                 ),
             ).length(),
         )

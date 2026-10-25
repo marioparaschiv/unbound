@@ -1,54 +1,21 @@
 #import "ChatUI.h"
 
+#import "CoreBridge.h"
+
 @implementation ChatUI
 
-static NSNumber   *customAvatarRadius  = nil;
-static const float defaultAvatarRadius = -1.0f;
+static NSNumber *customAvatarRadius    = nil;
+static BOOL      messageBubblesEnabled = NO;
 
-static NSNumber *messageBubblesEnabled     = nil;
-static NSString *messageBubbleLightColor   = nil;
-static NSString *messageBubbleDarkColor    = nil;
-static NSNumber *messageBubbleCornerRadius = nil;
-
-static const float defaultMessageBubbleRadius = 10.0f;
-static const float messageBubbleHorizontalPadding = 8.0f;
-static const float messageBubbleVerticalPadding   = 4.0f;
-
-static UIColor *messageCellLightColor   = nil;
-static UIColor *messageCellDarkColor    = nil;
 static UIColor *messageCellDynamicColor = nil;
 
-+ (void)setAvatarCornerRadius:(NSNumber *)radius
++ (void)reloadPreferences
 {
-    if (!radius)
-    {
-        [Logger error:LOG_CATEGORY_CHATUI format:@"Avatar corner radius cannot be nil"];
-        return;
-    }
+    messageBubblesEnabled = [CoreBridge preferenceEnabled:@"message-bubbles"];
+    NSString *radius      = [CoreBridge preference:@"avatar-radius" argument:@""];
+    customAvatarRadius    = radius.length > 0 ? @([radius doubleValue]) : nil;
 
-    float radiusValue = [radius floatValue];
-    if (radiusValue < 0)
-    {
-        [Logger error:LOG_CATEGORY_CHATUI format:@"Avatar corner radius cannot be negative"];
-        return;
-    }
-
-    customAvatarRadius = radius;
-    [Logger info:LOG_CATEGORY_CHATUI format:@"Avatar corner radius set to: %@", radius];
-
-    [self updateAllAvatarViews];
-}
-
-+ (NSNumber *)getAvatarCornerRadius
-{
-    return customAvatarRadius ?: @(defaultAvatarRadius);
-}
-
-+ (void)resetAvatarCornerRadius
-{
-    customAvatarRadius = nil;
-    [Logger info:LOG_CATEGORY_CHATUI format:@"Avatar corner radius reset to default"];
-
+    [self updateMessageBubbleSettings];
     [self updateAllAvatarViews];
 }
 
@@ -86,123 +53,6 @@ static UIColor *messageCellDynamicColor = nil;
     }
 }
 
-+ (float)getCurrentAvatarRadius
-{
-    if (customAvatarRadius)
-    {
-        return [customAvatarRadius floatValue];
-    }
-    return -1.0f;
-}
-
-+ (void)setMessageBubblesEnabled:(NSNumber *)enabled
-{
-    if (!enabled)
-    {
-        [Logger error:LOG_CATEGORY_CHATUI format:@"Message bubbles enabled cannot be nil"];
-        return;
-    }
-
-    messageBubblesEnabled = enabled;
-    [Logger info:LOG_CATEGORY_CHATUI format:@"Message bubbles enabled set to: %@", enabled];
-
-    [self updateMessageBubbleSettings];
-}
-
-+ (void)setMessageBubblesEnabled:(NSNumber *)enabled
-                      lightColor:(NSString *)lightColor
-                       darkColor:(NSString *)darkColor
-{
-    if (!enabled)
-    {
-        [Logger error:LOG_CATEGORY_CHATUI format:@"Message bubbles enabled cannot be nil"];
-        return;
-    }
-
-    messageBubblesEnabled = enabled;
-
-    if (lightColor)
-    {
-        messageBubbleLightColor = lightColor;
-    }
-
-    if (darkColor)
-    {
-        messageBubbleDarkColor = darkColor;
-    }
-
-    [Logger info:LOG_CATEGORY_CHATUI
-          format:@"Message bubbles enabled: %@, light color: %@, dark color: %@", enabled,
-                 lightColor ?: @"default", darkColor ?: @"default"];
-
-    [self updateMessageBubbleSettings];
-}
-
-+ (void)setMessageBubbleColors:(NSString *)lightColor darkColor:(NSString *)darkColor
-{
-    messageBubbleLightColor = lightColor;
-    messageBubbleDarkColor  = darkColor;
-
-    [Logger info:LOG_CATEGORY_CHATUI
-          format:@"Message bubble colors set - light: %@, dark: %@", lightColor ?: @"default",
-                 darkColor ?: @"default"];
-
-    [self updateMessageBubbleSettings];
-}
-
-+ (void)setMessageBubbleCornerRadius:(NSNumber *)radius
-{
-    if (!radius)
-    {
-        [Logger error:LOG_CATEGORY_CHATUI format:@"Message bubble corner radius cannot be nil"];
-        return;
-    }
-
-    float radiusValue = [radius floatValue];
-    if (radiusValue < 0)
-    {
-        [Logger error:LOG_CATEGORY_CHATUI
-               format:@"Message bubble corner radius cannot be negative"];
-        return;
-    }
-
-    messageBubbleCornerRadius = radius;
-    [Logger info:LOG_CATEGORY_CHATUI format:@"Message bubble corner radius set to: %@", radius];
-
-    [self updateMessageBubbleSettings];
-}
-
-+ (NSNumber *)getMessageBubblesEnabled
-{
-    return messageBubblesEnabled ?: @NO;
-}
-
-+ (NSString *)getMessageBubbleLightColor
-{
-    return messageBubbleLightColor;
-}
-
-+ (NSString *)getMessageBubbleDarkColor
-{
-    return messageBubbleDarkColor;
-}
-
-+ (NSNumber *)getMessageBubbleCornerRadius
-{
-    return messageBubbleCornerRadius ?: @(defaultMessageBubbleRadius);
-}
-
-+ (void)resetMessageBubbles
-{
-    messageBubblesEnabled     = nil;
-    messageBubbleLightColor   = nil;
-    messageBubbleDarkColor    = nil;
-    messageBubbleCornerRadius = nil;
-    [Logger info:LOG_CATEGORY_CHATUI format:@"Message bubbles reset to default"];
-
-    [self updateMessageBubbleSettings];
-}
-
 + (void)updateMessageBubbleSettings
 {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -213,40 +63,22 @@ static UIColor *messageCellDynamicColor = nil;
 
 + (BOOL)isDiscordDarkMode
 {
-    CGFloat red             = 0;
-    Class   themeColorClass = NSClassFromString(@"DCDThemeColor");
+    Class themeColorClass = NSClassFromString(@"DCDThemeColor");
     if (themeColorClass && [themeColorClass respondsToSelector:@selector(BACKGROUND_PRIMARY)])
     {
-        UIColor *bgColor = [themeColorClass BACKGROUND_PRIMARY];
-        [bgColor getRed:&red green:nil blue:nil alpha:nil];
-        return red < 0.25;
+        return [CoreBridge isDarkColor:[themeColorClass BACKGROUND_PRIMARY]];
     }
     return YES;
 }
 
 + (void)loadDynamicColors
 {
-    if (messageBubbleLightColor || messageBubbleDarkColor)
-    {
-        UIColor *customLightColor =
-            messageBubbleLightColor ? [Utilities parseColor:messageBubbleLightColor] : nil;
-        UIColor *customDarkColor =
-            messageBubbleDarkColor ? [Utilities parseColor:messageBubbleDarkColor] : nil;
-
-        messageCellLightColor =
-            customLightColor ?: [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.4];
-        messageCellDarkColor =
-            customDarkColor ?: [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.4];
-    }
-    else
-    {
-        messageCellLightColor = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:0.4];
-        messageCellDarkColor  = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.4];
-    }
+    UIColor *darkColor  = [CoreBridge messageBubbleColorForDarkTheme:YES];
+    UIColor *lightColor = [CoreBridge messageBubbleColorForDarkTheme:NO];
 
     messageCellDynamicColor =
         [[UIColor alloc] initWithDynamicProvider:^UIColor *(UITraitCollection *traitCollection) {
-            return [self isDiscordDarkMode] ? messageCellDarkColor : messageCellLightColor;
+            return [self isDiscordDarkMode] ? darkColor : lightColor;
         }];
 }
 
@@ -301,29 +133,66 @@ static UIColor *messageCellDynamicColor = nil;
     return best;
 }
 
-+ (BOOL)viewHasMediaDescendant:(UIView *)view
++ (BOOL)isMediaView:(UIView *)view
 {
     static NSSet<NSString *> *mediaClasses = nil;
     static dispatch_once_t    onceToken;
     dispatch_once(&onceToken, ^{
-        mediaClasses = [NSSet setWithObjects:@"DiscordChat.MediaMosaicView", @"DiscordChat.EmbedView",
-                                              @"DiscordChatComponentsSwift.ThumbnailView",
-                                              @"DCDMediaView", @"DiscordChat.AttachmentView", nil];
+        mediaClasses =
+            [NSSet setWithObjects:@"DiscordChat.MediaMosaicView", @"DiscordChat.EmbedView",
+                                  @"DiscordChatComponentsSwift.ThumbnailView", @"DCDMediaView",
+                                  @"DiscordChat.AttachmentView", nil];
     });
 
-    if ([mediaClasses containsObject:NSStringFromClass([view class])] &&
-        view.bounds.size.width > 0 && view.bounds.size.height > 0)
-    {
+    NSString *className = NSStringFromClass([view class]);
+    BOOL isMedia = [mediaClasses containsObject:className] || [className containsString:@"Sticker"];
+    return isMedia && !view.hidden && view.bounds.size.width > 0 && view.bounds.size.height > 0;
+}
+
++ (BOOL)hasMessageContent:(UIView *)view
+{
+    if (view.hidden || CGRectIsEmpty(view.bounds))
+        return NO;
+
+    if ([self isMediaView:view])
         return YES;
+
+    if ([NSStringFromClass([view class]) isEqualToString:@"DCDAttributedTextView"])
+    {
+        NSAttributedString *attrText = [view valueForKey:@"attributedText"];
+        return attrText.length > 0;
     }
 
     for (UIView *subview in view.subviews)
     {
-        if ([self viewHasMediaDescendant:subview])
+        if ([self hasMessageContent:subview])
             return YES;
     }
 
     return NO;
+}
+
++ (UIView *)messageBodyIn:(UIView *)contentColumn
+{
+    for (UIView *child in contentColumn.subviews.reverseObjectEnumerator)
+    {
+        if ([self hasMessageContent:child])
+            return child;
+    }
+
+    return nil;
+}
+
++ (void)collectMediaViewsIn:(UIView *)view into:(NSMutableArray<UIView *> *)mediaViews
+{
+    if ([self isMediaView:view])
+    {
+        [mediaViews addObject:view];
+        return;
+    }
+
+    for (UIView *subview in view.subviews)
+        [self collectMediaViewsIn:subview into:mediaViews];
 }
 
 + (UIView *)findTextViewIn:(UIView *)view
@@ -345,27 +214,37 @@ static UIColor *messageCellDynamicColor = nil;
     return nil;
 }
 
-+ (CGRect)tightenTextFrame:(CGRect)bodyFrame forBody:(UIView *)contentBody
++ (CGFloat)textWidthIn:(UIView *)contentBody limit:(CGFloat)limit
 {
-    if ([self viewHasMediaDescendant:contentBody])
-        return bodyFrame;
-
     UIView *textView = [self findTextViewIn:contentBody];
     if (!textView)
-        return bodyFrame;
+        return 0;
 
     NSAttributedString *attrText = [textView valueForKey:@"attributedText"];
-    CGRect              measured = [attrText boundingRectWithSize:CGSizeMake(bodyFrame.size.width,
-                                                                              CGFLOAT_MAX)
-                                                            options:NSStringDrawingUsesLineFragmentOrigin
-                                                            context:nil];
+    CGRect measured  = [attrText boundingRectWithSize:CGSizeMake(limit, CGFLOAT_MAX)
+                                              options:NSStringDrawingUsesLineFragmentOrigin
+                                              context:nil];
+    CGRect textFrame = [textView convertRect:textView.bounds toView:contentBody];
+    return textFrame.origin.x + ceil(measured.size.width);
+}
 
-    CGFloat measuredWidth = ceil(measured.size.width);
-    if (measuredWidth <= 0 || measuredWidth >= bodyFrame.size.width)
++ (CGRect)tightenFrame:(CGRect)bodyFrame forBody:(UIView *)contentBody
+{
+    CGFloat contentWidth = [self textWidthIn:contentBody limit:bodyFrame.size.width];
+
+    NSMutableArray<UIView *> *mediaViews = [NSMutableArray array];
+    [self collectMediaViewsIn:contentBody into:mediaViews];
+    for (UIView *mediaView in mediaViews)
+    {
+        CGRect mediaFrame = [mediaView convertRect:mediaView.bounds toView:contentBody];
+        contentWidth      = MAX(contentWidth, CGRectGetMaxX(mediaFrame));
+    }
+
+    if (contentWidth <= 0 || contentWidth >= bodyFrame.size.width)
         return bodyFrame;
 
-    CGRect tightened  = bodyFrame;
-    tightened.size.width = measuredWidth;
+    CGRect tightened     = bodyFrame;
+    tightened.size.width = contentWidth;
     return tightened;
 }
 
@@ -396,22 +275,19 @@ static UIColor *messageCellDynamicColor = nil;
     if (!contentColumn)
         return CGRectNull;
 
-    NSArray<UIView *> *children = contentColumn.subviews;
-    if (children.count == 0)
+    UIView *contentBody = [self messageBodyIn:contentColumn];
+    if (!contentBody)
         return CGRectNull;
 
-    UIView *contentBody = children.count >= 2 ? children[children.count - 2] : children.lastObject;
-    if (CGRectIsEmpty(contentBody.bounds))
-        return CGRectNull;
-
-    CGRect frame = [contentBody convertRect:contentBody.bounds toView:cell];
-    frame        = [self tightenTextFrame:frame forBody:contentBody];
-    return CGRectInset(frame, -messageBubbleHorizontalPadding, -messageBubbleVerticalPadding);
+    CGRect frame   = [contentBody convertRect:contentBody.bounds toView:cell];
+    frame          = [self tightenFrame:frame forBody:contentBody];
+    CGSize padding = [CoreBridge messageBubblePadding];
+    return CGRectInset(frame, -padding.width, -padding.height);
 }
 
 + (void)updateMessageCell:(DCDMessageTableViewCell *)cell
 {
-    BOOL enabled = messageBubblesEnabled ? [messageBubblesEnabled boolValue] : NO;
+    BOOL enabled = messageBubblesEnabled;
 
     if (!enabled)
     {
@@ -436,9 +312,7 @@ static UIColor *messageCellDynamicColor = nil;
     cell.customBackgroundView.hidden          = NO;
     cell.customBackgroundView.backgroundColor = messageCellDynamicColor;
 
-    float radius = messageBubbleCornerRadius ? [messageBubbleCornerRadius floatValue]
-                                             : defaultMessageBubbleRadius;
-    cell.customBackgroundView.layer.cornerRadius = radius;
+    cell.customBackgroundView.layer.cornerRadius = [CoreBridge messageBubbleRadius];
 }
 
 + (void)updateMessageCellFrame:(DCDMessageTableViewCell *)cell
@@ -446,7 +320,8 @@ static UIColor *messageCellDynamicColor = nil;
     [self updateMessageCellFrame:cell retriesRemaining:3];
 }
 
-+ (void)updateMessageCellFrame:(DCDMessageTableViewCell *)cell retriesRemaining:(int)retriesRemaining
++ (void)updateMessageCellFrame:(DCDMessageTableViewCell *)cell
+              retriesRemaining:(int)retriesRemaining
 {
     if (!cell.customBackgroundView || cell.customBackgroundView.hidden)
         return;
@@ -496,7 +371,7 @@ static UIColor *messageCellDynamicColor = nil;
 
 - (void)setBackgroundColor:(UIColor *)arg1
 {
-    BOOL enabled = messageBubblesEnabled ? [messageBubblesEnabled boolValue] : NO;
+    BOOL enabled = messageBubblesEnabled;
     %orig(enabled ? [UIColor clearColor] : arg1);
 }
 
@@ -504,7 +379,7 @@ static UIColor *messageCellDynamicColor = nil;
 {
     %orig;
 
-    BOOL enabled = messageBubblesEnabled ? [messageBubblesEnabled boolValue] : NO;
+    BOOL enabled = messageBubblesEnabled;
 
     if (enabled)
     {
@@ -530,7 +405,7 @@ static UIColor *messageCellDynamicColor = nil;
 {
     %orig;
 
-    BOOL enabled = messageBubblesEnabled ? [messageBubblesEnabled boolValue] : NO;
+    BOOL enabled = messageBubblesEnabled;
     if (enabled)
     {
         [ChatUI updateMessageCellFrame:self];
@@ -543,7 +418,7 @@ static UIColor *messageCellDynamicColor = nil;
 
 - (void)setBackgroundColor:(UIColor *)arg1
 {
-    BOOL enabled = messageBubblesEnabled ? [messageBubblesEnabled boolValue] : NO;
+    BOOL enabled = messageBubblesEnabled;
     %orig(enabled ? [UIColor clearColor] : arg1);
 }
 
@@ -552,5 +427,5 @@ static UIColor *messageCellDynamicColor = nil;
 %ctor
 {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
-                   ^{ [ChatUI loadDynamicColors]; });
+                   ^{ [ChatUI reloadPreferences]; });
 }

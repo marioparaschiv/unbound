@@ -1,5 +1,7 @@
 #import "FileSystem.h"
 
+#import "CoreBridge.h"
+
 static const NSTimeInterval kMonitorDebounce = 0.250;
 
 static const unsigned long kFileVnodeMask =
@@ -53,7 +55,8 @@ static dispatch_queue_t monitorRegistryQueue(void)
     NSError *error;
     if (![contents writeToFile:path options:NSDataWritingAtomic error:&error])
     {
-        [Logger error:LOG_CATEGORY_FILESYSTEM format:@"Atomic write to %@ failed. (%@)", path, error];
+        [Logger error:LOG_CATEGORY_FILESYSTEM
+               format:@"Atomic write to %@ failed. (%@)", path, error];
     }
 }
 
@@ -290,36 +293,26 @@ static dispatch_queue_t monitorRegistryQueue(void)
 
     dispatch_block_t onChange = monitor.onChange;
     monitor.debounceTimer     = [Utilities createDebounceTimer:kMonitorDebounce
-                                                     queue:monitor.queue
-                                                     block:^{
+                                                         queue:monitor.queue
+                                                         block:^{
                                                          if (onChange)
                                                          {
                                                              onChange();
                                                          }
-                                                     }];
-}
-
-+ (NSHTTPURLResponse *)download:(NSURL *)url path:(NSString *)path
-{
-    return [FileSystem download:url path:path withHeaders:@{}];
+                                                         }];
 }
 
 + (NSHTTPURLResponse *)download:(NSURL *)url
                            path:(NSString *)path
                     withHeaders:(NSDictionary *)headers
+                 requestTimeout:(NSTimeInterval)requestTimeout
+                   totalTimeout:(NSTimeInterval)totalTimeout
 {
-    static NSURLSession   *bundleUrlSession = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
-        config.timeoutIntervalForRequest  = 30.0;
-        bundleUrlSession                  = [NSURLSession sessionWithConfiguration:config];
-    });
-
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
 
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     request.cachePolicy          = NSURLRequestReloadIgnoringCacheData;
+    request.timeoutInterval      = requestTimeout;
 
     __block NSHTTPURLResponse *response;
     __block NSException       *exception;
@@ -330,26 +323,27 @@ static dispatch_queue_t monitorRegistryQueue(void)
         [request setValue:value forHTTPHeaderField:header];
     }
 
-    NSURLSessionTask *task = [bundleUrlSession
+    NSURLSessionTask *task = [[NSURLSession sharedSession]
         dataTaskWithRequest:request
           completionHandler:^(NSData *data, NSURLResponse *res, NSError *error) {
               response = (NSHTTPURLResponse *) res;
 
-              if (error != nil || ([response statusCode] != 200 && [response statusCode] != 304))
+              if (error != nil)
               {
                   exception = [[NSException alloc] initWithName:@"DownloadFailed"
                                                          reason:error.localizedDescription
                                                        userInfo:nil];
               }
-              else if ([response statusCode] != 304)
+              else if ([response statusCode] == 200)
               {
                   [Logger info:LOG_CATEGORY_FILESYSTEM
                         format:@"Saving file from %@ to %@", url, path];
                   if (![data writeToFile:path atomically:YES])
                   {
-                      exception = [[NSException alloc] initWithName:@"DownloadWriteFailed"
-                                                             reason:@"Downloaded bundle could not be saved"
-                                                           userInfo:nil];
+                      exception =
+                          [[NSException alloc] initWithName:@"DownloadWriteFailed"
+                                                     reason:@"Downloaded bundle could not be saved"
+                                                   userInfo:nil];
                   }
               }
 
@@ -358,13 +352,14 @@ static dispatch_queue_t monitorRegistryQueue(void)
 
     [task resume];
 
-    if (dispatch_semaphore_wait(semaphore,
-                                dispatch_time(DISPATCH_TIME_NOW, 35 * NSEC_PER_SEC)) != 0)
+    if (dispatch_semaphore_wait(
+            semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t) (totalTimeout * NSEC_PER_SEC))) !=
+        0)
     {
         [task cancel];
         @throw [[NSException alloc] initWithName:@"DownloadTimedOut"
-                                         reason:@"Bundle download exceeded its time limit"
-                                       userInfo:nil];
+                                          reason:@"Bundle download exceeded its time limit"
+                                        userInfo:nil];
     }
 
     if (exception)
@@ -384,7 +379,8 @@ static dispatch_queue_t monitorRegistryQueue(void)
 
     if (!documents)
     {
-        documents = [NSString pathWithComponents:@[ NSHomeDirectory(), @"Documents", @"Unbound" ]];
+        documents = [NSString
+            pathWithComponents:@[ NSHomeDirectory(), @"Documents", [CoreBridge documentsName] ]];
     }
 
     if (![FileSystem exists:documents])

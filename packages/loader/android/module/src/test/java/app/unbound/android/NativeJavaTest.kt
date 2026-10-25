@@ -241,17 +241,18 @@ class NativeJavaTest {
     }
 
     @Test
-    fun batchReportsAFailingOperationWithoutStopping() {
+    fun batchFailsAtTheFirstFailingOperation() {
         val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
         val handle = JSONObject(builder)
         val operations = JSONArray()
-        operations.put(JSONObject().put("op", "invoke").put("handle", handle).put("name", "noSuchMethod"))
         operations.put(JSONObject().put("op", "invoke").put("handle", handle).put("name", "toString"))
+        operations.put(JSONObject().put("op", "invoke").put("handle", handle).put("name", "noSuchMethod"))
 
-        val results = JSONArray(NativeJava.batch(operations.toString()))
+        val failure = assertThrows(IllegalStateException::class.java) {
+            NativeJava.batch(operations.toString())
+        }
 
-        assertTrue(results.getJSONObject(0).has("__nativeFailure"))
-        assertEquals("string", results.getJSONObject(1).getString("type"))
+        assertTrue(failure.message!!.startsWith("Java batch operation 1 failed"))
     }
 
     @Test
@@ -261,12 +262,11 @@ class NativeJavaTest {
             JSONObject().put("op", "explode").put("handle", JSONObject(builder)).put("name", "x"),
         )
 
-        val results = JSONArray(NativeJava.batch(operations.toString()))
+        val failure = assertThrows(IllegalStateException::class.java) {
+            NativeJava.batch(operations.toString())
+        }
 
-        assertTrue(
-            results.getJSONObject(0).getJSONObject("__nativeFailure")
-                .getString("message").contains("explode"),
-        )
+        assertTrue(failure.message!!.contains("explode"))
     }
 
     @Test
@@ -277,7 +277,7 @@ class NativeJavaTest {
 
         assertEquals("null", value(NativeJava.getAssociatedObject(builder, first)).getString("type"))
 
-        NativeJava.setAssociatedObject(builder, first, """{"type":"string","value":"kept"}""")
+        NativeJava.setAssociatedObject(builder, first, """{"type":"string","value":"kept"}""", 64)
 
         assertEquals("kept", value(NativeJava.getAssociatedObject(builder, first)).getString("value"))
         assertEquals("null", value(NativeJava.getAssociatedObject(builder, second)).getString("type"))
@@ -287,9 +287,9 @@ class NativeJavaTest {
     fun writingANullAssociationRemovesIt() {
         val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
         val key = NativeJava.createAssociationKey()
-        NativeJava.setAssociatedObject(builder, key, """{"type":"string","value":"kept"}""")
+        NativeJava.setAssociatedObject(builder, key, """{"type":"string","value":"kept"}""", 64)
 
-        NativeJava.setAssociatedObject(builder, key, """{"type":"null"}""")
+        NativeJava.setAssociatedObject(builder, key, """{"type":"null"}""", 64)
 
         assertEquals("null", value(NativeJava.getAssociatedObject(builder, key)).getString("type"))
     }
@@ -303,9 +303,28 @@ class NativeJavaTest {
     }
 
     @Test
-    fun classNamesAreLengthBounded() {
+    fun associationsAreBoundedPerObjectButReplaceable() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+        val first = NativeJava.createAssociationKey()
+        val second = NativeJava.createAssociationKey()
+        NativeJava.setAssociatedObject(builder, first, """{"type":"string","value":"a"}""", 1)
+
+        NativeJava.setAssociatedObject(builder, first, """{"type":"string","value":"b"}""", 1)
+
+        assertEquals("b", value(NativeJava.getAssociatedObject(builder, first)).getString("value"))
         assertThrows(IllegalArgumentException::class.java) {
-            NativeJava.getClass("a".repeat(512))
+            NativeJava.setAssociatedObject(builder, second, """{"type":"string","value":"c"}""", 1)
+        }
+    }
+
+    @Test
+    fun releaseAllForgetsHandlesAndAssociations() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+
+        NativeJava.releaseAll()
+
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeJava.className(builder)
         }
     }
 }

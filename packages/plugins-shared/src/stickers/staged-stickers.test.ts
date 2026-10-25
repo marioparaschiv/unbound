@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createStagedStickers } from './staged-stickers';
+import { createStagedStickers, sharedStagedStickers } from './staged-stickers';
 
 describe('createStagedStickers', () => {
 	test('stages each sticker once per channel, matching ids of either type', () => {
@@ -36,5 +36,36 @@ describe('createStagedStickers', () => {
 		staged.set('a', []);
 
 		expect(calls).toEqual(['a']);
+	});
+});
+
+describe('get', () => {
+	test('returns the same empty list for a channel without stickers', () => {
+		const staged = createStagedStickers();
+
+		expect(staged.get('empty')).toBe(staged.get('empty'));
+	});
+
+	test('returns the same list until the channel changes', () => {
+		const staged = createStagedStickers();
+
+		staged.add('channel', { id: '1' });
+
+		expect(staged.get('channel')).toBe(staged.get('channel'));
+	});
+});
+
+describe('sharedStagedStickers', () => {
+	test('returns one store across callers', () => {
+		const first = sharedStagedStickers();
+
+		first.add('shared', { id: '7' });
+
+		expect(
+			sharedStagedStickers()
+				.get('shared')
+				.map((sticker) => sticker.id),
+		).toEqual(['7']);
+		first.set('shared', []);
 	});
 });

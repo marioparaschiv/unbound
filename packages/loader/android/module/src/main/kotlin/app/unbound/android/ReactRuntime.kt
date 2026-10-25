@@ -41,18 +41,18 @@ object ReactRuntime {
         val queueThread = runCatching {
             val configuration = queueConfigurationMethod!!.invoke(target)!!
             configuration.javaClass.findMethod("getJSQueueThread")!!.invoke(configuration)!!
-        }.onFailure { Logger.error("runtime", "JS queue thread is unavailable", it) }.getOrNull() ?: return
+        }.onFailure { Logger.error(LogCategory.RUNTIME, "JS queue thread is unavailable", it) }.getOrNull() ?: return
 
         val runnable = Runnable {
             val pointer = runCatching { javaScriptContextMethod!!.invoke(target) as Long }
-                .onFailure { Logger.error("runtime", "JS runtime pointer is unavailable", it) }
+                .onFailure { Logger.error(LogCategory.RUNTIME, "JS runtime pointer is unavailable", it) }
                 .getOrNull() ?: return@Runnable
             work(pointer)
         }
 
         runCatching {
             queueThread.javaClass.findMethod("runOnQueue", Runnable::class.java)!!.invoke(queueThread, runnable)
-        }.onFailure { Logger.error("runtime", "Failed to schedule work on the JS thread", it) }
+        }.onFailure { Logger.error(LogCategory.RUNTIME, "Failed to schedule work on the JS thread", it) }
     }
 
     fun runBeforeBundle(work: (Long) -> Unit) {
@@ -60,12 +60,12 @@ object ReactRuntime {
         val queueThread = runCatching {
             val configuration = queueConfigurationMethod!!.invoke(target)!!
             configuration.javaClass.findMethod("getJSQueueThread")!!.invoke(configuration)!!
-        }.onFailure { Logger.error("runtime", "JS queue thread is unavailable", it) }.getOrNull()
+        }.onFailure { Logger.error(LogCategory.RUNTIME, "JS queue thread is unavailable", it) }.getOrNull()
             ?: return
 
         val runnable = Runnable {
             val pointer = runCatching { javaScriptContextMethod!!.invoke(target) as Long }
-                .onFailure { Logger.error("runtime", "JS runtime pointer is unavailable", it) }
+                .onFailure { Logger.error(LogCategory.RUNTIME, "JS runtime pointer is unavailable", it) }
                 .getOrNull() ?: return@Runnable
             work(pointer)
         }
@@ -90,10 +90,10 @@ object ReactRuntime {
                     }
                 },
             )
-        }.onFailure { Logger.error("runtime", "Failed to schedule module capture", it) }.isSuccess
+        }.onFailure { Logger.error(LogCategory.RUNTIME, "Failed to schedule module capture", it) }.isSuccess
 
         if (scheduled && !finished.await(BEFORE_BUNDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-            Logger.error("runtime", "Module capture did not run before the bundle within ${BEFORE_BUNDLE_TIMEOUT_SECONDS}s")
+            Logger.error(LogCategory.RUNTIME, "Module capture did not run before the bundle within ${BEFORE_BUNDLE_TIMEOUT_SECONDS}s")
         }
     }
 

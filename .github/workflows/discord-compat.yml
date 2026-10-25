@@ -2,13 +2,13 @@ name: Discord compatibility scan
 
 on:
     schedule:
-        - cron: '23 7 * * *'
+        - cron: '23 */6 * * *'
     workflow_dispatch:
         inputs:
             channel:
                 description: Discord release channel to scan
                 type: choice
-                options: [stable, beta]
+                options: [stable, beta, alpha]
                 default: stable
 
 permissions:
@@ -21,7 +21,7 @@ concurrency:
 jobs:
     scan:
         name: scan (${{ matrix.channel }})
-        runs-on: ubuntu-26.04
+        runs-on: macos-15
         timeout-minutes: 45
         permissions:
             actions: read
@@ -30,12 +30,14 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                channel: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.channel) || '["stable","beta"]') }}
+                channel: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.channel) || '["stable","beta","alpha"]') }}
         defaults:
             run:
                 working-directory: packages/loader
         env:
             CHANNEL: ${{ matrix.channel }}
+            IOS_SOURCE: ${{ matrix.channel == 'stable' && 'appstore' || matrix.channel == 'beta' && 'testflight' || 'none' }}
+            DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
             DISCORD_TRACKER: https://tracker.vendetta.rocks/tracker
             DKRYPT_BASE_URL: ${{ vars.DKRYPT_BASE_URL || 'https://ipa.dylib.dev' }}
             GH_TOKEN: ${{ github.token }}
@@ -54,29 +56,37 @@ jobs:
               with:
                   path: |
                       ~/.cache/go-build
+                      ~/Library/Caches/go-build
                       ~/go/pkg/mod
                   key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
                   restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
 
             - name: Download Discord for Android
               id: android
-              run: |
-                  set -euo pipefail
-                  code=$(curl -fsSL "$DISCORD_TRACKER/index" | jq -r ".latest.$CHANNEL")
-                  curl -fsSL -o discord.apk "$DISCORD_TRACKER/download/$code/base"
-                  echo "version=$((code / 1000)).$((code % 1000))" >> "$GITHUB_OUTPUT"
+              run: go run ./tools discord-apk --channel "$CHANNEL" --output-dir discord-android --split base
 
             - name: Download Discord for iOS
+              if: env.IOS_SOURCE != 'none'
               env:
                   DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
               run: |
                   set -euo pipefail
-                  if [ "$CHANNEL" = stable ]; then
+                  if [ "$IOS_SOURCE" = appstore ]; then
                     go run ./tools fetch --base-url "$DKRYPT_BASE_URL" --bundle-id com.hammerandchisel.discord --output discord.ipa
                   else
                     IPA_DIR="$RUNNER_TEMP/ipa" python3 ../../.agents/skills/dkrypt/scripts/fetch-ipa.py com.hammerandchisel.discord testflight
                     mv "$RUNNER_TEMP"/ipa/*.ipa discord.ipa
                   fi
+
+            - name: Find the platform SDKs
+              id: sdks
+              run: |
+                  set -euo pipefail
+                  ios_sdk=$(xcrun --sdk iphoneos --show-sdk-path)
+                  android_jar=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platforms" -path '*/android-*/android.jar' | sort -V | tail -n 1)
+                  test -d "$ios_sdk" && test -f "$android_jar"
+                  echo "ios=$ios_sdk" >> "$GITHUB_OUTPUT"
+                  echo "android=$android_jar" >> "$GITHUB_OUTPUT"
 
             - name: Restore the previous scan
               run: |
@@ -89,18 +99,27 @@ jobs:
                   done
 
             - name: Scan
+              env:
+                  ANDROID_APK: ${{ steps.android.outputs.apk }}
+                  ANDROID_VERSION: ${{ steps.android.outputs.version }}
+                  IOS_SDK: ${{ steps.sdks.outputs.ios }}
+                  ANDROID_JAR: ${{ steps.sdks.outputs.android }}
               run: |
                   set -euo pipefail
-                  go run ./tools compat-scan \
-                    --root ../.. \
-                    --channel "$CHANNEL" \
-                    --ipa discord.ipa \
-                    --apk discord.apk \
-                    --android-version "${{ steps.android.outputs.version }}" \
-                    --baseline baseline/compat.json \
-                    --results compat.json \
-                    --report report.md \
+                  scan_args=(
+                    --root ../..
+                    --channel "$CHANNEL"
+                    --apk "$ANDROID_APK"
+                    --android-version "$ANDROID_VERSION"
+                    --ios-sdk "$IOS_SDK"
+                    --android-jar "$ANDROID_JAR"
+                    --baseline baseline/compat.json
+                    --results compat.json
+                    --report report.md
                     --source-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA"
+                  )
+                  if [ "$IOS_SOURCE" != none ]; then scan_args+=(--ipa discord.ipa); fi
+                  go run ./tools compat-scan "${scan_args[@]}"
                   cat report.md >> "$GITHUB_STEP_SUMMARY"
 
             - name: Upload the scan
@@ -112,23 +131,9 @@ jobs:
                       packages/loader/report.md
                   retention-days: 90
 
-            - name: Open or update the issue
+            - name: Open, supersede or close the issue
               if: github.ref_name == github.event.repository.default_branch
               run: |
                   set -euo pipefail
-                  label=discord-compat
-                  prefix="Discord compatibility ($CHANNEL)"
-                  versions=$(jq -r '[.targets[] | (if .platform == "ios" then "iOS " else "Android " end) + .version] | join(", ")' compat.json)
-                  problems=$(jq '[.findings[] | select(.status == "broken" or .status == "possible")] | length' compat.json)
-                  gh label create "$label" --repo "$GITHUB_REPOSITORY" --color D93F0B --description "A Discord build breaks part of Unbound" --force >/dev/null
-                  existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label "$label" --state open --json number,title \
-                    --jq "[.[] | select(.title | startswith(\"$prefix\"))][0].number // empty")
-                  if [ "$problems" -gt 0 ]; then
-                    if [ -n "$existing" ]; then
-                      gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --title "$prefix: $versions" --body-file report.md
-                    else
-                      gh issue create --repo "$GITHUB_REPOSITORY" --title "$prefix: $versions" --label "$label" --body-file report.md
-                    fi
-                  elif [ -n "$existing" ]; then
-                    gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment "The scan of $versions finds nothing broken."
-                  fi
+                  gh label create discord-compat --repo "$GITHUB_REPOSITORY" --color D93F0B --description "A Discord build breaks part of Unbound" --force >/dev/null
+                  go run ./tools compat-issue --repo "$GITHUB_REPOSITORY" --channel "$CHANNEL" --results compat.json --report report.md

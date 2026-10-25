@@ -98,20 +98,6 @@ class NativeFabricTest {
     }
 
     @Test
-    fun mountRejectsAnEmptyModuleName() {
-        assertThrows(IllegalArgumentException::class.java) {
-            NativeFabric.mount("{}", "", "{}")
-        }
-    }
-
-    @Test
-    fun mountRejectsAnOversizedModuleName() {
-        assertThrows(IllegalArgumentException::class.java) {
-            NativeFabric.mount("{}", "a".repeat(200), "{}")
-        }
-    }
-
-    @Test
     fun updateForwardsNewProps() {
         val handle = NativeFabric.mount("{}", "MyComponent", "{}")
 
@@ -145,24 +131,50 @@ class NativeFabricTest {
     @Test
     fun unmountingTwiceIsHarmless() {
         val handle = NativeFabric.mount("{}", "MyComponent", "{}")
-        NativeFabric.unmount(handle)
-        NativeFabric.unmount(handle)
 
+        assertTrue(NativeFabric.unmount(handle))
+        assertFalse(NativeFabric.unmount(handle))
         assertEquals(0, NativeFabric.mountedCount())
     }
 
     @Test
-    fun reportsWhetherASurfaceIsRunning() {
+    fun setSizeAppliesTheMaximumSizeAndTheMinimumFloor() {
         val handle = NativeFabric.mount("{}", "MyComponent", "{}")
+        val view = host.surfaces[0].view()
 
-        assertTrue(JSONObject(NativeFabric.isRunning(handle)).getBoolean("value"))
+        NativeFabric.setSize(handle, """{"width":10,"height":20}""", """{"width":120,"height":48}""")
+
+        assertEquals(120, view.layoutParams.width)
+        assertEquals(48, view.layoutParams.height)
+        assertEquals(10, view.minimumWidth)
+        assertEquals(20, view.minimumHeight)
     }
 
     @Test
-    fun exposesTheSurfaceViewAsAUiHandle() {
+    fun setFrameSizesTheSurfaceView() {
+        val handle = NativeFabric.mount("{}", "MyComponent", "{}")
+        val view = host.surfaces[0].view()
+
+        NativeFabric.setFrame(handle, """{"x":0,"y":0,"width":64,"height":0}""")
+
+        assertEquals(64, view.layoutParams.width)
+        assertEquals(0, view.layoutParams.height)
+    }
+
+    @Test
+    fun measureRejectsAnUnlaidSurfaceView() {
         val handle = NativeFabric.mount("{}", "MyComponent", "{}")
 
-        assertTrue(JSONObject(NativeFabric.viewHandle(handle)).getString("id").isNotEmpty())
+        assertThrows(IllegalStateException::class.java) {
+            NativeFabric.measure(handle)
+        }
+    }
+
+    @Test
+    fun measureRejectsAnUnknownHandle() {
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeFabric.measure("""{"id":"surface-999"}""")
+        }
     }
 
     @Test
@@ -203,16 +215,6 @@ class NativeFabricTest {
         assertEquals(listOf("a", "b"), props.getStringArray("tags")?.toList())
         assertEquals(listOf(1, 2), props.getIntArray("sizes")?.toList())
         assertEquals("v", props.getParcelableArrayList<Bundle>("rows")?.get(0)?.getString("k"))
-    }
-
-    @Test
-    fun propsRejectExcessiveNesting() {
-        var json = """{"v":1}"""
-        repeat(12) { json = """{"n":$json}""" }
-
-        assertThrows(IllegalArgumentException::class.java) {
-            NativeFabric.bundle(JSONObject(json))
-        }
     }
 
     @Test

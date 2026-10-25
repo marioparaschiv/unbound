@@ -20,15 +20,23 @@ const (
 	compatBroken     = "broken"
 	compatPossible   = "possible"
 	compatUnverified = "unverified"
+	compatExternal   = "external"
 )
 
+var compatEnvironmentClasses = map[string]string{
+	"LCSharedUtils": "LiveContainer's own class, present only when Discord runs inside LiveContainer, so its absence is expected",
+}
+
 type compatTarget struct {
-	Platform string `json:"platform"`
-	Version  string `json:"version"`
-	Build    string `json:"build,omitempty"`
-	hermes   *hermesStrings
-	objc     *objcIndex
-	dex      *dexIndex
+	Platform  string `json:"platform"`
+	Version   string `json:"version"`
+	Build     string `json:"build,omitempty"`
+	hermes    *hermesStrings
+	objc      *objcIndex
+	dex       *dexIndex
+	sdk       *iosSDKIndex
+	framework *javaFrameworkIndex
+	own       *javaFrameworkIndex
 }
 
 type compatFinding struct {
@@ -46,12 +54,13 @@ type compatPlatformState struct {
 }
 
 type compatResults struct {
-	GeneratedAt string                          `json:"generatedAt"`
-	Channel     string                          `json:"channel,omitempty"`
-	Targets     []*compatTarget                 `json:"targets"`
-	Findings    []compatFinding                 `json:"findings"`
-	Dynamic     map[string]int                  `json:"dynamic"`
-	Platforms   map[string]*compatPlatformState `json:"platforms"`
+	GeneratedAt  string                          `json:"generatedAt"`
+	Channel      string                          `json:"channel,omitempty"`
+	Targets      []*compatTarget                 `json:"targets"`
+	Findings     []compatFinding                 `json:"findings"`
+	Dynamic      map[string]int                  `json:"dynamic"`
+	DynamicSites []compatDynamicSite             `json:"dynamicSites,omitempty"`
+	Platforms    map[string]*compatPlatformState `json:"platforms"`
 }
 
 type stringList []string
@@ -75,11 +84,13 @@ func runCompatScan(args []string) error {
 	reportPath := set.String("report", "", "markdown report output")
 	channel := set.String("channel", "", "release channel label")
 	sourceURL := set.String("source-url", "", "base URL linking report locations to the source")
+	iosSDK := set.String("ios-sdk", "", "iPhoneOS SDK path (found with xcrun when empty)")
+	androidJar := set.String("android-jar", "", "android.jar from the Android SDK (found under ANDROID_HOME when empty)")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
 	if *ipa == "" && len(apks) == 0 {
-		return errors.New("usage: compat-scan --ipa <path> --apk <path> [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>]")
+		return errors.New("usage: compat-scan [--ipa <path>] [--apk <path>...] [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>]")
 	}
 
 	sources, err := collectCompatReferences(*root)
@@ -94,12 +105,35 @@ func runCompatScan(args []string) error {
 		if err != nil {
 			return fmt.Errorf("iOS: %w", err)
 		}
+		if *iosSDK == "" {
+			*iosSDK = discoverIOSSDK()
+		}
+		if *iosSDK != "" {
+			if target.sdk, err = loadIOSSDKIndex(*iosSDK); err != nil {
+				return fmt.Errorf("iOS SDK: %w", err)
+			}
+		} else {
+			fmt.Fprintln(os.Stderr, "compat-scan: no iOS SDK found, members Discord inherits from UIKit stay unverified")
+		}
 		targets = append(targets, target)
 	}
 	if len(apks) > 0 {
 		target, err := loadAndroidTarget(apks, *androidVersion)
 		if err != nil {
 			return fmt.Errorf("Android: %w", err)
+		}
+		if *androidJar == "" {
+			*androidJar = discoverAndroidJar()
+		}
+		if *androidJar != "" {
+			if target.framework, err = loadJavaFrameworkIndex(*androidJar); err != nil {
+				return fmt.Errorf("android.jar: %w", err)
+			}
+		} else {
+			fmt.Fprintln(os.Stderr, "compat-scan: no android.jar found, members Discord inherits from Android stay unverified")
+		}
+		if target.own, err = loadOwnJavaIndex(*root); err != nil {
+			return fmt.Errorf("loader sources: %w", err)
 		}
 		targets = append(targets, target)
 	}
@@ -111,6 +145,7 @@ func runCompatScan(args []string) error {
 	results := evaluateCompat(references, targets, baseline)
 	results.Channel = *channel
 	results.Dynamic = sources.dynamic
+	results.DynamicSites = sources.dynamicSites
 	results.GeneratedAt = time.Now().UTC().Format(time.RFC3339)
 
 	report := renderCompatReportWithSource(results, *sourceURL)
@@ -326,16 +361,16 @@ func sortedDexClassNames(index *dexIndex) []string {
 	return names
 }
 
-func isSystemReference(reference *compatReference) bool {
+func isSystemReference(reference *compatReference, target *compatTarget) bool {
 	owner := reference.Class
 	if reference.Kind == referenceObjCClass || reference.Kind == referenceJavaClass {
 		owner = reference.Name
 	}
 	switch reference.Kind {
 	case referenceObjCClass, referenceObjCMethod:
-		return owner != "" && isAppleClassName(owner)
+		return target.sdk == nil && owner != "" && isAppleClassName(owner)
 	case referenceJavaClass, referenceJavaMethod:
-		return owner != "" && isSystemJavaClass(owner)
+		return target.framework == nil && owner != "" && isSystemJavaClass(owner)
 	}
 	return false
 }
@@ -383,86 +418,13 @@ func evaluateReference(reference *compatReference, target *compatTarget, seen ma
 	}
 
 	if target.objc != nil {
-		switch reference.Kind {
-		case referenceObjCClass:
-			if target.objc.Classes[reference.Name] != nil {
-				return compatOK, ""
-			}
-			if discordObjCClassRegex.MatchString(reference.Name) || (reference.Strict && !isAppleClassName(reference.Name)) || seen[key] {
-				return compatBroken, "class `" + reference.Name + "` is not in Discord's binaries" + similarClassNames(reference.Name, sortedObjCClassNames(target.objc))
-			}
-			return compatUnverified, "class `" + reference.Name + "` is not in Discord's binaries, assumed to be a system class"
-		case referenceObjCMethod:
-			if reference.Class == "" {
-				if target.objc.Selectors[reference.Name] {
-					return compatOK, ""
-				}
-				return unlessSeen("no Discord class uses `" + reference.Name + "`")
-			}
-			if target.objc.Classes[reference.Class] == nil {
-				return "", ""
-			}
-			switch result, owner := target.objc.lookupMethod(reference.Class, reference.Name); result {
-			case objcFound:
-				return compatOK, ""
-			case objcInheritedExternally:
-				return unlessSeen("not defined by Discord, may be inherited from `" + owner + "`")
-			default:
-				if seen[key] {
-					return compatBroken, "`" + reference.Class + "` no longer defines `" + reference.Name + "`"
-				}
-				return compatPossible, "`" + reference.Class + "` does not define `" + reference.Name + "`"
-			}
-		case referenceObjCIvar:
-			if target.objc.Ivars[reference.Name] {
-				return compatOK, ""
-			}
-			if seen[key] {
-				return compatBroken, "no Discord class has the ivar `" + reference.Name + "` any more"
-			}
-			return compatPossible, "no Discord class has the ivar `" + reference.Name + "`"
+		if status, reason, ok := evaluateObjCReference(reference, target, seen, unlessSeen); ok {
+			return status, reason
 		}
 	}
-
 	if target.dex != nil {
-		switch reference.Kind {
-		case referenceJavaClass:
-			if target.dex.Classes[reference.Name] != nil {
-				return compatOK, ""
-			}
-			return compatBroken, "class `" + reference.Name + "` is not in Discord's dex" + similarClassNames(reference.Name, sortedDexClassNames(target.dex))
-		case referenceJavaMethod:
-			if reference.Class == "" {
-				if target.dex.MethodNames[reference.Name] {
-					return compatOK, ""
-				}
-				if strings.Contains(reference.Name, "-") {
-					return compatBroken, "the Kotlin method `" + reference.Name + "` is gone, its signature probably changed"
-				}
-				return unlessSeen("no Discord code defines or calls `" + reference.Name + "`")
-			}
-			if target.dex.Classes[reference.Class] == nil {
-				return "", ""
-			}
-			parameters := ""
-			if reference.Parameters != nil {
-				parameters = javaParameterDescriptors(reference.Parameters)
-			}
-			switch result, owner := target.dex.lookupMethod(reference.Class, reference.Name, parameters); result {
-			case dexFound:
-				return compatOK, ""
-			case dexSignatureMismatch:
-				return compatBroken, "`" + reference.Name + "` exists but takes different parameters than (" + strings.Join(reference.Parameters, ", ") + ")"
-			case dexInheritedExternally:
-				return unlessSeen("not defined by Discord, may be inherited from `" + owner + "`")
-			default:
-				return compatBroken, "`" + reference.Class + "` has no method `" + reference.Name + "`"
-			}
-		case referenceJavaField:
-			if target.dex.FieldNames[reference.Name] {
-				return compatOK, ""
-			}
-			return unlessSeen("no Discord code defines or reads the field `" + reference.Name + "`")
+		if status, reason, ok := evaluateJavaReference(reference, target, unlessSeen); ok {
+			return status, reason
 		}
 	}
 	return "", ""
@@ -486,7 +448,7 @@ func evaluateCompat(references []*compatReference, targets []*compatTarget, base
 			for _, platform := range reference.platforms() {
 				applies = applies || platform == target.Platform
 			}
-			if !applies || isSystemReference(reference) || strings.HasPrefix(reference.Name, "app.unbound.") || strings.HasPrefix(reference.Class, "app.unbound.") {
+			if !applies || isSystemReference(reference, target) || target.own == nil && (isOwnJavaName(reference.Name) || isOwnJavaName(reference.Class)) {
 				continue
 			}
 			status, reason := evaluateReference(reference, target, seen)
@@ -524,7 +486,7 @@ func compatSeverity(status string) int {
 		return 2
 	case compatUnverified:
 		return 1
-	case compatOK:
+	case compatOK, compatExternal:
 		return 0
 	}
 	return -1

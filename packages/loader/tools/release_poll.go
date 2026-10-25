@@ -29,6 +29,7 @@ type releasePollConfig struct {
 	bundleID          string
 	itunesLookupURL   string
 	androidTrackerURL string
+	sniffURL          string
 	dkryptBaseURL     string
 	githubAPIURL      string
 	githubRepository  string
@@ -36,6 +37,22 @@ type releasePollConfig struct {
 	githubToken       string
 	httpClient        *http.Client
 	now               func() time.Time
+}
+
+type releaseCandidate struct {
+	Version     string
+	AndroidCode int
+}
+
+var releaseCandidateChannels = []string{"stable", "testflight", "android-beta", "android-alpha"}
+
+func isReleaseCandidateChannel(channel string) bool {
+	for _, known := range releaseCandidateChannels {
+		if known == channel {
+			return true
+		}
+	}
+	return false
 }
 
 type itunesLookupResponse struct {
@@ -77,18 +94,19 @@ type testflightBuild struct {
 
 func runReleaseCandidate(args []string) error {
 	set := flag.NewFlagSet("release-candidate", flag.ContinueOnError)
-	channel := set.String("channel", "", "stable or testflight")
+	channel := set.String("channel", "", "stable, testflight, android-beta or android-alpha")
 	bundleID := set.String("bundle-id", defaultBundleID, "Discord bundle identifier")
 	itunesURL := set.String("itunes-url", defaultItunesLookupURL, "iTunes Lookup endpoint")
 	androidTrackerURL := set.String("android-tracker", defaultAndroidTracker, "Android package tracker base URL")
+	sniffURL := set.String("sniff-url", envOr("DISCORD_SNIFF_URL", defaultSniffURL), "sniff service base URL")
 	dkryptBaseURL := set.String("dkrypt-base-url", envOr("DKRYPT_BASE_URL", defaultDkryptURL), "dkrypt service base URL")
 	githubAPIURL := set.String("github-api-url", defaultGithubAPI, "GitHub API base URL")
 	githubRepository := set.String("github-repository", os.Getenv("GITHUB_REPOSITORY"), "GitHub owner/repository")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
-	if *channel != "stable" && *channel != "testflight" {
-		return errors.New("usage: release-candidate --channel <stable|testflight>")
+	if !isReleaseCandidateChannel(*channel) {
+		return errors.New("usage: release-candidate --channel <stable|testflight|android-beta|android-alpha>")
 	}
 	if *githubRepository == "" || os.Getenv("GITHUB_TOKEN") == "" {
 		return errors.New("GITHUB_REPOSITORY and GITHUB_TOKEN are required")
@@ -99,6 +117,7 @@ func runReleaseCandidate(args []string) error {
 		bundleID:          *bundleID,
 		itunesLookupURL:   *itunesURL,
 		androidTrackerURL: strings.TrimRight(*androidTrackerURL, "/"),
+		sniffURL:          strings.TrimRight(*sniffURL, "/"),
 		dkryptBaseURL:     strings.TrimRight(*dkryptBaseURL, "/"),
 		githubAPIURL:      strings.TrimRight(*githubAPIURL, "/"),
 		githubRepository:  *githubRepository,
@@ -108,11 +127,11 @@ func runReleaseCandidate(args []string) error {
 		now:               time.Now,
 	}
 
-	version, err := discoverReleaseCandidate(context.Background(), config)
+	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		return err
 	}
-	if version != "" {
+	if version := candidate.Version; version != "" {
 		tag := "loader-v" + version
 		exists, err := githubReleaseExists(context.Background(), config.httpClient, config.githubAPIURL, config.githubRepository, tag, config.githubToken)
 		if err != nil {
@@ -120,25 +139,55 @@ func runReleaseCandidate(args []string) error {
 		}
 		if exists {
 			fmt.Printf("::notice title=release poll::%s already exists; no build is needed\n", tag)
-			version = ""
+			candidate = releaseCandidate{}
 		} else {
 			fmt.Printf("::notice title=release poll::new %s candidate: %s\n", config.channel, version)
 		}
 	} else {
 		fmt.Printf("::notice title=release poll::no %s candidate is available\n", config.channel)
 	}
-	return writeReleaseCandidateOutput(os.Getenv("GITHUB_OUTPUT"), version)
+	return writeReleaseCandidateOutput(os.Getenv("GITHUB_OUTPUT"), candidate)
 }
 
-func discoverReleaseCandidate(ctx context.Context, config releasePollConfig) (string, error) {
+func discoverReleaseCandidate(ctx context.Context, config releasePollConfig) (releaseCandidate, error) {
+	if channel, android := strings.CutPrefix(config.channel, "android-"); android {
+		return discoverAndroidChannelCandidate(ctx, config, channel)
+	}
 	lookup, err := lookupItunesApp(ctx, config.httpClient, config.itunesLookupURL, config.bundleID)
 	if err != nil {
-		return "", err
+		return releaseCandidate{}, err
 	}
+	var version string
 	if config.channel == "stable" {
-		return discoverStableCandidate(ctx, config, lookup.Version)
+		version, err = discoverStableCandidate(ctx, config, lookup.Version)
+	} else {
+		version, err = discoverTestflightCandidate(ctx, config, lookup.TrackID)
 	}
-	return discoverTestflightCandidate(ctx, config, lookup.TrackID)
+	return releaseCandidate{Version: version}, err
+}
+
+func discoverAndroidChannelCandidate(ctx context.Context, config releasePollConfig, channel string) (releaseCandidate, error) {
+	sources := discordAPKSources{sniffURL: config.sniffURL, trackerURL: config.androidTrackerURL, client: config.httpClient}
+	code, err := sources.latestCode(ctx, channel)
+	if err != nil {
+		return releaseCandidate{}, err
+	}
+	release, err := newDiscordAPKRelease(channel, code)
+	if err != nil {
+		return releaseCandidate{}, err
+	}
+	if _, err := sources.sniffSplitURLs(ctx, channel, code); err != nil {
+		available, trackerErr := verifyAndroidBasePackage(ctx, config.httpClient, config.androidTrackerURL, code)
+		if trackerErr != nil {
+			return releaseCandidate{}, errors.Join(err, trackerErr)
+		}
+		if !available {
+			fmt.Printf("::notice title=release poll::Android %s version %d is not downloadable; no release is available\n", channel, code)
+			return releaseCandidate{}, nil
+		}
+	}
+	fmt.Printf("::notice title=release poll::Android %s is %s (version code %d)\n", channel, release.Version, code)
+	return releaseCandidate{Version: release.ReleaseVersion, AndroidCode: code}, nil
 }
 
 func lookupItunesApp(ctx context.Context, client *http.Client, endpoint, bundleID string) (itunesLookupResult, error) {
@@ -432,16 +481,22 @@ func githubReleaseExists(ctx context.Context, client *http.Client, apiURL, repos
 	return true, nil
 }
 
-func writeReleaseCandidateOutput(outputPath, version string) error {
+func writeReleaseCandidateOutput(outputPath string, candidate releaseCandidate) error {
+	values := map[string]string{"version": candidate.Version}
+	lines := "version=" + candidate.Version + "\n"
+	if candidate.AndroidCode != 0 {
+		values["android_code"] = strconv.Itoa(candidate.AndroidCode)
+		lines += "android_code=" + values["android_code"] + "\n"
+	}
 	if outputPath == "" {
-		return json.NewEncoder(os.Stdout).Encode(map[string]string{"version": version})
+		return json.NewEncoder(os.Stdout).Encode(values)
 	}
 	file, err := os.OpenFile(outputPath, os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
 		return fmt.Errorf("open GitHub Actions output: %w", err)
 	}
 	defer file.Close()
-	if _, err := fmt.Fprintf(file, "version=%s\n", version); err != nil {
+	if _, err := file.WriteString(lines); err != nil {
 		return fmt.Errorf("write GitHub Actions output: %w", err)
 	}
 	return nil

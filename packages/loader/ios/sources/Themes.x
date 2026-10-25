@@ -1,7 +1,8 @@
 #import "Themes.h"
 
+#import "CoreBridge.h"
+
 @interface Themes ()
-+ (void)loadThemes;
 + (void)refreshDiscordTheme;
 + (void)applyThemeOnMainThread:(NSString *)manifestId;
 + (BOOL)setThemeOnMainThread:(NSString *)manifestId;
@@ -9,37 +10,18 @@
 
 @implementation Themes
 static NSMutableDictionary<NSString *, NSValue *> *originalRawImplementations;
-static NSMutableArray                             *themes         = nil;
 static NSString                                   *currentThemeId = nil;
 static __weak DCDThemeModule                      *currentDiscordTheme;
-static NSString                                   *lastDiscordThemeId = nil;
+static NSString                                   *lastDiscordThemeId     = nil;
 static BOOL                                        semanticColorsSwizzled = NO;
 static BOOL                                        refreshingDiscordTheme = NO;
-static BOOL                                        customThemeActive = NO;
-static NSDictionary<NSString *, UIColor *>        *semanticColors = nil;
-static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
-
-+ (NSString *)makeJSON
-{
-    return [Utilities JSONStringFromObject:themes options:0 fallback:@"[]"];
-};
-
-+ (NSDictionary *)getThemeById:(NSString *)manifestId
-{
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"manifest.id == %@", manifestId];
-    NSArray     *array     = [themes filteredArrayUsingPredicate:predicate];
-
-    if ([array count] != 0)
-    {
-        return array[0];
-    }
-
-    return nil;
-}
+static BOOL                                        customThemeActive      = NO;
+static NSDictionary<NSString *, UIColor *>        *semanticColors         = nil;
+static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
 
 + (BOOL)isValidCustomTheme:(NSString *)manifestId
 {
-    return [Themes getThemeById:manifestId] != nil;
+    return [CoreBridge hasTheme:manifestId];
 }
 
 + (NSString *)getTheme
@@ -49,7 +31,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
 + (NSArray *)getThemes
 {
-    return [themes copy] ?: @[];
+    return [CoreBridge themes];
 }
 
 + (void)applyTheme:(NSString *)manifestId
@@ -67,9 +49,9 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
     [Themes restoreOriginalRawColors];
 
     NSDictionary *colors = nil;
-    if (themeId && ![Settings getBoolean:@"unbound" key:@"recovery" def:NO])
+    if (themeId)
     {
-        colors = [CoreBridge themeColors:[Themes getThemeById:themeId] ?: @{}];
+        colors = [CoreBridge themeColorsForId:themeId];
     }
 
     @synchronized([Themes class])
@@ -125,16 +107,8 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
     return YES;
 }
 
-+ (void)loadThemes
++ (void)refreshThemes
 {
-    [themes addObjectsFromArray:[CoreBridge scanThemesIn:FileSystem.documents]];
-}
-
-+ (NSArray *)reloadThemes
-{
-    [themes removeAllObjects];
-    [Themes loadThemes];
-
     if (currentThemeId && ![Themes isValidCustomTheme:currentThemeId])
     {
         customThemeActive = NO;
@@ -146,24 +120,18 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
     }
 
     [Themes refreshDiscordTheme];
-    return [Themes getThemes];
 }
 
 + (void)init
 {
-    if (!themes)
-    {
-        themes = [[NSMutableArray alloc] init];
-    }
-
     if (!originalRawImplementations)
     {
         originalRawImplementations = [[NSMutableDictionary alloc] init];
     }
 
-    [Themes reloadThemes];
+    [Themes refreshThemes];
 
-    if (![Settings getBoolean:@"unbound" key:@"recovery" def:NO] && !semanticColorsSwizzled)
+    if (!semanticColorsSwizzled)
     {
         [Themes swizzleSemanticColors];
         semanticColorsSwizzled = YES;
@@ -171,20 +139,19 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
     static dispatch_once_t observeOnce;
     dispatch_once(&observeOnce, ^{
-        [[NSNotificationCenter defaultCenter] addObserverForName:SettingsDidChangeNotification
-                                                          object:nil
-                                                           queue:[NSOperationQueue mainQueue]
-                                                      usingBlock:^(NSNotification *notification) {
-                                                          [Themes applySelectedTheme];
-                                                      }];
+        [[NSNotificationCenter defaultCenter]
+            addObserverForName:SettingsDidChangeNotification
+                        object:nil
+                         queue:[NSOperationQueue mainQueue]
+                    usingBlock:^(NSNotification *notification) { [Themes applySelectedTheme]; }];
     });
     [Themes applySelectedTheme];
 };
 
 + (void)applySelectedTheme
 {
-    id        applied = [Settings getString:@"themes" key:@"applied" def:nil];
-    NSString *themeId = [applied isKindOfClass:[NSString class]] && [applied length] > 0 ? applied : nil;
+    NSString *applied = [CoreBridge preference:@"active-theme" argument:@""];
+    NSString *themeId = applied.length > 0 ? applied : nil;
     if (themeId == currentThemeId || [themeId isEqualToString:currentThemeId])
     {
         return;
@@ -212,7 +179,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
             IMP     replacement = imp_implementationWithBlock(^UIColor *(id self) {
                 UIColor *color = payload[raw];
                 return color ?: original(instance, selector);
-                });
+            });
 
             MSHookMessageEx(instance, selector, replacement, (IMP *) &original);
 
@@ -303,7 +270,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
                     if ([colorClass respondsToSelector:colorSelector])
                     {
                         UIColor *(*getColor)(id, SEL) =
-                            (UIColor * (*) (id, SEL))[colorClass methodForSelector:colorSelector];
+                            (UIColor * (*)(id, SEL)) [colorClass methodForSelector:colorSelector];
                         return getColor(colorClass, colorSelector);
                     }
                 }
@@ -341,7 +308,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
     [Utilities runOnMainThread:^{
         currentDiscordTheme = self;
-        lastDiscordThemeId = theme;
+        lastDiscordThemeId  = theme;
 
         if (!customThemeActive && ![currentThemeId isEqualToString:theme])
         {

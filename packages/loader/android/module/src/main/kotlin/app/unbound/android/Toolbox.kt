@@ -13,7 +13,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.net.Uri
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.text.InputType
@@ -29,18 +28,18 @@ import android.widget.TextView
 import android.widget.Toast
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
+import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
 import kotlin.math.sqrt
 
 object Toolbox {
-    private const val SHAKE_KEY = "toolbox.shake"
-    private const val THREE_FINGER_KEY = "toolbox.three-finger"
-    private const val LONG_PRESS_MS = 800L
+    private const val SHAKE = "shake"
+    private const val THREE_FINGER = "three-finger"
     private const val SHAKE_GRAVITY = 2.6f
     private const val SHAKE_WINDOW_MS = 900L
     private const val SHAKE_COOLDOWN_MS = 1_500L
-    private val ADDON_KINDS = listOf("Plugins" to "Plugins", "Themes" to "Themes", "Fonts" to "Fonts", "Icons" to "Icon Packs")
+    private val MENU_OPTIONS = JSONObject().put("copyAppFolderPath", true).toString()
+    private val holdMs by lazy { NativeBridge.nativeToolbox("hold-milliseconds", null)?.toLongOrNull() ?: 0L }
 
     private val main = Handler(Looper.getMainLooper())
     private var pressRunnable: Runnable? = null
@@ -85,17 +84,18 @@ object Toolbox {
             val activity = ActivityTracker.currentActivity() ?: return@post
             if (shown?.isShowing == true || activity.isFinishing) return@post
 
+            val model = menuModel()
             shown = AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-                .setTitle("Unbound Toolbox")
-                .setView(menu(activity))
-                .setNegativeButton("Close", null)
+                .setTitle(model.optString("title"))
+                .setView(menu(activity, model))
+                .setNegativeButton(model.optString("close"), null)
                 .show()
         }
     }
 
     private fun trackPress(activity: Activity, event: MotionEvent) {
         when (event.actionMasked) {
-            MotionEvent.ACTION_POINTER_DOWN -> if (event.pointerCount == 3 && enabled(THREE_FINGER_KEY)) {
+            MotionEvent.ACTION_POINTER_DOWN -> if (event.pointerCount == 3 && enabled(THREE_FINGER)) {
                 cancelPress()
                 val runnable = Runnable {
                     pressRunnable = null
@@ -103,7 +103,7 @@ object Toolbox {
                     show()
                 }
                 pressRunnable = runnable
-                main.postDelayed(runnable, LONG_PRESS_MS)
+                main.postDelayed(runnable, holdMs)
             }
             MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> cancelPress()
         }
@@ -115,7 +115,7 @@ object Toolbox {
     }
 
     private fun trackShake(event: SensorEvent) {
-        if (!enabled(SHAKE_KEY)) return
+        if (!enabled(SHAKE)) return
 
         val (x, y, z) = Triple(event.values[0], event.values[1], event.values[2])
         val force = sqrt(x * x + y * y + z * z) / SensorManager.GRAVITY_EARTH
@@ -138,45 +138,43 @@ object Toolbox {
         activity.window?.decorView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
     }
 
-    private fun enabled(key: String): Boolean = NativeBridge.nativeGetBoolean("unbound", key, true)
+    private fun enabled(gesture: String): Boolean = NativeBridge.preferenceEnabled("gesture", gesture)
 
-    private fun menu(activity: Activity): View {
+    private fun menuModel(): JSONObject =
+        runCatching { JSONObject(NativeBridge.nativeToolbox("menu", MENU_OPTIONS).orEmpty()) }.getOrDefault(JSONObject())
+
+    private fun menu(activity: Activity, model: JSONObject): View {
         val list = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(activity, 8), dp(activity, 4), dp(activity, 8), dp(activity, 4))
         }
+        val switches = mutableListOf<Switch>()
 
-        list.addView(header(activity, "Bundle"))
-        list.addView(action(activity, "Refetch Bundle") { refetchBundle(activity) })
-        list.addView(action(activity, "Delete Bundle") {
-            confirm(activity, "Delete Bundle") { run("delete-bundle") }
-        })
-        list.addView(action(activity, "Load Custom Bundle") { loadCustomBundle(activity) })
-
-        list.addView(header(activity, "Addons"))
-        for ((kind, title) in ADDON_KINDS) {
-            list.addView(action(activity, "Wipe $title") {
-                confirm(activity, "Wipe $title") { run("wipe", kind) }
-            })
+        for (section in objects(model.optJSONArray("sections"))) {
+            list.addView(header(activity, section.optString("title")))
+            for (item in objects(section.optJSONArray("items"))) {
+                if (item.optString("kind") == "toggle") {
+                    val switch = toggle(activity, item)
+                    switches += switch
+                    list.addView(switch)
+                } else {
+                    list.addView(action(activity, item) { select(activity, model, item) })
+                }
+            }
         }
 
-        list.addView(header(activity, "Utilities"))
-        val recovery = NativeBridge.nativeGetBoolean("unbound", "recovery", false)
-        list.addView(action(activity, if (recovery) "Disable Recovery Mode" else "Enable Recovery Mode") {
-            run("toggle-recovery")
-        })
-        list.addView(action(activity, "Factory Reset") {
-            confirm(activity, "Factory Reset") { run("factory-reset") }
-        })
-        list.addView(action(activity, "Copy App Folder Path") { copyFolderPath(activity) })
-        list.addView(action(activity, "Open GitHub Issue") { openIssue(activity) })
-
-        list.addView(header(activity, "Settings"))
-        list.addView(toggle(activity, "Enable Shake Motion", SHAKE_KEY, THREE_FINGER_KEY))
-        list.addView(toggle(activity, "Enable Three Finger Press", THREE_FINGER_KEY, SHAKE_KEY))
+        for (switch in switches) {
+            switch.setOnCheckedChangeListener { changed, checked ->
+                NativeBridge.nativePreference("set-gesture", "${changed.tag}=$checked")
+                for (other in switches) other.isChecked = enabled(other.tag as String)
+            }
+        }
 
         return ScrollView(activity).apply { addView(list) }
     }
+
+    private fun objects(array: JSONArray?): List<JSONObject> =
+        (0 until (array?.length() ?: 0)).mapNotNull { array?.optJSONObject(it) }
 
     private fun header(context: Context, title: String) = TextView(context).apply {
         text = title.uppercase()
@@ -186,13 +184,9 @@ object Toolbox {
         setPadding(dp(context, 12), dp(context, 16), dp(context, 12), dp(context, 6))
     }
 
-    private fun action(context: Context, title: String, onClick: () -> Unit) = TextView(context).apply {
-        text = title
-        setTextColor(if (title.startsWith("Wipe") || title.startsWith("Delete") || title == "Factory Reset") {
-            Color.rgb(242, 63, 67)
-        } else {
-            Color.WHITE
-        })
+    private fun action(context: Context, item: JSONObject, onClick: () -> Unit) = TextView(context).apply {
+        text = item.optString("title")
+        setTextColor(if (item.optBoolean("destructive")) Color.rgb(242, 63, 67) else Color.WHITE)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         setPadding(dp(context, 12), dp(context, 12), dp(context, 12), dp(context, 12))
         isClickable = true
@@ -200,98 +194,93 @@ object Toolbox {
         setOnClickListener { onClick() }
     }
 
-    private fun toggle(context: Context, title: String, key: String, partner: String) = Switch(context).apply {
-        text = title
+    private fun toggle(context: Context, item: JSONObject) = Switch(context).apply {
+        text = item.optString("title")
+        tag = item.optString("gesture")
         setTextColor(Color.WHITE)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         setPadding(dp(context, 12), dp(context, 8), dp(context, 12), dp(context, 8))
-        isChecked = enabled(key)
-        setOnCheckedChangeListener { _, checked ->
-            NativeBridge.nativeSetBoolean("unbound", key, checked)
-            if (!checked && !enabled(partner)) NativeBridge.nativeSetBoolean("unbound", partner, true)
-        }
+        isChecked = item.optBoolean("on")
     }
 
-    private fun confirm(activity: Activity, title: String, onConfirm: () -> Unit) {
+    private fun select(activity: Activity, model: JSONObject, item: JSONObject) {
+        if (!item.optBoolean("destructive")) return perform(activity, item)
+
+        val confirmation = model.optJSONObject("confirmation") ?: JSONObject()
         AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle(title)
-            .setMessage("This cannot be undone. Discord restarts afterwards.")
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Confirm") { _, _ -> onConfirm() }
+            .setTitle(item.optString("title"))
+            .setMessage(confirmation.optString("message"))
+            .setNegativeButton(confirmation.optString("cancel"), null)
+            .setPositiveButton(confirmation.optString("confirm")) { _, _ -> perform(activity, item) }
             .show()
     }
 
-    private fun run(action: String, argument: String? = null) {
-        shown?.dismiss()
-        Thread {
-            NativeBridge.nativeToolbox(action, argument)
-            Platform.restartApp()
-        }.start()
+    private fun perform(activity: Activity, item: JSONObject) {
+        val prompt = item.optJSONObject("prompt")
+        when {
+            item.optString("kind") == "platform" -> performPlatform(activity, item)
+            prompt != null -> prompt(activity, item, prompt)
+            else -> run(activity, item, item.optString("argument"))
+        }
     }
 
-    private fun refetchBundle(activity: Activity) {
-        shown?.dismiss()
-        Toast.makeText(activity, "Refetching the bundle…", Toast.LENGTH_SHORT).show()
-        Thread {
-            val ok = NativeBridge.nativeToolbox("refetch-bundle", null) == "true"
-            main.post {
-                if (ok) {
-                    Platform.restartApp()
-                } else {
-                    Toast.makeText(activity, "The bundle could not be downloaded.", Toast.LENGTH_LONG).show()
-                }
-            }
-        }.start()
+    private fun performPlatform(activity: Activity, item: JSONObject) {
+        when (item.optString("id")) {
+            "copy-app-folder-path" -> copyFolderPath(activity)
+            "open-issue" -> openIssue(activity, item)
+        }
     }
 
-    private fun loadCustomBundle(activity: Activity) {
+    private fun prompt(activity: Activity, item: JSONObject, prompt: JSONObject) {
         val input = EditText(activity).apply {
-            hint = "https://example.com/unbound.bundle"
+            hint = prompt.optString("placeholder")
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             setSingleLine()
         }
 
         AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle("Custom Bundle URL")
-            .setMessage("Enter the URL to download a custom bundle from")
+            .setTitle(prompt.optString("title"))
+            .setMessage(prompt.optString("message"))
             .setView(input)
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Download") { _, _ ->
-                if (NativeBridge.nativeToolbox("custom-bundle", input.text.toString().trim()) == "true") {
-                    shown?.dismiss()
-                    Platform.restartApp()
-                } else {
-                    Toast.makeText(activity, "Enter an http or https URL.", Toast.LENGTH_LONG).show()
-                }
-            }
+            .setNegativeButton(prompt.optString("cancel"), null)
+            .setPositiveButton(prompt.optString("confirm")) { _, _ -> run(activity, item, input.text.toString()) }
             .show()
     }
 
+    private fun run(activity: Activity, item: JSONObject, argument: String) {
+        val progress = item.optString("progress")
+        val failure = item.optString("failure")
+        if (progress.isNotEmpty()) Toast.makeText(activity, progress, Toast.LENGTH_SHORT).show()
+
+        Thread {
+            val result = NativeBridge.nativeToolbox(item.optString("action"), argument)
+            main.post {
+                if (failure.isNotEmpty() && result != "true") {
+                    Toast.makeText(activity, failure, Toast.LENGTH_LONG).show()
+                } else if (item.optBoolean("restartsApp")) {
+                    shown?.dismiss()
+                    Platform.restartApp()
+                }
+            }
+        }.start()
+    }
+
     private fun copyFolderPath(activity: Activity) {
-        val path = File(activity.applicationInfo.dataDir, "files/Unbound").absolutePath
+        val path = NativeBridge.documents
         activity.getSystemService(ClipboardManager::class.java)
             ?.setPrimaryClip(ClipData.newPlainText("Unbound folder", path))
         Toast.makeText(activity, path, Toast.LENGTH_LONG).show()
     }
 
-    private fun openIssue(activity: Activity) {
+    private fun openIssue(activity: Activity, item: JSONObject) {
         val discord = runCatching { activity.packageManager.getPackageInfo(activity.packageName, 0) }.getOrNull()
-        val unbound = runCatching { activity.packageManager.getPackageInfo("app.unbound.android", 0) }.getOrNull()
-        val environment = JSONObject()
-            .put("Device", "${Build.MANUFACTURER} ${Build.MODEL}")
-            .put("Android Version", "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
-            .put("Discord Version", "${discord?.versionName} (${discord?.longVersionCode})")
-            .put("Unbound Version", unbound?.versionName ?: "unknown")
-            .put("Emulator", if (Platform.isEmulator()) "Yes" else "No")
-        val url = NativeBridge.nativeToolbox(
-            "issue-url",
-            JSONObject().put("environment", environment).toString(),
-        ) ?: return
+        val version = discord?.let { "${it.versionName} (${it.longVersionCode})" }.orEmpty()
 
         runCatching {
-            activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            val url = NativeBridge.nativeToolbox("issue-url", version)
+            activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(requireNotNull(url))))
         }.onFailure {
-            Toast.makeText(activity, "No browser can open GitHub.", Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, item.optString("failure"), Toast.LENGTH_LONG).show()
         }
     }
 

@@ -58,9 +58,16 @@ func (reference compatReference) platforms() []string {
 	return []string{"ios", "android"}
 }
 
+type compatDynamicSite struct {
+	Component string         `json:"component"`
+	Call      string         `json:"call"`
+	Location  compatLocation `json:"location"`
+}
+
 type compatSourceSet struct {
-	references map[string]*compatReference
-	dynamic    map[string]int
+	references   map[string]*compatReference
+	dynamic      map[string]int
+	dynamicSites []compatDynamicSite
 }
 
 func newCompatSourceSet() *compatSourceSet {
@@ -186,37 +193,20 @@ func collectCompatReferences(root string) (*compatSourceSet, error) {
 	}
 
 	set := newCompatSourceSet()
-	constants := map[string]map[string]compatValue{}
-	tokens := map[string][]compatToken{}
+	var scripts []*scriptFile
 	for _, file := range files {
-		if ext := filepath.Ext(file.path); ext != ".ts" && ext != ".tsx" {
-			continue
-		}
 		content, err := os.ReadFile(filepath.Join(root, file.path))
 		if err != nil {
 			return nil, err
 		}
-		tokens[file.path] = tokenizeScript(string(content))
-		if constants[file.component] == nil {
-			constants[file.component] = map[string]compatValue{}
-		}
-		collectScriptConstants(tokens[file.path], constants[file.component])
-	}
-
-	shared := constants["plugins-shared"]
-	for _, file := range files {
 		switch filepath.Ext(file.path) {
 		case ".ts", ".tsx":
-			scope := compatScope{local: constants[file.component], shared: shared}
-			extractScriptReferences(set, file, tokens[file.path], scope)
+			scripts = append(scripts, newScriptFile(file, scriptSourceRoot(file.path), tokenizeScript(string(content))))
 		default:
-			content, err := os.ReadFile(filepath.Join(root, file.path))
-			if err != nil {
-				return nil, err
-			}
 			extractNativeReferences(set, file, string(content))
 		}
 	}
+	analyzeScripts(set, scripts)
 	return set, nil
 }
 
@@ -356,144 +346,6 @@ func isIdentifierPart(character byte) bool {
 	return isIdentifierStart(character) || (character >= '0' && character <= '9')
 }
 
-type compatValue struct {
-	strings []string
-	object  map[string]string
-	literal string
-	dynamic bool
-}
-
-type compatScope struct {
-	local  map[string]compatValue
-	shared map[string]compatValue
-}
-
-func (scope compatScope) resolve(name string) (compatValue, bool) {
-	if value, ok := scope.local[name]; ok {
-		return value, true
-	}
-	value, ok := scope.shared[name]
-	return value, ok
-}
-
-func collectScriptConstants(tokens []compatToken, constants map[string]compatValue) {
-	for index := 0; index+3 < len(tokens); index++ {
-		if tokens[index].value != "const" || tokens[index+1].kind != tokenIdentifier || tokens[index+2].value != "=" {
-			continue
-		}
-		name := tokens[index+1].value
-		value, _ := readScriptValue(tokens, index+3, compatScope{local: constants})
-		if !value.dynamic {
-			if _, exists := constants[name]; !exists {
-				constants[name] = value
-			}
-		}
-	}
-}
-
-func readScriptValue(tokens []compatToken, index int, scope compatScope) (compatValue, int) {
-	if index >= len(tokens) {
-		return compatValue{dynamic: true}, index
-	}
-	end := scriptExpressionEnd(tokens, index)
-	expression := tokens[index:end]
-	for len(expression) > 2 && expression[len(expression)-2].value == "as" {
-		expression = expression[:len(expression)-2]
-	}
-	if len(expression) == 1 {
-		token := expression[0]
-		switch token.kind {
-		case tokenString:
-			return compatValue{strings: []string{token.value}}, end
-		case tokenIdentifier:
-			if token.value == "true" || token.value == "false" {
-				return compatValue{literal: token.value}, end
-			}
-			if value, ok := scope.resolve(token.value); ok {
-				return value, end
-			}
-		}
-		return compatValue{dynamic: true}, end
-	}
-	if len(expression) >= 2 && expression[0].value == "[" && expression[len(expression)-1].value == "]" {
-		var values []string
-		for position := 1; position < len(expression)-1; {
-			item, next := readScriptValue(expression[:len(expression)-1], position, scope)
-			if item.dynamic || len(item.strings) == 0 {
-				return compatValue{dynamic: true}, end
-			}
-			values = append(values, item.strings...)
-			position = next
-			if position < len(expression)-1 && expression[position].value == "," {
-				position++
-			}
-		}
-		return compatValue{strings: values}, end
-	}
-	if len(expression) >= 2 && expression[0].value == "{" {
-		object := map[string]string{}
-		for position := 1; position+2 < len(expression); position++ {
-			if expression[position].kind == tokenIdentifier && expression[position+1].value == ":" {
-				object[expression[position].value] = expression[position+2].value
-			}
-		}
-		return compatValue{object: object}, end
-	}
-	return compatValue{dynamic: true}, end
-}
-
-func scriptExpressionEnd(tokens []compatToken, index int) int {
-	depth := 0
-	for position := index; position < len(tokens); position++ {
-		switch tokens[position].value {
-		case "(", "[", "{":
-			depth++
-		case ")", "]", "}":
-			if depth == 0 {
-				return position
-			}
-			depth--
-			if depth == 0 && position+1 < len(tokens) && tokens[position+1].value != "as" && tokens[position+1].value != "." {
-				return position + 1
-			}
-		case ",", ";":
-			if depth == 0 {
-				return position
-			}
-		}
-		if depth == 0 && position > index && tokens[position].line != tokens[position-1].line &&
-			tokens[position-1].kind != tokenPunctuation && tokens[position].kind != tokenPunctuation &&
-			tokens[position].value != "as" && tokens[position-1].value != "as" {
-			return position
-		}
-	}
-	return len(tokens)
-}
-
-func readCallArguments(tokens []compatToken, open int, scope compatScope) []compatValue {
-	var arguments []compatValue
-	position := open + 1
-	for position < len(tokens) && tokens[position].value != ")" {
-		value, next := readScriptValue(tokens, position, scope)
-		arguments = append(arguments, value)
-		if next <= position {
-			next = position + 1
-		}
-		position = next
-		for position < len(tokens) && tokens[position].value != "," && tokens[position].value != ")" {
-			arguments[len(arguments)-1] = compatValue{dynamic: true}
-			position = scriptExpressionEnd(tokens, position)
-			if position < len(tokens) && tokens[position].value != "," && tokens[position].value != ")" {
-				position++
-			}
-		}
-		if position < len(tokens) && tokens[position].value == "," {
-			position++
-		}
-	}
-	return arguments
-}
-
 var (
 	javaClassPattern      = regexp.MustCompile(`^(?:com|androidx|android|java|javax|kotlin|kotlinx|org|io|dalvik)\.(?:[a-z0-9_]+\.)+[A-Z][A-Za-z0-9_$]*$`)
 	modulePathPattern     = regexp.MustCompile(`^(?:[a-z_][A-Za-z0-9_-]*/)+[A-Za-z0-9_.\-\[\]]+\.(?:tsx|ts|jsx|js)$`)
@@ -507,179 +359,6 @@ var scriptLookupCalls = map[string]string{
 	"findByName": referenceName, "findByNameLazy": referenceName, "byName": referenceName,
 	"findByDisplayName": referenceName, "findByDisplayNameLazy": referenceName, "byDisplayName": referenceName,
 	"findByFilePath": referenceModulePath, "findByFilePathLazy": referenceModulePath, "byFilePath": referenceModulePath,
-}
-
-func leadingStrings(arguments []compatValue) ([]string, bool) {
-	var values []string
-	for _, argument := range arguments {
-		if argument.dynamic || argument.object != nil || argument.literal != "" {
-			break
-		}
-		values = append(values, argument.strings...)
-	}
-	return values, len(values) > 0
-}
-
-func optionValue(arguments []compatValue, name string) string {
-	for _, argument := range arguments {
-		if argument.object != nil {
-			return argument.object[name]
-		}
-	}
-	return ""
-}
-
-func stringArgument(arguments []compatValue, position int) (string, bool) {
-	if position >= len(arguments) || arguments[position].dynamic || len(arguments[position].strings) != 1 {
-		return "", false
-	}
-	return arguments[position].strings[0], true
-}
-
-func extractScriptReferences(set *compatSourceSet, file compatSourceFile, tokens []compatToken, scope compatScope) {
-	base := compatReference{Component: file.component, Platform: file.platform}
-	location := func(line int) compatLocation { return compatLocation{File: file.path, Line: line} }
-	dynamic := func() { set.dynamic[file.component]++ }
-
-	for index, token := range tokens {
-		if token.kind == tokenString {
-			previous := ""
-			if index > 0 {
-				previous = tokens[index-1].value
-			}
-			if previous == "from" || previous == "import" || (previous == "(" && index > 1 && tokens[index-2].value == "import") {
-				continue
-			}
-			switch {
-			case javaClassPattern.MatchString(token.value):
-				reference := base
-				reference.Kind, reference.Name = referenceJavaClass, token.value
-				set.add(reference, location(token.line))
-			case modulePathPattern.MatchString(token.value):
-				reference := base
-				reference.Kind, reference.Name = referenceModulePath, token.value
-				set.add(reference, location(token.line))
-			case discordObjCClassRegex.MatchString(token.value):
-				reference := base
-				reference.Kind, reference.Name = referenceObjCClass, token.value
-				set.add(reference, location(token.line))
-			}
-			continue
-		}
-		if token.kind != tokenIdentifier || index+1 >= len(tokens) || tokens[index+1].value != "(" {
-			continue
-		}
-		if index > 0 && (tokens[index-1].value == "function" || tokens[index-1].value == "new") {
-			continue
-		}
-		owner := ""
-		if index > 1 && tokens[index-1].value == "." && tokens[index-2].kind == tokenIdentifier {
-			owner = tokens[index-2].value
-		}
-		arguments := readCallArguments(tokens, index+1, scope)
-		reference := base
-
-		if kind, ok := scriptLookupCalls[token.value]; ok {
-			values, ok := leadingStrings(arguments)
-			if !ok {
-				dynamic()
-				continue
-			}
-			reference.Kind = kind
-			switch kind {
-			case referenceProps, referencePrototypes:
-				reference.Terms = values
-			case referenceStore:
-				reference.Name = values[0]
-				short := optionValue(arguments, "short") != "false"
-				if token.value == "byStore" && len(arguments) > 1 && arguments[1].literal == "false" {
-					short = false
-				}
-				if short {
-					reference.Name += "Store"
-				}
-			default:
-				reference.Name = values[0]
-			}
-			set.add(reference, location(token.line))
-			continue
-		}
-
-		switch owner + "." + token.value {
-		case "objc.getClass", "objc.alloc":
-			if name, ok := stringArgument(arguments, 0); ok {
-				reference.Kind, reference.Name = referenceObjCClass, name
-				set.add(reference, location(token.line))
-			} else {
-				dynamic()
-			}
-		case "objc.hook":
-			class, classOK := stringArgument(arguments, 0)
-			selector, selectorOK := stringArgument(arguments, 1)
-			if classOK && selectorOK {
-				reference.Kind, reference.Class, reference.Name = referenceObjCMethod, class, selector
-				set.add(reference, location(token.line))
-				classReference := base
-				classReference.Kind, classReference.Name, classReference.Strict = referenceObjCClass, class, true
-				set.add(classReference, location(token.line))
-			} else {
-				dynamic()
-			}
-		case "objc.invoke", "objc.invokeAsync", "objc.call", "objc.respondsTo":
-			if selector, ok := stringArgument(arguments, 1); ok {
-				reference.Kind, reference.Name = referenceObjCMethod, selector
-				set.add(reference, location(token.line))
-			} else {
-				dynamic()
-			}
-		case "objc.getIvar", "objc.setIvar":
-			if name, ok := stringArgument(arguments, 1); ok {
-				reference.Kind, reference.Name = referenceObjCIvar, name
-				set.add(reference, location(token.line))
-			} else {
-				dynamic()
-			}
-		case "java.getClass":
-			if name, ok := stringArgument(arguments, 0); ok {
-				reference.Kind, reference.Name = referenceJavaClass, name
-				set.add(reference, location(token.line))
-			} else {
-				dynamic()
-			}
-		case "java.invoke", "java.invokeAsync":
-			if name, ok := stringArgument(arguments, 1); ok {
-				reference.Kind, reference.Name = referenceJavaMethod, name
-				set.add(reference, location(token.line))
-			} else {
-				dynamic()
-			}
-		case "java.getField", "java.setField":
-			if name, ok := stringArgument(arguments, 1); ok {
-				reference.Kind, reference.Name = referenceJavaField, name
-				set.add(reference, location(token.line))
-			} else {
-				dynamic()
-			}
-		case "hooks.hook":
-			class, classOK := stringArgument(arguments, 0)
-			method, methodOK := stringArgument(arguments, 1)
-			if !classOK || !methodOK {
-				dynamic()
-				continue
-			}
-			classReference := base
-			classReference.Kind, classReference.Name, classReference.Strict = referenceJavaClass, class, true
-			set.add(classReference, location(token.line))
-			reference.Kind, reference.Class, reference.Name = referenceJavaMethod, class, method
-			if len(arguments) > 2 && !arguments[2].dynamic && arguments[2].object == nil {
-				reference.Parameters = arguments[2].strings
-				if reference.Parameters == nil {
-					reference.Parameters = []string{}
-				}
-			}
-			set.add(reference, location(token.line))
-		}
-	}
 }
 
 var (
@@ -709,6 +388,7 @@ func logosSelector(name, rest string) string {
 func extractNativeReferences(set *compatSourceSet, file compatSourceFile, content string) {
 	base := compatReference{Component: file.component, Platform: file.platform}
 	hooked := ""
+	addsMethod := false
 	lines := strings.Split(content, "\n")
 	for number, line := range lines {
 		location := compatLocation{File: file.path, Line: number + 1}
@@ -738,8 +418,14 @@ func extractNativeReferences(set *compatSourceSet, file compatSourceFile, conten
 				continue
 			}
 			if hooked != "" {
-				if match := logosMethodPattern.FindStringSubmatch(trimmed); match != nil {
+				if match := logosMethodPattern.FindStringSubmatch(trimmed); match != nil && !addsMethod {
 					add(referenceObjCMethod, hooked, logosSelector(match[1], match[2]))
+				}
+				if match := logosMethodPattern.FindStringSubmatch(trimmed); match != nil {
+					addsMethod = false
+				}
+				if strings.HasPrefix(trimmed, "%new") {
+					addsMethod = true
 				}
 			}
 			for _, match := range objcStringClassPattern.FindAllStringSubmatch(line, -1) {

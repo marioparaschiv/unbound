@@ -22,10 +22,7 @@
 			"name": "loader-android",
 			"path": "android",
 			"kind": "platform-runtime",
-			"dependencies": [
-				"loader-core",
-				"loader-bootstrap"
-			]
+			"dependencies": ["loader-core", "loader-bootstrap"]
 		},
 		{
 			"name": "loader-bootstrap",

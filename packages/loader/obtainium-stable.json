@@ -1,0 +1,7 @@
+{
+	"id": "com.discord",
+	"url": "https://github.com/marioparaschiv/unbound",
+	"author": "unbound-app",
+	"name": "Unbound",
+	"additionalSettings": "{\"apkFilterRegEx\":\"^Unbound\\\\.apks$\",\"filterReleaseTitlesByRegEx\":\"^loader-v[0-9]+\\\\.[0-9]+$\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\"}"
+}
