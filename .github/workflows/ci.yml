@@ -16,6 +16,18 @@ concurrency:
 jobs:
     validate:
         runs-on: ubuntu-26.04
+        services:
+            postgres:
+                image: postgres:18
+                env:
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 10
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -35,7 +47,16 @@ jobs:
               run: bun run fmt:js:check
             - name: Lint
               run: bun run lint:js
+            # The test helper creates and drops databases, so the role needs CREATEDB but not superuser.
+            - name: Create the test database role
+              run: psql -c "CREATE ROLE unbound_bot LOGIN CREATEDB PASSWORD 'unbound_bot'"
+              env:
+                  PGHOST: localhost
+                  PGUSER: postgres
+                  PGPASSWORD: postgres
             - name: Run tests
+              env:
+                  DATABASE_URL: postgres://unbound_bot:unbound_bot@localhost:5432/postgres
               run: bun test --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/client/tests/native.test.ts'
             - name: Run native bridge tests
               run: bun test --isolate packages/client/tests/native.test.ts

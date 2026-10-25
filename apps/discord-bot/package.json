@@ -1,0 +1,35 @@
+{
+	"name": "@unbound-app/discord-bot",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bun scripts/migrate.ts && bun --watch src/index.ts",
+		"start": "bun scripts/migrate.ts && bun src/index.ts",
+		"typecheck": "tsc --noEmit -p .",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "bun scripts/migrate.ts"
+	},
+	"dependencies": {
+		"@sapphire/decorators": "^6.2.0",
+		"@sapphire/discord.js-utilities": "^7.3.3",
+		"@sapphire/framework": "^5.5.1",
+		"@sapphire/plugin-i18next": "^8.0.0",
+		"@sapphire/plugin-logger": "^4.1.0",
+		"@sapphire/plugin-subcommands": "^7.0.1",
+		"@unbound-app/contracts": "workspace:*",
+		"@unbound-app/logger": "workspace:*",
+		"colorette": "^2.0.20",
+		"discord.js": "^14.27.0",
+		"drizzle-orm": "1.0.0-rc.4",
+		"postgres": "^3.4.9",
+		"zod": "^4.0.0"
+	},
+	"devDependencies": {
+		"@types/bun": "catalog:",
+		"drizzle-kit": "1.0.0-rc.4"
+	},
+	"peerDependencies": {
+		"typescript": "catalog:"
+	}
+}

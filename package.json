@@ -11,6 +11,7 @@
 			"packages/api",
 			"apps/sdk-generator",
 			"apps/web",
+			"apps/discord-bot",
 			"packages/contracts",
 			"packages/plugin-test",
 			"packages/utils",
