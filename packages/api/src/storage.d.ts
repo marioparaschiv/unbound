@@ -158,8 +158,9 @@ export declare function getStore(store: string): {
 	) => () => EventEmitter<EventMap>;
 };
 /**
- * @description Serialises the current settings and writes them to disk.
- * @returns A promise that resolves once the settings file has been written.
+ * @description Hands the settings changed since the last call to the loader, which merges them into the
+ * settings file key by key, so values the loader wrote in the meantime are kept.
+ * @returns A promise that resolves once the loader has stored the changes.
  */
 export declare function persist(): Promise<void>;
 /**

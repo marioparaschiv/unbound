@@ -1,10 +1,16 @@
-import type { PredicateResult, SettingsObject, SettingsValue, Widen } from '@unbound-app/types';
+import type {
+	NativeSettingsChange,
+	PredicateResult,
+	SettingsObject,
+	SettingsValue,
+	Widen,
+} from '@unbound-app/types';
 import debounce from '@unbound-app/utils/debounce';
 import isEmpty from '@unbound-app/utils/is-empty';
 import { useEffect, useState } from 'react';
 
 import { EventEmitter } from '~/lib/event-emitter';
-import fs from '~/api/fs';
+import { NativePlatform } from '~/api/native';
 
 /** Payload describing a settings change, passed to `changed` listeners and predicates. */
 export type SettingsPayload = {
@@ -237,16 +243,32 @@ export function useSettingsStore(
 	};
 }
 
-/**
- * @description Serialises the current settings and writes them to disk.
- * @returns A promise that resolves once the settings file has been written.
- */
-export async function persist() {
-	const payload = JSON.stringify(settings, null, 2);
+const pending: NativeSettingsChange[] = [];
 
-	await fs.write('Unbound/settings.json', payload);
+function record({ store, key, value }: SettingsPayload) {
+	if (key === null) {
+		pending.push({ store, clear: true });
+	} else if (value === undefined) {
+		pending.push({ store, key, remove: true });
+	} else {
+		pending.push({ store, key, value });
+	}
 }
 
+/**
+ * @description Hands the settings changed since the last call to the loader, which merges them into the
+ * settings file key by key, so values the loader wrote in the meantime are kept.
+ * @returns A promise that resolves once the loader has stored the changes.
+ */
+export async function persist() {
+	const settingsBridge = NativePlatform?.settings;
+
+	if (!settingsBridge || !pending.length) return;
+
+	settingsBridge.apply(pending.splice(0));
+}
+
+Events.on('changed', record);
 Events.on(
 	'changed',
 	debounce(() => void persist(), 100),

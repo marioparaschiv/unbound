@@ -159,6 +159,25 @@ namespace loader
                                  return evaluateBytecode(rt, std::move(bytecode), tag);
                              }));
 
+        if (provider->settings)
+        {
+            jsi::Object settings(runtime);
+            SettingsStore *store = provider->settings;
+            settings.setProperty(
+                runtime, "apply",
+                native::makeFunction(runtime, "apply", 1,
+                                     [store](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
+                                             size_t count) -> jsi::Value {
+                                         if (count == 0 || !args[0].isObject() ||
+                                             !args[0].asObject(rt).isArray(rt))
+                                         {
+                                             throw jsi::JSError(rt, "settings.apply expects an array of changes");
+                                         }
+                                         return jsi::Value(store->apply(fromJSIValue(rt, args[0])));
+                                     }));
+            platform.setProperty(runtime, "settings", std::move(settings));
+        }
+
         jsi::Object device(runtime);
         device.setProperty(runtime, "platform", jsi::String::createFromUtf8(runtime, provider->platform));
         device.setProperty(runtime, "getDeviceModel",

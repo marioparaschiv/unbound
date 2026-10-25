@@ -46,7 +46,8 @@ namespace unbound::android
     {
     }
 
-    static std::shared_ptr<loader::NativePlatformProvider> platformProvider(const LoaderConfiguration &configuration)
+    static std::shared_ptr<loader::NativePlatformProvider> platformProvider(const LoaderConfiguration &configuration,
+                                                                          loader::SettingsStore &settings)
     {
         const nlohmann::json info = configuration.platformInfo;
         auto                 text = [info](const char *key) {
@@ -68,12 +69,13 @@ namespace unbound::android
                                                            : std::nullopt;
         };
         provider->documents = configuration.documents;
+        provider->settings  = &settings;
         return provider;
     }
 
     void AndroidLoader::start()
     {
-        loader::setNativePlatformProvider(platformProvider(configuration_));
+        loader::setNativePlatformProvider(platformProvider(configuration_, settings_));
         loader::createDirectories(configuration_.documents);
         settings_.load();
 

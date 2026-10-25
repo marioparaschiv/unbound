@@ -698,6 +698,7 @@ export type NativePlatformBridge = {
 	readonly device: NativePlatformDevice;
 	readonly app: NativePlatformApp;
 	readonly files?: NativePlatformFiles;
+	readonly settings?: NativePlatformSettings;
 	readonly ios?: NativePlatformIOSBridge;
 };
 export type NativePlatformDevice = {
@@ -706,6 +707,7 @@ export type NativePlatformDevice = {
 	getOSVersionString(): string;
 	isRooted(): boolean;
 	isSystemApp(): boolean;
+	isVirtualDevice(): boolean;
 };
 export type NativePlatformFiles = {
 	remove(path: string): boolean;
@@ -714,6 +716,9 @@ export type NativePlatformIOSBridge = {
 	isVerifiedBuild(): boolean;
 	getEntitlements(): NativeSerializableObject;
 	getEntitlementsAsPlist(): string;
+};
+export type NativePlatformSettings = {
+	apply(changes: readonly NativeSettingsChange[]): boolean;
 };
 export type NativePluginBridge = {
 	readonly apiVersion: string;
@@ -776,6 +781,21 @@ export type NativeSerializable =
 export type NativeSerializableObject = {
 	[key: string]: NativeSerializable;
 };
+export type NativeSettingsChange =
+	| {
+			store: string;
+			key: string;
+			value: NativeSerializable;
+	  }
+	| {
+			store: string;
+			key: string;
+			remove: true;
+	  }
+	| {
+			store: string;
+			clear: true;
+	  };
 export type NativeStruct<T extends NativeStructFields = NativeStructFields> = {
 	readonly name: string;
 	readonly value?: T;

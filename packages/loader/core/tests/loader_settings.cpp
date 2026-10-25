@@ -82,5 +82,39 @@ int main()
     }
 
     std::filesystem::remove_all(root);
+    {
+        const auto applied = std::filesystem::temp_directory_path() / "loader-settings-apply.json";
+        std::filesystem::remove(applied);
+        loader::SettingsStore owner(applied.string());
+        owner.set("unbound", "loader.update.etag", std::string("native"));
+        owner.set("obsolete", "key", true);
+        owner.save();
+
+        loader::SettingsStore client(applied.string());
+        client.load();
+        assert(client.apply(nlohmann::json::array({
+            {{"store", "plugins"}, {"key", "states"}, {"value", {{"unbound.test", true}}}},
+            {{"store", "unbound"}, {"key", "recovery"}, {"value", false}},
+            {{"store", "unbound"}, {"key", "missing"}, {"remove", true}},
+            {{"store", "obsolete"}, {"clear", true}},
+        })));
+
+        loader::SettingsStore reader(applied.string());
+        reader.load();
+        assert(reader.getString("unbound", "loader.update.etag", "") == "native");
+        assert(reader.get("plugins", "states") == nlohmann::json({{"unbound.test", true}}));
+        assert(!reader.getBoolean("unbound", "recovery", true));
+        assert(!reader.get("obsolete", "key"));
+
+        owner.set("unbound", "loader.update.etag", std::string("newer"));
+        owner.save();
+        assert(client.apply(nlohmann::json::array({{{"store", "unbound"}, {"key", "recovery"}, {"remove", true}}})));
+        reader.load();
+        assert(!reader.get("unbound", "recovery"));
+        assert(reader.getString("unbound", "loader.update.etag", "") == "newer");
+        assert(!client.apply(nlohmann::json::object()));
+        std::filesystem::remove(applied);
+    }
+
     return 0;
 }

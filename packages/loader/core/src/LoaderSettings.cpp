@@ -205,6 +205,59 @@ namespace loader
     {
         std::lock_guard<std::mutex> lock(mutex_);
         refreshLocked();
+        setLocked(store, key, std::move(value));
+    }
+
+    void SettingsStore::remove(const std::string &store, const std::string &key)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        refreshLocked();
+        removeLocked(store, key);
+    }
+
+    bool SettingsStore::apply(const nlohmann::json &changes)
+    {
+        if (!changes.is_array())
+        {
+            return false;
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            refreshLocked();
+            for (const nlohmann::json &change : changes)
+            {
+                if (!change.is_object() || !change.contains("store") || !change["store"].is_string())
+                {
+                    continue;
+                }
+                if (change.value("clear", false))
+                {
+                    dirty_ = data_.erase(change["store"].get<std::string>()) > 0 || dirty_;
+                    continue;
+                }
+                if (!change.contains("key") || !change["key"].is_string())
+                {
+                    continue;
+                }
+
+                const std::string store = change["store"].get<std::string>();
+                const std::string key   = change["key"].get<std::string>();
+                if (change.value("remove", false))
+                {
+                    removeLocked(store, key);
+                }
+                else
+                {
+                    setLocked(store, key, change.contains("value") ? change["value"] : nlohmann::json(nullptr));
+                }
+            }
+        }
+        return save();
+    }
+
+    void SettingsStore::setLocked(const std::string &store, const std::string &key, nlohmann::json value)
+    {
         dirty_ = true;
 
         nlohmann::json &payload = data_[store];
@@ -226,6 +279,32 @@ namespace loader
         }
 
         (*current)[parts.back()] = std::move(value);
+    }
+
+    void SettingsStore::removeLocked(const std::string &store, const std::string &key)
+    {
+        auto payload = data_.find(store);
+        if (payload == data_.end() || !payload->is_object())
+        {
+            return;
+        }
+
+        std::vector<std::string> parts   = splitKeyPath(key);
+        nlohmann::json          *current = &*payload;
+        for (size_t index = 0; index + 1 < parts.size(); index++)
+        {
+            auto next = current->find(parts[index]);
+            if (next == current->end() || !next->is_object())
+            {
+                return;
+            }
+            current = &*next;
+        }
+
+        if (current->erase(parts.back()) > 0)
+        {
+            dirty_ = true;
+        }
     }
 
     const std::string &SettingsStore::path() const

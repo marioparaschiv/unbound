@@ -532,6 +532,7 @@ export type NativePlatformDevice = {
 	getOSVersionString(): string;
 	isRooted(): boolean;
 	isSystemApp(): boolean;
+	isVirtualDevice(): boolean;
 };
 
 export type NativePlatformIOSBridge = {
@@ -548,6 +549,15 @@ export type NativePlatformFiles = {
 	remove(path: string): boolean;
 };
 
+export type NativeSettingsChange =
+	| { store: string; key: string; value: NativeSerializable }
+	| { store: string; key: string; remove: true }
+	| { store: string; clear: true };
+
+export type NativePlatformSettings = {
+	apply(changes: readonly NativeSettingsChange[]): boolean;
+};
+
 export type NativePlatformBridge = {
 	readonly platform: NativePluginPlatform;
 	// UNKNOWN: returns the completion value of arbitrary evaluated bytecode.
@@ -555,6 +565,7 @@ export type NativePlatformBridge = {
 	readonly device: NativePlatformDevice;
 	readonly app: NativePlatformApp;
 	readonly files?: NativePlatformFiles;
+	readonly settings?: NativePlatformSettings;
 	readonly ios?: NativePlatformIOSBridge;
 };
 

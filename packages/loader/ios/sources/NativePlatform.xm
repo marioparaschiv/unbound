@@ -6,6 +6,7 @@
 #import "NativePlatform.h"
 
 #import "FileSystem.h"
+#import "SettingsCore.h"
 #import "Utilities.h"
 #import "Utilities+CodeSignature.h"
 
@@ -43,6 +44,7 @@ void registerNativePlatformProvider(void)
         return host ? std::optional<std::string>(toStdString(host)) : std::nullopt;
     };
     provider->documents = toStdString(FileSystem.documents);
+    provider->settings  = &UnboundSettingsStore();
 
     setNativePlatformProvider(provider);
 }

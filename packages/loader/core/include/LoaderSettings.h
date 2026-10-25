@@ -25,6 +25,8 @@ namespace loader
         std::string getString(const std::string &store, const std::string &key,
                               const std::string &fallback) const;
         void set(const std::string &store, const std::string &key, nlohmann::json value);
+        void remove(const std::string &store, const std::string &key);
+        bool apply(const nlohmann::json &changes);
 
         const std::string &path() const;
 
@@ -41,6 +43,8 @@ namespace loader
         void      backupCorruptFile() const;
         FileStamp stampOnDisk() const;
         void      refreshLocked() const;
+        void      setLocked(const std::string &store, const std::string &key, nlohmann::json value);
+        void      removeLocked(const std::string &store, const std::string &key);
 
         std::string            path_;
         mutable nlohmann::json data_ = nlohmann::json::object();

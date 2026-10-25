@@ -271,6 +271,7 @@ const nativePlatformBridge: NativePlatformBridge = {
 		getOSVersionString: () => '',
 		isRooted: () => false,
 		isSystemApp: () => false,
+		isVirtualDevice: () => false,
 	},
 	app: { getAppSource: () => '' },
 	ios: iosPlatformDetails,

@@ -9,6 +9,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "LoaderSettings.h"
+
 namespace loader
 {
     struct NativePlatformProvider
@@ -25,6 +27,7 @@ namespace loader
         std::function<bool()>           isVirtualDevice;
         std::function<std::optional<std::string>()> virtualDeviceHost;
         std::string                     documents;
+        SettingsStore                  *settings = nullptr;
     };
 
     void setNativePlatformProvider(std::shared_ptr<NativePlatformProvider> provider);
