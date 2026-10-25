@@ -48,13 +48,9 @@ async function readChannelId(
 	message: NativeObjectHandle,
 	bridge: NativeMessageCellBridge,
 ): Promise<string | undefined> {
-	for (const selector of ['channelId', 'channel_id']) {
-		if (!bridge.respondsTo(message, selector)) {
-			continue;
-		}
-
+	if (bridge.respondsTo(message, 'channelId')) {
 		const channelId = await nativeString(
-			await bridge.invokeAsync(message, selector, []),
+			await bridge.invokeAsync(message, 'channelId', []),
 			bridge,
 		);
 
