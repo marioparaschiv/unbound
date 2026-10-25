@@ -12,6 +12,7 @@ export const envSchema = databaseEnvSchema.extend({
 	UNBOUND_API_KEY: z.string().min(1),
 	POLL_INTERVAL_SECONDS: positiveInt.default(30),
 	FEED_PAGE_SIZE: positiveInt.max(500).default(100),
+	RECONCILE_INTERVAL_SECONDS: positiveInt.default(300),
 });
 
 export type Env = z.infer<typeof envSchema>;
