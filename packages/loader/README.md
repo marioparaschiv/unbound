@@ -187,12 +187,26 @@ Point `debugger.address` at a running `ub-debugger` bridge to evaluate JavaScrip
 
 ## Discord compatibility scan
 
-`.github/workflows/discord-compat.yml` runs every day for the stable and beta channels. It downloads the newest Discord IPA and APK and checks what the loaders, the client and the plugins look up against them: Metro module paths, props, stores and component names in the Hermes bundle, Objective-C classes, selectors and ivars in the Mach-O binaries, and Java classes, methods and fields in the dex files. Anything gone opens or updates a `discord-compat` issue, and the issue closes once a scan comes back clean.
+`.github/workflows/discord-compat.yml` runs every six hours for three channels, each with its own `discord-compat` issue:
 
-Run it locally against downloaded builds:
+| Channel | iOS build | Android build |
+| --- | --- | --- |
+| `stable` | latest App Store release | Play Store stable |
+| `beta` | latest TestFlight build | Play Store beta |
+| `alpha` | none | Play Store alpha |
+
+It downloads those builds and checks what the loaders, the client and the plugins look up against them: Metro module paths, props, stores and component names in the Hermes bundle, Objective-C classes, selectors and ivars in the Mach-O binaries, and Java classes, methods and fields in the dex files. Anything gone opens or updates that channel's issue, a scan of a newer build supersedes it, and the issue closes once a scan comes back clean.
+
+Android builds come from Google Play through [sniff](https://github.com/xhyrom/sniff), with the version tracker as a fallback. A channel gets the newest build any track it can see serves, which is what a Play tester on that channel installs. Fetch them locally with `discord-apk`, which checks each APK's manifest before it keeps it:
 
 ```bash
-go run ./tools compat-scan --ipa discord.ipa --apk base.apk --android-version 350.8 --report report.md
+go run ./tools discord-apk --channel alpha --output-dir discord-alpha --split base --split config.arm64_v8a
+```
+
+Run the scan against downloaded builds. Either `--ipa` or `--apk` can be left out to scan one platform:
+
+```bash
+go run ./tools compat-scan --ipa discord.ipa --apk discord-alpha/base.apk --android-version 352.8 --report report.md
 ```
 
 Each run's `compat.json` is the next run's `--baseline`. A name that resolved in an earlier build and disappears is reported as broken, even when the scan cannot tell who owns it.

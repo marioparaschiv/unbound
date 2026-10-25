@@ -2,13 +2,13 @@ name: Discord compatibility scan
 
 on:
     schedule:
-        - cron: '23 7 * * *'
+        - cron: '23 */6 * * *'
     workflow_dispatch:
         inputs:
             channel:
                 description: Discord release channel to scan
                 type: choice
-                options: [stable, beta]
+                options: [stable, beta, alpha]
                 default: stable
 
 permissions:
@@ -30,12 +30,14 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                channel: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.channel) || '["stable","beta"]') }}
+                channel: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.channel) || '["stable","beta","alpha"]') }}
         defaults:
             run:
                 working-directory: packages/loader
         env:
             CHANNEL: ${{ matrix.channel }}
+            IOS_SOURCE: ${{ matrix.channel == 'stable' && 'appstore' || matrix.channel == 'beta' && 'testflight' || 'none' }}
+            DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
             DISCORD_TRACKER: https://tracker.vendetta.rocks/tracker
             DKRYPT_BASE_URL: ${{ vars.DKRYPT_BASE_URL || 'https://ipa.dylib.dev' }}
             GH_TOKEN: ${{ github.token }}
@@ -61,18 +63,15 @@ jobs:
 
             - name: Download Discord for Android
               id: android
-              run: |
-                  set -euo pipefail
-                  code=$(curl -fsSL "$DISCORD_TRACKER/index" | jq -r ".latest.$CHANNEL")
-                  curl -fsSL -o discord.apk "$DISCORD_TRACKER/download/$code/base"
-                  echo "version=$((code / 1000)).$((code % 1000))" >> "$GITHUB_OUTPUT"
+              run: go run ./tools discord-apk --channel "$CHANNEL" --output-dir discord-android --split base
 
             - name: Download Discord for iOS
+              if: env.IOS_SOURCE != 'none'
               env:
                   DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
               run: |
                   set -euo pipefail
-                  if [ "$CHANNEL" = stable ]; then
+                  if [ "$IOS_SOURCE" = appstore ]; then
                     go run ./tools fetch --base-url "$DKRYPT_BASE_URL" --bundle-id com.hammerandchisel.discord --output discord.ipa
                   else
                     IPA_DIR="$RUNNER_TEMP/ipa" python3 ../../.agents/skills/dkrypt/scripts/fetch-ipa.py com.hammerandchisel.discord testflight
@@ -100,20 +99,27 @@ jobs:
                   done
 
             - name: Scan
+              env:
+                  ANDROID_APK: ${{ steps.android.outputs.apk }}
+                  ANDROID_VERSION: ${{ steps.android.outputs.version }}
+                  IOS_SDK: ${{ steps.sdks.outputs.ios }}
+                  ANDROID_JAR: ${{ steps.sdks.outputs.android }}
               run: |
                   set -euo pipefail
-                  go run ./tools compat-scan \
-                    --root ../.. \
-                    --channel "$CHANNEL" \
-                    --ipa discord.ipa \
-                    --apk discord.apk \
-                    --android-version "${{ steps.android.outputs.version }}" \
-                    --ios-sdk "${{ steps.sdks.outputs.ios }}" \
-                    --android-jar "${{ steps.sdks.outputs.android }}" \
-                    --baseline baseline/compat.json \
-                    --results compat.json \
-                    --report report.md \
+                  scan_args=(
+                    --root ../..
+                    --channel "$CHANNEL"
+                    --apk "$ANDROID_APK"
+                    --android-version "$ANDROID_VERSION"
+                    --ios-sdk "$IOS_SDK"
+                    --android-jar "$ANDROID_JAR"
+                    --baseline baseline/compat.json
+                    --results compat.json
+                    --report report.md
                     --source-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA"
+                  )
+                  if [ "$IOS_SOURCE" != none ]; then scan_args+=(--ipa discord.ipa); fi
+                  go run ./tools compat-scan "${scan_args[@]}"
                   cat report.md >> "$GITHUB_STEP_SUMMARY"
 
             - name: Upload the scan

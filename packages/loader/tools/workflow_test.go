@@ -606,3 +606,38 @@ func TestLoaderWorkflowsCacheTheirSlowestInputs(t *testing.T) {
 		t.Fatal("the Android module build must use the Gradle cache")
 	}
 }
+
+func TestCompatScanCoversEveryDiscordChannel(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	root := filepath.Dir(filepath.Dir(filename))
+	workflow, err := os.ReadFile(filepath.Join(root, "..", "..", ".github", "workflows", "discord-compat.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents := string(workflow)
+	for _, required := range []string{
+		"cron: '23 */6 * * *'",
+		"options: [stable, beta, alpha]",
+		`'["stable","beta","alpha"]'`,
+		"IOS_SOURCE: ${{ matrix.channel == 'stable' && 'appstore' || matrix.channel == 'beta' && 'testflight' || 'none' }}",
+		"DISCORD_SNIFF_URL: https://sniff.xhyrom.dev",
+		`go run ./tools discord-apk --channel "$CHANNEL" --output-dir discord-android --split base`,
+		"if: env.IOS_SOURCE != 'none'",
+		`if [ "$IOS_SOURCE" = appstore ]; then`,
+		"fetch-ipa.py com.hammerandchisel.discord testflight",
+		`if [ "$IOS_SOURCE" != none ]; then scan_args+=(--ipa discord.ipa); fi`,
+		"name: compat-${{ matrix.channel }}",
+		`--name "compat-$CHANNEL"`,
+		`go run ./tools compat-issue --repo "$GITHUB_REPOSITORY" --channel "$CHANNEL"`,
+	} {
+		if !strings.Contains(contents, required) {
+			t.Fatalf("compat workflow is missing %q", required)
+		}
+	}
+	if strings.Contains(contents, "% 1000") {
+		t.Fatal("the compat workflow must not derive Android version names from the code by hand")
+	}
+}
