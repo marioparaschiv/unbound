@@ -32,7 +32,7 @@ object DevOverlay {
     private var button: WeakReference<View>? = null
 
     fun shouldShow(): Boolean =
-        Platform.isEmulator() || NativeBridge.nativeGetBoolean("unbound", "developer-mode", false)
+        Platform.isEmulator() || NativeBridge.preferenceEnabled("developer-mode")
 
     fun onResumed(activity: Activity) {
         val decor = activity.window?.decorView as? ViewGroup ?: return
@@ -139,15 +139,29 @@ object DevOverlay {
     }
 
     private fun showMenu(activity: Activity) {
-        val items = arrayOf("Reload Bundle", "Edit Settings JSON", "Open Unbound Toolbox")
+        val items = arrayOf(
+            NativeBridge.nativePreference("message-bubbles-label", null).orEmpty(),
+            NativeBridge.nativePreference("avatar-radius-label", null).orEmpty(),
+            "Reload Bundle",
+            "Edit Settings JSON",
+            "Open Unbound Toolbox",
+        )
 
         AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
             .setTitle("Developer")
             .setItems(items) { _, index ->
                 when (index) {
-                    0 -> Platform.restartApp()
-                    1 -> editSettings(activity)
-                    2 -> Toolbox.show()
+                    0 -> {
+                        NativeBridge.nativePreference("toggle-message-bubbles", null)
+                        ChatUI.reload()
+                    }
+                    1 -> {
+                        NativeBridge.nativePreference("cycle-avatar-radius", null)
+                        ChatUI.reload()
+                    }
+                    2 -> Platform.restartApp()
+                    3 -> editSettings(activity)
+                    4 -> Toolbox.show()
                 }
             }
             .setNegativeButton("Cancel", null)
@@ -156,9 +170,8 @@ object DevOverlay {
 
     private fun editSettings(activity: Activity) {
         val current = NativeBridge.nativeToolbox("settings", null) ?: "{}"
-        val pretty = runCatching { JSONObject(current).toString(2) }.getOrDefault(current)
         val editor = EditText(activity).apply {
-            setText(pretty)
+            setText(current)
             typeface = Typeface.MONOSPACE
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or

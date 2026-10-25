@@ -1,3 +1,4 @@
+#import "CoreBridge.h"
 #import "DevOverlay.h"
 
 @interface DevOverlayPassthroughWindow : UIWindow
@@ -220,7 +221,6 @@ static UIWindow *discordKeyWindow = nil;
 static CGPoint devOverlayButtonCenter = { 0, 0 };
 static CGPoint devOverlayDragStartCenter = { 0, 0 };
 
-static NSArray<NSNumber *> *avatarRadiusPresets = nil;
 
 static NSString *const kDevOverlayButtonRelativeXKey = @"UnboundDevOverlayButtonRelativeX";
 static NSString *const kDevOverlayButtonRelativeYKey = @"UnboundDevOverlayButtonRelativeY";
@@ -233,7 +233,6 @@ static const CGFloat kDevOverlayButtonMargin = 8;
     if (self != [DevOverlay class])
         return;
 
-    avatarRadiusPresets = @[ @0, @8, @16, @20 ];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(settingsDidChange:)
                                                  name:SettingsDidChangeNotification
@@ -246,7 +245,7 @@ static const CGFloat kDevOverlayButtonMargin = 8;
     return YES;
 #else
     return [Utilities isVPhone] ||
-           [Settings getBoolean:@"unbound" key:@"developer-mode" def:NO];
+           [CoreBridge preferenceEnabled:@"developer-mode"];
 #endif
 }
 
@@ -310,7 +309,10 @@ static const CGFloat kDevOverlayButtonMargin = 8;
 
 + (void)settingsDidChange:(NSNotification *)notification
 {
-    dispatch_async(dispatch_get_main_queue(), ^{ [self refreshOverlay]; });
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self refreshOverlay];
+        [ChatUI reloadPreferences];
+    });
 }
 
 + (void)ensureOverlayForWindow:(UIWindow *)keyWindow
@@ -529,42 +531,21 @@ static const CGFloat kDevOverlayButtonMargin = 8;
 
 + (void)showDeveloperMenu
 {
-    BOOL messageBubblesEnabled = [[ChatUI getMessageBubblesEnabled] boolValue];
-    float currentRadius = [ChatUI getCurrentAvatarRadius];
-    BOOL isDefaultRadius = currentRadius < 0;
-    NSString *radiusTitle = isDefaultRadius
-                                ? @"Avatar Radius: Circular"
-                                : [NSString stringWithFormat:@"Avatar Radius: %.0fpt", currentRadius];
     UIAlertController *menu = [UIAlertController alertControllerWithTitle:@"Developer"
                                                                        message:nil
                                                                 preferredStyle:UIAlertControllerStyleAlert];
 
-    [menu addAction:[UIAlertAction actionWithTitle:messageBubblesEnabled ? @"Message Bubbles: On"
-                                                                              : @"Message Bubbles: Off"
-                                                   style:UIAlertActionStyleDefault
-                                                 handler:^(__unused UIAlertAction *action) {
-                                                     [ChatUI setMessageBubblesEnabled:@(!messageBubblesEnabled)];
-                                                 }]];
-    [menu addAction:[UIAlertAction actionWithTitle:radiusTitle
+    [menu addAction:[UIAlertAction actionWithTitle:[CoreBridge preference:@"message-bubbles-label" argument:@""]
                                                style:UIAlertActionStyleDefault
                                              handler:^(__unused UIAlertAction *action) {
-                                                 if (isDefaultRadius)
-                                                 {
-                                                     [ChatUI setAvatarCornerRadius:avatarRadiusPresets.firstObject];
-                                                 }
-                                                 else
-                                                 {
-                                                     NSUInteger index = [self indexOfClosestPreset:avatarRadiusPresets
-                                                                                           toValue:currentRadius];
-                                                     if (index + 1 < avatarRadiusPresets.count)
-                                                     {
-                                                         [ChatUI setAvatarCornerRadius:avatarRadiusPresets[index + 1]];
-                                                     }
-                                                     else
-                                                     {
-                                                         [ChatUI resetAvatarCornerRadius];
-                                                     }
-                                                 }
+                                                 [CoreBridge preference:@"toggle-message-bubbles" argument:@""];
+                                                 [ChatUI reloadPreferences];
+                                             }]];
+    [menu addAction:[UIAlertAction actionWithTitle:[CoreBridge preference:@"avatar-radius-label" argument:@""]
+                                               style:UIAlertActionStyleDefault
+                                             handler:^(__unused UIAlertAction *action) {
+                                                 [CoreBridge preference:@"cycle-avatar-radius" argument:@""];
+                                                 [ChatUI reloadPreferences];
                                              }]];
     [menu addAction:[UIAlertAction actionWithTitle:@"Reload Bundle"
                                                style:UIAlertActionStyleDefault
@@ -594,22 +575,6 @@ static const CGFloat kDevOverlayButtonMargin = 8;
         return;
 
     [presenter presentViewController:menu animated:YES completion:nil];
-}
-
-+ (NSUInteger)indexOfClosestPreset:(NSArray<NSNumber *> *)presets toValue:(float)value
-{
-    NSUInteger bestIndex = 0;
-    float      bestDiff  = FLT_MAX;
-    for (NSUInteger i = 0; i < presets.count; i++)
-    {
-        float diff = fabsf(presets[i].floatValue - value);
-        if (diff < bestDiff)
-        {
-            bestDiff  = diff;
-            bestIndex = i;
-        }
-    }
-    return bestIndex;
 }
 
 + (void)presentSettingsEditor

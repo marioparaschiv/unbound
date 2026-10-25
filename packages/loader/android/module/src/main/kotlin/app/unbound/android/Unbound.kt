@@ -53,9 +53,11 @@ class Unbound : XposedModule() {
         runCatching { Themes.install(this, param.classLoader) }
             .onFailure { Logger.error("themes", "Failed to apply the theme", it) }
         runCatching { Recovery.install(this) }
-            .onFailure { Logger.error("default", "Failed to install the Safe Mode shortcut", it) }
+            .onFailure { Logger.error("default", "Failed to install the Recovery Mode shortcut", it) }
         runCatching { Toolbox.install(this) }
             .onFailure { Logger.error("default", "Failed to install the toolbox gestures", it) }
+        runCatching { ChatUI.install(this, param.classLoader) }
+            .onFailure { Logger.error("chatui", "Failed to hook the chat UI", it) }
         runCatching { TextRewrites.install(this) }
             .onFailure { Logger.error("plugins", "Failed to hook text rewrites", it) }
     }
