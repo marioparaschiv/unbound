@@ -238,3 +238,37 @@ export function later(objc: NativeObjCBridge) {
 		t.Fatalf("a forwarder definition must not count as skipped: %v", calls)
 	}
 }
+
+func TestCompatBridgeReceivers(t *testing.T) {
+	set := scriptProgramReferences(t, map[string]string{
+		"packages/plugins-shared/src/native/message-info.ts": `
+export type NativeMessageCellBridge = {
+	getIvar(handle: NativeObjectHandle, name: string): unknown;
+	respondsTo(handle: NativeHandle, selector: string): boolean;
+};
+
+export type TextBridge = ReturnType<typeof createTextBridge>;
+
+export function createTextBridge(objc: NativeObjCBridge) {
+	return {
+		call(target: Handle, selector: string) {
+			return objc.invoke(target, selector, []);
+		},
+		getClass: (name: string) => objc.getClass(name),
+	};
+}
+
+export function readMessage(bridge: NativeMessageCellBridge, text: TextBridge, cell: NativeObjectHandle) {
+	bridge.getIvar(cell, 'viewModel');
+	text.call(cell, 'attributedText');
+	text.getClass('DCDLabel');
+	mystery.invoke(cell, 'hiddenSelector', []);
+	setLocale.call(this, resolve());
+}
+`,
+	})
+	expectKeys(t, set, []string{"objc-ivar  viewModel", "objc-method  attributedText", "objc-class  DCDLabel"}, []string{"objc-method  hiddenSelector"})
+	if len(set.dynamicSites) != 1 || set.dynamicSites[0].Call != "mystery.invoke (unknown bridge)" {
+		t.Fatalf("a lookup through an unknown receiver must be reported, got %+v", set.dynamicSites)
+	}
+}

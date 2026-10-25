@@ -444,6 +444,9 @@ func (program *scriptProgram) scanCall(file *scriptFile, index int) {
 	}
 	targets := program.callTargets(file, index, owner, name)
 	if len(targets) == 0 {
+		if program.emit && owner != "" && owner != "." {
+			program.reportUnknownReceiver(file, index, open, owner, name)
+		}
 		return
 	}
 	call := name
@@ -502,6 +505,27 @@ func (program *scriptProgram) callTargets(file *scriptFile, index int, owner, na
 		}
 	}
 	return targets
+}
+
+func (program *scriptProgram) reportUnknownReceiver(file *scriptFile, index, open int, owner, name string) {
+	roles, ok := scriptSinkRoles["objc."+name]
+	if !ok {
+		roles, ok = scriptSinkRoles["java."+name]
+	}
+	if !ok {
+		return
+	}
+	context := &scriptContext{file: file, function: file.scope[index], env: map[string]scriptValue{}, position: index}
+	parts := file.splitTopLevel(open+1, file.match[open], ",")
+	for _, role := range roles {
+		if role >= len(parts) || parts[role][1]-parts[role][0] != 1 {
+			continue
+		}
+		if value := program.eval(context, parts[role][0], parts[role][1]); value.kind == valueString && len(value.texts) > 0 {
+			program.dynamic(scriptSite{file: file, position: index, call: owner + "." + name + " (unknown bridge)"})
+			return
+		}
+	}
 }
 
 func (program *scriptProgram) scanBatchStep(file *scriptFile, index int) {
@@ -1881,6 +1905,11 @@ func (program *scriptProgram) typeReceivers(file *scriptFile, start, end, depth 
 			}
 		}
 	}
+	if len(receivers) == 0 && file.isPunctuation(start, "{") {
+		if bridge := bridgeShapedType(file, start); bridge != "" {
+			receivers = append(receivers, scriptReceiver{bridge: bridge})
+		}
+	}
 	if len(receivers) > 0 || !file.isIdentifier(start) {
 		return receivers
 	}
@@ -1896,6 +1925,34 @@ func (program *scriptProgram) typeReceivers(file *scriptFile, start, end, depth 
 		}
 	}
 	return receivers
+}
+
+var scriptBridgeOnlyMembers = map[string]string{
+	"getIvar": "objc", "setIvar": "objc", "findViews": "objc", "callSuper": "objc", "invokeSuper": "objc",
+	"invokeSuperAsync": "objc", "alloc": "objc", "getField": "java", "setField": "java", "construct": "java",
+}
+
+func bridgeShapedType(file *scriptFile, start int) string {
+	close := file.match[start]
+	if close < 0 {
+		return ""
+	}
+	bridge := ""
+	for _, part := range file.splitTopLevel(start+1, close, ";") {
+		for _, member := range file.splitTopLevel(part[0], part[1], ",") {
+			position := member[0]
+			if !file.isIdentifier(position) || !(file.isPunctuation(position+1, "(") || file.isPunctuation(position+1, "<") || file.isPunctuation(position+1, ":")) {
+				continue
+			}
+			if kind, ok := scriptBridgeOnlyMembers[file.value(position)]; ok {
+				if bridge != "" && bridge != kind {
+					return ""
+				}
+				bridge = kind
+			}
+		}
+	}
+	return bridge
 }
 
 func (program *scriptProgram) typeScope(file *scriptFile) []*scriptFile {
