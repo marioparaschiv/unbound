@@ -1,10 +1,10 @@
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 import { View, type LayoutChangeEvent } from 'react-native';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { EmbeddedMediaContext } from '~/components/embedded-media';
 import type { Message, Renderers, RowGenerator } from '~/modules';
-import { Surface } from '~/constants';
+import { CollapsedRemount, Surface } from '~/constants';
 
 export type SurfaceContent = {
 	record: Message;
@@ -42,8 +42,25 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 		);
 		const surface = source.surface(surfaceId);
 		const { ChatItem } = source.renderers;
+		const [mountAttempt, setMountAttempt] = useState(0);
+		const remount = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+		useEffect(() => () => clearTimeout(remount.current), []);
 
 		if (!surface) return <View style={{ height: 1 }} />;
+
+		function onItemLayout(event: LayoutChangeEvent) {
+			const collapsed = event.nativeEvent.layout.height < CollapsedRemount.minHeight;
+
+			clearTimeout(remount.current);
+
+			if (!collapsed || mountAttempt >= CollapsedRemount.limit) return;
+
+			remount.current = setTimeout(
+				() => setMountAttempt((attempt) => attempt + 1),
+				CollapsedRemount.delay,
+			);
+		}
 
 		function onLayout(event: LayoutChangeEvent) {
 			source.reportLayout(surfaceId, event.nativeEvent.layout.height);
@@ -63,12 +80,14 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 						width: surface.width,
 					}}
 				>
-					<ChatItem
-						key={surfaceId}
-						message={surface.record}
-						renderRevision={renderRevision + contentRevision}
-						rowGenerator={surface.generator}
-					/>
+					<View onLayout={onItemLayout}>
+						<ChatItem
+							key={`${surfaceId}-${mountAttempt}`}
+							message={surface.record}
+							renderRevision={renderRevision + contentRevision}
+							rowGenerator={surface.generator}
+						/>
+					</View>
 				</View>
 			</EmbeddedMediaContext.Provider>
 		);

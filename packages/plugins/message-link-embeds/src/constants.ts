@@ -12,6 +12,12 @@ export const Surface = {
 	background: '#2b2d31',
 };
 
+export const CollapsedRemount = {
+	minHeight: 8,
+	delay: 400,
+	limit: 5,
+};
+
 export const CellRetry = {
 	limit: 8,
 	delay: 120,
