@@ -99,14 +99,16 @@ export async function pollAll(options: PollerOptions): Promise<void> {
 /**
  * @description Polls every feed now and then every `intervalMs` after the previous round finishes.
  * @param options The poller's database, fetcher, page size and interval.
- * @returns A function that stops the poller.
+ * @returns A function that stops the poller and resolves once the round in flight has finished.
  */
-export function startPoller(options: PollerOptions): () => void {
+export function startPoller(options: PollerOptions): () => Promise<void> {
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	let stopped = false;
+	let round = Promise.resolve();
 
 	async function tick() {
-		await pollAll(options);
+		round = pollAll(options);
+		await round;
 
 		if (stopped) return;
 
@@ -115,9 +117,10 @@ export function startPoller(options: PollerOptions): () => void {
 
 	void tick();
 
-	return () => {
+	return async () => {
 		stopped = true;
 		clearTimeout(timer);
+		await round;
 	};
 }
 
