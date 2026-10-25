@@ -6,7 +6,6 @@
 #import "CoreBridge.h"
 #import "Discord.h"
 #import "HotReload.h"
-#import "JSI.h"
 #import "LoaderJSI.h"
 #include "LoaderBootstrap.h"
 #import "LoaderPipeline.h"

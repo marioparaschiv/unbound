@@ -22,7 +22,7 @@
 #import <unordered_map>
 #import <vector>
 
-#import "JSI.h"
+#import "CoreConversions.h"
 #import "Logger.h"
 #import "NativeAddressValidation.h"
 #import "NativeConversionBudget.h"
@@ -431,6 +431,16 @@ public:
     loader::native::throwCoded(runtime, "NATIVE_WRONG_THREAD", message);
 }
 
+static Value objcJSIValue(Runtime &runtime, id value)
+{
+    return loader::toJSIValue(runtime, unbound::ios::jsonFromObject(value));
+}
+
+static NSString *jsiString(Runtime &runtime, const Value &value)
+{
+    return value.isString() ? unbound::ios::toNSString(value.asString(runtime).utf8(runtime)) : nil;
+}
+
 static Value makeFunction(const char *name, unsigned int argCount, Runtime &runtime,
                           const HostFunctionType &handler)
 {
@@ -637,7 +647,7 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
     if ([value isKindOfClass:[NSString class]])
     {
         state.addBytes(runtime, [(NSString *) value lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-        return [JSI fromObjC:value runtime:runtime];
+        return objcJSIValue(runtime, value);
     }
 
     if ([value isKindOfClass:[NSNumber class]])
@@ -661,7 +671,7 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
                 return Value(runtime, BigInt::fromUint64(runtime, integer));
             }
         }
-        return [JSI fromObjC:value runtime:runtime];
+        return objcJSIValue(runtime, value);
     }
 
     if ([value isKindOfClass:[NSData class]])
@@ -723,7 +733,7 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
 
     if (value.isString())
     {
-        NSString *string = [JSI toNSString:value runtime:runtime];
+        NSString *string = jsiString(runtime, value);
         state.addString(runtime, [string lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
         return string ?: @"";
     }
@@ -800,7 +810,7 @@ static id valueToObjCValue(Runtime &runtime, const Value &value, ConversionState
             continue;
         }
 
-        NSString *key = [JSI toNSString:name runtime:runtime];
+        NSString *key = jsiString(runtime, name);
         if (key.length == 0)
         {
             continue;
@@ -1938,7 +1948,7 @@ static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, N
         Value thread = options->asObject(runtime).getProperty(runtime, "thread");
         if (thread.isString())
         {
-            policy = [JSI toNSString:thread runtime:runtime].UTF8String;
+            policy = jsiString(runtime, thread).UTF8String;
         }
     }
     if (policy == "current" || ([NSThread isMainThread] && policy == "main"))
@@ -2203,7 +2213,7 @@ static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)
             throw JSError(runtime, "Native batch step is malformed");
         }
         Array arguments = rawArguments.asObject(runtime).asArray(runtime);
-        NSString *selector = [JSI toNSString:rawSelector runtime:runtime];
+        NSString *selector = jsiString(runtime, rawSelector);
         if (selector.length > 256 || arguments.size(runtime) > 16)
         {
             throw JSError(runtime, "Native batch step exceeds its limits");
@@ -2356,11 +2366,11 @@ static Value snapshotUI(Runtime &runtime, const Value *args, size_t count)
                 item.setProperty(completionRuntime, "view", objcHandleResult(completionRuntime, node[@"view"]));
                 item.setProperty(completionRuntime, "parent", Value([node[@"parent"] doubleValue]));
                 item.setProperty(completionRuntime, "depth", Value([node[@"depth"] doubleValue]));
-                item.setProperty(completionRuntime, "className", [JSI fromObjC:node[@"className"] runtime:completionRuntime]);
+                item.setProperty(completionRuntime, "className", objcJSIValue(completionRuntime, node[@"className"]));
                 item.setProperty(completionRuntime, "frame", std::move(bounds));
                 item.setProperty(completionRuntime, "text", node[@"text"] == [NSNull null]
                                                            ? Value::null()
-                                                           : [JSI fromObjC:node[@"text"] runtime:completionRuntime]);
+                                                           : objcJSIValue(completionRuntime, node[@"text"]));
                 item.setProperty(completionRuntime, "visible", Value([node[@"visible"] boolValue]));
                 result.setValueAtIndex(completionRuntime, index, std::move(item));
             }
@@ -2375,7 +2385,7 @@ static Value findUIViews(Runtime &runtime, const Value *args, size_t count)
     {
         throw JSError(runtime, "objc.findViews expects a UIView handle and class name");
     }
-    NSString *className = [JSI toNSString:args[1] runtime:runtime];
+    NSString *className = jsiString(runtime, args[1]);
     if (className.length == 0 || className.length > 128)
     {
         throw JSError(runtime, "Native view class name must contain 1 to 128 characters");
@@ -2535,7 +2545,7 @@ static Value invokeSuperWithThreadPolicy(Runtime &runtime, id target, Class curr
         Value thread = options->asObject(runtime).getProperty(runtime, "thread");
         if (thread.isString())
         {
-            policy = [JSI toNSString:thread runtime:runtime].UTF8String;
+            policy = jsiString(runtime, thread).UTF8String;
         }
     }
     if (policy == "current" || ([NSThread isMainThread] && policy == "main"))
@@ -2578,7 +2588,7 @@ static Class classFromValue(Runtime &runtime, const Value &value)
 
     if (value.isString())
     {
-        NSString *name = [JSI toNSString:value runtime:runtime];
+        NSString *name = jsiString(runtime, value);
         return NSClassFromString(name);
     }
 
@@ -4204,8 +4214,8 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     loader::native::NativeResourceReservation reservation(loader::native::nativeHookBudget(),
                                                           "Too many native hooks are installed");
 
-    NSString *className = [JSI toNSString:args[0] runtime:runtime];
-    NSString *selectorName = [JSI toNSString:args[1] runtime:runtime];
+    NSString *className = jsiString(runtime, args[0]);
+    NSString *selectorName = jsiString(runtime, args[1]);
     Class cls = NSClassFromString(className);
     SEL selector = NSSelectorFromString(selectorName);
     Method method = class_getInstanceMethod(cls, selector);
@@ -4387,7 +4397,7 @@ static Value objcFunction(Runtime &runtime, const Value &target, const Value &se
                           const Value *args, size_t count, size_t start)
 {
     id object = objcValue(runtime, target);
-    NSString *selectorName = [JSI toNSString:selectorValue runtime:runtime];
+    NSString *selectorName = jsiString(runtime, selectorValue);
     if (!object || selectorName.length == 0)
     {
         throw JSError(runtime, "objc.call expects an object handle and selector");
@@ -4405,7 +4415,7 @@ static Value getIvar(Runtime &runtime, const Value *args, size_t count)
     }
 
     id object = objcValue(runtime, args[0]);
-    NSString *name = [JSI toNSString:args[1] runtime:runtime];
+    NSString *name = jsiString(runtime, args[1]);
     Ivar ivar = object ? class_getInstanceVariable(object_getClass(object), name.UTF8String) : NULL;
     if (!ivar)
     {
@@ -4532,7 +4542,7 @@ static Value setIvar(Runtime &runtime, const Value *args, size_t count)
     }
 
     id object = objcValue(runtime, args[0]);
-    NSString *name = [JSI toNSString:args[1] runtime:runtime];
+    NSString *name = jsiString(runtime, args[1]);
     Ivar ivar = object ? class_getInstanceVariable(object_getClass(object), name.UTF8String) : NULL;
     if (!ivar)
     {
@@ -4666,7 +4676,7 @@ static objc_AssociationPolicy associationPolicy(Runtime &runtime, const Value *v
         return OBJC_ASSOCIATION_RETAIN_NONATOMIC;
     }
 
-    NSString *name = [JSI toNSString:*value runtime:runtime];
+    NSString *name = jsiString(runtime, *value);
     if ([name isEqualToString:@"assign"])
     {
         return OBJC_ASSOCIATION_ASSIGN;
@@ -4698,7 +4708,7 @@ static void installObjC(Runtime &runtime, Object &objc)
             {
                 return Value::null();
             }
-            Class cls = NSClassFromString([JSI toNSString:args[0] runtime:rt]);
+            Class cls = NSClassFromString(jsiString(rt, args[0]));
             return cls ? Object::createFromHostObject(rt, std::make_shared<ObjCHandleHost>((id) cls))
                        : Value::null();
         }));
@@ -4721,7 +4731,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                 return Value::null();
             }
             Class cls = object_isClass(object) ? object : object_getClass(object);
-            return [JSI fromObjC:NSStringFromClass(cls) runtime:rt];
+            return objcJSIValue(rt, NSStringFromClass(cls));
         }));
 
     objc.setProperty(runtime, "respondsTo", makeFunction(
@@ -4731,7 +4741,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                 return Value(false);
             }
             id object = objcValue(rt, args[0]);
-            NSString *name = [JSI toNSString:args[1] runtime:rt];
+            NSString *name = jsiString(rt, args[1]);
             return Value(object && [object respondsToSelector:NSSelectorFromString(name)]);
         }));
 
@@ -4752,7 +4762,7 @@ static void installObjC(Runtime &runtime, Object &objc)
             }
             id object = objcValue(rt, args[0]);
             Class cls = classFromValue(rt, args[1]);
-            NSString *selectorName = [JSI toNSString:args[2] runtime:rt];
+            NSString *selectorName = jsiString(rt, args[2]);
             return invokeSuperObject(rt, object, cls, NSSelectorFromString(selectorName),
                                      argumentArray(rt, args, count, 3));
         }));
@@ -4770,7 +4780,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                 [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index)) ?: [NSNull null]];
             }
             id object = objcValue(rt, args[0]);
-            NSString *selectorName = [JSI toNSString:args[1] runtime:rt];
+            NSString *selectorName = jsiString(rt, args[1]);
             return invokeWithThreadPolicy(rt, object, NSSelectorFromString(selectorName), arguments,
                                           count > 3 ? &args[3] : nullptr);
         }));
@@ -4788,7 +4798,7 @@ static void installObjC(Runtime &runtime, Object &objc)
                 [arguments addObject:valueToObjC(rt, array.getValueAtIndex(rt, index)) ?: [NSNull null]];
             }
             id object = objcValue(rt, args[0]);
-            NSString *selectorName = [JSI toNSString:args[1] runtime:rt];
+            NSString *selectorName = jsiString(rt, args[1]);
             return invokeAsync(rt, object, NSSelectorFromString(selectorName), arguments);
         }));
 
@@ -4804,7 +4814,7 @@ static void installObjC(Runtime &runtime, Object &objc)
             }
             id object = objcValue(rt, args[0]);
             Class cls = classFromValue(rt, args[1]);
-            NSString *selectorName = [JSI toNSString:args[2] runtime:rt];
+            NSString *selectorName = jsiString(rt, args[2]);
             Array array = args[3].asObject(rt).asArray(rt);
             NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
             for (size_t index = 0; index < array.size(rt); index++)
@@ -4823,7 +4833,7 @@ static void installObjC(Runtime &runtime, Object &objc)
             }
             id object = objcValue(rt, args[0]);
             Class cls = classFromValue(rt, args[1]);
-            NSString *selectorName = [JSI toNSString:args[2] runtime:rt];
+            NSString *selectorName = jsiString(rt, args[2]);
             Array array = args[3].asObject(rt).asArray(rt);
             NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:array.size(rt)];
             for (size_t index = 0; index < array.size(rt); index++)
@@ -4878,7 +4888,7 @@ static void installObjC(Runtime &runtime, Object &objc)
             {
                 throw JSError(rt, "objc.struct expects a name and fields");
             }
-            return structValue(rt, [JSI toNSString:args[0] runtime:rt], args[1]);
+            return structValue(rt, jsiString(rt, args[0]), args[1]);
         }));
 
     objc.setProperty(runtime, "array", makeFunction(
@@ -4974,7 +4984,7 @@ public:
         }
         if (value.isString())
         {
-            storeNativeValue<SEL>(target, NSSelectorFromString([JSI toNSString:value runtime:runtime]));
+            storeNativeValue<SEL>(target, NSSelectorFromString(jsiString(runtime, value)));
             return;
         }
         if (std::shared_ptr<PointerHost> host = loader::ffi::pointerHost(runtime, value))
