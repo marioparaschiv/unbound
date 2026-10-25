@@ -175,13 +175,15 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		const wanted = new Map<string, Set<RoleKey>>();
 
 		for (const row of rows) {
+			const { discordId } = row;
 			const roles = qualifyingRoles(row, ids);
 
-			if (!roles.size || (absent.get(row.discordId) ?? 0) > now()) {
+			// A null discord id is a tombstone: grant nothing, remove nothing.
+			if (!discordId || !roles.size || (absent.get(discordId) ?? 0) > now()) {
 				continue;
 			}
 
-			wanted.set(row.discordId, new Set([...(wanted.get(row.discordId) ?? []), ...roles]));
+			wanted.set(discordId, new Set([...(wanted.get(discordId) ?? []), ...roles]));
 		}
 
 		if (!wanted.size) {

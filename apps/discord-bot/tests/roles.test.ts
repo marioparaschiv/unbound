@@ -170,6 +170,25 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		expect(discord.fetched).toEqual([]);
 	});
 
+	test('a tombstoned member (null discord id) is granted nothing and keeps earlier grants', async () => {
+		await seed({ isSponsor: true });
+		const discord = fakeDiscord({ members: { '1': [] } });
+		const roles = dispatcher();
+		const context = { db: database.db, client: discord.client };
+
+		await roles.reconcile(context);
+		await seed({ discordId: null, isAddonDeveloper: true, isSponsor: true });
+		await roles.handle(MEMBER.userId, context);
+		await roles.reconcile(context);
+
+		expect(discord.added).toEqual([
+			{ discordId: '1', roleId: 'r-c' },
+			{ discordId: '1', roleId: 'r-s' },
+		]);
+		expect(discord.held('1')).toEqual(new Set(['r-c', 'r-s']));
+		expect(await grants()).toHaveLength(2);
+	});
+
 	test('adds the role, then writes role_grant with the role id', async () => {
 		await seed({});
 		const discord = fakeDiscord({ members: { '1': [] } });
