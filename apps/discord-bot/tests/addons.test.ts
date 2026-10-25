@@ -314,6 +314,24 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		expect(await rowOf(PLUGIN.id)).toMatchObject({ messageId: ours[0]?.id });
 	});
 
+	test('reconcile pages past the first 100 messages to find our post', async () => {
+		for (let i = 0; i < 150; i++) {
+			discord.seed('11', discord.selfId, { embeds: [{ url: `https://old-bot/${i}` }] });
+		}
+
+		await ingest(PLUGIN);
+		await sync(PLUGIN.id);
+
+		const before = await rowOf(PLUGIN.id);
+		const posted = writes().length;
+
+		await reconcile();
+
+		expect(writes()).toHaveLength(posted);
+		expect(messagesOf(PLUGIN).map((message) => message.id)).toEqual([before?.messageId ?? '']);
+		expect(discord.messages('11')).toHaveLength(151);
+	});
+
 	test('reconcile keeps an old bot message whose url names no addon', async () => {
 		const old = discord.seed('11', discord.selfId, { embeds: [{ url: 'https://old-bot' }] });
 
