@@ -1,4 +1,4 @@
-import { COMPOSER_ROW_GAP, composerRowTop } from '@unbound-plugins/shared/composer/overlay-rows';
+import { COMPOSER_ROW_RIGHT, useComposerRow } from '@unbound-plugins/shared/composer/overlay-rows';
 import { Pressable, View } from 'react-native';
 import { useSyncExternalStore, type ComponentType } from 'react';
 
@@ -19,19 +19,25 @@ function StickerPreview({ channelId, staging, Sticker }: StickerPreviewProps) {
 		() => staging.get(channelId)[0],
 	);
 	const selectedId = selectedChannelId();
+	const shown = Boolean(sticker) && (!selectedId || selectedId === channelId);
+	const top = useComposerRow({
+		channel: ChannelStore.getChannel?.(channelId),
+		channelId,
+		id: 'sticker-preview',
+		order: 1,
+		height: PREVIEW_SIZE,
+		shown,
+	});
 
-	if (!sticker || (selectedId && selectedId !== channelId)) return null;
+	if (!sticker || !shown) return null;
 
 	return (
 		<View
 			pointerEvents='box-none'
 			style={{
 				position: 'absolute',
-				right: 16,
-				top: composerRowTop(
-					ChannelStore.getChannel?.(channelId),
-					PREVIEW_SIZE + COMPOSER_ROW_GAP,
-				),
+				right: COMPOSER_ROW_RIGHT,
+				top,
 				zIndex: 10,
 			}}
 		>

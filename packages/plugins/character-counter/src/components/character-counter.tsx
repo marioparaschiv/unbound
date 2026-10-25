@@ -1,9 +1,10 @@
-import { composerRowTop } from '@unbound-plugins/shared/composer/overlay-rows';
+import { COMPOSER_ROW_RIGHT, useComposerRow } from '@unbound-plugins/shared/composer/overlay-rows';
 import { Text, View } from 'react-native';
 
 import useMessageCount from '~/components/use-message-count';
 import { counterSurface, toneColor } from '~/colors';
 import { counterTone } from '~/counter';
+import { COUNTER_HEIGHT } from '~/constants';
 import { ChannelStore, settings, Theme } from '~/modules';
 
 type CharacterCounterProps = { channelId: string };
@@ -11,20 +12,28 @@ type CharacterCounterProps = { channelId: string };
 function CharacterCounter({ channelId }: CharacterCounterProps) {
 	const { length, limit } = useMessageCount(channelId);
 	const store = settings.useSettingsStore();
+	const channel = ChannelStore.getChannel?.(channelId);
+	const top = useComposerRow({
+		channel,
+		channelId,
+		id: 'character-counter',
+		order: 0,
+		height: COUNTER_HEIGHT,
+		shown: length > 0,
+	});
 
 	if (!length) return null;
 
 	const colors = Theme.colors ?? {};
 	const tone = counterTone(length, limit, store.get('colorEffects', true));
-	const channel = ChannelStore.getChannel?.(channelId);
 
 	return (
 		<View
 			pointerEvents='none'
 			style={{
 				position: 'absolute',
-				top: composerRowTop(channel),
-				right: 28,
+				top,
+				right: COMPOSER_ROW_RIGHT,
 				zIndex: 10,
 			}}
 		>
@@ -33,7 +42,7 @@ function CharacterCounter({ channelId }: CharacterCounterProps) {
 					alignItems: 'center',
 					backgroundColor: counterSurface(colors.TEXT_DEFAULT ?? colors.TEXT_NORMAL),
 					borderRadius: 999,
-					height: 20,
+					height: COUNTER_HEIGHT,
 					justifyContent: 'center',
 					paddingHorizontal: 7,
 				}}
