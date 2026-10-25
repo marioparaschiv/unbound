@@ -217,8 +217,6 @@ jobs:
                       - [**${{ needs.build.outputs.module_filename }}**](${{ needs.build.outputs.module_url }})
                       - [**${{ needs.build.outputs.patched_filename }}**](${{ needs.build.outputs.patched_url }})
 
-                      Packaging and simulator artifacts are link/package checks, not Discord device-runtime validation.
-
                       <sub>This comment was automatically generated. [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>
                   comment-tag: build-result
                   github-token: ${{ secrets.GITHUB_TOKEN }}
