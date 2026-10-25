@@ -192,6 +192,7 @@ export async function reconcileReleases(
 export const releasesDispatcher: Dispatcher = {
 	name: 'releases',
 	channel: 'loader_release',
+	requires: ['RELEASES_CHANNEL_ID', 'RELEASES_ROLE_ID'],
 	reconcile: ({ db, client }) => reconcileReleases(db, client.rest, client.user.id),
 	handle: (payload, { db, client }) => announceRelease(db, client.rest, payload),
 };

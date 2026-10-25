@@ -256,6 +256,7 @@ export async function reconcileAddons(
 export const addonsDispatcher: Dispatcher = {
 	name: 'addons',
 	channel: 'addon_changed',
+	requires: ['PLUGINS_CHANNEL_ID', 'THEMES_CHANNEL_ID', 'ICON_PACKS_CHANNEL_ID'],
 	reconcile: ({ db, client }) => reconcileAddons(db, client.rest, client.user.id),
 	handle: (id, { db, client }) => syncAddon(db, client.rest, id),
 };
