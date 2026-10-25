@@ -11,7 +11,7 @@ import { and, eq } from 'drizzle-orm';
 import { addon, addonMaintainer, addonVersion, submission, user } from '~/db/schema';
 import { LATEST_VERSION, refreshAddonSummary, toAddonSummary } from '~/lib/addons';
 import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
-import { getArtifactKeys, toAddonVersion } from '~/lib/artifacts';
+import { toAddonVersion, writeArtifact } from '~/lib/artifacts';
 import { createGitHubClient, getGitHubToken } from '~/lib/github';
 import { requireSourced, toSubmission } from '~/lib/submissions';
 import { recordReviewDecision } from '~/lib/moderation-events';
@@ -20,6 +20,7 @@ import type { Permissions } from '~/lib/auth/access';
 import { hasPermission } from '~/lib/auth/access';
 import { toVersionKey } from '~/lib/version-key';
 import type { AppContext } from '~/lib/context';
+import type { Transaction } from '~/db/database';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
 
@@ -212,16 +213,53 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
 		);
 	}
 
-	const keys = getArtifactKeys(row.addonId, row.version, row.manifest.main);
-
-	await Promise.all([
-		ctx.storage.public.write(keys.bundle, bundle),
-		ctx.storage.public.write(keys.manifest, JSON.stringify(row.manifest), {
-			type: 'application/json',
-		}),
-	]);
+	await writeArtifact(ctx, row, bundle);
 
 	return sha256;
+}
+
+/**
+ * @description Makes an approved submission's version live, inside the approval's transaction: a
+ * listing creates the addon with the author as owner, an update moves the addon to the submitted
+ * repository and refreshes its summary.
+ * @param tx The approval's transaction.
+ * @param row The approved submission.
+ * @param sha256 The verified SHA-256 of the published bundle.
+ * @param publishedAt The approval time.
+ */
+export function publishVersion(
+	tx: Transaction,
+	row: SubmissionRow,
+	sha256: string,
+	publishedAt: Date,
+): void {
+	if (row.kind === 'listing') {
+		tx.insert(addon)
+			.values({
+				id: row.addonId,
+				repository: row.repository,
+				createdAt: publishedAt,
+				...toAddonSummary(row.manifest, publishedAt),
+			})
+			.run();
+		tx.insert(addonMaintainer)
+			.values({
+				addonId: row.addonId,
+				userId: row.authorId,
+				role: 'owner',
+				createdAt: publishedAt,
+			})
+			.run();
+	}
+
+	tx.insert(addonVersion)
+		.values(toVersionRow(row, sha256, publishedAt))
+		.run();
+
+	if (row.kind === 'update') {
+		tx.update(addon).set({ repository: row.repository }).where(eq(addon.id, row.addonId)).run();
+		refreshAddonSummary(tx, row.addonId);
+	}
 }
 
 /**
@@ -262,24 +300,9 @@ function decide(
 				return updated;
 			}
 
-			if (row.kind === 'listing') {
-				tx.insert(addon)
-					.values({
-						id: row.addonId,
-						repository: row.repository,
-						createdAt: decision.reviewedAt,
-						...toAddonSummary(row.manifest, decision.reviewedAt),
-					})
-					.run();
-				tx.insert(addonMaintainer)
-					.values({
-						addonId: row.addonId,
-						userId: row.authorId,
-						role: 'owner',
-						createdAt: decision.reviewedAt,
-					})
-					.run();
+			publishVersion(tx, row, sha256, decision.reviewedAt);
 
+			if (row.kind === 'listing') {
 				const author = tx
 					.select({ role: user.role })
 					.from(user)
@@ -292,18 +315,6 @@ function decide(
 						.where(eq(user.id, row.authorId))
 						.run();
 				}
-			}
-
-			tx.insert(addonVersion)
-				.values(toVersionRow(row, sha256, decision.reviewedAt))
-				.run();
-
-			if (row.kind === 'update') {
-				tx.update(addon)
-					.set({ repository: row.repository })
-					.where(eq(addon.id, row.addonId))
-					.run();
-				refreshAddonSummary(tx, row.addonId);
 			}
 
 			return updated;
@@ -352,4 +363,4 @@ export async function reviewSubmission(
 	};
 }
 
-export default { toVersionRow, listReviewQueue, reviewSubmission };
+export default { toVersionRow, publishVersion, listReviewQueue, reviewSubmission };

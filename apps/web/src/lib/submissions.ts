@@ -239,6 +239,38 @@ function checkClaim(
 	return { kind: approved ? 'update' : 'listing', replaced };
 }
 
+/**
+ * @description Stores the GitHub source a submission was read from.
+ * @param tx The transaction that inserts the submission.
+ * @param submissionId The submission's id.
+ * @param source The addon source.
+ * @returns The stored source row.
+ */
+export function insertSubmissionSource(
+	tx: Transaction,
+	submissionId: string,
+	source: AddonSource,
+): SubmissionSourceRow {
+	const { pin } = source;
+
+	return tx
+		.insert(submissionSource)
+		.values({
+			submissionId,
+			repositoryId: pin.repositoryId,
+			path: pin.path,
+			ref: pin.ref,
+			commitSha: pin.commitSha,
+			bundlePath: pin.bundlePath,
+			bundleBlobSha: pin.bundleBlobSha,
+			addonMd: source.addonMd,
+			changelog: source.changelog,
+			details: source.details,
+		})
+		.returning()
+		.get();
+}
+
 function reserve(
 	ctx: AppContext,
 	caller: Caller,
@@ -279,22 +311,7 @@ function reserve(
 				.returning()
 				.get();
 
-			const row = tx
-				.insert(submissionSource)
-				.values({
-					submissionId: staged.id,
-					repositoryId: pin.repositoryId,
-					path: pin.path,
-					ref: pin.ref,
-					commitSha: pin.commitSha,
-					bundlePath: pin.bundlePath,
-					bundleBlobSha: pin.bundleBlobSha,
-					addonMd: source.addonMd,
-					changelog: source.changelog,
-					details: source.details,
-				})
-				.returning()
-				.get();
+			const row = insertSubmissionSource(tx, staged.id, source);
 
 			return {
 				created: {
@@ -398,6 +415,7 @@ export default {
 	REPLACEABLE_SUBMISSION_STATUSES,
 	requireSourced,
 	toSubmission,
+	insertSubmissionSource,
 	createSubmission,
 	previewSubmission,
 };
