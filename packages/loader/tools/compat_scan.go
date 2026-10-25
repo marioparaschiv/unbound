@@ -87,6 +87,7 @@ func runCompatScan(args []string) error {
 	sourceURL := set.String("source-url", "", "base URL linking report locations to the source")
 	iosSDK := set.String("ios-sdk", "", "iPhoneOS SDK path (found with xcrun when empty)")
 	androidJar := set.String("android-jar", "", "android.jar from the Android SDK (found under ANDROID_HOME when empty)")
+	failOnBreakage := set.Bool("fail-on-breakage", false, "exit with an error when anything is broken or possibly broken")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -166,7 +167,26 @@ func runCompatScan(args []string) error {
 			return err
 		}
 	}
+	if *failOnBreakage {
+		return compatBreakageError(results)
+	}
 	return nil
+}
+
+func compatBreakageError(results *compatResults) error {
+	broken, possible := 0, 0
+	for _, finding := range results.Findings {
+		switch finding.Status {
+		case compatBroken:
+			broken++
+		case compatPossible:
+			possible++
+		}
+	}
+	if broken == 0 && possible == 0 {
+		return nil
+	}
+	return fmt.Errorf("%s: %d broken and %d possibly broken lookups", compatTargetSummary(results), broken, possible)
 }
 
 func readCompatBaseline(path string) (*compatResults, error) {

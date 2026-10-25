@@ -245,9 +245,107 @@ jobs:
                     echo "is_testflight=$INPUT_IS_TESTFLIGHT"
                   } >> "$GITHUB_OUTPUT"
 
-    android:
+            - name: Keep the iOS build for the compatibility check
+              if: inputs.release == true && inputs.android_channel == ''
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: discord-source-ipa
+                  path: packages/loader/source.ipa
+                  if-no-files-found: error
+                  retention-days: 1
+
+    compat-gate:
+        name: Check Discord compatibility
         needs: resolve-source
-        if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success'
+        if: inputs.release == true && needs.resolve-source.result == 'success'
+        runs-on: macos-15
+        timeout-minutes: 45
+        permissions:
+            contents: read
+        env:
+            DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
+            DISCORD_TRACKER: https://tracker.vendetta.rocks/tracker
+            SCAN_IOS: ${{ inputs.android_channel == '' }}
+            SCAN_ANDROID: ${{ inputs.is_testflight != true }}
+            ANDROID_CHANNEL: ${{ inputs.android_channel || 'stable' }}
+            ANDROID_CODE: ${{ needs.resolve-source.outputs.android_code }}
+            DISCORD_VERSION: ${{ needs.resolve-source.outputs.version }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+            - name: Download the iOS build being released
+              if: env.SCAN_IOS == 'true'
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: discord-source-ipa
+                  path: packages/loader
+
+            - name: Download the Android build being released
+              id: android
+              if: env.SCAN_ANDROID == 'true'
+              run: |
+                  set -euo pipefail
+                  code="$ANDROID_CODE"
+                  if [ -z "$code" ]; then code=$(go run ./tools discord-version --version "$DISCORD_VERSION"); fi
+                  go run ./tools discord-apk --channel "$ANDROID_CHANNEL" --code "$code" --output-dir discord-android --split base
+
+            - name: Find the platform SDKs
+              id: sdks
+              run: |
+                  set -euo pipefail
+                  ios_sdk=$(xcrun --sdk iphoneos --show-sdk-path)
+                  android_jar=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platforms" -path '*/android-*/android.jar' | sort -V | tail -n 1)
+                  test -d "$ios_sdk" && test -f "$android_jar"
+                  echo "ios=$ios_sdk" >> "$GITHUB_OUTPUT"
+                  echo "android=$android_jar" >> "$GITHUB_OUTPUT"
+
+            - name: Check the release for breakages
+              env:
+                  ANDROID_APK: ${{ steps.android.outputs.apk }}
+                  ANDROID_VERSION: ${{ steps.android.outputs.version }}
+                  IOS_SDK: ${{ steps.sdks.outputs.ios }}
+                  ANDROID_JAR: ${{ steps.sdks.outputs.android }}
+              run: |
+                  set -euo pipefail
+                  scan_args=(
+                    --root ../..
+                    --channel release
+                    --ios-sdk "$IOS_SDK"
+                    --android-jar "$ANDROID_JAR"
+                    --report report.md
+                    --source-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA"
+                    --fail-on-breakage
+                  )
+                  if [ "$SCAN_IOS" = true ]; then scan_args+=(--ipa source.ipa); fi
+                  if [ "$SCAN_ANDROID" = true ]; then scan_args+=(--apk "$ANDROID_APK" --android-version "$ANDROID_VERSION"); fi
+                  status=0
+                  go run ./tools compat-scan "${scan_args[@]}" || status=$?
+                  cat report.md >> "$GITHUB_STEP_SUMMARY"
+                  if [ "$status" -ne 0 ]; then
+                    echo "::error::This Discord build breaks parts of Unbound, so nothing is built or released. The job summary lists what broke."
+                  fi
+                  exit "$status"
+
+    android:
+        needs: [resolve-source, compat-gate]
+        if: always() && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success' && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
         permissions:
             contents: read
         uses: ./.github/workflows/loader-android.yml
@@ -260,8 +358,8 @@ jobs:
         secrets: inherit
 
     ios:
-        needs: resolve-source
-        if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || needs.resolve-source.result == 'success')
+        needs: [resolve-source, compat-gate]
+        if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || needs.resolve-source.result == 'success') && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
         permissions:
             contents: write
             id-token: write

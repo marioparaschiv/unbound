@@ -247,6 +247,12 @@ const Forms = firstOf(
 
 `HostClass` loads the first class that exists. `firstOf` from `@unbound-app/utils/first-of` returns the first lookup that produces a value. Missing names in such a lookup are listed under "Covered by a fallback" and do not count as breakages. A name listed there on every channel can be removed.
 
+Releases run the same scan before anything is built. The `compat-gate` job in `loader-build.yml` checks the exact builds a release targets: the App Store IPA and the matching Play stable APK for a stable release, the TestFlight IPA for a TestFlight release, and the Play APK for a beta or alpha prerelease. Any broken or possibly broken lookup stops the release, and the job summary lists what broke. The scheduled channel issues stay open as a heads-up and do not block anything. Run the check locally with `--fail-on-breakage`:
+
+```bash
+go run ./tools compat-scan --ipa discord.ipa --apk discord-stable/base.apk --android-version 350.0 --fail-on-breakage
+```
+
 ## Patching an IPA
 
 The IPA build patches Discord before injecting the tweak: it names the app Unbound, drops the supported-device list, enables file sharing, adds the Unbound alternate icon and the `unbound://` URL scheme, and renames the React Navigation elements module. The same step runs on its own:

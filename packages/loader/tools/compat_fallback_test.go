@@ -173,3 +173,26 @@ func TestEvaluateCompatFallbackWithNothingLeft(t *testing.T) {
 		}
 	}
 }
+
+func TestCompatBreakageError(t *testing.T) {
+	location := []compatLocation{{File: "a.ts", Line: 1}}
+	android := compatTestTargets()[1]
+	android.Version = "350.8"
+	clean := evaluateCompat([]*compatReference{
+		{Kind: referenceStore, Name: "UserStore", Component: "client", Locations: location},
+		{Kind: referenceProps, Terms: []string{"FormSlider"}, Group: "forms", Component: "client", Locations: location},
+		{Kind: referenceStore, Name: "UserStore", Group: "forms", Alternative: 1, Component: "client", Locations: location},
+	}, []*compatTarget{android}, nil)
+	if err := compatBreakageError(clean); err != nil {
+		t.Fatalf("a build where everything resolves, fallbacks included, must pass the release check: %v", err)
+	}
+
+	broken := evaluateCompat([]*compatReference{
+		{Kind: referenceStore, Name: "GoneStore", Component: "client", Locations: location},
+		{Kind: referenceProps, Terms: []string{"transitionToGuild", "plainOnly"}, Component: "client", Locations: location},
+	}, []*compatTarget{android}, nil)
+	err := compatBreakageError(broken)
+	if err == nil || err.Error() != "Android 350.8: 1 broken and 1 possibly broken lookups" {
+		t.Fatalf("a broken build must fail the release check, got %v", err)
+	}
+}
