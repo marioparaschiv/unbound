@@ -16,6 +16,7 @@
 #include "HermesBytecodeHeader.h"
 #include "LoaderAddons.h"
 #include "LoaderDevOverlay.h"
+#include "LoaderDiagnostics.h"
 #include "LoaderFonts.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
@@ -338,6 +339,23 @@ static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
 + (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds
 {
     loader::devoverlay::saveButtonCenter(UnboundSettingsStore(), {center.x, center.y}, coreSize(bounds));
+}
+
++ (NSString *)incompatibleHostMessage
+{
+    return @(loader::diagnostics::kIncompatibleHostMessage);
+}
+
++ (NSString *)developmentBuildBanner
+{
+    loader::diagnostics::BuildInfo info{toStdString(COMMIT_SHORT_HASH), toStdString(COMMIT_SUBJECT),
+                                        toStdString(COMMIT_BRANCH), toStdString(BUILD_TIMESTAMP)};
+    return unbound::ios::toNSString(loader::diagnostics::developmentBuildBanner(info));
+}
+
++ (NSTimeInterval)developmentBuildBannerDuration
+{
+    return loader::diagnostics::kBannerSeconds;
 }
 
 @end

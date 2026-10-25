@@ -600,17 +600,7 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
     devBuildLabel.numberOfLines   = 3;
     devBuildLabel.lineBreakMode   = NSLineBreakByTruncatingTail;
 
-    NSString               *commitSubject     = COMMIT_SUBJECT ?: @"";
-    static const NSUInteger kMaxSubjectLength = 36;
-    if (commitSubject.length > kMaxSubjectLength)
-    {
-        commitSubject =
-            [[commitSubject substringToIndex:kMaxSubjectLength] stringByAppendingString:@"..."];
-    }
-
-    devBuildLabel.text = [NSString
-        stringWithFormat:@"DEVELOPMENT BUILD - DO NOT USE\n#%@ - %@ - %@\nBuilt: %@",
-                         COMMIT_SHORT_HASH, commitSubject, COMMIT_BRANCH, BUILD_TIMESTAMP];
+    devBuildLabel.text = [CoreBridge developmentBuildBanner];
 
     devBuildLabel.layer.shadowColor   = [UIColor blackColor].CGColor;
     devBuildLabel.layer.shadowOffset  = CGSizeMake(0.0, 1.0);
@@ -623,7 +613,8 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
 
     [UIView animateWithDuration:0.4 animations:^{ devBuildLabel.alpha = 1.0; }];
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 10.0 * NSEC_PER_SEC), dispatch_get_main_queue(),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) ([CoreBridge developmentBuildBannerDuration] * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(),
                    ^{
                        if (!devBuildLabel || !devBuildLabel.superview)
                        {

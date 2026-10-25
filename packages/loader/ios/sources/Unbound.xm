@@ -343,8 +343,7 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
     if (![Utilities isRNNewArchEnabled])
     {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [Utilities
-                alert:@"This version of Discord is incompatible with this version of the Tweak."];
+            [Utilities alert:[CoreBridge incompatibleHostMessage]];
         });
         return;
     }

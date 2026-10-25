@@ -9,6 +9,7 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.text.InputType
+import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
@@ -18,6 +19,7 @@ import android.view.WindowInsets
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.ref.WeakReference
@@ -27,7 +29,11 @@ import kotlin.math.roundToInt
 object DevOverlay {
     private const val DRAG_SLOP_DP = 6
 
+    private const val BANNER_HEIGHT_DP = 52
+    private const val BANNER_FADE_MS = 400L
+
     private var button: WeakReference<View>? = null
+    private var bannerShown = false
 
     @Volatile var debugBuild = false
 
@@ -53,6 +59,46 @@ object DevOverlay {
         decor.addView(view)
         button = WeakReference(view)
         decor.post { place(view, decor) }
+    }
+
+    fun showDevelopmentBuildBanner(activity: Activity) {
+        if (!debugBuild || bannerShown) return
+        val decor = activity.window?.decorView as? ViewGroup ?: return
+        bannerShown = true
+
+        val banner = TextView(activity).apply {
+            text = NativeBridge.nativeDevelopmentBuildBanner(
+                BuildConfig.COMMIT_SHORT_HASH,
+                BuildConfig.COMMIT_SUBJECT,
+                BuildConfig.COMMIT_BRANCH,
+                BuildConfig.BUILD_TIMESTAMP,
+            )
+            setTextColor(Color.rgb(255, 51, 51))
+            setBackgroundColor(Color.argb(179, 0, 0, 0))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            maxLines = 3
+            ellipsize = TextUtils.TruncateAt.END
+            setShadowLayer(1f, 0f, 1f, Color.BLACK)
+            alpha = 0f
+            elevation = dp(activity, 8).toFloat()
+            layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(activity, BANNER_HEIGHT_DP),
+                Gravity.TOP,
+            )
+        }
+        decor.addView(banner)
+        decor.post {
+            banner.translationY = systemInsets(decor).top.toFloat()
+            banner.animate().alpha(1f).setDuration(BANNER_FADE_MS)
+        }
+        banner.postDelayed({
+            banner.animate().alpha(0f).setDuration(BANNER_FADE_MS).withEndAction {
+                (banner.parent as? ViewGroup)?.removeView(banner)
+            }
+        }, NativeBridge.nativeDevelopmentBuildBannerSeconds() * 1000L)
     }
 
     private fun density(view: View): Double = view.resources.displayMetrics.density.toDouble()

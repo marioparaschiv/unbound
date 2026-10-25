@@ -1,6 +1,7 @@
 #include "AndroidHotReload.h"
 #include "AndroidLoader.h"
 #include "LoaderDevOverlay.h"
+#include "LoaderDiagnostics.h"
 #include "LoaderColor.h"
 #include "LoaderPreferences.h"
 #include "HermesBytecodeHeader.h"
@@ -302,6 +303,24 @@ static void nativeSaveDevOverlayCenter(JNIEnv *env, jclass, jdouble x, jdouble y
     }
 }
 
+static jstring nativeIncompatibleHostMessage(JNIEnv *env, jclass)
+{
+    return toJavaString(env, loader::diagnostics::kIncompatibleHostMessage);
+}
+
+static jstring nativeDevelopmentBuildBanner(JNIEnv *env, jclass, jstring commit, jstring subject, jstring branch,
+                                            jstring timestamp)
+{
+    const auto text = [env](jstring value) { return value ? toStdString(env, value) : std::string(); };
+    return toJavaString(env, loader::diagnostics::developmentBuildBanner(
+                                 {text(commit), text(subject), text(branch), text(timestamp)}));
+}
+
+static jint nativeDevelopmentBuildBannerSeconds(JNIEnv *, jclass)
+{
+    return static_cast<jint>(loader::diagnostics::kBannerSeconds);
+}
+
 static bool cacheCallbacks(JNIEnv *env, jclass bridge)
 {
     gCallbacks.bridgeClass     = static_cast<jclass>(env->NewGlobalRef(bridge));
@@ -451,6 +470,12 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativePrepareAddons", "()V", reinterpret_cast<void *>(nativePrepareAddons)},
         {"nativeLog", "(ILjava/lang/String;Ljava/lang/String;)V", reinterpret_cast<void *>(nativeLog)},
         {"nativeDevOverlayButtonSide", "()D", reinterpret_cast<void *>(nativeDevOverlayButtonSide)},
+        {"nativeIncompatibleHostMessage", "()Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeIncompatibleHostMessage)},
+        {"nativeDevelopmentBuildBanner",
+         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeDevelopmentBuildBanner)},
+        {"nativeDevelopmentBuildBannerSeconds", "()I", reinterpret_cast<void *>(nativeDevelopmentBuildBannerSeconds)},
         {"nativeDevOverlayCenter", "([D)[D", reinterpret_cast<void *>(nativeDevOverlayCenter)},
         {"nativeClampDevOverlayCenter", "(DD[D)[D", reinterpret_cast<void *>(nativeClampDevOverlayCenter)},
         {"nativeSaveDevOverlayCenter", "(DD[D)V", reinterpret_cast<void *>(nativeSaveDevOverlayCenter)},

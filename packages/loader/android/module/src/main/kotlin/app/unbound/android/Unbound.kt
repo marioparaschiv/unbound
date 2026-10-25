@@ -52,7 +52,12 @@ class Unbound : XposedModule() {
         SettingsWatcher.start(documents)
         SettingsWatcher.onChange(::onSettingsChanged)
         hookActivityLifecycle()
-        hookBundleLoading(param.classLoader)
+        val hooked = runCatching { hookBundleLoading(param.classLoader) }
+            .onFailure { Logger.error(LogCategory.RUNTIME, "Failed to hook ReactInstance.loadJSBundle", it) }
+        if (hooked.isFailure) {
+            StartupAlert.report(NativeBridge.nativeIncompatibleHostMessage())
+            return
+        }
         Analytics.block(this, param.classLoader)
         runCatching { Fonts.install(this, param.classLoader) }
             .onFailure { Logger.error(LogCategory.FONTS, "Failed to hook React Native fonts", it) }
@@ -113,8 +118,10 @@ class Unbound : XposedModule() {
                 val activity = chain.thisObject as Activity
                 ActivityTracker.onActivityResumed(activity)
                 runCatching {
+                    StartupAlert.onResumed(activity)
                     Toolbox.onResumed(activity)
                     DevOverlay.onResumed(activity)
+                    DevOverlay.showDevelopmentBuildBanner(activity)
                 }.onFailure { Logger.error(LogCategory.DEFAULT, "Failed to attach the toolbox", it) }
                 result
             }

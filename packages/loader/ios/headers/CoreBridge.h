@@ -37,6 +37,10 @@ NS_ASSUME_NONNULL_BEGIN
 + (CGPoint)clampDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds insets:(UIEdgeInsets)insets;
 + (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds;
 
++ (NSString *)incompatibleHostMessage;
++ (NSString *)developmentBuildBanner;
++ (NSTimeInterval)developmentBuildBannerDuration;
+
 @end
 
 NS_ASSUME_NONNULL_END

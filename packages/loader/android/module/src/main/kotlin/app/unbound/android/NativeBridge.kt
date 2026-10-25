@@ -86,6 +86,15 @@ object NativeBridge {
     external fun nativeDevOverlayButtonSide(): Double
 
     @JvmStatic
+    external fun nativeIncompatibleHostMessage(): String
+
+    @JvmStatic
+    external fun nativeDevelopmentBuildBanner(commit: String, subject: String, branch: String, timestamp: String): String
+
+    @JvmStatic
+    external fun nativeDevelopmentBuildBannerSeconds(): Int
+
+    @JvmStatic
     external fun nativeDevOverlayCenter(bounds: DoubleArray): DoubleArray?
 
     @JvmStatic
