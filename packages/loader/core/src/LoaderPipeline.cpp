@@ -55,8 +55,9 @@ namespace loader
 
         std::optional<std::string> updateURL       = host_->resolveUpdateURL();
         uint32_t                   bytecodeVersion = host_->runtimeBytecodeVersion();
+        bool                       preferFresh     = settings_.getBoolean("loader.update.hmr", false);
 
-        host_->runInBackground([this, pending, token, updateURL, bytecodeVersion]() {
+        host_->runInBackground([this, pending, token, updateURL, bytecodeVersion, preferFresh]() {
             auto settle = [&](std::string bundle, std::string path) {
                 std::lock_guard<std::mutex> lock(pending->mutex);
                 if (pending->settled)
@@ -73,7 +74,7 @@ namespace loader
             try
             {
                 std::string localPath = updater_.resolveBundlePath();
-                if (fileExists(localPath))
+                if (!preferFresh && fileExists(localPath))
                 {
                     std::optional<std::string> cached = readTextFile(localPath);
                     if (cached && !cached->empty() && token == prefetchToken_.load())
@@ -99,6 +100,18 @@ namespace loader
             {
                 log(LogLevel::Error, "default", std::string("Bundle download failed. (") +
                                                     error.what() + ")");
+            }
+
+            if (!signaled && preferFresh && token == prefetchToken_.load())
+            {
+                std::string localPath = updater_.resolveBundlePath();
+                std::optional<std::string> cached =
+                    fileExists(localPath) ? readTextFile(localPath) : std::nullopt;
+                if (cached && !cached->empty())
+                {
+                    settle(std::move(*cached), localPath);
+                    signaled = true;
+                }
             }
 
             if (!signaled)
