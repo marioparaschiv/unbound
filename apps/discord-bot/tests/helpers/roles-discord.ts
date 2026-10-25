@@ -31,6 +31,8 @@ export type FakeDiscord = {
 	listeners: number;
 	/** Adds the member to the guild and fires `guildMemberAdd`. */
 	join: (discordId: string, guildId?: string) => void;
+	/** Adds the member to the guild with no `guildMemberAdd`, as a bot without the GuildMembers intent sees it. */
+	enter: (discordId: string) => void;
 	/** The roles a member holds now; a moderator may edit the set. */
 	held: (discordId: string) => Set<string> | undefined;
 };
@@ -175,6 +177,9 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 			for (const listener of listeners) {
 				listener({ id: discordId, guild: { id: joinedGuildId } });
 			}
+		},
+		enter(discordId) {
+			members.set(discordId, members.get(discordId) ?? new Set());
 		},
 		held: (discordId) => members.get(discordId),
 	};

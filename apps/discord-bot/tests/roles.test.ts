@@ -239,9 +239,26 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		expect(await grants()).toEqual([]);
 	});
 
-	test('an absent member is not fetched again for an hour', async () => {
+	test('an absent member who later enters the guild is granted on the next reconcile, with no guildMemberAdd', async () => {
 		await seed({});
 		const discord = fakeDiscord({ members: {} });
+		const roles = dispatcher();
+		const context = { db: database.db, client: discord.client };
+
+		await roles.reconcile(context);
+		expect(discord.added).toEqual([]);
+
+		discord.enter('1');
+		await roles.reconcile(context);
+
+		expect(discord.fetched).toEqual(['1', '1']);
+		expect(discord.added).toEqual([{ discordId: '1', roleId: 'r-c' }]);
+		expect(await grants()).toEqual([{ discordId: '1', role: 'r-c' }]);
+	});
+
+	test('a deleted account is not fetched again for an hour', async () => {
+		await seed({});
+		const discord = fakeDiscord({ members: {}, deleted: ['1'] });
 		let clock = 0;
 		const roles = dispatcher({ now: () => clock });
 		const context = { db: database.db, client: discord.client };

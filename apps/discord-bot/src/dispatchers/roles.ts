@@ -81,7 +81,7 @@ const DEFAULT_ROLE_IDS: RoleIds = {
 	addonDeveloper: ADDON_DEVELOPER_ROLE_ID,
 	sponsor: SPONSOR_ROLE_ID,
 };
-const ABSENT_RETRY_MS = 60 * 60 * 1000;
+const DELETED_RETRY_MS = 60 * 60 * 1000;
 
 /**
  * @description Decides the roles one member row qualifies for.
@@ -132,13 +132,12 @@ function pendingRoles(claim: Claim, roles: Grantable, held: ReadonlySet<string>)
 	return pending;
 }
 
-/** 10007 for a user who is not in the guild, 10013 for a deleted account. */
-function isAbsent(error: unknown): error is DiscordAPIError {
-	return (
-		error instanceof DiscordAPIError &&
-		(error.code === RESTJSONErrorCodes.UnknownMember ||
-			error.code === RESTJSONErrorCodes.UnknownUser)
-	);
+function isNotInGuild(error: unknown): error is DiscordAPIError {
+	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember;
+}
+
+function isDeletedUser(error: unknown): error is DiscordAPIError {
+	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownUser;
 }
 
 function isMissingPermissions(error: unknown): error is DiscordAPIError {
@@ -161,8 +160,8 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 	const queue = createSerialQueue();
 	// `discordId:roleId` pairs seen held by hand; per process, so a restart checks them once more.
 	const held = new Set<string>();
-	// Discord id -> epoch ms before which an account missing from the guild is not fetched again.
-	const absent = new Map<string, number>();
+	// Discord id -> epoch ms before which a deleted account is not fetched again; one not in the guild is retried every run.
+	const deleted = new Map<string, number>();
 	let reported = new Set<string>();
 	let attached = false;
 
@@ -179,7 +178,7 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 			const roles = qualifyingRoles(row, ids);
 
 			// A null discord id is a tombstone: grant nothing, remove nothing.
-			if (!discordId || !roles.size || (absent.get(discordId) ?? 0) > now()) {
+			if (!discordId || !roles.size || (deleted.get(discordId) ?? 0) > now()) {
 				continue;
 			}
 
@@ -309,12 +308,20 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 
 		try {
 			target = await guild.members.fetch({ user: claim.discordId, force: true });
-			absent.delete(claim.discordId);
+			deleted.delete(claim.discordId);
 		} catch (error) {
-			if (isAbsent(error)) {
-				absent.set(claim.discordId, now() + ABSENT_RETRY_MS);
+			if (isNotInGuild(error)) {
 				logger.debug(
-					`Discord user ${claim.discordId} is not in the guild; retrying on a join or in an hour.`,
+					`Discord user ${claim.discordId} is not in the guild; retrying on the next reconcile.`,
+				);
+
+				return;
+			}
+
+			if (isDeletedUser(error)) {
+				deleted.set(claim.discordId, now() + DELETED_RETRY_MS);
+				logger.debug(
+					`Discord user ${claim.discordId} is a deleted account; retrying in an hour.`,
 				);
 
 				return;
@@ -372,7 +379,7 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		}
 	}
 
-	// Without the GuildMembers intent joins never fire; the runtime's timed reconcile then grants a joined member once their absence cooldown ends.
+	// The bot runs without the privileged GuildMembers intent, so this never fires today and the timed reconcile grants joins; it costs nothing if the intent is approved.
 	function attach(context: RolesContext) {
 		if (attached) return;
 
@@ -380,13 +387,8 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		context.client.on('guildMemberAdd', (joined) => {
 			if (joined.guild.id !== guildId) return;
 
-			// Cleared inside the queue, so a sync already running cannot mark the account absent again after the join.
 			queue
-				.enqueue(() => {
-					absent.delete(joined.id);
-
-					return sync(context, eq(member.discordId, joined.id));
-				})
+				.enqueue(() => sync(context, eq(member.discordId, joined.id)))
 				.catch((error) => {
 					logger.error(
 						`Failed to sync roles for joined Discord user ${joined.id}:`,
