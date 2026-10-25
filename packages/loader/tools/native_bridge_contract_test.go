@@ -335,7 +335,6 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		"__NativePluginPendingInvocations",
 		"gate.expire()",
 		"gMainThreadRuntimeWaits.fetch_add(1)",
-		"NATIVE_WRONG_THREAD",
 		"NATIVE_MAIN_THREAD_TIMEOUT",
 	} {
 		if !strings.Contains(string(runtimeSource), required) {

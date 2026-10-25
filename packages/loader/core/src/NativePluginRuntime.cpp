@@ -160,11 +160,6 @@ namespace loader::native
             operation();
             return;
         }
-        if (mainThreadIsWaitingForRuntime())
-        {
-            throw NativeCodedError("NATIVE_WRONG_THREAD",
-                                   "Native operation cannot synchronously cross to a waiting main thread");
-        }
 
         struct State
         {
