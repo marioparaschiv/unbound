@@ -36,15 +36,21 @@ static jsi::Runtime *gRuntime = nullptr;
 static __weak id gInstance = nil;
 static NSString *gPendingBrowserLoginToken = nil;
 static BOOL      gBrowserLoginIsApplying    = NO;
-static BOOL      gBundleIsReady             = NO;
 static NSUInteger gBrowserLoginFailureCount = 0;
 static std::atomic_bool gLoaderPrepared{false};
+
+static loader::LoaderPipeline &pipeline(void);
+
+BOOL UnboundBundleIsReady(void)
+{
+    return pipeline().isBundleReady();
+}
 
 static void applyPendingBrowserLogin(void)
 {
     id          instance = gInstance;
     NSString    *token    = gPendingBrowserLoginToken;
-    if (!instance || token.length == 0 || !gBundleIsReady || gBrowserLoginIsApplying)
+    if (!instance || token.length == 0 || !UnboundBundleIsReady() || gBrowserLoginIsApplying)
     {
         return;
     }
@@ -181,10 +187,7 @@ public:
 
     void onBundleExecuted() override
     {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            gBundleIsReady = YES;
-            applyPendingBrowserLogin();
-        });
+        dispatch_async(dispatch_get_main_queue(), ^{ applyPendingBrowserLogin(); });
     }
 
     void alert(const std::string &message) override
@@ -212,8 +215,7 @@ static void prepareLoading(id instance)
         return;
     }
 
-    gInstance      = instance;
-    gBundleIsReady = NO;
+    gInstance = instance;
     dispatch_async(dispatch_get_main_queue(), ^{ [DevOverlay refreshOverlay]; });
 
     if ([CoreBridge preferenceEnabled:@"loader-enabled"] && !gLoaderPrepared.exchange(true))

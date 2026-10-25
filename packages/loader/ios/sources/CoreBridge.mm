@@ -8,6 +8,7 @@
 #import "FileSystem.h"
 #import "Logger.h"
 #import "SettingsCore.h"
+#import "Unbound.h"
 #import "UpdaterCore.h"
 
 #include "HermesBytecodeHeader.h"
@@ -145,7 +146,8 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
                                             toStdString(FileSystem.documents),
                                             "iOS",
                                             [] { return UnboundUpdateURL(); },
-                                            [] { return [CoreBridge mainBundleBytecodeVersion]; }};
+                                            [] { return [CoreBridge mainBundleBytecodeVersion]; },
+                                            [] { return static_cast<bool>(UnboundBundleIsReady()); }};
     std::string result = loader::toolbox::perform(context, toStdString(action), toStdString(argument));
     return [NSString stringWithUTF8String:result.c_str()] ?: @"";
 }
@@ -160,11 +162,6 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
 + (BOOL)preferenceEnabled:(NSString *)action
 {
     return [[self preference:action argument:@""] isEqualToString:@"true"];
-}
-
-+ (BOOL)toolboxSucceeded:(NSString *)action argument:(NSString *)argument
-{
-    return [[self toolbox:action argument:argument] isEqualToString:@"true"];
 }
 
 + (NSDictionary *)toolboxObject:(NSString *)action argument:(NSString *)argument

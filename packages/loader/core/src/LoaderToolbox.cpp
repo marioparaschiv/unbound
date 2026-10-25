@@ -158,6 +158,15 @@ namespace loader::toolbox
         return enabled;
     }
 
+    RecoveryToggle toggleRecoveryFromShortcut(SettingsStore &settings, bool bundleReady)
+    {
+        const bool enabled = toggleRecovery(settings);
+        RecoveryToggle result{enabled, preferences::recoveryStatusText(enabled), bundleReady};
+
+        log(LogLevel::Info, "default", "Recovery shortcut: " + result.status + ".");
+        return result;
+    }
+
     bool refetchBundle(BundleUpdater &updater, const std::optional<std::string> &updateURL,
                        uint32_t bytecodeVersion)
     {
@@ -437,6 +446,19 @@ namespace loader::toolbox
         if (action == "toggle-recovery")
         {
             return flag(toggleRecovery(context.settings));
+        }
+        if (action == "recovery-shortcut")
+        {
+            const RecoveryToggle toggle =
+                toggleRecoveryFromShortcut(context.settings, context.bundleReady && context.bundleReady());
+            return nlohmann::json{{"enabled", toggle.enabled},
+                                  {"status", toggle.status},
+                                  {"restartRequired", toggle.restartRequired}}
+                .dump();
+        }
+        if (action == "recovery-shortcut-action")
+        {
+            return kRecoveryShortcutAction;
         }
         if (action == "refetch-bundle")
         {

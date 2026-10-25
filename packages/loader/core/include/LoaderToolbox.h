@@ -94,9 +94,18 @@ namespace loader::toolbox
         std::string                                 platform;
         std::function<std::optional<std::string>()> updateURL;
         std::function<uint32_t()>                   bytecodeVersion;
+        std::function<bool()>                       bundleReady;
+    };
+
+    struct RecoveryToggle
+    {
+        bool        enabled = false;
+        std::string status;
+        bool        restartRequired = false;
     };
 
     constexpr const char *kIssueRepository             = "marioparaschiv/unbound";
+    constexpr const char *kRecoveryShortcutAction      = "app.unbound.recovery.toggle";
     constexpr const char *kToolboxTitle                = "Unbound Toolbox";
     constexpr const char *kCloseText                   = "Close";
     constexpr const char *kConfirmText                 = "Confirm";
@@ -116,6 +125,7 @@ namespace loader::toolbox
     void        deleteBundle(SettingsStore &settings, BundleUpdater &updater, const std::string &documents);
     bool        useCustomBundle(SettingsStore &settings, const std::string &url);
     bool        toggleRecovery(SettingsStore &settings);
+    RecoveryToggle toggleRecoveryFromShortcut(SettingsStore &settings, bool bundleReady);
     bool        refetchBundle(BundleUpdater &updater, const std::optional<std::string> &updateURL,
                               uint32_t bytecodeVersion);
     std::vector<MenuSection> menu(const SettingsStore &settings, const MenuOptions &options);

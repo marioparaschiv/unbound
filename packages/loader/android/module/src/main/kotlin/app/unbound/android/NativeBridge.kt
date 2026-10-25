@@ -333,7 +333,6 @@ object NativeBridge {
 
     @JvmStatic
     fun onBundleExecuted() {
-        Recovery.bundleExecuted = true
         Logger.info("default", "Bundle executed.")
         HotReload.sync()
     }

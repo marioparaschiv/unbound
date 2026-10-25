@@ -89,7 +89,7 @@ namespace unbound::android
     {
         loader::toolbox::ToolboxContext context{
             settings_, *updater_, configuration_.documents, "Android", [this] { return resolveUpdateURL(); },
-            [this] { return runtimeBytecodeVersion(); }};
+            [this] { return runtimeBytecodeVersion(); }, [this] { return pipeline_->isBundleReady(); }};
         return loader::toolbox::perform(context, action, argument);
     }
 
