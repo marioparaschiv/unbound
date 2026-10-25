@@ -1,17 +1,15 @@
 #pragma once
 
-#include "AndroidLoader.h"
-
 #include <optional>
 #include <string>
 
-namespace unbound::android
-{
-    void registerNativePluginBridge(facebook::jsi::Runtime &runtime,
-                                    const JavaCallbacks &callbacks);
+#include "AndroidLoader.h"
 
-    void dispatchHookEvent(const std::string &token, const std::string &payload);
+namespace unbound::android {
+void registerNativePluginBridge(facebook::jsi::Runtime &runtime, const JavaCallbacks &callbacks);
 
-    std::optional<std::string> hookReturnValue(const std::string &token, const std::string &self,
-                                               const std::string &arguments);
+void dispatchHookEvent(const std::string &token, const std::string &payload);
+
+std::optional<std::string> hookReturnValue(const std::string &token, const std::string &self,
+                                           const std::string &arguments);
 }

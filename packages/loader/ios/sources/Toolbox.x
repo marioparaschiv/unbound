@@ -1,9 +1,10 @@
-#import "CoreBridge.h"
 #import "Toolbox.h"
+
+#import "CoreBridge.h"
 #import "DevOverlay.h"
 #import "RecoveryQuickAction.h"
 
-@interface ToolboxViewController ()
+@interface                         ToolboxViewController ()
 @property (nonatomic, assign) BOOL dismissalInProgress;
 @end
 
@@ -147,38 +148,36 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     backdropTap.delegate = self;
     [self.view addGestureRecognizer:backdropTap];
 
-    UIVisualEffectView *card = [[UIVisualEffectView alloc]
+    UIVisualEffectView *card                       = [[UIVisualEffectView alloc]
         initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial]];
     card.layer.cornerRadius                        = 28;
     card.layer.cornerCurve                         = kCACornerCurveContinuous;
     card.layer.masksToBounds                       = YES;
     card.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view addSubview:card];
-    self.cardView = card;
-    card.alpha = 0;
+    self.cardView  = card;
+    card.alpha     = 0;
     card.transform = CGAffineTransformMakeScale(0.97, 0.97);
 
     [NSLayoutConstraint activateConstraints:@[
         [card.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
         [card.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
-        [card.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
-                                        constant:8],
+        [card.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
         [card.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor
-                                           constant:-8],
+                                          constant:-8],
     ]];
 
-    UILabel *titleLabel                                    = [[UILabel alloc] init];
-    titleLabel.text                                        = self.menu[@"title"];
-    titleLabel.font                                        = [UIFont systemFontOfSize:20
-                                                    weight:UIFontWeightBold];
-    titleLabel.textColor                                   = UIColor.labelColor;
-    titleLabel.translatesAutoresizingMaskIntoConstraints    = NO;
+    UILabel *titleLabel  = [[UILabel alloc] init];
+    titleLabel.text      = self.menu[@"title"];
+    titleLabel.font      = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
+    titleLabel.textColor = UIColor.labelColor;
+    titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
 
     UIButton *closeButton = [self addCloseButtonToView:card.contentView];
 
-    UIView *divider                                     = [[UIView alloc] init];
-    divider.backgroundColor                             = [UIColor.labelColor colorWithAlphaComponent:0.08];
-    divider.translatesAutoresizingMaskIntoConstraints    = NO;
+    UIView *divider         = [[UIView alloc] init];
+    divider.backgroundColor = [UIColor.labelColor colorWithAlphaComponent:0.08];
+    divider.translatesAutoresizingMaskIntoConstraints = NO;
 
     self.tableView = [[UITableView alloc] initWithFrame:CGRectZero
                                                   style:UITableViewStyleInsetGrouped];
@@ -187,7 +186,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     self.tableView.dataSource                                = self;
     self.tableView.backgroundColor                           = UIColor.clearColor;
     self.tableView.separatorColor = [UIColor.labelColor colorWithAlphaComponent:0.08];
-    self.tableView.separatorInset                            = UIEdgeInsetsMake(0, 20, 0, 20);
+    self.tableView.separatorInset = UIEdgeInsetsMake(0, 20, 0, 20);
 
     [card.contentView addSubview:titleLabel];
     [card.contentView addSubview:divider];
@@ -196,12 +195,12 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     [NSLayoutConstraint activateConstraints:@[
         [closeButton.topAnchor constraintEqualToAnchor:card.contentView.topAnchor constant:12],
         [closeButton.trailingAnchor constraintEqualToAnchor:card.contentView.trailingAnchor
-                                                     constant:-12],
+                                                   constant:-12],
         [closeButton.widthAnchor constraintEqualToConstant:36],
         [closeButton.heightAnchor constraintEqualToConstant:36],
 
         [titleLabel.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor
-                                                  constant:20],
+                                                 constant:20],
         [titleLabel.centerYAnchor constraintEqualToAnchor:closeButton.centerYAnchor],
 
         [divider.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor],
@@ -225,7 +224,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
           initialSpringVelocity:0.2
                         options:UIViewAnimationOptionCurveEaseOut
                      animations:^{
-                         self.cardView.alpha = 1;
+                         self.cardView.alpha     = 1;
                          self.cardView.transform = CGAffineTransformIdentity;
                      }
                      completion:nil];
@@ -241,7 +240,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     UIImageSymbolConfiguration *cfg =
         [UIImageSymbolConfiguration configurationWithPointSize:14 weight:UIImageSymbolWeightBold];
     [button setImage:[UIImage systemImageNamed:@"xmark" withConfiguration:cfg]
-             forState:UIControlStateNormal];
+            forState:UIControlStateNormal];
     [button addTarget:self action:@selector(dismiss) forControlEvents:UIControlEventTouchUpInside];
 
     [container addSubview:button];
@@ -270,7 +269,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 
 - (void)setupMenuItems
 {
-    self.menu = [CoreBridge toolboxMenu:@{
+    self.menu         = [CoreBridge toolboxMenu:@{
         @"openAppFolder" : @YES,
         @"unboundIcon" : @(![Utilities hasDiscordProductionEntitlements]),
     }];
@@ -323,11 +322,11 @@ static NSString *iconForMenuItem(NSString *identifier)
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
     if (!cell)
     {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
-                                      reuseIdentifier:@"Cell"];
+        cell                 = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault
+                                                      reuseIdentifier:@"Cell"];
         cell.backgroundColor = [UIColor.labelColor colorWithAlphaComponent:0.05];
 
-        UIView *selectedBackground       = [[UIView alloc] init];
+        UIView *selectedBackground         = [[UIView alloc] init];
         selectedBackground.backgroundColor = [UIColor.labelColor colorWithAlphaComponent:0.12];
         cell.selectedBackgroundView        = selectedBackground;
     }
@@ -336,12 +335,13 @@ static NSString *iconForMenuItem(NSString *identifier)
 
     NSDictionary *item = self.menuSections[indexPath.section][@"items"][indexPath.row];
 
-    BOOL isDestructive = [item[@"destructive"] boolValue];
-    UIColor *tint      = isDestructive ? UIColor.systemRedColor : UIColor.labelColor;
+    BOOL     isDestructive = [item[@"destructive"] boolValue];
+    UIColor *tint          = isDestructive ? UIColor.systemRedColor : UIColor.labelColor;
 
     UIImageSymbolConfiguration *symbolConfig =
         [UIImageSymbolConfiguration configurationWithPointSize:18 weight:UIImageSymbolWeightMedium];
-    UIImage *icon = [UIImage systemImageNamed:iconForMenuItem(item[@"id"]) withConfiguration:symbolConfig];
+    UIImage *icon = [UIImage systemImageNamed:iconForMenuItem(item[@"id"])
+                            withConfiguration:symbolConfig];
 
     UIListContentConfiguration *content                  = [cell defaultContentConfiguration];
     content.text                                         = item[@"title"];
@@ -356,7 +356,7 @@ static NSString *iconForMenuItem(NSString *identifier)
 
     if ([item[@"kind"] isEqualToString:@"toggle"])
     {
-        UISwitch *toggle              = [[UISwitch alloc] init];
+        UISwitch *toggle               = [[UISwitch alloc] init];
         toggle.accessibilityIdentifier = item[@"id"];
         [toggle addTarget:self
                       action:@selector(toggleSetting:)
@@ -420,11 +420,10 @@ static NSString *iconForMenuItem(NSString *identifier)
     [alert addAction:[UIAlertAction actionWithTitle:confirmation[@"cancel"]
                                               style:UIAlertActionStyleCancel
                                             handler:nil]];
-    [alert addAction:[UIAlertAction actionWithTitle:confirmation[@"confirm"]
-                                              style:UIAlertActionStyleDestructive
-                                            handler:^(UIAlertAction *action) {
-                                                [self selectMenuItem:item];
-                                            }]];
+    [alert addAction:[UIAlertAction
+                         actionWithTitle:confirmation[@"confirm"]
+                                   style:UIAlertActionStyleDestructive
+                                 handler:^(UIAlertAction *action) { [self selectMenuItem:item]; }]];
 
     [self presentViewController:alert animated:YES completion:nil];
 }
@@ -462,9 +461,10 @@ static NSString *iconForMenuItem(NSString *identifier)
 - (void)promptForMenuItem:(NSDictionary *)item
 {
     NSDictionary      *prompt = item[@"prompt"];
-    UIAlertController *alert  = [UIAlertController alertControllerWithTitle:prompt[@"title"]
-                                                                    message:prompt[@"message"]
-                                                             preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alert =
+        [UIAlertController alertControllerWithTitle:prompt[@"title"]
+                                            message:prompt[@"message"]
+                                     preferredStyle:UIAlertControllerStyleAlert];
     [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
         textField.placeholder            = prompt[@"placeholder"];
         textField.keyboardType           = UIKeyboardTypeURL;
@@ -479,7 +479,8 @@ static NSString *iconForMenuItem(NSString *identifier)
                                               style:UIAlertActionStyleDefault
                                             handler:^(UIAlertAction *action) {
                                                 [self runMenuItem:item
-                                                         argument:alert.textFields.firstObject.text ?: @""];
+                                                         argument:alert.textFields.firstObject.text
+                                                                      ?: @""];
                                             }]];
     [self presentViewController:alert animated:YES completion:nil];
 }
@@ -490,8 +491,8 @@ static NSString *iconForMenuItem(NSString *identifier)
     if (item[@"progress"])
     {
         progress = [UIAlertController alertControllerWithTitle:item[@"title"]
-                                                        message:item[@"progress"]
-                                                 preferredStyle:UIAlertControllerStyleAlert];
+                                                       message:item[@"progress"]
+                                                preferredStyle:UIAlertControllerStyleAlert];
         [self presentViewController:progress animated:YES completion:nil];
     }
 
@@ -612,7 +613,8 @@ static NSString *iconForMenuItem(NSString *identifier)
             {
                 if (entry[@"gesture"])
                 {
-                    [[self switchForSettingKey:entry[@"id"]] setOn:[entry[@"on"] boolValue] animated:YES];
+                    [[self switchForSettingKey:entry[@"id"]] setOn:[entry[@"on"] boolValue]
+                                                          animated:YES];
                 }
             }
         }
@@ -648,8 +650,8 @@ static NSString *iconForMenuItem(NSString *identifier)
     self.dismissalInProgress = YES;
     [UIView animateWithDuration:0.16
         animations:^{
-            self.cardView.alpha = 0;
-            self.cardView.transform = CGAffineTransformMakeScale(0.97, 0.97);
+            self.cardView.alpha       = 0;
+            self.cardView.transform   = CGAffineTransformMakeScale(0.97, 0.97);
             self.view.backgroundColor = UIColor.clearColor;
         }
         completion:^(BOOL finished) {
@@ -659,27 +661,26 @@ static NSString *iconForMenuItem(NSString *identifier)
 
 - (void)finishDismissal
 {
-    UIWindow *storedWindow = objc_getAssociatedObject(self, "recoveryTopWindow");
+    UIWindow *storedWindow  = objc_getAssociatedObject(self, "recoveryTopWindow");
     UIWindow *origKeyWindow = objc_getAssociatedObject(self, "recoveryOriginalKeyWindow");
 
     if (storedWindow)
     {
-        storedWindow.hidden = YES;
+        storedWindow.hidden             = YES;
         storedWindow.rootViewController = nil;
     }
 
     [origKeyWindow makeKeyAndVisible];
 
     objc_setAssociatedObject(self, "recoveryTopWindow", nil, OBJC_ASSOCIATION_ASSIGN);
-    objc_setAssociatedObject(self, "recoveryOriginalKeyWindow", nil,
-                             OBJC_ASSOCIATION_ASSIGN);
+    objc_setAssociatedObject(self, "recoveryOriginalKeyWindow", nil, OBJC_ASSOCIATION_ASSIGN);
 }
 
 void showToolboxSheet(void)
 {
     ToolboxViewController *settingsVC = [[ToolboxViewController alloc] init];
-    settingsVC.modalPresentationStyle        = UIModalPresentationOverFullScreen;
-    settingsVC.modalTransitionStyle          = UIModalTransitionStyleCrossDissolve;
+    settingsVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
+    settingsVC.modalTransitionStyle   = UIModalTransitionStyleCrossDissolve;
 
     UIWindowScene *activeScene = activeWindowScene();
     if (!activeScene)

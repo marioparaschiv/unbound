@@ -1,9 +1,8 @@
 #include "LoaderVersion.h"
 
-namespace loader
+namespace loader {
+const char *loaderVersion()
 {
-    const char *loaderVersion()
-    {
-        return UNBOUND_VERSION;
-    }
+    return UNBOUND_VERSION;
+}
 }

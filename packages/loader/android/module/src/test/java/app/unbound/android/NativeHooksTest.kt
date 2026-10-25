@@ -42,11 +42,7 @@ class NativeHooksTest {
         }
     }
 
-    private class FakeChain(
-        private val self: Any?,
-        private val arguments: List<Any?>,
-        private val original: Any?,
-    ) : NativeHooks.Chain {
+    private class FakeChain(private val self: Any?, private val arguments: List<Any?>, private val original: Any?) : NativeHooks.Chain {
         var proceeded = false
 
         override fun target(): Any? = self

@@ -1,8 +1,8 @@
-#include "NativeTraversalOptions.h"
-
 #include <cassert>
 #include <limits>
 #include <stdexcept>
+
+#include "NativeTraversalOptions.h"
 
 using loader::native::parseTraversalOptions;
 using loader::native::TraversalDirection;
@@ -34,34 +34,42 @@ int main()
     auto query = parseTraversalOptions(nlohmann::json::object(), TraversalProfile::Query);
     assert(query.maxDepth == 16 && query.maxNodes == 512 && query.maxResults == 128);
 
-    auto clamped = parseTraversalOptions({{"maxDepth", 99}, {"maxNodes", 0}}, TraversalProfile::Snapshot);
+    auto clamped =
+        parseTraversalOptions({{"maxDepth", 99}, {"maxNodes", 0}}, TraversalProfile::Snapshot);
     assert(clamped.maxDepth == 12 && clamped.maxNodes == 1);
 
-    auto lowered = parseTraversalOptions({{"maxDepth", -4}, {"maxNodes", 5000}, {"maxResults", 900}},
-                                         TraversalProfile::Query);
+    auto lowered = parseTraversalOptions(
+        {{"maxDepth", -4}, {"maxNodes", 5000}, {"maxResults", 900}}, TraversalProfile::Query);
     assert(lowered.maxDepth == 0 && lowered.maxNodes == 2000 && lowered.maxResults == 500);
 
-    auto visited = parseTraversalOptions({{"maxVisited", 4096}, {"maxNodes", 3}}, TraversalProfile::Search);
+    auto visited =
+        parseTraversalOptions({{"maxVisited", 4096}, {"maxNodes", 3}}, TraversalProfile::Search);
     assert(visited.maxNodes == 2048);
 
     auto exact = parseTraversalOptions({{"maxDepth", 3}, {"maxNodes", 40}, {"maxResults", 2}},
                                        TraversalProfile::Query);
     assert(exact.maxDepth == 3 && exact.maxNodes == 40 && exact.maxResults == 2);
 
-    auto nulls = parseTraversalOptions({{"maxDepth", nullptr}, {"attachedOnly", nullptr}}, TraversalProfile::Search);
+    auto nulls = parseTraversalOptions({{"maxDepth", nullptr}, {"attachedOnly", nullptr}},
+                                       TraversalProfile::Search);
     assert(nulls.maxDepth == 24 && !nulls.attachedOnly);
 
     auto flags = parseTraversalOptions(
-        {{"attachedOnly", true}, {"stopAtMatch", true}, {"direction", "ancestors"}}, TraversalProfile::Search);
-    assert(flags.attachedOnly && flags.stopAtMatch && flags.direction == TraversalDirection::Ancestors);
+        {{"attachedOnly", true}, {"stopAtMatch", true}, {"direction", "ancestors"}},
+        TraversalProfile::Search);
+    assert(flags.attachedOnly && flags.stopAtMatch &&
+           flags.direction == TraversalDirection::Ancestors);
 
-    auto ignoredFlags = parseTraversalOptions({{"attachedOnly", "yes"}, {"maxResults", 2}}, TraversalProfile::Snapshot);
+    auto ignoredFlags = parseTraversalOptions({{"attachedOnly", "yes"}, {"maxResults", 2}},
+                                              TraversalProfile::Snapshot);
     assert(!ignoredFlags.attachedOnly && ignoredFlags.maxResults == 0);
 
     assert(rejects({{"maxDepth", 2.5}}, TraversalProfile::Snapshot));
     assert(rejects({{"maxDepth", "4"}}, TraversalProfile::Query));
-    assert(rejects({{"maxNodes", std::numeric_limits<double>::infinity()}}, TraversalProfile::Query));
-    assert(rejects({{"maxNodes", std::numeric_limits<double>::quiet_NaN()}}, TraversalProfile::Snapshot));
+    assert(
+        rejects({{"maxNodes", std::numeric_limits<double>::infinity()}}, TraversalProfile::Query));
+    assert(rejects({{"maxNodes", std::numeric_limits<double>::quiet_NaN()}},
+                   TraversalProfile::Snapshot));
     assert(rejects({{"attachedOnly", 1}}, TraversalProfile::Search));
     assert(rejects({{"direction", "sideways"}}, TraversalProfile::Search));
     assert(rejects(nlohmann::json::array(), TraversalProfile::Search));

@@ -44,7 +44,8 @@ static void nullCStringEncodesNullPointer()
     const char *pointer = reinterpret_cast<const char *>(1);
     std::memcpy(&pointer, bytes.data(), sizeof(pointer));
     assert(pointer == nullptr);
-    assert(std::holds_alternative<std::monostate>(loader::ffi::decodeValue(cstring, bytes.data()).data));
+    assert(std::holds_alternative<std::monostate>(
+        loader::ffi::decodeValue(cstring, bytes.data()).data));
 }
 
 static void cstringsStayValidWhileStorageGrows()
@@ -55,7 +56,8 @@ static void cstringsStayValidWhileStorageGrows()
     for (int index = 0; index < 64; index++)
     {
         slots.emplace_back(loader::ffi::valueStorageSize(cstring));
-        loader::ffi::encodeValue(cstring, NativeValue{std::to_string(index)}, slots.back().data(), storage);
+        loader::ffi::encodeValue(cstring, NativeValue{std::to_string(index)}, slots.back().data(),
+                                 storage);
     }
     for (int index = 0; index < 64; index++)
     {
@@ -85,11 +87,12 @@ static void structsRoundTrip()
     assert(std::get<double>(std::get<NativeFields>(fields[0].data)[0].data) == 1.5);
     assert(std::get<double>(std::get<NativeFields>(fields[1].data)[1].data) == 480.0);
 
-    Type         range = type("struct:NSRange");
-    NativeValue  rangeValue{NativeFields{NativeValue{3.0}, NativeValue{std::uint64_t{9}}}};
+    Type        range = type("struct:NSRange");
+    NativeValue rangeValue{NativeFields{NativeValue{3.0}, NativeValue{std::uint64_t{9}}}};
     std::vector<std::uint8_t> rangeBytes(loader::ffi::valueStorageSize(range));
     loader::ffi::encodeValue(range, rangeValue, rangeBytes.data(), storage);
-    NativeFields rangeFields = std::get<NativeFields>(loader::ffi::decodeValue(range, rangeBytes.data()).data);
+    NativeFields rangeFields =
+        std::get<NativeFields>(loader::ffi::decodeValue(range, rangeBytes.data()).data);
     assert(std::get<std::uint64_t>(rangeFields[0].data) == 3);
     assert(std::get<std::uint64_t>(rangeFields[1].data) == 9);
 
@@ -113,7 +116,8 @@ static void scalarsAreValidated()
     std::vector<std::uint8_t> bytes(loader::ffi::valueStorageSize(wide));
     ArgumentStorage           storage;
     loader::ffi::encodeValue(wide, NativeValue{UINT64_MAX}, bytes.data(), storage);
-    assert(std::get<std::uint64_t>(loader::ffi::decodeValue(wide, bytes.data()).data) == UINT64_MAX);
+    assert(std::get<std::uint64_t>(loader::ffi::decodeValue(wide, bytes.data()).data) ==
+           UINT64_MAX);
 
     Type signedWide = type("i64");
     loader::ffi::encodeValue(signedWide, NativeValue{-42.0}, bytes.data(), storage);
@@ -122,9 +126,11 @@ static void scalarsAreValidated()
     Type pointer = type("pointer");
     int  target  = 0;
     loader::ffi::encodeValue(pointer, NativeValue{NativeAddress{&target}}, bytes.data(), storage);
-    assert(std::get<NativeAddress>(loader::ffi::decodeValue(pointer, bytes.data()).data).value == &target);
+    assert(std::get<NativeAddress>(loader::ffi::decodeValue(pointer, bytes.data()).data).value ==
+           &target);
     loader::ffi::encodeValue(pointer, NativeValue{}, bytes.data(), storage);
-    assert(std::holds_alternative<std::monostate>(loader::ffi::decodeValue(pointer, bytes.data()).data));
+    assert(std::holds_alternative<std::monostate>(
+        loader::ffi::decodeValue(pointer, bytes.data()).data));
 }
 
 int main()

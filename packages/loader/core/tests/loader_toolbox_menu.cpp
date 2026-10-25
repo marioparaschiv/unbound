@@ -1,9 +1,9 @@
-#include "LoaderToolbox.h"
-
 #include <cassert>
 #include <filesystem>
 #include <string>
 #include <unistd.h>
+
+#include "LoaderToolbox.h"
 
 static std::filesystem::path makeTemporaryDirectory()
 {
@@ -25,7 +25,7 @@ static std::vector<std::string> ids(const loader::toolbox::MenuSection &section)
 }
 
 static const loader::toolbox::MenuItem &item(const std::vector<loader::toolbox::MenuSection> &menu,
-                                             const std::string &id)
+                                             const std::string                               &id)
 {
     for (const auto &section : menu)
     {
@@ -94,23 +94,24 @@ int main()
     assert(shake.gesture == loader::preferences::ToolboxGesture::Shake && shake.on);
 
     loader::preferences::setRecoveryEnabled(settings, true);
-    loader::preferences::setGestureEnabled(settings, loader::preferences::ToolboxGesture::Shake, false);
+    loader::preferences::setGestureEnabled(settings, loader::preferences::ToolboxGesture::Shake,
+                                           false);
     const auto ios = loader::toolbox::menu(
         settings, loader::toolbox::menuOptions(R"({"openAppFolder":true,"unboundIcon":true})"));
     assert(item(ios, "toggle-recovery").title == "Disable Recovery Mode");
     assert(!item(ios, "gesture-shake").on);
     assert(item(ios, "gesture-three-finger").on);
-    assert((ids(ios[2]) ==
-            std::vector<std::string>{"toggle-recovery", "factory-reset", "open-app-folder", "open-issue"}));
+    assert((ids(ios[2]) == std::vector<std::string>{"toggle-recovery", "factory-reset",
+                                                    "open-app-folder", "open-issue"}));
     assert((ids(ios[3]) ==
             std::vector<std::string>{"gesture-shake", "gesture-three-finger", "unbound-icon"}));
     assert(item(ios, "unbound-icon").kind == loader::toolbox::MenuItemKind::Toggle);
     assert(!item(ios, "unbound-icon").gesture);
 
-    const auto android =
-        loader::toolbox::menu(settings, loader::toolbox::menuOptions(R"({"copyAppFolderPath":true})"));
-    assert((ids(android[2]) ==
-            std::vector<std::string>{"toggle-recovery", "factory-reset", "copy-app-folder-path", "open-issue"}));
+    const auto android = loader::toolbox::menu(
+        settings, loader::toolbox::menuOptions(R"({"copyAppFolderPath":true})"));
+    assert((ids(android[2]) == std::vector<std::string>{"toggle-recovery", "factory-reset",
+                                                        "copy-app-folder-path", "open-issue"}));
     assert(ids(android[3]).size() == 2);
     assert(loader::toolbox::menuOptions("not json").openAppFolder == false);
 
@@ -133,13 +134,25 @@ int main()
 
     loader::BundleUpdater updater(
         root.string(), loader::updaterSettings(settings),
-        [](const std::string &, double) -> std::optional<std::string> { return std::nullopt; },
+        [](const std::string &, double) -> std::optional<std::string> {
+            return std::nullopt;
+        },
         [](const std::string &, const std::string &, const std::map<std::string, std::string> &,
-           const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> { return std::nullopt; });
-    loader::toolbox::ToolboxContext context{settings, updater, root.string(), "Android",
-                                            [] { return std::optional<std::string>(); }, [] { return 96u; }};
-    const nlohmann::json performed =
-        nlohmann::json::parse(loader::toolbox::perform(context, "menu", R"({"copyAppFolderPath":true})"));
+           const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
+            return std::nullopt;
+        });
+    loader::toolbox::ToolboxContext context{settings,
+                                            updater,
+                                            root.string(),
+                                            "Android",
+                                            [] {
+                                                return std::optional<std::string>();
+                                            },
+                                            [] {
+                                                return 96u;
+                                            }};
+    const nlohmann::json            performed = nlohmann::json::parse(
+        loader::toolbox::perform(context, "menu", R"({"copyAppFolderPath":true})"));
     assert(performed["sections"][2]["items"][2]["id"] == "copy-app-folder-path");
     assert(loader::toolbox::perform(context, "hold-milliseconds", "") == "500");
     assert(loader::toolbox::perform(context, "message", "refetch-failed").empty());

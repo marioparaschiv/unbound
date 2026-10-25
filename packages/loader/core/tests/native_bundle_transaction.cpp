@@ -1,10 +1,10 @@
-#include "NativeBundleTransaction.h"
-
 #include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <unistd.h>
+
+#include "NativeBundleTransaction.h"
 
 static void writeFile(const std::filesystem::path &path, const std::string &value)
 {
@@ -21,14 +21,14 @@ static std::string readFile(const std::filesystem::path &path)
 
 int main()
 {
-    std::string templatePath = (std::filesystem::temp_directory_path() /
-                                "native-bundle-transaction-XXXXXX").string();
+    std::string templatePath =
+        (std::filesystem::temp_directory_path() / "native-bundle-transaction-XXXXXX").string();
     char *directory = mkdtemp(templatePath.data());
     assert(directory);
     const std::filesystem::path root(directory);
-    const auto candidate = root / "unbound.bundle.candidate";
-    const auto target = root / "unbound.bundle";
-    const auto backup = root / "unbound.bundle.previous";
+    const auto                  candidate = root / "unbound.bundle.candidate";
+    const auto                  target    = root / "unbound.bundle";
+    const auto                  backup    = root / "unbound.bundle.previous";
 
     writeFile(target, "old bundle");
     writeFile(candidate, "new bundle");

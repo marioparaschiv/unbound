@@ -53,13 +53,7 @@ object TextRewrites {
 
     private data class Rule(val rendered: String, val edits: List<Edit>)
 
-    private data class Anchor(
-        val placeholder: Int,
-        val width: Int,
-        val height: Int,
-        val pinTop: Boolean,
-        val offsetY: Int,
-    )
+    private data class Anchor(val placeholder: Int, val width: Int, val height: Int, val pinTop: Boolean, val offsetY: Int)
 
     private class Slot(val host: View, var anchor: Anchor)
 
@@ -244,7 +238,10 @@ object TextRewrites {
                                             .put("attached", slot.host.isAttachedToWindow)
                                             .put("visible", slot.host.visibility == View.VISIBLE)
                                             .put("children", (slot.host as? ViewGroup)?.childCount ?: 0)
-                                            .put("frame", "${slot.host.x.toInt()},${slot.host.y.toInt()} ${slot.host.width}x${slot.host.height}")
+                                            .put(
+                                                "frame",
+                                                "${slot.host.x.toInt()},${slot.host.y.toInt()} ${slot.host.width}x${slot.host.height}",
+                                            )
                                             .put("content", describeContent((slot.host as? ViewGroup)?.getChildAt(0)))
                                     },
                                 ),

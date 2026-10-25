@@ -1,7 +1,6 @@
 package app.unbound.android
 
 import android.app.Activity
-import android.graphics.Color
 import android.graphics.Rect
 import android.os.Looper
 import android.view.Gravity
@@ -237,9 +236,13 @@ object NativeUI {
     }
 
     private fun matches(view: View, query: Query): Boolean {
-        if (query.role != "*" && query.role != role(view) && query.role != view.javaClass.name &&
+        if (query.role != "*" &&
+            query.role != role(view) &&
+            query.role != view.javaClass.name &&
             query.role != view.javaClass.simpleName
-        ) return false
+        ) {
+            return false
+        }
 
         val values = attributes(view)
         val keys = query.attributes.keys()

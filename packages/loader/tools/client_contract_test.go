@@ -59,7 +59,7 @@ func TestLoaderBridgesAdvertiseTheClientPlatformCapabilities(t *testing.T) {
 		"ios":     "kIOSNativePluginCapabilities",
 	}
 	for platform, name := range lists {
-		list := regexp.MustCompile(`(?s)` + name + ` = \{(.*?)\};`).FindStringSubmatch(string(header))
+		list := regexp.MustCompile(`(?s)` + name + `\s*=\s*\{(.*?)\};`).FindStringSubmatch(string(header))
 		if list == nil {
 			t.Fatalf("core declares no %s capability list", platform)
 		}
@@ -85,7 +85,7 @@ func TestCoreCapabilityTableMatchesTheClientCapabilities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	table := regexp.MustCompile(`(?s)kNativeCapabilityBindings = \{\{(.*?)\}\};`).FindStringSubmatch(string(header))
+	table := regexp.MustCompile(`(?s)kNativeCapabilityBindings\s*=\s*\{\{(.*?)\}\};`).FindStringSubmatch(string(header))
 	if table == nil {
 		t.Fatal("core declares no capability binding table")
 	}
@@ -109,14 +109,14 @@ type capabilityBinding struct {
 func coreCapabilityBindings(t *testing.T, header string) map[string]capabilityBinding {
 	t.Helper()
 	arrays := map[string][]string{}
-	for _, match := range regexp.MustCompile(`(?s)std::array<std::string_view, \d+> (k\w+Methods) = \{(.*?)\};`).FindAllStringSubmatch(header, -1) {
+	for _, match := range regexp.MustCompile(`(?s)std::array<std::string_view,\s*\d+>\s+(k\w+Methods)\s*=\s*\{(.*?)\};`).FindAllStringSubmatch(header, -1) {
 		arrays[match[1]] = regexp.MustCompile(`"([^"]+)"`).FindAllString(match[2], -1)
 		for index, method := range arrays[match[1]] {
 			arrays[match[1]][index] = strings.Trim(method, `"`)
 		}
 	}
 	bindings := map[string]capabilityBinding{}
-	for _, match := range regexp.MustCompile(`\{"(native\.[a-zA-Z]+\.[a-zA-Z]+)", "(\w+)", (k\w+Methods)\}`).FindAllStringSubmatch(header, -1) {
+	for _, match := range regexp.MustCompile(`\{"(native\.[a-zA-Z]+\.[a-zA-Z]+)",\s*"(\w+)",\s*(k\w+Methods)\}`).FindAllStringSubmatch(header, -1) {
 		methods, ok := arrays[match[3]]
 		if !ok {
 			t.Fatalf("capability %s references the undeclared method list %s", match[1], match[3])
@@ -161,14 +161,14 @@ func TestPlatformBridgesInstallEveryAdvertisedCapabilityMethod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	setProperty := regexp.MustCompile(`\b(objc|ffi|fabric|debug)\.setProperty\(runtime, "(\w+)"`)
-	defined := regexp.MustCompile(`define\(runtime, (\w+), "(\w+)"`)
+	setProperty := regexp.MustCompile(`\b(objc|ffi|fabric|debug)\.setProperty\(\s*runtime,\s*"(\w+)"`)
+	defined := regexp.MustCompile(`define\(\s*runtime,\s*(\w+),\s*"(\w+)"`)
 	platforms := map[string]map[string]map[string]bool{
 		"kIOSNativePluginCapabilities":     installedBridgeMethods(string(ios), setProperty),
 		"kAndroidNativePluginCapabilities": installedBridgeMethods(string(android), defined, setProperty),
 	}
 	for list, installed := range platforms {
-		declared := regexp.MustCompile(`(?s)` + list + ` = \{(.*?)\};`).FindStringSubmatch(string(header))
+		declared := regexp.MustCompile(`(?s)` + list + `\s*=\s*\{(.*?)\};`).FindStringSubmatch(string(header))
 		if declared == nil {
 			t.Fatalf("core declares no %s list", list)
 		}

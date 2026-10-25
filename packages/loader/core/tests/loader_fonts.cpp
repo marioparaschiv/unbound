@@ -1,10 +1,10 @@
-#include "LoaderFonts.h"
-
 #include <cassert>
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
+
+#include "LoaderFonts.h"
 
 static void appendU16(std::string &data, uint16_t value)
 {
@@ -28,11 +28,11 @@ static std::string utf16(const std::string &text)
     return encoded;
 }
 
-static std::string syntheticFont(const std::string &fullName, const std::string &postScriptName = "",
-                                 const std::string &family = "")
+static std::string syntheticFont(const std::string &fullName,
+                                 const std::string &postScriptName = "",
+                                 const std::string &family         = "")
 {
-    struct Record
-    {
+    struct Record {
         uint16_t    id;
         std::string text;
     };
@@ -109,36 +109,44 @@ int main()
     assert(!loader::fontFullName(broken));
 
     nlohmann::json system = loader::systemFontsFromFiles({second, first, broken}, "system");
-    assert(system.size() == 1 && system[0]["name"] == "Parity Sans Bold" && system[0]["path"] == second);
+    assert(system.size() == 1 && system[0]["name"] == "Parity Sans Bold" &&
+           system[0]["path"] == second);
     assert(system[0]["source"] == "system");
 
     const auto named = (directory / "ggsans-Bold.ttf").string();
-    std::ofstream(named, std::ios::binary) << syntheticFont("gg sans Bold", "ggsans-Bold", "gg sans");
+    std::ofstream(named, std::ios::binary)
+        << syntheticFont("gg sans Bold", "ggsans-Bold", "gg sans");
     auto names = loader::fontNames(named);
     assert(names && names->postScript == std::optional<std::string>("ggsans-Bold"));
     assert(names->family == std::optional<std::string>("gg sans"));
     nlohmann::json entry = loader::fontEntry(named, "app");
-    assert(entry["name"] == "ggsans-Bold" && entry["displayName"] == "gg sans Bold" && entry["family"] == "gg sans");
-    assert(loader::resolveFontTarget(nlohmann::json::array(), nlohmann::json::array({entry}), "gg sans Bold")->name ==
-           "ggsans-Bold");
+    assert(entry["name"] == "ggsans-Bold" && entry["displayName"] == "gg sans Bold" &&
+           entry["family"] == "gg sans");
+    assert(loader::resolveFontTarget(nlohmann::json::array(), nlohmann::json::array({entry}),
+                                     "gg sans Bold")
+               ->name == "ggsans-Bold");
 
-    nlohmann::json fromData = loader::fontEntryFromData(syntheticFont("gg sans Bold", "ggsans-Bold", "gg sans"),
-                                                        "asset:fonts/ggsans-Bold.ttf", "app", "ggsans-Bold");
-    assert(fromData["name"] == "ggsans-Bold" && fromData["displayName"] == "gg sans Bold" && fromData["source"] == "app");
+    nlohmann::json fromData =
+        loader::fontEntryFromData(syntheticFont("gg sans Bold", "ggsans-Bold", "gg sans"),
+                                  "asset:fonts/ggsans-Bold.ttf", "app", "ggsans-Bold");
+    assert(fromData["name"] == "ggsans-Bold" && fromData["displayName"] == "gg sans Bold" &&
+           fromData["source"] == "app");
     nlohmann::json opaque = loader::fontEntryFromData("nope", "asset:fonts/x.ttf", "app", "x");
     assert(opaque["name"] == "x" && opaque["displayName"] == "x");
 
-    nlohmann::json catalog =
-        loader::fontCatalog(nlohmann::json::array({entry}), nlohmann::json::array({entry, "Helvetica"}));
+    nlohmann::json catalog = loader::fontCatalog(nlohmann::json::array({entry}),
+                                                 nlohmann::json::array({entry, "Helvetica"}));
     assert(catalog.size() == 2 && catalog[1]["name"] == "Helvetica");
     assert(loader::fontNamesOf(catalog) == nlohmann::json::array({"ggsans-Bold", "Helvetica"}));
 
-    nlohmann::json custom = nlohmann::json::array({{{"name", "Ginto"}, {"path", "/fonts/Ginto.otf"}}});
+    nlohmann::json custom =
+        nlohmann::json::array({{{"name", "Ginto"}, {"path", "/fonts/Ginto.otf"}}});
     auto ginto = loader::resolveFontTarget(custom, system, "Ginto");
     assert(ginto && ginto->path == std::optional<std::string>("/fonts/Ginto.otf"));
     auto parity = loader::resolveFontTarget(custom, system, "Parity Sans Bold");
     assert(parity && parity->path == std::optional<std::string>(second));
-    auto family = loader::resolveFontTarget(custom, nlohmann::json::array({"Helvetica Neue"}), "Helvetica Neue");
+    auto family = loader::resolveFontTarget(custom, nlohmann::json::array({"Helvetica Neue"}),
+                                            "Helvetica Neue");
     assert(family && family->name == "Helvetica Neue" && !family->path);
     assert(!loader::resolveFontTarget(custom, system, "Missing"));
     assert(!loader::resolveFontTarget(custom, system, ""));

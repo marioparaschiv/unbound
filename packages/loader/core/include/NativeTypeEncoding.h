@@ -2,5 +2,5 @@
 
 #include <string>
 
-char normalizedType(const char *encoding);
+char        normalizedType(const char *encoding);
 std::string nativeFFITypeName(const char *encoding);

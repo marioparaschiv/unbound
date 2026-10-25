@@ -1,5 +1,5 @@
-#import "Utilities+CodeSignature.h"
 #import "Attestation.h"
+#import "Utilities+CodeSignature.h"
 
 @interface Utilities (CodeSignaturePrivate)
 + (NSDictionary *)readEntitlementsFrom64BitBinary:(FILE *)file;

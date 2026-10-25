@@ -1,9 +1,9 @@
 #pragma once
 
-#include "LoaderAddons.h"
-
 #include <nlohmann/json.hpp>
 
-loader::AddonState &UnboundAddonState();
+#include "LoaderAddons.h"
+
+loader::AddonState   &UnboundAddonState();
 const nlohmann::json &UnboundPlatformFonts();
-nlohmann::json UnboundFontCatalog();
+nlohmann::json        UnboundFontCatalog();

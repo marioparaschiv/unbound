@@ -1,14 +1,13 @@
+#import "HotReload.h"
+
 #include <istream>
+#include <memory>
 #include <ostream>
 #include <streambuf>
 
-#import "HotReload.h"
+#include "LoaderHotReload.h"
 #import "SettingsCore.h"
 #import "UpdaterCore.h"
-
-#include <memory>
-
-#include "LoaderHotReload.h"
 
 @interface HotReload ()
 - (void)openRequest:(const loader::HotReloadRequest &)request;
@@ -92,14 +91,19 @@ static uint64_t connectionOf(NSURLSessionTask *task)
 
         dispatch_queue_t queue = _queue;
         _controller            = std::make_shared<loader::HotReloadController>(
-            UnboundSettingsStore(), [] { return UnboundUpdateURL(); },
+            UnboundSettingsStore(),
+            [] {
+                return UnboundUpdateURL();
+            },
             std::make_shared<IOSHotReloadTransport>(self),
             [queue](double seconds, std::function<void()> work) {
                 auto task = std::make_shared<std::function<void()>>(std::move(work));
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (seconds * NSEC_PER_SEC)), queue,
-                               ^{ (*task)(); });
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (seconds * NSEC_PER_SEC)),
+                               queue, ^{ (*task)(); });
             },
-            [] { [Utilities reloadApp]; });
+            [] {
+                [Utilities reloadApp];
+            });
     }
 
     return self;
@@ -128,8 +132,9 @@ static uint64_t connectionOf(NSURLSessionTask *task)
         [urlRequest setValue:@(value.c_str()) forHTTPHeaderField:@(name.c_str())];
     }
 
-    _task                 = [_session dataTaskWithRequest:urlRequest];
-    _task.taskDescription = [NSString stringWithFormat:@"%llu", (unsigned long long) request.connection];
+    _task = [_session dataTaskWithRequest:urlRequest];
+    _task.taskDescription =
+        [NSString stringWithFormat:@"%llu", (unsigned long long) request.connection];
     [_task resume];
 }
 
@@ -174,9 +179,10 @@ static uint64_t connectionOf(NSURLSessionTask *task)
         _task = nil;
     }
 
-    _controller->onClosed(connectionOf(task),
-                          error ? std::optional<std::string>(error.localizedDescription.UTF8String ?: "")
-                                : std::nullopt);
+    _controller->onClosed(
+        connectionOf(task),
+        error ? std::optional<std::string>(error.localizedDescription.UTF8String ?: "")
+              : std::nullopt);
 }
 
 @end

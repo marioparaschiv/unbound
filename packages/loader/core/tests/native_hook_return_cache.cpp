@@ -1,7 +1,7 @@
+#include <cassert>
+
 #include "NativeHookReturnCache.h"
 #include "NativePluginRuntime.h"
-
-#include <cassert>
 
 using namespace loader::native;
 
@@ -36,7 +36,8 @@ int main()
     cache.set("hook-1", self, arguments, {{"type", "string"}, {"value", "replaced"}});
     assert(budget.used() == 1);
 
-    auto found = cache.findSerialized("hook-1", R"({"value":42.0,"type":"int"})", R"([{"value":"a","type":"string"}])");
+    auto found = cache.findSerialized("hook-1", R"({"value":42.0,"type":"int"})",
+                                      R"([{"value":"a","type":"string"}])");
     assert(found && nlohmann::json::parse(*found)["value"] == "replaced");
     assert(!cache.find("hook-2", self, arguments));
     assert(!cache.find("hook-1", self, nlohmann::json::array()));

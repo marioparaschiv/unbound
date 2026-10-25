@@ -1,9 +1,9 @@
-#include "NativePluginRuntime.h"
-
 #include <cassert>
 #include <fstream>
 #include <sstream>
 #include <string>
+
+#include "NativePluginRuntime.h"
 
 using namespace loader::native;
 

@@ -3,8 +3,8 @@
 static NSError *vphoneHapticsUnavailableError(void)
 {
     return [NSError errorWithDomain:@"com.apple.CoreHaptics"
-                                code:4099
-                            userInfo:@{NSLocalizedDescriptionKey : @"Unavailable on vphone"}];
+                               code:4099
+                           userInfo:@{NSLocalizedDescriptionKey : @"Unavailable on vphone"}];
 }
 
 %group VPhoneHaptics
@@ -26,31 +26,21 @@ static NSError *vphoneHapticsUnavailableError(void)
 %end
 
 %hook UIFeedbackGenerator
-- (void)prepare
-{
-}
+- (void)prepare {}
 %end
 
 %hook UIImpactFeedbackGenerator
-- (void)impactOccurred
-{
-}
+- (void)impactOccurred {}
 
-- (void)impactOccurredWithIntensity:(CGFloat)intensity
-{
-}
+- (void)impactOccurredWithIntensity:(CGFloat)intensity {}
 %end
 
 %hook UISelectionFeedbackGenerator
-- (void)selectionChanged
-{
-}
+- (void)selectionChanged {}
 %end
 
 %hook UINotificationFeedbackGenerator
-- (void)notificationOccurred:(UINotificationFeedbackType)notificationType
-{
-}
+- (void)notificationOccurred:(UINotificationFeedbackType)notificationType{}
 %end
 
 %end

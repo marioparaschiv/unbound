@@ -13,12 +13,11 @@ static NSMutableSet<NSString *>             *loadedPaths = nil;
 
     static dispatch_once_t observeOnce;
     dispatch_once(&observeOnce, ^{
-        [[NSNotificationCenter defaultCenter] addObserverForName:SettingsDidChangeNotification
-                                                          object:nil
-                                                           queue:[NSOperationQueue mainQueue]
-                                                      usingBlock:^(NSNotification *notification) {
-                                                          [Fonts apply];
-                                                      }];
+        [[NSNotificationCenter defaultCenter]
+            addObserverForName:SettingsDidChangeNotification
+                        object:nil
+                         queue:[NSOperationQueue mainQueue]
+                    usingBlock:^(NSNotification *notification) { [Fonts apply]; }];
     });
 
     @try
@@ -35,7 +34,7 @@ static NSMutableSet<NSString *>             *loadedPaths = nil;
 
 + (void)apply
 {
-    NSDictionary<NSString *, NSDictionary *> *targets = [CoreBridge fontOverrideTargets];
+    NSDictionary<NSString *, NSDictionary *>    *targets  = [CoreBridge fontOverrideTargets];
     NSMutableDictionary<NSString *, NSString *> *resolved = [NSMutableDictionary dictionary];
 
     for (NSString *family in targets)

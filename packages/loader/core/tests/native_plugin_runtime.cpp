@@ -1,8 +1,8 @@
-#include "NativePluginRuntime.h"
-
 #include <cassert>
 #include <stdexcept>
 #include <vector>
+
+#include "NativePluginRuntime.h"
 
 using loader::native::describeFailure;
 using loader::native::NativeCodedError;
@@ -24,19 +24,27 @@ static NativeFailure describeThrown(const std::function<void()> &body)
 
 int main()
 {
-    NativeFailure coded = describeThrown([] { throw NativeCodedError("NATIVE_MAIN_THREAD_TIMEOUT", "late"); });
+    NativeFailure coded = describeThrown([] {
+        throw NativeCodedError("NATIVE_MAIN_THREAD_TIMEOUT", "late");
+    });
     assert(coded.code == "NATIVE_MAIN_THREAD_TIMEOUT");
     assert(coded.message == "late");
 
-    NativeFailure generic = describeThrown([] { throw std::invalid_argument("frame width must be finite"); });
+    NativeFailure generic = describeThrown([] {
+        throw std::invalid_argument("frame width must be finite");
+    });
     assert(generic.code == "NATIVE_BRIDGE_ERROR");
     assert(generic.message == "frame width must be finite");
 
-    NativeFailure silent = describeThrown([] { throw std::runtime_error(""); });
+    NativeFailure silent = describeThrown([] {
+        throw std::runtime_error("");
+    });
     assert(silent.code == "NATIVE_BRIDGE_ERROR");
     assert(silent.message == "Native operation failed");
 
-    NativeFailure unknown = describeThrown([] { throw 7; });
+    NativeFailure unknown = describeThrown([] {
+        throw 7;
+    });
     assert(unknown.code == "NATIVE_BRIDGE_ERROR");
     assert(unknown.message == "Native operation failed");
 
@@ -52,9 +60,15 @@ int main()
     assert(tracker.generation() == 1);
 
     std::vector<uint64_t> observed;
-    tracker.addListener([&](uint64_t generation) { observed.push_back(generation); });
-    tracker.addListener([](uint64_t) { throw std::runtime_error("listener failure is contained"); });
-    tracker.addListener([&](uint64_t generation) { observed.push_back(generation * 10); });
+    tracker.addListener([&](uint64_t generation) {
+        observed.push_back(generation);
+    });
+    tracker.addListener([](uint64_t) {
+        throw std::runtime_error("listener failure is contained");
+    });
+    tracker.addListener([&](uint64_t generation) {
+        observed.push_back(generation * 10);
+    });
 
     auto advanced = tracker.advance(&second);
     assert(advanced == 2u);

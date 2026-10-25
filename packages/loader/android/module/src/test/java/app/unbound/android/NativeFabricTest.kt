@@ -217,7 +217,6 @@ class NativeFabricTest {
         assertEquals("v", props.getParcelableArrayList<Bundle>("rows")?.get(0)?.getString("k"))
     }
 
-
     @Test
     fun mountWithoutAHostIsRejected() {
         NativeFabric.useHost(

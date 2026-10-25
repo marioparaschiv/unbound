@@ -1,9 +1,9 @@
-#include "NativePluginRoot.h"
-
 #include <algorithm>
 #include <cassert>
 #include <set>
 #include <string>
+
+#include "NativePluginRoot.h"
 
 using namespace loader::native;
 
@@ -30,8 +30,9 @@ static bool contains(const std::vector<std::string> &values, const std::string &
 
 static bool mentions(const std::vector<std::string> &values, const std::string &fragment)
 {
-    return std::any_of(values.begin(), values.end(),
-                       [&](const std::string &value) { return value.find(fragment) != std::string::npos; });
+    return std::any_of(values.begin(), values.end(), [&](const std::string &value) {
+        return value.find(fragment) != std::string::npos;
+    });
 }
 
 int main()
@@ -45,7 +46,8 @@ int main()
 
     for (NativePluginPlatform platform : {NativePluginPlatform::IOS, NativePluginPlatform::Android})
     {
-        NativeCapabilityReport report = resolveNativePluginCapabilities(platform, installedFor(platform));
+        NativeCapabilityReport report =
+            resolveNativePluginCapabilities(platform, installedFor(platform));
         assert(report.diagnostics.empty());
         assert(report.advertised.size() == expectedNativePluginCapabilities(platform).size());
     }
@@ -58,14 +60,17 @@ int main()
     InstalledNativeMethods ios = installedFor(NativePluginPlatform::IOS);
     ios["fabric"].erase("setSize");
     ios["objc"].insert("teleport");
-    NativeCapabilityReport partial = resolveNativePluginCapabilities(NativePluginPlatform::IOS, ios);
+    NativeCapabilityReport partial =
+        resolveNativePluginCapabilities(NativePluginPlatform::IOS, ios);
     assert(!contains(partial.advertised, "native.fabric.mount"));
     assert(contains(partial.advertised, "native.fabric.async"));
-    assert(mentions(partial.diagnostics, "native.fabric.mount is withheld because it lacks fabric.setSize"));
+    assert(mentions(partial.diagnostics,
+                    "native.fabric.mount is withheld because it lacks fabric.setSize"));
     assert(mentions(partial.diagnostics, "objc.teleport is not bound to any capability"));
 
     InstalledNativeMethods empty;
-    NativeCapabilityReport bare = resolveNativePluginCapabilities(NativePluginPlatform::Android, empty);
+    NativeCapabilityReport bare =
+        resolveNativePluginCapabilities(NativePluginPlatform::Android, empty);
     assert((bare.advertised == std::vector<std::string>{"native.runtime.events"}));
 
     const NativeCapabilityBinding *hooks = findNativeCapabilityBinding("native.java.hooks");

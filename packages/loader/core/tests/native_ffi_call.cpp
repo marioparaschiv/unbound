@@ -19,14 +19,12 @@ using loader::ffi::NativeFields;
 using loader::ffi::NativeValue;
 using loader::ffi::Type;
 
-struct TestPoint
-{
+struct TestPoint {
     double x;
     double y;
 };
 
-struct TestRect
-{
+struct TestRect {
     TestPoint origin;
     TestPoint size;
 };
@@ -43,9 +41,9 @@ extern "C" int32_t unboundTestIsNull(const char *value)
     return value == nullptr ? 1 : 0;
 }
 
-extern "C" int64_t unboundTestSum(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f, int32_t g,
-                                  int32_t h, int32_t i, int32_t j, int32_t k, int32_t l, int32_t m, int32_t n,
-                                  int32_t o, int32_t p)
+extern "C" int64_t unboundTestSum(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f,
+                                  int32_t g, int32_t h, int32_t i, int32_t j, int32_t k, int32_t l,
+                                  int32_t m, int32_t n, int32_t o, int32_t p)
 {
     return static_cast<int64_t>(a) + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p;
 }
@@ -55,7 +53,10 @@ static int unboundTestData = 7;
 class MarkerCodec final : public loader::ffi::TypeCodec
 {
 public:
-    void write(jsi::Runtime &, const jsi::Value &, std::uint8_t *, loader::ffi::ArgumentStorage &) const override {}
+    void write(jsi::Runtime &, const jsi::Value &, std::uint8_t *,
+               loader::ffi::ArgumentStorage &) const override
+    {
+    }
 
     jsi::Value read(jsi::Runtime &, const std::uint8_t *) const override
     {
@@ -85,7 +86,8 @@ static void callInterfacesAreCachedAndBounded()
         arguments.front() = type(index % 3 == 0 ? "double" : index % 3 == 1 ? "float" : "i64");
         arguments.back()  = type(index % 5 == 0 ? "u16" : index % 5 == 1 ? "i16" : "u32");
         loader::ffi::callInterface(type(index % 2 == 0 ? "i8" : "u8"), arguments);
-        loader::ffi::callInterface(loader::ffi::Type{Kind::Pointer, "pointer#" + std::to_string(index)}, {});
+        loader::ffi::callInterface(
+            loader::ffi::Type{Kind::Pointer, "pointer#" + std::to_string(index)}, {});
     }
     assert(loader::ffi::cachedCallInterfaceCount() <= loader::ffi::kCallInterfaceCacheCapacity);
     assert(first->cif.nargs == 2);
@@ -96,15 +98,17 @@ static void callInterfacesAreCachedAndBounded()
 
 static void structsTravelByValue()
 {
-    Type      rect = type("struct:CGRect");
-    CallFrame frame(loader::ffi::callInterface(rect, {rect, type("double")}));
-    NativeValue value{NativeFields{NativeValue{NativeFields{NativeValue{1.0}, NativeValue{2.0}}},
-                                   NativeValue{NativeFields{NativeValue{30.0}, NativeValue{40.0}}}}};
+    Type        rect = type("struct:CGRect");
+    CallFrame   frame(loader::ffi::callInterface(rect, {rect, type("double")}));
+    NativeValue value{
+        NativeFields{NativeValue{NativeFields{NativeValue{1.0}, NativeValue{2.0}}},
+                     NativeValue{NativeFields{NativeValue{30.0}, NativeValue{40.0}}}}};
     loader::ffi::encodeValue(rect, value, frame.argument(0), frame.storage());
     loader::ffi::encodeValue(type("double"), NativeValue{0.5}, frame.argument(1), frame.storage());
     frame.invoke(reinterpret_cast<void *>(&unboundTestOffsetRect));
 
-    NativeFields result = std::get<NativeFields>(loader::ffi::decodeValue(rect, frame.result()).data);
+    NativeFields result =
+        std::get<NativeFields>(loader::ffi::decodeValue(rect, frame.result()).data);
     NativeFields origin = std::get<NativeFields>(result[0].data);
     NativeFields size   = std::get<NativeFields>(result[1].data);
     assert(std::get<double>(origin[0].data) == 1.5 && std::get<double>(origin[1].data) == 2.5);
@@ -120,7 +124,8 @@ static void nullCStringsReachNativeCode()
     assert(std::get<double>(loader::ffi::decodeValue(type("i32"), frame.result()).data) == 1);
 
     CallFrame text(loader::ffi::callInterface(type("i32"), {type("cstring")}));
-    loader::ffi::encodeValue(type("cstring"), NativeValue{std::string("")}, text.argument(0), text.storage());
+    loader::ffi::encodeValue(type("cstring"), NativeValue{std::string("")}, text.argument(0),
+                             text.storage());
     text.invoke(reinterpret_cast<void *>(&unboundTestIsNull));
     assert(std::get<double>(loader::ffi::decodeValue(type("i32"), text.result()).data) == 0);
 }
@@ -132,11 +137,12 @@ static void sixteenArgumentsAreSupported()
     CallFrame         frame(loader::ffi::callInterface(signature.result, signature.arguments));
     for (std::size_t index = 0; index < arguments.size(); index++)
     {
-        loader::ffi::encodeValue(arguments[index], NativeValue{static_cast<double>(index + 1)}, frame.argument(index),
-                                 frame.storage());
+        loader::ffi::encodeValue(arguments[index], NativeValue{static_cast<double>(index + 1)},
+                                 frame.argument(index), frame.storage());
     }
     frame.invoke(reinterpret_cast<void *>(&unboundTestSum));
-    assert(std::get<std::int64_t>(loader::ffi::decodeValue(type("i64"), frame.result()).data) == 136);
+    assert(std::get<std::int64_t>(loader::ffi::decodeValue(type("i64"), frame.result()).data) ==
+           136);
 }
 
 static void extensionTypesResolveThroughTheirCodec()
@@ -148,7 +154,8 @@ static void extensionTypesResolveThroughTheirCodec()
     }
     catch (const std::invalid_argument &error)
     {
-        rejectedUnknown = std::string(error.what()) == "Unsupported native FFI type marker on this platform";
+        rejectedUnknown =
+            std::string(error.what()) == "Unsupported native FFI type marker on this platform";
     }
     assert(rejectedUnknown);
 

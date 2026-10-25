@@ -1,10 +1,10 @@
 #import <objc/runtime.h>
 #import <substrate.h>
 
-#import "Discord.h"
-#import "Unbound.h"
 #import "CoreBridge.h"
+#import "Discord.h"
 #import "LoaderShared.h"
+#import "Unbound.h"
 
 @interface Themes : NSObject
 {

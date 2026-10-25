@@ -1,6 +1,5 @@
 #pragma once
 
-namespace loader
-{
-    const char *loaderVersion();
+namespace loader {
+const char *loaderVersion();
 }

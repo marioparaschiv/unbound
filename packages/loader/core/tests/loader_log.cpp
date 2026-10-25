@@ -1,11 +1,10 @@
-#include "LoaderLog.h"
-
 #include <cassert>
 #include <string>
 #include <vector>
 
-struct Entry
-{
+#include "LoaderLog.h"
+
+struct Entry {
     loader::LogLevel level;
     std::string      category;
     std::string      message;
@@ -14,9 +13,10 @@ struct Entry
 int main()
 {
     std::vector<Entry> entries;
-    loader::setLogSink([&](loader::LogLevel level, const std::string &category, const std::string &message) {
-        entries.push_back({level, category, message});
-    });
+    loader::setLogSink(
+        [&](loader::LogLevel level, const std::string &category, const std::string &message) {
+            entries.push_back({level, category, message});
+        });
 
     for (const char *category : loader::kLogCategories)
     {

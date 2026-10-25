@@ -5,12 +5,7 @@
 			"id": "inputAction",
 			"type": "pickString",
 			"description": "build actions",
-			"options": [
-				"Install on vphone",
-				"Package",
-				"AirDrop Tweak",
-				"Build IPA"
-			],
+			"options": ["Install on vphone", "Package", "AirDrop Tweak", "Build IPA"],
 			"default": "Install on vphone"
 		}
 	],

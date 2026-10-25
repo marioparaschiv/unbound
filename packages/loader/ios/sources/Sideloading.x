@@ -3,13 +3,13 @@
 static NSString *const BrowserLoginStateKey  = @"BrowserLoginState";
 static NSString *const BrowserLoginSecretKey = @"BrowserLoginSecret";
 static NSString *const BrowserLoginDateKey   = @"BrowserLoginDate";
-static NSString *const SafariExtensionName = @"OpenInDiscord";
+static NSString *const SafariExtensionName   = @"OpenInDiscord";
 
 static NSString *browserLoginBase64URL(NSData *data)
 {
     NSString *encoded = [data base64EncodedStringWithOptions:0];
-    encoded = [encoded stringByReplacingOccurrencesOfString:@"+" withString:@"-"];
-    encoded = [encoded stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
+    encoded           = [encoded stringByReplacingOccurrencesOfString:@"+" withString:@"-"];
+    encoded           = [encoded stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
     return [encoded stringByReplacingOccurrencesOfString:@"=" withString:@""];
 }
 
@@ -20,12 +20,12 @@ static NSData *browserLoginDecodeBase64URL(NSString *encoded)
         return nil;
     }
 
-    NSString *base64 = [encoded stringByReplacingOccurrencesOfString:@"-" withString:@"+"];
-    base64 = [base64 stringByReplacingOccurrencesOfString:@"_" withString:@"/"];
+    NSString *base64   = [encoded stringByReplacingOccurrencesOfString:@"-" withString:@"+"];
+    base64             = [base64 stringByReplacingOccurrencesOfString:@"_" withString:@"/"];
     NSUInteger padding = (4 - base64.length % 4) % 4;
-    base64 = [base64 stringByPaddingToLength:base64.length + padding
-                                  withString:@"="
-                             startingAtIndex:0];
+    base64             = [base64 stringByPaddingToLength:base64.length + padding
+                                              withString:@"="
+                                         startingAtIndex:0];
     return [[NSData alloc] initWithBase64EncodedString:base64 options:0];
 }
 
@@ -78,10 +78,11 @@ static void browserLoginClear(void)
 
 static NSString *safariExtensionIdentifier(void)
 {
-    NSString *extensionsPath = [[[NSBundle mainBundle] bundlePath]
-        stringByAppendingPathComponent:@"PlugIns"];
-    NSString *extensionPath = [extensionsPath
-        stringByAppendingPathComponent:[SafariExtensionName stringByAppendingPathExtension:@"appex"]];
+    NSString *extensionsPath =
+        [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"PlugIns"];
+    NSString *extensionPath   = [extensionsPath
+        stringByAppendingPathComponent:[SafariExtensionName
+                                           stringByAppendingPathExtension:@"appex"]];
     NSBundle *extensionBundle = [NSBundle bundleWithPath:extensionPath];
     return [extensionBundle objectForInfoDictionaryKey:@"CFBundleIdentifier"];
 }
@@ -104,19 +105,17 @@ static void browserLoginStartFlow(void)
     [defaults setObject:secret forKey:BrowserLoginSecretKey];
     [defaults setObject:[NSDate date] forKey:BrowserLoginDateKey];
 
-    NSString *urlString = [NSString stringWithFormat:
-                               @"https://discord.com/login#login-state=%@&login-secret=%@",
-                           state, key];
+    NSString *urlString = [NSString
+        stringWithFormat:@"https://discord.com/login#login-state=%@&login-secret=%@", state, key];
     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlString]
-                                        options:@{}
-                              completionHandler:^(BOOL success) {
-                                  if (!success)
-                                  {
-                                      browserLoginClear();
-                                      [Utilities alert:@"Safari could not be opened."
-                                                 title:@"Could Not Start Login"];
-                                  }
-    }];
+        options:@{}
+        completionHandler:^(BOOL success) {
+            if (!success)
+            {
+                browserLoginClear();
+                [Utilities alert:@"Safari could not be opened." title:@"Could Not Start Login"];
+            }
+        }];
 }
 
 static void browserLoginStart(void)
@@ -143,32 +142,34 @@ static void browserLoginStart(void)
 
         [SFSafariExtensionManager
             getStateOfExtensionWithIdentifier:identifier
-                             completionHandler:^(SFSafariExtensionState *state, NSError *error) {
-                                 dispatch_async(dispatch_get_main_queue(), ^{
-                                     if (error || !state)
-                                     {
-                                         [Logger error:LOG_CATEGORY_DEFAULT
-                                                format:@"Could not read Safari extension state: %@.",
-                                                        error];
-                                         [Utilities alert:@"Discord could not check whether the Safari "
-                                                          @"extension is enabled."
-                                                    title:@"Could Not Check Extension"];
-                                         return;
-                                     }
+                            completionHandler:^(SFSafariExtensionState *state, NSError *error) {
+                                dispatch_async(dispatch_get_main_queue(), ^{
+                                    if (error || !state)
+                                    {
+                                        [Logger error:LOG_CATEGORY_DEFAULT
+                                               format:@"Could not read Safari extension state: %@.",
+                                                      error];
+                                        [Utilities
+                                            alert:@"Discord could not check whether the Safari "
+                                                  @"extension is enabled."
+                                            title:@"Could Not Check Extension"];
+                                        return;
+                                    }
 
-                                     if (!state.isEnabled)
-                                     {
-                                         [Logger info:LOG_CATEGORY_DEFAULT
-                                               format:@"Safari extension is disabled."];
-                                         [Utilities alert:@"Enable the Safari extension "
-                                                          @"in Settings, then try browser login again."
-                                                    title:@"Safari Extension Disabled"];
-                                         return;
-                                     }
+                                    if (!state.isEnabled)
+                                    {
+                                        [Logger info:LOG_CATEGORY_DEFAULT
+                                              format:@"Safari extension is disabled."];
+                                        [Utilities
+                                            alert:@"Enable the Safari extension "
+                                                  @"in Settings, then try browser login again."
+                                            title:@"Safari Extension Disabled"];
+                                        return;
+                                    }
 
-                                     browserLoginStartFlow();
-                                 });
-                             }];
+                                    browserLoginStartFlow();
+                                });
+                            }];
         return;
     }
 
@@ -183,32 +184,31 @@ static BOOL browserLoginHandleURL(NSURL *url)
         return NO;
     }
 
-    NSUserDefaults  *defaults = [NSUserDefaults standardUserDefaults];
-    NSString        *state    = [defaults stringForKey:BrowserLoginStateKey];
-    NSData           *secret   = [defaults dataForKey:BrowserLoginSecretKey];
-    NSDate           *date     = [defaults objectForKey:BrowserLoginDateKey];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString       *state    = [defaults stringForKey:BrowserLoginStateKey];
+    NSData         *secret   = [defaults dataForKey:BrowserLoginSecretKey];
+    NSDate         *date     = [defaults objectForKey:BrowserLoginDateKey];
     if (state.length == 0 || secret.length == 0 || !date)
     {
         [Logger info:LOG_CATEGORY_DEFAULT
-               format:@"Ignoring browser login callback without an active session."];
+              format:@"Ignoring browser login callback without an active session."];
         return YES;
     }
 
-    NSURLComponents *parts    = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
+    NSURLComponents *parts = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
     NSString        *returnedState = browserLoginQueryValue(parts, @"state");
-    NSData          *iv            = browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"iv"));
-    NSData          *ciphertext =
-        browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"ciphertext"));
+    NSData          *iv = browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"iv"));
+    NSData *ciphertext  = browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"ciphertext"));
     NSData *returnedMAC = browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"mac"));
 
-    NSTimeInterval sessionAge = date ? -date.timeIntervalSinceNow : -1;
+    NSTimeInterval sessionAge   = date ? -date.timeIntervalSinceNow : -1;
     BOOL           stateMatches = state.length > 0 && [state isEqualToString:returnedState];
     BOOL           sessionFresh = date && sessionAge >= 0 && sessionAge <= 600;
     if (!stateMatches)
     {
         [Logger info:LOG_CATEGORY_DEFAULT
-               format:@"Ignoring callback with state length %lu; active state length %lu.",
-                      (unsigned long)returnedState.length, (unsigned long)state.length];
+              format:@"Ignoring callback with state length %lu; active state length %lu.",
+                     (unsigned long) returnedState.length, (unsigned long) state.length];
         return YES;
     }
 
@@ -216,10 +216,13 @@ static BOOL browserLoginHandleURL(NSURL *url)
     if (!validSession || iv.length != kCCBlockSizeAES128 || ciphertext.length == 0 ||
         returnedMAC.length != CC_SHA256_DIGEST_LENGTH)
     {
-        [Logger error:LOG_CATEGORY_DEFAULT
-               format:@"Browser login validation failed: session=%d fresh=%d secret=%lu iv=%lu ciphertext=%lu mac=%lu age=%.1f.",
-                      validSession, sessionFresh, (unsigned long)secret.length, (unsigned long)iv.length,
-                      (unsigned long)ciphertext.length, (unsigned long)returnedMAC.length, sessionAge];
+        [Logger
+             error:LOG_CATEGORY_DEFAULT
+            format:
+                @"Browser login validation failed: session=%d fresh=%d secret=%lu iv=%lu ciphertext=%lu mac=%lu age=%.1f.",
+                validSession, sessionFresh, (unsigned long) secret.length,
+                (unsigned long) iv.length, (unsigned long) ciphertext.length,
+                (unsigned long) returnedMAC.length, sessionAge];
         browserLoginClear();
         [Utilities alert:@"The browser login session was invalid or expired. Please try again."
                    title:@"Could Not Finish Login"];
@@ -232,7 +235,7 @@ static BOOL browserLoginHandleURL(NSURL *url)
     [authenticatedData appendData:ciphertext];
 
     uint8_t expectedMAC[CC_SHA256_DIGEST_LENGTH];
-    CCHmac(kCCHmacAlgSHA256, (const uint8_t *)secret.bytes + 32, 32, authenticatedData.bytes,
+    CCHmac(kCCHmacAlgSHA256, (const uint8_t *) secret.bytes + 32, 32, authenticatedData.bytes,
            authenticatedData.length, expectedMAC);
     NSData *expectedMACData = [NSData dataWithBytes:expectedMAC length:sizeof(expectedMAC)];
     if (!browserLoginConstantTimeEqual(expectedMACData, returnedMAC))
@@ -244,8 +247,9 @@ static BOOL browserLoginHandleURL(NSURL *url)
         return YES;
     }
 
-    NSMutableData *plaintext = [NSMutableData dataWithLength:ciphertext.length + kCCBlockSizeAES128];
-    size_t         plaintextLength = 0;
+    NSMutableData *plaintext =
+        [NSMutableData dataWithLength:ciphertext.length + kCCBlockSizeAES128];
+    size_t          plaintextLength = 0;
     CCCryptorStatus status =
         CCCrypt(kCCDecrypt, kCCAlgorithmAES, kCCOptionPKCS7Padding, secret.bytes, 32, iv.bytes,
                 ciphertext.bytes, ciphertext.length, plaintext.mutableBytes, plaintext.length,
@@ -261,13 +265,13 @@ static BOOL browserLoginHandleURL(NSURL *url)
     }
 
     plaintext.length = plaintextLength;
-    NSString *token = [[NSString alloc] initWithData:plaintext encoding:NSUTF8StringEncoding];
+    NSString *token  = [[NSString alloc] initWithData:plaintext encoding:NSUTF8StringEncoding];
     browserLoginClear();
     if (token.length < 20)
     {
         [Logger error:LOG_CATEGORY_DEFAULT
                format:@"Browser login returned a short token (%lu characters).",
-                      (unsigned long)token.length];
+                      (unsigned long) token.length];
         [Utilities alert:@"Safari did not return a valid Discord session. Please try again."
                    title:@"Could Not Finish Login"];
         return YES;
@@ -282,7 +286,8 @@ static BOOL browserLoginShouldHandleController(ASAuthorizationController *contro
 {
     for (ASAuthorizationRequest *request in controller.authorizationRequests)
     {
-        if ([request conformsToProtocol:@protocol(ASAuthorizationPublicKeyCredentialAssertionRequest)])
+        if ([request
+                conformsToProtocol:@protocol(ASAuthorizationPublicKeyCredentialAssertionRequest)])
         {
             return YES;
         }
@@ -294,7 +299,7 @@ static NSError *iconError(NSInteger code, NSString *description)
 {
     return [NSError errorWithDomain:@"Icon"
                                code:code
-                           userInfo:@{ NSLocalizedDescriptionKey : description }];
+                           userInfo:@{NSLocalizedDescriptionKey : description}];
 }
 
 static void completeIconChange(void (^completion)(NSError *error), NSError *error)
@@ -305,9 +310,8 @@ static void completeIconChange(void (^completion)(NSError *error), NSError *erro
     }
 }
 
-static void setAlternateIconNameWithUIKit(NSString *iconName,
-                                           void (^completion)(NSError *error),
-                                           NSError *fallbackError)
+static void setAlternateIconNameWithUIKit(NSString *iconName, void (^completion)(NSError *error),
+                                          NSError  *fallbackError)
 {
     UIApplication *application = UIApplication.sharedApplication;
     SEL setterSelector         = NSSelectorFromString(@"_setAlternateIconName:completionHandler:");
@@ -321,8 +325,8 @@ static void setAlternateIconNameWithUIKit(NSString *iconName,
     IconSetter setIcon = (IconSetter) objc_msgSend;
     setIcon(application, setterSelector, iconName, ^(NSError *error) {
         [Logger info:LOG_CATEGORY_DEFAULT
-               format:@"UIKit private icon result: icon=%@ error=%@.",
-                       iconName ?: @"<primary>", error];
+              format:@"UIKit private icon result: icon=%@ error=%@.", iconName ?: @"<primary>",
+                     error];
         completeIconChange(completion, error ?: fallbackError);
     });
 }
@@ -330,7 +334,7 @@ static void setAlternateIconNameWithUIKit(NSString *iconName,
 void SetAlternateIconName(NSString *iconName, void (^completion)(NSError *error))
 {
     Class bundleProxyClass = NSClassFromString(@"LSBundleProxy");
-    SEL proxySelector = NSSelectorFromString(@"bundleProxyForCurrentProcess");
+    SEL   proxySelector    = NSSelectorFromString(@"bundleProxyForCurrentProcess");
     if (!bundleProxyClass || ![bundleProxyClass respondsToSelector:proxySelector])
     {
         NSError *error = iconError(1, @"LSBundleProxy is unavailable");
@@ -339,9 +343,9 @@ void SetAlternateIconName(NSString *iconName, void (^completion)(NSError *error)
         return;
     }
 
-    id (*getBundleProxy)(id, SEL) = (id (*)(id, SEL))objc_msgSend;
-    id bundleProxy = getBundleProxy(bundleProxyClass, proxySelector);
-    SEL setterSelector = NSSelectorFromString(@"setAlternateIconName:withResult:");
+    id (*getBundleProxy)(id, SEL) = (id (*)(id, SEL)) objc_msgSend;
+    id  bundleProxy               = getBundleProxy(bundleProxyClass, proxySelector);
+    SEL setterSelector            = NSSelectorFromString(@"setAlternateIconName:withResult:");
     if (!bundleProxy || ![bundleProxy respondsToSelector:setterSelector])
     {
         NSError *error = iconError(2, @"LSApplicationProxy icon setter is unavailable");
@@ -351,18 +355,19 @@ void SetAlternateIconName(NSString *iconName, void (^completion)(NSError *error)
     }
 
     typedef void (*IconSetter)(id, SEL, NSString *, void (^)(BOOL success, NSError *error));
-    IconSetter setIcon = (IconSetter)objc_msgSend;
+    IconSetter setIcon = (IconSetter) objc_msgSend;
     setIcon(bundleProxy, setterSelector, iconName, ^(BOOL success, NSError *error) {
         [Logger info:LOG_CATEGORY_DEFAULT
-               format:@"LSApplicationProxy icon result: success=%d icon=%@ error=%@.",
-                       success, iconName ?: @"<primary>", error];
+              format:@"LSApplicationProxy icon result: success=%d icon=%@ error=%@.", success,
+                     iconName ?: @"<primary>", error];
         if (success && !error)
         {
             completeIconChange(completion, nil);
             return;
         }
 
-        NSError *fallbackError = error ?: iconError(3, @"LSApplicationProxy rejected the icon change");
+        NSError *fallbackError =
+            error ?: iconError(3, @"LSApplicationProxy rejected the icon change");
         setAlternateIconNameWithUIKit(iconName, completion, fallbackError);
     });
 }
@@ -376,10 +381,10 @@ void SetAlternateIconName(NSString *iconName, void (^completion)(NSError *error)
 
         NSFileManager *manager = [NSFileManager defaultManager];
         NSURL         *url     = [manager URLForDirectory:NSDocumentDirectory
-                                     inDomain:NSUserDomainMask
-                            appropriateForURL:nil
-                                       create:YES
-                                        error:&error];
+                                                 inDomain:NSUserDomainMask
+                                        appropriateForURL:nil
+                                                   create:YES
+                                                    error:&error];
 
         if (error)
         {
@@ -492,8 +497,8 @@ void SetAlternateIconName(NSString *iconName, void (^completion)(NSError *error)
 %hook RCTLinkingManager
 
 + (BOOL)application:(UIApplication *)application
-             openURL:(NSURL *)url
-             options:(NSDictionary<UIApplicationOpenURLOptionsKey, id> *)options
+            openURL:(NSURL *)url
+            options:(NSDictionary<UIApplicationOpenURLOptionsKey, id> *)options
 {
     if (browserLoginHandleURL(url))
     {

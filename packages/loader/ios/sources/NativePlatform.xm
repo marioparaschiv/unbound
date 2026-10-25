@@ -1,17 +1,16 @@
+#import "NativePlatform.h"
+
 #include <istream>
 #include <ostream>
 #include <streambuf>
 
-#import "CoreConversions.h"
-#import "NativePlatform.h"
-
 #import "AddonsCore.h"
+#import "CoreConversions.h"
 #import "FileSystem.h"
-#import "SettingsCore.h"
-#import "Utilities.h"
-#import "Utilities+CodeSignature.h"
-
 #include "NativePlatformBridge.h"
+#import "SettingsCore.h"
+#import "Utilities+CodeSignature.h"
+#import "Utilities.h"
 
 using unbound::ios::jsonFromObject;
 using unbound::ios::toStdString;
@@ -26,27 +25,45 @@ namespace loader {
 
 void registerNativePlatformProvider(void)
 {
-    auto provider          = std::make_shared<NativePlatformProvider>();
-    provider->platform     = "ios";
-    provider->deviceModel  = []() { return toStdString([Utilities getDeviceModel]); };
-    provider->osVersion    = []() { return toStdString([Utilities getiOSVersionString]); };
-    provider->isRooted = []() { return static_cast<bool>([Utilities isJailbroken]); };
-    provider->isSystemApp  = []() { return static_cast<bool>([Utilities isSystemApp]); };
-    provider->isVerifiedBuild = []() { return static_cast<bool>([Utilities isVerifiedBuild]); };
-    provider->entitlements    = []() { return entitlementsJSON(); };
+    auto provider         = std::make_shared<NativePlatformProvider>();
+    provider->platform    = "ios";
+    provider->deviceModel = []() {
+        return toStdString([Utilities getDeviceModel]);
+    };
+    provider->osVersion = []() {
+        return toStdString([Utilities getiOSVersionString]);
+    };
+    provider->isRooted = []() {
+        return static_cast<bool>([Utilities isJailbroken]);
+    };
+    provider->isSystemApp = []() {
+        return static_cast<bool>([Utilities isSystemApp]);
+    };
+    provider->isVerifiedBuild = []() {
+        return static_cast<bool>([Utilities isVerifiedBuild]);
+    };
+    provider->entitlements = []() {
+        return entitlementsJSON();
+    };
     provider->entitlementsAsPlist = []() {
         NSDictionary *entitlements = [Utilities getApplicationEntitlements];
         return toStdString([Utilities formatEntitlementsAsPlist:entitlements]);
     };
-    provider->appSource = []() { return toStdString([Utilities getAppSource]); };
-    provider->isVirtualDevice   = []() { return static_cast<bool>([Utilities isVPhone]); };
+    provider->appSource = []() {
+        return toStdString([Utilities getAppSource]);
+    };
+    provider->isVirtualDevice = []() {
+        return static_cast<bool>([Utilities isVPhone]);
+    };
     provider->virtualDeviceHost = []() -> std::optional<std::string> {
         NSString *host = [Utilities getVirtualDeviceHostAddress];
         return host ? std::optional<std::string>(toStdString(host)) : std::nullopt;
     };
     provider->documents = toStdString(FileSystem.documents);
     provider->settings  = &UnboundSettingsStore();
-    provider->fonts     = [] { return UnboundFontCatalog(); };
+    provider->fonts     = [] {
+        return UnboundFontCatalog();
+    };
 
     setNativePlatformProvider(provider);
 }

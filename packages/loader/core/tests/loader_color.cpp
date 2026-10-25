@@ -1,6 +1,6 @@
-#include "LoaderColor.h"
-
 #include <cassert>
+
+#include "LoaderColor.h"
 
 int main()
 {

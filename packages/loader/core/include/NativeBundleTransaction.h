@@ -6,8 +6,7 @@
 extern "C" {
 #endif
 
-bool promoteNativeBundle(const char *candidatePath, const char *targetPath,
-                         const char *backupPath);
+bool promoteNativeBundle(const char *candidatePath, const char *targetPath, const char *backupPath);
 bool restoreNativeBundle(const char *backupPath, const char *targetPath);
 
 #ifdef __cplusplus

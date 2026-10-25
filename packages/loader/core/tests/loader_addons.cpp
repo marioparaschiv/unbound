@@ -1,12 +1,12 @@
-#include "LoaderAddons.h"
-#include "LoaderFiles.h"
-#include "LoaderPreload.h"
-#include "LoaderVersion.h"
-
 #include <cassert>
 #include <filesystem>
 #include <string>
 #include <unistd.h>
+
+#include "LoaderAddons.h"
+#include "LoaderFiles.h"
+#include "LoaderPreload.h"
+#include "LoaderVersion.h"
 
 static std::filesystem::path makeTemporaryDirectory()
 {
@@ -57,10 +57,10 @@ int main()
     assert(fonts[0]["file"] == "Inter.ttf");
 
     loader::PreloadPayload payload;
-    payload.settings = nlohmann::json::parse(R"({"unbound":{}})");
-    payload.plugins  = plugins;
-    payload.origin   = "libunbound.so";
-    payload.version  = "1.0.0";
+    payload.settings    = nlohmann::json::parse(R"({"unbound":{}})");
+    payload.plugins     = plugins;
+    payload.origin      = "libunbound.so";
+    payload.version     = "1.0.0";
     nlohmann::json data = loader::preloadData(payload);
     assert(data["settings"] == nlohmann::json::parse(R"({"unbound":{}})"));
     assert(data["themes"] == nlohmann::json::array());
@@ -76,14 +76,15 @@ int main()
     loader::AddonState addons;
     assert(addons.plugins().empty() && !addons.theme("t.dark"));
     addons.scan(root.string());
-    assert(addons.plugins().size() == 1 && addons.themes().size() == 1 && addons.fonts().size() == 1);
+    assert(addons.plugins().size() == 1 && addons.themes().size() == 1 &&
+           addons.fonts().size() == 1);
     assert(addons.theme("t.dark") && (*addons.theme("t.dark"))["manifest"]["id"] == "t.dark");
     assert(!addons.theme("t.none"));
 
     loader::SettingsStore settings((root / "settings.json").string());
     settings.set("unbound", "recovery", false);
-    loader::PreloadPayload made =
-        loader::makePreloadPayload(settings, addons, nlohmann::json::array({"Ginto"}), "Unbound.dylib");
+    loader::PreloadPayload made = loader::makePreloadPayload(
+        settings, addons, nlohmann::json::array({"Ginto"}), "Unbound.dylib");
     assert(made.plugins[0]["manifest"]["id"] == "a.good");
     assert(made.availableFonts == nlohmann::json::array({"Ginto"}));
     assert(made.settings["unbound"].contains("recovery"));

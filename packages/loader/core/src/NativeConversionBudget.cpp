@@ -1,6 +1,7 @@
 #include "NativeConversionBudget.h"
 
-NativeConversionBudget::NativeConversionBudget(const NativeConversionProfile &profile) : profile_(profile)
+NativeConversionBudget::NativeConversionBudget(const NativeConversionProfile &profile)
+    : profile_(profile)
 {
 }
 

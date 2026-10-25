@@ -1,8 +1,8 @@
-#include "LoaderHotReload.h"
-
 #include <cassert>
 #include <map>
 #include <string>
+
+#include "LoaderHotReload.h"
 
 static loader::UpdaterSettings memorySettings(std::map<std::string, std::string> &values)
 {
@@ -11,23 +11,29 @@ static loader::UpdaterSettings memorySettings(std::map<std::string, std::string>
         auto found = values.find(key);
         return found == values.end() ? fallback : found->second;
     };
-    settings.getBoolean = [](const std::string &, bool fallback) { return fallback; };
-    settings.setString  = [&values](const std::string &key, const std::string &value) { values[key] = value; };
+    settings.getBoolean = [](const std::string &, bool fallback) {
+        return fallback;
+    };
+    settings.setString = [&values](const std::string &key, const std::string &value) {
+        values[key] = value;
+    };
     return settings;
 }
 
 int main()
 {
     std::map<std::string, std::string> values;
-    auto settings = memorySettings(values);
+    auto                               settings = memorySettings(values);
 
     std::string probed;
-    auto reachable = [&probed](const std::string &url, double timeout) {
+    auto        reachable = [&probed](const std::string &url, double timeout) {
         probed = url;
         assert(timeout == loader::kDevServerProbeTimeoutSeconds);
         return true;
     };
-    auto unreachable = [](const std::string &, double) { return false; };
+    auto unreachable = [](const std::string &, double) {
+        return false;
+    };
 
     assert(!loader::resolveUpdateURL(settings, std::nullopt, reachable));
     assert(loader::resolveUpdateURL(settings, std::string("10.0.2.2"), reachable) ==

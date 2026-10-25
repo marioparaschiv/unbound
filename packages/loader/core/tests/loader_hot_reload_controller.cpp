@@ -1,6 +1,3 @@
-#include "LoaderHotReload.h"
-#include "LoaderSettings.h"
-
 #include <algorithm>
 #include <cassert>
 #include <deque>
@@ -9,14 +6,15 @@
 #include <unistd.h>
 #include <vector>
 
-struct ScheduledWork
-{
+#include "LoaderHotReload.h"
+#include "LoaderSettings.h"
+
+struct ScheduledWork {
     double                seconds;
     std::function<void()> work;
 };
 
-struct FakeScheduler
-{
+struct FakeScheduler {
     std::deque<ScheduledWork> pending;
 
     loader::HotReloadScheduler scheduler()
@@ -43,7 +41,8 @@ struct FakeScheduler
 
     void runImmediate()
     {
-        for (auto immediate = findImmediate(); immediate != pending.end(); immediate = findImmediate())
+        for (auto immediate = findImmediate(); immediate != pending.end();
+             immediate      = findImmediate())
         {
             std::function<void()> work = std::move(immediate->work);
             pending.erase(immediate);
@@ -53,8 +52,9 @@ struct FakeScheduler
 
     std::deque<ScheduledWork>::iterator findImmediate()
     {
-        return std::find_if(pending.begin(), pending.end(),
-                            [](const ScheduledWork &work) { return work.seconds == 0; });
+        return std::find_if(pending.begin(), pending.end(), [](const ScheduledWork &work) {
+            return work.seconds == 0;
+        });
     }
 
     void dropTimeouts()
@@ -65,8 +65,7 @@ struct FakeScheduler
     }
 };
 
-struct FakeTransport : loader::HotReloadTransport
-{
+struct FakeTransport : loader::HotReloadTransport {
     std::vector<loader::HotReloadRequest> opened;
     int                                   cancelled = 0;
 
@@ -107,12 +106,19 @@ int main()
     settings.load();
     settings.set("unbound", "loader.update.etag", "\"1\"");
 
-    FakeScheduler                  scheduler;
-    auto                           transport = std::make_shared<FakeTransport>();
-    std::optional<std::string>     base      = std::string("http://10.0.2.2:3000/unbound.js");
-    int                            reloads   = 0;
-    auto controller = std::make_shared<loader::HotReloadController>(
-        settings, [&base] { return base; }, transport, scheduler.scheduler(), [&reloads] { reloads++; });
+    FakeScheduler              scheduler;
+    auto                       transport  = std::make_shared<FakeTransport>();
+    std::optional<std::string> base       = std::string("http://10.0.2.2:3000/unbound.js");
+    int                        reloads    = 0;
+    auto                       controller = std::make_shared<loader::HotReloadController>(
+        settings,
+        [&base] {
+            return base;
+        },
+        transport, scheduler.scheduler(),
+        [&reloads] {
+            reloads++;
+        });
 
     controller->sync();
     assert(scheduler.pending.size() == 1 && scheduler.nextDelay() == 0);
@@ -145,7 +151,8 @@ int main()
     assert(request.headers.at("Cache-Control") == "no-cache");
     assert(request.connectTimeoutSeconds == loader::kHotReloadConnectTimeoutSeconds);
     assert(request.readTimeoutSeconds == loader::kHotReloadReadTimeoutSeconds);
-    assert(scheduler.pending.size() == 1 && scheduler.nextDelay() == loader::kHotReloadConnectTimeoutSeconds);
+    assert(scheduler.pending.size() == 1 &&
+           scheduler.nextDelay() == loader::kHotReloadConnectTimeoutSeconds);
 
     controller->sync();
     scheduler.runImmediate();

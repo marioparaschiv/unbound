@@ -1,4 +1,5 @@
 #import "ChatUI.h"
+
 #import "CoreBridge.h"
 
 @implementation ChatUI
@@ -137,13 +138,14 @@ static UIColor *messageCellDynamicColor = nil;
     static NSSet<NSString *> *mediaClasses = nil;
     static dispatch_once_t    onceToken;
     dispatch_once(&onceToken, ^{
-        mediaClasses = [NSSet setWithObjects:@"DiscordChat.MediaMosaicView", @"DiscordChat.EmbedView",
-                                              @"DiscordChatComponentsSwift.ThumbnailView",
-                                              @"DCDMediaView", @"DiscordChat.AttachmentView", nil];
+        mediaClasses =
+            [NSSet setWithObjects:@"DiscordChat.MediaMosaicView", @"DiscordChat.EmbedView",
+                                  @"DiscordChatComponentsSwift.ThumbnailView", @"DCDMediaView",
+                                  @"DiscordChat.AttachmentView", nil];
     });
 
     NSString *className = NSStringFromClass([view class]);
-    BOOL      isMedia   = [mediaClasses containsObject:className] || [className containsString:@"Sticker"];
+    BOOL isMedia = [mediaClasses containsObject:className] || [className containsString:@"Sticker"];
     return isMedia && !view.hidden && view.bounds.size.width > 0 && view.bounds.size.height > 0;
 }
 
@@ -219,9 +221,9 @@ static UIColor *messageCellDynamicColor = nil;
         return 0;
 
     NSAttributedString *attrText = [textView valueForKey:@"attributedText"];
-    CGRect              measured = [attrText boundingRectWithSize:CGSizeMake(limit, CGFLOAT_MAX)
-                                                            options:NSStringDrawingUsesLineFragmentOrigin
-                                                            context:nil];
+    CGRect measured  = [attrText boundingRectWithSize:CGSizeMake(limit, CGFLOAT_MAX)
+                                              options:NSStringDrawingUsesLineFragmentOrigin
+                                              context:nil];
     CGRect textFrame = [textView convertRect:textView.bounds toView:contentBody];
     return textFrame.origin.x + ceil(measured.size.width);
 }
@@ -277,8 +279,8 @@ static UIColor *messageCellDynamicColor = nil;
     if (!contentBody)
         return CGRectNull;
 
-    CGRect frame = [contentBody convertRect:contentBody.bounds toView:cell];
-    frame        = [self tightenFrame:frame forBody:contentBody];
+    CGRect frame   = [contentBody convertRect:contentBody.bounds toView:cell];
+    frame          = [self tightenFrame:frame forBody:contentBody];
     CGSize padding = [CoreBridge messageBubblePadding];
     return CGRectInset(frame, -padding.width, -padding.height);
 }
@@ -318,7 +320,8 @@ static UIColor *messageCellDynamicColor = nil;
     [self updateMessageCellFrame:cell retriesRemaining:3];
 }
 
-+ (void)updateMessageCellFrame:(DCDMessageTableViewCell *)cell retriesRemaining:(int)retriesRemaining
++ (void)updateMessageCellFrame:(DCDMessageTableViewCell *)cell
+              retriesRemaining:(int)retriesRemaining
 {
     if (!cell.customBackgroundView || cell.customBackgroundView.hidden)
         return;

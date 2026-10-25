@@ -28,8 +28,11 @@ object Themes {
     )
 
     @Volatile private var palette = Palette()
+
     @Volatile private var rawById: Map<Int, Int> = emptyMap()
+
     @Volatile private var currentThemeId: String? = null
+
     @Volatile private var context: Context? = null
     private var patcher: Patcher? = null
 
@@ -142,11 +145,7 @@ object Themes {
 
     private class ThemedField(val field: Field, val original: Any?, val themed: Any)
 
-    private class Patcher(
-        private val themeObject: Class<*>,
-        private val lazyType: Class<*>,
-        private val classLoader: ClassLoader,
-    ) {
+    private class Patcher(private val themeObject: Class<*>, private val lazyType: Class<*>, private val classLoader: ClassLoader) {
         private val lazyValue: Method = lazyType.getMethod("getValue")
         private val themes = Collections.synchronizedMap(WeakHashMap<Any, Map<String, ThemedField>>())
 
@@ -195,7 +194,9 @@ object Themes {
 
         private fun colorGetters(type: Class<*>): List<Method> =
             type.methods.filter {
-                it.name.startsWith("get") && it.parameterCount == 0 && it.returnType == Integer.TYPE &&
+                it.name.startsWith("get") &&
+                    it.parameterCount == 0 &&
+                    it.returnType == Integer.TYPE &&
                     !Modifier.isStatic(it.modifiers)
             }
 

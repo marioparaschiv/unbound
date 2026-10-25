@@ -1,10 +1,10 @@
-#include "LoaderFiles.h"
-#include "LoaderUpdater.h"
-
 #include <cassert>
 #include <filesystem>
 #include <string>
 #include <unistd.h>
+
+#include "LoaderFiles.h"
+#include "LoaderUpdater.h"
 
 static std::filesystem::path makeTemporaryDirectory()
 {
@@ -17,12 +17,12 @@ static std::filesystem::path makeTemporaryDirectory()
 
 int main()
 {
-    const auto  root      = makeTemporaryDirectory();
-    const auto  documents = root.string();
-    std::string manifest  = R"({"bytecodeVersions":[96,98]})";
-    std::string requestedURL;
+    const auto                         root      = makeTemporaryDirectory();
+    const auto                         documents = root.string();
+    std::string                        manifest  = R"({"bytecodeVersions":[96,98]})";
+    std::string                        requestedURL;
     std::map<std::string, std::string> requestedHeaders;
-    int         nextStatus = 200;
+    int                                nextStatus = 200;
 
     loader::SettingsStore settings((root / "settings.json").string());
     settings.load();
@@ -37,7 +37,8 @@ int main()
             return manifest;
         },
         [&](const std::string &url, const std::string &destination,
-            const std::map<std::string, std::string> &headers, const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
+            const std::map<std::string, std::string> &headers,
+            const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
             requestedURL     = url;
             requestedHeaders = headers;
             if (nextStatus == 200)
@@ -70,18 +71,18 @@ int main()
     assert(!loader::fileExists(candidate));
     assert(settings.getString("unbound", "loader.update.etag", "") == "\"etag-1\"");
 
-    nextStatus = 304;
+    nextStatus            = 304;
     std::string unchanged = updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98);
     assert(unchanged == (root / "unbound.bundle").string());
     assert(requestedHeaders.at("If-None-Match") == "\"etag-1\"");
 
-    nextStatus = 200;
+    nextStatus         = 200;
     std::string second = updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98);
     assert(updater.markBundleAttempted(second));
     assert(updater.resolveBundlePath() == (root / "unbound.bundle").string());
     assert(!loader::fileExists(second));
 
-    nextStatus = 500;
+    nextStatus    = 500;
     bool rejected = false;
     try
     {

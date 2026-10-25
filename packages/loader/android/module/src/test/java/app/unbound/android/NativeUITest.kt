@@ -15,9 +15,9 @@ import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -59,7 +59,7 @@ class NativeUITest {
 
         val handle = JSONArray(NativeUI.lookup(bounded("""{"role":"text"}"""))).getJSONObject(0)
         val snapshot = JSONObject(
-            NativeUI.snapshot(bounded("""{"role":"text","root":${handle}}""")),
+            NativeUI.snapshot(bounded("""{"role":"text","root":$handle}""")),
         )
         val node = snapshot.getJSONArray("nodes").getJSONObject(0)
 
@@ -80,7 +80,7 @@ class NativeUITest {
         ActivityTracker.onActivityResumed(secondActivity)
 
         assertThrows(IllegalArgumentException::class.java) {
-            NativeUI.snapshot(bounded("""{"role":"text","root":${handle}}"""))
+            NativeUI.snapshot(bounded("""{"role":"text","root":$handle}"""))
         }
     }
 

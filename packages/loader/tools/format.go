@@ -36,12 +36,16 @@ var formatSourceExtensions = map[string]string{
 
 const logosPragma = "#pragma unbound_logos "
 
+var vendoredSourceDirectories = []string{"ios/headers/ReactCommon"}
+
+const vendoredLicenseMarker = "Copyright (c) Meta Platforms"
+
 var (
 	logosDirectiveLine = regexp.MustCompile(`^\s*%(hook|end|ctor|dtor|group|subclass|new|property|hookf|config)\b`)
 	logosInline        = map[string]string{
-		"%orig": "__unbound_logos_orig",
-		"%init": "__unbound_logos_init",
-		"%c(":   "__unbound_logos_class(",
+		"%orig": "_LOrg",
+		"%init": "_LInt",
+		"%c(":   "_LC(",
 	}
 	includeLine = regexp.MustCompile(`^\s*#\s*(import|include)\b`)
 )
@@ -128,7 +132,8 @@ func nativeSourceFiles(root string) ([]string, error) {
 				return err
 			}
 			if info.IsDir() {
-				if strings.HasPrefix(info.Name(), ".") || info.Name() == "build" {
+				rel, _ := filepath.Rel(root, path)
+				if strings.HasPrefix(info.Name(), ".") || info.Name() == "build" || isVendoredDirectory(rel) {
 					return filepath.SkipDir
 				}
 				return nil
@@ -174,6 +179,15 @@ func (selection fileSelection) hasExtension(extensions map[string]string) bool {
 	return false
 }
 
+func isVendoredDirectory(rel string) bool {
+	for _, directory := range vendoredSourceDirectories {
+		if rel == directory {
+			return true
+		}
+	}
+	return false
+}
+
 func formatNativeSources(root string, check bool, only fileSelection) ([]string, error) {
 	if err := requireClangFormat(); err != nil {
 		return nil, err
@@ -192,6 +206,9 @@ func formatNativeSources(root string, check bool, only fileSelection) ([]string,
 		original, err := os.ReadFile(path)
 		if err != nil {
 			return nil, err
+		}
+		if strings.Contains(string(original), vendoredLicenseMarker) {
+			continue
 		}
 		formatted, err := formatNativeSource(root, path, original)
 		if err != nil {
@@ -246,8 +263,12 @@ func formatNativeSource(root, path string, original []byte) ([]byte, error) {
 
 	formatted := output.Bytes()
 	if isLogos {
-		formatted = restoreLogos(formatted)
-		if !sameTokens(original, formatted) {
+		restored, err := restoreLogos(formatted, original)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+		formatted = restored
+		if !sameTokens(original, formatted) || strings.Join(logosDirectives(original), "\n") != strings.Join(logosDirectives(formatted), "\n") {
 			return nil, fmt.Errorf("%s: formatting would change Logos code, not just whitespace", path)
 		}
 	}
@@ -255,36 +276,61 @@ func formatNativeSource(root, path string, original []byte) ([]byte, error) {
 }
 
 func protectLogos(source []byte) ([]byte, error) {
+	for _, placeholder := range logosInline {
+		if strings.Contains(string(source), placeholder) {
+			return nil, fmt.Errorf("source already contains the placeholder %s", placeholder)
+		}
+	}
+	if strings.Contains(string(source), logosPragma) {
+		return nil, fmt.Errorf("source already contains %q", strings.TrimSpace(logosPragma))
+	}
+
 	lines := strings.Split(string(source), "\n")
+	directive := 0
 	for index, line := range lines {
 		if logosDirectiveLine.MatchString(line) {
-			lines[index] = logosPragma + strings.TrimSpace(line)
+			lines[index] = fmt.Sprintf("%s%d", logosPragma, directive)
+			directive++
 			continue
 		}
 		lines[index] = replaceOutsideLiterals(line, logosInline)
 	}
-	protected := strings.Join(lines, "\n")
-	for _, placeholder := range logosInline {
-		if strings.Count(string(source), placeholder) > 0 {
-			return nil, fmt.Errorf("source already contains the placeholder %s", placeholder)
-		}
-	}
-	return []byte(protected), nil
+	return []byte(strings.Join(lines, "\n")), nil
 }
 
-func restoreLogos(formatted []byte) []byte {
+func logosDirectives(source []byte) []string {
+	var directives []string
+	for _, line := range strings.Split(string(source), "\n") {
+		if logosDirectiveLine.MatchString(line) {
+			directives = append(directives, strings.TrimSpace(line))
+		}
+	}
+	return directives
+}
+
+func restoreLogos(formatted []byte, original []byte) ([]byte, error) {
+	directives := logosDirectives(original)
 	lines := strings.Split(string(formatted), "\n")
+	used := 0
 	for index, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, logosPragma) {
-			lines[index] = strings.TrimPrefix(trimmed, logosPragma)
+			var position int
+			if _, err := fmt.Sscanf(strings.TrimPrefix(trimmed, logosPragma), "%d", &position); err != nil || position != used || position >= len(directives) {
+				return nil, errors.New("clang-format moved or rewrote a Logos directive")
+			}
+			lines[index] = directives[position]
+			used++
 			continue
 		}
 		for directive, placeholder := range logosInline {
 			lines[index] = strings.ReplaceAll(lines[index], placeholder, directive)
 		}
 	}
-	return []byte(strings.Join(lines, "\n"))
+	if used != len(directives) {
+		return nil, errors.New("clang-format dropped a Logos directive")
+	}
+	return []byte(strings.Join(lines, "\n")), nil
 }
 
 func replaceOutsideLiterals(line string, replacements map[string]string) string {

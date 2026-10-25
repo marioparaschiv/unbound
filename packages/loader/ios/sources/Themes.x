@@ -1,5 +1,6 @@
-#import "CoreBridge.h"
 #import "Themes.h"
+
+#import "CoreBridge.h"
 
 @interface Themes ()
 + (void)refreshDiscordTheme;
@@ -11,12 +12,12 @@
 static NSMutableDictionary<NSString *, NSValue *> *originalRawImplementations;
 static NSString                                   *currentThemeId = nil;
 static __weak DCDThemeModule                      *currentDiscordTheme;
-static NSString                                   *lastDiscordThemeId = nil;
+static NSString                                   *lastDiscordThemeId     = nil;
 static BOOL                                        semanticColorsSwizzled = NO;
 static BOOL                                        refreshingDiscordTheme = NO;
-static BOOL                                        customThemeActive = NO;
-static NSDictionary<NSString *, UIColor *>        *semanticColors = nil;
-static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
+static BOOL                                        customThemeActive      = NO;
+static NSDictionary<NSString *, UIColor *>        *semanticColors         = nil;
+static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
 
 + (BOOL)isValidCustomTheme:(NSString *)manifestId
 {
@@ -138,12 +139,11 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
     static dispatch_once_t observeOnce;
     dispatch_once(&observeOnce, ^{
-        [[NSNotificationCenter defaultCenter] addObserverForName:SettingsDidChangeNotification
-                                                          object:nil
-                                                           queue:[NSOperationQueue mainQueue]
-                                                      usingBlock:^(NSNotification *notification) {
-                                                          [Themes applySelectedTheme];
-                                                      }];
+        [[NSNotificationCenter defaultCenter]
+            addObserverForName:SettingsDidChangeNotification
+                        object:nil
+                         queue:[NSOperationQueue mainQueue]
+                    usingBlock:^(NSNotification *notification) { [Themes applySelectedTheme]; }];
     });
     [Themes applySelectedTheme];
 };
@@ -179,7 +179,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
             IMP     replacement = imp_implementationWithBlock(^UIColor *(id self) {
                 UIColor *color = payload[raw];
                 return color ?: original(instance, selector);
-                });
+            });
 
             MSHookMessageEx(instance, selector, replacement, (IMP *) &original);
 
@@ -270,7 +270,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
                     if ([colorClass respondsToSelector:colorSelector])
                     {
                         UIColor *(*getColor)(id, SEL) =
-                            (UIColor * (*) (id, SEL))[colorClass methodForSelector:colorSelector];
+                            (UIColor * (*)(id, SEL)) [colorClass methodForSelector:colorSelector];
                         return getColor(colorClass, colorSelector);
                     }
                 }
@@ -308,7 +308,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
     [Utilities runOnMainThread:^{
         currentDiscordTheme = self;
-        lastDiscordThemeId = theme;
+        lastDiscordThemeId  = theme;
 
         if (!customThemeActive && ![currentThemeId isEqualToString:theme])
         {

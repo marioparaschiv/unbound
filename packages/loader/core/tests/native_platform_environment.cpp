@@ -1,6 +1,6 @@
-#include "NativePlatformBridge.h"
-
 #include <cassert>
+
+#include "NativePlatformBridge.h"
 
 int main()
 {
@@ -9,8 +9,12 @@ int main()
     assert(unset["isVirtualDevice"] == false);
     assert(unset["hostAddress"].is_null());
 
-    provider.isVirtualDevice   = [] { return true; };
-    provider.virtualDeviceHost = []() -> std::optional<std::string> { return "10.0.2.2"; };
+    provider.isVirtualDevice = [] {
+        return true;
+    };
+    provider.virtualDeviceHost = []() -> std::optional<std::string> {
+        return "10.0.2.2";
+    };
     nlohmann::json virtualDevice = loader::debugEnvironment(provider);
     assert(virtualDevice["isVirtualDevice"] == true);
     assert(virtualDevice["hostAddress"] == "10.0.2.2");

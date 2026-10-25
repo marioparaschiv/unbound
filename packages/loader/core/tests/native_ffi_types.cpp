@@ -31,7 +31,7 @@ int main()
     assert(loader::ffi::structLayout("CGPoint") == loader::ffi::structLayout("CGPoint"));
 
     std::vector<loader::ffi::Type> sixteen(loader::ffi::kMaximumArguments, *integer);
-    auto signature = loader::ffi::makeSignature(*integer, sixteen);
+    auto                           signature = loader::ffi::makeSignature(*integer, sixteen);
     assert(signature.arguments.size() == 16);
 
     bool rejectedSeventeen = false;

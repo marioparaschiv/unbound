@@ -1,18 +1,13 @@
+#import "CoreBridge.h"
+
+#import <CoreText/CoreText.h>
 #include <istream>
 #include <ostream>
 #include <streambuf>
 
-#import "CoreConversions.h"
-#import <CoreText/CoreText.h>
-
 #import "AddonsCore.h"
-#import "CoreBridge.h"
+#import "CoreConversions.h"
 #import "FileSystem.h"
-#import "Logger.h"
-#import "SettingsCore.h"
-#import "Unbound.h"
-#import "UpdaterCore.h"
-
 #include "HermesBytecodeHeader.h"
 #include "LoaderAddons.h"
 #include "LoaderDevOverlay.h"
@@ -23,6 +18,10 @@
 #include "LoaderPreload.h"
 #include "LoaderThemes.h"
 #include "LoaderToolbox.h"
+#import "Logger.h"
+#import "SettingsCore.h"
+#import "Unbound.h"
+#import "UpdaterCore.h"
 
 using unbound::ios::jsonFromObject;
 using unbound::ios::objectFromJSON;
@@ -65,12 +64,14 @@ static LogLevel iosLogLevel(loader::LogLevel level)
 
 + (uint32_t)mainBundleBytecodeVersion
 {
-    NSString *path    = [NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:@"main.jsbundle"];
-    uint32_t  version = loader::hermesBytecodeVersionOfFile(toStdString(path));
+    NSString *path =
+        [NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:@"main.jsbundle"];
+    uint32_t version = loader::hermesBytecodeVersionOfFile(toStdString(path));
 
     if (version == 0)
     {
-        [Logger error:LOG_CATEGORY_UTILITIES format:@"%@ is not a readable Hermes bytecode bundle", path];
+        [Logger error:LOG_CATEGORY_UTILITIES
+               format:@"%@ is not a readable Hermes bytecode bundle", path];
     }
     return version;
 }
@@ -80,9 +81,11 @@ static UIColor *uiColor(const loader::RGBAColor &color)
     return [UIColor colorWithRed:color.red green:color.green blue:color.blue alpha:color.alpha];
 }
 
-static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string, loader::RGBAColor> &colors)
+static NSDictionary<NSString *, UIColor *> *
+uiColors(const std::map<std::string, loader::RGBAColor> &colors)
 {
-    NSMutableDictionary<NSString *, UIColor *> *result = [NSMutableDictionary dictionaryWithCapacity:colors.size()];
+    NSMutableDictionary<NSString *, UIColor *> *result =
+        [NSMutableDictionary dictionaryWithCapacity:colors.size()];
     for (const auto &[name, color] : colors)
     {
         result[@(loader::themeColorAccessor(name).c_str())] = uiColor(color);
@@ -139,7 +142,7 @@ static nlohmann::json platformFontEntry(NSString *postScriptName, NSString *appP
     const std::string display = fontAttribute(descriptor, kCTFontDisplayNameAttribute);
     const std::string family  = fontAttribute(descriptor, kCTFontFamilyNameAttribute);
     const std::string style   = fontAttribute(descriptor, kCTFontStyleNameAttribute);
-    NSURL            *url     = CFBridgingRelease(CTFontDescriptorCopyAttribute(descriptor, kCTFontURLAttribute));
+    NSURL *url = CFBridgingRelease(CTFontDescriptorCopyAttribute(descriptor, kCTFontURLAttribute));
     CFRelease(descriptor);
 
     entry["displayName"] = display.empty() ? entry["name"] : nlohmann::json(display);
@@ -163,8 +166,8 @@ const nlohmann::json &UnboundPlatformFonts()
     static nlohmann::json  fonts;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        NSArray  *names   = CFBridgingRelease(CTFontManagerCopyAvailablePostScriptNames());
-        NSString *appPath = NSBundle.mainBundle.bundlePath;
+        NSArray       *names   = CFBridgingRelease(CTFontManagerCopyAvailablePostScriptNames());
+        NSString      *appPath = NSBundle.mainBundle.bundlePath;
         nlohmann::json entries = nlohmann::json::array();
         for (NSString *name in [names sortedArrayUsingSelector:@selector(compare:)])
         {
@@ -193,10 +196,15 @@ nlohmann::json UnboundFontCatalog()
     NSMutableDictionary<NSString *, NSString *> *fallbacks = [NSMutableDictionary dictionary];
     for (const auto &[name, selector] : colors.rawFallbacks)
     {
-        fallbacks[@(loader::themeColorAccessor(name).c_str())] = @(loader::themeColorAccessor(selector).c_str());
+        fallbacks[@(loader::themeColorAccessor(name).c_str())] =
+            @(loader::themeColorAccessor(selector).c_str());
     }
 
-    return @{@"semantic" : uiColors(colors.semantic), @"raw" : uiColors(colors.raw), @"rawFallbacks" : fallbacks};
+    return @{
+        @"semantic" : uiColors(colors.semantic),
+        @"raw" : uiColors(colors.raw),
+        @"rawFallbacks" : fallbacks
+    };
 }
 
 + (BOOL)hasTheme:(NSString *)themeId
@@ -206,11 +214,12 @@ nlohmann::json UnboundFontCatalog()
 
 + (void)installLogging
 {
-    loader::setLogSink([](loader::LogLevel level, const std::string &category, const std::string &message) {
-        [Logger log:iosLogLevel(level)
-            category:category.c_str()
-              format:@"%@", [NSString stringWithUTF8String:message.c_str()] ?: @""];
-    });
+    loader::setLogSink(
+        [](loader::LogLevel level, const std::string &category, const std::string &message) {
+            [Logger log:iosLogLevel(level)
+                category:category.c_str()
+                  format:@"%@", [NSString stringWithUTF8String:message.c_str()] ?: @""];
+        });
 }
 
 + (void)scanAddons
@@ -265,17 +274,24 @@ nlohmann::json UnboundFontCatalog()
                                             UnboundBundleUpdater(),
                                             toStdString(FileSystem.documents),
                                             "iOS",
-                                            [] { return UnboundUpdateURL(); },
-                                            [] { return [CoreBridge mainBundleBytecodeVersion]; },
-                                            [] { return static_cast<bool>(UnboundBundleIsReady()); }};
-    std::string result = loader::toolbox::perform(context, toStdString(action), toStdString(argument));
+                                            [] {
+                                                return UnboundUpdateURL();
+                                            },
+                                            [] {
+                                                return [CoreBridge mainBundleBytecodeVersion];
+                                            },
+                                            [] {
+                                                return static_cast<bool>(UnboundBundleIsReady());
+                                            }};
+    std::string                     result =
+        loader::toolbox::perform(context, toStdString(action), toStdString(argument));
     return [NSString stringWithUTF8String:result.c_str()] ?: @"";
 }
 
 + (NSString *)preference:(NSString *)action argument:(NSString *)argument
 {
-    std::string result =
-        loader::preferences::perform(UnboundSettingsStore(), toStdString(action), toStdString(argument));
+    std::string result = loader::preferences::perform(UnboundSettingsStore(), toStdString(action),
+                                                      toStdString(argument));
     return [NSString stringWithUTF8String:result.c_str()] ?: @"";
 }
 
@@ -324,8 +340,8 @@ static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
 
 + (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets
 {
-    loader::devoverlay::Point center =
-        loader::devoverlay::buttonCenter(UnboundSettingsStore(), coreSize(bounds), coreInsets(insets));
+    loader::devoverlay::Point center = loader::devoverlay::buttonCenter(
+        UnboundSettingsStore(), coreSize(bounds), coreInsets(insets));
     return CGPointMake(center.x, center.y);
 }
 
@@ -338,7 +354,8 @@ static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
 
 + (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds
 {
-    loader::devoverlay::saveButtonCenter(UnboundSettingsStore(), {center.x, center.y}, coreSize(bounds));
+    loader::devoverlay::saveButtonCenter(UnboundSettingsStore(), {center.x, center.y},
+                                         coreSize(bounds));
 }
 
 + (NSString *)incompatibleHostMessage

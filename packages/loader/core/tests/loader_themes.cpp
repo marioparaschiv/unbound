@@ -1,6 +1,6 @@
-#include "LoaderThemes.h"
-
 #include <cassert>
+
+#include "LoaderThemes.h"
 
 int main()
 {

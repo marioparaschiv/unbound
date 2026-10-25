@@ -1,11 +1,11 @@
-#include "LoaderFiles.h"
-#include "LoaderSettings.h"
-
 #include <cassert>
 #include <chrono>
 #include <filesystem>
 #include <string>
 #include <unistd.h>
+
+#include "LoaderFiles.h"
+#include "LoaderSettings.h"
 
 static std::filesystem::path makeTemporaryDirectory()
 {
@@ -27,7 +27,8 @@ int main()
     assert(missing.getBoolean("unbound", "loader.enabled", true));
 
     assert(loader::writeTextFileAtomically(
-        path, R"({"unbound":{"loader":{"enabled":false,"update":{"url":"http://host/unbound.js"}}}})"));
+        path,
+        R"({"unbound":{"loader":{"enabled":false,"update":{"url":"http://host/unbound.js"}}}})"));
     loader::SettingsStore store(path);
     store.load();
     assert(!store.getBoolean("unbound", "loader.enabled", true));
@@ -68,7 +69,8 @@ int main()
         assert(!native.getBoolean("unbound", "recovery", true));
 
         assert(loader::writeTextFileAtomically(
-            fresh, R"({"unbound":{"recovery":false,"toasts":{"enabled":false}},"plugins":{"a":1}})"));
+            fresh,
+            R"({"unbound":{"recovery":false,"toasts":{"enabled":false}},"plugins":{"a":1}})"));
         std::filesystem::last_write_time(fresh, std::filesystem::file_time_type::clock::now() +
                                                     std::chrono::seconds(2));
         assert(!native.getBoolean("unbound", "toasts.enabled", true));
@@ -108,7 +110,8 @@ int main()
 
         owner.set("unbound", "loader.update.etag", std::string("newer"));
         owner.save();
-        assert(client.apply(nlohmann::json::array({{{"store", "unbound"}, {"key", "recovery"}, {"remove", true}}})));
+        assert(client.apply(nlohmann::json::array(
+            {{{"store", "unbound"}, {"key", "recovery"}, {"remove", true}}})));
         reader.load();
         assert(!reader.get("unbound", "recovery"));
         assert(reader.getString("unbound", "loader.update.etag", "") == "newer");

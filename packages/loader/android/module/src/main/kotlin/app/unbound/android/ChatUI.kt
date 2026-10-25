@@ -38,7 +38,9 @@ object ChatUI {
     private val rowBackgrounds = WeakHashMap<ViewGroup, Drawable>()
 
     @Volatile private var avatarRadius: Float? = null
+
     @Volatile private var bubblesEnabled = false
+
     @Volatile private var style: BubbleStyle? = null
     private var themeManager: Any? = null
     private var isThemeDark: java.lang.reflect.Method? = null

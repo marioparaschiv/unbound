@@ -359,8 +359,9 @@ object NativeJava {
     }
 
     private fun accepts(parameter: Class<*>, argument: Argument): Boolean = when (argument) {
-        is Absent -> !parameter.isPrimitive &&
-            (argument.declaredType == null || parameter.isAssignableFrom(argument.declaredType))
+        is Absent ->
+            !parameter.isPrimitive &&
+                (argument.declaredType == null || parameter.isAssignableFrom(argument.declaredType))
         is Reference -> parameter.isInstance(argument.target) ||
             (parameter == Class::class.java && argument.target is Class<*>)
         is Scalar -> acceptsScalar(parameter, argument.value)

@@ -82,7 +82,7 @@ func TestHostFunctionsOnlyComeFromTheGuardedFactory(t *testing.T) {
 				return err
 			}
 			text := string(source)
-			if path != allowed && strings.Contains(text, "createFromHostFunction") {
+			if path != allowed && containsCode(text, "createFromHostFunction") {
 				t.Errorf("%s creates a host function outside loader::native::makeFunction", path)
 			}
 			for _, match := range hostObjectAccessor.FindAllStringSubmatch(text, -1) {
@@ -101,10 +101,10 @@ func TestHostFunctionsOnlyComeFromTheGuardedFactory(t *testing.T) {
 		t.Fatal(err)
 	}
 	if strings.Count(string(runtimeSource), "createFromHostFunction") != 1 ||
-		!strings.Contains(string(runtimeSource), "return guard(rt, [&]() { return handler(rt, thisValue, args, count); });") {
+		!containsCode(string(runtimeSource), "return guard(rt, [&]() { return handler(rt, thisValue, args, count); });") {
 		t.Fatal("the core host function factory no longer guards every handler")
 	}
-	if !strings.Contains(string(runtimeSource), "static std::atomic<NativeErrorDelivery> gErrorDelivery{NativeErrorDelivery::Envelope};") {
+	if !containsCode(string(runtimeSource), "static std::atomic<NativeErrorDelivery> gErrorDelivery{NativeErrorDelivery::Envelope};") {
 		t.Fatal("Android no longer delivers native failures through envelopes")
 	}
 }
@@ -122,7 +122,7 @@ func TestAndroidKotlinLeavesBridgeLimitsToCore(t *testing.T) {
 			"MAX_ARGUMENTS", "MAX_BATCH_OPERATIONS", "MAX_ASSOCIATIONS_PER_OBJECT", "MAX_PROP_",
 			"useLimits", "returnValues[", "boundedHandle", "boundedDimension", "coerceIn(",
 		} {
-			if strings.Contains(string(source), duplicate) {
+			if containsCode(string(source), duplicate) {
 				t.Errorf("%s re-implements the core bridge limit %q", name, duplicate)
 			}
 		}

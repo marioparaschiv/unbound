@@ -5,7 +5,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
@@ -337,6 +336,4 @@ object NativeBridge {
     fun onBundleExecuted() {
         Logger.info(LogCategory.DEFAULT, "Bundle executed.")
     }
-
-
 }

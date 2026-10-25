@@ -45,10 +45,13 @@ object NativeFabric {
         surface.start()
 
         val view = surface.view()
-        container.addView(view, ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-        ))
+        container.addView(
+            view,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ),
+        )
 
         val id = synchronized(this) {
             val handle = "surface-${nextSurface++}"

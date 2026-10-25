@@ -1,4 +1,3 @@
-#import "CoreBridge.h"
 #import "Utilities.h"
 
 #import <arpa/inet.h>
@@ -6,17 +5,18 @@
 #import <sys/socket.h>
 #import <sys/sysctl.h>
 
+#import "CoreBridge.h"
+
 #if __has_include(<net/route.h>)
 #import <net/route.h>
 #else
 // The iOS SDK omits <net/route.h>; these mirror the stable XNU routing-socket ABI.
-#define RTF_GATEWAY 0x2
+#define RTF_GATEWAY  0x2
 #define RTAX_DST     0
 #define RTAX_GATEWAY 1
 #define RTAX_MAX     8
 
-struct rt_metrics
-{
+struct rt_metrics {
     u_int32_t rmx_locks;
     u_int32_t rmx_mtu;
     u_int32_t rmx_hopcount;
@@ -30,8 +30,7 @@ struct rt_metrics
     u_int32_t rmx_filler[4];
 };
 
-struct rt_msghdr
-{
+struct rt_msghdr {
     u_short           rtm_msglen;
     u_char            rtm_version;
     u_char            rtm_type;
@@ -475,7 +474,9 @@ static NSString *bundle = nil;
           }];
 
     [task resume];
-    if (dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t) ((timeout + 1) * NSEC_PER_SEC))) != 0)
+    if (dispatch_semaphore_wait(
+            semaphore,
+            dispatch_time(DISPATCH_TIME_NOW, (int64_t) ((timeout + 1) * NSEC_PER_SEC))) != 0)
     {
         [task cancel];
         return nil;
@@ -726,9 +727,8 @@ static NSString *defaultRouteGateway(const struct rt_msghdr *message, const uint
         }
 
         const struct sockaddr *address = (const struct sockaddr *) cursor;
-        size_t                 length  = address->sa_len > 0
-                                             ? 1 + ((address->sa_len - 1) | (sizeof(uint32_t) - 1))
-                                             : sizeof(uint32_t);
+        size_t length = address->sa_len > 0 ? 1 + ((address->sa_len - 1) | (sizeof(uint32_t) - 1))
+                                            : sizeof(uint32_t);
         if (cursor + length > end)
         {
             return nil;

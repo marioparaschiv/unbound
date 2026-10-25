@@ -1,7 +1,7 @@
-#include "NativeConversionBudget.h"
-
 #include <cassert>
 #include <limits>
+
+#include "NativeConversionBudget.h"
 
 static void exhaustsProfile(const NativeConversionProfile &profile)
 {

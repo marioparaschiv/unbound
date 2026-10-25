@@ -1,7 +1,7 @@
-#include "NativeOperationGate.h"
-
 #include <cassert>
 #include <thread>
+
+#include "NativeOperationGate.h"
 
 int main()
 {
@@ -20,10 +20,14 @@ int main()
     for (int index = 0; index < 1000; index++)
     {
         loader::NativeOperationGate competing;
-        bool started = false;
-        bool timedOut = false;
-        std::thread operation([&]() { started = competing.start(); });
-        std::thread timeout([&]() { timedOut = competing.expire(); });
+        bool                        started  = false;
+        bool                        timedOut = false;
+        std::thread                 operation([&]() {
+            started = competing.start();
+        });
+        std::thread                 timeout([&]() {
+            timedOut = competing.expire();
+        });
         operation.join();
         timeout.join();
         assert(started != timedOut);

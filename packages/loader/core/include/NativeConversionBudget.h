@@ -2,8 +2,7 @@
 
 #include <cstddef>
 
-struct NativeConversionProfile
-{
+struct NativeConversionProfile {
     size_t maximumDepth;
     size_t maximumEntries;
     size_t maximumBytes;
@@ -26,7 +25,8 @@ inline constexpr size_t kMaximumNativeArguments = 16;
 class NativeConversionBudget
 {
 public:
-    explicit NativeConversionBudget(const NativeConversionProfile &profile = kNativeValueConversion);
+    explicit NativeConversionBudget(
+        const NativeConversionProfile &profile = kNativeValueConversion);
 
     const NativeConversionProfile &profile() const;
 

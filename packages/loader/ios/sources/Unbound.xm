@@ -1,23 +1,23 @@
-#import "CoreConversions.h"
+#import "Unbound.h"
+
 #import <jsi/jsi.h>
+#import <substrate.h>
 
 #import "AddonsCore.h"
-#include "LoaderFonts.h"
 #import "CoreBridge.h"
+#import "CoreConversions.h"
 #import "Discord.h"
 #import "HotReload.h"
-#import "LoaderJSI.h"
 #include "LoaderBootstrap.h"
+#include "LoaderFonts.h"
+#import "LoaderJSI.h"
 #import "LoaderPipeline.h"
 #import "LoaderShared.h"
+#import "NativePlatform.h"
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
 #import "SettingsCore.h"
-#import "Unbound.h"
-#import "NativePlatform.h"
 #import "UpdaterCore.h"
-
-#import <substrate.h>
 
 using unbound::ios::toNSString;
 using unbound::ios::toStdString;
@@ -31,11 +31,11 @@ using namespace facebook;
 
 #pragma mark - Pre/post bundle injection
 
-static jsi::Runtime *gRuntime = nullptr;
-static __weak id gInstance = nil;
-static NSString *gPendingBrowserLoginToken = nil;
-static BOOL      gBrowserLoginIsApplying    = NO;
-static NSUInteger gBrowserLoginFailureCount = 0;
+static jsi::Runtime *gRuntime                  = nullptr;
+static __weak id     gInstance                 = nil;
+static NSString     *gPendingBrowserLoginToken = nil;
+static BOOL          gBrowserLoginIsApplying   = NO;
+static NSUInteger    gBrowserLoginFailureCount = 0;
 
 static loader::LoaderPipeline &pipeline(void);
 
@@ -46,8 +46,8 @@ BOOL UnboundBundleIsReady(void)
 
 static void applyPendingBrowserLogin(void)
 {
-    id          instance = gInstance;
-    NSString    *token    = gPendingBrowserLoginToken;
+    id        instance = gInstance;
+    NSString *token    = gPendingBrowserLoginToken;
     if (!instance || token.length == 0 || !UnboundBundleIsReady() || gBrowserLoginIsApplying)
     {
         return;
@@ -68,7 +68,8 @@ static void applyPendingBrowserLogin(void)
             }
             catch (const std::exception &error)
             {
-                [Logger error:LOG_CATEGORY_DEFAULT format:@"Browser login failed. (%s)", error.what()];
+                [Logger error:LOG_CATEGORY_DEFAULT
+                       format:@"Browser login failed. (%s)", error.what()];
             }
         }
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -80,14 +81,15 @@ static void applyPendingBrowserLogin(void)
                     gPendingBrowserLoginToken = nil;
                 }
                 gBrowserLoginFailureCount = 0;
-                [Logger info:LOG_CATEGORY_DEFAULT format:@"Browser login token application scheduled."];
+                [Logger info:LOG_CATEGORY_DEFAULT
+                      format:@"Browser login token application scheduled."];
                 return;
             }
 
             gBrowserLoginFailureCount++;
             [Logger error:LOG_CATEGORY_DEFAULT
                    format:@"Browser login JavaScript application failed (attempt %lu).",
-                          (unsigned long)gBrowserLoginFailureCount];
+                          (unsigned long) gBrowserLoginFailureCount];
             if (gBrowserLoginFailureCount <= 3)
             {
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC),
@@ -162,7 +164,8 @@ public:
     loader::PreloadPayload preloadPayload() override
     {
         nlohmann::json availableFonts = loader::fontNamesOf(UnboundPlatformFonts());
-        return loader::makePreloadPayload(UnboundSettingsStore(), UnboundAddonState(), availableFonts,
+        return loader::makePreloadPayload(UnboundSettingsStore(), UnboundAddonState(),
+                                          availableFonts,
                                           toStdString([Utilities getCurrentDylibName]));
     }
 
@@ -198,8 +201,8 @@ static loader::LoaderPipeline &pipeline(void)
     static loader::LoaderPipeline *shared = nullptr;
     static dispatch_once_t         onceToken;
     dispatch_once(&onceToken, ^{
-        shared = new loader::LoaderPipeline(std::make_shared<IOSLoaderHost>(), UnboundUpdaterSettings(),
-                                            UnboundBundleUpdater());
+        shared = new loader::LoaderPipeline(std::make_shared<IOSLoaderHost>(),
+                                            UnboundUpdaterSettings(), UnboundBundleUpdater());
     });
     return *shared;
 }
@@ -269,7 +272,7 @@ typedef void (*LoadScriptFromSourceIMP)(id, SEL, id);
 
 static LoadJSBundleIMP         gOriginalLoadJSBundle         = NULL;
 static LoadScriptFromSourceIMP gOriginalLoadScriptFromSource = NULL;
-static BOOL                    gRCTInstanceHooksInstalled   = NO;
+static BOOL                    gRCTInstanceHooksInstalled    = NO;
 
 static void loadJSBundle(id self, SEL selector, NSURL *sourceURL)
 {
@@ -304,16 +307,12 @@ static BOOL installRCTInstanceHooks(void)
         return NO;
     }
 
-    MSHookMessageEx(instanceClass,
-                    @selector(_loadJSBundle:),
-                    (IMP)loadJSBundle,
-                    (IMP *)&gOriginalLoadJSBundle);
-    MSHookMessageEx(instanceClass,
-                    @selector(_loadScriptFromSource:),
-                    (IMP)loadScriptFromSource,
-                    (IMP *)&gOriginalLoadScriptFromSource);
-    gRCTInstanceHooksInstalled = gOriginalLoadJSBundle != NULL &&
-                                 gOriginalLoadScriptFromSource != NULL;
+    MSHookMessageEx(instanceClass, @selector(_loadJSBundle:), (IMP) loadJSBundle,
+                    (IMP *) &gOriginalLoadJSBundle);
+    MSHookMessageEx(instanceClass, @selector(_loadScriptFromSource:), (IMP) loadScriptFromSource,
+                    (IMP *) &gOriginalLoadScriptFromSource);
+    gRCTInstanceHooksInstalled =
+        gOriginalLoadJSBundle != NULL && gOriginalLoadScriptFromSource != NULL;
     return gRCTInstanceHooksInstalled;
 }
 
@@ -328,8 +327,7 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
         return;
     }
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC),
-                   dispatch_get_main_queue(),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(),
                    ^{ retryRCTInstanceHooks(attempt + 1); });
 }
 
@@ -342,9 +340,8 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
 
     if (![Utilities isRNNewArchEnabled])
     {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [Utilities alert:[CoreBridge incompatibleHostMessage]];
-        });
+        dispatch_async(dispatch_get_main_queue(),
+                       ^{ [Utilities alert:[CoreBridge incompatibleHostMessage]]; });
         return;
     }
 
@@ -354,22 +351,23 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
         dispatch_async(dispatch_get_main_queue(), ^{
             if (!verified)
             {
-                [Logger error:LOG_CATEGORY_DEFAULT format:@"Embedded tweak attestation verification failed"];
-                [Utilities alert:@"The injected tweak failed Unbound's embedded integrity verification. "
-                                 @"You cannot be sure that this is free of malware. "
-                                 @"If this app was obtained via 'cypwn' or similar sources "
-                                 @"we heavily recommend you uninstall it immediately."
-                           title:@"⚠️ SECURITY WARNING"
-                         timeout:15
-                         warning:YES];
+                [Logger error:LOG_CATEGORY_DEFAULT
+                       format:@"Embedded tweak attestation verification failed"];
+                [Utilities
+                      alert:@"The injected tweak failed Unbound's embedded integrity verification. "
+                            @"You cannot be sure that this is free of malware. "
+                            @"If this app was obtained via 'cypwn' or similar sources "
+                            @"we heavily recommend you uninstall it immediately."
+                      title:@"⚠️ SECURITY WARNING"
+                    timeout:15
+                    warning:YES];
                 return;
             }
             retryRCTInstanceHooks(0);
         });
     });
 #else
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC),
-                   dispatch_get_main_queue(),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(),
                    ^{ retryRCTInstanceHooks(0); });
 #endif
 

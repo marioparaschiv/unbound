@@ -1,7 +1,7 @@
+#include <cassert>
+
 #include "NativePluginRuntime.h"
 #include "NativeResourceBudget.h"
-
-#include <cassert>
 
 using namespace loader::native;
 
