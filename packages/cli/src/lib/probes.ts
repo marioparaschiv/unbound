@@ -42,20 +42,27 @@ export async function viewTree(
 	maxNodes: number,
 ): Promise<string> {
 	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
-	const holder = (platform: string, capability: NativePluginCapability) =>
+	const holder = (platform: string, capabilities: NativePluginCapability[]) =>
 		[...manager.entities.values()].find(
 			(entity) =>
 				entity.started &&
 				entity.context?.platform === platform &&
-				entity.context.capabilities.includes(capability),
+				capabilities.every((capability) =>
+					entity.context?.capabilities.includes(capability),
+				),
 		)?.context;
-	const android = holder('android', 'native.java.invoke');
-	const ios = holder('ios', 'native.objc.snapshot');
+	const android = holder('android', [
+		'native.java.classes',
+		'native.java.fields',
+		'native.java.invoke',
+	]);
+	const ios = holder('ios', ['native.objc.snapshot']);
 
 	if (android) {
 		const { java } = android.native;
 		const handle = (value: NativeJavaValue): NativeJavaHandleValue | null =>
 			value.type === 'handle' ? value : null;
+		const isTrue = (value: NativeJavaValue) => 'value' in value && value.value === true;
 		const number = (value: NativeJavaValue) =>
 			'value' in value && typeof value.value === 'number' ? value.value : 0;
 		const string = (value: NativeJavaValue) => (value.type === 'string' ? value.value : '');
@@ -76,7 +83,7 @@ export async function viewTree(
 		let visited = 0;
 
 		function describeText(view: NativeJavaHandleValue): string {
-			if (java.invoke(textView, 'isInstance', [view]).value !== true) {
+			if (!isTrue(java.invoke(textView, 'isInstance', [view]))) {
 				return '';
 			}
 
@@ -104,7 +111,7 @@ export async function viewTree(
 				match: !filter || name.includes(filter),
 			});
 
-			if (java.invoke(group, 'isInstance', [view]).value !== true) return;
+			if (!isTrue(java.invoke(group, 'isInstance', [view]))) return;
 
 			const count = number(java.invoke(view, 'getChildCount'));
 
@@ -233,11 +240,14 @@ export function textSpans(unbound: UnboundGlobal, match: string, maxViews: numbe
 		(entity) =>
 			entity.started &&
 			entity.context?.platform === 'android' &&
-			entity.context.capabilities.includes('native.java.invoke'),
+			['native.java.classes', 'native.java.fields', 'native.java.invoke'].every(
+				(capability) =>
+					entity.context?.capabilities.includes(capability as NativePluginCapability),
+			),
 	)?.context;
 
 	if (!context) {
-		return 'No running Android plugin holds native.java.invoke. Spans can only be read on Android.';
+		return 'No running Android plugin holds native.java.fields and native.java.invoke. Spans can only be read on Android.';
 	}
 
 	const { java } = context.native;
@@ -247,6 +257,7 @@ export function textSpans(unbound: UnboundGlobal, match: string, maxViews: numbe
 		'value' in value && typeof value.value === 'number' ? value.value : 0;
 	const string = (value: NativeJavaValue) => (value.type === 'string' ? value.value : '');
 	const int = (value: number): NativeJavaValue => ({ type: 'int', value });
+	const isTrue = (value: NativeJavaValue) => 'value' in value && value.value === true;
 	const tracker = handle(
 		java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
 	);
@@ -269,7 +280,7 @@ export function textSpans(unbound: UnboundGlobal, match: string, maxViews: numbe
 	while (queue.length && output.length < maxViews) {
 		const view = queue.shift()!;
 
-		if (java.invoke(textView, 'isInstance', [view]).value === true) {
+		if (isTrue(java.invoke(textView, 'isInstance', [view]))) {
 			const value = java.invoke(view, 'getText');
 			const text = handle(value);
 			const content = text ? string(java.invoke(text, 'toString')) : string(value);
@@ -306,7 +317,7 @@ export function textSpans(unbound: UnboundGlobal, match: string, maxViews: numbe
 			}
 		}
 
-		if (java.invoke(group, 'isInstance', [view]).value !== true) {
+		if (!isTrue(java.invoke(group, 'isInstance', [view]))) {
 			continue;
 		}
 
