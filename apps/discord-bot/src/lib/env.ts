@@ -13,6 +13,11 @@ export const envSchema = databaseEnvSchema.extend({
 	POLL_INTERVAL_SECONDS: positiveInt.default(30),
 	FEED_PAGE_SIZE: positiveInt.max(500).default(100),
 	RECONCILE_INTERVAL_SECONDS: positiveInt.default(300),
+	/** Raises the GitHub API rate limit for the contributor lookup; an empty value counts as unset. */
+	GITHUB_TOKEN: z
+		.string()
+		.optional()
+		.transform((token) => token || undefined),
 });
 
 export type Env = z.infer<typeof envSchema>;

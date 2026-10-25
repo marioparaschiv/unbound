@@ -45,7 +45,16 @@ describe('checkConfig', () => {
 				POLL_INTERVAL_SECONDS: 30,
 				FEED_PAGE_SIZE: 100,
 				RECONCILE_INTERVAL_SECONDS: 300,
+				GITHUB_TOKEN: undefined,
 			},
 		});
+	});
+
+	test('treats an empty GITHUB_TOKEN as unset and keeps a set one', () => {
+		const empty = checkConfig({ ...ENV, GITHUB_TOKEN: '' }, SET_IDS);
+		const set = checkConfig({ ...ENV, GITHUB_TOKEN: 'token' }, SET_IDS);
+
+		expect(empty.ok ? empty.env.GITHUB_TOKEN : 'failed').toBeUndefined();
+		expect(set.ok ? set.env.GITHUB_TOKEN : 'failed').toBe('token');
 	});
 });
