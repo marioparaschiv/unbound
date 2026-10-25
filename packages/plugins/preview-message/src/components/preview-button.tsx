@@ -1,5 +1,5 @@
 import { sharedStagedStickers } from '@unbound-plugins/shared/stickers/staged-stickers';
-import { Animated, Pressable, type PressableStateCallbackType } from 'react-native';
+import { Animated, Platform, Pressable, type PressableStateCallbackType } from 'react-native';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Portal } from '@unbound-app/api/metro/components';
 
@@ -7,6 +7,8 @@ import { DraftStore, FluxHooks, Haptics, PreviewRunning, type Sticker } from '~/
 import { Button, CHANNEL_MESSAGE_DRAFT_TYPE, Timing } from '~/constants';
 import PreviewOverlay from '~/components/preview-overlay';
 import { dismissKeyboard } from '~/keyboard';
+
+const trailingGap = Platform.OS === 'android' ? Button.gap : 0;
 
 type PreviewButtonProps = {
 	channelId: string;
@@ -97,7 +99,7 @@ function PreviewButton({ channelId, icon }: PreviewButtonProps) {
 			<Animated.View
 				style={{
 					width: slotVisible ? Button.size : 0,
-					marginRight: slotVisible ? 0 : -Button.gap,
+					marginRight: slotVisible ? trailingGap : -Button.gap,
 					height: Button.size,
 					opacity: visible ? progress : 0,
 					overflow: 'hidden',
