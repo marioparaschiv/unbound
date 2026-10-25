@@ -45,4 +45,26 @@ int main()
     assert(!budget.acquire(1));
     budget.release(1);
     assert(budget.acquire(1));
+
+    assert(nativeSurfaceBudget().limit() == 64);
+    NativeResourceBudget   hooks(3);
+    NativeResourceRegistry registry(hooks);
+    {
+        NativeResourceReservation reservation(hooks, "budget exhausted");
+        registry.adopt("hook-1", reservation);
+    }
+    {
+        NativeResourceReservation duplicate(hooks, "budget exhausted");
+        registry.adopt("hook-1", duplicate);
+    }
+    assert(hooks.used() == 1 && registry.size() == 1 && registry.contains("hook-1"));
+    {
+        NativeResourceReservation reservation(hooks, "budget exhausted");
+        registry.adopt("hook-2", reservation);
+    }
+    assert(registry.release("hook-1"));
+    assert(!registry.release("hook-1"));
+    assert(hooks.used() == 1);
+    assert(registry.releaseAll() == 1);
+    assert(hooks.used() == 0 && registry.size() == 0);
 }

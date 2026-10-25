@@ -162,6 +162,23 @@ class NativeUITest {
     }
 
     @Test
+    fun unmountAllDetachesEveryMountedView() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val root = FrameLayout(activity)
+        activity.setContentView(root)
+        ActivityTracker.onActivityResumed(activity)
+        val container = JSONObject(NativeUI.mountView("", "View", "{}"))
+        NativeUI.mountView(container.toString(), "Text", """{"text":"Mounted"}""")
+
+        NativeUI.unmountAll()
+
+        assertEquals(0, NativeUI.mountedCount())
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeUI.measureView(container.toString())
+        }
+    }
+
+    @Test
     fun mountRejectsUnsupportedModulesAndProperties() {
         val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
         activity.setContentView(FrameLayout(activity))

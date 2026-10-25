@@ -180,4 +180,21 @@ namespace loader::native
         }
         return serializeBounded(runtime, value, profile);
     }
+
+    nlohmann::json serializeBoundedBatch(jsi::Runtime &runtime, const jsi::Value &value, size_t maximumSteps)
+    {
+        if (!value.isObject() || !value.asObject(runtime).isArray(runtime))
+        {
+            throw std::invalid_argument("A native batch must be an array of steps");
+        }
+        if (value.asObject(runtime).asArray(runtime).size(runtime) > maximumSteps)
+        {
+            throw std::invalid_argument("Native batch requires at most " + std::to_string(maximumSteps) +
+                                        " steps");
+        }
+        NativeConversionBudget budget(kNativeBatchConversion);
+        nlohmann::json         steps = serializeBounded(runtime, value, budget);
+        dumpBounded(steps, kNativeBatchConversion);
+        return steps;
+    }
 }

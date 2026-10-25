@@ -67,10 +67,8 @@ namespace loader::native
     inline constexpr std::array<std::string_view, 2> kUILookupMethods = {"lookup", "snapshot"};
     inline constexpr std::array<std::string_view, 3> kUIMountMethods = {"mount", "update", "unmount"};
     inline constexpr std::array<std::string_view, 2> kUILayoutMethods = {"measure", "setFrame"};
-    inline constexpr std::array<std::string_view, 1> kMediaPickMethods = {"pick"};
-    inline constexpr std::array<std::string_view, 3> kMediaAccessMethods = {"inspect", "copy", "read"};
 
-    inline constexpr std::array<NativeCapabilityBinding, 28> kNativeCapabilityBindings = {{
+    inline constexpr std::array<NativeCapabilityBinding, 26> kNativeCapabilityBindings = {{
         {"native.objc.classes", "objc", kObjCClassMethods},
         {"native.objc.invoke", "objc", kObjCInvokeMethods},
         {"native.objc.invokeAsync", "objc", kObjCInvokeAsyncMethods},
@@ -97,8 +95,6 @@ namespace loader::native
         {"native.ui.lookup", "ui", kUILookupMethods},
         {"native.ui.mount", "ui", kUIMountMethods},
         {"native.ui.layout", "ui", kUILayoutMethods},
-        {"native.media.pick", "media", kMediaPickMethods},
-        {"native.media.access", "media", kMediaAccessMethods},
     }};
 
     inline constexpr std::array<const char *, 15> kIOSNativePluginCapabilities = {

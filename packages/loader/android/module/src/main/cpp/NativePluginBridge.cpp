@@ -5,6 +5,8 @@
 #include "NativeEvaluations.h"
 #include "NativeFFI.h"
 #include "NativeGeometry.h"
+#include "NativeHookReturnCache.h"
+#include "NativeLimits.h"
 #include "NativePlatformBridge.h"
 #include "NativePluginRoot.h"
 #include "NativeResourceBudget.h"
@@ -114,11 +116,8 @@ namespace unbound::android
             throw std::invalid_argument("a native UI query requires a role string");
         }
 
-        std::string role = roleValue.getString(runtime).utf8(runtime);
-        if (role.empty() || role.size() > 128)
-        {
-            throw std::invalid_argument("the native UI query role must be 1 to 128 bytes");
-        }
+        std::string role = loader::native::parseName(runtime, roleValue, loader::native::kMaximumQueryRoleBytes,
+                                                     "The native UI query role");
 
         loader::native::TraversalOptions limits =
             loader::native::parseTraversalOptions(runtime, value, loader::native::TraversalProfile::Query);
@@ -130,15 +129,9 @@ namespace unbound::android
         query["maxResults"] = limits.maxResults;
 
         jsi::Value rootValue = input.getProperty(runtime, "root");
-        if (rootValue.isObject() && !rootValue.isNull())
+        if (rootValue.isObject())
         {
-            jsi::Object root = rootValue.asObject(runtime);
-            jsi::Value  id   = root.getProperty(runtime, "id");
-            if (!id.isString())
-            {
-                throw std::invalid_argument("a native UI root handle must contain a string id");
-            }
-            query["root"] = { { "id", id.getString(runtime).utf8(runtime) } };
+            query["root"] = {{"id", loader::native::parseHandleId(runtime, rootValue, "A native UI root handle")}};
         }
 
         std::string serialized = query.dump();
@@ -152,30 +145,7 @@ namespace unbound::android
 
     static std::string serializeHandle(jsi::Runtime &runtime, const jsi::Value &value)
     {
-        if (!value.isObject() || value.isNull())
-        {
-            throw std::invalid_argument("a native UI handle is required");
-        }
-
-        jsi::Object handle = value.asObject(runtime);
-        if (handle.isArray(runtime))
-        {
-            throw std::invalid_argument("a native UI handle must be a plain object");
-        }
-
-        jsi::Value id = handle.getProperty(runtime, "id");
-        if (!id.isString())
-        {
-            throw std::invalid_argument("a native UI handle must contain a string id");
-        }
-
-        std::string identifier = id.getString(runtime).utf8(runtime);
-        if (identifier.empty() || identifier.size() > 128)
-        {
-            throw std::invalid_argument("a native UI handle id must be 1 to 128 bytes");
-        }
-
-        return nlohmann::json({ { "id", identifier } }).dump();
+        return loader::native::handleJSON(loader::native::parseHandleId(runtime, value, "A native UI handle"));
     }
 
     static std::string serializeFrame(jsi::Runtime &runtime, const jsi::Value &value)
@@ -425,12 +395,8 @@ namespace unbound::android
         std::string container = args[0].isNull() || args[0].isUndefined()
                                     ? std::string()
                                     : serializeHandle(runtime, args[0]);
-        std::string moduleName = args[1].getString(runtime).utf8(runtime);
-        if (moduleName.empty() || moduleName.size() > 128)
-        {
-            loader::native::throwCoded(runtime, "NATIVE_BRIDGE_ERROR",
-                                       "Native UI module names must be 1 to 128 bytes");
-        }
+        std::string moduleName = loader::native::parseName(runtime, args[1], loader::native::kMaximumNativeNameBytes,
+                                                           "A native UI module name");
         std::string properties = "{}";
         if (count == 3)
         {
@@ -488,8 +454,6 @@ namespace unbound::android
             [callbacks, handle = std::move(handle)]() { callUnmount(callbacks, handle); },
             [](jsi::Runtime &) -> jsi::Value { return jsi::Value::undefined(); });
     }
-
-    static constexpr size_t kMaximumJavaNameBytes = 256;
 
     static std::string takeJavaFailure(JNIEnv *env, const char *fallback)
     {
@@ -646,13 +610,13 @@ namespace unbound::android
         JNIEnv *env = currentEnvironment();
         if (!env || !callbacks.bridgeClass || !method)
         {
-            throw std::runtime_error("The Android debug adapter is unavailable");
+            throw std::runtime_error("The Android adapter is unavailable");
         }
 
         jstring  input = toJavaString(env, argument);
         jboolean output = env->CallStaticBooleanMethod(callbacks.bridgeClass, method, input);
         std::string failure =
-            env->ExceptionCheck() ? takeJavaFailure(env, "The Android debug operation failed") : "";
+            env->ExceptionCheck() ? takeJavaFailure(env, "The Android operation failed") : "";
         env->DeleteLocalRef(input);
 
         if (!failure.empty())
@@ -693,57 +657,72 @@ namespace unbound::android
 
     static std::string javaName(jsi::Runtime &runtime, const jsi::Value &value)
     {
-        if (!value.isString())
-        {
-            throw std::invalid_argument("Java names must be strings");
-        }
-
-        std::string name = value.getString(runtime).utf8(runtime);
-        if (name.empty() || name.size() > kMaximumJavaNameBytes)
-        {
-            throw std::invalid_argument("Java names must be 1 to 256 bytes");
-        }
-
-        return name;
+        return loader::native::parseName(runtime, value, loader::native::kMaximumNativeNameBytes, "A Java name");
     }
 
     static std::string serializeJavaHandle(jsi::Runtime &runtime, const jsi::Value &value)
     {
-        if (!value.isObject() || value.isNull())
-        {
-            throw std::invalid_argument("a Java handle is required");
-        }
+        return loader::native::handleJSON(loader::native::parseHandleId(runtime, value, "A Java handle"));
+    }
 
-        jsi::Object handle = value.asObject(runtime);
-        if (handle.isArray(runtime))
+    static std::string serializeJavaBatch(jsi::Runtime &runtime, const jsi::Value &value)
+    {
+        nlohmann::json steps = loader::native::serializeBoundedBatch(runtime, value, loader::native::kMaximumBatchSteps);
+        for (nlohmann::json &step : steps)
         {
-            throw std::invalid_argument("a Java handle must be a plain object");
-        }
-
-        jsi::Value id = handle.getProperty(runtime, "id");
-        if (!id.isString())
-        {
-            jsi::Value tag = handle.getProperty(runtime, "type");
-            jsi::Value tagged = handle.getProperty(runtime, "value");
-            if (tag.isString() && tag.getString(runtime).utf8(runtime) == "handle" &&
-                tagged.isString())
+            if (!step.is_object() || !step.contains("op") || !step["op"].is_string())
             {
-                id = std::move(tagged);
+                throw std::invalid_argument("Java batch steps require an operation name");
+            }
+            const std::string &operation = step["op"].get_ref<const std::string &>();
+            if (operation != "invoke" && operation != "getField" && operation != "setField" &&
+                operation != "respondsTo")
+            {
+                throw std::invalid_argument("Unsupported Java batch operation: " + operation);
+            }
+            step["handle"] = {{"id", loader::native::parseHandleId(step.value("handle", nlohmann::json()),
+                                                                     "A Java batch handle")}};
+            if (!step.contains("name") || !step["name"].is_string())
+            {
+                throw std::invalid_argument("Java batch steps require a member name");
+            }
+            loader::native::parseName(step["name"].get<std::string>(), loader::native::kMaximumNativeNameBytes,
+                                      "A Java batch member name");
+            if (step.contains("args") && (!step["args"].is_array() || step["args"].size() > kMaximumNativeArguments))
+            {
+                throw std::invalid_argument("Java batch arguments must be an array of at most 16 values");
+            }
+            if (operation == "setField" && (!step.contains("value") || !step["value"].is_object()))
+            {
+                throw std::invalid_argument("A Java field write needs a value");
             }
         }
+        return steps.dump();
+    }
 
-        if (!id.isString())
+    static void callSetAssociatedObject(const JavaCallbacks &callbacks, const std::string &handle,
+                                        const std::string &key, const std::string &value)
+    {
+        JNIEnv *env = currentEnvironment();
+        if (!env || !callbacks.bridgeClass || !callbacks.javaSetAssociatedObject)
         {
-            throw std::invalid_argument("a Java handle must contain a string id");
+            throw std::runtime_error("The Android Java adapter is unavailable");
         }
 
-        std::string identifier = id.getString(runtime).utf8(runtime);
-        if (identifier.empty() || identifier.size() > 128)
+        jstring inputHandle = toJavaString(env, handle);
+        jstring inputKey    = toJavaString(env, key);
+        jstring inputValue  = toJavaString(env, value);
+        env->CallStaticVoidMethod(callbacks.bridgeClass, callbacks.javaSetAssociatedObject, inputHandle, inputKey,
+                                  inputValue, static_cast<jint>(loader::native::kMaximumAssociationsPerObject));
+        std::string failure =
+            env->ExceptionCheck() ? takeJavaFailure(env, "The Android Java operation failed") : "";
+        env->DeleteLocalRef(inputValue);
+        env->DeleteLocalRef(inputKey);
+        env->DeleteLocalRef(inputHandle);
+        if (!failure.empty())
         {
-            throw std::invalid_argument("a Java handle id must be 1 to 128 bytes");
+            throw std::runtime_error(failure);
         }
-
-        return nlohmann::json({ { "id", identifier } }).dump();
     }
 
     static std::string serializeJavaArguments(jsi::Runtime &runtime, const jsi::Value *args,
@@ -853,18 +832,55 @@ namespace unbound::android
 
     static std::string hookTokenId(jsi::Runtime &runtime, const jsi::Value &value)
     {
-        if (!value.isObject())
-        {
-            throw std::invalid_argument("a hook token is required");
-        }
+        return loader::native::parseHandleId(runtime, value, "A hook token");
+    }
 
-        jsi::Value id = value.asObject(runtime).getProperty(runtime, "id");
-        if (!id.isString())
-        {
-            throw std::invalid_argument("a hook token must contain a string id");
-        }
+    static loader::native::NativeResourceRegistry &installedHooks()
+    {
+        static loader::native::NativeResourceRegistry registry(loader::native::nativeHookBudget());
+        return registry;
+    }
 
-        return id.getString(runtime).utf8(runtime);
+    static loader::native::NativeResourceRegistry &mountedSurfaces()
+    {
+        static loader::native::NativeResourceRegistry registry(loader::native::nativeSurfaceBudget());
+        return registry;
+    }
+
+    static loader::native::HookReturnCache &hookReturnValues()
+    {
+        static loader::native::HookReturnCache cache(loader::native::nativeCachedReturnBudget());
+        return cache;
+    }
+
+    std::optional<std::string> hookReturnValue(const std::string &token, const std::string &self,
+                                               const std::string &arguments)
+    {
+        return hookReturnValues().findSerialized(token, self, arguments);
+    }
+
+    static std::string installedHookToken(jsi::Runtime &runtime, const jsi::Value &value)
+    {
+        std::string token = hookTokenId(runtime, value);
+        if (!installedHooks().contains(token))
+        {
+            throw std::invalid_argument("The Android hook has been removed");
+        }
+        return token;
+    }
+
+    static nlohmann::json boundedJSON(jsi::Runtime &runtime, const jsi::Value &value)
+    {
+        NativeConversionBudget budget(kNativeArgumentsConversion);
+        nlohmann::json         result = loader::native::serializeBounded(runtime, value, budget);
+        loader::native::dumpBounded(result, kNativeArgumentsConversion);
+        return result;
+    }
+
+    static nlohmann::json boundedArgumentsJSON(jsi::Runtime &runtime, const jsi::Value &value)
+    {
+        return nlohmann::json::parse(
+            loader::native::serializeBoundedArguments(runtime, value, kNativeArgumentsConversion));
     }
 
     static void callBridgeVoid(const JavaCallbacks &callbacks, jmethodID method)
@@ -884,31 +900,15 @@ namespace unbound::android
         }
     }
 
-    static void applyHookLimits(const JavaCallbacks &callbacks)
-    {
-        JNIEnv *env = currentEnvironment();
-        if (!env || !callbacks.bridgeClass || !callbacks.hooksUseLimits)
-        {
-            throw std::runtime_error("The Android hook adapter is unavailable");
-        }
-
-        env->CallStaticVoidMethod(callbacks.bridgeClass, callbacks.hooksUseLimits,
-                                  static_cast<jint>(loader::native::kMaximumNativeHooks),
-                                  static_cast<jint>(loader::native::kMaximumNativeCachedReturnValues));
-        std::string failure =
-            env->ExceptionCheck() ? takeJavaFailure(env, "The Android hook limits were rejected") : "";
-        if (!failure.empty())
-        {
-            throw std::runtime_error(failure);
-        }
-    }
-
     static void watchRuntimeGenerations(const JavaCallbacks &callbacks)
     {
         static std::once_flag watching;
         std::call_once(watching, [callbacks]() {
             loader::native::onRuntimeGenerationChanged([callbacks](uint64_t) {
                 retireHookListeners();
+                hookReturnValues().clearAll();
+                installedHooks().releaseAll();
+                mountedSurfaces().releaseAll();
                 callBridgeVoid(callbacks, callbacks.runtimeReplaced);
             });
         });
@@ -1035,8 +1035,7 @@ namespace unbound::android
         });
         define(runtime, java, "batch", 1, [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
             requireArguments(count, 1, "A Java batch requires an operation list");
-            return parseJavaResult(rt, callJavaString(callbacks, callbacks.javaBatch,
-                                                      {serializeJavaArguments(rt, args, count, 0)}));
+            return parseJavaResult(rt, callJavaString(callbacks, callbacks.javaBatch, {serializeJavaBatch(rt, args[0])}));
         });
         define(runtime, java, "createAssociationKey", 0, [callbacks](jsi::Runtime &rt, const jsi::Value *, size_t) {
             return parseJavaResult(rt, callJavaStringNoArguments(callbacks, callbacks.javaCreateAssociationKey));
@@ -1051,9 +1050,8 @@ namespace unbound::android
         define(runtime, java, "setAssociatedObject", 3,
                [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                    requireArguments(count, 3, "Writing an association requires a handle, a key and a value");
-                   callJavaVoid(callbacks, callbacks.javaSetAssociatedObject,
-                                {serializeJavaHandle(rt, args[0]), serializeJavaHandle(rt, args[1]),
-                                 serializeJavaValue(rt, args[2])});
+                   callSetAssociatedObject(callbacks, serializeJavaHandle(rt, args[0]),
+                                           serializeJavaHandle(rt, args[1]), serializeJavaValue(rt, args[2]));
                    return jsi::Value::undefined();
                });
         return java;
@@ -1079,6 +1077,8 @@ namespace unbound::android
             std::string parameters = serializeJavaArguments(rt, args, count, 2);
             std::string options =
                 count > 3 && args[3].isObject() ? serializeJavaValue(rt, args[3]) : std::string("{}");
+            loader::native::NativeResourceReservation reservation(loader::native::nativeHookBudget(),
+                                                                  "Too many native hooks are installed");
             std::string token = callJavaString(callbacks, callbacks.hooksInstall,
                                                {javaName(rt, args[0]), javaName(rt, args[1]), parameters, options});
 
@@ -1087,6 +1087,7 @@ namespace unbound::android
             {
                 throw std::runtime_error("The Android hook adapter returned no token");
             }
+            installedHooks().adopt(parsed["id"].get<std::string>(), reservation);
             if (count > 4)
             {
                 rememberHookListener(rt, parsed["id"].get<std::string>(), args[4]);
@@ -1095,32 +1096,31 @@ namespace unbound::android
         });
         define(runtime, hooks, "remove", 1, [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
             requireArguments(count, 1, "Removing a hook requires its token");
-            forgetHookListener(hookTokenId(rt, args[0]));
-            callJavaVoid(callbacks, callbacks.hooksRemove, {serializeJavaHandle(rt, args[0])});
+            std::string token = hookTokenId(rt, args[0]);
+            forgetHookListener(token);
+            hookReturnValues().clear(token);
+            installedHooks().release(token);
+            callJavaVoid(callbacks, callbacks.hooksRemove, {loader::native::handleJSON(token)});
             return jsi::Value::undefined();
         });
-        define(runtime, hooks, "setReturnValue", 4,
-               [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-                   requireArguments(count, 4, "A cached hook result requires a token, a receiver, arguments and a value");
-                   callJavaVoid(callbacks, callbacks.hooksSetReturnValue,
-                                {serializeJavaHandle(rt, args[0]), serializeJavaValue(rt, args[1]),
-                                 serializeJavaArguments(rt, args, count, 2), serializeJavaValue(rt, args[3])});
-                   return jsi::Value::undefined();
-               });
-        define(runtime, hooks, "removeReturnValue", 3,
-               [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-                   requireArguments(count, 3, "Removing a cached hook result requires a token, a receiver and arguments");
-                   callJavaVoid(callbacks, callbacks.hooksRemoveReturnValue,
-                                {serializeJavaHandle(rt, args[0]), serializeJavaValue(rt, args[1]),
-                                 serializeJavaArguments(rt, args, count, 2)});
-                   return jsi::Value::undefined();
-               });
-        define(runtime, hooks, "clearReturnValues", 1,
-               [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-                   requireArguments(count, 1, "Clearing cached hook results requires a token");
-                   callJavaVoid(callbacks, callbacks.hooksClearReturnValues, {serializeJavaHandle(rt, args[0])});
-                   return jsi::Value::undefined();
-               });
+        define(runtime, hooks, "setReturnValue", 4, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+            requireArguments(count, 4, "A cached hook result requires a token, a receiver, arguments and a value");
+            std::string token = installedHookToken(rt, args[0]);
+            hookReturnValues().set(token, boundedJSON(rt, args[1]), boundedArgumentsJSON(rt, args[2]),
+                                   boundedJSON(rt, args[3]));
+            return jsi::Value::undefined();
+        });
+        define(runtime, hooks, "removeReturnValue", 3, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+            requireArguments(count, 3, "Removing a cached hook result requires a token, a receiver and arguments");
+            hookReturnValues().remove(hookTokenId(rt, args[0]), boundedJSON(rt, args[1]),
+                                      boundedArgumentsJSON(rt, args[2]));
+            return jsi::Value::undefined();
+        });
+        define(runtime, hooks, "clearReturnValues", 1, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+            requireArguments(count, 1, "Clearing cached hook results requires a token");
+            hookReturnValues().clear(hookTokenId(rt, args[0]));
+            return jsi::Value::undefined();
+        });
         return hooks;
     }
 
@@ -1144,10 +1144,19 @@ namespace unbound::android
             std::string properties = count > 2 && !args[2].isUndefined() && !args[2].isNull()
                                          ? serializeNativeProperties(rt, args[2])
                                          : std::string("{}");
+            auto reservation = std::make_shared<loader::native::NativeResourceReservation>(
+                loader::native::nativeSurfaceBudget(), "Too many React surfaces are mounted");
             return javaAsynchronously(rt, [callbacks, container = std::move(container),
-                                           moduleName = std::move(moduleName),
-                                           properties = std::move(properties)]() {
-                return callJavaString(callbacks, callbacks.fabricMount, {container, moduleName, properties});
+                                           moduleName = std::move(moduleName), properties = std::move(properties),
+                                           reservation]() {
+                std::string    handle = callJavaString(callbacks, callbacks.fabricMount, {container, moduleName, properties});
+                nlohmann::json parsed = nlohmann::json::parse(handle, nullptr, false);
+                if (parsed.is_discarded() || !parsed.contains("id") || !parsed["id"].is_string())
+                {
+                    throw std::runtime_error("The Android surface adapter returned an invalid handle");
+                }
+                mountedSurfaces().adopt(parsed["id"].get<std::string>(), *reservation);
+                return handle;
             });
         });
         define(runtime, fabric, "updateAsync", 2, [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
@@ -1192,9 +1201,12 @@ namespace unbound::android
         define(runtime, fabric, "unmountAsync", 1,
                [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                    requireArguments(count, 1, "Unmounting a React surface requires a handle");
-                   std::string handle = serializeJavaHandle(rt, args[0]);
-                   return javaAsynchronously(rt, [callbacks, handle = std::move(handle)]() {
-                       callJavaVoid(callbacks, callbacks.fabricUnmount, {handle});
+                   std::string id = loader::native::parseHandleId(rt, args[0], "A React surface handle");
+                   return javaAsynchronously(rt, [callbacks, id = std::move(id)]() {
+                       if (callJavaBoolean(callbacks, callbacks.fabricUnmount, loader::native::handleJSON(id)))
+                       {
+                           mountedSurfaces().release(id);
+                       }
                        return std::string();
                    });
                });
@@ -1204,7 +1216,6 @@ namespace unbound::android
     void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
     {
         watchRuntimeGenerations(callbacks);
-        applyHookLimits(callbacks);
 
         loader::native::NativePluginRootBuilder bridge(runtime, loader::native::NativePluginPlatform::Android);
         bridge.addNamespace("ui", makeUINamespace(runtime, callbacks));

@@ -10,9 +10,6 @@ import org.json.JSONObject
 import kotlin.math.ceil
 
 object NativeFabric {
-    private const val MAX_SURFACES = 64
-    private const val MAX_MODULE_NAME_LENGTH = 128
-
     interface Surface {
         fun view(): View
         fun start()
@@ -38,16 +35,8 @@ object NativeFabric {
 
     fun mount(containerHandleJSON: String, moduleName: String, propsJSON: String): String {
         requireMainThread()
-        require(moduleName.isNotEmpty() && moduleName.length <= MAX_MODULE_NAME_LENGTH) {
-            "The React surface module name is out of bounds"
-        }
-
         val host = synchronized(this) { host }
             ?: throw IllegalStateException("The React surface host is unavailable")
-
-        synchronized(this) {
-            require(mounted.size < MAX_SURFACES) { "Too many React surfaces are mounted" }
-        }
 
         val context = host.activityContext()
             ?: throw IllegalStateException("No resumed Android activity is available")
@@ -75,12 +64,13 @@ object NativeFabric {
         resolve(parseHandle(handleJSON)).surface.updateProps(bundle(JSONObject(propsJSON)))
     }
 
-    fun unmount(handleJSON: String) {
+    fun unmount(handleJSON: String): Boolean {
         requireMainThread()
         val id = parseHandle(handleJSON)
-        val entry = synchronized(this) { mounted.remove(id) } ?: return
+        val entry = synchronized(this) { mounted.remove(id) } ?: return false
         (entry.view.parent as? ViewGroup)?.removeView(entry.view)
         entry.surface.stop()
+        return true
     }
 
     fun setSize(handleJSON: String, minimumJSON: String, maximumJSON: String) {
@@ -153,12 +143,7 @@ object NativeFabric {
         mounted[id] ?: throw IllegalArgumentException("The React surface handle is unavailable")
     }
 
-    private fun parseHandle(handleJSON: String): String {
-        val id = JSONObject(handleJSON).optString("id").trim()
-        require(id.isNotEmpty() && id.length <= 128) { "The React surface handle is out of bounds" }
-
-        return id
-    }
+    private fun parseHandle(handleJSON: String): String = JSONObject(handleJSON).getString("id")
 
     fun bundle(props: JSONObject): Bundle {
         val result = Bundle()

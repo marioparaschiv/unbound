@@ -258,7 +258,10 @@ func TestAndroidNativeBridgeContractIsSynchronized(t *testing.T) {
 		`define(runtime, fabric, "unmountAsync",`,
 		"loader::native::onRuntimeGenerationChanged(",
 		"retireHookListeners();",
-		"applyHookLimits(callbacks);",
+		"installedHooks().adopt(",
+		"hookReturnValues().clearAll();",
+		"mountedSurfaces().releaseAll();",
+		"serializeJavaBatch(rt, args[0])",
 		"executeMainAsynchronously(",
 		"bridge.install();",
 	} {

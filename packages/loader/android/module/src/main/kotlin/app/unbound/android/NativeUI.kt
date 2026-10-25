@@ -41,6 +41,7 @@ object NativeUI {
     private val viewsByHandle = HashMap<String, WeakReference<View>>()
     private var handleGeneration = -1L
     private var nextHandle = 1L
+    private val mountedViews = java.util.Collections.newSetFromMap(WeakHashMap<View, Boolean>())
 
     fun lookup(queryJSON: String): String {
         requireMainThread()
@@ -92,8 +93,6 @@ object NativeUI {
 
     fun mountView(containerHandleJSON: String, moduleName: String, propertiesJSON: String): String {
         requireMainThread()
-        require(moduleName.length in 1..128)
-
         val activity = ActivityTracker.currentActivity()
             ?: throw IllegalStateException("No resumed Android activity is available")
         val container = if (containerHandleJSON.isBlank()) {
@@ -106,6 +105,7 @@ object NativeUI {
         val view = createView(activity, moduleName)
         applyProperties(view, JSONObject(propertiesJSON))
         container.addView(view, layoutParams(container))
+        mountedViews.add(view)
         return JSONObject().put("id", handle(view)).toString()
     }
 
@@ -120,10 +120,24 @@ object NativeUI {
     fun unmountView(handleJSON: String) {
         requireMainThread()
         val view = resolve(parseHandle(handleJSON))
-        if (view is ImageView) NativeImageLoader.clear(view)
-        (view.parent as? ViewGroup)?.removeView(view)
+        detach(view)
         viewsByObject.remove(view)
         viewsByHandle.remove(parseHandle(handleJSON))
+    }
+
+    fun unmountAll() {
+        requireMainThread()
+        for (view in mountedViews.toList()) detach(view)
+        viewsByObject.clear()
+        viewsByHandle.clear()
+    }
+
+    fun mountedCount(): Int = mountedViews.size
+
+    private fun detach(view: View) {
+        if (view is ImageView) NativeImageLoader.clear(view)
+        (view.parent as? ViewGroup)?.removeView(view)
+        mountedViews.remove(view)
     }
 
     fun setViewFrame(handleJSON: String, frameJSON: String) {
@@ -151,9 +165,7 @@ object NativeUI {
 
     private fun parseQuery(queryJSON: String): Query {
         val input = JSONObject(queryJSON)
-        val role = input.optString("role").trim()
-        require(role.isNotEmpty() && role.length <= 128)
-
+        val role = input.getString("role")
         val rootID = input.optJSONObject("root")?.optString("id")?.takeIf { it.isNotEmpty() }
         return Query(
             role = role,
@@ -172,11 +184,7 @@ object NativeUI {
             ?.window
             ?.decorView as? ViewGroup
 
-    private fun parseHandle(handleJSON: String): String {
-        val id = JSONObject(handleJSON).optString("id").trim()
-        require(id.isNotEmpty() && id.length <= 128)
-        return id
-    }
+    private fun parseHandle(handleJSON: String): String = JSONObject(handleJSON).getString("id")
 
     private fun traverse(query: Query): List<Visit> {
         val activity = ActivityTracker.currentActivity()
@@ -320,9 +328,7 @@ object NativeUI {
             when (key) {
                 "text" -> {
                     require(view is TextView) { "The Android native UI view does not support text" }
-                    val value = properties.optString(key)
-                    require(value.length <= 4096)
-                    view.text = value
+                    view.text = properties.optString(key)
                 }
                 "textColor" -> {
                     require(view is TextView) { "The Android native UI view does not support textColor" }

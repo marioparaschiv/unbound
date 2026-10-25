@@ -112,3 +112,23 @@ func TestHostFunctionsOnlyComeFromTheGuardedFactory(t *testing.T) {
 		t.Fatal("Android no longer delivers native failures through envelopes")
 	}
 }
+
+func TestAndroidKotlinLeavesBridgeLimitsToCore(t *testing.T) {
+	root := loaderRoot(t)
+	directory := filepath.Join(root, "android", "module", "src", "main", "kotlin", "app", "unbound", "android")
+	for _, name := range []string{"NativeJava.kt", "NativeHooks.kt", "NativeFabric.kt", "NativeUI.kt", "NativeBridge.kt"} {
+		source, err := os.ReadFile(filepath.Join(directory, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, duplicate := range []string{
+			"MAX_SURFACES", "MAX_MODULE_NAME_LENGTH", "MAX_CLASS_NAME_LENGTH", "MAX_MEMBER_NAME_LENGTH",
+			"MAX_ARGUMENTS", "MAX_BATCH_OPERATIONS", "MAX_ASSOCIATIONS_PER_OBJECT", "MAX_PROP_",
+			"useLimits", "returnValues[", "boundedHandle", "boundedDimension", "coerceIn(",
+		} {
+			if strings.Contains(string(source), duplicate) {
+				t.Errorf("%s re-implements the core bridge limit %q", name, duplicate)
+			}
+		}
+	}
+}

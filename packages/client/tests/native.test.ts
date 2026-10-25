@@ -109,8 +109,6 @@ const capabilities = [
 	'native.ui.lookup',
 	'native.ui.mount',
 	'native.ui.layout',
-	'native.media.pick',
-	'native.media.access',
 ] as const;
 
 function cancellable<T>(promise: Promise<T>, name: string) {
@@ -233,20 +231,6 @@ const bridge: NativePluginBridge = {
 		recordEvaluation: () => true,
 		environment: () => ({ isVirtualDevice: true, hostAddress: '10.0.2.2' }),
 	},
-	media: {
-		pick: () => cancellable(Promise.resolve([]), 'media-pick'),
-		inspect: () =>
-			cancellable(
-				Promise.resolve({ uri: '', fileName: '', mimeType: '', fileSize: 0 }),
-				'media-inspect',
-			),
-		copy: () =>
-			cancellable(
-				Promise.resolve({ uri: '', fileName: '', mimeType: '', fileSize: 0 }),
-				'media-copy',
-			),
-		read: () => cancellable(Promise.resolve(new ArrayBuffer(0)), 'media-read'),
-	},
 };
 const iosSpecificBridges = {
 	objc: bridge.objc,
@@ -256,7 +240,6 @@ const iosSpecificBridges = {
 const genericBridges = {
 	runtime: bridge.runtime,
 	ui: bridge.ui,
-	media: bridge.media,
 };
 
 const manifest: AddonManifest = {
@@ -557,13 +540,10 @@ describe('native plugin capability scopes', () => {
 		context.dispose();
 	});
 
-	test('gates semantic UI and media operations by capability', () => {
+	test('gates semantic UI operations by capability', () => {
 		const context = createPluginContext({ ...manifest, capabilities: [] });
 
 		expect(() => context.native.ui.lookup({ role: 'message', root: nativeHandle })).toThrow(
-			NativePluginCapabilityError,
-		);
-		expect(() => context.native.media.pick({ mediaTypes: ['image'] })).toThrow(
 			NativePluginCapabilityError,
 		);
 	});
@@ -691,17 +671,6 @@ describe('native plugin capability scopes', () => {
 		expect(fabricOperations).toEqual(['mount', 'update', 'setFrame', 'measure', 'unmount']);
 		expect(asynchronouslyUnmounted).toEqual([nativeHandle]);
 	});
-
-	test('cancels media access operations when a plugin context stops', () => {
-		const context = createPluginContext({
-			...manifest,
-			capabilities: ['native.media.pick'],
-		});
-
-		context.native.media.pick({ mediaTypes: ['image', 'video'] });
-		context.dispose();
-		expect(cancelled).toContain('media-pick');
-	});
 });
 
 describe('native plugin negotiation', () => {
@@ -709,7 +678,7 @@ describe('native plugin negotiation', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });
 		Object.assign(bridge, {
-			capabilities: ['native.runtime.events', 'native.ui.lookup', 'native.media.access'],
+			capabilities: ['native.runtime.events', 'native.ui.lookup'],
 			objc: undefined,
 			ffi: undefined,
 			fabric: undefined,
@@ -743,7 +712,6 @@ describe('native plugin negotiation', () => {
 			ffi: undefined,
 			fabric: undefined,
 			runtime: undefined,
-			media: undefined,
 			ui: {
 				lookup: () => cancellable(Promise.resolve([nativeHandle]), 'ui-lookup'),
 				snapshot: () =>
@@ -764,9 +732,6 @@ describe('native plugin negotiation', () => {
 			nodes: [],
 		});
 		expect(() => context.native.runtime.subscribe('ui.changed', () => undefined)).toThrow(
-			NativePluginCapabilityError,
-		);
-		expect(() => context.native.media.pick({ mediaTypes: ['image'] })).toThrow(
 			NativePluginCapabilityError,
 		);
 		context.dispose();
@@ -871,7 +836,7 @@ describe('native plugin negotiation', () => {
 			createPluginContext({
 				...manifest,
 				platformCapabilities: {
-					android: ['native.media.access'],
+					android: ['native.java.hooks'],
 				},
 			}),
 		).toThrow(NativePluginCapabilityError);

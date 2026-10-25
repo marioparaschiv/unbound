@@ -145,37 +145,15 @@ static jint nativeHermesBytecodeVersion(JNIEnv *env, jclass, jbyteArray header)
     return static_cast<jint>(version);
 }
 
-static jboolean nativeGetBoolean(JNIEnv *env, jclass, jstring store, jstring key, jboolean fallback)
+static jstring nativeHookReturnValue(JNIEnv *env, jclass, jstring token, jstring self, jstring arguments)
 {
-    auto loader = currentLoader();
-    if (!loader)
-    {
-        return fallback;
-    }
-    return loader->settings().getBoolean(toStdString(env, store), toStdString(env, key), fallback);
-}
-
-static void nativeSetBoolean(JNIEnv *env, jclass, jstring store, jstring key, jboolean value)
-{
-    auto loader = currentLoader();
-    if (!loader)
-    {
-        return;
-    }
-    loader->settings().set(toStdString(env, store), toStdString(env, key), static_cast<bool>(value));
-    loader->settings().save();
-}
-
-static jstring nativeSettingJSON(JNIEnv *env, jclass, jstring store, jstring key)
-{
-    auto loader = currentLoader();
-    if (!loader)
+    if (!token || !self || !arguments)
     {
         return nullptr;
     }
-    std::optional<nlohmann::json> value =
-        loader->settings().get(toStdString(env, store), toStdString(env, key));
-    return value ? toJavaString(env, loader::toJSON(*value)) : nullptr;
+    std::optional<std::string> value = unbound::android::hookReturnValue(
+        toStdString(env, token), toStdString(env, self), toStdString(env, arguments));
+    return value ? toJavaString(env, *value) : nullptr;
 }
 
 static jstring nativeToolbox(JNIEnv *env, jclass, jstring action, jstring argument)
@@ -285,15 +263,6 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         "String;");
     gCallbacks.hooksRemove =
         env->GetStaticMethodID(bridge, "hooksRemove", "(Ljava/lang/String;)V");
-    gCallbacks.hooksSetReturnValue = env->GetStaticMethodID(
-        bridge, "hooksSetReturnValue",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.hooksRemoveReturnValue = env->GetStaticMethodID(
-        bridge, "hooksRemoveReturnValue",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.hooksClearReturnValues =
-        env->GetStaticMethodID(bridge, "hooksClearReturnValues", "(Ljava/lang/String;)V");
-    gCallbacks.hooksUseLimits = env->GetStaticMethodID(bridge, "hooksUseLimits", "(II)V");
     gCallbacks.runtimeReplaced = env->GetStaticMethodID(bridge, "runtimeReplaced", "()V");
     gCallbacks.javaBatch = env->GetStaticMethodID(
         bridge, "javaBatch", "(Ljava/lang/String;)Ljava/lang/String;");
@@ -304,14 +273,14 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaSetAssociatedObject = env->GetStaticMethodID(
         bridge, "javaSetAssociatedObject",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V");
     gCallbacks.fabricMount = env->GetStaticMethodID(
         bridge, "fabricMount",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.fabricUpdate = env->GetStaticMethodID(
         bridge, "fabricUpdate", "(Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.fabricUnmount =
-        env->GetStaticMethodID(bridge, "fabricUnmount", "(Ljava/lang/String;)V");
+        env->GetStaticMethodID(bridge, "fabricUnmount", "(Ljava/lang/String;)Z");
     gCallbacks.fabricSetSize = env->GetStaticMethodID(
         bridge, "fabricSetSize", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.fabricSetFrame = env->GetStaticMethodID(
@@ -338,8 +307,7 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.javaClassName && gCallbacks.javaConstruct && gCallbacks.javaRespondsTo &&
            gCallbacks.javaInvoke && gCallbacks.javaGetField && gCallbacks.javaSetField &&
            gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
-           gCallbacks.hooksSetReturnValue && gCallbacks.hooksRemoveReturnValue &&
-           gCallbacks.hooksClearReturnValues && gCallbacks.hooksUseLimits && gCallbacks.runtimeReplaced &&
+           gCallbacks.runtimeReplaced &&
            gCallbacks.javaBatch &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
@@ -381,12 +349,8 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeDispatchHookEvent)},
         {"nativeHermesBytecodeVersion", "([B)I",
          reinterpret_cast<void *>(nativeHermesBytecodeVersion)},
-        {"nativeGetBoolean", "(Ljava/lang/String;Ljava/lang/String;Z)Z",
-         reinterpret_cast<void *>(nativeGetBoolean)},
-        {"nativeSetBoolean", "(Ljava/lang/String;Ljava/lang/String;Z)V",
-         reinterpret_cast<void *>(nativeSetBoolean)},
-        {"nativeSettingJSON", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeSettingJSON)},
+        {"nativeHookReturnValue", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeHookReturnValue)},
         {"nativeToolbox", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeToolbox)},
         {"nativePreference", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",

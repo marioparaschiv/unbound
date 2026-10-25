@@ -17,5 +17,7 @@ namespace loader::native
                                           const NativeConversionProfile &profile);
     std::string    serializeBoundedArguments(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value,
                                              const NativeConversionProfile &profile);
+    nlohmann::json serializeBoundedBatch(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value,
+                                         size_t maximumSteps);
     std::string    dumpBounded(const nlohmann::json &value, const NativeConversionProfile &profile);
 }

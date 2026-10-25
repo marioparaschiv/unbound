@@ -43,10 +43,6 @@ namespace unbound::android
         jmethodID javaRelease        = nullptr;
         jmethodID hooksInstall       = nullptr;
         jmethodID hooksRemove        = nullptr;
-        jmethodID hooksSetReturnValue = nullptr;
-        jmethodID hooksRemoveReturnValue = nullptr;
-        jmethodID hooksClearReturnValues = nullptr;
-        jmethodID hooksUseLimits      = nullptr;
         jmethodID runtimeReplaced     = nullptr;
         jmethodID javaBatch           = nullptr;
         jmethodID javaCreateAssociationKey = nullptr;
