@@ -8,6 +8,7 @@ export const addon = pgTable('addon', {
 	data: jsonb('data').$type<AddonFeedItem>().notNull(),
 	contentHash: text('content_hash').notNull(),
 	listed: boolean('listed').notNull(),
+	// Moves only when content_hash or listed changes; the ingest skips every other update.
 	updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
 });
 
