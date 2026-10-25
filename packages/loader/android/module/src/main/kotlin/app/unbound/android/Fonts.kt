@@ -4,16 +4,15 @@ import android.content.res.AssetManager
 import android.graphics.Typeface
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
-import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 object Fonts {
     private const val FONT_MANAGER = "com.facebook.react.common.assets.ReactFontManager"
     private const val TYPEFACE_STYLE = "com.facebook.react.common.assets.ReactFontManager\$TypefaceStyle"
-    private const val DEFAULT_FAMILY = "sans-serif"
 
-    private val typefaces = ConcurrentHashMap<String, Typeface>()
+    private val typefaces = ConcurrentHashMap<String, LoadedFont>()
 
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
         val manager = classLoader.loadClass(FONT_MANAGER)
@@ -38,31 +37,28 @@ object Fonts {
     }
 
     private fun resolve(family: String): Typeface? {
-        val target = NativeBridge.nativePreference("font-override", family).orEmpty()
-        if (target.isEmpty() || target == family) return null
-
-        return typefaces.getOrPut(target) { load(target) ?: return null }
+        val font = JSONObject(NativeBridge.nativeResolveFont(family))
+        val name = font.optString("name").takeIf { it.isNotEmpty() } ?: return null
+        val error = font.optString("error").takeIf { it.isNotEmpty() }
+        return typefaces.getOrPut(name) { load(name, font.optString("path"), error) }.typeface
     }
 
-    private fun load(name: String): Typeface? {
-        val fonts = runCatching { JSONArray(NativeBridge.nativeFontsJSON()) }.getOrNull()
-        val custom = (0 until (fonts?.length() ?: 0))
-            .map { fonts!!.getJSONObject(it) }
-            .firstOrNull { it.optString("name") == name }
+    private fun load(name: String, path: String, error: String?): LoadedFont {
+        if (error != null) {
+            Logger.error("fonts", error)
+            return LoadedFont(null)
+        }
 
-        if (custom != null) {
-            val file = File(custom.optString("path"))
-            return runCatching { Typeface.createFromFile(file) }
+        val typeface = if (path.isEmpty()) {
+            Typeface.create(name, Typeface.NORMAL)
+        } else {
+            runCatching { Typeface.createFromFile(File(path)) }
                 .onSuccess { Logger.info("fonts", "Loaded font: $name.") }
                 .onFailure { Logger.error("fonts", "Failed to load font \"$name\"", it) }
                 .getOrNull()
         }
-
-        val system = Typeface.create(name, Typeface.NORMAL)
-        if (system == Typeface.DEFAULT && name != DEFAULT_FAMILY) {
-            Logger.error("fonts", "Failed to replace a font with \"$name\". The requested font isn't loaded.")
-            return null
-        }
-        return system
+        return LoadedFont(typeface)
     }
+
+    private class LoadedFont(val typeface: Typeface?)
 }

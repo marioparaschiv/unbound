@@ -3,6 +3,7 @@
 #include "JniEnvironment.h"
 #include "LoaderAddons.h"
 #include "LoaderColor.h"
+#include "LoaderFonts.h"
 #include "LoaderPreferences.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
@@ -70,11 +71,6 @@ namespace unbound::android
     loader::SettingsStore &AndroidLoader::settings()
     {
         return settings_;
-    }
-
-    std::string AndroidLoader::fontsJSON()
-    {
-        return loader::toJSON(addons_.fonts());
     }
 
     std::string AndroidLoader::themeColorsJSON(const std::string &themeId)
@@ -430,30 +426,64 @@ namespace unbound::android
         return result;
     }
 
+    const nlohmann::json &AndroidLoader::systemFonts()
+    {
+        std::lock_guard<std::mutex> lock(systemFontsMutex_);
+        if (systemFonts_)
+        {
+            return *systemFonts_;
+        }
+
+        std::vector<std::string> paths;
+        if (JNIEnv *env = currentEnvironment())
+        {
+            auto files = static_cast<jobjectArray>(
+                env->CallStaticObjectMethod(callbacks_.bridgeClass, callbacks_.availableFonts));
+            if (!clearPendingException(env) && files)
+            {
+                jsize count = env->GetArrayLength(files);
+                for (jsize index = 0; index < count; index++)
+                {
+                    auto file = static_cast<jstring>(env->GetObjectArrayElement(files, index));
+                    paths.push_back(toStdString(env, file));
+                    env->DeleteLocalRef(file);
+                }
+                env->DeleteLocalRef(files);
+            }
+        }
+
+        systemFonts_ = loader::systemFontsFromFiles(paths);
+        return *systemFonts_;
+    }
+
     nlohmann::json AndroidLoader::availableFonts()
     {
-        nlohmann::json families = nlohmann::json::array();
-        JNIEnv        *env      = currentEnvironment();
-        if (!env)
+        nlohmann::json names = nlohmann::json::array();
+        for (const nlohmann::json &font : systemFonts())
         {
-            return families;
+            names.push_back(font["name"]);
+        }
+        return names;
+    }
+
+    std::string AndroidLoader::resolveFont(const std::string &family)
+    {
+        const auto target = loader::fontOverrideFor(loader::preferences::fontOverrides(settings_), family);
+        if (!target || *target == family)
+        {
+            return "{}";
         }
 
-        auto names = static_cast<jobjectArray>(
-            env->CallStaticObjectMethod(callbacks_.bridgeClass, callbacks_.availableFonts));
-        if (clearPendingException(env) || !names)
+        const auto font = loader::resolveFontTarget(addons_.fonts(), systemFonts(), *target);
+        if (!font)
         {
-            return families;
+            return loader::toJSON({{"name", *target}, {"error", loader::fontUnavailableMessage(family, *target)}});
         }
-
-        jsize count = env->GetArrayLength(names);
-        for (jsize index = 0; index < count; index++)
+        nlohmann::json resolved = {{"name", font->name}};
+        if (font->path)
         {
-            auto name = static_cast<jstring>(env->GetObjectArrayElement(names, index));
-            families.push_back(toStdString(env, name));
-            env->DeleteLocalRef(name);
+            resolved["path"] = *font->path;
         }
-        env->DeleteLocalRef(names);
-        return families;
+        return loader::toJSON(resolved);
     }
 }

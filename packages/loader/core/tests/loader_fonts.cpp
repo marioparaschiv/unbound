@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <filesystem>
+#include <fstream>
 #include <string>
 
 static void appendU16(std::string &data, uint16_t value)
@@ -66,5 +67,33 @@ int main()
     assert(loader::fontOverrideFor(overrides, "Whitney") == std::optional<std::string>("Arial"));
     assert(!loader::fontOverrideFor(overrides, "Other"));
     assert(!loader::fontOverrideFor(nlohmann::json::array(), "Whitney"));
+
+    const auto directory = std::filesystem::temp_directory_path() / "loader-fonts-test";
+    std::filesystem::create_directories(directory);
+    const auto first  = (directory / "Parity-Bold.ttf").string();
+    const auto second = (directory / "Parity-Copy.ttf").string();
+    const auto broken = (directory / "Broken.ttf").string();
+    std::ofstream(first, std::ios::binary) << syntheticFont("Parity Sans Bold");
+    std::ofstream(second, std::ios::binary) << syntheticFont("Parity Sans Bold");
+    std::ofstream(broken, std::ios::binary) << "nope";
+    assert(loader::fontFullName(first) == std::optional<std::string>("Parity Sans Bold"));
+    assert(!loader::fontFullName(broken));
+
+    nlohmann::json system = loader::systemFontsFromFiles({second, first, broken});
+    assert(system.size() == 1 && system[0]["name"] == "Parity Sans Bold" && system[0]["path"] == second);
+
+    nlohmann::json custom = nlohmann::json::array({{{"name", "Ginto"}, {"path", "/fonts/Ginto.otf"}}});
+    auto ginto = loader::resolveFontTarget(custom, system, "Ginto");
+    assert(ginto && ginto->path == std::optional<std::string>("/fonts/Ginto.otf"));
+    auto parity = loader::resolveFontTarget(custom, system, "Parity Sans Bold");
+    assert(parity && parity->path == std::optional<std::string>(second));
+    auto family = loader::resolveFontTarget(custom, nlohmann::json::array({"Helvetica Neue"}), "Helvetica Neue");
+    assert(family && family->name == "Helvetica Neue" && !family->path);
+    assert(!loader::resolveFontTarget(custom, system, "Missing"));
+    assert(!loader::resolveFontTarget(custom, system, ""));
+    assert(loader::fontUnavailableMessage("Whitney", "Missing") ==
+           "Failed to replace \"Whitney\" with \"Missing\". The requested font isn't loaded.");
+
+    std::filesystem::remove_all(directory);
     return 0;
 }

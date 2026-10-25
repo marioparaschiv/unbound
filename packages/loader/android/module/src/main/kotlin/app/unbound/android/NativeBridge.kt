@@ -89,7 +89,7 @@ object NativeBridge {
     fun nativeColor(value: String): Int = parseColor(value) ?: Color.TRANSPARENT
 
     @JvmStatic
-    external fun nativeFontsJSON(): String
+    external fun nativeResolveFont(family: String): String
 
     @JvmStatic
     external fun nativeThemeColorsJSON(themeId: String): String
@@ -317,9 +317,8 @@ object NativeBridge {
     fun availableFonts(): Array<String> = runCatching {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return emptyArray()
         SystemFonts.getAvailableFonts()
-            .mapNotNull { it.file?.nameWithoutExtension }
+            .mapNotNull { it.file?.absolutePath }
             .distinct()
-            .sorted()
             .toTypedArray()
     }.getOrDefault(emptyArray())
 

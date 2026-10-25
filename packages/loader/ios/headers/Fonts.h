@@ -7,9 +7,6 @@
 #import "LoaderShared.h"
 
 @interface Fonts : NSObject
-{
-    NSMutableDictionary<NSString *, NSString *>            *overrides;
-}
 
 + (void)apply;
 + (void)init;
@@ -18,6 +15,6 @@
 + (NSArray *)getAvailableFonts;
 
 
-+ (NSMutableDictionary<NSString *, NSString *> *)overrides;
++ (NSDictionary<NSString *, NSString *> *)overrides;
 
 @end

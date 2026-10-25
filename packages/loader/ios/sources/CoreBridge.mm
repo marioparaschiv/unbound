@@ -12,6 +12,7 @@
 
 #include "HermesBytecodeHeader.h"
 #include "LoaderAddons.h"
+#include "LoaderFonts.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
 #include "LoaderPreload.h"
@@ -130,6 +131,41 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
 + (NSArray *)themes
 {
     return arrayFromJSON(UnboundAddonState().themes());
+}
+
++ (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets:(NSArray<NSString *> *)systemFonts
+{
+    nlohmann::json system = nlohmann::json::array();
+    for (NSString *family in systemFonts)
+    {
+        system.push_back(toStdString(family));
+    }
+
+    nlohmann::json custom    = UnboundAddonState().fonts();
+    nlohmann::json overrides = loader::preferences::fontOverrides(UnboundSettingsStore());
+    nlohmann::json targets   = nlohmann::json::object();
+    for (const auto &[key, value] : overrides.items())
+    {
+        if (!value.is_string() || value.get<std::string>().empty())
+        {
+            continue;
+        }
+        const std::string name = value.get<std::string>();
+        const auto        font = loader::resolveFontTarget(custom, system, name);
+        if (!font)
+        {
+            targets[key] = {{"name", name}, {"error", loader::fontUnavailableMessage(key, name)}};
+            continue;
+        }
+        targets[key] = {{"name", font->name}};
+        if (font->path)
+        {
+            targets[key]["path"] = *font->path;
+        }
+    }
+
+    id converted = objectFromJSON(targets);
+    return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
 }
 
 + (NSArray<NSDictionary *> *)fonts

@@ -92,7 +92,7 @@ namespace unbound::android
 
         loader::SettingsStore &settings();
         std::string toolbox(const std::string &action, const std::string &argument);
-        std::string fontsJSON();
+        std::string resolveFont(const std::string &family);
         std::string themeColorsJSON(const std::string &themeId);
         std::optional<std::string> hotReloadURL();
         void hotReloadConnected();
@@ -119,6 +119,7 @@ namespace unbound::android
             const std::string &url, const std::string &destination,
             const std::map<std::string, std::string> &headers, const loader::DownloadPolicy &policy);
         nlohmann::json availableFonts();
+        const nlohmann::json &systemFonts();
         std::optional<std::string> devServerHost();
         bool isServing(const std::string &url, double timeoutSeconds);
 
@@ -134,6 +135,8 @@ namespace unbound::android
         std::mutex                               mainQueueMutex_;
         std::deque<std::function<void()>>        mainQueue_;
         loader::AddonState                       addons_;
+        std::mutex                               systemFontsMutex_;
+        std::optional<nlohmann::json>            systemFonts_;
     };
 
     std::shared_ptr<AndroidLoader> currentLoader();
