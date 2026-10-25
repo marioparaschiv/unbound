@@ -125,7 +125,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 			},
 			{ embeds: [{ footer: { text: 'Event #4 · user.unbanned' } }] },
 		);
-		await audit.reconcile(context());
+		await audit.handle('4', context());
 
 		expect(fake.requests).toHaveLength(4);
 		expect(fake.requests[3]?.embeds?.[0]?.footer?.text).toBe('Event #4 · user.unbanned');
@@ -135,6 +135,48 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 			{ id: 3, channelId: fake.channelId, messageId: third?.id },
 			{ id: 4, channelId: fake.channelId, messageId: fake.messages[4]?.id },
 		]);
+	});
+
+	test('a bot post for an older event that reused the id is not adopted', async () => {
+		const audit = createAuditDispatcher(fake.channelId);
+
+		fake.inject(fake.botUser, {
+			embeds: [
+				{
+					footer: { text: 'Event #1 · user.unbanned' },
+					timestamp: '2020-01-01T00:00:00.000Z',
+				},
+			],
+		});
+		await seed(1);
+		await audit.reconcile(context());
+
+		expect(fake.requests).toHaveLength(1);
+		expect(await rows()).toMatchObject([{ id: 1, messageId: fake.messages[1]?.id }]);
+	});
+
+	test('an embed Discord rejects posts a bare fallback so later events still post', async () => {
+		const audit = createAuditDispatcher(fake.channelId);
+
+		for (const id of [1, 2, 3]) {
+			await seed(id);
+		}
+
+		fake.rejectAt([1]);
+		await audit.handle('3', context());
+
+		expect(footers(fake)).toEqual([
+			'Event #1 · user.unbanned',
+			'Event #2 · user.unbanned',
+			'Event #3 · user.unbanned',
+		]);
+		expect(fake.messages[1]?.embeds[0]).toMatchObject({
+			title: 'user.unbanned',
+			description: 'Discord rejected the full embed for this event; see the admin log.',
+		});
+		expect((await rows()).map((row) => row.messageId)).toEqual(
+			fake.messages.map((message) => message.id),
+		);
 	});
 
 	test('a burst through 429s posts each event once, in order', async () => {
@@ -200,12 +242,12 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 			await seed(id);
 		}
 
-		fake.rejectAt([1]);
+		fake.rejectAt([1, 2]);
 
 		const [failed] = await Promise.allSettled([audit.handle('3', context())]);
 
 		expect(failed.status).toBe('rejected');
-		expect(fake.requests).toHaveLength(2);
+		expect(fake.requests).toHaveLength(3);
 		expect(await rows()).toMatchObject([
 			{ id: 1, messageId: fake.messages[0]?.id },
 			{ id: 2, messageId: null },

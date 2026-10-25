@@ -113,6 +113,39 @@ describe('buildAuditEmbed', () => {
 		);
 	});
 
+	test('never emits a blank field that Discord would reject', () => {
+		const edited = buildAuditEmbed(
+			event('note.edited', { noteId: 1, before: ' ', body: '\n' }, { subjectName: '' }),
+		);
+		const renamed = buildAuditEmbed(
+			event('addon.edited', { changes: [{ field: ' ', from: 'a', to: 'b', pinned: false }] }),
+		);
+
+		expect(field(edited, 'Before')).toBe('None');
+		expect(field(edited, 'After')).toBe('None');
+		expect(field(edited, 'Subject')).toBe(
+			'[addon-1](https://unbound.rip/admin/addons/addon-1)',
+		);
+		expect(field(renamed, 'None')).toBe('a -> b');
+	});
+
+	test('kinds named after object builtins render the generic embed', () => {
+		for (const kind of ['constructor', 'toString', '__proto__']) {
+			const embed = buildAuditEmbed(event(kind, {}));
+
+			expect(embed.title).toBe(kind);
+			expect(field(embed, 'Data')).toBe('```json\n{}\n```');
+		}
+	});
+
+	test('a cut never leaves half of a surrogate pair', () => {
+		const embed = buildAuditEmbed(
+			event('note.added', { noteId: 1, body: `${'x'.repeat(4094)}😀😀` }),
+		);
+
+		expect(embed.description).toBe(`${'x'.repeat(4094)}…`);
+	});
+
 	test('review decisions pick their title and colour from the decision', () => {
 		const rejected = buildAuditEmbed(
 			event('review.decided', { ...SUBMISSION, decision: 'rejected' }),

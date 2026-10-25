@@ -32,13 +32,30 @@ export function truncate(value: string, max: number): string {
 		return value;
 	}
 
-	return max > 0 ? `${value.slice(0, max - 1)}…` : '';
+	if (max <= 0) {
+		return '';
+	}
+
+	let end = max - 1;
+	const last = value.charCodeAt(end - 1);
+
+	// Never keep half of a surrogate pair; Discord rejects or mangles a lone surrogate.
+	if (last >= 0xd8_00 && last <= 0xdb_ff) {
+		end--;
+	}
+
+	return `${value.slice(0, end)}…`;
+}
+
+// Discord rejects a blank field name or value with a 400, which would stall every later event.
+function present(text: string) {
+	return text.trim() ? text : 'None';
 }
 
 function subjectLink(event: AuditEventRow) {
-	const path = SUBJECT_PATHS[event.subjectType];
+	if (!Object.hasOwn(SUBJECT_PATHS, event.subjectType)) return;
 
-	if (!path) return;
+	const path = SUBJECT_PATHS[event.subjectType];
 
 	return `${SITE_ORIGIN}/${path}/${encodeURIComponent(event.subjectId)}`;
 }
@@ -46,6 +63,26 @@ function subjectLink(event: AuditEventRow) {
 // A `]` in a subject name would otherwise end the masked link's text early.
 function escapeLinkText(text: string) {
 	return text.replaceAll(/[\\[\]]/g, '\\$&');
+}
+
+// A plain lookup would resolve kinds like `constructor` to inherited functions.
+function renderKind(event: AuditEventRow) {
+	if (!Object.hasOwn(KINDS, event.kind)) return;
+
+	try {
+		return KINDS[event.kind]?.(event.data);
+	} catch {
+		// A renderer that trips over odd data falls back to the generic embed.
+		return;
+	}
+}
+
+function subjectValue(event: AuditEventRow, url: string | undefined) {
+	const subject = present(truncate(event.subjectName || event.subjectId, EMBED_LIMITS.fieldName));
+	const linked = url ? `[${escapeLinkText(subject)}](${url})` : subject;
+
+	// Cutting a masked link would leave broken markdown, so an oversized one stays plain text.
+	return linked.length <= EMBED_LIMITS.fieldValue ? linked : subject;
 }
 
 function genericKind(event: AuditEventRow): KindEmbed {
@@ -67,9 +104,9 @@ function fitFields(fields: APIEmbedField[], budget: number) {
 	let remaining = budget;
 
 	for (const field of fields.slice(0, EMBED_LIMITS.fields)) {
-		const name = truncate(field.name, EMBED_LIMITS.fieldName);
+		const name = truncate(present(field.name), EMBED_LIMITS.fieldName);
 		const value = truncate(
-			field.value,
+			present(field.value),
 			Math.min(EMBED_LIMITS.fieldValue, remaining - name.length),
 		);
 
@@ -90,20 +127,15 @@ function fitFields(fields: APIEmbedField[], budget: number) {
  * @returns The embed; an unknown kind or malformed data renders the raw kind and data instead.
  */
 export function buildAuditEmbed(event: AuditEventRow): APIEmbed {
-	const kind = KINDS[event.kind]?.(event.data) ?? genericKind(event);
+	const kind = renderKind(event) ?? genericKind(event);
 	const url = subjectLink(event);
-	const subject = truncate(event.subjectName ?? event.subjectId, EMBED_LIMITS.fieldName);
 	const reasonAsField = kind.description !== undefined && event.reason;
-	const author = truncate(event.actor?.name ?? 'System', EMBED_LIMITS.authorName);
+	const author = truncate(present(event.actor?.name ?? 'System'), EMBED_LIMITS.authorName);
 	const title = truncate(kind.title, EMBED_LIMITS.title);
 	const footer = truncate(`Event #${event.id} · ${event.kind}`, EMBED_LIMITS.footer);
 	const { fields, remaining } = fitFields(
 		[
-			{
-				name: 'Subject',
-				value: url ? `[${escapeLinkText(subject)}](${url})` : subject,
-				inline: true,
-			},
+			{ name: 'Subject', value: subjectValue(event, url), inline: true },
 			...kind.fields,
 			...(reasonAsField ? [{ name: 'Reason', value: reasonAsField }] : []),
 		],
@@ -126,4 +158,19 @@ export function buildAuditEmbed(event: AuditEventRow): APIEmbed {
 	};
 }
 
-export default { EMBED_LIMITS, truncate, buildAuditEmbed };
+/**
+ * @description Renders the bare minimum of an audit event, for when Discord rejected its full embed.
+ * @param event The `audit_event` row.
+ * @returns An embed with only the raw kind, the event id and the creation time.
+ */
+export function buildFallbackEmbed(event: AuditEventRow): APIEmbed {
+	return {
+		title: truncate(present(event.kind), EMBED_LIMITS.title),
+		description: 'Discord rejected the full embed for this event; see the admin log.',
+		color: COLOURS.neutral,
+		footer: { text: truncate(`Event #${event.id} · ${event.kind}`, EMBED_LIMITS.footer) },
+		timestamp: event.createdAt.toISOString(),
+	};
+}
+
+export default { EMBED_LIMITS, truncate, buildAuditEmbed, buildFallbackEmbed };
