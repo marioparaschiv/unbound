@@ -40,7 +40,7 @@ object Toolbox {
     private const val SHAKE_GRAVITY = 2.6f
     private const val SHAKE_WINDOW_MS = 900L
     private const val SHAKE_COOLDOWN_MS = 1_500L
-    private const val ADDON_KINDS = "Plugins,Themes,Icons,Fonts"
+    private val ADDON_KINDS = listOf("Plugins" to "Plugins", "Themes" to "Themes", "Fonts" to "Fonts", "Icons" to "Icon Packs")
 
     private val main = Handler(Looper.getMainLooper())
     private var pressRunnable: Runnable? = null
@@ -146,10 +146,6 @@ object Toolbox {
             setPadding(dp(activity, 8), dp(activity, 4), dp(activity, 8), dp(activity, 4))
         }
 
-        list.addView(header(activity, "Settings"))
-        list.addView(toggle(activity, "Shake to open", SHAKE_KEY, THREE_FINGER_KEY))
-        list.addView(toggle(activity, "Three-finger press to open", THREE_FINGER_KEY, SHAKE_KEY))
-
         list.addView(header(activity, "Bundle"))
         list.addView(action(activity, "Refetch Bundle") { refetchBundle(activity) })
         list.addView(action(activity, "Delete Bundle") {
@@ -158,15 +154,15 @@ object Toolbox {
         list.addView(action(activity, "Load Custom Bundle") { loadCustomBundle(activity) })
 
         list.addView(header(activity, "Addons"))
-        for (kind in ADDON_KINDS.split(",")) {
-            list.addView(action(activity, "Wipe $kind") {
-                confirm(activity, "Wipe $kind") { run("wipe", kind) }
+        for ((kind, title) in ADDON_KINDS) {
+            list.addView(action(activity, "Wipe $title") {
+                confirm(activity, "Wipe $title") { run("wipe", kind) }
             })
         }
 
         list.addView(header(activity, "Utilities"))
         val recovery = NativeBridge.nativeGetBoolean("unbound", "recovery", false)
-        list.addView(action(activity, if (recovery) "Disable Safe Mode" else "Enable Safe Mode") {
+        list.addView(action(activity, if (recovery) "Disable Recovery Mode" else "Enable Recovery Mode") {
             run("toggle-recovery")
         })
         list.addView(action(activity, "Factory Reset") {
@@ -174,6 +170,10 @@ object Toolbox {
         })
         list.addView(action(activity, "Copy App Folder Path") { copyFolderPath(activity) })
         list.addView(action(activity, "Open GitHub Issue") { openIssue(activity) })
+
+        list.addView(header(activity, "Settings"))
+        list.addView(toggle(activity, "Enable Shake Motion", SHAKE_KEY, THREE_FINGER_KEY))
+        list.addView(toggle(activity, "Enable Three Finger Press", THREE_FINGER_KEY, SHAKE_KEY))
 
         return ScrollView(activity).apply { addView(list) }
     }
