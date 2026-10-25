@@ -40,10 +40,11 @@ func TestDiscoverStableCandidateSelectsLatestSharedAndroidVersion(t *testing.T) 
 		androidTrackerURL: server.URL + "/tracker",
 		httpClient:        server.Client(),
 	}
-	version, err := discoverReleaseCandidate(context.Background(), config)
+	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
+	version := candidate.Version
 	if version != "350.8" {
 		t.Fatalf("selected version %q, want 350.8", version)
 	}
@@ -72,10 +73,11 @@ func TestDiscoverStableCandidateSelectsLatestSharedVersionWhenAndroidIsAhead(t *
 		androidTrackerURL: server.URL + "/tracker",
 		httpClient:        server.Client(),
 	}
-	version, err := discoverReleaseCandidate(context.Background(), config)
+	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
+	version := candidate.Version
 	if version != "350.8" {
 		t.Fatalf("selected version %q, want 350.8", version)
 	}
@@ -103,10 +105,11 @@ func TestDiscoverStableCandidateSkipsUnavailableMatchingAndroidVersion(t *testin
 		androidTrackerURL: server.URL + "/tracker",
 		httpClient:        server.Client(),
 	}
-	version, err := discoverReleaseCandidate(context.Background(), config)
+	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
+	version := candidate.Version
 	if version != "" {
 		t.Fatalf("selected version %q, want no candidate", version)
 	}
@@ -149,10 +152,11 @@ func TestDiscoverTestflightCandidateSelectsNewestUnexpiredBuild(t *testing.T) {
 		httpClient:      server.Client(),
 		now:             func() time.Time { return now },
 	}
-	version, err := discoverReleaseCandidate(context.Background(), config)
+	candidate, err := discoverReleaseCandidate(context.Background(), config)
 	if err != nil {
 		t.Fatal(err)
 	}
+	version := candidate.Version
 	if version != "351.0_102" {
 		t.Fatalf("selected version %q, want 351.0_102", version)
 	}
@@ -197,7 +201,7 @@ func TestWriteReleaseCandidateOutput(t *testing.T) {
 	if err := os.WriteFile(path, []byte("previous=value\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := writeReleaseCandidateOutput(path, "350.8_102"); err != nil {
+	if err := writeReleaseCandidateOutput(path, releaseCandidate{Version: "350.8_102"}); err != nil {
 		t.Fatal(err)
 	}
 	contents, err := os.ReadFile(path)
@@ -205,6 +209,84 @@ func TestWriteReleaseCandidateOutput(t *testing.T) {
 		t.Fatal(err)
 	}
 	if string(contents) != "previous=value\nversion=350.8_102\n" {
+		t.Fatalf("unexpected output contents %q", contents)
+	}
+}
+
+func TestDiscoverAndroidChannelCandidateTagsTheChannelBuild(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/sniff/v1/details/com.discord/stable", "/sniff/v1/details/com.discord/beta":
+			fmt.Fprint(writer, `{"success":true,"data":{"item":{"details":{"app_details":{"version_code":350008}}}}}`)
+		case "/sniff/v1/download/com.discord/beta/351112":
+			fmt.Fprint(writer, `{"success":true,"data":{"main_apk_url":"https://play.example/base","splits":[]}}`)
+		case "/tracker/index":
+			fmt.Fprint(writer, `{"latest":{"alpha":352208,"beta":351112,"stable":350008}}`)
+		default:
+			t.Fatalf("unexpected request path %q", request.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	config := releasePollConfig{
+		channel:           "android-beta",
+		androidTrackerURL: server.URL + "/tracker",
+		sniffURL:          server.URL + "/sniff",
+		httpClient:        server.Client(),
+	}
+	candidate, err := discoverReleaseCandidate(context.Background(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if candidate != (releaseCandidate{Version: "351.12-android-beta", AndroidCode: 351112}) {
+		t.Fatalf("selected %+v, want 351.12-android-beta at 351112", candidate)
+	}
+}
+
+func TestDiscoverAndroidChannelCandidateSkipsUndownloadableBuilds(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch {
+		case strings.HasPrefix(request.URL.Path, "/sniff/"):
+			writer.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(writer, `{"success":false,"data":null,"error":"InvalidApp"}`)
+		case request.URL.Path == "/tracker/index":
+			fmt.Fprint(writer, `{"latest":{"alpha":352208,"beta":351112,"stable":350008}}`)
+		case request.URL.Path == "/tracker/download/352208/base":
+			writer.WriteHeader(http.StatusNotFound)
+		default:
+			t.Fatalf("unexpected request path %q", request.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	config := releasePollConfig{
+		channel:           "android-alpha",
+		androidTrackerURL: server.URL + "/tracker",
+		sniffURL:          server.URL + "/sniff",
+		httpClient:        server.Client(),
+	}
+	candidate, err := discoverReleaseCandidate(context.Background(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if candidate != (releaseCandidate{}) {
+		t.Fatalf("selected %+v for a build nobody serves", candidate)
+	}
+}
+
+func TestWriteReleaseCandidateOutputIncludesTheAndroidCode(t *testing.T) {
+	path := t.TempDir() + "/output"
+	if err := os.WriteFile(path, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := writeReleaseCandidateOutput(path, releaseCandidate{Version: "352.8-android-alpha", AndroidCode: 352208}); err != nil {
+		t.Fatal(err)
+	}
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(contents) != "version=352.8-android-alpha\nandroid_code=352208\n" {
 		t.Fatalf("unexpected output contents %q", contents)
 	}
 }

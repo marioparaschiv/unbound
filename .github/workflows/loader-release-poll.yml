@@ -79,6 +79,70 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: go run ./tools release-candidate --channel testflight
 
+  android-beta-candidate:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.candidate.outputs.version }}
+      android_code: ${{ steps.candidate.outputs.android_code }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          cache: false
+          go-version-file: packages/loader/go.mod
+      - name: Cache Go builds
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Resolve Android beta candidate
+        id: candidate
+        env:
+          DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: go run ./tools release-candidate --channel android-beta
+
+  android-alpha-candidate:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.candidate.outputs.version }}
+      android_code: ${{ steps.candidate.outputs.android_code }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          cache: false
+          go-version-file: packages/loader/go.mod
+      - name: Cache Go builds
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Resolve Android alpha candidate
+        id: candidate
+        env:
+          DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: go run ./tools release-candidate --channel android-alpha
+
   stable-release:
     needs: stable-candidate
     if: needs.stable-candidate.outputs.version != ''
@@ -107,4 +171,36 @@ jobs:
       version: ${{ needs.testflight-candidate.outputs.version }}
       release: true
       is_testflight: true
+    secrets: inherit
+
+  android-beta-release:
+    needs: [android-beta-candidate, testflight-release]
+    if: always() && needs.android-beta-candidate.outputs.version != ''
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    uses: ./.github/workflows/loader-build.yml
+    with:
+      version: ${{ needs.android-beta-candidate.outputs.version }}
+      release: true
+      android_channel: beta
+      android_code: ${{ needs.android-beta-candidate.outputs.android_code }}
+    secrets: inherit
+
+  android-alpha-release:
+    needs: [android-alpha-candidate, android-beta-release]
+    if: always() && needs.android-alpha-candidate.outputs.version != ''
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    uses: ./.github/workflows/loader-build.yml
+    with:
+      version: ${{ needs.android-alpha-candidate.outputs.version }}
+      release: true
+      android_channel: alpha
+      android_code: ${{ needs.android-alpha-candidate.outputs.android_code }}
     secrets: inherit

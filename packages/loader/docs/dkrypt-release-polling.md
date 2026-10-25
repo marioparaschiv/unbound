@@ -34,7 +34,8 @@ The scheduled workflow should run the following checks independently so an unava
 3. Select the newest Android version that is not newer than the current App Store version. Confirm the exact Android base package is downloadable, then ask dkrypt to decrypt that exact iOS marketing version. The build's existing IPA and APK version checks remain the final guard; any absent historical iOS version or source mismatch fails closed without creating a release.
 4. Use the iTunes track ID to list TestFlight trains and builds through dkrypt. Choose the newest non-expired build for the Discord bundle ID, represented as `major.minor_build`.
 5. Check whether the matching GitHub release tag already exists before dispatching either build. Stable tags use `v{version}`; TestFlight prerelease tags use `v{version}_{build}`.
-6. Call the existing reusable build workflow with the exact candidate. Stable builds include matching iOS and Android artifacts. TestFlight builds produce an iOS prerelease only unless a matching Android beta source is available.
+6. Call the existing reusable build workflow with the exact candidate. Stable builds include matching iOS and Android artifacts. TestFlight builds produce an iOS prerelease only.
+7. Resolve Discord's Google Play beta and alpha builds through sniff and the Android version tracker, taking the newest version code any eligible track serves. Tag them `loader-v{version}-android-beta` and `loader-v{version}-android-alpha`, and build them as Android-only prereleases from the exact version code. These do not need dkrypt.
 
 The workflow should be concurrency-protected per channel, tolerate an unchanged catalog as a no-op, retry transient network errors, and never fall back to a different app version. The API key belongs only in GitHub Actions secrets. Stable decrypt requests need the `com.hammerandchisel.discord` bundle scope; TestFlight polling additionally needs dkrypt's TestFlight API scope.
 
