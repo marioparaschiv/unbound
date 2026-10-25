@@ -298,6 +298,24 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		expect(messagesOf(PLUGIN)).toHaveLength(1);
 	});
 
+	test('a post retried after a timeout leaves one message and one row', async () => {
+		await discord.stop();
+		discord = createFakeDiscord({ retries: 1, timeout: 100 });
+		discord.beforePostResponse = async () => {
+			discord.beforePostResponse = undefined;
+			await Bun.sleep(300);
+		};
+
+		await ingest(PLUGIN);
+		await sync(PLUGIN.id);
+
+		const [message, ...extra] = messagesOf(PLUGIN);
+
+		expect(writes().map((request) => request.method)).toEqual(['POST', 'POST']);
+		expect(extra).toHaveLength(0);
+		expect(await rowOf(PLUGIN.id)).toMatchObject({ messageId: message?.id });
+	});
+
 	// The fake Discord's POST handler ends the sync's own database client before it responds, so
 	// the real post lands and the row write after it fails.
 	test('a crash between the post and the row write converges on reconcile', async () => {

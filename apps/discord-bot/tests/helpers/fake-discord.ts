@@ -11,6 +11,15 @@ export type RecordedRequest = {
 	body?: RESTPostAPIChannelMessageJSONBody;
 };
 
+export type FakeDiscordOptions = {
+	/** The user id of the bot that `rest` authenticates as. */
+	selfId?: string;
+	/** How many times `rest` retries a request that timed out or failed with a 5xx. */
+	retries?: number;
+	/** Milliseconds `rest` waits for a response before aborting the request. */
+	timeout?: number;
+};
+
 export type FakeDiscord = {
 	rest: REST;
 	/** The bot's own user id; messages posted through `rest` carry it as author. */
@@ -21,6 +30,8 @@ export type FakeDiscord = {
 	beforePostResponse: (() => Promise<void>) | undefined;
 	/** Rejects a POST whose body it matches with Discord's invalid form body error. */
 	rejectPost: ((body: RESTPostAPIChannelMessageJSONBody) => boolean) | undefined;
+	/** Rejects a DELETE of a message it matches with Discord's missing permissions error. */
+	rejectDelete: ((messageId: string) => boolean) | undefined;
 	/** A channel's messages, oldest first. */
 	messages: (channelId: string) => FakeMessage[];
 	/** Adds a message as any author, bypassing `rest`. */
@@ -38,6 +49,9 @@ type Route = {
 const ROUTE = /^\/api\/v\d+\/channels\/(\d+)\/messages(?:\/(\d+))?$/;
 const UNKNOWN_MESSAGE = { message: 'Unknown Message', code: 10_008 };
 const INVALID_FORM_BODY = { message: 'Invalid Form Body', code: 50_035 };
+const MISSING_PERMISSIONS = { message: 'Missing Permissions', code: 50_013 };
+const EMBED_DESCRIPTION_LIMIT = 4096;
+const EMBED_TOTAL_LIMIT = 6000;
 // Starts one below a power of ten so ids change length, catching snowflakes compared as strings.
 const FIRST_ID = 99_999_999_999_999_999n;
 
@@ -54,12 +68,41 @@ function byIdDescending(a: FakeMessage, b: FakeMessage) {
 }
 
 /**
+ * @description Counts the characters Discord adds up against its per-message embed limit.
+ * @param embed The embed to measure.
+ * @returns The embed's text length.
+ */
+export function embedLength(embed: APIEmbed): number {
+	const fields = embed.fields ?? [];
+
+	return [
+		embed.title,
+		embed.description,
+		embed.footer?.text,
+		embed.author?.name,
+		...fields.flatMap((field) => [field.name, field.value]),
+	].reduce((total, text) => total + (text?.length ?? 0), 0);
+}
+
+function isOversized(embeds: APIEmbed[]) {
+	const total = embeds.reduce((sum, embed) => sum + embedLength(embed), 0);
+	const description = embeds.some(
+		(embed) => (embed.description?.length ?? 0) > EMBED_DESCRIPTION_LIMIT,
+	);
+
+	return description || total > EMBED_TOTAL_LIMIT;
+}
+
+/**
  * @description Serves the Discord message routes the dispatchers use from memory, behind a real `REST`.
- * @param selfId The user id of the bot that `rest` authenticates as.
+ * @param options The bot's user id and the retry policy of `rest`.
  * @returns The client, the recorded requests and hooks to inspect and disturb the fake channels.
  */
-export function createFakeDiscord(selfId: string = '1000'): FakeDiscord {
+export function createFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord {
+	const { selfId = '1000', retries = 0, timeout = 15_000 } = options;
 	const channels = new Map<string, Map<string, FakeMessage>>();
+	// Discord dedupes an `enforce_nonce` post by its author and nonce; one bot authors every post here.
+	const nonces = new Map<string, string>();
 	const requests: RecordedRequest[] = [];
 	let nextId = FIRST_ID;
 
@@ -126,11 +169,22 @@ export function createFakeDiscord(selfId: string = '1000'): FakeDiscord {
 				return Response.json(list(channelId, url.searchParams));
 			}
 
-			if (fake.rejectPost?.(body ?? {})) {
+			const nonce = body?.nonce === undefined ? undefined : `${channelId}:${body.nonce}`;
+			const original = nonce ? channel(channelId).get(nonces.get(nonce) ?? '') : undefined;
+
+			if (body?.enforce_nonce && original) {
+				return Response.json(original);
+			}
+
+			if (fake.rejectPost?.(body ?? {}) || isOversized(body?.embeds ?? [])) {
 				return Response.json(INVALID_FORM_BODY, { status: 400 });
 			}
 
 			const id = store(channelId, selfId, body ?? {});
+
+			if (nonce) {
+				nonces.set(nonce, id);
+			}
 
 			await fake.beforePostResponse?.();
 
@@ -157,6 +211,10 @@ export function createFakeDiscord(selfId: string = '1000'): FakeDiscord {
 			}
 
 			case 'DELETE': {
+				if (fake.rejectDelete?.(messageId)) {
+					return Response.json(MISSING_PERMISSIONS, { status: 403 });
+				}
+
 				channel(channelId).delete(messageId);
 
 				return new Response(null, { status: 204 });
@@ -171,7 +229,8 @@ export function createFakeDiscord(selfId: string = '1000'): FakeDiscord {
 	const server = Bun.serve({ port: 0, hostname: '127.0.0.1', fetch: respond });
 	const rest = new REST({
 		api: `http://127.0.0.1:${server.port}/api`,
-		retries: 0,
+		retries,
+		timeout,
 		handlerSweepInterval: 0,
 		hashSweepInterval: 0,
 	}).setToken('fake');
@@ -181,6 +240,7 @@ export function createFakeDiscord(selfId: string = '1000'): FakeDiscord {
 		requests,
 		beforePostResponse: undefined,
 		rejectPost: undefined,
+		rejectDelete: undefined,
 		messages: (channelId) => [...channel(channelId).values()].sort(byIdDescending).reverse(),
 		seed: store,
 		handDelete: (channelId, messageId) => void channel(channelId).delete(messageId),
@@ -192,4 +252,4 @@ export function createFakeDiscord(selfId: string = '1000'): FakeDiscord {
 	return fake;
 }
 
-export default { createFakeDiscord };
+export default { createFakeDiscord, embedLength };

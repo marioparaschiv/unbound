@@ -169,6 +169,24 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		expect(posts()).toHaveLength(1);
 	});
 
+	test('a post retried after a timeout pings the role once', async () => {
+		await discord.stop();
+		discord = createFakeDiscord({ retries: 1, timeout: 100 });
+		discord.beforePostResponse = async () => {
+			discord.beforePostResponse = undefined;
+			await Bun.sleep(300);
+		};
+
+		await ingest(RELEASE);
+		await handle(RELEASE);
+
+		const [message, ...extra] = discord.messages('21');
+
+		expect(posts()).toHaveLength(2);
+		expect(extra).toHaveLength(0);
+		expect(await rowOf(RELEASE)).toMatchObject({ messageId: message?.id });
+	});
+
 	// The fake Discord's POST handler ends the announcer's own database client before it responds,
 	// so the real post lands and the id write after it fails.
 	test('a crash between the post and the id write converges on reconcile', async () => {

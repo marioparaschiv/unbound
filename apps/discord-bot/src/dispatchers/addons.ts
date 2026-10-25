@@ -1,6 +1,7 @@
 import type { APIEmbed, APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import { DiscordAPIError, RESTJSONErrorCodes, Routes } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
+import { randomBytes } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 
 import {
@@ -77,7 +78,12 @@ export function renderAddon(item: AddonFeedItem): RESTPostAPIChannelMessageJSONB
 }
 
 async function postMessage(rest: REST, channelId: string, item: AddonFeedItem) {
-	const body = renderAddon(item);
+	// REST retries a timed-out post with this body, and Discord answers a repeated nonce with the original.
+	const body = {
+		...renderAddon(item),
+		nonce: randomBytes(12).toString('hex'),
+		enforce_nonce: true,
+	};
 	const message = (await rest.post(Routes.channelMessages(channelId), { body })) as APIMessage;
 
 	return message.id;

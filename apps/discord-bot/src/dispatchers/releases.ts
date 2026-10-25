@@ -2,6 +2,7 @@ import type { APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discor
 import { DiscordAPIError, RESTJSONErrorCodes, Routes } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { and, asc, eq, isNull } from 'drizzle-orm';
+import { randomBytes } from 'node:crypto';
 
 import { COLOURS, RELEASES_CHANNEL_ID, RELEASES_ROLE_ID } from '~/lib/constants';
 import type { LoaderPlatform } from '~/lib/feed/types';
@@ -157,7 +158,12 @@ async function adoptOrphans(db: Database, rest: REST, selfId: string, target: Re
 // Once posted, a release is never edited or reposted, even if its message was deleted by hand:
 // a repost would ping the role a second time.
 async function announce(db: Database, rest: REST, release: ReleaseRow, target: ReleaseTarget) {
-	const body = renderRelease(release, target.roleId);
+	// REST retries a timed-out post with this body, and Discord answers a repeated nonce with the original.
+	const body = {
+		...renderRelease(release, target.roleId),
+		nonce: randomBytes(12).toString('hex'),
+		enforce_nonce: true,
+	};
 	const message = (await rest.post(Routes.channelMessages(target.channelId), {
 		body,
 	})) as APIMessage;
