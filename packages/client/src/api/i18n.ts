@@ -121,12 +121,17 @@ function syncMomentLocale(locale: string): void {
 const subscriptions: Array<() => void> = [];
 
 /**
- * @description Builds a `Messages` proxy over a string store, resolving each key against the active locale, then en-US, then the key itself.
+ * @description Builds a `Messages` proxy over a string store, resolving each key against the active locale, then en-US, then the bundled strings, then the key itself.
  * @param store The string store to read translations from.
  * @param getLocale Returns the currently active locale, shared across every proxy.
+ * @param bundled Strings shipped in the bundle, for keys a fetched locale does not have yet.
  * @returns A proxy whose property accesses resolve to localized strings.
  */
-function createMessages(store: StringStore, getLocale: () => string | null) {
+function createMessages(
+	store: StringStore,
+	getLocale: () => string | null,
+	bundled: LocaleStrings = {},
+) {
 	return new Proxy(
 		{},
 		{
@@ -137,7 +142,7 @@ function createMessages(store: StringStore, getLocale: () => string | null) {
 					return store[locale][key];
 				}
 
-				return store['en-US']?.[key] ?? key;
+				return store['en-US']?.[key] ?? bundled[key] ?? key;
 			},
 		},
 	) as Record<string, string>;
@@ -204,7 +209,7 @@ async function ensureLocale(locale: string): Promise<void> {
 }
 
 /** The core `Messages` proxy, resolving Unbound's own UI strings against the active Discord locale. */
-export const Messages = createMessages(strings, () => currentLocale);
+export const Messages = createMessages(strings, () => currentLocale, enUS);
 
 /**
  * @description Formats a localized string, interpolating ICU `MessageFormat` placeholders.
