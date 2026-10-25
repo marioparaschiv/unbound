@@ -10,7 +10,7 @@ object HotReload {
     private var running = false
 
     fun observe() {
-        if (running || !NativeBridge.nativeGetBoolean("unbound", "loader.update.hmr", false)) return
+        if (running || !NativeBridge.preferenceEnabled("hot-reload")) return
 
         val url = NativeBridge.nativeHotReloadURL()?.let { runCatching { URL(it) }.getOrNull() }
         if (url == null) {

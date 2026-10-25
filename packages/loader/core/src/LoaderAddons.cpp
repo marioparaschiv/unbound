@@ -1,4 +1,5 @@
 #include "LoaderAddons.h"
+#include "LoaderFonts.h"
 
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
@@ -196,6 +197,10 @@ namespace loader
                                }
 
                                std::string name = resolveName ? resolveName(path) : std::string();
+                               if (name.empty())
+                               {
+                                   name = fontFullName(path).value_or("");
+                               }
                                if (name.empty())
                                {
                                    size_t dot = file.find_last_of('.');

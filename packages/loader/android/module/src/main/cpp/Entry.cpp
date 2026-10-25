@@ -1,4 +1,6 @@
 #include "AndroidLoader.h"
+#include "LoaderColor.h"
+#include "LoaderPreferences.h"
 #include "HermesBytecodeHeader.h"
 #include "JniEnvironment.h"
 #include "LoaderLog.h"
@@ -222,6 +224,27 @@ static jstring nativeToolbox(JNIEnv *env, jclass, jstring action, jstring argume
                                              argument ? toStdString(env, argument) : std::string()));
 }
 
+static jstring nativePreference(JNIEnv *env, jclass, jstring action, jstring argument)
+{
+    auto loader = currentLoader();
+    if (!loader || !action)
+    {
+        return nullptr;
+    }
+    return toJavaString(env, loader::preferences::perform(loader->settings(), toStdString(env, action),
+                                                          argument ? toStdString(env, argument) : std::string()));
+}
+
+static jlong nativeParseColor(JNIEnv *env, jclass, jstring value)
+{
+    if (!value)
+    {
+        return -1;
+    }
+    const auto color = loader::parseColor(toStdString(env, value));
+    return color ? static_cast<jlong>(loader::toARGB(*color)) : -1;
+}
+
 static jstring nativeFontsJSON(JNIEnv *env, jclass)
 {
     auto loader = currentLoader();
@@ -393,6 +416,9 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeSettingJSON)},
         {"nativeToolbox", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeToolbox)},
+        {"nativePreference", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativePreference)},
+        {"nativeParseColor", "(Ljava/lang/String;)J", reinterpret_cast<void *>(nativeParseColor)},
         {"nativeFontsJSON", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeFontsJSON)},
         {"nativeThemeColorsJSON", "(Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeThemeColorsJSON)},

@@ -57,7 +57,7 @@ object Recovery {
             }
     }
 
-    fun isEnabled(): Boolean = NativeBridge.nativeGetBoolean("unbound", "recovery", false)
+    fun isEnabled(): Boolean = NativeBridge.preferenceEnabled("recovery")
 
     private fun isLauncherActivity(activity: Activity): Boolean {
         val launcher = activity.packageManager.getLaunchIntentForPackage(activity.packageName)?.component ?: return false
@@ -68,18 +68,16 @@ object Recovery {
 
     private fun toggle(activity: Activity) {
         activity.intent = Intent(activity.intent).setAction(Intent.ACTION_MAIN)
-        val enabled = !isEnabled()
-        NativeBridge.nativeSetBoolean("unbound", "recovery", enabled)
-        Logger.info("default", "Launcher shortcut ${if (enabled) "enabled" else "disabled"} Safe Mode.")
-
-        val message = if (enabled) "Safe Mode enabled" else "Safe Mode disabled"
+        NativeBridge.nativeToolbox("toggle-recovery", null)
+        val message = NativeBridge.nativePreference("recovery-status", null).orEmpty()
+        Logger.info("default", "Launcher shortcut: $message.")
         Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
         if (bundleExecuted) Platform.restartApp()
     }
 
     private fun publishShortcut(activity: Activity) {
         val manager = activity.getSystemService(ShortcutManager::class.java) ?: return
-        val label = if (isEnabled()) "Disable Safe Mode" else "Enable Safe Mode"
+        val label = NativeBridge.nativePreference("recovery-label", null).orEmpty()
         val intent = Intent(ACTION_TOGGLE).setClassName(activity.packageName, activity.javaClass.name)
         val shortcut = ShortcutInfo.Builder(activity, SHORTCUT_ID)
             .setShortLabel(label)
@@ -87,6 +85,6 @@ object Recovery {
             .setIntent(intent)
             .build()
         runCatching { manager.addDynamicShortcuts(listOf(shortcut)) }
-            .onFailure { Logger.error("default", "Failed to publish the Safe Mode shortcut", it) }
+            .onFailure { Logger.error("default", "Failed to publish the Recovery Mode shortcut", it) }
     }
 }

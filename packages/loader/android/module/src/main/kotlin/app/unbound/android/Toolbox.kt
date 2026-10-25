@@ -34,8 +34,8 @@ import java.io.File
 import kotlin.math.sqrt
 
 object Toolbox {
-    private const val SHAKE_KEY = "toolbox.shake"
-    private const val THREE_FINGER_KEY = "toolbox.three-finger"
+    private const val SHAKE = "shake"
+    private const val THREE_FINGER = "three-finger"
     private const val LONG_PRESS_MS = 800L
     private const val SHAKE_GRAVITY = 2.6f
     private const val SHAKE_WINDOW_MS = 900L
@@ -95,7 +95,7 @@ object Toolbox {
 
     private fun trackPress(activity: Activity, event: MotionEvent) {
         when (event.actionMasked) {
-            MotionEvent.ACTION_POINTER_DOWN -> if (event.pointerCount == 3 && enabled(THREE_FINGER_KEY)) {
+            MotionEvent.ACTION_POINTER_DOWN -> if (event.pointerCount == 3 && enabled(THREE_FINGER)) {
                 cancelPress()
                 val runnable = Runnable {
                     pressRunnable = null
@@ -115,7 +115,7 @@ object Toolbox {
     }
 
     private fun trackShake(event: SensorEvent) {
-        if (!enabled(SHAKE_KEY)) return
+        if (!enabled(SHAKE)) return
 
         val (x, y, z) = Triple(event.values[0], event.values[1], event.values[2])
         val force = sqrt(x * x + y * y + z * z) / SensorManager.GRAVITY_EARTH
@@ -138,7 +138,7 @@ object Toolbox {
         activity.window?.decorView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
     }
 
-    private fun enabled(key: String): Boolean = NativeBridge.nativeGetBoolean("unbound", key, true)
+    private fun enabled(gesture: String): Boolean = NativeBridge.preferenceEnabled("gesture", gesture)
 
     private fun menu(activity: Activity): View {
         val list = LinearLayout(activity).apply {
@@ -161,8 +161,7 @@ object Toolbox {
         }
 
         list.addView(header(activity, "Utilities"))
-        val recovery = NativeBridge.nativeGetBoolean("unbound", "recovery", false)
-        list.addView(action(activity, if (recovery) "Disable Recovery Mode" else "Enable Recovery Mode") {
+        list.addView(action(activity, NativeBridge.nativePreference("recovery-label", null).orEmpty()) {
             run("toggle-recovery")
         })
         list.addView(action(activity, "Factory Reset") {
@@ -172,8 +171,17 @@ object Toolbox {
         list.addView(action(activity, "Open GitHub Issue") { openIssue(activity) })
 
         list.addView(header(activity, "Settings"))
-        list.addView(toggle(activity, "Enable Shake Motion", SHAKE_KEY, THREE_FINGER_KEY))
-        list.addView(toggle(activity, "Enable Three Finger Press", THREE_FINGER_KEY, SHAKE_KEY))
+        val shake = toggle(activity, "Enable Shake Motion", SHAKE)
+        val threeFinger = toggle(activity, "Enable Three Finger Press", THREE_FINGER)
+        val switches = listOf(shake, threeFinger)
+        for (switch in switches) {
+            switch.setOnCheckedChangeListener { changed, checked ->
+                NativeBridge.nativePreference("set-gesture", "${changed.tag}=$checked")
+                for (other in switches) other.isChecked = enabled(other.tag as String)
+            }
+        }
+        list.addView(shake)
+        list.addView(threeFinger)
 
         return ScrollView(activity).apply { addView(list) }
     }
@@ -200,16 +208,13 @@ object Toolbox {
         setOnClickListener { onClick() }
     }
 
-    private fun toggle(context: Context, title: String, key: String, partner: String) = Switch(context).apply {
+    private fun toggle(context: Context, title: String, gesture: String) = Switch(context).apply {
         text = title
+        tag = gesture
         setTextColor(Color.WHITE)
         setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
         setPadding(dp(context, 12), dp(context, 8), dp(context, 12), dp(context, 8))
-        isChecked = enabled(key)
-        setOnCheckedChangeListener { _, checked ->
-            NativeBridge.nativeSetBoolean("unbound", key, checked)
-            if (!checked && !enabled(partner)) NativeBridge.nativeSetBoolean("unbound", partner, true)
-        }
+        isChecked = enabled(gesture)
     }
 
     private fun confirm(activity: Activity, title: String, onConfirm: () -> Unit) {

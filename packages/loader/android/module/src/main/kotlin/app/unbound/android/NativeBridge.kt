@@ -1,5 +1,6 @@
 package app.unbound.android
 
+import android.graphics.Color
 import android.graphics.fonts.SystemFonts
 import android.os.Build
 import android.os.Handler
@@ -63,6 +64,16 @@ object NativeBridge {
 
     @JvmStatic
     external fun nativeToolbox(action: String, argument: String?): String?
+    external fun nativePreference(action: String, argument: String?): String?
+
+    fun preferenceEnabled(action: String, argument: String? = null): Boolean =
+        nativePreference(action, argument) == "true"
+
+    external fun nativeParseColor(value: String): Long
+
+    fun parseColor(value: String): Int? = nativeParseColor(value).takeIf { it >= 0 }?.toInt()
+
+    fun nativeColor(value: String): Int = parseColor(value) ?: Color.TRANSPARENT
 
     @JvmStatic
     external fun nativeFontsJSON(): String

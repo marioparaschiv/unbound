@@ -66,6 +66,14 @@ static UIWindowScene *activeWindowScene(void)
     return nil;
 }
 
+static NSString *const kShakeGesture       = @"shake";
+static NSString *const kThreeFingerGesture = @"three-finger";
+
+static BOOL toolboxGestureEnabled(NSString *gesture)
+{
+    return [[CoreBridge preference:@"gesture" argument:gesture] isEqualToString:@"true"];
+}
+
 %hook UIWindow
 - (void)becomeKeyWindow
 {
@@ -88,11 +96,7 @@ static UIWindowScene *activeWindowScene(void)
 {
     if (motion == UIEventSubtypeMotionShake && isShaking)
     {
-        NSUserDefaults *defaults  = [NSUserDefaults standardUserDefaults];
-        BOOL            isEnabled = [defaults objectForKey:@"UnboundShakeGestureEnabled"] == nil
-                                        ? YES
-                                        : [defaults boolForKey:@"UnboundShakeGestureEnabled"];
-        if (isEnabled)
+        if (toolboxGestureEnabled(kShakeGesture))
         {
             NSTimeInterval currentTime   = [[NSDate date] timeIntervalSince1970];
             NSTimeInterval shakeDuration = currentTime - shakeStartTime;
@@ -116,11 +120,7 @@ static UIWindowScene *activeWindowScene(void)
 {
     if (gesture.state == UIGestureRecognizerStateBegan)
     {
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        BOOL isEnabled = [defaults objectForKey:@"UnboundThreeFingerGestureEnabled"] == nil
-                             ? YES
-                             : [defaults boolForKey:@"UnboundThreeFingerGestureEnabled"];
-        if (isEnabled)
+        if (toolboxGestureEnabled(kThreeFingerGesture))
         {
             triggerHapticFeedback();
             showToolboxSheet();
@@ -275,13 +275,13 @@ static UIWindowScene *activeWindowScene(void)
             @"title" : @"Enable Shake Motion",
             @"icon" : @"iphone.gen3.radiowaves.left.and.right",
             @"isSwitch" : @YES,
-            @"key" : @"UnboundShakeGestureEnabled"
+            @"key" : kShakeGesture
         },
                                          @{
                                              @"title" : @"Enable Three Finger Press",
                                              @"icon" : @"hand.tap",
                                              @"isSwitch" : @YES,
-                                             @"key" : @"UnboundThreeFingerGestureEnabled"
+                                             @"key" : kThreeFingerGesture
                                          },
                                          nil];
 
@@ -437,8 +437,6 @@ static UIWindowScene *activeWindowScene(void)
                       action:@selector(toggleSetting:)
             forControlEvents:UIControlEventValueChanged];
 
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-
         if ([item[@"key"] isEqualToString:@"UnboundAppIconEnabled"])
         {
             NSString *currentIcon = [[UIApplication sharedApplication] alternateIconName];
@@ -446,9 +444,7 @@ static UIWindowScene *activeWindowScene(void)
         }
         else
         {
-            toggle.on = [defaults objectForKey:item[@"key"]] == nil
-                            ? YES
-                            : [defaults boolForKey:item[@"key"]];
+            toggle.on = toolboxGestureEnabled(item[@"key"]);
         }
 
         cell.accessoryView = toggle;
@@ -691,25 +687,15 @@ static UIWindowScene *activeWindowScene(void)
 
 - (void)toggleSetting:(UISwitch *)sender
 {
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSString       *key      = sender.accessibilityIdentifier;
+    NSString *key = sender.accessibilityIdentifier;
 
-    if ([key isEqualToString:@"UnboundShakeGestureEnabled"])
+    if ([key isEqualToString:kShakeGesture] || [key isEqualToString:kThreeFingerGesture])
     {
-        [defaults setBool:sender.on forKey:key];
-        if (!sender.on)
+        [CoreBridge preference:@"set-gesture"
+                      argument:[NSString stringWithFormat:@"%@=%@", key, sender.on ? @"true" : @"false"]];
+        for (NSString *gesture in @[ kShakeGesture, kThreeFingerGesture ])
         {
-            [defaults setBool:YES forKey:@"UnboundThreeFingerGestureEnabled"];
-            [[self switchForSettingKey:@"UnboundThreeFingerGestureEnabled"] setOn:YES animated:YES];
-        }
-    }
-    else if ([key isEqualToString:@"UnboundThreeFingerGestureEnabled"])
-    {
-        [defaults setBool:sender.on forKey:key];
-        if (!sender.on)
-        {
-            [defaults setBool:YES forKey:@"UnboundShakeGestureEnabled"];
-            [[self switchForSettingKey:@"UnboundShakeGestureEnabled"] setOn:YES animated:YES];
+            [[self switchForSettingKey:gesture] setOn:toolboxGestureEnabled(gesture) animated:YES];
         }
     }
     else if ([key isEqualToString:@"UnboundAppIconEnabled"])
@@ -726,8 +712,6 @@ static UIWindowScene *activeWindowScene(void)
                                                   }
                                               }];
     }
-
-    [defaults synchronize];
 }
 
 - (void)safariViewControllerDidFinish:(SFSafariViewController *)controller

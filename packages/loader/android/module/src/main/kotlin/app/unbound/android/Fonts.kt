@@ -5,14 +5,13 @@ import android.graphics.Typeface
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
 import org.json.JSONArray
-import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 object Fonts {
     private const val FONT_MANAGER = "com.facebook.react.common.assets.ReactFontManager"
     private const val TYPEFACE_STYLE = "com.facebook.react.common.assets.ReactFontManager\$TypefaceStyle"
-    private const val ALL_FAMILIES = "*"
+    private const val DEFAULT_FAMILY = "sans-serif"
 
     private val typefaces = ConcurrentHashMap<String, Typeface>()
 
@@ -39,9 +38,7 @@ object Fonts {
     }
 
     private fun resolve(family: String): Typeface? {
-        val overrides = NativeBridge.nativeSettingJSON("unbound", "font-states")
-            ?.let { runCatching { JSONObject(it) }.getOrNull() } ?: return null
-        val target = overrides.optString(ALL_FAMILIES).ifEmpty { overrides.optString(family) }
+        val target = NativeBridge.nativePreference("font-override", family).orEmpty()
         if (target.isEmpty() || target == family) return null
 
         return typefaces.getOrPut(target) { load(target) ?: return null }
@@ -61,6 +58,11 @@ object Fonts {
                 .getOrNull()
         }
 
-        return Typeface.create(name, Typeface.NORMAL)
+        val system = Typeface.create(name, Typeface.NORMAL)
+        if (system == Typeface.DEFAULT && name != DEFAULT_FAMILY) {
+            Logger.error("fonts", "Failed to replace a font with \"$name\". The requested font isn't loaded.")
+            return null
+        }
+        return system
     }
 }

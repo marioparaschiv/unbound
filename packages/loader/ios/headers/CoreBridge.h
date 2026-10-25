@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument;
 + (BOOL)toolboxSucceeded:(NSString *)action argument:(NSString *)argument;
 + (NSString *)toolboxMessage:(NSString *)key;
++ (NSString *)preference:(NSString *)action argument:(NSString *)argument;
++ (BOOL)preferenceEnabled:(NSString *)action;
 
 @end
 

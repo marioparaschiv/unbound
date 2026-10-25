@@ -1,3 +1,4 @@
+#import "CoreBridge.h"
 #import "Themes.h"
 
 @interface Themes ()
@@ -67,7 +68,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
     [Themes restoreOriginalRawColors];
 
     NSDictionary *colors = nil;
-    if (themeId && ![Settings getBoolean:@"unbound" key:@"recovery" def:NO])
+    if (themeId && ![CoreBridge preferenceEnabled:@"recovery"])
     {
         colors = [CoreBridge themeColors:[Themes getThemeById:themeId] ?: @{}];
     }
@@ -163,7 +164,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
     [Themes reloadThemes];
 
-    if (![Settings getBoolean:@"unbound" key:@"recovery" def:NO] && !semanticColorsSwizzled)
+    if (![CoreBridge preferenceEnabled:@"recovery"] && !semanticColorsSwizzled)
     {
         [Themes swizzleSemanticColors];
         semanticColorsSwizzled = YES;
@@ -183,8 +184,8 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
 + (void)applySelectedTheme
 {
-    id        applied = [Settings getString:@"themes" key:@"applied" def:nil];
-    NSString *themeId = [applied isKindOfClass:[NSString class]] && [applied length] > 0 ? applied : nil;
+    NSString *applied = [CoreBridge preference:@"applied-theme" argument:@""];
+    NSString *themeId = applied.length > 0 ? applied : nil;
     if (themeId == currentThemeId || [themeId isEqualToString:currentThemeId])
     {
         return;

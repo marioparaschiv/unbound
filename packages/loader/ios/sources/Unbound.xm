@@ -223,7 +223,7 @@ static void prepareLoading(id instance)
     gBundleIsReady = NO;
     dispatch_async(dispatch_get_main_queue(), ^{ [DevOverlay refreshOverlay]; });
 
-    if ([Settings getBoolean:@"unbound" key:@"loader.enabled" def:YES] && !gLoaderPrepared.exchange(true))
+    if ([CoreBridge preferenceEnabled:@"loader-enabled"] && !gLoaderPrepared.exchange(true))
     {
         [HotReload observe];
     }

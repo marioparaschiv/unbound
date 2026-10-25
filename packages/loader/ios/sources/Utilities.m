@@ -1033,7 +1033,7 @@ static NSString *defaultGatewayAddress(void)
 
 + (BOOL)isRecoveryModeEnabled
 {
-    return [Settings getBoolean:@"unbound" key:@"recovery" def:NO];
+    return [CoreBridge preferenceEnabled:@"recovery"];
 }
 
 + (UIWindow *)keyWindow

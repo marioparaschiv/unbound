@@ -7,6 +7,7 @@
 
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
+#include "LoaderPreferences.h"
 
 namespace loader::toolbox
 {
@@ -145,10 +146,9 @@ namespace loader::toolbox
 
     bool toggleRecovery(SettingsStore &settings)
     {
-        const bool enabled = !settings.getBoolean("unbound", "recovery", false);
+        const bool enabled = !preferences::recoveryEnabled(settings);
 
-        settings.set("unbound", "recovery", enabled);
-        settings.save();
+        preferences::setRecoveryEnabled(settings, enabled);
         return enabled;
     }
 

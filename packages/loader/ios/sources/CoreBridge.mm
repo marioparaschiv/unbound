@@ -11,6 +11,7 @@
 #include "HermesBytecodeHeader.h"
 #include "LoaderAddons.h"
 #include "LoaderLog.h"
+#include "LoaderPreferences.h"
 #include "LoaderPreload.h"
 #include "LoaderThemes.h"
 #include "LoaderToolbox.h"
@@ -141,6 +142,18 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
                                             [] { return [CoreBridge mainBundleBytecodeVersion]; }};
     std::string result = loader::toolbox::perform(context, toStdString(action), toStdString(argument));
     return [NSString stringWithUTF8String:result.c_str()] ?: @"";
+}
+
++ (NSString *)preference:(NSString *)action argument:(NSString *)argument
+{
+    std::string result =
+        loader::preferences::perform(UnboundSettingsStore(), toStdString(action), toStdString(argument));
+    return [NSString stringWithUTF8String:result.c_str()] ?: @"";
+}
+
++ (BOOL)preferenceEnabled:(NSString *)action
+{
+    return [[self preference:action argument:@""] isEqualToString:@"true"];
 }
 
 + (BOOL)toolboxSucceeded:(NSString *)action argument:(NSString *)argument

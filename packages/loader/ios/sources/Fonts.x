@@ -56,7 +56,10 @@ static NSMutableArray<NSDictionary<NSString *, NSString *> *> *fonts     = nil;
 
 + (void)apply
 {
-    NSDictionary *states = [Settings getDictionary:@"unbound" key:@"font-states" def:@{}];
+    NSData       *statesJSON = [[CoreBridge preference:@"font-overrides" argument:@""]
+        dataUsingEncoding:NSUTF8StringEncoding];
+    id            parsed     = statesJSON ? [NSJSONSerialization JSONObjectWithData:statesJSON options:0 error:nil] : nil;
+    NSDictionary *states     = [parsed isKindOfClass:[NSDictionary class]] ? parsed : @{};
 
     for (NSString *state in states)
     {

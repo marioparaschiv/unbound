@@ -1,3 +1,4 @@
+#import "CoreBridge.h"
 #include <istream>
 #include <ostream>
 #include <streambuf>
@@ -62,7 +63,7 @@
 
 - (void)sync
 {
-    BOOL enabled = [Settings getBoolean:@"unbound" key:@"loader.update.hmr" def:NO];
+    BOOL enabled = [CoreBridge preferenceEnabled:@"hot-reload"];
 
     dispatch_async(_queue, ^{
         if (enabled && !self->_running)

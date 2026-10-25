@@ -421,7 +421,7 @@ object NativeUI {
     private fun parseColor(properties: JSONObject, name: String): Int {
         val value = properties.getString(name)
         require(value.length <= 32)
-        return Color.parseColor(value)
+        return requireNotNull(NativeBridge.parseColor(value)) { "Invalid color: $value" }
     }
 
     private fun requireMainThread() {

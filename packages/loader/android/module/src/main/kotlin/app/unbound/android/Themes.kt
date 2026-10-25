@@ -23,9 +23,7 @@ object Themes {
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
         if (Recovery.isEnabled()) return
 
-        val applied = NativeBridge.nativeSettingJSON("themes", "applied")
-            ?.let { runCatching { JSONObject("{\"id\":$it}").optString("id") }.getOrNull() }
-            ?.takeIf { it.isNotEmpty() } ?: return
+        val applied = NativeBridge.nativePreference("applied-theme", null)?.takeIf { it.isNotEmpty() } ?: return
 
         NativeBridge.nativePrepareAddons()
         val colors = JSONObject(NativeBridge.nativeThemeColorsJSON(applied))
