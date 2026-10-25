@@ -246,6 +246,11 @@ function findChangelogBase(options: Options, decision: SelectedDecision): string
 		published.repository?.toLowerCase() === repository.toLowerCase() &&
 		tryGit(root, ['cat-file', '-e', `${published.commitSha}^{commit}`]).ok
 	) {
+		// A reviewed version was submitted from a main commit itself; a build commit sits beside main.
+		if (tryGit(root, ['merge-base', '--is-ancestor', published.commitSha, 'HEAD']).ok) {
+			return published.commitSha;
+		}
+
 		const parent = tryGit(root, ['rev-parse', '--verify', `${published.commitSha}^`]);
 
 		if (parent.ok) {

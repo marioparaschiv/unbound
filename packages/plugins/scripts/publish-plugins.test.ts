@@ -244,3 +244,17 @@ test('a build tag already on the remote is reused, not rebuilt', async () => {
 	]);
 	expect(git(work, 'ls-remote', 'origin', `refs/tags/${tag}`).split('\t')[0]).toBe(head);
 });
+
+test('a version reviewed from a main commit starts the changelog after that commit', async () => {
+	const reviewed = git(work, 'rev-parse', 'HEAD');
+
+	state.published = new Map([['unbound.beta', { version: '1.1.0', commitSha: reviewed }]]);
+	writePlugin('beta', '1.2.0');
+	commit('fix(beta): keep the toggle');
+
+	const result = await run('--dry-run');
+
+	expect(result.exitCode).toBe(0);
+	expect(result.output).toContain('- Keep the toggle');
+	expect(result.output).not.toContain('- Add more');
+});

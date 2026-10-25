@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
     publish:
-        if: github.repository == 'marioparaschiv/unbound'
+        if: github.repository == 'marioparaschiv/unbound' && github.ref == 'refs/heads/main'
         runs-on: ubuntu-26.04
         steps:
             - name: Checkout code
