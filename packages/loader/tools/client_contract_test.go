@@ -50,16 +50,20 @@ func TestLoaderBridgesAdvertiseTheClientPlatformCapabilities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	bridges := map[string]string{
-		"android": filepath.Join(root, "android", "module", "src", "main", "cpp", "NativePluginBridge.cpp"),
-		"ios":     filepath.Join(root, "ios", "sources", "NativePluginBridge.mm"),
+	header, err := os.ReadFile(filepath.Join(root, "core", "include", "NativePluginRoot.h"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	for platform, path := range bridges {
-		source, err := os.ReadFile(path)
-		if err != nil {
-			t.Fatal(err)
+	lists := map[string]string{
+		"android": "kAndroidNativePluginCapabilities",
+		"ios":     "kIOSNativePluginCapabilities",
+	}
+	for platform, name := range lists {
+		list := regexp.MustCompile(`(?s)` + name + ` = \{(.*?)\};`).FindStringSubmatch(string(header))
+		if list == nil {
+			t.Fatalf("core declares no %s capability list", platform)
 		}
-		loader := capabilitySet(string(source))
+		loader := capabilitySet(list[1])
 		client := clientPlatformCapabilities(t, string(typings), platform)
 		if strings.Join(loader, ",") != strings.Join(client, ",") {
 			t.Fatalf("%s bridge capabilities %v differ from the client's %v", platform, loader, client)

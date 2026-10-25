@@ -35,24 +35,8 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	if !strings.Contains(headerText, `kNativePluginAbiVersion[] = "1.0.0"`) {
 		t.Fatal("native plugin ABI version is not v1")
 	}
-	for _, capability := range []string{
-		"native.objc.classes",
-		"native.objc.invoke",
-		"native.objc.invokeAsync",
-		"native.objc.batch",
-		"native.objc.ivars",
-		"native.objc.associations",
-		"native.objc.hooks",
-		"native.ffi.symbols",
-		"native.ffi.call",
-		"native.fabric.mount",
-		"native.fabric.async",
-		"native.debug.evaluations",
-		"native.debug.environment",
-	} {
-		if !strings.Contains(sourceText, `"`+capability+`"`) {
-			t.Fatalf("native capability %q is missing from the loader", capability)
-		}
+	if !strings.Contains(sourceText, "loader::native::makeNativePluginRoot(runtime, loader::native::kIOSNativePluginCapabilities)") {
+		t.Fatal("the iOS bridge does not advertise the shared iOS capability list")
 	}
 	for _, symbol := range []string{
 		"ffi_closure_alloc",
@@ -205,23 +189,7 @@ func TestAndroidNativeBridgeContractIsSynchronized(t *testing.T) {
 	}
 	sourceText := string(source)
 	for _, contract := range []string{
-		"loader::kNativePluginApiVersion",
-		"loader::kNativePluginAbiVersion",
-		"native.ui.lookup",
-		"native.ui.layout",
-		"native.ui.mount",
-		"native.java.classes",
-		"native.java.invoke",
-		"native.java.invokeAsync",
-		"native.java.fields",
-		"native.java.construct",
-		"native.java.hooks",
-		"native.java.batch",
-		"native.java.associations",
-		"native.debug.evaluations",
-		"native.debug.environment",
-		"native.fabric.mount",
-		"native.fabric.async",
+		"loader::native::makeNativePluginRoot(runtime, loader::native::kAndroidNativePluginCapabilities)",
 		`runtime, "lookup",`,
 		`runtime, "snapshot",`,
 		`runtime, "measure",`,

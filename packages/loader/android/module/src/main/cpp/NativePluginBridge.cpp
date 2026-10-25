@@ -4,7 +4,7 @@
 #include "NativeEvaluations.h"
 #include "NativeFFI.h"
 #include "NativePlatformBridge.h"
-#include "NativePluginVersion.h"
+#include "NativePluginRoot.h"
 
 #include <algorithm>
 #include <cmath>
@@ -1119,28 +1119,8 @@ namespace unbound::android
 
     void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
     {
-        jsi::Object bridge(runtime);
-        bridge.setProperty(runtime, "apiVersion",
-                           jsi::String::createFromUtf8(runtime, loader::kNativePluginApiVersion));
-        bridge.setProperty(runtime, "abiVersion",
-                           jsi::String::createFromUtf8(runtime, loader::kNativePluginAbiVersion));
-
-        const char *capabilityNames[] = {
-            "native.ui.lookup",       "native.ui.layout",      "native.ui.mount",
-            "native.runtime.events",  "native.java.classes",   "native.java.invoke",
-            "native.java.invokeAsync", "native.java.fields",   "native.java.construct",
-            "native.java.hooks",     "native.java.batch",     "native.java.associations",
-            "native.debug.evaluations", "native.debug.environment",
-            "native.fabric.mount",   "native.fabric.async",
-            "native.ffi.symbols",    "native.ffi.call",
-        };
-        jsi::Array capabilities(runtime, std::size(capabilityNames));
-        for (size_t index = 0; index < std::size(capabilityNames); index++)
-        {
-            capabilities.setValueAtIndex(
-                runtime, index, jsi::String::createFromUtf8(runtime, capabilityNames[index]));
-        }
-        bridge.setProperty(runtime, "capabilities", std::move(capabilities));
+        jsi::Object bridge =
+            loader::native::makeNativePluginRoot(runtime, loader::native::kAndroidNativePluginCapabilities);
 
         jsi::Object ui(runtime);
         ui.setProperty(

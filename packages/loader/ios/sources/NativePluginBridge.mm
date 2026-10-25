@@ -35,6 +35,7 @@
 #import "NativePluginFFI.h"
 #import "NativeNumericValidation.h"
 #import "NativeOperationGate.h"
+#import "NativePluginRoot.h"
 #import "NativePluginRuntime.h"
 #import "NativeTypeEncoding.h"
 
@@ -5739,33 +5740,7 @@ void registerNativePluginBridge(Runtime &runtime)
         invalidateRuntimeHooks(generation);
         invalidateRuntimeFabricSurfaces(generation);
     }
-    Object bridge(runtime);
-    bridge.setProperty(runtime, "apiVersion", String::createFromUtf8(runtime, kNativePluginApiVersion));
-    bridge.setProperty(runtime, "abiVersion", String::createFromUtf8(runtime, kNativePluginAbiVersion));
-
-    const char *names[] = {
-        "native.objc.classes",
-        "native.objc.invoke",
-        "native.objc.invokeAsync",
-        "native.objc.batch",
-        "native.objc.snapshot",
-        "native.objc.ivars",
-        "native.objc.associations",
-        "native.objc.hooks",
-        "native.ffi.symbols",
-        "native.ffi.call",
-        "native.fabric.mount",
-        "native.fabric.async",
-        "native.runtime.events",
-        "native.debug.evaluations",
-        "native.debug.environment",
-    };
-    Array capabilities(runtime, std::size(names));
-    for (size_t index = 0; index < std::size(names); index++)
-    {
-        capabilities.setValueAtIndex(runtime, index, String::createFromUtf8(runtime, names[index]));
-    }
-    bridge.setProperty(runtime, "capabilities", std::move(capabilities));
+    Object bridge = loader::native::makeNativePluginRoot(runtime, loader::native::kIOSNativePluginCapabilities);
 
     Object objc(runtime);
     installObjC(runtime, objc);
