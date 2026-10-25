@@ -1,0 +1,178 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { and, eq, sql } from 'drizzle-orm';
+
+import { announceRelease, reconcileReleases, type ReleaseTarget } from '~/dispatchers/releases';
+import type { ReleaseFeedItem } from '~/lib/feed/types';
+import { createDatabase } from '~/db/database';
+import { loaderRelease } from '~/db/schema';
+import { feeds } from '~/lib/feed/feeds';
+
+import {
+	createTestDatabase,
+	DROP_HOOK_TIMEOUT_MS,
+	DATABASE_URL,
+	type TestDatabase,
+} from './helpers/database';
+import { createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
+import { RELEASE } from './helpers/feeds';
+
+const TARGET: ReleaseTarget = { channelId: '21', roleId: '31' };
+
+const ANDROID: ReleaseFeedItem = {
+	platform: 'android',
+	version: '1.2.4',
+	url: 'https://example.com/unbound.apk',
+	changelog: null,
+	publishedAt: '2026-09-01T00:00:00.000Z',
+};
+
+describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
+	let database: TestDatabase;
+	let discord: FakeDiscord;
+
+	beforeAll(async () => {
+		database = await createTestDatabase();
+	});
+
+	afterAll(async () => {
+		await database.drop();
+	}, DROP_HOOK_TIMEOUT_MS);
+
+	beforeEach(async () => {
+		await database.db.execute(sql`TRUNCATE loader_release`);
+		discord = createFakeDiscord();
+	});
+
+	afterEach(async () => {
+		await discord.stop();
+	});
+
+	async function ingest(...items: ReleaseFeedItem[]) {
+		await database.db.transaction((tx) => feeds.releases.ingest(tx, items));
+	}
+
+	function handle(item: ReleaseFeedItem) {
+		return announceRelease(
+			database.db,
+			discord.rest,
+			`${item.platform}:${item.version}`,
+			TARGET,
+		);
+	}
+
+	function reconcile() {
+		return reconcileReleases(database.db, discord.rest, discord.selfId, TARGET);
+	}
+
+	async function rowOf(item: ReleaseFeedItem) {
+		const [row] = await database.db
+			.select()
+			.from(loaderRelease)
+			.where(
+				and(
+					eq(loaderRelease.platform, item.platform),
+					eq(loaderRelease.version, item.version),
+				),
+			);
+
+		return row;
+	}
+
+	function posts() {
+		return discord.requests.filter((request) => request.method === 'POST');
+	}
+
+	test('a release is announced once, pinging only the releases role', async () => {
+		await ingest(RELEASE);
+		await handle(RELEASE);
+
+		const [message, ...extra] = discord.messages('21');
+
+		expect(extra).toHaveLength(0);
+		expect(message?.content).toContain('<@&31>');
+		expect(message?.allowed_mentions).toEqual({ parse: [], roles: ['31'] });
+		expect(message?.embeds).toEqual([
+			{
+				title: 'Unbound for iOS 1.2.3',
+				url: RELEASE.url,
+				description: 'Fixes.',
+				color: 0xc8_41_51,
+				timestamp: RELEASE.publishedAt,
+			},
+		]);
+		expect(await rowOf(RELEASE)).toMatchObject({ channelId: '21', messageId: message?.id });
+
+		await handle(RELEASE);
+		await reconcile();
+		expect(posts()).toHaveLength(1);
+
+		discord.handDelete('21', message?.id ?? '');
+		await reconcile();
+		expect(posts()).toHaveLength(1);
+		expect(discord.messages('21')).toHaveLength(0);
+	});
+
+	test('reconcile announces every unannounced release in publish order', async () => {
+		await ingest(RELEASE, ANDROID);
+		await reconcile();
+
+		const titles = discord.messages('21').map((message) => message.embeds[0]?.title);
+
+		expect(titles).toEqual(['Unbound for Android 1.2.4', 'Unbound for iOS 1.2.3']);
+		expect(discord.messages('21')[0]?.embeds[0]?.description).toBeUndefined();
+		expect((await rowOf(ANDROID))?.messageId).toBe(discord.messages('21')[0]?.id);
+
+		// The two ids straddle the fake's id length change; a string compare would delete the newer one.
+		await reconcile();
+		expect(discord.requests.map((request) => request.method)).not.toContain('DELETE');
+		expect(discord.messages('21')).toHaveLength(2);
+	});
+
+	test('reconcile deletes our unmatched messages and leaves other authors alone', async () => {
+		await ingest(RELEASE);
+		await handle(RELEASE);
+
+		const stale = discord.seed('21', discord.selfId, { embeds: [{ url: 'https://gone' }] });
+		const human = discord.seed('21', '42', { content: 'when android' });
+
+		await reconcile();
+
+		const ids = discord.messages('21').map((message) => message.id);
+
+		expect(ids).toContain(human);
+		expect(ids).not.toContain(stale);
+		expect(posts()).toHaveLength(1);
+	});
+
+	// The fake Discord's POST handler ends the announcer's own database client before it responds,
+	// so the real post lands and the id write after it fails.
+	test('a crash between the post and the id write converges on reconcile', async () => {
+		const crashing = createDatabase(database.url);
+
+		await ingest(RELEASE);
+		discord.beforePostResponse = () => crashing.$client.end();
+		const outcome = await announceRelease(
+			crashing,
+			discord.rest,
+			`ios:${RELEASE.version}`,
+			TARGET,
+		).then(
+			() => 'announced',
+			() => 'failed',
+		);
+
+		expect(outcome).toBe('failed');
+		discord.beforePostResponse = undefined;
+
+		expect(discord.messages('21')).toHaveLength(1);
+		expect((await rowOf(RELEASE))?.messageId).toBeNull();
+
+		await reconcile();
+
+		const [message, ...extra] = discord.messages('21');
+
+		expect(extra).toHaveLength(0);
+		expect(posts()).toHaveLength(1);
+		expect(await rowOf(RELEASE)).toMatchObject({ channelId: '21', messageId: message?.id });
+	});
+});
