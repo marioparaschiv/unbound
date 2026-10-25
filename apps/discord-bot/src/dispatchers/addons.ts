@@ -163,6 +163,8 @@ async function adoptOrphans(
 	const referenced = new Set(messages.map((row) => row.messageId));
 
 	for (const [channelId, listing] of listings) {
+		const listed = new Set(listing.map((message) => message.id));
+
 		for (const message of listing) {
 			const url = message.embeds[0]?.url;
 			const owner = url ? byUrl.get(url) : undefined;
@@ -175,7 +177,10 @@ async function adoptOrphans(
 			const row = rows.get(owner.id);
 
 			try {
-				if (desiredChannel(owner, channels) !== channelId || row?.channelId === channelId) {
+				const kept = row?.channelId === channelId && listed.has(row.messageId);
+
+				// A row whose message is gone takes this post over instead of deleting it and posting anew.
+				if (desiredChannel(owner, channels) !== channelId || kept) {
 					await deleteMessage(rest, channelId, message.id);
 
 					continue;

@@ -314,6 +314,25 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		expect(await rowOf(PLUGIN.id)).toMatchObject({ messageId: ours[0]?.id });
 	});
 
+	test('a row whose message is gone adopts our unreferenced post instead of reposting', async () => {
+		await ingest(PLUGIN);
+		await sync(PLUGIN.id);
+
+		const before = await rowOf(PLUGIN.id);
+		const spare = discord.seed('11', discord.selfId, { embeds: [{ url: PLUGIN.pageUrl }] });
+
+		discord.handDelete('11', before?.messageId ?? '');
+		discord.requests.length = 0;
+		await reconcile();
+
+		expect(discord.requests.map((request) => request.method)).not.toContain('POST');
+		expect(messagesOf(PLUGIN).map((message) => message.id)).toEqual([spare]);
+		expect(await rowOf(PLUGIN.id)).toMatchObject({
+			messageId: spare,
+			postedHash: before?.postedHash,
+		});
+	});
+
 	test('reconcile pages past the first 100 messages to find our post', async () => {
 		for (let i = 0; i < 150; i++) {
 			discord.seed('11', discord.selfId, { embeds: [{ url: `https://old-bot/${i}` }] });
