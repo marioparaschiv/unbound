@@ -197,6 +197,20 @@ go run ./tools compat-scan --ipa discord.ipa --apk base.apk --android-version 35
 
 Each run's `compat.json` is the next run's `--baseline`. A name that resolved in an earlier build and disappears is reported as broken, even when the scan cannot tell who owns it.
 
+## Patching an IPA
+
+The IPA build patches Discord before injecting the tweak: it names the app Unbound, drops the supported-device list, enables file sharing, adds the Unbound alternate icon and the `unbound://` URL scheme, and renames the React Navigation elements module. The same step runs on its own:
+
+```bash
+go run ./tools patch-ipa --ipa Discord.ipa --output Patched.ipa
+```
+
+The alternate icon is compiled from `tools/assets/ipa-icons/AppIcon.icon`. After editing it, regenerate the bundled PNGs on macOS with Xcode installed:
+
+```bash
+go run ./tools ipa-icons
+```
+
 ## Contributors
 
 [![Contributors](https://contrib.rocks/image?repo=marioparaschiv/unbound)](https://github.com/marioparaschiv/unbound/graphs/contributors)
