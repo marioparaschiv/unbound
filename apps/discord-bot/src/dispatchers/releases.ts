@@ -1,5 +1,6 @@
 import type { APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import { DiscordAPIError, RESTJSONErrorCodes, Routes } from 'discord.js';
+import { createLogger } from '@unbound-app/logger';
 import { and, asc, eq, isNull } from 'drizzle-orm';
 
 import { COLOURS, RELEASES_CHANNEL_ID, RELEASES_ROLE_ID } from '~/lib/constants';
@@ -14,6 +15,8 @@ export type ReleaseTarget = {
 };
 
 type ReleaseRow = typeof loaderRelease.$inferSelect;
+
+const logger = createLogger('Bot', 'Releases');
 
 type ReleaseKey = {
 	platform: LoaderPlatform;
@@ -199,7 +202,7 @@ export async function announceRelease(
  * @param rest The Discord REST client.
  * @param selfId The bot's own user id.
  * @param target The channel to post in and the role to ping.
- * @returns Resolves once every release is announced.
+ * @returns Resolves once every release was tried; one release's failure is logged and left to the next run.
  */
 export async function reconcileReleases(
 	db: Database,
@@ -216,7 +219,11 @@ export async function reconcileReleases(
 		.orderBy(asc(loaderRelease.publishedAt), loaderRelease.platform, loaderRelease.version);
 
 	for (const release of unannounced) {
-		await announce(db, rest, release, target);
+		try {
+			await announce(db, rest, release, target);
+		} catch (error) {
+			logger.error(`Failed to announce ${release.platform} ${release.version}:`, error);
+		}
 	}
 }
 

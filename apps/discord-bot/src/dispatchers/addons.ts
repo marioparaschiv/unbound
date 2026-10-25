@@ -1,5 +1,6 @@
 import type { APIEmbed, APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import { DiscordAPIError, RESTJSONErrorCodes, Routes } from 'discord.js';
+import { createLogger } from '@unbound-app/logger';
 import { eq } from 'drizzle-orm';
 
 import {
@@ -17,6 +18,8 @@ export type AddonChannels = { [K in AddonType]?: string };
 
 type AddonRow = typeof addon.$inferSelect;
 type AddonMessageRow = typeof addonMessage.$inferSelect;
+
+const logger = createLogger('Bot', 'Addons');
 
 // Fonts have no channel, so they are never posted.
 export const ADDON_CHANNELS: AddonChannels = {
@@ -104,9 +107,9 @@ async function deleteMessage(rest: REST, channelId: string, messageId: string) {
 	}
 }
 
-async function ownMessagesAfter(rest: REST, channelId: string, selfId: string, after: string) {
+async function ownMessages(rest: REST, channelId: string, selfId: string) {
 	const own: APIMessage[] = [];
-	let cursor = after;
+	let cursor = '0';
 	let page: APIMessage[];
 
 	do {
@@ -120,17 +123,21 @@ async function ownMessagesAfter(rest: REST, channelId: string, selfId: string, a
 	return own.sort(oldestFirst);
 }
 
-// Posts are serial and a crash stops all posting until the startup reconcile, so a message posted
-// without its row being written is one of ours newer than every stored id in its channel.
-async function adoptOrphans(db: Database, rest: REST, selfId: string, channels: AddonChannels) {
+// Posts are serial and the row is written right after each post, so a message posted without its
+// row (a crash, or a post whose response was lost) is one of ours newer than every stored id.
+async function adoptOrphans(
+	db: Database,
+	rest: REST,
+	channels: AddonChannels,
+	listings: Map<string, APIMessage[]>,
+) {
 	const [addons, messages] = await Promise.all([
 		db.select().from(addon),
 		db.select().from(addonMessage),
 	]);
 	const stored = new Set(messages.map((message) => message.addonId));
-	const channelIds = new Set(Object.values(channels).filter((id) => id !== undefined));
 
-	for (const channelId of channelIds) {
+	for (const [channelId, listing] of listings) {
 		const unposted = new Map(
 			addons
 				.filter((row) => !stored.has(row.id) && desiredChannel(row, channels) === channelId)
@@ -140,7 +147,9 @@ async function adoptOrphans(db: Database, rest: REST, selfId: string, channels: 
 			messages.filter((row) => row.channelId === channelId).map((row) => row.messageId),
 		);
 
-		for (const message of await ownMessagesAfter(rest, channelId, selfId, after)) {
+		const orphans = listing.filter((message) => BigInt(message.id) > BigInt(after));
+
+		for (const message of orphans) {
 			const url = message.embeds[0]?.url;
 			const addonId = url ? unposted.get(url) : undefined;
 
@@ -172,6 +181,7 @@ async function adoptOrphans(db: Database, rest: REST, selfId: string, channels: 
  * @param rest The Discord REST client.
  * @param id The addon id.
  * @param channels The channel each addon type posts to.
+ * @param present Ids of our messages that exist, from a listing; without it the message is fetched.
  * @returns Resolves once the message and its row match the addon.
  */
 export async function syncAddon(
@@ -179,6 +189,7 @@ export async function syncAddon(
 	rest: REST,
 	id: string,
 	channels: AddonChannels = ADDON_CHANNELS,
+	present?: ReadonlySet<string>,
 ): Promise<void> {
 	const [[current], [posted]] = await Promise.all([
 		db.select().from(addon).where(eq(addon.id, id)),
@@ -197,7 +208,11 @@ export async function syncAddon(
 		return;
 	}
 
-	if (posted?.channelId === channelId && (await messageExists(rest, posted))) {
+	const kept =
+		posted?.channelId === channelId &&
+		(present?.has(posted.messageId) ?? (await messageExists(rest, posted)));
+
+	if (posted && kept) {
 		if (posted.postedHash === current.contentHash) return;
 
 		await rest.patch(Routes.channelMessage(channelId, posted.messageId), {
@@ -235,7 +250,7 @@ export async function syncAddon(
  * @param rest The Discord REST client.
  * @param selfId The bot's own user id.
  * @param channels The channel each addon type posts to.
- * @returns Resolves once every addon's message matches its row.
+ * @returns Resolves once every addon was synced; one addon's failure is logged and left to the next run.
  */
 export async function reconcileAddons(
 	db: Database,
@@ -243,7 +258,18 @@ export async function reconcileAddons(
 	selfId: string,
 	channels: AddonChannels = ADDON_CHANNELS,
 ): Promise<void> {
-	await adoptOrphans(db, rest, selfId, channels);
+	// One listing per channel replaces a fetch per message on every periodic run.
+	const listings = new Map<string, APIMessage[]>();
+
+	for (const channelId of new Set(Object.values(channels))) {
+		if (channelId) {
+			listings.set(channelId, await ownMessages(rest, channelId, selfId));
+		}
+	}
+
+	const present = new Set([...listings.values()].flat().map((message) => message.id));
+
+	await adoptOrphans(db, rest, channels, listings);
 
 	const ids = await db
 		.select({ id: addon.id })
@@ -251,7 +277,11 @@ export async function reconcileAddons(
 		.union(db.select({ id: addonMessage.addonId }).from(addonMessage));
 
 	for (const { id } of ids) {
-		await syncAddon(db, rest, id, channels);
+		try {
+			await syncAddon(db, rest, id, channels, present);
+		} catch (error) {
+			logger.error(`Failed to sync addon ${id}:`, error);
+		}
 	}
 }
 

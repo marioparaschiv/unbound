@@ -19,6 +19,8 @@ export type FakeDiscord = {
 	requests: RecordedRequest[];
 	/** Runs after a POST is stored and before its response is sent. */
 	beforePostResponse: (() => Promise<void>) | undefined;
+	/** Rejects a POST whose body it matches with Discord's invalid form body error. */
+	rejectPost: ((body: RESTPostAPIChannelMessageJSONBody) => boolean) | undefined;
 	/** A channel's messages, oldest first. */
 	messages: (channelId: string) => FakeMessage[];
 	/** Adds a message as any author, bypassing `rest`. */
@@ -35,6 +37,7 @@ type Route = {
 
 const ROUTE = /^\/api\/v\d+\/channels\/(\d+)\/messages(?:\/(\d+))?$/;
 const UNKNOWN_MESSAGE = { message: 'Unknown Message', code: 10_008 };
+const INVALID_FORM_BODY = { message: 'Invalid Form Body', code: 50_035 };
 // Starts one below a power of ten so ids change length, catching snowflakes compared as strings.
 const FIRST_ID = 99_999_999_999_999_999n;
 
@@ -123,6 +126,10 @@ export function createFakeDiscord(selfId: string = '1000'): FakeDiscord {
 				return Response.json(list(channelId, url.searchParams));
 			}
 
+			if (fake.rejectPost?.(body ?? {})) {
+				return Response.json(INVALID_FORM_BODY, { status: 400 });
+			}
+
 			const id = store(channelId, selfId, body ?? {});
 
 			await fake.beforePostResponse?.();
@@ -173,6 +180,7 @@ export function createFakeDiscord(selfId: string = '1000'): FakeDiscord {
 		selfId,
 		requests,
 		beforePostResponse: undefined,
+		rejectPost: undefined,
 		messages: (channelId) => [...channel(channelId).values()].sort(byIdDescending).reverse(),
 		seed: store,
 		handDelete: (channelId, messageId) => void channel(channelId).delete(messageId),

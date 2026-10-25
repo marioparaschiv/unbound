@@ -245,6 +245,33 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		expect(await rowOf(PLUGIN.id)).toMatchObject({ messageId: message?.id });
 	});
 
+	test('an addon Discord rejects is logged and skipped, and the next reconcile posts it', async () => {
+		await ingest(PLUGIN, THEME);
+		discord.rejectPost = (body) => body.embeds?.[0]?.title === PLUGIN.name;
+		await reconcile();
+
+		expect(messagesOf(THEME)).toHaveLength(1);
+		expect(await rowOf(PLUGIN.id)).toBeUndefined();
+
+		discord.rejectPost = undefined;
+		await reconcile();
+
+		expect(messagesOf(PLUGIN)).toHaveLength(1);
+		expect(messagesOf(THEME)).toHaveLength(1);
+	});
+
+	test('reconcile of synced addons lists each channel instead of fetching each message', async () => {
+		await ingest(PLUGIN, THEME, ICON_PACK);
+		await reconcile();
+		discord.requests.length = 0;
+
+		await reconcile();
+
+		expect(discord.requests).toHaveLength(3);
+		expect(discord.requests.every((request) => request.method === 'GET')).toBe(true);
+		expect(discord.requests.every((request) => !request.messageId)).toBe(true);
+	});
+
 	test('reconcile deletes our unmatched messages and leaves other authors alone', async () => {
 		await ingest(PLUGIN);
 		await sync(PLUGIN.id);

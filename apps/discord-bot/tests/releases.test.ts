@@ -128,6 +128,21 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		expect(discord.messages('21')).toHaveLength(2);
 	});
 
+	test('a release Discord rejects is logged and skipped, and the next reconcile announces it', async () => {
+		await ingest(RELEASE, ANDROID);
+		discord.rejectPost = (body) => body.embeds?.[0]?.url === ANDROID.url;
+		await reconcile();
+
+		expect((await rowOf(RELEASE))?.messageId).not.toBeNull();
+		expect((await rowOf(ANDROID))?.messageId).toBeNull();
+
+		discord.rejectPost = undefined;
+		await reconcile();
+
+		expect((await rowOf(ANDROID))?.messageId).not.toBeNull();
+		expect(discord.messages('21')).toHaveLength(2);
+	});
+
 	test('reconcile deletes our unmatched messages and leaves other authors alone', async () => {
 		await ingest(RELEASE);
 		await handle(RELEASE);
