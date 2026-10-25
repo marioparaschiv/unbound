@@ -22,8 +22,15 @@ import type { Role } from '~/lib/auth/access';
 import { delistAddon } from '~/lib/addons';
 import type { Api } from '~/api';
 
-import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
-import { manifest, seedApprovedAddon } from './helpers/addons';
+import {
+	authRequest,
+	createTestContext,
+	linkGitHub,
+	signInWithDiscord,
+	snowflakeAt,
+} from './helpers/context';
+import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
+import { createStaffNote } from '~/lib/staff-notes';
 import { failure, serveEndpoints } from './helpers/server';
 import { seedSponsorship } from './helpers/sponsors';
 
@@ -431,6 +438,65 @@ describe('events feed', () => {
 			expect.not.objectContaining({ subjectName: expect.anything() }),
 		]);
 		expect((await feeds.events(drained.cursor ?? undefined, '2')).items).toEqual([]);
+	});
+
+	test('deleting a user logs one user.deleted with what the cascade removes', async () => {
+		const doomed = await signUp();
+		const admin = await signUp('admin');
+
+		// Legacy uploads: a GitHub-sourced submission's source row blocks the cascade.
+		await seedSubmission(ctx, doomed.userId, manifest('events.doomed'), {}, null);
+		await seedSubmission(
+			ctx,
+			doomed.userId,
+			manifest('events.doomed.old'),
+			{ status: 'rejected' },
+			null,
+		);
+		await createStaffNote(ctx, admin.caller, {
+			subject: { type: 'user', id: doomed.userId },
+			body: 'Spam account.',
+		});
+
+		const from = await tail(feeds.events);
+		const removed = await authRequest(ctx, '/admin/remove-user', {
+			method: 'POST',
+			headers: admin.headers,
+			body: JSON.stringify({ userId: doomed.userId }),
+		});
+
+		expect(removed.status).toBe(200);
+		expect(await ctx.db.query.user.findFirst({ where: { id: doomed.userId } })).toBeUndefined();
+		expect((await drain(feeds.events, from)).items).toEqual([
+			{
+				id: expect.any(Number),
+				kind: 'user.deleted',
+				subjectType: 'user',
+				subjectId: doomed.userId,
+				actor: { id: admin.userId, name: admin.caller.user.name },
+				data: { openSubmissions: 1, staffNotes: 1 },
+				reason: null,
+				createdAt: expect.any(String),
+			},
+		]);
+	});
+
+	test('a user delete the database refuses records nothing', async () => {
+		const kept = await signUp();
+		const admin = await signUp('admin');
+
+		await seedSubmission(ctx, kept.userId, manifest('events.kept'));
+
+		const from = await tail(feeds.events);
+		const removed = await authRequest(ctx, '/admin/remove-user', {
+			method: 'POST',
+			headers: admin.headers,
+			body: JSON.stringify({ userId: kept.userId }),
+		});
+
+		expect(removed.ok).toBe(false);
+		expect(await ctx.db.query.user.findFirst({ where: { id: kept.userId } })).toBeDefined();
+		expect((await drain(feeds.events, from)).items).toEqual([]);
 	});
 
 	test('a cursor from another feed, a garbage cursor or a bad limit is an invalid request', async () => {

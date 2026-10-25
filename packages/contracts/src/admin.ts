@@ -70,6 +70,14 @@ export const moderationEventDataSchema = z.discriminatedUnion('kind', [
 	}),
 	z.object({ kind: z.literal('user.unbanned'), data: z.object({}) }),
 	z.object({ kind: z.literal('user.role_set'), data: z.object({ role: z.string() }) }),
+	/** Written just before the delete; the counts are what the cascade then removes with the user. */
+	z.object({
+		kind: z.literal('user.deleted'),
+		data: z.object({
+			openSubmissions: z.int().check(z.nonnegative()),
+			staffNotes: z.int().check(z.nonnegative()),
+		}),
+	}),
 	z.object({
 		kind: z.literal('note.added'),
 		data: z.object({ noteId: z.int(), body: z.string() }),

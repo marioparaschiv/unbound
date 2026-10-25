@@ -224,6 +224,18 @@ function EventSummary({ event, users }: EventSummaryProps) {
 			);
 		}
 
+		case 'user.deleted': {
+			const { openSubmissions, staffNotes } = event.data;
+
+			return (
+				<>
+					deleted the user, with {openSubmissions} open{' '}
+					{openSubmissions === 1 ? 'submission' : 'submissions'} and {staffNotes} staff{' '}
+					{staffNotes === 1 ? 'note' : 'notes'}
+				</>
+			);
+		}
+
 		case 'note.added': {
 			return (
 				<>
