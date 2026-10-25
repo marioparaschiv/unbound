@@ -1,8 +1,8 @@
-import { mkdirSync, readFileSync, watch } from 'node:fs';
+import { mkdirSync, readFileSync, statSync } from 'node:fs';
 import Logger from '@unbound-app/logger';
 import { join } from 'node:path';
 
-import { DIST_DIR, MANIFEST_NAME, SOURCE_BUNDLE_NAME, WATCH_DEBOUNCE } from './constants';
+import { DIST_DIR, MANIFEST_NAME, MANIFEST_POLL_INTERVAL, SOURCE_BUNDLE_NAME } from './constants';
 
 type ReloadPayload = { etag: string };
 
@@ -72,6 +72,7 @@ export function handleHot(req: Request): Response {
 			hotClients.add(controller);
 			logger.info(`Hot-reload client connected (${hotClients.size} total).`);
 
+			etag = bundleEtag();
 			send(controller, frame('reload', { etag }));
 		},
 		cancel() {
@@ -96,37 +97,45 @@ export function handleHot(req: Request): Response {
 }
 
 /**
- * @description Watches `dist/` for bundle writes and broadcasts a reload when the content hash
- * changes, recomputing it even with no clients connected so a later-connecting client catches up.
+ * @description Polls the build manifest, which the build writes last, and broadcasts a reload when the
+ * bundle's content hash changes. Recomputes the hash even with no clients connected so a later-connecting
+ * client catches up. Polls because `fs.watch` coalesces events on macOS and can miss the manifest write.
  * @param reloadOnRebuild Whether to broadcast the new hash. Without it, only clients connecting later catch up.
- * @returns The `FSWatcher`, so the caller can close it on shutdown.
+ * @returns A handle whose `close` stops polling.
  */
 export function watchBundle(reloadOnRebuild: boolean = true) {
 	mkdirSync(DIST_DIR, { recursive: true });
 
-	// Debounced because the bundle write can fire `watch` more than once per build.
-	let watchTimer: ReturnType<typeof setTimeout> | null = null;
+	let manifestTime = manifestModifiedTime();
 
-	return watch(DIST_DIR, (_event, filename) => {
-		if (filename !== MANIFEST_NAME) return;
+	const timer = setInterval(() => {
+		const modified = manifestModifiedTime();
 
-		if (watchTimer) {
-			clearTimeout(watchTimer);
-		}
+		if (modified === manifestTime) return;
 
-		watchTimer = setTimeout(() => {
-			const next = bundleEtag();
+		manifestTime = modified;
 
-			if (next === etag) return;
+		const next = bundleEtag();
 
-			etag = next;
+		if (next === etag) return;
 
-			if (!reloadOnRebuild || hotClients.size === 0) return;
+		etag = next;
 
-			logger.info(`Bundle changed - reloading ${hotClients.size} client(s).`);
-			broadcast();
-		}, WATCH_DEBOUNCE);
-	});
+		if (!reloadOnRebuild || hotClients.size === 0) return;
+
+		logger.info(`Bundle changed - reloading ${hotClients.size} client(s).`);
+		broadcast();
+	}, MANIFEST_POLL_INTERVAL);
+
+	return { close: () => clearInterval(timer) };
+}
+
+function manifestModifiedTime(): number {
+	try {
+		return statSync(join(DIST_DIR, MANIFEST_NAME)).mtimeMs;
+	} catch {
+		return 0;
+	}
 }
 
 export default { bundleEtag, handleHot, watchBundle };

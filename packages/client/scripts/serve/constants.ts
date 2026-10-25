@@ -10,7 +10,7 @@ export const DIST_DIR = join(__dirname, '..', '..', 'dist');
 // bakes into the bundle, so the two never drift.
 export const LAN_URL = resolveDevServerUrl();
 
-export const WATCH_DEBOUNCE = 100;
+export const MANIFEST_POLL_INTERVAL = 250;
 
 /** The JavaScript bundle inside `DIST_DIR`; every Hermes `unbound.<version>.bundle` is compiled from it. */
 export const SOURCE_BUNDLE_NAME = 'unbound.js';
@@ -26,7 +26,7 @@ export default {
 	HOST,
 	DIST_DIR,
 	LAN_URL,
-	WATCH_DEBOUNCE,
+	MANIFEST_POLL_INTERVAL,
 	SOURCE_BUNDLE_NAME,
 	MANIFEST_NAME,
 	BUNDLE_PATTERN,
