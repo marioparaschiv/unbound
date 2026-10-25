@@ -1,9 +1,15 @@
 import type { APIEmbed, APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
-import { DiscordAPIError, RESTJSONErrorCodes, Routes } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
-import { randomBytes } from 'node:crypto';
+import { Routes } from 'discord.js';
 import { eq } from 'drizzle-orm';
 
+import {
+	deleteMessage,
+	listOwnMessages,
+	messageExists,
+	postMessage,
+	truncate,
+} from '~/lib/discord-messages';
 import {
 	COLOURS,
 	ICON_PACKS_CHANNEL_ID,
@@ -18,7 +24,6 @@ import type { Database } from '~/db/database';
 export type AddonChannels = { [K in AddonType]?: string };
 
 type AddonRow = typeof addon.$inferSelect;
-type AddonMessageRow = typeof addonMessage.$inferSelect;
 
 const logger = createLogger('Bot', 'Addons');
 
@@ -29,27 +34,10 @@ export const ADDON_CHANNELS: AddonChannels = {
 	'icon-pack': ICON_PACKS_CHANNEL_ID,
 };
 
-const PAGE_LIMIT = 100;
 // Discord rejects a longer value or an embed over 6000 characters in all, failing every retry.
 const TITLE_LIMIT = 256;
 const DESCRIPTION_LIMIT = 2048;
 const FIELD_LIMIT = 1024;
-
-function truncate(text: string, max: number) {
-	return text.length > max ? `${text.slice(0, max - 1)}…` : text;
-}
-
-function isUnknownMessage(error: unknown): error is DiscordAPIError {
-	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMessage;
-}
-
-function newest(ids: string[]) {
-	return ids.reduce((max, id) => (BigInt(id) > BigInt(max) ? id : max), '0');
-}
-
-function oldestFirst(a: APIMessage, b: APIMessage) {
-	return BigInt(a.id) < BigInt(b.id) ? -1 : 1;
-}
 
 function desiredChannel(row: AddonRow, channels: AddonChannels) {
 	return row.listed ? channels[row.type] : undefined;
@@ -75,58 +63,6 @@ export function renderAddon(item: AddonFeedItem): RESTPostAPIChannelMessageJSONB
 	};
 
 	return { embeds: [embed], allowed_mentions: { parse: [] } };
-}
-
-async function postMessage(rest: REST, channelId: string, item: AddonFeedItem) {
-	// REST retries a timed-out post with this body, and Discord answers a repeated nonce with the original.
-	const body = {
-		...renderAddon(item),
-		nonce: randomBytes(12).toString('hex'),
-		enforce_nonce: true,
-	};
-	const message = (await rest.post(Routes.channelMessages(channelId), { body })) as APIMessage;
-
-	return message.id;
-}
-
-async function messageExists(rest: REST, posted: AddonMessageRow) {
-	try {
-		await rest.get(Routes.channelMessage(posted.channelId, posted.messageId));
-
-		return true;
-	} catch (error) {
-		if (!isUnknownMessage(error)) {
-			throw error;
-		}
-
-		return false;
-	}
-}
-
-async function deleteMessage(rest: REST, channelId: string, messageId: string) {
-	try {
-		await rest.delete(Routes.channelMessage(channelId, messageId));
-	} catch (error) {
-		if (!isUnknownMessage(error)) {
-			throw error;
-		}
-	}
-}
-
-async function ownMessages(rest: REST, channelId: string, selfId: string) {
-	const own: APIMessage[] = [];
-	let cursor = '0';
-	let page: APIMessage[];
-
-	do {
-		const query = new URLSearchParams({ after: cursor, limit: String(PAGE_LIMIT) });
-
-		page = (await rest.get(Routes.channelMessages(channelId), { query })) as APIMessage[];
-		cursor = newest([cursor, ...page.map((message) => message.id)]);
-		own.push(...page.filter((message) => message.author.id === selfId));
-	} while (page.length === PAGE_LIMIT);
-
-	return own.sort(oldestFirst);
 }
 
 async function storeMessage(
@@ -238,7 +174,8 @@ export async function syncAddon(
 
 	const kept =
 		posted?.channelId === channelId &&
-		(present?.has(posted.messageId) ?? (await messageExists(rest, posted)));
+		(present?.has(posted.messageId) ??
+			(await messageExists(rest, posted.channelId, posted.messageId)));
 
 	if (posted && kept) {
 		if (posted.postedHash === current.contentHash) return;
@@ -258,7 +195,7 @@ export async function syncAddon(
 		await deleteMessage(rest, posted.channelId, posted.messageId);
 	}
 
-	const messageId = await postMessage(rest, channelId, current.data);
+	const messageId = await postMessage(rest, channelId, renderAddon(current.data));
 
 	try {
 		await storeMessage(db, id, channelId, messageId, current.contentHash);
@@ -294,7 +231,7 @@ export async function reconcileAddons(
 
 	for (const channelId of new Set(Object.values(channels))) {
 		if (channelId) {
-			listings.set(channelId, await ownMessages(rest, channelId, selfId));
+			listings.set(channelId, await listOwnMessages(rest, channelId, selfId));
 		}
 	}
 

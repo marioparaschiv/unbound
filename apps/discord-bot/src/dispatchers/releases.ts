@@ -1,10 +1,9 @@
-import type { APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
+import type { REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import { and, asc, eq, gte, isNull } from 'drizzle-orm';
 import { createLogger } from '@unbound-app/logger';
-import { randomBytes } from 'node:crypto';
-import { Routes } from 'discord.js';
 
 import { COLOURS, RELEASES_CHANNEL_ID, RELEASES_ROLE_ID } from '~/lib/constants';
+import { listOwnMessages, postMessage, truncate } from '~/lib/discord-messages';
 import type { LoaderPlatform } from '~/lib/feed/types';
 import type { Dispatcher } from '~/dispatchers/types';
 import type { Database } from '~/db/database';
@@ -30,26 +29,13 @@ export const RELEASE_TARGET: ReleaseTarget = {
 };
 
 const PLATFORM_NAMES: Record<LoaderPlatform, string> = { ios: 'iOS', android: 'Android' };
-const PAGE_LIMIT = 100;
 // An older release is never announced, or a first deploy would ping the role once per historic release.
 const RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 // Discord rejects an embed over 6000 characters in all, which would fail the post on every retry.
 const CHANGELOG_LIMIT = 4000;
 
-function truncate(text: string, max: number) {
-	return text.length > max ? `${text.slice(0, max - 1)}…` : text;
-}
-
 function isPlatform(value: string): value is LoaderPlatform {
 	return Object.hasOwn(PLATFORM_NAMES, value);
-}
-
-function newest(ids: string[]) {
-	return ids.reduce((max, id) => (BigInt(id) > BigInt(max) ? id : max), '0');
-}
-
-function oldestFirst(a: APIMessage, b: APIMessage) {
-	return BigInt(a.id) < BigInt(b.id) ? -1 : 1;
 }
 
 function byKey(key: ReleaseKey) {
@@ -100,22 +86,6 @@ export function renderRelease(
 	};
 }
 
-async function ownMessages(rest: REST, channelId: string, selfId: string) {
-	const own: APIMessage[] = [];
-	let cursor = '0';
-	let page: APIMessage[];
-
-	do {
-		const query = new URLSearchParams({ after: cursor, limit: String(PAGE_LIMIT) });
-
-		page = (await rest.get(Routes.channelMessages(channelId), { query })) as APIMessage[];
-		cursor = newest([cursor, ...page.map((message) => message.id)]);
-		own.push(...page.filter((message) => message.author.id === selfId));
-	} while (page.length === PAGE_LIMIT);
-
-	return own.sort(oldestFirst);
-}
-
 // Our listed announcement whose title names an unannounced release lost its id write, so it is
 // adopted. Nothing here is ever deleted: its ping already happened.
 async function adoptOrphans(db: Database, rest: REST, selfId: string, target: ReleaseTarget) {
@@ -125,7 +95,7 @@ async function adoptOrphans(db: Database, rest: REST, selfId: string, target: Re
 		.where(isNull(loaderRelease.messageId));
 	const byTitle = new Map(unannounced.map((row) => [releaseTitle(row), row]));
 
-	for (const message of await ownMessages(rest, target.channelId, selfId)) {
+	for (const message of await listOwnMessages(rest, target.channelId, selfId)) {
 		const title = message.embeds[0]?.title;
 		const release = title ? byTitle.get(title) : undefined;
 
@@ -144,19 +114,15 @@ async function adoptOrphans(db: Database, rest: REST, selfId: string, target: Re
 // Once posted, a release is never edited or reposted, even if its message was deleted by hand:
 // a repost would ping the role a second time.
 async function announce(db: Database, rest: REST, release: ReleaseRow, target: ReleaseTarget) {
-	// REST retries a timed-out post with this body, and Discord answers a repeated nonce with the original.
-	const body = {
-		...renderRelease(release, target.roleId),
-		nonce: randomBytes(12).toString('hex'),
-		enforce_nonce: true,
-	};
-	const message = (await rest.post(Routes.channelMessages(target.channelId), {
-		body,
-	})) as APIMessage;
+	const messageId = await postMessage(
+		rest,
+		target.channelId,
+		renderRelease(release, target.roleId),
+	);
 
 	await db
 		.update(loaderRelease)
-		.set({ channelId: target.channelId, messageId: message.id })
+		.set({ channelId: target.channelId, messageId })
 		.where(byKey(release));
 }
 
