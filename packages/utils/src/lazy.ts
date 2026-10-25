@@ -26,6 +26,15 @@ function lazy<T extends object>(initializer: () => T): T {
 		has: (_, prop) => prop in (resolve() as object),
 		set: (_, prop, value) => ((resolve()[prop as keyof T] = value), true),
 		deleteProperty: (_, prop) => delete resolve()[prop as keyof T],
+		defineProperty: (_, prop, descriptor) => {
+			const defined = Reflect.defineProperty(resolve(), prop, descriptor);
+
+			if (defined && descriptor.configurable === false) {
+				Reflect.defineProperty(target, prop, descriptor);
+			}
+
+			return defined;
+		},
 		ownKeys: () => Reflect.ownKeys(resolve()),
 		getPrototypeOf: () => Reflect.getPrototypeOf(resolve()),
 		getOwnPropertyDescriptor: (_, prop) => {
@@ -33,7 +42,10 @@ function lazy<T extends object>(initializer: () => T): T {
 
 			// Proxy invariant: a non-configurable target prop can't be reported for a configurable one, so
 			// force `configurable` since the target is an empty, fully-configurable object.
-			if (descriptor) {
+			if (
+				descriptor &&
+				Reflect.getOwnPropertyDescriptor(target, prop)?.configurable !== false
+			) {
 				descriptor.configurable = true;
 			}
 
