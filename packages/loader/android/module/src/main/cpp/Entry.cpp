@@ -1,3 +1,4 @@
+#include "AndroidHotReload.h"
 #include "AndroidLoader.h"
 #include "LoaderColor.h"
 #include "LoaderPreferences.h"
@@ -142,34 +143,6 @@ static jint nativeHermesBytecodeVersion(JNIEnv *env, jclass, jbyteArray header)
     uint32_t version = loader::hermesBytecodeVersion(bytes, static_cast<size_t>(length));
     env->ReleaseByteArrayElements(header, bytes, JNI_ABORT);
     return static_cast<jint>(version);
-}
-
-static jstring nativeHotReloadURL(JNIEnv *env, jclass)
-{
-    auto loader = currentLoader();
-    std::optional<std::string> url = loader ? loader->hotReloadURL() : std::nullopt;
-    return url ? toJavaString(env, *url) : nullptr;
-}
-
-static void nativeHotReloadConnected(JNIEnv *, jclass)
-{
-    if (auto loader = currentLoader())
-    {
-        loader->hotReloadConnected();
-    }
-}
-
-static jboolean nativeHotReloadFeed(JNIEnv *env, jclass, jstring chunk)
-{
-    auto loader = currentLoader();
-    return loader && loader->hotReloadFeed(toStdString(env, chunk)) ? JNI_TRUE : JNI_FALSE;
-}
-
-static jlong nativeHotReloadNextDelayMs(JNIEnv *, jclass)
-{
-    auto loader = currentLoader();
-    double seconds = loader ? loader->hotReloadNextDelay() : loader::kHotReloadMaximumDelaySeconds;
-    return static_cast<jlong>(seconds * 1000);
 }
 
 static jboolean nativeGetBoolean(JNIEnv *env, jclass, jstring store, jstring key, jboolean fallback)
@@ -408,10 +381,6 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeDispatchHookEvent)},
         {"nativeHermesBytecodeVersion", "([B)I",
          reinterpret_cast<void *>(nativeHermesBytecodeVersion)},
-        {"nativeHotReloadURL", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeHotReloadURL)},
-        {"nativeHotReloadConnected", "()V", reinterpret_cast<void *>(nativeHotReloadConnected)},
-        {"nativeHotReloadFeed", "(Ljava/lang/String;)Z", reinterpret_cast<void *>(nativeHotReloadFeed)},
-        {"nativeHotReloadNextDelayMs", "()J", reinterpret_cast<void *>(nativeHotReloadNextDelayMs)},
         {"nativeGetBoolean", "(Ljava/lang/String;Ljava/lang/String;Z)Z",
          reinterpret_cast<void *>(nativeGetBoolean)},
         {"nativeSetBoolean", "(Ljava/lang/String;Ljava/lang/String;Z)V",
@@ -432,7 +401,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
     };
 
     if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) != JNI_OK ||
-        !cacheCallbacks(env, bridge.get()))
+        !cacheCallbacks(env, bridge.get()) || !registerHotReloadNatives(env))
     {
         clearPendingException(env);
         return JNI_ERR;

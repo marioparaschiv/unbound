@@ -375,7 +375,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if strings.Contains(string(bridge), "result = invokeObject(runtime, target, selector, arguments)") {
 		t.Fatal("Objective-C invocation still creates JSI values on the main thread")
 	}
-	for _, required := range []string{"!gLoaderPrepared.exchange(true)", "pipeline().prepare()", "pipeline().enqueueBundle()"} {
+	for _, required := range []string{"[HotReload observe];", "pipeline().prepare()", "pipeline().enqueueBundle()"} {
 		if !strings.Contains(string(loader), required) {
 			t.Fatalf("loader lifecycle guard %q is missing", required)
 		}

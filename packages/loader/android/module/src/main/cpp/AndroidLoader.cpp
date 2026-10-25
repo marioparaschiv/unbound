@@ -1,5 +1,6 @@
 #include "AndroidLoader.h"
 
+#include "AndroidHotReload.h"
 #include "JniEnvironment.h"
 #include "LoaderAddons.h"
 #include "LoaderColor.h"
@@ -58,6 +59,9 @@ namespace unbound::android
                 return download(url, destination, headers, policy);
             });
         pipeline_ = std::make_unique<loader::LoaderPipeline>(shared_from_this(), loader::updaterSettings(settings_), *updater_);
+        hotReload_ = createHotReloadController(
+            settings_, [this] { return resolveUpdateURL(); },
+            [this](double seconds, std::function<void()> work) { runAfter(seconds, std::move(work)); });
     }
 
     std::string AndroidLoader::toolbox(const std::string &action, const std::string &argument)
@@ -257,30 +261,9 @@ namespace unbound::android
         return !clearPendingException(env) && serving == JNI_TRUE;
     }
 
-    std::optional<std::string> AndroidLoader::hotReloadURL()
+    std::shared_ptr<loader::HotReloadController> AndroidLoader::hotReload()
     {
-        std::optional<std::string> base = resolveUpdateURL();
-        return base ? loader::hotReloadURL(*base) : std::nullopt;
-    }
-
-    void AndroidLoader::hotReloadConnected()
-    {
-        if (!hotReloadStream_)
-        {
-            hotReloadStream_ = std::make_unique<loader::HotReloadStream>(loader::updaterSettings(settings_));
-        }
-        hotReloadStream_->reset();
-        hotReloadBackoff_.reset();
-    }
-
-    bool AndroidLoader::hotReloadFeed(const std::string &chunk)
-    {
-        return hotReloadStream_ && hotReloadStream_->feed(chunk);
-    }
-
-    double AndroidLoader::hotReloadNextDelay()
-    {
-        return hotReloadBackoff_.next();
+        return hotReload_;
     }
 
     uint32_t AndroidLoader::runtimeBytecodeVersion()
@@ -330,6 +313,7 @@ namespace unbound::android
 
     void AndroidLoader::onBundleExecuted()
     {
+        hotReload_->sync();
         JNIEnv *env = currentEnvironment();
         if (!env)
         {

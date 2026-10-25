@@ -94,10 +94,7 @@ namespace unbound::android
         std::string toolbox(const std::string &action, const std::string &argument);
         std::string resolveFont(const std::string &family);
         std::string themeColorsJSON(const std::string &themeId);
-        std::optional<std::string> hotReloadURL();
-        void hotReloadConnected();
-        bool hotReloadFeed(const std::string &chunk);
-        double hotReloadNextDelay();
+        std::shared_ptr<loader::HotReloadController> hotReload();
 
         void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) override;
         bool isMainThread() override;
@@ -128,8 +125,7 @@ namespace unbound::android
         loader::SettingsStore                    settings_;
         std::unique_ptr<loader::BundleUpdater>   updater_;
         std::unique_ptr<loader::LoaderPipeline>  pipeline_;
-        std::unique_ptr<loader::HotReloadStream> hotReloadStream_;
-        loader::HotReloadBackoff                 hotReloadBackoff_;
+        std::shared_ptr<loader::HotReloadController> hotReload_;
         std::mutex                               queueMutex_;
         std::deque<std::function<void(facebook::jsi::Runtime &)>> queue_;
         std::mutex                               mainQueueMutex_;

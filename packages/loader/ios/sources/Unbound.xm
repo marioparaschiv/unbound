@@ -18,8 +18,6 @@
 
 #import <substrate.h>
 
-#include <atomic>
-
 using unbound::ios::toNSString;
 using unbound::ios::toStdString;
 
@@ -38,7 +36,6 @@ static NSString *gPendingBrowserLoginToken = nil;
 static BOOL      gBrowserLoginIsApplying    = NO;
 static BOOL      gBundleIsReady             = NO;
 static NSUInteger gBrowserLoginFailureCount = 0;
-static std::atomic_bool gLoaderPrepared{false};
 
 static void applyPendingBrowserLogin(void)
 {
@@ -181,6 +178,7 @@ public:
 
     void onBundleExecuted() override
     {
+        [HotReload observe];
         dispatch_async(dispatch_get_main_queue(), ^{
             gBundleIsReady = YES;
             applyPendingBrowserLogin();
@@ -215,11 +213,6 @@ static void prepareLoading(id instance)
     gInstance      = instance;
     gBundleIsReady = NO;
     dispatch_async(dispatch_get_main_queue(), ^{ [DevOverlay refreshOverlay]; });
-
-    if ([CoreBridge preferenceEnabled:@"loader-enabled"] && !gLoaderPrepared.exchange(true))
-    {
-        [HotReload observe];
-    }
     pipeline().prepare();
 }
 
