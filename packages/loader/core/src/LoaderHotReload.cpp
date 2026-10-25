@@ -46,12 +46,12 @@ namespace loader
         std::string base = "http://" + *devServerHost + ":" + std::to_string(kDevServerPort) + "/";
         if (!isServing || !isServing(base + std::string(kDevServerProbePath), kDevServerProbeTimeoutSeconds))
         {
-            log(LogLevel::Info, "updater",
+            log(LogLevel::Info, LOG_CATEGORY_UPDATER,
                 "Dev server: " + base + " is not reachable; using the default update URL.");
             return std::nullopt;
         }
 
-        log(LogLevel::Info, "updater", "Dev server: using " + base + ".");
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Dev server: using " + base + ".");
         return base;
     }
 
@@ -145,11 +145,11 @@ namespace loader
         std::string stored = settings.getString("loader.update.etag", "");
         if (!stored.empty() && normalizedEtag(stored) == normalizedEtag(*incoming))
         {
-            log(LogLevel::Info, "updater", "Hot-reload: etag unchanged (" + *incoming + "); skipping reload.");
+            log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Hot-reload: etag unchanged (" + *incoming + "); skipping reload.");
             return false;
         }
 
-        log(LogLevel::Info, "updater",
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
             "Hot-reload: etag mismatch (stored " + (stored.empty() ? std::string("<none>") : stored) +
                 ", incoming " + *incoming + ") -> reloading.");
         return true;
@@ -192,7 +192,7 @@ namespace loader
 
     static void logHotReload(const std::string &message)
     {
-        log(LogLevel::Info, "updater", "Hot-reload: " + message);
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Hot-reload: " + message);
     }
 
     HotReloadController::HotReloadController(SettingsStore &settings, HotReloadURLResolver resolveBaseURL,

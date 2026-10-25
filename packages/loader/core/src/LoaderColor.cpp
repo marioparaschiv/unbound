@@ -97,4 +97,9 @@ namespace loader
         return (channel(color.alpha) << 24) | (channel(color.red) << 16) | (channel(color.green) << 8) |
                channel(color.blue);
     }
+
+    bool isDarkColor(const RGBAColor &color)
+    {
+        return 0.299 * color.red + 0.587 * color.green + 0.114 * color.blue < 0.5;
+    }
 }

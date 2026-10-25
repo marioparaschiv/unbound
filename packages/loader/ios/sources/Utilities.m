@@ -454,20 +454,6 @@ static NSString *bundle = nil;
     [alertView.layer addAnimation:animationGroup forKey:@"redLightsaberGlow"];
 }
 
-+ (id)parseJSON:(NSData *)data
-{
-    NSError *error = nil;
-
-    id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:&error];
-
-    if (error)
-    {
-        @throw error;
-    }
-
-    return object;
-}
-
 + (NSData *)fetchDataWithTimeout:(NSURL *)url timeout:(NSTimeInterval)timeout
 {
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
@@ -1003,34 +989,6 @@ static NSString *defaultGatewayAddress(void)
                         [application openURL:webURL options:@{} completionHandler:nil];
                     }
                 }];
-}
-
-+ (NSString *)JSONString:(NSString *)str
-{
-    if (!str)
-        return @"null";
-    NSString *escaped = [str stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
-    return [NSString stringWithFormat:@"\"%@\"", escaped];
-}
-
-+ (NSString *)JSONStringFromObject:(id)object
-                           options:(NSJSONWritingOptions)opts
-                          fallback:(NSString *)fallback
-{
-    NSError *error = nil;
-    NSData  *data  = [NSJSONSerialization dataWithJSONObject:object options:opts error:&error];
-
-    if (error != nil || data == nil)
-    {
-        return fallback;
-    }
-
-    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-}
-
-+ (BOOL)isRecoveryModeEnabled
-{
-    return [CoreBridge preferenceEnabled:@"recovery"];
 }
 
 + (UIWindow *)keyWindow

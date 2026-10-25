@@ -109,12 +109,12 @@ namespace loader::native
             }
             catch (const std::exception &error)
             {
-                log(LogLevel::Error, "plugins",
+                log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
                     std::string("Runtime generation listener failed: ") + error.what());
             }
             catch (...)
             {
-                log(LogLevel::Error, "plugins", "Runtime generation listener failed");
+                log(LogLevel::Error, LOG_CATEGORY_PLUGINS, "Runtime generation listener failed");
             }
         }
     }
@@ -569,11 +569,11 @@ namespace loader::native
             }
             catch (const std::exception &error)
             {
-                log(LogLevel::Error, "plugins", std::string("Native plugin callback failed: ") + error.what());
+                log(LogLevel::Error, LOG_CATEGORY_PLUGINS, std::string("Native plugin callback failed: ") + error.what());
             }
             catch (...)
             {
-                log(LogLevel::Error, "plugins", "Native plugin callback failed");
+                log(LogLevel::Error, LOG_CATEGORY_PLUGINS, "Native plugin callback failed");
             }
         });
     }

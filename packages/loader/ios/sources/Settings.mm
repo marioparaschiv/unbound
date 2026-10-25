@@ -10,16 +10,11 @@
 
 #include "LoaderPreferences.h"
 
-using unbound::ios::jsonFromObject;
-using unbound::ios::objectFromJSON;
 using unbound::ios::toStdString;
 
 NSString *const SettingsDidChangeNotification = @"SettingsDidChange";
 
-static const NSTimeInterval kSettingsSaveDebounce = 0.3;
-
 static std::unique_ptr<loader::SettingsStore> gStore;
-static dispatch_source_t                      saveTimer = nil;
 
 loader::SettingsStore &UnboundSettingsStore()
 {
@@ -52,85 +47,6 @@ loader::SettingsStore &UnboundSettingsStore()
 + (void)loadSettings
 {
     UnboundSettingsStore().load();
-}
-
-+ (id)rawValueForStore:(NSString *)store key:(NSString *)key
-{
-    std::optional<nlohmann::json> value = UnboundSettingsStore().get(toStdString(store), toStdString(key));
-    return value ? objectFromJSON(*value) : nil;
-}
-
-+ (NSString *)getString:(NSString *)store key:(NSString *)key def:(NSString *)def
-{
-    return [Settings rawValueForStore:store key:key] ?: def;
-}
-
-+ (NSDictionary *)getDictionary:(NSString *)store key:(NSString *)key def:(NSDictionary *)def
-{
-    return [Settings rawValueForStore:store key:key] ?: def;
-}
-
-+ (BOOL)getBoolean:(NSString *)store key:(NSString *)key def:(BOOL)def
-{
-    return UnboundSettingsStore().getBoolean(toStdString(store), toStdString(key), def);
-}
-
-+ (void)set:(NSString *)store key:(NSString *)key value:(id)value
-{
-    UnboundSettingsStore().set(toStdString(store), toStdString(key), jsonFromObject(value));
-    [Settings scheduleSave];
-}
-
-+ (void)reset
-{
-    UnboundSettingsStore().replace("{}");
-    [Settings save];
-}
-
-+ (void)scheduleSave
-{
-    @synchronized([Settings class])
-    {
-        if (saveTimer)
-        {
-            dispatch_source_cancel(saveTimer);
-        }
-
-        saveTimer = [Utilities createDebounceTimer:kSettingsSaveDebounce
-                                              queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)
-                                              block:^{ [Settings save]; }];
-    }
-}
-
-+ (void)save
-{
-    if (!UnboundSettingsStore().save())
-    {
-        [Logger error:LOG_CATEGORY_SETTINGS format:@"Failed to write settings.json."];
-    }
-}
-
-+ (NSString *)getSettings
-{
-    return @(UnboundSettingsStore().serialize().c_str());
-}
-
-+ (BOOL)loadFromJSONString:(NSString *)json error:(NSError **)error
-{
-    if (!UnboundSettingsStore().replace(toStdString(json)))
-    {
-        if (error)
-        {
-            *error = [NSError errorWithDomain:@"Settings"
-                                         code:2
-                                     userInfo:@{NSLocalizedDescriptionKey : @"Root must be a JSON object"}];
-        }
-        return NO;
-    }
-
-    [Settings save];
-    [[NSNotificationCenter defaultCenter] postNotificationName:SettingsDidChangeNotification object:nil];
-    return YES;
 }
 
 @end

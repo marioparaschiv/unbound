@@ -48,17 +48,17 @@ namespace loader
         }
         catch (const jsi::JSError &error)
         {
-            log(LogLevel::Error, "default",
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 "JSI eval of '" + tag + "' threw JSError: " + error.what());
         }
         catch (const std::exception &error)
         {
-            log(LogLevel::Error, "default",
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 "JSI eval of '" + tag + "' threw exception: " + error.what());
         }
         catch (...)
         {
-            log(LogLevel::Error, "default", "JSI eval of '" + tag + "' threw an unknown error");
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "JSI eval of '" + tag + "' threw an unknown error");
         }
         return false;
     }
@@ -77,17 +77,17 @@ namespace loader
         }
         catch (const jsi::JSError &error)
         {
-            log(LogLevel::Error, "default",
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 "JSI source eval of '" + tag + "' threw JSError: " + error.what());
         }
         catch (const std::exception &error)
         {
-            log(LogLevel::Error, "default",
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 "JSI source eval of '" + tag + "' threw exception: " + error.what());
         }
         catch (...)
         {
-            log(LogLevel::Error, "default",
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 "JSI source eval of '" + tag + "' threw an unknown error");
         }
         return jsi::Value();
@@ -140,7 +140,7 @@ namespace loader
         }
         catch (const std::exception &error)
         {
-            log(LogLevel::Error, "default", std::string("The run-application gate failed: ") + error.what());
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT, std::string("The run-application gate failed: ") + error.what());
             return false;
         }
     }

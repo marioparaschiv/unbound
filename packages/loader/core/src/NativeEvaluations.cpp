@@ -170,7 +170,7 @@ namespace loader::native
     {
         std::string outcome = record.ok ? truncatedText(record.value.value_or("undefined"), kEvaluationLogFieldLimit)
                                         : truncatedText(record.error.value_or("unknown error"), kEvaluationLogFieldLimit);
-        log(record.ok ? LogLevel::Info : LogLevel::Error, "debugger",
+        log(record.ok ? LogLevel::Info : LogLevel::Error, LOG_CATEGORY_DEBUGGER,
             "Eval " + record.identifier + (record.ok ? " succeeded" : " failed") + " (" +
                 std::to_string(record.logs.size()) + " console lines)\n> " +
                 truncatedText(record.code, kEvaluationLogFieldLimit) + "\n< " + outcome);
@@ -198,7 +198,7 @@ namespace loader::native
         }
         catch (const std::exception &error)
         {
-            log(LogLevel::Error, "debugger", std::string("Rejected evaluation record: ") + error.what());
+            log(LogLevel::Error, LOG_CATEGORY_DEBUGGER, std::string("Rejected evaluation record: ") + error.what());
             return false;
         }
 
@@ -289,7 +289,7 @@ namespace loader::native
                                 }
                                 catch (...)
                                 {
-                                    log(LogLevel::Error, "debugger", "Rejected evaluation record: reading it failed");
+                                    log(LogLevel::Error, LOG_CATEGORY_DEBUGGER, "Rejected evaluation record: reading it failed");
                                     return jsi::Value(false);
                                 }
                             });

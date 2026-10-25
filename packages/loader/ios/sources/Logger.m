@@ -58,14 +58,11 @@ static os_log_t getLoggerForCategory(const char *category)
             case LogLevelInfo:
                 os_log_info(logger, "%{public}@", message);
                 break;
-            case LogLevelNotice:
+            case LogLevelWarning:
                 os_log(logger, "%{public}@", message);
                 break;
             case LogLevelError:
                 os_log_error(logger, "%{public}@", message);
-                break;
-            case LogLevelFault:
-                os_log_fault(logger, "%{public}@", message);
                 break;
         }
     });
@@ -91,14 +88,14 @@ static os_log_t getLoggerForCategory(const char *category)
     [self log:LogLevelInfo category:category format:@"%@", message];
 }
 
-+ (void)notice:(const char *)category format:(NSString *)format, ...
++ (void)warning:(const char *)category format:(NSString *)format, ...
 {
     va_list args;
     va_start(args, format);
     NSString *message = [[NSString alloc] initWithFormat:format arguments:args];
     va_end(args);
 
-    [self log:LogLevelNotice category:category format:@"%@", message];
+    [self log:LogLevelWarning category:category format:@"%@", message];
 }
 
 + (void)error:(const char *)category format:(NSString *)format, ...
@@ -109,16 +106,6 @@ static os_log_t getLoggerForCategory(const char *category)
     va_end(args);
 
     [self log:LogLevelError category:category format:@"%@", message];
-}
-
-+ (void)fault:(const char *)category format:(NSString *)format, ...
-{
-    va_list args;
-    va_start(args, format);
-    NSString *message = [[NSString alloc] initWithFormat:format arguments:args];
-    va_end(args);
-
-    [self log:LogLevelFault category:category format:@"%@", message];
 }
 
 @end

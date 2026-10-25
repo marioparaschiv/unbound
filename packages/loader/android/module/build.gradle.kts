@@ -1,3 +1,5 @@
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 plugins {
@@ -14,6 +16,17 @@ val packageVersionCode = packageVersion.split(".").take(3).fold(0) { code, part 
     code * 100 + (part.filter(Char::isDigit).toIntOrNull() ?: 0)
 }
 val resolvedVersionCode = buildNumber?.let { 1_000_000 + it } ?: packageVersionCode.coerceAtLeast(1)
+fun gitOutput(vararg arguments: String): String = providers.exec {
+    commandLine("git", "-C", repositoryRoot.absolutePath, *arguments)
+    isIgnoreExitValue = true
+}.standardOutput.asText.get().trim()
+
+fun buildConfigString(value: String): String = "\"" + value.filter { it.isLetterOrDigit() || it in " ._:/()-" } + "\""
+
+val commitShortHash = gitOutput("rev-parse", "--short", "HEAD")
+val commitSubject = gitOutput("log", "-1", "--pretty=format:%s")
+val commitBranch = gitOutput("branch", "--show-current").ifEmpty { "detached" }
+val buildTimestamp: String = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"))
 val signingStoreFile = System.getenv("ANDROID_SIGNING_STORE_FILE")
 val signingStorePassword = System.getenv("ANDROID_SIGNING_STORE_PASSWORD")
 val signingKeyAlias = System.getenv("ANDROID_SIGNING_KEY_ALIAS")
@@ -36,6 +49,11 @@ android {
         targetSdk = 36
         versionCode = resolvedVersionCode
         versionName = packageVersion
+
+        buildConfigField("String", "COMMIT_SHORT_HASH", buildConfigString(commitShortHash))
+        buildConfigField("String", "COMMIT_SUBJECT", buildConfigString(commitSubject))
+        buildConfigField("String", "COMMIT_BRANCH", buildConfigString(commitBranch))
+        buildConfigField("String", "BUILD_TIMESTAMP", buildConfigString(buildTimestamp))
 
         externalNativeBuild {
             cmake {
@@ -73,6 +91,10 @@ android {
             path = file("src/main/cpp/CMakeLists.txt")
             version = "3.22.1"
         }
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     testOptions {

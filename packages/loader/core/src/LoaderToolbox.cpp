@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <system_error>
 
+#include "LoaderDevOverlay.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
@@ -163,7 +164,7 @@ namespace loader::toolbox
         const bool enabled = toggleRecovery(settings);
         RecoveryToggle result{enabled, preferences::recoveryStatusText(enabled), bundleReady};
 
-        log(LogLevel::Info, "default", "Recovery shortcut: " + result.status + ".");
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Recovery shortcut: " + result.status + ".");
         return result;
     }
 
@@ -176,7 +177,7 @@ namespace loader::toolbox
         }
         catch (const std::exception &error)
         {
-            log(LogLevel::Error, "updater", std::string("Refetching the bundle failed: ") + error.what());
+            log(LogLevel::Error, LOG_CATEGORY_UPDATER, std::string("Refetching the bundle failed: ") + error.what());
             return false;
         }
     }
@@ -469,9 +470,13 @@ namespace loader::toolbox
         {
             return context.settings.serialize();
         }
-        if (action == "replace-settings")
+        if (action == "save-settings")
         {
-            return flag(context.settings.replace(argument) && context.settings.save());
+            return devoverlay::editResultJSON(devoverlay::saveSettings(context.settings, argument)).dump();
+        }
+        if (action == "developer-menu")
+        {
+            return devoverlay::menuJSON(context.settings).dump();
         }
         if (action == "issue-url")
         {

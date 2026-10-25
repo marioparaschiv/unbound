@@ -113,7 +113,7 @@ object TextRewrites {
                     chain.proceed()
                 }
                 runCatching { onTextShown(view, stages) }
-                    .onFailure { Logger.error("plugins", "Text rewrite hosts failed", it) }
+                    .onFailure { Logger.error(LogCategory.PLUGINS, "Text rewrite hosts failed", it) }
                 result
             }
         installed = true
@@ -376,7 +376,7 @@ object TextRewrites {
             override fun onViewAttachedToWindow(attached: View) {
                 val stages = synchronized(lock) { shown[view] } ?: return
                 runCatching { onTextShown(view, stages) }
-                    .onFailure { Logger.error("plugins", "Text rewrite hosts failed", it) }
+                    .onFailure { Logger.error(LogCategory.PLUGINS, "Text rewrite hosts failed", it) }
             }
 
             override fun onViewDetachedFromWindow(detached: View) {

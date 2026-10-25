@@ -1,6 +1,5 @@
 package app.unbound.android
 
-import android.graphics.Color
 import android.graphics.fonts.SystemFonts
 import android.os.Build
 import android.os.Handler
@@ -68,7 +67,8 @@ object NativeBridge {
 
     fun parseColor(value: String): Int? = nativeParseColor(value).takeIf { it >= 0 }?.toInt()
 
-    fun nativeColor(value: String): Int = parseColor(value) ?: Color.TRANSPARENT
+    @JvmStatic
+    external fun nativeMessageBubbleStyle(): DoubleArray
 
     @JvmStatic
     external fun nativeResolveFont(family: String): String
@@ -78,6 +78,30 @@ object NativeBridge {
 
     @JvmStatic
     external fun nativePrepareAddons()
+
+    @JvmStatic
+    external fun nativeLog(level: Int, category: String, message: String)
+
+    @JvmStatic
+    external fun nativeDevOverlayButtonSide(): Double
+
+    @JvmStatic
+    external fun nativeIncompatibleHostMessage(): String
+
+    @JvmStatic
+    external fun nativeDevelopmentBuildBanner(commit: String, subject: String, branch: String, timestamp: String): String
+
+    @JvmStatic
+    external fun nativeDevelopmentBuildBannerSeconds(): Int
+
+    @JvmStatic
+    external fun nativeDevOverlayCenter(bounds: DoubleArray): DoubleArray?
+
+    @JvmStatic
+    external fun nativeClampDevOverlayCenter(x: Double, y: Double, bounds: DoubleArray): DoubleArray?
+
+    @JvmStatic
+    external fun nativeSaveDevOverlayCenter(x: Double, y: Double, bounds: DoubleArray)
 
     @JvmStatic
     fun scheduleRuntimeWork() {
@@ -258,7 +282,7 @@ object NativeBridge {
             deadline.cancel(false)
             connection.disconnect()
         }
-    }.onFailure { Logger.error("updater", "Bundle download failed: $it") }.getOrNull()
+    }.onFailure { Logger.error(LogCategory.UPDATER, "Bundle download failed: $it") }.getOrNull()
 
     @JvmStatic
     fun devServerHost(): String? = Platform.emulatorHostAddress()
@@ -311,7 +335,7 @@ object NativeBridge {
 
     @JvmStatic
     fun onBundleExecuted() {
-        Logger.info("default", "Bundle executed.")
+        Logger.info(LogCategory.DEFAULT, "Bundle executed.")
     }
 
 

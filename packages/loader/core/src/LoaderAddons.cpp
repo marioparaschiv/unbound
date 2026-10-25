@@ -82,7 +82,7 @@ namespace loader
             [&](const std::string &folder, const std::string &directory) {
                 if (!isDirectory(directory))
                 {
-                    log(LogLevel::Info, "plugins",
+                    log(LogLevel::Info, LOG_CATEGORY_PLUGINS,
                         "Skipping " + folder + " as it is not a directory.");
                     return;
                 }
@@ -90,7 +90,7 @@ namespace loader
                 std::string manifestPath = joinPath(directory, "manifest.json");
                 if (!fileExists(manifestPath))
                 {
-                    log(LogLevel::Info, "plugins",
+                    log(LogLevel::Info, LOG_CATEGORY_PLUGINS,
                         "Skipping " + folder + " as it is missing a manifest.");
                     return;
                 }
@@ -106,7 +106,7 @@ namespace loader
                     resolveManifestEntry(directory, *manifest, "main");
                 if (!entry)
                 {
-                    log(LogLevel::Info, "plugins",
+                    log(LogLevel::Info, LOG_CATEGORY_PLUGINS,
                         "Skipping " + folder + " as manifest.main is missing or invalid.");
                     return;
                 }
@@ -114,7 +114,7 @@ namespace loader
                 std::optional<std::string> bundle = readTextFile(*entry);
                 if (!bundle)
                 {
-                    log(LogLevel::Error, "plugins",
+                    log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
                         "Skipping " + folder + " as its entry failed to be read.");
                     return;
                 }
@@ -124,11 +124,11 @@ namespace loader
                 (*manifest)["entry"]  = *entry;
 
                 plugins.push_back({{"manifest", *manifest}, {"bundle", *bundle}});
-                log(LogLevel::Info, "plugins", "Loaded " + folder + " from " + *entry + ".");
+                log(LogLevel::Info, LOG_CATEGORY_PLUGINS, "Loaded " + folder + " from " + *entry + ".");
             });
 
         size_t count = plugins.size();
-        log(LogLevel::Info, "plugins",
+        log(LogLevel::Info, LOG_CATEGORY_PLUGINS,
             "Loaded " + std::to_string(count) + (count == 1 ? " plugin." : " plugins."));
         return plugins;
     }
@@ -142,7 +142,7 @@ namespace loader
             [&](const std::string &folder, const std::string &directory) {
                 if (!isDirectory(directory))
                 {
-                    log(LogLevel::Info, "themes",
+                    log(LogLevel::Info, LOG_CATEGORY_THEMES,
                         "Skipping " + folder + " as it is not a directory.");
                     return;
                 }
@@ -150,7 +150,7 @@ namespace loader
                 std::string manifestPath = joinPath(directory, "manifest.json");
                 if (!fileExists(manifestPath))
                 {
-                    log(LogLevel::Info, "themes",
+                    log(LogLevel::Info, LOG_CATEGORY_THEMES,
                         "Skipping " + folder + " as it is missing a manifest.");
                     return;
                 }
@@ -165,7 +165,7 @@ namespace loader
                 std::string bundlePath = joinPath(directory, "bundle.json");
                 if (!fileExists(bundlePath))
                 {
-                    log(LogLevel::Info, "themes",
+                    log(LogLevel::Info, LOG_CATEGORY_THEMES,
                         "Skipping " + folder + " as it is missing a bundle.");
                     return;
                 }
@@ -199,7 +199,7 @@ namespace loader
 
                                nlohmann::json entry = fontEntry(path, "custom");
                                entry["file"]        = file;
-                               log(LogLevel::Info, "fonts", "Registering font: " + path);
+                               log(LogLevel::Info, LOG_CATEGORY_FONTS, "Registering font: " + path);
                                fonts.push_back(std::move(entry));
                            });
 

@@ -11,6 +11,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (uint32_t)mainBundleBytecodeVersion;
 
 + (nullable UIColor *)colorFromString:(NSString *)value;
++ (BOOL)isDarkColor:(UIColor *)color;
+
++ (CGFloat)messageBubbleRadius;
++ (CGSize)messageBubblePadding;
++ (UIColor *)messageBubbleColorForDarkTheme:(BOOL)dark;
 + (nullable NSDictionary *)themeColorsForId:(NSString *)themeId;
 + (BOOL)hasTheme:(NSString *)themeId;
 
@@ -25,6 +30,16 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSTimeInterval)toolboxHoldDuration;
 + (NSString *)preference:(NSString *)action argument:(NSString *)argument;
 + (BOOL)preferenceEnabled:(NSString *)action;
+
++ (CGFloat)devOverlayButtonSide;
++ (CGFloat)devOverlayButtonMargin;
++ (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets;
++ (CGPoint)clampDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds insets:(UIEdgeInsets)insets;
++ (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds;
+
++ (NSString *)incompatibleHostMessage;
++ (NSString *)developmentBuildBanner;
++ (NSTimeInterval)developmentBuildBannerDuration;
 
 @end
 

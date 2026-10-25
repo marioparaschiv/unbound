@@ -41,7 +41,7 @@ namespace loader
             prefetchToken_.fetch_add(1);
             std::lock_guard<std::mutex> lock(pendingMutex_);
             pending_.reset();
-            log(LogLevel::Info, "default", "Loader is disabled. Aborting.");
+            log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Loader is disabled. Aborting.");
             return;
         }
 
@@ -104,7 +104,7 @@ namespace loader
             }
             catch (const std::exception &error)
             {
-                log(LogLevel::Error, "default", std::string("Bundle download failed. (") +
+                log(LogLevel::Error, LOG_CATEGORY_DEFAULT, std::string("Bundle download failed. (") +
                                                     error.what() + ")");
             }
 
@@ -140,12 +140,12 @@ namespace loader
         {
             if (std::optional<std::string> devtools = bootstrap::script(bootstrap::kDevtools))
             {
-                log(LogLevel::Info, "default", "Executing DevTools bundle...");
+                log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Executing DevTools bundle...");
                 evaluateScript(runtime, *devtools, "unbound:devtools");
             }
         }
 
-        log(LogLevel::Info, "default", "Pre-loading settings, plugins, fonts and themes...");
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Pre-loading settings, plugins, fonts and themes...");
         auto preload = bootstrap::function(runtime, bootstrap::kPreload);
         if (!preload)
         {
@@ -157,20 +157,20 @@ namespace loader
         }
         catch (const std::exception &error)
         {
-            log(LogLevel::Error, "default", std::string("Pre-loading failed: ") + error.what());
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT, std::string("Pre-loading failed: ") + error.what());
         }
     }
 
     void LoaderPipeline::onRuntimeCreated(jsi::Runtime &runtime)
     {
         bool captured = installMetroModuleCapture(runtime);
-        log(captured ? LogLevel::Info : LogLevel::Error, "runtime",
+        log(captured ? LogLevel::Info : LogLevel::Error, LOG_CATEGORY_RUNTIME,
             captured ? "Metro module capture installed before Discord bundle."
                      : "Metro module capture could not be installed.");
 
         bool gated = installRunApplicationGate(
             runtime, [this](jsi::Runtime &rt) { executeNow(rt, kRunApplicationBundleWait); });
-        log(gated ? LogLevel::Info : LogLevel::Error, "runtime",
+        log(gated ? LogLevel::Info : LogLevel::Error, LOG_CATEGORY_RUNTIME,
             gated ? "Unbound will run before Discord's first surface starts."
                   : "The run-application gate could not be installed.");
     }
@@ -199,7 +199,7 @@ namespace loader
                 if (!pending->ready.wait_for(lock, kBundlePreparationTimeout,
                                              [&] { return pending->settled; }))
                 {
-                    log(LogLevel::Error, "default", "Bundle preparation timed out.");
+                    log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Bundle preparation timed out.");
                     return;
                 }
             }
@@ -209,7 +209,7 @@ namespace loader
                 return;
             }
 
-            log(LogLevel::Info, "default", "Scheduling Unbound's bundle for execution...");
+            log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Scheduling Unbound's bundle for execution...");
             executeBundle(pending, token, 0);
         });
     }
@@ -234,13 +234,13 @@ namespace loader
             {
                 if (attempt == 0)
                 {
-                    log(LogLevel::Info, "default",
+                    log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
                         "React Native module readiness state: " + runtimeModuleDiagnostics(runtime));
                 }
 
                 if (attempt >= kMaximumReadinessAttempts)
                 {
-                    log(LogLevel::Error, "default",
+                    log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
                         "React Native modules were not ready after " + std::to_string(attempt) +
                             " attempts.");
                     return;
@@ -288,7 +288,7 @@ namespace loader
             return false;
         }
 
-        log(LogLevel::Info, "default", "Executing Unbound's bundle before the app starts...");
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Executing Unbound's bundle before the app starts...");
         return evaluatePending(runtime, currentPending(), prefetchToken_.load());
     }
 
@@ -300,14 +300,14 @@ namespace loader
 
         if (!updater_.markBundleAttempted(pending->path))
         {
-            log(LogLevel::Error, "default", "Bundle validation marker could not be saved.");
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Bundle validation marker could not be saved.");
             return false;
         }
 
         global.setProperty(runtime, "__loaderBundleInstalled", jsi::Value(true));
         injectPreBundle(runtime);
 
-        log(LogLevel::Info, "default", "Attempting to execute bundle...");
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Attempting to execute bundle...");
         if (!evaluateScript(runtime, pending->bundle, "unbound"))
         {
             global.setProperty(runtime, "__loaderBundleInstalled", jsi::Value(false));
@@ -317,9 +317,9 @@ namespace loader
 
         if (!updater_.acceptBundle(pending->path))
         {
-            log(LogLevel::Error, "default", "Validated bundle could not be promoted.");
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Validated bundle could not be promoted.");
         }
-        log(LogLevel::Info, "default", "Unbound's bundle was successfully executed.");
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Unbound's bundle was successfully executed.");
         if (token == prefetchToken_.load())
         {
             bundleReady_.store(true);

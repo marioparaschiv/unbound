@@ -1,5 +1,7 @@
 #include "AndroidHotReload.h"
 #include "AndroidLoader.h"
+#include "LoaderDevOverlay.h"
+#include "LoaderDiagnostics.h"
 #include "LoaderColor.h"
 #include "LoaderPreferences.h"
 #include "HermesBytecodeHeader.h"
@@ -36,8 +38,13 @@ static int androidPriority(loader::LogLevel level)
 
 static void writeLog(loader::LogLevel level, const std::string &category, const std::string &message)
 {
-    __android_log_print(androidPriority(level), "Unbound", "[%s] %s", category.c_str(),
-                        message.c_str());
+    __android_log_write(androidPriority(level), "Unbound", loader::formatLogLine(category, message).c_str());
+}
+
+static void nativeLog(JNIEnv *env, jclass, jint level, jstring category, jstring message)
+{
+    loader::logFromPlatform(level, category ? toStdString(env, category) : LOG_CATEGORY_DEFAULT,
+                            message ? toStdString(env, message) : std::string());
 }
 
 static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring bootstrapScripts,
@@ -59,7 +66,7 @@ static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring boo
     auto loader = std::make_shared<AndroidLoader>(std::move(configuration), gCallbacks);
     loader->start();
     setCurrentLoader(loader);
-    loader::log(loader::LogLevel::Info, "default", "Native loader initialized.");
+    loader::log(loader::LogLevel::Info, LOG_CATEGORY_DEFAULT, "Native loader initialized.");
 }
 
 static void nativeOnLoadJSBundle(JNIEnv *, jclass)
@@ -188,6 +195,20 @@ static jlong nativeParseColor(JNIEnv *env, jclass, jstring value)
     return color ? static_cast<jlong>(loader::toARGB(*color)) : -1;
 }
 
+static jdoubleArray nativeMessageBubbleStyle(JNIEnv *env, jclass)
+{
+    const auto  &style     = loader::preferences::kMessageBubbleStyle;
+    const jdouble values[] = {style.radius, style.horizontalPadding, style.verticalPadding,
+                              static_cast<jdouble>(loader::toARGB(loader::preferences::messageBubbleColor(true))),
+                              static_cast<jdouble>(loader::toARGB(loader::preferences::messageBubbleColor(false)))};
+    jdoubleArray result = env->NewDoubleArray(5);
+    if (result)
+    {
+        env->SetDoubleArrayRegion(result, 0, 5, values);
+    }
+    return result;
+}
+
 static jstring nativeResolveFont(JNIEnv *env, jclass, jstring family)
 {
     auto loader = currentLoader();
@@ -216,6 +237,88 @@ static void nativePrepareAddons(JNIEnv *, jclass)
     {
         loader->onAddonsPrepared();
     }
+}
+
+static bool readOverlayBounds(JNIEnv *env, jdoubleArray bounds, loader::devoverlay::Size &size,
+                              loader::devoverlay::Insets &insets)
+{
+    if (!bounds || env->GetArrayLength(bounds) < 6)
+    {
+        return false;
+    }
+    jdouble values[6];
+    env->GetDoubleArrayRegion(bounds, 0, 6, values);
+    size   = {values[0], values[1]};
+    insets = {values[2], values[3], values[4], values[5]};
+    return true;
+}
+
+static jdoubleArray toPointArray(JNIEnv *env, loader::devoverlay::Point point)
+{
+    jdoubleArray result = env->NewDoubleArray(2);
+    if (result)
+    {
+        const jdouble values[2] = {point.x, point.y};
+        env->SetDoubleArrayRegion(result, 0, 2, values);
+    }
+    return result;
+}
+
+static jdouble nativeDevOverlayButtonSide(JNIEnv *, jclass)
+{
+    return loader::devoverlay::kButtonSide;
+}
+
+static jdoubleArray nativeDevOverlayCenter(JNIEnv *env, jclass, jdoubleArray bounds)
+{
+    loader::devoverlay::Size   size;
+    loader::devoverlay::Insets insets;
+    auto                       loader = currentLoader();
+    if (!loader || !readOverlayBounds(env, bounds, size, insets))
+    {
+        return nullptr;
+    }
+    return toPointArray(env, loader::devoverlay::buttonCenter(loader->settings(), size, insets));
+}
+
+static jdoubleArray nativeClampDevOverlayCenter(JNIEnv *env, jclass, jdouble x, jdouble y, jdoubleArray bounds)
+{
+    loader::devoverlay::Size   size;
+    loader::devoverlay::Insets insets;
+    if (!readOverlayBounds(env, bounds, size, insets))
+    {
+        return nullptr;
+    }
+    return toPointArray(env, loader::devoverlay::clampCenter({x, y}, size, insets));
+}
+
+static void nativeSaveDevOverlayCenter(JNIEnv *env, jclass, jdouble x, jdouble y, jdoubleArray bounds)
+{
+    loader::devoverlay::Size   size;
+    loader::devoverlay::Insets insets;
+    auto                       loader = currentLoader();
+    if (loader && readOverlayBounds(env, bounds, size, insets))
+    {
+        loader::devoverlay::saveButtonCenter(loader->settings(), {x, y}, size);
+    }
+}
+
+static jstring nativeIncompatibleHostMessage(JNIEnv *env, jclass)
+{
+    return toJavaString(env, loader::diagnostics::kIncompatibleHostMessage);
+}
+
+static jstring nativeDevelopmentBuildBanner(JNIEnv *env, jclass, jstring commit, jstring subject, jstring branch,
+                                            jstring timestamp)
+{
+    const auto text = [env](jstring value) { return value ? toStdString(env, value) : std::string(); };
+    return toJavaString(env, loader::diagnostics::developmentBuildBanner(
+                                 {text(commit), text(subject), text(branch), text(timestamp)}));
+}
+
+static jint nativeDevelopmentBuildBannerSeconds(JNIEnv *, jclass)
+{
+    return static_cast<jint>(loader::diagnostics::kBannerSeconds);
 }
 
 static bool cacheCallbacks(JNIEnv *env, jclass bridge)
@@ -358,12 +461,24 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativePreference", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativePreference)},
         {"nativeParseColor", "(Ljava/lang/String;)J", reinterpret_cast<void *>(nativeParseColor)},
+        {"nativeMessageBubbleStyle", "()[D", reinterpret_cast<void *>(nativeMessageBubbleStyle)},
         {"nativeResolveFont", "(Ljava/lang/String;)Ljava/lang/String;", reinterpret_cast<void *>(nativeResolveFont)},
         {"nativeDocumentsName", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeDocumentsName)},
         {"nativeSettingsFileName", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeSettingsFileName)},
         {"nativeThemeColorsJSON", "(Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeThemeColorsJSON)},
         {"nativePrepareAddons", "()V", reinterpret_cast<void *>(nativePrepareAddons)},
+        {"nativeLog", "(ILjava/lang/String;Ljava/lang/String;)V", reinterpret_cast<void *>(nativeLog)},
+        {"nativeDevOverlayButtonSide", "()D", reinterpret_cast<void *>(nativeDevOverlayButtonSide)},
+        {"nativeIncompatibleHostMessage", "()Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeIncompatibleHostMessage)},
+        {"nativeDevelopmentBuildBanner",
+         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeDevelopmentBuildBanner)},
+        {"nativeDevelopmentBuildBannerSeconds", "()I", reinterpret_cast<void *>(nativeDevelopmentBuildBannerSeconds)},
+        {"nativeDevOverlayCenter", "([D)[D", reinterpret_cast<void *>(nativeDevOverlayCenter)},
+        {"nativeClampDevOverlayCenter", "(DD[D)[D", reinterpret_cast<void *>(nativeClampDevOverlayCenter)},
+        {"nativeSaveDevOverlayCenter", "(DD[D)V", reinterpret_cast<void *>(nativeSaveDevOverlayCenter)},
     };
 
     if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) != JNI_OK ||

@@ -48,7 +48,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
     [Themes restoreOriginalRawColors];
 
     NSDictionary *colors = nil;
-    if (themeId && ![CoreBridge preferenceEnabled:@"recovery"])
+    if (themeId)
     {
         colors = [CoreBridge themeColorsForId:themeId];
     }
@@ -130,7 +130,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
     [Themes refreshThemes];
 
-    if (![CoreBridge preferenceEnabled:@"recovery"] && !semanticColorsSwizzled)
+    if (!semanticColorsSwizzled)
     {
         [Themes swizzleSemanticColors];
         semanticColorsSwizzled = YES;

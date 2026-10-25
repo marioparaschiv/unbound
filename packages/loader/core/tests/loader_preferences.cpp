@@ -48,7 +48,9 @@ int main()
     assert(perform(settings, "message-bubbles-label", "") == "Message Bubbles: On");
 
     assert(!avatarRadius(settings));
-    assert(nlohmann::json::parse(perform(settings, "bubble-style", ""))["radius"] == 10);
+    assert(perform(settings, "bubble-style", "").empty());
+    assert(loader::toARGB(messageBubbleColor(true)) == 0x66000000);
+    assert(loader::toARGB(messageBubbleColor(false)) == 0x66FFFFFF);
     assert(perform(settings, "avatar-radius-label", "") == "Avatar Radius: Circular");
     assert(nextAvatarRadius(std::nullopt) == 0.0);
     assert(nextAvatarRadius(7.0) == 16.0);

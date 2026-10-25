@@ -15,6 +15,8 @@
 
 #include "HermesBytecodeHeader.h"
 #include "LoaderAddons.h"
+#include "LoaderDevOverlay.h"
+#include "LoaderDiagnostics.h"
 #include "LoaderFonts.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
@@ -47,7 +49,7 @@ static LogLevel iosLogLevel(loader::LogLevel level)
         case loader::LogLevel::Info:
             return LogLevelInfo;
         case loader::LogLevel::Warning:
-            return LogLevelNotice;
+            return LogLevelWarning;
         case loader::LogLevel::Error:
             return LogLevelError;
     }
@@ -92,6 +94,29 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
 {
     std::optional<loader::RGBAColor> color = loader::parseColor(toStdString(value));
     return color ? uiColor(*color) : nil;
+}
+
++ (BOOL)isDarkColor:(UIColor *)color
+{
+    CGFloat red = 0, green = 0, blue = 0, alpha = 0;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
+    return loader::isDarkColor({red, green, blue, alpha});
+}
+
++ (CGFloat)messageBubbleRadius
+{
+    return loader::preferences::kMessageBubbleStyle.radius;
+}
+
++ (CGSize)messageBubblePadding
+{
+    return CGSizeMake(loader::preferences::kMessageBubbleStyle.horizontalPadding,
+                      loader::preferences::kMessageBubbleStyle.verticalPadding);
+}
+
++ (UIColor *)messageBubbleColorForDarkTheme:(BOOL)dark
+{
+    return uiColor(loader::preferences::messageBubbleColor(dark));
 }
 
 static std::string fontAttribute(CTFontDescriptorRef descriptor, CFStringRef attribute)
@@ -275,6 +300,62 @@ nlohmann::json UnboundFontCatalog()
 + (NSTimeInterval)toolboxHoldDuration
 {
     return loader::toolbox::kThreeFingerHoldMilliseconds / 1000.0;
+}
+
+static loader::devoverlay::Size coreSize(CGSize size)
+{
+    return {size.width, size.height};
+}
+
+static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
+{
+    return {insets.top, insets.left, insets.bottom, insets.right};
+}
+
++ (CGFloat)devOverlayButtonSide
+{
+    return loader::devoverlay::kButtonSide;
+}
+
++ (CGFloat)devOverlayButtonMargin
+{
+    return loader::devoverlay::kButtonMargin;
+}
+
++ (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets
+{
+    loader::devoverlay::Point center =
+        loader::devoverlay::buttonCenter(UnboundSettingsStore(), coreSize(bounds), coreInsets(insets));
+    return CGPointMake(center.x, center.y);
+}
+
++ (CGPoint)clampDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds insets:(UIEdgeInsets)insets
+{
+    loader::devoverlay::Point clamped =
+        loader::devoverlay::clampCenter({center.x, center.y}, coreSize(bounds), coreInsets(insets));
+    return CGPointMake(clamped.x, clamped.y);
+}
+
++ (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds
+{
+    loader::devoverlay::saveButtonCenter(UnboundSettingsStore(), {center.x, center.y}, coreSize(bounds));
+}
+
++ (NSString *)incompatibleHostMessage
+{
+    return @(loader::diagnostics::kIncompatibleHostMessage);
+}
+
++ (NSString *)developmentBuildBanner
+{
+    loader::diagnostics::BuildInfo info{toStdString(COMMIT_SHORT_HASH), toStdString(COMMIT_SUBJECT),
+                                        toStdString(COMMIT_BRANCH), toStdString(BUILD_TIMESTAMP)};
+    return unbound::ios::toNSString(loader::diagnostics::developmentBuildBanner(info));
+}
+
++ (NSTimeInterval)developmentBuildBannerDuration
+{
+    return loader::diagnostics::kBannerSeconds;
 }
 
 @end

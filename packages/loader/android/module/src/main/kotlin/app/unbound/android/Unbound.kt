@@ -23,7 +23,7 @@ class Unbound : XposedModule() {
         if (param.packageName != DISCORD_PACKAGE || !param.isFirstPackage) return
 
         runCatching { initialize(param) }
-            .onFailure { Logger.error("default", "Failed to initialize Unbound", it) }
+            .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to initialize Unbound", it) }
     }
 
     private fun initialize(param: PackageReadyParam) {
@@ -33,6 +33,7 @@ class Unbound : XposedModule() {
         installHookBridge()
         ReactSurfaces.install(param.classLoader)
         System.load(nativeLibraryPath(moduleInfo, appInfo))
+        Logger.nativeReady = true
 
         val documents = File(File(appInfo.dataDir, "files"), NativeBridge.nativeDocumentsName()).absolutePath
         NativeBridge.documents = documents
@@ -46,25 +47,30 @@ class Unbound : XposedModule() {
             Platform.describe(appInfo, frameworkName).toString(),
         )
 
-        Logger.info("default", "Hermes bytecode version $bytecodeVersion, documents at $documents")
+        Logger.info(LogCategory.DEFAULT, "Hermes bytecode version $bytecodeVersion, documents at $documents")
         DevOverlay.debugBuild = moduleInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         SettingsWatcher.start(documents)
         SettingsWatcher.onChange(::onSettingsChanged)
         hookActivityLifecycle()
-        hookBundleLoading(param.classLoader)
+        val hooked = runCatching { hookBundleLoading(param.classLoader) }
+            .onFailure { Logger.error(LogCategory.RUNTIME, "Failed to hook ReactInstance.loadJSBundle", it) }
+        if (hooked.isFailure) {
+            StartupAlert.report(NativeBridge.nativeIncompatibleHostMessage())
+            return
+        }
         Analytics.block(this, param.classLoader)
         runCatching { Fonts.install(this, param.classLoader) }
-            .onFailure { Logger.error("fonts", "Failed to hook React Native fonts", it) }
+            .onFailure { Logger.error(LogCategory.FONTS, "Failed to hook React Native fonts", it) }
         runCatching { Themes.install(this, param.classLoader) }
-            .onFailure { Logger.error("themes", "Failed to apply the theme", it) }
+            .onFailure { Logger.error(LogCategory.THEMES, "Failed to apply the theme", it) }
         runCatching { Recovery.install(this) }
-            .onFailure { Logger.error("default", "Failed to install the Recovery Mode shortcut", it) }
+            .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to install the Recovery Mode shortcut", it) }
         runCatching { Toolbox.install(this) }
-            .onFailure { Logger.error("default", "Failed to install the toolbox gestures", it) }
+            .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to install the toolbox gestures", it) }
         runCatching { ChatUI.install(this, param.classLoader) }
-            .onFailure { Logger.error("chatui", "Failed to hook the chat UI", it) }
+            .onFailure { Logger.error(LogCategory.CHATUI, "Failed to hook the chat UI", it) }
         runCatching { TextRewrites.install(this) }
-            .onFailure { Logger.error("plugins", "Failed to hook text rewrites", it) }
+            .onFailure { Logger.error(LogCategory.PLUGINS, "Failed to hook text rewrites", it) }
     }
 
     private fun onSettingsChanged() {
@@ -112,9 +118,11 @@ class Unbound : XposedModule() {
                 val activity = chain.thisObject as Activity
                 ActivityTracker.onActivityResumed(activity)
                 runCatching {
+                    StartupAlert.onResumed(activity)
                     Toolbox.onResumed(activity)
                     DevOverlay.onResumed(activity)
-                }.onFailure { Logger.error("default", "Failed to attach the toolbox", it) }
+                    DevOverlay.showDevelopmentBuildBanner(activity)
+                }.onFailure { Logger.error(LogCategory.DEFAULT, "Failed to attach the toolbox", it) }
                 result
             }
 
@@ -139,7 +147,7 @@ class Unbound : XposedModule() {
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept { chain ->
                 Logger.info(
-                    "runtime",
+                    LogCategory.RUNTIME,
                     "Loading ReactInstance ${System.identityHashCode(chain.thisObject)}",
                 )
                 ReactRuntime.attach(chain.thisObject)
@@ -148,13 +156,13 @@ class Unbound : XposedModule() {
                 val result = chain.proceed()
                 NativeBridge.nativeOnJSBundleLoaded()
                 Logger.info(
-                    "runtime",
+                    LogCategory.RUNTIME,
                     "ReactInstance ${System.identityHashCode(chain.thisObject)} loadJSBundle returned",
                 )
                 result
             }
 
-        Logger.info("default", "Hooked ReactInstance.loadJSBundle.")
+        Logger.info(LogCategory.DEFAULT, "Hooked ReactInstance.loadJSBundle.")
     }
 
     private fun nativeLibraryPath(moduleInfo: ApplicationInfo, appInfo: ApplicationInfo): String {

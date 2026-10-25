@@ -103,8 +103,6 @@ extern NSString *const TROLL_STORE_LITE_PATH;
              warning:(BOOL)warning
                  tts:(BOOL)tts;
 
-+ (id)parseJSON:(NSData *)data;
-
 + (NSData *)fetchDataWithTimeout:(NSURL *)url timeout:(NSTimeInterval)timeout;
 
 + (dispatch_source_t)createDebounceTimer:(double)delay
@@ -137,18 +135,10 @@ extern NSString *const TROLL_STORE_LITE_PATH;
 
 + (BOOL)isRNNewArchEnabled;
 
-+ (NSString *)JSONString:(NSString *)str;
-
-+ (NSString *)JSONStringFromObject:(id)object
-                           options:(NSJSONWritingOptions)opts
-                          fallback:(NSString *)fallback;
-
 + (UIColor *)parseColor:(NSString *)color;
 
 + (UIWindow *)keyWindow;
 + (UIViewController *)topViewController;
-
-+ (BOOL)isRecoveryModeEnabled;
 
 + (void)setBundleUpdater:(id)bundleUpdater;
 + (void)reloadApp;

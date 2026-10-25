@@ -124,7 +124,7 @@ namespace loader::native
         NativeCapabilityReport report = resolveNativePluginCapabilities(platform_, installed);
         for (const std::string &diagnostic : report.diagnostics)
         {
-            log(LogLevel::Error, "plugins", "Native plugin contract: " + diagnostic);
+            log(LogLevel::Error, LOG_CATEGORY_PLUGINS, "Native plugin contract: " + diagnostic);
         }
 
         jsi::Object root(runtime_);
