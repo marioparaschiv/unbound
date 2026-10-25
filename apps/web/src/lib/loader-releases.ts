@@ -17,7 +17,12 @@ import { ApiError } from '~/lib/api/errors';
 
 type LoaderReleaseRow = typeof loaderRelease.$inferSelect;
 
-function toLoaderRelease(row: LoaderReleaseRow): LoaderRelease {
+/**
+ * @description Serializes a loader release row for the API.
+ * @param row The release row.
+ * @returns The release.
+ */
+export function toLoaderRelease(row: LoaderReleaseRow): LoaderRelease {
 	return {
 		platform: row.platform,
 		version: row.version,
@@ -152,6 +157,7 @@ export async function findLoaderUpdate(
 }
 
 export default {
+	toLoaderRelease,
 	publishLoaderRelease,
 	withdrawLoaderRelease,
 	newerLoaderReleases,

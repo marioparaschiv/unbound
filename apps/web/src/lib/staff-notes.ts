@@ -7,6 +7,7 @@ import type {
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { and, eq } from 'drizzle-orm';
 
+import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
@@ -40,6 +41,18 @@ function toStaffNote(row: NoteWithAuthor, caller: Caller): StaffNote {
 		editedAt: row.editedAt,
 		mine: row.authorId === caller.user.id,
 	};
+}
+
+function noteSubject(row: NoteRow): Subject {
+	if (row.userId) {
+		return { type: 'user', id: row.userId };
+	}
+
+	if (!row.addonId) {
+		throw new Error(`Staff note ${row.id} has no subject.`);
+	}
+
+	return { type: 'addon', id: row.addonId };
 }
 
 function callerSummary(caller: Caller): UserSummary {
@@ -110,19 +123,36 @@ export async function createStaffNote(
 		throw new ApiError('not_found', `No ${subject.type} has the id ${subject.id}.`);
 	}
 
-	const row = ctx.db
-		.insert(staffNote)
-		.values({
-			userId: subject.type === 'user' ? subject.id : null,
-			addonId: subject.type === 'addon' ? subject.id : null,
-			authorId: caller.user.id,
-			body,
-			createdAt: ctx.now(),
-		})
-		.returning()
-		.get();
+	const at = ctx.now();
+	const row = ctx.db.transaction((tx) => {
+		const created = tx
+			.insert(staffNote)
+			.values({
+				userId: subject.type === 'user' ? subject.id : null,
+				addonId: subject.type === 'addon' ? subject.id : null,
+				authorId: caller.user.id,
+				body,
+				createdAt: at,
+			})
+			.returning()
+			.get();
+
+		appendEvent(tx, {
+			subject,
+			actorId: caller.user.id,
+			at,
+			kind: 'note.added',
+			data: { noteId: created.id, body: created.body },
+		});
+
+		return created;
+	});
 
 	return toStaffNote({ ...row, author: callerSummary(caller) }, caller);
+}
+
+function ownNote(id: number, caller: Caller) {
+	return and(eq(staffNote.id, id), eq(staffNote.authorId, caller.user.id));
 }
 
 async function failMissingOwnNote(ctx: AppContext, id: number): Promise<never> {
@@ -149,12 +179,36 @@ export async function editStaffNote(
 ): Promise<StaffNote> {
 	requirePermission(caller, { note: ['write'] });
 
-	const row = ctx.db
-		.update(staffNote)
-		.set({ body: request.body, editedAt: ctx.now() })
-		.where(and(eq(staffNote.id, request.id), eq(staffNote.authorId, caller.user.id)))
-		.returning()
-		.get();
+	const at = ctx.now();
+	const row = ctx.db.transaction(
+		(tx) => {
+			const current = tx
+				.select({ body: staffNote.body })
+				.from(staffNote)
+				.where(ownNote(request.id, caller))
+				.get();
+
+			if (!current) return;
+
+			const edited = tx
+				.update(staffNote)
+				.set({ body: request.body, editedAt: at })
+				.where(eq(staffNote.id, request.id))
+				.returning()
+				.get();
+
+			appendEvent(tx, {
+				subject: noteSubject(edited),
+				actorId: caller.user.id,
+				at,
+				kind: 'note.edited',
+				data: { noteId: edited.id, before: current.body, body: edited.body },
+			});
+
+			return edited;
+		},
+		{ behavior: 'immediate' },
+	);
 
 	if (!row) {
 		return failMissingOwnNote(ctx, request.id);
@@ -176,11 +230,21 @@ export async function deleteStaffNote(
 ): Promise<void> {
 	requirePermission(caller, { note: ['write'] });
 
-	const row = ctx.db
-		.delete(staffNote)
-		.where(and(eq(staffNote.id, request.id), eq(staffNote.authorId, caller.user.id)))
-		.returning({ id: staffNote.id })
-		.get();
+	const row = ctx.db.transaction((tx) => {
+		const deleted = tx.delete(staffNote).where(ownNote(request.id, caller)).returning().get();
+
+		if (!deleted) return;
+
+		appendEvent(tx, {
+			subject: noteSubject(deleted),
+			actorId: caller.user.id,
+			at: ctx.now(),
+			kind: 'note.deleted',
+			data: { noteId: deleted.id, body: deleted.body },
+		});
+
+		return deleted;
+	});
 
 	if (!row) {
 		await failMissingOwnNote(ctx, request.id);

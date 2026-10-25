@@ -1,8 +1,10 @@
+import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { formatChangelogText } from '@unbound-app/contracts/changelog';
 import type { AddonVersion } from '@unbound-app/contracts/addons';
 import type { SourcePin } from '@unbound-app/contracts/source';
 
 import type { addonVersion, submissionSource } from '~/db/schema';
+import type { AppContext } from '~/lib/context';
 import type { Env } from '~/lib/env';
 
 export type AddonVersionRow = typeof addonVersion.$inferSelect;
@@ -27,6 +29,13 @@ export type ArtifactKeys = {
 	bundle: string;
 };
 
+/** The version an artifact is published as. */
+export type ArtifactVersion = {
+	addonId: string;
+	version: string;
+	manifest: PublishedManifest;
+};
+
 /**
  * @description Builds the public bucket keys an approved version is published under. The bundle sits
  * at `main` relative to the manifest, which is how the client resolves it.
@@ -39,6 +48,27 @@ export function getArtifactKeys(addonId: string, version: string, main: string):
 	const directory = `addons/${addonId}/${version}`;
 
 	return { manifest: `${directory}/manifest.json`, bundle: `${directory}/${main}` };
+}
+
+/**
+ * @description Writes a version's bundle and `manifest.json` to the public bucket at its {@link getArtifactKeys}.
+ * @param ctx The application context.
+ * @param target The addon id, version and manifest the files are published as.
+ * @param bundle The verified bundle bytes.
+ */
+export async function writeArtifact(
+	ctx: AppContext,
+	target: ArtifactVersion,
+	bundle: Uint8Array,
+): Promise<void> {
+	const keys = getArtifactKeys(target.addonId, target.version, target.manifest.main);
+
+	await Promise.all([
+		ctx.storage.public.write(keys.bundle, bundle),
+		ctx.storage.public.write(keys.manifest, JSON.stringify(target.manifest), {
+			type: 'application/json',
+		}),
+	]);
 }
 
 /**
@@ -132,6 +162,7 @@ export function toAddonVersion(
 export default {
 	VERSION_SOURCE,
 	getArtifactKeys,
+	writeArtifact,
 	getCdnUrl,
 	toVersionChangelog,
 	pinSource,

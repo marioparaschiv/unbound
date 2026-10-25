@@ -13,7 +13,7 @@ import {
 	type NotificationLog,
 	type TestDatabase,
 } from './helpers/database';
-import { ADDON, EVENT, fakeFetcher, RELEASE, SAMPLE_PAGES } from './helpers/feeds';
+import { ADDON, EVENT, fakeFetcher, MEMBER, RELEASE, SAMPLE_PAGES } from './helpers/feeds';
 
 describe.skipIf(!DATABASE_URL)('feed ingest', () => {
 	let database: TestDatabase;
@@ -142,5 +142,35 @@ describe.skipIf(!DATABASE_URL)('feed ingest', () => {
 		});
 		expect(storedAddon?.data.version).toBe('2.0.0');
 		expect(messages).toEqual([{ addonId: item.id, messageId: posted.messageId }]);
+	});
+
+	test('a member tombstone stores a null discord id and notifies member_changed', async () => {
+		const { db } = database;
+		const linked = { ...MEMBER, userId: 'user-tombstone', discordId: '77' };
+		const tombstone = {
+			...linked,
+			discordId: null,
+			isAddonDeveloper: false,
+			isSponsor: false,
+			updatedAt: '2026-10-02T00:00:00.000Z',
+		};
+		const { fetchPage } = fakeFetcher({
+			members: [
+				{ items: [linked], cursor: 'm-linked', hasMore: false },
+				{ items: [tombstone], cursor: 'm-tombstone', hasMore: false },
+			],
+		});
+
+		await pollFeed(db, 'members', fetchPage, 100);
+		await log.flush();
+		log.received.length = 0;
+
+		expect(await pollFeed(db, 'members', fetchPage, 100)).toBe(1);
+		await log.flush();
+
+		const [stored] = await db.select().from(member).where(eq(member.userId, linked.userId));
+
+		expect(stored?.discordId).toBeNull();
+		expect(log.received).toEqual([{ channel: 'member_changed', payload: linked.userId }]);
 	});
 });

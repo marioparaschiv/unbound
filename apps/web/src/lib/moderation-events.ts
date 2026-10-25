@@ -5,18 +5,20 @@ import type {
 	Subject,
 	SubjectType,
 } from '@unbound-app/contracts/admin';
+import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
 import { moderationEventSchema } from '@unbound-app/contracts/admin';
 import type { UserSummary } from '@unbound-app/contracts/account';
+import { and, count, eq, inArray } from 'drizzle-orm';
 import { createLogger } from '@unbound-app/logger';
 import { z } from 'zod';
 
+import { moderationEvent, staffNote, submission, user } from '~/db/schema';
 import type { Database, Transaction } from '~/db/database';
 import type { SubmissionRow } from '~/lib/submissions';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
-import { moderationEvent } from '~/db/schema';
 
 /** Who acted, when and why; the subject is implied by the action. */
 export type ActionMeta = {
@@ -293,6 +295,46 @@ export function recordAuthAdminAction(db: Database, action: AuthAdminAction): vo
 	});
 }
 
+/**
+ * @description Deletes a user and records `user.deleted` in one transaction, counting the open
+ * submissions and staff notes the cascade removes. A failed delete records nothing.
+ * @param db The database.
+ * @param userId The user to delete.
+ * @param meta Who deleted them, and when.
+ */
+export function deleteUserWithRecord(db: Database, userId: string, meta: ActionMeta): void {
+	db.transaction((tx) => {
+		const submissions = tx
+			.select({ total: count() })
+			.from(submission)
+			.where(
+				and(
+					eq(submission.authorId, userId),
+					inArray(submission.status, openSubmissionStatusSchema.options),
+				),
+			)
+			.get();
+
+		const notes = tx
+			.select({ total: count() })
+			.from(staffNote)
+			.where(eq(staffNote.userId, userId))
+			.get();
+
+		appendEvent(tx, {
+			subject: { type: 'user', id: userId },
+			...meta,
+			kind: 'user.deleted',
+			data: {
+				openSubmissions: submissions?.total ?? 0,
+				staffNotes: notes?.total ?? 0,
+			},
+		});
+
+		tx.delete(user).where(eq(user.id, userId)).run();
+	});
+}
+
 export default {
 	appendEvent,
 	recordReviewDecision,
@@ -301,4 +343,5 @@ export default {
 	listEvents,
 	getEventTimeline,
 	recordAuthAdminAction,
+	deleteUserWithRecord,
 };
