@@ -13,10 +13,10 @@ import { API_KEY_HEADER, createApiClient } from '~/api/client';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createSubmission } from '~/lib/submissions';
 import { getArtifactKeys } from '~/lib/artifacts';
-import { delistAddon } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
 import type { Caller } from '~/lib/api/caller';
+import { delistAddon } from '~/lib/addons';
 import { addon, user } from '~/db/schema';
 import type { Api } from '~/api';
 
