@@ -48,7 +48,12 @@ async function exit(code: number): Promise<never> {
 }
 
 function startRuntime(ready: Client<true>) {
-	const stopDispatchers = startDispatchers(dispatchers, { db, client: ready }, env.DATABASE_URL);
+	const stopDispatchers = startDispatchers(
+		dispatchers,
+		{ db, client: ready },
+		env.DATABASE_URL,
+		env.RECONCILE_INTERVAL_SECONDS * 1000,
+	);
 	const stopPoller = startPoller({
 		db,
 		fetchPage: createFeedClient(env.UNBOUND_API_URL, env.UNBOUND_API_KEY),
