@@ -316,6 +316,12 @@ namespace unbound::android
         provider->isRooted            = flag("isRooted");
         provider->isSystemApp         = flag("isSystemApp");
         provider->appSource           = text("appSource");
+        provider->isVirtualDevice     = flag("isVirtualDevice");
+        provider->virtualDeviceHost   = [info]() -> std::optional<std::string> {
+            const auto host = info.find("virtualDeviceHost");
+            return host != info.end() && host->is_string() ? std::optional<std::string>(host->get<std::string>())
+                                                           : std::nullopt;
+        };
         provider->documents           = configuration_.documents;
         loader::installNativePlatform(runtime, provider);
         registerNativePluginBridge(runtime, callbacks_);

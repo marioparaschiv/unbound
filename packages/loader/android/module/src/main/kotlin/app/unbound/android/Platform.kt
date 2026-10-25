@@ -54,6 +54,8 @@ object Platform {
         .put("isRooted", SU_PATHS.any { File(it).exists() })
         .put("isSystemApp", appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0)
         .put("appSource", frameworkName)
+        .put("isVirtualDevice", isEmulator())
+        .put("virtualDeviceHost", emulatorHostAddress() ?: JSONObject.NULL)
 
     fun mainBundleBytecodeVersion(apkPath: String): Int = runCatching {
         ZipFile(apkPath).use { zip ->

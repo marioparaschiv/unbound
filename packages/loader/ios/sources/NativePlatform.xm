@@ -37,6 +37,11 @@ void registerNativePlatform(facebook::jsi::Runtime &runtime)
         return toStdString([Utilities formatEntitlementsAsPlist:entitlements]);
     };
     provider->appSource = []() { return toStdString([Utilities getAppSource]); };
+    provider->isVirtualDevice   = []() { return static_cast<bool>([Utilities isVPhone]); };
+    provider->virtualDeviceHost = []() -> std::optional<std::string> {
+        NSString *host = [Utilities getVirtualDeviceHostAddress];
+        return host ? std::optional<std::string>(toStdString(host)) : std::nullopt;
+    };
     provider->documents = toStdString(FileSystem.documents);
 
     installNativePlatform(runtime, provider);

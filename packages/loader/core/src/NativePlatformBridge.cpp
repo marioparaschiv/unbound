@@ -158,6 +158,8 @@ namespace loader
                            booleanGetter(runtime, "isRooted", provider->isRooted));
         device.setProperty(runtime, "isSystemApp",
                            booleanGetter(runtime, "isSystemApp", provider->isSystemApp));
+        device.setProperty(runtime, "isVirtualDevice",
+                           booleanGetter(runtime, "isVirtualDevice", provider->isVirtualDevice));
         platform.setProperty(runtime, "device", std::move(device));
 
         if (provider->platform == "ios")
@@ -205,5 +207,13 @@ namespace loader
 
         platform.setProperty(runtime, "platform", jsi::String::createFromUtf8(runtime, provider->platform));
         runtime.global().setProperty(runtime, "NativePlatform", std::move(platform));
+    }
+
+    nlohmann::json debugEnvironment(const NativePlatformProvider &provider)
+    {
+        std::optional<std::string> host =
+            provider.virtualDeviceHost ? provider.virtualDeviceHost() : std::nullopt;
+        return {{"isVirtualDevice", provider.isVirtualDevice && provider.isVirtualDevice()},
+                {"hostAddress", host ? nlohmann::json(*host) : nlohmann::json(nullptr)}};
     }
 }

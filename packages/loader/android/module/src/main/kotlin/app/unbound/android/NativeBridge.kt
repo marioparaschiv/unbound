@@ -18,8 +18,6 @@ object NativeBridge {
         Thread(it, "unbound-download-watchdog").apply { isDaemon = true }
     }
 
-    private const val EMULATOR_HOST = "10.0.2.2"
-
     @JvmStatic
     external fun nativeDocumentsName(): String
 
@@ -291,7 +289,7 @@ object NativeBridge {
     }.onFailure { Logger.error("updater", "Bundle download failed: $it") }.getOrNull()
 
     @JvmStatic
-    fun devServerHost(): String? = EMULATOR_HOST.takeIf { Platform.isEmulator() }
+    fun devServerHost(): String? = Platform.emulatorHostAddress()
 
     @JvmStatic
     fun isServing(url: String, timeoutMs: Int): Boolean = runCatching {

@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include <jsi/jsi.h>
@@ -21,8 +22,12 @@ namespace loader
         std::function<nlohmann::json()> entitlements;
         std::function<std::string()>    entitlementsAsPlist;
         std::function<std::string()>    appSource;
+        std::function<bool()>           isVirtualDevice;
+        std::function<std::optional<std::string>()> virtualDeviceHost;
         std::string                     documents;
     };
+
+    nlohmann::json debugEnvironment(const NativePlatformProvider &provider);
 
     facebook::jsi::Value toJSIValue(facebook::jsi::Runtime &runtime, const nlohmann::json &value);
     nlohmann::json fromJSIValue(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);
