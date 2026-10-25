@@ -14,5 +14,11 @@
 	],
 	"version": "1.0.0",
 	"icon": "ImageIcon",
+	"platforms": ["ios", "android"],
+	"capabilities": [],
+	"platformCapabilities": {
+		"android": ["native.java.classes", "native.java.invoke"]
+	},
+	"minNativePluginApi": "1.0.0",
 	"main": "index.ts"
 }

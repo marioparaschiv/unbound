@@ -2,8 +2,13 @@ import { describe, expect, test } from 'bun:test';
 
 import { formatBytes, sizeBadgesForRow, type MediaItemElement } from './badges';
 
-function item(key: string | null, fileSize: number | undefined, size: number): MediaItemElement {
-	return { key, type: 'item', props: { item: { node: { image: { fileSize } } }, size } };
+function item(
+	key: string | null,
+	fileSize: number | undefined,
+	size: number,
+	uri?: string,
+): MediaItemElement {
+	return { key, type: 'item', props: { item: { node: { image: { fileSize, uri } } }, size } };
 }
 
 describe('formatBytes', () => {
@@ -35,5 +40,26 @@ describe('sizeBadgesForRow', () => {
 		);
 
 		expect(badges).toEqual([{ key: 'file-size-d', label: '10 Bytes', left: 303 }]);
+	});
+
+	test('asks for the size of items Discord reports without one', () => {
+		const sizes: Record<string, number> = { 'content://media/1': 442270 };
+		const badges = sizeBadgesForRow(
+			[
+				item('a', undefined, 100, 'content://media/1'),
+				item('b', undefined, 100, 'content://media/2'),
+			],
+			0,
+			0,
+			(uri) => sizes[uri],
+		);
+
+		expect(badges).toEqual([{ key: 'file-size-a', label: '431.9 KB', left: 3 }]);
+	});
+
+	test('prefers the size Discord reports', () => {
+		const badges = sizeBadgesForRow([item('a', 2048, 100, 'content://media/1')], 0, 0, () => 1);
+
+		expect(badges).toEqual([{ key: 'file-size-a', label: '2 KB', left: 3 }]);
 	});
 });
