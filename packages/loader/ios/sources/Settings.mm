@@ -8,6 +8,8 @@
 
 #include <memory>
 
+#include "LoaderPreferences.h"
+
 using unbound::ios::jsonFromObject;
 using unbound::ios::objectFromJSON;
 using unbound::ios::toStdString;
@@ -23,7 +25,7 @@ loader::SettingsStore &UnboundSettingsStore()
 {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        NSString *path = [NSString pathWithComponents:@[ FileSystem.documents, @"settings.json" ]];
+        NSString *path = [NSString pathWithComponents:@[ FileSystem.documents, @(loader::preferences::kSettingsFile) ]];
         gStore         = std::make_unique<loader::SettingsStore>(toStdString(path));
         gStore->load();
     });

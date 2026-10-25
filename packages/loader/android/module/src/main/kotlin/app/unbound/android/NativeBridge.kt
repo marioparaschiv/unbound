@@ -21,6 +21,15 @@ object NativeBridge {
     private const val EMULATOR_HOST = "10.0.2.2"
 
     @JvmStatic
+    external fun nativeDocumentsName(): String
+
+    @JvmStatic
+    external fun nativeSettingsFileName(): String
+
+    @Volatile
+    var documents: String = ""
+
+    @JvmStatic
     external fun nativeInitialize(
         documents: String,
         devtoolsScript: String?,

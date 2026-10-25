@@ -6,6 +6,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (void)installLogging;
 
++ (NSString *)documentsName;
+
 + (uint32_t)mainBundleBytecodeVersion;
 
 + (nullable UIColor *)colorFromString:(NSString *)value;

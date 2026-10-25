@@ -1,3 +1,4 @@
+#import "CoreBridge.h"
 #import "FileSystem.h"
 
 static const NSTimeInterval kMonitorDebounce = 0.250;
@@ -374,7 +375,7 @@ static dispatch_queue_t monitorRegistryQueue(void)
 
     if (!documents)
     {
-        documents = [NSString pathWithComponents:@[ NSHomeDirectory(), @"Documents", @"Unbound" ]];
+        documents = [NSString pathWithComponents:@[ NSHomeDirectory(), @"Documents", [CoreBridge documentsName] ]];
     }
 
     if (![FileSystem exists:documents])

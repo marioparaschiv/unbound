@@ -3,6 +3,7 @@
 #include "JniEnvironment.h"
 #include "LoaderAddons.h"
 #include "LoaderColor.h"
+#include "LoaderPreferences.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
 #include "LoaderThemes.h"
@@ -39,7 +40,7 @@ namespace unbound::android
 
     AndroidLoader::AndroidLoader(LoaderConfiguration configuration, JavaCallbacks callbacks)
         : configuration_(std::move(configuration)), callbacks_(callbacks),
-          settings_(loader::joinPath(configuration_.documents, "settings.json"))
+          settings_(loader::joinPath(configuration_.documents, loader::preferences::kSettingsFile))
     {
     }
 

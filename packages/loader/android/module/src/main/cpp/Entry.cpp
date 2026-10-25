@@ -243,6 +243,16 @@ static jstring nativeFontsJSON(JNIEnv *env, jclass)
     return toJavaString(env, loader ? loader->fontsJSON() : "[]");
 }
 
+static jstring nativeDocumentsName(JNIEnv *env, jclass)
+{
+    return toJavaString(env, loader::preferences::kDocumentsName);
+}
+
+static jstring nativeSettingsFileName(JNIEnv *env, jclass)
+{
+    return toJavaString(env, loader::preferences::kSettingsFile);
+}
+
 static jstring nativeThemeColorsJSON(JNIEnv *env, jclass, jstring themeId)
 {
     auto loader = currentLoader();
@@ -412,6 +422,8 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativePreference)},
         {"nativeParseColor", "(Ljava/lang/String;)J", reinterpret_cast<void *>(nativeParseColor)},
         {"nativeFontsJSON", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeFontsJSON)},
+        {"nativeDocumentsName", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeDocumentsName)},
+        {"nativeSettingsFileName", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeSettingsFileName)},
         {"nativeThemeColorsJSON", "(Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeThemeColorsJSON)},
         {"nativePrepareAddons", "()V", reinterpret_cast<void *>(nativePrepareAddons)},

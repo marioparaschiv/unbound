@@ -30,7 +30,6 @@ import android.widget.Toast
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
 import org.json.JSONObject
-import java.io.File
 import kotlin.math.sqrt
 
 object Toolbox {
@@ -273,7 +272,7 @@ object Toolbox {
     }
 
     private fun copyFolderPath(activity: Activity) {
-        val path = File(activity.applicationInfo.dataDir, "files/Unbound").absolutePath
+        val path = NativeBridge.documents
         activity.getSystemService(ClipboardManager::class.java)
             ?.setPrimaryClip(ClipData.newPlainText("Unbound folder", path))
         Toast.makeText(activity, path, Toast.LENGTH_LONG).show()

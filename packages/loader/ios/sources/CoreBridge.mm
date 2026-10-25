@@ -51,6 +51,11 @@ static LogLevel iosLogLevel(loader::LogLevel level)
 
 @implementation CoreBridge
 
++ (NSString *)documentsName
+{
+    return @(loader::preferences::kDocumentsName);
+}
+
 + (uint32_t)mainBundleBytecodeVersion
 {
     NSString *path    = [NSBundle.mainBundle.bundlePath stringByAppendingPathComponent:@"main.jsbundle"];

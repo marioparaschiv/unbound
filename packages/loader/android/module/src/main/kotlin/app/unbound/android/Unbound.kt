@@ -32,7 +32,8 @@ class Unbound : XposedModule() {
         ReactSurfaces.install(param.classLoader)
         System.load(nativeLibraryPath(moduleInfo, appInfo))
 
-        val documents = File(appInfo.dataDir, "files/Unbound").absolutePath
+        val documents = File(File(appInfo.dataDir, "files"), NativeBridge.nativeDocumentsName()).absolutePath
+        NativeBridge.documents = documents
         val bytecodeVersion = Platform.mainBundleBytecodeVersion(appInfo.sourceDir)
 
         NativeBridge.nativeInitialize(
