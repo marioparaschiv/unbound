@@ -2,19 +2,6 @@
 
 @implementation Fonts
 static NSMutableDictionary<NSString *, NSString *>            *overrides = nil;
-static NSMutableArray<NSDictionary<NSString *, NSString *> *> *fonts     = nil;
-
-+ (NSString *)makeJSON
-{
-    return [Utilities JSONStringFromObject:fonts options:0 fallback:@"[]"];
-};
-
-+ (NSString *)makeAvailableJSON
-{
-    NSArray *availabeFonts = [Fonts getAvailableFonts];
-
-    return [Utilities JSONStringFromObject:availabeFonts options:0 fallback:@"[]"];
-};
 
 + (NSArray *)getAvailableFonts
 {
@@ -26,21 +13,10 @@ static NSMutableArray<NSDictionary<NSString *, NSString *> *> *fonts     = nil;
 
 + (void)init
 {
-    if (!fonts)
-    {
-        fonts = [[NSMutableArray alloc] init];
-    }
-
     if (!overrides)
     {
         overrides = [[NSMutableDictionary alloc] init];
     }
-
-    [fonts removeAllObjects];
-    [fonts addObjectsFromArray:[CoreBridge scanFontsIn:FileSystem.documents
-                                          nameResolver:^NSString *(NSString *path) {
-                                              return [Fonts getFontName:path];
-                                          }]];
 
     @try
     {
@@ -68,7 +44,7 @@ static NSMutableArray<NSDictionary<NSString *, NSString *> *> *fonts     = nil;
             continue;
 
         NSPredicate *customPredicate = [NSPredicate predicateWithFormat:@"name == %@", override];
-        NSArray     *custom          = [fonts filteredArrayUsingPredicate:customPredicate];
+        NSArray     *custom          = [[CoreBridge fonts] filteredArrayUsingPredicate:customPredicate];
 
         NSArray     *loadedSystemFonts = [Fonts getAvailableFonts];
         NSPredicate *systemPredicate   = [NSPredicate predicateWithFormat:@"SELF == %@", override];
@@ -132,30 +108,6 @@ static NSMutableArray<NSDictionary<NSString *, NSString *> *> *fonts     = nil;
     [Logger info:LOG_CATEGORY_FONTS format:@"Loaded font: %@.", [Fonts getFontNameByRef:ref]];
 
     CGFontRelease(ref);
-}
-
-+ (NSString *)getFontName:(NSString *)path
-{
-    NSURL *url = [NSURL fileURLWithPath:path];
-
-    CGDataProviderRef provider = CGDataProviderCreateWithURL((__bridge CFURLRef) url);
-    if (!provider)
-    {
-        return nil;
-    }
-
-    CGFontRef ref = CGFontCreateWithDataProvider(provider);
-    CGDataProviderRelease(provider);
-
-    if (!ref)
-    {
-        return nil;
-    }
-
-    NSString *name = [Fonts getFontNameByRef:ref];
-    CGFontRelease(ref);
-
-    return name;
 }
 
 + (NSString *)getFontNameByRef:(CGFontRef)ref

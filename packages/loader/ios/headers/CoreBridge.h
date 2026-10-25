@@ -9,12 +9,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (uint32_t)mainBundleBytecodeVersion;
 
 + (nullable UIColor *)colorFromString:(NSString *)value;
-+ (NSDictionary *)themeColors:(NSDictionary *)theme;
++ (nullable NSDictionary *)themeColorsForId:(NSString *)themeId;
++ (BOOL)hasTheme:(NSString *)themeId;
 
-+ (NSMutableArray *)scanPluginsIn:(NSString *)documents;
-+ (NSMutableArray *)scanThemesIn:(NSString *)documents;
-+ (NSMutableArray *)scanFontsIn:(NSString *)documents
-                   nameResolver:(NSString *_Nullable (^)(NSString *path))resolver;
++ (void)scanAddons;
++ (NSArray *)themes;
++ (NSArray<NSDictionary *> *)fonts;
 
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument;
 + (BOOL)toolboxSucceeded:(NSString *)action argument:(NSString *)argument;

@@ -73,6 +73,22 @@ int main()
     assert(script.find(R"("bundle":"{\"semantic\":{}}")") != std::string::npos);
     assert(script.find(R"("bundle":"{}")") != std::string::npos);
 
+    loader::AddonState addons;
+    assert(addons.plugins().empty() && !addons.theme("t.dark"));
+    addons.scan(root.string());
+    assert(addons.plugins().size() == 1 && addons.themes().size() == 1 && addons.fonts().size() == 1);
+    assert(addons.theme("t.dark") && (*addons.theme("t.dark"))["manifest"]["id"] == "t.dark");
+    assert(!addons.theme("t.none"));
+
+    loader::SettingsStore settings((root / "settings.json").string());
+    settings.set("unbound", "recovery", false);
+    loader::PreloadPayload made =
+        loader::makePreloadPayload(settings, addons, nlohmann::json::array({"Ginto"}), "Unbound.dylib", "1.0.0");
+    assert(made.plugins.find("a.good") != std::string::npos);
+    assert(made.availableFonts == R"(["Ginto"])");
+    assert(made.settings.find("recovery") != std::string::npos);
+    assert(made.origin == "Unbound.dylib" && made.version == "1.0.0");
+
     std::filesystem::remove_all(root);
     return 0;
 }

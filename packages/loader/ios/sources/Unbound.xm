@@ -1,5 +1,6 @@
 #import <jsi/jsi.h>
 
+#import "AddonsCore.h"
 #import "CoreBridge.h"
 #import "Discord.h"
 #import "HotReload.h"
@@ -9,6 +10,7 @@
 #import "LoaderShared.h"
 #import "NativePluginBridge.h"
 #import "RCTHost.h"
+#import "SettingsCore.h"
 #import "Unbound.h"
 #import "NativePlatform.h"
 #import "UpdaterCore.h"
@@ -161,15 +163,13 @@ public:
 
     loader::PreloadPayload preloadPayload() override
     {
-        loader::PreloadPayload payload;
-        payload.settings       = stdString([Settings getSettings]);
-        payload.plugins        = stdString([Plugins makeJSON]);
-        payload.themes         = stdString([Themes makeJSON]);
-        payload.fonts          = stdString([Fonts makeJSON]);
-        payload.availableFonts = stdString([Fonts makeAvailableJSON]);
-        payload.origin         = stdString([Utilities getCurrentDylibName]);
-        payload.version        = stdString(PACKAGE_VERSION);
-        return payload;
+        nlohmann::json availableFonts = nlohmann::json::array();
+        for (NSString *family in [Fonts getAvailableFonts])
+        {
+            availableFonts.push_back(stdString(family));
+        }
+        return loader::makePreloadPayload(UnboundSettingsStore(), UnboundAddonState(), availableFonts,
+                                          stdString([Utilities getCurrentDylibName]), stdString(PACKAGE_VERSION));
     }
 
     void installNativeModules(jsi::Runtime &runtime) override
@@ -181,7 +181,7 @@ public:
 
     void onAddonsPrepared() override
     {
-        [Plugins init];
+        [CoreBridge scanAddons];
         [Themes init];
         [Fonts init];
     }

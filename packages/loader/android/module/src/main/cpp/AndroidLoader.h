@@ -11,6 +11,7 @@
 
 #include <jsi/jsi.h>
 
+#include "LoaderAddons.h"
 #include "LoaderHotReload.h"
 #include "LoaderPipeline.h"
 #include "LoaderSettings.h"
@@ -130,10 +131,7 @@ namespace unbound::android
         std::deque<std::function<void(facebook::jsi::Runtime &)>> queue_;
         std::mutex                               mainQueueMutex_;
         std::deque<std::function<void()>>        mainQueue_;
-        std::mutex                               addonsMutex_;
-        nlohmann::json                           plugins_ = nlohmann::json::array();
-        nlohmann::json                           themes_  = nlohmann::json::array();
-        nlohmann::json                           fonts_   = nlohmann::json::array();
+        loader::AddonState                       addons_;
     };
 
     std::shared_ptr<AndroidLoader> currentLoader();

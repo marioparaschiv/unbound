@@ -2,7 +2,6 @@
 #import "Themes.h"
 
 @interface Themes ()
-+ (void)loadThemes;
 + (void)refreshDiscordTheme;
 + (void)applyThemeOnMainThread:(NSString *)manifestId;
 + (BOOL)setThemeOnMainThread:(NSString *)manifestId;
@@ -10,7 +9,6 @@
 
 @implementation Themes
 static NSMutableDictionary<NSString *, NSValue *> *originalRawImplementations;
-static NSMutableArray                             *themes         = nil;
 static NSString                                   *currentThemeId = nil;
 static __weak DCDThemeModule                      *currentDiscordTheme;
 static NSString                                   *lastDiscordThemeId = nil;
@@ -20,27 +18,9 @@ static BOOL                                        customThemeActive = NO;
 static NSDictionary<NSString *, UIColor *>        *semanticColors = nil;
 static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
-+ (NSString *)makeJSON
-{
-    return [Utilities JSONStringFromObject:themes options:0 fallback:@"[]"];
-};
-
-+ (NSDictionary *)getThemeById:(NSString *)manifestId
-{
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"manifest.id == %@", manifestId];
-    NSArray     *array     = [themes filteredArrayUsingPredicate:predicate];
-
-    if ([array count] != 0)
-    {
-        return array[0];
-    }
-
-    return nil;
-}
-
 + (BOOL)isValidCustomTheme:(NSString *)manifestId
 {
-    return [Themes getThemeById:manifestId] != nil;
+    return [CoreBridge hasTheme:manifestId];
 }
 
 + (NSString *)getTheme
@@ -50,7 +30,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
 + (NSArray *)getThemes
 {
-    return [themes copy] ?: @[];
+    return [CoreBridge themes];
 }
 
 + (void)applyTheme:(NSString *)manifestId
@@ -70,7 +50,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
     NSDictionary *colors = nil;
     if (themeId && ![CoreBridge preferenceEnabled:@"recovery"])
     {
-        colors = [CoreBridge themeColors:[Themes getThemeById:themeId] ?: @{}];
+        colors = [CoreBridge themeColorsForId:themeId];
     }
 
     @synchronized([Themes class])
@@ -126,16 +106,8 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
     return YES;
 }
 
-+ (void)loadThemes
++ (void)refreshThemes
 {
-    [themes addObjectsFromArray:[CoreBridge scanThemesIn:FileSystem.documents]];
-}
-
-+ (NSArray *)reloadThemes
-{
-    [themes removeAllObjects];
-    [Themes loadThemes];
-
     if (currentThemeId && ![Themes isValidCustomTheme:currentThemeId])
     {
         customThemeActive = NO;
@@ -147,22 +119,16 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
     }
 
     [Themes refreshDiscordTheme];
-    return [Themes getThemes];
 }
 
 + (void)init
 {
-    if (!themes)
-    {
-        themes = [[NSMutableArray alloc] init];
-    }
-
     if (!originalRawImplementations)
     {
         originalRawImplementations = [[NSMutableDictionary alloc] init];
     }
 
-    [Themes reloadThemes];
+    [Themes refreshThemes];
 
     if (![CoreBridge preferenceEnabled:@"recovery"] && !semanticColorsSwizzled)
     {

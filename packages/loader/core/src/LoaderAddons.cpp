@@ -1,4 +1,5 @@
 #include "LoaderAddons.h"
+#include "LoaderThemes.h"
 #include "LoaderFonts.h"
 
 #include "LoaderFiles.h"
@@ -212,5 +213,42 @@ namespace loader
                            });
 
         return fonts;
+    }
+
+    void AddonState::scan(const std::string &documents, const FontNameResolver &resolveName)
+    {
+        nlohmann::json plugins = scanPlugins(documents);
+        nlohmann::json themes  = scanThemes(documents);
+        nlohmann::json fonts   = scanFonts(documents, resolveName);
+
+        std::lock_guard<std::mutex> lock(mutex_);
+        plugins_ = std::move(plugins);
+        themes_  = std::move(themes);
+        fonts_   = std::move(fonts);
+    }
+
+    nlohmann::json AddonState::plugins() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return plugins_;
+    }
+
+    nlohmann::json AddonState::themes() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return themes_;
+    }
+
+    nlohmann::json AddonState::fonts() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return fonts_;
+    }
+
+    std::optional<nlohmann::json> AddonState::theme(const std::string &id) const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        const nlohmann::json *found = findTheme(themes_, id);
+        return found ? std::optional<nlohmann::json>(*found) : std::nullopt;
     }
 }

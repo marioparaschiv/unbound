@@ -39,4 +39,19 @@ namespace loader
                "this.UNBOUND_LOADER = {\n" + "    origin: " + toJSON(payload.origin) + ",\n" +
                "    version: " + toJSON(payload.version) + ",\n" + "};";
     }
+
+    PreloadPayload makePreloadPayload(const SettingsStore &settings, const AddonState &addons,
+                                      const nlohmann::json &availableFonts, std::string origin,
+                                      std::string version)
+    {
+        PreloadPayload payload;
+        payload.settings       = settings.serialize();
+        payload.plugins        = toJSON(addons.plugins());
+        payload.themes         = toJSON(addons.themes());
+        payload.fonts          = toJSON(addons.fonts());
+        payload.availableFonts = toJSON(availableFonts);
+        payload.origin         = std::move(origin);
+        payload.version        = std::move(version);
+        return payload;
+    }
 }

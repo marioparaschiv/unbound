@@ -75,14 +75,12 @@ namespace unbound::android
 
     std::string AndroidLoader::fontsJSON()
     {
-        std::lock_guard<std::mutex> lock(addonsMutex_);
-        return loader::toJSON(fonts_);
+        return loader::toJSON(addons_.fonts());
     }
 
     std::string AndroidLoader::themeColorsJSON(const std::string &themeId)
     {
-        std::lock_guard<std::mutex> lock(addonsMutex_);
-        const nlohmann::json *theme = loader::findTheme(themes_, themeId);
+        std::optional<nlohmann::json> theme = addons_.theme(themeId);
         return loader::toJSON(theme ? loader::themeColorsByAccessor(loader::resolveThemeColors(*theme))
                                     : nlohmann::json::object());
     }
@@ -304,18 +302,8 @@ namespace unbound::android
 
     loader::PreloadPayload AndroidLoader::preloadPayload()
     {
-        loader::PreloadPayload payload;
-        payload.settings = settings_.serialize();
-        {
-            std::lock_guard<std::mutex> lock(addonsMutex_);
-            payload.plugins = loader::toJSON(plugins_);
-            payload.themes  = loader::toJSON(themes_);
-            payload.fonts   = loader::toJSON(fonts_);
-        }
-        payload.availableFonts = loader::toJSON(availableFonts());
-        payload.origin         = configuration_.origin;
-        payload.version        = UNBOUND_VERSION;
-        return payload;
+        return loader::makePreloadPayload(settings_, addons_, availableFonts(), configuration_.origin,
+                                          UNBOUND_VERSION);
     }
 
     void AndroidLoader::installNativeModules(jsi::Runtime &runtime)
@@ -343,14 +331,7 @@ namespace unbound::android
 
     void AndroidLoader::onAddonsPrepared()
     {
-        nlohmann::json plugins = loader::scanPlugins(configuration_.documents);
-        nlohmann::json themes  = loader::scanThemes(configuration_.documents);
-        nlohmann::json fonts   = loader::scanFonts(configuration_.documents, nullptr);
-
-        std::lock_guard<std::mutex> lock(addonsMutex_);
-        plugins_ = std::move(plugins);
-        themes_  = std::move(themes);
-        fonts_   = std::move(fonts);
+        addons_.scan(configuration_.documents);
     }
 
     void AndroidLoader::onBundleExecuted()

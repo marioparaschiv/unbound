@@ -2,6 +2,7 @@
 #include <ostream>
 #include <streambuf>
 
+#import "AddonsCore.h"
 #import "CoreBridge.h"
 #import "FileSystem.h"
 #import "Logger.h"
@@ -22,14 +23,18 @@ static std::string toStdString(NSString *value)
     return utf8 ? std::string(utf8) : std::string();
 }
 
-static NSMutableArray *mutableArrayFromJSON(const nlohmann::json &value)
+static NSArray *arrayFromJSON(const nlohmann::json &value)
 {
     std::string json   = loader::toJSON(value);
     NSData     *data   = [NSData dataWithBytes:json.data() length:json.size()];
-    id          parsed = [NSJSONSerialization JSONObjectWithData:data
-                                                     options:NSJSONReadingMutableContainers
-                                                       error:nil];
-    return [parsed isKindOfClass:[NSMutableArray class]] ? parsed : [NSMutableArray array];
+    id          parsed = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    return [parsed isKindOfClass:[NSArray class]] ? parsed : @[];
+}
+
+loader::AddonState &UnboundAddonState()
+{
+    static loader::AddonState state;
+    return state;
 }
 
 static LogLevel iosLogLevel(loader::LogLevel level)
@@ -83,16 +88,15 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
     return color ? uiColor(*color) : nil;
 }
 
-+ (NSDictionary *)themeColors:(NSDictionary *)theme
++ (NSDictionary *)themeColorsForId:(NSString *)themeId
 {
-    NSData *data = [NSJSONSerialization isValidJSONObject:theme]
-                       ? [NSJSONSerialization dataWithJSONObject:theme options:0 error:nil]
-                       : nil;
-    nlohmann::json parsed =
-        data ? nlohmann::json::parse(static_cast<const char *>(data.bytes),
-                                     static_cast<const char *>(data.bytes) + data.length, nullptr, false)
-             : nlohmann::json::object();
-    loader::ThemeColors colors = loader::resolveThemeColors(parsed);
+    std::optional<nlohmann::json> theme = UnboundAddonState().theme(toStdString(themeId));
+    if (!theme)
+    {
+        return nil;
+    }
+
+    loader::ThemeColors colors = loader::resolveThemeColors(*theme);
 
     NSMutableDictionary<NSString *, NSString *> *fallbacks = [NSMutableDictionary dictionary];
     for (const auto &[name, selector] : colors.rawFallbacks)
@@ -101,6 +105,11 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
     }
 
     return @{@"semantic" : uiColors(colors.semantic), @"raw" : uiColors(colors.raw), @"rawFallbacks" : fallbacks};
+}
+
++ (BOOL)hasTheme:(NSString *)themeId
+{
+    return UnboundAddonState().theme(toStdString(themeId)).has_value();
 }
 
 + (void)installLogging
@@ -112,24 +121,19 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
     });
 }
 
-+ (NSMutableArray *)scanPluginsIn:(NSString *)documents
++ (void)scanAddons
 {
-    return mutableArrayFromJSON(loader::scanPlugins(toStdString(documents)));
+    UnboundAddonState().scan(toStdString(FileSystem.documents));
 }
 
-+ (NSMutableArray *)scanThemesIn:(NSString *)documents
++ (NSArray *)themes
 {
-    return mutableArrayFromJSON(loader::scanThemes(toStdString(documents)));
+    return arrayFromJSON(UnboundAddonState().themes());
 }
 
-+ (NSMutableArray *)scanFontsIn:(NSString *)documents
-                   nameResolver:(NSString *_Nullable (^)(NSString *path))resolver
++ (NSArray<NSDictionary *> *)fonts
 {
-    loader::FontNameResolver resolveName = [resolver](const std::string &path) {
-        NSString *name = resolver([NSString stringWithUTF8String:path.c_str()] ?: @"");
-        return name ? toStdString(name) : std::string();
-    };
-    return mutableArrayFromJSON(loader::scanFonts(toStdString(documents), resolveName));
+    return arrayFromJSON(UnboundAddonState().fonts());
 }
 
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument
