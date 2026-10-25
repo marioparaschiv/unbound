@@ -1,6 +1,7 @@
 package app.unbound.android
 
 import android.app.Activity
+import android.graphics.Color
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -11,6 +12,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -20,6 +22,11 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class NativeUITest {
+    @Before
+    fun useJvmColorParser() {
+        NativeUI.colorParser = { value -> runCatching { Color.parseColor(value) }.getOrNull() }
+    }
+
     @Test
     fun lookupReturnsHandlesForMatchingViewsWithinTheResultLimit() {
         val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
