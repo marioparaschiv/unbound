@@ -379,7 +379,10 @@ object TextRewrites {
                     .onFailure { Logger.error("plugins", "Text rewrite hosts failed", it) }
             }
 
-            override fun onViewDetachedFromWindow(detached: View) = Unit
+            override fun onViewDetachedFromWindow(detached: View) {
+                val owned = synchronized(lock) { groupsById.values.filter { it.owner?.get() === view } }
+                for (group in owned) release(group)
+            }
         })
         view.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) positionAll(view)
