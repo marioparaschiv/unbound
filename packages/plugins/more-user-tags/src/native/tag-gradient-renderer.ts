@@ -66,7 +66,6 @@ export function createTagGradients(
 				CAGradientLayer,
 				CABasicAnimation: objc.getClass('CABasicAnimation'),
 				CAMediaTimingFunction: objc.getClass('CAMediaTimingFunction'),
-				UIAccessibility: objc.getClass('UIAccessibility'),
 			},
 			colors,
 		);
