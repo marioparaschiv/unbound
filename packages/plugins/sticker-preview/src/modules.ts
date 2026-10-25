@@ -22,6 +22,7 @@ export const RequiredModules = [
 export const ChatInputs = metro.findByProps('getBestActiveInputForChannelId', { lazy: true });
 export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
 export const DraftStore = metro.findStore('Draft', { lazy: true });
+export const ChannelStore = metro.findStore('Channel', { lazy: true });
 export const MessageActions = metro.api.Messages;
 
 // Components are found with `interop: false`, by file path first, then by name.

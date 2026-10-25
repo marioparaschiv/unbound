@@ -1,9 +1,9 @@
+import { composerRowTop } from '@unbound-plugins/shared/composer/overlay-rows';
 import { Text, View } from 'react-native';
 
 import useMessageCount from '~/components/use-message-count';
 import { counterSurface, toneColor } from '~/colors';
 import { counterTone } from '~/counter';
-import { COUNTER_OFFSET, SLOWMODE_ROW_HEIGHT } from '~/constants';
 import { ChannelStore, settings, Theme } from '~/modules';
 
 type CharacterCounterProps = { channelId: string };
@@ -16,14 +16,14 @@ function CharacterCounter({ channelId }: CharacterCounterProps) {
 
 	const colors = Theme.colors ?? {};
 	const tone = counterTone(length, limit, store.get('colorEffects', true));
-	const slowmode = (ChannelStore.getChannel?.(channelId)?.rateLimitPerUser ?? 0) > 0;
+	const channel = ChannelStore.getChannel?.(channelId);
 
 	return (
 		<View
 			pointerEvents='none'
 			style={{
 				position: 'absolute',
-				top: slowmode ? COUNTER_OFFSET - SLOWMODE_ROW_HEIGHT : COUNTER_OFFSET,
+				top: composerRowTop(channel),
 				right: 28,
 				zIndex: 10,
 			}}

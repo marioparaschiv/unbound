@@ -32,13 +32,13 @@ export function patchFloatingChatInputContainer(
 			container,
 			{},
 			<>
+				{container.props.children}
 				<StickerPreview
 					key='sticker-preview'
 					channelId={channelId}
 					staging={staging}
 					Sticker={Sticker}
 				/>
-				{container.props.children}
 			</>,
 		);
 	});
