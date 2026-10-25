@@ -50,11 +50,13 @@ type Claim = { discordId: string; wanted: ReadonlySet<RoleKey>; granted: Readonl
 /** Role id per key; a role blocked by the guild is absent and was logged. */
 type Grantable = ReadonlyMap<RoleKey, string>;
 type Pending = [key: RoleKey, roleId: string];
+type RoleCheck = { grantable: Map<RoleKey, string>; problems: string[] };
 
 export type RolesOptions = {
 	guildId?: string;
 	roleIds?: RoleIds;
 	contributors?: ContributorCache;
+	now?: () => number;
 };
 
 export type RolesDispatcher = {
@@ -77,6 +79,7 @@ const DEFAULT_ROLE_IDS: RoleIds = {
 	addonDeveloper: ADDON_DEVELOPER_ROLE_ID,
 	sponsor: SPONSOR_ROLE_ID,
 };
+const ABSENT_RETRY_MS = 60 * 60 * 1000;
 
 /**
  * @description Decides the roles one member row qualifies for.
@@ -109,13 +112,17 @@ export function qualifyingRoles(
 	return roles;
 }
 
-function pendingRoles(claim: Claim, roles: Grantable): Pending[] {
+function heldKey(discordId: string, roleId: string) {
+	return `${discordId}:${roleId}`;
+}
+
+function pendingRoles(claim: Claim, roles: Grantable, held: ReadonlySet<string>): Pending[] {
 	const pending: Pending[] = [];
 
 	for (const key of claim.wanted) {
 		const roleId = roles.get(key);
 
-		if (roleId && !claim.granted.has(roleId)) {
+		if (roleId && !claim.granted.has(roleId) && !held.has(heldKey(claim.discordId, roleId))) {
 			pending.push([key, roleId]);
 		}
 	}
@@ -123,8 +130,17 @@ function pendingRoles(claim: Claim, roles: Grantable): Pending[] {
 	return pending;
 }
 
-function isUnknownMember(error: unknown): error is DiscordAPIError {
-	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember;
+/** 10007 for a user who is not in the guild, 10013 for a deleted account. */
+function isAbsent(error: unknown): error is DiscordAPIError {
+	return (
+		error instanceof DiscordAPIError &&
+		(error.code === RESTJSONErrorCodes.UnknownMember ||
+			error.code === RESTJSONErrorCodes.UnknownUser)
+	);
+}
+
+function isMissingPermissions(error: unknown): error is DiscordAPIError {
+	return error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions;
 }
 
 /**
@@ -137,9 +153,15 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		guildId = GUILD_ID,
 		roleIds = DEFAULT_ROLE_IDS,
 		contributors = createContributorCache(),
+		now = Date.now,
 	} = options;
 	const allRoles: Grantable = new Map(ROLE_KEYS.map((key) => [key, roleIds[key]]));
 	const queue = createSerialQueue();
+	// `discordId:roleId` pairs seen held by hand; per process, so a restart checks them once more.
+	const held = new Set<string>();
+	// Discord id -> epoch ms before which an account missing from the guild is not fetched again.
+	const absent = new Map<string, number>();
+	let reported = new Set<string>();
 	let attached = false;
 
 	async function loadClaims(db: Database, where: SQL | undefined): Promise<Claim[]> {
@@ -153,7 +175,7 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		for (const row of rows) {
 			const roles = qualifyingRoles(row, ids);
 
-			if (!roles.size) {
+			if (!roles.size || (absent.get(row.discordId) ?? 0) > now()) {
 				continue;
 			}
 
@@ -177,43 +199,44 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 			);
 		}
 
-		// A claim with nothing left to grant costs no Discord call.
+		// Granted, held by hand or cooling down after a miss: a converged account costs no Discord call.
 		return [...wanted]
 			.map(([discordId, roles]) => ({
 				discordId,
 				wanted: roles,
 				granted: granted.get(discordId) ?? new Set<string>(),
 			}))
-			.filter((claim) => pendingRoles(claim, allRoles).length);
+			.filter((claim) => pendingRoles(claim, allRoles, held).length);
 	}
 
-	function grantableRoles(guild: RolesGuild): Grantable {
+	function checkRoles(guild: RolesGuild): RoleCheck {
 		const grantable = new Map<RoleKey, string>();
+		const problems: string[] = [];
 		const me = guild.members.me;
 
 		if (!me) {
-			logger.error(
+			problems.push(
 				`Cannot grant any role: the bot's member in guild ${guildId} is not cached.`,
 			);
 
-			return grantable;
+			return { grantable, problems };
 		}
 
 		const highest = me.roles.highest;
 
 		if (!me.permissions.has(PermissionFlagsBits.ManageRoles)) {
-			logger.error(
+			problems.push(
 				`Cannot grant any role: the bot's role "${highest.name}" lacks Manage Roles. Enable it in Server Settings > Roles.`,
 			);
 
-			return grantable;
+			return { grantable, problems };
 		}
 
 		for (const [key, roleId] of allRoles) {
 			const role = guild.roles.cache.get(roleId);
 
 			if (!role) {
-				logger.error(
+				problems.push(
 					`Cannot grant ${key}: role ${ROLE_CONSTANTS[key]}=${roleId} does not exist in guild ${guildId}. Fix it in src/lib/constants.ts.`,
 				);
 
@@ -221,7 +244,7 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 			}
 
 			if (highest.comparePositionTo(roleId) <= 0) {
-				logger.error(
+				problems.push(
 					`Cannot grant "${role.name}" (position ${role.position}): the bot's highest role "${highest.name}" (position ${highest.position}) is not above it. In Server Settings > Roles, drag "${highest.name}" above "${role.name}".`,
 				);
 
@@ -231,11 +254,50 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 			grantable.set(key, roleId);
 		}
 
-		return grantable;
+		return { grantable, problems };
 	}
 
-	async function grantClaim(db: Database, guild: RolesGuild, claim: Claim, grantable: Grantable) {
-		const pending = pendingRoles(claim, grantable);
+	// Every timed reconcile meets the same guild, so a problem is logged when it appears, not on each run.
+	function report(problems: string[]) {
+		if (
+			problems.length === reported.size &&
+			problems.every((problem) => reported.has(problem))
+		) {
+			return;
+		}
+
+		if (!problems.length) {
+			logger.info('Role grants are unblocked: every guild-level problem is resolved.');
+		}
+
+		for (const problem of problems) {
+			logger.error(problem);
+		}
+
+		reported = new Set(problems);
+	}
+
+	async function grantRole(
+		db: Database,
+		target: RolesMember,
+		discordId: string,
+		pending: Pending,
+	) {
+		const [key, roleId] = pending;
+
+		await target.roles.add(roleId, `Unbound role sync: ${key}`);
+		await db.insert(roleGrant).values({ discordId, role: roleId }).onConflictDoNothing();
+		logger.info(`Granted ${key} to Discord user ${discordId}.`);
+	}
+
+	// `grantable` is this run's; a role Discord refuses with 50013 leaves it for the rest of the run.
+	async function grantClaim(
+		db: Database,
+		guild: RolesGuild,
+		claim: Claim,
+		grantable: Map<RoleKey, string>,
+	) {
+		const pending = pendingRoles(claim, grantable, held);
 
 		if (!pending.length) return;
 
@@ -243,10 +305,12 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 
 		try {
 			target = await guild.members.fetch({ user: claim.discordId, force: true });
+			absent.delete(claim.discordId);
 		} catch (error) {
-			if (isUnknownMember(error)) {
+			if (isAbsent(error)) {
+				absent.set(claim.discordId, now() + ABSENT_RETRY_MS);
 				logger.debug(
-					`Discord user ${claim.discordId} is not in the guild; waiting for a join.`,
+					`Discord user ${claim.discordId} is not in the guild; retrying on a join or in an hour.`,
 				);
 
 				return;
@@ -255,18 +319,33 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 			throw error;
 		}
 
-		for (const [key, roleId] of pending) {
-			// Held by hand: leave it alone and record nothing.
+		for (const role of pending) {
+			const [key, roleId] = role;
+
+			// Held by hand: remember it, record nothing.
 			if (target.roles.cache.has(roleId)) {
+				held.add(heldKey(claim.discordId, roleId));
+
 				continue;
 			}
 
-			await target.roles.add(roleId, `Unbound role sync: ${key}`);
-			await db
-				.insert(roleGrant)
-				.values({ discordId: claim.discordId, role: roleId })
-				.onConflictDoNothing();
-			logger.info(`Granted ${key} to Discord user ${claim.discordId}.`);
+			try {
+				await grantRole(db, target, claim.discordId, role);
+			} catch (error) {
+				if (!isMissingPermissions(error)) {
+					logger.error(
+						`Failed to grant ${key} to Discord user ${claim.discordId}:`,
+						error,
+					);
+
+					continue;
+				}
+
+				grantable.delete(key);
+				logger.error(
+					`Cannot grant ${key}: Discord answered Missing Permissions (50013) for role ${roleId}. Check the role is not managed by an integration and sits below the bot's highest role; skipping it this run.`,
+				);
+			}
 		}
 	}
 
@@ -276,7 +355,9 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		if (!claims.length) return;
 
 		const guild = await current.client.guilds.fetch(guildId);
-		const grantable = grantableRoles(guild);
+		const { grantable, problems } = checkRoles(guild);
+
+		report(problems);
 
 		for (const claim of claims) {
 			try {
@@ -287,7 +368,7 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		}
 	}
 
-	// Without the GuildMembers intent joins never fire; the runtime's periodic reconcile catches them.
+	// Without the GuildMembers intent joins never fire; the runtime's timed reconcile then grants a joined member once their absence cooldown ends.
 	function attach(context: RolesContext) {
 		if (attached) return;
 
@@ -295,8 +376,13 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		context.client.on('guildMemberAdd', (joined) => {
 			if (joined.guild.id !== guildId) return;
 
+			// Cleared inside the queue, so a sync already running cannot mark the account absent again after the join.
 			queue
-				.enqueue(() => sync(context, eq(member.discordId, joined.id)))
+				.enqueue(() => {
+					absent.delete(joined.id);
+
+					return sync(context, eq(member.discordId, joined.id));
+				})
 				.catch((error) => {
 					logger.error(
 						`Failed to sync roles for joined Discord user ${joined.id}:`,

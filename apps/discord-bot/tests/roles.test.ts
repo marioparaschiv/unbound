@@ -30,6 +30,7 @@ import { FAKE_GUILD_ID, GUILD_ROLES, fakeDiscord } from './helpers/roles-discord
 import { fakeGitHub } from './helpers/github-fetch';
 import { MEMBER } from './helpers/feeds';
 
+const HOUR = 60 * 60 * 1000;
 const ROLE_IDS = { contributor: 'r-c', addonDeveloper: 'r-a', sponsor: 'r-s' };
 const CONTRIBUTORS = new Set(['42']);
 
@@ -84,7 +85,7 @@ describe('qualifyingRoles', () => {
 
 describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 	let database: TestDatabase;
-	const error = spyOn(console, 'error');
+	const error = spyOn(console, 'error').mockImplementation(() => undefined);
 	const info = spyOn(console, 'info').mockImplementation(() => void 0);
 	const debug = spyOn(console, 'debug').mockImplementation(() => void 0);
 
@@ -99,7 +100,12 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 
 	afterEach(() => {
 		error.mockClear();
+		info.mockClear();
 	});
+
+	function count(spy: ReturnType<typeof spyOn>, text: string) {
+		return spy.mock.calls.filter((call) => call.map(String).join(' ').includes(text)).length;
+	}
 
 	afterAll(async () => {
 		error.mockRestore();
@@ -199,6 +205,52 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		expect(discord.added).toHaveLength(3);
 	});
 
+	test('a role held by hand costs no Discord call on the next reconcile', async () => {
+		await seed({});
+		const discord = fakeDiscord({ members: { '1': ['r-c'] } });
+		const roles = dispatcher();
+		const context = { db: database.db, client: discord.client };
+
+		await roles.reconcile(context);
+		await roles.reconcile(context);
+		await roles.handle(MEMBER.userId, context);
+
+		expect(discord.fetched).toEqual(['1']);
+		expect(discord.added).toEqual([]);
+		expect(await grants()).toEqual([]);
+	});
+
+	test('an absent member is not fetched again for an hour', async () => {
+		await seed({});
+		const discord = fakeDiscord({ members: {} });
+		let clock = 0;
+		const roles = dispatcher({ now: () => clock });
+		const context = { db: database.db, client: discord.client };
+
+		await roles.reconcile(context);
+		clock = HOUR - 1;
+		await roles.reconcile(context);
+		await roles.handle(MEMBER.userId, context);
+		expect(discord.fetched).toEqual(['1']);
+
+		clock = HOUR;
+		await roles.reconcile(context);
+		expect(discord.fetched).toEqual(['1', '1']);
+	});
+
+	test('a deleted account (10013 Unknown User) is skipped quietly like an absent member', async () => {
+		await seed({});
+		const discord = fakeDiscord({ members: {}, deleted: ['1'] });
+		const roles = dispatcher();
+		const context = { db: database.db, client: discord.client };
+
+		await roles.reconcile(context);
+		await roles.reconcile(context);
+
+		expect(discord.fetched).toEqual(['1']);
+		expect(logged(error)).toBe('');
+	});
+
 	test('does not re-add a role the bot granted after a moderator removed it', async () => {
 		await seed({});
 		const discord = fakeDiscord({ members: { '1': [] } });
@@ -270,8 +322,30 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 
 		expect(discord.added).toEqual([{ discordId: '1', roleId: 'r-c' }]);
 		expect(logged(error)).toContain(
-			'Cannot grant "Sponsor" (position 3): the bot\'s highest role "Unbound" (position 5) is not above it. In Server Settings > Roles, drag "Unbound" above "Sponsor".',
+			'Cannot grant "Sponsor" (position 6): the bot\'s highest role "Unbound" (position 5) is not above it. In Server Settings > Roles, drag "Unbound" above "Sponsor".',
 		);
+	});
+
+	test('logs a guild problem once while it persists, again when it changes, and once when it clears', async () => {
+		await seed({ isAddonDeveloper: true, isSponsor: true });
+		const members = { '1': [] };
+		const sponsorAbove = fakeDiscord({ members, aboveBot: ['r-s'] });
+		const bothAbove = fakeDiscord({ members, aboveBot: ['r-s', 'r-a'] });
+		const fixed = fakeDiscord({ members });
+		const roles = dispatcher();
+
+		await roles.reconcile({ db: database.db, client: sponsorAbove.client });
+		await roles.reconcile({ db: database.db, client: sponsorAbove.client });
+		expect(count(error, 'Cannot grant "Sponsor"')).toBe(1);
+
+		await roles.reconcile({ db: database.db, client: bothAbove.client });
+		expect(count(error, 'Cannot grant "Sponsor"')).toBe(2);
+		expect(count(error, 'Cannot grant "Addon Developer"')).toBe(1);
+
+		await roles.reconcile({ db: database.db, client: fixed.client });
+		await roles.reconcile({ db: database.db, client: fixed.client });
+		expect(fixed.added).toEqual([{ discordId: '1', roleId: 'r-s' }]);
+		expect(count(info, 'Role grants are unblocked')).toBe(1);
 	});
 
 	test('logs a role missing from the guild and still grants the others', async () => {
@@ -298,15 +372,20 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		expect(logged(error)).toContain('the bot\'s role "Unbound" lacks Manage Roles');
 	});
 
-	test('a rejected add is logged and other members are still granted', async () => {
-		await seed({ userId: 'a', discordId: '1' }, { userId: 'b', discordId: '2' });
-		const discord = fakeDiscord({ members: { '1': [], '2': [] }, failAdd: ['1'] });
+	test("a 50013 on one role still grants each member's other roles and is logged once", async () => {
+		await seed(
+			{ userId: 'a', discordId: '1', isSponsor: true },
+			{ userId: 'b', discordId: '2', isSponsor: true },
+		);
+		const discord = fakeDiscord({ members: { '1': [], '2': [] }, failAdd: ['r-c'] });
 
 		await dispatcher().reconcile({ db: database.db, client: discord.client });
 
-		expect(discord.added).toEqual([{ discordId: '2', roleId: 'r-c' }]);
-		expect(await grants()).toEqual([{ discordId: '2', role: 'r-c' }]);
-		expect(logged(error)).toContain('Failed to grant roles to Discord user 1');
+		expect(discord.added).toEqual([
+			{ discordId: '1', roleId: 'r-s' },
+			{ discordId: '2', roleId: 'r-s' },
+		]);
+		expect(count(error, 'Missing Permissions (50013)')).toBe(1);
 	});
 
 	test('concurrent reconcile, handle and join add each role once', async () => {

@@ -12,11 +12,13 @@ export type FakeDiscordOptions = {
 	guildId?: string;
 	/** Role ids each guild member holds, by Discord id; anyone else is not in the guild. */
 	members: Record<string, string[]>;
+	/** Discord ids of deleted accounts, answered with 10013 Unknown User. */
+	deleted?: string[];
 	guildRoles?: RolesRole[];
-	/** Role ids at or above the bot's highest role. */
+	/** Role ids moved above the bot's highest role. */
 	aboveBot?: string[];
 	manageRoles?: boolean;
-	/** Discord ids whose role adds reject. */
+	/** Role ids whose adds reject with 50013 Missing Permissions. */
 	failAdd?: string[];
 };
 
@@ -43,6 +45,17 @@ export const GUILD_ROLES: RolesRole[] = [
 
 const BOT_ROLE: RolesRole = { id: 'r-bot', name: 'Unbound', position: 5 };
 
+function discordError(code: RESTJSONErrorCodes, message: string, method: string, url: string) {
+	return new DiscordAPIError(
+		{ code, message },
+		code,
+		code === RESTJSONErrorCodes.MissingPermissions ? 403 : 404,
+		method,
+		url,
+		{},
+	);
+}
+
 /**
  * @description A guild with one bot member, recording every fetch and role add.
  * @param options Members, guild roles, hierarchy and permission.
@@ -55,11 +68,17 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 		aboveBot = [],
 		manageRoles = true,
 		failAdd = [],
+		deleted = [],
 	} = options;
 	const members = new Map(
 		Object.entries(options.members).map(([id, roles]) => [id, new Set(roles)]),
 	);
-	const roles = new Map(guildRoles.map((role) => [role.id, role]));
+	const roles = new Map(
+		guildRoles.map((role) => [
+			role.id,
+			aboveBot.includes(role.id) ? { ...role, position: BOT_ROLE.position + 1 } : role,
+		]),
+	);
 	const listeners: ((member: JoinedMember) => void)[] = [];
 	const added: Added[] = [];
 	const fetched: string[] = [];
@@ -69,8 +88,13 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 			roles: {
 				cache: held,
 				async add(roleId) {
-					if (failAdd.includes(discordId)) {
-						throw new Error(`Missing Permissions for ${discordId}`);
+					if (failAdd.includes(roleId)) {
+						throw discordError(
+							RESTJSONErrorCodes.MissingPermissions,
+							'Missing Permissions',
+							'PUT',
+							`/guilds/${guildId}/members/${discordId}/roles/${roleId}`,
+						);
 					}
 
 					held.add(roleId);
@@ -92,7 +116,8 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 				roles: {
 					highest: {
 						...BOT_ROLE,
-						comparePositionTo: (roleId) => (aboveBot.includes(roleId) ? 0 : 1),
+						comparePositionTo: (roleId) =>
+							BOT_ROLE.position - (roles.get(roleId)?.position ?? 0),
 					},
 				},
 			},
@@ -101,14 +126,21 @@ export function fakeDiscord(options: FakeDiscordOptions): FakeDiscord {
 
 				const held = members.get(user);
 
-				if (!held) {
-					throw new DiscordAPIError(
-						{ code: RESTJSONErrorCodes.UnknownMember, message: 'Unknown Member' },
-						RESTJSONErrorCodes.UnknownMember,
-						404,
+				if (deleted.includes(user)) {
+					throw discordError(
+						RESTJSONErrorCodes.UnknownUser,
+						'Unknown User',
 						'GET',
 						`/guilds/${guildId}/members/${user}`,
-						{},
+					);
+				}
+
+				if (!held) {
+					throw discordError(
+						RESTJSONErrorCodes.UnknownMember,
+						'Unknown Member',
+						'GET',
+						`/guilds/${guildId}/members/${user}`,
 					);
 				}
 
