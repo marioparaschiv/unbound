@@ -1,14 +1,64 @@
 version: 2
 updates:
+    - package-ecosystem: 'github-actions'
+      directory: '/'
+      schedule:
+          interval: 'weekly'
+      open-pull-requests-limit: 5
+      commit-message:
+          prefix: 'ci(deps)'
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
+    - package-ecosystem: 'gitsubmodule'
+      directory: '/'
+      schedule:
+          interval: 'daily'
+      open-pull-requests-limit: 5
+      commit-message:
+          prefix: 'build(deps)'
 
-  - package-ecosystem: "gitsubmodule"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    open-pull-requests-limit: 5
+    - package-ecosystem: 'bun'
+      directory: '/'
+      schedule:
+          interval: 'weekly'
+      open-pull-requests-limit: 5
+      commit-message:
+          prefix: 'build(deps)'
+      groups:
+          minor-and-patch:
+              update-types:
+                  - 'minor'
+                  - 'patch'
+
+    - package-ecosystem: 'bun'
+      directory: '/packages/debugger'
+      schedule:
+          interval: 'weekly'
+      open-pull-requests-limit: 5
+      commit-message:
+          prefix: 'build(deps)'
+      groups:
+          minor-and-patch:
+              update-types:
+                  - 'minor'
+                  - 'patch'
+
+    - package-ecosystem: 'gomod'
+      directory: '/packages/loader'
+      schedule:
+          interval: 'weekly'
+      open-pull-requests-limit: 5
+      commit-message:
+          prefix: 'build(deps)'
+
+    - package-ecosystem: 'gradle'
+      directory: '/packages/loader/android'
+      schedule:
+          interval: 'weekly'
+      open-pull-requests-limit: 5
+      commit-message:
+          prefix: 'build(deps)'
+      groups:
+          minor-and-patch:
+              update-types:
+                  - 'minor'
+                  - 'patch'
