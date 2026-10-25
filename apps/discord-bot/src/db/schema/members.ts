@@ -2,7 +2,8 @@ import { boolean, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-co
 
 export const member = pgTable('member', {
 	userId: text('user_id').primaryKey(),
-	discordId: text('discord_id').notNull(),
+	/** `null` is the feed's tombstone: the user unlinked Discord or was deleted. */
+	discordId: text('discord_id'),
 	githubId: text('github_id'),
 	githubLogin: text('github_login'),
 	isAddonDeveloper: boolean('is_addon_developer').notNull(),

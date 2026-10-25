@@ -1,0 +1,1 @@
+ALTER TABLE "member" ALTER COLUMN "discord_id" DROP NOT NULL;
