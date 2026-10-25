@@ -26,12 +26,11 @@ function StickerPreview({ channelId, staging, Sticker }: StickerPreviewProps) {
 			pointerEvents='box-none'
 			style={{
 				alignItems: 'flex-end',
-				bottom: 64,
+				alignSelf: 'stretch',
 				height: PREVIEW_SIZE,
-				paddingRight: 16,
-				position: 'absolute',
-				right: 0,
 				justifyContent: 'center',
+				marginBottom: 8,
+				paddingRight: 16,
 			}}
 		>
 			<Pressable
@@ -52,6 +51,7 @@ function StickerPreview({ channelId, staging, Sticker }: StickerPreviewProps) {
 				}}
 			>
 				<View
+					pointerEvents='none'
 					style={{
 						borderRadius: 16,
 						height: STICKER_SIZE,

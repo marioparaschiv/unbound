@@ -46,10 +46,13 @@ export function createMentionIndex(includeRoles: boolean) {
 		for (const message of messages) add(message);
 	}
 
-	function hydrateMessage(id: string | undefined): boolean {
+	function hydrateMessage(id: string | undefined, channelId?: string): boolean {
 		if (!id) return false;
 
-		const message = MessageStore.getMessage(SelectedChannelStore.getChannelId(), id);
+		const message = MessageStore.getMessage(
+			channelId ?? SelectedChannelStore.getChannelId(),
+			id,
+		);
 
 		if (!message) return false;
 
@@ -63,6 +66,7 @@ export function createMentionIndex(includeRoles: boolean) {
 		hydrateChannel,
 		hydrateMessage,
 		get: (id: string): Mention[] => mentionsByMessage.get(id) ?? [],
+		all: (): Mention[] => [...new Set([...mentionsByMessage.values()].flat())],
 		isUnresolved: (id: string) => unresolved.has(id),
 		clear() {
 			mentionsByMessage.clear();

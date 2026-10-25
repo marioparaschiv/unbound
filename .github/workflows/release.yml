@@ -20,31 +20,43 @@ concurrency:
 
 jobs:
     release:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         outputs:
             releases-created: ${{ steps.release.outputs.releases_created }}
             client-released: ${{ steps.release.outputs['packages/client--release_created'] }}
             client-version: ${{ steps.release.outputs['packages/client--version'] }}
         steps:
-            - id: release
+            - name: Run release-please
+              id: release
               uses: googleapis/release-please-action@v5
 
             # release-please bumps package.json versions but only knows npm lockfiles, so the
             # workspace versions recorded in bun.lock are refreshed on the release PR branch.
-            - if: steps.release.outputs.prs_created == 'true'
-              uses: actions/checkout@v4
+            - name: Checkout code
+              if: steps.release.outputs.prs_created == 'true'
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
 
             # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
             # canary's frozen-lockfile check fails on a self-generated lockfile (round-trip bug),
             # so install without it until stable 1.4 lands.
-            - if: steps.release.outputs.prs_created == 'true'
+            - name: Setup Bun
+              if: steps.release.outputs.prs_created == 'true'
               uses: oven-sh/setup-bun@v2
               with:
                   bun-version: canary
 
-            - if: steps.release.outputs.prs_created == 'true'
+            - name: Cache Bun installs
+              if: steps.release.outputs.prs_created == 'true'
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ~/.bun/install/cache
+                  key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+                  restore-keys: bun-${{ runner.os }}-
+
+            - name: Sync bun.lock with the release versions
+              if: steps.release.outputs.prs_created == 'true'
               run: |
                   bun install
                   git diff --quiet -- bun.lock && exit 0
@@ -57,24 +69,36 @@ jobs:
     publish:
         needs: release
         if: needs.release.outputs.releases-created == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   persist-credentials: false
 
-            - uses: oven-sh/setup-bun@v2
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
               with:
                   bun-version: canary
 
-            - run: bun install
+            - name: Cache Bun installs
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ~/.bun/install/cache
+                  key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+                  restore-keys: bun-${{ runner.os }}-
+
+            - name: Install dependencies
+              run: bun install
 
             # Publishing uses npm trusted publishing (OIDC), which needs npm >= 11.5.1; the runner's
             # preinstalled npm is older.
-            - run: npm install --global npm@latest
+            - name: Update npm
+              run: npm install --global npm@latest
 
             # Skips every package whose version is already on npm, so only the released ones publish.
-            - run: bun scripts/publish-all.ts
+            - name: Publish packages
+              run: bun scripts/publish-all.ts
 
     bundle:
         needs: release

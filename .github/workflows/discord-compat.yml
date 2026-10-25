@@ -1,0 +1,134 @@
+name: Discord compatibility scan
+
+on:
+    schedule:
+        - cron: '23 7 * * *'
+    workflow_dispatch:
+        inputs:
+            channel:
+                description: Discord release channel to scan
+                type: choice
+                options: [stable, beta]
+                default: stable
+
+permissions:
+    contents: read
+
+concurrency:
+    group: discord-compat-${{ github.ref }}
+    cancel-in-progress: false
+
+jobs:
+    scan:
+        name: scan (${{ matrix.channel }})
+        runs-on: ubuntu-26.04
+        timeout-minutes: 45
+        permissions:
+            actions: read
+            contents: read
+            issues: write
+        strategy:
+            fail-fast: false
+            matrix:
+                channel: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.channel) || '["stable","beta"]') }}
+        defaults:
+            run:
+                working-directory: packages/loader
+        env:
+            CHANNEL: ${{ matrix.channel }}
+            DISCORD_TRACKER: https://tracker.vendetta.rocks/tracker
+            DKRYPT_BASE_URL: ${{ vars.DKRYPT_BASE_URL || 'https://ipa.dylib.dev' }}
+            GH_TOKEN: ${{ github.token }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+            - name: Download Discord for Android
+              id: android
+              run: |
+                  set -euo pipefail
+                  code=$(curl -fsSL "$DISCORD_TRACKER/index" | jq -r ".latest.$CHANNEL")
+                  curl -fsSL -o discord.apk "$DISCORD_TRACKER/download/$code/base"
+                  echo "version=$((code / 1000)).$((code % 1000))" >> "$GITHUB_OUTPUT"
+
+            - name: Download Discord for iOS
+              env:
+                  DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+              run: |
+                  set -euo pipefail
+                  if [ "$CHANNEL" = stable ]; then
+                    go run ./tools fetch --base-url "$DKRYPT_BASE_URL" --bundle-id com.hammerandchisel.discord --output discord.ipa
+                  else
+                    IPA_DIR="$RUNNER_TEMP/ipa" python3 ../../.agents/skills/dkrypt/scripts/fetch-ipa.py com.hammerandchisel.discord testflight
+                    mv "$RUNNER_TEMP"/ipa/*.ipa discord.ipa
+                  fi
+
+            - name: Restore the previous scan
+              run: |
+                  set -euo pipefail
+                  for run in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow discord-compat.yml --status success --limit 20 --json databaseId --jq '.[].databaseId'); do
+                    if gh run download "$run" --repo "$GITHUB_REPOSITORY" --name "compat-$CHANNEL" --dir baseline 2>/dev/null; then
+                      echo "Using the scan from run $run as the baseline"
+                      break
+                    fi
+                  done
+
+            - name: Scan
+              run: |
+                  set -euo pipefail
+                  go run ./tools compat-scan \
+                    --root ../.. \
+                    --channel "$CHANNEL" \
+                    --ipa discord.ipa \
+                    --apk discord.apk \
+                    --android-version "${{ steps.android.outputs.version }}" \
+                    --baseline baseline/compat.json \
+                    --results compat.json \
+                    --report report.md \
+                    --source-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA"
+                  cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Upload the scan
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: compat-${{ matrix.channel }}
+                  path: |
+                      packages/loader/compat.json
+                      packages/loader/report.md
+                  retention-days: 90
+
+            - name: Open or update the issue
+              if: github.ref_name == github.event.repository.default_branch
+              run: |
+                  set -euo pipefail
+                  label=discord-compat
+                  prefix="Discord compatibility ($CHANNEL)"
+                  versions=$(jq -r '[.targets[] | (if .platform == "ios" then "iOS " else "Android " end) + .version] | join(", ")' compat.json)
+                  problems=$(jq '[.findings[] | select(.status == "broken" or .status == "possible")] | length' compat.json)
+                  gh label create "$label" --repo "$GITHUB_REPOSITORY" --color D93F0B --description "A Discord build breaks part of Unbound" --force >/dev/null
+                  existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label "$label" --state open --json number,title \
+                    --jq "[.[] | select(.title | startswith(\"$prefix\"))][0].number // empty")
+                  if [ "$problems" -gt 0 ]; then
+                    if [ -n "$existing" ]; then
+                      gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --title "$prefix: $versions" --body-file report.md
+                    else
+                      gh issue create --repo "$GITHUB_REPOSITORY" --title "$prefix: $versions" --label "$label" --body-file report.md
+                    fi
+                  elif [ -n "$existing" ]; then
+                    gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment "The scan of $versions finds nothing broken."
+                  fi

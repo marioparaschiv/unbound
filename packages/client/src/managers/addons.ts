@@ -9,6 +9,7 @@ import {
 	NativePlatform,
 	NativePluginCapabilityError,
 	NativePluginPlatformError,
+	NativePluginUnsupportedPlatformError,
 	validateNativePluginRequirements,
 } from '~/api/native-runtime';
 import { Manager, ManagerType } from '~/managers/base';
@@ -366,7 +367,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 		try {
 			await this.unload(resolved);
-			await fs.rm(`Unbound/${ManagerType[this.type]}/${resolved.id}`);
+			await fs.rm(this.directoryOf(resolved.id));
 			this.forgetSource(resolved.id);
 			this.emit('deleted', resolved);
 		} catch (error) {
@@ -630,13 +631,22 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	}
 
 	/**
+	 * @description Names an addon's on-disk folder, matching the case the loader scans on case-sensitive file systems.
+	 * @param id The addon's id.
+	 * @returns The folder path relative to the documents directory.
+	 */
+	protected directoryOf(id: string): string {
+		return `Unbound/${managerDirectories[this.type]}/${id}`;
+	}
+
+	/**
 	 * @description Writes an addon's manifest and bundle to its on-disk folder, the same layout the
 	 * loader reads at startup, so a fresh install or hot reload survives the next app launch.
 	 * @param bundle The addon's bundle source.
 	 * @param manifest The addon's validated manifest.
 	 */
 	protected async persist(bundle: string, manifest: AddonManifest): Promise<void> {
-		const dir = `Unbound/${managerDirectories[this.type]}/${manifest.id}`;
+		const dir = this.directoryOf(manifest.id);
 
 		await fs.write(`${dir}/manifest.json`, JSON.stringify(manifest));
 		await fs.write(`${dir}/${manifest.main}`, bundle);
@@ -697,6 +707,18 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			throw new Error('Manifest capabilities must be an array');
 		}
 
+		if (manifest.platforms !== undefined) {
+			if (!Array.isArray(manifest.platforms) || manifest.platforms.length === 0) {
+				throw new Error('Manifest platforms must be a non-empty array');
+			}
+
+			for (const platform of manifest.platforms as readonly string[]) {
+				if (platform !== 'ios' && platform !== 'android') {
+					throw new Error(`Manifest platforms has unsupported platform: ${platform}`);
+				}
+			}
+		}
+
 		if (
 			manifest.platformCapabilities !== undefined &&
 			(typeof manifest.platformCapabilities !== 'object' ||
@@ -729,6 +751,14 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		}
 
 		const currentPlatform = NativePlatform?.device.platform ?? NativePlatform?.platform;
+
+		if (manifest.platforms?.length && !manifest.platforms.includes(currentPlatform as never)) {
+			throw new NativePluginUnsupportedPlatformError(
+				manifest.platforms,
+				String(currentPlatform),
+			);
+		}
+
 		const hasPlatformRequirements = Object.keys(manifest.platformCapabilities ?? {}).length > 0;
 
 		if (hasPlatformRequirements && currentPlatform !== 'ios' && currentPlatform !== 'android') {

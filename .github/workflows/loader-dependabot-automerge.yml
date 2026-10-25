@@ -1,0 +1,54 @@
+name: Loader Auto-merge Dependabot
+
+on:
+  workflow_run:
+    workflows:
+      - Loader Pull Request Build
+    types:
+      - completed
+
+permissions:
+  contents: write
+  pull-requests: write
+
+defaults:
+  run:
+    working-directory: packages/loader
+
+jobs:
+  merge:
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Merge successful Dependabot pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$PR_NUMBER" ]]; then
+            exit 0
+          fi
+          run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${WORKFLOW_RUN_ID}")"
+          if [[ "$(jq -r '.event' <<< "$run")" != "pull_request" || "$(jq -r '.conclusion' <<< "$run")" != "success" ]]; then
+            exit 0
+          fi
+          if [[ "$(jq -r '.head_repository.full_name' <<< "$run")" != "$GITHUB_REPOSITORY" ]]; then
+            exit 0
+          fi
+          run_head_sha="$(jq -r '.head_sha' <<< "$run")"
+          pull_request="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}")"
+          if [[ "$(jq -r '.state' <<< "$pull_request")" != "open" || "$(jq -r '.draft' <<< "$pull_request")" == "true" ]]; then
+            exit 0
+          fi
+          if [[ "$(jq -r '.user.login' <<< "$pull_request")" != "dependabot[bot]" || "$(jq -r '.base.ref' <<< "$pull_request")" != "main" ]]; then
+            exit 0
+          fi
+          if [[ "$(jq -r '.head.repo.full_name' <<< "$pull_request")" != "$GITHUB_REPOSITORY" || "$(jq -r '.head.sha' <<< "$pull_request")" != "$run_head_sha" ]]; then
+            exit 0
+          fi
+          gh pr merge "$PR_NUMBER" --auto --squash

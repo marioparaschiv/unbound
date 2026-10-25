@@ -31,6 +31,18 @@ describe('selectMentionLabel', () => {
 	});
 });
 
+describe('selectMentionLabel on ContentNode text', () => {
+	test('matches a label followed by the word joiner Discord now renders after mentions', () => {
+		expect(
+			selectMentionLabel('@adri\u00e1n\u2060 \u2069 hi', ['adri\u00e1n', 'dylib.dev']),
+		).toBe('adri\u00e1n');
+	});
+
+	test('still rejects a label that continues into more visible text', () => {
+		expect(selectMentionLabel('@adri\u00e1nx\u2060', ['adri\u00e1n'])).toBeUndefined();
+	});
+});
+
 describe('containsMentionText', () => {
 	test('requires every mention label to appear in full', () => {
 		expect(

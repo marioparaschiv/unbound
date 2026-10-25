@@ -46,6 +46,7 @@
 	"UNBOUND_TOASTS_ANIMATIONS": "Animations",
 	"UNBOUND_TOASTS_MAX_ON_SCREEN": "Max Toasts on Screen",
 	"UNBOUND_TOASTS_DURATION": "Duration",
+	"UNBOUND_TOASTS_BEHAVIOR": "Behavior",
 	"UNBOUND_TOASTS_OPACITY": "Opacity",
 	"UNBOUND_TOASTS_BLUR": "Blur",
 	"UNBOUND_DEVELOPER_SETTINGS": "Developer Settings",
@@ -108,5 +109,6 @@
 	"UNBOUND_LINKS": "Links",
 	"UNBOUND_GITHUB": "GitHub",
 	"UNBOUND_DOCS": "Documentation",
-	"UNBOUND_SUPPORT_SERVER": "Support Server"
+	"UNBOUND_SUPPORT_SERVER": "Support Server",
+	"UNBOUND_THEME_RESTART_CONFIRM": "Restart now so the theme applies everywhere?"
 }

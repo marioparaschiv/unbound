@@ -1,4 +1,8 @@
 import type { NativeObjectHandle } from '@unbound-app/api/native';
+import {
+	placeAttachedViews,
+	type TextEngine,
+} from '@unbound-plugins/shared/native/text-attachments';
 
 import type { CodeBlockPlacement } from '~/fences';
 import { readPreferences } from '~/preferences';
@@ -17,6 +21,7 @@ import { measureCardWidth } from './cells';
 export type MountTarget = {
 	label: NativeObjectHandle;
 	cell: NativeObjectHandle;
+	engine: TextEngine;
 	original: NativeObjectHandle;
 	placements: CodeBlockPlacement[];
 	channelId: string;
@@ -54,12 +59,31 @@ function whileApplying<T>(session: Session, surface: Surface, write: () => T): T
 	}
 }
 
+function placeCards(session: Session, surface: Surface): void {
+	if (surface.engine !== 'textkit' || surface.placing || !isMounted(session, surface)) return;
+
+	surface.placing = true;
+
+	const views = surface.parts.map((part) => ({
+		view: part.host.host,
+		index: part.attachmentIndex,
+	}));
+
+	void placeAttachedViews(session.text, surface.label, views)
+		.catch(() => undefined)
+		.finally(() => {
+			surface.placing = false;
+
+			if (!isMounted(session, surface)) detachSurface(session, surface);
+		});
+}
+
 function applySurface(session: Session, surface: Surface, relayout: boolean = true): boolean {
 	const { ui } = session;
 
 	if (surface.parts.some((part) => part.height <= 0)) return false;
 
-	const text = textWithCards(ui, surface);
+	const text = textWithCards(session, surface);
 
 	if (!text) return false;
 
@@ -70,6 +94,8 @@ function applySurface(session: Session, surface: Surface, relayout: boolean = tr
 		ui.call(surface.label, 'setNeedsLayout');
 
 		if (relayout) updateRow(session, surface);
+
+		placeCards(session, surface);
 
 		return true;
 	});
@@ -185,7 +211,7 @@ function createParts(session: Session, surface: Surface, placements: CodeBlockPl
 
 		if (!host) return null;
 
-		parts.push({ placement, host, height: layout.height, copyHook: null });
+		parts.push({ placement, host, height: layout.height, copyHook: null, attachmentIndex: 0 });
 	}
 
 	return parts;
@@ -198,7 +224,12 @@ function hookSurface(session: Session, surface: Surface): void {
 		surface.cellHook = objc.hook(
 			'DCDMessageTableViewCell',
 			'layoutSubviews',
-			{ after: () => scheduleRowCorrection(session, surface) },
+			{
+				after: () => {
+					scheduleRowCorrection(session, surface);
+					placeCards(session, surface);
+				},
+			},
 			{ instance: surface.cell },
 		);
 	} catch {
@@ -230,7 +261,7 @@ function hookSurface(session: Session, surface: Surface): void {
  */
 export function mountSurface(session: Session, target: MountTarget): void {
 	const { ui, surfaces } = session;
-	const { label, cell, original, placements, channelId, messageId } = target;
+	const { label, cell, engine, original, placements, channelId, messageId } = target;
 	const labelKey = ui.key(label);
 	const cellKey = ui.key(cell);
 	const previous = surfaces.get(labelKey);
@@ -264,6 +295,7 @@ export function mountSurface(session: Session, target: MountTarget): void {
 		labelKey,
 		cell,
 		cellKey,
+		engine,
 		channelId,
 		messageId,
 		original,
@@ -278,6 +310,7 @@ export function mountSurface(session: Session, target: MountTarget): void {
 		rowCorrectionPending: false,
 		rowTimer: null,
 		settleTimers: [],
+		placing: false,
 	};
 	const parts = createParts(session, surface, placements);
 
@@ -318,6 +351,7 @@ export function rebuildSurface(session: Session, surface: Surface): void {
 	mountSurface(session, {
 		label: surface.label,
 		cell: surface.cell,
+		engine: surface.engine,
 		original: surface.original,
 		placements: surface.parts.map((part) => part.placement),
 		channelId: surface.channelId,

@@ -2,6 +2,7 @@ import { metro, patcher, storage } from '@unbound-app/api';
 
 export const ChatInputs = metro.findByProps('getBestActiveInputForChannelId', { lazy: true });
 export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
+export const ChannelStore = metro.findStore('Channel', { lazy: true });
 export const UserStore = metro.stores.Users;
 
 // The same module as `metro.common.Theme`, which the generated typings do not declare yet.

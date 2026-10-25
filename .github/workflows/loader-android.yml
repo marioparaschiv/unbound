@@ -1,0 +1,228 @@
+name: Loader Build Android
+
+on:
+    workflow_dispatch:
+        inputs:
+            ios_version:
+                description: "Discord app version to match"
+                required: false
+                type: string
+            require_matching_version:
+                description: "Fail instead of using a different Android version"
+                required: false
+                default: false
+                type: boolean
+            release:
+                description: "Require persistent Android release signing"
+                required: false
+                default: false
+                type: boolean
+    workflow_call:
+        inputs:
+            ios_version:
+                description: "Discord app version to match"
+                required: false
+                type: string
+            require_matching_version:
+                description: "Fail instead of using a different Android version"
+                required: false
+                default: false
+                type: boolean
+            release:
+                description: "Require persistent Android release signing"
+                required: false
+                default: false
+                type: boolean
+        outputs:
+            module_filename:
+                description: "Filename of the LSPosed module APK"
+                value: ${{ jobs.build-module.outputs.module_filename }}
+            patched_filename:
+                description: "Filename of the LSPatch-patched Discord split APKs"
+                value: ${{ jobs.patch-discord.outputs.patched_filename }}
+
+permissions:
+    contents: read
+
+concurrency:
+    group: android-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+defaults:
+    run:
+        working-directory: packages/loader
+
+jobs:
+    core-tests:
+        name: Shared core tests
+        runs-on: ubuntu-26.04
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 1
+
+            - name: Configure core
+              run: cmake -S core -B build/core -DUNBOUND_CORE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
+
+            - name: Build core
+              run: cmake --build build/core -j"$(nproc)"
+
+            - name: Run core tests
+              run: ctest --test-dir build/core --output-on-failure
+
+    build-module:
+        name: Build LSPosed module
+        runs-on: ubuntu-26.04
+        env:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+        outputs:
+            module_filename: ${{ steps.collect.outputs.module_filename }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  submodules: recursive
+                  fetch-depth: 1
+
+            - name: Setup Java
+              uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
+              with:
+                  distribution: temurin
+                  java-version: "17"
+
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6
+
+            - name: Install NDK and CMake
+              run: |
+                  set -eu
+                  yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+                  "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.3.13750724" "cmake;3.22.1" "platforms;android-36" "build-tools;36.0.0" > /dev/null
+
+            - name: Configure persistent release signing
+              env:
+                  REQUIRE_RELEASE_SIGNING: ${{ inputs.release }}
+              run: |
+                  set -euo pipefail
+                  if [ -z "$ANDROID_SIGNING_KEYSTORE_BASE64" ]; then
+                      if [ "$REQUIRE_RELEASE_SIGNING" = true ]; then
+                          echo "::error::Android release signing secrets are required for Obtainium-compatible updates"
+                          exit 1
+                      fi
+                      exit 0
+                  fi
+                  keystore="$RUNNER_TEMP/unbound-android-release.keystore"
+                  printf '%s' "$ANDROID_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+                  echo "ANDROID_SIGNING_STORE_FILE=$keystore" >> "$GITHUB_ENV"
+
+            - name: Build module
+              working-directory: packages/loader/android
+              run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PunboundBuildNumber="${GITHUB_RUN_NUMBER}"
+
+            - name: Collect module
+              id: collect
+              run: |
+                  set -euo pipefail
+                  name="app.unbound.android.lsposed.apk"
+                  cp android/module/build/outputs/apk/release/module-release.apk "$name"
+                  echo "module_filename=$name" >> "$GITHUB_OUTPUT"
+
+            - name: Upload module
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: android module
+                  path: packages/loader/${{ steps.collect.outputs.module_filename }}
+
+    patch-discord:
+        name: Build patched Discord APK
+        needs: build-module
+        runs-on: ubuntu-26.04
+        outputs:
+            patched_filename: ${{ steps.patch.outputs.patched_filename }}
+        env:
+            LSPATCH_VERSION: v1.2
+            LSPATCH_JAR: lspatch-v1.2-487-release.jar
+            LSPATCH_SHA256: d238fdc414d121b7fa454d8b4ccf420df3a8c97d563761861ff92bd9c5da2165
+            DISCORD_CERT_SHA256: 3c39d23cf9367849a5c699395647fe0e5bfea5a1f1f40d8c717ddc70f8bfa113
+            DISCORD_TRACKER: https://tracker.vendetta.rocks/tracker
+            IOS_VERSION: ${{ inputs.ios_version }}
+            REQUIRE_MATCHING_VERSION: ${{ inputs.require_matching_version }}
+        steps:
+            - name: Setup Java
+              uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
+              with:
+                  distribution: temurin
+                  java-version: "21"
+
+            - name: Download module
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: android module
+                  path: packages/loader/module
+
+            - name: Download LSPatch
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  set -euo pipefail
+                  gh release download "$LSPATCH_VERSION" -R JingMatrix/LSPatch -p "$LSPATCH_JAR"
+                  echo "$LSPATCH_SHA256  $LSPATCH_JAR" | sha256sum -c -
+
+            - name: Download Discord
+              id: discord
+              run: |
+                  set -euo pipefail
+                  latest_version=$(curl -fsSL "$DISCORD_TRACKER/index" | jq -r '.latest.stable')
+                  version=""
+                  if [[ "$IOS_VERSION" =~ ^([0-9]+)\.([0-9]+)(\.|_|$) ]]; then
+                      candidate="${BASH_REMATCH[1]}$(printf '%03d' "${BASH_REMATCH[2]}")"
+                      if [ "$REQUIRE_MATCHING_VERSION" = true ]; then
+                          version="$candidate"
+                      elif curl -fsSL --range 0-0 --max-time 15 -o /dev/null "$DISCORD_TRACKER/download/$candidate/base"; then
+                          version="$candidate"
+                      fi
+                  fi
+                  if [ "$REQUIRE_MATCHING_VERSION" = true ] && [ -z "$version" ]; then
+                      echo "::error::Cannot derive an Android version matching iOS version $IOS_VERSION"
+                      exit 1
+                  fi
+                  version="${version:-$latest_version}"
+                  mkdir discord
+                  for split in base config.arm64_v8a config.armeabi_v7a config.xxhdpi config.en; do
+                      curl -fsSL -o "discord/$split.apk" "$DISCORD_TRACKER/download/$version/$split"
+                  done
+                  build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+                  apk_version_code=$("$build_tools/aapt" dump badging discord/base.apk | sed -n "s/^package: name='com.discord' versionCode='\\([^']*\\)'.*/\\1/p")
+                  if [ -z "$apk_version_code" ] || [ "$apk_version_code" != "$version" ]; then
+                      echo "::error::Android source version code $apk_version_code does not match selected version code $version"
+                      exit 1
+                  fi
+                  apksigner="$build_tools/apksigner"
+                  for apk in discord/*.apk; do
+                      certificates=$("$apksigner" verify --print-certs "$apk")
+                      if ! grep -Eq "^(V[0-9.]+ )?Signer( #1)?:? certificate SHA-256 digest: $DISCORD_CERT_SHA256" <<< "$certificates"; then
+                          echo "::error::$apk is not signed by Discord"
+                          exit 1
+                      fi
+                  done
+                  echo "version=$version" >> "$GITHUB_OUTPUT"
+
+            - name: Patch Discord
+              id: patch
+              run: |
+                  set -euo pipefail
+                  mkdir patched
+                  java -jar "$LSPATCH_JAR" discord/*.apk -m module/*.apk -l 2 -o patched -f
+                  name="Unbound.apks"
+                  (cd patched && zip -q "../$name" ./*.apk)
+                  echo "patched_filename=$name" >> "$GITHUB_OUTPUT"
+
+            - name: Upload patched Discord
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: patched discord
+                  path: packages/loader/${{ steps.patch.outputs.patched_filename }}

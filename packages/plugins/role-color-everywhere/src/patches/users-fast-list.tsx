@@ -3,10 +3,11 @@ import {
 	type RoleColorAppearance,
 } from '@unbound-plugins/shared/colors/role-colors';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import { cloneElement } from 'react';
 import { Text } from 'react-native';
 
-import { GuildMemberStore, GuildRoleStore, Patcher, UsersFastList } from '~/modules';
+import { GuildMemberStore, GuildRoleStore, Patcher, USERS_FAST_LIST_PATH } from '~/modules';
 import { PLUGIN_NAME } from '~/constants';
 import { paintRoleText } from '~/role-text';
 import type { Rendered } from '~/types';
@@ -43,40 +44,63 @@ function sectionAppearance(props: UserListProps, section: number): RoleColorAppe
 	return appearance.colors.length ? appearance : null;
 }
 
-/**
- * @description Paints role section titles in the member list with the role's colors.
- * @returns A function that removes the patch.
- */
-export function patchUsersFastList(): () => void {
-	const feature = `${PLUGIN_NAME}: member list`;
+type ListRender = (props: UserListProps, ...rest: unknown[]) => Rendered;
 
-	if (!ensureModules(feature, { UsersFastList, GuildRoleStore })) return () => {};
+type UsersFastListModule = {
+	UsersFastList?: ListRender | { render?: ListRender };
+};
 
-	if (typeof UsersFastList.UsersFastList?.render !== 'function') {
-		console.error(`[${feature}] Skipped, UsersFastList is not a forwardRef component.`);
+function paintSectionHeaders(props: UserListProps, result: Rendered): Rendered | undefined {
+	const renderHeader = result?.props?.renderSectionHeader;
 
-		return () => {};
+	if (typeof renderHeader !== 'function' || !props.getSectionProps || !props.getItemProps) {
+		return;
 	}
 
-	return Patcher.after(UsersFastList.UsersFastList, 'render', ({ args: [props], result }) => {
-		const renderHeader = result?.props?.renderSectionHeader;
+	return cloneElement(result, {
+		renderSectionHeader: (section: number, ...rest: unknown[]) => {
+			const header: Rendered = renderHeader(section, ...rest);
+			const title = header?.props?.title;
+			const appearance = sectionAppearance(props, section);
 
-		if (typeof renderHeader !== 'function' || !props.getSectionProps || !props.getItemProps) {
-			return;
-		}
+			if (!appearance || typeof title !== 'string') return header;
 
-		return cloneElement(result, {
-			renderSectionHeader: (section: number, ...rest: unknown[]) => {
-				const header: Rendered = renderHeader(section, ...rest);
-				const title = header?.props?.title;
-				const appearance = sectionAppearance(props, section);
-
-				if (!appearance || typeof title !== 'string') return header;
-
-				return cloneElement(header, { title: paintRoleText(title, appearance, Text) });
-			},
-		});
+			return cloneElement(header, { title: paintRoleText(title, appearance, Text) });
+		},
 	});
+}
+
+function patchLoadedUsersFastList(module: UsersFastListModule): () => void {
+	const feature = `${PLUGIN_NAME}: member list`;
+	const list = module.UsersFastList;
+
+	if (!ensureModules(feature, { GuildRoleStore })) return () => {};
+
+	if (typeof list === 'function') {
+		return Patcher.after(module, 'UsersFastList', ({ args: [props], result }) =>
+			paintSectionHeaders(props as UserListProps, result),
+		);
+	}
+
+	if (typeof list?.render === 'function') {
+		return Patcher.after(list, 'render', ({ args: [props], result }) =>
+			paintSectionHeaders(props as UserListProps, result),
+		);
+	}
+
+	console.error(
+		`[${feature}] Skipped, UsersFastList is neither a function nor a forwardRef component.`,
+	);
+
+	return () => {};
+}
+
+/**
+ * @description Paints role section titles in the member list with the role's colors, once the list's module loads.
+ * @returns A function that stops waiting or removes the patch.
+ */
+export function patchUsersFastList(): () => void {
+	return whenLoaded<UsersFastListModule>(USERS_FAST_LIST_PATH, patchLoadedUsersFastList);
 }
 
 export default patchUsersFastList;

@@ -137,6 +137,8 @@ if (symbol) {
 }
 ```
 
+The same calls work on iOS and Android. Android has no Objective-C types, so its signatures use the scalar, `cstring`, `pointer`, and struct types. It takes and returns structs as plain `{ name, value }` objects, for example `{ name: 'timespec', value: { tv_sec: 1n, tv_nsec: 0n } }`. The registered structs are `CGPoint`, `CGSize`, `CGVector`, `CGRect`, `NSRange`, `UIEdgeInsets`, `CGAffineTransform`, `timespec`, and `timeval`. `i64` and `u64` results are `BigInt` values.
+
 The v1 bridge does not expose:
 
 - Arbitrary memory access or `dlopen`

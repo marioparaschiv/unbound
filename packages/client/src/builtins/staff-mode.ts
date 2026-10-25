@@ -21,6 +21,12 @@ export function start() {
 		return;
 	}
 
+	if (!Object.isExtensible(Store)) {
+		Logger.warn('DeveloperExperimentStore is frozen, so staff mode cannot be applied.');
+
+		return;
+	}
+
 	Patcher.instead(Store, 'initialize', ({ this: self }) => {
 		self.waitFor(Users, Guilds);
 

@@ -5,6 +5,7 @@ import { createLogger } from '@unbound-app/logger';
 import noop from '@unbound-app/utils/noop';
 
 import Filters, { type MetroFilter } from '~/api/metro/filters';
+import { registerLazyModule } from '~/api/metro/lazy-registry';
 import { blacklist, data } from '~/api/metro/state';
 import Cache, { ModuleFlags } from '~/lib/cache';
 import { CACHE_KEY } from '~/lib/constants';
@@ -727,7 +728,7 @@ function searchWithOptions(
 			return cache;
 		}
 
-		return new Proxy(
+		const proxy = new Proxy(
 			{
 				__METRO_LAZY__: true,
 				get module() {
@@ -761,6 +762,10 @@ function searchWithOptions(
 				},
 			},
 		);
+
+		registerLazyModule(proxy, resolve);
+
+		return proxy;
 	}
 
 	if (typeof filter === 'string') {

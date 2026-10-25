@@ -42,7 +42,8 @@
 		"*.gen.ts",
 		"packages/api/src/**",
 		"packages/cli/templates/**",
-		"packages/plugins/**"
+		"packages/plugins/**",
+		"packages/loader/**"
 	],
 	"overrides": [
 		{

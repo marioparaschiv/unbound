@@ -38,7 +38,7 @@ function ToastsPage() {
 				/>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup title={Messages.UNBOUND_TOAST_SETTINGS}>
+			<Discord.TableRowGroup title={Messages.UNBOUND_TOASTS_BEHAVIOR}>
 				<Discord.TableRow
 					label={
 						<View style={{ width: '100%', flexDirection: 'row', alignItems: 'center' }}>

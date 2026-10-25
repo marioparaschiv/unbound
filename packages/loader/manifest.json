@@ -1,0 +1,57 @@
+{
+	"name": "unbound-loader",
+	"packages": [
+		{
+			"name": "loader-core",
+			"path": "core",
+			"kind": "shared-runtime"
+		},
+		{
+			"name": "loader-ios",
+			"path": "ios",
+			"kind": "platform-runtime",
+			"dependencies": [
+				"loader-core",
+				"loader-bootstrap",
+				"libffi",
+				"open-in-discord",
+				"share-to-discord"
+			]
+		},
+		{
+			"name": "loader-android",
+			"path": "android",
+			"kind": "platform-runtime",
+			"dependencies": [
+				"loader-core",
+				"loader-bootstrap"
+			]
+		},
+		{
+			"name": "loader-bootstrap",
+			"path": "bootstrap",
+			"kind": "shared-bootstrap"
+		},
+		{
+			"name": "libffi",
+			"path": "vendor/libffi",
+			"kind": "native-dependency"
+		},
+		{
+			"name": "apt-repo",
+			"path": "apt-repo",
+			"kind": "distribution-feed",
+			"dependencies": ["loader-ios"]
+		},
+		{
+			"name": "open-in-discord",
+			"path": "ios/extensions/OpenInDiscord",
+			"kind": "ios-extension"
+		},
+		{
+			"name": "share-to-discord",
+			"path": "ios/extensions/ShareToDiscord",
+			"kind": "ios-extension"
+		}
+	]
+}

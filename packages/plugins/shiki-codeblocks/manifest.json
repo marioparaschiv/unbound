@@ -8,18 +8,33 @@
 			"id": "454072114492866560"
 		},
 		{
-			"name": "Unbound Team",
-			"id": "0"
+			"name": "adrian",
+			"id": "224617799434108928"
 		}
 	],
-	"capabilities": [
-		"native.objc.classes",
-		"native.objc.invoke",
-		"native.objc.batch",
-		"native.objc.snapshot",
-		"native.objc.ivars",
-		"native.objc.hooks"
-	],
+	"platforms": ["ios", "android"],
+	"capabilities": [],
+	"platformCapabilities": {
+		"ios": [
+			"native.objc.classes",
+			"native.objc.invoke",
+			"native.objc.invokeAsync",
+			"native.objc.batch",
+			"native.objc.snapshot",
+			"native.objc.ivars",
+			"native.objc.hooks"
+		],
+		"android": [
+			"native.java.classes",
+			"native.java.invoke",
+			"native.java.invokeAsync",
+			"native.java.construct",
+			"native.java.hooks",
+			"native.java.fields",
+			"native.fabric.mount",
+			"native.fabric.async"
+		]
+	},
 	"minNativePluginApi": "1.0.0",
 	"version": "1.0.0",
 	"icon": "TextIcon",

@@ -7,22 +7,44 @@ export type SoundManager = {
 	prepare: (url: string, category: string, id: number, callback: PrepareCallback) => void;
 	play: (id: number) => Promise<void>;
 	stop: (id: number) => void;
+	release?: (id: number) => void;
 };
 
 export type Player = ReturnType<typeof createPlayer>;
 
 /**
+ * @description Reads a prepared sound's length, which Discord's iOS sound manager reports in seconds and its Android one in milliseconds.
+ * @param duration The reported duration.
+ * @param platform The platform that reported it.
+ * @returns The length in milliseconds, or `null` when the duration is not usable.
+ */
+export function soundDuration(duration: number | undefined, platform: string): number | null {
+	if (duration === undefined || !Number.isFinite(duration) || duration <= 0) return null;
+
+	return platform === 'android' ? duration : duration * 1000;
+}
+
+/**
  * @description Prepares the Moyai sound with Discord's native sound manager and plays it on demand.
  * @param manager Discord's `DCDSoundManager` native module.
+ * @param platform The platform the manager runs on, which decides the unit it reports durations in.
  * @returns `play` restarts the sound, `dispose` stops it and cancels pending work.
  */
-export function createPlayer(manager: SoundManager) {
+export function createPlayer(manager: SoundManager, platform: string) {
 	let duration: number | null = null;
 	let preparing = false;
 	let disposed = false;
 	let playing = false;
 	let sequence = 0;
 	let stopTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function release() {
+		try {
+			manager.release?.(Sound.id);
+		} catch (error) {
+			console.error('[Moyai] Failed to release the sound:', error);
+		}
+	}
 
 	function prepare() {
 		if (preparing || duration !== null) return;
@@ -31,9 +53,13 @@ export function createPlayer(manager: SoundManager) {
 
 		try {
 			manager.prepare(Sound.url, 'media', Sound.id, (error, metadata) => {
-				if (disposed) return;
-
 				preparing = false;
+
+				if (disposed) {
+					if (!error) release();
+
+					return;
+				}
 
 				if (error) {
 					console.error('[Moyai] Failed to prepare the sound:', error);
@@ -41,12 +67,7 @@ export function createPlayer(manager: SoundManager) {
 					return;
 				}
 
-				const seconds = metadata?.duration ?? 0;
-
-				duration =
-					Number.isFinite(seconds) && seconds > 0
-						? seconds * 1000
-						: Sound.fallbackDuration;
+				duration = soundDuration(metadata?.duration, platform) ?? Sound.fallbackDuration;
 			});
 		} catch (error) {
 			preparing = false;
@@ -97,6 +118,10 @@ export function createPlayer(manager: SoundManager) {
 		if (playing) manager.stop(Sound.id);
 
 		playing = false;
+
+		if (duration !== null) release();
+
+		duration = null;
 	}
 
 	prepare();

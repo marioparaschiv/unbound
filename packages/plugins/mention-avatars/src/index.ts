@@ -4,6 +4,7 @@ import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
+import { createAndroidRenderer } from '~/android/renderer';
 import { createVisibleCellScanner } from '~/native/visible-cells';
 import { subscribeSelectedChannel } from '~/events/selected-channel';
 import { patchRowGenerator } from '~/patches/row-generator';
@@ -39,7 +40,20 @@ function start(context: PluginContext) {
 	const index = createMentionIndex(
 		ensureModules('Mention Avatars: role mentions', { RoleStore }),
 	);
-	const renderer = createRenderer(objc, index, () => settings.get('showAtSymbol', true));
+	const showAtSymbol = () => settings.get('showAtSymbol', true);
+
+	if (context.platform === 'android') {
+		const android = createAndroidRenderer(context.native, index, showAtSymbol);
+
+		dispose = applyFeatures('Mention Avatars', [
+			() => android.dispose,
+			() => patchRowGenerator(index),
+		]);
+
+		return;
+	}
+
+	const renderer = createRenderer(objc, index, showAtSymbol);
 	const scanner = createVisibleCellScanner(objc, renderer.schedule);
 
 	dispose = applyFeatures('Mention Avatars', [
@@ -50,6 +64,7 @@ function start(context: PluginContext) {
 				shown: renderer.schedule,
 				laidOut: renderer.schedule,
 				reused: renderer.reuse,
+				textChanged: renderer.schedule,
 			}),
 		() => subscribeSelectedChannel(renderer, scanner),
 	]);

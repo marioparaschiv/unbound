@@ -4,18 +4,32 @@ import type { metro } from '@unbound-app/api';
 type ModuleHandle = ReturnType<typeof metro.find>;
 type ModuleHandles = Record<string, ModuleHandle>;
 
+function lazyMarker(handle: NonNullable<ModuleHandle>): boolean | null {
+	try {
+		return Object.getOwnPropertyDescriptor(handle, '__METRO_LAZY__')?.value === true;
+	} catch {
+		return null;
+	}
+}
+
 function isResolved(handle: ModuleHandle): boolean {
 	if (!handle) {
 		return false;
 	}
 
-	// Lazy handles are truthy proxies: `module` runs a `{ lazy: true }` search, and pre-resolved handles throw on a miss.
-	try {
-		if ('__METRO_LAZY__' in handle) {
-			return Boolean(handle.module);
-		}
+	const lazy = lazyMarker(handle);
 
+	if (lazy === null) {
+		return false;
+	}
+
+	if (!lazy) {
 		return true;
+	}
+
+	// `module` runs a `{ lazy: true }` search, and pre-resolved handles throw on a miss.
+	try {
+		return Boolean(handle.module);
 	} catch {
 		return false;
 	}

@@ -79,6 +79,21 @@ return await relaunch();
 | `ubd mcp open <Screen> [--params '<json>']` | Opens a settings screen. `<Screen>` is a `Screens` key from `packages/client/src/lib/constants.ts` (`Marketplace`, `Plugins`, `Design`, ...) or a `SETTING_RENDERER_CONFIG` key. |
 | `ubd mcp route`                             | Prints `{name, params, path}` of the current screen. Assert on `name` (`mcp open Plugins` gives `UNBOUND_PLUGINS`).                                                              |
 
+### Plugin analysis
+
+These work on iOS and Android unless noted. The probes borrow the native bridge of a running plugin that holds the capability they need, so keep one native plugin (such as Shiki Codeblocks) enabled. Device evaluations time out after ten seconds.
+
+| Command                                                             | Does                                                                                                                                                |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ubd push <id-or-dir> [--build=false]`                              | Builds one plugin and hot-reloads it on the connected device, installing it if missing.                                                             |
+| `ubd install <id-or-dir> [--serial <adb serial>]`                   | Android: builds a plugin and copies it into Discord's plugin folder over adb and `su`, for cold-start tests.                                        |
+| `ubd views [class] [--depth n] [--max n]`                           | Prints the native view tree with sizes, visibility, text and handles; a class filter keeps matches and their ancestors (iOS: each match's subtree). |
+| `ubd spans <text>`                                                  | Android: prints the text and spans of text views containing the text, with invisible characters escaped.                                            |
+| `ubd modules <regex>`                                               | Lists Metro modules by tracked path or export name and whether they have loaded; compare platforms with it.                                         |
+| `ubd hook <class> <method> [--parameters type ...] [--duration ms]` | Records calls to a Java method or Objective-C selector. Hook a specific class, never a method every view calls.                                     |
+| `ubd trace <prop> [prop ...]`                                       | Records calls to a JS function of a module found by props, such as `generateMessageRowData`.                                                        |
+| `ubd timing`                                                        | Measures timer and main-thread round-trip latency; large numbers mean the JS thread is busy.                                                        |
+
 Commands live in `packages/cli/src/commands/`, registered in `packages/cli/src/registry.ts`. Add device shortcuts there with `surfaces: { cli: 'mcp', mcp: true }`.
 
 ## Discord's source

@@ -15,6 +15,7 @@ import {
 import { ORIGINAL, commit, cut, fits, resolve } from '~/lib/hot/instances';
 import { HOOK_FIBERS, reconcile, withAlternates } from '~/lib/hot/refresh';
 import type { Decision, Fiber, FiberType } from '~/lib/hot/refresh';
+import { resolveLazyModule } from '~/api/metro/lazy-registry';
 import type { Instance, Layout } from '~/lib/hot/instances';
 import type { Budget } from '~/lib/hot/hooks';
 
@@ -110,7 +111,7 @@ let batch: Batch | null = null;
 /**
  * @description Patches a method so mounted components rendering it pick the patch up in place, hooks included.
  * @param phase When the callback runs.
- * @param parent The object holding the method.
+ * @param patchedParent The object holding the method, or a lazy module proxy standing for it.
  * @param method The method's key.
  * @param callback The patch callback.
  * @param options possess's patch options.
@@ -118,11 +119,12 @@ let batch: Batch | null = null;
  */
 export function patch(
 	phase: PatchType,
-	parent: PatchParent,
+	patchedParent: PatchParent,
 	method: string,
 	callback: PatchCallback,
 	options: PatchOptions = {},
 ): () => void {
+	const parent = resolveLazyModule(patchedParent);
 	const live: LivePatch = {
 		phase,
 		parent,

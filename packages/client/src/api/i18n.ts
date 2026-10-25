@@ -7,6 +7,7 @@ import { getStore } from '~/api/storage';
 import fs from '~/api/fs';
 
 import createMomentCalendarLocale from './create-moment-calendar-locale';
+import createMomentLocaleDefiner from './create-moment-locale-definer';
 import createMomentLocaleSetter from './create-moment-locale-setter';
 import resolveMomentLocale from './resolve-moment-locale';
 import enUS from '../../../../i18n/en-US.json';
@@ -42,6 +43,8 @@ let originalMomentInstanceLocaleSetter: MomentMethod | null = null;
 let wrappedMomentInstanceLocaleSetter: MomentMethod | null = null;
 let originalMomentCalendar: MomentMethod | null = null;
 let wrappedMomentCalendar: MomentMethod | null = null;
+let originalMomentDefineLocale: MomentMethod | null = null;
+let wrappedMomentDefineLocale: MomentMethod | null = null;
 
 let MessageFormat: MessageFormatConstructor | undefined;
 
@@ -84,6 +87,19 @@ function syncMomentLocale(locale: string): void {
 			Moment.prototype.locale = wrappedMomentInstanceLocaleSetter;
 		}
 
+		if (typeof Moment.defineLocale === 'function') {
+			originalMomentDefineLocale = Moment.defineLocale;
+			wrappedMomentDefineLocale = createMomentLocaleDefiner(Moment.defineLocale, () =>
+				Reflect.apply(localeSetter, Moment, [
+					resolveMomentLocale(
+						currentLocale ?? Discord.intl?.currentLocale ?? locale,
+						Moment.locales(),
+					),
+				]),
+			);
+			Moment.defineLocale = wrappedMomentDefineLocale;
+		}
+
 		const calendar = Moment.prototype?.calendar;
 		const instanceLocale = Moment.prototype?.locale;
 
@@ -105,12 +121,17 @@ function syncMomentLocale(locale: string): void {
 const subscriptions: Array<() => void> = [];
 
 /**
- * @description Builds a `Messages` proxy over a string store, resolving each key against the active locale, then en-US, then the key itself.
+ * @description Builds a `Messages` proxy over a string store, resolving each key against the active locale, then en-US, then the bundled strings, then the key itself.
  * @param store The string store to read translations from.
  * @param getLocale Returns the currently active locale, shared across every proxy.
+ * @param bundled Strings shipped in the bundle, for keys a fetched locale does not have yet.
  * @returns A proxy whose property accesses resolve to localized strings.
  */
-function createMessages(store: StringStore, getLocale: () => string | null) {
+function createMessages(
+	store: StringStore,
+	getLocale: () => string | null,
+	bundled: LocaleStrings = {},
+) {
 	return new Proxy(
 		{},
 		{
@@ -121,7 +142,7 @@ function createMessages(store: StringStore, getLocale: () => string | null) {
 					return store[locale][key];
 				}
 
-				return store['en-US']?.[key] ?? key;
+				return store['en-US']?.[key] ?? bundled[key] ?? key;
 			},
 		},
 	) as Record<string, string>;
@@ -188,7 +209,7 @@ async function ensureLocale(locale: string): Promise<void> {
 }
 
 /** The core `Messages` proxy, resolving Unbound's own UI strings against the active Discord locale. */
-export const Messages = createMessages(strings, () => currentLocale);
+export const Messages = createMessages(strings, () => currentLocale, enUS);
 
 /**
  * @description Formats a localized string, interpolating ICU `MessageFormat` placeholders.
@@ -293,6 +314,14 @@ export function destroy() {
 		Moment.prototype.calendar = originalMomentCalendar;
 	}
 
+	if (
+		originalMomentDefineLocale &&
+		wrappedMomentDefineLocale &&
+		Moment?.defineLocale === wrappedMomentDefineLocale
+	) {
+		Moment.defineLocale = originalMomentDefineLocale;
+	}
+
 	if (previousMomentLocale && originalMomentLocaleSetter) {
 		Reflect.apply(originalMomentLocaleSetter, Moment, [previousMomentLocale]);
 	}
@@ -304,6 +333,8 @@ export function destroy() {
 	wrappedMomentInstanceLocaleSetter = null;
 	originalMomentCalendar = null;
 	wrappedMomentCalendar = null;
+	originalMomentDefineLocale = null;
+	wrappedMomentDefineLocale = null;
 }
 
 export default { Messages, format, defineLocalizations, init, destroy };

@@ -49,15 +49,10 @@ export const SelectedChannelStore = metro.findStore('SelectedChannel', {
 
 export const byRowManager = metro.filters.byName('RowManager');
 
-export const TypingIndicator = metro.findByFilePath('modules/chat/native/TypingIndicator.tsx', {
-	interop: false,
-	lazy: true,
-});
+export const TYPING_INDICATOR_PATH = 'modules/chat/native/TypingIndicator.tsx';
 
-export const UsersFastList = metro.findByFilePath(
-	'modules/main_tabs_v2/native/shared_components/user_list/UsersFastList.tsx',
-	{ interop: false, lazy: true },
-);
+export const USERS_FAST_LIST_PATH =
+	'modules/main_tabs_v2/native/shared_components/user_list/UsersFastList.tsx';
 
 export const MessageReactionsContent = metro.findByFilePath(
 	'modules/reactions/native/MessageReactionsContent.tsx',

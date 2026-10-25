@@ -10,6 +10,7 @@ export type TextAttributes = {
 	NSFont?: Handle;
 	YYTextAttachment?: Handle;
 	YYTextHighlight?: Handle;
+	UnboundMentionPadding?: boolean;
 };
 
 /**

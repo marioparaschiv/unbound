@@ -1,0 +1,11 @@
+{
+  "name": "vphone-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server for interacting with the virtual iPhone (vphone) over SSH.",
+  "bin": { "vphone-mcp": "server.mjs" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}

@@ -27,9 +27,11 @@ function useDraft(channelId: string): string {
 }
 
 function useStickers(channelId: string): Sticker[] {
+	const [store] = useState(() => (StickerPreviewStore.module ? StickerPreviewStore : null));
+
 	return FluxHooks.useStateFromStores(
-		[StickerPreviewStore],
-		() => StickerPreviewStore.getStickerPreview(channelId, false) ?? NO_STICKERS,
+		store ? [store] : [],
+		() => store?.getStickerPreview(channelId, false) ?? NO_STICKERS,
 	);
 }
 
@@ -112,6 +114,8 @@ function PreviewButton({ channelId, icon }: PreviewButtonProps) {
 				}}
 			>
 				<Pressable
+					accessibilityRole='button'
+					accessibilityLabel='Preview message'
 					onPress={openPreview}
 					onPressIn={() =>
 						Haptics.triggerHapticFeedback?.(Haptics.HapticFeedbackTypes?.IMPACT_LIGHT)

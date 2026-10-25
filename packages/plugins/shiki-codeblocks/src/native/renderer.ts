@@ -6,9 +6,16 @@ import type {
 	NativeObjectHandle,
 } from '@unbound-app/api/native';
 import findVisibleCells from '@unbound-plugins/shared/native/visible-cells';
+import {
+	attributeRun,
+	CODE_BLOCK_ATTRIBUTE,
+	MESSAGE_TEXT_VIEW_CLASSES,
+	textAttachmentBridge,
+	textEngine,
+} from '@unbound-plugins/shared/native/text-attachments';
 
 import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
-import { locateCodeBlocks, parseFencedCodeBlocks } from '~/fences';
+import { locateCodeBlocks, parseFencedCodeBlocks, type CodeBlockPlacement } from '~/fences';
 import { getLanguageMetadata, loadLanguageCatalog } from '~/catalog';
 import { MessageStore, settings } from '~/modules';
 import { createHighlighter } from '~/highlighter';
@@ -26,6 +33,21 @@ function forgetLabel(session: Session, labelKey: string): void {
 	const surface = session.surfaces.get(labelKey);
 
 	if (surface) detachSurface(session, surface);
+}
+
+function expandToCodeRuns(
+	session: Session,
+	original: NativeObjectHandle,
+	placements: CodeBlockPlacement[],
+): CodeBlockPlacement[] {
+	return placements.map((placement) => ({
+		...placement,
+		...attributeRun(session.text, original, placement, CODE_BLOCK_ATTRIBUTE),
+	}));
+}
+
+function textViewClasses(objc: NativeObjCBridge): string[] {
+	return MESSAGE_TEXT_VIEW_CLASSES.filter((name) => objc.getClass(name));
 }
 
 function renderLabel(session: Session, label: NativeObjectHandle, original: NativeObjectHandle) {
@@ -65,7 +87,10 @@ function renderLabel(session: Session, label: NativeObjectHandle, original: Nati
 
 	if (typeof content !== 'string') return;
 
-	const placements = locateCodeBlocks(parseFencedCodeBlocks(content), rendered);
+	const engine = textEngine(session.text, label);
+	const located = locateCodeBlocks(parseFencedCodeBlocks(content), rendered);
+	const placements =
+		engine === 'textkit' ? expandToCodeRuns(session, original, located) : located;
 
 	if (
 		!placements.length ||
@@ -76,7 +101,7 @@ function renderLabel(session: Session, label: NativeObjectHandle, original: Nati
 		return;
 	}
 
-	mountSurface(session, { label, cell, original, placements, channelId, messageId });
+	mountSurface(session, { label, cell, engine, original, placements, channelId, messageId });
 }
 
 // Labels already on screen at start never call `setAttributedText:` again, so find them once.
@@ -90,9 +115,13 @@ async function renderVisibleLabels(session: Session): Promise<void> {
 		return session.signal.aborted || channelId !== visibleChannelId();
 	}
 
-	const labels = await findVisibleCells(objc, 'DCDReusableYYLabel', session.signal);
+	const labels: NativeObjectHandle[] = [];
 
-	if (isStale()) return;
+	for (const className of textViewClasses(objc)) {
+		labels.push(...(await findVisibleCells(objc, className, session.signal)));
+
+		if (isStale()) return;
+	}
 
 	for (let index = 0; index < labels.length; index += 64) {
 		const chunk = labels.slice(index, index + 64);
@@ -156,9 +185,11 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 		}
 	}
 
+	const classes = textViewClasses(objc);
+
 	return [
-		['DCDReusableYYLabel', 'setAttributedText:', { after: onSetText }],
-		['DCDReusableYYLabel', 'didMoveToWindow', { after: onMoveToWindow }],
+		...classes.map((name): HookSpec => [name, 'setAttributedText:', { after: onSetText }]),
+		...classes.map((name): HookSpec => [name, 'didMoveToWindow', { after: onMoveToWindow }]),
 		['DCDMessageTableViewCell', 'prepareForReuse', { after: onReuse }],
 	];
 }
@@ -206,6 +237,7 @@ export function startRenderer(objc: NativeObjCBridge): () => void {
 	const controller = new AbortController();
 	const session: Session = {
 		ui: createNativeUI(objc),
+		text: textAttachmentBridge(objc),
 		highlighter: createHighlighter(),
 		surfaces: new Map(),
 		applying: new Set(),

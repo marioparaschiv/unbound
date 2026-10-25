@@ -4,6 +4,13 @@ import type {
 	NativeObjectHandle,
 } from '@unbound-app/api/native';
 import { safeInvoke } from '@unbound-plugins/shared/native/safe-invoke';
+import {
+	MESSAGE_TEXT_VIEW_CLASSES,
+	placeAttachedViews,
+	textAttachmentBridge,
+	textEngine,
+	type TextEngine,
+} from '@unbound-plugins/shared/native/text-attachments';
 
 import {
 	availableMessageWidth,
@@ -49,6 +56,10 @@ export type EmbeddedSurface = {
 	reactionSnapshot: string;
 	label: NativeObjectHandle;
 	labelHook: NativeHookToken | null;
+	layoutHook: NativeHookToken | null;
+	engine: TextEngine;
+	attachmentIndex: number;
+	placing: boolean;
 	host: NativeObjectHandle;
 	mounted: NativeFabricSurface | null;
 	table: NativeObjectHandle | null;
@@ -98,6 +109,8 @@ export function applyAttachment(
 
 		if (!insertion) return false;
 
+		const insertAt = surface.range.location + surface.range.length;
+
 		const updated = safeInvoke(
 			objc,
 			surface.original,
@@ -106,13 +119,7 @@ export function applyAttachment(
 
 		if (!updated) return false;
 
-		safeInvoke(
-			objc,
-			updated,
-			'insertAttributedString:atIndex:',
-			insertion,
-			surface.range.location + surface.range.length,
-		);
+		safeInvoke(objc, updated, 'insertAttributedString:atIndex:', insertion.text, insertAt);
 
 		const text = nativeString(objc, safeInvoke(objc, updated, 'string'));
 
@@ -120,13 +127,46 @@ export function applyAttachment(
 
 		surface.rendered = updated;
 		surface.renderedText = text;
+		surface.attachmentIndex = insertAt + insertion.attachmentOffset;
 		safeInvoke(objc, surface.label, 'setAttributedText:', updated);
 		safeInvoke(objc, surface.label, 'setNeedsLayout');
 		refreshRowSize(session, surface, forceRefresh);
+		placeHost(session, surface);
 
 		return true;
 	} finally {
 		surface.applying = false;
+	}
+}
+
+function placeHost(session: Session, surface: EmbeddedSurface) {
+	if (surface.engine !== 'textkit' || surface.placing || surface.disposed) return;
+
+	surface.placing = true;
+
+	void placeAttachedViews(textAttachmentBridge(session.objc), surface.label, [
+		{ view: surface.host, index: surface.attachmentIndex },
+	])
+		.catch(() => undefined)
+		.finally(() => {
+			surface.placing = false;
+
+			if (surface.disposed) safeInvoke(session.objc, surface.host, 'removeFromSuperview');
+		});
+}
+
+function hookLayout(session: Session, surface: EmbeddedSurface): NativeHookToken | null {
+	if (surface.engine !== 'textkit') return null;
+
+	try {
+		return session.objc.hook(
+			session.objc.className(surface.label) ?? MESSAGE_TEXT_VIEW_CLASSES[0],
+			'layoutSubviews',
+			{ after: () => placeHost(session, surface) },
+			{ instance: surface.label },
+		);
+	} catch {
+		return null;
 	}
 }
 
@@ -205,6 +245,7 @@ export function teardownSurface(session: Session, surface: EmbeddedSurface, rest
 	surface.disposed = true;
 	clearSurfaceTimers(session, surface);
 	surface.labelHook?.remove();
+	surface.layoutHook?.remove();
 
 	if (restore && surface.rendered) {
 		const current = safeInvoke(
@@ -282,6 +323,10 @@ export async function createSurface(
 		reactionSnapshot: init.reactionSnapshot,
 		label,
 		labelHook: null,
+		layoutHook: null,
+		engine: textEngine(textAttachmentBridge(objc), label),
+		attachmentIndex: 0,
+		placing: false,
 		host,
 		mounted: null,
 		table,
@@ -310,7 +355,7 @@ export async function createSurface(
 
 	try {
 		surface.labelHook = objc.hook(
-			'DCDReusableYYLabel',
+			objc.className(label) ?? MESSAGE_TEXT_VIEW_CLASSES[0],
 			'setAttributedText:',
 			{
 				after: () => {
@@ -321,6 +366,7 @@ export async function createSurface(
 			},
 			{ instance: label },
 		);
+		surface.layoutHook = hookLayout(session, surface);
 		surface.mounted = fabric.mount(host, session.surfaceModule, {
 			renderRevision: 0,
 			surfaceId: surface.id,

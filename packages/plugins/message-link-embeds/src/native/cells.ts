@@ -1,6 +1,7 @@
 import { readNativeMessageInfo } from '@unbound-plugins/shared/native/message-info';
 import type { NativeHookToken, NativeObjectHandle } from '@unbound-app/api/native';
 import viewKey from '@unbound-plugins/shared/native/view-key';
+import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/text-attachments';
 
 import { embedCell, type CellStatus } from '~/native/embed-cell';
 import { CellRetry, INITIAL_SCAN_DELAYS } from '~/constants';
@@ -49,6 +50,29 @@ export function removeLabelHooks(tracked: TrackedCell) {
 	tracked.labelHooks = undefined;
 }
 
+function textViewClass(className: string | null | undefined): string | undefined {
+	return MESSAGE_TEXT_VIEW_CLASSES.find((name) => className?.includes(name));
+}
+
+async function findTextViews(session: Session, cell: NativeObjectHandle) {
+	const labels: NativeObjectHandle[] = [];
+
+	for (const className of MESSAGE_TEXT_VIEW_CLASSES) {
+		if (!session.objc.getClass(className)) continue;
+
+		labels.push(
+			...(await session.objc.findViews(cell, className, {
+				maxDepth: 10,
+				maxVisited: 100,
+				maxResults: 32,
+				stopAtMatch: false,
+			})),
+		);
+	}
+
+	return labels;
+}
+
 // Re-checks the cell whenever one of its labels gets new text, until an embed attaches.
 function observeLabels(session: Session, tracked: TrackedCell, labels: NativeObjectHandle[]) {
 	const { objc } = session;
@@ -58,12 +82,14 @@ function observeLabels(session: Session, tracked: TrackedCell, labels: NativeObj
 	const hooks: NativeHookToken[] = [];
 
 	for (const label of labels) {
-		if (!objc.className(label)?.includes('DCDReusableYYLabel')) continue;
+		const className = textViewClass(objc.className(label));
+
+		if (!className) continue;
 
 		try {
 			hooks.push(
 				objc.hook(
-					'DCDReusableYYLabel',
+					className,
 					'setAttributedText:',
 					{ after: () => refreshCell(session, tracked.cell) },
 					{ instance: label },
@@ -114,14 +140,7 @@ async function lookUpCell(session: Session, cell: NativeObjectHandle, isCurrent:
 	const channelId = info?.channelId ?? currentChannelId();
 	const source = info && channelId ? MessageStore.getMessage(channelId, info.messageId) : null;
 	const labels =
-		source && linkedTargets(source).length > 0
-			? await objc.findViews(cell, 'DCDReusableYYLabel', {
-					maxDepth: 10,
-					maxVisited: 100,
-					maxResults: 32,
-					stopAtMatch: false,
-				})
-			: [];
+		source && linkedTargets(source).length > 0 ? await findTextViews(session, cell) : [];
 
 	if (!isCurrent()) return;
 

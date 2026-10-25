@@ -9,7 +9,7 @@ Decompiled builds live at `~/.cache/unbound/discord-<version>/`: `main.js` is th
 
 ## Decompile a build
 
-Get the IPA with the `dkrypt` skill, then:
+Get the IPA with the `dkrypt` skill (an Android APK or a raw bundle works too), then:
 
 ```bash
 python3 .agents/skills/hermes/scripts/decompile.py <discord.ipa> ~/.cache/unbound/discord-<version>

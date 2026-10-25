@@ -1,0 +1,189 @@
+name: Loader Pull Request Build
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened, ready_for_review]
+        paths:
+            - 'packages/loader/**'
+            - '.github/workflows/loader-*.yml'
+            - '.gitmodules'
+            - 'packages/types/typings/native.ts'
+
+permissions:
+    contents: read
+    pull-requests: write
+    id-token: write
+    attestations: write
+    artifact-metadata: write
+
+concurrency:
+    group: loader-pr-${{ github.event.pull_request.number }}
+    cancel-in-progress: true
+
+defaults:
+    run:
+        working-directory: packages/loader
+
+jobs:
+    validate-submodules:
+        name: Validate submodules
+        runs-on: ubuntu-26.04
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  submodules: recursive
+                  fetch-depth: 1
+
+            - name: Verify submodule state
+              run: |
+                  set -euo pipefail
+                  status="$(git submodule status --recursive)"
+                  if printf '%s\n' "$status" | grep -Eq '^[+-U]'; then
+                      printf '%s\n' "$status"
+                      exit 1
+                  fi
+                  git submodule foreach --recursive 'git diff --exit-code'
+
+    build:
+        name: Build Unbound
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        uses: ./.github/workflows/loader-build.yml
+        with:
+            ipa_url: https://raw.githubusercontent.com/Tulugaak/Discord-205.0-IPA/4eec98e61e20d0720c091d42c4a762710b32e8c5/com.hammerandchisel.discord_861573261.ipa
+            release: false
+            caller_workflow: "ci"
+        secrets: inherit
+
+    compatibility-source:
+        defaults:
+            run:
+                working-directory: ${{ github.workspace }}
+        name: Check authorized compatibility source
+        runs-on: ubuntu-26.04
+        outputs:
+            available: ${{ steps.check.outputs.available }}
+        steps:
+            - name: Check source credentials
+              id: check
+              env:
+                  DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+              run: |
+                  if [ -n "$DKRYPT_API_KEY" ]; then
+                      echo 'available=true' >> "$GITHUB_OUTPUT"
+                  else
+                      echo 'available=false' >> "$GITHUB_OUTPUT"
+                  fi
+
+    compatibility:
+        name: Discord ${{ matrix.version }} package smoke check
+        needs: [build, compatibility-source]
+        if: needs.compatibility-source.outputs.available == 'true'
+        runs-on: macos-15
+        strategy:
+            fail-fast: false
+            matrix:
+                version: ['347.0', '341.0']
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  submodules: recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                path: |
+                  ~/.cache/go-build
+                  ~/Library/Caches/go-build
+                  ~/go/pkg/mod
+                key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+            - name: Download built tweak
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: rootless package
+                  path: packages/loader/packages
+
+            - name: Fetch pinned Discord fixture
+              env:
+                  DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+                  DISCORD_VERSION: ${{ matrix.version }}
+              run: |
+                  go run ./tools fetch --base-url https://ipa.dylib.dev --bundle-id com.hammerandchisel.discord --version "$DISCORD_VERSION" --output discord.ipa
+
+            - name: Restore the packaging tools
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: packages/loader/.tools-cache
+                  key: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ hashFiles('packages/loader/tools/build.go') }}
+                  restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
+
+            - name: Package compatibility IPA
+              env:
+                  DISCORD_VERSION: ${{ matrix.version }}
+              run: |
+                  go run ./tools build ipa --ipa discord.ipa --deb "$(find packages -maxdepth 1 -name '*.deb' -print -quit)" --channel appstore --output "discord-${DISCORD_VERSION}.ipa" --non-interactive
+
+            - name: Upload package smoke artifact
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: discord-${{ matrix.version }}-package-smoke
+                  path: packages/loader/discord-${{ matrix.version }}.ipa
+
+    comment-pr:
+        name: Comment on PR
+        runs-on: ubuntu-26.04
+        needs: build
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  ref: ${{ github.event.pull_request.head.sha }}
+                  fetch-depth: 1
+
+            - name: Delete existing comment
+              uses: izhangzhihao/delete-comment@d075704468e1cf74e60944d9f335351213c34d85
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  delete_user_name: github-actions[bot]
+                  issue_number: ${{ github.event.number }}
+
+            - name: Get build info
+              id: build-info
+              run: |
+                  COMMIT_HASH=$(git rev-parse --short HEAD)
+                  BUILD_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+
+                  echo "hash=$COMMIT_HASH" >> "$GITHUB_OUTPUT"
+                  echo "time=$BUILD_TIME" >> "$GITHUB_OUTPUT"
+
+            - name: Comment on current PR
+              uses: thollander/actions-comment-pull-request@e4a76dd2b0a3c2027c3fd84147a67c22ee4c90fa
+              with:
+                  message: |
+                      **Commit**: [#${{ steps.build-info.outputs.hash }}](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.head.sha }})
+                      **Build Time**: `${{ steps.build-info.outputs.time }}`
+
+                      #### Artifacts:
+                      - [**${{ needs.build.outputs.deb_filename }}**](${{ needs.build.outputs.deb_url }})
+                      - [**${{ needs.build.outputs.simulator_filename }}**](${{ needs.build.outputs.simulator_url }})
+                      - [**${{ needs.build.outputs.ipa_filename }}**](${{ needs.build.outputs.ipa_url }})
+
+                      Packaging and simulator artifacts are link/package checks, not Discord device-runtime validation.
+
+                      <sub>This comment was automatically generated. [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>
+                  comment-tag: build-result
+                  github-token: ${{ secrets.GITHUB_TOKEN }}

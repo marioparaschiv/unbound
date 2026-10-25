@@ -1,5 +1,5 @@
+import { Platform, SafeAreaView, StatusBar } from 'react-native';
 import { useShallow } from 'zustand/shallow';
-import { SafeAreaView } from 'react-native';
 
 import { useSettingsStore } from '~/api/storage';
 import { Screens } from '~/api/metro/common';
@@ -7,6 +7,9 @@ import useToastStore from '~/stores/toasts';
 
 import useStyles from './toast-container.style';
 import Toast from './toast';
+
+const androidInset =
+	Platform.OS === 'android' ? { paddingTop: StatusBar.currentHeight ?? 0 } : null;
 
 function ToastContainer() {
 	const settings = useSettingsStore('unbound', ({ key }) => key === 'toasts.maxOnScreen');
@@ -31,7 +34,7 @@ function ToastContainer() {
 
 	return (
 		<Screens.FullWindowOverlay>
-			<SafeAreaView style={styles.container} pointerEvents='box-none'>
+			<SafeAreaView style={[styles.container, androidInset]} pointerEvents='box-none'>
 				{ids.map((id) => (
 					<Toast key={id} id={id} />
 				))}

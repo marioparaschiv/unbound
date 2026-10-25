@@ -1,0 +1,12 @@
+*.ipa
+.theos/
+.DS_Store
+.tools-cache/
+attestation_private.pem
+/build/
+/android/.gradle/
+/android/.kotlin/
+/android/**/build/
+/ios/packages/
+/*.deb
+/*.ipa

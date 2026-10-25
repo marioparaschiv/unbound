@@ -8,11 +8,17 @@
 			"id": "519760564755365888"
 		},
 		{
-			"name": "Unbound Team",
-			"id": "0"
+			"name": "adrian",
+			"id": "224617799434108928"
 		}
 	],
 	"version": "1.0.0",
 	"icon": "ImageIcon",
+	"platforms": ["ios", "android"],
+	"capabilities": [],
+	"platformCapabilities": {
+		"android": ["native.java.classes", "native.java.invoke"]
+	},
+	"minNativePluginApi": "1.0.0",
 	"main": "index.ts"
 }

@@ -1,0 +1,16 @@
+{
+	"name": "unbound_root",
+	"device": "pixel_7",
+	"systemImage": "system-images;android-35;google_apis;arm64-v8a",
+	"systemImageDirectory": "system-images/android-35/google_apis/arm64-v8a/",
+	"abi": "arm64-v8a",
+	"playStore": false,
+	"ramMiB": 4096,
+	"cpuCores": 4,
+	"gpuMode": "host",
+	"width": 720,
+	"height": 1600,
+	"densityDpi": 280,
+	"dataPartition": "6G",
+	"heapMiB": 512
+}

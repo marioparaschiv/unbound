@@ -29,9 +29,9 @@ export declare function read(
 	inDocuments?: boolean,
 ): Promise<string>;
 /**
- * @description Removes a file within {@link Documents}.
- * @param path The file path to remove, relative to {@link Documents}.
- * @returns A promise resolving to whether the file was removed.
+ * @description Removes a file or a whole folder within {@link Documents}.
+ * @param path The path to remove, relative to {@link Documents}.
+ * @returns A promise resolving to whether anything was removed.
  */
 export declare function rm(path: string): Promise<boolean>;
 /**

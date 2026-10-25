@@ -1,4 +1,5 @@
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import { Platform } from 'react-native';
 import type { MetroFunction } from '@unbound-app/api/metro';
 
 import { byRowManager, GuildMemberStore, Patcher, settings } from '~/modules';
@@ -21,6 +22,7 @@ export function patchRowManager(): () => void {
 		return Patcher.after(RowManager.prototype, 'generate', ({ result }) => {
 			applyChatRoleColors(result, GuildMemberStore, {
 				chatMentions: settings.get('chatMentions', true),
+				roleMentionColors: Platform.OS === 'ios',
 				colorChatMessages: settings.get('colorChatMessages', false),
 				messageSaturation: settings.get('messageSaturation', 30),
 			});

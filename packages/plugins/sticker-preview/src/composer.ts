@@ -7,6 +7,7 @@ export type ChatInput = {
 	clearText?: () => void;
 	flushPendingDraftSave?: () => void;
 	closeCustomKeyboard?: () => void;
+	openSystemKeyboard?: () => void;
 	showSideActions?: () => void;
 };
 

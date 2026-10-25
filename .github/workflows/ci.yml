@@ -9,21 +9,41 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: client-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
           bun-version: canary
-      - run: bun install
-      - run: bun run fmt:check
-      - run: bun run lint
-      - run: bun test --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/client/tests/native.test.ts'
-      - run: bun test --isolate packages/client/tests/native.test.ts
-      - run: bun run generate-sdk
+      - name: Cache Bun installs
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+      - name: Install dependencies
+        run: bun install
+      - name: Check formatting
+        run: bun run fmt:check
+      - name: Lint
+        run: bun run lint
+      - name: Run tests
+        run: bun test --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/client/tests/native.test.ts'
+      - name: Run native bridge tests
+        run: bun test --isolate packages/client/tests/native.test.ts
+      - name: Generate the plugin SDK
+        run: bun run generate-sdk
       # Releases replace the generated `<version>-<hash>` with the plain release version.
-      - run: |
+      - name: Check the generated SDK is up to date
+        run: |
           git diff --exit-code -I '^\s*"version": ' -- packages/api/src packages/api/package.json
-      - run: bun run --cwd packages/client build
+      - name: Build the client
+        run: bun run --cwd packages/client build

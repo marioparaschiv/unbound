@@ -3,9 +3,11 @@ import type { ReactElement } from 'react';
 import { BADGE_INSET, BYTE_FORMAT, BYTE_UNITS } from '~/constants';
 
 export type MediaItemElement = ReactElement<{
-	item?: { node?: { image?: { fileSize?: number } } };
+	item?: { node?: { image?: { fileSize?: number; uri?: string } } };
 	size?: number;
 }>;
+
+export type FileSizeLookup = (uri: string) => number | undefined;
 
 export type SizeBadge = {
 	key: string;
@@ -31,12 +33,14 @@ export function formatBytes(bytes: number): string {
  * @param items The row's media item elements in slot order, with an empty slot as `null`.
  * @param padding The row's horizontal padding.
  * @param separator The gap between items.
+ * @param lookup Finds the size of an item Discord reports without one, as on Android.
  * @returns One badge per item with a known file size and a positive layout size.
  */
 export function sizeBadgesForRow(
 	items: (MediaItemElement | null)[],
 	padding: number,
 	separator: number,
+	lookup?: FileSizeLookup,
 ): SizeBadge[] {
 	const badges: SizeBadge[] = [];
 
@@ -45,7 +49,8 @@ export function sizeBadgesForRow(
 			continue;
 		}
 
-		const bytes = item.props.item?.node?.image?.fileSize;
+		const image = item.props.item?.node?.image;
+		const bytes = image?.fileSize ?? (image?.uri ? lookup?.(image.uri) : undefined);
 		const size = item.props.size;
 
 		if (typeof bytes !== 'number' || !Number.isSafeInteger(bytes) || bytes < 0) {

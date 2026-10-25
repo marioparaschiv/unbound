@@ -3,6 +3,7 @@ import {
 	type RoleColorAppearance,
 } from '@unbound-plugins/shared/colors/role-colors';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import { cloneElement } from 'react';
 
 import {
@@ -11,7 +12,7 @@ import {
 	Patcher,
 	RelationshipStore,
 	SelectedChannelStore,
-	TypingIndicator,
+	TYPING_INDICATOR_PATH,
 	TypingStore,
 	UserStore,
 } from '~/modules';
@@ -52,13 +53,13 @@ function typingAppearances(): Map<string, RoleColorAppearance> {
 	return uniqueNames(owners);
 }
 
-/**
- * @description Paints the names in the channel typing indicator with their role colors.
- * @returns A function that removes the patch.
- */
-export function patchTypingIndicator(): () => void {
+type TypingIndicatorModule = {
+	default?: { type?: (...args: unknown[]) => unknown };
+};
+
+function patchLoadedTypingIndicator(TypingIndicator: TypingIndicatorModule): () => void {
 	const feature = `${PLUGIN_NAME}: typing`;
-	const modules = { TypingIndicator, TypingStore, UserStore, ChannelStore, SelectedChannelStore };
+	const modules = { TypingStore, UserStore, ChannelStore, SelectedChannelStore };
 
 	if (!ensureModules(feature, modules)) return () => {};
 
@@ -98,6 +99,14 @@ export function patchTypingIndicator(): () => void {
 		active = false;
 		unpatch();
 	};
+}
+
+/**
+ * @description Paints the names in the channel typing indicator with their role colors, once the indicator's module loads; Android loads it only when someone first types.
+ * @returns A function that stops waiting or removes the patch.
+ */
+export function patchTypingIndicator(): () => void {
+	return whenLoaded<TypingIndicatorModule>(TYPING_INDICATOR_PATH, patchLoadedTypingIndicator);
 }
 
 export default patchTypingIndicator;

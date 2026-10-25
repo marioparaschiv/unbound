@@ -35,11 +35,12 @@ export function createRenderer(
 		index.hydrateChannel();
 
 		const key = viewKey(objc, cell);
-		const id = (await readNativeMessageInfo(cell, objc))?.messageId;
+		const info = await readNativeMessageInfo(cell, objc);
+		const id = info?.messageId;
 
 		if (disposed) return false;
 
-		const hydrated = index.hydrateMessage(id);
+		const hydrated = index.hydrateMessage(id, info?.channelId);
 		const mentions = id ? index.get(id) : [];
 		const retry = id ? !hydrated || index.isUnresolved(id) : false;
 

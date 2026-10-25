@@ -49,6 +49,27 @@ describe('rendered message link ranges', () => {
 		});
 	});
 
+	test("covers the word joiners and thin space in Discord's current channel chip", () => {
+		const prefix = 'Parity fixture: message link embed ';
+		const chip =
+			'\u2068\uFFFC\u2060development\u2060\uFFFC\u2060\uFFFC\u2060\u2060\u2009\u2069';
+
+		expect(findRenderedLinkRange(`${prefix}${chip} after`, 'development')).toEqual({
+			location: prefix.length,
+			length: chip.length,
+		});
+	});
+
+	test('covers the zero-width icon placeholders of the Android channel chip', () => {
+		const prefix = 'fresh cross-channel link ';
+		const chip = '\u2068\u2068\u200Bshowcase\u2069\u200B\u2068\u200B\u2069\u2069';
+
+		expect(findRenderedLinkRange(`${prefix}${chip}`, 'showcase')).toEqual({
+			location: prefix.length,
+			length: chip.length,
+		});
+	});
+
 	test('ignores plain text that shares a channel name', () => {
 		expect(findRenderedLinkRange('development and more', 'development')).toBeUndefined();
 	});
@@ -56,7 +77,7 @@ describe('rendered message link ranges', () => {
 
 describe('native username color', () => {
 	test('converts a Discord role color to an opaque React Native color', () => {
-		expect(nativeUsernameColor('#277ecd')).toBe(0xff277ecd);
+		expect(nativeUsernameColor('#277ecd')).toBe(0xff277ecd | 0);
 	});
 
 	test('rejects colors that are not six-digit hexadecimal strings', () => {

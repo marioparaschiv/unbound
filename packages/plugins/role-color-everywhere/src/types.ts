@@ -6,6 +6,7 @@ export type Member = {
 	colorString?: string | null;
 	colorStrings?: RoleColorStops | null;
 	hoistRoleId?: string | null;
+	colorRoleId?: string | null;
 };
 
 export type Role = {
