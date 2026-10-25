@@ -72,6 +72,7 @@ describe.skipIf(!DATABASE_URL)('timed reconcile', () => {
 			dispatcher: {
 				name: 'fake',
 				channel: 'addon_changed',
+				requires: [],
 				reconcile: () =>
 					tracked(async () => {
 						calls.reconciles++;
@@ -97,7 +98,7 @@ describe.skipIf(!DATABASE_URL)('timed reconcile', () => {
 
 	test('a row whose handle failed is posted on the next timer tick without a new NOTIFY', async () => {
 		const fake = fakeDispatcher({ failFirstHandle: true });
-		const stop = startDispatchers([fake.dispatcher], context, database.url, 300);
+		const { stop } = startDispatchers([fake.dispatcher], context, database.url, 300);
 
 		try {
 			await waitFor(() => fake.calls.reconciles === 1);
@@ -120,7 +121,7 @@ describe.skipIf(!DATABASE_URL)('timed reconcile', () => {
 
 	test('timer reconciles never overlap a running handle', async () => {
 		const fake = fakeDispatcher({ handleMs: 40 });
-		const stop = startDispatchers([fake.dispatcher], context, database.url, 10);
+		const { stop } = startDispatchers([fake.dispatcher], context, database.url, 10);
 
 		try {
 			await waitFor(() => fake.calls.reconciles > 0);
@@ -142,7 +143,7 @@ describe.skipIf(!DATABASE_URL)('timed reconcile', () => {
 
 	test('stop clears the timer, so nothing runs once it resolves', async () => {
 		const fake = fakeDispatcher({});
-		const stop = startDispatchers([fake.dispatcher], context, database.url, 10);
+		const { stop } = startDispatchers([fake.dispatcher], context, database.url, 10);
 
 		await waitFor(() => fake.calls.reconciles >= 3);
 		await stop();

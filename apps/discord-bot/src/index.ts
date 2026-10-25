@@ -8,13 +8,13 @@ import { createFeedClient } from '~/lib/feed/client';
 import { startDispatchers } from '~/runtime/start';
 import { createDatabase } from '~/db/database';
 import { startPoller } from '~/runtime/poller';
-import { DISCORD_IDS } from '~/lib/constants';
+import { GUILD_ID } from '~/lib/constants';
 import { setDatabase } from '~/db/instance';
 import { dispatchers } from '~/dispatchers';
 import { checkConfig } from '~/lib/config';
 
 const logger = createLogger('Bot');
-const config = checkConfig(process.env, DISCORD_IDS);
+const config = checkConfig(process.env, GUILD_ID);
 
 if (!config.ok) {
 	logger.error(config.message);
@@ -49,7 +49,7 @@ async function exit(code: number): Promise<never> {
 }
 
 function startRuntime(ready: Client<true>) {
-	const stopDispatchers = startDispatchers(
+	const { started, stop: stopDispatchers } = startDispatchers(
 		dispatchers,
 		{ db, client: ready },
 		env.DATABASE_URL,
@@ -70,7 +70,7 @@ function startRuntime(ready: Client<true>) {
 	process.once('SIGINT', () => void shutdown());
 	process.once('SIGTERM', () => void shutdown());
 
-	logger.success(`Runtime started with ${dispatchers.length} dispatcher(s).`);
+	logger.success(`Runtime started with ${started.length} dispatcher(s).`);
 }
 
 client.once(Events.ClientReady, (ready) => {
