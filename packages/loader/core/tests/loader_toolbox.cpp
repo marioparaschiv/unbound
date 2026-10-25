@@ -97,7 +97,6 @@ int main()
     assert(loader::toolbox::perform(context, "custom-bundle", "ftp://nope") == "false");
     assert(loader::toolbox::perform(context, "settings", "").find("padded.bundle") != std::string::npos);
     assert(loader::toolbox::perform(context, "unknown", "").empty());
-    assert(loader::toolbox::perform(context, "message", "refetch-failed") == loader::toolbox::kRefetchFailedMessage);
     const std::string issue = loader::toolbox::perform(
         context, "issue-url",
         R"({"facts":{"device":"iPhone SE","osVersion":"26.0.1","virtualDevice":false},"attachments":[["Entitlements","<plist/>"]]})");

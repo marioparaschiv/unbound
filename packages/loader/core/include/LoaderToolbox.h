@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "LoaderPreferences.h"
 #include "LoaderSettings.h"
 #include "LoaderUpdater.h"
 
@@ -18,6 +19,51 @@ namespace loader::toolbox
         Themes,
         Icons,
         Fonts,
+    };
+
+    enum class MenuItemKind
+    {
+        Action,
+        Toggle,
+        Platform,
+    };
+
+    struct MenuPrompt
+    {
+        std::string title;
+        std::string message;
+        std::string placeholder;
+        std::string confirm;
+        std::string cancel;
+    };
+
+    struct MenuItem
+    {
+        std::string                                id;
+        std::string                                title;
+        MenuItemKind                               kind = MenuItemKind::Action;
+        std::string                                action;
+        std::string                                argument;
+        bool                                       destructive = false;
+        bool                                       restartsApp = false;
+        std::string                                progress;
+        std::string                                failure;
+        std::optional<MenuPrompt>                  prompt;
+        std::optional<preferences::ToolboxGesture> gesture;
+        bool                                       on = false;
+    };
+
+    struct MenuSection
+    {
+        std::string           title;
+        std::vector<MenuItem> items;
+    };
+
+    struct MenuOptions
+    {
+        bool openAppFolder     = false;
+        bool copyAppFolderPath = false;
+        bool unboundIcon       = false;
     };
 
     struct IssueReport
@@ -49,11 +95,20 @@ namespace loader::toolbox
         std::function<uint32_t()>                   bytecodeVersion;
     };
 
-    constexpr const char *kIssueRepository        = "marioparaschiv/unbound";
-    constexpr const char *kRefetchFailedMessage    = "The bundle could not be downloaded.";
-    constexpr const char *kCustomBundleInvalidText = "Enter an http or https URL.";
+    constexpr const char *kIssueRepository             = "marioparaschiv/unbound";
+    constexpr const char *kToolboxTitle                = "Unbound Toolbox";
+    constexpr const char *kCloseText                   = "Close";
+    constexpr const char *kConfirmText                 = "Confirm";
+    constexpr const char *kCancelText                  = "Cancel";
+    constexpr const char *kDestructiveConfirmation     = "This cannot be undone. Discord restarts afterwards.";
+    constexpr const char *kRefetchProgressMessage      = "Refetching the bundle…";
+    constexpr const char *kRefetchFailedMessage        = "The bundle could not be downloaded.";
+    constexpr const char *kCustomBundleInvalidText     = "Enter an http or https URL.";
+    constexpr const char *kIssueFailedMessage          = "The GitHub issue page could not be opened.";
+    constexpr unsigned    kThreeFingerHoldMilliseconds = 500;
 
     const char *addonDirectoryName(AddonKind kind);
+    const char *addonTitle(AddonKind kind);
     std::optional<AddonKind> addonKindNamed(const std::string &name);
     bool        wipeAddons(const std::string &documents, AddonKind kind);
     bool        factoryReset(const std::string &documents);
@@ -62,6 +117,9 @@ namespace loader::toolbox
     bool        toggleRecovery(SettingsStore &settings);
     bool        refetchBundle(BundleUpdater &updater, const std::optional<std::string> &updateURL,
                               uint32_t bytecodeVersion);
+    std::vector<MenuSection> menu(const SettingsStore &settings, const MenuOptions &options);
+    MenuOptions              menuOptions(const std::string &json);
+    nlohmann::json           menuJSON(const SettingsStore &settings, const MenuOptions &options);
     std::string perform(ToolboxContext &context, const std::string &action, const std::string &argument);
     std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFacts &facts);
     std::string issueBody(const IssueReport &report);

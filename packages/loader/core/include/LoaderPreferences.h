@@ -46,6 +46,7 @@ namespace loader::preferences
     nlohmann::json             fontOverrides(const SettingsStore &settings);
 
     std::optional<ToolboxGesture> gestureNamed(const std::string &name);
+    const char                   *gestureName(ToolboxGesture gesture);
     bool gestureEnabled(const SettingsStore &settings, ToolboxGesture gesture);
     bool setGestureEnabled(SettingsStore &settings, ToolboxGesture gesture, bool enabled);
 

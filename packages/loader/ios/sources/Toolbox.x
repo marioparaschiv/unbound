@@ -34,7 +34,7 @@ static void addSettingsGestureToWindow(UIWindow *window)
         UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc]
             initWithTarget:[UIApplication sharedApplication]
                     action:@selector(handleThreeFingerLongPress:)];
-        longPress.minimumPressDuration          = 0.5;
+        longPress.minimumPressDuration          = [CoreBridge toolboxHoldDuration];
         longPress.numberOfTouchesRequired       = 3;
         [window addGestureRecognizer:longPress];
     }
@@ -168,7 +168,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     ]];
 
     UILabel *titleLabel                                    = [[UILabel alloc] init];
-    titleLabel.text                                        = @"Unbound Toolbox";
+    titleLabel.text                                        = self.menu[@"title"];
     titleLabel.font                                        = [UIFont systemFontOfSize:20
                                                     weight:UIFontWeightBold];
     titleLabel.textColor                                   = UIColor.labelColor;
@@ -270,110 +270,36 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 
 - (void)setupMenuItems
 {
-    NSMutableArray *settingsItems =
-        [NSMutableArray arrayWithObjects:@{
-            @"title" : @"Enable Shake Motion",
-            @"icon" : @"iphone.gen3.radiowaves.left.and.right",
-            @"isSwitch" : @YES,
-            @"key" : kShakeGesture
-        },
-                                         @{
-                                             @"title" : @"Enable Three Finger Press",
-                                             @"icon" : @"hand.tap",
-                                             @"isSwitch" : @YES,
-                                             @"key" : kThreeFingerGesture
-                                         },
-                                         nil];
+    self.menu = [CoreBridge toolboxMenu:@{
+        @"openAppFolder" : @YES,
+        @"unboundIcon" : @(![Utilities hasDiscordProductionEntitlements]),
+    }];
+    self.menuSections = self.menu[@"sections"] ?: @[];
+}
 
-    if (![Utilities hasDiscordProductionEntitlements])
-    {
-        [settingsItems addObject:@{
-            @"title" : @"Use Unbound Icon",
-            @"icon" : @"app.badge",
-            @"isSwitch" : @YES,
-            @"key" : @"UnboundAppIconEnabled"
-        }];
-    }
-
-    self.menuSections = @[
-        @{
-            @"title" : @"Bundle",
-            @"items" : @[
-                @{
-                    @"title" : @"Refetch Bundle",
-                    @"icon" : @"arrow.triangle.2.circlepath",
-                    @"selector" : NSStringFromSelector(@selector(refetchBundle))
-                },
-                @{
-                    @"title" : @"Delete Bundle",
-                    @"icon" : @"trash",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(deleteBundle))
-                },
-                @{
-                    @"title" : @"Load Custom Bundle",
-                    @"icon" : @"link.badge.plus",
-                    @"selector" : NSStringFromSelector(@selector(loadCustomBundle))
-                }
-            ]
-        },
-        @{
-            @"title" : @"Addons",
-            @"items" : @[
-                @{
-                    @"title" : @"Wipe Plugins",
-                    @"icon" : @"trash",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(wipePlugins))
-                },
-                @{
-                    @"title" : @"Wipe Themes",
-                    @"icon" : @"trash",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(wipeThemes))
-                },
-                @{
-                    @"title" : @"Wipe Fonts",
-                    @"icon" : @"trash",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(wipeFonts))
-                },
-                @{
-                    @"title" : @"Wipe Icon Packs",
-                    @"icon" : @"trash",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(wipeIconPacks))
-                }
-            ]
-        },
-        @{
-            @"title" : @"Utilities",
-            @"items" : @[
-                @{
-                    @"title" : [CoreBridge preference:@"recovery-label" argument:@""],
-                    @"icon" : @"shield",
-                    @"selector" : NSStringFromSelector(@selector(toggleRecoveryMode))
-                },
-                @{
-                    @"title" : @"Factory Reset",
-                    @"icon" : @"trash.fill",
-                    @"destructive" : @YES,
-                    @"selector" : NSStringFromSelector(@selector(factoryReset))
-                },
-                @{
-                    @"title" : @"Open App Folder",
-                    @"icon" : @"folder",
-                    @"selector" : NSStringFromSelector(@selector(openAppFolder))
-                },
-                @{
-                    @"title" : @"Open GitHub Issue",
-                    @"icon" : @"exclamationmark.bubble",
-                    @"selector" : NSStringFromSelector(@selector(openGitHubIssue))
-                }
-            ]
-        },
-        @{@"title" : @"Settings", @"items" : settingsItems}
-    ];
+static NSString *iconForMenuItem(NSString *identifier)
+{
+    static NSDictionary<NSString *, NSString *> *icons = nil;
+    static dispatch_once_t                       onceToken;
+    dispatch_once(&onceToken, ^{
+        icons = @{
+            @"refetch-bundle" : @"arrow.triangle.2.circlepath",
+            @"delete-bundle" : @"trash",
+            @"custom-bundle" : @"link.badge.plus",
+            @"wipe-plugins" : @"trash",
+            @"wipe-themes" : @"trash",
+            @"wipe-fonts" : @"trash",
+            @"wipe-icons" : @"trash",
+            @"toggle-recovery" : @"shield",
+            @"factory-reset" : @"trash.fill",
+            @"open-app-folder" : @"folder",
+            @"open-issue" : @"exclamationmark.bubble",
+            @"gesture-shake" : @"iphone.gen3.radiowaves.left.and.right",
+            @"gesture-three-finger" : @"hand.tap",
+            @"unbound-icon" : @"app.badge",
+        };
+    });
+    return icons[identifier] ?: @"circle";
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -415,7 +341,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 
     UIImageSymbolConfiguration *symbolConfig =
         [UIImageSymbolConfiguration configurationWithPointSize:18 weight:UIImageSymbolWeightMedium];
-    UIImage *icon = [UIImage systemImageNamed:item[@"icon"] withConfiguration:symbolConfig];
+    UIImage *icon = [UIImage systemImageNamed:iconForMenuItem(item[@"id"]) withConfiguration:symbolConfig];
 
     UIListContentConfiguration *content                  = [cell defaultContentConfiguration];
     content.text                                         = item[@"title"];
@@ -428,22 +354,22 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     content.imageToTextPadding                           = 14;
     cell.contentConfiguration                            = content;
 
-    if ([item[@"isSwitch"] boolValue])
+    if ([item[@"kind"] isEqualToString:@"toggle"])
     {
         UISwitch *toggle              = [[UISwitch alloc] init];
-        toggle.accessibilityIdentifier = item[@"key"];
+        toggle.accessibilityIdentifier = item[@"id"];
         [toggle addTarget:self
                       action:@selector(toggleSetting:)
             forControlEvents:UIControlEventValueChanged];
 
-        if ([item[@"key"] isEqualToString:@"UnboundAppIconEnabled"])
+        if ([item[@"id"] isEqualToString:@"unbound-icon"])
         {
             NSString *currentIcon = [[UIApplication sharedApplication] alternateIconName];
             toggle.on             = [currentIcon isEqualToString:@"UnboundIcon"];
         }
         else
         {
-            toggle.on = toolboxGestureEnabled(item[@"key"]);
+            toggle.on = [item[@"on"] boolValue];
         }
 
         cell.accessoryView = toggle;
@@ -458,13 +384,18 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 
     NSDictionary *item = self.menuSections[indexPath.section][@"items"][indexPath.row];
 
+    if ([item[@"kind"] isEqualToString:@"toggle"])
+    {
+        return;
+    }
+
     if ([item[@"destructive"] boolValue])
     {
-        [self showDestructiveConfirmation:item[@"title"] selectorName:item[@"selector"]];
+        [self confirmMenuItem:item];
     }
-    else if (item[@"selector"])
+    else
     {
-        [self executeActionWithSelectorName:item[@"selector"]];
+        [self selectMenuItem:item];
     }
 }
 
@@ -478,131 +409,119 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     cell.preservesSuperviewLayoutMargins = NO;
 }
 
-- (void)showDestructiveConfirmation:(NSString *)action selectorName:(NSString *)selectorName
+- (void)confirmMenuItem:(NSDictionary *)item
 {
-    NSString *message = @"Are you sure you want to do this?";
+    NSDictionary *confirmation = self.menu[@"confirmation"];
 
     UIAlertController *alert =
-        [UIAlertController alertControllerWithTitle:action
-                                            message:message
+        [UIAlertController alertControllerWithTitle:item[@"title"]
+                                            message:confirmation[@"message"]
                                      preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel"
+    [alert addAction:[UIAlertAction actionWithTitle:confirmation[@"cancel"]
                                               style:UIAlertActionStyleCancel
                                             handler:nil]];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Confirm"
+    [alert addAction:[UIAlertAction actionWithTitle:confirmation[@"confirm"]
                                               style:UIAlertActionStyleDestructive
                                             handler:^(UIAlertAction *action) {
-                                                [self executeActionWithSelectorName:selectorName];
+                                                [self selectMenuItem:item];
                                             }]];
 
     [self presentViewController:alert animated:YES completion:nil];
 }
 
-- (void)executeActionWithSelectorName:(NSString *)selectorName
+- (void)selectMenuItem:(NSDictionary *)item
 {
-    SEL selector = NSSelectorFromString(selectorName);
-    if ([self respondsToSelector:selector])
+    if ([item[@"kind"] isEqualToString:@"platform"])
     {
-        IMP imp               = [self methodForSelector:selector];
-        void (*func)(id, SEL) = (void *) imp;
-        func(self, selector);
+        [self performPlatformMenuItem:item];
+    }
+    else if (item[@"prompt"])
+    {
+        [self promptForMenuItem:item];
+    }
+    else
+    {
+        [self runMenuItem:item argument:item[@"argument"] ?: @""];
     }
 }
 
-- (void)toggleRecoveryMode
+- (void)performPlatformMenuItem:(NSDictionary *)item
 {
-    [RecoveryQuickAction toggleRecoveryMode];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
+    NSString *identifier = item[@"id"];
+
+    if ([identifier isEqualToString:@"open-app-folder"])
+    {
+        [self openAppFolder];
+    }
+    else if ([identifier isEqualToString:@"open-issue"])
+    {
+        [self openGitHubIssue:item];
+    }
 }
 
-- (void)refetchBundle
+- (void)promptForMenuItem:(NSDictionary *)item
 {
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        BOOL downloaded = [CoreBridge toolboxSucceeded:@"refetch-bundle" argument:@""];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            if (!downloaded)
-            {
-                [Utilities alert:[CoreBridge toolboxMessage:@"refetch-failed"] title:@"Refetch Bundle"];
-                return;
-            }
-            [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
-        });
-    });
-}
-
-- (void)deleteBundle
-{
-    [CoreBridge toolbox:@"delete-bundle" argument:@""];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
-}
-
-- (void)loadCustomBundle
-{
-    UIAlertController *alert = [UIAlertController
-        alertControllerWithTitle:@"Custom Bundle URL"
-                         message:@"Enter the URL to download a custom bundle from"
-                  preferredStyle:UIAlertControllerStyleAlert];
+    NSDictionary      *prompt = item[@"prompt"];
+    UIAlertController *alert  = [UIAlertController alertControllerWithTitle:prompt[@"title"]
+                                                                    message:prompt[@"message"]
+                                                             preferredStyle:UIAlertControllerStyleAlert];
     [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.placeholder            = @"https://example.com/unbound.bundle";
+        textField.placeholder            = prompt[@"placeholder"];
         textField.keyboardType           = UIKeyboardTypeURL;
         textField.autocorrectionType     = UITextAutocorrectionTypeNo;
         textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
     }];
 
-    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel"
+    [alert addAction:[UIAlertAction actionWithTitle:prompt[@"cancel"]
                                               style:UIAlertActionStyleCancel
                                             handler:nil]];
-
-    [alert
-        addAction:[UIAlertAction
-                      actionWithTitle:@"Download"
-                                style:UIAlertActionStyleDefault
-                              handler:^(UIAlertAction *action) {
-                                  UITextField *textField = alert.textFields.firstObject;
-                                  NSString    *urlString = textField.text;
-
-                                  if (![CoreBridge toolboxSucceeded:@"custom-bundle" argument:urlString ?: @""])
-                                  {
-                                      [Utilities alert:[CoreBridge toolboxMessage:@"custom-bundle-invalid"]
-                                                 title:@"Custom Bundle URL"];
-                                      return;
-                                  }
-                                  [self dismissViewControllerAnimated:YES
-                                                              completion:^{
-                                                                  [Utilities reloadApp];
-                                                              }];
-                              }]];
+    [alert addAction:[UIAlertAction actionWithTitle:prompt[@"confirm"]
+                                              style:UIAlertActionStyleDefault
+                                            handler:^(UIAlertAction *action) {
+                                                [self runMenuItem:item
+                                                         argument:alert.textFields.firstObject.text ?: @""];
+                                            }]];
     [self presentViewController:alert animated:YES completion:nil];
 }
 
-- (void)wipePlugins
+- (void)runMenuItem:(NSDictionary *)item argument:(NSString *)argument
 {
-    [CoreBridge toolbox:@"wipe" argument:@"Plugins"];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
+    UIAlertController *progress = nil;
+    if (item[@"progress"])
+    {
+        progress = [UIAlertController alertControllerWithTitle:item[@"title"]
+                                                        message:item[@"progress"]
+                                                 preferredStyle:UIAlertControllerStyleAlert];
+        [self presentViewController:progress animated:YES completion:nil];
+    }
+
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSString *result = [CoreBridge toolbox:item[@"action"] argument:argument];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            void (^finish)(void) = ^{ [self finishMenuItem:item result:result]; };
+            if (progress)
+            {
+                [progress dismissViewControllerAnimated:YES completion:finish];
+                return;
+            }
+            finish();
+        });
+    });
 }
 
-- (void)wipeThemes
+- (void)finishMenuItem:(NSDictionary *)item result:(NSString *)result
 {
-    [CoreBridge toolbox:@"wipe" argument:@"Themes"];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
-}
+    if (item[@"failure"] && ![result isEqualToString:@"true"])
+    {
+        [Utilities alert:item[@"failure"] title:item[@"title"]];
+        return;
+    }
 
-- (void)wipeFonts
-{
-    [CoreBridge toolbox:@"wipe" argument:@"Fonts"];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
-}
-
-- (void)wipeIconPacks
-{
-    [CoreBridge toolbox:@"wipe" argument:@"Icons"];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
-}
-
-- (void)factoryReset
-{
-    [CoreBridge toolbox:@"factory-reset" argument:@""];
-    [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
+    if ([item[@"restartsApp"] boolValue])
+    {
+        [RecoveryQuickAction refresh];
+        [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
+    }
 }
 
 - (void)openAppFolder
@@ -626,7 +545,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     [[UIApplication sharedApplication] openURL:sharedUrl options:@{} completionHandler:nil];
 }
 
-- (void)openGitHubIssue
+- (void)openGitHubIssue:(NSDictionary *)item
 {
     NSString *appVersion =
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
@@ -660,7 +579,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 
     if (!url)
     {
-        [Utilities alert:@"Failed to create GitHub issue URL" title:@"Error"];
+        [Utilities alert:item[@"failure"] title:item[@"title"]];
         return;
     }
 
@@ -684,20 +603,44 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
     return nil;
 }
 
-- (void)toggleSetting:(UISwitch *)sender
+- (NSDictionary *)menuItemWithIdentifier:(NSString *)identifier
 {
-    NSString *key = sender.accessibilityIdentifier;
-
-    if ([key isEqualToString:kShakeGesture] || [key isEqualToString:kThreeFingerGesture])
+    for (NSDictionary *section in self.menuSections)
     {
-        [CoreBridge preference:@"set-gesture"
-                      argument:[NSString stringWithFormat:@"%@=%@", key, sender.on ? @"true" : @"false"]];
-        for (NSString *gesture in @[ kShakeGesture, kThreeFingerGesture ])
+        for (NSDictionary *item in section[@"items"])
         {
-            [[self switchForSettingKey:gesture] setOn:toolboxGestureEnabled(gesture) animated:YES];
+            if ([item[@"id"] isEqualToString:identifier])
+            {
+                return item;
+            }
         }
     }
-    else if ([key isEqualToString:@"UnboundAppIconEnabled"])
+    return nil;
+}
+
+- (void)toggleSetting:(UISwitch *)sender
+{
+    NSString     *identifier = sender.accessibilityIdentifier;
+    NSDictionary *item       = [self menuItemWithIdentifier:identifier];
+
+    if (item[@"gesture"])
+    {
+        [CoreBridge preference:@"set-gesture"
+                      argument:[NSString stringWithFormat:@"%@=%@", item[@"gesture"],
+                                                          sender.on ? @"true" : @"false"]];
+        [self setupMenuItems];
+        for (NSDictionary *section in self.menuSections)
+        {
+            for (NSDictionary *entry in section[@"items"])
+            {
+                if (entry[@"gesture"])
+                {
+                    [[self switchForSettingKey:entry[@"id"]] setOn:[entry[@"on"] boolValue] animated:YES];
+                }
+            }
+        }
+    }
+    else if ([identifier isEqualToString:@"unbound-icon"])
     {
         NSString *iconName = sender.on ? @"UnboundIcon" : nil;
 

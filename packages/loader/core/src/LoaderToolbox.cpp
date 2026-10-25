@@ -56,6 +56,11 @@ namespace loader::toolbox
         return "";
     }
 
+    const char *addonTitle(AddonKind kind)
+    {
+        return kind == AddonKind::Icons ? "Icon Packs" : addonDirectoryName(kind);
+    }
+
     std::optional<AddonKind> addonKindNamed(const std::string &name)
     {
         for (auto kind : {AddonKind::Plugins, AddonKind::Themes, AddonKind::Icons, AddonKind::Fonts})
@@ -193,6 +198,186 @@ namespace loader::toolbox
         return rows;
     }
 
+    static MenuItem restartingAction(std::string id, std::string title, std::string action, bool destructive,
+                                     std::string argument = "")
+    {
+        MenuItem item;
+        item.id          = std::move(id);
+        item.title       = std::move(title);
+        item.action      = std::move(action);
+        item.argument    = std::move(argument);
+        item.destructive = destructive;
+        item.restartsApp = true;
+        return item;
+    }
+
+    static MenuItem platformItem(std::string id, std::string title, MenuItemKind kind = MenuItemKind::Platform)
+    {
+        MenuItem item;
+        item.id    = std::move(id);
+        item.title = std::move(title);
+        item.kind  = kind;
+        return item;
+    }
+
+    static MenuItem gestureToggle(const SettingsStore &settings, preferences::ToolboxGesture gesture,
+                                  std::string title)
+    {
+        MenuItem item = platformItem(std::string("gesture-") + preferences::gestureName(gesture), std::move(title),
+                                     MenuItemKind::Toggle);
+        item.gesture  = gesture;
+        item.on       = preferences::gestureEnabled(settings, gesture);
+        return item;
+    }
+
+    static MenuSection bundleSection()
+    {
+        MenuItem refetch = restartingAction("refetch-bundle", "Refetch Bundle", "refetch-bundle", false);
+        refetch.progress = kRefetchProgressMessage;
+        refetch.failure  = kRefetchFailedMessage;
+
+        MenuItem custom = restartingAction("custom-bundle", "Load Custom Bundle", "custom-bundle", false);
+        custom.failure  = kCustomBundleInvalidText;
+        custom.prompt   = MenuPrompt{"Custom Bundle URL", "Enter the URL to download a custom bundle from",
+                                     "https://example.com/unbound.bundle", "Download", kCancelText};
+
+        return {"Bundle",
+                {std::move(refetch), restartingAction("delete-bundle", "Delete Bundle", "delete-bundle", true),
+                 std::move(custom)}};
+    }
+
+    static MenuSection addonsSection()
+    {
+        MenuSection section{"Addons", {}};
+        for (auto kind : {AddonKind::Plugins, AddonKind::Themes, AddonKind::Fonts, AddonKind::Icons})
+        {
+            section.items.push_back(restartingAction(std::string("wipe-") + lowercase(addonDirectoryName(kind)),
+                                                     std::string("Wipe ") + addonTitle(kind), "wipe", true,
+                                                     addonDirectoryName(kind)));
+        }
+        return section;
+    }
+
+    static MenuSection utilitiesSection(const SettingsStore &settings, const MenuOptions &options)
+    {
+        MenuSection section{"Utilities", {}};
+        section.items.push_back(restartingAction(
+            "toggle-recovery", preferences::recoveryActionLabel(preferences::recoveryEnabled(settings)),
+            "toggle-recovery", false));
+        section.items.push_back(restartingAction("factory-reset", "Factory Reset", "factory-reset", true));
+        if (options.openAppFolder)
+        {
+            section.items.push_back(platformItem("open-app-folder", "Open App Folder"));
+        }
+        if (options.copyAppFolderPath)
+        {
+            section.items.push_back(platformItem("copy-app-folder-path", "Copy App Folder Path"));
+        }
+
+        MenuItem issue = platformItem("open-issue", "Open GitHub Issue");
+        issue.failure  = kIssueFailedMessage;
+        section.items.push_back(std::move(issue));
+        return section;
+    }
+
+    static MenuSection settingsSection(const SettingsStore &settings, const MenuOptions &options)
+    {
+        MenuSection section{"Settings",
+                            {gestureToggle(settings, preferences::ToolboxGesture::Shake, "Enable Shake Motion"),
+                             gestureToggle(settings, preferences::ToolboxGesture::ThreeFinger,
+                                           "Enable Three Finger Press")}};
+        if (options.unboundIcon)
+        {
+            section.items.push_back(platformItem("unbound-icon", "Use Unbound Icon", MenuItemKind::Toggle));
+        }
+        return section;
+    }
+
+    std::vector<MenuSection> menu(const SettingsStore &settings, const MenuOptions &options)
+    {
+        return {bundleSection(), addonsSection(), utilitiesSection(settings, options),
+                settingsSection(settings, options)};
+    }
+
+    MenuOptions menuOptions(const std::string &json)
+    {
+        const nlohmann::json input = nlohmann::json::parse(json, nullptr, false);
+        if (!input.is_object())
+        {
+            return {};
+        }
+        return {input.value("openAppFolder", false), input.value("copyAppFolderPath", false),
+                input.value("unboundIcon", false)};
+    }
+
+    static const char *kindName(MenuItemKind kind)
+    {
+        switch (kind)
+        {
+        case MenuItemKind::Action:
+            return "action";
+        case MenuItemKind::Toggle:
+            return "toggle";
+        case MenuItemKind::Platform:
+            return "platform";
+        }
+        return "";
+    }
+
+    static nlohmann::json itemJSON(const MenuItem &item)
+    {
+        nlohmann::json json{{"id", item.id},
+                            {"title", item.title},
+                            {"kind", kindName(item.kind)},
+                            {"destructive", item.destructive},
+                            {"restartsApp", item.restartsApp}};
+
+        const std::pair<const char *, const std::string *> optionalTexts[] = {
+            {"action", &item.action}, {"argument", &item.argument}, {"progress", &item.progress},
+            {"failure", &item.failure}};
+        for (const auto &[key, value] : optionalTexts)
+        {
+            if (!value->empty())
+            {
+                json[key] = *value;
+            }
+        }
+        if (item.prompt)
+        {
+            json["prompt"] = {{"title", item.prompt->title},
+                              {"message", item.prompt->message},
+                              {"placeholder", item.prompt->placeholder},
+                              {"confirm", item.prompt->confirm},
+                              {"cancel", item.prompt->cancel}};
+        }
+        if (item.gesture)
+        {
+            json["gesture"] = preferences::gestureName(*item.gesture);
+            json["on"]      = item.on;
+        }
+        return json;
+    }
+
+    nlohmann::json menuJSON(const SettingsStore &settings, const MenuOptions &options)
+    {
+        nlohmann::json sections = nlohmann::json::array();
+        for (const MenuSection &section : menu(settings, options))
+        {
+            nlohmann::json items = nlohmann::json::array();
+            for (const MenuItem &item : section.items)
+            {
+                items.push_back(itemJSON(item));
+            }
+            sections.push_back({{"title", section.title}, {"items", std::move(items)}});
+        }
+
+        return {{"title", kToolboxTitle},
+                {"close", kCloseText},
+                {"confirmation",
+                 {{"message", kDestructiveConfirmation}, {"confirm", kConfirmText}, {"cancel", kCancelText}}},
+                {"sections", std::move(sections)}};
+    }
+
     static std::string text(const nlohmann::json &object, const char *key)
     {
         const auto value = object.find(key);
@@ -267,16 +452,13 @@ namespace loader::toolbox
         {
             return issueURL(issueReportFrom(context.platform, argument));
         }
-        if (action == "message")
+        if (action == "menu")
         {
-            if (argument == "refetch-failed")
-            {
-                return kRefetchFailedMessage;
-            }
-            if (argument == "custom-bundle-invalid")
-            {
-                return kCustomBundleInvalidText;
-            }
+            return menuJSON(context.settings, menuOptions(argument)).dump();
+        }
+        if (action == "hold-milliseconds")
+        {
+            return std::to_string(kThreeFingerHoldMilliseconds);
         }
         return "";
     }

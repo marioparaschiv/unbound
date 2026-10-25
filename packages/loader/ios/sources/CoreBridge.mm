@@ -18,6 +18,7 @@
 #include "LoaderThemes.h"
 #include "LoaderToolbox.h"
 
+using unbound::ios::jsonFromObject;
 using unbound::ios::objectFromJSON;
 using unbound::ios::toStdString;
 
@@ -166,9 +167,22 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
     return [[self toolbox:action argument:argument] isEqualToString:@"true"];
 }
 
-+ (NSString *)toolboxMessage:(NSString *)key
++ (NSDictionary *)toolboxObject:(NSString *)action argument:(NSString *)argument
 {
-    return [self toolbox:@"message" argument:key];
+    nlohmann::json parsed =
+        nlohmann::json::parse(toStdString([self toolbox:action argument:argument]), nullptr, false);
+    id converted = parsed.is_object() ? objectFromJSON(parsed) : nil;
+    return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
+}
+
++ (NSDictionary *)toolboxMenu:(NSDictionary *)options
+{
+    return [self toolboxObject:@"menu" argument:@(jsonFromObject(options).dump().c_str())];
+}
+
++ (NSTimeInterval)toolboxHoldDuration
+{
+    return loader::toolbox::kThreeFingerHoldMilliseconds / 1000.0;
 }
 
 @end

@@ -80,15 +80,19 @@ namespace loader::preferences
 
     std::optional<ToolboxGesture> gestureNamed(const std::string &name)
     {
-        if (name == "shake")
+        for (auto gesture : {ToolboxGesture::Shake, ToolboxGesture::ThreeFinger})
         {
-            return ToolboxGesture::Shake;
-        }
-        if (name == "three-finger")
-        {
-            return ToolboxGesture::ThreeFinger;
+            if (name == gestureName(gesture))
+            {
+                return gesture;
+            }
         }
         return std::nullopt;
+    }
+
+    const char *gestureName(ToolboxGesture gesture)
+    {
+        return gesture == ToolboxGesture::Shake ? "shake" : "three-finger";
     }
 
     bool gestureEnabled(const SettingsStore &settings, ToolboxGesture gesture)
