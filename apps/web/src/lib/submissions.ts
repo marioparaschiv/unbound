@@ -13,6 +13,7 @@ import { and, count, eq, gte, inArray, ne } from 'drizzle-orm';
 import { addon, addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
 import type { AddonSource } from '~/lib/addon-source';
+import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Transaction } from '~/db/database';
@@ -312,6 +313,19 @@ function reserve(
 				.get();
 
 			const row = insertSubmissionSource(tx, staged.id, source);
+
+			appendEvent(tx, {
+				subject: { type: 'addon', id: manifest.id },
+				actorId: caller.user.id,
+				at: now,
+				kind: 'submission.created',
+				data: {
+					submissionId: staged.id,
+					submissionKind: kind,
+					version: manifest.version,
+					supersededId: replaced?.id ?? null,
+				},
+			});
 
 			return {
 				created: {

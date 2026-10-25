@@ -29,10 +29,16 @@ const cases: Case[] = [
 	['admin', { firstParty: ['publish'] }, true],
 	['ci', { submission: ['create'] }, false],
 	['ci', { addon: ['delist'] }, false],
+	['bot', { bot: ['read'] }, true],
+	['bot', { note: ['read'] }, false],
+	['bot', { user: ['list'] }, false],
+	['moderator', { bot: ['read'] }, false],
+	['user', { bot: ['read'] }, false],
 	['admin', { user: ['set-role'] }, true],
 	['admin', { loader: ['publish'] }, true],
 	['admin', { addon: ['transfer', 'delist'] }, true],
 	['admin', { note: ['read', 'write'] }, true],
+	['admin', { bot: ['read'] }, true],
 ];
 
 describe('hasPermission', () => {

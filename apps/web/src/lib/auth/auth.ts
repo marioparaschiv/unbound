@@ -7,7 +7,7 @@ import { createLogger } from '@unbound-app/logger';
 import { apiKey } from '@better-auth/api-key';
 import { betterAuth } from 'better-auth';
 
-import { recordAuthAdminAction } from '~/lib/moderation-events';
+import { deleteUserWithRecord, recordAuthAdminAction } from '~/lib/moderation-events';
 import { API_KEY_HEADER, CLI_CLIENT_ID } from '~/api/client';
 import { DEFAULT_ROLE, ac, roles } from '~/lib/auth/access';
 import type { FileRoutesByTo } from '~/routeTree.gen';
@@ -113,6 +113,18 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 								error,
 							);
 						}
+					},
+				},
+				delete: {
+					// Better Auth deletes outside any transaction, so the user is deleted here together with
+					// its `user.deleted` record, and `false` skips Better Auth's own delete.
+					before: async (deleted, context) => {
+						deleteUserWithRecord(db, deleted.id, {
+							actorId: context?.context.session?.user.id ?? null,
+							at: new Date(),
+						});
+
+						return false;
 					},
 				},
 			},
