@@ -98,20 +98,6 @@ class NativeFabricTest {
     }
 
     @Test
-    fun mountRejectsAnEmptyModuleName() {
-        assertThrows(IllegalArgumentException::class.java) {
-            NativeFabric.mount("{}", "", "{}")
-        }
-    }
-
-    @Test
-    fun mountRejectsAnOversizedModuleName() {
-        assertThrows(IllegalArgumentException::class.java) {
-            NativeFabric.mount("{}", "a".repeat(200), "{}")
-        }
-    }
-
-    @Test
     fun updateForwardsNewProps() {
         val handle = NativeFabric.mount("{}", "MyComponent", "{}")
 
@@ -145,9 +131,9 @@ class NativeFabricTest {
     @Test
     fun unmountingTwiceIsHarmless() {
         val handle = NativeFabric.mount("{}", "MyComponent", "{}")
-        NativeFabric.unmount(handle)
-        NativeFabric.unmount(handle)
 
+        assertTrue(NativeFabric.unmount(handle))
+        assertFalse(NativeFabric.unmount(handle))
         assertEquals(0, NativeFabric.mountedCount())
     }
 

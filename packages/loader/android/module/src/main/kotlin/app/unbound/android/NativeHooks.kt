@@ -6,9 +6,6 @@ import java.lang.reflect.Executable
 import java.lang.reflect.Method
 
 object NativeHooks {
-    private var maximumHooks = 0
-    private var maximumCachedReturns = 0
-
     interface Installer {
         fun install(method: Executable, hook: Hook): Removable
     }
@@ -32,6 +29,10 @@ object NativeHooks {
         fun dispatch(token: String, payloadJSON: String)
     }
 
+    fun interface ReturnValues {
+        fun find(token: String, selfJSON: String, argumentsJSON: String): String?
+    }
+
     private class Registration(
         val token: String,
         val method: Executable,
@@ -42,11 +43,13 @@ object NativeHooks {
     )
 
     private val registrations = HashMap<String, Registration>()
-    private val returnValues = HashMap<String, Any?>()
     private var nextToken = 1L
 
     private var installer: Installer? = null
     private var dispatcher: Dispatcher? = null
+    private var returnValues = ReturnValues { token, selfJSON, argumentsJSON ->
+        NativeBridge.nativeHookReturnValue(token, selfJSON, argumentsJSON)
+    }
 
     fun useInstaller(value: Installer) {
         synchronized(this) { installer = value }
@@ -56,20 +59,13 @@ object NativeHooks {
         synchronized(this) { dispatcher = value }
     }
 
-    fun useLimits(hooks: Int, cachedReturns: Int) {
-        synchronized(this) {
-            maximumHooks = hooks
-            maximumCachedReturns = cachedReturns
-        }
+    fun useReturnValues(value: ReturnValues) {
+        synchronized(this) { returnValues = value }
     }
 
     fun hook(className: String, methodName: String, parametersJSON: String, optionsJSON: String): String {
         val installer = synchronized(this) { installer }
             ?: throw IllegalStateException("The Android hook installer is unavailable")
-
-        synchronized(this) {
-            require(registrations.size < maximumHooks) { "Too many native hooks are installed" }
-        }
 
         val options = JSONObject(optionsJSON)
         val owner = NativeJava.loadHostClass(className)
@@ -98,7 +94,6 @@ object NativeHooks {
     fun remove(tokenJSON: String) {
         val token = parseToken(tokenJSON)
         val registration = synchronized(this) { registrations.remove(token) } ?: return
-        synchronized(this) { returnValues.keys.removeAll { it.startsWith("$token|") } }
         registration.removable?.remove()
     }
 
@@ -106,30 +101,9 @@ object NativeHooks {
         val current = synchronized(this) {
             val all = registrations.values.toList()
             registrations.clear()
-            returnValues.clear()
             all
         }
         for (registration in current) registration.removable?.remove()
-    }
-
-    fun setReturnValue(tokenJSON: String, selfJSON: String, argumentsJSON: String, valueJSON: String) {
-        val key = cacheKey(parseToken(tokenJSON), selfJSON, argumentsJSON)
-        synchronized(this) {
-            require(returnValues.containsKey(key) || returnValues.size < maximumCachedReturns) {
-                "Too many cached native hook results"
-            }
-            returnValues[key] = NativeJava.decode(valueJSON)
-        }
-    }
-
-    fun removeReturnValue(tokenJSON: String, selfJSON: String, argumentsJSON: String) {
-        val key = cacheKey(parseToken(tokenJSON), selfJSON, argumentsJSON)
-        synchronized(this) { returnValues.remove(key) }
-    }
-
-    fun clearReturnValues(tokenJSON: String) {
-        val token = parseToken(tokenJSON)
-        synchronized(this) { returnValues.keys.removeAll { it.startsWith("$token|") } }
     }
 
     fun installedCount(): Int = synchronized(this) { registrations.size }
@@ -149,18 +123,16 @@ object NativeHooks {
 
             if (!registration.replaces) return chain.proceed()
 
-            val key = cacheKey(registration.token, selfJSON, argumentsJSON)
-            val cached = synchronized(this@NativeHooks) {
-                if (returnValues.containsKey(key)) returnValues[key] else NO_VALUE
+            val lookup = synchronized(this@NativeHooks) { returnValues }
+            val cached = lookup.find(registration.token, selfJSON, argumentsJSON) ?: return chain.proceed()
+            val value = runCatching { NativeJava.decode(cached) }.getOrElse {
+                Logger.error("hooks", "Failed to decode a cached Android hook result", it)
+                return chain.proceed()
             }
 
-            if (cached === NO_VALUE) return chain.proceed()
-
-            return coerceReturn(registration.method, cached)
+            return coerceReturn(registration.method, value)
         }
     }
-
-    private val NO_VALUE = Any()
 
     private fun coerceReturn(method: Executable, value: Any?): Any? {
         if (method !is Method) return value
@@ -176,43 +148,7 @@ object NativeHooks {
             .onFailure { Logger.error("hooks", "Failed to dispatch an Android hook event", it) }
     }
 
-    private fun cacheKey(token: String, selfJSON: String, argumentsJSON: String): String =
-        "$token|${canonical(selfJSON)}|${canonical(argumentsJSON)}"
-
-    fun canonical(json: String): String {
-        val trimmed = json.trim()
-        val parsed = runCatching {
-            if (trimmed.startsWith("[")) JSONArray(trimmed) else JSONObject(trimmed)
-        }.getOrNull() ?: return trimmed
-
-        return canonicalValue(parsed)
-    }
-
-    private fun canonicalValue(value: Any?): String = when (value) {
-        null, JSONObject.NULL -> "null"
-        is JSONObject -> value.keys().asSequence().sorted()
-            .joinToString(",", "{", "}") { "\"$it\":${canonicalValue(value.get(it))}" }
-        is JSONArray -> (0 until value.length())
-            .joinToString(",", "[", "]") { canonicalValue(value.get(it)) }
-        is Number -> canonicalNumber(value)
-        is String -> JSONObject.quote(value)
-        else -> value.toString()
-    }
-
-    private fun canonicalNumber(value: Number): String {
-        val decimal = value.toDouble()
-        if (decimal.isFinite() && decimal == Math.floor(decimal) && Math.abs(decimal) < 1e15) {
-            return decimal.toLong().toString()
-        }
-
-        return decimal.toString()
-    }
-
-    private fun parseToken(tokenJSON: String): String {
-        val id = JSONObject(tokenJSON).optString("id").trim()
-        require(id.isNotEmpty() && id.length <= 128) { "The Android hook token is out of bounds" }
-        return id
-    }
+    private fun parseToken(tokenJSON: String): String = JSONObject(tokenJSON).getString("id")
 
     private fun resolveMethod(className: String, methodName: String, parametersJSON: String): Executable {
         val owner = NativeJava.loadHostClass(className)

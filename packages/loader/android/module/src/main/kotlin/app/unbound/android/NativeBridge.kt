@@ -55,13 +55,7 @@ object NativeBridge {
     external fun nativeHermesBytecodeVersion(header: ByteArray): Int
 
     @JvmStatic
-    external fun nativeGetBoolean(store: String, key: String, fallback: Boolean): Boolean
-
-    @JvmStatic
-    external fun nativeSetBoolean(store: String, key: String, value: Boolean)
-
-    @JvmStatic
-    external fun nativeSettingJSON(store: String, key: String): String?
+    external fun nativeHookReturnValue(token: String, selfJSON: String, argumentsJSON: String): String?
 
     @JvmStatic
     external fun nativeToolbox(action: String, argument: String?): String?
@@ -92,11 +86,7 @@ object NativeBridge {
 
     @JvmStatic
     fun installMetroModuleCaptureBeforeBundle() {
-        ReactRuntime.runBeforeBundle { runtimePointer ->
-            if (!nativeInstallMetroModuleCapture(runtimePointer)) {
-                Logger.error("runtime", "Metro module capture could not be installed")
-            }
-        }
+        ReactRuntime.runBeforeBundle { runtimePointer -> nativeInstallMetroModuleCapture(runtimePointer) }
     }
 
     @JvmStatic
@@ -154,7 +144,7 @@ object NativeBridge {
         NativeFabric.update(handleJSON, propsJSON)
 
     @JvmStatic
-    fun fabricUnmount(handleJSON: String) = NativeFabric.unmount(handleJSON)
+    fun fabricUnmount(handleJSON: String): Boolean = NativeFabric.unmount(handleJSON)
 
     @JvmStatic
     fun fabricSetSize(handleJSON: String, minimumJSON: String, maximumJSON: String) =
@@ -168,29 +158,14 @@ object NativeBridge {
     fun fabricMeasure(handleJSON: String): String = NativeFabric.measure(handleJSON)
 
     @JvmStatic
-    fun hooksUseLimits(maximumHooks: Int, maximumCachedReturns: Int) =
-        NativeHooks.useLimits(maximumHooks, maximumCachedReturns)
-
-    @JvmStatic
     fun runtimeReplaced() {
         NativeHooks.removeAll()
-        Handler(Looper.getMainLooper()).post { NativeFabric.unmountAll() }
+        NativeJava.releaseAll()
+        Handler(Looper.getMainLooper()).post {
+            NativeFabric.unmountAll()
+            NativeUI.unmountAll()
+        }
     }
-
-    @JvmStatic
-    fun hooksSetReturnValue(
-        tokenJSON: String,
-        selfJSON: String,
-        argumentsJSON: String,
-        valueJSON: String,
-    ) = NativeHooks.setReturnValue(tokenJSON, selfJSON, argumentsJSON, valueJSON)
-
-    @JvmStatic
-    fun hooksRemoveReturnValue(tokenJSON: String, selfJSON: String, argumentsJSON: String) =
-        NativeHooks.removeReturnValue(tokenJSON, selfJSON, argumentsJSON)
-
-    @JvmStatic
-    fun hooksClearReturnValues(tokenJSON: String) = NativeHooks.clearReturnValues(tokenJSON)
 
     @JvmStatic
     fun javaGetClass(name: String): String = NativeJava.getClass(name)
@@ -232,8 +207,8 @@ object NativeBridge {
         NativeJava.getAssociatedObject(handleJSON, keyJSON)
 
     @JvmStatic
-    fun javaSetAssociatedObject(handleJSON: String, keyJSON: String, valueJSON: String) =
-        NativeJava.setAssociatedObject(handleJSON, keyJSON, valueJSON)
+    fun javaSetAssociatedObject(handleJSON: String, keyJSON: String, valueJSON: String, maximumPerObject: Int) =
+        NativeJava.setAssociatedObject(handleJSON, keyJSON, valueJSON, maximumPerObject)
 
     @JvmStatic
     fun fetchText(url: String, timeoutMs: Int): String? = runCatching {

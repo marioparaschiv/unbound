@@ -1,5 +1,6 @@
 package app.unbound.android
 
+import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
@@ -59,12 +60,20 @@ class NativeHooksTest {
 
     private lateinit var installer: FakeInstaller
     private val dispatched = ArrayList<Pair<String, String>>()
+    private val cached = HashMap<Triple<String, String, String>, String>()
+    private val lookups = ArrayList<Triple<String, String, String>>()
 
     @Before
     fun setUp() {
         NativeHooks.removeAll()
-        NativeHooks.useLimits(256, 512)
         NativeJava.releaseAll()
+        cached.clear()
+        lookups.clear()
+        NativeHooks.useReturnValues { token, selfJSON, argumentsJSON ->
+            val key = Triple(token, selfJSON, argumentsJSON)
+            lookups.add(key)
+            cached[key]
+        }
         installer = FakeInstaller()
         NativeHooks.useInstaller(installer)
         dispatched.clear()
@@ -146,12 +155,14 @@ class NativeHooksTest {
         assertTrue(chain.proceeded)
     }
 
+    private fun cache(tokenJSON: String, selfJSON: String, argumentsJSON: String, valueJSON: String) {
+        cached[Triple(JSONObject(tokenJSON).getString("id"), selfJSON, argumentsJSON)] = valueJSON
+    }
+
     @Test
     fun aReplacingHookReturnsTheCachedResultWithoutCallingTheOriginal() {
         val token = hookToString("""{"replace":true}""")
-        val self = """{"type":"int","value":42}"""
-        val arguments = "[]"
-        NativeHooks.setReturnValue(token, self, arguments, """{"type":"string","value":"cached"}""")
+        cache(token, """{"type":"int","value":42}""", "[]", """{"type":"string","value":"cached"}""")
 
         val chain = FakeChain(42, emptyList(), "original")
         val result = installer.installed[0].hook.intercept(chain)
@@ -161,29 +172,21 @@ class NativeHooksTest {
     }
 
     @Test
-    fun aCachedResultMatchesAcrossNumericJsonSpelling() {
+    fun aReplacingHookAsksTheCoreCacheWithTheDescribedReceiverAndArguments() {
         val token = hookToString("""{"replace":true}""")
-        NativeHooks.setReturnValue(
-            token,
-            """{"value":42.0,"type":"int"}""",
-            """[{"type":"int","value":7.0}]""",
-            """{"type":"string","value":"cached"}""",
-        )
 
-        val chain = FakeChain(42, listOf(7), "original")
+        installer.installed[0].hook.intercept(FakeChain(42, listOf("alpha"), "original"))
 
-        assertEquals("cached", installer.installed[0].hook.intercept(chain))
+        val lookup = lookups.single()
+        assertEquals(JSONObject(token).getString("id"), lookup.first)
+        assertEquals(42, JSONObject(lookup.second).getInt("value"))
+        assertEquals("alpha", JSONArray(lookup.third).getJSONObject(0).getString("value"))
     }
 
     @Test
     fun aCachedResultOnlyAppliesToTheMatchingReceiverAndArguments() {
         val token = hookToString("""{"replace":true}""")
-        NativeHooks.setReturnValue(
-            token,
-            """{"type":"int","value":42}""",
-            "[]",
-            """{"type":"string","value":"cached"}""",
-        )
+        cache(token, """{"type":"int","value":42}""", "[]", """{"type":"string","value":"cached"}""")
 
         val other = FakeChain(7, emptyList(), "original")
 
@@ -192,31 +195,22 @@ class NativeHooksTest {
     }
 
     @Test
-    fun removingACachedResultRestoresTheOriginal() {
+    fun anUndecodableCachedResultFallsBackToTheOriginal() {
         val token = hookToString("""{"replace":true}""")
-        val self = """{"type":"int","value":42}"""
-        NativeHooks.setReturnValue(token, self, "[]", """{"type":"string","value":"cached"}""")
-        NativeHooks.removeReturnValue(token, self, "[]")
+        cache(token, """{"type":"int","value":42}""", "[]", """{"type":"handle","value":"java-999"}""")
 
         val chain = FakeChain(42, emptyList(), "original")
 
         assertEquals("original", installer.installed[0].hook.intercept(chain))
+        assertTrue(chain.proceeded)
     }
 
     @Test
-    fun clearingCachedResultsRestoresTheOriginal() {
-        val token = hookToString("""{"replace":true}""")
-        NativeHooks.setReturnValue(
-            token,
-            """{"type":"int","value":42}""",
-            "[]",
-            """{"type":"string","value":"cached"}""",
-        )
-        NativeHooks.clearReturnValues(token)
+    fun anObservingHookNeverConsultsTheCache() {
+        hookToString()
+        installer.installed[0].hook.intercept(FakeChain(42, emptyList(), "original"))
 
-        val chain = FakeChain(42, emptyList(), "original")
-
-        assertEquals("original", installer.installed[0].hook.intercept(chain))
+        assertTrue(lookups.isEmpty())
     }
 
     @Test
@@ -228,25 +222,14 @@ class NativeHooksTest {
     }
 
     @Test
-    fun removingAHookUnregistersItAndItsCachedResults() {
+    fun removingAHookUnregistersIt() {
         val token = hookToString("""{"replace":true}""")
-        NativeHooks.setReturnValue(
-            token,
-            """{"type":"int","value":42}""",
-            "[]",
-            """{"type":"string","value":"cached"}""",
-        )
 
         NativeHooks.remove(token)
 
         assertEquals(0, NativeHooks.installedCount())
         assertTrue(installer.installed[0].removed)
-
-        val reinstalled = hookToString("""{"replace":true}""")
-        val chain = FakeChain(42, emptyList(), "original")
-
-        assertEquals("original", installer.installed[1].hook.intercept(chain))
-        assertTrue(JSONObject(reinstalled).getString("id").isNotEmpty())
+        assertTrue(JSONObject(hookToString()).getString("id").isNotEmpty())
     }
 
     @Test
@@ -259,26 +242,6 @@ class NativeHooksTest {
         assertEquals("int", payload.getJSONObject("self").getString("type"))
         assertEquals(42, payload.getJSONObject("self").getInt("value"))
         assertEquals("alpha", payload.getJSONArray("args").getJSONObject(0).getString("value"))
-    }
-
-    @Test
-    fun theInjectedLimitsBoundHooksAndCachedResults() {
-        NativeHooks.useLimits(1, 1)
-        val token = hookToString("""{"replace":true}""")
-        NativeHooks.setReturnValue(token, """{"type":"int","value":1}""", "[]", """{"type":"string","value":"a"}""")
-        NativeHooks.setReturnValue(token, """{"type":"int","value":1}""", "[]", """{"type":"string","value":"b"}""")
-
-        assertThrows(IllegalArgumentException::class.java) {
-            NativeHooks.hook("java.lang.String", "length", "[]", "{}")
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            NativeHooks.setReturnValue(
-                token,
-                """{"type":"int","value":2}""",
-                "[]",
-                """{"type":"string","value":"c"}""",
-            )
-        }
     }
 
     @Test
