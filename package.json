@@ -71,7 +71,7 @@
 		"@commitlint/cli": "^21.0.2",
 		"@marioparaschiv/oxc-config": "^0.2.0",
 		"@semantic-release/exec": "^7.1.0",
-		"@semantic-release/git": "^10.0.1",
+		"@semantic-release/git": "^11.0.1",
 		"@stylistic/eslint-plugin": "^5.10.0",
 		"dts-bundle-generator": "^9.5.1",
 		"eslint-plugin-jsdoc": "^64.5.4",
