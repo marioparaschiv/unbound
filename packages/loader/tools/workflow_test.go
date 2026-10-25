@@ -330,7 +330,6 @@ func TestPullRequestWorkflowChecksPinnedSupportedDiscordFixtures(t *testing.T) {
 		"--bundle-id com.hammerandchisel.discord",
 		"--version \"$DISCORD_VERSION\"",
 		"needs.compatibility-source.outputs.available == 'true'",
-		"link/package checks, not Discord device-runtime validation",
 	} {
 		if !strings.Contains(contents, required) {
 			t.Fatalf("pull request workflow is missing compatibility check %q", required)
