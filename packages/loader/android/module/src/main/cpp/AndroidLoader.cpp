@@ -76,16 +76,10 @@ namespace unbound::android
 
     std::string AndroidLoader::themeColorsJSON(const std::string &themeId)
     {
-        nlohmann::json colors = nlohmann::json::object();
         std::lock_guard<std::mutex> lock(addonsMutex_);
-        if (const nlohmann::json *theme = loader::findTheme(themes_, themeId))
-        {
-            for (const auto &[name, color] : loader::resolveThemeColors(*theme).semantic)
-            {
-                colors[loader::themeColorAccessor(name)] = loader::toARGB(color);
-            }
-        }
-        return loader::toJSON(colors);
+        const nlohmann::json *theme = loader::findTheme(themes_, themeId);
+        return loader::toJSON(theme ? loader::themeColorsByAccessor(loader::resolveThemeColors(*theme))
+                                    : nlohmann::json::object());
     }
 
     void AndroidLoader::onLoadJSBundle()

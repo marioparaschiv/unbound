@@ -37,6 +37,15 @@ int main()
     assert(loader::themeColorAccessor("backgroundBaseLower") == "backgroundBaseLower");
     assert(loader::themeColorAccessor("_TEXT__MUTED_") == "textMuted");
 
+    assert(loader::themeColorResource("PRIMARY_100") == "primary_100");
+    assert(loader::themeColorResource("brand-500") == "brand_500");
+
+    nlohmann::json byAccessor = loader::themeColorsByAccessor(colors);
+    assert(byAccessor["semantic"].size() == 2);
+    assert(byAccessor["semantic"]["text"] == 0xFF112233);
+    assert(byAccessor["raw"]["primary_100"] == 0xFF112233);
+    assert(byAccessor["rawFallbacks"]["link"] == "brand_500");
+
     loader::ThemeColors empty = loader::resolveThemeColors(nlohmann::json::object());
     assert(empty.semantic.empty() && empty.raw.empty() && empty.rawFallbacks.empty());
     return 0;

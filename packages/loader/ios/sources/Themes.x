@@ -184,7 +184,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
 
 + (void)applySelectedTheme
 {
-    NSString *applied = [CoreBridge preference:@"applied-theme" argument:@""];
+    NSString *applied = [CoreBridge preference:@"active-theme" argument:@""];
     NSString *themeId = applied.length > 0 ? applied : nil;
     if (themeId == currentThemeId || [themeId isEqualToString:currentThemeId])
     {

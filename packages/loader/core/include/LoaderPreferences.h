@@ -38,9 +38,11 @@ namespace loader::preferences
     bool recoveryEnabled(const SettingsStore &settings);
     bool setRecoveryEnabled(SettingsStore &settings, bool enabled);
     bool developerMode(const SettingsStore &settings);
+    bool devOverlayVisible(const SettingsStore &settings, bool virtualDevice, bool debugBuild);
     bool hotReloadEnabled(const SettingsStore &settings);
 
     std::optional<std::string> appliedThemeId(const SettingsStore &settings);
+    std::optional<std::string> activeThemeId(const SettingsStore &settings);
     nlohmann::json             fontOverrides(const SettingsStore &settings);
 
     std::optional<ToolboxGesture> gestureNamed(const std::string &name);

@@ -24,8 +24,13 @@ int main()
     assert(perform(settings, "recovery-label", "") == "Disable Recovery Mode");
     assert(perform(settings, "recovery-status", "") == "Recovery Mode enabled");
     assert(!developerMode(settings));
+    assert(!devOverlayVisible(settings, false, false));
+    assert(perform(settings, "dev-overlay", "virtual-device") == "true");
+    assert(perform(settings, "dev-overlay", "debug-build") == "true");
+    assert(perform(settings, "dev-overlay", "") == "false");
     assert(!hotReloadEnabled(settings));
     assert(appliedThemeId(settings) == std::optional<std::string>("adrian.theme"));
+    assert(!activeThemeId(settings));
     assert(fontOverrides(settings)["*"] == "Ginto");
     assert(perform(settings, "font-override", "Whitney") == "Ginto");
 

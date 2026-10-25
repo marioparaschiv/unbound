@@ -47,6 +47,11 @@ namespace loader::preferences
         return settings.getBoolean(kStore, kDeveloperMode, false);
     }
 
+    bool devOverlayVisible(const SettingsStore &settings, bool virtualDevice, bool debugBuild)
+    {
+        return debugBuild || virtualDevice || developerMode(settings);
+    }
+
     bool hotReloadEnabled(const SettingsStore &settings)
     {
         return settings.getBoolean(kStore, kHotReload, false);
@@ -60,6 +65,11 @@ namespace loader::preferences
             return std::nullopt;
         }
         return value->get<std::string>();
+    }
+
+    std::optional<std::string> activeThemeId(const SettingsStore &settings)
+    {
+        return recoveryEnabled(settings) ? std::nullopt : appliedThemeId(settings);
     }
 
     nlohmann::json fontOverrides(const SettingsStore &settings)
@@ -207,6 +217,11 @@ namespace loader::preferences
         {
             return recoveryStatusText(recoveryEnabled(settings));
         }
+        if (action == "dev-overlay")
+        {
+            return flag(devOverlayVisible(settings, argument.find("virtual-device") != std::string::npos,
+                                          argument.find("debug-build") != std::string::npos));
+        }
         if (action == "developer-mode")
         {
             return flag(developerMode(settings));
@@ -214,6 +229,10 @@ namespace loader::preferences
         if (action == "hot-reload")
         {
             return flag(hotReloadEnabled(settings));
+        }
+        if (action == "active-theme")
+        {
+            return activeThemeId(settings).value_or("");
         }
         if (action == "applied-theme")
         {

@@ -123,4 +123,36 @@ namespace loader
         }
         return colors;
     }
+
+    std::string themeColorResource(const std::string &key)
+    {
+        std::string resource;
+        for (unsigned char character : key)
+        {
+            resource += character == '-' || character == '.' ? '_' : static_cast<char>(std::tolower(character));
+        }
+        return resource;
+    }
+
+    nlohmann::json themeColorsByAccessor(const ThemeColors &colors)
+    {
+        nlohmann::json semantic     = nlohmann::json::object();
+        nlohmann::json raw          = nlohmann::json::object();
+        nlohmann::json rawFallbacks = nlohmann::json::object();
+
+        for (const auto &[name, color] : colors.semantic)
+        {
+            semantic[themeColorAccessor(name)] = toARGB(color);
+        }
+        for (const auto &[name, color] : colors.raw)
+        {
+            raw[themeColorResource(name)] = toARGB(color);
+        }
+        for (const auto &[name, fallback] : colors.rawFallbacks)
+        {
+            rawFallbacks[themeColorAccessor(name)] = themeColorResource(fallback);
+        }
+
+        return {{"semantic", semantic}, {"raw", raw}, {"rawFallbacks", rawFallbacks}};
+    }
 }
