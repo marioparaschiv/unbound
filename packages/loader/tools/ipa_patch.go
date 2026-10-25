@@ -77,7 +77,7 @@ func patchIPA(input, output string) error {
 	writer := zip.NewWriter(file)
 
 	for _, entry := range reader.File {
-		if iconNames[entry.Name] {
+		if iconNames[entry.Name] || !strings.HasPrefix(entry.Name, "Payload/") {
 			continue
 		}
 		if err := copyPatchedEntry(writer, entry, app, renamesModules); err != nil {
@@ -150,6 +150,9 @@ func copyPatchedEntry(writer *zip.Writer, entry *zip.File, app string, renamesMo
 	if renamesModules {
 		name = renamePnpmModule(name, app+pnpmModules)
 	}
+	if strings.HasSuffix(name, "/") {
+		return writeDirectoryEntry(writer, entry, name)
+	}
 	if name == entry.Name {
 		return writer.Copy(entry)
 	}
@@ -164,6 +167,13 @@ func copyPatchedEntry(writer *zip.Writer, entry *zip.File, app string, renamesMo
 		return err
 	}
 	_, err = io.Copy(target, raw)
+	return err
+}
+
+func writeDirectoryEntry(writer *zip.Writer, entry *zip.File, name string) error {
+	header := &zip.FileHeader{Name: name, Method: zip.Store, Modified: entry.Modified}
+	header.SetMode(entry.Mode())
+	_, err := writer.CreateHeader(header)
 	return err
 }
 

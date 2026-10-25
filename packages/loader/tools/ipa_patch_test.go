@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/zip"
+	"bytes"
 	"encoding/json"
 	"io"
 	"os"
@@ -155,6 +156,23 @@ func TestPatchIPA(t *testing.T) {
 	}
 }
 
+func TestPatchIPAKeepsOnlyThePayload(t *testing.T) {
+	input := writeTestIPA(t, map[string]string{
+		"Payload/Discord.app/Info.plist":       discordInfoPlist,
+		"iTunesMetadata.plist":                 "purchaser",
+		"META-INF/com.apple.ZipMetadata.plist": "metadata",
+	})
+	output := filepath.Join(t.TempDir(), "out.ipa")
+	if err := patchIPA(input, output); err != nil {
+		t.Fatal(err)
+	}
+	for name := range readTestIPA(t, output) {
+		if !strings.HasPrefix(name, "Payload/") {
+			t.Fatalf("kept %s outside the payload", name)
+		}
+	}
+}
+
 func TestPatchIPAIsIdempotent(t *testing.T) {
 	app := "Payload/Discord.app/"
 	input := writeTestIPA(t, map[string]string{app + "Info.plist": discordInfoPlist})
@@ -182,6 +200,38 @@ func TestPatchIPARejectsArchivesWithoutAnApp(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "Info.plist") {
 		t.Fatalf("expected a missing Info.plist error, got %v", err)
 	}
+}
+
+func TestPatchIPAKeepsCompressedDirectoryEntries(t *testing.T) {
+	input := writeTestIPA(t, map[string]string{
+		"Payload/Resources":              "",
+		"Payload/Discord.app/Info.plist": discordInfoPlist,
+	})
+	data, err := os.ReadFile(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(input, bytes.ReplaceAll(data, []byte("Payload/Resources"), []byte("Payload/Resource/")), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	output := filepath.Join(t.TempDir(), "out.ipa")
+	if err := patchIPA(input, output); err != nil {
+		t.Fatal(err)
+	}
+	archive, err := zip.OpenReader(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer archive.Close()
+	for _, file := range archive.File {
+		if file.Name == "Payload/Resource/" {
+			if !file.Mode().IsDir() && file.UncompressedSize64 != 0 {
+				t.Fatalf("directory entry was not kept as a directory: %v", file.Mode())
+			}
+			return
+		}
+	}
+	t.Fatal("directory entry was dropped")
 }
 
 func TestRenamePnpmModule(t *testing.T) {
