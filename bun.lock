@@ -94,7 +94,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.9.0-e1c2bc16e9b6c153538a9ef3a88a69ee6c1aa02f1f4bebb6131ee6d2a507f461",
+      "version": "0.9.0-88e406b33f33781aa28cc8a1a199c77fd3a1b725bc4a982835812c90bd9dbf2d",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -291,6 +291,7 @@
         "@types/bun": "catalog:",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
+        "react": "catalog:react",
         "react-native": "^0.83.0",
       },
     },
