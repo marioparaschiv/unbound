@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"path"
 	"strings"
 )
@@ -105,6 +106,12 @@ type scriptFile struct {
 	annotations   map[string][]scriptAnnotation
 	typeAliases   map[string]scriptTypeAlias
 	statements    []bool
+	fallbacks     []scriptFallback
+}
+
+type scriptFallback struct {
+	call         int
+	alternatives [][2]int
 }
 
 var scriptKeywords = map[string]bool{
@@ -140,7 +147,32 @@ func newScriptFile(source compatSourceFile, srcRoot string, tokens []compatToken
 	file.parseBindings()
 	file.parseModuleStatements()
 	file.parseAnnotations()
+	file.parseFallbacks()
 	return file
+}
+
+func (file *scriptFile) parseFallbacks() {
+	for index := range file.tokens {
+		open := index + 1
+		if file.value(index) != "firstOf" || !file.isIdentifier(index) || !file.isPunctuation(open, "(") || file.match[open] < 0 {
+			continue
+		}
+		file.fallbacks = append(file.fallbacks, scriptFallback{call: index, alternatives: file.splitTopLevel(open+1, file.match[open], ",")})
+	}
+}
+
+func (file *scriptFile) fallbackAt(position int) (string, int) {
+	group, alternative, width := "", 0, -1
+	for _, fallback := range file.fallbacks {
+		for index, span := range fallback.alternatives {
+			if position < span[0] || position >= span[1] || width >= 0 && span[1]-span[0] >= width {
+				continue
+			}
+			group = fmt.Sprintf("%s:%d", file.source.path, file.tokens[fallback.call].line)
+			alternative, width = index, span[1]-span[0]
+		}
+	}
+	return group, alternative
 }
 
 func (file *scriptFile) value(index int) string {

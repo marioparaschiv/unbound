@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -29,15 +31,17 @@ type compatLocation struct {
 }
 
 type compatReference struct {
-	Kind       string           `json:"kind"`
-	Platform   string           `json:"platform,omitempty"`
-	Component  string           `json:"component"`
-	Class      string           `json:"class,omitempty"`
-	Name       string           `json:"name,omitempty"`
-	Terms      []string         `json:"terms,omitempty"`
-	Parameters []string         `json:"parameters,omitempty"`
-	Strict     bool             `json:"strict,omitempty"`
-	Locations  []compatLocation `json:"locations"`
+	Kind        string           `json:"kind"`
+	Platform    string           `json:"platform,omitempty"`
+	Component   string           `json:"component"`
+	Class       string           `json:"class,omitempty"`
+	Name        string           `json:"name,omitempty"`
+	Terms       []string         `json:"terms,omitempty"`
+	Parameters  []string         `json:"parameters,omitempty"`
+	Strict      bool             `json:"strict,omitempty"`
+	Group       string           `json:"group,omitempty"`
+	Alternative int              `json:"alternative,omitempty"`
+	Locations   []compatLocation `json:"locations"`
 }
 
 func (reference compatReference) key() string {
@@ -75,7 +79,7 @@ func newCompatSourceSet() *compatSourceSet {
 }
 
 func (set *compatSourceSet) add(reference compatReference, location compatLocation) {
-	identity := reference.Component + "#" + reference.Platform + "#" + reference.key()
+	identity := reference.Component + "#" + reference.Platform + "#" + reference.key() + "#" + reference.Group + "#" + strconv.Itoa(reference.Alternative)
 	if existing := set.references[identity]; existing != nil {
 		existing.Strict = existing.Strict || reference.Strict
 		for _, known := range existing.Locations {
@@ -372,6 +376,7 @@ var (
 	kotlinMethodPattern    = regexp.MustCompile(`get(?:Declared)?Method\("([A-Za-z_$][A-Za-z0-9_$-]*)"`)
 	kotlinFieldPattern     = regexp.MustCompile(`get(?:Declared)?Field\("([A-Za-z_$][A-Za-z0-9_$]*)"`)
 	jniClassPattern        = regexp.MustCompile(`FindClass\("([A-Za-z0-9_/$]+)"`)
+	kotlinHostClassPattern = regexp.MustCompile(`\bHostClass\(([^()]*)\)`)
 )
 
 func logosSelector(name, rest string) string {
@@ -385,8 +390,47 @@ func logosSelector(name, rest string) string {
 	return selector
 }
 
+func lineAt(content string, offset int) int {
+	return strings.Count(content[:offset], "\n") + 1
+}
+
+func extractKotlinFallbacks(set *compatSourceSet, base compatReference, file compatSourceFile, content string) map[int]map[string]bool {
+	grouped := map[int]map[string]bool{}
+	for _, span := range kotlinHostClassPattern.FindAllStringSubmatchIndex(content, -1) {
+		arguments := content[span[2]:span[3]]
+		matches := kotlinStringPattern.FindAllStringSubmatchIndex(arguments, -1)
+		var names []string
+		var lines []int
+		for _, match := range matches {
+			name := arguments[match[2]:match[3]]
+			if javaClassPattern.MatchString(name) {
+				names = append(names, name)
+				lines = append(lines, lineAt(content, span[2]+match[0]))
+			}
+		}
+		if len(names) < 2 {
+			continue
+		}
+		group := fmt.Sprintf("%s:%d", file.path, lineAt(content, span[0]))
+		for alternative, name := range names {
+			reference := base
+			reference.Kind, reference.Name, reference.Group, reference.Alternative = referenceJavaClass, name, group, alternative
+			set.add(reference, compatLocation{File: file.path, Line: lines[alternative]})
+			if grouped[lines[alternative]] == nil {
+				grouped[lines[alternative]] = map[string]bool{}
+			}
+			grouped[lines[alternative]][name] = true
+		}
+	}
+	return grouped
+}
+
 func extractNativeReferences(set *compatSourceSet, file compatSourceFile, content string) {
 	base := compatReference{Component: file.component, Platform: file.platform}
+	var grouped map[int]map[string]bool
+	if filepath.Ext(file.path) == ".kt" {
+		grouped = extractKotlinFallbacks(set, base, file, content)
+	}
 	hooked := ""
 	addsMethod := false
 	lines := strings.Split(content, "\n")
@@ -436,7 +480,7 @@ func extractNativeReferences(set *compatSourceSet, file compatSourceFile, conten
 			}
 		case ".kt":
 			for _, match := range kotlinStringPattern.FindAllStringSubmatch(line, -1) {
-				if javaClassPattern.MatchString(match[1]) {
+				if javaClassPattern.MatchString(match[1]) && !grouped[number+1][match[1]] {
 					add(referenceJavaClass, "", match[1])
 				}
 			}

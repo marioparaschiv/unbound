@@ -846,3 +846,70 @@ func TestPullRequestCommentListsBothPlatforms(t *testing.T) {
 		}
 	}
 }
+
+func workflowJob(t *testing.T, workflow, name string) string {
+	t.Helper()
+	start := strings.Index(workflow, "\n    "+name+":\n")
+	if start < 0 {
+		t.Fatalf("workflow has no %s job", name)
+	}
+	body := workflow[start+1:]
+	if end := regexp.MustCompile(`\n    [a-z][a-z-]*:\n`).FindStringIndex(body[1:]); end != nil {
+		body = body[:end[0]+1]
+	}
+	return body
+}
+
+func TestReleasesWaitForTheCompatibilityGate(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	root := filepath.Dir(filepath.Dir(filename))
+	workflow, err := os.ReadFile(filepath.Join(root, "..", "..", ".github", "workflows", "loader-build.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents := string(workflow)
+
+	resolve := workflowJob(t, contents, "resolve-source")
+	for _, required := range []string{"name: discord-source-ipa", "path: packages/loader/source.ipa", "if: inputs.release == true && inputs.android_channel == ''"} {
+		if !strings.Contains(resolve, required) {
+			t.Fatalf("resolve-source must keep the IPA it resolved for the gate, missing %q", required)
+		}
+	}
+
+	gate := workflowJob(t, contents, "compat-gate")
+	for _, required := range []string{
+		"needs: resolve-source",
+		"if: inputs.release == true && needs.resolve-source.result == 'success'",
+		"SCAN_IOS: ${{ inputs.android_channel == '' }}",
+		"SCAN_ANDROID: ${{ inputs.is_testflight != true }}",
+		"ANDROID_CHANNEL: ${{ inputs.android_channel || 'stable' }}",
+		"ANDROID_CODE: ${{ needs.resolve-source.outputs.android_code }}",
+		"name: discord-source-ipa",
+		"go run ./tools discord-version --version \"$DISCORD_VERSION\"",
+		"go run ./tools discord-apk --channel \"$ANDROID_CHANNEL\" --code \"$code\"",
+		"--fail-on-breakage",
+		"scan_args+=(--ipa source.ipa)",
+		"cat report.md >> \"$GITHUB_STEP_SUMMARY\"",
+	} {
+		if !strings.Contains(gate, required) {
+			t.Fatalf("compat gate is missing %q", required)
+		}
+	}
+
+	for _, job := range []string{"android", "ios"} {
+		body := workflowJob(t, contents, job)
+		if !strings.Contains(body, "needs: [resolve-source, compat-gate]") ||
+			!strings.Contains(body, "(needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')") {
+			t.Fatalf("the %s build must wait for the compatibility gate:\n%s", job, body)
+		}
+	}
+	for _, job := range []string{"release", "android-prerelease", "publish-app-repo"} {
+		body := workflowJob(t, contents, job)
+		if !strings.Contains(body, "needs.ios.result == 'success'") && !strings.Contains(body, "needs.android.result == 'success'") {
+			t.Fatalf("%s publishes without a gated build:\n%s", job, body)
+		}
+	}
+}
