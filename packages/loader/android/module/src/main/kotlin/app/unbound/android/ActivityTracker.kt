@@ -13,11 +13,15 @@ object ActivityTracker : Application.ActivityLifecycleCallbacks {
     private var current: WeakReference<Activity>? = null
 
     @Volatile
+    private var knownApplication: Application? = null
+
+    @Volatile
     var generation: Long = 0
         private set
 
     fun install(application: Application?) {
         if (application == null) return
+        knownApplication = application
 
         synchronized(lock) {
             if (installed) return
@@ -26,6 +30,8 @@ object ActivityTracker : Application.ActivityLifecycleCallbacks {
         }
     }
 
+    fun application(): Application? = knownApplication
+
     fun currentActivity(): Activity? = current?.get()
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
@@ -33,6 +39,7 @@ object ActivityTracker : Application.ActivityLifecycleCallbacks {
     override fun onActivityStarted(activity: Activity) = Unit
 
     override fun onActivityResumed(activity: Activity) {
+        if (!installed) install(activity.application)
         val previous = current?.get()
         if (previous !== activity) generation++
         current = WeakReference(activity)

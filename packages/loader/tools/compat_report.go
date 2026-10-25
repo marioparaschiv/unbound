@@ -105,6 +105,18 @@ func compatLines(findings []compatFinding, status, sourceURL string) []compatRep
 	return lines
 }
 
+func compatDynamicLines(sites []compatDynamicSite, sourceURL string) []compatReportLine {
+	lines := make([]compatReportLine, 0, len(sites))
+	for _, site := range sites {
+		lines = append(lines, compatReportLine{component: site.Component, text: "- `" + site.Call + "` · " + compatLocationLink(site.Location, sourceURL)})
+	}
+	sort.SliceStable(lines, func(left, right int) bool {
+		return compatComponentRank(lines[left].component) < compatComponentRank(lines[right].component) ||
+			compatComponentRank(lines[left].component) == compatComponentRank(lines[right].component) && lines[left].component < lines[right].component
+	})
+	return lines
+}
+
 func compatComponentRank(component string) int {
 	switch {
 	case strings.HasPrefix(component, "loader"):
@@ -214,12 +226,16 @@ func renderCompatReportWithSource(results *compatResults, sourceURL string) stri
 		builder.WriteString(fmt.Sprintf("\n<details><summary>Not verifiable (%d)</summary>\n\nSystem APIs, and members whose owner the scan cannot tell. They become checkable once a scan has seen them resolve.\n%s\n</details>\n", len(unverified), section.String()))
 	}
 
-	dynamic := 0
-	for _, count := range results.Dynamic {
-		dynamic += count
+	if external := compatLines(results.Findings, compatExternal, sourceURL); len(external) > 0 {
+		var section strings.Builder
+		writeCompatSection(&section, external)
+		builder.WriteString(fmt.Sprintf("\n<details><summary>Outside Discord and the SDKs (%d)</summary>\n\nNames that only exist in the environment Discord runs in, so the scan cannot look for them.\n%s\n</details>\n", len(external), section.String()))
 	}
-	if dynamic > 0 {
-		builder.WriteString(fmt.Sprintf("\n%d lookups use computed names and were not checked.\n", dynamic))
+
+	if len(results.DynamicSites) > 0 {
+		var section strings.Builder
+		writeCompatSection(&section, compatDynamicLines(results.DynamicSites, sourceURL))
+		builder.WriteString(fmt.Sprintf("\n<details><summary>Not checked (%d)</summary>\n\nThese lookups use names the scan cannot work out from the source.\n%s\n</details>\n", len(results.DynamicSites), section.String()))
 	}
 
 	report := builder.String()

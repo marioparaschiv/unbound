@@ -21,7 +21,7 @@ concurrency:
 jobs:
     scan:
         name: scan (${{ matrix.channel }})
-        runs-on: ubuntu-26.04
+        runs-on: macos-15
         timeout-minutes: 45
         permissions:
             actions: read
@@ -54,6 +54,7 @@ jobs:
               with:
                   path: |
                       ~/.cache/go-build
+                      ~/Library/Caches/go-build
                       ~/go/pkg/mod
                   key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
                   restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
@@ -78,6 +79,16 @@ jobs:
                     mv "$RUNNER_TEMP"/ipa/*.ipa discord.ipa
                   fi
 
+            - name: Find the platform SDKs
+              id: sdks
+              run: |
+                  set -euo pipefail
+                  ios_sdk=$(xcrun --sdk iphoneos --show-sdk-path)
+                  android_jar=$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platforms" -path '*/android-*/android.jar' | sort -V | tail -n 1)
+                  test -d "$ios_sdk" && test -f "$android_jar"
+                  echo "ios=$ios_sdk" >> "$GITHUB_OUTPUT"
+                  echo "android=$android_jar" >> "$GITHUB_OUTPUT"
+
             - name: Restore the previous scan
               run: |
                   set -euo pipefail
@@ -97,6 +108,8 @@ jobs:
                     --ipa discord.ipa \
                     --apk discord.apk \
                     --android-version "${{ steps.android.outputs.version }}" \
+                    --ios-sdk "${{ steps.sdks.outputs.ios }}" \
+                    --android-jar "${{ steps.sdks.outputs.android }}" \
                     --baseline baseline/compat.json \
                     --results compat.json \
                     --report report.md \
@@ -112,23 +125,9 @@ jobs:
                       packages/loader/report.md
                   retention-days: 90
 
-            - name: Open or update the issue
+            - name: Open, supersede or close the issue
               if: github.ref_name == github.event.repository.default_branch
               run: |
                   set -euo pipefail
-                  label=discord-compat
-                  prefix="Discord compatibility ($CHANNEL)"
-                  versions=$(jq -r '[.targets[] | (if .platform == "ios" then "iOS " else "Android " end) + .version] | join(", ")' compat.json)
-                  problems=$(jq '[.findings[] | select(.status == "broken" or .status == "possible")] | length' compat.json)
-                  gh label create "$label" --repo "$GITHUB_REPOSITORY" --color D93F0B --description "A Discord build breaks part of Unbound" --force >/dev/null
-                  existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label "$label" --state open --json number,title \
-                    --jq "[.[] | select(.title | startswith(\"$prefix\"))][0].number // empty")
-                  if [ "$problems" -gt 0 ]; then
-                    if [ -n "$existing" ]; then
-                      gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --title "$prefix: $versions" --body-file report.md
-                    else
-                      gh issue create --repo "$GITHUB_REPOSITORY" --title "$prefix: $versions" --label "$label" --body-file report.md
-                    fi
-                  elif [ -n "$existing" ]; then
-                    gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment "The scan of $versions finds nothing broken."
-                  fi
+                  gh label create discord-compat --repo "$GITHUB_REPOSITORY" --color D93F0B --description "A Discord build breaks part of Unbound" --force >/dev/null
+                  go run ./tools compat-issue --repo "$GITHUB_REPOSITORY" --channel "$CHANNEL" --results compat.json --report report.md
