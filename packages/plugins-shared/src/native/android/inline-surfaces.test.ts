@@ -98,25 +98,32 @@ const options = { watchedClass: 'MessageContentView', surfaceModule: 'Card', gro
 
 const methods = (state: FakeState) => state.calls.map((call) => call.method);
 
+const settled = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 describe('createInlineSurfaces', () => {
 	test('is unavailable when the loader has no native text rewrites', () => {
 		expect(setup(false).surfaces).toBeNull();
 	});
 
-	test('registers the rule, two mounted groups and reapplies the text', () => {
+	test('registers the rule, reapplies the text and hands over hosts once they mount', async () => {
 		const { state, surfaces } = setup();
 
 		surfaces!.define(definition);
 
-		expect(methods(state)).toEqual(['watch', 'put', 'addHost', 'addHost', 'reapply']);
+		expect(methods(state)).toEqual(['watch', 'put', 'reapply']);
+
+		await settled();
+
+		expect(methods(state)).toEqual(['watch', 'put', 'reapply', 'addHost', 'addHost']);
 		expect(surfaces!.isDefined('code ￼')).toBe(true);
 	});
 
-	test('adds a group when the loader asks for another host', () => {
+	test('adds a group when the loader asks for another host', async () => {
 		const { state, surfaces } = setup();
 
 		surfaces!.define(definition);
 		state.handler?.({ args: [handle('other'), { type: 'string', value: 'code ￼' }] });
+		await settled();
 
 		expect(methods(state).filter((method) => method === 'addHost')).toHaveLength(3);
 	});
@@ -129,6 +136,16 @@ describe('createInlineSurfaces', () => {
 
 		expect(methods(state).filter((method) => method === 'updateAnchor')).toHaveLength(2);
 		expect(methods(state)).toContain('refresh');
+	});
+
+	test('does not hand over hosts that mount after dispose', async () => {
+		const { state, surfaces } = setup();
+
+		surfaces!.define(definition);
+		await surfaces!.dispose();
+		await settled();
+
+		expect(methods(state)).not.toContain('addHost');
 	});
 
 	test('removes its rules, groups and hook on dispose', async () => {

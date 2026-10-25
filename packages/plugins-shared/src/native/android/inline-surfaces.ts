@@ -107,14 +107,17 @@ export function createInlineSurfaces(
 
 		for (const slot of entry.slots) {
 			const host = java.construct('android.widget.FrameLayout', context ? [context] : []);
+			const mount = fabric
+				.mountAsync(host, options.surfaceModule, { surfaceId: slot.surfaceId })
+				.catch(() => null);
 
 			group.hosts.push(host);
-			active.addHost(group.id, entry.rendered, host, anchorOf(slot));
-			group.mounts.push(
-				fabric
-					.mountAsync(host, options.surfaceModule, { surfaceId: slot.surfaceId })
-					.catch(() => null),
-			);
+			group.mounts.push(mount);
+			void mount.then(() => {
+				if (!disposed && entry.groups.includes(group)) {
+					active.addHost(group.id, entry.rendered, host, anchorOf(slot));
+				}
+			});
 		}
 
 		entry.groups.push(group);
