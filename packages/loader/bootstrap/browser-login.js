@@ -1,12 +1,14 @@
 (token) => {
-	const apply = () => {
+	function apply() {
 		const metro = globalThis.unbound?.metro;
 
 		if (!metro || typeof metro.findByProps !== 'function') {
 			throw new Error('Metro API unavailable');
 		}
 
-		const auth = metro.findByProps('getAnalyticsToken', 'setToken') ?? metro.findByProps('getToken', 'setToken');
+		const auth =
+			metro.findByProps('getAnalyticsToken', 'setToken') ??
+			metro.findByProps('getToken', 'setToken');
 
 		if (!auth || typeof auth.setToken !== 'function') {
 			throw new Error('Discord authentication store unavailable');
@@ -21,7 +23,7 @@
 		}
 
 		Promise.resolve(reload()).catch(() => {});
-	};
+	}
 
 	const ready = globalThis.__runtimeReady;
 

@@ -8,5 +8,19 @@
 	"tabWidth": 4,
 	"printWidth": 100,
 	"trailingComma": "all",
-	"ignorePatterns": ["*.gen.ts", "drizzle", "packages/cli/templates/**", "packages/loader/**", "CHANGELOG.md"]
+	"ignorePatterns": [
+		"*.gen.ts",
+		"drizzle",
+		"packages/cli/templates/**",
+		"CHANGELOG.md",
+		"packages/loader/bootstrap/devtools.js",
+		"packages/loader/vendor/**",
+		"packages/loader/apt-repo/**",
+		"packages/loader/ios/.theos/**",
+		"packages/loader/ios/packages/**",
+		"packages/loader/android/**/build/**",
+		"packages/loader/build/**",
+		"packages/loader/ios/extensions/**",
+		"packages/loader/tools/assets/**"
+	]
 }

@@ -134,3 +134,30 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.16.1")
 }
+
+val ktlint: Configuration by configurations.creating
+
+dependencies {
+    ktlint("com.pinterest.ktlint:ktlint-cli:1.5.0") {
+        attributes {
+            attribute(Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling::class.java, Bundling.EXTERNAL))
+        }
+    }
+}
+
+val ktlintSources = listOf("src/**/*.kt", "*.kts", "../*.kts")
+
+tasks.register<JavaExec>("ktlintCheck") {
+    group = "verification"
+    classpath = ktlint
+    mainClass.set("com.pinterest.ktlint.Main")
+    args(ktlintSources)
+}
+
+tasks.register<JavaExec>("ktlintFormat") {
+    group = "formatting"
+    classpath = ktlint
+    mainClass.set("com.pinterest.ktlint.Main")
+    jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
+    args(listOf("--format") + ktlintSources)
+}

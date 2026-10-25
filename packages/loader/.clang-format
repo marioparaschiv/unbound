@@ -1,6 +1,5 @@
 # Base Style
 BasedOnStyle: LLVM
-Language: ObjC
 
 # Indentation
 IndentWidth: 4
@@ -10,6 +9,8 @@ ColumnLimit: 100
 AccessModifierOffset: -4
 IndentCaseLabels: true
 NamespaceIndentation: Inner
+FixNamespaceComments: false
+BreakStringLiterals: false
 
 # Alignment
 AlignConsecutiveAssignments: Consecutive
@@ -18,12 +19,6 @@ AlignConsecutiveMacros: Consecutive
 AlignTrailingComments: true
 AlignOperands: true
 AlignAfterOpenBracket: Align
-
-# Objective-C specific
-ObjCSpaceAfterProperty: true
-ObjCSpaceBeforeProtocolList: true
-ObjCBreakBeforeNestedBlockParam: true
-ObjCBinPackProtocolList: Never
 
 # Breaking and wrapping
 AllowShortBlocksOnASingleLine: Empty
@@ -69,3 +64,11 @@ IncludeCategories:
 
 # File formatting
 InsertNewlineAtEOF: true
+---
+Language: Cpp
+---
+Language: ObjC
+ObjCSpaceAfterProperty: true
+ObjCSpaceBeforeProtocolList: true
+ObjCBreakBeforeNestedBlockParam: true
+ObjCBinPackProtocolList: Never

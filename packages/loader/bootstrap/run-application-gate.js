@@ -3,7 +3,7 @@
 		return true;
 	}
 
-	const gate = (registry) => {
+	function gate(registry) {
 		if (!registry || typeof registry !== 'object' || registry.__unboundGated) {
 			return registry;
 		}
@@ -27,7 +27,7 @@
 		} catch {}
 
 		return registry;
-	};
+	}
 
 	let current = gate(globalThis.RN$AppRegistry);
 

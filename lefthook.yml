@@ -1,14 +1,20 @@
 pre-commit:
-  commands:
-    format:
-      glob: '*.{ts,tsx,js,mjs,json}'
-      run: bun run fmt:check
-    plugins:
-      run: bun run plugins:validate
+    commands:
+        format-js:
+            glob: '*.{ts,tsx,js,mjs,json,md,yml,yaml}'
+            run: bunx oxfmt --config .oxfmtrc.json --no-error-on-unmatched-pattern {staged_files}
+            stage_fixed: true
+        format-loader:
+            root: 'packages/loader/'
+            glob: '*.{c,cc,cpp,h,hpp,m,mm,x,xm,go,kt,kts}'
+            run: go run ./tools format {staged_files}
+            stage_fixed: true
+        plugins:
+            run: bun run plugins:validate
 
 commit-msg:
-  commands:
-    commitlint:
-      env:
-        PATH: "./node_modules/.bin:$PATH"
-      run: commitlint --edit "{1}"
+    commands:
+        commitlint:
+            env:
+                PATH: './node_modules/.bin:$PATH'
+            run: commitlint --edit "{1}"
