@@ -108,5 +108,6 @@
 	"UNBOUND_LINKS": "Links",
 	"UNBOUND_GITHUB": "GitHub",
 	"UNBOUND_DOCS": "Documentation",
-	"UNBOUND_SUPPORT_SERVER": "Support Server"
+	"UNBOUND_SUPPORT_SERVER": "Support Server",
+	"UNBOUND_THEME_RESTART_CONFIRM": "Restart now so the theme applies everywhere?"
 }
