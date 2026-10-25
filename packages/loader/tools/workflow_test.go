@@ -853,3 +853,28 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		}
 	}
 }
+
+func TestPullRequestCommentListsBothPlatforms(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	repository := filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(filename))))
+	workflows := filepath.Join(repository, ".github", "workflows")
+	files := map[string][]string{
+		"loader-ci.yml":      {"needs.build.outputs.deb_url", "needs.build.outputs.ipa_url", "needs.build.outputs.module_url", "needs.build.outputs.patched_url"},
+		"loader-build.yml":   {"jobs.android.outputs.module_url", "jobs.android.outputs.patched_url"},
+		"loader-android.yml": {"steps.upload-module.outputs.artifact-url", "steps.upload-patched.outputs.artifact-url"},
+	}
+	for name, expected := range files {
+		contents, err := os.ReadFile(filepath.Join(workflows, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, value := range expected {
+			if !strings.Contains(string(contents), value) {
+				t.Errorf("%s no longer passes %s to the pull request comment", name, value)
+			}
+		}
+	}
+}

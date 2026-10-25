@@ -4,61 +4,67 @@ on:
     workflow_dispatch:
         inputs:
             ios_version:
-                description: "Discord app version to match"
+                description: 'Discord app version to match'
                 required: false
                 type: string
             require_matching_version:
-                description: "Fail instead of using a different Android version"
+                description: 'Fail instead of using a different Android version'
                 required: false
                 default: false
                 type: boolean
             release:
-                description: "Require persistent Android release signing"
+                description: 'Require persistent Android release signing'
                 required: false
                 default: false
                 type: boolean
             discord_channel:
-                description: "Discord Android channel to patch"
+                description: 'Discord Android channel to patch'
                 required: false
                 default: stable
                 type: choice
                 options: [stable, beta, alpha]
             android_code:
-                description: "Exact Discord Android version code to patch"
+                description: 'Exact Discord Android version code to patch'
                 required: false
                 type: string
     workflow_call:
         inputs:
             ios_version:
-                description: "Discord app version to match"
+                description: 'Discord app version to match'
                 required: false
                 type: string
             require_matching_version:
-                description: "Fail instead of using a different Android version"
+                description: 'Fail instead of using a different Android version'
                 required: false
                 default: false
                 type: boolean
             release:
-                description: "Require persistent Android release signing"
+                description: 'Require persistent Android release signing'
                 required: false
                 default: false
                 type: boolean
             discord_channel:
-                description: "Discord Android channel to patch"
+                description: 'Discord Android channel to patch'
                 required: false
                 default: stable
                 type: string
             android_code:
-                description: "Exact Discord Android version code to patch"
+                description: 'Exact Discord Android version code to patch'
                 required: false
                 type: string
         outputs:
             module_filename:
-                description: "Filename of the LSPosed module APK"
+                description: 'Filename of the LSPosed module APK'
                 value: ${{ jobs.build-module.outputs.module_filename }}
+            module_url:
+                description: 'Download URL for the LSPosed module APK artifact'
+                value: ${{ jobs.build-module.outputs.module_url }}
             patched_filename:
-                description: "Filename of the LSPatch-patched Discord split APKs"
+                description: 'Filename of the LSPatch-patched Discord split APKs'
                 value: ${{ jobs.patch-discord.outputs.patched_filename }}
+            patched_url:
+                description: 'Download URL for the LSPatch-patched Discord artifact'
+                value: ${{ jobs.patch-discord.outputs.patched_url }}
 
 permissions:
     contents: read
@@ -100,6 +106,7 @@ jobs:
             ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         outputs:
             module_filename: ${{ steps.collect.outputs.module_filename }}
+            module_url: ${{ steps.upload-module.outputs.artifact-url }}
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -111,7 +118,7 @@ jobs:
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
               with:
                   distribution: temurin
-                  java-version: "17"
+                  java-version: '17'
 
             - name: Setup Gradle
               uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6
@@ -151,6 +158,7 @@ jobs:
                   echo "module_filename=$name" >> "$GITHUB_OUTPUT"
 
             - name: Upload module
+              id: upload-module
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: android module
@@ -162,6 +170,7 @@ jobs:
         runs-on: ubuntu-26.04
         outputs:
             patched_filename: ${{ steps.patch.outputs.patched_filename }}
+            patched_url: ${{ steps.upload-patched.outputs.artifact-url }}
         env:
             LSPATCH_VERSION: v1.2
             LSPATCH_JAR: lspatch-v1.2-487-release.jar
@@ -199,7 +208,7 @@ jobs:
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
               with:
                   distribution: temurin
-                  java-version: "21"
+                  java-version: '21'
 
             - name: Download module
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
@@ -271,6 +280,7 @@ jobs:
                   echo "patched_filename=$name" >> "$GITHUB_OUTPUT"
 
             - name: Upload patched Discord
+              id: upload-patched
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: patched discord

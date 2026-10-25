@@ -1,451 +1,457 @@
 name: Loader Build Unbound
 run-name: >-
-  ${{
-    inputs.only_app_repo == true && 'app-repo deploy' ||
-    inputs.only_apt_repo == true && 'apt-repo deploy' ||
-    format('{0} for {1}', (inputs.release == true && 'Release' || 'Build'), (inputs.version != '' && inputs.version || inputs.ipa_url != '' && inputs.ipa_url || inputs.android_channel != '' && format('latest Android {0}', inputs.android_channel) || 'latest stable'))
-  }}
+    ${{
+      inputs.only_app_repo == true && 'app-repo deploy' ||
+      inputs.only_apt_repo == true && 'apt-repo deploy' ||
+      format('{0} for {1}', (inputs.release == true && 'Release' || 'Build'), (inputs.version != '' && inputs.version || inputs.ipa_url != '' && inputs.ipa_url || inputs.android_channel != '' && format('latest Android {0}', inputs.android_channel) || 'latest stable'))
+    }}
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'packages/loader/**'
-      - '.github/workflows/loader-*.yml'
-      - '.gitmodules'
-      - '!**/*.md'
-      - '!**/*.mdx'
-  workflow_dispatch:
-    inputs:
-      version:
-        default: ""
-        description: "Discord app version"
-        required: false
-        type: string
-      ipa_url:
-        default: ""
-        description: "Public direct IPA URL; leave empty to decrypt latest stable from dkrypt"
-        required: false
-        type: string
-      is_testflight:
-        default: false
-        description: "Mark the selected iOS build as a TestFlight release"
-        type: boolean
-      android_channel:
-        default: ""
-        description: "Build only Android against Discord's beta or alpha channel and publish it as a prerelease"
-        required: false
-        type: string
-      android_code:
-        default: ""
-        description: "Exact Discord Android version code for an Android channel build; leave empty for the channel's latest"
-        required: false
-        type: string
-      authenticated_source:
-        default: false
-        description: "Authenticate direct IPA source downloads with the dkrypt API key"
-        type: boolean
-      dkrypt_base_url:
-        default: "https://ipa.dylib.dev"
-        description: "dkrypt service base URL"
-        type: string
-      release:
-        default: true
-        description: "Create a GitHub release"
-        type: boolean
-      only_app_repo:
-        default: false
-        description: "Build and deploy app-repo"
-        type: boolean
-      only_apt_repo:
-        default: false
-        description: "Build and deploy apt-repo"
-        type: boolean
-  workflow_call:
-    inputs:
-      version:
-        default: ""
-        type: string
-      ipa_url:
-        default: ""
-        type: string
-      release:
-        default: false
-        type: boolean
-      is_testflight:
-        default: false
-        type: boolean
-      android_channel:
-        default: ""
-        type: string
-      android_code:
-        default: ""
-        type: string
-      authenticated_source:
-        default: false
-        type: boolean
-      dkrypt_base_url:
-        default: "https://ipa.dylib.dev"
-        type: string
-      only_app_repo:
-        default: false
-        type: boolean
-      only_apt_repo:
-        default: false
-        type: boolean
-      caller_workflow:
-        default: ""
-        type: string
-    outputs:
-      deb_url:
-        description: "Download URL for the deb package artifact"
-        value: ${{ jobs.ios.outputs.deb_url }}
-      ipa_url:
-        description: "Download URL for the ipa file artifact"
-        value: ${{ jobs.ios.outputs.ipa_url }}
-      simulator_url:
-        description: "Download URL for the iOS Simulator zip artifact"
-        value: ${{ jobs.ios.outputs.simulator_url }}
-      deb_filename:
-        description: "Filename of the deb package"
-        value: ${{ jobs.ios.outputs.deb_filename }}
-      ipa_filename:
-        description: "Filename of the ipa file"
-        value: ${{ jobs.ios.outputs.ipa_filename }}
-      simulator_filename:
-        description: "Filename of the iOS Simulator zip"
-        value: ${{ jobs.ios.outputs.simulator_filename }}
-      module_filename:
-        description: "Filename of the Android LSPosed module APK"
-        value: ${{ jobs.android.outputs.module_filename }}
-      patched_filename:
-        description: "Filename of the LSPatch-patched Discord package"
-        value: ${{ jobs.android.outputs.patched_filename }}
+    push:
+        branches: [main]
+        paths:
+            - 'packages/loader/**'
+            - '.github/workflows/loader-*.yml'
+            - '.gitmodules'
+            - '!**/*.md'
+            - '!**/*.mdx'
+    workflow_dispatch:
+        inputs:
+            version:
+                default: ''
+                description: 'Discord app version'
+                required: false
+                type: string
+            ipa_url:
+                default: ''
+                description: 'Public direct IPA URL; leave empty to decrypt latest stable from dkrypt'
+                required: false
+                type: string
+            is_testflight:
+                default: false
+                description: 'Mark the selected iOS build as a TestFlight release'
+                type: boolean
+            android_channel:
+                default: ''
+                description: "Build only Android against Discord's beta or alpha channel and publish it as a prerelease"
+                required: false
+                type: string
+            android_code:
+                default: ''
+                description: "Exact Discord Android version code for an Android channel build; leave empty for the channel's latest"
+                required: false
+                type: string
+            authenticated_source:
+                default: false
+                description: 'Authenticate direct IPA source downloads with the dkrypt API key'
+                type: boolean
+            dkrypt_base_url:
+                default: 'https://ipa.dylib.dev'
+                description: 'dkrypt service base URL'
+                type: string
+            release:
+                default: true
+                description: 'Create a GitHub release'
+                type: boolean
+            only_app_repo:
+                default: false
+                description: 'Build and deploy app-repo'
+                type: boolean
+            only_apt_repo:
+                default: false
+                description: 'Build and deploy apt-repo'
+                type: boolean
+    workflow_call:
+        inputs:
+            version:
+                default: ''
+                type: string
+            ipa_url:
+                default: ''
+                type: string
+            release:
+                default: false
+                type: boolean
+            is_testflight:
+                default: false
+                type: boolean
+            android_channel:
+                default: ''
+                type: string
+            android_code:
+                default: ''
+                type: string
+            authenticated_source:
+                default: false
+                type: boolean
+            dkrypt_base_url:
+                default: 'https://ipa.dylib.dev'
+                type: string
+            only_app_repo:
+                default: false
+                type: boolean
+            only_apt_repo:
+                default: false
+                type: boolean
+            caller_workflow:
+                default: ''
+                type: string
+        outputs:
+            deb_url:
+                description: 'Download URL for the deb package artifact'
+                value: ${{ jobs.ios.outputs.deb_url }}
+            ipa_url:
+                description: 'Download URL for the ipa file artifact'
+                value: ${{ jobs.ios.outputs.ipa_url }}
+            simulator_url:
+                description: 'Download URL for the iOS Simulator zip artifact'
+                value: ${{ jobs.ios.outputs.simulator_url }}
+            deb_filename:
+                description: 'Filename of the deb package'
+                value: ${{ jobs.ios.outputs.deb_filename }}
+            ipa_filename:
+                description: 'Filename of the ipa file'
+                value: ${{ jobs.ios.outputs.ipa_filename }}
+            simulator_filename:
+                description: 'Filename of the iOS Simulator zip'
+                value: ${{ jobs.ios.outputs.simulator_filename }}
+            module_filename:
+                description: 'Filename of the Android LSPosed module APK'
+                value: ${{ jobs.android.outputs.module_filename }}
+            module_url:
+                description: 'Download URL for the Android LSPosed module artifact'
+                value: ${{ jobs.android.outputs.module_url }}
+            patched_filename:
+                description: 'Filename of the LSPatch-patched Discord package'
+                value: ${{ jobs.android.outputs.patched_filename }}
+            patched_url:
+                description: 'Download URL for the LSPatch-patched Discord artifact'
+                value: ${{ jobs.android.outputs.patched_url }}
 
 permissions: {}
 
 concurrency:
-  group: ${{ inputs.release == true && 'loader-release' || format('build-{0}-{1}', github.workflow, github.ref) }}
-  cancel-in-progress: false
+    group: ${{ inputs.release == true && 'loader-release' || format('build-{0}-{1}', github.workflow, github.ref) }}
+    cancel-in-progress: false
 
 defaults:
-  run:
-    working-directory: packages/loader
+    run:
+        working-directory: packages/loader
 
 jobs:
-  resolve-source:
-    if: inputs.only_app_repo != true && inputs.only_apt_repo != true
-    runs-on: ubuntu-26.04
-    timeout-minutes: 50
-    outputs:
-      version: ${{ steps.resolve.outputs.version }}
-      release_version: ${{ steps.resolve.outputs.release_version }}
-      is_testflight: ${{ steps.resolve.outputs.is_testflight }}
-      android_code: ${{ steps.resolve.outputs.code }}
-    steps:
-      - name: Checkout resolver
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    resolve-source:
+        if: inputs.only_app_repo != true && inputs.only_apt_repo != true
+        runs-on: ubuntu-26.04
+        timeout-minutes: 50
+        outputs:
+            version: ${{ steps.resolve.outputs.version }}
+            release_version: ${{ steps.resolve.outputs.release_version }}
+            is_testflight: ${{ steps.resolve.outputs.is_testflight }}
+            android_code: ${{ steps.resolve.outputs.code }}
+        steps:
+            - name: Checkout resolver
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+            - name: Resolve source version
+              id: resolve
+              env:
+                  DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+                  INPUT_VERSION: ${{ inputs.version }}
+                  INPUT_IPA_URL: ${{ inputs.ipa_url }}
+                  INPUT_IS_TESTFLIGHT: ${{ inputs.is_testflight }}
+                  INPUT_RELEASE: ${{ inputs.release }}
+                  INPUT_AUTHENTICATED_SOURCE: ${{ inputs.authenticated_source }}
+                  INPUT_DKRYPT_BASE_URL: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
+                  INPUT_ANDROID_TRACKER: https://tracker.vendetta.rocks/tracker
+                  INPUT_ANDROID_CHANNEL: ${{ inputs.android_channel }}
+                  INPUT_ANDROID_CODE: ${{ inputs.android_code }}
+                  DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
+              run: |
+                  set -euo pipefail
+                  if [ -n "$INPUT_ANDROID_CHANNEL" ]; then
+                    case "$INPUT_ANDROID_CHANNEL" in
+                      beta|alpha) ;;
+                      *) echo "::error::Android channel builds are beta or alpha, not $INPUT_ANDROID_CHANNEL"; exit 1 ;;
+                    esac
+                    if [ "$INPUT_IS_TESTFLIGHT" = true ]; then
+                      echo "::error::An Android channel build cannot also be a TestFlight build"
+                      exit 1
+                    fi
+                    apk_args=(--channel "$INPUT_ANDROID_CHANNEL" --android-tracker "$INPUT_ANDROID_TRACKER")
+                    if [ -n "$INPUT_ANDROID_CODE" ]; then apk_args+=(--code "$INPUT_ANDROID_CODE"); fi
+                    release=$(go run ./tools discord-apk "${apk_args[@]}")
+                    release_version=$(jq -r '.releaseVersion' <<< "$release")
+                    if [ -n "$INPUT_VERSION" ] && [ "$INPUT_VERSION" != "$release_version" ]; then
+                      echo "::error::Android version code $(jq -r '.code' <<< "$release") is $release_version, not the requested $INPUT_VERSION"
+                      exit 1
+                    fi
+                    echo "is_testflight=false" >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
+                  requested_version="$INPUT_VERSION"
+                  if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ] && [ -z "$requested_version" ] && [ -z "$INPUT_IPA_URL" ]; then
+                    android_code=$(curl -fsSL "$INPUT_ANDROID_TRACKER/index" | jq -er '.latest.stable | tonumber')
+                    requested_version=$(go run ./tools discord-version --android-code "$android_code")
+                    echo "::notice::Selecting the latest Android stable version available to both platforms: $requested_version"
+                  fi
+                  if [ -z "$INPUT_IPA_URL" ]; then
+                    go run ./tools fetch \
+                      --base-url "$INPUT_DKRYPT_BASE_URL" \
+                      --bundle-id com.hammerandchisel.discord \
+                      --version "$requested_version" \
+                      --output source.ipa
+                  else
+                    channel=appstore
+                    if [ "$INPUT_IS_TESTFLIGHT" = true ]; then channel=testflight; fi
+                    fetch_args=(--base-url "$INPUT_DKRYPT_BASE_URL" --source-url "$INPUT_IPA_URL")
+                    if [ "$INPUT_AUTHENTICATED_SOURCE" = true ]; then fetch_args+=(--authenticated-source); fi
+                    fetch_args+=(--channel "$channel" --version "$requested_version" --output source.ipa)
+                    go run ./tools fetch "${fetch_args[@]}"
+                  fi
+                  ipa_info=$(go run ./tools ipa-info --ipa source.ipa)
+                  version=$(jq -r '.version' <<< "$ipa_info")
+                  build=$(jq -r '.build' <<< "$ipa_info")
+                  if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ]; then
+                    actual_android_code=$(go run ./tools discord-version --version "$version")
+                    if [ -n "$requested_version" ]; then
+                      requested_android_code=$(go run ./tools discord-version --version "$requested_version")
+                      if [ "$actual_android_code" != "$requested_android_code" ]; then
+                        echo "::error::The iOS IPA is $version but the requested matching release is $requested_version"
+                        exit 1
+                      fi
+                    fi
+                  fi
+                  release_version="$version"
+                  if [ "$INPUT_IS_TESTFLIGHT" = true ]; then release_version="${version}_${build}"; fi
+                  {
+                    echo "version=$version"
+                    echo "release_version=$release_version"
+                    echo "is_testflight=$INPUT_IS_TESTFLIGHT"
+                  } >> "$GITHUB_OUTPUT"
+
+    android:
+        needs: resolve-source
+        if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success'
+        permissions:
+            contents: read
+        uses: ./.github/workflows/loader-android.yml
         with:
-          cache: false
-          go-version-file: packages/loader/go.mod
+            ios_version: ${{ needs.resolve-source.outputs.version }}
+            require_matching_version: ${{ inputs.release == true && inputs.is_testflight != true }}
+            release: ${{ inputs.release || false }}
+            discord_channel: ${{ inputs.android_channel || 'stable' }}
+            android_code: ${{ needs.resolve-source.outputs.android_code }}
+        secrets: inherit
 
-      - name: Cache Go builds
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+    ios:
+        needs: resolve-source
+        if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || needs.resolve-source.result == 'success')
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        uses: ./.github/workflows/loader-ios.yml
         with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            version: ${{ needs.resolve-source.outputs.version || inputs.version }}
+            ipa_url: ${{ inputs.ipa_url }}
+            release: ${{ inputs.release || false }}
+            is_testflight: ${{ inputs.is_testflight || false }}
+            authenticated_source: ${{ inputs.authenticated_source || false }}
+            dkrypt_base_url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
+            only_app_repo: ${{ inputs.only_app_repo || false }}
+            only_apt_repo: ${{ inputs.only_apt_repo || false }}
+            caller_workflow: ${{ inputs.caller_workflow || '' }}
+        secrets: inherit
 
-      - name: Resolve source version
-        id: resolve
-        env:
-          DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
-          INPUT_VERSION: ${{ inputs.version }}
-          INPUT_IPA_URL: ${{ inputs.ipa_url }}
-          INPUT_IS_TESTFLIGHT: ${{ inputs.is_testflight }}
-          INPUT_RELEASE: ${{ inputs.release }}
-          INPUT_AUTHENTICATED_SOURCE: ${{ inputs.authenticated_source }}
-          INPUT_DKRYPT_BASE_URL: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
-          INPUT_ANDROID_TRACKER: https://tracker.vendetta.rocks/tracker
-          INPUT_ANDROID_CHANNEL: ${{ inputs.android_channel }}
-          INPUT_ANDROID_CODE: ${{ inputs.android_code }}
-          DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
-        run: |
-          set -euo pipefail
-          if [ -n "$INPUT_ANDROID_CHANNEL" ]; then
-            case "$INPUT_ANDROID_CHANNEL" in
-              beta|alpha) ;;
-              *) echo "::error::Android channel builds are beta or alpha, not $INPUT_ANDROID_CHANNEL"; exit 1 ;;
-            esac
-            if [ "$INPUT_IS_TESTFLIGHT" = true ]; then
-              echo "::error::An Android channel build cannot also be a TestFlight build"
-              exit 1
-            fi
-            apk_args=(--channel "$INPUT_ANDROID_CHANNEL" --android-tracker "$INPUT_ANDROID_TRACKER")
-            if [ -n "$INPUT_ANDROID_CODE" ]; then apk_args+=(--code "$INPUT_ANDROID_CODE"); fi
-            release=$(go run ./tools discord-apk "${apk_args[@]}")
-            release_version=$(jq -r '.releaseVersion' <<< "$release")
-            if [ -n "$INPUT_VERSION" ] && [ "$INPUT_VERSION" != "$release_version" ]; then
-              echo "::error::Android version code $(jq -r '.code' <<< "$release") is $release_version, not the requested $INPUT_VERSION"
-              exit 1
-            fi
-            echo "is_testflight=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          requested_version="$INPUT_VERSION"
-          if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ] && [ -z "$requested_version" ] && [ -z "$INPUT_IPA_URL" ]; then
-            android_code=$(curl -fsSL "$INPUT_ANDROID_TRACKER/index" | jq -er '.latest.stable | tonumber')
-            requested_version=$(go run ./tools discord-version --android-code "$android_code")
-            echo "::notice::Selecting the latest Android stable version available to both platforms: $requested_version"
-          fi
-          if [ -z "$INPUT_IPA_URL" ]; then
-            go run ./tools fetch \
-              --base-url "$INPUT_DKRYPT_BASE_URL" \
-              --bundle-id com.hammerandchisel.discord \
-              --version "$requested_version" \
-              --output source.ipa
-          else
-            channel=appstore
-            if [ "$INPUT_IS_TESTFLIGHT" = true ]; then channel=testflight; fi
-            fetch_args=(--base-url "$INPUT_DKRYPT_BASE_URL" --source-url "$INPUT_IPA_URL")
-            if [ "$INPUT_AUTHENTICATED_SOURCE" = true ]; then fetch_args+=(--authenticated-source); fi
-            fetch_args+=(--channel "$channel" --version "$requested_version" --output source.ipa)
-            go run ./tools fetch "${fetch_args[@]}"
-          fi
-          ipa_info=$(go run ./tools ipa-info --ipa source.ipa)
-          version=$(jq -r '.version' <<< "$ipa_info")
-          build=$(jq -r '.build' <<< "$ipa_info")
-          if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ]; then
-            actual_android_code=$(go run ./tools discord-version --version "$version")
-            if [ -n "$requested_version" ]; then
-              requested_android_code=$(go run ./tools discord-version --version "$requested_version")
-              if [ "$actual_android_code" != "$requested_android_code" ]; then
-                echo "::error::The iOS IPA is $version but the requested matching release is $requested_version"
-                exit 1
-              fi
-            fi
-          fi
-          release_version="$version"
-          if [ "$INPUT_IS_TESTFLIGHT" = true ]; then release_version="${version}_${build}"; fi
-          {
-            echo "version=$version"
-            echo "release_version=$release_version"
-            echo "is_testflight=$INPUT_IS_TESTFLIGHT"
-          } >> "$GITHUB_OUTPUT"
+    release:
+        if: always() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
+        needs: [resolve-source, ios, android]
+        runs-on: ubuntu-26.04
+        permissions:
+            contents: write
+        steps:
+            - name: Checkout loader sources
+              if: needs.resolve-source.outputs.is_testflight != 'true'
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 0
 
-  android:
-    needs: resolve-source
-    if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success'
-    permissions:
-      contents: read
-    uses: ./.github/workflows/loader-android.yml
-    with:
-      ios_version: ${{ needs.resolve-source.outputs.version }}
-      require_matching_version: ${{ inputs.release == true && inputs.is_testflight != true }}
-      release: ${{ inputs.release || false }}
-      discord_channel: ${{ inputs.android_channel || 'stable' }}
-      android_code: ${{ needs.resolve-source.outputs.android_code }}
-    secrets: inherit
+            - name: Setup Go for loader update publishing
+              if: needs.resolve-source.outputs.is_testflight != 'true'
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
 
-  ios:
-    needs: resolve-source
-    if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || needs.resolve-source.result == 'success')
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    uses: ./.github/workflows/loader-ios.yml
-    with:
-      version: ${{ needs.resolve-source.outputs.version || inputs.version }}
-      ipa_url: ${{ inputs.ipa_url }}
-      release: ${{ inputs.release || false }}
-      is_testflight: ${{ inputs.is_testflight || false }}
-      authenticated_source: ${{ inputs.authenticated_source || false }}
-      dkrypt_base_url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
-      only_app_repo: ${{ inputs.only_app_repo || false }}
-      only_apt_repo: ${{ inputs.only_apt_repo || false }}
-      caller_workflow: ${{ inputs.caller_workflow || '' }}
-    secrets: inherit
+            - name: Download iOS tweak
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: rootless package
+                  path: packages/loader/release-assets
 
-  release:
-    if: always() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
-    needs: [resolve-source, ios, android]
-    runs-on: ubuntu-26.04
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout loader sources
-        if: needs.resolve-source.outputs.is_testflight != 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+            - name: Download iOS IPA
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: ipa
+                  path: packages/loader/release-assets
+
+            - name: Download iOS simulator build
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: ios-simulator
+                  path: packages/loader/release-assets
+
+            - name: Download Android LSPosed module
+              if: inputs.is_testflight != true
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: android module
+                  path: packages/loader/release-assets
+
+            - name: Download patched Android Discord package
+              if: inputs.is_testflight != true
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: patched discord
+                  path: packages/loader/release-assets
+
+            - name: Publish stable release
+              if: needs.resolve-source.outputs.is_testflight != 'true'
+              uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+              with:
+                  tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}
+                  files: |
+                      packages/loader/release-assets/${{ needs.ios.outputs.deb_filename }}
+                      packages/loader/release-assets/${{ needs.ios.outputs.ipa_filename }}
+                      packages/loader/release-assets/${{ needs.ios.outputs.simulator_filename }}
+                      packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
+                      packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
+                  generate_release_notes: true
+                  make_latest: false
+                  fail_on_unmatched_files: true
+                  token: ${{ github.token }}
+
+            - name: Refresh the rolling loader-latest release
+              if: needs.resolve-source.outputs.is_testflight != 'true'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RELEASE_VERSION: ${{ needs.resolve-source.outputs.release_version }}
+              run: |
+                  set -euo pipefail
+                  gh release delete loader-latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+                  gh release create loader-latest \
+                    --repo "$GITHUB_REPOSITORY" \
+                    --target "$GITHUB_SHA" \
+                    --title "Unbound loader (latest)" \
+                    --notes "The most recent stable loader, currently loader-v$RELEASE_VERSION." \
+                    --latest=false \
+                    "release-assets/${{ needs.ios.outputs.deb_filename }}" \
+                    "release-assets/${{ needs.ios.outputs.ipa_filename }}" \
+                    "release-assets/${{ needs.ios.outputs.simulator_filename }}" \
+                    "release-assets/${{ needs.android.outputs.module_filename }}" \
+                    "release-assets/${{ needs.android.outputs.patched_filename }}"
+
+            - name: Publish TestFlight prerelease
+              if: needs.resolve-source.outputs.is_testflight == 'true'
+              uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+              with:
+                  tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}
+                  files: |
+                      packages/loader/release-assets/${{ needs.ios.outputs.deb_filename }}
+                      packages/loader/release-assets/${{ needs.ios.outputs.ipa_filename }}
+                      packages/loader/release-assets/${{ needs.ios.outputs.simulator_filename }}
+                  generate_release_notes: true
+                  prerelease: true
+                  make_latest: false
+                  fail_on_unmatched_files: true
+                  token: ${{ github.token }}
+
+            - name: Publish loader update records
+              if: needs.resolve-source.outputs.is_testflight != 'true'
+              env:
+                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+                  RELEASE_VERSION: ${{ needs.resolve-source.outputs.release_version }}
+                  IOS_DEB_FILENAME: ${{ needs.ios.outputs.deb_filename }}
+                  ANDROID_MODULE_FILENAME: ${{ needs.android.outputs.module_filename }}
+              run: |
+                  set -euo pipefail
+                  : "${UNBOUND_API_KEY:?UNBOUND_API_KEY is required for stable release publication}"
+                  : "${UNBOUND_API_URL:?UNBOUND_API_URL is required for stable release publication}"
+                  api_url="${UNBOUND_API_URL%/}/api/v1/loader/releases"
+                  deb_path="release-assets/$IOS_DEB_FILENAME"
+                  loader_version=$(dpkg-deb -f "$deb_path" Version)
+                  release_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/loader-v$RELEASE_VERSION"
+                  go run ./tools generate-loader-changelog \
+                    --version "$loader_version" \
+                    --output release-assets/loader-changelog.md
+                  go run ./tools publish-loader-releases \
+                    --api-url "$api_url" \
+                    --version "$loader_version" \
+                    --ios-url "$release_url/$IOS_DEB_FILENAME" \
+                    --android-url "$release_url/$ANDROID_MODULE_FILENAME" \
+                    --changelog-file release-assets/loader-changelog.md
+
+    android-prerelease:
+        if: always() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'
+        needs: [resolve-source, android]
+        runs-on: ubuntu-26.04
+        permissions:
+            contents: write
+        steps:
+            - name: Download Android LSPosed module
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: android module
+                  path: packages/loader/release-assets
+
+            - name: Download patched Android Discord package
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: patched discord
+                  path: packages/loader/release-assets
+
+            - name: Publish Android prerelease
+              uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+              with:
+                  tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}
+                  files: |
+                      packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
+                      packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
+                  generate_release_notes: true
+                  prerelease: true
+                  make_latest: false
+                  fail_on_unmatched_files: true
+                  token: ${{ github.token }}
+
+    publish-app-repo:
+        if: always() && inputs.release == true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
+        needs: [resolve-source, ios, android, release]
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        uses: ./.github/workflows/loader-ios.yml
         with:
-          fetch-depth: 0
-
-      - name: Setup Go for loader update publishing
-        if: needs.resolve-source.outputs.is_testflight != 'true'
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-        with:
-          cache: false
-          go-version-file: packages/loader/go.mod
-
-      - name: Download iOS tweak
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: rootless package
-          path: packages/loader/release-assets
-
-      - name: Download iOS IPA
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: ipa
-          path: packages/loader/release-assets
-
-      - name: Download iOS simulator build
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: ios-simulator
-          path: packages/loader/release-assets
-
-      - name: Download Android LSPosed module
-        if: inputs.is_testflight != true
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: android module
-          path: packages/loader/release-assets
-
-      - name: Download patched Android Discord package
-        if: inputs.is_testflight != true
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: patched discord
-          path: packages/loader/release-assets
-
-      - name: Publish stable release
-        if: needs.resolve-source.outputs.is_testflight != 'true'
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
-        with:
-          tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}
-          files: |
-            packages/loader/release-assets/${{ needs.ios.outputs.deb_filename }}
-            packages/loader/release-assets/${{ needs.ios.outputs.ipa_filename }}
-            packages/loader/release-assets/${{ needs.ios.outputs.simulator_filename }}
-            packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
-            packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
-          generate_release_notes: true
-          make_latest: false
-          fail_on_unmatched_files: true
-          token: ${{ github.token }}
-
-      - name: Refresh the rolling loader-latest release
-        if: needs.resolve-source.outputs.is_testflight != 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_VERSION: ${{ needs.resolve-source.outputs.release_version }}
-        run: |
-          set -euo pipefail
-          gh release delete loader-latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
-          gh release create loader-latest \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "Unbound loader (latest)" \
-            --notes "The most recent stable loader, currently loader-v$RELEASE_VERSION." \
-            --latest=false \
-            "release-assets/${{ needs.ios.outputs.deb_filename }}" \
-            "release-assets/${{ needs.ios.outputs.ipa_filename }}" \
-            "release-assets/${{ needs.ios.outputs.simulator_filename }}" \
-            "release-assets/${{ needs.android.outputs.module_filename }}" \
-            "release-assets/${{ needs.android.outputs.patched_filename }}"
-
-      - name: Publish TestFlight prerelease
-        if: needs.resolve-source.outputs.is_testflight == 'true'
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
-        with:
-          tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}
-          files: |
-            packages/loader/release-assets/${{ needs.ios.outputs.deb_filename }}
-            packages/loader/release-assets/${{ needs.ios.outputs.ipa_filename }}
-            packages/loader/release-assets/${{ needs.ios.outputs.simulator_filename }}
-          generate_release_notes: true
-          prerelease: true
-          make_latest: false
-          fail_on_unmatched_files: true
-          token: ${{ github.token }}
-
-      - name: Publish loader update records
-        if: needs.resolve-source.outputs.is_testflight != 'true'
-        env:
-          UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
-          UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
-          RELEASE_VERSION: ${{ needs.resolve-source.outputs.release_version }}
-          IOS_DEB_FILENAME: ${{ needs.ios.outputs.deb_filename }}
-          ANDROID_MODULE_FILENAME: ${{ needs.android.outputs.module_filename }}
-        run: |
-          set -euo pipefail
-          : "${UNBOUND_API_KEY:?UNBOUND_API_KEY is required for stable release publication}"
-          : "${UNBOUND_API_URL:?UNBOUND_API_URL is required for stable release publication}"
-          api_url="${UNBOUND_API_URL%/}/api/v1/loader/releases"
-          deb_path="release-assets/$IOS_DEB_FILENAME"
-          loader_version=$(dpkg-deb -f "$deb_path" Version)
-          release_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/loader-v$RELEASE_VERSION"
-          go run ./tools generate-loader-changelog \
-            --version "$loader_version" \
-            --output release-assets/loader-changelog.md
-          go run ./tools publish-loader-releases \
-            --api-url "$api_url" \
-            --version "$loader_version" \
-            --ios-url "$release_url/$IOS_DEB_FILENAME" \
-            --android-url "$release_url/$ANDROID_MODULE_FILENAME" \
-            --changelog-file release-assets/loader-changelog.md
-
-  android-prerelease:
-    if: always() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'
-    needs: [resolve-source, android]
-    runs-on: ubuntu-26.04
-    permissions:
-      contents: write
-    steps:
-      - name: Download Android LSPosed module
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: android module
-          path: packages/loader/release-assets
-
-      - name: Download patched Android Discord package
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: patched discord
-          path: packages/loader/release-assets
-
-      - name: Publish Android prerelease
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
-        with:
-          tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}
-          files: |
-            packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
-            packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
-          generate_release_notes: true
-          prerelease: true
-          make_latest: false
-          fail_on_unmatched_files: true
-          token: ${{ github.token }}
-
-  publish-app-repo:
-    if: always() && inputs.release == true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
-    needs: [resolve-source, ios, android, release]
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    uses: ./.github/workflows/loader-ios.yml
-    with:
-      version: ${{ needs.resolve-source.outputs.release_version }}
-      only_app_repo: true
-      release: false
-    secrets: inherit
+            version: ${{ needs.resolve-source.outputs.release_version }}
+            only_app_repo: true
+            release: false
+        secrets: inherit

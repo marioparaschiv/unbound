@@ -208,10 +208,14 @@ jobs:
                       **Commit**: [#${{ steps.build-info.outputs.hash }}](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.head.sha }})
                       **Build Time**: `${{ steps.build-info.outputs.time }}`
 
-                      #### Artifacts:
+                      #### iOS
                       - [**${{ needs.build.outputs.deb_filename }}**](${{ needs.build.outputs.deb_url }})
                       - [**${{ needs.build.outputs.simulator_filename }}**](${{ needs.build.outputs.simulator_url }})
                       - [**${{ needs.build.outputs.ipa_filename }}**](${{ needs.build.outputs.ipa_url }})
+
+                      #### Android
+                      - [**${{ needs.build.outputs.module_filename }}**](${{ needs.build.outputs.module_url }})
+                      - [**${{ needs.build.outputs.patched_filename }}**](${{ needs.build.outputs.patched_url }})
 
                       Packaging and simulator artifacts are link/package checks, not Discord device-runtime validation.
 
