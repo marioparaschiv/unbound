@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 
-import { DISCORD_IDS } from '~/lib/constants';
 import { checkConfig } from '~/lib/config';
 
 const ENV = {
@@ -9,13 +8,12 @@ const ENV = {
 	UNBOUND_API_URL: 'https://unbound.rip',
 	UNBOUND_API_KEY: 'key',
 };
-const SET_IDS = Object.fromEntries(
-	Object.keys(DISCORD_IDS).map((name, index) => [name, String(index + 1)]),
-);
+const UNSET_IDS = { RELEASES_CHANNEL_ID: '0', SPONSOR_ROLE_ID: '0' };
+const SET_IDS = { RELEASES_CHANNEL_ID: '1', SPONSOR_ROLE_ID: '2' };
 
 describe('checkConfig', () => {
 	test('names every unset env var and every id constant still 0, in one message', () => {
-		const result = checkConfig({}, DISCORD_IDS);
+		const result = checkConfig({}, UNSET_IDS);
 
 		expect(result.ok).toBe(false);
 
@@ -25,7 +23,7 @@ describe('checkConfig', () => {
 			expect(result.message).toContain(`env ${name} is not set`);
 		}
 
-		for (const name of Object.keys(DISCORD_IDS)) {
+		for (const name of Object.keys(UNSET_IDS)) {
 			expect(result.message).toContain(`constant ${name} in src/lib/constants.ts`);
 		}
 	});
