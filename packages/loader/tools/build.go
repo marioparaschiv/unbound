@@ -17,8 +17,6 @@ import (
 )
 
 const (
-	patcherRepository  = "https://github.com/unbound-app/patcher-ios"
-	patcherCommit      = "700653ba3a002998d1c9b8e2f1eef6579a9706f5"
 	cyanRepository     = "https://github.com/asdfzxcvbn/pyzule-rw"
 	cyanCommit         = "740d3716dcd98c20c000f12cdb88f1f0b2a533a4"
 	pillowVersion      = "11.3.0"
@@ -232,11 +230,7 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 	if options.channel == "testflight" {
 		patched = input
 	} else {
-		patcher, err := provisionPatcher(options.root, runner)
-		if err != nil {
-			return err
-		}
-		if err := runner(options.root, patcher, []string{"-i", input, "-o", patched}, os.Environ(), os.Stdout, os.Stderr); err != nil {
+		if err := patchIPA(input, patched); err != nil {
 			return fmt.Errorf("patching IPA failed: %w", err)
 		}
 	}
@@ -457,27 +451,6 @@ func attestationKeys() (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
 		return nil, nil, errors.New("attestation private key does not match the pinned public key")
 	}
 	return private, public, nil
-}
-
-func provisionPatcher(root string, runner commandRunner) (string, error) {
-	cache := filepath.Join(root, ".tools-cache", "patcher-ios-"+patcherCommit)
-	binary := filepath.Join(cache, "patcher")
-	if executableExists(binary) {
-		return binary, nil
-	}
-	if err := os.MkdirAll(filepath.Dir(cache), 0o755); err != nil {
-		return "", err
-	}
-	if err := runner(root, "git", []string{"clone", patcherRepository, cache}, os.Environ(), os.Stdout, os.Stderr); err != nil {
-		return "", err
-	}
-	if err := runner(cache, "git", []string{"checkout", "--detach", patcherCommit}, os.Environ(), os.Stdout, os.Stderr); err != nil {
-		return "", err
-	}
-	if err := runner(cache, "go", []string{"build", "-o", binary, "."}, os.Environ(), os.Stdout, os.Stderr); err != nil {
-		return "", err
-	}
-	return binary, nil
 }
 
 func provisionCyan(root string, runner commandRunner) (string, error) {

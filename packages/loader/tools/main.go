@@ -27,6 +27,10 @@ func run(args []string) error {
 		return runFetch(args[1:])
 	case "ipa-info":
 		return runIPAInfo(args[1:])
+	case "patch-ipa":
+		return runPatchIPA(args[1:])
+	case "ipa-icons":
+		return runIPAIcons(args[1:])
 	case "discord-version":
 		return runDiscordVersion(args[1:])
 	case "release-candidate":
@@ -67,7 +71,7 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|discord-version|release-candidate|generate-loader-changelog|publish-loader-releases|attest|doctor|dev|compat-scan>")
+	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|release-candidate|generate-loader-changelog|publish-loader-releases|attest|doctor|dev|compat-scan>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
 	fmt.Println("       go run ./tools validate [--root <path>]")
@@ -75,6 +79,8 @@ func printUsage() {
 	fmt.Println("       go run ./tools packages <list|validate> [--root <path>]")
 	fmt.Println("       go run ./tools libffi-build --archive <path> --include <path>")
 	fmt.Println("       go run ./tools ipa-info --ipa <path>")
+	fmt.Println("       go run ./tools patch-ipa --ipa <path> --output <path>")
+	fmt.Println("       go run ./tools ipa-icons [--root <path>]")
 	fmt.Println("       go run ./tools discord-version --version <version> | --android-code <code>")
 	fmt.Println("       go run ./tools release-candidate --channel <stable|testflight>")
 	fmt.Println("       go run ./tools publish-loader-releases --version <semver> --ios-url <release-url> --android-url <release-url> [--changelog-file <path>]")
