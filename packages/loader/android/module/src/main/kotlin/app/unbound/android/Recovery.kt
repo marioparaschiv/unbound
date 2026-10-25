@@ -4,14 +4,21 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.Icon
 import android.os.Bundle
 import android.widget.Toast
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
 import org.json.JSONObject
+import kotlin.math.roundToInt
 
 object Recovery {
     private const val SHORTCUT_ID = "unbound-recovery"
+    private const val ICON_SIZE_DP = 108
+    private const val GLYPH_INSET = 0.3f
     private val actionToggle by lazy { NativeBridge.nativeToolbox("recovery-shortcut-action", null).orEmpty() }
 
     @Volatile
@@ -70,15 +77,29 @@ object Recovery {
         if (result.optBoolean("restartRequired")) Platform.restartApp()
     }
 
+    private fun shortcutIcon(activity: Activity): Icon? = runCatching {
+        val size = (ICON_SIZE_DP * activity.resources.displayMetrics.density).roundToInt()
+        val inset = (size * GLYPH_INSET).roundToInt()
+        val glyph = activity.getDrawable(android.R.drawable.ic_menu_revert)?.mutate() ?: return null
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawColor(Color.rgb(88, 101, 242))
+        glyph.setTint(Color.WHITE)
+        glyph.setBounds(inset, inset, size - inset, size - inset)
+        glyph.draw(canvas)
+        Icon.createWithAdaptiveBitmap(bitmap)
+    }.getOrNull()
+
     private fun publishShortcut(activity: Activity) {
         val manager = activity.getSystemService(ShortcutManager::class.java) ?: return
         val label = NativeBridge.nativePreference("recovery-label", null).orEmpty()
         val intent = Intent(actionToggle).setClassName(activity.packageName, activity.javaClass.name)
-        val shortcut = ShortcutInfo.Builder(activity, SHORTCUT_ID)
+        val builder = ShortcutInfo.Builder(activity, SHORTCUT_ID)
             .setShortLabel(label)
             .setLongLabel(label)
             .setIntent(intent)
-            .build()
+        shortcutIcon(activity)?.let(builder::setIcon)
+        val shortcut = builder.build()
         runCatching { manager.addDynamicShortcuts(listOf(shortcut)) }
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to publish the Recovery Mode shortcut", it) }
     }
