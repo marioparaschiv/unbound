@@ -1,8 +1,10 @@
 import {
 	getNativeModule,
+	NativePlatform,
 	type DCDFileManagerEncoding,
 	type DCDFileManagerType,
 } from '~/api/native';
+import { unboundRelativePath } from '~/lib/unbound-path';
 
 const FileManager: DCDFileManagerType = getNativeModule(
 	'NativeFileModule',
@@ -41,11 +43,18 @@ export function write(path: string, content: string, encoding: DCDFileManagerEnc
 }
 
 /**
- * @description Removes a file within {@link Documents}.
- * @param path The file path to remove, relative to {@link Documents}.
- * @returns A promise resolving to whether the file was removed.
+ * @description Removes a file or a whole folder within {@link Documents}.
+ * @param path The path to remove, relative to {@link Documents}.
+ * @returns A promise resolving to whether anything was removed.
  */
 export function rm(path: string): Promise<boolean> {
+	const relative = unboundRelativePath(path);
+	const files = NativePlatform?.files;
+
+	if (relative && files) {
+		return Promise.resolve(files.remove(relative));
+	}
+
 	return FileManager.removeFile('documents', path);
 }
 
