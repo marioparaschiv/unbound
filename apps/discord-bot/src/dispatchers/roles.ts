@@ -10,6 +10,7 @@ import {
 } from '~/lib/constants';
 import { type ContributorCache, createContributorCache } from '~/lib/github-contributors';
 import createSerialQueue from '~/runtime/serial-queue';
+import type { IdConstantName } from '~/lib/constants';
 import { member, roleGrant } from '~/db/schema';
 import type { Database } from '~/db/database';
 
@@ -62,6 +63,7 @@ export type RolesOptions = {
 export type RolesDispatcher = {
 	name: 'roles';
 	channel: 'member_changed';
+	requires: readonly IdConstantName[];
 	reconcile: (context: RolesContext) => Promise<void>;
 	handle: (payload: string, context: RolesContext) => Promise<void>;
 	/** Resolves once every queued sync, including joins, has settled. */
@@ -395,6 +397,7 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 	return {
 		name: 'roles',
 		channel: 'member_changed',
+		requires: ['CONTRIBUTOR_ROLE_ID', 'ADDON_DEVELOPER_ROLE_ID', 'SPONSOR_ROLE_ID'],
 		reconcile(current) {
 			attach(current);
 

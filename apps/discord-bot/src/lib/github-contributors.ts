@@ -1,6 +1,8 @@
 import { createLogger } from '@unbound-app/logger';
 import { z } from 'zod';
 
+import { envSchema } from '~/lib/env';
+
 const logger = createLogger('Bot', 'Contributors');
 
 /** Narrower than `typeof fetch`, which Bun extends with `preconnect`; `globalThis.fetch` is assignable. */
@@ -152,7 +154,7 @@ export async function fetchContributorIds(
 export function createContributorCache(options: ContributorCacheOptions = {}): ContributorCache {
 	const {
 		fetch = globalThis.fetch,
-		token = process.env.GITHUB_TOKEN,
+		token = envSchema.shape.GITHUB_TOKEN.parse(process.env.GITHUB_TOKEN),
 		refreshMs = CONTRIBUTOR_REFRESH_MS,
 		now = Date.now,
 	} = options;
