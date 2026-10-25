@@ -34,8 +34,6 @@ object Themes {
     private var patcher: Patcher? = null
 
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
-        if (Recovery.isEnabled()) return
-
         val patcher = Patcher(classLoader.loadClass(THEME_OBJECT), classLoader.loadClass(LAZY), classLoader)
         this.patcher = patcher
         val manager = classLoader.loadClass(THEME_MANAGER)

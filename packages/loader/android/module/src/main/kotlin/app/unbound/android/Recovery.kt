@@ -55,8 +55,6 @@ object Recovery {
             }
     }
 
-    fun isEnabled(): Boolean = NativeBridge.preferenceEnabled("recovery")
-
     private fun isLauncherActivity(activity: Activity): Boolean {
         val launcher = activity.packageManager.getLaunchIntentForPackage(activity.packageName)?.component ?: return false
         val info = runCatching { activity.packageManager.getActivityInfo(launcher, 0) }.getOrNull()
