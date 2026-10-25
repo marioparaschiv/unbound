@@ -5,6 +5,7 @@
 #import "CoreConversions.h"
 #import "NativePlatform.h"
 
+#import "AddonsCore.h"
 #import "FileSystem.h"
 #import "SettingsCore.h"
 #import "Utilities.h"
@@ -45,6 +46,7 @@ void registerNativePlatformProvider(void)
     };
     provider->documents = toStdString(FileSystem.documents);
     provider->settings  = &UnboundSettingsStore();
+    provider->fonts     = [] { return UnboundFontCatalog(); };
 
     setNativePlatformProvider(provider);
 }

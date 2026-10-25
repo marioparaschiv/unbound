@@ -297,6 +297,8 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.isServing     = env->GetStaticMethodID(bridge, "isServing", "(Ljava/lang/String;I)Z");
     gCallbacks.availableFonts =
         env->GetStaticMethodID(bridge, "availableFonts", "()[Ljava/lang/String;");
+    gCallbacks.appFonts = env->GetStaticMethodID(bridge, "appFonts", "()[Ljava/lang/String;");
+    gCallbacks.appFontBytes = env->GetStaticMethodID(bridge, "appFontBytes", "(Ljava/lang/String;)[B");
     gCallbacks.alert = env->GetStaticMethodID(bridge, "alert", "(Ljava/lang/String;)V");
     gCallbacks.onBundleExecuted = env->GetStaticMethodID(bridge, "onBundleExecuted", "()V");
 
@@ -313,7 +315,7 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
            gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&
            gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure && gCallbacks.fetchText &&
-           gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing && gCallbacks.availableFonts &&
+           gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing && gCallbacks.availableFonts && gCallbacks.appFonts && gCallbacks.appFontBytes &&
            gCallbacks.alert && gCallbacks.onBundleExecuted;
 }
 

@@ -8,7 +8,12 @@
 
 namespace loader
 {
-    static constexpr uint16_t kFullNameID     = 4;
+    static constexpr uint16_t kFamilyID            = 1;
+    static constexpr uint16_t kStyleID             = 2;
+    static constexpr uint16_t kFullNameID          = 4;
+    static constexpr uint16_t kPostScriptNameID    = 6;
+    static constexpr uint16_t kTypographicFamilyID = 16;
+    static constexpr uint16_t kTypographicStyleID  = 17;
     static constexpr uint16_t kWindowsPlatform = 3;
     static constexpr uint16_t kMacPlatform     = 1;
     static constexpr uint16_t kEnglishUS       = 0x409;
@@ -117,7 +122,7 @@ namespace loader
         return std::nullopt;
     }
 
-    static std::optional<std::string> fullNameFromNameTable(const std::string &table)
+    static std::optional<std::string> nameFromNameTable(const std::string &table, uint16_t wantedID)
     {
         const auto count   = readU16(table, 2);
         const auto storage = readU16(table, 4);
@@ -137,7 +142,7 @@ namespace loader
             const auto   nameID   = readU16(table, record + 6);
             const auto   length   = readU16(table, record + 8);
             const auto   offset   = readU16(table, record + 10);
-            if (!platform || !language || !nameID || !length || !offset || *nameID != kFullNameID)
+            if (!platform || !language || !nameID || !length || !offset || *nameID != wantedID)
             {
                 continue;
             }
@@ -186,7 +191,7 @@ namespace loader
         {
             return std::nullopt;
         }
-        return fullNameFromNameTable(data.substr(table->offset, table->length));
+        return nameFromNameTable(data.substr(table->offset, table->length), kFullNameID);
     }
 
     static std::optional<std::string> readRange(std::ifstream &file, size_t offset, size_t length)
@@ -201,7 +206,7 @@ namespace loader
         return buffer;
     }
 
-    std::optional<std::string> fontFullName(const std::string &path)
+    static std::optional<std::string> nameTableOfFile(const std::string &path)
     {
         std::ifstream file(path, std::ios::binary);
         if (!file)
@@ -224,9 +229,95 @@ namespace loader
         {
             return std::nullopt;
         }
+        return readRange(file, location->offset, location->length);
+    }
 
-        const auto table = readRange(file, location->offset, location->length);
-        return table ? fullNameFromNameTable(*table) : std::nullopt;
+    static std::optional<FontNames> namesFromTable(const std::string &table)
+    {
+        FontNames names;
+        names.postScript = nameFromNameTable(table, kPostScriptNameID);
+        names.full       = nameFromNameTable(table, kFullNameID);
+        names.family     = nameFromNameTable(table, kTypographicFamilyID);
+        if (!names.family)
+        {
+            names.family = nameFromNameTable(table, kFamilyID);
+        }
+        names.style = nameFromNameTable(table, kTypographicStyleID);
+        if (!names.style)
+        {
+            names.style = nameFromNameTable(table, kStyleID);
+        }
+        if (!names.postScript && !names.full)
+        {
+            return std::nullopt;
+        }
+        return names;
+    }
+
+    std::optional<FontNames> fontNames(const std::string &path)
+    {
+        const auto table = nameTableOfFile(path);
+        return table ? namesFromTable(*table) : std::nullopt;
+    }
+
+    std::optional<FontNames> fontNamesFromData(const std::string &data)
+    {
+        const auto fontOffset = fontOffsetIn(data);
+        const auto table      = fontOffset ? nameTableIn(data, *fontOffset) : std::nullopt;
+        if (!table || table->offset + table->length > data.size())
+        {
+            return std::nullopt;
+        }
+        return namesFromTable(data.substr(table->offset, table->length));
+    }
+
+    std::optional<std::string> fontFullName(const std::string &path)
+    {
+        const auto names = fontNames(path);
+        return names ? names->full : std::nullopt;
+    }
+
+    static std::string fileStem(const std::string &path)
+    {
+        const size_t slash = path.find_last_of('/');
+        const std::string file  = slash == std::string::npos ? path : path.substr(slash + 1);
+        const size_t dot   = file.find_last_of('.');
+        return dot == std::string::npos ? file : file.substr(0, dot);
+    }
+
+    static nlohmann::json entryFromNames(const std::optional<FontNames> &names, const std::string &path,
+                                         const std::string &source, const std::string &fallbackName)
+    {
+        const std::string name = names && names->postScript && !names->postScript->empty() ? *names->postScript
+                                 : names && names->full && !names->full->empty()           ? *names->full
+                                                                                           : fallbackName;
+
+        nlohmann::json entry = {{"name", name},
+                                {"displayName", names && names->full ? *names->full : name},
+                                {"path", path},
+                                {"source", source}};
+        if (names && names->family)
+        {
+            entry["family"] = *names->family;
+        }
+        if (names && names->style)
+        {
+            entry["style"] = *names->style;
+        }
+        return entry;
+    }
+
+    nlohmann::json fontEntry(const std::string &path, const std::string &source)
+    {
+        return entryFromNames(fontNames(path), path, source, fileStem(path));
+    }
+
+    nlohmann::json fontEntryFromData(const std::string &data, const std::string &path, const std::string &source,
+                                     const std::string &name)
+    {
+        nlohmann::json entry = entryFromNames(fontNamesFromData(data), path, source, name);
+        entry["name"]        = name;
+        return entry;
     }
 
     static std::optional<std::string> fontName(const nlohmann::json &font)
@@ -242,6 +333,16 @@ namespace loader
         return std::nullopt;
     }
 
+    static bool fontMatches(const nlohmann::json &font, const std::string &name)
+    {
+        if (fontName(font) == name)
+        {
+            return true;
+        }
+        return font.is_object() && font.contains("displayName") && font["displayName"].is_string() &&
+               font["displayName"].get<std::string>() == name;
+    }
+
     static std::optional<FontTarget> findFont(const nlohmann::json &fonts, const std::string &name)
     {
         if (!fonts.is_array())
@@ -250,11 +351,11 @@ namespace loader
         }
         for (const nlohmann::json &font : fonts)
         {
-            if (fontName(font) != name)
+            if (!fontMatches(font, name))
             {
                 continue;
             }
-            FontTarget target{name, std::nullopt};
+            FontTarget target{fontName(font).value_or(name), std::nullopt};
             if (font.is_object() && font.contains("path") && font["path"].is_string())
             {
                 target.path = font["path"].get<std::string>();
@@ -283,22 +384,65 @@ namespace loader
         return "Failed to replace \"" + family + "\" with \"" + name + "\". The requested font isn't loaded.";
     }
 
-    nlohmann::json systemFontsFromFiles(const std::vector<std::string> &paths)
+    nlohmann::json systemFontsFromFiles(const std::vector<std::string> &paths, const std::string &source)
     {
         nlohmann::json        fonts = nlohmann::json::array();
         std::set<std::string> seen;
         for (const std::string &path : paths)
         {
-            const auto name = fontFullName(path);
-            if (name && !name->empty() && seen.insert(*name).second)
+            if (!fontNames(path))
             {
-                fonts.push_back({{"name", *name}, {"path", path}});
+                continue;
+            }
+            nlohmann::json entry = fontEntry(path, source);
+            if (seen.insert(entry["name"].get<std::string>()).second)
+            {
+                fonts.push_back(std::move(entry));
             }
         }
         std::sort(fonts.begin(), fonts.end(), [](const nlohmann::json &left, const nlohmann::json &right) {
             return left["name"].get<std::string>() < right["name"].get<std::string>();
         });
         return fonts;
+    }
+
+    nlohmann::json fontCatalog(const nlohmann::json &customFonts, const nlohmann::json &platformFonts)
+    {
+        nlohmann::json        catalog = nlohmann::json::array();
+        std::set<std::string> seen;
+        for (const nlohmann::json *list : {&customFonts, &platformFonts})
+        {
+            if (!list->is_array())
+            {
+                continue;
+            }
+            for (const nlohmann::json &font : *list)
+            {
+                const auto name = fontName(font);
+                if (!name || name->empty() || !seen.insert(*name).second)
+                {
+                    continue;
+                }
+                catalog.push_back(font.is_object() ? font
+                                                   : nlohmann::json{{"name", *name},
+                                                                    {"displayName", *name},
+                                                                    {"source", "system"}});
+            }
+        }
+        return catalog;
+    }
+
+    nlohmann::json fontNamesOf(const nlohmann::json &fonts)
+    {
+        nlohmann::json names = nlohmann::json::array();
+        for (const nlohmann::json &font : fonts)
+        {
+            if (const auto name = fontName(font))
+            {
+                names.push_back(*name);
+            }
+        }
+        return names;
     }
 
     std::optional<std::string> fontOverrideFor(const nlohmann::json &overrides, const std::string &family)

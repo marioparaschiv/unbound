@@ -4,14 +4,6 @@
 static NSDictionary<NSString *, NSString *> *overrides   = nil;
 static NSMutableSet<NSString *>             *loadedPaths = nil;
 
-+ (NSArray *)getAvailableFonts
-{
-    CFArrayRef available = CTFontManagerCopyAvailableFontFamilyNames();
-    NSArray   *fonts     = (__bridge NSArray *) available;
-
-    return fonts ? fonts : @[];
-}
-
 + (void)init
 {
     if (!loadedPaths)
@@ -43,7 +35,7 @@ static NSMutableSet<NSString *>             *loadedPaths = nil;
 
 + (void)apply
 {
-    NSDictionary<NSString *, NSDictionary *> *targets = [CoreBridge fontOverrideTargets:[Fonts getAvailableFonts]];
+    NSDictionary<NSString *, NSDictionary *> *targets = [CoreBridge fontOverrideTargets];
     NSMutableDictionary<NSString *, NSString *> *resolved = [NSMutableDictionary dictionary];
 
     for (NSString *family in targets)

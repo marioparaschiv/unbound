@@ -554,6 +554,21 @@ export type NativeSettingsChange =
 	| { store: string; key: string; remove: true }
 	| { store: string; clear: true };
 
+export type NativeFontSource = 'app' | 'system' | 'custom';
+
+export type NativeFontEntry = {
+	readonly name: string;
+	readonly displayName: string;
+	readonly family?: string;
+	readonly style?: string;
+	readonly path?: string;
+	readonly source: NativeFontSource;
+};
+
+export type NativePlatformFonts = {
+	list(): NativeFontEntry[];
+};
+
 export type NativePlatformSettings = {
 	apply(changes: readonly NativeSettingsChange[]): boolean;
 };
@@ -566,6 +581,7 @@ export type NativePlatformBridge = {
 	readonly app: NativePlatformApp;
 	readonly files?: NativePlatformFiles;
 	readonly settings?: NativePlatformSettings;
+	readonly fonts?: NativePlatformFonts;
 	readonly ios?: NativePlatformIOSBridge;
 };
 

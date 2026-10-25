@@ -2,6 +2,7 @@
 #import <jsi/jsi.h>
 
 #import "AddonsCore.h"
+#include "LoaderFonts.h"
 #import "CoreBridge.h"
 #import "Discord.h"
 #import "HotReload.h"
@@ -159,11 +160,7 @@ public:
 
     loader::PreloadPayload preloadPayload() override
     {
-        nlohmann::json availableFonts = nlohmann::json::array();
-        for (NSString *family in [Fonts getAvailableFonts])
-        {
-            availableFonts.push_back(toStdString(family));
-        }
+        nlohmann::json availableFonts = loader::fontNamesOf(UnboundPlatformFonts());
         return loader::makePreloadPayload(UnboundSettingsStore(), UnboundAddonState(), availableFonts,
                                           toStdString([Utilities getCurrentDylibName]));
     }

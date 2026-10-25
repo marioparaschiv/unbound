@@ -59,6 +59,8 @@ namespace unbound::android
         jmethodID devServerHost      = nullptr;
         jmethodID isServing          = nullptr;
         jmethodID availableFonts     = nullptr;
+        jmethodID appFonts           = nullptr;
+        jmethodID appFontBytes       = nullptr;
         jmethodID alert              = nullptr;
         jmethodID onBundleExecuted   = nullptr;
     };
@@ -113,6 +115,8 @@ namespace unbound::android
             const std::map<std::string, std::string> &headers, const loader::DownloadPolicy &policy);
         nlohmann::json availableFonts();
         const nlohmann::json &systemFonts();
+        nlohmann::json        appFonts();
+        nlohmann::json        fontCatalog();
         std::optional<std::string> devServerHost();
         bool isServing(const std::string &url, double timeoutSeconds);
 

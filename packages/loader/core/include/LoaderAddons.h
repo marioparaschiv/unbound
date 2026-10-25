@@ -9,16 +9,14 @@
 
 namespace loader
 {
-    using FontNameResolver = std::function<std::string(const std::string &path)>;
-
     nlohmann::json scanPlugins(const std::string &documents);
     nlohmann::json scanThemes(const std::string &documents);
-    nlohmann::json scanFonts(const std::string &documents, const FontNameResolver &resolveName);
+    nlohmann::json scanFonts(const std::string &documents);
 
     class AddonState
     {
     public:
-        void scan(const std::string &documents, const FontNameResolver &resolveName = nullptr);
+        void scan(const std::string &documents);
 
         nlohmann::json plugins() const;
         nlohmann::json themes() const;

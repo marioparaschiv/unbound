@@ -480,6 +480,15 @@ export type NativeFabricSize = {
 	height: number;
 };
 export type NativeFabricSurface = NativeHandle;
+export type NativeFontEntry = {
+	readonly name: string;
+	readonly displayName: string;
+	readonly family?: string;
+	readonly style?: string;
+	readonly path?: string;
+	readonly source: NativeFontSource;
+};
+export type NativeFontSource = 'app' | 'system' | 'custom';
 /** An opaque reference to a native object. Only the bridge creates handles; plugins pass them back. */
 export type NativeHandle = {
 	readonly [nativeHandle]: true;
@@ -699,6 +708,7 @@ export type NativePlatformBridge = {
 	readonly app: NativePlatformApp;
 	readonly files?: NativePlatformFiles;
 	readonly settings?: NativePlatformSettings;
+	readonly fonts?: NativePlatformFonts;
 	readonly ios?: NativePlatformIOSBridge;
 };
 export type NativePlatformDevice = {
@@ -711,6 +721,9 @@ export type NativePlatformDevice = {
 };
 export type NativePlatformFiles = {
 	remove(path: string): boolean;
+};
+export type NativePlatformFonts = {
+	list(): NativeFontEntry[];
 };
 export type NativePlatformIOSBridge = {
 	isVerifiedBuild(): boolean;

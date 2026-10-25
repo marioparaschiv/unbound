@@ -3,6 +3,8 @@
 #include <streambuf>
 
 #import "CoreConversions.h"
+#import <CoreText/CoreText.h>
+
 #import "AddonsCore.h"
 #import "CoreBridge.h"
 #import "FileSystem.h"
@@ -92,6 +94,67 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
     return color ? uiColor(*color) : nil;
 }
 
+static std::string fontAttribute(CTFontDescriptorRef descriptor, CFStringRef attribute)
+{
+    NSString *value = CFBridgingRelease(CTFontDescriptorCopyAttribute(descriptor, attribute));
+    return [value isKindOfClass:[NSString class]] ? toStdString(value) : std::string();
+}
+
+static nlohmann::json platformFontEntry(NSString *postScriptName, NSString *appPath)
+{
+    CTFontDescriptorRef descriptor =
+        CTFontDescriptorCreateWithNameAndSize((__bridge CFStringRef) postScriptName, 0);
+    nlohmann::json entry = {{"name", toStdString(postScriptName)}, {"source", "system"}};
+    if (!descriptor)
+    {
+        entry["displayName"] = entry["name"];
+        return entry;
+    }
+
+    const std::string display = fontAttribute(descriptor, kCTFontDisplayNameAttribute);
+    const std::string family  = fontAttribute(descriptor, kCTFontFamilyNameAttribute);
+    const std::string style   = fontAttribute(descriptor, kCTFontStyleNameAttribute);
+    NSURL            *url     = CFBridgingRelease(CTFontDescriptorCopyAttribute(descriptor, kCTFontURLAttribute));
+    CFRelease(descriptor);
+
+    entry["displayName"] = display.empty() ? entry["name"] : nlohmann::json(display);
+    if (!family.empty())
+    {
+        entry["family"] = family;
+    }
+    if (!style.empty())
+    {
+        entry["style"] = style;
+    }
+    if ([url isKindOfClass:[NSURL class]] && [url.path hasPrefix:appPath])
+    {
+        entry["source"] = "app";
+    }
+    return entry;
+}
+
+const nlohmann::json &UnboundPlatformFonts()
+{
+    static nlohmann::json  fonts;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSArray  *names   = CFBridgingRelease(CTFontManagerCopyAvailablePostScriptNames());
+        NSString *appPath = NSBundle.mainBundle.bundlePath;
+        nlohmann::json entries = nlohmann::json::array();
+        for (NSString *name in [names sortedArrayUsingSelector:@selector(compare:)])
+        {
+            entries.push_back(platformFontEntry(name, appPath));
+        }
+        fonts = loader::fontCatalog(nlohmann::json::array(), entries);
+    });
+    return fonts;
+}
+
+nlohmann::json UnboundFontCatalog()
+{
+    return loader::fontCatalog(UnboundAddonState().fonts(), UnboundPlatformFonts());
+}
+
 + (NSDictionary *)themeColorsForId:(NSString *)themeId
 {
     std::optional<nlohmann::json> theme = UnboundAddonState().theme(toStdString(themeId));
@@ -135,13 +198,9 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
     return arrayFromJSON(UnboundAddonState().themes());
 }
 
-+ (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets:(NSArray<NSString *> *)systemFonts
++ (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets
 {
-    nlohmann::json system = nlohmann::json::array();
-    for (NSString *family in systemFonts)
-    {
-        system.push_back(toStdString(family));
-    }
+    const nlohmann::json &system = UnboundPlatformFonts();
 
     nlohmann::json custom    = UnboundAddonState().fonts();
     nlohmann::json overrides = loader::preferences::fontOverrides(UnboundSettingsStore());

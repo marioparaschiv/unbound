@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <vector>
 
 static void appendU16(std::string &data, uint16_t value)
 {
@@ -17,13 +18,51 @@ static void appendU32(std::string &data, uint32_t value)
     appendU16(data, static_cast<uint16_t>(value & 0xFFFF));
 }
 
-static std::string syntheticFont(const std::string &fullName)
+static std::string utf16(const std::string &text)
 {
-    std::string name;
-    for (char character : fullName)
+    std::string encoded;
+    for (char character : text)
     {
-        appendU16(name, static_cast<uint16_t>(character));
+        appendU16(encoded, static_cast<uint16_t>(character));
     }
+    return encoded;
+}
+
+static std::string syntheticFont(const std::string &fullName, const std::string &postScriptName = "",
+                                 const std::string &family = "")
+{
+    struct Record
+    {
+        uint16_t    id;
+        std::string text;
+    };
+    std::vector<Record> records = {{4, utf16(fullName)}};
+    if (!postScriptName.empty())
+    {
+        records.push_back({6, utf16(postScriptName)});
+    }
+    if (!family.empty())
+    {
+        records.push_back({1, utf16(family)});
+    }
+
+    const uint16_t storage = static_cast<uint16_t>(6 + records.size() * 12);
+    std::string    strings;
+    std::string    table;
+    appendU16(table, 0);
+    appendU16(table, static_cast<uint16_t>(records.size()));
+    appendU16(table, storage);
+    for (const Record &record : records)
+    {
+        appendU16(table, 3);
+        appendU16(table, 1);
+        appendU16(table, 0x409);
+        appendU16(table, record.id);
+        appendU16(table, static_cast<uint16_t>(record.text.size()));
+        appendU16(table, static_cast<uint16_t>(strings.size()));
+        strings += record.text;
+    }
+    table += strings;
 
     std::string font;
     appendU32(font, 0x00010000);
@@ -34,18 +73,8 @@ static std::string syntheticFont(const std::string &fullName)
     appendU32(font, 0x6E616D65);
     appendU32(font, 0);
     appendU32(font, 28);
-    appendU32(font, static_cast<uint32_t>(18 + name.size()));
-
-    appendU16(font, 0);
-    appendU16(font, 1);
-    appendU16(font, 18);
-    appendU16(font, 3);
-    appendU16(font, 1);
-    appendU16(font, 0x409);
-    appendU16(font, 4);
-    appendU16(font, static_cast<uint16_t>(name.size()));
-    appendU16(font, 0);
-    return font + name;
+    appendU32(font, static_cast<uint32_t>(table.size()));
+    return font + table;
 }
 
 int main()
@@ -79,8 +108,30 @@ int main()
     assert(loader::fontFullName(first) == std::optional<std::string>("Parity Sans Bold"));
     assert(!loader::fontFullName(broken));
 
-    nlohmann::json system = loader::systemFontsFromFiles({second, first, broken});
+    nlohmann::json system = loader::systemFontsFromFiles({second, first, broken}, "system");
     assert(system.size() == 1 && system[0]["name"] == "Parity Sans Bold" && system[0]["path"] == second);
+    assert(system[0]["source"] == "system");
+
+    const auto named = (directory / "ggsans-Bold.ttf").string();
+    std::ofstream(named, std::ios::binary) << syntheticFont("gg sans Bold", "ggsans-Bold", "gg sans");
+    auto names = loader::fontNames(named);
+    assert(names && names->postScript == std::optional<std::string>("ggsans-Bold"));
+    assert(names->family == std::optional<std::string>("gg sans"));
+    nlohmann::json entry = loader::fontEntry(named, "app");
+    assert(entry["name"] == "ggsans-Bold" && entry["displayName"] == "gg sans Bold" && entry["family"] == "gg sans");
+    assert(loader::resolveFontTarget(nlohmann::json::array(), nlohmann::json::array({entry}), "gg sans Bold")->name ==
+           "ggsans-Bold");
+
+    nlohmann::json fromData = loader::fontEntryFromData(syntheticFont("gg sans Bold", "ggsans-Bold", "gg sans"),
+                                                        "asset:fonts/ggsans-Bold.ttf", "app", "ggsans-Bold");
+    assert(fromData["name"] == "ggsans-Bold" && fromData["displayName"] == "gg sans Bold" && fromData["source"] == "app");
+    nlohmann::json opaque = loader::fontEntryFromData("nope", "asset:fonts/x.ttf", "app", "x");
+    assert(opaque["name"] == "x" && opaque["displayName"] == "x");
+
+    nlohmann::json catalog =
+        loader::fontCatalog(nlohmann::json::array({entry}), nlohmann::json::array({entry, "Helvetica"}));
+    assert(catalog.size() == 2 && catalog[1]["name"] == "Helvetica");
+    assert(loader::fontNamesOf(catalog) == nlohmann::json::array({"ggsans-Bold", "Helvetica"}));
 
     nlohmann::json custom = nlohmann::json::array({{{"name", "Ginto"}, {"path", "/fonts/Ginto.otf"}}});
     auto ginto = loader::resolveFontTarget(custom, system, "Ginto");

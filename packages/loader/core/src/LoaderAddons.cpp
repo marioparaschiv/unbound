@@ -186,7 +186,7 @@ namespace loader
         return themes;
     }
 
-    nlohmann::json scanFonts(const std::string &documents, const FontNameResolver &resolveName)
+    nlohmann::json scanFonts(const std::string &documents)
     {
         nlohmann::json fonts = nlohmann::json::array();
 
@@ -197,29 +197,20 @@ namespace loader
                                    return;
                                }
 
-                               std::string name = resolveName ? resolveName(path) : std::string();
-                               if (name.empty())
-                               {
-                                   name = fontFullName(path).value_or("");
-                               }
-                               if (name.empty())
-                               {
-                                   size_t dot = file.find_last_of('.');
-                                   name       = dot == std::string::npos ? file : file.substr(0, dot);
-                               }
-
+                               nlohmann::json entry = fontEntry(path, "custom");
+                               entry["file"]        = file;
                                log(LogLevel::Info, "fonts", "Registering font: " + path);
-                               fonts.push_back({{"name", name}, {"file", file}, {"path", path}});
+                               fonts.push_back(std::move(entry));
                            });
 
         return fonts;
     }
 
-    void AddonState::scan(const std::string &documents, const FontNameResolver &resolveName)
+    void AddonState::scan(const std::string &documents)
     {
         nlohmann::json plugins = scanPlugins(documents);
         nlohmann::json themes  = scanThemes(documents);
-        nlohmann::json fonts   = scanFonts(documents, resolveName);
+        nlohmann::json fonts   = scanFonts(documents);
 
         std::lock_guard<std::mutex> lock(mutex_);
         plugins_ = std::move(plugins);

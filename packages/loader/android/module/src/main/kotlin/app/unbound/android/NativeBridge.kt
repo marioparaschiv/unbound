@@ -276,6 +276,22 @@ object NativeBridge {
         }
     }.getOrDefault(false)
 
+    private const val APP_FONTS_DIRECTORY = "fonts"
+
+    @JvmStatic
+    fun appFonts(): Array<String> = runCatching {
+        val assets = Platform.application()?.assets ?: return emptyArray()
+        assets.list(APP_FONTS_DIRECTORY).orEmpty()
+            .filter { it.endsWith(".ttf", true) || it.endsWith(".otf", true) }
+            .map { "$APP_FONTS_DIRECTORY/$it" }
+            .toTypedArray()
+    }.getOrDefault(emptyArray())
+
+    @JvmStatic
+    fun appFontBytes(path: String): ByteArray? = runCatching {
+        Platform.application()?.assets?.open(path)?.use { it.readBytes() }
+    }.getOrNull()
+
     @JvmStatic
     fun availableFonts(): Array<String> = runCatching {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return emptyArray()

@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)scanAddons;
 + (NSArray *)themes;
 + (NSArray<NSDictionary *> *)fonts;
-+ (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets:(NSArray<NSString *> *)systemFonts;
++ (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets;
 
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument;
 + (NSDictionary *)toolboxObject:(NSString *)action argument:(NSString *)argument;

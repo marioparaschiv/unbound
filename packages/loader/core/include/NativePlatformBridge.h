@@ -28,6 +28,7 @@ namespace loader
         std::function<std::optional<std::string>()> virtualDeviceHost;
         std::string                     documents;
         SettingsStore                  *settings = nullptr;
+        std::function<nlohmann::json()> fonts;
     };
 
     void setNativePlatformProvider(std::shared_ptr<NativePlatformProvider> provider);

@@ -49,14 +49,12 @@ int main()
     assert(themes[0]["bundle"].contains("semantic"));
 
     write(root / "Fonts" / "Inter.ttf", "font");
-    nlohmann::json fonts = loader::scanFonts(root.string(), nullptr);
+    nlohmann::json fonts = loader::scanFonts(root.string());
     assert(fonts.size() == 1);
     assert(fonts[0]["name"] == "Inter");
+    assert(fonts[0]["displayName"] == "Inter");
+    assert(fonts[0]["source"] == "custom");
     assert(fonts[0]["file"] == "Inter.ttf");
-
-    nlohmann::json named = loader::scanFonts(
-        root.string(), [](const std::string &) { return std::string("Inter Display"); });
-    assert(named[0]["name"] == "Inter Display");
 
     loader::PreloadPayload payload;
     payload.settings = R"({"unbound":{}})";

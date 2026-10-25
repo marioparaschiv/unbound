@@ -12,7 +12,6 @@
 + (void)init;
 + (void)loadFont:(NSString *)path;
 + (NSString *)getFontNameByRef:(CGFontRef)ref;
-+ (NSArray *)getAvailableFonts;
 
 
 + (NSDictionary<NSString *, NSString *> *)overrides;

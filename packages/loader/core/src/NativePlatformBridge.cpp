@@ -159,6 +159,17 @@ namespace loader
                                  return evaluateBytecode(rt, std::move(bytecode), tag);
                              }));
 
+        if (provider->fonts)
+        {
+            jsi::Object fonts(runtime);
+            auto        list = provider->fonts;
+            fonts.setProperty(runtime, "list",
+                              native::makeFunction(runtime, "list", 0,
+                                                   [list](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *,
+                                                          size_t) -> jsi::Value { return toJSIValue(rt, list()); }));
+            platform.setProperty(runtime, "fonts", std::move(fonts));
+        }
+
         if (provider->settings)
         {
             jsi::Object settings(runtime);
