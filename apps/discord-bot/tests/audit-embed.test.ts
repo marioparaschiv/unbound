@@ -103,6 +103,16 @@ describe('buildAuditEmbed', () => {
 		expect(field(other, 'Subject')).toBe('Silent Typing');
 	});
 
+	test('escapes brackets in the subject name so the link text stays whole', () => {
+		const embed = buildAuditEmbed(
+			event('addon.delisted', {}, { subjectName: 'Evil](https://example.com) [x' }),
+		);
+
+		expect(field(embed, 'Subject')).toBe(
+			'[Evil\\](https://example.com) \\[x](https://unbound.rip/admin/addons/addon-1)',
+		);
+	});
+
 	test('review decisions pick their title and colour from the decision', () => {
 		const rejected = buildAuditEmbed(
 			event('review.decided', { ...SUBMISSION, decision: 'rejected' }),

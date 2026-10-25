@@ -43,6 +43,11 @@ function subjectLink(event: AuditEventRow) {
 	return `${SITE_ORIGIN}/${path}/${encodeURIComponent(event.subjectId)}`;
 }
 
+// A `]` in a subject name would otherwise end the masked link's text early.
+function escapeLinkText(text: string) {
+	return text.replaceAll(/[\\[\]]/g, '\\$&');
+}
+
 function genericKind(event: AuditEventRow): KindEmbed {
 	const json = JSON.stringify(event.data, null, 2) ?? 'null';
 	const room = EMBED_LIMITS.fieldValue - CODE_FENCE.open.length - CODE_FENCE.close.length;
@@ -94,7 +99,11 @@ export function buildAuditEmbed(event: AuditEventRow): APIEmbed {
 	const footer = truncate(`Event #${event.id} · ${event.kind}`, EMBED_LIMITS.footer);
 	const { fields, remaining } = fitFields(
 		[
-			{ name: 'Subject', value: url ? `[${subject}](${url})` : subject, inline: true },
+			{
+				name: 'Subject',
+				value: url ? `[${escapeLinkText(subject)}](${url})` : subject,
+				inline: true,
+			},
 			...kind.fields,
 			...(reasonAsField ? [{ name: 'Reason', value: reasonAsField }] : []),
 		],
