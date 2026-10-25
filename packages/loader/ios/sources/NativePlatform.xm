@@ -4,6 +4,7 @@
 
 #import "NativePlatform.h"
 
+#import "FileSystem.h"
 #import "Utilities.h"
 #import "Utilities+CodeSignature.h"
 
@@ -49,6 +50,7 @@ void registerNativePlatform(facebook::jsi::Runtime &runtime)
         return toStdString([Utilities formatEntitlementsAsPlist:entitlements]);
     };
     provider->appSource = []() { return toStdString([Utilities getAppSource]); };
+    provider->documents = toStdString(FileSystem.documents);
 
     installNativePlatform(runtime, provider);
 }

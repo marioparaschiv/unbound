@@ -81,6 +81,7 @@ export type {
 	NativePlatformApp,
 	NativePlatformBridge,
 	NativePlatformDevice,
+	NativePlatformFiles,
 	NativePlatformIOSBridge,
 	NativePluginBridge,
 	NativePluginCapability,

@@ -62,6 +62,36 @@ namespace loader
         return std::filesystem::remove(path, error);
     }
 
+    static bool staysInside(const std::filesystem::path &relative)
+    {
+        if (relative.empty() || relative.is_absolute())
+        {
+            return false;
+        }
+
+        for (const auto &component : relative)
+        {
+            if (component == ".." || component == ".")
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool removeTree(const std::string &root, const std::string &relative)
+    {
+        const std::filesystem::path path(relative);
+        if (root.empty() || !staysInside(path))
+        {
+            return false;
+        }
+
+        std::error_code error;
+        const auto      removed = std::filesystem::remove_all(std::filesystem::path(root) / path, error);
+        return !error && removed > 0;
+    }
+
     uint64_t fileSize(const std::string &path)
     {
         std::error_code error;

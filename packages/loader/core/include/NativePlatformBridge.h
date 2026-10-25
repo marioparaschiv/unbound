@@ -21,6 +21,7 @@ namespace loader
         std::function<nlohmann::json()> entitlements;
         std::function<std::string()>    entitlementsAsPlist;
         std::function<std::string()>    appSource;
+        std::string                     documents;
     };
 
     facebook::jsi::Value toJSIValue(facebook::jsi::Runtime &runtime, const nlohmann::json &value);

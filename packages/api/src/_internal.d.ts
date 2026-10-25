@@ -733,6 +733,7 @@ export type NativePlatformBridge = {
 	evaluateBytecode(bytecode: ArrayBuffer, tag?: string): unknown;
 	readonly device: NativePlatformDevice;
 	readonly app: NativePlatformApp;
+	readonly files?: NativePlatformFiles;
 	readonly ios?: NativePlatformIOSBridge;
 };
 export type NativePlatformDevice = {
@@ -741,6 +742,9 @@ export type NativePlatformDevice = {
 	getOSVersionString(): string;
 	isRooted(): boolean;
 	isSystemApp(): boolean;
+};
+export type NativePlatformFiles = {
+	remove(path: string): boolean;
 };
 export type NativePlatformIOSBridge = {
 	isVerifiedBuild(): boolean;

@@ -584,12 +584,17 @@ export type NativePlatformApp = {
 	getAppSource(): string;
 };
 
+export type NativePlatformFiles = {
+	remove(path: string): boolean;
+};
+
 export type NativePlatformBridge = {
 	readonly platform: NativePluginPlatform;
 	// UNKNOWN: returns the completion value of arbitrary evaluated bytecode.
 	evaluateBytecode(bytecode: ArrayBuffer, tag?: string): unknown;
 	readonly device: NativePlatformDevice;
 	readonly app: NativePlatformApp;
+	readonly files?: NativePlatformFiles;
 	readonly ios?: NativePlatformIOSBridge;
 };
 

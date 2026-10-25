@@ -1,5 +1,6 @@
 #include "NativePlatformBridge.h"
 
+#include "LoaderFiles.h"
 #include "LoaderJSI.h"
 
 namespace loader
@@ -183,6 +184,24 @@ namespace loader
         app.setProperty(runtime, "getAppSource",
                         stringGetter(runtime, "getAppSource", provider->appSource));
         platform.setProperty(runtime, "app", std::move(app));
+
+        if (!provider->documents.empty())
+        {
+            jsi::Object files(runtime);
+            files.setProperty(
+                runtime, "remove",
+                makeHostFunction(runtime, "remove", 1,
+                                 [provider](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
+                                            size_t count) -> jsi::Value {
+                                     if (count == 0 || !args[0].isString())
+                                     {
+                                         return jsi::Value(false);
+                                     }
+                                     return jsi::Value(
+                                         removeTree(provider->documents, args[0].getString(rt).utf8(rt)));
+                                 }));
+            platform.setProperty(runtime, "files", std::move(files));
+        }
 
         platform.setProperty(runtime, "platform", jsi::String::createFromUtf8(runtime, provider->platform));
         runtime.global().setProperty(runtime, "NativePlatform", std::move(platform));

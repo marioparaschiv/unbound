@@ -386,6 +386,7 @@ namespace unbound::android
         provider->isRooted            = flag("isRooted");
         provider->isSystemApp         = flag("isSystemApp");
         provider->appSource           = text("appSource");
+        provider->documents           = configuration_.documents;
         loader::installNativePlatform(runtime, provider);
         registerNativePluginBridge(runtime, callbacks_);
     }
