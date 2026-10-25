@@ -388,6 +388,7 @@ func logosSelector(name, rest string) string {
 func extractNativeReferences(set *compatSourceSet, file compatSourceFile, content string) {
 	base := compatReference{Component: file.component, Platform: file.platform}
 	hooked := ""
+	addsMethod := false
 	lines := strings.Split(content, "\n")
 	for number, line := range lines {
 		location := compatLocation{File: file.path, Line: number + 1}
@@ -417,8 +418,14 @@ func extractNativeReferences(set *compatSourceSet, file compatSourceFile, conten
 				continue
 			}
 			if hooked != "" {
-				if match := logosMethodPattern.FindStringSubmatch(trimmed); match != nil {
+				if match := logosMethodPattern.FindStringSubmatch(trimmed); match != nil && !addsMethod {
 					add(referenceObjCMethod, hooked, logosSelector(match[1], match[2]))
+				}
+				if match := logosMethodPattern.FindStringSubmatch(trimmed); match != nil {
+					addsMethod = false
+				}
+				if strings.HasPrefix(trimmed, "%new") {
+					addsMethod = true
 				}
 			}
 			for _, match := range objcStringClassPattern.FindAllStringSubmatch(line, -1) {
