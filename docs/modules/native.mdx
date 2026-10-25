@@ -137,7 +137,13 @@ if (symbol) {
 }
 ```
 
-The same calls work on iOS and Android. Android has no Objective-C types, so its signatures use the scalar, `cstring`, `pointer`, and struct types. It takes and returns structs as plain `{ name, value }` objects, for example `{ name: 'timespec', value: { tv_sec: 1n, tv_nsec: 0n } }`. The registered structs are `CGPoint`, `CGSize`, `CGVector`, `CGRect`, `NSRange`, `UIEdgeInsets`, `CGAffineTransform`, `timespec`, and `timeval`. `i64` and `u64` results are `BigInt` values.
+Both platforms run the same FFI implementation, so the same calls behave the same way on iOS and Android. Android has no Objective-C types, so its signatures use the scalar, `cstring`, `pointer`, and struct types. iOS adds `object`, `class`, and `selector`.
+
+- A signature takes at most 16 arguments, and no argument can be `void`.
+- `null` or `undefined` passed as a `cstring` becomes a null pointer.
+- Struct arguments can be `{ name, value }` objects, plain field objects, or `objc.struct` values. Struct results have `name` and `value` properties, for example `{ name: 'timespec', value: { tv_sec: 1n, tv_nsec: 0n } }`. On iOS, UIKit and Foundation structs come back as `objc.struct` values, so you can pass them straight to Objective-C calls.
+- The registered structs are `CGPoint`, `CGSize`, `CGVector`, `CGRect`, `NSRange`, `UIEdgeInsets`, `CGAffineTransform`, `timespec`, and `timeval`.
+- `i64` and `u64` results are `BigInt` values.
 
 The v1 bridge does not expose:
 

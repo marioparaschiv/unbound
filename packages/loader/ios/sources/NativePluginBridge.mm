@@ -1,12 +1,8 @@
 #import "NativePluginBridge.h"
 
-#import <dlfcn.h>
-#import <mach/mach.h>
-#import <mach-o/loader.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
 #import <os/signpost.h>
-#import <ptrauth.h>
 #import <substrate.h>
 #import <UIKit/UIKit.h>
 
@@ -19,7 +15,7 @@
 #import <exception>
 #import <memory>
 #import <mutex>
-#import <sstream>
+#import <optional>
 #import <stdexcept>
 #import <string>
 #import <thread>
@@ -30,9 +26,8 @@
 #import "Logger.h"
 #import "NativeAddressValidation.h"
 #import "NativeConversionBudget.h"
-#import "NativeFFITypes.h"
+#import "NativeFFI.h"
 #import "NativeEvaluations.h"
-#import "NativePluginFFI.h"
 #import "NativeNumericValidation.h"
 #import "NativeOperationGate.h"
 #import "NativePluginRoot.h"
@@ -202,25 +197,7 @@ private:
     uint64_t generation_ = 0;
 };
 
-class PointerHost final : public HostObject
-{
-public:
-    explicit PointerHost(void *value, bool callable = false) : value_(value), callable_(callable) {}
-
-    void *value(void) const
-    {
-        return value_;
-    }
-
-    bool callable(void) const
-    {
-        return callable_;
-    }
-
-private:
-    void *value_;
-    bool callable_;
-};
+using loader::ffi::PointerHost;
 
 static Value structFields(Runtime &runtime, NSString *name, NSValue *value);
 
@@ -260,32 +237,10 @@ private:
     __strong id value_;
 };
 
-struct FFITypeDefinition {
-    ffi_type type{};
-    std::vector<ffi_type *> elements;
-};
-
-struct FFITypeSpec {
-    std::string name;
-    ffi_type *type;
-};
-
-struct FFISignature {
-    FFITypeSpec result;
-    std::vector<FFITypeSpec> arguments;
-};
-
-struct FFICallArgument {
-    std::vector<uint8_t> bytes;
-    std::string string;
-    id object;
-    void *pointer;
-};
-
 struct HookSignature {
-    FFITypeSpec result;
-    std::vector<FFITypeSpec> arguments;
-    ffi_cif cif{};
+    loader::ffi::Type result;
+    std::vector<loader::ffi::Type> arguments;
+    std::shared_ptr<loader::ffi::CallInterface> interface;
 };
 
 struct HookState;
@@ -383,10 +338,6 @@ private:
     bool enabled_;
 };
 
-static FFITypeSpec ffiType(Runtime &runtime, const std::string &name);
-static ffi_cif prepareFFICif(Runtime &runtime, const FFITypeSpec &result,
-                             const std::vector<FFITypeSpec> &arguments);
-static Value ffiResult(Runtime &runtime, const FFITypeSpec &spec, const std::vector<uint8_t> &bytes);
 static void dispatchFFIHook(ffi_cif *cif, void *returnValue, void **arguments, void *userData);
 static void dispatchFFIHookBody(ffi_cif *cif, void *returnValue, void **arguments, void *userData);
 static void executeRuntimeAsynchronously(std::function<void(Runtime &)> callback);
@@ -475,16 +426,6 @@ public:
     loader::native::throwCoded(runtime, "NATIVE_WRONG_THREAD", message);
 }
 
-static std::mutex gFFIMutex;
-static std::unordered_map<std::string, std::shared_ptr<FFITypeDefinition>> gFFITypes;
-struct CachedFFICif {
-    ffi_cif cif{};
-    std::vector<ffi_type *> arguments;
-};
-
-static std::mutex gFFICifMutex;
-static std::unordered_map<std::string, std::shared_ptr<CachedFFICif>> gFFICifs;
-
 static Value makeFunction(const char *name, unsigned int argCount, Runtime &runtime,
                           const HostFunctionType &handler)
 {
@@ -519,121 +460,6 @@ static std::string hookKey(Class cls, SEL selector)
     return std::string(class_getName(cls)) + ":" + sel_getName(selector);
 }
 
-static bool isInstructionSectionAddress(void *address)
-{
-    Dl_info image{};
-    if (dladdr(address, &image) == 0 || !image.dli_fbase)
-    {
-        return false;
-    }
-
-    const auto *header = reinterpret_cast<const mach_header_64 *>(image.dli_fbase);
-    if (header->magic != MH_MAGIC_64)
-    {
-        return false;
-    }
-
-    const auto *command = reinterpret_cast<const load_command *>(header + 1);
-    std::uintptr_t slide = 0;
-    bool foundText = false;
-    for (uint32_t index = 0; index < header->ncmds; index++)
-    {
-        if (command->cmdsize < sizeof(load_command))
-        {
-            return false;
-        }
-        if (command->cmd == LC_SEGMENT_64)
-        {
-            const auto *segment = reinterpret_cast<const segment_command_64 *>(command);
-            if (command->cmdsize < sizeof(segment_command_64) ||
-                segment->nsects > (command->cmdsize - sizeof(segment_command_64)) /
-                                      sizeof(section_64))
-            {
-                return false;
-            }
-            if (strncmp(segment->segname, SEG_TEXT, sizeof(segment->segname)) == 0)
-            {
-                slide = reinterpret_cast<std::uintptr_t>(header) - segment->vmaddr;
-                foundText = true;
-                break;
-            }
-        }
-        command = reinterpret_cast<const load_command *>(reinterpret_cast<const uint8_t *>(command) +
-                                                          command->cmdsize);
-    }
-    if (!foundText)
-    {
-        return false;
-    }
-
-    command = reinterpret_cast<const load_command *>(header + 1);
-    for (uint32_t index = 0; index < header->ncmds; index++)
-    {
-        if (command->cmd == LC_SEGMENT_64)
-        {
-            const auto *segment = reinterpret_cast<const segment_command_64 *>(command);
-            if ((segment->initprot & VM_PROT_EXECUTE) != 0)
-            {
-                const auto *sections = reinterpret_cast<const section_64 *>(segment + 1);
-                for (uint32_t sectionIndex = 0; sectionIndex < segment->nsects; sectionIndex++)
-                {
-                    const auto &section = sections[sectionIndex];
-                    if ((section.flags & (S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS)) !=
-                            0 &&
-                        addressWithinRegion(reinterpret_cast<std::uintptr_t>(address),
-                                            section.addr + slide, section.size))
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-        command = reinterpret_cast<const load_command *>(reinterpret_cast<const uint8_t *>(command) +
-                                                          command->cmdsize);
-    }
-    return false;
-}
-
-static bool isExecutableAddress(void *address)
-{
-    if (!address)
-    {
-        return false;
-    }
-
-    void *regionAddress = address;
-#if __has_feature(ptrauth_calls)
-    regionAddress = ptrauth_strip(address, ptrauth_key_function_pointer);
-#endif
-    vm_address_t target = reinterpret_cast<vm_address_t>(regionAddress);
-    natural_t depth = 0;
-    for (unsigned int attempt = 0; attempt < 16; attempt++)
-    {
-        vm_address_t region = target;
-        vm_size_t size = 0;
-        vm_region_submap_short_info_data_64_t info{};
-        mach_msg_type_number_t count = VM_REGION_SUBMAP_SHORT_INFO_COUNT_64;
-        kern_return_t result = vm_region_recurse_64(
-            mach_task_self(), &region, &size, &depth,
-            reinterpret_cast<vm_region_recurse_info_t>(&info), &count);
-        if (result != KERN_SUCCESS || !addressWithinRegion(target, region, size))
-        {
-            return false;
-        }
-        if (!info.is_submap)
-        {
-            return (info.protection & VM_PROT_EXECUTE) != 0;
-        }
-        depth++;
-    }
-    return false;
-}
-
-static bool isCallableSymbolAddress(void *address)
-{
-    return isExecutableAddress(address) && isInstructionSectionAddress(address);
-}
-
 static std::shared_ptr<ObjCHandleHost> objcHost(Runtime &runtime, const Value &value)
 {
     if (!value.isObject())
@@ -666,14 +492,23 @@ static Value objcHandleResult(Runtime &runtime, id value)
     return Object::createFromHostObject(runtime, std::make_shared<ObjCHandleHost>(value));
 }
 
-static Value pointerResult(Runtime &runtime, void *pointer, bool callable = false)
+static Value pointerResult(Runtime &runtime, void *pointer)
 {
-    if (!pointer)
-    {
-        return Value::null();
-    }
+    return loader::ffi::pointerValue(runtime, pointer);
+}
 
-    return Object::createFromHostObject(runtime, std::make_shared<PointerHost>(pointer, callable));
+template <typename T>
+static void storeNativeValue(uint8_t *target, T value)
+{
+    memcpy(target, &value, sizeof(value));
+}
+
+template <typename T>
+static T loadNativeValue(const uint8_t *source)
+{
+    T value{};
+    memcpy(&value, source, sizeof(value));
+    return value;
 }
 
 struct ConversionState
@@ -1600,9 +1435,10 @@ static Value returnValue(Runtime &runtime, NSInvocation *invocation, NSMethodSig
         throw JSError(runtime, "Native return value has an invalid size");
     }
 
-    std::vector<uint8_t> bytes(length);
+    loader::ffi::Type type = loader::ffi::resolveType(name);
+    std::vector<uint8_t> bytes(std::max<size_t>(length, loader::ffi::valueStorageSize(type)));
     [invocation getReturnValue:bytes.data()];
-    return ffiResult(runtime, ffiType(runtime, name), bytes);
+    return loader::ffi::readValue(runtime, type, bytes.data());
 }
 
 static void validateNativeScalarArgument(id value, const std::string &type)
@@ -1896,8 +1732,9 @@ static Value invokeObject(Runtime &runtime, id target, SEL selector, NSArray *ar
     return returnValue(runtime, invocation, invocation.methodSignature);
 }
 
-static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id object,
-                                 FFICallArgument &argument, std::vector<id> &retained)
+static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id object, uint8_t *target,
+                                 size_t capacity, loader::ffi::ArgumentStorage &storage,
+                                 std::vector<id> &retained)
 {
     std::string scalarType = nativeFFITypeName(encoding);
     if (isNativeScalarType(scalarType))
@@ -1910,82 +1747,72 @@ static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id objec
     {
         id retainedValue = object == [NSNull null] ? nil : object;
         retained.push_back(retainedValue);
-        argument.pointer = (__bridge void *) retainedValue;
+        storeNativeValue<void *>(target, (__bridge void *) retainedValue);
         return;
     }
     if (code == ':')
     {
+        SEL selector = NULL;
         if ([value isKindOfClass:[NSString class]])
         {
-            argument.pointer = (void *) sel_registerName([(NSString *) value UTF8String]);
+            selector = sel_registerName([(NSString *) value UTF8String]);
         }
         else if ([value isKindOfClass:[NSValue class]])
         {
-            argument.pointer = [(NSValue *) value pointerValue];
+            selector = (SEL) [(NSValue *) value pointerValue];
         }
+        storeNativeValue<SEL>(target, selector);
         return;
     }
     if (code == '^' || code == '*')
     {
+        const void *pointer = nullptr;
         if (code == '*' && [value isKindOfClass:[NSString class]])
         {
-            argument.string = [(NSString *) value UTF8String] ?: "";
-            argument.pointer = (void *) argument.string.c_str();
+            pointer = storage.keep([(NSString *) value UTF8String] ?: "");
         }
         else if ([value isKindOfClass:[NSValue class]])
         {
-            argument.pointer = [(NSValue *) value pointerValue];
+            pointer = [(NSValue *) value pointerValue];
         }
+        storeNativeValue<const void *>(target, pointer);
         return;
     }
     if (code == 'B')
     {
-        bool scalar = [value boolValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<bool>(target, [value boolValue]);
         return;
     }
     if (code == 'c' || code == 'C')
     {
-        uint8_t scalar = code == 'c' ? (uint8_t) [value charValue] : [value unsignedCharValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<uint8_t>(target, code == 'c' ? (uint8_t) [value charValue] : [value unsignedCharValue]);
         return;
     }
     if (code == 's' || code == 'S')
     {
-        uint16_t scalar = code == 's' ? (uint16_t) [value shortValue] : [value unsignedShortValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<uint16_t>(target,
+                                   code == 's' ? (uint16_t) [value shortValue] : [value unsignedShortValue]);
         return;
     }
     if (code == 'i' || code == 'I')
     {
-        uint32_t scalar = code == 'i' ? (uint32_t) [value intValue] : [value unsignedIntValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<uint32_t>(target, code == 'i' ? (uint32_t) [value intValue] : [value unsignedIntValue]);
         return;
     }
     if (code == 'l' || code == 'L' || code == 'q' || code == 'Q')
     {
-        uint64_t scalar = code == 'l' || code == 'q' ? (uint64_t) [value longLongValue]
-                                                       : [value unsignedLongLongValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<uint64_t>(target, code == 'l' || code == 'q' ? (uint64_t) [value longLongValue]
+                                                                       : [value unsignedLongLongValue]);
         return;
     }
     if (code == 'f')
     {
-        float scalar = [value floatValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<float>(target, [value floatValue]);
         return;
     }
     if (code == 'd')
     {
-        double scalar = [value doubleValue];
-        argument.bytes.resize(sizeof(scalar));
-        memcpy(argument.bytes.data(), &scalar, sizeof(scalar));
+        storeNativeValue<double>(target, [value doubleValue]);
         return;
     }
     if (code == '{')
@@ -1993,15 +1820,58 @@ static void setSuperFFIArgument(Runtime &runtime, const char *encoding, id objec
         NSUInteger size = 0;
         NSUInteger alignment = 0;
         NSGetSizeAndAlignment(encoding, &size, &alignment);
-        if (![value isKindOfClass:[NSValue class]])
+        if (![value isKindOfClass:[NSValue class]] || size > capacity)
         {
             throw JSError(runtime, "Native super struct argument expected");
         }
-        argument.bytes.resize(size);
-        [(NSValue *) value getValue:argument.bytes.data() size:size];
+        [(NSValue *) value getValue:target size:size];
         return;
     }
     throw JSError(runtime, "Unsupported native super argument type");
+}
+
+static std::vector<loader::ffi::Type> superArgumentTypes(Runtime &runtime, NSMethodSignature *signature)
+{
+    std::vector<loader::ffi::Type> types{loader::ffi::resolveType("pointer"),
+                                         loader::ffi::resolveType("selector")};
+    for (NSUInteger index = 2; index < signature.numberOfArguments; index++)
+    {
+        std::string name = nativeFFITypeName([signature getArgumentTypeAtIndex:index]);
+        if (name.empty())
+        {
+            throw JSError(runtime, "Unsupported native super argument type encoding");
+        }
+        types.push_back(loader::ffi::resolveType(name));
+    }
+    return types;
+}
+
+static std::unique_ptr<loader::ffi::CallFrame> superCallFrame(Runtime &runtime, NSMethodSignature *signature)
+{
+    std::string resultName = nativeFFITypeName(signature.methodReturnType);
+    if (resultName.empty())
+    {
+        throw JSError(runtime, "Unsupported native super return type encoding");
+    }
+    std::vector<loader::ffi::Type> types = superArgumentTypes(runtime, signature);
+    return std::make_unique<loader::ffi::CallFrame>(
+        loader::ffi::callInterface(loader::ffi::resolveType(resultName), types));
+}
+
+static void setSuperFFIArguments(Runtime &runtime, NSMethodSignature *signature, NSArray *arguments,
+                                 struct objc_super *superInfo, SEL selector,
+                                 loader::ffi::CallFrame &frame, std::vector<id> &retained)
+{
+    storeNativeValue<void *>(frame.argument(0), superInfo);
+    storeNativeValue<SEL>(frame.argument(1), selector);
+    retained.reserve(arguments.count);
+    for (NSUInteger index = 0; index < arguments.count; index++)
+    {
+        setSuperFFIArgument(runtime, [signature getArgumentTypeAtIndex:index + 2], arguments[index],
+                            frame.argument(index + 2),
+                            loader::ffi::valueStorageSize(frame.interface().arguments[index + 2]),
+                            frame.storage(), retained);
+    }
 }
 
 static Value invokeSuperObject(Runtime &runtime, id target, Class currentClass, SEL selector,
@@ -2026,56 +1896,12 @@ static Value invokeSuperObject(Runtime &runtime, id target, Class currentClass, 
         throw JSError(runtime, "Objective-C super argument count does not match the method signature");
     }
 
-    std::vector<FFITypeSpec> types;
-    std::vector<FFICallArgument> values(arguments.count + 2);
-    std::vector<void *> argumentValues(arguments.count + 2);
+    std::unique_ptr<loader::ffi::CallFrame> frame = superCallFrame(runtime, signature);
     std::vector<id> retained;
-    types.reserve(arguments.count);
-    retained.reserve(arguments.count);
-
     struct objc_super superInfo = {target, currentClass};
-    values[0].pointer = &superInfo;
-    values[1].pointer = selector;
-    argumentValues[0] = &values[0].pointer;
-    argumentValues[1] = &values[1].pointer;
-
-    for (NSUInteger index = 0; index < arguments.count; index++)
-    {
-        const char *encoding = [signature getArgumentTypeAtIndex:index + 2];
-        std::string name = nativeFFITypeName(encoding);
-        if (name.empty())
-        {
-            throw JSError(runtime, "Unsupported native super argument type encoding");
-        }
-        types.push_back(ffiType(runtime, name));
-        setSuperFFIArgument(runtime, encoding, arguments[index], values[index + 2], retained);
-        if (name == "object" || name == "class" || name == "selector" || name == "pointer")
-        {
-            argumentValues[index + 2] = &values[index + 2].pointer;
-        }
-        else
-        {
-            argumentValues[index + 2] = values[index + 2].bytes.data();
-        }
-    }
-
-    std::string resultName = nativeFFITypeName(signature.methodReturnType);
-    if (resultName.empty())
-    {
-        throw JSError(runtime, "Unsupported native super return type encoding");
-    }
-    FFITypeSpec result = ffiType(runtime, resultName);
-    std::vector<FFITypeSpec> cifArguments;
-    cifArguments.reserve(types.size() + 2);
-    cifArguments.push_back({"pointer", &ffi_type_pointer});
-    cifArguments.push_back({"selector", &ffi_type_pointer});
-    cifArguments.insert(cifArguments.end(), types.begin(), types.end());
-    ffi_cif cif = prepareFFICif(runtime, result, cifArguments);
-
-    std::vector<uint8_t> output(std::max<size_t>(result.type->size, sizeof(void *)));
-    ffi_call(&cif, reinterpret_cast<void (*)(void)>(objc_msgSendSuper),
-             resultName == "void" ? nullptr : output.data(), argumentValues.data());
-    return ffiResult(runtime, result, output);
+    setSuperFFIArguments(runtime, signature, arguments, &superInfo, selector, *frame, retained);
+    frame->invoke((void *) objc_msgSendSuper);
+    return loader::ffi::readValue(runtime, frame->interface().result, frame->result());
 }
 
 static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, NSArray *arguments,
@@ -2700,12 +2526,8 @@ static Value invokeAsync(Runtime &runtime, id target, SEL selector, NSArray *arg
 
 struct AsyncSuperCall {
     struct objc_super superInfo{};
-    std::vector<FFICallArgument> values;
-    std::vector<void *> argumentValues;
+    std::unique_ptr<loader::ffi::CallFrame> frame;
     std::vector<id> retainedArguments;
-    FFITypeSpec result;
-    ffi_cif cif{};
-    std::vector<uint8_t> output;
     __strong id retainedTarget = nil;
     __strong id retainedResult = nil;
 };
@@ -2735,63 +2557,25 @@ static Value invokeSuperAsync(Runtime &runtime, id target, Class currentClass, S
     auto call = std::make_shared<AsyncSuperCall>();
     call->retainedTarget = target;
     call->superInfo = {target, currentClass};
-    call->values.resize(arguments.count + 2);
-    call->argumentValues.resize(arguments.count + 2);
-    call->retainedArguments.reserve(arguments.count);
-    call->values[0].pointer = &call->superInfo;
-    call->values[1].pointer = selector;
-    call->argumentValues[0] = &call->values[0].pointer;
-    call->argumentValues[1] = &call->values[1].pointer;
-
-    std::vector<FFITypeSpec> cifArguments;
-    cifArguments.reserve(arguments.count + 2);
-    cifArguments.push_back({"pointer", &ffi_type_pointer});
-    cifArguments.push_back({"selector", &ffi_type_pointer});
-    for (NSUInteger index = 0; index < arguments.count; index++)
-    {
-        const char *encoding = [signature getArgumentTypeAtIndex:index + 2];
-        std::string name = nativeFFITypeName(encoding);
-        if (name.empty())
-        {
-            throw JSError(runtime, "Unsupported native super argument type encoding");
-        }
-        cifArguments.push_back(ffiType(runtime, name));
-        setSuperFFIArgument(runtime, encoding, arguments[index], call->values[index + 2],
-                            call->retainedArguments);
-        if (name == "object" || name == "class" || name == "selector" || name == "pointer")
-        {
-            call->argumentValues[index + 2] = &call->values[index + 2].pointer;
-        }
-        else
-        {
-            call->argumentValues[index + 2] = call->values[index + 2].bytes.data();
-        }
-    }
-
-    std::string resultName = nativeFFITypeName(signature.methodReturnType);
-    if (resultName.empty())
-    {
-        throw JSError(runtime, "Unsupported native super return type encoding");
-    }
-    call->result = ffiType(runtime, resultName);
-    call->cif = prepareFFICif(runtime, call->result, cifArguments);
-    call->output.resize(std::max<size_t>(call->result.type->size, sizeof(void *)));
+    call->frame = superCallFrame(runtime, signature);
+    setSuperFFIArguments(runtime, signature, arguments, &call->superInfo, selector, *call->frame,
+                         call->retainedArguments);
 
     return executeMainAsynchronously(
         runtime,
         [call]() {
-            ffi_call(&call->cif, reinterpret_cast<void (*)(void)>(objc_msgSendSuper),
-                     call->result.name == "void" ? nullptr : call->output.data(),
-                     call->argumentValues.data());
-            if (call->result.name == "object" || call->result.name == "class")
+            call->frame->invoke((void *) objc_msgSendSuper);
+            const loader::ffi::Type &result = call->frame->interface().result;
+            if (result.name == "object" || result.name == "class")
             {
                 __unsafe_unretained id object = nil;
-                memcpy(&object, call->output.data(), sizeof(object));
+                memcpy(&object, call->frame->result(), sizeof(object));
                 call->retainedResult = object;
             }
         },
         [call](Runtime &completionRuntime) {
-            return ffiResult(completionRuntime, call->result, call->output);
+            return loader::ffi::readValue(completionRuntime, call->frame->interface().result,
+                                          call->frame->result());
         });
 }
 
@@ -3128,338 +2912,6 @@ static Value structFields(Runtime &runtime, NSString *name, NSValue *value)
     return Value::undefined();
 }
 
-static ffi_type *libffiScalarType(loader::ffi::Kind kind)
-{
-    switch (kind)
-    {
-        case loader::ffi::Kind::Void:
-            return &ffi_type_void;
-        case loader::ffi::Kind::Bool:
-        case loader::ffi::Kind::UInt8:
-            return &ffi_type_uint8;
-        case loader::ffi::Kind::Int8:
-            return &ffi_type_sint8;
-        case loader::ffi::Kind::Int16:
-            return &ffi_type_sint16;
-        case loader::ffi::Kind::UInt16:
-            return &ffi_type_uint16;
-        case loader::ffi::Kind::Int32:
-            return &ffi_type_sint32;
-        case loader::ffi::Kind::UInt32:
-            return &ffi_type_uint32;
-        case loader::ffi::Kind::Int64:
-            return &ffi_type_sint64;
-        case loader::ffi::Kind::UInt64:
-            return &ffi_type_uint64;
-        case loader::ffi::Kind::Float:
-            return &ffi_type_float;
-        case loader::ffi::Kind::Double:
-            return &ffi_type_double;
-        case loader::ffi::Kind::CString:
-        case loader::ffi::Kind::Pointer:
-        case loader::ffi::Kind::Struct:
-            return &ffi_type_pointer;
-    }
-    return &ffi_type_pointer;
-}
-
-static ffi_type *ffiStructTypeLocked(const loader::ffi::StructLayout *layout)
-{
-    auto existing = gFFITypes.find(layout->name);
-    if (existing != gFFITypes.end())
-    {
-        return &existing->second->type;
-    }
-
-    auto definition = std::make_shared<FFITypeDefinition>();
-    for (const loader::ffi::StructField &field : layout->fields)
-    {
-        definition->elements.push_back(field.type.kind == loader::ffi::Kind::Struct
-                                           ? ffiStructTypeLocked(field.type.layout)
-                                           : libffiScalarType(field.type.kind));
-    }
-    definition->elements.push_back(nullptr);
-    definition->type.type     = FFI_TYPE_STRUCT;
-    definition->type.elements = definition->elements.data();
-    gFFITypes[layout->name]   = definition;
-    return &definition->type;
-}
-
-static FFITypeSpec ffiType(Runtime &runtime, const std::string &name)
-{
-    if (name == "object" || name == "class" || name == "selector")
-    {
-        return {name, &ffi_type_pointer};
-    }
-
-    std::optional<loader::ffi::Type> type = loader::ffi::parseType(name);
-    if (!type)
-    {
-        throw JSError(runtime, "Unsupported native FFI type");
-    }
-    if (type->kind != loader::ffi::Kind::Struct)
-    {
-        return {name, libffiScalarType(type->kind)};
-    }
-    if (!structEncoding(type->layout->name))
-    {
-        throw JSError(runtime, "Unsupported native FFI type");
-    }
-
-    std::lock_guard<std::mutex> lock(gFFIMutex);
-    return {name, ffiStructTypeLocked(type->layout)};
-}
-
-static std::string ffiCifKey(const FFITypeSpec &result, const std::vector<FFITypeSpec> &arguments)
-{
-    std::ostringstream key;
-    key << result.name;
-    for (const FFITypeSpec &argument : arguments)
-    {
-        key << '\0' << argument.name;
-    }
-    return key.str();
-}
-
-static ffi_cif prepareFFICif(Runtime &runtime, const FFITypeSpec &result,
-                             const std::vector<FFITypeSpec> &arguments)
-{
-    std::string key = ffiCifKey(result, arguments);
-    {
-        std::lock_guard<std::mutex> lock(gFFICifMutex);
-        auto existing = gFFICifs.find(key);
-        if (existing != gFFICifs.end())
-        {
-            return existing->second->cif;
-        }
-    }
-
-    auto cached = std::make_shared<CachedFFICif>();
-    cached->arguments.reserve(arguments.size());
-    for (const FFITypeSpec &argument : arguments)
-    {
-        cached->arguments.push_back(argument.type);
-    }
-
-    if (ffi_prep_cif(&cached->cif, FFI_DEFAULT_ABI, (unsigned) cached->arguments.size(), result.type,
-                     cached->arguments.data()) != FFI_OK)
-    {
-        throw JSError(runtime, "Native FFI signature could not be prepared");
-    }
-
-    std::lock_guard<std::mutex> lock(gFFICifMutex);
-    auto existing = gFFICifs.find(key);
-    if (existing != gFFICifs.end())
-    {
-        return existing->second->cif;
-    }
-    gFFICifs.emplace(std::move(key), cached);
-    return cached->cif;
-}
-
-static std::string ffiTypeName(Runtime &runtime, const Value &value)
-{
-    if (value.isString())
-    {
-        return [JSI toNSString:value runtime:runtime].UTF8String;
-    }
-
-    if (value.isObject())
-    {
-        Object object = value.asObject(runtime);
-        Value structName = object.getProperty(runtime, "struct");
-        if (structName.isString())
-        {
-            return "struct:" + std::string([JSI toNSString:structName runtime:runtime].UTF8String);
-        }
-        Value typeName = object.getProperty(runtime, "type");
-        if (typeName.isString())
-        {
-            return [JSI toNSString:typeName runtime:runtime].UTF8String;
-        }
-    }
-
-    throw JSError(runtime, "Native FFI type must be a string or type object");
-}
-
-static FFISignature parseFFISignature(Runtime &runtime, const Value &value)
-{
-    if (!value.isObject())
-    {
-        throw JSError(runtime, "ffi.call expects a signature object");
-    }
-
-    Object signature = value.asObject(runtime);
-    Value resultValue = signature.getProperty(runtime, "returnType");
-    if (resultValue.isUndefined())
-    {
-        resultValue = signature.getProperty(runtime, "returns");
-    }
-    if (resultValue.isUndefined())
-    {
-        throw JSError(runtime, "Native FFI signature is missing returnType");
-    }
-
-    Value argumentsValue = signature.getProperty(runtime, "args");
-    if (!argumentsValue.isObject() || !argumentsValue.asObject(runtime).isArray(runtime))
-    {
-        throw JSError(runtime, "Native FFI signature is missing args");
-    }
-
-    FFISignature result{ffiType(runtime, ffiTypeName(runtime, resultValue)), {}};
-    Array arguments = argumentsValue.asObject(runtime).asArray(runtime);
-    result.arguments.reserve(arguments.size(runtime));
-    for (size_t index = 0; index < arguments.size(runtime); index++)
-    {
-        result.arguments.push_back(ffiType(runtime, ffiTypeName(runtime, arguments.getValueAtIndex(runtime, index))));
-    }
-    return result;
-}
-
-static void setFFIScalar(Runtime &runtime, const Value &value, const std::string &name,
-                         FFICallArgument &argument)
-{
-    if (name == "bool")
-    {
-        if (!value.isBool())
-        {
-            throw JSError(runtime, "Native FFI boolean argument expected");
-        }
-    }
-    else if (name == "i64" || name == "u64")
-    {
-        if (value.isBigInt())
-        {
-            BigInt bigint = value.asBigInt(runtime);
-            bool inRange = name == "i64" ? runtime.bigintIsInt64(bigint)
-                                          : runtime.bigintIsUint64(bigint);
-            if (!inRange)
-            {
-                throw JSError(runtime, "Native FFI integer exceeds its type range");
-            }
-        }
-        else if (!value.isNumber() || !validNativeNumericValue(value.getNumber(), name))
-        {
-            throw JSError(runtime, "Native FFI integer must be a safe integral value");
-        }
-    }
-    else if (!value.isNumber() || !validNativeNumericValue(value.getNumber(), name))
-    {
-        throw JSError(runtime, "Native FFI numeric argument exceeds its type range");
-    }
-
-    id object = valueToObjC(runtime, value);
-    if (name == "bool" || name == "i8" || name == "u8")
-    {
-        argument.bytes.resize(1);
-        argument.bytes[0] = name == "bool" ? [object boolValue] : [object unsignedCharValue];
-        return;
-    }
-    if (name == "i16" || name == "u16")
-    {
-        argument.bytes.resize(2);
-        uint16_t number = name == "i16" ? (uint16_t) [object shortValue] : [object unsignedShortValue];
-        memcpy(argument.bytes.data(), &number, sizeof(number));
-        return;
-    }
-    if (name == "i32" || name == "u32")
-    {
-        argument.bytes.resize(4);
-        uint32_t number = name == "i32" ? (uint32_t) [object intValue] : [object unsignedIntValue];
-        memcpy(argument.bytes.data(), &number, sizeof(number));
-        return;
-    }
-    if (name == "i64" || name == "u64")
-    {
-        argument.bytes.resize(8);
-        uint64_t number = name == "i64" ? (uint64_t) [object longLongValue]
-                                         : [object unsignedLongLongValue];
-        memcpy(argument.bytes.data(), &number, sizeof(number));
-        return;
-    }
-    if (name == "float")
-    {
-        argument.bytes.resize(sizeof(float));
-        float number = [object floatValue];
-        memcpy(argument.bytes.data(), &number, sizeof(number));
-        return;
-    }
-    if (name == "double")
-    {
-        argument.bytes.resize(sizeof(double));
-        double number = [object doubleValue];
-        memcpy(argument.bytes.data(), &number, sizeof(number));
-        return;
-    }
-}
-
-static void setFFIArgument(Runtime &runtime, const Value &value, const FFITypeSpec &spec,
-                           FFICallArgument &argument)
-{
-    if (spec.name == "cstring")
-    {
-        NSString *string = [JSI toNSString:value runtime:runtime];
-        argument.string = string.UTF8String ?: "";
-        argument.pointer = (void *) argument.string.c_str();
-        return;
-    }
-
-    if (spec.name == "selector")
-    {
-        if (value.isString())
-        {
-            NSString *name = [JSI toNSString:value runtime:runtime];
-            argument.pointer = (void *) NSSelectorFromString(name);
-        }
-        else if (value.isObject())
-        {
-            Object object = value.asObject(runtime);
-            if (object.isHostObject<PointerHost>(runtime))
-            {
-                argument.pointer = object.getHostObject<PointerHost>(runtime)->value();
-            }
-        }
-        return;
-    }
-
-    if (spec.name == "object" && !value.isNull() && !value.isUndefined() &&
-        !(value.isObject() && value.asObject(runtime).isHostObject<PointerHost>(runtime)))
-    {
-        argument.object = valueToObjC(runtime, value);
-        argument.pointer = (__bridge void *) argument.object;
-        return;
-    }
-
-    if (spec.name == "pointer" || spec.name == "object" || spec.name == "class")
-    {
-        argument.pointer = (__bridge void *) objcValue(runtime, value);
-        if (!argument.pointer && value.isObject())
-        {
-            Object object = value.asObject(runtime);
-            if (object.isHostObject<PointerHost>(runtime))
-            {
-                argument.pointer = object.getHostObject<PointerHost>(runtime)->value();
-            }
-        }
-        return;
-    }
-
-    if (spec.name.rfind("struct:", 0) == 0)
-    {
-        id object = valueToObjC(runtime, value);
-        if (![object isKindOfClass:[NSValue class]])
-        {
-            throw JSError(runtime, "Native FFI struct argument expected");
-        }
-        NSUInteger size = spec.type->size;
-        argument.bytes.resize(size);
-        [(NSValue *) object getValue:argument.bytes.data() size:size];
-        return;
-    }
-
-    setFFIScalar(runtime, value, spec.name, argument);
-}
-
 struct HookInvocation {
     std::shared_ptr<HookDispatcher> dispatcher;
     std::vector<std::vector<uint8_t>> arguments;
@@ -3486,14 +2938,14 @@ static std::shared_ptr<HookInvocation> hookInvocation(const std::shared_ptr<Hook
     invocation->arguments.reserve(dispatcher->signature->arguments.size());
     invocation->retainedObjects.reserve(dispatcher->signature->arguments.size());
     invocation->retainedStrings.reserve(dispatcher->signature->arguments.size());
-    for (const FFITypeSpec &spec : dispatcher->signature->arguments)
+    for (const loader::ffi::Type &spec : dispatcher->signature->arguments)
     {
-        size_t size = std::max<size_t>(spec.type->size, sizeof(void *));
+        size_t size = loader::ffi::valueStorageSize(spec);
         invocation->arguments.emplace_back(size);
-        if (spec.type->size)
+        if (loader::ffi::typeSize(spec))
         {
             memcpy(invocation->arguments.back().data(), arguments[invocation->arguments.size() - 1],
-                   spec.type->size);
+                   loader::ffi::typeSize(spec));
         }
         if (spec.name == "object" || spec.name == "class")
         {
@@ -3528,10 +2980,10 @@ static void copyHookResult(const std::shared_ptr<HookInvocation> &invocation, vo
         return;
     }
 
-    size_t size = std::max<size_t>(invocation->dispatcher->signature->result.type->size, sizeof(void *));
+    size_t size = loader::ffi::valueStorageSize(invocation->dispatcher->signature->result);
     invocation->originalResult.resize(size);
     memcpy(invocation->originalResult.data(), returnValue,
-           invocation->dispatcher->signature->result.type->size);
+           loader::ffi::typeSize(invocation->dispatcher->signature->result));
 }
 
 static bool invokeDeferredHookOriginal(const std::shared_ptr<HookInvocation> &invocation)
@@ -3552,8 +3004,7 @@ static bool invokeDeferredHookOriginal(const std::shared_ptr<HookInvocation> &in
 static std::shared_ptr<std::vector<uint8_t>> hookReturnBuffer(
     const std::shared_ptr<HookInvocation> &invocation)
 {
-    size_t size = std::max<size_t>(invocation->dispatcher->signature->result.type->size,
-                                   sizeof(void *));
+    size_t size = loader::ffi::valueStorageSize(invocation->dispatcher->signature->result);
     return std::make_shared<std::vector<uint8_t>>(size);
 }
 
@@ -3566,7 +3017,16 @@ static void copyHookReturnBuffer(const std::shared_ptr<HookInvocation> &invocati
         return;
     }
 
-    memcpy(returnValue, buffer->data(), invocation->dispatcher->signature->result.type->size);
+    memcpy(returnValue, buffer->data(), loader::ffi::typeSize(invocation->dispatcher->signature->result));
+}
+
+static Value hookValue(Runtime &runtime, const loader::ffi::Type &type, const std::vector<uint8_t> &bytes)
+{
+    if (type.name != "void" && bytes.size() < loader::ffi::typeSize(type))
+    {
+        throw JSError(runtime, "Native result buffer is too small");
+    }
+    return loader::ffi::readValue(runtime, type, bytes.data());
 }
 
 static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation> &invocation,
@@ -3584,7 +3044,7 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
     {
         values.setValueAtIndex(
             runtime, index,
-            ffiResult(runtime, invocation->dispatcher->signature->arguments[index + 2],
+            hookValue(runtime, invocation->dispatcher->signature->arguments[index + 2],
                       invocation->arguments[index + 2]));
     }
     context.setProperty(runtime, "args", std::move(values));
@@ -3627,7 +3087,7 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                 }
 
                 size_t argumentIndex = explicitIndex + 2;
-                const FFITypeSpec &spec = original->dispatcher->signature->arguments[argumentIndex];
+                const loader::ffi::Type &spec = original->dispatcher->signature->arguments[argumentIndex];
                 if (spec.name != "object" && spec.name != "class")
                 {
                     throw JSError(rt, "Native hook argument is not an Objective-C object");
@@ -3674,7 +3134,7 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                     copyHookResult(original, original->returnValue);
                     original->originalCalled.store(true);
                 }
-                return ffiResult(rt, original->dispatcher->signature->result, original->originalResult);
+                return hookValue(rt, original->dispatcher->signature->result, original->originalResult);
             }));
     return context;
 }
@@ -3693,11 +3153,11 @@ static void executeRuntimeAsynchronously(std::function<void(Runtime &)> callback
 static void invokeHookOriginal(const std::shared_ptr<HookDispatcher> &dispatcher, void **arguments,
                                void *returnValue)
 {
-    ffi_call(&dispatcher->signature->cif, reinterpret_cast<void (*)(void)>(dispatcher->original),
-             dispatcher->signature->result.name == "void" ? nullptr : returnValue, arguments);
+    loader::ffi::invoke(*dispatcher->signature->interface, (void *) dispatcher->original, returnValue,
+                        arguments);
 }
 
-static bool setHookReturn(Runtime &runtime, const FFITypeSpec &spec, const Value &value,
+static bool setHookReturn(Runtime &runtime, const loader::ffi::Type &spec, const Value &value,
                           void *returnValue)
 {
     if (spec.name == "void")
@@ -3709,95 +3169,82 @@ static bool setHookReturn(Runtime &runtime, const FFITypeSpec &spec, const Value
         return false;
     }
 
-    FFICallArgument argument{};
-    setFFIArgument(runtime, value, spec, argument);
-    if (spec.name == "cstring" || spec.name == "pointer" || spec.name == "object" ||
-        spec.name == "class" || spec.name == "selector")
-    {
-        memcpy(returnValue, &argument.pointer, sizeof(argument.pointer));
-        return true;
-    }
-    if (argument.bytes.size() < spec.type->size)
-    {
-        return false;
-    }
-    memcpy(returnValue, argument.bytes.data(), spec.type->size);
+    std::vector<uint8_t> bytes(loader::ffi::valueStorageSize(spec));
+    loader::ffi::ArgumentStorage storage;
+    loader::ffi::writeValue(runtime, value, spec, bytes.data(), storage);
+    memcpy(returnValue, bytes.data(), loader::ffi::typeSize(spec));
     return true;
 }
 
-static id hookCacheComponent(const FFITypeSpec &spec, const FFICallArgument &argument)
+static id hookCacheComponent(const loader::ffi::Type &spec, const uint8_t *bytes)
 {
     if (spec.name == "object" || spec.name == "class")
     {
-        id object = (__bridge id) argument.pointer;
+        id object = (__bridge id) loadNativeValue<void *>(bytes);
         return object ?: [NSNull null];
     }
     if (spec.name == "selector")
     {
-        SEL selector = (SEL) argument.pointer;
+        SEL selector = loadNativeValue<SEL>(bytes);
         return selector ? NSStringFromSelector(selector) : [NSNull null];
     }
     if (spec.name == "pointer")
     {
-        return [NSValue valueWithPointer:argument.pointer];
+        return [NSValue valueWithPointer:loadNativeValue<void *>(bytes)];
     }
     if (spec.name == "cstring")
     {
-        const char *string = (const char *) argument.pointer;
+        const char *string = loadNativeValue<const char *>(bytes);
         return string ? ([NSString stringWithUTF8String:string] ?: [NSNull null]) : [NSNull null];
     }
     if (spec.name == "bool")
     {
-        return @(*(const bool *) argument.bytes.data());
+        return @(loadNativeValue<bool>(bytes));
     }
     if (spec.name == "i8")
     {
-        return @(*(const int8_t *) argument.bytes.data());
+        return @(loadNativeValue<int8_t>(bytes));
     }
     if (spec.name == "u8")
     {
-        return @(*(const uint8_t *) argument.bytes.data());
+        return @(loadNativeValue<uint8_t>(bytes));
     }
     if (spec.name == "i16")
     {
-        return @(*(const int16_t *) argument.bytes.data());
+        return @(loadNativeValue<int16_t>(bytes));
     }
     if (spec.name == "u16")
     {
-        return @(*(const uint16_t *) argument.bytes.data());
+        return @(loadNativeValue<uint16_t>(bytes));
     }
     if (spec.name == "i32")
     {
-        return @(*(const int32_t *) argument.bytes.data());
+        return @(loadNativeValue<int32_t>(bytes));
     }
     if (spec.name == "u32")
     {
-        return @(*(const uint32_t *) argument.bytes.data());
+        return @(loadNativeValue<uint32_t>(bytes));
     }
     if (spec.name == "i64")
     {
-        return @(*(const int64_t *) argument.bytes.data());
+        return @(loadNativeValue<int64_t>(bytes));
     }
     if (spec.name == "u64")
     {
-        return @(*(const uint64_t *) argument.bytes.data());
+        return @(loadNativeValue<uint64_t>(bytes));
     }
     if (spec.name == "float")
     {
-        return @(*(const float *) argument.bytes.data());
+        return @(loadNativeValue<float>(bytes));
     }
     if (spec.name == "double")
     {
-        return @(*(const double *) argument.bytes.data());
+        return @(loadNativeValue<double>(bytes));
     }
-    if (spec.name.rfind("struct:", 0) == 0)
+    if (spec.kind == loader::ffi::Kind::Struct)
     {
-        const char *encoding = structEncoding(spec.name.substr(7));
-        if (!encoding || argument.bytes.size() < spec.type->size)
-        {
-            return nil;
-        }
-        return [NSValue value:argument.bytes.data() withObjCType:encoding];
+        const char *encoding = structEncoding(spec.layout->name);
+        return encoding ? [NSValue value:bytes withObjCType:encoding] : nil;
     }
     return nil;
 }
@@ -3830,10 +3277,11 @@ static NSArray *hookReturnCacheKey(Runtime &runtime, const std::shared_ptr<HookS
     [components addObject:NSStringFromSelector(dispatcher->selector)];
     for (size_t index = 0; index < expected; index++)
     {
-        FFICallArgument argument{};
-        setFFIArgument(runtime, values.getValueAtIndex(runtime, index),
-                       dispatcher->signature->arguments[index + 2], argument);
-        id component = hookCacheComponent(dispatcher->signature->arguments[index + 2], argument);
+        const loader::ffi::Type &spec = dispatcher->signature->arguments[index + 2];
+        std::vector<uint8_t> bytes(loader::ffi::valueStorageSize(spec));
+        loader::ffi::ArgumentStorage storage;
+        loader::ffi::writeValue(runtime, values.getValueAtIndex(runtime, index), spec, bytes.data(), storage);
+        id component = hookCacheComponent(spec, bytes.data());
         if (!component)
         {
             throw JSError(runtime, "Native hook return cache argument type is unsupported");
@@ -3855,19 +3303,8 @@ static NSArray *hookReturnCacheKey(const std::shared_ptr<HookDispatcher> &dispat
         [NSMutableArray arrayWithCapacity:dispatcher->signature->arguments.size()];
     for (size_t index = 0; index < dispatcher->signature->arguments.size(); index++)
     {
-        const FFITypeSpec &spec = dispatcher->signature->arguments[index];
-        FFICallArgument argument{};
-        if (spec.name == "object" || spec.name == "class" || spec.name == "selector" ||
-            spec.name == "pointer" || spec.name == "cstring")
-        {
-            memcpy(&argument.pointer, arguments[index], sizeof(argument.pointer));
-        }
-        else
-        {
-            argument.bytes.resize(spec.type->size);
-            memcpy(argument.bytes.data(), arguments[index], spec.type->size);
-        }
-        id component = hookCacheComponent(spec, argument);
+        id component = hookCacheComponent(dispatcher->signature->arguments[index],
+                                          static_cast<const uint8_t *>(arguments[index]));
         if (!component)
         {
             return nil;
@@ -3891,15 +3328,15 @@ static void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState
         throw JSError(runtime, "Native hook has been removed");
     }
 
-    const FFITypeSpec &result = dispatcher->signature->result;
-    std::vector<uint8_t> bytes(std::max<size_t>(result.type->size, sizeof(void *)));
+    const loader::ffi::Type &result = dispatcher->signature->result;
+    std::vector<uint8_t> bytes(loader::ffi::valueStorageSize(result));
     if (!setHookReturn(runtime, result, args[2], bytes.data()))
     {
         throw JSError(runtime, "Native hook return value has an unsupported type");
     }
 
     NSArray *key = hookReturnCacheKey(runtime, state, args, count);
-    NSData *value = [NSData dataWithBytes:bytes.data() length:result.type->size];
+    NSData *value = [NSData dataWithBytes:bytes.data() length:loader::ffi::typeSize(result)];
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
     state->returnCache[key] = value;
 }
@@ -3968,7 +3405,7 @@ static void applyHookSizeHeightFloors(const std::shared_ptr<HookDispatcher> &dis
                                       void **arguments, void *returnValue)
 {
     if (!returnValue || dispatcher->signature->result.name != "struct:CGSize" ||
-        dispatcher->signature->result.type->size < sizeof(CGSize))
+        loader::ffi::typeSize(dispatcher->signature->result) < sizeof(CGSize))
     {
         return;
     }
@@ -4013,165 +3450,6 @@ static void applyHookSizeHeightFloors(const std::shared_ptr<HookDispatcher> &dis
     }
 
     memcpy(returnValue, &size, sizeof(size));
-}
-
-template <typename T>
-static T readFFIResult(Runtime &runtime, const std::vector<uint8_t> &bytes)
-{
-    if (bytes.size() < sizeof(T))
-    {
-        throw JSError(runtime, "Native result buffer is too small");
-    }
-    T value{};
-    memcpy(&value, bytes.data(), sizeof(value));
-    return value;
-}
-
-static Value ffiResult(Runtime &runtime, const FFITypeSpec &spec, const std::vector<uint8_t> &bytes)
-{
-    if (spec.name == "void")
-    {
-        return Value::undefined();
-    }
-    if (spec.name == "bool")
-    {
-        return Value(readFFIResult<uint8_t>(runtime, bytes) != 0);
-    }
-    if (spec.name == "i8")
-    {
-        return Value((double) readFFIResult<int8_t>(runtime, bytes));
-    }
-    if (spec.name == "u8")
-    {
-        return Value((double) readFFIResult<uint8_t>(runtime, bytes));
-    }
-    if (spec.name == "i16")
-    {
-        return Value((double) readFFIResult<int16_t>(runtime, bytes));
-    }
-    if (spec.name == "u16")
-    {
-        return Value((double) readFFIResult<uint16_t>(runtime, bytes));
-    }
-    if (spec.name == "i32")
-    {
-        return Value((double) readFFIResult<int32_t>(runtime, bytes));
-    }
-    if (spec.name == "u32")
-    {
-        return Value((double) readFFIResult<uint32_t>(runtime, bytes));
-    }
-    if (spec.name == "i64")
-    {
-        return Value(runtime, BigInt::fromInt64(runtime, readFFIResult<int64_t>(runtime, bytes)));
-    }
-    if (spec.name == "u64")
-    {
-        return Value(runtime, BigInt::fromUint64(runtime, readFFIResult<uint64_t>(runtime, bytes)));
-    }
-    if (spec.name == "float")
-    {
-        return Value((double) readFFIResult<float>(runtime, bytes));
-    }
-    if (spec.name == "double")
-    {
-        return Value(readFFIResult<double>(runtime, bytes));
-    }
-    if (spec.name == "cstring")
-    {
-        const char *string = readFFIResult<const char *>(runtime, bytes);
-        return string ? String::createFromUtf8(runtime, string) : Value::null();
-    }
-    if (spec.name == "object" || spec.name == "class")
-    {
-        if (bytes.size() < sizeof(id)) throw JSError(runtime, "Native result buffer is too small");
-        __unsafe_unretained id object = nil;
-        memcpy(&object, bytes.data(), sizeof(object));
-        return objcResult(runtime, object);
-    }
-    if (spec.name == "selector")
-    {
-        if (bytes.size() < sizeof(SEL)) throw JSError(runtime, "Native result buffer is too small");
-        SEL selector = NULL;
-        memcpy(&selector, bytes.data(), sizeof(selector));
-        return selector ? String::createFromUtf8(runtime, sel_getName(selector)) : Value::null();
-    }
-    if (spec.name == "pointer")
-    {
-        return pointerResult(runtime, readFFIResult<void *>(runtime, bytes));
-    }
-    if (spec.name.rfind("struct:", 0) == 0)
-    {
-        std::string name = spec.name.substr(7);
-        const char *encoding = structEncoding(name);
-        if (!encoding)
-        {
-            throw JSError(runtime, "Native FFI struct result is not registered");
-        }
-        NSUInteger size = 0;
-        NSGetSizeAndAlignment(encoding, &size, nullptr);
-        if (bytes.size() < size) throw JSError(runtime, "Native result buffer is too small");
-        NSValue *value = [NSValue value:bytes.data() withObjCType:encoding];
-        return structResult(runtime, [NSString stringWithUTF8String:name.c_str()] ?: @"", value);
-    }
-    throw JSError(runtime, "Unsupported native FFI result type");
-}
-
-static Value ffiCall(Runtime &runtime, void *pointer, const FFISignature &signature,
-                     const Value *args)
-{
-    std::vector<FFICallArgument> arguments(signature.arguments.size());
-    std::vector<void *> argumentValues(signature.arguments.size());
-    for (size_t index = 0; index < signature.arguments.size(); index++)
-    {
-        setFFIArgument(runtime, args[index], signature.arguments[index], arguments[index]);
-        if (signature.arguments[index].name == "pointer" ||
-            signature.arguments[index].name == "object" || signature.arguments[index].name == "class" ||
-            signature.arguments[index].name == "selector" || signature.arguments[index].name == "cstring")
-        {
-            argumentValues[index] = &arguments[index].pointer;
-        }
-        else
-        {
-            argumentValues[index] = arguments[index].bytes.data();
-        }
-    }
-
-    ffi_cif cif = prepareFFICif(runtime, signature.result, signature.arguments);
-
-    size_t resultSize = signature.result.type->size;
-    std::vector<uint8_t> result(std::max<size_t>(resultSize, sizeof(void *)));
-    ffi_call(&cif, reinterpret_cast<void (*)(void)>(pointer),
-             signature.result.name == "void" ? nullptr : result.data(), argumentValues.data());
-    return ffiResult(runtime, signature.result, result);
-}
-
-static Value ffiCallValue(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count < 2 || !args[0].isObject())
-    {
-        throw JSError(runtime, "ffi.call expects a pointer, signature, and arguments");
-    }
-
-    Object pointer = args[0].asObject(runtime);
-    if (!pointer.isHostObject<PointerHost>(runtime))
-    {
-        throw JSError(runtime, "ffi.call expects a pointer handle");
-    }
-
-    std::shared_ptr<PointerHost> host = pointer.getHostObject<PointerHost>(runtime);
-    void *address = host->value();
-    if (!address || !host->callable() || !isCallableSymbolAddress(address))
-    {
-        throw JSError(runtime, "ffi.call requires an executable symbol pointer");
-    }
-
-    FFISignature signature = parseFFISignature(runtime, args[1]);
-    if (signature.arguments.size() != count - 2)
-    {
-        throw JSError(runtime, "Native FFI argument count does not match the signature");
-    }
-    return ffiCall(runtime, address, signature, args + 2);
 }
 
 static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selector,
@@ -4285,7 +3563,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
                 cached = state->returnCache[key];
             }
             if (cached && returnValue &&
-                cached.length == dispatcher->signature->result.type->size)
+                cached.length == loader::ffi::typeSize(dispatcher->signature->result))
             {
                 memcpy(returnValue, cached.bytes, cached.length);
                 cachedReturn = true;
@@ -4331,7 +3609,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
                 cached = state->returnCache[key];
             }
             if (cached && returnValue &&
-                cached.length == dispatcher->signature->result.type->size)
+                cached.length == loader::ffi::typeSize(dispatcher->signature->result))
             {
                 memcpy(returnValue, cached.bytes, cached.length);
                 replacementApplied = true;
@@ -4966,7 +4244,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     {
         throw JSError(runtime, "Unsupported native hook return type encoding");
     }
-    signature->result = ffiType(runtime, resultName);
+    signature->result = loader::ffi::resolveType(resultName);
     for (NSUInteger index = 0; index < methodSignature.numberOfArguments; index++)
     {
         std::string name = nativeFFITypeName([methodSignature getArgumentTypeAtIndex:index]);
@@ -4974,9 +4252,9 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         {
             throw JSError(runtime, "Unsupported native hook argument type encoding");
         }
-        signature->arguments.push_back(ffiType(runtime, name));
+        signature->arguments.push_back(loader::ffi::resolveType(name));
     }
-    signature->cif = prepareFFICif(runtime, signature->result, signature->arguments);
+    signature->interface = loader::ffi::callInterface(signature->result, signature->arguments);
 
     Object handlers = args[2].asObject(runtime);
     auto functionFor = [&](const char *name) -> std::shared_ptr<Function> {
@@ -5049,7 +4327,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
                                                                           &dispatcher->code);
                 bool closureReady =
                     dispatcher->closure && isExecutableAddress(dispatcher->code) &&
-                    ffi_prep_closure_loc(dispatcher->closure, &dispatcher->signature->cif,
+                    ffi_prep_closure_loc(dispatcher->closure, &dispatcher->signature->interface->cif,
                                          dispatchFFIHook, dispatcher.get(), dispatcher->code) == FFI_OK;
                 if (!closureReady)
                 {
@@ -5124,35 +4402,6 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         dispatcher->hooks.push_back(state);
     }
     return Object::createFromHostObject(runtime, std::make_shared<HookTokenHost>(state, callbacks));
-}
-
-static Value ffiSymbol(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count == 0 || !args[0].isString())
-    {
-        throw JSError(runtime, "ffi.symbol expects a symbol name");
-    }
-
-    NSString *name = [JSI toNSString:args[0] runtime:runtime];
-    void *handle = RTLD_DEFAULT;
-    bool closesHandle = false;
-    if (count > 1 && args[1].isString())
-    {
-        NSString *image = [JSI toNSString:args[1] runtime:runtime];
-        handle = dlopen(image.UTF8String, RTLD_NOLOAD | RTLD_LAZY);
-        if (!handle)
-        {
-            throw JSError(runtime, "ffi.symbol image is not loaded");
-        }
-        closesHandle = true;
-    }
-
-    void *symbol = dlsym(handle, name.UTF8String);
-    if (closesHandle)
-    {
-        dlclose(handle);
-    }
-    return pointerResult(runtime, symbol, true);
 }
 
 static Value objcFunction(Runtime &runtime, const Value &target, const Value &selectorValue,
@@ -5676,10 +4925,131 @@ static void installObjC(Runtime &runtime, Object &objc)
     objc.setProperty(runtime, "hook", makeFunction("hook", 3, runtime, makeHook));
 }
 
+class ObjectFFICodec final : public loader::ffi::TypeCodec
+{
+public:
+    void write(Runtime &runtime, const Value &value, uint8_t *target,
+               loader::ffi::ArgumentStorage &storage) const override
+    {
+        if (value.isNull() || value.isUndefined())
+        {
+            storeNativeValue<void *>(target, nullptr);
+            return;
+        }
+        if (std::shared_ptr<PointerHost> host = loader::ffi::pointerHost(runtime, value))
+        {
+            storeNativeValue<void *>(target, host->value());
+            return;
+        }
+        id object = valueToObjC(runtime, value);
+        storage.retain(std::make_shared<ObjCHandleHost>(object));
+        storeNativeValue<void *>(target, (__bridge void *) object);
+    }
+
+    Value read(Runtime &runtime, const uint8_t *source) const override
+    {
+        return objcResult(runtime, (__bridge id) loadNativeValue<void *>(source));
+    }
+};
+
+class ClassFFICodec final : public loader::ffi::TypeCodec
+{
+public:
+    void write(Runtime &runtime, const Value &value, uint8_t *target,
+               loader::ffi::ArgumentStorage &) const override
+    {
+        if (value.isNull() || value.isUndefined())
+        {
+            storeNativeValue<void *>(target, nullptr);
+            return;
+        }
+        if (std::shared_ptr<ObjCHandleHost> host = objcHost(runtime, value))
+        {
+            storeNativeValue<void *>(target, (__bridge void *) host->value());
+            return;
+        }
+        if (std::shared_ptr<PointerHost> host = loader::ffi::pointerHost(runtime, value))
+        {
+            storeNativeValue<void *>(target, host->value());
+            return;
+        }
+        throw std::invalid_argument("Native FFI class argument expected");
+    }
+
+    Value read(Runtime &runtime, const uint8_t *source) const override
+    {
+        return objcResult(runtime, (__bridge id) loadNativeValue<void *>(source));
+    }
+};
+
+class SelectorFFICodec final : public loader::ffi::TypeCodec
+{
+public:
+    void write(Runtime &runtime, const Value &value, uint8_t *target,
+               loader::ffi::ArgumentStorage &) const override
+    {
+        if (value.isNull() || value.isUndefined())
+        {
+            storeNativeValue<SEL>(target, NULL);
+            return;
+        }
+        if (value.isString())
+        {
+            storeNativeValue<SEL>(target, NSSelectorFromString([JSI toNSString:value runtime:runtime]));
+            return;
+        }
+        if (std::shared_ptr<PointerHost> host = loader::ffi::pointerHost(runtime, value))
+        {
+            storeNativeValue<void *>(target, host->value());
+            return;
+        }
+        throw std::invalid_argument("Native FFI selector argument expected");
+    }
+
+    Value read(Runtime &runtime, const uint8_t *source) const override
+    {
+        SEL selector = loadNativeValue<SEL>(source);
+        return selector ? Value(String::createFromUtf8(runtime, sel_getName(selector))) : Value::null();
+    }
+};
+
+static std::optional<void *> objcFFIPointer(Runtime &runtime, const Object &object)
+{
+    if (!object.isHostObject<ObjCHandleHost>(runtime))
+    {
+        return std::nullopt;
+    }
+    return (__bridge void *) object.getHostObject<ObjCHandleHost>(runtime)->value();
+}
+
+static std::optional<Value> objcFFIStructResult(Runtime &runtime, const loader::ffi::StructLayout &layout,
+                                                const uint8_t *source)
+{
+    const char *encoding = structEncoding(layout.name);
+    if (!encoding)
+    {
+        return std::nullopt;
+    }
+    return structResult(runtime, [NSString stringWithUTF8String:layout.name.c_str()] ?: @"",
+                        [NSValue value:source withObjCType:encoding]);
+}
+
+static void installFFIPlatform(void)
+{
+    static std::once_flag installed;
+    std::call_once(installed, [] {
+        loader::ffi::registerExtensionType("object", std::make_shared<ObjectFFICodec>());
+        loader::ffi::registerExtensionType("class", std::make_shared<ClassFFICodec>());
+        loader::ffi::registerExtensionType("selector", std::make_shared<SelectorFFICodec>());
+        loader::ffi::setPointerResolver(objcFFIPointer);
+        loader::ffi::setStructResultFactory(objcFFIStructResult);
+    });
+}
+
 static void installFFI(Runtime &runtime, Object &ffi)
 {
-    ffi.setProperty(runtime, "symbol", makeFunction("symbol", 2, runtime, ffiSymbol));
-    ffi.setProperty(runtime, "call", makeFunction("call", 3, runtime, ffiCallValue));
+    ffi.setProperty(runtime, "symbol", makeFunction("symbol", 2, runtime, loader::ffi::lookupSymbol));
+    ffi.setProperty(runtime, "call", makeFunction("call", 3, runtime, loader::ffi::callFunction));
 }
 
 static void installFabric(Runtime &runtime, Object &fabric)
@@ -5733,6 +5103,7 @@ void setNativePluginFabricHost(id instance)
 
 void registerNativePluginBridge(Runtime &runtime)
 {
+    installFFIPlatform();
     uint64_t previous   = loader::native::runtimeGeneration();
     uint64_t generation = loader::native::registerRuntime(runtime);
     if (generation != previous)

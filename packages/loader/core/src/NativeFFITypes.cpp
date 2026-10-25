@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #include <utility>
 
 namespace loader::ffi
@@ -58,6 +59,9 @@ namespace loader::ffi
 
         std::mutex                                                   layoutMutex;
         std::map<std::string, std::unique_ptr<StructLayout>>         layouts;
+
+        std::mutex                                                   extensionMutex;
+        std::map<std::string, std::shared_ptr<const TypeCodec>>      extensions;
 
         const StructLayout *buildLayout(const std::string &name)
         {
@@ -131,11 +135,49 @@ namespace loader::ffi
         }
 
         auto kind = scalarKinds().find(name);
-        if (kind == scalarKinds().end())
+        if (kind != scalarKinds().end())
+        {
+            return Type{kind->second, name, nullptr};
+        }
+
+        std::lock_guard<std::mutex> lock(extensionMutex);
+        auto                        extension = extensions.find(name);
+        if (extension == extensions.end())
         {
             return std::nullopt;
         }
-        return Type{kind->second, name, nullptr};
+        return Type{Kind::Extension, name, nullptr, extension->second.get()};
+    }
+
+    void registerExtensionType(const std::string &name, std::shared_ptr<const TypeCodec> codec)
+    {
+        if (!codec || name.empty() || name.rfind("struct:", 0) == 0 || scalarKinds().count(name) != 0)
+        {
+            throw std::invalid_argument("Native FFI type " + name + " cannot be registered");
+        }
+
+        std::lock_guard<std::mutex> lock(extensionMutex);
+        if (!extensions.emplace(name, std::move(codec)).second)
+        {
+            throw std::invalid_argument("Native FFI type " + name + " is already registered");
+        }
+    }
+
+    Signature makeSignature(Type result, std::vector<Type> arguments)
+    {
+        if (arguments.size() > kMaximumArguments)
+        {
+            throw std::invalid_argument("Native FFI signatures take at most " + std::to_string(kMaximumArguments) +
+                                        " arguments");
+        }
+        for (const Type &argument : arguments)
+        {
+            if (argument.kind == Kind::Void)
+            {
+                throw std::invalid_argument("Native FFI arguments cannot be void");
+            }
+        }
+        return Signature{std::move(result), std::move(arguments)};
     }
 
     std::size_t typeSize(const Type &type)
@@ -161,6 +203,7 @@ namespace loader::ffi
             return 8;
         case Kind::CString:
         case Kind::Pointer:
+        case Kind::Extension:
             return sizeof(void *);
         case Kind::Struct:
             return type.layout ? type.layout->size : 0;

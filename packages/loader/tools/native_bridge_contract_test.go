@@ -57,7 +57,8 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 		"setHookSizeHeightFloor",
 		"applyHookSizeHeightFloors",
 		"setSizeHeightFloor",
-		"prepareFFICif",
+		"loader::ffi::callInterface(signature->result, signature->arguments)",
+		"&dispatcher->signature->interface->cif",
 		"valueToData",
 		"structResult",
 		"objc_setAssociatedObject",
@@ -153,8 +154,32 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	if strings.Contains(sourceText[registration:registration+registrationEnd], "dispatcher->original = method_getImplementation(method)") {
 		t.Fatal("native hook registration can wrap an external IMP that already chains through its dispatcher")
 	}
-	if !strings.Contains(sourceText, "gFFICifs") {
-		t.Fatal("native FFI call interface cache is missing from the loader")
+	ffiCall, err := os.ReadFile(filepath.Join(root, "core", "src", "ffi", "NativeFFICall.cpp"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(ffiCall), "class CallInterfaceCache") ||
+		!strings.Contains(string(ffiCall), "entries_.size() > kCallInterfaceCacheCapacity") {
+		t.Fatal("native FFI call interface cache is missing or unbounded")
+	}
+	for _, shared := range []string{
+		`makeFunction("symbol", 2, runtime, loader::ffi::lookupSymbol)`,
+		`makeFunction("call", 3, runtime, loader::ffi::callFunction)`,
+		"using loader::ffi::PointerHost;",
+		`loader::ffi::registerExtensionType("object"`,
+		`loader::ffi::registerExtensionType("class"`,
+		`loader::ffi::registerExtensionType("selector"`,
+		"loader::ffi::setPointerResolver(",
+		"loader::ffi::setStructResultFactory(",
+	} {
+		if !strings.Contains(sourceText, shared) {
+			t.Fatalf("the iOS bridge does not use the shared core FFI through %q", shared)
+		}
+	}
+	for _, duplicate := range []string{"class PointerHost", "ffi_prep_cif(", "static Value ffiResult(", "NativePluginFFI.h"} {
+		if strings.Contains(sourceText, duplicate) {
+			t.Fatalf("the iOS bridge still carries its own FFI implementation (%q)", duplicate)
+		}
 	}
 	for _, installation := range []string{
 		`bridge.setProperty(runtime, "debug", std::move(debug));`,
@@ -261,14 +286,36 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	coreFFI, err := os.ReadFile(filepath.Join(root, "core", "src", "ffi", "NativeFFI.cpp"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	addressValidation, err := os.ReadFile(filepath.Join(root, "core", "src", "NativeAddressValidation.cpp"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, required := range []string{
+		"ffi.call requires an executable symbol pointer",
+		"!isCallableSymbolAddress(host->value())",
+	} {
+		if !strings.Contains(string(coreFFI), required) {
+			t.Fatalf("shared FFI safety guard %q is missing", required)
+		}
+	}
+	for _, required := range []string{
+		"bool isCallableSymbolAddress(void *address)",
+		"return isExecutableAddress(address) && isInstructionSectionAddress(address);",
+		"vm_region_recurse_64",
+		"S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS",
+		"dl_iterate_phdr(findExecutableSegment, &search)",
+	} {
+		if !strings.Contains(string(addressValidation), required) {
+			t.Fatalf("shared callable address guard %q is missing", required)
+		}
+	}
 	for _, required := range []string{
 		"Native value exceeds conversion limits",
-		"ffi.call requires an executable symbol pointer",
-		"static bool isCallableSymbolAddress(void *address)",
-		"return isExecutableAddress(address) && isInstructionSectionAddress(address);",
-		"!isCallableSymbolAddress(address)",
 		"dispatcher->closure && isExecutableAddress(dispatcher->code)",
-		"vm_region_recurse_64",
 		"if (code == ':')",
 		"[invocation retainArguments]",
 		"Native super invocation cannot synchronously cross to the main thread",
