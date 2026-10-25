@@ -1,4 +1,19 @@
-// Swap point: replace these with `@unbound-app/contracts/bot` once packages/contracts/src/bot.ts lands.
+import type {
+	BotActor,
+	BotAddon,
+	BotEvent,
+	BotMember,
+	BotRelease,
+} from '@unbound-app/contracts/bot';
+
+export {
+	botAddonsResponseSchema,
+	botEventsResponseSchema,
+	botMembersResponseSchema,
+	botReleasesResponseSchema,
+} from '@unbound-app/contracts/bot';
+export type { LoaderPlatform } from '@unbound-app/contracts/loader';
+export type { AddonType } from '@unbound-app/contracts/addons';
 
 export type FeedName = 'addons' | 'events' | 'releases' | 'members';
 
@@ -8,65 +23,12 @@ export type FeedPage<T> = {
 	hasMore: boolean;
 };
 
-// Mirrors `addonTypeSchema` (`ADDON_TYPES` in @unbound-app/types/addons).
-export type AddonType = 'plugin' | 'theme' | 'icon-pack' | 'font';
-
-export type AddonAuthor = {
-	name: string;
-	githubLogin?: string;
-	discordId?: string;
-};
-
-export type AddonFeedItem = {
-	id: string;
-	type: AddonType;
-	name: string;
-	description: string;
-	version: string;
-	authors: AddonAuthor[];
-	iconUrl?: string;
-	pageUrl: string;
-	listed: boolean;
-	updatedAt: string;
-};
-
-export type EventActor = {
-	id: string;
-	name: string;
-};
-
-export type EventFeedItem = {
-	id: number;
-	kind: string;
-	subjectType: string;
-	subjectId: string;
-	subjectName?: string;
-	actor: EventActor | null;
-	// UNKNOWN: the event data is per-kind JSON the bot stores verbatim.
-	data: unknown;
-	reason: string | null;
-	createdAt: string;
-};
-
-export type LoaderPlatform = 'ios' | 'android';
-
-export type ReleaseFeedItem = {
-	platform: LoaderPlatform;
-	version: string;
-	url: string;
-	changelog: string | null;
-	publishedAt: string;
-};
-
-export type MemberFeedItem = {
-	userId: string;
-	discordId: string;
-	githubId?: string;
-	githubLogin?: string;
-	isAddonDeveloper: boolean;
-	isSponsor: boolean;
-	updatedAt: string;
-};
+export type AddonFeedItem = BotAddon;
+export type EventActor = BotActor;
+export type EventFeedItem = BotEvent;
+export type ReleaseFeedItem = BotRelease;
+/** `discordId` is `null` once the user unlinks Discord or is deleted. */
+export type MemberFeedItem = BotMember;
 
 export type FeedItems = {
 	addons: AddonFeedItem;

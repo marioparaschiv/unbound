@@ -26,6 +26,14 @@ describe('fetchFeedPage', () => {
 					return new Response('nope', { status: 401 });
 				}
 
+				if (url.pathname.endsWith('/addons')) {
+					return Response.json({
+						items: [{ id: 'addon-1' }],
+						cursor: 'c',
+						hasMore: false,
+					});
+				}
+
 				return Response.json(SAMPLE_PAGES.releases);
 			},
 		});
@@ -56,5 +64,16 @@ describe('fetchFeedPage', () => {
 		);
 
 		expect(message).toMatch(/members.*401/);
+	});
+
+	test('throws on a page that breaks the feed contract, naming the feed', async () => {
+		const fetchFeedPage = createFeedClient(server.url.origin, 'secret');
+
+		const message = await fetchFeedPage('addons', null, 100).then(
+			() => 'resolved',
+			(error: Error) => error.message,
+		);
+
+		expect(message).toContain('Feed addons returned a page that does not match its contract');
 	});
 });

@@ -39,6 +39,9 @@ export const envSchema = z.object({
 	SPONSOR_RECONCILE_INTERVAL_SECONDS: positiveInt.default(3600),
 	SPONSOR_PERK_GRACE_DAYS: z.coerce.number().int().nonnegative().default(7),
 
+	/** The `owner/name` whose build tags CI publishes without review; unset turns first-party publishing off. */
+	FIRST_PARTY_REPOSITORY: z.string().min(1).optional(),
+
 	ADDON_MAX_BYTES: positiveInt.default(25 * 1024 * 1024),
 	/** The largest ADDON.md and CHANGELOG.md read from a repository. */
 	ADDON_TEXT_MAX_BYTES: positiveInt.default(100 * 1024),
