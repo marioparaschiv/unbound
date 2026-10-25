@@ -25,6 +25,13 @@ export class Themes extends Addons<ThemeEntity> {
 			this.load(bundle, manifest);
 		}
 
+		const appliedId = this.settings.get('applied', null);
+		const applied = appliedId ? this.getEntity(appliedId) : undefined;
+
+		if (applied?.started) {
+			ThemeStore.getState().setApplied(applied.id, applied.instance);
+		}
+
 		this.initialized = true;
 	}
 
