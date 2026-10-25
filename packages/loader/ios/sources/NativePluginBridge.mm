@@ -29,6 +29,7 @@
 #import "NativeFFI.h"
 #import "NativeEvaluations.h"
 #import "NativeGeometry.h"
+#import "NativeLimits.h"
 #import "NativeNumericValidation.h"
 #import "NativeOperationGate.h"
 #import "NativePluginRoot.h"
@@ -918,6 +919,22 @@ static void fabricSetMinimumSize(id surface, CGSize minimumSize, CGSize maximumS
                              maximumSize);
 }
 
+static void forgetFabricSurface(FabricSurfaceHost *surfaceHost)
+{
+    std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
+    if (gFabricSurfaces.erase(surfaceHost) > 0)
+    {
+        loader::native::nativeSurfaceBudget().release();
+    }
+}
+
+static NSString *fabricModuleName(Runtime &runtime, const Value &value)
+{
+    std::string name = loader::native::parseName(runtime, value, loader::native::kMaximumNativeNameBytes,
+                                                 "A Fabric module name");
+    return [NSString stringWithUTF8String:name.c_str()] ?: @"";
+}
+
 static void fabricMountNative(id host, UIView *containerView, NSString *moduleName,
                               NSDictionary *properties,
                               const std::shared_ptr<FabricSurfaceHost> &surfaceHost,
@@ -928,6 +945,8 @@ static void fabricMountNative(id host, UIView *containerView, NSString *moduleNa
     {
         throw std::runtime_error("Fabric runtime was replaced before mounting");
     }
+    loader::native::NativeResourceReservation reservation(loader::native::nativeSurfaceBudget(),
+                                                          "Too many React surfaces are mounted");
     if (![host respondsToSelector:@selector(createSurfaceWithModuleName:mode:initialProperties:)])
     {
         throw std::runtime_error("Fabric host does not expose surface creation");
@@ -967,7 +986,11 @@ static void fabricMountNative(id host, UIView *containerView, NSString *moduleNa
     {
         std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
         replaced = generation != loader::native::runtimeGeneration();
-        if (!replaced) gFabricSurfaces[surfaceHost.get()] = surfaceHost;
+        if (!replaced)
+        {
+            gFabricSurfaces[surfaceHost.get()] = surfaceHost;
+            reservation.commit();
+        }
     }
     if (replaced)
     {
@@ -997,7 +1020,7 @@ static Value fabricMount(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "Fabric host is unavailable");
     }
 
-    NSString *moduleName = [JSI toNSString:args[1] runtime:runtime];
+    NSString *moduleName = fabricModuleName(runtime, args[1]);
     NSDictionary *properties = fabricProperties(runtime, count > 2 ? &args[2] : nullptr);
     auto surfaceHost = std::make_shared<FabricSurfaceHost>();
     uint64_t generation = loader::native::runtimeGeneration();
@@ -1027,7 +1050,7 @@ static Value fabricMountAsync(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "Fabric host is unavailable");
     }
 
-    NSString *moduleName = [JSI toNSString:args[1] runtime:runtime];
+    NSString *moduleName = fabricModuleName(runtime, args[1]);
     NSDictionary *properties = fabricProperties(runtime, count > 2 ? &args[2] : nullptr);
     auto surfaceHost = std::make_shared<FabricSurfaceHost>();
     uint64_t generation = loader::native::runtimeGeneration();
@@ -1101,6 +1124,7 @@ static void invalidateRuntimeFabricSurfaces(uint64_t generation)
             }
             stale.push_back(iterator->second);
             iterator = gFabricSurfaces.erase(iterator);
+            loader::native::nativeSurfaceBudget().release();
         }
     }
     if (stale.empty()) return;
@@ -1229,10 +1253,7 @@ static Value fabricUnmount(Runtime &runtime, const Value *args, size_t count)
 
     executeMainSynchronously([surface, view]() { fabricUnmountNative(surface, view); });
     surfaceHost->clear();
-    {
-        std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
-        gFabricSurfaces.erase(surfaceHost.get());
-    }
+    forgetFabricSurface(surfaceHost.get());
     return Value::undefined();
 }
 
@@ -1334,8 +1355,7 @@ static Value fabricUnmountAsync(Runtime &runtime, const Value *args, size_t coun
             if (!surfaceHost->active()) return;
             fabricUnmountNative(surfaceHost->surface(), surfaceHost->view());
             surfaceHost->clear();
-            std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
-            gFabricSurfaces.erase(surfaceHost.get());
+            forgetFabricSurface(surfaceHost.get());
         },
         fabricVoidResult);
 }
@@ -2159,7 +2179,7 @@ static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)
         throw JSError(runtime, "objc.batch expects an array of steps");
     }
     Array input = args[0].asObject(runtime).asArray(runtime);
-    if (input.size(runtime) > 64)
+    if (input.size(runtime) > loader::native::kMaximumBatchSteps)
     {
         throw JSError(runtime, "Native batch requires at most 64 steps");
     }
