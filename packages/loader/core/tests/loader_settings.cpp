@@ -2,6 +2,7 @@
 #include "LoaderSettings.h"
 
 #include <cassert>
+#include <chrono>
 #include <filesystem>
 #include <string>
 #include <unistd.h>
@@ -58,6 +59,27 @@ int main()
     assert(!corrupt.replace("[]"));
     assert(corrupt.replace(R"({"unbound":{"recovery":true}})"));
     assert(corrupt.getBoolean("unbound", "recovery", false));
+
+    {
+        const auto fresh = (root / "fresh.json").string();
+        assert(loader::writeTextFileAtomically(fresh, R"({"unbound":{"recovery":false}})"));
+        loader::SettingsStore native(fresh);
+        native.load();
+        assert(!native.getBoolean("unbound", "recovery", true));
+
+        assert(loader::writeTextFileAtomically(
+            fresh, R"({"unbound":{"recovery":false,"toasts":{"enabled":false}},"plugins":{"a":1}})"));
+        std::filesystem::last_write_time(fresh, std::filesystem::file_time_type::clock::now() +
+                                                    std::chrono::seconds(2));
+        assert(!native.getBoolean("unbound", "toasts.enabled", true));
+
+        native.set("unbound", "recovery", true);
+        assert(native.save());
+        const std::string written = loader::readTextFile(fresh).value();
+        assert(written.find("\"plugins\"") != std::string::npos);
+        assert(written.find("\"toasts\"") != std::string::npos);
+        assert(native.getBoolean("unbound", "recovery", false));
+    }
 
     std::filesystem::remove_all(root);
     return 0;

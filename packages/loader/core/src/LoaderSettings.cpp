@@ -4,6 +4,8 @@
 #include "LoaderLog.h"
 
 #include <chrono>
+#include <filesystem>
+#include <system_error>
 
 namespace loader
 {
@@ -27,6 +29,42 @@ namespace loader
 
     SettingsStore::SettingsStore(std::string path) : path_(std::move(path)) {}
 
+    SettingsStore::FileStamp SettingsStore::stampOnDisk() const
+    {
+        std::error_code error;
+        const auto      size = std::filesystem::file_size(path_, error);
+        if (error)
+        {
+            return {};
+        }
+        const auto modified = std::filesystem::last_write_time(path_, error);
+        if (error)
+        {
+            return {};
+        }
+        return {true, static_cast<int64_t>(modified.time_since_epoch().count()), static_cast<uint64_t>(size)};
+    }
+
+    void SettingsStore::refreshLocked() const
+    {
+        if (dirty_)
+        {
+            return;
+        }
+        const FileStamp current = stampOnDisk();
+        if (current == stamp_ || !current.exists)
+        {
+            return;
+        }
+        std::optional<std::string> contents = readTextFile(path_);
+        nlohmann::json parsed = contents ? nlohmann::json::parse(*contents, nullptr, false) : nlohmann::json();
+        if (parsed.is_object())
+        {
+            data_ = std::move(parsed);
+        }
+        stamp_ = current;
+    }
+
     void SettingsStore::load()
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -49,17 +87,27 @@ namespace loader
             return;
         }
 
-        data_ = std::move(parsed);
+        data_  = std::move(parsed);
+        stamp_ = stampOnDisk();
+        dirty_ = false;
     }
 
     bool SettingsStore::save() const
     {
-        return writeTextFileAtomically(path_, serialize());
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!writeTextFileAtomically(path_, data_.dump(2)))
+        {
+            return false;
+        }
+        stamp_ = stampOnDisk();
+        dirty_ = false;
+        return true;
     }
 
     std::string SettingsStore::serialize() const
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        refreshLocked();
         return data_.dump(2);
     }
 
@@ -72,7 +120,8 @@ namespace loader
         }
 
         std::lock_guard<std::mutex> lock(mutex_);
-        data_ = std::move(parsed);
+        data_  = std::move(parsed);
+        dirty_ = true;
         return true;
     }
 
@@ -80,6 +129,7 @@ namespace loader
                                                      const std::string &key) const
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        refreshLocked();
 
         auto storeEntry = data_.find(store);
         if (storeEntry == data_.end() || !storeEntry->is_object())
@@ -154,6 +204,8 @@ namespace loader
     void SettingsStore::set(const std::string &store, const std::string &key, nlohmann::json value)
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        refreshLocked();
+        dirty_ = true;
 
         nlohmann::json &payload = data_[store];
         if (!payload.is_object())

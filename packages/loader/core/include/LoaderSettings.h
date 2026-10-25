@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -28,10 +29,23 @@ namespace loader
         const std::string &path() const;
 
     private:
-        void backupCorruptFile() const;
+        struct FileStamp
+        {
+            bool     exists   = false;
+            int64_t  modified = 0;
+            uint64_t size     = 0;
 
-        std::string        path_;
-        nlohmann::json     data_ = nlohmann::json::object();
-        mutable std::mutex mutex_;
+            bool operator==(const FileStamp &other) const = default;
+        };
+
+        void      backupCorruptFile() const;
+        FileStamp stampOnDisk() const;
+        void      refreshLocked() const;
+
+        std::string            path_;
+        mutable nlohmann::json data_ = nlohmann::json::object();
+        mutable FileStamp      stamp_;
+        mutable bool           dirty_ = false;
+        mutable std::mutex     mutex_;
     };
 }
