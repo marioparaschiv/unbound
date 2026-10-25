@@ -11,6 +11,7 @@ import { and, eq } from 'drizzle-orm';
 import { account, addon, addonMaintainer, moderationEvent, user } from '~/db/schema';
 import { publishLoaderRelease, withdrawLoaderRelease } from '~/lib/loader-releases';
 import { API_KEY_HEADER, createApiClient } from '~/api/client';
+import { createStaffNote } from '~/lib/staff-notes';
 import botReleases from '~/endpoints/bot-releases';
 import { mintBotKey } from '~/lib/bot/credential';
 import botMembers from '~/endpoints/bot-members';
@@ -30,7 +31,6 @@ import {
 	snowflakeAt,
 } from './helpers/context';
 import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
-import { createStaffNote } from '~/lib/staff-notes';
 import { failure, serveEndpoints } from './helpers/server';
 import { seedSponsorship } from './helpers/sponsors';
 
