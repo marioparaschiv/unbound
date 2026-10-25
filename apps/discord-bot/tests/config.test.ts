@@ -40,7 +40,12 @@ describe('checkConfig', () => {
 
 		expect(result).toEqual({
 			ok: true,
-			env: { ...ENV, POLL_INTERVAL_SECONDS: 30, FEED_PAGE_SIZE: 100 },
+			env: {
+				...ENV,
+				POLL_INTERVAL_SECONDS: 30,
+				FEED_PAGE_SIZE: 100,
+				RECONCILE_INTERVAL_SECONDS: 300,
+			},
 		});
 	});
 });
