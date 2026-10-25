@@ -1,8 +1,8 @@
 import type { APIEmbed, APIEmbedField } from 'discord.js';
 
 import { KINDS, type KindEmbed } from '~/dispatchers/audit-kinds';
-import type { auditEvent } from '~/db/schema';
 import { COLOURS, SITE_URL } from '~/lib/constants';
+import type { auditEvent } from '~/db/schema';
 
 export type AuditEventRow = typeof auditEvent.$inferSelect;
 
