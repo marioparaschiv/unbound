@@ -60,7 +60,11 @@ export async function connectDiscord(): Promise<void> {
 		);
 
 		if (!clientId || !state) {
-			notify('OAuth configuration is incomplete.');
+			notify(
+				login.ok
+					? 'OAuth configuration is incomplete.'
+					: `The translate service is unavailable (HTTP ${login.status}).`,
+			);
 
 			return;
 		}
