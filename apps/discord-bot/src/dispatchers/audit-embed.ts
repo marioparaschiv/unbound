@@ -2,7 +2,7 @@ import type { APIEmbed, APIEmbedField } from 'discord.js';
 
 import { KINDS, type KindEmbed } from '~/dispatchers/audit-kinds';
 import type { auditEvent } from '~/db/schema';
-import { COLOURS } from '~/lib/constants';
+import { COLOURS, SITE_URL } from '~/lib/constants';
 
 export type AuditEventRow = typeof auditEvent.$inferSelect;
 
@@ -17,7 +17,6 @@ export const EMBED_LIMITS = {
 	total: 6000,
 } as const;
 
-const SITE_ORIGIN = 'https://unbound.rip';
 const SUBJECT_PATHS: Record<string, string> = { addon: 'admin/addons', user: 'admin/users' };
 const CODE_FENCE = { open: '```json\n', close: '\n```' } as const;
 
@@ -57,7 +56,7 @@ function subjectLink(event: AuditEventRow) {
 
 	const path = SUBJECT_PATHS[event.subjectType];
 
-	return `${SITE_ORIGIN}/${path}/${encodeURIComponent(event.subjectId)}`;
+	return `${SITE_URL}/${path}/${encodeURIComponent(event.subjectId)}`;
 }
 
 // A `]` in a subject name would otherwise end the masked link's text early.
