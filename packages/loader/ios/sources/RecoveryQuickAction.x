@@ -15,8 +15,7 @@ static NSString *const kRecoveryShortcutType = @"app.unbound.recovery.toggle";
 + (NSArray<UIApplicationShortcutItem *> *)itemsWithRecoveryAction:
     (NSArray<UIApplicationShortcutItem *> *)items
 {
-    BOOL enabled = [Utilities isRecoveryModeEnabled];
-    NSString *title = enabled ? @"Disable Safe Mode" : @"Enable Safe Mode";
+    NSString *title = [CoreBridge preference:@"recovery-label" argument:@""];
     UIApplicationShortcutIcon *icon = [UIApplicationShortcutIcon iconWithSystemImageName:@"shield"];
     UIApplicationShortcutItem *recovery =
         [[UIApplicationShortcutItem alloc] initWithType:kRecoveryShortcutType
@@ -45,13 +44,13 @@ static NSString *const kRecoveryShortcutType = @"app.unbound.recovery.toggle";
         return NO;
     }
 
-    BOOL enabled = [RecoveryQuickAction toggleSafeMode];
+    [RecoveryQuickAction toggleRecoveryMode];
     [Logger info:LOG_CATEGORY_DEFAULT
-          format:@"Home Screen action %@ Safe Mode.", enabled ? @"enabled" : @"disabled"];
+          format:@"Home Screen action: %@.", [CoreBridge preference:@"recovery-status" argument:@""]];
     return YES;
 }
 
-+ (BOOL)toggleSafeMode
++ (BOOL)toggleRecoveryMode
 {
     BOOL enabled = [CoreBridge toolboxSucceeded:@"toggle-recovery" argument:@""];
     [RecoveryQuickAction refresh];

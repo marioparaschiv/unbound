@@ -350,8 +350,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
             @"title" : @"Utilities",
             @"items" : @[
                 @{
-                    @"title" : [Utilities isRecoveryModeEnabled] ? @"Disable Recovery Mode"
-                                                                 : @"Enable Recovery Mode",
+                    @"title" : [CoreBridge preference:@"recovery-label" argument:@""],
                     @"icon" : @"shield",
                     @"selector" : NSStringFromSelector(@selector(toggleRecoveryMode))
                 },
@@ -512,7 +511,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 
 - (void)toggleRecoveryMode
 {
-    [RecoveryQuickAction toggleSafeMode];
+    [RecoveryQuickAction toggleRecoveryMode];
     [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
 }
 
