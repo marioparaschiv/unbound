@@ -13,7 +13,7 @@ import {
 	DATABASE_URL,
 	type TestDatabase,
 } from './helpers/database';
-import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord';
+import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord-rest';
 import { RELEASE } from './helpers/feeds';
 
 const TARGET: ReleaseTarget = { channelId: '21', roleId: '31' };

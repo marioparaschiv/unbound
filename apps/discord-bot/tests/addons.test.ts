@@ -13,7 +13,7 @@ import {
 	DATABASE_URL,
 	type TestDatabase,
 } from './helpers/database';
-import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord';
+import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord-rest';
 import { ADDON } from './helpers/feeds';
 
 const CHANNELS: AddonChannels = { plugin: '11', theme: '12', 'icon-pack': '13' };
