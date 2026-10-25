@@ -2,6 +2,7 @@
 #include <ostream>
 #include <streambuf>
 
+#import "CoreConversions.h"
 #import "NativePlatform.h"
 
 #import "FileSystem.h"
@@ -10,27 +11,13 @@
 
 #include "NativePlatformBridge.h"
 
-static std::string toStdString(NSString *value)
-{
-    const char *utf8 = value.UTF8String;
-    return utf8 ? std::string(utf8) : std::string();
-}
+using unbound::ios::jsonFromObject;
+using unbound::ios::toStdString;
 
 static nlohmann::json entitlementsJSON()
 {
-    NSDictionary *entitlements = [Utilities getApplicationEntitlements] ?: @{};
-    NSData       *data         = [NSJSONSerialization dataWithJSONObject:entitlements
-                                                           options:0
-                                                             error:nil];
-    if (!data)
-    {
-        return nlohmann::json::object();
-    }
-
-    nlohmann::json parsed =
-        nlohmann::json::parse(static_cast<const char *>(data.bytes),
-                              static_cast<const char *>(data.bytes) + data.length, nullptr, false);
-    return parsed.is_object() ? parsed : nlohmann::json::object();
+    nlohmann::json converted = jsonFromObject([Utilities getApplicationEntitlements] ?: @{});
+    return converted.is_object() ? converted : nlohmann::json::object();
 }
 
 namespace loader {

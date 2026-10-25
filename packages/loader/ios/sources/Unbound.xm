@@ -1,3 +1,4 @@
+#import "CoreConversions.h"
 #import <jsi/jsi.h>
 
 #import "AddonsCore.h"
@@ -18,6 +19,9 @@
 #import <substrate.h>
 
 #include <atomic>
+
+using unbound::ios::toNSString;
+using unbound::ios::toStdString;
 
 using namespace facebook;
 
@@ -105,17 +109,6 @@ void CompleteBrowserLogin(NSString *token)
     applyPendingBrowserLogin();
 }
 
-static NSString *nsString(const std::string &value)
-{
-    return [NSString stringWithUTF8String:value.c_str()] ?: @"";
-}
-
-static std::string stdString(NSString *value)
-{
-    const char *utf8 = value.UTF8String;
-    return utf8 ? std::string(utf8) : std::string();
-}
-
 class IOSLoaderHost final : public loader::LoaderHost
 {
 public:
@@ -143,7 +136,7 @@ public:
 
     std::optional<std::string> resource(const std::string &name) override
     {
-        NSData *data = [Utilities getResource:nsString(name) data:true ext:@"js"];
+        NSData *data = [Utilities getResource:toNSString(name) data:true ext:@"js"];
         if (data.length == 0)
         {
             return std::nullopt;
@@ -166,10 +159,10 @@ public:
         nlohmann::json availableFonts = nlohmann::json::array();
         for (NSString *family in [Fonts getAvailableFonts])
         {
-            availableFonts.push_back(stdString(family));
+            availableFonts.push_back(toStdString(family));
         }
         return loader::makePreloadPayload(UnboundSettingsStore(), UnboundAddonState(), availableFonts,
-                                          stdString([Utilities getCurrentDylibName]), stdString(PACKAGE_VERSION));
+                                          toStdString([Utilities getCurrentDylibName]), toStdString(PACKAGE_VERSION));
     }
 
     void installNativeModules(jsi::Runtime &runtime) override
@@ -196,7 +189,7 @@ public:
 
     void alert(const std::string &message) override
     {
-        NSString *text = nsString(message);
+        NSString *text = toNSString(message);
         dispatch_async(dispatch_get_main_queue(), ^{ [Utilities alert:text]; });
     }
 };

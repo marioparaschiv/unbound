@@ -2,6 +2,7 @@
 #include <ostream>
 #include <streambuf>
 
+#import "CoreConversions.h"
 #import "CoreBridge.h"
 #import "SettingsCore.h"
 #import "Updater.h"
@@ -9,6 +10,9 @@
 
 #include "LoaderHotReload.h"
 #include "LoaderUpdater.h"
+
+using unbound::ios::toNSString;
+using unbound::ios::toStdString;
 
 static bool isServingBundle(NSURL *url, NSTimeInterval timeout)
 {
@@ -37,17 +41,6 @@ static bool isServingBundle(NSURL *url, NSTimeInterval timeout)
     }
 
     return serving;
-}
-
-static std::string toStdString(NSString *value)
-{
-    const char *utf8 = value.UTF8String;
-    return utf8 ? std::string(utf8) : std::string();
-}
-
-static NSString *toNSString(const std::string &value)
-{
-    return [NSString stringWithUTF8String:value.c_str()] ?: @"";
 }
 
 static loader::UpdaterSettings iosUpdaterSettings()

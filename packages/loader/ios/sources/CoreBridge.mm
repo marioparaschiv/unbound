@@ -2,6 +2,7 @@
 #include <ostream>
 #include <streambuf>
 
+#import "CoreConversions.h"
 #import "AddonsCore.h"
 #import "CoreBridge.h"
 #import "FileSystem.h"
@@ -17,18 +18,13 @@
 #include "LoaderThemes.h"
 #include "LoaderToolbox.h"
 
-static std::string toStdString(NSString *value)
-{
-    const char *utf8 = value.UTF8String;
-    return utf8 ? std::string(utf8) : std::string();
-}
+using unbound::ios::objectFromJSON;
+using unbound::ios::toStdString;
 
 static NSArray *arrayFromJSON(const nlohmann::json &value)
 {
-    std::string json   = loader::toJSON(value);
-    NSData     *data   = [NSData dataWithBytes:json.data() length:json.size()];
-    id          parsed = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-    return [parsed isKindOfClass:[NSArray class]] ? parsed : @[];
+    id converted = objectFromJSON(value);
+    return [converted isKindOfClass:[NSArray class]] ? converted : @[];
 }
 
 loader::AddonState &UnboundAddonState()
