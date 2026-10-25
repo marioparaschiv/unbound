@@ -1,5 +1,3 @@
-import type { Sticker } from '~/modules';
-
 export const Button = {
 	size: 32,
 	gap: 8,
@@ -19,9 +17,6 @@ export const MAX_PREVIEW_URLS = 4;
 
 export const CHANNEL_MESSAGE_DRAFT_TYPE = 0;
 export const MESSAGE_ROW_TYPE = 1;
-
-// A stable empty list, so the sticker selector does not re-render the button on every store change.
-export const NO_STICKERS: Sticker[] = [];
 
 export const TextFields = new Map<string, 'title' | 'description' | 'siteName' | 'type' | 'image'>([
 	['og:title', 'title'],

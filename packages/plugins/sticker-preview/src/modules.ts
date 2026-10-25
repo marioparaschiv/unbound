@@ -1,6 +1,6 @@
 import { metro, patcher } from '@unbound-app/api';
 
-import type { Sticker } from '~/staged-stickers';
+import type { Sticker } from '@unbound-plugins/shared/stickers/staged-stickers';
 
 export type StickerProps = { animated: boolean; opaque: boolean; size: number; sticker: Sticker };
 

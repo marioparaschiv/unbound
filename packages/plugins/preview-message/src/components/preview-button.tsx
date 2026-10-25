@@ -1,16 +1,10 @@
+import { sharedStagedStickers } from '@unbound-plugins/shared/stickers/staged-stickers';
 import { Animated, Pressable, type PressableStateCallbackType } from 'react-native';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Portal } from '@unbound-app/api/metro/components';
-import { useEffect, useRef, useState } from 'react';
 
-import {
-	DraftStore,
-	FluxHooks,
-	Haptics,
-	PreviewRunning,
-	StickerPreviewStore,
-	type Sticker,
-} from '~/modules';
-import { Button, CHANNEL_MESSAGE_DRAFT_TYPE, NO_STICKERS, Timing } from '~/constants';
+import { DraftStore, FluxHooks, Haptics, PreviewRunning, type Sticker } from '~/modules';
+import { Button, CHANNEL_MESSAGE_DRAFT_TYPE, Timing } from '~/constants';
 import PreviewOverlay from '~/components/preview-overlay';
 import { dismissKeyboard } from '~/keyboard';
 
@@ -27,11 +21,9 @@ function useDraft(channelId: string): string {
 }
 
 function useStickers(channelId: string): Sticker[] {
-	const [store] = useState(() => (StickerPreviewStore.module ? StickerPreviewStore : null));
-
-	return FluxHooks.useStateFromStores(
-		store ? [store] : [],
-		() => store?.getStickerPreview(channelId, false) ?? NO_STICKERS,
+	return useSyncExternalStore(
+		(onChange) => sharedStagedStickers().subscribe(channelId, onChange),
+		() => sharedStagedStickers().get(channelId),
 	);
 }
 

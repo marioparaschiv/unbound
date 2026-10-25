@@ -2,6 +2,12 @@ export type Sticker = { id: string | number; opaque?: boolean };
 
 export type StagedStickers = ReturnType<typeof createStagedStickers>;
 
+const NO_STICKERS: readonly Sticker[] = Object.freeze([]);
+
+declare global {
+	var __unboundStagedStickers: StagedStickers | undefined;
+}
+
 /**
  * @description Holds the stickers waiting to be sent in each channel, notifying that channel's subscribers on change.
  * @returns `get`, `set` and `add` the channel's stickers, `subscribe` to a channel, and list the `channels` holding any.
@@ -11,7 +17,7 @@ export function createStagedStickers() {
 	const listeners = new Map<string, Set<() => void>>();
 
 	function get(channelId: string): Sticker[] {
-		return staged.get(channelId) ?? [];
+		return staged.get(channelId) ?? (NO_STICKERS as Sticker[]);
 	}
 
 	function set(channelId: string, stickers: Sticker[]) {
@@ -50,4 +56,12 @@ export function createStagedStickers() {
 	}
 
 	return { get, set, add, subscribe, channels };
+}
+
+/**
+ * @description Returns the staged stickers every plugin bundle shares, so Preview Message can show what Sticker Preview staged.
+ * @returns The one staged-sticker store kept on `globalThis`.
+ */
+export function sharedStagedStickers(): StagedStickers {
+	return (globalThis.__unboundStagedStickers ??= createStagedStickers());
 }
