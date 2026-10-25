@@ -1,14 +1,19 @@
-import { publishFirstPartyResponseSchema } from '@unbound-app/contracts/publish';
+import {
+	listFirstPartyAddonsResponseSchema,
+	publishFirstPartyResponseSchema,
+} from '@unbound-app/contracts/publish';
 import type { PublishFirstPartyRequest } from '@unbound-app/contracts/publish';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { eq } from 'drizzle-orm';
 
+import listFirstPartyAddonsEndpoint from '~/endpoints/list-first-party-addons';
 import publishFirstPartyEndpoint from '~/endpoints/publish-first-party';
 import { API_KEY_HEADER, createApiClient } from '~/api/client';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createSubmission } from '~/lib/submissions';
 import { getArtifactKeys } from '~/lib/artifacts';
+import { delistAddon } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
 import type { Caller } from '~/lib/api/caller';
@@ -55,6 +60,7 @@ const ctx = trusted.ctx;
 const server = serveEndpoints(ctx, {
 	'POST /api/v1/first-party/publish': publishFirstPartyEndpoint,
 	'GET /api/v1/catalog': getCatalogEndpoint,
+	'GET /api/v1/first-party/addons': listFirstPartyAddonsEndpoint,
 });
 const client = createApiClient<Api>({ baseUrl: server.url.href });
 
@@ -265,6 +271,49 @@ describe('POST /api/v1/first-party/publish', () => {
 			(await liveSha256(reviewed.ctx, 'fp.same', '1.0.0')) ?? '',
 		);
 		expect(await liveSha256(ctx, 'fp.same', '1.0.0')).toBe(trustedResult.sha256);
+	});
+});
+
+describe('GET /api/v1/first-party/addons', () => {
+	test('lists a delisted first-party addon at its newest version, and no other repository', async () => {
+		const request = buildTag(fixture, 'fp.delisted');
+		const admin = await signUp(ctx, 'admin');
+		const owner = await signUp(ctx);
+
+		await publish(ciKey, request);
+		delistAddon(ctx, admin.caller, 'fp.delisted');
+		await seedApprovedAddon(ctx, owner.userId, manifest('fp.elsewhere'));
+		await ctx.db
+			.update(addon)
+			.set({ repository: THIRD_PARTY })
+			.where(eq(addon.id, 'fp.elsewhere'));
+
+		const { addons } = await client('GET /api/v1/first-party/addons', {
+			headers: ciKey,
+			response: listFirstPartyAddonsResponseSchema,
+		});
+
+		expect(addons).toContainEqual({
+			id: 'fp.delisted',
+			version: '1.0.0',
+			commitSha: request.commitSha,
+		});
+		expect(addons.map(({ id }) => id)).not.toContain('fp.elsewhere');
+	});
+
+	test('needs the same credential as publishing', async () => {
+		const developer = await signUp(ctx, 'developer');
+
+		for (const headers of [ci.session, await apiKey(ctx, developer)]) {
+			expect(
+				await failure(
+					client('GET /api/v1/first-party/addons', {
+						headers,
+						response: listFirstPartyAddonsResponseSchema,
+					}),
+				),
+			).toEqual({ status: 403, code: 'forbidden' });
+		}
 	});
 });
 

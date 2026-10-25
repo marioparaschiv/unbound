@@ -8,11 +8,10 @@ export type LocalPlugin = {
 	bundle: string;
 };
 
-/** The version the backend serves for an addon, and where it was read from. */
+/** The newest version the backend published for an addon, delisted or not, and the commit it was read from. */
 export type PublishedVersion = {
 	version: string;
 	commitSha: string | null;
-	repository: string | null;
 };
 
 export type PublishedVersions = Map<string, PublishedVersion>;

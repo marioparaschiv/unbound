@@ -62,30 +62,24 @@ function commit(message: string): string {
 	return git(work, 'rev-parse', 'HEAD');
 }
 
-function addonPage(id: string, published: Published) {
-	return {
-		id,
-		latestVersion: {
-			version: published.version,
-			source: published.commitSha
-				? { repository: REPOSITORY, commitSha: published.commitSha }
-				: null,
-		},
-	};
-}
-
 async function serve(request: Request): Promise<Response> {
 	const url = new URL(request.url);
-	const entries = [...state.published.entries()];
 
-	if (request.method === 'GET' && url.pathname === '/api/v1/addons') {
-		const index = Number(url.searchParams.get('cursor') ?? 0);
-		const entry = entries[index];
+	if (request.method === 'GET' && url.pathname === '/api/v1/first-party/addons') {
+		if (request.headers.get('x-api-key') !== 'test-key') {
+			return Response.json(
+				{ error: { code: 'unauthorized', message: 'No key.' } },
+				{ status: 401 },
+			);
+		}
 
-		return Response.json({
-			addons: entry ? [addonPage(...entry)] : [],
-			nextCursor: index + 1 < entries.length ? String(index + 1) : null,
-		});
+		const addons = [...state.published].map(([id, { version, commitSha }]) => ({
+			id,
+			version,
+			commitSha,
+		}));
+
+		return Response.json({ addons });
 	}
 
 	if (request.method === 'POST' && url.pathname === '/api/v1/first-party/publish') {

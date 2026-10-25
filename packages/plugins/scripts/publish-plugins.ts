@@ -17,9 +17,11 @@ import {
 	parseChangelog,
 	selectRelease,
 } from '@unbound-app/contracts/changelog';
-import { publishFirstPartyResponseSchema } from '@unbound-app/contracts/publish';
+import {
+	listFirstPartyAddonsResponseSchema,
+	publishFirstPartyResponseSchema,
+} from '@unbound-app/contracts/publish';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
-import { z } from '@unbound-app/contracts/zod';
 
 import type { LocalPlugin, PluginDecision, PublishedVersions } from './select-plugins';
 import type { PluginCommit } from './plugin-changelog';
@@ -37,7 +39,7 @@ type Options = {
 	remote: string;
 	dryRun: boolean;
 	apiUrl: string;
-	apiKey: string | undefined;
+	apiKey: string;
 };
 
 type ManifestVersion = {
@@ -80,24 +82,6 @@ type PublishOutcome = {
 	line: string;
 };
 
-const publishedPageSchema = z.object({
-	addons: z.array(
-		z.object({
-			id: z.string(),
-			latestVersion: z.object({
-				version: z.string(),
-				source: z.nullable(
-					z.object({
-						repository: z.string(),
-						commitSha: z.string(),
-					}),
-				),
-			}),
-		}),
-	),
-	nextCursor: z.nullable(z.string()),
-});
-
 function git(root: string, args: string[], options: GitOptions = {}): string {
 	const result = tryGit(root, args, options);
 
@@ -135,7 +119,7 @@ function readOptions(): Options {
 	});
 
 	const apiUrl = process.env.UNBOUND_API_URL?.replace(/\/+$/, '');
-	const apiKey = process.env.UNBOUND_API_KEY || undefined;
+	const apiKey = process.env.UNBOUND_API_KEY;
 	const dryRun = values['dry-run'];
 
 	if (!values.repository) {
@@ -146,7 +130,8 @@ function readOptions(): Options {
 		throw new Error('Set UNBOUND_API_URL to the Unbound backend, such as https://unbound.rip.');
 	}
 
-	if (!apiKey && !dryRun) {
+	// A dry run needs it too: only the CI account can see delisted first-party addons.
+	if (!apiKey) {
 		throw new Error('Set UNBOUND_API_KEY to an API key of the CI account.');
 	}
 
@@ -200,50 +185,35 @@ function discoverPlugins(root: string): LocalPlugin[] {
 	return plugins;
 }
 
-async function fetchPublished(apiUrl: string): Promise<PublishedVersions> {
-	const published: PublishedVersions = new Map();
+// The public listing hides delisted addons; this one does not, so a delisted plugin is never rebuilt.
+async function fetchPublished(options: Options): Promise<PublishedVersions> {
+	const url = `${options.apiUrl}/api/v1/first-party/addons`;
+	const response = await fetch(url, { headers: { 'x-api-key': options.apiKey } });
+	const body = await response.json().catch(() => null);
 
-	let cursor: string | null = null;
+	if (!response.ok) {
+		const error = apiErrorResponseSchema.safeParse(body);
+		const reason = error.success
+			? `${error.data.error.code}: ${error.data.error.message}`
+			: `status ${response.status}`;
 
-	do {
-		const url = new URL(`${apiUrl}/api/v1/addons`);
+		throw new Error(`GET ${url} failed (${reason}).`);
+	}
 
-		if (cursor) {
-			url.searchParams.set('cursor', cursor);
-		}
+	const { addons } = listFirstPartyAddonsResponseSchema.parse(body);
 
-		const response = await fetch(url);
-
-		if (!response.ok) {
-			throw new Error(`GET ${url} answered ${response.status}.`);
-		}
-
-		const page = publishedPageSchema.parse(await response.json());
-
-		for (const addon of page.addons) {
-			published.set(addon.id, {
-				version: addon.latestVersion.version,
-				commitSha: addon.latestVersion.source?.commitSha ?? null,
-				repository: addon.latestVersion.source?.repository ?? null,
-			});
-		}
-
-		cursor = page.nextCursor;
-	} while (cursor);
-
-	return published;
+	return new Map(addons.map(({ id, version, commitSha }) => [id, { version, commitSha }]));
 }
 
 // The published build commit's parent is the main commit it was built from; failing that, the commit that set the published version.
 function findChangelogBase(options: Options, decision: SelectedDecision): string | undefined {
 	if (decision.reason === 'unpublished') return;
 
-	const { root, repository } = options;
+	const { root } = options;
 	const { published, plugin } = decision;
 
 	if (
 		published.commitSha &&
-		published.repository?.toLowerCase() === repository.toLowerCase() &&
 		tryGit(root, ['cat-file', '-e', `${published.commitSha}^{commit}`]).ok
 	) {
 		// A reviewed version was submitted from a main commit itself; a build commit sits beside main.
@@ -436,7 +406,7 @@ async function publishPlugin(
 	try {
 		const response = await fetch(`${options.apiUrl}/api/v1/first-party/publish`, {
 			method: 'POST',
-			headers: { 'content-type': 'application/json', 'x-api-key': options.apiKey ?? '' },
+			headers: { 'content-type': 'application/json', 'x-api-key': options.apiKey },
 			body: JSON.stringify(request),
 		});
 		const body = await response.json().catch(() => null);
@@ -483,10 +453,7 @@ function describeDecision(decision: PluginDecision): string {
 
 async function main(): Promise<number> {
 	const options = readOptions();
-	const decisions = selectPlugins(
-		discoverPlugins(options.root),
-		await fetchPublished(options.apiUrl),
-	);
+	const decisions = selectPlugins(discoverPlugins(options.root), await fetchPublished(options));
 	const selected = getSelected(decisions);
 
 	for (const decision of decisions) {

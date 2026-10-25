@@ -8,7 +8,7 @@ function plugin(version: string): LocalPlugin {
 }
 
 function live(version: string): PublishedVersion {
-	return { version, commitSha: null, repository: null };
+	return { version, commitSha: null };
 }
 
 function decide(local: string, published?: string) {

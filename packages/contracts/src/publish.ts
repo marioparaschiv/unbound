@@ -104,6 +104,19 @@ export const publishFirstPartyResponseSchema = z.object({
 	sha256: z.string(),
 });
 
+/** One addon of the first-party repository, delisted or not, at its newest published version. */
+export const firstPartyAddonSchema = z.object({
+	id: addonIdSchema,
+	/** The newest version ever published, rolled back or not, so it is never published again. */
+	version: z.string(),
+	/** The commit that version was read from, or `null` for a legacy upload. */
+	commitSha: z.nullable(z.string()),
+});
+
+export const listFirstPartyAddonsResponseSchema = z.object({
+	addons: z.array(firstPartyAddonSchema),
+});
+
 export type SubmissionKind = z.infer<typeof submissionKindSchema>;
 export type SubmissionStatus = z.infer<typeof submissionStatusSchema>;
 export type OpenSubmissionStatus = z.infer<typeof openSubmissionStatusSchema>;
@@ -116,6 +129,8 @@ export type CreateSubmissionResponse = z.infer<typeof createSubmissionResponseSc
 export type PublishFirstPartyRequest = z.infer<typeof publishFirstPartyRequestSchema>;
 export type FirstPartyPublishStatus = z.infer<typeof firstPartyPublishStatusSchema>;
 export type PublishFirstPartyResponse = z.infer<typeof publishFirstPartyResponseSchema>;
+export type FirstPartyAddon = z.infer<typeof firstPartyAddonSchema>;
+export type ListFirstPartyAddonsResponse = z.infer<typeof listFirstPartyAddonsResponseSchema>;
 
 export default {
 	MAX_CHANGELOG_LENGTH,
@@ -131,4 +146,6 @@ export default {
 	publishFirstPartyRequestSchema,
 	firstPartyPublishStatusSchema,
 	publishFirstPartyResponseSchema,
+	firstPartyAddonSchema,
+	listFirstPartyAddonsResponseSchema,
 };

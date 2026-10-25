@@ -1,10 +1,11 @@
 import type {
+	ListFirstPartyAddonsResponse,
 	PublishFirstPartyRequest,
 	PublishFirstPartyResponse,
 	SubmissionKind,
 } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
-import { and, eq, inArray, ne } from 'drizzle-orm';
+import { and, eq, inArray, ne, sql } from 'drizzle-orm';
 
 import { OPEN_SUBMISSION_STATUSES, insertSubmissionSource } from '~/lib/submissions';
 import { createGitHubClient, getGitHubToken } from '~/lib/github';
@@ -14,7 +15,7 @@ import type { AddonSource } from '~/lib/addon-source';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Transaction } from '~/db/database';
-import { writeArtifact } from '~/lib/artifacts';
+import { VERSION_SOURCE, writeArtifact } from '~/lib/artifacts';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { publishVersion } from '~/lib/review';
@@ -208,4 +209,45 @@ export async function publishFirstParty(
 	return { status: 'published', ...published, sha256: source.sha256 };
 }
 
-export default { publishFirstParty };
+/**
+ * @description Lists every addon of `FIRST_PARTY_REPOSITORY`, delisted ones included, at its newest
+ * published version, so CI never rebuilds a version the server would answer `unchanged` for.
+ * @param ctx The application context.
+ * @param caller The caller; must use an API key with `firstParty: ['publish']`.
+ * @returns The addons, ordered by id.
+ */
+export async function listFirstPartyAddons(
+	ctx: AppContext,
+	caller: Caller,
+): Promise<ListFirstPartyAddonsResponse> {
+	const repository = requireFirstPartyRepository(ctx, caller);
+	const rows = await ctx.db.query.addon.findMany({
+		where: { RAW: (table) => sql`lower(${table.repository}) = lower(${repository})` },
+		columns: { id: true },
+		with: {
+			versions: {
+				columns: { version: true },
+				orderBy: { versionKey: 'desc' },
+				limit: 1,
+				with: VERSION_SOURCE,
+			},
+		},
+		orderBy: { id: 'asc' },
+	});
+
+	const addons = rows.flatMap(({ id, versions: [newest] }) =>
+		newest
+			? [
+					{
+						id,
+						version: newest.version,
+						commitSha: newest.submission?.source?.commitSha ?? null,
+					},
+				]
+			: [],
+	);
+
+	return { addons };
+}
+
+export default { publishFirstParty, listFirstPartyAddons };
