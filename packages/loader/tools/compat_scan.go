@@ -21,6 +21,7 @@ const (
 	compatPossible   = "possible"
 	compatUnverified = "unverified"
 	compatExternal   = "external"
+	compatFallback   = "fallback"
 )
 
 var compatEnvironmentClasses = map[string]string{
@@ -443,6 +444,7 @@ func evaluateCompat(references []*compatReference, targets []*compatTarget, base
 		}
 		state := &compatPlatformState{Version: target.Version, Statuses: map[string]string{}}
 
+		var findings []compatFinding
 		for _, reference := range references {
 			applies := false
 			for _, platform := range reference.platforms() {
@@ -455,17 +457,20 @@ func evaluateCompat(references []*compatReference, targets []*compatTarget, base
 			if status == "" {
 				continue
 			}
-			key := reference.key()
 			if status == compatOK {
-				seen[key] = true
+				seen[reference.key()] = true
 			}
-			if worse(status, state.Statuses[key]) {
-				state.Statuses[key] = status
+			findings = append(findings, compatFinding{Reference: reference, Platform: target.Platform, Status: status, Reason: reason})
+		}
+		resolveFallbacks(findings)
+		for _, finding := range findings {
+			key := finding.Reference.key()
+			if worse(finding.Status, state.Statuses[key]) {
+				state.Statuses[key] = finding.Status
 			}
-			finding := compatFinding{Reference: reference, Platform: target.Platform, Status: status, Reason: reason}
-			if status == compatBroken || status == compatPossible {
+			if finding.Status == compatBroken || finding.Status == compatPossible {
 				before, known := previous.Statuses[key]
-				finding.New = known && before != status && before != compatBroken
+				finding.New = known && before != finding.Status && before != compatBroken
 			}
 			results.Findings = append(results.Findings, finding)
 		}
@@ -478,6 +483,62 @@ func evaluateCompat(references []*compatReference, targets []*compatTarget, base
 	return results
 }
 
+func resolves(status string) bool {
+	return status == compatOK || status == compatExternal
+}
+
+func resolveFallbacks(findings []compatFinding) {
+	alternatives := map[string]map[int][]int{}
+	var groups []string
+	for index, finding := range findings {
+		group := finding.Reference.Group
+		if group == "" {
+			continue
+		}
+		if alternatives[group] == nil {
+			alternatives[group] = map[int][]int{}
+			groups = append(groups, group)
+		}
+		alternatives[group][finding.Reference.Alternative] = append(alternatives[group][finding.Reference.Alternative], index)
+	}
+	for _, group := range groups {
+		used := -1
+		for alternative, members := range alternatives[group] {
+			complete := true
+			for _, member := range members {
+				complete = complete && resolves(findings[member].Status)
+			}
+			if complete && (used < 0 || alternative < used) {
+				used = alternative
+			}
+		}
+		if used < 0 {
+			for _, members := range alternatives[group] {
+				for _, member := range members {
+					if !resolves(findings[member].Status) && findings[member].Reason != "" {
+						findings[member].Reason += ", and no fallback in its lookup resolves either"
+					}
+				}
+			}
+			continue
+		}
+		var covering []string
+		for _, member := range alternatives[group][used] {
+			covering = append(covering, describeCompatReference(findings[member].Reference))
+		}
+		for _, members := range alternatives[group] {
+			for _, member := range members {
+				finding := &findings[member]
+				if finding.Status != compatBroken && finding.Status != compatPossible {
+					continue
+				}
+				finding.Status = compatFallback
+				finding.Reason += "; " + strings.Join(covering, " and ") + " resolves instead"
+			}
+		}
+	}
+}
+
 func compatSeverity(status string) int {
 	switch status {
 	case compatBroken:
@@ -486,7 +547,7 @@ func compatSeverity(status string) int {
 		return 2
 	case compatUnverified:
 		return 1
-	case compatOK, compatExternal:
+	case compatOK, compatExternal, compatFallback:
 		return 0
 	}
 	return -1

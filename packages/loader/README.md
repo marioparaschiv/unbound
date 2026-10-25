@@ -232,6 +232,21 @@ go run ./tools compat-scan --ipa discord.ipa --apk discord-alpha/base.apk --andr
 
 Each run's `compat.json` is the next run's `--baseline`. A name that resolved in an earlier build and disappears is reported as broken, even when the scan cannot tell who owns it.
 
+When Discord renames something, keep the old name as a fallback so one loader works on every channel. A lookup that lists several names passes when any of them resolves:
+
+```kotlin
+private val THEME_MANAGER = HostClass("com.discord.theme.next.ThemeManager", "com.discord.theme.ThemeManager")
+```
+
+```ts
+const Forms = firstOf(
+	() => findByProps('FormSlider'),
+	() => findByProps('FormSliderRow'),
+);
+```
+
+`HostClass` loads the first class that exists. `firstOf` from `@unbound-app/utils/first-of` returns the first lookup that produces a value. Missing names in such a lookup are listed under "Covered by a fallback" and do not count as breakages. A name listed there on every channel can be removed.
+
 ## Patching an IPA
 
 The IPA build patches Discord before injecting the tweak: it names the app Unbound, drops the supported-device list, enables file sharing, adds the Unbound alternate icon and the `unbound://` URL scheme, and renames the React Navigation elements module. The same step runs on its own:

@@ -226,6 +226,12 @@ func renderCompatReportWithSource(results *compatResults, sourceURL string) stri
 		builder.WriteString(fmt.Sprintf("\n<details><summary>Not verifiable (%d)</summary>\n\nSystem APIs, and members whose owner the scan cannot tell. They become checkable once a scan has seen them resolve.\n%s\n</details>\n", len(unverified), section.String()))
 	}
 
+	if fallback := compatLines(results.Findings, compatFallback, sourceURL); len(fallback) > 0 {
+		var section strings.Builder
+		writeCompatSection(&section, fallback)
+		builder.WriteString(fmt.Sprintf("\n<details><summary>Covered by a fallback (%d)</summary>\n\nThese names are gone from this build, but another name in the same lookup still resolves. A name listed here on every channel can be removed.\n%s\n</details>\n", len(fallback), section.String()))
+	}
+
 	if external := compatLines(results.Findings, compatExternal, sourceURL); len(external) > 0 {
 		var section strings.Builder
 		writeCompatSection(&section, external)

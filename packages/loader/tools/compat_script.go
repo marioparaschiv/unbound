@@ -892,6 +892,7 @@ func argumentAt(args []scriptValue, index int) scriptValue {
 func (program *scriptProgram) emitSink(site scriptSite, sink, method string, args []scriptValue) {
 	file := site.file
 	base := compatReference{Component: file.source.component, Platform: file.source.platform}
+	base.Group, base.Alternative = file.fallbackAt(site.position)
 	location := site.location()
 	add := func(kind, class, name string, strict bool) {
 		reference := base
