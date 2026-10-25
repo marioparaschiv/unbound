@@ -124,6 +124,7 @@ export function createAuditDispatcher(channelId: string = AUDIT_LOG_CHANNEL_ID):
 	return {
 		name: 'audit',
 		channel: 'audit_event',
+		requires: ['AUDIT_LOG_CHANNEL_ID'],
 		reconcile: postPending,
 		handle: (_payload, context) => postPending(context),
 	};
