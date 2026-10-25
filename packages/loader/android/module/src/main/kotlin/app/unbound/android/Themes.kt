@@ -70,14 +70,14 @@ object Themes {
         palette = themeId?.let(::readPalette) ?: Palette()
         rawById = resolveRawIds(palette.raw)
         patcher?.refreshAll()
-        Logger.info("themes", "Theme updated. (${themeId ?: "default"})")
+        Logger.info(LogCategory.THEMES, "Theme updated. (${themeId ?: "default"})")
     }
 
     private fun readPalette(themeId: String): Palette {
         NativeBridge.nativePrepareAddons()
         val colors = JSONObject(NativeBridge.nativeThemeColorsJSON(themeId))
         if (colors.length() == 0) {
-            Logger.error("themes", "Selected theme $themeId is not installed.")
+            Logger.error(LogCategory.THEMES, "Selected theme $themeId is not installed.")
             return Palette()
         }
 

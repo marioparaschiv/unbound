@@ -36,8 +36,13 @@ static int androidPriority(loader::LogLevel level)
 
 static void writeLog(loader::LogLevel level, const std::string &category, const std::string &message)
 {
-    __android_log_print(androidPriority(level), "Unbound", "[%s] %s", category.c_str(),
-                        message.c_str());
+    __android_log_write(androidPriority(level), "Unbound", loader::formatLogLine(category, message).c_str());
+}
+
+static void nativeLog(JNIEnv *env, jclass, jint level, jstring category, jstring message)
+{
+    loader::logFromPlatform(level, category ? toStdString(env, category) : LOG_CATEGORY_DEFAULT,
+                            message ? toStdString(env, message) : std::string());
 }
 
 static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring bootstrapScripts,
@@ -59,7 +64,7 @@ static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring boo
     auto loader = std::make_shared<AndroidLoader>(std::move(configuration), gCallbacks);
     loader->start();
     setCurrentLoader(loader);
-    loader::log(loader::LogLevel::Info, "default", "Native loader initialized.");
+    loader::log(loader::LogLevel::Info, LOG_CATEGORY_DEFAULT, "Native loader initialized.");
 }
 
 static void nativeOnLoadJSBundle(JNIEnv *, jclass)
@@ -364,6 +369,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativeThemeColorsJSON", "(Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeThemeColorsJSON)},
         {"nativePrepareAddons", "()V", reinterpret_cast<void *>(nativePrepareAddons)},
+        {"nativeLog", "(ILjava/lang/String;Ljava/lang/String;)V", reinterpret_cast<void *>(nativeLog)},
     };
 
     if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) != JNI_OK ||

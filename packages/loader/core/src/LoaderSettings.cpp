@@ -80,7 +80,7 @@ namespace loader
         nlohmann::json parsed = nlohmann::json::parse(*contents, nullptr, false);
         if (parsed.is_discarded() || !parsed.is_object())
         {
-            log(LogLevel::Error, "settings", "settings.json is corrupt, backing it up and resetting.");
+            log(LogLevel::Error, LOG_CATEGORY_SETTINGS, "settings.json is corrupt, backing it up and resetting.");
             backupCorruptFile();
             data_ = nlohmann::json::object();
             writeTextFileAtomically(path_, "{}");
@@ -327,10 +327,10 @@ namespace loader
         std::string backup = path_ + ".corrupt-" + std::to_string(timestamp);
         if (!copyFile(path_, backup))
         {
-            log(LogLevel::Error, "settings", "Failed to back up corrupt settings.json.");
+            log(LogLevel::Error, LOG_CATEGORY_SETTINGS, "Failed to back up corrupt settings.json.");
             return;
         }
 
-        log(LogLevel::Error, "settings", "Backed up corrupt settings.json to " + backup);
+        log(LogLevel::Error, LOG_CATEGORY_SETTINGS, "Backed up corrupt settings.json to " + backup);
     }
 }

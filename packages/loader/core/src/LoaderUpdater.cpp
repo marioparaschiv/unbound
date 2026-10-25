@@ -174,7 +174,7 @@ namespace loader
             if (!manifest.is_discarded() && manifest.is_object())
             {
                 auto versions = manifest.find("bytecodeVersions");
-                log(LogLevel::Info, "updater",
+                log(LogLevel::Info, LOG_CATEGORY_UPDATER,
                     "Manifest bytecode versions: " +
                         (versions == manifest.end() ? std::string("none") : versions->dump()) +
                         ", Current bytecode version: " + std::to_string(bytecodeVersion));
@@ -186,19 +186,19 @@ namespace loader
                         if (version.is_number_unsigned() &&
                             version.get<uint32_t>() == bytecodeVersion)
                         {
-                            log(LogLevel::Info, "updater", "Using hermes bytecode bundle");
+                            log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Using hermes bytecode bundle");
                             return baseURL + "unbound." + std::to_string(bytecodeVersion) +
                                    ".bundle";
                         }
                     }
                 }
 
-                log(LogLevel::Info, "updater", "Using JavaScript bundle");
+                log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Using JavaScript bundle");
                 return baseURL + "unbound.js";
             }
         }
 
-        log(LogLevel::Error, "updater", "Failed to fetch manifest; falling back to JavaScript bundle");
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER, "Failed to fetch manifest; falling back to JavaScript bundle");
         if (directURL)
         {
             return *directURL;
@@ -215,7 +215,7 @@ namespace loader
                                               const std::optional<std::string> &updateURL,
                                               uint32_t bytecodeVersion)
     {
-        log(LogLevel::Info, "updater", "Ensuring bundle is up to date...");
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Ensuring bundle is up to date...");
 
         if (hasSuffix(preferredPath, kCandidateSuffix) && fileExists(preferredPath))
         {
@@ -259,7 +259,7 @@ namespace loader
 
         if (response->status == 304)
         {
-            log(LogLevel::Info, "updater", "No update found.");
+            log(LogLevel::Info, LOG_CATEGORY_UPDATER, "No update found.");
             return targetPath;
         }
 
@@ -274,7 +274,7 @@ namespace loader
             throw std::runtime_error("Downloaded bundle metadata could not be saved");
         }
 
-        log(LogLevel::Info, "updater", "Bundle candidate is ready for validation.");
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Bundle candidate is ready for validation.");
         return candidatePath;
     }
 

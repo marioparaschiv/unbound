@@ -80,6 +80,9 @@ object NativeBridge {
     external fun nativePrepareAddons()
 
     @JvmStatic
+    external fun nativeLog(level: Int, category: String, message: String)
+
+    @JvmStatic
     fun scheduleRuntimeWork() {
         ReactRuntime.post { runtimePointer -> nativeDrainRuntimeWork(runtimePointer) }
     }
@@ -258,7 +261,7 @@ object NativeBridge {
             deadline.cancel(false)
             connection.disconnect()
         }
-    }.onFailure { Logger.error("updater", "Bundle download failed: $it") }.getOrNull()
+    }.onFailure { Logger.error(LogCategory.UPDATER, "Bundle download failed: $it") }.getOrNull()
 
     @JvmStatic
     fun devServerHost(): String? = Platform.emulatorHostAddress()
@@ -311,7 +314,7 @@ object NativeBridge {
 
     @JvmStatic
     fun onBundleExecuted() {
-        Logger.info("default", "Bundle executed.")
+        Logger.info(LogCategory.DEFAULT, "Bundle executed.")
     }
 
 

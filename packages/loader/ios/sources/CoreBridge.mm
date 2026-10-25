@@ -47,7 +47,7 @@ static LogLevel iosLogLevel(loader::LogLevel level)
         case loader::LogLevel::Info:
             return LogLevelInfo;
         case loader::LogLevel::Warning:
-            return LogLevelNotice;
+            return LogLevelWarning;
         case loader::LogLevel::Error:
             return LogLevelError;
     }

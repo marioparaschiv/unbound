@@ -152,12 +152,12 @@ namespace unbound::android
             }
             catch (const std::exception &error)
             {
-                loader::log(loader::LogLevel::Error, "default",
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_DEFAULT,
                             std::string("Runtime work failed: ") + error.what());
             }
             catch (...)
             {
-                loader::log(loader::LogLevel::Error, "default", "Runtime work failed.");
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_DEFAULT, "Runtime work failed.");
             }
         }
     }
@@ -178,12 +178,12 @@ namespace unbound::android
             }
             catch (const std::exception &error)
             {
-                loader::log(loader::LogLevel::Error, "plugins",
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
                             std::string("Main-thread native work failed: ") + error.what());
             }
             catch (...)
             {
-                loader::log(loader::LogLevel::Error, "plugins", "Main-thread native work failed.");
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS, "Main-thread native work failed.");
             }
         }
     }

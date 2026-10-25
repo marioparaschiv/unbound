@@ -11,9 +11,9 @@ object Analytics {
 
     fun block(xposed: XposedInterface, classLoader: ClassLoader) {
         runCatching { blockInitProvider(xposed, classLoader) }
-            .onFailure { Logger.error("default", "Failed to block the Sentry init provider", it) }
+            .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to block the Sentry init provider", it) }
         runCatching { blockNativeSdk(xposed, classLoader) }
-            .onFailure { Logger.error("default", "Failed to block the Sentry native SDK", it) }
+            .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to block the Sentry native SDK", it) }
     }
 
     private fun blockInitProvider(xposed: XposedInterface, classLoader: ClassLoader) {
@@ -21,7 +21,7 @@ object Analytics {
         xposed.hook(provider.getDeclaredMethod("onCreate"))
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept {
-                Logger.info("default", "Blocked Sentry auto-initialization.")
+                Logger.info(LogCategory.DEFAULT, "Blocked Sentry auto-initialization.")
                 true
             }
     }
@@ -39,7 +39,7 @@ object Analytics {
         xposed.hook(initNativeSdk)
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept { chain ->
-                Logger.info("default", "Blocked Sentry native SDK.")
+                Logger.info(LogCategory.DEFAULT, "Blocked Sentry native SDK.")
                 resolve.invoke(chain.getArg(1), java.lang.Boolean.FALSE)
                 null
             }

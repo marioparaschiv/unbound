@@ -163,7 +163,7 @@ namespace loader::toolbox
         const bool enabled = toggleRecovery(settings);
         RecoveryToggle result{enabled, preferences::recoveryStatusText(enabled), bundleReady};
 
-        log(LogLevel::Info, "default", "Recovery shortcut: " + result.status + ".");
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Recovery shortcut: " + result.status + ".");
         return result;
     }
 
@@ -176,7 +176,7 @@ namespace loader::toolbox
         }
         catch (const std::exception &error)
         {
-            log(LogLevel::Error, "updater", std::string("Refetching the bundle failed: ") + error.what());
+            log(LogLevel::Error, LOG_CATEGORY_UPDATER, std::string("Refetching the bundle failed: ") + error.what());
             return false;
         }
     }

@@ -48,7 +48,7 @@ object ChatUI {
         loadTheme(classLoader)
         hookAvatars(xposed, classLoader)
         hookMessageViews(xposed, classLoader)
-        Logger.info("chatui", "Hooked avatars and message rows.")
+        Logger.info(LogCategory.CHATUI, "Hooked avatars and message rows.")
     }
 
     fun reload() {
@@ -77,7 +77,7 @@ object ChatUI {
             val type = classLoader.loadClass(THEME_MANAGER)
             themeManager = type.getField("INSTANCE").get(null)
             isThemeDark = type.getMethod("isThemeDark")
-        }.onFailure { Logger.error("chatui", "Discord's theme manager is unavailable", it) }
+        }.onFailure { Logger.error(LogCategory.CHATUI, "Discord's theme manager is unavailable", it) }
     }
 
     private fun darkTheme(): Boolean =

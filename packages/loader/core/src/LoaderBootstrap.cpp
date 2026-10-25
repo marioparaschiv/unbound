@@ -36,7 +36,7 @@ namespace loader::bootstrap
         }
         if (!loaded)
         {
-            log(LogLevel::Error, "default", "Bootstrap script " + name + " is unavailable.");
+            log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Bootstrap script " + name + " is unavailable.");
         }
         gScripts[name] = loaded;
         return loaded;

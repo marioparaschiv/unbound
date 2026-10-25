@@ -126,7 +126,7 @@ object NativeHooks {
             val lookup = synchronized(this@NativeHooks) { returnValues }
             val cached = lookup.find(registration.token, selfJSON, argumentsJSON) ?: return chain.proceed()
             val value = runCatching { NativeJava.decode(cached) }.getOrElse {
-                Logger.error("hooks", "Failed to decode a cached Android hook result", it)
+                Logger.error(LogCategory.HOOKS, "Failed to decode a cached Android hook result", it)
                 return chain.proceed()
             }
 
@@ -145,7 +145,7 @@ object NativeHooks {
             .put("self", JSONObject(selfJSON))
             .put("args", JSONArray(argumentsJSON))
         runCatching { target.dispatch(token, payload.toString()) }
-            .onFailure { Logger.error("hooks", "Failed to dispatch an Android hook event", it) }
+            .onFailure { Logger.error(LogCategory.HOOKS, "Failed to dispatch an Android hook event", it) }
     }
 
     private fun parseToken(tokenJSON: String): String = JSONObject(tokenJSON).getString("id")

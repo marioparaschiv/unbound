@@ -82,6 +82,6 @@ object Recovery {
             .setIntent(intent)
             .build()
         runCatching { manager.addDynamicShortcuts(listOf(shortcut)) }
-            .onFailure { Logger.error("default", "Failed to publish the Recovery Mode shortcut", it) }
+            .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to publish the Recovery Mode shortcut", it) }
     }
 }

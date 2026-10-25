@@ -34,7 +34,7 @@ object Fonts {
                 apply.invoke(chain.getArg(1), replacement)
             }
 
-        Logger.info("fonts", "Hooked ReactFontManager.getTypeface.")
+        Logger.info(LogCategory.FONTS, "Hooked ReactFontManager.getTypeface.")
     }
 
     private fun resolve(family: String, assets: AssetManager): Typeface? {
@@ -46,7 +46,7 @@ object Fonts {
 
     private fun load(name: String, path: String, error: String?, assets: AssetManager): LoadedFont {
         if (error != null) {
-            Logger.error("fonts", error)
+            Logger.error(LogCategory.FONTS, error)
             return LoadedFont(null)
         }
 
@@ -60,8 +60,8 @@ object Fonts {
                     Typeface.createFromFile(File(path))
                 }
             }
-                .onSuccess { Logger.info("fonts", "Loaded font: $name.") }
-                .onFailure { Logger.error("fonts", "Failed to load font \"$name\"", it) }
+                .onSuccess { Logger.info(LogCategory.FONTS, "Loaded font: $name.") }
+                .onFailure { Logger.error(LogCategory.FONTS, "Failed to load font \"$name\"", it) }
                 .getOrNull()
         }
         return LoadedFont(typeface)
