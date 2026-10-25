@@ -41,6 +41,9 @@ namespace loader
     public:
         LoaderPipeline(std::shared_ptr<LoaderHost> host, UpdaterSettings settings, BundleUpdater &updater);
 
+        static constexpr std::chrono::milliseconds kRunApplicationBundleWait{1500};
+
+        void onRuntimeCreated(facebook::jsi::Runtime &runtime);
         void prepare();
         void enqueueBundle();
         bool executeNow(facebook::jsi::Runtime &runtime, std::chrono::milliseconds wait);

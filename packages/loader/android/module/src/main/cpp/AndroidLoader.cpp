@@ -17,8 +17,6 @@ namespace unbound::android
 {
     namespace jsi = facebook::jsi;
 
-    static constexpr auto kRunApplicationBundleWait = std::chrono::milliseconds(1500);
-
     static jint milliseconds(double seconds)
     {
         return static_cast<jint>(seconds * 1000);
@@ -96,16 +94,9 @@ namespace unbound::android
         pipeline_->enqueueBundle();
     }
 
-    void AndroidLoader::executeBundleNow(jsi::Runtime &runtime)
+    void AndroidLoader::onRuntimeCreated(jsi::Runtime &runtime)
     {
-        jsi::Value installed = runtime.global().getProperty(runtime, "__loaderBundleInstalled");
-        if (installed.isBool() && installed.getBool())
-        {
-            return;
-        }
-
-        loader::native::registerRuntime(runtime);
-        pipeline_->executeNow(runtime, kRunApplicationBundleWait);
+        pipeline_->onRuntimeCreated(runtime);
     }
 
     void AndroidLoader::drainRuntimeWork(jsi::Runtime &runtime)

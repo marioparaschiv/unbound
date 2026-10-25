@@ -244,10 +244,7 @@ static void enqueueBundle(id instance)
 {
     gRuntime = &runtime;
     [Logger info:LOG_CATEGORY_DEFAULT format:@"RCTHost didInitializeRuntime reached."];
-    if (!loader::installMetroModuleCapture(runtime))
-    {
-        [Logger error:LOG_CATEGORY_DEFAULT format:@"Metro module capture could not be installed."];
-    }
+    pipeline().onRuntimeCreated(runtime);
     loader::setNativePluginFabricHost(self);
     id hostInstance = instance;
     prepareLoading(hostInstance);

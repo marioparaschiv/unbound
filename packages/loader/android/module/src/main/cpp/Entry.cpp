@@ -84,22 +84,14 @@ static jboolean nativeInstallMetroModuleCapture(JNIEnv *, jclass, jlong runtimeP
         return JNI_FALSE;
     }
 
-    auto *runtime = reinterpret_cast<facebook::jsi::Runtime *>(runtimePointer);
-    bool installed = loader::installMetroModuleCapture(*runtime);
-    loader::log(installed ? loader::LogLevel::Info : loader::LogLevel::Error, "runtime",
-                installed ? "Metro module capture installed before Discord bundle."
-                          : "Metro module capture could not be installed.");
+    auto loader = currentLoader();
+    if (!loader)
+    {
+        return JNI_FALSE;
+    }
 
-    bool gated = loader::installRunApplicationGate(*runtime, [](facebook::jsi::Runtime &rt) {
-        if (auto loader = currentLoader())
-        {
-            loader->executeBundleNow(rt);
-        }
-    });
-    loader::log(gated ? loader::LogLevel::Info : loader::LogLevel::Error, "runtime",
-                gated ? "Unbound will run before Discord's first surface starts."
-                      : "The run-application gate could not be installed.");
-    return installed ? JNI_TRUE : JNI_FALSE;
+    loader->onRuntimeCreated(*reinterpret_cast<facebook::jsi::Runtime *>(runtimePointer));
+    return JNI_TRUE;
 }
 
 static void nativeDrainRuntimeWork(JNIEnv *, jclass, jlong runtimePointer)

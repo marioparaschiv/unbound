@@ -131,6 +131,20 @@ namespace loader
         evaluateScript(runtime, buildPreloadScript(host_->preloadPayload()), "unbound:preload");
     }
 
+    void LoaderPipeline::onRuntimeCreated(jsi::Runtime &runtime)
+    {
+        bool captured = installMetroModuleCapture(runtime);
+        log(captured ? LogLevel::Info : LogLevel::Error, "runtime",
+            captured ? "Metro module capture installed before Discord bundle."
+                     : "Metro module capture could not be installed.");
+
+        bool gated = installRunApplicationGate(
+            runtime, [this](jsi::Runtime &rt) { executeNow(rt, kRunApplicationBundleWait); });
+        log(gated ? LogLevel::Info : LogLevel::Error, "runtime",
+            gated ? "Unbound will run before Discord's first surface starts."
+                  : "The run-application gate could not be installed.");
+    }
+
     void LoaderPipeline::enqueueBundle()
     {
         if (executionScheduled_.exchange(true))
