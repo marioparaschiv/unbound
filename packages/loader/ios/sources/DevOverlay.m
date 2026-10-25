@@ -1,5 +1,6 @@
-#import "CoreBridge.h"
 #import "DevOverlay.h"
+
+#import "CoreBridge.h"
 
 @interface DevOverlayPassthroughWindow : UIWindow
 @end
@@ -14,9 +15,9 @@
 
 @interface DevOverlaySettingsEditorViewController : UIViewController <UIGestureRecognizerDelegate>
 @property (nonatomic, copy) NSDictionary *model;
-@property (nonatomic, strong) UIView *cardView;
+@property (nonatomic, strong) UIView     *cardView;
 @property (nonatomic, strong) UITextView *textView;
-@property (nonatomic, strong) UILabel *errorLabel;
+@property (nonatomic, strong) UILabel    *errorLabel;
 @end
 
 @implementation DevOverlaySettingsEditorViewController
@@ -36,7 +37,7 @@
     backdropTap.delegate = self;
     [self.view addGestureRecognizer:backdropTap];
 
-    UIVisualEffectView *card = [[UIVisualEffectView alloc]
+    UIVisualEffectView *card                       = [[UIVisualEffectView alloc]
         initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial]];
     card.layer.cornerRadius                        = 28;
     card.layer.cornerCurve                         = kCACornerCurveContinuous;
@@ -48,53 +49,51 @@
     [NSLayoutConstraint activateConstraints:@[
         [card.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:12],
         [card.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-12],
-        [card.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
-                                        constant:8],
+        [card.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
         [card.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor
-                                           constant:-8],
+                                          constant:-8],
     ]];
 
-    UILabel *titleLabel                                  = [[UILabel alloc] init];
-    titleLabel.text                                      = self.model[@"title"];
-    titleLabel.font       = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
-    titleLabel.textColor  = UIColor.labelColor;
+    UILabel *titleLabel  = [[UILabel alloc] init];
+    titleLabel.text      = self.model[@"title"];
+    titleLabel.font      = [UIFont systemFontOfSize:20 weight:UIFontWeightBold];
+    titleLabel.textColor = UIColor.labelColor;
     titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
 
     UIButton *closeButton = [self addCircleButtonWithSystemImage:@"xmark"
-                                                            action:@selector(cancelTapped)
-                                                            toView:card.contentView];
+                                                          action:@selector(cancelTapped)
+                                                          toView:card.contentView];
 
     UIButton *saveButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [saveButton setTitle:self.model[@"save"] forState:UIControlStateNormal];
-    saveButton.titleLabel.font                          = [UIFont systemFontOfSize:16
-                                                            weight:UIFontWeightSemibold];
-    saveButton.tintColor                                = UIColor.systemBlueColor;
+    saveButton.titleLabel.font = [UIFont systemFontOfSize:16 weight:UIFontWeightSemibold];
+    saveButton.tintColor       = UIColor.systemBlueColor;
     saveButton.translatesAutoresizingMaskIntoConstraints = NO;
     [saveButton addTarget:self
-                  action:@selector(saveTapped)
-        forControlEvents:UIControlEventTouchUpInside];
+                   action:@selector(saveTapped)
+         forControlEvents:UIControlEventTouchUpInside];
 
-    UIView *divider                                  = [[UIView alloc] init];
-    divider.backgroundColor                          = [UIColor.labelColor colorWithAlphaComponent:0.08];
+    UIView *divider         = [[UIView alloc] init];
+    divider.backgroundColor = [UIColor.labelColor colorWithAlphaComponent:0.08];
     divider.translatesAutoresizingMaskIntoConstraints = NO;
 
-    self.errorLabel               = [[UILabel alloc] init];
-    self.errorLabel.textColor     = UIColor.systemRedColor;
-    self.errorLabel.font          = [UIFont systemFontOfSize:12];
-    self.errorLabel.numberOfLines = 2;
-    self.errorLabel.hidden        = YES;
+    self.errorLabel                                           = [[UILabel alloc] init];
+    self.errorLabel.textColor                                 = UIColor.systemRedColor;
+    self.errorLabel.font                                      = [UIFont systemFontOfSize:12];
+    self.errorLabel.numberOfLines                             = 2;
+    self.errorLabel.hidden                                    = YES;
     self.errorLabel.translatesAutoresizingMaskIntoConstraints = NO;
 
-    self.textView                             = [[UITextView alloc] init];
-    self.textView.backgroundColor             = UIColor.clearColor;
-    self.textView.font = [UIFont monospacedSystemFontOfSize:13 weight:UIFontWeightRegular];
-    self.textView.textColor                   = UIColor.labelColor;
-    self.textView.autocorrectionType          = UITextAutocorrectionTypeNo;
-    self.textView.autocapitalizationType      = UITextAutocapitalizationTypeNone;
-    self.textView.smartQuotesType             = UITextSmartQuotesTypeNo;
-    self.textView.smartDashesType             = UITextSmartDashesTypeNo;
-    self.textView.keyboardType                = UIKeyboardTypeASCIICapable;
-    self.textView.text                        = [CoreBridge toolbox:@"settings" argument:@""];
+    self.textView                 = [[UITextView alloc] init];
+    self.textView.backgroundColor = UIColor.clearColor;
+    self.textView.font      = [UIFont monospacedSystemFontOfSize:13 weight:UIFontWeightRegular];
+    self.textView.textColor = UIColor.labelColor;
+    self.textView.autocorrectionType     = UITextAutocorrectionTypeNo;
+    self.textView.autocapitalizationType = UITextAutocapitalizationTypeNone;
+    self.textView.smartQuotesType        = UITextSmartQuotesTypeNo;
+    self.textView.smartDashesType        = UITextSmartDashesTypeNo;
+    self.textView.keyboardType           = UIKeyboardTypeASCIICapable;
+    self.textView.text                   = [CoreBridge toolbox:@"settings" argument:@""];
     self.textView.translatesAutoresizingMaskIntoConstraints = NO;
 
     [card.contentView addSubview:titleLabel];
@@ -109,7 +108,7 @@
         [saveButton.centerYAnchor constraintEqualToAnchor:titleLabel.centerYAnchor],
 
         [titleLabel.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor
-                                                  constant:20],
+                                                 constant:20],
 
         [divider.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor],
         [divider.trailingAnchor constraintEqualToAnchor:card.contentView.trailingAnchor],
@@ -117,24 +116,24 @@
         [divider.heightAnchor constraintEqualToConstant:1.0 / UIScreen.mainScreen.scale],
 
         [self.errorLabel.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor
-                                                       constant:20],
+                                                      constant:20],
         [self.errorLabel.trailingAnchor constraintEqualToAnchor:card.contentView.trailingAnchor
-                                                        constant:-20],
+                                                       constant:-20],
         [self.errorLabel.topAnchor constraintEqualToAnchor:divider.bottomAnchor constant:8],
 
         [self.textView.topAnchor constraintEqualToAnchor:self.errorLabel.bottomAnchor constant:4],
         [self.textView.leadingAnchor constraintEqualToAnchor:card.contentView.leadingAnchor
-                                                      constant:12],
+                                                    constant:12],
         [self.textView.trailingAnchor constraintEqualToAnchor:card.contentView.trailingAnchor
-                                                       constant:-12],
-        [self.textView.bottomAnchor constraintEqualToAnchor:card.contentView.bottomAnchor
                                                      constant:-12],
+        [self.textView.bottomAnchor constraintEqualToAnchor:card.contentView.bottomAnchor
+                                                   constant:-12],
     ]];
 }
 
 - (UIButton *)addCircleButtonWithSystemImage:(NSString *)imageName
-                                       action:(SEL)action
-                                       toView:(UIView *)container
+                                      action:(SEL)action
+                                      toView:(UIView *)container
 {
     UIView *backdrop                                   = [[UIView alloc] init];
     backdrop.translatesAutoresizingMaskIntoConstraints = NO;
@@ -143,7 +142,7 @@
     backdrop.layer.masksToBounds                       = YES;
     backdrop.userInteractionEnabled                    = NO;
 
-    UIVisualEffectView *blur = [[UIVisualEffectView alloc]
+    UIVisualEffectView *blur                       = [[UIVisualEffectView alloc]
         initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial]];
     blur.translatesAutoresizingMaskIntoConstraints = NO;
     [backdrop addSubview:blur];
@@ -156,7 +155,7 @@
     UIImageSymbolConfiguration *cfg =
         [UIImageSymbolConfiguration configurationWithPointSize:14 weight:UIImageSymbolWeightBold];
     [button setImage:[UIImage systemImageNamed:imageName withConfiguration:cfg]
-             forState:UIControlStateNormal];
+            forState:UIControlStateNormal];
     [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
 
     [container addSubview:backdrop];
@@ -206,7 +205,8 @@
         return;
     }
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:SettingsDidChangeNotification object:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:SettingsDidChangeNotification
+                                                        object:nil];
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
@@ -220,8 +220,8 @@ static UIView   *devOverlayBackdrop = nil;
 
 static UIWindow *discordKeyWindow = nil;
 
-static CGPoint devOverlayButtonCenter = { 0, 0 };
-static CGPoint devOverlayDragStartCenter = { 0, 0 };
+static CGPoint devOverlayButtonCenter    = {0, 0};
+static CGPoint devOverlayDragStartCenter = {0, 0};
 
 + (void)initialize
 {
@@ -246,8 +246,8 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
         [flags addObject:@"virtual-device"];
     if (debugBuild)
         [flags addObject:@"debug-build"];
-    return [[CoreBridge preference:@"dev-overlay" argument:[flags componentsJoinedByString:@","]]
-        isEqualToString:@"true"];
+    return [[CoreBridge preference:@"dev-overlay"
+                          argument:[flags componentsJoinedByString:@","]] isEqualToString:@"true"];
 }
 
 + (UIWindowScene *)activeWindowScene
@@ -286,11 +286,11 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
 
 + (void)removeOverlay
 {
-    devOverlayButton = nil;
-    devOverlayBackdrop = nil;
-    devOverlayWindow.hidden = YES;
+    devOverlayButton                    = nil;
+    devOverlayBackdrop                  = nil;
+    devOverlayWindow.hidden             = YES;
     devOverlayWindow.rootViewController = nil;
-    devOverlayWindow = nil;
+    devOverlayWindow                    = nil;
 }
 
 + (void)refreshOverlay
@@ -333,11 +333,11 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
 
     DevOverlayPassthroughWindow *overlayWindow =
         [[DevOverlayPassthroughWindow alloc] initWithWindowScene:activeScene];
-    overlayWindow.windowLevel      = UIWindowLevelAlert - 1;
-    overlayWindow.backgroundColor  = [UIColor clearColor];
+    overlayWindow.windowLevel     = UIWindowLevelAlert - 1;
+    overlayWindow.backgroundColor = [UIColor clearColor];
 
-    UIView *passthroughView          = [[UIView alloc] init];
-    passthroughView.backgroundColor  = [UIColor clearColor];
+    UIView *passthroughView         = [[UIView alloc] init];
+    passthroughView.backgroundColor = [UIColor clearColor];
 
     UIViewController *rootVC         = [UIViewController new];
     rootVC.view                      = passthroughView;
@@ -364,8 +364,8 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
 
     UIVisualEffectView *blur = [[UIVisualEffectView alloc]
         initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial]];
-    blur.frame            = CGRectMake(0, 0, side, side);
-    blur.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    blur.frame               = CGRectMake(0, 0, side, side);
+    blur.autoresizingMask    = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [backdrop addSubview:blur];
 
     [rootVC.view addSubview:backdrop];
@@ -377,9 +377,8 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
     UIImageSymbolConfiguration *symbolConfig =
         [UIImageSymbolConfiguration configurationWithPointSize:15
                                                         weight:UIImageSymbolWeightRegular];
-    [button setImage:[UIImage systemImageNamed:@"wrench"
-                              withConfiguration:symbolConfig]
-             forState:UIControlStateNormal];
+    [button setImage:[UIImage systemImageNamed:@"wrench" withConfiguration:symbolConfig]
+            forState:UIControlStateNormal];
     [button addTarget:self
                   action:@selector(showDeveloperMenu)
         forControlEvents:UIControlEventTouchUpInside];
@@ -419,14 +418,15 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
 + (CGRect)buttonFrameInScreen
 {
     CGFloat side = [CoreBridge devOverlayButtonSide];
-    return CGRectMake(devOverlayButtonCenter.x - side / 2.0, devOverlayButtonCenter.y - side / 2.0, side, side);
+    return CGRectMake(devOverlayButtonCenter.x - side / 2.0, devOverlayButtonCenter.y - side / 2.0,
+                      side, side);
 }
 
 + (CGRect)collapsedFrame
 {
-    CGFloat margin = [CoreBridge devOverlayButtonMargin];
-    CGRect  padded = CGRectInset([self buttonFrameInScreen], -margin, -margin);
-    CGRect clipped = CGRectIntersection(padded, [self screenBounds]);
+    CGFloat margin  = [CoreBridge devOverlayButtonMargin];
+    CGRect  padded  = CGRectInset([self buttonFrameInScreen], -margin, -margin);
+    CGRect  clipped = CGRectIntersection(padded, [self screenBounds]);
     return CGRectIsNull(clipped) ? padded : clipped;
 }
 
@@ -468,29 +468,26 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
 {
     switch (gesture.state)
     {
-        case UIGestureRecognizerStateBegan:
-        {
+        case UIGestureRecognizerStateBegan: {
             [self growOverlayWindow];
             [gesture setTranslation:CGPointZero inView:devOverlayWindow];
             devOverlayDragStartCenter = devOverlayButtonCenter;
 
-            [[[UIImpactFeedbackGenerator alloc]
-                initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+            [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight]
+                impactOccurred];
             break;
         }
-        case UIGestureRecognizerStateChanged:
-        {
+        case UIGestureRecognizerStateChanged: {
             CGPoint translation = [gesture translationInView:devOverlayWindow];
             devOverlayButtonCenter =
                 [self clampedCenter:CGPointMake(devOverlayDragStartCenter.x + translation.x,
-                                                 devOverlayDragStartCenter.y + translation.y)];
+                                                devOverlayDragStartCenter.y + translation.y)];
             [self applyButtonPosition];
             break;
         }
         case UIGestureRecognizerStateEnded:
         case UIGestureRecognizerStateCancelled:
-        case UIGestureRecognizerStateFailed:
-        {
+        case UIGestureRecognizerStateFailed: {
             [self persistButtonCenter];
             [self shrinkOverlayWindow];
             break;
@@ -502,18 +499,8 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
 
 + (void)performDeveloperMenuItem:(NSDictionary *)item editor:(NSDictionary *)editor
 {
-    NSString *action = item[@"action"];
-    if (action.length > 0)
-    {
-        [CoreBridge preference:action argument:@""];
-    }
-
     NSString *followUp = item[@"followUp"];
-    if ([followUp isEqualToString:@"reload-chat"])
-    {
-        [ChatUI reloadPreferences];
-    }
-    else if ([followUp isEqualToString:@"reload-app"])
+    if ([followUp isEqualToString:@"reload-app"])
     {
         [Utilities reloadApp];
     }
@@ -530,16 +517,18 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
 + (void)showDeveloperMenu
 {
     NSDictionary      *model = [CoreBridge toolboxObject:@"developer-menu" argument:@""];
-    UIAlertController *menu  = [UIAlertController alertControllerWithTitle:model[@"title"]
-                                                                   message:nil
-                                                            preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *menu =
+        [UIAlertController alertControllerWithTitle:model[@"title"]
+                                            message:nil
+                                     preferredStyle:UIAlertControllerStyleAlert];
 
     for (NSDictionary *item in model[@"items"])
     {
         [menu addAction:[UIAlertAction actionWithTitle:item[@"title"]
                                                  style:UIAlertActionStyleDefault
                                                handler:^(__unused UIAlertAction *action) {
-                                                   [self performDeveloperMenuItem:item editor:model[@"editor"]];
+                                                   [self performDeveloperMenuItem:item
+                                                                           editor:model[@"editor"]];
                                                }]];
     }
     [menu addAction:[UIAlertAction actionWithTitle:model[@"cancel"]
@@ -613,21 +602,22 @@ static CGPoint devOverlayDragStartCenter = { 0, 0 };
 
     [UIView animateWithDuration:0.4 animations:^{ devBuildLabel.alpha = 1.0; }];
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) ([CoreBridge developmentBuildBannerDuration] * NSEC_PER_SEC)),
-                   dispatch_get_main_queue(),
-                   ^{
-                       if (!devBuildLabel || !devBuildLabel.superview)
-                       {
-                           return;
-                       }
+    dispatch_after(
+        dispatch_time(DISPATCH_TIME_NOW,
+                      (int64_t) ([CoreBridge developmentBuildBannerDuration] * NSEC_PER_SEC)),
+        dispatch_get_main_queue(), ^{
+            if (!devBuildLabel || !devBuildLabel.superview)
+            {
+                return;
+            }
 
-                       [UIView animateWithDuration:0.4
-                           animations:^{ devBuildLabel.alpha = 0.0; }
-                           completion:^(BOOL finished) {
-                               [devBuildLabel removeFromSuperview];
-                               devBuildLabel = nil;
-                           }];
-                   });
+            [UIView animateWithDuration:0.4
+                animations:^{ devBuildLabel.alpha = 0.0; }
+                completion:^(BOOL finished) {
+                    [devBuildLabel removeFromSuperview];
+                    devBuildLabel = nil;
+                }];
+        });
 }
 
 @end

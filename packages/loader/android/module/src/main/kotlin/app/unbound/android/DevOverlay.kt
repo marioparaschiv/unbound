@@ -232,9 +232,7 @@ object DevOverlay {
     }
 
     private fun perform(activity: Activity, item: JSONObject, editor: JSONObject) {
-        item.optString("action").takeIf { it.isNotEmpty() }?.let { NativeBridge.nativePreference(it, null) }
         when (item.optString("followUp")) {
-            "reload-chat" -> ChatUI.reload()
             "reload-app" -> Platform.restartApp()
             "edit-settings" -> editSettings(activity, editor)
             "open-toolbox" -> Toolbox.show()

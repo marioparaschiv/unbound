@@ -1,16 +1,17 @@
-#include "LoaderFiles.h"
-#include "LoaderPreferences.h"
-
 #include <cassert>
 #include <filesystem>
 #include <string>
 #include <unistd.h>
 
+#include "LoaderFiles.h"
+#include "LoaderPreferences.h"
+
 using namespace loader::preferences;
 
 int main()
 {
-    std::string templatePath = (std::filesystem::temp_directory_path() / "loader-preferences-XXXXXX").string();
+    std::string templatePath =
+        (std::filesystem::temp_directory_path() / "loader-preferences-XXXXXX").string();
     assert(mkdtemp(templatePath.data()));
     const auto path = (std::filesystem::path(templatePath) / kSettingsFile).string();
     assert(loader::writeTextFileAtomically(
@@ -44,23 +45,17 @@ int main()
     assert(perform(settings, "gesture", "nope").empty());
 
     assert(!messageBubbles(settings));
-    assert(perform(settings, "toggle-message-bubbles", "") == "true");
-    assert(perform(settings, "message-bubbles-label", "") == "Message Bubbles: On");
+    assert(setMessageBubbles(settings, true));
+    assert(perform(settings, "message-bubbles", "") == "true");
 
     assert(!avatarRadius(settings));
     assert(perform(settings, "bubble-style", "").empty());
     assert(loader::toARGB(messageBubbleColor(true)) == 0x66000000);
     assert(loader::toARGB(messageBubbleColor(false)) == 0x66FFFFFF);
-    assert(perform(settings, "avatar-radius-label", "") == "Avatar Radius: Circular");
-    assert(nextAvatarRadius(std::nullopt) == 0.0);
-    assert(nextAvatarRadius(7.0) == 16.0);
-    assert(!nextAvatarRadius(20.0));
-    assert(perform(settings, "cycle-avatar-radius", "") == "0");
-    assert(perform(settings, "cycle-avatar-radius", "") == "8");
-    assert(perform(settings, "avatar-radius-label", "") == "Avatar Radius: 8pt");
-    perform(settings, "cycle-avatar-radius", "");
-    perform(settings, "cycle-avatar-radius", "");
-    assert(perform(settings, "cycle-avatar-radius", "").empty());
+    settings.set("unbound", "chat.avatar-radius", 8.0);
+    assert(avatarRadius(settings) == 8.0);
+    assert(perform(settings, "avatar-radius", "") == "8");
+    settings.set("unbound", "chat.avatar-radius", nlohmann::json());
     assert(!avatarRadius(settings));
 
     loader::SettingsStore reread(path);

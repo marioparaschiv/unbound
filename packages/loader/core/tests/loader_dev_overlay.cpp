@@ -1,13 +1,13 @@
-#include "LoaderDevOverlay.h"
-#include "LoaderFiles.h"
-#include "LoaderPreferences.h"
-#include "LoaderToolbox.h"
-
 #include <cassert>
 #include <cmath>
 #include <filesystem>
 #include <string>
 #include <unistd.h>
+
+#include "LoaderDevOverlay.h"
+#include "LoaderFiles.h"
+#include "LoaderPreferences.h"
+#include "LoaderToolbox.h"
 
 using namespace loader::devoverlay;
 
@@ -37,26 +37,20 @@ int main()
 
     const Menu plain = menu(settings);
     assert(plain.title == "Developer" && plain.cancel == "Cancel");
-    assert((ids(plain) == std::vector<std::string>{"message-bubbles", "avatar-radius", "reload-bundle",
-                                                   "edit-settings", "open-toolbox"}));
-    assert(plain.items[0].title == "Message Bubbles: Off");
-    assert(plain.items[0].action == "toggle-message-bubbles");
-    assert(plain.items[0].followUp == FollowUp::ReloadChat);
-    assert(plain.items[1].title == "Avatar Radius: Circular");
-    assert(plain.items[1].action == "cycle-avatar-radius");
-    assert(plain.items[2].action.empty() && plain.items[2].followUp == FollowUp::ReloadApp);
-    assert(plain.items[3].title == kSettingsEditorTitle && plain.items[3].followUp == FollowUp::EditSettings);
-    assert(plain.items[4].followUp == FollowUp::OpenToolbox);
+    assert(
+        (ids(plain) == std::vector<std::string>{"reload-bundle", "edit-settings", "open-toolbox"}));
+    assert(plain.items[0].followUp == FollowUp::ReloadApp);
+    assert(plain.items[1].title == kSettingsEditorTitle &&
+           plain.items[1].followUp == FollowUp::EditSettings);
+    assert(plain.items[2].followUp == FollowUp::OpenToolbox);
 
     loader::preferences::setMessageBubbles(settings, true);
-    loader::preferences::cycleAvatarRadius(settings);
     const nlohmann::json json = menuJSON(settings);
     assert(json["title"] == "Developer" && json["cancel"] == "Cancel");
-    assert(json["items"].size() == 5);
-    assert(json["items"][0]["title"] == "Message Bubbles: On");
-    assert(json["items"][1]["title"] == "Avatar Radius: 0pt");
-    assert(json["items"][2]["followUp"] == "reload-app");
-    assert(json["items"][3]["followUp"] == "edit-settings");
+    assert(json["items"].size() == 3);
+    assert(json["items"][0]["followUp"] == "reload-app");
+    assert(json["items"][1]["followUp"] == "edit-settings");
+    assert(!json["items"][0].contains("action"));
     assert(json["editor"]["title"] == "Edit Settings JSON");
     assert(json["editor"]["save"] == "Save" && json["editor"]["cancel"] == "Cancel");
 
@@ -66,7 +60,8 @@ int main()
     assert(!array.saved && array.error == kInvalidSettingsMessage);
     assert(loader::preferences::messageBubbles(settings));
 
-    const SettingsEditResult saved = saveSettings(settings, "{\"unbound\":{\"developer-mode\":true}}");
+    const SettingsEditResult saved =
+        saveSettings(settings, "{\"unbound\":{\"developer-mode\":true}}");
     assert(saved.saved && saved.error.empty());
     assert(loader::preferences::developerMode(settings));
     assert(!loader::preferences::messageBubbles(settings));
@@ -75,13 +70,20 @@ int main()
 
     loader::BundleUpdater updater(
         templatePath, loader::updaterSettings(settings),
-        [](const std::string &, double) -> std::optional<std::string> { return std::nullopt; },
+        [](const std::string &, double) -> std::optional<std::string> {
+            return std::nullopt;
+        },
         [](const std::string &, const std::string &, const std::map<std::string, std::string> &,
-           const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> { return std::nullopt; });
+           const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
+            return std::nullopt;
+        });
     loader::toolbox::ToolboxContext context{settings, updater, templatePath, "Test", {}, {}, {}};
-    assert(nlohmann::json::parse(loader::toolbox::perform(context, "developer-menu", ""))["items"].size() == 5);
-    assert(nlohmann::json::parse(loader::toolbox::perform(context, "save-settings", "nope"))["saved"] == false);
-    assert(nlohmann::json::parse(loader::toolbox::perform(context, "save-settings", "{}"))["saved"] == true);
+    assert(nlohmann::json::parse(loader::toolbox::perform(context, "developer-menu", ""))["items"]
+               .size() == 3);
+    assert(nlohmann::json::parse(
+               loader::toolbox::perform(context, "save-settings", "nope"))["saved"] == false);
+    assert(nlohmann::json::parse(
+               loader::toolbox::perform(context, "save-settings", "{}"))["saved"] == true);
     assert(!loader::preferences::developerMode(settings));
 
     const Size   phone{375, 667};
