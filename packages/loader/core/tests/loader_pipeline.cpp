@@ -66,7 +66,7 @@ int main()
         root.string(), loader::updaterSettings(settings),
         [](const std::string &, double) -> std::optional<std::string> { return std::nullopt; },
         [](const std::string &, const std::string &,
-           const std::map<std::string, std::string> &) -> std::optional<loader::DownloadResult> {
+           const std::map<std::string, std::string> &, const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
             return std::nullopt;
         });
 

@@ -299,27 +299,17 @@ static dispatch_queue_t monitorRegistryQueue(void)
                                                      }];
 }
 
-+ (NSHTTPURLResponse *)download:(NSURL *)url path:(NSString *)path
-{
-    return [FileSystem download:url path:path withHeaders:@{}];
-}
-
 + (NSHTTPURLResponse *)download:(NSURL *)url
                            path:(NSString *)path
                     withHeaders:(NSDictionary *)headers
+                 requestTimeout:(NSTimeInterval)requestTimeout
+                   totalTimeout:(NSTimeInterval)totalTimeout
 {
-    static NSURLSession   *bundleUrlSession = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
-        config.timeoutIntervalForRequest  = 30.0;
-        bundleUrlSession                  = [NSURLSession sessionWithConfiguration:config];
-    });
-
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
 
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     request.cachePolicy          = NSURLRequestReloadIgnoringCacheData;
+    request.timeoutInterval      = requestTimeout;
 
     __block NSHTTPURLResponse *response;
     __block NSException       *exception;
@@ -330,18 +320,18 @@ static dispatch_queue_t monitorRegistryQueue(void)
         [request setValue:value forHTTPHeaderField:header];
     }
 
-    NSURLSessionTask *task = [bundleUrlSession
+    NSURLSessionTask *task = [[NSURLSession sharedSession]
         dataTaskWithRequest:request
           completionHandler:^(NSData *data, NSURLResponse *res, NSError *error) {
               response = (NSHTTPURLResponse *) res;
 
-              if (error != nil || ([response statusCode] != 200 && [response statusCode] != 304))
+              if (error != nil)
               {
                   exception = [[NSException alloc] initWithName:@"DownloadFailed"
                                                          reason:error.localizedDescription
                                                        userInfo:nil];
               }
-              else if ([response statusCode] != 304)
+              else if ([response statusCode] == 200)
               {
                   [Logger info:LOG_CATEGORY_FILESYSTEM
                         format:@"Saving file from %@ to %@", url, path];
@@ -359,7 +349,7 @@ static dispatch_queue_t monitorRegistryQueue(void)
     [task resume];
 
     if (dispatch_semaphore_wait(semaphore,
-                                dispatch_time(DISPATCH_TIME_NOW, 35 * NSEC_PER_SEC)) != 0)
+                                dispatch_time(DISPATCH_TIME_NOW, (int64_t) (totalTimeout * NSEC_PER_SEC))) != 0)
     {
         [task cancel];
         @throw [[NSException alloc] initWithName:@"DownloadTimedOut"

@@ -27,8 +27,9 @@
 
 + (NSHTTPURLResponse *)download:(NSURL *)url
                            path:(NSString *)path
-                    withHeaders:(NSDictionary *)headers;
-+ (NSHTTPURLResponse *)download:(NSURL *)url path:(NSString *)path;
+                    withHeaders:(NSDictionary *)headers
+                 requestTimeout:(NSTimeInterval)requestTimeout
+                   totalTimeout:(NSTimeInterval)totalTimeout;
 
 + (void)monitor:(NSString *)filePath onChange:(void (^)())onChange autoRestart:(BOOL)autoRestart;
 + (void)stopMonitoring:(NSString *)path;

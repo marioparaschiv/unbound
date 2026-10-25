@@ -114,7 +114,7 @@ namespace unbound::android
         std::optional<std::string> fetchText(const std::string &url, double timeoutSeconds);
         std::optional<loader::DownloadResult> download(
             const std::string &url, const std::string &destination,
-            const std::map<std::string, std::string> &headers);
+            const std::map<std::string, std::string> &headers, const loader::DownloadPolicy &policy);
         nlohmann::json availableFonts();
         std::optional<std::string> devServerHost();
         bool isServing(const std::string &url, double timeoutSeconds);

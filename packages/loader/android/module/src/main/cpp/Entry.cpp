@@ -345,7 +345,7 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         env->GetStaticMethodID(bridge, "fetchText", "(Ljava/lang/String;I)Ljava/lang/String;");
     gCallbacks.download = env->GetStaticMethodID(
         bridge, "download",
-        "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;)[Ljava/lang/"
+        "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;[Ljava/lang/String;III)[Ljava/lang/"
         "String;");
     gCallbacks.devServerHost = env->GetStaticMethodID(bridge, "devServerHost", "()Ljava/lang/String;");
     gCallbacks.isServing     = env->GetStaticMethodID(bridge, "isServing", "(Ljava/lang/String;I)Z");

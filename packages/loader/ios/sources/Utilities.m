@@ -470,22 +470,15 @@ static NSString *bundle = nil;
 
 + (NSData *)fetchDataWithTimeout:(NSURL *)url timeout:(NSTimeInterval)timeout
 {
-    static NSURLSession   *bundleUrlSession = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
-        config.timeoutIntervalForRequest  = timeout;
-        bundleUrlSession                  = [NSURLSession sessionWithConfiguration:config];
-    });
-
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
 
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
     request.cachePolicy          = NSURLRequestReloadIgnoringCacheData;
+    request.timeoutInterval      = timeout;
 
     __block NSData *resultData = nil;
 
-    NSURLSessionTask *task = [bundleUrlSession
+    NSURLSessionTask *task = [[NSURLSession sharedSession]
         dataTaskWithRequest:request
           completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
               if (!error && [(NSHTTPURLResponse *) response statusCode] == 200)
@@ -496,7 +489,11 @@ static NSString *bundle = nil;
           }];
 
     [task resume];
-    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    if (dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t) ((timeout + 1) * NSEC_PER_SEC))) != 0)
+    {
+        [task cancel];
+        return nil;
+    }
 
     return resultData;
 }

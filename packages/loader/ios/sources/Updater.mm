@@ -67,7 +67,8 @@ static std::optional<std::string> fetchText(const std::string &url, double timeo
 
 static std::optional<loader::DownloadResult> download(const std::string &url,
                                                       const std::string &destination,
-                                                      const std::map<std::string, std::string> &headers)
+                                                      const std::map<std::string, std::string> &headers,
+                                                      const loader::DownloadPolicy &policy)
 {
     NSMutableDictionary *requestHeaders = [NSMutableDictionary dictionary];
     for (const auto &[key, value] : headers)
@@ -79,7 +80,9 @@ static std::optional<loader::DownloadResult> download(const std::string &url,
     {
         NSHTTPURLResponse *response = [FileSystem download:[NSURL URLWithString:toNSString(url)]
                                                       path:toNSString(destination)
-                                               withHeaders:requestHeaders];
+                                               withHeaders:requestHeaders
+                                            requestTimeout:policy.readTimeoutSeconds
+                                              totalTimeout:policy.totalTimeoutSeconds];
         loader::DownloadResult result;
         result.status = static_cast<int>(response.statusCode);
         result.etag   = toStdString([response valueForHTTPHeaderField:@"etag"] ?: @"");

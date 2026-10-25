@@ -16,11 +16,23 @@ namespace loader
         std::string etag;
     };
 
+    struct DownloadPolicy
+    {
+        double connectTimeoutSeconds = 15.0;
+        double readTimeoutSeconds    = 30.0;
+        double totalTimeoutSeconds   = 35.0;
+    };
+
+    constexpr DownloadPolicy kBundleDownloadPolicy{};
+    constexpr double         kManifestFetchTimeoutSeconds = 5.0;
+
+    bool isAcceptedDownloadStatus(int status);
+
     using TextFetcher =
         std::function<std::optional<std::string>(const std::string &url, double timeoutSeconds)>;
     using FileDownloader = std::function<std::optional<DownloadResult>(
         const std::string &url, const std::string &destination,
-        const std::map<std::string, std::string> &headers)>;
+        const std::map<std::string, std::string> &headers, const DownloadPolicy &policy)>;
 
     struct UpdaterSettings
     {

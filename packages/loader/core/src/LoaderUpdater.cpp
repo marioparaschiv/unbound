@@ -167,7 +167,7 @@ namespace loader
         }
 
         std::optional<std::string> manifestText =
-            fetchText_ ? fetchText_(baseURL + "manifest.json", 5.0) : std::nullopt;
+            fetchText_ ? fetchText_(baseURL + "manifest.json", kManifestFetchTimeoutSeconds) : std::nullopt;
         if (manifestText)
         {
             nlohmann::json manifest = nlohmann::json::parse(*manifestText, nullptr, false);
@@ -206,6 +206,11 @@ namespace loader
         return baseURL + "unbound.js";
     }
 
+    bool isAcceptedDownloadStatus(int status)
+    {
+        return status == 200 || status == 304;
+    }
+
     std::string BundleUpdater::downloadBundle(const std::string &preferredPath,
                                               const std::optional<std::string> &updateURL,
                                               uint32_t bytecodeVersion)
@@ -240,10 +245,16 @@ namespace loader
         }
 
         std::optional<DownloadResult> response =
-            download_ ? download_(url, candidatePath, headers) : std::nullopt;
+            download_ ? download_(url, candidatePath, headers, kBundleDownloadPolicy) : std::nullopt;
         if (!response)
         {
             throw std::runtime_error("Bundle download failed");
+        }
+
+        if (!isAcceptedDownloadStatus(response->status))
+        {
+            removeFile(candidatePath);
+            throw std::runtime_error("Bundle download returned HTTP " + std::to_string(response->status));
         }
 
         if (response->status == 304)

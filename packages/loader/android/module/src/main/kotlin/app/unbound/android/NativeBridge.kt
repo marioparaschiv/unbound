@@ -10,8 +10,14 @@ import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 object NativeBridge {
+    private val downloadWatchdog = Executors.newSingleThreadScheduledExecutor {
+        Thread(it, "unbound-download-watchdog").apply { isDaemon = true }
+    }
+
     private const val EMULATOR_HOST = "10.0.2.2"
 
     @JvmStatic
@@ -245,12 +251,16 @@ object NativeBridge {
         destination: String,
         headerKeys: Array<String>,
         headerValues: Array<String>,
+        connectTimeoutMs: Int,
+        readTimeoutMs: Int,
+        totalTimeoutMs: Int,
     ): Array<String>? = runCatching {
         val connection = URL(url).openConnection() as HttpURLConnection
-        connection.connectTimeout = 15_000
-        connection.readTimeout = 30_000
+        connection.connectTimeout = connectTimeoutMs
+        connection.readTimeout = readTimeoutMs
         connection.useCaches = false
         headerKeys.zip(headerValues).forEach { (key, value) -> connection.setRequestProperty(key, value) }
+        val deadline = downloadWatchdog.schedule({ connection.disconnect() }, totalTimeoutMs.toLong(), TimeUnit.MILLISECONDS)
 
         try {
             val status = connection.responseCode
@@ -263,12 +273,10 @@ object NativeBridge {
                     staging.delete()
                     return null
                 }
-            } else if (status != HttpURLConnection.HTTP_NOT_MODIFIED) {
-                Logger.error("updater", "Bundle download returned HTTP $status for $url")
-                return null
             }
             arrayOf(status.toString(), connection.getHeaderField("etag") ?: "")
         } finally {
+            deadline.cancel(false)
             connection.disconnect()
         }
     }.onFailure { Logger.error("updater", "Bundle download failed: $it") }.getOrNull()

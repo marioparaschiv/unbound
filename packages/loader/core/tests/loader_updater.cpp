@@ -37,7 +37,7 @@ int main()
             return manifest;
         },
         [&](const std::string &url, const std::string &destination,
-            const std::map<std::string, std::string> &headers) -> std::optional<loader::DownloadResult> {
+            const std::map<std::string, std::string> &headers, const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
             requestedURL     = url;
             requestedHeaders = headers;
             if (nextStatus == 200)
@@ -80,6 +80,21 @@ int main()
     assert(updater.markBundleAttempted(second));
     assert(updater.resolveBundlePath() == (root / "unbound.bundle").string());
     assert(!loader::fileExists(second));
+
+    nextStatus = 500;
+    bool rejected = false;
+    try
+    {
+        updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98);
+    }
+    catch (const std::runtime_error &)
+    {
+        rejected = true;
+    }
+    assert(rejected);
+    assert(!loader::fileExists((root / "unbound.bundle.candidate").string()));
+    assert(loader::isAcceptedDownloadStatus(200) && loader::isAcceptedDownloadStatus(304));
+    assert(!loader::isAcceptedDownloadStatus(404));
 
     std::filesystem::remove_all(root);
     return 0;

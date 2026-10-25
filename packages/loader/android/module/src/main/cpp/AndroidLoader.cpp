@@ -19,6 +19,11 @@ namespace unbound::android
 
     static constexpr auto kRunApplicationBundleWait = std::chrono::milliseconds(1500);
 
+    static jint milliseconds(double seconds)
+    {
+        return static_cast<jint>(seconds * 1000);
+    }
+
     static std::mutex                     gLoaderMutex;
     static std::shared_ptr<AndroidLoader> gLoader;
 
@@ -49,8 +54,8 @@ namespace unbound::android
             configuration_.documents, loader::updaterSettings(settings_),
             [this](const std::string &url, double timeout) { return fetchText(url, timeout); },
             [this](const std::string &url, const std::string &destination,
-                   const std::map<std::string, std::string> &headers) {
-                return download(url, destination, headers);
+                   const std::map<std::string, std::string> &headers, const loader::DownloadPolicy &policy) {
+                return download(url, destination, headers, policy);
             });
         pipeline_ = std::make_unique<loader::LoaderPipeline>(shared_from_this(), loader::updaterSettings(settings_), *updater_);
     }
@@ -261,7 +266,7 @@ namespace unbound::android
 
         jstring  javaURL = toJavaString(env, url);
         jboolean serving = env->CallStaticBooleanMethod(callbacks_.bridgeClass, callbacks_.isServing, javaURL,
-                                                        static_cast<jint>(timeoutSeconds * 1000));
+                                                        milliseconds(timeoutSeconds));
         env->DeleteLocalRef(javaURL);
         return !clearPendingException(env) && serving == JNI_TRUE;
     }
@@ -383,7 +388,7 @@ namespace unbound::android
         jstring javaURL = toJavaString(env, url);
         auto    result  = static_cast<jstring>(env->CallStaticObjectMethod(
             callbacks_.bridgeClass, callbacks_.fetchText, javaURL,
-            static_cast<jint>(timeoutSeconds * 1000)));
+            milliseconds(timeoutSeconds)));
         env->DeleteLocalRef(javaURL);
         if (clearPendingException(env) || !result)
         {
@@ -397,7 +402,7 @@ namespace unbound::android
 
     std::optional<loader::DownloadResult> AndroidLoader::download(
         const std::string &url, const std::string &destination,
-        const std::map<std::string, std::string> &headers)
+        const std::map<std::string, std::string> &headers, const loader::DownloadPolicy &policy)
     {
         JNIEnv *env = currentEnvironment();
         if (!env)
@@ -420,7 +425,8 @@ namespace unbound::android
 
         auto response = static_cast<jobjectArray>(env->CallStaticObjectMethod(
             callbacks_.bridgeClass, callbacks_.download, javaURL, javaDestination, javaKeys,
-            javaValues));
+            javaValues, milliseconds(policy.connectTimeoutSeconds), milliseconds(policy.readTimeoutSeconds),
+            milliseconds(policy.totalTimeoutSeconds)));
 
         env->DeleteLocalRef(javaURL);
         env->DeleteLocalRef(javaDestination);
