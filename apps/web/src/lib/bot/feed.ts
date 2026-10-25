@@ -44,7 +44,7 @@ const CHANGE_CURSOR = z.tuple([z.int(), z.string().min(1)]);
  * @description Fails with `forbidden` unless the caller may read the bot feeds.
  * @param caller The resolved caller.
  */
-export function requireBotReader(caller: Caller) {
+export function requireBotReader(caller: Caller): void {
 	requirePermission(caller, { bot: ['read'] });
 }
 
