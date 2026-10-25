@@ -1,5 +1,5 @@
 -- Bot feeds: triggers move a key of `bot_feed_change` past every other key of its feed whenever one
--- of the feed's inputs changes, read through `src/lib/bot-feed.ts`. They catch every writer, Better
+-- of the feed's inputs changes, read through `src/lib/bot/feed.ts`. They catch every writer, Better
 -- Auth included. A `seq` is assigned inside the writing transaction and SQLite has one writer, so seq
 -- order is commit order and a reader paging by (seq, key) never skips a change.
 -- A drizzle-kit rebuild of `addon`, `addon_version`, `addon_maintainer`, `account`, `user`,
