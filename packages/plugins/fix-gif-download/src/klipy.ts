@@ -5,12 +5,11 @@ import { findDeep, isRecord } from '~/media-record';
 const resolved = new Map<string, string>();
 const requests = new Map<string, Promise<string | null>>();
 
-// Klipy media URLs carry the GIF's hash as `/ii/<hash>/`, also when wrapped in a Discord proxy URL.
-function mediaHash(value: string): string | null {
+function mediaFolder(value: string): string | null {
 	try {
 		const url = new URL(getDiscordProxyTarget(value) ?? value);
 
-		return url.pathname.match(/\/ii\/([^/]+)\//i)?.[1] ?? null;
+		return url.pathname.match(/\/ii\/(.+)\/[^/]+$/i)?.[1] ?? null;
 	} catch {
 		return null;
 	}
@@ -44,8 +43,8 @@ function title(value: unknown): string | null {
 	return null;
 }
 
-function klipyHash(value: unknown): string | null {
-	return typeof value === 'string' && /klipy/i.test(value) ? mediaHash(value) : null;
+function klipyFolder(value: unknown): string | null {
+	return typeof value === 'string' && /klipy/i.test(value) ? mediaFolder(value) : null;
 }
 
 function klipyGifUrl(value: unknown): string | null {
@@ -66,22 +65,48 @@ function findGifUrl(value: unknown): string | null {
 	]);
 }
 
-// The first GIF URL in a Klipy search result whose hash matches, or any GIF URL when the hash is unknown.
-function findMatchingGif(result: unknown, hash: string | null): string | null {
-	return findDeep(
-		result,
-		(value) => {
-			if (!isRecord(value)) return null;
-
-			const url = findGifUrl(value);
-
-			return url && (!hash || mediaHash(url) === hash) ? url : null;
-		},
-		7,
-	);
+function resultSlug(result: unknown): string | null {
+	return isRecord(result) && typeof result.slug === 'string' ? result.slug : null;
 }
 
-async function search(slug: string, hash: string | null): Promise<string | null> {
+function isSlugMatch(result: unknown, slug: string | null): boolean {
+	const candidate = resultSlug(result);
+
+	return !!slug && !!candidate && (candidate === slug || candidate.startsWith(`${slug}--`));
+}
+
+function isFolderMatch(url: string, folder: string | null): boolean {
+	return !!folder && mediaFolder(url) === folder;
+}
+
+/**
+ * @description Picks the GIF for Klipy media from search results: the result whose media folder matches, then the result whose slug matches, never an unrelated result.
+ * @param results Klipy search results.
+ * @param slug The media's page slug, when known.
+ * @param folder The media's folder under `/ii/`, when known.
+ * @returns The matching GIF URL, or `null`.
+ */
+export function pickKlipyGif(
+	results: readonly unknown[],
+	slug: string | null,
+	folder: string | null,
+): string | null {
+	for (const result of results) {
+		const url = findGifUrl(result);
+
+		if (url && isFolderMatch(url, folder)) return url;
+	}
+
+	for (const result of results) {
+		const url = findGifUrl(result);
+
+		if (url && isSlugMatch(result, slug)) return url;
+	}
+
+	return null;
+}
+
+async function search(slug: string, folder: string | null): Promise<string | null> {
 	try {
 		const query = encodeURIComponent(slug.replace(/[-_]+/g, ' '));
 		const response = await fetch(
@@ -95,11 +120,7 @@ async function search(slug: string, hash: string | null): Promise<string | null>
 
 		if (!Array.isArray(results)) return null;
 
-		for (const result of results) {
-			const match = findMatchingGif(result, hash);
-
-			if (match) return match;
-		}
+		return pickKlipyGif(results, slug, folder);
 	} catch {
 		// Network or parse failure; the download falls back to Discord's own media.
 	}
@@ -113,7 +134,7 @@ async function search(slug: string, hash: string | null): Promise<string | null>
  * @returns The GIF URL, or `null` when the media is not Klipy's or no search result matches.
  */
 export async function resolveKlipyGifUrl(value: unknown): Promise<string | null> {
-	const hash = findDeep(value, klipyHash, 5, [...SOURCE_KEYS, ...NESTED_KEYS]);
+	const folder = findDeep(value, klipyFolder, 5, [...SOURCE_KEYS, ...NESTED_KEYS]);
 	const slug =
 		findDeep(value, pageSlug, 5, [
 			'url',
@@ -136,7 +157,7 @@ export async function resolveKlipyGifUrl(value: unknown): Promise<string | null>
 			'data',
 			'embed',
 		]);
-	const key = hash ?? slug;
+	const key = folder ?? slug;
 
 	if (!key) return null;
 
@@ -146,7 +167,7 @@ export async function resolveKlipyGifUrl(value: unknown): Promise<string | null>
 
 	if (!slug) return null;
 
-	const request = search(slug, hash);
+	const request = search(slug, folder);
 
 	requests.set(key, request);
 
