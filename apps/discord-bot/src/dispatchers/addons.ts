@@ -129,8 +129,25 @@ async function ownMessages(rest: REST, channelId: string, selfId: string) {
 	return own.sort(oldestFirst);
 }
 
-// Posts are serial and the row is written right after each post, so a message posted without its
-// row (a crash, or a post whose response was lost) is one of ours newer than every stored id.
+async function storeMessage(
+	db: Database,
+	addonId: string,
+	channelId: string,
+	messageId: string,
+	postedHash: string,
+) {
+	const values = { channelId, messageId, postedHash, postedAt: new Date(), editedAt: null };
+	const [row] = await db
+		.insert(addonMessage)
+		.values({ addonId, ...values })
+		.onConflictDoUpdate({ target: addonMessage.addonId, set: values })
+		.returning();
+
+	return row;
+}
+
+// A listed post of an addon that no row points at lost its row write. It is adopted when its addon
+// belongs in that channel and has no message there yet, else it is a duplicate or stale and goes.
 async function adoptOrphans(
 	db: Database,
 	rest: REST,
@@ -141,42 +158,42 @@ async function adoptOrphans(
 		db.select().from(addon),
 		db.select().from(addonMessage),
 	]);
-	const stored = new Set(messages.map((message) => message.addonId));
+	const byUrl = new Map(addons.map((row) => [row.data.pageUrl, row]));
+	const rows = new Map(messages.map((row) => [row.addonId, row]));
+	const referenced = new Set(messages.map((row) => row.messageId));
 
 	for (const [channelId, listing] of listings) {
-		const unposted = new Map(
-			addons
-				.filter((row) => !stored.has(row.id) && desiredChannel(row, channels) === channelId)
-				.map((row) => [row.data.pageUrl, row.id]),
-		);
-		const after = newest(
-			messages.filter((row) => row.channelId === channelId).map((row) => row.messageId),
-		);
-
-		const orphans = listing.filter((message) => BigInt(message.id) > BigInt(after));
-
-		for (const message of orphans) {
+		for (const message of listing) {
 			const url = message.embeds[0]?.url;
-			const addonId = url ? unposted.get(url) : undefined;
+			const owner = url ? byUrl.get(url) : undefined;
 
-			// With no stored id the scan starts at the channel's beginning, where an unmatched message
-			// predates this bot's rows (an old bot, a manual post), so only a later one is deleted.
-			if (!url || !addonId) {
-				if (after !== '0') {
-					await deleteMessage(rest, channelId, message.id);
-				}
-
+			// A url that names no addon is not an addon post (a tag reply, an old bot's post), so it stays.
+			if (!owner || referenced.has(message.id)) {
 				continue;
 			}
 
-			unposted.delete(url);
-			// An empty hash makes the following sync patch the message to the current content.
-			await db.insert(addonMessage).values({
-				addonId,
-				channelId,
-				messageId: message.id,
-				postedHash: '',
-			});
+			const row = rows.get(owner.id);
+
+			try {
+				if (desiredChannel(owner, channels) !== channelId || row?.channelId === channelId) {
+					await deleteMessage(rest, channelId, message.id);
+
+					continue;
+				}
+
+				if (row) {
+					await deleteMessage(rest, row.channelId, row.messageId);
+				}
+
+				// An empty hash makes the following sync patch the message to the current content.
+				const adopted = await storeMessage(db, owner.id, channelId, message.id, '');
+
+				if (adopted) {
+					rows.set(owner.id, adopted);
+				}
+			} catch (error) {
+				logger.error(`Failed to adopt message ${message.id} of addon ${owner.id}:`, error);
+			}
 		}
 	}
 }
@@ -236,18 +253,21 @@ export async function syncAddon(
 		await deleteMessage(rest, posted.channelId, posted.messageId);
 	}
 
-	const values = {
-		channelId,
-		messageId: await postMessage(rest, channelId, current.data),
-		postedHash: current.contentHash,
-		postedAt: new Date(),
-		editedAt: null,
-	};
+	const messageId = await postMessage(rest, channelId, current.data);
 
-	await db
-		.insert(addonMessage)
-		.values({ addonId: id, ...values })
-		.onConflictDoUpdate({ target: addonMessage.addonId, set: values });
+	try {
+		await storeMessage(db, id, channelId, messageId, current.contentHash);
+	} catch (error) {
+		// A post without its row would be duplicated by the next sync; reconcile adopts it if this fails.
+		await deleteMessage(rest, channelId, messageId).catch((cleanup) => {
+			logger.warn(
+				`Failed to remove unrecorded message ${messageId} of addon ${id}:`,
+				cleanup,
+			);
+		});
+
+		throw error;
+	}
 }
 
 /**
