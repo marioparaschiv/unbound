@@ -75,10 +75,10 @@ const javaHandle: NativeJavaHandle = Object.create(null);
 const javaHookToken: NativeJavaHookToken = { id: 'hook-1' };
 const hooksRemoved: NativeJavaHookToken[] = [];
 const javaInvokeResult: NativeJavaValue = { type: 'string', value: 'invoked' };
-const javaInvokeFailure = {
-	__nativeFailure: { code: 'NATIVE_BRIDGE_ERROR', message: 'No method noSuchMethod' },
-};
-let javaInvokeOutcome: NativeJavaValue | typeof javaInvokeFailure = javaInvokeResult;
+const javaInvokeFailure = Object.assign(new Error('No method noSuchMethod'), {
+	code: 'NATIVE_BRIDGE_ERROR',
+});
+let javaInvokeFails = false;
 const nativeHandle: NativeUIHandle = Object.create(null);
 const capabilities = [
 	'native.objc.classes',
@@ -203,7 +203,11 @@ const bridge: NativePluginBridge = {
 		invoke: (_handle: NativeJavaReference, _name: string, args?: NativeJavaArgument[]) => {
 			javaInvokeArguments.push(args);
 
-			return javaInvokeOutcome as NativeJavaValue;
+			if (javaInvokeFails) {
+				throw javaInvokeFailure;
+			}
+
+			return javaInvokeResult;
 		},
 		invokeAsync: () => cancellable(Promise.resolve(javaInvokeResult), 'java-invoke'),
 		getField: () => ({ type: 'int', value: 7 }),
@@ -294,7 +298,6 @@ const nativePlatformBridge: NativePlatformBridge = {
 
 const {
 	NativePluginCapabilityError,
-	NativeJavaError,
 	NativePluginDisposedError,
 	NativePluginPlatformError,
 	NativePluginUnsupportedPlatformError,
@@ -950,10 +953,10 @@ describe('native plugin negotiation', () => {
 		);
 	});
 
-	test('turns a tagged native failure into a Java error', () => {
+	test('propagates coded native Java errors unchanged', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });
-		javaInvokeOutcome = javaInvokeFailure;
+		javaInvokeFails = true;
 
 		const context = createPluginContext({
 			...manifest,
@@ -963,10 +966,47 @@ describe('native plugin negotiation', () => {
 
 		const call = () => context.native.java.invoke(nativeHandle, 'noSuchMethod');
 
-		expect(call).toThrow(NativeJavaError);
+		expect(call).toThrow(javaInvokeFailure);
 		expect(call).toThrow('No method noSuchMethod');
-		javaInvokeOutcome = javaInvokeResult;
+		javaInvokeFails = false;
 		context.dispose();
+	});
+
+	test('routes Android Fabric surfaces to the native async namespace', async () => {
+		Object.assign(nativePlatformBridge.device, { platform: 'android' });
+		Object.assign(nativePlatformBridge, { platform: 'android' });
+		const androidSurface: NativeFabricSurface = Object.create(null);
+		const androidUnmounted: NativeFabricSurface[] = [];
+
+		Object.assign(bridge, {
+			objc: undefined,
+			fabric: {
+				mountAsync: () => cancellable(Promise.resolve(androidSurface), 'android-mount'),
+				unmountAsync: (surface: NativeFabricSurface) => {
+					androidUnmounted.push(surface);
+
+					return cancellable(Promise.resolve(), 'android-unmount');
+				},
+			},
+		});
+
+		const context = createPluginContext({
+			...manifest,
+			platforms: ['android'],
+			capabilities: ['native.fabric.async'],
+		});
+
+		expect(await context.native.fabric.mountAsync(nativeHandle, 'AndroidSurface')).toBe(
+			androidSurface,
+		);
+		expect(() => context.native.fabric.mount(nativeHandle, 'AndroidSurface')).toThrow(
+			NativePluginCapabilityError,
+		);
+		expect(() => context.native.fabric.measureAsync(nativeHandle)).toThrow(
+			'The native plugin bridge is unavailable.',
+		);
+		context.dispose();
+		expect(androidUnmounted).toEqual([androidSurface]);
 	});
 
 	test('scopes Java hooks to the capability a plugin declares', () => {

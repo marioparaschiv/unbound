@@ -116,7 +116,7 @@ Hooks follow these rules:
 Results and errors:
 
 - Objective-C `NSData` results are returned as `Uint8Array` values.
-- Native bridge failures are JavaScript errors with a stable `code` property. Native runtime failures use the code `NATIVE_BRIDGE_ERROR`.
+- Native bridge failures are thrown, or rejected for asynchronous calls, as JavaScript errors with a stable `code` property on both iOS and Android. A coded native failure keeps its own code; other native runtime failures use the code `NATIVE_BRIDGE_ERROR`.
 - Client-side negotiation errors have their own codes for unavailable bridges, missing capabilities, disposed scopes, and unsupported minimum API versions.
 
 ### Raw FFI operations
@@ -174,6 +174,10 @@ native.fabric.unmount(surface);
 
 Fabric surfaces are created and destroyed on the UIKit main thread. The JavaScript API stays synchronous and fails closed on timeout.
 
+Android offers only the asynchronous variants (`mountAsync`, `updateAsync`, `setSizeAsync`, `setFrameAsync`, `measureAsync`, and `unmountAsync`), so Android plugins declare `native.fabric.async` without `native.fabric.mount`.
+
+Sizes and frames must be finite. Widths and heights must be between 0 and 32,768, and `x` and `y` between -100,000 and 100,000. Surface properties are limited to 8 levels of nesting, 512 entries, 16 KiB in total, 4 KiB per string, and property names of 1 to 64 bytes.
+
 Surface handles belong to the plugin scope. They are unmounted automatically when the scope is disposed.
 
 ### Capabilities and lifecycle
@@ -182,7 +186,7 @@ In the plugin manifest, declare only the capabilities the plugin needs:
 
 - Objective-C: `native.objc.classes`, `native.objc.invoke`, `native.objc.ivars`, `native.objc.associations`, `native.objc.hooks`
 - FFI: `native.ffi.symbols`, `native.ffi.call`
-- Fabric: `native.fabric.mount`
+- Fabric: `native.fabric.mount` (iOS only), `native.fabric.async`
 
 Before calling `start(context)`, the addon manager validates the capability names and the optional minimum API version. `context.native` is scoped to the plugin. `context.dispose()` is called during stop, unload, reload, and cleanup after a failed start.
 

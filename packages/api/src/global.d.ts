@@ -38,7 +38,6 @@ export type {
 	InternalToastOptions,
 	NATIVE_PLUGIN_CAPABILITIES,
 	NATIVE_PLUGIN_PLATFORM_CAPABILITIES,
-	NativeAndroidSurfaceBridge,
 	NativeAssociationKey,
 	NativeBatchReference,
 	NativeBatchStep,
