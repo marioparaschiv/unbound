@@ -9,15 +9,25 @@ const MAX_VISITED = 4_000;
 export const STARTUP_SCAN_DELAYS = [300];
 
 /**
+ * @description Reads the activity the loader's `ActivityTracker` saw resume last.
+ * @param java The plugin's Java bridge.
+ * @returns The activity, or `null` while no activity is resumed.
+ */
+export function currentActivity(java: ViewBridge): NativeJavaReference | null {
+	const tracker = javaReference(
+		java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
+	);
+
+	return tracker ? javaReference(java.invoke(tracker, 'currentActivity', [])) : null;
+}
+
+/**
  * @description Reads the decor view of the activity the loader saw resume last.
  * @param java The plugin's Java bridge.
  * @returns The decor view, or `null` while no activity is resumed.
  */
 export function currentDecorView(java: ViewBridge): NativeJavaReference | null {
-	const tracker = javaReference(
-		java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
-	);
-	const activity = tracker ? javaReference(java.invoke(tracker, 'currentActivity', [])) : null;
+	const activity = currentActivity(java);
 	const window = activity ? javaReference(java.invoke(activity, 'getWindow', [])) : null;
 
 	return window ? javaReference(java.invoke(window, 'getDecorView', [])) : null;
@@ -65,4 +75,4 @@ export function findViewsOfClass(
 	return found;
 }
 
-export default { currentDecorView, findViewsOfClass };
+export default { currentActivity, currentDecorView, findViewsOfClass };

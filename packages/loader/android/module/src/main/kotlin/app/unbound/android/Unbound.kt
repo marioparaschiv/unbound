@@ -27,7 +27,6 @@ class Unbound : XposedModule() {
     private fun initialize(param: PackageReadyParam) {
         val moduleInfo = moduleApplicationInfo
         val appInfo = param.applicationInfo
-        ActivityTracker.install(Platform.application())
         NativeJava.useClassLoader(param.classLoader)
         installHookBridge()
         ReactSurfaces.install(param.classLoader)
