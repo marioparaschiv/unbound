@@ -1,6 +1,6 @@
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
-import type { PublishFirstPartyRequest } from '../../contracts/src/publish';
-import type { WorkspaceFiles } from '../../contracts/src/workspace';
+import type { PublishFirstPartyRequest } from '@unbound-app/contracts/publish';
+import type { WorkspaceFiles } from '@unbound-app/contracts/workspace';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -11,15 +11,15 @@ import {
 	matchAddonDirs,
 	readAddon,
 	workspaceConfigSchema,
-} from '../../contracts/src/workspace';
+} from '@unbound-app/contracts/workspace';
 import {
 	formatChangelogIssues,
 	parseChangelog,
 	selectRelease,
-} from '../../contracts/src/changelog';
-import { publishFirstPartyResponseSchema } from '../../contracts/src/publish';
-import { apiErrorResponseSchema } from '../../contracts/src/errors';
-import { z } from '../../contracts/src/zod';
+} from '@unbound-app/contracts/changelog';
+import { publishFirstPartyResponseSchema } from '@unbound-app/contracts/publish';
+import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
+import { z } from '@unbound-app/contracts/zod';
 
 import type { LocalPlugin, PluginDecision, PublishedVersions } from './select-plugins';
 import type { PluginCommit } from './plugin-changelog';

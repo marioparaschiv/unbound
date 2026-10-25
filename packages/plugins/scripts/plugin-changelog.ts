@@ -1,5 +1,5 @@
-import type { ChangeType, Changelog } from '../../contracts/src/changelog';
-import { CHANGE_LABELS, changeTypeSchema, parseChangelog } from '../../contracts/src/changelog';
+import type { ChangeType, Changelog } from '@unbound-app/contracts/changelog';
+import { CHANGE_LABELS, changeTypeSchema, parseChangelog } from '@unbound-app/contracts/changelog';
 
 /** One commit that touched a plugin, as `git log` reports it. */
 export type PluginCommit = {

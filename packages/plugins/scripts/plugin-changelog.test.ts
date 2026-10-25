@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
 
-import type { Changelog } from '../../contracts/src/changelog';
+import type { Changelog } from '@unbound-app/contracts/changelog';
 import type { PluginCommit } from '@scripts/plugin-changelog';
-import { parseChangelog, selectRelease } from '../../contracts/src/changelog';
+import { parseChangelog, selectRelease } from '@unbound-app/contracts/changelog';
 import { createRelease, mergeRelease, renderRelease } from '@scripts/plugin-changelog';
 
 const DATE = '2026-05-01';
