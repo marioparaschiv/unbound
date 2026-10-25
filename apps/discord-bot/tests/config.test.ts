@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { GUILD_ID } from '~/lib/constants';
 import { checkConfig } from '~/lib/config';
+import { GUILD_ID } from '~/lib/constants';
 
 const ENV = {
 	DISCORD_TOKEN: 'token',

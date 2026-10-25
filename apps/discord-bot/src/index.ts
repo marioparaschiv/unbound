@@ -8,10 +8,10 @@ import { createFeedClient } from '~/lib/feed/client';
 import { startDispatchers } from '~/runtime/start';
 import { createDatabase } from '~/db/database';
 import { startPoller } from '~/runtime/poller';
-import { GUILD_ID } from '~/lib/constants';
 import { setDatabase } from '~/db/instance';
 import { dispatchers } from '~/dispatchers';
 import { checkConfig } from '~/lib/config';
+import { GUILD_ID } from '~/lib/constants';
 
 const logger = createLogger('Bot');
 const config = checkConfig(process.env, GUILD_ID);
