@@ -145,7 +145,8 @@ dependencies {
     }
 }
 
-val ktlintSources = listOf("src/**/*.kt", "*.kts", "../*.kts")
+val ktlintSources = providers.gradleProperty("ktlintFiles").orNull?.split(",")?.filter(String::isNotBlank)
+    ?: listOf("src/**/*.kt", "*.kts", "../*.kts")
 
 tasks.register<JavaExec>("ktlintCheck") {
     group = "verification"

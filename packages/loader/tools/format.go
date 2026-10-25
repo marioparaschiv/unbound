@@ -82,7 +82,7 @@ func runFormat(args []string) error {
 	}
 
 	if only == nil || only.hasExtension(map[string]string{".kt": ".kt", ".kts": ".kts"}) {
-		if err := runKotlinFormatter(rootPath, *check); err != nil {
+		if err := runKotlinFormatter(rootPath, *check, only.withExtensions(".kt", ".kts")); err != nil {
 			failures = append(failures, "Kotlin sources ("+err.Error()+")")
 		}
 	}
@@ -382,20 +382,36 @@ func formatGoSources(root string, check bool) ([]string, error) {
 	return files, nil
 }
 
-func runKotlinFormatter(root string, check bool) error {
+func (selection fileSelection) withExtensions(extensions ...string) []string {
+	var files []string
+	for path := range selection {
+		for _, extension := range extensions {
+			if filepath.Ext(path) == extension {
+				files = append(files, path)
+			}
+		}
+	}
+	sort.Strings(files)
+	return files
+}
+
+func runKotlinFormatter(root string, check bool, files []string) error {
 	task := ":module:ktlintFormat"
 	if check {
 		task = ":module:ktlintCheck"
 	}
-	return runGradle(root, task)
+	if len(files) == 0 {
+		return runGradle(root, task)
+	}
+	return runGradle(root, task, "-PktlintFiles="+strings.Join(files, ","))
 }
 
 func runKotlinLinter(root string) error {
 	return runGradle(root, ":module:ktlintCheck")
 }
 
-func runGradle(root, task string) error {
-	command := exec.Command("./gradlew", "--quiet", task)
+func runGradle(root, task string, arguments ...string) error {
+	command := exec.Command("./gradlew", append([]string{"--quiet", task}, arguments...)...)
 	command.Dir = filepath.Join(root, "android")
 	command.Env = androidEnvironment()
 	var output bytes.Buffer
