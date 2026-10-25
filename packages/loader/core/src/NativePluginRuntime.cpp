@@ -19,7 +19,7 @@ namespace loader::native
     static std::shared_ptr<NativePluginExecutor> gExecutor;
     static jsi::Runtime                         *gRuntime = nullptr;
     static std::thread::id                       gRuntimeThread;
-    static std::atomic_uint64_t                  gGeneration{0};
+    static RuntimeGenerationTracker              gGenerations;
     static std::atomic_uint64_t                  gNextInvocation{1};
     static std::atomic_uint                      gMainThreadRuntimeWaits{0};
 
@@ -31,6 +31,76 @@ namespace loader::native
     const std::string &NativeCodedError::code() const
     {
         return code_;
+    }
+
+    NativeFailure describeFailure(std::exception_ptr failure)
+    {
+        try
+        {
+            if (failure)
+            {
+                std::rethrow_exception(failure);
+            }
+        }
+        catch (const NativeCodedError &error)
+        {
+            return {error.code(), error.what()};
+        }
+        catch (const std::exception &error)
+        {
+            std::string message = error.what();
+            return {kNativeBridgeErrorCode, message.empty() ? "Native operation failed" : message};
+        }
+        catch (...)
+        {
+        }
+        return {kNativeBridgeErrorCode, "Native operation failed"};
+    }
+
+    std::optional<uint64_t> RuntimeGenerationTracker::advance(const void *runtime)
+    {
+        if (runtime_ == runtime)
+        {
+            return std::nullopt;
+        }
+        runtime_ = runtime;
+        return generation_.fetch_add(1) + 1;
+    }
+
+    uint64_t RuntimeGenerationTracker::generation() const
+    {
+        return generation_.load();
+    }
+
+    void RuntimeGenerationTracker::addListener(RuntimeGenerationListener listener)
+    {
+        std::lock_guard<std::mutex> lock(listenersMutex_);
+        listeners_.push_back(std::move(listener));
+    }
+
+    void RuntimeGenerationTracker::notify(uint64_t generation) const
+    {
+        std::vector<RuntimeGenerationListener> listeners;
+        {
+            std::lock_guard<std::mutex> lock(listenersMutex_);
+            listeners = listeners_;
+        }
+        for (const RuntimeGenerationListener &listener : listeners)
+        {
+            try
+            {
+                listener(generation);
+            }
+            catch (const std::exception &error)
+            {
+                log(LogLevel::Error, "plugins",
+                    std::string("Runtime generation listener failed: ") + error.what());
+            }
+            catch (...)
+            {
+                log(LogLevel::Error, "plugins", "Runtime generation listener failed");
+            }
+        }
     }
 
     void setExecutor(std::shared_ptr<NativePluginExecutor> value)
@@ -47,19 +117,28 @@ namespace loader::native
 
     uint64_t registerRuntime(jsi::Runtime &runtime)
     {
-        std::lock_guard<std::mutex> lock(gStateMutex);
-        if (gRuntime != &runtime)
+        std::optional<uint64_t> advanced;
         {
-            gGeneration.fetch_add(1);
+            std::lock_guard<std::mutex> lock(gStateMutex);
+            advanced       = gGenerations.advance(&runtime);
+            gRuntime       = &runtime;
+            gRuntimeThread = std::this_thread::get_id();
         }
-        gRuntime       = &runtime;
-        gRuntimeThread = std::this_thread::get_id();
-        return gGeneration.load();
+        if (advanced)
+        {
+            gGenerations.notify(*advanced);
+        }
+        return gGenerations.generation();
     }
 
     uint64_t runtimeGeneration()
     {
-        return gGeneration.load();
+        return gGenerations.generation();
+    }
+
+    void onRuntimeGenerationChanged(RuntimeGenerationListener listener)
+    {
+        gGenerations.addListener(std::move(listener));
     }
 
     bool isRuntimeThread()
@@ -111,7 +190,25 @@ namespace loader::native
             return;
         }
 
-        object.setProperty(runtime, "code", jsi::String::createFromUtf8(runtime, "NATIVE_BRIDGE_ERROR"));
+        object.setProperty(runtime, "code", jsi::String::createFromUtf8(runtime, kNativeBridgeErrorCode));
+    }
+
+    jsi::Value guard(jsi::Runtime &runtime, const std::function<jsi::Value()> &body)
+    {
+        try
+        {
+            return body();
+        }
+        catch (const jsi::JSError &error)
+        {
+            attachDefaultCode(runtime, error);
+            throw;
+        }
+        catch (...)
+        {
+            NativeFailure failure = describeFailure(std::current_exception());
+            throwCoded(runtime, failure.code.c_str(), failure.message);
+        }
     }
 
     jsi::Function makeFunction(jsi::Runtime &runtime, const char *name, unsigned int argumentCount,
@@ -120,27 +217,7 @@ namespace loader::native
         jsi::HostFunctionType guarded = [handler = std::move(handler)](
                                             jsi::Runtime &rt, const jsi::Value &thisValue,
                                             const jsi::Value *args, size_t count) -> jsi::Value {
-            try
-            {
-                return handler(rt, thisValue, args, count);
-            }
-            catch (const jsi::JSError &error)
-            {
-                attachDefaultCode(rt, error);
-                throw;
-            }
-            catch (const NativeCodedError &error)
-            {
-                throwCoded(rt, error.code().c_str(), error.what());
-            }
-            catch (const std::exception &error)
-            {
-                throwCoded(rt, "NATIVE_BRIDGE_ERROR", error.what());
-            }
-            catch (...)
-            {
-                throwCoded(rt, "NATIVE_BRIDGE_ERROR", "Native bridge operation failed");
-            }
+            return guard(rt, [&]() { return handler(rt, thisValue, args, count); });
         };
 
         return jsi::Function::createFromHostFunction(runtime, jsi::PropNameID::forUtf8(runtime, name),
@@ -237,7 +314,7 @@ namespace loader::native
             throwCoded(runtime, "NATIVE_PLUGIN_UNAVAILABLE", "Native executor is unavailable");
         }
 
-        uint64_t    generation = gGeneration.load();
+        uint64_t    generation = gGenerations.generation();
         std::string identifier = std::to_string(gNextInvocation.fetch_add(1));
         auto        cancelled  = std::make_shared<std::atomic_bool>(false);
         auto        gate       = std::make_shared<NativeOperationGate>();
@@ -267,33 +344,25 @@ namespace loader::native
                     .setProperty(rt, identifier.c_str(), pair);
 
                 target->runOnMain([operation, result, identifier, cancelled, gate, generation]() {
-                    if (cancelled->load() || !gate->start() || generation != gGeneration.load())
+                    if (cancelled->load() || !gate->start() || generation != gGenerations.generation())
                     {
                         return;
                     }
 
-                    std::string failure;
+                    std::optional<NativeFailure> failure;
                     try
                     {
                         operation();
                     }
-                    catch (const std::exception &error)
-                    {
-                        failure = error.what();
-                        if (failure.empty())
-                        {
-                            failure = "Native operation failed";
-                        }
-                    }
                     catch (...)
                     {
-                        failure = "Native operation failed";
+                        failure = describeFailure(std::current_exception());
                     }
                     gate->finish();
 
                     executeRuntimeAsynchronously([identifier, cancelled, generation, result,
                                                   failure](jsi::Runtime &completion) {
-                        if (generation != gGeneration.load())
+                        if (generation != gGenerations.generation())
                         {
                             return;
                         }
@@ -313,20 +382,28 @@ namespace loader::native
                             return;
                         }
 
+                        jsi::Function reject = pair.getPropertyAsFunction(completion, "reject");
+                        if (failure)
+                        {
+                            reject.call(completion, makeError(completion, failure->code.c_str(),
+                                                              failure->message));
+                            return;
+                        }
                         try
                         {
-                            if (!failure.empty())
-                            {
-                                throw std::runtime_error(failure);
-                            }
-                            pair.getPropertyAsFunction(completion, "resolve")
-                                .call(completion, result(completion));
+                            jsi::Value value = result(completion);
+                            pair.getPropertyAsFunction(completion, "resolve").call(completion, value);
                         }
-                        catch (const std::exception &error)
+                        catch (const jsi::JSError &error)
                         {
-                            pair.getPropertyAsFunction(completion, "reject")
-                                .call(completion,
-                                      makeError(completion, "NATIVE_BRIDGE_ERROR", error.what()));
+                            attachDefaultCode(completion, error);
+                            reject.call(completion, error.value());
+                        }
+                        catch (...)
+                        {
+                            NativeFailure described = describeFailure(std::current_exception());
+                            reject.call(completion,
+                                        makeError(completion, described.code.c_str(), described.message));
                         }
                     });
                 });
@@ -338,7 +415,7 @@ namespace loader::native
                     }
                     cancelled->store(true);
                     executeRuntimeAsynchronously([identifier, generation](jsi::Runtime &completion) {
-                        if (generation != gGeneration.load())
+                        if (generation != gGenerations.generation())
                         {
                             return;
                         }
@@ -382,9 +459,9 @@ namespace loader::native
         }
 
         jsi::Runtime *expected   = currentRuntime();
-        uint64_t      generation = gGeneration.load();
+        uint64_t      generation = gGenerations.generation();
         target->runOnRuntime([callback = std::move(callback), expected, generation](jsi::Runtime &runtime) {
-            if (expected != &runtime || generation != gGeneration.load())
+            if (expected != &runtime || generation != gGenerations.generation())
             {
                 return;
             }
@@ -426,12 +503,12 @@ namespace loader::native
         };
 
         auto     state      = std::make_shared<State>();
-        uint64_t generation = gGeneration.load();
+        uint64_t generation = gGenerations.generation();
         target->runOnRuntime([state, callback = std::move(callback), expected,
                               generation](jsi::Runtime &runtime) {
             bool completed = false;
             std::exception_ptr failure;
-            if (!state->cancelled.load() && expected == &runtime && generation == gGeneration.load())
+            if (!state->cancelled.load() && expected == &runtime && generation == gGenerations.generation())
             {
                 try
                 {
