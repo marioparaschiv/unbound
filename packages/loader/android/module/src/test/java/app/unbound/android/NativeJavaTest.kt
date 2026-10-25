@@ -241,17 +241,18 @@ class NativeJavaTest {
     }
 
     @Test
-    fun batchReportsAFailingOperationWithoutStopping() {
+    fun batchFailsAtTheFirstFailingOperation() {
         val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
         val handle = JSONObject(builder)
         val operations = JSONArray()
-        operations.put(JSONObject().put("op", "invoke").put("handle", handle).put("name", "noSuchMethod"))
         operations.put(JSONObject().put("op", "invoke").put("handle", handle).put("name", "toString"))
+        operations.put(JSONObject().put("op", "invoke").put("handle", handle).put("name", "noSuchMethod"))
 
-        val results = JSONArray(NativeJava.batch(operations.toString()))
+        val failure = assertThrows(IllegalStateException::class.java) {
+            NativeJava.batch(operations.toString())
+        }
 
-        assertTrue(results.getJSONObject(0).has("__nativeFailure"))
-        assertEquals("string", results.getJSONObject(1).getString("type"))
+        assertTrue(failure.message!!.startsWith("Java batch operation 1 failed"))
     }
 
     @Test
@@ -261,12 +262,11 @@ class NativeJavaTest {
             JSONObject().put("op", "explode").put("handle", JSONObject(builder)).put("name", "x"),
         )
 
-        val results = JSONArray(NativeJava.batch(operations.toString()))
+        val failure = assertThrows(IllegalStateException::class.java) {
+            NativeJava.batch(operations.toString())
+        }
 
-        assertTrue(
-            results.getJSONObject(0).getJSONObject("__nativeFailure")
-                .getString("message").contains("explode"),
-        )
+        assertTrue(failure.message!!.contains("explode"))
     }
 
     @Test

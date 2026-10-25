@@ -63,6 +63,7 @@ class NativeHooksTest {
     @Before
     fun setUp() {
         NativeHooks.removeAll()
+        NativeHooks.useLimits(256, 512)
         NativeJava.releaseAll()
         installer = FakeInstaller()
         NativeHooks.useInstaller(installer)
@@ -258,6 +259,26 @@ class NativeHooksTest {
         assertEquals("int", payload.getJSONObject("self").getString("type"))
         assertEquals(42, payload.getJSONObject("self").getInt("value"))
         assertEquals("alpha", payload.getJSONArray("args").getJSONObject(0).getString("value"))
+    }
+
+    @Test
+    fun theInjectedLimitsBoundHooksAndCachedResults() {
+        NativeHooks.useLimits(1, 1)
+        val token = hookToString("""{"replace":true}""")
+        NativeHooks.setReturnValue(token, """{"type":"int","value":1}""", "[]", """{"type":"string","value":"a"}""")
+        NativeHooks.setReturnValue(token, """{"type":"int","value":1}""", "[]", """{"type":"string","value":"b"}""")
+
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeHooks.hook("java.lang.String", "length", "[]", "{}")
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeHooks.setReturnValue(
+                token,
+                """{"type":"int","value":2}""",
+                "[]",
+                """{"type":"string","value":"c"}""",
+            )
+        }
     }
 
     @Test

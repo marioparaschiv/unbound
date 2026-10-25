@@ -171,10 +171,25 @@ object NativeBridge {
     fun fabricUnmount(handleJSON: String) = NativeFabric.unmount(handleJSON)
 
     @JvmStatic
-    fun fabricIsRunning(handleJSON: String): String = NativeFabric.isRunning(handleJSON)
+    fun fabricSetSize(handleJSON: String, minimumJSON: String, maximumJSON: String) =
+        NativeFabric.setSize(handleJSON, minimumJSON, maximumJSON)
 
     @JvmStatic
-    fun fabricViewHandle(handleJSON: String): String = NativeFabric.viewHandle(handleJSON)
+    fun fabricSetFrame(handleJSON: String, frameJSON: String) =
+        NativeFabric.setFrame(handleJSON, frameJSON)
+
+    @JvmStatic
+    fun fabricMeasure(handleJSON: String): String = NativeFabric.measure(handleJSON)
+
+    @JvmStatic
+    fun hooksUseLimits(maximumHooks: Int, maximumCachedReturns: Int) =
+        NativeHooks.useLimits(maximumHooks, maximumCachedReturns)
+
+    @JvmStatic
+    fun runtimeReplaced() {
+        NativeHooks.removeAll()
+        Handler(Looper.getMainLooper()).post { NativeFabric.unmountAll() }
+    }
 
     @JvmStatic
     fun debugEnvironment(): String = JSONObject()
