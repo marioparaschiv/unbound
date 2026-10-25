@@ -309,6 +309,18 @@ describe('refusals', () => {
 		expect((await response.json()).error.code).toBe('forbidden');
 	});
 
+	test('a branch or tag other than a build tag is forbidden', async () => {
+		const request = buildTag(fixture, 'fp.branch');
+
+		fixture.tag('release', { at: request.commitSha });
+
+		expect(await failure(publish(ciKey, { ...request, ref: 'release' }))).toEqual({
+			status: 403,
+			code: 'forbidden',
+		});
+		expect(await liveSha256(ctx, 'fp.branch', '1.0.0')).toBeUndefined();
+	});
+
 	test('an addon published from another repository is never taken over', async () => {
 		const owner = await signUp(ctx);
 

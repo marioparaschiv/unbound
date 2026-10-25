@@ -22,6 +22,9 @@ import { ApiError } from '~/lib/api/errors';
 
 type ClaimReader = Pick<Transaction, 'select'>;
 
+/** CI tags each build commit under this prefix; no other branch or tag of the repository is first-party. */
+const BUILD_TAG_PREFIX = 'plugin-builds/';
+
 /** What publishing a version would do: create or update the addon, or nothing when it is already live. */
 type Claim = { kind: SubmissionKind } | { kind: 'unchanged'; sha256: string };
 
@@ -168,6 +171,13 @@ export async function publishFirstParty(
 
 	if (!isRepository(request.repository, repository)) {
 		throw new ApiError('forbidden', `Only ${repository} publishes first-party addons.`);
+	}
+
+	if (!request.ref.startsWith(BUILD_TAG_PREFIX)) {
+		throw new ApiError(
+			'forbidden',
+			`First-party addons are published from ${BUILD_TAG_PREFIX}* tags.`,
+		);
 	}
 
 	// CI has no push-capable GitHub link; the API key and the repository check are the trust.
