@@ -1,4 +1,5 @@
 export const GUILD_ID = '950850315601711176';
+export const SITE_URL = 'https://unbound.rip';
 
 export const COLOURS = {
 	positive: 0x00_ff_00,
@@ -32,6 +33,7 @@ export const DISCORD_IDS = {
 
 export default {
 	GUILD_ID,
+	SITE_URL,
 	COLOURS,
 	PLUGINS_CHANNEL_ID,
 	THEMES_CHANNEL_ID,
