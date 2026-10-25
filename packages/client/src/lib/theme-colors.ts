@@ -39,7 +39,7 @@ export function resolveThemeColor(
 	if (!entry?.value) return;
 
 	const value =
-		entry.type === 'raw' ? (theme.raw?.[entry.value] ?? discordRaw[entry.value]) : entry.value;
+		entry.type === 'raw' ? (theme?.raw?.[entry.value] ?? discordRaw[entry.value]) : entry.value;
 
 	if (!value) return;
 
