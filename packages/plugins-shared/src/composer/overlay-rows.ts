@@ -64,7 +64,9 @@ export function showComposerRow(channelId: string, id: string, row: ComposerRow)
 
 		rows.delete(id);
 
-		if (!rows.size) channels.delete(channelId);
+		if (!rows.size) {
+			channels.delete(channelId);
+		}
 
 		notify();
 	};
@@ -80,7 +82,9 @@ export function spaceBelow(channelId: string, order: number): number {
 	let space = 0;
 
 	for (const row of composerRows().channels.get(channelId)?.values() ?? []) {
-		if (row.order < order) space += row.height + COMPOSER_ROW_GAP;
+		if (row.order < order) {
+			space += row.height + COMPOSER_ROW_GAP;
+		}
 	}
 
 	return space;

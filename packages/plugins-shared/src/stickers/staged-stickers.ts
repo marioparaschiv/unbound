@@ -47,7 +47,9 @@ export function createStagedStickers() {
 		return () => {
 			channelListeners.delete(listener);
 
-			if (!channelListeners.size) listeners.delete(channelId);
+			if (!channelListeners.size) {
+				listeners.delete(channelId);
+			}
 		};
 	}
 
