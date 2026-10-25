@@ -1,8 +1,8 @@
 package app.unbound.android
 
-import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.Rect
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
@@ -12,7 +12,6 @@ import android.view.ViewOutlineProvider
 import android.widget.TextView
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
-import org.json.JSONObject
 import java.util.Collections
 import java.util.WeakHashMap
 import kotlin.math.ceil
@@ -36,10 +35,11 @@ object ChatUI {
     private val main = Handler(Looper.getMainLooper())
     private val avatars = Collections.synchronizedMap(WeakHashMap<View, ViewOutlineProvider>())
     private val bubbles = Collections.synchronizedMap(WeakHashMap<ViewGroup, View>())
+    private val rowBackgrounds = WeakHashMap<ViewGroup, Drawable>()
 
     @Volatile private var avatarRadius: Float? = null
     @Volatile private var bubblesEnabled = false
-    @Volatile private var style = BubbleStyle(10f, 8f, 4f, Color.argb(102, 0, 0, 0), Color.argb(102, 255, 255, 255))
+    @Volatile private var style: BubbleStyle? = null
     private var themeManager: Any? = null
     private var isThemeDark: java.lang.reflect.Method? = null
 
@@ -54,7 +54,7 @@ object ChatUI {
     fun reload() {
         avatarRadius = NativeBridge.nativePreference("avatar-radius", null)?.toFloatOrNull()
         bubblesEnabled = NativeBridge.preferenceEnabled("message-bubbles")
-        style = readStyle() ?: style
+        style = readStyle()
         main.post {
             synchronized(avatars) { avatars.keys.toList() }.forEach(::applyAvatar)
             synchronized(bubbles) { bubbles.entries.toList() }.forEach { (row, bubble) -> placeBubble(row, bubble) }
@@ -62,13 +62,13 @@ object ChatUI {
     }
 
     private fun readStyle(): BubbleStyle? = runCatching {
-        val json = JSONObject(NativeBridge.nativePreference("bubble-style", null).orEmpty())
+        val values = NativeBridge.nativeMessageBubbleStyle()
         BubbleStyle(
-            json.getDouble("radius").toFloat(),
-            json.getDouble("horizontalPadding").toFloat(),
-            json.getDouble("verticalPadding").toFloat(),
-            NativeBridge.nativeColor(json.getString("darkColor")),
-            NativeBridge.nativeColor(json.getString("lightColor")),
+            values[0].toFloat(),
+            values[1].toFloat(),
+            values[2].toFloat(),
+            values[3].toLong().toInt(),
+            values[4].toLong().toInt(),
         )
     }.getOrNull()
 
@@ -141,13 +141,16 @@ object ChatUI {
     }
 
     private fun placeBubble(row: ViewGroup, bubble: View) {
-        val area = if (bubblesEnabled) contentArea(row) else null
-        if (area == null) {
+        val current = style
+        val enabled = bubblesEnabled && current != null
+        if (enabled) clearRowBackground(row) else restoreRowBackground(row)
+
+        val area = if (enabled) contentArea(row) else null
+        if (area == null || current == null) {
             if (bubble.visibility != View.GONE) bubble.visibility = View.GONE
             return
         }
 
-        val current = style
         area.inset(-dp(row, current.horizontalPadding).toInt(), -dp(row, current.verticalPadding).toInt())
         val background = (bubble.background as? GradientDrawable) ?: GradientDrawable().also { bubble.background = it }
         background.cornerRadius = dp(row, current.radius)
@@ -158,6 +161,17 @@ object ChatUI {
             View.MeasureSpec.makeMeasureSpec(area.height(), View.MeasureSpec.EXACTLY),
         )
         bubble.layout(area.left, area.top, area.right, area.bottom)
+    }
+
+    private fun clearRowBackground(row: ViewGroup) {
+        val background = row.background ?: return
+        rowBackgrounds[row] = background
+        row.background = null
+    }
+
+    private fun restoreRowBackground(row: ViewGroup) {
+        val background = rowBackgrounds.remove(row) ?: return
+        if (row.background == null) row.background = background
     }
 
     private fun contentArea(row: ViewGroup): Rect? {

@@ -6,6 +6,7 @@
 
 #include <nlohmann/json.hpp>
 
+#include "LoaderColor.h"
 #include "LoaderSettings.h"
 
 namespace loader::preferences
@@ -50,6 +51,7 @@ namespace loader::preferences
     bool gestureEnabled(const SettingsStore &settings, ToolboxGesture gesture);
     bool setGestureEnabled(SettingsStore &settings, ToolboxGesture gesture, bool enabled);
 
+    RGBAColor             messageBubbleColor(bool dark);
     bool                  messageBubbles(const SettingsStore &settings);
     bool                  setMessageBubbles(SettingsStore &settings, bool enabled);
     std::optional<double> avatarRadius(const SettingsStore &settings);

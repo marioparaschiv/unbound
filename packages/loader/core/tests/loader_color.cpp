@@ -12,5 +12,9 @@ int main()
     assert(!loader::parseColor("#12345"));
     assert(!loader::parseColor("blue"));
     assert(!loader::parseColor("rgba(1,2)"));
+    assert(loader::isDarkColor(*loader::parseColor("#313338")));
+    assert(loader::isDarkColor(*loader::parseColor("#000000")));
+    assert(!loader::isDarkColor(*loader::parseColor("#FFFFFF")));
+    assert(!loader::isDarkColor(*loader::parseColor("#FBFBFB")));
     return 0;
 }

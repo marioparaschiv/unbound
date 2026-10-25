@@ -194,6 +194,20 @@ static jlong nativeParseColor(JNIEnv *env, jclass, jstring value)
     return color ? static_cast<jlong>(loader::toARGB(*color)) : -1;
 }
 
+static jdoubleArray nativeMessageBubbleStyle(JNIEnv *env, jclass)
+{
+    const auto  &style     = loader::preferences::kMessageBubbleStyle;
+    const jdouble values[] = {style.radius, style.horizontalPadding, style.verticalPadding,
+                              static_cast<jdouble>(loader::toARGB(loader::preferences::messageBubbleColor(true))),
+                              static_cast<jdouble>(loader::toARGB(loader::preferences::messageBubbleColor(false)))};
+    jdoubleArray result = env->NewDoubleArray(5);
+    if (result)
+    {
+        env->SetDoubleArrayRegion(result, 0, 5, values);
+    }
+    return result;
+}
+
 static jstring nativeResolveFont(JNIEnv *env, jclass, jstring family)
 {
     auto loader = currentLoader();
@@ -428,6 +442,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativePreference", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativePreference)},
         {"nativeParseColor", "(Ljava/lang/String;)J", reinterpret_cast<void *>(nativeParseColor)},
+        {"nativeMessageBubbleStyle", "()[D", reinterpret_cast<void *>(nativeMessageBubbleStyle)},
         {"nativeResolveFont", "(Ljava/lang/String;)Ljava/lang/String;", reinterpret_cast<void *>(nativeResolveFont)},
         {"nativeDocumentsName", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeDocumentsName)},
         {"nativeSettingsFileName", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeSettingsFileName)},

@@ -1,6 +1,5 @@
 package app.unbound.android
 
-import android.graphics.Color
 import android.graphics.fonts.SystemFonts
 import android.os.Build
 import android.os.Handler
@@ -68,7 +67,8 @@ object NativeBridge {
 
     fun parseColor(value: String): Int? = nativeParseColor(value).takeIf { it >= 0 }?.toInt()
 
-    fun nativeColor(value: String): Int = parseColor(value) ?: Color.TRANSPARENT
+    @JvmStatic
+    external fun nativeMessageBubbleStyle(): DoubleArray
 
     @JvmStatic
     external fun nativeResolveFont(family: String): String

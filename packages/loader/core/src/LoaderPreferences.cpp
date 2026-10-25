@@ -110,6 +110,11 @@ namespace loader::preferences
         return settings.save();
     }
 
+    RGBAColor messageBubbleColor(bool dark)
+    {
+        return parseColor(dark ? kMessageBubbleStyle.darkColor : kMessageBubbleStyle.lightColor).value_or(RGBAColor{});
+    }
+
     bool messageBubbles(const SettingsStore &settings)
     {
         return settings.getBoolean(kStore, kMessageBubbles, false);
@@ -280,15 +285,6 @@ namespace loader::preferences
         if (action == "cycle-avatar-radius")
         {
             return radiusText(cycleAvatarRadius(settings));
-        }
-        if (action == "bubble-style")
-        {
-            return nlohmann::json{{"radius", kMessageBubbleStyle.radius},
-                                  {"horizontalPadding", kMessageBubbleStyle.horizontalPadding},
-                                  {"verticalPadding", kMessageBubbleStyle.verticalPadding},
-                                  {"darkColor", kMessageBubbleStyle.darkColor},
-                                  {"lightColor", kMessageBubbleStyle.lightColor}}
-                .dump();
         }
         if (action == "message-bubbles-label")
         {

@@ -6,12 +6,6 @@
 static NSNumber *customAvatarRadius    = nil;
 static BOOL      messageBubblesEnabled = NO;
 
-static CGFloat messageBubbleRadius            = 10;
-static CGFloat messageBubbleHorizontalPadding = 8;
-static CGFloat messageBubbleVerticalPadding   = 4;
-
-static UIColor *messageCellLightColor   = nil;
-static UIColor *messageCellDarkColor    = nil;
 static UIColor *messageCellDynamicColor = nil;
 
 + (void)reloadPreferences
@@ -68,33 +62,22 @@ static UIColor *messageCellDynamicColor = nil;
 
 + (BOOL)isDiscordDarkMode
 {
-    CGFloat red             = 0;
-    Class   themeColorClass = NSClassFromString(@"DCDThemeColor");
+    Class themeColorClass = NSClassFromString(@"DCDThemeColor");
     if (themeColorClass && [themeColorClass respondsToSelector:@selector(BACKGROUND_PRIMARY)])
     {
-        UIColor *bgColor = [themeColorClass BACKGROUND_PRIMARY];
-        [bgColor getRed:&red green:nil blue:nil alpha:nil];
-        return red < 0.25;
+        return [CoreBridge isDarkColor:[themeColorClass BACKGROUND_PRIMARY]];
     }
     return YES;
 }
 
 + (void)loadDynamicColors
 {
-    NSData       *data  = [[CoreBridge preference:@"bubble-style" argument:@""] dataUsingEncoding:NSUTF8StringEncoding];
-    NSDictionary *style = data ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
-    if ([style isKindOfClass:[NSDictionary class]])
-    {
-        messageBubbleRadius            = [style[@"radius"] doubleValue];
-        messageBubbleHorizontalPadding = [style[@"horizontalPadding"] doubleValue];
-        messageBubbleVerticalPadding   = [style[@"verticalPadding"] doubleValue];
-        messageCellDarkColor           = [CoreBridge colorFromString:style[@"darkColor"] ?: @""];
-        messageCellLightColor          = [CoreBridge colorFromString:style[@"lightColor"] ?: @""];
-    }
+    UIColor *darkColor  = [CoreBridge messageBubbleColorForDarkTheme:YES];
+    UIColor *lightColor = [CoreBridge messageBubbleColorForDarkTheme:NO];
 
     messageCellDynamicColor =
         [[UIColor alloc] initWithDynamicProvider:^UIColor *(UITraitCollection *traitCollection) {
-            return [self isDiscordDarkMode] ? messageCellDarkColor : messageCellLightColor;
+            return [self isDiscordDarkMode] ? darkColor : lightColor;
         }];
 }
 
@@ -296,7 +279,8 @@ static UIColor *messageCellDynamicColor = nil;
 
     CGRect frame = [contentBody convertRect:contentBody.bounds toView:cell];
     frame        = [self tightenFrame:frame forBody:contentBody];
-    return CGRectInset(frame, -messageBubbleHorizontalPadding, -messageBubbleVerticalPadding);
+    CGSize padding = [CoreBridge messageBubblePadding];
+    return CGRectInset(frame, -padding.width, -padding.height);
 }
 
 + (void)updateMessageCell:(DCDMessageTableViewCell *)cell
@@ -326,7 +310,7 @@ static UIColor *messageCellDynamicColor = nil;
     cell.customBackgroundView.hidden          = NO;
     cell.customBackgroundView.backgroundColor = messageCellDynamicColor;
 
-    cell.customBackgroundView.layer.cornerRadius = messageBubbleRadius;
+    cell.customBackgroundView.layer.cornerRadius = [CoreBridge messageBubbleRadius];
 }
 
 + (void)updateMessageCellFrame:(DCDMessageTableViewCell *)cell
