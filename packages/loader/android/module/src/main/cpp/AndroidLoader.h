@@ -68,7 +68,7 @@ namespace unbound::android
     struct LoaderConfiguration
     {
         std::string                documents;
-        std::optional<std::string> devtoolsScript;
+        nlohmann::json             bootstrapScripts = nlohmann::json::object();
         std::string                origin;
         uint32_t                   bytecodeVersion = 0;
         nlohmann::json             platformInfo    = nlohmann::json::object();

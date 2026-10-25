@@ -6,6 +6,7 @@ import android.os.Build
 import io.github.libxposed.api.XposedInterface.ExceptionMode
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam
+import org.json.JSONObject
 import java.io.File
 import java.util.zip.ZipFile
 
@@ -15,6 +16,7 @@ class Unbound : XposedModule() {
         private const val NATIVE_LIBRARY = "libunbound.so"
         private const val REACT_INSTANCE = "com.facebook.react.runtime.ReactInstance"
         private const val BUNDLE_LOADER = "com.facebook.react.bridge.JSBundleLoader"
+        private const val BOOTSTRAP_DIRECTORY = "assets/js/"
     }
 
     override fun onPackageReady(param: PackageReadyParam) {
@@ -38,7 +40,7 @@ class Unbound : XposedModule() {
 
         NativeBridge.nativeInitialize(
             documents,
-            readModuleAsset(moduleInfo.sourceDir, "assets/js/devtools.js"),
+            readBootstrapScripts(moduleInfo.sourceDir).toString(),
             NATIVE_LIBRARY,
             bytecodeVersion,
             Platform.describe(appInfo, frameworkName).toString(),
@@ -174,10 +176,16 @@ class Unbound : XposedModule() {
         return target.absolutePath
     }
 
-    private fun readModuleAsset(apkPath: String, entryName: String): String? = runCatching {
+    private fun readBootstrapScripts(apkPath: String): JSONObject = runCatching {
         ZipFile(apkPath).use { zip ->
-            val entry = zip.getEntry(entryName) ?: return null
-            zip.getInputStream(entry).bufferedReader().use { it.readText() }
+            val scripts = JSONObject()
+            zip.entries().asSequence()
+                .filter { it.name.startsWith(BOOTSTRAP_DIRECTORY) && it.name.endsWith(".js") }
+                .forEach { entry ->
+                    val name = entry.name.removePrefix(BOOTSTRAP_DIRECTORY).removeSuffix(".js")
+                    scripts.put(name, zip.getInputStream(entry).bufferedReader().use { it.readText() })
+                }
+            scripts
         }
-    }.getOrNull()
+    }.getOrDefault(JSONObject())
 }

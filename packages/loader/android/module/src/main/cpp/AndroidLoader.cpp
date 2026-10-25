@@ -247,11 +247,12 @@ namespace unbound::android
 
     std::optional<std::string> AndroidLoader::resource(const std::string &name)
     {
-        if (name == "devtools")
+        const auto script = configuration_.bootstrapScripts.find(name);
+        if (script == configuration_.bootstrapScripts.end() || !script->is_string())
         {
-            return configuration_.devtoolsScript;
+            return std::nullopt;
         }
-        return std::nullopt;
+        return script->get<std::string>();
     }
 
     std::optional<std::string> AndroidLoader::resolveUpdateURL()

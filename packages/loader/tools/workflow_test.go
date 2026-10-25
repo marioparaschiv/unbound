@@ -495,7 +495,11 @@ func TestMetroRegistryIsCapturedBeforeBundleWithoutLegacyPatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(capture), "installMetroModuleCapture") || !strings.Contains(string(capture), "Object.defineProperty(globalThis,'__d'") {
+	script, err := os.ReadFile(filepath.Join(root, "bootstrap", "metro-module-capture.js"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(capture), "bootstrap::kMetroModuleCapture") || !strings.Contains(string(script), "Object.defineProperty(globalThis, '__d'") {
 		t.Fatal("shared loader no longer captures the Metro registry before module definitions")
 	}
 }

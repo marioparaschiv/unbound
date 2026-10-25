@@ -18,6 +18,7 @@ namespace loader
         bool save() const;
 
         std::string serialize() const;
+        nlohmann::json snapshot() const;
         bool replace(const std::string &json);
 
         std::optional<nlohmann::json> get(const std::string &store, const std::string &key) const;

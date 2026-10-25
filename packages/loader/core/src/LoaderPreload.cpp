@@ -9,48 +9,42 @@ namespace loader
         return value.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
     }
 
-    static std::string themesWithSourceBundles(const std::string &themes)
+    static nlohmann::json themesWithSourceBundles(nlohmann::json themes)
     {
-        nlohmann::json parsed = nlohmann::json::parse(themes, nullptr, false);
-        if (!parsed.is_array())
+        if (!themes.is_array())
         {
-            return themes;
+            return nlohmann::json::array();
         }
 
-        for (nlohmann::json &theme : parsed)
+        for (nlohmann::json &theme : themes)
         {
             if (theme.is_object() && theme.contains("bundle") && !theme["bundle"].is_string())
             {
                 theme["bundle"] = toJSON(theme["bundle"]);
             }
         }
-        return toJSON(parsed);
+        return themes;
     }
 
-    std::string buildPreloadScript(const PreloadPayload &payload)
+    nlohmann::json preloadData(const PreloadPayload &payload)
     {
-        auto orDefault = [](const std::string &value, const char *fallback) {
-            return value.empty() ? std::string(fallback) : value;
-        };
-
-        return "this.UNBOUND_SETTINGS = " + orDefault(payload.settings, "{}") + ";\n" +
-               "this.UNBOUND_PLUGINS = " + orDefault(payload.plugins, "[]") + ";\n" +
-               "this.UNBOUND_THEMES = " + themesWithSourceBundles(orDefault(payload.themes, "[]")) + ";\n" +
-               "this.UNBOUND_FONTS = " + orDefault(payload.fonts, "[]") + ";\n" +
-               "this.UNBOUND_AVAILABLE_FONTS = " + orDefault(payload.availableFonts, "[]") + ";\n\n" +
-               "this.UNBOUND_LOADER = {\n" + "    origin: " + toJSON(payload.origin) + ",\n" +
-               "    version: " + toJSON(payload.version) + ",\n" + "};";
+        return {{"settings", payload.settings.is_object() ? payload.settings : nlohmann::json::object()},
+                {"plugins", payload.plugins.is_array() ? payload.plugins : nlohmann::json::array()},
+                {"themes", themesWithSourceBundles(payload.themes)},
+                {"fonts", payload.fonts.is_array() ? payload.fonts : nlohmann::json::array()},
+                {"availableFonts", payload.availableFonts.is_array() ? payload.availableFonts : nlohmann::json::array()},
+                {"loader", {{"origin", payload.origin}, {"version", payload.version}}}};
     }
 
     PreloadPayload makePreloadPayload(const SettingsStore &settings, const AddonState &addons,
                                       const nlohmann::json &availableFonts, std::string origin)
     {
         PreloadPayload payload;
-        payload.settings       = settings.serialize();
-        payload.plugins        = toJSON(addons.plugins());
-        payload.themes         = toJSON(addons.themes());
-        payload.fonts          = toJSON(addons.fonts());
-        payload.availableFonts = toJSON(availableFonts);
+        payload.settings       = settings.snapshot();
+        payload.plugins        = addons.plugins();
+        payload.themes         = addons.themes();
+        payload.fonts          = addons.fonts();
+        payload.availableFonts = availableFonts;
         payload.origin         = std::move(origin);
         payload.version        = loaderVersion();
         return payload;

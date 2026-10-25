@@ -30,7 +30,7 @@ object NativeBridge {
     @JvmStatic
     external fun nativeInitialize(
         documents: String,
-        devtoolsScript: String?,
+        bootstrapScripts: String,
         origin: String,
         bytecodeVersion: Int,
         platformInfo: String,

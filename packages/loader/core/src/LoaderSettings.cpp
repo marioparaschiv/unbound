@@ -104,6 +104,13 @@ namespace loader
         return true;
     }
 
+    nlohmann::json SettingsStore::snapshot() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        refreshLocked();
+        return data_;
+    }
+
     std::string SettingsStore::serialize() const
     {
         std::lock_guard<std::mutex> lock(mutex_);

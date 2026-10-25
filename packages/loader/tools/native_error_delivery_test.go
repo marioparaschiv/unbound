@@ -22,13 +22,9 @@ func loaderRoot(t *testing.T) string {
 
 func TestNativeFailureGuardRethrowsEnvelopesInJavaScript(t *testing.T) {
 	root := loaderRoot(t)
-	header, err := os.ReadFile(filepath.Join(root, "core", "include", "NativePluginRuntime.h"))
+	source, err := os.ReadFile(filepath.Join(root, "bootstrap", "native-failure-guard.js"))
 	if err != nil {
 		t.Fatal(err)
-	}
-	match := regexp.MustCompile(`(?s)kNativeFailureGuardSource = R"JS\((.*?)\)JS";`).FindStringSubmatch(string(header))
-	if match == nil {
-		t.Fatal("core declares no native failure guard source")
 	}
 	engine := ""
 	for _, candidate := range []string{"bun", "node"} {
@@ -40,7 +36,7 @@ func TestNativeFailureGuardRethrowsEnvelopesInJavaScript(t *testing.T) {
 	if engine == "" {
 		t.Skip("no JavaScript engine is available")
 	}
-	script := "const guard = " + match[1] + `;
+	script := "const guard = " + strings.TrimSuffix(strings.TrimSpace(string(source)), ";") + `;
 const check = (condition, message) => { if (!condition) throw new Error(message); };
 const failing = guard(function () { return { __unboundNativeFailure: { code: 'NATIVE_TEST', message: 'boom' } }; });
 let caught;

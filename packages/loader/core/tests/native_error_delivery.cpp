@@ -1,6 +1,8 @@
 #include "NativePluginRuntime.h"
 
 #include <cassert>
+#include <fstream>
+#include <sstream>
 #include <string>
 
 using namespace loader::native;
@@ -13,11 +15,15 @@ int main()
     setNativeErrorDelivery(NativeErrorDelivery::Throw);
     assert(nativeErrorDelivery() == NativeErrorDelivery::Throw);
 
-    std::string source = kNativeFailureGuardSource;
-    assert(source.rfind("(function () {", 0) == 0);
+    std::ifstream      file(std::string(UNBOUND_BOOTSTRAP_DIR) + "/native-failure-guard.js");
+    std::ostringstream contents;
+    contents << file.rdbuf();
+    std::string source = contents.str();
+    assert(!source.empty());
     assert(source.find(std::string("'") + kNativeFailureEnvelopeKey + "'") != std::string::npos);
     assert(source.find(std::string("'") + kNativeFailureGuardName + "'") != std::string::npos);
     assert(source.find("error.code = String(failure.code);") != std::string::npos);
     assert(source.find("throw error;") != std::string::npos);
+    assert(source.find("return guard;") != std::string::npos);
     assert(std::string(kNativeBridgeErrorCode) == "NATIVE_BRIDGE_ERROR");
 }

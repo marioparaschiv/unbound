@@ -1,5 +1,6 @@
 #include "NativePluginRuntime.h"
 
+#include "LoaderBootstrap.h"
 #include "LoaderLog.h"
 #include "NativeOperationGate.h"
 
@@ -282,15 +283,18 @@ namespace loader::native
         return throwingGuard(runtime, body);
     }
 
-    static jsi::Function failureGuard(jsi::Runtime &runtime)
+    static std::optional<jsi::Function> failureGuard(jsi::Runtime &runtime)
     {
         jsi::Value existing = runtime.global().getProperty(runtime, kNativeFailureGuardName);
         if (existing.isObject() && existing.asObject(runtime).isFunction(runtime))
         {
             return existing.asObject(runtime).asFunction(runtime);
         }
-        jsi::Value created = runtime.evaluateJavaScript(
-            std::make_shared<jsi::StringBuffer>(kNativeFailureGuardSource), "unbound:native-failure-guard");
+        jsi::Value created = bootstrap::evaluate(runtime, bootstrap::kNativeFailureGuard);
+        if (!created.isObject() || !created.asObject(runtime).isFunction(runtime))
+        {
+            return std::nullopt;
+        }
         return created.asObject(runtime).asFunction(runtime);
     }
 
@@ -309,7 +313,12 @@ namespace loader::native
         {
             return native;
         }
-        return failureGuard(runtime).call(runtime, std::move(native)).asObject(runtime).asFunction(runtime);
+        auto wrap = failureGuard(runtime);
+        if (!wrap)
+        {
+            return native;
+        }
+        return wrap->call(runtime, std::move(native)).asObject(runtime).asFunction(runtime);
     }
 
     void executeMainSynchronously(std::function<void()> operation, std::chrono::milliseconds timeout)

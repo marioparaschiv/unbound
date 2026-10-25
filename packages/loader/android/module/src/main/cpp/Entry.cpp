@@ -40,13 +40,13 @@ static void writeLog(loader::LogLevel level, const std::string &category, const 
                         message.c_str());
 }
 
-static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring devtoolsScript,
+static void nativeInitialize(JNIEnv *env, jclass, jstring documents, jstring bootstrapScripts,
                              jstring origin, jint bytecodeVersion,
                              jstring platformInfo)
 {
     LoaderConfiguration configuration;
     configuration.documents       = toStdString(env, documents);
-    configuration.devtoolsScript  = toOptionalString(env, devtoolsScript);
+    configuration.bootstrapScripts = nlohmann::json::parse(toStdString(env, bootstrapScripts), nullptr, false);
     configuration.origin          = toStdString(env, origin);
     configuration.bytecodeVersion = static_cast<uint32_t>(bytecodeVersion);
 

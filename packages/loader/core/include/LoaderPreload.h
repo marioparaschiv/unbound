@@ -11,17 +11,17 @@ namespace loader
 {
     struct PreloadPayload
     {
-        std::string settings       = "{}";
-        std::string plugins        = "[]";
-        std::string themes         = "[]";
-        std::string fonts          = "[]";
-        std::string availableFonts = "[]";
-        std::string origin;
-        std::string version;
+        nlohmann::json settings       = nlohmann::json::object();
+        nlohmann::json plugins        = nlohmann::json::array();
+        nlohmann::json themes         = nlohmann::json::array();
+        nlohmann::json fonts          = nlohmann::json::array();
+        nlohmann::json availableFonts = nlohmann::json::array();
+        std::string    origin;
+        std::string    version;
     };
 
     std::string toJSON(const nlohmann::json &value);
-    std::string buildPreloadScript(const PreloadPayload &payload);
+    nlohmann::json preloadData(const PreloadPayload &payload);
     PreloadPayload makePreloadPayload(const SettingsStore &settings, const AddonState &addons,
                                       const nlohmann::json &availableFonts, std::string origin);
 }

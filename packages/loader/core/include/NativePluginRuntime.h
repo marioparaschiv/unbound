@@ -55,25 +55,6 @@ namespace loader::native
 
     inline constexpr const char *kNativeFailureEnvelopeKey = "__unboundNativeFailure";
     inline constexpr const char *kNativeFailureGuardName   = "__unboundGuardNativeFunction";
-    inline constexpr const char *kNativeFailureGuardSource = R"JS((function () {
-  var key = '__unboundNativeFailure';
-  var owns = Object.prototype.hasOwnProperty;
-  var NativeError = Error;
-  var guard = function (native) {
-    return function () {
-      var result = native.apply(this, arguments);
-      var failure = result !== null && typeof result === 'object' && owns.call(result, key) ? result[key] : null;
-      if (failure !== null && typeof failure === 'object') {
-        var error = new NativeError(String(failure.message));
-        error.code = String(failure.code);
-        throw error;
-      }
-      return result;
-    };
-  };
-  Object.defineProperty(globalThis, '__unboundGuardNativeFunction', { value: guard });
-  return guard;
-})())JS";
 
     NativeErrorDelivery nativeErrorDelivery();
     void setNativeErrorDelivery(NativeErrorDelivery delivery);

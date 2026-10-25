@@ -1,8 +1,10 @@
 #include "LoaderPipeline.h"
 
+#include "LoaderBootstrap.h"
 #include "LoaderFiles.h"
 #include "LoaderJSI.h"
 #include "LoaderLog.h"
+#include "NativePlatformBridge.h"
 
 #include <chrono>
 
@@ -18,6 +20,10 @@ namespace loader
                                    BundleUpdater &updater)
         : host_(std::move(host)), settings_(std::move(settings)), updater_(updater)
     {
+        bootstrap::setScriptSource([weak = std::weak_ptr<LoaderHost>(host_)](const std::string &name) {
+            auto host = weak.lock();
+            return host ? host->resource(name) : std::nullopt;
+        });
     }
 
     bool LoaderPipeline::isBundleReady() const
@@ -132,8 +138,7 @@ namespace loader
 
         if (settings_.getBoolean("loader.devtools", false))
         {
-            std::optional<std::string> devtools = host_->resource("devtools");
-            if (devtools && !devtools->empty())
+            if (std::optional<std::string> devtools = bootstrap::script(bootstrap::kDevtools))
             {
                 log(LogLevel::Info, "default", "Executing DevTools bundle...");
                 evaluateScript(runtime, *devtools, "unbound:devtools");
@@ -141,7 +146,19 @@ namespace loader
         }
 
         log(LogLevel::Info, "default", "Pre-loading settings, plugins, fonts and themes...");
-        evaluateScript(runtime, buildPreloadScript(host_->preloadPayload()), "unbound:preload");
+        auto preload = bootstrap::function(runtime, bootstrap::kPreload);
+        if (!preload)
+        {
+            return;
+        }
+        try
+        {
+            preload->call(runtime, toJSIValue(runtime, preloadData(host_->preloadPayload())));
+        }
+        catch (const std::exception &error)
+        {
+            log(LogLevel::Error, "default", std::string("Pre-loading failed: ") + error.what());
+        }
     }
 
     void LoaderPipeline::onRuntimeCreated(jsi::Runtime &runtime)

@@ -57,20 +57,21 @@ int main()
     assert(fonts[0]["file"] == "Inter.ttf");
 
     loader::PreloadPayload payload;
-    payload.settings = R"({"unbound":{}})";
-    payload.plugins  = loader::toJSON(plugins);
+    payload.settings = nlohmann::json::parse(R"({"unbound":{}})");
+    payload.plugins  = plugins;
     payload.origin   = "libunbound.so";
     payload.version  = "1.0.0";
-    std::string script = loader::buildPreloadScript(payload);
-    assert(script.find("this.UNBOUND_SETTINGS = {\"unbound\":{}};") == 0);
-    assert(script.find("this.UNBOUND_THEMES = [];") != std::string::npos);
-    assert(script.find("origin: \"libunbound.so\"") != std::string::npos);
-    assert(script.find("a.good") != std::string::npos);
+    nlohmann::json data = loader::preloadData(payload);
+    assert(data["settings"] == nlohmann::json::parse(R"({"unbound":{}})"));
+    assert(data["themes"] == nlohmann::json::array());
+    assert(data["loader"]["origin"] == "libunbound.so" && data["loader"]["version"] == "1.0.0");
+    assert(data["plugins"][0]["manifest"]["id"] == "a.good");
 
-    payload.themes = R"([{"manifest":{"id":"t"},"bundle":{"semantic":{}}},{"manifest":{"id":"s"},"bundle":"{}"}])";
-    script         = loader::buildPreloadScript(payload);
-    assert(script.find(R"("bundle":"{\"semantic\":{}}")") != std::string::npos);
-    assert(script.find(R"("bundle":"{}")") != std::string::npos);
+    payload.themes = nlohmann::json::parse(
+        R"([{"manifest":{"id":"t"},"bundle":{"semantic":{}}},{"manifest":{"id":"s"},"bundle":"{}"}])");
+    data = loader::preloadData(payload);
+    assert(data["themes"][0]["bundle"] == R"({"semantic":{}})");
+    assert(data["themes"][1]["bundle"] == "{}");
 
     loader::AddonState addons;
     assert(addons.plugins().empty() && !addons.theme("t.dark"));
@@ -83,9 +84,9 @@ int main()
     settings.set("unbound", "recovery", false);
     loader::PreloadPayload made =
         loader::makePreloadPayload(settings, addons, nlohmann::json::array({"Ginto"}), "Unbound.dylib");
-    assert(made.plugins.find("a.good") != std::string::npos);
-    assert(made.availableFonts == R"(["Ginto"])");
-    assert(made.settings.find("recovery") != std::string::npos);
+    assert(made.plugins[0]["manifest"]["id"] == "a.good");
+    assert(made.availableFonts == nlohmann::json::array({"Ginto"}));
+    assert(made.settings["unbound"].contains("recovery"));
     assert(made.origin == "Unbound.dylib" && made.version == loader::loaderVersion());
 
     std::filesystem::remove_all(root);
