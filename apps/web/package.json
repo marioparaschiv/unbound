@@ -53,7 +53,7 @@
 		"clsx": "^2.1.1",
 		"diff": "^9.0.0",
 		"drizzle-orm": "1.0.0-rc.4",
-		"motion": "^12.34.3",
+		"motion": "^14.6.0",
 		"obscenity": "^0.4.6",
 		"react": "catalog:react",
 		"react-day-picker": "^10.0.2",
