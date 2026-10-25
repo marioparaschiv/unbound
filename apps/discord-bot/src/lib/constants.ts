@@ -8,7 +8,7 @@ export const COLOURS = {
 	brand: 0xc8_41_51,
 } as const;
 
-// '0' marks an id the operator has not supplied yet; startup refuses to run until each is set.
+// '0' marks an id the operator has not supplied yet; a dispatcher that requires it is not started.
 export const PLUGINS_CHANNEL_ID = '0';
 export const THEMES_CHANNEL_ID = '0';
 export const ICON_PACKS_CHANNEL_ID = '0';
@@ -30,6 +30,8 @@ export const DISCORD_IDS = {
 	ADDON_DEVELOPER_ROLE_ID,
 	SPONSOR_ROLE_ID,
 } as const;
+
+export type IdConstantName = keyof typeof DISCORD_IDS;
 
 export default {
 	GUILD_ID,
