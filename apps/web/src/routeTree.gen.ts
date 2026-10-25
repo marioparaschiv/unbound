@@ -35,6 +35,7 @@ import { Route as ApiV1SyncRouteImport } from './routes/api/v1/sync'
 import { Route as ApiV1UpdatesRouteImport } from './routes/api/v1/updates'
 import { Route as ApiWebhooksGithubSponsorsRouteImport } from './routes/api/webhooks/github-sponsors'
 import { Route as SiteStaffAdminIndexRouteImport } from './routes/_site/_staff/admin/index'
+import { Route as ApiV1FirstPartyPublishRouteImport } from './routes/api/v1/first-party/publish'
 import { Route as ApiV1GithubAddonsRouteImport } from './routes/api/v1/github/addons'
 import { Route as ApiV1GithubRepositoriesRouteImport } from './routes/api/v1/github/repositories'
 import { Route as ApiV1LoaderReleasesRouteImport } from './routes/api/v1/loader/releases'
@@ -187,6 +188,11 @@ const SiteStaffAdminIndexRoute = SiteStaffAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => SiteStaffRouteRoute,
 } as any)
+const ApiV1FirstPartyPublishRoute = ApiV1FirstPartyPublishRouteImport.update({
+  id: '/api/v1/first-party/publish',
+  path: '/api/v1/first-party/publish',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1GithubAddonsRoute = ApiV1GithubAddonsRouteImport.update({
   id: '/api/v1/github/addons',
   path: '/api/v1/github/addons',
@@ -328,6 +334,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
+  '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
   '/api/v1/github/repositories': typeof ApiV1GithubRepositoriesRoute
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
@@ -376,6 +383,7 @@ export interface FileRoutesByTo {
   '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
+  '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
   '/api/v1/github/repositories': typeof ApiV1GithubRepositoriesRoute
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
@@ -427,6 +435,7 @@ export interface FileRoutesById {
   '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
+  '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
   '/api/v1/github/repositories': typeof ApiV1GithubRepositoriesRoute
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
@@ -477,6 +486,7 @@ export interface FileRouteTypes {
     | '/api/v1/sync'
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
+    | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
     | '/api/v1/github/repositories'
     | '/api/v1/loader/releases'
@@ -525,6 +535,7 @@ export interface FileRouteTypes {
     | '/api/v1/sync'
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
+    | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
     | '/api/v1/github/repositories'
     | '/api/v1/loader/releases'
@@ -575,6 +586,7 @@ export interface FileRouteTypes {
     | '/api/v1/sync'
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
+    | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
     | '/api/v1/github/repositories'
     | '/api/v1/loader/releases'
@@ -612,6 +624,7 @@ export interface RootRouteChildren {
   ApiV1SyncRoute: typeof ApiV1SyncRouteWithChildren
   ApiV1UpdatesRoute: typeof ApiV1UpdatesRoute
   ApiWebhooksGithubSponsorsRoute: typeof ApiWebhooksGithubSponsorsRoute
+  ApiV1FirstPartyPublishRoute: typeof ApiV1FirstPartyPublishRoute
   ApiV1GithubAddonsRoute: typeof ApiV1GithubAddonsRoute
   ApiV1GithubRepositoriesRoute: typeof ApiV1GithubRepositoriesRoute
   ApiV1LoaderReleasesRoute: typeof ApiV1LoaderReleasesRouteWithChildren
@@ -804,6 +817,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof SiteStaffAdminIndexRouteImport
       parentRoute: typeof SiteStaffRouteRoute
+    }
+    '/api/v1/first-party/publish': {
+      id: '/api/v1/first-party/publish'
+      path: '/api/v1/first-party/publish'
+      fullPath: '/api/v1/first-party/publish'
+      preLoaderRoute: typeof ApiV1FirstPartyPublishRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/v1/github/addons': {
       id: '/api/v1/github/addons'
@@ -1114,6 +1134,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1SyncRoute: ApiV1SyncRouteWithChildren,
   ApiV1UpdatesRoute: ApiV1UpdatesRoute,
   ApiWebhooksGithubSponsorsRoute: ApiWebhooksGithubSponsorsRoute,
+  ApiV1FirstPartyPublishRoute: ApiV1FirstPartyPublishRoute,
   ApiV1GithubAddonsRoute: ApiV1GithubAddonsRoute,
   ApiV1GithubRepositoriesRoute: ApiV1GithubRepositoriesRoute,
   ApiV1LoaderReleasesRoute: ApiV1LoaderReleasesRouteWithChildren,
