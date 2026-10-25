@@ -8,15 +8,15 @@ Unbound Loader injects [Unbound](https://github.com/unbound-app/client) into Dis
 
 ## Layout
 
-| Path                    | What it is                                                                                           |
-| ----------------------- | ---------------------------------------------------------------------------------------------------- |
-| `core/`        | Shared C++20 core: settings store, addon scanning, preload script, bundle updater, load pipeline, `NativePlatform` JSI bridge, native plugin async runtime |
-| `ios/`         | The Theos tweak (ElleKit, rootless) and its iOS app-extension submodules                             |
-| `android/`     | The LSPosed module (modern libxposed API) and its NDK library, built with Gradle                     |
-| `bootstrap/`   | The shared optional React DevTools bundle (`devtools.js`) for both platforms                          |
-| `vendor/`      | Third-party code: the pinned libffi submodule, nlohmann/json and the React Native JSI headers         |
-| `apt-repo/`    | Debian package and SideStore-compatible iOS distribution feeds                                       |
-| `tools/`                | Go build, test, validation and packaging commands for the monorepo                                   |
+| Path         | What it is                                                                                                                                                 |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/`      | Shared C++20 core: settings store, addon scanning, preload script, bundle updater, load pipeline, `NativePlatform` JSI bridge, native plugin async runtime |
+| `ios/`       | The Theos tweak (ElleKit, rootless) and its iOS app-extension submodules                                                                                   |
+| `android/`   | The LSPosed module (modern libxposed API) and its NDK library, built with Gradle                                                                           |
+| `bootstrap/` | The shared optional React DevTools bundle (`devtools.js`) for both platforms                                                                               |
+| `vendor/`    | Third-party code: the pinned libffi submodule, nlohmann/json and the React Native JSI headers                                                              |
+| `apt-repo/`  | Debian package and SideStore-compatible iOS distribution feeds                                                                                             |
+| `tools/`     | Go build, test, validation and packaging commands for the monorepo                                                                                         |
 
 `manifest.json` is the workspace catalog for the package roots and their dependencies. The Go manager validates the catalog against the checkout and lists packages without requiring a second runtime or package manager.
 
@@ -51,11 +51,11 @@ Builds are in the [Releases](https://github.com/marioparaschiv/unbound/releases/
 
 **Not rooted:** install the pre-patched Discord, which is Discord with the module embedded through LSPatch. It contains Android split APKs, so use Obtainium or a split-APK installer such as SAI. It replaces an existing Play Store Discord because the signature differs. It is built for each Discord channel on Google Play:
 
-| Channel | Release tag | Asset | Obtainium |
-| --- | --- | --- | --- |
-| Stable | `loader-v<version>` and `loader-latest` | `Unbound.apks` | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eloader-v%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D) |
-| Beta | `loader-v<version>-android-beta` (prerelease) | `Unbound-beta.apks` | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20%28Discord%20beta%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound-beta%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eloader-v%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B-android-beta%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D) |
-| Alpha | `loader-v<version>-android-alpha` (prerelease) | `Unbound-alpha.apks` | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20%28Discord%20alpha%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound-alpha%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eloader-v%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B-android-alpha%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D) |
+| Channel | Release tag                                    | Asset                | Obtainium                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------- | ---------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stable  | `loader-v<version>` and `loader-latest`        | `Unbound.apks`       | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eloader-v%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D)                                                                                     |
+| Beta    | `loader-v<version>-android-beta` (prerelease)  | `Unbound-beta.apks`  | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20%28Discord%20beta%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound-beta%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eloader-v%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B-android-beta%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D)    |
+| Alpha   | `loader-v<version>-android-alpha` (prerelease) | `Unbound-alpha.apks` | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20%28Discord%20alpha%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound-alpha%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eloader-v%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B-android-alpha%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D) |
 
 The Obtainium configs are [`obtainium.json`](obtainium.json) for the module and `obtainium-<channel>.json` for patched Discord. Each patched config filters release titles to its own channel's tags and falls back past the newer releases of other channels.
 
@@ -70,7 +70,6 @@ The platform workflows can also be run independently for development builds. The
 <details>
 <summary>Building and validation</summary>
 
-
 The root Go tool coordinates common validation and platform-specific builds:
 
 ```bash
@@ -84,6 +83,20 @@ go run ./tools platform build ios --configuration debug
 ```
 
 `validate` runs Go and shared-core tests, Android tests and release build, and the iOS tweak build on macOS. Platform build commands use Gradle for Android and Theos for iOS.
+
+### Formatting and linting
+
+Every part of the loader is formatted and linted by one command each:
+
+```bash
+go run ./tools format
+go run ./tools format --check
+go run ./tools lint
+```
+
+`format` runs clang-format 23.1 over the shared core, the Android JNI sources and the iOS tweak, including Logos files, whose `%hook`/`%orig` syntax is protected before formatting and checked afterwards so only whitespace changes. It also runs gofmt over the tools and ktlint over the Android module. `lint` adds `go vet`, ktlint and actionlint, then checks formatting. From the repository root, `bun run fmt` and `bun run lint` cover the loader together with the TypeScript packages, and the pre-commit hook formats staged files automatically. Install clang-format with `pipx install clang-format==23.1.3` or Homebrew, and actionlint with `brew install actionlint`.
+
+JavaScript the loader runs inside Discord lives in `bootstrap/` and is formatted and linted with the rest of the TypeScript packages; native code never embeds JavaScript.
 
 <details>
 <summary>Shared core</summary>
@@ -197,11 +210,11 @@ Point `debugger.address` at a running `ub-debugger` bridge to evaluate JavaScrip
 
 `.github/workflows/discord-compat.yml` runs every six hours for three channels, each with its own `discord-compat` issue:
 
-| Channel | iOS build | Android build |
-| --- | --- | --- |
+| Channel  | iOS build                | Android build     |
+| -------- | ------------------------ | ----------------- |
 | `stable` | latest App Store release | Play Store stable |
-| `beta` | latest TestFlight build | Play Store beta |
-| `alpha` | none | Play Store alpha |
+| `beta`   | latest TestFlight build  | Play Store beta   |
+| `alpha`  | none                     | Play Store alpha  |
 
 It downloads those builds and checks what the loaders, the client and the plugins look up against them: Metro module paths, props, stores and component names in the Hermes bundle, Objective-C classes, selectors and ivars in the Mach-O binaries, and Java classes, methods and fields in the dex files. Anything gone opens or updates that channel's issue, a scan of a newer build supersedes it, and the issue closes once a scan comes back clean.
 
