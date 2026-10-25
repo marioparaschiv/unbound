@@ -1128,8 +1128,8 @@ namespace unbound::android
     {
         jsi::Object debug(runtime);
         debug.setProperty(runtime, "recordEvaluation", loader::native::makeRecordEvaluationFunction(runtime));
-        define(runtime, debug, "environment", 0, [callbacks](jsi::Runtime &rt, const jsi::Value *, size_t) {
-            return parseJavaResult(rt, callJavaStringNoArguments(callbacks, callbacks.debugEnvironment));
+        define(runtime, debug, "environment", 0, [](jsi::Runtime &rt, const jsi::Value *, size_t) {
+            return loader::toJSIValue(rt, loader::currentDebugEnvironment());
         });
         return debug;
     }

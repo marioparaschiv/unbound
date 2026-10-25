@@ -322,8 +322,6 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         env->GetStaticMethodID(bridge, "hooksClearReturnValues", "(Ljava/lang/String;)V");
     gCallbacks.hooksUseLimits = env->GetStaticMethodID(bridge, "hooksUseLimits", "(II)V");
     gCallbacks.runtimeReplaced = env->GetStaticMethodID(bridge, "runtimeReplaced", "()V");
-    gCallbacks.debugEnvironment =
-        env->GetStaticMethodID(bridge, "debugEnvironment", "()Ljava/lang/String;");
     gCallbacks.javaBatch = env->GetStaticMethodID(
         bridge, "javaBatch", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaCreateAssociationKey =
@@ -369,7 +367,7 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
            gCallbacks.hooksSetReturnValue && gCallbacks.hooksRemoveReturnValue &&
            gCallbacks.hooksClearReturnValues && gCallbacks.hooksUseLimits && gCallbacks.runtimeReplaced &&
-           gCallbacks.debugEnvironment && gCallbacks.javaBatch &&
+           gCallbacks.javaBatch &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
            gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&

@@ -28,6 +28,7 @@ namespace loader
     };
 
     nlohmann::json debugEnvironment(const NativePlatformProvider &provider);
+    nlohmann::json currentDebugEnvironment();
 
     facebook::jsi::Value toJSIValue(facebook::jsi::Runtime &runtime, const nlohmann::json &value);
     nlohmann::json fromJSIValue(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value);

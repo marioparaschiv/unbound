@@ -1,5 +1,7 @@
 #include "NativePlatformBridge.h"
 
+#include <mutex>
+
 #include "LoaderFiles.h"
 #include "LoaderJSI.h"
 
@@ -123,8 +125,16 @@ namespace loader
             });
     }
 
+    static std::mutex                              gInstalledProviderMutex;
+    static std::shared_ptr<NativePlatformProvider> gInstalledProvider;
+
     void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatformProvider> provider)
     {
+        {
+            std::lock_guard<std::mutex> lock(gInstalledProviderMutex);
+            gInstalledProvider = provider;
+        }
+
         jsi::Object platform(runtime);
 
         platform.setProperty(
@@ -215,5 +225,15 @@ namespace loader
             provider.virtualDeviceHost ? provider.virtualDeviceHost() : std::nullopt;
         return {{"isVirtualDevice", provider.isVirtualDevice && provider.isVirtualDevice()},
                 {"hostAddress", host ? nlohmann::json(*host) : nlohmann::json(nullptr)}};
+    }
+
+    nlohmann::json currentDebugEnvironment()
+    {
+        std::shared_ptr<NativePlatformProvider> provider;
+        {
+            std::lock_guard<std::mutex> lock(gInstalledProviderMutex);
+            provider = gInstalledProvider;
+        }
+        return debugEnvironment(provider ? *provider : NativePlatformProvider{});
     }
 }

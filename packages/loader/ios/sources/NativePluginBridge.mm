@@ -32,6 +32,7 @@
 #import "NativeNumericValidation.h"
 #import "NativeOperationGate.h"
 #import "NativePluginRoot.h"
+#import "NativePlatformBridge.h"
 #import "NativePluginRuntime.h"
 #import "NativeResourceBudget.h"
 #import "NativeTraversalOptions.h"
@@ -5028,14 +5029,7 @@ static void installFabric(Runtime &runtime, Object &fabric)
 
 static Value environment(Runtime &runtime, const Value *, size_t)
 {
-    NSString *hostAddress = [Utilities getVirtualDeviceHostAddress];
-
-    Object result(runtime);
-    result.setProperty(runtime, "isVirtualDevice", Value(static_cast<bool>([Utilities isVPhone])));
-    result.setProperty(runtime, "hostAddress",
-                       hostAddress ? Value(String::createFromUtf8(runtime, hostAddress.UTF8String))
-                                   : Value::null());
-    return result;
+    return loader::toJSIValue(runtime, loader::currentDebugEnvironment());
 }
 
 static void installDebug(Runtime &runtime, Object &debug)

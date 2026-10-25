@@ -190,12 +190,6 @@ object NativeBridge {
     }
 
     @JvmStatic
-    fun debugEnvironment(): String = JSONObject()
-        .put("isVirtualDevice", Platform.isEmulator())
-        .put("hostAddress", Platform.emulatorHostAddress() ?: JSONObject.NULL)
-        .toString()
-
-    @JvmStatic
     fun hooksSetReturnValue(
         tokenJSON: String,
         selfJSON: String,
