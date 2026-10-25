@@ -60,6 +60,11 @@ function readDatabaseUrl(): string | undefined {
 
 export const DATABASE_URL = readDatabaseUrl();
 
+// CI provides Postgres, so a missing URL there is a misconfiguration, not a reason to skip.
+if (process.env.CI && !DATABASE_URL) {
+	throw new Error('DATABASE_URL is not set; the database tests must not skip in CI.');
+}
+
 function withDatabase(url: string, name: string) {
 	const parsed = new URL(url);
 
