@@ -41,8 +41,14 @@ const client = new SapphireClient({
 	loadMessageCommandListeners: true,
 });
 
-async function startRuntime(ready: Client<true>) {
-	const stopDispatchers = await startDispatchers(dispatchers, { db, client: ready });
+async function exit(code: number): Promise<never> {
+	await client.destroy();
+	await db.$client.end();
+	process.exit(code);
+}
+
+function startRuntime(ready: Client<true>) {
+	const stopDispatchers = startDispatchers(dispatchers, { db, client: ready }, env.DATABASE_URL);
 	const stopPoller = startPoller({
 		db,
 		fetchPage: createFeedClient(env.UNBOUND_API_URL, env.UNBOUND_API_KEY),
@@ -51,11 +57,8 @@ async function startRuntime(ready: Client<true>) {
 	});
 
 	async function shutdown() {
-		stopPoller();
-		await stopDispatchers();
-		await client.destroy();
-		await db.$client.end();
-		process.exit(0);
+		await Promise.all([stopPoller(), stopDispatchers()]);
+		await exit(0);
 	}
 
 	process.once('SIGINT', () => void shutdown());
@@ -64,14 +67,19 @@ async function startRuntime(ready: Client<true>) {
 	logger.success(`Runtime started with ${dispatchers.length} dispatcher(s).`);
 }
 
-client.once(Events.ClientReady, (ready) => void startRuntime(ready));
+client.once(Events.ClientReady, (ready) => {
+	try {
+		startRuntime(ready);
+	} catch (error) {
+		logger.error('Failed to start the runtime:', error);
+		void exit(1);
+	}
+});
 
 try {
 	await client.login(env.DISCORD_TOKEN);
 	logger.info(`Logged in as ${client.user?.username ?? 'unknown'}.`);
 } catch (error) {
 	logger.error('Failed to log in:', error);
-	await client.destroy();
-	await db.$client.end();
-	process.exit(1);
+	await exit(1);
 }

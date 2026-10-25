@@ -1,47 +1,36 @@
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
+import createSerialQueue from '~/runtime/serial-queue';
 import type { Unlisten } from '~/runtime/listen';
 import { listen } from '~/runtime/listen';
-
-type Task = () => Promise<void>;
-
-// One chain per dispatcher, so a reconcile and a handle never race on the same Discord message.
-function createSerialQueue() {
-	let tail: Promise<void> = Promise.resolve();
-
-	return function enqueue(task: Task): Promise<void> {
-		const run = tail.then(task);
-
-		tail = run.catch(() => void 0);
-
-		return run;
-	};
-}
 
 /**
  * @description Listens on each dispatcher's channel, running its reconcile and handle calls one at a time.
  * @param dispatchers The registered dispatchers.
  * @param context The database and the ready Discord client handed to each call.
- * @returns A function that stops every listener.
+ * @param url The connection string each listener opens its own connection with.
+ * @returns A function that stops every listener and resolves once their in-flight calls have settled.
  */
-export async function startDispatchers(
+export function startDispatchers(
 	dispatchers: Dispatcher[],
 	context: DispatcherContext,
-): Promise<Unlisten> {
-	const unlisteners = await Promise.all(
-		dispatchers.map((dispatcher) => {
-			const enqueue = createSerialQueue();
+	url: string,
+): Unlisten {
+	// One queue per dispatcher, so a reconcile and a handle never race on the same Discord message.
+	const running = dispatchers.map((dispatcher) => {
+		const queue = createSerialQueue();
+		const unlisten = listen({
+			url,
+			channel: dispatcher.channel,
+			handler: (payload) => queue.enqueue(() => dispatcher.handle(payload, context)),
+			reconcile: () => queue.enqueue(() => dispatcher.reconcile(context)),
+		});
 
-			return listen(
-				context.db.$client,
-				dispatcher.channel,
-				(payload) => enqueue(() => dispatcher.handle(payload, context)),
-				() => enqueue(() => dispatcher.reconcile(context)),
-			);
-		}),
-	);
+		return { queue, unlisten };
+	});
 
 	return async () => {
-		await Promise.all(unlisteners.map((unlisten) => unlisten()));
+		await Promise.all(running.map(({ unlisten }) => unlisten()));
+		await Promise.all(running.map(({ queue }) => queue.drain()));
 	};
 }
 
