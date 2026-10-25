@@ -31,6 +31,12 @@ int main()
     assert(loader::toARGB(colors.semantic.at("TEXT")) == 0xFF112233);
     assert(colors.rawFallbacks.size() == 1 && colors.rawFallbacks.at("LINK") == "BRAND_500");
 
+    assert(loader::themeColorAccessor("BACKGROUND_BASE_LOWER") == "backgroundBaseLower");
+    assert(loader::themeColorAccessor("BRAND_500") == "brand500");
+    assert(loader::themeColorAccessor("TEXT_NORMAL") == "textNormal");
+    assert(loader::themeColorAccessor("backgroundBaseLower") == "backgroundBaseLower");
+    assert(loader::themeColorAccessor("_TEXT__MUTED_") == "textMuted");
+
     loader::ThemeColors empty = loader::resolveThemeColors(nlohmann::json::object());
     assert(empty.semantic.empty() && empty.raw.empty() && empty.rawFallbacks.empty());
     return 0;

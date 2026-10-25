@@ -85,7 +85,7 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
     NSMutableDictionary<NSString *, UIColor *> *result = [NSMutableDictionary dictionaryWithCapacity:colors.size()];
     for (const auto &[name, color] : colors)
     {
-        result[@(name.c_str())] = uiColor(color);
+        result[@(loader::themeColorAccessor(name).c_str())] = uiColor(color);
     }
     return result;
 }
@@ -110,7 +110,7 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
     NSMutableDictionary<NSString *, NSString *> *fallbacks = [NSMutableDictionary dictionary];
     for (const auto &[name, selector] : colors.rawFallbacks)
     {
-        fallbacks[@(name.c_str())] = @(selector.c_str());
+        fallbacks[@(loader::themeColorAccessor(name).c_str())] = @(loader::themeColorAccessor(selector).c_str());
     }
 
     return @{@"semantic" : uiColors(colors.semantic), @"raw" : uiColors(colors.raw), @"rawFallbacks" : fallbacks};

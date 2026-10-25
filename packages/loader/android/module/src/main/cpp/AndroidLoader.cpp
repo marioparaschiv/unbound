@@ -131,7 +131,7 @@ namespace unbound::android
         {
             for (const auto &[name, color] : loader::resolveThemeColors(*theme).semantic)
             {
-                colors[name] = loader::toARGB(color);
+                colors[loader::themeColorAccessor(name)] = loader::toARGB(color);
             }
         }
         return loader::toJSON(colors);

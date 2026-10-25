@@ -1,5 +1,7 @@
 #include "LoaderThemes.h"
 
+#include <cctype>
+
 namespace loader
 {
     static const nlohmann::json &emptyObject()
@@ -40,6 +42,29 @@ namespace loader
     static std::optional<RGBAColor> colorValue(const nlohmann::json &value)
     {
         return value.is_string() ? parseColor(value.get<std::string>()) : std::nullopt;
+    }
+
+    std::string themeColorAccessor(const std::string &key)
+    {
+        if (key.find_first_of("_-.") == std::string::npos &&
+            std::any_of(key.begin(), key.end(), [](unsigned char c) { return std::islower(c); }))
+        {
+            return key;
+        }
+
+        std::string accessor;
+        bool        capitalize = false;
+        for (unsigned char character : key)
+        {
+            if (character == '_' || character == '-' || character == '.')
+            {
+                capitalize = !accessor.empty();
+                continue;
+            }
+            accessor += static_cast<char>(capitalize ? std::toupper(character) : std::tolower(character));
+            capitalize = false;
+        }
+        return accessor;
     }
 
     ThemeColors resolveThemeColors(const nlohmann::json &theme)

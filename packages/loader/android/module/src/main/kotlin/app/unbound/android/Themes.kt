@@ -61,10 +61,7 @@ object Themes {
             }
     }
 
-    private fun getterName(key: String): String =
-        "get" + key.lowercase().split('_', '-', '.')
-            .filter { it.isNotEmpty() }
-            .joinToString("") { part -> part.replaceFirstChar { it.uppercase() } }
+    private fun getterName(accessor: String): String = "get" + accessor.replaceFirstChar { it.uppercase() }
 
     private class Patcher(
         private val themeObject: Class<*>,

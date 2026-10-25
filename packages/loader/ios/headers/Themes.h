@@ -25,5 +25,6 @@
 + (void)swizzleSemanticColors;
 + (NSString *)makeJSON;
 + (void)init;
++ (void)applySelectedTheme;
 
 @end

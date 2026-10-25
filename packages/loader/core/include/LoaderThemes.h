@@ -19,4 +19,5 @@ namespace loader
 
     const nlohmann::json *findTheme(const nlohmann::json &themes, const std::string &id);
     ThemeColors resolveThemeColors(const nlohmann::json &theme);
+    std::string themeColorAccessor(const std::string &key);
 }

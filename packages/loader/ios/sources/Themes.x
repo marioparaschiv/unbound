@@ -168,7 +168,33 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks   = nil;
         [Themes swizzleSemanticColors];
         semanticColorsSwizzled = YES;
     }
+
+    static dispatch_once_t observeOnce;
+    dispatch_once(&observeOnce, ^{
+        [[NSNotificationCenter defaultCenter] addObserverForName:SettingsDidChangeNotification
+                                                          object:nil
+                                                           queue:[NSOperationQueue mainQueue]
+                                                      usingBlock:^(NSNotification *notification) {
+                                                          [Themes applySelectedTheme];
+                                                      }];
+    });
+    [Themes applySelectedTheme];
 };
+
++ (void)applySelectedTheme
+{
+    id        applied = [Settings getString:@"themes" key:@"applied" def:nil];
+    NSString *themeId = [applied isKindOfClass:[NSString class]] && [applied length] > 0 ? applied : nil;
+    if (themeId == currentThemeId || [themeId isEqualToString:currentThemeId])
+    {
+        return;
+    }
+
+    if (![Themes setTheme:themeId])
+    {
+        [Logger error:LOG_CATEGORY_THEMES format:@"Selected theme %@ is not installed.", themeId];
+    }
+}
 
 + (void)swizzleRawColors:(NSDictionary *)payload
 {
