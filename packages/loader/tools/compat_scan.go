@@ -90,7 +90,7 @@ func runCompatScan(args []string) error {
 		return err
 	}
 	if *ipa == "" && len(apks) == 0 {
-		return errors.New("usage: compat-scan --ipa <path> --apk <path> [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>]")
+		return errors.New("usage: compat-scan [--ipa <path>] [--apk <path>...] [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>]")
 	}
 
 	sources, err := collectCompatReferences(*root)
