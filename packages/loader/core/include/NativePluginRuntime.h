@@ -62,8 +62,8 @@ namespace loader::native
   var guard = function (native) {
     return function () {
       var result = native.apply(this, arguments);
-      if (result !== null && typeof result === 'object' && owns.call(result, key)) {
-        var failure = result[key];
+      var failure = result !== null && typeof result === 'object' && owns.call(result, key) ? result[key] : null;
+      if (failure !== null && typeof failure === 'object') {
         var error = new NativeError(String(failure.message));
         error.code = String(failure.code);
         throw error;

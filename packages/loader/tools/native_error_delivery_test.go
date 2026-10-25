@@ -51,6 +51,8 @@ check(caught.code === 'NATIVE_TEST', 'the native code must be kept');
 const forwarding = guard(function (first, second) { return [this.tag, first, second]; });
 check(JSON.stringify(forwarding.call({ tag: 'receiver' }, 1, 2)) === '["receiver",1,2]', 'receiver and arguments must be forwarded');
 check(guard(function () { return { value: 1 }; })().value === 1, 'plain objects must pass through');
+var hostLike = new Proxy({}, { getOwnPropertyDescriptor: function () { return { value: undefined, configurable: true, enumerable: true }; }, get: function () { return undefined; } });
+check(guard(function () { return hostLike; })() === hostLike, 'objects that only claim the failure key must pass through');
 check(guard(function () { return null; })() === null, 'null must pass through');
 check(guard(function () { return undefined; })() === undefined, 'undefined must pass through');
 check(globalThis.__unboundGuardNativeFunction === guard, 'the guard must be cached on the global');
