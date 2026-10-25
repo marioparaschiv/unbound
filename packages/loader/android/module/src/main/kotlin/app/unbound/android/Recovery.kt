@@ -8,13 +8,11 @@ import android.os.Bundle
 import android.widget.Toast
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
+import org.json.JSONObject
 
 object Recovery {
-    private const val ACTION_TOGGLE = "app.unbound.recovery.toggle"
     private const val SHORTCUT_ID = "unbound-recovery"
-
-    @Volatile
-    var bundleExecuted = false
+    private val actionToggle by lazy { NativeBridge.nativeToolbox("recovery-shortcut-action", null).orEmpty() }
 
     @Volatile
     private var newIntentHooked = false
@@ -28,7 +26,7 @@ object Recovery {
                 val activity = chain.thisObject as Activity
                 if (isLauncherActivity(activity)) {
                     hookNewIntent(xposed, activity.javaClass)
-                    if (activity.intent?.action == ACTION_TOGGLE) toggle(activity)
+                    if (activity.intent?.action == actionToggle) toggle(activity)
                     publishShortcut(activity)
                 }
                 result
@@ -47,7 +45,7 @@ object Recovery {
             .intercept { chain ->
                 val activity = chain.thisObject as Activity
                 val intent = chain.getArg(0) as? Intent
-                if (intent?.action == ACTION_TOGGLE && isLauncherActivity(activity)) {
+                if (intent?.action == actionToggle && isLauncherActivity(activity)) {
                     activity.intent = intent
                     toggle(activity)
                     publishShortcut(activity)
@@ -68,17 +66,16 @@ object Recovery {
 
     private fun toggle(activity: Activity) {
         activity.intent = Intent(activity.intent).setAction(Intent.ACTION_MAIN)
-        NativeBridge.nativeToolbox("toggle-recovery", null)
-        val message = NativeBridge.nativePreference("recovery-status", null).orEmpty()
-        Logger.info("default", "Launcher shortcut: $message.")
-        Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
-        if (bundleExecuted) Platform.restartApp()
+        val result = runCatching { JSONObject(NativeBridge.nativeToolbox("recovery-shortcut", null).orEmpty()) }
+            .getOrDefault(JSONObject())
+        Toast.makeText(activity, result.optString("status"), Toast.LENGTH_SHORT).show()
+        if (result.optBoolean("restartRequired")) Platform.restartApp()
     }
 
     private fun publishShortcut(activity: Activity) {
         val manager = activity.getSystemService(ShortcutManager::class.java) ?: return
         val label = NativeBridge.nativePreference("recovery-label", null).orEmpty()
-        val intent = Intent(ACTION_TOGGLE).setClassName(activity.packageName, activity.javaClass.name)
+        val intent = Intent(actionToggle).setClassName(activity.packageName, activity.javaClass.name)
         val shortcut = ShortcutInfo.Builder(activity, SHORTCUT_ID)
             .setShortLabel(label)
             .setLongLabel(label)

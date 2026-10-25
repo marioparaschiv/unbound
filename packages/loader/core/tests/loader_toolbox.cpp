@@ -97,16 +97,6 @@ int main()
     assert(loader::toolbox::perform(context, "custom-bundle", "ftp://nope") == "false");
     assert(loader::toolbox::perform(context, "settings", "").find("padded.bundle") != std::string::npos);
     assert(loader::toolbox::perform(context, "unknown", "").empty());
-    assert(loader::toolbox::perform(context, "message", "refetch-failed") == loader::toolbox::kRefetchFailedMessage);
-    const std::string issue = loader::toolbox::perform(
-        context, "issue-url",
-        R"({"facts":{"device":"iPhone SE","osVersion":"26.0.1","virtualDevice":false},"attachments":[["Entitlements","<plist/>"]]})");
-    assert(issue.find("bug%28iOS%29") != std::string::npos);
-    assert(issue.find("iPhone%20SE") != std::string::npos);
-    assert(issue.find("Device") < issue.find("iOS%20Version"));
-    assert(issue.find("Unbound%20Version%2A%2A%3A%20unknown") != std::string::npos);
-    assert(issue.find("Entitlements") != std::string::npos);
-
     const auto rows = loader::toolbox::issueEnvironment({"Android", "Pixel", "16", "350.8", "1.0.0", "", "", true});
     assert(rows.size() == 5);
     assert(rows[1].first == "Android Version");

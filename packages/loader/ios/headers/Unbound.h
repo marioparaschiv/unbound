@@ -17,6 +17,7 @@
 extern "C" {
 #endif
 void CompleteBrowserLogin(NSString *token);
+BOOL UnboundBundleIsReady(void);
 #ifdef __cplusplus
 }
 #endif

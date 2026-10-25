@@ -1,6 +1,7 @@
 #include "LoaderAddons.h"
 #include "LoaderFiles.h"
 #include "LoaderPreload.h"
+#include "LoaderVersion.h"
 
 #include <cassert>
 #include <filesystem>
@@ -83,11 +84,11 @@ int main()
     loader::SettingsStore settings((root / "settings.json").string());
     settings.set("unbound", "recovery", false);
     loader::PreloadPayload made =
-        loader::makePreloadPayload(settings, addons, nlohmann::json::array({"Ginto"}), "Unbound.dylib", "1.0.0");
+        loader::makePreloadPayload(settings, addons, nlohmann::json::array({"Ginto"}), "Unbound.dylib");
     assert(made.plugins.find("a.good") != std::string::npos);
     assert(made.availableFonts == R"(["Ginto"])");
     assert(made.settings.find("recovery") != std::string::npos);
-    assert(made.origin == "Unbound.dylib" && made.version == "1.0.0");
+    assert(made.origin == "Unbound.dylib" && made.version == loader::loaderVersion());
 
     std::filesystem::remove_all(root);
     return 0;

@@ -22,7 +22,7 @@ static nlohmann::json entitlementsJSON()
 
 namespace loader {
 
-void registerNativePlatform(facebook::jsi::Runtime &runtime)
+void registerNativePlatformProvider(void)
 {
     auto provider          = std::make_shared<NativePlatformProvider>();
     provider->platform     = "ios";
@@ -44,7 +44,12 @@ void registerNativePlatform(facebook::jsi::Runtime &runtime)
     };
     provider->documents = toStdString(FileSystem.documents);
 
-    installNativePlatform(runtime, provider);
+    setNativePlatformProvider(provider);
+}
+
+void registerNativePlatform(facebook::jsi::Runtime &runtime)
+{
+    installNativePlatform(runtime, currentNativePlatformProvider());
 }
 
 }

@@ -1,5 +1,7 @@
 #include "LoaderPreload.h"
 
+#include "LoaderVersion.h"
+
 namespace loader
 {
     std::string toJSON(const nlohmann::json &value)
@@ -41,8 +43,7 @@ namespace loader
     }
 
     PreloadPayload makePreloadPayload(const SettingsStore &settings, const AddonState &addons,
-                                      const nlohmann::json &availableFonts, std::string origin,
-                                      std::string version)
+                                      const nlohmann::json &availableFonts, std::string origin)
     {
         PreloadPayload payload;
         payload.settings       = settings.serialize();
@@ -51,7 +52,7 @@ namespace loader
         payload.fonts          = toJSON(addons.fonts());
         payload.availableFonts = toJSON(availableFonts);
         payload.origin         = std::move(origin);
-        payload.version        = std::move(version);
+        payload.version        = loaderVersion();
         return payload;
     }
 }

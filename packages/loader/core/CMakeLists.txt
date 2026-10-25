@@ -45,6 +45,12 @@ target_include_directories(unbound_core PUBLIC
     ${UNBOUND_VENDOR_DIR}/react)
 target_compile_options(unbound_core PRIVATE -fvisibility=hidden -fexceptions -frtti)
 
+if(NOT UNBOUND_VERSION)
+    file(STRINGS ${CMAKE_CURRENT_LIST_DIR}/../ios/control UNBOUND_CONTROL_VERSION REGEX "^Version:")
+    string(REGEX REPLACE "^Version:[ \t]*" "" UNBOUND_VERSION "${UNBOUND_CONTROL_VERSION}")
+endif()
+target_compile_definitions(unbound_core PRIVATE UNBOUND_VERSION="${UNBOUND_VERSION}")
+
 if(UNBOUND_CORE_TESTS)
     enable_testing()
     file(GLOB UNBOUND_CORE_TEST_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/tests/*.cpp)

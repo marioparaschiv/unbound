@@ -8,6 +8,7 @@
 #import "FileSystem.h"
 #import "Logger.h"
 #import "SettingsCore.h"
+#import "Unbound.h"
 #import "UpdaterCore.h"
 
 #include "HermesBytecodeHeader.h"
@@ -19,6 +20,7 @@
 #include "LoaderThemes.h"
 #include "LoaderToolbox.h"
 
+using unbound::ios::jsonFromObject;
 using unbound::ios::objectFromJSON;
 using unbound::ios::toStdString;
 
@@ -180,7 +182,8 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
                                             toStdString(FileSystem.documents),
                                             "iOS",
                                             [] { return UnboundUpdateURL(); },
-                                            [] { return [CoreBridge mainBundleBytecodeVersion]; }};
+                                            [] { return [CoreBridge mainBundleBytecodeVersion]; },
+                                            [] { return static_cast<bool>(UnboundBundleIsReady()); }};
     std::string result = loader::toolbox::perform(context, toStdString(action), toStdString(argument));
     return [NSString stringWithUTF8String:result.c_str()] ?: @"";
 }
@@ -197,14 +200,22 @@ static NSDictionary<NSString *, UIColor *> *uiColors(const std::map<std::string,
     return [[self preference:action argument:@""] isEqualToString:@"true"];
 }
 
-+ (BOOL)toolboxSucceeded:(NSString *)action argument:(NSString *)argument
++ (NSDictionary *)toolboxObject:(NSString *)action argument:(NSString *)argument
 {
-    return [[self toolbox:action argument:argument] isEqualToString:@"true"];
+    nlohmann::json parsed =
+        nlohmann::json::parse(toStdString([self toolbox:action argument:argument]), nullptr, false);
+    id converted = parsed.is_object() ? objectFromJSON(parsed) : nil;
+    return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
 }
 
-+ (NSString *)toolboxMessage:(NSString *)key
++ (NSDictionary *)toolboxMenu:(NSDictionary *)options
 {
-    return [self toolbox:@"message" argument:key];
+    return [self toolboxObject:@"menu" argument:@(jsonFromObject(options).dump().c_str())];
+}
+
++ (NSTimeInterval)toolboxHoldDuration
+{
+    return loader::toolbox::kThreeFingerHoldMilliseconds / 1000.0;
 }
 
 @end

@@ -30,5 +30,6 @@ void showToolboxSheet(void);
 @end
 
 @interface                                             ToolboxViewController ()
+@property (nonatomic, strong) NSDictionary *menu;
 @property (nonatomic, strong) NSArray<NSDictionary *> *menuSections;
 @end

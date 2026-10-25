@@ -11,7 +11,6 @@ add_subdirectory(${UNBOUND_REPOSITORY_ROOT}/core ${CMAKE_BINARY_DIR}/core)
 
 file(GLOB UNBOUND_ANDROID_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_LIST_DIR}/*.cpp)
 add_library(unbound SHARED ${UNBOUND_ANDROID_SOURCES})
-target_compile_definitions(unbound PRIVATE UNBOUND_VERSION="${UNBOUND_VERSION}")
 target_compile_options(unbound PRIVATE -fvisibility=hidden -fexceptions -frtti)
 target_link_libraries(unbound PRIVATE unbound_core log android)
 target_link_options(unbound PRIVATE -Wl,--gc-sections -Wl,--exclude-libs,ALL)

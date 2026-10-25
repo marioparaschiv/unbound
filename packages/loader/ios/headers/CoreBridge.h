@@ -20,8 +20,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets:(NSArray<NSString *> *)systemFonts;
 
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument;
-+ (BOOL)toolboxSucceeded:(NSString *)action argument:(NSString *)argument;
-+ (NSString *)toolboxMessage:(NSString *)key;
++ (NSDictionary *)toolboxObject:(NSString *)action argument:(NSString *)argument;
++ (NSDictionary *)toolboxMenu:(NSDictionary *)options;
++ (NSTimeInterval)toolboxHoldDuration;
 + (NSString *)preference:(NSString *)action argument:(NSString *)argument;
 + (BOOL)preferenceEnabled:(NSString *)action;
 

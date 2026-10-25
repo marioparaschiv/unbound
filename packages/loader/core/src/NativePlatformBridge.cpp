@@ -122,13 +122,20 @@ namespace loader
     static std::mutex                              gInstalledProviderMutex;
     static std::shared_ptr<NativePlatformProvider> gInstalledProvider;
 
+    void setNativePlatformProvider(std::shared_ptr<NativePlatformProvider> provider)
+    {
+        std::lock_guard<std::mutex> lock(gInstalledProviderMutex);
+        gInstalledProvider = std::move(provider);
+    }
+
+    std::shared_ptr<NativePlatformProvider> currentNativePlatformProvider()
+    {
+        std::lock_guard<std::mutex> lock(gInstalledProviderMutex);
+        return gInstalledProvider;
+    }
+
     void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatformProvider> provider)
     {
-        {
-            std::lock_guard<std::mutex> lock(gInstalledProviderMutex);
-            gInstalledProvider = provider;
-        }
-
         jsi::Object platform(runtime);
 
         platform.setProperty(
@@ -223,11 +230,7 @@ namespace loader
 
     nlohmann::json currentDebugEnvironment()
     {
-        std::shared_ptr<NativePlatformProvider> provider;
-        {
-            std::lock_guard<std::mutex> lock(gInstalledProviderMutex);
-            provider = gInstalledProvider;
-        }
+        std::shared_ptr<NativePlatformProvider> provider = currentNativePlatformProvider();
         return debugEnvironment(provider ? *provider : NativePlatformProvider{});
     }
 }

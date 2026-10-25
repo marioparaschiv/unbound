@@ -27,6 +27,9 @@ namespace loader
         std::string                     documents;
     };
 
+    void setNativePlatformProvider(std::shared_ptr<NativePlatformProvider> provider);
+    std::shared_ptr<NativePlatformProvider> currentNativePlatformProvider();
+
     nlohmann::json debugEnvironment(const NativePlatformProvider &provider);
     nlohmann::json currentDebugEnvironment();
 
