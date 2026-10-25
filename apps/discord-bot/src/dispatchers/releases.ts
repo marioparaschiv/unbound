@@ -1,8 +1,8 @@
 import type { APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
-import { Routes } from 'discord.js';
+import { and, asc, eq, gte, isNull } from 'drizzle-orm';
 import { createLogger } from '@unbound-app/logger';
-import { and, asc, eq, isNull } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
+import { Routes } from 'discord.js';
 
 import { COLOURS, RELEASES_CHANNEL_ID, RELEASES_ROLE_ID } from '~/lib/constants';
 import type { LoaderPlatform } from '~/lib/feed/types';
@@ -31,6 +31,8 @@ export const RELEASE_TARGET: ReleaseTarget = {
 
 const PLATFORM_NAMES: Record<LoaderPlatform, string> = { ios: 'iOS', android: 'Android' };
 const PAGE_LIMIT = 100;
+// An older release is never announced, or a first deploy would ping the role once per historic release.
+const RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 // Discord rejects a longer description, which would fail the post on every retry.
 const DESCRIPTION_LIMIT = 4096;
 
@@ -52,6 +54,10 @@ function oldestFirst(a: APIMessage, b: APIMessage) {
 
 function byKey(key: ReleaseKey) {
 	return and(eq(loaderRelease.platform, key.platform), eq(loaderRelease.version, key.version));
+}
+
+function isFresh(now: number) {
+	return gte(loaderRelease.publishedAt, new Date(now - RELEASE_MAX_AGE_MS));
 }
 
 function parseKey(payload: string): ReleaseKey | undefined {
@@ -160,13 +166,15 @@ async function announce(db: Database, rest: REST, release: ReleaseRow, target: R
  * @param rest The Discord REST client.
  * @param payload The `loader_release` notification payload.
  * @param target The channel to post in and the role to ping.
- * @returns Resolves once the release is announced or found already announced.
+ * @param now The current time in milliseconds; a release older than a week is skipped.
+ * @returns Resolves once the release is announced, found already announced, or skipped as old.
  */
 export async function announceRelease(
 	db: Database,
 	rest: REST,
 	payload: string,
 	target: ReleaseTarget = RELEASE_TARGET,
+	now: number = Date.now(),
 ): Promise<void> {
 	const key = parseKey(payload);
 
@@ -175,7 +183,7 @@ export async function announceRelease(
 	const [release] = await db
 		.select()
 		.from(loaderRelease)
-		.where(and(byKey(key), isNull(loaderRelease.messageId)));
+		.where(and(byKey(key), isNull(loaderRelease.messageId), isFresh(now)));
 
 	if (!release) return;
 
@@ -188,6 +196,7 @@ export async function announceRelease(
  * @param rest The Discord REST client.
  * @param selfId The bot's own user id.
  * @param target The channel to post in and the role to ping.
+ * @param now The current time in milliseconds; releases older than a week are skipped.
  * @returns Resolves once every release was tried; one release's failure is logged and left to the next run.
  */
 export async function reconcileReleases(
@@ -195,13 +204,14 @@ export async function reconcileReleases(
 	rest: REST,
 	selfId: string,
 	target: ReleaseTarget = RELEASE_TARGET,
+	now: number = Date.now(),
 ): Promise<void> {
 	await adoptOrphans(db, rest, selfId, target);
 
 	const unannounced = await db
 		.select()
 		.from(loaderRelease)
-		.where(isNull(loaderRelease.messageId))
+		.where(and(isNull(loaderRelease.messageId), isFresh(now)))
 		.orderBy(asc(loaderRelease.publishedAt), loaderRelease.platform, loaderRelease.version);
 
 	for (const release of unannounced) {

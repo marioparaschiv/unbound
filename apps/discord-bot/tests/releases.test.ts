@@ -17,13 +17,14 @@ import { createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
 import { RELEASE } from './helpers/feeds';
 
 const TARGET: ReleaseTarget = { channelId: '21', roleId: '31' };
+const NOW = Date.parse('2026-10-02T00:00:00.000Z');
 
 const ANDROID: ReleaseFeedItem = {
 	platform: 'android',
 	version: '1.2.4',
 	url: 'https://example.com/unbound.apk',
 	changelog: null,
-	publishedAt: '2026-09-01T00:00:00.000Z',
+	publishedAt: '2026-09-30T00:00:00.000Z',
 };
 
 describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
@@ -57,11 +58,12 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 			discord.rest,
 			`${item.platform}:${item.version}`,
 			TARGET,
+			NOW,
 		);
 	}
 
 	function reconcile() {
-		return reconcileReleases(database.db, discord.rest, discord.selfId, TARGET);
+		return reconcileReleases(database.db, discord.rest, discord.selfId, TARGET, NOW);
 	}
 
 	async function rowOf(item: ReleaseFeedItem) {
@@ -126,6 +128,19 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		await reconcile();
 		expect(discord.requests.map((request) => request.method)).not.toContain('DELETE');
 		expect(discord.messages('21')).toHaveLength(2);
+	});
+
+	test('a release published over a week ago is never announced; a fresh one is', async () => {
+		const old = { ...ANDROID, version: '0.9.0', publishedAt: '2026-09-24T00:00:00.000Z' };
+
+		await ingest(old, RELEASE);
+		await handle(old);
+		await reconcile();
+
+		const titles = discord.messages('21').map((message) => message.embeds[0]?.title);
+
+		expect(titles).toEqual(['Unbound for iOS 1.2.3']);
+		expect((await rowOf(old))?.messageId).toBeNull();
 	});
 
 	test('a release Discord rejects is logged and skipped, and the next reconcile announces it', async () => {
@@ -201,6 +216,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 			discord.rest,
 			`${item.platform}:${item.version}`,
 			TARGET,
+			NOW,
 		).then(
 			() => 'announced',
 			() => 'failed',
@@ -212,7 +228,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	}
 
 	test('announcements that lost their id writes are adopted by release, not by a shared url', async () => {
-		const next = { ...ANDROID, version: '1.2.5', publishedAt: '2026-09-02T00:00:00.000Z' };
+		const next = { ...ANDROID, version: '1.2.5', publishedAt: '2026-09-30T12:00:00.000Z' };
 
 		await ingest(ANDROID, next);
 
