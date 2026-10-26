@@ -39,6 +39,7 @@ permissions:
 jobs:
     build:
         runs-on: ubuntu-26.04
+        timeout-minutes: 15
         # A release upload must never be cancelled by a later push.
         concurrency:
             group: build-bundle-${{ inputs.version || 'beta' }}
@@ -54,20 +55,10 @@ jobs:
             # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
             # canary's frozen-lockfile check fails on a self-generated lockfile (round-trip bug),
             # so install without it until stable 1.4 lands.
-            - name: Setup Bun
-              uses: oven-sh/setup-bun@v2
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
               with:
                   bun-version: canary
-
-            - name: Cache Bun installs
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: ~/.bun/install/cache
-                  key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-                  restore-keys: bun-${{ runner.os }}-
-
-            - name: Install dependencies
-              run: bun install
 
             - name: Build the client
               run: bun run --cwd packages/client build

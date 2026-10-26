@@ -16,19 +16,14 @@ concurrency:
 jobs:
     validate:
         runs-on: ubuntu-26.04
+        timeout-minutes: 5
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-            - name: Setup Bun
-              uses: oven-sh/setup-bun@v2
-            - name: Cache Bun installs
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
               with:
-                  path: ~/.bun/install/cache
-                  key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-                  restore-keys: bun-${{ runner.os }}-
-            - name: Install dependencies
-              run: bun install --frozen-lockfile
+                  frozen-lockfile: 'true'
             - name: Validate plugins
               run: bun run plugins:validate
             - name: Test plugins

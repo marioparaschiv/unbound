@@ -81,6 +81,7 @@ jobs:
     core-tests:
         name: Shared core tests
         runs-on: ubuntu-26.04
+        timeout-minutes: 6
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -99,6 +100,7 @@ jobs:
     build-module:
         name: Build LSPosed module
         runs-on: ubuntu-26.04
+        timeout-minutes: 12
         env:
             ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
             ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
@@ -161,17 +163,51 @@ jobs:
                   cp android/module/build/outputs/apk/release/module-release.apk "$name"
                   echo "module_filename=$name" >> "$GITHUB_OUTPUT"
 
+            - name: Collect native symbols and build IDs
+              run: |
+                  set -euo pipefail
+                  module=android/module/build/outputs/apk/release/module-release.apk
+                  readelf=$(find "$ANDROID_HOME/ndk/27.3.13750724/toolchains/llvm/prebuilt" -path '*/bin/llvm-readelf' -print -quit)
+                  test -x "$readelf"
+                  mkdir -p android-symbols
+                  unzip -q android/module/build/outputs/native-debug-symbols/release/native-debug-symbols.zip -d android-symbols
+                  for abi in arm64-v8a x86_64; do
+                    symbols="android-symbols/$abi/libunbound.so.dbg"
+                    library="$RUNNER_TEMP/$abi-libunbound.so"
+                    test -f "$symbols"
+                    sections=$("$readelf" -S "$symbols" 2>/dev/null)
+                    grep -q '\.debug_info' <<< "$sections"
+                    unzip -p "$module" "lib/$abi/libunbound.so" > "$library"
+                    library_id=$("$readelf" -n "$library" | awk '/Build ID:/ { print $3 }')
+                    symbols_id=$("$readelf" -n "$symbols" 2>/dev/null | awk '/Build ID:/ { print $3 }')
+                    test -n "$library_id"
+                    test "$library_id" = "$symbols_id"
+                    printf '%s %s\n' "$abi" "$library_id" >> android-symbols/build-ids.txt
+                  done
+                  test -s android-symbols/build-ids.txt
+                  git rev-parse HEAD > android-symbols/commit.txt
+
+            - name: Upload native symbols
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: android symbols
+                  path: packages/loader/android-symbols/
+                  if-no-files-found: error
+                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
+
             - name: Upload module
               id: upload-module
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: android module
                   path: packages/loader/${{ steps.collect.outputs.module_filename }}
+                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
     patch-discord:
         name: Build patched Discord APK
         needs: build-module
         runs-on: ubuntu-26.04
+        timeout-minutes: 5
         outputs:
             patched_filename: ${{ steps.patch.outputs.patched_filename }}
             patched_url: ${{ steps.upload-patched.outputs.artifact-url }}
@@ -192,21 +228,8 @@ jobs:
               with:
                   fetch-depth: 1
 
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
-
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
             - name: Setup Java
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
@@ -289,3 +312,4 @@ jobs:
               with:
                   name: patched discord
                   path: packages/loader/${{ steps.patch.outputs.patched_filename }}
+                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
