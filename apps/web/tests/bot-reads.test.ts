@@ -79,15 +79,6 @@ async function withdraw(addonId: string, version: string) {
 		.where(and(eq(addonVersion.addonId, addonId), eq(addonVersion.version, version)));
 }
 
-async function newestEventId() {
-	const newest = await ctx.db.query.moderationEvent.findFirst({
-		orderBy: { id: 'desc' },
-		columns: { id: true },
-	});
-
-	return newest?.id ?? 0;
-}
-
 describe('addons', () => {
 	test('reads the public listing, with only an http(s) icon and the page on the site url', async () => {
 		const owner = await signUp();
@@ -298,7 +289,7 @@ describe('events', () => {
 
 		await seedAddon(owner.userId, 'events.reads');
 
-		const after = await newestEventId();
+		const after = await reads.newestEventId();
 		const event = {
 			subjectType: 'addon',
 			subjectId: 'events.reads',
@@ -337,6 +328,7 @@ describe('events', () => {
 			'review.decided',
 		]);
 		expect(await reads.eventsAfter(events.at(-1)?.id ?? 0, 10)).toEqual([]);
+		expect(await reads.newestEventId()).toBe(events.at(-1)?.id ?? -1);
 	});
 
 	test('deleting a user logs one user.deleted with what the cascade removes', async () => {
@@ -357,7 +349,7 @@ describe('events', () => {
 			body: 'Spam account.',
 		});
 
-		const after = await newestEventId();
+		const after = await reads.newestEventId();
 		const removed = await authRequest(ctx, '/admin/remove-user', {
 			method: 'POST',
 			headers: admin.headers,
@@ -387,7 +379,7 @@ describe('events', () => {
 
 		await seedSubmission(ctx, kept.userId, manifest('events.kept'));
 
-		const after = await newestEventId();
+		const after = await reads.newestEventId();
 		const removed = await authRequest(ctx, '/admin/remove-user', {
 			method: 'POST',
 			headers: admin.headers,

@@ -1,5 +1,8 @@
+import { max } from 'drizzle-orm';
+
 import type { ReadDatabase } from '~/lib/bot/reads';
 import type { AuditEvent } from '~/lib/bot/types';
+import { moderationEvent } from '~/db/schema';
 
 type EventRow = Awaited<ReturnType<typeof queryEvents>>[number];
 
@@ -73,4 +76,15 @@ export async function readEventsAfter(
 	}));
 }
 
-export default { readEventsAfter };
+/**
+ * @description Reads the newest moderation event's id.
+ * @param db The read database.
+ * @returns The id, or `0` when the log is empty.
+ */
+export async function readNewestEventId(db: ReadDatabase): Promise<number> {
+	const [row] = await db.select({ id: max(moderationEvent.id) }).from(moderationEvent);
+
+	return row?.id ?? 0;
+}
+
+export default { readEventsAfter, readNewestEventId };

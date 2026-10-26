@@ -83,6 +83,8 @@ export type BotReads = {
 	addons: () => Promise<PublicAddon[]>;
 	/** Moderation events after an id, oldest first. */
 	eventsAfter: (afterId: number, limit: number) => Promise<AuditEvent[]>;
+	/** The newest moderation event's id; `0` when the log is empty. */
+	newestEventId: () => Promise<number>;
 	/** A published release; `undefined` once withdrawn. */
 	release: (key: ReleaseKey) => Promise<Release | undefined>;
 	/** Releases published at or after a moment, in publish order. */

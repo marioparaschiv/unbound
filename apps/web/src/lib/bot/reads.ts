@@ -5,7 +5,7 @@ import { readRelease, readReleasesSince } from '~/lib/bot/releases';
 import { DEFAULT_PERK_GRACE_DAYS } from '~/lib/sponsors/standing';
 import type { BotReadOptions, BotReads } from '~/lib/bot/types';
 import { readAddon, readAddons } from '~/lib/bot/addons';
-import { readEventsAfter } from '~/lib/bot/events';
+import { readEventsAfter, readNewestEventId } from '~/lib/bot/events';
 import { readMembers } from '~/lib/bot/members';
 import relations from '~/db/relations';
 
@@ -36,6 +36,7 @@ export function createBotReads(client: postgres.Sql, options: BotReadOptions): B
 		addon: (id) => readAddon(db, resolved, id),
 		addons: () => readAddons(db, resolved),
 		eventsAfter: (afterId, limit) => readEventsAfter(db, afterId, limit),
+		newestEventId: () => readNewestEventId(db),
 		release: (key) => readRelease(db, key),
 		releasesSince: (since) => readReleasesSince(db, since),
 		members: (query) => readMembers(db, resolved, query),
