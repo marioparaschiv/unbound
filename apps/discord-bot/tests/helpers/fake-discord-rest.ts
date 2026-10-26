@@ -34,8 +34,13 @@ export type FakeDiscord = {
 	rejectDelete: ((messageId: string) => boolean) | undefined;
 	/** A channel's messages, oldest first. */
 	messages: (channelId: string) => FakeMessage[];
-	/** Adds a message as any author, bypassing `rest`. */
-	seed: (channelId: string, authorId: string, body: RESTPostAPIChannelMessageJSONBody) => string;
+	/** Adds a message as any author, bypassing `rest`; `id` keeps a real message's id. */
+	seed: (
+		channelId: string,
+		authorId: string,
+		body: RESTPostAPIChannelMessageJSONBody,
+		id?: string,
+	) => string;
 	/** Deletes a message out of band, as a moderator would. */
 	handDelete: (channelId: string, messageId: string) => void;
 	stop: () => Promise<void>;
@@ -117,8 +122,12 @@ export function createFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord
 		return messages;
 	}
 
-	function store(channelId: string, authorId: string, body: RESTPostAPIChannelMessageJSONBody) {
-		const id = String(nextId++);
+	function store(
+		channelId: string,
+		authorId: string,
+		body: RESTPostAPIChannelMessageJSONBody,
+		id: string = String(nextId++),
+	) {
 		const embeds: APIEmbed[] = body.embeds ?? [];
 
 		channel(channelId).set(id, {

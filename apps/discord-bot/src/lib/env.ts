@@ -1,27 +1,22 @@
+import { DEFAULT_PERK_GRACE_DAYS } from '@unbound-app/web/bot';
 import { z } from 'zod';
 
 const positiveInt = z.coerce.number().int().positive();
 
 export const databaseEnvSchema = z.object({
-	/** The bot's Postgres database, direct, for `LISTEN` and migrations, e.g. `postgres://unbound_bot:<password>@127.0.0.1:5432/unbound_bot`. */
+	/** The web's database as the bot's role, direct, for `LISTEN` and migrations, e.g. `postgres://unbound_bot:<password>@127.0.0.1:5432/unbound`. */
 	DATABASE_DIRECT_URL: z.string().min(1),
 });
 
 export const envSchema = databaseEnvSchema.extend({
-	/** The same database through pgbouncer in transaction mode, for queries, e.g. `postgres://unbound_bot:<password>@127.0.0.1:6432/unbound_bot`. */
+	/** The same database through pgbouncer in transaction mode, for queries, e.g. `postgres://unbound_bot:<password>@127.0.0.1:6432/unbound`. */
 	DATABASE_URL: z.string().min(1),
 	/** The Discord bot token. */
 	DISCORD_TOKEN: z.string().min(1),
-	/** The Unbound backend serving `/api/v1/bot/*`, e.g. `https://unbound.rip`. */
-	UNBOUND_API_URL: z.url(),
-	/** An API key with the bot feed permission, sent as `x-api-key`. */
-	UNBOUND_API_KEY: z.string().min(1),
-	/** Seconds between rounds of polling every feed. */
-	POLL_INTERVAL_SECONDS: positiveInt.default(30),
-	/** Items requested per feed page; the backend caps it at 500. */
-	FEED_PAGE_SIZE: positiveInt.max(500).default(100),
 	/** Seconds between the timed reconciles of every dispatcher. */
 	RECONCILE_INTERVAL_SECONDS: positiveInt.default(300),
+	/** Days sponsor perks outlast a sponsorship; keep it equal to the web's `SPONSOR_PERK_GRACE_DAYS`. */
+	SPONSOR_PERK_GRACE_DAYS: z.coerce.number().int().nonnegative().default(DEFAULT_PERK_GRACE_DAYS),
 	/** Raises the GitHub API rate limit for the contributor lookup; an empty value counts as unset. */
 	GITHUB_TOKEN: z
 		.string()

@@ -6,9 +6,10 @@
 	"scripts": {
 		"dev": "bun scripts/migrate.ts && bun --watch src/index.ts",
 		"start": "bun scripts/migrate.ts && bun src/index.ts",
-		"typecheck": "tsc --noEmit -p .",
+		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p .",
 		"db:generate": "drizzle-kit generate",
-		"db:migrate": "bun scripts/migrate.ts"
+		"db:migrate": "bun scripts/migrate.ts",
+		"db:move-data": "bun scripts/move-data.ts"
 	},
 	"dependencies": {
 		"@sapphire/decorators": "^6.2.0",
@@ -19,6 +20,7 @@
 		"@sapphire/plugin-subcommands": "^7.0.1",
 		"@unbound-app/contracts": "workspace:*",
 		"@unbound-app/logger": "workspace:*",
+		"@unbound-app/web": "workspace:*",
 		"colorette": "^2.0.20",
 		"discord.js": "^14.27.0",
 		"drizzle-orm": "1.0.0-rc.4",

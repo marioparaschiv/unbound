@@ -1,9 +1,10 @@
+import { createLogger } from '@unbound-app/logger';
 import { Database } from 'bun:sqlite';
 
 import type { SourceValue } from './codecs';
 import type { TableSpec } from './registry';
 
-import { OPTIONAL_SOURCE_TABLES, SQLITE_ONLY_TABLES } from './registry';
+import { OPTIONAL_SOURCE_TABLES, RETIRED_SOURCE_TABLES, SQLITE_ONLY_TABLES } from './registry';
 import quote from './quote';
 
 /** A row as canonical text per column, `null` for SQL NULL. */
@@ -27,6 +28,12 @@ type SequenceRow = {
 	name: string;
 	seq: bigint;
 };
+
+type CountRow = {
+	count: bigint;
+};
+
+const logger = createLogger('Web', 'Copy');
 
 // Only labels a row in an error, so invalid UTF-8 in a key may show as U+FFFD.
 function label(value: SourceValue | undefined) {
@@ -91,7 +98,8 @@ function readRows(db: Database, spec: TableSpec): CanonicalRow[] {
 
 /**
  * @description Reads every registry table from a SQLite file, read-only and in one snapshot, after
- * checking it holds every app table but the optional ones and no table or column the registry does not know.
+ * checking it holds every app table but the optional ones and no table or column the registry does not know,
+ * and logs each retired table it skips with its row count.
  * @param path The SQLite file.
  * @param specs The tables to read, in the order to return them.
  * @returns Each table's rows as canonical text; throws on a missing or unknown table, an unknown column,
@@ -108,7 +116,10 @@ export function readSource(path: string, specs: TableSpec[]): SourceTable[] {
 				.map((row) => row.name);
 			const known = new Set(specs.map((spec) => spec.name));
 			const unknown = names.filter(
-				(name) => !known.has(name) && !SQLITE_ONLY_TABLES.has(name),
+				(name) =>
+					!known.has(name) &&
+					!SQLITE_ONLY_TABLES.has(name) &&
+					!RETIRED_SOURCE_TABLES.has(name),
 			);
 
 			if (unknown.length > 0) {
@@ -129,6 +140,14 @@ export function readSource(path: string, specs: TableSpec[]): SourceTable[] {
 
 			if (missing.length > 0) {
 				throw new Error(`The source lacks the app tables ${missing.join(', ')}.`);
+			}
+
+			for (const name of names.filter((table) => RETIRED_SOURCE_TABLES.has(table))) {
+				const row = db
+					.query<CountRow, []>(`SELECT count(*) AS count FROM ${quote(name)}`)
+					.get();
+
+				logger.info(`Skipped the retired table ${name} (${row?.count ?? 0} rows).`);
 			}
 
 			const sequences = new Map(

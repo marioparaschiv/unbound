@@ -1,3 +1,4 @@
+import { DEFAULT_PERK_GRACE_DAYS } from '@unbound-app/web/bot';
 import { describe, expect, test } from 'bun:test';
 
 import { parseDatabaseEnv } from '~/lib/env';
@@ -8,9 +9,19 @@ const ENV = {
 	DISCORD_TOKEN: 'token',
 	DATABASE_URL: 'postgres://bot@localhost:6432/bot',
 	DATABASE_DIRECT_URL: 'postgres://bot@localhost:5432/bot',
-	UNBOUND_API_URL: 'https://unbound.rip',
-	UNBOUND_API_KEY: 'key',
 };
+
+describe('SPONSOR_PERK_GRACE_DAYS', () => {
+	test("defaults to the web's grace period and takes an override", () => {
+		const unset = checkConfig(ENV, GUILD_ID);
+		const set = checkConfig({ ...ENV, SPONSOR_PERK_GRACE_DAYS: '3' }, GUILD_ID);
+
+		expect(unset.ok ? unset.env.SPONSOR_PERK_GRACE_DAYS : 'failed').toBe(
+			DEFAULT_PERK_GRACE_DAYS,
+		);
+		expect(set.ok ? set.env.SPONSOR_PERK_GRACE_DAYS : 'failed').toBe(3);
+	});
+});
 
 describe('checkConfig', () => {
 	test('names every unset env var and an unset GUILD_ID, in one message', () => {
@@ -34,10 +45,10 @@ describe('checkConfig', () => {
 	});
 
 	test('names an invalid value', () => {
-		const result = checkConfig({ ...ENV, FEED_PAGE_SIZE: '501' }, GUILD_ID);
+		const result = checkConfig({ ...ENV, RECONCILE_INTERVAL_SECONDS: '-1' }, GUILD_ID);
 
 		expect(result.ok).toBe(false);
-		expect(result.ok ? '' : result.message).toContain('env FEED_PAGE_SIZE');
+		expect(result.ok ? '' : result.message).toContain('env RECONCILE_INTERVAL_SECONDS');
 	});
 
 	test('passes a complete env with the real constants, though channel ids are still 0', () => {
@@ -47,9 +58,8 @@ describe('checkConfig', () => {
 			ok: true,
 			env: {
 				...ENV,
-				POLL_INTERVAL_SECONDS: 30,
-				FEED_PAGE_SIZE: 100,
 				RECONCILE_INTERVAL_SECONDS: 300,
+				SPONSOR_PERK_GRACE_DAYS: 7,
 				GITHUB_TOKEN: undefined,
 			},
 		});

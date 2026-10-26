@@ -1,6 +1,8 @@
-import { pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { serial, text, timestamp } from 'drizzle-orm/pg-core';
 
-export const tag = pgTable('tag', {
+import { botSchema } from './bot';
+
+export const tag = botSchema.table('tag', {
 	id: serial('id').primaryKey(),
 	name: text('name').notNull().unique(),
 	content: text('content').notNull(),

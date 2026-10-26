@@ -1,41 +1,42 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { createStaffNote } from '@unbound-app/web/testing';
+import { asc, eq, isNotNull, isNull } from 'drizzle-orm';
+import type { AuditEvent } from '@unbound-app/web/bot';
 import type { Client } from 'discord.js';
-import { asc, eq } from 'drizzle-orm';
 
 import type { DispatcherContext } from '~/dispatchers/types';
 import { createAuditDispatcher } from '~/dispatchers/audit';
-import { auditEvent } from '~/db/schema';
+import { auditPost } from '~/db/schema';
 
-import {
-	createTestDatabase,
-	DROP_HOOK_TIMEOUT_MS,
-	DATABASE_URL,
-	type TestDatabase,
-} from './helpers/database';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
 import { createFakeClient, createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
+import { createFakeReads, EVENT, type FakeReads } from './helpers/fake-reads';
+import { signUp } from './helpers/web';
 
-type EventColumns = Partial<typeof auditEvent.$inferInsert>;
+type EventColumns = Partial<AuditEvent>;
 
 function footers(fake: FakeDiscord) {
 	return fake.messages.map((message) => message.embeds[0]?.footer?.text);
 }
 
 describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
-	let database: TestDatabase;
+	let database: BotTestDatabase;
 	let fake: FakeDiscord;
+	let reads: FakeReads;
 	let clients: Client<true>[];
 
 	beforeAll(async () => {
-		database = await createTestDatabase();
+		database = await createBotTestDatabase();
 	});
 
 	afterAll(async () => {
 		await database.drop();
-	}, DROP_HOOK_TIMEOUT_MS);
+	});
 
 	beforeEach(async () => {
-		await database.db.delete(auditEvent);
+		await database.db.delete(auditPost);
 		fake = createFakeDiscord();
+		reads = createFakeReads();
 		clients = [];
 	});
 
@@ -50,32 +51,106 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 
 		clients.push(client);
 
-		return { db: database.db, client };
+		return { db: database.db, web: reads.reads, client };
 	}
 
-	async function seed(id: number, columns: EventColumns = {}) {
-		await database.db.insert(auditEvent).values({
+	function seed(id: number, columns: EventColumns = {}) {
+		reads.events.push({
+			...EVENT,
 			id,
 			kind: 'user.unbanned',
 			subjectType: 'user',
 			subjectId: `user-${id}`,
-			actor: { id: 'staff-1', name: 'Mario' },
-			data: {},
-			reason: null,
-			createdAt: new Date('2026-10-01T00:00:00.000Z'),
+			subjectName: null,
 			...columns,
 		});
 	}
 
-	function rows() {
-		return database.db.select().from(auditEvent).orderBy(asc(auditEvent.id));
+	// The first run on an empty moderation log floors it at 0, so every event seeded after it posts.
+	async function enabled(channelId: string = fake.channelId) {
+		const audit = createAuditDispatcher(channelId);
+
+		await audit.reconcile(context());
+
+		return audit;
 	}
 
-	test('posts every event in ascending id order and stores each message id', async () => {
+	function floors() {
+		return database.db
+			.select({ id: auditPost.eventId, channelId: auditPost.channelId })
+			.from(auditPost)
+			.where(isNull(auditPost.messageId));
+	}
+
+	async function rows() {
+		const posts = await database.db
+			.select()
+			.from(auditPost)
+			.where(isNotNull(auditPost.messageId))
+			.orderBy(asc(auditPost.eventId));
+
+		return posts.map(({ eventId, channelId, messageId }) => ({
+			id: eventId,
+			channelId,
+			messageId,
+		}));
+	}
+
+	test('the first run posts no history and floors the log at its newest event', async () => {
 		const audit = createAuditDispatcher(fake.channelId);
 
+		for (const id of [1, 2, 3]) {
+			seed(id);
+		}
+
+		await audit.reconcile(context());
+
+		expect(fake.requests).toEqual([]);
+		expect(await floors()).toEqual([{ id: 3, channelId: fake.channelId }]);
+
+		seed(4);
+		await audit.handle('4', context());
+		await audit.reconcile(context());
+		await audit.handle('4', context());
+
+		expect(footers(fake)).toEqual(['Event #4 · user.unbanned']);
+		expect(await floors()).toEqual([{ id: 3, channelId: fake.channelId }]);
+		expect(await rows()).toMatchObject([{ id: 4, messageId: fake.messages[0]?.id }]);
+	});
+
+	test('an empty log floors at 0 and posts its first event', async () => {
+		const audit = createAuditDispatcher(fake.channelId);
+
+		await audit.reconcile(context());
+		seed(1);
+		await audit.handle('1', context());
+
+		expect(await floors()).toEqual([{ id: 0, channelId: fake.channelId }]);
+		expect(footers(fake)).toEqual(['Event #1 · user.unbanned']);
+	});
+
+	test('posts moved from the old database win over a floor', async () => {
+		const audit = createAuditDispatcher(fake.channelId);
+
+		await database.db
+			.insert(auditPost)
+			.values({ eventId: 2, channelId: fake.channelId, messageId: '700' });
+
+		for (const id of [1, 2, 3, 4]) {
+			seed(id);
+		}
+
+		await audit.reconcile(context());
+
+		expect(await floors()).toEqual([]);
+		expect(footers(fake)).toEqual(['Event #3 · user.unbanned', 'Event #4 · user.unbanned']);
+	});
+
+	test('posts every event in ascending id order and stores each message id', async () => {
+		const audit = await enabled();
+
 		for (const id of [5, 2, 9, 3]) {
-			await seed(id);
+			seed(id);
 		}
 
 		await audit.handle('9', context());
@@ -96,10 +171,10 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('posts nothing twice across a restart or a crash before the id was stored', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 
 		for (const id of [1, 2, 3]) {
-			await seed(id);
+			seed(id);
 		}
 
 		await audit.reconcile(context());
@@ -109,11 +184,8 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 
 		const [, , third] = fake.messages;
 
-		await database.db
-			.update(auditEvent)
-			.set({ channelId: null, messageId: null })
-			.where(eq(auditEvent.id, 3));
-		await seed(4);
+		await database.db.delete(auditPost).where(eq(auditPost.eventId, 3));
+		seed(4);
 		fake.inject(
 			{
 				id: '901',
@@ -138,7 +210,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('a bot post for an older event that reused the id is not adopted', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 
 		fake.inject(fake.botUser, {
 			embeds: [
@@ -148,7 +220,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 				},
 			],
 		});
-		await seed(1);
+		seed(1);
 		await audit.reconcile(context());
 
 		expect(fake.requests).toHaveLength(1);
@@ -156,10 +228,10 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('an embed Discord rejects posts a bare fallback so later events still post', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 
 		for (const id of [1, 2, 3]) {
-			await seed(id);
+			seed(id);
 		}
 
 		fake.rejectAt([1]);
@@ -180,11 +252,11 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('a burst through 429s posts each event once, in order', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 		const ids = Array.from({ length: 30 }, (_, index) => index + 1);
 
 		for (const id of ids.toReversed()) {
-			await seed(id);
+			seed(id);
 		}
 
 		fake.rateLimitAt([0, 4, 5, 13, 27]);
@@ -198,10 +270,11 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('an unknown kind and a malformed known kind post a generic embed', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 
-		await seed(1, { kind: 'future.thing', data: { colour: 'teal' } });
-		await seed(2, { kind: 'user.banned', data: { expiresAt: 42 } });
+		// A kind newer than this bot's contracts arrives as plain text from the database.
+		seed(1, { kind: 'future.thing' as AuditEvent['kind'], data: { colour: 'teal' } });
+		seed(2, { kind: 'user.banned', data: { expiresAt: 42 } });
 		await audit.reconcile(context());
 
 		expect(fake.messages.map((message) => message.embeds[0])).toMatchObject([
@@ -221,10 +294,10 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('a note full of mentions can ping no one', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 		const body = '@everyone <@123> <@&456> look at this';
 
-		await seed(1, { kind: 'note.added', data: { noteId: 1, body } });
+		seed(1, { kind: 'note.added', data: { noteId: 1, body } });
 		await audit.handle('1', context());
 
 		const [request] = fake.requests;
@@ -236,10 +309,10 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('a failed send stops the run so no later event jumps ahead', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 
 		for (const id of [1, 2, 3]) {
-			await seed(id);
+			seed(id);
 		}
 
 		fake.rejectAt([1, 2]);
@@ -248,11 +321,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 
 		expect(failed.status).toBe('rejected');
 		expect(fake.requests).toHaveLength(3);
-		expect(await rows()).toMatchObject([
-			{ id: 1, messageId: fake.messages[0]?.id },
-			{ id: 2, messageId: null },
-			{ id: 3, messageId: null },
-		]);
+		expect(await rows()).toMatchObject([{ id: 1, messageId: fake.messages[0]?.id }]);
 
 		await audit.handle('3', context());
 
@@ -264,13 +333,39 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('an unsendable or missing channel fails the run and posts nothing', async () => {
-		const audit = createAuditDispatcher('404');
+		const audit = await enabled('404');
 
-		await seed(1);
+		seed(1);
 
 		const [failed] = await Promise.allSettled([audit.reconcile(context())]);
 
 		expect(failed.status).toBe('rejected');
 		expect(fake.requests).toEqual([]);
+	});
+
+	test('a staff note written on the web posts one embed naming its subject, once', async () => {
+		const audit = await enabled();
+		const moderator = await signUp(database.web, 'moderator');
+		const subject = await signUp(database.web);
+		const real = (): DispatcherContext => ({ ...context(), web: database.reads });
+
+		await createStaffNote(database.web, moderator.caller, {
+			subject: { type: 'user', id: subject.userId },
+			body: 'Watch this account.',
+		});
+		await audit.handle('any', real());
+		await audit.reconcile(real());
+
+		expect(fake.requests).toHaveLength(1);
+		expect(fake.messages[0]?.embeds[0]).toMatchObject({
+			author: { name: moderator.caller.user.name },
+			description: 'Watch this account.',
+			fields: expect.arrayContaining([
+				expect.objectContaining({
+					name: 'Subject',
+					value: expect.stringContaining(subject.caller.user.name),
+				}),
+			]),
+		});
 	});
 });

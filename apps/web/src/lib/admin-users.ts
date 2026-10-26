@@ -11,6 +11,7 @@ import type { AdminSubmission } from '~/lib/admin-submissions';
 import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
+import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { matchesSearch } from '~/lib/admin-search';
 import type { StaffNote } from '~/lib/staff-notes';
 import { listStaffNotes } from '~/lib/staff-notes';
@@ -18,7 +19,6 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
 import { userSearchText } from '~/db/schema';
-import { LIVE_VERSIONS } from '~/lib/addons';
 import type { user } from '~/db/schema';
 
 export type AdminUser = {

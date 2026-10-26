@@ -1,10 +1,8 @@
 import type { APIEmbed, APIEmbedField } from 'discord.js';
+import type { AuditEvent } from '@unbound-app/web/bot';
 
 import { renderKind, type KindEmbed } from '~/dispatchers/audit-kinds';
 import { COLOURS, SITE_URL } from '~/lib/constants';
-import type { auditEvent } from '~/db/schema';
-
-export type AuditEventRow = typeof auditEvent.$inferSelect;
 
 export const EMBED_LIMITS = {
 	title: 256,
@@ -51,7 +49,7 @@ function present(text: string) {
 	return text.trim() ? text : 'None';
 }
 
-function subjectLink(event: AuditEventRow) {
+function subjectLink(event: AuditEvent) {
 	if (!Object.hasOwn(SUBJECT_PATHS, event.subjectType)) return;
 
 	const path = SUBJECT_PATHS[event.subjectType];
@@ -64,7 +62,7 @@ function escapeLinkText(text: string) {
 	return text.replaceAll(/[\\[\]]/g, '\\$&');
 }
 
-function subjectValue(event: AuditEventRow, url: string | undefined) {
+function subjectValue(event: AuditEvent, url: string | undefined) {
 	const subject = present(truncate(event.subjectName || event.subjectId, EMBED_LIMITS.fieldName));
 	const linked = url ? `[${escapeLinkText(subject)}](${url})` : subject;
 
@@ -72,7 +70,7 @@ function subjectValue(event: AuditEventRow, url: string | undefined) {
 	return linked.length <= EMBED_LIMITS.fieldValue ? linked : subject;
 }
 
-function genericKind(event: AuditEventRow): KindEmbed {
+function genericKind(event: AuditEvent): KindEmbed {
 	const json = JSON.stringify(event.data, null, 2) ?? 'null';
 	const room = EMBED_LIMITS.fieldValue - CODE_FENCE.open.length - CODE_FENCE.close.length;
 
@@ -110,10 +108,10 @@ function fitFields(fields: APIEmbedField[], budget: number) {
 
 /**
  * @description Renders an audit event as a Discord embed that always passes Discord's embed limits.
- * @param event The `audit_event` row.
+ * @param event The moderation event.
  * @returns The embed; an unknown kind or malformed data renders the raw kind and data instead.
  */
-export function buildAuditEmbed(event: AuditEventRow): APIEmbed {
+export function buildAuditEmbed(event: AuditEvent): APIEmbed {
 	const kind = renderKind(event.kind, event.data) ?? genericKind(event);
 	const url = subjectLink(event);
 	const reasonAsField = kind.description !== undefined && event.reason;
@@ -147,10 +145,10 @@ export function buildAuditEmbed(event: AuditEventRow): APIEmbed {
 
 /**
  * @description Renders the bare minimum of an audit event, for when Discord rejected its full embed.
- * @param event The `audit_event` row.
+ * @param event The moderation event.
  * @returns An embed with only the raw kind, the event id and the creation time.
  */
-export function buildFallbackEmbed(event: AuditEventRow): APIEmbed {
+export function buildFallbackEmbed(event: AuditEvent): APIEmbed {
 	return {
 		title: truncate(present(event.kind), EMBED_LIMITS.title),
 		description: 'Discord rejected the full embed for this event; see the admin log.',

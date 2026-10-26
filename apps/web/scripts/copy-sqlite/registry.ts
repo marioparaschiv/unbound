@@ -35,6 +35,9 @@ export const SQLITE_ONLY_TABLES: ReadonlySet<string> = new Set([
 	...FTS_MIRRORS.flatMap((mirror) => FTS_SHADOWS.map((shadow) => `${mirror}_${shadow}`)),
 ]);
 
+/** The tables production's SQLite file still holds that later Postgres migrations drop: the bot feed. */
+export const RETIRED_SOURCE_TABLES: ReadonlySet<string> = new Set(['bot_feed_change']);
+
 /** The app tables newer than production's SQLite file, which then copy as empty: #231's profiles. */
 export const OPTIONAL_SOURCE_TABLES: ReadonlySet<string> = new Set(['discord_profile']);
 
@@ -112,6 +115,7 @@ export const tables: TableSpec[] = inReferenceOrder(
 
 export default {
 	OPTIONAL_SOURCE_TABLES,
+	RETIRED_SOURCE_TABLES,
 	SQLITE_ONLY_TABLES,
 	WHOLE_JSON_COLUMNS,
 	inReferenceOrder,
