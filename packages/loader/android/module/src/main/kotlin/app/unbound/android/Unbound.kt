@@ -2,12 +2,14 @@ package app.unbound.android
 
 import android.app.Activity
 import android.content.pm.ApplicationInfo
+import android.content.res.AssetManager
 import android.os.Build
 import io.github.libxposed.api.XposedInterface.ExceptionMode
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface.PackageReadyParam
 import org.json.JSONObject
 import java.io.File
+import java.lang.reflect.Method
 import java.util.zip.ZipFile
 
 class Unbound : XposedModule() {
@@ -53,7 +55,7 @@ class Unbound : XposedModule() {
         SettingsWatcher.onChange(::onSettingsChanged)
         hookActivityLifecycle()
         val hooked = runCatching { hookBundleLoading(param.classLoader) }
-            .onFailure { Logger.error(LogCategory.RUNTIME, "Failed to hook ReactInstance.loadJSBundle", it) }
+            .onFailure { Logger.error(LogCategory.RUNTIME, "Failed to hook the ReactInstance bundle loader", it) }
         if (hooked.isFailure) {
             StartupAlert.report(NativeBridge.nativeIncompatibleHostMessage())
             return
@@ -140,29 +142,44 @@ class Unbound : XposedModule() {
 
     private fun hookBundleLoading(classLoader: ClassLoader) {
         val reactInstance = classLoader.loadClass(REACT_INSTANCE)
-        val bundleLoader = classLoader.loadClass(BUNDLE_LOADER)
-        val loadJSBundle = reactInstance.getDeclaredMethod("loadJSBundle", bundleLoader)
+        val loaders = bundleLoaders(reactInstance, classLoader)
+        check(loaders.isNotEmpty()) { "ReactInstance has no bundle loader to hook" }
 
-        hook(loadJSBundle)
-            .setExceptionMode(ExceptionMode.PROTECTIVE)
-            .intercept { chain ->
-                Logger.info(
-                    LogCategory.RUNTIME,
-                    "Loading ReactInstance ${System.identityHashCode(chain.thisObject)}",
-                )
-                ReactRuntime.attach(chain.thisObject)
-                NativeBridge.nativeOnLoadJSBundle()
-                NativeBridge.installMetroModuleCaptureBeforeBundle()
-                val result = chain.proceed()
-                NativeBridge.nativeOnJSBundleLoaded()
-                Logger.info(
-                    LogCategory.RUNTIME,
-                    "ReactInstance ${System.identityHashCode(chain.thisObject)} loadJSBundle returned",
-                )
-                result
-            }
+        for (loader in loaders) {
+            hook(loader)
+                .setExceptionMode(ExceptionMode.PROTECTIVE)
+                .intercept { chain ->
+                    Logger.info(
+                        LogCategory.RUNTIME,
+                        "Loading ReactInstance ${System.identityHashCode(chain.thisObject)} through ${loader.name}",
+                    )
+                    ReactRuntime.attach(chain.thisObject)
+                    NativeBridge.nativeOnLoadJSBundle()
+                    NativeBridge.installMetroModuleCaptureBeforeBundle()
+                    val result = chain.proceed()
+                    NativeBridge.nativeOnJSBundleLoaded()
+                    Logger.info(
+                        LogCategory.RUNTIME,
+                        "ReactInstance ${System.identityHashCode(chain.thisObject)} ${loader.name} returned",
+                    )
+                    result
+                }
+        }
 
-        Logger.info(LogCategory.DEFAULT, "Hooked ReactInstance.loadJSBundle.")
+        Logger.info(LogCategory.DEFAULT, "Hooked ReactInstance.${loaders.joinToString(", ReactInstance.") { it.name }}.")
+    }
+
+    private fun bundleLoaders(reactInstance: Class<*>, classLoader: ClassLoader): List<Method> {
+        val bundleLoader = runCatching { classLoader.loadClass(BUNDLE_LOADER) }.getOrNull()
+        val loadJSBundle = bundleLoader?.let { runCatching { reactInstance.getDeclaredMethod("loadJSBundle", it) }.getOrNull() }
+        if (loadJSBundle != null) return listOf(loadJSBundle)
+
+        return listOfNotNull(
+            runCatching {
+                reactInstance.getDeclaredMethod("loadJSBundleFromAssets", AssetManager::class.java, String::class.java)
+            }.getOrNull(),
+            runCatching { reactInstance.getDeclaredMethod("loadJSBundleFromFile", String::class.java, String::class.java) }.getOrNull(),
+        )
     }
 
     private fun nativeLibraryPath(moduleInfo: ApplicationInfo, appInfo: ApplicationInfo): String {
