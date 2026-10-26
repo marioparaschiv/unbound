@@ -207,7 +207,7 @@ jobs:
         name: Build patched Discord APK
         needs: build-module
         runs-on: ubuntu-26.04
-        timeout-minutes: 5
+        timeout-minutes: 10
         outputs:
             patched_filename: ${{ steps.patch.outputs.patched_filename }}
             patched_url: ${{ steps.upload-patched.outputs.artifact-url }}
