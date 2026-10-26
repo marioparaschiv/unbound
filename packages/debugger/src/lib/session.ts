@@ -1,10 +1,12 @@
 import type {
 	LogMessage,
 	EvalResult,
+	EvalRequest,
 	BridgeMessage,
 	PluginPushResult,
 	PluginPushRequest,
 } from '@unbound-app/debugger-protocol';
+import { DEFAULT_EVAL_TIMEOUT_MS, MAX_EVAL_TIMEOUT_MS } from '@unbound-app/debugger-protocol';
 
 /**
  * The bridge's transport-agnostic routing core: routes each eval result back to the controller that
@@ -47,8 +49,6 @@ const evalListeners = new Set<(code: string) => void>();
 const resultListeners = new Set<(result: EvalResult) => void>();
 const controllerListeners = new Set<(connected: boolean, count: number) => void>();
 
-/** How long to wait for a device to answer an eval before failing it. */
-export const EVAL_TIMEOUT_MS = 10_000;
 const PLUGIN_PUSH_TIMEOUT_MS = 60_000;
 
 /**
@@ -146,21 +146,33 @@ export function detachController(socket: SocketLike) {
  * @description Runs code on the device on behalf of a controller socket, delivering the id-correlated
  * result back over that same socket. Sends an error frame instead if no device is connected.
  * @param socket The controller that issued the request.
- * @param id The controller-chosen correlation id, echoed on the result.
- * @param code The JavaScript to evaluate on the device.
+ * @param request The controller's eval, whose `id` correlates the result and whose `timeout` bounds the wait.
  */
-export function evaluateForController(socket: SocketLike, id: string, code: string) {
+export function evaluateForController(socket: SocketLike, request: EvalRequest) {
+	const { id, code } = request;
 	const deliver = getControllerDelivery(socket);
 
 	// Surface controller (MCP) activity so an observer like the terminal can show a full transcript,
 	// not just the device's own console output.
 	for (const listener of evalListeners) listener(code);
 
-	dispatch(id, code, (result) => {
+	dispatch(id, code, resolveEvalTimeout(request.timeout), (result) => {
 		for (const listener of resultListeners) listener(result);
 
 		deliver(result);
 	});
+}
+
+/**
+ * @description Picks how long an eval may run: the requested timeout when it is a positive number of
+ * milliseconds, capped at {@link MAX_EVAL_TIMEOUT_MS}, otherwise {@link DEFAULT_EVAL_TIMEOUT_MS}.
+ * @param requested The timeout the controller asked for, if any.
+ * @returns The timeout to apply, in milliseconds.
+ */
+export function resolveEvalTimeout(requested: number | undefined): number {
+	return typeof requested === 'number' && requested > 0
+		? Math.min(requested, MAX_EVAL_TIMEOUT_MS)
+		: DEFAULT_EVAL_TIMEOUT_MS;
 }
 
 /**
@@ -201,17 +213,22 @@ export function pushPluginForController(socket: SocketLike, request: PluginPushR
 /**
  * @description Runs code on the device on behalf of an in-process caller (the terminal REPL),
  * resolving with the device's answer. Rejects if no device is connected or it doesn't answer within
- * {@link EVAL_TIMEOUT_MS}.
+ * {@link DEFAULT_EVAL_TIMEOUT_MS}.
  * @param code The JavaScript to evaluate on the device.
  * @returns The device's {@link EvalResult}.
  */
 export function evaluate(code: string): Promise<EvalResult> {
 	return new Promise<EvalResult>((resolve) => {
-		dispatch(crypto.randomUUID(), code, resolve);
+		dispatch(crypto.randomUUID(), code, DEFAULT_EVAL_TIMEOUT_MS, resolve);
 	});
 }
 
-function dispatch(id: string, code: string, deliver: (result: EvalResult) => void) {
+function dispatch(
+	id: string,
+	code: string,
+	timeout: number,
+	deliver: (result: EvalResult) => void,
+) {
 	if (!state.device) {
 		deliver({
 			type: 'eval-result',
@@ -229,9 +246,9 @@ function dispatch(id: string, code: string, deliver: (result: EvalResult) => voi
 			type: 'eval-result',
 			id,
 			ok: false,
-			error: `Evaluation timed out after ${EVAL_TIMEOUT_MS}ms.`,
+			error: `Evaluation timed out after ${timeout}ms.`,
 		});
-	}, EVAL_TIMEOUT_MS);
+	}, timeout);
 
 	pending.set(id, { deliver, timer });
 	state.device.send(JSON.stringify({ type: 'eval', id, code }));

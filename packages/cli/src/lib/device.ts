@@ -36,27 +36,34 @@ export const NOT_CONNECTED: CommandOutput = {
  * @description Waits briefly for a device, then evaluates code on it.
  * @param client The bridge controller.
  * @param code The JavaScript to evaluate on the device.
+ * @param timeout How long the bridge waits for the result, in milliseconds; its default when omitted.
  * @returns The device's result, or `undefined` when no device connected in time.
  */
 export async function evaluateOnDevice(
 	client: DeviceClient,
 	code: string,
+	timeout?: number,
 ): Promise<EvalResult | undefined> {
 	await waitForDevice(client);
 
 	if (!client.isDeviceConnected) return;
 
-	return client.evaluate(code);
+	return client.evaluate(code, timeout);
 }
 
 /**
  * @description Evaluates code on the device and renders the result as a command's output.
  * @param client The bridge controller.
  * @param code The JavaScript to evaluate on the device.
+ * @param timeout How long the bridge waits for the result, in milliseconds; its default when omitted.
  * @returns The formatted transcript with the raw result as data, or {@link NOT_CONNECTED}.
  */
-export async function runOnDevice(client: DeviceClient, code: string): Promise<CommandOutput> {
-	const result = await evaluateOnDevice(client, code);
+export async function runOnDevice(
+	client: DeviceClient,
+	code: string,
+	timeout?: number,
+): Promise<CommandOutput> {
+	const result = await evaluateOnDevice(client, code, timeout);
 
 	if (!result) {
 		return NOT_CONNECTED;
