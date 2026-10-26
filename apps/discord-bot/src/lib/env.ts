@@ -8,6 +8,24 @@ export const databaseEnvSchema = z.object({
 	DATABASE_DIRECT_URL: z.string().min(1),
 });
 
+/** The telemetry variables, named as telecord names them so both export to SigNoz alike. */
+export const otelEnvSchema = z.object({
+	/** The single gate: `true` or `1` exports the audit trail. */
+	OTEL_ENABLED: z
+		.string()
+		.optional()
+		.transform((flag) => flag === 'true' || flag === '1'),
+	/** The OTLP/HTTP collector, e.g. `http://localhost:4318`. */
+	OTEL_ENDPOINT: z
+		.url()
+		.optional()
+		.transform((url) => url?.replace(/\/+$/, '')),
+	/** The service SigNoz files the records under; `-dev` is appended under `NODE_ENV=development`. */
+	OTEL_SERVICE_NAME: z.string().min(1).default('unbound-discord-bot'),
+	/** `development` marks the service as dev, since dev and production export to the same SigNoz. */
+	NODE_ENV: z.string().default('production'),
+});
+
 export const envSchema = databaseEnvSchema.extend({
 	/** The same database through pgbouncer in transaction mode, for queries, e.g. `postgres://unbound_bot:<password>@127.0.0.1:6432/unbound`. */
 	DATABASE_URL: z.string().min(1),
@@ -22,10 +40,12 @@ export const envSchema = databaseEnvSchema.extend({
 		.string()
 		.optional()
 		.transform((token) => token || undefined),
+	...otelEnvSchema.shape,
 });
 
 export type Env = z.infer<typeof envSchema>;
 export type DatabaseEnv = z.infer<typeof databaseEnvSchema>;
+export type OtelEnv = z.infer<typeof otelEnvSchema>;
 export type EnvSource = Record<string, string | undefined>;
 
 /**
@@ -43,4 +63,4 @@ export function parseDatabaseEnv(source: EnvSource = process.env): DatabaseEnv {
 	return result.data;
 }
 
-export default { databaseEnvSchema, envSchema, parseDatabaseEnv };
+export default { databaseEnvSchema, otelEnvSchema, envSchema, parseDatabaseEnv };

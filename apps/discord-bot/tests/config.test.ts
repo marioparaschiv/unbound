@@ -61,6 +61,10 @@ describe('checkConfig', () => {
 				RECONCILE_INTERVAL_SECONDS: 300,
 				SPONSOR_PERK_GRACE_DAYS: 7,
 				GITHUB_TOKEN: undefined,
+				OTEL_ENABLED: false,
+				OTEL_ENDPOINT: undefined,
+				OTEL_SERVICE_NAME: 'unbound-discord-bot',
+				NODE_ENV: 'production',
 			},
 		});
 	});

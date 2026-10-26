@@ -4,6 +4,7 @@ import { DiscordAPIError } from 'discord.js';
 import { max } from 'drizzle-orm';
 
 import type { Dispatcher, DispatcherContext, Stores } from '~/dispatchers/types';
+import { auditTelemetry, type AuditTelemetry } from '~/lib/audit-telemetry';
 import { buildAuditEmbed, buildFallbackEmbed } from '~/dispatchers/audit-embed';
 import { AUDIT_LOG_CHANNEL_ID } from '~/lib/constants';
 import type { Database } from '~/db/database';
@@ -36,11 +37,18 @@ async function pendingEvents(stores: Stores, channelId: string): Promise<AuditEv
 	return stores.web.eventsAfter(last, PAGE);
 }
 
-async function markPosted(db: Database, id: number, message: Message) {
+// Both a fresh post and an adopted one pass through here once, so each event is exported once.
+async function markPosted(
+	db: Database,
+	telemetry: AuditTelemetry,
+	event: AuditEvent,
+	message: Message,
+) {
 	await db
 		.insert(auditPost)
-		.values({ eventId: id, channelId: message.channelId, messageId: message.id })
+		.values({ eventId: event.id, channelId: message.channelId, messageId: message.id })
 		.onConflictDoNothing();
+	telemetry.emit(event, buildAuditEmbed(event).title ?? event.kind);
 }
 
 // The creation time ties a message to this event, not to an older event that reused its id.
@@ -63,6 +71,7 @@ async function recoverPosted(
 	channel: SendableChannels,
 	pending: AuditEvent[],
 	context: DispatcherContext,
+	telemetry: AuditTelemetry,
 ) {
 	const messages = [...(await channel.messages.fetch({ limit: RECOVERY_WINDOW })).values()];
 	const unposted: AuditEvent[] = [];
@@ -76,7 +85,7 @@ async function recoverPosted(
 			continue;
 		}
 
-		await markPosted(context.db, event.id, message);
+		await markPosted(context.db, telemetry, event, message);
 	}
 
 	return unposted;
@@ -108,9 +117,13 @@ async function post(channel: SendableChannels, event: AuditEvent) {
 /**
  * @description Creates the dispatcher that posts each moderation event once, in id order, to the audit log channel.
  * @param channelId The audit log channel's id.
+ * @param telemetry Where each posted event is also exported, as an OpenTelemetry log.
  * @returns The `audit_event` dispatcher.
  */
-export function createAuditDispatcher(channelId: string = AUDIT_LOG_CHANNEL_ID): Dispatcher {
+export function createAuditDispatcher(
+	channelId: string = AUDIT_LOG_CHANNEL_ID,
+	telemetry: AuditTelemetry = auditTelemetry,
+): Dispatcher {
 	async function resolveChannel(client: Client<true>) {
 		const channel = await client.channels.fetch(channelId);
 
@@ -125,10 +138,10 @@ export function createAuditDispatcher(channelId: string = AUDIT_LOG_CHANNEL_ID):
 	async function postPending(context: DispatcherContext) {
 		for (let pending = await pendingEvents(context, channelId); pending.length;) {
 			const channel = await resolveChannel(context.client);
-			const unposted = await recoverPosted(channel, pending, context);
+			const unposted = await recoverPosted(channel, pending, context, telemetry);
 
 			for (const event of unposted) {
-				await markPosted(context.db, event.id, await post(channel, event));
+				await markPosted(context.db, telemetry, event, await post(channel, event));
 			}
 
 			if (pending.length < PAGE) return;

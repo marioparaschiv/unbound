@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "bun scripts/migrate.ts && bun --watch src/index.ts",
+		"dev": "bun scripts/migrate.ts && NODE_ENV=development bun --watch src/index.ts",
 		"start": "bun scripts/migrate.ts && bun src/index.ts",
 		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p .",
 		"db:generate": "drizzle-kit generate",
@@ -12,6 +12,10 @@
 		"db:move-data": "bun scripts/move-data.ts"
 	},
 	"dependencies": {
+		"@opentelemetry/api": "^1.10.0",
+		"@opentelemetry/exporter-logs-otlp-http": "^0.300.0",
+		"@opentelemetry/resources": "^3.0.0",
+		"@opentelemetry/sdk-logs": "^3.0.0",
 		"@sapphire/decorators": "^6.2.0",
 		"@sapphire/discord.js-utilities": "^7.3.3",
 		"@sapphire/framework": "^5.5.1",

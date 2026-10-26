@@ -143,7 +143,7 @@ describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake 
 		await Bun.sleep(100);
 
 		const notes = auditLog.messages.filter(
-			(message) => message.embeds[0]?.description === 'Delisted for a broken build.',
+			(message) => message.embeds[0]?.description === '> Delisted for a broken build.',
 		);
 
 		expect(notes).toHaveLength(1);
