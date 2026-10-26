@@ -46,7 +46,7 @@
 		"test:s3": "bun scripts/test-s3.ts",
 		"lint": "bun run lint:js && bun run loader:lint",
 		"lint:js": "bun run lint:rules && bun run --filter @unbound-app/web build:types && oxlint --config .oxlintrc.json --type-aware apps packages && bun run plugins:lint",
-		"typecheck": "bun run --filter '*' typecheck",
+		"typecheck": "bun run --cwd apps/web typecheck && bun run --cwd apps/discord-bot typecheck && bun run --cwd packages/cli typecheck && bun run --cwd packages/client typecheck",
 		"lint:fix": "bun run lint:rules && bun run --filter @unbound-app/web build:types && oxlint --config .oxlintrc.json --type-aware --fix-dangerously apps packages",
 		"lint:rules": "oxc-config-check .oxlintrc.json",
 		"fmt": "bun run fmt:js && bun run loader:fmt",
