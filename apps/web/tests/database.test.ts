@@ -119,6 +119,33 @@ describe('migrateDatabase', () => {
 	});
 });
 
+describe('createTestContext', () => {
+	async function testDatabases(): Promise<Set<string>> {
+		const rows = await ctx.db.$client<{ datname: string }[]>`
+			select datname from pg_database where datname like 'unbound_web_test_%'`;
+
+		return new Set(rows.map((row) => row.datname));
+	}
+
+	test('drops its database when it fails to start', async () => {
+		const before = await testDatabases();
+
+		expect(await failure(createTestContext({ ADDON_LIST_PAGE_SIZE: 'many' }))).toBeDefined();
+
+		let leaked: string[] = [];
+
+		for (let i = 0; i < 20; i++) {
+			leaked = [...(await testDatabases())].filter((name) => !before.has(name));
+
+			if (leaked.length === 0) break;
+
+			await Bun.sleep(100);
+		}
+
+		expect(leaked).toEqual([]);
+	});
+});
+
 describe('createDatabase', () => {
 	test('enforces foreign keys', async () => {
 		const insert = ctx.db

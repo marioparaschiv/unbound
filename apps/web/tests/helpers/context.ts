@@ -6,7 +6,7 @@ import { createDatabase } from '~/db/database';
 import { migrateDatabase } from '~/db/migrate';
 import { DISCORD_EPOCH } from '~/lib/discord';
 import { CLI_CLIENT_ID } from '~/api/client';
-import type { EnvSource } from '~/lib/env';
+import type { Env, EnvSource } from '~/lib/env';
 import { parseEnv } from '~/lib/env';
 
 import { createTestDatabase } from './database';
@@ -77,15 +77,22 @@ export type SignedInUser = {
  */
 export async function createTestContext(overrides: EnvSource = {}): Promise<TestContext> {
 	const database = await createTestDatabase();
+	let env: Env;
 
-	await migrateDatabase(database.url);
+	try {
+		await migrateDatabase(database.url);
+		env = parseEnv({
+			...TEST_ENV,
+			DATABASE_URL: database.url,
+			DATABASE_DIRECT_URL: database.url,
+			...overrides,
+		});
+	} catch (error) {
+		await database.drop();
 
-	const env = parseEnv({
-		...TEST_ENV,
-		DATABASE_URL: database.url,
-		DATABASE_DIRECT_URL: database.url,
-		...overrides,
-	});
+		throw error;
+	}
+
 	const db = createDatabase(env.DATABASE_URL);
 
 	return {
