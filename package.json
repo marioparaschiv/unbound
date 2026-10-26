@@ -25,7 +25,7 @@
 			"packages/plugins-shared"
 		],
 		"catalog": {
-			"typescript": "^5.9.3",
+			"typescript": "^7.0.2",
 			"possess": "^1.1.0",
 			"@types/bun": "latest",
 			"better-auth": "1.7.12"
