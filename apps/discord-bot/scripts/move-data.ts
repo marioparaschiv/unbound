@@ -33,8 +33,11 @@ type TableSpec = {
 
 type Side = 'source' | 'target';
 
-/** A table's rows by key, each with its canonical line. */
-type Snapshot = Map<string, { row: Row; line: string }>;
+/** One row with its canonical line, the form both sides are compared and hashed in. */
+type CanonicalRow = { row: Row; line: string };
+
+/** A table's rows by key. */
+type Snapshot = Map<string, CanonicalRow>;
 
 export type TableReport = {
 	name: string;
