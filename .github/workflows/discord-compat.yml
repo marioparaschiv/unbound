@@ -67,16 +67,13 @@ jobs:
 
             - name: Download Discord for iOS
               if: env.IOS_SOURCE != 'none'
-              env:
-                  DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
-              run: |
-                  set -euo pipefail
-                  if [ "$IOS_SOURCE" = appstore ]; then
-                    go run ./tools fetch --base-url "$DKRYPT_BASE_URL" --bundle-id com.hammerandchisel.discord --output discord.ipa
-                  else
-                    IPA_DIR="$RUNNER_TEMP/ipa" python3 ../../.agents/skills/dkrypt/scripts/fetch-ipa.py com.hammerandchisel.discord testflight
-                    mv "$RUNNER_TEMP"/ipa/*.ipa discord.ipa
-                  fi
+              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@26d8cd98861aa633725864121838febed58a4350
+              with:
+                  api-url: ${{ env.DKRYPT_BASE_URL }}
+                  api-key: ${{ secrets.DKRYPT_API_KEY }}
+                  bundle-id: com.hammerandchisel.discord
+                  channel: ${{ env.IOS_SOURCE }}
+                  output: packages/loader/discord.ipa
 
             - name: Find the platform SDKs
               id: sdks

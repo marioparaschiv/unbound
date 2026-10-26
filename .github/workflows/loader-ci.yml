@@ -148,11 +148,12 @@ jobs:
                   path: packages/loader/packages
 
             - name: Fetch pinned Discord fixture
-              env:
-                  DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
-                  DISCORD_VERSION: ${{ matrix.version }}
-              run: |
-                  go run ./tools fetch --base-url https://ipa.dylib.dev --bundle-id com.hammerandchisel.discord --version "$DISCORD_VERSION" --output discord.ipa
+              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@26d8cd98861aa633725864121838febed58a4350
+              with:
+                  api-key: ${{ secrets.DKRYPT_API_KEY }}
+                  bundle-id: com.hammerandchisel.discord
+                  version: ${{ matrix.version }}
+                  output: packages/loader/discord.ipa
 
             - name: Restore the packaging tools
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9

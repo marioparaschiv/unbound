@@ -1,206 +1,215 @@
 name: Loader Poll Discord releases
 
 on:
-  schedule:
-    - cron: '17 */3 * * *'
-  workflow_dispatch:
+    schedule:
+        - cron: '17 */3 * * *'
+    workflow_dispatch:
 
 permissions:
-  contents: read
+    contents: read
 
 concurrency:
-  group: discord-release-poll-${{ github.ref }}
-  cancel-in-progress: false
+    group: discord-release-poll-${{ github.ref }}
+    cancel-in-progress: false
 
 defaults:
-  run:
-    working-directory: packages/loader
+    run:
+        working-directory: packages/loader
 
 jobs:
-  stable-candidate:
-    runs-on: ubuntu-26.04
-    timeout-minutes: 10
-    outputs:
-      version: ${{ steps.candidate.outputs.version }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+    stable-candidate:
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        outputs:
+            version: ${{ steps.candidate.outputs.version }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+            - name: Resolve stable candidate
+              id: candidate
+              env:
+                  GITHUB_REPOSITORY: ${{ github.repository }}
+                  GITHUB_TOKEN: ${{ github.token }}
+              run: go run ./tools release-candidate --channel stable
+
+    testflight-candidate:
+        runs-on: ubuntu-26.04
+        timeout-minutes: 20
+        outputs:
+            version: ${{ steps.candidate.outputs.version }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+            - name: Decrypt the latest TestFlight build
+              id: testflight
+              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@26d8cd98861aa633725864121838febed58a4350
+              with:
+                  api-url: ${{ vars.DKRYPT_BASE_URL || 'https://ipa.dylib.dev' }}
+                  api-key: ${{ secrets.DKRYPT_API_KEY }}
+                  bundle-id: com.hammerandchisel.discord
+                  channel: testflight
+                  output: ${{ runner.temp }}/testflight.ipa
+
+            - name: Resolve TestFlight candidate
+              id: candidate
+              env:
+                  GITHUB_REPOSITORY: ${{ github.repository }}
+                  GITHUB_TOKEN: ${{ github.token }}
+                  TESTFLIGHT_VERSION: ${{ steps.testflight.outputs.version }}
+              run: go run ./tools release-candidate --channel testflight --version "$TESTFLIGHT_VERSION"
+
+    android-beta-candidate:
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        outputs:
+            version: ${{ steps.candidate.outputs.version }}
+            android_code: ${{ steps.candidate.outputs.android_code }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+            - name: Resolve Android beta candidate
+              id: candidate
+              env:
+                  DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
+                  GITHUB_REPOSITORY: ${{ github.repository }}
+                  GITHUB_TOKEN: ${{ github.token }}
+              run: go run ./tools release-candidate --channel android-beta
+
+    android-alpha-candidate:
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        outputs:
+            version: ${{ steps.candidate.outputs.version }}
+            android_code: ${{ steps.candidate.outputs.android_code }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+            - name: Resolve Android alpha candidate
+              id: candidate
+              env:
+                  DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
+                  GITHUB_REPOSITORY: ${{ github.repository }}
+                  GITHUB_TOKEN: ${{ github.token }}
+              run: go run ./tools release-candidate --channel android-alpha
+
+    stable-release:
+        needs: stable-candidate
+        if: needs.stable-candidate.outputs.version != ''
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        uses: ./.github/workflows/loader-build.yml
         with:
-          cache: false
-          go-version-file: packages/loader/go.mod
-      - name: Cache Go builds
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+            version: ${{ needs.stable-candidate.outputs.version }}
+            release: true
+            is_testflight: false
+        secrets: inherit
+
+    testflight-release:
+        needs: [testflight-candidate, stable-release]
+        if: always() && needs.testflight-candidate.outputs.version != ''
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        uses: ./.github/workflows/loader-build.yml
         with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            version: ${{ needs.testflight-candidate.outputs.version }}
+            release: true
+            is_testflight: true
+        secrets: inherit
 
-      - name: Resolve stable candidate
-        id: candidate
-        env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ github.token }}
-        run: go run ./tools release-candidate --channel stable
-
-  testflight-candidate:
-    runs-on: ubuntu-26.04
-    timeout-minutes: 20
-    outputs:
-      version: ${{ steps.candidate.outputs.version }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+    android-beta-release:
+        needs: [android-beta-candidate, testflight-release]
+        if: always() && needs.android-beta-candidate.outputs.version != ''
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        uses: ./.github/workflows/loader-build.yml
         with:
-          cache: false
-          go-version-file: packages/loader/go.mod
-      - name: Cache Go builds
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+            version: ${{ needs.android-beta-candidate.outputs.version }}
+            release: true
+            android_channel: beta
+            android_code: ${{ needs.android-beta-candidate.outputs.android_code }}
+        secrets: inherit
+
+    android-alpha-release:
+        needs: [android-alpha-candidate, android-beta-release]
+        if: always() && needs.android-alpha-candidate.outputs.version != ''
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        uses: ./.github/workflows/loader-build.yml
         with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Resolve TestFlight candidate
-        id: candidate
-        env:
-          DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
-          DKRYPT_BASE_URL: ${{ vars.DKRYPT_BASE_URL || 'https://ipa.dylib.dev' }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ github.token }}
-        run: go run ./tools release-candidate --channel testflight
-
-  android-beta-candidate:
-    runs-on: ubuntu-26.04
-    timeout-minutes: 10
-    outputs:
-      version: ${{ steps.candidate.outputs.version }}
-      android_code: ${{ steps.candidate.outputs.android_code }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-        with:
-          cache: false
-          go-version-file: packages/loader/go.mod
-      - name: Cache Go builds
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Resolve Android beta candidate
-        id: candidate
-        env:
-          DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ github.token }}
-        run: go run ./tools release-candidate --channel android-beta
-
-  android-alpha-candidate:
-    runs-on: ubuntu-26.04
-    timeout-minutes: 10
-    outputs:
-      version: ${{ steps.candidate.outputs.version }}
-      android_code: ${{ steps.candidate.outputs.android_code }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-        with:
-          cache: false
-          go-version-file: packages/loader/go.mod
-      - name: Cache Go builds
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Resolve Android alpha candidate
-        id: candidate
-        env:
-          DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ github.token }}
-        run: go run ./tools release-candidate --channel android-alpha
-
-  stable-release:
-    needs: stable-candidate
-    if: needs.stable-candidate.outputs.version != ''
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    uses: ./.github/workflows/loader-build.yml
-    with:
-      version: ${{ needs.stable-candidate.outputs.version }}
-      release: true
-      is_testflight: false
-    secrets: inherit
-
-  testflight-release:
-    needs: [testflight-candidate, stable-release]
-    if: always() && needs.testflight-candidate.outputs.version != ''
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    uses: ./.github/workflows/loader-build.yml
-    with:
-      version: ${{ needs.testflight-candidate.outputs.version }}
-      release: true
-      is_testflight: true
-    secrets: inherit
-
-  android-beta-release:
-    needs: [android-beta-candidate, testflight-release]
-    if: always() && needs.android-beta-candidate.outputs.version != ''
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    uses: ./.github/workflows/loader-build.yml
-    with:
-      version: ${{ needs.android-beta-candidate.outputs.version }}
-      release: true
-      android_channel: beta
-      android_code: ${{ needs.android-beta-candidate.outputs.android_code }}
-    secrets: inherit
-
-  android-alpha-release:
-    needs: [android-alpha-candidate, android-beta-release]
-    if: always() && needs.android-alpha-candidate.outputs.version != ''
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    uses: ./.github/workflows/loader-build.yml
-    with:
-      version: ${{ needs.android-alpha-candidate.outputs.version }}
-      release: true
-      android_channel: alpha
-      android_code: ${{ needs.android-alpha-candidate.outputs.android_code }}
-    secrets: inherit
+            version: ${{ needs.android-alpha-candidate.outputs.version }}
+            release: true
+            android_channel: alpha
+            android_code: ${{ needs.android-alpha-candidate.outputs.android_code }}
+        secrets: inherit
