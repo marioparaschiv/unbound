@@ -23,7 +23,8 @@ type SeededSession = {
 	cookie: string;
 };
 
-const ROLES = ['user', 'developer', 'moderator', 'admin'] as const;
+// `ci` is the account CI's API key belongs to; it publishes first-party addons.
+const ROLES = ['user', 'developer', 'moderator', 'admin', 'ci'] as const;
 // seedSubmission records 1024-byte bundles, so the staged and published bytes match that size.
 const BUNDLE = new TextEncoder().encode(`console.log('verify-web');\n`.padEnd(1024, ' '));
 const SHA256 = new Bun.CryptoHasher('sha256').update(BUNDLE).digest('hex');

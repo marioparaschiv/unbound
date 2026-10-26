@@ -21,12 +21,13 @@ It is ready when it prints `ready: http://verify-web-<name>.localhost:<port>`, a
 
 Seed data (`scripts/seed.ts`):
 
-| Thing              | Value                                                                                                                                                                                                                                                                    |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Users              | `Verify User` (user), `Verify Developer` (developer), `Verify Moderator` (moderator), `Verify Admin` (admin). Each has a Discord account dated 2020, so the 30-day account-age gate passes, and a linked GitHub account that can push to `verify/addons`.                |
-| Fake GitHub        | `scripts/fake-github.ts` in the instance's tmux session (window `github`) serves `verify/addons`: a workspace with `plugins/verify.new` 0.1.0, `plugins/verify.hello` 1.1.0 and `plugins/verify.broken` (bundle not committed), tag `v1`. `GITHUB_API_URL` points at it. |
-| Approved addon     | `verify.hello` 1.0.0, plugin, owned by Verify Developer. Its manifest and bundle are on the MinIO CDN.                                                                                                                                                                   |
-| Pending submission | `verify.pending` 0.1.0, new listing by Verify User, pinned to `verify/addons` (a seeded pin, not a real commit there). Its 1024-byte bundle is staged with a matching sha256, so Approve really publishes.                                                               |
+| Thing              | Value                                                                                                                                                                                                                                                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Users              | `Verify User` (user), `Verify Developer` (developer), `Verify Moderator` (moderator), `Verify Admin` (admin), `Verify Ci` (ci, the account CI's API key belongs to). Each has a Discord account dated 2020, so the 30-day account-age gate passes, and a linked GitHub account that can push to `verify/addons`. |
+| Fake GitHub        | `scripts/fake-github.ts` in the instance's tmux session (window `github`) serves `verify/addons`: a workspace with `plugins/verify.new` 0.1.0, `plugins/verify.hello` 1.1.0 and `plugins/verify.broken` (bundle not committed), tag `v1`. `GITHUB_API_URL` points at it.                                         |
+| First party        | `FIRST_PARTY_REPOSITORY` is `verify/first-party` on the fake GitHub: `plugins/verify.first` 0.1.0, with its build on a commit only the tag `plugin-builds/<main sha>` reaches. `github.log` prints the line `first-party build: {…}`, which is the publish request body.                                         |
+| Approved addon     | `verify.hello` 1.0.0, plugin, owned by Verify Developer. Its manifest and bundle are on the MinIO CDN.                                                                                                                                                                                                           |
+| Pending submission | `verify.pending` 0.1.0, new listing by Verify User, pinned to `verify/addons` (a seeded pin, not a real commit there). Its 1024-byte bundle is staged with a matching sha256, so Approve really publishes.                                                                                                       |
 
 ## Sign in
 
@@ -37,7 +38,12 @@ scripts/session.sh moderator                 # preview_evaluate expression that 
 scripts/session.sh admin --field token       # bearer token for curl: -H "authorization: Bearer $T"
 ```
 
-Roles: `user`, `developer`, `moderator`, `admin`. To switch roles in a tab, run the other role's expression.
+Roles: `user`, `developer`, `moderator`, `admin`, `ci`. To switch roles in a tab, run the other role's expression.
+
+API keys for curl journeys:
+
+- CI's first-party key: `curl -X POST $URL/api/auth/api-key/create -H "authorization: Bearer $(scripts/session.sh ci --field token)" -H 'content-type: application/json' -d '{"name":"ci"}'`. Send `key` as `x-api-key` to `/api/v1/first-party/addons` and `/api/v1/first-party/publish`.
+- The bot's key: in `apps/web`, run `set -a; . /tmp/verify-web/<name>/web.env; set +a; bun run bot:mint-key`. It prints the key last. Send it as `x-api-key` to `/api/v1/bot/*`.
 
 ## Doctor
 
