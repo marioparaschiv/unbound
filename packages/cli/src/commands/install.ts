@@ -1,14 +1,12 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { getBundleName } from '@unbound-app/contracts/workspace';
-import { spawnSync } from 'node:child_process';
-import { join } from 'node:path';
 import { z } from 'zod';
 
+import { installOnAndroid } from '~/lib/android-install';
+import { readPluginPayload } from '~/lib/plugin-install';
 import { resolveAddonTarget } from '~/lib/addon-target';
-import { readBuiltAddon } from '~/lib/reload-transport';
+import { installOnIOS } from '~/lib/ios-install';
 
-const PLUGINS_DIRECTORY = '/data/data/com.discord/files/Unbound/Plugins';
-const STAGING_DIRECTORY = '/data/local/tmp';
+const BUILD_TIMEOUT_MS = 300_000;
 
 const schema = z.object({
 	addon: z
@@ -19,57 +17,55 @@ const schema = z.object({
 	serial: z
 		.string()
 		.optional()
-		.describe('The adb serial of the device, when several are attached.'),
+		.describe('The adb serial of the Android device, when several are attached.'),
+	ios: z
+		.boolean()
+		.default(false)
+		.describe('Install on a jailbroken iPhone through jb-p1lot instead of over adb.'),
+	udid: z
+		.string()
+		.optional()
+		.describe('The UDID of the iPhone, when several are connected. Implies --ios.'),
+	restart: z
+		.boolean()
+		.default(false)
+		.describe('Restart Discord afterwards so it loads the plugin.'),
 });
-
-function adb(serial: string | undefined, args: string[]) {
-	return spawnSync('adb', [...(serial ? ['-s', serial] : []), ...args], { encoding: 'utf8' });
-}
 
 const installCommand: CommandDefinition<typeof schema> = {
 	name: 'install',
 	description:
 		"Build one plugin and copy it into Discord's plugin folder on a rooted Android device or " +
-		'emulator over adb, so the next cold start loads it. Use `push` to hot-reload instead.',
+		'emulator over adb, or on a jailbroken iPhone through jb-p1lot, so the next cold start loads ' +
+		'it. Pass `restart` to relaunch Discord right away. Use `push` to hot-reload instead.',
 	surfaces: { cli: 'root', mcp: true },
 	schema,
 	cli: { positionals: ['addon'] },
-	async handler({ addon: target, build, serial }) {
-		const resolved = await resolveAddonTarget(target, build);
+	async handler({ addon: target, build, serial, ios, udid, restart }) {
+		const onIOS = ios || udid !== void 0;
+
+		if (onIOS && serial !== void 0) {
+			return {
+				ok: false,
+				text: 'Pass either --serial for an Android device or --ios/--udid for an iPhone, not both.',
+			};
+		}
+
+		const resolved = await resolveAddonTarget(target, build, BUILD_TIMEOUT_MS);
 
 		if ('error' in resolved) {
 			return { ok: false, text: resolved.error };
 		}
 
-		const { addon } = resolved;
-		const { manifest } = readBuiltAddon(addon);
-		const files = ['manifest.json', getBundleName(addon.static, manifest.main)];
-		const destination = `${PLUGINS_DIRECTORY}/${addon.id}`;
+		const plugin = readPluginPayload(resolved.addon);
 
-		for (const file of files) {
-			const pushed = adb(serial, [
-				'push',
-				join(addon.output, file),
-				`${STAGING_DIRECTORY}/${addon.id}-${file}`,
-			]);
-
-			if (pushed.status !== 0) {
-				return { ok: false, text: pushed.stderr || pushed.stdout };
-			}
+		if ('error' in plugin) {
+			return { ok: false, text: plugin.error };
 		}
 
-		const copy = files
-			.map((file) => `cp ${STAGING_DIRECTORY}/${addon.id}-${file} ${destination}/${file}`)
-			.join(' && ');
-		const script = `mkdir -p ${destination} && ${copy} && chown -R $(stat -c %u:%g ${PLUGINS_DIRECTORY}) ${destination} && chmod 600 ${destination}/*`;
-		const installed = adb(serial, ['shell', `su -c '${script}'`]);
-
-		return installed.status === 0
-			? {
-					ok: true,
-					text: `Installed ${addon.id} into ${destination}. Restart Discord to load it.`,
-				}
-			: { ok: false, text: installed.stderr || installed.stdout };
+		return onIOS
+			? installOnIOS(plugin, { udid, restart })
+			: installOnAndroid(plugin, { serial, restart });
 	},
 };
 

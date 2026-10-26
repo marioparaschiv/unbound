@@ -1,8 +1,8 @@
 import { isWorkspaceAddon, matchAddonDirs, readAddon } from '@unbound-app/contracts/workspace';
 import type { WorkspaceAddon, WorkspaceFiles } from '@unbound-app/contracts/workspace';
 import { existsSync, readFileSync } from 'node:fs';
-import { join, posix, sep } from 'node:path';
-import { glob } from 'node:fs/promises';
+import { readdir } from 'node:fs/promises';
+import { join } from 'node:path';
 
 import type { ResolvedConfig } from '~/lib/config';
 
@@ -56,20 +56,23 @@ function listBareCandidates(root: string): string[] {
 	return existsSync(join(root, 'manifest.json')) ? [''] : [];
 }
 
-async function listManifestDirs(root: string): Promise<string[]> {
-	const dirs: string[] = [];
+async function listManifestDirs(root: string, relative = ''): Promise<string[]> {
+	const entries = await readdir(join(root, relative), { withFileTypes: true });
+	const dirs = entries.some((entry) => entry.isFile() && entry.name === 'manifest.json')
+		? [relative]
+		: [];
 
-	for await (const match of glob('**/manifest.json', { cwd: root, exclude: isIgnored })) {
-		const dir = posix.dirname(match.split(sep).join('/'));
+	for (const entry of entries) {
+		if (!entry.isDirectory() || IGNORED_SEGMENTS.has(entry.name)) {
+			continue;
+		}
 
-		dirs.push(dir === '.' ? '' : dir);
+		dirs.push(
+			...(await listManifestDirs(root, relative ? `${relative}/${entry.name}` : entry.name)),
+		);
 	}
 
 	return dirs;
-}
-
-function isIgnored(path: string): boolean {
-	return path.split(sep).some((segment) => IGNORED_SEGMENTS.has(segment));
 }
 
 export default discoverAddons;

@@ -215,6 +215,14 @@ func TestParsedCompatScansDoNotCancelEachOther(t *testing.T) {
 	}
 }
 
+func TestParsedAndroidBuildRunsTheModuleUnitTests(t *testing.T) {
+	module := loadWorkflow(t, "loader-android.yml").job(t, "build-module")
+	test := module.step(t, "Test module")
+	if !strings.Contains(test.Run, ":module:testDebugUnitTest") {
+		t.Fatalf("the module build must run the Kotlin unit tests, runs %q", test.Run)
+	}
+}
+
 func TestOnlyTheStableScanTracksRemovableLegacyNames(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "discord-compat.yml"))
 	if err != nil {

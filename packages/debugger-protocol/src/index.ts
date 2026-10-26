@@ -11,6 +11,7 @@ export type EvalRequest = {
 	/** Correlation id echoed back on the matching {@link EvalResult}. */
 	id: string;
 	code: string;
+	timeout?: number;
 };
 
 /** The outcome of an {@link EvalRequest}, sent device → bridge → the one waiting controller. */
@@ -79,6 +80,10 @@ export type BridgeMessage =
 /** The default port the bridge listens on and controllers dial. */
 export const DEFAULT_BRIDGE_PORT = 9090;
 
+export const DEFAULT_EVAL_TIMEOUT_MS = 10_000;
+
+export const MAX_EVAL_TIMEOUT_MS = 86_400_000;
+
 /** The query marker a controller appends to its URL so the bridge routes it as a controller, not a device. */
 export const CONTROLLER_ENDPOINT_MARKER = 'mcp';
 
@@ -129,6 +134,8 @@ export function serializeMessage(message: BridgeMessage): string {
 }
 export default {
 	DEFAULT_BRIDGE_PORT,
+	DEFAULT_EVAL_TIMEOUT_MS,
+	MAX_EVAL_TIMEOUT_MS,
 	CONTROLLER_ENDPOINT_MARKER,
 	parseMessage,
 	serializeMessage,
