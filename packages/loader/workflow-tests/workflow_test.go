@@ -214,3 +214,11 @@ func TestParsedCompatScansDoNotCancelEachOther(t *testing.T) {
 		t.Fatalf("dispatched channels must not share one concurrency group, group is %q", workflow.Concurrency.Group)
 	}
 }
+
+func TestParsedAndroidBuildRunsTheModuleUnitTests(t *testing.T) {
+	module := loadWorkflow(t, "loader-android.yml").job(t, "build-module")
+	test := module.step(t, "Test module")
+	if !strings.Contains(test.Run, ":module:testDebugUnitTest") {
+		t.Fatalf("the module build must run the Kotlin unit tests, runs %q", test.Run)
+	}
+}
