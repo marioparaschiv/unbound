@@ -9,7 +9,6 @@
 		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p .",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "bun scripts/migrate.ts",
-		"db:provision": "psql -X -v ON_ERROR_STOP=1 -f scripts/provision.sql",
 		"db:move-data": "bun scripts/move-data.ts"
 	},
 	"dependencies": {
