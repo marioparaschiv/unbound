@@ -266,4 +266,57 @@ describe('ordered ids', () => {
 
 		expect(rows.map((row) => row.key)).toEqual(['feed-a', 'feed-b']);
 	});
+
+	test('bot feed changed_at never goes backwards along seq', async () => {
+		for (const id of ['stamp-a', 'stamp-b', 'stamp-c']) {
+			await seedUser(id);
+		}
+
+		await ctx.db.insert(addon).values({
+			id: 'stamped',
+			type: 'plugin',
+			name: 'Stamped',
+			description: '',
+			updatedAt: new Date(),
+		});
+
+		const holdFirst = gate();
+		const firstInserted = gate();
+
+		function addMaintainer(tx: Transaction, userId: string) {
+			return tx
+				.insert(addonMaintainer)
+				.values({ addonId: 'stamped', userId, role: 'maintainer' });
+		}
+
+		const firstTx = ctx.db.transaction(async (tx) => {
+			await addMaintainer(tx, 'stamp-a');
+			firstInserted.open();
+			await holdFirst.promise;
+			await addMaintainer(tx, 'stamp-c');
+		});
+
+		await firstInserted.promise;
+
+		// Its statement starts before the first transaction's second touch, then waits for that commit.
+		const secondTx = ctx.db.transaction(async (tx) => {
+			await addMaintainer(tx, 'stamp-b');
+		});
+
+		await waitForLockWaiters(1);
+		await Bun.sleep(5);
+		holdFirst.open();
+		await firstTx;
+		await secondTx;
+
+		const rows = await ctx.db
+			.select({ key: botFeedChange.key, changedAt: botFeedChange.changedAt })
+			.from(botFeedChange)
+			.where(sql`${botFeedChange.key} in ('stamp-a', 'stamp-b', 'stamp-c')`)
+			.orderBy(botFeedChange.seq);
+		const stamps = rows.map((row) => row.changedAt.getTime());
+
+		expect(rows.map((row) => row.key)).toEqual(['stamp-a', 'stamp-c', 'stamp-b']);
+		expect(stamps).toEqual(stamps.toSorted((a, b) => a - b));
+	});
 });

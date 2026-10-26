@@ -4,12 +4,22 @@ ALTER SEQUENCE "moderation_event_id_seq" OWNED BY "moderation_event"."id";--> st
 ALTER SEQUENCE "bot_feed_change_seq" OWNED BY "bot_feed_change"."seq";--> statement-breakpoint
 -- Bot feeds: triggers move a key of `bot_feed_change` past every other key whenever one of its feed's
 -- inputs changes, read through `src/lib/bot/feed.ts`. They catch every writer, Better Auth included.
--- `DISTINCT`, because one INSERT … ON CONFLICT must not update a row twice.
+-- `DISTINCT`, because one INSERT … ON CONFLICT must not update a row twice. The stamp is read with the
+-- ordering lock held, so `changed_at` never goes backwards along `seq`.
 CREATE FUNCTION bot_feed_touch(p_feed text, p_keys text[]) RETURNS void
 LANGUAGE plpgsql AS $$
+DECLARE
+	stamp timestamptz;
 BEGIN
+	IF cardinality(p_keys) = 0 THEN
+		RETURN;
+	END IF;
+
+	PERFORM lock_ordered_ids();
+	stamp := clock_timestamp();
+
 	INSERT INTO bot_feed_change (feed, key, seq, changed_at)
-	SELECT p_feed, k, next_ordered_id('bot_feed_change_seq'), statement_timestamp()
+	SELECT p_feed, k, next_ordered_id('bot_feed_change_seq'), stamp
 	FROM (SELECT DISTINCT unnest(p_keys) AS k) keys
 	ON CONFLICT (feed, key) DO UPDATE SET seq = excluded.seq, changed_at = excluded.changed_at;
 END $$;--> statement-breakpoint
