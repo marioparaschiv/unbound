@@ -384,18 +384,19 @@ describe('admin list plans', () => {
 
 	// Order index vs trigram index plus sort is a cost call that differs between clusters. No user
 	// cursor: user_createdAt_idx serves its created_at range too.
-	test('a search reads the trigram index', async () => {
-		const statements: [Statement, string][] = [
-			[queryAdminUsers(ctx, { q: 'walker' }), 'user_search_idx'],
-			[queryAdminAddons(ctx, { q: 'walk.' }), 'addon_search_idx'],
+	test('a search reads the trigram index of the listed table, scanned once', async () => {
+		const statements: [Statement, string, string][] = [
+			[queryAdminUsers(ctx, { q: 'walker' }), 'user_search_idx', 'user'],
+			[queryAdminAddons(ctx, { q: 'walk.' }), 'addon_search_idx', 'addon'],
 		];
 
-		for (const [statement, index] of statements) {
+		for (const [statement, index, table] of statements) {
 			const nodes = await plan(statement, 'filter');
 			const scan = nodes.find((node) => node['Index Name'] === index);
 
 			expect(scan?.['Index Cond']).toMatch(/ ~~ /);
 			expect(types(nodes)).not.toContain('Seq Scan');
+			expect(nodes.filter((node) => node['Relation Name'] === table)).toHaveLength(1);
 		}
 	});
 });

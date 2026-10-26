@@ -7,7 +7,7 @@ import type { SQL } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
-import { addonMaintainer, submission } from '~/db/schema';
+import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
 import type { KeysetPage } from '~/lib/keyset';
 import { LIVE_VERSIONS, toAddon } from '~/lib/addons';
 import { requirePermission } from '~/lib/api/caller';
@@ -90,7 +90,7 @@ function filters(db: Database, table: typeof addon, search: AdminAddonsSearch) {
 		: undefined;
 
 	return [
-		q ? matchesSearch('addon', table.id, q) : undefined,
+		q ? matchesSearch(addonSearchText(table), q) : undefined,
 		type ? eq(table.type, type) : undefined,
 		status ? STATUS_FILTERS[status](db, table) : undefined,
 		maintained ? inArray(table.id, maintained) : undefined,

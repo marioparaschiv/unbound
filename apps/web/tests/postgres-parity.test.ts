@@ -2,7 +2,14 @@ import { and, asc, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { z } from 'zod';
 
-import { rateLimit, staffNote, submission, submissionSource, user } from '~/db/schema';
+import {
+	rateLimit,
+	staffNote,
+	submission,
+	submissionSource,
+	user,
+	userSearchText,
+} from '~/db/schema';
 import { matchesSearch } from '~/lib/admin-search';
 import { likeContains } from '~/lib/like-contains';
 import { afterKey, cursorTime, decodeCursor, encodeCursor } from '~/lib/keyset';
@@ -30,7 +37,7 @@ async function namesMatching(q: string, ids: string[]) {
 	const rows = await ctx.db
 		.select({ name: user.name })
 		.from(user)
-		.where(and(inArray(user.id, ids), matchesSearch('user', user.id, q)))
+		.where(and(inArray(user.id, ids), matchesSearch(userSearchText(user), q)))
 		.orderBy(asc(user.name));
 
 	return rows.map((row) => row.name);

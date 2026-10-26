@@ -8,6 +8,7 @@ import {
 	uniqueIndex,
 	primaryKey,
 } from 'drizzle-orm/pg-core';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import type {
 	ReviewDecision,
 	SubmissionKind,
@@ -60,12 +61,18 @@ export const addon = pgTable(
 		index('addon_delisted_createdAt_idx')
 			.on(table.createdAt, table.id)
 			.where(sql`${table.delistedAt} is not null`),
-		trigramIndex('addon_search_idx', addonSearchText),
+		trigramIndex('addon_search_idx', addonSearchText(table)),
 	],
 );
 
-/** The text admin search matches an addon by, and the expression `addon_search_idx` indexes. */
-export const addonSearchText: SQL = searchText([addon.id, addon.name]);
+/**
+ * @description Builds the text admin search matches an addon by, the expression `addon_search_idx` indexes.
+ * @param table The addon table or an alias of it.
+ * @returns The search text of the table's row.
+ */
+export function addonSearchText(table: Record<'id' | 'name', AnyPgColumn>): SQL {
+	return searchText([table.id, table.name]);
+}
 
 export const addonMaintainer = pgTable(
 	'addon_maintainer',

@@ -18,6 +18,7 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
 import { LIVE_VERSIONS } from '~/lib/addons';
+import { userSearchText } from '~/db/schema';
 import type { user } from '~/db/schema';
 
 export type AdminUser = {
@@ -94,7 +95,7 @@ export function queryAdminUsers(ctx: AppContext, search: AdminUsersSearch = {}) 
 		where: {
 			RAW: (table) =>
 				and(
-					q ? matchesSearch('user', table.id, q) : undefined,
+					q ? matchesSearch(userSearchText(table), q) : undefined,
 					after ? afterKey([table.createdAt, table.id], after, 'desc', dir) : undefined,
 				) ?? sql`true`,
 		},
