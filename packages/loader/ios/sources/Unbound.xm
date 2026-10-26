@@ -9,6 +9,7 @@
 #import "Discord.h"
 #import "HotReload.h"
 #include "LoaderBootstrap.h"
+#include "LoaderDiagnostics.h"
 #include "LoaderFonts.h"
 #import "LoaderJSI.h"
 #import "LoaderPipeline.h"
@@ -353,14 +354,10 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
             {
                 [Logger error:LOG_CATEGORY_DEFAULT
                        format:@"Embedded tweak attestation verification failed"];
-                [Utilities
-                      alert:@"The injected tweak failed Unbound's embedded integrity verification. "
-                            @"You cannot be sure that this is free of malware. "
-                            @"If this app was obtained via 'cypwn' or similar sources "
-                            @"we heavily recommend you uninstall it immediately."
-                      title:@"⚠️ SECURITY WARNING"
-                    timeout:15
-                    warning:YES];
+                [Utilities alert:@(loader::diagnostics::kAttestationWarningMessage)
+                           title:@(loader::diagnostics::kAttestationWarningTitle)
+                         timeout:loader::diagnostics::kAttestationWarningSeconds
+                         warning:YES];
                 return;
             }
             retryRCTInstanceHooks(0);
@@ -375,46 +372,37 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
                    ^{
                        if (![Utilities isLoadedWithElleKit])
                        {
-                           [Utilities alert:@"Warning: Tweak is not loaded through ElleKit. "
-                                            @"Functionality is not guaranteed."
-                                      title:@"Runtime Detection"];
+                           [Utilities alert:@(loader::diagnostics::kElleKitWarningMessage)
+                                      title:@(loader::diagnostics::kElleKitWarningTitle)];
                        }
                    });
 
     dispatch_after(
         dispatch_time(DISPATCH_TIME_NOW, 1.5 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            if (![Utilities isAppStoreApp] && ![Utilities isTestFlightApp] &&
-                ![Utilities isTrollStoreApp])
+            if (!loader::diagnostics::needsExtensionCheck([Utilities isAppStoreApp],
+                                                          [Utilities isTestFlightApp],
+                                                          [Utilities isTrollStoreApp]))
             {
-                [Logger info:LOG_CATEGORY_DEFAULT
-                      format:@"App is sideloaded, checking for critical extensions"];
+                return;
+            }
 
-                BOOL hasOpenInDiscord = [Utilities hasAppExtension:@"OpenInDiscord"];
-                BOOL hasShare         = [Utilities hasAppExtension:@"Share"];
+            [Logger info:LOG_CATEGORY_DEFAULT
+                  format:@"App is sideloaded, checking for critical extensions"];
 
-                if (!hasOpenInDiscord)
-                {
-                    [Logger info:LOG_CATEGORY_DEFAULT
-                          format:@"OpenInDiscord extension missing, showing alert"];
-                    [Utilities alert:@"The Safari extension (OpenInDiscord.appex) is missing. "
-                                     @"You won't be able to open Discord links directly in the app."
-                               title:@"Missing Safari Extension"];
-                }
+            BOOL hasOpenInDiscord =
+                [Utilities hasAppExtension:@(loader::diagnostics::kSafariExtensionName)];
+            BOOL hasShare = [Utilities hasAppExtension:@(loader::diagnostics::kShareExtensionName)];
 
-                if (!hasShare)
-                {
-                    [Logger info:LOG_CATEGORY_DEFAULT
-                          format:@"Share extension missing, showing alert"];
-                    [Utilities alert:@"The Share extension (Share.appex) is missing. "
-                                     @"You won't be able to receive shared media and files "
-                                     @"from other apps through the share sheet."
-                               title:@"Missing Share Extension"];
-                }
+            for (const auto &warning :
+                 loader::diagnostics::missingExtensionWarnings(hasOpenInDiscord, hasShare))
+            {
+                [Logger info:LOG_CATEGORY_DEFAULT format:@"%@", toNSString(warning.logMessage)];
+                [Utilities alert:toNSString(warning.message) title:toNSString(warning.title)];
+            }
 
-                if (hasOpenInDiscord && hasShare)
-                {
-                    [Logger info:LOG_CATEGORY_DEFAULT format:@"All critical extensions present"];
-                }
+            if (hasOpenInDiscord && hasShare)
+            {
+                [Logger info:LOG_CATEGORY_DEFAULT format:@"All critical extensions present"];
             }
         });
 
