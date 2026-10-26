@@ -3,6 +3,8 @@ import { and, eq, max } from 'drizzle-orm';
 
 import type { Database, Transaction, TransactionBody } from '~/db/database';
 import { deleteUserWithRecord } from '~/lib/moderation-events';
+import { upsertSponsorship } from '~/lib/sponsors/sponsorships';
+import type { Sponsorship } from '~/lib/sponsors/standing';
 import { account, botFeedChange } from '~/db/schema';
 
 import {
@@ -326,6 +328,17 @@ describe('webhook racing a GitHub link', () => {
 
 		expect(await statusOf(await delivery)).toEqual({ code: 200, body: { status: 'applied' } });
 		expect(await memberSeq(userId)).toBeGreaterThan(linkSeq);
+	});
+});
+
+describe('sponsorship writes', () => {
+	test('accept only a transaction that locked account first', () => {
+		function plain(row: Sponsorship) {
+			// @ts-expect-error A plain transaction skips the account lock the sponsorship feed trigger needs.
+			return ctx.db.transaction((tx) => upsertSponsorship(tx, row));
+		}
+
+		expect(plain).toBeFunction();
 	});
 });
 
