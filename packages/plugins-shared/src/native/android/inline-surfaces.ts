@@ -105,7 +105,7 @@ export function createInlineSurfaces(
 		const context = javaReference(java.invoke(entry.textView, 'getContext', []));
 		const group: Group = { id: `${options.groupPrefix}-${nextGroup++}`, hosts: [], mounts: [] };
 
-		for (const slot of entry.slots) {
+		for (const [index, slot] of entry.slots.entries()) {
 			const host = java.construct('android.widget.FrameLayout', context ? [context] : []);
 			const mount = fabric
 				.mountAsync(host, options.surfaceModule, { surfaceId: slot.surfaceId })
@@ -114,8 +114,10 @@ export function createInlineSurfaces(
 			group.hosts.push(host);
 			group.mounts.push(mount);
 			void mount.then(() => {
-				if (!disposed && entry.groups.includes(group)) {
-					active.addHost(group.id, entry.rendered, host, anchorOf(slot));
+				const current = entry.slots[index];
+
+				if (!disposed && current && entry.groups.includes(group)) {
+					active.addHost(group.id, entry.rendered, host, anchorOf(current));
 				}
 			});
 		}
