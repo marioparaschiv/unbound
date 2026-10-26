@@ -14,7 +14,7 @@ import {
 import { reviewSubmission } from '../../../../apps/web/src/lib/review.ts';
 import { gitBlobSha } from '../../../../apps/web/src/lib/github.ts';
 
-// Replays the TLC counterexamples against the real reviewSubmission, real SQLite and an in-memory
+// Replays the TLC counterexamples against the real reviewSubmission, real Postgres and an in-memory
 // object store whose public writes can be held open. Invariant names match spec/ReviewPublish.tla.
 type Checks = Record<string, boolean>;
 
@@ -30,7 +30,7 @@ type Seeded = {
 	public: MemoryBucket;
 	author: string;
 	reviewers: Caller[];
-	close: () => void;
+	close: () => Promise<void>;
 };
 
 const ADDON = 'replay.addon';
@@ -73,7 +73,7 @@ function sha256(bytes: Uint8Array | string): string {
 }
 
 async function setup(env: EnvSource = {}): Promise<Seeded> {
-	const { ctx, close } = createTestContext(env);
+	const { ctx, close } = await createTestContext(env);
 	const staging = new MemoryBucket();
 	const bucket = new MemoryBucket();
 
@@ -97,7 +97,7 @@ async function setup(env: EnvSource = {}): Promise<Seeded> {
 
 	for (const id of reviewerIds) {
 		// drizzle-orm resolves only inside apps/web, so the role is set with the raw client.
-		ctx.db.$client.run(`update user set role = 'moderator' where id = ?`, [id]);
+		await ctx.db.$client`update "user" set role = 'moderator' where id = ${id}`;
 
 		const user = await ctx.db.query.user.findFirst({ where: { id } });
 
@@ -173,7 +173,7 @@ async function approveRacesReject(): Promise<Checks> {
 			RejectedNeverPublic: keys.length === 0 || status !== 'rejected',
 		};
 	} finally {
-		seeded.close();
+		await seeded.close();
 	}
 }
 
@@ -205,7 +205,7 @@ async function secondUpdateOverwrites(): Promise<Checks> {
 
 		return { PublicMatchesLive: !live || !bundle || served === live.sha256 };
 	} finally {
-		seeded.close();
+		await seeded.close();
 	}
 }
 
@@ -260,7 +260,7 @@ async function refetchLostBundle(): Promise<Checks> {
 			PublicOnlyIfLiveAtRest: !keys.some((key) => key.includes('/2.0.0/')),
 		};
 	} finally {
-		seeded.close();
+		await seeded.close();
 		await github.stop();
 	}
 }

@@ -47,7 +47,7 @@ Exit 0 means every outcome matches the `EXPECTED` table in `scripts/check.ts` an
 
 ## 3. Read a FAIL
 
-- **Replay FAIL.** `replay.ts` drives the real `reviewSubmission` over real SQLite and an in-memory bucket. A changed outcome is a change in real behaviour. `violated (expected holds)` is a new bug in your diff. `holds (expected violated)` means a finding below changed; confirm it in the model before you edit the `violated` list.
+- **Replay FAIL.** `replay.ts` drives the real `reviewSubmission` over real Postgres and an in-memory bucket. A changed outcome is a change in real behaviour. `violated (expected holds)` is a new bug in your diff. `holds (expected violated)` means a finding below changed; confirm it in the model before you edit the `violated` list.
 - **Model FAIL on `current*`.** Only after you changed a `.cfg` flag or the spec to describe your diff. Read the trace. If each step is something the code can do, it is a real bug. If a step is impossible in the code, the model is wrong: fix the action, citing the line that forbids the step.
 - **Model FAIL on `reordered*` or `broken-*`.** You changed the spec itself. Those configs must keep failing exactly as listed, or a property has lost its ability to fail.
 

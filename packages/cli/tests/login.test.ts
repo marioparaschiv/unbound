@@ -16,7 +16,7 @@ import { createTempDir, runUbd } from './helpers/ubd';
 import { createClient } from '../src/lib/api-client';
 import { login } from '../src/lib/login';
 
-const { ctx, close } = createTestContext();
+const { ctx, close } = await createTestContext();
 const server = serveEndpoints(ctx, { 'GET /api/v1/me': meEndpoint });
 const config = createTempDir();
 const env = parseEnv({ UNBOUND_API_URL: server.url.href, XDG_CONFIG_HOME: config.path });
@@ -26,7 +26,7 @@ afterEach(() => setSystemTime());
 afterAll(async () => {
 	await server.stop(true);
 	config.remove();
-	close();
+	await close();
 });
 
 async function decide(

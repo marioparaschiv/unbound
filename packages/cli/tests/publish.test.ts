@@ -22,7 +22,7 @@ const github = serveGitHub({
 
 const checkout = useCheckout(github.repository(REPOSITORY), REPOSITORY);
 
-const { ctx, close } = createTestContext({
+const { ctx, close } = await createTestContext({
 	ADDON_MAX_BYTES: String(ADDON_MAX_BYTES),
 	GITHUB_API_URL: github.url.href,
 });
@@ -33,7 +33,7 @@ afterAll(async () => {
 	await server.stop(true);
 	await github.stop();
 	config.remove();
-	close();
+	await close();
 });
 
 let users = 0;
