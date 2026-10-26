@@ -7,6 +7,7 @@ import { moderationEvent } from '~/db/schema';
 type EventRow = Awaited<ReturnType<typeof queryEvents>>[number];
 
 const NAME_COLUMNS = { id: true, name: true } as const;
+const ACTOR_COLUMNS = { ...NAME_COLUMNS, image: true } as const;
 
 function queryEvents(db: ReadDatabase, afterId: number, limit: number) {
 	return db.query.moderationEvent.findMany({
@@ -20,7 +21,7 @@ function queryEvents(db: ReadDatabase, afterId: number, limit: number) {
 			reason: true,
 			createdAt: true,
 		},
-		with: { actor: { columns: NAME_COLUMNS } },
+		with: { actor: { columns: ACTOR_COLUMNS } },
 		orderBy: { id: 'asc' },
 		limit,
 	});

@@ -6,14 +6,18 @@ export const COLOURS = {
 	danger: 0xff_00_00,
 	neutral: 0xf1_f1_f1,
 	brand: 0xc8_41_51,
+	warning: 0xf0_b2_32,
+	info: 0x58_65_f2,
+	muted: 0x80_84_8e,
+	deploy: 0x1a_bc_9c,
 } as const;
 
 // '0' marks an id the operator has not supplied yet; a dispatcher that requires it is not started.
 export const PLUGINS_CHANNEL_ID = '1564067818415333407';
 export const THEMES_CHANNEL_ID = '1564067819958571110';
 export const ICON_PACKS_CHANNEL_ID = '1564067821443616768';
-export const AUDIT_LOG_CHANNEL_ID = '0';
-export const RELEASES_CHANNEL_ID = '0';
+export const AUDIT_LOG_CHANNEL_ID = '1564277749403746314';
+export const RELEASES_CHANNEL_ID = '1564277813849100378';
 export const RELEASES_ROLE_ID = '0';
 export const CONTRIBUTOR_ROLE_ID = '967799585844113418';
 export const ADDON_DEVELOPER_ROLE_ID = '952688684107456612';

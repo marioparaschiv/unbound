@@ -145,7 +145,11 @@ function commitApproved(
 		);
 
 		await insertSubmissionSource(tx, id, source);
-		await recordReviewDecision(tx, row);
+		await recordReviewDecision(tx, row, {
+			repository: pin.repository,
+			commitSha: pin.commitSha,
+			ref: pin.ref,
+		});
 		await publishVersion(tx, row, source.sha256, now);
 
 		return claim;

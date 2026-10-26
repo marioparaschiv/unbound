@@ -225,9 +225,22 @@ describe('POST /api/v1/first-party/publish', () => {
 
 		const events = await ctx.db.query.moderationEvent.findMany({
 			where: { subjectId: 'fp.hello', kind: 'review.decided' },
+			orderBy: { id: 'asc' },
 		});
 
 		expect(events.map((event) => event.actorId)).toEqual([ci.userId, ci.userId]);
+		expect(events.map((event) => event.data)).toEqual(
+			submissions.map((row) =>
+				expect.objectContaining({
+					submissionId: row.id,
+					build: {
+						repository: expect.any(String),
+						commitSha: expect.stringMatching(/^[0-9a-f]{40}$/),
+						ref: expect.stringMatching(/^plugin-builds\//),
+					},
+				}),
+			),
+		);
 		expect((await ctx.db.query.user.findFirst({ where: { id: ci.userId } }))?.role).toBe('ci');
 	});
 

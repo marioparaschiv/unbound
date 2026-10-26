@@ -5,12 +5,14 @@ import type { AuditEvent } from '@unbound-app/web/bot';
 import type { Client } from 'discord.js';
 
 import type { DispatcherContext } from '~/dispatchers/types';
+import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { createAuditDispatcher } from '~/dispatchers/audit';
 import { auditPost } from '~/db/schema';
 
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
 import { createFakeClient, createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
 import { createFakeReads, EVENT, type FakeReads } from './helpers/fake-reads';
+import RecordingExporter from './helpers/recording-exporter';
 import { signUp } from './helpers/web';
 
 type EventColumns = Partial<AuditEvent>;
@@ -127,6 +129,26 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 
 		expect(await floors()).toEqual([{ id: 0, channelId: fake.channelId }]);
 		expect(footers(fake)).toEqual(['Event #1 · user.unbanned']);
+	});
+
+	test('each posted event is exported to telemetry once, after its post', async () => {
+		const exporter = new RecordingExporter();
+		const telemetry = createAuditTelemetry({ exporter });
+		const audit = createAuditDispatcher(fake.channelId, telemetry);
+
+		await audit.reconcile(context());
+		seed(1);
+		seed(2);
+		fake.rejectAt([1]);
+		await Promise.allSettled([audit.handle('2', context())]);
+		await audit.handle('2', context());
+		await audit.reconcile(context());
+		await telemetry.shutdown();
+
+		expect(footers(fake)).toEqual(['Event #1 · user.unbanned', 'Event #2 · user.unbanned']);
+		expect(exporter.records.map((record) => record.attributes['audit.event.id'])).toEqual([
+			1, 2,
+		]);
 	});
 
 	test('posts moved from the old database win over a floor', async () => {
@@ -280,15 +302,11 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 		expect(fake.messages.map((message) => message.embeds[0])).toMatchObject([
 			{
 				title: 'future.thing',
-				fields: expect.arrayContaining([
-					{ name: 'Data', value: '```json\n{\n  "colour": "teal"\n}\n```' },
-				]),
+				description: '```json\n{\n  "colour": "teal"\n}\n```',
 			},
 			{
 				title: 'user.banned',
-				fields: expect.arrayContaining([
-					{ name: 'Data', value: '```json\n{\n  "expiresAt": 42\n}\n```' },
-				]),
+				description: '```json\n{\n  "expiresAt": 42\n}\n```',
 			},
 		]);
 	});
@@ -304,7 +322,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 
 		expect(request?.allowed_mentions).toEqual({ parse: [] });
 		expect(request?.content).toBeUndefined();
-		expect(request?.embeds?.[0]?.description).toBe(body);
+		expect(request?.embeds?.[0]?.description).toBe(`> ${body}`);
 		expect(JSON.stringify({ ...request, embeds: undefined })).not.toContain('@everyone');
 	});
 
@@ -359,13 +377,8 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 		expect(fake.requests).toHaveLength(1);
 		expect(fake.messages[0]?.embeds[0]).toMatchObject({
 			author: { name: moderator.caller.user.name },
-			description: 'Watch this account.',
-			fields: expect.arrayContaining([
-				expect.objectContaining({
-					name: 'Subject',
-					value: expect.stringContaining(subject.caller.user.name),
-				}),
-			]),
+			title: `Added a note on ${subject.caller.user.name}`,
+			description: '> Watch this account.',
 		});
 	});
 });

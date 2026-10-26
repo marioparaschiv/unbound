@@ -28,6 +28,8 @@ export type PublicAddon = {
 export type AuditActor = {
 	id: string;
 	name: string;
+	/** The avatar url from the sign-in provider, if the account has one. */
+	image: string | null;
 };
 
 type ModerationEventRow = typeof moderationEvent.$inferSelect;

@@ -3,12 +3,17 @@ import type { Release } from '@unbound-app/web/bot';
 import { schema } from '@unbound-app/web/testing';
 import { and, eq, sql } from 'drizzle-orm';
 
-import { announceRelease, reconcileReleases, type ReleaseTarget } from '~/dispatchers/releases';
+import {
+	announceRelease,
+	reconcileReleases,
+	renderRelease,
+	type ReleaseTarget,
+} from '~/dispatchers/releases';
 import { createDatabase, type Database } from '~/db/database';
 import { releasePost } from '~/db/schema';
 
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
-import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord-rest';
+import { createFakeDiscord, type FakeDiscord } from './helpers/fake-discord-rest';
 import { createFakeReads, RELEASE, type FakeReads } from './helpers/fake-reads';
 
 const TARGET: ReleaseTarget = { channelId: '21', roleId: '31' };
@@ -95,7 +100,6 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 			{
 				title: 'Unbound for iOS 1.2.3',
 				url: RELEASE.url,
-				description: 'Fixes.',
 				color: 0xc8_41_51,
 				timestamp: RELEASE.publishedAt.toISOString(),
 			},
@@ -112,16 +116,16 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		expect(discord.messages('21')).toHaveLength(0);
 	});
 
-	test('a release with a very long changelog posts within the embed size cap', async () => {
-		const long = { ...RELEASE, changelog: 'c'.repeat(10_000) };
+	test('an announcement links out to the changelog instead of inlining it', () => {
+		const body = renderRelease({ ...RELEASE, changelog: 'c'.repeat(10_000) }, '31');
 
-		ingest(long);
-		await handle(long);
-
-		const [embed] = discord.messages('21')[0]?.embeds ?? [];
-
-		expect(embed).toBeDefined();
-		expect(embedLength(embed ?? {})).toBeLessThanOrEqual(6000);
+		expect(JSON.stringify(body)).not.toContain('ccc');
+		expect(body.components).toEqual([
+			{
+				type: 1,
+				components: [{ type: 2, style: 5, label: 'View changelog', url: RELEASE.url }],
+			},
+		]);
 	});
 
 	test('reconcile announces every unannounced release in publish order', async () => {

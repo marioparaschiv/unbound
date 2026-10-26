@@ -6,6 +6,7 @@ import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
+import { auditTelemetry } from '~/lib/audit-telemetry';
 import { GUILD_ID, SITE_URL } from '~/lib/constants';
 import { startDispatchers } from '~/runtime/start';
 import { checkTriggers } from '~/db/triggers';
@@ -53,6 +54,7 @@ const client = new SapphireClient({
 
 async function exit(code: number): Promise<never> {
 	await client.destroy();
+	await auditTelemetry.shutdown();
 	await db.$client.end();
 	process.exit(code);
 }

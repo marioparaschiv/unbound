@@ -8,7 +8,11 @@ import { COLOURS } from '~/lib/constants';
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
 type EventData = Record<string, Json>;
 
-const SUBMISSION: EventData = { submissionId: 'sub-1', submissionKind: 'update', version: '1.2.0' };
+const SUBMISSION: EventData = {
+	submissionId: '01a17591-27b7',
+	submissionKind: 'update',
+	version: '1.2.0',
+};
 
 // One valid `data` per kind of `moderationEventDataSchema` in @unbound-app/contracts/admin.
 const SAMPLES: Record<string, EventData> = {
@@ -40,7 +44,7 @@ function event(kind: string, data: EventData, columns: Partial<AuditEvent> = {})
 		subjectType: 'addon',
 		subjectId: 'addon-1',
 		subjectName: 'Silent Typing',
-		actor: { id: 'staff-1', name: 'Mario' },
+		actor: { id: 'staff-1', name: 'Mario', image: null },
 		data,
 		reason: null,
 		createdAt: new Date('2026-10-01T00:00:00.000Z'),
@@ -48,131 +52,157 @@ function event(kind: string, data: EventData, columns: Partial<AuditEvent> = {})
 	};
 }
 
-function field(embed: APIEmbed, name: string) {
-	return embed.fields?.find((entry) => entry.name === name)?.value;
-}
-
 function totalLength(embed: APIEmbed) {
-	const fields = embed.fields ?? [];
-
-	return [
-		embed.title,
-		embed.description,
-		embed.author?.name,
-		embed.footer?.text,
-		...fields.flatMap((entry) => [entry.name, entry.value]),
-	].reduce((sum, text) => sum + (text?.length ?? 0), 0);
+	return [embed.title, embed.description, embed.author?.name, embed.footer?.text].reduce(
+		(sum, text) => sum + (text?.length ?? 0),
+		0,
+	);
 }
 
 describe('buildAuditEmbed', () => {
 	for (const [kind, data] of Object.entries(SAMPLES)) {
-		test(`${kind} renders its own embed, not the generic one`, () => {
+		test(`${kind} names its subject in the title and keeps the recovery footer`, () => {
 			const embed = buildAuditEmbed(event(kind, data));
 
-			expect(embed.title).not.toBe(kind);
-			expect(field(embed, 'Data')).toBeUndefined();
+			expect(embed.title).toContain('Silent Typing');
+			expect(embed.description ?? '').not.toContain('```json');
+			expect(embed.fields).toBeUndefined();
 			expect(embed.footer?.text).toBe(`Event #7 · ${kind}`);
+			expect(embed.timestamp).toBe('2026-10-01T00:00:00.000Z');
 		});
 	}
 
-	test('carries the actor, subject link, reason and creation time', () => {
-		const embed = buildAuditEmbed(
-			event('addon.delisted', {}, { reason: 'Malware.', actor: null }),
-		);
+	test('a review shows who decided, their note as a quote, and a colour per decision', () => {
+		const decided = (decision: string, reason: string | null = null) =>
+			buildAuditEmbed(event('review.decided', { ...SUBMISSION, decision }, { reason }));
+		const approved = decided('approved', 'Looks good.\nThanks!');
 
-		expect(embed).toMatchObject({
-			author: { name: 'System' },
+		expect(approved).toMatchObject({
+			author: { name: 'Mario' },
+			title: 'Approved Silent Typing 1.2.0',
 			url: 'https://unbound.rip/admin/addons/addon-1',
-			description: 'Malware.',
-			timestamp: '2026-10-01T00:00:00.000Z',
+			color: COLOURS.positive,
+			description: '> Looks good.\n> Thanks!\n-# Update · Submission `01a17591`',
 		});
-		expect(field(embed, 'Subject')).toBe(
-			'[Silent Typing](https://unbound.rip/admin/addons/addon-1)',
+		expect(
+			buildAuditEmbed(
+				event('submission.created', {
+					...SUBMISSION,
+					submissionKind: 'listing',
+					supersededId: null,
+				}),
+			).description,
+		).toBe('-# New listing · Submission `01a17591`');
+		expect(decided('rejected')).toMatchObject({
+			title: 'Rejected Silent Typing 1.2.0',
+			color: COLOURS.danger,
+		});
+		expect(decided('changes_requested')).toMatchObject({
+			title: 'Requested changes on Silent Typing 1.2.0',
+			color: COLOURS.warning,
+		});
+	});
+
+	test('a rollback shows the arrow, and lists only versions the arrow leaves out', () => {
+		const rollback = (withdrawn: string[], restored: string[]) =>
+			buildAuditEmbed(
+				event(
+					'addon.rollback',
+					{ from: '1.2.0', to: '1.1.0', withdrawn, restored },
+					{ reason: 'Crashes on launch.' },
+				),
+			);
+
+		expect(rollback(['1.2.0'], ['1.1.0'])).toMatchObject({
+			title: 'Rolled back Silent Typing to 1.1.0',
+			color: COLOURS.warning,
+			description: '> Crashes on launch.\n-# `1.2.0` → `1.1.0`',
+		});
+		expect(rollback(['1.2.0', '1.1.5'], ['1.1.0', '1.0.9']).description).toBe(
+			'> Crashes on launch.\n-# `1.2.0` → `1.1.0`\n-# Also withdrew `1.1.5`\n-# Also restored `1.0.9`',
 		);
 	});
 
-	test('links users to their admin page and leaves other subjects unlinked', () => {
-		const user = buildAuditEmbed(
-			event('user.unbanned', {}, { subjectType: 'user', subjectId: 'u1', subjectName: null }),
+	test('a first-party deploy reads as a deploy linking its build commit, not as a review', () => {
+		const sha = '481d82722e7733bf41f214d9222303b58881bb4b';
+		const embed = buildAuditEmbed(
+			event(
+				'review.decided',
+				{
+					...SUBMISSION,
+					decision: 'approved',
+					build: { repository: 'owner/repo', commitSha: sha, ref: 'plugin-builds/abc' },
+				},
+				{ reason: `Published by CI from build commit ${sha} (plugin-builds/abc).` },
+			),
+		);
+
+		expect(embed).toMatchObject({
+			title: '🚀 Deployed Silent Typing 1.2.0',
+			color: COLOURS.deploy,
+			description: `-# First-party update · Build [\`481d827\`](https://github.com/owner/repo/commit/${sha})`,
+		});
+	});
+
+	test('a system action without an actor reads as System, and a user links to its admin page', () => {
+		const embed = buildAuditEmbed(
+			event(
+				'user.unbanned',
+				{},
+				{ actor: null, subjectType: 'user', subjectId: 'u1', subjectName: null },
+			),
 		);
 		// A subject type newer than the bot's contracts arrives as plain text from the database.
 		const other = buildAuditEmbed(
 			event('user.unbanned', {}, { subjectType: 'tag' as AuditEvent['subjectType'] }),
 		);
 
-		expect(user.url).toBe('https://unbound.rip/admin/users/u1');
-		expect(field(user, 'Subject')).toBe('[u1](https://unbound.rip/admin/users/u1)');
+		expect(embed).toMatchObject({
+			author: { name: 'System' },
+			title: 'Unbanned u1',
+			url: 'https://unbound.rip/admin/users/u1',
+		});
+		expect(embed.description).toBeUndefined();
 		expect(other.url).toBeUndefined();
-		expect(field(other, 'Subject')).toBe('Silent Typing');
 	});
 
-	test('escapes brackets in the subject name so the link text stays whole', () => {
-		const embed = buildAuditEmbed(
-			event('addon.delisted', {}, { subjectName: 'Evil](https://example.com) [x' }),
+	test("the author shows the actor's avatar, and only an http(s) one", () => {
+		const avatar = (image: string | null) =>
+			buildAuditEmbed(
+				event('addon.delisted', {}, { actor: { id: 'staff-1', name: 'Mario', image } }),
+			).author?.icon_url;
+
+		expect(avatar('https://cdn.discordapp.com/avatars/1/a.png')).toBe(
+			'https://cdn.discordapp.com/avatars/1/a.png',
 		);
-
-		expect(field(embed, 'Subject')).toBe(
-			'[Evil\\](https://example.com) \\[x](https://unbound.rip/admin/addons/addon-1)',
-		);
-	});
-
-	test('never emits a blank field that Discord would reject', () => {
-		const edited = buildAuditEmbed(
-			event('note.edited', { noteId: 1, before: ' ', body: '\n' }, { subjectName: '' }),
-		);
-		const role = buildAuditEmbed(
-			event('user.role_set', { role: ' ' }, { actor: { id: 'staff-1', name: ' ' } }),
-		);
-
-		expect(field(edited, 'Before')).toBe('None');
-		expect(field(edited, 'After')).toBe('None');
-		expect(field(edited, 'Subject')).toBe(
-			'[addon-1](https://unbound.rip/admin/addons/addon-1)',
-		);
-		expect(field(role, 'Role')).toBe('None');
-		expect(role.author?.name).toBe('None');
-	});
-
-	test('kinds named after object builtins render the generic embed', () => {
-		for (const kind of ['constructor', 'toString', '__proto__']) {
-			const embed = buildAuditEmbed(event(kind, {}));
-
-			expect(embed.title).toBe(kind);
-			expect(field(embed, 'Data')).toBe('```json\n{}\n```');
-		}
-	});
-
-	test('a cut never leaves half of a surrogate pair', () => {
-		const embed = buildAuditEmbed(
-			event('note.added', { noteId: 1, body: `${'x'.repeat(4094)}😀😀` }),
-		);
-
-		expect(embed.description).toBe(`${'x'.repeat(4094)}…`);
-	});
-
-	test('review decisions pick their title and colour from the decision', () => {
-		const rejected = buildAuditEmbed(
-			event('review.decided', { ...SUBMISSION, decision: 'rejected' }),
-		);
-
-		expect(rejected).toMatchObject({ title: 'Submission rejected', color: COLOURS.danger });
-		expect(field(rejected, 'Version')).toBe('1.2.0');
-		expect(field(rejected, 'Kind')).toBe('update');
+		expect(avatar('data:image/png;base64,AAAA')).toBeUndefined();
+		expect(avatar(null)).toBeUndefined();
+		expect(
+			buildAuditEmbed(event('addon.delisted', {}, { actor: null })).author?.icon_url,
+		).toBeUndefined();
 	});
 
 	test('kind specifics read from the data', () => {
-		const banned = buildAuditEmbed(event('user.banned', { expiresAt: '2026-11-01T00:00:00Z' }));
-		const permanent = buildAuditEmbed(event('user.banned', { expiresAt: null }));
-		const edited = buildAuditEmbed(
-			event('addon.edited', {
+		const line = (kind: string, data: EventData) =>
+			buildAuditEmbed(event(kind, data)).description;
+
+		expect(line('user.banned', { expiresAt: '2026-11-01T00:00:00Z' })).toBe(
+			'-# Until <t:1793491200:F>',
+		);
+		expect(line('user.banned', { expiresAt: null })).toBe('-# Permanently');
+		expect(buildAuditEmbed(event('user.role_set', { role: 'reviewer' })).title).toBe(
+			'Set the role of Silent Typing to reviewer',
+		);
+		expect(
+			line('addon.edited', {
 				changes: [
 					{ field: 'name', from: 'Old', to: 'New', pinned: true },
 					{ field: 'repository', from: null, to: 'owner/repo', pinned: false },
 				],
 			}),
-		);
-		const maintainers = buildAuditEmbed(
-			event('addon.maintainers_changed', {
+		).toBe('-# Name: Old → New (pinned)\n-# Repository: None → owner/repo');
+		expect(
+			line('addon.maintainers_changed', {
 				before: [
 					{ userId: 'u1', role: 'owner' },
 					{ userId: 'u2', role: 'maintainer' },
@@ -182,77 +212,67 @@ describe('buildAuditEmbed', () => {
 					{ userId: 'u3', role: 'owner' },
 				],
 			}),
+		).toBe(
+			'-# Added `u3` as owner\n-# Removed `u2` (maintainer)\n-# Changed `u1` from owner to maintainer',
 		);
-
-		const deleted = buildAuditEmbed(
-			event('user.deleted', { openSubmissions: 2, staffNotes: 0 }, { subjectType: 'user' }),
+		expect(line('note.edited', { noteId: 1, before: 'Old.', body: 'New.' })).toBe(
+			'> New.\n-# Was: Old.',
 		);
-		const negative = buildAuditEmbed(
-			event('user.deleted', { openSubmissions: -1, staffNotes: 0 }),
-		);
-
-		expect(deleted).toMatchObject({ title: 'User deleted', color: COLOURS.danger });
-		expect(field(deleted, 'Open submissions removed')).toBe('2');
-		expect(field(deleted, 'Staff notes removed')).toBe('0');
-		expect(negative.title).toBe('user.deleted');
-		expect(field(banned, 'Expires')).toBe('<t:1793491200:F>');
-		expect(field(permanent, 'Expires')).toBe('Permanent');
-		expect(field(edited, 'name (pinned)')).toBe('Old -> New');
-		expect(field(edited, 'repository')).toBe('None -> owner/repo');
-		expect(field(maintainers, 'Added')).toBe('u3 (owner)');
-		expect(field(maintainers, 'Removed')).toBe('u2 (maintainer)');
-		expect(field(maintainers, 'Role changed')).toBe('u1: owner -> maintainer');
 	});
 
-	test('a note puts its body in the description and its reason in a field', () => {
+	test('an unknown kind or malformed data renders the raw kind and data', () => {
+		for (const [kind, data] of [
+			['future.thing', { colour: 'teal' }],
+			['user.deleted', { openSubmissions: -1, staffNotes: 0 }],
+			['constructor', {}],
+			['__proto__', {}],
+		] as const) {
+			const embed = buildAuditEmbed(event(kind, data));
+
+			expect(embed).toMatchObject({ title: kind, color: COLOURS.muted });
+			expect(embed.description).toBe(`\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``);
+		}
+	});
+
+	test('never emits a blank author or title that Discord would reject', () => {
 		const embed = buildAuditEmbed(
-			event('note.added', { noteId: 1, body: 'Body.' }, { reason: 'Why.' }),
+			event(
+				'addon.delisted',
+				{},
+				{ subjectName: '', actor: { id: 'staff-1', name: ' ', image: null } },
+			),
 		);
 
-		expect(embed.description).toBe('Body.');
-		expect(field(embed, 'Reason')).toBe('Why.');
+		expect(embed.author?.name).toBe('None');
+		expect(embed.title).toBe('Delisted addon-1');
 	});
 
-	test('stays within Discord limits for a 10 000 character note', () => {
+	test('a cut never leaves half of a surrogate pair', () => {
+		const embed = buildAuditEmbed(
+			event('note.added', { noteId: 1, body: `${'x'.repeat(4092)}😀😀` }),
+		);
+
+		expect(embed.description).toBe(`> ${'x'.repeat(4092)}…`);
+	});
+
+	test('stays within Discord limits for oversized notes, titles and data', () => {
 		const body = 'x'.repeat(10_000);
-		const embed = buildAuditEmbed(
-			event('note.edited', { noteId: 1, before: body, body }, { reason: body }),
-		);
-		const added = buildAuditEmbed(event('note.added', { noteId: 1, body }, { reason: body }));
-
-		for (const fitted of [embed, added]) {
-			expect(fitted.description?.length ?? 0).toBeLessThanOrEqual(4096);
-			expect(totalLength(fitted)).toBeLessThanOrEqual(6000);
-
-			for (const entry of fitted.fields ?? []) {
-				expect(entry.value.length).toBeLessThanOrEqual(1024);
-			}
-		}
-
-		expect(added.description).toEndWith('…');
-	});
-
-	test('stays within Discord limits for oversized titles, footers and field counts', () => {
 		const kind = 'k'.repeat(3000);
-		const generic = buildAuditEmbed(event(kind, { blob: 'y'.repeat(5000) }));
-		const changes = Array.from({ length: 40 }, (_, index) => ({
-			field: `f${index}`.repeat(100),
-			from: 'a'.repeat(2000),
-			to: 'b',
-			pinned: false,
-		}));
-		const edited = buildAuditEmbed(event('addon.edited', { changes }));
+		const embeds = [
+			buildAuditEmbed(
+				event('note.edited', { noteId: 1, before: body, body }, { reason: body }),
+			),
+			buildAuditEmbed(event('note.added', { noteId: 1, body }, { subjectName: body })),
+			buildAuditEmbed(event(kind, { blob: 'y'.repeat(5000) })),
+		];
 
-		expect(generic.title?.length).toBe(256);
-		expect(generic.footer?.text.length).toBeLessThanOrEqual(2048);
-		expect(field(generic, 'Data')).toEndWith('…\n```');
-		expect(totalLength(generic)).toBeLessThanOrEqual(6000);
-		expect(edited.fields?.length).toBeLessThanOrEqual(25);
-		expect(totalLength(edited)).toBeLessThanOrEqual(6000);
-
-		for (const entry of edited.fields ?? []) {
-			expect(entry.name.length).toBeLessThanOrEqual(256);
-			expect(entry.value.length).toBeLessThanOrEqual(1024);
+		for (const embed of embeds) {
+			expect(embed.title?.length ?? 0).toBeLessThanOrEqual(256);
+			expect(embed.description?.length ?? 0).toBeLessThanOrEqual(4096);
+			expect(embed.footer?.text.length ?? 0).toBeLessThanOrEqual(2048);
+			expect(totalLength(embed)).toBeLessThanOrEqual(6000);
 		}
+
+		expect(embeds[2]?.description).toEndWith('…\n```');
 	});
 });

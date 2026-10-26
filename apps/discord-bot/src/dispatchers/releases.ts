@@ -1,11 +1,12 @@
 import type { REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import type { LoaderPlatform } from '@unbound-app/contracts/loader';
 import type { Release, ReleaseKey } from '@unbound-app/web/bot';
+import { ButtonStyle, ComponentType } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { and, eq } from 'drizzle-orm';
 
 import { COLOURS, RELEASES_CHANNEL_ID, RELEASES_ROLE_ID } from '~/lib/constants';
-import { listOwnMessages, postMessage, truncate } from '~/lib/discord-messages';
+import { listOwnMessages, postMessage } from '~/lib/discord-messages';
 import type { Dispatcher, Stores } from '~/dispatchers/types';
 import type { Database } from '~/db/database';
 import { releasePost } from '~/db/schema';
@@ -25,8 +26,6 @@ export const RELEASE_TARGET: ReleaseTarget = {
 const PLATFORM_NAMES: Record<LoaderPlatform, string> = { ios: 'iOS', android: 'Android' };
 // An older release is never announced, or a first deploy would ping the role once per historic release.
 const RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-// Discord rejects an embed over 6000 characters in all, which would fail the post on every retry.
-const CHANGELOG_LIMIT = 4000;
 
 function isPlatform(value: string): value is LoaderPlatform {
 	return Object.hasOwn(PLATFORM_NAMES, value);
@@ -54,7 +53,7 @@ function releaseTitle(release: ReleaseKey) {
 }
 
 /**
- * @description Renders a loader release announcement that pings only the releases role.
+ * @description Renders a compact loader release announcement that links out to the changelog and pings only the releases role.
  * @param release The release.
  * @param roleId The role to ping.
  * @returns The message body to post.
@@ -66,11 +65,21 @@ export function renderRelease(release: Release, roleId: string): RESTPostAPIChan
 			{
 				title: releaseTitle(release),
 				url: release.url,
-				description: release.changelog
-					? truncate(release.changelog, CHANGELOG_LIMIT)
-					: undefined,
 				color: COLOURS.brand,
 				timestamp: release.publishedAt.toISOString(),
+			},
+		],
+		components: [
+			{
+				type: ComponentType.ActionRow,
+				components: [
+					{
+						type: ComponentType.Button,
+						style: ButtonStyle.Link,
+						label: 'View changelog',
+						url: release.url,
+					},
+				],
 			},
 		],
 		allowed_mentions: { parse: [], roles: [roleId] },

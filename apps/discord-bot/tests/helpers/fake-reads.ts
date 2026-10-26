@@ -36,7 +36,7 @@ export const EVENT: AuditEvent = {
 	subjectType: 'addon',
 	subjectId: 'addon-1',
 	subjectName: 'Silent Typing',
-	actor: { id: 'user-1', name: 'Mario' },
+	actor: { id: 'user-1', name: 'Mario', image: null },
 	data: {},
 	reason: null,
 	createdAt: new Date('2026-10-01T00:00:00.000Z'),

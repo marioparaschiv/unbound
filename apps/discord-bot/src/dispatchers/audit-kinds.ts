@@ -4,16 +4,21 @@ import type {
 	ModerationEventKind,
 } from '@unbound-app/contracts/admin';
 import { moderationEventDataSchema } from '@unbound-app/contracts/admin';
-import type { APIEmbedField } from 'discord.js';
 
 import { COLOURS } from '~/lib/constants';
 
 export type KindEmbed = {
-	title: string;
+	/** What the actor did, read before the subject: `Approved`, `Rolled back`. */
+	verb: string;
+	/** Read after the subject: a version, or `to 1.1.0`. */
+	suffix?: string;
 	colour: number;
-	/** Replaces the event's reason as the description; the reason then moves to a field. */
-	description?: string;
-	fields: APIEmbedField[];
+	/** Short facts, shown as subtext under the quote. */
+	details: string[];
+	/** Text the kind carries itself, such as a note body; quoted ahead of the event's reason. */
+	quote?: string;
+	/** The details already say what the reason would, as for a CI deploy's generated note. */
+	omitReason?: boolean;
 };
 
 type KindTag<K extends ModerationEventKind> = { kind: K };
@@ -26,26 +31,47 @@ type KindEvent<K extends ModerationEventKind> = KindTag<K> & { data: KindData<K>
 
 type SubmissionData = KindData<'submission.cancelled'>;
 
+type FirstPartyBuild = NonNullable<KindData<'review.decided'>['build']>;
+
 const DECISIONS = {
-	approved: { title: 'Submission approved', colour: COLOURS.positive },
-	rejected: { title: 'Submission rejected', colour: COLOURS.danger },
-	changes_requested: { title: 'Changes requested', colour: COLOURS.neutral },
+	approved: { verb: 'Approved', colour: COLOURS.positive },
+	rejected: { verb: 'Rejected', colour: COLOURS.danger },
+	changes_requested: { verb: 'Requested changes on', colour: COLOURS.warning },
 } as const;
 
-function field(name: string, value: string, inline: boolean = true): APIEmbedField {
-	return { name, value: value || 'None', inline };
+const SUBMISSION_KINDS = { listing: 'New listing', update: 'Update' } as const;
+
+function capitalise(text: string) {
+	return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function list(values: string[]) {
-	return values.join(', ') || 'None';
+function code(value: string) {
+	return `\`${value.replaceAll('`', 'ˋ')}\``;
 }
 
-function submissionFields(data: SubmissionData) {
+function submissionDetails(data: SubmissionData) {
 	return [
-		field('Version', data.version),
-		field('Kind', data.submissionKind),
-		field('Submission', data.submissionId),
+		`${SUBMISSION_KINDS[data.submissionKind]} · Submission ${code(data.submissionId.slice(0, 8))}`,
 	];
+}
+
+// A first-party deploy is CI publishing a build commit without review, so it reads unlike a review.
+function deployed(data: SubmissionData, build: FirstPartyBuild): KindEmbed {
+	const commit = `https://github.com/${build.repository}/commit/${build.commitSha}`;
+
+	return {
+		verb: '🚀 Deployed',
+		suffix: data.version,
+		colour: COLOURS.deploy,
+		details: [
+			`First-party ${SUBMISSION_KINDS[data.submissionKind].toLowerCase()} · Build [${code(build.commitSha.slice(0, 7))}](${commit})`,
+		],
+		omitReason: true,
+	};
+}
+
+function versions(values: string[]) {
+	return values.map(code).join(', ');
 }
 
 function maintainerChanges(before: MaintainerEntry[], after: MaintainerEntry[]) {
@@ -57,107 +83,111 @@ function maintainerChanges(before: MaintainerEntry[], after: MaintainerEntry[]) 
 		(entry) => previous.has(entry.userId) && previous.get(entry.userId) !== entry.role,
 	);
 
-	const sections: [string, string[]][] = [
-		['Added', added.map((entry) => `${entry.userId} (${entry.role})`)],
-		['Removed', removed.map((entry) => `${entry.userId} (${entry.role})`)],
-		[
-			'Role changed',
-			changed.map(
-				(entry) => `${entry.userId}: ${previous.get(entry.userId)} -> ${entry.role}`,
-			),
-		],
+	return [
+		...added.map((entry) => `Added ${code(entry.userId)} as ${entry.role}`),
+		...removed.map((entry) => `Removed ${code(entry.userId)} (${entry.role})`),
+		...changed.map(
+			(entry) =>
+				`Changed ${code(entry.userId)} from ${previous.get(entry.userId)} to ${entry.role}`,
+		),
 	];
-
-	return sections
-		.filter(([, lines]) => lines.length)
-		.map(([name, lines]) => field(name, lines.join('\n'), false));
 }
 
 const RENDERERS: KindRenderers = {
-	'review.decided': (data) => ({ ...DECISIONS[data.decision], fields: submissionFields(data) }),
+	'review.decided': (data) =>
+		data.build
+			? deployed(data, data.build)
+			: {
+					...DECISIONS[data.decision],
+					suffix: data.version,
+					details: submissionDetails(data),
+				},
 	'submission.created': (data) => ({
-		title: 'Submission created',
-		colour: COLOURS.brand,
-		fields: [
-			...submissionFields(data),
-			...(data.supersededId ? [field('Supersedes', data.supersededId)] : []),
+		verb: 'Submitted',
+		suffix: data.version,
+		colour: COLOURS.info,
+		details: [
+			...submissionDetails(data),
+			...(data.supersededId ? [`Replaces ${code(data.supersededId.slice(0, 8))}`] : []),
 		],
 	}),
 	'submission.cancelled': (data) => ({
-		title: 'Submission cancelled',
-		colour: COLOURS.danger,
-		fields: submissionFields(data),
+		verb: 'Cancelled',
+		suffix: data.version,
+		colour: COLOURS.muted,
+		details: submissionDetails(data),
 	}),
-	'addon.delisted': () => ({ title: 'Addon delisted', colour: COLOURS.danger, fields: [] }),
-	'addon.relisted': () => ({ title: 'Addon relisted', colour: COLOURS.positive, fields: [] }),
+	'addon.delisted': () => ({ verb: 'Delisted', colour: COLOURS.danger, details: [] }),
+	'addon.relisted': () => ({ verb: 'Relisted', colour: COLOURS.positive, details: [] }),
 	'addon.maintainers_changed': (data) => ({
-		title: 'Maintainers changed',
-		colour: COLOURS.neutral,
-		fields: maintainerChanges(data.before, data.after),
+		verb: 'Changed the maintainers of',
+		colour: COLOURS.info,
+		details: maintainerChanges(data.before, data.after),
 	}),
 	'addon.edited': (data) => ({
-		title: 'Addon edited',
-		colour: COLOURS.neutral,
-		fields: data.changes.map((change) =>
-			field(
-				change.pinned ? `${change.field} (pinned)` : change.field,
-				`${change.from ?? 'None'} -> ${change.to ?? 'None'}`,
-				false,
-			),
+		verb: 'Edited',
+		colour: COLOURS.info,
+		details: data.changes.map(
+			(change) =>
+				`${capitalise(change.field)}: ${change.from ?? 'None'} → ${change.to ?? 'None'}${change.pinned ? ' (pinned)' : ''}`,
 		),
 	}),
-	'addon.rollback': (data) => ({
-		title: 'Addon rolled back',
-		colour: COLOURS.danger,
-		fields: [
-			field('From', data.from ?? 'None'),
-			field('To', data.to),
-			field('Withdrawn', list(data.withdrawn), false),
-			field('Restored', list(data.restored), false),
-		],
-	}),
+	'addon.rollback': (data) => {
+		// The arrow already says `from` was withdrawn and `to` restored; only other versions add news.
+		const withdrawn = data.withdrawn.filter((version) => version !== data.from);
+		const restored = data.restored.filter((version) => version !== data.to);
+
+		return {
+			verb: 'Rolled back',
+			suffix: `to ${data.to}`,
+			colour: COLOURS.warning,
+			details: [
+				`${code(data.from ?? 'None')} → ${code(data.to)}`,
+				...(withdrawn.length ? [`Also withdrew ${versions(withdrawn)}`] : []),
+				...(restored.length ? [`Also restored ${versions(restored)}`] : []),
+			],
+		};
+	},
 	'user.banned': (data) => ({
-		title: 'User banned',
+		verb: 'Banned',
 		colour: COLOURS.danger,
-		fields: [
-			field(
-				'Expires',
-				data.expiresAt
-					? `<t:${Math.floor(Date.parse(data.expiresAt) / 1000)}:F>`
-					: 'Permanent',
-			),
+		details: [
+			data.expiresAt
+				? `Until <t:${Math.floor(Date.parse(data.expiresAt) / 1000)}:F>`
+				: 'Permanently',
 		],
 	}),
-	'user.unbanned': () => ({ title: 'User unbanned', colour: COLOURS.positive, fields: [] }),
+	'user.unbanned': () => ({ verb: 'Unbanned', colour: COLOURS.positive, details: [] }),
 	'user.role_set': (data) => ({
-		title: 'Role set',
-		colour: COLOURS.neutral,
-		fields: [field('Role', data.role)],
+		verb: 'Set the role of',
+		suffix: `to ${data.role.trim() || 'None'}`,
+		colour: COLOURS.info,
+		details: [],
 	}),
 	'user.deleted': (data) => ({
-		title: 'User deleted',
+		verb: 'Deleted',
 		colour: COLOURS.danger,
-		fields: [
-			field('Open submissions removed', String(data.openSubmissions)),
-			field('Staff notes removed', String(data.staffNotes)),
+		details: [
+			`Removed ${data.openSubmissions} open submission(s) and ${data.staffNotes} staff note(s)`,
 		],
 	}),
 	'note.added': (data) => ({
-		title: 'Note added',
-		colour: COLOURS.brand,
-		description: data.body,
-		fields: [],
+		verb: 'Added a note on',
+		colour: COLOURS.info,
+		details: [],
+		quote: data.body,
 	}),
 	'note.edited': (data) => ({
-		title: 'Note edited',
-		colour: COLOURS.neutral,
-		fields: [field('Before', data.before, false), field('After', data.body, false)],
+		verb: 'Edited a note on',
+		colour: COLOURS.info,
+		details: [`Was: ${data.before.trim() || 'None'}`],
+		quote: data.body,
 	}),
 	'note.deleted': (data) => ({
-		title: 'Note deleted',
+		verb: 'Deleted a note on',
 		colour: COLOURS.danger,
-		description: data.body,
-		fields: [],
+		details: [],
+		quote: data.body,
 	}),
 };
 
