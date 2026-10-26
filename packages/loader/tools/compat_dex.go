@@ -9,11 +9,28 @@ import (
 const dexNoIndex = 0xFFFFFFFF
 
 type dexClass struct {
-	Name    string
-	Super   string
-	Methods map[string][]string
-	Fields  map[string]bool
+	Name         string
+	Super        string
+	Interfaces   []string
+	Methods      map[string][]string
+	Fields       map[string]bool
+	Declared     []dexMember
+	Constructors [][]string
 }
+
+type dexMember struct {
+	Name       string
+	Field      bool
+	Static     bool
+	Type       string
+	Parameters []string
+}
+
+const (
+	dexStaticFlag      = 0x8
+	dexConstructorName = "<init>"
+	dexInitializerName = "<clinit>"
+)
 
 type dexIndex struct {
 	Classes     map[string]*dexClass
@@ -90,13 +107,23 @@ type dexFile struct {
 	data    []byte
 	strings []string
 	types   []string
-	protos  []string
-	fields  [][2]string
+	protos  []dexProto
+	fields  []dexFieldID
 	methods []dexMethodID
 }
 
+type dexProto struct {
+	descriptors string
+	parameters  []string
+}
+
+type dexFieldID struct {
+	class, name, fieldType string
+}
+
 type dexMethodID struct {
-	class, name, parameters string
+	class, name string
+	proto       dexProto
 }
 
 func readUleb128(data []byte, offset int) (uint32, int, error) {
@@ -172,26 +199,38 @@ func addDexToIndex(index *dexIndex, data []byte) error {
 		return ""
 	}
 
-	file.protos = make([]string, protoCount)
-	for index := range file.protos {
-		parameters := int(order.Uint32(data[protoOffset+12*index+8:]))
-		var builder strings.Builder
-		if parameters != 0 && parameters+4 <= len(data) {
-			count := int(order.Uint32(data[parameters:]))
-			for item := 0; item < count && parameters+4+2*item+2 <= len(data); item++ {
-				builder.WriteString(typeName(uint32(order.Uint16(data[parameters+4+2*item:]))))
-			}
+	typeList := func(offset int) []string {
+		if offset == 0 || offset+4 > len(data) {
+			return nil
 		}
-		file.protos[index] = builder.String()
+		count := int(order.Uint32(data[offset:]))
+		var types []string
+		for item := 0; item < count && offset+4+2*item+2 <= len(data); item++ {
+			types = append(types, typeName(uint32(order.Uint16(data[offset+4+2*item:]))))
+		}
+		return types
 	}
 
-	file.fields = make([][2]string, fieldCount)
+	file.protos = make([]dexProto, protoCount)
+	for index := range file.protos {
+		descriptors := typeList(int(order.Uint32(data[protoOffset+12*index+8:])))
+		proto := dexProto{descriptors: strings.Join(descriptors, ""), parameters: make([]string, len(descriptors))}
+		for position, descriptor := range descriptors {
+			proto.parameters[position] = javaRuntimeName(descriptor)
+		}
+		file.protos[index] = proto
+	}
+
+	file.fields = make([]dexFieldID, fieldCount)
 	for item := range file.fields {
 		base := fieldOffset + 8*item
-		class := javaClassName(typeName(uint32(order.Uint16(data[base:]))))
-		name := text(order.Uint32(data[base+4:]))
-		file.fields[item] = [2]string{class, name}
-		index.FieldNames[name] = true
+		field := dexFieldID{
+			class:     javaClassName(typeName(uint32(order.Uint16(data[base:])))),
+			fieldType: javaRuntimeName(typeName(uint32(order.Uint16(data[base+2:])))),
+			name:      text(order.Uint32(data[base+4:])),
+		}
+		file.fields[item] = field
+		index.FieldNames[field.name] = true
 	}
 
 	file.methods = make([]dexMethodID, methodCount)
@@ -202,7 +241,7 @@ func addDexToIndex(index *dexIndex, data []byte) error {
 			name:  text(order.Uint32(data[base+4:])),
 		}
 		if proto := int(order.Uint16(data[base+2:])); proto < len(file.protos) {
-			method.parameters = file.protos[proto]
+			method.proto = file.protos[proto]
 		}
 		file.methods[item] = method
 		index.MethodNames[method.name] = true
@@ -217,6 +256,9 @@ func addDexToIndex(index *dexIndex, data []byte) error {
 		}
 		if super := order.Uint32(data[base+8:]); super != dexNoIndex {
 			class.Super = javaClassName(typeName(super))
+		}
+		for _, descriptor := range typeList(int(order.Uint32(data[base+12:]))) {
+			class.Interfaces = append(class.Interfaces, javaClassName(descriptor))
 		}
 		if classData := int(order.Uint32(data[base+24:])); classData != 0 {
 			if err := file.readClassData(classData, class); err != nil {
@@ -242,39 +284,64 @@ func (file *dexFile) readClassData(offset int, class *dexClass) error {
 	for group := 0; group < 2; group++ {
 		var fieldIndex uint32
 		for item := uint32(0); item < counts[group]; item++ {
-			var difference uint32
+			var difference, flags uint32
 			if difference, offset, err = readUleb128(file.data, offset); err != nil {
 				return err
 			}
-			if _, offset, err = readUleb128(file.data, offset); err != nil {
+			if flags, offset, err = readUleb128(file.data, offset); err != nil {
 				return err
 			}
 			fieldIndex += difference
 			if int(fieldIndex) < len(file.fields) {
-				class.Fields[file.fields[fieldIndex][1]] = true
+				field := file.fields[fieldIndex]
+				class.Fields[field.name] = true
+				class.Declared = append(class.Declared, dexMember{Name: field.name, Field: true, Static: flags&dexStaticFlag != 0, Type: field.fieldType})
 			}
 		}
 	}
 	for group := 2; group < 4; group++ {
 		var methodIndex uint32
 		for item := uint32(0); item < counts[group]; item++ {
-			var difference uint32
+			var difference, flags uint32
 			if difference, offset, err = readUleb128(file.data, offset); err != nil {
 				return err
 			}
-			for skip := 0; skip < 2; skip++ {
-				if _, offset, err = readUleb128(file.data, offset); err != nil {
-					return err
-				}
+			if flags, offset, err = readUleb128(file.data, offset); err != nil {
+				return err
+			}
+			if _, offset, err = readUleb128(file.data, offset); err != nil {
+				return err
 			}
 			methodIndex += difference
 			if int(methodIndex) < len(file.methods) {
-				method := file.methods[methodIndex]
-				class.Methods[method.name] = append(class.Methods[method.name], method.parameters)
+				file.addMethod(class, file.methods[methodIndex], flags)
 			}
 		}
 	}
 	return nil
+}
+
+func (file *dexFile) addMethod(class *dexClass, method dexMethodID, flags uint32) {
+	class.Methods[method.name] = append(class.Methods[method.name], method.proto.descriptors)
+	switch method.name {
+	case dexConstructorName:
+		class.Constructors = append(class.Constructors, method.proto.parameters)
+	case dexInitializerName:
+	default:
+		class.Declared = append(class.Declared, dexMember{Name: method.name, Static: flags&dexStaticFlag != 0, Parameters: method.proto.parameters})
+	}
+}
+
+func javaRuntimeName(descriptor string) string {
+	if strings.HasPrefix(descriptor, "[") {
+		return strings.ReplaceAll(descriptor, "/", ".")
+	}
+	for name, primitive := range javaPrimitiveDescriptors {
+		if descriptor == primitive {
+			return name
+		}
+	}
+	return javaClassName(descriptor)
 }
 
 func javaClassName(descriptor string) string {

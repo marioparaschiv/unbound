@@ -38,6 +38,8 @@ type compatTarget struct {
 	sdk       *iosSDKIndex
 	framework *javaFrameworkIndex
 	own       *javaFrameworkIndex
+	shapes    map[string]discordShape
+	resources *androidResources
 }
 
 type compatFinding struct {
@@ -136,6 +138,9 @@ func runCompatScan(args []string) error {
 		}
 		if target.own, err = loadOwnJavaIndex(*root); err != nil {
 			return fmt.Errorf("loader sources: %w", err)
+		}
+		if target.shapes, err = loadDiscordShapes(*root); err != nil {
+			return err
 		}
 		targets = append(targets, target)
 	}
@@ -288,6 +293,16 @@ func loadAndroidTarget(paths []string, version string) (*compatTarget, error) {
 					archive.Close()
 					return nil, err
 				}
+			case file.Name == "resources.arsc" && target.resources == nil:
+				data, err := readZipEntry(file)
+				if err != nil {
+					archive.Close()
+					return nil, err
+				}
+				if target.resources, err = parseResourceTable(data); err != nil {
+					archive.Close()
+					return nil, fmt.Errorf("resources.arsc: %w", err)
+				}
 			case strings.HasSuffix(file.Name, ".dex") && !strings.Contains(file.Name, "/"):
 				data, err := readZipEntry(file)
 				if err != nil {
@@ -436,6 +451,16 @@ func evaluateReference(reference *compatReference, target *compatTarget, seen ma
 			return compatPossible, describeTerms(plain) + " only appears as a string, never as a property name"
 		}
 		return compatOK, ""
+	case referenceJavaShape:
+		if target.dex == nil {
+			return "", ""
+		}
+		return evaluateShapeReference(reference, target)
+	case referenceResource:
+		if target.dex == nil {
+			return "", ""
+		}
+		return evaluateResourceReference(reference, target)
 	}
 
 	if target.objc != nil {

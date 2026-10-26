@@ -43,6 +43,10 @@ func describeCompatReference(reference *compatReference) string {
 		return "method `" + name + "`"
 	case referenceJavaField:
 		return "field `" + reference.Name + "`"
+	case referenceJavaShape:
+		return "shape `" + reference.Name + "`"
+	case referenceResource:
+		return "resource `" + reference.Class + "/" + reference.Name + "`"
 	}
 	return "`" + reference.Name + "`"
 }
