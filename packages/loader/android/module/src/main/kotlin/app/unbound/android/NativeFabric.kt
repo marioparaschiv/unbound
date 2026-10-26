@@ -174,15 +174,19 @@ object NativeFabric {
                 key,
                 Array(values.length()) { values.optString(it) },
             )
+
             is Int -> target.putIntArray(key, IntArray(values.length()) { values.optInt(it) })
+
             is Double -> target.putDoubleArray(
                 key,
                 DoubleArray(values.length()) { values.optDouble(it) },
             )
+
             is Boolean -> target.putBooleanArray(
                 key,
                 BooleanArray(values.length()) { values.optBoolean(it) },
             )
+
             is JSONObject -> {
                 val bundles = ArrayList<Bundle>(values.length())
                 for (index in 0 until values.length()) {
@@ -190,6 +194,7 @@ object NativeFabric {
                 }
                 target.putParcelableArrayList(key, bundles)
             }
+
             else -> target.putStringArray(key, emptyArray())
         }
     }

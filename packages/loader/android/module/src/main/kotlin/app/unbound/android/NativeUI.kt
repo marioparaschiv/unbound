@@ -314,10 +314,12 @@ object NativeUI {
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT,
         )
+
         is LinearLayout -> LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT,
         )
+
         else -> ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -333,19 +335,23 @@ object NativeUI {
                     require(view is TextView) { "The Android native UI view does not support text" }
                     view.text = properties.optString(key)
                 }
+
                 "textColor" -> {
                     require(view is TextView) { "The Android native UI view does not support textColor" }
                     view.setTextColor(parseColor(properties, key))
                 }
+
                 "textSize" -> {
                     require(view is TextView) { "The Android native UI view does not support textSize" }
                     val value = boundedNumber(properties, key, 1.0, 128.0)
                     view.textSize = value.toFloat()
                 }
+
                 "sourceUri" -> {
                     require(view is ImageView) { "The Android native UI view does not support sourceUri" }
                     NativeImageLoader.load(view, properties.getString(key))
                 }
+
                 "scaleType" -> {
                     require(view is ImageView) { "The Android native UI view does not support scaleType" }
                     view.scaleType = when (properties.getString(key)) {
@@ -356,6 +362,7 @@ object NativeUI {
                         else -> throw IllegalArgumentException("The Android native image scale type is invalid")
                     }
                 }
+
                 "borderRadius" -> {
                     val radius = boundedNumber(properties, key, 0.0, 512.0)
                     if (radius == 0.0) {
@@ -370,20 +377,27 @@ object NativeUI {
                         view.clipToOutline = true
                     }
                 }
+
                 "backgroundColor" -> view.setBackgroundColor(parseColor(properties, key))
+
                 "contentDescription" -> {
                     val value = properties.optString(key)
                     require(value.length <= 256)
                     view.contentDescription = value
                 }
+
                 "padding" -> {
                     val value = boundedNumber(properties, key, 0.0, 128.0)
                     val pixels = ceil(value * view.resources.displayMetrics.density).toInt()
                     view.setPadding(pixels, pixels, pixels, pixels)
                 }
+
                 "enabled" -> view.isEnabled = properties.getBoolean(key)
+
                 "alpha" -> view.alpha = boundedNumber(properties, key, 0.0, 1.0).toFloat()
+
                 "visible" -> view.visibility = if (properties.getBoolean(key)) View.VISIBLE else View.GONE
+
                 "orientation" -> {
                     require(view is LinearLayout) { "The Android native UI view does not support orientation" }
                     view.orientation = when (properties.getString(key)) {
@@ -392,6 +406,7 @@ object NativeUI {
                         else -> throw IllegalArgumentException("The Android native UI orientation is invalid")
                     }
                 }
+
                 "gravity" -> {
                     val gravity = when (properties.getString(key)) {
                         "start" -> Gravity.START
@@ -407,6 +422,7 @@ object NativeUI {
                         else -> throw IllegalArgumentException("The Android native UI view does not support gravity")
                     }
                 }
+
                 else -> throw IllegalArgumentException("Unsupported Android native UI property: $key")
             }
         }
