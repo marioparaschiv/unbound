@@ -4,7 +4,7 @@ import lazy from '@unbound-app/utils/lazy';
 import type { ComponentType } from 'react';
 
 import { findByPropsLazy, findByNameLazy } from '~/api/metro/wrappers';
-import { findByName, findByProps } from '~/api/metro';
+import { findByName } from '~/api/metro';
 
 export const Discord: DesignModule = findByPropsLazy(
 	'createStyles',
@@ -21,8 +21,8 @@ export const Switch: ComponentType<SwitchProps> = findByName('Switch');
 export const Forms = lazy(
 	() =>
 		firstOf(
-			() => findByProps('FormSliderRow'),
-			() => findByProps('FormSection', 'FormRow'),
+			() => require('~/api/metro').findByProps('FormSliderRow'),
+			() => require('~/api/metro').findByProps('FormSection', 'FormRow'),
 		) ?? {},
 );
 export const Avatars = findByPropsLazy('AvatarSizes', 'Avatar');
