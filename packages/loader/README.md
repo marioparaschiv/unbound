@@ -226,6 +226,12 @@ Android builds come from Google Play through [sniff](https://github.com/xhyrom/s
 go run ./tools discord-apk --channel alpha --output-dir discord-alpha --split base --split config.arm64_v8a
 ```
 
+Installing a split APK needs every split the device uses, or `adb install-multiple` fails with `INSTALL_FAILED_MISSING_SPLIT`. Pass `--device <adb serial>` to download all of them: the splits of the installed Discord from `pm path com.discord`, or, when Discord is not installed, the splits for the device's ABI (`ro.product.cpu.abi`), density bucket (`wm density`) and language. Add `--install` to install them with `adb install-multiple -r -d`, which keeps app data and allows a downgrade:
+
+```bash
+go run ./tools discord-apk --channel stable --device emulator-5554 --output-dir discord-stable --install
+```
+
 Run the scan against downloaded builds. Either `--ipa` or `--apk` can be left out to scan one platform:
 
 ```bash
