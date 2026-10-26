@@ -176,23 +176,32 @@ export async function createTestDatabase(locale: string = 'C'): Promise<TestData
 }
 
 /**
- * @description Plans a query with sequential scans and sorts priced out, so on tables too small for
- * the planner to prefer an index, a test sees whether an index can serve the query and its order.
+ * What an index must serve for a plan to avoid every disabled node: the order (no seq scan, no sort),
+ * or the filter (no seq scan, no plain or index-only scan, which leaves bitmap scans of a predicate).
+ */
+export type PlanMode = 'order' | 'filter';
+
+const PLAN_SETTINGS: Record<PlanMode, string[]> = {
+	order: ['enable_seqscan', 'enable_sort'],
+	filter: ['enable_seqscan', 'enable_indexscan', 'enable_indexonlyscan'],
+};
+
+/**
+ * @description Plans a query with the paths that would hide a missing index turned off, so on tables
+ * too small for the planner to prefer an index, a test sees whether an index can serve the query.
  * @param db The database.
  * @param query The query's SQL and parameters, from `.toSQL()`.
- * @param sorts Whether to leave sorts priced as usual, for a query whose index is a filter, not an order.
+ * @param mode Whether an index must serve the query's order or its filter.
  * @returns The root plan node.
  */
 export async function explain(
 	db: Database,
 	query: Query,
-	sorts: boolean = false,
+	mode: PlanMode = 'order',
 ): Promise<PlanNode> {
 	const [row] = await db.$client.begin(async (sql) => {
-		await sql`SET LOCAL enable_seqscan = off`;
-
-		if (!sorts) {
-			await sql`SET LOCAL enable_sort = off`;
+		for (const setting of PLAN_SETTINGS[mode]) {
+			await sql.unsafe(`SET LOCAL ${setting} = off`);
 		}
 
 		return sql.unsafe<ExplainRow[]>(
