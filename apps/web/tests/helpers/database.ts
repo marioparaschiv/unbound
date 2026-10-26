@@ -104,7 +104,17 @@ function isRetryableDrop(error: unknown): error is postgres.PostgresError {
 	return error instanceof postgres.PostgresError && RETRYABLE_DROP_CODES.has(error.code);
 }
 
-async function dropDatabase(name: string) {
+/**
+ * @description Force-drops a database on the test cluster, retrying while another role's backend or a
+ * slow one still holds it, for up to 30 seconds.
+ * @param name The database name, lowercase letters, digits and underscores only.
+ * @returns Resolves once the database is gone.
+ */
+export async function dropDatabase(name: string): Promise<void> {
+	if (!/^[a-z0-9_]+$/.test(name)) {
+		throw new Error(`Refusing to drop the database ${JSON.stringify(name)}.`);
+	}
+
 	const deadline = Date.now() + DROP_RETRY_DEADLINE_MS;
 
 	while (true) {
