@@ -6,8 +6,8 @@ import postgres from 'postgres';
 import { z } from 'zod';
 
 import { ADDON_CHANNELS, type AddonChannels } from '~/dispatchers/addons';
-import { contentHash } from '~/lib/content-hash';
 import { parseDatabaseEnv, envSchema } from '~/lib/env';
+import { contentHash } from '~/lib/content-hash';
 import { SITE_URL } from '~/lib/constants';
 
 type Row = Record<string, string | number | boolean | null>;
