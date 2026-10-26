@@ -22,6 +22,12 @@ import {
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
 import {
+	MESSAGE_VIEW,
+	messageBindMethod,
+	messageIdField,
+	viewByIdName,
+} from '@unbound-plugins/shared/native/android/discord-views';
+import {
 	currentDecorView,
 	findViewsOfClass,
 	STARTUP_SCAN_DELAYS,
@@ -33,16 +39,6 @@ import type { AndroidTooltips } from '~/android/tooltip';
 import { subscribeTheme } from '~/theme';
 import { Icon } from '~/constants';
 
-const MESSAGE_VIEW = 'com.discord.chat.presentation.message.MessageView';
-const SET_MESSAGE_PARAMETERS = [
-	'com.discord.chat.bridge.Message',
-	'com.discord.chat.presentation.root.MessageContext',
-	'com.discord.chat.presentation.events.ChatEventHandler',
-	'com.discord.chat.presentation.message.view.botuikit.ComponentProvider',
-	'kotlin.jvm.functions.Function0',
-	'boolean',
-	'boolean',
-];
 const DRAWABLE = 'android.graphics.drawable.Drawable';
 const NO_DRAWABLE = { type: 'null', class: DRAWABLE } as const;
 const VISIBLE = 0;
@@ -125,12 +121,6 @@ export function createAndroidIndicators(
 		indicator.revision++;
 
 		for (const listener of listeners.get(indicator.id) ?? []) listener();
-	}
-
-	function bindingView(messageView: NativeJavaReference, field: string) {
-		const binding = javaReference(java.getField(messageView, 'binding'));
-
-		return binding ? javaReference(java.getField(binding, field)) : null;
 	}
 
 	function density(view: NativeJavaReference): number {
@@ -248,6 +238,10 @@ export function createAndroidIndicators(
 		}
 	}
 
+	function isVisible(view: NativeJavaReference): boolean {
+		return javaNumber(java.invoke(view, 'getVisibility', [])) === VISIBLE;
+	}
+
 	async function render(messageView: NativeJavaReference, messageId: string) {
 		const key = viewKey(messageView as NativeJavaValue);
 
@@ -255,12 +249,9 @@ export function createAndroidIndicators(
 
 		const record = records.get(messageId);
 		const existing = indicators.get(key);
-		const header = bindingView(messageView, 'header');
-		const authorName = bindingView(messageView, 'authorName');
-		const shown =
-			header &&
-			authorName &&
-			javaNumber(java.invoke(header, 'getVisibility', [])) === VISIBLE;
+		const header = viewByIdName(java, messageView, 'header');
+		const authorName = viewByIdName(java, messageView, 'author_name');
+		const shown = header && authorName && isVisible(header) && isVisible(authorName);
 
 		if (!record || !shown) {
 			if (existing) await remove(existing);
@@ -342,10 +333,12 @@ export function createAndroidIndicators(
 		queues.set(key, next);
 	}
 
+	const bindMessage = messageBindMethod(java);
+	const idField = messageIdField(java);
 	const token = hooks.hook(
 		MESSAGE_VIEW,
-		'setMessage',
-		SET_MESSAGE_PARAMETERS,
+		bindMessage.name,
+		bindMessage.parameters,
 		{ notify: true },
 		({ self, args }) => {
 			const messageView = javaReference(self);
@@ -374,7 +367,7 @@ export function createAndroidIndicators(
 		if (!decor || disposed) return;
 
 		for (const messageView of findViewsOfClass(java, decor, MESSAGE_VIEW)) {
-			const messageId = javaText(java.getField(messageView, 'messageId'));
+			const messageId = javaText(java.getField(messageView, idField));
 
 			if (messageId) schedule(messageView, messageId);
 		}

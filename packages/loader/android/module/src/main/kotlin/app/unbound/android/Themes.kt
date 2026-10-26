@@ -15,11 +15,12 @@ import java.util.Collections
 import java.util.WeakHashMap
 
 object Themes {
-    private const val THEME_MANAGER = "com.discord.theme.ThemeManager"
-    private const val THEME_TYPE = "com.discord.theme.DiscordTheme"
-    private const val THEME_OBJECT = "com.discord.theme.DiscordThemeObject"
+    private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
+    private val THEME_TYPE = HostClass.legacy("com.discord.theme.DiscordTheme")
+    private val THEME_OBJECT = HostClass.legacy("com.discord.theme.DiscordThemeObject")
     private const val LAZY = "kotlin.Lazy"
     private const val SENTINEL_BASE = 0x5A000000
+    private val THEME_SUFFIXES = listOf("dark", "light", "ash", "onyx", "darker", "midnight")
 
     private data class Palette(
         val semantic: Map<String, Int> = emptyMap(),
@@ -34,13 +35,25 @@ object Themes {
     @Volatile private var currentThemeId: String? = null
 
     @Volatile private var context: Context? = null
+
+    @Volatile private var resources: Resources? = null
+
+    @Volatile private var semanticResources = false
     private var patcher: Patcher? = null
 
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
-        val patcher = Patcher(classLoader.loadClass(THEME_OBJECT), classLoader.loadClass(LAZY), classLoader)
+        hookRawColors(xposed)
+        if (THEME_MANAGER.find(classLoader) == null) {
+            semanticResources = true
+            apply()
+            SettingsWatcher.onChange(::apply)
+            Logger.info(LogCategory.THEMES, "Discord's theme classes are obfuscated, so themes recolour Discord's colour resources.")
+            return
+        }
+        val patcher = Patcher(THEME_OBJECT.load(classLoader), classLoader.loadClass(LAZY), classLoader)
         this.patcher = patcher
-        val manager = classLoader.loadClass(THEME_MANAGER)
-        val themeType = classLoader.loadClass(THEME_TYPE)
+        val manager = THEME_MANAGER.load(classLoader)
+        val themeType = THEME_TYPE.load(classLoader)
         val instance = manager.getDeclaredField("INSTANCE").get(null)
         val getTheme = manager.getDeclaredMethod("getTheme", themeType)
 
@@ -53,12 +66,11 @@ object Themes {
             .intercept { chain ->
                 chain.proceed().also {
                     context = (chain.getArg(0) as? Context)?.applicationContext
-                    rawById = resolveRawIds(palette.raw)
+                    rawById = resolveIds()
                     themeType.enumConstants?.forEach { type -> patcher.patch(getTheme.invoke(instance, type)) }
                 }
             }
 
-        hookRawColors(xposed)
         apply()
         SettingsWatcher.onChange(::apply)
     }
@@ -69,7 +81,7 @@ object Themes {
         currentThemeId = themeId
 
         palette = themeId?.let(::readPalette) ?: Palette()
-        rawById = resolveRawIds(palette.raw)
+        rawById = resolveIds()
         patcher?.refreshAll()
         Logger.info(LogCategory.THEMES, "Theme updated. (${themeId ?: "default"})")
     }
@@ -98,8 +110,26 @@ object Themes {
     private fun getterName(accessor: String): String = "get" + accessor.replaceFirstChar { it.uppercase() }
 
     private fun resourceId(name: String): Int {
-        val current = context ?: return 0
-        return current.resources.getIdentifier(name, "color", current.packageName)
+        val current = context?.resources ?: resources ?: return 0
+        return current.getIdentifier(name, "color", context?.packageName ?: Unbound.DISCORD_PACKAGE)
+    }
+
+    private fun resolveIds(): Map<Int, Int> = resolveRawIds(palette.raw) + if (semanticResources) semanticIds() else emptyMap()
+
+    private fun semanticIds(): Map<Int, Int> =
+        (palette.semantic.keys + palette.rawFallbacks.keys).flatMap { getter ->
+            val color = semanticColor(getter) ?: return@flatMap emptyList()
+            val base = resourceBase(getter)
+            THEME_SUFFIXES.mapNotNull { suffix -> resourceId("${base}_$suffix").takeIf { it != 0 }?.let { it to color } }
+        }.toMap()
+
+    private fun resourceBase(getter: String): String =
+        getter.removePrefix("get").replace(Regex("([a-z0-9])([A-Z])"), "$1_$2").lowercase()
+
+    private fun useResources(current: Resources) {
+        if (resources != null || context != null) return
+        resources = current
+        rawById = resolveIds()
     }
 
     private fun resolveRawIds(raw: Map<String, Int>): Map<Int, Int> =
@@ -112,7 +142,7 @@ object Themes {
         current.semantic[getter]?.let { return it }
         val fallback = current.rawFallbacks[getter] ?: return null
         val id = resourceId(fallback).takeIf { it != 0 } ?: return null
-        return rawById[id] ?: context?.getColor(id)
+        return rawById[id] ?: context?.getColor(id) ?: resources?.getColor(id, null)
     }
 
     private fun hookRawColors(xposed: XposedInterface) {
@@ -120,11 +150,17 @@ object Themes {
 
         xposed.hook(Resources::class.java.getDeclaredMethod("getColor", Integer.TYPE, Resources.Theme::class.java))
             .setExceptionMode(ExceptionMode.PROTECTIVE)
-            .intercept { chain -> overrideColor(chain.getArg(0) as Int) ?: chain.proceed() }
+            .intercept { chain ->
+                if (semanticResources) useResources(chain.thisObject as Resources)
+                overrideColor(chain.getArg(0) as Int) ?: chain.proceed()
+            }
 
         xposed.hook(Resources::class.java.getDeclaredMethod("getColorStateList", Integer.TYPE, Resources.Theme::class.java))
             .setExceptionMode(ExceptionMode.PROTECTIVE)
-            .intercept { chain -> overrideColor(chain.getArg(0) as Int)?.let(ColorStateList::valueOf) ?: chain.proceed() }
+            .intercept { chain ->
+                if (semanticResources) useResources(chain.thisObject as Resources)
+                overrideColor(chain.getArg(0) as Int)?.let(ColorStateList::valueOf) ?: chain.proceed()
+            }
 
         fun typedArrayOverride(array: TypedArray, index: Int): Int? {
             if (rawById.isEmpty()) return null

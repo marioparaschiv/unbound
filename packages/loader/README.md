@@ -249,6 +249,18 @@ const Forms = firstOf(
 
 `HostClass` loads the first class that exists. `firstOf` from `@unbound-app/utils/first-of` returns the first lookup that produces a value. Missing names in such a lookup are listed under "Covered by a fallback" and do not count as breakages. A name listed there on every channel can be removed.
 
+When the new build has no name to fall back to and the code finds the replacement by its shape instead, mark the old name as legacy. The scan then lists it under "Covered by a fallback" for every lookup of that name in the same component:
+
+```kotlin
+private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
+```
+
+```ts
+const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
+```
+
+`legacyJavaClass` comes from `@unbound-plugins/shared/native/android/legacy-classes`. Only mark a name once the code handles its absence.
+
 Releases run the same scan before anything is built. The `compat-gate` job in `loader-build.yml` checks the exact builds a release targets: the App Store IPA and the matching Play stable APK for a stable release, the TestFlight IPA for a TestFlight release, and the Play APK for a beta or alpha prerelease. Any broken or possibly broken lookup stops the release, and the job summary lists what broke. The scheduled channel issues stay open as a heads-up and do not block anything. Run the check locally with `--fail-on-breakage`:
 
 ```bash

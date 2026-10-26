@@ -9,12 +9,20 @@ import type {
 } from '@unbound-app/api/native';
 import { layoutHostingList, removeHost } from '@unbound-plugins/shared/native/android/inline-hosts';
 import {
+	describeJavaClass,
+	MESSAGE_VIEW,
+	messageBindMethod,
+	messageIdField,
+	viewByIdName,
+} from '@unbound-plugins/shared/native/android/discord-views';
+import {
 	javaFlag,
 	javaInt,
 	javaNumber,
 	javaReference,
 	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
+import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-classes';
 import {
 	currentDecorView,
 	findViewsOfClass,
@@ -36,19 +44,11 @@ import { surfaceStates } from '~/surface-states';
 import ReactionUserCache from '~/reactor-cache';
 import { fetchReactors } from '~/reactors';
 
-const MESSAGE_VIEW = 'com.discord.chat.presentation.message.MessageView';
-const REACTION_VIEW = 'com.discord.reactions.ReactionView';
+const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 const REACTION_ROW = 'com.discord.reactions.ShortcutsFlexbox';
+const ADD_REACTION_VIEW = 'com.discord.reactions.AddReactionView';
+const STRING = 'java.lang.String';
 const LINEAR_PARAMS = 'android.widget.LinearLayout$LayoutParams';
-const SET_MESSAGE_PARAMETERS = [
-	'com.discord.chat.bridge.Message',
-	'com.discord.chat.presentation.root.MessageContext',
-	'com.discord.chat.presentation.events.ChatEventHandler',
-	'com.discord.chat.presentation.message.view.botuikit.ComponentProvider',
-	'kotlin.jvm.functions.Function0',
-	'boolean',
-	'boolean',
-];
 const CENTER_VERTICAL = 16;
 const VISIBLE = 0;
 const HOST_HEIGHT = 20;
@@ -123,11 +123,47 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		).filter((child): child is NativeJavaReference => child !== null);
 	}
 
+	const reactionViewNamed = (() => {
+		try {
+			java.getClass(REACTION_VIEW);
+
+			return true;
+		} catch {
+			return false;
+		}
+	})();
+	const emojiFields = new Map<string, string>();
+
+	function isReactionView(view: NativeJavaReference): boolean {
+		if (reactionViewNamed) return isA(REACTION_VIEW, view);
+
+		return (
+			isA('android.view.View', view) && javaText(java.className(view)) !== ADD_REACTION_VIEW
+		);
+	}
+
+	function emojiField(reactionView: NativeJavaReference): string | undefined {
+		const className = javaText(java.className(reactionView));
+
+		if (!className) return undefined;
+
+		const cached = emojiFields.get(className);
+
+		if (cached) return cached;
+
+		const fields = describeJavaClass(java, className).fields.filter(
+			(field) => !field.static && field.type === STRING,
+		);
+
+		if (fields.length !== 1) return undefined;
+
+		emojiFields.set(className, fields[0]!.name);
+
+		return fields[0]!.name;
+	}
+
 	function reactionRow(messageView: NativeJavaReference): NativeJavaReference | null {
-		const binding = javaReference(java.getField(messageView, 'binding'));
-		const accessories = binding
-			? javaReference(java.getField(binding, 'accessoriesView'))
-			: null;
+		const accessories = viewByIdName(java, messageView, 'accessories_view');
 		let level = accessories ? [accessories] : [];
 
 		for (let depth = 0; depth < MAX_SEARCH_DEPTH && level.length; depth++) {
@@ -248,7 +284,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 			? MessageStore.getMessage(channelId, messageId)
 			: undefined;
 		const row = reactionRow(messageView);
-		const views = row ? children(row).filter((view) => isA(REACTION_VIEW, view)) : [];
+		const views = row ? children(row).filter(isReactionView) : [];
 		const reactions = message?.reactions ?? [];
 		const used = new Set<number>();
 		const changed: Pill[] = [];
@@ -257,9 +293,8 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 			const key = viewKey(reactionView as NativeJavaValue) ?? '';
 			const existing = pills.get(key);
 			const shown = javaNumber(java.invoke(reactionView, 'getVisibility', [])) === VISIBLE;
-			const emoji = shown
-				? javaText(java.getField(reactionView, 'currentEmojiId'))
-				: undefined;
+			const field = shown ? emojiField(reactionView) : undefined;
+			const emoji = field ? javaText(java.getField(reactionView, field)) : undefined;
 			const index = reactions.findIndex(
 				(reaction, position) => !used.has(position) && emojiKey(reaction) === emoji,
 			);
@@ -350,10 +385,12 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		queues.set(key, next);
 	}
 
+	const bindMessage = messageBindMethod(java);
+	const idField = messageIdField(java);
 	const token = hooks.hook(
 		MESSAGE_VIEW,
-		'setMessage',
-		SET_MESSAGE_PARAMETERS,
+		bindMessage.name,
+		bindMessage.parameters,
 		{ notify: true },
 		({ self, args }) => {
 			const messageView = javaReference(self);
@@ -410,7 +447,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		if (!decor || disposed) return;
 
 		for (const messageView of findViewsOfClass(java, decor, MESSAGE_VIEW)) {
-			const messageId = javaText(java.getField(messageView, 'messageId'));
+			const messageId = javaText(java.getField(messageView, idField));
 
 			if (messageId) schedule(messageView, messageId);
 		}

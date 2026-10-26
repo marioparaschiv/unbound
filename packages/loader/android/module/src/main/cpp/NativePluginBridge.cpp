@@ -1018,6 +1018,12 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
                return javaSynchronously(rt, callbacks, callbacks.javaClassName,
                                         {serializeJavaHandle(rt, args[0])});
            });
+    define(runtime, java, "describe", 1,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 1, "Java class descriptions require a class name");
+               return javaSynchronously(rt, callbacks, callbacks.javaDescribe,
+                                        {javaName(rt, args[0])});
+           });
     define(runtime, java, "construct", 2,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 1, "Java construction requires a class name");

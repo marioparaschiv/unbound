@@ -271,6 +271,7 @@ const nativeUICapabilityRequirements: Record<keyof NativeUIBridge, NativePluginC
 const nativeJavaCapabilityRequirements: Record<keyof NativeJavaBridge, NativePluginCapability> = {
 	getClass: 'native.java.classes',
 	className: 'native.java.classes',
+	describe: 'native.java.classes',
 	construct: 'native.java.construct',
 	respondsTo: 'native.java.classes',
 	invoke: 'native.java.invoke',
@@ -1153,6 +1154,10 @@ function createScopedNativePlugin(
 		className: scopeMethod(
 			javaBridge.className.bind(javaBridge),
 			nativeJavaCapabilityRequirements.className,
+		),
+		describe: scopeMethod(
+			javaBridge.describe.bind(javaBridge),
+			nativeJavaCapabilityRequirements.describe,
 		),
 		construct: (name, args) =>
 			trackJavaHandle(

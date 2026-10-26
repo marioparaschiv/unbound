@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -78,7 +79,9 @@ func compatLines(findings []compatFinding, status, sourceURL string) []compatRep
 			groups[identity] = existing
 			order = append(order, identity)
 		}
-		existing.platforms = append(existing.platforms, compatPlatformLabels[finding.Platform])
+		if label := compatPlatformLabels[finding.Platform]; !slices.Contains(existing.platforms, label) {
+			existing.platforms = append(existing.platforms, label)
+		}
 		existing.isNew = existing.isNew || finding.New
 	}
 	lines := make([]compatReportLine, 0, len(order))

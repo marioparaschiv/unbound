@@ -41,6 +41,7 @@ type compatReference struct {
 	Strict      bool             `json:"strict,omitempty"`
 	Group       string           `json:"group,omitempty"`
 	Alternative int              `json:"alternative,omitempty"`
+	Legacy      bool             `json:"legacy,omitempty"`
 	Locations   []compatLocation `json:"locations"`
 }
 
@@ -79,7 +80,7 @@ func newCompatSourceSet() *compatSourceSet {
 }
 
 func (set *compatSourceSet) add(reference compatReference, location compatLocation) {
-	identity := reference.Component + "#" + reference.Platform + "#" + reference.key() + "#" + reference.Group + "#" + strconv.Itoa(reference.Alternative)
+	identity := reference.Component + "#" + reference.Platform + "#" + reference.key() + "#" + reference.Group + "#" + strconv.Itoa(reference.Alternative) + "#" + strconv.FormatBool(reference.Legacy)
 	if existing := set.references[identity]; existing != nil {
 		existing.Strict = existing.Strict || reference.Strict
 		for _, known := range existing.Locations {
@@ -377,6 +378,7 @@ var (
 	kotlinFieldPattern     = regexp.MustCompile(`get(?:Declared)?Field\("([A-Za-z_$][A-Za-z0-9_$]*)"`)
 	jniClassPattern        = regexp.MustCompile(`FindClass\("([A-Za-z0-9_/$]+)"`)
 	kotlinHostClassPattern = regexp.MustCompile(`\bHostClass\(([^()]*)\)`)
+	kotlinLegacyPattern    = regexp.MustCompile(`\bHostClass\.legacy\(\s*"([^"]+)"\s*\)`)
 )
 
 func logosSelector(name, rest string) string {
@@ -421,6 +423,20 @@ func extractKotlinFallbacks(set *compatSourceSet, base compatReference, file com
 			}
 			grouped[lines[alternative]][name] = true
 		}
+	}
+	for _, match := range kotlinLegacyPattern.FindAllStringSubmatchIndex(content, -1) {
+		name := content[match[2]:match[3]]
+		if !javaClassPattern.MatchString(name) {
+			continue
+		}
+		line := lineAt(content, match[2])
+		reference := base
+		reference.Kind, reference.Name, reference.Legacy = referenceJavaClass, name, true
+		set.add(reference, compatLocation{File: file.path, Line: line})
+		if grouped[line] == nil {
+			grouped[line] = map[string]bool{}
+		}
+		grouped[line][name] = true
 	}
 	return grouped
 }

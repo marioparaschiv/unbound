@@ -8,6 +8,11 @@ import type {
 	NativeJavaValue,
 } from '@unbound-app/api/native';
 import {
+	MESSAGE_VIEW,
+	messageBindMethod,
+	messageIdField,
+} from '@unbound-plugins/shared/native/android/discord-views';
+import {
 	createHost,
 	hostContainer,
 	layoutHostingList,
@@ -40,18 +45,7 @@ import { createLinkedMessages } from '~/linked-messages';
 import { currentChannelId, linkedChannelName } from '~/channels';
 import { Surface } from '~/constants';
 
-const MESSAGE_VIEW = 'com.discord.chat.presentation.message.MessageView';
-const MESSAGE_ID_FIELD = 'messageId';
 const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
-const SET_MESSAGE_PARAMETERS = [
-	'com.discord.chat.bridge.Message',
-	'com.discord.chat.presentation.root.MessageContext',
-	'com.discord.chat.presentation.events.ChatEventHandler',
-	'com.discord.chat.presentation.message.view.botuikit.ComponentProvider',
-	'kotlin.jvm.functions.Function0',
-	'boolean',
-	'boolean',
-];
 const SPAN_EXCLUSIVE_EXCLUSIVE = 33;
 const PLACEHOLDER = '￼';
 const SETTLE_DELAYS = [0, 120, 600];
@@ -438,10 +432,11 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		if (await reserve(embed)) settle(embed);
 	}
 
+	const bindMessage = messageBindMethod(java);
 	const token = hooks.hook(
 		MESSAGE_VIEW,
-		'setMessage',
-		SET_MESSAGE_PARAMETERS,
+		bindMessage.name,
+		bindMessage.parameters,
 		{ notify: true },
 		({ self, args }) => {
 			const messageView = javaReference(self);
@@ -490,7 +485,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		if (!decor || controller.signal.aborted) return;
 
 		for (const messageView of findViewsOfClass(java, decor, MESSAGE_VIEW)) {
-			const messageId = javaText(java.getField(messageView, MESSAGE_ID_FIELD));
+			const messageId = javaText(java.getField(messageView, messageIdField(java)));
 
 			if (messageId) {
 				render(messageView, messageId).catch((error) => {

@@ -7,4 +7,8 @@ class HostClass(vararg val names: String) {
 
     fun load(classLoader: ClassLoader): Class<*> =
         find(classLoader) ?: throw ClassNotFoundException(names.joinToString(" or "))
+
+    companion object {
+        fun legacy(name: String) = HostClass(name)
+    }
 }

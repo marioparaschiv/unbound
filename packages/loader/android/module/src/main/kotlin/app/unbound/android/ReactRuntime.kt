@@ -7,13 +7,14 @@ import java.util.concurrent.TimeUnit
 
 object ReactRuntime {
     private const val BEFORE_BUNDLE_TIMEOUT_SECONDS = 5L
+    private const val QUEUE_CONFIGURATION = "com.facebook.react.bridge.queue.ReactQueueConfiguration"
 
     private val lock = Any()
     private var instance: WeakReference<Any>? = null
     private val pending = ArrayList<(Long) -> Unit>()
 
     private var javaScriptContextMethod: Method? = null
-    private var queueConfigurationMethod: Method? = null
+    private var queueConfiguration: ((Any) -> Any?)? = null
 
     fun attach(reactInstance: Any) {
         ActivityTracker.install(Platform.application())
@@ -21,12 +22,14 @@ object ReactRuntime {
         synchronized(lock) {
             instance = WeakReference(reactInstance)
             javaScriptContextMethod = reactInstance.javaClass.findMethod("getJavaScriptContext")
-            queueConfigurationMethod = reactInstance.javaClass.findMethod("getReactQueueConfiguration")
+            queueConfiguration = queueConfigurationReader(reactInstance.javaClass)
             queued = ArrayList(pending)
             pending.clear()
         }
         queued.forEach { post(it) }
     }
+
+    fun currentInstance(): Any? = synchronized(lock) { instance?.get() }
 
     fun post(work: (Long) -> Unit) {
         val target = synchronized(lock) {
@@ -39,7 +42,7 @@ object ReactRuntime {
         }
 
         val queueThread = runCatching {
-            val configuration = queueConfigurationMethod!!.invoke(target)!!
+            val configuration = queueConfiguration!!.invoke(target)!!
             configuration.javaClass.findMethod("getJSQueueThread")!!.invoke(configuration)!!
         }.onFailure { Logger.error(LogCategory.RUNTIME, "JS queue thread is unavailable", it) }.getOrNull() ?: return
 
@@ -58,7 +61,7 @@ object ReactRuntime {
     fun runBeforeBundle(work: (Long) -> Unit) {
         val target = synchronized(lock) { instance?.get() } ?: return
         val queueThread = runCatching {
-            val configuration = queueConfigurationMethod!!.invoke(target)!!
+            val configuration = queueConfiguration!!.invoke(target)!!
             configuration.javaClass.findMethod("getJSQueueThread")!!.invoke(configuration)!!
         }.onFailure { Logger.error(LogCategory.RUNTIME, "JS queue thread is unavailable", it) }.getOrNull()
             ?: return
@@ -95,6 +98,17 @@ object ReactRuntime {
         if (scheduled && !finished.await(BEFORE_BUNDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
             Logger.error(LogCategory.RUNTIME, "Module capture did not run before the bundle within ${BEFORE_BUNDLE_TIMEOUT_SECONDS}s")
         }
+    }
+
+    private fun queueConfigurationReader(instanceClass: Class<*>): ((Any) -> Any?)? {
+        instanceClass.findMethod("getReactQueueConfiguration")?.let { getter -> return { instance -> getter.invoke(instance) } }
+        val configurationType = runCatching { instanceClass.classLoader?.loadClass(QUEUE_CONFIGURATION) }.getOrNull() ?: return null
+        val field = generateSequence(instanceClass) { it.superclass }
+            .flatMap { it.declaredFields.asSequence() }
+            .firstOrNull { configurationType.isAssignableFrom(it.type) }
+            ?.apply { isAccessible = true }
+            ?: return null
+        return { instance -> field.get(instance) }
     }
 
     private fun Class<*>.findMethod(name: String, vararg parameters: Class<*>): Method? {

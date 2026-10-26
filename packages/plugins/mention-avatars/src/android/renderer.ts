@@ -5,6 +5,10 @@ import type {
 	NativeJavaValue,
 } from '@unbound-app/api/native';
 import {
+	DRAWEE_TEXT_SETTER,
+	draweeTextBuilder,
+} from '@unbound-plugins/shared/native/android/discord-views';
+import {
 	circularBitmap,
 	decodeBitmap,
 	inlineDrawable,
@@ -16,11 +20,11 @@ import {
 	STARTUP_SCAN_DELAYS,
 } from '@unbound-plugins/shared/native/android/views';
 import {
+	javaFlag,
 	javaInt,
 	javaNumber,
 	javaReference,
 	javaString,
-	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
 
 import {
@@ -33,11 +37,8 @@ import type { MentionIndex } from '~/mention-index';
 import type { Mention } from '~/mentions';
 
 const TEXT_VIEW = 'com.facebook.drawee.span.SimpleDraweeSpanTextView';
-const TEXT_BUILDER = 'com.facebook.drawee.span.DraweeSpanStringBuilder';
-const TAPPABLE_SPAN = 'com.discord.span.utilities.spannable.ClickableSpan';
-const BACKGROUND_SPAN = 'com.discord.span.utilities.spannable.BackgroundSpan';
+const TAPPABLE_SPAN = 'android.text.style.ClickableSpan';
 const ANY_SPAN = 'java.lang.Object';
-const MENTION_SPANS = new Set([TAPPABLE_SPAN, BACKGROUND_SPAN]);
 const IMAGE_SIZE = 16;
 const ALIGN_CENTER = 2;
 const SPAN_EXCLUSIVE_EXCLUSIVE = 33;
@@ -130,6 +131,10 @@ export function createAndroidRenderer(
 		return entry?.bitmap ?? null;
 	}
 
+	function isTappable(span: NativeJavaReference): boolean {
+		return javaFlag(java.invoke(java.getClass(TAPPABLE_SPAN), 'isInstance', [span]));
+	}
+
 	function overlappingSpans(builder: NativeJavaReference, range: SpanRange) {
 		const length = javaNumber(java.invoke(builder, 'length')) ?? 0;
 
@@ -168,13 +173,12 @@ export function createAndroidRenderer(
 		]);
 
 		for (const { span: existing, flags } of spans) {
-			const stretched = MENTION_SPANS.has(javaText(java.className(existing)) ?? '');
-			const start = stretched
-				? range.start
-				: (javaNumber(java.invoke(builder, 'getSpanStart', [existing])) ?? -1);
-			const end = stretched
-				? range.end + grown
-				: (javaNumber(java.invoke(builder, 'getSpanEnd', [existing])) ?? -1);
+			const spanStart = javaNumber(java.invoke(builder, 'getSpanStart', [existing])) ?? -1;
+			const spanEnd = javaNumber(java.invoke(builder, 'getSpanEnd', [existing])) ?? -1;
+			const stretched =
+				isTappable(existing) || (spanStart === range.start && spanEnd === range.end);
+			const start = stretched ? range.start : spanStart;
+			const end = stretched ? range.end + grown : spanEnd;
 
 			java.invoke(builder, 'removeSpan', [existing]);
 
@@ -219,7 +223,7 @@ export function createAndroidRenderer(
 				imageSize,
 				stretchFrom: placement.range.start,
 				stretchTo: placement.range.end,
-				stretchClasses: [TAPPABLE_SPAN, BACKGROUND_SPAN],
+				stretchClasses: [TAPPABLE_SPAN],
 			});
 		}
 
@@ -301,10 +305,12 @@ export function createAndroidRenderer(
 		}, 0);
 	}
 
+	const textBuilder = draweeTextBuilder(java);
+
 	const token = hooks.hook(
 		TEXT_VIEW,
-		'setDraweeSpanStringBuilder',
-		[TEXT_BUILDER],
+		DRAWEE_TEXT_SETTER,
+		[textBuilder],
 		{ notify: true },
 		({ self }) => {
 			const view = javaReference(self);

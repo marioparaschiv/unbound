@@ -403,7 +403,7 @@ func (program *scriptProgram) classifyString(file *scriptFile, index int) {
 	reference := compatReference{Component: file.source.component, Platform: file.source.platform}
 	switch {
 	case javaClassPattern.MatchString(token.value):
-		reference.Kind, reference.Name = referenceJavaClass, token.value
+		reference.Kind, reference.Name, reference.Legacy = referenceJavaClass, token.value, file.legacyAt(index)
 	case modulePathPattern.MatchString(token.value):
 		reference.Kind, reference.Name = referenceModulePath, token.value
 	case discordObjCClassRegex.MatchString(token.value):

@@ -324,8 +324,11 @@ object TextRewrites {
         if (edit.stretchClasses.isEmpty() || edit.stretchTo <= edit.stretchFrom) return emptyList()
         return builder.getSpans(edit.stretchFrom, edit.stretchTo, Any::class.java)
             .filter { builder.getSpanStart(it) < edit.stretchTo && builder.getSpanEnd(it) > edit.stretchFrom }
-            .map { span -> Stretched(span, builder.getSpanFlags(span), isA(span, edit.stretchClasses)) }
+            .map { span -> Stretched(span, builder.getSpanFlags(span), isA(span, edit.stretchClasses) || covers(builder, span, edit)) }
     }
+
+    private fun covers(builder: SpannableStringBuilder, span: Any, edit: Edit): Boolean =
+        builder.getSpanStart(span) == edit.stretchFrom && builder.getSpanEnd(span) == edit.stretchTo
 
     private fun isA(span: Any, names: Set<String>): Boolean {
         var current: Class<*>? = span.javaClass
