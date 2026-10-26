@@ -23,19 +23,11 @@ updates:
       open-pull-requests-limit: 5
       commit-message:
           prefix: 'build(deps)'
-      groups:
-          minor-and-patch:
-              update-types:
-                  - 'minor'
-                  - 'patch'
-
-    - package-ecosystem: 'bun'
-      directory: '/packages/debugger'
-      schedule:
-          interval: 'weekly'
-      open-pull-requests-limit: 5
-      commit-message:
-          prefix: 'build(deps)'
+      ignore:
+          - dependency-name: 'react-native'
+            update-types:
+                - 'version-update:semver-minor'
+                - 'version-update:semver-major'
       groups:
           minor-and-patch:
               update-types:
