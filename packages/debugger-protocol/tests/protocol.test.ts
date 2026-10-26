@@ -4,6 +4,7 @@ import { describe, expect, test } from 'bun:test';
 import {
 	serializeMessage,
 	parseMessage,
+	type EvalRequest,
 	type PluginPushRequest,
 	type PluginPushResult,
 } from '../src/index';
@@ -72,5 +73,13 @@ describe('allowlist', () => {
 
 		expect(parseMessage(JSON.stringify(push))).toBeDefined();
 		expect(parseMessage(JSON.stringify(result))).toBeDefined();
+	});
+});
+
+describe('eval round-trip', () => {
+	test('an eval carrying a timeout survives serialize → parse intact', () => {
+		const message: EvalRequest = { type: 'eval', id: 'eval-1', code: '1', timeout: 30_000 };
+
+		expect(parseMessage(serializeMessage(message))).toEqual(message);
 	});
 });

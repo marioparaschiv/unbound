@@ -278,13 +278,31 @@ func runDiscordAPK(args []string) error {
 	set.Var(&splits, "split", "split to download, such as base or config.arm64_v8a (repeatable, defaults to base)")
 	sniffURL := set.String("sniff-url", envOr("DISCORD_SNIFF_URL", defaultSniffURL), "sniff service base URL")
 	trackerURL := set.String("android-tracker", envOr("DISCORD_TRACKER", defaultAndroidTracker), "Android package tracker base URL")
+	device := set.String("device", "", "adb serial of a device to download every split it needs for, read from its Discord install or else its ABI, density and locale")
+	install := set.Bool("install", false, "install the downloaded splits on --device with adb install-multiple -r -d, keeping app data")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
 	if discordAndroidChannelRank(*channel) < 0 {
-		return errors.New("usage: discord-apk --channel <stable|beta|alpha> [--code <code>] [--output-dir <dir> --split <name>...]")
+		return errors.New("usage: discord-apk --channel <stable|beta|alpha> [--code <code>] [--output-dir <dir> [--split <name>...] [--device <serial> [--install]]]")
+	}
+	if *install && *device == "" {
+		return errors.New("discord-apk: --install needs --device")
+	}
+	if *device != "" && *outputDir == "" {
+		return errors.New("discord-apk: --device needs --output-dir")
 	}
 	ctx := context.Background()
+	var adb adbRunner
+	if *device != "" {
+		adb = adbForSerial(*device)
+		needed, err := discordDeviceSplits(ctx, adb)
+		if err != nil {
+			return fmt.Errorf("read the splits %s needs: %w", *device, err)
+		}
+		splits = orderSplits(append(needed, splits...))
+		fmt.Fprintf(os.Stderr, "discord-apk: %s needs %s\n", *device, strings.Join(splits, ", "))
+	}
 	sources := discordAPKSources{
 		sniffURL:   strings.TrimRight(*sniffURL, "/"),
 		trackerURL: strings.TrimRight(*trackerURL, "/"),
@@ -328,6 +346,11 @@ func runDiscordAPK(args []string) error {
 				outputs["apk"] = path
 				outputs["version_name"] = manifest.VersionName
 			}
+		}
+	}
+	if *install {
+		if err := installDiscordSplits(ctx, adb, release.Files); err != nil {
+			return err
 		}
 	}
 	if err := writeOutputs(outputs); err != nil {

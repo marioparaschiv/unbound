@@ -2,7 +2,12 @@ import type { AddonManifest } from '@unbound-app/types';
 
 import type { EvalResult, LogMessage, PluginPushResult } from './index';
 
-import { serializeMessage, parseMessage } from './index';
+import {
+	DEFAULT_EVAL_TIMEOUT_MS,
+	MAX_EVAL_TIMEOUT_MS,
+	serializeMessage,
+	parseMessage,
+} from './index';
 
 /**
  * The controller half of the bridge: dials the `?mcp` endpoint and settles id-correlated evals
@@ -27,8 +32,7 @@ type PluginPush = {
 	manifest: AddonManifest;
 };
 
-/** How long the client waits for a result before failing an eval (must exceed the bridge's own). */
-const EVAL_TIMEOUT_MS = 15_000;
+const EVAL_RESULT_GRACE_MS = 5_000;
 const PLUGIN_PUSH_TIMEOUT_MS = 75_000;
 
 /** How long to wait between reconnection attempts when the bridge is unreachable. */
@@ -96,9 +100,10 @@ export class ControllerClient {
 	 * @description Sends code to the device via the bridge and resolves with its result. Fails fast
 	 * if the socket isn't open or the bridge doesn't answer in time.
 	 * @param code The JavaScript to evaluate on the device.
+	 * @param timeout How long the bridge waits for the device, in milliseconds; the bridge's default when omitted.
 	 * @returns The device's {@link EvalResult}.
 	 */
-	evaluate(code: string): Promise<EvalResult> {
+	evaluate(code: string, timeout?: number): Promise<EvalResult> {
 		const id = crypto.randomUUID();
 
 		return new Promise<EvalResult>((resolve) => {
@@ -114,6 +119,7 @@ export class ControllerClient {
 			}
 
 			const logs: LogMessage[] = [];
+			const limit = Math.min(timeout ?? DEFAULT_EVAL_TIMEOUT_MS, MAX_EVAL_TIMEOUT_MS);
 
 			const timer = setTimeout(() => {
 				this.pending.delete(id);
@@ -121,13 +127,19 @@ export class ControllerClient {
 					type: 'eval-result',
 					id,
 					ok: false,
-					error: `Evaluation timed out after ${EVAL_TIMEOUT_MS}ms.`,
+					error: `Evaluation timed out after ${limit}ms.`,
 					logs,
 				});
-			}, EVAL_TIMEOUT_MS);
+			}, limit + EVAL_RESULT_GRACE_MS);
 
 			this.pending.set(id, { resolve, timer, logs });
-			this.ws.send(serializeMessage({ type: 'eval', id, code }));
+			this.ws.send(
+				serializeMessage(
+					timeout === void 0
+						? { type: 'eval', id, code }
+						: { type: 'eval', id, code, timeout },
+				),
+			);
 		});
 	}
 

@@ -10,9 +10,14 @@ export type AddonTarget = { addon: DiscoveredAddon } | { error: string };
  * @description Finds a workspace addon by its id or directory and builds it unless asked not to.
  * @param target The addon's manifest id, or a path to its directory.
  * @param build Whether to run the workspace build command for it first.
+ * @param buildTimeoutMs How long the build may run before it fails; unbounded when omitted.
  * @returns The addon, or the reason it could not be found or built.
  */
-export async function resolveAddonTarget(target: string, build: boolean): Promise<AddonTarget> {
+export async function resolveAddonTarget(
+	target: string,
+	build: boolean,
+	buildTimeoutMs?: number,
+): Promise<AddonTarget> {
 	const resolved = loadConfig();
 	const addons = await discoverAddons(resolved);
 	const directory = resolve(target);
@@ -22,7 +27,7 @@ export async function resolveAddonTarget(target: string, build: boolean): Promis
 		return { error: `No addon in this workspace has the id or directory ${target}.` };
 	}
 
-	if (build && !(await buildAddon(addon, resolved.config.build))) {
+	if (build && !(await buildAddon(addon, resolved.config.build, {}, buildTimeoutMs))) {
 		return { error: `Building ${addon.id} failed.` };
 	}
 

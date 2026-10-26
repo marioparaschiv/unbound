@@ -189,7 +189,7 @@ function handleControllerMessage(ws: session.SocketLike, raw: string) {
 	// A controller sends either an eval request or a plugin-push; run it and deliver the id-correlated
 	// result back over this same controller's socket.
 	if (message?.type === 'eval') {
-		session.evaluateForController(ws, message.id, message.code);
+		session.evaluateForController(ws, message);
 
 		return;
 	}
