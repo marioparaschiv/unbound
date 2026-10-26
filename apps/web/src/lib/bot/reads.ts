@@ -3,6 +3,7 @@ import type postgres from 'postgres';
 
 import { readRelease, readReleasesSince } from '~/lib/bot/releases';
 import type { BotReadOptions, BotReads } from '~/lib/bot/types';
+import { DEFAULT_PERK_GRACE_DAYS } from '~/lib/sponsors/standing';
 import { readAddon, readAddons } from '~/lib/bot/addons';
 import { readEventsAfter } from '~/lib/bot/events';
 import { readMembers } from '~/lib/bot/members';
@@ -26,7 +27,8 @@ export type ResolvedReadOptions = Required<BotReadOptions>;
 export function createBotReads(client: postgres.Sql, options: BotReadOptions): BotReads {
 	const db = open(client);
 	const resolved: ResolvedReadOptions = {
-		...options,
+		siteUrl: options.siteUrl,
+		sponsorGraceDays: options.sponsorGraceDays ?? DEFAULT_PERK_GRACE_DAYS,
 		now: options.now ?? (() => new Date()),
 	};
 

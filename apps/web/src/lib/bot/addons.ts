@@ -6,19 +6,21 @@ import type { PublicAddon } from '~/lib/bot/types';
 
 type AddonWithServed = Awaited<ReturnType<typeof queryAddons>>[number];
 
-function queryAddons(db: ReadDatabase, id?: string) {
-	return db.query.addon.findMany({
-		where: id === undefined ? undefined : { id },
-		columns: { id: true, type: true, name: true, description: true, delistedAt: true },
-		with: {
-			versions: {
-				where: LIVE_VERSIONS,
-				orderBy: { versionKey: 'desc' },
-				limit: 1,
-				columns: { version: true, manifest: true },
-			},
+// The listing's fields and its newest live version, shared by the one-addon and every-addon reads.
+const LISTING = {
+	columns: { id: true, type: true, name: true, description: true, delistedAt: true },
+	with: {
+		versions: {
+			where: LIVE_VERSIONS,
+			orderBy: { versionKey: 'desc' },
+			limit: 1,
+			columns: { version: true, manifest: true },
 		},
-	});
+	},
+} as const;
+
+function queryAddons(db: ReadDatabase) {
+	return db.query.addon.findMany(LISTING);
 }
 
 function iconUrl(icon: PublishedManifest['icon']): string | undefined {
@@ -67,7 +69,7 @@ export async function readAddon(
 	options: ResolvedReadOptions,
 	id: string,
 ): Promise<PublicAddon | undefined> {
-	const [row] = await queryAddons(db, id);
+	const row = await db.query.addon.findFirst({ ...LISTING, where: { id } });
 
 	return row ? toPublicAddon(row, options.siteUrl) : undefined;
 }

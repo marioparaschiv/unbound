@@ -69,8 +69,8 @@ export type MemberQuery = { by: 'all' } | { by: MemberSubject; ids: readonly str
 export type BotReadOptions = {
 	/** The site origin addon page urls are built on, e.g. `https://unbound.rip`. */
 	siteUrl: string;
-	/** Days sponsor perks outlast a sponsorship, as the web's `SPONSOR_PERK_GRACE_DAYS`. */
-	sponsorGraceDays: number;
+	/** Days sponsor perks outlast a sponsorship, as the web's `SPONSOR_PERK_GRACE_DAYS`; its default unset. */
+	sponsorGraceDays?: number;
 	/** The clock sponsor standing is judged at. */
 	now?: () => Date;
 };

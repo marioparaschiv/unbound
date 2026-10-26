@@ -103,6 +103,7 @@ export async function appendEvent(tx: Transaction, entry: EventEntry): Promise<n
 	const { subject, actorId, at, reason = null, kind, data } = entry;
 
 	// The id defaults to `next_ordered_id`, drawn in commit order; see the baseline migration.
+	// The prelude's rule to lock `account` first applied only to the removed bot feed's triggers.
 	const { id } = one(
 		await tx
 			.insert(moderationEvent)
