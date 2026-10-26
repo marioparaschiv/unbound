@@ -89,6 +89,22 @@ struct ToolboxContext {
     std::function<bool()>                       bundleReady;
 };
 
+enum class MenuStep
+{
+    None,
+    Confirm,
+    Platform,
+    Prompt,
+    Run,
+};
+
+enum class MenuOutcome
+{
+    Done,
+    Failed,
+    Restart,
+};
+
 struct RecoveryToggle {
     bool        enabled = false;
     std::string status;
@@ -108,6 +124,8 @@ constexpr const char *kRefetchFailedMessage        = "The bundle could not be do
 constexpr const char *kCustomBundleInvalidText     = "Enter an http or https URL.";
 constexpr const char *kIssueFailedMessage          = "The GitHub issue page could not be opened.";
 constexpr unsigned    kThreeFingerHoldMilliseconds = 500;
+constexpr double      kShakeMinimumSeconds         = 0.5;
+constexpr double      kShakeMaximumSeconds         = 2.0;
 
 const char              *addonDirectoryName(AddonKind kind);
 const char              *addonTitle(AddonKind kind);
@@ -132,4 +150,15 @@ IssueReport issueReport(const NativePlatformProvider &provider, const std::strin
 std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFacts &facts);
 std::string                                      issueBody(const IssueReport &report);
 std::string                                      issueURL(const IssueReport &report);
+
+MenuStep                 menuStep(const nlohmann::json &item, bool confirmed);
+MenuOutcome              menuOutcome(const nlohmann::json &item, const std::string &result);
+const char              *menuStepName(MenuStep step);
+const char              *menuOutcomeName(MenuOutcome outcome);
+std::string              menuStepFor(const std::string &request);
+std::string              menuOutcomeFor(const std::string &request);
+bool                     isShakeGesture(double seconds);
+std::string              discordVersionLabel(const std::optional<std::string> &version,
+                                             const std::string                &build);
+std::vector<std::string> appFolderURLs(const std::string &documents, bool jailbroken);
 }

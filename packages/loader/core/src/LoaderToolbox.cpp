@@ -511,6 +511,14 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
     {
         return std::to_string(kThreeFingerHoldMilliseconds);
     }
+    if (action == "menu-step")
+    {
+        return menuStepFor(argument);
+    }
+    if (action == "menu-outcome")
+    {
+        return menuOutcomeFor(argument);
+    }
     return "";
 }
 
