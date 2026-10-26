@@ -1,5 +1,7 @@
 package app.unbound.android
 
+import android.content.Context
+import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
@@ -23,6 +25,7 @@ object ChatUI {
     private const val CONTENT_VIEW = "com.discord.chat.presentation.message.view.MessageContentView"
     private const val AVATAR_VIEW = "com.facebook.drawee.view.SimpleDraweeView"
     private const val THEME_MANAGER = "com.discord.theme.ThemeManager"
+    private const val PROBE_SIZE = 100
 
     private data class BubbleStyle(
         val radius: Float,
@@ -36,6 +39,7 @@ object ChatUI {
     private val avatars = Collections.synchronizedMap(WeakHashMap<View, ViewOutlineProvider>())
     private val bubbles = Collections.synchronizedMap(WeakHashMap<ViewGroup, View>())
     private val rowBackgrounds = WeakHashMap<ViewGroup, Drawable>()
+    private val circleProviders = Collections.synchronizedMap(WeakHashMap<ViewOutlineProvider, Boolean>())
 
     @Volatile private var avatarRadius: Float? = null
 
@@ -75,19 +79,42 @@ object ChatUI {
     }.getOrNull()
 
     private fun loadTheme(classLoader: ClassLoader) {
+        val type = runCatching { classLoader.loadClass(THEME_MANAGER) }.getOrNull()
+        if (type == null) {
+            Logger.info(LogCategory.CHATUI, "Discord's theme manager is obfuscated, so bubbles follow the message text colour.")
+            return
+        }
         runCatching {
-            val type = classLoader.loadClass(THEME_MANAGER)
             themeManager = type.getField("INSTANCE").get(null)
             isThemeDark = type.getMethod("isThemeDark")
         }.onFailure { Logger.error(LogCategory.CHATUI, "Discord's theme manager is unavailable", it) }
     }
 
-    private fun darkTheme(): Boolean =
-        runCatching { isThemeDark?.invoke(themeManager) as? Boolean }.getOrNull() ?: true
+    private fun darkTheme(row: ViewGroup): Boolean {
+        isThemeDark?.let { method ->
+            runCatching { method.invoke(themeManager) as? Boolean }.getOrNull()?.let { return it }
+        }
+        val text = contentText(row) ?: return true
+        return Color.luminance(text.currentTextColor) > 0.5f
+    }
+
+    private fun contentText(group: ViewGroup): TextView? {
+        for (child in children(group)) {
+            if (child is TextView && child.javaClass.name == CONTENT_VIEW) return child
+            if (child is ViewGroup) contentText(child)?.let { return it }
+        }
+        return null
+    }
 
     private fun hookAvatars(xposed: XposedInterface, classLoader: ClassLoader) {
         val avatarType = classLoader.loadClass(AVATAR_VIEW)
-        val clipToCircle = classLoader.loadClass(CLIPPING_UTILS).getDeclaredMethod("clipToCircle", View::class.java)
+        val clipToCircle = runCatching {
+            classLoader.loadClass(CLIPPING_UTILS).getDeclaredMethod("clipToCircle", View::class.java)
+        }.getOrNull()
+        if (clipToCircle == null) {
+            hookCircleOutlines(xposed, avatarType)
+            return
+        }
         xposed.hook(clipToCircle)
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept { chain ->
@@ -101,6 +128,36 @@ object ChatUI {
             }
     }
 
+    private fun hookCircleOutlines(xposed: XposedInterface, avatarType: Class<*>) {
+        xposed.hook(View::class.java.getDeclaredMethod("setOutlineProvider", ViewOutlineProvider::class.java))
+            .setExceptionMode(ExceptionMode.PROTECTIVE)
+            .intercept { chain ->
+                val result = chain.proceed()
+                val view = chain.thisObject as View
+                val provider = chain.getArg(0) as? ViewOutlineProvider
+                if (provider != null &&
+                    provider !is RoundedOutline &&
+                    avatars[view] !== provider &&
+                    avatarType.isInstance(view) &&
+                    isCircle(provider, view.context)
+                ) {
+                    avatars[view] = provider
+                    applyAvatar(view)
+                }
+                result
+            }
+    }
+
+    private fun isCircle(provider: ViewOutlineProvider, context: Context): Boolean = circleProviders.getOrPut(provider) {
+        runCatching {
+            val probe = View(context).apply { layout(0, 0, PROBE_SIZE, PROBE_SIZE) }
+            val outline = Outline()
+            provider.getOutline(probe, outline)
+            val bounds = Rect()
+            outline.getRect(bounds) && bounds.width() == PROBE_SIZE && bounds.height() == PROBE_SIZE && outline.radius == PROBE_SIZE / 2f
+        }.getOrDefault(false)
+    }
+
     private fun applyAvatar(view: View) {
         val radius = avatarRadius
         val original = avatars[view] ?: return
@@ -109,7 +166,9 @@ object ChatUI {
         view.invalidateOutline()
     }
 
-    private fun roundedOutline(radius: Float) = object : ViewOutlineProvider() {
+    private fun roundedOutline(radius: Float) = RoundedOutline(radius)
+
+    private class RoundedOutline(private val radius: Float) : ViewOutlineProvider() {
         override fun getOutline(view: View, outline: Outline) {
             outline.setRoundRect(0, 0, view.width, view.height, radius)
         }
@@ -156,7 +215,7 @@ object ChatUI {
         area.inset(-dp(row, current.horizontalPadding).toInt(), -dp(row, current.verticalPadding).toInt())
         val background = (bubble.background as? GradientDrawable) ?: GradientDrawable().also { bubble.background = it }
         background.cornerRadius = dp(row, current.radius)
-        background.setColor(if (darkTheme()) current.darkColor else current.lightColor)
+        background.setColor(if (darkTheme(row)) current.darkColor else current.lightColor)
         if (bubble.visibility != View.VISIBLE) bubble.visibility = View.VISIBLE
         bubble.measure(
             View.MeasureSpec.makeMeasureSpec(area.width(), View.MeasureSpec.EXACTLY),
