@@ -127,6 +127,7 @@ describe('createTestContext', () => {
 		return new Set(rows.map((row) => row.datname));
 	}
 
+	// A drop can outlast drop()'s own wait while other files' drops queue on a busy cluster.
 	test('drops its database when it fails to start', async () => {
 		const before = await testDatabases();
 
@@ -134,16 +135,16 @@ describe('createTestContext', () => {
 
 		let leaked: string[] = [];
 
-		for (let i = 0; i < 20; i++) {
+		for (let i = 0; i < 100; i++) {
 			leaked = [...(await testDatabases())].filter((name) => !before.has(name));
 
 			if (leaked.length === 0) break;
 
-			await Bun.sleep(100);
+			await Bun.sleep(200);
 		}
 
 		expect(leaked).toEqual([]);
-	});
+	}, 30_000);
 });
 
 describe('createDatabase', () => {
