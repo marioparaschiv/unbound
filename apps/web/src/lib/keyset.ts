@@ -13,10 +13,10 @@ export type CursorKey = [value: string | number, id: string];
 /** A decoded cursor's position, with a timestamp back as a `Date`. */
 export type CursorPosition = [value: string | number | Date, id: string];
 
-// The latest time a JS Date can hold; Postgres's timestamptz reaches further.
-const MAX_DATE_MS = 8.64e15;
+// The last millisecond of year 9999: later, toISOString() writes an extended year Postgres rejects.
+const MAX_DATE_MS = Date.UTC(10_000, 0, 1) - 1;
 
-/** A cursor's timestamp: epoch milliseconds a `Date` can hold, decoded to that `Date`. */
+/** A cursor's timestamp: epoch milliseconds up to the end of year 9999, decoded to a `Date`. */
 export const cursorTime = z
 	.int()
 	.min(0)

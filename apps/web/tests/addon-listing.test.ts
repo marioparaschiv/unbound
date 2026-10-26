@@ -182,17 +182,19 @@ describe('listing', () => {
 		});
 	});
 
-	test.each<AddonSort>(['created', 'updated'])(
-		'refuses a %s cursor whose time no Date can hold',
-		async (sort) => {
-			const cursor = encodeCursor([Number.MAX_SAFE_INTEGER, 'list.alpha']);
+	test.each<[AddonSort, number]>([
+		['created', Number.MAX_SAFE_INTEGER],
+		['updated', Number.MAX_SAFE_INTEGER],
+		['created', 3e14],
+		['updated', 3e14],
+	])('refuses a %s cursor at %d, past year 9999', async (sort, ms) => {
+		const cursor = encodeCursor([ms, 'list.alpha']);
 
-			expect(await failure(list({ sort, cursor }))).toEqual({
-				status: 400,
-				code: 'invalid_request',
-			});
-		},
-	);
+		expect(await failure(list({ sort, cursor }))).toEqual({
+			status: 400,
+			code: 'invalid_request',
+		});
+	});
 
 	test('refuses NUL in the search or the cursor', async () => {
 		const queries: ListAddonsQuery[] = [
