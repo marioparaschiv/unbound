@@ -7,7 +7,7 @@ description: Boot and drive apps/web (the unbound.rip addon site and its /api/v1
 
 One command boots a disposable instance from this checkout. It writes a fake env, creates a fresh Postgres database, starts a MinIO container and a fake GitHub, migrates, seeds one session per role, and serves vite in its own tmux session. Scripts live in `scripts/` next to this file and run from any directory. Never point them at production. They only touch `/tmp/verify-web/<name>/`, the database `unbound_web_verify_<name>`, their own tmux session and their own container.
 
-The database lives on the local cluster that `DATABASE_DIRECT_URL` in `apps/web/.env` names (role `unbound_web`, which has CREATEDB). `scripts/database.ts` creates it like the test helpers do (`TEMPLATE template0`, UTF8, libc `LOCALE 'C'`), and the app's `scripts/migrate.ts` migrates it. The instance's `DATABASE_URL` and `DATABASE_DIRECT_URL` are both the direct URL of that database. Skipping pgbouncer is fine for one local instance. Those URLs carry the cluster password, so they live only in `/tmp/verify-web/<name>/web.env` (mode 600). Never print or copy them into logs or evidence.
+The database lives on the local cluster that `DATABASE_DIRECT_URL` in `apps/web/.env` names (role `unbound_web`, which has CREATEDB). `scripts/database.ts` creates it like the test helpers do (`TEMPLATE template0`, UTF8, libc `LOCALE 'C'`), and the app's `scripts/migrate.ts` migrates it. The instance's `DATABASE_URL` and `DATABASE_DIRECT_URL` are both the direct URL of that database. Skipping pgbouncer is fine for one local instance. Those URLs carry the cluster password, so they live only in `/tmp/verify-web/<name>/web.env` (mode 600). Never print or copy them into logs or evidence, or pass them as a command argument. Each launch drops the `unbound_web_verify_*` databases of instances that have neither a state dir nor a tmux session left.
 
 ## Launch
 
@@ -70,10 +70,10 @@ Write proofs to `/tmp/verify-web-evidence/` (or `/tmp/<task>-evidence/`). Teardo
 
 - Record with `preview_recording_start` and `preview_recording_stop`. Copy the returned mp4 path into the evidence dir.
 - `preview_snapshot` with `save: true` returns a PNG path. Copy it too.
-- Prove side effects with a second view. Read the DB in a read-only session:
+- Prove side effects with a second view. Read the DB in a read-only session. The subshell takes the connection from `PG*` variables, because a URL in psql's arguments shows its password in `ps`:
 
 ```bash
-PGOPTIONS='-c default_transaction_read_only=on' psql "$(grep '^DATABASE_URL=' /tmp/verify-web/default/web.env | cut -d= -f2-)" -c 'select addon_id,status from submission'
+(eval "$(bun .agents/skills/verify-web/scripts/database.ts env default)"; PGOPTIONS='-c default_transaction_read_only=on' psql -c 'select addon_id,status from submission')
 ```
 
 The CDN view is `curl http://$MINIO_ADDR/unbound-addons/addons/<id>/<version>/manifest.json`. `MINIO_ADDR` is in `/tmp/verify-web/<name>/instance.env`.
