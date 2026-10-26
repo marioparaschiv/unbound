@@ -20,7 +20,7 @@ const github = serveGitHub({
 });
 
 const fixture = github.repository(REPOSITORY);
-const { ctx, close } = createTestContext({ ...S3_TEST_ENV, GITHUB_API_URL: github.url.href });
+const { ctx, close } = await createTestContext({ ...S3_TEST_ENV, GITHUB_API_URL: github.url.href });
 const server = serveEndpoints(ctx, { 'POST /api/v1/submissions': createSubmissionEndpoint });
 
 afterAll(async () => {
@@ -29,7 +29,7 @@ afterAll(async () => {
 	await Promise.all(rows.map((row) => ctx.storage.staging.delete(row.key)));
 	await server.stop(true);
 	await github.stop();
-	close();
+	await close();
 });
 
 let users = 0;
@@ -57,8 +57,8 @@ function create(client: Client, request: CreateSubmissionRequest) {
 	});
 }
 
-function findRow(id: string) {
-	const row = ctx.db.select().from(submission).where(eq(submission.id, id)).get();
+async function findRow(id: string) {
+	const [row] = await ctx.db.select().from(submission).where(eq(submission.id, id));
 
 	if (!row) {
 		throw new Error(`Submission ${id} was not stored.`);
@@ -72,7 +72,7 @@ describe('submitting from GitHub', () => {
 		const client = await signUp();
 		const { request, bundle } = commitPlugin(fixture, REPOSITORY, 's3.publish');
 		const { submission: created } = await create(client, request);
-		const row = findRow(created.id);
+		const row = await findRow(created.id);
 
 		expect(created.status).toBe('pending_review');
 		expect(row.sha256).toBe(new Bun.CryptoHasher('sha256').update(bundle).digest('hex'));
@@ -97,12 +97,12 @@ describe('republishing', () => {
 			'dist/index.js': 'export default "fixed";',
 		});
 		const second = await create(client, next.request);
-		const replaced = findRow(first.submission.id);
+		const replaced = await findRow(first.submission.id);
 
 		expect(replaced.status).toBe('superseded');
 		expect(await ctx.storage.staging.exists(replaced.stagingKey)).toBe(false);
 		expect(
-			await ctx.storage.staging.file(findRow(second.submission.id).stagingKey).text(),
+			await ctx.storage.staging.file((await findRow(second.submission.id)).stagingKey).text(),
 		).toBe('export default "fixed";');
 	});
 });

@@ -39,7 +39,7 @@ const GRACE = 7 * DAY;
 
 const BADGE: Badge = { label: 'Night Owl', icon: 'moon', color: 'purple' };
 
-const base = createTestContext();
+const base = await createTestContext();
 const ctx: AppContext = { ...base.ctx, now: () => NOW };
 
 const server = serveEndpoints(ctx, {
@@ -54,7 +54,7 @@ const anonymous = createApiClient<Api>({ baseUrl: server.url.href });
 
 afterAll(async () => {
 	await server.stop(true);
-	base.close();
+	await base.close();
 });
 
 let users = 0;
@@ -75,7 +75,7 @@ async function signUp({ role = 'user', github = true, sponsorship = {} }: Sponso
 	}
 
 	if (github && sponsorship) {
-		seedSponsorship(ctx, { githubId: userId, ...sponsorship });
+		await seedSponsorship(ctx, { githubId: userId, ...sponsorship });
 	}
 
 	return { userId, client: createApiClient<Api>({ baseUrl: server.url.href, headers }) };

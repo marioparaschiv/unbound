@@ -2,9 +2,9 @@ import { describe, expect, test } from 'bun:test';
 
 import { parseEnv } from '~/lib/env';
 
-import { TEST_ENV } from './helpers/context';
+import { OFFLINE_DATABASE_ENV, TEST_ENV } from './helpers/context';
 
-const valid = { ...TEST_ENV, DATABASE_PATH: ':memory:' };
+const valid = { ...TEST_ENV, ...OFFLINE_DATABASE_ENV };
 
 describe('parseEnv', () => {
 	test('parses a complete environment and applies defaults', () => {

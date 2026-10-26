@@ -29,7 +29,7 @@ import { failure, serveEndpoints } from './helpers/server';
 
 const NOW = new Date('2026-10-17T12:00:00.000Z');
 
-const base = createTestContext();
+const base = await createTestContext();
 const ctx: AppContext = { ...base.ctx, now: () => NOW };
 
 const server = serveEndpoints(ctx, {
@@ -46,7 +46,7 @@ const server = serveEndpoints(ctx, {
 
 afterAll(async () => {
 	await server.stop(true);
-	base.close();
+	await base.close();
 });
 
 let users = 0;

@@ -25,11 +25,11 @@ const discord = serveDiscord({
 	[LATE]: { username: 'late', global_name: null },
 	[BANNED]: { username: 'banned', global_name: 'Banned On Discord' },
 });
-const base = createTestContext({ DISCORD_API_URL: discord.apiUrl });
+const base = await createTestContext({ DISCORD_API_URL: discord.apiUrl });
 const ctx: AppContext = base.ctx;
 
 afterAll(async () => {
-	base.close();
+	await base.close();
 	await discord.stop();
 });
 

@@ -81,7 +81,10 @@ github.repository(BARE).commit({
 
 github.repository('acme/huge').commit({ 'manifest.json': manifestJson('acme.huge') });
 
-const base = createTestContext({ GITHUB_API_URL: github.url.href, GITHUB_RATE_LIMIT_MAX: '1000' });
+const base = await createTestContext({
+	GITHUB_API_URL: github.url.href,
+	GITHUB_RATE_LIMIT_MAX: '1000',
+});
 const ctx = base.ctx;
 const server = serveEndpoints(ctx, {
 	'GET /api/v1/github/repositories': listGitHubRepositoriesEndpoint,
@@ -128,7 +131,7 @@ afterAll(async () => {
 	fetchSpy.mockRestore();
 	await server.stop(true);
 	await github.stop();
-	base.close();
+	await base.close();
 });
 
 let users = 0;
@@ -404,7 +407,7 @@ describe('GET /api/v1/github/addons', () => {
 	});
 
 	test('limits GitHub reads per user to GITHUB_RATE_LIMIT_MAX per window', async () => {
-		const limited = createTestContext({
+		const limited = await createTestContext({
 			GITHUB_API_URL: github.url.href,
 			GITHUB_RATE_LIMIT_MAX: '2',
 		});
@@ -428,7 +431,7 @@ describe('GET /api/v1/github/addons', () => {
 			expect(await failure(request())).toEqual({ status: 429, code: 'rate_limited' });
 		} finally {
 			await limitedServer.stop(true);
-			limited.close();
+			await limited.close();
 		}
 	});
 });

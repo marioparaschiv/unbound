@@ -88,7 +88,7 @@ const discord = Bun.serve({
 	},
 });
 
-const base = createTestContext({
+const base = await createTestContext({
 	DISCORD_API_URL: new URL('/api/v10', discord.url).href,
 	SYNC_RATE_LIMIT_MAX: '1000',
 	SYNC_SIGN_IN_RATE_LIMIT_MAX: '1000',
@@ -106,7 +106,7 @@ const client = createApiClient<Api>({ baseUrl: server.url.href });
 afterAll(async () => {
 	await server.stop(true);
 	await discord.stop(true);
-	base.close();
+	await base.close();
 });
 
 let users = 0;

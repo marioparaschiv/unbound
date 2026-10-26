@@ -19,7 +19,7 @@ type LoaderQuery = Record<string, string>;
 
 const NOW = new Date('2026-10-17T12:00:00.000Z');
 
-const base = createTestContext();
+const base = await createTestContext();
 let clock = NOW;
 const ctx: AppContext = { ...base.ctx, now: () => clock };
 
@@ -270,7 +270,7 @@ describe('GET /api/v1/loader/updates', () => {
 	});
 
 	test('rate limits each client IP within UPDATES_RATE_LIMIT_WINDOW_SECONDS', async () => {
-		const limited = createTestContext({ UPDATES_RATE_LIMIT_MAX: '1' });
+		const limited = await createTestContext({ UPDATES_RATE_LIMIT_MAX: '1' });
 		const target: AppContext = { ...limited.ctx, now: () => NOW };
 		const query = { platform: 'ios', version: '1.0.0' };
 
@@ -282,7 +282,7 @@ describe('GET /api/v1/loader/updates', () => {
 			});
 			expect((await check(query, target, '203.0.113.2')).status).toBe(200);
 		} finally {
-			limited.close();
+			await limited.close();
 		}
 	});
 });

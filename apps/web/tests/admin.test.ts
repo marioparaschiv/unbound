@@ -12,7 +12,10 @@ import type { Role } from '~/lib/auth/access';
 import { authRequest, createTestContext, signInWithDiscord } from './helpers/context';
 import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
 
-const { ctx, close } = createTestContext({ ADDON_LIST_PAGE_SIZE: '2', USER_LIST_PAGE_SIZE: '2' });
+const { ctx, close } = await createTestContext({
+	ADDON_LIST_PAGE_SIZE: '2',
+	USER_LIST_PAGE_SIZE: '2',
+});
 
 afterAll(close);
 

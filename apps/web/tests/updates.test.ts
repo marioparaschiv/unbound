@@ -12,14 +12,11 @@ import { addon, user } from '~/db/schema';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { createTestContext, signInWithDiscord } from './helpers/context';
-
-type PlanStep = {
-	detail: string;
-};
+import { explain, planNodes } from './helpers/database';
 
 const NOW = new Date('2026-10-17T12:00:00.000Z');
 
-const base = createTestContext();
+const base = await createTestContext();
 const ctx: AppContext = { ...base.ctx, now: () => NOW };
 
 afterAll(base.close);
@@ -75,7 +72,7 @@ beforeAll(async () => {
 		throw new Error(`User ${adminId} was not stored.`);
 	}
 
-	serveVersion(ctx, { user: admin, via: 'session' }, 'up.rolledback', {
+	await serveVersion(ctx, { user: admin, via: 'session' }, 'up.rolledback', {
 		version: '1.0.0',
 		reason: '1.1.0 and 1.2.0 crash',
 	});
@@ -195,7 +192,7 @@ describe('POST /api/v1/updates', () => {
 	});
 
 	test('rate limits each client IP within UPDATES_RATE_LIMIT_WINDOW_SECONDS', async () => {
-		const limited = createTestContext({ UPDATES_RATE_LIMIT_MAX: '2' });
+		const limited = await createTestContext({ UPDATES_RATE_LIMIT_MAX: '2' });
 		let clock = NOW;
 		const target: AppContext = { ...limited.ctx, now: () => clock };
 		const body = { clientVersion: '1.0.0', addons: [] };
@@ -213,7 +210,7 @@ describe('POST /api/v1/updates', () => {
 
 			expect((await check(body, target)).status).toBe(200);
 		} finally {
-			limited.close();
+			await limited.close();
 		}
 	});
 });
@@ -229,8 +226,8 @@ describe('findUpdates', () => {
 	};
 
 	test('resolves the whole batch in three statements, one when nothing is newer', async () => {
-		// Drizzle's bun:sqlite session prepares every statement through `query`.
-		const statements = spyOn(ctx.db.$client, 'query');
+		// Drizzle's postgres.js session runs every statement through `unsafe`.
+		const statements = spyOn(ctx.db.$client, 'unsafe');
 
 		try {
 			const { updates } = await findUpdates(ctx, request);
@@ -253,7 +250,7 @@ describe('findUpdates', () => {
 	});
 
 	test('offers the served version to a client on a withdrawn one, in three statements', async () => {
-		const statements = spyOn(ctx.db.$client, 'query');
+		const statements = spyOn(ctx.db.$client, 'unsafe');
 
 		try {
 			const { updates } = await findUpdates(ctx, {
@@ -294,19 +291,17 @@ describe('findUpdates', () => {
 		).toEqual([['1.0.0', ['1.0.0']]]);
 	});
 
-	test('reads only the listed addons through an index, never a table scan', () => {
-		const { sql, params } = newestCompatibleVersions(ctx, request).toSQL();
-		// Every parameter of this query is a string: addon ids and version keys.
-		const plan = ctx.db.$client
-			.query<PlanStep, string[]>(`EXPLAIN QUERY PLAN ${sql}`)
-			.all(...params.map(String))
-			.map((step) => step.detail);
-
-		expect(plan).toContainEqual(
-			expect.stringMatching(
-				/^SEARCH addon_version USING (COVERING )?INDEX \S+ \(addon_id=\?/,
-			),
+	test('reads only the listed addons through an index, never a table scan', async () => {
+		const nodes = planNodes(
+			await explain(ctx.db, newestCompatibleVersions(ctx, request).toSQL()),
 		);
-		expect(plan).not.toContainEqual(expect.stringMatching(/^SCAN/));
+
+		expect(nodes).toContainEqual(
+			expect.objectContaining({
+				'Relation Name': 'addon_version',
+				'Index Name': expect.stringMatching(/^addon_version_/),
+			}),
+		);
+		expect(nodes.map((node) => node['Node Type'])).not.toContain('Seq Scan');
 	});
 });

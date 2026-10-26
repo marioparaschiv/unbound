@@ -50,7 +50,7 @@ type Reader<T> = (after?: string, limit?: string) => Promise<Page<T>>;
 
 type HeaderValues = ConstructorParameters<typeof Headers>[0];
 
-const { ctx, close } = createTestContext();
+const { ctx, close } = await createTestContext();
 const server = serveEndpoints(ctx, {
 	'GET /api/v1/bot/addons': botAddons,
 	'GET /api/v1/bot/members': botMembers,
@@ -66,7 +66,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
 	await server.stop(true);
-	close();
+	await close();
 });
 
 let users = 0;
@@ -267,7 +267,7 @@ describe('addons feed', () => {
 		const from = await tail(feeds.addons);
 		const before = Date.now();
 
-		delistAddon(ctx, moderator.caller, 'feed.delisted');
+		await delistAddon(ctx, moderator.caller, 'feed.delisted');
 
 		const { items } = await drain(feeds.addons, from);
 
@@ -293,7 +293,7 @@ describe('members feed', () => {
 
 		from = await tail(feeds.members);
 		await linkGitHub(ctx, member.userId, 'token');
-		seedSponsorship(ctx, { githubId: member.userId });
+		await seedSponsorship(ctx, { githubId: member.userId });
 
 		expect((await drain(feeds.members, from)).items).toMatchObject([
 			{
@@ -332,7 +332,7 @@ describe('members feed', () => {
 					eq(addonMaintainer.userId, helper.userId),
 				),
 			);
-		delistAddon(ctx, moderator.caller, 'members.addon');
+		await delistAddon(ctx, moderator.caller, 'members.addon');
 
 		const undone = await drain(feeds.members, from);
 

@@ -31,7 +31,7 @@ const github = serveGitHub({
 	repositories: { [REPOSITORY]: {}, [MOVED_REPOSITORY]: {} },
 	tokens: { owner: { push: [REPOSITORY, MOVED_REPOSITORY] } },
 });
-const base = createTestContext({ S3_ENDPOINT: s3.url.href, GITHUB_API_URL: github.url.href });
+const base = await createTestContext({ S3_ENDPOINT: s3.url.href, GITHUB_API_URL: github.url.href });
 
 let clock = new Date('2026-10-23T12:00:00.000Z');
 
@@ -39,7 +39,7 @@ const ctx: AppContext = { ...base.ctx, now: () => clock };
 
 afterAll(async () => {
 	await Promise.all([s3.stop(true), github.stop()]);
-	base.close();
+	await base.close();
 });
 
 let users = 0;
@@ -147,18 +147,20 @@ describe('the admin addon view', () => {
 	test('approval records the verified repository, and an approved update from another one replaces it', async () => {
 		const author = await signUp();
 		const moderator = await signUp('moderator');
-		const repositoryOf = () =>
-			ctx.db
+		const repositoryOf = async () => {
+			const [row] = await ctx.db
 				.select({ repository: addon.repository })
 				.from(addon)
-				.where(eq(addon.id, 'views.moved'))
-				.get()?.repository;
+				.where(eq(addon.id, 'views.moved'));
+
+			return row?.repository;
+		};
 
 		await reviewSubmission(ctx, moderator.caller, await publish(author, 'views.moved'), {
 			decision: 'approved',
 		});
 
-		expect(repositoryOf()).toBe(REPOSITORY);
+		expect(await repositoryOf()).toBe(REPOSITORY);
 
 		const developer = await ctx.db.query.user.findFirst({ where: { id: author.userId } });
 
@@ -175,7 +177,7 @@ describe('the admin addon view', () => {
 
 		await reviewSubmission(ctx, moderator.caller, update, { decision: 'approved' });
 
-		expect(repositoryOf()).toBe(MOVED_REPOSITORY);
+		expect(await repositoryOf()).toBe(MOVED_REPOSITORY);
 	});
 
 	test('lists every version newest first by version, not by approval order', async () => {
@@ -214,9 +216,9 @@ describe('the admin addon view', () => {
 		tick();
 		await addMaintainer(ctx, owner.caller, 'views.events', helper.userId);
 		tick();
-		delistAddon(ctx, moderator.caller, 'views.events');
+		await delistAddon(ctx, moderator.caller, 'views.events');
 		tick();
-		relistAddon(ctx, moderator.caller, 'views.events');
+		await relistAddon(ctx, moderator.caller, 'views.events');
 
 		const view = await getAdminAddon(ctx, moderator.caller, 'views.events');
 

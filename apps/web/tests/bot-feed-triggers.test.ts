@@ -1,9 +1,5 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { cp, mkdtemp, readdir, rm } from 'node:fs/promises';
-import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
 import { and, eq, max } from 'drizzle-orm';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
 import {
 	account,
@@ -15,24 +11,20 @@ import {
 	sponsorship,
 	user,
 } from '~/db/schema';
-import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
-import { createDatabase } from '~/db/database';
 import type { BotFeed } from '~/db/schema/bot';
 
 import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
 import { seedSponsorship } from './helpers/sponsors';
 
-const TRIGGERS_MIGRATION_SUFFIX = '_bot_feed_triggers';
-
 type TriggerRow = {
-	sql: string;
+	definition: string;
 };
 
 /** A write under test: a query builder, a promise or a synchronous seed. */
 type Change = () => PromiseLike<object | void> | void;
 
-const { ctx, close } = createTestContext();
+const { ctx, close } = await createTestContext();
 
 afterAll(close);
 
@@ -50,31 +42,31 @@ async function signUp() {
 	return userId;
 }
 
-function seqOf(feed: BotFeed, key: string): number | undefined {
-	return ctx.db
+async function seqOf(feed: BotFeed, key: string): Promise<number | undefined> {
+	const [row] = await ctx.db
 		.select({ seq: botFeedChange.seq })
 		.from(botFeedChange)
-		.where(and(eq(botFeedChange.feed, feed), eq(botFeedChange.key, key)))
-		.get()?.seq;
+		.where(and(eq(botFeedChange.feed, feed), eq(botFeedChange.key, key)));
+
+	return row?.seq;
 }
 
-function latestSeq(feed: BotFeed): number {
-	return (
-		ctx.db
-			.select({ seq: max(botFeedChange.seq) })
-			.from(botFeedChange)
-			.where(eq(botFeedChange.feed, feed))
-			.get()?.seq ?? 0
-	);
+async function latestSeq(feed: BotFeed): Promise<number> {
+	const [row] = await ctx.db
+		.select({ seq: max(botFeedChange.seq) })
+		.from(botFeedChange)
+		.where(eq(botFeedChange.feed, feed));
+
+	return row?.seq ?? 0;
 }
 
 /** Whether running `change` moved `key` past every key its feed had before. */
 async function moves(feed: BotFeed, key: string, change: Change): Promise<boolean> {
-	const before = latestSeq(feed);
+	const before = await latestSeq(feed);
 
 	await change();
 
-	return (seqOf(feed, key) ?? 0) > before;
+	return ((await seqOf(feed, key)) ?? 0) > before;
 }
 
 describe('addon triggers', () => {
@@ -192,18 +184,16 @@ describe('member triggers', () => {
 
 	test('deleting a user fires the account triggers through the cascade', async () => {
 		const member = await signUp();
-		const trigger = ctx.db.$client
-			.query<TriggerRow, []>(
-				"SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'bot_feed_user_delete'",
-			)
-			.get();
+		const [trigger] = await ctx.db.$client<TriggerRow[]>`
+			SELECT pg_get_triggerdef(oid) AS definition FROM pg_trigger
+			WHERE tgname = 'bot_feed_user_delete' AND tgrelid = '"user"'::regclass`;
 
 		if (!trigger) {
 			throw new Error('The user delete trigger is missing.');
 		}
 
 		// Without the user's own trigger, only the cascaded account deletes can move the member.
-		ctx.db.$client.run('DROP TRIGGER `bot_feed_user_delete`');
+		await ctx.db.$client`DROP TRIGGER bot_feed_user_delete ON "user"`;
 
 		try {
 			expect(
@@ -212,7 +202,7 @@ describe('member triggers', () => {
 				),
 			).toBe(true);
 		} finally {
-			ctx.db.$client.run(trigger.sql);
+			await ctx.db.$client.unsafe(trigger.definition);
 		}
 	});
 });
@@ -241,55 +231,5 @@ describe('release triggers', () => {
 		expect(
 			await moves('releases', 'ios:1.2.0', () => ctx.db.delete(loaderRelease).where(where)),
 		).toBe(true);
-	});
-});
-
-describe('bot feed triggers migration', () => {
-	test('backfills every addon, linked user and release', async () => {
-		const directory = await mkdtemp(join(tmpdir(), 'ub-bot-feed-'));
-		const previous = join(directory, 'migrations');
-		const migrations = (await readdir(MIGRATIONS_FOLDER)).toSorted();
-		const applied = migrations.slice(
-			0,
-			migrations.findIndex((name) => name.endsWith(TRIGGERS_MIGRATION_SUFFIX)),
-		);
-		const db = createDatabase(join(directory, 'app.db'));
-
-		try {
-			for (const name of applied) {
-				await cp(join(MIGRATIONS_FOLDER, name), join(previous, name), { recursive: true });
-			}
-
-			migrate(db, { migrationsFolder: previous });
-
-			db.$client.run(
-				`INSERT INTO user (id, name, email) VALUES ('u', 'U', 'u@example.com'), ('bare', 'B', 'b@example.com')`,
-			);
-			db.$client.run(
-				`INSERT INTO account (id, account_id, provider_id, user_id, updated_at) VALUES ('d', '1', 'discord', 'u', 0), ('g', '2', 'github', 'u', 0)`,
-			);
-			db.$client.run(
-				`INSERT INTO addon (id, type, name, description, updated_at) VALUES ('old.addon', 'plugin', 'Old', '', 0)`,
-			);
-			db.$client.run(
-				`INSERT INTO loader_release (platform, version, version_key, url, published_at) VALUES ('android', '1.0.0', '1.0.0', 'https://example.com', 0)`,
-			);
-
-			migrateDatabase(db);
-
-			const rows = db
-				.select({ feed: botFeedChange.feed, key: botFeedChange.key })
-				.from(botFeedChange)
-				.all();
-
-			expect(rows.toSorted((a, b) => a.feed.localeCompare(b.feed))).toEqual([
-				{ feed: 'addons', key: 'old.addon' },
-				{ feed: 'members', key: 'u' },
-				{ feed: 'releases', key: 'android:1.0.0' },
-			]);
-		} finally {
-			db.$client.close();
-			await rm(directory, { recursive: true });
-		}
 	});
 });

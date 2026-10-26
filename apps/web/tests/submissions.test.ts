@@ -1,7 +1,7 @@
 import { createSubmissionResponseSchema } from '@unbound-app/contracts/publish';
 import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
-import { afterAll, describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, spyOn, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import createSubmissionEndpoint from '~/endpoints/create-submission';
@@ -34,8 +34,8 @@ const github = serveGitHub({
 
 const fixture = github.repository(REPOSITORY);
 
-function setup(overrides: EnvSource = {}) {
-	const test = createTestContext({
+async function setup(overrides: EnvSource = {}) {
+	const test = await createTestContext({
 		GITHUB_API_URL: github.url.href,
 		GITHUB_RATE_LIMIT_MAX: '1000',
 		...overrides,
@@ -53,11 +53,11 @@ function setup(overrides: EnvSource = {}) {
 	};
 }
 
-const main = setup();
+const main = await setup();
 const { ctx, staging } = main;
 
 afterAll(async () => {
-	main.close();
+	await main.close();
 	await github.stop();
 });
 
@@ -229,6 +229,38 @@ describe('new listings', () => {
 		expect(await refused(response)).toEqual({ status: 409, code: 'pending_listing_cap' });
 	});
 
+	test('two concurrent submissions cannot both take the last pending listing slot', async () => {
+		const { headers } = await signUp();
+
+		await accepted(await submit(headers, commitAddon('race.one').request));
+
+		// Both stage before either reserves, so their claim transactions overlap.
+		const write = staging.write.bind(staging);
+		const bothStaged = Promise.withResolvers<void>();
+		let staged = 0;
+		const held = spyOn(staging, 'write').mockImplementation(async (...args) => {
+			staged += 1;
+
+			if (staged === 2) {
+				bothStaged.resolve();
+			}
+
+			await bothStaged.promise;
+
+			return write(...args);
+		});
+		const responses = await Promise.all([
+			submit(headers, commitAddon('race.two').request),
+			submit(headers, commitAddon('race.three').request),
+		]).finally(() => held.mockRestore());
+		const outcomes = await Promise.all(
+			responses.map(async (response) => (response.ok ? 'created' : refused(response))),
+		);
+
+		expect(outcomes).toContainEqual('created');
+		expect(outcomes).toContainEqual({ status: 409, code: 'pending_listing_cap' });
+	});
+
 	test('rejects a request naming a manifest instead of a source', async () => {
 		const { headers } = await signUp();
 		const response = await createSubmissionEndpoint.handle(
@@ -370,7 +402,7 @@ describe('the GitHub source', () => {
 
 describe('rate limiting', () => {
 	test('limits submissions per user within SUBMISSION_RATE_LIMIT_WINDOW_SECONDS', async () => {
-		const limited = setup({
+		const limited = await setup({
 			SUBMISSION_RATE_LIMIT_MAX: '2',
 			SUBMISSION_MAX_PENDING_LISTINGS: '10',
 		});
@@ -389,12 +421,12 @@ describe('rate limiting', () => {
 
 			await accepted(await submit(headers, commitAddon('rate.three').request, limited.ctx));
 		} finally {
-			limited.close();
+			await limited.close();
 		}
 	});
 
 	test('refusals cost no quota', async () => {
-		const limited = setup({
+		const limited = await setup({
 			SUBMISSION_RATE_LIMIT_MAX: '2',
 			SUBMISSION_MAX_PENDING_LISTINGS: '10',
 		});
@@ -437,7 +469,7 @@ describe('rate limiting', () => {
 				await submit(author.headers, commitAddon('quota.two').request, limited.ctx),
 			);
 		} finally {
-			limited.close();
+			await limited.close();
 		}
 	});
 });

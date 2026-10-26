@@ -20,7 +20,7 @@ import { manifest, REPOSITORY_DETAILS, seedApprovedAddon, seedVersion } from './
 import { createTestContext, signInWithDiscord } from './helpers/context';
 import { serveEndpoints } from './helpers/server';
 
-const base = createTestContext();
+const base = await createTestContext();
 const ctx = base.ctx;
 const server = serveEndpoints(ctx, {
 	'GET /api/v1/catalog': getCatalogEndpoint,
@@ -61,7 +61,7 @@ const UPDATES_REQUEST = {
 
 afterAll(async () => {
 	await server.stop(true);
-	base.close();
+	await base.close();
 });
 
 beforeAll(async () => {
@@ -105,7 +105,7 @@ beforeAll(async () => {
 		throw new Error(`User ${adminId} was not stored.`);
 	}
 
-	serveVersion(ctx, { user: admin, via: 'session' }, 'src.withdrawn', {
+	await serveVersion(ctx, { user: admin, via: 'session' }, 'src.withdrawn', {
 		version: '1.0.0',
 		reason: '1.1.0 crashes',
 	});

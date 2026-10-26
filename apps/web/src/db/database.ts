@@ -36,10 +36,11 @@ export function createDatabase(url: string): Database {
 	const db = open(client);
 	const begin = db.transaction.bind(db);
 
-	return Object.assign(db, {
-		transaction: <T>(body: TransactionBody<T>) =>
-			retrySerializable(() => begin(body, { isolationLevel: 'serializable' })),
-	});
+	function transaction<T>(body: TransactionBody<T>): Promise<T> {
+		return retrySerializable(() => begin(body, { isolationLevel: 'serializable' }));
+	}
+
+	return Object.assign(db, { transaction });
 }
 
 /**

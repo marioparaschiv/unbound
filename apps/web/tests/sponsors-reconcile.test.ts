@@ -83,10 +83,10 @@ const github = Bun.serve({
 	},
 });
 
-const contexts: Array<() => void> = [];
+const contexts: Array<() => Promise<void>> = [];
 
-function setup(): AppContext {
-	const { ctx, close } = createTestContext({
+async function setup(): Promise<AppContext> {
+	const { ctx, close } = await createTestContext({
 		GITHUB_API_URL: github.url.href,
 		GITHUB_SPONSORS_LOGIN: SPONSORED_LOGIN,
 		GITHUB_SPONSORS_TOKEN: TOKEN,
@@ -100,17 +100,15 @@ function setup(): AppContext {
 	return { ...ctx, now: () => NOW };
 }
 
-afterEach(() => {
-	for (const close of contexts.splice(0)) {
-		close();
-	}
+afterEach(async () => {
+	await Promise.all(contexts.splice(0).map((close) => close()));
 });
 
 afterAll(() => github.stop(true));
 
 describe('reconcileSponsorships', () => {
 	test('a sponsorship whose created webhook was missed converges to active across pages', async () => {
-		const ctx = setup();
+		const ctx = await setup();
 
 		remote.nodes = [
 			{ id: 1, active: true },
@@ -124,34 +122,40 @@ describe('reconcileSponsorships', () => {
 
 		expect(remote.requests).toBe(3);
 		expect(result).toEqual({ fetched: 5, updated: 4 });
-		expect(storedSponsorship(ctx, '3')).toMatchObject({
+		expect(await storedSponsorship(ctx, '3')).toMatchObject({
 			githubLogin: 'sponsor-3',
 			state: 'active',
 			monthlyPriceCents: 100,
 			since: new Date('2026-01-01T00:00:00Z'),
 		});
-		expect(storedSponsorship(ctx, '2')).toBeUndefined();
+		expect(await storedSponsorship(ctx, '2')).toBeUndefined();
 	});
 
 	test('a sponsorship whose cancelled webhook was missed converges to cancelled', async () => {
-		const ctx = setup();
+		const ctx = await setup();
 
-		seed(ctx, { githubId: '10' });
-		seed(ctx, { githubId: '11' });
+		await seed(ctx, { githubId: '10' });
+		await seed(ctx, { githubId: '11' });
 		remote.nodes = [{ id: 10, active: false }];
 
 		await reconcileSponsorships(ctx);
 
-		expect(storedSponsorship(ctx, '10')).toMatchObject({ state: 'cancelled', endsAt: NOW });
-		expect(storedSponsorship(ctx, '11')).toMatchObject({ state: 'cancelled', endsAt: NOW });
+		expect(await storedSponsorship(ctx, '10')).toMatchObject({
+			state: 'cancelled',
+			endsAt: NOW,
+		});
+		expect(await storedSponsorship(ctx, '11')).toMatchObject({
+			state: 'cancelled',
+			endsAt: NOW,
+		});
 	});
 
 	test('a pending cancellation stands until it takes effect, then a still-active sponsor is reinstated', async () => {
-		const ctx = setup();
+		const ctx = await setup();
 		const later = new Date('2026-03-20T00:00:00Z');
 
-		seed(ctx, { githubId: '20', state: 'pending_cancellation', endsAt: later });
-		seed(ctx, {
+		await seed(ctx, { githubId: '20', state: 'pending_cancellation', endsAt: later });
+		await seed(ctx, {
 			githubId: '21',
 			state: 'pending_cancellation',
 			endsAt: new Date('2026-02-20T00:00:00Z'),
@@ -163,17 +167,17 @@ describe('reconcileSponsorships', () => {
 
 		await reconcileSponsorships(ctx);
 
-		expect(storedSponsorship(ctx, '20')).toMatchObject({
+		expect(await storedSponsorship(ctx, '20')).toMatchObject({
 			state: 'pending_cancellation',
 			endsAt: later,
 		});
-		expect(storedSponsorship(ctx, '21')).toMatchObject({ state: 'active', endsAt: null });
+		expect(await storedSponsorship(ctx, '21')).toMatchObject({ state: 'active', endsAt: null });
 	});
 
 	test('running it twice changes nothing the second time', async () => {
-		const ctx = setup();
+		const ctx = await setup();
 
-		seed(ctx, { githubId: '30' });
+		await seed(ctx, { githubId: '30' });
 		remote.nodes = [
 			{ id: 31, active: true },
 			{ id: 32, active: false },
@@ -181,17 +185,17 @@ describe('reconcileSponsorships', () => {
 
 		await reconcileSponsorships(ctx);
 
-		const before = ctx.db.select().from(sponsorship).all();
+		const before = await ctx.db.select().from(sponsorship);
 		const second = await reconcileSponsorships(ctx);
 
 		expect(second.updated).toBe(0);
-		expect(ctx.db.select().from(sponsorship).all()).toEqual(before);
+		expect(await ctx.db.select().from(sponsorship)).toEqual(before);
 	});
 
 	test('a failed page applies nothing, not even the absence sweep', async () => {
-		const ctx = setup();
+		const ctx = await setup();
 
-		seed(ctx, { githubId: '40' });
+		await seed(ctx, { githubId: '40' });
 		remote.nodes = [
 			{ id: 41, active: true },
 			{ id: 42, active: true },
@@ -206,18 +210,18 @@ describe('reconcileSponsorships', () => {
 
 		expect(outcome).toMatch(/Something broke/);
 
-		expect(ctx.db.select().from(sponsorship).all()).toEqual([
+		expect(await ctx.db.select().from(sponsorship)).toEqual([
 			expect.objectContaining({ githubId: '40', state: 'active' }),
 		]);
 	});
 
 	test('a row a webhook wrote during the run is left alone', async () => {
-		const ctx = setup();
+		const ctx = await setup();
 
-		seed(ctx, { githubId: '50', updatedAt: new Date(NOW.getTime() + 1000) });
+		await seed(ctx, { githubId: '50', updatedAt: new Date(NOW.getTime() + 1000) });
 
 		await reconcileSponsorships(ctx);
 
-		expect(storedSponsorship(ctx, '50')?.state).toBe('active');
+		expect((await storedSponsorship(ctx, '50'))?.state).toBe('active');
 	});
 });

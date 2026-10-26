@@ -1,41 +1,28 @@
 import type { AddonSort, ListAddonsQuery, SortOrder } from '@unbound-app/contracts/addons';
 import { listAddonsResponseSchema } from '@unbound-app/contracts/addons';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { cp, mkdtemp, readdir, rm } from 'node:fs/promises';
-import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
-import type { SQLQueryBindings } from 'bun:sqlite';
 import { eq } from 'drizzle-orm';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
-import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { getAddonDetails, queryListedAddons } from '~/lib/addons';
 import listAddonsEndpoint from '~/endpoints/list-addons';
-import { toVersionKey } from '~/lib/version-key';
 import type { AppContext } from '~/lib/context';
 import { createApiClient } from '~/api/client';
-import { createDatabase } from '~/db/database';
 import { addon } from '~/db/schema';
 import type { Api } from '~/api';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { createTestContext, signInWithDiscord } from './helpers/context';
+import { explain, planNodes } from './helpers/database';
 import { failure, serveEndpoints } from './helpers/server';
 
-type PlanStep = {
-	detail: string;
-};
-
-const LISTING_MIGRATION = '20261017110421_listing';
-
-const base = createTestContext({ ADDON_LIST_PAGE_SIZE: '2' });
+const base = await createTestContext({ ADDON_LIST_PAGE_SIZE: '2' });
 const ctx = base.ctx;
 const server = serveEndpoints(ctx, { 'GET /api/v1/addons': listAddonsEndpoint });
 const client = createApiClient<Api>({ baseUrl: server.url.href });
 
 afterAll(async () => {
 	await server.stop(true);
-	base.close();
+	await base.close();
 });
 
 function onDay(day: number): AppContext {
@@ -203,18 +190,15 @@ describe('listing', () => {
 		{ type: 'plugin', sort: 'updated', q: 'a' },
 	])('reads %o in index order without sorting', async (query) => {
 		const { nextCursor } = await list(query);
-		const { sql, params } = queryListedAddons(ctx, {
-			...query,
-			cursor: nextCursor ?? undefined,
-		}).toSQL();
-		const plan = ctx.db.$client
-			.query<PlanStep, SQLQueryBindings[]>(`EXPLAIN QUERY PLAN ${sql}`)
-			.all(...params.map((param) => (typeof param === 'number' ? param : String(param))))
-			.map((step) => step.detail);
+		const sql = queryListedAddons(ctx, { ...query, cursor: nextCursor ?? undefined }).toSQL();
+		const nodes = planNodes(await explain(ctx.db, sql));
 
-		expect(plan).toContainEqual(expect.stringMatching(/USING (COVERING )?INDEX addon_listed_/));
-		expect(plan).not.toContainEqual(expect.stringMatching(/TEMP B-TREE/));
-		expect(plan).not.toContainEqual(expect.stringMatching(/^SCAN addon_version/));
+		expect(nodes.map((node) => node['Index Name'])).toContainEqual(
+			expect.stringMatching(/^addon_listed_/),
+		);
+		expect(nodes.map((node) => node['Node Type'])).not.toContainEqual(
+			expect.stringMatching(/Sort|Seq Scan/),
+		);
 	});
 });
 
@@ -239,66 +223,5 @@ describe('addon details', () => {
 	test('hides delisted and unapproved addons', async () => {
 		expect(await getAddonDetails(ctx, 'list.delta')).toBeUndefined();
 		expect(await getAddonDetails(ctx, 'list.pending')).toBeUndefined();
-	});
-});
-
-describe('listing migration', () => {
-	test('backfills the listing columns of existing addons from their newest version', async () => {
-		const directory = await mkdtemp(join(tmpdir(), 'ub-listing-'));
-		const previous = join(directory, 'migrations');
-		const applied = (await readdir(MIGRATIONS_FOLDER)).filter(
-			(name) => name < LISTING_MIGRATION,
-		);
-		const db = createDatabase(join(directory, 'app.db'));
-
-		try {
-			for (const name of applied) {
-				await cp(join(MIGRATIONS_FOLDER, name), join(previous, name), { recursive: true });
-			}
-
-			migrate(db, { migrationsFolder: previous });
-
-			// Published out of version order: 1.10.0 is the newest even though 1.2.0 came last.
-			const versions = [
-				{ version: '1.0.0', publishedAt: 1000, description: 'First.' },
-				{ version: '1.10.0', publishedAt: 2000, description: 'Newest.' },
-				{ version: '1.2.0', publishedAt: 3000, description: 'Backport.' },
-			];
-
-			db.$client.run(`INSERT INTO user (id, name, email) VALUES ('u', 'U', 'u@example.com')`);
-			db.$client.run(`INSERT INTO addon (id) VALUES ('old.theme'), ('old.plugin')`);
-
-			for (const id of ['old.theme', 'old.plugin']) {
-				for (const { version, publishedAt, description } of versions) {
-					const main = id === 'old.theme' ? 'theme.json' : 'index.js';
-					const published = JSON.stringify(manifest(id, version, { description, main }));
-					const submissionId = `${id}@${version}`;
-
-					db.$client.run(
-						`INSERT INTO submission (id, addon_id, author_id, kind, status, version, manifest, bundle_size, staging_key, upload_expires_at, created_at)
-						VALUES (?, ?, 'u', 'listing', 'approved', ?, ?, 1, ?, 0, 0)`,
-						[submissionId, id, version, published, submissionId],
-					);
-					db.$client.run(
-						`INSERT INTO addon_version (addon_id, version, version_key, min_client_key, submission_id, manifest, bundle_size, sha256, published_at)
-						VALUES (?, ?, ?, '', ?, ?, 1, 'x', ?)`,
-						[id, version, toVersionKey(version), submissionId, published, publishedAt],
-					);
-				}
-			}
-
-			migrateDatabase(db);
-
-			const migrated = await db.select().from(addon).orderBy(addon.id);
-			const newest = { name: 'Hello', description: 'Newest.', updatedAt: new Date(2000) };
-
-			expect(migrated).toMatchObject([
-				{ id: 'old.plugin', type: 'plugin', ...newest },
-				{ id: 'old.theme', type: 'theme', ...newest },
-			]);
-		} finally {
-			db.$client.close();
-			await rm(directory, { recursive: true });
-		}
 	});
 });

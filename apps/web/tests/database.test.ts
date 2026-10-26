@@ -25,6 +25,14 @@ type Gate = {
 	open: () => void;
 };
 
+// UNKNOWN: whatever the promise rejects with.
+function failure(promise: PromiseLike<unknown>): Promise<unknown> {
+	return Promise.resolve(promise).then(
+		() => undefined,
+		(error: unknown) => error,
+	);
+}
+
 function gate(): Gate {
 	const { promise, resolve } = Promise.withResolvers<void>();
 
@@ -99,7 +107,7 @@ describe('migrateDatabase', () => {
 		const database = await createTestDatabase('en_US.UTF-8');
 
 		try {
-			await expect(migrateDatabase(database.url)).rejects.toThrow(/not libc C/);
+			expect(String(await failure(migrateDatabase(database.url)))).toMatch(/not libc C/);
 		} finally {
 			await database.drop();
 		}
@@ -108,10 +116,11 @@ describe('migrateDatabase', () => {
 
 describe('createDatabase', () => {
 	test('enforces foreign keys', async () => {
-		await expect(
-			ctx.db.$client`insert into session (id, expires_at, token, updated_at, user_id)
-				values ('s', now(), 't', now(), 'missing')`,
-		).rejects.toThrow(/foreign key/);
+		const insert = ctx.db
+			.$client`insert into session (id, expires_at, token, updated_at, user_id)
+			values ('s', now(), 't', now(), 'missing')`;
+
+		expect(String(await failure(insert))).toMatch(/foreign key/);
 	});
 
 	test('retries a transaction that lost a serialization race, losing no update', async () => {
@@ -157,13 +166,15 @@ describe('createDatabase', () => {
 	test('does not retry a transaction that failed with an ApiError', async () => {
 		let attempts = 0;
 
-		await expect(
-			ctx.db.transaction(async () => {
-				attempts++;
+		expect(
+			await failure(
+				ctx.db.transaction(async () => {
+					attempts++;
 
-				throw new ApiError('not_found', 'Nothing here.');
-			}),
-		).rejects.toThrow(ApiError);
+					throw new ApiError('not_found', 'Nothing here.');
+				}),
+			),
+		).toBeInstanceOf(ApiError);
 		expect(attempts).toBe(1);
 	});
 });

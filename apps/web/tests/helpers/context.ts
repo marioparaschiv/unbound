@@ -28,6 +28,12 @@ export const TEST_ENV = {
 	S3_PUBLIC_BUCKET: 'unbound-addons',
 } satisfies EnvSource;
 
+/** Database URLs for a `parseEnv` that never connects; `createTestContext` sets real ones. */
+export const OFFLINE_DATABASE_ENV = {
+	DATABASE_URL: 'postgres://127.0.0.1:9/offline',
+	DATABASE_DIRECT_URL: 'postgres://127.0.0.1:9/offline',
+} satisfies EnvSource;
+
 /** The MinIO endpoint and buckets `bun run test:s3` provides, for `createTestContext` in `*.s3.ts` files. */
 export const S3_TEST_ENV = {
 	S3_ENDPOINT: process.env.S3_ENDPOINT,

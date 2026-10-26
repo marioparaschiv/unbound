@@ -7,7 +7,7 @@ import me from '~/endpoints/me';
 
 import { authRequest, createTestContext, linkGitHub, signInWithDiscord } from './helpers/context';
 
-const { ctx, close } = createTestContext();
+const { ctx, close } = await createTestContext();
 
 afterAll(close);
 
@@ -212,7 +212,7 @@ describe('API keys', () => {
 
 describe('rate limiting', () => {
 	test('is stored in SQLite and rejects requests over the limit', async () => {
-		const limited = createTestContext({
+		const limited = await createTestContext({
 			AUTH_RATE_LIMIT_MAX: '2',
 			AUTH_RATE_LIMIT_WINDOW_SECONDS: '60',
 		});
@@ -231,7 +231,7 @@ describe('rate limiting', () => {
 
 			expect(rows).toEqual([expect.objectContaining({ count: 2 })]);
 		} finally {
-			limited.close();
+			await limited.close();
 		}
 	});
 });

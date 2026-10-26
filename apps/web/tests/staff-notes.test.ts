@@ -1,7 +1,6 @@
 import { createStaffNoteRequestSchema } from '@unbound-app/contracts/admin';
 import { dirname, join, relative, resolve } from 'node:path';
 import { afterAll, describe, expect, test } from 'bun:test';
-import type { SQLQueryBindings } from 'bun:sqlite';
 import { existsSync, readdirSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod/mini';
@@ -21,13 +20,10 @@ import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 
 import { createTestContext, signInWithDiscord, snowflakeAt } from './helpers/context';
+import { explain, planNodes, planPath } from './helpers/database';
 import { manifest, seedApprovedAddon } from './helpers/addons';
 
-type PlanStep = {
-	detail: string;
-};
-
-const base = createTestContext();
+const base = await createTestContext();
 
 let clock = new Date('2026-10-23T12:00:00.000Z');
 
@@ -323,17 +319,12 @@ describe('staff notes', () => {
 		expect(parse('x'.repeat(5000)).success).toBe(true);
 	});
 
-	test('reads a subject’s notes through its partial index without sorting', () => {
-		const { sql, params } = queryStaffNotes(ctx, { type: 'addon', id: 'notes.crud' }).toSQL();
-		const plan = ctx.db.$client
-			.query<PlanStep, SQLQueryBindings[]>(`EXPLAIN QUERY PLAN ${sql}`)
-			.all(...params.map((param) => (typeof param === 'number' ? param : String(param))))
-			.map((step) => step.detail);
+	test('reads a subject’s notes through its partial index without sorting', async () => {
+		const query = queryStaffNotes(ctx, { type: 'addon', id: 'notes.crud' }).toSQL();
+		const root = await explain(ctx.db, query);
 
-		expect(plan).toContainEqual(
-			expect.stringMatching(/USING (COVERING )?INDEX staff_note_addon_idx \(addon_id=\?\)/),
-		);
-		expect(plan).not.toContainEqual(expect.stringMatching(/TEMP B-TREE/));
+		expect(planNodes(root).map((node) => node['Index Name'])).toContain('staff_note_addon_idx');
+		expect(planPath(root, 'd0').map((node) => node['Node Type'])).not.toContain('Sort');
 	});
 });
 

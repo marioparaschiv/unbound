@@ -1,22 +1,15 @@
 import type { ModerationEvent, Subject } from '@unbound-app/contracts/admin';
 import { afterAll, describe, expect, test } from 'bun:test';
-import { cp, mkdtemp, readdir, rm } from 'node:fs/promises';
-import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
-import type { SQLQueryBindings } from 'bun:sqlite';
 import { eq } from 'drizzle-orm';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
 import { createStaffNote, deleteStaffNote, editStaffNote } from '~/lib/staff-notes';
 import { addMaintainer, removeMaintainer, transferAddon } from '~/lib/maintainers';
-import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { listEvents, queryEvents } from '~/lib/moderation-events';
 import { delistAddon, relistAddon } from '~/lib/addons';
 import { createSubmission } from '~/lib/submissions';
 import { moderationEvent, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
-import { createDatabase } from '~/db/database';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 
@@ -29,13 +22,8 @@ import {
 } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
 import { commitPlugin, serveGitHub } from './helpers/github';
+import { explain, planNodes, planPath } from './helpers/database';
 import { serveMemoryS3 } from './helpers/memory-s3';
-
-type PlanStep = {
-	detail: string;
-};
-
-const EVENTS_MIGRATION_SUFFIX = '_moderation_events';
 
 const REPOSITORY = 'acme/addons';
 
@@ -45,7 +33,7 @@ const github = serveGitHub({
 	tokens: { owner: { push: [REPOSITORY] } },
 });
 
-const base = createTestContext({
+const base = await createTestContext({
 	S3_ENDPOINT: s3.url.href,
 	GITHUB_API_URL: github.url.href,
 	EVENT_PAGE_SIZE: '2',
@@ -57,7 +45,7 @@ const ctx: AppContext = { ...base.ctx, now: () => clock };
 
 afterAll(async () => {
 	await Promise.all([s3.stop(true), github.stop()]);
-	base.close();
+	await base.close();
 });
 
 let users = 0;
@@ -278,13 +266,13 @@ describe('addon moderation', () => {
 		await seedApprovedAddon(ctx, owner.userId, manifest('events.delist'));
 
 		const delistedAt = tick();
-		const delisted = delistAddon(ctx, moderator.caller, 'events.delist');
+		const delisted = await delistAddon(ctx, moderator.caller, 'events.delist');
 
 		tick();
 
-		const again = delistAddon(ctx, moderator.caller, 'events.delist');
+		const again = await delistAddon(ctx, moderator.caller, 'events.delist');
 
-		relistAddon(ctx, moderator.caller, 'events.delist');
+		await relistAddon(ctx, moderator.caller, 'events.delist');
 
 		const events = await timeline(moderator, addonSubject('events.delist'));
 
@@ -402,98 +390,14 @@ describe('the timeline', () => {
 	});
 
 	test('reads the subject index newest first without sorting', async () => {
-		const { sql, params } = queryEvents(ctx, addonSubject('events.cycle'), 10).toSQL();
-		const plan = ctx.db.$client
-			.query<PlanStep, SQLQueryBindings[]>(`EXPLAIN QUERY PLAN ${sql}`)
-			.all(...params.map((param) => (typeof param === 'number' ? param : String(param))))
-			.map((step) => step.detail);
-
-		expect(plan).toContainEqual(
-			expect.stringMatching(
-				/USING INDEX moderation_event_subject_idx \(subject_type=\? AND subject_id=\? AND rowid<\?\)/,
-			),
+		const root = await explain(
+			ctx.db,
+			queryEvents(ctx, addonSubject('events.cycle'), 10).toSQL(),
 		);
-		expect(plan).not.toContainEqual(expect.stringMatching(/TEMP B-TREE/));
-	});
-});
+		const scan = planNodes(root).find((node) => node.Alias === 'd0');
 
-describe('events migration', () => {
-	test('backfills the review decisions recorded on submissions', async () => {
-		const directory = await mkdtemp(join(tmpdir(), 'ub-events-'));
-		const previous = join(directory, 'migrations');
-		const migrations = (await readdir(MIGRATIONS_FOLDER)).toSorted();
-		const applied = migrations.slice(
-			0,
-			migrations.findIndex((name) => name.endsWith(EVENTS_MIGRATION_SUFFIX)),
-		);
-		const db = createDatabase(join(directory, 'app.db'));
-
-		try {
-			for (const name of applied) {
-				await cp(join(MIGRATIONS_FOLDER, name), join(previous, name), { recursive: true });
-			}
-
-			migrate(db, { migrationsFolder: previous });
-
-			db.$client.run(
-				`INSERT INTO user (id, name, email, role) VALUES ('a', 'A', 'a@example.com', 'user'), ('m', 'M', 'm@example.com', 'moderator')`,
-			);
-
-			const submissions = [
-				['s-changes', 'listing', 'superseded', 'changes_requested', 'Add a README.', 1000],
-				['s-approved', 'listing', 'approved', 'approved', 'Thanks.', 2000],
-				['s-pending', 'update', 'pending_review', null, null, null],
-			] as const;
-
-			for (const [id, kind, status, decision, note, reviewedAt] of submissions) {
-				db.$client.run(
-					`INSERT INTO submission (id, addon_id, author_id, kind, status, version, manifest, bundle_size, staging_key, upload_expires_at, created_at, reviewer_id, review_decision, review_note, reviewed_at)
-					VALUES (?, 'old.addon', 'a', ?, ?, '1.0.0', ?, 1, ?, 0, 0, ?, ?, ?, ?)`,
-					[
-						id,
-						kind,
-						status,
-						JSON.stringify(manifest('old.addon')),
-						id,
-						decision ? 'm' : null,
-						decision,
-						note,
-						reviewedAt,
-					],
-				);
-			}
-
-			migrateDatabase(db);
-
-			const moderator = await signUp('moderator');
-			const events = await listEvents(
-				{ ...ctx, db },
-				moderator.caller,
-				addonSubject('old.addon'),
-			);
-
-			expect(events.items).toMatchObject([
-				{
-					kind: 'review.decided',
-					actor: { id: 'm' },
-					reason: 'Thanks.',
-					createdAt: new Date(2000).toISOString(),
-					data: {
-						submissionId: 's-approved',
-						submissionKind: 'listing',
-						decision: 'approved',
-					},
-				},
-				{
-					kind: 'review.decided',
-					reason: 'Add a README.',
-					createdAt: new Date(1000).toISOString(),
-					data: { submissionId: 's-changes', decision: 'changes_requested' },
-				},
-			]);
-		} finally {
-			db.$client.close();
-			await rm(directory, { recursive: true });
-		}
+		expect(scan?.['Index Name']).toBe('moderation_event_subject_idx');
+		expect(scan?.['Index Cond']).toMatch(/subject_type = .+ AND .*subject_id = .+ AND .*id < /);
+		expect(planPath(root, 'd0').map((node) => node['Node Type'])).not.toContain('Sort');
 	});
 });

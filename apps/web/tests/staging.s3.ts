@@ -25,7 +25,7 @@ const github = serveGitHub({
 	tokens: { owner: { push: [REPOSITORY] } },
 });
 
-const base = createTestContext({ ...S3_TEST_ENV, GITHUB_API_URL: github.url.href });
+const base = await createTestContext({ ...S3_TEST_ENV, GITHUB_API_URL: github.url.href });
 const grace = base.ctx.env.STAGING_ORPHAN_GRACE_SECONDS * 1000;
 
 // Objects are stamped by MinIO's clock, so the sweep runs on the real clock shifted by `ahead`.
@@ -37,7 +37,7 @@ afterAll(async () => {
 
 	await Promise.all(rows.map((row) => ctx.storage.staging.delete(row.key)));
 	await github.stop();
-	base.close();
+	await base.close();
 });
 
 function sweepAfter(ms: number) {
@@ -64,8 +64,10 @@ function staged(key: string) {
 	return ctx.storage.staging.exists(key);
 }
 
-function statusOf(id: string) {
-	return ctx.db.select().from(submission).where(eq(submission.id, id)).get()?.status;
+async function statusOf(id: string) {
+	const [row] = await ctx.db.select().from(submission).where(eq(submission.id, id));
+
+	return row?.status;
 }
 
 describe('sweepStaging', () => {
@@ -129,7 +131,10 @@ describe('banning a user', () => {
 		});
 
 		expect(response.status).toBe(200);
-		expect([statusOf(listing.id), statusOf(update.id)]).toEqual(['cancelled', 'cancelled']);
+		expect([await statusOf(listing.id), await statusOf(update.id)]).toEqual([
+			'cancelled',
+			'cancelled',
+		]);
 		expect(await staged(listing.stagingKey)).toBe(false);
 		expect(await staged(update.stagingKey)).toBe(false);
 

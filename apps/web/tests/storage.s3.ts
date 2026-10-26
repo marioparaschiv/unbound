@@ -2,13 +2,13 @@ import { afterAll, describe, expect, test } from 'bun:test';
 
 import { S3_TEST_ENV, createTestContext } from './helpers/context';
 
-const { ctx, close } = createTestContext(S3_TEST_ENV);
+const { ctx, close } = await createTestContext(S3_TEST_ENV);
 
 const key = `tests/${crypto.randomUUID()}/index.js`;
 
 afterAll(async () => {
 	await Promise.all([ctx.storage.staging.delete(key), ctx.storage.public.delete(key)]);
-	close();
+	await close();
 });
 
 describe('createStorage', () => {

@@ -71,8 +71,8 @@ function commitAddon(branch: string, id: string, files: Record<string, string | 
 
 fixture.commit({ 'unbound.config.json': JSON.stringify({ addons: ['plugins/*'] }) });
 
-function setup(overrides: EnvSource = {}) {
-	const test = createTestContext({
+async function setup(overrides: EnvSource = {}) {
+	const test = await createTestContext({
 		GITHUB_API_URL: github.url.href,
 		GITHUB_RATE_LIMIT_MAX: '1000',
 		...overrides,
@@ -86,12 +86,12 @@ function setup(overrides: EnvSource = {}) {
 		client: createApiClient<Api>({ baseUrl: server.url.href }),
 		async close() {
 			await server.stop(true);
-			test.close();
+			await test.close();
 		},
 	};
 }
 
-const main = setup();
+const main = await setup();
 
 afterAll(async () => {
 	await main.close();
@@ -180,12 +180,16 @@ describe('POST /api/v1/submissions/preview', () => {
 	test('writes nothing', async () => {
 		const { headers } = await signIn();
 		const { path, commitSha } = commitAddon('readonly', 'acme.readonly');
-		const total = () => main.ctx.db.select({ total: count() }).from(submission).get()?.total;
-		const before = total();
+		const total = async () => {
+			const [row] = await main.ctx.db.select({ total: count() }).from(submission);
+
+			return row?.total;
+		};
+		const before = await total();
 
 		await preview(headers, { repository: REPOSITORY, path, ref: 'readonly', commitSha });
 
-		expect(total()).toBe(before);
+		expect(await total()).toBe(before);
 	});
 
 	test('runs the claim checks: updates, existing versions and maintainership', async () => {
@@ -278,8 +282,8 @@ describe('POST /api/v1/submissions/preview', () => {
 	});
 
 	test('refuses an oversize bundle and an oversize ADDON.md', async () => {
-		const small = setup({ ADDON_MAX_BYTES: String(BUNDLE.length - 1) });
-		const smallText = setup({ ADDON_TEXT_MAX_BYTES: '4' });
+		const small = await setup({ ADDON_MAX_BYTES: String(BUNDLE.length - 1) });
+		const smallText = await setup({ ADDON_TEXT_MAX_BYTES: '4' });
 
 		try {
 			const { path, commitSha } = commitAddon('oversize', 'acme.oversize');
