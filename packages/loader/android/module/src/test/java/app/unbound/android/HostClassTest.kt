@@ -28,6 +28,12 @@ class HostClassTest {
     }
 
     @Test
+    fun legacyFindsTheClassOnlyWhileItExists() {
+        assertEquals(String::class.java, HostClass.legacy("java.lang.String").find(classLoader))
+        assertNull(HostClass.legacy("com.discord.missing.ThemeManager").find(classLoader))
+    }
+
+    @Test
     fun loadNamesEveryCandidateWhenNoneExists() {
         val failure = assertThrows(ClassNotFoundException::class.java) {
             HostClass("com.discord.missing.A", "com.discord.missing.B").load(classLoader)

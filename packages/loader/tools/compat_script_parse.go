@@ -107,6 +107,7 @@ type scriptFile struct {
 	typeAliases   map[string]scriptTypeAlias
 	statements    []bool
 	fallbacks     []scriptFallback
+	legacy        [][2]int
 }
 
 type scriptFallback struct {
@@ -159,6 +160,21 @@ func (file *scriptFile) parseFallbacks() {
 		}
 		file.fallbacks = append(file.fallbacks, scriptFallback{call: index, alternatives: file.splitTopLevel(open+1, file.match[open], ",")})
 	}
+	for index := range file.tokens {
+		open := index + 1
+		if file.value(index) == "legacyJavaClass" && file.isIdentifier(index) && file.isPunctuation(open, "(") && file.match[open] >= 0 {
+			file.legacy = append(file.legacy, [2]int{open + 1, file.match[open]})
+		}
+	}
+}
+
+func (file *scriptFile) legacyAt(position int) bool {
+	for _, span := range file.legacy {
+		if position >= span[0] && position < span[1] {
+			return true
+		}
+	}
+	return false
 }
 
 func (file *scriptFile) fallbackAt(position int) (string, int) {

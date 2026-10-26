@@ -483,6 +483,7 @@ func evaluateCompat(references []*compatReference, targets []*compatTarget, base
 			findings = append(findings, compatFinding{Reference: reference, Platform: target.Platform, Status: status, Reason: reason})
 		}
 		resolveFallbacks(findings)
+		resolveLegacy(findings)
 		for _, finding := range findings {
 			key := finding.Reference.key()
 			if worse(finding.Status, state.Statuses[key]) {
@@ -556,6 +557,26 @@ func resolveFallbacks(findings []compatFinding) {
 				finding.Reason += "; " + strings.Join(covering, " and ") + " resolves instead"
 			}
 		}
+	}
+}
+
+func resolveLegacy(findings []compatFinding) {
+	legacy := map[string]bool{}
+	for _, finding := range findings {
+		if finding.Reference.Legacy {
+			legacy[finding.Reference.Component+"#"+finding.Reference.Name] = true
+		}
+	}
+	for index := range findings {
+		finding := &findings[index]
+		if finding.Status != compatBroken && finding.Status != compatPossible {
+			continue
+		}
+		if !legacy[finding.Reference.Component+"#"+finding.Reference.Name] {
+			continue
+		}
+		finding.Status = compatFallback
+		finding.Reason += "; only older Discord builds have it, and its lookup finds the replacement structurally"
 	}
 }
 
