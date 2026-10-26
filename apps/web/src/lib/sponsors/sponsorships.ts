@@ -2,12 +2,10 @@ import { and, eq, sql } from 'drizzle-orm';
 
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
 import type { Database, Transaction } from '~/db/database';
-import { standingOf } from '~/lib/sponsors/standing';
+import { perkGraceMs, standingOf } from '~/lib/sponsors/standing';
 import { account, sponsorship } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import type { Env } from '~/lib/env';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type SponsorshipValues = Pick<
 	Sponsorship,
@@ -34,7 +32,7 @@ export type UserSponsorship = {
  * @returns The grace period in milliseconds.
  */
 export function graceMs(env: Env): number {
-	return env.SPONSOR_PERK_GRACE_DAYS * DAY_MS;
+	return perkGraceMs(env.SPONSOR_PERK_GRACE_DAYS);
 }
 
 /**

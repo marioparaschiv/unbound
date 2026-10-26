@@ -26,6 +26,7 @@ import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { likeContains } from '~/lib/like-contains';
+import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { addon, addonVersion } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
@@ -80,9 +81,6 @@ export const PINNED_FIELDS = {
 	description: 1 << 1,
 	type: 1 << 2,
 } as const satisfies Record<PinnableField, number>;
-
-/** Relational filter for the versions an addon can serve: the ones no rollback withdrew. */
-export const LIVE_VERSIONS = { withdrawnBy: { isNull: true } } as const;
 
 /** The relational `with` that loads the version an addon serves: its newest live version. */
 export const LATEST_VERSION = {
@@ -456,7 +454,6 @@ export async function listMyAddons(ctx: AppContext, caller: Caller): Promise<MyA
 
 export default {
 	PINNED_FIELDS,
-	LIVE_VERSIONS,
 	LATEST_VERSION,
 	toAddon,
 	getManifestType,

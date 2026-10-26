@@ -3,7 +3,7 @@ import type { BotAddon } from '@unbound-app/contracts/bot';
 
 import type { ChangeFeed, FeedChange } from '~/lib/bot/feed';
 import type { AppContext } from '~/lib/context';
-import { LIVE_VERSIONS } from '~/lib/addons';
+import { LIVE_VERSIONS } from '~/lib/live-versions';
 
 function iconUrl(icon: PublishedManifest['icon']): string | undefined {
 	const uri = typeof icon === 'string' ? icon : icon?.uri;

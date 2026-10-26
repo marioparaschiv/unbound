@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { DEFAULT_PERK_GRACE_DAYS } from '~/lib/sponsors/standing';
 import { isBotTokenHost } from '~/lib/discord';
 
 const positiveInt = z.coerce.number().int().positive();
@@ -52,7 +53,7 @@ export const envSchema = z.object({
 	GITHUB_SPONSORS_TOKEN: z.string().min(1).optional(),
 	GITHUB_SPONSORS_WEBHOOK_SECRET: z.string().min(1).optional(),
 	SPONSOR_RECONCILE_INTERVAL_SECONDS: positiveInt.default(3600),
-	SPONSOR_PERK_GRACE_DAYS: z.coerce.number().int().nonnegative().default(7),
+	SPONSOR_PERK_GRACE_DAYS: z.coerce.number().int().nonnegative().default(DEFAULT_PERK_GRACE_DAYS),
 
 	/** The `owner/name` whose build tags CI publishes without review; unset turns first-party publishing off. */
 	FIRST_PARTY_REPOSITORY: z.string().min(1).optional(),

@@ -8,7 +8,8 @@ import { z } from 'zod';
 
 import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
-import { LIVE_VERSIONS, toAddon } from '~/lib/addons';
+import { LIVE_VERSIONS } from '~/lib/live-versions';
+import { toAddon } from '~/lib/addons';
 import { requirePermission } from '~/lib/api/caller';
 import { matchesSearch } from '~/lib/admin-search';
 import type { AppContext } from '~/lib/context';
