@@ -4,7 +4,8 @@ import type { ComponentProps } from 'react';
 
 import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card';
 import InstallAddonButton from '~/components/install-addon-button';
-import type { MarketplaceAddon } from '~/lib/marketplace';
+import type { MarketplaceAddon } from '~/lib/marketplace-addon';
+import AuthorByline from '~/components/author-byline';
 import Text from '~/components/ui/text';
 import cn from '~/lib/cn';
 
@@ -40,8 +41,8 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 							{addon.name}
 						</Link>
 					</Text>
-					<Text variant='text-xs' color='muted' className='truncate'>
-						by {addon.authors.map((author) => author.name).join(', ')}
+					<Text as='div' variant='text-xs' color='muted' className='truncate'>
+						<AuthorByline authors={addon.authors} />
 					</Text>
 				</div>
 				<Text variant='text-xs' color='muted' className='self-start mt-1 shrink-0'>

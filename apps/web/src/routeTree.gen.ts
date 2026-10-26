@@ -16,7 +16,6 @@ import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as SiteStaffRouteRouteImport } from './routes/_site/_staff/route'
 import { Route as SiteAccountRouteImport } from './routes/_site/account'
 import { Route as SiteDashboardRouteImport } from './routes/_site/dashboard'
-import { Route as SiteDevelopersRouteImport } from './routes/_site/developers'
 import { Route as SiteFaqRouteImport } from './routes/_site/faq'
 import { Route as SiteLicenseRouteImport } from './routes/_site/license'
 import { Route as SitePluginsRouteImport } from './routes/_site/plugins'
@@ -26,6 +25,8 @@ import { Route as SiteTermsRouteImport } from './routes/_site/terms'
 import { Route as SiteThemesRouteImport } from './routes/_site/themes'
 import { Route as SiteStaffReviewRouteImport } from './routes/_site/_staff/review'
 import { Route as SiteAddonsIdRouteImport } from './routes/_site/addons/$id'
+import { Route as SiteDevelopersIndexRouteImport } from './routes/_site/developers/index'
+import { Route as SiteDevelopersDiscordIdRouteImport } from './routes/_site/developers/$discordId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1AddonsRouteImport } from './routes/api/v1/addons'
 import { Route as ApiV1CatalogRouteImport } from './routes/api/v1/catalog'
@@ -97,11 +98,6 @@ const SiteDashboardRoute = SiteDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => SiteRouteRoute,
 } as any)
-const SiteDevelopersRoute = SiteDevelopersRouteImport.update({
-  id: '/developers',
-  path: '/developers',
-  getParentRoute: () => SiteRouteRoute,
-} as any)
 const SiteFaqRoute = SiteFaqRouteImport.update({
   id: '/faq',
   path: '/faq',
@@ -145,6 +141,16 @@ const SiteStaffReviewRoute = SiteStaffReviewRouteImport.update({
 const SiteAddonsIdRoute = SiteAddonsIdRouteImport.update({
   id: '/addons/$id',
   path: '/addons/$id',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
+const SiteDevelopersIndexRoute = SiteDevelopersIndexRouteImport.update({
+  id: '/developers/',
+  path: '/developers/',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
+const SiteDevelopersDiscordIdRoute = SiteDevelopersDiscordIdRouteImport.update({
+  id: '/developers/$discordId',
+  path: '/developers/$discordId',
   getParentRoute: () => SiteRouteRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -346,7 +352,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/account': typeof SiteAccountRoute
   '/dashboard': typeof SiteDashboardRoute
-  '/developers': typeof SiteDevelopersRoute
   '/faq': typeof SiteFaqRoute
   '/license': typeof SiteLicenseRoute
   '/plugins': typeof SitePluginsRoute
@@ -356,6 +361,7 @@ export interface FileRoutesByFullPath {
   '/themes': typeof SiteThemesRoute
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
+  '/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -364,6 +370,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
+  '/developers/': typeof SiteDevelopersIndexRoute
   '/api/v1/bot/addons': typeof ApiV1BotAddonsRoute
   '/api/v1/bot/events': typeof ApiV1BotEventsRoute
   '/api/v1/bot/members': typeof ApiV1BotMembersRoute
@@ -400,7 +407,6 @@ export interface FileRoutesByTo {
   '/': typeof SiteIndexRoute
   '/account': typeof SiteAccountRoute
   '/dashboard': typeof SiteDashboardRoute
-  '/developers': typeof SiteDevelopersRoute
   '/faq': typeof SiteFaqRoute
   '/license': typeof SiteLicenseRoute
   '/plugins': typeof SitePluginsRoute
@@ -410,6 +416,7 @@ export interface FileRoutesByTo {
   '/themes': typeof SiteThemesRoute
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
+  '/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -418,6 +425,7 @@ export interface FileRoutesByTo {
   '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
+  '/developers': typeof SiteDevelopersIndexRoute
   '/api/v1/bot/addons': typeof ApiV1BotAddonsRoute
   '/api/v1/bot/events': typeof ApiV1BotEventsRoute
   '/api/v1/bot/members': typeof ApiV1BotMembersRoute
@@ -456,7 +464,6 @@ export interface FileRoutesById {
   '/_site/_staff': typeof SiteStaffRouteRouteWithChildren
   '/_site/account': typeof SiteAccountRoute
   '/_site/dashboard': typeof SiteDashboardRoute
-  '/_site/developers': typeof SiteDevelopersRoute
   '/_site/faq': typeof SiteFaqRoute
   '/_site/license': typeof SiteLicenseRoute
   '/_site/plugins': typeof SitePluginsRoute
@@ -467,6 +474,7 @@ export interface FileRoutesById {
   '/_site/': typeof SiteIndexRoute
   '/_site/_staff/review': typeof SiteStaffReviewRoute
   '/_site/addons/$id': typeof SiteAddonsIdRoute
+  '/_site/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -475,6 +483,7 @@ export interface FileRoutesById {
   '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
+  '/_site/developers/': typeof SiteDevelopersIndexRoute
   '/api/v1/bot/addons': typeof ApiV1BotAddonsRoute
   '/api/v1/bot/events': typeof ApiV1BotEventsRoute
   '/api/v1/bot/members': typeof ApiV1BotMembersRoute
@@ -513,7 +522,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/account'
     | '/dashboard'
-    | '/developers'
     | '/faq'
     | '/license'
     | '/plugins'
@@ -523,6 +531,7 @@ export interface FileRouteTypes {
     | '/themes'
     | '/review'
     | '/addons/$id'
+    | '/developers/$discordId'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -531,6 +540,7 @@ export interface FileRouteTypes {
     | '/api/v1/sync'
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
+    | '/developers/'
     | '/api/v1/bot/addons'
     | '/api/v1/bot/events'
     | '/api/v1/bot/members'
@@ -567,7 +577,6 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/dashboard'
-    | '/developers'
     | '/faq'
     | '/license'
     | '/plugins'
@@ -577,6 +586,7 @@ export interface FileRouteTypes {
     | '/themes'
     | '/review'
     | '/addons/$id'
+    | '/developers/$discordId'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -585,6 +595,7 @@ export interface FileRouteTypes {
     | '/api/v1/sync'
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
+    | '/developers'
     | '/api/v1/bot/addons'
     | '/api/v1/bot/events'
     | '/api/v1/bot/members'
@@ -622,7 +633,6 @@ export interface FileRouteTypes {
     | '/_site/_staff'
     | '/_site/account'
     | '/_site/dashboard'
-    | '/_site/developers'
     | '/_site/faq'
     | '/_site/license'
     | '/_site/plugins'
@@ -633,6 +643,7 @@ export interface FileRouteTypes {
     | '/_site/'
     | '/_site/_staff/review'
     | '/_site/addons/$id'
+    | '/_site/developers/$discordId'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -641,6 +652,7 @@ export interface FileRouteTypes {
     | '/api/v1/sync'
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
+    | '/_site/developers/'
     | '/api/v1/bot/addons'
     | '/api/v1/bot/events'
     | '/api/v1/bot/members'
@@ -750,13 +762,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteDashboardRouteImport
       parentRoute: typeof SiteRouteRoute
     }
-    '/_site/developers': {
-      id: '/_site/developers'
-      path: '/developers'
-      fullPath: '/developers'
-      preLoaderRoute: typeof SiteDevelopersRouteImport
-      parentRoute: typeof SiteRouteRoute
-    }
     '/_site/faq': {
       id: '/_site/faq'
       path: '/faq'
@@ -818,6 +823,20 @@ declare module '@tanstack/react-router' {
       path: '/addons/$id'
       fullPath: '/addons/$id'
       preLoaderRoute: typeof SiteAddonsIdRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
+    '/_site/developers/': {
+      id: '/_site/developers/'
+      path: '/developers'
+      fullPath: '/developers/'
+      preLoaderRoute: typeof SiteDevelopersIndexRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
+    '/_site/developers/$discordId': {
+      id: '/_site/developers/$discordId'
+      path: '/developers/$discordId'
+      fullPath: '/developers/$discordId'
+      preLoaderRoute: typeof SiteDevelopersDiscordIdRouteImport
       parentRoute: typeof SiteRouteRoute
     }
     '/api/auth/$': {
@@ -1108,7 +1127,6 @@ interface SiteRouteRouteChildren {
   SiteStaffRouteRoute: typeof SiteStaffRouteRouteWithChildren
   SiteAccountRoute: typeof SiteAccountRoute
   SiteDashboardRoute: typeof SiteDashboardRoute
-  SiteDevelopersRoute: typeof SiteDevelopersRoute
   SiteFaqRoute: typeof SiteFaqRoute
   SiteLicenseRoute: typeof SiteLicenseRoute
   SitePluginsRoute: typeof SitePluginsRoute
@@ -1118,13 +1136,14 @@ interface SiteRouteRouteChildren {
   SiteThemesRoute: typeof SiteThemesRoute
   SiteIndexRoute: typeof SiteIndexRoute
   SiteAddonsIdRoute: typeof SiteAddonsIdRoute
+  SiteDevelopersDiscordIdRoute: typeof SiteDevelopersDiscordIdRoute
+  SiteDevelopersIndexRoute: typeof SiteDevelopersIndexRoute
 }
 
 const SiteRouteRouteChildren: SiteRouteRouteChildren = {
   SiteStaffRouteRoute: SiteStaffRouteRouteWithChildren,
   SiteAccountRoute: SiteAccountRoute,
   SiteDashboardRoute: SiteDashboardRoute,
-  SiteDevelopersRoute: SiteDevelopersRoute,
   SiteFaqRoute: SiteFaqRoute,
   SiteLicenseRoute: SiteLicenseRoute,
   SitePluginsRoute: SitePluginsRoute,
@@ -1134,6 +1153,8 @@ const SiteRouteRouteChildren: SiteRouteRouteChildren = {
   SiteThemesRoute: SiteThemesRoute,
   SiteIndexRoute: SiteIndexRoute,
   SiteAddonsIdRoute: SiteAddonsIdRoute,
+  SiteDevelopersDiscordIdRoute: SiteDevelopersDiscordIdRoute,
+  SiteDevelopersIndexRoute: SiteDevelopersIndexRoute,
 }
 
 const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
@@ -1251,12 +1272,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
