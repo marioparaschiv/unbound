@@ -34,14 +34,15 @@ export function graceMs(env: Env): number {
  * @description Inserts a sponsorship or replaces the stored one for the same GitHub id.
  * @param tx The transaction to write in.
  * @param row The whole sponsorship.
+ * @returns Resolves once it is written.
  */
-export function upsertSponsorship(tx: Transaction, row: Sponsorship) {
+export async function upsertSponsorship(tx: Transaction, row: Sponsorship): Promise<void> {
 	const { githubId: _githubId, ...values } = row;
 
-	tx.insert(sponsorship)
+	await tx
+		.insert(sponsorship)
 		.values(row)
-		.onConflictDoUpdate({ target: sponsorship.githubId, set: values })
-		.run();
+		.onConflictDoUpdate({ target: sponsorship.githubId, set: values });
 }
 
 /**
@@ -50,13 +51,15 @@ export function upsertSponsorship(tx: Transaction, row: Sponsorship) {
  * @param userId The user.
  * @returns Whether GitHub is linked and the user's standing.
  */
-export function getUserSponsorship(ctx: AppContext, userId: string): UserSponsorship {
-	const row = ctx.db
+export async function getUserSponsorship(
+	ctx: AppContext,
+	userId: string,
+): Promise<UserSponsorship> {
+	const [row] = await ctx.db
 		.select({ sponsorship })
 		.from(account)
 		.leftJoin(sponsorship, eq(sponsorship.githubId, account.accountId))
-		.where(and(eq(account.userId, userId), eq(account.providerId, 'github')))
-		.get();
+		.where(and(eq(account.userId, userId), eq(account.providerId, 'github')));
 
 	return {
 		githubLinked: Boolean(row),

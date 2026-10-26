@@ -10,7 +10,7 @@ const deleteSyncEndpoint = endpoint(
 	async ({ ctx, request }) => {
 		const { user } = await requireCaller(ctx, request.headers);
 
-		return { deleted: deleteSyncDocument(ctx, user.id) };
+		return { deleted: await deleteSyncDocument(ctx, user.id) };
 	},
 );
 

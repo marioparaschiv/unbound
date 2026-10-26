@@ -30,9 +30,15 @@ export type SponsorOverview = {
  * @param userId The user.
  * @returns The overview.
  */
-export function getSponsorOverview(ctx: AppContext, userId: string): SponsorOverview {
+export async function getSponsorOverview(
+	ctx: AppContext,
+	userId: string,
+): Promise<SponsorOverview> {
 	const login = ctx.env.GITHUB_SPONSORS_LOGIN;
-	const { githubLinked, standing } = getUserSponsorship(ctx, userId);
+	const [{ githubLinked, standing }, claim] = await Promise.all([
+		getUserSponsorship(ctx, userId),
+		findBadgeClaim(ctx, userId),
+	]);
 	const row = standing.kind === 'none' ? undefined : standing.sponsorship;
 	const perks = perkIdSchema.options.map((id) => ({
 		id,
@@ -57,7 +63,7 @@ export function getSponsorOverview(ctx: AppContext, userId: string): SponsorOver
 		standing: standing.kind,
 		graceUntil: standing.kind === 'grace' ? standing.until : null,
 		perks,
-		badge: toBadgeClaim(findBadgeClaim(ctx, userId)),
+		badge: toBadgeClaim(claim),
 	};
 }
 

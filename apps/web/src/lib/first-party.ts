@@ -20,6 +20,7 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { publishVersion } from '~/lib/review';
 import { ApiError } from '~/lib/api/errors';
+import one from '~/db/one';
 
 type ClaimReader = Pick<Transaction, 'select'>;
 
@@ -49,20 +50,19 @@ function requireFirstPartyRepository(ctx: AppContext, caller: Caller): string {
 	return repository;
 }
 
-function checkClaim(
+async function checkClaim(
 	tx: ClaimReader,
 	repository: string,
 	callerId: string,
 	manifest: PublishedManifest,
-): Claim {
-	const existing = tx
+): Promise<Claim> {
+	const [existing] = await tx
 		.select({ repository: addon.repository })
 		.from(addon)
-		.where(eq(addon.id, manifest.id))
-		.get();
+		.where(eq(addon.id, manifest.id));
 
 	if (!existing) {
-		const claimed = tx
+		const [claimed] = await tx
 			.select({ id: submission.id })
 			.from(submission)
 			.where(
@@ -71,8 +71,7 @@ function checkClaim(
 					inArray(submission.status, OPEN_SUBMISSION_STATUSES),
 					ne(submission.authorId, callerId),
 				),
-			)
-			.get();
+			);
 
 		if (claimed) {
 			throw new ApiError(
@@ -91,13 +90,12 @@ function checkClaim(
 		);
 	}
 
-	const live = tx
+	const [live] = await tx
 		.select({ sha256: addonVersion.sha256 })
 		.from(addonVersion)
 		.where(
 			and(eq(addonVersion.addonId, manifest.id), eq(addonVersion.version, manifest.version)),
-		)
-		.get();
+		);
 
 	return live ? { kind: 'unchanged', sha256: live.sha256 } : { kind: 'update' };
 }
@@ -109,19 +107,19 @@ function commitApproved(
 	repository: string,
 	source: AddonSource,
 	now: Date,
-): Claim {
+): Promise<Claim> {
 	const { manifest, pin } = source;
 
-	return ctx.db.transaction(
-		(tx) => {
-			const claim = checkClaim(tx, repository, caller.user.id, manifest);
+	return ctx.db.transaction(async (tx) => {
+		const claim = await checkClaim(tx, repository, caller.user.id, manifest);
 
-			if (claim.kind === 'unchanged') {
-				return claim;
-			}
+		if (claim.kind === 'unchanged') {
+			return claim;
+		}
 
-			const id = Bun.randomUUIDv7();
-			const row = tx
+		const id = Bun.randomUUIDv7();
+		const row = one(
+			await tx
 				.insert(submission)
 				.values({
 					id,
@@ -142,17 +140,15 @@ function commitApproved(
 					reviewedAt: now,
 					reviewNote: `Published by CI from build commit ${pin.commitSha} (${pin.ref}).`,
 				})
-				.returning()
-				.get();
+				.returning(),
+		);
 
-			insertSubmissionSource(tx, id, source);
-			recordReviewDecision(tx, row);
-			publishVersion(tx, row, source.sha256, now);
+		await insertSubmissionSource(tx, id, source);
+		await recordReviewDecision(tx, row);
+		await publishVersion(tx, row, source.sha256, now);
 
-			return claim;
-		},
-		{ behavior: 'immediate' },
-	);
+		return claim;
+	});
 }
 
 /**
@@ -192,7 +188,9 @@ export async function publishFirstParty(
 	}
 
 	const published = { addonId: manifest.id, version: manifest.version };
-	const claim = ctx.db.transaction((tx) => checkClaim(tx, repository, caller.user.id, manifest));
+	const claim = await ctx.db.transaction((tx) =>
+		checkClaim(tx, repository, caller.user.id, manifest),
+	);
 
 	if (claim.kind === 'unchanged') {
 		return { status: 'unchanged', ...published, sha256: claim.sha256 };
@@ -200,7 +198,7 @@ export async function publishFirstParty(
 
 	await writeArtifact(ctx, { ...published, manifest }, source.bundle);
 
-	const committed = commitApproved(ctx, caller, repository, source, ctx.now());
+	const committed = await commitApproved(ctx, caller, repository, source, ctx.now());
 
 	if (committed.kind === 'unchanged') {
 		return { status: 'unchanged', ...published, sha256: committed.sha256 };
@@ -222,7 +220,7 @@ export async function listFirstPartyAddons(
 ): Promise<ListFirstPartyAddonsResponse> {
 	const repository = requireFirstPartyRepository(ctx, caller);
 	const rows = await ctx.db.query.addon.findMany({
-		where: { RAW: (table) => sql`lower(${table.repository}) = lower(${repository})` },
+		where: { RAW: (table) => sql`lower(${table.repository}) = lower(${repository}::text)` },
 		columns: { id: true },
 		with: {
 			versions: {

@@ -46,13 +46,12 @@ export function toMaintainers(rows: MaintainerRow[]): Maintainer[] {
 	);
 }
 
-function selectMembers(tx: Transaction, addonId: string): MaintainerEntry[] {
+function selectMembers(tx: Transaction, addonId: string): Promise<MaintainerEntry[]> {
 	return tx
 		.select({ userId: addonMaintainer.userId, role: addonMaintainer.role })
 		.from(addonMaintainer)
 		.where(eq(addonMaintainer.addonId, addonId))
-		.orderBy(desc(addonMaintainer.role), asc(addonMaintainer.createdAt))
-		.all();
+		.orderBy(desc(addonMaintainer.role), asc(addonMaintainer.createdAt));
 }
 
 /**
@@ -63,13 +62,14 @@ function selectMembers(tx: Transaction, addonId: string): MaintainerEntry[] {
  * @param addonId The addon id.
  * @param next Every member after the change, each user once.
  * @param meta Who made the change, when and why.
+ * @returns Resolves once the members are replaced.
  */
-export function replaceMaintainers(
+export async function replaceMaintainers(
 	tx: Transaction,
 	addonId: string,
 	next: MaintainerEntry[],
 	meta: ActionMeta,
-): void {
+): Promise<void> {
 	if (!next.some((member) => member.role === 'owner')) {
 		throw new ApiError(
 			'last_owner',
@@ -77,7 +77,7 @@ export function replaceMaintainers(
 		);
 	}
 
-	const before = selectMembers(tx, addonId);
+	const before = await selectMembers(tx, addonId);
 	const roles = new Map(before.map((member) => [member.userId, member.role]));
 	const kept = new Set(next.map((member) => member.userId));
 	const removed = before
@@ -88,28 +88,28 @@ export function replaceMaintainers(
 	if (removed.length === 0 && changed.length === 0) return;
 
 	if (removed.length > 0) {
-		tx.delete(addonMaintainer)
+		await tx
+			.delete(addonMaintainer)
 			.where(
 				and(eq(addonMaintainer.addonId, addonId), inArray(addonMaintainer.userId, removed)),
-			)
-			.run();
+			);
 	}
 
 	for (const member of changed) {
-		tx.insert(addonMaintainer)
+		await tx
+			.insert(addonMaintainer)
 			.values({ addonId, ...member, createdAt: meta.at })
 			.onConflictDoUpdate({
 				target: [addonMaintainer.addonId, addonMaintainer.userId],
 				set: { role: member.role },
-			})
-			.run();
+			});
 	}
 
-	appendEvent(tx, {
+	await appendEvent(tx, {
 		...meta,
 		subject: { type: 'addon', id: addonId },
 		kind: 'addon.maintainers_changed',
-		data: { before, after: selectMembers(tx, addonId) },
+		data: { before, after: await selectMembers(tx, addonId) },
 	});
 }
 
@@ -185,17 +185,14 @@ export async function addMaintainer(
 	await requireOwner(ctx, caller, addonId);
 	await requireUser(ctx, userId);
 
-	ctx.db.transaction(
-		(tx) => {
-			const members = selectMembers(tx, addonId);
-			const next: MaintainerEntry[] = members.some((member) => member.userId === userId)
-				? members
-				: [...members, { userId, role: 'maintainer' }];
+	await ctx.db.transaction(async (tx) => {
+		const members = await selectMembers(tx, addonId);
+		const next: MaintainerEntry[] = members.some((member) => member.userId === userId)
+			? members
+			: [...members, { userId, role: 'maintainer' }];
 
-			replaceMaintainers(tx, addonId, next, { actorId: caller.user.id, at: ctx.now() });
-		},
-		{ behavior: 'immediate' },
-	);
+		await replaceMaintainers(tx, addonId, next, { actorId: caller.user.id, at: ctx.now() });
+	});
 
 	return listMaintainers(ctx, addonId);
 }
@@ -217,23 +214,20 @@ export async function removeMaintainer(
 ): Promise<MaintainersResponse> {
 	await requireOwner(ctx, caller, addonId);
 
-	ctx.db.transaction(
-		(tx) => {
-			const members = selectMembers(tx, addonId);
+	await ctx.db.transaction(async (tx) => {
+		const members = await selectMembers(tx, addonId);
 
-			if (!members.some((member) => member.userId === userId)) {
-				throw new ApiError('not_found', `${userId} is not a maintainer of ${addonId}.`);
-			}
+		if (!members.some((member) => member.userId === userId)) {
+			throw new ApiError('not_found', `${userId} is not a maintainer of ${addonId}.`);
+		}
 
-			replaceMaintainers(
-				tx,
-				addonId,
-				members.filter((member) => member.userId !== userId),
-				{ actorId: caller.user.id, at: ctx.now() },
-			);
-		},
-		{ behavior: 'immediate' },
-	);
+		await replaceMaintainers(
+			tx,
+			addonId,
+			members.filter((member) => member.userId !== userId),
+			{ actorId: caller.user.id, at: ctx.now() },
+		);
+	});
 
 	return listMaintainers(ctx, addonId);
 }
@@ -258,29 +252,27 @@ export async function transferAddon(
 	await requireAddon(ctx, addonId);
 	await requireUser(ctx, request.userId);
 
-	ctx.db.transaction(
-		(tx) => {
-			const others = selectMembers(tx, addonId).flatMap((member): MaintainerEntry[] => {
-				if (member.userId === request.userId) {
-					return [];
-				}
+	await ctx.db.transaction(async (tx) => {
+		const members = await selectMembers(tx, addonId);
+		const others = members.flatMap((member): MaintainerEntry[] => {
+			if (member.userId === request.userId) {
+				return [];
+			}
 
-				if (member.role !== 'owner') {
-					return [member];
-				}
+			if (member.role !== 'owner') {
+				return [member];
+			}
 
-				return request.keepPreviousOwner ? [{ ...member, role: 'maintainer' }] : [];
-			});
+			return request.keepPreviousOwner ? [{ ...member, role: 'maintainer' }] : [];
+		});
 
-			replaceMaintainers(
-				tx,
-				addonId,
-				[{ userId: request.userId, role: 'owner' }, ...others],
-				{ actorId: caller.user.id, at: ctx.now() },
-			);
-		},
-		{ behavior: 'immediate' },
-	);
+		await replaceMaintainers(
+			tx,
+			addonId,
+			[{ userId: request.userId, role: 'owner' }, ...others],
+			{ actorId: caller.user.id, at: ctx.now() },
+		);
+	});
 
 	return listMaintainers(ctx, addonId);
 }

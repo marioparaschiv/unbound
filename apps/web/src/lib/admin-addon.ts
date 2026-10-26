@@ -152,16 +152,15 @@ function diffEdit(current: EditableState, edit: EditAddonRequest): EditDiff {
 	};
 }
 
-function selectMembers(tx: Transaction, addonId: string): MaintainerEntry[] {
+function selectMembers(tx: Transaction, addonId: string): Promise<MaintainerEntry[]> {
 	return tx
 		.select({ userId: addonMaintainer.userId, role: addonMaintainer.role })
 		.from(addonMaintainer)
 		.where(eq(addonMaintainer.addonId, addonId))
-		.orderBy(desc(addonMaintainer.role), asc(addonMaintainer.createdAt))
-		.all();
+		.orderBy(desc(addonMaintainer.role), asc(addonMaintainer.createdAt));
 }
 
-function writeFields(tx: Transaction, addonId: string, edit: EditAddonRequest) {
+async function writeFields(tx: Transaction, addonId: string, edit: EditAddonRequest) {
 	const { name, description, type, repository } = edit;
 	let pinnedFields = 0;
 
@@ -171,7 +170,8 @@ function writeFields(tx: Transaction, addonId: string, edit: EditAddonRequest) {
 		}
 	}
 
-	tx.update(addon)
+	await tx
+		.update(addon)
 		.set({
 			pinnedFields,
 			repository,
@@ -179,14 +179,13 @@ function writeFields(tx: Transaction, addonId: string, edit: EditAddonRequest) {
 			description: description ?? undefined,
 			type: type ?? undefined,
 		})
-		.where(eq(addon.id, addonId))
-		.run();
-	refreshAddonSummary(tx, addonId);
+		.where(eq(addon.id, addonId));
+	await refreshAddonSummary(tx, addonId);
 }
 
-function requireUsers(tx: Transaction, members: MaintainerEntry[]) {
+async function requireUsers(tx: Transaction, members: MaintainerEntry[]) {
 	const ids = members.map((member) => member.userId);
-	const found = tx.select({ id: user.id }).from(user).where(inArray(user.id, ids)).all();
+	const found = await tx.select({ id: user.id }).from(user).where(inArray(user.id, ids));
 	const known = new Set(found.map((entry) => entry.id));
 	const missing = ids.find((id) => !known.has(id));
 
@@ -322,63 +321,60 @@ export async function editAddon(
 ): Promise<AdminAddonView> {
 	requirePermission(caller, { addon: ['delist'] });
 
-	ctx.db.transaction(
-		(tx) => {
-			const row = tx.select().from(addon).where(eq(addon.id, id)).get();
+	await ctx.db.transaction(async (tx) => {
+		const [row] = await tx.select().from(addon).where(eq(addon.id, id));
 
-			if (!row) {
-				throw new ApiError('not_found', `Addon ${id} does not exist.`);
-			}
+		if (!row) {
+			throw new ApiError('not_found', `Addon ${id} does not exist.`);
+		}
 
-			const current = toEditableState(row, selectMembers(tx, id));
+		const current = toEditableState(row, await selectMembers(tx, id));
 
-			if (revisionOf(current) !== edit.revision) {
-				throw new ApiError(
-					'edit_conflict',
-					`${id} changed since you opened it. Reload to see the changes.`,
-				);
-			}
+		if (revisionOf(current) !== edit.revision) {
+			throw new ApiError(
+				'edit_conflict',
+				`${id} changed since you opened it. Reload to see the changes.`,
+			);
+		}
 
-			const diff = diffEdit(current, edit);
-			const meta: ActionMeta = {
-				actorId: caller.user.id,
-				at: ctx.now(),
-				reason: edit.reason,
-			};
+		const diff = diffEdit(current, edit);
+		const meta: ActionMeta = {
+			actorId: caller.user.id,
+			at: ctx.now(),
+			reason: edit.reason,
+		};
 
-			if (diff.fields.length > 0) {
-				requirePermission(caller, GROUP_PERMISSIONS.fields);
-			}
+		if (diff.fields.length > 0) {
+			requirePermission(caller, GROUP_PERMISSIONS.fields);
+		}
 
-			if (diff.delisted) {
-				requirePermission(caller, GROUP_PERMISSIONS.delisted);
-			}
+		if (diff.delisted) {
+			requirePermission(caller, GROUP_PERMISSIONS.delisted);
+		}
 
-			if (diff.maintainers) {
-				requirePermission(caller, GROUP_PERMISSIONS.maintainers);
-				requireUsers(tx, edit.maintainers);
-			}
+		if (diff.maintainers) {
+			requirePermission(caller, GROUP_PERMISSIONS.maintainers);
+			await requireUsers(tx, edit.maintainers);
+		}
 
-			if (diff.fields.length > 0) {
-				writeFields(tx, id, edit);
-				appendEvent(tx, {
-					...meta,
-					subject: { type: 'addon', id },
-					kind: 'addon.edited',
-					data: { changes: diff.fields },
-				});
-			}
+		if (diff.fields.length > 0) {
+			await writeFields(tx, id, edit);
+			await appendEvent(tx, {
+				...meta,
+				subject: { type: 'addon', id },
+				kind: 'addon.edited',
+				data: { changes: diff.fields },
+			});
+		}
 
-			if (diff.delisted) {
-				writeDelisted(tx, row, edit.delisted, meta);
-			}
+		if (diff.delisted) {
+			await writeDelisted(tx, row, edit.delisted, meta);
+		}
 
-			if (diff.maintainers) {
-				replaceMaintainers(tx, id, edit.maintainers, meta);
-			}
-		},
-		{ behavior: 'immediate' },
-	);
+		if (diff.maintainers) {
+			await replaceMaintainers(tx, id, edit.maintainers, meta);
+		}
+	});
 
 	const view = await getAdminAddon(ctx, caller, id);
 

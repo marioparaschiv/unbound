@@ -1,7 +1,8 @@
 import type { PageDirection } from '@unbound-app/contracts/admin';
 import type { SortOrder } from '@unbound-app/contracts/addons';
 import type { SQL, SQLWrapper } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
+import { PgTimestamp } from 'drizzle-orm/pg-core';
+import { is, sql } from 'drizzle-orm';
 import type { z } from 'zod';
 
 import { ApiError } from '~/lib/api/errors';
@@ -80,8 +81,11 @@ export function afterKey(
 	dir: PageDirection = 'next',
 ): SQL {
 	const operator = scanOrder(order, dir) === 'asc' ? sql`>` : sql`<`;
+	const [column, idColumn] = columns;
+	// Cursors carry a timestamp as epoch milliseconds; precision 3 makes the Date exact.
+	const value = is(column, PgTimestamp) ? sql.param(new Date(key[0]), column) : key[0];
 
-	return sql`(${columns[0]}, ${columns[1]}) ${operator} (${key[0]}, ${key[1]})`;
+	return sql`(${column}, ${idColumn}) ${operator} (${value}, ${key[1]})`;
 }
 
 /**

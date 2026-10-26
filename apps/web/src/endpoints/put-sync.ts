@@ -12,7 +12,7 @@ const putSyncEndpoint = endpoint(
 	async ({ ctx, request, body }) => {
 		const { user } = await requireCaller(ctx, request.headers);
 
-		consumeRateLimit(ctx, {
+		await consumeRateLimit(ctx, {
 			key: `api:sync:${user.id}`,
 			windowSeconds: ctx.env.SYNC_RATE_LIMIT_WINDOW_SECONDS,
 			max: ctx.env.SYNC_RATE_LIMIT_MAX,

@@ -62,12 +62,17 @@ export function toBadgeClaim(row: ClaimRow | undefined): BadgeClaim | null {
  * @param userId The user.
  * @returns The claim row, or `undefined`.
  */
-export function findBadgeClaim(ctx: AppContext, userId: string): ClaimRow | undefined {
-	return ctx.db.select().from(perkClaim).where(badgeClaimWhere(userId)).get();
+export async function findBadgeClaim(
+	ctx: AppContext,
+	userId: string,
+): Promise<ClaimRow | undefined> {
+	const [row] = await ctx.db.select().from(perkClaim).where(badgeClaimWhere(userId));
+
+	return row;
 }
 
-function claimResponse(ctx: AppContext, userId: string): BadgeClaimResponse {
-	return { claim: toBadgeClaim(findBadgeClaim(ctx, userId)) };
+async function claimResponse(ctx: AppContext, userId: string): Promise<BadgeClaimResponse> {
+	return { claim: toBadgeClaim(await findBadgeClaim(ctx, userId)) };
 }
 
 /**
@@ -83,7 +88,7 @@ export async function claimBadge(
 	userId: string,
 	badge: Badge,
 ): Promise<BadgeClaimResponse> {
-	const { standing } = getUserSponsorship(ctx, userId);
+	const { standing } = await getUserSponsorship(ctx, userId);
 
 	if (!canClaimPerk(PERK_ID, standing)) {
 		throw new ApiError(
@@ -92,7 +97,7 @@ export async function claimBadge(
 		);
 	}
 
-	if (findBadgeClaim(ctx, userId)?.revokedAt) {
+	if ((await findBadgeClaim(ctx, userId))?.revokedAt) {
 		throw new ApiError('perk_revoked', 'Staff removed your badge; it cannot be set again.');
 	}
 

@@ -13,7 +13,7 @@ async function hydrateReleases(
 	ctx: AppContext,
 	changes: FeedChange[],
 ): Promise<Map<string, BotRelease>> {
-	const rows = ctx.db
+	const rows = await ctx.db
 		.select({ key: RELEASE_KEY, release: loaderRelease })
 		.from(loaderRelease)
 		.where(
@@ -21,8 +21,7 @@ async function hydrateReleases(
 				RELEASE_KEY,
 				changes.map((change) => change.key),
 			),
-		)
-		.all();
+		);
 
 	return new Map(rows.map((row) => [row.key, toLoaderRelease(row.release)]));
 }

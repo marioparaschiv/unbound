@@ -1,6 +1,6 @@
 import { and, eq, exists, inArray, isNull, sql } from 'drizzle-orm';
 import type { BotMember } from '@unbound-app/contracts/bot';
-import { alias } from 'drizzle-orm/sqlite-core';
+import { alias } from 'drizzle-orm/pg-core';
 
 import { account, addon, addonMaintainer, addonVersion, sponsorship, user } from '~/db/schema';
 import { isSponsoring, standingOf } from '~/lib/sponsors/standing';
@@ -32,7 +32,7 @@ async function hydrateMembers(
 	ctx: AppContext,
 	changes: FeedChange[],
 ): Promise<Map<string, BotMember>> {
-	const rows = ctx.db
+	const rows = await ctx.db
 		.select({
 			userId: user.id,
 			discordId: discord.accountId,
@@ -49,8 +49,7 @@ async function hydrateMembers(
 				user.id,
 				changes.map((change) => change.key),
 			),
-		)
-		.all();
+		);
 
 	const found = new Map(rows.map((row) => [row.userId, row]));
 	const now = ctx.now();

@@ -27,6 +27,7 @@ import { requirePermission } from '~/lib/api/caller';
 import { likeContains } from '~/lib/like-contains';
 import { addon, addonVersion } from '~/db/schema';
 import type { Transaction } from '~/db/database';
+import one from '~/db/one';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { CursorKey } from '~/lib/keyset';
@@ -131,7 +132,7 @@ export function toAddonSummary(manifest: PublishedManifest, publishedAt: Date): 
 }
 
 function unlessPinned(field: PinnableField, column: PinnableColumn, value: string) {
-	return sql`iif(${addon.pinnedFields} & ${PINNED_FIELDS[field]}, ${column}, ${value})`;
+	return sql`case when (${addon.pinnedFields} & ${PINNED_FIELDS[field]}::integer) <> 0 then ${column} else ${value} end`;
 }
 
 /**
@@ -139,15 +140,15 @@ function unlessPinned(field: PinnableField, column: PinnableColumn, value: strin
  * fields staff pinned.
  * @param tx The approval, rollback or edit transaction.
  * @param addonId The addon id.
+ * @returns Resolves once the summary is copied.
  */
-export function refreshAddonSummary(tx: Transaction, addonId: string) {
-	const latest = tx
+export async function refreshAddonSummary(tx: Transaction, addonId: string): Promise<void> {
+	const [latest] = await tx
 		.select({ manifest: addonVersion.manifest, publishedAt: addonVersion.publishedAt })
 		.from(addonVersion)
 		.where(and(eq(addonVersion.addonId, addonId), isNull(addonVersion.withdrawnBy)))
 		.orderBy(desc(addonVersion.versionKey))
-		.limit(1)
-		.get();
+		.limit(1);
 
 	if (!latest) {
 		throw new Error(`Addon ${addonId} has no live version to summarize.`);
@@ -155,15 +156,15 @@ export function refreshAddonSummary(tx: Transaction, addonId: string) {
 
 	const summary = toAddonSummary(latest.manifest, latest.publishedAt);
 
-	tx.update(addon)
+	await tx
+		.update(addon)
 		.set({
 			type: unlessPinned('type', addon.type, summary.type),
 			name: unlessPinned('name', addon.name, summary.name),
 			description: unlessPinned('description', addon.description, summary.description),
 			updatedAt: summary.updatedAt,
 		})
-		.where(eq(addon.id, addonId))
-		.run();
+		.where(eq(addon.id, addonId));
 }
 
 /**
@@ -175,51 +176,50 @@ export function refreshAddonSummary(tx: Transaction, addonId: string) {
  * @param meta Who made the change, when and why.
  * @returns The addon row after the change.
  */
-export function writeDelisted(
+export async function writeDelisted(
 	tx: Transaction,
 	current: AddonRow,
 	delisted: boolean,
 	meta: ActionMeta,
-): AddonRow {
+): Promise<AddonRow> {
 	if ((current.delistedAt !== null) === delisted) {
 		return current;
 	}
 
-	appendEvent(tx, {
+	await appendEvent(tx, {
 		...meta,
 		subject: { type: 'addon', id: current.id },
 		kind: delisted ? 'addon.delisted' : 'addon.relisted',
 		data: {},
 	});
 
-	return tx
-		.update(addon)
-		.set({ delistedAt: delisted ? meta.at : null })
-		.where(eq(addon.id, current.id))
-		.returning()
-		.get();
+	return one(
+		await tx
+			.update(addon)
+			.set({ delistedAt: delisted ? meta.at : null })
+			.where(eq(addon.id, current.id))
+			.returning(),
+	);
 }
 
-function setDelisted(
+async function setDelisted(
 	ctx: AppContext,
 	caller: Caller,
 	addonId: string,
 	delisted: boolean,
-): AddonResponse {
+): Promise<AddonResponse> {
 	requirePermission(caller, { addon: ['delist'] });
 
-	const row = ctx.db.transaction(
-		(tx) => {
-			const current = tx.select().from(addon).where(eq(addon.id, addonId)).get();
+	const at = ctx.now();
+	const row = await ctx.db.transaction(async (tx) => {
+		const [current] = await tx.select().from(addon).where(eq(addon.id, addonId));
 
-			if (!current) {
-				throw new ApiError('not_found', `Addon ${addonId} does not exist.`);
-			}
+		if (!current) {
+			throw new ApiError('not_found', `Addon ${addonId} does not exist.`);
+		}
 
-			return writeDelisted(tx, current, delisted, { actorId: caller.user.id, at: ctx.now() });
-		},
-		{ behavior: 'immediate' },
-	);
+		return writeDelisted(tx, current, delisted, { actorId: caller.user.id, at });
+	});
 
 	return { addon: toAddon(row) };
 }
@@ -233,7 +233,11 @@ function setDelisted(
  * @param addonId The addon id.
  * @returns The addon.
  */
-export function delistAddon(ctx: AppContext, caller: Caller, addonId: string): AddonResponse {
+export function delistAddon(
+	ctx: AppContext,
+	caller: Caller,
+	addonId: string,
+): Promise<AddonResponse> {
 	return setDelisted(ctx, caller, addonId, true);
 }
 
@@ -245,7 +249,11 @@ export function delistAddon(ctx: AppContext, caller: Caller, addonId: string): A
  * @param addonId The addon id.
  * @returns The addon.
  */
-export function relistAddon(ctx: AppContext, caller: Caller, addonId: string): AddonResponse {
+export function relistAddon(
+	ctx: AppContext,
+	caller: Caller,
+	addonId: string,
+): Promise<AddonResponse> {
 	return setDelisted(ctx, caller, addonId, false);
 }
 

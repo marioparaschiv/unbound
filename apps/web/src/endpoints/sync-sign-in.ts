@@ -12,7 +12,7 @@ const syncSignInEndpoint = endpoint(
 		// Without a trustworthy client IP, requests share one bucket rather than going unlimited.
 		const ip = getIP(request, ctx.auth.options) ?? 'unknown';
 
-		consumeRateLimit(ctx, {
+		await consumeRateLimit(ctx, {
 			key: `api:sync-sign-in:${ip}`,
 			windowSeconds: ctx.env.SYNC_SIGN_IN_RATE_LIMIT_WINDOW_SECONDS,
 			max: ctx.env.SYNC_SIGN_IN_RATE_LIMIT_MAX,

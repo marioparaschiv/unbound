@@ -22,8 +22,8 @@ function toState(row: SyncRow): SyncState {
  * @param userId The owner.
  * @returns The stored state, or revision `0` with an empty document when nothing is stored.
  */
-export function getSyncState(ctx: AppContext, userId: string): SyncState {
-	const row = ctx.db.select().from(syncDocument).where(eq(syncDocument.userId, userId)).get();
+export async function getSyncState(ctx: AppContext, userId: string): Promise<SyncState> {
+	const [row] = await ctx.db.select().from(syncDocument).where(eq(syncDocument.userId, userId));
 
 	if (!row) {
 		return { revision: 0, updatedAt: null, document: emptySyncDocument() };
@@ -40,32 +40,30 @@ export function getSyncState(ctx: AppContext, userId: string): SyncState {
  * @param document The stripped document.
  * @returns The new state. Throws `sync_conflict` when another save landed first.
  */
-export function saveSyncDocument(
+export async function saveSyncDocument(
 	ctx: AppContext,
 	userId: string,
 	revision: number,
 	document: SyncDocument,
-): SyncState {
+): Promise<SyncState> {
 	const updatedAt = ctx.now();
 	const values = { revision: revision + 1, document, updatedAt };
 
 	// Both statements only write when the stored revision still matches, so a lost race writes nothing.
-	const row =
+	const [row] =
 		revision === 0
-			? ctx.db
+			? await ctx.db
 					.insert(syncDocument)
 					.values({ userId, ...values })
 					.onConflictDoNothing()
 					.returning()
-					.get()
-			: ctx.db
+			: await ctx.db
 					.update(syncDocument)
 					.set(values)
 					.where(
 						and(eq(syncDocument.userId, userId), eq(syncDocument.revision, revision)),
 					)
-					.returning()
-					.get();
+					.returning();
 
 	if (!row) {
 		throw new ApiError('sync_conflict', 'The Cloud Sync document changed. Sync again.');
@@ -80,12 +78,11 @@ export function saveSyncDocument(
  * @param userId The owner.
  * @returns Whether there was a document to delete.
  */
-export function deleteSyncDocument(ctx: AppContext, userId: string): boolean {
-	const deleted = ctx.db
+export async function deleteSyncDocument(ctx: AppContext, userId: string): Promise<boolean> {
+	const deleted = await ctx.db
 		.delete(syncDocument)
 		.where(eq(syncDocument.userId, userId))
-		.returning({ userId: syncDocument.userId })
-		.all();
+		.returning({ userId: syncDocument.userId });
 
 	return deleted.length > 0;
 }

@@ -94,7 +94,7 @@ export async function readChangeFeed<T>(
 	const { after, limit = BOT_FEED_DEFAULT_LIMIT } = request;
 	const position = after ? decodeCursor(after, CHANGE_CURSOR) : undefined;
 
-	const rows = ctx.db
+	const rows = await ctx.db
 		.select({
 			key: botFeedChange.key,
 			seq: botFeedChange.seq,
@@ -110,8 +110,7 @@ export async function readChangeFeed<T>(
 			),
 		)
 		.orderBy(asc(botFeedChange.seq), asc(botFeedChange.key))
-		.limit(limit + 1)
-		.all();
+		.limit(limit + 1);
 
 	const page = toRowPage(rows, limit, after, (row) => [row.seq, row.key]);
 	const items = page.rows.length ? await feed.hydrate(ctx, page.rows) : new Map<string, T>();

@@ -490,7 +490,7 @@ export async function getGitHubToken(ctx: AppContext, userId: string): Promise<s
  * @returns A client for that token; `github_not_linked` when none is linked.
  */
 export async function connectGitHub(ctx: AppContext, userId: string): Promise<GitHubClient> {
-	consumeRateLimit(ctx, {
+	await consumeRateLimit(ctx, {
 		key: `api:github:${userId}`,
 		windowSeconds: ctx.env.GITHUB_RATE_LIMIT_WINDOW_SECONDS,
 		max: ctx.env.GITHUB_RATE_LIMIT_MAX,

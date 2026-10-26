@@ -14,6 +14,7 @@ import { z } from 'zod';
 
 import { moderationEvent, staffNote, submission, user } from '~/db/schema';
 import type { Database, Transaction } from '~/db/database';
+import one from '~/db/one';
 import type { SubmissionRow } from '~/lib/submissions';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
@@ -98,22 +99,24 @@ const READ_PERMISSIONS: Record<SubjectType, Permissions> = {
  * @param entry The subject, actor, time, reason, kind and payload.
  * @returns The event id.
  */
-export function appendEvent(tx: Transaction, entry: EventEntry): number {
+export async function appendEvent(tx: Transaction, entry: EventEntry): Promise<number> {
 	const { subject, actorId, at, reason = null, kind, data } = entry;
 
-	const { id } = tx
-		.insert(moderationEvent)
-		.values({
-			subjectType: subject.type,
-			subjectId: subject.id,
-			actorId,
-			kind,
-			data,
-			reason,
-			createdAt: at,
-		})
-		.returning({ id: moderationEvent.id })
-		.get();
+	// The id defaults to `next_ordered_id`, drawn in commit order; see the baseline migration.
+	const { id } = one(
+		await tx
+			.insert(moderationEvent)
+			.values({
+				subjectType: subject.type,
+				subjectId: subject.id,
+				actorId,
+				kind,
+				data,
+				reason,
+				createdAt: at,
+			})
+			.returning({ id: moderationEvent.id }),
+	);
 
 	return id;
 }
@@ -122,15 +125,19 @@ export function appendEvent(tx: Transaction, entry: EventEntry): number {
  * @description Records a review decision, with its reviewer, note and time, as `review.decided`.
  * @param tx The review's transaction.
  * @param reviewed The submission as the decision left it.
+ * @returns Resolves once the event is recorded.
  */
-export function recordReviewDecision(tx: Transaction, reviewed: SubmissionRow): void {
+export async function recordReviewDecision(
+	tx: Transaction,
+	reviewed: SubmissionRow,
+): Promise<void> {
 	const { reviewDecision, reviewedAt } = reviewed;
 
 	if (!reviewDecision || !reviewedAt) {
 		throw new Error(`Submission ${reviewed.id} has no review decision to record.`);
 	}
 
-	appendEvent(tx, {
+	await appendEvent(tx, {
 		subject: { type: 'addon', id: reviewed.addonId },
 		actorId: reviewed.reviewerId,
 		at: reviewedAt,
@@ -277,8 +284,9 @@ function isAuthAdminPath(path: string): path is AuthAdminPath {
  * to other endpoints, and calls that failed, record nothing.
  * @param db The database.
  * @param action The endpoint call.
+ * @returns Resolves once the event, if any, is recorded.
  */
-export function recordAuthAdminAction(db: Database, action: AuthAdminAction): void {
+export async function recordAuthAdminAction(db: Database, action: AuthAdminAction): Promise<void> {
 	const { path, actorId, at, body, returned } = action;
 
 	if (!isAuthAdminPath(path)) return;
@@ -290,9 +298,9 @@ export function recordAuthAdminAction(db: Database, action: AuthAdminAction): vo
 	const target = parsed.data.user;
 	const event = AUTH_ADMIN_EVENTS[path](target, authBodySchema.parse(body));
 
-	db.transaction((tx) => {
-		appendEvent(tx, { subject: { type: 'user', id: target.id }, actorId, at, ...event });
-	});
+	await db.transaction((tx) =>
+		appendEvent(tx, { subject: { type: 'user', id: target.id }, actorId, at, ...event }),
+	);
 }
 
 /**
@@ -301,10 +309,15 @@ export function recordAuthAdminAction(db: Database, action: AuthAdminAction): vo
  * @param db The database.
  * @param userId The user to delete.
  * @param meta Who deleted them, and when.
+ * @returns Resolves once the user is deleted.
  */
-export function deleteUserWithRecord(db: Database, userId: string, meta: ActionMeta): void {
-	db.transaction((tx) => {
-		const submissions = tx
+export async function deleteUserWithRecord(
+	db: Database,
+	userId: string,
+	meta: ActionMeta,
+): Promise<void> {
+	await db.transaction(async (tx) => {
+		const [submissions] = await tx
 			.select({ total: count() })
 			.from(submission)
 			.where(
@@ -312,16 +325,14 @@ export function deleteUserWithRecord(db: Database, userId: string, meta: ActionM
 					eq(submission.authorId, userId),
 					inArray(submission.status, openSubmissionStatusSchema.options),
 				),
-			)
-			.get();
+			);
 
-		const notes = tx
+		const [notes] = await tx
 			.select({ total: count() })
 			.from(staffNote)
-			.where(eq(staffNote.userId, userId))
-			.get();
+			.where(eq(staffNote.userId, userId));
 
-		appendEvent(tx, {
+		await appendEvent(tx, {
 			subject: { type: 'user', id: userId },
 			...meta,
 			kind: 'user.deleted',
@@ -331,7 +342,7 @@ export function deleteUserWithRecord(db: Database, userId: string, meta: ActionM
 			},
 		});
 
-		tx.delete(user).where(eq(user.id, userId)).run();
+		await tx.delete(user).where(eq(user.id, userId));
 	});
 }
 

@@ -1,12 +1,17 @@
 import type { SQL, SQLWrapper } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 
-const SEARCH_TABLES = {
-	user: sql.raw('`user_search`'),
-	addon: sql.raw('`addon_search`'),
+import { addon, addonSearchText, user, userSearchText } from '~/db/schema';
+
+// FTS5's trigram index never matched fewer characters; neither does this.
+const MIN_QUERY_CHARACTERS = 3;
+
+const SEARCH_SUBJECTS = {
+	user: { id: user.id, table: user, text: userSearchText },
+	addon: { id: addon.id, table: addon, text: addonSearchText },
 } as const;
 
-export type SearchSubject = keyof typeof SEARCH_TABLES;
+export type SearchSubject = keyof typeof SEARCH_SUBJECTS;
 
 /**
  * @description Matches the rows whose searchable text (a user's id, name and email, an addon's id and
@@ -17,11 +22,15 @@ export type SearchSubject = keyof typeof SEARCH_TABLES;
  * @returns The `id in (…)` condition.
  */
 export function matchesSearch(subject: SearchSubject, id: SQLWrapper, q: string): SQL {
-	const table = SEARCH_TABLES[subject];
-	// One quoted phrase, so FTS5 query syntax in `q` is matched as plain text.
-	const phrase = `"${q.replaceAll('"', '""')}"`;
+	if ([...q].length < MIN_QUERY_CHARACTERS) {
+		return sql`false`;
+	}
 
-	return sql`${id} in (select \`id\` from ${table} where ${table} match ${phrase})`;
+	const { id: searchedId, table, text } = SEARCH_SUBJECTS[subject];
+	// The LIKE wildcards in `q` match literally.
+	const pattern = `%${q.replaceAll(/[\\%_]/g, (match) => `\\${match}`)}%`;
+
+	return sql`${id} in (select ${searchedId} from ${table} where ${text} like lower(${pattern}::text collate pg_c_utf8) escape '\\')`;
 }
 
 export default { matchesSearch };

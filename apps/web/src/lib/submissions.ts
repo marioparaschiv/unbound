@@ -17,6 +17,7 @@ import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Transaction } from '~/db/database';
+import one from '~/db/one';
 import { getSnowflakeDate } from '~/lib/discord';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
@@ -137,23 +138,25 @@ async function checkAccountAge(ctx: AppContext, userId: string, now: Date) {
 	}
 }
 
-function checkClaim(
+async function checkClaim(
 	ctx: AppContext,
 	tx: ClaimReader,
 	caller: Caller,
 	manifest: PublishedManifest,
-): Claim {
+): Promise<Claim> {
 	const { user } = caller;
-	const approved = tx.select({ id: addon.id }).from(addon).where(eq(addon.id, manifest.id)).get();
+	const [approved] = await tx
+		.select({ id: addon.id })
+		.from(addon)
+		.where(eq(addon.id, manifest.id));
 
 	if (approved) {
-		const maintainer = tx
+		const [maintainer] = await tx
 			.select({ role: addonMaintainer.role })
 			.from(addonMaintainer)
 			.where(
 				and(eq(addonMaintainer.addonId, manifest.id), eq(addonMaintainer.userId, user.id)),
-			)
-			.get();
+			);
 
 		if (!maintainer) {
 			throw new ApiError('not_maintainer', `You are not a maintainer of ${manifest.id}.`);
@@ -161,7 +164,7 @@ function checkClaim(
 
 		requirePermission(caller, { update: ['create'] });
 
-		const existing = tx
+		const [existing] = await tx
 			.select({ version: addonVersion.version })
 			.from(addonVersion)
 			.where(
@@ -169,8 +172,7 @@ function checkClaim(
 					eq(addonVersion.addonId, manifest.id),
 					eq(addonVersion.version, manifest.version),
 				),
-			)
-			.get();
+			);
 
 		if (existing) {
 			throw new ApiError(
@@ -182,7 +184,7 @@ function checkClaim(
 		requirePermission(caller, { submission: ['create'] });
 	}
 
-	const open = tx
+	const open = await tx
 		.select()
 		.from(submission)
 		.where(
@@ -190,8 +192,7 @@ function checkClaim(
 				eq(submission.addonId, manifest.id),
 				inArray(submission.status, OPEN_SUBMISSION_STATUSES),
 			),
-		)
-		.all();
+		);
 
 	const replaced = open.find(
 		(row) =>
@@ -216,7 +217,7 @@ function checkClaim(
 	}
 
 	if (!approved) {
-		const pending = tx
+		const [pending] = await tx
 			.select({ total: count() })
 			.from(submission)
 			.where(
@@ -226,8 +227,7 @@ function checkClaim(
 					inArray(submission.status, OPEN_SUBMISSION_STATUSES),
 					replaced ? ne(submission.id, replaced.id) : undefined,
 				),
-			)
-			.get();
+			);
 
 		if (pending && pending.total >= ctx.env.SUBMISSION_MAX_PENDING_LISTINGS) {
 			throw new ApiError(
@@ -247,14 +247,14 @@ function checkClaim(
  * @param source The addon source.
  * @returns The stored source row.
  */
-export function insertSubmissionSource(
+export async function insertSubmissionSource(
 	tx: Transaction,
 	submissionId: string,
 	source: AddonSource,
-): SubmissionSourceRow {
+): Promise<SubmissionSourceRow> {
 	const { pin } = source;
 
-	return tx
+	const rows = await tx
 		.insert(submissionSource)
 		.values({
 			submissionId,
@@ -268,8 +268,9 @@ export function insertSubmissionSource(
 			changelog: source.changelog,
 			details: source.details,
 		})
-		.returning()
-		.get();
+		.returning();
+
+	return one(rows);
 }
 
 function reserve(
@@ -278,21 +279,21 @@ function reserve(
 	staged: Staged,
 	source: AddonSource,
 	now: Date,
-): Reservation {
+): Promise<Reservation> {
 	const { manifest, pin } = source;
 
-	return ctx.db.transaction(
-		(tx) => {
-			const { kind, replaced } = checkClaim(ctx, tx, caller, manifest);
+	return ctx.db.transaction(async (tx) => {
+		const { kind, replaced } = await checkClaim(ctx, tx, caller, manifest);
 
-			if (replaced) {
-				tx.update(submission)
-					.set({ status: 'superseded' })
-					.where(eq(submission.id, replaced.id))
-					.run();
-			}
+		if (replaced) {
+			await tx
+				.update(submission)
+				.set({ status: 'superseded' })
+				.where(eq(submission.id, replaced.id));
+		}
 
-			const created = tx
+		const created = one(
+			await tx
 				.insert(submission)
 				.values({
 					id: staged.id,
@@ -309,36 +310,34 @@ function reserve(
 					createdAt: now,
 					submittedAt: now,
 				})
-				.returning()
-				.get();
+				.returning(),
+		);
 
-			const row = insertSubmissionSource(tx, staged.id, source);
+		const row = await insertSubmissionSource(tx, staged.id, source);
 
-			appendEvent(tx, {
-				subject: { type: 'addon', id: manifest.id },
-				actorId: caller.user.id,
-				at: now,
-				kind: 'submission.created',
-				data: {
-					submissionId: staged.id,
-					submissionKind: kind,
-					version: manifest.version,
-					supersededId: replaced?.id ?? null,
-				},
-			});
+		await appendEvent(tx, {
+			subject: { type: 'addon', id: manifest.id },
+			actorId: caller.user.id,
+			at: now,
+			kind: 'submission.created',
+			data: {
+				submissionId: staged.id,
+				submissionKind: kind,
+				version: manifest.version,
+				supersededId: replaced?.id ?? null,
+			},
+		});
 
-			return {
-				created: {
-					...created,
-					repository: pin.repository,
-					sha256: source.sha256,
-					source: row,
-				},
-				replaced,
-			};
-		},
-		{ behavior: 'immediate' },
-	);
+		return {
+			created: {
+				...created,
+				repository: pin.repository,
+				sha256: source.sha256,
+				source: row,
+			},
+			replaced,
+		};
+	});
 }
 
 async function stageAndReserve(
@@ -354,7 +353,7 @@ async function stageAndReserve(
 	await ctx.storage.staging.write(staged.stagingKey, source.bundle);
 
 	try {
-		return reserve(ctx, caller, staged, source, now);
+		return await reserve(ctx, caller, staged, source, now);
 	} catch (error) {
 		await ctx.storage.staging.delete(staged.stagingKey);
 
@@ -408,7 +407,7 @@ export async function previewSubmission(
 
 	const github = await connectGitHub(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request);
-	const { kind } = ctx.db.transaction((tx) => checkClaim(ctx, tx, caller, source.manifest));
+	const { kind } = await ctx.db.transaction((tx) => checkClaim(ctx, tx, caller, source.manifest));
 
 	return {
 		preview: {
