@@ -9,9 +9,9 @@ export const COLOURS = {
 } as const;
 
 // '0' marks an id the operator has not supplied yet; a dispatcher that requires it is not started.
-export const PLUGINS_CHANNEL_ID = '0';
-export const THEMES_CHANNEL_ID = '0';
-export const ICON_PACKS_CHANNEL_ID = '0';
+export const PLUGINS_CHANNEL_ID = '1564067818415333407';
+export const THEMES_CHANNEL_ID = '1564067819958571110';
+export const ICON_PACKS_CHANNEL_ID = '1564067821443616768';
 export const AUDIT_LOG_CHANNEL_ID = '0';
 export const RELEASES_CHANNEL_ID = '0';
 export const RELEASES_ROLE_ID = '0';
