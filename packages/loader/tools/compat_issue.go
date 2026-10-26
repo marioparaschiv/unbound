@@ -83,9 +83,9 @@ func supersededComment(number int) string {
 }
 
 type compatGitHub interface {
-	openIssues(repository string) ([]compatIssue, error)
+	openIssues(repository, label string) ([]compatIssue, error)
 	updateIssue(repository string, number int, title, bodyFile string) error
-	createIssue(repository, title, bodyFile string) (int, error)
+	createIssue(repository, title, label, bodyFile string) (int, error)
 	closeIssue(repository string, number int, comment string) error
 }
 
@@ -97,8 +97,8 @@ func (ghCLI) run(args ...string) ([]byte, error) {
 	return command.Output()
 }
 
-func (cli ghCLI) openIssues(repository string) ([]compatIssue, error) {
-	output, err := cli.run("issue", "list", "--repo", repository, "--label", compatIssueLabel, "--state", "open", "--limit", "100", "--json", "number,title")
+func (cli ghCLI) openIssues(repository, label string) ([]compatIssue, error) {
+	output, err := cli.run("issue", "list", "--repo", repository, "--label", label, "--state", "open", "--limit", "100", "--json", "number,title")
 	if err != nil {
 		return nil, err
 	}
@@ -111,8 +111,8 @@ func (cli ghCLI) updateIssue(repository string, number int, title, bodyFile stri
 	return err
 }
 
-func (cli ghCLI) createIssue(repository, title, bodyFile string) (int, error) {
-	output, err := cli.run("issue", "create", "--repo", repository, "--title", title, "--label", compatIssueLabel, "--body-file", bodyFile)
+func (cli ghCLI) createIssue(repository, title, label, bodyFile string) (int, error) {
+	output, err := cli.run("issue", "create", "--repo", repository, "--title", title, "--label", label, "--body-file", bodyFile)
 	if err != nil {
 		return 0, err
 	}
@@ -129,7 +129,7 @@ func (cli ghCLI) closeIssue(repository string, number int, comment string) error
 	return err
 }
 
-func applyCompatIssuePlan(github compatGitHub, repository, bodyFile string, plan compatIssuePlan) (int, error) {
+func applyCompatIssuePlan(github compatGitHub, repository, label, bodyFile string, plan compatIssuePlan) (int, error) {
 	current := plan.Update
 	switch {
 	case plan.Update != 0:
@@ -137,7 +137,7 @@ func applyCompatIssuePlan(github compatGitHub, repository, bodyFile string, plan
 			return 0, err
 		}
 	case plan.Create:
-		number, err := github.createIssue(repository, plan.Title, bodyFile)
+		number, err := github.createIssue(repository, plan.Title, label, bodyFile)
 		if err != nil {
 			return 0, err
 		}
@@ -176,12 +176,12 @@ func runCompatIssue(args []string) error {
 		return fmt.Errorf("results: %w", err)
 	}
 	github := ghCLI{}
-	open, err := github.openIssues(*repository)
+	open, err := github.openIssues(*repository, compatIssueLabel)
 	if err != nil {
 		return err
 	}
 	plan := planCompatIssue(open, *channel, compatIssueVersions(&results), compatHasProblems(&results))
-	number, err := applyCompatIssuePlan(github, *repository, *reportPath, plan)
+	number, err := applyCompatIssuePlan(github, *repository, compatIssueLabel, *reportPath, plan)
 	if number != 0 {
 		fmt.Printf("Discord compatibility issue #%d is current\n", number)
 	}

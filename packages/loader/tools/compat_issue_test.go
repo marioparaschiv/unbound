@@ -12,15 +12,15 @@ type fakeGitHub struct {
 	actions []string
 }
 
-func (fake *fakeGitHub) openIssues(string) ([]compatIssue, error) { return nil, nil }
+func (fake *fakeGitHub) openIssues(string, string) ([]compatIssue, error) { return nil, nil }
 
 func (fake *fakeGitHub) updateIssue(_ string, number int, title, _ string) error {
 	fake.actions = append(fake.actions, "update #"+strconv.Itoa(number)+" "+title)
 	return nil
 }
 
-func (fake *fakeGitHub) createIssue(_ string, title, _ string) (int, error) {
-	fake.actions = append(fake.actions, "create "+title)
+func (fake *fakeGitHub) createIssue(_ string, title, label, _ string) (int, error) {
+	fake.actions = append(fake.actions, "create "+title+" ["+label+"]")
 	return fake.created, nil
 }
 
@@ -60,11 +60,11 @@ func TestPlanCompatIssue(t *testing.T) {
 func TestApplyCompatIssuePlan(t *testing.T) {
 	fake := &fakeGitHub{created: 21}
 	plan := planCompatIssue([]compatIssue{{Number: 15, Title: "Discord compatibility (beta): iOS 1, Android 1"}}, "beta", "iOS 2, Android 2", true)
-	number, err := applyCompatIssuePlan(fake, "unbound-app/unbound", "report.md", plan)
+	number, err := applyCompatIssuePlan(fake, "unbound-app/unbound", compatIssueLabel, "report.md", plan)
 	if err != nil || number != 21 {
 		t.Fatalf("got #%d, %v", number, err)
 	}
-	want := []string{"create Discord compatibility (beta): iOS 2, Android 2", "close #15 Superseded by #21"}
+	want := []string{"create Discord compatibility (beta): iOS 2, Android 2 [discord-compat]", "close #15 Superseded by #21"}
 	if !reflect.DeepEqual(fake.actions, want) {
 		t.Fatalf("got %v, want %v", fake.actions, want)
 	}

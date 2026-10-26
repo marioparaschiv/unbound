@@ -259,7 +259,15 @@ private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 ```
 
-`legacyJavaClass` comes from `@unbound-plugins/shared/native/android/legacy-classes`. Only mark a name once the code handles its absence.
+`legacyJavaClass` comes from `@unbound-plugins/shared/native/android/legacy-classes`. Only mark a name once the code handles its absence. When the stable build no longer has a legacy name, no channel does, so the stable scan keeps one `discord-compat-cleanup` issue listing those names and where the code uses them. It closes once there is nothing left to remove.
+
+Plugins find obfuscated members by their shape instead of their name. The shapes live in [`discord-shapes.json`](../plugins-shared/src/native/android/discord-shapes.json), which `shapeMethod`, `shapeField` and `hasShapeConstructor` from `@unbound-plugins/shared/native/android/discord-shapes` read at runtime and the scan checks against the dex:
+
+```ts
+const bind = shapeMethod(java, 'messageBind');
+```
+
+A shape names its class with `owner`. When the code gets the class at runtime instead, `extends`, `implements` and `withFields` tell the scan how to find it. The member must be the only one that fits, or the one with the most parameters for `"pick": "most-parameters"`. A shape nothing fits is broken, and so is one several members fit, because the helper then refuses the lookup. A shape found through `extends`, `implements` or `withFields` must fit exactly one class, or the scan cannot tell which one the code gets. The scan also checks the resource ids that `viewByIdName` looks up against the APK's resource table.
 
 Plugins find obfuscated members by their shape instead of their name. The shapes live in [`discord-shapes.json`](../plugins-shared/src/native/android/discord-shapes.json), which `shapeMethod`, `shapeField` and `hasShapeConstructor` from `@unbound-plugins/shared/native/android/discord-shapes` read at runtime and the scan checks against the dex:
 
