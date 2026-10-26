@@ -2,14 +2,14 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { cp, mkdtemp, readdir, rm } from 'node:fs/promises';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 import { eq } from 'drizzle-orm';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import postgres from 'postgres';
 
+import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { moderationEvent, rateLimit } from '~/db/schema';
 import type { Transaction } from '~/db/database';
-import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { ApiError } from '~/lib/api/errors';
 
 import { createTestDatabase } from './helpers/database';

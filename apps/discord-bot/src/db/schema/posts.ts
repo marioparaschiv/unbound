@@ -1,5 +1,5 @@
-import type { LoaderPlatform } from '@unbound-app/contracts/loader';
 import { bigint, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import type { LoaderPlatform } from '@unbound-app/contracts/loader';
 
 import { botSchema } from './bot';
 

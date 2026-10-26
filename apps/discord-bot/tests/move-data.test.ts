@@ -16,7 +16,7 @@ import {
 	TEST_GRACE_DAYS,
 	type BotTestDatabase,
 } from './helpers/database';
-import { moveData, type MoveOptions } from '../scripts/move-data';
+import { moveData, type MoveOptions, type MoveReport } from '../scripts/move-data';
 import { signUp } from './helpers/web';
 
 // The old bot database's tables the move reads, as its last migrations left them.
@@ -45,6 +45,13 @@ const OLD_SCHEMA = `
 `;
 
 const CHANNELS: AddonChannels = { plugin: '11' };
+
+function refusal(move: Promise<MoveReport>): Promise<string> {
+	return move.then(
+		() => 'moved',
+		(error: Error) => error.message,
+	);
+}
 const OPTIONS: MoveOptions = { sponsorGraceDays: TEST_GRACE_DAYS, channels: CHANNELS };
 
 describe.skipIf(!DATABASE_URL)('move-data', () => {
@@ -128,12 +135,14 @@ describe.skipIf(!DATABASE_URL)('move-data', () => {
 	test('refuses a target the bot already wrote to, and a source that is not the old bot database', async () => {
 		await target`insert into bot.role_grant (discord_id, role) values ('9', 'r-c')`;
 
-		await expect(moveData(source, target, OPTIONS)).rejects.toThrow(
+		expect(await refusal(moveData(source, target, OPTIONS))).toContain(
 			'bot.role_grant has row 9:r-c, which the source lacks',
 		);
 
 		await target`delete from bot.role_grant where discord_id = '9'`;
 
-		await expect(moveData(target, target, OPTIONS)).rejects.toThrow('not the old bot database');
+		expect(await refusal(moveData(target, target, OPTIONS))).toContain(
+			'not the old bot database',
+		);
 	});
 });

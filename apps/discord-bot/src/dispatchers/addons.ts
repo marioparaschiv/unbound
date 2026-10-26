@@ -1,4 +1,6 @@
 import type { APIEmbed, APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
+import type { AddonType } from '@unbound-app/contracts/addons';
+import type { PublicAddon } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 import { Routes } from 'discord.js';
 import { eq } from 'drizzle-orm';
@@ -17,8 +19,6 @@ import {
 	THEMES_CHANNEL_ID,
 } from '~/lib/constants';
 import type { Dispatcher, Stores } from '~/dispatchers/types';
-import type { AddonType } from '@unbound-app/contracts/addons';
-import type { PublicAddon } from '@unbound-app/web/bot';
 import { contentHash } from '~/lib/content-hash';
 import type { Database } from '~/db/database';
 import { addonMessage } from '~/db/schema';

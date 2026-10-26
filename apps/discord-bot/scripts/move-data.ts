@@ -7,9 +7,8 @@ import { z } from 'zod';
 
 import { ADDON_CHANNELS, type AddonChannels } from '~/dispatchers/addons';
 import { contentHash } from '~/lib/content-hash';
-import { parseDatabaseEnv } from '~/lib/env';
+import { parseDatabaseEnv, envSchema } from '~/lib/env';
 import { SITE_URL } from '~/lib/constants';
-import { envSchema } from '~/lib/env';
 
 type Row = Record<string, string | number | boolean | null>;
 

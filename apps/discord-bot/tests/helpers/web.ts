@@ -1,10 +1,5 @@
-import {
-	type AppContext,
-	createStaffNote,
-	schema,
-	signInWithDiscord,
-	snowflakeAt,
-} from '@unbound-app/web/testing';
+import type { createStaffNote } from '@unbound-app/web/testing';
+import { type AppContext, schema, signInWithDiscord, snowflakeAt } from '@unbound-app/web/testing';
 import { eq } from 'drizzle-orm';
 
 export type WebCaller = Parameters<typeof createStaffNote>[1];

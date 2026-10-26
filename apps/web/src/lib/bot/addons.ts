@@ -1,8 +1,8 @@
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 
 import type { ReadDatabase, ResolvedReadOptions } from '~/lib/bot/reads';
-import type { PublicAddon } from '~/lib/bot/types';
 import { LIVE_VERSIONS } from '~/lib/live-versions';
+import type { PublicAddon } from '~/lib/bot/types';
 
 type AddonWithServed = Awaited<ReturnType<typeof queryAddons>>[number];
 

@@ -315,7 +315,12 @@ describe.skipIf(!DATABASE_URL)('triggers on the web tables', () => {
 			throw new Error('rolled back');
 		});
 
-		await expect(rolledBack).rejects.toThrow('rolled back');
+		expect(
+			await rolledBack.then(
+				() => 'committed',
+				(error: Error) => error.message,
+			),
+		).toBe('rolled back');
 		expect(await received()).toEqual([]);
 	});
 

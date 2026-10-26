@@ -7,8 +7,8 @@ import { announceRelease, reconcileReleases, type ReleaseTarget } from '~/dispat
 import { createDatabase, type Database } from '~/db/database';
 import { releasePost } from '~/db/schema';
 
-import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord-rest';
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
+import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord-rest';
 import { createFakeReads, RELEASE, type FakeReads } from './helpers/fake-reads';
 
 const TARGET: ReleaseTarget = { channelId: '21', roleId: '31' };

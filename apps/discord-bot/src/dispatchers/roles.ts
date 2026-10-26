@@ -1,5 +1,5 @@
-import type { Member, MemberQuery, MemberSubject } from '@unbound-app/web/bot';
 import { DiscordAPIError, PermissionFlagsBits, RESTJSONErrorCodes } from 'discord.js';
+import type { Member, MemberQuery, MemberSubject } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 import { inArray } from 'drizzle-orm';
 
@@ -428,7 +428,9 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		handle(payload, current) {
 			const query = parseMemberPayload(payload);
 
-			if (!query) return Promise.resolve();
+			if (!query) {
+				return Promise.resolve();
+			}
 
 			return queue.enqueue(() => sync(current, query));
 		},

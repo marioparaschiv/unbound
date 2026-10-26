@@ -68,7 +68,7 @@ describe.skipIf(!SUPERUSER_URL)('provision.sql', () => {
 			{ stdout: 'pipe', stderr: 'pipe' },
 		);
 
-		return { code: run.exitCode, output: `${run.stdout}${run.stderr}` };
+		return { code: run.exitCode, output: `${run.stdout.toString()}${run.stderr.toString()}` };
 	}
 
 	function grants(): Promise<Grant[]> {

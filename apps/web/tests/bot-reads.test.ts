@@ -7,8 +7,8 @@ import { publishLoaderRelease, withdrawLoaderRelease } from '~/lib/loader-releas
 import { createStaffNote } from '~/lib/staff-notes';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
-import { createBotReads } from '~/lib/bot';
 import { delistAddon } from '~/lib/addons';
+import { createBotReads } from '~/lib/bot';
 
 import {
 	authRequest,

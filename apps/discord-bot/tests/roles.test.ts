@@ -8,7 +8,6 @@ import {
 	spyOn,
 	test,
 } from 'bun:test';
-
 import { linkGitHub, manifest, seedApprovedAddon, seedSponsorship } from '@unbound-app/web/testing';
 import type { Member } from '@unbound-app/web/bot';
 

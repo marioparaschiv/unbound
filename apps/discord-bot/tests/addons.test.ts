@@ -1,5 +1,5 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import { manifest, schema, seedApprovedAddon, signInWithDiscord } from '@unbound-app/web/testing';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import type { PublicAddon } from '@unbound-app/web/bot';
 import { eq, sql } from 'drizzle-orm';
 
@@ -8,8 +8,8 @@ import { createDatabase, type Database } from '~/db/database';
 import { contentHash } from '~/lib/content-hash';
 import { addonMessage } from '~/db/schema';
 
-import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord-rest';
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
+import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord-rest';
 import { ADDON, createFakeReads, type FakeReads } from './helpers/fake-reads';
 
 const CHANNELS: AddonChannels = { plugin: '11', theme: '12', 'icon-pack': '13' };
@@ -112,7 +112,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	}
 
 	test('a listed plugin, theme and icon pack each get one embed in their own channel; a font gets none', async () => {
-		await ingest(PLUGIN, THEME, ICON_PACK, FONT);
+		ingest(PLUGIN, THEME, ICON_PACK, FONT);
 
 		for (const item of [PLUGIN, THEME, ICON_PACK, FONT]) {
 			await sync(item.id);
@@ -164,7 +164,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 			authors: [{ name: 'a'.repeat(2000), discordId: '1' }],
 		};
 
-		await ingest(long);
+		ingest(long);
 		await sync(long.id);
 
 		const [embed] = messagesOf(long)[0]?.embeds ?? [];
@@ -174,12 +174,12 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	});
 
 	test('a content change edits the message in place and advances posted_hash', async () => {
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		await sync(PLUGIN.id);
 
 		const before = await rowOf(PLUGIN.id);
 
-		await ingest({ ...PLUGIN, version: '1.1.0' });
+		ingest({ ...PLUGIN, version: '1.1.0' });
 		await sync(PLUGIN.id);
 
 		const after = await rowOf(PLUGIN.id);
@@ -199,14 +199,14 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	test('re-syncing an identical snapshot writes nothing to Discord or the row', async () => {
 		const other = { ...PLUGIN, id: 'plugin-2', pageUrl: 'https://unbound.rip/addons/plugin-2' };
 
-		await ingest(PLUGIN, other);
+		ingest(PLUGIN, other);
 		await sync(PLUGIN.id);
 		await sync(other.id);
 
 		const before = await rowOf(PLUGIN.id);
 		const posted = writes().length;
 
-		await ingest({ ...PLUGIN });
+		ingest({ ...PLUGIN });
 		await sync(PLUGIN.id);
 		await reconcile();
 
@@ -217,16 +217,16 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	test('delisting deletes the message and row; relisting posts exactly one new message', async () => {
 		const counts: number[] = [];
 
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		await sync(PLUGIN.id);
 		counts.push(messagesOf(PLUGIN).length);
 
-		await ingest({ ...PLUGIN, listed: false });
+		ingest({ ...PLUGIN, listed: false });
 		await sync(PLUGIN.id);
 		counts.push(messagesOf(PLUGIN).length);
 		expect(await rowOf(PLUGIN.id)).toBeUndefined();
 
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		await sync(PLUGIN.id);
 		counts.push(messagesOf(PLUGIN).length);
 		await reconcile();
@@ -238,9 +238,9 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	});
 
 	test('a type change moves the message to the new channel', async () => {
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		await sync(PLUGIN.id);
-		await ingest({ ...PLUGIN, type: 'theme' });
+		ingest({ ...PLUGIN, type: 'theme' });
 		await sync(PLUGIN.id);
 
 		expect(discord.messages('11')).toHaveLength(0);
@@ -252,7 +252,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	});
 
 	test('a hand-deleted message is reposted on reconcile and the row follows it', async () => {
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		await sync(PLUGIN.id);
 
 		const before = await rowOf(PLUGIN.id);
@@ -268,7 +268,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	});
 
 	test('an addon Discord rejects is logged and skipped, and the next reconcile posts it', async () => {
-		await ingest(PLUGIN, THEME);
+		ingest(PLUGIN, THEME);
 		discord.rejectPost = (body) => body.embeds?.[0]?.title === PLUGIN.name;
 		await reconcile();
 
@@ -283,7 +283,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	});
 
 	test('reconcile of synced addons lists each channel instead of fetching each message', async () => {
-		await ingest(PLUGIN, THEME, ICON_PACK);
+		ingest(PLUGIN, THEME, ICON_PACK);
 		await reconcile();
 		discord.requests.length = 0;
 
@@ -297,7 +297,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	test('reconcile deletes our duplicate and stale addon posts and keeps every other message', async () => {
 		const delisted = { ...THEME, type: 'plugin' as const, listed: false };
 
-		await ingest(PLUGIN, delisted);
+		ingest(PLUGIN, delisted);
 		await sync(PLUGIN.id);
 
 		const duplicate = discord.seed('11', discord.selfId, { embeds: [{ url: PLUGIN.pageUrl }] });
@@ -319,7 +319,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	});
 
 	test('a row whose message is gone adopts our unreferenced post instead of reposting', async () => {
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		await sync(PLUGIN.id);
 
 		const before = await rowOf(PLUGIN.id);
@@ -342,7 +342,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 			discord.seed('11', discord.selfId, { embeds: [{ url: `https://old-bot/${i}` }] });
 		}
 
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		await sync(PLUGIN.id);
 
 		const before = await rowOf(PLUGIN.id);
@@ -358,7 +358,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	test('reconcile keeps an old bot message whose url names no addon', async () => {
 		const old = discord.seed('11', discord.selfId, { embeds: [{ url: 'https://old-bot' }] });
 
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		await reconcile();
 
 		expect(discord.messages('11').map((message) => message.id)).toContain(old);
@@ -373,7 +373,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 			await Bun.sleep(300);
 		};
 
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		await sync(PLUGIN.id);
 
 		const [message, ...extra] = messagesOf(PLUGIN);
@@ -401,7 +401,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	}
 
 	test('a failed row write deletes the message it just posted, and reconcile reposts it', async () => {
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 
 		expect(await crashSync(PLUGIN.id)).toBe('failed');
 		expect(writes().map((request) => request.method)).toEqual(['POST', 'DELETE']);
@@ -418,7 +418,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 	// Discord refusing the cleanup delete leaves a post with no row, the case adoption exists for.
 	test('a post left without its row is adopted and shows current content', async () => {
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		discord.rejectDelete = () => true;
 
 		expect(await crashSync(PLUGIN.id)).toBe('failed');
@@ -426,7 +426,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		const [orphan] = messagesOf(PLUGIN);
 
 		discord.rejectDelete = undefined;
-		await ingest({ ...PLUGIN, version: '2.0.0' });
+		ingest({ ...PLUGIN, version: '2.0.0' });
 		await reconcile();
 
 		const [message, ...extra] = messagesOf(PLUGIN);
@@ -440,7 +440,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	test('a post left without its row is adopted when a later post in its channel has a row', async () => {
 		const other = { ...PLUGIN, id: 'plugin-2', pageUrl: 'https://unbound.rip/addons/plugin-2' };
 
-		await ingest(PLUGIN, other);
+		ingest(PLUGIN, other);
 		discord.rejectDelete = () => true;
 
 		expect(await crashSync(PLUGIN.id)).toBe('failed');
@@ -457,12 +457,12 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	});
 
 	test('a type change whose repost lost its row converges to one message in the new channel', async () => {
-		await ingest(PLUGIN);
+		ingest(PLUGIN);
 		await sync(PLUGIN.id);
 
 		const old = (await rowOf(PLUGIN.id))?.messageId;
 
-		await ingest({ ...PLUGIN, type: 'theme' });
+		ingest({ ...PLUGIN, type: 'theme' });
 		discord.rejectDelete = (messageId) => messageId !== old;
 
 		expect(await crashSync(PLUGIN.id)).toBe('failed');

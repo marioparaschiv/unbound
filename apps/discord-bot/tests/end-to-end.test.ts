@@ -14,21 +14,21 @@ import { announceRelease, reconcileReleases, type ReleaseTarget } from '~/dispat
 import { reconcileAddons, syncAddon, type AddonChannels } from '~/dispatchers/addons';
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import { startDispatchers, type DiscordIds } from '~/runtime/start';
-import { createRolesDispatcher } from '~/dispatchers/roles';
 import { createAuditDispatcher } from '~/dispatchers/audit';
+import { createRolesDispatcher } from '~/dispatchers/roles';
 import { DISCORD_IDS } from '~/lib/constants';
 
 import {
 	createFakeDiscord as createFakeChannels,
 	type FakeDiscord as FakeChannels,
 } from './helpers/fake-discord-rest';
-import { createFakeClient, createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
 import {
 	createBotTestDatabase,
 	DATABASE_URL,
 	waitFor,
 	type BotTestDatabase,
 } from './helpers/database';
+import { createFakeClient, createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
 import { FAKE_GUILD_ID, fakeDiscord as fakeGuild } from './helpers/roles-discord';
 import { signUp } from './helpers/web';
 

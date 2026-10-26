@@ -1,6 +1,6 @@
 import { dirname, join, relative, resolve } from 'node:path';
-import { existsSync } from 'node:fs';
 import { expect, test } from 'bun:test';
+import { existsSync } from 'node:fs';
 
 const SRC = join(import.meta.dirname, '..', 'src');
 const ENTRY = join(SRC, 'lib', 'bot', 'index.ts');

@@ -1,9 +1,9 @@
 import { and, eq } from 'drizzle-orm';
 
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
-import type { Transaction } from '~/db/database';
 import { perkGraceMs, standingOf } from '~/lib/sponsors/standing';
 import { account, sponsorship } from '~/db/schema';
+import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Env } from '~/lib/env';
 

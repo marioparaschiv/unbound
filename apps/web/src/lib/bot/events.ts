@@ -1,5 +1,5 @@
-import type { AuditEvent } from '~/lib/bot/types';
 import type { ReadDatabase } from '~/lib/bot/reads';
+import type { AuditEvent } from '~/lib/bot/types';
 
 type EventRow = Awaited<ReturnType<typeof queryEvents>>[number];
 

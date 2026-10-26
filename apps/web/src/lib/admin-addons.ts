@@ -8,15 +8,15 @@ import { z } from 'zod';
 
 import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
-import { LIVE_VERSIONS } from '~/lib/live-versions';
-import { toAddon } from '~/lib/addons';
 import { requirePermission } from '~/lib/api/caller';
+import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { matchesSearch } from '~/lib/admin-search';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
 import type { Database } from '~/db/database';
 import type { addon } from '~/db/schema';
+import { toAddon } from '~/lib/addons';
 
 export type AdminAddon = Addon & {
 	name: string;

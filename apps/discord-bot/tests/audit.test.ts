@@ -8,8 +8,8 @@ import type { DispatcherContext } from '~/dispatchers/types';
 import { createAuditDispatcher } from '~/dispatchers/audit';
 import { auditPost } from '~/db/schema';
 
-import { createFakeClient, createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
+import { createFakeClient, createFakeDiscord, type FakeDiscord } from './helpers/fake-discord';
 import { createFakeReads, EVENT, type FakeReads } from './helpers/fake-reads';
 import { signUp } from './helpers/web';
 

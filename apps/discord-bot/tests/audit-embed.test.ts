@@ -1,7 +1,6 @@
+import type { AuditEvent } from '@unbound-app/web/bot';
 import { describe, expect, test } from 'bun:test';
 import type { APIEmbed } from 'discord.js';
-
-import type { AuditEvent } from '@unbound-app/web/bot';
 
 import { buildAuditEmbed } from '~/dispatchers/audit-embed';
 import { COLOURS } from '~/lib/constants';
