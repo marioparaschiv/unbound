@@ -110,6 +110,9 @@ const MAX_TAGS = 20;
 const MAX_TAG_DEPTH = 5;
 const SYMLINK_MODE = '120000';
 
+/** The only origin the OAuth app's credentials are ever sent to. */
+const GITHUB_API_ORIGIN = 'https://api.github.com';
+
 function linkExpired(): ApiError {
 	return new ApiError('github_not_linked', 'Your GitHub link has expired. Link GitHub again.');
 }
@@ -121,20 +124,45 @@ function unavailable(reason: string): ApiError {
 	);
 }
 
+/**
+ * @description Picks the `authorization` header for a GitHub API request: the user's token when there
+ * is one, otherwise the OAuth app's client credentials, which lift public reads from 60 to 5,000
+ * requests an hour. The app credentials only ever go to `https://api.github.com`.
+ * @param env The validated environment.
+ * @param token The user's GitHub token, or `null` to read public data.
+ * @param url The request URL.
+ * @returns The header value, or `undefined` to send the request anonymously.
+ */
+export function getGitHubAuthorization(
+	env: Env,
+	token: string | null,
+	url: URL,
+): string | undefined {
+	if (token) {
+		return `Bearer ${token}`;
+	}
+
+	if (url.origin !== GITHUB_API_ORIGIN) return;
+
+	return `Basic ${btoa(`${env.GITHUB_CLIENT_ID}:${env.GITHUB_CLIENT_SECRET}`)}`;
+}
+
 async function send(env: Env, token: string | null, path: string): Promise<Response> {
+	const url = new URL(path, env.GITHUB_API_URL);
 	const headers = new Headers({
 		accept: 'application/vnd.github+json',
 		'x-github-api-version': '2022-11-28',
 	});
+	const authorization = getGitHubAuthorization(env, token, url);
 
-	if (token) {
-		headers.set('authorization', `Bearer ${token}`);
+	if (authorization) {
+		headers.set('authorization', authorization);
 	}
 
 	let response: Response;
 
 	try {
-		response = await fetch(new URL(path, env.GITHUB_API_URL), { headers });
+		response = await fetch(url, { headers });
 	} catch {
 		throw unavailable('network error');
 	}
@@ -213,7 +241,7 @@ export function gitBlobSha(bytes: Uint8Array): string {
  * @description Binds GitHub's REST calls to one user's token. Every response is parsed here; callers
  * see domain types. A 401 is `github_not_linked`; rate limits, 5xx and network errors are `github_unavailable`.
  * @param env The validated environment; `GITHUB_API_URL` points tests at a fake.
- * @param token The user's GitHub OAuth access token, or `null` to read public data anonymously.
+ * @param token The user's GitHub OAuth access token, or `null` to read public data as the OAuth app.
  * @returns The calls publishing from GitHub needs.
  */
 export function createGitHubClient(env: Env, token: string | null) {
@@ -477,4 +505,10 @@ export async function connectGitHub(ctx: AppContext, userId: string): Promise<Gi
 	return createGitHubClient(ctx.env, token);
 }
 
-export default { gitBlobSha, createGitHubClient, getGitHubToken, connectGitHub };
+export default {
+	gitBlobSha,
+	getGitHubAuthorization,
+	createGitHubClient,
+	getGitHubToken,
+	connectGitHub,
+};
