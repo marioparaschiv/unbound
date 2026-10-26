@@ -41,7 +41,7 @@
 		"@unbound-app/types": "workspace:*",
 		"@unbound-app/utils": "workspace:*",
 		"@unbound-app/web": "workspace:*",
-		"tsdown": "^0.22.9"
+		"tsdown": "^0.23.1"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"
