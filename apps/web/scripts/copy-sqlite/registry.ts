@@ -10,7 +10,7 @@ import { codecs, isColumnType, wholeJsonCodec } from './codecs';
 
 export type ColumnSpec = {
 	name: string;
-	/** The Postgres type, such as `timestamp(3) with time zone`, that encoded text is cast to. */
+	/** The Postgres type, such as `timestamp(3) with time zone`, that canonical text is cast to. */
 	sqlType: string;
 	codec: Codec;
 };
@@ -85,22 +85,17 @@ export function inReferenceOrder(tables: TableSpec[]): TableSpec[] {
 	const ordered: TableSpec[] = [];
 
 	while (pending.length > 0) {
-		const next = pending.findIndex((table) =>
-			table.references.every((name) => name === table.name || placed.has(name)),
+		const table = pending.find((candidate) =>
+			candidate.references.every((name) => name === candidate.name || placed.has(name)),
 		);
 
-		if (!~next) {
+		if (!table) {
 			throw new Error(
 				`Foreign keys form a cycle among ${pending.map((t) => t.name).join(', ')}.`,
 			);
 		}
 
-		const [table] = pending.splice(next, 1);
-
-		if (!table) {
-			continue;
-		}
-
+		pending.splice(pending.indexOf(table), 1);
 		placed.add(table.name);
 		ordered.push(table);
 	}

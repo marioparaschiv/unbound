@@ -5,15 +5,15 @@ export type SourceValue = string | bigint | number | Uint8Array | null;
 
 /**
  * How one Postgres column type is copied from SQLite, through canonical text that the source value
- * parses into, the Postgres input is encoded from, and the Postgres column reads back as.
+ * parses into, Postgres casts into the column, and the column reads back as.
  */
 export type Codec = {
 	/** SQL that selects the quoted SQLite column as `parse` takes it. */
 	select: (column: string) => string;
 	/** Parses a non-null source value into canonical text; throws on a value the column cannot hold. */
 	parse: (value: Exclude<SourceValue, null>) => string;
-	/** Encodes canonical text as the Postgres input text for the column. */
-	encode: (canonical: string) => string;
+	/** SQL that casts the placeholder bound to canonical text to the column's `sqlType`. */
+	write: (placeholder: string, sqlType: string) => string;
 	/** SQL that reads the quoted Postgres column back as canonical text. */
 	readBack: (column: string) => string;
 };
@@ -28,8 +28,8 @@ export type ColumnType =
 
 const INT32 = { min: -(2n ** 31n), max: 2n ** 31n - 1n };
 const INT64 = { min: -(2n ** 63n), max: 2n ** 63n - 1n };
-// The range a JS `Date` holds, which every copied timestamp passes through.
-const MAX_DATE_MS = 8_640_000_000_000_000n;
+// 0001-01-01T00:00:00.000Z to 9999-12-31T23:59:59.999Z, the years a four-digit ISO string holds.
+const TIMESTAMP_MS = { min: -62_135_596_800_000n, max: 253_402_300_799_999n };
 
 type Range = typeof INT32;
 
@@ -108,6 +108,12 @@ function identity(canonical: string) {
 	return canonical;
 }
 
+// Bound as text, so postgres.js sends the canonical text as is instead of serializing it for the
+// column's type (it would JSON-encode a json string), and Postgres parses it.
+function cast(placeholder: string, sqlType: string) {
+	return `${placeholder}::text::${sqlType}`;
+}
+
 function asBytes(column: string) {
 	return `CASE typeof(${column}) WHEN 'null' THEN NULL WHEN 'text' THEN CAST(${column} AS BLOB) ELSE typeof(${column}) END`;
 }
@@ -119,8 +125,9 @@ function asText(column: string) {
 export const codecs: Record<ColumnType, Codec> = {
 	PgTimestamp: {
 		select: identity,
-		parse: (value) => String(integer(value, { min: -MAX_DATE_MS, max: MAX_DATE_MS })),
-		encode: (canonical) => new Date(Number(canonical)).toISOString(),
+		parse: (value) => String(integer(value, TIMESTAMP_MS)),
+		write: (placeholder, sqlType) =>
+			`('epoch'::timestamptz + ${placeholder}::bigint * interval '1 millisecond')::${sqlType}`,
 		// `extract` is exact numeric, and the column holds whole milliseconds.
 		readBack: (column) => `(extract(epoch from ${column}) * 1000)::bigint::text`,
 	},
@@ -133,24 +140,24 @@ export const codecs: Record<ColumnType, Codec> = {
 
 			return String(value);
 		},
-		encode: (canonical) => (canonical === '1' ? 'true' : 'false'),
+		write: cast,
 		readBack: (column) => `${column}::int::text`,
 	},
 	// `json`, unlike `jsonb`, stores its input text, so key order and spacing survive.
-	PgJson: { select: asBytes, parse: json, encode: identity, readBack: asText },
+	PgJson: { select: asBytes, parse: json, write: cast, readBack: asText },
 	PgBigInt53: {
 		select: identity,
 		parse: (value) => String(integer(value, INT64)),
-		encode: identity,
+		write: cast,
 		readBack: asText,
 	},
 	PgInteger: {
 		select: identity,
 		parse: (value) => String(integer(value, INT32)),
-		encode: identity,
+		write: cast,
 		readBack: asText,
 	},
-	PgText: { select: asBytes, parse: text, encode: identity, readBack: identity },
+	PgText: { select: asBytes, parse: text, write: cast, readBack: identity },
 };
 
 /** A `json` column the app stores whole, whose strings may hold what `->>` cannot read. */

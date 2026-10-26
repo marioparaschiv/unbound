@@ -8,6 +8,7 @@ import type { TableSpec } from './registry';
 
 import { readSource } from './source';
 import { tables } from './registry';
+import quote from './quote';
 
 export type CopyOptions = {
 	/** The SQLite file, opened read-only. */
@@ -27,6 +28,10 @@ export type TableReport = {
 	rows: number;
 	/** The sha256 of the source's canonical rows. */
 	checksum: string;
+	/** The rows Postgres reads back, before commit. */
+	targetRows: number;
+	/** The sha256 of the rows Postgres reads back, as canonical text. */
+	targetChecksum: string;
 	match: boolean;
 };
 
@@ -63,10 +68,6 @@ export class VerificationError extends Error {
 const MAX_PARAMETERS = 65_535;
 const MAX_BATCH_ROWS = 1000;
 
-function quote(identifier: string) {
-	return `"${identifier.replaceAll('"', '""')}"`;
-}
-
 /**
  * @description Hashes canonical rows, one JSON array per line, so a `null` and any string differ.
  * @param rows The rows, in primary key order.
@@ -82,7 +83,9 @@ export function checksum(rows: CanonicalRow[]): string {
 	return hash.digest('hex');
 }
 
-async function lockTables(tx: postgres.TransactionSql, specs: TableSpec[]) {
+// ALTER TABLE holds an ACCESS EXCLUSIVE lock until commit, so no other session can write a row between
+// the emptiness check and the copy.
+async function disableTriggers(tx: postgres.TransactionSql, specs: TableSpec[]) {
 	for (const spec of specs) {
 		await tx.unsafe(`ALTER TABLE ${quote(spec.name)} DISABLE TRIGGER USER`);
 	}
@@ -111,8 +114,9 @@ async function clearTarget(tx: postgres.TransactionSql, specs: TableSpec[], repl
 		throw new TargetNotEmptyError(occupied);
 	}
 
+	// No CASCADE: every app table is listed, so a table outside them that references one makes it fail.
 	await tx.unsafe(
-		`TRUNCATE ${specs.map((spec) => quote(spec.name)).join(', ')} RESTART IDENTITY CASCADE`,
+		`TRUNCATE ${specs.map((spec) => quote(spec.name)).join(', ')} RESTART IDENTITY`,
 	);
 }
 
@@ -121,21 +125,14 @@ async function insertRows(tx: postgres.TransactionSql, table: SourceTable) {
 	const width = spec.columns.length;
 	const batch = Math.min(MAX_BATCH_ROWS, Math.floor(MAX_PARAMETERS / width));
 	const columns = spec.columns.map((column) => quote(column.name)).join(', ');
-	// Bound as text, so postgres.js sends the encoded text as is instead of serializing it for the
-	// column's type (it would JSON-encode a json string), and Postgres parses it.
-	const casts = spec.columns.map((column) => `::text::${column.sqlType}`);
 
 	for (let start = 0; start < rows.length; start += batch) {
 		const chunk = rows.slice(start, start + batch);
-		const parameters = chunk.flatMap((row) =>
-			row.map((value, position) =>
-				value === null ? null : (spec.columns[position]?.codec.encode(value) ?? null),
-			),
-		);
+		const parameters = chunk.flat();
 		const values = chunk
 			.map((_, index) => {
-				const placeholders = casts.map(
-					(cast, position) => `$${index * width + position + 1}${cast}`,
+				const placeholders = spec.columns.map((column, position) =>
+					column.codec.write(`$${index * width + position + 1}`, column.sqlType),
 				);
 
 				return `(${placeholders.join(', ')})`;
@@ -199,9 +196,17 @@ async function verify(tx: postgres.TransactionSql, source: SourceTable[]): Promi
 			.unsafe(`SELECT ${columns.join(', ')} FROM ${quote(spec.name)} ORDER BY ${order}`)
 			.values();
 		const expected = checksum(rows);
-		const match = target.length === rows.length && checksum(target) === expected;
+		const actual = checksum(target);
 
-		reports.push({ table: spec.name, present, rows: rows.length, checksum: expected, match });
+		reports.push({
+			table: spec.name,
+			present,
+			rows: rows.length,
+			checksum: expected,
+			targetRows: target.length,
+			targetChecksum: actual,
+			match: target.length === rows.length && actual === expected,
+		});
 	}
 
 	return reports;
@@ -226,7 +231,7 @@ export async function copySqlite(options: CopyOptions): Promise<TableReport[]> {
 
 	try {
 		return await sql.begin(async (tx) => {
-			await lockTables(tx, specs);
+			await disableTriggers(tx, specs);
 			await clearTarget(tx, specs, replace);
 
 			for (const table of source) {

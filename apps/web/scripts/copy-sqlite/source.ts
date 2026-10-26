@@ -4,6 +4,7 @@ import type { SourceValue } from './codecs';
 import type { TableSpec } from './registry';
 
 import { OPTIONAL_SOURCE_TABLES, SQLITE_ONLY_TABLES } from './registry';
+import quote from './quote';
 
 /** A row as canonical text per column, `null` for SQL NULL. */
 export type CanonicalRow = (string | null)[];
@@ -26,10 +27,6 @@ type SequenceRow = {
 	name: string;
 	seq: bigint;
 };
-
-function quote(identifier: string) {
-	return `"${identifier.replaceAll('"', '""')}"`;
-}
 
 // Only labels a row in an error, so invalid UTF-8 in a key may show as U+FFFD.
 function label(value: SourceValue | undefined) {

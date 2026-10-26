@@ -132,6 +132,8 @@ describe('copySqlite', () => {
 			expect(report).toMatchObject({ match: true, present: true });
 			expect(report.rows).toBe(sourceCount(context.source, report.table));
 			expect(row?.n).toBe(report.rows);
+			expect(report.targetRows).toBe(report.rows);
+			expect(report.targetChecksum).toBe(report.checksum);
 		}
 
 		expect(reports.every((report) => report.rows > 0)).toBe(true);
@@ -227,6 +229,46 @@ describe('copySqlite', () => {
 		);
 	});
 
+	test('copies timestamps from year 1 to year 9999 and names the row of one past them', async () => {
+		const first = Date.parse('0001-01-01T00:00:00.000Z');
+		const last = Date.parse('9999-12-31T23:59:59.999Z');
+		const context = await setup();
+
+		context.source.exec(`UPDATE addon SET updated_at = ${first} WHERE id = 'acme.one'`);
+		context.source.exec(`UPDATE addon SET updated_at = ${last} WHERE id = 'acme.two'`);
+		await copy(context);
+
+		const rows = await context.db.$client`
+			select (extract(epoch from updated_at) * 1000)::bigint::text as ms from addon order by id`;
+
+		expect(rows.map((row) => Number(row.ms))).toEqual([first, last]);
+
+		for (const outside of [first - 1, last + 1]) {
+			context.source.exec(`UPDATE addon SET updated_at = ${outside} WHERE id = 'acme.two'`);
+
+			expect((await failure(copy(context, true))).message).toBe(
+				'addon.updated_at at (id) = ("acme.two"):',
+			);
+		}
+	});
+
+	test('refuses to replace a target that another table references', async () => {
+		const context = await setup();
+
+		await copy(context);
+		await context.db.$client.unsafe(
+			`CREATE TABLE foreign_ref (addon_id text REFERENCES addon (id)); INSERT INTO foreign_ref VALUES ('acme.one')`,
+		);
+
+		const before = await snapshot(context.db);
+		const error = await failure(copy(context, true));
+		const [row] = await context.db.$client`select count(*)::int as n from foreign_ref`;
+
+		expect(error.message).toContain('foreign key');
+		expect(row?.n).toBe(1);
+		expect(await snapshot(context.db)).toEqual(before);
+	});
+
 	test('refuses a target with rows and leaves it unchanged', async () => {
 		const context = await setup();
 
@@ -263,8 +305,8 @@ describe('copySqlite', () => {
 							...column,
 							codec: {
 								...column.codec,
-								encode: (value: string) =>
-									codecs.PgTimestamp.encode(String(BigInt(value) + 1n)),
+								write: (placeholder: string, sqlType: string) =>
+									`${codecs.PgTimestamp.write(placeholder, sqlType)} + interval '1 millisecond'`,
 							},
 						}
 					: column,
@@ -275,11 +317,12 @@ describe('copySqlite', () => {
 		);
 
 		expect(error).toBeInstanceOf(VerificationError);
-		expect(
-			(error as VerificationError).reports
-				.filter((report) => !report.match)
-				.map((report) => report.table),
-		).toEqual(['addon']);
+
+		const failed = (error as VerificationError).reports.filter((report) => !report.match);
+
+		expect(failed.map((report) => report.table)).toEqual(['addon']);
+		expect(failed[0]?.targetRows).toBe(failed[0]?.rows);
+		expect(failed[0]?.targetChecksum).not.toBe(failed[0]?.checksum);
 		expect(
 			Object.values(await snapshot(context.db)).every((digest) => digest.startsWith('0:')),
 		).toBe(true);
@@ -472,8 +515,28 @@ describe('db:copy-sqlite', () => {
 		const first = run();
 
 		expect(first.exitCode).toBe(0);
-		expect(first.stdout.toString()).toMatch(/^sync_document\s+1\s+[0-9a-f]{64}\s+match$/m);
+		expect(first.stdout.toString()).toMatch(
+			/^sync_document\s+1\s+([0-9a-f]{64})\s+1\s+\1\s+match$/m,
+		);
 		expect(run().exitCode).toBe(1);
 		expect(run('--replace').exitCode).toBe(0);
+	});
+
+	test('prints where Postgres refused a row', async () => {
+		const context = await setup();
+
+		context.source.exec(
+			`INSERT INTO addon_maintainer (addon_id, user_id, role, created_at) VALUES ('acme.ghost', 'u1', 'owner', 0)`,
+		);
+
+		const result = Bun.spawnSync(['bun', 'scripts/copy-sqlite.ts', context.source.path], {
+			cwd: join(import.meta.dirname, '..'),
+			env: { ...process.env, DATABASE_DIRECT_URL: context.target.url },
+		});
+		const output = `${result.stdout.toString()}${result.stderr.toString()}`;
+
+		expect(result.exitCode).toBe(1);
+		expect(output).toContain('Key (addon_id)=(acme.ghost) is not present in table "addon".');
+		expect(output).toContain('table addon_maintainer');
 	});
 });
