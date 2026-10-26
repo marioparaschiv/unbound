@@ -530,6 +530,7 @@ export type NativeJavaBatchOperation = {
 };
 export type NativeJavaBridge = {
 	getClass(name: string): NativeJavaHandle;
+	describe(name: string): NativeJavaClassDescription;
 	batch(operations: NativeJavaBatchOperation[]): NativeJavaValue[];
 	createAssociationKey(): NativeJavaAssociationKey;
 	getAssociatedObject(
@@ -557,6 +558,19 @@ export type NativeJavaBridge = {
 	getField(handle: NativeJavaReference, name: string): NativeJavaValue;
 	setField(handle: NativeJavaReference, name: string, value: NativeJavaArgument): void;
 	release(handle: NativeJavaReference): void;
+};
+export type NativeJavaClassDescription = {
+	name: string;
+	superclass: string | null;
+	interfaces: string[];
+	constructors: string[][];
+	methods: NativeJavaMethodDescription[];
+	fields: NativeJavaFieldDescription[];
+};
+export type NativeJavaFieldDescription = {
+	name: string;
+	type: string;
+	static: boolean;
 };
 export type NativeJavaHandle = NativeHandle;
 export type NativeJavaHandleValue = {
@@ -595,6 +609,12 @@ export type NativeJavaHooksBridge = {
 	): void;
 	clearReturnValues(token: NativeJavaHookToken): void;
 	remove(token: NativeJavaHookToken): void;
+};
+export type NativeJavaMethodDescription = {
+	name: string;
+	parameters: string[];
+	returnType: string;
+	static: boolean;
 };
 export type NativeJavaReference = NativeJavaHandle | NativeJavaHandleValue;
 export type NativeJavaValue =
