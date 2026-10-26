@@ -150,6 +150,26 @@ describe('loadAuthors', () => {
 		});
 	});
 
+	test('treats a malformed id like an unknown one', async () => {
+		for (const id of ['007', '99999999999999999999999']) {
+			expect(await resolveOne('Malformed', id as typeof UNFETCHED)).toEqual({
+				kind: 'manifest',
+				discordId: null,
+				name: 'Malformed',
+				avatarUrl: 'https://cdn.discordapp.com/embed/avatars/0.png',
+			});
+		}
+	});
+
+	test('keeps the first name of an author listed twice', async () => {
+		const [author] = await resolve([
+			{ name: 'First', id: UNFETCHED },
+			{ name: 'Second', id: UNFETCHED },
+		]);
+
+		expect(author?.name).toBe('First');
+	});
+
 	test('lists an author named twice in one manifest once', async () => {
 		const authors = await resolve([
 			{ name: 'Manifest Profiled', id: PROFILED },

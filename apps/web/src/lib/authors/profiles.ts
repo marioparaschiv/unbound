@@ -6,6 +6,7 @@ import { fetchDiscordUser } from '~/lib/authors/discord-users';
 import { listListedAddons } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
 import { discordProfile } from '~/db/schema';
+import { isDiscordId } from '~/lib/discord';
 
 const logger = createLogger('Web', 'Authors');
 
@@ -111,7 +112,7 @@ async function listAuthorIds(ctx: AppContext): Promise<DiscordId[]> {
 
 	for (const entry of addons) {
 		for (const author of entry.latestVersion.manifest.authors) {
-			if (author.id !== '0') {
+			if (isDiscordId(author.id)) {
 				ids.add(author.id);
 			}
 		}
@@ -163,7 +164,7 @@ export async function refreshDiscordProfiles(
 			break;
 		}
 
-		const lookup = await fetchDiscordUser(ctx.env, id);
+		const lookup = await fetchDiscordUser(ctx.env, id, signal);
 
 		if (lookup.kind === 'rate_limited') {
 			return { refreshed, retryAfterMs: lookup.retryAfterMs };

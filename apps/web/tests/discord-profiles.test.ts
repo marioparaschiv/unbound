@@ -138,6 +138,27 @@ describe('refreshDiscordProfiles', () => {
 		});
 	});
 
+	test('never looks up malformed ids, and caches a 400 as a miss so it cannot stall the sweep', async () => {
+		await credit(
+			'007' as DiscordId,
+			'99999999999999999999999' as DiscordId,
+			'251',
+			'252',
+			'253',
+		);
+		discord.override((id) =>
+			id === '251'
+				? Response.json({ message: 'Invalid Form Body' }, { status: 400 })
+				: undefined,
+		);
+
+		const result = await refreshDiscordProfiles(ctx);
+
+		expect(fetchedIds().toSorted((a, b) => a.localeCompare(b))).toEqual(['251', '252', '253']);
+		expect(result).toEqual({ refreshed: 3, retryAfterMs: null });
+		expect((await readProfiles(ctx, ['251'])).get('251')?.kind).toBe('missing');
+	});
+
 	test('keeps the cached row when Discord answers 500', async () => {
 		await cache('301', 'kept', 30 * HOUR_MS);
 		await credit('301');
@@ -263,9 +284,10 @@ describe('startProfileRefresher', () => {
 			requestProfileRefresh();
 			await Bun.sleep(50);
 
+			// A retry_after under a second is held to one, so this pause is still running.
 			expect(discord.requests).toHaveLength(1);
 
-			await waitFor(async () => (await readProfiles(ctx, ['801'])).has('801'));
+			await waitFor(async () => (await readProfiles(ctx, ['801'])).has('801'), 4000);
 
 			expect(discord.requests.length).toBeGreaterThan(1);
 		} finally {

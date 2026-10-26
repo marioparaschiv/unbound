@@ -5,6 +5,10 @@ export const BOT_TOKEN_HOST = 'discord.com';
 
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
+const SNOWFLAKE_PATTERN = /^[1-9]\d{0,19}$/;
+
+const SNOWFLAKE_LIMIT = 1n << 64n;
+
 /**
  * @description Reads the creation time encoded in a Discord snowflake id.
  * @param id The snowflake, e.g. a Discord user id.
@@ -12,6 +16,15 @@ const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
  */
 export function getSnowflakeDate(id: string): Date {
 	return new Date(Number((BigInt(id) >> 22n) + DISCORD_EPOCH));
+}
+
+/**
+ * @description Checks that a manifest author id can name a Discord user, which `'0'` and malformed ids cannot.
+ * @param id The manifest author id.
+ * @returns Whether the id is a snowflake worth looking up.
+ */
+export function isDiscordId(id: string): boolean {
+	return SNOWFLAKE_PATTERN.test(id) && BigInt(id) < SNOWFLAKE_LIMIT;
 }
 
 /**
@@ -52,6 +65,7 @@ export default {
 	DISCORD_EPOCH,
 	BOT_TOKEN_HOST,
 	getSnowflakeDate,
+	isDiscordId,
 	getAvatarUrl,
 	getDefaultAvatarUrl,
 	isBotTokenHost,

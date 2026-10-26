@@ -8,7 +8,7 @@ import {
 	requestProfileRefresh,
 	type CachedProfile,
 } from '~/lib/authors/profiles';
-import { getAvatarUrl, getDefaultAvatarUrl } from '~/lib/discord';
+import { getAvatarUrl, getDefaultAvatarUrl, isDiscordId } from '~/lib/discord';
 import type { DiscordId } from '~/lib/authors/discord-users';
 import { getVisibleBadges } from '~/lib/sponsors/badges';
 import { DEFAULT_ROLE } from '~/lib/auth/access';
@@ -55,7 +55,7 @@ function pickAuthor(
 	linked: LinkedUser | undefined,
 	cached: CachedProfile | undefined,
 ): ResolvedAuthor {
-	if (author.id === '0') {
+	if (!isDiscordId(author.id)) {
 		return {
 			kind: 'manifest',
 			discordId: null,
@@ -134,7 +134,7 @@ async function readLinkedUsers(
 }
 
 function authorKey(author: ManifestAuthor): string {
-	return author.id === '0' ? `0:${author.name}` : author.id;
+	return isDiscordId(author.id) ? author.id : `0:${author.name}`;
 }
 
 /**
@@ -149,7 +149,7 @@ export async function loadAuthors(
 	lists: ManifestAuthor[][],
 ): Promise<AuthorResolver> {
 	const ids = [
-		...new Set(lists.flat().flatMap((author) => (author.id === '0' ? [] : [author.id]))),
+		...new Set(lists.flat().flatMap((author) => (isDiscordId(author.id) ? [author.id] : []))),
 	];
 	const [linked, cached] = await Promise.all([readLinkedUsers(ctx, ids), readProfiles(ctx, ids)]);
 
@@ -158,7 +158,13 @@ export async function loadAuthors(
 	}
 
 	return (authors) => {
-		const unique = new Map(authors.map((author) => [authorKey(author), author]));
+		const unique = new Map<string, ManifestAuthor>();
+
+		for (const author of authors) {
+			if (!unique.has(authorKey(author))) {
+				unique.set(authorKey(author), author);
+			}
+		}
 
 		return [...unique.values()].map((author) =>
 			pickAuthor(author, linked.get(author.id), cached.get(author.id)),
