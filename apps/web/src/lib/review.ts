@@ -14,6 +14,7 @@ import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
 import { createGitHubClient, getGitHubToken } from '~/lib/github';
 import { requireSourced, toSubmission } from '~/lib/submissions';
 import { toAddonVersion, writeArtifact } from '~/lib/artifacts';
+import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { recordReviewDecision } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
@@ -335,6 +336,10 @@ export async function reviewSubmission(
 
 	const sha256 = request.decision === 'approved' ? await publishArtifact(ctx, row) : undefined;
 	const reviewed = await decide(ctx, row, decision, sha256);
+
+	if (sha256) {
+		requestProfileRefresh();
+	}
 
 	if (request.decision !== 'changes_requested') {
 		await ctx.storage.staging.delete(row.stagingKey);

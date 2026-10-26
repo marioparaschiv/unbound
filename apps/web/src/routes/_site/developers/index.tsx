@@ -74,7 +74,8 @@ function DevelopersContent() {
 					</EmptyMedia>
 					<EmptyTitle>No Developers Yet</EmptyTitle>
 					<EmptyDescription>
-						There are no developers yet. Developers will appear here once they join.
+						There are no developers yet. Developers will appear here once their addons
+						are listed.
 					</EmptyDescription>
 				</EmptyHeader>
 			</Empty>
@@ -119,7 +120,7 @@ function DevelopersContent() {
 				<>
 					<div style={GRID_STYLE} className='fill-grid gap-3'>
 						{developers.map((developer) => (
-							<DeveloperCard developer={developer} key={developer.id} />
+							<DeveloperCard developer={developer} key={developer.author.discordId} />
 						))}
 					</div>
 
@@ -151,7 +152,7 @@ function DevelopersPage() {
 	);
 }
 
-export const Route = createFileRoute('/_site/developers')({
+export const Route = createFileRoute('/_site/developers/')({
 	head: () => ({ meta: [{ title: 'Unbound | Developers' }] }),
 	validateSearch: pageSearchSchema,
 	loaderDeps: ({ search }) => search,

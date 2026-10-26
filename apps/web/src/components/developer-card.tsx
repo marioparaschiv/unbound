@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import type { ComponentProps } from 'react';
 
 import { Card, CardContent } from '~/components/ui/card';
@@ -11,11 +12,14 @@ type DeveloperCardProps = ComponentProps<typeof Card> & {
 	developer: Developer;
 };
 
+/** A credited author's card. */
 function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
+	const { author, addonCount } = developer;
+
 	return (
 		<Card
 			className={cn(
-				'p-0 gap-0 rounded-lg transition-transform duration-200 ease-in-out hover:-translate-y-1 hover:shadow-lg flex-row items-center',
+				'relative p-0 gap-0 rounded-lg transition-transform duration-200 ease-in-out hover:-translate-y-1 hover:shadow-lg flex-row items-center',
 				className,
 			)}
 			{...props}
@@ -23,19 +27,31 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 			<div className='flex items-center justify-center size-10 shrink-0 rounded-lg bg-accent m-4 mr-0 overflow-hidden'>
 				<UserAvatar
 					className='size-full rounded-lg object-cover'
-					src={developer.image}
-					name={developer.name}
+					src={author.avatarUrl}
+					name={author.name}
 				/>
 			</div>
 			<CardContent className='flex flex-col gap-0.5 p-4 min-w-0'>
 				<Text variant='heading-sm' className='truncate leading-tight!'>
-					{developer.name}
+					{author.kind === 'user' ? (
+						<Link
+							to='/developers/$discordId'
+							params={{ discordId: author.discordId }}
+							className='after:absolute after:inset-0 after:rounded-lg'
+						>
+							{author.name}
+						</Link>
+					) : (
+						author.name
+					)}
 				</Text>
 				<div className='flex items-center gap-2 min-w-0'>
-					<Text variant='text-xs' color='muted' className='capitalize'>
-						{developer.role}
+					<Text variant='text-xs' color='muted'>
+						{addonCount} {addonCount === 1 ? 'addon' : 'addons'}
 					</Text>
-					{developer.badge ? <UserBadge badge={developer.badge} /> : null}
+					{author.kind === 'user' && author.badge ? (
+						<UserBadge badge={author.badge} />
+					) : null}
 				</div>
 			</CardContent>
 		</Card>

@@ -1,6 +1,7 @@
 import type { SyncOAuthConfig, SyncSignInResponse } from '@unbound-app/contracts/sync';
 import { z } from 'zod';
 
+import { getAvatarUrl, getDefaultAvatarUrl } from '~/lib/discord';
 import { isBanned, toCallerProfile } from '~/lib/api/caller';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
@@ -37,18 +38,16 @@ function discordUrl(env: Env, path: string): URL {
 
 // Mirrors Better Auth's Discord provider, so in-app and web sign-ups store the same avatar.
 function avatarUrl(user: DiscordUser): string {
-	if (!user.avatar) {
-		const index =
-			!user.discriminator || user.discriminator === '0'
-				? Number(BigInt(user.id) >> 22n) % 6
-				: Number.parseInt(user.discriminator, 10) % 5;
-
-		return `https://cdn.discordapp.com/embed/avatars/${index}.png`;
+	if (user.avatar) {
+		return getAvatarUrl(user.id, user.avatar);
 	}
 
-	const format = user.avatar.startsWith('a_') ? 'gif' : 'png';
+	if (!user.discriminator || user.discriminator === '0') {
+		return getDefaultAvatarUrl(user.id);
+	}
 
-	return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${format}`;
+	// Accounts that still have a legacy discriminator pick their default avatar from it.
+	return `https://cdn.discordapp.com/embed/avatars/${Number.parseInt(user.discriminator, 10) % 5}.png`;
 }
 
 /**

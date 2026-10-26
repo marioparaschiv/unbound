@@ -10,6 +10,7 @@ import { and, eq, inArray, ne, sql } from 'drizzle-orm';
 import { OPEN_SUBMISSION_STATUSES, insertSubmissionSource } from '~/lib/submissions';
 import { createGitHubClient, getGitHubToken } from '~/lib/github';
 import { VERSION_SOURCE, writeArtifact } from '~/lib/artifacts';
+import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { recordReviewDecision } from '~/lib/moderation-events';
 import { addon, addonVersion, submission } from '~/db/schema';
 import type { AddonSource } from '~/lib/addon-source';
@@ -203,6 +204,8 @@ export async function publishFirstParty(
 	if (committed.kind === 'unchanged') {
 		return { status: 'unchanged', ...published, sha256: committed.sha256 };
 	}
+
+	requestProfileRefresh();
 
 	return { status: 'published', ...published, sha256: source.sha256 };
 }

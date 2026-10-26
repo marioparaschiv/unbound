@@ -1,18 +1,12 @@
-import type {
-	AddonType,
-	AddonVersion,
-	ListedAddon,
-	Maintainer,
-} from '@unbound-app/contracts/addons';
-import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
+import { listAddonsQuerySchema, type AddonVersion } from '@unbound-app/contracts/addons';
 import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source';
-import { listAddonsQuerySchema } from '@unbound-app/contracts/addons';
-import type { PublicBadge } from '@unbound-app/contracts/sponsors';
+import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod/mini';
 
+import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
 import { getAddonDetails, listAddons } from '~/lib/addons';
-import { getVisibleBadges } from '~/lib/sponsors/badges';
+import { loadAuthors } from '~/lib/authors/resolve';
 import app from '~/lib/app';
 
 export type MarketplaceSearch = z.infer<typeof marketplaceSearchSchema>;
@@ -23,19 +17,6 @@ export const marketplaceSearchSchema = z.pick(listAddonsQuerySchema.def.innerTyp
 	sort: true,
 	order: true,
 });
-
-/** What an addon card shows. Manifests are not passed whole: their passthrough keys cannot be serialized. */
-export type MarketplaceAddon = {
-	id: string;
-	type: AddonType;
-	name: string;
-	description: string;
-	authors: PublishedManifest['authors'];
-	version: string;
-	manifestUrl: string;
-};
-
-type ListedAddonFields = Pick<ListedAddon, 'id' | 'type' | 'name' | 'description'>;
 
 export type MarketplacePage = {
 	addons: MarketplaceAddon[];
@@ -60,26 +41,9 @@ export type MarketplaceAddonDetails = MarketplaceAddon & {
 	minClientVersion: string | null;
 	/** Newest first; the first is the one installs get. */
 	versions: MarketplaceVersion[];
-	maintainers: MarketplaceMaintainer[];
 	/** `null` when the newest version predates GitHub sources. */
 	source: MarketplaceSource | null;
 };
-
-export type MarketplaceMaintainer = Maintainer & {
-	badge: PublicBadge | null;
-};
-
-function toMarketplaceAddon(addon: ListedAddonFields, latest: AddonVersion): MarketplaceAddon {
-	return {
-		id: addon.id,
-		type: addon.type,
-		name: addon.name ?? latest.manifest.name,
-		description: addon.description ?? latest.manifest.description,
-		authors: latest.manifest.authors,
-		version: latest.version,
-		manifestUrl: latest.manifestUrl,
-	};
-}
 
 /**
  * @description Loads one page of the public addon listing for `/plugins` and `/themes`.
@@ -89,16 +53,22 @@ export const fetchMarketplacePage = createServerFn({ method: 'GET' })
 	.validator(listAddonsQuerySchema)
 	.handler(async ({ data }): Promise<MarketplacePage> => {
 		const page = await listAddons(app, data);
+		const resolve = await loadAuthors(
+			app,
+			page.addons.map((entry) => entry.latestVersion.manifest.authors),
+		);
 
 		return {
-			addons: page.addons.map((entry) => toMarketplaceAddon(entry, entry.latestVersion)),
+			addons: page.addons.map((entry) =>
+				toMarketplaceAddon(entry, entry.latestVersion, resolve),
+			),
 			nextCursor: page.nextCursor,
 		};
 	});
 
 /**
  * @description Loads a listed addon's public page.
- * @returns The addon with its version history and maintainers, or `null` when it is not listed.
+ * @returns The addon with its version history and resolved authors, or `null` when it is not listed.
  */
 export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 	.validator(addonIdSchema)
@@ -108,21 +78,14 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 
 		if (!details || !latest) return null;
 
-		const badges = await getVisibleBadges(
-			app,
-			details.maintainers.map((maintainer) => maintainer.id),
-		);
+		const resolve = await loadAuthors(app, [latest.manifest.authors]);
 
 		return {
-			...toMarketplaceAddon(details, latest),
+			...toMarketplaceAddon(details, latest, resolve),
 			createdAt: details.createdAt,
 			capabilities: latest.manifest.capabilities ?? [],
 			minClientVersion: latest.manifest.unbound?.min ?? null,
 			versions: details.versions.map(({ manifest: _manifest, ...version }) => version),
-			maintainers: details.maintainers.map((maintainer) => ({
-				...maintainer,
-				badge: badges.get(maintainer.id) ?? null,
-			})),
 			source:
 				latest.source && details.details
 					? {

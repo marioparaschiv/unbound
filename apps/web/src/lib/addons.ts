@@ -335,18 +335,28 @@ export async function listAddons(
 }
 
 /**
+ * @description Loads every listed addon with its newest version, ordered by id.
+ * @param ctx The application context.
+ * @returns The listed addons.
+ */
+export async function listListedAddons(ctx: AppContext): Promise<ListedAddon[]> {
+	const rows = await ctx.db.query.addon.findMany({
+		where: { delistedAt: { isNull: true } },
+		with: LATEST_VERSION,
+		orderBy: { id: 'asc' },
+	});
+
+	return toListedAddons(ctx, rows);
+}
+
+/**
  * @description Snapshots every listed addon with its newest version, ordered by id. The revision is a
  * hash of the snapshot, so it changes exactly when an approval, delist or relist changes what is listed.
  * @param ctx The application context.
  * @returns The catalog and its revision.
  */
 export async function getCatalog(ctx: AppContext): Promise<CatalogResponse> {
-	const rows = await ctx.db.query.addon.findMany({
-		where: { delistedAt: { isNull: true } },
-		with: LATEST_VERSION,
-		orderBy: { id: 'asc' },
-	});
-	const addons = toListedAddons(ctx, rows);
+	const addons = await listListedAddons(ctx);
 	const revision = new Bun.CryptoHasher('sha256').update(JSON.stringify(addons)).digest('hex');
 
 	return { revision, addons };
@@ -457,6 +467,7 @@ export default {
 	relistAddon,
 	queryListedAddons,
 	listAddons,
+	listListedAddons,
 	getCatalog,
 	getAddonDetails,
 	listMyAddons,

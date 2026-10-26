@@ -21,8 +21,9 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from '~/components/ui/empty';
-import type { MarketplaceAddon, MarketplacePage, MarketplaceSearch } from '~/lib/marketplace';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
+import type { MarketplacePage, MarketplaceSearch } from '~/lib/marketplace';
+import type { MarketplaceAddon } from '~/lib/marketplace-addon';
 import type { SortOption } from '~/components/sort-controls';
 import { fetchMarketplacePage } from '~/lib/marketplace';
 import type { CssVariables } from '~/lib/css-variables';

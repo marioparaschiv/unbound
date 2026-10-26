@@ -1,4 +1,5 @@
 export * from './sponsors';
+export * from './discord';
 export * from './sources';
 export * from './addons';
 export * from './loader';
