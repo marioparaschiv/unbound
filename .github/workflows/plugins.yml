@@ -62,7 +62,7 @@ jobs:
                   curl --fail --location --silent --show-error --retry 3 "$ipa_url" -o "$RUNNER_TEMP/Unbound.ipa"
             - name: Sync plugin icons from the loader IPA
               if: steps.loader-ipa.outputs.available == 'true'
-              run: bun packages/plugins/scripts/sync-plugin-icons.ts "$RUNNER_TEMP/Unbound.ipa"
+              run: bun packages/plugin-scripts/src/sync-plugin-icons.ts "$RUNNER_TEMP/Unbound.ipa"
             - name: Generate the plugin catalog
               run: bun run plugins:catalog
             - name: Check generated plugin files are up to date

@@ -1,0 +1,21 @@
+{
+	"name": "@unbound-app/plugin-scripts",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"validate": "bun src/validate-plugins.ts",
+		"catalog": "bun src/generate-plugins-readme.ts",
+		"sync-icons": "bun src/sync-plugin-icons.ts",
+		"device-matrix": "bun src/device-matrix.ts",
+		"publish": "bun src/publish-plugins.ts",
+		"lint": "oxlint --config .oxlintrc.json .",
+		"test": "bun test --isolate",
+		"typecheck": "tsc --noEmit -p ."
+	},
+	"devDependencies": {
+		"@types/bun": "catalog:",
+		"@unbound-app/contracts": "workspace:*",
+		"@unbound-app/types": "workspace:*",
+		"typescript": "catalog:"
+	}
+}

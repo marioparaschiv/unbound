@@ -108,6 +108,7 @@ export function createNativeCards(native: Native) {
 	const contentCache = new Map<string, Promise<CardContent>>();
 	const pending = new Set<string>();
 	const awaitingSize = new Map<string, NativeJavaReference>();
+	const renderedByView = new Map<string, string>();
 	const blockBackgrounds = createBlockBackgroundFinder(java);
 	let nextSurface = 0;
 	let disposed = false;
@@ -280,16 +281,16 @@ export function createNativeCards(native: Native) {
 		}
 
 		const density = displayDensity(textView);
-		const width = textWidth(textView, density);
+		const rendered = renderedText(content.string, slots);
+		const previous = layouts.get(rendered);
+		const detached = !javaFlag(java.invoke(textView, 'isAttachedToWindow', []));
+		const width = previous && detached ? previous.width : textWidth(textView, density);
 
 		if (width < MIN_WIDTH) {
 			awaitingSize.set(key, textView);
 
 			return;
 		}
-
-		const rendered = renderedText(content.string, slots);
-		const previous = layouts.get(rendered);
 		const layout: Layout = {
 			original: content.string,
 			textView,
@@ -302,6 +303,26 @@ export function createNativeCards(native: Native) {
 		};
 
 		layouts.set(rendered, layout);
+		renderedByView.set(key, rendered);
+		await define(rendered, layout);
+	}
+
+	async function resize(textView: NativeJavaReference) {
+		const key = viewKey(textView as NativeJavaValue);
+		const rendered = key ? renderedByView.get(key) : undefined;
+		const layout = rendered ? layouts.get(rendered) : undefined;
+		const shown = readViewText(java, textView)?.string;
+
+		if (disposed || !rendered || !layout || (shown !== rendered && shown !== layout.original)) {
+			return;
+		}
+
+		const width = textWidth(textView, layout.density);
+
+		if (width < MIN_WIDTH || Math.abs(width - layout.width) < 1) return;
+
+		layout.width = width;
+		layout.textView = textView;
 		await define(rendered, layout);
 	}
 
@@ -343,10 +364,20 @@ export function createNativeCards(native: Native) {
 			const key = viewKey(self);
 			const textView = key ? awaitingSize.get(key) : undefined;
 
-			if (!key || !textView) return;
+			if (key && textView) {
+				awaitingSize.delete(key);
+				schedule(textView);
 
-			awaitingSize.delete(key);
-			schedule(textView);
+				return;
+			}
+
+			const resized = javaReference(self);
+
+			if (resized) {
+				resize(resized).catch((error) => {
+					console.error(`[${PLUGIN_NAME}] Failed to resize an Android code card:`, error);
+				});
+			}
 		},
 	);
 
@@ -384,6 +415,7 @@ export function createNativeCards(native: Native) {
 			hooks.remove(token);
 			hooks.remove(sizeToken);
 			awaitingSize.clear();
+			renderedByView.clear();
 			unsubscribe();
 			layouts.clear();
 			listeners.clear();

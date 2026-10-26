@@ -62,7 +62,7 @@ jobs:
               env:
                   DATABASE_URL: postgres://unbound_bot:unbound_bot@localhost:5432/postgres
                   POSTGRES_SUPERUSER_URL: postgres://postgres:postgres@localhost:5432/postgres
-              run: bun test --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/client/tests/native.test.ts'
+              run: bun test --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/plugin-scripts/**' --path-ignore-patterns 'packages/client/tests/native.test.ts'
             - name: Run native bridge tests
               run: bun test --isolate packages/client/tests/native.test.ts
             - name: Generate the plugin SDK

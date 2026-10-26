@@ -298,6 +298,15 @@
         "@types/bun": "catalog:",
       },
     },
+    "packages/plugin-scripts": {
+      "name": "@unbound-app/plugin-scripts",
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "@unbound-app/contracts": "workspace:*",
+        "@unbound-app/types": "workspace:*",
+        "typescript": "catalog:",
+      },
+    },
     "packages/plugin-test": {
       "name": "plugin-sdk-test",
       "version": "0.7.0",
@@ -1818,6 +1827,8 @@
     "@unbound-app/discord-bot": ["@unbound-app/discord-bot@workspace:apps/discord-bot"],
 
     "@unbound-app/logger": ["@unbound-app/logger@workspace:packages/logger"],
+
+    "@unbound-app/plugin-scripts": ["@unbound-app/plugin-scripts@workspace:packages/plugin-scripts"],
 
     "@unbound-app/plugins": ["@unbound-app/plugins@workspace:packages/plugins"],
 

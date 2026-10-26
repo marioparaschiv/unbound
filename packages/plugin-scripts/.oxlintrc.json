@@ -1,0 +1,8 @@
+{
+	"$schema": "../../node_modules/oxlint/configuration_schema.json",
+	"ignorePatterns": ["**/dist/**", "**/node_modules/**"],
+	"rules": {
+		"eslint/no-control-regex": "off",
+		"unicorn/no-useless-spread": "off"
+	}
+}

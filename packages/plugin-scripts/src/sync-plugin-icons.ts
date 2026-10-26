@@ -1,11 +1,11 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const repoRoot = fileURLToPath(new URL('..', import.meta.url));
-const pluginsDir = repoRoot;
-const iconsDir = resolve(repoRoot, '../../assets/plugins/icons');
+import { PLUGIN_ICONS_DIR, PLUGINS_DIR } from './paths';
+
+const pluginsDir = PLUGINS_DIR;
+const iconsDir = PLUGIN_ICONS_DIR;
 const iconRoots = [
 	'Payload/Discord.app/assets/design/components/Icon/native/redesign/generated/images/',
 	'Payload/Discord.app/assets/images/native/icons/',
@@ -89,6 +89,9 @@ function syncIcons(archivePath: string): void {
 }
 
 const archivePath = process.argv[2];
-if (!archivePath) throw new Error('Usage: bun scripts/sync-plugin-icons.ts <loader-ipa-path>');
+if (!archivePath)
+	throw new Error(
+		'Usage: bun packages/plugin-scripts/src/sync-plugin-icons.ts <loader-ipa-path>',
+	);
 
 syncIcons(archivePath);

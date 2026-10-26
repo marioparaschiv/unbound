@@ -5,7 +5,7 @@ import type { ThemedToken } from 'shiki';
 
 import type { IconMode, LineOverflow } from '~/preferences';
 import type { ThemeAppearance, TokenLines } from '~/highlighter';
-import { codeBlockLayout } from '~/layout';
+import { CODE_LINE_HEIGHT, codeBlockLayout } from '~/layout';
 import { languageLabel } from '~/languages';
 import devicons from '~/devicons.json';
 import { cssColor } from '~/card-colors';
@@ -44,7 +44,7 @@ const deviconImages: Record<string, string> = devicons.images;
 const codeText: TextStyle = {
 	fontFamily: 'monospace',
 	fontSize: 12,
-	lineHeight: 14.5,
+	lineHeight: CODE_LINE_HEIGHT,
 	includeFontPadding: false,
 };
 
