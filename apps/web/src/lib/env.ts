@@ -37,7 +37,7 @@ export const envSchema = z.object({
 		.url()
 		.default('https://discord.com/api/v10')
 		.refine(
-			(value) => isBotTokenHost(new URL(value)),
+			(value) => URL.canParse(value) && isBotTokenHost(new URL(value)),
 			'Must be https://discord.com or loopback.',
 		),
 	/** How long a cached Discord profile of a manifest author counts as fresh. */

@@ -143,8 +143,9 @@ describe('refreshDiscordProfiles', () => {
 		await credit('301');
 		discord.override(() => Response.json({ message: 'Oops' }, { status: 500 }));
 
-		await refreshDiscordProfiles(ctx);
+		const result = await refreshDiscordProfiles(ctx);
 
+		expect(result.retryAfterMs).toBeGreaterThan(0);
 		expect(fetchedIds()).toContain('301');
 		expect((await readProfiles(ctx, ['301'])).get('301')).toEqual({
 			kind: 'found',
@@ -210,7 +211,11 @@ describe('Discord API host', () => {
 	test('rejects a DISCORD_API_URL that is neither discord.com nor loopback', () => {
 		const env = { ...TEST_ENV, DATABASE_PATH: ':memory:' };
 
-		for (const url of ['https://example.com/api/v10', 'http://discord.com/api/v10']) {
+		for (const url of [
+			'https://example.com/api/v10',
+			'http://discord.com/api/v10',
+			'not a url',
+		]) {
 			expect(() => parseEnv({ ...env, DISCORD_API_URL: url })).toThrow(/DISCORD_API_URL/);
 		}
 

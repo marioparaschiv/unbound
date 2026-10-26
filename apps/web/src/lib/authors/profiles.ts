@@ -16,7 +16,7 @@ export type CachedProfile =
 
 export type SweepResult = {
 	refreshed: number;
-	/** Set when the sweep stopped early: how long to wait before the next one. */
+	/** Set when Discord rate-limited or failed: how long to wait before the next sweep. */
 	retryAfterMs: number | null;
 };
 
@@ -155,6 +155,7 @@ export async function refreshDiscordProfiles(ctx: AppContext): Promise<SweepResu
 
 	let refreshed = 0;
 	let failures = 0;
+	let failed = false;
 
 	for (const id of due) {
 		const lookup = await fetchDiscordUser(ctx.env, id);
@@ -164,6 +165,7 @@ export async function refreshDiscordProfiles(ctx: AppContext): Promise<SweepResu
 		}
 
 		if (lookup.kind === 'failed') {
+			failed = true;
 			failures += 1;
 
 			if (failures === MAX_CONSECUTIVE_FAILURES) {
@@ -178,7 +180,8 @@ export async function refreshDiscordProfiles(ctx: AppContext): Promise<SweepResu
 		refreshed += 1;
 	}
 
-	return { refreshed, retryAfterMs: null };
+	// A failed id stays due, so without a pause every page view would fetch it again.
+	return { refreshed, retryAfterMs: failed ? FAILURE_BACKOFF_MS : null };
 }
 
 function createProfileRefresher(ctx: AppContext): ProfileRefresher {
@@ -211,6 +214,7 @@ function createProfileRefresher(ctx: AppContext): ProfileRefresher {
 				}
 
 				if (retryAfterMs !== null) {
+					logger.warn(`Discord profile refresh paused for ${retryAfterMs} ms.`);
 					pause(retryAfterMs);
 				} else if (state.kind === 'running' && !state.again) {
 					state = { kind: 'idle' };
