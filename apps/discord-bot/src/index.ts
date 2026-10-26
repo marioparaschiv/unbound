@@ -9,6 +9,7 @@ import { createDatabase, POOLED_OPTIONS } from '~/db/database';
 import { GUILD_ID, SITE_URL } from '~/lib/constants';
 import { startDispatchers } from '~/runtime/start';
 import { setDatabase } from '~/db/instance';
+import { checkTriggers } from '~/db/triggers';
 import { dispatchers } from '~/dispatchers';
 import { checkConfig } from '~/lib/config';
 
@@ -29,6 +30,12 @@ const web = createBotReads(db.$client, {
 });
 
 setDatabase(db);
+
+try {
+	await checkTriggers(db);
+} catch (error) {
+	logger.error('Failed to check the triggers on the web tables:', error);
+}
 
 const client = new SapphireClient({
 	// Sapphire otherwise derives the piece root from the package entry point, which Bun does not set.
