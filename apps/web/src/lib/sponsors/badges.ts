@@ -97,10 +97,6 @@ export async function claimBadge(
 		);
 	}
 
-	if ((await findBadgeClaim(ctx, userId))?.revokedAt) {
-		throw new ApiError('perk_revoked', 'Staff removed your badge; it cannot be set again.');
-	}
-
 	const problem = findBadgeLabelProblem(badge.label);
 
 	if (problem) {
@@ -108,16 +104,22 @@ export async function claimBadge(
 	}
 
 	const now = ctx.now();
-
-	await ctx.db
+	// One statement, so a revoke committing while it runs still wins.
+	const [row] = await ctx.db
 		.insert(perkClaim)
 		.values({ userId, perkId: PERK_ID, config: badge, createdAt: now, updatedAt: now })
 		.onConflictDoUpdate({
 			target: [perkClaim.userId, perkClaim.perkId],
 			set: { config: badge, updatedAt: now },
-		});
+			setWhere: isNull(perkClaim.revokedAt),
+		})
+		.returning();
 
-	return claimResponse(ctx, userId);
+	if (!row) {
+		throw new ApiError('perk_revoked', 'Staff removed your badge; it cannot be set again.');
+	}
+
+	return { claim: toBadgeClaim(row) };
 }
 
 /**
