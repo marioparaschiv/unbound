@@ -1,11 +1,11 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import type postgres from 'postgres';
 
+import { readEventsAfter, readNewestEventId } from '~/lib/bot/events';
 import { readRelease, readReleasesSince } from '~/lib/bot/releases';
 import { DEFAULT_PERK_GRACE_DAYS } from '~/lib/sponsors/standing';
 import type { BotReadOptions, BotReads } from '~/lib/bot/types';
 import { readAddon, readAddons } from '~/lib/bot/addons';
-import { readEventsAfter, readNewestEventId } from '~/lib/bot/events';
 import { readMembers } from '~/lib/bot/members';
 import relations from '~/db/relations';
 

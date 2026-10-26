@@ -1,8 +1,8 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import { createStaffNote } from '@unbound-app/web/testing';
+import { asc, eq, isNotNull, isNull } from 'drizzle-orm';
 import type { AuditEvent } from '@unbound-app/web/bot';
 import type { Client } from 'discord.js';
-import { asc, eq, isNotNull, isNull } from 'drizzle-orm';
 
 import type { DispatcherContext } from '~/dispatchers/types';
 import { createAuditDispatcher } from '~/dispatchers/audit';
