@@ -23,6 +23,8 @@ const (
 	referenceJavaClass  = "java-class"
 	referenceJavaMethod = "java-method"
 	referenceJavaField  = "java-field"
+	referenceJavaShape  = "java-shape"
+	referenceResource   = "android-resource"
 )
 
 type compatLocation struct {
@@ -54,7 +56,7 @@ func (reference compatReference) platforms() []string {
 	switch reference.Kind {
 	case referenceObjCClass, referenceObjCMethod, referenceObjCIvar:
 		return []string{"ios"}
-	case referenceJavaClass, referenceJavaMethod, referenceJavaField:
+	case referenceJavaClass, referenceJavaMethod, referenceJavaField, referenceJavaShape, referenceResource:
 		return []string{"android"}
 	}
 	if reference.Platform != "" {

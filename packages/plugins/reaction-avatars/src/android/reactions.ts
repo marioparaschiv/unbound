@@ -8,8 +8,8 @@ import type {
 	NativeJavaValue,
 } from '@unbound-app/api/native';
 import { layoutHostingList, removeHost } from '@unbound-plugins/shared/native/android/inline-hosts';
+import { shapeField } from '@unbound-plugins/shared/native/android/discord-shapes';
 import {
-	describeJavaClass,
 	MESSAGE_VIEW,
 	messageBindMethod,
 	messageIdField,
@@ -47,7 +47,6 @@ import { fetchReactors } from '~/reactors';
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 const REACTION_ROW = 'com.discord.reactions.ShortcutsFlexbox';
 const ADD_REACTION_VIEW = 'com.discord.reactions.AddReactionView';
-const STRING = 'java.lang.String';
 const LINEAR_PARAMS = 'android.widget.LinearLayout$LayoutParams';
 const CENTER_VERTICAL = 16;
 const VISIBLE = 0;
@@ -151,15 +150,13 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 
 		if (cached) return cached;
 
-		const fields = describeJavaClass(java, className).fields.filter(
-			(field) => !field.static && field.type === STRING,
-		);
+		const field = shapeField(java, 'reactionEmoji', className);
 
-		if (fields.length !== 1) return undefined;
+		if (!field) return undefined;
 
-		emojiFields.set(className, fields[0]!.name);
+		emojiFields.set(className, field.name);
 
-		return fields[0]!.name;
+		return field.name;
 	}
 
 	function reactionRow(messageView: NativeJavaReference): NativeJavaReference | null {

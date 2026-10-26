@@ -1,0 +1,37 @@
+{
+	"messageBind": {
+		"owner": "com.discord.chat.presentation.message.MessageView",
+		"member": "method",
+		"static": false,
+		"firstParameter": "com.discord.chat.bridge.Message",
+		"pick": "most-parameters"
+	},
+	"messageId": {
+		"owner": "com.discord.chat.presentation.message.MessageView",
+		"member": "field",
+		"static": false,
+		"type": "java.lang.String",
+		"pick": "only"
+	},
+	"draweeTextBuilder": {
+		"owner": "com.facebook.drawee.span.SimpleDraweeSpanTextView",
+		"member": "method",
+		"name": "setDraweeSpanStringBuilder",
+		"parameterCount": 1,
+		"pick": "only"
+	},
+	"blockBackgroundSpan": {
+		"implements": "android.text.style.LineBackgroundSpan",
+		"member": "constructor",
+		"parameters": ["int", "int", "int", "int", "int", "int", "int"],
+		"pick": "only"
+	},
+	"reactionEmoji": {
+		"extends": "android.widget.LinearLayout",
+		"withFields": ["java.lang.Integer", "java.lang.Boolean"],
+		"member": "field",
+		"static": false,
+		"type": "java.lang.String",
+		"pick": "only"
+	}
+}

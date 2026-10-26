@@ -63,6 +63,8 @@ func run(args []string) error {
 		return runCompatScan(args[1:])
 	case "compat-issue":
 		return runCompatIssue(args[1:])
+	case "compat-legacy-issue":
+		return runCompatLegacyIssue(args[1:])
 	case "format":
 		return runFormat(args[1:])
 	case "lint":
@@ -79,7 +81,7 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|doctor|dev|compat-scan|compat-issue|format|lint>")
+	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|format|lint>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
 	fmt.Println("       go run ./tools validate [--root <path>]")
@@ -97,6 +99,7 @@ func printUsage() {
 	fmt.Println("       go run ./tools attest <enabled|stage|sign|verify> [flags]")
 	fmt.Println("       go run ./tools compat-scan [--ipa <path>] [--apk <path>...] [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>] [--ios-sdk <path>] [--android-jar <path>]")
 	fmt.Println("       go run ./tools compat-issue --results <json> --report <md> --channel <name> [--repo <owner/name>]")
+	fmt.Println("       go run ./tools compat-legacy-issue --results <json> [--repo <owner/name>] [--source-url <url>]")
 	fmt.Println("       go run ./tools format [--check] [--root <path>]")
 	fmt.Println("       go run ./tools lint [--root <path>]")
 	fmt.Println("       go run ./tools dev status [--root <path>]")
