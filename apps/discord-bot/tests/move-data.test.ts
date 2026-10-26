@@ -10,12 +10,7 @@ import postgres from 'postgres';
 import type { AddonChannels } from '~/dispatchers/addons';
 import { contentHash } from '~/lib/content-hash';
 
-import {
-	createBotTestDatabase,
-	DATABASE_URL,
-	TEST_GRACE_DAYS,
-	type BotTestDatabase,
-} from './helpers/database';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
 import { moveData, type MoveOptions, type MoveReport } from '../scripts/move-data';
 import { signUp } from './helpers/web';
 
@@ -52,7 +47,7 @@ function refusal(move: Promise<MoveReport>): Promise<string> {
 		(error: Error) => error.message,
 	);
 }
-const OPTIONS: MoveOptions = { sponsorGraceDays: TEST_GRACE_DAYS, channels: CHANNELS };
+const OPTIONS: MoveOptions = { channels: CHANNELS };
 
 describe.skipIf(!DATABASE_URL)('move-data', () => {
 	let database: BotTestDatabase;
@@ -118,18 +113,35 @@ describe.skipIf(!DATABASE_URL)('move-data', () => {
 		]).toEqual([{ ms: String(Date.parse('2026-10-01T00:00:00.123Z')) }]);
 	});
 
-	test('a rerun converges to the same rows, and a new tag after it takes a fresh id', async () => {
+	test('a rerun is a no-op, and a new tag after it takes a fresh id', async () => {
 		const first = await moveData(source, target, OPTIONS);
 
-		await target`update bot.addon_message set posted_hash = 'drifted' where addon_id = 'move.gone'`;
-
-		const second = await moveData(source, target, OPTIONS);
-
-		expect(second).toEqual(first);
+		expect(await moveData(source, target, OPTIONS)).toEqual(first);
 		expect([
 			...(await target`insert into bot.tag (name, content) values ('new', 'New.') returning id`),
 		]).toEqual([{ id: 3 }]);
 		await target`delete from bot.tag where name = 'new'`;
+	});
+
+	test('a target row that differs from the source fails loudly before any write, and a fixed target finishes the move', async () => {
+		const first = await moveData(source, target, OPTIONS);
+
+		await target`delete from bot.tag where name = 'docs'`;
+		await target`update bot.addon_message set posted_hash = 'drifted' where addon_id = 'move.gone'`;
+
+		expect(await refusal(moveData(source, target, OPTIONS))).toBe(
+			'bot.addon_message row move.gone is ["move.gone","11","503","drifted","1790812802000",null], but the source has ["move.gone","11","503","posted","1790812802000",null]: the bot already ran against this database. Stop it and decide which rows to keep; nothing was written.',
+		);
+		expect([
+			...(await target`select posted_hash from bot.addon_message where addon_id = 'move.gone'`),
+		]).toEqual([{ posted_hash: 'drifted' }]);
+		expect([...(await target`select name from bot.tag order by id`)]).toEqual([
+			{ name: 'faq' },
+		]);
+
+		await target`update bot.addon_message set posted_hash = 'posted' where addon_id = 'move.gone'`;
+
+		expect(await moveData(source, target, OPTIONS)).toEqual(first);
 	});
 
 	test('refuses a target the bot already wrote to, and a source that is not the old bot database', async () => {
