@@ -60,7 +60,11 @@ function readRows(db: Database, spec: TableSpec): CanonicalRow[] {
 		.query<SourceValue[], []>(`SELECT ${columns} FROM ${quote(spec.name)} ORDER BY ${order}`)
 		.values();
 
-	return rows.map((row, index) =>
+	const keyPositions = spec.primaryKey.map((name) =>
+		spec.columns.findIndex((column) => column.name === name),
+	);
+
+	return rows.map((row) =>
 		spec.columns.map((column, position) => {
 			const value = row[position] ?? null;
 
@@ -69,9 +73,13 @@ function readRows(db: Database, spec: TableSpec): CanonicalRow[] {
 			try {
 				return column.codec.parse(value);
 			} catch (error) {
-				throw new Error(`${spec.name}.${column.name}, row ${index + 1} by primary key:`, {
-					cause: error,
-				});
+				// Names the row by its key, never by the value that failed.
+				const key = keyPositions.map((at) => JSON.stringify(String(row[at]))).join(', ');
+
+				throw new Error(
+					`${spec.name}.${column.name} at (${spec.primaryKey.join(', ')}) = (${key}):`,
+					{ cause: error },
+				);
 			}
 		}),
 	);

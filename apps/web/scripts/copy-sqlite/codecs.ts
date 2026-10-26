@@ -1,3 +1,5 @@
+import { containsNul, NUL } from '@unbound-app/contracts/text';
+
 /** A value as `bun:sqlite` reads it with `safeIntegers`, so no integer loses precision. */
 export type SourceValue = string | bigint | number | Uint8Array | null;
 
@@ -45,12 +47,35 @@ function integer(value: Exclude<SourceValue, null>, range: Range): bigint {
 	return value;
 }
 
+// The messages never quote the value, which may be a secret.
 function text(value: Exclude<SourceValue, null>): string {
 	if (typeof value !== 'string') {
 		throw new TypeError(`Expected text, got ${describe(value)}.`);
 	}
 
+	if (value.includes(NUL)) {
+		throw new TypeError('Postgres text cannot hold a NUL character.');
+	}
+
 	return value;
+}
+
+function json(value: Exclude<SourceValue, null>): string {
+	const parsed = text(value);
+	let escapedNul = false;
+
+	try {
+		escapedNul = containsNul(JSON.parse(parsed));
+	} catch {
+		throw new TypeError('Expected JSON, got text that does not parse.');
+	}
+
+	// An escaped `\u0000` stores in `json` but fails every `->>` that reads it.
+	if (escapedNul) {
+		throw new TypeError('Postgres json cannot hold a NUL character in a string or key.');
+	}
+
+	return parsed;
 }
 
 function identity(canonical: string) {
@@ -80,7 +105,7 @@ export const codecs: Record<ColumnType, Codec> = {
 		readBack: (column) => `${column}::int::text`,
 	},
 	// `json`, unlike `jsonb`, stores its input text, so key order and spacing survive.
-	PgJson: { parse: text, encode: identity, readBack: asText },
+	PgJson: { parse: json, encode: identity, readBack: asText },
 	PgBigInt53: {
 		parse: (value) => String(integer(value, INT64)),
 		encode: identity,
@@ -91,19 +116,7 @@ export const codecs: Record<ColumnType, Codec> = {
 		encode: identity,
 		readBack: asText,
 	},
-	PgText: {
-		parse: (value) => {
-			const parsed = text(value);
-
-			if (parsed.includes('\0')) {
-				throw new TypeError('Postgres text cannot hold a NUL character.');
-			}
-
-			return parsed;
-		},
-		encode: identity,
-		readBack: identity,
-	},
+	PgText: { parse: text, encode: identity, readBack: identity },
 };
 
 /**

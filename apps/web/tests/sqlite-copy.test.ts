@@ -293,6 +293,34 @@ describe('copySqlite', () => {
 		expect((await failure(copy(context))).message).toContain('stray');
 	});
 
+	test('names the row holding NUL, without its value, before writing anything', async () => {
+		const cases = [
+			{
+				statement: `UPDATE addon_maintainer SET role = 'hidden' || char(0) || 'value'`,
+				location: 'addon_maintainer.role at (addon_id, user_id) = ("acme.one", "u1"):',
+			},
+			{
+				statement: `UPDATE submission SET manifest = '{"hidden":"a\\u0000value"}'`,
+				location: 'submission.manifest at (id) = ("sub1"):',
+			},
+		];
+
+		for (const { statement, location } of cases) {
+			const context = await setup();
+
+			context.source.exec(statement);
+
+			const error = await failure(copy(context));
+			const cause = error.cause instanceof Error ? error.cause.message : '';
+			const [target] = await context.db.$client`select to_regclass('addon') as addon`;
+
+			expect(error.message).toBe(location);
+			expect(cause).toContain('NUL');
+			expect(`${error.message} ${cause}`).not.toMatch(/hidden|value/);
+			expect(target?.addon).toBeNull();
+		}
+	});
+
 	test('copies a table the source predates as empty', async () => {
 		const context = await setup();
 
