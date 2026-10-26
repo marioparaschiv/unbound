@@ -15,11 +15,12 @@ export const addonMessage = botSchema.table('addon_message', {
 	editedAt: timestamp('edited_at', { withTimezone: true }),
 });
 
-/** One row per posted moderation event; the newest `event_id` is the audit log's cursor. */
+/** One row per posted moderation event and one floor row; the newest `event_id` is the audit log's cursor. */
 export const auditPost = botSchema.table('audit_post', {
 	eventId: bigint('event_id', { mode: 'number' }).primaryKey(),
 	channelId: text('channel_id').notNull(),
-	messageId: text('message_id').notNull(),
+	/** `null` marks the floor: the newest event when the audit log was first enabled, never posted. */
+	messageId: text('message_id'),
 	postedAt: timestamp('posted_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

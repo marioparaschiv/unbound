@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } fr
 import { createStaffNote } from '@unbound-app/web/testing';
 import type { AuditEvent } from '@unbound-app/web/bot';
 import type { Client } from 'discord.js';
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, isNotNull, isNull } from 'drizzle-orm';
 
 import type { DispatcherContext } from '~/dispatchers/types';
 import { createAuditDispatcher } from '~/dispatchers/audit';
@@ -66,8 +66,28 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 		});
 	}
 
+	// The first run on an empty moderation log floors it at 0, so every event seeded after it posts.
+	async function enabled(channelId: string = fake.channelId) {
+		const audit = createAuditDispatcher(channelId);
+
+		await audit.reconcile(context());
+
+		return audit;
+	}
+
+	function floors() {
+		return database.db
+			.select({ id: auditPost.eventId, channelId: auditPost.channelId })
+			.from(auditPost)
+			.where(isNull(auditPost.messageId));
+	}
+
 	async function rows() {
-		const posts = await database.db.select().from(auditPost).orderBy(asc(auditPost.eventId));
+		const posts = await database.db
+			.select()
+			.from(auditPost)
+			.where(isNotNull(auditPost.messageId))
+			.orderBy(asc(auditPost.eventId));
 
 		return posts.map(({ eventId, channelId, messageId }) => ({
 			id: eventId,
@@ -76,8 +96,58 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 		}));
 	}
 
-	test('posts every event in ascending id order and stores each message id', async () => {
+	test('the first run posts no history and floors the log at its newest event', async () => {
 		const audit = createAuditDispatcher(fake.channelId);
+
+		for (const id of [1, 2, 3]) {
+			seed(id);
+		}
+
+		await audit.reconcile(context());
+
+		expect(fake.requests).toEqual([]);
+		expect(await floors()).toEqual([{ id: 3, channelId: fake.channelId }]);
+
+		seed(4);
+		await audit.handle('4', context());
+		await audit.reconcile(context());
+		await audit.handle('4', context());
+
+		expect(footers(fake)).toEqual(['Event #4 · user.unbanned']);
+		expect(await floors()).toEqual([{ id: 3, channelId: fake.channelId }]);
+		expect(await rows()).toMatchObject([{ id: 4, messageId: fake.messages[0]?.id }]);
+	});
+
+	test('an empty log floors at 0 and posts its first event', async () => {
+		const audit = createAuditDispatcher(fake.channelId);
+
+		await audit.reconcile(context());
+		seed(1);
+		await audit.handle('1', context());
+
+		expect(await floors()).toEqual([{ id: 0, channelId: fake.channelId }]);
+		expect(footers(fake)).toEqual(['Event #1 · user.unbanned']);
+	});
+
+	test('posts moved from the old database win over a floor', async () => {
+		const audit = createAuditDispatcher(fake.channelId);
+
+		await database.db
+			.insert(auditPost)
+			.values({ eventId: 2, channelId: fake.channelId, messageId: '700' });
+
+		for (const id of [1, 2, 3, 4]) {
+			seed(id);
+		}
+
+		await audit.reconcile(context());
+
+		expect(await floors()).toEqual([]);
+		expect(footers(fake)).toEqual(['Event #3 · user.unbanned', 'Event #4 · user.unbanned']);
+	});
+
+	test('posts every event in ascending id order and stores each message id', async () => {
+		const audit = await enabled();
 
 		for (const id of [5, 2, 9, 3]) {
 			seed(id);
@@ -101,7 +171,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('posts nothing twice across a restart or a crash before the id was stored', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 
 		for (const id of [1, 2, 3]) {
 			seed(id);
@@ -140,7 +210,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('a bot post for an older event that reused the id is not adopted', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 
 		fake.inject(fake.botUser, {
 			embeds: [
@@ -158,7 +228,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('an embed Discord rejects posts a bare fallback so later events still post', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 
 		for (const id of [1, 2, 3]) {
 			seed(id);
@@ -182,7 +252,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('a burst through 429s posts each event once, in order', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 		const ids = Array.from({ length: 30 }, (_, index) => index + 1);
 
 		for (const id of ids.toReversed()) {
@@ -200,7 +270,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('an unknown kind and a malformed known kind post a generic embed', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 
 		// A kind newer than this bot's contracts arrives as plain text from the database.
 		seed(1, { kind: 'future.thing' as AuditEvent['kind'], data: { colour: 'teal' } });
@@ -224,7 +294,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('a note full of mentions can ping no one', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 		const body = '@everyone <@123> <@&456> look at this';
 
 		seed(1, { kind: 'note.added', data: { noteId: 1, body } });
@@ -239,7 +309,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('a failed send stops the run so no later event jumps ahead', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 
 		for (const id of [1, 2, 3]) {
 			seed(id);
@@ -263,7 +333,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('an unsendable or missing channel fails the run and posts nothing', async () => {
-		const audit = createAuditDispatcher('404');
+		const audit = await enabled('404');
 
 		seed(1);
 
@@ -274,7 +344,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('a staff note written on the web posts one embed naming its subject, once', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = await enabled();
 		const moderator = await signUp(database.web, 'moderator');
 		const subject = await signUp(database.web);
 		const real = (): DispatcherContext => ({ ...context(), web: database.reads });

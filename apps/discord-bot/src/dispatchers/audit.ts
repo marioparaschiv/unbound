@@ -14,12 +14,26 @@ const RECOVERY_WINDOW = 100;
 const PAGE = 100;
 const FOOTER_ID = /^Event #(\d+) /;
 
+// An empty `audit_post` means the log was never enabled here, so the newest event becomes the floor and
+// enabling posts no history. An empty moderation log floors at 0, which posts its first event.
+async function recordFloor({ db, web }: Stores, channelId: string) {
+	const floor = await web.newestEventId();
+
+	await db
+		.insert(auditPost)
+		.values({ eventId: floor, channelId, messageId: null })
+		.onConflictDoNothing();
+
+	return floor;
+}
+
 // Posts go out one at a time in id order and moderation event ids are commit-ordered, so every
 // event up to the newest posted one is posted: that id is the whole cursor.
-async function pendingEvents({ db, web }: Stores): Promise<AuditEvent[]> {
-	const [row] = await db.select({ last: max(auditPost.eventId) }).from(auditPost);
+async function pendingEvents(stores: Stores, channelId: string): Promise<AuditEvent[]> {
+	const [row] = await stores.db.select({ last: max(auditPost.eventId) }).from(auditPost);
+	const last = row?.last ?? (await recordFloor(stores, channelId));
 
-	return web.eventsAfter(row?.last ?? 0, PAGE);
+	return stores.web.eventsAfter(last, PAGE);
 }
 
 async function markPosted(db: Database, id: number, message: Message) {
@@ -109,7 +123,7 @@ export function createAuditDispatcher(channelId: string = AUDIT_LOG_CHANNEL_ID):
 
 	// A failed send throws and ends the run, so no later event is ever posted ahead of it.
 	async function postPending(context: DispatcherContext) {
-		for (let pending = await pendingEvents(context); pending.length;) {
+		for (let pending = await pendingEvents(context, channelId); pending.length;) {
 			const channel = await resolveChannel(context.client);
 			const unposted = await recoverPosted(channel, pending, context);
 
@@ -119,7 +133,7 @@ export function createAuditDispatcher(channelId: string = AUDIT_LOG_CHANNEL_ID):
 
 			if (pending.length < PAGE) return;
 
-			pending = await pendingEvents(context);
+			pending = await pendingEvents(context, channelId);
 		}
 	}
 

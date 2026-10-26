@@ -97,6 +97,7 @@ export function createFakeReads(): FakeReads {
 					.filter((event) => event.id > afterId)
 					.toSorted((a, b) => a.id - b.id)
 					.slice(0, limit),
+			newestEventId: async () => Math.max(0, ...fake.events.map((event) => event.id)),
 			release: async (key) =>
 				fake.releases.find(
 					(release) =>
