@@ -327,4 +327,26 @@ class NativeJavaTest {
             NativeJava.className(builder)
         }
     }
+
+    @Test
+    fun invokeListsTheOverloadsWhenNoneAcceptTheArguments() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            NativeJava.invoke(builder, "insert", """[{"type":"string","value":"a"},{"type":"string","value":"b"}]""")
+        }
+
+        assertTrue(error.message!!.startsWith("No overload of insert on java.lang.StringBuilder accepts these arguments; it has ("))
+        assertTrue(error.message!!.contains("(int, "))
+    }
+
+    @Test
+    fun constructListsTheConstructorsWhenNoneAcceptTheArguments() {
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            NativeJava.construct("java.lang.StringBuilder", """[{"type":"boolean","value":true},{"type":"boolean","value":false}]""")
+        }
+
+        assertTrue(error.message!!.startsWith("No constructor of java.lang.StringBuilder accepts these arguments; it has "))
+        assertTrue(error.message!!.contains("(int)"))
+    }
 }

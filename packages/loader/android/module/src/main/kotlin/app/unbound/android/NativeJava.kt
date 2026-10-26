@@ -8,6 +8,7 @@ import java.lang.reflect.Modifier
 
 object NativeJava {
     private const val MAX_RESULT_STRING_LENGTH = 1 shl 20
+    private const val MAX_LISTED_OVERLOADS = 6
 
     private val associations = java.util.WeakHashMap<Any, HashMap<String, Any?>>()
     private var nextAssociation = 1L
@@ -78,7 +79,13 @@ object NativeJava {
         val constructor = target.declaredConstructors
             .filter { it.parameterCount == arguments.size }
             .firstOrNull { matches(it.parameterTypes, arguments) }
-            ?: throw IllegalArgumentException("No matching constructor for $name")
+            ?: throw IllegalArgumentException(
+                "No constructor of $name accepts these arguments; it has ${signatures(
+                    target.declaredConstructors.map {
+                        it.parameterTypes
+                    },
+                )}",
+            )
 
         constructor.isAccessible = true
         val instance = rethrowingCause { constructor.newInstance(*values(constructor.parameterTypes, arguments)) }
@@ -241,6 +248,12 @@ object NativeJava {
         throw IllegalArgumentException("The Java class $name is unavailable")
     }
 
+    fun signature(types: Array<Class<*>>): String = types.joinToString(", ", "(", ")") { it.name }
+
+    private fun signatures(overloads: List<Array<Class<*>>>): String =
+        overloads.take(MAX_LISTED_OVERLOADS).joinToString(" ") { signature(it) } +
+            if (overloads.size > MAX_LISTED_OVERLOADS) " and ${overloads.size - MAX_LISTED_OVERLOADS} more" else ""
+
     private fun findMethod(target: Any, name: String, arguments: List<Argument>): Method {
         val owner = if (target is Class<*>) target else target.javaClass
         val searched = if (target is Class<*>) listOf(owner, Class::class.java) else listOf(owner)
@@ -251,7 +264,9 @@ object NativeJava {
 
         return candidates.filter { matches(it.parameterTypes, arguments) }
             .minByOrNull { specificity(it.parameterTypes, arguments) }
-            ?: throw IllegalArgumentException("No overload of $name on ${owner.name} accepts these arguments")
+            ?: throw IllegalArgumentException(
+                "No overload of $name on ${owner.name} accepts these arguments; it has ${signatures(candidates.map { it.parameterTypes })}",
+            )
     }
 
     private fun methods(owner: Class<*>): List<Method> {
