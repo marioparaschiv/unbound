@@ -96,6 +96,8 @@ DATABASE_PATH=$DIR/db/unbound.db
 BETTER_AUTH_SECRET=$(head -c 32 /dev/urandom | base64 | tr -d '/+=')
 DISCORD_CLIENT_ID=verify-web-discord
 DISCORD_CLIENT_SECRET=verify-web-discord-secret
+DISCORD_BOT_TOKEN=verify-web-discord-bot-token
+DISCORD_API_URL=http://127.0.0.1:9/api/v10
 GITHUB_CLIENT_ID=verify-web-github
 GITHUB_CLIENT_SECRET=verify-web-github-secret
 GITHUB_API_URL=http://127.0.0.1:$GITHUB_PORT
