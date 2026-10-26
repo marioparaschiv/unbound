@@ -59,6 +59,8 @@ func run(args []string) error {
 		return runDoctor(args[1:])
 	case "dev":
 		return runDev(args[1:])
+	case "symbolicate-android":
+		return runSymbolicateAndroid(args[1:])
 	case "compat-scan":
 		return runCompatScan(args[1:])
 	case "compat-issue":
@@ -81,7 +83,7 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|format|lint>")
+	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|format|lint>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
 	fmt.Println("       go run ./tools validate [--root <path>]")
@@ -97,6 +99,7 @@ func printUsage() {
 	fmt.Println("       go run ./tools publish-loader-releases --version <semver> --ios-url <release-url> --android-url <release-url> [--changelog-file <path>]")
 	fmt.Println("       go run ./tools generate-loader-changelog --version <semver> --output <path>")
 	fmt.Println("       go run ./tools attest <enabled|stage|sign|verify> [flags]")
+	fmt.Println("       go run ./tools symbolicate-android --symbols <dir|zip> [--abi <abi>] [--symbolizer <path>] [--input <file>] < tombstone.txt")
 	fmt.Println("       go run ./tools compat-scan [--ipa <path>] [--apk <path>...] [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>] [--ios-sdk <path>] [--android-jar <path>]")
 	fmt.Println("       go run ./tools compat-issue --results <json> --report <md> --channel <name> [--repo <owner/name>]")
 	fmt.Println("       go run ./tools compat-legacy-issue --results <json> [--repo <owner/name>] [--source-url <url>]")
