@@ -1,5 +1,6 @@
 import { pgTable, text, integer, bigint, boolean, index, uniqueIndex } from 'drizzle-orm/pg-core';
 import { defineRelationsPart, type SQL } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import { searchText, timestampMs, trigramIndex } from './columns';
 
@@ -23,12 +24,18 @@ export const user = pgTable(
 	},
 	(table) => [
 		index('user_createdAt_idx').on(table.createdAt, table.id),
-		trigramIndex('user_search_idx', userSearchText),
+		trigramIndex('user_search_idx', userSearchText(table)),
 	],
 );
 
-/** The text admin search matches a user by, and the expression `user_search_idx` indexes. */
-export const userSearchText: SQL = searchText([user.id, user.name, user.email]);
+/**
+ * @description Builds the text admin search matches a user by, the expression `user_search_idx` indexes.
+ * @param table The user table or an alias of it.
+ * @returns The search text of the table's row.
+ */
+export function userSearchText(table: Record<'id' | 'name' | 'email', AnyPgColumn>): SQL {
+	return searchText([table.id, table.name, table.email]);
+}
 
 export const session = pgTable(
 	'session',

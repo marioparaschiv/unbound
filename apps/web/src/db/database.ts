@@ -43,12 +43,9 @@ export function createDatabase(url: string): Database {
 	return Object.assign(db, { transaction });
 }
 
-/**
- * @description Tells whether an error is one a transaction re-run on a fresh snapshot can fix.
- * @param error The error a transaction failed with; drizzle wraps a failed statement's in `cause`.
- * @returns Whether it is a serialization failure or a deadlock.
- */
-export function isRetryable(error: unknown): error is Error {
+// True for a serialization failure or a deadlock, which a re-run on a fresh snapshot can fix.
+// UNKNOWN: whatever a transaction threw; drizzle wraps a failed statement's error in `cause`.
+function isRetryable(error: unknown): boolean {
 	const cause =
 		error instanceof Error && error.cause instanceof postgres.PostgresError
 			? error.cause
@@ -71,4 +68,4 @@ async function retrySerializable<T>(run: () => Promise<T>): Promise<T> {
 	}
 }
 
-export default { createDatabase, isRetryable };
+export default { createDatabase };

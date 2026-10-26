@@ -1,4 +1,5 @@
-// Real `GET /api/v1/catalog` endpoint over a seeded SQLite database, plus a CDN for the seeded files.
+// Real `GET /api/v1/catalog` endpoint over a seeded throwaway Postgres database, plus a CDN for the
+// seeded files. The database is dropped on SIGINT or SIGTERM.
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 
 import {
@@ -16,7 +17,12 @@ import { toAddonSummary } from '../../../../apps/web/src/lib/addons';
 const PORT = Number(process.env.PORT ?? 3200);
 const ORIGIN = `http://${resolveDevHost()}:${PORT}`;
 
-const { ctx } = createTestContext({ CDN_URL: `${ORIGIN}/cdn/` });
+const { ctx, close } = await createTestContext({ CDN_URL: `${ORIGIN}/cdn/` });
+
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+	process.once(signal, () => void close().finally(() => process.exit(0)));
+}
+
 const { userId } = await signInWithDiscord(ctx, {
 	id: '80351110224679003',
 	name: 'Seeder',

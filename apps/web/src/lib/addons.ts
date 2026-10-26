@@ -17,10 +17,11 @@ import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { OPEN_SUBMISSION_STATUSES, requireSourced, toSubmission } from '~/lib/submissions';
+import { afterKey, cursorTime, decodeCursor, toKeysetPage } from '~/lib/keyset';
 import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
-import { afterKey, decodeCursor, toKeysetPage } from '~/lib/keyset';
 import { VERSION_SOURCE, toAddonVersion } from '~/lib/artifacts';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
+import type { CursorKey, CursorPosition } from '~/lib/keyset';
 import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
@@ -29,7 +30,6 @@ import { addon, addonVersion } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
-import type { CursorKey } from '~/lib/keyset';
 import { ApiError } from '~/lib/api/errors';
 import one from '~/db/one';
 
@@ -70,9 +70,9 @@ const SORT_COLUMNS = {
 
 const CURSOR_SCHEMAS = {
 	name: z.tuple([z.string(), addonIdSchema]),
-	created: z.tuple([z.int(), addonIdSchema]),
-	updated: z.tuple([z.int(), addonIdSchema]),
-} satisfies Record<AddonSort, z.ZodType<CursorKey>>;
+	created: z.tuple([cursorTime, addonIdSchema]),
+	updated: z.tuple([cursorTime, addonIdSchema]),
+} satisfies Record<AddonSort, z.ZodType<CursorPosition>>;
 
 /** The `addon.pinned_fields` bit of each summary field a staff edit can own. */
 export const PINNED_FIELDS = {
@@ -273,7 +273,7 @@ function listingKey(row: AddonRow, sort: AddonSort): CursorKey {
 export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) {
 	const { type, q, sort = 'name', order = 'asc', cursor } = query;
 	const column = SORT_COLUMNS[sort];
-	const after = cursor ? decodeCursor(cursor, CURSOR_SCHEMAS[sort]) : undefined;
+	const after = cursor ? decodeCursor<CursorPosition>(cursor, CURSOR_SCHEMAS[sort]) : undefined;
 
 	return ctx.db.query.addon.findMany({
 		where: {
@@ -426,7 +426,7 @@ export async function listMyAddons(ctx: AppContext, caller: Caller): Promise<MyA
 			OR: [{ addonId: { in: ids } }, { authorId: userId, kind: 'listing' }],
 		},
 		with: { source: true },
-		orderBy: { createdAt: 'asc' },
+		orderBy: { createdAt: 'asc', id: 'asc' },
 	});
 
 	const open = loaded.map(requireSourced);

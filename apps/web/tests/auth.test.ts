@@ -211,7 +211,7 @@ describe('API keys', () => {
 });
 
 describe('rate limiting', () => {
-	test('is stored in SQLite and rejects requests over the limit', async () => {
+	test('is stored in the database and rejects requests over the limit', async () => {
 		const limited = await createTestContext({
 			AUTH_RATE_LIMIT_MAX: '2',
 			AUTH_RATE_LIMIT_WINDOW_SECONDS: '60',

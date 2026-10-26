@@ -13,12 +13,12 @@ import restoreBadgeEndpoint from '~/endpoints/restore-badge';
 import revokeBadgeEndpoint from '~/endpoints/revoke-badge';
 import setMyBadgeEndpoint from '~/endpoints/set-my-badge';
 import { getVisibleBadges } from '~/lib/sponsors/badges';
+import { account, perkClaim, user } from '~/db/schema';
 import { isPerkUnlocked } from '~/lib/sponsors/perks';
 import { standingOf } from '~/lib/sponsors/standing';
 import type { AppContext } from '~/lib/context';
 import { createApiClient } from '~/api/client';
 import type { Role } from '~/lib/auth/access';
-import { account, user } from '~/db/schema';
 import type { Api } from '~/api';
 
 import type { SeededSponsorship } from './helpers/sponsors';
@@ -82,6 +82,20 @@ async function signUp({ role = 'user', github = true, sponsorship = {} }: Sponso
 }
 
 type Client = Awaited<ReturnType<typeof signUp>>['client'];
+
+async function waitForLockWait() {
+	for (let i = 0; i < 250; i++) {
+		const [row] = await ctx.db.$client<{ waiting: number }[]>`
+			select count(*)::int as waiting from pg_stat_activity
+			where datname = current_database() and wait_event_type = 'Lock'`;
+
+		if (row?.waiting) return;
+
+		await Bun.sleep(20);
+	}
+
+	throw new Error('Expected a statement waiting on a lock.');
+}
 
 function setBadge(client: Client, badge: Badge = BADGE) {
 	return client('PUT /api/v1/me/badge', { body: badge, response: badgeClaimResponseSchema });
@@ -296,6 +310,59 @@ describe('revoking a badge', () => {
 		expect(await publicBadges(sponsor.userId)).toEqual({
 			badges: [{ ...BADGE, kind: 'custom-badge' }],
 		});
+	});
+
+	test('a revoke landing while a badge is being set keeps the revoked badge', async () => {
+		const sponsor = await signUp();
+		const locked = Promise.withResolvers<void>();
+		const release = Promise.withResolvers<void>();
+
+		await setBadge(sponsor.client);
+
+		const revoke = ctx.db.$client.begin(async (sql) => {
+			await sql`select 1 from perk_claim where user_id = ${sponsor.userId} for update`;
+			locked.resolve();
+			await release.promise;
+			await sql`update perk_claim set revoked_at = now() where user_id = ${sponsor.userId}`;
+		});
+
+		await locked.promise;
+
+		const replaced = failure(setBadge(sponsor.client, { ...BADGE, label: 'Replaced' }));
+
+		await waitForLockWait();
+		release.resolve();
+		await revoke;
+
+		expect(await replaced).toEqual({ status: 403, code: 'perk_revoked' });
+
+		const [stored] = await ctx.db
+			.select({ config: perkClaim.config })
+			.from(perkClaim)
+			.where(eq(perkClaim.userId, sponsor.userId));
+
+		expect(stored?.config).toEqual(BADGE);
+	});
+
+	test('NUL in the path or the reason is an invalid request', async () => {
+		const moderator = await signUp({ role: 'moderator', github: false });
+		const sponsor = await signUp();
+
+		await setBadge(sponsor.client);
+
+		expect(await failure(publicBadges('nul\0id'))).toEqual({
+			status: 400,
+			code: 'invalid_request',
+		});
+		expect(
+			await failure(
+				moderator.client('POST /api/v1/users/$id/badge/revoke', {
+					params: { id: sponsor.userId },
+					body: { reason: 'Bad\0label.' },
+					response: badgeClaimResponseSchema,
+				}),
+			),
+		).toEqual({ status: 400, code: 'invalid_request' });
 	});
 
 	test('revoking a user without a badge is not found', async () => {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Usage: teardown.sh [--name N]
 # Stops only what launch.sh started for this instance (its tmux session, its pane pid, its MinIO
-# container) and deletes its state dir. Evidence lives elsewhere and is never touched.
+# container), drops its database and deletes its state dir. Evidence lives elsewhere and is never touched.
 set -uo pipefail
 
 . "$(dirname "$(readlink -f "$0")")/lib.sh"
@@ -29,6 +29,9 @@ if command -v podman >/dev/null && podman container exists "$MINIO" 2>/dev/null;
 	podman stop --time 0 "$MINIO" >/dev/null
 	echo "stopped container $MINIO"
 fi
+
+# After the kills, so no server of ours still holds a connection; FORCE ends any other.
+bun "$SKILL_DIR/scripts/database.ts" drop "$INSTANCE" || echo "warning: could not drop database $DATABASE" >&2
 
 case "$DIR" in
 	"$STATE_ROOT"/?*) rm -rf "$DIR" && echo "removed $DIR" ;;

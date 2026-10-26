@@ -12,9 +12,16 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { encodeCursor } from '~/lib/keyset';
 
+import {
+	explain,
+	indexCond,
+	planNodes,
+	planPath,
+	type PlanMode,
+	type PlanNode,
+} from './helpers/database';
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { authRequest, createTestContext, signInWithDiscord } from './helpers/context';
-import { explain, planNodes, planPath, type PlanNode } from './helpers/database';
 
 type CompiledQuery = {
 	sql: string;
@@ -176,8 +183,8 @@ async function addonsMatching(search: AdminAddonsSearch): Promise<string[]> {
 	return forward.flat();
 }
 
-async function plan(statement: Statement): Promise<PlanNode[]> {
-	return planNodes(await explain(ctx.db, statement.toSQL()));
+async function plan(statement: Statement, mode: PlanMode = 'order'): Promise<PlanNode[]> {
+	return planNodes(await explain(ctx.db, statement.toSQL(), mode));
 }
 
 // The nodes above the listed table's scan; a sort there would reorder the page.
@@ -259,6 +266,16 @@ describe('admin users list', () => {
 		);
 
 		expect(error).toMatchObject({ code: 'invalid_request' });
+	});
+
+	test('rejects a cursor whose time no Date can hold', async () => {
+		const cursor = encodeCursor([Number.MAX_SAFE_INTEGER, 'someone']);
+		const errors = await Promise.all([
+			listAdminUsers(ctx, moderator, { cursor }).catch((caught) => caught),
+			listAdminAddons(ctx, moderator, { cursor }).catch((caught) => caught),
+		]);
+
+		expect(errors).toMatchObject([{ code: 'invalid_request' }, { code: 'invalid_request' }]);
 	});
 });
 
@@ -365,20 +382,21 @@ describe('admin list plans', () => {
 		},
 	);
 
-	test('a search reads the trigram index', async () => {
-		const { next } = await userCursors();
-		const statements: [Statement, string][] = [
-			[queryAdminUsers(ctx, { q: 'walker' }), 'user_search_idx'],
-			[queryAdminUsers(ctx, { q: 'walker', cursor: next }), 'user_search_idx'],
-			[queryAdminAddons(ctx, { q: 'walk.' }), 'addon_search_idx'],
+	// Order index vs trigram index plus sort is a cost call that differs between clusters. No user
+	// cursor: user_createdAt_idx serves its created_at range too.
+	test('a search reads the trigram index of the listed table, scanned once', async () => {
+		const statements: [Statement, string, string][] = [
+			[queryAdminUsers(ctx, { q: 'walker' }), 'user_search_idx', 'user'],
+			[queryAdminAddons(ctx, { q: 'walk.' }), 'addon_search_idx', 'addon'],
 		];
 
-		for (const [statement, index] of statements) {
-			// Matches are few, so reading them through the index and sorting beats walking the order.
-			const nodes = planNodes(await explain(ctx.db, statement.toSQL(), true));
+		for (const [statement, index, table] of statements) {
+			const nodes = await plan(statement, 'filter');
+			const scan = nodes.find((node) => node['Index Name'] === index);
 
-			expect(indexes(nodes)).toContain(index);
+			expect(scan?.['Index Cond']).toMatch(/ ~~ /);
 			expect(types(nodes)).not.toContain('Seq Scan');
+			expect(nodes.filter((node) => node['Relation Name'] === table)).toHaveLength(1);
 		}
 	});
 });
@@ -520,17 +538,28 @@ describe('admin addon filter plans', () => {
 		}
 	});
 
-	test.each<[string, AdminAddonsSearch, string]>([
-		['maintainer', { maintainer: 'someone' }, 'addon_maintainer_userId_idx'],
-		['pending review', { status: 'pending_review' }, 'submission_status_submittedAt_idx'],
-		['changes requested', { status: 'changes_requested' }, 'submission_status_submittedAt_idx'],
-		['search', { q: 'walk' }, 'addon_search_idx'],
-	])('%s reads only the matching addons through its index', async (_name, filters, index) => {
+	test.each<[string, AdminAddonsSearch, string, RegExp]>([
+		['maintainer', { maintainer: 'someone' }, 'addon_maintainer_userId_idx', /^\(user_id = /],
+		[
+			'pending review',
+			{ status: 'pending_review' },
+			'submission_status_submittedAt_idx',
+			/^\(status = /,
+		],
+		[
+			'changes requested',
+			{ status: 'changes_requested' },
+			'submission_status_submittedAt_idx',
+			/^\(status = /,
+		],
+		['search', { q: 'walk' }, 'addon_search_idx', / ~~ /],
+	])('%s seeks only the matching addons in its index', async (_name, filters, index, seek) => {
 		for (const page of pages) {
-			const nodes = await plan(queryAdminAddons(ctx, { ...filters, ...page }));
+			const query = queryAdminAddons(ctx, { ...filters, ...page }).toSQL();
+			const root = await explain(ctx.db, query, 'filter');
 
-			expect(indexes(nodes)).toContain(index);
-			expect(types(nodes)).not.toContain('Seq Scan');
+			expect(indexCond(root, index)).toMatch(seek);
+			expect(types(planNodes(root))).not.toContain('Seq Scan');
 		}
 	});
 });

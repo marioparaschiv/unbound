@@ -254,23 +254,23 @@ export async function insertSubmissionSource(
 ): Promise<SubmissionSourceRow> {
 	const { pin } = source;
 
-	const rows = await tx
-		.insert(submissionSource)
-		.values({
-			submissionId,
-			repositoryId: pin.repositoryId,
-			path: pin.path,
-			ref: pin.ref,
-			commitSha: pin.commitSha,
-			bundlePath: pin.bundlePath,
-			bundleBlobSha: pin.bundleBlobSha,
-			addonMd: source.addonMd,
-			changelog: source.changelog,
-			details: source.details,
-		})
-		.returning();
-
-	return one(rows);
+	return one(
+		await tx
+			.insert(submissionSource)
+			.values({
+				submissionId,
+				repositoryId: pin.repositoryId,
+				path: pin.path,
+				ref: pin.ref,
+				commitSha: pin.commitSha,
+				bundlePath: pin.bundlePath,
+				bundleBlobSha: pin.bundleBlobSha,
+				addonMd: source.addonMd,
+				changelog: source.changelog,
+				details: source.details,
+			})
+			.returning(),
+	);
 }
 
 function reserve(

@@ -3,7 +3,6 @@ import { IconArrowsExchange, IconEye, IconEyeOff } from '@tabler/icons-react';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { useRouter } from '@tanstack/react-router';
 import { useState, useTransition } from 'react';
-import type { FormEvent } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -16,16 +15,13 @@ import {
 	DialogTrigger,
 } from '~/components/ui/dialog';
 import { createBrowserClient } from '~/lib/api/browser-client';
-import getAuthErrorMessage from '~/lib/auth/error-message';
 import getApiErrorMessage from '~/lib/api/error-message';
+import UserSearch from '~/components/admin/user-search';
 import ConfirmDialog from '~/components/confirm-dialog';
 import type { AdminAddon } from '~/lib/admin-addons';
 import UserAvatar from '~/components/user-avatar';
 import { Button } from '~/components/ui/button';
-import authClient from '~/lib/auth/client';
-import Input from '~/components/ui/input';
 import Text from '~/components/ui/text';
-import cn from '~/lib/cn';
 
 type AddonActionsProps = {
 	addon: AdminAddon;
@@ -38,8 +34,6 @@ type AddonActionProps = {
 	disabled: boolean;
 	run: (action: () => Promise<void>, success: string) => void;
 };
-
-const USER_SEARCH_LIMIT = 5;
 
 function DelistDialog({ addon, disabled, run }: AddonActionProps) {
 	function delist() {
@@ -69,40 +63,8 @@ function DelistDialog({ addon, disabled, run }: AddonActionProps) {
 
 function TransferDialog({ addon, disabled, run }: AddonActionProps) {
 	const [open, setOpen] = useState(false);
-	const [query, setQuery] = useState('');
-	const [results, setResults] = useState<UserSummary[]>([]);
 	const [selected, setSelected] = useState<UserSummary | null>(null);
-	const [isSearching, startSearch] = useTransition();
 	const owners = new Set(addon.owners.map((owner) => owner.id));
-
-	function search(event: FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-
-		startSearch(async () => {
-			const { data, error } = await authClient.admin.listUsers({
-				query: {
-					searchValue: query.trim(),
-					searchField: 'name',
-					searchOperator: 'contains',
-					limit: USER_SEARCH_LIMIT,
-				},
-			});
-
-			if (error) {
-				toast.error(getAuthErrorMessage(error));
-
-				return;
-			}
-
-			setResults(
-				data.users.map((user) => ({
-					id: user.id,
-					name: user.name,
-					image: user.image ?? null,
-				})),
-			);
-		});
-	}
 
 	function transfer() {
 		if (!selected) return;
@@ -132,42 +94,20 @@ function TransferDialog({ addon, disabled, run }: AddonActionProps) {
 						Pick the new owner. The current owners stay on as maintainers.
 					</DialogDescription>
 				</DialogHeader>
-				<form onSubmit={search} className='flex gap-2'>
-					<Input
-						value={query}
-						onChange={(event) => setQuery(event.target.value)}
-						placeholder='Search users by name...'
-						aria-label='Search users'
-						required
-					/>
-					<Button type='submit' variant='secondary' disabled={isSearching}>
-						Search
-					</Button>
-				</form>
-				<div className='flex flex-col gap-1'>
-					{results.map((user) => (
-						<button
-							key={user.id}
-							type='button'
-							onClick={() => setSelected(user)}
-							disabled={owners.has(user.id)}
-							className={cn(
-								'flex items-center gap-3 hover:bg-accent/50 disabled:opacity-50 px-3 py-2 rounded-lg text-left transition-colors disabled:pointer-events-none',
-								selected?.id === user.id && 'bg-accent',
-							)}
-						>
-							<UserAvatar src={user.image} name={user.name} size='xs' />
-							<Text as='span' variant='text-sm' className='flex-1 truncate'>
-								{user.name}
-							</Text>
-							{owners.has(user.id) ? (
-								<Text as='span' variant='text-xs' color='muted'>
-									Owner
-								</Text>
-							) : null}
-						</button>
-					))}
-				</div>
+				<UserSearch
+					id={`transfer-${addon.id}`}
+					placeholder='Search users...'
+					disabledIds={owners}
+					onPick={setSelected}
+				/>
+				{selected ? (
+					<div className='flex items-center gap-3 bg-accent px-3 py-2 rounded-lg'>
+						<UserAvatar src={selected.image} name={selected.name} size='xs' />
+						<Text as='span' variant='text-sm' className='flex-1 truncate'>
+							{selected.name}
+						</Text>
+					</div>
+				) : null}
 				<DialogFooter>
 					<Button variant='outline' onClick={() => setOpen(false)} disabled={disabled}>
 						Cancel

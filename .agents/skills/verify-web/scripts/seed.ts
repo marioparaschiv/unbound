@@ -23,7 +23,8 @@ type SeededSession = {
 	cookie: string;
 };
 
-const ROLES = ['user', 'developer', 'moderator', 'admin'] as const;
+// `ci` is the account CI's API key belongs to; it publishes first-party addons.
+const ROLES = ['user', 'developer', 'moderator', 'admin', 'ci'] as const;
 // seedSubmission records 1024-byte bundles, so the staged and published bytes match that size.
 const BUNDLE = new TextEncoder().encode(`console.log('verify-web');\n`.padEnd(1024, ' '));
 const SHA256 = new Bun.CryptoHasher('sha256').update(BUNDLE).digest('hex');
@@ -36,7 +37,7 @@ if (!output) {
 }
 
 const env = parseEnv();
-const ctx = createAppContext(env, createDatabase(env.DATABASE_PATH));
+const ctx = createAppContext(env, createDatabase(env.DATABASE_URL));
 const s3 = process.env.VERIFY_WEB_S3 === '1';
 // The fake GitHub launch.sh starts accepts this token and lets it push to verify/addons.
 const githubToken = process.env.VERIFY_WEB_GITHUB_TOKEN;
@@ -105,6 +106,6 @@ if (s3) {
 }
 
 await Bun.write(output, JSON.stringify(sessions, null, '\t'));
-ctx.db.$client.close();
+await ctx.db.$client.end();
 
 console.log(`seeded ${ROLES.join(', ')}; addon verify.hello; pending submission ${pending.id}`);

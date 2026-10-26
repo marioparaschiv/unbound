@@ -1,14 +1,27 @@
 import type { PageDirection } from '@unbound-app/contracts/admin';
 import type { SortOrder } from '@unbound-app/contracts/addons';
+import { containsNul } from '@unbound-app/contracts/text';
 import type { SQL, SQLWrapper } from 'drizzle-orm';
-import { PgTimestamp } from 'drizzle-orm/pg-core';
-import { is, sql } from 'drizzle-orm';
-import type { z } from 'zod';
+import { sql } from 'drizzle-orm';
+import { z } from 'zod';
 
 import { ApiError } from '~/lib/api/errors';
 
-/** A row's position in a keyset list: its sort value, then its id to break ties. */
+/** A row's position in a keyset list as a cursor carries it: its sort value, then its id. */
 export type CursorKey = [value: string | number, id: string];
+
+/** A decoded cursor's position, with a timestamp back as a `Date`. */
+export type CursorPosition = [value: string | number | Date, id: string];
+
+// The latest time a JS Date can hold; Postgres's timestamptz reaches further.
+const MAX_DATE_MS = 8.64e15;
+
+/** A cursor's timestamp: epoch milliseconds a `Date` can hold, decoded to that `Date`. */
+export const cursorTime = z
+	.int()
+	.min(0)
+	.max(MAX_DATE_MS)
+	.transform((ms) => new Date(ms));
 
 /** The sort column and the id column a keyset list is ordered by. */
 export type KeyColumns = [value: SQLWrapper, id: SQLWrapper];
@@ -42,9 +55,15 @@ export function encodeCursor(key: CursorKey): string {
  * @param schema The list's key shape.
  * @returns The row position.
  */
-export function decodeCursor(cursor: string, schema: z.ZodType<CursorKey>): CursorKey {
+export function decodeCursor<T extends CursorPosition>(cursor: string, schema: z.ZodType<T>): T {
 	try {
-		return schema.parse(JSON.parse(Buffer.from(cursor, 'base64url').toString()));
+		const key = JSON.parse(Buffer.from(cursor, 'base64url').toString());
+
+		if (containsNul(key)) {
+			throw new Error('NUL in a cursor.');
+		}
+
+		return schema.parse(key);
 	} catch {
 		throw new ApiError('invalid_request', 'The cursor does not belong to this list.');
 	}
@@ -76,14 +95,14 @@ export function scanOrder(order: SortOrder, dir: PageDirection = 'next'): SortOr
  */
 export function afterKey(
 	columns: KeyColumns,
-	key: CursorKey,
+	key: CursorPosition,
 	order: SortOrder,
 	dir: PageDirection = 'next',
 ): SQL {
 	const operator = scanOrder(order, dir) === 'asc' ? sql`>` : sql`<`;
 	const [column, idColumn] = columns;
-	// Cursors carry a timestamp as epoch milliseconds; precision 3 makes the Date exact.
-	const value = is(column, PgTimestamp) ? sql.param(new Date(key[0]), column) : key[0];
+	// drizzle turns postgres.js's own Date serializer off, so a Date is bound as its column would bind it.
+	const value = key[0] instanceof Date ? key[0].toISOString() : key[0];
 
 	return sql`(${column}, ${idColumn}) ${operator} (${value}, ${key[1]})`;
 }
@@ -122,4 +141,4 @@ export function toKeysetPage<T>(
 	};
 }
 
-export default { encodeCursor, decodeCursor, scanOrder, afterKey, toKeysetPage };
+export default { cursorTime, encodeCursor, decodeCursor, scanOrder, afterKey, toKeysetPage };

@@ -3,6 +3,7 @@ import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
 import { submissionSchema } from './publish';
 import { sourcePinSchema } from './source';
+import { withoutNul } from './text';
 import { z } from './zod';
 
 export const sha256Schema = z
@@ -51,7 +52,7 @@ export const listAddonsQuerySchema = z.optional(
 	z.object({
 		type: z.optional(addonTypeSchema),
 		/** Matches anywhere in the newest version's name or description, case-insensitively. */
-		q: z.optional(z.string().check(z.trim(), z.maxLength(100))),
+		q: z.optional(z.string().check(z.trim(), z.maxLength(100), withoutNul)),
 		/** Defaults to `name`; ties are ordered by id. */
 		sort: z.optional(addonSortSchema),
 		/** Defaults to `asc`. */
@@ -92,7 +93,7 @@ export const maintainerSchema = z.extend(userSummarySchema, {
 });
 
 export const addMaintainerRequestSchema = z.object({
-	userId: z.string().check(z.minLength(1)),
+	userId: z.string().check(z.minLength(1), withoutNul),
 });
 
 export const maintainersResponseSchema = z.object({
@@ -100,7 +101,7 @@ export const maintainersResponseSchema = z.object({
 });
 
 export const transferAddonRequestSchema = z.object({
-	userId: z.string().check(z.minLength(1)),
+	userId: z.string().check(z.minLength(1), withoutNul),
 	/** Whether the previous owner stays on as a maintainer. */
 	keepPreviousOwner: z._default(z.boolean(), true),
 });

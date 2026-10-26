@@ -53,6 +53,9 @@ cwd="$(readlink "/proc/$PANE_PID/cwd" 2>/dev/null)"
 [ "$cwd" = "$WEB_DIR" ] && r=ok || r="serving '$cwd', not $WEB_DIR"
 check "serving this checkout" "$r"
 
+bun "$SKILL_DIR/scripts/database.ts" exists "$INSTANCE" >/dev/null 2>&1 && r=ok || r="database missing"
+check "database $DATABASE" "$r"
+
 code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$URL/")"
 [ "$code" = 200 ] && r=ok || r="HTTP $code"
 check "GET $URL/" "$r"

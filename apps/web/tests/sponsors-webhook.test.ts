@@ -1,4 +1,8 @@
 import { afterAll, describe, expect, test } from 'bun:test';
+import { and, eq, max } from 'drizzle-orm';
+
+import { account, botFeedChange } from '~/db/schema';
+import type { Transaction } from '~/db/database';
 
 import {
 	SPONSORED_LOGIN,
@@ -8,7 +12,7 @@ import {
 	sponsorshipPayload,
 	storedSponsorship,
 } from './helpers/sponsors';
-import { createTestContext } from './helpers/context';
+import { createTestContext, signInWithDiscord, snowflakeAt } from './helpers/context';
 
 const NOW = new Date('2026-03-01T00:00:00Z');
 
@@ -26,6 +30,44 @@ afterAll(async () => {
 
 async function statusOf(response: Response) {
 	return { code: response.status, body: await response.json() };
+}
+
+async function hasLockWaiter(table: string): Promise<boolean> {
+	const [row] = await ctx.db.$client<{ waiting: number }[]>`
+		select count(*)::int as waiting from pg_locks
+		where locktype = 'relation' and not granted
+			and database = (select oid from pg_database where datname = current_database())
+			and relation = ${table}::regclass`;
+
+	return Boolean(row?.waiting);
+}
+
+async function waitUntil(check: () => Promise<boolean>, what: string) {
+	for (let i = 0; i < 250; i++) {
+		if (await check()) return;
+
+		await Bun.sleep(20);
+	}
+
+	throw new Error(`Timed out waiting for ${what}.`);
+}
+
+async function memberSeq(userId: string, db: Pick<Transaction, 'select'> = ctx.db) {
+	const [row] = await db
+		.select({ seq: botFeedChange.seq })
+		.from(botFeedChange)
+		.where(and(eq(botFeedChange.feed, 'members'), eq(botFeedChange.key, userId)));
+
+	return row?.seq ?? 0;
+}
+
+async function latestMemberSeq(): Promise<number> {
+	const [row] = await ctx.db
+		.select({ seq: max(botFeedChange.seq) })
+		.from(botFeedChange)
+		.where(eq(botFeedChange.feed, 'members'));
+
+	return row?.seq ?? 0;
 }
 
 describe('webhook authentication', () => {
@@ -180,5 +222,108 @@ describe('webhook events', () => {
 		);
 
 		expect(await storedSponsorship(ctx, id)).toMatchObject({ state: 'active', endsAt: null });
+	});
+});
+
+describe('webhook racing a GitHub link', () => {
+	test('a link committing while a delivery is applied still moves the member after it', async () => {
+		const githubId = '7700';
+		const { userId } = await signInWithDiscord(ctx, {
+			id: snowflakeAt(new Date('2021-01-01T00:00:00Z')),
+			name: 'Racing sponsor',
+			email: 'racing-sponsor@example.com',
+		});
+		const { internalAdapter } = await ctx.auth.$context;
+		const locked = Promise.withResolvers<void>();
+		const release = Promise.withResolvers<void>();
+
+		// Holding sponsorship parks the delivery's upsert after its snapshot is taken.
+		const blocker = ctx.db.$client.begin(async (sql) => {
+			await sql`lock table sponsorship in exclusive mode`;
+			locked.resolve();
+			await release.promise;
+		});
+
+		await locked.promise;
+
+		const delivery = deliver(
+			ctx,
+			sponsorshipPayload({ action: 'created', sponsorId: githubId }),
+			{
+				id: 'race-link',
+			},
+		);
+
+		await waitUntil(() => hasLockWaiter('sponsorship'), 'the delivery to wait on sponsorship');
+
+		let linked = false;
+		const link = internalAdapter
+			.linkAccount({ userId, providerId: 'github', accountId: githubId, accessToken: 'race' })
+			.then(() => {
+				linked = true;
+			});
+
+		await waitUntil(
+			async () => linked || (await hasLockWaiter('account')),
+			'the link to commit or wait',
+		);
+
+		const checkpoint = await latestMemberSeq();
+
+		release.resolve();
+		await blocker;
+
+		expect(await statusOf(await delivery)).toEqual({ code: 200, body: { status: 'applied' } });
+
+		await link;
+
+		expect(await memberSeq(userId)).toBeGreaterThan(checkpoint);
+	});
+
+	test('a link in flight when a delivery starts is seen by the delivery', async () => {
+		const githubId = '7701';
+		const { userId } = await signInWithDiscord(ctx, {
+			id: snowflakeAt(new Date('2021-01-02T00:00:00Z')),
+			name: 'In-flight sponsor',
+			email: 'in-flight-sponsor@example.com',
+		});
+		const inserted = Promise.withResolvers<number>();
+		const release = Promise.withResolvers<void>();
+
+		const link = ctx.db.transaction(async (tx) => {
+			await tx.insert(account).values({
+				id: 'in-flight-link',
+				accountId: githubId,
+				providerId: 'github',
+				userId,
+				updatedAt: new Date(),
+			});
+			inserted.resolve(await memberSeq(userId, tx));
+			await release.promise;
+		});
+		const linkSeq = await inserted.promise;
+
+		let delivered = false;
+		const delivery = deliver(
+			ctx,
+			sponsorshipPayload({ action: 'created', sponsorId: githubId }),
+			{
+				id: 'in-flight-link',
+			},
+		).then((response) => {
+			delivered = true;
+
+			return response;
+		});
+
+		await waitUntil(
+			async () => delivered || (await hasLockWaiter('account')),
+			'the delivery to finish or wait on account',
+		);
+		release.resolve();
+		await link;
+
+		expect(await statusOf(await delivery)).toEqual({ code: 200, body: { status: 'applied' } });
+		expect(await memberSeq(userId)).toBeGreaterThan(linkSeq);
 	});
 });

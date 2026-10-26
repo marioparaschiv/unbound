@@ -1,3 +1,4 @@
+import { containsNul } from '@unbound-app/contracts/text';
 import { createLogger } from '@unbound-app/logger';
 import { z } from 'zod';
 
@@ -118,6 +119,10 @@ export function endpoint<
 			const { pathname, searchParams } = new URL(request.url);
 
 			try {
+				if (containsNul(params)) {
+					throw new ApiError('invalid_request', 'The path must not contain NUL.');
+				}
+
 				const body = parseInput(schemas.body, await readJson(request));
 				const query = parseInput(
 					schemas.query,

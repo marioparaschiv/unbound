@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { withoutNul } from './text';
+
 export const BADGE_ICONS = [
 	'heart',
 	'star',
@@ -73,7 +75,7 @@ export const badgeClaimResponseSchema = z.object({
 export const sponsorshipStateSchema = z.enum(['active', 'pending_cancellation', 'cancelled']);
 
 export const revokeBadgeRequestSchema = z.object({
-	reason: z.string().trim().min(1).max(500),
+	reason: z.string().trim().min(1).max(500).check(withoutNul),
 });
 
 export type BadgeIcon = z.infer<typeof badgeIconSchema>;

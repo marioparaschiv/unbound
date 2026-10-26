@@ -12,24 +12,26 @@ description: "Model-check addon review publishing in apps/web (TLA+/TLC plus a r
 ## 1. Does your change touch the verified code?
 
 ```sh
-git diff 208ddd3a95e00d4ce3f78656aab54dd8cfd74bb5 -- apps/web/src/lib/review.ts apps/web/src/lib/submissions.ts apps/web/src/lib/staging.ts apps/web/src/lib/github.ts apps/web/src/lib/auth/auth.ts apps/web/src/db/schema/addons.ts apps/web/src/lib/artifacts.ts
+git diff e2b8008c8c431e5f2e492cfe8bf983cef71eee2d -- apps/web/src/lib/review.ts apps/web/src/lib/submissions.ts apps/web/src/lib/staging.ts apps/web/src/lib/github.ts apps/web/src/lib/auth/auth.ts apps/web/src/db/schema/addons.ts apps/web/src/lib/artifacts.ts
 ```
 
 Empty output: the verification still describes the code. Otherwise map each hunk to the coverage table below and go on.
 
-| Code (at the sync commit)                                                        | Model action in `spec/ReviewPublish.tla`     |
-| -------------------------------------------------------------------------------- | -------------------------------------------- |
-| `submissions.ts` `stageAndReserve` 291-309 (staging write before the row)        | `Stage`                                      |
-| `submissions.ts` `reserve` 226-287, `createSubmission` 322-341                   | `Create`; supersede is `Purge` then `Create` |
-| a staging write outside the app (no app path writes after create)                | `Tamper` (`Evil` bytes, any time)            |
-| `staging.ts` `deleteOrphans` 23-64 (grace window `STAGING_ORPHAN_GRACE_SECONDS`) | `Orphan`                                     |
-| `staging.ts` `purgeUserSubmissions` 105-124 (ban hook `auth.ts` 102)             | `Purge`                                      |
-| `review.ts` `requirePendingReview` 155-186                                       | `Start` (row snapshot incl. `sha256`)        |
-| `review.ts` `publishArtifact` 207-233, `refetchBundle` 190-203                   | `ReadStaged`, `WriteBundle`, `WriteManifest` |
-| `review.ts` `decide` 239-321 (CAS 256, PKs from `db/schema/addons.ts`)           | `Decide`                                     |
-| `review.ts` `reviewSubmission` 337-359 (order, staged delete 354-356)            | `pc` sequence, `Cleanup`                     |
+| Code (at the sync commit)                                                                            | Model action in `spec/ReviewPublish.tla`     |
+| ---------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `submissions.ts` `stageAndReserve` 343-362 (staging write 353 before the row)                        | `Stage`                                      |
+| `submissions.ts` `reserve` 276-341, `createSubmission` 372-391                                       | `Create`; supersede is `Purge` then `Create` |
+| a staging write outside the app (no app path writes after create)                                    | `Tamper` (`Evil` bytes, any time)            |
+| `staging.ts` `deleteOrphans` 24-64 (grace window `STAGING_ORPHAN_GRACE_SECONDS`)                     | `Orphan`                                     |
+| `staging.ts` `purgeUserSubmissions` 105-144 (ban hook `auth.ts` 108)                                 | `Purge`                                      |
+| `review.ts` `requirePendingReview` 158-189                                                           | `Start` (row snapshot incl. `sha256`)        |
+| `review.ts` `publishArtifact` 201-220, `refetchBundle` 193-199, `artifacts.ts` `writeArtifact` 59-72 | `ReadStaged`, `WriteBundle`, `WriteManifest` |
+| `review.ts` `decide` 265-312 (CAS 281, `publishVersion` 232-259, PKs from `db/schema/addons.ts`)     | `Decide`                                     |
+| `review.ts` `reviewSubmission` 323-356 (order, staged delete 344-346)                                | `pc` sequence, `Cleanup`                     |
 
-Sync commit: `208ddd3a95e00d4ce3f78656aab54dd8cfd74bb5`. Move it forward only after you confirm, hunk by hunk, that every row above still describes the code at the new commit, and update the line numbers in the table and in the spec comments.
+`reserve`, `decide` and the ban's cancel are each one Postgres SERIALIZABLE transaction that `createDatabase` retries whole on a serialization failure or deadlock, so each is still one indivisible step.
+
+Sync commit: `e2b8008c8c431e5f2e492cfe8bf983cef71eee2d`. Move it forward only after you confirm, hunk by hunk, that every row above still describes the code at the new commit, and update the line numbers in the table and in the spec comments.
 
 ## 2. Run the check
 
@@ -82,4 +84,4 @@ Reviewers are symmetric (`SYMMETRY ReviewerSymmetry`). `reordered-pending-update
 
 The refetch is modelled as content-addressed: it yields the pinned bytes or fails, because `readBlob` checks the git blob SHA-1 (replay `approval refetches a lost bundle` runs both outcomes on the real code). `Orphan` may delete an object whose row is not inserted yet, over-approximating a create slower than the grace window.
 
-Not modelled: S3 write failures and partial writes, GitHub outages beyond a failed refetch, user deletion cascades, delist/relist, `listReviewQueue`, author's listing caps, the per-request permission checks, and liveness (a live version having its files).
+Not modelled: first-party publishing (`first-party.ts` `publishFirstParty`, added after the previous sync commit 208ddd3a), which also writes `addons/{id}/{version}/` through `writeArtifact` before its transaction re-checks the claim; S3 write failures and partial writes, GitHub outages beyond a failed refetch, user deletion cascades, delist/relist, `listReviewQueue`, author's listing caps, the per-request permission checks, and liveness (a live version having its files).

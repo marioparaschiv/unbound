@@ -96,7 +96,7 @@ export async function listReviewQueue(
 	const rows = await ctx.db.query.submission.findMany({
 		where: { status: 'pending_review', kind: { in: kinds } },
 		with: { author: { columns: { id: true, name: true, image: true } }, source: true },
-		orderBy: { submittedAt: 'asc' },
+		orderBy: { submittedAt: 'asc', id: 'asc' },
 	});
 
 	if (rows.length === 0) {

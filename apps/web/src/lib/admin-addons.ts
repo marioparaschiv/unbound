@@ -6,14 +6,14 @@ import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import type { SQL } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { afterKey, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
-import { addonMaintainer, submission } from '~/db/schema';
-import type { CursorKey, KeysetPage } from '~/lib/keyset';
+import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
+import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
 import { LIVE_VERSIONS, toAddon } from '~/lib/addons';
 import { requirePermission } from '~/lib/api/caller';
 import { matchesSearch } from '~/lib/admin-search';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
+import type { KeysetPage } from '~/lib/keyset';
 import type { Database } from '~/db/database';
 import type { addon } from '~/db/schema';
 
@@ -30,7 +30,9 @@ type OpenUpdateStatus = Extract<AdminAddonStatus, 'pending_review' | 'changes_re
 
 type StatusFilter = (db: Database, table: typeof addon) => SQL;
 
-const ADDON_CURSOR = z.tuple([z.int(), addonIdSchema]);
+const ADDON_CURSOR = z.tuple([cursorTime, addonIdSchema]);
+
+type AddonPosition = z.output<typeof ADDON_CURSOR>;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -60,13 +62,13 @@ function publishedRange(
 	table: typeof addon,
 	search: AdminAddonsSearch,
 	read: SortOrder,
-	after: CursorKey | undefined,
+	after: AddonPosition | undefined,
 ) {
 	const from = search.publishedFrom ? startOfDay(search.publishedFrom).getTime() : undefined;
 	const until = search.publishedTo
 		? startOfDay(search.publishedTo).getTime() + DAY_MS
 		: undefined;
-	const position = after ? Number(after[0]) : undefined;
+	const position = after?.[0].getTime();
 	const lowerByCursor = read === 'asc' && position !== undefined && from !== undefined;
 	const upperByCursor = read === 'desc' && position !== undefined && until !== undefined;
 	const lower = lowerByCursor && position >= from ? undefined : from;
@@ -88,7 +90,7 @@ function filters(db: Database, table: typeof addon, search: AdminAddonsSearch) {
 		: undefined;
 
 	return [
-		q ? matchesSearch('addon', table.id, q) : undefined,
+		q ? matchesSearch(addonSearchText(table), q) : undefined,
 		type ? eq(table.type, type) : undefined,
 		status ? STATUS_FILTERS[status](db, table) : undefined,
 		maintained ? inArray(table.id, maintained) : undefined,
@@ -126,7 +128,7 @@ export function queryAdminAddons(ctx: AppContext, search: AdminAddonsSearch = {}
 			maintainers: {
 				where: { role: 'owner' },
 				with: { user: { columns: { id: true, name: true, image: true } } },
-				orderBy: { createdAt: 'asc' },
+				orderBy: { createdAt: 'asc', userId: 'asc' },
 			},
 		},
 		orderBy: (table, operators) => [

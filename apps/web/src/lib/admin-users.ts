@@ -4,7 +4,7 @@ import type { UserSummary } from '@unbound-app/contracts/account';
 import { and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { afterKey, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
+import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import { DEFAULT_ROLE, hasPermission } from '~/lib/auth/access';
 import type { AdminSubmission } from '~/lib/admin-submissions';
@@ -17,6 +17,7 @@ import { listStaffNotes } from '~/lib/staff-notes';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
+import { userSearchText } from '~/db/schema';
 import { LIVE_VERSIONS } from '~/lib/addons';
 import type { user } from '~/db/schema';
 
@@ -63,7 +64,7 @@ export type AdminUserView = {
 
 type UserRow = typeof user.$inferSelect;
 
-const USER_CURSOR = z.tuple([z.int(), z.string().min(1)]);
+const USER_CURSOR = z.tuple([cursorTime, z.string().min(1)]);
 
 function toAdminUser(row: UserRow): AdminUser {
 	return {
@@ -94,7 +95,7 @@ export function queryAdminUsers(ctx: AppContext, search: AdminUsersSearch = {}) 
 		where: {
 			RAW: (table) =>
 				and(
-					q ? matchesSearch('user', table.id, q) : undefined,
+					q ? matchesSearch(userSearchText(table), q) : undefined,
 					after ? afterKey([table.createdAt, table.id], after, 'desc', dir) : undefined,
 				) ?? sql`true`,
 		},
@@ -147,7 +148,7 @@ function queryMaintainedAddons(ctx: AppContext, userId: string) {
 				},
 			},
 		},
-		orderBy: { role: 'desc', createdAt: 'asc' },
+		orderBy: { role: 'desc', createdAt: 'asc', addonId: 'asc' },
 	});
 }
 

@@ -246,6 +246,20 @@ describe('POST /api/v1/submissions/preview', () => {
 				{ files: { 'CHANGELOG.md': '## [0.1.0]\n\n### Fixed\n\n- Old.\n' } },
 				'invalid_changelog',
 			],
+			[
+				'nulmanifest',
+				{
+					files: {
+						'manifest.json': JSON.stringify({
+							...JSON.parse(manifestJson('acme.nulmanifest')),
+							extra: { note: 'NUL \0 here' },
+						}),
+					},
+				},
+				'invalid_manifest',
+			],
+			['nuladdonmd', { files: { 'ADDON.md': '# Hello\0' } }, 'invalid_request'],
+			['nulchangelog', { files: { 'CHANGELOG.md': `${CHANGELOG}\0` } }, 'invalid_request'],
 		] as const;
 
 		for (const [branch, options, code] of cases) {

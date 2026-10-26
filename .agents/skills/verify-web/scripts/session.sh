@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: session.sh <user|developer|moderator|admin> [--name N] [--field cookie|token|js]
+# Usage: session.sh <user|developer|moderator|admin|ci> [--name N] [--field cookie|token|js]
 # Prints a seeded session. `js` (default) is a preview_evaluate expression that signs the tab in.
 set -euo pipefail
 
@@ -20,8 +20,8 @@ done
 parse_name "${ARGS[@]}"
 
 case "$ROLE" in
-	user | developer | moderator | admin) ;;
-	*) echo "role must be user, developer, moderator or admin" >&2; exit 2 ;;
+	user | developer | moderator | admin | ci) ;;
+	*) echo "role must be user, developer, moderator, admin or ci" >&2; exit 2 ;;
 esac
 
 [ -f "$DIR/sessions.json" ] || { echo "no $DIR/sessions.json; run launch.sh" >&2; exit 1; }
