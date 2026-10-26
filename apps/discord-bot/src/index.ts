@@ -4,9 +4,9 @@ import { Events, GatewayIntentBits, type Client } from 'discord.js';
 import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { createLogger } from '@unbound-app/logger';
 
+import { createDatabase, POOLED_OPTIONS } from '~/db/database';
 import { createFeedClient } from '~/lib/feed/client';
 import { startDispatchers } from '~/runtime/start';
-import { createDatabase, POOLED_OPTIONS } from '~/db/database';
 import { startPoller } from '~/runtime/poller';
 import { setDatabase } from '~/db/instance';
 import { dispatchers } from '~/dispatchers';

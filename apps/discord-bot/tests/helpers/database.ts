@@ -5,8 +5,8 @@ import postgres from 'postgres';
 
 import { createDatabase, type Database } from '~/db/database';
 import type { NotifyChannel } from '~/dispatchers/types';
-import type { EnvSource } from '~/lib/env';
 import { migrateDatabase } from '~/db/migrate';
+import type { EnvSource } from '~/lib/env';
 
 export type TestDatabase = {
 	name: string;
