@@ -342,3 +342,41 @@ describe.skipIf(!DATABASE_URL)('triggers on the web tables', () => {
 		expect(await received()).toEqual([]);
 	});
 });
+
+describe.skipIf(!DATABASE_URL)('triggers after a web migration reshapes a hooked table', () => {
+	let database: BotTestDatabase;
+	let log: NotificationLog;
+
+	beforeAll(async () => {
+		database = await createBotTestDatabase();
+		log = await recordNotifications(database);
+	});
+
+	afterAll(async () => {
+		await log.stop();
+		await database.drop();
+	});
+
+	test('a renamed or dropped column the bodies read neither fails the migration nor the web write', async () => {
+		const sql = database.db.$client;
+
+		await sql.unsafe(`
+			ALTER TABLE public.addon RENAME COLUMN name TO title;
+			ALTER TABLE public.addon DROP COLUMN description;
+			ALTER TABLE public.account RENAME COLUMN provider_id TO provider;
+			ALTER TABLE public.moderation_event RENAME COLUMN id TO event_id;
+		`);
+		await sql`
+			insert into public.addon (id, type, title, updated_at) values ('reshaped', 'plugin', 'Hello', now())`;
+		await sql`update public.addon set title = 'Renamed' where id = 'reshaped'`;
+		await sql`
+			insert into public.moderation_event (subject_type, subject_id, kind, data, created_at)
+			values ('addon', 'reshaped', 'addon.delisted', '{}', now())`;
+		await log.flush();
+
+		expect([...(await sql`select title from public.addon where id = 'reshaped'`)]).toEqual([
+			{ title: 'Renamed' },
+		]);
+		expect(log.received).toEqual([{ channel: 'addon_changed', payload: 'reshaped' }]);
+	});
+});
