@@ -12,9 +12,9 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { encodeCursor } from '~/lib/keyset';
 
+import { explain, planNodes, planPath, type PlanMode, type PlanNode } from './helpers/database';
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { authRequest, createTestContext, signInWithDiscord } from './helpers/context';
-import { explain, planNodes, planPath, type PlanMode, type PlanNode } from './helpers/database';
 
 type CompiledQuery = {
 	sql: string;
