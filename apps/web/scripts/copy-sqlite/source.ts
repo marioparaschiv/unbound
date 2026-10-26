@@ -3,7 +3,7 @@ import { Database } from 'bun:sqlite';
 import type { SourceValue } from './codecs';
 import type { TableSpec } from './registry';
 
-import { SQLITE_ONLY_TABLES } from './registry';
+import { OPTIONAL_SOURCE_TABLES, SQLITE_ONLY_TABLES } from './registry';
 
 /** A row as canonical text per column, `null` for SQL NULL. */
 export type CanonicalRow = (string | null)[];
@@ -31,6 +31,11 @@ function quote(identifier: string) {
 	return `"${identifier.replaceAll('"', '""')}"`;
 }
 
+// Only labels a row in an error, so invalid UTF-8 in a key may show as U+FFFD.
+function label(value: SourceValue | undefined) {
+	return value instanceof Uint8Array ? new TextDecoder().decode(value) : String(value);
+}
+
 function columnsOf(db: Database, table: string) {
 	return db
 		.query<NameRow, [string]>('SELECT name FROM pragma_table_info(?)')
@@ -54,7 +59,9 @@ function assertColumns(db: Database, spec: TableSpec) {
 }
 
 function readRows(db: Database, spec: TableSpec): CanonicalRow[] {
-	const columns = spec.columns.map((column) => quote(column.name)).join(', ');
+	const columns = spec.columns
+		.map((column) => column.codec.select(quote(column.name)))
+		.join(', ');
 	const order = spec.primaryKey.map(quote).join(', ');
 	const rows = db
 		.query<SourceValue[], []>(`SELECT ${columns} FROM ${quote(spec.name)} ORDER BY ${order}`)
@@ -74,7 +81,7 @@ function readRows(db: Database, spec: TableSpec): CanonicalRow[] {
 				return column.codec.parse(value);
 			} catch (error) {
 				// Names the row by its key, never by the value that failed.
-				const key = keyPositions.map((at) => JSON.stringify(String(row[at]))).join(', ');
+				const key = keyPositions.map((at) => JSON.stringify(label(row[at]))).join(', ');
 
 				throw new Error(
 					`${spec.name}.${column.name} at (${spec.primaryKey.join(', ')}) = (${key}):`,
@@ -87,10 +94,11 @@ function readRows(db: Database, spec: TableSpec): CanonicalRow[] {
 
 /**
  * @description Reads every registry table from a SQLite file, read-only and in one snapshot, after
- * checking it holds no table or column the registry does not know.
+ * checking it holds every app table but the optional ones and no table or column the registry does not know.
  * @param path The SQLite file.
  * @param specs The tables to read, in the order to return them.
- * @returns Each table's rows as canonical text; throws on an unknown table or column, or a bad value.
+ * @returns Each table's rows as canonical text; throws on a missing or unknown table, an unknown column,
+ * or a bad value.
  */
 export function readSource(path: string, specs: TableSpec[]): SourceTable[] {
 	const db = new Database(path, { readonly: true, safeIntegers: true, strict: true });
@@ -110,6 +118,20 @@ export function readSource(path: string, specs: TableSpec[]): SourceTable[] {
 				throw new Error(
 					`Source tables the Postgres schema does not know: ${unknown.join(', ')}.`,
 				);
+			}
+
+			if (!specs.some((spec) => names.includes(spec.name))) {
+				throw new Error(
+					`The source holds none of the app tables; is ${path} the app's SQLite file?`,
+				);
+			}
+
+			const missing = specs
+				.map((spec) => spec.name)
+				.filter((name) => !names.includes(name) && !OPTIONAL_SOURCE_TABLES.has(name));
+
+			if (missing.length > 0) {
+				throw new Error(`The source lacks the app tables ${missing.join(', ')}.`);
 			}
 
 			const sequences = new Map(

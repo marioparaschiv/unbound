@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { Database as Sqlite } from 'bun:sqlite';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { asc, eq, sql } from 'drizzle-orm';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
@@ -152,6 +154,7 @@ describe('copySqlite', () => {
 		expect(users[0]?.name).toBe('Zoë 😀');
 		expect(users[0]?.banExpires).toBeNull();
 		expect(users[1]?.banExpires?.getTime()).toBe(4_102_444_800_000);
+		expect(users[2]?.name).toBe('\uFEFFNulls');
 		expect(users[2]?.createdAt.getTime()).toBe(0);
 		expect(users[2]?.updatedAt.getTime()).toBe(-1);
 
@@ -293,19 +296,49 @@ describe('copySqlite', () => {
 		expect((await failure(copy(context))).message).toContain('stray');
 	});
 
-	test('names the row holding NUL, without its value, before writing anything', async () => {
+	test('names the row holding a value Postgres cannot hold, without the value, before writing anything', async () => {
+		const role = 'addon_maintainer.role at (addon_id, user_id) = ("acme.one", "u1"):';
+		const manifest = 'submission.manifest at (id) = ("sub1"):';
+		const document = 'sync_document.document at (user_id) = ("u1"):';
 		const cases = [
 			{
 				statement: `UPDATE addon_maintainer SET role = 'hidden' || char(0) || 'value'`,
-				location: 'addon_maintainer.role at (addon_id, user_id) = ("acme.one", "u1"):',
+				location: role,
+				reason: 'NUL',
+			},
+			{
+				statement: `UPDATE addon_maintainer SET role = cast(x'68696464656eff76616c7565' as text)`,
+				location: role,
+				reason: 'UTF-8',
 			},
 			{
 				statement: `UPDATE submission SET manifest = '{"hidden":"a\\u0000value"}'`,
-				location: 'submission.manifest at (id) = ("sub1"):',
+				location: manifest,
+				reason: 'NUL',
+			},
+			{
+				statement: `UPDATE submission SET manifest = '{"hidden":"a\\ud800value"}'`,
+				location: manifest,
+				reason: 'surrogate',
+			},
+			{
+				statement: `UPDATE submission SET manifest = '{"hidden\\udc00value":1}'`,
+				location: manifest,
+				reason: 'surrogate',
+			},
+			{
+				statement: `UPDATE sync_document SET document = '{"hidden":"' || char(0) || 'value"}'`,
+				location: document,
+				reason: 'NUL',
+			},
+			{
+				statement: `UPDATE sync_document SET document = cast(x'7b2268696464656e223a22ff76616c7565227d' as text)`,
+				location: document,
+				reason: 'UTF-8',
 			},
 		];
 
-		for (const { statement, location } of cases) {
+		for (const { statement, location, reason } of cases) {
 			const context = await setup();
 
 			context.source.exec(statement);
@@ -315,10 +348,59 @@ describe('copySqlite', () => {
 			const [target] = await context.db.$client`select to_regclass('addon') as addon`;
 
 			expect(error.message).toBe(location);
-			expect(cause).toContain('NUL');
+			expect(cause).toContain(reason);
 			expect(`${error.message} ${cause}`).not.toMatch(/hidden|value/);
 			expect(target?.addon).toBeNull();
 		}
+	});
+
+	test('copies a sync document with escaped NUL and lone surrogates, as the app stores it', async () => {
+		const context = await setup();
+		const stored = '{"plugins":{"a\\u0000b":{"enabled":true}},"x":"\\ud800","\\udc00":1}';
+
+		context.source.exec(`UPDATE sync_document SET document = '${stored}'`);
+
+		const reports = await copy(context);
+		const [raw] = await context.db
+			.$client`select document::text as document from sync_document`;
+		const [row] = await context.db.select().from(syncDocument);
+
+		expect(reports.find((report) => report.table === 'sync_document')?.match).toBe(true);
+		expect(raw?.document).toBe(stored);
+		expect(row?.document).toEqual(JSON.parse(stored));
+	});
+
+	test('refuses a source that is not the app database, leaving the target unchanged', async () => {
+		const context = await setup();
+		const directory = mkdtempSync(join(tmpdir(), 'unbound-sqlite-foreign-'));
+		const empty = join(directory, 'empty.db');
+		const foreign = join(directory, 'foreign.db');
+		const handle = new Sqlite(foreign, { create: true });
+
+		cleanups.push(() => rmSync(directory, { recursive: true, force: true }));
+		writeFileSync(empty, '');
+		handle.exec('CREATE TABLE "__drizzle_migrations" (id INTEGER PRIMARY KEY, hash text)');
+		handle.close();
+		await copy(context);
+
+		const before = await snapshot(context.db);
+
+		for (const sqlitePath of [empty, foreign]) {
+			for (const replace of [false, true]) {
+				const error = await failure(
+					copySqlite({ sqlitePath, targetUrl: context.target.url, replace }),
+				);
+
+				expect(error.message).toContain('none of the app tables');
+			}
+		}
+
+		context.source.exec('DROP TABLE staff_note');
+
+		const error = await failure(copy(context, true));
+
+		expect(error.message).toBe('The source lacks the app tables staff_note.');
+		expect(await snapshot(context.db)).toEqual(before);
 	});
 
 	test('copies a table the source predates as empty', async () => {

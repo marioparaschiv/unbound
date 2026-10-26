@@ -34,7 +34,7 @@ const ROWS = `
 INSERT INTO user (id, name, email, email_verified, image, created_at, updated_at, role, banned, ban_reason, ban_expires) VALUES
 	('u1', 'Zoë 😀', 'u1@example.com', 1, NULL, 1700000000123, 1700000000999, NULL, 0, NULL, NULL),
 	('u2', 'Banned', 'u2@example.com', 0, 'https://example.com/a.png', 1600000000000, 1600000000001, 'admin', 1, 'spam', 4102444800000),
-	('u3', 'Nulls', 'u3@example.com', 0, NULL, 0, -1, NULL, NULL, NULL, NULL);
+	('u3', char(65279) || 'Nulls', 'u3@example.com', 0, NULL, 0, -1, NULL, NULL, NULL, NULL);
 INSERT INTO account (id, account_id, provider_id, user_id, access_token, refresh_token, id_token, access_token_expires_at, refresh_token_expires_at, scope, password, created_at, updated_at) VALUES
 	('a1', '12345', 'github', 'u1', 'token', NULL, NULL, NULL, 1800000000000, 'read:user', NULL, 1700000000000, 1700000000001);
 INSERT INTO session (id, expires_at, token, created_at, updated_at, ip_address, user_agent, user_id, impersonated_by) VALUES

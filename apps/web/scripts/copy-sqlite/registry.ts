@@ -1,3 +1,4 @@
+import type { PgColumn } from 'drizzle-orm/pg-core';
 import { getTableConfig, PgTable } from 'drizzle-orm/pg-core';
 import { is } from 'drizzle-orm';
 
@@ -5,7 +6,7 @@ import * as schema from '~/db/schema';
 
 import type { Codec } from './codecs';
 
-import { codecs, isColumnType } from './codecs';
+import { codecs, isColumnType, wholeJsonCodec } from './codecs';
 
 export type ColumnSpec = {
 	name: string;
@@ -34,6 +35,15 @@ export const SQLITE_ONLY_TABLES: ReadonlySet<string> = new Set([
 	...FTS_MIRRORS.flatMap((mirror) => FTS_SHADOWS.map((shadow) => `${mirror}_${shadow}`)),
 ]);
 
+/** The app tables newer than production's SQLite file, which then copy as empty: #231's profiles. */
+export const OPTIONAL_SOURCE_TABLES: ReadonlySet<string> = new Set(['discord_profile']);
+
+/**
+ * The `json` columns the app stores whole and never reads into with `->>`, so they copy the NUL and
+ * lone surrogates it lets in (`put-sync`'s `anyJsonBody`) instead of refusing them.
+ */
+export const WHOLE_JSON_COLUMNS: ReadonlySet<PgColumn> = new Set([schema.syncDocument.document]);
+
 function describeTable(table: PgTable): TableSpec {
 	const config = getTableConfig(table);
 	const columns = config.columns.map((column) => {
@@ -46,7 +56,7 @@ function describeTable(table: PgTable): TableSpec {
 		return {
 			name: column.name,
 			sqlType: column.getSQLType(),
-			codec: codecs[column.columnType],
+			codec: WHOLE_JSON_COLUMNS.has(column) ? wholeJsonCodec : codecs[column.columnType],
 		};
 	});
 	const primaryKey =
@@ -105,4 +115,10 @@ export const tables: TableSpec[] = inReferenceOrder(
 		.map(describeTable),
 );
 
-export default { SQLITE_ONLY_TABLES, inReferenceOrder, tables };
+export default {
+	OPTIONAL_SOURCE_TABLES,
+	SQLITE_ONLY_TABLES,
+	WHOLE_JSON_COLUMNS,
+	inReferenceOrder,
+	tables,
+};
