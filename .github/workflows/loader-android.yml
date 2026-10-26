@@ -149,6 +149,10 @@ jobs:
               working-directory: packages/loader/android
               run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PunboundBuildNumber="${GITHUB_RUN_NUMBER}"
 
+            - name: Test module
+              working-directory: packages/loader/android
+              run: ./gradlew :module:testDebugUnitTest --build-cache --quiet --console=plain
+
             - name: Collect module
               id: collect
               run: |
