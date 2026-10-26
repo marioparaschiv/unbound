@@ -365,9 +365,8 @@ describe('admin list plans', () => {
 		},
 	);
 
-	// Whether walking the order index beats the trigram index and a sort is a cost call that differs
-	// between clusters, so only scans of the predicate are left to plan. A user cursor is left out: its
-	// created_at range is a predicate user_createdAt_idx serves too, and which one wins is a cost call.
+	// Order index vs trigram index plus sort is a cost call that differs between clusters. No user
+	// cursor: user_createdAt_idx serves its created_at range too.
 	test('a search reads the trigram index', async () => {
 		const statements: [Statement, string][] = [
 			[queryAdminUsers(ctx, { q: 'walker' }), 'user_search_idx'],

@@ -2,8 +2,7 @@ import { appendFileSync } from 'node:fs';
 import { SQL } from 'bun';
 
 // Usage: bun database.ts create <instance> <env file> | drop <instance> | exists <instance>
-// Manages the instance's throwaway `unbound_web_verify_<instance>` database on the cluster that
-// apps/web/.env's DATABASE_DIRECT_URL names. Never prints a URL, so the password stays out of logs.
+// Never prints a URL, so the cluster password stays out of logs.
 import { MAINTENANCE_URL, withDatabase } from '../../../../apps/web/tests/helpers/database';
 
 type DatabaseRow = {
