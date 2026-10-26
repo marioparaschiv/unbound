@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "70ee06cf-b3c8-424d-bf52-8ba4e74349cd",
+  "id": "d598371f-5d23-4c89-80f3-1ddb5769afe2",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -21,6 +21,12 @@
     {
       "isRlsEnabled": false,
       "name": "sponsorship",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "discord_profile",
       "entityType": "tables",
       "schema": "public"
     },
@@ -385,6 +391,71 @@
       "entityType": "columns",
       "schema": "public",
       "table": "sponsorship"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "discord_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "discord_profile"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "username",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "discord_profile"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "global_name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "discord_profile"
+    },
+    {
+      "type": "text",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "avatar_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "discord_profile"
+    },
+    {
+      "type": "timestamp(3) with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "fetched_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "discord_profile"
     },
     {
       "type": "text",
@@ -2461,6 +2532,27 @@
       "nameExplicit": true,
       "columns": [
         {
+          "value": "fetched_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "discord_profile_fetchedAt_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "discord_profile"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
           "value": "name",
           "isExpression": false,
           "asc": true,
@@ -3655,6 +3747,16 @@
       "name": "sponsorship_pkey",
       "schema": "public",
       "table": "sponsorship",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "discord_id"
+      ],
+      "nameExplicit": false,
+      "name": "discord_profile_pkey",
+      "schema": "public",
+      "table": "discord_profile",
       "entityType": "pks"
     },
     {

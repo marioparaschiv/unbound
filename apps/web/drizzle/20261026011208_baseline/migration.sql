@@ -49,6 +49,14 @@ CREATE TABLE "sponsorship" (
 	"updated_at" timestamp(3) with time zone NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "discord_profile" (
+	"discord_id" text PRIMARY KEY,
+	"username" text,
+	"global_name" text,
+	"avatar_hash" text,
+	"fetched_at" timestamp(3) with time zone NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "submission_source" (
 	"submission_id" text PRIMARY KEY,
 	"repository_id" bigint NOT NULL,
@@ -263,6 +271,7 @@ CREATE TABLE "bot_feed_change" (
 );
 --> statement-breakpoint
 CREATE INDEX "sponsor_webhook_delivery_receivedAt_idx" ON "sponsor_webhook_delivery" ("received_at");--> statement-breakpoint
+CREATE INDEX "discord_profile_fetchedAt_idx" ON "discord_profile" ("fetched_at");--> statement-breakpoint
 CREATE INDEX "addon_listed_name_idx" ON "addon" ("name","id") WHERE "delisted_at" is null;--> statement-breakpoint
 CREATE INDEX "addon_listed_type_name_idx" ON "addon" ("type","name","id") WHERE "delisted_at" is null;--> statement-breakpoint
 CREATE INDEX "addon_listed_createdAt_idx" ON "addon" ("created_at","id") WHERE "delisted_at" is null;--> statement-breakpoint
@@ -311,7 +320,8 @@ ALTER TABLE "staff_note" ADD CONSTRAINT "staff_note_addon_id_addon_id_fkey" FORE
 ALTER TABLE "staff_note" ADD CONSTRAINT "staff_note_author_id_user_id_fkey" FOREIGN KEY ("author_id") REFERENCES "user"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
-ALTER TABLE "sync_document" ADD CONSTRAINT "sync_document_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "sync_document" ADD CONSTRAINT "sync_document_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;
+--> statement-breakpoint
 -- (B) Hand-written.
 ALTER SEQUENCE "moderation_event_id_seq" OWNED BY "moderation_event"."id";--> statement-breakpoint
 ALTER SEQUENCE "bot_feed_change_seq" OWNED BY "bot_feed_change"."seq";--> statement-breakpoint
