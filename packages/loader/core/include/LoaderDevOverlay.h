@@ -42,6 +42,13 @@ struct Size {
     double height = 0;
 };
 
+struct Frame {
+    double x      = 0;
+    double y      = 0;
+    double width  = 0;
+    double height = 0;
+};
+
 struct Insets {
     double top    = 0;
     double left   = 0;
@@ -69,4 +76,6 @@ Point position(const SettingsStore &settings);
 Point clampCenter(Point center, Size bounds, Insets insets);
 Point buttonCenter(const SettingsStore &settings, Size bounds, Insets insets);
 bool  saveButtonCenter(SettingsStore &settings, Point center, Size bounds);
+Frame buttonFrame(Point center);
+Frame collapsedWindowFrame(Point center, Frame screen);
 }

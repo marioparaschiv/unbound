@@ -311,11 +311,6 @@ static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
     return loader::devoverlay::kButtonSide;
 }
 
-+ (CGFloat)devOverlayButtonMargin
-{
-    return loader::devoverlay::kButtonMargin;
-}
-
 + (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets
 {
     loader::devoverlay::Point center = loader::devoverlay::buttonCenter(
@@ -334,6 +329,29 @@ static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
 {
     loader::devoverlay::saveButtonCenter(UnboundSettingsStore(), {center.x, center.y},
                                          coreSize(bounds));
+}
+
+static CGRect cgRect(const loader::devoverlay::Frame &frame)
+{
+    return CGRectMake(frame.x, frame.y, frame.width, frame.height);
+}
+
++ (CGRect)devOverlayButtonFrameForCenter:(CGPoint)center
+{
+    return cgRect(loader::devoverlay::buttonFrame({center.x, center.y}));
+}
+
++ (CGRect)devOverlayCollapsedFrameForCenter:(CGPoint)center screen:(CGRect)screen
+{
+    return cgRect(loader::devoverlay::collapsedWindowFrame(
+        {center.x, center.y},
+        {screen.origin.x, screen.origin.y, screen.size.width, screen.size.height}));
+}
+
++ (BOOL)devOverlayVisibleOnVirtualDevice:(BOOL)virtualDevice debugBuild:(BOOL)debugBuild
+{
+    return loader::preferences::devOverlayVisible(UnboundSettingsStore(), virtualDevice,
+                                                  debugBuild);
 }
 
 + (NSString *)incompatibleHostMessage
