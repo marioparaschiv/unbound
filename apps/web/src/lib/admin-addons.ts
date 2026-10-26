@@ -128,7 +128,7 @@ export function queryAdminAddons(ctx: AppContext, search: AdminAddonsSearch = {}
 			maintainers: {
 				where: { role: 'owner' },
 				with: { user: { columns: { id: true, name: true, image: true } } },
-				orderBy: { createdAt: 'asc' },
+				orderBy: { createdAt: 'asc', userId: 'asc' },
 			},
 		},
 		orderBy: (table, operators) => [

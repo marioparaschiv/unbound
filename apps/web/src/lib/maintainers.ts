@@ -22,7 +22,7 @@ type MaintainerRow = Pick<typeof addonMaintainer.$inferSelect, 'role' | 'created
 /** The relational query options that load maintainers, owners first, with their user. */
 export const MAINTAINERS = {
 	with: { user: { columns: { id: true, name: true, image: true } } },
-	orderBy: { role: 'desc', createdAt: 'asc' },
+	orderBy: { role: 'desc', createdAt: 'asc', userId: 'asc' },
 } as const;
 
 /**
@@ -51,7 +51,11 @@ function selectMembers(tx: Transaction, addonId: string): Promise<MaintainerEntr
 		.select({ userId: addonMaintainer.userId, role: addonMaintainer.role })
 		.from(addonMaintainer)
 		.where(eq(addonMaintainer.addonId, addonId))
-		.orderBy(desc(addonMaintainer.role), asc(addonMaintainer.createdAt));
+		.orderBy(
+			desc(addonMaintainer.role),
+			asc(addonMaintainer.createdAt),
+			asc(addonMaintainer.userId),
+		);
 }
 
 /**

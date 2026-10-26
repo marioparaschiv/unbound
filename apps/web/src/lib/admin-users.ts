@@ -148,7 +148,7 @@ function queryMaintainedAddons(ctx: AppContext, userId: string) {
 				},
 			},
 		},
-		orderBy: { role: 'desc', createdAt: 'asc' },
+		orderBy: { role: 'desc', createdAt: 'asc', addonId: 'asc' },
 	});
 }
 

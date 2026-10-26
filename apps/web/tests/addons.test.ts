@@ -139,6 +139,22 @@ describe('maintainers', () => {
 		expect(roles([owner, helper], removed.maintainers)).toEqual(['owner', undefined]);
 	});
 
+	test('maintainers who joined at the same instant are listed by user id', async () => {
+		const owner = await ownedAddon('own.ties');
+		const helpers = [await signUp(), await signUp(), await signUp()].map(
+			(helper) => helper.userId,
+		);
+
+		// Added in descending id order, all at the context's fixed clock.
+		for (const userId of helpers.toSorted().toReversed()) {
+			await addMaintainer(owner.client, 'own.ties', userId);
+		}
+
+		const listed = (await maintainers(anonymous, 'own.ties')).maintainers;
+
+		expect(listed.map((member) => member.id)).toEqual([owner.userId, ...helpers.toSorted()]);
+	});
+
 	test('a maintainer cannot manage maintainers and a non-member gets 403', async () => {
 		const owner = await ownedAddon('own.denied');
 		const helper = await signUp('developer');

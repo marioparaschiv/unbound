@@ -115,7 +115,7 @@ async function readLinkedUsers(
 		.from(account)
 		.innerJoin(user, eq(user.id, account.userId))
 		.where(and(eq(account.providerId, 'discord'), inArray(account.accountId, ids)))
-		.orderBy(asc(account.createdAt));
+		.orderBy(asc(account.createdAt), asc(account.id));
 
 	const now = ctx.now();
 	const active = rows.filter((row) => !isBanned(row.user, now));

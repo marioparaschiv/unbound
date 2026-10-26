@@ -426,7 +426,7 @@ export async function listMyAddons(ctx: AppContext, caller: Caller): Promise<MyA
 			OR: [{ addonId: { in: ids } }, { authorId: userId, kind: 'listing' }],
 		},
 		with: { source: true },
-		orderBy: { createdAt: 'asc' },
+		orderBy: { createdAt: 'asc', id: 'asc' },
 	});
 
 	const open = loaded.map(requireSourced);

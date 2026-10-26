@@ -210,7 +210,7 @@ async function querySubmissions(ctx: AppContext, userId: string, addonIds: strin
 			.from(submission)
 			.leftJoin(submissionSource, eq(submissionSource.submissionId, submission.id))
 			.where(and(scope, isNotNull(submission.submittedAt)))
-			.orderBy(desc(submission.submittedAt))
+			.orderBy(desc(submission.submittedAt), desc(submission.id))
 			.limit(TIMELINE_LIMIT),
 	]);
 

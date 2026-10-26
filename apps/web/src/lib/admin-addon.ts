@@ -157,7 +157,11 @@ function selectMembers(tx: Transaction, addonId: string): Promise<MaintainerEntr
 		.select({ userId: addonMaintainer.userId, role: addonMaintainer.role })
 		.from(addonMaintainer)
 		.where(eq(addonMaintainer.addonId, addonId))
-		.orderBy(desc(addonMaintainer.role), asc(addonMaintainer.createdAt));
+		.orderBy(
+			desc(addonMaintainer.role),
+			asc(addonMaintainer.createdAt),
+			asc(addonMaintainer.userId),
+		);
 }
 
 async function writeFields(tx: Transaction, addonId: string, edit: EditAddonRequest) {
