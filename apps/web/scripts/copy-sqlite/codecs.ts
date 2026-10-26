@@ -125,14 +125,35 @@ function asText(column: string) {
 export const codecs: Record<ColumnType, Codec> = {
 	PgTimestamp: {
 		select: identity,
+		/**
+		 * @description Reads a SQLite millisecond timestamp as canonical text.
+		 * @param value The source value.
+		 * @returns The milliseconds since the epoch as text.
+		 */
 		parse: (value) => String(integer(value, TIMESTAMP_MS)),
+		/**
+		 * @description Casts canonical milliseconds to a Postgres timestamp.
+		 * @param placeholder The bound placeholder.
+		 * @param sqlType The column's SQL type.
+		 * @returns The SQL that writes the timestamp.
+		 */
 		write: (placeholder, sqlType) =>
 			`('epoch'::timestamptz + ${placeholder}::bigint * interval '1 millisecond')::${sqlType}`,
 		// `extract` is exact numeric, and the column holds whole milliseconds.
+		/**
+		 * @description Reads a Postgres timestamp back as canonical milliseconds.
+		 * @param column The quoted column.
+		 * @returns The SQL that reads the timestamp back.
+		 */
 		readBack: (column) => `(extract(epoch from ${column}) * 1000)::bigint::text`,
 	},
 	PgBoolean: {
 		select: identity,
+		/**
+		 * @description Reads a SQLite `0` or `1` as canonical text.
+		 * @param value The source value.
+		 * @returns `0` or `1` as text.
+		 */
 		parse: (value) => {
 			if (value !== 0n && value !== 1n) {
 				throw new TypeError(`Expected 0 or 1, got ${describe(value)} ${String(value)}.`);
@@ -141,18 +162,33 @@ export const codecs: Record<ColumnType, Codec> = {
 			return String(value);
 		},
 		write: cast,
+		/**
+		 * @description Reads a Postgres boolean back as `0` or `1`.
+		 * @param column The quoted column.
+		 * @returns The SQL that reads the boolean back.
+		 */
 		readBack: (column) => `${column}::int::text`,
 	},
 	// `json`, unlike `jsonb`, stores its input text, so key order and spacing survive.
 	PgJson: { select: asBytes, parse: json, write: cast, readBack: asText },
 	PgBigInt53: {
 		select: identity,
+		/**
+		 * @description Reads a SQLite 64-bit integer as canonical text.
+		 * @param value The source value.
+		 * @returns The integer as text.
+		 */
 		parse: (value) => String(integer(value, INT64)),
 		write: cast,
 		readBack: asText,
 	},
 	PgInteger: {
 		select: identity,
+		/**
+		 * @description Reads a SQLite 32-bit integer as canonical text.
+		 * @param value The source value.
+		 * @returns The integer as text.
+		 */
 		parse: (value) => String(integer(value, INT32)),
 		write: cast,
 		readBack: asText,

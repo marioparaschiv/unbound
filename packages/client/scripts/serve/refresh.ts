@@ -64,6 +64,10 @@ export async function deliver(update: HotUpdate) {
 }
 
 export const websocket: WebSocketHandler<SocketData> = {
+	/**
+	 * @description Registers a connected device with the dev engine.
+	 * @param socket The device's socket.
+	 */
 	async open(socket) {
 		const { clientId } = socket.data;
 
@@ -71,6 +75,11 @@ export const websocket: WebSocketHandler<SocketData> = {
 		await tracker?.registerClient(clientId);
 		logger.info(`Device connected (${sockets.size} total).`);
 	},
+	/**
+	 * @description Records an applied patch, or answers a reload request with the latest build.
+	 * @param socket The device's socket.
+	 * @param raw The device's message.
+	 */
 	async message(socket, raw) {
 		const message: ClientMessage = JSON.parse(String(raw));
 
@@ -83,6 +92,10 @@ export const websocket: WebSocketHandler<SocketData> = {
 		await tracker?.ensureLatestBuildOutput();
 		socket.send(JSON.stringify({ type: 'reload' }));
 	},
+	/**
+	 * @description Forgets a disconnected device.
+	 * @param socket The device's socket.
+	 */
 	async close(socket) {
 		const { clientId } = socket.data;
 

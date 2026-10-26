@@ -144,10 +144,10 @@ jobs:
         runs-on: ubuntu-26.04
         timeout-minutes: 50
         outputs:
-            version: ${{ steps.resolve.outputs.version }}
-            release_version: ${{ steps.resolve.outputs.release_version }}
-            is_testflight: ${{ steps.resolve.outputs.is_testflight }}
-            android_code: ${{ steps.resolve.outputs.code }}
+            version: ${{ steps.resolve.outputs.version || steps.select.outputs.version }}
+            release_version: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
+            is_testflight: ${{ steps.resolve.outputs.is_testflight || steps.select.outputs.is_testflight }}
+            android_code: ${{ steps.select.outputs.code }}
         steps:
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -168,16 +168,13 @@ jobs:
                   key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
                   restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
 
-            - name: Resolve source version
-              id: resolve
+            - name: Select the source
+              id: select
               env:
-                  DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
                   INPUT_VERSION: ${{ inputs.version }}
                   INPUT_IPA_URL: ${{ inputs.ipa_url }}
                   INPUT_IS_TESTFLIGHT: ${{ inputs.is_testflight }}
                   INPUT_RELEASE: ${{ inputs.release }}
-                  INPUT_AUTHENTICATED_SOURCE: ${{ inputs.authenticated_source }}
-                  INPUT_DKRYPT_BASE_URL: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
                   INPUT_ANDROID_TRACKER: https://tracker.vendetta.rocks/tracker
                   INPUT_ANDROID_CHANNEL: ${{ inputs.android_channel }}
                   INPUT_ANDROID_CODE: ${{ inputs.android_code }}
@@ -201,7 +198,10 @@ jobs:
                       echo "::error::Android version code $(jq -r '.code' <<< "$release") is $release_version, not the requested $INPUT_VERSION"
                       exit 1
                     fi
-                    echo "is_testflight=false" >> "$GITHUB_OUTPUT"
+                    {
+                      echo "is_testflight=false"
+                      echo "platform=android"
+                    } >> "$GITHUB_OUTPUT"
                     exit 0
                   fi
                   requested_version="$INPUT_VERSION"
@@ -210,29 +210,58 @@ jobs:
                     requested_version=$(go run ./tools discord-version --android-code "$android_code")
                     echo "::notice::Selecting the latest Android stable version available to both platforms: $requested_version"
                   fi
-                  if [ -z "$INPUT_IPA_URL" ]; then
-                    go run ./tools fetch \
-                      --base-url "$INPUT_DKRYPT_BASE_URL" \
-                      --bundle-id com.hammerandchisel.discord \
-                      --version "$requested_version" \
-                      --output source.ipa
-                  else
-                    channel=appstore
-                    if [ "$INPUT_IS_TESTFLIGHT" = true ]; then channel=testflight; fi
-                    fetch_args=(--base-url "$INPUT_DKRYPT_BASE_URL" --source-url "$INPUT_IPA_URL")
-                    if [ "$INPUT_AUTHENTICATED_SOURCE" = true ]; then fetch_args+=(--authenticated-source); fi
-                    fetch_args+=(--channel "$channel" --version "$requested_version" --output source.ipa)
-                    go run ./tools fetch "${fetch_args[@]}"
-                  fi
+                  {
+                    echo "platform=ios"
+                    echo "requested_version=$requested_version"
+                  } >> "$GITHUB_OUTPUT"
+
+            - name: Decrypt the source IPA
+              if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == ''
+              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@26d8cd98861aa633725864121838febed58a4350
+              with:
+                  api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
+                  api-key: ${{ secrets.DKRYPT_API_KEY }}
+                  bundle-id: com.hammerandchisel.discord
+                  channel: ${{ inputs.is_testflight && 'testflight' || 'appstore' }}
+                  version: ${{ steps.select.outputs.requested_version }}
+                  output: packages/loader/source.ipa
+
+            - name: Download the source IPA
+              if: steps.select.outputs.platform == 'ios' && inputs.ipa_url != ''
+              env:
+                  DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+                  INPUT_IPA_URL: ${{ inputs.ipa_url }}
+                  INPUT_IS_TESTFLIGHT: ${{ inputs.is_testflight }}
+                  INPUT_AUTHENTICATED_SOURCE: ${{ inputs.authenticated_source }}
+                  INPUT_DKRYPT_BASE_URL: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
+                  REQUESTED_VERSION: ${{ steps.select.outputs.requested_version }}
+              run: |
+                  set -euo pipefail
+                  channel=appstore
+                  if [ "$INPUT_IS_TESTFLIGHT" = true ]; then channel=testflight; fi
+                  fetch_args=(--base-url "$INPUT_DKRYPT_BASE_URL" --source-url "$INPUT_IPA_URL")
+                  if [ "$INPUT_AUTHENTICATED_SOURCE" = true ]; then fetch_args+=(--authenticated-source); fi
+                  fetch_args+=(--channel "$channel" --version "$REQUESTED_VERSION" --output source.ipa)
+                  go run ./tools fetch "${fetch_args[@]}"
+
+            - name: Resolve source version
+              id: resolve
+              if: steps.select.outputs.platform == 'ios'
+              env:
+                  INPUT_IS_TESTFLIGHT: ${{ inputs.is_testflight }}
+                  INPUT_RELEASE: ${{ inputs.release }}
+                  REQUESTED_VERSION: ${{ steps.select.outputs.requested_version }}
+              run: |
+                  set -euo pipefail
                   ipa_info=$(go run ./tools ipa-info --ipa source.ipa)
                   version=$(jq -r '.version' <<< "$ipa_info")
                   build=$(jq -r '.build' <<< "$ipa_info")
                   if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ]; then
                     actual_android_code=$(go run ./tools discord-version --version "$version")
-                    if [ -n "$requested_version" ]; then
-                      requested_android_code=$(go run ./tools discord-version --version "$requested_version")
+                    if [ -n "$REQUESTED_VERSION" ]; then
+                      requested_android_code=$(go run ./tools discord-version --version "$REQUESTED_VERSION")
                       if [ "$actual_android_code" != "$requested_android_code" ]; then
-                        echo "::error::The iOS IPA is $version but the requested matching release is $requested_version"
+                        echo "::error::The iOS IPA is $version but the requested matching release is $REQUESTED_VERSION"
                         exit 1
                       fi
                     fi
@@ -367,7 +396,7 @@ jobs:
             artifact-metadata: write
         uses: ./.github/workflows/loader-ios.yml
         with:
-            version: ${{ needs.resolve-source.outputs.version || inputs.version }}
+            version: ${{ needs.resolve-source.outputs.release_version || inputs.version }}
             ipa_url: ${{ inputs.ipa_url }}
             release: ${{ inputs.release || false }}
             is_testflight: ${{ inputs.is_testflight || false }}

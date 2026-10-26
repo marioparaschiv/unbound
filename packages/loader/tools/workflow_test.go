@@ -148,10 +148,10 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		"needs: [resolve-source, ios, android]",
 		"ios_version: ${{ needs.resolve-source.outputs.version }}",
 		"require_matching_version: ${{ inputs.release == true && inputs.is_testflight != true }}",
-		"version: ${{ needs.resolve-source.outputs.version || inputs.version }}",
+		"version: ${{ needs.resolve-source.outputs.release_version || inputs.version }}",
 		"android_code=$(curl -fsSL \"$INPUT_ANDROID_TRACKER/index\" | jq -er '.latest.stable | tonumber')",
 		"go run ./tools discord-version --android-code \"$android_code\"",
-		"The iOS IPA is $version but the requested matching release is $requested_version",
+		"The iOS IPA is $version but the requested matching release is $REQUESTED_VERSION",
 		"secrets: inherit",
 		"value: ${{ jobs.android.outputs.module_filename }}",
 		"value: ${{ jobs.android.outputs.patched_filename }}",
@@ -169,7 +169,7 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, required := range []string{
-		"INPUT_RELEASE: ${{ inputs.release }}",
+		"if: inputs.release == true && inputs.is_testflight != true && inputs.version != ''",
 		"The source IPA is $source_version but the selected combined release is $INPUT_VERSION",
 	} {
 		if !strings.Contains(string(iosWorkflow), required) {
@@ -327,8 +327,9 @@ func TestPullRequestWorkflowChecksPinnedSupportedDiscordFixtures(t *testing.T) {
 	for _, required := range []string{
 		"version: ['347.0', '341.0']",
 		"name: rootless package",
-		"--bundle-id com.hammerandchisel.discord",
-		"--version \"$DISCORD_VERSION\"",
+		"uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@",
+		"bundle-id: com.hammerandchisel.discord",
+		"version: ${{ matrix.version }}",
 		"needs.compatibility-source.outputs.available == 'true'",
 	} {
 		if !strings.Contains(contents, required) {
@@ -600,8 +601,9 @@ func TestCompatScanCoversEveryDiscordChannel(t *testing.T) {
 		"DISCORD_SNIFF_URL: https://sniff.xhyrom.dev",
 		`go run ./tools discord-apk --channel "$CHANNEL" --output-dir discord-android --split base`,
 		"if: env.IOS_SOURCE != 'none'",
-		`if [ "$IOS_SOURCE" = appstore ]; then`,
-		"fetch-ipa.py com.hammerandchisel.discord testflight",
+		"uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@",
+		"channel: ${{ env.IOS_SOURCE }}",
+		"output: packages/loader/discord.ipa",
 		`if [ "$IOS_SOURCE" != none ]; then scan_args+=(--ipa discord.ipa); fi`,
 		"name: compat-${{ matrix.channel }}",
 		`--name "compat-$CHANNEL"`,
@@ -780,7 +782,7 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"      android_code:\n",
 		"beta|alpha) ;;",
 		`release=$(go run ./tools discord-apk "${apk_args[@]}")`,
-		"android_code: ${{ steps.resolve.outputs.code }}",
+		"android_code: ${{ steps.select.outputs.code }}",
 		"discord_channel: ${{ inputs.android_channel || 'stable' }}",
 		"android_code: ${{ needs.resolve-source.outputs.android_code }}",
 		"if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true",
@@ -911,5 +913,54 @@ func TestReleasesWaitForTheCompatibilityGate(t *testing.T) {
 		if !strings.Contains(body, "needs.ios.result == 'success'") && !strings.Contains(body, "needs.android.result == 'success'") {
 			t.Fatalf("%s publishes without a gated build:\n%s", job, body)
 		}
+	}
+}
+
+func TestDkryptIsOnlyReachedThroughThePinnedAction(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	root := filepath.Dir(filepath.Dir(filename))
+	workflows, err := filepath.Glob(filepath.Join(root, "..", "..", ".github", "workflows", "*.yml"))
+	if err != nil || len(workflows) == 0 {
+		t.Fatalf("no workflows found: %v", err)
+	}
+	pinned := regexp.MustCompile(`uses: castdrian/dkrypt/\.github/actions/dkrypt-decrypt@([0-9a-f]{40})\n`)
+	references := regexp.MustCompile(`castdrian/dkrypt[^\n]*`)
+	shas := map[string]bool{}
+	users := map[string]bool{}
+	for _, path := range workflows {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		contents := string(data)
+		name := filepath.Base(path)
+		if len(references.FindAllString(contents, -1)) != len(pinned.FindAllString(contents, -1)) {
+			t.Fatalf("%s uses the dkrypt action without pinning it to a full commit SHA", name)
+		}
+		for _, match := range pinned.FindAllStringSubmatch(contents, -1) {
+			shas[match[1]] = true
+			users[name] = true
+		}
+		for _, forbidden := range []string{"/v1/decrypts", "fetch-ipa.py", "release-candidate --channel testflight\n"} {
+			if strings.Contains(contents, forbidden) {
+				t.Fatalf("%s reaches dkrypt with %q instead of the action", name, forbidden)
+			}
+		}
+		for _, line := range strings.Split(contents, "\n") {
+			if strings.Contains(line, "go run ./tools fetch") && !strings.Contains(line, "fetch_args") {
+				t.Fatalf("%s decrypts with the fetch tool instead of the action: %s", name, strings.TrimSpace(line))
+			}
+		}
+	}
+	for _, name := range []string{"discord-compat.yml", "loader-build.yml", "loader-ci.yml", "loader-ios.yml", "loader-release-poll.yml"} {
+		if !users[name] {
+			t.Fatalf("%s no longer uses the dkrypt action", name)
+		}
+	}
+	if len(shas) != 1 {
+		t.Fatalf("every workflow must pin the same dkrypt action commit, found %d", len(shas))
 	}
 }

@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"sort"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -30,10 +30,9 @@ type releasePollConfig struct {
 	itunesLookupURL   string
 	androidTrackerURL string
 	sniffURL          string
-	dkryptBaseURL     string
 	githubAPIURL      string
 	githubRepository  string
-	dkryptAPIKey      string
+	testflightVersion string
 	githubToken       string
 	httpClient        *http.Client
 	now               func() time.Time
@@ -72,26 +71,6 @@ type androidTrackerIndex struct {
 	} `json:"latest"`
 }
 
-type testflightTrainsResponse struct {
-	Trains []testflightTrain `json:"trains"`
-}
-
-type testflightTrain struct {
-	TrainVersion string `json:"trainVersion"`
-}
-
-type testflightBuildsResponse struct {
-	Builds []testflightBuild `json:"builds"`
-}
-
-type testflightBuild struct {
-	ID                   int64  `json:"id"`
-	BundleID             string `json:"bundleId"`
-	CFBundleShortVersion string `json:"cfBundleShortVersion"`
-	CFBundleVersion      string `json:"cfBundleVersion"`
-	Expiration           string `json:"expiration"`
-}
-
 func runReleaseCandidate(args []string) error {
 	set := flag.NewFlagSet("release-candidate", flag.ContinueOnError)
 	channel := set.String("channel", "", "stable, testflight, android-beta or android-alpha")
@@ -99,7 +78,7 @@ func runReleaseCandidate(args []string) error {
 	itunesURL := set.String("itunes-url", defaultItunesLookupURL, "iTunes Lookup endpoint")
 	androidTrackerURL := set.String("android-tracker", defaultAndroidTracker, "Android package tracker base URL")
 	sniffURL := set.String("sniff-url", envOr("DISCORD_SNIFF_URL", defaultSniffURL), "sniff service base URL")
-	dkryptBaseURL := set.String("dkrypt-base-url", envOr("DKRYPT_BASE_URL", defaultDkryptURL), "dkrypt service base URL")
+	testflightVersion := set.String("version", "", "TestFlight version_build the dkrypt action resolved")
 	githubAPIURL := set.String("github-api-url", defaultGithubAPI, "GitHub API base URL")
 	githubRepository := set.String("github-repository", os.Getenv("GITHUB_REPOSITORY"), "GitHub owner/repository")
 	if err := set.Parse(args); err != nil {
@@ -118,10 +97,9 @@ func runReleaseCandidate(args []string) error {
 		itunesLookupURL:   *itunesURL,
 		androidTrackerURL: strings.TrimRight(*androidTrackerURL, "/"),
 		sniffURL:          strings.TrimRight(*sniffURL, "/"),
-		dkryptBaseURL:     strings.TrimRight(*dkryptBaseURL, "/"),
 		githubAPIURL:      strings.TrimRight(*githubAPIURL, "/"),
 		githubRepository:  *githubRepository,
-		dkryptAPIKey:      os.Getenv("DKRYPT_API_KEY"),
+		testflightVersion: strings.TrimSpace(*testflightVersion),
 		githubToken:       os.Getenv("GITHUB_TOKEN"),
 		httpClient:        &http.Client{Timeout: releasePollRequestLimit},
 		now:               time.Now,
@@ -153,17 +131,24 @@ func discoverReleaseCandidate(ctx context.Context, config releasePollConfig) (re
 	if channel, android := strings.CutPrefix(config.channel, "android-"); android {
 		return discoverAndroidChannelCandidate(ctx, config, channel)
 	}
+	if config.channel == "testflight" {
+		return testflightCandidate(config.testflightVersion)
+	}
 	lookup, err := lookupItunesApp(ctx, config.httpClient, config.itunesLookupURL, config.bundleID)
 	if err != nil {
 		return releaseCandidate{}, err
 	}
-	var version string
-	if config.channel == "stable" {
-		version, err = discoverStableCandidate(ctx, config, lookup.Version)
-	} else {
-		version, err = discoverTestflightCandidate(ctx, config, lookup.TrackID)
-	}
+	version, err := discoverStableCandidate(ctx, config, lookup.Version)
 	return releaseCandidate{Version: version}, err
+}
+
+var testflightVersionPattern = regexp.MustCompile(`^[0-9]+(\.[0-9]+)+_[0-9]+$`)
+
+func testflightCandidate(version string) (releaseCandidate, error) {
+	if !testflightVersionPattern.MatchString(version) {
+		return releaseCandidate{}, fmt.Errorf("release-candidate --channel testflight needs --version <version>_<build> from the dkrypt action, got %q", version)
+	}
+	return releaseCandidate{Version: version}, nil
 }
 
 func discoverAndroidChannelCandidate(ctx context.Context, config releasePollConfig, channel string) (releaseCandidate, error) {
@@ -311,121 +296,6 @@ func verifyAndroidBasePackage(ctx context.Context, client *http.Client, trackerU
 		return false, fmt.Errorf("read Android version %d availability response: %w", code, err)
 	}
 	return true, nil
-}
-
-func discoverTestflightCandidate(ctx context.Context, config releasePollConfig, appID int) (string, error) {
-	if config.dkryptAPIKey == "" {
-		return "", errors.New("DKRYPT_API_KEY is required to poll TestFlight")
-	}
-	endpoint := fmt.Sprintf("%s/v1/testflight/%d/trains", config.dkryptBaseURL, appID)
-	body, status, err := fetchResponse(ctx, config.httpClient, endpoint, config.dkryptAPIKey, nil)
-	if err != nil {
-		return "", err
-	}
-	if status != http.StatusOK {
-		return "", fmt.Errorf("dkrypt TestFlight train lookup returned HTTP %d", status)
-	}
-	var response testflightTrainsResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return "", fmt.Errorf("decode dkrypt TestFlight train response: %w", err)
-	}
-	trains := append([]testflightTrain(nil), response.Trains...)
-	sort.Slice(trains, func(i, j int) bool {
-		return compareDiscordVersions(trains[i].TrainVersion, trains[j].TrainVersion) > 0
-	})
-	var selected *testflightBuild
-	for _, train := range trains {
-		builds, err := lookupTestflightBuilds(ctx, config, appID, train.TrainVersion)
-		if err != nil {
-			return "", err
-		}
-		for i := range builds {
-			build := &builds[i]
-			if !isAvailableTestflightBuild(*build, config.bundleID, config.now()) {
-				continue
-			}
-			if selected == nil || newerTestflightBuild(*build, *selected) {
-				selected = build
-			}
-		}
-	}
-	if selected == nil {
-		return "", nil
-	}
-	return selected.CFBundleShortVersion + "_" + selected.CFBundleVersion, nil
-}
-
-func lookupTestflightBuilds(ctx context.Context, config releasePollConfig, appID int, trainVersion string) ([]testflightBuild, error) {
-	endpoint, err := url.Parse(fmt.Sprintf("%s/v1/testflight/%d/builds", config.dkryptBaseURL, appID))
-	if err != nil {
-		return nil, err
-	}
-	query := endpoint.Query()
-	query.Set("trainVersion", trainVersion)
-	endpoint.RawQuery = query.Encode()
-	body, status, err := fetchResponse(ctx, config.httpClient, endpoint.String(), config.dkryptAPIKey, nil)
-	if err != nil {
-		return nil, err
-	}
-	if status != http.StatusOK {
-		return nil, fmt.Errorf("dkrypt TestFlight build lookup for %s returned HTTP %d", trainVersion, status)
-	}
-	var response testflightBuildsResponse
-	if err := json.Unmarshal(body, &response); err != nil {
-		return nil, fmt.Errorf("decode dkrypt TestFlight build response for %s: %w", trainVersion, err)
-	}
-	return response.Builds, nil
-}
-
-func isAvailableTestflightBuild(build testflightBuild, bundleID string, now time.Time) bool {
-	if build.ID < 1 || build.BundleID != bundleID || build.CFBundleShortVersion == "" || build.CFBundleVersion == "" {
-		return false
-	}
-	if _, err := strconv.ParseUint(build.CFBundleVersion, 10, 64); err != nil {
-		return false
-	}
-	if build.Expiration == "" {
-		return true
-	}
-	expiration, err := time.Parse(time.RFC3339, build.Expiration)
-	return err == nil && expiration.After(now)
-}
-
-func newerTestflightBuild(candidate, current testflightBuild) bool {
-	versionOrder := compareDiscordVersions(candidate.CFBundleShortVersion, current.CFBundleShortVersion)
-	if versionOrder != 0 {
-		return versionOrder > 0
-	}
-	candidateBuild, candidateErr := strconv.ParseUint(candidate.CFBundleVersion, 10, 64)
-	currentBuild, currentErr := strconv.ParseUint(current.CFBundleVersion, 10, 64)
-	return candidateErr == nil && currentErr == nil && candidateBuild > currentBuild
-}
-
-func compareDiscordVersions(left, right string) int {
-	left = strings.TrimPrefix(strings.TrimSpace(strings.SplitN(left, "_", 2)[0]), "v")
-	right = strings.TrimPrefix(strings.TrimSpace(strings.SplitN(right, "_", 2)[0]), "v")
-	leftParts := strings.Split(left, ".")
-	rightParts := strings.Split(right, ".")
-	length := len(leftParts)
-	if len(rightParts) > length {
-		length = len(rightParts)
-	}
-	for i := 0; i < length; i++ {
-		var leftPart, rightPart uint64
-		if i < len(leftParts) {
-			leftPart, _ = strconv.ParseUint(leftParts[i], 10, 64)
-		}
-		if i < len(rightParts) {
-			rightPart, _ = strconv.ParseUint(rightParts[i], 10, 64)
-		}
-		if leftPart > rightPart {
-			return 1
-		}
-		if leftPart < rightPart {
-			return -1
-		}
-	}
-	return 0
 }
 
 func fetchResponse(ctx context.Context, client *http.Client, endpoint, apiKey string, headers map[string]string) ([]byte, int, error) {

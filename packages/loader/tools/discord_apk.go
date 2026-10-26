@@ -335,3 +335,14 @@ func runDiscordAPK(args []string) error {
 	}
 	return json.NewEncoder(os.Stdout).Encode(release)
 }
+
+func safeMessage(value any) string {
+	message := strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(fmt.Sprint(value), "\r", " "), "\n", " "))
+	if len(message) > 500 {
+		message = message[:500]
+	}
+	if message == "" || message == "<nil>" {
+		return "unknown error"
+	}
+	return message
+}
