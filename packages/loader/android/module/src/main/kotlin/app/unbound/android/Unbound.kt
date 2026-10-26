@@ -33,7 +33,8 @@ class Unbound : XposedModule() {
         val appInfo = param.applicationInfo
         NativeJava.useClassLoader(param.classLoader)
         installHookBridge()
-        ReactSurfaces.install(param.classLoader)
+        runCatching { ReactSurfaces.install(this, param.classLoader) }
+            .onFailure { Logger.error(LogCategory.RUNTIME, "Failed to set up React surfaces", it) }
         System.load(nativeLibraryPath(moduleInfo, appInfo))
         Logger.nativeReady = true
 

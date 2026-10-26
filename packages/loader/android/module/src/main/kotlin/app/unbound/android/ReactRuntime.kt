@@ -29,6 +29,8 @@ object ReactRuntime {
         queued.forEach { post(it) }
     }
 
+    fun currentInstance(): Any? = synchronized(lock) { instance?.get() }
+
     fun post(work: (Long) -> Unit) {
         val target = synchronized(lock) {
             val current = instance?.get()
