@@ -17,6 +17,27 @@ const supportsColor =
  * @description A scoped console logger that prefixes every line with its caller chain, tinting
  * output per log level when the environment supports ANSI colors.
  */
+function describeError(error: Error): string {
+	const code = 'code' in error && typeof error.code === 'string' ? ` [${error.code}]` : '';
+	const heading = `${error.name}${code}: ${error.message}`;
+	const frames = error.stack?.split('\n').filter((line) => /^\s*at\s/.test(line)) ?? [];
+
+	return [heading, ...frames].join('\n');
+}
+
+type LoggedValue =
+	| Error
+	| string
+	| number
+	| boolean
+	| null
+	| LoggedValue[]
+	| { [key: string]: LoggedValue };
+
+function revealErrors(_key: string, value: LoggedValue) {
+	return value instanceof Error ? describeError(value) : value;
+}
+
 class Logger {
 	private static inspector: InspectorFn | null = null;
 
@@ -62,7 +83,15 @@ class Logger {
 			return arg;
 		}
 
-		return Logger.inspector ? Logger.inspector(arg) : JSON.stringify(arg);
+		if (Logger.inspector) {
+			return Logger.inspector(arg);
+		}
+
+		if (arg instanceof Error) {
+			return describeError(arg);
+		}
+
+		return JSON.stringify(arg, revealErrors);
 	}
 
 	private _paint(string: string, color: Color): string {

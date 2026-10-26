@@ -122,10 +122,11 @@ class NativeHooksTest {
 
     @Test
     fun hookRejectsAMethodThatDoesNotExist() {
-        assertThrows(IllegalArgumentException::class.java) {
-            NativeHooks.hook("java.lang.Integer", "noSuchMethod", "[]", "{}")
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            NativeHooks.hook("java.lang.Integer", "noSuchMethod", "[\"int\"]", "{}")
         }
 
+        assertEquals("No method noSuchMethod(int) on java.lang.Integer or its superclasses", error.message)
         assertEquals(0, NativeHooks.installedCount())
     }
 

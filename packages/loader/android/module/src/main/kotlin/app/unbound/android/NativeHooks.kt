@@ -169,6 +169,8 @@ object NativeHooks {
             current = current.superclass
         }
 
-        throw IllegalArgumentException("No method $methodName on $className takes those parameters")
+        throw IllegalArgumentException(
+            "No method $methodName${NativeJava.signature(parameters.toTypedArray())} on $className or its superclasses",
+        )
     }
 }
