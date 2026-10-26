@@ -1,5 +1,7 @@
 import type { LineOverflow } from '~/preferences';
 
+export const CODE_LINE_HEIGHT = 14.5;
+
 export type CodeBlockLayout = {
 	/** Height of the code text. */
 	contentHeight: number;
@@ -32,7 +34,7 @@ export function codeBlockLayout(
 						count + Math.max(1, Math.ceil((line.length + 4) / charactersPerLine)),
 					0,
 				);
-	const contentHeight = Math.max(26, 2 + lineCount * 18);
+	const contentHeight = Math.max(26, Math.ceil(2 + lineCount * CODE_LINE_HEIGHT));
 
 	return {
 		contentHeight,
@@ -66,4 +68,4 @@ export function shouldCorrectRow(
 	return Math.max(contentHeight, labelBottom) > cellHeight + 1;
 }
 
-export default { codeBlockLayout, codeScrollHeight, shouldCorrectRow };
+export default { CODE_LINE_HEIGHT, codeBlockLayout, codeScrollHeight, shouldCorrectRow };

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { codeBlockLayout, codeScrollHeight, shouldCorrectRow } from './layout';
+import { CODE_LINE_HEIGHT, codeBlockLayout, codeScrollHeight, shouldCorrectRow } from './layout';
 
 describe('codeBlockLayout', () => {
 	test('keeps long lines on one row in horizontal-scroll mode', () => {
@@ -10,6 +10,14 @@ describe('codeBlockLayout', () => {
 
 		expect(scrolled.height).toBeLessThan(wrapped.height);
 		expect(scrolled.contentWidth).toBeGreaterThan((code.split('\n')[0].length + 3) * 8);
+	});
+
+	test('sizes the code to its lines so the card leaves no gap above them', () => {
+		const code = Array.from({ length: 8 }, (_, index) => `line ${index}`).join('\n');
+		const layout = codeBlockLayout(code, 320, 'wrap');
+
+		expect(layout.contentHeight).toBe(Math.ceil(2 + 8 * CODE_LINE_HEIGHT));
+		expect(layout.height).toBe(50 + layout.contentHeight);
 	});
 
 	test('caps the card height and leaves the overflow to scroll', () => {
