@@ -3,7 +3,7 @@ import { lt } from 'drizzle-orm';
 import { z } from 'zod';
 
 import type { SponsorshipLifecycle, SponsorshipValues } from '~/lib/sponsors/sponsorships';
-import { sponsorshipTransaction, upsertSponsorship } from '~/lib/sponsors/sponsorships';
+import { upsertSponsorship } from '~/lib/sponsors/sponsorships';
 import { sponsorship, sponsorWebhookDelivery } from '~/db/schema';
 import type { Sponsorship } from '~/lib/sponsors/standing';
 import type { AppContext } from '~/lib/context';
@@ -270,7 +270,7 @@ export async function reconcileSponsorships(ctx: AppContext): Promise<ReconcileR
 	const remote = await fetchRemoteSponsorships(ctx.env);
 	const now = ctx.now();
 
-	const updated = await sponsorshipTransaction(ctx.db, async (tx) => {
+	const updated = await ctx.db.transaction(async (tx) => {
 		const writes = planReconcile(await tx.select().from(sponsorship), remote, now, startedAt);
 
 		for (const row of writes) {

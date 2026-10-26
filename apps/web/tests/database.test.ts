@@ -1,16 +1,15 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { eq, sql } from 'drizzle-orm';
+import { cp, mkdtemp, readdir, rm } from 'node:fs/promises';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { eq } from 'drizzle-orm';
+import postgres from 'postgres';
 
-import {
-	addon,
-	addonMaintainer,
-	botFeedChange,
-	moderationEvent,
-	rateLimit,
-	user,
-} from '~/db/schema';
+import { moderationEvent, rateLimit } from '~/db/schema';
 import type { Transaction } from '~/db/database';
-import { migrateDatabase } from '~/db/migrate';
+import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { ApiError } from '~/lib/api/errors';
 
 import { createTestDatabase } from './helpers/database';
@@ -19,6 +18,9 @@ import { createTestContext } from './helpers/context';
 const { ctx, close } = await createTestContext();
 
 afterAll(close);
+
+// The last migration of the bot feed era; the ones after it drop the feed.
+const FEED_MIGRATION = '20261026021602_bot-feed';
 
 type Gate = {
 	promise: Promise<void>;
@@ -55,10 +57,6 @@ async function waitForLockWaiters(count: number) {
 	}
 
 	throw new Error(`Expected ${count} transaction(s) waiting on the ordered-id lock.`);
-}
-
-async function seedUser(id: string) {
-	await ctx.db.insert(user).values({ id, name: id, email: `${id}@example.com` });
 }
 
 async function eventIds() {
@@ -106,6 +104,50 @@ describe('migrateDatabase', () => {
 		const rows = await ctx.db.$client`select 1 from pg_extension where extname = 'pg_trgm'`;
 
 		expect(rows).toHaveLength(1);
+	});
+
+	test('leaves no bot feed table, sequence, function or trigger behind', async () => {
+		const rows = await ctx.db.$client<{ name: string }[]>`
+			select relname as name from pg_class where relname like 'bot_feed%'
+			union all select proname from pg_proc where proname like 'bot_feed%'
+			union all select tgname from pg_trigger where tgname like 'bot_feed%'`;
+
+		expect([...rows]).toEqual([]);
+	});
+
+	test('an upgrade revokes the bot feed key and keeps its user as an ordinary one', async () => {
+		const database = await createTestDatabase();
+		const before = await mkdtemp(join(tmpdir(), 'unbound-migrations-'));
+		const client = postgres(database.url, { max: 1, onnotice: () => void 0 });
+
+		try {
+			for (const name of await readdir(MIGRATIONS_FOLDER)) {
+				if (name <= FEED_MIGRATION) {
+					await cp(join(MIGRATIONS_FOLDER, name), join(before, name), {
+						recursive: true,
+					});
+				}
+			}
+
+			await migrate(drizzle({ client }), { migrationsFolder: before });
+			await client`insert into "user" (id, name, email, role) values
+				('bot', 'Unbound Bot', 'bot@unbound.invalid', 'bot'),
+				('ci', 'CI', 'ci@example.com', 'ci')`;
+			await client`insert into apikey (id, reference_id, key, created_at, updated_at) values
+				('bot-key', 'bot', 'hashed-bot', now(), now()),
+				('ci-key', 'ci', 'hashed-ci', now(), now())`;
+			await migrateDatabase(database.url);
+
+			expect([...(await client`select id, role from "user" order by id`)]).toEqual([
+				{ id: 'bot', role: 'user' },
+				{ id: 'ci', role: 'ci' },
+			]);
+			expect([...(await client`select id from apikey`)]).toEqual([{ id: 'ci-key' }]);
+		} finally {
+			await client.end();
+			await rm(before, { recursive: true, force: true });
+			await database.drop();
+		}
 	});
 
 	test('refuses a database whose locale does not compare bytewise', async () => {
@@ -255,110 +297,5 @@ describe('ordered ids', () => {
 
 		expect(second).toBeGreaterThan(first);
 		expect(await eventIds()).toEqual([...before, first, second]);
-	});
-
-	test('bot feed seqs are drawn in commit order', async () => {
-		await seedUser('feed-a');
-		await seedUser('feed-b');
-		await ctx.db.insert(addon).values({
-			id: 'ordered',
-			type: 'plugin',
-			name: 'Ordered',
-			description: '',
-			updatedAt: new Date(),
-		});
-
-		const holdFirst = gate();
-		const firstInserted = gate();
-
-		const firstTx = ctx.db.transaction(async (tx) => {
-			await tx
-				.insert(addonMaintainer)
-				.values({ addonId: 'ordered', userId: 'feed-a', role: 'owner' });
-			firstInserted.open();
-			await holdFirst.promise;
-		});
-
-		await firstInserted.promise;
-
-		const secondTx = ctx.db.transaction(async (tx) => {
-			await tx
-				.insert(addonMaintainer)
-				.values({ addonId: 'ordered', userId: 'feed-b', role: 'maintainer' });
-		});
-
-		await waitForLockWaiters(1);
-
-		const visible = await ctx.db
-			.select({ key: botFeedChange.key })
-			.from(botFeedChange)
-			.where(sql`${botFeedChange.key} in ('feed-a', 'feed-b')`);
-
-		expect(visible).toEqual([]);
-
-		holdFirst.open();
-		await firstTx;
-		await secondTx;
-
-		const rows = await ctx.db
-			.select({ key: botFeedChange.key })
-			.from(botFeedChange)
-			.where(eq(botFeedChange.feed, 'members'))
-			.orderBy(botFeedChange.seq);
-
-		expect(rows.map((row) => row.key)).toEqual(['feed-a', 'feed-b']);
-	});
-
-	test('bot feed changed_at never goes backwards along seq', async () => {
-		for (const id of ['stamp-a', 'stamp-b', 'stamp-c']) {
-			await seedUser(id);
-		}
-
-		await ctx.db.insert(addon).values({
-			id: 'stamped',
-			type: 'plugin',
-			name: 'Stamped',
-			description: '',
-			updatedAt: new Date(),
-		});
-
-		const holdFirst = gate();
-		const firstInserted = gate();
-
-		function addMaintainer(tx: Transaction, userId: string) {
-			return tx
-				.insert(addonMaintainer)
-				.values({ addonId: 'stamped', userId, role: 'maintainer' });
-		}
-
-		const firstTx = ctx.db.transaction(async (tx) => {
-			await addMaintainer(tx, 'stamp-a');
-			firstInserted.open();
-			await holdFirst.promise;
-			await addMaintainer(tx, 'stamp-c');
-		});
-
-		await firstInserted.promise;
-
-		// Its statement starts before the first transaction's second touch, then waits for that commit.
-		const secondTx = ctx.db.transaction(async (tx) => {
-			await addMaintainer(tx, 'stamp-b');
-		});
-
-		await waitForLockWaiters(1);
-		await Bun.sleep(5);
-		holdFirst.open();
-		await firstTx;
-		await secondTx;
-
-		const rows = await ctx.db
-			.select({ key: botFeedChange.key, changedAt: botFeedChange.changedAt })
-			.from(botFeedChange)
-			.where(sql`${botFeedChange.key} in ('stamp-a', 'stamp-b', 'stamp-c')`)
-			.orderBy(botFeedChange.seq);
-		const stamps = rows.map((row) => row.changedAt.getTime());
-
-		expect(rows.map((row) => row.key)).toEqual(['stamp-a', 'stamp-c', 'stamp-b']);
-		expect(stamps).toEqual(stamps.toSorted((a, b) => a - b));
 	});
 });
