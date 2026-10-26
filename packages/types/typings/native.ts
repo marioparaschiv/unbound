@@ -572,6 +572,17 @@ export type NativePlatformFiles = {
 	remove(path: string): boolean;
 };
 
+export type NativeCrashedAddon = {
+	readonly id: string;
+	readonly name: string;
+};
+
+export type NativePlatformCrashGuard = {
+	begin(id: string, name: string): boolean;
+	end(id: string): boolean;
+	disabled(): NativeCrashedAddon[];
+};
+
 export type NativeSettingsChange =
 	| { store: string; key: string; value: NativeSerializable }
 	| { store: string; key: string; remove: true }
@@ -603,6 +614,7 @@ export type NativePlatformBridge = {
 	readonly device: NativePlatformDevice;
 	readonly app: NativePlatformApp;
 	readonly files?: NativePlatformFiles;
+	readonly crashGuard?: NativePlatformCrashGuard;
 	readonly settings?: NativePlatformSettings;
 	readonly fonts?: NativePlatformFonts;
 	readonly ios?: NativePlatformIOSBridge;
