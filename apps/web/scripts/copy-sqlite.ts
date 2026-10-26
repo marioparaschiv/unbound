@@ -5,9 +5,11 @@
 import { createLogger } from '@unbound-app/logger';
 import { parseArgs } from 'node:util';
 
-import { copySqlite, VerificationError } from '~/db/sqlite-copy/copy';
-import type { TableReport } from '~/db/sqlite-copy/copy';
 import { envSchema } from '~/lib/env';
+
+import type { TableReport } from './copy-sqlite/copy';
+
+import { copySqlite, VerificationError } from './copy-sqlite/copy';
 
 const logger = createLogger('Web', 'Copy');
 

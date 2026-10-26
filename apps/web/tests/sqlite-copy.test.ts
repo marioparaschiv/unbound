@@ -13,13 +13,13 @@ import {
 	syncDocument,
 	user,
 } from '~/db/schema';
-import { copySqlite, TargetNotEmptyError, VerificationError } from '~/db/sqlite-copy/copy';
-import type { TableReport } from '~/db/sqlite-copy/copy';
-import { tables } from '~/db/sqlite-copy/registry';
-import { codecs } from '~/db/sqlite-copy/codecs';
 import { createDatabase } from '~/db/database';
 import type { Database } from '~/db/database';
 
+import { copySqlite, TargetNotEmptyError, VerificationError } from '../scripts/copy-sqlite/copy';
+import type { TableReport } from '../scripts/copy-sqlite/copy';
+import { tables } from '../scripts/copy-sqlite/registry';
+import { codecs } from '../scripts/copy-sqlite/codecs';
 import type { SqliteSource } from './helpers/sqlite-source';
 import type { TestDatabase } from './helpers/database';
 
