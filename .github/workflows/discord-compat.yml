@@ -67,7 +67,7 @@ jobs:
 
             - name: Download Discord for iOS
               if: env.IOS_SOURCE != 'none'
-              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@d7f38f835ccc361b8cdc27f32ce8ecc3a8a1d4a1
+              uses: castdrian/dkrypt@v1.1.1
               with:
                   api-url: ${{ env.DKRYPT_BASE_URL }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}
