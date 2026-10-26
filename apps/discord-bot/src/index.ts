@@ -4,9 +4,9 @@ import { Events, GatewayIntentBits, type Client } from 'discord.js';
 import { LogLevel, SapphireClient } from '@sapphire/framework';
 import { createLogger } from '@unbound-app/logger';
 
+import { createDatabase, POOLED_OPTIONS } from '~/db/database';
 import { createFeedClient } from '~/lib/feed/client';
 import { startDispatchers } from '~/runtime/start';
-import { createDatabase } from '~/db/database';
 import { startPoller } from '~/runtime/poller';
 import { setDatabase } from '~/db/instance';
 import { dispatchers } from '~/dispatchers';
@@ -22,7 +22,7 @@ if (!config.ok) {
 }
 
 const { env } = config;
-const db = createDatabase(env.DATABASE_URL);
+const db = createDatabase(env.DATABASE_URL, POOLED_OPTIONS);
 
 setDatabase(db);
 
@@ -50,7 +50,8 @@ function startRuntime(ready: Client<true>) {
 	const { started, stop: stopDispatchers } = startDispatchers(
 		dispatchers,
 		{ db, client: ready },
-		env.DATABASE_URL,
+		// LISTEN holds a session, which pgbouncer's transaction mode cannot give it.
+		env.DATABASE_DIRECT_URL,
 		env.RECONCILE_INTERVAL_SECONDS * 1000,
 	);
 	const stopPoller = startPoller({

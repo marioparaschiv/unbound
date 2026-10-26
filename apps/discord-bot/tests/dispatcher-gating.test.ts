@@ -32,7 +32,8 @@ type Warn = ReturnType<typeof spyOn<Console, 'warn'>>;
 
 const ENV = {
 	DISCORD_TOKEN: 'token',
-	DATABASE_URL: 'postgres://bot@localhost/bot',
+	DATABASE_URL: 'postgres://bot@localhost:6432/bot',
+	DATABASE_DIRECT_URL: 'postgres://bot@localhost:5432/bot',
 	UNBOUND_API_URL: 'https://unbound.rip',
 	UNBOUND_API_KEY: 'key',
 };

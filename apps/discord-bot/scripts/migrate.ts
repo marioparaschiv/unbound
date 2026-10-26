@@ -6,9 +6,9 @@ import { parseDatabaseEnv } from '~/lib/env';
 
 const logger = createLogger('Bot', 'Migrate');
 const env = parseDatabaseEnv();
-const db = createDatabase(env.DATABASE_URL);
+const db = createDatabase(env.DATABASE_DIRECT_URL);
 
 await migrateDatabase(db);
 await db.$client.end();
 
-logger.success(`Migrated ${new URL(env.DATABASE_URL).pathname.slice(1)}.`);
+logger.success(`Migrated ${new URL(env.DATABASE_DIRECT_URL).pathname.slice(1)}.`);

@@ -6,6 +6,7 @@ import postgres from 'postgres';
 import { createDatabase, type Database } from '~/db/database';
 import type { NotifyChannel } from '~/dispatchers/types';
 import { migrateDatabase } from '~/db/migrate';
+import type { EnvSource } from '~/lib/env';
 
 export type TestDatabase = {
 	name: string;
@@ -37,27 +38,36 @@ const DROP_TIMEOUT_MS = 30_000;
 /** Pass to `afterAll` so a drop that waits out a TimescaleDB scheduler is not cut off. */
 export const DROP_HOOK_TIMEOUT_MS = DROP_TIMEOUT_MS + 10_000;
 
-function readDatabaseUrl(): string | undefined {
-	if (process.env.DATABASE_URL) {
-		return process.env.DATABASE_URL;
-	}
-
+function readEnvFile(): EnvSource {
 	const path = join(import.meta.dirname, '..', '..', '.env');
 
-	if (!existsSync(path)) return;
+	if (!existsSync(path)) {
+		return {};
+	}
 
-	const line = readFileSync(path, 'utf8')
+	const entries = readFileSync(path, 'utf8')
 		.split('\n')
-		.find((entry) => entry.startsWith('DATABASE_URL='));
+		.map((line) => line.match(/^(\w+)=(.*)$/))
+		.filter((match) => match !== null)
+		.map(([, name, value]) => [name, value?.trim().replaceAll(/^["']|["']$/g, '')]);
+
+	return Object.fromEntries(entries);
+}
+
+// Throwaway databases are created and listened on directly, so the direct url wins; CI sets only `DATABASE_URL`.
+function readDatabaseUrl(): string | undefined {
+	const file = readEnvFile();
 
 	return (
-		line
-			?.slice('DATABASE_URL='.length)
-			.trim()
-			.replaceAll(/^["']|["']$/g, '') || undefined
+		process.env.DATABASE_DIRECT_URL ||
+		process.env.DATABASE_URL ||
+		file.DATABASE_DIRECT_URL ||
+		file.DATABASE_URL ||
+		undefined
 	);
 }
 
+/** A direct (not pooled) url on the test cluster; its database name is replaced per test database. */
 export const DATABASE_URL = readDatabaseUrl();
 
 // CI provides Postgres, so a missing URL there is a misconfiguration, not a reason to skip.

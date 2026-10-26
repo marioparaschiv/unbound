@@ -3,11 +3,13 @@ import { z } from 'zod';
 const positiveInt = z.coerce.number().int().positive();
 
 export const databaseEnvSchema = z.object({
-	/** The bot's own Postgres database, e.g. `postgres://unbound_bot:<password>@localhost:5432/unbound_bot`. */
-	DATABASE_URL: z.string().min(1),
+	/** The bot's Postgres database, direct, for `LISTEN` and migrations, e.g. `postgres://unbound_bot:<password>@127.0.0.1:5432/unbound_bot`. */
+	DATABASE_DIRECT_URL: z.string().min(1),
 });
 
 export const envSchema = databaseEnvSchema.extend({
+	/** The same database through pgbouncer in transaction mode, for queries, e.g. `postgres://unbound_bot:<password>@127.0.0.1:6432/unbound_bot`. */
+	DATABASE_URL: z.string().min(1),
 	/** The Discord bot token. */
 	DISCORD_TOKEN: z.string().min(1),
 	/** The Unbound backend serving `/api/v1/bot/*`, e.g. `https://unbound.rip`. */
