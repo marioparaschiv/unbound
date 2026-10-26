@@ -1,5 +1,5 @@
-import type { PgColumn } from 'drizzle-orm/pg-core';
 import { getTableConfig, PgTable } from 'drizzle-orm/pg-core';
+import type { PgColumn } from 'drizzle-orm/pg-core';
 import { is } from 'drizzle-orm';
 
 import * as schema from '~/db/schema';

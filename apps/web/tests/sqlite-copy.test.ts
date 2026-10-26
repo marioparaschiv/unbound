@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { Database as Sqlite } from 'bun:sqlite';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { Database as Sqlite } from 'bun:sqlite';
 import { asc, eq, sql } from 'drizzle-orm';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
