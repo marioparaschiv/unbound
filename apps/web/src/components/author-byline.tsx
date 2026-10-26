@@ -59,8 +59,10 @@ function AuthorByline({ authors, linked = false, className, ...props }: AuthorBy
 						src={author.avatarUrl}
 						name={author.name}
 					/>
-					<AuthorName author={author} linked={linked} />
-					{index < authors.length - 1 ? ',' : null}
+					<span className='inline-flex min-w-0'>
+						<AuthorName author={author} linked={linked} />
+						{index < authors.length - 1 ? ',' : null}
+					</span>
 				</span>
 			))}
 		</span>
