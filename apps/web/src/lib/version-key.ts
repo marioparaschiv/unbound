@@ -11,7 +11,7 @@ function encodeIdentifier(identifier: string): string {
 export const RELEASE_KEY_SUFFIX = '~';
 
 /**
- * @description Encodes a semver version so that comparing keys as strings (as SQLite does) follows
+ * @description Encodes a semver version so that comparing keys bytewise (the database's C collation) follows
  * semver precedence: a release sorts after its prereleases, numeric prerelease identifiers before
  * alphanumeric ones, and build metadata is ignored.
  * @param version A version accepted by `semverSchema`.

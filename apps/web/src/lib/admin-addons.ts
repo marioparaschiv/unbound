@@ -54,8 +54,8 @@ function startOfDay(date: string): Date {
 	return new Date(`${date}T00:00:00.000Z`);
 }
 
-// SQLite seeks on one bound per side of an index range, so a cursor that already lies inside the range
-// replaces the published bound on its side instead of being filtered row by row behind it.
+// An index range seeks on one bound per side, so a cursor that already lies inside the range replaces
+// the published bound on its side instead of being filtered row by row behind it.
 function publishedRange(
 	table: typeof addon,
 	search: AdminAddonsSearch,
