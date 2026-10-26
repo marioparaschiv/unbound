@@ -12,7 +12,14 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { encodeCursor } from '~/lib/keyset';
 
-import { explain, planNodes, planPath, type PlanMode, type PlanNode } from './helpers/database';
+import {
+	explain,
+	indexCond,
+	planNodes,
+	planPath,
+	type PlanMode,
+	type PlanNode,
+} from './helpers/database';
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { authRequest, createTestContext, signInWithDiscord } from './helpers/context';
 
@@ -530,17 +537,28 @@ describe('admin addon filter plans', () => {
 		}
 	});
 
-	test.each<[string, AdminAddonsSearch, string]>([
-		['maintainer', { maintainer: 'someone' }, 'addon_maintainer_userId_idx'],
-		['pending review', { status: 'pending_review' }, 'submission_status_submittedAt_idx'],
-		['changes requested', { status: 'changes_requested' }, 'submission_status_submittedAt_idx'],
-		['search', { q: 'walk' }, 'addon_search_idx'],
-	])('%s reads only the matching addons through its index', async (_name, filters, index) => {
+	test.each<[string, AdminAddonsSearch, string, RegExp]>([
+		['maintainer', { maintainer: 'someone' }, 'addon_maintainer_userId_idx', /^\(user_id = /],
+		[
+			'pending review',
+			{ status: 'pending_review' },
+			'submission_status_submittedAt_idx',
+			/^\(status = /,
+		],
+		[
+			'changes requested',
+			{ status: 'changes_requested' },
+			'submission_status_submittedAt_idx',
+			/^\(status = /,
+		],
+		['search', { q: 'walk' }, 'addon_search_idx', / ~~ /],
+	])('%s seeks only the matching addons in its index', async (_name, filters, index, seek) => {
 		for (const page of pages) {
-			const nodes = await plan(queryAdminAddons(ctx, { ...filters, ...page }), 'filter');
+			const query = queryAdminAddons(ctx, { ...filters, ...page }).toSQL();
+			const root = await explain(ctx.db, query, 'filter');
 
-			expect(indexes(nodes)).toContain(index);
-			expect(types(nodes)).not.toContain('Seq Scan');
+			expect(indexCond(root, index)).toMatch(seek);
+			expect(types(planNodes(root))).not.toContain('Seq Scan');
 		}
 	});
 });

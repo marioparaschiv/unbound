@@ -17,7 +17,7 @@ import { serveVersion } from '~/lib/rollback';
 import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { manifest, seedApprovedAddon, seedVersion } from './helpers/addons';
 import { commitPlugin, serveGitHub } from './helpers/github';
-import { explain, planNodes } from './helpers/database';
+import { explain, indexCond, planNodes } from './helpers/database';
 import { serveMemoryS3 } from './helpers/memory-s3';
 
 const REPOSITORY = 'acme/addons';
@@ -299,9 +299,9 @@ describe('served-version reads', () => {
 		const query = ctx.db.query.addon
 			.findMany({ where: { delistedAt: { isNull: true } }, with: LATEST_VERSION })
 			.toSQL();
-		const nodes = planNodes(await explain(ctx.db, query));
+		const root = await explain(ctx.db, query);
 
-		expect(nodes.map((node) => node['Index Name'])).toContain('addon_version_live_idx');
+		expect(indexCond(root, 'addon_version_live_idx')).toMatch(/^\(addon_id = /);
 	});
 
 	test('the update check reads live versions through the live index', async () => {
@@ -310,9 +310,9 @@ describe('served-version reads', () => {
 			addons: [{ id: 'rb.rollback', version: '1.0.0' }],
 		};
 		const query = newestCompatibleVersions(ctx, request).toSQL();
-		const nodes = planNodes(await explain(ctx.db, query));
+		const root = await explain(ctx.db, query);
 
-		expect(nodes.map((node) => node['Index Name'])).toContain('addon_version_live_idx');
-		expect(nodes.map((node) => node['Node Type'])).not.toContain('Seq Scan');
+		expect(indexCond(root, 'addon_version_live_idx')).toMatch(/^\(addon_id = /);
+		expect(planNodes(root).map((node) => node['Node Type'])).not.toContain('Seq Scan');
 	});
 });

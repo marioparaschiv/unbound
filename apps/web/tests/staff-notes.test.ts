@@ -20,7 +20,7 @@ import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 
 import { createTestContext, signInWithDiscord, snowflakeAt } from './helpers/context';
-import { explain, planNodes, planPath } from './helpers/database';
+import { explain, indexCond, planPath } from './helpers/database';
 import { manifest, seedApprovedAddon } from './helpers/addons';
 
 const base = await createTestContext();
@@ -323,7 +323,7 @@ describe('staff notes', () => {
 		const query = queryStaffNotes(ctx, { type: 'addon', id: 'notes.crud' }).toSQL();
 		const root = await explain(ctx.db, query);
 
-		expect(planNodes(root).map((node) => node['Index Name'])).toContain('staff_note_addon_idx');
+		expect(indexCond(root, 'staff_note_addon_idx')).toMatch(/^\(addon_id = /);
 		expect(planPath(root, 'd0').map((node) => node['Node Type'])).not.toContain('Sort');
 	});
 });

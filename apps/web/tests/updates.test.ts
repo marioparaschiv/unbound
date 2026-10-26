@@ -12,7 +12,7 @@ import { addon, user } from '~/db/schema';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { createTestContext, signInWithDiscord } from './helpers/context';
-import { explain, planNodes } from './helpers/database';
+import { explain, indexCond, planNodes } from './helpers/database';
 
 const NOW = new Date('2026-10-17T12:00:00.000Z');
 
@@ -292,16 +292,9 @@ describe('findUpdates', () => {
 	});
 
 	test('reads only the listed addons through an index, never a table scan', async () => {
-		const nodes = planNodes(
-			await explain(ctx.db, newestCompatibleVersions(ctx, request).toSQL()),
-		);
+		const root = await explain(ctx.db, newestCompatibleVersions(ctx, request).toSQL());
 
-		expect(nodes).toContainEqual(
-			expect.objectContaining({
-				'Relation Name': 'addon_version',
-				'Index Name': expect.stringMatching(/^addon_version_/),
-			}),
-		);
-		expect(nodes.map((node) => node['Node Type'])).not.toContain('Seq Scan');
+		expect(indexCond(root, 'addon_version_live_idx')).toMatch(/^\(addon_id = /);
+		expect(planNodes(root).map((node) => node['Node Type'])).not.toContain('Seq Scan');
 	});
 });

@@ -227,6 +227,18 @@ export function planNodes(node: PlanNode): PlanNode[] {
 }
 
 /**
+ * @description Reads what a plan seeks one index on: the `Index Cond` of the scan of that index.
+ * @param root The root plan node.
+ * @param index The index name.
+ * @returns The seek predicate, or `undefined` when no scan of the index seeks.
+ */
+export function indexCond(root: PlanNode, index: string): string | undefined {
+	return planNodes(root).find((node) => node['Index Name'] === index && node['Index Cond'])?.[
+		'Index Cond'
+	];
+}
+
+/**
  * @description Finds the nodes from a plan's root down to the scan of one relation alias, which is
  * what decides whether that relation's rows come out sorted.
  * @param node The root plan node.
