@@ -256,7 +256,18 @@ export const addonsDispatcher: Dispatcher = {
 	name: 'addons',
 	channel: 'addon_changed',
 	requires: ['PLUGINS_CHANNEL_ID', 'THEMES_CHANNEL_ID', 'ICON_PACKS_CHANNEL_ID'],
+	/**
+	 * @description Syncs every addon message with the web's listings.
+	 * @param context The dispatcher's stores and Discord client.
+	 * @returns Resolves once every addon was synced.
+	 */
 	reconcile: (context) => reconcileAddons(context, context.client.rest, context.client.user.id),
+	/**
+	 * @description Syncs the message of the addon a NOTIFY payload names.
+	 * @param id The addon id from the payload.
+	 * @param context The dispatcher's stores and Discord client.
+	 * @returns Resolves once the addon's message matches its listing.
+	 */
 	handle: (id, context) => syncAddon(context, context.client.rest, id),
 };
 

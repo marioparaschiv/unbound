@@ -201,7 +201,18 @@ export const releasesDispatcher: Dispatcher = {
 	name: 'releases',
 	channel: 'loader_release',
 	requires: ['RELEASES_CHANNEL_ID', 'RELEASES_ROLE_ID'],
+	/**
+	 * @description Announces every loader release that has no message yet.
+	 * @param context The dispatcher's stores and Discord client.
+	 * @returns Resolves once every release was announced.
+	 */
 	reconcile: (context) => reconcileReleases(context, context.client.rest, context.client.user.id),
+	/**
+	 * @description Announces the loader release a NOTIFY payload names.
+	 * @param payload The release payload from the notification.
+	 * @param context The dispatcher's stores and Discord client.
+	 * @returns Resolves once the release was announced.
+	 */
 	handle: (payload, context) => announceRelease(context, context.client.rest, payload),
 };
 
