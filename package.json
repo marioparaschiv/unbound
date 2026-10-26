@@ -28,7 +28,7 @@
 			"typescript": "^5.9.3",
 			"possess": "^1.1.0",
 			"@types/bun": "latest",
-			"better-auth": "1.7.10"
+			"better-auth": "1.7.12"
 		},
 		"catalogs": {
 			"react": {
@@ -36,7 +36,7 @@
 				"@types/react-dom": "^19.2.3",
 				"react": "^19.3.1",
 				"react-dom": "^19.3.1",
-				"react-native": "^0.83.0"
+				"react-native": "^0.86.0"
 			}
 		}
 	},
@@ -71,14 +71,14 @@
 		"@commitlint/cli": "^21.0.2",
 		"@marioparaschiv/oxc-config": "^0.2.0",
 		"@semantic-release/exec": "^7.1.0",
-		"@semantic-release/git": "^10.0.1",
+		"@semantic-release/git": "^11.0.1",
 		"@stylistic/eslint-plugin": "^5.10.0",
 		"dts-bundle-generator": "^9.5.1",
 		"eslint-plugin-jsdoc": "^64.5.4",
 		"eslint-plugin-perfectionist": "^5.9.1",
 		"eslint-plugin-unicorn": "^76.0.0",
 		"lefthook": "^2.1.9",
-		"oxfmt": "^0.71.0",
+		"oxfmt": "^0.74.0",
 		"oxlint": "^1.86.0",
 		"oxlint-tsgolint": "^7.0.2003",
 		"semantic-release": "^25.0.8",

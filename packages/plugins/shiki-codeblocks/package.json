@@ -14,7 +14,7 @@
 		"@shikijs/themes": "4.5.0",
 		"@unbound-plugins/shared": "workspace:*",
 		"highlight.js": "11.12.0",
-		"jsonc-parser": "3.2.0",
+		"jsonc-parser": "3.3.1",
 		"shiki": "4.5.0"
 	},
 	"devDependencies": {
@@ -22,7 +22,7 @@
 		"@types/react": "^19.2.7",
 		"@unbound-app/api": "workspace:*",
 		"@unbound-plugins/rollup-config": "workspace:*",
-		"react-native": "^0.83.0",
+		"react-native": "^0.86.0",
 		"rollup": "^4.62.2"
 	}
 }

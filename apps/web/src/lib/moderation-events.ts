@@ -7,8 +7,8 @@ import type {
 } from '@unbound-app/contracts/admin';
 import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
 import { moderationEventSchema } from '@unbound-app/contracts/admin';
+import { and, count, EmptyFilter, eq, inArray } from 'drizzle-orm';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { and, count, eq, inArray } from 'drizzle-orm';
 import { createLogger } from '@unbound-app/logger';
 import { z } from 'zod';
 
@@ -166,7 +166,7 @@ export function queryEvents(ctx: AppContext, subject: Subject, before?: number) 
 		where: {
 			subjectType: subject.type,
 			subjectId: subject.id,
-			id: before === undefined ? undefined : { lt: before },
+			id: before === undefined ? EmptyFilter : { lt: before },
 		},
 		with: { actor: { columns: { id: true, name: true, image: true } } },
 		orderBy: { id: 'desc' },

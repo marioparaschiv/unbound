@@ -11,9 +11,9 @@ import type {
 	MyAddonsResponse,
 } from '@unbound-app/contracts/addons';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
+import { and, desc, EmptyFilter, eq, isNull, or, sql } from 'drizzle-orm';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
 import type { PinnableField } from '@unbound-app/contracts/admin';
-import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { OPEN_SUBMISSION_STATUSES, requireSourced, toSubmission } from '~/lib/submissions';
@@ -276,7 +276,7 @@ export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) 
 	return ctx.db.query.addon.findMany({
 		where: {
 			delistedAt: { isNull: true },
-			type,
+			type: type ?? EmptyFilter,
 			RAW: (table) =>
 				and(
 					q

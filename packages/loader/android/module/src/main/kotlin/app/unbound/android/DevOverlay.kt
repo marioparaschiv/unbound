@@ -137,6 +137,7 @@ object DevOverlay {
                     startCenter = center(touched)
                     dragging = false
                 }
+
                 MotionEvent.ACTION_MOVE -> {
                     val dx = event.rawX - downX
                     val dy = event.rawY - downY
@@ -152,6 +153,7 @@ object DevOverlay {
                         )?.let { moveTo(touched, it) }
                     }
                 }
+
                 MotionEvent.ACTION_UP -> {
                     if (dragging) {
                         val current = center(touched)

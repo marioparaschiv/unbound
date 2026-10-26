@@ -61,7 +61,9 @@ describe('round trips', () => {
 
 	test('a JSON column stores its text verbatim', async () => {
 		const text = '{"b": 1.0, "a": [true, null], "b2": "é"}';
-		const [row] = await ctx.db.$client<{ text: string }[]>`select ${text}::json::text as text`;
+		const [row] = await ctx.db.$client<
+			{ text: string }[]
+		>`select ${text}::text::json::text as text`;
 
 		expect(row?.text).toBe(text);
 	});

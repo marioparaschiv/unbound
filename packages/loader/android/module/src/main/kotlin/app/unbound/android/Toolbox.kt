@@ -105,6 +105,7 @@ object Toolbox {
                 pressRunnable = runnable
                 main.postDelayed(runnable, holdMs)
             }
+
             MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> cancelPress()
         }
     }

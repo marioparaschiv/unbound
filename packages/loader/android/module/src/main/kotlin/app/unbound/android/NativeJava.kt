@@ -102,13 +102,17 @@ object NativeJava {
             val outcome = runCatching {
                 when (kind) {
                     "invoke" -> invoke(handle, name, operation.optJSONArray("args")?.toString() ?: "[]")
+
                     "getField" -> getField(handle, name)
+
                     "setField" -> {
                         setField(handle, name, operation.getJSONObject("value").toString())
                         serialize(null)
                     }
+
                     "respondsTo" ->
                         respondsTo(handle, name, operation.optJSONArray("args")?.toString() ?: "[]")
+
                     else -> throw IllegalArgumentException("Unsupported Java batch operation: $kind")
                 }
             }
@@ -262,21 +266,33 @@ object NativeJava {
 
         return when (type) {
             "null" -> Absent(value.optString("class").takeIf { it.isNotEmpty() }?.let { loadClass(it) })
+
             "handle" -> Reference(resolve(value.getString("value")))
+
             "string" -> Scalar(value.optString("value"), String::class.java)
+
             "boolean" -> Scalar(value.getBoolean("value"), java.lang.Boolean.TYPE)
+
             "byte" -> Scalar(boundedLong(value).toByte(), java.lang.Byte.TYPE)
+
             "short" -> Scalar(boundedLong(value).toShort(), java.lang.Short.TYPE)
+
             "char" -> {
                 val text = value.optString("value")
                 require(text.length == 1) { "The Java char value must be one character" }
                 Scalar(text[0], Character.TYPE)
             }
+
             "int" -> Scalar(boundedLong(value).toInt(), Integer.TYPE)
+
             "long" -> Scalar(boundedLong(value), java.lang.Long.TYPE)
+
             "float" -> Scalar(boundedDouble(value).toFloat(), java.lang.Float.TYPE)
+
             "double" -> Scalar(boundedDouble(value), java.lang.Double.TYPE)
+
             "array" -> parseArray(value)
+
             else -> throw IllegalArgumentException("Unsupported Java value type: $type")
         }
     }
@@ -362,8 +378,10 @@ object NativeJava {
         is Absent ->
             !parameter.isPrimitive &&
                 (argument.declaredType == null || parameter.isAssignableFrom(argument.declaredType))
+
         is Reference -> parameter.isInstance(argument.target) ||
             (parameter == Class::class.java && argument.target is Class<*>)
+
         is Scalar -> acceptsScalar(parameter, argument.value)
     }
 

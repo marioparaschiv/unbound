@@ -112,11 +112,14 @@ internal object NativeImageLoader {
         val uri = Uri.parse(source)
         return when (uri.scheme?.lowercase()) {
             "content" -> !uri.authority.isNullOrEmpty()
+
             "file" -> !uri.path.isNullOrEmpty()
+
             "https" -> {
                 val host = uri.host?.lowercase() ?: return false
                 isTrustedDiscordHost(host) && (uri.port == -1 || uri.port == 443)
             }
+
             else -> false
         }
     }
