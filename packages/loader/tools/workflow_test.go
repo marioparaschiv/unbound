@@ -590,7 +590,7 @@ func TestCompatScanCoversEveryDiscordChannel(t *testing.T) {
 		"DISCORD_SNIFF_URL: https://sniff.xhyrom.dev",
 		`go run ./tools discord-apk --channel "$CHANNEL" --output-dir discord-android --split base`,
 		"if: env.IOS_SOURCE != 'none'",
-		"uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@",
+		"uses: castdrian/dkrypt@",
 		"channel: ${{ env.IOS_SOURCE }}",
 		"output: packages/loader/discord.ipa",
 		`if [ "$IOS_SOURCE" != none ]; then scan_args+=(--ipa discord.ipa); fi`,
@@ -856,7 +856,7 @@ func TestDkryptIsOnlyReachedThroughTheAction(t *testing.T) {
 		}
 		contents := string(data)
 		name := filepath.Base(path)
-		users[name] = strings.Contains(contents, "uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@")
+		users[name] = strings.Contains(contents, "uses: castdrian/dkrypt@")
 		for _, forbidden := range []string{"/v1/decrypts", "fetch-ipa.py", "release-candidate --channel testflight\n"} {
 			if strings.Contains(contents, forbidden) {
 				t.Fatalf("%s reaches dkrypt with %q instead of the action", name, forbidden)

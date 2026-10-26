@@ -217,7 +217,7 @@ jobs:
 
             - name: Decrypt the source IPA
               if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == ''
-              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@d7f38f835ccc361b8cdc27f32ce8ecc3a8a1d4a1
+              uses: castdrian/dkrypt@v1.1.1
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}
