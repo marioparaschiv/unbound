@@ -7,12 +7,12 @@ import cn from '~/lib/cn';
 
 type AuthorBylineProps = ComponentProps<'span'> & {
 	authors: ResolvedAuthor[];
-	linked?: boolean;
+	linkProfiles?: boolean;
 };
 
 type AuthorNameProps = {
 	author: ResolvedAuthor;
-	linked: boolean;
+	linkProfiles: boolean;
 };
 
 /**
@@ -24,8 +24,8 @@ export function authorKey(author: ResolvedAuthor): string {
 	return author.discordId ?? `0:${author.name}`;
 }
 
-function AuthorName({ author, linked }: AuthorNameProps) {
-	if (!linked || author.kind !== 'user') {
+function AuthorName({ author, linkProfiles }: AuthorNameProps) {
+	if (!linkProfiles || author.kind !== 'user') {
 		return <span className='truncate'>{author.name}</span>;
 	}
 
@@ -41,7 +41,7 @@ function AuthorName({ author, linked }: AuthorNameProps) {
 }
 
 /** "by" followed by each author's avatar and name. */
-function AuthorByline({ authors, linked = false, className, ...props }: AuthorBylineProps) {
+function AuthorByline({ authors, linkProfiles = false, className, ...props }: AuthorBylineProps) {
 	return (
 		<span
 			className={cn(
@@ -59,7 +59,7 @@ function AuthorByline({ authors, linked = false, className, ...props }: AuthorBy
 						name={author.name}
 					/>
 					<span className='inline-flex min-w-0'>
-						<AuthorName author={author} linked={linked} />
+						<AuthorName author={author} linkProfiles={linkProfiles} />
 						{index < authors.length - 1 ? ',' : null}
 					</span>
 				</span>

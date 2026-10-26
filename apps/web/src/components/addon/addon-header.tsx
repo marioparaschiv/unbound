@@ -31,7 +31,7 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 						color='muted'
 						className='flex flex-wrap gap-1.5'
 					>
-						<AuthorByline authors={addon.authors} linked />
+						<AuthorByline authors={addon.authors} linkProfiles />
 						<span>· v{addon.version}</span>
 					</Text>
 				</div>

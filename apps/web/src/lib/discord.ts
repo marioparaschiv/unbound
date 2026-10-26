@@ -1,7 +1,7 @@
 /** The start of 2015 in Unix milliseconds: the zero point of Discord snowflake timestamps. */
 export const DISCORD_EPOCH = 1_420_070_400_000n;
 
-export const DISCORD_API_HOST = 'discord.com';
+export const BOT_TOKEN_HOST = 'discord.com';
 
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
@@ -45,12 +45,12 @@ export function isBotTokenHost(url: URL): boolean {
 		return url.protocol === 'http:' || url.protocol === 'https:';
 	}
 
-	return url.protocol === 'https:' && url.host === DISCORD_API_HOST;
+	return url.protocol === 'https:' && url.host === BOT_TOKEN_HOST;
 }
 
 export default {
 	DISCORD_EPOCH,
-	DISCORD_API_HOST,
+	BOT_TOKEN_HOST,
 	getSnowflakeDate,
 	getAvatarUrl,
 	getDefaultAvatarUrl,

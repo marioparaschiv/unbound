@@ -27,7 +27,10 @@ const DEFAULT_RETRY_AFTER_MS = 60_000;
 const discordUserSchema = z.object({
 	id: z.string(),
 	username: z.string().min(1),
-	global_name: z.string().nullish(),
+	global_name: z
+		.string()
+		.nullish()
+		.transform((value) => value || null),
 	avatar: z.string().nullish(),
 });
 

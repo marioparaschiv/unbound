@@ -87,7 +87,7 @@ function pickAuthor(
 			kind: 'discord',
 			discordId: author.id,
 			username: found.username,
-			name: found.globalName || found.username,
+			name: found.globalName ?? found.username,
 			avatarUrl: discordAvatarUrl,
 		};
 	}
