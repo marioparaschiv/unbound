@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 
 import { formatCalendarDate, parseCalendarDate } from '~/lib/calendar-date';
 
-const ORIGINAL_TZ = process.env.TZ;
+const ORIGINAL_TZ = process.env.TZ ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const ZONES_EITHER_SIDE_OF_UTC: [zone: string, januaryOffset: number][] = [
 	['America/Los_Angeles', 480],
@@ -13,11 +13,7 @@ const ZONES_EITHER_SIDE_OF_UTC: [zone: string, januaryOffset: number][] = [
 const DAYS = ['2026-01-12', '2026-02-03', '2024-02-29', '2026-03-08', '2026-12-31', '0099-06-15'];
 
 afterAll(() => {
-	if (ORIGINAL_TZ === undefined) {
-		delete process.env.TZ;
-	} else {
-		process.env.TZ = ORIGINAL_TZ;
-	}
+	process.env.TZ = ORIGINAL_TZ;
 });
 
 describe.each(ZONES_EITHER_SIDE_OF_UTC)('calendar dates in %s', (zone, januaryOffset) => {
