@@ -11,8 +11,8 @@ import java.lang.reflect.Method
 import java.util.concurrent.atomic.AtomicReference
 
 object ReactSurfaces {
-    private const val REACT_HOST = "com.facebook.react.ReactHost"
-    private const val REACT_SURFACE = "com.facebook.react.interfaces.fabric.ReactSurface"
+    private val REACT_HOST = HostClass.legacy("com.facebook.react.ReactHost")
+    private val REACT_SURFACE = HostClass.legacy("com.facebook.react.interfaces.fabric.ReactSurface")
     private const val REACT_HOST_IMPL = "com.facebook.react.runtime.ReactHostImpl"
     private const val HOST_DELEGATE = "com.facebook.react.defaults.DefaultReactHostDelegate"
     private const val FABRIC_UI_MANAGER = "com.facebook.react.fabric.FabricUIManager"
@@ -26,7 +26,7 @@ object ReactSurfaces {
 
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
         val legacy = runCatching {
-            classLoader.loadClass(REACT_HOST).getMethod("createSurface", Context::class.java, String::class.java, Bundle::class.java)
+            REACT_HOST.load(classLoader).getMethod("createSurface", Context::class.java, String::class.java, Bundle::class.java)
         }.isSuccess
         if (legacy) {
             NativeFabric.useHost(ReflectiveHost(classLoader))
@@ -81,8 +81,8 @@ object ReactSurfaces {
         ): NativeFabric.Surface {
             val application = Platform.application()
                 ?: throw IllegalStateException("The Android application is unavailable")
-            val hostClass = classLoader.loadClass(REACT_HOST)
-            val surfaceClass = classLoader.loadClass(REACT_SURFACE)
+            val hostClass = REACT_HOST.load(classLoader)
+            val surfaceClass = REACT_SURFACE.load(classLoader)
             val reactHost = application.javaClass.getMethod("getReactHost").invoke(application)
                 ?: throw IllegalStateException("The React host is unavailable")
             val create = hostClass.getMethod(

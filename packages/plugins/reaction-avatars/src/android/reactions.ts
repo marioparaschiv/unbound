@@ -22,6 +22,7 @@ import {
 	javaReference,
 	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
+import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-classes';
 import {
 	currentDecorView,
 	findViewsOfClass,
@@ -43,7 +44,7 @@ import { surfaceStates } from '~/surface-states';
 import ReactionUserCache from '~/reactor-cache';
 import { fetchReactors } from '~/reactors';
 
-const REACTION_VIEW = 'com.discord.reactions.ReactionView';
+const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 const REACTION_ROW = 'com.discord.reactions.ShortcutsFlexbox';
 const ADD_REACTION_VIEW = 'com.discord.reactions.AddReactionView';
 const STRING = 'java.lang.String';

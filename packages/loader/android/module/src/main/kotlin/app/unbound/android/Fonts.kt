@@ -11,7 +11,7 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 object Fonts {
-    private const val FONT_MANAGER = "com.facebook.react.common.assets.ReactFontManager"
+    private val FONT_MANAGER = HostClass.legacy("com.facebook.react.common.assets.ReactFontManager")
     private const val TYPEFACE_STYLE = "com.facebook.react.common.assets.ReactFontManager\$TypefaceStyle"
     private const val ASSET_PREFIX = "asset:"
     private val ASSET_FONT = Regex("^fonts/(.+?)(_bold_italic|_bold|_italic)?\\.(ttf|otf)$")
@@ -23,7 +23,7 @@ object Fonts {
 
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
         SettingsWatcher.onChange { resolutions.clear() }
-        val manager = runCatching { classLoader.loadClass(FONT_MANAGER) }.getOrNull()
+        val manager = FONT_MANAGER.find(classLoader)
         if (manager == null) {
             hookTypefaces(xposed)
             return

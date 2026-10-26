@@ -1,9 +1,12 @@
 import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
 import { describeJavaClass } from '@unbound-plugins/shared/native/android/discord-views';
 import { javaText } from '@unbound-plugins/shared/native/android/java-values';
+import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-classes';
 import { spansOf, type SpanHit } from '@unbound-plugins/shared/native/android/spans';
 
-const BLOCK_BACKGROUND_SPAN = 'com.discord.span.utilities.spannable.BlockBackgroundSpan';
+const BLOCK_BACKGROUND_SPAN = legacyJavaClass(
+	'com.discord.span.utilities.spannable.BlockBackgroundSpan',
+);
 const LINE_BACKGROUND_SPAN = 'android.text.style.LineBackgroundSpan';
 const BLOCK_BACKGROUND_INTS = 7;
 

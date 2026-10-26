@@ -19,12 +19,12 @@ import java.util.WeakHashMap
 import kotlin.math.ceil
 
 object ChatUI {
-    private const val CLIPPING_UTILS = "com.discord.misc.utilities.view.ViewClippingUtilsKt"
+    private val CLIPPING_UTILS = HostClass.legacy("com.discord.misc.utilities.view.ViewClippingUtilsKt")
     private const val MESSAGE_VIEW = "com.discord.chat.presentation.message.MessageView"
     private const val ACCESSORIES_VIEW = "com.discord.chat.presentation.message.MessageAccessoriesView"
     private const val CONTENT_VIEW = "com.discord.chat.presentation.message.view.MessageContentView"
     private const val AVATAR_VIEW = "com.facebook.drawee.view.SimpleDraweeView"
-    private const val THEME_MANAGER = "com.discord.theme.ThemeManager"
+    private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
     private const val PROBE_SIZE = 100
 
     private data class BubbleStyle(
@@ -79,7 +79,7 @@ object ChatUI {
     }.getOrNull()
 
     private fun loadTheme(classLoader: ClassLoader) {
-        val type = runCatching { classLoader.loadClass(THEME_MANAGER) }.getOrNull()
+        val type = THEME_MANAGER.find(classLoader)
         if (type == null) {
             Logger.info(LogCategory.CHATUI, "Discord's theme manager is obfuscated, so bubbles follow the message text colour.")
             return
@@ -109,7 +109,7 @@ object ChatUI {
     private fun hookAvatars(xposed: XposedInterface, classLoader: ClassLoader) {
         val avatarType = classLoader.loadClass(AVATAR_VIEW)
         val clipToCircle = runCatching {
-            classLoader.loadClass(CLIPPING_UTILS).getDeclaredMethod("clipToCircle", View::class.java)
+            CLIPPING_UTILS.load(classLoader).getDeclaredMethod("clipToCircle", View::class.java)
         }.getOrNull()
         if (clipToCircle == null) {
             hookCircleOutlines(xposed, avatarType)

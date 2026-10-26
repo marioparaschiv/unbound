@@ -15,9 +15,9 @@ import java.util.Collections
 import java.util.WeakHashMap
 
 object Themes {
-    private const val THEME_MANAGER = "com.discord.theme.ThemeManager"
-    private const val THEME_TYPE = "com.discord.theme.DiscordTheme"
-    private const val THEME_OBJECT = "com.discord.theme.DiscordThemeObject"
+    private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
+    private val THEME_TYPE = HostClass.legacy("com.discord.theme.DiscordTheme")
+    private val THEME_OBJECT = HostClass.legacy("com.discord.theme.DiscordThemeObject")
     private const val LAZY = "kotlin.Lazy"
     private const val SENTINEL_BASE = 0x5A000000
     private val THEME_SUFFIXES = listOf("dark", "light", "ash", "onyx", "darker", "midnight")
@@ -43,17 +43,17 @@ object Themes {
 
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
         hookRawColors(xposed)
-        if (runCatching { classLoader.loadClass(THEME_MANAGER) }.isFailure) {
+        if (THEME_MANAGER.find(classLoader) == null) {
             semanticResources = true
             apply()
             SettingsWatcher.onChange(::apply)
             Logger.info(LogCategory.THEMES, "Discord's theme classes are obfuscated, so themes recolour Discord's colour resources.")
             return
         }
-        val patcher = Patcher(classLoader.loadClass(THEME_OBJECT), classLoader.loadClass(LAZY), classLoader)
+        val patcher = Patcher(THEME_OBJECT.load(classLoader), classLoader.loadClass(LAZY), classLoader)
         this.patcher = patcher
-        val manager = classLoader.loadClass(THEME_MANAGER)
-        val themeType = classLoader.loadClass(THEME_TYPE)
+        val manager = THEME_MANAGER.load(classLoader)
+        val themeType = THEME_TYPE.load(classLoader)
         val instance = manager.getDeclaredField("INSTANCE").get(null)
         val getTheme = manager.getDeclaredMethod("getTheme", themeType)
 
