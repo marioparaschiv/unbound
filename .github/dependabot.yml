@@ -41,7 +41,9 @@ updates:
                   - 'patch'
 
     - package-ecosystem: 'gomod'
-      directory: '/packages/loader'
+      directories:
+          - '/packages/loader'
+          - '/packages/loader/workflow-tests'
       schedule:
           interval: 'weekly'
       open-pull-requests-limit: 5

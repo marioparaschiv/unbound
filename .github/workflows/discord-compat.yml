@@ -15,7 +15,7 @@ permissions:
     contents: read
 
 concurrency:
-    group: discord-compat-${{ github.ref }}
+    group: discord-compat-${{ github.ref }}-${{ inputs.channel || 'all' }}
     cancel-in-progress: false
 
 jobs:
@@ -67,7 +67,7 @@ jobs:
 
             - name: Download Discord for iOS
               if: env.IOS_SOURCE != 'none'
-              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@26d8cd98861aa633725864121838febed58a4350
+              uses: castdrian/dkrypt@v1.1.1
               with:
                   api-url: ${{ env.DKRYPT_BASE_URL }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}

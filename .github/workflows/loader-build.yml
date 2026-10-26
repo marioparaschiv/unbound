@@ -217,7 +217,7 @@ jobs:
 
             - name: Decrypt the source IPA
               if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == ''
-              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@26d8cd98861aa633725864121838febed58a4350
+              uses: castdrian/dkrypt@v1.1.1
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}
@@ -274,8 +274,8 @@ jobs:
                     echo "is_testflight=$INPUT_IS_TESTFLIGHT"
                   } >> "$GITHUB_OUTPUT"
 
-            - name: Keep the iOS build for the compatibility check
-              if: inputs.release == true && inputs.android_channel == ''
+            - name: Keep the source IPA for the gate and the iOS build
+              if: steps.select.outputs.platform == 'ios'
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: discord-source-ipa
@@ -398,6 +398,7 @@ jobs:
         with:
             version: ${{ needs.resolve-source.outputs.release_version || inputs.version }}
             ipa_url: ${{ inputs.ipa_url }}
+            source_ipa_artifact: ${{ needs.resolve-source.result == 'success' && 'discord-source-ipa' || '' }}
             release: ${{ inputs.release || false }}
             is_testflight: ${{ inputs.is_testflight || false }}
             authenticated_source: ${{ inputs.authenticated_source || false }}

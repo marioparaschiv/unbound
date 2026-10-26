@@ -52,14 +52,16 @@ export function toCleyeCommand(definition: CommandDefinition<z.ZodObject<z.ZodRa
 			),
 			flags,
 			// Tools under `ubd mcp` run through a second cleye instance, whose usage line would drop `mcp`.
-			help:
-				definition.surfaces.cli === 'mcp'
+			help: {
+				description: firstSentence(definition.description),
+				...(definition.surfaces.cli === 'mcp'
 					? {
 							usage: ['ubd mcp', definition.name, '[flags...]']
 								.concat(positionalNames.map((name) => `[${name}]`))
 								.join(' '),
 						}
-					: void 0,
+					: {}),
+			},
 		},
 		(parsed) => {
 			const { json, ...flagInput } = parsed.flags;
@@ -72,6 +74,10 @@ export function toCleyeCommand(definition: CommandDefinition<z.ZodObject<z.ZodRa
 			void run(definition, input, positionalNames[0], Boolean(json));
 		},
 	);
+}
+
+function firstSentence(description: string) {
+	return description.match(/^.*?\.(?=\s|$)/s)?.[0] ?? description;
 }
 
 async function run(

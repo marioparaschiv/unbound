@@ -30,6 +30,9 @@ on:
             caller_workflow:
                 default: ''
                 type: string
+            source_ipa_artifact:
+                default: ''
+                type: string
         outputs:
             deb_url:
                 description: 'Download URL for the deb package artifact'
@@ -105,6 +108,9 @@ jobs:
 
             - name: Test tools
               run: go test -count=1 ./...
+
+            - name: Test workflows
+              run: go -C workflow-tests test -count=1 ./...
 
             - name: Check cache
               run: printf 'upstream_heads=%s-%s\n' "$(git ls-remote https://github.com/theos/theos | awk 'NR == 1 { print $1 }')" "$(git ls-remote https://github.com/theos/sdks | awk 'NR == 1 { print $1 }')" >> "$GITHUB_ENV"
@@ -208,10 +214,10 @@ jobs:
         runs-on: ubuntu-26.04
         timeout-minutes: 50
         outputs:
-            channel: ${{ steps.dkrypt.outputs.channel || steps.direct.outputs.channel }}
-            is_testflight: ${{ steps.dkrypt.outputs.is_testflight || steps.direct.outputs.is_testflight }}
-            version: ${{ steps.dkrypt.outputs.version || steps.direct.outputs.version }}
-            cache_hit: ${{ steps.dkrypt.outputs.cache_hit || steps.direct.outputs.cache_hit }}
+            channel: ${{ steps.reuse.outputs.channel || steps.dkrypt.outputs.channel || steps.direct.outputs.channel }}
+            is_testflight: ${{ steps.reuse.outputs.is_testflight || steps.dkrypt.outputs.is_testflight || steps.direct.outputs.is_testflight }}
+            version: ${{ steps.reuse.outputs.version || steps.dkrypt.outputs.version || steps.direct.outputs.version }}
+            cache_hit: ${{ steps.reuse.outputs.cache_hit || steps.dkrypt.outputs.cache_hit || steps.direct.outputs.cache_hit }}
         steps:
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -232,10 +238,35 @@ jobs:
                   key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
                   restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
 
+            - name: Download the resolved source ipa
+              if: inputs.source_ipa_artifact != ''
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: ${{ inputs.source_ipa_artifact }}
+                  path: packages/loader
+
+            - name: Reuse the resolved source ipa
+              id: reuse
+              if: inputs.source_ipa_artifact != ''
+              env:
+                  INPUT_VERSION: ${{ inputs.version }}
+                  INPUT_IS_TESTFLIGHT: ${{ inputs.is_testflight }}
+              run: |
+                  set -euo pipefail
+                  mv source.ipa discord.ipa
+                  channel=appstore
+                  if [ "$INPUT_IS_TESTFLIGHT" = true ]; then channel=testflight; fi
+                  {
+                    echo "channel=$channel"
+                    echo "is_testflight=$INPUT_IS_TESTFLIGHT"
+                    echo "version=$INPUT_VERSION"
+                    echo "cache_hit=true"
+                  } >> "$GITHUB_OUTPUT"
+
             - name: Decrypt the source ipa
               id: dkrypt
-              if: inputs.ipa_url == ''
-              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@26d8cd98861aa633725864121838febed58a4350
+              if: inputs.source_ipa_artifact == '' && inputs.ipa_url == ''
+              uses: castdrian/dkrypt@v1.1.1
               with:
                   api-url: ${{ inputs.dkrypt_base_url }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}
@@ -246,7 +277,7 @@ jobs:
 
             - name: Download the source ipa
               id: direct
-              if: inputs.ipa_url != ''
+              if: inputs.source_ipa_artifact == '' && inputs.ipa_url != ''
               env:
                   DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
                   INPUT_VERSION: ${{ inputs.version }}

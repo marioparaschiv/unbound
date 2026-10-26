@@ -112,6 +112,9 @@ func runLint(args []string) error {
 	if err := runQuiet(rootPath, "go", "vet", "./tools"); err != nil {
 		return fmt.Errorf("go vet: %w", err)
 	}
+	if err := runQuiet(filepath.Join(rootPath, workflowTestsModule), "go", "vet", "./..."); err != nil {
+		return fmt.Errorf("go vet %s: %w", workflowTestsModule, err)
+	}
 	if err := runKotlinLinter(rootPath); err != nil {
 		return fmt.Errorf("ktlint: %w", err)
 	}
@@ -405,12 +408,14 @@ func sameTokens(original, formatted []byte) bool {
 	return originalCode == formattedCode && strings.Join(originalIncludes, "\n") == strings.Join(formattedIncludes, "\n")
 }
 
+const workflowTestsModule = "workflow-tests"
+
 func formatGoSources(root string, check bool) ([]string, error) {
 	mode := "-w"
 	if check {
 		mode = "-l"
 	}
-	command := exec.Command("gofmt", mode, "tools")
+	command := exec.Command("gofmt", mode, "tools", workflowTestsModule)
 	command.Dir = root
 	output, err := command.CombinedOutput()
 	if err != nil {

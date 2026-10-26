@@ -60,7 +60,7 @@ describe('nextRange', () => {
 	});
 
 	test('a midway tie survives a daylight-saving change inside the range', () => {
-		const originalZone = process.env.TZ;
+		const originalZone = process.env.TZ ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 		// London leaves summer time on 25 Oct 2026, so 20 to 25 Oct is an hour shorter than 25 to 30 Oct.
 		process.env.TZ = 'Europe/London';
@@ -75,11 +75,7 @@ describe('nextRange', () => {
 				to: midway,
 			});
 		} finally {
-			if (originalZone === undefined) {
-				delete process.env.TZ;
-			} else {
-				process.env.TZ = originalZone;
-			}
+			process.env.TZ = originalZone;
 		}
 	});
 
