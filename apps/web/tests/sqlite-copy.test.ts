@@ -1,13 +1,12 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { Database as Sqlite } from 'bun:sqlite';
-import { asc, eq, sql } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
 	addon,
-	botFeedChange,
 	moderationEvent,
 	staffNote,
 	submission,
@@ -27,7 +26,6 @@ import {
 	DETAILS_JSON,
 	DOCUMENT_JSON,
 	EVENT_SEQUENCE,
-	FEED_SEQ,
 	INT64_MAX,
 	MANIFEST_JSON,
 	MAX_SAFE_ID,
@@ -50,11 +48,8 @@ type CountRow = {
 	n: number;
 };
 
-type FeedRow = {
-	feed: string;
-	key: string;
-	seq: bigint;
-	changed_at: bigint;
+type RegclassRow = {
+	table: string | null;
 };
 
 const cleanups: (() => Promise<void> | void)[] = [];
@@ -205,27 +200,30 @@ describe('copySqlite', () => {
 		expect((await db.select().from(staffNote))[0]?.id).toBe(MAX_SAFE_ID);
 	});
 
-	test('keeps bot feed changes as the source has them', async () => {
+	test('skips the retired bot feed and copies every other table', async () => {
 		const context = await setup();
-		const sqlite = new Sqlite(context.source.path, { readonly: true, safeIntegers: true });
-		const expected = sqlite
-			.query<FeedRow, []>(
-				'SELECT feed, key, seq, changed_at FROM bot_feed_change ORDER BY feed, key',
-			)
-			.all()
-			.map((row) => [row.feed, row.key, Number(row.seq), Number(row.changed_at)]);
+		const reports = await copy(context);
+		const [row] = await context.db.$client<
+			RegclassRow[]
+		>`select to_regclass('bot_feed_change')::text as "table"`;
 
-		sqlite.close();
-		await copy(context);
+		expect(sourceCount(context.source, 'bot_feed_change')).toBeGreaterThan(1);
+		expect(reports.map((report) => report.table)).not.toContain('bot_feed_change');
+		expect(reports.every((report) => report.match)).toBe(true);
+		expect(row?.table).toBeNull();
+	});
 
-		const rows = await context.db
-			.select()
-			.from(botFeedChange)
-			.orderBy(asc(botFeedChange.feed), asc(botFeedChange.key));
+	test('copies past the retired bot feed but fails on any other unknown table', async () => {
+		const context = await setup();
 
-		expect(expected.length).toBeGreaterThan(1);
-		expect(rows.map((row) => [row.feed, row.key, row.seq, row.changedAt.getTime()])).toEqual(
-			expected,
+		expect((await copy(context)).every((report) => report.match)).toBe(true);
+
+		context.source.exec('CREATE TABLE bot_feed_cursor (feed text primary key)');
+
+		const error = await failure(copy(context, true));
+
+		expect(error.message).toBe(
+			'Source tables the Postgres schema does not know: bot_feed_cursor.',
 		);
 	});
 
@@ -483,21 +481,6 @@ describe('copySqlite', () => {
 
 		expect(event?.id).toBe(EVENT_SEQUENCE + 1);
 		expect(note?.id).toBe(MAX_SAFE_ID + 1);
-
-		await db.insert(addon).values({
-			id: 'acme.three',
-			type: 'plugin',
-			name: 'Three',
-			description: 'Third',
-			updatedAt: new Date(),
-		});
-
-		const [change] = await db
-			.select({ seq: botFeedChange.seq })
-			.from(botFeedChange)
-			.where(sql`${botFeedChange.key} = 'acme.three'`);
-
-		expect(change?.seq).toBe(FEED_SEQ + 1);
 	});
 });
 
@@ -520,6 +503,23 @@ describe('db:copy-sqlite', () => {
 		);
 		expect(run().exitCode).toBe(1);
 		expect(run('--replace').exitCode).toBe(0);
+	});
+
+	test('logs the retired table it skips with its row count', async () => {
+		const context = await setup();
+		const result = Bun.spawnSync(['bun', 'scripts/copy-sqlite.ts', context.source.path], {
+			cwd: join(import.meta.dirname, '..'),
+			env: { ...process.env, DATABASE_DIRECT_URL: context.target.url },
+		});
+		const output = `${result.stdout.toString()}${result.stderr.toString()}`;
+		const skipped = output.split('\n').filter((line) => line.includes('bot_feed_change'));
+
+		expect(result.exitCode).toBe(0);
+		expect(skipped).toHaveLength(1);
+		expect(skipped[0]).toContain(
+			`Skipped the retired table bot_feed_change (${sourceCount(context.source, 'bot_feed_change')} rows).`,
+		);
+		expect(output).not.toContain('MISMATCH');
 	});
 
 	test('prints where Postgres refused a row', async () => {
