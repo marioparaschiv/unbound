@@ -45,6 +45,9 @@ jobs:
               run: bun install
             - name: Check formatting
               run: bun run fmt:js:check
+            # Type-aware lint resolves `@unbound-app/web/*` imports through the web's built declarations.
+            - name: Build the web's type declarations
+              run: bun run --filter @unbound-app/web build:types
             - name: Lint
               run: bun run lint:js
             # The test helper creates and drops databases, so the role needs CREATEDB but not superuser.
