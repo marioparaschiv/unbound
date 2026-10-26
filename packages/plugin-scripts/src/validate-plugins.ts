@@ -5,6 +5,8 @@ import {
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { PLUGINS_DIR } from './paths';
+
 export const PLUGIN_FOLDER_MAX_LENGTH = 48;
 export const PLUGIN_NAME_MAX_LENGTH = 64;
 export const PLUGIN_DESCRIPTION_MAX_LENGTH = 160;
@@ -254,7 +256,7 @@ export function validatePluginDirectory(pluginsDirectory: string): string[] {
 }
 
 export function main(): void {
-	const errors = validatePluginDirectory(join(import.meta.dir, '..'));
+	const errors = validatePluginDirectory(PLUGINS_DIR);
 	if (errors.length === 0) {
 		console.log('Plugin naming and manifest validation passed.');
 		return;

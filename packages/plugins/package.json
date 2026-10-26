@@ -6,10 +6,7 @@
 		"dev": "bun ../../packages/cli/src/index.ts dev",
 		"build": "bun ../../packages/cli/src/index.ts build",
 		"test": "bun test --isolate",
-		"lint": "oxlint --config .oxlintrc.json .",
-		"validate": "bun scripts/validate-plugins.ts",
-		"catalog": "bun scripts/generate-plugins-readme.ts",
-		"sync-icons": "bun scripts/sync-plugin-icons.ts"
+		"lint": "oxlint --config .oxlintrc.json ."
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",

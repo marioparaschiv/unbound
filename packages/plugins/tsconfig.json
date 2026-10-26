@@ -10,10 +10,7 @@
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"allowImportingTsExtensions": true,
-		"paths": {
-			"@scripts/*": ["./scripts/*"]
-		},
 		"noEmit": true
 	},
-	"include": ["*", "shared", "scripts"]
+	"include": ["*", "shared"]
 }

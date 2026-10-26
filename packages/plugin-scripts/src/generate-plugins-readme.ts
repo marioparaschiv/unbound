@@ -1,13 +1,13 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const repoRoot = fileURLToPath(new URL('..', import.meta.url));
-const pluginsDir = repoRoot;
-const iconsDir = resolve(repoRoot, '../../assets/plugins/icons');
-const catalogPath = resolve(repoRoot, 'catalog.svg');
-const readmePath = resolve(repoRoot, 'README.md');
+import { PLUGIN_ICONS_DIR, PLUGINS_DIR } from './paths';
+
+const pluginsDir = PLUGINS_DIR;
+const iconsDir = PLUGIN_ICONS_DIR;
+const catalogPath = resolve(PLUGINS_DIR, 'catalog.svg');
+const readmePath = resolve(PLUGINS_DIR, 'README.md');
 const catalogInset = 30;
 const pluginColumnWidth = 300;
 const descriptionColumnWidth = 560;
@@ -65,7 +65,10 @@ function escapeXml(value: string): string {
 function repositoryTitle(): string {
 	const repository =
 		process.env.GITHUB_REPOSITORY ??
-		execFileSync('git', ['remote', 'get-url', 'origin'], { cwd: repoRoot, encoding: 'utf8' });
+		execFileSync('git', ['remote', 'get-url', 'origin'], {
+			cwd: PLUGINS_DIR,
+			encoding: 'utf8',
+		});
 	const match = /(?:^|[:/])([^/:]+)\/([^/]+?)(?:\.git)?\/?$/.exec(repository.trim());
 	if (!match) throw new Error('Could not determine the repository owner and name.');
 	return `${match[1]}/${match[2]}`;

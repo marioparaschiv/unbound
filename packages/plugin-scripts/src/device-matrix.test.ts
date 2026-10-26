@@ -1,8 +1,7 @@
-import { resolve } from 'node:path';
-
 import { expect, test } from 'bun:test';
 
-import { catalogPlugins, renderDeviceMatrix, validateDeviceMatrix } from '@scripts/device-matrix';
+import { catalogPlugins, renderDeviceMatrix, validateDeviceMatrix } from './device-matrix';
+import { PLUGINS_DIR } from './paths';
 
 const catalog = [
 	{ id: 'unbound.alpha', name: 'Alpha' },
@@ -25,7 +24,7 @@ const checks = [
 ];
 
 test('the device matrix discovers the complete plugin catalog', () => {
-	expect(catalogPlugins(resolve(import.meta.dir, '..'))).toHaveLength(32);
+	expect(catalogPlugins(PLUGINS_DIR)).toHaveLength(32);
 });
 
 test('the device matrix accepts one evidenced result per plugin', () => {

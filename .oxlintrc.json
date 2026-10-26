@@ -49,6 +49,7 @@
 		"packages/api/src/**",
 		"packages/cli/templates/**",
 		"packages/plugins/**",
+		"packages/plugin-scripts/**",
 		"packages/loader/bootstrap/devtools.js",
 		"packages/loader/vendor/**",
 		"packages/loader/apt-repo/**",

@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 
-import type { LocalPlugin, PublishedVersion } from '@scripts/select-plugins';
-import { getSelected, selectPlugins } from '@scripts/select-plugins';
+import type { LocalPlugin, PublishedVersion } from './select-plugins';
+import { getSelected, selectPlugins } from './select-plugins';
 
 function plugin(version: string): LocalPlugin {
 	return { id: 'unbound.example', dir: 'example', version, bundle: 'example/dist/index.js' };

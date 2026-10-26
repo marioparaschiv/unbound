@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join } from 'node:path';
 
 import { expect, test } from 'bun:test';
 
@@ -9,7 +9,8 @@ import {
 	PLUGIN_NAME_MAX_LENGTH,
 	validatePluginDirectory,
 	validatePluginFolder,
-} from '@scripts/validate-plugins';
+} from './validate-plugins';
+import { PLUGINS_DIR } from './paths';
 
 const validManifest = {
 	id: 'unbound.example-plugin',
@@ -21,22 +22,19 @@ const validManifest = {
 };
 
 test('every plugin folder follows the workspace convention', () => {
-	const pluginsDirectory = resolve(import.meta.dir, '..');
-	expect(validatePluginDirectory(pluginsDirectory)).toEqual([]);
-	expect(readdirSync(pluginsDirectory)).toContain('hello-there');
+	expect(validatePluginDirectory(PLUGINS_DIR)).toEqual([]);
 });
 
 test('the workspace contains only first-party plugins', () => {
-	const pluginsDirectory = resolve(import.meta.dir, '..');
-	const plugins = readdirSync(pluginsDirectory, { withFileTypes: true }).filter((entry) => {
-		return entry.isDirectory() && !['node_modules', 'shared', 'scripts'].includes(entry.name);
+	const plugins = readdirSync(PLUGINS_DIR, { withFileTypes: true }).filter((entry) => {
+		return entry.isDirectory() && !['node_modules', 'shared'].includes(entry.name);
 	});
 
-	expect(plugins).toHaveLength(33);
+	expect(plugins).toHaveLength(32);
 	expect(
 		plugins.every((plugin) => {
-			const manifestPath = resolve(pluginsDirectory, plugin.name, 'manifest.json');
-			if (!existsSync(manifestPath)) return plugin.name === 'hello-there';
+			const manifestPath = join(PLUGINS_DIR, plugin.name, 'manifest.json');
+			if (!existsSync(manifestPath)) return false;
 			const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 			return manifest.authors.some((author: { name: string }) => author.name === 'adrian');
 		}),

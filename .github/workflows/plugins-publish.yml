@@ -55,4 +55,4 @@ jobs:
               env:
                   UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
                   UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
-              run: bun packages/plugins/scripts/publish-plugins.ts
+              run: bun packages/plugin-scripts/src/publish-plugins.ts

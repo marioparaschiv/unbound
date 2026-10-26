@@ -1,6 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { PLUGINS_DIR } from './paths';
+
 export type DeviceCheck = {
 	id: string;
 	behavior: 'pass' | 'fail';
@@ -101,8 +103,9 @@ export function renderDeviceMatrix(catalog: CatalogPlugin[], checks: DeviceCheck
 
 function main(): void {
 	const path = process.argv[2];
-	if (!path) throw new Error('Usage: bun scripts/device-matrix.ts <results.json>');
-	const catalog = catalogPlugins(join(import.meta.dir, '..'));
+	if (!path)
+		throw new Error('Usage: bun packages/plugin-scripts/src/device-matrix.ts <results.json>');
+	const catalog = catalogPlugins(PLUGINS_DIR);
 	const checks = JSON.parse(readFileSync(path, 'utf8')) as unknown;
 	if (!Array.isArray(checks)) throw new Error('Results must be an array');
 	const errors = validateDeviceMatrix(catalog, checks);
