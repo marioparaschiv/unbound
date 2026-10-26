@@ -80,7 +80,7 @@ async function cache(id: DiscordId, username: string, ageMs: number) {
 }
 
 function fetchedIds() {
-	return discord.requests.map((request) => request.path.split('/').at(-1));
+	return discord.requests.map((request) => request.path.split('/').at(-1) ?? '');
 }
 
 async function waitFor(predicate: () => boolean | Promise<boolean>, timeoutMs: number = 2000) {
@@ -107,7 +107,7 @@ describe('refreshDiscordProfiles', () => {
 		const result = await refreshDiscordProfiles(ctx);
 		const profiles = await readProfiles(ctx, ['101', '102', '103']);
 
-		expect(fetchedIds().toSorted()).toEqual(['102', '103']);
+		expect(fetchedIds().toSorted((a, b) => a.localeCompare(b))).toEqual(['102', '103']);
 		expect(result).toEqual({ refreshed: 2, retryAfterMs: null });
 		expect(profiles.get('101')).toMatchObject({
 			kind: 'found',
@@ -228,7 +228,12 @@ describe('Discord API host', () => {
 		try {
 			const env = { ...ctx.env, DISCORD_API_URL: 'https://discord.example.com/api/v10' };
 
-			await expect(fetchDiscordUser(env, '601')).rejects.toThrow(/Refusing/);
+			const error = await fetchDiscordUser(env, '601').then(
+				() => undefined,
+				(caught) => caught,
+			);
+
+			expect(String(error)).toMatch(/Refusing to send the Discord bot token/);
 			expect(fetchSpy).not.toHaveBeenCalled();
 		} finally {
 			fetchSpy.mockRestore();

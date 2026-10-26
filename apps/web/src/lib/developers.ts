@@ -1,10 +1,8 @@
-import type { IdentifiedAuthor } from '~/lib/authors/resolve';
-import type { MarketplaceAddon } from '~/lib/marketplace-addon';
+import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';
+import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
 import type { DiscordId } from '~/lib/authors/discord-users';
-import { isIdentified, loadAuthors } from '~/lib/authors/resolve';
-import { toMarketplaceAddon } from '~/lib/marketplace-addon';
-import type { AppContext } from '~/lib/context';
 import { listListedAddons } from '~/lib/addons';
+import type { AppContext } from '~/lib/context';
 
 export type DevelopersQuery = {
 	/** Matches anywhere in the developer's name or a manifest name for them, case-insensitively. */

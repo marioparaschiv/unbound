@@ -1,12 +1,10 @@
-import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source';
-import type { AddonVersion } from '@unbound-app/contracts/addons';
-import { listAddonsQuerySchema } from '@unbound-app/contracts/addons';
+import { listAddonsQuerySchema, type AddonVersion } from '@unbound-app/contracts/addons';
+import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod/mini';
 
-import type { MarketplaceAddon } from '~/lib/marketplace-addon';
-import { toMarketplaceAddon } from '~/lib/marketplace-addon';
+import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
 import { getAddonDetails, listAddons } from '~/lib/addons';
 import { loadAuthors } from '~/lib/authors/resolve';
 import app from '~/lib/app';

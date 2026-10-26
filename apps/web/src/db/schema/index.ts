@@ -1,6 +1,6 @@
 export * from './sponsors';
-export * from './sources';
 export * from './discord';
+export * from './sources';
 export * from './addons';
 export * from './loader';
 export * from './admin';

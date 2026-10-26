@@ -12,13 +12,13 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import type { IdentifiedAuthor } from '~/lib/authors/resolve';
-import { formatDate } from '~/components/addon/format';
 import type { CssVariables } from '~/lib/css-variables';
+import { formatDate } from '~/components/addon/format';
 import UserAvatar from '~/components/user-avatar';
 import AddonCard from '~/components/addon-card';
-import { getDeveloper } from '~/lib/developers';
 import { Button } from '~/components/ui/button';
 import UserBadge from '~/components/user-badge';
+import { getDeveloper } from '~/lib/developers';
 import Text from '~/components/ui/text';
 import app from '~/lib/app';
 

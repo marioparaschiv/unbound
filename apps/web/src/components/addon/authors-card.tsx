@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 
-import type { ResolvedAuthor } from '~/lib/authors/resolve';
 import { SidebarCard } from '~/components/addon/sidebar-card';
+import type { ResolvedAuthor } from '~/lib/authors/resolve';
 import { authorKey } from '~/components/author-byline';
 import UserAvatar from '~/components/user-avatar';
 import UserBadge from '~/components/user-badge';

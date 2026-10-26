@@ -11,9 +11,9 @@ import {
 } from '~/components/ui/empty';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import ContributorsCard from '~/components/addon/contributors-card';
-import AuthorsCard from '~/components/addon/authors-card';
 import VersionHistory from '~/components/addon/version-history';
 import AddonHeader from '~/components/addon/addon-header';
+import AuthorsCard from '~/components/addon/authors-card';
 import DetailsCard from '~/components/addon/details-card';
 import { fetchMarketplaceAddon } from '~/lib/marketplace';
 import SourceCard from '~/components/addon/source-card';

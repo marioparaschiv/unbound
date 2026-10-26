@@ -2,15 +2,19 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { PublicBadge } from '@unbound-app/contracts/sponsors';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 
-import { isStale, readProfiles, requestProfileRefresh } from '~/lib/authors/profiles';
+import {
+	isStale,
+	readProfiles,
+	requestProfileRefresh,
+	type CachedProfile,
+} from '~/lib/authors/profiles';
 import { getAvatarUrl, getDefaultAvatarUrl } from '~/lib/discord';
-import type { CachedProfile } from '~/lib/authors/profiles';
 import type { DiscordId } from '~/lib/authors/discord-users';
 import { getVisibleBadges } from '~/lib/sponsors/badges';
 import { DEFAULT_ROLE } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
-import { isBanned } from '~/lib/api/caller';
 import { account, user } from '~/db/schema';
+import { isBanned } from '~/lib/api/caller';
 
 export type ManifestAuthor = PublishedManifest['authors'][number];
 

@@ -26,7 +26,9 @@ export type ProfileRefresher = {
 	stop(): void;
 };
 
-type StoredLookup = Extract<DiscordLookup, { kind: 'found' | 'missing' }>;
+type StoredKind = { kind: 'found' | 'missing' };
+
+type StoredLookup = Extract<DiscordLookup, StoredKind>;
 
 type RefresherState =
 	| { kind: 'idle' }
@@ -263,7 +265,9 @@ export function startProfileRefresher(ctx: AppContext): ProfileRefresher {
 	);
 
 	const handle: ProfileRefresher = {
-		kick: refresher.kick,
+		kick() {
+			refresher.kick();
+		},
 		stop() {
 			clearInterval(interval);
 			refresher.stop();
