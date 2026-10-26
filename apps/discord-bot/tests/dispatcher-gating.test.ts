@@ -33,8 +33,6 @@ const ENV = {
 	DISCORD_TOKEN: 'token',
 	DATABASE_URL: 'postgres://bot@localhost:6432/bot',
 	DATABASE_DIRECT_URL: 'postgres://bot@localhost:5432/bot',
-	UNBOUND_API_URL: 'https://unbound.rip',
-	UNBOUND_API_KEY: 'key',
 };
 
 function fakeDispatcher(
