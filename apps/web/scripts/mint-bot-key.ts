@@ -13,11 +13,13 @@ import { parseEnv } from '~/lib/env';
 
 const logger = createLogger('Web', 'Bot');
 const env = parseEnv();
-const db = createDatabase(env.DATABASE_PATH);
 
-migrateDatabase(db);
+await migrateDatabase(env.DATABASE_DIRECT_URL);
 
+const db = createDatabase(env.DATABASE_URL);
 const key = await mintBotKey(createAppContext(env, db));
+
+await db.$client.end();
 
 logger.success('Minted a bot API key. It is shown only once:');
 process.stdout.write(`${key}\n`);

@@ -1,11 +1,10 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { createDatabase } from '~/db/database';
 import { migrateDatabase } from '~/db/migrate';
 import { parseEnv } from '~/lib/env';
 
 const logger = createLogger('Web', 'Migrate');
 const env = parseEnv();
 
-migrateDatabase(createDatabase(env.DATABASE_PATH));
-logger.success(`Migrated ${env.DATABASE_PATH}.`);
+await migrateDatabase(env.DATABASE_DIRECT_URL);
+logger.success(`Migrated ${new URL(env.DATABASE_DIRECT_URL).pathname.slice(1)}.`);

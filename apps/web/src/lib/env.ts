@@ -6,7 +6,10 @@ export const envSchema = z.object({
 	PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
 	PUBLIC_URL: z.url(),
 	CDN_URL: z.url(),
-	DATABASE_PATH: z.string().min(1),
+	/** The pooled connection (pgbouncer, transaction mode) every query runs over. */
+	DATABASE_URL: z.url(),
+	/** The direct connection migrations run over, past pgbouncer. */
+	DATABASE_DIRECT_URL: z.url(),
 
 	BETTER_AUTH_SECRET: z.string().min(32),
 	DISCORD_CLIENT_ID: z.string().min(1),

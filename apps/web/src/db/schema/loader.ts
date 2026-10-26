@@ -1,9 +1,10 @@
-import { sqliteTable, text, integer, index, primaryKey } from 'drizzle-orm/sqlite-core';
+import { pgTable, text, index, primaryKey } from 'drizzle-orm/pg-core';
 import type { LoaderPlatform } from '@unbound-app/contracts/loader';
 
+import { timestampMs } from './columns';
 import { user } from './auth';
 
-export const loaderRelease = sqliteTable(
+export const loaderRelease = pgTable(
 	'loader_release',
 	{
 		platform: text('platform').$type<LoaderPlatform>().notNull(),
@@ -12,7 +13,7 @@ export const loaderRelease = sqliteTable(
 		url: text('url').notNull(),
 		changelog: text('changelog'),
 		publishedBy: text('published_by').references(() => user.id, { onDelete: 'set null' }),
-		publishedAt: integer('published_at', { mode: 'timestamp_ms' }).notNull(),
+		publishedAt: timestampMs('published_at').notNull(),
 	},
 	(table) => [
 		primaryKey({ columns: [table.platform, table.version] }),

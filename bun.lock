@@ -92,6 +92,7 @@
         "drizzle-orm": "1.0.0-rc.4",
         "motion": "^12.34.3",
         "obscenity": "^0.4.6",
+        "postgres": "^3.4.9",
         "react": "catalog:react",
         "react-day-picker": "^10.0.2",
         "react-dom": "catalog:react",

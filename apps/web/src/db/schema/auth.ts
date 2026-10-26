@@ -1,40 +1,43 @@
-import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
-import { defineRelationsPart, sql } from 'drizzle-orm';
+import { pgTable, text, integer, bigint, boolean, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { defineRelationsPart, type SQL } from 'drizzle-orm';
 
-// `user_search` mirrors id, name and email for admin search; the `admin_search` migration owns it.
-export const user = sqliteTable(
+import { searchText, timestampMs, trigramIndex } from './columns';
+
+export const user = pgTable(
 	'user',
 	{
 		id: text('id').primaryKey(),
 		name: text('name').notNull(),
 		email: text('email').notNull().unique(),
-		emailVerified: integer('email_verified', { mode: 'boolean' }).default(false).notNull(),
+		emailVerified: boolean('email_verified').default(false).notNull(),
 		image: text('image'),
-		createdAt: integer('created_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-			.notNull(),
-		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+		createdAt: timestampMs('created_at').defaultNow().notNull(),
+		updatedAt: timestampMs('updated_at')
+			.defaultNow()
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 		role: text('role'),
-		banned: integer('banned', { mode: 'boolean' }).default(false),
+		banned: boolean('banned').default(false),
 		banReason: text('ban_reason'),
-		banExpires: integer('ban_expires', { mode: 'timestamp_ms' }),
+		banExpires: timestampMs('ban_expires'),
 	},
-	(table) => [index('user_createdAt_idx').on(table.createdAt, table.id)],
+	(table) => [
+		index('user_createdAt_idx').on(table.createdAt, table.id),
+		trigramIndex('user_search_idx', userSearchText),
+	],
 );
 
-export const session = sqliteTable(
+/** The text admin search matches a user by, and the expression `user_search_idx` indexes. */
+export const userSearchText: SQL = searchText([user.id, user.name, user.email]);
+
+export const session = pgTable(
 	'session',
 	{
 		id: text('id').primaryKey(),
-		expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+		expiresAt: timestampMs('expires_at').notNull(),
 		token: text('token').notNull().unique(),
-		createdAt: integer('created_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-			.notNull(),
-		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+		createdAt: timestampMs('created_at').defaultNow().notNull(),
+		updatedAt: timestampMs('updated_at')
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 		ipAddress: text('ip_address'),
@@ -47,7 +50,7 @@ export const session = sqliteTable(
 	(table) => [index('session_userId_idx').on(table.userId)],
 );
 
-export const account = sqliteTable(
+export const account = pgTable(
 	'account',
 	{
 		id: text('id').primaryKey(),
@@ -59,53 +62,45 @@ export const account = sqliteTable(
 		accessToken: text('access_token'),
 		refreshToken: text('refresh_token'),
 		idToken: text('id_token'),
-		accessTokenExpiresAt: integer('access_token_expires_at', {
-			mode: 'timestamp_ms',
-		}),
-		refreshTokenExpiresAt: integer('refresh_token_expires_at', {
-			mode: 'timestamp_ms',
-		}),
+		accessTokenExpiresAt: timestampMs('access_token_expires_at'),
+		refreshTokenExpiresAt: timestampMs('refresh_token_expires_at'),
 		scope: text('scope'),
 		password: text('password'),
-		createdAt: integer('created_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-			.notNull(),
-		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+		createdAt: timestampMs('created_at').defaultNow().notNull(),
+		updatedAt: timestampMs('updated_at')
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 	},
 	(table) => [index('account_userId_idx').on(table.userId)],
 );
 
-export const verification = sqliteTable(
+export const verification = pgTable(
 	'verification',
 	{
 		id: text('id').primaryKey(),
 		identifier: text('identifier').notNull(),
 		value: text('value').notNull(),
-		expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
-		createdAt: integer('created_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-			.notNull(),
-		updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+		expiresAt: timestampMs('expires_at').notNull(),
+		createdAt: timestampMs('created_at').defaultNow().notNull(),
+		updatedAt: timestampMs('updated_at')
+			.defaultNow()
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 	},
 	(table) => [index('verification_identifier_idx').on(table.identifier)],
 );
 
-export const deviceCode = sqliteTable(
+export const deviceCode = pgTable(
 	'device_code',
 	{
 		id: text('id').primaryKey(),
 		deviceCode: text('device_code').notNull(),
 		userCode: text('user_code').notNull(),
 		userId: text('user_id'),
-		expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+		expiresAt: timestampMs('expires_at').notNull(),
 		status: text('status').notNull(),
-		lastPolledAt: integer('last_polled_at', { mode: 'timestamp_ms' }),
-		pollingInterval: integer('polling_interval'),
+		lastPolledAt: timestampMs('last_polled_at'),
+		pollingInterval: bigint('polling_interval', { mode: 'number' }),
 		clientId: text('client_id'),
 		scope: text('scope'),
 	},
@@ -115,7 +110,7 @@ export const deviceCode = sqliteTable(
 	],
 );
 
-export const apikey = sqliteTable(
+export const apikey = pgTable(
 	'apikey',
 	{
 		id: text('id').primaryKey(),
@@ -125,21 +120,19 @@ export const apikey = sqliteTable(
 		referenceId: text('reference_id').notNull(),
 		prefix: text('prefix'),
 		key: text('key').notNull(),
-		refillInterval: integer('refill_interval'),
+		refillInterval: bigint('refill_interval', { mode: 'number' }),
 		refillAmount: integer('refill_amount'),
-		lastRefillAt: integer('last_refill_at', { mode: 'timestamp_ms' }),
-		enabled: integer('enabled', { mode: 'boolean' }).default(true),
-		rateLimitEnabled: integer('rate_limit_enabled', {
-			mode: 'boolean',
-		}).default(true),
-		rateLimitTimeWindow: integer('rate_limit_time_window').default(86400000),
+		lastRefillAt: timestampMs('last_refill_at'),
+		enabled: boolean('enabled').default(true),
+		rateLimitEnabled: boolean('rate_limit_enabled').default(true),
+		rateLimitTimeWindow: bigint('rate_limit_time_window', { mode: 'number' }).default(86400000),
 		rateLimitMax: integer('rate_limit_max').default(1000),
 		requestCount: integer('request_count').default(0),
 		remaining: integer('remaining'),
-		lastRequest: integer('last_request', { mode: 'timestamp_ms' }),
-		expiresAt: integer('expires_at', { mode: 'timestamp_ms' }),
-		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+		lastRequest: timestampMs('last_request'),
+		expiresAt: timestampMs('expires_at'),
+		createdAt: timestampMs('created_at').notNull(),
+		updatedAt: timestampMs('updated_at').notNull(),
 		permissions: text('permissions'),
 		metadata: text('metadata'),
 	},
@@ -150,11 +143,11 @@ export const apikey = sqliteTable(
 	],
 );
 
-export const rateLimit = sqliteTable('rate_limit', {
+export const rateLimit = pgTable('rate_limit', {
 	id: text('id').primaryKey(),
 	key: text('key').notNull().unique(),
 	count: integer('count').notNull(),
-	lastRequest: integer('last_request').notNull(),
+	lastRequest: bigint('last_request', { mode: 'number' }).notNull(),
 });
 
 export const authRelations = defineRelationsPart(

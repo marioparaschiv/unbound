@@ -1,7 +1,4 @@
 import { makeSignature } from 'better-auth/crypto';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
 import { createAppContext } from '~/lib/context';
 import type { AppContext } from '~/lib/context';
@@ -11,6 +8,8 @@ import { DISCORD_EPOCH } from '~/lib/discord';
 import { CLI_CLIENT_ID } from '~/api/client';
 import type { EnvSource } from '~/lib/env';
 import { parseEnv } from '~/lib/env';
+
+import { createTestDatabase } from './database';
 
 export const TEST_ENV = {
 	PUBLIC_URL: 'http://localhost:3000',
@@ -40,8 +39,8 @@ export const S3_TEST_ENV = {
 
 export type TestContext = {
 	ctx: AppContext;
-	/** Closes the database and deletes its temporary directory. */
-	close: () => void;
+	/** Ends the pool and force-drops the context's database. */
+	close: () => Promise<void>;
 };
 
 export type DiscordProfile = {
@@ -64,23 +63,29 @@ export type SignedInUser = {
 };
 
 /**
- * @description Builds an application context over a fresh, migrated SQLite file in a temporary
- * directory, from {@link TEST_ENV} plus any overrides.
+ * @description Builds an application context over a fresh, migrated Postgres database of its own, from
+ * {@link TEST_ENV} plus any overrides.
  * @param overrides Environment variables to replace.
- * @returns The context and a `close` that disposes of the database.
+ * @returns The context and a `close` that drops the database.
  */
-export function createTestContext(overrides: EnvSource = {}): TestContext {
-	const dir = mkdtempSync(join(tmpdir(), 'unbound-web-'));
-	const env = parseEnv({ ...TEST_ENV, DATABASE_PATH: join(dir, 'unbound.db'), ...overrides });
-	const db = createDatabase(env.DATABASE_PATH);
+export async function createTestContext(overrides: EnvSource = {}): Promise<TestContext> {
+	const database = await createTestDatabase();
 
-	migrateDatabase(db);
+	await migrateDatabase(database.url);
+
+	const env = parseEnv({
+		...TEST_ENV,
+		DATABASE_URL: database.url,
+		DATABASE_DIRECT_URL: database.url,
+		...overrides,
+	});
+	const db = createDatabase(env.DATABASE_URL);
 
 	return {
 		ctx: createAppContext(env, db),
-		close: () => {
-			db.$client.close();
-			rmSync(dir, { recursive: true, force: true });
+		close: async () => {
+			await db.$client.end();
+			await database.drop();
 		},
 	};
 }

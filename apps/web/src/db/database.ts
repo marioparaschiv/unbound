@@ -1,39 +1,73 @@
-import type { SQLiteBunTransaction } from 'drizzle-orm/bun-sqlite';
-import { drizzle } from 'drizzle-orm/bun-sqlite';
-import { Database as SQLite } from 'bun:sqlite';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 
 import relations from '~/db/relations';
 
-// 256 MiB of the file is memory-mapped; reads past that fall back to regular I/O.
-const MMAP_SIZE = 256 * 1024 * 1024;
-const BUSY_TIMEOUT_MS = 5000;
+// Serialization failures and deadlocks are the two errors a re-run on a fresh snapshot can fix.
+const RETRYABLE_CODES = new Set(['40001', '40P01']);
+const MAX_ATTEMPTS = 10;
+const BASE_DELAY_MS = 5;
+const MAX_DELAY_MS = 200;
 
-export const PRAGMAS = {
-	journal_mode: 'WAL',
-	synchronous: 'NORMAL',
-	foreign_keys: 'ON',
-	busy_timeout: BUSY_TIMEOUT_MS,
-	mmap_size: MMAP_SIZE,
-	temp_store: 'MEMORY',
-} as const;
-
-/**
- * @description Opens the SQLite database with the performance and integrity pragmas applied. The
- * process should hold exactly one instance: it is the single writer connection.
- * @param path The database file path, or `:memory:`.
- * @returns The Drizzle database, with the raw `bun:sqlite` handle on `$client`.
- */
-export function createDatabase(path: string) {
-	const sqlite = new SQLite(path, { create: true, strict: true });
-
-	for (const [pragma, value] of Object.entries(PRAGMAS)) {
-		sqlite.run(`PRAGMA ${pragma} = ${value};`);
-	}
-
-	return drizzle({ client: sqlite, relations });
+function open(client: postgres.Sql) {
+	return drizzle({ client, relations });
 }
 
-export type Database = ReturnType<typeof createDatabase>;
-export type Transaction = SQLiteBunTransaction<typeof relations>;
+type Drizzle = ReturnType<typeof open>;
 
-export default { PRAGMAS, createDatabase };
+export type Transaction = Parameters<Parameters<Drizzle['transaction']>[0]>[0];
+
+/** A transaction body. It may run more than once, so it does database work through `tx` only. */
+export type TransactionBody<T> = (tx: Transaction) => Promise<T>;
+
+/** The app's database, whose only transaction is serializable and retried. */
+export type Database = Omit<Drizzle, 'transaction'> & {
+	transaction<T>(body: TransactionBody<T>): Promise<T>;
+};
+
+/**
+ * @description Opens the app's Postgres pool over postgres.js. Prepared statements are off for
+ * pgbouncer's transaction mode, and every transaction is serializable.
+ * @param url The connection string, `DATABASE_URL`.
+ * @returns The database, with the postgres.js client on `$client`.
+ */
+export function createDatabase(url: string): Database {
+	const client = postgres(url, { prepare: false, onnotice: () => void 0 });
+	const db = open(client);
+	const begin = db.transaction.bind(db);
+
+	return Object.assign(db, {
+		transaction: <T>(body: TransactionBody<T>) =>
+			retrySerializable(() => begin(body, { isolationLevel: 'serializable' })),
+	});
+}
+
+/**
+ * @description Tells whether an error is one a transaction re-run on a fresh snapshot can fix.
+ * @param error The error a transaction failed with; drizzle wraps a failed statement's in `cause`.
+ * @returns Whether it is a serialization failure or a deadlock.
+ */
+export function isRetryable(error: unknown): error is Error {
+	const cause =
+		error instanceof Error && error.cause instanceof postgres.PostgresError
+			? error.cause
+			: error;
+
+	return cause instanceof postgres.PostgresError && RETRYABLE_CODES.has(cause.code);
+}
+
+async function retrySerializable<T>(run: () => Promise<T>): Promise<T> {
+	for (let attempt = 1; ; attempt++) {
+		try {
+			return await run();
+		} catch (error) {
+			if (!isRetryable(error) || attempt >= MAX_ATTEMPTS) {
+				throw error;
+			}
+
+			await Bun.sleep(Math.min(MAX_DELAY_MS, BASE_DELAY_MS * 2 ** attempt) * Math.random());
+		}
+	}
+}
+
+export default { createDatabase, isRetryable };
