@@ -34,6 +34,11 @@ std::optional<FontTarget> resolveFontTarget(const nlohmann::json &customFonts,
                                             const nlohmann::json &systemFonts,
                                             const std::string    &name);
 std::string    fontUnavailableMessage(const std::string &family, const std::string &name);
+nlohmann::json fontTargetJSON(const nlohmann::json &customFonts, const nlohmann::json &systemFonts,
+                              const std::string &family, const std::string &name);
+nlohmann::json fontOverrideTargets(const nlohmann::json &overrides,
+                                   const nlohmann::json &customFonts,
+                                   const nlohmann::json &systemFonts);
 nlohmann::json systemFontsFromFiles(const std::vector<std::string> &paths,
                                     const std::string              &source);
 nlohmann::json fontCatalog(const nlohmann::json &customFonts, const nlohmann::json &platformFonts);

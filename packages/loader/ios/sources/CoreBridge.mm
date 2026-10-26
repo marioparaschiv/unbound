@@ -234,31 +234,9 @@ nlohmann::json UnboundFontCatalog()
 
 + (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets
 {
-    const nlohmann::json &system = UnboundPlatformFonts();
-
-    nlohmann::json custom    = UnboundAddonState().fonts();
-    nlohmann::json overrides = loader::preferences::fontOverrides(UnboundSettingsStore());
-    nlohmann::json targets   = nlohmann::json::object();
-    for (const auto &[key, value] : overrides.items())
-    {
-        if (!value.is_string() || value.get<std::string>().empty())
-        {
-            continue;
-        }
-        const std::string name = value.get<std::string>();
-        const auto        font = loader::resolveFontTarget(custom, system, name);
-        if (!font)
-        {
-            targets[key] = {{"name", name}, {"error", loader::fontUnavailableMessage(key, name)}};
-            continue;
-        }
-        targets[key] = {{"name", font->name}};
-        if (font->path)
-        {
-            targets[key]["path"] = *font->path;
-        }
-    }
-
+    nlohmann::json targets =
+        loader::fontOverrideTargets(loader::preferences::fontOverrides(UnboundSettingsStore()),
+                                    UnboundAddonState().fonts(), UnboundPlatformFonts());
     id converted = objectFromJSON(targets);
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
 }

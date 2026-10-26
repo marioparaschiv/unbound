@@ -386,6 +386,42 @@ std::string fontUnavailableMessage(const std::string &family, const std::string 
            "\". The requested font isn't loaded.";
 }
 
+nlohmann::json fontTargetJSON(const nlohmann::json &customFonts, const nlohmann::json &systemFonts,
+                              const std::string &family, const std::string &name)
+{
+    const auto font = resolveFontTarget(customFonts, systemFonts, name);
+    if (!font)
+    {
+        return {{"name", name}, {"error", fontUnavailableMessage(family, name)}};
+    }
+    nlohmann::json target = {{"name", font->name}};
+    if (font->path)
+    {
+        target["path"] = *font->path;
+    }
+    return target;
+}
+
+nlohmann::json fontOverrideTargets(const nlohmann::json &overrides,
+                                   const nlohmann::json &customFonts,
+                                   const nlohmann::json &systemFonts)
+{
+    nlohmann::json targets = nlohmann::json::object();
+    if (!overrides.is_object())
+    {
+        return targets;
+    }
+    for (const auto &[family, value] : overrides.items())
+    {
+        if (value.is_string() && !value.get<std::string>().empty())
+        {
+            targets[family] =
+                fontTargetJSON(customFonts, systemFonts, family, value.get<std::string>());
+        }
+    }
+    return targets;
+}
+
 nlohmann::json systemFontsFromFiles(const std::vector<std::string> &paths,
                                     const std::string              &source)
 {
