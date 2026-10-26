@@ -304,6 +304,7 @@
         "@types/bun": "catalog:",
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/types": "workspace:*",
+        "typescript": "catalog:",
       },
     },
     "packages/plugin-test": {

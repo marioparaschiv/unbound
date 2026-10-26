@@ -15,6 +15,7 @@
 	"devDependencies": {
 		"@types/bun": "catalog:",
 		"@unbound-app/contracts": "workspace:*",
-		"@unbound-app/types": "workspace:*"
+		"@unbound-app/types": "workspace:*",
+		"typescript": "catalog:"
 	}
 }
