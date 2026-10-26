@@ -1,15 +1,15 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createSubmissionRequestSchema, createSubmissionResponseSchema } from '../src/publish';
-import { updatesRequestSchema, updatesResponseSchema } from '../src/updates';
-import { addonManifestSchema, semverSchema } from '../src/manifest';
-import { reviewSubmissionRequestSchema } from '../src/review';
-import { revokeBadgeRequestSchema } from '../src/sponsors';
 import {
 	adminUsersSearchSchema,
 	createStaffNoteRequestSchema,
 	moderationReasonSchema,
 } from '../src/admin';
+import { createSubmissionRequestSchema, createSubmissionResponseSchema } from '../src/publish';
+import { updatesRequestSchema, updatesResponseSchema } from '../src/updates';
+import { addonManifestSchema, semverSchema } from '../src/manifest';
+import { reviewSubmissionRequestSchema } from '../src/review';
+import { revokeBadgeRequestSchema } from '../src/sponsors';
 import { apiErrorResponseSchema } from '../src/errors';
 import { apiUrlSchema } from '../src/api';
 

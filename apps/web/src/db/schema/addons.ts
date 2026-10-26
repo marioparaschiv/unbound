@@ -8,7 +8,6 @@ import {
 	uniqueIndex,
 	primaryKey,
 } from 'drizzle-orm/pg-core';
-import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import type {
 	ReviewDecision,
 	SubmissionKind,
@@ -18,6 +17,7 @@ import type { AddonType, MaintainerRole } from '@unbound-app/contracts/addons';
 import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { defineRelationsPart, sql, type SQL } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import { searchText, timestampMs, trigramIndex } from './columns';
 import { moderationEvent } from './admin';

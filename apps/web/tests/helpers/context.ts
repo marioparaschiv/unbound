@@ -2,11 +2,11 @@ import { makeSignature } from 'better-auth/crypto';
 
 import { createAppContext } from '~/lib/context';
 import type { AppContext } from '~/lib/context';
+import type { Env, EnvSource } from '~/lib/env';
 import { createDatabase } from '~/db/database';
 import { migrateDatabase } from '~/db/migrate';
 import { DISCORD_EPOCH } from '~/lib/discord';
 import { CLI_CLIENT_ID } from '~/api/client';
-import type { Env, EnvSource } from '~/lib/env';
 import { parseEnv } from '~/lib/env';
 
 import { createTestDatabase } from './database';

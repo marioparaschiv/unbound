@@ -13,12 +13,12 @@ import restoreBadgeEndpoint from '~/endpoints/restore-badge';
 import revokeBadgeEndpoint from '~/endpoints/revoke-badge';
 import setMyBadgeEndpoint from '~/endpoints/set-my-badge';
 import { getVisibleBadges } from '~/lib/sponsors/badges';
+import { account, perkClaim, user } from '~/db/schema';
 import { isPerkUnlocked } from '~/lib/sponsors/perks';
 import { standingOf } from '~/lib/sponsors/standing';
 import type { AppContext } from '~/lib/context';
 import { createApiClient } from '~/api/client';
 import type { Role } from '~/lib/auth/access';
-import { account, perkClaim, user } from '~/db/schema';
 import type { Api } from '~/api';
 
 import type { SeededSponsorship } from './helpers/sponsors';

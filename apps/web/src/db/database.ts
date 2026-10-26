@@ -43,8 +43,8 @@ export function createDatabase(url: string): Database {
 	return Object.assign(db, { transaction });
 }
 
-// UNKNOWN: whatever a transaction threw; drizzle wraps a failed statement's error in `cause`. True for
-// a serialization failure or a deadlock, which a re-run on a fresh snapshot can fix.
+// True for a serialization failure or a deadlock, which a re-run on a fresh snapshot can fix.
+// UNKNOWN: whatever a transaction threw; drizzle wraps a failed statement's error in `cause`.
 function isRetryable(error: unknown): boolean {
 	const cause =
 		error instanceof Error && error.cause instanceof postgres.PostgresError

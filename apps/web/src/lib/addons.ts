@@ -17,10 +17,11 @@ import { and, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { OPEN_SUBMISSION_STATUSES, requireSourced, toSubmission } from '~/lib/submissions';
-import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
 import { afterKey, cursorTime, decodeCursor, toKeysetPage } from '~/lib/keyset';
+import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
 import { VERSION_SOURCE, toAddonVersion } from '~/lib/artifacts';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
+import type { CursorKey, CursorPosition } from '~/lib/keyset';
 import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
@@ -29,7 +30,6 @@ import { addon, addonVersion } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
-import type { CursorKey, CursorPosition } from '~/lib/keyset';
 import { ApiError } from '~/lib/api/errors';
 import one from '~/db/one';
 

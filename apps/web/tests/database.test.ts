@@ -138,7 +138,9 @@ describe('createTestContext', () => {
 		for (let i = 0; i < 100; i++) {
 			leaked = [...(await testDatabases())].filter((name) => !before.has(name));
 
-			if (leaked.length === 0) break;
+			if (leaked.length === 0) {
+				break;
+			}
 
 			await Bun.sleep(200);
 		}

@@ -17,8 +17,8 @@ import { listStaffNotes } from '~/lib/staff-notes';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
-import { LIVE_VERSIONS } from '~/lib/addons';
 import { userSearchText } from '~/db/schema';
+import { LIVE_VERSIONS } from '~/lib/addons';
 import type { user } from '~/db/schema';
 
 export type AdminUser = {

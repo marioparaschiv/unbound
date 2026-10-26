@@ -16,8 +16,8 @@ import {
 } from '~/components/ui/dialog';
 import { createBrowserClient } from '~/lib/api/browser-client';
 import getApiErrorMessage from '~/lib/api/error-message';
-import ConfirmDialog from '~/components/confirm-dialog';
 import UserSearch from '~/components/admin/user-search';
+import ConfirmDialog from '~/components/confirm-dialog';
 import type { AdminAddon } from '~/lib/admin-addons';
 import UserAvatar from '~/components/user-avatar';
 import { Button } from '~/components/ui/button';
