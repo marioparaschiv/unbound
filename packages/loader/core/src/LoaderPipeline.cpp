@@ -3,6 +3,7 @@
 #include <chrono>
 
 #include "LoaderBootstrap.h"
+#include "LoaderCrashGuard.h"
 #include "LoaderFiles.h"
 #include "LoaderJSI.h"
 #include "LoaderLog.h"
@@ -131,9 +132,24 @@ void LoaderPipeline::prefetchBundle()
     });
 }
 
+void LoaderPipeline::announceCrashDisabledAddons()
+{
+    std::shared_ptr<NativePlatformProvider> provider = currentNativePlatformProvider();
+    if (!provider || provider->documents.empty())
+    {
+        return;
+    }
+
+    for (const CrashedAddon &addon : takeUnannouncedCrashDisabledAddons(provider->documents))
+    {
+        host_->alert(crashDisabledNotice(addon));
+    }
+}
+
 void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime)
 {
     host_->installNativeModules(runtime);
+    announceCrashDisabledAddons();
 
     if (settings_.getBoolean("loader.devtools", false))
     {
