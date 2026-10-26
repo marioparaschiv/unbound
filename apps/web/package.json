@@ -57,7 +57,7 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"diff": "^9.0.0",
-		"drizzle-orm": "1.0.0-rc.4",
+		"drizzle-orm": "1.0.0-rc.5",
 		"motion": "^12.34.3",
 		"obscenity": "^0.4.6",
 		"postgres": "^3.4.9",
