@@ -201,8 +201,8 @@ export const releasesDispatcher: Dispatcher = {
 	name: 'releases',
 	channel: 'loader_release',
 	requires: ['RELEASES_CHANNEL_ID', 'RELEASES_ROLE_ID'],
-	reconcile: ({ db, web, client }) => reconcileReleases({ db, web }, client.rest, client.user.id),
-	handle: (payload, { db, web, client }) => announceRelease({ db, web }, client.rest, payload),
+	reconcile: (context) => reconcileReleases(context, context.client.rest, context.client.user.id),
+	handle: (payload, context) => announceRelease(context, context.client.rest, payload),
 };
 
 export default {

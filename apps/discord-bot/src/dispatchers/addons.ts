@@ -256,8 +256,8 @@ export const addonsDispatcher: Dispatcher = {
 	name: 'addons',
 	channel: 'addon_changed',
 	requires: ['PLUGINS_CHANNEL_ID', 'THEMES_CHANNEL_ID', 'ICON_PACKS_CHANNEL_ID'],
-	reconcile: ({ db, web, client }) => reconcileAddons({ db, web }, client.rest, client.user.id),
-	handle: (id, { db, web, client }) => syncAddon({ db, web }, client.rest, id),
+	reconcile: (context) => reconcileAddons(context, context.client.rest, context.client.user.id),
+	handle: (id, context) => syncAddon(context, context.client.rest, id),
 };
 
 export default { ADDON_CHANNELS, renderAddon, syncAddon, reconcileAddons, addonsDispatcher };

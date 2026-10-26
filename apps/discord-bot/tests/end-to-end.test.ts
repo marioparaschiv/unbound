@@ -91,9 +91,9 @@ describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake 
 			createAuditDispatcher(auditLog.channelId),
 			{
 				...roles,
-				reconcile: ({ db, web }) => roles.reconcile({ db, web, client: guild.client }),
-				handle: (payload, { db, web }) =>
-					roles.handle(payload, { db, web, client: guild.client }),
+				reconcile: (context) => roles.reconcile({ ...context, client: guild.client }),
+				handle: (payload, context) =>
+					roles.handle(payload, { ...context, client: guild.client }),
 			},
 		];
 		const dispatchers = registered.map(observed);
