@@ -3,7 +3,6 @@ import { reviewDecisionSchema, submissionKindSchema } from './publish';
 import { userSummarySchema } from './account';
 import { repositorySchema } from './source';
 import { semverSchema } from './manifest';
-import { withoutNul } from './text';
 import { z } from './zod';
 
 export const subjectTypeSchema = z.enum(['addon', 'user']);
@@ -11,11 +10,11 @@ export const subjectTypeSchema = z.enum(['addon', 'user']);
 /** What a moderation event or staff note is about: an addon id or a user id. */
 export const subjectSchema = z.object({
 	type: subjectTypeSchema,
-	id: z.string().check(z.minLength(1), withoutNul),
+	id: z.string().check(z.minLength(1)),
 });
 
 export const maintainerEntrySchema = z.object({
-	userId: z.string().check(z.minLength(1), withoutNul),
+	userId: z.string().check(z.minLength(1)),
 	role: maintainerRoleSchema,
 });
 
@@ -159,7 +158,6 @@ export const adminSearchTextSchema = z
 			ADMIN_SEARCH_MAX_LENGTH,
 			`Search for at most ${ADMIN_SEARCH_MAX_LENGTH} characters.`,
 		),
-		withoutNul,
 	);
 
 const keysetSearch = {
@@ -189,7 +187,7 @@ export const adminAddonsSearchSchema = z.object({
 	type: z.optional(addonTypeSchema),
 	status: z.optional(adminAddonStatusSchema),
 	/** A user id: the addons they own or maintain. */
-	maintainer: z.optional(z.string().check(z.minLength(1), z.maxLength(64), withoutNul)),
+	maintainer: z.optional(z.string().check(z.minLength(1), z.maxLength(64))),
 	/** The first day of first approval, inclusive, in UTC. */
 	publishedFrom: z.optional(z.iso.date()),
 	/** The last day of first approval, inclusive, in UTC. */
@@ -206,7 +204,6 @@ export const moderationReasonSchema = z
 		z.trim(),
 		z.minLength(1, 'Give a reason.'),
 		z.maxLength(2000, 'Keep the reason under 2000 characters.'),
-		withoutNul,
 	);
 
 /** Makes `version` the one the addon serves; serving the pre-rollback version undoes a rollback. */
@@ -230,17 +227,12 @@ export const editAddonRequestSchema = z.object({
 				z.trim(),
 				z.minLength(1, 'Give a name.'),
 				z.maxLength(100, 'Keep the name under 100 characters.'),
-				withoutNul,
 			),
 	),
 	description: z.nullable(
 		z
 			.string()
-			.check(
-				z.trim(),
-				z.maxLength(1000, 'Keep the description under 1000 characters.'),
-				withoutNul,
-			),
+			.check(z.trim(), z.maxLength(1000, 'Keep the description under 1000 characters.')),
 	),
 	type: z.nullable(addonTypeSchema),
 	repository: z.nullable(repositorySchema),
@@ -264,7 +256,6 @@ export const staffNoteBodySchema = z
 		z.trim(),
 		z.minLength(1, 'Write a note.'),
 		z.maxLength(5000, 'Keep a note to 5000 characters.'),
-		withoutNul,
 	);
 
 export const staffNoteIdSchema = z.int().check(z.positive());

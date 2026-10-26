@@ -1,6 +1,6 @@
 import type { PageDirection } from '@unbound-app/contracts/admin';
 import type { SortOrder } from '@unbound-app/contracts/addons';
-import { containsNul } from '@unbound-app/contracts/text';
+import { isPostgresSafe } from '@unbound-app/contracts/text';
 import type { SQL, SQLWrapper } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -59,8 +59,8 @@ export function decodeCursor<T extends CursorPosition>(cursor: string, schema: z
 	try {
 		const key = JSON.parse(Buffer.from(cursor, 'base64url').toString());
 
-		if (containsNul(key)) {
-			throw new Error('NUL in a cursor.');
+		if (!isPostgresSafe(key)) {
+			throw new Error('Text Postgres cannot store in a cursor.');
 		}
 
 		return schema.parse(key);

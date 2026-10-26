@@ -22,6 +22,8 @@ const putSyncEndpoint = endpoint(
 
 		return saveSyncDocument(ctx, user.id, body.revision, document);
 	},
+	// A client's settings are stored whole as `json` and read back whole, never queried into.
+	{ anyJsonBody: true },
 );
 
 export default putSyncEndpoint;

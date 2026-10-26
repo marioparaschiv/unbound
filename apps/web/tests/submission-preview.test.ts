@@ -258,6 +258,18 @@ describe('POST /api/v1/submissions/preview', () => {
 				},
 				'invalid_manifest',
 			],
+			[
+				'surrogatemanifest',
+				{
+					files: {
+						'manifest.json': JSON.stringify({
+							...JSON.parse(manifestJson('acme.surrogatemanifest')),
+							description: 'Half \ud800 a pair.',
+						}),
+					},
+				},
+				'invalid_manifest',
+			],
 			['nuladdonmd', { files: { 'ADDON.md': '# Hello\0' } }, 'invalid_request'],
 			['nulchangelog', { files: { 'CHANGELOG.md': `${CHANGELOG}\0` } }, 'invalid_request'],
 		] as const;

@@ -1,4 +1,3 @@
-import { withoutNul } from './text';
 import { z } from './zod';
 
 /** A GitHub repository as `owner/name`. */
@@ -100,7 +99,6 @@ export const gitRefSchema = z
 		z.minLength(1),
 		z.maxLength(255),
 		z.regex(/^[^\s~^:?*[\\]+$/, 'Must be a branch, tag or commit SHA.'),
-		withoutNul,
 	);
 
 /** An addon directory relative to the repository root, `/`-separated; `''` is the root. */

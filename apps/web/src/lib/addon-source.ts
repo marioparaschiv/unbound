@@ -20,7 +20,7 @@ import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { addonManifestSchema } from '@unbound-app/contracts/manifest';
 import type { Changelog } from '@unbound-app/contracts/changelog';
-import { NUL } from '@unbound-app/contracts/text';
+import { isPostgresSafe } from '@unbound-app/contracts/text';
 import { z } from 'zod';
 
 import type {
@@ -134,7 +134,7 @@ async function readTexts(
 			const text = decoder.decode(await github.readBlob(repository, entry.sha));
 
 			// Postgres text cannot hold NUL, and no text file an addon ships needs it.
-			if (text.includes(NUL)) {
+			if (!isPostgresSafe(text)) {
 				throw new ApiError(
 					'invalid_request',
 					`${path} contains the NUL character (U+0000).`,
@@ -241,7 +241,17 @@ function checkTextSize(env: Env, tree: GitTree, path: string): ApiError | undefi
 }
 
 function parseManifest(addon: WorkspaceAddon, manifestText: string): PublishedManifest | ApiError {
-	const parsed = addonManifestSchema.safeParse(JSON.parse(manifestText));
+	const json = JSON.parse(manifestText);
+
+	// An escape such as `\u0000` or a lone `\ud800` gets past the file's own check.
+	if (!isPostgresSafe(json)) {
+		return new ApiError(
+			'invalid_manifest',
+			`${childPath(addon.path, 'manifest.json')} must not contain NUL (U+0000) or an unpaired surrogate.`,
+		);
+	}
+
+	const parsed = addonManifestSchema.safeParse(json);
 
 	if (!parsed.success) {
 		return new ApiError(

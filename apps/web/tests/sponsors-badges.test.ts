@@ -344,7 +344,7 @@ describe('revoking a badge', () => {
 		expect(stored?.config).toEqual(BADGE);
 	});
 
-	test('NUL in the path or the reason is an invalid request', async () => {
+	test('NUL in the path, or NUL or a lone surrogate in the reason, is an invalid request', async () => {
 		const moderator = await signUp({ role: 'moderator', github: false });
 		const sponsor = await signUp();
 
@@ -354,15 +354,18 @@ describe('revoking a badge', () => {
 			status: 400,
 			code: 'invalid_request',
 		});
-		expect(
-			await failure(
-				moderator.client('POST /api/v1/users/$id/badge/revoke', {
-					params: { id: sponsor.userId },
-					body: { reason: 'Bad\0label.' },
-					response: badgeClaimResponseSchema,
-				}),
-			),
-		).toEqual({ status: 400, code: 'invalid_request' });
+
+		for (const reason of ['Bad\0label.', 'Bad\ud800label.', 'Bad\udc00label.']) {
+			expect(
+				await failure(
+					moderator.client('POST /api/v1/users/$id/badge/revoke', {
+						params: { id: sponsor.userId },
+						body: { reason },
+						response: badgeClaimResponseSchema,
+					}),
+				),
+			).toEqual({ status: 400, code: 'invalid_request' });
+		}
 	});
 
 	test('revoking a user without a badge is not found', async () => {

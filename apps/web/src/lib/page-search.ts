@@ -1,10 +1,9 @@
-import { withoutNul } from '@unbound-app/contracts/text';
 import { z } from 'zod';
 
 /** The URL search of a searchable, paginated list page. */
 export const pageSearchSchema = z.object({
 	page: z.coerce.number().int().min(1).optional(),
-	search: z.string().max(100).check(withoutNul).optional(),
+	search: z.string().max(100).optional(),
 });
 
 export type PageSearch = z.infer<typeof pageSearchSchema>;

@@ -196,10 +196,11 @@ describe('listing', () => {
 		});
 	});
 
-	test('refuses NUL in the search or the cursor', async () => {
+	test('refuses NUL in the search, and NUL or a lone surrogate in the cursor', async () => {
 		const queries: ListAddonsQuery[] = [
 			{ q: 'alp\0ha' },
 			{ cursor: encodeCursor(['Al\0pha', 'list.alpha']) },
+			{ cursor: encodeCursor(['Al\ud800pha', 'list.alpha']) },
 		];
 
 		for (const query of queries) {
