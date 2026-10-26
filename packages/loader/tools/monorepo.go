@@ -229,7 +229,7 @@ func validateWorkspaceManifest(root string, manifest workspaceManifest) error {
 	return validateWorkspaceTopLevel(root, knownPaths)
 }
 
-var loaderSupportDirectories = map[string]struct{}{"build": {}, "docs": {}, "tools": {}}
+var loaderSupportDirectories = map[string]struct{}{"build": {}, "docs": {}, "tools": {}, "workflow-tests": {}}
 
 func workspacePath(path string) bool {
 	clean := filepath.ToSlash(filepath.Clean(path))
