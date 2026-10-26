@@ -168,6 +168,7 @@ func reportAVDStatus(profile avdProfile) error {
 		}
 		rooted := strings.Contains(identity, "uid=0(root)")
 		fmt.Printf("Android target %s: Android %s (API %s), root=%t\n", device.Serial, release, api, rooted)
+		reportAndroidSetup(device.Serial)
 		return nil
 	}
 	fmt.Println("Android target: not running")
@@ -307,8 +308,74 @@ func startAVD(profile avdProfile) error {
 	if !strings.Contains(identity, "uid=0(root)") {
 		return errors.New("Android AVD did not provide a root shell")
 	}
+	if err := disableEmulationOverlays(serial, profile); err != nil {
+		return err
+	}
 	fmt.Printf("Android target %s ready: Android %s (API %s), rooted\n", serial, release, api)
 	return nil
+}
+
+func disableEmulationOverlays(serial string, profile avdProfile) error {
+	overlays, err := devCommandOutput("adb", "-s", serial, "shell", "cmd", "overlay", "list", "android")
+	if err != nil {
+		return err
+	}
+	for _, overlay := range enabledEmulationOverlays(overlays) {
+		if err := devRunCommand("adb", "-s", serial, "shell", "cmd", "overlay", "disable", overlay); err != nil {
+			return err
+		}
+		fmt.Printf("Disabled %s: it is sized for the %s's own screen, not this AVD's %dx%d one, and hides the status bar\n", overlay, profile.Device, profile.Width, profile.Height)
+	}
+	return nil
+}
+
+func enabledEmulationOverlays(list string) []string {
+	enabled := []string{}
+	for _, line := range strings.Split(list, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 2 && fields[0] == "[x]" && strings.HasPrefix(fields[1], "com.android.internal.emulation.") {
+			enabled = append(enabled, fields[1])
+		}
+	}
+	return enabled
+}
+
+func reportAndroidSetup(serial string) {
+	shell := func(command string) string {
+		output, _ := devCommandOutput("adb", "-s", serial, "shell", command)
+		return output
+	}
+	fmt.Printf("  su root: %t\n", strings.Contains(shell("su -c id"), "uid=0(root)"))
+	fmt.Printf("  Xposed framework: %s\n", valueOr(xposedFramework(shell("su -c 'ls /data/adb/modules'")), "missing; install LSPosed or Vector as a Magisk module"))
+	fmt.Printf("  Unbound module: %t\n", strings.Contains(shell("pm path app.unbound.android"), "package:"))
+	fmt.Printf("  Discord: %s\n", valueOr(packageVersionName(shell("dumpsys package com.discord")), "not installed"))
+	overlays := enabledEmulationOverlays(shell("cmd overlay list android"))
+	fmt.Printf("  emulation overlays: %s\n", valueOr(strings.Join(overlays, ", "), "none"))
+}
+
+func xposedFramework(modules string) string {
+	for _, module := range strings.Fields(modules) {
+		if strings.Contains(module, "lsposed") || strings.Contains(module, "vector") {
+			return module
+		}
+	}
+	return ""
+}
+
+func packageVersionName(dumpsys string) string {
+	for _, line := range strings.Split(dumpsys, "\n") {
+		if name, found := strings.CutPrefix(strings.TrimSpace(line), "versionName="); found {
+			return name
+		}
+	}
+	return ""
+}
+
+func valueOr(value, fallback string) string {
+	if value == "" {
+		return fallback
+	}
+	return value
 }
 
 func reportSimulatorStatus() {
