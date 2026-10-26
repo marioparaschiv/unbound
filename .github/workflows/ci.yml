@@ -72,4 +72,6 @@ jobs:
               run: |
                   git diff --exit-code -I '^[[:space:]]*"version": ' -- packages/api/src packages/api/package.json
             - name: Build the client
+              env:
+                  TMPDIR: ${{ runner.temp }}
               run: bun run --cwd packages/client build
