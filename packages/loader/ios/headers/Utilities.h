@@ -14,10 +14,13 @@
 #import "Unbound.h"
 
 #define CS_DEBUGGED 0x10000000
+#ifdef __cplusplus
+extern "C" {
+#endif
 int csops(pid_t pid, unsigned int ops, void *useraddr, size_t usersize);
-
-extern NSString *const TROLL_STORE_PATH;
-extern NSString *const TROLL_STORE_LITE_PATH;
+#ifdef __cplusplus
+}
+#endif
 
 @interface Utilities : NSObject
 {
