@@ -1,8 +1,9 @@
 import { Database } from 'bun:sqlite';
 
 import type { SourceValue } from './codecs';
-import { SQLITE_ONLY_TABLES } from './registry';
 import type { TableSpec } from './registry';
+
+import { SQLITE_ONLY_TABLES } from './registry';
 
 /** A row as canonical text per column, `null` for SQL NULL. */
 export type CanonicalRow = (string | null)[];

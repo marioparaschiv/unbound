@@ -20,6 +20,9 @@ import { codecs } from '~/db/sqlite-copy/codecs';
 import { createDatabase } from '~/db/database';
 import type { Database } from '~/db/database';
 
+import type { SqliteSource } from './helpers/sqlite-source';
+import type { TestDatabase } from './helpers/database';
+
 import {
 	createSqliteSource,
 	DETAILS_JSON,
@@ -31,9 +34,7 @@ import {
 	MAX_SAFE_ID,
 	REPOSITORY_ID,
 } from './helpers/sqlite-source';
-import type { SqliteSource } from './helpers/sqlite-source';
 import { createTestDatabase } from './helpers/database';
-import type { TestDatabase } from './helpers/database';
 
 type Snapshot = Record<string, string>;
 
@@ -41,6 +42,10 @@ type Setup = {
 	source: SqliteSource;
 	target: TestDatabase;
 	db: Database;
+};
+
+type CountRow = {
+	n: number;
 };
 
 type FeedRow = {
@@ -89,7 +94,7 @@ async function snapshot(db: Database): Promise<Snapshot> {
 
 function sourceCount(source: SqliteSource, table: string): number {
 	const db = new Sqlite(source.path, { readonly: true });
-	const row = db.query<{ n: number }, []>(`SELECT count(*) AS n FROM "${table}"`).get();
+	const row = db.query<CountRow, []>(`SELECT count(*) AS n FROM "${table}"`).get();
 
 	db.close();
 
@@ -100,7 +105,9 @@ async function failure(promise: Promise<TableReport[]>): Promise<Error> {
 	try {
 		await promise;
 	} catch (error) {
-		if (error instanceof Error) return error;
+		if (error instanceof Error) {
+			return error;
+		}
 	}
 
 	throw new Error('Expected the copy to fail.');

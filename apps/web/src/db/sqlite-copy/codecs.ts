@@ -2,9 +2,8 @@
 export type SourceValue = string | bigint | number | Uint8Array | null;
 
 /**
- * How one Postgres column type is copied from SQLite. Every value passes through its canonical text:
- * the source value parses into it, the Postgres input is encoded from it, and the Postgres column
- * reads back as it, so the two sides of a copy compare as equal strings.
+ * How one Postgres column type is copied from SQLite, through canonical text that the source value
+ * parses into, the Postgres input is encoded from, and the Postgres column reads back as.
  */
 export type Codec = {
 	/** Parses a non-null source value into canonical text; throws on a value the column cannot hold. */

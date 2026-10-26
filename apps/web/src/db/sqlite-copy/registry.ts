@@ -3,8 +3,9 @@ import { is } from 'drizzle-orm';
 
 import * as schema from '~/db/schema';
 
-import { codecs, isColumnType } from './codecs';
 import type { Codec } from './codecs';
+
+import { codecs, isColumnType } from './codecs';
 
 export type ColumnSpec = {
 	name: string;

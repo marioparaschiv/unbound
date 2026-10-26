@@ -5,6 +5,7 @@ import { migrateDatabase } from '~/db/migrate';
 
 import type { CanonicalRow, SourceTable } from './source';
 import type { TableSpec } from './registry';
+
 import { readSource } from './source';
 import { tables } from './registry';
 
