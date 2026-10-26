@@ -1,673 +1,682 @@
 name: Loader Build iOS
 
 on:
-  workflow_call:
-    inputs:
-      version:
-        default: ""
-        type: string
-      ipa_url:
-        default: ""
-        type: string
-      release:
-        default: true
-        type: boolean
-      is_testflight:
-        default: false
-        type: boolean
-      authenticated_source:
-        default: false
-        type: boolean
-      dkrypt_base_url:
-        default: "https://ipa.dylib.dev"
-        type: string
-      only_app_repo:
-        default: false
-        type: boolean
-      only_apt_repo:
-        default: false
-        type: boolean
-      caller_workflow:
-        default: ""
-        type: string
-    outputs:
-      deb_url:
-        description: "Download URL for the deb package artifact"
-        value: ${{ jobs.build-tweak.outputs.deb_url }}
-      ipa_url:
-        description: "Download URL for the ipa file artifact"
-        value: ${{ jobs.build-ipa.outputs.ipa_url }}
-      simulator_url:
-        description: "Download URL for the iOS Simulator zip artifact"
-        value: ${{ jobs.build-simulator.outputs.simulator_url }}
-      deb_filename:
-        description: "Filename of the deb package"
-        value: ${{ jobs.build-tweak.outputs.deb_filename }}
-      ipa_filename:
-        description: "Filename of the ipa file"
-        value: ${{ jobs.build-ipa.outputs.ipa_filename }}
-      simulator_filename:
-        description: "Filename of the iOS Simulator zip"
-        value: ${{ jobs.build-simulator.outputs.simulator_filename }}
+    workflow_call:
+        inputs:
+            version:
+                default: ''
+                type: string
+            ipa_url:
+                default: ''
+                type: string
+            release:
+                default: true
+                type: boolean
+            is_testflight:
+                default: false
+                type: boolean
+            authenticated_source:
+                default: false
+                type: boolean
+            dkrypt_base_url:
+                default: 'https://ipa.dylib.dev'
+                type: string
+            only_app_repo:
+                default: false
+                type: boolean
+            only_apt_repo:
+                default: false
+                type: boolean
+            caller_workflow:
+                default: ''
+                type: string
+        outputs:
+            deb_url:
+                description: 'Download URL for the deb package artifact'
+                value: ${{ jobs.build-tweak.outputs.deb_url }}
+            ipa_url:
+                description: 'Download URL for the ipa file artifact'
+                value: ${{ jobs.build-ipa.outputs.ipa_url }}
+            simulator_url:
+                description: 'Download URL for the iOS Simulator zip artifact'
+                value: ${{ jobs.build-simulator.outputs.simulator_url }}
+            deb_filename:
+                description: 'Filename of the deb package'
+                value: ${{ jobs.build-tweak.outputs.deb_filename }}
+            ipa_filename:
+                description: 'Filename of the ipa file'
+                value: ${{ jobs.build-ipa.outputs.ipa_filename }}
+            simulator_filename:
+                description: 'Filename of the iOS Simulator zip'
+                value: ${{ jobs.build-simulator.outputs.simulator_filename }}
 
 permissions: {}
 
 concurrency:
-  group: ios-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+    group: ios-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
 
 env:
-  GH_TOKEN: ${{ github.token }}
+    GH_TOKEN: ${{ github.token }}
 
 defaults:
-  run:
-    working-directory: packages/loader
+    run:
+        working-directory: packages/loader
 
 jobs:
-  build-tweak:
-    if: &only_build_check inputs.only_app_repo != true && inputs.only_apt_repo != true
-    runs-on: macos-26
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    outputs:
-      deb_url: ${{ steps.upload-deb.outputs.artifact-url }}
-      deb_filename: ${{ steps.set-deb-filename.outputs.filename }}
-    env:
-      ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-      HOMEBREW_NO_AUTO_UPDATE: 1
-      HOMEBREW_NO_INSTALL_CLEANUP: 1
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          submodules: recursive
-
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-        with:
-          cache: false
-          go-version-file: packages/loader/go.mod
-
-      - name: Cache Go builds
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Test tools
-        run: go test -count=1 ./...
-
-      - name: Check cache
-        run: printf 'upstream_heads=%s-%s\n' "$(git ls-remote https://github.com/theos/theos | awk 'NR == 1 { print $1 }')" "$(git ls-remote https://github.com/theos/sdks | awk 'NR == 1 { print $1 }')" >> "$GITHUB_ENV"
-
-      - name: Use cache
-        id: cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: ${{ github.workspace }}/theos
-          key: ${{ runner.os }}-${{ env.upstream_heads }}
-
-      - name: Trust Homebrew tap
-        run: |
-          if brew tap | grep -Fxq 'aws/tap'; then
-            brew trust aws/tap
-          fi
-
-      - name: Prepare Theos
-        uses: Randomblock1/theos-action@4e23d15886bca77b5f7c462a82567e0de33ebe0b
-
-      - name: Read the libffi revision
-        id: libffi
-        run: echo "revision=$(git -C vendor/libffi rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore the libffi build
-        id: libffi-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: packages/loader/ios/.theos/libffi
-          key: libffi-${{ runner.os }}-${{ steps.libffi.outputs.revision }}-${{ hashFiles('packages/loader/tools/libffi.go') }}
-
-      - name: Install Autotools
-        if: steps.libffi-cache.outputs.cache-hit != 'true'
-        run: |
-          brew install autoconf automake libtool
-          {
-            echo "$(brew --prefix autoconf)/bin"
-            echo "$(brew --prefix automake)/bin"
-            echo "$(brew --prefix libtool)/bin"
-          } >> "$GITHUB_PATH"
-
-      - name: Verify Autotools
-        if: steps.libffi-cache.outputs.cache-hit != 'true'
-        run: |
-          command -v autoreconf
-          command -v automake
-          command -v aclocal
-          command -v glibtoolize
-
-      - name: Build package
-        run: go run ./tools build tweak --configuration release --non-interactive
-
-      - name: Collect tweak symbols and UUIDs
-        run: |
-          set -euo pipefail
-          mkdir -p symbols
-          for architecture in arm64 arm64e; do
-            binary="ios/.theos/obj/${architecture}/Unbound.dylib"
-            bundle="${binary}.dSYM"
-            test -f "$binary"
-            test -d "$bundle"
-            binary_uuid=$(dwarfdump --uuid "$binary" | awk '{print $2}')
-            symbols_uuid=$(dwarfdump --uuid "$bundle" | awk '{print $2}')
-            test -n "$binary_uuid"
-            test "$binary_uuid" = "$symbols_uuid"
-            cp -R "$bundle" "symbols/${architecture}-Unbound.dylib.dSYM"
-            printf '%s %s\n' "$architecture" "$binary_uuid" >> symbols/uuids.txt
-          done
-          test -s symbols/uuids.txt
-          git rev-parse HEAD > symbols/commit.txt
-
-      - name: Upload tweak symbols
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: tweak symbols
-          path: packages/loader/symbols/
-
-      - name: Upload rootless package
-        id: upload-deb
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: rootless package
-          path: packages/loader/ios/packages/*.deb
-
-      - name: Attest rootless package
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
-        with:
-          subject-path: packages/loader/ios/packages/*.deb
-
-      - name: Set deb filename
-        id: set-deb-filename
-        run: |
-          DEB_FILE=$(find ios/packages -maxdepth 1 -type f -name '*.deb' -print -quit)
-          DEB_FILENAME=$(basename "$DEB_FILE")
-          echo "filename=$DEB_FILENAME" >> "$GITHUB_OUTPUT"
-
-  resolve-source-ipa:
-    name: resolve source ipa
-    if: *only_build_check
-    runs-on: ubuntu-26.04
-    timeout-minutes: 50
-    outputs:
-      channel: ${{ steps.resolve.outputs.channel }}
-      is_testflight: ${{ steps.resolve.outputs.is_testflight }}
-      version: ${{ steps.resolve.outputs.version }}
-      cache_hit: ${{ steps.resolve.outputs.cache_hit }}
-    steps:
-      - name: Checkout resolver
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-        with:
-          cache: false
-          go-version-file: packages/loader/go.mod
-
-      - name: Cache Go builds
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Resolve and download source ipa
-        id: resolve
+    build-tweak:
+        if: &only_build_check inputs.only_app_repo != true && inputs.only_apt_repo != true
+        runs-on: macos-26
+        timeout-minutes: 30
+        permissions:
+            contents: read
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        outputs:
+            deb_url: ${{ steps.upload-deb.outputs.artifact-url }}
+            deb_filename: ${{ steps.set-deb-filename.outputs.filename }}
         env:
-          DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
-          INPUT_VERSION: ${{ inputs.version }}
-          INPUT_IPA_URL: ${{ inputs.ipa_url }}
-          INPUT_IS_TESTFLIGHT: ${{ inputs.is_testflight }}
-          INPUT_RELEASE: ${{ inputs.release }}
-          INPUT_AUTHENTICATED_SOURCE: ${{ inputs.authenticated_source }}
-          INPUT_DKRYPT_BASE_URL: ${{ inputs.dkrypt_base_url }}
-        run: |
-          set -euo pipefail
-          if [ -z "$INPUT_IPA_URL" ]; then
-            go run ./tools fetch \
-              --base-url "$INPUT_DKRYPT_BASE_URL" \
-              --bundle-id com.hammerandchisel.discord \
-              --version "$INPUT_VERSION" \
-              --output discord.ipa
-          else
-            channel=appstore
-            if [ "$INPUT_IS_TESTFLIGHT" = true ]; then channel=testflight; fi
-            fetch_args=(--base-url "$INPUT_DKRYPT_BASE_URL" --source-url "$INPUT_IPA_URL")
-            if [ "$INPUT_AUTHENTICATED_SOURCE" = true ]; then fetch_args+=(--authenticated-source); fi
-            fetch_args+=(--channel "$channel" --version "$INPUT_VERSION" --output discord.ipa)
-            go run ./tools fetch "${fetch_args[@]}"
-          fi
-          if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ] && [ -n "$INPUT_VERSION" ]; then
-            ipa_info=$(go run ./tools ipa-info --ipa discord.ipa)
-            source_version=$(jq -r '.version' <<< "$ipa_info")
-            expected_android_code=$(go run ./tools discord-version --version "$INPUT_VERSION")
-            source_android_code=$(go run ./tools discord-version --version "$source_version")
-            if [ "$source_android_code" != "$expected_android_code" ]; then
-              echo "::error::The source IPA is $source_version but the selected combined release is $INPUT_VERSION"
-              exit 1
-            fi
-          fi
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            HOMEBREW_NO_AUTO_UPDATE: 1
+            HOMEBREW_NO_INSTALL_CLEANUP: 1
 
-      - name: Upload source ipa
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: source ipa
-          path: packages/loader/discord.ipa
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  submodules: recursive
 
-  build-ipa:
-    if: *only_build_check
-    runs-on: macos-15
-    timeout-minutes: 45
-    permissions:
-      contents: read
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    needs: [build-tweak, resolve-source-ipa]
-    outputs:
-      ipa_url: ${{ steps.upload-ipa.outputs.artifact-url }}
-      ipa_filename: ${{ steps.set-ipa-filename.outputs.filename }}
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          submodules: recursive
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
 
-      - name: Select Xcode Version
-        run: |
-          set -euo pipefail
-          selected_developer_dir=""
-          for candidate in /Applications/Xcode_16.4.app /Applications/Xcode_16.4.0.app /Applications/Xcode.app; do
-            if [ -x "$candidate/Contents/Developer/usr/bin/xcodebuild" ] && [ "$("$candidate/Contents/Developer/usr/bin/xcodebuild" -version | awk 'NR == 1 { print $2 }')" = "16.4" ]; then
-              selected_developer_dir="$candidate/Contents/Developer"
-              break
-            fi
-          done
-          test -n "$selected_developer_dir"
-          sudo xcode-select --switch "$selected_developer_dir"
-          xcodebuild -version
+            - name: Test tools
+              run: go test -count=1 ./...
 
-      - name: Download the tweak package
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: rootless package
-          path: packages/loader
+            - name: Check cache
+              run: printf 'upstream_heads=%s-%s\n' "$(git ls-remote https://github.com/theos/theos | awk 'NR == 1 { print $1 }')" "$(git ls-remote https://github.com/theos/sdks | awk 'NR == 1 { print $1 }')" >> "$GITHUB_ENV"
 
-      - name: Download the source IPA
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: source ipa
-          path: packages/loader
+            - name: Use cache
+              id: cache
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ${{ github.workspace }}/theos
+                  key: ${{ runner.os }}-${{ env.upstream_heads }}
 
-      - name: Restore the packaging tools
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: packages/loader/.tools-cache
-          key: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ hashFiles('packages/loader/tools/build.go') }}
-          restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
+            - name: Trust Homebrew tap
+              run: |
+                  if brew tap | grep -Fxq 'aws/tap'; then
+                    brew trust aws/tap
+                  fi
 
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-        with:
-          cache: false
-          go-version-file: packages/loader/go.mod
+            - name: Prepare Theos
+              uses: Randomblock1/theos-action@4e23d15886bca77b5f7c462a82567e0de33ebe0b
 
-      - name: Cache Go builds
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Read the libffi revision
+              id: libffi
+              run: echo "revision=$(git -C vendor/libffi rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Extract app name
-        run: |
-          NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
-          echo "APP_NAME=$NAME" >> "$GITHUB_ENV"
+            - name: Restore the libffi build
+              id: libffi-cache
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: packages/loader/ios/.theos/libffi
+                  key: libffi-${{ runner.os }}-${{ steps.libffi.outputs.revision }}-${{ hashFiles('packages/loader/tools/libffi.go') }}
 
-      - name: Build IPA
+            - name: Install Autotools
+              if: steps.libffi-cache.outputs.cache-hit != 'true'
+              run: |
+                  brew install autoconf automake libtool
+                  {
+                    echo "$(brew --prefix autoconf)/bin"
+                    echo "$(brew --prefix automake)/bin"
+                    echo "$(brew --prefix libtool)/bin"
+                  } >> "$GITHUB_PATH"
+
+            - name: Verify Autotools
+              if: steps.libffi-cache.outputs.cache-hit != 'true'
+              run: |
+                  command -v autoreconf
+                  command -v automake
+                  command -v aclocal
+                  command -v glibtoolize
+
+            - name: Build package
+              run: go run ./tools build tweak --configuration release --non-interactive
+
+            - name: Collect tweak symbols and UUIDs
+              run: |
+                  set -euo pipefail
+                  mkdir -p symbols
+                  for architecture in arm64 arm64e; do
+                    binary="ios/.theos/obj/${architecture}/Unbound.dylib"
+                    bundle="${binary}.dSYM"
+                    test -f "$binary"
+                    test -d "$bundle"
+                    binary_uuid=$(dwarfdump --uuid "$binary" | awk '{print $2}')
+                    symbols_uuid=$(dwarfdump --uuid "$bundle" | awk '{print $2}')
+                    test -n "$binary_uuid"
+                    test "$binary_uuid" = "$symbols_uuid"
+                    cp -R "$bundle" "symbols/${architecture}-Unbound.dylib.dSYM"
+                    printf '%s %s\n' "$architecture" "$binary_uuid" >> symbols/uuids.txt
+                  done
+                  test -s symbols/uuids.txt
+                  git rev-parse HEAD > symbols/commit.txt
+
+            - name: Upload tweak symbols
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: tweak symbols
+                  path: packages/loader/symbols/
+
+            - name: Upload rootless package
+              id: upload-deb
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: rootless package
+                  path: packages/loader/ios/packages/*.deb
+
+            - name: Attest rootless package
+              if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+              with:
+                  subject-path: packages/loader/ios/packages/*.deb
+
+            - name: Set deb filename
+              id: set-deb-filename
+              run: |
+                  DEB_FILE=$(find ios/packages -maxdepth 1 -type f -name '*.deb' -print -quit)
+                  DEB_FILENAME=$(basename "$DEB_FILE")
+                  echo "filename=$DEB_FILENAME" >> "$GITHUB_OUTPUT"
+
+    resolve-source-ipa:
+        name: resolve source ipa
+        if: *only_build_check
+        runs-on: ubuntu-26.04
+        timeout-minutes: 50
+        outputs:
+            channel: ${{ steps.dkrypt.outputs.channel || steps.direct.outputs.channel }}
+            is_testflight: ${{ steps.dkrypt.outputs.is_testflight || steps.direct.outputs.is_testflight }}
+            version: ${{ steps.dkrypt.outputs.version || steps.direct.outputs.version }}
+            cache_hit: ${{ steps.dkrypt.outputs.cache_hit || steps.direct.outputs.cache_hit }}
+        steps:
+            - name: Checkout resolver
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+            - name: Decrypt the source ipa
+              id: dkrypt
+              if: inputs.ipa_url == ''
+              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@26d8cd98861aa633725864121838febed58a4350
+              with:
+                  api-url: ${{ inputs.dkrypt_base_url }}
+                  api-key: ${{ secrets.DKRYPT_API_KEY }}
+                  bundle-id: com.hammerandchisel.discord
+                  channel: ${{ inputs.is_testflight && 'testflight' || 'appstore' }}
+                  version: ${{ inputs.version }}
+                  output: packages/loader/discord.ipa
+
+            - name: Download the source ipa
+              id: direct
+              if: inputs.ipa_url != ''
+              env:
+                  DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+                  INPUT_VERSION: ${{ inputs.version }}
+                  INPUT_IPA_URL: ${{ inputs.ipa_url }}
+                  INPUT_IS_TESTFLIGHT: ${{ inputs.is_testflight }}
+                  INPUT_AUTHENTICATED_SOURCE: ${{ inputs.authenticated_source }}
+                  INPUT_DKRYPT_BASE_URL: ${{ inputs.dkrypt_base_url }}
+              run: |
+                  set -euo pipefail
+                  channel=appstore
+                  if [ "$INPUT_IS_TESTFLIGHT" = true ]; then channel=testflight; fi
+                  fetch_args=(--base-url "$INPUT_DKRYPT_BASE_URL" --source-url "$INPUT_IPA_URL")
+                  if [ "$INPUT_AUTHENTICATED_SOURCE" = true ]; then fetch_args+=(--authenticated-source); fi
+                  fetch_args+=(--channel "$channel" --version "$INPUT_VERSION" --output discord.ipa)
+                  go run ./tools fetch "${fetch_args[@]}"
+
+            - name: Check the source ipa matches the release
+              if: inputs.release == true && inputs.is_testflight != true && inputs.version != ''
+              env:
+                  INPUT_VERSION: ${{ inputs.version }}
+              run: |
+                  set -euo pipefail
+                  ipa_info=$(go run ./tools ipa-info --ipa discord.ipa)
+                  source_version=$(jq -r '.version' <<< "$ipa_info")
+                  expected_android_code=$(go run ./tools discord-version --version "$INPUT_VERSION")
+                  source_android_code=$(go run ./tools discord-version --version "$source_version")
+                  if [ "$source_android_code" != "$expected_android_code" ]; then
+                    echo "::error::The source IPA is $source_version but the selected combined release is $INPUT_VERSION"
+                    exit 1
+                  fi
+
+            - name: Upload source ipa
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: source ipa
+                  path: packages/loader/discord.ipa
+
+    build-ipa:
+        if: *only_build_check
+        runs-on: macos-15
+        timeout-minutes: 45
+        permissions:
+            contents: read
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        needs: [build-tweak, resolve-source-ipa]
+        outputs:
+            ipa_url: ${{ steps.upload-ipa.outputs.artifact-url }}
+            ipa_filename: ${{ steps.set-ipa-filename.outputs.filename }}
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  submodules: recursive
+
+            - name: Select Xcode Version
+              run: |
+                  set -euo pipefail
+                  selected_developer_dir=""
+                  for candidate in /Applications/Xcode_16.4.app /Applications/Xcode_16.4.0.app /Applications/Xcode.app; do
+                    if [ -x "$candidate/Contents/Developer/usr/bin/xcodebuild" ] && [ "$("$candidate/Contents/Developer/usr/bin/xcodebuild" -version | awk 'NR == 1 { print $2 }')" = "16.4" ]; then
+                      selected_developer_dir="$candidate/Contents/Developer"
+                      break
+                    fi
+                  done
+                  test -n "$selected_developer_dir"
+                  sudo xcode-select --switch "$selected_developer_dir"
+                  xcodebuild -version
+
+            - name: Download the tweak package
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: rootless package
+                  path: packages/loader
+
+            - name: Download the source IPA
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: source ipa
+                  path: packages/loader
+
+            - name: Restore the packaging tools
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: packages/loader/.tools-cache
+                  key: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ hashFiles('packages/loader/tools/build.go') }}
+                  restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
+
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
+
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+            - name: Extract app name
+              run: |
+                  NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
+                  echo "APP_NAME=$NAME" >> "$GITHUB_ENV"
+
+            - name: Build IPA
+              env:
+                  BUILD_CHANNEL: ${{ needs.resolve-source-ipa.outputs.channel }}
+              run: |
+                  go run ./tools build ipa --ipa discord.ipa --deb "$(find . -maxdepth 1 -name '*.deb' -print -quit)" --channel "$BUILD_CHANNEL" --output "${APP_NAME}.ipa" --non-interactive
+
+            - name: Upload ipa as artifact
+              id: upload-ipa
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: ipa
+                  path: packages/loader/${{ env.APP_NAME }}.ipa
+
+            - name: Attest IPA
+              if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+              with:
+                  subject-path: packages/loader/${{ env.APP_NAME }}.ipa
+
+            - name: Set ipa filename
+              id: set-ipa-filename
+              run: echo "filename=${{ env.APP_NAME }}.ipa" >> "$GITHUB_OUTPUT"
+
+    build-simulator:
+        if: *only_build_check
+        runs-on: macos-15
+        timeout-minutes: 20
+        permissions:
+            contents: read
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+        needs: build-ipa
         env:
-          BUILD_CHANNEL: ${{ needs.resolve-source-ipa.outputs.channel }}
-        run: |
-          go run ./tools build ipa --ipa discord.ipa --deb "$(find . -maxdepth 1 -name '*.deb' -print -quit)" --channel "$BUILD_CHANNEL" --output "${APP_NAME}.ipa" --non-interactive
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+        outputs:
+            simulator_url: ${{ steps.upload-simulator.outputs.artifact-url }}
+            simulator_filename: ${{ steps.set-simulator-filename.outputs.filename }}
 
-      - name: Upload ipa as artifact
-        id: upload-ipa
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: ipa
-          path: packages/loader/${{ env.APP_NAME }}.ipa
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Attest IPA
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
-        with:
-          subject-path: packages/loader/${{ env.APP_NAME }}.ipa
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
 
-      - name: Set ipa filename
-        id: set-ipa-filename
-        run: echo "filename=${{ env.APP_NAME }}.ipa" >> "$GITHUB_OUTPUT"
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
 
-  build-simulator:
-    if: *only_build_check
-    runs-on: macos-15
-    timeout-minutes: 20
-    permissions:
-      contents: read
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    needs: build-ipa
-    env:
-      ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-    outputs:
-      simulator_url: ${{ steps.upload-simulator.outputs.artifact-url }}
-      simulator_filename: ${{ steps.set-simulator-filename.outputs.filename }}
+            - name: Download ipa artifact
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: ipa
+                  path: packages/loader
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+            - name: Extract app name
+              run: |
+                  NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
+                  echo "APP_NAME=$NAME" >> "$GITHUB_ENV"
 
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-        with:
-          cache: false
-          go-version-file: packages/loader/go.mod
+            - name: Restore the packaging tools
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: packages/loader/.tools-cache
+                  key: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ hashFiles('packages/loader/tools/build.go') }}
+                  restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
 
-      - name: Cache Go builds
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Build simulator
+              run: go run ./tools build simulator --ipa "${APP_NAME}.ipa" --output unbound-ios-simulator.zip --configuration release --non-interactive
 
-      - name: Download ipa artifact
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: ipa
-          path: packages/loader
+            - name: Upload iOS Simulator artifact
+              id: upload-simulator
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: ios-simulator
+                  path: packages/loader/unbound-ios-simulator.zip
 
-      - name: Extract app name
-        run: |
-          NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
-          echo "APP_NAME=$NAME" >> "$GITHUB_ENV"
+            - name: Attest iOS Simulator artifact
+              if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+              with:
+                  subject-path: packages/loader/unbound-ios-simulator.zip
 
-      - name: Restore the packaging tools
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: packages/loader/.tools-cache
-          key: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ hashFiles('packages/loader/tools/build.go') }}
-          restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
+            - name: Set simulator filename
+              id: set-simulator-filename
+              run: echo "filename=unbound-ios-simulator.zip" >> "$GITHUB_OUTPUT"
 
-      - name: Build simulator
-        run: go run ./tools build simulator --ipa "${APP_NAME}.ipa" --output unbound-ios-simulator.zip --configuration release --non-interactive
-
-      - name: Upload iOS Simulator artifact
-        id: upload-simulator
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: ios-simulator
-          path: packages/loader/unbound-ios-simulator.zip
-
-      - name: Attest iOS Simulator artifact
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
-        with:
-          subject-path: packages/loader/unbound-ios-simulator.zip
-
-      - name: Set simulator filename
-        id: set-simulator-filename
-        run: echo "filename=unbound-ios-simulator.zip" >> "$GITHUB_OUTPUT"
-
-  deploy-pages:
-    if: |
-      always() &&
-      (
-        inputs.only_app_repo == true ||
-        inputs.only_apt_repo == true
-      )
-    continue-on-error: true
-    runs-on: ubuntu-26.04
-    timeout-minutes: 20
-    needs: [build-tweak, build-ipa, resolve-source-ipa]
-    concurrency:
-      group: loader-feed
-      cancel-in-progress: false
-    permissions:
-      contents: write
-    env:
-      GPG_KEY: ${{ secrets.GPG_KEY }}
-      GH_TOKEN: ${{ github.token }}
-      FEED_URL: https://builds.unbound.rip/repo
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-
-      - name: Setup Go
-        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-        with:
-          cache: false
-          go-version-file: packages/loader/go.mod
-
-      - name: Cache Go builds
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-          restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Download deb artifact
-        if: inputs.only_app_repo != true && inputs.only_apt_repo != true
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: rootless package
-          path: packages/loader/apt-repo/repo/debs
-
-      - name: Download latest release deb
-        if: inputs.only_apt_repo == true
-        run: |
-          mkdir -p apt-repo/repo/debs
-          LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("loader-v")) and (.isPrerelease | not))][0].tagName')
-          gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*arm64.deb' --dir apt-repo/repo/debs --clobber
-
-      - name: Capture new deb filename
-        if: inputs.only_app_repo != true
-        run: |
-          DEB_FILE=$(find apt-repo/repo/debs -maxdepth 1 -type f -name '*.deb' -print -quit)
-          echo "NEW_DEB_FILENAME=$(basename "$DEB_FILE")" >> "$GITHUB_ENV"
-
-      - name: Download ipa artifact
-        if: inputs.only_app_repo != true && inputs.only_apt_repo != true
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-        with:
-          name: ipa
-          path: packages/loader
-
-      - name: Download latest release ipa
-        if: inputs.only_app_repo == true
+    deploy-pages:
+        if: |
+            always() &&
+            (
+              inputs.only_app_repo == true ||
+              inputs.only_apt_repo == true
+            )
+        continue-on-error: true
+        runs-on: ubuntu-26.04
+        timeout-minutes: 20
+        needs: [build-tweak, build-ipa, resolve-source-ipa]
+        concurrency:
+            group: loader-feed
+            cancel-in-progress: false
+        permissions:
+            contents: write
         env:
-          VERSION_SELECTOR: ${{ inputs.version }}
-        run: |
-          set -euo pipefail
-          if [ -z "$VERSION_SELECTOR" ]; then
-            LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("loader-v")) and (.isPrerelease | not))][0].tagName')
-            gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
-          else
-            selector="${VERSION_SELECTOR#v}"
-            tag="loader-v$selector"
-            if ! gh release download "$tag" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber; then
-              if [[ "$selector" == *_* ]]; then
-                train="${selector%%_*}"
-                build="${selector#*_}"
-                if [[ "$train" != *.* ]]; then
-                  gh release download "loader-v${train}.0_${build}" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
-                else
-                  exit 1
-                fi
-              elif [[ "$selector" != *.* ]]; then
-                gh release download "${tag}.0" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
-              else
-                exit 1
-              fi
-            fi
-          fi
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GH_TOKEN: ${{ github.token }}
+            FEED_URL: https://builds.unbound.rip/repo
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Restore live site state
-        run: |
-          PACKAGE_ID=$(grep '^Package:' ios/control | cut -d ' ' -f 2)
-          mkdir -p "apt-repo/repo/depictions/web/$PACKAGE_ID" apt-repo/repo/debs
-          cp apt-repo/app-repo.json apt-repo/repo/app-repo.json
+            - name: Setup Go
+              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+              with:
+                  cache: false
+                  go-version-file: packages/loader/go.mod
 
-          PAGES_URL="${FEED_URL%/}"
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
 
-          curl -fsSL "$PAGES_URL/app-repo.json" -o apt-repo/repo/app-repo.json.live \
-            && mv apt-repo/repo/app-repo.json.live apt-repo/repo/app-repo.json \
-            || echo "No live app-repo.json yet, using repo template"
+            - name: Download deb artifact
+              if: inputs.only_app_repo != true && inputs.only_apt_repo != true
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: rootless package
+                  path: packages/loader/apt-repo/repo/debs
 
-          curl -fsSL "$PAGES_URL/depictions/web/$PACKAGE_ID/info.xml" -o "apt-repo/repo/depictions/web/$PACKAGE_ID/info.xml" \
-            || echo "No live depiction yet, using repo template"
+            - name: Download latest release deb
+              if: inputs.only_apt_repo == true
+              run: |
+                  mkdir -p apt-repo/repo/debs
+                  LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("loader-v")) and (.isPrerelease | not))][0].tagName')
+                  gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*arm64.deb' --dir apt-repo/repo/debs --clobber
 
-          if curl -fsSL "$PAGES_URL/Packages" -o previous-Packages; then
-            grep '^Filename:' previous-Packages | awk '{print $2}' | sed 's|^\./||' | while read -r deb_path; do
-              deb_name=$(basename "$deb_path")
-              dest="apt-repo/repo/debs/$deb_name"
-              if [ -f "$dest" ]; then
-                continue
-              fi
-              echo "Restoring $deb_name"
-              curl -fsSL "$PAGES_URL/$deb_path" -o "$dest" || echo "Warning: failed to restore $deb_name"
-            done
-            rm -f previous-Packages
-          else
-            echo "No live Packages file found, starting fresh"
-          fi
+            - name: Capture new deb filename
+              if: inputs.only_app_repo != true
+              run: |
+                  DEB_FILE=$(find apt-repo/repo/debs -maxdepth 1 -type f -name '*.deb' -print -quit)
+                  echo "NEW_DEB_FILENAME=$(basename "$DEB_FILE")" >> "$GITHUB_ENV"
 
-      - name: Update app-repo.json
-        if: inputs.only_apt_repo != true
-        env:
-          VERSION_SELECTOR: ${{ inputs.version }}
-        run: |
-          set -euo pipefail
-          APP_FILE=$(find . -maxdepth 1 -type f -name '*.ipa' -print -quit)
-          IPA_INFO=$(go run ./tools ipa-info --ipa "$APP_FILE")
-          VERSION=$(printf '%s\n' "$IPA_INFO" | jq -r '.version')
+            - name: Download ipa artifact
+              if: inputs.only_app_repo != true && inputs.only_apt_repo != true
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: ipa
+                  path: packages/loader
 
-          if [ "${{ inputs.only_app_repo }}" == true ]; then
-            if [[ "$VERSION_SELECTOR" == *_* ]]; then
-              IS_TESTFLIGHT=true
-            else
-              IS_TESTFLIGHT=false
-            fi
-          else
-            IS_TESTFLIGHT="${{ needs.resolve-source-ipa.outputs.is_testflight }}"
-          fi
+            - name: Download latest release ipa
+              if: inputs.only_app_repo == true
+              env:
+                  VERSION_SELECTOR: ${{ inputs.version }}
+              run: |
+                  set -euo pipefail
+                  if [ -z "$VERSION_SELECTOR" ]; then
+                    LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("loader-v")) and (.isPrerelease | not))][0].tagName')
+                    gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
+                  else
+                    selector="${VERSION_SELECTOR#v}"
+                    tag="loader-v$selector"
+                    if ! gh release download "$tag" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber; then
+                      if [[ "$selector" == *_* ]]; then
+                        train="${selector%%_*}"
+                        build="${selector#*_}"
+                        if [[ "$train" != *.* ]]; then
+                          gh release download "loader-v${train}.0_${build}" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
+                        else
+                          exit 1
+                        fi
+                      elif [[ "$selector" != *.* ]]; then
+                        gh release download "${tag}.0" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
+                      else
+                        exit 1
+                      fi
+                    fi
+                  fi
 
-          if [[ "$IS_TESTFLIGHT" == true ]]; then
-            BUILD=$(printf '%s\n' "$IPA_INFO" | jq -r '.build')
-            VERSION="${VERSION}_${BUILD}"
-            APP_INDEX=1
-          else
-            APP_INDEX=0
-          fi
+            - name: Restore live site state
+              run: |
+                  PACKAGE_ID=$(grep '^Package:' ios/control | cut -d ' ' -f 2)
+                  mkdir -p "apt-repo/repo/depictions/web/$PACKAGE_ID" apt-repo/repo/debs
+                  cp apt-repo/app-repo.json apt-repo/repo/app-repo.json
 
-          NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
-          DATE=$(date -u +"%Y-%m-%d")
-          IPA_SIZE=$(stat -c%s "$APP_FILE")
-          DOWNLOAD_URL=https://github.com/${{ github.repository }}/releases/download/loader-v$VERSION/$NAME.ipa
-          NEW_ENTRY=$(jq -n --arg version "$VERSION" --arg date "$DATE" --arg size "$IPA_SIZE" --arg downloadURL "$DOWNLOAD_URL" '{version: $version, date: $date, size: ($size | tonumber), downloadURL: $downloadURL, localizedDescription: "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."}')
+                  PAGES_URL="${FEED_URL%/}"
 
-          VERSION_EXISTS=$(jq --arg version "$VERSION" --argjson index "$APP_INDEX" '.apps[$index].versions | map(select(.version == $version)) | length' apt-repo/repo/app-repo.json)
-          if [ "$VERSION_EXISTS" -gt 0 ]; then
-            jq --argjson newEntry "$NEW_ENTRY" --argjson index "$APP_INDEX" --arg version "$VERSION" '.apps[$index].versions |= map(if .version == $version then $newEntry else . end)' apt-repo/repo/app-repo.json > temp.json
-          else
-            jq --argjson newEntry "$NEW_ENTRY" --argjson index "$APP_INDEX" '.apps[$index].versions |= [$newEntry] + .' apt-repo/repo/app-repo.json > temp.json
-          fi
-          mv temp.json apt-repo/repo/app-repo.json
+                  curl -fsSL "$PAGES_URL/app-repo.json" -o apt-repo/repo/app-repo.json.live \
+                    && mv apt-repo/repo/app-repo.json.live apt-repo/repo/app-repo.json \
+                    || echo "No live app-repo.json yet, using repo template"
 
-      - name: Update depiction version
-        if: inputs.only_app_repo != true
-        run: |
-          DEB_FILE="apt-repo/repo/debs/${{ env.NEW_DEB_FILENAME }}"
-          VERSION=$(dpkg-deb -f "$DEB_FILE" Version)
-          PACKAGE_ID=$(dpkg-deb -f "$DEB_FILE" Package)
+                  curl -fsSL "$PAGES_URL/depictions/web/$PACKAGE_ID/info.xml" -o "apt-repo/repo/depictions/web/$PACKAGE_ID/info.xml" \
+                    || echo "No live depiction yet, using repo template"
 
-          INFO_XML="apt-repo/repo/depictions/web/$PACKAGE_ID/info.xml"
-          if [ -f "$INFO_XML" ]; then
-            sed -i "s|<version>.*</version>|<version>$VERSION</version>|" "$INFO_XML"
-          else
-            echo "Warning: no web depiction at $INFO_XML for $PACKAGE_ID"
-          fi
+                  if curl -fsSL "$PAGES_URL/Packages" -o previous-Packages; then
+                    grep '^Filename:' previous-Packages | awk '{print $2}' | sed 's|^\./||' | while read -r deb_path; do
+                      deb_name=$(basename "$deb_path")
+                      dest="apt-repo/repo/debs/$deb_name"
+                      if [ -f "$dest" ]; then
+                        continue
+                      fi
+                      echo "Restoring $deb_name"
+                      curl -fsSL "$PAGES_URL/$deb_path" -o "$dest" || echo "Warning: failed to restore $deb_name"
+                    done
+                    rm -f previous-Packages
+                  else
+                    echo "No live Packages file found, starting fresh"
+                  fi
 
-      - name: Install apt-ftparchive & compressors
-        run: sudo apt-get update && sudo apt-get install -y apt-utils xz-utils zstd bzip2 lz4 gzip gnupg
+            - name: Update app-repo.json
+              if: inputs.only_apt_repo != true
+              env:
+                  VERSION_SELECTOR: ${{ inputs.version }}
+              run: |
+                  set -euo pipefail
+                  APP_FILE=$(find . -maxdepth 1 -type f -name '*.ipa' -print -quit)
+                  IPA_INFO=$(go run ./tools ipa-info --ipa "$APP_FILE")
+                  VERSION=$(printf '%s\n' "$IPA_INFO" | jq -r '.version')
 
-      - name: Import GPG key
-        if: ${{ env.GPG_KEY != '' }}
-        run: |
-          echo "$GPG_KEY" | gpg --import
-          GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | awk '/^sec/ { split($2, key, "/"); print key[2]; exit }')
-          echo "GPG_KEY_ID=$GPG_KEY_ID" >> "$GITHUB_ENV"
+                  if [ "${{ inputs.only_app_repo }}" == true ]; then
+                    if [[ "$VERSION_SELECTOR" == *_* ]]; then
+                      IS_TESTFLIGHT=true
+                    else
+                      IS_TESTFLIGHT=false
+                    fi
+                  else
+                    IS_TESTFLIGHT="${{ needs.resolve-source-ipa.outputs.is_testflight }}"
+                  fi
 
-      - name: Update repository
-        working-directory: packages/loader/apt-repo
-        env:
-          GPG_KEY_ID: ${{ env.GPG_KEY_ID }}
-        run: |
-          chmod +x update-repo.sh
-          ./update-repo.sh
+                  if [[ "$IS_TESTFLIGHT" == true ]]; then
+                    BUILD=$(printf '%s\n' "$IPA_INFO" | jq -r '.build')
+                    VERSION="${VERSION}_${BUILD}"
+                    APP_INDEX=1
+                  else
+                    APP_INDEX=0
+                  fi
 
-      - name: Publish the feed to the builds branch
-        run: |
-          set -euo pipefail
-          feed="$(pwd)/apt-repo/repo"
-          publish="$(mktemp -d)"
-          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+                  NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
+                  DATE=$(date -u +"%Y-%m-%d")
+                  IPA_SIZE=$(stat -c%s "$APP_FILE")
+                  DOWNLOAD_URL=https://github.com/${{ github.repository }}/releases/download/loader-v$VERSION/$NAME.ipa
+                  NEW_ENTRY=$(jq -n --arg version "$VERSION" --arg date "$DATE" --arg size "$IPA_SIZE" --arg downloadURL "$DOWNLOAD_URL" '{version: $version, date: $date, size: ($size | tonumber), downloadURL: $downloadURL, localizedDescription: "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."}')
 
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+                  VERSION_EXISTS=$(jq --arg version "$VERSION" --argjson index "$APP_INDEX" '.apps[$index].versions | map(select(.version == $version)) | length' apt-repo/repo/app-repo.json)
+                  if [ "$VERSION_EXISTS" -gt 0 ]; then
+                    jq --argjson newEntry "$NEW_ENTRY" --argjson index "$APP_INDEX" --arg version "$VERSION" '.apps[$index].versions |= map(if .version == $version then $newEntry else . end)' apt-repo/repo/app-repo.json > temp.json
+                  else
+                    jq --argjson newEntry "$NEW_ENTRY" --argjson index "$APP_INDEX" '.apps[$index].versions |= [$newEntry] + .' apt-repo/repo/app-repo.json > temp.json
+                  fi
+                  mv temp.json apt-repo/repo/app-repo.json
 
-          git fetch --depth 1 "$remote" builds:refs/remotes/publish/builds
-          git worktree add --detach "$publish" refs/remotes/publish/builds
-          cd "$publish"
+            - name: Update depiction version
+              if: inputs.only_app_repo != true
+              run: |
+                  DEB_FILE="apt-repo/repo/debs/${{ env.NEW_DEB_FILENAME }}"
+                  VERSION=$(dpkg-deb -f "$DEB_FILE" Version)
+                  PACKAGE_ID=$(dpkg-deb -f "$DEB_FILE" Package)
 
-          rm -rf repo
-          mkdir repo
-          cp -r "$feed"/. repo/
+                  INFO_XML="apt-repo/repo/depictions/web/$PACKAGE_ID/info.xml"
+                  if [ -f "$INFO_XML" ]; then
+                    sed -i "s|<version>.*</version>|<version>$VERSION</version>|" "$INFO_XML"
+                  else
+                    echo "Warning: no web depiction at $INFO_XML for $PACKAGE_ID"
+                  fi
 
-          git add -A repo
-          if git diff --cached --quiet; then
-            echo "The feed is already up to date"
-            exit 0
-          fi
-          git commit -m "build: publish the loader feed for ${GITHUB_SHA}"
-          git push "$remote" HEAD:builds
+            - name: Install apt-ftparchive & compressors
+              run: sudo apt-get update && sudo apt-get install -y apt-utils xz-utils zstd bzip2 lz4 gzip gnupg
+
+            - name: Import GPG key
+              if: ${{ env.GPG_KEY != '' }}
+              run: |
+                  echo "$GPG_KEY" | gpg --import
+                  GPG_KEY_ID=$(gpg --list-secret-keys --keyid-format LONG | awk '/^sec/ { split($2, key, "/"); print key[2]; exit }')
+                  echo "GPG_KEY_ID=$GPG_KEY_ID" >> "$GITHUB_ENV"
+
+            - name: Update repository
+              working-directory: packages/loader/apt-repo
+              env:
+                  GPG_KEY_ID: ${{ env.GPG_KEY_ID }}
+              run: |
+                  chmod +x update-repo.sh
+                  ./update-repo.sh
+
+            - name: Publish the feed to the builds branch
+              run: |
+                  set -euo pipefail
+                  feed="$(pwd)/apt-repo/repo"
+                  publish="$(mktemp -d)"
+                  remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+                  git config user.name 'github-actions[bot]'
+                  git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+                  git fetch --depth 1 "$remote" builds:refs/remotes/publish/builds
+                  git worktree add --detach "$publish" refs/remotes/publish/builds
+                  cd "$publish"
+
+                  rm -rf repo
+                  mkdir repo
+                  cp -r "$feed"/. repo/
+
+                  git add -A repo
+                  if git diff --cached --quiet; then
+                    echo "The feed is already up to date"
+                    exit 0
+                  fi
+                  git commit -m "build: publish the loader feed for ${GITHUB_SHA}"
+                  git push "$remote" HEAD:builds
