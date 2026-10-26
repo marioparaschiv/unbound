@@ -39,3 +39,10 @@ bool validNativeNumericValue(double value, std::string_view type)
         return value >= 0 && value <= 9007199254740991.0;
     return false;
 }
+
+bool isNativeScalarType(std::string_view type)
+{
+    return type == "bool" || type == "float" || type == "double" || type == "i8" || type == "u8" ||
+           type == "i16" || type == "u16" || type == "i32" || type == "u32" || type == "i64" ||
+           type == "u64";
+}
