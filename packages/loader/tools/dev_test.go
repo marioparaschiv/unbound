@@ -48,3 +48,24 @@ func TestParseAVDConfigIgnoresNonEntries(t *testing.T) {
 		t.Fatalf("unexpected parsed config: %#v", values)
 	}
 }
+
+func TestEnabledEmulationOverlaysListsOnlyEnabledDeviceOverlays(t *testing.T) {
+	list := "android\n[x] com.google.android.overlay.googleconfig\n[ ] com.android.internal.emulation.pixel_7_pro\n[x] com.android.internal.emulation.pixel_7\n[ ] com.android.internal.display.cutout.emulation.corner\n"
+	got := enabledEmulationOverlays(list)
+	if len(got) != 1 || got[0] != "com.android.internal.emulation.pixel_7" {
+		t.Fatalf("expected only the enabled device overlay, got %#v", got)
+	}
+}
+
+func TestAndroidSetupParsers(t *testing.T) {
+	if got := xposedFramework("zygisk_vector\nsome_other_module\n"); got != "zygisk_vector" {
+		t.Fatalf("expected the Vector module, got %q", got)
+	}
+	if got := xposedFramework("busybox\n"); got != "" {
+		t.Fatalf("expected no framework, got %q", got)
+	}
+	dumpsys := "Packages:\n  Package [com.discord]\n    versionCode=352110 minSdk=24\n    versionName=352.10 - Beta\n"
+	if got := packageVersionName(dumpsys); got != "352.10 - Beta" {
+		t.Fatalf("unexpected version name %q", got)
+	}
+}
