@@ -355,6 +355,8 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         env->GetStaticMethodID(bridge, "javaGetClass", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaClassName =
         env->GetStaticMethodID(bridge, "javaClassName", "(Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.javaDescribe =
+        env->GetStaticMethodID(bridge, "javaDescribe", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaConstruct = env->GetStaticMethodID(
         bridge, "javaConstruct", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaRespondsTo = env->GetStaticMethodID(
@@ -418,10 +420,10 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.isMainThread && gCallbacks.lookupViews && gCallbacks.snapshotViews &&
            gCallbacks.measureView && gCallbacks.setViewFrame && gCallbacks.mountView &&
            gCallbacks.updateView && gCallbacks.unmountView && gCallbacks.javaGetClass &&
-           gCallbacks.javaClassName && gCallbacks.javaConstruct && gCallbacks.javaRespondsTo &&
-           gCallbacks.javaInvoke && gCallbacks.javaGetField && gCallbacks.javaSetField &&
-           gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
-           gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
+           gCallbacks.javaClassName && gCallbacks.javaDescribe && gCallbacks.javaConstruct &&
+           gCallbacks.javaRespondsTo && gCallbacks.javaInvoke && gCallbacks.javaGetField &&
+           gCallbacks.javaSetField && gCallbacks.javaRelease && gCallbacks.hooksInstall &&
+           gCallbacks.hooksRemove && gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
            gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&

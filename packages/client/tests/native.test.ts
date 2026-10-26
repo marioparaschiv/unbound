@@ -196,6 +196,16 @@ const bridge: NativePluginBridge = {
 	java: {
 		getClass: () => nativeHandle,
 		className: () => ({ type: 'string', value: 'java.lang.Class' }),
+		describe: (name: string) => ({
+			name,
+			superclass: 'java.lang.Object',
+			interfaces: [],
+			constructors: [[]],
+			methods: [
+				{ name: 'toString', parameters: [], returnType: 'java.lang.String', static: false },
+			],
+			fields: [],
+		}),
 		construct: () => javaHandle,
 		respondsTo: () => ({ type: 'boolean', value: true }),
 		invoke: (_handle: NativeJavaReference, _name: string, args?: NativeJavaArgument[]) => {

@@ -54,11 +54,8 @@ inline constexpr std::array<std::string_view, 6> kFabricAsyncMethods = {
     "mountAsync", "updateAsync", "setSizeAsync", "setFrameAsync", "measureAsync", "unmountAsync",
 };
 inline constexpr std::array<std::string_view, 0> kClientProvidedMethods = {};
-inline constexpr std::array<std::string_view, 4> kJavaClassMethods      = {
-    "getClass",
-    "className",
-    "respondsTo",
-    "release",
+inline constexpr std::array<std::string_view, 5> kJavaClassMethods      = {
+    "getClass", "className", "describe", "respondsTo", "release",
 };
 inline constexpr std::array<std::string_view, 1> kJavaConstructMethods   = {"construct"};
 inline constexpr std::array<std::string_view, 2> kJavaFieldMethods       = {"getField", "setField"};

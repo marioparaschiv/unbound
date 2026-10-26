@@ -36,6 +36,42 @@ object NativeJava {
         return serialize(target.javaClass.name)
     }
 
+    fun describe(name: String): String {
+        val target = loadClass(name)
+        val description = JSONObject()
+            .put("name", target.name)
+            .put("superclass", target.superclass?.name ?: JSONObject.NULL)
+            .put("interfaces", JSONArray(target.interfaces.map { it.name }))
+            .put(
+                "constructors",
+                JSONArray(target.declaredConstructors.map { constructor -> JSONArray(constructor.parameterTypes.map { it.name }) }),
+            )
+            .put(
+                "methods",
+                JSONArray(
+                    target.declaredMethods.map { method ->
+                        JSONObject()
+                            .put("name", method.name)
+                            .put("parameters", JSONArray(method.parameterTypes.map { it.name }))
+                            .put("returnType", method.returnType.name)
+                            .put("static", Modifier.isStatic(method.modifiers))
+                    },
+                ),
+            )
+            .put(
+                "fields",
+                JSONArray(
+                    target.declaredFields.map { field ->
+                        JSONObject()
+                            .put("name", field.name)
+                            .put("type", field.type.name)
+                            .put("static", Modifier.isStatic(field.modifiers))
+                    },
+                ),
+            )
+        return description.toString()
+    }
+
     fun construct(name: String, argumentsJSON: String): String {
         val target = loadClass(name)
         val arguments = parseArguments(argumentsJSON)

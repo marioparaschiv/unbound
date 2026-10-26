@@ -31,6 +31,7 @@ struct JavaCallbacks {
     jmethodID unmountView              = nullptr;
     jmethodID javaGetClass             = nullptr;
     jmethodID javaClassName            = nullptr;
+    jmethodID javaDescribe             = nullptr;
     jmethodID javaConstruct            = nullptr;
     jmethodID javaRespondsTo           = nullptr;
     jmethodID javaInvoke               = nullptr;

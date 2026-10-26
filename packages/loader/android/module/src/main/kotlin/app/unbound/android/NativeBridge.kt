@@ -197,6 +197,9 @@ object NativeBridge {
     fun javaClassName(handleJSON: String): String = NativeJava.className(handleJSON)
 
     @JvmStatic
+    fun javaDescribe(name: String): String = NativeJava.describe(name)
+
+    @JvmStatic
     fun javaConstruct(name: String, argumentsJSON: String): String =
         NativeJava.construct(name, argumentsJSON)
 
