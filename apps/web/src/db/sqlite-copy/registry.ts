@@ -1,0 +1,107 @@
+import { getTableConfig, PgTable } from 'drizzle-orm/pg-core';
+import { is } from 'drizzle-orm';
+
+import * as schema from '~/db/schema';
+
+import { codecs, isColumnType } from './codecs';
+import type { Codec } from './codecs';
+
+export type ColumnSpec = {
+	name: string;
+	/** The Postgres type, such as `timestamp(3) with time zone`, that encoded text is cast to. */
+	sqlType: string;
+	codec: Codec;
+};
+
+export type TableSpec = {
+	name: string;
+	/** In the drizzle schema's order, which is the order rows are written and checksummed in. */
+	columns: ColumnSpec[];
+	primaryKey: string[];
+	/** The tables this one has a foreign key to. */
+	references: string[];
+};
+
+const FTS_MIRRORS = ['user_search', 'addon_search'];
+const FTS_SHADOWS = ['data', 'idx', 'content', 'docsize', 'config'];
+
+/** The SQLite tables with no Postgres counterpart, which the copy reads past. */
+export const SQLITE_ONLY_TABLES: ReadonlySet<string> = new Set([
+	'sqlite_sequence',
+	'__drizzle_migrations',
+	...FTS_MIRRORS,
+	...FTS_MIRRORS.flatMap((mirror) => FTS_SHADOWS.map((shadow) => `${mirror}_${shadow}`)),
+]);
+
+function describeTable(table: PgTable): TableSpec {
+	const config = getTableConfig(table);
+	const columns = config.columns.map((column) => {
+		if (!isColumnType(column.columnType)) {
+			throw new Error(
+				`${config.name}.${column.name} is a ${column.columnType}, which has no codec.`,
+			);
+		}
+
+		return {
+			name: column.name,
+			sqlType: column.getSQLType(),
+			codec: codecs[column.columnType],
+		};
+	});
+	const primaryKey =
+		config.primaryKeys[0]?.columns.map((column) => column.name) ??
+		config.columns.filter((column) => column.primary).map((column) => column.name);
+
+	if (primaryKey.length === 0) {
+		throw new Error(`${config.name} has no primary key to order its rows by.`);
+	}
+
+	const references = config.foreignKeys.map(
+		(key) => getTableConfig(key.reference().foreignTable).name,
+	);
+
+	return { name: config.name, columns, primaryKey, references: [...new Set(references)] };
+}
+
+/**
+ * @description Orders tables so each comes after every table it references.
+ * @param tables The tables, in any order.
+ * @returns The tables in foreign key order, ties broken by name.
+ */
+export function inReferenceOrder(tables: TableSpec[]): TableSpec[] {
+	const pending = [...tables].sort((a, b) => a.name.localeCompare(b.name));
+	const placed = new Set<string>();
+	const ordered: TableSpec[] = [];
+
+	while (pending.length > 0) {
+		const next = pending.findIndex((table) =>
+			table.references.every((name) => name === table.name || placed.has(name)),
+		);
+
+		if (!~next) {
+			throw new Error(
+				`Foreign keys form a cycle among ${pending.map((t) => t.name).join(', ')}.`,
+			);
+		}
+
+		const [table] = pending.splice(next, 1);
+
+		if (!table) {
+			continue;
+		}
+
+		placed.add(table.name);
+		ordered.push(table);
+	}
+
+	return ordered;
+}
+
+/** Every table of the app's Postgres schema, in foreign key order. */
+export const tables: TableSpec[] = inReferenceOrder(
+	Object.values(schema)
+		.filter((value) => is(value, PgTable))
+		.map(describeTable),
+);
+
+export default { SQLITE_ONLY_TABLES, inReferenceOrder, tables };
