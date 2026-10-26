@@ -9,6 +9,7 @@
 #import "Discord.h"
 #import "HotReload.h"
 #include "LoaderBootstrap.h"
+#include "LoaderBrowserLogin.h"
 #include "LoaderDiagnostics.h"
 #include "LoaderFonts.h"
 #import "LoaderJSI.h"
@@ -32,11 +33,14 @@ using namespace facebook;
 
 #pragma mark - Pre/post bundle injection
 
-static jsi::Runtime *gRuntime                  = nullptr;
-static __weak id     gInstance                 = nil;
-static NSString     *gPendingBrowserLoginToken = nil;
-static BOOL          gBrowserLoginIsApplying   = NO;
-static NSUInteger    gBrowserLoginFailureCount = 0;
+static jsi::Runtime *gRuntime  = nullptr;
+static __weak id     gInstance = nil;
+
+static loader::browserlogin::PendingLogin &pendingBrowserLogin(void)
+{
+    static loader::browserlogin::PendingLogin pending;
+    return pending;
+}
 
 static loader::LoaderPipeline &pipeline(void);
 
@@ -47,18 +51,17 @@ BOOL UnboundBundleIsReady(void)
 
 static void applyPendingBrowserLogin(void)
 {
-    id        instance = gInstance;
-    NSString *token    = gPendingBrowserLoginToken;
-    if (!instance || token.length == 0 || !UnboundBundleIsReady() || gBrowserLoginIsApplying)
+    id                         instance = gInstance;
+    std::optional<std::string> pending =
+        pendingBrowserLogin().begin(instance && UnboundBundleIsReady());
+    if (!pending)
     {
         return;
     }
 
-    gBrowserLoginIsApplying = YES;
+    std::string tokenValue = *pending;
 
-    std::string tokenValue = toStdString(token);
-
-    [instance callFunctionOnBufferedRuntimeExecutor:[tokenValue, token](jsi::Runtime &runtime) {
+    [instance callFunctionOnBufferedRuntimeExecutor:[tokenValue](jsi::Runtime &runtime) {
         BOOL applied = NO;
         if (auto login = loader::bootstrap::function(runtime, loader::bootstrap::kBrowserLogin))
         {
@@ -74,32 +77,28 @@ static void applyPendingBrowserLogin(void)
             }
         }
         dispatch_async(dispatch_get_main_queue(), ^{
-            gBrowserLoginIsApplying = NO;
-            if (applied)
+            switch (pendingBrowserLogin().finish(tokenValue, applied))
             {
-                if ([gPendingBrowserLoginToken isEqualToString:token])
-                {
-                    gPendingBrowserLoginToken = nil;
-                }
-                gBrowserLoginFailureCount = 0;
-                [Logger info:LOG_CATEGORY_DEFAULT
-                      format:@"Browser login token application scheduled."];
-                return;
-            }
-
-            gBrowserLoginFailureCount++;
-            [Logger error:LOG_CATEGORY_DEFAULT
-                   format:@"Browser login JavaScript application failed (attempt %lu).",
-                          (unsigned long) gBrowserLoginFailureCount];
-            if (gBrowserLoginFailureCount <= 3)
-            {
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC),
-                               dispatch_get_main_queue(), ^{ applyPendingBrowserLogin(); });
-            }
-            else
-            {
-                [Utilities alert:@"Discord could not finish browser login. Please try again."
-                           title:@"Could Not Finish Login"];
+                case loader::browserlogin::ApplyResult::Applied:
+                    [Logger info:LOG_CATEGORY_DEFAULT
+                          format:@"Browser login token application scheduled."];
+                    return;
+                case loader::browserlogin::ApplyResult::Retry:
+                    [Logger error:LOG_CATEGORY_DEFAULT
+                           format:@"Browser login JavaScript application failed (attempt %u).",
+                                  pendingBrowserLogin().failures()];
+                    dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
+                                                 (int64_t) (loader::browserlogin::kRetrySeconds *
+                                                            NSEC_PER_SEC)),
+                                   dispatch_get_main_queue(), ^{ applyPendingBrowserLogin(); });
+                    return;
+                case loader::browserlogin::ApplyResult::GaveUp:
+                    [Logger error:LOG_CATEGORY_DEFAULT
+                           format:@"Browser login JavaScript application failed (attempt %u).",
+                                  pendingBrowserLogin().failures()];
+                    [Utilities alert:@(loader::browserlogin::kRetryFailedMessage)
+                               title:@(loader::browserlogin::kFailedTitle)];
+                    return;
             }
         });
     }];
@@ -107,14 +106,10 @@ static void applyPendingBrowserLogin(void)
 
 void CompleteBrowserLogin(NSString *token)
 {
-    if (token.length == 0)
+    if (pendingBrowserLogin().submit(toStdString(token)))
     {
-        return;
+        applyPendingBrowserLogin();
     }
-
-    gPendingBrowserLoginToken = [token copy];
-    gBrowserLoginFailureCount = 0;
-    applyPendingBrowserLogin();
 }
 
 class IOSLoaderHost final : public loader::LoaderHost
