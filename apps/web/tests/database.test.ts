@@ -42,8 +42,12 @@ function gate(): Gate {
 
 async function waitForLockWaiters(count: number) {
 	for (let i = 0; i < 250; i++) {
+		// Only this database's waiters on the ordering key (7695970, 1); other test files share the cluster.
 		const [row] = await ctx.db.$client<{ waiting: number }[]>`
-			select count(*)::int as waiting from pg_locks where locktype = 'advisory' and not granted`;
+			select count(*)::int as waiting from pg_locks
+			where locktype = 'advisory' and not granted
+				and database = (select oid from pg_database where datname = current_database())
+				and classid = 7695970 and objid = 1 and objsubid = 2`;
 
 		if (row?.waiting === count) return;
 
