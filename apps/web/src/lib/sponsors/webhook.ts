@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import type { SponsorshipLifecycle, SponsorshipValues } from '~/lib/sponsors/sponsorships';
 import { sponsorship, sponsorWebhookDelivery } from '~/db/schema';
-import { upsertSponsorship } from '~/lib/sponsors/sponsorships';
+import { sponsorshipTransaction, upsertSponsorship } from '~/lib/sponsors/sponsorships';
 import type { Sponsorship } from '~/lib/sponsors/standing';
 import type { AppContext } from '~/lib/context';
 
@@ -138,7 +138,7 @@ function applyDelivery(
 ): Promise<WebhookStatus> {
 	const now = ctx.now();
 
-	return ctx.db.transaction(async (tx): Promise<WebhookStatus> => {
+	return sponsorshipTransaction(ctx.db, async (tx): Promise<WebhookStatus> => {
 		const recorded = await tx
 			.insert(sponsorWebhookDelivery)
 			.values({ id: deliveryId, action, receivedAt: now })
