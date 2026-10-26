@@ -229,6 +229,10 @@ describe.skipIf(!SUPERUSER_URL)('provision.sql', () => {
 				),
 			),
 		).toBe('42501 permission denied for table account');
+		// A schema named after the web role would lead its default search_path.
+		expect(await refusalOf(bot.$client.unsafe(`CREATE SCHEMA "${names.web}"`))).toStartWith(
+			'42501 permission denied for database',
+		);
 
 		await wakes('audit_event', insertEvent);
 		await wakes('member_changed', async () => {

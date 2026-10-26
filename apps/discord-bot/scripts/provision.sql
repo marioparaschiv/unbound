@@ -115,6 +115,9 @@ END $$;
 
 REVOKE TRIGGER ON public.addon, public.addon_version, public.addon_maintainer, public.account,
 	public.sponsorship, public.moderation_event, public.loader_release FROM :"bot_role";
+-- A schema named after another role sits first on that role's default search_path and could shadow
+-- built-in functions in its sessions, so the bot may create schemas only while it migrates.
+REVOKE CREATE ON DATABASE :"database" FROM :"bot_role";
 
 COMMIT;
 
@@ -125,7 +128,7 @@ BEGIN;
 CREATE SCHEMA IF NOT EXISTS bot AUTHORIZATION :"bot_role";
 ALTER SCHEMA bot OWNER TO :"bot_role";
 -- CREATE because drizzle's migrator runs CREATE SCHEMA IF NOT EXISTS bot, which Postgres checks before it
--- finds the schema exists. It lets the role add schemas, never touch the web's.
+-- finds the schema exists. The lock phase takes it back.
 GRANT CONNECT, CREATE ON DATABASE :"database" TO :"bot_role";
 GRANT USAGE ON SCHEMA public TO :"bot_role";
 
