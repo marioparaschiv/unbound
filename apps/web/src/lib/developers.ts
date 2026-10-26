@@ -13,7 +13,6 @@ export type DevelopersQuery = {
 
 export type Developer = {
 	author: IdentifiedAuthor;
-	/** Listed addons whose newest version credits this author. */
 	addonCount: number;
 };
 
@@ -25,16 +24,13 @@ export type DevelopersPage = {
 
 export type DeveloperProfile = {
 	author: IdentifiedAuthor;
-	/** The listed addons whose newest version credits this author, by id. */
 	addons: MarketplaceAddon[];
 };
 
 type Credit = DeveloperProfile & {
-	/** Every name a manifest gives this author, so a search finds them by any of them. */
 	aliases: Set<string>;
 };
 
-// Reads the whole catalog: at hundreds of listed addons this beats keeping an author index in sync.
 async function loadCredits(ctx: AppContext): Promise<Map<DiscordId, Credit>> {
 	const listed = await listListedAddons(ctx);
 	const resolve = await loadAuthors(

@@ -12,7 +12,7 @@ type DeveloperCardProps = ComponentProps<typeof Card> & {
 	developer: Developer;
 };
 
-/** A credited author. Only a linked Unbound user's card links to their profile. */
+/** A credited author's card. */
 function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 	const { author, addonCount } = developer;
 

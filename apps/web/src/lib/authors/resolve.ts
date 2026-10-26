@@ -19,13 +19,10 @@ import { isBanned } from '~/lib/api/caller';
 export type ManifestAuthor = PublishedManifest['authors'][number];
 
 type AuthorFace = {
-	/** What to print. */
 	name: string;
-	/** Falls back to Discord's default avatar for the id. */
 	avatarUrl: string;
 };
 
-/** A manifest author, resolved for display. Only `user` links to a profile page. */
 export type ResolvedAuthor =
 	| (AuthorFace & {
 			kind: 'user';
@@ -33,17 +30,13 @@ export type ResolvedAuthor =
 			userId: string;
 			role: string;
 			badge: PublicBadge | null;
-			/** When the Unbound account was created, as an ISO string. */
 			memberSince: string;
 	  })
 	| (AuthorFace & { kind: 'discord'; discordId: DiscordId; username: string })
-	/** `discordId` is null when the manifest id is `'0'`. */
 	| (AuthorFace & { kind: 'manifest'; discordId: DiscordId | null });
 
-/** An author with a real Discord id: what `/developers` lists. */
 export type IdentifiedAuthor = ResolvedAuthor & { discordId: DiscordId };
 
-/** Resolves one manifest's authors, dropping repeats. Pure: ids it was not loaded for get the manifest tier. */
 export type AuthorResolver = (authors: ManifestAuthor[]) => ResolvedAuthor[];
 
 type LinkedUser = typeof user.$inferSelect & { badge: PublicBadge | null };
@@ -94,7 +87,6 @@ function pickAuthor(
 			kind: 'discord',
 			discordId: author.id,
 			username: found.username,
-			// An empty display name falls through to the username, as Discord shows it.
 			name: found.globalName || found.username,
 			avatarUrl: discordAvatarUrl,
 		};
@@ -108,7 +100,6 @@ function pickAuthor(
 	};
 }
 
-// A banned user falls through to the Discord tier. The oldest link wins if two users claim one id.
 async function readLinkedUsers(
 	ctx: AppContext,
 	ids: DiscordId[],
@@ -147,8 +138,8 @@ function authorKey(author: ManifestAuthor): string {
 }
 
 /**
- * @description Loads everything needed to resolve the given manifests' authors, and asks for a
- * Discord refresh when any profile is missing or stale. Never waits on Discord.
+ * @description Loads what resolving these manifests' authors needs, requesting a profile refresh
+ * when any is missing or stale.
  * @param ctx The application context.
  * @param lists The authors of each manifest that will be resolved.
  * @returns A pure resolver: linked Unbound user, else cached Discord profile, else the manifest name.

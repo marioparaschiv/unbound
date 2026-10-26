@@ -1,22 +1,18 @@
-/** A user the fake knows, as `GET /users/{id}` returns it. Unknown ids get a 404. */
 export type FakeDiscordUser = {
 	username: string;
 	global_name?: string | null;
 	avatar?: string | null;
 };
 
-/** One request the fake received. */
 export type FakeDiscordRequest = {
 	path: string;
 	authorization: string | null;
 };
 
-/** Replaces the answer for one user id; returning `undefined` falls back to the normal answer. */
 export type FakeDiscordOverride = (id: string) => Response | Promise<Response> | undefined;
 
 export type FakeDiscord = {
 	url: URL;
-	/** The base `DISCORD_API_URL` should point at. */
 	apiUrl: string;
 	users: Map<string, FakeDiscordUser>;
 	requests: FakeDiscordRequest[];
@@ -25,8 +21,7 @@ export type FakeDiscord = {
 };
 
 /**
- * @description Serves Discord's `GET /api/v10/users/{id}` from a map of users, recording every
- * request so tests can see what was fetched and with which credentials.
+ * @description Serves a fake Discord `GET /api/v10/users/{id}` that records every request.
  * @param users The known users by id.
  * @returns The running fake.
  */

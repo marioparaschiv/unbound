@@ -9,19 +9,16 @@ import { discordProfile } from '~/db/schema';
 
 const logger = createLogger('Web', 'Authors');
 
-/** One cached row as the domain sees it. */
 export type CachedProfile =
 	| { kind: 'found'; user: DiscordUser; fetchedAt: Date }
 	| { kind: 'missing'; discordId: DiscordId; fetchedAt: Date };
 
 export type SweepResult = {
 	refreshed: number;
-	/** Set when Discord rate-limited or failed: how long to wait before the next sweep. */
 	retryAfterMs: number | null;
 };
 
 export type ProfileRefresher = {
-	/** Asks for a sweep. Returns at once; merged into a running sweep; ignored while paused. */
 	kick(): void;
 	stop(): void;
 };
@@ -36,7 +33,6 @@ type RefresherState =
 	| { kind: 'paused' }
 	| { kind: 'stopped' };
 
-/** How many lookups in a row may fail before a sweep gives up and backs off. */
 const MAX_CONSECUTIVE_FAILURES = 3;
 
 const FAILURE_BACKOFF_MS = 5 * 60_000;
@@ -44,7 +40,7 @@ const FAILURE_BACKOFF_MS = 5 * 60_000;
 let active: ProfileRefresher | undefined;
 
 /**
- * @description Reads cached Discord profiles, fresh or stale. Never touches the network.
+ * @description Reads cached Discord profiles, fresh or stale.
  * @param ctx The application context.
  * @param ids The Discord ids.
  * @returns Each cached profile by id; ids never fetched are absent.
@@ -139,11 +135,10 @@ async function writeProfile(ctx: AppContext, id: DiscordId, lookup: StoredLookup
 }
 
 /**
- * @description Runs one sweep: fetches every listed author whose profile is missing or stale, missing
- * ones first, then the oldest. Each row is written on its own, so a stop halfway loses nothing.
+ * @description Fetches every listed author whose profile is missing or stale, oldest first.
  * @param ctx The application context.
- * @param signal Stops the sweep before its next lookup once aborted.
- * @returns How many profiles were written, and how long to wait when Discord rate-limited or failed.
+ * @param signal Stops the sweep before its next lookup.
+ * @returns How many profiles were written, and the backoff when Discord rate-limited or failed.
  */
 export async function refreshDiscordProfiles(
 	ctx: AppContext,
@@ -190,7 +185,6 @@ export async function refreshDiscordProfiles(
 		refreshed += 1;
 	}
 
-	// A failed id stays due, so without a pause every page view would fetch it again.
 	return { refreshed, retryAfterMs: failed ? FAILURE_BACKOFF_MS : null };
 }
 
@@ -266,7 +260,7 @@ function createProfileRefresher(ctx: AppContext): ProfileRefresher {
  * @description Starts the process's Discord profile refresher: sweeps now, every
  * `DISCORD_PROFILE_SWEEP_INTERVAL_SECONDS`, and whenever {@link requestProfileRefresh} asks.
  * @param ctx The application context.
- * @returns The refresher, whose `stop` also ends the periodic sweep.
+ * @returns The running refresher.
  */
 export function startProfileRefresher(ctx: AppContext): ProfileRefresher {
 	active?.stop();
@@ -298,8 +292,7 @@ export function startProfileRefresher(ctx: AppContext): ProfileRefresher {
 }
 
 /**
- * @description Asks the running refresher for a sweep without waiting for it. Does nothing when none
- * was started, so tests and scripts never reach Discord.
+ * @description Asks the running refresher, if any, for a sweep without waiting for it.
  */
 export function requestProfileRefresh() {
 	active?.kick();

@@ -1,7 +1,6 @@
 /** The start of 2015 in Unix milliseconds: the zero point of Discord snowflake timestamps. */
 export const DISCORD_EPOCH = 1_420_070_400_000n;
 
-/** The only remote host the bot token may be sent to. */
 export const DISCORD_API_HOST = 'discord.com';
 
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
@@ -37,8 +36,7 @@ export function getDefaultAvatarUrl(id: string): string {
 }
 
 /**
- * @description Decides whether a URL may receive the Discord bot token: `https://discord.com`, or a
- * loopback address for tests and local runs.
+ * @description Decides whether a URL may receive the Discord bot token: `https://discord.com` or loopback.
  * @param url The URL a request would go to.
  * @returns Whether the token may be sent there.
  */

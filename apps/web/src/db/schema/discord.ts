@@ -1,6 +1,5 @@
 import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 
-/** What Discord last said about a manifest author. A null `username` caches a 404. */
 export const discordProfile = sqliteTable(
 	'discord_profile',
 	{

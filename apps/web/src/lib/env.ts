@@ -13,7 +13,7 @@ export const envSchema = z.object({
 	BETTER_AUTH_SECRET: z.string().min(32),
 	DISCORD_CLIENT_ID: z.string().min(1),
 	DISCORD_CLIENT_SECRET: z.string().min(1),
-	/** Reads manifest authors' public Discord profiles. Sent only to `DISCORD_API_URL`. */
+	/** Reads manifest authors' public Discord profiles. */
 	DISCORD_BOT_TOKEN: z.string().min(1),
 	GITHUB_CLIENT_ID: z.string().min(1),
 	GITHUB_CLIENT_SECRET: z.string().min(1),
@@ -40,7 +40,6 @@ export const envSchema = z.object({
 			(value) => URL.canParse(value) && isBotTokenHost(new URL(value)),
 			'Must be https://discord.com or loopback.',
 		),
-	/** How long a cached Discord profile of a manifest author counts as fresh. */
 	DISCORD_PROFILE_TTL_SECONDS: positiveInt.default(86_400),
 	DISCORD_PROFILE_SWEEP_INTERVAL_SECONDS: positiveInt.default(3600),
 

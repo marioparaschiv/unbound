@@ -7,7 +7,6 @@ import cn from '~/lib/cn';
 
 type AuthorBylineProps = ComponentProps<'span'> & {
 	authors: ResolvedAuthor[];
-	/** Links linked Unbound users to their profile. Off inside a card that is itself a link. */
 	linked?: boolean;
 };
 

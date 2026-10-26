@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { isBotTokenHost } from '~/lib/discord';
 import type { Env } from '~/lib/env';
 
-/** A Discord user id as manifests write it. `'0'` means the author did not give one. */
 export type DiscordId = PublishedManifest['authors'][number]['id'];
 
 export type DiscordUser = {
@@ -14,12 +13,10 @@ export type DiscordUser = {
 	avatarHash: string | null;
 };
 
-/** What one `GET /users/{id}` said. */
 export type DiscordLookup =
 	| { kind: 'found'; user: DiscordUser }
 	| { kind: 'missing' }
 	| { kind: 'rate_limited'; retryAfterMs: number }
-	/** A 5xx, a redirect, a timeout or a network failure. */
 	| { kind: 'failed'; status: number | null };
 
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -47,11 +44,10 @@ async function readRetryAfterMs(response: Response): Promise<number> {
 }
 
 /**
- * @description Looks up one Discord user with the bot token. Redirects are refused rather than
- * followed, so the token cannot be forwarded to another host.
+ * @description Looks up one Discord user with the bot token.
  * @param env The validated environment.
  * @param id The user's id; never `'0'`.
- * @returns The outcome. HTTP and network failures are outcomes, not errors.
+ * @returns The outcome; HTTP and network failures return rather than throw.
  */
 export async function fetchDiscordUser(env: Env, id: DiscordId): Promise<DiscordLookup> {
 	const url = new URL(`users/${id}`, `${env.DISCORD_API_URL.replace(/\/$/, '')}/`);
