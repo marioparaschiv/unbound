@@ -4,8 +4,8 @@ import { createSubmissionRequestSchema, createSubmissionResponseSchema } from '.
 import { updatesRequestSchema, updatesResponseSchema } from '../src/updates';
 import { addonManifestSchema, semverSchema } from '../src/manifest';
 import { reviewSubmissionRequestSchema } from '../src/review';
-import { isPostgresSafe } from '../src/text';
 import { apiErrorResponseSchema } from '../src/errors';
+import { isPostgresSafe } from '../src/text';
 import { apiUrlSchema } from '../src/api';
 
 const manifest = {

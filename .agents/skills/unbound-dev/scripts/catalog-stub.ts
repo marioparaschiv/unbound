@@ -2,14 +2,13 @@
 // seeded files. The database is dropped on SIGINT, SIGTERM or SIGHUP (`tmux kill-session`).
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 
-import { createTestDatabase, dropDatabase } from '../../../../apps/web/tests/helpers/database';
-
 import {
 	createTestContext,
 	manifest,
 	seedVersion,
 	signInWithDiscord,
 } from '../../../../apps/web/tests/helpers/index';
+import { createTestDatabase, dropDatabase } from '../../../../apps/web/tests/helpers/database';
 import getCatalogEndpoint from '../../../../apps/web/src/endpoints/get-catalog';
 import { resolveDevHost } from '../../../../packages/client/scripts/dev-host';
 import { eq } from '../../../../apps/web/node_modules/drizzle-orm/index.js';

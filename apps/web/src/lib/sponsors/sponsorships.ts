@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm';
 
-import type { Database, Transaction } from '~/db/database';
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
+import type { Database, Transaction } from '~/db/database';
 import { standingOf } from '~/lib/sponsors/standing';
 import { account, sponsorship } from '~/db/schema';
 import type { AppContext } from '~/lib/context';

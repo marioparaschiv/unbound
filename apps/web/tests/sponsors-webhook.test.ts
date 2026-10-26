@@ -2,8 +2,8 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { and, eq, max } from 'drizzle-orm';
 
 import type { Database, Transaction, TransactionBody } from '~/db/database';
-import { deleteUserWithRecord } from '~/lib/moderation-events';
 import { upsertSponsorship } from '~/lib/sponsors/sponsorships';
+import { deleteUserWithRecord } from '~/lib/moderation-events';
 import type { Sponsorship } from '~/lib/sponsors/standing';
 import { account, botFeedChange } from '~/db/schema';
 

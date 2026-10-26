@@ -1,11 +1,10 @@
+// Usage: bun database.ts create|drop|exists|env <instance> [env file] | sweep <state root>
+// Never prints a URL; `env` prints PG* variables, password included, for `eval` only.
 import { appendFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { SQL } from 'bun';
 
-// Usage: bun database.ts create <instance> <env file> | drop <instance> | exists <instance>
-//   | env <instance> | sweep <state root>
-// Never prints a URL. `env` prints the instance's PG* variables, password included, for `eval` only.
 import {
 	MAINTENANCE_URL,
 	dropDatabase,

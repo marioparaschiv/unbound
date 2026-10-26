@@ -10,6 +10,7 @@ import { CLI_CLIENT_ID } from '~/api/client';
 import { parseEnv } from '~/lib/env';
 
 import type { TestDatabase } from './database';
+
 import { createTestDatabase } from './database';
 
 export const TEST_ENV = {
