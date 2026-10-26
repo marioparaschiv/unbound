@@ -194,6 +194,17 @@ describe('listing', () => {
 		},
 	);
 
+	test('refuses NUL in the search or the cursor', async () => {
+		const queries: ListAddonsQuery[] = [
+			{ q: 'alp\0ha' },
+			{ cursor: encodeCursor(['Al\0pha', 'list.alpha']) },
+		];
+
+		for (const query of queries) {
+			expect(await failure(list(query))).toEqual({ status: 400, code: 'invalid_request' });
+		}
+	});
+
 	test.each<ListAddonsQuery>([
 		{ sort: 'name' },
 		{ sort: 'created', order: 'desc' },

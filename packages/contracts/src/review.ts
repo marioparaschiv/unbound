@@ -6,9 +6,10 @@ import { addonVersionSchema, sha256Schema } from './addons';
 import { addonManifestSchema } from './manifest';
 import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
+import { withoutNul } from './text';
 import { z } from './zod';
 
-const noteSchema = z.string().check(z.trim(), z.minLength(1), z.maxLength(10_000));
+const noteSchema = z.string().check(z.trim(), z.minLength(1), z.maxLength(10_000), withoutNul);
 
 export const reviewQueueQuerySchema = z.optional(
 	z.object({

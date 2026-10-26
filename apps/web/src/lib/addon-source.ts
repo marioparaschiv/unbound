@@ -20,6 +20,7 @@ import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { addonManifestSchema } from '@unbound-app/contracts/manifest';
 import type { Changelog } from '@unbound-app/contracts/changelog';
+import { NUL } from '@unbound-app/contracts/text';
 import { z } from 'zod';
 
 import type {
@@ -130,9 +131,17 @@ async function readTexts(
 
 			if (!entry) return;
 
-			const bytes = await github.readBlob(repository, entry.sha);
+			const text = decoder.decode(await github.readBlob(repository, entry.sha));
 
-			return [path, decoder.decode(bytes)] as const;
+			// Postgres text cannot hold NUL, and no text file an addon ships needs it.
+			if (text.includes(NUL)) {
+				throw new ApiError(
+					'invalid_request',
+					`${path} contains the NUL character (U+0000).`,
+				);
+			}
+
+			return [path, text] as const;
 		}),
 	);
 

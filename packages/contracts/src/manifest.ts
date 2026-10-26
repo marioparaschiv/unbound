@@ -1,6 +1,7 @@
 import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
 import { ADDON_TYPES } from '@unbound-app/types/addons';
 
+import { withoutNul } from './text';
 import { z } from './zod';
 
 /**
@@ -38,30 +39,33 @@ export const addonAuthorSchema = z.object({
 
 /**
  * The manifest an author publishes. Unknown keys pass through untouched so the stored manifest is
- * exactly what the author shipped; only the fields the platform relies on are validated.
+ * exactly what the author shipped; only the fields the platform relies on are validated, and no
+ * string or key anywhere may hold NUL.
  */
-export const addonManifestSchema = z.looseObject({
-	id: addonIdSchema,
-	type: z.optional(z.enum(ADDON_TYPES)),
-	name: z.string().check(z.minLength(1)),
-	description: z.string(),
-	authors: z.array(addonAuthorSchema).check(z.minLength(1)),
-	icon: z.optional(z.union([z.string(), z.object({ uri: z.string() })])),
-	// The bundle is published next to the manifest at `addons/{id}/{version}/{main}` and resolved
-	// relative to the manifest URL, so `main` may not leave that directory.
-	main: z
-		.string()
-		.check(
-			z.regex(
-				/^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*$/,
-				'Must be a relative path inside the addon.',
+export const addonManifestSchema = z
+	.looseObject({
+		id: addonIdSchema,
+		type: z.optional(z.enum(ADDON_TYPES)),
+		name: z.string().check(z.minLength(1)),
+		description: z.string(),
+		authors: z.array(addonAuthorSchema).check(z.minLength(1)),
+		icon: z.optional(z.union([z.string(), z.object({ uri: z.string() })])),
+		// The bundle is published next to the manifest at `addons/{id}/{version}/{main}` and resolved
+		// relative to the manifest URL, so `main` may not leave that directory.
+		main: z
+			.string()
+			.check(
+				z.regex(
+					/^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*$/,
+					'Must be a relative path inside the addon.',
+				),
 			),
-		),
-	version: semverSchema,
-	capabilities: z.optional(z.array(z.enum(NATIVE_PLUGIN_CAPABILITIES))),
-	minNativePluginApi: z.optional(z.string()),
-	unbound: z.optional(z.object({ min: z.optional(semverSchema) })),
-});
+		version: semverSchema,
+		capabilities: z.optional(z.array(z.enum(NATIVE_PLUGIN_CAPABILITIES))),
+		minNativePluginApi: z.optional(z.string()),
+		unbound: z.optional(z.object({ min: z.optional(semverSchema) })),
+	})
+	.check(withoutNul);
 
 export type PublishedManifest = z.infer<typeof addonManifestSchema>;
 

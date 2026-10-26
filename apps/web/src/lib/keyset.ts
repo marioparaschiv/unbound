@@ -2,6 +2,7 @@ import type { PageDirection } from '@unbound-app/contracts/admin';
 import type { SortOrder } from '@unbound-app/contracts/addons';
 import type { SQL, SQLWrapper } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
+import { containsNul } from '@unbound-app/contracts/text';
 import { z } from 'zod';
 
 import { ApiError } from '~/lib/api/errors';
@@ -56,7 +57,13 @@ export function encodeCursor(key: CursorKey): string {
  */
 export function decodeCursor<T extends CursorPosition>(cursor: string, schema: z.ZodType<T>): T {
 	try {
-		return schema.parse(JSON.parse(Buffer.from(cursor, 'base64url').toString()));
+		const key = JSON.parse(Buffer.from(cursor, 'base64url').toString());
+
+		if (containsNul(key)) {
+			throw new Error('NUL in a cursor.');
+		}
+
+		return schema.parse(key);
 	} catch {
 		throw new ApiError('invalid_request', 'The cursor does not belong to this list.');
 	}

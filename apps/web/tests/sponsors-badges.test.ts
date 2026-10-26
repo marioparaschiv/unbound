@@ -344,6 +344,27 @@ describe('revoking a badge', () => {
 		expect(stored?.config).toEqual(BADGE);
 	});
 
+	test('NUL in the path or the reason is an invalid request', async () => {
+		const moderator = await signUp({ role: 'moderator', github: false });
+		const sponsor = await signUp();
+
+		await setBadge(sponsor.client);
+
+		expect(await failure(publicBadges('nul\0id'))).toEqual({
+			status: 400,
+			code: 'invalid_request',
+		});
+		expect(
+			await failure(
+				moderator.client('POST /api/v1/users/$id/badge/revoke', {
+					params: { id: sponsor.userId },
+					body: { reason: 'Bad\0label.' },
+					response: badgeClaimResponseSchema,
+				}),
+			),
+		).toEqual({ status: 400, code: 'invalid_request' });
+	});
+
 	test('revoking a user without a badge is not found', async () => {
 		const moderator = await signUp({ role: 'moderator', github: false });
 		const plain = await signUp();

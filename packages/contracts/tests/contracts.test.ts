@@ -4,6 +4,12 @@ import { createSubmissionRequestSchema, createSubmissionResponseSchema } from '.
 import { updatesRequestSchema, updatesResponseSchema } from '../src/updates';
 import { addonManifestSchema, semverSchema } from '../src/manifest';
 import { reviewSubmissionRequestSchema } from '../src/review';
+import { revokeBadgeRequestSchema } from '../src/sponsors';
+import {
+	adminUsersSearchSchema,
+	createStaffNoteRequestSchema,
+	moderationReasonSchema,
+} from '../src/admin';
 import { apiErrorResponseSchema } from '../src/errors';
 import { apiUrlSchema } from '../src/api';
 
@@ -262,5 +268,30 @@ describe('apiErrorResponseSchema', () => {
 		expect(
 			apiErrorResponseSchema.safeParse({ error: { code: 'teapot', message: '' } }).success,
 		).toBe(false);
+	});
+});
+
+describe('NUL', () => {
+	test('free text bound for the database refuses NUL', () => {
+		const inputs = [
+			[adminUsersSearchSchema, { q: 'ali\0ce' }],
+			[createStaffNoteRequestSchema, { subject: { type: 'user', id: 'u1' }, body: 'Hi\0.' }],
+			[moderationReasonSchema, 'Spam\0.'],
+			[revokeBadgeRequestSchema, { reason: 'Bad\0.' }],
+			[reviewSubmissionRequestSchema, { decision: 'rejected', note: 'No\0.' }],
+			[addonManifestSchema, { ...manifest, description: 'Says\0 hello.' }],
+			[addonManifestSchema, { ...manifest, extra: [{ 'ke\0y': 'value' }] }],
+		] as const;
+
+		for (const [schema, input] of inputs) {
+			expect({ input, ok: schema.safeParse(input).success }).toEqual({ input, ok: false });
+		}
+	});
+
+	test('the same text without NUL is accepted', () => {
+		expect(adminUsersSearchSchema.safeParse({ q: 'alice' }).success).toBe(true);
+		expect(
+			addonManifestSchema.safeParse({ ...manifest, extra: [{ key: 'value' }] }).success,
+		).toBe(true);
 	});
 });
