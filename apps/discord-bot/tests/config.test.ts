@@ -1,11 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 
+import { parseDatabaseEnv } from '~/lib/env';
 import { checkConfig } from '~/lib/config';
 import { GUILD_ID } from '~/lib/constants';
 
 const ENV = {
 	DISCORD_TOKEN: 'token',
-	DATABASE_URL: 'postgres://bot@localhost/bot',
+	DATABASE_URL: 'postgres://bot@localhost:6432/bot',
+	DATABASE_DIRECT_URL: 'postgres://bot@localhost:5432/bot',
 	UNBOUND_API_URL: 'https://unbound.rip',
 	UNBOUND_API_KEY: 'key',
 };
@@ -51,6 +53,22 @@ describe('checkConfig', () => {
 				GITHUB_TOKEN: undefined,
 			},
 		});
+	});
+
+	test('names DATABASE_DIRECT_URL alone when only the pooled url is set', () => {
+		const { DATABASE_DIRECT_URL: _, ...pooledOnly } = ENV;
+		const result = checkConfig(pooledOnly, GUILD_ID);
+
+		expect(result.ok ? '' : result.message).toBe(
+			'Refusing to start, the configuration is incomplete:\n  - env DATABASE_DIRECT_URL is not set',
+		);
+	});
+
+	test('migrations read the direct url and refuse the pooled one alone', () => {
+		expect(parseDatabaseEnv(ENV)).toEqual({ DATABASE_DIRECT_URL: ENV.DATABASE_DIRECT_URL });
+		expect(() => parseDatabaseEnv({ DATABASE_URL: ENV.DATABASE_URL })).toThrow(
+			'DATABASE_DIRECT_URL',
+		);
 	});
 
 	test('treats an empty GITHUB_TOKEN as unset and keeps a set one', () => {
