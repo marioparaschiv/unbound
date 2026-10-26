@@ -20,9 +20,9 @@ import {
 	signInWithDiscord,
 	snowflakeAt,
 } from './helpers/context';
+import { explain, planNodes, planPath } from './helpers/database';
 import { manifest, seedApprovedAddon } from './helpers/addons';
 import { commitPlugin, serveGitHub } from './helpers/github';
-import { explain, planNodes, planPath } from './helpers/database';
 import { serveMemoryS3 } from './helpers/memory-s3';
 
 const REPOSITORY = 'acme/addons';

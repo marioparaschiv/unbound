@@ -17,13 +17,13 @@ import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Transaction } from '~/db/database';
-import one from '~/db/one';
 import { getSnowflakeDate } from '~/lib/discord';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { connectGitHub } from '~/lib/github';
 import { ApiError } from '~/lib/api/errors';
 import { pinSource } from '~/lib/artifacts';
+import one from '~/db/one';
 
 export type SubmissionRow = typeof submission.$inferSelect;
 

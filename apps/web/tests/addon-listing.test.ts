@@ -12,8 +12,8 @@ import type { Api } from '~/api';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { createTestContext, signInWithDiscord } from './helpers/context';
-import { explain, planNodes } from './helpers/database';
 import { failure, serveEndpoints } from './helpers/server';
+import { explain, planNodes } from './helpers/database';
 
 const base = await createTestContext({ ADDON_LIST_PAGE_SIZE: '2' });
 const ctx = base.ctx;

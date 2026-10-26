@@ -14,8 +14,7 @@ import { encodeCursor } from '~/lib/keyset';
 
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { authRequest, createTestContext, signInWithDiscord } from './helpers/context';
-import type { PlanNode } from './helpers/database';
-import { explain, planNodes, planPath } from './helpers/database';
+import { explain, planNodes, planPath, type PlanNode } from './helpers/database';
 
 type CompiledQuery = {
 	sql: string;

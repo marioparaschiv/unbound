@@ -1,6 +1,6 @@
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
-import { pgTable, text, bigint, json } from 'drizzle-orm/pg-core';
 import type { Changelog } from '@unbound-app/contracts/changelog';
+import { pgTable, text, bigint, json } from 'drizzle-orm/pg-core';
 import { defineRelationsPart } from 'drizzle-orm';
 
 import { addon, addonVersion, submission } from './addons';

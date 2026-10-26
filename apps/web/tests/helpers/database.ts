@@ -34,9 +34,8 @@ type DatabaseName = {
 const PREFIX = 'unbound_web_test_';
 // 42501: another role's backend is connected; 55006: a backend did not leave within Postgres's 5 s wait.
 const RETRYABLE_DROP_CODES = new Set(['42501', '55006']);
-// A DROP DATABASE waits for every backend on the cluster to absorb a barrier, which a busy shared
-// cluster can hold up for seconds. `drop()` waits this long, then lets the drop finish on its own, so
-// a hook closing several contexts stays inside bun's 5 s timeout.
+// A busy shared cluster can hold a DROP DATABASE for seconds; `drop()` waits this long, then lets it
+// finish on its own, so a hook closing several contexts stays inside bun's 5 s timeout.
 const DROP_WAIT_MS = 250;
 const DROP_RETRY_DEADLINE_MS = 30_000;
 // A test database this old was left behind by a crashed or timed-out run.
@@ -126,7 +125,7 @@ async function dropDatabase(name: string) {
 // A drop still running when the wait ends carries on in the background; if the run exits first, the
 // next run's sweep drops the database.
 async function dropWithin(name: string) {
-	const dropped = dropDatabase(name).catch((error: unknown) => {
+	const dropped = dropDatabase(name).catch((error) => {
 		console.warn(`Could not drop ${name}; the next run's sweep will:`, error);
 	});
 

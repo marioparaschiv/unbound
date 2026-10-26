@@ -27,11 +27,11 @@ import { requirePermission } from '~/lib/api/caller';
 import { likeContains } from '~/lib/like-contains';
 import { addon, addonVersion } from '~/db/schema';
 import type { Transaction } from '~/db/database';
-import one from '~/db/one';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { CursorKey } from '~/lib/keyset';
 import { ApiError } from '~/lib/api/errors';
+import one from '~/db/one';
 
 export type AddonRow = typeof addon.$inferSelect;
 

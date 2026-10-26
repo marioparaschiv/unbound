@@ -14,12 +14,12 @@ import { z } from 'zod';
 
 import { moderationEvent, staffNote, submission, user } from '~/db/schema';
 import type { Database, Transaction } from '~/db/database';
-import one from '~/db/one';
 import type { SubmissionRow } from '~/lib/submissions';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
+import one from '~/db/one';
 
 /** Who acted, when and why; the subject is implied by the action. */
 export type ActionMeta = {

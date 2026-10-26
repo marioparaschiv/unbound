@@ -22,7 +22,8 @@ export type SearchSubject = keyof typeof SEARCH_SUBJECTS;
  * @returns The `id in (…)` condition.
  */
 export function matchesSearch(subject: SearchSubject, id: SQLWrapper, q: string): SQL {
-	if ([...q].length < MIN_QUERY_CHARACTERS) {
+	// Counted in code points, as trigrams are.
+	if (Array.from(q).length < MIN_QUERY_CHARACTERS) {
 		return sql`false`;
 	}
 

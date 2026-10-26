@@ -1,5 +1,5 @@
-import { afterAll, describe, expect, test } from 'bun:test';
 import { and, asc, eq, inArray, sql, type SQL } from 'drizzle-orm';
+import { afterAll, describe, expect, test } from 'bun:test';
 
 import { rateLimit, staffNote, submission, submissionSource, user } from '~/db/schema';
 import { matchesSearch } from '~/lib/admin-search';
@@ -161,7 +161,8 @@ describe('text', () => {
 			await seedUser('a_b'),
 			await seedUser('axb'),
 		];
-		const matching = async (search: string) => {
+
+		async function matching(search: string) {
 			const rows = await ctx.db
 				.select({ name: user.name })
 				.from(user)
@@ -169,7 +170,7 @@ describe('text', () => {
 				.orderBy(asc(user.name));
 
 			return rows.map((row) => row.name);
-		};
+		}
 
 		expect(await matching('abc')).toEqual(['xABCx']);
 		expect(await matching('é')).toEqual([]);

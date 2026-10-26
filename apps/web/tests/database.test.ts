@@ -26,11 +26,12 @@ type Gate = {
 };
 
 // UNKNOWN: whatever the promise rejects with.
-function failure(promise: PromiseLike<unknown>): Promise<unknown> {
-	return Promise.resolve(promise).then(
-		() => undefined,
-		(error: unknown) => error,
-	);
+async function failure(promise: PromiseLike<unknown>): Promise<unknown> {
+	try {
+		await promise;
+	} catch (error) {
+		return error;
+	}
 }
 
 function gate(): Gate {

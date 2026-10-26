@@ -180,11 +180,12 @@ describe('POST /api/v1/submissions/preview', () => {
 	test('writes nothing', async () => {
 		const { headers } = await signIn();
 		const { path, commitSha } = commitAddon('readonly', 'acme.readonly');
-		const total = async () => {
+
+		async function total() {
 			const [row] = await main.ctx.db.select({ total: count() }).from(submission);
 
 			return row?.total;
-		};
+		}
 		const before = await total();
 
 		await preview(headers, { repository: REPOSITORY, path, ref: 'readonly', commitSha });

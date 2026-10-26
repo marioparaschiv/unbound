@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 
 import { getAddonDetails, getCatalog, listAddons } from '~/lib/addons';
 import { editAddon, getAdminAddon } from '~/lib/admin-addon';
-import { addon, moderationEvent, user } from '~/db/schema';
+import { moderationEvent, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';

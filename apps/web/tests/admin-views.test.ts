@@ -147,14 +147,15 @@ describe('the admin addon view', () => {
 	test('approval records the verified repository, and an approved update from another one replaces it', async () => {
 		const author = await signUp();
 		const moderator = await signUp('moderator');
-		const repositoryOf = async () => {
+
+		async function repositoryOf() {
 			const [row] = await ctx.db
 				.select({ repository: addon.repository })
 				.from(addon)
 				.where(eq(addon.id, 'views.moved'));
 
 			return row?.repository;
-		};
+		}
 
 		await reviewSubmission(ctx, moderator.caller, await publish(author, 'views.moved'), {
 			decision: 'approved',
