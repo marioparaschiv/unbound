@@ -260,6 +260,16 @@ describe('admin users list', () => {
 
 		expect(error).toMatchObject({ code: 'invalid_request' });
 	});
+
+	test('rejects a cursor whose time no Date can hold', async () => {
+		const cursor = encodeCursor([Number.MAX_SAFE_INTEGER, 'someone']);
+		const errors = await Promise.all([
+			listAdminUsers(ctx, moderator, { cursor }).catch((caught) => caught),
+			listAdminAddons(ctx, moderator, { cursor }).catch((caught) => caught),
+		]);
+
+		expect(errors).toMatchObject([{ code: 'invalid_request' }, { code: 'invalid_request' }]);
+	});
 });
 
 describe('admin addons list', () => {

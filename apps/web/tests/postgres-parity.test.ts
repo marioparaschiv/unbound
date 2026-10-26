@@ -1,10 +1,11 @@
 import { and, asc, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import { afterAll, describe, expect, test } from 'bun:test';
+import { z } from 'zod';
 
 import { rateLimit, staffNote, submission, submissionSource, user } from '~/db/schema';
 import { matchesSearch } from '~/lib/admin-search';
 import { likeContains } from '~/lib/like-contains';
-import { afterKey } from '~/lib/keyset';
+import { afterKey, cursorTime, decodeCursor, encodeCursor } from '~/lib/keyset';
 
 import { manifest, seedSubmission } from './helpers/addons';
 import { createTestContext } from './helpers/context';
@@ -85,9 +86,9 @@ describe('round trips', () => {
 			throw new Error('The seeded users were not stored.');
 		}
 
-		const after = await page(
-			afterKey([user.createdAt, user.id], [first.createdAt.getTime(), first.id], 'asc'),
-		);
+		const cursor = encodeCursor([first.createdAt.getTime(), first.id]);
+		const position = decodeCursor(cursor, z.tuple([cursorTime, z.string()]));
+		const after = await page(afterKey([user.createdAt, user.id], position, 'asc'));
 
 		expect(after).toEqual(rest);
 	});

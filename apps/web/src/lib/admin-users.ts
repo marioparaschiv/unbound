@@ -4,7 +4,7 @@ import type { UserSummary } from '@unbound-app/contracts/account';
 import { and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { afterKey, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
+import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import { DEFAULT_ROLE, hasPermission } from '~/lib/auth/access';
 import type { AdminSubmission } from '~/lib/admin-submissions';
@@ -63,7 +63,7 @@ export type AdminUserView = {
 
 type UserRow = typeof user.$inferSelect;
 
-const USER_CURSOR = z.tuple([z.int(), z.string().min(1)]);
+const USER_CURSOR = z.tuple([cursorTime, z.string().min(1)]);
 
 function toAdminUser(row: UserRow): AdminUser {
 	return {

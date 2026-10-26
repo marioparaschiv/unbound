@@ -7,6 +7,7 @@ import { getAddonDetails, queryListedAddons } from '~/lib/addons';
 import listAddonsEndpoint from '~/endpoints/list-addons';
 import type { AppContext } from '~/lib/context';
 import { createApiClient } from '~/api/client';
+import { encodeCursor } from '~/lib/keyset';
 import { addon } from '~/db/schema';
 import type { Api } from '~/api';
 
@@ -180,6 +181,18 @@ describe('listing', () => {
 			code: 'invalid_request',
 		});
 	});
+
+	test.each<AddonSort>(['created', 'updated'])(
+		'refuses a %s cursor whose time no Date can hold',
+		async (sort) => {
+			const cursor = encodeCursor([Number.MAX_SAFE_INTEGER, 'list.alpha']);
+
+			expect(await failure(list({ sort, cursor }))).toEqual({
+				status: 400,
+				code: 'invalid_request',
+			});
+		},
+	);
 
 	test.each<ListAddonsQuery>([
 		{ sort: 'name' },
