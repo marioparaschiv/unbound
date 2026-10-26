@@ -1,7 +1,6 @@
 import { MAX_UPDATE_CHANGELOGS } from './updates';
 import { MAX_CHANGELOG_LENGTH } from './publish';
 import { semverSchema } from './manifest';
-import { withoutNul } from './text';
 import { z } from './zod';
 
 export const loaderPlatformSchema = z.enum(['ios', 'android']);
@@ -11,7 +10,7 @@ export const loaderReleaseSchema = z.object({
 	platform: loaderPlatformSchema,
 	version: semverSchema,
 	url: z.url({ protocol: /^https?$/ }),
-	changelog: z.nullable(z.string().check(z.maxLength(MAX_CHANGELOG_LENGTH), withoutNul)),
+	changelog: z.nullable(z.string().check(z.maxLength(MAX_CHANGELOG_LENGTH))),
 	publishedAt: z.iso.datetime(),
 });
 

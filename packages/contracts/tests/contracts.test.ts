@@ -1,16 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-	adminUsersSearchSchema,
-	createStaffNoteRequestSchema,
-	moderationReasonSchema,
-} from '../src/admin';
 import { createSubmissionRequestSchema, createSubmissionResponseSchema } from '../src/publish';
 import { updatesRequestSchema, updatesResponseSchema } from '../src/updates';
 import { addonManifestSchema, semverSchema } from '../src/manifest';
 import { reviewSubmissionRequestSchema } from '../src/review';
-import { revokeBadgeRequestSchema } from '../src/sponsors';
 import { apiErrorResponseSchema } from '../src/errors';
+import { isPostgresSafe } from '../src/text';
 import { apiUrlSchema } from '../src/api';
 
 const manifest = {
@@ -271,27 +266,29 @@ describe('apiErrorResponseSchema', () => {
 	});
 });
 
-describe('NUL', () => {
-	test('free text bound for the database refuses NUL', () => {
+describe('isPostgresSafe', () => {
+	test('refuses NUL or an unpaired surrogate in any string or key', () => {
 		const inputs = [
-			[adminUsersSearchSchema, { q: 'ali\0ce' }],
-			[createStaffNoteRequestSchema, { subject: { type: 'user', id: 'u1' }, body: 'Hi\0.' }],
-			[moderationReasonSchema, 'Spam\0.'],
-			[revokeBadgeRequestSchema, { reason: 'Bad\0.' }],
-			[reviewSubmissionRequestSchema, { decision: 'rejected', note: 'No\0.' }],
-			[addonManifestSchema, { ...manifest, description: 'Says\0 hello.' }],
-			[addonManifestSchema, { ...manifest, extra: [{ 'ke\0y': 'value' }] }],
-		] as const;
+			'ali\0ce',
+			'half \ud800 a pair',
+			'\udc00 first',
+			'ends high \ud83d',
+			{ subject: { type: 'user', id: 'u1' }, body: 'Hi\0.' },
+			{ ...manifest, extra: [{ 'ke\0y': 'value' }] },
+			{ ...manifest, extra: [{ ['ke\ud800y']: 'value' }] },
+			[1, true, null, ['deep \0']],
+		];
 
-		for (const [schema, input] of inputs) {
-			expect({ input, ok: schema.safeParse(input).success }).toEqual({ input, ok: false });
+		for (const input of inputs) {
+			expect({ input, ok: isPostgresSafe(input) }).toEqual({ input, ok: false });
 		}
 	});
 
-	test('the same text without NUL is accepted', () => {
-		expect(adminUsersSearchSchema.safeParse({ q: 'alice' }).success).toBe(true);
-		expect(
-			addonManifestSchema.safeParse({ ...manifest, extra: [{ key: 'value' }] }).success,
-		).toBe(true);
+	test('accepts other text, surrogate pairs included, and non-strings', () => {
+		const inputs = ['alice', 'a cat \ud83d\udc31', { ...manifest, extra: [{ key: 'value' }] }];
+
+		for (const input of [...inputs, 1, true, null, undefined]) {
+			expect({ input, ok: isPostgresSafe(input) }).toEqual({ input, ok: true });
+		}
 	});
 });

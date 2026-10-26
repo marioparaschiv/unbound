@@ -8,11 +8,11 @@ import type {
 import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
 import { moderationEventSchema } from '@unbound-app/contracts/admin';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { and, count, eq, inArray } from 'drizzle-orm';
+import { and, count, eq, inArray, sql } from 'drizzle-orm';
 import { createLogger } from '@unbound-app/logger';
 import { z } from 'zod';
 
-import { moderationEvent, staffNote, submission, user } from '~/db/schema';
+import { account, moderationEvent, staffNote, submission, user } from '~/db/schema';
 import type { Database, Transaction } from '~/db/database';
 import type { SubmissionRow } from '~/lib/submissions';
 import { requirePermission } from '~/lib/api/caller';
@@ -317,6 +317,9 @@ export async function deleteUserWithRecord(
 	meta: ActionMeta,
 ): Promise<void> {
 	await db.transaction(async (tx) => {
+		// The cascade writes `account` after the event takes the ordering lock; see `lock_ordered_ids`.
+		await tx.execute(sql`lock table ${account} in row exclusive mode`);
+
 		const [submissions] = await tx
 			.select({ total: count() })
 			.from(submission)

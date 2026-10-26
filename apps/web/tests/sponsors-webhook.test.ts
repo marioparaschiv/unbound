@@ -1,8 +1,11 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { and, eq, max } from 'drizzle-orm';
 
+import type { Database, Transaction, TransactionBody } from '~/db/database';
+import { upsertSponsorship } from '~/lib/sponsors/sponsorships';
+import { deleteUserWithRecord } from '~/lib/moderation-events';
+import type { Sponsorship } from '~/lib/sponsors/standing';
 import { account, botFeedChange } from '~/db/schema';
-import type { Transaction } from '~/db/database';
 
 import {
 	SPONSORED_LOGIN,
@@ -325,5 +328,97 @@ describe('webhook racing a GitHub link', () => {
 
 		expect(await statusOf(await delivery)).toEqual({ code: 200, body: { status: 'applied' } });
 		expect(await memberSeq(userId)).toBeGreaterThan(linkSeq);
+	});
+});
+
+describe('sponsorship writes', () => {
+	test('accept only a transaction that locked account first', () => {
+		function plain(row: Sponsorship) {
+			// @ts-expect-error A plain transaction skips the account lock the sponsorship feed trigger needs.
+			return ctx.db.transaction((tx) => upsertSponsorship(tx, row));
+		}
+
+		expect(plain).toBeFunction();
+	});
+});
+
+describe('webhook racing a user deletion', () => {
+	type Attempts = { count: number };
+
+	function countingAttempts(db: Database, attempts: Attempts): Database {
+		function transaction<T>(body: TransactionBody<T>): Promise<T> {
+			return db.transaction((tx) => {
+				attempts.count++;
+
+				return body(tx);
+			});
+		}
+
+		return new Proxy(db, {
+			get: (target, key) => (key === 'transaction' ? transaction : Reflect.get(target, key)),
+		});
+	}
+
+	async function lockWaiters(): Promise<number> {
+		const [row] = await ctx.db.$client<{ waiting: number }[]>`
+			select count(*)::int as waiting from pg_locks
+			where not granted
+				and database = (select oid from pg_database where datname = current_database())`;
+
+		return row?.waiting ?? 0;
+	}
+
+	test('a delivery and a deletion both waiting on the ordering lock do not deadlock', async () => {
+		const githubId = '7800';
+		const deleted = await signInWithDiscord(ctx, {
+			id: snowflakeAt(new Date('2021-01-03T00:00:00Z')),
+			name: 'Deleted user',
+			email: 'deleted-user@example.com',
+		});
+		const sponsor = await signInWithDiscord(ctx, {
+			id: snowflakeAt(new Date('2021-01-04T00:00:00Z')),
+			name: 'Deadlock sponsor',
+			email: 'deadlock-sponsor@example.com',
+		});
+		const { internalAdapter } = await ctx.auth.$context;
+
+		await internalAdapter.linkAccount({
+			userId: sponsor.userId,
+			providerId: 'github',
+			accountId: githubId,
+			accessToken: 'deadlock',
+		});
+
+		const attempts = { count: 0 };
+		const db = countingAttempts(ctx.db, attempts);
+		const locked = Promise.withResolvers<void>();
+		const release = Promise.withResolvers<void>();
+
+		// Holding the ordering lock parks the deletion at its event, then the delivery behind it.
+		const blocker = ctx.db.$client.begin(async (sql) => {
+			await sql`select lock_ordered_ids()`;
+			locked.resolve();
+			await release.promise;
+		});
+
+		await locked.promise;
+
+		const deletion = deleteUserWithRecord(db, deleted.userId, { actorId: null, at: NOW });
+
+		await waitUntil(async () => (await lockWaiters()) === 1, 'the deletion to wait');
+
+		const delivery = deliver(
+			{ ...ctx, db },
+			sponsorshipPayload({ action: 'created', sponsorId: githubId }),
+			{ id: 'race-delete' },
+		);
+
+		await waitUntil(async () => (await lockWaiters()) === 2, 'the delivery to wait');
+		release.resolve();
+		await blocker;
+		await deletion;
+
+		expect(await statusOf(await delivery)).toEqual({ code: 200, body: { status: 'applied' } });
+		expect(attempts.count).toBe(2);
 	});
 });

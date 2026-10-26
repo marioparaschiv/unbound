@@ -9,6 +9,8 @@ import { DISCORD_EPOCH } from '~/lib/discord';
 import { CLI_CLIENT_ID } from '~/api/client';
 import { parseEnv } from '~/lib/env';
 
+import type { TestDatabase } from './database';
+
 import { createTestDatabase } from './database';
 
 export const TEST_ENV = {
@@ -73,10 +75,14 @@ export type SignedInUser = {
  * @description Builds an application context over a fresh, migrated Postgres database of its own, from
  * {@link TEST_ENV} plus any overrides.
  * @param overrides Environment variables to replace.
+ * @param openDatabase Creates the empty database, for a test that needs its name.
  * @returns The context and a `close` that drops the database.
  */
-export async function createTestContext(overrides: EnvSource = {}): Promise<TestContext> {
-	const database = await createTestDatabase();
+export async function createTestContext(
+	overrides: EnvSource = {},
+	openDatabase: () => Promise<TestDatabase> = createTestDatabase,
+): Promise<TestContext> {
+	const database = await openDatabase();
 	let env: Env;
 
 	try {

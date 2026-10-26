@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm';
 
-import type { Database, Transaction, TransactionBody } from '~/db/database';
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
+import type { Database, Transaction } from '~/db/database';
 import { standingOf } from '~/lib/sponsors/standing';
 import { account, sponsorship } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
@@ -15,6 +15,13 @@ export type SponsorshipValues = Pick<
 >;
 
 export type SponsorshipLifecycle = Pick<Sponsorship, 'state' | 'endsAt'>;
+
+declare const sponsorshipLock: unique symbol;
+
+/** A transaction from {@link sponsorshipTransaction}, the only kind a sponsorship write accepts. */
+export type SponsorshipTransaction = Transaction & { readonly [sponsorshipLock]: true };
+
+export type SponsorshipTransactionBody<T> = (tx: SponsorshipTransaction) => Promise<T>;
 
 export type UserSponsorship = {
 	githubLinked: boolean;
@@ -38,23 +45,29 @@ export function graceMs(env: Env): number {
  * @param body The transaction body.
  * @returns The body's result.
  */
-export function sponsorshipTransaction<T>(db: Database, body: TransactionBody<T>): Promise<T> {
+export function sponsorshipTransaction<T>(
+	db: Database,
+	body: SponsorshipTransactionBody<T>,
+): Promise<T> {
 	return db.transaction(async (tx) => {
 		// LOCK takes no snapshot, so it must be the first statement. A link in flight commits before the
 		// snapshot; a later one waits for this commit and its own trigger moves the member after it.
 		await tx.execute(sql`lock table ${account} in share mode`);
 
-		return body(tx);
+		return body(tx as SponsorshipTransaction);
 	});
 }
 
 /**
  * @description Inserts a sponsorship or replaces the stored one for the same GitHub id.
- * @param tx The transaction to write in.
+ * @param tx The sponsorship transaction to write in.
  * @param row The whole sponsorship.
  * @returns Resolves once it is written.
  */
-export async function upsertSponsorship(tx: Transaction, row: Sponsorship): Promise<void> {
+export async function upsertSponsorship(
+	tx: SponsorshipTransaction,
+	row: Sponsorship,
+): Promise<void> {
 	const { githubId: _githubId, ...values } = row;
 
 	await tx

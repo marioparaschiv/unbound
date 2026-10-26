@@ -2,6 +2,7 @@ import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2';
 import type { Auth as BetterAuth, BetterAuthOptions } from 'better-auth';
 import { admin, bearer, deviceAuthorization } from 'better-auth/plugins';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { isPostgresSafe } from '@unbound-app/contracts/text';
 import type { AdminOptions } from 'better-auth/plugins';
 import { createLogger } from '@unbound-app/logger';
 import { apiKey } from '@better-auth/api-key';
@@ -131,6 +132,13 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 		},
 		hooks: {
 			before: createAuthMiddleware(async (ctx) => {
+				if (!isPostgresSafe(ctx.body) || !isPostgresSafe(ctx.query)) {
+					throw new APIError('BAD_REQUEST', {
+						message:
+							'The request must not contain NUL (U+0000) or an unpaired surrogate.',
+					});
+				}
+
 				if (ctx.path !== '/sign-in/social' || ctx.body?.provider !== 'github') return;
 
 				throw new APIError('FORBIDDEN', {

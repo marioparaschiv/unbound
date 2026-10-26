@@ -93,7 +93,7 @@ Tamper(s) ==
     /\ staged' = [staged EXCEPT ![s] = Evil]
     /\ UNCHANGED <<status, kind, recordedSha, StoreVars, ReviewerVars>>
 
-\* purgeUserSubmissions on ban (staging.ts:105-144, auth.ts:108): cancels any open submission,
+\* purgeUserSubmissions on ban (staging.ts:105-144, auth.ts:109): cancels any open submission,
 \* pending_review too. reserve()'s supersede (submissions.ts:288-293, 387) moves the author's own
 \* changes_requested row out of Open and deletes its bundle: Purge then Create.
 Purge(s) ==

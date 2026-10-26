@@ -272,6 +272,19 @@ describe('/api/v1/sync', () => {
 		});
 	});
 
+	test('stores settings holding NUL or a lone surrogate whole', async () => {
+		const headers = await signIn();
+		const settings = { 'cat.plugin': { nul: 'a\0b', lone: 'a\ud800b', 'ke\0y': true } };
+		const saved = await put(
+			headers,
+			0,
+			documentWith({ addons: plugins('cat.plugin'), settings }),
+		);
+
+		expect(saved.document.settings).toEqual(settings);
+		expect((await getState(headers)).document.settings).toEqual(settings);
+	});
+
 	test('rejects a save against a stale revision with a conflict', async () => {
 		const headers = await signIn();
 

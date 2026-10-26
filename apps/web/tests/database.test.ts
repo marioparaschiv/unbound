@@ -120,32 +120,40 @@ describe('migrateDatabase', () => {
 });
 
 describe('createTestContext', () => {
-	async function testDatabases(): Promise<Set<string>> {
-		const rows = await ctx.db.$client<{ datname: string }[]>`
-			select datname from pg_database where datname like 'unbound_web_test_%'`;
+	async function databaseExists(name: string): Promise<boolean> {
+		const rows = await ctx.db.$client`select 1 from pg_database where datname = ${name}`;
 
-		return new Set(rows.map((row) => row.datname));
+		return rows.length > 0;
 	}
 
 	// A drop can outlast drop()'s own wait while other files' drops queue on a busy cluster.
 	test('drops its database when it fails to start', async () => {
-		const before = await testDatabases();
+		const created: string[] = [];
 
-		expect(await failure(createTestContext({ ADDON_LIST_PAGE_SIZE: 'many' }))).toBeDefined();
+		async function openDatabase() {
+			const database = await createTestDatabase();
 
-		let leaked: string[] = [];
+			created.push(database.name);
 
-		for (let i = 0; i < 100; i++) {
-			leaked = [...(await testDatabases())].filter((name) => !before.has(name));
-
-			if (leaked.length === 0) {
-				break;
-			}
-
-			await Bun.sleep(200);
+			return database;
 		}
 
-		expect(leaked).toEqual([]);
+		expect(
+			await failure(createTestContext({ ADDON_LIST_PAGE_SIZE: 'many' }, openDatabase)),
+		).toBeDefined();
+
+		const [name = ''] = created;
+		let exists = true;
+
+		for (let i = 0; i < 100 && exists; i++) {
+			exists = await databaseExists(name);
+
+			if (exists) {
+				await Bun.sleep(200);
+			}
+		}
+
+		expect({ created: created.length, exists }).toEqual({ created: 1, exists: false });
 	}, 30_000);
 });
 

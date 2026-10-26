@@ -111,6 +111,8 @@ EOF
 
 # The database URLs carry the cluster password, so only this file holds them.
 chmod 600 "$DIR/web.env"
+# Instances killed without teardown.sh leave their databases on the shared cluster.
+bun "$SKILL_DIR/scripts/database.ts" sweep "$STATE_ROOT" || echo "warning: could not sweep leftover databases" >&2
 bun "$SKILL_DIR/scripts/database.ts" create "$INSTANCE" "$DIR/web.env" || fail "could not create database $DATABASE"
 
 (
