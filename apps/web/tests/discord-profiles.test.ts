@@ -139,13 +139,7 @@ describe('refreshDiscordProfiles', () => {
 	});
 
 	test('never looks up malformed ids, and caches a 400 as a miss so it cannot stall the sweep', async () => {
-		await credit(
-			'007' as DiscordId,
-			'99999999999999999999999' as DiscordId,
-			'251',
-			'252',
-			'253',
-		);
+		await credit('007', '99999999999999999999999', '251', '252', '253');
 		discord.override((id) =>
 			id === '251'
 				? Response.json({ message: 'Invalid Form Body' }, { status: 400 })
