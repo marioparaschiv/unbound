@@ -37,8 +37,8 @@ export const addonAuthorSchema = z.object({
 });
 
 /**
- * The manifest an author publishes. Unknown keys pass through untouched so the stored manifest is
- * exactly what the author shipped; only the fields the platform relies on are validated.
+ * The manifest an author publishes. Unknown keys pass through untouched, so the stored manifest is
+ * what the author shipped; only the fields the platform relies on are validated.
  */
 export const addonManifestSchema = z.looseObject({
 	id: addonIdSchema,

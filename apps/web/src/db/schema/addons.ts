@@ -1,11 +1,13 @@
 import {
-	sqliteTable,
+	pgTable,
 	text,
 	integer,
+	bigint,
+	json,
 	index,
 	uniqueIndex,
 	primaryKey,
-} from 'drizzle-orm/sqlite-core';
+} from 'drizzle-orm/pg-core';
 import type {
 	ReviewDecision,
 	SubmissionKind,
@@ -14,8 +16,10 @@ import type {
 import type { AddonType, MaintainerRole } from '@unbound-app/contracts/addons';
 import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
-import { defineRelationsPart, sql } from 'drizzle-orm';
+import { defineRelationsPart, sql, type SQL } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
+import { searchText, timestampMs, trigramIndex } from './columns';
 import { moderationEvent } from './admin';
 import { user } from './auth';
 
@@ -26,22 +30,19 @@ const LISTING_SORTS = ['name', 'createdAt', 'updatedAt'] as const;
 
 /**
  * An approved addon. The row is created when its first listing is approved; until then a pending listing submission holds the id.
- * `addon_search` mirrors its id and name for admin search; the `admin_search` migration owns it.
  */
-export const addon = sqliteTable(
+export const addon = pgTable(
 	'addon',
 	{
 		id: text('id').primaryKey(),
-		createdAt: integer('created_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-			.notNull(),
-		delistedAt: integer('delisted_at', { mode: 'timestamp_ms' }),
+		createdAt: timestampMs('created_at').defaultNow().notNull(),
+		delistedAt: timestampMs('delisted_at'),
 		// Copied from the served version on approval and rollback so listings filter, search and sort on
 		// one table. A staff edit pins a field instead.
 		type: text('type').$type<AddonType>().notNull(),
 		name: text('name').notNull(),
 		description: text('description').notNull(),
-		updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+		updatedAt: timestampMs('updated_at').notNull(),
 		/** `PINNED_FIELDS` bits: the summary columns a staff edit owns, which refreshes leave alone. */
 		pinnedFields: integer('pinned_fields').default(0).notNull(),
 		/** The GitHub `owner/name` of the addon's source. Addon-level, never copied from a manifest. */
@@ -60,10 +61,20 @@ export const addon = sqliteTable(
 		index('addon_delisted_createdAt_idx')
 			.on(table.createdAt, table.id)
 			.where(sql`${table.delistedAt} is not null`),
+		trigramIndex('addon_search_idx', addonSearchText(table)),
 	],
 );
 
-export const addonMaintainer = sqliteTable(
+/**
+ * @description Builds the text admin search matches an addon by, the expression `addon_search_idx` indexes.
+ * @param table The addon table or an alias of it.
+ * @returns The search text of the table's row.
+ */
+export function addonSearchText(table: Record<'id' | 'name', AnyPgColumn>): SQL {
+	return searchText([table.id, table.name]);
+}
+
+export const addonMaintainer = pgTable(
 	'addon_maintainer',
 	{
 		addonId: text('addon_id')
@@ -73,9 +84,7 @@ export const addonMaintainer = sqliteTable(
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),
 		role: text('role').$type<MaintainerRole>().notNull(),
-		createdAt: integer('created_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-			.notNull(),
+		createdAt: timestampMs('created_at').defaultNow().notNull(),
 	},
 	(table) => [
 		primaryKey({ columns: [table.addonId, table.userId] }),
@@ -83,7 +92,7 @@ export const addonMaintainer = sqliteTable(
 	],
 );
 
-export const submission = sqliteTable(
+export const submission = pgTable(
 	'submission',
 	{
 		id: text('id').primaryKey(),
@@ -94,17 +103,17 @@ export const submission = sqliteTable(
 		kind: text('kind').$type<SubmissionKind>().notNull(),
 		status: text('status').$type<SubmissionStatus>().notNull(),
 		version: text('version').notNull(),
-		manifest: text('manifest', { mode: 'json' }).$type<PublishedManifest>().notNull(),
+		manifest: json('manifest').$type<PublishedManifest>().notNull(),
 		changelog: text('changelog'),
 		repository: text('repository'),
 		bundleSize: integer('bundle_size').notNull(),
 		stagingKey: text('staging_key').notNull().unique(),
 		sha256: text('sha256'),
-		createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-		submittedAt: integer('submitted_at', { mode: 'timestamp_ms' }),
+		createdAt: timestampMs('created_at').notNull(),
+		submittedAt: timestampMs('submitted_at'),
 		reviewerId: text('reviewer_id').references(() => user.id, { onDelete: 'set null' }),
 		reviewDecision: text('review_decision').$type<ReviewDecision>(),
-		reviewedAt: integer('reviewed_at', { mode: 'timestamp_ms' }),
+		reviewedAt: timestampMs('reviewed_at'),
 		reviewNote: text('review_note'),
 	},
 	(table) => [
@@ -119,7 +128,7 @@ export const submission = sqliteTable(
 );
 
 /** The approved versions of an addon, never deleted; the newest one not withdrawn is served. */
-export const addonVersion = sqliteTable(
+export const addonVersion = pgTable(
 	'addon_version',
 	{
 		addonId: text('addon_id')
@@ -133,15 +142,15 @@ export const addonVersion = sqliteTable(
 		submissionId: text('submission_id')
 			.notNull()
 			.references(() => submission.id),
-		manifest: text('manifest', { mode: 'json' }).$type<PublishedManifest>().notNull(),
+		manifest: json('manifest').$type<PublishedManifest>().notNull(),
 		changelog: text('changelog'),
 		bundleSize: integer('bundle_size').notNull(),
 		sha256: text('sha256').notNull(),
-		publishedAt: integer('published_at', { mode: 'timestamp_ms' })
-			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-			.notNull(),
+		publishedAt: timestampMs('published_at').defaultNow().notNull(),
 		/** The rollback event that withdrew this version from serving; `null` is live. */
-		withdrawnBy: integer('withdrawn_by').references(() => moderationEvent.id),
+		withdrawnBy: bigint('withdrawn_by', { mode: 'number' }).references(
+			() => moderationEvent.id,
+		),
 	},
 	(table) => [
 		primaryKey({ columns: [table.addonId, table.version] }),

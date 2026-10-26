@@ -135,39 +135,34 @@ function applyDelivery(
 	deliveryId: string,
 	action: SponsorshipAction,
 	event: SponsorshipEvent,
-): WebhookStatus {
+): Promise<WebhookStatus> {
 	const now = ctx.now();
 
-	return ctx.db.transaction(
-		(tx) => {
-			const recorded = tx
-				.insert(sponsorWebhookDelivery)
-				.values({ id: deliveryId, action, receivedAt: now })
-				.onConflictDoNothing()
-				.returning({ id: sponsorWebhookDelivery.id })
-				.all();
+	return ctx.db.transaction(async (tx): Promise<WebhookStatus> => {
+		const recorded = await tx
+			.insert(sponsorWebhookDelivery)
+			.values({ id: deliveryId, action, receivedAt: now })
+			.onConflictDoNothing()
+			.returning({ id: sponsorWebhookDelivery.id });
 
-			if (recorded.length === 0) {
-				return 'duplicate';
-			}
+		if (recorded.length === 0) {
+			return 'duplicate';
+		}
 
-			const current = tx
-				.select()
-				.from(sponsorship)
-				.where(eq(sponsorship.githubId, event.values.githubId))
-				.get();
-			const lifecycle = TRANSITIONS[action](event, current, now);
+		const [current] = await tx
+			.select()
+			.from(sponsorship)
+			.where(eq(sponsorship.githubId, event.values.githubId));
+		const lifecycle = TRANSITIONS[action](event, current, now);
 
-			if (!lifecycle) {
-				return 'unchanged';
-			}
+		if (!lifecycle) {
+			return 'unchanged';
+		}
 
-			upsertSponsorship(tx, { ...event.values, ...lifecycle, updatedAt: now });
+		await upsertSponsorship(tx, { ...event.values, ...lifecycle, updatedAt: now });
 
-			return 'applied';
-		},
-		{ behavior: 'immediate' },
-	);
+		return 'applied';
+	});
 }
 
 /**
@@ -235,7 +230,7 @@ export async function handleSponsorsWebhook(ctx: AppContext, request: Request): 
 		},
 		effectiveDate: effective_date,
 	};
-	const result = applyDelivery(ctx, deliveryId, action, event);
+	const result = await applyDelivery(ctx, deliveryId, action, event);
 
 	logger.info(`Sponsorship ${action} from ${remote.sponsor.login}: ${result}.`);
 

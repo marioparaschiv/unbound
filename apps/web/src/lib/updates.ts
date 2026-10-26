@@ -3,7 +3,7 @@ import type {
 	UpdatesResponse,
 	VersionChangelog,
 } from '@unbound-app/contracts/updates';
-import { and, desc, eq, gt, inArray, isNotNull, isNull, lte, max, or } from 'drizzle-orm';
+import { and, desc, eq, gt, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm';
 import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 
 import { getArtifactKeys, getCdnUrl, toVersionChangelog } from '~/lib/artifacts';
@@ -14,17 +14,17 @@ import type { AppContext } from '~/lib/context';
 
 /**
  * @description Builds the single statement that finds, per listed addon, its newest live version the
- * client can run. SQLite fills the other selected columns from the row holding the `max()`.
+ * client can run: `distinct on` keeps each addon's first row in version order, newest first.
  * @param ctx The application context.
  * @param request The client version and installed addons.
  * @returns The query, unexecuted.
  */
 export function newestCompatibleVersions(ctx: AppContext, request: UpdatesRequest) {
 	return ctx.db
-		.select({
+		.selectDistinctOn([addonVersion.addonId], {
 			addonId: addonVersion.addonId,
 			version: addonVersion.version,
-			versionKey: max(addonVersion.versionKey),
+			versionKey: addonVersion.versionKey,
 			manifest: addonVersion.manifest,
 			changelog: addonVersion.changelog,
 			submissionId: addonVersion.submissionId,
@@ -43,7 +43,7 @@ export function newestCompatibleVersions(ctx: AppContext, request: UpdatesReques
 				isNull(addon.delistedAt),
 			),
 		)
-		.groupBy(addonVersion.addonId);
+		.orderBy(addonVersion.addonId, desc(addonVersion.versionKey));
 }
 
 /** The version range one update spans: newer than `from`, up to and including `to`, as version keys. */

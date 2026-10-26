@@ -121,22 +121,20 @@ export function deliver(ctx: AppContext, payload: WebhookPayload, options: Deliv
  * @description Stores a sponsorship directly: an active $5 monthly one unless overridden.
  * @param ctx The application context.
  * @param row The sponsor's GitHub id and any columns to override.
+ * @returns Resolves once it is stored.
  */
-export function seedSponsorship(ctx: AppContext, row: SeededSponsorship) {
-	ctx.db
-		.insert(sponsorship)
-		.values({
-			githubLogin: `sponsor-${row.githubId}`,
-			state: 'active',
-			tierName: '$5 a month',
-			monthlyPriceCents: 500,
-			oneTime: false,
-			since: new Date('2026-01-01T00:00:00Z'),
-			endsAt: null,
-			updatedAt: new Date('2026-02-01T00:00:00Z'),
-			...row,
-		})
-		.run();
+export async function seedSponsorship(ctx: AppContext, row: SeededSponsorship): Promise<void> {
+	await ctx.db.insert(sponsorship).values({
+		githubLogin: `sponsor-${row.githubId}`,
+		state: 'active',
+		tierName: '$5 a month',
+		monthlyPriceCents: 500,
+		oneTime: false,
+		since: new Date('2026-01-01T00:00:00Z'),
+		endsAt: null,
+		updatedAt: new Date('2026-02-01T00:00:00Z'),
+		...row,
+	});
 }
 
 /**
@@ -145,6 +143,8 @@ export function seedSponsorship(ctx: AppContext, row: SeededSponsorship) {
  * @param githubId The sponsor's GitHub id.
  * @returns The row, or `undefined`.
  */
-export function storedSponsorship(ctx: AppContext, githubId: string) {
-	return ctx.db.select().from(sponsorship).where(eq(sponsorship.githubId, githubId)).get();
+export async function storedSponsorship(ctx: AppContext, githubId: string) {
+	const [row] = await ctx.db.select().from(sponsorship).where(eq(sponsorship.githubId, githubId));
+
+	return row;
 }

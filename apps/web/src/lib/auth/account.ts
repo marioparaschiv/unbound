@@ -55,7 +55,7 @@ export const getAccountOverview = createServerFn({ method: 'GET' }).handler(
 				expiresAt: key.expiresAt,
 				lastRequest: key.lastRequest,
 			})),
-			sponsor: getSponsorOverview(app, session.user.id),
+			sponsor: await getSponsorOverview(app, session.user.id),
 		};
 	},
 );

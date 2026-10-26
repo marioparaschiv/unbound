@@ -52,9 +52,9 @@ const github = serveGitHub({
 const fixture = github.repository(FIRST_PARTY);
 
 const shared = { GITHUB_API_URL: github.url.href, FIRST_PARTY_REPOSITORY: FIRST_PARTY };
-const trusted = createTestContext({ ...shared, S3_ENDPOINT: s3.url.href });
-const reviewed = createTestContext({ ...shared, S3_ENDPOINT: reviewS3.url.href });
-const unconfigured = createTestContext({ GITHUB_API_URL: github.url.href });
+const trusted = await createTestContext({ ...shared, S3_ENDPOINT: s3.url.href });
+const reviewed = await createTestContext({ ...shared, S3_ENDPOINT: reviewS3.url.href });
+const unconfigured = await createTestContext({ GITHUB_API_URL: github.url.href });
 const ctx = trusted.ctx;
 
 const server = serveEndpoints(ctx, {
@@ -68,7 +68,7 @@ afterAll(async () => {
 	await Promise.all([server.stop(true), s3.stop(true), reviewS3.stop(true), github.stop()]);
 
 	for (const context of [trusted, reviewed, unconfigured]) {
-		context.close();
+		await context.close();
 	}
 });
 
@@ -281,7 +281,7 @@ describe('GET /api/v1/first-party/addons', () => {
 		const owner = await signUp(ctx);
 
 		await publish(ciKey, request);
-		delistAddon(ctx, admin.caller, 'fp.delisted');
+		await delistAddon(ctx, admin.caller, 'fp.delisted');
 		await seedApprovedAddon(ctx, owner.userId, manifest('fp.elsewhere'));
 		await ctx.db
 			.update(addon)

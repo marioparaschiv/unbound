@@ -13,7 +13,7 @@ const ERIN = '100000000000000002';
 const FRANK = '100000000000000003';
 const DANA = '100000000000000004';
 
-const { ctx, close } = createTestContext({ DEVELOPER_LIST_PAGE_SIZE: '2' });
+const { ctx, close } = await createTestContext({ DEVELOPER_LIST_PAGE_SIZE: '2' });
 
 afterAll(close);
 

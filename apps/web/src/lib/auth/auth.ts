@@ -2,6 +2,7 @@ import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2';
 import type { Auth as BetterAuth, BetterAuthOptions } from 'better-auth';
 import { admin, bearer, deviceAuthorization } from 'better-auth/plugins';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { isPostgresSafe } from '@unbound-app/contracts/text';
 import type { AdminOptions } from 'better-auth/plugins';
 import { createLogger } from '@unbound-app/logger';
 import { apiKey } from '@better-auth/api-key';
@@ -59,7 +60,7 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 		baseURL: env.PUBLIC_URL,
 		secret: env.BETTER_AUTH_SECRET,
 		trustedOrigins: [env.PUBLIC_URL],
-		database: drizzleAdapter(db, { provider: 'sqlite', schema }),
+		database: drizzleAdapter(db, { provider: 'pg', schema }),
 		session: {
 			// No re-sign-in gate on sensitive routes such as unlinking; sessions last 30 days and roll on use.
 			freshAge: 0,
@@ -119,7 +120,7 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 					// Better Auth deletes outside any transaction, so the user is deleted here together with
 					// its `user.deleted` record, and `false` skips Better Auth's own delete.
 					before: async (deleted, context) => {
-						deleteUserWithRecord(db, deleted.id, {
+						await deleteUserWithRecord(db, deleted.id, {
 							actorId: context?.context.session?.user.id ?? null,
 							at: new Date(),
 						});
@@ -131,6 +132,13 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 		},
 		hooks: {
 			before: createAuthMiddleware(async (ctx) => {
+				if (!isPostgresSafe(ctx.body) || !isPostgresSafe(ctx.query)) {
+					throw new APIError('BAD_REQUEST', {
+						message:
+							'The request must not contain NUL (U+0000) or an unpaired surrogate.',
+					});
+				}
+
 				if (ctx.path !== '/sign-in/social' || ctx.body?.provider !== 'github') return;
 
 				throw new APIError('FORBIDDEN', {
@@ -141,7 +149,7 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 				if (!ctx.path.startsWith('/admin/')) return;
 
 				try {
-					recordAuthAdminAction(db, {
+					await recordAuthAdminAction(db, {
 						path: ctx.path,
 						actorId: ctx.context.session?.user.id ?? null,
 						at: new Date(),

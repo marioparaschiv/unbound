@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { DEFAULT_PERK_GRACE_DAYS } from '~/lib/sponsors/standing';
 import { isBotTokenHost } from '~/lib/discord';
 
 const positiveInt = z.coerce.number().int().positive();
@@ -8,7 +9,10 @@ export const envSchema = z.object({
 	PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
 	PUBLIC_URL: z.url(),
 	CDN_URL: z.url(),
-	DATABASE_PATH: z.string().min(1),
+	/** The pooled connection (pgbouncer, transaction mode) every query runs over. */
+	DATABASE_URL: z.url(),
+	/** The direct connection migrations run over, past pgbouncer. */
+	DATABASE_DIRECT_URL: z.url(),
 
 	BETTER_AUTH_SECRET: z.string().min(32),
 	DISCORD_CLIENT_ID: z.string().min(1),
@@ -49,7 +53,7 @@ export const envSchema = z.object({
 	GITHUB_SPONSORS_TOKEN: z.string().min(1).optional(),
 	GITHUB_SPONSORS_WEBHOOK_SECRET: z.string().min(1).optional(),
 	SPONSOR_RECONCILE_INTERVAL_SECONDS: positiveInt.default(3600),
-	SPONSOR_PERK_GRACE_DAYS: z.coerce.number().int().nonnegative().default(7),
+	SPONSOR_PERK_GRACE_DAYS: z.coerce.number().int().nonnegative().default(DEFAULT_PERK_GRACE_DAYS),
 
 	/** The `owner/name` whose build tags CI publishes without review; unset turns first-party publishing off. */
 	FIRST_PARTY_REPOSITORY: z.string().min(1).optional(),

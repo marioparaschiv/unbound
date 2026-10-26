@@ -1,17 +1,22 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { createTestContext, MAINTENANCE_URL, type AppContext } from '@unbound-app/web/testing';
+import { createBotReads, type BotReads } from '@unbound-app/web/bot';
 import { randomBytes } from 'node:crypto';
-import { join } from 'node:path';
 import postgres from 'postgres';
 
 import { createDatabase, type Database } from '~/db/database';
 import type { NotifyChannel } from '~/dispatchers/types';
 import { migrateDatabase } from '~/db/migrate';
-import type { EnvSource } from '~/lib/env';
+import { SITE_URL } from '~/lib/constants';
 
-export type TestDatabase = {
-	name: string;
-	url: string;
+export type BotTestDatabase = {
+	/** The web's context over the same database, for seeding web rows through the web's own helpers. */
+	web: AppContext;
+	/** The bot's schema, migrated. */
 	db: Database;
+	/** The read model over the bot's pool, as the runtime builds it. */
+	reads: BotReads;
+	/** The direct url of the throwaway database. */
+	url: string;
 	drop: () => Promise<void>;
 };
 
@@ -31,124 +36,40 @@ const NOTIFY_CHANNELS: NotifyChannel[] = [
 	'member_changed',
 ];
 const FLUSH_CHANNEL = 'test_flush';
-// 42501: another role's backend is connected; 55006: a backend did not leave within Postgres's 5 s wait.
-const RETRYABLE_DROP_CODES = new Set(['42501', '55006']);
-const DROP_TIMEOUT_MS = 30_000;
 
-/** Pass to `afterAll` so a drop that waits out a TimescaleDB scheduler is not cut off. */
-export const DROP_HOOK_TIMEOUT_MS = DROP_TIMEOUT_MS + 10_000;
+/** The sponsor grace period the test read model judges standing with, the web's default. */
+export const TEST_GRACE_DAYS = 7;
 
-function readEnvFile(): EnvSource {
-	const path = join(import.meta.dirname, '..', '..', '.env');
-
-	if (!existsSync(path)) {
-		return {};
-	}
-
-	const entries = readFileSync(path, 'utf8')
-		.split('\n')
-		.map((line) => line.match(/^(\w+)=(.*)$/))
-		.filter((match) => match !== null)
-		.map(([, name, value]) => [name, value?.trim().replaceAll(/^["']|["']$/g, '')]);
-
-	return Object.fromEntries(entries);
-}
-
-// Throwaway databases are created and listened on directly, so the direct url wins; CI sets only `DATABASE_URL`.
-function readDatabaseUrl(): string | undefined {
-	const file = readEnvFile();
-
-	return (
-		process.env.DATABASE_DIRECT_URL ||
-		process.env.DATABASE_URL ||
-		file.DATABASE_DIRECT_URL ||
-		file.DATABASE_URL ||
-		undefined
-	);
-}
-
-/** A direct (not pooled) url on the test cluster; its database name is replaced per test database. */
-export const DATABASE_URL = readDatabaseUrl();
-
-// CI provides Postgres, so a missing URL there is a misconfiguration, not a reason to skip.
-if (process.env.CI && !DATABASE_URL) {
-	throw new Error('DATABASE_URL is not set; the database tests must not skip in CI.');
-}
-
-function withDatabase(url: string, name: string) {
-	const parsed = new URL(url);
-
-	parsed.pathname = `/${name}`;
-
-	return parsed.toString();
-}
-
-async function onMaintenance(statement: string) {
-	if (!DATABASE_URL) {
-		throw new Error('DATABASE_URL is not set.');
-	}
-
-	const sql = postgres(withDatabase(DATABASE_URL, 'postgres'), {
-		max: 1,
-		onnotice: () => void 0,
-	});
-
-	try {
-		await sql.unsafe(statement);
-	} finally {
-		await sql.end();
-	}
-}
-
-function isRetryableDrop(error: unknown): error is postgres.PostgresError {
-	return error instanceof postgres.PostgresError && RETRYABLE_DROP_CODES.has(error.code);
-}
-
-// TimescaleDB's launcher briefly opens a superuser scheduler in every new database, which a
-// non-superuser cannot force out, so the drop retries until it has left.
-async function dropDatabase(name: string) {
-	const deadline = Date.now() + DROP_TIMEOUT_MS;
-
-	while (true) {
-		try {
-			await onMaintenance(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
-
-			return;
-		} catch (error) {
-			if (!isRetryableDrop(error) || Date.now() > deadline) {
-				throw error;
-			}
-
-			await Bun.sleep(200);
-		}
-	}
-}
+/** A direct url on the test cluster, from the web's helper; unset skips the database suites. */
+export const DATABASE_URL = MAINTENANCE_URL;
 
 /**
- * @description Creates and migrates a throwaway `unbound_bot_test_<random>` database on the local cluster.
- * @returns The database, its URL, and `drop()` which force-drops it.
+ * @description Creates a throwaway database with the web's migrations, then the bot's: schema `bot`
+ * and the triggers on the web's tables.
+ * @returns The web's context, the bot's database and reads over it, its url and `drop()`.
  */
-export async function createTestDatabase(): Promise<TestDatabase> {
-	if (!DATABASE_URL) {
-		throw new Error('DATABASE_URL is not set.');
-	}
-
-	const name = `unbound_bot_test_${randomBytes(6).toString('hex')}`;
-
-	await onMaintenance(`CREATE DATABASE ${name}`);
-
-	const url = withDatabase(DATABASE_URL, name);
+export async function createBotTestDatabase(): Promise<BotTestDatabase> {
+	const { ctx: web, close } = await createTestContext();
+	const url = web.env.DATABASE_DIRECT_URL;
 	const db = createDatabase(url);
 
-	await migrateDatabase(db);
+	try {
+		await migrateDatabase(db);
+	} catch (error) {
+		await db.$client.end();
+		await close();
+
+		throw error;
+	}
 
 	return {
-		name,
-		url,
+		web,
 		db,
+		reads: createBotReads(db.$client, { siteUrl: SITE_URL, sponsorGraceDays: TEST_GRACE_DAYS }),
+		url,
 		async drop() {
 			await db.$client.end();
-			await dropDatabase(name);
+			await close();
 		},
 	};
 }
@@ -158,7 +79,9 @@ export async function createTestDatabase(): Promise<TestDatabase> {
  * @param database The test database to listen on.
  * @returns The received notifications, a `flush()` barrier and `stop()`.
  */
-export async function recordNotifications(database: TestDatabase): Promise<NotificationLog> {
+export async function recordNotifications(
+	database: Pick<BotTestDatabase, 'url' | 'db'>,
+): Promise<NotificationLog> {
 	const sql = postgres(database.url, { max: 1, onnotice: () => void 0 });
 	const received: Notification[] = [];
 	const flushed = new Set<string>();

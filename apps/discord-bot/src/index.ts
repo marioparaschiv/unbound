@@ -2,16 +2,16 @@ import './lib/setup';
 
 import { Events, GatewayIntentBits, type Client } from 'discord.js';
 import { LogLevel, SapphireClient } from '@sapphire/framework';
+import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
-import { createFeedClient } from '~/lib/feed/client';
+import { GUILD_ID, SITE_URL } from '~/lib/constants';
 import { startDispatchers } from '~/runtime/start';
-import { startPoller } from '~/runtime/poller';
+import { checkTriggers } from '~/db/triggers';
 import { setDatabase } from '~/db/instance';
 import { dispatchers } from '~/dispatchers';
 import { checkConfig } from '~/lib/config';
-import { GUILD_ID } from '~/lib/constants';
 
 const logger = createLogger('Bot');
 const config = checkConfig(process.env, GUILD_ID);
@@ -23,8 +23,19 @@ if (!config.ok) {
 
 const { env } = config;
 const db = createDatabase(env.DATABASE_URL, POOLED_OPTIONS);
+// One pool for both: the bot's schema through `db`, the web's tables, read only, through `web`.
+const web = createBotReads(db.$client, {
+	siteUrl: SITE_URL,
+	sponsorGraceDays: env.SPONSOR_PERK_GRACE_DAYS,
+});
 
 setDatabase(db);
+
+try {
+	await checkTriggers(db);
+} catch (error) {
+	logger.error('Failed to check the triggers on the web tables:', error);
+}
 
 const client = new SapphireClient({
 	// Sapphire otherwise derives the piece root from the package entry point, which Bun does not set.
@@ -49,20 +60,14 @@ async function exit(code: number): Promise<never> {
 function startRuntime(ready: Client<true>) {
 	const { started, stop: stopDispatchers } = startDispatchers(
 		dispatchers,
-		{ db, client: ready },
+		{ db, web, client: ready },
 		// LISTEN holds a session, which pgbouncer's transaction mode cannot give it.
 		env.DATABASE_DIRECT_URL,
 		env.RECONCILE_INTERVAL_SECONDS * 1000,
 	);
-	const stopPoller = startPoller({
-		db,
-		fetchPage: createFeedClient(env.UNBOUND_API_URL, env.UNBOUND_API_KEY),
-		pageSize: env.FEED_PAGE_SIZE,
-		intervalMs: env.POLL_INTERVAL_SECONDS * 1000,
-	});
 
 	async function shutdown() {
-		await Promise.all([stopPoller(), stopDispatchers()]);
+		await stopDispatchers();
 		await exit(0);
 	}
 

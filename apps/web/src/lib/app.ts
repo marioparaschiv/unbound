@@ -5,6 +5,6 @@ import { parseEnv } from '~/lib/env';
 const env = parseEnv();
 
 /** The process-wide application context. Route handlers import this; tests build their own. */
-const app = createAppContext(env, createDatabase(env.DATABASE_PATH));
+const app = createAppContext(env, createDatabase(env.DATABASE_URL));
 
 export default app;

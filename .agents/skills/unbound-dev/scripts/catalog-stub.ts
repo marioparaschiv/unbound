@@ -1,4 +1,5 @@
-// Real `GET /api/v1/catalog` endpoint over a seeded SQLite database, plus a CDN for the seeded files.
+// Real `GET /api/v1/catalog` endpoint over a seeded throwaway Postgres database, plus a CDN for the
+// seeded files. The database is dropped on SIGINT, SIGTERM or SIGHUP (`tmux kill-session`).
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 
 import {
@@ -7,6 +8,7 @@ import {
 	seedVersion,
 	signInWithDiscord,
 } from '../../../../apps/web/tests/helpers/index';
+import { createTestDatabase, dropDatabase } from '../../../../apps/web/tests/helpers/database';
 import getCatalogEndpoint from '../../../../apps/web/src/endpoints/get-catalog';
 import { resolveDevHost } from '../../../../packages/client/scripts/dev-host';
 import { eq } from '../../../../apps/web/node_modules/drizzle-orm/index.js';
@@ -16,7 +18,33 @@ import { toAddonSummary } from '../../../../apps/web/src/lib/addons';
 const PORT = Number(process.env.PORT ?? 3200);
 const ORIGIN = `http://${resolveDevHost()}:${PORT}`;
 
-const { ctx } = createTestContext({ CDN_URL: `${ORIGIN}/cdn/` });
+let databaseName = '';
+
+const { ctx } = await createTestContext({ CDN_URL: `${ORIGIN}/cdn/` }, async () => {
+	const database = await createTestDatabase();
+
+	databaseName = database.name;
+
+	return database;
+});
+
+let stopping: Promise<void> | undefined;
+
+// The context's own close() stops waiting for the drop after 250 ms; this exit waits for all of it.
+async function stop() {
+	await ctx.db.$client.end();
+	await dropDatabase(databaseName);
+	console.log(`dropped ${databaseName}`);
+}
+
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const) {
+	process.on(signal, () => {
+		stopping ??= stop()
+			.catch((error) => console.error(`Could not drop ${databaseName}:`, error))
+			.finally(() => process.exit(0));
+	});
+}
+
 const { userId } = await signInWithDiscord(ctx, {
 	id: '80351110224679003',
 	name: 'Seeder',

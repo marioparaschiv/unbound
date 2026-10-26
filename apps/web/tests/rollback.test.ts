@@ -1,6 +1,5 @@
 import type { UpdatesRequest } from '@unbound-app/contracts/updates';
 import { afterAll, describe, expect, test } from 'bun:test';
-import type { SQLQueryBindings } from 'bun:sqlite';
 import { eq } from 'drizzle-orm';
 
 import { LATEST_VERSION, getAddonDetails, getCatalog, listAddons } from '~/lib/addons';
@@ -17,12 +16,9 @@ import { serveVersion } from '~/lib/rollback';
 
 import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { manifest, seedApprovedAddon, seedVersion } from './helpers/addons';
+import { explain, indexCond, planNodes } from './helpers/database';
 import { commitPlugin, serveGitHub } from './helpers/github';
 import { serveMemoryS3 } from './helpers/memory-s3';
-
-type PlanStep = {
-	detail: string;
-};
 
 const REPOSITORY = 'acme/addons';
 
@@ -31,7 +27,7 @@ const github = serveGitHub({
 	repositories: { [REPOSITORY]: {} },
 	tokens: { owner: { push: [REPOSITORY] } },
 });
-const base = createTestContext({
+const base = await createTestContext({
 	S3_ENDPOINT: s3.url.href,
 	GITHUB_API_URL: github.url.href,
 	SUBMISSION_RATE_LIMIT_MAX: '1000',
@@ -41,7 +37,7 @@ const ctx: AppContext = base.ctx;
 
 afterAll(async () => {
 	await Promise.all([s3.stop(true), github.stop()]);
-	base.close();
+	await base.close();
 });
 
 let users = 0;
@@ -113,19 +109,12 @@ function countEvents() {
 	return ctx.db.$count(moderationEvent);
 }
 
-function rejection(run: () => ServeVersionResult): Error | undefined {
+async function rejection(run: () => Promise<ServeVersionResult>): Promise<Error | undefined> {
 	try {
-		run();
+		await run();
 	} catch (error) {
 		return error instanceof Error ? error : undefined;
 	}
-}
-
-function plan(sql: string, params: unknown[]) {
-	return ctx.db.$client
-		.query<PlanStep, SQLQueryBindings[]>(`EXPLAIN QUERY PLAN ${sql}`)
-		.all(...params.map((param) => (typeof param === 'number' ? param : String(param))))
-		.map((step) => step.detail);
 }
 
 describe('serveVersion', () => {
@@ -133,7 +122,7 @@ describe('serveVersion', () => {
 		await seedReleases('rb.rollback');
 
 		const before = await getCatalog(ctx);
-		const result = serveVersion(ctx, admin.caller, 'rb.rollback', {
+		const result = await serveVersion(ctx, admin.caller, 'rb.rollback', {
 			version: '1.0.0',
 			reason: '1.2.0 crashes on launch',
 		});
@@ -174,7 +163,10 @@ describe('serveVersion', () => {
 
 	test('offers clients on a withdrawn version the served one, and nothing to clients on it', async () => {
 		await seedReleases('rb.downgrade');
-		serveVersion(ctx, admin.caller, 'rb.downgrade', { version: '1.0.0', reason: 'Broken' });
+		await serveVersion(ctx, admin.caller, 'rb.downgrade', {
+			version: '1.0.0',
+			reason: 'Broken',
+		});
 
 		expect(await offered('rb.downgrade', '1.2.0')).toEqual([['1.0.0', []]]);
 		expect(await offered('rb.downgrade', '1.1.0')).toEqual([['1.0.0', []]]);
@@ -184,9 +176,9 @@ describe('serveVersion', () => {
 
 	test('serving the pre-rollback version restores exactly what the rollback withdrew', async () => {
 		await seedReleases('rb.undo');
-		serveVersion(ctx, admin.caller, 'rb.undo', { version: '1.0.0', reason: 'Broken' });
+		await serveVersion(ctx, admin.caller, 'rb.undo', { version: '1.0.0', reason: 'Broken' });
 
-		const undo = serveVersion(ctx, admin.caller, 'rb.undo', {
+		const undo = await serveVersion(ctx, admin.caller, 'rb.undo', {
 			version: '1.2.0',
 			reason: 'False alarm',
 		});
@@ -207,9 +199,9 @@ describe('serveVersion', () => {
 
 	test('serving a version between restores only it and leaves the newer ones withdrawn', async () => {
 		await seedReleases('rb.between');
-		serveVersion(ctx, admin.caller, 'rb.between', { version: '1.0.0', reason: 'Broken' });
+		await serveVersion(ctx, admin.caller, 'rb.between', { version: '1.0.0', reason: 'Broken' });
 
-		const partial = serveVersion(ctx, admin.caller, 'rb.between', {
+		const partial = await serveVersion(ctx, admin.caller, 'rb.between', {
 			version: '1.1.0',
 			reason: 'Only 1.2.0 is broken',
 		});
@@ -220,7 +212,10 @@ describe('serveVersion', () => {
 
 	test('a new approval after a rollback is served while the withdrawn versions stay withdrawn', async () => {
 		await seedReleases('rb.approval');
-		serveVersion(ctx, admin.caller, 'rb.approval', { version: '1.0.0', reason: 'Broken' });
+		await serveVersion(ctx, admin.caller, 'rb.approval', {
+			version: '1.0.0',
+			reason: 'Broken',
+		});
 
 		const developer = await currentCaller(owner.userId);
 		const { request } = commitPlugin(
@@ -261,7 +256,7 @@ describe('serveVersion', () => {
 
 		const events = await countEvents();
 		const before = await getCatalog(ctx);
-		const result = serveVersion(ctx, admin.caller, 'rb.noop', {
+		const result = await serveVersion(ctx, admin.caller, 'rb.noop', {
 			version: '1.2.0',
 			reason: 'Again',
 		});
@@ -284,15 +279,15 @@ describe('serveVersion', () => {
 		const request = { version: '1.0.0', reason: 'Broken' };
 
 		expect(
-			rejection(() => serveVersion(ctx, moderator.caller, 'rb.refused', request)),
+			await rejection(() => serveVersion(ctx, moderator.caller, 'rb.refused', request)),
 		).toMatchObject({ code: 'forbidden' });
 		expect(
-			rejection(() =>
+			await rejection(() =>
 				serveVersion(ctx, admin.caller, 'rb.refused', { ...request, version: '3.0.0' }),
 			),
 		).toMatchObject({ code: 'not_found' });
 		expect(
-			rejection(() => serveVersion(ctx, admin.caller, 'rb.unknown', request)),
+			await rejection(() => serveVersion(ctx, admin.caller, 'rb.unknown', request)),
 		).toMatchObject({ code: 'not_found' });
 		expect(await countEvents()).toBe(events);
 		expect((await served('rb.refused')).catalog).toBe('1.2.0');
@@ -300,31 +295,24 @@ describe('serveVersion', () => {
 });
 
 describe('served-version reads', () => {
-	test('the catalog reads the served version through the live index', () => {
+	test('the catalog reads the served version through the live index', async () => {
 		const query = ctx.db.query.addon
 			.findMany({ where: { delistedAt: { isNull: true } }, with: LATEST_VERSION })
 			.toSQL();
+		const root = await explain(ctx.db, query);
 
-		expect(plan(query.sql, query.params)).toContainEqual(
-			expect.stringMatching(
-				/^SEARCH \S+ USING (COVERING )?INDEX addon_version_live_idx \(addon_id=\?/,
-			),
-		);
+		expect(indexCond(root, 'addon_version_live_idx')).toMatch(/^\(addon_id = /);
 	});
 
-	test('the update check reads live versions through the live index', () => {
+	test('the update check reads live versions through the live index', async () => {
 		const request: UpdatesRequest = {
 			clientVersion: '2.0.0',
 			addons: [{ id: 'rb.rollback', version: '1.0.0' }],
 		};
 		const query = newestCompatibleVersions(ctx, request).toSQL();
-		const steps = plan(query.sql, query.params);
+		const root = await explain(ctx.db, query);
 
-		expect(steps).toContainEqual(
-			expect.stringMatching(
-				/^SEARCH addon_version USING (COVERING )?INDEX addon_version_live_idx \(addon_id=\?/,
-			),
-		);
-		expect(steps).not.toContainEqual(expect.stringMatching(/^SCAN/));
+		expect(indexCond(root, 'addon_version_live_idx')).toMatch(/^\(addon_id = /);
+		expect(planNodes(root).map((node) => node['Node Type'])).not.toContain('Seq Scan');
 	});
 });

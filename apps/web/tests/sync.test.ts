@@ -88,7 +88,7 @@ const discord = Bun.serve({
 	},
 });
 
-const base = createTestContext({
+const base = await createTestContext({
 	DISCORD_API_URL: new URL('/api/v10', discord.url).href,
 	SYNC_RATE_LIMIT_MAX: '1000',
 	SYNC_SIGN_IN_RATE_LIMIT_MAX: '1000',
@@ -106,7 +106,7 @@ const client = createApiClient<Api>({ baseUrl: server.url.href });
 afterAll(async () => {
 	await server.stop(true);
 	await discord.stop(true);
-	base.close();
+	await base.close();
 });
 
 let users = 0;
@@ -270,6 +270,19 @@ describe('/api/v1/sync', () => {
 			unbound: { 'staff-mode': true },
 			'cat.plugin': { volume: 3 },
 		});
+	});
+
+	test('stores settings holding NUL or a lone surrogate whole', async () => {
+		const headers = await signIn();
+		const settings = { 'cat.plugin': { nul: 'a\0b', lone: 'a\ud800b', 'ke\0y': true } };
+		const saved = await put(
+			headers,
+			0,
+			documentWith({ addons: plugins('cat.plugin'), settings }),
+		);
+
+		expect(saved.document.settings).toEqual(settings);
+		expect((await getState(headers)).document.settings).toEqual(settings);
 	});
 
 	test('rejects a save against a stale revision with a conflict', async () => {

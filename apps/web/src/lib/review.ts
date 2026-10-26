@@ -96,7 +96,7 @@ export async function listReviewQueue(
 	const rows = await ctx.db.query.submission.findMany({
 		where: { status: 'pending_review', kind: { in: kinds } },
 		with: { author: { columns: { id: true, name: true, image: true } }, source: true },
-		orderBy: { submittedAt: 'asc' },
+		orderBy: { submittedAt: 'asc', id: 'asc' },
 	});
 
 	if (rows.length === 0) {
@@ -227,40 +227,35 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
  * @param row The approved submission.
  * @param sha256 The verified SHA-256 of the published bundle.
  * @param publishedAt The approval time.
+ * @returns Resolves once the version is live.
  */
-export function publishVersion(
+export async function publishVersion(
 	tx: Transaction,
 	row: SubmissionRow,
 	sha256: string,
 	publishedAt: Date,
-): void {
+): Promise<void> {
 	if (row.kind === 'listing') {
-		tx.insert(addon)
-			.values({
-				id: row.addonId,
-				repository: row.repository,
-				createdAt: publishedAt,
-				...toAddonSummary(row.manifest, publishedAt),
-			})
-			.run();
-		tx.insert(addonMaintainer)
-			.values({
-				addonId: row.addonId,
-				userId: row.authorId,
-				role: 'owner',
-				createdAt: publishedAt,
-			})
-			.run();
+		await tx.insert(addon).values({
+			id: row.addonId,
+			repository: row.repository,
+			createdAt: publishedAt,
+			...toAddonSummary(row.manifest, publishedAt),
+		});
+		await tx.insert(addonMaintainer).values({
+			addonId: row.addonId,
+			userId: row.authorId,
+			role: 'owner',
+			createdAt: publishedAt,
+		});
 	}
 
-	tx.insert(addonVersion)
-		.values(toVersionRow(row, sha256, publishedAt))
-		.run();
+	await tx.insert(addonVersion).values(toVersionRow(row, sha256, publishedAt));
 
 	if (row.kind !== 'update') return;
 
-	tx.update(addon).set({ repository: row.repository }).where(eq(addon.id, row.addonId)).run();
-	refreshAddonSummary(tx, row.addonId);
+	await tx.update(addon).set({ repository: row.repository }).where(eq(addon.id, row.addonId));
+	await refreshAddonSummary(tx, row.addonId);
 }
 
 /**
@@ -272,56 +267,48 @@ function decide(
 	row: SubmissionRow,
 	decision: Decision,
 	sha256?: string,
-): SubmissionRow {
-	return ctx.db.transaction(
-		(tx) => {
-			const updated = tx
-				.update(submission)
-				.set({
-					status: decision.decision,
-					reviewDecision: decision.decision,
-					reviewNote: decision.note,
-					reviewerId: decision.reviewerId,
-					reviewedAt: decision.reviewedAt,
-				})
-				.where(and(eq(submission.id, row.id), eq(submission.status, 'pending_review')))
-				.returning()
-				.get();
+): Promise<SubmissionRow> {
+	return ctx.db.transaction(async (tx) => {
+		const [updated] = await tx
+			.update(submission)
+			.set({
+				status: decision.decision,
+				reviewDecision: decision.decision,
+				reviewNote: decision.note,
+				reviewerId: decision.reviewerId,
+				reviewedAt: decision.reviewedAt,
+			})
+			.where(and(eq(submission.id, row.id), eq(submission.status, 'pending_review')))
+			.returning();
 
-			if (!updated) {
-				throw new ApiError(
-					'submission_not_pending',
-					`Submission ${row.id} was already reviewed.`,
-				);
-			}
+		if (!updated) {
+			throw new ApiError(
+				'submission_not_pending',
+				`Submission ${row.id} was already reviewed.`,
+			);
+		}
 
-			recordReviewDecision(tx, updated);
+		await recordReviewDecision(tx, updated);
 
-			if (!sha256) {
-				return updated;
-			}
-
-			publishVersion(tx, row, sha256, decision.reviewedAt);
-
-			if (row.kind === 'listing') {
-				const author = tx
-					.select({ role: user.role })
-					.from(user)
-					.where(eq(user.id, row.authorId))
-					.get();
-
-				if (author && !hasPermission(author.role, { update: ['create'] })) {
-					tx.update(user)
-						.set({ role: 'developer' })
-						.where(eq(user.id, row.authorId))
-						.run();
-				}
-			}
-
+		if (!sha256) {
 			return updated;
-		},
-		{ behavior: 'immediate' },
-	);
+		}
+
+		await publishVersion(tx, row, sha256, decision.reviewedAt);
+
+		if (row.kind === 'listing') {
+			const [author] = await tx
+				.select({ role: user.role })
+				.from(user)
+				.where(eq(user.id, row.authorId));
+
+			if (author && !hasPermission(author.role, { update: ['create'] })) {
+				await tx.update(user).set({ role: 'developer' }).where(eq(user.id, row.authorId));
+			}
+		}
+
+		return updated;
+	});
 }
 
 /**
@@ -348,7 +335,7 @@ export async function reviewSubmission(
 	};
 
 	const sha256 = request.decision === 'approved' ? await publishArtifact(ctx, row) : undefined;
-	const reviewed = decide(ctx, row, decision, sha256);
+	const reviewed = await decide(ctx, row, decision, sha256);
 
 	if (sha256) {
 		requestProfileRefresh();

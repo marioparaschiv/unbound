@@ -11,7 +11,8 @@ import { sql } from 'drizzle-orm';
 export function likeContains(column: SQLWrapper, search: string): SQL {
 	const pattern = `%${search.replaceAll(/[\\%_]/g, (match) => `\\${match}`)}%`;
 
-	return sql`${column} like ${pattern} escape '\\'`;
+	// Under the database's libc C ctype, `ilike` folds ASCII only, as SQLite's `like` did.
+	return sql`${column} ilike ${pattern} escape '\\'`;
 }
 
 export default likeContains;

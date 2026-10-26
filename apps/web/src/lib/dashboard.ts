@@ -165,9 +165,9 @@ const RECORD_COLUMNS = {
 	kind: submission.kind,
 	status: submission.status,
 	version: submission.version,
-	name: sql<string>`json_extract(${submission.manifest}, '$.name')`,
-	manifestType: sql<AddonType | null>`json_extract(${submission.manifest}, '$.type')`,
-	main: sql<string>`json_extract(${submission.manifest}, '$.main')`,
+	name: sql<string>`${submission.manifest} ->> 'name'`,
+	manifestType: sql<AddonType | null>`${submission.manifest} ->> 'type'`,
+	main: sql<string>`${submission.manifest} ->> 'main'`,
 	repository: submission.repository,
 	path: submissionSource.path,
 	submittedAt: submission.submittedAt,
@@ -210,7 +210,7 @@ async function querySubmissions(ctx: AppContext, userId: string, addonIds: strin
 			.from(submission)
 			.leftJoin(submissionSource, eq(submissionSource.submissionId, submission.id))
 			.where(and(scope, isNotNull(submission.submittedAt)))
-			.orderBy(desc(submission.submittedAt))
+			.orderBy(desc(submission.submittedAt), desc(submission.id))
 			.limit(TIMELINE_LIMIT),
 	]);
 

@@ -1,0 +1,1 @@
+ALTER TABLE "bot"."audit_post" ALTER COLUMN "message_id" DROP NOT NULL;

@@ -4,6 +4,11 @@ import type { sponsorship } from '~/db/schema';
 
 export type Sponsorship = typeof sponsorship.$inferSelect;
 
+/** Days sponsor perks outlast a sponsorship unless `SPONSOR_PERK_GRACE_DAYS` says otherwise. */
+export const DEFAULT_PERK_GRACE_DAYS = 7;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export type SponsoringStanding =
 	| { kind: 'active'; sponsorship: Sponsorship }
 	| { kind: 'grace'; sponsorship: Sponsorship; until: Date };
@@ -18,6 +23,15 @@ const ENDS_AT: Record<SponsorshipState, (row: Sponsorship) => Date | null> = {
 	pending_cancellation: (row) => row.endsAt,
 	cancelled: (row) => row.endsAt ?? row.updatedAt,
 };
+
+/**
+ * @description Converts a grace period in days to the milliseconds {@link standingOf} takes.
+ * @param days The grace period, `SPONSOR_PERK_GRACE_DAYS`.
+ * @returns The grace period in milliseconds.
+ */
+export function perkGraceMs(days: number): number {
+	return days * DAY_MS;
+}
 
 /**
  * @description Derives a sponsor's standing at a moment from their stored sponsorship.
@@ -59,4 +73,4 @@ export function isSponsoring(standing: SponsorStanding): standing is SponsoringS
 	return standing.kind === 'active' || standing.kind === 'grace';
 }
 
-export default { standingOf, isSponsoring };
+export default { DEFAULT_PERK_GRACE_DAYS, perkGraceMs, standingOf, isSponsoring };

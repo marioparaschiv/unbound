@@ -1,18 +1,12 @@
 import { editAddonRequestSchema } from '@unbound-app/contracts/admin';
 import type { EditAddonRequest } from '@unbound-app/contracts/admin';
 import { afterAll, describe, expect, test } from 'bun:test';
-import { cp, mkdtemp, readdir, rm } from 'node:fs/promises';
-import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
 import { eq } from 'drizzle-orm';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
 import { getAddonDetails, getCatalog, listAddons } from '~/lib/addons';
-import { MIGRATIONS_FOLDER, migrateDatabase } from '~/db/migrate';
 import { editAddon, getAdminAddon } from '~/lib/admin-addon';
-import { addon, moderationEvent, user } from '~/db/schema';
+import { moderationEvent, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
-import { createDatabase } from '~/db/database';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 import { serveVersion } from '~/lib/rollback';
@@ -20,9 +14,7 @@ import { serveVersion } from '~/lib/rollback';
 import { createTestContext, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { manifest, seedApprovedAddon, seedVersion } from './helpers/addons';
 
-const EDIT_MIGRATION = '20261023165207_admin_edit';
-
-const base = createTestContext({ ADDON_LIST_PAGE_SIZE: '100' });
+const base = await createTestContext({ ADDON_LIST_PAGE_SIZE: '100' });
 const ctx: AppContext = base.ctx;
 
 afterAll(base.close);
@@ -122,7 +114,7 @@ describe('editAddon', () => {
 			details: ['Greeter', 'Says hello in 1.1.0.'],
 		});
 
-		serveVersion(ctx, admin.caller, 'edit.pin', { version: '1.0.0', reason: 'Broken' });
+		await serveVersion(ctx, admin.caller, 'edit.pin', { version: '1.0.0', reason: 'Broken' });
 
 		expect((await displayed('edit.pin')).row).toEqual({
 			name: 'Greeter',
@@ -293,58 +285,5 @@ describe('editAddon', () => {
 				code: 'forbidden',
 			},
 		);
-	});
-});
-
-describe('edit migration', () => {
-	test('backfills the repository from the newest approved submission that named one', async () => {
-		const directory = await mkdtemp(join(tmpdir(), 'ub-edit-'));
-		const previous = join(directory, 'migrations');
-		const applied = (await readdir(MIGRATIONS_FOLDER)).filter((name) => name < EDIT_MIGRATION);
-		const db = createDatabase(join(directory, 'app.db'));
-
-		try {
-			for (const name of applied) {
-				await cp(join(MIGRATIONS_FOLDER, name), join(previous, name), { recursive: true });
-			}
-
-			migrate(db, { migrationsFolder: previous });
-
-			db.$client.run(`INSERT INTO user (id, name, email) VALUES ('u', 'U', 'u@example.com')`);
-			db.$client.run(
-				`INSERT INTO addon (id, type, name, description, updated_at) VALUES ('old.one', 'plugin', 'One', '', 0), ('old.none', 'plugin', 'None', '', 0)`,
-			);
-
-			const submissions = [
-				['old.one', 'a', 'approved', 'acme/first', 1000],
-				['old.one', 'b', 'approved', 'acme/newest', 2000],
-				['old.one', 'c', 'approved', null, 3000],
-				['old.one', 'd', 'rejected', 'evil/fork', 4000],
-				['old.none', 'e', 'approved', null, 1000],
-			] as const;
-
-			for (const [addonId, id, status, repository, reviewedAt] of submissions) {
-				db.$client.run(
-					`INSERT INTO submission (id, addon_id, author_id, kind, status, version, manifest, repository, bundle_size, staging_key, upload_expires_at, created_at, reviewed_at)
-					VALUES (?, ?, 'u', 'update', ?, '1.0.0', '{}', ?, 1, ?, 0, 0, ?)`,
-					[id, addonId, status, repository, id, reviewedAt],
-				);
-			}
-
-			migrateDatabase(db);
-
-			const migrated = await db
-				.select({ id: addon.id, repository: addon.repository })
-				.from(addon)
-				.orderBy(addon.id);
-
-			expect(migrated).toEqual([
-				{ id: 'old.none', repository: null },
-				{ id: 'old.one', repository: 'acme/newest' },
-			]);
-		} finally {
-			db.$client.close();
-			await rm(directory, { recursive: true });
-		}
 	});
 });

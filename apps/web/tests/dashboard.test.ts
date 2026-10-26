@@ -12,7 +12,7 @@ import { createTestContext, signInWithDiscord } from './helpers/context';
 
 const NOW = new Date('2026-10-17T12:00:00.000Z');
 
-const base = createTestContext();
+const base = await createTestContext();
 const ctx: AppContext = { ...base.ctx, now: () => NOW };
 
 let users = 0;

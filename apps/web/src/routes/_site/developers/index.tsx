@@ -52,7 +52,7 @@ function DevelopersContent() {
 
 	function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		navigate({ search: toPageSearch(searchInput, 1) });
+		void navigate({ search: toPageSearch(searchInput, 1) });
 	}
 
 	function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -62,7 +62,7 @@ function DevelopersContent() {
 
 	function clearSearch() {
 		setSearchInput('');
-		navigate({ search: toPageSearch('', 1) });
+		void navigate({ search: toPageSearch('', 1) });
 	}
 
 	if (total === 0 && !search) {

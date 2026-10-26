@@ -5,6 +5,7 @@ import { updatesRequestSchema, updatesResponseSchema } from '../src/updates';
 import { addonManifestSchema, semverSchema } from '../src/manifest';
 import { reviewSubmissionRequestSchema } from '../src/review';
 import { apiErrorResponseSchema } from '../src/errors';
+import { isPostgresSafe } from '../src/text';
 import { apiUrlSchema } from '../src/api';
 
 const manifest = {
@@ -262,5 +263,32 @@ describe('apiErrorResponseSchema', () => {
 		expect(
 			apiErrorResponseSchema.safeParse({ error: { code: 'teapot', message: '' } }).success,
 		).toBe(false);
+	});
+});
+
+describe('isPostgresSafe', () => {
+	test('refuses NUL or an unpaired surrogate in any string or key', () => {
+		const inputs = [
+			'ali\0ce',
+			'half \ud800 a pair',
+			'\udc00 first',
+			'ends high \ud83d',
+			{ subject: { type: 'user', id: 'u1' }, body: 'Hi\0.' },
+			{ ...manifest, extra: [{ 'ke\0y': 'value' }] },
+			{ ...manifest, extra: [{ ['ke\ud800y']: 'value' }] },
+			[1, true, null, ['deep \0']],
+		];
+
+		for (const input of inputs) {
+			expect({ input, ok: isPostgresSafe(input) }).toEqual({ input, ok: false });
+		}
+	});
+
+	test('accepts other text, surrogate pairs included, and non-strings', () => {
+		const inputs = ['alice', 'a cat \ud83d\udc31', { ...manifest, extra: [{ key: 'value' }] }];
+
+		for (const input of [...inputs, 1, true, null, undefined]) {
+			expect({ input, ok: isPostgresSafe(input) }).toEqual({ input, ok: true });
+		}
 	});
 });

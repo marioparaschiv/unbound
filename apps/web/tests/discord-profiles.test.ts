@@ -13,7 +13,12 @@ import { addon, discordProfile } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import { parseEnv } from '~/lib/env';
 
-import { TEST_ENV, createTestContext, signInWithDiscord } from './helpers/context';
+import {
+	OFFLINE_DATABASE_ENV,
+	TEST_ENV,
+	createTestContext,
+	signInWithDiscord,
+} from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
 import { serveDiscord } from './helpers/discord';
 
@@ -21,7 +26,7 @@ const HOUR_MS = 3_600_000;
 
 const discord = serveDiscord();
 const other = serveDiscord();
-const base = createTestContext({ DISCORD_API_URL: discord.apiUrl });
+const base = await createTestContext({ DISCORD_API_URL: discord.apiUrl });
 
 let clock = new Date('2026-10-20T12:00:00Z');
 
@@ -31,7 +36,7 @@ let addons = 0;
 let ownerId = '';
 
 afterAll(async () => {
-	base.close();
+	await base.close();
 	await Promise.all([discord.stop(), other.stop()]);
 });
 
@@ -224,7 +229,7 @@ describe('refreshDiscordProfiles', () => {
 
 describe('Discord API host', () => {
 	test('rejects a DISCORD_API_URL that is neither discord.com nor loopback', () => {
-		const env = { ...TEST_ENV, DATABASE_PATH: ':memory:' };
+		const env = { ...TEST_ENV, ...OFFLINE_DATABASE_ENV };
 
 		for (const url of [
 			'https://example.com/api/v10',

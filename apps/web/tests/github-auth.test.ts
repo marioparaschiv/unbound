@@ -3,7 +3,7 @@ import { afterAll, afterEach, expect, spyOn, test } from 'bun:test';
 import { createGitHubClient } from '~/lib/github';
 import { parseEnv } from '~/lib/env';
 
-import { TEST_ENV } from './helpers/context';
+import { OFFLINE_DATABASE_ENV, TEST_ENV } from './helpers/context';
 
 const APP_CREDENTIALS = `Basic ${btoa(`${TEST_ENV.GITHUB_CLIENT_ID}:${TEST_ENV.GITHUB_CLIENT_SECRET}`)}`;
 
@@ -30,7 +30,7 @@ async function sentAuthorization(apiUrl: string, token: string | null) {
 
 	fetchSpy.mockImplementation(Object.assign(capture, { preconnect }));
 
-	const env = parseEnv({ ...TEST_ENV, DATABASE_PATH: ':memory:', GITHUB_API_URL: apiUrl });
+	const env = parseEnv({ ...TEST_ENV, ...OFFLINE_DATABASE_ENV, GITHUB_API_URL: apiUrl });
 
 	await createGitHubClient(env, token)
 		.getRepository('acme/addons')

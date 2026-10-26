@@ -32,7 +32,7 @@ const cdn = Bun.serve({
 	},
 });
 
-const web = createTestContext({ CDN_URL: cdn.url.origin });
+const web = await createTestContext({ CDN_URL: cdn.url.origin });
 const api = serveEndpoints(web.ctx, { 'POST /api/v1/updates': checkUpdatesEndpoint });
 
 // Bound and stopped up front, so nothing is listening on its port.
@@ -41,10 +41,10 @@ const unreachableUrl = closed.url.origin;
 
 closed.stop(true);
 
-afterAll(() => {
+afterAll(async () => {
 	api.stop(true);
 	cdn.stop(true);
-	web.close();
+	await web.close();
 });
 
 function sha256(bundle: string): string {

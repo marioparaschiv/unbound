@@ -7,5 +7,10 @@
 		"rootDir": ".",
 		"outDir": "dist/types"
 	},
-	"files": ["src/api/index.ts", "src/api/client.ts", "tests/helpers/index.ts"]
+	"files": [
+		"src/api/index.ts",
+		"src/api/client.ts",
+		"src/lib/bot/index.ts",
+		"tests/helpers/index.ts"
+	]
 }

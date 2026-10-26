@@ -62,12 +62,17 @@ export function toBadgeClaim(row: ClaimRow | undefined): BadgeClaim | null {
  * @param userId The user.
  * @returns The claim row, or `undefined`.
  */
-export function findBadgeClaim(ctx: AppContext, userId: string): ClaimRow | undefined {
-	return ctx.db.select().from(perkClaim).where(badgeClaimWhere(userId)).get();
+export async function findBadgeClaim(
+	ctx: AppContext,
+	userId: string,
+): Promise<ClaimRow | undefined> {
+	const [row] = await ctx.db.select().from(perkClaim).where(badgeClaimWhere(userId));
+
+	return row;
 }
 
-function claimResponse(ctx: AppContext, userId: string): BadgeClaimResponse {
-	return { claim: toBadgeClaim(findBadgeClaim(ctx, userId)) };
+async function claimResponse(ctx: AppContext, userId: string): Promise<BadgeClaimResponse> {
+	return { claim: toBadgeClaim(await findBadgeClaim(ctx, userId)) };
 }
 
 /**
@@ -83,17 +88,13 @@ export async function claimBadge(
 	userId: string,
 	badge: Badge,
 ): Promise<BadgeClaimResponse> {
-	const { standing } = getUserSponsorship(ctx, userId);
+	const { standing } = await getUserSponsorship(ctx, userId);
 
 	if (!canClaimPerk(PERK_ID, standing)) {
 		throw new ApiError(
 			'sponsorship_required',
 			'A monthly GitHub sponsorship of $1 or more unlocks a custom badge.',
 		);
-	}
-
-	if (findBadgeClaim(ctx, userId)?.revokedAt) {
-		throw new ApiError('perk_revoked', 'Staff removed your badge; it cannot be set again.');
 	}
 
 	const problem = findBadgeLabelProblem(badge.label);
@@ -103,16 +104,22 @@ export async function claimBadge(
 	}
 
 	const now = ctx.now();
-
-	await ctx.db
+	// One statement, so a revoke committing while it runs still wins.
+	const [row] = await ctx.db
 		.insert(perkClaim)
 		.values({ userId, perkId: PERK_ID, config: badge, createdAt: now, updatedAt: now })
 		.onConflictDoUpdate({
 			target: [perkClaim.userId, perkClaim.perkId],
 			set: { config: badge, updatedAt: now },
-		});
+			setWhere: isNull(perkClaim.revokedAt),
+		})
+		.returning();
 
-	return claimResponse(ctx, userId);
+	if (!row) {
+		throw new ApiError('perk_revoked', 'Staff removed your badge; it cannot be set again.');
+	}
+
+	return { claim: toBadgeClaim(row) };
 }
 
 /**

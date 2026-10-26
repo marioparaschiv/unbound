@@ -12,7 +12,7 @@ const putSyncEndpoint = endpoint(
 	async ({ ctx, request, body }) => {
 		const { user } = await requireCaller(ctx, request.headers);
 
-		consumeRateLimit(ctx, {
+		await consumeRateLimit(ctx, {
 			key: `api:sync:${user.id}`,
 			windowSeconds: ctx.env.SYNC_RATE_LIMIT_WINDOW_SECONDS,
 			max: ctx.env.SYNC_RATE_LIMIT_MAX,
@@ -22,6 +22,8 @@ const putSyncEndpoint = endpoint(
 
 		return saveSyncDocument(ctx, user.id, body.revision, document);
 	},
+	// A client's settings are stored whole as `json` and read back whole, never queried into.
+	{ anyJsonBody: true },
 );
 
 export default putSyncEndpoint;

@@ -7,7 +7,7 @@ import me from '~/endpoints/me';
 
 import { authRequest, createTestContext, linkGitHub, signInWithDiscord } from './helpers/context';
 
-const { ctx, close } = createTestContext();
+const { ctx, close } = await createTestContext();
 
 afterAll(close);
 
@@ -210,9 +210,40 @@ describe('API keys', () => {
 	});
 });
 
+describe('text Postgres cannot store', () => {
+	test('is refused in a body or a query before it reaches the database', async () => {
+		const { userId, headers } = await signInWithDiscord(ctx, {
+			id: '80351110224678920',
+			name: 'Unstored',
+			email: 'unstored@example.com',
+		});
+		const requests = [
+			['/update-user', { method: 'POST', body: JSON.stringify({ name: 'Nul\0name' }) }],
+			['/update-user', { method: 'POST', body: JSON.stringify({ name: 'Half\ud800name' }) }],
+			['/api-key/create', { method: 'POST', body: JSON.stringify({ name: 'key\0' }) }],
+			['/device?user_code=AB%00CD', {}],
+		] as const;
+
+		const statuses: number[] = [];
+
+		for (const [path, init] of requests) {
+			statuses.push((await authRequest(ctx, path, { ...init, headers })).status);
+		}
+
+		expect(statuses).toEqual([400, 400, 400, 400]);
+
+		const [stored] = await ctx.db
+			.select({ name: user.name })
+			.from(user)
+			.where(eq(user.id, userId));
+
+		expect(stored?.name).toBe('Unstored');
+	});
+});
+
 describe('rate limiting', () => {
-	test('is stored in SQLite and rejects requests over the limit', async () => {
-		const limited = createTestContext({
+	test('is stored in the database and rejects requests over the limit', async () => {
+		const limited = await createTestContext({
 			AUTH_RATE_LIMIT_MAX: '2',
 			AUTH_RATE_LIMIT_WINDOW_SECONDS: '60',
 		});
@@ -231,7 +262,7 @@ describe('rate limiting', () => {
 
 			expect(rows).toEqual([expect.objectContaining({ count: 2 })]);
 		} finally {
-			limited.close();
+			await limited.close();
 		}
 	});
 });

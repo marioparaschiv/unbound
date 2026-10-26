@@ -35,7 +35,7 @@ const github = serveGitHub({
 const fixture = github.repository(REPOSITORY);
 
 // The real clock: MinIO checks presigned URLs against it.
-const { ctx, close } = createTestContext({ ...S3_TEST_ENV, GITHUB_API_URL: github.url.href });
+const { ctx, close } = await createTestContext({ ...S3_TEST_ENV, GITHUB_API_URL: github.url.href });
 
 const server = serveEndpoints(ctx, {
 	'POST /api/v1/submissions': createSubmissionEndpoint,
@@ -54,7 +54,7 @@ afterAll(async () => {
 	]);
 	await server.stop(true);
 	await github.stop();
-	close();
+	await close();
 });
 
 let users = 0;
@@ -116,8 +116,8 @@ function queue(reviewer: Member, kind?: SubmissionKind) {
 	});
 }
 
-function findRow(id: string) {
-	const row = ctx.db.select().from(submission).where(eq(submission.id, id)).get();
+async function findRow(id: string) {
+	const [row] = await ctx.db.select().from(submission).where(eq(submission.id, id));
 
 	if (!row) {
 		throw new Error(`Submission ${id} was not stored.`);
@@ -126,8 +126,10 @@ function findRow(id: string) {
 	return row;
 }
 
-function getRole(userId: string) {
-	return ctx.db.select({ role: user.role }).from(user).where(eq(user.id, userId)).get()?.role;
+async function getRole(userId: string) {
+	const [row] = await ctx.db.select({ role: user.role }).from(user).where(eq(user.id, userId));
+
+	return row?.role;
 }
 
 // Approves a first listing, leaving its author the owner of a live 1.0.0.
@@ -147,7 +149,7 @@ describe('approval', () => {
 		const bundle = 'console.log("approved");';
 		const published = manifest('review.approve');
 		const id = await publish(author, 'review.approve', bundle);
-		const { stagingKey } = findRow(id);
+		const { stagingKey } = await findRow(id);
 
 		const { submission: reviewed } = await review(moderator, id, {
 			decision: 'approved',
@@ -168,7 +170,7 @@ describe('approval', () => {
 		expect(await ctx.storage.public.file(`${base}/manifest.json`).json()).toEqual(published);
 		expect(version).toMatchObject({ submissionId: id, sha256: sha256(bundle) });
 		expect(await ctx.storage.staging.exists(stagingKey)).toBe(false);
-		expect(findRow(id).reviewerId).toBe(moderator.userId);
+		expect((await findRow(id)).reviewerId).toBe(moderator.userId);
 		expect(
 			await ctx.db.query.addonMaintainer.findFirst({ where: { addonId: 'review.approve' } }),
 		).toMatchObject({ userId: author.userId, role: 'owner' });
@@ -179,13 +181,13 @@ describe('approval', () => {
 		const moderator = await signUp('moderator');
 		const id = await publish(author, 'review.tampered', 'original');
 
-		await ctx.storage.staging.write(findRow(id).stagingKey, 'replaced');
+		await ctx.storage.staging.write((await findRow(id)).stagingKey, 'replaced');
 
 		expect(await failure(review(moderator, id, { decision: 'approved' }))).toEqual({
 			status: 409,
 			code: 'artifact_mismatch',
 		});
-		expect(findRow(id).status).toBe('pending_review');
+		expect((await findRow(id)).status).toBe('pending_review');
 		expect(await ctx.storage.public.exists('addons/review.tampered/1.0.0/index.js')).toBe(
 			false,
 		);
@@ -200,7 +202,7 @@ describe('approval', () => {
 		const bundle = 'export default "refetched";';
 		const id = await publish(author, 'review.refetched', bundle);
 
-		await ctx.storage.staging.delete(findRow(id).stagingKey);
+		await ctx.storage.staging.delete((await findRow(id)).stagingKey);
 		await review(moderator, id, { decision: 'approved' });
 
 		expect(await ctx.storage.public.file('addons/review.refetched/1.0.0/index.js').text()).toBe(
@@ -213,7 +215,7 @@ describe('approval', () => {
 		const moderator = await signUp('moderator');
 		const id = await publish(author, 'review.refetch-tampered', 'export default 1;');
 
-		await ctx.storage.staging.delete(findRow(id).stagingKey);
+		await ctx.storage.staging.delete((await findRow(id)).stagingKey);
 		github.tamper(true);
 
 		try {
@@ -225,7 +227,7 @@ describe('approval', () => {
 			github.tamper(false);
 		}
 
-		expect(findRow(id).status).toBe('pending_review');
+		expect((await findRow(id)).status).toBe('pending_review');
 		expect(
 			await ctx.storage.public.exists('addons/review.refetch-tampered/1.0.0/index.js'),
 		).toBe(false);
@@ -234,13 +236,13 @@ describe('approval', () => {
 	test('grants developer on the first approved listing only', async () => {
 		const { author, moderator } = await approvedAddon('review.first');
 
-		expect(getRole(author.userId)).toBe('developer');
+		expect(await getRole(author.userId)).toBe('developer');
 
 		const update = await publish(author, 'review.first', 'export default 2;', '1.1.0');
 
 		await review(moderator, update, { decision: 'approved' });
 
-		expect(getRole(author.userId)).toBe('developer');
+		expect(await getRole(author.userId)).toBe('developer');
 	});
 
 	test('does not demote a moderator whose listing is approved', async () => {
@@ -251,7 +253,7 @@ describe('approval', () => {
 			decision: 'approved',
 		});
 
-		expect(getRole(author.userId)).toBe('moderator');
+		expect(await getRole(author.userId)).toBe('moderator');
 	});
 
 	test('a delisted addon keeps its published files', async () => {
@@ -311,7 +313,7 @@ describe('who may review', () => {
 		expect(
 			await failure(review(maintainer, id, { decision: 'rejected', note: 'No.' })),
 		).toEqual({ status: 403, code: 'self_review' });
-		expect(findRow(id).status).toBe('pending_review');
+		expect((await findRow(id)).status).toBe('pending_review');
 	});
 });
 
@@ -357,7 +359,7 @@ describe('rejection and requested changes', () => {
 		const moderator = await signUp('moderator');
 		const other = await signUp();
 		const id = await publish(author, 'review.rejected', 'rejected');
-		const { stagingKey } = findRow(id);
+		const { stagingKey } = await findRow(id);
 
 		const { submission: reviewed } = await review(moderator, id, {
 			decision: 'rejected',
@@ -396,7 +398,7 @@ describe('rejection and requested changes', () => {
 		const second = await publish(author, 'review.changes', 'second try');
 		const requeued = await queue(moderator, 'listing');
 
-		expect(findRow(first)).toMatchObject({
+		expect(await findRow(first)).toMatchObject({
 			status: 'superseded',
 			reviewDecision: 'changes_requested',
 		});

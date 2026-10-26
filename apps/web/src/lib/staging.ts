@@ -40,7 +40,7 @@ async function deleteOrphans(ctx: AppContext): Promise<number> {
 			.filter((object) => new Date(object.lastModified ?? 0).getTime() <= settled)
 			.map((object) => object.key);
 
-		const owned = ctx.db
+		const owned = await ctx.db
 			.select({ key: submission.stagingKey })
 			.from(submission)
 			.where(
@@ -48,8 +48,7 @@ async function deleteOrphans(ctx: AppContext): Promise<number> {
 					inArray(submission.stagingKey, keys),
 					inArray(submission.status, OPEN_SUBMISSION_STATUSES),
 				),
-			)
-			.all();
+			);
 
 		const kept = new Set(owned.map((row) => row.key));
 		const orphans = keys.filter((key) => !kept.has(key));
@@ -105,8 +104,8 @@ export function startStagingSweeper(ctx: AppContext): Timer {
  */
 export async function purgeUserSubmissions(ctx: StagingContext, userId: string): Promise<number> {
 	const at = new Date();
-	const cancelled = ctx.db.transaction((tx) => {
-		const rows = tx
+	const cancelled = await ctx.db.transaction(async (tx) => {
+		const rows = await tx
 			.update(submission)
 			.set({ status: 'cancelled' })
 			.where(
@@ -121,11 +120,10 @@ export async function purgeUserSubmissions(ctx: StagingContext, userId: string):
 				kind: submission.kind,
 				version: submission.version,
 				key: submission.stagingKey,
-			})
-			.all();
+			});
 
 		for (const row of rows) {
-			appendEvent(tx, {
+			await appendEvent(tx, {
 				subject: { type: 'addon', id: row.addonId },
 				actorId: null,
 				at,

@@ -22,7 +22,7 @@ const github = serveGitHub({
 });
 
 const checkout = useCheckout(github.repository(REPOSITORY), REPOSITORY);
-const { ctx, close } = createTestContext({ ...S3_TEST_ENV, GITHUB_API_URL: github.url.href });
+const { ctx, close } = await createTestContext({ ...S3_TEST_ENV, GITHUB_API_URL: github.url.href });
 const server = servePublishApi(ctx);
 const config = createTempDir();
 
@@ -33,7 +33,7 @@ afterAll(async () => {
 	await server.stop(true);
 	await github.stop();
 	config.remove();
-	close();
+	await close();
 });
 
 describe('ubd publish', () => {

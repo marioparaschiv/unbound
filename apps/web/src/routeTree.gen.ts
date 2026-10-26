@@ -36,10 +36,6 @@ import { Route as ApiV1SyncRouteImport } from './routes/api/v1/sync'
 import { Route as ApiV1UpdatesRouteImport } from './routes/api/v1/updates'
 import { Route as ApiWebhooksGithubSponsorsRouteImport } from './routes/api/webhooks/github-sponsors'
 import { Route as SiteStaffAdminIndexRouteImport } from './routes/_site/_staff/admin/index'
-import { Route as ApiV1BotAddonsRouteImport } from './routes/api/v1/bot/addons'
-import { Route as ApiV1BotEventsRouteImport } from './routes/api/v1/bot/events'
-import { Route as ApiV1BotMembersRouteImport } from './routes/api/v1/bot/members'
-import { Route as ApiV1BotReleasesRouteImport } from './routes/api/v1/bot/releases'
 import { Route as ApiV1FirstPartyAddonsRouteImport } from './routes/api/v1/first-party/addons'
 import { Route as ApiV1FirstPartyPublishRouteImport } from './routes/api/v1/first-party/publish'
 import { Route as ApiV1GithubAddonsRouteImport } from './routes/api/v1/github/addons'
@@ -199,26 +195,6 @@ const SiteStaffAdminIndexRoute = SiteStaffAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => SiteStaffRouteRoute,
 } as any)
-const ApiV1BotAddonsRoute = ApiV1BotAddonsRouteImport.update({
-  id: '/api/v1/bot/addons',
-  path: '/api/v1/bot/addons',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiV1BotEventsRoute = ApiV1BotEventsRouteImport.update({
-  id: '/api/v1/bot/events',
-  path: '/api/v1/bot/events',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiV1BotMembersRoute = ApiV1BotMembersRouteImport.update({
-  id: '/api/v1/bot/members',
-  path: '/api/v1/bot/members',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiV1BotReleasesRoute = ApiV1BotReleasesRouteImport.update({
-  id: '/api/v1/bot/releases',
-  path: '/api/v1/bot/releases',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiV1FirstPartyAddonsRoute = ApiV1FirstPartyAddonsRouteImport.update({
   id: '/api/v1/first-party/addons',
   path: '/api/v1/first-party/addons',
@@ -371,10 +347,6 @@ export interface FileRoutesByFullPath {
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/developers/': typeof SiteDevelopersIndexRoute
-  '/api/v1/bot/addons': typeof ApiV1BotAddonsRoute
-  '/api/v1/bot/events': typeof ApiV1BotEventsRoute
-  '/api/v1/bot/members': typeof ApiV1BotMembersRoute
-  '/api/v1/bot/releases': typeof ApiV1BotReleasesRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -426,10 +398,6 @@ export interface FileRoutesByTo {
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/developers': typeof SiteDevelopersIndexRoute
-  '/api/v1/bot/addons': typeof ApiV1BotAddonsRoute
-  '/api/v1/bot/events': typeof ApiV1BotEventsRoute
-  '/api/v1/bot/members': typeof ApiV1BotMembersRoute
-  '/api/v1/bot/releases': typeof ApiV1BotReleasesRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -484,10 +452,6 @@ export interface FileRoutesById {
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/_site/developers/': typeof SiteDevelopersIndexRoute
-  '/api/v1/bot/addons': typeof ApiV1BotAddonsRoute
-  '/api/v1/bot/events': typeof ApiV1BotEventsRoute
-  '/api/v1/bot/members': typeof ApiV1BotMembersRoute
-  '/api/v1/bot/releases': typeof ApiV1BotReleasesRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -541,10 +505,6 @@ export interface FileRouteTypes {
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
     | '/developers/'
-    | '/api/v1/bot/addons'
-    | '/api/v1/bot/events'
-    | '/api/v1/bot/members'
-    | '/api/v1/bot/releases'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -596,10 +556,6 @@ export interface FileRouteTypes {
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
     | '/developers'
-    | '/api/v1/bot/addons'
-    | '/api/v1/bot/events'
-    | '/api/v1/bot/members'
-    | '/api/v1/bot/releases'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -653,10 +609,6 @@ export interface FileRouteTypes {
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
     | '/_site/developers/'
-    | '/api/v1/bot/addons'
-    | '/api/v1/bot/events'
-    | '/api/v1/bot/members'
-    | '/api/v1/bot/releases'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -696,10 +648,6 @@ export interface RootRouteChildren {
   ApiV1SyncRoute: typeof ApiV1SyncRouteWithChildren
   ApiV1UpdatesRoute: typeof ApiV1UpdatesRoute
   ApiWebhooksGithubSponsorsRoute: typeof ApiWebhooksGithubSponsorsRoute
-  ApiV1BotAddonsRoute: typeof ApiV1BotAddonsRoute
-  ApiV1BotEventsRoute: typeof ApiV1BotEventsRoute
-  ApiV1BotMembersRoute: typeof ApiV1BotMembersRoute
-  ApiV1BotReleasesRoute: typeof ApiV1BotReleasesRoute
   ApiV1FirstPartyAddonsRoute: typeof ApiV1FirstPartyAddonsRoute
   ApiV1FirstPartyPublishRoute: typeof ApiV1FirstPartyPublishRoute
   ApiV1GithubAddonsRoute: typeof ApiV1GithubAddonsRoute
@@ -901,34 +849,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof SiteStaffAdminIndexRouteImport
       parentRoute: typeof SiteStaffRouteRoute
-    }
-    '/api/v1/bot/addons': {
-      id: '/api/v1/bot/addons'
-      path: '/api/v1/bot/addons'
-      fullPath: '/api/v1/bot/addons'
-      preLoaderRoute: typeof ApiV1BotAddonsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/v1/bot/events': {
-      id: '/api/v1/bot/events'
-      path: '/api/v1/bot/events'
-      fullPath: '/api/v1/bot/events'
-      preLoaderRoute: typeof ApiV1BotEventsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/v1/bot/members': {
-      id: '/api/v1/bot/members'
-      path: '/api/v1/bot/members'
-      fullPath: '/api/v1/bot/members'
-      preLoaderRoute: typeof ApiV1BotMembersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/v1/bot/releases': {
-      id: '/api/v1/bot/releases'
-      path: '/api/v1/bot/releases'
-      fullPath: '/api/v1/bot/releases'
-      preLoaderRoute: typeof ApiV1BotReleasesRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/api/v1/first-party/addons': {
       id: '/api/v1/first-party/addons'
@@ -1255,10 +1175,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1SyncRoute: ApiV1SyncRouteWithChildren,
   ApiV1UpdatesRoute: ApiV1UpdatesRoute,
   ApiWebhooksGithubSponsorsRoute: ApiWebhooksGithubSponsorsRoute,
-  ApiV1BotAddonsRoute: ApiV1BotAddonsRoute,
-  ApiV1BotEventsRoute: ApiV1BotEventsRoute,
-  ApiV1BotMembersRoute: ApiV1BotMembersRoute,
-  ApiV1BotReleasesRoute: ApiV1BotReleasesRoute,
   ApiV1FirstPartyAddonsRoute: ApiV1FirstPartyAddonsRoute,
   ApiV1FirstPartyPublishRoute: ApiV1FirstPartyPublishRoute,
   ApiV1GithubAddonsRoute: ApiV1GithubAddonsRoute,
@@ -1274,10 +1190,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

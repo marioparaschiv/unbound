@@ -1,13 +1,11 @@
 import { and, eq } from 'drizzle-orm';
 
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
-import { standingOf } from '~/lib/sponsors/standing';
+import { perkGraceMs, standingOf } from '~/lib/sponsors/standing';
 import { account, sponsorship } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Env } from '~/lib/env';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type SponsorshipValues = Pick<
 	Sponsorship,
@@ -27,21 +25,22 @@ export type UserSponsorship = {
  * @returns The grace period in milliseconds.
  */
 export function graceMs(env: Env): number {
-	return env.SPONSOR_PERK_GRACE_DAYS * DAY_MS;
+	return perkGraceMs(env.SPONSOR_PERK_GRACE_DAYS);
 }
 
 /**
  * @description Inserts a sponsorship or replaces the stored one for the same GitHub id.
  * @param tx The transaction to write in.
  * @param row The whole sponsorship.
+ * @returns Resolves once it is written.
  */
-export function upsertSponsorship(tx: Transaction, row: Sponsorship) {
+export async function upsertSponsorship(tx: Transaction, row: Sponsorship): Promise<void> {
 	const { githubId: _githubId, ...values } = row;
 
-	tx.insert(sponsorship)
+	await tx
+		.insert(sponsorship)
 		.values(row)
-		.onConflictDoUpdate({ target: sponsorship.githubId, set: values })
-		.run();
+		.onConflictDoUpdate({ target: sponsorship.githubId, set: values });
 }
 
 /**
@@ -50,13 +49,15 @@ export function upsertSponsorship(tx: Transaction, row: Sponsorship) {
  * @param userId The user.
  * @returns Whether GitHub is linked and the user's standing.
  */
-export function getUserSponsorship(ctx: AppContext, userId: string): UserSponsorship {
-	const row = ctx.db
+export async function getUserSponsorship(
+	ctx: AppContext,
+	userId: string,
+): Promise<UserSponsorship> {
+	const [row] = await ctx.db
 		.select({ sponsorship })
 		.from(account)
 		.leftJoin(sponsorship, eq(sponsorship.githubId, account.accountId))
-		.where(and(eq(account.userId, userId), eq(account.providerId, 'github')))
-		.get();
+		.where(and(eq(account.userId, userId), eq(account.providerId, 'github')));
 
 	return {
 		githubLinked: Boolean(row),

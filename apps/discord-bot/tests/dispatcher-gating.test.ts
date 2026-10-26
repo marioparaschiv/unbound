@@ -16,11 +16,10 @@ import { startDispatchers, type DiscordIds } from '~/runtime/start';
 import { checkConfig } from '~/lib/config';
 
 import {
-	createTestDatabase,
-	DROP_HOOK_TIMEOUT_MS,
+	createBotTestDatabase,
 	DATABASE_URL,
 	waitFor,
-	type TestDatabase,
+	type BotTestDatabase,
 } from './helpers/database';
 
 type FakeDispatcher = {
@@ -34,8 +33,6 @@ const ENV = {
 	DISCORD_TOKEN: 'token',
 	DATABASE_URL: 'postgres://bot@localhost:6432/bot',
 	DATABASE_DIRECT_URL: 'postgres://bot@localhost:5432/bot',
-	UNBOUND_API_URL: 'https://unbound.rip',
-	UNBOUND_API_KEY: 'key',
 };
 
 function fakeDispatcher(
@@ -62,20 +59,24 @@ function fakeDispatcher(
 }
 
 describe.skipIf(!DATABASE_URL)('dispatcher gating', () => {
-	let database: TestDatabase;
+	let database: BotTestDatabase;
 	let context: DispatcherContext;
 	let warn: Warn;
 
 	beforeAll(async () => {
-		database = await createTestDatabase();
+		database = await createBotTestDatabase();
 		// The fake dispatchers never touch Discord, so an unready client is enough.
-		context = { db: database.db, client: new Client({ intents: [] }) as Client<true> };
+		context = {
+			db: database.db,
+			web: database.reads,
+			client: new Client({ intents: [] }) as Client<true>,
+		};
 	});
 
 	afterAll(async () => {
 		await context.client.destroy();
 		await database.drop();
-	}, DROP_HOOK_TIMEOUT_MS);
+	});
 
 	// The logger writes warnings through console.warn, so that is where they are read back.
 	beforeEach(() => {

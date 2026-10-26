@@ -1,6 +1,6 @@
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import type { Changelog } from '@unbound-app/contracts/changelog';
+import { pgTable, text, bigint, json } from 'drizzle-orm/pg-core';
 import { defineRelationsPart } from 'drizzle-orm';
 
 import { addon, addonVersion, submission } from './addons';
@@ -8,12 +8,12 @@ import { moderationEvent } from './admin';
 import { user } from './auth';
 
 /** Where a GitHub-sourced submission was read from. Written once with the submission, never updated. */
-export const submissionSource = sqliteTable('submission_source', {
+export const submissionSource = pgTable('submission_source', {
 	submissionId: text('submission_id')
 		.primaryKey()
 		.references(() => submission.id),
 	/** GitHub's numeric id; the `owner/name` stays on `submission.repository`. */
-	repositoryId: integer('repository_id').notNull(),
+	repositoryId: bigint('repository_id', { mode: 'number' }).notNull(),
 	/** The addon directory, repository-relative; `''` is the root. */
 	path: text('path').notNull(),
 	/** The branch, tag or SHA the author named. */
@@ -27,9 +27,9 @@ export const submissionSource = sqliteTable('submission_source', {
 	/** ADDON.md as submitted, or `null` when the addon has none. */
 	addonMd: text('addon_md'),
 	/** This version's CHANGELOG.md entry, or `null` when the addon has no CHANGELOG.md. */
-	changelog: text('changelog', { mode: 'json' }).$type<Changelog>(),
+	changelog: json('changelog').$type<Changelog>(),
 	/** GitHub's repository details as submitted, with the author's overrides applied. */
-	details: text('details', { mode: 'json' }).$type<RepositoryDetails>().notNull(),
+	details: json('details').$type<RepositoryDetails>().notNull(),
 });
 
 // Drizzle keeps one relations entry per table across parts, so add `submission` and `addon_version`

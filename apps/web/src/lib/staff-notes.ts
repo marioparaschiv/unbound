@@ -13,6 +13,7 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
 import { staffNote } from '~/db/schema';
+import one from '~/db/one';
 
 export type StaffNote = {
 	id: number;
@@ -124,20 +125,21 @@ export async function createStaffNote(
 	}
 
 	const at = ctx.now();
-	const row = ctx.db.transaction((tx) => {
-		const created = tx
-			.insert(staffNote)
-			.values({
-				userId: subject.type === 'user' ? subject.id : null,
-				addonId: subject.type === 'addon' ? subject.id : null,
-				authorId: caller.user.id,
-				body,
-				createdAt: at,
-			})
-			.returning()
-			.get();
+	const row = await ctx.db.transaction(async (tx) => {
+		const created = one(
+			await tx
+				.insert(staffNote)
+				.values({
+					userId: subject.type === 'user' ? subject.id : null,
+					addonId: subject.type === 'addon' ? subject.id : null,
+					authorId: caller.user.id,
+					body,
+					createdAt: at,
+				})
+				.returning(),
+		);
 
-		appendEvent(tx, {
+		await appendEvent(tx, {
 			subject,
 			actorId: caller.user.id,
 			at,
@@ -180,35 +182,32 @@ export async function editStaffNote(
 	requirePermission(caller, { note: ['write'] });
 
 	const at = ctx.now();
-	const row = ctx.db.transaction(
-		(tx) => {
-			const current = tx
-				.select({ body: staffNote.body })
-				.from(staffNote)
-				.where(ownNote(request.id, caller))
-				.get();
+	const row = await ctx.db.transaction(async (tx) => {
+		const [current] = await tx
+			.select({ body: staffNote.body })
+			.from(staffNote)
+			.where(ownNote(request.id, caller));
 
-			if (!current) return;
+		if (!current) return;
 
-			const edited = tx
+		const edited = one(
+			await tx
 				.update(staffNote)
 				.set({ body: request.body, editedAt: at })
 				.where(eq(staffNote.id, request.id))
-				.returning()
-				.get();
+				.returning(),
+		);
 
-			appendEvent(tx, {
-				subject: noteSubject(edited),
-				actorId: caller.user.id,
-				at,
-				kind: 'note.edited',
-				data: { noteId: edited.id, before: current.body, body: edited.body },
-			});
+		await appendEvent(tx, {
+			subject: noteSubject(edited),
+			actorId: caller.user.id,
+			at,
+			kind: 'note.edited',
+			data: { noteId: edited.id, before: current.body, body: edited.body },
+		});
 
-			return edited;
-		},
-		{ behavior: 'immediate' },
-	);
+		return edited;
+	});
 
 	if (!row) {
 		return failMissingOwnNote(ctx, request.id);
@@ -230,12 +229,12 @@ export async function deleteStaffNote(
 ): Promise<void> {
 	requirePermission(caller, { note: ['write'] });
 
-	const row = ctx.db.transaction((tx) => {
-		const deleted = tx.delete(staffNote).where(ownNote(request.id, caller)).returning().get();
+	const row = await ctx.db.transaction(async (tx) => {
+		const [deleted] = await tx.delete(staffNote).where(ownNote(request.id, caller)).returning();
 
 		if (!deleted) return;
 
-		appendEvent(tx, {
+		await appendEvent(tx, {
 			subject: noteSubject(deleted),
 			actorId: caller.user.id,
 			at: ctx.now(),

@@ -1,3 +1,4 @@
+import { isPostgresSafe } from '@unbound-app/contracts/text';
 import { createLogger } from '@unbound-app/logger';
 import { z } from 'zod';
 
@@ -38,6 +39,11 @@ export type EndpointOptions<TResponse extends z.core.$ZodType> = {
 	 * request whose `If-None-Match` lists it is answered `304` with no body.
 	 */
 	etag?: (result: z.output<TResponse>) => string;
+	/**
+	 * Accepts a body Postgres cannot read back as text: NUL or an unpaired surrogate. Only for a body
+	 * stored whole in a `json` column that no query reads into.
+	 */
+	anyJsonBody?: boolean;
 };
 
 /** A `/api/v1` handler bound to the contract schemas its request and response follow. */
@@ -75,6 +81,16 @@ function matchesIfNoneMatch(request: Request, etag: string): boolean {
 	return header
 		.split(',')
 		.some((tag) => tag.trim() === '*' || tag.trim().replace(/^W\//, '') === etag);
+}
+
+// UNKNOWN: raw request input; refused before its schema when Postgres cannot store it.
+function requirePostgresSafe(input: unknown, part: string) {
+	if (!isPostgresSafe(input)) {
+		throw new ApiError(
+			'invalid_request',
+			`The ${part} must not contain NUL (U+0000) or an unpaired surrogate.`,
+		);
+	}
 }
 
 // UNKNOWN: request input, validated by the endpoint's schema.
@@ -118,11 +134,19 @@ export function endpoint<
 			const { pathname, searchParams } = new URL(request.url);
 
 			try {
-				const body = parseInput(schemas.body, await readJson(request));
-				const query = parseInput(
-					schemas.query,
-					searchParams.size > 0 ? Object.fromEntries(searchParams) : undefined,
-				);
+				const rawBody = await readJson(request);
+				const rawQuery =
+					searchParams.size > 0 ? Object.fromEntries(searchParams) : undefined;
+
+				requirePostgresSafe(params, 'path');
+				requirePostgresSafe(rawQuery, 'query');
+
+				if (!options.anyJsonBody) {
+					requirePostgresSafe(rawBody, 'body');
+				}
+
+				const body = parseInput(schemas.body, rawBody);
+				const query = parseInput(schemas.query, rawQuery);
 				const result = z.parse(
 					schemas.response,
 					await handler({ ctx, request, params, body, query }),

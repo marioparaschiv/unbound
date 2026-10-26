@@ -7,6 +7,10 @@ import { createTestContext } from './helpers/context';
 
 type Case = [role: Role, permissions: Permissions, granted: boolean];
 
+const { ctx, close } = await createTestContext();
+
+afterAll(close);
+
 const cases: Case[] = [
 	['user', { submission: ['create'] }, true],
 	['user', { submission: ['review'] }, false],
@@ -29,16 +33,10 @@ const cases: Case[] = [
 	['admin', { firstParty: ['publish'] }, true],
 	['ci', { submission: ['create'] }, false],
 	['ci', { addon: ['delist'] }, false],
-	['bot', { bot: ['read'] }, true],
-	['bot', { note: ['read'] }, false],
-	['bot', { user: ['list'] }, false],
-	['moderator', { bot: ['read'] }, false],
-	['user', { bot: ['read'] }, false],
 	['admin', { user: ['set-role'] }, true],
 	['admin', { loader: ['publish'] }, true],
 	['admin', { addon: ['transfer', 'delist'] }, true],
 	['admin', { note: ['read', 'write'] }, true],
-	['admin', { bot: ['read'] }, true],
 ];
 
 describe('hasPermission', () => {
@@ -58,10 +56,6 @@ describe('hasPermission', () => {
 });
 
 describe('admin plugin access control', () => {
-	const { ctx, close } = createTestContext();
-
-	afterAll(close);
-
 	// The admin plugin's own check, which its endpoints (ban, set-role, ...) enforce, agrees.
 	test.each(cases)('%s with %o is %p', async (role, permissions, granted) => {
 		const result = await ctx.auth.api.userHasPermission({ body: { role, permissions } });

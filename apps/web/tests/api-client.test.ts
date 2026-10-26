@@ -7,12 +7,12 @@ import me from '~/endpoints/me';
 
 import { createTestContext, signInWithDiscord } from './helpers/context';
 
-const { ctx, close } = createTestContext();
+const { ctx, close } = await createTestContext();
 const server = Bun.serve({ port: 0, fetch: (request) => me.handle(ctx, request) });
 
 afterAll(async () => {
 	await server.stop(true);
-	close();
+	await close();
 });
 
 describe('createApiClient', () => {

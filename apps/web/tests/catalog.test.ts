@@ -13,7 +13,7 @@ import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './help
 import { createTestContext, signInWithDiscord } from './helpers/context';
 import { serveEndpoints } from './helpers/server';
 
-const base = createTestContext({ ADDON_LIST_PAGE_SIZE: '1' });
+const base = await createTestContext({ ADDON_LIST_PAGE_SIZE: '1' });
 const ctx = base.ctx;
 const server = serveEndpoints(ctx, { 'GET /api/v1/catalog': getCatalogEndpoint });
 const client = createApiClient<Api>({ baseUrl: server.url.href });
@@ -23,7 +23,7 @@ let ownerId = '';
 
 afterAll(async () => {
 	await server.stop(true);
-	base.close();
+	await base.close();
 });
 
 beforeAll(async () => {
@@ -137,7 +137,7 @@ describe('GET /api/v1/catalog', () => {
 		const caller: Caller = { user: row, via: 'session' };
 		const before = (await get()).headers.get('etag') ?? '';
 
-		serveVersion(ctx, caller, 'cat.plugin', { version: '1.0.0', reason: 'Broken' });
+		await serveVersion(ctx, caller, 'cat.plugin', { version: '1.0.0', reason: 'Broken' });
 
 		const rolledBack = await get(before);
 		const catalog = catalogResponseSchema.parse(await rolledBack.json());
@@ -147,7 +147,7 @@ describe('GET /api/v1/catalog', () => {
 			catalog.addons.find((entry) => entry.id === 'cat.plugin')?.latestVersion.version,
 		).toBe('1.0.0');
 
-		serveVersion(ctx, caller, 'cat.plugin', { version: '1.1.0', reason: 'Fixed' });
+		await serveVersion(ctx, caller, 'cat.plugin', { version: '1.1.0', reason: 'Fixed' });
 
 		expect((await get(before)).status).toBe(304);
 	});

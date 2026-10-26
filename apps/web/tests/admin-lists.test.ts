@@ -2,7 +2,6 @@ import { adminAddonsSearchSchema, adminUsersSearchSchema } from '@unbound-app/co
 import type { AdminAddonsSearch, AdminUsersSearch } from '@unbound-app/contracts/admin';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { SortOrder } from '@unbound-app/contracts/addons';
-import type { SQLQueryBindings } from 'bun:sqlite';
 import { eq } from 'drizzle-orm';
 
 import { listAdminAddons, queryAdminAddons } from '~/lib/admin-addons';
@@ -13,13 +12,16 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { encodeCursor } from '~/lib/keyset';
 
+import {
+	explain,
+	indexCond,
+	planNodes,
+	planPath,
+	type PlanMode,
+	type PlanNode,
+} from './helpers/database';
 import { manifest, seedApprovedAddon, seedSubmission, seedVersion } from './helpers/addons';
 import { authRequest, createTestContext, signInWithDiscord } from './helpers/context';
-
-type PlanStep = {
-	parent: number;
-	detail: string;
-};
 
 type CompiledQuery = {
 	sql: string;
@@ -42,7 +44,10 @@ type SeededUser = {
 	createdAt: number;
 };
 
-const { ctx, close } = createTestContext({ ADDON_LIST_PAGE_SIZE: '2', USER_LIST_PAGE_SIZE: '2' });
+const { ctx, close } = await createTestContext({
+	ADDON_LIST_PAGE_SIZE: '2',
+	USER_LIST_PAGE_SIZE: '2',
+});
 
 afterAll(close);
 
@@ -178,22 +183,21 @@ async function addonsMatching(search: AdminAddonsSearch): Promise<string[]> {
 	return forward.flat();
 }
 
-function plan(statement: Statement): PlanStep[] {
-	const { sql, params } = statement.toSQL();
-
-	return ctx.db.$client
-		.query<PlanStep, SQLQueryBindings[]>(`EXPLAIN QUERY PLAN ${sql}`)
-		.all(...params.map((param) => (typeof param === 'number' ? param : String(param))));
+async function plan(statement: Statement, mode: PlanMode = 'order'): Promise<PlanNode[]> {
+	return planNodes(await explain(ctx.db, statement.toSQL(), mode));
 }
 
-function outerSteps(statement: Statement): string[] {
-	return plan(statement)
-		.filter((step) => step.parent === 0)
-		.map((step) => step.detail);
+// The nodes above the listed table's scan; a sort there would reorder the page.
+async function outerPlan(statement: Statement): Promise<PlanNode[]> {
+	return planPath(await explain(ctx.db, statement.toSQL()), 'd0');
 }
 
-function allSteps(statement: Statement): string[] {
-	return plan(statement).map((step) => step.detail);
+function indexes(nodes: PlanNode[]): (string | undefined)[] {
+	return nodes.map((node) => node['Index Name']);
+}
+
+function types(nodes: PlanNode[]): string[] {
+	return nodes.map((node) => node['Node Type']);
 }
 
 describe('admin users list', () => {
@@ -263,6 +267,22 @@ describe('admin users list', () => {
 
 		expect(error).toMatchObject({ code: 'invalid_request' });
 	});
+
+	test.each([Number.MAX_SAFE_INTEGER, 3e14])(
+		'rejects a cursor at %d, past year 9999',
+		async (ms) => {
+			const cursor = encodeCursor([ms, 'someone']);
+			const errors = await Promise.all([
+				listAdminUsers(ctx, moderator, { cursor }).catch((caught) => caught),
+				listAdminAddons(ctx, moderator, { cursor }).catch((caught) => caught),
+			]);
+
+			expect(errors).toMatchObject([
+				{ code: 'invalid_request' },
+				{ code: 'invalid_request' },
+			]);
+		},
+	);
 });
 
 describe('admin addons list', () => {
@@ -342,14 +362,10 @@ describe('admin list plans', () => {
 		const searches: AdminUsersSearch[] = [{}, { cursor: next }, { cursor: prev, dir: 'prev' }];
 
 		for (const search of searches) {
-			const steps = outerSteps(queryAdminUsers(ctx, search));
+			const statement = queryAdminUsers(ctx, search);
 
-			expect(steps).toContainEqual(
-				expect.stringMatching(
-					/^(SCAN|SEARCH) d0 USING (COVERING )?INDEX user_createdAt_idx/,
-				),
-			);
-			expect(steps).not.toContainEqual(expect.stringMatching(/TEMP B-TREE/));
+			expect(indexes(await plan(statement))).toContain('user_createdAt_idx');
+			expect(types(await outerPlan(statement))).not.toContain('Sort');
 		}
 	});
 
@@ -364,33 +380,29 @@ describe('admin list plans', () => {
 			];
 
 			for (const search of searches) {
-				const steps = outerSteps(queryAdminAddons(ctx, search));
+				const statement = queryAdminAddons(ctx, search);
 
-				expect(steps).toContainEqual(
-					expect.stringMatching(
-						/^(SCAN|SEARCH) d0 USING (COVERING )?INDEX addon_createdAt_idx/,
-					),
-				);
-				expect(steps).not.toContainEqual(expect.stringMatching(/TEMP B-TREE/));
+				expect(indexes(await outerPlan(statement))).toContain('addon_createdAt_idx');
+				expect(types(await outerPlan(statement))).not.toContain('Sort');
 			}
 		},
 	);
 
-	test('a search reads the trigram index and only the matching rows', async () => {
-		const { next } = await userCursors();
-		const statements = [
-			queryAdminUsers(ctx, { q: 'walker' }),
-			queryAdminUsers(ctx, { q: 'walker', cursor: next }),
-			queryAdminAddons(ctx, { q: 'walk.' }),
+	// Order index vs trigram index plus sort is a cost call that differs between clusters. No user
+	// cursor: user_createdAt_idx serves its created_at range too.
+	test('a search reads the trigram index of the listed table, scanned once', async () => {
+		const statements: [Statement, string, string][] = [
+			[queryAdminUsers(ctx, { q: 'walker' }), 'user_search_idx', 'user'],
+			[queryAdminAddons(ctx, { q: 'walk.' }), 'addon_search_idx', 'addon'],
 		];
 
-		for (const statement of statements) {
-			const steps = allSteps(statement);
+		for (const [statement, index, table] of statements) {
+			const nodes = await plan(statement, 'filter');
+			const scan = nodes.find((node) => node['Index Name'] === index);
 
-			expect(steps).toContainEqual(
-				expect.stringMatching(/^SCAN (user|addon)_search VIRTUAL TABLE INDEX \d+:M/),
-			);
-			expect(steps).not.toContainEqual(expect.stringMatching(/^SCAN d0\b/));
+			expect(scan?.['Index Cond']).toMatch(/ ~~ /);
+			expect(types(nodes)).not.toContain('Seq Scan');
+			expect(nodes.filter((node) => node['Relation Name'] === table)).toHaveLength(1);
 		}
 	});
 });
@@ -489,77 +501,72 @@ describe('admin addon filter plans', () => {
 	const pages: AdminAddonsSearch[] = [{}, { cursor: middle }, { cursor: middle, dir: 'prev' }];
 
 	test.each<[string, AdminAddonsSearch, RegExp]>([
-		[
-			'listed',
-			{ status: 'listed' },
-			/^(SCAN|SEARCH) d0 USING INDEX addon_listed_createdAt_idx/,
-		],
-		[
-			'delisted',
-			{ status: 'delisted' },
-			/^(SCAN|SEARCH) d0 USING INDEX addon_delisted_createdAt_idx/,
-		],
-		['type', { type: 'theme' }, /^(SCAN|SEARCH) d0 USING INDEX addon_createdAt_idx/],
-		[
-			'listed type',
-			{ type: 'theme', status: 'listed' },
-			/^SEARCH d0 USING INDEX addon_listed_type_createdAt_idx \(type=\?/,
-		],
+		['listed', { status: 'listed' }, /^addon_listed_createdAt_idx$/],
+		// On a few rows the planner may filter the general index past a cursor; both read in order.
+		['delisted', { status: 'delisted' }, /^addon_(delisted_)?createdAt_idx$/],
+		['type', { type: 'theme' }, /^addon_createdAt_idx$/],
+		['listed type', { type: 'theme', status: 'listed' }, /^addon_listed_type_createdAt_idx$/],
 		[
 			'published range',
 			{ publishedFrom: '1970-01-02', publishedTo: '1970-01-04', order: 'asc' },
-			/^SEARCH d0 USING INDEX addon_createdAt_idx \(.*created_at.*AND.*created_at/,
+			/^addon_createdAt_idx$/,
 		],
-	])('%s reads its index in order, without sorting', (_name, filters, index) => {
+	])('%s reads its index in order, without sorting', async (_name, filters, index) => {
 		for (const page of pages) {
-			const steps = outerSteps(queryAdminAddons(ctx, { ...filters, ...page }));
+			const statement = queryAdminAddons(ctx, { ...filters, ...page });
 
-			expect(steps).toContainEqual(expect.stringMatching(index));
-			expect(steps).not.toContainEqual(expect.stringMatching(/TEMP B-TREE/));
+			expect(indexes(await outerPlan(statement))).toContainEqual(
+				expect.stringMatching(index),
+			);
+			expect(types(await outerPlan(statement))).not.toContain('Sort');
 		}
 	});
 
-	test('a published range seeks to the cursor rather than to the range bound', () => {
+	test('a published range seeks to the cursor rather than to the range bound', async () => {
 		const range: AdminAddonsSearch = { publishedFrom: '1970-01-02', publishedTo: '1970-01-04' };
-		const cases: [AdminAddonsSearch, string][] = [
-			[range, '(created_at>? AND created_at<?)'],
-			[{ ...range, cursor: middle }, '(created_at>? AND (created_at,id)<(?,?))'],
-			[{ ...range, cursor: middle, dir: 'prev' }, '((created_at,id)>(?,?) AND created_at<?)'],
+		const cases: [AdminAddonsSearch, RegExp][] = [
+			[range, /^\(\(created_at >= .+\) AND \(created_at < .+\)\)$/],
+			[
+				{ ...range, cursor: middle },
+				/^\(\(created_at >= .+\) AND \(ROW\(created_at, id\) < ROW\(.+\)\)\)$/,
+			],
+			[
+				{ ...range, cursor: middle, dir: 'prev' },
+				/^\(\(created_at < .+\) AND \(ROW\(created_at, id\) > ROW\(.+\)\)\)$/,
+			],
 		];
 
 		for (const [search, bounds] of cases) {
-			expect(outerSteps(queryAdminAddons(ctx, search))).toContainEqual(
-				`SEARCH d0 USING INDEX addon_createdAt_idx ${bounds}`,
-			);
+			const nodes = await plan(queryAdminAddons(ctx, search));
+			const scan = nodes.find((node) => node['Index Name'] === 'addon_createdAt_idx');
+
+			expect(scan?.['Index Cond']).toMatch(bounds);
 		}
 	});
 
-	test.each<[string, AdminAddonsSearch, RegExp]>([
-		[
-			'maintainer',
-			{ maintainer: 'someone' },
-			/^SEARCH addon_maintainer USING (COVERING )?INDEX addon_maintainer_userId_idx \(user_id=\?\)/,
-		],
+	test.each<[string, AdminAddonsSearch, string, RegExp]>([
+		['maintainer', { maintainer: 'someone' }, 'addon_maintainer_userId_idx', /^\(user_id = /],
 		[
 			'pending review',
 			{ status: 'pending_review' },
-			/^SEARCH submission USING INDEX submission_status_submittedAt_idx \(status=\?\)/,
+			'submission_status_submittedAt_idx',
+			/^\(status = /,
 		],
 		[
 			'changes requested',
 			{ status: 'changes_requested' },
-			/^SEARCH submission USING INDEX submission_status_submittedAt_idx \(status=\?\)/,
+			'submission_status_submittedAt_idx',
+			/^\(status = /,
 		],
-		['search', { q: 'walk' }, /^SCAN addon_search VIRTUAL TABLE INDEX \d+:M/],
-	])('%s reads only the matching addons through its index', (_name, filters, index) => {
+		// Search has no row here: with a cursor, addon_createdAt_idx serves the range and which index wins is
+		// a cost call. 'a search reads the trigram index of the listed table' plans it without one.
+	])('%s seeks only the matching addons in its index', async (_name, filters, index, seek) => {
 		for (const page of pages) {
-			const steps = allSteps(queryAdminAddons(ctx, { ...filters, ...page }));
+			const query = queryAdminAddons(ctx, { ...filters, ...page }).toSQL();
+			const root = await explain(ctx.db, query, 'filter');
 
-			expect(steps).toContainEqual(expect.stringMatching(index));
-			expect(steps).toContainEqual(
-				expect.stringMatching(/^SEARCH d0 USING INDEX sqlite_autoindex_addon_1 \(id=\?\)/),
-			);
-			expect(steps).not.toContainEqual(expect.stringMatching(/^SCAN d0\b/));
+			expect(indexCond(root, index)).toMatch(seek);
+			expect(types(planNodes(root))).not.toContain('Seq Scan');
 		}
 	});
 });

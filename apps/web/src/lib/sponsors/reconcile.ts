@@ -270,32 +270,24 @@ export async function reconcileSponsorships(ctx: AppContext): Promise<ReconcileR
 	const remote = await fetchRemoteSponsorships(ctx.env);
 	const now = ctx.now();
 
-	const updated = ctx.db.transaction(
-		(tx) => {
-			const writes = planReconcile(
-				tx.select().from(sponsorship).all(),
-				remote,
-				now,
-				startedAt,
+	const updated = await ctx.db.transaction(async (tx) => {
+		const writes = planReconcile(await tx.select().from(sponsorship), remote, now, startedAt);
+
+		for (const row of writes) {
+			await upsertSponsorship(tx, row);
+		}
+
+		await tx
+			.delete(sponsorWebhookDelivery)
+			.where(
+				lt(
+					sponsorWebhookDelivery.receivedAt,
+					new Date(now.getTime() - DELIVERY_RETENTION_MS),
+				),
 			);
 
-			for (const row of writes) {
-				upsertSponsorship(tx, row);
-			}
-
-			tx.delete(sponsorWebhookDelivery)
-				.where(
-					lt(
-						sponsorWebhookDelivery.receivedAt,
-						new Date(now.getTime() - DELIVERY_RETENTION_MS),
-					),
-				)
-				.run();
-
-			return writes.length;
-		},
-		{ behavior: 'immediate' },
-	);
+		return writes.length;
+	});
 
 	return { fetched: remote.size, updated };
 }

@@ -63,29 +63,26 @@ export function manifest(
 	};
 }
 
-function insertSource(ctx: AppContext, row: SubmissionRow, source: SourceSeed) {
+async function insertSource(ctx: AppContext, row: SubmissionRow, source: SourceSeed) {
 	const { repository, ...columns } = source;
 	const path = columns.path ?? 'plugins/hello';
 
-	ctx.db
-		.insert(submissionSource)
-		.values({
-			submissionId: row.id,
-			repositoryId: 1,
-			path,
-			ref: 'main',
-			commitSha: sha1(row.id),
-			bundlePath: `${path}/dist/index.js`,
-			bundleBlobSha: sha1(`${row.id}/bundle`),
-			addonMd: `# ${row.manifest.name}`,
-			changelog: {
-				date: '2026-10-17',
-				sections: [{ type: 'added', items: [`Changes in ${row.version}.`] }],
-			},
-			details: REPOSITORY_DETAILS,
-			...columns,
-		})
-		.run();
+	await ctx.db.insert(submissionSource).values({
+		submissionId: row.id,
+		repositoryId: 1,
+		path,
+		ref: 'main',
+		commitSha: sha1(row.id),
+		bundlePath: `${path}/dist/index.js`,
+		bundleBlobSha: sha1(`${row.id}/bundle`),
+		addonMd: `# ${row.manifest.name}`,
+		changelog: {
+			date: '2026-10-17',
+			sections: [{ type: 'added', items: [`Changes in ${row.version}.`] }],
+		},
+		details: REPOSITORY_DETAILS,
+		...columns,
+	});
 }
 
 /**
@@ -133,7 +130,7 @@ export async function seedSubmission(
 	}
 
 	if (source) {
-		insertSource(ctx, row, source);
+		await insertSource(ctx, row, source);
 	}
 
 	return row;
@@ -166,11 +163,9 @@ export async function seedVersion(
 		source ?? null,
 	);
 
-	ctx.db.transaction((tx) => {
-		tx.insert(addonVersion)
-			.values(toVersionRow(row, sha256, ctx.now()))
-			.run();
-		refreshAddonSummary(tx, published.id);
+	await ctx.db.transaction(async (tx) => {
+		await tx.insert(addonVersion).values(toVersionRow(row, sha256, ctx.now()));
+		await refreshAddonSummary(tx, published.id);
 	});
 
 	return row;

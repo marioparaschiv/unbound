@@ -11,7 +11,7 @@ const checkLoaderUpdateEndpoint = endpoint(
 	async ({ ctx, request, query }) => {
 		const ip = getIP(request, ctx.auth.options) ?? 'unknown';
 
-		consumeRateLimit(ctx, {
+		await consumeRateLimit(ctx, {
 			key: `api:loader-updates:${ip}`,
 			windowSeconds: ctx.env.UPDATES_RATE_LIMIT_WINDOW_SECONDS,
 			max: ctx.env.UPDATES_RATE_LIMIT_MAX,
