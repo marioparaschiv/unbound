@@ -8,8 +8,8 @@ import { createLogger } from '@unbound-app/logger';
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
 import { GUILD_ID, SITE_URL } from '~/lib/constants';
 import { startDispatchers } from '~/runtime/start';
-import { setDatabase } from '~/db/instance';
 import { checkTriggers } from '~/db/triggers';
+import { setDatabase } from '~/db/instance';
 import { dispatchers } from '~/dispatchers';
 import { checkConfig } from '~/lib/config';
 

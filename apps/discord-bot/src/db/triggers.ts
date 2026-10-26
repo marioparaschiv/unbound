@@ -1,5 +1,5 @@
-import { createLogger } from '@unbound-app/logger';
 import { readdirSync, readFileSync } from 'node:fs';
+import { createLogger } from '@unbound-app/logger';
 import { join } from 'node:path';
 
 import { MIGRATIONS_FOLDER } from '~/db/migrate';
