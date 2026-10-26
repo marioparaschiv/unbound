@@ -5,11 +5,10 @@ import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
 import { startDispatchers } from '~/runtime/start';
 
 import {
-	createTestDatabase,
-	DROP_HOOK_TIMEOUT_MS,
+	createBotTestDatabase,
 	DATABASE_URL,
 	waitFor,
-	type TestDatabase,
+	type BotTestDatabase,
 } from './helpers/database';
 
 type Calls = {
@@ -31,22 +30,26 @@ type FakeOptions = {
 };
 
 describe.skipIf(!DATABASE_URL)('timed reconcile', () => {
-	let database: TestDatabase;
+	let database: BotTestDatabase;
 	let context: DispatcherContext;
 
 	beforeAll(async () => {
-		database = await createTestDatabase();
+		database = await createBotTestDatabase();
 		await database.db.$client`
 			CREATE TABLE timed_post (id text PRIMARY KEY, posted boolean NOT NULL DEFAULT false)
 		`;
 		// The fake dispatchers never touch Discord, so an unready client is enough.
-		context = { db: database.db, client: new Client({ intents: [] }) as Client<true> };
+		context = {
+			db: database.db,
+			web: database.reads,
+			client: new Client({ intents: [] }) as Client<true>,
+		};
 	});
 
 	afterAll(async () => {
 		await context.client.destroy();
 		await database.drop();
-	}, DROP_HOOK_TIMEOUT_MS);
+	});
 
 	function fakeDispatcher({
 		failFirstHandle = false,

@@ -1,6 +1,7 @@
+import type { Member, MemberQuery, MemberSubject } from '@unbound-app/web/bot';
 import { DiscordAPIError, PermissionFlagsBits, RESTJSONErrorCodes } from 'discord.js';
-import { and, eq, inArray, isNotNull, type SQL } from 'drizzle-orm';
 import { createLogger } from '@unbound-app/logger';
+import { inArray } from 'drizzle-orm';
 
 import {
 	ADDON_DEVELOPER_ROLE_ID,
@@ -11,8 +12,9 @@ import {
 import { type ContributorCache, createContributorCache } from '~/lib/github-contributors';
 import createSerialQueue from '~/runtime/serial-queue';
 import type { IdConstantName } from '~/lib/constants';
-import { member, roleGrant } from '~/db/schema';
+import type { Stores } from '~/dispatchers/types';
 import type { Database } from '~/db/database';
+import { roleGrant } from '~/db/schema';
 
 const logger = createLogger('Bot', 'Roles');
 
@@ -40,13 +42,11 @@ export type RolesClient = {
 	guilds: { fetch: (guildId: string) => Promise<RolesGuild> };
 	on: (event: 'guildMemberAdd', listener: (member: JoinedMember) => void) => void;
 };
-export type RolesContext = { db: Database; client: RolesClient };
+export type RolesContext = Stores & { client: RolesClient };
 
 export type RoleKey = 'contributor' | 'addonDeveloper' | 'sponsor';
 export type RoleIds = Record<RoleKey, string>;
-export type MemberRow = typeof member.$inferSelect;
-
-/** One Discord account: the union of every member row with this discord id. */
+/** One Discord account: the union of every member with this discord id. */
 type Claim = { discordId: string; wanted: ReadonlySet<RoleKey>; granted: ReadonlySet<string> };
 /** Role id per key; a role blocked by the guild is absent and was logged. */
 type Grantable = ReadonlyMap<RoleKey, string>;
@@ -82,20 +82,42 @@ const DEFAULT_ROLE_IDS: RoleIds = {
 	sponsor: SPONSOR_ROLE_ID,
 };
 const DELETED_RETRY_MS = 60 * 60 * 1000;
+const ALL_MEMBERS: MemberQuery = { by: 'all' };
+// The subjects the bot's triggers write into `member_changed` payloads; `discord` is for joins only.
+const PAYLOAD_SUBJECTS: ReadonlySet<string> = new Set<MemberSubject>(['user', 'github', 'addon']);
+
+function isPayloadSubject(value: string): value is MemberSubject {
+	return PAYLOAD_SUBJECTS.has(value);
+}
 
 /**
- * @description Decides the roles one member row qualifies for.
- * @param row The member row.
+ * @description Reads a `member_changed` payload written by the bot's triggers.
+ * @param payload `user:<id>`, `github:<id>` or `addon:<id>`.
+ * @returns The members it names, or undefined for a payload no trigger writes.
+ */
+export function parseMemberPayload(payload: string): MemberQuery | undefined {
+	const separator = payload.indexOf(':');
+	const by = payload.slice(0, separator);
+	const id = payload.slice(separator + 1);
+
+	if (separator < 0 || !id || !isPayloadSubject(by)) return;
+
+	return { by, ids: [id] };
+}
+
+/**
+ * @description Decides the roles one member qualifies for.
+ * @param row The member.
  * @param contributors Contributor GitHub ids, or undefined when no list has loaded yet.
- * @returns The qualifying role keys; empty unless GitHub and Discord are both linked.
+ * @returns The qualifying role keys; empty unless GitHub is linked too.
  */
 export function qualifyingRoles(
-	row: MemberRow,
+	row: Member,
 	contributors: ReadonlySet<string> | undefined,
 ): Set<RoleKey> {
 	const roles = new Set<RoleKey>();
 
-	if (!row.discordId || row.githubId === null) {
+	if (row.githubId === null) {
 		return roles;
 	}
 
@@ -165,20 +187,16 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 	let reported = new Set<string>();
 	let attached = false;
 
-	async function loadClaims(db: Database, where: SQL | undefined): Promise<Claim[]> {
+	async function loadClaims({ db, web }: Stores, query: MemberQuery): Promise<Claim[]> {
 		const ids = await contributors.get();
-		const rows = await db
-			.select()
-			.from(member)
-			.where(and(isNotNull(member.githubId), where));
+		const rows = await web.members(query);
 		const wanted = new Map<string, Set<RoleKey>>();
 
 		for (const row of rows) {
 			const { discordId } = row;
 			const roles = qualifyingRoles(row, ids);
 
-			// A null discord id is a tombstone: grant nothing, remove nothing.
-			if (!discordId || !roles.size || (deleted.get(discordId) ?? 0) > now()) {
+			if (!roles.size || (deleted.get(discordId) ?? 0) > now()) {
 				continue;
 			}
 
@@ -360,8 +378,8 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		}
 	}
 
-	async function sync(current: RolesContext, where: SQL | undefined) {
-		const claims = await loadClaims(current.db, where);
+	async function sync(current: RolesContext, query: MemberQuery) {
+		const claims = await loadClaims(current, query);
 
 		if (!claims.length) return;
 
@@ -388,7 +406,7 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 			if (joined.guild.id !== guildId) return;
 
 			queue
-				.enqueue(() => sync(context, eq(member.discordId, joined.id)))
+				.enqueue(() => sync(context, { by: 'discord', ids: [joined.id] }))
 				.catch((error) => {
 					logger.error(
 						`Failed to sync roles for joined Discord user ${joined.id}:`,
@@ -405,15 +423,14 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 		reconcile(current) {
 			attach(current);
 
-			return queue.enqueue(() => sync(current, undefined));
+			return queue.enqueue(() => sync(current, ALL_MEMBERS));
 		},
-		handle(userId, current) {
-			const discordIds = current.db
-				.select({ discordId: member.discordId })
-				.from(member)
-				.where(eq(member.userId, userId));
+		handle(payload, current) {
+			const query = parseMemberPayload(payload);
 
-			return queue.enqueue(() => sync(current, inArray(member.discordId, discordIds)));
+			if (!query) return Promise.resolve();
+
+			return queue.enqueue(() => sync(current, query));
 		},
 		drain: () => queue.drain(),
 	};
@@ -421,4 +438,4 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 
 export const rolesDispatcher = createRolesDispatcher();
 
-export default { createRolesDispatcher, qualifyingRoles, rolesDispatcher };
+export default { parseMemberPayload, createRolesDispatcher, qualifyingRoles, rolesDispatcher };

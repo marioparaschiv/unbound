@@ -2,9 +2,11 @@ export { default as previewSubmissionEndpoint } from '~/endpoints/preview-submis
 export { default as createSubmissionEndpoint } from '~/endpoints/create-submission';
 export { default as checkUpdatesEndpoint } from '~/endpoints/check-updates';
 export { default as meEndpoint } from '~/endpoints/me';
+export { createStaffNote } from '~/lib/staff-notes';
 export type { AppContext } from '~/lib/context';
 export * as schema from '~/db/schema';
 export * from './database';
+export * from './sponsors';
 export * from './context';
 export * from './storage';
 export * from './addons';

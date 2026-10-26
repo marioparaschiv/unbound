@@ -1,27 +1,21 @@
 import type { REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
-import { and, asc, eq, gte, isNull } from 'drizzle-orm';
+import type { LoaderPlatform } from '@unbound-app/contracts/loader';
+import type { Release, ReleaseKey } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
+import { and, eq } from 'drizzle-orm';
 
 import { COLOURS, RELEASES_CHANNEL_ID, RELEASES_ROLE_ID } from '~/lib/constants';
 import { listOwnMessages, postMessage, truncate } from '~/lib/discord-messages';
-import type { LoaderPlatform } from '~/lib/feed/types';
-import type { Dispatcher } from '~/dispatchers/types';
+import type { Dispatcher, Stores } from '~/dispatchers/types';
 import type { Database } from '~/db/database';
-import { loaderRelease } from '~/db/schema';
+import { releasePost } from '~/db/schema';
 
 export type ReleaseTarget = {
 	channelId: string;
 	roleId: string;
 };
 
-type ReleaseRow = typeof loaderRelease.$inferSelect;
-
 const logger = createLogger('Bot', 'Releases');
-
-type ReleaseKey = {
-	platform: LoaderPlatform;
-	version: string;
-};
 
 export const RELEASE_TARGET: ReleaseTarget = {
 	channelId: RELEASES_CHANNEL_ID,
@@ -38,12 +32,8 @@ function isPlatform(value: string): value is LoaderPlatform {
 	return Object.hasOwn(PLATFORM_NAMES, value);
 }
 
-function byKey(key: ReleaseKey) {
-	return and(eq(loaderRelease.platform, key.platform), eq(loaderRelease.version, key.version));
-}
-
-function isFresh(now: number) {
-	return gte(loaderRelease.publishedAt, new Date(now - RELEASE_MAX_AGE_MS));
+function keyOf(release: ReleaseKey) {
+	return `${release.platform}:${release.version}`;
 }
 
 function parseKey(payload: string): ReleaseKey | undefined {
@@ -55,20 +45,21 @@ function parseKey(payload: string): ReleaseKey | undefined {
 	return { platform, version: payload.slice(separator + 1) };
 }
 
-function releaseTitle(release: ReleaseRow) {
+function freshSince(now: number) {
+	return new Date(now - RELEASE_MAX_AGE_MS);
+}
+
+function releaseTitle(release: ReleaseKey) {
 	return `Unbound for ${PLATFORM_NAMES[release.platform]} ${release.version}`;
 }
 
 /**
  * @description Renders a loader release announcement that pings only the releases role.
- * @param release The release row.
+ * @param release The release.
  * @param roleId The role to ping.
  * @returns The message body to post.
  */
-export function renderRelease(
-	release: ReleaseRow,
-	roleId: string,
-): RESTPostAPIChannelMessageJSONBody {
+export function renderRelease(release: Release, roleId: string): RESTPostAPIChannelMessageJSONBody {
 	return {
 		content: `<@&${roleId}>`,
 		embeds: [
@@ -86,14 +77,23 @@ export function renderRelease(
 	};
 }
 
-// Our listed announcement whose title names an unannounced release lost its id write, so it is
+async function recordPost(db: Database, release: ReleaseKey, channelId: string, messageId: string) {
+	await db
+		.insert(releasePost)
+		.values({ platform: release.platform, version: release.version, channelId, messageId })
+		.onConflictDoNothing();
+}
+
+// Our listed announcement whose title names an unannounced release lost its row write, so it is
 // adopted. Nothing here is ever deleted: its ping already happened.
-async function adoptOrphans(db: Database, rest: REST, selfId: string, target: ReleaseTarget) {
-	const unannounced = await db
-		.select()
-		.from(loaderRelease)
-		.where(isNull(loaderRelease.messageId));
-	const byTitle = new Map(unannounced.map((row) => [releaseTitle(row), row]));
+async function adoptOrphans(
+	db: Database,
+	rest: REST,
+	selfId: string,
+	target: ReleaseTarget,
+	unannounced: Release[],
+): Promise<Release[]> {
+	const byTitle = new Map(unannounced.map((release) => [releaseTitle(release), release]));
 
 	for (const message of await listOwnMessages(rest, target.channelId, selfId)) {
 		const title = message.embeds[0]?.title;
@@ -104,39 +104,35 @@ async function adoptOrphans(db: Database, rest: REST, selfId: string, target: Re
 		}
 
 		byTitle.delete(title);
-		await db
-			.update(loaderRelease)
-			.set({ channelId: target.channelId, messageId: message.id })
-			.where(byKey(release));
+		await recordPost(db, release, target.channelId, message.id);
 	}
+
+	return [...byTitle.values()];
 }
 
 // Once posted, a release is never edited or reposted, even if its message was deleted by hand:
 // a repost would ping the role a second time.
-async function announce(db: Database, rest: REST, release: ReleaseRow, target: ReleaseTarget) {
+async function announce(db: Database, rest: REST, release: Release, target: ReleaseTarget) {
 	const messageId = await postMessage(
 		rest,
 		target.channelId,
 		renderRelease(release, target.roleId),
 	);
 
-	await db
-		.update(loaderRelease)
-		.set({ channelId: target.channelId, messageId })
-		.where(byKey(release));
+	await recordPost(db, release, target.channelId, messageId);
 }
 
 /**
  * @description Announces the release named by a `platform:version` payload unless it was announced already.
- * @param db The bot database.
+ * @param stores The bot database and the web's reads.
  * @param rest The Discord REST client.
  * @param payload The `loader_release` notification payload.
  * @param target The channel to post in and the role to ping.
  * @param now The current time in milliseconds; a release older than a week is skipped.
- * @returns Resolves once the release is announced, found already announced, or skipped as old.
+ * @returns Resolves once the release is announced, found already announced, or skipped.
  */
 export async function announceRelease(
-	db: Database,
+	{ db, web }: Stores,
 	rest: REST,
 	payload: string,
 	target: ReleaseTarget = RELEASE_TARGET,
@@ -146,19 +142,24 @@ export async function announceRelease(
 
 	if (!key) return;
 
-	const [release] = await db
-		.select()
-		.from(loaderRelease)
-		.where(and(byKey(key), isNull(loaderRelease.messageId), isFresh(now)));
+	const [release, [posted]] = await Promise.all([
+		web.release(key),
+		db
+			.select({ messageId: releasePost.messageId })
+			.from(releasePost)
+			.where(
+				and(eq(releasePost.platform, key.platform), eq(releasePost.version, key.version)),
+			),
+	]);
 
-	if (!release) return;
+	if (!release || posted || release.publishedAt < freshSince(now)) return;
 
 	await announce(db, rest, release, target);
 }
 
 /**
- * @description Adopts announcements a crash left unrecorded, then announces every unannounced release in publish order.
- * @param db The bot database.
+ * @description Adopts announcements a crash left unrecorded, then announces every unannounced fresh release in publish order.
+ * @param stores The bot database and the web's reads.
  * @param rest The Discord REST client.
  * @param selfId The bot's own user id.
  * @param target The channel to post in and the role to ping.
@@ -166,19 +167,26 @@ export async function announceRelease(
  * @returns Resolves once every release was tried; one release's failure is logged and left to the next run.
  */
 export async function reconcileReleases(
-	db: Database,
+	{ db, web }: Stores,
 	rest: REST,
 	selfId: string,
 	target: ReleaseTarget = RELEASE_TARGET,
 	now: number = Date.now(),
 ): Promise<void> {
-	await adoptOrphans(db, rest, selfId, target);
-
-	const unannounced = await db
-		.select()
-		.from(loaderRelease)
-		.where(and(isNull(loaderRelease.messageId), isFresh(now)))
-		.orderBy(asc(loaderRelease.publishedAt), loaderRelease.platform, loaderRelease.version);
+	const [fresh, posts] = await Promise.all([
+		web.releasesSince(freshSince(now)),
+		db
+			.select({ platform: releasePost.platform, version: releasePost.version })
+			.from(releasePost),
+	]);
+	const posted = new Set(posts.map(keyOf));
+	const unannounced = await adoptOrphans(
+		db,
+		rest,
+		selfId,
+		target,
+		fresh.filter((release) => !posted.has(keyOf(release))),
+	);
 
 	for (const release of unannounced) {
 		try {
@@ -193,8 +201,8 @@ export const releasesDispatcher: Dispatcher = {
 	name: 'releases',
 	channel: 'loader_release',
 	requires: ['RELEASES_CHANNEL_ID', 'RELEASES_ROLE_ID'],
-	reconcile: ({ db, client }) => reconcileReleases(db, client.rest, client.user.id),
-	handle: (payload, { db, client }) => announceRelease(db, client.rest, payload),
+	reconcile: ({ db, web, client }) => reconcileReleases({ db, web }, client.rest, client.user.id),
+	handle: (payload, { db, web, client }) => announceRelease({ db, web }, client.rest, payload),
 };
 
 export default {

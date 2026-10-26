@@ -1,60 +1,61 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import type { Release } from '@unbound-app/web/bot';
+import { schema } from '@unbound-app/web/testing';
 import { and, eq, sql } from 'drizzle-orm';
 
 import { announceRelease, reconcileReleases, type ReleaseTarget } from '~/dispatchers/releases';
-import type { ReleaseFeedItem } from '~/lib/feed/types';
-import { createDatabase } from '~/db/database';
-import { loaderRelease } from '~/db/schema';
-import { feeds } from '~/lib/feed/feeds';
+import { createDatabase, type Database } from '~/db/database';
+import { releasePost } from '~/db/schema';
 
-import {
-	createTestDatabase,
-	DROP_HOOK_TIMEOUT_MS,
-	DATABASE_URL,
-	type TestDatabase,
-} from './helpers/database';
 import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord-rest';
-import { RELEASE } from './helpers/feeds';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
+import { createFakeReads, RELEASE, type FakeReads } from './helpers/fake-reads';
 
 const TARGET: ReleaseTarget = { channelId: '21', roleId: '31' };
 const NOW = Date.parse('2026-10-02T00:00:00.000Z');
 
-const ANDROID: ReleaseFeedItem = {
+const ANDROID: Release = {
 	platform: 'android',
 	version: '1.2.4',
 	url: 'https://example.com/unbound.apk',
 	changelog: null,
-	publishedAt: '2026-09-30T00:00:00.000Z',
+	publishedAt: new Date('2026-09-30T00:00:00.000Z'),
 };
 
 describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
-	let database: TestDatabase;
+	let database: BotTestDatabase;
 	let discord: FakeDiscord;
+	let fake: FakeReads;
 
 	beforeAll(async () => {
-		database = await createTestDatabase();
+		database = await createBotTestDatabase();
 	});
 
 	afterAll(async () => {
 		await database.drop();
-	}, DROP_HOOK_TIMEOUT_MS);
+	});
 
 	beforeEach(async () => {
-		await database.db.execute(sql`TRUNCATE loader_release`);
+		await database.db.execute(sql`TRUNCATE bot.release_post`);
 		discord = createFakeDiscord();
+		fake = createFakeReads();
 	});
 
 	afterEach(async () => {
 		await discord.stop();
 	});
 
-	async function ingest(...items: ReleaseFeedItem[]) {
-		await database.db.transaction((tx) => feeds.releases.ingest(tx, items));
+	function stores(db: Database = database.db) {
+		return { db, web: fake.reads };
 	}
 
-	function handle(item: ReleaseFeedItem) {
+	function ingest(...items: Release[]) {
+		fake.releases.push(...items);
+	}
+
+	function handle(item: Release) {
 		return announceRelease(
-			database.db,
+			stores(),
 			discord.rest,
 			`${item.platform}:${item.version}`,
 			TARGET,
@@ -63,18 +64,15 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	}
 
 	function reconcile() {
-		return reconcileReleases(database.db, discord.rest, discord.selfId, TARGET, NOW);
+		return reconcileReleases(stores(), discord.rest, discord.selfId, TARGET, NOW);
 	}
 
-	async function rowOf(item: ReleaseFeedItem) {
+	async function rowOf(item: Release) {
 		const [row] = await database.db
 			.select()
-			.from(loaderRelease)
+			.from(releasePost)
 			.where(
-				and(
-					eq(loaderRelease.platform, item.platform),
-					eq(loaderRelease.version, item.version),
-				),
+				and(eq(releasePost.platform, item.platform), eq(releasePost.version, item.version)),
 			);
 
 		return row;
@@ -85,7 +83,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	}
 
 	test('a release is announced once, pinging only the releases role', async () => {
-		await ingest(RELEASE);
+		ingest(RELEASE);
 		await handle(RELEASE);
 
 		const [message, ...extra] = discord.messages('21');
@@ -99,7 +97,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 				url: RELEASE.url,
 				description: 'Fixes.',
 				color: 0xc8_41_51,
-				timestamp: RELEASE.publishedAt,
+				timestamp: RELEASE.publishedAt.toISOString(),
 			},
 		]);
 		expect(await rowOf(RELEASE)).toMatchObject({ channelId: '21', messageId: message?.id });
@@ -117,7 +115,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	test('a release with a very long changelog posts within the embed size cap', async () => {
 		const long = { ...RELEASE, changelog: 'c'.repeat(10_000) };
 
-		await ingest(long);
+		ingest(long);
 		await handle(long);
 
 		const [embed] = discord.messages('21')[0]?.embeds ?? [];
@@ -127,7 +125,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	});
 
 	test('reconcile announces every unannounced release in publish order', async () => {
-		await ingest(RELEASE, ANDROID);
+		ingest(RELEASE, ANDROID);
 		await reconcile();
 
 		const titles = discord.messages('21').map((message) => message.embeds[0]?.title);
@@ -143,35 +141,39 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	});
 
 	test('a release published over a week ago is never announced; a fresh one is', async () => {
-		const old = { ...ANDROID, version: '0.9.0', publishedAt: '2026-09-24T00:00:00.000Z' };
+		const old = {
+			...ANDROID,
+			version: '0.9.0',
+			publishedAt: new Date('2026-09-24T00:00:00.000Z'),
+		};
 
-		await ingest(old, RELEASE);
+		ingest(old, RELEASE);
 		await handle(old);
 		await reconcile();
 
 		const titles = discord.messages('21').map((message) => message.embeds[0]?.title);
 
 		expect(titles).toEqual(['Unbound for iOS 1.2.3']);
-		expect((await rowOf(old))?.messageId).toBeNull();
+		expect((await rowOf(old))?.messageId).toBeUndefined();
 	});
 
 	test('a release Discord rejects is logged and skipped, and the next reconcile announces it', async () => {
-		await ingest(RELEASE, ANDROID);
+		ingest(RELEASE, ANDROID);
 		discord.rejectPost = (body) => body.embeds?.[0]?.url === ANDROID.url;
 		await reconcile();
 
-		expect((await rowOf(RELEASE))?.messageId).not.toBeNull();
-		expect((await rowOf(ANDROID))?.messageId).toBeNull();
+		expect((await rowOf(RELEASE))?.messageId).toBeDefined();
+		expect((await rowOf(ANDROID))?.messageId).toBeUndefined();
 
 		discord.rejectPost = undefined;
 		await reconcile();
 
-		expect((await rowOf(ANDROID))?.messageId).not.toBeNull();
+		expect((await rowOf(ANDROID))?.messageId).toBeDefined();
 		expect(discord.messages('21')).toHaveLength(2);
 	});
 
 	test('reconcile never deletes a message in the releases channel', async () => {
-		await ingest(RELEASE);
+		ingest(RELEASE);
 		await handle(RELEASE);
 
 		const [announced] = discord.messages('21');
@@ -191,7 +193,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	test('reconcile keeps an old bot message that names no release', async () => {
 		const old = discord.seed('21', discord.selfId, { embeds: [{ url: 'https://old-bot' }] });
 
-		await ingest(RELEASE);
+		ingest(RELEASE);
 		await reconcile();
 
 		expect(discord.messages('21').map((message) => message.id)).toContain(old);
@@ -206,7 +208,7 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 			await Bun.sleep(300);
 		};
 
-		await ingest(RELEASE);
+		ingest(RELEASE);
 		await handle(RELEASE);
 
 		const [message, ...extra] = discord.messages('21');
@@ -218,13 +220,13 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 
 	// The fake Discord's POST handler ends the announcer's own database client before it responds,
 	// so the real post lands and the id write after it fails.
-	async function crashAnnounce(item: ReleaseFeedItem) {
+	async function crashAnnounce(item: Release) {
 		const crashing = createDatabase(database.url);
 
 		discord.beforePostResponse = () => crashing.$client.end();
 
 		const outcome = await announceRelease(
-			crashing,
+			stores(crashing),
 			discord.rest,
 			`${item.platform}:${item.version}`,
 			TARGET,
@@ -240,9 +242,13 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	}
 
 	test('announcements that lost their id writes are adopted by release, not by a shared url', async () => {
-		const next = { ...ANDROID, version: '1.2.5', publishedAt: '2026-09-30T12:00:00.000Z' };
+		const next = {
+			...ANDROID,
+			version: '1.2.5',
+			publishedAt: new Date('2026-09-30T12:00:00.000Z'),
+		};
 
-		await ingest(ANDROID, next);
+		ingest(ANDROID, next);
 
 		expect(await crashAnnounce(ANDROID)).toBe('failed');
 		expect(await crashAnnounce(next)).toBe('failed');
@@ -259,11 +265,11 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 	});
 
 	test('a crash between the post and the id write converges on reconcile', async () => {
-		await ingest(RELEASE);
+		ingest(RELEASE);
 
 		expect(await crashAnnounce(RELEASE)).toBe('failed');
 		expect(discord.messages('21')).toHaveLength(1);
-		expect((await rowOf(RELEASE))?.messageId).toBeNull();
+		expect((await rowOf(RELEASE))?.messageId).toBeUndefined();
 
 		await reconcile();
 
@@ -272,5 +278,26 @@ describe.skipIf(!DATABASE_URL)('loader release announcements', () => {
 		expect(extra).toHaveLength(0);
 		expect(posts()).toHaveLength(1);
 		expect(await rowOf(RELEASE)).toMatchObject({ channelId: '21', messageId: message?.id });
+	});
+
+	test('a release published on the web is announced once; a withdrawn one never', async () => {
+		const real = { db: database.db, web: database.reads };
+		const publishedAt = new Date(NOW - 60_000);
+
+		await database.web.db.insert(schema.loaderRelease).values([
+			{ ...RELEASE, versionKey: RELEASE.version, publishedAt },
+			{ ...ANDROID, versionKey: ANDROID.version, publishedAt },
+		]);
+		await database.web.db
+			.delete(schema.loaderRelease)
+			.where(eq(schema.loaderRelease.platform, 'android'));
+		await announceRelease(real, discord.rest, 'ios:1.2.3', TARGET, NOW);
+		await announceRelease(real, discord.rest, 'android:1.2.4', TARGET, NOW);
+		await reconcileReleases(real, discord.rest, discord.selfId, TARGET, NOW);
+
+		expect(discord.messages('21').map((message) => message.embeds[0]?.title)).toEqual([
+			'Unbound for iOS 1.2.3',
+		]);
+		expect(posts()).toHaveLength(1);
 	});
 });

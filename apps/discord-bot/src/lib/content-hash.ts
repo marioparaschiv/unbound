@@ -1,4 +1,4 @@
-import type { AddonFeedItem } from '~/lib/feed/types';
+import type { PublicAddon } from '@unbound-app/web/bot';
 
 type JsonObject = { [key: string]: JsonValue };
 // `undefined` stands for an absent optional field; JSON.stringify drops it.
@@ -23,13 +23,13 @@ function sortKeys(value: JsonValue): JsonValue {
 }
 
 /**
- * @description Hashes an addon snapshot so a re-sent but unchanged listing compares equal.
- * @param item The addon feed item.
- * @returns The sha256 hex of the item serialized with sorted keys, excluding `updatedAt`.
+ * @description Hashes an addon listing so an unchanged one compares equal. The hashes posted under the
+ * old feed used the same serialization, so a listing that did not change still matches its post.
+ * @param addon The addon's public listing.
+ * @returns The sha256 hex of the listing serialized with sorted keys.
  */
-export function contentHash(item: AddonFeedItem): string {
-	const { updatedAt: _, ...content } = item;
-	const serialized = JSON.stringify(sortKeys(content));
+export function contentHash(addon: PublicAddon): string {
+	const serialized = JSON.stringify(sortKeys(addon));
 
 	return new Bun.CryptoHasher('sha256').update(serialized).digest('hex');
 }

@@ -16,14 +16,14 @@ import {
 	PLUGINS_CHANNEL_ID,
 	THEMES_CHANNEL_ID,
 } from '~/lib/constants';
-import type { AddonFeedItem, AddonType } from '~/lib/feed/types';
-import type { Dispatcher } from '~/dispatchers/types';
-import { addon, addonMessage } from '~/db/schema';
+import type { Dispatcher, Stores } from '~/dispatchers/types';
+import type { AddonType } from '@unbound-app/contracts/addons';
+import type { PublicAddon } from '@unbound-app/web/bot';
+import { contentHash } from '~/lib/content-hash';
 import type { Database } from '~/db/database';
+import { addonMessage } from '~/db/schema';
 
 export type AddonChannels = { [K in AddonType]?: string };
-
-type AddonRow = typeof addon.$inferSelect;
 
 const logger = createLogger('Bot', 'Addons');
 
@@ -39,16 +39,16 @@ const TITLE_LIMIT = 256;
 const DESCRIPTION_LIMIT = 2048;
 const FIELD_LIMIT = 1024;
 
-function desiredChannel(row: AddonRow, channels: AddonChannels) {
-	return row.listed ? channels[row.type] : undefined;
+function desiredChannel(addon: PublicAddon, channels: AddonChannels) {
+	return addon.listed ? channels[addon.type] : undefined;
 }
 
 /**
  * @description Renders an addon listing as a message body that can never ping anyone.
- * @param item The addon snapshot.
+ * @param item The addon's public listing.
  * @returns The message body to post or patch.
  */
-export function renderAddon(item: AddonFeedItem): RESTPostAPIChannelMessageJSONBody {
+export function renderAddon(item: PublicAddon): RESTPostAPIChannelMessageJSONBody {
 	const authors = item.authors.map((author) => author.name).join(', ') || 'Unknown';
 	const embed: APIEmbed = {
 		title: truncate(item.name, TITLE_LIMIT),
@@ -89,12 +89,10 @@ async function adoptOrphans(
 	rest: REST,
 	channels: AddonChannels,
 	listings: Map<string, APIMessage[]>,
+	addons: PublicAddon[],
 ) {
-	const [addons, messages] = await Promise.all([
-		db.select().from(addon),
-		db.select().from(addonMessage),
-	]);
-	const byUrl = new Map(addons.map((row) => [row.data.pageUrl, row]));
+	const messages = await db.select().from(addonMessage);
+	const byUrl = new Map(addons.map((item) => [item.pageUrl, item]));
 	const rows = new Map(messages.map((row) => [row.addonId, row]));
 	const referenced = new Set(messages.map((row) => row.messageId));
 
@@ -140,8 +138,8 @@ async function adoptOrphans(
 }
 
 /**
- * @description Brings one addon's Discord message in line with its row: posted, edited, moved or removed.
- * @param db The bot database.
+ * @description Brings one addon's Discord message in line with its listing: posted, edited, moved or removed.
+ * @param stores The bot database and the web's reads.
  * @param rest The Discord REST client.
  * @param id The addon id.
  * @param channels The channel each addon type posts to.
@@ -149,14 +147,14 @@ async function adoptOrphans(
  * @returns Resolves once the message and its row match the addon.
  */
 export async function syncAddon(
-	db: Database,
+	{ db, web }: Stores,
 	rest: REST,
 	id: string,
 	channels: AddonChannels = ADDON_CHANNELS,
 	present?: ReadonlySet<string>,
 ): Promise<void> {
-	const [[current], [posted]] = await Promise.all([
-		db.select().from(addon).where(eq(addon.id, id)),
+	const [current, [posted]] = await Promise.all([
+		web.addon(id),
 		db.select().from(addonMessage).where(eq(addonMessage.addonId, id)),
 	]);
 	const channelId = current ? desiredChannel(current, channels) : undefined;
@@ -172,20 +170,21 @@ export async function syncAddon(
 		return;
 	}
 
+	const hash = contentHash(current);
 	const kept =
 		posted?.channelId === channelId &&
 		(present?.has(posted.messageId) ??
 			(await messageExists(rest, posted.channelId, posted.messageId)));
 
 	if (posted && kept) {
-		if (posted.postedHash === current.contentHash) return;
+		if (posted.postedHash === hash) return;
 
 		await rest.patch(Routes.channelMessage(channelId, posted.messageId), {
-			body: renderAddon(current.data),
+			body: renderAddon(current),
 		});
 		await db
 			.update(addonMessage)
-			.set({ postedHash: current.contentHash, editedAt: new Date() })
+			.set({ postedHash: hash, editedAt: new Date() })
 			.where(eq(addonMessage.addonId, id));
 
 		return;
@@ -195,10 +194,10 @@ export async function syncAddon(
 		await deleteMessage(rest, posted.channelId, posted.messageId);
 	}
 
-	const messageId = await postMessage(rest, channelId, renderAddon(current.data));
+	const messageId = await postMessage(rest, channelId, renderAddon(current));
 
 	try {
-		await storeMessage(db, id, channelId, messageId, current.contentHash);
+		await storeMessage(db, id, channelId, messageId, hash);
 	} catch (error) {
 		// A post without its row would be duplicated by the next sync; reconcile adopts it if this fails.
 		await deleteMessage(rest, channelId, messageId).catch((cleanup) => {
@@ -214,14 +213,14 @@ export async function syncAddon(
 
 /**
  * @description Adopts messages a crash left without a row, then syncs every addon that has or had a message.
- * @param db The bot database.
+ * @param stores The bot database and the web's reads.
  * @param rest The Discord REST client.
  * @param selfId The bot's own user id.
  * @param channels The channel each addon type posts to.
  * @returns Resolves once every addon was synced; one addon's failure is logged and left to the next run.
  */
 export async function reconcileAddons(
-	db: Database,
+	stores: Stores,
 	rest: REST,
 	selfId: string,
 	channels: AddonChannels = ADDON_CHANNELS,
@@ -237,16 +236,16 @@ export async function reconcileAddons(
 
 	const present = new Set([...listings.values()].flat().map((message) => message.id));
 
-	await adoptOrphans(db, rest, channels, listings);
+	const addons = await stores.web.addons();
 
-	const ids = await db
-		.select({ id: addon.id })
-		.from(addon)
-		.union(db.select({ id: addonMessage.addonId }).from(addonMessage));
+	await adoptOrphans(stores.db, rest, channels, listings, addons);
 
-	for (const { id } of ids) {
+	const posted = await stores.db.select({ id: addonMessage.addonId }).from(addonMessage);
+	const ids = new Set([...addons.map((item) => item.id), ...posted.map((row) => row.id)]);
+
+	for (const id of ids) {
 		try {
-			await syncAddon(db, rest, id, channels, present);
+			await syncAddon(stores, rest, id, channels, present);
 		} catch (error) {
 			logger.error(`Failed to sync addon ${id}:`, error);
 		}
@@ -257,8 +256,8 @@ export const addonsDispatcher: Dispatcher = {
 	name: 'addons',
 	channel: 'addon_changed',
 	requires: ['PLUGINS_CHANNEL_ID', 'THEMES_CHANNEL_ID', 'ICON_PACKS_CHANNEL_ID'],
-	reconcile: ({ db, client }) => reconcileAddons(db, client.rest, client.user.id),
-	handle: (id, { db, client }) => syncAddon(db, client.rest, id),
+	reconcile: ({ db, web, client }) => reconcileAddons({ db, web }, client.rest, client.user.id),
+	handle: (id, { db, web, client }) => syncAddon({ db, web }, client.rest, id),
 };
 
 export default { ADDON_CHANNELS, renderAddon, syncAddon, reconcileAddons, addonsDispatcher };

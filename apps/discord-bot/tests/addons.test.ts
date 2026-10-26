@@ -1,24 +1,20 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { manifest, schema, seedApprovedAddon, signInWithDiscord } from '@unbound-app/web/testing';
+import type { PublicAddon } from '@unbound-app/web/bot';
 import { eq, sql } from 'drizzle-orm';
 
 import { reconcileAddons, syncAddon, type AddonChannels } from '~/dispatchers/addons';
-import type { AddonFeedItem } from '~/lib/feed/types';
-import { addon, addonMessage } from '~/db/schema';
-import { createDatabase } from '~/db/database';
-import { feeds } from '~/lib/feed/feeds';
+import { createDatabase, type Database } from '~/db/database';
+import { contentHash } from '~/lib/content-hash';
+import { addonMessage } from '~/db/schema';
 
-import {
-	createTestDatabase,
-	DROP_HOOK_TIMEOUT_MS,
-	DATABASE_URL,
-	type TestDatabase,
-} from './helpers/database';
 import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord-rest';
-import { ADDON } from './helpers/feeds';
+import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
+import { ADDON, createFakeReads, type FakeReads } from './helpers/fake-reads';
 
 const CHANNELS: AddonChannels = { plugin: '11', theme: '12', 'icon-pack': '13' };
 
-const PLUGIN: AddonFeedItem = {
+const PLUGIN: PublicAddon = {
 	...ADDON,
 	id: 'plugin-1',
 	authors: [
@@ -28,7 +24,7 @@ const PLUGIN: AddonFeedItem = {
 	iconUrl: 'https://unbound.rip/icons/plugin-1.png',
 	pageUrl: 'https://unbound.rip/addons/plugin-1',
 };
-const THEME: AddonFeedItem = {
+const THEME: PublicAddon = {
 	...PLUGIN,
 	id: 'theme-1',
 	type: 'theme',
@@ -36,14 +32,14 @@ const THEME: AddonFeedItem = {
 	iconUrl: undefined,
 	pageUrl: 'https://unbound.rip/addons/theme-1',
 };
-const ICON_PACK: AddonFeedItem = {
+const ICON_PACK: PublicAddon = {
 	...PLUGIN,
 	id: 'icons-1',
 	type: 'icon-pack',
 	name: 'Rounded',
 	pageUrl: 'https://unbound.rip/addons/icons-1',
 };
-const FONT: AddonFeedItem = {
+const FONT: PublicAddon = {
 	...PLUGIN,
 	id: 'font-1',
 	type: 'font',
@@ -52,36 +48,44 @@ const FONT: AddonFeedItem = {
 };
 
 describe.skipIf(!DATABASE_URL)('addon announcements', () => {
-	let database: TestDatabase;
+	let database: BotTestDatabase;
 	let discord: FakeDiscord;
+	let fake: FakeReads;
 
 	beforeAll(async () => {
-		database = await createTestDatabase();
+		database = await createBotTestDatabase();
 	});
 
 	afterAll(async () => {
 		await database.drop();
-	}, DROP_HOOK_TIMEOUT_MS);
+	});
 
 	beforeEach(async () => {
-		await database.db.execute(sql`TRUNCATE addon, addon_message`);
+		await database.db.execute(sql`TRUNCATE bot.addon_message`);
 		discord = createFakeDiscord();
+		fake = createFakeReads();
 	});
 
 	afterEach(async () => {
 		await discord.stop();
 	});
 
-	async function ingest(...items: AddonFeedItem[]) {
-		await database.db.transaction((tx) => feeds.addons.ingest(tx, items));
+	function stores(db: Database = database.db) {
+		return { db, web: fake.reads };
+	}
+
+	function ingest(...items: PublicAddon[]) {
+		for (const item of items) {
+			fake.addons.set(item.id, item);
+		}
 	}
 
 	function sync(id: string) {
-		return syncAddon(database.db, discord.rest, id, CHANNELS);
+		return syncAddon(stores(), discord.rest, id, CHANNELS);
 	}
 
 	function reconcile() {
-		return reconcileAddons(database.db, discord.rest, discord.selfId, CHANNELS);
+		return reconcileAddons(stores(), discord.rest, discord.selfId, CHANNELS);
 	}
 
 	async function rowOf(id: string) {
@@ -93,7 +97,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		return row;
 	}
 
-	function messagesOf(item: AddonFeedItem) {
+	function messagesOf(item: PublicAddon) {
 		const channelId = CHANNELS[item.type];
 
 		return channelId
@@ -175,17 +179,17 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 		const before = await rowOf(PLUGIN.id);
 
-		await ingest({ ...PLUGIN, version: '1.1.0', updatedAt: '2026-10-02T00:00:00.000Z' });
+		await ingest({ ...PLUGIN, version: '1.1.0' });
 		await sync(PLUGIN.id);
 
 		const after = await rowOf(PLUGIN.id);
-		const [current] = await database.db.select().from(addon).where(eq(addon.id, PLUGIN.id));
+		const current = fake.addons.get(PLUGIN.id);
 
 		expect(writes().map((request) => request.method)).toEqual(['POST', 'PATCH']);
 		expect(messagesOf(PLUGIN)).toHaveLength(1);
 		expect(messagesOf(PLUGIN)[0]?.embeds[0]?.fields?.[0]?.value).toBe('1.1.0');
 		expect(after?.messageId).toBe(before?.messageId);
-		expect(after?.postedHash).toBe(current?.contentHash);
+		expect(after?.postedHash).toBe(current ? contentHash(current) : '');
 		expect(after?.postedHash).not.toBe(before?.postedHash);
 		expect(after?.editedAt).toBeInstanceOf(Date);
 	});
@@ -202,7 +206,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		const before = await rowOf(PLUGIN.id);
 		const posted = writes().length;
 
-		await ingest({ ...PLUGIN, updatedAt: '2026-10-03T00:00:00.000Z' });
+		await ingest({ ...PLUGIN });
 		await sync(PLUGIN.id);
 		await reconcile();
 
@@ -386,7 +390,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 		discord.beforePostResponse = () => crashing.$client.end();
 
-		const outcome = await syncAddon(crashing, discord.rest, id, CHANNELS).then(
+		const outcome = await syncAddon(stores(crashing), discord.rest, id, CHANNELS).then(
 			() => 'synced',
 			() => 'failed',
 		);
@@ -422,7 +426,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		const [orphan] = messagesOf(PLUGIN);
 
 		discord.rejectDelete = undefined;
-		await ingest({ ...PLUGIN, version: '2.0.0', updatedAt: '2026-10-04T00:00:00.000Z' });
+		await ingest({ ...PLUGIN, version: '2.0.0' });
 		await reconcile();
 
 		const [message, ...extra] = messagesOf(PLUGIN);
@@ -471,5 +475,43 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		expect(discord.messages('11')).toHaveLength(0);
 		expect(extra).toHaveLength(0);
 		expect(await rowOf(PLUGIN.id)).toMatchObject({ channelId: '12', messageId: message?.id });
+	});
+
+	test('an addon approved on the web posts its listing, and a delist on the web removes it', async () => {
+		const { web, reads } = database;
+		const owner = await signInWithDiscord(web, {
+			id: '700',
+			name: 'Owner',
+			email: 'addons-owner@example.com',
+		});
+		const real = { db: database.db, web: reads };
+
+		await seedApprovedAddon(web, owner.userId, manifest('web.listed', '2.0.0'));
+		await syncAddon(real, discord.rest, 'web.listed', CHANNELS);
+
+		const [message, ...extra] = discord.messages('11');
+
+		expect(extra).toHaveLength(0);
+		expect(message?.embeds[0]).toMatchObject({
+			title: 'Hello',
+			url: 'https://unbound.rip/addons/web.listed',
+			fields: [
+				{ name: 'Version', value: '2.0.0', inline: true },
+				{ name: 'Authors', value: 'Mario', inline: true },
+			],
+		});
+		expect(await rowOf('web.listed')).toMatchObject({
+			messageId: message?.id,
+			postedHash: contentHash((await reads.addon('web.listed')) ?? ADDON),
+		});
+
+		await web.db
+			.update(schema.addon)
+			.set({ delistedAt: new Date() })
+			.where(eq(schema.addon.id, 'web.listed'));
+		await reconcileAddons(real, discord.rest, discord.selfId, CHANNELS);
+
+		expect(discord.messages('11')).toHaveLength(0);
+		expect(await rowOf('web.listed')).toBeUndefined();
 	});
 });

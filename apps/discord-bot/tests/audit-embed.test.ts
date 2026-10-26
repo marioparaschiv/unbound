@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import type { APIEmbed } from 'discord.js';
 
-import { buildAuditEmbed, type AuditEventRow } from '~/dispatchers/audit-embed';
+import type { AuditEvent } from '@unbound-app/web/bot';
+
+import { buildAuditEmbed } from '~/dispatchers/audit-embed';
 import { COLOURS } from '~/lib/constants';
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
@@ -31,10 +33,11 @@ const SAMPLES: Record<string, EventData> = {
 	'submission.cancelled': SUBMISSION,
 };
 
-function event(kind: string, data: EventData, columns: Partial<AuditEventRow> = {}): AuditEventRow {
+// A kind the bot's contracts do not know yet arrives as plain text from the database.
+function event(kind: string, data: EventData, columns: Partial<AuditEvent> = {}): AuditEvent {
 	return {
 		id: 7,
-		kind,
+		kind: kind as AuditEvent['kind'],
 		subjectType: 'addon',
 		subjectId: 'addon-1',
 		subjectName: 'Silent Typing',
@@ -42,8 +45,6 @@ function event(kind: string, data: EventData, columns: Partial<AuditEventRow> = 
 		data,
 		reason: null,
 		createdAt: new Date('2026-10-01T00:00:00.000Z'),
-		channelId: null,
-		messageId: null,
 		...columns,
 	};
 }
@@ -95,7 +96,10 @@ describe('buildAuditEmbed', () => {
 		const user = buildAuditEmbed(
 			event('user.unbanned', {}, { subjectType: 'user', subjectId: 'u1', subjectName: null }),
 		);
-		const other = buildAuditEmbed(event('user.unbanned', {}, { subjectType: 'tag' }));
+		// A subject type newer than the bot's contracts arrives as plain text from the database.
+		const other = buildAuditEmbed(
+			event('user.unbanned', {}, { subjectType: 'tag' as AuditEvent['subjectType'] }),
+		);
 
 		expect(user.url).toBe('https://unbound.rip/admin/users/u1');
 		expect(field(user, 'Subject')).toBe('[u1](https://unbound.rip/admin/users/u1)');

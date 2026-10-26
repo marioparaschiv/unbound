@@ -4,11 +4,10 @@ import { randomBytes } from 'node:crypto';
 import { listen, type Backoff } from '~/runtime/listen';
 
 import {
-	createTestDatabase,
-	DROP_HOOK_TIMEOUT_MS,
+	createBotTestDatabase,
 	DATABASE_URL,
 	waitFor,
-	type TestDatabase,
+	type BotTestDatabase,
 } from './helpers/database';
 import { createTcpProxy } from './helpers/proxy';
 
@@ -28,15 +27,15 @@ function recorder() {
 }
 
 describe.skipIf(!DATABASE_URL)('listen', () => {
-	let database: TestDatabase;
+	let database: BotTestDatabase;
 
 	beforeAll(async () => {
-		database = await createTestDatabase();
+		database = await createBotTestDatabase();
 	});
 
 	afterAll(async () => {
 		await database.drop();
-	}, DROP_HOOK_TIMEOUT_MS);
+	});
 
 	function withApplicationName(name: string) {
 		const url = new URL(database.url);

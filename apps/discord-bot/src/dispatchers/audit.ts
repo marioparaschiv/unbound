@@ -1,34 +1,36 @@
 import type { APIEmbed, Client, Message, SendableChannels } from 'discord.js';
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import type { AuditEvent } from '@unbound-app/web/bot';
 import { DiscordAPIError } from 'discord.js';
+import { max } from 'drizzle-orm';
 
-import { buildAuditEmbed, buildFallbackEmbed, type AuditEventRow } from '~/dispatchers/audit-embed';
-import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
+import type { Dispatcher, DispatcherContext, Stores } from '~/dispatchers/types';
+import { buildAuditEmbed, buildFallbackEmbed } from '~/dispatchers/audit-embed';
 import { AUDIT_LOG_CHANNEL_ID } from '~/lib/constants';
 import type { Database } from '~/db/database';
-import { auditEvent } from '~/db/schema';
+import { auditPost } from '~/db/schema';
 
 // Posts are strictly sequential, so a post orphaned by a crash is always among the newest messages.
 const RECOVERY_WINDOW = 100;
+const PAGE = 100;
 const FOOTER_ID = /^Event #(\d+) /;
 
-function pendingEvents(db: Database) {
-	return db
-		.select()
-		.from(auditEvent)
-		.where(isNull(auditEvent.messageId))
-		.orderBy(asc(auditEvent.id));
+// Posts go out one at a time in id order and moderation event ids are commit-ordered, so every
+// event up to the newest posted one is posted: that id is the whole cursor.
+async function pendingEvents({ db, web }: Stores): Promise<AuditEvent[]> {
+	const [row] = await db.select({ last: max(auditPost.eventId) }).from(auditPost);
+
+	return web.eventsAfter(row?.last ?? 0, PAGE);
 }
 
 async function markPosted(db: Database, id: number, message: Message) {
 	await db
-		.update(auditEvent)
-		.set({ channelId: message.channelId, messageId: message.id })
-		.where(and(eq(auditEvent.id, id), isNull(auditEvent.messageId)));
+		.insert(auditPost)
+		.values({ eventId: id, channelId: message.channelId, messageId: message.id })
+		.onConflictDoNothing();
 }
 
 // The creation time ties a message to this event, not to an older event that reused its id.
-function isPostOf(message: Message, event: AuditEventRow, client: Client<true>) {
+function isPostOf(message: Message, event: AuditEvent, client: Client<true>) {
 	if (message.author.id !== client.user.id) {
 		return false;
 	}
@@ -45,11 +47,11 @@ function isPostOf(message: Message, event: AuditEventRow, client: Client<true>) 
 // Adopts messages that reached Discord before a failure kept their ids from being stored.
 async function recoverPosted(
 	channel: SendableChannels,
-	pending: AuditEventRow[],
+	pending: AuditEvent[],
 	context: DispatcherContext,
 ) {
 	const messages = [...(await channel.messages.fetch({ limit: RECOVERY_WINDOW })).values()];
-	const unposted: AuditEventRow[] = [];
+	const unposted: AuditEvent[] = [];
 
 	for (const event of pending) {
 		const message = messages.find((entry) => isPostOf(entry, event, context.client));
@@ -67,7 +69,7 @@ async function recoverPosted(
 }
 
 // The nonce includes the creation time so a rebuilt database never collides with an old post.
-function send(channel: SendableChannels, event: AuditEventRow, embed: APIEmbed) {
+function send(channel: SendableChannels, event: AuditEvent, embed: APIEmbed) {
 	return channel.send({
 		embeds: [embed],
 		allowedMentions: { parse: [] },
@@ -77,7 +79,7 @@ function send(channel: SendableChannels, event: AuditEventRow, embed: APIEmbed) 
 }
 
 // A 400 would reject the same embed forever and stall every later event, so it retries once bare.
-async function post(channel: SendableChannels, event: AuditEventRow) {
+async function post(channel: SendableChannels, event: AuditEvent) {
 	try {
 		return await send(channel, event, buildAuditEmbed(event));
 	} catch (error) {
@@ -90,7 +92,7 @@ async function post(channel: SendableChannels, event: AuditEventRow) {
 }
 
 /**
- * @description Creates the dispatcher that posts each audit event once, in id order, to the audit log channel.
+ * @description Creates the dispatcher that posts each moderation event once, in id order, to the audit log channel.
  * @param channelId The audit log channel's id.
  * @returns The `audit_event` dispatcher.
  */
@@ -107,17 +109,17 @@ export function createAuditDispatcher(channelId: string = AUDIT_LOG_CHANNEL_ID):
 
 	// A failed send throws and ends the run, so no later event is ever posted ahead of it.
 	async function postPending(context: DispatcherContext) {
-		const pending = await pendingEvents(context.db);
+		for (let pending = await pendingEvents(context); pending.length;) {
+			const channel = await resolveChannel(context.client);
+			const unposted = await recoverPosted(channel, pending, context);
 
-		if (!pending.length) return;
+			for (const event of unposted) {
+				await markPosted(context.db, event.id, await post(channel, event));
+			}
 
-		const channel = await resolveChannel(context.client);
-		const unposted = await recoverPosted(channel, pending, context);
+			if (pending.length < PAGE) return;
 
-		for (const event of unposted) {
-			const message = await post(channel, event);
-
-			await markPosted(context.db, event.id, message);
+			pending = await pendingEvents(context);
 		}
 	}
 
