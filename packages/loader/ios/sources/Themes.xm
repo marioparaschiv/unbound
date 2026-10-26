@@ -1,6 +1,12 @@
 #import "Themes.h"
 
+#import "AddonsCore.h"
 #import "CoreBridge.h"
+#import "CoreConversions.h"
+#include "LoaderThemes.h"
+
+using unbound::ios::toNSString;
+using unbound::ios::toStdString;
 
 @interface Themes ()
 + (void)refreshDiscordTheme;
@@ -10,14 +16,24 @@
 
 @implementation Themes
 static NSMutableDictionary<NSString *, NSValue *> *originalRawImplementations;
-static NSString                                   *currentThemeId = nil;
 static __weak DCDThemeModule                      *currentDiscordTheme;
-static NSString                                   *lastDiscordThemeId     = nil;
 static BOOL                                        semanticColorsSwizzled = NO;
 static BOOL                                        refreshingDiscordTheme = NO;
-static BOOL                                        customThemeActive      = NO;
 static NSDictionary<NSString *, UIColor *>        *semanticColors         = nil;
 static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
+
+static loader::ThemeSelection &themeSelection(void)
+{
+    static loader::ThemeSelection selection([](const std::string &themeId) {
+        return UnboundAddonState().theme(themeId).has_value();
+    });
+    return selection;
+}
+
+static NSString *optionalThemeId(const std::optional<std::string> &themeId)
+{
+    return themeId ? toNSString(*themeId) : nil;
+}
 
 + (BOOL)isValidCustomTheme:(NSString *)manifestId
 {
@@ -26,7 +42,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
 
 + (NSString *)getTheme
 {
-    return currentThemeId;
+    return optionalThemeId(themeSelection().current());
 }
 
 + (NSArray *)getThemes
@@ -41,10 +57,9 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
 
 + (void)applyThemeOnMainThread:(NSString *)manifestId
 {
-    NSString *themeId = manifestId.length > 0 ? manifestId : nil;
+    NSString *themeId = optionalThemeId(themeSelection().apply(toStdString(manifestId)));
 
     [Logger info:LOG_CATEGORY_THEMES format:@"Theme updated. (%@)", themeId ?: @"default"];
-    currentThemeId = themeId;
 
     [Themes restoreOriginalRawColors];
 
@@ -69,8 +84,9 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
 
 + (void)refreshDiscordTheme
 {
-    DCDThemeModule *theme = currentDiscordTheme;
-    if (!theme || lastDiscordThemeId.length == 0)
+    DCDThemeModule *theme        = currentDiscordTheme;
+    NSString       *discordTheme = optionalThemeId(themeSelection().discordTheme());
+    if (!theme || discordTheme.length == 0)
     {
         return;
     }
@@ -78,7 +94,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
     refreshingDiscordTheme = YES;
     @try
     {
-        [theme updateTheme:lastDiscordThemeId];
+        [theme updateTheme:discordTheme];
     }
     @finally
     {
@@ -95,28 +111,28 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
 
 + (BOOL)setThemeOnMainThread:(NSString *)manifestId
 {
-    NSString *themeId = manifestId.length > 0 ? manifestId : nil;
-    if (themeId && ![Themes isValidCustomTheme:themeId])
+    if (!themeSelection().select(toStdString(manifestId)))
     {
         return NO;
     }
 
-    customThemeActive = themeId != nil;
-    [Themes applyThemeOnMainThread:themeId];
+    [Themes applyThemeOnMainThread:manifestId];
     [Themes refreshDiscordTheme];
     return YES;
 }
 
 + (void)refreshThemes
 {
-    if (currentThemeId && ![Themes isValidCustomTheme:currentThemeId])
+    switch (themeSelection().refresh())
     {
-        customThemeActive = NO;
-        [Themes applyTheme:nil];
-    }
-    else if (currentThemeId)
-    {
-        [Themes applyTheme:currentThemeId];
+        case loader::ThemeRefresh::Reset:
+            [Themes applyTheme:nil];
+            break;
+        case loader::ThemeRefresh::Reapply:
+            [Themes applyTheme:[Themes getTheme]];
+            break;
+        case loader::ThemeRefresh::None:
+            break;
     }
 
     [Themes refreshDiscordTheme];
@@ -151,11 +167,12 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
 + (void)applySelectedTheme
 {
     NSString *applied = [CoreBridge preference:@"active-theme" argument:@""];
-    NSString *themeId = applied.length > 0 ? applied : nil;
-    if (themeId == currentThemeId || [themeId isEqualToString:currentThemeId])
+    if (!themeSelection().needsSelection(toStdString(applied)))
     {
         return;
     }
+
+    NSString *themeId = applied.length > 0 ? applied : nil;
 
     if (![Themes setTheme:themeId])
     {
@@ -308,9 +325,8 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
 
     [Utilities runOnMainThread:^{
         currentDiscordTheme = self;
-        lastDiscordThemeId  = theme;
 
-        if (!customThemeActive && ![currentThemeId isEqualToString:theme])
+        if (themeSelection().followDiscordTheme(toStdString(theme)))
         {
             [Themes applyTheme:theme];
         }
