@@ -25,7 +25,7 @@
 	},
 	"dependencies": {
 		"@unbound-app/debugger-protocol": "workspace:*",
-		"cleye": "^1.3.4",
+		"cleye": "^2.7.0",
 		"terminal-kit": "^3.1.2"
 	},
 	"devDependencies": {
