@@ -1,5 +1,5 @@
-import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source';
 import { listAddonsQuerySchema, type AddonVersion } from '@unbound-app/contracts/addons';
+import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod/mini';
