@@ -190,7 +190,7 @@ go run ./tools dev android-avd start
 
 `setup` creates the named AVD only when it is absent and applies the tracked performance settings without wiping its userdata. If the system image is missing, install its Android SDK license interactively with `sdkmanager --licenses`, then rerun setup. `start` reuses an already-running matching emulator, enables `adb root` only on that emulator, waits for Android to finish booting, and verifies the root shell. Use `--name` to target another AVD by name. Use `adb -s <serial> install -r <apk>` to install a debug build on the active emulator; `go run ./tools dev status` reports its serial and root state.
 
-`start` also disables the emulator's `com.android.internal.emulation.<device>` overlay. That overlay is sized for the real Pixel 7 screen, so on this profile's 720×1600 screen it hides the status bar. `status` reports what the loader needs on a running AVD: a `su` root shell, an Xposed framework installed as a Magisk module, the Unbound module, Discord's version, and any emulation overlay still enabled.
+The profile runs at the Pixel 7's own 1080×2400 screen, so the emulator's `com.android.internal.emulation.pixel_7` overlay sizes the status bar and cutout correctly; `start` re-enables that overlay if it was turned off. `status` reports what the loader needs on a running AVD: a `su` root shell, an Xposed framework installed as a Magisk module, the Unbound module, Discord's version, and the enabled emulation overlays.
 
 Rooting is a one-time manual step, because it patches the system image with third-party tools:
 

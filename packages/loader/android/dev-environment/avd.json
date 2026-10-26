@@ -8,9 +8,9 @@
 	"ramMiB": 4096,
 	"cpuCores": 4,
 	"gpuMode": "host",
-	"width": 720,
-	"height": 1600,
-	"densityDpi": 280,
+	"width": 1080,
+	"height": 2400,
+	"densityDpi": 420,
 	"dataPartition": "6G",
 	"heapMiB": 512
 }
