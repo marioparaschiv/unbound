@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Usage: launch.sh [--name N] [--port N] [--no-s3]
-# Starts a throwaway apps/web instance: fake OAuth, fake GitHub, temp SQLite, local MinIO, seeded users.
+# Starts a throwaway apps/web instance: fake OAuth, fake GitHub, throwaway Postgres database, local MinIO, seeded users.
 set -euo pipefail
 
 . "$(dirname "$(readlink -f "$0")")/lib.sh"
@@ -52,7 +52,7 @@ GITHUB_PORT=$((PORT + 1))
 until port_free "$GITHUB_PORT"; do GITHUB_PORT=$((GITHUB_PORT + 1)); done
 GITHUB_TOKEN=verify-web-github
 
-mkdir -p "$DIR/db"
+mkdir -p "$DIR"
 # Cookies ignore ports, so a per-instance *.localhost host keeps this session cookie from colliding
 # with any other app on localhost.
 URL="http://verify-web-$INSTANCE.localhost:$PORT"
@@ -92,7 +92,6 @@ cat >"$DIR/web.env" <<EOF
 PORT=$PORT
 PUBLIC_URL=$URL
 CDN_URL=$S3_ENDPOINT/unbound-addons
-DATABASE_PATH=$DIR/db/unbound.db
 BETTER_AUTH_SECRET=$(head -c 32 /dev/urandom | base64 | tr -d '/+=')
 DISCORD_CLIENT_ID=verify-web-discord
 DISCORD_CLIENT_SECRET=verify-web-discord-secret
@@ -108,6 +107,10 @@ S3_SECRET_ACCESS_KEY=verify-web-password
 S3_STAGING_BUCKET=unbound-staging
 S3_PUBLIC_BUCKET=unbound-addons
 EOF
+
+# The database URLs carry the cluster password, so only this file holds them.
+chmod 600 "$DIR/web.env"
+bun "$SKILL_DIR/scripts/database.ts" create "$INSTANCE" "$DIR/web.env" || fail "could not create database $DATABASE"
 
 (
 	cd "$WEB_DIR"

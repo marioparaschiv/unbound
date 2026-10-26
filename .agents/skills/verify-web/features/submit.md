@@ -31,4 +31,3 @@ Preconditions: a fresh seed, launched without `--no-s3`.
 
 - Verify User already has one pending listing (`verify.pending`), and the cap is 2. A third listing fails with `pending_listing_cap`.
 - Read page text with `preview_evaluate` (`document.body.innerText`). `preview_snapshot` output is dominated by vite's module requests.
-- A read-only `bun:sqlite` connection may not see rows still in the WAL. Open the DB without `readonly` for side-effect checks.

@@ -24,6 +24,7 @@ parse_name() {
 	DIR="$STATE_ROOT/$INSTANCE"
 	SESSION="verify-web-$INSTANCE"
 	MINIO="verify-web-minio-$INSTANCE"
+	DATABASE="unbound_web_verify_${INSTANCE//-/_}"
 }
 
 # instance.env holds PORT, URL, PANE_PID, GITHUB_PID, GITHUB_URL, GITHUB_TOKEN, MINIO_ADDR (empty
