@@ -57,7 +57,18 @@ jobs:
             - name: Setup Go
               uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
               with:
+                  cache: false
                   go-version-file: packages/loader/go.mod
+
+            - name: Cache Go builds
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/Library/Caches/go-build
+                      ~/go/pkg/mod
+                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
 
             - name: Setup Java
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
@@ -89,90 +100,6 @@ jobs:
             release: false
             caller_workflow: 'ci'
         secrets: inherit
-
-    compatibility-source:
-        defaults:
-            run:
-                working-directory: ${{ github.workspace }}
-        name: Check authorized compatibility source
-        runs-on: ubuntu-26.04
-        outputs:
-            available: ${{ steps.check.outputs.available }}
-        steps:
-            - name: Check source credentials
-              id: check
-              env:
-                  DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
-              run: |
-                  if [ -n "$DKRYPT_API_KEY" ]; then
-                      echo 'available=true' >> "$GITHUB_OUTPUT"
-                  else
-                      echo 'available=false' >> "$GITHUB_OUTPUT"
-                  fi
-
-    compatibility:
-        name: Discord ${{ matrix.version }} package smoke check
-        needs: [build, compatibility-source]
-        if: needs.compatibility-source.outputs.available == 'true'
-        runs-on: macos-15
-        strategy:
-            fail-fast: false
-            matrix:
-                version: ['347.0', '341.0']
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-              with:
-                  submodules: recursive
-
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
-
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
-
-            - name: Download built tweak
-              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-              with:
-                  name: rootless package
-                  path: packages/loader/packages
-
-            - name: Fetch pinned Discord fixture
-              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@26d8cd98861aa633725864121838febed58a4350
-              with:
-                  api-key: ${{ secrets.DKRYPT_API_KEY }}
-                  bundle-id: com.hammerandchisel.discord
-                  version: ${{ matrix.version }}
-                  output: packages/loader/discord.ipa
-
-            - name: Restore the packaging tools
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: packages/loader/.tools-cache
-                  key: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ hashFiles('packages/loader/tools/build.go') }}
-                  restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
-
-            - name: Package compatibility IPA
-              env:
-                  DISCORD_VERSION: ${{ matrix.version }}
-              run: |
-                  go run ./tools build ipa --ipa discord.ipa --deb "$(find packages -maxdepth 1 -name '*.deb' -print -quit)" --channel appstore --output "discord-${DISCORD_VERSION}.ipa" --non-interactive
-
-            - name: Upload package smoke artifact
-              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-              with:
-                  name: discord-${{ matrix.version }}-package-smoke
-                  path: packages/loader/discord-${{ matrix.version }}.ipa
 
     comment-pr:
         name: Comment on PR

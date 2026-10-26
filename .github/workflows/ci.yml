@@ -47,6 +47,10 @@ jobs:
               run: bun run fmt:js:check
             - name: Lint
               run: bun run lint:js
+
+            - name: Typecheck
+              run: bun run typecheck
+
             # The test helper creates and drops databases, so the role needs CREATEDB but not superuser.
             - name: Create the test database role
               run: psql -c "CREATE ROLE unbound_bot LOGIN CREATEDB PASSWORD 'unbound_bot'"
@@ -66,6 +70,6 @@ jobs:
             # Releases replace the generated `<version>-<hash>` with the plain release version.
             - name: Check the generated SDK is up to date
               run: |
-                  git diff --exit-code -I '^\s*"version": ' -- packages/api/src packages/api/package.json
+                  git diff --exit-code -I '^[[:space:]]*"version": ' -- packages/api/src packages/api/package.json
             - name: Build the client
               run: bun run --cwd packages/client build

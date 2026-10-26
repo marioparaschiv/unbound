@@ -70,15 +70,15 @@ jobs:
                   key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
                   restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
 
-            - name: Decrypt the latest TestFlight build
+            - name: Resolve the latest TestFlight build
               id: testflight
-              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@26d8cd98861aa633725864121838febed58a4350
+              uses: castdrian/dkrypt/.github/actions/dkrypt-decrypt@d7f38f835ccc361b8cdc27f32ce8ecc3a8a1d4a1
               with:
                   api-url: ${{ vars.DKRYPT_BASE_URL || 'https://ipa.dylib.dev' }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}
                   bundle-id: com.hammerandchisel.discord
                   channel: testflight
-                  output: ${{ runner.temp }}/testflight.ipa
+                  resolve-only: true
 
             - name: Resolve TestFlight candidate
               id: candidate
