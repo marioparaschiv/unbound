@@ -2,6 +2,7 @@ import { IconPalette, IconPlug } from '@tabler/icons-react';
 
 import InstallAddonButton from '~/components/install-addon-button';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import AuthorByline from '~/components/author-byline';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 
@@ -24,9 +25,14 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 					<Text as='h1' variant='heading-lg' className='truncate'>
 						{addon.name}
 					</Text>
-					<Text variant='text-sm' color='muted'>
-						by {addon.authors.map((author) => author.name).join(', ')} · v
-						{addon.version}
+					<Text
+						as='div'
+						variant='text-sm'
+						color='muted'
+						className='flex flex-wrap gap-1.5'
+					>
+						<AuthorByline authors={addon.authors} linkProfiles />
+						<span>· v{addon.version}</span>
 					</Text>
 				</div>
 				<InstallAddonButton size='lg' type={addon.type} manifestUrl={addon.manifestUrl} />

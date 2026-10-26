@@ -18,6 +18,7 @@ export const TEST_ENV = {
 	BETTER_AUTH_SECRET: 'test-secret-that-is-at-least-32-characters',
 	DISCORD_CLIENT_ID: 'discord-client',
 	DISCORD_CLIENT_SECRET: 'discord-secret',
+	DISCORD_BOT_TOKEN: 'discord-bot-token',
 	GITHUB_CLIENT_ID: 'github-client',
 	GITHUB_CLIENT_SECRET: 'github-secret',
 	S3_ENDPOINT: 'http://127.0.0.1:9000',

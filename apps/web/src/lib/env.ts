@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { isBotTokenHost } from '~/lib/discord';
+
 const positiveInt = z.coerce.number().int().positive();
 
 export const envSchema = z.object({
@@ -11,6 +13,8 @@ export const envSchema = z.object({
 	BETTER_AUTH_SECRET: z.string().min(32),
 	DISCORD_CLIENT_ID: z.string().min(1),
 	DISCORD_CLIENT_SECRET: z.string().min(1),
+	/** Reads manifest authors' public Discord profiles. */
+	DISCORD_BOT_TOKEN: z.string().min(1),
 	GITHUB_CLIENT_ID: z.string().min(1),
 	GITHUB_CLIENT_SECRET: z.string().min(1),
 
@@ -29,7 +33,15 @@ export const envSchema = z.object({
 	S3_PUBLIC_BUCKET: z.string().min(1),
 
 	GITHUB_API_URL: z.url().default('https://api.github.com'),
-	DISCORD_API_URL: z.url().default('https://discord.com/api/v10'),
+	DISCORD_API_URL: z
+		.url()
+		.default('https://discord.com/api/v10')
+		.refine(
+			(value) => URL.canParse(value) && isBotTokenHost(new URL(value)),
+			'Must be https://discord.com or loopback.',
+		),
+	DISCORD_PROFILE_TTL_SECONDS: positiveInt.default(86_400),
+	DISCORD_PROFILE_SWEEP_INTERVAL_SECONDS: positiveInt.default(3600),
 
 	/** The sponsored account. The webhook also needs the secret; the reconcile also needs the token. */
 	GITHUB_SPONSORS_LOGIN: z.string().min(1).optional(),
