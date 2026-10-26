@@ -136,7 +136,17 @@ function describeMemberChange(change: MemberChange, users: Users): ReactNode {
 function EventSummary({ event, users }: EventSummaryProps) {
 	switch (event.kind) {
 		case 'review.decided': {
-			const { decision, submissionKind, version } = event.data;
+			const { decision, submissionKind, version, build } = event.data;
+
+			if (build) {
+				return (
+					<>
+						deployed first-party {SUBMISSION_NOUNS[submissionKind]}{' '}
+						<span className='font-mono'>{version}</span> from build{' '}
+						<span className='font-mono'>{build.commitSha.slice(0, 7)}</span>
+					</>
+				);
+			}
 
 			return (
 				<>

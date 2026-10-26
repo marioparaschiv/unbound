@@ -40,6 +40,10 @@ export const moderationEventDataSchema = z.discriminatedUnion('kind', [
 			submissionKind: submissionKindSchema,
 			version: semverSchema,
 			decision: reviewDecisionSchema,
+			/** Set when CI published a first-party addon from a build commit, without a human review. */
+			build: z.optional(
+				z.object({ repository: z.string(), commitSha: z.string(), ref: z.string() }),
+			),
 		}),
 	}),
 	z.object({ kind: z.literal('addon.delisted'), data: z.object({}) }),

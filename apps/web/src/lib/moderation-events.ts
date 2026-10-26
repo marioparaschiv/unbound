@@ -30,6 +30,9 @@ export type ActionMeta = {
 
 export type EventMeta = ActionMeta & { subject: Subject };
 
+/** The build commit CI published a first-party addon from. */
+export type FirstPartyBuild = { repository: string; commitSha: string; ref: string };
+
 export type EventEntry = EventMeta & ModerationEventData;
 
 export type EventRow = typeof moderationEvent.$inferSelect & {
@@ -126,11 +129,13 @@ export async function appendEvent(tx: Transaction, entry: EventEntry): Promise<n
  * @description Records a review decision, with its reviewer, note and time, as `review.decided`.
  * @param tx The review's transaction.
  * @param reviewed The submission as the decision left it.
+ * @param build The build commit, when CI published a first-party addon without review.
  * @returns Resolves once the event is recorded.
  */
 export async function recordReviewDecision(
 	tx: Transaction,
 	reviewed: SubmissionRow,
+	build?: FirstPartyBuild,
 ): Promise<void> {
 	const { reviewDecision, reviewedAt } = reviewed;
 
@@ -149,6 +154,7 @@ export async function recordReviewDecision(
 			submissionKind: reviewed.kind,
 			version: reviewed.version,
 			decision: reviewDecision,
+			...(build ? { build } : {}),
 		},
 	});
 }
