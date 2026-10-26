@@ -12,6 +12,10 @@
 			"types": "./dist/types/src/api/client.d.ts",
 			"default": "./src/api/client.ts"
 		},
+		"./bot": {
+			"types": "./dist/types/src/lib/bot/index.d.ts",
+			"default": "./src/lib/bot/index.ts"
+		},
 		"./testing": {
 			"types": "./dist/types/tests/helpers/index.d.ts",
 			"default": "./tests/helpers/index.ts"
@@ -25,7 +29,6 @@
 		"build:types": "tsc -p tsconfig.types.json && bun scripts/resolve-type-paths.ts",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "bun scripts/migrate.ts",
-		"bot:mint-key": "bun scripts/mint-bot-key.ts",
 		"b2:staging-lifecycle": "b2 bucket update --lifecycle-rule \"$(cat b2/staging-lifecycle.json)\" \"$S3_STAGING_BUCKET\" allPrivate"
 	},
 	"dependencies": {

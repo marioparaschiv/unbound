@@ -1,32 +1,50 @@
-import type { BotRelease } from '@unbound-app/contracts/bot';
-import { inArray, sql } from 'drizzle-orm';
+import { and, asc, eq, gte } from 'drizzle-orm';
 
-import type { ChangeFeed, FeedChange } from '~/lib/bot/feed';
-import { toLoaderRelease } from '~/lib/loader-releases';
-import type { AppContext } from '~/lib/context';
+import type { Release, ReleaseKey } from '~/lib/bot/types';
+import type { ReadDatabase } from '~/lib/bot/reads';
 import { loaderRelease } from '~/db/schema';
 
-// Matches the key the `bot_feed_release_*` triggers write.
-const RELEASE_KEY = sql<string>`${loaderRelease.platform} || ':' || ${loaderRelease.version}`;
+const RELEASE_COLUMNS = {
+	platform: loaderRelease.platform,
+	version: loaderRelease.version,
+	url: loaderRelease.url,
+	changelog: loaderRelease.changelog,
+	publishedAt: loaderRelease.publishedAt,
+};
 
-async function hydrateReleases(
-	ctx: AppContext,
-	changes: FeedChange[],
-): Promise<Map<string, BotRelease>> {
-	const rows = await ctx.db
-		.select({ key: RELEASE_KEY, release: loaderRelease })
+/**
+ * @description Reads one published loader release.
+ * @param db The read database.
+ * @param key The release's platform and version.
+ * @returns The release, or `undefined` when it was never published or was withdrawn.
+ */
+export async function readRelease(db: ReadDatabase, key: ReleaseKey): Promise<Release | undefined> {
+	const [row] = await db
+		.select(RELEASE_COLUMNS)
 		.from(loaderRelease)
 		.where(
-			inArray(
-				RELEASE_KEY,
-				changes.map((change) => change.key),
-			),
+			and(eq(loaderRelease.platform, key.platform), eq(loaderRelease.version, key.version)),
 		);
 
-	return new Map(rows.map((row) => [row.key, toLoaderRelease(row.release)]));
+	return row;
 }
 
-/** Every published or republished loader release; a withdrawn one has nothing to show and is skipped. */
-export const releasesFeed: ChangeFeed<BotRelease> = { name: 'releases', hydrate: hydrateReleases };
+/**
+ * @description Reads the loader releases published at or after a moment.
+ * @param db The read database.
+ * @param since The earliest publish time.
+ * @returns The releases in publish order, ties by platform then version.
+ */
+export function readReleasesSince(db: ReadDatabase, since: Date): Promise<Release[]> {
+	return db
+		.select(RELEASE_COLUMNS)
+		.from(loaderRelease)
+		.where(gte(loaderRelease.publishedAt, since))
+		.orderBy(
+			asc(loaderRelease.publishedAt),
+			asc(loaderRelease.platform),
+			asc(loaderRelease.version),
+		);
+}
 
-export default { releasesFeed };
+export default { readRelease, readReleasesSince };
