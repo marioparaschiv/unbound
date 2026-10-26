@@ -1,5 +1,5 @@
-import type { AuditEvent } from '@unbound-app/web/bot';
 import { afterEach, describe, expect, test } from 'bun:test';
+import type { AuditEvent } from '@unbound-app/web/bot';
 
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { otelEnvSchema } from '~/lib/env';
@@ -105,12 +105,13 @@ describe('createAuditTelemetry', () => {
 
 	test('OTEL_ENABLED with OTEL_ENDPOINT posts to the collector; either alone sends nothing', async () => {
 		const { url, paths } = collect();
-		const send = async (source: Record<string, string>) => {
+
+		async function send(source: Record<string, string>) {
 			const telemetry = createAuditTelemetry({ env: otelEnvSchema.parse(source) });
 
 			telemetry.emit(EVENT, 'x');
 			await telemetry.shutdown();
-		};
+		}
 
 		await send({ OTEL_ENDPOINT: url });
 		await send({ OTEL_ENABLED: 'true' });

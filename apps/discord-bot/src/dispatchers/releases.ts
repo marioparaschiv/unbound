@@ -1,7 +1,7 @@
-import { ButtonStyle, ComponentType } from 'discord.js';
 import type { REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import type { LoaderPlatform } from '@unbound-app/contracts/loader';
 import type { Release, ReleaseKey } from '@unbound-app/web/bot';
+import { ButtonStyle, ComponentType } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { and, eq } from 'drizzle-orm';
 

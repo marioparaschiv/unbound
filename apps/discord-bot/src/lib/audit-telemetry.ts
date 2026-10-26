@@ -7,7 +7,6 @@ import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import type { AuditEvent } from '@unbound-app/web/bot';
 import { SeverityNumber } from '@opentelemetry/api';
-
 import { createLogger } from '@unbound-app/logger';
 
 import { otelEnvSchema, type OtelEnv } from '~/lib/env';

@@ -4,8 +4,8 @@ import { DiscordAPIError } from 'discord.js';
 import { max } from 'drizzle-orm';
 
 import type { Dispatcher, DispatcherContext, Stores } from '~/dispatchers/types';
-import { auditTelemetry, type AuditTelemetry } from '~/lib/audit-telemetry';
 import { buildAuditEmbed, buildFallbackEmbed } from '~/dispatchers/audit-embed';
+import { auditTelemetry, type AuditTelemetry } from '~/lib/audit-telemetry';
 import { AUDIT_LOG_CHANNEL_ID } from '~/lib/constants';
 import type { Database } from '~/db/database';
 import { auditPost } from '~/db/schema';
