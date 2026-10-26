@@ -16,10 +16,7 @@ import {
 import { createDatabase } from '~/db/database';
 import type { Database } from '~/db/database';
 
-import { copySqlite, TargetNotEmptyError, VerificationError } from '../scripts/copy-sqlite/copy';
 import type { TableReport } from '../scripts/copy-sqlite/copy';
-import { tables } from '../scripts/copy-sqlite/registry';
-import { codecs } from '../scripts/copy-sqlite/codecs';
 import type { SqliteSource } from './helpers/sqlite-source';
 import type { TestDatabase } from './helpers/database';
 
@@ -34,7 +31,10 @@ import {
 	MAX_SAFE_ID,
 	REPOSITORY_ID,
 } from './helpers/sqlite-source';
+import { copySqlite, TargetNotEmptyError, VerificationError } from '../scripts/copy-sqlite/copy';
+import { tables } from '../scripts/copy-sqlite/registry';
 import { createTestDatabase } from './helpers/database';
+import { codecs } from '../scripts/copy-sqlite/codecs';
 
 type Snapshot = Record<string, string>;
 
