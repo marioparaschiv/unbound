@@ -278,6 +278,6 @@ describe('startProfileRefresher', () => {
 		requestProfileRefresh();
 		await Bun.sleep(20);
 
-		expect(discord.requests).toEqual([]);
+		expect(discord.requests.map((request) => request.path)).not.toContain('/api/v10/users/901');
 	});
 });

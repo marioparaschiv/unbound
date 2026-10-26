@@ -142,9 +142,13 @@ async function writeProfile(ctx: AppContext, id: DiscordId, lookup: StoredLookup
  * @description Runs one sweep: fetches every listed author whose profile is missing or stale, missing
  * ones first, then the oldest. Each row is written on its own, so a stop halfway loses nothing.
  * @param ctx The application context.
+ * @param signal Stops the sweep before its next lookup once aborted.
  * @returns How many profiles were written, and how long to wait when Discord rate-limited or failed.
  */
-export async function refreshDiscordProfiles(ctx: AppContext): Promise<SweepResult> {
+export async function refreshDiscordProfiles(
+	ctx: AppContext,
+	signal?: AbortSignal,
+): Promise<SweepResult> {
 	const ids = await listAuthorIds(ctx);
 	const cached = await readProfiles(ctx, ids);
 	const due = ids
@@ -160,6 +164,10 @@ export async function refreshDiscordProfiles(ctx: AppContext): Promise<SweepResu
 	let failed = false;
 
 	for (const id of due) {
+		if (signal?.aborted) {
+			break;
+		}
+
 		const lookup = await fetchDiscordUser(ctx.env, id);
 
 		if (lookup.kind === 'rate_limited') {
@@ -189,6 +197,7 @@ export async function refreshDiscordProfiles(ctx: AppContext): Promise<SweepResu
 function createProfileRefresher(ctx: AppContext): ProfileRefresher {
 	let state: RefresherState = { kind: 'idle' };
 	let resumeTimer: Timer | undefined;
+	const stopped = new AbortController();
 
 	function pause(ms: number) {
 		if (state.kind === 'stopped') return;
@@ -209,7 +218,10 @@ function createProfileRefresher(ctx: AppContext): ProfileRefresher {
 			while (state.kind === 'running') {
 				state.again = false;
 
-				const { refreshed, retryAfterMs } = await refreshDiscordProfiles(ctx);
+				const { refreshed, retryAfterMs } = await refreshDiscordProfiles(
+					ctx,
+					stopped.signal,
+				);
 
 				if (refreshed > 0) {
 					logger.info(`Refreshed ${refreshed} Discord profiles.`);
@@ -244,6 +256,7 @@ function createProfileRefresher(ctx: AppContext): ProfileRefresher {
 		kick,
 		stop() {
 			state = { kind: 'stopped' };
+			stopped.abort();
 			clearTimeout(resumeTimer);
 		},
 	};
