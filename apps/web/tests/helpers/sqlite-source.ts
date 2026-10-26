@@ -53,7 +53,7 @@ INSERT INTO addon_maintainer (addon_id, user_id, role, created_at) VALUES ('acme
 INSERT INTO submission (id, addon_id, author_id, kind, status, version, manifest, changelog, repository, bundle_size, staging_key, sha256, created_at, submitted_at, reviewer_id, review_decision, reviewed_at, review_note) VALUES
 	('sub1', 'acme.one', 'u1', 'listing', 'approved', '1.0.0', '${MANIFEST_JSON}', NULL, 'acme/addons', 42, 'staging/sub1', 'abc', 1700000000000, 1700000000100, 'u2', 'approve', 1700000000200, NULL);
 INSERT INTO moderation_event (id, subject_type, subject_id, actor_id, kind, data, reason, created_at) VALUES
-	(1, 'addon', 'acme.one', 'u2', 'review.decided', '{"z":1,"a":[]}', NULL, 1700000000200),
+	(9, 'addon', 'acme.one', 'u2', 'review.decided', '{"z":1,"a":[]}', NULL, 1700000000200),
 	(40, 'addon', 'acme.one', NULL, 'addon.rollback', '{}', 'bad build', 1700000000300),
 	(${EVENT_SEQUENCE}, 'user', 'u3', NULL, 'user.banned', '{}', NULL, 1700000000400);
 DELETE FROM moderation_event WHERE id = ${EVENT_SEQUENCE};

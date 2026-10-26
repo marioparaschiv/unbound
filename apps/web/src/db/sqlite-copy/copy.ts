@@ -190,7 +190,10 @@ async function verify(tx: postgres.TransactionSql, source: SourceTable[]): Promi
 
 	for (const { spec, present, rows } of source) {
 		const columns = spec.columns.map((column) => column.codec.readBack(quote(column.name)));
-		const order = spec.primaryKey.map(quote).join(', ');
+		// Qualified, or `ORDER BY "id"` would sort by the output column `"id"::text`, as text.
+		const order = spec.primaryKey
+			.map((name) => `${quote(spec.name)}.${quote(name)}`)
+			.join(', ');
 		const target = await tx
 			.unsafe(`SELECT ${columns.join(', ')} FROM ${quote(spec.name)} ORDER BY ${order}`)
 			.values();

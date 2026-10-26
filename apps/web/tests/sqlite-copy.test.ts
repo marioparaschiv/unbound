@@ -189,7 +189,7 @@ describe('copySqlite', () => {
 
 		const events = await db.select({ id: moderationEvent.id }).from(moderationEvent);
 
-		expect(events.map((row) => row.id).toSorted((a, b) => a - b)).toEqual([1, 40]);
+		expect(events.map((row) => row.id).toSorted((a, b) => a - b)).toEqual([9, 40]);
 		expect((await db.select().from(staffNote))[0]?.id).toBe(MAX_SAFE_ID);
 	});
 
