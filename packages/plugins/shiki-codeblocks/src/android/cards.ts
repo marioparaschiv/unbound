@@ -8,6 +8,11 @@ import type {
 	NativeJavaValue,
 } from '@unbound-app/api/native';
 import {
+	DRAWEE_TEXT_SETTER,
+	DRAWEE_TEXT_VIEW,
+	draweeTextBuilder,
+} from '@unbound-plugins/shared/native/android/discord-views';
+import {
 	createHost,
 	hostContainer,
 	layoutHostingList,
@@ -32,6 +37,7 @@ import {
 	STARTUP_SCAN_DELAYS,
 } from '@unbound-plugins/shared/native/android/views';
 
+import { createBlockBackgroundFinder } from '~/android/block-backgrounds';
 import { codeSlots, placeholderOffsets, sourceBlock, type CodeSlot } from '~/android/code-ranges';
 import { registerCodeCardSurface, type CardContent } from '~/components/code-card';
 import { MessageStore, SelectedChannelStore, settings } from '~/modules';
@@ -41,10 +47,7 @@ import { readPreferences } from '~/preferences';
 import { parseFencedCodeBlocks, type CodeBlock } from '~/fences';
 import { codeBlockLayout } from '~/layout';
 
-const TEXT_VIEW = 'com.facebook.drawee.span.SimpleDraweeSpanTextView';
-const TEXT_BUILDER = 'com.facebook.drawee.span.DraweeSpanStringBuilder';
 const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
-const BLOCK_BACKGROUND_SPAN = 'com.discord.span.utilities.spannable.BlockBackgroundSpan';
 const IMAGE_SPAN = 'android.text.style.ImageSpan';
 const ANY_SPAN = 'java.lang.Object';
 const SIZE_SPAN = 'android.text.style.AbsoluteSizeSpan';
@@ -110,6 +113,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 	const byId = new Map<string, Card>();
 	const pending = new Set<string>();
 	const renders = new Map<string, Promise<void>>();
+	const blockBackgrounds = createBlockBackgroundFinder(java);
 	const awaitingSize = new Map<string, NativeJavaReference>();
 	let nextId = 0;
 	let disposed = false;
@@ -326,7 +330,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 			return;
 		}
 
-		const hits = spansOf(java, content.text, content.string.length, BLOCK_BACKGROUND_SPAN);
+		const hits = blockBackgrounds(content.text, content.string.length);
 		const slots = codeSlots(content.string, hits).filter(
 			(slot) => slot.code.length <= Limits.codeLength,
 		);
@@ -477,10 +481,11 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		}, 0);
 	}
 
+	const textBuilder = draweeTextBuilder(java);
 	const token = hooks.hook(
-		TEXT_VIEW,
-		'setDraweeSpanStringBuilder',
-		[TEXT_BUILDER],
+		DRAWEE_TEXT_VIEW,
+		DRAWEE_TEXT_SETTER,
+		[textBuilder],
 		{ notify: true },
 		({ self }) => {
 			const textView = javaReference(self);

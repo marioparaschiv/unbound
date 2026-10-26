@@ -1,0 +1,43 @@
+import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
+import { describeJavaClass } from '@unbound-plugins/shared/native/android/discord-views';
+import { javaText } from '@unbound-plugins/shared/native/android/java-values';
+import { spansOf, type SpanHit } from '@unbound-plugins/shared/native/android/spans';
+
+const BLOCK_BACKGROUND_SPAN = 'com.discord.span.utilities.spannable.BlockBackgroundSpan';
+const LINE_BACKGROUND_SPAN = 'android.text.style.LineBackgroundSpan';
+const BLOCK_BACKGROUND_INTS = 7;
+
+/**
+ * @description Creates a finder for the spans Discord draws code block backgrounds with. Newer builds obfuscate the span's name, so it is recognised as the line background span built from seven colours and sizes.
+ * @param java The Java bridge.
+ * @returns A function listing the block background spans of a text.
+ */
+export function createBlockBackgroundFinder(java: NativeJavaBridge) {
+	const matches = new Map<string, boolean>();
+
+	function isBlockBackground(span: NativeJavaReference): boolean {
+		const name = javaText(java.className(span));
+
+		if (!name) return false;
+		if (name === BLOCK_BACKGROUND_SPAN) return true;
+
+		const cached = matches.get(name);
+
+		if (cached !== undefined) return cached;
+
+		const match = describeJavaClass(java, name).constructors.some(
+			(parameters) =>
+				parameters.length === BLOCK_BACKGROUND_INTS &&
+				parameters.every((parameter) => parameter === 'int'),
+		);
+
+		matches.set(name, match);
+
+		return match;
+	}
+
+	return (text: NativeJavaReference, length: number): SpanHit[] =>
+		spansOf(java, text, length, LINE_BACKGROUND_SPAN).filter((hit) =>
+			isBlockBackground(hit.span),
+		);
+}
