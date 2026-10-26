@@ -308,25 +308,37 @@ func startAVD(profile avdProfile) error {
 	if !strings.Contains(identity, "uid=0(root)") {
 		return errors.New("Android AVD did not provide a root shell")
 	}
-	if err := disableEmulationOverlays(serial, profile); err != nil {
+	if err := enableDeviceOverlay(serial, profile); err != nil {
 		return err
 	}
 	fmt.Printf("Android target %s ready: Android %s (API %s), rooted\n", serial, release, api)
 	return nil
 }
 
-func disableEmulationOverlays(serial string, profile avdProfile) error {
+func enableDeviceOverlay(serial string, profile avdProfile) error {
 	overlays, err := devCommandOutput("adb", "-s", serial, "shell", "cmd", "overlay", "list", "android")
 	if err != nil {
 		return err
 	}
-	for _, overlay := range enabledEmulationOverlays(overlays) {
-		if err := devRunCommand("adb", "-s", serial, "shell", "cmd", "overlay", "disable", overlay); err != nil {
-			return err
-		}
-		fmt.Printf("Disabled %s: it is sized for the %s's own screen, not this AVD's %dx%d one, and hides the status bar\n", overlay, profile.Device, profile.Width, profile.Height)
+	overlay := "com.android.internal.emulation." + profile.Device
+	if !disabledOverlay(overlays, overlay) {
+		return nil
 	}
+	if err := devRunCommand("adb", "-s", serial, "shell", "cmd", "overlay", "enable", overlay); err != nil {
+		return err
+	}
+	fmt.Printf("Enabled %s, which sizes the status bar and cutout for the %s screen\n", overlay, profile.Device)
 	return nil
+}
+
+func disabledOverlay(list, overlay string) bool {
+	for _, line := range strings.Split(list, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 3 && fields[0] == "[" && fields[1] == "]" && fields[2] == overlay {
+			return true
+		}
+	}
+	return false
 }
 
 func enabledEmulationOverlays(list string) []string {
