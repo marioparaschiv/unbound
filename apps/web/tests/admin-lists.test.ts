@@ -552,7 +552,8 @@ describe('admin addon filter plans', () => {
 			'submission_status_submittedAt_idx',
 			/^\(status = /,
 		],
-		['search', { q: 'walk' }, 'addon_search_idx', / ~~ /],
+		// Search has no row here: with a cursor, addon_createdAt_idx serves the range and which index wins is
+		// a cost call. 'a search reads the trigram index of the listed table' plans it without one.
 	])('%s seeks only the matching addons in its index', async (_name, filters, index, seek) => {
 		for (const page of pages) {
 			const query = queryAdminAddons(ctx, { ...filters, ...page }).toSQL();
