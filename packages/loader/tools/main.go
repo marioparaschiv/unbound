@@ -61,6 +61,8 @@ func run(args []string) error {
 		return runDoctor(args[1:])
 	case "dev":
 		return runDev(args[1:])
+	case "smoke":
+		return runSmoke(args[1:])
 	case "symbolicate-android":
 		return runSymbolicateAndroid(args[1:])
 	case "compat-scan":
@@ -87,7 +89,7 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
+	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
 	fmt.Println("       go run ./tools validate [--root <path>]")
@@ -105,6 +107,8 @@ func printUsage() {
 	fmt.Println("       go run ./tools attest <enabled|stage|sign|verify> [flags]")
 	fmt.Println("       go run ./tools bundle-key generate --out <dir> [--name bundle-signing|pr-bundle-signing]")
 	fmt.Println("       go run ./tools bundle-key verify --dir <dist> [--pr <n>] [--public-key <file>]")
+	fmt.Println("       go run ./tools smoke android --apks <dir> [--serial <serial>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>] [--timeout <duration>]")
+	fmt.Println("       go run ./tools smoke ios --app <Discord.app> [--device <udid>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>] [--timeout <duration>]")
 	fmt.Println("       go run ./tools symbolicate-android --symbols <dir|zip> [--abi <abi>] [--symbolizer <path>] [--input <file>] < tombstone.txt")
 	fmt.Println("       go run ./tools compat-scan [--ipa <path>] [--apk <path>...] [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>] [--ios-sdk <path>] [--android-jar <path>]")
 	fmt.Println("       go run ./tools compat-issue --results <json> --report <md> --channel <name> [--repo <owner/name>]")

@@ -10,6 +10,8 @@ on:
             - '.github/workflows/pr-builds-cleanup.yml'
             - 'packages/client/**'
             - 'scripts/pr-builds*.ts'
+            - 'packages/plugins/**'
+            - 'packages/plugins-shared/**'
             - '.gitmodules'
             - 'packages/types/typings/native.ts'
 
