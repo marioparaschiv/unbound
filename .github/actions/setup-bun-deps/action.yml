@@ -1,0 +1,43 @@
+name: Setup Bun dependencies
+description: Installs Bun, restores its install cache and installs the workspace dependencies.
+
+inputs:
+    bun-version:
+        description: Bun version to install; empty uses the setup-bun default.
+        required: false
+        default: ''
+    install:
+        description: Whether to run bun install after restoring the cache.
+        required: false
+        default: 'true'
+    frozen-lockfile:
+        description: Whether bun install must fail when bun.lock is out of date.
+        required: false
+        default: 'false'
+
+runs:
+    using: composite
+    steps:
+        - name: Setup Bun
+          uses: oven-sh/setup-bun@v2
+          with:
+              bun-version: ${{ inputs.bun-version }}
+
+        - name: Cache Bun installs
+          uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+          with:
+              path: ~/.bun/install/cache
+              key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+              restore-keys: bun-${{ runner.os }}-
+
+        - name: Install dependencies
+          if: inputs.install == 'true'
+          shell: bash
+          env:
+              FROZEN_LOCKFILE: ${{ inputs.frozen-lockfile }}
+          run: |
+              if [ "$FROZEN_LOCKFILE" = true ]; then
+                  bun install --frozen-lockfile
+              else
+                  bun install
+              fi
