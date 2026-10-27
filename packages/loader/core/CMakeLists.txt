@@ -38,6 +38,24 @@ else()
     message(STATUS "Bundle signature verification: off, ${UNBOUND_BUNDLE_SIGNING_KEY_FILE} does not exist")
 endif()
 
+set(UNBOUND_PR_NUMBER "$ENV{UNBOUND_PR_NUMBER}" CACHE STRING "Pull request number a test build trusts the PR bundle key for; empty for production builds")
+set(UNBOUND_PR_BUNDLE_SIGNING_KEY_FILE ${CMAKE_CURRENT_LIST_DIR}/keys/pr-bundle-signing.pub CACHE FILEPATH "Base64 Ed25519 public key that pull request test bundles may be signed with")
+set(UNBOUND_PR_BUNDLE_SIGNING_KEY "")
+string(LENGTH "${UNBOUND_PR_NUMBER}" UNBOUND_PR_NUMBER_LENGTH)
+if(UNBOUND_PR_NUMBER STREQUAL "")
+    set(UNBOUND_PR_NUMBER 0)
+elseif(NOT UNBOUND_PR_NUMBER MATCHES "^[1-9][0-9]*$" OR UNBOUND_PR_NUMBER_LENGTH GREATER 9)
+    message(FATAL_ERROR "UNBOUND_PR_NUMBER must be a pull request number, not \"${UNBOUND_PR_NUMBER}\"")
+else()
+    if(NOT EXISTS ${UNBOUND_PR_BUNDLE_SIGNING_KEY_FILE})
+        message(FATAL_ERROR "A pull request build needs ${UNBOUND_PR_BUNDLE_SIGNING_KEY_FILE}")
+    endif()
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${UNBOUND_PR_BUNDLE_SIGNING_KEY_FILE})
+    file(READ ${UNBOUND_PR_BUNDLE_SIGNING_KEY_FILE} UNBOUND_PR_BUNDLE_SIGNING_KEY)
+    string(STRIP "${UNBOUND_PR_BUNDLE_SIGNING_KEY}" UNBOUND_PR_BUNDLE_SIGNING_KEY)
+    message(STATUS "Pull request build #${UNBOUND_PR_NUMBER}: also trusts ${UNBOUND_PR_BUNDLE_SIGNING_KEY_FILE}")
+endif()
+
 file(GLOB_RECURSE UNBOUND_BEARSSL_SOURCES CONFIGURE_DEPENDS ${UNBOUND_VENDOR_DIR}/bearssl/src/*.c)
 add_library(unbound_bearssl STATIC ${UNBOUND_BEARSSL_SOURCES})
 target_include_directories(unbound_bearssl PRIVATE ${UNBOUND_VENDOR_DIR}/bearssl/src)
@@ -72,7 +90,11 @@ if(NOT UNBOUND_VERSION)
     file(STRINGS ${CMAKE_CURRENT_LIST_DIR}/../ios/control UNBOUND_CONTROL_VERSION REGEX "^Version:")
     string(REGEX REPLACE "^Version:[ \t]*" "" UNBOUND_VERSION "${UNBOUND_CONTROL_VERSION}")
 endif()
-target_compile_definitions(unbound_core PRIVATE UNBOUND_VERSION="${UNBOUND_VERSION}" UNBOUND_BUNDLE_SIGNING_KEY="${UNBOUND_BUNDLE_SIGNING_KEY}")
+target_compile_definitions(unbound_core PRIVATE
+    UNBOUND_VERSION="${UNBOUND_VERSION}"
+    UNBOUND_BUNDLE_SIGNING_KEY="${UNBOUND_BUNDLE_SIGNING_KEY}"
+    UNBOUND_PR_NUMBER=${UNBOUND_PR_NUMBER}
+    UNBOUND_PR_BUNDLE_SIGNING_KEY="${UNBOUND_PR_BUNDLE_SIGNING_KEY}")
 
 if(UNBOUND_CORE_TESTS)
     enable_testing()

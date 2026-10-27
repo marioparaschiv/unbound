@@ -63,8 +63,10 @@ int main()
         });
 
     touch(root / "unbound.bundle");
+    touch(root / "unbound.bundle.trust");
     loader::toolbox::deleteBundle(settings, updater, root.string());
     assert(!std::filesystem::exists(root / "unbound.bundle"));
+    assert(!std::filesystem::exists(root / "unbound.bundle.trust"));
     assert(settings.getString("unbound", "loader.update.url", "none") == "none");
 
     assert(loader::toolbox::toggleRecovery(settings));

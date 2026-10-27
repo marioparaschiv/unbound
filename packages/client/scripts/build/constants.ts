@@ -40,6 +40,9 @@ export const PROD_I18N_BASE_URL =
 
 export const IS_DEV_BUILD = process.env.UNBOUND_DEV === '1' || process.argv.includes('--dev');
 
+export const BUILD_CHANNEL =
+	process.env.UNBOUND_CHANNEL?.trim() || (IS_DEV_BUILD ? 'dev' : 'local');
+
 // The `serve` script's origin, baked in for locale tables and hot reload. Defaults to the LAN IP, as
 // a physical device can't reach `localhost` (that's the phone itself).
 export const DEV_SERVER_URL = IS_DEV_BUILD ? resolveDevServerUrl() : '';

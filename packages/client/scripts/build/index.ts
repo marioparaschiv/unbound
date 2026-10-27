@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import {
 	API_URL,
 	IS_DEV_BUILD,
+	BUILD_CHANNEL,
 	GIT_REVISION,
 	I18N_BASE_URL,
 	CLIENT_VERSION,
@@ -105,7 +106,7 @@ const config: RolldownOptions = {
 			versions: bytecodeVersions.length,
 			flags: IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map'],
 		}),
-		generateManifest(GIT_REVISION, bytecodeVersions, IS_DEV_BUILD),
+		generateManifest(GIT_REVISION, bytecodeVersions, IS_DEV_BUILD, BUILD_CHANNEL),
 		...(IS_DEV_BUILD ? [locales()] : []),
 	],
 

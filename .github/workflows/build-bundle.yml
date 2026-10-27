@@ -66,9 +66,10 @@ jobs:
               run: bun run --cwd packages/client build
               env:
                   TMPDIR: ${{ runner.temp }}
+                  UNBOUND_CHANNEL: ${{ inputs.version && 'stable' || 'beta' }}
                   UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
 
-            - name: Check every bundle is signed
+            - name: Check every bundle and the manifest are signed
               run: bun run --cwd packages/client verify-signatures
 
             - name: Check every bundle has a source map

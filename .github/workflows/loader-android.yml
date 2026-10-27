@@ -52,6 +52,11 @@ on:
                 description: 'Exact Discord Android version code to patch'
                 required: false
                 type: string
+            pr_number:
+                description: 'Pull request whose test bundles this build trusts the PR bundle key for'
+                required: false
+                default: ''
+                type: string
         outputs:
             module_filename:
                 description: 'Filename of the LSPosed module APK'
@@ -106,6 +111,7 @@ jobs:
             ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
             ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
             ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
         outputs:
             module_filename: ${{ steps.collect.outputs.module_filename }}
             module_url: ${{ steps.upload-module.outputs.artifact-url }}

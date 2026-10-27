@@ -30,6 +30,9 @@ on:
             caller_workflow:
                 default: ''
                 type: string
+            pr_number:
+                default: ''
+                type: string
             source_ipa_artifact:
                 default: ''
                 type: string
@@ -81,6 +84,7 @@ jobs:
             deb_filename: ${{ steps.set-deb-filename.outputs.filename }}
         env:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
             HOMEBREW_NO_AUTO_UPDATE: 1
             HOMEBREW_NO_INSTALL_CLEANUP: 1
 
@@ -389,6 +393,7 @@ jobs:
         needs: build-ipa
         env:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
         outputs:
             simulator_url: ${{ steps.upload-simulator.outputs.artifact-url }}
             simulator_filename: ${{ steps.set-simulator-filename.outputs.filename }}

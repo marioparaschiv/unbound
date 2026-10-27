@@ -13,6 +13,7 @@
 		"dev": "bun --bun scripts/dev",
 		"serve": "bun scripts/serve/start.ts",
 		"upload": "bun scripts/build/upload.ts",
+		"sign": "bun scripts/build/sign.ts",
 		"verify-signatures": "bun scripts/build/verify-signatures.ts",
 		"symbolicate": "bun scripts/build/symbolicate.ts",
 		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p ."

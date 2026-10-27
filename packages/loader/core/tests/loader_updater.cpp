@@ -47,7 +47,7 @@ int main()
             }
             return loader::DownloadResult{nextStatus, "\"etag-1\""};
         },
-        "");
+        loader::BundleTrust{});
 
     assert(updater.downloadURL(std::nullopt, 98) == "https://builds.unbound.rip/unbound.98.bundle");
     assert(updater.downloadURL(std::nullopt, 90) == "https://builds.unbound.rip/unbound.js");
