@@ -19,6 +19,15 @@ const CLIENT_DIST = join(CLIENT_ROOT, 'dist');
  * @returns The trace with that bundle's frames rewritten to paths relative to `packages/client`; other frames are left as printed.
  */
 export function symbolicate(trace: string, bundle: string): string {
+	return createSymbolicator(bundle)(trace);
+}
+
+/**
+ * @description Loads a bytecode bundle's maps once and returns a function that rewrites its frames in any number of traces, for callers such as a log tail that symbolicate line after line.
+ * @param bundle The bundle that threw, e.g. `dist/unbound.98.bundle`, with its `.map` and `unbound.js.map` beside it.
+ * @returns A function that rewrites that bundle's frames in a trace to paths relative to `packages/client`, leaving other frames as printed.
+ */
+export function createSymbolicator(bundle: string): (trace: string) => string {
 	const bytecode = new TraceMap(readFileSync(`${bundle}.map`, 'utf8'));
 	const chunks = new Map<string, TraceMap>();
 
@@ -33,27 +42,31 @@ export function symbolicate(trace: string, bundle: string): string {
 		return map;
 	}
 
-	return trace.replace(FRAME, (frame, url: string, line: string, column: string) => {
-		if (url !== SOURCE_URL && basename(url) !== basename(bundle)) {
-			return frame;
-		}
+	return (trace) =>
+		trace.replace(FRAME, (frame, url: string, line: string, column: string) => {
+			if (url !== SOURCE_URL && basename(url) !== basename(bundle)) {
+				return frame;
+			}
 
-		const chunk = originalPositionFor(bytecode, { line: Number(line), column: Number(column) });
+			const chunk = originalPositionFor(bytecode, {
+				line: Number(line),
+				column: Number(column),
+			});
 
-		if (!chunk.source) {
-			return frame;
-		}
+			if (!chunk.source) {
+				return frame;
+			}
 
-		const original = originalPositionFor(chunkMap(chunk.source), chunk);
+			const original = originalPositionFor(chunkMap(chunk.source), chunk);
 
-		if (!original.source) {
-			return frame;
-		}
+			if (!original.source) {
+				return frame;
+			}
 
-		const source = relative(CLIENT_ROOT, join(CLIENT_DIST, original.source));
+			const source = relative(CLIENT_ROOT, join(CLIENT_DIST, original.source));
 
-		return `${source}:${original.line}:${original.column + 1}`;
-	});
+			return `${source}:${original.line}:${original.column + 1}`;
+		});
 }
 
 if (import.meta.main) {

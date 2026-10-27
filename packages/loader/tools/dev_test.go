@@ -15,9 +15,9 @@ func TestUpdateAVDConfigAppliesProfileAndPreservesOtherValues(t *testing.T) {
 		RAMMiB:               4096,
 		CPUCores:             4,
 		GPU:                  "host",
-		Width:                720,
-		Height:               1600,
-		DensityDPI:           280,
+		Width:                1080,
+		Height:               2400,
+		DensityDPI:           420,
 		DataPartition:        "6G",
 		HeapMiB:              512,
 	}
@@ -67,5 +67,18 @@ func TestAndroidSetupParsers(t *testing.T) {
 	dumpsys := "Packages:\n  Package [com.discord]\n    versionCode=352110 minSdk=24\n    versionName=352.10 - Beta\n"
 	if got := packageVersionName(dumpsys); got != "352.10 - Beta" {
 		t.Fatalf("unexpected version name %q", got)
+	}
+}
+
+func TestDisabledOverlayFindsOnlyTheNamedDisabledOverlay(t *testing.T) {
+	list := "android\n[ ] com.android.internal.emulation.pixel_7\n[x] com.android.internal.emulation.pixel_7_pro\n"
+	if !disabledOverlay(list, "com.android.internal.emulation.pixel_7") {
+		t.Fatal("expected the disabled Pixel 7 overlay to be found")
+	}
+	if disabledOverlay(list, "com.android.internal.emulation.pixel_7_pro") {
+		t.Fatal("an enabled overlay must not be reported as disabled")
+	}
+	if disabledOverlay(list, "com.android.internal.emulation.pixel_8") {
+		t.Fatal("a missing overlay must not be reported as disabled")
 	}
 }

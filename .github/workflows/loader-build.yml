@@ -12,6 +12,7 @@ on:
         paths:
             - 'packages/loader/**'
             - '.github/workflows/loader-*.yml'
+            - '.github/actions/**'
             - '.gitmodules'
             - '!**/*.md'
             - '!**/*.mdx'
@@ -152,21 +153,8 @@ jobs:
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
-
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
             - name: Select the source
               id: select
@@ -303,21 +291,8 @@ jobs:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
-
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
             - name: Download the iOS build being released
               if: env.SCAN_IOS == 'true'
@@ -412,6 +387,7 @@ jobs:
         if: always() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
         needs: [resolve-source, ios, android]
         runs-on: ubuntu-26.04
+        timeout-minutes: 15
         permissions:
             contents: write
         steps:
@@ -421,12 +397,9 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - name: Setup Go for loader update publishing
+            - name: Setup Go tools for loader update publishing
               if: needs.resolve-source.outputs.is_testflight != 'true'
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
+              uses: ./.github/actions/setup-go-tools
 
             - name: Download iOS tweak
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
@@ -446,6 +419,12 @@ jobs:
                   name: ios-simulator
                   path: packages/loader/release-assets
 
+            - name: Download iOS tweak symbols
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: tweak symbols
+                  path: packages/loader/release-assets/ios-symbols
+
             - name: Download Android LSPosed module
               if: inputs.is_testflight != true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
@@ -460,6 +439,22 @@ jobs:
                   name: patched discord
                   path: packages/loader/release-assets
 
+            - name: Download Android native symbols
+              if: inputs.is_testflight != true
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: android symbols
+                  path: packages/loader/release-assets/android-symbols
+
+            - name: Package native symbols
+              run: |
+                  set -euo pipefail
+                  for platform in ios android; do
+                    if [ -d "release-assets/$platform-symbols" ]; then
+                      (cd "release-assets/$platform-symbols" && zip -qr "../unbound-$platform-symbols.zip" .)
+                    fi
+                  done
+
             - name: Publish stable release
               if: needs.resolve-source.outputs.is_testflight != 'true'
               uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
@@ -471,6 +466,8 @@ jobs:
                       packages/loader/release-assets/${{ needs.ios.outputs.simulator_filename }}
                       packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
                       packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
+                      packages/loader/release-assets/unbound-ios-symbols.zip
+                      packages/loader/release-assets/unbound-android-symbols.zip
                   generate_release_notes: true
                   make_latest: false
                   fail_on_unmatched_files: true
@@ -505,6 +502,7 @@ jobs:
                       packages/loader/release-assets/${{ needs.ios.outputs.deb_filename }}
                       packages/loader/release-assets/${{ needs.ios.outputs.ipa_filename }}
                       packages/loader/release-assets/${{ needs.ios.outputs.simulator_filename }}
+                      packages/loader/release-assets/unbound-ios-symbols.zip
                   generate_release_notes: true
                   prerelease: true
                   make_latest: false
@@ -541,6 +539,7 @@ jobs:
         if: always() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'
         needs: [resolve-source, android]
         runs-on: ubuntu-26.04
+        timeout-minutes: 10
         permissions:
             contents: write
         steps:
@@ -556,6 +555,16 @@ jobs:
                   name: patched discord
                   path: packages/loader/release-assets
 
+            - name: Download Android native symbols
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: android symbols
+                  path: packages/loader/release-assets/android-symbols
+
+            - name: Package native symbols
+              working-directory: packages/loader/release-assets/android-symbols
+              run: zip -qr ../unbound-android-symbols.zip .
+
             - name: Publish Android prerelease
               uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
               with:
@@ -563,6 +572,7 @@ jobs:
                   files: |
                       packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
                       packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
+                      packages/loader/release-assets/unbound-android-symbols.zip
                   generate_release_notes: true
                   prerelease: true
                   make_latest: false

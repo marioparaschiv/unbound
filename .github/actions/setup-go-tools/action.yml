@@ -1,0 +1,21 @@
+name: Setup Go tools
+description: Installs the Go version of the loader tools and restores the Go build and module caches.
+
+runs:
+    using: composite
+    steps:
+        - name: Setup Go
+          uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+          with:
+              cache: false
+              go-version-file: packages/loader/go.mod
+
+        - name: Cache Go builds
+          uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+          with:
+              path: |
+                  ~/.cache/go-build
+                  ~/Library/Caches/go-build
+                  ~/go/pkg/mod
+              key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+              restore-keys: go-${{ runner.os }}-${{ runner.arch }}-

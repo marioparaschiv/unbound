@@ -17,11 +17,13 @@ import {
 	DEV_SERVER_URL,
 	IGNORED_WARNINGS,
 	DEBUGGER_ADDRESS,
+	MINIMUM_DISCORD_VERSIONS,
 } from './constants';
 import globals, { shimmedModules } from './plugins/globals';
 import refresh, { refreshRuntime } from './plugins/refresh';
 import downlevel, { lower } from './plugins/downlevel';
 import generateManifest from './plugins/manifest';
+import { bytecodeVersions } from './hermes.json';
 import worklets from './plugins/worklets';
 
 /** What the dev engine reports after a source change. */
@@ -85,6 +87,8 @@ const config: RolldownOptions = {
 			$$I18N_BASE_URL$$: I18N_BASE_URL,
 			$$DEBUGGER_ADDRESS$$: DEBUGGER_ADDRESS,
 			$$DEV_SERVER_URL$$: DEV_SERVER_URL,
+			$$MINIMUM_DISCORD_ANDROID$$: MINIMUM_DISCORD_VERSIONS.android,
+			$$MINIMUM_DISCORD_IOS$$: MINIMUM_DISCORD_VERSIONS.ios,
 		}),
 		// Only strips TS and JSX, and lowers class fields so parameter properties stay assigned before
 		// field initializers. `downlevel` lowers the rest once per chunk, sharing each helper.
@@ -96,8 +100,11 @@ const config: RolldownOptions = {
 			sourceMaps: !IS_DEV_BUILD,
 		}),
 		downlevel(root),
-		hermes({ flags: IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map'] }),
-		generateManifest(GIT_REVISION),
+		hermes({
+			versions: bytecodeVersions.length,
+			flags: IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map'],
+		}),
+		generateManifest(GIT_REVISION, bytecodeVersions, IS_DEV_BUILD),
 		...(IS_DEV_BUILD ? [locales()] : []),
 	],
 

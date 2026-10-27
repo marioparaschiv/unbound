@@ -82,6 +82,9 @@ android {
         release {
             isMinifyEnabled = true
             proguardFiles("proguard-rules.pro")
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
             signingConfig = signingConfigs.getByName(if (hasReleaseSigning) "release" else "debug")
         }
     }

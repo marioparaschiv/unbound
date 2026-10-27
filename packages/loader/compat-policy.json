@@ -1,0 +1,7 @@
+{
+	"minimumDiscordVersion": {
+		"android": "350.8",
+		"ios": "350.0"
+	},
+	"raiseReminderDays": 30
+}

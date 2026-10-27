@@ -1,6 +1,7 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 import type { z } from 'zod';
 
+import inspectCommand from '~/commands/inspect';
 import installCommand from '~/commands/install';
 import modulesCommand from '~/commands/modules';
 import publishCommand from '~/commands/publish';
@@ -16,6 +17,7 @@ import traceCommand from '~/commands/trace';
 import viewsCommand from '~/commands/views';
 import evalCommand from '~/commands/eval';
 import hookCommand from '~/commands/hook';
+import logsCommand from '~/commands/logs';
 import openCommand from '~/commands/open';
 import pushCommand from '~/commands/push';
 import devCommand from '~/commands/dev';
@@ -31,7 +33,9 @@ export const commands: CommandDefinition<z.ZodObject<z.ZodRawShape>>[] = [
 	reloadCommand,
 	pushCommand,
 	installCommand,
+	logsCommand,
 	viewsCommand,
+	inspectCommand,
 	spansCommand,
 	modulesCommand,
 	hookCommand,

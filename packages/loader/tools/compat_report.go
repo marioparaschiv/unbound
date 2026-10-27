@@ -43,6 +43,12 @@ func describeCompatReference(reference *compatReference) string {
 		return "method `" + name + "`"
 	case referenceJavaField:
 		return "field `" + reference.Name + "`"
+	case referenceJavaShape:
+		return "shape `" + reference.Name + "`"
+	case referenceResource:
+		return "resource `" + reference.Class + "/" + reference.Name + "`"
+	case referenceHermesBytecode:
+		return "Hermes bytecode"
 	}
 	return "`" + reference.Name + "`"
 }
@@ -188,6 +194,39 @@ func compatTargetSummary(results *compatResults) string {
 	return strings.Join(parts, " · ")
 }
 
+func compatLookupFindings(results *compatResults) []compatFinding {
+	var findings []compatFinding
+	for _, finding := range results.Findings {
+		if finding.Reference.Kind != referenceHermesBytecode {
+			findings = append(findings, finding)
+		}
+	}
+	return findings
+}
+
+func compatSupportSummary(results *compatResults) string {
+	var minimums, older []string
+	for _, target := range results.Targets {
+		state := results.Support[target.Platform]
+		if state == nil {
+			continue
+		}
+		label := compatPlatformLabels[target.Platform]
+		minimums = append(minimums, label+" "+state.Minimum)
+		if compatOlderThanSupported(target, results.Support) {
+			older = append(older, label+" "+target.Version)
+		}
+	}
+	if len(minimums) == 0 {
+		return ""
+	}
+	summary := "Oldest supported Discord: " + strings.Join(minimums, ", ") + "."
+	if len(older) > 0 {
+		summary += " **" + strings.Join(older, " and ") + " is older than Unbound supports.**"
+	}
+	return summary
+}
+
 func renderCompatReport(results *compatResults) string {
 	return renderCompatReportWithSource(results, "")
 }
@@ -200,6 +239,25 @@ func renderCompatReportWithSource(results *compatResults, sourceURL string) stri
 	}
 	builder.WriteString("## " + title + "\n\n")
 	builder.WriteString(compatTargetSummary(results) + "\n\n")
+	if bytecode := compatBytecodeFindings(results, compatBroken); len(bytecode) > 0 {
+		builder.WriteString("### Hermes bytecode\n\nThe scan cannot read Discord's Hermes bundle, so the lookups in it went unchecked.\n\n")
+		for _, line := range compatLines(bytecode, compatBroken, sourceURL) {
+			builder.WriteString(line.text + "\n")
+		}
+		builder.WriteString("\n")
+	} else if summary := compatBytecodeSummary(results); summary != "" {
+		builder.WriteString(summary + "\n\n")
+	}
+	if warnings := compatLines(results.Findings, compatWarning, sourceURL); len(warnings) > 0 {
+		builder.WriteString("### Warnings\n\nThese do not break Unbound or block a release. Add the version to `hermes.json` once hermesc can build it.\n\n")
+		for _, line := range warnings {
+			builder.WriteString(line.text + "\n")
+		}
+		builder.WriteString("\n")
+	}
+	if support := compatSupportSummary(results); support != "" {
+		builder.WriteString(support + "\n\n")
+	}
 	builder.WriteString("| Platform | Broken | Possibly broken | OK | Unverified |\n| --- | --- | --- | --- | --- |\n")
 	for _, target := range results.Targets {
 		counts := compatCounts(results, target.Platform)
@@ -207,7 +265,7 @@ func renderCompatReportWithSource(results *compatResults, sourceURL string) stri
 			counts[compatBroken], counts[compatPossible], counts[compatOK], counts[compatUnverified]))
 	}
 
-	broken := compatLines(results.Findings, compatBroken, sourceURL)
+	broken := compatLines(compatLookupFindings(results), compatBroken, sourceURL)
 	possible := compatLines(results.Findings, compatPossible, sourceURL)
 	unverified := compatLines(results.Findings, compatUnverified, sourceURL)
 
@@ -219,7 +277,7 @@ func renderCompatReportWithSource(results *compatResults, sourceURL string) stri
 		builder.WriteString("\n### Possibly broken\n\nThese names still exist, but not where the code expects them.\n")
 		writeCompatSection(&builder, possible)
 	}
-	if len(broken) == 0 && len(possible) == 0 {
+	if len(broken) == 0 && len(possible) == 0 && len(compatBytecodeFindings(results, compatBroken)) == 0 {
 		builder.WriteString("\nEverything the scan can check still resolves.\n")
 	}
 

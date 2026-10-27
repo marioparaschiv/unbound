@@ -343,6 +343,11 @@ var scriptSinkRoles = map[string][]int{
 	"objc.getIvar": {1}, "objc.setIvar": {1}, "objc.batchStep": {0},
 	"java.getClass": {0}, "java.construct": {0}, "java.invoke": {1}, "java.invokeAsync": {1}, "java.respondsTo": {1},
 	"java.getField": {1}, "java.setField": {1}, "hooks.hook": {0, 1, 2},
+	"shape": {1}, "resource": {2},
+}
+
+var scriptMarkerSinks = map[string]string{
+	"shapeMethod": "shape", "shapeField": "shape", "hasShapeConstructor": "shape", "viewByIdName": "resource",
 }
 
 func newScriptProgram(files []*scriptFile) *scriptProgram {
@@ -498,6 +503,9 @@ func (program *scriptProgram) callTargets(file *scriptFile, index int, owner, na
 	}
 	if _, ok := scriptLookupCalls[name]; ok && len(targets) == 0 {
 		return []scriptCallTarget{{sink: "metro"}}
+	}
+	if sink, ok := scriptMarkerSinks[name]; ok && owner == "" {
+		targets = append(targets, scriptCallTarget{sink: sink})
 	}
 	if owner == "" {
 		if function := program.resolveFunction(file, file.scope[index], name); function != nil {
@@ -955,6 +963,16 @@ func (program *scriptProgram) emitSink(site scriptSite, sink, method string, arg
 		single(1, referenceJavaField, false)
 	case "hooks.hook":
 		paired(0, 1, referenceJavaClass, referenceJavaMethod)
+	case "shape":
+		single(1, referenceJavaShape, false)
+	case "resource":
+		resources := scalarOf(argumentAt(args, 2))
+		for _, name := range resources.texts {
+			add(referenceResource, "id", name, false)
+		}
+		if resources.dynamic {
+			program.dynamic(site)
+		}
 	case "metro":
 		program.emitMetro(site, method, args, base, location)
 	}

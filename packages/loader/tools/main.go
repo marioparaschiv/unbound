@@ -59,10 +59,16 @@ func run(args []string) error {
 		return runDoctor(args[1:])
 	case "dev":
 		return runDev(args[1:])
+	case "symbolicate-android":
+		return runSymbolicateAndroid(args[1:])
 	case "compat-scan":
 		return runCompatScan(args[1:])
 	case "compat-issue":
 		return runCompatIssue(args[1:])
+	case "compat-legacy-issue":
+		return runCompatLegacyIssue(args[1:])
+	case "compat-support-issue":
+		return runCompatSupportIssue(args[1:])
 	case "format":
 		return runFormat(args[1:])
 	case "lint":
@@ -79,7 +85,7 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|doctor|dev|compat-scan|compat-issue|format|lint>")
+	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
 	fmt.Println("       go run ./tools validate [--root <path>]")
@@ -95,8 +101,11 @@ func printUsage() {
 	fmt.Println("       go run ./tools publish-loader-releases --version <semver> --ios-url <release-url> --android-url <release-url> [--changelog-file <path>]")
 	fmt.Println("       go run ./tools generate-loader-changelog --version <semver> --output <path>")
 	fmt.Println("       go run ./tools attest <enabled|stage|sign|verify> [flags]")
+	fmt.Println("       go run ./tools symbolicate-android --symbols <dir|zip> [--abi <abi>] [--symbolizer <path>] [--input <file>] < tombstone.txt")
 	fmt.Println("       go run ./tools compat-scan [--ipa <path>] [--apk <path>...] [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>] [--ios-sdk <path>] [--android-jar <path>]")
 	fmt.Println("       go run ./tools compat-issue --results <json> --report <md> --channel <name> [--repo <owner/name>]")
+	fmt.Println("       go run ./tools compat-legacy-issue --results <json> [--root <monorepo>] [--repo <owner/name>] [--source-url <url>]")
+	fmt.Println("       go run ./tools compat-support-issue --results <json> [--root <monorepo>] [--repo <owner/name>] [--source-url <url>]")
 	fmt.Println("       go run ./tools format [--check] [--root <path>]")
 	fmt.Println("       go run ./tools lint [--root <path>]")
 	fmt.Println("       go run ./tools dev status [--root <path>]")

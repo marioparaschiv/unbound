@@ -1,49 +1,23 @@
-import type {
-	NativeJavaBridge,
-	NativeJavaClassDescription,
-	NativeJavaMethodDescription,
-	NativeJavaReference,
-} from '@unbound-app/api/native';
 import {
 	javaInt,
 	javaNumber,
 	javaReference,
 	javaString,
 } from '@unbound-plugins/shared/native/android/java-values';
+import type {
+	NativeJavaBridge,
+	NativeJavaMethodDescription,
+	NativeJavaReference,
+} from '@unbound-app/api/native';
+import { shapeField, shapeMethod } from '@unbound-plugins/shared/native/android/discord-shapes';
 
 export const MESSAGE_VIEW = 'com.discord.chat.presentation.message.MessageView';
-export const MESSAGE = 'com.discord.chat.bridge.Message';
 export const DRAWEE_TEXT_VIEW = 'com.facebook.drawee.span.SimpleDraweeSpanTextView';
 export const DRAWEE_TEXT_SETTER = 'setDraweeSpanStringBuilder';
 
 const DISCORD_PACKAGE = 'com.discord';
-const STRING = 'java.lang.String';
 
-const descriptions = new Map<string, NativeJavaClassDescription>();
 const viewIds = new Map<string, number>();
-
-/**
- * @description Describes a Java class once and reuses the description, since a class does not change while Discord runs.
- * @param java The Java bridge.
- * @param name The class name.
- * @returns The class's declared constructors, methods and fields.
- */
-export function describeJavaClass(
-	java: NativeJavaBridge,
-	name: string,
-): NativeJavaClassDescription {
-	const cached = descriptions.get(name);
-
-	if (cached) {
-		return cached;
-	}
-
-	const description = java.describe(name);
-
-	descriptions.set(name, description);
-
-	return description;
-}
 
 /**
  * @description Finds the method a `MessageView` binds a message with. Discord obfuscates its name and most parameter types, but on every build it takes the message first and has the most parameters.
@@ -51,20 +25,15 @@ export function describeJavaClass(
  * @returns The method's name and parameter types, ready to hook.
  */
 export function messageBindMethod(java: NativeJavaBridge): NativeJavaMethodDescription {
-	const candidates = describeJavaClass(java, MESSAGE_VIEW).methods.filter(
-		(method) => !method.static && method.parameters[0] === MESSAGE,
-	);
-	const longest = candidates.reduce<NativeJavaMethodDescription | null>(
-		(best, method) =>
-			best === null || method.parameters.length > best.parameters.length ? method : best,
-		null,
-	);
+	const method = shapeMethod(java, 'messageBind');
 
-	if (!longest) {
-		throw new Error('This Discord build has no MessageView method that binds a message.');
+	if (!method) {
+		throw new Error(
+			'This Discord build has no single MessageView method that binds a message.',
+		);
 	}
 
-	return longest;
+	return method;
 }
 
 /**
@@ -73,12 +42,10 @@ export function messageBindMethod(java: NativeJavaBridge): NativeJavaMethodDescr
  * @returns The builder's class name.
  */
 export function draweeTextBuilder(java: NativeJavaBridge): string {
-	const builder = describeJavaClass(java, DRAWEE_TEXT_VIEW).methods.find(
-		(method) => method.name === DRAWEE_TEXT_SETTER && method.parameters.length === 1,
-	)?.parameters[0];
+	const builder = shapeMethod(java, 'draweeTextBuilder')?.parameters[0];
 
 	if (!builder) {
-		throw new Error('This Discord build has no drawee span text builder setter.');
+		throw new Error('This Discord build has no single drawee span text builder setter.');
 	}
 
 	return builder;
@@ -90,17 +57,13 @@ export function draweeTextBuilder(java: NativeJavaBridge): string {
  * @returns The field name.
  */
 export function messageIdField(java: NativeJavaBridge): string {
-	const fields = describeJavaClass(java, MESSAGE_VIEW).fields.filter(
-		(field) => !field.static && field.type === STRING,
-	);
+	const field = shapeField(java, 'messageId');
 
-	if (fields.length !== 1) {
-		throw new Error(
-			`MessageView has ${fields.length} text fields, so its message id is ambiguous.`,
-		);
+	if (!field) {
+		throw new Error('MessageView has no single text field, so its message id is ambiguous.');
 	}
 
-	return fields[0].name;
+	return field.name;
 }
 
 /**
