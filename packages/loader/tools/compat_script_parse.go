@@ -177,18 +177,18 @@ func (file *scriptFile) legacyAt(position int) bool {
 	return false
 }
 
-func (file *scriptFile) fallbackAt(position int) (string, int) {
-	group, alternative, width := "", 0, -1
+func (file *scriptFile) fallbackAt(position int) (string, int, int) {
+	group, alternative, count, width := "", 0, 0, -1
 	for _, fallback := range file.fallbacks {
 		for index, span := range fallback.alternatives {
 			if position < span[0] || position >= span[1] || width >= 0 && span[1]-span[0] >= width {
 				continue
 			}
 			group = fmt.Sprintf("%s:%d", file.source.path, file.tokens[fallback.call].line)
-			alternative, width = index, span[1]-span[0]
+			alternative, count, width = index, len(fallback.alternatives), span[1]-span[0]
 		}
 	}
-	return group, alternative
+	return group, alternative, count
 }
 
 func (file *scriptFile) value(index int) string {
