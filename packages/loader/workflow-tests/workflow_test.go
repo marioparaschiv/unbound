@@ -587,18 +587,21 @@ func TestParsedPullRequestBuildsAreDeletedOnClose(t *testing.T) {
 	}
 	var workflow struct {
 		On struct {
-			PullRequest struct {
+			PullRequestTarget struct {
 				Types []string `yaml:"types"`
-			} `yaml:"pull_request"`
+			} `yaml:"pull_request_target"`
 		} `yaml:"on"`
 	}
 	if err := yaml.Unmarshal(data, &workflow); err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(workflow.On.PullRequest.Types, []string{"closed"}) {
-		t.Fatalf("cleanup must run when a pull request closes, runs on %v", workflow.On.PullRequest.Types)
+	if !reflect.DeepEqual(workflow.On.PullRequestTarget.Types, []string{"closed"}) {
+		t.Fatalf("cleanup must run with the bucket secrets when any pull request closes, forks included, runs on %v", workflow.On.PullRequestTarget.Types)
 	}
 	job := loadWorkflow(t, "pr-builds-cleanup.yml").job(t, "delete")
+	if checkout := job.stepUsing(t, "actions/checkout@"); checkout.With["ref"] != "${{ github.event.repository.default_branch }}" {
+		t.Fatalf("cleanup must run the default branch's scripts, never the pull request's, checks out %+v", checkout.With)
+	}
 	config := job.step(t, "Check the bucket configuration")
 	if config.Run != "bun scripts/pr-builds-plan.ts cleanup" {
 		t.Fatalf("the cleanup must decide through the tested script, runs %q", config.Run)
@@ -606,5 +609,105 @@ func TestParsedPullRequestBuildsAreDeletedOnClose(t *testing.T) {
 	remove := job.step(t, "Delete the client and loader builds")
 	if remove.If != "steps.config.outputs.enabled == 'true'" || !strings.HasPrefix(remove.Run, `bun scripts/pr-builds.ts delete "$PR_NUMBER"`) {
 		t.Fatalf("the cleanup must stay inert without credentials, got %+v", remove)
+	}
+}
+
+func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
+	ci := loadWorkflow(t, "loader-ci.yml")
+	stage := ci.job(t, "stage-fork-pr-builds")
+	requireNeeds(t, "stage-fork-pr-builds", stage, "pr-builds", "build")
+	if stage.If != "needs.pr-builds.outputs.stage == 'true'" {
+		t.Fatalf("only planned fork builds are staged, runs if %q", stage.If)
+	}
+	if _, signed := stage.step(t, "Build the client").Env["UNBOUND_BUNDLE_SIGNING_KEY"]; signed {
+		t.Fatal("the untrusted fork build must stay secret-free")
+	}
+	staged := map[string]bool{}
+	for _, step := range stage.Steps {
+		if strings.HasPrefix(step.Uses, "actions/upload-artifact@") {
+			staged[step.With["name"]] = true
+		}
+	}
+	if !staged["pr client bundle"] || !staged["pr number"] {
+		t.Fatalf("the fork build must stage its client and its pull request number, stages %v", staged)
+	}
+
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "pr-builds-publish.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var trigger struct {
+		On struct {
+			WorkflowRun struct {
+				Workflows []string `yaml:"workflows"`
+				Types     []string `yaml:"types"`
+			} `yaml:"workflow_run"`
+		} `yaml:"on"`
+	}
+	if err := yaml.Unmarshal(data, &trigger); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(trigger.On.WorkflowRun.Workflows, []string{"Loader Pull Request Build"}) || !reflect.DeepEqual(trigger.On.WorkflowRun.Types, []string{"completed"}) {
+		t.Fatalf("fork builds must be published after the loader build completes, triggers %+v", trigger.On.WorkflowRun)
+	}
+	publish := loadWorkflow(t, "pr-builds-publish.yml").job(t, "publish")
+	for _, condition := range []string{"github.event.workflow_run.event == 'pull_request'", "github.event.workflow_run.conclusion == 'success'", "github.event.workflow_run.head_repository.full_name != github.repository"} {
+		if !strings.Contains(publish.If, condition) {
+			t.Fatalf("the publisher must only handle successful fork builds, runs if %q", publish.If)
+		}
+	}
+	if checkout := publish.stepUsing(t, "actions/checkout@"); checkout.With["ref"] != "${{ github.event.repository.default_branch }}" || checkout.With["persist-credentials"] != "false" {
+		t.Fatalf("the publisher must run only the default branch's scripts, checks out %+v", checkout.With)
+	}
+	confirm := publish.step(t, "Confirm the pull request")
+	if confirm.Run != "bun scripts/pr-builds-fork.ts" || confirm.Env["HEAD_SHA"] != "${{ github.event.workflow_run.head_sha }}" || confirm.Env["HEAD_REPOSITORY"] != "${{ github.event.workflow_run.head_repository.full_name }}" {
+		t.Fatalf("the claimed pull request must be checked against the run's head, got %+v", confirm)
+	}
+	plan := publish.step(t, "Plan the uploads")
+	if plan.Env["PR_NUMBER"] != "${{ steps.pull-request.outputs.number }}" || plan.Env["SIGNING_KEY_SECRET"] != "UNBOUND_PR_BUNDLE_SIGNING_KEY" {
+		t.Fatalf("the publisher must plan with the confirmed number and the pull request key, got %+v", plan.Env)
+	}
+	for _, step := range publish.Steps {
+		if strings.HasPrefix(step.Uses, "actions/download-artifact@") && step.With["run-id"] != "${{ github.event.workflow_run.id }}" {
+			t.Fatalf("%q must download from the fork's run", step.Name)
+		}
+		if strings.Contains(step.Run, "packages/client/dist/") && !strings.Contains(step.Run, "sign.ts") {
+			t.Fatalf("%q must not run anything from the fork's build", step.Name)
+		}
+	}
+	sign := publish.step(t, "Sign the bundles with the pull request key")
+	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || !strings.Contains(sign.Run, "packages/client/scripts/build/sign.ts") {
+		t.Fatalf("fork bundles must be signed with the pull request key, got %+v", sign)
+	}
+	if _, ok := sign.Env["UNBOUND_BUNDLE_SIGNING_KEY"]; ok {
+		t.Fatal("fork bundles must never be signed with the production key")
+	}
+	if publish.step(t, "Comment on the pull request").With["pr-number"] != "${{ steps.pull-request.outputs.number }}" {
+		t.Fatal("the publisher must comment on the confirmed pull request")
+	}
+}
+
+func TestParsedBackfillSignsOnlyOnDemand(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "backfill-signatures.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var trigger struct {
+		On map[string]any `yaml:"on"`
+	}
+	if err := yaml.Unmarshal(data, &trigger); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := trigger.On["workflow_dispatch"]; !ok || len(trigger.On) != 1 {
+		t.Fatalf("the backfill must only run when dispatched, triggers %v", trigger.On)
+	}
+	job := loadWorkflow(t, "backfill-signatures.yml").job(t, "backfill")
+	backfill := job.step(t, "Sign unsigned stable and beta bundles")
+	if backfill.If != "steps.config.outputs.enabled == 'true'" || !strings.HasPrefix(backfill.Run, "bun run --cwd packages/client backfill-signatures") {
+		t.Fatalf("the backfill must stay inert without credentials, got %+v", backfill)
+	}
+	s3 := loadWorkflow(t, "ci.yml").job(t, "s3")
+	if run := s3.step(t, "Run the S3 tests against MinIO").Run; !strings.Contains(run, "bun run test:s3") || !strings.Contains(run, "backfill-signatures.s3.ts") {
+		t.Fatalf("CI must prove the backfill against MinIO, runs %q", run)
 	}
 }

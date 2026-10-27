@@ -88,6 +88,7 @@ jobs:
             contents: read
         outputs:
             enabled: ${{ steps.plan.outputs.enabled }}
+            stage: ${{ steps.plan.outputs.stage }}
             bundle_url: ${{ steps.plan.outputs.bundle_url }}
             loader_url: ${{ steps.plan.outputs.loader_url }}
             reason: ${{ steps.plan.outputs.reason }}
@@ -217,6 +218,59 @@ jobs:
                     echo "Client bundle: $BUNDLE_URL"
                     for file in pr-builds/*; do echo "- $LOADER_URL$(basename "$file")"; done
                   } >> "$GITHUB_STEP_SUMMARY"
+
+    stage-fork-pr-builds:
+        name: Stage fork builds for publishing
+        needs: [pr-builds, build]
+        if: needs.pr-builds.outputs.stage == 'true'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 15
+        permissions:
+            contents: read
+        defaults:
+            run:
+                working-directory: .
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 1
+                  persist-credentials: false
+
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
+              with:
+                  bun-version: canary
+
+            - name: Build the client
+              env:
+                  TMPDIR: ${{ runner.temp }}
+              run: bun run --cwd packages/client build
+
+            - name: Record the pull request number
+              env:
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+              run: |
+                  mkdir -p pr-number
+                  printf '%s\n' "$PR_NUMBER" > pr-number/number
+
+            - name: Upload the client build
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: pr client bundle
+                  path: |
+                      packages/client/dist/
+                      !packages/client/dist/**/*.map
+                  if-no-files-found: error
+                  retention-days: 3
+
+            - name: Upload the pull request number
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: pr number
+                  path: pr-number/number
+                  if-no-files-found: error
+                  retention-days: 3
 
     comment-pr:
         name: Comment on PR

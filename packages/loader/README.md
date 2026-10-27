@@ -273,7 +273,25 @@ The `pr-builds` job decides with `bun scripts/pr-builds-plan.ts plan`, and the r
 - variables `S3_ENDPOINT`, `S3_REGION`, `S3_PUBLIC_BUCKET` and `CDN_URL` (the public `https` base URL the bucket is served from)
 - secrets `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `UNBOUND_BUNDLE_SIGNING_KEY`
 
-Pull requests from forks get no secrets, so their bundles would be unsigned and a release loader would reject them. Their uploads are skipped without failing, and their builds are only available as artifacts. When a pull request closes, `pr-builds-cleanup.yml` deletes both prefixes with `bun scripts/pr-builds.ts delete <number>`. It needs the bucket variables and the two S3 secrets, and does nothing without them.
+Pull requests from forks are published too, without ever giving the fork's code a secret:
+
+1. The fork's `pull_request` run builds everything secret-free. Its `stage-fork-pr-builds` job builds the client unsigned and uploads it as the `pr client bundle` artifact, with the pull request number in the `pr number` artifact. Its loader builds already carry the pull request's bundle URL when `CDN_URL` is available to it.
+2. When that run succeeds, `pr-builds-publish.yml` starts on `workflow_run` in the base repository. It checks out the default branch and only reads the fork's artifacts as data. `bun scripts/pr-builds-fork.ts` takes the claimed number, or the one GitHub linked to the run, and accepts it only if the API shows an open pull request into this repository whose head is exactly the run's commit and fork.
+3. It signs every bundle with `UNBOUND_PR_BUNDLE_SIGNING_KEY` through `packages/client/scripts/build/sign.ts --pr <number>`, which replaces any `.sig` the fork supplied, uploads the client and loader builds to the same prefixes, and posts the S3 links on the pull request.
+
+Same-repository pull requests keep the production key. The publisher needs the bucket variables, the two S3 secrets and `UNBOUND_PR_BUNDLE_SIGNING_KEY`, and writes why it did nothing to its job summary otherwise.
+
+When any pull request closes, forks included, `pr-builds-cleanup.yml` runs on `pull_request_target` from the default branch and deletes both prefixes with `bun scripts/pr-builds.ts delete <number>`. It needs the bucket variables and the two S3 secrets, and does nothing without them.
+
+### Backfilling release signatures
+
+Stable and beta versions published before bundle signing have no `.sig`, and keyed loaders reject them. `backfill-signatures.yml` is dispatched by hand. It lists every `unbound/stable/<version>/` and `unbound/beta/<version>/` prefix, signs each `unbound.js` and `unbound.<bytecode>.bundle` that has no signature with `UNBOUND_BUNDLE_SIGNING_KEY`, and uploads only the new `.sig` objects. It never overwrites an existing object, so a second run changes nothing. It needs the bucket variables, the two S3 secrets and the signing key:
+
+```bash
+bun run --cwd packages/client backfill-signatures
+```
+
+`bun run test:s3` runs it, and the pull request upload, against a throwaway MinIO in podman. The `s3` job in `ci.yml` does the same on every push.
 
 ## Discord compatibility scan
 
