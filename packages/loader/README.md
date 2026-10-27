@@ -248,6 +248,33 @@ To replace the key pair:
 
 A loader accepts only bundles signed with the key it was built with. After a rotation, loaders built with the old key reject new bundles and keep their cached one until the user updates the loader.
 
+## Pull request builds
+
+Every same-repository pull request that runs the loader build (`loader-ci.yml`) also gets its latest build in the public bucket, so it can be tested with no settings changes:
+
+| Prefix                 | Contents                                                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unbound/pr/<number>/` | the pull request's client build: `manifest.json` with `bytecodeVersions`, every `unbound.<bytecode>.bundle` and `unbound.js` it emits, and each bundle's `.sig` |
+| `loader/pr/<number>/`  | the rootless `.deb`, `Unbound.ipa`, `app.unbound.android.lsposed.apk` and `Unbound.apks`                                                                        |
+
+Each push overwrites both prefixes and deletes files the new build no longer has, so the links stay the same for the life of the pull request. The client is built with `TMPDIR` on the runner disk so hermesc emits every bytecode version, signed with `UNBOUND_BUNDLE_SIGNING_KEY`, and checked with `verify-signatures` before anything is uploaded. The loader builds of that run are compiled with that pull request's bundle URL as their default, so installing them loads the pull request's client. A `loader.update.url` in settings still wins. The pull request comment lists the bundle base URL and each loader build under **S3**, next to the artifact links.
+
+The default bundle URL is set at build time. `core/include/LoaderUpdater.h` falls back to `https://builds.unbound.rip/` unless `UNBOUND_DEFAULT_BUNDLE_URL` is defined. The iOS Makefile defines it from the `UNBOUND_BUNDLE_URL` environment variable, and the Android module from the `unboundBundleURL` Gradle property (passed to CMake as `UNBOUND_BUNDLE_URL`; it must be an `https` URL ending in `/`):
+
+```bash
+UNBOUND_BUNDLE_URL=https://cdn.example.com/unbound/pr/42/ go run ./tools build tweak --configuration release --non-interactive
+./android/gradlew -p android :module:assembleRelease -PunboundBundleURL=https://cdn.example.com/unbound/pr/42/
+```
+
+Only `loader-ci.yml` passes a URL, through the `bundle_url` input of `loader-build.yml`, `loader-android.yml` and `loader-ios.yml`. Release, scheduled and `main` builds pass none and keep the default. PR loaders never point at the stable or beta bucket paths, whose bundles are unsigned.
+
+The `pr-builds` job decides with `bun scripts/pr-builds-plan.ts plan`, and the rest stays inert, with the reason in the job summary and the comment, until all of these exist:
+
+- variables `S3_ENDPOINT`, `S3_REGION`, `S3_PUBLIC_BUCKET` and `CDN_URL` (the public `https` base URL the bucket is served from)
+- secrets `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `UNBOUND_BUNDLE_SIGNING_KEY`
+
+Pull requests from forks get no secrets, so their bundles would be unsigned and a release loader would reject them. Their uploads are skipped without failing, and their builds are only available as artifacts. When a pull request closes, `pr-builds-cleanup.yml` deletes both prefixes with `bun scripts/pr-builds.ts delete <number>`. It needs the bucket variables and the two S3 secrets, and does nothing without them.
+
 ## Discord compatibility scan
 
 `.github/workflows/discord-compat.yml` runs every six hours for three channels, each with its own `discord-compat` issue:

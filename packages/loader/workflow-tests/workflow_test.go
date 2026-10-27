@@ -3,6 +3,7 @@ package workflowtests
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"runtime"
 	"slices"
@@ -478,5 +479,132 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 	module := loadWorkflow(t, "loader-android.yml").job(t, "build-module")
 	if upload := module.step(t, "Upload native symbols"); upload.With["name"] != "android symbols" || upload.With["if-no-files-found"] != "error" {
 		t.Fatalf("the module build must upload its native symbols, got %+v", upload.With)
+	}
+}
+
+func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
+	ci := loadWorkflow(t, "loader-ci.yml")
+	plan := ci.job(t, "pr-builds")
+	planStep := plan.step(t, "Plan the uploads")
+	if planStep.Run != "bun scripts/pr-builds-plan.ts plan" {
+		t.Fatalf("the plan must come from the tested script, runs %q", planStep.Run)
+	}
+	for name, value := range map[string]string{
+		"IS_FORK":                        "${{ github.event.pull_request.head.repo.full_name != github.repository }}",
+		"HAS_S3_ACCESS_KEY_ID":           "${{ secrets.S3_ACCESS_KEY_ID != '' }}",
+		"HAS_S3_SECRET_ACCESS_KEY":       "${{ secrets.S3_SECRET_ACCESS_KEY != '' }}",
+		"HAS_UNBOUND_BUNDLE_SIGNING_KEY": "${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY != '' }}",
+		"CDN_URL":                        "${{ vars.CDN_URL }}",
+	} {
+		if planStep.Env[name] != value {
+			t.Fatalf("the plan must see %s as %q, got %q", name, value, planStep.Env[name])
+		}
+	}
+	for _, name := range []string{"S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "UNBOUND_BUNDLE_SIGNING_KEY"} {
+		if _, ok := planStep.Env[name]; ok {
+			t.Fatalf("the plan must only learn whether %s is set, never its value", name)
+		}
+	}
+
+	build := ci.job(t, "build")
+	requireNeeds(t, "build", build, "pr-builds")
+	if build.With["bundle_url"] != "${{ needs.pr-builds.outputs.bundle_url }}" {
+		t.Fatalf("pull request loaders must be built with their bundle URL, got %+v", build.With)
+	}
+
+	upload := ci.job(t, "upload-pr-builds")
+	requireNeeds(t, "upload-pr-builds", upload, "pr-builds", "build")
+	if upload.If != "needs.pr-builds.outputs.enabled == 'true'" {
+		t.Fatalf("uploads must stay off unless planned, runs if %q", upload.If)
+	}
+	clientBuild := upload.step(t, "Build the client")
+	if clientBuild.Env["UNBOUND_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}" || clientBuild.Env["TMPDIR"] != "${{ runner.temp }}" {
+		t.Fatalf("the uploaded bundles must be signed and compiled to bytecode, got %+v", clientBuild.Env)
+	}
+	if upload.step(t, "Check every bundle is signed").Run != "bun run --cwd packages/client verify-signatures" {
+		t.Fatal("unsigned bundles must never reach the bucket")
+	}
+	client := upload.step(t, "Upload the client bundles")
+	if client.Env["UNBOUND_CHANNEL"] != "pr" || client.Env["UNBOUND_VERSION"] != "${{ github.event.pull_request.number }}" {
+		t.Fatalf("the client must upload to unbound/pr/<number>/, got %+v", client.Env)
+	}
+	downloads := map[string]bool{}
+	for _, step := range upload.Steps {
+		if strings.HasPrefix(step.Uses, "actions/download-artifact@") {
+			downloads[step.With["name"]] = step.With["path"] == "pr-builds"
+		}
+	}
+	for _, artifact := range []string{"rootless package", "ipa", "android module", "patched discord"} {
+		if !downloads[artifact] {
+			t.Fatalf("the loader upload must include %s, downloads %v", artifact, downloads)
+		}
+	}
+	if upload.step(t, "Upload the loader builds").Run != `bun scripts/pr-builds.ts upload-loader "$PR_NUMBER" pr-builds/*` {
+		t.Fatal("the loader builds must upload to loader/pr/<number>/")
+	}
+
+	comment := ci.job(t, "comment-pr")
+	requireNeeds(t, "comment-pr", comment, "build", "pr-builds", "upload-pr-builds")
+	if !strings.HasPrefix(comment.If, "always() && needs.build.result == 'success'") {
+		t.Fatalf("the comment must still post when uploads are off, runs if %q", comment.If)
+	}
+	if comment.step(t, "Describe the S3 builds").Run != "bun scripts/pr-builds-plan.ts comment" || !strings.Contains(comment.step(t, "Comment on current PR").With["message"], "${{ steps.s3.outputs.section }}") {
+		t.Fatal("the comment must carry the S3 links or why there are none")
+	}
+}
+
+func TestParsedLoaderBuildsTakeTheBundleURLOnlyWhenGiven(t *testing.T) {
+	build := loadWorkflow(t, "loader-build.yml")
+	for _, name := range []string{"android", "ios"} {
+		if build.job(t, name).With["bundle_url"] != "${{ inputs.bundle_url }}" {
+			t.Fatalf("the %s build must pass the bundle URL through", name)
+		}
+	}
+	if with := build.job(t, "publish-app-repo").With; with["bundle_url"] != "" {
+		t.Fatalf("release builds must keep the default bundle URL, got %+v", with)
+	}
+	module := loadWorkflow(t, "loader-android.yml").job(t, "build-module").step(t, "Build module")
+	if module.Env["BUNDLE_URL"] != "${{ inputs.bundle_url }}" || !strings.Contains(module.Run, `-PunboundBundleURL="$BUNDLE_URL"`) {
+		t.Fatalf("the module must be built with the given bundle URL, got %+v", module)
+	}
+	tweak := loadWorkflow(t, "loader-ios.yml").job(t, "build-tweak").step(t, "Build package")
+	if tweak.Env["UNBOUND_BUNDLE_URL"] != "${{ inputs.bundle_url }}" {
+		t.Fatalf("the tweak must be built with the given bundle URL, got %+v", tweak.Env)
+	}
+	for _, name := range []string{"loader-release-poll.yml"} {
+		for jobName, job := range loadWorkflow(t, name).Jobs {
+			if _, ok := job.With["bundle_url"]; ok {
+				t.Fatalf("%s %s must not override the release bundle URL", name, jobName)
+			}
+		}
+	}
+}
+
+func TestParsedPullRequestBuildsAreDeletedOnClose(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "pr-builds-cleanup.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var workflow struct {
+		On struct {
+			PullRequest struct {
+				Types []string `yaml:"types"`
+			} `yaml:"pull_request"`
+		} `yaml:"on"`
+	}
+	if err := yaml.Unmarshal(data, &workflow); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(workflow.On.PullRequest.Types, []string{"closed"}) {
+		t.Fatalf("cleanup must run when a pull request closes, runs on %v", workflow.On.PullRequest.Types)
+	}
+	job := loadWorkflow(t, "pr-builds-cleanup.yml").job(t, "delete")
+	config := job.step(t, "Check the bucket configuration")
+	if config.Run != "bun scripts/pr-builds-plan.ts cleanup" {
+		t.Fatalf("the cleanup must decide through the tested script, runs %q", config.Run)
+	}
+	remove := job.step(t, "Delete the client and loader builds")
+	if remove.If != "steps.config.outputs.enabled == 'true'" || !strings.HasPrefix(remove.Run, `bun scripts/pr-builds.ts delete "$PR_NUMBER"`) {
+		t.Fatalf("the cleanup must stay inert without credentials, got %+v", remove)
 	}
 }

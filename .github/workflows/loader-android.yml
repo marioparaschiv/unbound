@@ -52,6 +52,10 @@ on:
                 description: 'Exact Discord Android version code to patch'
                 required: false
                 type: string
+            bundle_url:
+                description: 'Default bundle update URL to build in; empty keeps the release default'
+                required: false
+                type: string
         outputs:
             module_filename:
                 description: 'Filename of the LSPosed module APK'
@@ -149,7 +153,9 @@ jobs:
 
             - name: Build module
               working-directory: packages/loader/android
-              run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PunboundBuildNumber="${GITHUB_RUN_NUMBER}"
+              env:
+                  BUNDLE_URL: ${{ inputs.bundle_url }}
+              run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PunboundBuildNumber="${GITHUB_RUN_NUMBER}" -PunboundBundleURL="$BUNDLE_URL"
 
             - name: Test module
               working-directory: packages/loader/android
