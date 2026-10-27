@@ -3,7 +3,7 @@ import type { NativeCrashedAddon } from '@unbound-app/types/native';
 
 import { FakeAddons, makeManifest, persists, resetDevice, states } from './helpers/addons';
 
-const { resetCrashGuard } = await import('~/api/crash-guard');
+const { attributeAddon, crashDisabledNotice, resetCrashGuard } = await import('~/api/crash-guard');
 
 type GuardCall = ['begin', string, string] | ['end', string];
 
@@ -109,5 +109,62 @@ describe('addon crash guard', () => {
 		manager.load('bundle-a', makeManifest('a'));
 
 		expect(manager.getEntity('a')?.started).toBe(true);
+	});
+});
+
+describe('addon crash attribution', () => {
+	function installActivity(slot: number) {
+		const buffer = new ArrayBuffer(4);
+		const registered: string[] = [];
+
+		Object.assign(globalThis.NativePlatform?.crashGuard ?? {}, {
+			register: (id: string) => (registered.push(id), slot),
+			activity: () => buffer,
+		});
+
+		return { cell: new Uint32Array(buffer), registered };
+	}
+
+	test('marks the addon active only while a wrapped call runs', () => {
+		const { cell, registered } = installActivity(3);
+		const attribute = attributeAddon('plugins:a', 'a');
+
+		expect(attribute).toBeDefined();
+
+		const read = attribute?.(() => cell[0]);
+
+		expect(read?.()).toBe(3);
+		expect(cell[0]).toBe(0);
+		expect(registered).toEqual(['plugins:a']);
+	});
+
+	test('restores the outer addon after a nested or failing call', () => {
+		const { cell } = installActivity(5);
+		const attribute = attributeAddon('plugins:a', 'a');
+		const fail = attribute?.(() => {
+			throw new Error('native failure');
+		});
+
+		cell[0] = 2;
+
+		expect(() => fail?.()).toThrow('native failure');
+		expect(cell[0]).toBe(2);
+	});
+
+	test('does nothing when the loader cannot attribute crashes', () => {
+		expect(attributeAddon('plugins:a', 'a')).toBeUndefined();
+
+		installActivity(0);
+
+		expect(attributeAddon('plugins:a', 'a')).toBeUndefined();
+	});
+
+	test('names the phase the addon crashed in', () => {
+		expect(crashDisabledNotice({ id: 'plugins:a', name: 'a', phase: 'running' }, 'A')).toBe(
+			'Disabled A because Discord crashed while running it.',
+		);
+		expect(crashDisabledNotice({ id: 'plugins:a', name: 'a' }, 'A')).toBe(
+			'Disabled A because Discord crashed while starting it.',
+		);
 	});
 });

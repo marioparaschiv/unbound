@@ -3,6 +3,7 @@ import type { Addon, AddonManifest, Plugin, PluginContext, PluginEntity } from '
 import { createScopedReact, performRefresh, withRefreshScope } from '~/lib/hot/runtime';
 import { createPluginContext } from '~/api/native-runtime';
 import type { ReloadResult } from '~/managers/addons';
+import { attributeAddon } from '~/api/crash-guard';
 import { reload as reloadApp } from '~/api/native';
 import { ManagerType } from '~/managers/base';
 import { Addons } from '~/managers/addons';
@@ -76,7 +77,10 @@ export class Plugins extends Addons<PluginEntity> {
 	}
 
 	protected createContext(entity: PluginEntity): PluginContext {
-		return createPluginContext(entity.data);
+		return createPluginContext(
+			entity.data,
+			attributeAddon(this.crashGuardKey(entity.id), entity.data.name),
+		);
 	}
 }
 

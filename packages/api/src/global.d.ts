@@ -44,6 +44,7 @@ export type {
 	NativeCallOptions,
 	NativeCancelablePromise,
 	NativeClassHandle,
+	NativeCrashPhase,
 	NativeCrashedAddon,
 	NativeDebugBridge,
 	NativeDebugEnvironment,

@@ -572,15 +572,20 @@ export type NativePlatformFiles = {
 	remove(path: string): boolean;
 };
 
+export type NativeCrashPhase = 'starting' | 'running';
+
 export type NativeCrashedAddon = {
 	readonly id: string;
 	readonly name: string;
+	readonly phase?: NativeCrashPhase;
 };
 
 export type NativePlatformCrashGuard = {
 	begin(id: string, name: string): boolean;
 	end(id: string): boolean;
 	disabled(): NativeCrashedAddon[];
+	register?(id: string, name: string): number;
+	activity?(): ArrayBuffer | undefined;
 };
 
 export type NativeSettingsChange =

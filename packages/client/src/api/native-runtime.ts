@@ -36,6 +36,7 @@ import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
 import { NativeModules, TurboModuleRegistry } from 'react-native';
 import type { AddonManifest } from '@unbound-app/types/addons';
 
+import type { AddonAttribution } from '~/api/crash-guard';
 import { findByPropsLazy } from '~/api/metro/wrappers';
 
 export type {
@@ -766,15 +767,54 @@ function createIOSNativeUIBridge(
 	};
 }
 
+type AttributedMethod = {
+	original: unknown;
+	attributed: unknown;
+};
+
+function attributeBridge<T extends object>(source: T, attribute?: AddonAttribution): T {
+	if (!attribute) {
+		return source;
+	}
+
+	const methods = new Map<PropertyKey, AttributedMethod>();
+
+	return new Proxy(source, {
+		get: (target, property) => {
+			const value: unknown = Reflect.get(target, property);
+
+			if (typeof value !== 'function') {
+				return value;
+			}
+
+			const cached = methods.get(property);
+
+			if (cached?.original === value) {
+				return cached.attributed;
+			}
+
+			const attributed = attribute(value.bind(target));
+
+			methods.set(property, { original: value, attributed });
+
+			return attributed;
+		},
+	});
+}
+
 function createScopedNativePlugin(
 	capabilities: readonly NativePluginCapability[],
 	platform?: NativePluginPlatform,
+	attribute?: AddonAttribution,
 ): ScopedNativePlugin {
 	const fallbackBridge = unavailableNativePlugin();
 	const bridge = getNativePlugin() ?? fallbackBridge;
-	const objcBridge = bridge.objc ?? fallbackBridge.objc;
-	const ffiBridge = bridge.ffi ?? fallbackBridge.ffi;
-	const fabricBridge = withFallback(bridge.fabric, fallbackBridge.fabric);
+	const objcBridge = attributeBridge(bridge.objc ?? fallbackBridge.objc, attribute);
+	const ffiBridge = attributeBridge(bridge.ffi ?? fallbackBridge.ffi, attribute);
+	const fabricBridge = attributeBridge(
+		withFallback(bridge.fabric, fallbackBridge.fabric),
+		attribute,
+	);
 	const runtimeBridge =
 		platform === 'android' && capabilities.includes('native.runtime.events')
 			? createFluxRuntimeBridge()
@@ -785,12 +825,12 @@ function createScopedNativePlugin(
 	const uiBridge =
 		platform === 'ios'
 			? createIOSNativeUIBridge(objcBridge, fabricBridge)
-			: (bridge.ui ?? fallbackBridge.ui);
+			: attributeBridge(bridge.ui ?? fallbackBridge.ui, attribute);
 	const uiCapabilities =
 		platform === 'ios' ? iosNativeUICapabilityRequirements : nativeUICapabilityRequirements;
-	const javaBridge = bridge.java ?? fallbackBridge.java;
-	const hooksBridge = bridge.hooks ?? fallbackBridge.hooks;
-	const debugBridge = bridge.debug ?? fallbackBridge.debug;
+	const javaBridge = attributeBridge(bridge.java ?? fallbackBridge.java, attribute);
+	const hooksBridge = attributeBridge(bridge.hooks ?? fallbackBridge.hooks, attribute);
+	const debugBridge = attributeBridge(bridge.debug ?? fallbackBridge.debug, attribute);
 	const tokens = new Set<NativeHookToken>();
 	const surfaces = new Set<NativeFabricSurface>();
 	const uiSurfaces = new Set<NativeUIHandle>();
@@ -1471,9 +1511,13 @@ export function validateNativePluginRequirements(
 /**
  * @description Builds a plugin's context, with a native bridge scoped to its declared capabilities.
  * @param manifest The plugin's manifest.
+ * @param attribute Marks the plugin as active in the loader's crash attribution while its native calls run.
  * @returns The plugin context; call its `dispose` to release the plugin's native resources.
  */
-export function createPluginContext(manifest: AddonManifest): PluginContext {
+export function createPluginContext(
+	manifest: AddonManifest,
+	attribute?: AddonAttribution,
+): PluginContext {
 	const platform = NativePlatform?.device.platform ?? NativePlatform?.platform;
 
 	if (manifest.platforms?.length && !manifest.platforms.includes(platform as never)) {
@@ -1486,7 +1530,7 @@ export function createPluginContext(manifest: AddonManifest): PluginContext {
 	]);
 
 	validateNativePluginRequirements(capabilities, manifest.minNativePluginApi);
-	const scoped = createScopedNativePlugin(capabilities, platform);
+	const scoped = createScopedNativePlugin(capabilities, platform, attribute);
 
 	return {
 		manifest,

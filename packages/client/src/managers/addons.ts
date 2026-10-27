@@ -12,7 +12,12 @@ import {
 	NativePluginUnsupportedPlatformError,
 	validateNativePluginRequirements,
 } from '~/api/native-runtime';
-import { beginAddonStart, crashedAddon, finishAddonStart } from '~/api/crash-guard';
+import {
+	beginAddonStart,
+	crashDisabledNotice,
+	crashedAddon,
+	finishAddonStart,
+} from '~/api/crash-guard';
 import { Manager, ManagerType } from '~/managers/base';
 import storage from '~/api/storage';
 import fs from '~/api/fs';
@@ -455,7 +460,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		this.settings.set('states', states);
 		void storage.persist();
 
-		this.logger.warn(`Disabled ${entity.data.name} because Discord crashed while starting it.`);
+		this.logger.warn(crashDisabledNotice(crashed, entity.data.name));
 
 		return true;
 	}

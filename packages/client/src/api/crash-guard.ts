@@ -1,9 +1,25 @@
 import type { NativeCrashedAddon, NativePlatformCrashGuard } from '@unbound-app/types/native';
 
 let disabledAfterCrash: Map<string, NativeCrashedAddon> | undefined;
+let activityCell: Uint32Array | null | undefined;
+
+/** Wraps a native bridge method so the loader attributes a crash inside it to one addon. */
+export type AddonAttribution = <A extends unknown[], R>(
+	method: (...args: A) => R,
+) => (...args: A) => R;
 
 function bridge(): NativePlatformCrashGuard | undefined {
 	return globalThis.NativePlatform?.crashGuard;
+}
+
+function sharedActivityCell(guard: NativePlatformCrashGuard): Uint32Array | null {
+	if (activityCell === undefined) {
+		const buffer = guard.activity?.();
+
+		activityCell = buffer && buffer.byteLength >= 4 ? new Uint32Array(buffer, 0, 1) : null;
+	}
+
+	return activityCell;
 }
 
 /**
@@ -24,7 +40,38 @@ export function finishAddonStart(key: string): void {
 }
 
 /**
- * @description Looks up whether the loader disabled an addon because Discord crashed while starting it on consecutive launches.
+ * @description Registers an addon with the loader's crash attribution and returns a wrapper that marks the
+ * addon as active while a native bridge method runs, so a native crash inside it disables that addon.
+ * @param key The addon's crash guard key.
+ * @param name The addon's display name.
+ * @returns The wrapper, or `undefined` when the loader cannot attribute crashes.
+ */
+export function attributeAddon(key: string, name: string): AddonAttribution | undefined {
+	const guard = bridge();
+	const slot = guard?.register?.(key, name) ?? 0;
+	const cell = guard && slot > 0 ? sharedActivityCell(guard) : null;
+
+	if (!cell) {
+		return undefined;
+	}
+
+	return (method) =>
+		(...args) => {
+			const previous = cell[0];
+
+			cell[0] = slot;
+
+			try {
+				return method(...args);
+			} finally {
+				cell[0] = previous;
+			}
+		};
+}
+
+/**
+ * @description Looks up whether the loader disabled an addon because Discord crashed while starting or running it on
+ * consecutive launches.
  * @param key The addon's crash guard key.
  * @returns The crashed addon reported by the loader, or `undefined`.
  */
@@ -35,8 +82,21 @@ export function crashedAddon(key: string): NativeCrashedAddon | undefined {
 }
 
 /**
+ * @description Describes why the loader disabled an addon after consecutive crashes.
+ * @param addon The crashed addon reported by the loader.
+ * @param name The addon's display name.
+ * @returns The notice shown to the user.
+ */
+export function crashDisabledNotice(addon: NativeCrashedAddon, name: string): string {
+	const activity = addon.phase === 'running' ? 'running' : 'starting';
+
+	return `Disabled ${name} because Discord crashed while ${activity} it.`;
+}
+
+/**
  * @description Forgets the cached loader verdict so the next lookup asks the bridge again.
  */
 export function resetCrashGuard(): void {
 	disabledAfterCrash = undefined;
+	activityCell = undefined;
 }
