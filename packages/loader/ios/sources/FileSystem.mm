@@ -1,8 +1,14 @@
 #import "FileSystem.h"
 
-#import "CoreBridge.h"
+#include <map>
+#include <memory>
+#include <mutex>
 
-static const NSTimeInterval kMonitorDebounce = 0.250;
+#import "CoreBridge.h"
+#import "CoreConversions.h"
+#include "LoaderFileWatcher.h"
+
+using unbound::ios::toStdString;
 
 static const unsigned long kFileVnodeMask =
     DISPATCH_VNODE_ATTRIB | DISPATCH_VNODE_DELETE | DISPATCH_VNODE_EXTEND | DISPATCH_VNODE_LINK |
@@ -14,27 +20,146 @@ static const unsigned long kFileGoneMask =
 static const unsigned long kDirVnodeMask =
     DISPATCH_VNODE_WRITE | DISPATCH_VNODE_DELETE | DISPATCH_VNODE_RENAME;
 
-@implementation FileMonitor
-@end
+class DispatchFileWatchBackend final : public loader::FileWatchBackend
+{
+public:
+    void attach(std::weak_ptr<loader::FileWatcher> watcher)
+    {
+        watcher_ = std::move(watcher);
+    }
 
-@implementation DirectoryWatcher
-@end
+    bool watchFile(const std::string &path) override
+    {
+        dispatch_source_t source = createSource(path, kFileVnodeMask);
+        if (!source)
+        {
+            return false;
+        }
+        std::weak_ptr<loader::FileWatcher> watcher = watcher_;
+        dispatch_source_set_event_handler(source, ^{
+            if (!isCurrent(files_, path, source))
+            {
+                return;
+            }
+            const loader::FileWatchEvent event = (dispatch_source_get_data(source) & kFileGoneMask)
+                                                     ? loader::FileWatchEvent::Removed
+                                                     : loader::FileWatchEvent::Changed;
+            if (auto active = watcher.lock())
+            {
+                active->fileChanged(path, event);
+            }
+        });
+        store(files_, path, source);
+        return true;
+    }
+
+    void unwatchFile(const std::string &path) override
+    {
+        cancel(files_, path);
+    }
+
+    bool watchDirectory(const std::string &path) override
+    {
+        dispatch_source_t source = createSource(path, kDirVnodeMask);
+        if (!source)
+        {
+            [Logger error:LOG_CATEGORY_FILESYSTEM
+                   format:@"Failed to open dir %s for monitoring (errno %d)", path.c_str(), errno];
+            return false;
+        }
+        std::weak_ptr<loader::FileWatcher> watcher = watcher_;
+        dispatch_source_set_event_handler(source, ^{
+            if (auto active = watcher.lock())
+            {
+                active->directoryChanged(path);
+            }
+        });
+        store(directories_, path, source);
+        return true;
+    }
+
+    void unwatchDirectory(const std::string &path) override
+    {
+        cancel(directories_, path);
+    }
+
+private:
+    using Sources = std::map<std::string, dispatch_source_t>;
+
+    static dispatch_source_t createSource(const std::string &path, unsigned long mask)
+    {
+        int fd = open(path.c_str(), O_EVTONLY);
+        if (fd < 0)
+        {
+            return nil;
+        }
+        dispatch_source_t source =
+            dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fd, mask,
+                                   dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0));
+        dispatch_source_set_cancel_handler(source, ^{ close(fd); });
+        return source;
+    }
+
+    bool isCurrent(Sources &sources, const std::string &path, dispatch_source_t source)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        const auto                  found = sources.find(path);
+        return found != sources.end() && found->second == source;
+    }
+
+    void store(Sources &sources, const std::string &path, dispatch_source_t source)
+    {
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            sources[path] = source;
+        }
+        dispatch_resume(source);
+    }
+
+    void cancel(Sources &sources, const std::string &path)
+    {
+        dispatch_source_t source = nil;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            const auto                  found = sources.find(path);
+            if (found == sources.end())
+            {
+                return;
+            }
+            source = found->second;
+            sources.erase(found);
+        }
+        dispatch_source_cancel(source);
+    }
+
+    std::weak_ptr<loader::FileWatcher> watcher_;
+    Sources                            files_;
+    Sources                            directories_;
+    std::mutex                         mutex_;
+};
+
+static loader::FileWatcher &fileWatcher(void)
+{
+    static std::shared_ptr<loader::FileWatcher> watcher;
+    static dispatch_once_t                      once;
+    dispatch_once(&once, ^{
+        auto backend = std::make_shared<DispatchFileWatchBackend>();
+        watcher      = std::make_shared<loader::FileWatcher>(
+            backend,
+            [](double seconds, std::function<void()> work) {
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (seconds * NSEC_PER_SEC)),
+                               dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
+                               ^{ work(); });
+            },
+            loader::kDispatchSourceDebounceSeconds);
+        backend->attach(watcher);
+    });
+    return *watcher;
+}
 
 @implementation FileSystem
-static NSMutableDictionary<NSString *, FileMonitor *>      *monitors    = nil;
-static NSMutableDictionary<NSString *, DirectoryWatcher *> *dirWatchers = nil;
-static NSFileManager                                       *manager     = nil;
-static NSString                                            *documents   = nil;
-
-static dispatch_queue_t monitorRegistryQueue(void)
-{
-    static dispatch_queue_t queue;
-    static dispatch_once_t  once;
-    dispatch_once(&once, ^{
-        queue = dispatch_queue_create("app.unbound.fs.monitors", DISPATCH_QUEUE_SERIAL);
-    });
-    return queue;
-}
+static NSFileManager *manager   = nil;
+static NSString      *documents = nil;
 
 + (BOOL)exists:(NSString *)path
 {
@@ -126,180 +251,19 @@ static dispatch_queue_t monitorRegistryQueue(void)
 
 + (void)monitor:(NSString *)filePath onChange:(void (^)())onChange autoRestart:(BOOL)autoRestart
 {
-    dispatch_async(monitorRegistryQueue(), ^{
-        if (!monitors)
+    dispatch_block_t callback = onChange;
+    fileWatcher().watch(toStdString(filePath), [callback] {
+        if (callback)
         {
-            monitors = [NSMutableDictionary dictionary];
+            callback();
         }
-        if (!dirWatchers)
-        {
-            dirWatchers = [NSMutableDictionary dictionary];
-        }
-        if (monitors[filePath])
-        {
-            return;
-        }
-
-        FileMonitor *monitor = [[FileMonitor alloc] init];
-        monitor.path         = filePath;
-        monitor.onChange     = onChange;
-        monitor.queue        = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-        monitors[filePath]   = monitor;
-
-        DirectoryWatcher *dir =
-            [FileSystem watcherForDirectory:monitor.path.stringByDeletingLastPathComponent
-                                      queue:monitor.queue];
-        [dir.files addObject:filePath];
-
-        [FileSystem armFileSource:monitor];
     });
 }
 
 + (void)stopMonitoring:(NSString *)path
 {
-    dispatch_async(monitorRegistryQueue(), ^{
-        FileMonitor *monitor = monitors[path];
-        if (!monitor)
-        {
-            return;
-        }
-
-        if (monitor.fileSource)
-        {
-            dispatch_source_cancel(monitor.fileSource);
-        }
-        if (monitor.debounceTimer)
-        {
-            dispatch_source_cancel(monitor.debounceTimer);
-        }
-
-        [monitors removeObjectForKey:path];
-        [FileSystem releaseDirectoryWatcherFor:path.stringByDeletingLastPathComponent];
-
-        [Logger debug:LOG_CATEGORY_FILESYSTEM format:@"monitor for %@ was destroyed", path];
-    });
-}
-
-#pragma mark - Monitoring internals (run on monitorRegistryQueue)
-
-+ (DirectoryWatcher *)watcherForDirectory:(NSString *)dirPath queue:(dispatch_queue_t)queue
-{
-    DirectoryWatcher *existing = dirWatchers[dirPath];
-    if (existing)
-    {
-        return existing;
-    }
-
-    DirectoryWatcher *watcher = [[DirectoryWatcher alloc] init];
-    watcher.path              = dirPath;
-    watcher.files             = [NSMutableSet set];
-    dirWatchers[dirPath]      = watcher;
-
-    int fd = open(dirPath.fileSystemRepresentation, O_EVTONLY);
-    if (fd < 0)
-    {
-        [Logger error:LOG_CATEGORY_FILESYSTEM
-               format:@"Failed to open dir %@ for monitoring (errno %d)", dirPath, errno];
-        return watcher;
-    }
-
-    watcher.source = dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fd, kDirVnodeMask, queue);
-
-    dispatch_source_set_event_handler(watcher.source, ^{
-        dispatch_sync(monitorRegistryQueue(), ^{ [FileSystem handleDirectoryEvent:dirPath]; });
-    });
-    dispatch_source_set_cancel_handler(watcher.source, ^{ close(fd); });
-
-    dispatch_resume(watcher.source);
-    return watcher;
-}
-
-+ (void)handleDirectoryEvent:(NSString *)dirPath
-{
-    for (NSString *file in [dirWatchers[dirPath].files copy])
-    {
-        FileMonitor *monitor = monitors[file];
-        if (!monitor.fileSource)
-        {
-            [FileSystem armFileSource:monitor];
-        }
-        [FileSystem scheduleNotify:monitor];
-    }
-}
-
-+ (void)releaseDirectoryWatcherFor:(NSString *)dirPath
-{
-    DirectoryWatcher *watcher = dirWatchers[dirPath];
-    [watcher.files removeObject:dirPath];
-
-    if (watcher.files.count == 0)
-    {
-        if (watcher.source)
-        {
-            dispatch_source_cancel(watcher.source);
-        }
-        [dirWatchers removeObjectForKey:dirPath];
-    }
-}
-
-+ (void)armFileSource:(FileMonitor *)monitor
-{
-    if (!monitor || monitor.fileSource)
-    {
-        return;
-    }
-
-    int fd = open(monitor.path.fileSystemRepresentation, O_EVTONLY);
-    if (fd < 0)
-    {
-        return;
-    }
-
-    dispatch_source_t source =
-        dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fd, kFileVnodeMask, monitor.queue);
-
-    dispatch_source_set_event_handler(source, ^{
-        unsigned long flags = dispatch_source_get_data(source);
-        dispatch_sync(monitorRegistryQueue(), ^{ [FileSystem scheduleNotify:monitor]; });
-
-        if (flags & kFileGoneMask)
-        {
-            dispatch_sync(monitorRegistryQueue(), ^{
-                if (monitor.fileSource == source)
-                {
-                    monitor.fileSource = nil;
-                }
-            });
-            dispatch_source_cancel(source);
-        }
-    });
-    dispatch_source_set_cancel_handler(source, ^{ close(fd); });
-
-    monitor.fileSource = source;
-    dispatch_resume(source);
-}
-
-+ (void)scheduleNotify:(FileMonitor *)monitor
-{
-    if (!monitor)
-    {
-        return;
-    }
-
-    if (monitor.debounceTimer)
-    {
-        dispatch_source_cancel(monitor.debounceTimer);
-    }
-
-    dispatch_block_t onChange = monitor.onChange;
-    monitor.debounceTimer     = [Utilities createDebounceTimer:kMonitorDebounce
-                                                         queue:monitor.queue
-                                                         block:^{
-                                                         if (onChange)
-                                                         {
-                                                             onChange();
-                                                         }
-                                                         }];
+    fileWatcher().unwatch(toStdString(path));
+    [Logger debug:LOG_CATEGORY_FILESYSTEM format:@"monitor for %@ was destroyed", path];
 }
 
 + (NSHTTPURLResponse *)download:(NSURL *)url

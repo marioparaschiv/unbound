@@ -1,6 +1,7 @@
 #include <android/log.h>
 #include <jni.h>
 
+#include "AndroidFileWatcher.h"
 #include "AndroidHotReload.h"
 #include "AndroidLoader.h"
 #include "HermesBytecodeHeader.h"
@@ -502,7 +503,8 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
 
     if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) !=
             JNI_OK ||
-        !cacheCallbacks(env, bridge.get()) || !registerHotReloadNatives(env))
+        !cacheCallbacks(env, bridge.get()) || !registerHotReloadNatives(env) ||
+        !registerFileWatcherNatives(env))
     {
         clearPendingException(env);
         return JNI_ERR;
