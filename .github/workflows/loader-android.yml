@@ -345,6 +345,8 @@ jobs:
 
             - name: Build the client and the plugins
               working-directory: .
+              env:
+                  TMPDIR: ${{ runner.temp }}
               run: |
                   set -euo pipefail
                   bun run --cwd packages/client build
