@@ -1,6 +1,9 @@
 import { semverSchema } from '@unbound-app/contracts/manifest';
 import { apiUrlSchema } from '@unbound-app/contracts/api';
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { z } from 'zod';
 
 import { resolveDevServerUrl, resolveDevHost } from '../dev-host';
 import { version } from '../../package.json';
@@ -16,6 +19,19 @@ export const GIT_REVISION = (() => {
 export const CLIENT_VERSION = semverSchema.parse(version);
 
 export const API_URL = apiUrlSchema.parse(process.env.UNBOUND_API_URL);
+
+const compatPolicySchema = z.object({
+	minimumDiscordVersion: z.object({
+		android: z.string().regex(/^\d+\.\d+$/),
+		ios: z.string().regex(/^\d+\.\d+$/),
+	}),
+});
+
+export const COMPAT_POLICY_PATH = join(__dirname, '..', '..', '..', 'loader', 'compat-policy.json');
+
+export const MINIMUM_DISCORD_VERSIONS = compatPolicySchema.parse(
+	JSON.parse(readFileSync(COMPAT_POLICY_PATH, 'utf8')),
+).minimumDiscordVersion;
 
 export const IGNORED_WARNINGS = ['PLUGIN_TIMINGS', 'EVAL', 'MISSING_NAME_OPTION_FOR_IIFE_EXPORT'];
 

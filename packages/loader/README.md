@@ -279,7 +279,7 @@ private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 ```
 
-`legacyJavaClass` comes from `@unbound-plugins/shared/native/android/legacy-classes`. Only mark a name once the code handles its absence. When the stable build no longer has a legacy name, no channel does, so the stable scan keeps one `discord-compat-cleanup` issue listing those names and where the code uses them. It closes once there is nothing left to remove.
+`legacyJavaClass` comes from `@unbound-plugins/shared/native/android/legacy-classes`. Only mark a name once the code handles its absence. A legacy name can be removed once the oldest supported Discord build no longer has it, as [Supported Discord versions](#supported-discord-versions) describes.
 
 Plugins find obfuscated members by their shape instead of their name. The shapes live in [`discord-shapes.json`](../plugins-shared/src/native/android/discord-shapes.json), which `shapeMethod`, `shapeField` and `hasShapeConstructor` from `@unbound-plugins/shared/native/android/discord-shapes` read at runtime and the scan checks against the dex:
 
@@ -302,6 +302,34 @@ Releases run the same scan before anything is built. The `compat-gate` job in `l
 ```bash
 go run ./tools compat-scan --ipa discord.ipa --apk discord-stable/base.apk --android-version 350.0 --fail-on-breakage
 ```
+
+### Hermes bytecode
+
+The client ships one bundle per Hermes bytecode version. The loader loads the one that matches the bytecode Discord runs, and falls back to the uncompiled `unbound.js` when none does. The versions it builds are listed in [`hermes.json`](../client/scripts/build/hermes.json). A release build fails when the bundles it compiled differ from that list, so the list always matches what ships.
+
+The scan reads the bytecode version from the header of Discord's `index.android.bundle` and `main.jsbundle` and compares it with that list. A version the client does not build is a warning, listed under "Warnings" at the top of the report: Unbound still loads, only with a slower startup, so it does not count as a breakage, does not fail `--fail-on-breakage` and does not stop a release. It shows up in the channel's `discord-compat` issue when that issue is open for other reasons. When Discord moves to a new bytecode version, add it to `hermes.json` once [hermesc](https://github.com/unbound-app/hermesc) publishes it.
+
+A bundle whose header or string table the scan cannot read is a broken finding, because none of its lookups could be checked. It is listed at the top of the report and stops a release like any other breakage.
+
+### Supported Discord versions
+
+[`compat-policy.json`](compat-policy.json) sets the oldest Discord version Unbound supports on each platform:
+
+```json
+{
+	"minimumDiscordVersion": {
+		"android": "350.8",
+		"ios": "350.0"
+	},
+	"raiseReminderDays": 30
+}
+```
+
+Supported means every build from that minimum up to the newest alpha. Lookups keep fallbacks for every supported build, and the scans and the release gate check them. On a Discord older than the minimum, the client logs a warning and shows a toast once per Discord version, as the policy is bundled into the client at build time.
+
+The minimum follows the Play Store stable and App Store releases. Once the scheduled stable scan has seen a stable build newer than the minimum for more than `raiseReminderDays` days, it opens one `discord-support-policy` issue proposing to raise the minimum to the current stable build, and lists the legacy names raising it would let the team remove. Each scan's `compat.json` carries the date stable first moved past the minimum into the next scan, and raising the minimum restarts it. The issue closes once the minimum is raised.
+
+Legacy code is removed against the minimum, not against stable. When the scanned stable build is the minimum, or older than it, every supported build lacks the legacy names stable lacks, so the stable scan keeps one `discord-compat-cleanup` issue listing them and where the code uses them, and closes it once there is nothing left to remove. While stable is newer than the minimum, the scan cannot tell what the minimum build still has, so nothing more becomes removable until the minimum is raised. To clean up, raise the minimum in `compat-policy.json`, wait for the next stable scan to list the names, and remove them together with their `HostClass.legacy` or `legacyJavaClass` marks.
 
 ## Symbolicating native crashes
 

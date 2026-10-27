@@ -52,7 +52,7 @@ func planCompatIssue(open []compatIssue, channel, versions string, problems bool
 			relevant = append(relevant, issue)
 		}
 	}
-	sort.Slice(relevant, func(left, right int) bool { return relevant[left].Number > relevant[right].Number })
+	sortIssuesNewestFirst(relevant)
 	if !problems {
 		for _, issue := range relevant {
 			plan.Close = append(plan.Close, compatIssueClose{Number: issue.Number, Comment: resolvedComment(versions)})
@@ -72,6 +72,10 @@ func planCompatIssue(open []compatIssue, channel, versions string, problems bool
 		}
 	}
 	return plan
+}
+
+func sortIssuesNewestFirst(issues []compatIssue) {
+	sort.Slice(issues, func(left, right int) bool { return issues[left].Number > issues[right].Number })
 }
 
 func resolvedComment(versions string) string {
