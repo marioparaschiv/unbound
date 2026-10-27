@@ -25,6 +25,7 @@ import downlevel, { lower } from './plugins/downlevel';
 import generateManifest from './plugins/manifest';
 import { bytecodeVersions } from './hermes.json';
 import worklets from './plugins/worklets';
+import signBundles from './sign';
 
 /** What the dev engine reports after a source change. */
 export type HotUpdate =
@@ -184,6 +185,8 @@ async function build() {
 		}
 
 		await bundle.close();
+
+		signBundles(join(root, 'dist'));
 
 		const endTime = performance.now();
 		const duration = (endTime - startTime).toFixed(2);

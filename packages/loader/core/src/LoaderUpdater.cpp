@@ -82,10 +82,57 @@ UpdaterSettings updaterSettings(SettingsStore &store)
 }
 
 BundleUpdater::BundleUpdater(std::string documents, UpdaterSettings settings, TextFetcher fetchText,
-                             FileDownloader download)
+                             FileDownloader download, std::string signingKey)
     : documents_(std::move(documents)), settings_(std::move(settings)),
-      fetchText_(std::move(fetchText)), download_(std::move(download))
+      fetchText_(std::move(fetchText)), download_(std::move(download)),
+      signingKey_(std::move(signingKey))
 {
+}
+
+bool BundleUpdater::isSignatureValid(const std::string &url, const std::string &candidatePath)
+{
+    if (signingKey_.empty())
+    {
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            "Bundle signature check skipped: this loader was built without a signing key.");
+        return true;
+    }
+
+    if (settings_.getBoolean("loader.update.unsigned", false))
+    {
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            "Bundle signature check skipped: loader.update.unsigned is on.");
+        return true;
+    }
+
+    if (isDevelopmentBundleURL(url))
+    {
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            "Bundle signature check skipped for the dev server at " + url + ".");
+        return true;
+    }
+
+    std::optional<std::string> signature =
+        fetchText_ ? fetchText_(url + kBundleSignatureSuffix, kManifestFetchTimeoutSeconds)
+                   : std::nullopt;
+    if (!signature)
+    {
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Rejected the downloaded bundle: " + url + kBundleSignatureSuffix +
+                " could not be fetched.");
+        return false;
+    }
+
+    std::optional<std::string> bundle = readTextFile(candidatePath);
+    if (!bundle || !verifyBundleSignature(*bundle, *signature, signingKey_))
+    {
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Rejected the downloaded bundle: its signature does not match.");
+        return false;
+    }
+
+    log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Bundle signature verified.");
+    return true;
 }
 
 std::string BundleUpdater::bundlePath(const std::string &extension) const
@@ -267,6 +314,12 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
     if (!fileExists(candidatePath))
     {
         throw std::runtime_error("Downloaded bundle candidate is unavailable");
+    }
+
+    if (!isSignatureValid(url, candidatePath))
+    {
+        rejectBundle(candidatePath);
+        throw std::runtime_error("Downloaded bundle failed signature verification");
     }
 
     if (!writeTextFileAtomically(candidatePath + ".etag", response->etag))

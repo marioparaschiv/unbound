@@ -67,4 +67,14 @@ jobs:
             - name: Build the client
               env:
                   TMPDIR: ${{ runner.temp }}
+                  UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
               run: bun run --cwd packages/client build
+            - name: Check the bundle signatures
+              env:
+                  SIGNING_KEY_PRESENT: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY != '' }}
+              run: |
+                  if [ "$SIGNING_KEY_PRESENT" != true ]; then
+                      echo "No signing key in this run, so the bundles are unsigned."
+                      exit 0
+                  fi
+                  bun run --cwd packages/client verify-signatures

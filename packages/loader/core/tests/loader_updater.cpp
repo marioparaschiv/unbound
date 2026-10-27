@@ -46,7 +46,8 @@ int main()
                 assert(loader::writeTextFileAtomically(destination, "bundle-" + url));
             }
             return loader::DownloadResult{nextStatus, "\"etag-1\""};
-        });
+        },
+        "");
 
     assert(updater.downloadURL(std::nullopt, 98) == "https://builds.unbound.rip/unbound.98.bundle");
     assert(updater.downloadURL(std::nullopt, 90) == "https://builds.unbound.rip/unbound.js");
