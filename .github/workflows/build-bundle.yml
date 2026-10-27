@@ -65,6 +65,7 @@ jobs:
             - name: Build the client
               run: bun run --cwd packages/client build
               env:
+                  TMPDIR: ${{ runner.temp }}
                   UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
 
             - name: Check every bundle is signed
@@ -117,7 +118,12 @@ jobs:
 
                   git push --force "$remote" builds
 
+            - name: Note the unconfigured public bucket
+              if: ${{ vars.S3_PUBLIC_BUCKET == '' }}
+              run: echo "The public bucket is not configured (vars S3_ENDPOINT, S3_REGION, S3_PUBLIC_BUCKET; secrets S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY), so the bucket upload is skipped." >> "$GITHUB_STEP_SUMMARY"
+
             - name: Upload bundles to the public bucket
+              if: ${{ vars.S3_PUBLIC_BUCKET != '' }}
               run: bun run --cwd packages/client upload
               env:
                   UNBOUND_CHANNEL: ${{ inputs.version && 'stable' || 'beta' }}
