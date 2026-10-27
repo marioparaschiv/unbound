@@ -2,6 +2,7 @@
 
 #include <mutex>
 
+#include "LoaderCrashGuard.h"
 #include "LoaderFiles.h"
 #include "LoaderJSI.h"
 #include "NativePluginRuntime.h"
@@ -115,6 +116,47 @@ static jsi::Function booleanGetter(jsi::Runtime &runtime, const char *name, Prov
         [provider](jsi::Runtime &, const jsi::Value &, const jsi::Value *, size_t) -> jsi::Value {
             return jsi::Value(provider ? provider() : false);
         });
+}
+
+static std::string stringArgument(jsi::Runtime &runtime, const jsi::Value *args, size_t count,
+                                  size_t index)
+{
+    return index < count && args[index].isString() ? args[index].getString(runtime).utf8(runtime)
+                                                   : std::string();
+}
+
+static jsi::Object crashGuardObject(jsi::Runtime &runtime, const std::string &documents)
+{
+    crashDisabledAddons(documents);
+
+    jsi::Object guard(runtime);
+    guard.setProperty(
+        runtime, "begin",
+        native::makeFunction(runtime, "begin", 2,
+                             [documents](jsi::Runtime     &rt, const jsi::Value &,
+                                         const jsi::Value *args, size_t count) -> jsi::Value {
+                                 crashDisabledAddons(documents);
+                                 return jsi::Value(AddonCrashGuard(documents).beginStart(
+                                     stringArgument(rt, args, count, 0),
+                                     stringArgument(rt, args, count, 1)));
+                             }));
+    guard.setProperty(
+        runtime, "end",
+        native::makeFunction(runtime, "end", 1,
+                             [documents](jsi::Runtime     &rt, const jsi::Value &,
+                                         const jsi::Value *args, size_t count) -> jsi::Value {
+                                 return jsi::Value(AddonCrashGuard(documents).finishStart(
+                                     stringArgument(rt, args, count, 0)));
+                             }));
+    guard.setProperty(
+        runtime, "disabled",
+        native::makeFunction(runtime, "disabled", 0,
+                             [documents](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *,
+                                         size_t) -> jsi::Value {
+                                 return toJSIValue(
+                                     rt, crashedAddonsJSON(crashDisabledAddons(documents)));
+                             }));
+    return guard;
 }
 
 static std::mutex                              gInstalledProviderMutex;
@@ -244,6 +286,7 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                                                                   args[0].getString(rt).utf8(rt)));
                                  }));
         platform.setProperty(runtime, "files", std::move(files));
+        platform.setProperty(runtime, "crashGuard", crashGuardObject(runtime, provider->documents));
     }
 
     platform.setProperty(runtime, "platform",

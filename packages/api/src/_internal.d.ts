@@ -383,6 +383,10 @@ export type NativeCancelablePromise<T> = Promise<T> & {
 	cancel(): void;
 };
 export type NativeClassHandle = NativeHandle;
+export type NativeCrashedAddon = {
+	readonly id: string;
+	readonly name: string;
+};
 export type NativeDebugBridge = {
 	recordEvaluation(record: NativeDebugEvaluation): boolean;
 	environment(): NativeDebugEnvironment;
@@ -727,9 +731,15 @@ export type NativePlatformBridge = {
 	readonly device: NativePlatformDevice;
 	readonly app: NativePlatformApp;
 	readonly files?: NativePlatformFiles;
+	readonly crashGuard?: NativePlatformCrashGuard;
 	readonly settings?: NativePlatformSettings;
 	readonly fonts?: NativePlatformFonts;
 	readonly ios?: NativePlatformIOSBridge;
+};
+export type NativePlatformCrashGuard = {
+	begin(id: string, name: string): boolean;
+	end(id: string): boolean;
+	disabled(): NativeCrashedAddon[];
 };
 export type NativePlatformDevice = {
 	readonly platform: NativePluginPlatform;
