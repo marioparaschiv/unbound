@@ -67,9 +67,8 @@ jobs:
             - name: Build the client
               env:
                   TMPDIR: ${{ runner.temp }}
-              run: bun run --cwd packages/client build
-              env:
                   UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
+              run: bun run --cwd packages/client build
             - name: Check the bundle signatures
               env:
                   SIGNING_KEY_PRESENT: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY != '' }}
