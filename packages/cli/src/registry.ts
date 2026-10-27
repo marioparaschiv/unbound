@@ -16,6 +16,7 @@ import traceCommand from '~/commands/trace';
 import viewsCommand from '~/commands/views';
 import evalCommand from '~/commands/eval';
 import hookCommand from '~/commands/hook';
+import logsCommand from '~/commands/logs';
 import openCommand from '~/commands/open';
 import pushCommand from '~/commands/push';
 import devCommand from '~/commands/dev';
@@ -31,6 +32,7 @@ export const commands: CommandDefinition<z.ZodObject<z.ZodRawShape>>[] = [
 	reloadCommand,
 	pushCommand,
 	installCommand,
+	logsCommand,
 	viewsCommand,
 	spansCommand,
 	modulesCommand,

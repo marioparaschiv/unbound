@@ -143,7 +143,12 @@ export async function installOnIOS(
 			};
 }
 
-async function pickDevice(
+/**
+ * @description Picks the one jailbroken iPhone whose jb-p1lot bridge is running.
+ * @param pilotCommand Runs a jb-p1lot command.
+ * @returns The device's UDID, or why no single device could be picked.
+ */
+export async function pickDevice(
 	pilotCommand: (args: string[], timeoutMs: number) => Promise<CommandResult>,
 ): Promise<string | { error: string }> {
 	const listed = await pilotCommand(['device_list'], IOS_TIMEOUTS.list);
