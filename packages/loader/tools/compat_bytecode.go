@@ -78,11 +78,11 @@ func evaluateBytecodeReference(reference *compatReference, target *compatTarget)
 		return compatBroken, "the Hermes header of `" + target.bundle + "` cannot be read (" + target.problem + "), so the scan cannot tell which bytecode version Discord runs"
 	}
 	version := strconv.FormatUint(uint64(target.Bytecode), 10)
-	if !slices.Contains(reference.Terms, version) {
-		return compatBroken, "Discord's `" + target.bundle + "` is Hermes bytecode " + version + ", but the client only builds bytecode " + builds + ", so the loader falls back to the uncompiled `unbound.js`"
-	}
 	if target.hermes == nil {
-		return compatBroken, "the client builds bytecode " + version + ", but the string table of `" + target.bundle + "` cannot be read (" + target.problem + "), so none of the bundle's lookups were checked"
+		return compatBroken, "Discord uses Hermes bytecode " + version + ", but the string table of `" + target.bundle + "` cannot be read (" + target.problem + "), so none of the bundle's lookups were checked"
+	}
+	if !slices.Contains(reference.Terms, version) {
+		return compatWarning, "Discord uses Hermes bytecode " + version + "; the loader falls back to `unbound.js` until the client builds " + version + " (it builds " + builds + ")"
 	}
 	return compatOK, ""
 }

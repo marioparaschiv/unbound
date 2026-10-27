@@ -22,6 +22,7 @@ const (
 	compatUnverified = "unverified"
 	compatExternal   = "external"
 	compatFallback   = "fallback"
+	compatWarning    = "warning"
 )
 
 var compatEnvironmentClasses = map[string]string{
@@ -635,7 +636,7 @@ func compatSeverity(status string) int {
 		return 2
 	case compatUnverified:
 		return 1
-	case compatOK, compatExternal, compatFallback:
+	case compatOK, compatExternal, compatFallback, compatWarning:
 		return 0
 	}
 	return -1

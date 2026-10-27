@@ -301,7 +301,9 @@ go run ./tools compat-scan --ipa discord.ipa --apk discord-stable/base.apk --and
 
 The client ships one bundle per Hermes bytecode version. The loader loads the one that matches the bytecode Discord runs, and falls back to the uncompiled `unbound.js` when none does. The versions it builds are listed in [`hermes.json`](../client/scripts/build/hermes.json). A release build fails when the bundles it compiled differ from that list, so the list always matches what ships.
 
-The scan reads the bytecode version from the header of Discord's `index.android.bundle` and `main.jsbundle` and compares it with that list. A version the client does not build, or a header the scan cannot read, is a broken finding listed at the top of the report. It stops a release through the `compat-gate` job and opens the channel's `discord-compat` issue like any other breakage. When Discord moves to a new bytecode version, add it to `hermes.json` once [hermesc](https://github.com/unbound-app/hermesc) publishes it.
+The scan reads the bytecode version from the header of Discord's `index.android.bundle` and `main.jsbundle` and compares it with that list. A version the client does not build is a warning, listed under "Warnings" at the top of the report: Unbound still loads, only with a slower startup, so it does not count as a breakage, does not fail `--fail-on-breakage` and does not stop a release. It shows up in the channel's `discord-compat` issue when that issue is open for other reasons. When Discord moves to a new bytecode version, add it to `hermes.json` once [hermesc](https://github.com/unbound-app/hermesc) publishes it.
+
+A bundle whose header or string table the scan cannot read is a broken finding, because none of its lookups could be checked. It is listed at the top of the report and stops a release like any other breakage.
 
 ### Supported Discord versions
 

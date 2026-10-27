@@ -240,13 +240,20 @@ func renderCompatReportWithSource(results *compatResults, sourceURL string) stri
 	builder.WriteString("## " + title + "\n\n")
 	builder.WriteString(compatTargetSummary(results) + "\n\n")
 	if bytecode := compatBytecodeFindings(results, compatBroken); len(bytecode) > 0 {
-		builder.WriteString("### Hermes bytecode\n\nNo bytecode bundle the client ships matches the Hermes version this Discord build runs. Add the version to `hermes.json` once hermesc can build it.\n\n")
+		builder.WriteString("### Hermes bytecode\n\nThe scan cannot read Discord's Hermes bundle, so the lookups in it went unchecked.\n\n")
 		for _, line := range compatLines(bytecode, compatBroken, sourceURL) {
 			builder.WriteString(line.text + "\n")
 		}
 		builder.WriteString("\n")
 	} else if summary := compatBytecodeSummary(results); summary != "" {
 		builder.WriteString(summary + "\n\n")
+	}
+	if warnings := compatLines(results.Findings, compatWarning, sourceURL); len(warnings) > 0 {
+		builder.WriteString("### Warnings\n\nThese do not break Unbound or block a release. Add the version to `hermes.json` once hermesc can build it.\n\n")
+		for _, line := range warnings {
+			builder.WriteString(line.text + "\n")
+		}
+		builder.WriteString("\n")
 	}
 	if support := compatSupportSummary(results); support != "" {
 		builder.WriteString(support + "\n\n")

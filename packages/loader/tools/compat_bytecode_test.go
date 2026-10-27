@@ -116,31 +116,39 @@ func TestEvaluateBytecode(t *testing.T) {
 
 	unsupported := evaluateCompat(references, []*compatTarget{bytecodeTarget("ios", bundleWithVersion(99)), bytecodeTarget("android", bundleWithVersion(99))}, nil)
 	finding := statusOf(unsupported, "android", referenceHermesBytecode, "bytecodeVersions")
-	if finding.Status != compatBroken || !strings.Contains(finding.Reason, "Hermes bytecode 99, but the client only builds bytecode 98, 96, 94") {
-		t.Fatalf("a version the client cannot target must be broken: %+v", finding)
+	if finding.Status != compatWarning || !strings.HasPrefix(finding.Reason, "Discord uses Hermes bytecode 99; the loader falls back to `unbound.js` until the client builds 99") {
+		t.Fatalf("a version the client does not build must be a warning: %+v", finding)
 	}
 	if statusOf(unsupported, "android", referenceStore, "UserStore").Status != compatOK {
 		t.Fatal("lookups must still be checked when only the version is unsupported")
 	}
-	err := compatBreakageError(unsupported)
-	if err == nil || !strings.Contains(err.Error(), "Hermes bytecode 99") {
-		t.Fatalf("an unsupported version must fail --fail-on-breakage with its reason, got %v", err)
+	if err := compatBreakageError(unsupported); err != nil {
+		t.Fatalf("an unsupported version must not fail --fail-on-breakage: %v", err)
 	}
-	if !compatHasProblems(unsupported) {
-		t.Fatal("an unsupported version must open the channel issue")
+	if compatHasProblems(unsupported) {
+		t.Fatal("an unsupported version alone must not count as a channel breakage")
 	}
 	report := renderCompatReport(unsupported)
-	section := strings.Index(report, "### Hermes bytecode")
+	section := strings.Index(report, "### Warnings")
 	if section < 0 || section > strings.Index(report, "| Platform |") {
-		t.Fatalf("the bytecode problem must lead the report:\n%s", report)
+		t.Fatalf("the warning must lead the report:\n%s", report)
 	}
-	if strings.Count(report, "- Hermes bytecode (") != 2 || strings.Contains(report, "### Definitely broken") || strings.Contains(report, "Everything the scan can check still resolves") {
-		t.Fatalf("the bytecode problem must be listed once, at the top:\n%s", report)
+	if strings.Count(report, "- Hermes bytecode (iOS, Android): Discord uses Hermes bytecode 99;") != 1 || strings.Contains(report, "### Definitely broken") || strings.Contains(report, "### Hermes bytecode") || !strings.Contains(report, "Everything the scan can check still resolves") {
+		t.Fatalf("the warning must be listed once and not as a breakage:\n%s", report)
+	}
+	if !strings.Contains(report, "| Android | 0 | 0 | 1 | 0 |") {
+		t.Fatalf("a warning must not count as broken:\n%s", report)
 	}
 
 	unreadable := evaluateCompat(references, []*compatTarget{bytecodeTarget("android", []byte("garbage"))}, nil)
 	if finding := statusOf(unreadable, "android", referenceHermesBytecode, "bytecodeVersions"); finding.Status != compatBroken || !strings.Contains(finding.Reason, "cannot be read") {
 		t.Fatalf("an unreadable header must be broken with its reason: %+v", finding)
+	}
+	if report := renderCompatReport(unreadable); !strings.Contains(report, "### Hermes bytecode") || strings.Index(report, "### Hermes bytecode") > strings.Index(report, "| Platform |") {
+		t.Fatalf("an unreadable bundle must lead the report:\n%s", report)
+	}
+	if err := compatBreakageError(unreadable); err == nil || !strings.Contains(err.Error(), "cannot be read") {
+		t.Fatalf("an unreadable bundle must fail --fail-on-breakage with its reason, got %v", err)
 	}
 	if finding := statusOf(unreadable, "android", referenceStore, "UserStore"); finding.Status != "" {
 		t.Fatalf("lookups in an unreadable bundle must be skipped, not crash: %+v", finding)
