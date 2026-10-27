@@ -313,6 +313,12 @@ When the new build has no name to fall back to and the code finds the replacemen
 private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
 ```
 
+A method that only older builds declare is looked up with `legacyMethod`, which returns `null` instead of throwing:
+
+```kotlin
+val loadJSBundle = reactInstance.legacyMethod("loadJSBundle", bundleLoader)
+```
+
 ```ts
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 ```
@@ -367,7 +373,7 @@ Supported means every build from that minimum up to the newest alpha. Lookups ke
 
 The minimum follows the Play Store stable and App Store releases. Once the scheduled stable scan has seen a stable build newer than the minimum for more than `raiseReminderDays` days, it opens one `discord-support-policy` issue proposing to raise the minimum to the current stable build, and lists the legacy names raising it would let the team remove. Each scan's `compat.json` carries the date stable first moved past the minimum into the next scan, and raising the minimum restarts it. The issue closes once the minimum is raised.
 
-Legacy code is removed against the minimum, not against stable. When the scanned stable build is the minimum, or older than it, every supported build lacks the legacy names stable lacks, so the stable scan keeps one `discord-compat-cleanup` issue listing them and where the code uses them, and closes it once there is nothing left to remove. While stable is newer than the minimum, the scan cannot tell what the minimum build still has, so nothing more becomes removable until the minimum is raised. To clean up, raise the minimum in `compat-policy.json`, wait for the next stable scan to list the names, and remove them together with their `HostClass.legacy` or `legacyJavaClass` marks.
+Legacy code is removed against the minimum, not against stable. When the scanned stable build is the minimum, or older than it, every supported build lacks the legacy names stable lacks, so the stable scan keeps one `discord-compat-cleanup` issue listing them and where the code uses them, and closes it once there is nothing left to remove. While stable is newer than the minimum, the scan cannot tell what the minimum build still has, so nothing more becomes removable until the minimum is raised. To clean up, raise the minimum in `compat-policy.json`, wait for the next stable scan to list the names, and remove them together with their `HostClass.legacy`, `legacyMethod` or `legacyJavaClass` marks.
 
 ## Symbolicating native crashes
 

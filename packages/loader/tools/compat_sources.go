@@ -381,6 +381,7 @@ var (
 	jniClassPattern        = regexp.MustCompile(`FindClass\("([A-Za-z0-9_/$]+)"`)
 	kotlinHostClassPattern = regexp.MustCompile(`\bHostClass\(([^()]*)\)`)
 	kotlinLegacyPattern    = regexp.MustCompile(`\bHostClass\.legacy\(\s*"([^"]+)"\s*\)`)
+	kotlinLegacyMethod     = regexp.MustCompile(`\.legacyMethod\(\s*"([A-Za-z_$][A-Za-z0-9_$-]*)"`)
 	kotlinShapePattern     = regexp.MustCompile(`\bshape(?:Class|Field|Fields|Method)\(\s*"([A-Za-z_][A-Za-z0-9_]*)"`)
 )
 
@@ -514,6 +515,11 @@ func extractNativeReferences(set *compatSourceSet, file compatSourceFile, conten
 			}
 			for _, match := range kotlinMethodPattern.FindAllStringSubmatch(line, -1) {
 				add(referenceJavaMethod, "", match[1])
+			}
+			for _, match := range kotlinLegacyMethod.FindAllStringSubmatch(line, -1) {
+				reference := base
+				reference.Kind, reference.Name, reference.Legacy = referenceJavaMethod, match[1], true
+				set.add(reference, location)
 			}
 			for _, match := range kotlinFieldPattern.FindAllStringSubmatch(line, -1) {
 				add(referenceJavaField, "", match[1])
