@@ -22,7 +22,14 @@ ATTESTATION_ENABLED := $(if $(filter 1,$(DEBUG)),0,1)
 BUNDLE_SIGNING_KEY_FILE ?= $(CORE_DIR)/keys/bundle-signing.pub
 BUNDLE_SIGNING_KEY := $(shell cat "$(BUNDLE_SIGNING_KEY_FILE)" 2>/dev/null | LC_ALL=C tr -cd 'A-Za-z0-9+/=')
 $(if $(filter 0,$(MAKELEVEL)),$(if $(BUNDLE_SIGNING_KEY),$(info Bundle signature verification: on, key from $(BUNDLE_SIGNING_KEY_FILE)),$(info Bundle signature verification: off, $(BUNDLE_SIGNING_KEY_FILE) does not exist)))
-COMMON_FLAGS = -fobjc-arc -DATTESTATION_ENABLED=$(ATTESTATION_ENABLED) -DUNBOUND_VERSION='"$(THEOS_PACKAGE_BASE_VERSION)"' -DUNBOUND_BUNDLE_SIGNING_KEY='"$(BUNDLE_SIGNING_KEY)"' -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_HASH='@"$(COMMIT_SHORT_HASH)"' -DCOMMIT_SUBJECT='@"$(COMMIT_SUBJECT)"' -DCOMMIT_BRANCH='@"$(COMMIT_BRANCH)"' -DBUILD_TIMESTAMP='@"$(BUILD_TIMESTAMP)"' -I$(THEOS_PROJECT_DIR)/headers -I$(CORE_DIR)/include -I$(VENDOR_DIR) -I$(VENDOR_DIR)/react
+UNBOUND_PR_NUMBER ?=
+PR_BUNDLE_SIGNING_KEY_FILE ?= $(CORE_DIR)/keys/pr-bundle-signing.pub
+PR_NUMBER := $(if $(strip $(UNBOUND_PR_NUMBER)),$(strip $(UNBOUND_PR_NUMBER)),0)
+PR_NUMBER_NON_DIGITS := $(subst 0,,$(subst 1,,$(subst 2,,$(subst 3,,$(subst 4,,$(subst 5,,$(subst 6,,$(subst 7,,$(subst 8,,$(subst 9,,$(PR_NUMBER)))))))))))
+$(if $(or $(PR_NUMBER_NON_DIGITS),$(filter-out 1,$(words $(PR_NUMBER))),$(filter-out 0,$(filter 0%,$(PR_NUMBER)))),$(error UNBOUND_PR_NUMBER must be a pull request number, not "$(UNBOUND_PR_NUMBER)"))
+PR_BUNDLE_SIGNING_KEY := $(if $(filter-out 0,$(PR_NUMBER)),$(shell cat "$(PR_BUNDLE_SIGNING_KEY_FILE)" 2>/dev/null | LC_ALL=C tr -cd 'A-Za-z0-9+/='))
+$(if $(filter-out 0,$(PR_NUMBER)),$(if $(PR_BUNDLE_SIGNING_KEY),$(if $(filter 0,$(MAKELEVEL)),$(info Pull request build #$(PR_NUMBER): also trusts $(PR_BUNDLE_SIGNING_KEY_FILE))),$(error A pull request build needs $(PR_BUNDLE_SIGNING_KEY_FILE))))
+COMMON_FLAGS = -fobjc-arc -DATTESTATION_ENABLED=$(ATTESTATION_ENABLED) -DUNBOUND_VERSION='"$(THEOS_PACKAGE_BASE_VERSION)"' -DUNBOUND_BUNDLE_SIGNING_KEY='"$(BUNDLE_SIGNING_KEY)"' -DUNBOUND_PR_NUMBER=$(PR_NUMBER) -DUNBOUND_PR_BUNDLE_SIGNING_KEY='"$(PR_BUNDLE_SIGNING_KEY)"' -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_HASH='@"$(COMMIT_SHORT_HASH)"' -DCOMMIT_SUBJECT='@"$(COMMIT_SUBJECT)"' -DCOMMIT_BRANCH='@"$(COMMIT_BRANCH)"' -DBUILD_TIMESTAMP='@"$(BUILD_TIMESTAMP)"' -I$(THEOS_PROJECT_DIR)/headers -I$(CORE_DIR)/include -I$(VENDOR_DIR) -I$(VENDOR_DIR)/react
 LIBFFI_OUTPUT := $(THEOS_PROJECT_DIR)/.theos/libffi
 LIBFFI_ARCHIVE := $(LIBFFI_OUTPUT)/libffi.a
 LIBFFI_HEADERS := $(LIBFFI_OUTPUT)/include
