@@ -32,6 +32,8 @@ on:
                 required: true
             S3_SECRET_ACCESS_KEY:
                 required: true
+            UNBOUND_BUNDLE_SIGNING_KEY:
+                required: true
 
 permissions:
     contents: write
@@ -62,6 +64,11 @@ jobs:
 
             - name: Build the client
               run: bun run --cwd packages/client build
+              env:
+                  UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
+
+            - name: Check every bundle is signed
+              run: bun run --cwd packages/client verify-signatures
 
             - name: Check every bundle has a source map
               run: |
