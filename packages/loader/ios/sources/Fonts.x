@@ -2,14 +2,11 @@
 
 @implementation Fonts
 static NSDictionary<NSString *, NSString *> *overrides   = nil;
-static NSMutableSet<NSString *>             *loadedPaths = nil;
+static NSString                             *everyFamily = nil;
 
 + (void)init
 {
-    if (!loadedPaths)
-    {
-        loadedPaths = [NSMutableSet set];
-    }
+    everyFamily = [CoreBridge everyFontFamily];
 
     static dispatch_once_t observeOnce;
     dispatch_once(&observeOnce, ^{
@@ -34,30 +31,22 @@ static NSMutableSet<NSString *>             *loadedPaths = nil;
 
 + (void)apply
 {
-    NSDictionary<NSString *, NSDictionary *>    *targets  = [CoreBridge fontOverrideTargets];
-    NSMutableDictionary<NSString *, NSString *> *resolved = [NSMutableDictionary dictionary];
+    NSDictionary *plan = [CoreBridge fontOverridePlan];
 
-    for (NSString *family in targets)
+    for (NSString *error in plan[@"errors"])
     {
-        NSDictionary *target = targets[family];
-        if (target[@"error"])
-        {
-            [Logger error:LOG_CATEGORY_FONTS format:@"%@", target[@"error"]];
-            continue;
-        }
-
-        NSString *path = target[@"path"];
-        if (path && ![loadedPaths containsObject:path])
-        {
-            [Fonts loadFont:path];
-            [loadedPaths addObject:path];
-        }
-        resolved[family] = target[@"name"];
+        [Logger error:LOG_CATEGORY_FONTS format:@"%@", error];
     }
 
+    for (NSString *path in plan[@"registrations"])
+    {
+        [Fonts loadFont:path];
+    }
+
+    NSDictionary<NSString *, NSString *> *table = plan[@"table"];
     @synchronized([Fonts class])
     {
-        overrides = resolved;
+        overrides = [table isKindOfClass:[NSDictionary class]] ? table : @{};
     }
 }
 
@@ -109,14 +98,9 @@ static NSMutableSet<NSString *>             *loadedPaths = nil;
 %hook UIFont
 + (UIFont *)fontWithName:(NSString *)name size:(CGFloat)size
 {
-    NSDictionary *overrides = [Fonts overrides];
-    NSObject     *all       = overrides[@"*"];
+    NSDictionary *overrides   = [Fonts overrides];
+    NSString     *replacement = overrides[name] ?: overrides[everyFamily];
 
-    if (overrides[name] || all)
-    {
-        return %orig(all ? all : overrides[name], size);
-    }
-
-    return %orig;
+    return replacement ? %orig(replacement, size) : %orig;
 }
 %end

@@ -1,7 +1,10 @@
 #pragma once
 
+#include <map>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -43,4 +46,26 @@ nlohmann::json systemFontsFromFiles(const std::vector<std::string> &paths,
                                     const std::string              &source);
 nlohmann::json fontCatalog(const nlohmann::json &customFonts, const nlohmann::json &platformFonts);
 nlohmann::json fontNamesOf(const nlohmann::json &fonts);
+
+using FontOverrideTable = std::map<std::string, std::string>;
+
+struct FontOverridePlan {
+    std::vector<std::string> registrations;
+    std::vector<std::string> errors;
+    FontOverrideTable        table;
+};
+
+class FontOverrideRegistry
+{
+public:
+    FontOverridePlan plan(const nlohmann::json &targets);
+
+private:
+    std::set<std::string> registered_;
+    std::mutex            mutex_;
+};
+
+nlohmann::json             fontOverridePlanJSON(const FontOverridePlan &plan);
+std::optional<std::string> fontOverrideLookup(const FontOverrideTable &table,
+                                              const std::string       &name);
 }

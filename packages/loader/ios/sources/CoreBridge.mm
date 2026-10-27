@@ -232,13 +232,25 @@ nlohmann::json UnboundFontCatalog()
     return arrayFromJSON(UnboundAddonState().themes());
 }
 
-+ (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets
+static loader::FontOverrideRegistry &UnboundFontOverrides()
+{
+    static loader::FontOverrideRegistry registry;
+    return registry;
+}
+
++ (NSDictionary *)fontOverridePlan
 {
     nlohmann::json targets =
         loader::fontOverrideTargets(loader::preferences::fontOverrides(UnboundSettingsStore()),
                                     UnboundAddonState().fonts(), UnboundPlatformFonts());
-    id converted = objectFromJSON(targets);
+    id converted =
+        objectFromJSON(loader::fontOverridePlanJSON(UnboundFontOverrides().plan(targets)));
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
+}
+
++ (NSString *)everyFontFamily
+{
+    return @(loader::kAllFontFamilies);
 }
 
 + (NSArray<NSDictionary *> *)fonts
