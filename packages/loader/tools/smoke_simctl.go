@@ -54,6 +54,16 @@ func runIOSSmoke(args []string) error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	version, err := runSmokeCommand(ctx, time.Minute, "plutil", "-extract", "CFBundleShortVersionString", "raw", filepath.Join(*app, "Info.plist"))
+	if err != nil {
+		return err
+	}
+	if reason, err := unsupportedDiscordReason(options.repository, "ios", strings.TrimSpace(version)); err != nil || reason != "" {
+		if err != nil {
+			return err
+		}
+		return skipSmokeTest("ios", options, reason)
+	}
 	target := &iosSmokeTarget{app: *app, device: *device}
 	defer target.cleanup()
 	return runSmokeTest(ctx, "ios", options, target)

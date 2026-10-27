@@ -193,6 +193,39 @@ func smokeSettings(plugins []smokePlugin, debuggerAddress, bundleURL string) ([]
 	}, "", "\t")
 }
 
+func unsupportedDiscordReason(repository, platform, version string) (string, error) {
+	policy, err := loadCompatPolicy(repository)
+	if err != nil {
+		return "", err
+	}
+	minimum := policy.Minimum[platform]
+	order, err := compareDiscordVersions(version, minimum)
+	if err != nil {
+		return "", fmt.Errorf("read the Discord version of the build: %w", err)
+	}
+	if order >= 0 {
+		return "", nil
+	}
+	return fmt.Sprintf("Skipped: this build patches Discord %s, older than %s, the oldest %s version Unbound supports (compat-policy.json), so the loader is not expected to inject into it. Builds of a supported Discord, such as main pushes and releases, run the smoke test.", version, minimum, platform), nil
+}
+
+func skipSmokeTest(platform string, options *smokeOptions, reason string) error {
+	if err := os.MkdirAll(options.artifacts, 0o755); err != nil {
+		return err
+	}
+	title := map[string]string{"android": "Android", "ios": "iOS"}[platform]
+	report := fmt.Sprintf("## %s smoke test\n\n%s\n\n", title, reason)
+	fmt.Print(report)
+	_ = os.WriteFile(filepath.Join(options.artifacts, "report.md"), []byte(report), 0o644)
+	if options.summary != "" {
+		if file, err := os.OpenFile(options.summary, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644); err == nil {
+			defer file.Close()
+			_, _ = file.WriteString(report)
+		}
+	}
+	return nil
+}
+
 func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, target smokeTarget) error {
 	if err := os.MkdirAll(options.artifacts, 0o755); err != nil {
 		return err

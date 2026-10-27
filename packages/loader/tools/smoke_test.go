@@ -275,3 +275,32 @@ func TestSimulatorProcessListed(t *testing.T) {
 		t.Fatal("an unlisted pid is not running")
 	}
 }
+
+func TestSmokeTestsSkipUnsupportedDiscordBuilds(t *testing.T) {
+	repository := t.TempDir()
+	policy := filepath.Join(repository, "packages", "loader", "compat-policy.json")
+	if err := os.MkdirAll(filepath.Dir(policy), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(policy, []byte(`{"minimumDiscordVersion":{"android":"350.8","ios":"350.0"},"raiseReminderDays":30}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	reason, err := unsupportedDiscordReason(repository, "ios", "205.0")
+	if err != nil || !strings.Contains(reason, "Discord 205.0, older than 350.0") {
+		t.Fatalf("an unsupported build must be skipped with a reason, got %q, %v", reason, err)
+	}
+	for _, version := range []string{"350.0", "352.1"} {
+		if reason, err := unsupportedDiscordReason(repository, "ios", version); err != nil || reason != "" {
+			t.Fatalf("Discord %s is supported, got %q, %v", version, reason, err)
+		}
+	}
+	summary := filepath.Join(t.TempDir(), "summary.md")
+	options := &smokeOptions{artifacts: filepath.Join(t.TempDir(), "artifacts"), summary: summary}
+	if err := skipSmokeTest("ios", options, reason); err != nil {
+		t.Fatal(err)
+	}
+	written, err := os.ReadFile(summary)
+	if err != nil || !strings.HasPrefix(string(written), "## iOS smoke test\n\nSkipped: ") {
+		t.Fatalf("the skip must be explained in the job summary, got %q, %v", written, err)
+	}
+}
