@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 
+#include "LoaderBundleSignature.h"
 #include "LoaderSettings.h"
 
 namespace loader {
@@ -45,7 +46,7 @@ class BundleUpdater
 {
 public:
     BundleUpdater(std::string documents, UpdaterSettings settings, TextFetcher fetchText,
-                  FileDownloader download);
+                  FileDownloader download, std::string signingKey = compiledBundleSigningKey());
 
     std::string resolveBundlePath();
     std::string downloadBundle(const std::string                &preferredPath,
@@ -59,10 +60,12 @@ public:
 
 private:
     std::string bundlePath(const std::string &extension) const;
+    bool        isSignatureValid(const std::string &url, const std::string &candidatePath);
 
     std::string     documents_;
     UpdaterSettings settings_;
     TextFetcher     fetchText_;
     FileDownloader  download_;
+    std::string     signingKey_;
 };
 }

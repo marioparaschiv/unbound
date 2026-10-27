@@ -19,12 +19,15 @@ CORE_DIR := $(REPO_ROOT)/core
 VENDOR_DIR := $(REPO_ROOT)/vendor
 RESOURCES_DIR := $(REPO_ROOT)/bootstrap
 ATTESTATION_ENABLED := $(if $(filter 1,$(DEBUG)),0,1)
-COMMON_FLAGS = -fobjc-arc -DATTESTATION_ENABLED=$(ATTESTATION_ENABLED) -DUNBOUND_VERSION='"$(THEOS_PACKAGE_BASE_VERSION)"' -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_HASH='@"$(COMMIT_SHORT_HASH)"' -DCOMMIT_SUBJECT='@"$(COMMIT_SUBJECT)"' -DCOMMIT_BRANCH='@"$(COMMIT_BRANCH)"' -DBUILD_TIMESTAMP='@"$(BUILD_TIMESTAMP)"' -I$(THEOS_PROJECT_DIR)/headers -I$(CORE_DIR)/include -I$(VENDOR_DIR) -I$(VENDOR_DIR)/react
+BUNDLE_SIGNING_KEY_FILE ?= $(CORE_DIR)/keys/bundle-signing.pub
+BUNDLE_SIGNING_KEY := $(shell cat "$(BUNDLE_SIGNING_KEY_FILE)" 2>/dev/null | LC_ALL=C tr -cd 'A-Za-z0-9+/=')
+$(if $(filter 0,$(MAKELEVEL)),$(if $(BUNDLE_SIGNING_KEY),$(info Bundle signature verification: on, key from $(BUNDLE_SIGNING_KEY_FILE)),$(info Bundle signature verification: off, $(BUNDLE_SIGNING_KEY_FILE) does not exist)))
+COMMON_FLAGS = -fobjc-arc -DATTESTATION_ENABLED=$(ATTESTATION_ENABLED) -DUNBOUND_VERSION='"$(THEOS_PACKAGE_BASE_VERSION)"' -DUNBOUND_BUNDLE_SIGNING_KEY='"$(BUNDLE_SIGNING_KEY)"' -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_HASH='@"$(COMMIT_SHORT_HASH)"' -DCOMMIT_SUBJECT='@"$(COMMIT_SUBJECT)"' -DCOMMIT_BRANCH='@"$(COMMIT_BRANCH)"' -DBUILD_TIMESTAMP='@"$(BUILD_TIMESTAMP)"' -I$(THEOS_PROJECT_DIR)/headers -I$(CORE_DIR)/include -I$(VENDOR_DIR) -I$(VENDOR_DIR)/react
 LIBFFI_OUTPUT := $(THEOS_PROJECT_DIR)/.theos/libffi
 LIBFFI_ARCHIVE := $(LIBFFI_OUTPUT)/libffi.a
 LIBFFI_HEADERS := $(LIBFFI_OUTPUT)/include
 
-$(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp)
+$(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp) $(wildcard ../vendor/monocypher/*.c)
 $(TWEAK_NAME)_CFLAGS = $(COMMON_FLAGS)
 # _CCFLAGS (not _CXXFLAGS) is what Theos applies to C++/Objective-C++ compiles.
 $(TWEAK_NAME)_CCFLAGS = $(COMMON_FLAGS) -I$(LIBFFI_HEADERS) -std=c++20 -fno-cxx-modules
