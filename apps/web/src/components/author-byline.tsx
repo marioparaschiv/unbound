@@ -47,7 +47,10 @@ const MAX_AVATARS = 3;
 /** "by" followed by the authors' avatars in a pile, then their names. */
 function AuthorByline({ authors, linkProfiles = false, className, ...props }: AuthorBylineProps) {
 	return (
-		<span className={cn('inline-flex items-center gap-1.5 min-w-0', className)} {...props}>
+		<span
+			className={cn('inline-flex items-center gap-1.5 min-w-0 max-w-full', className)}
+			{...props}
+		>
 			by
 			<AvatarPile size={16} totalCount={authors.length} aria-hidden>
 				{authors.slice(0, MAX_AVATARS).map((author) => (
