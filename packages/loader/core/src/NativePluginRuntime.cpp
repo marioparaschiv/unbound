@@ -6,6 +6,7 @@
 #include <mutex>
 #include <thread>
 
+#include "LoaderAddonActivity.h"
 #include "LoaderBootstrap.h"
 #include "LoaderLog.h"
 #include "NativeOperationGate.h"
@@ -345,14 +346,16 @@ void executeMainSynchronously(std::function<void()> operation, std::chrono::mill
         NativeOperationGate     gate;
     };
 
-    auto state = std::make_shared<State>();
-    target->runOnMain([state, operation = std::move(operation)]() {
+    auto      state = std::make_shared<State>();
+    AddonSlot addon = currentAddon();
+    target->runOnMain([state, operation = std::move(operation), addon]() {
         if (!state->gate.start())
         {
             return;
         }
         try
         {
+            AddonScope scope(addon);
             operation();
         }
         catch (...)
@@ -420,6 +423,7 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
     std::string identifier = std::to_string(gNextInvocation.fetch_add(1));
     auto        cancelled  = std::make_shared<std::atomic_bool>(false);
     auto        gate       = std::make_shared<NativeOperationGate>();
+    AddonSlot   addon      = currentAddon();
 
     jsi::Object global       = runtime.global();
     jsi::Value  pendingValue = global.getProperty(runtime, kPendingInvocations);
@@ -431,8 +435,9 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
     jsi::Function executorFunction = makeFunction(
         runtime, "nativeMainExecutor", 2,
         [target, operation = std::move(operation), result = std::move(result), identifier,
-         cancelled, gate, generation](jsi::Runtime     &rt, const jsi::Value &,
-                                      const jsi::Value *callbacks, size_t count) -> jsi::Value {
+         cancelled, gate, generation,
+         addon](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *callbacks,
+                size_t count) -> jsi::Value {
             if (count < 2 || !callbacks[0].isObject() || !callbacks[1].isObject())
             {
                 throw NativeCodedError(
@@ -447,12 +452,14 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                 .getPropertyAsObject(rt, kPendingInvocations)
                 .setProperty(rt, identifier.c_str(), pair);
 
-            target->runOnMain([operation, result, identifier, cancelled, gate, generation]() {
+            target->runOnMain([operation, result, identifier, cancelled, gate, generation,
+                               addon]() {
                 if (cancelled->load() || !gate->start() || generation != gGenerations.generation())
                 {
                     return;
                 }
 
+                AddonScope                   scope(addon);
                 std::optional<NativeFailure> failure;
                 try
                 {
@@ -563,12 +570,14 @@ void executeRuntimeAsynchronously(std::function<void(jsi::Runtime &)> callback)
 
     jsi::Runtime *expected   = currentRuntime();
     uint64_t      generation = gGenerations.generation();
+    AddonSlot     addon      = currentAddon();
     target->runOnRuntime(
-        [callback = std::move(callback), expected, generation](jsi::Runtime &runtime) {
+        [callback = std::move(callback), expected, generation, addon](jsi::Runtime &runtime) {
             if (expected != &runtime || generation != gGenerations.generation())
             {
                 return;
             }
+            AddonScope scope(addon);
             try
             {
                 callback(runtime);
@@ -610,31 +619,33 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
         std::exception_ptr      failure;
     };
 
-    auto     state      = std::make_shared<State>();
-    uint64_t generation = gGenerations.generation();
-    target->runOnRuntime(
-        [state, callback = std::move(callback), expected, generation](jsi::Runtime &runtime) {
-            bool               completed = false;
-            std::exception_ptr failure;
-            if (!state->cancelled.load() && expected == &runtime &&
-                generation == gGenerations.generation())
+    auto      state      = std::make_shared<State>();
+    uint64_t  generation = gGenerations.generation();
+    AddonSlot addon      = currentAddon();
+    target->runOnRuntime([state, callback = std::move(callback), expected, generation,
+                          addon](jsi::Runtime &runtime) {
+        bool               completed = false;
+        std::exception_ptr failure;
+        if (!state->cancelled.load() && expected == &runtime &&
+            generation == gGenerations.generation())
+        {
+            try
             {
-                try
-                {
-                    callback(runtime);
-                    completed = true;
-                }
-                catch (...)
-                {
-                    failure = std::current_exception();
-                }
+                AddonScope scope(addon);
+                callback(runtime);
+                completed = true;
             }
-            std::lock_guard<std::mutex> lock(state->mutex);
-            state->completed = completed;
-            state->failure   = failure;
-            state->signaled  = true;
-            state->done.notify_all();
-        });
+            catch (...)
+            {
+                failure = std::current_exception();
+            }
+        }
+        std::lock_guard<std::mutex> lock(state->mutex);
+        state->completed = completed;
+        state->failure   = failure;
+        state->signaled  = true;
+        state->done.notify_all();
+    });
 
     bool mainThread = target->isMainThread();
     if (mainThread)

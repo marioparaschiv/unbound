@@ -22,6 +22,7 @@
 #import <vector>
 
 #import "CoreConversions.h"
+#import "LoaderAddonActivity.h"
 #import "Logger.h"
 #import "NativeAddressValidation.h"
 #import "NativeAssociationPolicy.h"
@@ -284,10 +285,11 @@ struct HookState {
         [NSMutableDictionary dictionary];
     __strong NSMutableDictionary<NSArray *, NSNumber *> *sizeHeightFloors =
         [NSMutableDictionary dictionary];
-    bool             cacheOnly = false;
-    bool             once      = false;
-    std::atomic_bool active{true};
-    std::atomic_bool afterOncePending{false};
+    bool              cacheOnly = false;
+    bool              once      = false;
+    loader::AddonSlot addon     = loader::kNoAddon;
+    std::atomic_bool  active{true};
+    std::atomic_bool  afterOncePending{false};
 };
 
 class HookTokenHost final : public HostObject
@@ -3632,6 +3634,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             continue;
         }
 
+        loader::AddonScope addonScope(state->addon);
         if (state->cacheOnly)
         {
             NSArray *key    = hookReturnCacheKey(dispatcher, arguments);
@@ -3738,7 +3741,8 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             continue;
         }
 
-        __strong id retainedObject = object;
+        loader::AddonScope addonScope(state->addon);
+        __strong id        retainedObject = object;
         executeRuntimeAsynchronously(
             [invocation, retainedObject, selector, state](Runtime &runtime) {
                 bool pending = state->afterOncePending.exchange(false);
@@ -4160,6 +4164,7 @@ static void dispatchVoidHook(id object, SEL selector)
                 continue;
             }
 
+            loader::AddonScope addonScope(state->addon);
             if (state->hasBefore)
             {
                 try
@@ -4242,7 +4247,8 @@ static void dispatchVoidHook(id object, SEL selector)
                 continue;
             }
 
-            __strong id retainedObject = object;
+            loader::AddonScope addonScope(state->addon);
+            __strong id        retainedObject = object;
             executeRuntimeAsynchronously([invocation, retainedObject, selector,
                                           state](Runtime &runtime) {
                 bool pending = state->afterOncePending.exchange(false);
@@ -4454,6 +4460,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     state->once              = once;
     state->instanceTarget    = instanceTarget;
     state->dispatcher        = dispatcher;
+    state->addon             = loader::currentAddon();
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
         dispatcher->hooks.push_back(state);

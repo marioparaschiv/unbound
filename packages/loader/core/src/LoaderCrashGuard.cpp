@@ -5,6 +5,7 @@
 #include <optional>
 #include <set>
 
+#include "LoaderCrashHandler.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
 
@@ -55,43 +56,73 @@ std::string AddonCrashGuard::startingPath() const
     return joinPath(directory_, kStartingFile);
 }
 
+std::string AddonCrashGuard::runningPath() const
+{
+    return joinPath(directory_, kRunningFile);
+}
+
 std::string AddonCrashGuard::crashesPath() const
 {
     return joinPath(directory_, kCrashesFile);
 }
 
+static std::optional<CrashRecord> takeMarker(const std::string &path, CrashPhase phase,
+                                             bool &unreadable)
+{
+    bool                       present = fileExists(path) && fileSize(path) > 0;
+    std::optional<CrashRecord> record  = readRecord(path);
+    removeFile(path);
+    if (record)
+    {
+        record->addon.phase = phase;
+    }
+    else if (present)
+    {
+        unreadable = true;
+    }
+    return record;
+}
+
+static std::string crashActivity(CrashPhase phase)
+{
+    return phase == CrashPhase::Running ? "running" : "starting";
+}
+
 std::vector<CrashedAddon> AddonCrashGuard::recoverFromPreviousLaunch() const
 {
-    bool                       interrupted = fileExists(startingPath());
-    std::optional<CrashRecord> starting    = readRecord(startingPath());
-    removeFile(startingPath());
+    bool                       unreadable = false;
+    std::optional<CrashRecord> starting =
+        takeMarker(startingPath(), CrashPhase::Starting, unreadable);
+    std::optional<CrashRecord> running = takeMarker(runningPath(), CrashPhase::Running, unreadable);
+    std::optional<CrashRecord> crashed = starting ? starting : running;
 
-    if (!starting)
+    if (!crashed)
     {
-        if (interrupted)
+        if (unreadable)
         {
             log(LogLevel::Warning, LOG_CATEGORY_PLUGINS,
-                "Ignoring an unreadable addon start marker from the previous launch.");
+                "Ignoring an unreadable addon crash marker from the previous launch.");
         }
         removeFile(crashesPath());
         return {};
     }
 
     std::optional<CrashRecord> previous = readRecord(crashesPath());
-    int crashes = previous && previous->addon.id == starting->addon.id ? previous->crashes + 1 : 1;
+    int crashes = previous && previous->addon.id == crashed->addon.id ? previous->crashes + 1 : 1;
 
     log(LogLevel::Warning, LOG_CATEGORY_PLUGINS,
-        "Discord exited while starting " + starting->addon.name + " (" + starting->addon.id +
-            "), crash " + std::to_string(crashes) + " of " + std::to_string(kCrashLimit) + ".");
+        "Discord exited while " + crashActivity(crashed->addon.phase) + " " + crashed->addon.name +
+            " (" + crashed->addon.id + "), crash " + std::to_string(crashes) + " of " +
+            std::to_string(kCrashLimit) + ".");
 
     if (crashes >= kCrashLimit)
     {
         removeFile(crashesPath());
-        log(LogLevel::Error, LOG_CATEGORY_PLUGINS, crashDisabledNotice(starting->addon));
-        return {starting->addon};
+        log(LogLevel::Error, LOG_CATEGORY_PLUGINS, crashDisabledNotice(crashed->addon));
+        return {crashed->addon};
     }
 
-    if (!writeTextFileAtomically(crashesPath(), recordJSON(starting->addon, crashes).dump()))
+    if (!writeTextFileAtomically(crashesPath(), recordJSON(crashed->addon, crashes).dump()))
     {
         log(LogLevel::Error, LOG_CATEGORY_PLUGINS, "Addon crash count could not be saved.");
     }
@@ -134,6 +165,17 @@ std::vector<CrashedAddon> crashDisabledAddons(const std::string &directory)
     return found->second;
 }
 
+bool armAddonCrashAttribution(const std::string &directory)
+{
+    if (directory.empty())
+    {
+        return false;
+    }
+    crashDisabledAddons(directory);
+    createDirectories(directory);
+    return installAddonCrashHandler(joinPath(directory, AddonCrashGuard::kRunningFile));
+}
+
 std::vector<CrashedAddon> takeUnannouncedCrashDisabledAddons(const std::string &directory)
 {
     static std::mutex            mutex;
@@ -150,7 +192,8 @@ std::vector<CrashedAddon> takeUnannouncedCrashDisabledAddons(const std::string &
 
 std::string crashDisabledNotice(const CrashedAddon &addon)
 {
-    return "Disabled " + addon.name + " because Discord crashed while starting it.";
+    return "Disabled " + addon.name + " because Discord crashed while " +
+           crashActivity(addon.phase) + " it.";
 }
 
 nlohmann::json crashedAddonsJSON(const std::vector<CrashedAddon> &addons)
@@ -158,7 +201,8 @@ nlohmann::json crashedAddonsJSON(const std::vector<CrashedAddon> &addons)
     nlohmann::json result = nlohmann::json::array();
     for (const CrashedAddon &addon : addons)
     {
-        result.push_back({{"id", addon.id}, {"name", addon.name}});
+        result.push_back(
+            {{"id", addon.id}, {"name", addon.name}, {"phase", crashActivity(addon.phase)}});
     }
     return result;
 }

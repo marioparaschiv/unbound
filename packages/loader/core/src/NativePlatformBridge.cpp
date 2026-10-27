@@ -2,6 +2,7 @@
 
 #include <mutex>
 
+#include "LoaderAddonActivity.h"
 #include "LoaderCrashGuard.h"
 #include "LoaderFiles.h"
 #include "LoaderJSI.h"
@@ -125,6 +126,35 @@ static std::string stringArgument(jsi::Runtime &runtime, const jsi::Value *args,
                                                    : std::string();
 }
 
+class ActivityCellBuffer final : public jsi::MutableBuffer
+{
+public:
+    explicit ActivityCellBuffer(uint32_t *cell) : cell_(cell) {}
+
+    size_t size() const override
+    {
+        return sizeof(*cell_);
+    }
+
+    uint8_t *data() override
+    {
+        return reinterpret_cast<uint8_t *>(cell_);
+    }
+
+private:
+    uint32_t *cell_;
+};
+
+static jsi::Value activityCell(jsi::Runtime &runtime)
+{
+    uint32_t *cell = claimActivityCell();
+    if (!cell)
+    {
+        return jsi::Value::undefined();
+    }
+    return jsi::ArrayBuffer(runtime, std::make_shared<ActivityCellBuffer>(cell));
+}
+
 static jsi::Object crashGuardObject(jsi::Runtime &runtime, const std::string &documents)
 {
     crashDisabledAddons(documents);
@@ -135,7 +165,7 @@ static jsi::Object crashGuardObject(jsi::Runtime &runtime, const std::string &do
         native::makeFunction(runtime, "begin", 2,
                              [documents](jsi::Runtime     &rt, const jsi::Value &,
                                          const jsi::Value *args, size_t count) -> jsi::Value {
-                                 crashDisabledAddons(documents);
+                                 armAddonCrashAttribution(documents);
                                  return jsi::Value(AddonCrashGuard(documents).beginStart(
                                      stringArgument(rt, args, count, 0),
                                      stringArgument(rt, args, count, 1)));
@@ -148,6 +178,22 @@ static jsi::Object crashGuardObject(jsi::Runtime &runtime, const std::string &do
                                  return jsi::Value(AddonCrashGuard(documents).finishStart(
                                      stringArgument(rt, args, count, 0)));
                              }));
+    guard.setProperty(
+        runtime, "register",
+        native::makeFunction(runtime, "register", 2,
+                             [documents](jsi::Runtime     &rt, const jsi::Value &,
+                                         const jsi::Value *args, size_t count) -> jsi::Value {
+                                 armAddonCrashAttribution(documents);
+                                 return jsi::Value(static_cast<double>(
+                                     registerAddonSlot(stringArgument(rt, args, count, 0),
+                                                       stringArgument(rt, args, count, 1))));
+                             }));
+    guard.setProperty(runtime, "activity",
+                      native::makeFunction(runtime, "activity", 0,
+                                           [](jsi::Runtime &rt, const jsi::Value &,
+                                              const jsi::Value *, size_t) -> jsi::Value {
+                                               return activityCell(rt);
+                                           }));
     guard.setProperty(
         runtime, "disabled",
         native::makeFunction(runtime, "disabled", 0,

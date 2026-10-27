@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "JniEnvironment.h"
+#include "LoaderAddonActivity.h"
 #include "NativeBoundedValue.h"
 #include "NativeEvaluations.h"
 #include "NativeFFI.h"
@@ -790,12 +791,17 @@ static jsi::Value javaSynchronously(jsi::Runtime &runtime, const JavaCallbacks &
     return parseJavaResult(runtime, callJavaString(callbacks, method, arguments));
 }
 
-static std::mutex                                                      gHookMutex;
-static std::unordered_map<std::string, std::shared_ptr<jsi::Function>> gHookListeners;
+struct HookListener {
+    std::shared_ptr<jsi::Function> callback;
+    loader::AddonSlot              addon = loader::kNoAddon;
+};
+
+static std::mutex                                    gHookMutex;
+static std::unordered_map<std::string, HookListener> gHookListeners;
 
 void dispatchHookEvent(const std::string &token, const std::string &payload)
 {
-    std::shared_ptr<jsi::Function> listener;
+    HookListener listener;
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
         auto                        found = gHookListeners.find(token);
@@ -806,15 +812,17 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
         listener = found->second;
     }
 
-    loader::native::executeRuntimeAsynchronously([listener, payload](jsi::Runtime &runtime) {
-        nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
-        if (parsed.is_discarded())
-        {
-            return;
-        }
+    loader::AddonScope scope(listener.addon);
+    loader::native::executeRuntimeAsynchronously(
+        [listener = listener.callback, payload](jsi::Runtime &runtime) {
+            nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
+            if (parsed.is_discarded())
+            {
+                return;
+            }
 
-        listener->call(runtime, loader::toJSIValue(runtime, parsed));
-    });
+            listener->call(runtime, loader::toJSIValue(runtime, parsed));
+        });
 }
 
 static void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
@@ -825,7 +833,9 @@ static void rememberHookListener(jsi::Runtime &runtime, const std::string &token
         return;
     }
 
-    auto stored = std::make_shared<jsi::Function>(listener.asObject(runtime).asFunction(runtime));
+    HookListener stored{
+        std::make_shared<jsi::Function>(listener.asObject(runtime).asFunction(runtime)),
+        loader::currentAddon()};
     std::lock_guard<std::mutex> lock(gHookMutex);
     gHookListeners[token] = std::move(stored);
 }
@@ -842,7 +852,7 @@ static void retireHookListeners()
     std::lock_guard<std::mutex> lock(gHookMutex);
     for (auto &entry : gHookListeners)
     {
-        retired->push_back(std::move(entry.second));
+        retired->push_back(std::move(entry.second.callback));
     }
     gHookListeners.clear();
 }

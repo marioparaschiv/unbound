@@ -20,6 +20,19 @@ static void crashWhileStarting(const loader::AddonCrashGuard &guard, const std::
     assert(guard.beginStart(id, "Plugin " + id));
 }
 
+static void crashWhileRunning(const std::filesystem::path &root, const std::string &id)
+{
+    nlohmann::json record = {{"id", id}, {"name", "Plugin " + id}};
+    assert(loader::writeTextFileAtomically((root / loader::AddonCrashGuard::kRunningFile).string(),
+                                           record.dump()));
+}
+
+static void cleanRunningLaunch(const std::filesystem::path &root)
+{
+    assert(loader::writeTextFileAtomically((root / loader::AddonCrashGuard::kRunningFile).string(),
+                                           ""));
+}
+
 static bool markerExists(const std::filesystem::path &root)
 {
     return loader::fileExists((root / loader::AddonCrashGuard::kStartingFile).string());
@@ -119,6 +132,62 @@ static void verdictIsComputedOncePerProcess(const std::filesystem::path &root)
     assert(json[0]["name"] == "Plugin themes:t");
 }
 
+static void secondCrashWhileRunningDisables(const std::filesystem::path &root)
+{
+    loader::AddonCrashGuard guard(root.string());
+    crashWhileRunning(root, "plugins:hooky");
+    assert(guard.recoverFromPreviousLaunch().empty());
+    assert(!std::filesystem::exists(root / loader::AddonCrashGuard::kRunningFile));
+
+    crashWhileRunning(root, "plugins:hooky");
+    std::vector<loader::CrashedAddon> disabled = guard.recoverFromPreviousLaunch();
+    assert(disabled.size() == 1 && disabled[0].id == "plugins:hooky");
+    assert(disabled[0].phase == loader::CrashPhase::Running);
+    assert(loader::crashDisabledNotice(disabled[0]) ==
+           "Disabled Plugin plugins:hooky because Discord crashed while running it.");
+
+    nlohmann::json json = loader::crashedAddonsJSON(disabled);
+    assert(json[0]["phase"] == "running");
+}
+
+static void emptyRunningMarkerIsACleanLaunch(const std::filesystem::path &root)
+{
+    loader::AddonCrashGuard guard(root.string());
+    crashWhileRunning(root, "plugins:once");
+    assert(guard.recoverFromPreviousLaunch().empty());
+    cleanRunningLaunch(root);
+    assert(guard.recoverFromPreviousLaunch().empty());
+    crashWhileRunning(root, "plugins:once");
+    assert(guard.recoverFromPreviousLaunch().empty());
+}
+
+static void startAndRunCrashesCountTogether(const std::filesystem::path &root)
+{
+    loader::AddonCrashGuard guard(root.string());
+    crashWhileStarting(guard, "plugins:both");
+    assert(guard.recoverFromPreviousLaunch().empty());
+
+    crashWhileRunning(root, "plugins:both");
+    std::vector<loader::CrashedAddon> disabled = guard.recoverFromPreviousLaunch();
+    assert(disabled.size() == 1 && disabled[0].phase == loader::CrashPhase::Running);
+}
+
+static void startingMarkerTakesPrecedence(const std::filesystem::path &root)
+{
+    loader::AddonCrashGuard guard(root.string());
+    crashWhileStarting(guard, "plugins:starting");
+    crashWhileRunning(root, "plugins:other");
+    assert(guard.recoverFromPreviousLaunch().empty());
+    assert(!std::filesystem::exists(root / loader::AddonCrashGuard::kRunningFile));
+
+    crashWhileStarting(guard, "plugins:starting");
+    crashWhileRunning(root, "plugins:other");
+    std::vector<loader::CrashedAddon> disabled = guard.recoverFromPreviousLaunch();
+    assert(disabled.size() == 1 && disabled[0].id == "plugins:starting");
+    assert(disabled[0].phase == loader::CrashPhase::Starting);
+    assert(loader::crashedAddonsJSON(disabled)[0]["phase"] == "starting");
+}
+
 int main()
 {
     const auto root = makeTemporaryDirectory();
@@ -134,6 +203,10 @@ int main()
     run("different", differentAddonResetsCount);
     run("unreadable", unreadableMarkerIsIgnored);
     run("once", verdictIsComputedOncePerProcess);
+    run("running", secondCrashWhileRunningDisables);
+    run("running-clean", emptyRunningMarkerIsACleanLaunch);
+    run("start-and-run", startAndRunCrashesCountTogether);
+    run("precedence", startingMarkerTakesPrecedence);
 
     std::filesystem::remove_all(root);
     return 0;
