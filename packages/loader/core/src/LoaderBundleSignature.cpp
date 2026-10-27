@@ -6,6 +6,8 @@
 #include <monocypher/monocypher-ed25519.h>
 #include <vector>
 
+#include "LoaderCrypto.h"
+
 #ifndef UNBOUND_BUNDLE_SIGNING_KEY
 #define UNBOUND_BUNDLE_SIGNING_KEY ""
 #endif
@@ -19,9 +21,7 @@
 #endif
 
 namespace loader {
-static constexpr size_t kPublicKeySize = 32;
-static constexpr size_t kSignatureSize = 64;
-static constexpr size_t kSha512Size    = 64;
+static constexpr size_t kSha512Size = 64;
 
 static_assert(UNBOUND_PR_NUMBER >= 0 && UNBOUND_PR_NUMBER <= UINT32_MAX,
               "UNBOUND_PR_NUMBER must be a pull request number");
@@ -139,19 +139,9 @@ std::string pullRequestSigningContext(uint32_t pullRequestNumber)
 
 std::string sha512Hex(std::string_view data)
 {
-    static constexpr char kDigits[] = "0123456789abcdef";
-
     std::array<uint8_t, kSha512Size> hash{};
     crypto_sha512(hash.data(), reinterpret_cast<const uint8_t *>(data.data()), data.size());
-
-    std::string hex;
-    hex.reserve(hash.size() * 2);
-    for (uint8_t byte : hash)
-    {
-        hex.push_back(kDigits[byte >> 4]);
-        hex.push_back(kDigits[byte & 0x0f]);
-    }
-    return hex;
+    return crypto::hex(std::string_view(reinterpret_cast<const char *>(hash.data()), hash.size()));
 }
 
 bool verifyBundleSignature(const std::string &bundle, const std::string &signatureBase64,
@@ -159,16 +149,7 @@ bool verifyBundleSignature(const std::string &bundle, const std::string &signatu
 {
     std::optional<std::string> publicKey = decodeBase64(publicKeyBase64);
     std::optional<std::string> signature = decodeBase64(signatureBase64);
-    if (!publicKey || publicKey->size() != kPublicKeySize || !signature ||
-        signature->size() != kSignatureSize)
-    {
-        return false;
-    }
-
-    return crypto_ed25519_check(reinterpret_cast<const uint8_t *>(signature->data()),
-                                reinterpret_cast<const uint8_t *>(publicKey->data()),
-                                reinterpret_cast<const uint8_t *>(bundle.data()),
-                                bundle.size()) == 0;
+    return publicKey && signature && crypto::verifyEd25519(bundle, *signature, *publicKey);
 }
 
 TrustedSigner verifyTrustedSignature(const std::string &message, const std::string &signatureBase64,

@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <utility>
+
+#include "LoaderCrypto.h"
 
 namespace loader::browserlogin {
 static constexpr std::string_view kBase64Alphabet =
@@ -47,20 +50,6 @@ std::string paddedBase64(std::string_view base64URL)
     std::replace(base64.begin(), base64.end(), '_', '/');
     base64.append((4 - base64.size() % 4) % 4, '=');
     return base64;
-}
-
-bool constantTimeEqual(std::string_view left, std::string_view right)
-{
-    if (left.size() != right.size())
-    {
-        return false;
-    }
-    uint8_t difference = 0;
-    for (size_t index = 0; index < left.size(); index++)
-    {
-        difference |= static_cast<uint8_t>(left[index]) ^ static_cast<uint8_t>(right[index]);
-    }
-    return difference == 0;
 }
 
 std::string loginURL(const std::string &state, const std::string &key)
@@ -112,6 +101,40 @@ std::string authenticatedData(const std::string &state, std::string_view iv,
     data.append(iv);
     data.append(ciphertext);
     return data;
+}
+
+std::optional<Handoff> createHandoff()
+{
+    std::optional<std::string> state  = crypto::randomBytes(kStateBytes);
+    std::optional<std::string> secret = crypto::randomBytes(kSecretBytes);
+    if (!state || !secret)
+    {
+        return std::nullopt;
+    }
+    return Handoff{base64URLEncode(*state), *secret, base64URLEncode(*secret)};
+}
+
+OpenedCallback openCallback(std::string_view secret, const std::string &state, std::string_view iv,
+                            std::string_view ciphertext, std::string_view mac)
+{
+    if (secret.size() != kSecretBytes)
+    {
+        return {OpenStatus::Unverified, {}};
+    }
+    const std::string_view encryptionKey = secret.substr(0, kKeyBytes);
+    const std::string_view signingKey    = secret.substr(kKeyBytes, kKeyBytes);
+    const std::string      expectedMAC =
+        crypto::hmacSHA256(signingKey, authenticatedData(state, iv, ciphertext));
+    if (!crypto::constantTimeEqual(expectedMAC, mac))
+    {
+        return {OpenStatus::Unverified, {}};
+    }
+    std::optional<std::string> token = crypto::aes256CBCDecrypt(encryptionKey, iv, ciphertext);
+    if (!token)
+    {
+        return {OpenStatus::Unreadable, {}};
+    }
+    return {OpenStatus::Opened, std::move(*token)};
 }
 
 bool PendingLogin::submit(const std::string &token)

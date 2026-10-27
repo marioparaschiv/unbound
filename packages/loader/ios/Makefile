@@ -29,12 +29,15 @@ PR_NUMBER_NON_DIGITS := $(subst 0,,$(subst 1,,$(subst 2,,$(subst 3,,$(subst 4,,$
 $(if $(or $(PR_NUMBER_NON_DIGITS),$(filter-out 1,$(words $(PR_NUMBER))),$(filter-out 0,$(filter 0%,$(PR_NUMBER)))),$(error UNBOUND_PR_NUMBER must be a pull request number, not "$(UNBOUND_PR_NUMBER)"))
 PR_BUNDLE_SIGNING_KEY := $(if $(filter-out 0,$(PR_NUMBER)),$(shell cat "$(PR_BUNDLE_SIGNING_KEY_FILE)" 2>/dev/null | LC_ALL=C tr -cd 'A-Za-z0-9+/='))
 $(if $(filter-out 0,$(PR_NUMBER)),$(if $(PR_BUNDLE_SIGNING_KEY),$(if $(filter 0,$(MAKELEVEL)),$(info Pull request build #$(PR_NUMBER): also trusts $(PR_BUNDLE_SIGNING_KEY_FILE))),$(error A pull request build needs $(PR_BUNDLE_SIGNING_KEY_FILE))))
-COMMON_FLAGS = -fobjc-arc -DATTESTATION_ENABLED=$(ATTESTATION_ENABLED) -DUNBOUND_VERSION='"$(THEOS_PACKAGE_BASE_VERSION)"' -DUNBOUND_BUNDLE_SIGNING_KEY='"$(BUNDLE_SIGNING_KEY)"' -DUNBOUND_PR_NUMBER=$(PR_NUMBER) -DUNBOUND_PR_BUNDLE_SIGNING_KEY='"$(PR_BUNDLE_SIGNING_KEY)"' -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_HASH='@"$(COMMIT_SHORT_HASH)"' -DCOMMIT_SUBJECT='@"$(COMMIT_SUBJECT)"' -DCOMMIT_BRANCH='@"$(COMMIT_BRANCH)"' -DBUILD_TIMESTAMP='@"$(BUILD_TIMESTAMP)"' -I$(THEOS_PROJECT_DIR)/headers -I$(CORE_DIR)/include -I$(VENDOR_DIR) -I$(VENDOR_DIR)/react
+COMMON_FLAGS = -fobjc-arc -DATTESTATION_ENABLED=$(ATTESTATION_ENABLED) -DUNBOUND_VERSION='"$(THEOS_PACKAGE_BASE_VERSION)"' -DUNBOUND_BUNDLE_SIGNING_KEY='"$(BUNDLE_SIGNING_KEY)"' -DUNBOUND_PR_NUMBER=$(PR_NUMBER) -DUNBOUND_PR_BUNDLE_SIGNING_KEY='"$(PR_BUNDLE_SIGNING_KEY)"' -DCOMMIT_HASH='@"$(COMMIT_HASH)"' -DCOMMIT_SHORT_HASH='@"$(COMMIT_SHORT_HASH)"' -DCOMMIT_SUBJECT='@"$(COMMIT_SUBJECT)"' -DCOMMIT_BRANCH='@"$(COMMIT_BRANCH)"' -DBUILD_TIMESTAMP='@"$(BUILD_TIMESTAMP)"' -I$(THEOS_PROJECT_DIR)/headers -I$(CORE_DIR)/include -I$(VENDOR_DIR) -I$(VENDOR_DIR)/react -I$(VENDOR_DIR)/bearssl/inc
 LIBFFI_OUTPUT := $(THEOS_PROJECT_DIR)/.theos/libffi
 LIBFFI_ARCHIVE := $(LIBFFI_OUTPUT)/libffi.a
 LIBFFI_HEADERS := $(LIBFFI_OUTPUT)/include
 
-$(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp) $(wildcard ../vendor/monocypher/*.c)
+BEARSSL_FILES := $(shell find ../vendor/bearssl/src -name "*.c")
+$(foreach file,$(BEARSSL_FILES),$(eval $(file)_CFLAGS = -I$(VENDOR_DIR)/bearssl/src))
+
+$(TWEAK_NAME)_FILES = $(shell find sources -name "*.x*" -o -name "*.m*") $(wildcard ../core/src/*.cpp) $(wildcard ../core/src/ffi/*.cpp) $(wildcard ../vendor/monocypher/*.c) $(BEARSSL_FILES)
 $(TWEAK_NAME)_CFLAGS = $(COMMON_FLAGS)
 # _CCFLAGS (not _CXXFLAGS) is what Theos applies to C++/Objective-C++ compiles.
 $(TWEAK_NAME)_CCFLAGS = $(COMMON_FLAGS) -I$(LIBFFI_HEADERS) -std=c++20 -fno-cxx-modules
