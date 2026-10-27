@@ -7,6 +7,8 @@ on:
             - 'packages/loader/**'
             - '.github/workflows/loader-*.yml'
             - '.github/actions/**'
+            - 'packages/plugins/**'
+            - 'packages/plugins-shared/**'
             - '.gitmodules'
             - 'packages/types/typings/native.ts'
 

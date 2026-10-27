@@ -38,14 +38,16 @@ type workflowStep struct {
 }
 
 type workflowJob struct {
-	Needs          workflowNeeds     `yaml:"needs"`
-	If             string            `yaml:"if"`
-	Uses           string            `yaml:"uses"`
-	RunsOn         string            `yaml:"runs-on"`
-	TimeoutMinutes int               `yaml:"timeout-minutes"`
-	With           map[string]string `yaml:"with"`
-	Outputs        map[string]string `yaml:"outputs"`
-	Steps          []workflowStep    `yaml:"steps"`
+	Name            string            `yaml:"name"`
+	ContinueOnError bool              `yaml:"continue-on-error"`
+	Needs           workflowNeeds     `yaml:"needs"`
+	If              string            `yaml:"if"`
+	Uses            string            `yaml:"uses"`
+	RunsOn          string            `yaml:"runs-on"`
+	TimeoutMinutes  int               `yaml:"timeout-minutes"`
+	With            map[string]string `yaml:"with"`
+	Outputs         map[string]string `yaml:"outputs"`
+	Steps           []workflowStep    `yaml:"steps"`
 }
 
 type parsedWorkflow struct {
@@ -407,7 +409,8 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 }
 
 func TestParsedLoaderArtifactsExpireOnlyOnPullRequests(t *testing.T) {
-	intermediates := map[string]bool{"discord-source-ipa": true, "source ipa": true}
+	intermediates := map[string]bool{"discord-source-ipa": true, "source ipa": true, "patched discord emulator split": true}
+	diagnostics := map[string]bool{"android smoke test": true, "ios smoke test": true}
 	uploaded := map[string]string{}
 	for _, name := range []string{"loader-android.yml", "loader-build.yml", "loader-ios.yml"} {
 		for jobName, job := range loadWorkflow(t, name).Jobs {
@@ -417,6 +420,12 @@ func TestParsedLoaderArtifactsExpireOnlyOnPullRequests(t *testing.T) {
 				}
 				artifact, retention := step.With["name"], step.With["retention-days"]
 				uploaded[artifact] = retention
+				if diagnostics[artifact] {
+					if retention != "14" || step.If != "always()" {
+						t.Errorf("%s %s must keep the %s logs of every run for 14 days, got %q if %q", name, jobName, artifact, retention, step.If)
+					}
+					continue
+				}
 				if intermediates[artifact] {
 					if retention != "1" {
 						t.Errorf("%s %s keeps the decrypted %s for %q days, only its own run needs it", name, jobName, artifact, retention)
@@ -478,6 +487,88 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 	module := loadWorkflow(t, "loader-android.yml").job(t, "build-module")
 	if upload := module.step(t, "Upload native symbols"); upload.With["name"] != "android symbols" || upload.With["if-no-files-found"] != "error" {
 		t.Fatalf("the module build must upload its native symbols, got %+v", upload.With)
+	}
+}
+
+func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
+	android := loadWorkflow(t, "loader-android.yml")
+	patch := android.job(t, "patch-discord")
+	if !strings.Contains(patch.step(t, "Download Discord").Run, "config.x86_64") || !strings.Contains(patch.step(t, "Patch Discord").Run, "mv patched/config.x86_64*.apk emulator/") {
+		t.Fatal("the emulator split must be patched with the release package but kept out of it")
+	}
+	smoke := android.job(t, "smoke")
+	requireNeeds(t, "smoke", smoke, "patch-discord")
+	if smoke.If != "" || smoke.ContinueOnError {
+		t.Fatalf("the Android smoke test must run and fail the build every time, runs if %q", smoke.If)
+	}
+	runner := smoke.stepUsing(t, "reactivecircus/android-emulator-runner@")
+	if !regexp.MustCompile(`@[0-9a-f]{40}$`).MatchString(runner.Uses) {
+		t.Fatalf("the emulator runner must be pinned by SHA, uses %q", runner.Uses)
+	}
+	if runner.With["target"] != "google_apis" || runner.With["arch"] != "x86_64" || !strings.HasPrefix(runner.With["script"], "go run ./tools smoke android --apks smoke/apks") {
+		t.Fatalf("the smoke test must run on a rootable x86_64 emulator, got %+v", runner.With)
+	}
+	if !strings.Contains(smoke.step(t, "Enable KVM").Run, "udevadm trigger --name-match=kvm") {
+		t.Fatal("the emulator needs KVM")
+	}
+	for _, name := range []string{"Download patched Discord", "Download the emulator split"} {
+		if !strings.HasPrefix(smoke.step(t, name).Uses, "actions/download-artifact@") {
+			t.Fatalf("%q must download the build's own patched Discord", name)
+		}
+	}
+	if smoke.step(t, "Download patched Discord").With["name"] != "patched discord" || smoke.step(t, "Download the emulator split").With["name"] != "patched discord emulator split" {
+		t.Fatal("the smoke test must install the patched Discord this run built")
+	}
+}
+
+func TestParsedIOSSmokeTestGatesTheIOSBuild(t *testing.T) {
+	ios := loadWorkflow(t, "loader-ios.yml")
+	smoke := ios.job(t, "smoke-simulator")
+	requireNeeds(t, "smoke-simulator", smoke, "build-simulator")
+	if smoke.If != ios.job(t, "build-simulator").If || smoke.ContinueOnError {
+		t.Fatalf("the iOS smoke test must run whenever the simulator is built, runs if %q", smoke.If)
+	}
+	if smoke.step(t, "Download the simulator build").With["name"] != "ios-simulator" {
+		t.Fatal("the smoke test must install this run's simulator build")
+	}
+	if run := smoke.step(t, "Run the smoke test").Run; !strings.HasPrefix(run, `go run ./tools smoke ios --app "$APP_PATH"`) {
+		t.Fatalf("unexpected smoke command %q", run)
+	}
+}
+
+func TestParsedSmokeTestsGateReleasesAndPullRequests(t *testing.T) {
+	build := loadWorkflow(t, "loader-build.yml")
+	for name, workflow := range map[string]string{"android": "./.github/workflows/loader-android.yml", "ios": "./.github/workflows/loader-ios.yml"} {
+		if build.job(t, name).Uses != workflow {
+			t.Fatalf("the %s build must run %s, which holds its smoke test", name, workflow)
+		}
+	}
+	for _, name := range []string{"release", "android-prerelease"} {
+		if !strings.Contains(build.job(t, name).If, "needs.android.result == 'success'") {
+			t.Fatalf("%s must wait for the Android build and its smoke test", name)
+		}
+	}
+	if !strings.Contains(build.job(t, "release").If, "needs.ios.result == 'success'") {
+		t.Fatal("a release must wait for the iOS build and its smoke test")
+	}
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "loader-ci.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var workflow struct {
+		On struct {
+			PullRequest struct {
+				Paths []string `yaml:"paths"`
+			} `yaml:"pull_request"`
+		} `yaml:"on"`
+	}
+	if err := yaml.Unmarshal(data, &workflow); err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{"packages/loader/**", "packages/plugins/**", "packages/plugins-shared/**"} {
+		if !slices.Contains(workflow.On.PullRequest.Paths, path) {
+			t.Fatalf("pull requests touching %s must run the smoke tests, paths are %v", path, workflow.On.PullRequest.Paths)
+		}
 	}
 }
 
