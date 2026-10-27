@@ -286,6 +286,12 @@ nlohmann::json UnboundFontCatalog()
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
 }
 
++ (NSArray *)toolboxArray:(NSString *)action argument:(NSString *)argument
+{
+    return arrayFromJSON(nlohmann::json::parse(toStdString([self toolbox:action argument:argument]),
+                                               nullptr, false));
+}
+
 + (NSDictionary *)toolboxMenu:(NSDictionary *)options
 {
     return [self toolboxObject:@"menu" argument:@(jsonFromObject(options).dump().c_str())];

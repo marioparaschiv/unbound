@@ -4,6 +4,7 @@
 #import "CoreConversions.h"
 #import "DevOverlay.h"
 #include "LoaderToolbox.h"
+#include "LoaderToolboxGestures.h"
 #import "RecoveryQuickAction.h"
 
 using unbound::ios::jsonFromObject;
@@ -28,9 +29,8 @@ static loader::toolbox::MenuStep menuStep(NSDictionary *item, BOOL confirmed)
 
 @end
 
-static NSTimeInterval shakeStartTime      = 0;
-static BOOL           isShaking           = NO;
-static NSHashTable   *windowsWithGestures = nil;
+static loader::toolbox::ShakeMotion shakeMotion;
+static NSHashTable                 *windowsWithGestures = nil;
 
 static void addSettingsGestureToWindow(UIWindow *window)
 {
@@ -98,28 +98,20 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
 {
     if (motion == UIEventSubtypeMotionShake)
     {
-        isShaking      = YES;
-        shakeStartTime = [[NSDate date] timeIntervalSince1970];
+        shakeMotion.began([[NSDate date] timeIntervalSince1970]);
     }
     %orig;
 }
 
 - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event
 {
-    if (motion == UIEventSubtypeMotionShake && isShaking)
+    if (motion == UIEventSubtypeMotionShake &&
+        shakeMotion.ended([[NSDate date] timeIntervalSince1970], [] {
+            return toolboxGestureEnabled(kShakeGesture);
+        }) == loader::toolbox::GestureAction::Open)
     {
-        if (toolboxGestureEnabled(kShakeGesture))
-        {
-            NSTimeInterval currentTime   = [[NSDate date] timeIntervalSince1970];
-            NSTimeInterval shakeDuration = currentTime - shakeStartTime;
-
-            if (loader::toolbox::isShakeGesture(shakeDuration))
-            {
-                triggerHapticFeedback();
-                dispatch_async(dispatch_get_main_queue(), ^{ showToolboxSheet(); });
-            }
-        }
-        isShaking = NO;
+        triggerHapticFeedback();
+        dispatch_async(dispatch_get_main_queue(), ^{ showToolboxSheet(); });
     }
     %orig;
 }

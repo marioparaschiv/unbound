@@ -135,9 +135,12 @@ bool                     factoryReset(const std::string &documents);
 void deleteBundle(SettingsStore &settings, BundleUpdater &updater, const std::string &documents);
 bool useCustomBundle(SettingsStore &settings, const std::string &url);
 bool toggleRecovery(SettingsStore &settings);
-RecoveryToggle toggleRecoveryFromShortcut(SettingsStore &settings, bool bundleReady);
-bool           refetchBundle(BundleUpdater &updater, const std::optional<std::string> &updateURL,
-                             uint32_t bytecodeVersion);
+RecoveryToggle                toggleRecoveryFromShortcut(SettingsStore &settings, bool bundleReady);
+std::vector<size_t>           shortcutsAfterRecovery(const std::vector<std::string> &types);
+std::optional<RecoveryToggle> activateShortcut(SettingsStore &settings, bool bundleReady,
+                                               const std::string &type);
+bool refetchBundle(BundleUpdater &updater, const std::optional<std::string> &updateURL,
+                   uint32_t bytecodeVersion);
 std::vector<MenuSection> menu(const SettingsStore &settings, const MenuOptions &options);
 MenuOptions              menuOptions(const std::string &json);
 nlohmann::json           menuJSON(const SettingsStore &settings, const MenuOptions &options);

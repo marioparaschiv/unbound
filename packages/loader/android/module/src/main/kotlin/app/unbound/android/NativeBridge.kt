@@ -62,6 +62,10 @@ object NativeBridge {
     fun preferenceEnabled(action: String, argument: String? = null): Boolean =
         nativePreference(action, argument) == "true"
 
+    external fun nativeShakeSample(x: Float, y: Float, z: Float, milliseconds: Long): Boolean
+
+    external fun nativeThreeFingerEvent(event: String, pointers: Int): String
+
     external fun nativeParseColor(value: String): Long
 
     fun parseColor(value: String): Int? = nativeParseColor(value).takeIf { it >= 0 }?.toInt()

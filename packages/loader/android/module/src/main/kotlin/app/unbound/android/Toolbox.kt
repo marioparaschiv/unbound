@@ -30,21 +30,20 @@ import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
 import org.json.JSONArray
 import org.json.JSONObject
-import kotlin.math.sqrt
+import java.lang.ref.WeakReference
 
 object Toolbox {
-    private const val SHAKE = "shake"
-    private const val THREE_FINGER = "three-finger"
-    private const val SHAKE_GRAVITY = 2.6f
-    private const val SHAKE_WINDOW_MS = 900L
-    private const val SHAKE_COOLDOWN_MS = 1_500L
     private val MENU_OPTIONS = JSONObject().put("copyAppFolderPath", true).toString()
     private val holdMs by lazy { NativeBridge.nativeToolbox("hold-milliseconds", null)?.toLongOrNull() ?: 0L }
 
     private val main = Handler(Looper.getMainLooper())
-    private var pressRunnable: Runnable? = null
-    private var shakeStart = 0L
-    private var lastShake = 0L
+    private var holdActivity: WeakReference<Activity>? = null
+    private val holdRunnable = Runnable {
+        if (NativeBridge.nativeThreeFingerEvent("hold-elapsed", 0) == "open") {
+            holdActivity?.get()?.let(::confirmHaptic)
+            show()
+        }
+    }
     private var shown: AlertDialog? = null
     private var sensorListener: SensorEventListener? = null
 
@@ -94,43 +93,28 @@ object Toolbox {
     }
 
     private fun trackPress(activity: Activity, event: MotionEvent) {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_POINTER_DOWN -> if (event.pointerCount == 3 && enabled(THREE_FINGER)) {
-                cancelPress()
-                val runnable = Runnable {
-                    pressRunnable = null
-                    confirmHaptic(activity)
-                    show()
-                }
-                pressRunnable = runnable
-                main.postDelayed(runnable, holdMs)
+        val gesture = when (event.actionMasked) {
+            MotionEvent.ACTION_POINTER_DOWN -> NativeBridge.nativeThreeFingerEvent("pointer-down", event.pointerCount)
+
+            MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                NativeBridge.nativeThreeFingerEvent("released", event.pointerCount)
+
+            else -> return
+        }
+        when (gesture) {
+            "start-hold" -> {
+                holdActivity = WeakReference(activity)
+                main.removeCallbacks(holdRunnable)
+                main.postDelayed(holdRunnable, holdMs)
             }
 
-            MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> cancelPress()
+            "cancel-hold" -> main.removeCallbacks(holdRunnable)
         }
-    }
-
-    private fun cancelPress() {
-        pressRunnable?.let(main::removeCallbacks)
-        pressRunnable = null
     }
 
     private fun trackShake(event: SensorEvent) {
-        if (!enabled(SHAKE)) return
+        if (!NativeBridge.nativeShakeSample(event.values[0], event.values[1], event.values[2], System.currentTimeMillis())) return
 
-        val (x, y, z) = Triple(event.values[0], event.values[1], event.values[2])
-        val force = sqrt(x * x + y * y + z * z) / SensorManager.GRAVITY_EARTH
-        val now = System.currentTimeMillis()
-
-        if (force < SHAKE_GRAVITY || now - lastShake < SHAKE_COOLDOWN_MS) return
-
-        if (shakeStart == 0L || now - shakeStart > SHAKE_WINDOW_MS) {
-            shakeStart = now
-            return
-        }
-
-        shakeStart = 0L
-        lastShake = now
         ActivityTracker.currentActivity()?.let(::confirmHaptic)
         show()
     }

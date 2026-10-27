@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument;
 + (NSDictionary *)toolboxObject:(NSString *)action argument:(NSString *)argument;
++ (NSArray *)toolboxArray:(NSString *)action argument:(NSString *)argument;
 + (NSDictionary *)toolboxMenu:(NSDictionary *)options;
 + (NSTimeInterval)toolboxHoldDuration;
 + (NSString *)preference:(NSString *)action argument:(NSString *)argument;

@@ -1,5 +1,6 @@
 #include <android/log.h>
 #include <jni.h>
+#include <mutex>
 
 #include "AndroidFileWatcher.h"
 #include "AndroidHotReload.h"
@@ -13,6 +14,7 @@
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
 #include "LoaderPreload.h"
+#include "LoaderToolboxGestures.h"
 #include "NativePluginBridge.h"
 
 using namespace unbound::android;
@@ -189,6 +191,60 @@ static jstring nativePreference(JNIEnv *env, jclass, jstring action, jstring arg
     return toJavaString(
         env, loader::preferences::perform(loader->settings(), toStdString(env, action),
                                           argument ? toStdString(env, argument) : std::string()));
+}
+
+struct ToolboxGestures {
+    std::mutex                        mutex;
+    loader::toolbox::ShakeSensor      shake;
+    loader::toolbox::ThreeFingerPress press;
+};
+
+static ToolboxGestures &toolboxGestures()
+{
+    static ToolboxGestures gestures;
+    return gestures;
+}
+
+static loader::toolbox::GestureEnabled gestureEnabled(loader::preferences::ToolboxGesture gesture)
+{
+    return [gesture] {
+        auto loader = currentLoader();
+        return loader && loader::preferences::gestureEnabled(loader->settings(), gesture);
+    };
+}
+
+static jboolean nativeShakeSample(JNIEnv *, jclass, jfloat x, jfloat y, jfloat z,
+                                  jlong milliseconds)
+{
+    ToolboxGestures            &gestures = toolboxGestures();
+    std::lock_guard<std::mutex> lock(gestures.mutex);
+    return gestures.shake.sample(x, y, z, milliseconds,
+                                 gestureEnabled(loader::preferences::ToolboxGesture::Shake)) ==
+                   loader::toolbox::GestureAction::Open
+               ? JNI_TRUE
+               : JNI_FALSE;
+}
+
+static jstring nativeThreeFingerEvent(JNIEnv *env, jclass, jstring event, jint pointers)
+{
+    const std::string              name     = toStdString(env, event);
+    ToolboxGestures               &gestures = toolboxGestures();
+    std::lock_guard<std::mutex>    lock(gestures.mutex);
+    loader::toolbox::GestureAction action = loader::toolbox::GestureAction::None;
+    if (name == "pointer-down")
+    {
+        action = gestures.press.pointerDown(
+            pointers, gestureEnabled(loader::preferences::ToolboxGesture::ThreeFinger));
+    }
+    else if (name == "released")
+    {
+        action = gestures.press.released();
+    }
+    else if (name == "hold-elapsed")
+    {
+        action = gestures.press.holdElapsed();
+    }
+    return toJavaString(env, loader::toolbox::gestureActionName(action));
 }
 
 static jlong nativeParseColor(JNIEnv *env, jclass, jstring value)
@@ -473,6 +529,9 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeToolbox)},
         {"nativePreference", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativePreference)},
+        {"nativeShakeSample", "(FFFJ)Z", reinterpret_cast<void *>(nativeShakeSample)},
+        {"nativeThreeFingerEvent", "(Ljava/lang/String;I)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeThreeFingerEvent)},
         {"nativeParseColor", "(Ljava/lang/String;)J", reinterpret_cast<void *>(nativeParseColor)},
         {"nativeMessageBubbleStyle", "()[D", reinterpret_cast<void *>(nativeMessageBubbleStyle)},
         {"nativeResolveFont", "(Ljava/lang/String;)Ljava/lang/String;",
