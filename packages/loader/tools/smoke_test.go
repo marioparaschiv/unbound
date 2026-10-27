@@ -304,3 +304,22 @@ func TestSmokeTestsSkipUnsupportedDiscordBuilds(t *testing.T) {
 		t.Fatalf("the skip must be explained in the job summary, got %q, %v", written, err)
 	}
 }
+
+func TestSmokeLogWatcherForgetsAFirstLaunchCrash(t *testing.T) {
+	watcher := newSmokeLogWatcher(&androidSmokeTarget{})
+	watcher.observe("10-26 21:00:00.000  4242  4242 I Unbound : [plugins] Loaded unbound.moyai from /x.")
+	watcher.observe("10-26 21:00:00.001   600   700 I ActivityManager: Process com.discord (pid 4242) has died: fg  TOP")
+	if crash := watcher.takeCrashBeforeLoads(); !strings.Contains(crash, "has died") {
+		t.Fatalf("the first crash must be handed over, got %q", crash)
+	}
+	if watcher.crashed() || watcher.loadedAll([]smokePlugin{{id: "unbound.moyai"}}) {
+		t.Fatal("a relaunch must start from a clean slate")
+	}
+	if crash := watcher.takeCrashBeforeLoads(); crash != "" {
+		t.Fatalf("nothing is left to hand over, got %q", crash)
+	}
+	report := renderSmokeReport(&smokeResult{platform: "android", relaunch: "boom", loaded: map[string]bool{}})
+	if !strings.Contains(report, "Warning: Discord crashed on the first launch and was relaunched once: `boom`") {
+		t.Fatalf("a relaunch must be reported, got:\n%s", report)
+	}
+}

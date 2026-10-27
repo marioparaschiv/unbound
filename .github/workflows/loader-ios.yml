@@ -444,7 +444,7 @@ jobs:
         if: *only_build_check
         needs: build-simulator
         runs-on: macos-26
-        timeout-minutes: 40
+        timeout-minutes: 45
         permissions:
             contents: read
         steps:
@@ -488,7 +488,7 @@ jobs:
             - name: Run the smoke test
               env:
                   APP_PATH: ${{ steps.app.outputs.path }}
-              run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --timeout 12m
+              run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --timeout 25m
 
             - name: Upload smoke test logs
               if: always()

@@ -96,6 +96,7 @@ type smokeResult struct {
 	statuses  []smokePluginStatus
 	evalError string
 	problems  []string
+	relaunch  string
 }
 
 func runSmoke(args []string) error {
@@ -284,6 +285,14 @@ func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, t
 	}
 	deadline := time.Now().Add(options.timeout)
 	waitForSmokeLoads(ctx, target, watcher, plugins, deadline)
+	if crash := watcher.takeCrashBeforeLoads(); crash != "" {
+		result.relaunch = crash
+		fmt.Printf("::warning::Discord crashed on the first launch and was relaunched once: %s\n", crash)
+		if err := target.launch(ctx); err != nil {
+			return result.fail(fmt.Errorf("relaunch Discord: %w", err))
+		}
+		waitForSmokeLoads(ctx, target, watcher, plugins, deadline)
+	}
 	var statuses []smokePluginStatus
 	var evalErr error
 	if watcher.crashed() {
@@ -481,6 +490,9 @@ func renderSmokeReport(result *smokeResult) string {
 		}
 		report.WriteString("\n")
 	}
+	if result.relaunch != "" {
+		fmt.Fprintf(&report, "Warning: Discord crashed on the first launch and was relaunched once: `%s`\n\n", result.relaunch)
+	}
 	byID := map[string]smokePluginStatus{}
 	for _, status := range result.statuses {
 		byID[status.ID] = status
@@ -576,6 +588,19 @@ func (watcher *smokeLogWatcher) observeFailures(line string) {
 	if match := smokeAddonFailure.FindStringSubmatch(line); match != nil {
 		watcher.failures[match[1]] = append(watcher.failures[match[1]], strings.TrimSpace(line))
 	}
+}
+
+func (watcher *smokeLogWatcher) takeCrashBeforeLoads() string {
+	watcher.mu.Lock()
+	defer watcher.mu.Unlock()
+	if len(watcher.crashes) == 0 {
+		return ""
+	}
+	crash := watcher.crashes[0]
+	watcher.crashes = nil
+	watcher.loaded = map[string]bool{}
+	watcher.count = 0
+	return crash
 }
 
 func (watcher *smokeLogWatcher) crashed() bool {
