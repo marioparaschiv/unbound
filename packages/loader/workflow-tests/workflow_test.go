@@ -571,3 +571,13 @@ func TestParsedSmokeTestsGateReleasesAndPullRequests(t *testing.T) {
 		}
 	}
 }
+
+func TestParsedBundlePublishingBuildsOffTmpAndSkipsAnUnconfiguredBucket(t *testing.T) {
+	build := loadWorkflow(t, "build-bundle.yml").job(t, "build")
+	if got := build.step(t, "Build the client").Env["TMPDIR"]; got != "${{ runner.temp }}" {
+		t.Fatalf("hermesc cannot move out of /tmp on hosted runners, so the build must use the runner temp directory, TMPDIR is %q", got)
+	}
+	if got := build.step(t, "Upload bundles to the public bucket").If; !strings.Contains(got, "vars.S3_PUBLIC_BUCKET != ''") {
+		t.Fatalf("the bucket upload must skip when the bucket is not configured, condition is %q", got)
+	}
+}
