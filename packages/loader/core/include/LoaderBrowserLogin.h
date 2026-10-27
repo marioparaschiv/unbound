@@ -35,6 +35,24 @@ struct Callback {
     size_t      macLength        = 0;
 };
 
+struct Handoff {
+    std::string state;
+    std::string secret;
+    std::string key;
+};
+
+enum class OpenStatus
+{
+    Opened,
+    Unverified,
+    Unreadable,
+};
+
+struct OpenedCallback {
+    OpenStatus  status = OpenStatus::Unreadable;
+    std::string token;
+};
+
 constexpr size_t      kStateBytes             = 24;
 constexpr size_t      kSecretBytes            = 64;
 constexpr size_t      kKeyBytes               = 32;
@@ -59,15 +77,17 @@ constexpr const char *kUnreadableMessage =
 constexpr const char *kInvalidTokenMessage =
     "Safari did not return a valid Discord session. Please try again.";
 
-std::string   base64URLEncode(std::string_view bytes);
-std::string   paddedBase64(std::string_view base64URL);
-bool          constantTimeEqual(std::string_view left, std::string_view right);
-std::string   loginURL(const std::string &state, const std::string &key);
-bool          isCallbackURL(const std::string &scheme, const std::string &host);
-bool          isFresh(std::optional<double> ageSeconds);
-CallbackCheck checkCallback(const Session &session, const Callback &callback);
-std::string   authenticatedData(const std::string &state, std::string_view iv,
-                                std::string_view ciphertext);
+std::string            base64URLEncode(std::string_view bytes);
+std::string            paddedBase64(std::string_view base64URL);
+std::string            loginURL(const std::string &state, const std::string &key);
+bool                   isCallbackURL(const std::string &scheme, const std::string &host);
+bool                   isFresh(std::optional<double> ageSeconds);
+CallbackCheck          checkCallback(const Session &session, const Callback &callback);
+std::string            authenticatedData(const std::string &state, std::string_view iv,
+                                         std::string_view ciphertext);
+std::optional<Handoff> createHandoff();
+OpenedCallback openCallback(std::string_view secret, const std::string &state, std::string_view iv,
+                            std::string_view ciphertext, std::string_view mac);
 
 class PendingLogin
 {

@@ -102,6 +102,11 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            val vectors = repositoryRoot.resolve("core/tests/vectors/crypto-cross-check.txt")
+            it.inputs.file(vectors)
+            it.systemProperty("unbound.coreCryptoVectors", vectors.absolutePath)
+        }
     }
 
     packaging {
