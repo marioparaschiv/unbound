@@ -71,6 +71,12 @@ int main()
     checkMenuSteps(menu);
     checkMenuOutcomes(menu);
 
+    const auto numeric = loader::toolbox::menuOptions(R"({"openAppFolder":1,"unboundIcon":0})");
+    assert(numeric.openAppFolder && !numeric.unboundIcon && !numeric.copyAppFolderPath);
+    const auto mixed =
+        loader::toolbox::menuOptions(R"({"openAppFolder":"yes","unboundIcon":true})");
+    assert(!mixed.openAppFolder && mixed.unboundIcon);
+
     assert(loader::toolbox::menuStep(nullptr, false) == MenuStep::None);
     assert(loader::toolbox::menuStep(nlohmann::json::object(), false) == MenuStep::Run);
     assert(loader::toolbox::menuStep(nlohmann::json{{"prompt", "text"}}, false) == MenuStep::Run);
