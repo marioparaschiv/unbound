@@ -301,31 +301,48 @@ Loaders from #271 verify only `<bundle>.sig`, and older loaders verify nothing, 
 
 ### Pull request builds
 
-Pull request test builds trust a second key, `core/keys/pr-bundle-signing.pub`, whose private half is the `UNBOUND_PR_BUNDLE_SIGNING_KEY` secret. `loader-ci.yml` passes the pull request number to `loader-build.yml`, which sets `UNBOUND_PR_NUMBER` for the Android module (Gradle passes it to CMake as `-DUNBOUND_PR_NUMBER`) and the iOS tweak (the Makefile reads it from the environment). A build with a PR number accepts a bundle or manifest signed either:
+Every pull request that runs the loader build (`loader-ci.yml`), forks included, also gets its latest build in the public bucket, so it can be tested with no settings changes:
 
-- with the production key over the plain bytes, or
-- with the PR key over `unbound-pr-bundle/v1/<number>/` followed by the bytes.
+| Prefix                 | Contents                                                                                                                                                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unbound/pr/<number>/` | the pull request's client build: the signed `manifest.json` with `bytecodeVersions`, `channel` `pr-<number>` and each bundle's SHA-512, every `unbound.<bytecode>.bundle` and `unbound.js` it emits, each bundle's `.sig` and `manifest.json.sig` |
+| `loader/pr/<number>/`  | the rootless `.deb`, `Unbound.ipa`, `app.unbound.android.lsposed.apk` and `Unbound.apks`                                                                                                                                                          |
 
-So a PR-key signature made for pull request 5 does not verify in a build for pull request 6, and a production build (no PR number) never compiles in or trusts the PR key. CI signs a fork's build for pull request `<n>` with `bun run --cwd packages/client sign --pr <n>`, which reads `UNBOUND_PR_BUNDLE_SIGNING_KEY`.
+Each push overwrites both prefixes and deletes files the new build no longer has, so the links stay the same for the life of the pull request. The client is built with `TMPDIR` on the runner disk so hermesc emits every bytecode version and with `UNBOUND_CHANNEL=pr-<number>`, so a pull request loader never takes another channel's manifest at that URL. It is then signed with the pull request key through `bun run --cwd packages/client sign --dir dist --pr <number>` and checked with `verify-signatures --dir dist --pr <number>` before anything is uploaded. Pull request bundles are never signed with the production key, so only that pull request's loader accepts them. The pull request comment lists the bundle base URL and each loader build under **S3**, next to the artifact links.
 
-### Signing keys
+Pull request loader builds already get `UNBOUND_PR_NUMBER` through `loader-build.yml`, which makes them trust `core/keys/pr-bundle-signing.pub` for that number. When the `CDN_URL` variable is set, the build jobs also export `UNBOUND_BUNDLE_URL=<CDN_URL>/unbound/pr/<number>/`, and the loader compiles it in as its default update URL, so installing it loads the pull request's client. A `loader.update.url` in settings still wins. `core/include/LoaderUpdater.h` falls back to `https://builds.unbound.rip/` unless `UNBOUND_DEFAULT_BUNDLE_URL` is defined. The iOS Makefile defines it from `UNBOUND_BUNDLE_URL`, and the Android module from the `unboundBundleURL` Gradle property or the `UNBOUND_BUNDLE_URL` environment variable, passed to CMake and required to be an `https` URL ending in `/`:
 
-The private keys are not in this repository; they are kept in the maintainer's backup. CI receives them from the `UNBOUND_BUNDLE_SIGNING_KEY` and `UNBOUND_PR_BUNDLE_SIGNING_KEY` repository secrets. `build-bundle.yml` signs every build it publishes and fails before publishing if a bundle or the manifest is not signed with the committed key. The client CI job signs and checks its build whenever the secret is available.
+```bash
+UNBOUND_PR_NUMBER=42 UNBOUND_BUNDLE_URL=https://cdn.example.com/unbound/pr/42/ go run ./tools build tweak --configuration release --non-interactive
+UNBOUND_PR_NUMBER=42 ./android/gradlew -p android :module:assembleRelease -PunboundBundleURL=https://cdn.example.com/unbound/pr/42/
+```
 
-| Key        | Public key                        | Secret                          | Trusted by               |
-| ---------- | --------------------------------- | ------------------------------- | ------------------------ |
-| Production | `core/keys/bundle-signing.pub`    | `UNBOUND_BUNDLE_SIGNING_KEY`    | every loader             |
-| PR         | `core/keys/pr-bundle-signing.pub` | `UNBOUND_PR_BUNDLE_SIGNING_KEY` | pull request builds only |
+Release, scheduled and `main` builds have no pull request number and keep the default. Pull request loaders never point at the stable or beta bucket paths. Set `CDN_URL` together with the bucket variables and secrets, since a pull request loader built against it expects its bundle there.
 
-To replace a key pair, with `<name>` being `bundle-signing` (production) or `pr-bundle-signing` (PR):
+The `pr-builds` job decides with `bun scripts/pr-builds-plan.ts plan`, and the uploads stay inert, with the reason in the job summary and the comment, until all of these exist:
 
-1. Run `go run ./tools bundle-key generate --out <dir> --name <name>` from `packages/loader`, with `<dir>` outside the repository. It writes `<name>.pem` (mode 0600) and `<name>.pub`, and prints only their paths and the public key.
-2. Store `<name>.pem` in the maintainer's backup.
-3. Run `gh secret set UNBOUND_BUNDLE_SIGNING_KEY --repo marioparaschiv/unbound < <dir>/bundle-signing.pem`, or `UNBOUND_PR_BUNDLE_SIGNING_KEY` with `pr-bundle-signing.pem`.
-4. Copy `<name>.pub` to `core/keys/<name>.pub` and commit it.
-5. Delete `<dir>`.
+- variables `S3_ENDPOINT`, `S3_REGION`, `S3_PUBLIC_BUCKET` and `CDN_URL` (the public `https` base URL the bucket is served from)
+- secrets `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `UNBOUND_PR_BUNDLE_SIGNING_KEY`
 
-A loader accepts only signatures from the keys it was built with. After a production rotation, loaders built with the old key reject new builds and keep their cached bundle until the user updates the loader. After a PR rotation, only pull request builds made before it are affected.
+Pull requests from forks are published without ever giving the fork's code a secret:
+
+1. The fork's `pull_request` run builds everything secret-free. Its `stage-fork-pr-builds` job builds the client unsigned and uploads it as the `pr client bundle` artifact, with the pull request number in the `pr number` artifact.
+2. When that run succeeds, `pr-builds-publish.yml` starts on `workflow_run` in the base repository. It checks out the default branch and only reads the fork's artifacts as data. `bun scripts/pr-builds-fork.ts` takes the claimed number, or the one GitHub linked to the run, and accepts it only if the API shows an open pull request into this repository whose head is exactly the run's commit and fork. `bun scripts/pr-builds-fork.ts check-manifest` refuses a manifest whose channel is not `pr-<number>`.
+3. It signs the bundles and the manifest with the pull request key, which replaces any `.sig` the fork supplied, verifies them, uploads the client and loader builds to the same prefixes, and posts the S3 links on the pull request.
+
+The publisher needs the same variables and secrets, and writes why it did nothing to its job summary otherwise.
+
+When any pull request closes, forks included, `pr-builds-cleanup.yml` runs on `pull_request_target` from the default branch and deletes both prefixes with `bun scripts/pr-builds.ts delete <number>`. It needs the bucket variables and the two S3 secrets, and does nothing without them.
+
+### Backfilling release signatures
+
+Stable and beta versions published before bundle signing have no `.sig`, and keyed loaders reject them. `backfill-signatures.yml` is dispatched by hand. It lists every `unbound/stable/<version>/` and `unbound/beta/<version>/` prefix, signs each `unbound.js` and `unbound.<bytecode>.bundle` that has no signature with `UNBOUND_BUNDLE_SIGNING_KEY`, and uploads only the new `.sig` objects. It never overwrites an existing object, so a second run changes nothing. It needs the bucket variables, the two S3 secrets and the signing key:
+
+```bash
+bun run --cwd packages/client backfill-signatures
+```
+
+`bun run test:s3` runs it, and the pull request upload, against a throwaway MinIO in podman. The `s3` job in `ci.yml` does the same on every push.
 
 ## Discord compatibility scan
 

@@ -151,6 +151,15 @@ jobs:
                   command -v aclocal
                   command -v glibtoolize
 
+            - name: Derive the pull request bundle URL
+              env:
+                  PR_NUMBER: ${{ inputs.pr_number || '' }}
+                  CDN_URL: ${{ vars.CDN_URL }}
+              run: |
+                  if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then
+                    echo "UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
+                  fi
+
             - name: Build package
               run: go run ./tools build tweak --configuration release --non-interactive
 

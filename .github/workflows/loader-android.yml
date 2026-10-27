@@ -153,6 +153,15 @@ jobs:
                   printf '%s' "$ANDROID_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$keystore"
                   echo "ANDROID_SIGNING_STORE_FILE=$keystore" >> "$GITHUB_ENV"
 
+            - name: Derive the pull request bundle URL
+              env:
+                  PR_NUMBER: ${{ inputs.pr_number || '' }}
+                  CDN_URL: ${{ vars.CDN_URL }}
+              run: |
+                  if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then
+                    echo "UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
+                  fi
+
             - name: Build module
               working-directory: packages/loader/android
               run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PunboundBuildNumber="${GITHUB_RUN_NUMBER}"

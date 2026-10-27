@@ -19,22 +19,32 @@ const releaseSchema = z.discriminatedUnion('UNBOUND_CHANNEL', [
 			.string()
 			.regex(/^[0-9a-f]{7,40}$/, 'Beta versions are the commit SHA they were built from.'),
 	}),
+	z.object({
+		UNBOUND_CHANNEL: z.literal('pr'),
+		UNBOUND_VERSION: z
+			.string()
+			.regex(/^[1-9][0-9]*$/, 'Pull request builds are keyed by the pull request number.'),
+	}),
 ]);
 
-export const uploadEnvSchema = z
-	.object({
-		S3_ENDPOINT: z.url(),
-		S3_REGION: z.string().min(1),
-		S3_ACCESS_KEY_ID: z.string().min(1),
-		S3_SECRET_ACCESS_KEY: z.string().min(1),
-		S3_PUBLIC_BUCKET: z.string().min(1),
-	})
-	.and(releaseSchema);
+export const bucketEnvSchema = z.object({
+	S3_ENDPOINT: z.url(),
+	S3_REGION: z.string().min(1),
+	S3_ACCESS_KEY_ID: z.string().min(1),
+	S3_SECRET_ACCESS_KEY: z.string().min(1),
+	S3_PUBLIC_BUCKET: z.string().min(1),
+});
+
+export const uploadEnvSchema = bucketEnvSchema.and(releaseSchema);
+
+export type BucketEnv = z.infer<typeof bucketEnvSchema>;
 
 export type UploadEnv = z.infer<typeof uploadEnvSchema>;
 
+export type PublicBucket = Pick<Bun.S3Client, 'write' | 'list' | 'delete' | 'exists'>;
+
 export type UploadTarget = {
-	bucket: Bun.S3Client;
+	bucket: PublicBucket;
 	channel: UploadEnv['UNBOUND_CHANNEL'];
 	version: string;
 };
@@ -60,8 +70,50 @@ export function versionPrefix(target: UploadTarget): string {
 }
 
 /**
+ * @description Lists every object key under a prefix, following continuation tokens.
+ * @param bucket The bucket to list.
+ * @param prefix The key prefix.
+ * @returns The keys under the prefix.
+ */
+export async function listKeys(bucket: PublicBucket, prefix: string): Promise<string[]> {
+	const keys: string[] = [];
+	let continuationToken: string | undefined;
+
+	do {
+		const page = await bucket.list({ prefix, continuationToken });
+
+		for (const object of page.contents ?? []) keys.push(object.key);
+
+		continuationToken = page.isTruncated ? page.nextContinuationToken : void 0;
+	} while (continuationToken);
+
+	return keys;
+}
+
+/**
+ * @description Deletes the keys under a prefix, except the ones to keep.
+ * @param bucket The bucket to delete from.
+ * @param prefix The key prefix.
+ * @param keep The keys to leave in place.
+ * @returns The deleted keys.
+ */
+export async function deletePrefix(
+	bucket: PublicBucket,
+	prefix: string,
+	keep: Iterable<string> = [],
+): Promise<string[]> {
+	const kept = new Set(keep);
+	const stale = (await listKeys(bucket, prefix)).filter((key) => !kept.has(key));
+
+	await Promise.all(stale.map((key) => bucket.delete(key)));
+
+	return stale;
+}
+
+/**
  * @description Uploads every file but the source maps in a client build directory to `unbound/{channel}/{version}/`.
- * Version paths are immutable: an already published version is skipped, never overwritten.
+ * Release versions are immutable: an already published version is skipped, never overwritten. A pull
+ * request's prefix always holds its latest build, so it is overwritten and its stale files removed.
  * @param dir The build output directory, e.g. `packages/client/dist`.
  * @param target The bucket, channel and version to upload to.
  * @returns The uploaded object keys, or `undefined` when the version was already published.
@@ -71,12 +123,11 @@ export async function uploadBuild(
 	target: UploadTarget,
 ): Promise<string[] | undefined> {
 	const prefix = versionPrefix(target);
+	const mutable = target.channel === 'pr';
 
-	if (await target.bucket.exists(`${prefix}${COMPLETION_MARKER}`)) return;
+	if (!mutable && (await target.bucket.exists(`${prefix}${COMPLETION_MARKER}`))) return;
 
-	const existing = await target.bucket.list({ prefix, maxKeys: 1 });
-
-	if (existing.keyCount) {
+	if (!mutable && (await target.bucket.list({ prefix, maxKeys: 1 })).keyCount) {
 		throw new IncompleteVersionError(prefix);
 	}
 
@@ -103,6 +154,10 @@ export async function uploadBuild(
 
 	keys.push(await upload(COMPLETION_MARKER));
 
+	if (mutable) {
+		await deletePrefix(target.bucket, prefix, keys);
+	}
+
 	return keys;
 }
 
@@ -124,11 +179,28 @@ export function parseUploadEnv(
 }
 
 /**
+ * @description Parses the bucket credentials, failing with every missing or malformed variable named.
+ * @param source The raw environment, `process.env` by default.
+ * @returns The validated bucket environment.
+ */
+export function parseBucketEnv(
+	source: Record<string, string | undefined> = process.env,
+): BucketEnv {
+	const result = bucketEnvSchema.safeParse(source);
+
+	if (!result.success) {
+		throw new Error(`Invalid bucket environment:\n${z.prettifyError(result.error)}`);
+	}
+
+	return result.data;
+}
+
+/**
  * @description Connects to the public bucket described by the upload environment.
- * @param env The validated upload environment.
+ * @param env The validated bucket environment.
  * @returns A client for the public bucket.
  */
-export function createPublicBucket(env: UploadEnv): Bun.S3Client {
+export function createPublicBucket(env: BucketEnv): Bun.S3Client {
 	return new Bun.S3Client({
 		endpoint: env.S3_ENDPOINT,
 		region: env.S3_REGION,

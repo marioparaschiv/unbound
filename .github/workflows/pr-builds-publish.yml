@@ -1,0 +1,188 @@
+name: Pull Request Builds Publish
+
+on:
+    workflow_run:
+        workflows: [Loader Pull Request Build]
+        types: [completed]
+
+permissions:
+    contents: read
+    actions: read
+    pull-requests: write
+
+jobs:
+    publish:
+        name: Publish fork pull request builds
+        if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name != github.repository
+        runs-on: ubuntu-26.04
+        timeout-minutes: 20
+        concurrency:
+            group: pr-builds-fork-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+            cancel-in-progress: false
+        env:
+            RUN_ID: ${{ github.event.workflow_run.id }}
+        steps:
+            - name: Checkout the trusted scripts
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  ref: ${{ github.event.repository.default_branch }}
+                  fetch-depth: 1
+                  persist-credentials: false
+
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
+              with:
+                  bun-version: canary
+
+            - name: Download the pull request number
+              id: claim
+              continue-on-error: true
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: pr number
+                  path: ${{ runner.temp }}/claim
+                  run-id: ${{ github.event.workflow_run.id }}
+                  github-token: ${{ github.token }}
+
+            - name: Report a run without staged builds
+              if: steps.claim.outcome != 'success'
+              run: echo "The fork build staged nothing to publish, so its builds stay artifacts only." >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Confirm the pull request
+              id: pull-request
+              if: steps.claim.outcome == 'success'
+              env:
+                  GITHUB_TOKEN: ${{ github.token }}
+                  CLAIMED_FILE: ${{ runner.temp }}/claim/number
+                  HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+                  HEAD_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
+                  EVENT_PULL_REQUESTS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
+              run: bun scripts/pr-builds-fork.ts
+
+            - name: Plan the uploads
+              id: plan
+              if: steps.pull-request.outputs.number != ''
+              env:
+                  PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+                  IS_FORK: 'false'
+                  S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+                  S3_REGION: ${{ vars.S3_REGION }}
+                  S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
+                  CDN_URL: ${{ vars.CDN_URL }}
+                  HAS_S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID != '' }}
+                  HAS_S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY != '' }}
+                  HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}
+              run: bun scripts/pr-builds-plan.ts plan
+
+            - name: Download the client build
+              if: steps.plan.outputs.enabled == 'true'
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: pr client bundle
+                  path: packages/client/dist
+                  run-id: ${{ github.event.workflow_run.id }}
+                  github-token: ${{ github.token }}
+
+            - name: Download the iOS tweak
+              if: steps.plan.outputs.enabled == 'true'
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: rootless package
+                  path: ${{ runner.temp }}/pr-builds
+                  run-id: ${{ github.event.workflow_run.id }}
+                  github-token: ${{ github.token }}
+
+            - name: Download the iOS IPA
+              if: steps.plan.outputs.enabled == 'true'
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: ipa
+                  path: ${{ runner.temp }}/pr-builds
+                  run-id: ${{ github.event.workflow_run.id }}
+                  github-token: ${{ github.token }}
+
+            - name: Download the Android module
+              if: steps.plan.outputs.enabled == 'true'
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: android module
+                  path: ${{ runner.temp }}/pr-builds
+                  run-id: ${{ github.event.workflow_run.id }}
+                  github-token: ${{ github.token }}
+
+            - name: Download the patched Discord
+              if: steps.plan.outputs.enabled == 'true'
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: patched discord
+                  path: ${{ runner.temp }}/pr-builds
+                  run-id: ${{ github.event.workflow_run.id }}
+                  github-token: ${{ github.token }}
+
+            - name: Check the fork's manifest
+              if: steps.plan.outputs.enabled == 'true'
+              env:
+                  PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+                  MANIFEST_FILE: packages/client/dist/manifest.json
+              run: bun scripts/pr-builds-fork.ts check-manifest
+
+            - name: Sign the bundles with the pull request key
+              if: steps.plan.outputs.enabled == 'true'
+              env:
+                  PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+                  UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}
+              run: |
+                  set -euo pipefail
+                  bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"
+                  bun run --cwd packages/client verify-signatures --dir dist --pr "$PR_NUMBER"
+
+            - name: Upload the client bundles
+              if: steps.plan.outputs.enabled == 'true'
+              env:
+                  UNBOUND_CHANNEL: pr
+                  UNBOUND_VERSION: ${{ steps.pull-request.outputs.number }}
+                  S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+                  S3_REGION: ${{ vars.S3_REGION }}
+                  S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
+                  S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+                  S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+              run: bun run --cwd packages/client upload
+
+            - name: Upload the loader builds
+              if: steps.plan.outputs.enabled == 'true'
+              env:
+                  PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+                  BUILDS: ${{ runner.temp }}/pr-builds
+                  S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+                  S3_REGION: ${{ vars.S3_REGION }}
+                  S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
+                  S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+                  S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+              run: |
+                  set -euo pipefail
+                  mapfile -t files < <(find "$BUILDS" -maxdepth 1 -type f \( -name '*.deb' -o -name '*.ipa' -o -name '*.apk' -o -name '*.apks' \) | sort)
+                  bun scripts/pr-builds.ts upload-loader "$PR_NUMBER" "${files[@]}"
+                  printf '%s\n' "${files[@]##*/}" > "$RUNNER_TEMP/pr-build-files"
+
+            - name: Describe the S3 builds
+              id: s3
+              if: steps.plan.outputs.enabled == 'true'
+              env:
+                  ENABLED: 'true'
+                  UPLOAD_RESULT: success
+                  BUNDLE_URL: ${{ steps.plan.outputs.bundle_url }}
+                  LOADER_URL: ${{ steps.plan.outputs.loader_url }}
+              run: FILES="$(cat "$RUNNER_TEMP/pr-build-files")" bun scripts/pr-builds-plan.ts comment
+
+            - name: Comment on the pull request
+              if: steps.plan.outputs.enabled == 'true'
+              uses: thollander/actions-comment-pull-request@e4a76dd2b0a3c2027c3fd84147a67c22ee4c90fa
+              with:
+                  pr-number: ${{ steps.pull-request.outputs.number }}
+                  comment-tag: pr-builds-s3
+                  mode: upsert
+                  message: |
+                      **Fork build**: [#${{ github.event.workflow_run.head_sha }}](https://github.com/${{ github.repository }}/commit/${{ github.event.workflow_run.head_sha }}), published by [the trusted workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) and signed with the pull request key.
+
+                      ${{ steps.s3.outputs.section }}
+                  github-token: ${{ github.token }}

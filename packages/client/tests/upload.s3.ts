@@ -70,6 +70,28 @@ describe('uploadBuild', () => {
 	});
 });
 
+describe('uploadBuild for pull requests', () => {
+	test('replaces the pull request build and drops files it no longer has', async () => {
+		const pullRequest = { bucket, channel: 'pr' as const, version: String(Date.now()) };
+		const prPrefix = versionPrefix(pullRequest);
+
+		try {
+			await bucket.write(`${prPrefix}unbound.94.bundle`, 'stale');
+			await Bun.write(join(dist, 'unbound.js'), 'pull request build');
+
+			const keys = await uploadBuild(dist, pullRequest);
+
+			expect(keys?.at(-1)).toBe(`${prPrefix}manifest.json`);
+			expect(await bucket.exists(`${prPrefix}unbound.94.bundle`)).toBe(false);
+			expect(await bucket.file(`${prPrefix}unbound.js`).text()).toBe('pull request build');
+		} finally {
+			const { contents = [] } = await bucket.list({ prefix: prPrefix });
+
+			await Promise.all(contents.map((object) => bucket.delete(object.key)));
+		}
+	});
+});
+
 describe('parseUploadEnv', () => {
 	test('requires a semver for stable and a commit SHA for beta', () => {
 		const base = { ...process.env };
@@ -84,6 +106,18 @@ describe('parseUploadEnv', () => {
 			parseUploadEnv({ ...base, UNBOUND_CHANNEL: 'stable', UNBOUND_VERSION: '1.2.3' })
 				.UNBOUND_VERSION,
 		).toBe('1.2.3');
+	});
+
+	test('keys pull request builds by their number', () => {
+		const base = { ...process.env };
+
+		expect(
+			parseUploadEnv({ ...base, UNBOUND_CHANNEL: 'pr', UNBOUND_VERSION: '42' })
+				.UNBOUND_VERSION,
+		).toBe('42');
+		expect(() =>
+			parseUploadEnv({ ...base, UNBOUND_CHANNEL: 'pr', UNBOUND_VERSION: '../42' }),
+		).toThrow(/UNBOUND_VERSION/);
 	});
 
 	test('names a missing bucket credential', () => {

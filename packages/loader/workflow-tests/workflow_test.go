@@ -3,6 +3,7 @@ package workflowtests
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"runtime"
 	"slices"
@@ -579,5 +580,236 @@ func TestParsedBundlePublishingBuildsOffTmpAndSkipsAnUnconfiguredBucket(t *testi
 	}
 	if got := build.step(t, "Upload bundles to the public bucket").If; !strings.Contains(got, "vars.S3_PUBLIC_BUCKET != ''") {
 		t.Fatalf("the bucket upload must skip when the bucket is not configured, condition is %q", got)
+	}
+}
+
+func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
+	ci := loadWorkflow(t, "loader-ci.yml")
+	plan := ci.job(t, "pr-builds")
+	planStep := plan.step(t, "Plan the uploads")
+	if planStep.Run != "bun scripts/pr-builds-plan.ts plan" {
+		t.Fatalf("the plan must come from the tested script, runs %q", planStep.Run)
+	}
+	for name, value := range map[string]string{
+		"IS_FORK":                           "${{ github.event.pull_request.head.repo.full_name != github.repository }}",
+		"HAS_S3_ACCESS_KEY_ID":              "${{ secrets.S3_ACCESS_KEY_ID != '' }}",
+		"HAS_S3_SECRET_ACCESS_KEY":          "${{ secrets.S3_SECRET_ACCESS_KEY != '' }}",
+		"HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY": "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}",
+		"CDN_URL":                           "${{ vars.CDN_URL }}",
+	} {
+		if planStep.Env[name] != value {
+			t.Fatalf("the plan must see %s as %q, got %q", name, value, planStep.Env[name])
+		}
+	}
+	for _, name := range []string{"S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "UNBOUND_PR_BUNDLE_SIGNING_KEY"} {
+		if _, ok := planStep.Env[name]; ok {
+			t.Fatalf("the plan must only learn whether %s is set, never its value", name)
+		}
+	}
+
+	if build := ci.job(t, "build"); build.With["pr_number"] != "${{ github.event.pull_request.number }}" {
+		t.Fatalf("pull request loaders must know their pull request, got %+v", build.With)
+	}
+
+	upload := ci.job(t, "upload-pr-builds")
+	requireNeeds(t, "upload-pr-builds", upload, "pr-builds", "build")
+	if upload.If != "needs.pr-builds.outputs.enabled == 'true'" {
+		t.Fatalf("uploads must stay off unless planned, runs if %q", upload.If)
+	}
+	clientBuild := upload.step(t, "Build the client")
+	if clientBuild.Env["TMPDIR"] != "${{ runner.temp }}" || clientBuild.Env["UNBOUND_CHANNEL"] != "pr-${{ github.event.pull_request.number }}" {
+		t.Fatalf("the uploaded bundles must be compiled to bytecode on the pull request's own channel, got %+v", clientBuild.Env)
+	}
+	if _, ok := clientBuild.Env["UNBOUND_BUNDLE_SIGNING_KEY"]; ok {
+		t.Fatal("pull request bundles must never be signed with the production key")
+	}
+	sign := upload.step(t, "Sign the bundles with the pull request key")
+	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || sign.Run != `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"` {
+		t.Fatalf("pull request bundles must be signed with the pull request key, got %+v", sign)
+	}
+	if upload.step(t, "Check every bundle is signed").Run != `bun run --cwd packages/client verify-signatures --dir dist --pr "$PR_NUMBER"` {
+		t.Fatal("unsigned bundles must never reach the bucket")
+	}
+	client := upload.step(t, "Upload the client bundles")
+	if client.Env["UNBOUND_CHANNEL"] != "pr" || client.Env["UNBOUND_VERSION"] != "${{ github.event.pull_request.number }}" {
+		t.Fatalf("the client must upload to unbound/pr/<number>/, got %+v", client.Env)
+	}
+	downloads := map[string]bool{}
+	for _, step := range upload.Steps {
+		if strings.HasPrefix(step.Uses, "actions/download-artifact@") {
+			downloads[step.With["name"]] = step.With["path"] == "pr-builds"
+		}
+	}
+	for _, artifact := range []string{"rootless package", "ipa", "android module", "patched discord"} {
+		if !downloads[artifact] {
+			t.Fatalf("the loader upload must include %s, downloads %v", artifact, downloads)
+		}
+	}
+	if upload.step(t, "Upload the loader builds").Run != `bun scripts/pr-builds.ts upload-loader "$PR_NUMBER" pr-builds/*` {
+		t.Fatal("the loader builds must upload to loader/pr/<number>/")
+	}
+
+	comment := ci.job(t, "comment-pr")
+	requireNeeds(t, "comment-pr", comment, "build", "pr-builds", "upload-pr-builds")
+	if !strings.HasPrefix(comment.If, "always() && needs.build.result == 'success'") {
+		t.Fatalf("the comment must still post when uploads are off, runs if %q", comment.If)
+	}
+	if comment.step(t, "Describe the S3 builds").Run != "bun scripts/pr-builds-plan.ts comment" || !strings.Contains(comment.step(t, "Comment on current PR").With["message"], "${{ steps.s3.outputs.section }}") {
+		t.Fatal("the comment must carry the S3 links or why there are none")
+	}
+}
+
+func TestParsedLoaderBuildsDeriveThePullRequestBundleURL(t *testing.T) {
+	for name, job := range map[string]workflowJob{
+		"loader-android.yml build-module": loadWorkflow(t, "loader-android.yml").job(t, "build-module"),
+		"loader-ios.yml build-tweak":      loadWorkflow(t, "loader-ios.yml").job(t, "build-tweak"),
+	} {
+		derive := job.step(t, "Derive the pull request bundle URL")
+		if derive.Env["PR_NUMBER"] != "${{ inputs.pr_number || '' }}" || derive.Env["CDN_URL"] != "${{ vars.CDN_URL }}" {
+			t.Fatalf("%s must derive the bundle URL from the pull request number it already gets, got %+v", name, derive.Env)
+		}
+		if !strings.Contains(derive.Run, `if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then`) || !strings.Contains(derive.Run, `UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/`) {
+			t.Fatalf("%s must only set a bundle URL for pull request builds, runs %q", name, derive.Run)
+		}
+	}
+	for jobName, job := range loadWorkflow(t, "loader-release-poll.yml").Jobs {
+		if _, ok := job.With["pr_number"]; ok {
+			t.Fatalf("loader-release-poll.yml %s must keep the release bundle URL", jobName)
+		}
+	}
+}
+
+func TestParsedPullRequestBuildsAreDeletedOnClose(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "pr-builds-cleanup.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var workflow struct {
+		On struct {
+			PullRequestTarget struct {
+				Types []string `yaml:"types"`
+			} `yaml:"pull_request_target"`
+		} `yaml:"on"`
+	}
+	if err := yaml.Unmarshal(data, &workflow); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(workflow.On.PullRequestTarget.Types, []string{"closed"}) {
+		t.Fatalf("cleanup must run with the bucket secrets when any pull request closes, forks included, runs on %v", workflow.On.PullRequestTarget.Types)
+	}
+	job := loadWorkflow(t, "pr-builds-cleanup.yml").job(t, "delete")
+	if checkout := job.stepUsing(t, "actions/checkout@"); checkout.With["ref"] != "${{ github.event.repository.default_branch }}" {
+		t.Fatalf("cleanup must run the default branch's scripts, never the pull request's, checks out %+v", checkout.With)
+	}
+	config := job.step(t, "Check the bucket configuration")
+	if config.Run != "bun scripts/pr-builds-plan.ts cleanup" {
+		t.Fatalf("the cleanup must decide through the tested script, runs %q", config.Run)
+	}
+	remove := job.step(t, "Delete the client and loader builds")
+	if remove.If != "steps.config.outputs.enabled == 'true'" || !strings.HasPrefix(remove.Run, `bun scripts/pr-builds.ts delete "$PR_NUMBER"`) {
+		t.Fatalf("the cleanup must stay inert without credentials, got %+v", remove)
+	}
+}
+
+func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
+	ci := loadWorkflow(t, "loader-ci.yml")
+	stage := ci.job(t, "stage-fork-pr-builds")
+	requireNeeds(t, "stage-fork-pr-builds", stage, "pr-builds", "build")
+	if stage.If != "needs.pr-builds.outputs.stage == 'true'" {
+		t.Fatalf("only planned fork builds are staged, runs if %q", stage.If)
+	}
+	if _, signed := stage.step(t, "Build the client").Env["UNBOUND_BUNDLE_SIGNING_KEY"]; signed {
+		t.Fatal("the untrusted fork build must stay secret-free")
+	}
+	staged := map[string]bool{}
+	for _, step := range stage.Steps {
+		if strings.HasPrefix(step.Uses, "actions/upload-artifact@") {
+			staged[step.With["name"]] = true
+		}
+	}
+	if !staged["pr client bundle"] || !staged["pr number"] {
+		t.Fatalf("the fork build must stage its client and its pull request number, stages %v", staged)
+	}
+
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "pr-builds-publish.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var trigger struct {
+		On struct {
+			WorkflowRun struct {
+				Workflows []string `yaml:"workflows"`
+				Types     []string `yaml:"types"`
+			} `yaml:"workflow_run"`
+		} `yaml:"on"`
+	}
+	if err := yaml.Unmarshal(data, &trigger); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(trigger.On.WorkflowRun.Workflows, []string{"Loader Pull Request Build"}) || !reflect.DeepEqual(trigger.On.WorkflowRun.Types, []string{"completed"}) {
+		t.Fatalf("fork builds must be published after the loader build completes, triggers %+v", trigger.On.WorkflowRun)
+	}
+	publish := loadWorkflow(t, "pr-builds-publish.yml").job(t, "publish")
+	for _, condition := range []string{"github.event.workflow_run.event == 'pull_request'", "github.event.workflow_run.conclusion == 'success'", "github.event.workflow_run.head_repository.full_name != github.repository"} {
+		if !strings.Contains(publish.If, condition) {
+			t.Fatalf("the publisher must only handle successful fork builds, runs if %q", publish.If)
+		}
+	}
+	if checkout := publish.stepUsing(t, "actions/checkout@"); checkout.With["ref"] != "${{ github.event.repository.default_branch }}" || checkout.With["persist-credentials"] != "false" {
+		t.Fatalf("the publisher must run only the default branch's scripts, checks out %+v", checkout.With)
+	}
+	confirm := publish.step(t, "Confirm the pull request")
+	if confirm.Run != "bun scripts/pr-builds-fork.ts" || confirm.Env["HEAD_SHA"] != "${{ github.event.workflow_run.head_sha }}" || confirm.Env["HEAD_REPOSITORY"] != "${{ github.event.workflow_run.head_repository.full_name }}" {
+		t.Fatalf("the claimed pull request must be checked against the run's head, got %+v", confirm)
+	}
+	plan := publish.step(t, "Plan the uploads")
+	if plan.Env["PR_NUMBER"] != "${{ steps.pull-request.outputs.number }}" || plan.Env["HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}" {
+		t.Fatalf("the publisher must plan with the confirmed number and the pull request key, got %+v", plan.Env)
+	}
+	for _, step := range publish.Steps {
+		if strings.HasPrefix(step.Uses, "actions/download-artifact@") && step.With["run-id"] != "${{ github.event.workflow_run.id }}" {
+			t.Fatalf("%q must download from the fork's run", step.Name)
+		}
+		if strings.Contains(step.Run, "dist/") {
+			t.Fatalf("%q must not run anything from the fork's build", step.Name)
+		}
+	}
+	sign := publish.step(t, "Sign the bundles with the pull request key")
+	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || !strings.Contains(sign.Run, `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"`) || !strings.Contains(sign.Run, `verify-signatures --dir dist --pr "$PR_NUMBER"`) {
+		t.Fatalf("fork bundles must be signed with the pull request key, got %+v", sign)
+	}
+	if _, ok := sign.Env["UNBOUND_BUNDLE_SIGNING_KEY"]; ok {
+		t.Fatal("fork bundles must never be signed with the production key")
+	}
+	if check := publish.step(t, "Check the fork's manifest"); check.Run != "bun scripts/pr-builds-fork.ts check-manifest" {
+		t.Fatalf("the fork's manifest must declare its own channel, runs %q", check.Run)
+	}
+	if publish.step(t, "Comment on the pull request").With["pr-number"] != "${{ steps.pull-request.outputs.number }}" {
+		t.Fatal("the publisher must comment on the confirmed pull request")
+	}
+}
+
+func TestParsedBackfillSignsOnlyOnDemand(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "backfill-signatures.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var trigger struct {
+		On map[string]any `yaml:"on"`
+	}
+	if err := yaml.Unmarshal(data, &trigger); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := trigger.On["workflow_dispatch"]; !ok || len(trigger.On) != 1 {
+		t.Fatalf("the backfill must only run when dispatched, triggers %v", trigger.On)
+	}
+	job := loadWorkflow(t, "backfill-signatures.yml").job(t, "backfill")
+	backfill := job.step(t, "Sign unsigned stable and beta bundles")
+	if backfill.If != "steps.config.outputs.enabled == 'true'" || !strings.HasPrefix(backfill.Run, "bun run --cwd packages/client backfill-signatures") {
+		t.Fatalf("the backfill must stay inert without credentials, got %+v", backfill)
+	}
+	s3 := loadWorkflow(t, "ci.yml").job(t, "s3")
+	if run := s3.step(t, "Run the S3 tests against MinIO").Run; !strings.Contains(run, "bun run test:s3") || !strings.Contains(run, "backfill-signatures.s3.ts") {
+		t.Fatalf("CI must prove the backfill against MinIO, runs %q", run)
 	}
 }

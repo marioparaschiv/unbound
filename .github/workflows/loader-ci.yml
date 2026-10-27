@@ -7,6 +7,9 @@ on:
             - 'packages/loader/**'
             - '.github/workflows/loader-*.yml'
             - '.github/actions/**'
+            - '.github/workflows/pr-builds-cleanup.yml'
+            - 'packages/client/**'
+            - 'scripts/pr-builds*.ts'
             - 'packages/plugins/**'
             - 'packages/plugins-shared/**'
             - '.gitmodules'
@@ -79,6 +82,45 @@ jobs:
             - name: Lint and check formatting
               run: go run ./tools lint
 
+    pr-builds:
+        name: Plan pull request uploads
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            contents: read
+        outputs:
+            enabled: ${{ steps.plan.outputs.enabled }}
+            stage: ${{ steps.plan.outputs.stage }}
+            bundle_url: ${{ steps.plan.outputs.bundle_url }}
+            loader_url: ${{ steps.plan.outputs.loader_url }}
+            reason: ${{ steps.plan.outputs.reason }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 1
+
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
+              with:
+                  bun-version: canary
+                  install: 'false'
+
+            - name: Plan the uploads
+              id: plan
+              working-directory: .
+              env:
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  IS_FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+                  S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+                  S3_REGION: ${{ vars.S3_REGION }}
+                  S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
+                  CDN_URL: ${{ vars.CDN_URL }}
+                  HAS_S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID != '' }}
+                  HAS_S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY != '' }}
+                  HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}
+              run: bun scripts/pr-builds-plan.ts plan
+
     build:
         name: Build Unbound
         permissions:
@@ -94,12 +136,155 @@ jobs:
             pr_number: ${{ github.event.pull_request.number }}
         secrets: inherit
 
+    upload-pr-builds:
+        name: Upload pull request builds
+        needs: [pr-builds, build]
+        if: needs.pr-builds.outputs.enabled == 'true'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 15
+        permissions:
+            contents: read
+        concurrency:
+            group: pr-builds-${{ github.event.pull_request.number }}
+            cancel-in-progress: false
+        defaults:
+            run:
+                working-directory: .
+        env:
+            PR_NUMBER: ${{ github.event.pull_request.number }}
+            S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+            S3_REGION: ${{ vars.S3_REGION }}
+            S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
+            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 1
+
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
+              with:
+                  bun-version: canary
+
+            - name: Build the client
+              env:
+                  TMPDIR: ${{ runner.temp }}
+                  UNBOUND_CHANNEL: pr-${{ github.event.pull_request.number }}
+              run: bun run --cwd packages/client build
+
+            - name: Sign the bundles with the pull request key
+              env:
+                  UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}
+              run: bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"
+
+            - name: Check every bundle is signed
+              run: bun run --cwd packages/client verify-signatures --dir dist --pr "$PR_NUMBER"
+
+            - name: Upload the client bundles
+              env:
+                  UNBOUND_CHANNEL: pr
+                  UNBOUND_VERSION: ${{ github.event.pull_request.number }}
+              run: bun run --cwd packages/client upload
+
+            - name: Download the iOS tweak
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: rootless package
+                  path: pr-builds
+
+            - name: Download the iOS IPA
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: ipa
+                  path: pr-builds
+
+            - name: Download the Android module
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: android module
+                  path: pr-builds
+
+            - name: Download the patched Discord
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: patched discord
+                  path: pr-builds
+
+            - name: Upload the loader builds
+              run: bun scripts/pr-builds.ts upload-loader "$PR_NUMBER" pr-builds/*
+
+            - name: Summarize the uploads
+              env:
+                  BUNDLE_URL: ${{ needs.pr-builds.outputs.bundle_url }}
+                  LOADER_URL: ${{ needs.pr-builds.outputs.loader_url }}
+              run: |
+                  {
+                    echo "Client bundle: $BUNDLE_URL"
+                    for file in pr-builds/*; do echo "- $LOADER_URL$(basename "$file")"; done
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+    stage-fork-pr-builds:
+        name: Stage fork builds for publishing
+        needs: [pr-builds, build]
+        if: needs.pr-builds.outputs.stage == 'true'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 15
+        permissions:
+            contents: read
+        defaults:
+            run:
+                working-directory: .
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 1
+                  persist-credentials: false
+
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
+              with:
+                  bun-version: canary
+
+            - name: Build the client
+              env:
+                  TMPDIR: ${{ runner.temp }}
+                  UNBOUND_CHANNEL: pr-${{ github.event.pull_request.number }}
+              run: bun run --cwd packages/client build
+
+            - name: Record the pull request number
+              env:
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+              run: |
+                  mkdir -p pr-number
+                  printf '%s\n' "$PR_NUMBER" > pr-number/number
+
+            - name: Upload the client build
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: pr client bundle
+                  path: |
+                      packages/client/dist/
+                      !packages/client/dist/**/*.map
+                  if-no-files-found: error
+                  retention-days: 3
+
+            - name: Upload the pull request number
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: pr number
+                  path: pr-number/number
+                  if-no-files-found: error
+                  retention-days: 3
+
     comment-pr:
         name: Comment on PR
         runs-on: ubuntu-26.04
         timeout-minutes: 5
-        needs: build
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        needs: [build, pr-builds, upload-pr-builds]
+        if: always() && needs.build.result == 'success' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -123,6 +308,28 @@ jobs:
                   echo "hash=$COMMIT_HASH" >> "$GITHUB_OUTPUT"
                   echo "time=$BUILD_TIME" >> "$GITHUB_OUTPUT"
 
+            - name: Setup Bun
+              uses: ./.github/actions/setup-bun-deps
+              with:
+                  bun-version: canary
+                  install: 'false'
+
+            - name: Describe the S3 builds
+              id: s3
+              working-directory: .
+              env:
+                  ENABLED: ${{ needs.pr-builds.outputs.enabled }}
+                  UPLOAD_RESULT: ${{ needs.upload-pr-builds.result }}
+                  BUNDLE_URL: ${{ needs.pr-builds.outputs.bundle_url }}
+                  LOADER_URL: ${{ needs.pr-builds.outputs.loader_url }}
+                  REASON: ${{ needs.pr-builds.outputs.reason }}
+                  FILES: |
+                      ${{ needs.build.outputs.deb_filename }}
+                      ${{ needs.build.outputs.ipa_filename }}
+                      ${{ needs.build.outputs.module_filename }}
+                      ${{ needs.build.outputs.patched_filename }}
+              run: bun scripts/pr-builds-plan.ts comment
+
             - name: Comment on current PR
               uses: thollander/actions-comment-pull-request@e4a76dd2b0a3c2027c3fd84147a67c22ee4c90fa
               with:
@@ -138,6 +345,8 @@ jobs:
                       #### Android
                       - [**${{ needs.build.outputs.module_filename }}**](${{ needs.build.outputs.module_url }})
                       - [**${{ needs.build.outputs.patched_filename }}**](${{ needs.build.outputs.patched_url }})
+
+                      ${{ steps.s3.outputs.section }}
 
                       <sub>This comment was automatically generated. [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>
                   comment-tag: build-result
