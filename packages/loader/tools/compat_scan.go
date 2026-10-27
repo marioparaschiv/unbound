@@ -558,6 +558,7 @@ func resolves(status string) bool {
 
 func resolveFallbacks(findings []compatFinding) {
 	alternatives := map[string]map[int][]int{}
+	counts := map[string]int{}
 	var groups []string
 	for index, finding := range findings {
 		group := finding.Reference.Group
@@ -569,9 +570,16 @@ func resolveFallbacks(findings []compatFinding) {
 			groups = append(groups, group)
 		}
 		alternatives[group][finding.Reference.Alternative] = append(alternatives[group][finding.Reference.Alternative], index)
+		counts[group] = max(counts[group], finding.Reference.Alternatives)
 	}
 	for _, group := range groups {
 		used := -1
+		for alternative := range counts[group] {
+			if _, looksUp := alternatives[group][alternative]; !looksUp {
+				used = alternative
+				break
+			}
+		}
 		for alternative, members := range alternatives[group] {
 			complete := true
 			for _, member := range members {
@@ -595,6 +603,9 @@ func resolveFallbacks(findings []compatFinding) {
 		for _, member := range alternatives[group][used] {
 			covering = append(covering, describeCompatReference(findings[member].Reference))
 		}
+		if len(covering) == 0 {
+			covering = append(covering, "Unbound's own implementation in the same lookup")
+		}
 		for _, members := range alternatives[group] {
 			for _, member := range members {
 				finding := &findings[member]
@@ -617,7 +628,7 @@ func resolveLegacy(findings []compatFinding) {
 	}
 	for index := range findings {
 		finding := &findings[index]
-		if finding.Status != compatBroken && finding.Status != compatPossible {
+		if finding.Status != compatBroken && finding.Status != compatPossible && finding.Status != compatUnverified {
 			continue
 		}
 		if !legacy[finding.Reference.Component+"#"+finding.Reference.Name] {

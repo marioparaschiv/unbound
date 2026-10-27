@@ -7,6 +7,7 @@ import * as ReactModule from 'react';
 import { ComponentType, ReactNode } from 'react';
 import {
 	AccessibilityState,
+	ColorValue,
 	ImageStyle,
 	PressableProps,
 	StyleProp,
@@ -15,6 +16,16 @@ import {
 	ViewProps,
 	ViewStyle,
 } from 'react-native';
+declare const HelpMessageTypes: {
+	readonly 0: 'WARNING';
+	readonly 1: 'INFO';
+	readonly 2: 'ERROR';
+	readonly 3: 'SUCCESS';
+	readonly WARNING: 0;
+	readonly INFO: 1;
+	readonly ERROR: 2;
+	readonly SUCCESS: 3;
+};
 /** @internal */
 declare const CACHE_KEY: unique symbol;
 export declare const off: typeof removeListener;
@@ -115,6 +126,15 @@ export declare function initializeModule(id: number): boolean;
 export declare function removeListener(listener: (mdl: any, id: number) => void): void;
 /** An object of shape `T` widened with an arbitrary property index. */
 export type AnyProps<T = unknown> = T & Record<PropertyKey, MetroExport>;
+export type HelpMessageProps = {
+	children?: ReactModule.ReactNode;
+	messageType?: HelpMessageType;
+	textVariant?: string;
+	textColor?: ColorValue;
+	borderRadius?: number;
+	button?: ReactModule.ReactNode;
+};
+export type HelpMessageType = (typeof HelpMessageTypes)[keyof typeof HelpMessageTypes & string];
 /** Widens a single result to an array when the search was made with `all: true`. */
 export type MetroAllValues<T extends MetroSearchOptions, U> = T extends {
 	all: true;

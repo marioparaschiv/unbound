@@ -48,7 +48,7 @@ const unpatches: (() => void)[] = [];
  * any held native calls. Twin of the host loader pattern in `revenge-bundle`.
  * @param onReady Runs once the registry is ready; resolve it before Discord and deferred calls flush.
  */
-export default function deferUntilReady(onReady: () => Promise<void>): void {
+export default function deferUntilReady(onReady: () => void | Promise<void>): void {
 	// `__r` already exists: the hook point is gone (legacy Vendetta-style loader). Initialize now.
 	if (typeof window.__r !== 'undefined') {
 		void runReady(onReady).then((initialized) => {
@@ -93,7 +93,7 @@ export default function deferUntilReady(onReady: () => Promise<void>): void {
  * Handles the native `__r(0)` "run application" call: holds outstanding native calls, runs our
  * initialization, then starts Discord and flushes everything we held back.
  */
-function onRunApplication(original: MetroRequire, onReady: () => Promise<void>) {
+function onRunApplication(original: MetroRequire, onReady: () => void | Promise<void>) {
 	holdNativeCalls();
 
 	void runReady(onReady).then((initialized) => {
@@ -109,7 +109,7 @@ function onRunApplication(original: MetroRequire, onReady: () => Promise<void>) 
 }
 
 /** Runs the readiness callback, surfacing any failure the same way the entry point used to. */
-async function runReady(onReady: () => Promise<void>): Promise<boolean> {
+async function runReady(onReady: () => void | Promise<void>): Promise<boolean> {
 	try {
 		await onReady();
 

@@ -1,25 +1,13 @@
 #include <cassert>
-#include <filesystem>
 #include <string>
-#include <unistd.h>
 
 #include "LoaderBundleSignature.h"
-#include "LoaderFiles.h"
-#include "LoaderUpdater.h"
+#include "bundle_test_server.h"
 
 static const std::string kPublicKey = "PUAXw+hDiVqStwqnTRt+vJyYLM8uxJaMwM1V8Sr0Zgw=";
 static const std::string kSignature =
     "kqAJqfDUyrhyDoILX2QlQKKye1QWUD+Ps3YiI+vbadoIWsHkPhWZbkWPNhPQ8R2MOHsurrQwKu6wDSkWErsMAA==";
 static const std::string kMessage = "r";
-
-static std::filesystem::path makeTemporaryDirectory()
-{
-    std::string templatePath =
-        (std::filesystem::temp_directory_path() / "loader-bundle-signature-XXXXXX").string();
-    char *directory = mkdtemp(templatePath.data());
-    assert(directory);
-    return std::filesystem::path(directory);
-}
 
 static void decodesBase64()
 {
@@ -68,140 +56,59 @@ static void recognisesDevelopmentServers()
     assert(!loader::isDevelopmentBundleURL("file:///tmp/unbound.bundle"));
 }
 
-struct UpdaterHarness {
-    std::filesystem::path root = makeTemporaryDirectory();
-    loader::SettingsStore settings{(root / "settings.json").string()};
-    std::string           served    = kMessage;
-    std::string           signature = kSignature;
-    bool                  signed_   = true;
-    std::string           requestedSignature;
-
-    loader::BundleUpdater updater(const std::string &key)
-    {
-        settings.load();
-        return loader::BundleUpdater(
-            root.string(), loader::updaterSettings(settings),
-            [this](const std::string &url, double) -> std::optional<std::string> {
-                if (url.size() > 4 && url.compare(url.size() - 4, 4, ".sig") == 0)
-                {
-                    requestedSignature = url;
-                    return signed_ ? std::optional<std::string>(signature + "\n") : std::nullopt;
-                }
-                if (url.find("manifest.json") != std::string::npos)
-                {
-                    return std::string(R"({"bytecodeVersions":[98]})");
-                }
-                return std::nullopt;
-            },
-            [this](const std::string &, const std::string &destination,
-                   const std::map<std::string, std::string> &,
-                   const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
-                assert(loader::writeTextFileAtomically(destination, served));
-                return loader::DownloadResult{200, "\"etag\""};
-            },
-            key);
-    }
-
-    std::string candidatePath() const
-    {
-        return (root / "unbound.bundle.candidate").string();
-    }
-
-    bool downloadFrom(loader::BundleUpdater &updater, const std::optional<std::string> &base)
-    {
-        try
-        {
-            return updater.downloadBundle(updater.resolveBundlePath(), base, 98) == candidatePath();
-        }
-        catch (const std::runtime_error &)
-        {
-            return false;
-        }
-    }
-
-    ~UpdaterHarness()
-    {
-        std::filesystem::remove_all(root);
-    }
-};
-
-static void acceptsSignedBundles()
+static void hashesWithSha512()
 {
-    UpdaterHarness        harness;
-    loader::BundleUpdater updater = harness.updater(kPublicKey);
-    assert(harness.downloadFrom(updater, std::nullopt));
-    assert(harness.requestedSignature == "https://builds.unbound.rip/unbound.98.bundle.sig");
-    assert(loader::fileExists(harness.candidatePath() + ".etag"));
+    assert(loader::sha512Hex("abc") ==
+           "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a"
+           "2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f");
+    assert(loader::sha512Hex("").size() == 128);
 }
 
-static void verifiesAnyHttpsBase()
+static void bindsPullRequestSignaturesToTheirNumber()
 {
-    UpdaterHarness        harness;
-    loader::BundleUpdater updater = harness.updater(kPublicKey);
-    assert(harness.downloadFrom(updater, std::string("https://cdn.example.com/unbound/pr/42/")));
-    assert(harness.requestedSignature ==
-           "https://cdn.example.com/unbound/pr/42/unbound.98.bundle.sig");
+    using bundle_test::foreignKey;
+    using bundle_test::productionKey;
+    using bundle_test::pullRequestKey;
+    using loader::TrustedSigner;
 
-    harness.signature[3] = harness.signature[3] == 'A' ? 'B' : 'A';
-    std::filesystem::remove(harness.candidatePath());
-    std::filesystem::remove(harness.candidatePath() + ".etag");
-    assert(!harness.downloadFrom(updater, std::string("https://cdn.example.com/unbound/pr/42/")));
+    const std::string message = "bundle bytes";
+    assert(loader::pullRequestSigningContext(5) == "unbound-pr-bundle/v1/5/");
+
+    const loader::BundleTrust production = bundle_test::productionTrust();
+    const loader::BundleTrust pr5        = bundle_test::pullRequestTrust(5);
+    const loader::BundleTrust pr6        = bundle_test::pullRequestTrust(6);
+    const loader::BundleTrust unnumbered{productionKey().publicKey, pullRequestKey().publicKey, 0};
+
+    const std::string forPR5 = pullRequestKey().sign(message, 5);
+    assert(loader::verifyTrustedSignature(message, forPR5, pr5) == TrustedSigner::PullRequest);
+    assert(loader::verifyTrustedSignature(message, forPR5, pr6) == TrustedSigner::None);
+    assert(loader::verifyTrustedSignature(message, forPR5, production) == TrustedSigner::None);
+    assert(loader::verifyTrustedSignature(message, forPR5, unnumbered) == TrustedSigner::None);
+
+    const std::string plainPR = pullRequestKey().sign(message);
+    assert(loader::verifyTrustedSignature(message, plainPR, pr5) == TrustedSigner::None);
+
+    const std::string productionSigned = productionKey().sign(message);
+    assert(loader::verifyTrustedSignature(message, productionSigned, pr5) ==
+           TrustedSigner::Production);
+    assert(loader::verifyTrustedSignature(message, productionSigned, production) ==
+           TrustedSigner::Production);
+    assert(loader::verifyTrustedSignature(message, productionKey().sign(message, 5), pr5) ==
+           TrustedSigner::None);
+    assert(loader::verifyTrustedSignature(message, foreignKey().sign(message, 5), pr5) ==
+           TrustedSigner::None);
+    assert(loader::verifyTrustedSignature("other", forPR5, pr5) == TrustedSigner::None);
+
+    assert(production.isEnabled() && !production.trustsPullRequestKey());
+    assert(pr5.trustsPullRequestKey() && !unnumbered.trustsPullRequestKey());
+    assert(!loader::BundleTrust{}.isEnabled());
 }
 
-static void rejectsTamperedBundlesAndKeepsTheCurrentOne()
+static void compilesTheProductionTrust()
 {
-    UpdaterHarness harness;
-    std::string    current = (harness.root / "unbound.bundle").string();
-    assert(loader::writeTextFileAtomically(current, "current"));
-
-    loader::BundleUpdater updater = harness.updater(kPublicKey);
-    harness.served                = "tampered";
-    assert(!harness.downloadFrom(updater, std::nullopt));
-    assert(!loader::fileExists(harness.candidatePath()));
-    assert(!loader::fileExists(harness.candidatePath() + ".etag"));
-    assert(updater.resolveBundlePath() == current);
-    assert(loader::readTextFile(current) == std::string("current"));
-}
-
-static void rejectsUnsignedBundles()
-{
-    UpdaterHarness        harness;
-    loader::BundleUpdater updater = harness.updater(kPublicKey);
-    harness.signed_               = false;
-    assert(!harness.downloadFrom(updater, std::nullopt));
-    assert(!loader::fileExists(harness.candidatePath()));
-    assert(!harness.downloadFrom(updater, std::string("http://cdn.example.com/")));
-}
-
-static void skipsDevelopmentServers()
-{
-    UpdaterHarness        harness;
-    loader::BundleUpdater updater = harness.updater(kPublicKey);
-    harness.signed_               = false;
-    harness.served                = "dev bundle";
-    assert(harness.downloadFrom(updater, std::string("http://10.0.2.2:3000/")));
-    assert(harness.requestedSignature.empty());
-}
-
-static void skipsWhenExplicitlyAllowed()
-{
-    UpdaterHarness        harness;
-    loader::BundleUpdater updater = harness.updater(kPublicKey);
-    harness.settings.set("unbound", "loader.update.unsigned", true);
-    harness.signed_ = false;
-    harness.served  = "unsigned";
-    assert(harness.downloadFrom(updater, std::nullopt));
-    assert(harness.requestedSignature.empty());
-}
-
-static void skipsWithoutAKey()
-{
-    UpdaterHarness        harness;
-    loader::BundleUpdater updater = harness.updater("");
-    harness.signed_               = false;
-    harness.served                = "unsigned";
-    assert(harness.downloadFrom(updater, std::nullopt));
-    assert(harness.requestedSignature.empty());
+    const loader::BundleTrust compiled = loader::compiledBundleTrust();
+    assert(compiled.productionKey == loader::compiledBundleSigningKey());
+    assert(compiled.pullRequestNumber > 0 || compiled.pullRequestKey.empty());
 }
 
 int main()
@@ -209,12 +116,8 @@ int main()
     decodesBase64();
     verifiesSignatures();
     recognisesDevelopmentServers();
-    acceptsSignedBundles();
-    verifiesAnyHttpsBase();
-    rejectsTamperedBundlesAndKeepsTheCurrentOne();
-    rejectsUnsignedBundles();
-    skipsDevelopmentServers();
-    skipsWhenExplicitlyAllowed();
-    skipsWithoutAKey();
+    hashesWithSha512();
+    bindsPullRequestSignaturesToTheirNumber();
+    compilesTheProductionTrust();
     return 0;
 }

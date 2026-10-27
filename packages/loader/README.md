@@ -236,27 +236,96 @@ Browser login (`LoaderBrowserLogin`) and the tweak's Mach-O attestation digest (
 
 ## Signed client bundles
 
-The client build signs each bundle it writes (`unbound.js` and every `unbound.<bytecode>.bundle`) with Ed25519 and writes the base64 signature next to it as `<bundle>.sig`. The private key comes from the `UNBOUND_BUNDLE_SIGNING_KEY` environment variable (a PEM PKCS#8 Ed25519 key). Without it, the build writes no signatures and still succeeds, so local and fork builds keep working. `bun run --cwd packages/client verify-signatures` checks a build against the committed public key.
+### What the build signs
 
-The loader compiles in the public key from `core/keys/bundle-signing.pub` (the raw 32-byte key as base64). CMake and the iOS Makefile log at configure time whether verification is on. After a download, and before a candidate bundle can replace the current one, the updater fetches `<bundle URL>.sig` and checks it with the vendored Monocypher Ed25519 implementation (`vendor/monocypher`). If the signature is missing or does not match, the updater rejects the candidate and the current bundle keeps running. This applies to every update URL, including any custom HTTPS base. The check is skipped when:
+`bun run --cwd packages/client build` writes `manifest.json` next to the bundles:
+
+```json
+{
+	"revision": "b53f3860",
+	"channel": "beta",
+	"buildTime": "2026-10-27T12:06:15.507Z",
+	"bytecodeVersions": [98, 96, 94],
+	"sha512": {
+		"unbound.98.bundle": "<128 hex digits>",
+		"unbound.js": "<128 hex digits>"
+	}
+}
+```
+
+`channel` comes from `UNBOUND_CHANNEL` (`build-bundle.yml` sets `beta` for pushes to main and `stable` for releases; local builds write `local`, dev builds `dev`). `buildTime` is ISO 8601 in UTC. `sha512` holds the lowercase hex SHA-512 of every bundle in the build.
+
+When `UNBOUND_BUNDLE_SIGNING_KEY` holds a PEM PKCS#8 Ed25519 key, the build refreshes `sha512` and writes a base64 Ed25519 signature next to every bundle (`<bundle>.sig`) and next to the manifest (`manifest.json.sig`). Each signature covers the exact bytes of its file. Without the key, the build writes no signatures and still succeeds, so local and fork builds keep working.
+
+To sign a build that already exists, run `bun run --cwd packages/client sign [--dir <dist>] [--pr <n>] [--key-env <VAR>]`. It reads the key from `UNBOUND_BUNDLE_SIGNING_KEY`, or from `UNBOUND_PR_BUNDLE_SIGNING_KEY` with `--pr`; `--key-env` names another variable. `bun run --cwd packages/client verify-signatures [--dir <dist>] [--pr <n>]` and `go run ./tools bundle-key verify --dir <dist> [--pr <n>]` check a build against the committed public key: every signature, the manifest's fields, and that the manifest hashes exactly the bundles in the build.
+
+### Trust model
+
+The loader compiles in `core/keys/bundle-signing.pub`, the production public key (raw 32 bytes as base64). CMake and the iOS Makefile log at configure time whether verification is on. Every update check then works like this:
+
+1. Fetch `manifest.json` and `manifest.json.sig` from the update URL and verify the signature with the vendored Monocypher Ed25519 implementation (`vendor/monocypher`).
+2. Refuse the manifest if it lacks `buildTime`, `revision`, `channel` or a hash for the bundle the loader picked, or if anti-rollback (below) rejects it.
+3. Download the bundle and compare its SHA-512 with the manifest. A mismatch rejects the candidate, and the current bundle keeps running.
+4. Store the signed manifest and its signature beside the candidate as `<candidate>.trust`.
+
+The candidate is verified again from `<candidate>.trust` before it runs (every `resolveBundlePath`) and before it is promoted. A candidate that fails, or has no `.trust` file, is discarded and downloaded again at the same update check. That covers candidates downloaded by a loader from before signing existed. On promotion, the record moves to `unbound.<ext>.trust`, and the manifest becomes the anti-rollback baseline.
+
+The active bundle is not re-verified at launch, so a bundle verified at install keeps running offline. An active bundle without a `.trust` file came from an older loader. It keeps running, so the app works offline after the upgrade, but the next update check skips `If-None-Match` and downloads a verified copy, which replaces it on the next launch.
+
+### Anti-rollback
+
+A signature alone would let a server replay an older, legitimately signed build. The loader therefore keeps a baseline in its settings, `loader.update.baseline`: the update URL, `channel`, `buildTime` and `revision` of the manifest the active bundle was installed from. For the same update URL, a manifest is refused when its `buildTime` is older than the baseline or its `channel` differs from it. An equal `buildTime` is accepted.
+
+The baseline resets when:
+
+- the update URL changes (`loader.update.url`, a custom bundle from the toolbox, or the default URL again). A channel is served from its own URL, so switching channels switches URLs.
+- a bundle is promoted without a signed manifest: from a dev server, with `loader.update.unsigned`, from a loader built without a key, or through the transitional bundle-only path.
+
+### Exempt from the checks
+
+Signature, hash and anti-rollback checks are all skipped when:
 
 - no key file existed at build time, as in forks without a key,
 - the bundle comes from a dev server over plain `http://` on localhost, a `.local` name or a private address (this covers the dev-server auto-discovery on `10.0.2.2` and live reload), or
 - `loader.update.unsigned` is set to `true`.
 
-### Signing key
+The `.trust` record of such a candidate names the exemption, and the candidate is discarded if the exemption no longer applies when it is about to run.
 
-The key pair is already set up. The private key is not in this repository; it is kept in the maintainer's backup. CI receives it from the `UNBOUND_BUNDLE_SIGNING_KEY` repository secret. `build-bundle.yml` signs every bundle it publishes and fails before publishing if a bundle is not signed with the committed key. The client CI job signs and checks its build whenever the secret is available. The matching public key is `core/keys/bundle-signing.pub`.
+### Bundle-only transition
 
-To replace the key pair:
+Loaders from #271 verify only `<bundle>.sig`, and older loaders verify nothing, so the published output keeps the per-bundle `.sig` files beside the signed manifest. A loader from this release still accepts a bundle that only has a valid `<bundle>.sig` while the update URL serves no valid `manifest.json.sig`, but only while it has no baseline for that URL. Once a URL has served a signed manifest, an unsigned or invalid manifest from it is refused. Plan:
 
-1. Run `go run ./tools bundle-key generate --out <dir>` from `packages/loader`, with `<dir>` outside the repository. It writes `bundle-signing.pem` (mode 0600) and `bundle-signing.pub`, and prints only their paths and the public key.
-2. Store `bundle-signing.pem` in the maintainer's backup.
-3. Run `gh secret set UNBOUND_BUNDLE_SIGNING_KEY --repo marioparaschiv/unbound < <dir>/bundle-signing.pem`.
-4. Copy `bundle-signing.pub` to `core/keys/bundle-signing.pub` and commit it.
+1. This release: the build publishes the signed manifest and the per-bundle `.sig` files; loaders prefer the manifest and fall back to `<bundle>.sig` only without a baseline.
+2. The loader release after builds.unbound.rip and the release bucket have served signed manifests for a full release cycle removes the bundle-only fallback, so every loader requires a signed manifest.
+3. Once loaders from #271 are no longer supported, the build stops writing per-bundle `.sig` files.
+
+### Pull request builds
+
+Pull request test builds trust a second key, `core/keys/pr-bundle-signing.pub`, whose private half is the `UNBOUND_PR_BUNDLE_SIGNING_KEY` secret. `loader-ci.yml` passes the pull request number to `loader-build.yml`, which sets `UNBOUND_PR_NUMBER` for the Android module (Gradle passes it to CMake as `-DUNBOUND_PR_NUMBER`) and the iOS tweak (the Makefile reads it from the environment). A build with a PR number accepts a bundle or manifest signed either:
+
+- with the production key over the plain bytes, or
+- with the PR key over `unbound-pr-bundle/v1/<number>/` followed by the bytes.
+
+So a PR-key signature made for pull request 5 does not verify in a build for pull request 6, and a production build (no PR number) never compiles in or trusts the PR key. CI signs a fork's build for pull request `<n>` with `bun run --cwd packages/client sign --pr <n>`, which reads `UNBOUND_PR_BUNDLE_SIGNING_KEY`.
+
+### Signing keys
+
+The private keys are not in this repository; they are kept in the maintainer's backup. CI receives them from the `UNBOUND_BUNDLE_SIGNING_KEY` and `UNBOUND_PR_BUNDLE_SIGNING_KEY` repository secrets. `build-bundle.yml` signs every build it publishes and fails before publishing if a bundle or the manifest is not signed with the committed key. The client CI job signs and checks its build whenever the secret is available.
+
+| Key        | Public key                        | Secret                          | Trusted by               |
+| ---------- | --------------------------------- | ------------------------------- | ------------------------ |
+| Production | `core/keys/bundle-signing.pub`    | `UNBOUND_BUNDLE_SIGNING_KEY`    | every loader             |
+| PR         | `core/keys/pr-bundle-signing.pub` | `UNBOUND_PR_BUNDLE_SIGNING_KEY` | pull request builds only |
+
+To replace a key pair, with `<name>` being `bundle-signing` (production) or `pr-bundle-signing` (PR):
+
+1. Run `go run ./tools bundle-key generate --out <dir> --name <name>` from `packages/loader`, with `<dir>` outside the repository. It writes `<name>.pem` (mode 0600) and `<name>.pub`, and prints only their paths and the public key.
+2. Store `<name>.pem` in the maintainer's backup.
+3. Run `gh secret set UNBOUND_BUNDLE_SIGNING_KEY --repo marioparaschiv/unbound < <dir>/bundle-signing.pem`, or `UNBOUND_PR_BUNDLE_SIGNING_KEY` with `pr-bundle-signing.pem`.
+4. Copy `<name>.pub` to `core/keys/<name>.pub` and commit it.
 5. Delete `<dir>`.
 
-A loader accepts only bundles signed with the key it was built with. After a rotation, loaders built with the old key reject new bundles and keep their cached one until the user updates the loader.
+A loader accepts only signatures from the keys it was built with. After a production rotation, loaders built with the old key reject new builds and keep their cached bundle until the user updates the loader. After a PR rotation, only pull request builds made before it are affected.
 
 ## Discord compatibility scan
 
@@ -313,6 +382,12 @@ When the new build has no name to fall back to and the code finds the replacemen
 private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
 ```
 
+A method that only older builds declare is looked up with `legacyMethod`, which returns `null` instead of throwing:
+
+```kotlin
+val loadJSBundle = reactInstance.legacyMethod("loadJSBundle", bundleLoader)
+```
+
 ```ts
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 ```
@@ -367,7 +442,30 @@ Supported means every build from that minimum up to the newest alpha. Lookups ke
 
 The minimum follows the Play Store stable and App Store releases. Once the scheduled stable scan has seen a stable build newer than the minimum for more than `raiseReminderDays` days, it opens one `discord-support-policy` issue proposing to raise the minimum to the current stable build, and lists the legacy names raising it would let the team remove. Each scan's `compat.json` carries the date stable first moved past the minimum into the next scan, and raising the minimum restarts it. The issue closes once the minimum is raised.
 
-Legacy code is removed against the minimum, not against stable. When the scanned stable build is the minimum, or older than it, every supported build lacks the legacy names stable lacks, so the stable scan keeps one `discord-compat-cleanup` issue listing them and where the code uses them, and closes it once there is nothing left to remove. While stable is newer than the minimum, the scan cannot tell what the minimum build still has, so nothing more becomes removable until the minimum is raised. To clean up, raise the minimum in `compat-policy.json`, wait for the next stable scan to list the names, and remove them together with their `HostClass.legacy` or `legacyJavaClass` marks.
+Legacy code is removed against the minimum, not against stable. When the scanned stable build is the minimum, or older than it, every supported build lacks the legacy names stable lacks, so the stable scan keeps one `discord-compat-cleanup` issue listing them and where the code uses them, and closes it once there is nothing left to remove. While stable is newer than the minimum, the scan cannot tell what the minimum build still has, so nothing more becomes removable until the minimum is raised. To clean up, raise the minimum in `compat-policy.json`, wait for the next stable scan to list the names, and remove them together with their `HostClass.legacy`, `legacyMethod` or `legacyJavaClass` marks.
+
+## Smoke tests
+
+Every loader build installs what it built and checks that Discord loads Unbound and every first-party plugin without anyone signing in. They run on pull requests that touch the loader or the plugins, on pushes to `main`, and before every release: the release jobs only run once the Android and iOS builds, smoke tests included, succeed.
+
+- **Android** (`smoke` in `loader-android.yml`) boots an x86_64 `google_apis` emulator (API 34) with KVM, installs the patched Discord from `patch-discord` with the `config.x86_64` split it patches alongside (and keeps out of `Unbound.apks`), and uses `adb root` to copy the plugins and a `settings.json` into Discord's data the way `ubd install --serial` does.
+- **iOS** (`smoke-simulator` in `loader-ios.yml`) boots a fresh iPhone simulator on the newest installed runtime, installs `Discord.app` from the simulator build with `xcrun simctl install`, and writes the plugins and `settings.json` into its data container.
+
+Both build the client and the plugins from the same commit. The tool serves `packages/client/dist` to the app as its bundle (`loader.update.url`), turns on the debugger and points it at a `ub-debugger` bridge it starts, and enables every plugin. It then launches Discord and passes when, within the timeout:
+
+- the loader logs `[plugins] Loaded <id> from …` for every plugin built for that platform and `Loaded <n> plugins.` (logcat tag `Unbound`, or the `app.unbound` subsystem of the unified log),
+- nothing logs `Failed to start addon` or `Failed to load addon`, and Discord neither crashes nor exits,
+- `bun packages/cli/src/index.ts eval` over the bridge reports every plugin as `started`.
+
+On a fresh simulator Discord first downloads its own over-the-air update, which can take several minutes on hosted runners before React Native starts, so the iOS test waits up to 25 minutes. If Discord crashes before every plugin loads, the test relaunches it once and keeps the crash as a warning in the report. The iOS test skips, with the reason in the job summary, when the simulator build patches a Discord older than the iOS minimum in `compat-policy.json`, since the loader does not inject into those. Pull request builds patch the pinned Discord 205.0 IPA, so on pull requests only the Android test runs end to end, while main pushes and releases test both platforms against current Discord. The job summary has a table of each plugin's result, and the `android smoke test` and `ios smoke test` artifacts keep the full log, the bridge transcript, the bundle requests, the settings before and after, a screenshot, and on iOS any crash report. Run it against your own emulator or simulator:
+
+```bash
+bun run --cwd ../client build && bun run --cwd ../.. plugins:build
+go run ./tools smoke android --apks patched-discord --client ../client/dist
+go run ./tools smoke ios --app Payload/Discord.app --client ../client/dist
+```
+
+`--apks` is a directory of patched split APKs, from which the base, the emulator's ABI split and the other config splits are installed. Without `--client` the app keeps its default bundle URL. The simulator build retargets frameworks that only declare an iPhoneOS deployment target, such as `CydiaSubstrate.framework`, to the simulator platform, since the simulator refuses to load them otherwise.
 
 ## Symbolicating native crashes
 

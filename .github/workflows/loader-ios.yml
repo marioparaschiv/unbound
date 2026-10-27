@@ -30,6 +30,9 @@ on:
             caller_workflow:
                 default: ''
                 type: string
+            pr_number:
+                default: ''
+                type: string
             source_ipa_artifact:
                 default: ''
                 type: string
@@ -81,6 +84,7 @@ jobs:
             deb_filename: ${{ steps.set-deb-filename.outputs.filename }}
         env:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
             HOMEBREW_NO_AUTO_UPDATE: 1
             HOMEBREW_NO_INSTALL_CLEANUP: 1
 
@@ -389,6 +393,7 @@ jobs:
         needs: build-ipa
         env:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
         outputs:
             simulator_url: ${{ steps.upload-simulator.outputs.artifact-url }}
             simulator_filename: ${{ steps.set-simulator-filename.outputs.filename }}
@@ -438,6 +443,66 @@ jobs:
             - name: Set simulator filename
               id: set-simulator-filename
               run: echo "filename=unbound-ios-simulator.zip" >> "$GITHUB_OUTPUT"
+
+    smoke-simulator:
+        name: Smoke test the simulator build
+        if: *only_build_check
+        needs: build-simulator
+        runs-on: macos-26
+        timeout-minutes: 45
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 1
+
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
+
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
+              with:
+                  bun-version: canary
+
+            - name: Build the client and the plugins
+              working-directory: .
+              env:
+                  TMPDIR: ${{ runner.temp }}
+              run: |
+                  set -euo pipefail
+                  bun run --cwd packages/client build
+                  bun run plugins:build
+
+            - name: Download the simulator build
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: ios-simulator
+                  path: packages/loader/smoke/package
+
+            - name: Unpack the simulator build
+              id: app
+              run: |
+                  set -euo pipefail
+                  unzip -q smoke/package/unbound-ios-simulator.zip -d smoke/app
+                  app=$(find smoke/app -maxdepth 2 -type d -name Discord.app -print -quit)
+                  test -n "$app"
+                  echo "path=$app" >> "$GITHUB_OUTPUT"
+
+            - name: Run the smoke test
+              env:
+                  APP_PATH: ${{ steps.app.outputs.path }}
+              run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --timeout 25m
+
+            - name: Upload smoke test logs
+              if: always()
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: ios smoke test
+                  path: packages/loader/smoke/artifacts/
+                  if-no-files-found: warn
+                  retention-days: 14
 
     deploy-pages:
         if: |

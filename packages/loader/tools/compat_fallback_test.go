@@ -196,3 +196,25 @@ func TestCompatBreakageError(t *testing.T) {
 		t.Fatalf("a broken build must fail the release check, got %v", err)
 	}
 }
+
+func TestScriptFallbackToOwnImplementation(t *testing.T) {
+	source := `import firstOf from '@unbound-app/utils/first-of';
+import { findByName } from '@unbound-app/api/metro';
+import OwnNotice from './own-notice';
+export const Notice = firstOf(() => findByName('HelpMessage'), () => OwnNotice);
+`
+	references := scriptReferences(t, "packages/client/src/api/metro/components.ts", source)
+	notice := groupedReference(references, referenceName, "HelpMessage", true)
+	if notice == nil || notice.Alternatives != 2 {
+		t.Fatalf("the lookup must know its group has two alternatives: %+v", notice)
+	}
+
+	results := evaluateCompat([]*compatReference{notice}, compatTestTargets()[:1], nil)
+	finding := fallbackFinding(results, "HelpMessage", notice.Group)
+	if finding.Status != compatFallback || !strings.Contains(finding.Reason, "Unbound's own implementation") {
+		t.Fatalf("a lookup Unbound implements itself must be covered, got %q (%s)", finding.Status, finding.Reason)
+	}
+	if compatHasProblems(results) {
+		t.Fatalf("a covered lookup must not be a problem: %+v", results.Findings)
+	}
+}

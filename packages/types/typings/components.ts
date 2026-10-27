@@ -19,10 +19,13 @@ export type DiscordFunction<T = any> = (...args: any[]) => T;
  * The Discord mobile design system module (keyed by `createStyles` / `dismissAlerts` / `ContextMenu`).
  * See `DESIGN.md` for the full catalogue.
  */
+export type SemanticColorToken = Readonly<Record<string, string | number | boolean>>;
+
 export type DesignModule = {
 	/* Styling */
 	createStyles: CreateStyles;
 	TextStyleSheet: Record<TextVariant, TextStyle>;
+	useToken: (token: SemanticColorToken) => string;
 
 	/* Typography */
 	Text: ComponentType<TextProps>;

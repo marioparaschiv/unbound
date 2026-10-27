@@ -3,6 +3,7 @@
 #include <array>
 #include <cctype>
 #include <cstdint>
+#include <monocypher/monocypher-ed25519.h>
 #include <vector>
 
 #include "LoaderCrypto.h"
@@ -11,7 +12,30 @@
 #define UNBOUND_BUNDLE_SIGNING_KEY ""
 #endif
 
+#ifndef UNBOUND_PR_BUNDLE_SIGNING_KEY
+#define UNBOUND_PR_BUNDLE_SIGNING_KEY ""
+#endif
+
+#ifndef UNBOUND_PR_NUMBER
+#define UNBOUND_PR_NUMBER 0
+#endif
+
 namespace loader {
+static constexpr size_t kSha512Size = 64;
+
+static_assert(UNBOUND_PR_NUMBER >= 0 && UNBOUND_PR_NUMBER <= UINT32_MAX,
+              "UNBOUND_PR_NUMBER must be a pull request number");
+
+bool BundleTrust::isEnabled() const
+{
+    return !productionKey.empty() || trustsPullRequestKey();
+}
+
+bool BundleTrust::trustsPullRequestKey() const
+{
+    return pullRequestNumber > 0 && !pullRequestKey.empty();
+}
+
 static int base64Value(char character)
 {
     if (character >= 'A' && character <= 'Z')
@@ -96,12 +120,67 @@ std::string compiledBundleSigningKey()
     return UNBOUND_BUNDLE_SIGNING_KEY;
 }
 
+BundleTrust compiledBundleTrust()
+{
+    BundleTrust trust;
+    trust.productionKey     = UNBOUND_BUNDLE_SIGNING_KEY;
+    trust.pullRequestNumber = static_cast<uint32_t>(UNBOUND_PR_NUMBER);
+    if (trust.pullRequestNumber > 0)
+    {
+        trust.pullRequestKey = UNBOUND_PR_BUNDLE_SIGNING_KEY;
+    }
+    return trust;
+}
+
+std::string pullRequestSigningContext(uint32_t pullRequestNumber)
+{
+    return "unbound-pr-bundle/v1/" + std::to_string(pullRequestNumber) + "/";
+}
+
+std::string sha512Hex(std::string_view data)
+{
+    std::array<uint8_t, kSha512Size> hash{};
+    crypto_sha512(hash.data(), reinterpret_cast<const uint8_t *>(data.data()), data.size());
+    return crypto::hex(std::string_view(reinterpret_cast<const char *>(hash.data()), hash.size()));
+}
+
 bool verifyBundleSignature(const std::string &bundle, const std::string &signatureBase64,
                            const std::string &publicKeyBase64)
 {
     std::optional<std::string> publicKey = decodeBase64(publicKeyBase64);
     std::optional<std::string> signature = decodeBase64(signatureBase64);
     return publicKey && signature && crypto::verifyEd25519(bundle, *signature, *publicKey);
+}
+
+TrustedSigner verifyTrustedSignature(const std::string &message, const std::string &signatureBase64,
+                                     const BundleTrust &trust)
+{
+    if (!trust.productionKey.empty() &&
+        verifyBundleSignature(message, signatureBase64, trust.productionKey))
+    {
+        return TrustedSigner::Production;
+    }
+    if (trust.trustsPullRequestKey() &&
+        verifyBundleSignature(pullRequestSigningContext(trust.pullRequestNumber) + message,
+                              signatureBase64, trust.pullRequestKey))
+    {
+        return TrustedSigner::PullRequest;
+    }
+    return TrustedSigner::None;
+}
+
+std::string describeSigner(TrustedSigner signer, const BundleTrust &trust)
+{
+    switch (signer)
+    {
+        case TrustedSigner::Production:
+            return "the production key";
+        case TrustedSigner::PullRequest:
+            return "the key for pull request #" + std::to_string(trust.pullRequestNumber);
+        case TrustedSigner::None:
+            break;
+    }
+    return "no trusted key";
 }
 
 static std::string lowercase(std::string value)

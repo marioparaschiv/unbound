@@ -120,6 +120,7 @@ void deleteBundle(SettingsStore &settings, BundleUpdater &updater, const std::st
         const std::string path = joinPath(documents, std::string("unbound.") + extension);
 
         removeFile(path);
+        removeFile(path + kBundleTrustSuffix);
         updater.rejectBundle(path + ".candidate");
     }
 }

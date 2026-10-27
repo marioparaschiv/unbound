@@ -111,3 +111,26 @@ test('preserves the loader-captured Metro registry during initialization', async
 		}
 	}
 });
+
+test('initializes synchronously when Discord already defined its modules', () => {
+	const previousRequire = globalThis.__r;
+	const events: string[] = [];
+
+	globalThis.__r = createRequire(() => undefined);
+
+	try {
+		deferUntilReady(() => {
+			events.push('initialize');
+		});
+
+		events.push('discord:runApplication');
+
+		expect(events).toEqual(['initialize', 'discord:runApplication']);
+	} finally {
+		if (previousRequire) {
+			globalThis.__r = previousRequire;
+		} else {
+			Reflect.deleteProperty(globalThis, '__r');
+		}
+	}
+});

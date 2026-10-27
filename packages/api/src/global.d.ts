@@ -125,6 +125,7 @@ export type {
 	SegmentedControlProps,
 	SegmentedControlState,
 	SegmentedControlStateOptions,
+	SemanticColorToken,
 	SettingsEntry,
 	SettingsObject,
 	SettingsScreen,

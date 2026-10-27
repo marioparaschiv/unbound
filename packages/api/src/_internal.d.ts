@@ -235,13 +235,10 @@ export type ContextMenuProps = {
 export type CreateStyles = <T extends StyleSheetSpec>(
 	styles: StyleSheetSpecOrFactory<T>,
 ) => () => ResolvedStyles<T>;
-/**
- * The Discord mobile design system module (keyed by `createStyles` / `dismissAlerts` / `ContextMenu`).
- * See `DESIGN.md` for the full catalogue.
- */
 export type DesignModule = {
 	createStyles: CreateStyles;
 	TextStyleSheet: Record<TextVariant, TextStyle>;
+	useToken: (token: SemanticColorToken) => string;
 	Text: ReactModule.ComponentType<TextProps>;
 	Heading: ReactModule.ComponentType<TextProps>;
 	TableRow: TableRowComponent;
@@ -977,6 +974,11 @@ export type SegmentedControlStateOptions = {
 	defaultIndex?: number;
 	onPageChange?: (index: number) => void;
 };
+/**
+ * The Discord mobile design system module (keyed by `createStyles` / `dismissAlerts` / `ContextMenu`).
+ * See `DESIGN.md` for the full catalogue.
+ */
+export type SemanticColorToken = Readonly<Record<string, string | number | boolean>>;
 /** A registered Unbound settings entry, mirroring Discord's `SETTING_RENDERER_CONFIG` route shape. */
 export type SettingsEntry = {
 	type: 'route';
