@@ -118,12 +118,15 @@ describe('buildAddon', () => {
 	test('kills every process of a build that times out', async () => {
 		const directory = mkdtempSync(join(tmpdir(), 'ubd-build-addon-'));
 		const pidFile = join(directory, 'grandchild.pid');
-		const addon = {
+		const addon: DiscoveredAddon = {
 			id: 'com.example.slow',
+			kind: 'plugin',
+			path: '',
+			bundle: 'dist/index.js',
 			dir: directory,
 			output: directory,
 			static: false,
-		} as DiscoveredAddon;
+		};
 
 		try {
 			const building = buildAddon(addon, grandchildScript(pidFile), {}, 1_000);
