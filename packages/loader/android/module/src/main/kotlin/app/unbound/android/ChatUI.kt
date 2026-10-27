@@ -25,7 +25,6 @@ object ChatUI {
     private const val CONTENT_VIEW = "com.discord.chat.presentation.message.view.MessageContentView"
     private const val AVATAR_VIEW = "com.facebook.drawee.view.SimpleDraweeView"
     private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
-    private const val PROBE_SIZE = 100
 
     private data class BubbleStyle(
         val radius: Float,
@@ -91,11 +90,8 @@ object ChatUI {
     }
 
     private fun darkTheme(row: ViewGroup): Boolean {
-        isThemeDark?.let { method ->
-            runCatching { method.invoke(themeManager) as? Boolean }.getOrNull()?.let { return it }
-        }
-        val text = contentText(row) ?: return true
-        return Color.luminance(text.currentTextColor) > 0.5f
+        val managerDark = isThemeDark?.let { method -> runCatching { method.invoke(themeManager) as? Boolean }.getOrNull() }
+        return ChatAppearance.isDarkTheme(managerDark) { contentText(row)?.let { Color.luminance(it.currentTextColor) } }
     }
 
     private fun contentText(group: ViewGroup): TextView? {
@@ -108,9 +104,7 @@ object ChatUI {
 
     private fun hookAvatars(xposed: XposedInterface, classLoader: ClassLoader) {
         val avatarType = classLoader.loadClass(AVATAR_VIEW)
-        val clipToCircle = runCatching {
-            CLIPPING_UTILS.load(classLoader).getDeclaredMethod("clipToCircle", View::class.java)
-        }.getOrNull()
+        val clipToCircle = ChatAppearance.clipToCircle(CLIPPING_UTILS.find(classLoader))
         if (clipToCircle == null) {
             hookCircleOutlines(xposed, avatarType)
             return
@@ -150,11 +144,13 @@ object ChatUI {
 
     private fun isCircle(provider: ViewOutlineProvider, context: Context): Boolean = circleProviders.getOrPut(provider) {
         runCatching {
-            val probe = View(context).apply { layout(0, 0, PROBE_SIZE, PROBE_SIZE) }
+            val size = ChatAppearance.PROBE_SIZE
+            val probe = View(context).apply { layout(0, 0, size, size) }
             val outline = Outline()
             provider.getOutline(probe, outline)
             val bounds = Rect()
-            outline.getRect(bounds) && bounds.width() == PROBE_SIZE && bounds.height() == PROBE_SIZE && outline.radius == PROBE_SIZE / 2f
+            val rectangular = outline.getRect(bounds)
+            ChatAppearance.isCircleOutline(rectangular, bounds.width(), bounds.height(), outline.radius)
         }.getOrDefault(false)
     }
 
@@ -262,4 +258,18 @@ object ChatUI {
     private fun children(group: ViewGroup): List<View> = (0 until group.childCount).map(group::getChildAt)
 
     private fun dp(view: View, value: Float): Float = value * view.resources.displayMetrics.density
+}
+
+internal object ChatAppearance {
+    const val PROBE_SIZE = 100
+    private const val DARK_TEXT_LUMINANCE = 0.5f
+
+    fun clipToCircle(clippingUtils: Class<*>?): java.lang.reflect.Method? =
+        clippingUtils?.let { runCatching { it.getDeclaredMethod("clipToCircle", View::class.java) }.getOrNull() }
+
+    fun isCircleOutline(rectangular: Boolean, width: Int, height: Int, radius: Float): Boolean =
+        rectangular && width == PROBE_SIZE && height == PROBE_SIZE && radius == PROBE_SIZE / 2f
+
+    fun isDarkTheme(managerDark: Boolean?, textLuminance: () -> Float?): Boolean =
+        managerDark ?: textLuminance()?.let { it > DARK_TEXT_LUMINANCE } ?: true
 }
