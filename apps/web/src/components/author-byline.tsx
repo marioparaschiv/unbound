@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import type { ComponentProps } from 'react';
 
 import type { ResolvedAuthor } from '~/lib/authors/resolve';
+import AvatarPile from '~/components/ui/avatar-pile';
 import UserAvatar from '~/components/user-avatar';
 import cn from '~/lib/cn';
 
@@ -26,44 +27,46 @@ export function authorKey(author: ResolvedAuthor): string {
 
 function AuthorName({ author, linkProfiles }: AuthorNameProps) {
 	if (!linkProfiles || author.kind !== 'user') {
-		return <span className='truncate'>{author.name}</span>;
+		return <span>{author.name}</span>;
 	}
 
 	return (
 		<Link
 			to='/developers/$discordId'
 			params={{ discordId: author.discordId }}
-			className='truncate underline-offset-4 hover:underline'
+			className='underline-offset-4 hover:underline'
 		>
 			{author.name}
 		</Link>
 	);
 }
 
-/** "by" followed by each author's avatar and name. */
+// Discord's piles show three avatars, then a "+N" chip.
+const MAX_AVATARS = 3;
+
+/** "by" followed by the authors' avatars in a pile, then their names. */
 function AuthorByline({ authors, linkProfiles = false, className, ...props }: AuthorBylineProps) {
 	return (
-		<span
-			className={cn(
-				'inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 min-w-0',
-				className,
-			)}
-			{...props}
-		>
+		<span className={cn('inline-flex items-center gap-1.5 min-w-0', className)} {...props}>
 			by
-			{authors.map((author, index) => (
-				<span key={authorKey(author)} className='inline-flex items-center gap-1 min-w-0'>
+			<AvatarPile size={16} totalCount={authors.length} aria-hidden>
+				{authors.slice(0, MAX_AVATARS).map((author) => (
 					<UserAvatar
-						className='size-4 text-[10px]'
+						key={authorKey(author)}
+						className='text-[10px]'
 						src={author.avatarUrl}
 						name={author.name}
 					/>
-					<span className='inline-flex min-w-0'>
+				))}
+			</AvatarPile>
+			<span className='truncate'>
+				{authors.map((author, index) => (
+					<span key={authorKey(author)}>
 						<AuthorName author={author} linkProfiles={linkProfiles} />
-						{index < authors.length - 1 ? ',' : null}
+						{index < authors.length - 1 ? ', ' : null}
 					</span>
-				</span>
-			))}
+				))}
+			</span>
 		</span>
 	);
 }
