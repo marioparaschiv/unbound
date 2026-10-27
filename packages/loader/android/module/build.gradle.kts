@@ -16,7 +16,9 @@ val packageVersionCode = packageVersion.split(".").take(3).fold(0) { code, part 
     code * 100 + (part.filter(Char::isDigit).toIntOrNull() ?: 0)
 }
 val resolvedVersionCode = buildNumber?.let { 1_000_000 + it } ?: packageVersionCode.coerceAtLeast(1)
-val bundleURL = providers.gradleProperty("unboundBundleURL").orNull?.trim()?.takeIf(String::isNotEmpty)
+val bundleURL = (providers.gradleProperty("unboundBundleURL").orNull ?: System.getenv("UNBOUND_BUNDLE_URL"))
+    ?.trim()
+    ?.takeIf(String::isNotEmpty)
 
 if (bundleURL != null && !bundleURL.matches(Regex("https://[A-Za-z0-9.-]+(:[0-9]+)?/[A-Za-z0-9._~/-]*/"))) {
     throw GradleException("unboundBundleURL must be an https URL ending in /, got $bundleURL")
@@ -31,6 +33,8 @@ fun buildConfigString(value: String): String = "\"" + value.filter { it.isLetter
 val commitShortHash = gitOutput("rev-parse", "--short", "HEAD")
 val commitSubject = gitOutput("log", "-1", "--pretty=format:%s")
 val commitBranch = gitOutput("branch", "--show-current").ifEmpty { "detached" }
+val pullRequestNumber: String = providers.gradleProperty("unboundPrNumber").orNull
+    ?: System.getenv("UNBOUND_PR_NUMBER").orEmpty()
 val buildTimestamp: String = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"))
 val signingStoreFile = System.getenv("ANDROID_SIGNING_STORE_FILE")
 val signingStorePassword = System.getenv("ANDROID_SIGNING_STORE_PASSWORD")
@@ -66,6 +70,7 @@ android {
                     listOf(
                         "-DANDROID_STL=c++_static",
                         "-DUNBOUND_VERSION=$packageVersion",
+                        "-DUNBOUND_PR_NUMBER=${pullRequestNumber.trim()}",
                         "-DUNBOUND_BUNDLE_URL=${bundleURL.orEmpty()}",
                     )
                 cppFlags += listOf("-std=c++20", "-fexceptions", "-frtti")
@@ -112,6 +117,11 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            val vectors = repositoryRoot.resolve("core/tests/vectors/crypto-cross-check.txt")
+            it.inputs.file(vectors)
+            it.systemProperty("unbound.coreCryptoVectors", vectors.absolutePath)
+        }
     }
 
     packaging {

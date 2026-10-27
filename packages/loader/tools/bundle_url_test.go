@@ -17,7 +17,7 @@ func TestDefaultBundleURLCanBeOverriddenAtBuildTime(t *testing.T) {
 	for path, required := range map[string][]string{
 		"core/include/LoaderUpdater.h": {
 			"#ifndef UNBOUND_DEFAULT_BUNDLE_URL\n#define UNBOUND_DEFAULT_BUNDLE_URL \"https://builds.unbound.rip/\"\n#endif",
-			"constexpr const char *kDefaultBundleBaseURL = UNBOUND_DEFAULT_BUNDLE_URL;",
+			"constexpr const char *kDefaultBundleBaseURL  = UNBOUND_DEFAULT_BUNDLE_URL;",
 		},
 		"ios/Makefile": {
 			"ifneq ($(strip $(UNBOUND_BUNDLE_URL)),)",

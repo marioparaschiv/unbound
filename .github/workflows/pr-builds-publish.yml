@@ -71,7 +71,6 @@ jobs:
                   CDN_URL: ${{ vars.CDN_URL }}
                   HAS_S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID != '' }}
                   HAS_S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY != '' }}
-                  SIGNING_KEY_SECRET: UNBOUND_PR_BUNDLE_SIGNING_KEY
                   HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}
               run: bun scripts/pr-builds-plan.ts plan
 
@@ -120,12 +119,22 @@ jobs:
                   run-id: ${{ github.event.workflow_run.id }}
                   github-token: ${{ github.token }}
 
+            - name: Check the fork's manifest
+              if: steps.plan.outputs.enabled == 'true'
+              env:
+                  PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+                  MANIFEST_FILE: packages/client/dist/manifest.json
+              run: bun scripts/pr-builds-fork.ts check-manifest
+
             - name: Sign the bundles with the pull request key
               if: steps.plan.outputs.enabled == 'true'
               env:
                   PR_NUMBER: ${{ steps.pull-request.outputs.number }}
                   UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}
-              run: bun packages/client/scripts/build/sign.ts --pr "$PR_NUMBER" packages/client/dist
+              run: |
+                  set -euo pipefail
+                  bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"
+                  bun run --cwd packages/client verify-signatures --dir dist --pr "$PR_NUMBER"
 
             - name: Upload the client bundles
               if: steps.plan.outputs.enabled == 'true'

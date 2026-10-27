@@ -2,7 +2,11 @@ import { describe, expect, test } from 'bun:test';
 
 import type { ForkRun, PullRequestSummary } from './pr-builds-fork';
 
-import { parseEventPullRequests, resolveForkPullRequest } from './pr-builds-fork';
+import {
+	forkManifestProblem,
+	parseEventPullRequests,
+	resolveForkPullRequest,
+} from './pr-builds-fork';
 
 const run: ForkRun = {
 	repository: 'marioparaschiv/unbound',
@@ -93,5 +97,17 @@ describe('parseEventPullRequests', () => {
 		).toEqual([7]);
 		expect(parseEventPullRequests('')).toEqual([]);
 		expect(parseEventPullRequests('{}')).toEqual([]);
+	});
+});
+
+describe('forkManifestProblem', () => {
+	test('accepts only the channel of the confirmed pull request', () => {
+		expect(forkManifestProblem('{"channel":"pr-42"}', 42)).toBe('');
+		expect(forkManifestProblem('{"channel":"beta"}', 42)).toBe(
+			'manifest.json declares channel beta, not pr-42.',
+		);
+		expect(forkManifestProblem('{"channel":"pr-7"}', 42)).toContain('not pr-42');
+		expect(forkManifestProblem('{}', 42)).toContain('channel undefined');
+		expect(forkManifestProblem('not json', 42)).toBe('manifest.json is not JSON.');
 	});
 });

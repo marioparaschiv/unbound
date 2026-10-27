@@ -52,9 +52,10 @@ on:
                 description: 'Exact Discord Android version code to patch'
                 required: false
                 type: string
-            bundle_url:
-                description: 'Default bundle update URL to build in; empty keeps the release default'
+            pr_number:
+                description: 'Pull request whose test bundles this build trusts the PR bundle key for'
                 required: false
+                default: ''
                 type: string
         outputs:
             module_filename:
@@ -110,6 +111,7 @@ jobs:
             ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
             ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
             ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
         outputs:
             module_filename: ${{ steps.collect.outputs.module_filename }}
             module_url: ${{ steps.upload-module.outputs.artifact-url }}
@@ -151,11 +153,18 @@ jobs:
                   printf '%s' "$ANDROID_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$keystore"
                   echo "ANDROID_SIGNING_STORE_FILE=$keystore" >> "$GITHUB_ENV"
 
+            - name: Derive the pull request bundle URL
+              env:
+                  PR_NUMBER: ${{ inputs.pr_number || '' }}
+                  CDN_URL: ${{ vars.CDN_URL }}
+              run: |
+                  if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then
+                    echo "UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
+                  fi
+
             - name: Build module
               working-directory: packages/loader/android
-              env:
-                  BUNDLE_URL: ${{ inputs.bundle_url }}
-              run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PunboundBuildNumber="${GITHUB_RUN_NUMBER}" -PunboundBundleURL="$BUNDLE_URL"
+              run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PunboundBuildNumber="${GITHUB_RUN_NUMBER}"
 
             - name: Test module
               working-directory: packages/loader/android

@@ -23,7 +23,7 @@ const REQUIRED_VARIABLES = ['S3_ENDPOINT', 'S3_REGION', 'S3_PUBLIC_BUCKET', 'CDN
 
 const BUCKET_SECRETS = ['S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const;
 
-const DEFAULT_SIGNING_SECRET = 'UNBOUND_BUNDLE_SIGNING_KEY';
+const SIGNING_SECRET = 'UNBOUND_PR_BUNDLE_SIGNING_KEY';
 
 const SAFE_URL = /^https:\/\/[A-Za-z0-9.-]+(:[0-9]+)?\/[A-Za-z0-9._~/-]*\/$/;
 
@@ -59,7 +59,7 @@ export function planPullRequestBuilds(env: PlanEnv): PullRequestPlan {
 			enabled: false,
 			stage: true,
 			...urls,
-			reason: 'This fork build runs without secrets, so the trusted Pull Request Builds Publish workflow signs its bundles with the pull request key and uploads it once this run succeeds.',
+			reason: 'This fork build runs without secrets, so the trusted Pull Request Builds Publish workflow signs its bundles with the pull request key and uploads them once this run succeeds.',
 		};
 	}
 
@@ -67,7 +67,7 @@ export function planPullRequestBuilds(env: PlanEnv): PullRequestPlan {
 		...REQUIRED_VARIABLES.filter((name) => !env[name]?.trim()).map(
 			(name) => `variable ${name}`,
 		),
-		...[...BUCKET_SECRETS, env.SIGNING_KEY_SECRET || DEFAULT_SIGNING_SECRET]
+		...[...BUCKET_SECRETS, SIGNING_SECRET]
 			.filter((name) => env[`HAS_${name}`] !== 'true')
 			.map((name) => `secret ${name}`),
 	];

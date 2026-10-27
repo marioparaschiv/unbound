@@ -116,12 +116,11 @@ jobs:
                   CDN_URL: ${{ vars.CDN_URL }}
                   HAS_S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID != '' }}
                   HAS_S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY != '' }}
-                  HAS_UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY != '' }}
+                  HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}
               run: bun scripts/pr-builds-plan.ts plan
 
     build:
         name: Build Unbound
-        needs: pr-builds
         permissions:
             contents: write
             id-token: write
@@ -132,7 +131,7 @@ jobs:
             ipa_url: https://raw.githubusercontent.com/Tulugaak/Discord-205.0-IPA/4eec98e61e20d0720c091d42c4a762710b32e8c5/com.hammerandchisel.discord_861573261.ipa
             release: false
             caller_workflow: 'ci'
-            bundle_url: ${{ needs.pr-builds.outputs.bundle_url }}
+            pr_number: ${{ github.event.pull_request.number }}
         secrets: inherit
 
     upload-pr-builds:
@@ -170,11 +169,16 @@ jobs:
             - name: Build the client
               env:
                   TMPDIR: ${{ runner.temp }}
-                  UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
+                  UNBOUND_CHANNEL: pr-${{ github.event.pull_request.number }}
               run: bun run --cwd packages/client build
 
+            - name: Sign the bundles with the pull request key
+              env:
+                  UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}
+              run: bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"
+
             - name: Check every bundle is signed
-              run: bun run --cwd packages/client verify-signatures
+              run: bun run --cwd packages/client verify-signatures --dir dist --pr "$PR_NUMBER"
 
             - name: Upload the client bundles
               env:
@@ -245,6 +249,7 @@ jobs:
             - name: Build the client
               env:
                   TMPDIR: ${{ runner.temp }}
+                  UNBOUND_CHANNEL: pr-${{ github.event.pull_request.number }}
               run: bun run --cwd packages/client build
 
             - name: Record the pull request number

@@ -482,6 +482,16 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 	}
 }
 
+func TestParsedBundlePublishingBuildsOffTmpAndSkipsAnUnconfiguredBucket(t *testing.T) {
+	build := loadWorkflow(t, "build-bundle.yml").job(t, "build")
+	if got := build.step(t, "Build the client").Env["TMPDIR"]; got != "${{ runner.temp }}" {
+		t.Fatalf("hermesc cannot move out of /tmp on hosted runners, so the build must use the runner temp directory, TMPDIR is %q", got)
+	}
+	if got := build.step(t, "Upload bundles to the public bucket").If; !strings.Contains(got, "vars.S3_PUBLIC_BUCKET != ''") {
+		t.Fatalf("the bucket upload must skip when the bucket is not configured, condition is %q", got)
+	}
+}
+
 func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 	ci := loadWorkflow(t, "loader-ci.yml")
 	plan := ci.job(t, "pr-builds")
@@ -490,26 +500,24 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 		t.Fatalf("the plan must come from the tested script, runs %q", planStep.Run)
 	}
 	for name, value := range map[string]string{
-		"IS_FORK":                        "${{ github.event.pull_request.head.repo.full_name != github.repository }}",
-		"HAS_S3_ACCESS_KEY_ID":           "${{ secrets.S3_ACCESS_KEY_ID != '' }}",
-		"HAS_S3_SECRET_ACCESS_KEY":       "${{ secrets.S3_SECRET_ACCESS_KEY != '' }}",
-		"HAS_UNBOUND_BUNDLE_SIGNING_KEY": "${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY != '' }}",
-		"CDN_URL":                        "${{ vars.CDN_URL }}",
+		"IS_FORK":                           "${{ github.event.pull_request.head.repo.full_name != github.repository }}",
+		"HAS_S3_ACCESS_KEY_ID":              "${{ secrets.S3_ACCESS_KEY_ID != '' }}",
+		"HAS_S3_SECRET_ACCESS_KEY":          "${{ secrets.S3_SECRET_ACCESS_KEY != '' }}",
+		"HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY": "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}",
+		"CDN_URL":                           "${{ vars.CDN_URL }}",
 	} {
 		if planStep.Env[name] != value {
 			t.Fatalf("the plan must see %s as %q, got %q", name, value, planStep.Env[name])
 		}
 	}
-	for _, name := range []string{"S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "UNBOUND_BUNDLE_SIGNING_KEY"} {
+	for _, name := range []string{"S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "UNBOUND_PR_BUNDLE_SIGNING_KEY"} {
 		if _, ok := planStep.Env[name]; ok {
 			t.Fatalf("the plan must only learn whether %s is set, never its value", name)
 		}
 	}
 
-	build := ci.job(t, "build")
-	requireNeeds(t, "build", build, "pr-builds")
-	if build.With["bundle_url"] != "${{ needs.pr-builds.outputs.bundle_url }}" {
-		t.Fatalf("pull request loaders must be built with their bundle URL, got %+v", build.With)
+	if build := ci.job(t, "build"); build.With["pr_number"] != "${{ github.event.pull_request.number }}" {
+		t.Fatalf("pull request loaders must know their pull request, got %+v", build.With)
 	}
 
 	upload := ci.job(t, "upload-pr-builds")
@@ -518,10 +526,17 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 		t.Fatalf("uploads must stay off unless planned, runs if %q", upload.If)
 	}
 	clientBuild := upload.step(t, "Build the client")
-	if clientBuild.Env["UNBOUND_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}" || clientBuild.Env["TMPDIR"] != "${{ runner.temp }}" {
-		t.Fatalf("the uploaded bundles must be signed and compiled to bytecode, got %+v", clientBuild.Env)
+	if clientBuild.Env["TMPDIR"] != "${{ runner.temp }}" || clientBuild.Env["UNBOUND_CHANNEL"] != "pr-${{ github.event.pull_request.number }}" {
+		t.Fatalf("the uploaded bundles must be compiled to bytecode on the pull request's own channel, got %+v", clientBuild.Env)
 	}
-	if upload.step(t, "Check every bundle is signed").Run != "bun run --cwd packages/client verify-signatures" {
+	if _, ok := clientBuild.Env["UNBOUND_BUNDLE_SIGNING_KEY"]; ok {
+		t.Fatal("pull request bundles must never be signed with the production key")
+	}
+	sign := upload.step(t, "Sign the bundles with the pull request key")
+	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || sign.Run != `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"` {
+		t.Fatalf("pull request bundles must be signed with the pull request key, got %+v", sign)
+	}
+	if upload.step(t, "Check every bundle is signed").Run != `bun run --cwd packages/client verify-signatures --dir dist --pr "$PR_NUMBER"` {
 		t.Fatal("unsigned bundles must never reach the bucket")
 	}
 	client := upload.step(t, "Upload the client bundles")
@@ -553,29 +568,22 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 	}
 }
 
-func TestParsedLoaderBuildsTakeTheBundleURLOnlyWhenGiven(t *testing.T) {
-	build := loadWorkflow(t, "loader-build.yml")
-	for _, name := range []string{"android", "ios"} {
-		if build.job(t, name).With["bundle_url"] != "${{ inputs.bundle_url }}" {
-			t.Fatalf("the %s build must pass the bundle URL through", name)
+func TestParsedLoaderBuildsDeriveThePullRequestBundleURL(t *testing.T) {
+	for name, job := range map[string]workflowJob{
+		"loader-android.yml build-module": loadWorkflow(t, "loader-android.yml").job(t, "build-module"),
+		"loader-ios.yml build-tweak":      loadWorkflow(t, "loader-ios.yml").job(t, "build-tweak"),
+	} {
+		derive := job.step(t, "Derive the pull request bundle URL")
+		if derive.Env["PR_NUMBER"] != "${{ inputs.pr_number || '' }}" || derive.Env["CDN_URL"] != "${{ vars.CDN_URL }}" {
+			t.Fatalf("%s must derive the bundle URL from the pull request number it already gets, got %+v", name, derive.Env)
+		}
+		if !strings.Contains(derive.Run, `if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then`) || !strings.Contains(derive.Run, `UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/`) {
+			t.Fatalf("%s must only set a bundle URL for pull request builds, runs %q", name, derive.Run)
 		}
 	}
-	if with := build.job(t, "publish-app-repo").With; with["bundle_url"] != "" {
-		t.Fatalf("release builds must keep the default bundle URL, got %+v", with)
-	}
-	module := loadWorkflow(t, "loader-android.yml").job(t, "build-module").step(t, "Build module")
-	if module.Env["BUNDLE_URL"] != "${{ inputs.bundle_url }}" || !strings.Contains(module.Run, `-PunboundBundleURL="$BUNDLE_URL"`) {
-		t.Fatalf("the module must be built with the given bundle URL, got %+v", module)
-	}
-	tweak := loadWorkflow(t, "loader-ios.yml").job(t, "build-tweak").step(t, "Build package")
-	if tweak.Env["UNBOUND_BUNDLE_URL"] != "${{ inputs.bundle_url }}" {
-		t.Fatalf("the tweak must be built with the given bundle URL, got %+v", tweak.Env)
-	}
-	for _, name := range []string{"loader-release-poll.yml"} {
-		for jobName, job := range loadWorkflow(t, name).Jobs {
-			if _, ok := job.With["bundle_url"]; ok {
-				t.Fatalf("%s %s must not override the release bundle URL", name, jobName)
-			}
+	for jobName, job := range loadWorkflow(t, "loader-release-poll.yml").Jobs {
+		if _, ok := job.With["pr_number"]; ok {
+			t.Fatalf("loader-release-poll.yml %s must keep the release bundle URL", jobName)
 		}
 	}
 }
@@ -664,23 +672,26 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 		t.Fatalf("the claimed pull request must be checked against the run's head, got %+v", confirm)
 	}
 	plan := publish.step(t, "Plan the uploads")
-	if plan.Env["PR_NUMBER"] != "${{ steps.pull-request.outputs.number }}" || plan.Env["SIGNING_KEY_SECRET"] != "UNBOUND_PR_BUNDLE_SIGNING_KEY" {
+	if plan.Env["PR_NUMBER"] != "${{ steps.pull-request.outputs.number }}" || plan.Env["HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}" {
 		t.Fatalf("the publisher must plan with the confirmed number and the pull request key, got %+v", plan.Env)
 	}
 	for _, step := range publish.Steps {
 		if strings.HasPrefix(step.Uses, "actions/download-artifact@") && step.With["run-id"] != "${{ github.event.workflow_run.id }}" {
 			t.Fatalf("%q must download from the fork's run", step.Name)
 		}
-		if strings.Contains(step.Run, "packages/client/dist/") && !strings.Contains(step.Run, "sign.ts") {
+		if strings.Contains(step.Run, "dist/") {
 			t.Fatalf("%q must not run anything from the fork's build", step.Name)
 		}
 	}
 	sign := publish.step(t, "Sign the bundles with the pull request key")
-	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || !strings.Contains(sign.Run, "packages/client/scripts/build/sign.ts") {
+	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || !strings.Contains(sign.Run, `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"`) || !strings.Contains(sign.Run, `verify-signatures --dir dist --pr "$PR_NUMBER"`) {
 		t.Fatalf("fork bundles must be signed with the pull request key, got %+v", sign)
 	}
 	if _, ok := sign.Env["UNBOUND_BUNDLE_SIGNING_KEY"]; ok {
 		t.Fatal("fork bundles must never be signed with the production key")
+	}
+	if check := publish.step(t, "Check the fork's manifest"); check.Run != "bun scripts/pr-builds-fork.ts check-manifest" {
+		t.Fatalf("the fork's manifest must declare its own channel, runs %q", check.Run)
 	}
 	if publish.step(t, "Comment on the pull request").With["pr-number"] != "${{ steps.pull-request.outputs.number }}" {
 		t.Fatal("the publisher must comment on the confirmed pull request")

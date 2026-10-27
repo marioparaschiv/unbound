@@ -82,62 +82,163 @@ UpdaterSettings updaterSettings(SettingsStore &store)
 }
 
 BundleUpdater::BundleUpdater(std::string documents, UpdaterSettings settings, TextFetcher fetchText,
-                             FileDownloader download, std::string signingKey)
+                             FileDownloader download, BundleTrust trust)
     : documents_(std::move(documents)), settings_(std::move(settings)),
-      fetchText_(std::move(fetchText)), download_(std::move(download)),
-      signingKey_(std::move(signingKey))
+      fetchText_(std::move(fetchText)), download_(std::move(download)), trust_(std::move(trust))
 {
 }
 
-bool BundleUpdater::isSignatureValid(const std::string &url, const std::string &candidatePath)
+static std::string urlFileName(const std::string &url)
 {
-    if (signingKey_.empty())
+    std::string path  = url.substr(0, url.find_first_of("?#"));
+    size_t      slash = path.find_last_of('/');
+    return slash == std::string::npos ? path : path.substr(slash + 1);
+}
+
+static nlohmann::json parseRecord(const std::optional<std::string> &text)
+{
+    if (!text)
+    {
+        return nlohmann::json();
+    }
+    nlohmann::json record = nlohmann::json::parse(*text, nullptr, false);
+    return record.is_object() ? record : nlohmann::json();
+}
+
+static std::string recordField(const nlohmann::json &record, const char *key)
+{
+    auto field = record.find(key);
+    return field != record.end() && field->is_string() ? field->get<std::string>() : "";
+}
+
+std::optional<std::string> BundleUpdater::fetch(const std::string &url) const
+{
+    return fetchText_ ? fetchText_(url, kManifestFetchTimeoutSeconds) : std::nullopt;
+}
+
+std::optional<BundleBaseline> BundleUpdater::baseline() const
+{
+    return parseBaseline(settings_.getString(kBundleBaselineSetting, ""));
+}
+
+std::optional<std::string> BundleUpdater::exemptionFor(const std::string &url) const
+{
+    if (!trust_.isEnabled())
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
             "Bundle signature check skipped: this loader was built without a signing key.");
-        return true;
+        return "unkeyed";
     }
 
     if (settings_.getBoolean("loader.update.unsigned", false))
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
             "Bundle signature check skipped: loader.update.unsigned is on.");
-        return true;
+        return "unsigned";
     }
 
     if (isDevelopmentBundleURL(url))
     {
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
             "Bundle signature check skipped for the dev server at " + url + ".");
-        return true;
+        return "development";
     }
 
-    std::optional<std::string> signature =
-        fetchText_ ? fetchText_(url + kBundleSignatureSuffix, kManifestFetchTimeoutSeconds)
-                   : std::nullopt;
-    if (!signature)
+    return std::nullopt;
+}
+
+bool BundleUpdater::isExemptionCurrent(const std::string &reason, const std::string &url) const
+{
+    if (reason == "unkeyed")
     {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Rejected the downloaded bundle: " + url + kBundleSignatureSuffix +
-                " could not be fetched.");
-        return false;
+        return !trust_.isEnabled();
     }
-
-    std::optional<std::string> bundle = readTextFile(candidatePath);
-    if (!bundle || !verifyBundleSignature(*bundle, *signature, signingKey_))
+    if (reason == "unsigned")
     {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Rejected the downloaded bundle: its signature does not match.");
-        return false;
+        return settings_.getBoolean("loader.update.unsigned", false);
     }
-
-    log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Bundle signature verified.");
-    return true;
+    return reason == "development" && isDevelopmentBundleURL(url);
 }
 
 std::string BundleUpdater::bundlePath(const std::string &extension) const
 {
     return joinPath(documents_, "unbound." + extension);
+}
+
+std::optional<std::string> BundleUpdater::candidateProblem(const std::string &candidatePath) const
+{
+    nlohmann::json record = parseRecord(readTextFile(candidatePath + kBundleTrustSuffix));
+    if (record.is_null())
+    {
+        return std::string("it has no verification record, so an older loader downloaded it");
+    }
+
+    std::string kind = recordField(record, "kind");
+    std::string url  = recordField(record, "url");
+    if (kind == "exempt")
+    {
+        std::string reason = recordField(record, "exemption");
+        if (!isExemptionCurrent(reason, url))
+        {
+            return "it was downloaded without verification (" + reason +
+                   "), which no longer applies";
+        }
+        return std::nullopt;
+    }
+
+    if (!trust_.isEnabled())
+    {
+        return std::nullopt;
+    }
+
+    std::optional<std::string> bundle = readTextFile(candidatePath);
+    if (!bundle)
+    {
+        return std::string("it could not be read");
+    }
+
+    std::string source    = recordField(record, "source");
+    std::string signature = recordField(record, "signature");
+    if (kind == "bundle")
+    {
+        if (verifyTrustedSignature(*bundle, signature, trust_) == TrustedSigner::None)
+        {
+            return std::string("its stored signature does not match");
+        }
+        std::optional<BundleBaseline> active = baseline();
+        if (active && active->source == source)
+        {
+            return std::string("it has no signed manifest, but the active bundle from ") + source +
+                   " does";
+        }
+        return std::nullopt;
+    }
+
+    if (kind != "manifest")
+    {
+        return "its verification record has an unknown kind \"" + kind + "\"";
+    }
+
+    std::string manifestText = recordField(record, "manifest");
+    if (verifyTrustedSignature(manifestText, signature, trust_) == TrustedSigner::None)
+    {
+        return std::string("its stored manifest signature does not match");
+    }
+    std::optional<BundleManifest> manifest = parseBundleManifest(manifestText);
+    if (!manifest || !manifest->isSignable())
+    {
+        return std::string("its stored manifest is incomplete");
+    }
+    auto hash = manifest->sha512.find(recordField(record, "file"));
+    if (hash == manifest->sha512.end() || hash->second != sha512Hex(*bundle))
+    {
+        return std::string("its SHA-512 does not match its signed manifest");
+    }
+    if (std::optional<std::string> rollback = rollbackProblem(*manifest, source, baseline()))
+    {
+        return rollback;
+    }
+    return std::nullopt;
 }
 
 std::string BundleUpdater::resolveBundlePath()
@@ -164,6 +265,7 @@ std::string BundleUpdater::resolveBundlePath()
                 throw std::runtime_error("Interrupted bundle update could not be restored");
             }
             rejectBundle(candidate);
+            removeFile(target + kBundleTrustSuffix);
             removeFile(promoting);
             settings_.setString("loader.update.etag", "");
         }
@@ -177,6 +279,15 @@ std::string BundleUpdater::resolveBundlePath()
         {
             if (!fileExists(candidate + ".etag") || fileSize(candidate) == 0)
             {
+                rejectBundle(candidate);
+                continue;
+            }
+            if (std::optional<std::string> problem = candidateProblem(candidate))
+            {
+                log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+                    "Discarded the bundle candidate: " + *problem +
+                        ". A verified copy will be "
+                        "downloaded.");
                 rejectBundle(candidate);
                 continue;
             }
@@ -196,61 +307,211 @@ std::string BundleUpdater::resolveBundlePath()
     return bundlePath("bundle");
 }
 
+BundleUpdater::BundleSource
+BundleUpdater::bundleSource(const std::optional<std::string> &updateURL) const
+{
+    BundleSource source{updateURL.value_or(kDefaultBundleBaseURL), std::nullopt};
+
+    if (hasSuffix(source.baseURL, ".bundle") || hasSuffix(source.baseURL, ".js"))
+    {
+        source.directURL = source.baseURL;
+        source.baseURL   = directoryOfURL(source.baseURL);
+    }
+
+    if (!hasSuffix(source.baseURL, "/"))
+    {
+        source.baseURL += "/";
+    }
+    return source;
+}
+
+std::string BundleUpdater::selectURL(const BundleSource                  &source,
+                                     const std::optional<BundleManifest> &manifest,
+                                     uint32_t                             bytecodeVersion) const
+{
+    if (!manifest)
+    {
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Failed to fetch manifest; falling back to JavaScript bundle");
+        return source.directURL.value_or(source.baseURL + "unbound.js");
+    }
+
+    std::string versions;
+    for (uint32_t version : manifest->bytecodeVersions)
+    {
+        versions += (versions.empty() ? "" : ",") + std::to_string(version);
+    }
+    log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+        "Manifest bytecode versions: [" + versions +
+            "], Current bytecode version: " + std::to_string(bytecodeVersion));
+
+    std::string file = manifest->bundleFile(bytecodeVersion);
+    log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+        file == "unbound.js" ? "Using JavaScript bundle" : "Using hermes bytecode bundle");
+    return source.baseURL + file;
+}
+
 std::string BundleUpdater::downloadURL(const std::optional<std::string> &updateURL,
                                        uint32_t                          bytecodeVersion)
 {
-    std::string                baseURL = updateURL.value_or(kDefaultBundleBaseURL);
-    std::optional<std::string> directURL;
+    BundleSource               source       = bundleSource(updateURL);
+    std::optional<std::string> manifestText = fetch(source.baseURL + kBundleManifestName);
+    return selectURL(source, manifestText ? parseBundleManifest(*manifestText) : std::nullopt,
+                     bytecodeVersion);
+}
 
-    if (hasSuffix(baseURL, ".bundle") || hasSuffix(baseURL, ".js"))
+BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std::string> &updateURL,
+                                                        uint32_t bytecodeVersion)
+{
+    BundleSource                  source       = bundleSource(updateURL);
+    std::string                   manifestURL  = source.baseURL + kBundleManifestName;
+    std::optional<std::string>    manifestText = fetch(manifestURL);
+    std::optional<BundleManifest> manifest =
+        manifestText ? parseBundleManifest(*manifestText) : std::nullopt;
+
+    DownloadPlan plan;
+    plan.url    = selectURL(source, manifest, bytecodeVersion);
+    plan.source = source.baseURL;
+
+    if (std::optional<std::string> exemption = exemptionFor(plan.url))
     {
-        directURL = baseURL;
-        baseURL   = directoryOfURL(baseURL);
+        plan.exemption = *exemption;
+        return plan;
     }
 
-    if (!hasSuffix(baseURL, "/"))
-    {
-        baseURL += "/";
-    }
+    std::optional<std::string> signature =
+        manifest ? fetch(manifestURL + kBundleSignatureSuffix) : std::nullopt;
+    TrustedSigner signer =
+        signature ? verifyTrustedSignature(*manifestText, *signature, trust_) : TrustedSigner::None;
+    std::optional<BundleBaseline> active = baseline();
 
-    std::optional<std::string> manifestText =
-        fetchText_ ? fetchText_(baseURL + "manifest.json", kManifestFetchTimeoutSeconds)
-                   : std::nullopt;
-    if (manifestText)
+    if (signer == TrustedSigner::None)
     {
-        nlohmann::json manifest = nlohmann::json::parse(*manifestText, nullptr, false);
-        if (!manifest.is_discarded() && manifest.is_object())
+        if (active && active->source == plan.source)
         {
-            auto versions = manifest.find("bytecodeVersions");
-            log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-                "Manifest bytecode versions: " +
-                    (versions == manifest.end() ? std::string("none") : versions->dump()) +
-                    ", Current bytecode version: " + std::to_string(bytecodeVersion));
-
-            if (versions != manifest.end() && versions->is_array())
-            {
-                for (const nlohmann::json &version : *versions)
-                {
-                    if (version.is_number_unsigned() && version.get<uint32_t>() == bytecodeVersion)
-                    {
-                        log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Using hermes bytecode bundle");
-                        return baseURL + "unbound." + std::to_string(bytecodeVersion) + ".bundle";
-                    }
-                }
-            }
-
-            log(LogLevel::Info, LOG_CATEGORY_UPDATER, "Using JavaScript bundle");
-            return baseURL + "unbound.js";
+            log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+                "Refused the update: " + manifestURL +
+                    " has no valid signature, but the active bundle came from a signed manifest.");
+            throw std::runtime_error("Bundle manifest failed signature verification");
         }
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            manifestURL + " has no valid signature; checking the bundle's own signature instead.");
+        plan.bundleSignatureOnly = true;
+        return plan;
     }
 
-    log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-        "Failed to fetch manifest; falling back to JavaScript bundle");
-    if (directURL)
+    if (!manifest->isSignable())
     {
-        return *directURL;
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Refused the update: the signed manifest lacks its build time, revision, channel or "
+            "hashes.");
+        throw std::runtime_error("Signed bundle manifest is incomplete");
     }
-    return baseURL + "unbound.js";
+
+    if (std::optional<std::string> rollback = rollbackProblem(*manifest, plan.source, active))
+    {
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Refused the update: the signed manifest would roll back the active bundle, as " +
+                *rollback + ".");
+        throw std::runtime_error("Bundle manifest would roll back the active bundle");
+    }
+
+    auto hash = manifest->sha512.find(urlFileName(plan.url));
+    if (hash == manifest->sha512.end())
+    {
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Refused the update: the signed manifest has no hash for " + urlFileName(plan.url) +
+                ".");
+        throw std::runtime_error("Signed bundle manifest does not list the bundle");
+    }
+
+    log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+        "Bundle manifest verified with " + describeSigner(signer, trust_) + " (revision " +
+            manifest->revision + ", channel " + manifest->channel + ", built " +
+            manifest->buildTime + ").");
+    plan.manifestText      = *manifestText;
+    plan.manifestSignature = *signature;
+    plan.expectedSha512    = hash->second;
+    return plan;
+}
+
+std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &plan,
+                                                         const std::string  &candidatePath) const
+{
+    nlohmann::json record{
+        {"url", plan.url}, {"source", plan.source}, {"file", urlFileName(plan.url)}};
+
+    if (!plan.exemption.empty())
+    {
+        record["kind"]      = "exempt";
+        record["exemption"] = plan.exemption;
+        return record.dump();
+    }
+
+    std::optional<std::string> bundle = readTextFile(candidatePath);
+    if (!bundle)
+    {
+        return std::nullopt;
+    }
+
+    if (!plan.bundleSignatureOnly)
+    {
+        if (sha512Hex(*bundle) != plan.expectedSha512)
+        {
+            log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+                "Rejected the downloaded bundle: its SHA-512 does not match the signed manifest.");
+            return std::nullopt;
+        }
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            "Bundle signature verified: " + urlFileName(plan.url) +
+                " matches the signed manifest.");
+        record["kind"]      = "manifest";
+        record["manifest"]  = plan.manifestText;
+        record["signature"] = plan.manifestSignature;
+        return record.dump();
+    }
+
+    std::optional<std::string> signature = fetch(plan.url + kBundleSignatureSuffix);
+    if (!signature)
+    {
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Rejected the downloaded bundle: " + plan.url + kBundleSignatureSuffix +
+                " could not be fetched.");
+        return std::nullopt;
+    }
+
+    TrustedSigner signer = verifyTrustedSignature(*bundle, *signature, trust_);
+    if (signer == TrustedSigner::None)
+    {
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Rejected the downloaded bundle: its signature does not match.");
+        return std::nullopt;
+    }
+
+    log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+        "Bundle signature verified with " + describeSigner(signer, trust_) + ".");
+    record["kind"]      = "bundle";
+    record["signature"] = *signature;
+    return record.dump();
+}
+
+void BundleUpdater::recordBaseline(const std::string &record)
+{
+    nlohmann::json parsed = parseRecord(record);
+    if (recordField(parsed, "kind") != "manifest")
+    {
+        settings_.setString(kBundleBaselineSetting, "");
+        return;
+    }
+
+    std::optional<BundleManifest> manifest = parseBundleManifest(recordField(parsed, "manifest"));
+    if (!manifest)
+    {
+        settings_.setString(kBundleBaselineSetting, "");
+        return;
+    }
+    settings_.setString(kBundleBaselineSetting, serializeBaseline(baselineFromManifest(
+                                                    *manifest, recordField(parsed, "source"))));
 }
 
 bool isAcceptedDownloadStatus(int status)
@@ -269,8 +530,9 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         return preferredPath;
     }
 
-    std::string storedEtag = settings_.getString("loader.update.etag", "");
-    std::string url        = downloadURL(updateURL, bytecodeVersion);
+    std::string  storedEtag = settings_.getString("loader.update.etag", "");
+    DownloadPlan plan       = planDownload(updateURL, bytecodeVersion);
+    std::string  url        = plan.url;
 
     std::string urlExtension     = urlPathExtension(url);
     std::string currentPath      = preferredPath.empty() ? resolveBundlePath() : preferredPath;
@@ -286,7 +548,13 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
 
     std::map<std::string, std::string> headers;
     bool forceUpdate = settings_.getBoolean("loader.update.force", false);
-    if (fileExists(targetPath) && !forceUpdate && !storedEtag.empty())
+    bool isVerified  = fileExists(targetPath + kBundleTrustSuffix);
+    if (fileExists(targetPath) && !isVerified)
+    {
+        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
+            "The active bundle has no verification record; downloading a verified copy.");
+    }
+    if (fileExists(targetPath) && isVerified && !forceUpdate && !storedEtag.empty())
     {
         headers["If-None-Match"] = storedEtag;
     }
@@ -316,13 +584,15 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         throw std::runtime_error("Downloaded bundle candidate is unavailable");
     }
 
-    if (!isSignatureValid(url, candidatePath))
+    std::optional<std::string> record = verifiedRecord(plan, candidatePath);
+    if (!record)
     {
         rejectBundle(candidatePath);
         throw std::runtime_error("Downloaded bundle failed signature verification");
     }
 
-    if (!writeTextFileAtomically(candidatePath + ".etag", response->etag))
+    if (!writeTextFileAtomically(candidatePath + kBundleTrustSuffix, *record) ||
+        !writeTextFileAtomically(candidatePath + ".etag", response->etag))
     {
         rejectBundle(candidatePath);
         throw std::runtime_error("Downloaded bundle metadata could not be saved");
@@ -348,6 +618,14 @@ bool BundleUpdater::acceptBundle(const std::string &path)
         return true;
     }
 
+    if (std::optional<std::string> problem = candidateProblem(path))
+    {
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Refused to promote the bundle candidate: " + *problem + ".");
+        rejectBundle(path);
+        return false;
+    }
+
     std::string targetPath    = path.substr(0, path.size() - kCandidateSuffix.size());
     std::string backupPath    = targetPath + ".previous";
     std::string promotingPath = path + ".promoting";
@@ -364,6 +642,14 @@ bool BundleUpdater::acceptBundle(const std::string &path)
         return false;
     }
 
+    std::optional<std::string> record = readTextFile(path + kBundleTrustSuffix);
+    if (!record || !writeTextFileAtomically(targetPath + kBundleTrustSuffix, *record))
+    {
+        removeFile(targetPath + kBundleTrustSuffix);
+    }
+    recordBaseline(record.value_or(""));
+    removeFile(path + kBundleTrustSuffix);
+
     std::optional<std::string> etag = readTextFile(path + ".etag");
     settings_.setString("loader.update.etag", etag.value_or(""));
     removeFile(path + ".etag");
@@ -375,6 +661,7 @@ bool BundleUpdater::acceptBundle(const std::string &path)
         if (otherPath != targetPath)
         {
             removeFile(otherPath);
+            removeFile(otherPath + kBundleTrustSuffix);
         }
     }
 
@@ -391,5 +678,6 @@ void BundleUpdater::rejectBundle(const std::string &path)
     removeFile(path);
     removeFile(path + ".etag");
     removeFile(path + ".attempting");
+    removeFile(path + kBundleTrustSuffix);
 }
 }

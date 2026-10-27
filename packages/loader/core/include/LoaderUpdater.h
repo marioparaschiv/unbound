@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 
+#include "LoaderBundleManifest.h"
 #include "LoaderBundleSignature.h"
 #include "LoaderSettings.h"
 
@@ -44,13 +45,15 @@ UpdaterSettings updaterSettings(SettingsStore &store);
 #define UNBOUND_DEFAULT_BUNDLE_URL "https://builds.unbound.rip/"
 #endif
 
-constexpr const char *kDefaultBundleBaseURL = UNBOUND_DEFAULT_BUNDLE_URL;
+constexpr const char *kDefaultBundleBaseURL  = UNBOUND_DEFAULT_BUNDLE_URL;
+constexpr const char *kBundleTrustSuffix     = ".trust";
+constexpr const char *kBundleBaselineSetting = "loader.update.baseline";
 
 class BundleUpdater
 {
 public:
     BundleUpdater(std::string documents, UpdaterSettings settings, TextFetcher fetchText,
-                  FileDownloader download, std::string signingKey = compiledBundleSigningKey());
+                  FileDownloader download, BundleTrust trust = compiledBundleTrust());
 
     std::string resolveBundlePath();
     std::string downloadBundle(const std::string                &preferredPath,
@@ -62,14 +65,42 @@ public:
     bool acceptBundle(const std::string &path);
     void rejectBundle(const std::string &path);
 
+    std::optional<BundleBaseline> baseline() const;
+
 private:
-    std::string bundlePath(const std::string &extension) const;
-    bool        isSignatureValid(const std::string &url, const std::string &candidatePath);
+    struct BundleSource {
+        std::string                baseURL;
+        std::optional<std::string> directURL;
+    };
+
+    struct DownloadPlan {
+        std::string url;
+        std::string source;
+        std::string exemption;
+        std::string manifestText;
+        std::string manifestSignature;
+        std::string expectedSha512;
+        bool        bundleSignatureOnly = false;
+    };
+
+    std::string                bundlePath(const std::string &extension) const;
+    BundleSource               bundleSource(const std::optional<std::string> &updateURL) const;
+    std::optional<std::string> fetch(const std::string &url) const;
+    std::string selectURL(const BundleSource &source, const std::optional<BundleManifest> &manifest,
+                          uint32_t bytecodeVersion) const;
+    std::optional<std::string> exemptionFor(const std::string &url) const;
+    bool         isExemptionCurrent(const std::string &reason, const std::string &url) const;
+    DownloadPlan planDownload(const std::optional<std::string> &updateURL,
+                              uint32_t                          bytecodeVersion);
+    std::optional<std::string> verifiedRecord(const DownloadPlan &plan,
+                                              const std::string  &candidatePath) const;
+    std::optional<std::string> candidateProblem(const std::string &candidatePath) const;
+    void                       recordBaseline(const std::string &record);
 
     std::string     documents_;
     UpdaterSettings settings_;
     TextFetcher     fetchText_;
     FileDownloader  download_;
-    std::string     signingKey_;
+    BundleTrust     trust_;
 };
 }

@@ -30,10 +30,10 @@ on:
             caller_workflow:
                 default: ''
                 type: string
-            source_ipa_artifact:
+            pr_number:
                 default: ''
                 type: string
-            bundle_url:
+            source_ipa_artifact:
                 default: ''
                 type: string
         outputs:
@@ -84,6 +84,7 @@ jobs:
             deb_filename: ${{ steps.set-deb-filename.outputs.filename }}
         env:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
             HOMEBREW_NO_AUTO_UPDATE: 1
             HOMEBREW_NO_INSTALL_CLEANUP: 1
 
@@ -150,9 +151,16 @@ jobs:
                   command -v aclocal
                   command -v glibtoolize
 
-            - name: Build package
+            - name: Derive the pull request bundle URL
               env:
-                  UNBOUND_BUNDLE_URL: ${{ inputs.bundle_url }}
+                  PR_NUMBER: ${{ inputs.pr_number || '' }}
+                  CDN_URL: ${{ vars.CDN_URL }}
+              run: |
+                  if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then
+                    echo "UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
+                  fi
+
+            - name: Build package
               run: go run ./tools build tweak --configuration release --non-interactive
 
             - name: Collect tweak symbols and UUIDs
@@ -394,6 +402,7 @@ jobs:
         needs: build-ipa
         env:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
         outputs:
             simulator_url: ${{ steps.upload-simulator.outputs.artifact-url }}
             simulator_filename: ${{ steps.set-simulator-filename.outputs.filename }}

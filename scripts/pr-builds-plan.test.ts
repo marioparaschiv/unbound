@@ -19,7 +19,7 @@ const configured = {
 	CDN_URL: 'https://cdn.example.test/',
 	HAS_S3_ACCESS_KEY_ID: 'true',
 	HAS_S3_SECRET_ACCESS_KEY: 'true',
-	HAS_UNBOUND_BUNDLE_SIGNING_KEY: 'true',
+	HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: 'true',
 };
 
 describe('planPullRequestBuilds', () => {
@@ -60,34 +60,18 @@ describe('planPullRequestBuilds', () => {
 
 		expect(plan.enabled).toBe(false);
 		expect(plan.reason).toBe(
-			'S3 uploads are off until these are configured: variable S3_ENDPOINT, variable S3_REGION, variable S3_PUBLIC_BUCKET, variable CDN_URL, secret S3_ACCESS_KEY_ID, secret S3_SECRET_ACCESS_KEY, secret UNBOUND_BUNDLE_SIGNING_KEY.',
+			'S3 uploads are off until these are configured: variable S3_ENDPOINT, variable S3_REGION, variable S3_PUBLIC_BUCKET, variable CDN_URL, secret S3_ACCESS_KEY_ID, secret S3_SECRET_ACCESS_KEY, secret UNBOUND_PR_BUNDLE_SIGNING_KEY.',
 		);
 	});
 
-	test('names the signing secret the caller signs with', () => {
+	test('needs the pull request key, since PR loaders reject unsigned bundles', () => {
 		const plan = planPullRequestBuilds({
 			...configured,
-			SIGNING_KEY_SECRET: 'UNBOUND_PR_BUNDLE_SIGNING_KEY',
-		});
-
-		expect(plan.reason).toContain('secret UNBOUND_PR_BUNDLE_SIGNING_KEY');
-		expect(
-			planPullRequestBuilds({
-				...configured,
-				SIGNING_KEY_SECRET: 'UNBOUND_PR_BUNDLE_SIGNING_KEY',
-				HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: 'true',
-			}).enabled,
-		).toBe(true);
-	});
-
-	test('needs the signing key, since keyed loaders reject unsigned bundles', () => {
-		const plan = planPullRequestBuilds({
-			...configured,
-			HAS_UNBOUND_BUNDLE_SIGNING_KEY: 'false',
+			HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: 'false',
 		});
 
 		expect(plan.enabled).toBe(false);
-		expect(plan.reason).toContain('secret UNBOUND_BUNDLE_SIGNING_KEY');
+		expect(plan.reason).toContain('secret UNBOUND_PR_BUNDLE_SIGNING_KEY');
 	});
 
 	test('refuses a CDN URL that could not be compiled into a loader', () => {
@@ -111,7 +95,7 @@ describe('cleanupSkipReason', () => {
 			cleanupSkipReason({
 				...configured,
 				CDN_URL: '',
-				HAS_UNBOUND_BUNDLE_SIGNING_KEY: 'false',
+				HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: 'false',
 			}),
 		).toBe('');
 		expect(cleanupSkipReason({ ...configured, S3_REGION: '' })).toBe(

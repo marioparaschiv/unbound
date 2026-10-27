@@ -61,6 +61,28 @@ export async function resolveForkPullRequest(
 }
 
 /**
+ * @description Checks that a fork's client build declares the channel of its own pull request, so a signed manifest can never pass as another channel's.
+ * @param manifestText The fork's `manifest.json`.
+ * @param pullRequest The confirmed pull request number.
+ * @returns Why the manifest is refused, or an empty string.
+ */
+export function forkManifestProblem(manifestText: string, pullRequest: number): string {
+	let manifest: { channel?: string } | null;
+
+	try {
+		manifest = JSON.parse(manifestText) as { channel?: string } | null;
+	} catch {
+		return 'manifest.json is not JSON.';
+	}
+
+	const expected = `pr-${pullRequest}`;
+
+	return manifest?.channel === expected
+		? ''
+		: `manifest.json declares channel ${String(manifest?.channel)}, not ${expected}.`;
+}
+
+/**
  * @description Builds a fetcher that reads pull requests from the GitHub REST API.
  * @param repository The `owner/name` the pull requests target.
  * @param token The workflow token.
@@ -115,7 +137,16 @@ export function parseEventPullRequests(json: string | undefined): number[] {
 	});
 }
 
-if (import.meta.main) {
+if (import.meta.main && process.argv[2] === 'check-manifest') {
+	const problem = forkManifestProblem(
+		readFileSync(process.env.MANIFEST_FILE ?? '', 'utf8'),
+		Number(process.env.PR_NUMBER),
+	);
+
+	if (problem) {
+		throw new Error(problem);
+	}
+} else if (import.meta.main) {
 	const env = process.env;
 	const repository = env.GITHUB_REPOSITORY ?? '';
 	const claimed = env.CLAIMED_FILE ? readFileSync(env.CLAIMED_FILE, 'utf8').slice(0, 32) : '';

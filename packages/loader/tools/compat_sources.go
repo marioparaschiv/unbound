@@ -33,18 +33,19 @@ type compatLocation struct {
 }
 
 type compatReference struct {
-	Kind        string           `json:"kind"`
-	Platform    string           `json:"platform,omitempty"`
-	Component   string           `json:"component"`
-	Class       string           `json:"class,omitempty"`
-	Name        string           `json:"name,omitempty"`
-	Terms       []string         `json:"terms,omitempty"`
-	Parameters  []string         `json:"parameters,omitempty"`
-	Strict      bool             `json:"strict,omitempty"`
-	Group       string           `json:"group,omitempty"`
-	Alternative int              `json:"alternative,omitempty"`
-	Legacy      bool             `json:"legacy,omitempty"`
-	Locations   []compatLocation `json:"locations"`
+	Kind         string           `json:"kind"`
+	Platform     string           `json:"platform,omitempty"`
+	Component    string           `json:"component"`
+	Class        string           `json:"class,omitempty"`
+	Name         string           `json:"name,omitempty"`
+	Terms        []string         `json:"terms,omitempty"`
+	Parameters   []string         `json:"parameters,omitempty"`
+	Strict       bool             `json:"strict,omitempty"`
+	Group        string           `json:"group,omitempty"`
+	Alternative  int              `json:"alternative,omitempty"`
+	Alternatives int              `json:"alternatives,omitempty"`
+	Legacy       bool             `json:"legacy,omitempty"`
+	Locations    []compatLocation `json:"locations"`
 }
 
 func (reference compatReference) key() string {
@@ -381,6 +382,7 @@ var (
 	jniClassPattern        = regexp.MustCompile(`FindClass\("([A-Za-z0-9_/$]+)"`)
 	kotlinHostClassPattern = regexp.MustCompile(`\bHostClass\(([^()]*)\)`)
 	kotlinLegacyPattern    = regexp.MustCompile(`\bHostClass\.legacy\(\s*"([^"]+)"\s*\)`)
+	kotlinLegacyMethod     = regexp.MustCompile(`\.legacyMethod\(\s*"([A-Za-z_$][A-Za-z0-9_$-]*)"`)
 	kotlinShapePattern     = regexp.MustCompile(`\bshape(?:Class|Field|Fields|Method)\(\s*"([A-Za-z_][A-Za-z0-9_]*)"`)
 )
 
@@ -514,6 +516,11 @@ func extractNativeReferences(set *compatSourceSet, file compatSourceFile, conten
 			}
 			for _, match := range kotlinMethodPattern.FindAllStringSubmatch(line, -1) {
 				add(referenceJavaMethod, "", match[1])
+			}
+			for _, match := range kotlinLegacyMethod.FindAllStringSubmatch(line, -1) {
+				reference := base
+				reference.Kind, reference.Name, reference.Legacy = referenceJavaMethod, match[1], true
+				set.add(reference, location)
 			}
 			for _, match := range kotlinFieldPattern.FindAllStringSubmatch(line, -1) {
 				add(referenceJavaField, "", match[1])

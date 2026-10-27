@@ -4,7 +4,7 @@ import { posix } from 'node:path';
 
 import type { PublicBucket } from './upload';
 
-import { parseSigningKey, SIGNATURE_SUFFIX, SIGNING_KEY_VARIABLE } from './sign';
+import { parseSigningKey, SIGNATURE_SUFFIX, signedMessage, SIGNING_KEY_VARIABLE } from './sign';
 import { createPublicBucket, listKeys, parseBucketEnv } from './upload';
 
 const logger = createLogger('Build', 'Backfill');
@@ -58,7 +58,7 @@ export async function backfillSignatures(
 			}
 
 			const bytes = Buffer.from(await bucket.file(bundle).arrayBuffer());
-			const signature = sign(null, bytes, key).toString('base64');
+			const signature = sign(null, signedMessage(bytes), key).toString('base64');
 
 			await bucket.write(signatureKey, `${signature}\n`, { type: 'text/plain' });
 			result.signed.push(signatureKey);

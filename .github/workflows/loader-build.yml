@@ -97,7 +97,7 @@ on:
             caller_workflow:
                 default: ''
                 type: string
-            bundle_url:
+            pr_number:
                 default: ''
                 type: string
         outputs:
@@ -362,7 +362,7 @@ jobs:
             release: ${{ inputs.release || false }}
             discord_channel: ${{ inputs.android_channel || 'stable' }}
             android_code: ${{ needs.resolve-source.outputs.android_code }}
-            bundle_url: ${{ inputs.bundle_url }}
+            pr_number: ${{ inputs.pr_number || '' }}
         secrets: inherit
 
     ios:
@@ -385,7 +385,7 @@ jobs:
             only_app_repo: ${{ inputs.only_app_repo || false }}
             only_apt_repo: ${{ inputs.only_apt_repo || false }}
             caller_workflow: ${{ inputs.caller_workflow || '' }}
-            bundle_url: ${{ inputs.bundle_url }}
+            pr_number: ${{ inputs.pr_number || '' }}
         secrets: inherit
 
     release:
