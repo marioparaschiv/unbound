@@ -1,8 +1,19 @@
 #import "Toolbox.h"
 
 #import "CoreBridge.h"
+#import "CoreConversions.h"
 #import "DevOverlay.h"
+#include "LoaderToolbox.h"
 #import "RecoveryQuickAction.h"
+
+using unbound::ios::jsonFromObject;
+using unbound::ios::toNSString;
+using unbound::ios::toStdString;
+
+static loader::toolbox::MenuStep menuStep(NSDictionary *item, BOOL confirmed)
+{
+    return loader::toolbox::menuStep(jsonFromObject(item), confirmed);
+}
 
 @interface                         ToolboxViewController ()
 @property (nonatomic, assign) BOOL dismissalInProgress;
@@ -102,7 +113,7 @@ static BOOL toolboxGestureEnabled(NSString *gesture)
             NSTimeInterval currentTime   = [[NSDate date] timeIntervalSince1970];
             NSTimeInterval shakeDuration = currentTime - shakeStartTime;
 
-            if (shakeDuration >= 0.5 && shakeDuration <= 2.0)
+            if (loader::toolbox::isShakeGesture(shakeDuration))
             {
                 triggerHapticFeedback();
                 dispatch_async(dispatch_get_main_queue(), ^{ showToolboxSheet(); });
@@ -384,18 +395,16 @@ static NSString *iconForMenuItem(NSString *identifier)
 
     NSDictionary *item = self.menuSections[indexPath.section][@"items"][indexPath.row];
 
-    if ([item[@"kind"] isEqualToString:@"toggle"])
+    switch (menuStep(item, NO))
     {
-        return;
-    }
-
-    if ([item[@"destructive"] boolValue])
-    {
-        [self confirmMenuItem:item];
-    }
-    else
-    {
-        [self selectMenuItem:item];
+        case loader::toolbox::MenuStep::None:
+            return;
+        case loader::toolbox::MenuStep::Confirm:
+            [self confirmMenuItem:item];
+            return;
+        default:
+            [self selectMenuItem:item];
+            return;
     }
 }
 
@@ -430,17 +439,19 @@ static NSString *iconForMenuItem(NSString *identifier)
 
 - (void)selectMenuItem:(NSDictionary *)item
 {
-    if ([item[@"kind"] isEqualToString:@"platform"])
+    switch (menuStep(item, YES))
     {
-        [self performPlatformMenuItem:item];
-    }
-    else if (item[@"prompt"])
-    {
-        [self promptForMenuItem:item];
-    }
-    else
-    {
-        [self runMenuItem:item argument:item[@"argument"] ?: @""];
+        case loader::toolbox::MenuStep::Platform:
+            [self performPlatformMenuItem:item];
+            break;
+        case loader::toolbox::MenuStep::Prompt:
+            [self promptForMenuItem:item];
+            break;
+        case loader::toolbox::MenuStep::Run:
+            [self runMenuItem:item argument:item[@"argument"] ?: @""];
+            break;
+        default:
+            break;
     }
 }
 
@@ -512,38 +523,39 @@ static NSString *iconForMenuItem(NSString *identifier)
 
 - (void)finishMenuItem:(NSDictionary *)item result:(NSString *)result
 {
-    if (item[@"failure"] && ![result isEqualToString:@"true"])
+    switch (loader::toolbox::menuOutcome(jsonFromObject(item), toStdString(result)))
     {
-        [Utilities alert:item[@"failure"] title:item[@"title"]];
-        return;
-    }
-
-    if ([item[@"restartsApp"] boolValue])
-    {
-        [RecoveryQuickAction refresh];
-        [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
+        case loader::toolbox::MenuOutcome::Failed:
+            [Utilities alert:item[@"failure"] title:item[@"title"]];
+            break;
+        case loader::toolbox::MenuOutcome::Restart:
+            [RecoveryQuickAction refresh];
+            [self dismissViewControllerAnimated:YES completion:^{ [Utilities reloadApp]; }];
+            break;
+        case loader::toolbox::MenuOutcome::Done:
+            break;
     }
 }
 
 - (void)openAppFolder
 {
-    if ([Utilities isJailbroken])
-    {
-        NSString *filePath = [NSString stringWithFormat:@"filza://view%@", FileSystem.documents];
-        NSURL    *url      = [NSURL URLWithString:filePath];
+    UIApplication           *application = [UIApplication sharedApplication];
+    std::vector<std::string> urls =
+        loader::toolbox::appFolderURLs(toStdString(FileSystem.documents), [Utilities isJailbroken]);
 
-        if ([[UIApplication sharedApplication] canOpenURL:url])
+    for (size_t index = 0; index + 1 < urls.size(); index++)
+    {
+        NSURL *url = [NSURL URLWithString:toNSString(urls[index])];
+        if ([application canOpenURL:url])
         {
-            [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+            [application openURL:url options:@{} completionHandler:nil];
             return;
         }
     }
 
-    NSString *sharedPath =
-        [NSString stringWithFormat:@"shareddocuments://%@", FileSystem.documents];
-    NSURL *sharedUrl = [NSURL URLWithString:sharedPath];
-
-    [[UIApplication sharedApplication] openURL:sharedUrl options:@{} completionHandler:nil];
+    [application openURL:[NSURL URLWithString:toNSString(urls.back())]
+                  options:@{}
+        completionHandler:nil];
 }
 
 - (void)openGitHubIssue:(NSDictionary *)item
@@ -551,9 +563,10 @@ static NSString *iconForMenuItem(NSString *identifier)
     NSString *appVersion =
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
     NSString *buildNumber = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"];
-    NSString *discordVersion =
-        appVersion ? [NSString stringWithFormat:@"%@ (%@)", appVersion, buildNumber ?: @""] : @"";
-    NSURL *url = [NSURL URLWithString:[CoreBridge toolbox:@"issue-url" argument:discordVersion]];
+    NSString *discordVersion = toNSString(loader::toolbox::discordVersionLabel(
+        appVersion ? std::optional<std::string>(toStdString(appVersion)) : std::nullopt,
+        toStdString(buildNumber)));
+    NSURL    *url = [NSURL URLWithString:[CoreBridge toolbox:@"issue-url" argument:discordVersion]];
 
     if (!url)
     {

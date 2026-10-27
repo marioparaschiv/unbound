@@ -43,6 +43,8 @@ func run(args []string) error {
 		return runGenerateLoaderChangelog(args[1:])
 	case "attest":
 		return runAttest(args[1:])
+	case "bundle-key":
+		return runBundleKey(args[1:])
 	case "build":
 		return runBuild(args[1:])
 	case "platform":
@@ -69,6 +71,8 @@ func run(args []string) error {
 		return runCompatIssue(args[1:])
 	case "compat-legacy-issue":
 		return runCompatLegacyIssue(args[1:])
+	case "compat-support-issue":
+		return runCompatSupportIssue(args[1:])
 	case "format":
 		return runFormat(args[1:])
 	case "lint":
@@ -85,7 +89,7 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|smoke|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|format|lint>")
+	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
 	fmt.Println("       go run ./tools validate [--root <path>]")
@@ -101,12 +105,15 @@ func printUsage() {
 	fmt.Println("       go run ./tools publish-loader-releases --version <semver> --ios-url <release-url> --android-url <release-url> [--changelog-file <path>]")
 	fmt.Println("       go run ./tools generate-loader-changelog --version <semver> --output <path>")
 	fmt.Println("       go run ./tools attest <enabled|stage|sign|verify> [flags]")
+	fmt.Println("       go run ./tools bundle-key generate --out <dir>")
+	fmt.Println("       go run ./tools bundle-key verify --dir <dist> [--public-key <file>]")
 	fmt.Println("       go run ./tools smoke android --apks <dir> [--serial <serial>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>] [--timeout <duration>]")
 	fmt.Println("       go run ./tools smoke ios --app <Discord.app> [--device <udid>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>] [--timeout <duration>]")
 	fmt.Println("       go run ./tools symbolicate-android --symbols <dir|zip> [--abi <abi>] [--symbolizer <path>] [--input <file>] < tombstone.txt")
 	fmt.Println("       go run ./tools compat-scan [--ipa <path>] [--apk <path>...] [--android-version <v>] [--baseline <json>] [--results <json>] [--report <md>] [--ios-sdk <path>] [--android-jar <path>]")
 	fmt.Println("       go run ./tools compat-issue --results <json> --report <md> --channel <name> [--repo <owner/name>]")
-	fmt.Println("       go run ./tools compat-legacy-issue --results <json> [--repo <owner/name>] [--source-url <url>]")
+	fmt.Println("       go run ./tools compat-legacy-issue --results <json> [--root <monorepo>] [--repo <owner/name>] [--source-url <url>]")
+	fmt.Println("       go run ./tools compat-support-issue --results <json> [--root <monorepo>] [--repo <owner/name>] [--source-url <url>]")
 	fmt.Println("       go run ./tools format [--check] [--root <path>]")
 	fmt.Println("       go run ./tools lint [--root <path>]")
 	fmt.Println("       go run ./tools dev status [--root <path>]")

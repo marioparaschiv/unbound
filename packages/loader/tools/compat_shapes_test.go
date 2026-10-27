@@ -58,7 +58,11 @@ func buildTestDex(classes []testDexClass) []byte {
 	}
 	type fieldID struct{ class, fieldType, name int }
 	type methodID struct{ class, proto, name int }
-	var protos [][]string
+	type protoID struct {
+		parameters []string
+		returns    string
+	}
+	var protos []protoID
 	var fields []fieldID
 	var methods []methodID
 	type classLayout struct {
@@ -102,8 +106,12 @@ func buildTestDex(classes []testDexClass) []byte {
 				for _, parameter := range method.parameters {
 					typeOf(parameter)
 				}
-				typeOf("V")
-				protos = append(protos, method.parameters)
+				returns := method.descriptor
+				if returns == "" {
+					returns = "V"
+				}
+				typeOf(returns)
+				protos = append(protos, protoID{parameters: method.parameters, returns: returns})
 				methods = append(methods, methodID{class: layout.class, proto: len(protos) - 1, name: text(method.name)})
 				flags := uint32(0)
 				if method.static {
@@ -158,13 +166,13 @@ func buildTestDex(classes []testDexClass) []byte {
 	for index, descriptor := range types {
 		order.PutUint32(data[typesOffset+4*index:], uint32(stringIndex[descriptor]))
 	}
-	for index, parameters := range protos {
+	for index, proto := range protos {
 		var items []int
-		for _, parameter := range parameters {
+		for _, parameter := range proto.parameters {
 			items = append(items, typeIndex[parameter])
 		}
 		base := protosOffset + 12*index
-		order.PutUint32(data[base+4:], uint32(typeIndex["V"]))
+		order.PutUint32(data[base+4:], uint32(typeIndex[proto.returns]))
 		order.PutUint32(data[base+8:], uint32(typeList(items)))
 	}
 	for index, field := range fields {
@@ -220,7 +228,7 @@ func TestDexDeclaredMembers(t *testing.T) {
 		methods: []testDexMember{
 			{name: dexConstructorName, parameters: []string{"I", "[I"}},
 			{name: "bind", parameters: []string{"Lcom/discord/Message;", "Z"}},
-			{name: "create", parameters: nil, static: true},
+			{name: "create", descriptor: "Lcom/discord/View;", parameters: nil, static: true},
 		},
 	}})
 	index := newDexIndex()
@@ -237,8 +245,8 @@ func TestDexDeclaredMembers(t *testing.T) {
 	want := []dexMember{
 		{Name: "COUNT", Field: true, Static: true, Type: "int"},
 		{Name: "messageId", Field: true, Type: "java.lang.String"},
-		{Name: "create", Static: true, Parameters: []string{}},
-		{Name: "bind", Parameters: []string{"com.discord.Message", "boolean"}},
+		{Name: "create", Static: true, Returns: "com.discord.View", Parameters: []string{}},
+		{Name: "bind", Returns: "void", Parameters: []string{"com.discord.Message", "boolean"}},
 	}
 	if !reflect.DeepEqual(class.Declared, want) {
 		t.Fatalf("got %+v, want %+v", class.Declared, want)
@@ -598,9 +606,185 @@ func TestDiscordShapeValidation(t *testing.T) {
 		{Owner: "a.B", Member: "property", Pick: shapePickOnly},
 		{Owner: "a.B", Member: shapeField, Pick: "first"},
 		{Member: shapeField, Pick: shapePickOnly},
+		{Owner: "a.B", Member: shapeField, Pick: shapePickAll},
+		{Owner: "a.B", Member: shapeField, Count: intPointer(2), Pick: shapePickOnly},
+		{Owner: "a.B", OwnerShape: "c", Member: shapeField, Pick: shapePickOnly},
+		{OwnerShape: "c", ParameterOf: "a.B", Member: shapeField, Pick: shapePickOnly},
+		{Owner: "a.B", Member: shapeMethod, TypeAssignableTo: "a.C", Pick: shapePickOnly},
+		{Owner: "a.B", Member: shapeField, Type: "a.C", TypeAssignableTo: "a.C", Pick: shapePickOnly},
+		{Owner: "a.B", Member: shapeField, ReturnsAssignableFrom: "a.C", Pick: shapePickOnly},
 	} {
 		if shape.validate() == nil {
 			t.Errorf("shape %+v must not validate", shape)
+		}
+	}
+	for _, shapes := range []map[string]discordShape{
+		{"field": {OwnerShape: "missing", Member: shapeField, Pick: shapePickOnly}},
+		{
+			"first":  {OwnerShape: "second", Member: shapeField, Pick: shapePickOnly},
+			"second": {OwnerShape: "third", Member: shapeField, Pick: shapePickOnly},
+			"third":  {Owner: "a.B", Member: shapeConstructor, Pick: shapePickOnly},
+		},
+	} {
+		if validateDiscordShapes(shapes) == nil {
+			t.Errorf("shapes %+v must not validate", shapes)
+		}
+	}
+	valid := map[string]discordShape{
+		"surface": {ParameterOf: "a.B", Member: shapeConstructor, Pick: shapePickOnly},
+		"handler": {OwnerShape: "surface", Member: shapeField, Count: intPointer(2), Pick: shapePickAll},
+	}
+	if err := validateDiscordShapes(valid); err != nil {
+		t.Errorf("an owner shape that names its class directly must validate: %v", err)
+	}
+}
+
+func TestEvaluateStructuralShapes(t *testing.T) {
+	surfaceParameters := []string{"android.content.Context", "java.lang.String", "android.os.Bundle"}
+	shapes := map[string]discordShape{
+		"surface":    {ParameterOf: "com.facebook.ReactInstance", UnlessClass: "com.facebook.ReactHost", Member: shapeConstructor, Parameters: surfaceParameters, Pick: shapePickOnly},
+		"handler":    {OwnerShape: "surface", Member: shapeField, Type: "com.facebook.SurfaceHandler", Pick: shapePickOnly},
+		"references": {OwnerShape: "surface", Member: shapeField, Type: "java.util.concurrent.atomic.AtomicReference", Count: intPointer(2), Pick: shapePickAll},
+		"host":       {OwnerShape: "surface", Member: shapeMethod, ParameterCount: intPointer(0), ReturnsAssignableFrom: "com.facebook.ReactHostImpl", Pick: shapePickOnly},
+		"factory":    {Owner: "com.facebook.Delegate", Member: shapeField, TypeAssignableTo: "kotlin.jvm.functions.Function2", Pick: shapePickOnly},
+	}
+	instance := &dexClass{Name: "com.facebook.ReactInstance", Declared: []dexMember{
+		{Name: "g", Returns: "void", Parameters: []string{"um.a0"}},
+		{Name: "d", Returns: "java.lang.Object", Parameters: []string{"java.lang.String"}},
+		{Name: "h", Returns: "void", Parameters: []string{"um.b", "int"}},
+	}}
+	surface := &dexClass{Name: "um.a0", Constructors: [][]string{surfaceParameters}, Declared: []dexMember{
+		{Name: "a", Field: true, Type: "com.facebook.SurfaceHandler"},
+		{Name: "c", Field: true, Type: "java.util.concurrent.atomic.AtomicReference"},
+		{Name: "d", Field: true, Type: "java.util.concurrent.atomic.AtomicReference"},
+		{Name: "a", Returns: "com.facebook.ReactHostImpl", Parameters: []string{}},
+		{Name: "b", Returns: "java.lang.Object", Parameters: []string{}},
+	}}
+	unrelated := &dexClass{Name: "um.b", Constructors: [][]string{surfaceParameters}}
+	hostImpl := &dexClass{Name: "com.facebook.ReactHostImpl", Super: javaObjectClass}
+	factory := &dexClass{Name: "af.e", Super: javaObjectClass, Interfaces: []string{"kotlin.jvm.functions.Function2"}}
+	merged := &dexClass{Name: "q4.e", Super: javaObjectClass, Interfaces: []string{"m50.i"}}
+	mergedInterface := &dexClass{Name: "m50.i"}
+	delegate := &dexClass{Name: "com.facebook.Delegate", Declared: []dexMember{
+		{Name: "d", Field: true, Type: "kotlin.jvm.functions.Function1"},
+		{Name: "e", Field: true, Type: "q4.e"},
+		{Name: "f", Field: true, Type: "af.e"},
+	}}
+	classes := []*dexClass{instance, surface, unrelated, hostImpl, factory, merged, mergedInterface, delegate}
+
+	expect := func(target *compatTarget, name, status, reason string) {
+		t.Helper()
+		got, why := evaluateShapeReference(&compatReference{Kind: referenceJavaShape, Name: name}, target)
+		if got != status || !strings.Contains(why, reason) {
+			t.Fatalf("shape %s: got %q (%s), want %q containing %q", name, got, why, status, reason)
+		}
+	}
+
+	matching := shapeTestTarget(shapes, classes...)
+	for _, name := range []string{"surface", "handler", "references", "host", "factory"} {
+		expect(matching, name, compatOK, "")
+	}
+
+	ambiguousSurface := &dexClass{Name: instance.Name, Declared: append(slices.Clone(instance.Declared), dexMember{Name: "i", Returns: "void", Parameters: []string{"um.b"}})}
+	ambiguous := shapeTestTarget(shapes, ambiguousSurface, surface, unrelated, hostImpl)
+	expect(ambiguous, "surface", compatBroken, "several classes taken alone by a `com.facebook.ReactInstance` method have one constructor")
+	expect(ambiguous, "handler", compatBroken, "it looks in the class the shape `surface` finds, but several classes")
+
+	expect(shapeTestTarget(shapes, surface), "surface", compatBroken, "class `com.facebook.ReactInstance` is not in Discord's dex")
+
+	threeReferences := &dexClass{Name: surface.Name, Constructors: surface.Constructors, Declared: append(slices.Clone(surface.Declared), dexMember{Name: "e", Field: true, Type: "java.util.concurrent.atomic.AtomicReference"})}
+	expect(shapeTestTarget(shapes, instance, threeReferences, hostImpl), "references", compatBroken, "has 3 fields of type `java.util.concurrent.atomic.AtomicReference`, `c`, `d`, `e`, not 2")
+
+	objectGetter := &dexClass{Name: surface.Name, Constructors: surface.Constructors, Declared: []dexMember{{Name: "a", Returns: javaObjectClass, Parameters: []string{}}}}
+	expect(shapeTestTarget(shapes, instance, objectGetter, hostImpl), "host", compatBroken, "`um.a0` has no method returning `com.facebook.ReactHostImpl` or a supertype other than `java.lang.Object` with 0 parameters")
+
+	interfaceGetter := &dexClass{Name: surface.Name, Constructors: surface.Constructors, Declared: []dexMember{{Name: "a", Returns: "com.facebook.ReactHost", Parameters: []string{}}}}
+	hostWithInterface := &dexClass{Name: hostImpl.Name, Super: javaObjectClass, Interfaces: []string{"com.facebook.ReactHost"}}
+	expect(shapeTestTarget(shapes, instance, interfaceGetter, hostWithInterface), "host", compatOK, "")
+
+	mergedFactory := &dexClass{Name: merged.Name, Super: javaObjectClass, Interfaces: []string{"m50.i"}}
+	functionInterface := &dexClass{Name: "m50.i", Interfaces: []string{"kotlin.jvm.functions.Function2"}}
+	expect(shapeTestTarget(shapes, delegate, factory, mergedFactory, functionInterface), "factory", compatBroken, "`e`, `f`, so the lookup is ambiguous")
+
+	legacy := shapeTestTarget(shapes, &dexClass{Name: "com.facebook.ReactHost"})
+	expect(legacy, "surface", compatFallback, "Discord still has `com.facebook.ReactHost`, so the loader does not need this shape")
+	expect(legacy, "handler", compatBroken, "it looks in the class the shape `surface` finds")
+
+	results := evaluateCompat([]*compatReference{{
+		Kind:      referenceJavaShape,
+		Name:      "surface",
+		Component: "loader-android",
+		Locations: []compatLocation{{File: "packages/loader/android/module/src/main/kotlin/app/unbound/android/ReactSurfaces.kt", Line: 48}},
+	}}, []*compatTarget{legacy}, nil)
+	if compatBreakageError(results) != nil {
+		t.Fatal("a shape Discord does not need yet must not fail the release gate")
+	}
+	if report := renderCompatReport(results); !strings.Contains(report, "only unused while Discord still has the class") || !strings.Contains(report, "ReactSurfaces.kt:48") {
+		t.Fatalf("the report must explain why a shape is skipped and where it is used:\n%s", report)
+	}
+}
+
+func TestKotlinShapeExtraction(t *testing.T) {
+	source := `package app.unbound.android
+
+object ReactSurfaces {
+    fun pieces(shapes: DiscordShapes) = listOf(
+        shapes.shapeClass("reactSurface"),
+        shapes.shapeField(
+            "reactFabric",
+        ),
+        shapes.shapeFields("reactSurfaceReferences"),
+        shapes.shapeMethod("reactSurfaceHost"),
+    )
+
+    fun shapeField(name: String) = name
+}
+`
+	set := newCompatSourceSet()
+	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/unbound/android/ReactSurfaces.kt", component: "loader-android", platform: "android"}
+	extractNativeReferences(set, file, source)
+
+	lines := map[string]int{}
+	for _, reference := range set.sorted() {
+		if reference.Kind == referenceJavaShape {
+			lines[reference.Name] = reference.Locations[0].Line
+		}
+	}
+	want := map[string]int{"reactSurface": 5, "reactFabric": 7, "reactSurfaceReferences": 9, "reactSurfaceHost": 10}
+	if !reflect.DeepEqual(lines, want) {
+		t.Fatalf("Kotlin shape lookups must be reported at the line naming the shape: got %v, want %v", lines, want)
+	}
+	for _, reference := range set.sorted() {
+		if reference.Kind == referenceJavaShape && (reference.Component != "loader-android" || reference.platforms()[0] != "android") {
+			t.Fatalf("a Kotlin shape belongs to the Android loader: %+v", reference)
+		}
+	}
+}
+
+func TestDexAssignability(t *testing.T) {
+	dex := newDexIndex()
+	for _, class := range []*dexClass{
+		{Name: "a.Child", Super: "a.Parent", Interfaces: []string{"a.Marker"}},
+		{Name: "a.Parent", Super: javaObjectClass},
+		{Name: "a.Marker", Interfaces: []string{"kotlin.Function"}},
+		{Name: "a.Loop", Super: "a.Loop"},
+	} {
+		dex.Classes[class.Name] = class
+	}
+	for _, test := range []struct {
+		from, to string
+		want     bool
+	}{
+		{"a.Child", "a.Child", true},
+		{"a.Child", "a.Parent", true},
+		{"a.Child", javaObjectClass, true},
+		{"a.Child", "kotlin.Function", true},
+		{"a.Parent", "a.Child", false},
+		{"a.Loop", "a.Parent", false},
+		{"java.lang.String", "a.Parent", false},
+	} {
+		if got := dex.isAssignable(test.from, test.to); got != test.want {
+			t.Errorf("isAssignable(%s, %s) = %v, want %v", test.from, test.to, got, test.want)
 		}
 	}
 }

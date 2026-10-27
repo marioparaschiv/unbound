@@ -10,46 +10,14 @@
 #if __has_include(<net/route.h>)
 #import <net/route.h>
 #else
-// The iOS SDK omits <net/route.h>; these mirror the stable XNU routing-socket ABI.
-#define RTF_GATEWAY  0x2
-#define RTAX_DST     0
-#define RTAX_GATEWAY 1
-#define RTAX_MAX     8
-
-struct rt_metrics {
-    u_int32_t rmx_locks;
-    u_int32_t rmx_mtu;
-    u_int32_t rmx_hopcount;
-    int32_t   rmx_expire;
-    u_int32_t rmx_recvpipe;
-    u_int32_t rmx_sendpipe;
-    u_int32_t rmx_ssthresh;
-    u_int32_t rmx_rtt;
-    u_int32_t rmx_rttvar;
-    u_int32_t rmx_pksent;
-    u_int32_t rmx_filler[4];
-};
-
-struct rt_msghdr {
-    u_short           rtm_msglen;
-    u_char            rtm_version;
-    u_char            rtm_type;
-    u_short           rtm_index;
-    int               rtm_flags;
-    int               rtm_addrs;
-    pid_t             rtm_pid;
-    int               rtm_seq;
-    int               rtm_errno;
-    int               rtm_use;
-    u_int32_t         rtm_inits;
-    struct rt_metrics rtm_rmx;
-};
+#define RTF_GATEWAY 0x2
 #endif
 
-static NSString *const kVirtualDeviceMachine = @"iPhone99,11";
+#import "CoreConversions.h"
+#include "LoaderEnvironment.h"
 
-NSString *const TROLL_STORE_PATH      = @"../_TrollStore";
-NSString *const TROLL_STORE_LITE_PATH = @"../_TrollStoreLite";
+using unbound::ios::toNSString;
+using unbound::ios::toStdString;
 
 @implementation Utilities
 static NSString *bundle = nil;
@@ -533,32 +501,35 @@ static NSString *bundle = nil;
     return appStoreReceiptURL.lastPathComponent;
 }
 
-+ (BOOL)isAppStoreApp
-{
-    NSString *receiptName = [self getAppStoreReceiptName];
-    if (!receiptName || [receiptName isEqualToString:@"sandboxReceipt"])
-    {
-        return NO;
-    }
-    NSURL *appStoreReceiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
-    return [[NSFileManager defaultManager] fileExistsAtPath:appStoreReceiptURL.path];
-}
-
-+ (BOOL)isTestFlightApp
++ (loader::environment::Receipt)receipt
 {
     NSString *receiptName = [self getAppStoreReceiptName];
     if (!receiptName)
     {
-        return NO;
+        return loader::environment::Receipt::None;
     }
-    return [receiptName isEqualToString:@"sandboxReceipt"];
+    NSURL *appStoreReceiptURL = [[NSBundle mainBundle] appStoreReceiptURL];
+    return loader::environment::receiptKind(
+        toStdString(receiptName),
+        [[NSFileManager defaultManager] fileExistsAtPath:appStoreReceiptURL.path]);
+}
+
++ (BOOL)isAppStoreApp
+{
+    return [self receipt] == loader::environment::Receipt::AppStore;
+}
+
++ (BOOL)isTestFlightApp
+{
+    return [self receipt] == loader::environment::Receipt::TestFlight;
 }
 
 + (NSDictionary *)checkTrollStorePaths:(NSString *)bundlePath
 {
-    NSString *trollStorePath = [bundlePath stringByAppendingPathComponent:TROLL_STORE_PATH];
+    NSString *trollStorePath =
+        [bundlePath stringByAppendingPathComponent:@(loader::environment::kTrollStoreMarker)];
     NSString *trollStoreLitePath =
-        [bundlePath stringByAppendingPathComponent:TROLL_STORE_LITE_PATH];
+        [bundlePath stringByAppendingPathComponent:@(loader::environment::kTrollStoreLiteMarker)];
 
     BOOL isTrollStore     = (access([trollStorePath UTF8String], F_OK) == 0);
     BOOL isTrollStoreLite = (access([trollStoreLitePath UTF8String], F_OK) == 0);
@@ -568,7 +539,8 @@ static NSString *bundle = nil;
 
 + (BOOL)isTrollStoreApp
 {
-    if ([self isAppStoreApp] || [self isTestFlightApp])
+    loader::environment::Receipt receipt = [self receipt];
+    if (receipt != loader::environment::Receipt::None)
     {
         return NO;
     }
@@ -578,7 +550,8 @@ static NSString *bundle = nil;
 
     BOOL isTrollStore     = [trollStorePaths[@"isTrollStore"] boolValue];
     BOOL isTrollStoreLite = [trollStorePaths[@"isTrollStoreLite"] boolValue];
-    BOOL isTrollStoreApp  = isTrollStore || isTrollStoreLite;
+    BOOL isTrollStoreApp =
+        loader::environment::isTrollStoreInstall(receipt, isTrollStore, isTrollStoreLite);
 
     [Logger debug:LOG_CATEGORY_UTILITIES
            format:@"TrollStore detection - Regular: %@, Lite: %@, isTrollStore: %@",
@@ -593,16 +566,9 @@ static NSString *bundle = nil;
     NSString     *bundlePath      = [[NSBundle mainBundle] bundlePath];
     NSDictionary *trollStorePaths = [self checkTrollStorePaths:bundlePath];
 
-    if ([trollStorePaths[@"isTrollStore"] boolValue])
-    {
-        return @"TrollStore";
-    }
-    else if ([trollStorePaths[@"isTrollStoreLite"] boolValue])
-    {
-        return @"TrollStore Lite";
-    }
-
-    return @"Unknown";
+    return toNSString(
+        loader::environment::trollStoreVariant([trollStorePaths[@"isTrollStore"] boolValue],
+                                               [trollStorePaths[@"isTrollStoreLite"] boolValue]));
 }
 
 + (BOOL)isSystemApp
@@ -703,62 +669,9 @@ static NSString *bundle = nil;
         size_t size        = sizeof(machine);
 
         result = sysctlbyname("hw.machine", machine, &size, NULL, 0) == 0 &&
-                 [@(machine) isEqualToString:kVirtualDeviceMachine];
+                 loader::environment::isVirtualDeviceMachine(machine);
     });
     return result;
-}
-
-// Returns the IPv4 gateway of the default route described by one routing message, if it is one.
-static NSString *defaultRouteGateway(const struct rt_msghdr *message, const uint8_t *end)
-{
-    const struct sockaddr *addresses[RTAX_MAX] = {NULL};
-    const uint8_t         *cursor              = (const uint8_t *) (message + 1);
-
-    for (int index = 0; index < RTAX_MAX; index++)
-    {
-        if (!(message->rtm_addrs & (1 << index)))
-        {
-            continue;
-        }
-
-        if (cursor >= end)
-        {
-            return nil;
-        }
-
-        const struct sockaddr *address = (const struct sockaddr *) cursor;
-        size_t length = address->sa_len > 0 ? 1 + ((address->sa_len - 1) | (sizeof(uint32_t) - 1))
-                                            : sizeof(uint32_t);
-        if (cursor + length > end)
-        {
-            return nil;
-        }
-
-        addresses[index] = address;
-        cursor += length;
-    }
-
-    const struct sockaddr *destination = addresses[RTAX_DST];
-    const struct sockaddr *gateway     = addresses[RTAX_GATEWAY];
-    if (!destination || !gateway || destination->sa_family != AF_INET ||
-        gateway->sa_family != AF_INET || destination->sa_len < sizeof(struct sockaddr_in) ||
-        gateway->sa_len < sizeof(struct sockaddr_in))
-    {
-        return nil;
-    }
-
-    if (((const struct sockaddr_in *) destination)->sin_addr.s_addr != INADDR_ANY)
-    {
-        return nil;
-    }
-
-    char text[INET_ADDRSTRLEN] = {0};
-    if (!inet_ntop(AF_INET, &((const struct sockaddr_in *) gateway)->sin_addr, text, sizeof(text)))
-    {
-        return nil;
-    }
-
-    return @(text);
 }
 
 static NSString *defaultGatewayAddress(void)
@@ -781,28 +694,9 @@ static NSString *defaultGatewayAddress(void)
         return nil;
     }
 
-    const uint8_t *cursor = (const uint8_t *) table.bytes;
-    const uint8_t *end    = cursor + length;
-
-    while (cursor + sizeof(struct rt_msghdr) <= end)
-    {
-        const struct rt_msghdr *message = (const struct rt_msghdr *) cursor;
-        const uint8_t          *next    = cursor + message->rtm_msglen;
-        if (message->rtm_msglen < sizeof(struct rt_msghdr) || next > end)
-        {
-            break;
-        }
-
-        NSString *gateway = defaultRouteGateway(message, next);
-        if (gateway)
-        {
-            return gateway;
-        }
-
-        cursor = next;
-    }
-
-    return nil;
+    std::optional<std::string> gateway =
+        loader::environment::defaultIPv4Gateway(static_cast<const uint8_t *>(table.bytes), length);
+    return gateway ? toNSString(*gateway) : nil;
 }
 
 + (NSString *)getVirtualDeviceHostAddress
@@ -829,9 +723,9 @@ static NSString *defaultGatewayAddress(void)
     MobileGestalt *mg              = [MobileGestalt sharedInstance];
     NSString      *iosBuildVersion = [mg getBuildVersion];
 
-    return iosBuildVersion
-               ? [NSString stringWithFormat:@"%@ (%@)", device.systemVersion, iosBuildVersion]
-               : device.systemVersion;
+    return toNSString(loader::environment::osVersionLabel(
+        toStdString(device.systemVersion),
+        iosBuildVersion ? std::optional<std::string>(toStdString(iosBuildVersion)) : std::nullopt));
 }
 
 + (BOOL)isLoadedWithElleKit
@@ -935,38 +829,20 @@ static NSString *defaultGatewayAddress(void)
 
 + (NSString *)getAppSource
 {
-    if ([self isRunningInSimulator])
+    loader::environment::InstallFacts facts;
+    facts.simulator = [self isRunningInSimulator];
+    if (!facts.simulator)
     {
-        return @"iOS Simulator";
+        NSDictionary *trollStorePaths = [self checkTrollStorePaths:NSBundle.mainBundle.bundlePath];
+        facts.receipt                 = [self receipt];
+        facts.trollStore              = [trollStorePaths[@"isTrollStore"] boolValue];
+        facts.trollStoreLite          = [trollStorePaths[@"isTrollStoreLite"] boolValue];
+        facts.liveContainer           = [self isLiveContainerApp];
+        facts.jitAvailable            = [] {
+            return static_cast<bool>([Utilities isJITAvailable]);
+        };
     }
-
-    if ([self isTrollStoreApp])
-    {
-        return [self getTrollStoreVariant];
-    }
-    else if ([self isLiveContainerApp])
-    {
-        if ([self isJITAvailable])
-        {
-            return @"LiveContainer (JIT)";
-        }
-        else
-        {
-            return @"LiveContainer (Signed)";
-        }
-    }
-    else if ([self isAppStoreApp])
-    {
-        return @"App Store";
-    }
-    else if ([self isTestFlightApp])
-    {
-        return @"TestFlight";
-    }
-    else
-    {
-        return @"Sideloaded";
-    }
+    return toNSString(loader::environment::appSource(facts));
 }
 
 + (UIAlertAction *)createDiscordInviteButton

@@ -1,11 +1,38 @@
 #import "ChatUI.h"
 
 #import "CoreBridge.h"
+#import "CoreConversions.h"
+#include "LoaderChatUI.h"
+
+#pragma clang diagnostic ignored "-Wvla-cxx-extension"
+
+using unbound::ios::toStdString;
 
 @implementation ChatUI
 
-static NSNumber *customAvatarRadius    = nil;
-static BOOL      messageBubblesEnabled = NO;
+static std::optional<double> customAvatarRadius    = std::nullopt;
+static BOOL                  messageBubblesEnabled = NO;
+
+static BOOL isViewOfClass(UIView *view, const char *className)
+{
+    return [NSStringFromClass([view class]) isEqualToString:@(className)];
+}
+
+static loader::chatui::Rect coreRect(CGRect rect)
+{
+    return {rect.origin.x, rect.origin.y, rect.size.width, rect.size.height};
+}
+
+static CGRect cgRect(const loader::chatui::Rect &rect)
+{
+    return CGRectMake(rect.x, rect.y, rect.width, rect.height);
+}
+
+static void applyAvatarRadius(UIView *view)
+{
+    view.layer.cornerRadius =
+        loader::chatui::avatarCornerRadius(customAvatarRadius, view.bounds.size.width);
+}
 
 static UIColor *messageCellDynamicColor = nil;
 
@@ -13,7 +40,8 @@ static UIColor *messageCellDynamicColor = nil;
 {
     messageBubblesEnabled = [CoreBridge preferenceEnabled:@"message-bubbles"];
     NSString *radius      = [CoreBridge preference:@"avatar-radius" argument:@""];
-    customAvatarRadius    = radius.length > 0 ? @([radius doubleValue]) : nil;
+    customAvatarRadius =
+        radius.length > 0 ? std::optional<double>([radius doubleValue]) : std::nullopt;
 
     [self updateMessageBubbleSettings];
     [self updateAllAvatarViews];
@@ -33,16 +61,9 @@ static UIColor *messageCellDynamicColor = nil;
 
 + (void)updateAvatarViewsInView:(UIView *)view
 {
-    if ([NSStringFromClass([view class]) isEqualToString:@"DCDAvatarView"])
+    if (isViewOfClass(view, loader::chatui::kAvatarViewClass))
     {
-        if (customAvatarRadius)
-        {
-            view.layer.cornerRadius = [customAvatarRadius floatValue];
-        }
-        else
-        {
-            view.layer.cornerRadius = view.bounds.size.width / 2.0;
-        }
+        applyAvatarRadius(view);
         [Logger debug:LOG_CATEGORY_CHATUI
                format:@"Updated avatar view with radius: %f", view.layer.cornerRadius];
     }
@@ -94,7 +115,7 @@ static UIColor *messageCellDynamicColor = nil;
 
 + (void)updateMessageCellsInView:(UIView *)view
 {
-    if ([NSStringFromClass([view class]) isEqualToString:@"DCDMessageTableViewCell"])
+    if (isViewOfClass(view, loader::chatui::kMessageCellClass))
     {
         [self updateMessageCell:(DCDMessageTableViewCell *) view];
     }
@@ -110,7 +131,7 @@ static UIColor *messageCellDynamicColor = nil;
     UIView *best     = nil;
     CGFloat bestArea = 0;
 
-    if ([NSStringFromClass([view class]) isEqualToString:@"DCDAvatarView"])
+    if (isViewOfClass(view, loader::chatui::kAvatarViewClass))
     {
         best     = view;
         bestArea = view.bounds.size.width * view.bounds.size.height;
@@ -135,17 +156,7 @@ static UIColor *messageCellDynamicColor = nil;
 
 + (BOOL)isMediaView:(UIView *)view
 {
-    static NSSet<NSString *> *mediaClasses = nil;
-    static dispatch_once_t    onceToken;
-    dispatch_once(&onceToken, ^{
-        mediaClasses =
-            [NSSet setWithObjects:@"DiscordChat.MediaMosaicView", @"DiscordChat.EmbedView",
-                                  @"DiscordChatComponentsSwift.ThumbnailView", @"DCDMediaView",
-                                  @"DiscordChat.AttachmentView", nil];
-    });
-
-    NSString *className = NSStringFromClass([view class]);
-    BOOL isMedia = [mediaClasses containsObject:className] || [className containsString:@"Sticker"];
+    BOOL isMedia = loader::chatui::isMediaViewClass(toStdString(NSStringFromClass([view class])));
     return isMedia && !view.hidden && view.bounds.size.width > 0 && view.bounds.size.height > 0;
 }
 
@@ -157,7 +168,7 @@ static UIColor *messageCellDynamicColor = nil;
     if ([self isMediaView:view])
         return YES;
 
-    if ([NSStringFromClass([view class]) isEqualToString:@"DCDAttributedTextView"])
+    if (isViewOfClass(view, loader::chatui::kAttributedTextViewClass))
     {
         NSAttributedString *attrText = [view valueForKey:@"attributedText"];
         return attrText.length > 0;
@@ -228,9 +239,9 @@ static UIColor *messageCellDynamicColor = nil;
     return textFrame.origin.x + ceil(measured.size.width);
 }
 
-+ (CGRect)tightenFrame:(CGRect)bodyFrame forBody:(UIView *)contentBody
++ (CGFloat)contentWidthIn:(UIView *)contentBody limit:(CGFloat)limit
 {
-    CGFloat contentWidth = [self textWidthIn:contentBody limit:bodyFrame.size.width];
+    CGFloat contentWidth = [self textWidthIn:contentBody limit:limit];
 
     NSMutableArray<UIView *> *mediaViews = [NSMutableArray array];
     [self collectMediaViewsIn:contentBody into:mediaViews];
@@ -240,12 +251,7 @@ static UIColor *messageCellDynamicColor = nil;
         contentWidth      = MAX(contentWidth, CGRectGetMaxX(mediaFrame));
     }
 
-    if (contentWidth <= 0 || contentWidth >= bodyFrame.size.width)
-        return bodyFrame;
-
-    CGRect tightened     = bodyFrame;
-    tightened.size.width = contentWidth;
-    return tightened;
+    return contentWidth;
 }
 
 + (CGRect)contentBubbleFrameForCell:(DCDMessageTableViewCell *)cell
@@ -256,13 +262,14 @@ static UIColor *messageCellDynamicColor = nil;
 
     UIView *node          = avatarView;
     UIView *contentColumn = nil;
-    for (int level = 0; level < 6 && node.superview; level++)
+    for (int level = 0; level < loader::chatui::kContentColumnSearchDepth && node.superview;
+         level++)
     {
         UIView *parent = node.superview;
         for (UIView *sibling in parent.subviews)
         {
-            if (sibling != node && sibling.frame.size.width > node.frame.size.width * 3.0 &&
-                sibling.frame.size.width > 100)
+            if (sibling != node &&
+                loader::chatui::isContentColumn(sibling.frame.size.width, node.frame.size.width))
             {
                 contentColumn = sibling;
                 break;
@@ -279,10 +286,11 @@ static UIColor *messageCellDynamicColor = nil;
     if (!contentBody)
         return CGRectNull;
 
-    CGRect frame   = [contentBody convertRect:contentBody.bounds toView:cell];
-    frame          = [self tightenFrame:frame forBody:contentBody];
-    CGSize padding = [CoreBridge messageBubblePadding];
-    return CGRectInset(frame, -padding.width, -padding.height);
+    CGRect  frame        = [contentBody convertRect:contentBody.bounds toView:cell];
+    CGFloat contentWidth = [self contentWidthIn:contentBody limit:frame.size.width];
+    CGSize  padding      = [CoreBridge messageBubblePadding];
+    return cgRect(loader::chatui::bubbleFrame(coreRect(frame), contentWidth,
+                                              {padding.width, padding.height}));
 }
 
 + (void)updateMessageCell:(DCDMessageTableViewCell *)cell
@@ -317,7 +325,7 @@ static UIColor *messageCellDynamicColor = nil;
 
 + (void)updateMessageCellFrame:(DCDMessageTableViewCell *)cell
 {
-    [self updateMessageCellFrame:cell retriesRemaining:3];
+    [self updateMessageCellFrame:cell retriesRemaining:loader::chatui::kBubbleFrameRetries];
 }
 
 + (void)updateMessageCellFrame:(DCDMessageTableViewCell *)cell
@@ -353,15 +361,7 @@ static UIColor *messageCellDynamicColor = nil;
 - (void)layoutSubviews
 {
     %orig;
-
-    if (customAvatarRadius)
-    {
-        self.layer.cornerRadius = [customAvatarRadius floatValue];
-    }
-    else
-    {
-        self.layer.cornerRadius = self.bounds.size.width / 2.0;
-    }
+    applyAvatarRadius(self);
 }
 
 %end
@@ -426,6 +426,8 @@ static UIColor *messageCellDynamicColor = nil;
 
 %ctor
 {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC), dispatch_get_main_queue(),
-                   ^{ [ChatUI reloadPreferences]; });
+    dispatch_after(
+        dispatch_time(DISPATCH_TIME_NOW,
+                      (int64_t) (loader::chatui::kPreferencesDelaySeconds * NSEC_PER_SEC)),
+        dispatch_get_main_queue(), ^{ [ChatUI reloadPreferences]; });
 }

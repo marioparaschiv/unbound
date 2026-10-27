@@ -548,17 +548,6 @@ std::string AndroidLoader::resolveFont(const std::string &family)
         return "{}";
     }
 
-    const auto font = loader::resolveFontTarget(addons_.fonts(), systemFonts(), *target);
-    if (!font)
-    {
-        return loader::toJSON(
-            {{"name", *target}, {"error", loader::fontUnavailableMessage(family, *target)}});
-    }
-    nlohmann::json resolved = {{"name", font->name}};
-    if (font->path)
-    {
-        resolved["path"] = *font->path;
-    }
-    return loader::toJSON(resolved);
+    return loader::toJSON(loader::fontTargetJSON(addons_.fonts(), systemFonts(), family, *target));
 }
 }

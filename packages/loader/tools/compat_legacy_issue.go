@@ -71,10 +71,12 @@ func androidVersion(results *compatResults) string {
 	return ""
 }
 
-func renderCompatLegacyIssue(names []compatLegacyName, version, sourceURL string) string {
+func renderCompatLegacyIssue(names []compatLegacyName, version, minimum, sourceURL string) string {
 	var builder strings.Builder
 	builder.WriteString("## " + compatLegacyTitle + "\n\n")
-	builder.WriteString("Discord Android " + version + " on the stable channel no longer has these names. Beta and alpha builds are newer, so no channel has them, and the code that handles them can go along with their `HostClass.legacy` or `legacyJavaClass` marks.\n\n")
+	builder.WriteString("Unbound supports Discord Android " + minimum + " and newer, as `" + compatPolicyPath + "` sets. A legacy name can go once the oldest supported build no longer has it, because no newer build has it either.\n\n")
+	builder.WriteString("The stable scan checked Android " + version + ", and no supported build is older than it, so these names are gone from every supported build. The code that handles them can go along with their `HostClass.legacy` or `legacyJavaClass` marks.\n\n")
+	builder.WriteString("Once stable moves past the oldest supported build, the scan cannot tell what that build still has, so the list stays as it is until the minimum is raised. The `" + compatSupportLabel + "` issue proposes raising it.\n\n")
 	for _, name := range names {
 		links := make([]string, len(name.Locations))
 		for index, location := range name.Locations {
@@ -86,45 +88,29 @@ func renderCompatLegacyIssue(names []compatLegacyName, version, sourceURL string
 }
 
 func planCompatLegacyIssue(open []compatIssue, version string, removable bool) compatIssuePlan {
-	plan := compatIssuePlan{Title: compatLegacyTitle + " (Android " + version + ")"}
-	var relevant []compatIssue
-	for _, issue := range open {
-		if strings.HasPrefix(issue.Title, compatLegacyTitle) {
-			relevant = append(relevant, issue)
-		}
-	}
-	sort.Slice(relevant, func(left, right int) bool { return relevant[left].Number > relevant[right].Number })
-	if !removable {
-		for _, issue := range relevant {
-			plan.Close = append(plan.Close, compatIssueClose{Number: issue.Number, Comment: legacyKeptComment(version)})
-		}
-		return plan
-	}
-	if len(relevant) == 0 {
-		plan.Create = true
-		return plan
-	}
-	plan.Update = relevant[0].Number
-	for _, issue := range relevant[1:] {
-		plan.Close = append(plan.Close, compatIssueClose{Number: issue.Number})
-	}
-	return plan
+	return planSingleIssue(open, compatLegacyTitle, compatLegacyTitle+" (Android "+version+")", removable, legacyKeptComment(version))
 }
 
 func legacyKeptComment(version string) string {
-	return "Discord Android " + version + " on the stable channel still has every name marked legacy, so there is nothing left to remove."
+	return "Discord Android " + version + ", the oldest supported build, still has every name marked legacy, so there is nothing left to remove."
+}
+
+func legacyScanCoversMinimum(version, minimum string) (bool, error) {
+	order, err := compareDiscordVersions(version, minimum)
+	return order <= 0, err
 }
 
 func runCompatLegacyIssue(args []string) error {
 	set := flag.NewFlagSet("compat-legacy-issue", flag.ContinueOnError)
 	resultsPath := set.String("results", "", "results JSON from the stable channel's compat-scan")
+	root := set.String("root", "../..", "monorepo root")
 	repository := set.String("repo", os.Getenv("GITHUB_REPOSITORY"), "owner/name of the repository")
 	sourceURL := set.String("source-url", "", "base URL linking locations to the source")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
 	if *resultsPath == "" || *repository == "" {
-		return errors.New("usage: compat-legacy-issue --results <json> [--repo <owner/name>] [--source-url <url>]")
+		return errors.New("usage: compat-legacy-issue --results <json> [--root <monorepo>] [--repo <owner/name>] [--source-url <url>]")
 	}
 	data, err := os.ReadFile(*resultsPath)
 	if err != nil {
@@ -138,13 +124,26 @@ func runCompatLegacyIssue(args []string) error {
 	if version == "" {
 		return errors.New("the results have no Android scan")
 	}
+	policy, err := loadCompatPolicy(*root)
+	if err != nil {
+		return err
+	}
+	minimum := policy.Minimum["android"]
+	covers, err := legacyScanCoversMinimum(version, minimum)
+	if err != nil {
+		return err
+	}
+	if !covers {
+		fmt.Printf("Discord Android %s is newer than the oldest supported %s, so nothing more is removable until the minimum is raised\n", version, minimum)
+		return nil
+	}
 	names := removableLegacyNames(&results)
 	body, err := os.CreateTemp("", "compat-legacy-*.md")
 	if err != nil {
 		return err
 	}
 	defer os.Remove(body.Name())
-	if _, err := body.WriteString(renderCompatLegacyIssue(names, version, *sourceURL)); err != nil {
+	if _, err := body.WriteString(renderCompatLegacyIssue(names, version, minimum, *sourceURL)); err != nil {
 		body.Close()
 		return err
 	}

@@ -214,6 +214,8 @@ On the iOS vphone and the Android emulator, the loader finds a dev server on the
 
 Point `debugger.address` at a running `ub-debugger` bridge to evaluate JavaScript on a device. The emulator reaches the host at `10.0.2.2`.
 
+`ubd logs` tails the loader's and the client's output without the bridge: `adb logcat` filtered to the `Unbound`, `ReactNativeJS` and `unknown:ReactNative` tags and Discord's crashes on Android, or the unified log of a jailbroken iPhone over USB through `idevicesyslog` with `--ios`. The SE has neither `log` nor a working `oslog`, so jb-p1lot only picks the device. `ubd inspect class|views|find` describes Java classes and dumps native views through the bridge.
+
 </details>
 
 ## Addon crash protection
@@ -221,6 +223,30 @@ Point `debugger.address` at a running `ub-debugger` bridge to evaluate JavaScrip
 The client asks the loader to write `addon-starting.json` in the Unbound data directory before it starts each plugin or theme, and the loader removes the file once that start returns. The file is replaced atomically, so it survives a native crash.
 
 At the next launch, the shared core reads any marker that was left behind before the client runs. It records the addon in `addon-crashes.json`, and a clean launch clears that count. If Discord dies while starting the same addon on two consecutive launches, the core logs it, shows the native notice "Disabled <name> because Discord crashed while starting it." (a toast on Android, an alert on iOS), and reports the addon through `NativePlatform.crashGuard.disabled()`. The client then saves the addon as disabled and skips its start. To try the addon again, enable it in settings. Recovery mode skips the markers because it starts no addon code.
+
+## Signed client bundles
+
+The client build signs each bundle it writes (`unbound.js` and every `unbound.<bytecode>.bundle`) with Ed25519 and writes the base64 signature next to it as `<bundle>.sig`. The private key comes from the `UNBOUND_BUNDLE_SIGNING_KEY` environment variable (a PEM PKCS#8 Ed25519 key). Without it, the build writes no signatures and still succeeds, so local and fork builds keep working. `bun run --cwd packages/client verify-signatures` checks a build against the committed public key.
+
+The loader compiles in the public key from `core/keys/bundle-signing.pub` (the raw 32-byte key as base64). CMake and the iOS Makefile log at configure time whether verification is on. After a download, and before a candidate bundle can replace the current one, the updater fetches `<bundle URL>.sig` and checks it with the vendored Monocypher Ed25519 implementation (`vendor/monocypher`). If the signature is missing or does not match, the updater rejects the candidate and the current bundle keeps running. This applies to every update URL, including any custom HTTPS base. The check is skipped when:
+
+- no key file existed at build time, as in forks without a key,
+- the bundle comes from a dev server over plain `http://` on localhost, a `.local` name or a private address (this covers the dev-server auto-discovery on `10.0.2.2` and live reload), or
+- `loader.update.unsigned` is set to `true`.
+
+### Signing key
+
+The key pair is already set up. The private key is not in this repository; it is kept in the maintainer's backup. CI receives it from the `UNBOUND_BUNDLE_SIGNING_KEY` repository secret. `build-bundle.yml` signs every bundle it publishes and fails before publishing if a bundle is not signed with the committed key. The client CI job signs and checks its build whenever the secret is available. The matching public key is `core/keys/bundle-signing.pub`.
+
+To replace the key pair:
+
+1. Run `go run ./tools bundle-key generate --out <dir>` from `packages/loader`, with `<dir>` outside the repository. It writes `bundle-signing.pem` (mode 0600) and `bundle-signing.pub`, and prints only their paths and the public key.
+2. Store `bundle-signing.pem` in the maintainer's backup.
+3. Run `gh secret set UNBOUND_BUNDLE_SIGNING_KEY --repo marioparaschiv/unbound < <dir>/bundle-signing.pem`.
+4. Copy `bundle-signing.pub` to `core/keys/bundle-signing.pub` and commit it.
+5. Delete `<dir>`.
+
+A loader accepts only bundles signed with the key it was built with. After a rotation, loaders built with the old key reject new bundles and keep their cached one until the user updates the loader.
 
 ## Discord compatibility scan
 
@@ -245,6 +271,8 @@ Installing a split APK needs every split the device uses, or `adb install-multip
 ```bash
 go run ./tools discord-apk --channel stable --device emulator-5554 --output-dir discord-stable --install
 ```
+
+To exercise the fallback on an emulator without losing Discord's login, remove it with `adb shell pm uninstall -k --user 0 com.discord`, which keeps its data directory, then run the command above with `--install`.
 
 Run the scan against downloaded builds. Either `--ipa` or `--apk` can be left out to scan one platform:
 
@@ -279,7 +307,7 @@ private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 ```
 
-`legacyJavaClass` comes from `@unbound-plugins/shared/native/android/legacy-classes`. Only mark a name once the code handles its absence. When the stable build no longer has a legacy name, no channel does, so the stable scan keeps one `discord-compat-cleanup` issue listing those names and where the code uses them. It closes once there is nothing left to remove.
+`legacyJavaClass` comes from `@unbound-plugins/shared/native/android/legacy-classes`. Only mark a name once the code handles its absence. A legacy name can be removed once the oldest supported Discord build no longer has it, as [Supported Discord versions](#supported-discord-versions) describes.
 
 Plugins find obfuscated members by their shape instead of their name. The shapes live in [`discord-shapes.json`](../plugins-shared/src/native/android/discord-shapes.json), which `shapeMethod`, `shapeField` and `hasShapeConstructor` from `@unbound-plugins/shared/native/android/discord-shapes` read at runtime and the scan checks against the dex:
 
@@ -302,6 +330,34 @@ Releases run the same scan before anything is built. The `compat-gate` job in `l
 ```bash
 go run ./tools compat-scan --ipa discord.ipa --apk discord-stable/base.apk --android-version 350.0 --fail-on-breakage
 ```
+
+### Hermes bytecode
+
+The client ships one bundle per Hermes bytecode version. The loader loads the one that matches the bytecode Discord runs, and falls back to the uncompiled `unbound.js` when none does. The versions it builds are listed in [`hermes.json`](../client/scripts/build/hermes.json). A release build fails when the bundles it compiled differ from that list, so the list always matches what ships.
+
+The scan reads the bytecode version from the header of Discord's `index.android.bundle` and `main.jsbundle` and compares it with that list. A version the client does not build is a warning, listed under "Warnings" at the top of the report: Unbound still loads, only with a slower startup, so it does not count as a breakage, does not fail `--fail-on-breakage` and does not stop a release. It shows up in the channel's `discord-compat` issue when that issue is open for other reasons. When Discord moves to a new bytecode version, add it to `hermes.json` once [hermesc](https://github.com/unbound-app/hermesc) publishes it.
+
+A bundle whose header or string table the scan cannot read is a broken finding, because none of its lookups could be checked. It is listed at the top of the report and stops a release like any other breakage.
+
+### Supported Discord versions
+
+[`compat-policy.json`](compat-policy.json) sets the oldest Discord version Unbound supports on each platform:
+
+```json
+{
+	"minimumDiscordVersion": {
+		"android": "350.8",
+		"ios": "350.0"
+	},
+	"raiseReminderDays": 30
+}
+```
+
+Supported means every build from that minimum up to the newest alpha. Lookups keep fallbacks for every supported build, and the scans and the release gate check them. On a Discord older than the minimum, the client logs a warning and shows a toast once per Discord version, as the policy is bundled into the client at build time.
+
+The minimum follows the Play Store stable and App Store releases. Once the scheduled stable scan has seen a stable build newer than the minimum for more than `raiseReminderDays` days, it opens one `discord-support-policy` issue proposing to raise the minimum to the current stable build, and lists the legacy names raising it would let the team remove. Each scan's `compat.json` carries the date stable first moved past the minimum into the next scan, and raising the minimum restarts it. The issue closes once the minimum is raised.
+
+Legacy code is removed against the minimum, not against stable. When the scanned stable build is the minimum, or older than it, every supported build lacks the legacy names stable lacks, so the stable scan keeps one `discord-compat-cleanup` issue listing them and where the code uses them, and closes it once there is nothing left to remove. While stable is newer than the minimum, the scan cannot tell what the minimum build still has, so nothing more becomes removable until the minimum is raised. To clean up, raise the minimum in `compat-policy.json`, wait for the next stable scan to list the names, and remove them together with their `HostClass.legacy` or `legacyJavaClass` marks.
 
 ## Smoke tests
 

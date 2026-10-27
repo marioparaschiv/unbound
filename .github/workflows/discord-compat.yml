@@ -135,9 +135,16 @@ jobs:
                   gh label create discord-compat --repo "$GITHUB_REPOSITORY" --color D93F0B --description "A Discord build breaks part of Unbound" --force >/dev/null
                   go run ./tools compat-issue --repo "$GITHUB_REPOSITORY" --channel "$CHANNEL" --results compat.json --report report.md
 
-            - name: Track the legacy names stable no longer has
+            - name: Track the legacy names the oldest supported build no longer has
               if: matrix.channel == 'stable' && github.ref_name == github.event.repository.default_branch
               run: |
                   set -euo pipefail
                   gh label create discord-compat-cleanup --repo "$GITHUB_REPOSITORY" --color 0E8A16 --description "Code for names Discord no longer ships can be removed" --force >/dev/null
                   go run ./tools compat-legacy-issue --repo "$GITHUB_REPOSITORY" --results compat.json --source-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA"
+
+            - name: Remind to raise the oldest supported Discord
+              if: matrix.channel == 'stable' && github.ref_name == github.event.repository.default_branch
+              run: |
+                  set -euo pipefail
+                  gh label create discord-support-policy --repo "$GITHUB_REPOSITORY" --color 5319E7 --description "The oldest supported Discord version is due to be raised" --force >/dev/null
+                  go run ./tools compat-support-issue --repo "$GITHUB_REPOSITORY" --results compat.json --source-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA"

@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
 
 export type CommandResult = { ok: true; stdout: string } | { ok: false; error: string };
 
@@ -9,10 +9,96 @@ export type CommandRunner = (
 ) => Promise<CommandResult>;
 
 const OUTPUT_DRAIN_MS = 500;
+const FORWARDED_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP'] as const;
+
+const liveGroups = new Set<ChildProcess>();
 
 /**
- * @description Runs a program to completion and captures its output, killing it once the timeout
- * elapses. A program that exits while a child it forked still holds its output open, as `adb` does
+ * @description Starts a program as the leader of its own process group, so the program and every
+ * process it forks can be killed together with {@link killGroup}. A group still running when this
+ * process exits or is interrupted is killed with it.
+ * @param command The program to run.
+ * @param args Its arguments.
+ * @param options The spawn options; `detached` is always set.
+ * @returns The started child.
+ */
+export function spawnGroup(command: string, args: string[], options: SpawnOptions): ChildProcess {
+	const child = spawn(command, args, { ...options, detached: true });
+
+	if (child.pid === void 0) {
+		return child;
+	}
+
+	if (!liveGroups.size) {
+		watchParentExit();
+	}
+
+	liveGroups.add(child);
+	child.once('exit', () => forgetGroup(child));
+	child.once('error', () => forgetGroup(child));
+
+	return child;
+}
+
+/**
+ * @description Kills a child started with {@link spawnGroup} together with everything it forked.
+ * @param child The group leader.
+ * @param signal The signal to send.
+ */
+export function killGroup(child: ChildProcess, signal: NodeJS.Signals = 'SIGKILL'): void {
+	if (child.pid === void 0) {
+		return;
+	}
+
+	try {
+		process.kill(-child.pid, signal);
+	} catch {
+		child.kill(signal);
+	}
+}
+
+function forgetGroup(child: ChildProcess) {
+	liveGroups.delete(child);
+
+	if (!liveGroups.size) {
+		unwatchParentExit();
+	}
+}
+
+function killLiveGroups() {
+	for (const child of liveGroups) {
+		killGroup(child);
+	}
+}
+
+function onParentSignal(signal: NodeJS.Signals) {
+	killLiveGroups();
+	unwatchParentExit();
+
+	if (!process.listenerCount(signal)) {
+		process.kill(process.pid, signal);
+	}
+}
+
+function watchParentExit() {
+	process.on('exit', killLiveGroups);
+
+	for (const signal of FORWARDED_SIGNALS) {
+		process.on(signal, onParentSignal);
+	}
+}
+
+function unwatchParentExit() {
+	process.off('exit', killLiveGroups);
+
+	for (const signal of FORWARDED_SIGNALS) {
+		process.off(signal, onParentSignal);
+	}
+}
+
+/**
+ * @description Runs a program to completion and captures its output, killing it and every process
+ * it forked once the timeout elapses. A program that exits while a child it forked still holds its output open, as `adb` does
  * when it starts its server, resolves shortly after it exits instead of waiting on that child.
  * @param command The program to run.
  * @param args Its arguments.
@@ -25,7 +111,7 @@ export function runCommand(
 	timeoutMs: number,
 ): Promise<CommandResult> {
 	return new Promise((resolve) => {
-		const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+		const child = spawnGroup(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 		const label = [command, findSubcommand(args)].filter(Boolean).join(' ');
 
 		let stdout = '';
@@ -39,8 +125,8 @@ export function runCommand(
 			settled = true;
 			clearTimeout(timer);
 			clearTimeout(drain);
-			child.stdout.destroy();
-			child.stderr.destroy();
+			child.stdout?.destroy();
+			child.stderr?.destroy();
 			resolve(result);
 		}
 
@@ -61,12 +147,12 @@ export function runCommand(
 		}
 
 		const timer = setTimeout(() => {
-			child.kill('SIGKILL');
+			killGroup(child);
 			settle({ ok: false, error: `${label} timed out after ${formatDuration(timeoutMs)}.` });
 		}, timeoutMs);
 
-		child.stdout.setEncoding('utf8').on('data', (chunk: string) => (stdout += chunk));
-		child.stderr.setEncoding('utf8').on('data', (chunk: string) => (stderr += chunk));
+		child.stdout?.setEncoding('utf8').on('data', (chunk: string) => (stdout += chunk));
+		child.stderr?.setEncoding('utf8').on('data', (chunk: string) => (stderr += chunk));
 
 		child.on('error', (error: NodeJS.ErrnoException) => {
 			settle({

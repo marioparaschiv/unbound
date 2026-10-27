@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 
 #include "LoaderPreferences.h"
 
@@ -121,5 +122,31 @@ bool saveButtonCenter(SettingsStore &settings, Point center, Size bounds)
                  {{"x", std::clamp(center.x / bounds.width, 0.0, 1.0)},
                   {"y", std::clamp(center.y / bounds.height, 0.0, 1.0)}});
     return settings.save();
+}
+
+Frame buttonFrame(Point center)
+{
+    return {center.x - kButtonSide / 2.0, center.y - kButtonSide / 2.0, kButtonSide, kButtonSide};
+}
+
+static std::optional<Frame> intersection(const Frame &first, const Frame &second)
+{
+    const double left   = std::max(first.x, second.x);
+    const double top    = std::max(first.y, second.y);
+    const double right  = std::min(first.x + first.width, second.x + second.width);
+    const double bottom = std::min(first.y + first.height, second.y + second.height);
+    if (right < left || bottom < top)
+    {
+        return std::nullopt;
+    }
+    return Frame{left, top, right - left, bottom - top};
+}
+
+Frame collapsedWindowFrame(Point center, Frame screen)
+{
+    const Frame button = buttonFrame(center);
+    const Frame padded{button.x - kButtonMargin, button.y - kButtonMargin,
+                       button.width + kButtonMargin * 2, button.height + kButtonMargin * 2};
+    return intersection(padded, screen).value_or(padded);
 }
 }

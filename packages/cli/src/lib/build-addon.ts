@@ -1,12 +1,11 @@
-import { spawn } from 'node:child_process';
-
+import { formatDuration, killGroup, spawnGroup } from '~/lib/run-command';
 import type { DiscoveredAddon } from '~/lib/discovery';
-import { formatDuration } from '~/lib/run-command';
 
 /**
  * @description Builds a single addon by running the config's `build` command with cwd set to the
  * addon directory. Static addons carry no build step, so they resolve immediately as successful.
- * stdout and stderr are inherited so the build's own output surfaces live.
+ * stdout and stderr are inherited so the build's own output surfaces live. The build runs in its own
+ * process group, so a timeout kills every process it started, not just the shell.
  * @param addon The addon to build.
  * @param buildCommand The shell command to run in the addon directory.
  * @param env Variables added to the build's environment.
@@ -24,11 +23,11 @@ export function buildAddon(
 	}
 
 	return new Promise((resolve) => {
-		const child = spawn(buildCommand, {
+		const child = spawnGroup(buildCommand, [], {
 			cwd: addon.dir,
 			env: { ...process.env, ...env },
 			shell: true,
-			stdio: 'inherit',
+			stdio: ['ignore', 'inherit', 'inherit'],
 		});
 
 		const timer =
@@ -38,7 +37,7 @@ export function buildAddon(
 						process.stderr.write(
 							`Building ${addon.id} timed out after ${formatDuration(timeoutMs)}.\n`,
 						);
-						child.kill('SIGKILL');
+						killGroup(child);
 					}, timeoutMs);
 
 		function settle(ok: boolean) {

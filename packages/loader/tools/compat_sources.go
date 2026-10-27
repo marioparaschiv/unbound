@@ -381,6 +381,7 @@ var (
 	jniClassPattern        = regexp.MustCompile(`FindClass\("([A-Za-z0-9_/$]+)"`)
 	kotlinHostClassPattern = regexp.MustCompile(`\bHostClass\(([^()]*)\)`)
 	kotlinLegacyPattern    = regexp.MustCompile(`\bHostClass\.legacy\(\s*"([^"]+)"\s*\)`)
+	kotlinShapePattern     = regexp.MustCompile(`\bshape(?:Class|Field|Fields|Method)\(\s*"([A-Za-z_][A-Za-z0-9_]*)"`)
 )
 
 func logosSelector(name, rest string) string {
@@ -443,11 +444,20 @@ func extractKotlinFallbacks(set *compatSourceSet, base compatReference, file com
 	return grouped
 }
 
+func extractKotlinShapes(set *compatSourceSet, base compatReference, file compatSourceFile, content string) {
+	for _, match := range kotlinShapePattern.FindAllStringSubmatchIndex(content, -1) {
+		reference := base
+		reference.Kind, reference.Name = referenceJavaShape, content[match[2]:match[3]]
+		set.add(reference, compatLocation{File: file.path, Line: lineAt(content, match[2])})
+	}
+}
+
 func extractNativeReferences(set *compatSourceSet, file compatSourceFile, content string) {
 	base := compatReference{Component: file.component, Platform: file.platform}
 	var grouped map[int]map[string]bool
 	if filepath.Ext(file.path) == ".kt" {
 		grouped = extractKotlinFallbacks(set, base, file, content)
+		extractKotlinShapes(set, base, file, content)
 	}
 	hooked := ""
 	addsMethod := false
