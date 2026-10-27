@@ -3,8 +3,11 @@ package main
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/sha512"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"flag"
@@ -12,15 +15,33 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
 const (
-	bundleSigningPrivateKeyName = "bundle-signing.pem"
-	bundleSigningPublicKeyName  = "bundle-signing.pub"
-	bundleSignatureSuffix       = ".sig"
+	bundleSigningKeyName            = "bundle-signing"
+	pullRequestBundleSigningKeyName = "pr-bundle-signing"
+	bundleSigningPrivateKeyName     = bundleSigningKeyName + ".pem"
+	bundleSigningPublicKeyName      = bundleSigningKeyName + ".pub"
+	bundleSignatureSuffix           = ".sig"
+	bundleManifestName              = "manifest.json"
 )
+
+var bundleKeyNames = []string{bundleSigningKeyName, pullRequestBundleSigningKeyName}
+
+func pullRequestSigningContext(number uint64) string {
+	return "unbound-pr-bundle/v1/" + strconv.FormatUint(number, 10) + "/"
+}
+
+func signedMessage(contents []byte, pullRequest uint64) []byte {
+	if pullRequest == 0 {
+		return contents
+	}
+	return append([]byte(pullRequestSigningContext(pullRequest)), contents...)
+}
 
 func runBundleKey(args []string) error {
 	if len(args) == 0 {
@@ -38,14 +59,15 @@ func runBundleKey(args []string) error {
 
 func bundleKeyGenerateCommand(args []string, output io.Writer) error {
 	set := flag.NewFlagSet("bundle-key generate", flag.ContinueOnError)
-	out := set.String("out", "", "directory to write bundle-signing.pem and bundle-signing.pub into")
+	out := set.String("out", "", "directory to write <name>.pem and <name>.pub into")
+	name := set.String("name", bundleSigningKeyName, "key to generate: bundle-signing or pr-bundle-signing")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
 	if *out == "" {
-		return errors.New("usage: bundle-key generate --out <dir>")
+		return errors.New("usage: bundle-key generate --out <dir> [--name bundle-signing|pr-bundle-signing]")
 	}
-	privatePath, publicPath, err := generateBundleSigningKey(*out, rand.Reader)
+	privatePath, publicPath, err := generateNamedBundleSigningKey(*out, *name, rand.Reader)
 	if err != nil {
 		return err
 	}
@@ -59,11 +81,22 @@ func bundleKeyGenerateCommand(args []string, output io.Writer) error {
 }
 
 func generateBundleSigningKey(directory string, entropy io.Reader) (string, string, error) {
+	return generateNamedBundleSigningKey(directory, bundleSigningKeyName, entropy)
+}
+
+func generateNamedBundleSigningKey(directory, name string, entropy io.Reader) (string, string, error) {
+	known := false
+	for _, candidate := range bundleKeyNames {
+		known = known || candidate == name
+	}
+	if !known {
+		return "", "", fmt.Errorf("unknown bundle signing key %q, want one of %s", name, strings.Join(bundleKeyNames, ", "))
+	}
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return "", "", err
 	}
-	privatePath := filepath.Join(directory, bundleSigningPrivateKeyName)
-	publicPath := filepath.Join(directory, bundleSigningPublicKeyName)
+	privatePath := filepath.Join(directory, name+".pem")
+	publicPath := filepath.Join(directory, name+".pub")
 	for _, path := range []string{privatePath, publicPath} {
 		if _, err := os.Stat(path); err == nil {
 			return "", "", fmt.Errorf("%s already exists; refusing to replace a signing key", path)
@@ -131,6 +164,83 @@ func signedBundleFiles(directory string) ([]string, error) {
 }
 
 func verifyBundleSignatures(directory string, public ed25519.PublicKey) ([]string, error) {
+	return verifySignedBuild(directory, public, 0)
+}
+
+type bundleManifest struct {
+	Revision  string            `json:"revision"`
+	Channel   string            `json:"channel"`
+	BuildTime string            `json:"buildTime"`
+	SHA512    map[string]string `json:"sha512"`
+}
+
+var buildTimePattern = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$`)
+
+func verifySignature(path string, public ed25519.PublicKey, pullRequest uint64) (string, []byte, error) {
+	name := filepath.Base(path)
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return "", nil, err
+	}
+	signature, err := os.ReadFile(path + bundleSignatureSuffix)
+	if err != nil {
+		return name + ": no signature", contents, nil
+	}
+	decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(signature)))
+	if err != nil || len(decoded) != ed25519.SignatureSize {
+		return name + ": malformed signature", contents, nil
+	}
+	if !ed25519.Verify(public, signedMessage(contents, pullRequest), decoded) {
+		return name + ": signature does not match", contents, nil
+	}
+	return "", contents, nil
+}
+
+func manifestProblems(directory string, files []string, public ed25519.PublicKey, pullRequest uint64) ([]string, error) {
+	problem, contents, err := verifySignature(filepath.Join(directory, bundleManifestName), public, pullRequest)
+	if errors.Is(err, os.ErrNotExist) {
+		return []string{bundleManifestName + ": missing"}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if problem != "" {
+		return []string{problem}, nil
+	}
+	var manifest bundleManifest
+	if err := json.Unmarshal(contents, &manifest); err != nil {
+		return []string{bundleManifestName + ": invalid JSON"}, nil
+	}
+	var problems []string
+	if !buildTimePattern.MatchString(manifest.BuildTime) {
+		problems = append(problems, bundleManifestName+": no ISO 8601 UTC buildTime")
+	}
+	if manifest.Revision == "" || manifest.Channel == "" {
+		problems = append(problems, bundleManifestName+": no revision or channel")
+	}
+	listed := map[string]bool{}
+	for _, path := range files {
+		name := filepath.Base(path)
+		listed[name] = true
+		bundle, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		sum := sha512.Sum512(bundle)
+		if manifest.SHA512[name] != hex.EncodeToString(sum[:]) {
+			problems = append(problems, name+": SHA-512 does not match "+bundleManifestName)
+		}
+	}
+	for name := range manifest.SHA512 {
+		if !listed[name] {
+			problems = append(problems, bundleManifestName+": lists "+name+", which the build lacks")
+		}
+	}
+	sort.Strings(problems)
+	return problems, nil
+}
+
+func verifySignedBuild(directory string, public ed25519.PublicKey, pullRequest uint64) ([]string, error) {
 	files, err := signedBundleFiles(directory)
 	if err != nil {
 		return nil, err
@@ -140,40 +250,42 @@ func verifyBundleSignatures(directory string, public ed25519.PublicKey) ([]strin
 	}
 	var problems []string
 	for _, path := range files {
-		name := filepath.Base(path)
-		signature, err := os.ReadFile(path + bundleSignatureSuffix)
-		if err != nil {
-			problems = append(problems, name+": no signature")
-			continue
-		}
-		decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(signature)))
-		if err != nil || len(decoded) != ed25519.SignatureSize {
-			problems = append(problems, name+": malformed signature")
-			continue
-		}
-		bundle, err := os.ReadFile(path)
+		problem, _, err := verifySignature(path, public, pullRequest)
 		if err != nil {
 			return nil, err
 		}
-		if !ed25519.Verify(public, bundle, decoded) {
-			problems = append(problems, name+": signature does not match")
+		if problem != "" {
+			problems = append(problems, problem)
 		}
 	}
+	manifest, err := manifestProblems(directory, files, public, pullRequest)
+	if err != nil {
+		return nil, err
+	}
+	problems = append(problems, manifest...)
 	if len(problems) > 0 {
 		return nil, fmt.Errorf("bundle signatures failed:\n  %s", strings.Join(problems, "\n  "))
 	}
-	return files, nil
+	return append(files, filepath.Join(directory, bundleManifestName)), nil
 }
 
 func bundleKeyVerifyCommand(args []string, output io.Writer) error {
 	set := flag.NewFlagSet("bundle-key verify", flag.ContinueOnError)
-	directory := set.String("dir", "", "client build directory holding the bundles and their .sig files")
-	publicKeyPath := set.String("public-key", filepath.Join(repositoryRoot(), "core", "keys", bundleSigningPublicKeyName), "base64 Ed25519 public key file")
+	directory := set.String("dir", "", "client build directory holding the bundles, manifest.json and their .sig files")
+	publicKeyPath := set.String("public-key", "", "base64 Ed25519 public key file; defaults to the committed key for the build kind")
+	pullRequest := set.Uint64("pr", 0, "pull request number the build was signed for with the PR key")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
 	if *directory == "" {
-		return errors.New("usage: bundle-key verify --dir <dist> [--public-key <file>]")
+		return errors.New("usage: bundle-key verify --dir <dist> [--pr <n>] [--public-key <file>]")
+	}
+	if *publicKeyPath == "" {
+		name := bundleSigningKeyName
+		if *pullRequest > 0 {
+			name = pullRequestBundleSigningKeyName
+		}
+		*publicKeyPath = filepath.Join(repositoryRoot(), "core", "keys", name+".pub")
 	}
 	raw, err := os.ReadFile(*publicKeyPath)
 	if err != nil {
@@ -183,7 +295,7 @@ func bundleKeyVerifyCommand(args []string, output io.Writer) error {
 	if err != nil {
 		return err
 	}
-	files, err := verifyBundleSignatures(*directory, public)
+	files, err := verifySignedBuild(*directory, public, *pullRequest)
 	if err != nil {
 		return err
 	}

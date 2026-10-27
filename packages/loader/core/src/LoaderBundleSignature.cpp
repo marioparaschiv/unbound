@@ -10,9 +10,31 @@
 #define UNBOUND_BUNDLE_SIGNING_KEY ""
 #endif
 
+#ifndef UNBOUND_PR_BUNDLE_SIGNING_KEY
+#define UNBOUND_PR_BUNDLE_SIGNING_KEY ""
+#endif
+
+#ifndef UNBOUND_PR_NUMBER
+#define UNBOUND_PR_NUMBER 0
+#endif
+
 namespace loader {
 static constexpr size_t kPublicKeySize = 32;
 static constexpr size_t kSignatureSize = 64;
+static constexpr size_t kSha512Size    = 64;
+
+static_assert(UNBOUND_PR_NUMBER >= 0 && UNBOUND_PR_NUMBER <= UINT32_MAX,
+              "UNBOUND_PR_NUMBER must be a pull request number");
+
+bool BundleTrust::isEnabled() const
+{
+    return !productionKey.empty() || trustsPullRequestKey();
+}
+
+bool BundleTrust::trustsPullRequestKey() const
+{
+    return pullRequestNumber > 0 && !pullRequestKey.empty();
+}
 
 static int base64Value(char character)
 {
@@ -98,6 +120,40 @@ std::string compiledBundleSigningKey()
     return UNBOUND_BUNDLE_SIGNING_KEY;
 }
 
+BundleTrust compiledBundleTrust()
+{
+    BundleTrust trust;
+    trust.productionKey     = UNBOUND_BUNDLE_SIGNING_KEY;
+    trust.pullRequestNumber = static_cast<uint32_t>(UNBOUND_PR_NUMBER);
+    if (trust.pullRequestNumber > 0)
+    {
+        trust.pullRequestKey = UNBOUND_PR_BUNDLE_SIGNING_KEY;
+    }
+    return trust;
+}
+
+std::string pullRequestSigningContext(uint32_t pullRequestNumber)
+{
+    return "unbound-pr-bundle/v1/" + std::to_string(pullRequestNumber) + "/";
+}
+
+std::string sha512Hex(std::string_view data)
+{
+    static constexpr char kDigits[] = "0123456789abcdef";
+
+    std::array<uint8_t, kSha512Size> hash{};
+    crypto_sha512(hash.data(), reinterpret_cast<const uint8_t *>(data.data()), data.size());
+
+    std::string hex;
+    hex.reserve(hash.size() * 2);
+    for (uint8_t byte : hash)
+    {
+        hex.push_back(kDigits[byte >> 4]);
+        hex.push_back(kDigits[byte & 0x0f]);
+    }
+    return hex;
+}
+
 bool verifyBundleSignature(const std::string &bundle, const std::string &signatureBase64,
                            const std::string &publicKeyBase64)
 {
@@ -113,6 +169,37 @@ bool verifyBundleSignature(const std::string &bundle, const std::string &signatu
                                 reinterpret_cast<const uint8_t *>(publicKey->data()),
                                 reinterpret_cast<const uint8_t *>(bundle.data()),
                                 bundle.size()) == 0;
+}
+
+TrustedSigner verifyTrustedSignature(const std::string &message, const std::string &signatureBase64,
+                                     const BundleTrust &trust)
+{
+    if (!trust.productionKey.empty() &&
+        verifyBundleSignature(message, signatureBase64, trust.productionKey))
+    {
+        return TrustedSigner::Production;
+    }
+    if (trust.trustsPullRequestKey() &&
+        verifyBundleSignature(pullRequestSigningContext(trust.pullRequestNumber) + message,
+                              signatureBase64, trust.pullRequestKey))
+    {
+        return TrustedSigner::PullRequest;
+    }
+    return TrustedSigner::None;
+}
+
+std::string describeSigner(TrustedSigner signer, const BundleTrust &trust)
+{
+    switch (signer)
+    {
+        case TrustedSigner::Production:
+            return "the production key";
+        case TrustedSigner::PullRequest:
+            return "the key for pull request #" + std::to_string(trust.pullRequestNumber);
+        case TrustedSigner::None:
+            break;
+    }
+    return "no trusted key";
 }
 
 static std::string lowercase(std::string value)

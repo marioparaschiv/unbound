@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/sha512"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"os"
 	"path/filepath"
@@ -59,15 +62,51 @@ func generatedKey(t *testing.T) (string, ed25519.PrivateKey, ed25519.PublicKey) 
 
 func writeSignedBundle(t *testing.T, directory, name string, contents []byte, private ed25519.PrivateKey) string {
 	t.Helper()
+	return writeSignedFile(t, directory, name, contents, private, 0)
+}
+
+func writeSignedFile(t *testing.T, directory, name string, contents []byte, private ed25519.PrivateKey, pullRequest uint64) string {
+	t.Helper()
 	path := filepath.Join(directory, name)
 	if err := os.WriteFile(path, contents, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	signature := base64.StdEncoding.EncodeToString(ed25519.Sign(private, contents)) + "\n"
+	signature := base64.StdEncoding.EncodeToString(ed25519.Sign(private, signedMessage(contents, pullRequest))) + "\n"
 	if err := os.WriteFile(path+bundleSignatureSuffix, []byte(signature), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	return path
+}
+
+func writeSignedManifest(t *testing.T, directory string, bundles map[string][]byte, private ed25519.PrivateKey, pullRequest uint64) {
+	t.Helper()
+	hashes := map[string]string{}
+	for name, contents := range bundles {
+		writeSignedFile(t, directory, name, contents, private, pullRequest)
+		sum := sha512.Sum512(contents)
+		hashes[name] = hex.EncodeToString(sum[:])
+	}
+	manifest, err := json.Marshal(map[string]any{
+		"revision":         "abc1234",
+		"channel":          "beta",
+		"buildTime":        "2026-10-27T12:06:15.507Z",
+		"bytecodeVersions": []int{98},
+		"sha512":           hashes,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writeSignedFile(t, directory, bundleManifestName, manifest, private, pullRequest)
+}
+
+func signedBuild(t *testing.T, private ed25519.PrivateKey, pullRequest uint64) string {
+	t.Helper()
+	dist := t.TempDir()
+	writeSignedManifest(t, dist, map[string][]byte{
+		"unbound.js":        []byte("console.log(1);"),
+		"unbound.98.bundle": {0xc6, 0x1f, 0xbc, 0x03},
+	}, private, pullRequest)
+	return dist
 }
 
 func TestBundleKeyGenerateWritesAMatchingPair(t *testing.T) {
@@ -103,18 +142,79 @@ func TestBundleKeyGenerateNeverPrintsThePrivateKey(t *testing.T) {
 
 func TestBundleKeyVerifyAcceptsSignedBundles(t *testing.T) {
 	_, private, public := generatedKey(t)
-	dist := t.TempDir()
-	writeSignedBundle(t, dist, "unbound.js", []byte("console.log(1);"), private)
-	writeSignedBundle(t, dist, "unbound.98.bundle", []byte{0xc6, 0x1f, 0xbc, 0x03}, private)
-	if err := os.WriteFile(filepath.Join(dist, "manifest.json"), []byte("{}"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	files, err := verifyBundleSignatures(dist, public)
+	files, err := verifyBundleSignatures(signedBuild(t, private, 0), public)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(files) != 2 {
-		t.Fatalf("verified %d bundles, want 2", len(files))
+	if len(files) != 3 {
+		t.Fatalf("verified %d files, want 2 bundles and the manifest", len(files))
+	}
+}
+
+func TestBundleKeyVerifyChecksTheSignedManifest(t *testing.T) {
+	_, private, public := generatedKey(t)
+	dist := signedBuild(t, private, 0)
+	writeSignedBundle(t, dist, "unbound.98.bundle", []byte("replaced"), private)
+	writeSignedBundle(t, dist, "unbound.96.bundle", []byte("unlisted"), private)
+	_, err := verifyBundleSignatures(dist, public)
+	if err == nil {
+		t.Fatal("verify accepted bundles the manifest does not hash")
+	}
+	for _, want := range []string{"unbound.98.bundle: SHA-512 does not match", "unbound.96.bundle: SHA-512 does not match"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("error %q does not mention %q", err, want)
+		}
+	}
+
+	dist = signedBuild(t, private, 0)
+	if err := os.Remove(filepath.Join(dist, bundleManifestName+bundleSignatureSuffix)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := verifyBundleSignatures(dist, public); err == nil || !strings.Contains(err.Error(), "manifest.json: no signature") {
+		t.Fatalf("verify accepted an unsigned manifest: %v", err)
+	}
+
+	dist = signedBuild(t, private, 0)
+	if err := os.Remove(filepath.Join(dist, bundleManifestName)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := verifyBundleSignatures(dist, public); err == nil || !strings.Contains(err.Error(), "manifest.json: missing") {
+		t.Fatalf("verify accepted a build without a manifest: %v", err)
+	}
+
+	dist = t.TempDir()
+	writeSignedBundle(t, dist, "unbound.js", []byte("js"), private)
+	writeSignedFile(t, dist, bundleManifestName, []byte(`{"bytecodeVersions":[]}`), private, 0)
+	_, err = verifyBundleSignatures(dist, public)
+	for _, want := range []string{"no ISO 8601 UTC buildTime", "no revision or channel", "unbound.js: SHA-512 does not match"} {
+		if err == nil || !strings.Contains(err.Error(), want) {
+			t.Fatalf("error %v does not mention %q", err, want)
+		}
+	}
+}
+
+func TestBundleKeyVerifyBindsPullRequestSignaturesToTheirNumber(t *testing.T) {
+	_, private, public := generatedKey(t)
+	dist := signedBuild(t, private, 5)
+	if _, err := verifySignedBuild(dist, public, 5); err != nil {
+		t.Fatal(err)
+	}
+	for _, pullRequest := range []uint64{0, 6} {
+		if _, err := verifySignedBuild(dist, public, pullRequest); err == nil {
+			t.Fatalf("a build signed for pull request 5 verified as %d", pullRequest)
+		}
+	}
+	if _, err := verifySignedBuild(signedBuild(t, private, 0), public, 5); err == nil {
+		t.Fatal("a build signed without the pull request context verified as pull request 5")
+	}
+}
+
+func TestBundleKeyVerifyCommandDefaultsToTheKeyForTheBuildKind(t *testing.T) {
+	_, private, _ := generatedKey(t)
+	dist := signedBuild(t, private, 7)
+	err := bundleKeyVerifyCommand([]string{"--dir", dist, "--pr", "7"}, &bytes.Buffer{})
+	if err == nil || !strings.Contains(err.Error(), "signature does not match") {
+		t.Fatalf("a throwaway key verified against the committed PR key: %v", err)
 	}
 }
 
@@ -145,6 +245,35 @@ func TestBundleKeyVerifyRequiresBundles(t *testing.T) {
 	_, _, public := generatedKey(t)
 	if _, err := verifyBundleSignatures(t.TempDir(), public); err == nil {
 		t.Fatal("verify passed an empty build directory")
+	}
+}
+
+func TestBundleKeyGenerateNamesThePullRequestKey(t *testing.T) {
+	directory := t.TempDir()
+	var output bytes.Buffer
+	if err := bundleKeyGenerateCommand([]string{"--out", directory, "--name", pullRequestBundleSigningKeyName}, &output); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"pr-bundle-signing.pem", "pr-bundle-signing.pub"} {
+		if _, err := os.Stat(filepath.Join(directory, name)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := bundleKeyGenerateCommand([]string{"--out", directory, "--name", "other"}, &output); err == nil {
+		t.Fatal("generate accepted an unknown key name")
+	}
+}
+
+func TestCommittedPullRequestSigningKeyIsAnEd25519PublicKey(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join(repositoryRoot(), "core", "keys", pullRequestBundleSigningKeyName+".pub"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := parseBundleSigningPublicKey(string(raw)); err != nil {
+		t.Fatal(err)
+	}
+	if strings.TrimSpace(string(raw)) != "mSJd/geAbJK4OV7hFgC5x46ZYosHzAusHyNUv5lihSc=" {
+		t.Fatalf("committed PR key is %q", raw)
 	}
 }
 
