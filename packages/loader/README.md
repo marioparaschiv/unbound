@@ -303,6 +303,29 @@ Releases run the same scan before anything is built. The `compat-gate` job in `l
 go run ./tools compat-scan --ipa discord.ipa --apk discord-stable/base.apk --android-version 350.0 --fail-on-breakage
 ```
 
+## Smoke tests
+
+Every loader build installs what it built and checks that Discord loads Unbound and every first-party plugin without anyone signing in. They run on pull requests that touch the loader or the plugins, on pushes to `main`, and before every release: the release jobs only run once the Android and iOS builds, smoke tests included, succeed.
+
+- **Android** (`smoke` in `loader-android.yml`) boots an x86_64 `google_apis` emulator (API 34) with KVM, installs the patched Discord from `patch-discord` with the `config.x86_64` split it patches alongside (and keeps out of `Unbound.apks`), and uses `adb root` to copy the plugins and a `settings.json` into Discord's data the way `ubd install --serial` does.
+- **iOS** (`smoke-simulator` in `loader-ios.yml`) boots a fresh iPhone simulator on the newest installed runtime, installs `Discord.app` from the simulator build with `xcrun simctl install`, and writes the plugins and `settings.json` into its data container.
+
+Both build the client and the plugins from the same commit. The tool serves `packages/client/dist` to the app as its bundle (`loader.update.url`), turns on the debugger and points it at a `ub-debugger` bridge it starts, and enables every plugin. It then launches Discord and passes when, within the timeout:
+
+- the loader logs `[plugins] Loaded <id> from …` for every plugin built for that platform and `Loaded <n> plugins.` (logcat tag `Unbound`, or the `app.unbound` subsystem of the unified log),
+- nothing logs `Failed to start addon` or `Failed to load addon`, and Discord neither crashes nor exits,
+- `bun packages/cli/src/index.ts eval` over the bridge reports every plugin as `started`.
+
+The job summary has a table of each plugin's result, and the `android smoke test` and `ios smoke test` artifacts keep the full log, the bridge transcript, the bundle requests, the settings before and after, a screenshot, and on iOS any crash report. Run it against your own emulator or simulator:
+
+```bash
+bun run --cwd ../client build && bun run --cwd ../.. plugins:build
+go run ./tools smoke android --apks patched-discord --client ../client/dist
+go run ./tools smoke ios --app Payload/Discord.app --client ../client/dist
+```
+
+`--apks` is a directory of patched split APKs, from which the base, the emulator's ABI split and the other config splits are installed. Without `--client` the app keeps its default bundle URL. The simulator build retargets frameworks that only declare an iPhoneOS deployment target, such as `CydiaSubstrate.framework`, to the simulator platform, since the simulator refuses to load them otherwise.
+
 ## Symbolicating native crashes
 
 Every build keeps the unstripped loader next to its stripped packages. iOS uploads the `tweak symbols` artifact with a dSYM per architecture, and Android uploads the `android symbols` artifact with `<abi>/libunbound.so.dbg` for `arm64-v8a` and `x86_64`. Both hold the build IDs or UUIDs they were checked against and the commit they came from. Releases attach them as `unbound-ios-symbols.zip` and `unbound-android-symbols.zip`. Pull request artifacts expire after 14 days, and other builds keep the repository default.
