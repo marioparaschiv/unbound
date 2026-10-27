@@ -222,6 +222,30 @@ The client asks the loader to write `addon-starting.json` in the Unbound data di
 
 At the next launch, the shared core reads any marker that was left behind before the client runs. It records the addon in `addon-crashes.json`, and a clean launch clears that count. If Discord dies while starting the same addon on two consecutive launches, the core logs it, shows the native notice "Disabled <name> because Discord crashed while starting it." (a toast on Android, an alert on iOS), and reports the addon through `NativePlatform.crashGuard.disabled()`. The client then saves the addon as disabled and skips its start. To try the addon again, enable it in settings. Recovery mode skips the markers because it starts no addon code.
 
+## Signed client bundles
+
+The client build signs each bundle it writes (`unbound.js` and every `unbound.<bytecode>.bundle`) with Ed25519 and writes the base64 signature next to it as `<bundle>.sig`. The private key comes from the `UNBOUND_BUNDLE_SIGNING_KEY` environment variable (a PEM PKCS#8 Ed25519 key). Without it, the build writes no signatures and still succeeds, so local and fork builds keep working. `bun run --cwd packages/client verify-signatures` checks a build against the committed public key.
+
+The loader compiles in the public key from `core/keys/bundle-signing.pub` (the raw 32-byte key as base64). CMake and the iOS Makefile log at configure time whether verification is on. After a download, and before a candidate bundle can replace the current one, the updater fetches `<bundle URL>.sig` and checks it with the vendored Monocypher Ed25519 implementation (`vendor/monocypher`). If the signature is missing or does not match, the updater rejects the candidate and the current bundle keeps running. This applies to every update URL, including any custom HTTPS base. The check is skipped when:
+
+- no key file existed at build time, as in forks without a key,
+- the bundle comes from a dev server over plain `http://` on localhost, a `.local` name or a private address (this covers the dev-server auto-discovery on `10.0.2.2` and live reload), or
+- `loader.update.unsigned` is set to `true`.
+
+### Signing key
+
+The key pair is already set up. The private key is not in this repository; it is kept in the maintainer's backup. CI receives it from the `UNBOUND_BUNDLE_SIGNING_KEY` repository secret. `build-bundle.yml` signs every bundle it publishes and fails before publishing if a bundle is not signed with the committed key. The client CI job signs and checks its build whenever the secret is available. The matching public key is `core/keys/bundle-signing.pub`.
+
+To replace the key pair:
+
+1. Run `go run ./tools bundle-key generate --out <dir>` from `packages/loader`, with `<dir>` outside the repository. It writes `bundle-signing.pem` (mode 0600) and `bundle-signing.pub`, and prints only their paths and the public key.
+2. Store `bundle-signing.pem` in the maintainer's backup.
+3. Run `gh secret set UNBOUND_BUNDLE_SIGNING_KEY --repo marioparaschiv/unbound < <dir>/bundle-signing.pem`.
+4. Copy `bundle-signing.pub` to `core/keys/bundle-signing.pub` and commit it.
+5. Delete `<dir>`.
+
+A loader accepts only bundles signed with the key it was built with. After a rotation, loaders built with the old key reject new bundles and keep their cached one until the user updates the loader.
+
 ## Discord compatibility scan
 
 `.github/workflows/discord-compat.yml` runs every six hours for three channels, each with its own `discord-compat` issue:
