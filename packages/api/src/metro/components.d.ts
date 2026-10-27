@@ -6,6 +6,7 @@ import * as ReactModule from 'react';
 import { ComponentType, ReactNode } from 'react';
 import {
 	AccessibilityState,
+	ColorValue,
 	ImageStyle,
 	PressableProps,
 	StyleProp,
@@ -14,6 +15,18 @@ import {
 	ViewProps,
 	ViewStyle,
 } from 'react-native';
+
+declare const HelpMessageTypes$1: any;
+declare const HelpMessageTypes: {
+	readonly 0: 'WARNING';
+	readonly 1: 'INFO';
+	readonly 2: 'ERROR';
+	readonly 3: 'SUCCESS';
+	readonly WARNING: 0;
+	readonly INFO: 1;
+	readonly ERROR: 2;
+	readonly SUCCESS: 3;
+};
 export declare const AvatarPiles: any;
 export declare const Avatars: any;
 export declare const BackdropFilters: any;
@@ -22,9 +35,30 @@ export declare const DefaultAvatars: any;
 export declare const Discord: DesignModule;
 export declare const FlashList: any;
 export declare const Forms: any;
-export declare const HelpMessage: any;
 export declare const Media: any;
 export declare const Portal: any;
 export declare const SafeArea: any;
 export declare const Switch: ReactModule.ComponentType<SwitchProps>;
+/**
+ * @description Discord's help message, or Unbound's own on Discord builds that no longer ship one, picked on first render.
+ * @param props The message, its type, text styling, corner radius and an optional trailing button.
+ * @returns The help message element.
+ */
+export declare function HelpMessage(
+	props: HelpMessageProps,
+): import('react').ReactElement<
+	HelpMessageProps,
+	string | import('react').JSXElementConstructor<any>
+>;
+export type HelpMessageProps = {
+	children?: ReactModule.ReactNode;
+	messageType?: HelpMessageType;
+	textVariant?: string;
+	textColor?: ColorValue;
+	borderRadius?: number;
+	button?: ReactModule.ReactNode;
+};
+export type HelpMessageType = (typeof HelpMessageTypes)[keyof typeof HelpMessageTypes & string];
+export { HelpMessageTypes$1 as HelpMessageTypes };
+
 export {};
