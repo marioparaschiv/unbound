@@ -99,8 +99,13 @@ static NSString                             *everyFamily = nil;
 + (UIFont *)fontWithName:(NSString *)name size:(CGFloat)size
 {
     NSDictionary *overrides   = [Fonts overrides];
-    NSString     *replacement = overrides[name] ?: overrides[everyFamily];
+    NSString     *replacement = overrides[everyFamily] ?: overrides[name];
 
-    return replacement ? %orig(replacement, size) : %orig;
+    if (replacement)
+    {
+        return %orig(replacement, size);
+    }
+
+    return %orig;
 }
 %end
