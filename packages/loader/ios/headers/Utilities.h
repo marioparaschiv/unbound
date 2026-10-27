@@ -1,6 +1,4 @@
 #import <AVFoundation/AVFoundation.h>
-#import <CommonCrypto/CommonCrypto.h>
-#import <Security/Security.h>
 #import <dlfcn.h>
 #import <mach-o/dyld.h>
 #import <mach-o/fat.h>

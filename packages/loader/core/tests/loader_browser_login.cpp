@@ -2,6 +2,8 @@
 #include <string>
 
 #include "LoaderBrowserLogin.h"
+#include "LoaderBundleSignature.h"
+#include "LoaderCrypto.h"
 
 using namespace loader::browserlogin;
 
@@ -27,11 +29,6 @@ static void checkBase64URL()
 
 static void checkCallbacks()
 {
-    assert(constantTimeEqual("", ""));
-    assert(constantTimeEqual("secret", "secret"));
-    assert(!constantTimeEqual("secret", "secreT"));
-    assert(!constantTimeEqual("secret", "secrets"));
-
     assert(loginURL("abc", "def") == "https://discord.com/login#login-state=abc&login-secret=def");
     assert(isCallbackURL("com.hammerandchisel.discord", "login"));
     assert(isCallbackURL("COM.HammerAndChisel.Discord", "LOGIN"));
@@ -102,10 +99,95 @@ static void checkPendingLogin()
     assert(pending.begin(true) == "token-4");
 }
 
+struct Sealed {
+    std::string iv;
+    std::string ciphertext;
+    std::string mac;
+};
+
+static Sealed sealLikeTheExtension(const Handoff &handoff, const std::string &token)
+{
+    const std::string secret = *loader::decodeBase64(paddedBase64(handoff.key));
+    Sealed            sealed;
+    sealed.iv = *loader::crypto::randomBytes(kIVBytes);
+    sealed.ciphertext =
+        *loader::crypto::aes256CBCEncrypt(secret.substr(0, kKeyBytes), sealed.iv, token);
+    sealed.mac = loader::crypto::hmacSHA256(
+        secret.substr(kKeyBytes), authenticatedData(handoff.state, sealed.iv, sealed.ciphertext));
+    return sealed;
+}
+
+static void createsHandoffs()
+{
+    const Handoff first  = *createHandoff();
+    const Handoff second = *createHandoff();
+    assert(first.secret.size() == kSecretBytes);
+    assert(first.state.size() == 32);
+    assert(first.key == base64URLEncode(first.secret));
+    assert(first.state.find_first_of("+/=") == std::string::npos);
+    assert(first.key.find_first_of("+/=") == std::string::npos);
+    assert(first.state != second.state);
+    assert(first.secret != second.secret);
+    assert(loginURL(first.state, first.key).find(first.key) != std::string::npos);
+}
+
+static void roundTripsTokens()
+{
+    for (size_t length : {size_t{1}, kMinimumTokenLength, size_t{70}, size_t{200}})
+    {
+        const Handoff     handoff = *createHandoff();
+        const std::string token(length, 't');
+        const Sealed      sealed = sealLikeTheExtension(handoff, token);
+
+        const Callback callback{handoff.state, sealed.iv.size(), sealed.ciphertext.size(),
+                                sealed.mac.size()};
+        assert(checkCallback({handoff.state, handoff.secret.size(), 1}, callback) ==
+               CallbackCheck::Valid);
+
+        const OpenedCallback opened =
+            openCallback(handoff.secret, handoff.state, sealed.iv, sealed.ciphertext, sealed.mac);
+        assert(opened.status == OpenStatus::Opened);
+        assert(opened.token == token);
+    }
+}
+
+static void rejectsTamperedCallbacks()
+{
+    const Handoff     handoff = *createHandoff();
+    const Sealed      sealed  = sealLikeTheExtension(handoff, "a-token-that-is-long-enough");
+    const std::string other   = createHandoff()->secret;
+
+    assert(openCallback(other, handoff.state, sealed.iv, sealed.ciphertext, sealed.mac).status ==
+           OpenStatus::Unverified);
+    assert(openCallback(handoff.secret.substr(1), handoff.state, sealed.iv, sealed.ciphertext,
+                        sealed.mac)
+               .status == OpenStatus::Unverified);
+    assert(openCallback(handoff.secret, "other", sealed.iv, sealed.ciphertext, sealed.mac).status ==
+           OpenStatus::Unverified);
+    std::string iv = sealed.iv;
+    iv[0] ^= 1;
+    assert(openCallback(handoff.secret, handoff.state, iv, sealed.ciphertext, sealed.mac).status ==
+           OpenStatus::Unverified);
+    assert(openCallback(handoff.secret, handoff.state, sealed.iv, sealed.ciphertext, "").status ==
+           OpenStatus::Unverified);
+
+    const std::string encryptionKey = handoff.secret.substr(0, kKeyBytes);
+    const std::string unpadded =
+        loader::crypto::aes256CBCEncrypt(encryptionKey, sealed.iv, std::string(16, '\0'))
+            ->substr(0, 16);
+    const std::string mac = loader::crypto::hmacSHA256(
+        handoff.secret.substr(kKeyBytes), authenticatedData(handoff.state, sealed.iv, unpadded));
+    assert(openCallback(handoff.secret, handoff.state, sealed.iv, unpadded, mac).status ==
+           OpenStatus::Unreadable);
+}
+
 int main()
 {
     checkBase64URL();
     checkCallbacks();
     checkPendingLogin();
+    createsHandoffs();
+    roundTripsTokens();
+    rejectsTamperedCallbacks();
     return 0;
 }

@@ -14,7 +14,7 @@ Unbound Loader injects [Unbound](https://github.com/unbound-app/client) into Dis
 | `ios/`       | The Theos tweak (ElleKit, rootless) and its iOS app-extension submodules                                                                                   |
 | `android/`   | The LSPosed module (modern libxposed API) and its NDK library, built with Gradle                                                                           |
 | `bootstrap/` | The shared optional React DevTools bundle (`devtools.js`) for both platforms                                                                               |
-| `vendor/`    | Third-party code: the pinned libffi submodule, nlohmann/json and the React Native JSI headers                                                              |
+| `vendor/`    | Third-party code: the pinned libffi submodule, nlohmann/json, the React Native JSI headers, Monocypher and a BearSSL subset                                |
 | `apt-repo/`  | Debian package and SideStore-compatible iOS distribution feeds                                                                                             |
 | `tools/`     | Go build, test, validation and packaging commands for the monorepo                                                                                         |
 
@@ -223,6 +223,16 @@ Point `debugger.address` at a running `ub-debugger` bridge to evaluate JavaScrip
 The client asks the loader to write `addon-starting.json` in the Unbound data directory before it starts each plugin or theme, and the loader removes the file once that start returns. The file is replaced atomically, so it survives a native crash.
 
 At the next launch, the shared core reads any marker that was left behind before the client runs. It records the addon in `addon-crashes.json`, and a clean launch clears that count. If Discord dies while starting the same addon on two consecutive launches, the core logs it, shows the native notice "Disabled <name> because Discord crashed while starting it." (a toast on Android, an alert on iOS), and reports the addon through `NativePlatform.crashGuard.disabled()`. The client then saves the addon as disabled and skips its start. To try the addon again, enable it in settings. Recovery mode skips the markers because it starts no addon code.
+
+## Crypto
+
+`core/include/LoaderCrypto.h` is the one crypto interface for both platforms. It provides SHA-256, HMAC-SHA256, AES-256-CBC with PKCS#7 padding, a constant-time compare, random bytes and Ed25519 verification:
+
+- SHA-256, HMAC and AES come from `vendor/bearssl`, the hash, HMAC and constant-time `aes_ct64` CBC modules of [BearSSL](https://bearssl.org) 0.6 (MIT, `bearssl-0.6.tar.gz` SHA-256 `6705bba1714961b41a728dfc5debbe348d2966c117649392f8c8139efc83ff14`). To update it, copy the same files from a newer release.
+- Ed25519 comes from `vendor/monocypher`.
+- Random bytes come from `arc4random_buf` on iOS and Android, and from `getrandom` on Linux hosts.
+
+Browser login (`LoaderBrowserLogin`) and the tweak's Mach-O attestation digest (`LoaderAttestation`) use this interface. Only the P-256 check of the attestation signature stays on the Security framework. `core/tests/vectors/crypto-cross-check.txt` holds vectors made with OpenSSL and with WebCrypto, the way the Safari extension seals a login. The core tests, a CommonCrypto test on macOS and the module's `javax.crypto` unit test all check them.
 
 ## Signed client bundles
 

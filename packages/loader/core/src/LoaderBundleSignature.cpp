@@ -3,17 +3,15 @@
 #include <array>
 #include <cctype>
 #include <cstdint>
-#include <monocypher/monocypher-ed25519.h>
 #include <vector>
+
+#include "LoaderCrypto.h"
 
 #ifndef UNBOUND_BUNDLE_SIGNING_KEY
 #define UNBOUND_BUNDLE_SIGNING_KEY ""
 #endif
 
 namespace loader {
-static constexpr size_t kPublicKeySize = 32;
-static constexpr size_t kSignatureSize = 64;
-
 static int base64Value(char character)
 {
     if (character >= 'A' && character <= 'Z')
@@ -103,16 +101,7 @@ bool verifyBundleSignature(const std::string &bundle, const std::string &signatu
 {
     std::optional<std::string> publicKey = decodeBase64(publicKeyBase64);
     std::optional<std::string> signature = decodeBase64(signatureBase64);
-    if (!publicKey || publicKey->size() != kPublicKeySize || !signature ||
-        signature->size() != kSignatureSize)
-    {
-        return false;
-    }
-
-    return crypto_ed25519_check(reinterpret_cast<const uint8_t *>(signature->data()),
-                                reinterpret_cast<const uint8_t *>(publicKey->data()),
-                                reinterpret_cast<const uint8_t *>(bundle.data()),
-                                bundle.size()) == 0;
+    return publicKey && signature && crypto::verifyEd25519(bundle, *signature, *publicKey);
 }
 
 static std::string lowercase(std::string value)
