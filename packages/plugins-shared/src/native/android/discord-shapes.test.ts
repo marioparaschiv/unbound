@@ -181,4 +181,13 @@ describe('Discord shapes', () => {
 		expect(() => shapeField(stable, 'messageBind')).toThrow('describes a method, not a field');
 		expect(() => shapeField(stable, 'reactionEmoji')).toThrow('needs the class to look in');
 	});
+
+	test("refuse shapes only the Android loader's matcher applies", () => {
+		expect(() => shapeField(stable, 'reactSurfaceViewFactory')).toThrow(
+			'uses typeAssignableTo, which only the Android loader applies',
+		);
+		expect(() => hasShapeConstructor(stable, 'reactSurface', MESSAGE_VIEW)).toThrow(
+			'uses parameterOf, which only the Android loader applies',
+		);
+	});
 });

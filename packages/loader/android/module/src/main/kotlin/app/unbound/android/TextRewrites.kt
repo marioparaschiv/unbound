@@ -13,6 +13,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.TextView
+import app.unbound.android.TextEdits.Anchor
+import app.unbound.android.TextEdits.Edit
+import app.unbound.android.TextEdits.Placement
+import app.unbound.android.TextEdits.covers
+import app.unbound.android.TextEdits.fits
+import app.unbound.android.TextEdits.isA
+import app.unbound.android.TextEdits.overlapsStretch
+import app.unbound.android.TextEdits.parseAnchor
+import app.unbound.android.TextEdits.parseEdits
+import app.unbound.android.TextEdits.placement
+import app.unbound.android.TextEdits.restretchedRange
+import app.unbound.android.TextEdits.stretches
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.ExceptionMode
 import org.json.JSONArray
@@ -33,27 +45,7 @@ object TextRewrites {
     private const val MAX_IMAGES = 128
     private const val ALIGN_CENTER = 2
 
-    private data class Edit(
-        val start: Int,
-        val end: Int,
-        val text: String,
-        val spacerOffset: Int,
-        val width: Int,
-        val height: Int,
-        val clearFrom: Int,
-        val clearTo: Int,
-        val collapseNext: Boolean,
-        val imageKey: String?,
-        val imageOffset: Int,
-        val imageSize: Int,
-        val stretchFrom: Int,
-        val stretchTo: Int,
-        val stretchClasses: Set<String>,
-    )
-
     private data class Rule(val rendered: String, val edits: List<Edit>)
-
-    private data class Anchor(val placeholder: Int, val width: Int, val height: Int, val pinTop: Boolean, val offsetY: Int)
 
     private class Slot(val host: View, var anchor: Anchor)
 
@@ -301,7 +293,7 @@ object TextRewrites {
     private fun apply(text: CharSequence, rule: Rule): CharSequence? {
         val builder = SpannableStringBuilder(text)
         for (edit in rule.edits) {
-            if (edit.end > builder.length || edit.start > edit.end) return null
+            if (!fits(edit, builder.length)) return null
             clearSpans(builder, edit.clearFrom, edit.clearTo)
             val stretched = stretchedSpans(builder, edit)
             builder.replace(edit.start, edit.end, edit.text)
@@ -321,31 +313,20 @@ object TextRewrites {
     private class Stretched(val span: Any, val flags: Int, val stretch: Boolean)
 
     private fun stretchedSpans(builder: SpannableStringBuilder, edit: Edit): List<Stretched> {
-        if (edit.stretchClasses.isEmpty() || edit.stretchTo <= edit.stretchFrom) return emptyList()
+        if (!stretches(edit)) return emptyList()
         return builder.getSpans(edit.stretchFrom, edit.stretchTo, Any::class.java)
-            .filter { builder.getSpanStart(it) < edit.stretchTo && builder.getSpanEnd(it) > edit.stretchFrom }
-            .map { span -> Stretched(span, builder.getSpanFlags(span), isA(span, edit.stretchClasses) || covers(builder, span, edit)) }
-    }
-
-    private fun covers(builder: SpannableStringBuilder, span: Any, edit: Edit): Boolean =
-        builder.getSpanStart(span) == edit.stretchFrom && builder.getSpanEnd(span) == edit.stretchTo
-
-    private fun isA(span: Any, names: Set<String>): Boolean {
-        var current: Class<*>? = span.javaClass
-        while (current != null) {
-            if (current.name in names) return true
-            current = current.superclass
-        }
-        return false
+            .filter { overlapsStretch(builder.getSpanStart(it), builder.getSpanEnd(it), edit) }
+            .map { span ->
+                val stretch = isA(span.javaClass, edit.stretchClasses) || covers(builder.getSpanStart(span), builder.getSpanEnd(span), edit)
+                Stretched(span, builder.getSpanFlags(span), stretch)
+            }
     }
 
     private fun restretch(builder: SpannableStringBuilder, edit: Edit, spans: List<Stretched>) {
-        val grown = edit.text.length - (edit.end - edit.start)
         for (entry in spans) {
-            val start = if (entry.stretch) edit.stretchFrom else builder.getSpanStart(entry.span)
-            val end = if (entry.stretch) edit.stretchTo + grown else builder.getSpanEnd(entry.span)
+            val range = restretchedRange(entry.stretch, builder.getSpanStart(entry.span), builder.getSpanEnd(entry.span), edit)
             builder.removeSpan(entry.span)
-            if (start >= 0 && end > start) builder.setSpan(entry.span, start, end, entry.flags)
+            if (range != null) builder.setSpan(entry.span, range.first, range.last + 1, entry.flags)
         }
     }
 
@@ -546,9 +527,16 @@ object TextRewrites {
         }
 
         val line = layout.getLineForOffset(anchor.placeholder)
-        val lineY = if (anchor.pinTop) layout.getLineTop(line) else layout.getLineBottom(line) - anchor.height
-        host.translationX = x + layout.getPrimaryHorizontal(anchor.placeholder) + view.totalPaddingLeft
-        host.translationY = y + lineY + view.totalPaddingTop + anchor.offsetY
+        val placement = placement(
+            anchor,
+            Placement(x, y),
+            layout.getPrimaryHorizontal(anchor.placeholder),
+            layout.getLineTop(line),
+            layout.getLineBottom(line),
+            Placement(view.totalPaddingLeft.toFloat(), view.totalPaddingTop.toFloat()),
+        )
+        host.translationX = placement.x
+        host.translationY = placement.y
 
         val params = host.layoutParams
         if (params != null && (params.width != anchor.width || params.height != anchor.height)) {
@@ -570,8 +558,56 @@ object TextRewrites {
         }
         return true
     }
+}
 
-    private fun parseAnchor(json: String): Anchor {
+internal object TextEdits {
+    data class Edit(
+        val start: Int,
+        val end: Int,
+        val text: String,
+        val spacerOffset: Int,
+        val width: Int,
+        val height: Int,
+        val clearFrom: Int,
+        val clearTo: Int,
+        val collapseNext: Boolean,
+        val imageKey: String?,
+        val imageOffset: Int,
+        val imageSize: Int,
+        val stretchFrom: Int,
+        val stretchTo: Int,
+        val stretchClasses: Set<String>,
+    )
+
+    data class Anchor(val placeholder: Int, val width: Int, val height: Int, val pinTop: Boolean, val offsetY: Int)
+
+    data class Placement(val x: Float, val y: Float)
+
+    fun placement(anchor: Anchor, origin: Placement, horizontal: Float, lineTop: Int, lineBottom: Int, padding: Placement): Placement {
+        val lineY = if (anchor.pinTop) lineTop else lineBottom - anchor.height
+        return Placement(origin.x + horizontal + padding.x, origin.y + lineY + padding.y + anchor.offsetY)
+    }
+
+    fun fits(edit: Edit, length: Int): Boolean = edit.end <= length && edit.start <= edit.end
+
+    fun stretches(edit: Edit): Boolean = edit.stretchClasses.isNotEmpty() && edit.stretchTo > edit.stretchFrom
+
+    fun overlapsStretch(spanStart: Int, spanEnd: Int, edit: Edit): Boolean =
+        spanStart < edit.stretchTo && spanEnd > edit.stretchFrom
+
+    fun covers(spanStart: Int, spanEnd: Int, edit: Edit): Boolean = spanStart == edit.stretchFrom && spanEnd == edit.stretchTo
+
+    fun isA(type: Class<*>, names: Set<String>): Boolean =
+        generateSequence(type) { it.superclass }.any { it.name in names }
+
+    fun restretchedRange(stretch: Boolean, spanStart: Int, spanEnd: Int, edit: Edit): IntRange? {
+        val grown = edit.text.length - (edit.end - edit.start)
+        val start = if (stretch) edit.stretchFrom else spanStart
+        val end = if (stretch) edit.stretchTo + grown else spanEnd
+        return if (start >= 0 && end > start) start until end else null
+    }
+
+    fun parseAnchor(json: String): Anchor {
         val anchor = JSONObject(json)
         return Anchor(
             placeholder = anchor.getInt("placeholder"),
@@ -582,7 +618,7 @@ object TextRewrites {
         )
     }
 
-    private fun parseEdits(json: String): List<Edit> {
+    fun parseEdits(json: String): List<Edit> {
         val array = JSONArray(json)
         return List(array.length()) { index ->
             val edit = array.getJSONObject(index)

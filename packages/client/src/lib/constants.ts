@@ -35,6 +35,11 @@ export const CLIENT_VERSION = '$$CLIENT_VERSION$$';
 /** Origin of the Unbound web API. Replaced at build time from `UNBOUND_API_URL`, defaulting to production. */
 export const API_URL = '$$API_URL$$';
 
+export const MINIMUM_DISCORD_VERSIONS: Record<'android' | 'ios', string> = {
+	android: '$$MINIMUM_DISCORD_ANDROID$$',
+	ios: '$$MINIMUM_DISCORD_IOS$$',
+};
+
 /** Route keys for every built-in Unbound settings screen. Values double as `SETTING_RENDERER_CONFIG` keys. */
 export const Screens = {
 	General: 'UNBOUND_GENERAL',

@@ -23,6 +23,7 @@ type dexMember struct {
 	Field      bool
 	Static     bool
 	Type       string
+	Returns    string
 	Parameters []string
 }
 
@@ -115,6 +116,7 @@ type dexFile struct {
 type dexProto struct {
 	descriptors string
 	parameters  []string
+	returns     string
 }
 
 type dexFieldID struct {
@@ -214,7 +216,11 @@ func addDexToIndex(index *dexIndex, data []byte) error {
 	file.protos = make([]dexProto, protoCount)
 	for index := range file.protos {
 		descriptors := typeList(int(order.Uint32(data[protoOffset+12*index+8:])))
-		proto := dexProto{descriptors: strings.Join(descriptors, ""), parameters: make([]string, len(descriptors))}
+		proto := dexProto{
+			descriptors: strings.Join(descriptors, ""),
+			parameters:  make([]string, len(descriptors)),
+			returns:     javaRuntimeName(typeName(order.Uint32(data[protoOffset+12*index+4:]))),
+		}
 		for position, descriptor := range descriptors {
 			proto.parameters[position] = javaRuntimeName(descriptor)
 		}
@@ -328,8 +334,28 @@ func (file *dexFile) addMethod(class *dexClass, method dexMethodID, flags uint32
 		class.Constructors = append(class.Constructors, method.proto.parameters)
 	case dexInitializerName:
 	default:
-		class.Declared = append(class.Declared, dexMember{Name: method.name, Static: flags&dexStaticFlag != 0, Parameters: method.proto.parameters})
+		class.Declared = append(class.Declared, dexMember{Name: method.name, Static: flags&dexStaticFlag != 0, Returns: method.proto.returns, Parameters: method.proto.parameters})
 	}
+}
+
+func (index *dexIndex) isAssignable(from, to string) bool {
+	visited := map[string]bool{}
+	pending := []string{from}
+	for len(pending) > 0 {
+		name := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
+		if name == to {
+			return true
+		}
+		if name == "" || visited[name] {
+			continue
+		}
+		visited[name] = true
+		if class := index.Classes[name]; class != nil {
+			pending = append(append(pending, class.Super), class.Interfaces...)
+		}
+	}
+	return false
 }
 
 func javaRuntimeName(descriptor string) string {

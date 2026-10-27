@@ -252,6 +252,33 @@ func TestOnlyTheStableScanTracksRemovableLegacyNames(t *testing.T) {
 	}
 }
 
+func TestOnlyTheStableScanRemindsToRaiseTheMinimum(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "discord-compat.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var workflow parsedWorkflow
+	if err := yaml.Unmarshal(data, &workflow); err != nil {
+		t.Fatal(err)
+	}
+	var steps []workflowStep
+	for _, step := range workflow.Jobs["scan"].Steps {
+		if strings.Contains(step.Run, "go run ./tools compat-support-issue") {
+			steps = append(steps, step)
+		}
+	}
+	if len(steps) != 1 {
+		t.Fatalf("the scan job must have one support policy step, found %d", len(steps))
+	}
+	step := steps[0]
+	if !strings.Contains(step.If, "matrix.channel == 'stable'") || !strings.Contains(step.If, "github.ref_name == github.event.repository.default_branch") {
+		t.Fatalf("only the default branch's stable scan may drive the support policy issue, the step runs if %q", step.If)
+	}
+	if !strings.Contains(step.Run, "--results compat.json") || !strings.Contains(step.Run, "gh label create discord-support-policy") {
+		t.Fatalf("the support policy step must read the stable scan and label its issue: %s", step.Run)
+	}
+}
+
 const pullRequestRetention = "${{ github.event_name == 'pull_request' && 14 || 0 }}"
 
 type compositeAction struct {

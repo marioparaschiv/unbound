@@ -14,8 +14,6 @@ object ReactSurfaces {
     private val REACT_HOST = HostClass.legacy("com.facebook.react.ReactHost")
     private val REACT_SURFACE = HostClass.legacy("com.facebook.react.interfaces.fabric.ReactSurface")
     private const val REACT_HOST_IMPL = "com.facebook.react.runtime.ReactHostImpl"
-    private const val HOST_DELEGATE = "com.facebook.react.defaults.DefaultReactHostDelegate"
-    private const val FABRIC_UI_MANAGER = "com.facebook.react.fabric.FabricUIManager"
     private const val SURFACE_HANDLER = "com.facebook.react.fabric.SurfaceHandlerBinding"
     private const val ARGUMENTS = "com.facebook.react.bridge.Arguments"
     private const val NATIVE_MAP = "com.facebook.react.bridge.NativeMap"
@@ -25,15 +23,49 @@ object ReactSurfaces {
     @Volatile private var reactHost: WeakReference<Any>? = null
 
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
-        val legacy = runCatching {
-            REACT_HOST.load(classLoader).getMethod("createSurface", Context::class.java, String::class.java, Bundle::class.java)
-        }.isSuccess
-        if (legacy) {
+        if (usesLegacyHost(REACT_HOST.find(classLoader))) {
             NativeFabric.useHost(ReflectiveHost(classLoader))
             return
         }
         captureReactHost(xposed, classLoader.loadClass(REACT_HOST_IMPL))
         NativeFabric.useHost(StructuralHost(classLoader))
+    }
+
+    internal fun usesLegacyHost(reactHost: Class<*>?): Boolean = reactHost != null &&
+        runCatching { reactHost.getMethod("createSurface", Context::class.java, String::class.java, Bundle::class.java) }.isSuccess
+
+    internal class StructuralShapes(
+        val surface: Class<*>,
+        val handler: Field,
+        val references: List<Field>,
+        val hostGetter: Method,
+        val fabric: Field,
+        val delegate: Field,
+        val viewFactory: Field,
+    )
+
+    internal fun structuralShapes(shapes: DiscordShapes): StructuralShapes = StructuralShapes(
+        surface = shapes.shapeClass("reactSurface"),
+        handler = shapes.shapeField("reactSurfaceHandler"),
+        references = shapes.shapeFields("reactSurfaceReferences"),
+        hostGetter = shapes.shapeMethod("reactSurfaceHost"),
+        fabric = shapes.shapeField("reactFabric"),
+        delegate = shapes.shapeField("reactHostDelegate"),
+        viewFactory = shapes.shapeField("reactSurfaceViewFactory"),
+    )
+
+    internal class SurfaceReferences(val host: Field, val view: Field)
+
+    internal fun surfaceReferences(surface: Any, references: List<Field>, hostGetter: Method, host: Any): SurfaceReferences {
+        val found = references.firstOrNull { reference ->
+            @Suppress("UNCHECKED_CAST")
+            val candidate = reference.get(surface) as AtomicReference<Any?>
+            candidate.set(host)
+            val matches = hostGetter.invoke(surface) === host
+            candidate.set(null)
+            matches
+        } ?: throw IllegalStateException("The React surface's host reference could not be identified")
+        return SurfaceReferences(found, references.first { it != found })
     }
 
     private fun captureReactHost(xposed: XposedInterface, hostClass: Class<*>) {
@@ -129,6 +161,8 @@ object ReactSurfaces {
     }
 
     private class StructuralHost(private val classLoader: ClassLoader) : NativeFabric.Host {
+        private val shapes = DiscordShapes.forClassLoader(classLoader)
+
         override fun createSurface(
             context: Context,
             moduleName: String,
@@ -136,73 +170,36 @@ object ReactSurfaces {
         ): NativeFabric.Surface {
             val host = reactHost?.get() ?: throw IllegalStateException("The React host is unavailable")
             val instance = ReactRuntime.currentInstance() ?: throw IllegalStateException("The React instance is unavailable")
-            val surfaceClass = surfaceClass(instance.javaClass)
-            val surface = surfaceClass.getConstructor(Context::class.java, String::class.java, Bundle::class.java)
+            val structure = structuralShapes(shapes)
+            val surface = structure.surface.getConstructor(Context::class.java, String::class.java, Bundle::class.java)
                 .newInstance(context, moduleName, props)
-            val view = createView(host, context, surface)
-            attach(surface, surfaceClass, view, host)
-            val handler = fieldOfType(surfaceClass, classLoader.loadClass(SURFACE_HANDLER)).get(surface)
+            val view = createView(structure, host, context, surface)
+            attach(structure, surface, view, host)
+            val handler = structure.handler.get(surface)
                 ?: throw IllegalStateException("The React surface has no surface handler")
-            val fabric = fieldOfType(instance.javaClass, classLoader.loadClass(FABRIC_UI_MANAGER)).get(instance)
+            val fabric = structure.fabric.get(instance)
                 ?: throw IllegalStateException("The React instance has no Fabric UI manager")
             return StructuralSurface(view, handler, fabric, classLoader)
         }
 
         override fun activityContext(): Context? = ActivityTracker.currentActivity()
 
-        private fun surfaceClass(instanceClass: Class<*>): Class<*> =
-            instanceClass.declaredMethods
-                .mapNotNull { it.parameterTypes.singleOrNull() }
-                .firstOrNull { candidate ->
-                    runCatching { candidate.getConstructor(Context::class.java, String::class.java, Bundle::class.java) }.isSuccess
-                }
-                ?: throw IllegalStateException("This React Native build has no surface class the loader recognises")
-
-        private fun createView(host: Any, context: Context, surface: Any): View {
-            val delegate = fieldOfType(host.javaClass, classLoader.loadClass(HOST_DELEGATE)).get(host)
+        private fun createView(structure: StructuralShapes, host: Any, context: Context, surface: Any): View {
+            val delegate = structure.delegate.get(host)
                 ?: throw IllegalStateException("The React host has no delegate")
-            val factoryType = classLoader.loadClass(FUNCTION_2)
-            val factory = fieldOfType(delegate.javaClass, factoryType).get(delegate)
+            val factory = structure.viewFactory.get(delegate)
                 ?: throw IllegalStateException("The React host delegate has no surface view factory")
-            val invoke = factoryType.getMethod("invoke", Any::class.java, Any::class.java)
+            val invoke = classLoader.loadClass(FUNCTION_2).getMethod("invoke", Any::class.java, Any::class.java)
             return invoke.invoke(factory, context, surface) as? View
                 ?: throw IllegalStateException("The surface view factory did not return a view")
         }
 
-        private fun attach(surface: Any, surfaceClass: Class<*>, view: View, host: Any) {
-            val references = surfaceClass.declaredFields
-                .filter { it.type == AtomicReference::class.java }
-                .onEach { it.isAccessible = true }
-            check(references.size == 2) { "The React surface has ${references.size} attachment references, expected 2" }
-            val hostGetter = hostGetter(surfaceClass, host.javaClass)
-            val (hostReference, viewReference) = references.firstOrNull { reference ->
-                @Suppress("UNCHECKED_CAST")
-                val candidate = reference.get(surface) as AtomicReference<Any?>
-                candidate.set(host)
-                val matches = hostGetter.invoke(surface) === host
-                candidate.set(null)
-                matches
-            }?.let { found -> found to references.first { it != found } }
-                ?: throw IllegalStateException("The React surface's host reference could not be identified")
+        private fun attach(structure: StructuralShapes, surface: Any, view: View, host: Any) {
+            val references = surfaceReferences(surface, structure.references, structure.hostGetter, host)
             @Suppress("UNCHECKED_CAST")
-            (viewReference.get(surface) as AtomicReference<Any?>).set(view)
+            (references.view.get(surface) as AtomicReference<Any?>).set(view)
             @Suppress("UNCHECKED_CAST")
-            (hostReference.get(surface) as AtomicReference<Any?>).set(host)
+            (references.host.get(surface) as AtomicReference<Any?>).set(host)
         }
-
-        private fun hostGetter(surfaceClass: Class<*>, hostClass: Class<*>): Method =
-            surfaceClass.declaredMethods.firstOrNull {
-                it.parameterTypes.isEmpty() && it.returnType.isAssignableFrom(hostClass) &&
-                    it.returnType != Any::class.java
-            }
-                ?.apply { isAccessible = true }
-                ?: throw IllegalStateException("The React surface has no host getter")
     }
-
-    private fun fieldOfType(owner: Class<*>, type: Class<*>): Field =
-        generateSequence(owner) { it.superclass }
-            .flatMap { it.declaredFields.asSequence() }
-            .firstOrNull { type.isAssignableFrom(it.type) }
-            ?.apply { isAccessible = true }
-            ?: throw IllegalStateException("${owner.name} has no ${type.name} field")
 }

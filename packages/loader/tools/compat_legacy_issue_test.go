@@ -27,9 +27,11 @@ func TestRemovableLegacyNames(t *testing.T) {
 		t.Fatalf("got %+v, want %+v", got, want)
 	}
 
-	body := renderCompatLegacyIssue(want, "350.8", "https://github.com/unbound-app/unbound/blob/abc")
+	body := renderCompatLegacyIssue(want, "350.8", "350.8", "https://github.com/unbound-app/unbound/blob/abc")
 	for _, line := range []string{
-		"Discord Android 350.8 on the stable channel no longer has these names",
+		"Unbound supports Discord Android 350.8 and newer",
+		"The stable scan checked Android 350.8",
+		"the list stays as it is until the minimum is raised",
 		"- class `com.discord.reactions.ReactionView` · [packages/plugins/reaction-avatars/src/android/reactions.ts:47](https://github.com/unbound-app/unbound/blob/abc/packages/plugins/reaction-avatars/src/android/reactions.ts#L47)",
 		"- class `com.discord.theme.ThemeManager` · [" + themes.File + ":4]",
 	} {
@@ -64,6 +66,20 @@ func TestPlanCompatLegacyIssue(t *testing.T) {
 	comment := legacyKeptComment("351.0")
 	if done.Create || done.Update != 0 || !reflect.DeepEqual(done.Close, []compatIssueClose{{Number: 34, Comment: comment}, {Number: 30, Comment: comment}}) {
 		t.Fatalf("nothing to remove must close every cleanup issue: %+v", done)
+	}
+
+	for _, scan := range []struct {
+		version, minimum string
+		covers           bool
+	}{
+		{"350.8", "350.8", true},
+		{"350.8", "351.0", true},
+		{"350.10", "350.8", false},
+		{"351.0", "350.8", false},
+	} {
+		if covers, err := legacyScanCoversMinimum(scan.version, scan.minimum); err != nil || covers != scan.covers {
+			t.Fatalf("stable %s against the minimum %s must cover it: %v, got %v (%v)", scan.version, scan.minimum, scan.covers, covers, err)
+		}
 	}
 
 	fake := &fakeGitHub{}

@@ -22,7 +22,7 @@ object Themes {
     private const val SENTINEL_BASE = 0x5A000000
     private val THEME_SUFFIXES = listOf("dark", "light", "ash", "onyx", "darker", "midnight")
 
-    private data class Palette(
+    internal data class Palette(
         val semantic: Map<String, Int> = emptyMap(),
         val raw: Map<String, Int> = emptyMap(),
         val rawFallbacks: Map<String, String> = emptyMap(),
@@ -41,9 +41,13 @@ object Themes {
     @Volatile private var semanticResources = false
     private var patcher: Patcher? = null
 
+    internal enum class Source { THEME_MANAGER, COLOR_RESOURCES }
+
+    internal fun source(themeManager: Class<*>?): Source = if (themeManager == null) Source.COLOR_RESOURCES else Source.THEME_MANAGER
+
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
         hookRawColors(xposed)
-        if (THEME_MANAGER.find(classLoader) == null) {
+        if (source(THEME_MANAGER.find(classLoader)) == Source.COLOR_RESOURCES) {
             semanticResources = true
             apply()
             SettingsWatcher.onChange(::apply)
@@ -107,7 +111,7 @@ object Themes {
     private fun JSONObject?.toStringMap(): Map<String, String> =
         this?.keys()?.asSequence()?.associateWith { getString(it) } ?: emptyMap()
 
-    private fun getterName(accessor: String): String = "get" + accessor.replaceFirstChar { it.uppercase() }
+    internal fun getterName(accessor: String): String = "get" + accessor.replaceFirstChar { it.uppercase() }
 
     private fun resourceId(name: String): Int {
         val current = context?.resources ?: resources ?: return 0
@@ -117,13 +121,20 @@ object Themes {
     private fun resolveIds(): Map<Int, Int> = resolveRawIds(palette.raw) + if (semanticResources) semanticIds() else emptyMap()
 
     private fun semanticIds(): Map<Int, Int> =
-        (palette.semantic.keys + palette.rawFallbacks.keys).flatMap { getter ->
-            val color = semanticColor(getter) ?: return@flatMap emptyList()
+        semanticResourceIds(
+            (palette.semantic.keys + palette.rawFallbacks.keys).mapNotNull { getter ->
+                semanticColor(getter)?.let { getter to it }
+            }.toMap(),
+            ::resourceId,
+        )
+
+    internal fun semanticResourceIds(colors: Map<String, Int>, resourceId: (String) -> Int): Map<Int, Int> =
+        colors.flatMap { (getter, color) ->
             val base = resourceBase(getter)
             THEME_SUFFIXES.mapNotNull { suffix -> resourceId("${base}_$suffix").takeIf { it != 0 }?.let { it to color } }
         }.toMap()
 
-    private fun resourceBase(getter: String): String =
+    internal fun resourceBase(getter: String): String =
         getter.removePrefix("get").replace(Regex("([a-z0-9])([A-Z])"), "$1_$2").lowercase()
 
     private fun useResources(current: Resources) {
@@ -132,17 +143,21 @@ object Themes {
         rawById = resolveIds()
     }
 
-    private fun resolveRawIds(raw: Map<String, Int>): Map<Int, Int> =
+    private fun resolveRawIds(raw: Map<String, Int>): Map<Int, Int> = rawResourceIds(raw, ::resourceId)
+
+    internal fun rawResourceIds(raw: Map<String, Int>, resourceId: (String) -> Int): Map<Int, Int> =
         raw.mapNotNull { (name, color) -> resourceId(name).takeIf { it != 0 }?.let { it to color } }.toMap()
 
     private fun isThemed(getter: String): Boolean = palette.let { getter in it.semantic || getter in it.rawFallbacks }
 
-    private fun semanticColor(getter: String): Int? {
-        val current = palette
-        current.semantic[getter]?.let { return it }
-        val fallback = current.rawFallbacks[getter] ?: return null
+    private fun semanticColor(getter: String): Int? =
+        semanticColor(palette, getter, ::resourceId) { id -> rawById[id] ?: context?.getColor(id) ?: resources?.getColor(id, null) }
+
+    internal fun semanticColor(palette: Palette, getter: String, resourceId: (String) -> Int, colorOf: (Int) -> Int?): Int? {
+        palette.semantic[getter]?.let { return it }
+        val fallback = palette.rawFallbacks[getter] ?: return null
         val id = resourceId(fallback).takeIf { it != 0 } ?: return null
-        return rawById[id] ?: context?.getColor(id) ?: resources?.getColor(id, null)
+        return colorOf(id)
     }
 
     private fun hookRawColors(xposed: XposedInterface) {

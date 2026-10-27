@@ -22,6 +22,7 @@ const (
 	compatUnverified = "unverified"
 	compatExternal   = "external"
 	compatFallback   = "fallback"
+	compatWarning    = "warning"
 )
 
 var compatEnvironmentClasses = map[string]string{
@@ -32,6 +33,9 @@ type compatTarget struct {
 	Platform  string `json:"platform"`
 	Version   string `json:"version"`
 	Build     string `json:"build,omitempty"`
+	Bytecode  uint32 `json:"bytecode,omitempty"`
+	bundle    string
+	problem   string
 	hermes    *hermesStrings
 	objc      *objcIndex
 	dex       *dexIndex
@@ -64,6 +68,7 @@ type compatResults struct {
 	Dynamic      map[string]int                  `json:"dynamic"`
 	DynamicSites []compatDynamicSite             `json:"dynamicSites,omitempty"`
 	Platforms    map[string]*compatPlatformState `json:"platforms"`
+	Support      map[string]*compatSupport       `json:"support,omitempty"`
 }
 
 type stringList []string
@@ -101,7 +106,15 @@ func runCompatScan(args []string) error {
 	if err != nil {
 		return err
 	}
-	references := sources.sorted()
+	bytecode, err := loadClientBytecodeReference(*root)
+	if err != nil {
+		return err
+	}
+	references := append([]*compatReference{bytecode}, sources.sorted()...)
+	policy, err := loadCompatPolicy(*root)
+	if err != nil {
+		return err
+	}
 
 	var targets []*compatTarget
 	if *ipa != "" {
@@ -153,7 +166,9 @@ func runCompatScan(args []string) error {
 	results.Channel = *channel
 	results.Dynamic = sources.dynamic
 	results.DynamicSites = sources.dynamicSites
-	results.GeneratedAt = time.Now().UTC().Format(time.RFC3339)
+	now := time.Now().UTC()
+	results.GeneratedAt = now.Format(time.RFC3339)
+	results.Support = evaluateCompatSupport(targets, policy, baseline, now)
 
 	report := renderCompatReportWithSource(results, *sourceURL)
 	if *reportPath != "" {
@@ -191,7 +206,11 @@ func compatBreakageError(results *compatResults) error {
 	if broken == 0 && possible == 0 {
 		return nil
 	}
-	return fmt.Errorf("%s: %d broken and %d possibly broken lookups", compatTargetSummary(results), broken, possible)
+	summary := compatTargetSummary(results)
+	if bytecode := compatBytecodeFindings(results, compatBroken); len(bytecode) > 0 {
+		summary += ": " + bytecode[0].Reason
+	}
+	return fmt.Errorf("%s: %d broken and %d possibly broken lookups", summary, broken, possible)
 }
 
 func readCompatBaseline(path string) (*compatResults, error) {
@@ -242,9 +261,7 @@ func loadIOSTarget(path string) (*compatTarget, error) {
 			if err != nil {
 				return nil, err
 			}
-			if target.hermes, err = parseHermesStrings(data); err != nil {
-				return nil, err
-			}
+			target.readHermesBundle(file.Name, data)
 			continue
 		}
 		if file.UncompressedSize64 < 4096 || strings.Contains(file.Name, ".appex/") {
@@ -268,7 +285,7 @@ func loadIOSTarget(path string) (*compatTarget, error) {
 			return nil, fmt.Errorf("%s: %w", file.Name, err)
 		}
 	}
-	if target.hermes == nil {
+	if target.bundle == "" {
 		return nil, errors.New("the IPA has no Hermes bundle")
 	}
 	return target, nil
@@ -289,10 +306,7 @@ func loadAndroidTarget(paths []string, version string) (*compatTarget, error) {
 					archive.Close()
 					return nil, err
 				}
-				if target.hermes, err = parseHermesStrings(data); err != nil {
-					archive.Close()
-					return nil, err
-				}
+				target.readHermesBundle(file.Name, data)
 			case file.Name == "resources.arsc" && target.resources == nil:
 				data, err := readZipEntry(file)
 				if err != nil {
@@ -317,7 +331,7 @@ func loadAndroidTarget(paths []string, version string) (*compatTarget, error) {
 		}
 		archive.Close()
 	}
-	if target.hermes == nil {
+	if target.bundle == "" {
 		return nil, errors.New("the APK has no Hermes bundle")
 	}
 	return target, nil
@@ -426,6 +440,15 @@ func evaluateReference(reference *compatReference, target *compatTarget, seen ma
 			return compatBroken, reason + ", but it was found in an earlier Discord build"
 		}
 		return compatUnverified, reason
+	}
+
+	switch reference.Kind {
+	case referenceHermesBytecode:
+		return evaluateBytecodeReference(reference, target)
+	case referenceModulePath, referenceStore, referenceName, referenceProps, referencePrototypes:
+		if target.hermes == nil {
+			return "", ""
+		}
 	}
 
 	switch reference.Kind {
@@ -613,7 +636,7 @@ func compatSeverity(status string) int {
 		return 2
 	case compatUnverified:
 		return 1
-	case compatOK, compatExternal, compatFallback:
+	case compatOK, compatExternal, compatFallback, compatWarning:
 		return 0
 	}
 	return -1

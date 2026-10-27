@@ -21,6 +21,29 @@ object Fonts {
     private val resolutions = ConcurrentHashMap<String, String>()
     private val pendingFallback = ThreadLocal<Typeface?>()
 
+    internal data class AssetFont(val family: String, val style: Int)
+
+    internal sealed interface Source {
+        data class System(val name: String) : Source
+
+        data class Asset(val path: String) : Source
+
+        data class File(val path: String) : Source
+
+        data class Failed(val error: String) : Source
+    }
+
+    internal fun assetFont(path: String): AssetFont? =
+        ASSET_FONT.matchEntire(path)?.let { AssetFont(it.groupValues[1], assetStyle(it.groupValues[2])) }
+
+    internal fun replacement(name: String, path: String, error: String): Source? = when {
+        name.isEmpty() -> null
+        error.isNotEmpty() -> Source.Failed(error)
+        path.isEmpty() -> Source.System(name)
+        path.startsWith(ASSET_PREFIX) -> Source.Asset(path.removePrefix(ASSET_PREFIX))
+        else -> Source.File(path)
+    }
+
     fun install(xposed: XposedInterface, classLoader: ClassLoader) {
         SettingsWatcher.onChange { resolutions.clear() }
         val manager = FONT_MANAGER.find(classLoader)
@@ -52,10 +75,10 @@ object Fonts {
         xposed.hook(Typeface::class.java.getDeclaredMethod("createFromAsset", AssetManager::class.java, String::class.java))
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept { chain ->
-                val match = ASSET_FONT.matchEntire(chain.getArg(1) as String) ?: return@intercept chain.proceed()
-                val replacement = guarded { resolve(match.groupValues[1], chain.getArg(0) as AssetManager) }
+                val font = assetFont(chain.getArg(1) as String) ?: return@intercept chain.proceed()
+                val replacement = guarded { resolve(font.family, chain.getArg(0) as AssetManager) }
                     ?: return@intercept chain.proceed()
-                styled(replacement, assetStyle(match.groupValues[2]))
+                styled(replacement, font.style)
             }
 
         xposed.hook(Typeface::class.java.getDeclaredMethod("create", String::class.java, Integer.TYPE))
@@ -78,11 +101,10 @@ object Fonts {
         xposed.hook(Font.Builder::class.java.getDeclaredConstructor(AssetManager::class.java, String::class.java))
             .setExceptionMode(ExceptionMode.PROTECTIVE)
             .intercept { chain ->
-                val match = ASSET_FONT.matchEntire(chain.getArg(1) as String)
+                val font = assetFont(chain.getArg(1) as String)
                 pendingFallback.set(
-                    match?.let { found ->
-                        guarded { resolve(found.groupValues[1], chain.getArg(0) as AssetManager) }
-                            ?.let { styled(it, assetStyle(found.groupValues[2])) }
+                    font?.let { found ->
+                        guarded { resolve(found.family, chain.getArg(0) as AssetManager) }?.let { styled(it, found.style) }
                     },
                 )
                 chain.proceed()
@@ -107,7 +129,7 @@ object Fonts {
         }
     }
 
-    private fun assetStyle(suffix: String): Int = when (suffix) {
+    internal fun assetStyle(suffix: String): Int = when (suffix) {
         "_bold" -> Typeface.BOLD
         "_italic" -> Typeface.ITALIC
         "_bold_italic" -> Typeface.BOLD_ITALIC
@@ -119,33 +141,31 @@ object Fonts {
 
     private fun resolve(family: String, assets: AssetManager): Typeface? {
         val font = JSONObject(resolutions.getOrPut(family) { NativeBridge.nativeResolveFont(family) })
-        val name = font.optString("name").takeIf { it.isNotEmpty() } ?: return null
-        val error = font.optString("error").takeIf { it.isNotEmpty() }
-        return typefaces.getOrPut(name) { load(name, font.optString("path"), error, assets) }.typeface
+        val name = font.optString("name")
+        val source = replacement(name, font.optString("path"), font.optString("error")) ?: return null
+        return typefaces.getOrPut(name) { load(name, source, assets) }.typeface
     }
 
-    private fun load(name: String, path: String, error: String?, assets: AssetManager): LoadedFont {
-        if (error != null) {
-            Logger.error(LogCategory.FONTS, error)
-            return LoadedFont(null)
-        }
-
-        val typeface = if (path.isEmpty()) {
-            Typeface.create(name, Typeface.NORMAL)
-        } else {
-            runCatching {
-                if (path.startsWith(ASSET_PREFIX)) {
-                    Typeface.createFromAsset(assets, path.removePrefix(ASSET_PREFIX))
-                } else {
-                    Typeface.createFromFile(File(path))
-                }
+    private fun load(name: String, source: Source, assets: AssetManager): LoadedFont {
+        val typeface = when (source) {
+            is Source.Failed -> {
+                Logger.error(LogCategory.FONTS, source.error)
+                null
             }
-                .onSuccess { Logger.info(LogCategory.FONTS, "Loaded font: $name.") }
-                .onFailure { Logger.error(LogCategory.FONTS, "Failed to load font \"$name\"", it) }
-                .getOrNull()
+
+            is Source.System -> Typeface.create(source.name, Typeface.NORMAL)
+
+            is Source.Asset -> loadFile(name) { Typeface.createFromAsset(assets, source.path) }
+
+            is Source.File -> loadFile(name) { Typeface.createFromFile(File(source.path)) }
         }
         return LoadedFont(typeface)
     }
+
+    private fun loadFile(name: String, create: () -> Typeface): Typeface? = runCatching(create)
+        .onSuccess { Logger.info(LogCategory.FONTS, "Loaded font: $name.") }
+        .onFailure { Logger.error(LogCategory.FONTS, "Failed to load font \"$name\"", it) }
+        .getOrNull()
 
     private class LoadedFont(val typeface: Typeface?)
 }

@@ -23,8 +23,23 @@ type DiscordShape = {
 
 const DISCORD_SHAPES: Record<DiscordShapeName, DiscordShape> = shapes;
 
+const LOADER_ONLY_KEYS = [
+	'ownerShape',
+	'parameterOf',
+	'typeAssignableTo',
+	'returnsAssignableFrom',
+	'count',
+] as const;
+
 function shapeOf(name: DiscordShapeName, member: string): DiscordShape {
 	const shape = DISCORD_SHAPES[name];
+	const loaderOnly = LOADER_ONLY_KEYS.filter((key) => key in shape);
+
+	if (loaderOnly.length > 0) {
+		throw new Error(
+			`The Discord shape ${name} uses ${loaderOnly.join(', ')}, which only the Android loader applies.`,
+		);
+	}
 
 	if (shape.member !== member) {
 		throw new Error(`The Discord shape ${name} describes a ${shape.member}, not a ${member}.`);

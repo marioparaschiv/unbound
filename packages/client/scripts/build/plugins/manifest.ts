@@ -57,16 +57,53 @@ function getBytecodeVersions(): number[] {
 }
 
 /**
+ * @description Describes how the bytecode versions a build produced differ from the ones `hermes.json` declares.
+ * @param declared The bytecode versions `hermes.json` declares.
+ * @param built The bytecode versions the build produced.
+ * @returns The mismatch, or `null` when both list the same versions.
+ */
+export function describeBytecodeMismatch(declared: number[], built: number[]): string | null {
+	const missing = declared.filter((version) => !built.includes(version));
+	const unexpected = built.filter((version) => !declared.includes(version));
+
+	if (missing.length === 0 && unexpected.length === 0) {
+		return null;
+	}
+
+	const problems = [
+		missing.length > 0 && `is missing ${missing.join(', ')}`,
+		unexpected.length > 0 && `also produced ${unexpected.join(', ')}`,
+	].filter(Boolean);
+
+	return `hermes.json declares bytecode ${declared.join(', ')}, but the build ${problems.join(' and ')}. Update hermes.json so the compatibility scan checks what ships.`;
+}
+
+/**
  * @description Writes `manifest.json` next to the bundles, listing the revision and bytecode versions.
  * @param revision The git revision the bundle was built from.
+ * @param declared The bytecode versions `hermes.json` declares.
+ * @param lenient Whether a mismatch with `declared` only warns instead of failing the build.
  * @returns A rolldown plugin writing the manifest after the bundle.
  */
-export default function generateManifest(revision: string): Plugin {
+export default function generateManifest(
+	revision: string,
+	declared: number[],
+	lenient: boolean,
+): Plugin {
 	return {
 		name: 'generate-manifest',
 		writeBundle() {
 			const manifestPath = resolve(dist, 'manifest.json');
 			const bytecodeVersions = getBytecodeVersions();
+			const mismatch = describeBytecodeMismatch(declared, bytecodeVersions);
+
+			if (mismatch && !lenient) {
+				this.error(mismatch);
+			}
+
+			if (mismatch) {
+				logger.warn(mismatch);
+			}
 
 			const manifest = {
 				revision,
