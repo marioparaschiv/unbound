@@ -40,7 +40,11 @@ struct UpdaterSettings {
 
 UpdaterSettings updaterSettings(SettingsStore &store);
 
-constexpr const char *kDefaultBundleBaseURL = "https://builds.unbound.rip/";
+#ifndef UNBOUND_DEFAULT_BUNDLE_URL
+#define UNBOUND_DEFAULT_BUNDLE_URL "https://builds.unbound.rip/"
+#endif
+
+constexpr const char *kDefaultBundleBaseURL = UNBOUND_DEFAULT_BUNDLE_URL;
 
 class BundleUpdater
 {

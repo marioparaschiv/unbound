@@ -16,6 +16,11 @@ val packageVersionCode = packageVersion.split(".").take(3).fold(0) { code, part 
     code * 100 + (part.filter(Char::isDigit).toIntOrNull() ?: 0)
 }
 val resolvedVersionCode = buildNumber?.let { 1_000_000 + it } ?: packageVersionCode.coerceAtLeast(1)
+val bundleURL = providers.gradleProperty("unboundBundleURL").orNull?.trim()?.takeIf(String::isNotEmpty)
+
+if (bundleURL != null && !bundleURL.matches(Regex("https://[A-Za-z0-9.-]+(:[0-9]+)?/[A-Za-z0-9._~/-]*/"))) {
+    throw GradleException("unboundBundleURL must be an https URL ending in /, got $bundleURL")
+}
 fun gitOutput(vararg arguments: String): String = providers.exec {
     commandLine("git", "-C", repositoryRoot.absolutePath, *arguments)
     isIgnoreExitValue = true
@@ -57,7 +62,12 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments += listOf("-DANDROID_STL=c++_static", "-DUNBOUND_VERSION=$packageVersion")
+                arguments +=
+                    listOf(
+                        "-DANDROID_STL=c++_static",
+                        "-DUNBOUND_VERSION=$packageVersion",
+                        "-DUNBOUND_BUNDLE_URL=${bundleURL.orEmpty()}",
+                    )
                 cppFlags += listOf("-std=c++20", "-fexceptions", "-frtti")
             }
         }

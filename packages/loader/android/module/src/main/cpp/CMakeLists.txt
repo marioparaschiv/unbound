@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(UNBOUND_REPOSITORY_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../../../../)
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/libffi ${CMAKE_BINARY_DIR}/libffi)
+if(UNBOUND_BUNDLE_URL)
+    message(STATUS "Default bundle URL: ${UNBOUND_BUNDLE_URL}")
+    add_compile_definitions(UNBOUND_DEFAULT_BUNDLE_URL="${UNBOUND_BUNDLE_URL}")
+endif()
 set(UNBOUND_CORE_FFI_TARGET unbound_ffi CACHE STRING "" FORCE)
 add_subdirectory(${UNBOUND_REPOSITORY_ROOT}/core ${CMAKE_BINARY_DIR}/core)
 
