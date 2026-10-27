@@ -144,3 +144,14 @@ func TestEvaluateCompatLegacyMethodSeenBefore(t *testing.T) {
 		t.Fatalf("a legacy method must not be a problem: %+v", results.Findings)
 	}
 }
+
+func TestEvaluateCompatLegacyMethodWithoutBaseline(t *testing.T) {
+	location := []compatLocation{{File: "Unbound.kt", Line: 5}}
+	reference := &compatReference{Kind: referenceJavaMethod, Name: "loadJSBundle", Legacy: true, Component: "loader-android", Locations: location}
+	results := evaluateCompat([]*compatReference{reference}, []*compatTarget{compatTestTargets()[1]}, nil)
+	for _, finding := range results.Findings {
+		if finding.Reference == reference && finding.Status != compatFallback {
+			t.Fatalf("a missing legacy method must be covered even without a baseline, got %q (%s)", finding.Status, finding.Reason)
+		}
+	}
+}

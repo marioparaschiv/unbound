@@ -33,18 +33,19 @@ type compatLocation struct {
 }
 
 type compatReference struct {
-	Kind        string           `json:"kind"`
-	Platform    string           `json:"platform,omitempty"`
-	Component   string           `json:"component"`
-	Class       string           `json:"class,omitempty"`
-	Name        string           `json:"name,omitempty"`
-	Terms       []string         `json:"terms,omitempty"`
-	Parameters  []string         `json:"parameters,omitempty"`
-	Strict      bool             `json:"strict,omitempty"`
-	Group       string           `json:"group,omitempty"`
-	Alternative int              `json:"alternative,omitempty"`
-	Legacy      bool             `json:"legacy,omitempty"`
-	Locations   []compatLocation `json:"locations"`
+	Kind         string           `json:"kind"`
+	Platform     string           `json:"platform,omitempty"`
+	Component    string           `json:"component"`
+	Class        string           `json:"class,omitempty"`
+	Name         string           `json:"name,omitempty"`
+	Terms        []string         `json:"terms,omitempty"`
+	Parameters   []string         `json:"parameters,omitempty"`
+	Strict       bool             `json:"strict,omitempty"`
+	Group        string           `json:"group,omitempty"`
+	Alternative  int              `json:"alternative,omitempty"`
+	Alternatives int              `json:"alternatives,omitempty"`
+	Legacy       bool             `json:"legacy,omitempty"`
+	Locations    []compatLocation `json:"locations"`
 }
 
 func (reference compatReference) key() string {
