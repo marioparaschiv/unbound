@@ -265,7 +265,7 @@ internal object ChatAppearance {
     private const val DARK_TEXT_LUMINANCE = 0.5f
 
     fun clipToCircle(clippingUtils: Class<*>?): java.lang.reflect.Method? =
-        clippingUtils?.let { runCatching { it.getDeclaredMethod("clipToCircle", View::class.java) }.getOrNull() }
+        clippingUtils?.legacyMethod("clipToCircle", View::class.java)
 
     fun isCircleOutline(rectangular: Boolean, width: Int, height: Int, radius: Float): Boolean =
         rectangular && width == PROBE_SIZE && height == PROBE_SIZE && radius == PROBE_SIZE / 2f

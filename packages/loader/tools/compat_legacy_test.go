@@ -97,3 +97,50 @@ func TestEvaluateCompatLegacy(t *testing.T) {
 		t.Fatal("names a component marks as legacy must not be problems")
 	}
 }
+
+func TestKotlinLegacyMethodExtraction(t *testing.T) {
+	source := `package app.unbound.android
+
+object Unbound {
+    fun loaders(reactInstance: Class<*>, bundleLoader: Class<*>) =
+        reactInstance.legacyMethod("loadJSBundle", bundleLoader) ?: reactInstance.getDeclaredMethod("loadJSBundleFromFile", String::class.java)
+}
+`
+	set := newCompatSourceSet()
+	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/unbound/android/Unbound.kt", component: "loader-android", platform: "android"}
+	extractNativeReferences(set, file, source)
+	var legacy, current *compatReference
+	for _, reference := range set.sorted() {
+		if reference.Kind != referenceJavaMethod {
+			continue
+		}
+		switch reference.Name {
+		case "loadJSBundle":
+			legacy = reference
+		case "loadJSBundleFromFile":
+			current = reference
+		}
+	}
+	if legacy == nil || !legacy.Legacy || legacy.Locations[0].Line != 5 {
+		t.Fatalf("a legacyMethod name must be a legacy method reference at its line: %+v", legacy)
+	}
+	if current == nil || current.Legacy {
+		t.Fatalf("a plain getDeclaredMethod name must stay unmarked: %+v", current)
+	}
+}
+
+func TestEvaluateCompatLegacyMethodSeenBefore(t *testing.T) {
+	location := []compatLocation{{File: "Unbound.kt", Line: 5}}
+	reference := &compatReference{Kind: referenceJavaMethod, Name: "loadJSBundle", Legacy: true, Component: "loader-android", Locations: location}
+	target := compatTestTargets()[1]
+	baseline := &compatResults{Platforms: map[string]*compatPlatformState{"android": {Seen: []string{reference.key()}, Statuses: map[string]string{}}}}
+	results := evaluateCompat([]*compatReference{reference}, []*compatTarget{target}, baseline)
+	for _, finding := range results.Findings {
+		if finding.Reference == reference && finding.Status != compatFallback {
+			t.Fatalf("a legacy method an earlier build had must be covered, got %q (%s)", finding.Status, finding.Reason)
+		}
+	}
+	if compatHasProblems(results) {
+		t.Fatalf("a legacy method must not be a problem: %+v", results.Findings)
+	}
+}

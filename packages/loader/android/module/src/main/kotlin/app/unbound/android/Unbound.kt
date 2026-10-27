@@ -172,7 +172,7 @@ class Unbound : XposedModule() {
 
     private fun bundleLoaders(reactInstance: Class<*>, classLoader: ClassLoader): List<Method> {
         val bundleLoader = runCatching { classLoader.loadClass(BUNDLE_LOADER) }.getOrNull()
-        val loadJSBundle = bundleLoader?.let { runCatching { reactInstance.getDeclaredMethod("loadJSBundle", it) }.getOrNull() }
+        val loadJSBundle = bundleLoader?.let { reactInstance.legacyMethod("loadJSBundle", it) }
         if (loadJSBundle != null) return listOf(loadJSBundle)
 
         return listOfNotNull(

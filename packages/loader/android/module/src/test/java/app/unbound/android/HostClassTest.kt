@@ -41,4 +41,11 @@ class HostClassTest {
 
         assertEquals("com.discord.missing.A or com.discord.missing.B", failure.message)
     }
+
+    @Test
+    fun legacyMethodFindsADeclaredMethodOrNothing() {
+        assertEquals("length", String::class.java.legacyMethod("length")?.name)
+        assertNull(String::class.java.legacyMethod("noSuchMethod"))
+        assertNull(String::class.java.legacyMethod("charAt", String::class.java))
+    }
 }
