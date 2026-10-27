@@ -17,7 +17,9 @@ type AuthorRowProps = {
 
 function AuthorRow({ author }: AuthorRowProps) {
 	const name =
-		author.kind === 'user' ? (
+		author.discordId === null ? (
+			author.name
+		) : (
 			<Link
 				to='/developers/$discordId'
 				params={{ discordId: author.discordId }}
@@ -25,8 +27,6 @@ function AuthorRow({ author }: AuthorRowProps) {
 			>
 				{author.name}
 			</Link>
-		) : (
-			author.name
 		);
 
 	return (

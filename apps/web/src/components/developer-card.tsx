@@ -33,17 +33,13 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 			</div>
 			<CardContent className='flex flex-col gap-0.5 p-4 min-w-0'>
 				<Text variant='heading-sm' className='truncate leading-tight!'>
-					{author.kind === 'user' ? (
-						<Link
-							to='/developers/$discordId'
-							params={{ discordId: author.discordId }}
-							className='after:absolute after:inset-0 after:rounded-lg'
-						>
-							{author.name}
-						</Link>
-					) : (
-						author.name
-					)}
+					<Link
+						to='/developers/$discordId'
+						params={{ discordId: author.discordId }}
+						className='after:absolute after:inset-0 after:rounded-lg'
+					>
+						{author.name}
+					</Link>
 				</Text>
 				<div className='flex items-center gap-2 min-w-0'>
 					<Text variant='text-xs' color='muted'>

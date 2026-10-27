@@ -26,7 +26,7 @@ export function authorKey(author: ResolvedAuthor): string {
 }
 
 function AuthorName({ author, linkProfiles }: AuthorNameProps) {
-	if (!linkProfiles || author.kind !== 'user') {
+	if (!linkProfiles || author.discordId === null) {
 		return <span>{author.name}</span>;
 	}
 
