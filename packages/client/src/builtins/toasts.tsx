@@ -7,6 +7,8 @@ import { ToastContainer } from '~/ui/toasts';
 import { showToast } from '~/api/toasts';
 import storage from '~/api/storage';
 
+import findToastContainers from './find-toast-containers';
+
 const Patcher = createPatcher('unbound::toasts');
 const Logger = createLogger('Toasts');
 const Settings = storage.getStore('unbound');
@@ -22,43 +24,26 @@ export function stop() {
 	Patcher.unpatchAll();
 }
 
-type PatchTarget = Record<string, (...args: never[]) => void>;
-
-function toastContainerTarget(): [PatchTarget, string] | undefined {
-	const App = findByFilePath('modules/toast/native/AppToastContainer.tsx', { interop: false });
-
-	if (typeof App?.default === 'function') {
-		return [App, 'default'];
-	}
-
-	const Components = findByProps('ToastContainer');
-	const container = Components?.ToastContainer;
-
-	if (typeof container?.type === 'function') {
-		return [container, 'type'];
-	}
-
-	return typeof container === 'function' ? [Components, 'ToastContainer'] : undefined;
-}
-
 function patchToastContainer() {
-	const target = toastContainerTarget();
+	const targets = findToastContainers(findByFilePath, findByProps);
 
-	if (!target) {
+	if (!targets.length) {
 		Logger.error('Failed to find ToastContainer component');
 
 		return;
 	}
 
-	Patcher.after(target[0], target[1], ({ result }) => {
-		const settings = Settings.useSettingsStore(({ key }) => key?.startsWith('toasts'));
+	for (const [module, key] of targets) {
+		Patcher.after(module, key, ({ result }) => {
+			const settings = Settings.useSettingsStore(({ key }) => key?.startsWith('toasts'));
 
-		if (settings.get('toasts.enabled', true)) {
-			return <ToastContainer />;
-		}
+			if (settings.get('toasts.enabled', true)) {
+				return <ToastContainer />;
+			}
 
-		return result;
-	});
+			return result;
+		});
+	}
 }
 
 function patchToastAPI() {
