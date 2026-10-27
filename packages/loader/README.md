@@ -216,6 +216,12 @@ Point `debugger.address` at a running `ub-debugger` bridge to evaluate JavaScrip
 
 </details>
 
+## Addon crash protection
+
+The client asks the loader to write `addon-starting.json` in the Unbound data directory before it starts each plugin or theme, and the loader removes the file once that start returns. The file is replaced atomically, so it survives a native crash.
+
+At the next launch, the shared core reads any marker that was left behind before the client runs. It records the addon in `addon-crashes.json`, and a clean launch clears that count. If Discord dies while starting the same addon on two consecutive launches, the core logs it, shows the native notice "Disabled <name> because Discord crashed while starting it." (a toast on Android, an alert on iOS), and reports the addon through `NativePlatform.crashGuard.disabled()`. The client then saves the addon as disabled and skips its start. To try the addon again, enable it in settings. Recovery mode skips the markers because it starts no addon code.
+
 ## Discord compatibility scan
 
 `.github/workflows/discord-compat.yml` runs every six hours for three channels, each with its own `discord-compat` issue:

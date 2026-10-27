@@ -12,6 +12,7 @@ import {
 	NativePluginUnsupportedPlatformError,
 	validateNativePluginRequirements,
 } from '~/api/native-runtime';
+import { beginAddonStart, crashedAddon, finishAddonStart } from '~/api/crash-guard';
 import { Manager, ManagerType } from '~/managers/base';
 import storage from '~/api/storage';
 import fs from '~/api/fs';
@@ -109,7 +110,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 			const states = this.getStates();
 
-			if (states[manifest.id]) {
+			if (states[manifest.id] && !this.disableAfterCrash(entity as T)) {
 				this.start(entity);
 			}
 
@@ -393,9 +394,14 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 		this.pendingStarts.delete(resolved.id);
 
-		try {
-			const recoveryMode = storage.get('unbound', 'recovery', false);
+		const recoveryMode = storage.get('unbound', 'recovery', false);
+		const guardKey = this.crashGuardKey(resolved.id);
 
+		if (!recoveryMode) {
+			beginAddonStart(guardKey, resolved.data.name);
+		}
+
+		try {
 			if (recoveryMode) {
 				resolved.instance = { start: noop, stop: noop };
 			} else {
@@ -415,7 +421,43 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			this.logger.error(`Failed to start addon ${resolved.id}:`, error);
 			this.errors.set(resolved.id, toError(error));
 			resolved.failed = true;
+		} finally {
+			if (!recoveryMode) {
+				finishAddonStart(guardKey);
+			}
 		}
+	}
+
+	/**
+	 * @description Names an addon in the loader's crash guard, unique across addon kinds.
+	 * @param id The addon's id.
+	 * @returns The crash guard key.
+	 */
+	protected crashGuardKey(id: string): string {
+		return `${ManagerType[this.type].toLowerCase()}:${id}`;
+	}
+
+	/**
+	 * @description Persistently disables an addon the loader reported crashing Discord on consecutive launches.
+	 * @param entity The addon about to start.
+	 * @returns Whether the addon was disabled instead of started.
+	 */
+	private disableAfterCrash(entity: T): boolean {
+		const crashed = crashedAddon(this.crashGuardKey(entity.id));
+
+		if (!crashed) {
+			return false;
+		}
+
+		const states = this.getStates();
+
+		states[entity.id] = false;
+		this.settings.set('states', states);
+		void storage.persist();
+
+		this.logger.warn(`Disabled ${entity.data.name} because Discord crashed while starting it.`);
+
+		return true;
 	}
 
 	/**
