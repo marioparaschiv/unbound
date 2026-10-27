@@ -236,7 +236,7 @@ func renderCompatReportWithSource(results *compatResults, sourceURL string) stri
 	if fallback := compatLines(results.Findings, compatFallback, sourceURL); len(fallback) > 0 {
 		var section strings.Builder
 		writeCompatSection(&section, fallback)
-		builder.WriteString(fmt.Sprintf("\n<details><summary>Covered by a fallback (%d)</summary>\n\nThese names are gone from this build, but another name in the same lookup still resolves. A name listed here on every channel can be removed.\n%s\n</details>\n", len(fallback), section.String()))
+		builder.WriteString(fmt.Sprintf("\n<details><summary>Covered by a fallback (%d)</summary>\n\nThese names are gone from this build, but another name in the same lookup still resolves. A name listed here on every channel can be removed. A shape listed here is only unused while Discord still has the class its lookup stands in for.\n%s\n</details>\n", len(fallback), section.String()))
 	}
 
 	if external := compatLines(results.Findings, compatExternal, sourceURL); len(external) > 0 {

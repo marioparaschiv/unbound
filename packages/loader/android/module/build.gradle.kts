@@ -135,6 +135,46 @@ abstract class CopyBootstrapResources : DefaultTask() {
     }
 }
 
+abstract class GenerateDiscordShapes : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val shapes: RegularFileProperty
+
+    @get:OutputDirectory
+    abstract val output: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val rules = groovy.json.JsonSlurper().parse(shapes.get().asFile) as Map<*, *>
+        val entries = rules.entries.joinToString("") { (name, rule) ->
+            val arguments = (rule as Map<*, *>).entries.joinToString(", ") { (key, value) -> "$key = ${literal(value)}" }
+            "    ${literal(name)} to DiscordShape($arguments),\n"
+        }
+        val file = output.get().asFile.resolve("app/unbound/android/DiscordShapeRules.kt")
+        file.parentFile.mkdirs()
+        file.writeText("package app.unbound.android\n\ninternal val DISCORD_SHAPE_RULES: Map<String, DiscordShape> = mapOf(\n$entries)\n")
+    }
+
+    private fun literal(value: Any?): String = when (value) {
+        is String -> "\"" + value.flatMap { character ->
+            when (character) {
+                '\\', '"', '$' -> listOf('\\', character)
+                else -> listOf(character)
+            }
+        }.joinToString("") + "\""
+
+        is Boolean, is Int -> value.toString()
+
+        is List<*> -> value.joinToString(", ", "listOf(", ")") { literal(it) }
+
+        else -> throw GradleException("discord-shapes.json has a value the loader cannot read: $value")
+    }
+}
+
+val generateDiscordShapes = tasks.register<GenerateDiscordShapes>("generateDiscordShapes") {
+    shapes.set(repositoryRoot.resolveSibling("plugins-shared/src/native/android/discord-shapes.json"))
+}
+
 val copyBootstrapResources = tasks.register<CopyBootstrapResources>("copyBootstrapResources") {
     scripts.from(fileTree(repositoryRoot.resolve("bootstrap")) { include("*.js") })
 }
@@ -142,6 +182,7 @@ val copyBootstrapResources = tasks.register<CopyBootstrapResources>("copyBootstr
 androidComponents {
     onVariants { variant ->
         variant.sources.assets?.addGeneratedSourceDirectory(copyBootstrapResources, CopyBootstrapResources::output)
+        variant.sources.kotlin?.addGeneratedSourceDirectory(generateDiscordShapes, GenerateDiscordShapes::output)
     }
 }
 
