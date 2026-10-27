@@ -3,6 +3,8 @@ import Logger from '@unbound-app/logger';
 import type { Plugin } from 'rolldown';
 import { resolve } from 'node:path';
 
+import { bundleHashes } from '../sign';
+
 const logger = Logger.create('Build', 'Manifest');
 const root = resolve(__dirname, '..', '..', '..');
 const dist = resolve(root, 'dist');
@@ -79,16 +81,18 @@ export function describeBytecodeMismatch(declared: number[], built: number[]): s
 }
 
 /**
- * @description Writes `manifest.json` next to the bundles, listing the revision and bytecode versions.
+ * @description Writes `manifest.json` next to the bundles, listing the revision, channel, build time, bytecode versions and each bundle's SHA-512.
  * @param revision The git revision the bundle was built from.
  * @param declared The bytecode versions `hermes.json` declares.
  * @param lenient Whether a mismatch with `declared` only warns instead of failing the build.
+ * @param channel The channel the build is published to.
  * @returns A rolldown plugin writing the manifest after the bundle.
  */
 export default function generateManifest(
 	revision: string,
 	declared: number[],
 	lenient: boolean,
+	channel: string,
 ): Plugin {
 	return {
 		name: 'generate-manifest',
@@ -107,8 +111,10 @@ export default function generateManifest(
 
 			const manifest = {
 				revision,
+				channel,
 				buildTime: new Date().toISOString(),
 				bytecodeVersions,
+				sha512: bundleHashes(dist),
 			};
 
 			writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
