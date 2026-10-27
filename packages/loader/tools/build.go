@@ -323,6 +323,9 @@ func buildSimulator(options buildOptions, runner commandRunner) error {
 	if err := runner(options.root, simforge, []string{"convert", app}, os.Environ(), os.Stdout, os.Stderr); err != nil {
 		return err
 	}
+	if err := retargetLegacyFrameworks(app, runner, options.root); err != nil {
+		return err
+	}
 	frameworks, _ := filepath.Glob(filepath.Join(app, "Frameworks", "*"))
 	for _, framework := range frameworks {
 		_ = runner(options.root, "codesign", []string{"-f", "-s", "-", framework}, os.Environ(), os.Stdout, os.Stderr)
