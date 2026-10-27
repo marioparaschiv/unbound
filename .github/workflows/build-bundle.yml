@@ -65,6 +65,7 @@ jobs:
             - name: Build the client
               run: bun run --cwd packages/client build
               env:
+                  TMPDIR: ${{ runner.temp }}
                   UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
 
             - name: Check every bundle is signed
