@@ -33,7 +33,7 @@ object Recovery {
                 val activity = chain.thisObject as Activity
                 if (isLauncherActivity(activity)) {
                     hookNewIntent(xposed, activity.javaClass)
-                    if (activity.intent?.action == actionToggle) toggle(activity)
+                    activate(activity, activity.intent)
                     publishShortcut(activity)
                 }
                 result
@@ -52,9 +52,7 @@ object Recovery {
             .intercept { chain ->
                 val activity = chain.thisObject as Activity
                 val intent = chain.getArg(0) as? Intent
-                if (intent?.action == actionToggle && isLauncherActivity(activity)) {
-                    activity.intent = intent
-                    toggle(activity)
+                if (isLauncherActivity(activity) && activate(activity, intent)) {
                     publishShortcut(activity)
                     return@intercept null
                 }
@@ -69,12 +67,16 @@ object Recovery {
         return target == activity.javaClass.name
     }
 
-    private fun toggle(activity: Activity) {
-        activity.intent = Intent(activity.intent).setAction(Intent.ACTION_MAIN)
-        val result = runCatching { JSONObject(NativeBridge.nativeToolbox("recovery-shortcut", null).orEmpty()) }
+    private fun activate(activity: Activity, intent: Intent?): Boolean {
+        val action = intent?.action ?: return false
+        val result = runCatching { JSONObject(NativeBridge.nativeToolbox("recovery-shortcut-activate", action).orEmpty()) }
             .getOrDefault(JSONObject())
+        if (!result.optBoolean("handled")) return false
+
+        activity.intent = Intent(intent).setAction(Intent.ACTION_MAIN)
         Toast.makeText(activity, result.optString("status"), Toast.LENGTH_SHORT).show()
         if (result.optBoolean("restartRequired")) Platform.restartApp()
+        return true
     }
 
     private fun shortcutIcon(activity: Activity): Icon? = runCatching {

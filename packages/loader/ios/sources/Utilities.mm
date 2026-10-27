@@ -13,7 +13,10 @@
 #define RTF_GATEWAY 0x2
 #endif
 
+#include <memory>
+
 #import "CoreConversions.h"
+#include "LoaderAlertCountdown.h"
 #include "LoaderEnvironment.h"
 
 using unbound::ios::toNSString;
@@ -197,6 +200,17 @@ static NSString *bundle = nil;
     [self presentAlert:message title:title buttons:buttons timeout:timeout warning:warning tts:tts];
 }
 
++ (void)applyCountdownFrame:(const loader::alerts::CountdownFrame &)frame
+                    toAlert:(UIAlertController *)alert
+                      title:(NSString *)title
+{
+    alert.title = frame.running ? toNSString(frame.title) : title;
+    for (UIAlertAction *action in alert.actions)
+    {
+        action.enabled = frame.buttonsEnabled;
+    }
+}
+
 + (void)presentAlert:(NSString *)message
                title:(NSString *)title
              buttons:(NSArray<UIAlertAction *> *)buttons
@@ -223,15 +237,10 @@ static NSString *bundle = nil;
         [alert addAction:button];
     }
 
-    if (timeout > 0)
+    auto countdown = std::make_shared<loader::alerts::Countdown>(toStdString(title), timeout);
+    if (countdown->frame().running)
     {
-        for (UIAlertAction *action in alert.actions)
-        {
-            action.enabled = NO;
-        }
-
-        NSString *originalTitle = title;
-        alert.title = [NSString stringWithFormat:@"%@ (%ld)", originalTitle, (long) timeout];
+        [self applyCountdownFrame:countdown->frame() toAlert:alert title:title];
     }
 
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -291,37 +300,29 @@ static NSString *bundle = nil;
                                               ^{ [self speakAlertContent:title message:message]; });
                            }
 
-                           if (timeout > 0)
+                           if (countdown->frame().running)
                            {
-                               __block NSInteger countdown = timeout;
-                               dispatch_source_t timer     = dispatch_source_create(
+                               dispatch_source_t timer = dispatch_source_create(
                                    DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
 
                                dispatch_source_set_timer(
-                                   timer, dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC),
-                                   1.0 * NSEC_PER_SEC, 0.1 * NSEC_PER_SEC);
+                                   timer,
+                                   dispatch_time(DISPATCH_TIME_NOW,
+                                                 loader::alerts::kCountdownTickSeconds *
+                                                     NSEC_PER_SEC),
+                                   loader::alerts::kCountdownTickSeconds * NSEC_PER_SEC,
+                                   loader::alerts::kCountdownLeewaySeconds * NSEC_PER_SEC);
 
                                dispatch_source_set_event_handler(timer, ^{
-                                   if (!alert.presentingViewController)
+                                   BOOL presented = alert.presentingViewController != nil;
+                                   loader::alerts::CountdownFrame frame =
+                                       countdown->tick(presented);
+                                   if (presented)
                                    {
-                                       dispatch_source_cancel(timer);
-                                       return;
+                                       [self applyCountdownFrame:frame toAlert:alert title:title];
                                    }
-
-                                   countdown--;
-
-                                   if (countdown > 0)
+                                   if (!frame.running)
                                    {
-                                       alert.title = [NSString
-                                           stringWithFormat:@"%@ (%ld)", title, (long) countdown];
-                                   }
-                                   else
-                                   {
-                                       alert.title = title;
-                                       for (UIAlertAction *action in alert.actions)
-                                       {
-                                           action.enabled = YES;
-                                       }
                                        dispatch_source_cancel(timer);
                                    }
                                });

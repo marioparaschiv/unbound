@@ -1,7 +1,11 @@
 #import "RecoveryQuickAction.h"
 
 #import "CoreBridge.h"
+#import "CoreConversions.h"
 #import "Unbound.h"
+
+using unbound::ios::toNSString;
+using unbound::ios::toStdString;
 
 static NSString *recoveryShortcutType(void)
 {
@@ -44,11 +48,18 @@ static void showRecoveryStatus(NSString *status)
     NSMutableArray<UIApplicationShortcutItem *> *updated =
         [NSMutableArray arrayWithObject:recovery];
 
+    nlohmann::json types = nlohmann::json::array();
     for (UIApplicationShortcutItem *item in items)
     {
-        if (![item.type isEqualToString:recoveryShortcutType()])
+        types.push_back(toStdString(item.type));
+    }
+    NSArray *kept = [CoreBridge toolboxArray:@"recovery-shortcut-order"
+                                    argument:toNSString(types.dump())];
+    for (NSNumber *index in kept)
+    {
+        if ([index isKindOfClass:[NSNumber class]] && index.unsignedIntegerValue < items.count)
         {
-            [updated addObject:item];
+            [updated addObject:items[index.unsignedIntegerValue]];
         }
     }
 
@@ -57,12 +68,13 @@ static void showRecoveryStatus(NSString *status)
 
 + (BOOL)handleShortcutItem:(UIApplicationShortcutItem *)item
 {
-    if (![item.type isEqualToString:recoveryShortcutType()])
+    NSDictionary *toggle = [CoreBridge toolboxObject:@"recovery-shortcut-activate"
+                                            argument:item.type ?: @""];
+    if (![toggle[@"handled"] boolValue])
     {
         return NO;
     }
 
-    NSDictionary *toggle = [CoreBridge toolboxObject:@"recovery-shortcut" argument:@""];
     [RecoveryQuickAction refresh];
     showRecoveryStatus(toggle[@"status"]);
     if ([toggle[@"restartRequired"] boolValue])

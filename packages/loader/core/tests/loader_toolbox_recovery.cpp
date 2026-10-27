@@ -91,6 +91,39 @@ int main()
     assert(loader::toolbox::perform(context, "recovery-shortcut-action", "") ==
            "app.unbound.recovery.toggle");
 
+    ready                               = true;
+    const bool           recoveryBefore = settings.getBoolean("unbound", "recovery", false);
+    const nlohmann::json ignored        = nlohmann::json::parse(
+        loader::toolbox::perform(context, "recovery-shortcut-activate", "com.discord.search"));
+    assert(ignored == nlohmann::json({{"handled", false}}));
+    assert(settings.getBoolean("unbound", "recovery", false) == recoveryBefore);
+    assert(!loader::toolbox::activateShortcut(settings, true, ""));
+
+    const nlohmann::json activated = nlohmann::json::parse(loader::toolbox::perform(
+        context, "recovery-shortcut-activate", loader::toolbox::kRecoveryShortcutAction));
+    assert(activated["handled"] == true && activated["restartRequired"] == true);
+    assert(activated["enabled"] == !recoveryBefore);
+    assert(activated["status"] ==
+           (recoveryBefore ? "Recovery Mode disabled" : "Recovery Mode enabled"));
+    assert(settings.getBoolean("unbound", "recovery", false) == !recoveryBefore);
+
+    const auto direct = loader::toolbox::activateShortcut(settings, false,
+                                                          loader::toolbox::kRecoveryShortcutAction);
+    assert(direct && direct->enabled == recoveryBefore && !direct->restartRequired);
+
+    using Indices = std::vector<size_t>;
+    assert(loader::toolbox::shortcutsAfterRecovery({}) == Indices{});
+    assert((loader::toolbox::shortcutsAfterRecovery(
+                {"search", loader::toolbox::kRecoveryShortcutAction, "dm", "search"}) ==
+            Indices{0, 2, 3}));
+    assert(loader::toolbox::shortcutsAfterRecovery(
+               {loader::toolbox::kRecoveryShortcutAction, loader::toolbox::kRecoveryShortcutAction})
+               .empty());
+    assert(loader::toolbox::perform(context, "recovery-shortcut-order",
+                                    "[\"a\",\"app.unbound.recovery.toggle\",\"b\"]") == "[0,2]");
+    assert(loader::toolbox::perform(context, "recovery-shortcut-order", "[1,\"b\"]") == "[0,1]");
+    assert(loader::toolbox::perform(context, "recovery-shortcut-order", "nonsense") == "[]");
+
     loader::setLogSink(nullptr);
     std::filesystem::remove_all(root);
     return 0;

@@ -295,7 +295,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	filesystem, err := os.ReadFile(filepath.Join(root, "ios", "sources", "FileSystem.m"))
+	filesystem, err := os.ReadFile(filepath.Join(root, "ios", "sources", "FileSystem.mm"))
 	if err != nil {
 		t.Fatal(err)
 	}

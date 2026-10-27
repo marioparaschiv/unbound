@@ -169,6 +169,29 @@ RecoveryToggle toggleRecoveryFromShortcut(SettingsStore &settings, bool bundleRe
     return result;
 }
 
+std::vector<size_t> shortcutsAfterRecovery(const std::vector<std::string> &types)
+{
+    std::vector<size_t> kept;
+    for (size_t index = 0; index < types.size(); index++)
+    {
+        if (types[index] != kRecoveryShortcutAction)
+        {
+            kept.push_back(index);
+        }
+    }
+    return kept;
+}
+
+std::optional<RecoveryToggle> activateShortcut(SettingsStore &settings, bool bundleReady,
+                                               const std::string &type)
+{
+    if (type != kRecoveryShortcutAction)
+    {
+        return std::nullopt;
+    }
+    return toggleRecoveryFromShortcut(settings, bundleReady);
+}
+
 bool refetchBundle(BundleUpdater &updater, const std::optional<std::string> &updateURL,
                    uint32_t bytecodeVersion)
 {
@@ -492,6 +515,33 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
     if (action == "recovery-shortcut-action")
     {
         return kRecoveryShortcutAction;
+    }
+    if (action == "recovery-shortcut-activate")
+    {
+        const std::optional<RecoveryToggle> toggle = activateShortcut(
+            context.settings, context.bundleReady && context.bundleReady(), argument);
+        if (!toggle)
+        {
+            return nlohmann::json{{"handled", false}}.dump();
+        }
+        return nlohmann::json{{"handled", true},
+                              {"enabled", toggle->enabled},
+                              {"status", toggle->status},
+                              {"restartRequired", toggle->restartRequired}}
+            .dump();
+    }
+    if (action == "recovery-shortcut-order")
+    {
+        const nlohmann::json     types = nlohmann::json::parse(argument, nullptr, false);
+        std::vector<std::string> names;
+        if (types.is_array())
+        {
+            for (const auto &type : types)
+            {
+                names.push_back(type.is_string() ? type.get<std::string>() : std::string());
+            }
+        }
+        return nlohmann::json(shortcutsAfterRecovery(names)).dump();
     }
     if (action == "refetch-bundle")
     {

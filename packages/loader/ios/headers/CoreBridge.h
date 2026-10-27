@@ -22,10 +22,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)scanAddons;
 + (NSArray *)themes;
 + (NSArray<NSDictionary *> *)fonts;
-+ (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets;
++ (NSDictionary *)fontOverridePlan;
++ (NSString *)everyFontFamily;
 
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument;
 + (NSDictionary *)toolboxObject:(NSString *)action argument:(NSString *)argument;
++ (NSArray *)toolboxArray:(NSString *)action argument:(NSString *)argument;
 + (NSDictionary *)toolboxMenu:(NSDictionary *)options;
 + (NSTimeInterval)toolboxHoldDuration;
 + (NSString *)preference:(NSString *)action argument:(NSString *)argument;

@@ -502,4 +502,68 @@ std::optional<std::string> fontOverrideFor(const nlohmann::json &overrides,
     }
     return std::nullopt;
 }
+
+static std::string errorText(const nlohmann::json &error)
+{
+    return error.is_string() ? error.get<std::string>() : error.dump();
+}
+
+FontOverridePlan FontOverrideRegistry::plan(const nlohmann::json &targets)
+{
+    FontOverridePlan            plan;
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!targets.is_object())
+    {
+        return plan;
+    }
+    for (const auto &[family, target] : targets.items())
+    {
+        if (!target.is_object())
+        {
+            continue;
+        }
+        const auto error = target.find("error");
+        if (error != target.end() && !error->is_null())
+        {
+            plan.errors.push_back(errorText(*error));
+            continue;
+        }
+        const auto path = target.find("path");
+        if (path != target.end() && path->is_string() &&
+            registered_.insert(path->get<std::string>()).second)
+        {
+            plan.registrations.push_back(path->get<std::string>());
+        }
+        const auto name = target.find("name");
+        if (name != target.end() && name->is_string())
+        {
+            plan.table[family] = name->get<std::string>();
+        }
+    }
+    const auto everyFamily = plan.table.find(kAllFontFamilies);
+    if (everyFamily != plan.table.end())
+    {
+        plan.table = {{kAllFontFamilies, everyFamily->second}};
+    }
+    return plan;
+}
+
+nlohmann::json fontOverridePlanJSON(const FontOverridePlan &plan)
+{
+    return {{"registrations", plan.registrations}, {"errors", plan.errors}, {"table", plan.table}};
+}
+
+std::optional<std::string> fontOverrideLookup(const FontOverrideTable &table,
+                                              const std::string       &name)
+{
+    for (const std::string &key : {name, std::string(kAllFontFamilies)})
+    {
+        const auto found = table.find(key);
+        if (found != table.end())
+        {
+            return found->second;
+        }
+    }
+    return std::nullopt;
+}
 }

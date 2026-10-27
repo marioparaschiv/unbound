@@ -232,13 +232,25 @@ nlohmann::json UnboundFontCatalog()
     return arrayFromJSON(UnboundAddonState().themes());
 }
 
-+ (NSDictionary<NSString *, NSDictionary *> *)fontOverrideTargets
+static loader::FontOverrideRegistry &UnboundFontOverrides()
+{
+    static loader::FontOverrideRegistry registry;
+    return registry;
+}
+
++ (NSDictionary *)fontOverridePlan
 {
     nlohmann::json targets =
         loader::fontOverrideTargets(loader::preferences::fontOverrides(UnboundSettingsStore()),
                                     UnboundAddonState().fonts(), UnboundPlatformFonts());
-    id converted = objectFromJSON(targets);
+    id converted =
+        objectFromJSON(loader::fontOverridePlanJSON(UnboundFontOverrides().plan(targets)));
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
+}
+
++ (NSString *)everyFontFamily
+{
+    return @(loader::kAllFontFamilies);
 }
 
 + (NSArray<NSDictionary *> *)fonts
@@ -284,6 +296,12 @@ nlohmann::json UnboundFontCatalog()
         nlohmann::json::parse(toStdString([self toolbox:action argument:argument]), nullptr, false);
     id converted = parsed.is_object() ? objectFromJSON(parsed) : nil;
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
+}
+
++ (NSArray *)toolboxArray:(NSString *)action argument:(NSString *)argument
+{
+    return arrayFromJSON(nlohmann::json::parse(toStdString([self toolbox:action argument:argument]),
+                                               nullptr, false));
 }
 
 + (NSDictionary *)toolboxMenu:(NSDictionary *)options
