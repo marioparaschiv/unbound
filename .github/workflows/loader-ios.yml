@@ -443,7 +443,7 @@ jobs:
         name: Smoke test the simulator build
         if: *only_build_check
         needs: build-simulator
-        runs-on: macos-15
+        runs-on: macos-26
         timeout-minutes: 40
         permissions:
             contents: read
