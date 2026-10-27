@@ -5,6 +5,7 @@ import { mock } from 'bun:test';
 // react-native. Stub both so the pure lifecycle logic loads under bun with no device harness.
 export const writes: string[] = [];
 export const states: Record<string, boolean> = {};
+export const persists: number[] = [];
 
 mock.module('~/api/fs', () => ({
 	default: {
@@ -23,7 +24,11 @@ mock.module('~/api/storage', () => {
 	};
 
 	return {
-		default: { getStore: () => store, get: <T>(_s: string, _k: string, d: T) => d },
+		default: {
+			getStore: () => store,
+			get: <T>(_s: string, _k: string, d: T) => d,
+			persist: async () => void persists.push(Date.now()),
+		},
 		getStore: () => store,
 	};
 });
@@ -134,6 +139,7 @@ export class FakeAddons extends Addons<Addon> {
 /** Clears the recorded writes and persisted enabled states between tests. */
 export function resetDevice() {
 	writes.length = 0;
+	persists.length = 0;
 
 	for (const key of Object.keys(states)) {
 		delete states[key];

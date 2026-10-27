@@ -81,6 +81,40 @@ func TestBuildWorkflowArchivesMatchingTweakSymbols(t *testing.T) {
 	}
 }
 
+func TestAndroidBuildArchivesMatchingNativeSymbols(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	root := filepath.Dir(filepath.Dir(filename))
+	workflow, err := os.ReadFile(filepath.Join(root, "..", "..", ".github", "workflows", "loader-android.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents := string(workflow)
+	for _, required := range []string{
+		"unzip -q android/module/build/outputs/native-debug-symbols/release/native-debug-symbols.zip -d android-symbols",
+		"for abi in arm64-v8a x86_64; do",
+		"grep -q '\\.debug_info' <<< \"$sections\"",
+		`unzip -p "$module" "lib/$abi/libunbound.so" > "$library"`,
+		`test "$library_id" = "$symbols_id"`,
+		"git rev-parse HEAD > android-symbols/commit.txt",
+		"name: android symbols",
+		"path: packages/loader/android-symbols/",
+	} {
+		if !strings.Contains(contents, required) {
+			t.Fatalf("Android workflow is missing native symbol detail %q", required)
+		}
+	}
+	gradle, err := os.ReadFile(filepath.Join(root, "android", "module", "build.gradle.kts"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(gradle), `debugSymbolLevel = "FULL"`) {
+		t.Fatal("the release module build must keep full native debug symbols")
+	}
+}
+
 func TestBuildWorkflowAllowsManualIPAInput(t *testing.T) {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
@@ -544,12 +578,19 @@ func TestLoaderWorkflowsCacheTheirSlowestInputs(t *testing.T) {
 		}
 		return string(contents)
 	}
-	for _, name := range []string{"loader-build.yml", "loader-ci.yml", "loader-ios.yml", "loader-release-poll.yml"} {
+	setupGo, err := os.ReadFile(filepath.Join(workflows, "..", "actions", "setup-go-tools", "action.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, required := range []string{"uses: actions/setup-go@", "name: Cache Go builds", "~/.cache/go-build", "~/go/pkg/mod", "go-version-file: packages/loader/go.mod"} {
+		if !strings.Contains(string(setupGo), required) {
+			t.Fatalf("the shared Go setup is missing %q", required)
+		}
+	}
+	for _, name := range []string{"loader-android.yml", "loader-build.yml", "loader-ci.yml", "loader-ios.yml", "loader-release-poll.yml"} {
 		contents := read(name)
-		setups := strings.Count(contents, "uses: actions/setup-go@")
-		caches := strings.Count(contents, "name: Cache Go builds")
-		if caches == 0 || caches < setups-1 {
-			t.Fatalf("%s sets up Go %d times but caches Go builds %d times", name, setups, caches)
+		if strings.Contains(contents, "uses: actions/setup-go@") || !strings.Contains(contents, "uses: ./.github/actions/setup-go-tools") {
+			t.Fatalf("%s must set up Go through the shared setup-go-tools action", name)
 		}
 	}
 	ios := read("loader-ios.yml")

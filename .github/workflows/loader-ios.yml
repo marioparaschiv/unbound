@@ -90,21 +90,8 @@ jobs:
               with:
                   submodules: recursive
 
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
-
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
             - name: Test tools
               run: go test -count=1 ./...
@@ -187,6 +174,7 @@ jobs:
               with:
                   name: tweak symbols
                   path: packages/loader/symbols/
+                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
             - name: Upload rootless package
               id: upload-deb
@@ -194,6 +182,7 @@ jobs:
               with:
                   name: rootless package
                   path: packages/loader/ios/packages/*.deb
+                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
             - name: Attest rootless package
               if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -222,21 +211,8 @@ jobs:
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
-
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
             - name: Download the resolved source ipa
               if: inputs.source_ipa_artifact != ''
@@ -314,6 +290,7 @@ jobs:
               with:
                   name: source ipa
                   path: packages/loader/discord.ipa
+                  retention-days: 1
 
     build-ipa:
         if: *only_build_check
@@ -368,21 +345,8 @@ jobs:
                   key: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ hashFiles('packages/loader/tools/build.go') }}
                   restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
 
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
-
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
             - name: Extract app name
               run: |
@@ -401,6 +365,7 @@ jobs:
               with:
                   name: ipa
                   path: packages/loader/${{ env.APP_NAME }}.ipa
+                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
             - name: Attest IPA
               if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -432,21 +397,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
-
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
             - name: Download ipa artifact
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
@@ -475,6 +427,7 @@ jobs:
               with:
                   name: ios-simulator
                   path: packages/loader/unbound-ios-simulator.zip
+                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
             - name: Attest iOS Simulator artifact
               if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -510,21 +463,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
-
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
             - name: Download deb artifact
               if: inputs.only_app_repo != true && inputs.only_apt_repo != true

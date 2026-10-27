@@ -6,6 +6,7 @@ on:
         paths:
             - 'packages/loader/**'
             - '.github/workflows/loader-*.yml'
+            - '.github/actions/**'
             - '.gitmodules'
             - 'packages/types/typings/native.ts'
 
@@ -28,6 +29,7 @@ jobs:
     validate-submodules:
         name: Validate submodules
         runs-on: ubuntu-26.04
+        timeout-minutes: 5
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -48,27 +50,15 @@ jobs:
     lint:
         name: Lint and format
         runs-on: ubuntu-26.04
+        timeout-minutes: 6
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   fetch-depth: 1
 
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
-
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
             - name: Setup Java
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
@@ -104,6 +94,7 @@ jobs:
     comment-pr:
         name: Comment on PR
         runs-on: ubuntu-26.04
+        timeout-minutes: 5
         needs: build
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         steps:

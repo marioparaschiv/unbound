@@ -190,7 +190,7 @@ go run ./tools dev android-avd start
 
 `setup` creates the named AVD only when it is absent and applies the tracked performance settings without wiping its userdata. If the system image is missing, install its Android SDK license interactively with `sdkmanager --licenses`, then rerun setup. `start` reuses an already-running matching emulator, enables `adb root` only on that emulator, waits for Android to finish booting, and verifies the root shell. Use `--name` to target another AVD by name. Use `adb -s <serial> install -r <apk>` to install a debug build on the active emulator; `go run ./tools dev status` reports its serial and root state.
 
-`start` also disables the emulator's `com.android.internal.emulation.<device>` overlay. That overlay is sized for the real Pixel 7 screen, so on this profile's 720×1600 screen it hides the status bar. `status` reports what the loader needs on a running AVD: a `su` root shell, an Xposed framework installed as a Magisk module, the Unbound module, Discord's version, and any emulation overlay still enabled.
+The profile runs at the Pixel 7's own 1080×2400 screen, so the emulator's `com.android.internal.emulation.pixel_7` overlay sizes the status bar and cutout correctly; `start` re-enables that overlay if it was turned off. `status` reports what the loader needs on a running AVD: a `su` root shell, an Xposed framework installed as a Magisk module, the Unbound module, Discord's version, and the enabled emulation overlays.
 
 Rooting is a one-time manual step, because it patches the system image with third-party tools:
 
@@ -215,6 +215,12 @@ On the iOS vphone and the Android emulator, the loader finds a dev server on the
 Point `debugger.address` at a running `ub-debugger` bridge to evaluate JavaScript on a device. The emulator reaches the host at `10.0.2.2`.
 
 </details>
+
+## Addon crash protection
+
+The client asks the loader to write `addon-starting.json` in the Unbound data directory before it starts each plugin or theme, and the loader removes the file once that start returns. The file is replaced atomically, so it survives a native crash.
+
+At the next launch, the shared core reads any marker that was left behind before the client runs. It records the addon in `addon-crashes.json`, and a clean launch clears that count. If Discord dies while starting the same addon on two consecutive launches, the core logs it, shows the native notice "Disabled <name> because Discord crashed while starting it." (a toast on Android, an alert on iOS), and reports the addon through `NativePlatform.crashGuard.disabled()`. The client then saves the addon as disabled and skips its start. To try the addon again, enable it in settings. Recovery mode skips the markers because it starts no addon code.
 
 ## Discord compatibility scan
 
@@ -296,6 +302,20 @@ Releases run the same scan before anything is built. The `compat-gate` job in `l
 ```bash
 go run ./tools compat-scan --ipa discord.ipa --apk discord-stable/base.apk --android-version 350.0 --fail-on-breakage
 ```
+
+## Symbolicating native crashes
+
+Every build keeps the unstripped loader next to its stripped packages. iOS uploads the `tweak symbols` artifact with a dSYM per architecture, and Android uploads the `android symbols` artifact with `<abi>/libunbound.so.dbg` for `arm64-v8a` and `x86_64`. Both hold the build IDs or UUIDs they were checked against and the commit they came from. Releases attach them as `unbound-ios-symbols.zip` and `unbound-android-symbols.zip`. Pull request artifacts expire after 14 days, and other builds keep the repository default.
+
+To symbolicate an Android tombstone or a logcat crash backtrace, download the symbols of the build that crashed and pipe the backtrace into `symbolicate-android`:
+
+```bash
+adb shell cat /data/tombstones/tombstone_00 > tombstone.txt
+go run ./tools symbolicate-android --symbols unbound-android-symbols.zip < tombstone.txt
+adb logcat -d -b crash | go run ./tools symbolicate-android --symbols android-symbols
+```
+
+`--symbols` takes the release zip or an extracted artifact directory. The tool resolves every `libunbound*.so` frame with `llvm-symbolizer` from the Android NDK (`ANDROID_NDK_HOME`, or the newest NDK under `ANDROID_HOME`), or the one passed with `--symbolizer`, and prints each frame's functions, inlined callers and source lines under it. The ABI comes from the frame's library path or the tombstone's `ABI:` line; pass `--abi` when the backtrace names neither. A frame whose `BuildId` differs from the symbols is reported instead of resolved, since those symbols belong to another build.
 
 ## Patching an IPA
 

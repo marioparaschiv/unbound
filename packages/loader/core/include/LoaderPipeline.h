@@ -65,6 +65,7 @@ private:
                          const std::shared_ptr<PendingBundle> &pending, uint64_t token);
     std::shared_ptr<PendingBundle> currentPending();
     void                           injectPreBundle(facebook::jsi::Runtime &runtime);
+    void                           announceCrashDisabledAddons();
 
     std::shared_ptr<LoaderHost>    host_;
     UpdaterSettings                settings_;
