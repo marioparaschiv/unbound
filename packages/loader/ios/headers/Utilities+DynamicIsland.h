@@ -2,8 +2,6 @@
 
 #import "Utilities.h"
 
-extern const CGFloat DYNAMIC_ISLAND_TOP_INSET;
-
 @interface Utilities (DynamicIsland)
 
 + (BOOL)deviceHasDynamicIsland;

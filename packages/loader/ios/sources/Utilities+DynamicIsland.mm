@@ -1,8 +1,24 @@
+#include "LoaderDynamicIsland.h"
 #import "Utilities+DynamicIsland.h"
 
-const CGFloat DYNAMIC_ISLAND_TOP_INSET = 59.0;
+namespace island = loader::dynamicisland;
 
-static UIView *islandOverlayView = nil;
+static UIView              *islandOverlayView = nil;
+static island::Presentation islandPresentation;
+
+static CGRect rectOf(const island::Frame &frame)
+{
+    return CGRectMake(frame.x, frame.y, frame.width, frame.height);
+}
+
+static island::ViewState islandViewState(void)
+{
+    if (!islandOverlayView)
+    {
+        return {};
+    }
+    return {true, (bool) islandOverlayView.hidden, islandOverlayView.alpha};
+}
 
 @implementation Utilities (DynamicIsland)
 
@@ -24,7 +40,7 @@ static UIView *islandOverlayView = nil;
     }
 
     CGFloat topInset         = keyWindow.safeAreaInsets.top;
-    BOOL    hasDynamicIsland = fabs(topInset - DYNAMIC_ISLAND_TOP_INSET) < 0.1;
+    BOOL    hasDynamicIsland = island::hasDynamicIsland(true, topInset);
 
     [Logger debug:LOG_CATEGORY_UTILITIES
            format:@"Key window top safe area inset: %.1f, Dynamic Island: %@", topInset,
@@ -121,26 +137,27 @@ static UIView *islandOverlayView = nil;
 
 + (void)showDynamicIslandOverlay
 {
-    if (!islandOverlayView)
+    island::Plan plan = islandPresentation.show(islandViewState());
+    if (plan.create)
     {
         [self createDynamicIslandOverlayView];
     }
-
-    if (islandOverlayView && !islandOverlayView.hidden && islandOverlayView.alpha >= 1.0)
+    if (!plan.reveal)
     {
         return;
     }
 
     islandOverlayView.hidden = NO;
 
-    [UIView animateWithDuration:0.2 animations:^{ islandOverlayView.alpha = 1.0; }];
+    [UIView animateWithDuration:island::kRevealSeconds
+                     animations:^{ islandOverlayView.alpha = 1.0; }];
 
     [Logger debug:LOG_CATEGORY_UTILITIES format:@"Showing Dynamic Island overlay"];
 }
 
 + (void)hideDynamicIslandOverlay
 {
-    if (!islandOverlayView || islandOverlayView.hidden)
+    if (!islandPresentation.hide(islandViewState()).conceal)
     {
         return;
     }
@@ -171,28 +188,23 @@ static UIView *islandOverlayView = nil;
         return;
     }
 
-    CGFloat width  = 126.0;
-    CGFloat height = 37.33;
-
-    CGFloat screenWidth = keyWindow.bounds.size.width;
-    CGFloat x           = (screenWidth - width) / 2;
-    CGFloat y           = 11.0;
+    island::Frame frame = island::overlayFrame(keyWindow.bounds.size.width);
 
     [Logger debug:LOG_CATEGORY_UTILITIES
-           format:@"Creating Dynamic Island overlay view at x:%f y:%f width:%f height:%f", x, y,
-                  width, height];
+           format:@"Creating Dynamic Island overlay view at x:%f y:%f width:%f height:%f", frame.x,
+                  frame.y, frame.width, frame.height];
 
-    islandOverlayView = [[UIView alloc] initWithFrame:CGRectMake(x, y, width, height)];
+    islandOverlayView                 = [[UIView alloc] initWithFrame:rectOf(frame)];
     islandOverlayView.backgroundColor = [UIColor blackColor];
     islandOverlayView.alpha           = 0.0;
     islandOverlayView.hidden          = YES;
 
     islandOverlayView.userInteractionEnabled = NO;
 
-    UIBezierPath *path =
-        [UIBezierPath bezierPathWithRoundedRect:islandOverlayView.bounds
-                              byRoundingCorners:UIRectCornerAllCorners
-                                    cornerRadii:CGSizeMake(height / 2, height / 2)];
+    UIBezierPath *path = [UIBezierPath
+        bezierPathWithRoundedRect:islandOverlayView.bounds
+                byRoundingCorners:UIRectCornerAllCorners
+                      cornerRadii:CGSizeMake(island::cornerRadius(), island::cornerRadius())];
 
     CAShapeLayer *maskLayer      = [CAShapeLayer layer];
     maskLayer.path               = path.CGPath;
@@ -205,11 +217,7 @@ static UIView *islandOverlayView = nil;
     logoView.image        = logoImage;
     logoView.contentMode  = UIViewContentModeScaleAspectFit;
 
-    CGFloat logoHeight  = height * 0.99;
-    CGFloat aspectRatio = logoImage.size.width / logoImage.size.height;
-    CGFloat logoWidth   = logoHeight * aspectRatio;
-    logoView.frame =
-        CGRectMake((width - logoWidth) / 2, (height - logoHeight) / 2, logoWidth, logoHeight);
+    logoView.frame = rectOf(island::logoFrame(logoImage.size.width / logoImage.size.height));
 
     [islandOverlayView addSubview:logoView];
 
@@ -223,20 +231,19 @@ static UIView *islandOverlayView = nil;
 {
     [Logger info:LOG_CATEGORY_UTILITIES format:@"Checking if device has Dynamic Island..."];
 
-    if (![self deviceHasDynamicIsland])
+    switch (islandPresentation.start([self deviceHasDynamicIsland]))
     {
-        [Logger info:LOG_CATEGORY_UTILITIES
-              format:@"Device does not have Dynamic Island, skipping overlay"];
-        return;
+        case island::Start::NoIsland:
+            [Logger info:LOG_CATEGORY_UTILITIES
+                  format:@"Device does not have Dynamic Island, skipping overlay"];
+            return;
+        case island::Start::AlreadyStarted:
+            [Logger info:LOG_CATEGORY_UTILITIES
+                  format:@"Dynamic Island overlay already initialized"];
+            return;
+        case island::Start::Started:
+            break;
     }
-
-    static BOOL isInitialized = NO;
-    if (isInitialized)
-    {
-        [Logger info:LOG_CATEGORY_UTILITIES format:@"Dynamic Island overlay already initialized"];
-        return;
-    }
-    isInitialized = YES;
 
     [Logger info:LOG_CATEGORY_UTILITIES format:@"Setting up Dynamic Island overlay notifications"];
 
@@ -262,14 +269,17 @@ static UIView *islandOverlayView = nil;
                                        ^{ [self hideDynamicIslandOverlay]; });
                     }];
 
-    dispatch_after(
-        dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            [Logger info:LOG_CATEGORY_UTILITIES format:@"Creating Dynamic Island overlay..."];
-            [self createDynamicIslandOverlayView];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, island::kCreateDelaySeconds * NSEC_PER_SEC),
+                   dispatch_get_main_queue(), ^{
+                       [Logger info:LOG_CATEGORY_UTILITIES
+                             format:@"Creating Dynamic Island overlay..."];
+                       [self createDynamicIslandOverlayView];
 
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.5 * NSEC_PER_SEC),
-                           dispatch_get_main_queue(), ^{ [self showDynamicIslandOverlay]; });
-        });
+                       dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
+                                                    island::kShowDelaySeconds * NSEC_PER_SEC),
+                                      dispatch_get_main_queue(),
+                                      ^{ [self showDynamicIslandOverlay]; });
+                   });
 }
 
 @end
