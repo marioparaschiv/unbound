@@ -1,16 +1,29 @@
 #import "Sideloading.h"
 
+#import "CoreConversions.h"
+#include "LoaderBrowserLogin.h"
+#include "LoaderDiagnostics.h"
+
+using unbound::ios::toNSString;
+using unbound::ios::toStdString;
+
+namespace browserlogin = loader::browserlogin;
+
+static_assert(browserlogin::kIVBytes == kCCBlockSizeAES128);
+static_assert(browserlogin::kMACBytes == CC_SHA256_DIGEST_LENGTH);
+
 static NSString *const BrowserLoginStateKey  = @"BrowserLoginState";
 static NSString *const BrowserLoginSecretKey = @"BrowserLoginSecret";
 static NSString *const BrowserLoginDateKey   = @"BrowserLoginDate";
-static NSString *const SafariExtensionName   = @"OpenInDiscord";
+
+static std::string_view bytesOf(NSData *data)
+{
+    return std::string_view(static_cast<const char *>(data.bytes), data.length);
+}
 
 static NSString *browserLoginBase64URL(NSData *data)
 {
-    NSString *encoded = [data base64EncodedStringWithOptions:0];
-    encoded           = [encoded stringByReplacingOccurrencesOfString:@"+" withString:@"-"];
-    encoded           = [encoded stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
-    return [encoded stringByReplacingOccurrencesOfString:@"=" withString:@""];
+    return toNSString(browserlogin::base64URLEncode(bytesOf(data)));
 }
 
 static NSData *browserLoginDecodeBase64URL(NSString *encoded)
@@ -20,13 +33,9 @@ static NSData *browserLoginDecodeBase64URL(NSString *encoded)
         return nil;
     }
 
-    NSString *base64   = [encoded stringByReplacingOccurrencesOfString:@"-" withString:@"+"];
-    base64             = [base64 stringByReplacingOccurrencesOfString:@"_" withString:@"/"];
-    NSUInteger padding = (4 - base64.length % 4) % 4;
-    base64             = [base64 stringByPaddingToLength:base64.length + padding
-                                              withString:@"="
-                                         startingAtIndex:0];
-    return [[NSData alloc] initWithBase64EncodedString:base64 options:0];
+    return [[NSData alloc]
+        initWithBase64EncodedString:toNSString(browserlogin::paddedBase64(toStdString(encoded)))
+                            options:0];
 }
 
 static NSData *browserLoginRandomData(NSUInteger length)
@@ -37,23 +46,6 @@ static NSData *browserLoginRandomData(NSUInteger length)
         return nil;
     }
     return data;
-}
-
-static BOOL browserLoginConstantTimeEqual(NSData *left, NSData *right)
-{
-    if (left.length != right.length)
-    {
-        return NO;
-    }
-
-    const uint8_t *leftBytes  = left.bytes;
-    const uint8_t *rightBytes = right.bytes;
-    uint8_t        difference = 0;
-    for (NSUInteger index = 0; index < left.length; index++)
-    {
-        difference |= leftBytes[index] ^ rightBytes[index];
-    }
-    return difference == 0;
 }
 
 static NSString *browserLoginQueryValue(NSURLComponents *components, NSString *name)
@@ -81,7 +73,7 @@ static NSString *safariExtensionIdentifier(void)
     NSString *extensionsPath =
         [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"PlugIns"];
     NSString *extensionPath   = [extensionsPath
-        stringByAppendingPathComponent:[SafariExtensionName
+        stringByAppendingPathComponent:[@(loader::diagnostics::kSafariExtensionName)
                                            stringByAppendingPathExtension:@"appex"]];
     NSBundle *extensionBundle = [NSBundle bundleWithPath:extensionPath];
     return [extensionBundle objectForInfoDictionaryKey:@"CFBundleIdentifier"];
@@ -89,12 +81,12 @@ static NSString *safariExtensionIdentifier(void)
 
 static void browserLoginStartFlow(void)
 {
-    NSData *stateData = browserLoginRandomData(24);
-    NSData *secret    = browserLoginRandomData(64);
+    NSData *stateData = browserLoginRandomData(browserlogin::kStateBytes);
+    NSData *secret    = browserLoginRandomData(browserlogin::kSecretBytes);
     if (!stateData || !secret)
     {
         [Utilities alert:@"Discord could not create a secure browser login session."
-                   title:@"Could Not Start Login"];
+                   title:@(browserlogin::kStartFailedTitle)];
         return;
     }
 
@@ -105,22 +97,22 @@ static void browserLoginStartFlow(void)
     [defaults setObject:secret forKey:BrowserLoginSecretKey];
     [defaults setObject:[NSDate date] forKey:BrowserLoginDateKey];
 
-    NSString *urlString = [NSString
-        stringWithFormat:@"https://discord.com/login#login-state=%@&login-secret=%@", state, key];
+    NSString *urlString = toNSString(browserlogin::loginURL(toStdString(state), toStdString(key)));
     [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlString]
         options:@{}
         completionHandler:^(BOOL success) {
             if (!success)
             {
                 browserLoginClear();
-                [Utilities alert:@"Safari could not be opened." title:@"Could Not Start Login"];
+                [Utilities alert:@"Safari could not be opened."
+                           title:@(browserlogin::kStartFailedTitle)];
             }
         }];
 }
 
 static void browserLoginStart(void)
 {
-    if (![Utilities hasAppExtension:SafariExtensionName])
+    if (![Utilities hasAppExtension:@(loader::diagnostics::kSafariExtensionName)])
     {
         [Logger error:LOG_CATEGORY_DEFAULT format:@"Safari extension is missing."];
         [Utilities alert:@"Browser login requires the Safari extension to be enabled."
@@ -176,10 +168,15 @@ static void browserLoginStart(void)
     browserLoginStartFlow();
 }
 
+static void browserLoginFail(NSString *message)
+{
+    browserLoginClear();
+    [Utilities alert:message title:@(browserlogin::kFailedTitle)];
+}
+
 static BOOL browserLoginHandleURL(NSURL *url)
 {
-    if (![[url.scheme lowercaseString] isEqualToString:@"com.hammerandchisel.discord"] ||
-        ![[url.host lowercaseString] isEqualToString:@"login"])
+    if (!browserlogin::isCallbackURL(toStdString(url.scheme), toStdString(url.host)))
     {
         return NO;
     }
@@ -188,12 +185,6 @@ static BOOL browserLoginHandleURL(NSURL *url)
     NSString       *state    = [defaults stringForKey:BrowserLoginStateKey];
     NSData         *secret   = [defaults dataForKey:BrowserLoginSecretKey];
     NSDate         *date     = [defaults objectForKey:BrowserLoginDateKey];
-    if (state.length == 0 || secret.length == 0 || !date)
-    {
-        [Logger info:LOG_CATEGORY_DEFAULT
-              format:@"Ignoring browser login callback without an active session."];
-        return YES;
-    }
 
     NSURLComponents *parts = [NSURLComponents componentsWithURL:url resolvingAgainstBaseURL:NO];
     NSString        *returnedState = browserLoginQueryValue(parts, @"state");
@@ -201,49 +192,52 @@ static BOOL browserLoginHandleURL(NSURL *url)
     NSData *ciphertext  = browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"ciphertext"));
     NSData *returnedMAC = browserLoginDecodeBase64URL(browserLoginQueryValue(parts, @"mac"));
 
-    NSTimeInterval sessionAge   = date ? -date.timeIntervalSinceNow : -1;
-    BOOL           stateMatches = state.length > 0 && [state isEqualToString:returnedState];
-    BOOL           sessionFresh = date && sessionAge >= 0 && sessionAge <= 600;
-    if (!stateMatches)
+    browserlogin::Session  session{toStdString(state), secret.length,
+                                   date ? std::optional<double>(-date.timeIntervalSinceNow)
+                                        : std::nullopt};
+    browserlogin::Callback callback{toStdString(returnedState), iv.length, ciphertext.length,
+                                    returnedMAC.length};
+
+    switch (browserlogin::checkCallback(session, callback))
     {
-        [Logger info:LOG_CATEGORY_DEFAULT
-              format:@"Ignoring callback with state length %lu; active state length %lu.",
-                     (unsigned long) returnedState.length, (unsigned long) state.length];
-        return YES;
+        case browserlogin::CallbackCheck::NoSession:
+            [Logger info:LOG_CATEGORY_DEFAULT
+                  format:@"Ignoring browser login callback without an active session."];
+            return YES;
+        case browserlogin::CallbackCheck::StateMismatch:
+            [Logger info:LOG_CATEGORY_DEFAULT
+                  format:@"Ignoring callback with state length %lu; active state length %lu.",
+                         (unsigned long) returnedState.length, (unsigned long) state.length];
+            return YES;
+        case browserlogin::CallbackCheck::Invalid:
+            [Logger
+                 error:LOG_CATEGORY_DEFAULT
+                format:
+                    @"Browser login validation failed: session=%d fresh=%d secret=%lu iv=%lu ciphertext=%lu mac=%lu age=%.1f.",
+                    secret.length == browserlogin::kSecretBytes &&
+                        browserlogin::isFresh(session.ageSeconds),
+                    browserlogin::isFresh(session.ageSeconds), (unsigned long) secret.length,
+                    (unsigned long) iv.length, (unsigned long) ciphertext.length,
+                    (unsigned long) returnedMAC.length, session.ageSeconds.value_or(-1)];
+            browserLoginFail(@(browserlogin::kInvalidSessionMessage));
+            return YES;
+        case browserlogin::CallbackCheck::Valid:
+            break;
     }
 
-    BOOL validSession = state.length > 0 && secret.length == 64 && sessionFresh;
-    if (!validSession || iv.length != kCCBlockSizeAES128 || ciphertext.length == 0 ||
-        returnedMAC.length != CC_SHA256_DIGEST_LENGTH)
-    {
-        [Logger
-             error:LOG_CATEGORY_DEFAULT
-            format:
-                @"Browser login validation failed: session=%d fresh=%d secret=%lu iv=%lu ciphertext=%lu mac=%lu age=%.1f.",
-                validSession, sessionFresh, (unsigned long) secret.length,
-                (unsigned long) iv.length, (unsigned long) ciphertext.length,
-                (unsigned long) returnedMAC.length, sessionAge];
-        browserLoginClear();
-        [Utilities alert:@"The browser login session was invalid or expired. Please try again."
-                   title:@"Could Not Finish Login"];
-        return YES;
-    }
-
-    NSMutableData *authenticatedData = [NSMutableData data];
-    [authenticatedData appendData:[state dataUsingEncoding:NSUTF8StringEncoding]];
-    [authenticatedData appendData:iv];
-    [authenticatedData appendData:ciphertext];
+    std::string authenticatedData =
+        browserlogin::authenticatedData(toStdString(state), bytesOf(iv), bytesOf(ciphertext));
 
     uint8_t expectedMAC[CC_SHA256_DIGEST_LENGTH];
-    CCHmac(kCCHmacAlgSHA256, (const uint8_t *) secret.bytes + 32, 32, authenticatedData.bytes,
-           authenticatedData.length, expectedMAC);
-    NSData *expectedMACData = [NSData dataWithBytes:expectedMAC length:sizeof(expectedMAC)];
-    if (!browserLoginConstantTimeEqual(expectedMACData, returnedMAC))
+    CCHmac(kCCHmacAlgSHA256, (const uint8_t *) secret.bytes + browserlogin::kKeyBytes,
+           browserlogin::kKeyBytes, authenticatedData.data(), authenticatedData.size(),
+           expectedMAC);
+    if (!browserlogin::constantTimeEqual(
+            std::string_view(reinterpret_cast<const char *>(expectedMAC), sizeof(expectedMAC)),
+            bytesOf(returnedMAC)))
     {
         [Logger error:LOG_CATEGORY_DEFAULT format:@"Browser login MAC verification failed."];
-        browserLoginClear();
-        [Utilities alert:@"The browser login response could not be verified. Please try again."
-                   title:@"Could Not Finish Login"];
+        browserLoginFail(@(browserlogin::kUnverifiedMessage));
         return YES;
     }
 
@@ -251,29 +245,26 @@ static BOOL browserLoginHandleURL(NSURL *url)
         [NSMutableData dataWithLength:ciphertext.length + kCCBlockSizeAES128];
     size_t          plaintextLength = 0;
     CCCryptorStatus status =
-        CCCrypt(kCCDecrypt, kCCAlgorithmAES, kCCOptionPKCS7Padding, secret.bytes, 32, iv.bytes,
-                ciphertext.bytes, ciphertext.length, plaintext.mutableBytes, plaintext.length,
-                &plaintextLength);
+        CCCrypt(kCCDecrypt, kCCAlgorithmAES, kCCOptionPKCS7Padding, secret.bytes,
+                browserlogin::kKeyBytes, iv.bytes, ciphertext.bytes, ciphertext.length,
+                plaintext.mutableBytes, plaintext.length, &plaintextLength);
     if (status != kCCSuccess)
     {
         [Logger error:LOG_CATEGORY_DEFAULT
                format:@"Browser login decryption failed with status %d.", status];
-        browserLoginClear();
-        [Utilities alert:@"The browser login response could not be read. Please try again."
-                   title:@"Could Not Finish Login"];
+        browserLoginFail(@(browserlogin::kUnreadableMessage));
         return YES;
     }
 
     plaintext.length = plaintextLength;
     NSString *token  = [[NSString alloc] initWithData:plaintext encoding:NSUTF8StringEncoding];
     browserLoginClear();
-    if (token.length < 20)
+    if (token.length < browserlogin::kMinimumTokenLength)
     {
         [Logger error:LOG_CATEGORY_DEFAULT
                format:@"Browser login returned a short token (%lu characters).",
                       (unsigned long) token.length];
-        [Utilities alert:@"Safari did not return a valid Discord session. Please try again."
-                   title:@"Could Not Finish Login"];
+        [Utilities alert:@(browserlogin::kInvalidTokenMessage) title:@(browserlogin::kFailedTitle)];
         return YES;
     }
 

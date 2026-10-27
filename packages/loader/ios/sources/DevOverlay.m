@@ -241,13 +241,7 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
 #else
     BOOL debugBuild = NO;
 #endif
-    NSMutableArray<NSString *> *flags = [NSMutableArray array];
-    if ([Utilities isVPhone])
-        [flags addObject:@"virtual-device"];
-    if (debugBuild)
-        [flags addObject:@"debug-build"];
-    return [[CoreBridge preference:@"dev-overlay"
-                          argument:[flags componentsJoinedByString:@","]] isEqualToString:@"true"];
+    return [CoreBridge devOverlayVisibleOnVirtualDevice:[Utilities isVPhone] debugBuild:debugBuild];
 }
 
 + (UIWindowScene *)activeWindowScene
@@ -417,17 +411,13 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
 
 + (CGRect)buttonFrameInScreen
 {
-    CGFloat side = [CoreBridge devOverlayButtonSide];
-    return CGRectMake(devOverlayButtonCenter.x - side / 2.0, devOverlayButtonCenter.y - side / 2.0,
-                      side, side);
+    return [CoreBridge devOverlayButtonFrameForCenter:devOverlayButtonCenter];
 }
 
 + (CGRect)collapsedFrame
 {
-    CGFloat margin  = [CoreBridge devOverlayButtonMargin];
-    CGRect  padded  = CGRectInset([self buttonFrameInScreen], -margin, -margin);
-    CGRect  clipped = CGRectIntersection(padded, [self screenBounds]);
-    return CGRectIsNull(clipped) ? padded : clipped;
+    return [CoreBridge devOverlayCollapsedFrameForCenter:devOverlayButtonCenter
+                                                  screen:[self screenBounds]];
 }
 
 + (void)applyButtonPosition

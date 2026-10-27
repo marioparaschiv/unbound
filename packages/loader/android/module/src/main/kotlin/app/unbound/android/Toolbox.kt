@@ -204,8 +204,14 @@ object Toolbox {
         isChecked = item.optBoolean("on")
     }
 
+    private fun menuStep(item: JSONObject, confirmed: Boolean): String? =
+        NativeBridge.nativeToolbox("menu-step", JSONObject().put("item", item).put("confirmed", confirmed).toString())
+
+    private fun menuOutcome(item: JSONObject, result: String?): String? =
+        NativeBridge.nativeToolbox("menu-outcome", JSONObject().put("item", item).put("result", result).toString())
+
     private fun select(activity: Activity, model: JSONObject, item: JSONObject) {
-        if (!item.optBoolean("destructive")) return perform(activity, item)
+        if (menuStep(item, false) != "confirm") return perform(activity, item)
 
         val confirmation = model.optJSONObject("confirmation") ?: JSONObject()
         AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
@@ -217,11 +223,10 @@ object Toolbox {
     }
 
     private fun perform(activity: Activity, item: JSONObject) {
-        val prompt = item.optJSONObject("prompt")
-        when {
-            item.optString("kind") == "platform" -> performPlatform(activity, item)
-            prompt != null -> prompt(activity, item, prompt)
-            else -> run(activity, item, item.optString("argument"))
+        when (menuStep(item, true)) {
+            "platform" -> performPlatform(activity, item)
+            "prompt" -> prompt(activity, item, item.getJSONObject("prompt"))
+            "run" -> run(activity, item, item.optString("argument"))
         }
     }
 
@@ -250,17 +255,19 @@ object Toolbox {
 
     private fun run(activity: Activity, item: JSONObject, argument: String) {
         val progress = item.optString("progress")
-        val failure = item.optString("failure")
         if (progress.isNotEmpty()) Toast.makeText(activity, progress, Toast.LENGTH_SHORT).show()
 
         Thread {
             val result = NativeBridge.nativeToolbox(item.optString("action"), argument)
+            val outcome = menuOutcome(item, result)
             main.post {
-                if (failure.isNotEmpty() && result != "true") {
-                    Toast.makeText(activity, failure, Toast.LENGTH_LONG).show()
-                } else if (item.optBoolean("restartsApp")) {
-                    shown?.dismiss()
-                    Platform.restartApp()
+                when (outcome) {
+                    "failed" -> Toast.makeText(activity, item.optString("failure"), Toast.LENGTH_LONG).show()
+
+                    "restart" -> {
+                        shown?.dismiss()
+                        Platform.restartApp()
+                    }
                 }
             }
         }.start()

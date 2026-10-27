@@ -158,4 +158,75 @@ nlohmann::json themeColorsByAccessor(const ThemeColors &colors)
 
     return {{"semantic", semantic}, {"raw", raw}, {"rawFallbacks", rawFallbacks}};
 }
+
+std::optional<std::string> themeIdFrom(const std::string &manifestId)
+{
+    return manifestId.empty() ? std::nullopt : std::optional<std::string>(manifestId);
+}
+
+ThemeSelection::ThemeSelection(InstalledCheck installed) : installed_(std::move(installed)) {}
+
+std::optional<std::string> ThemeSelection::current() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return current_;
+}
+
+std::optional<std::string> ThemeSelection::discordTheme() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return discordTheme_;
+}
+
+std::optional<std::string> ThemeSelection::apply(const std::string &manifestId)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    current_ = themeIdFrom(manifestId);
+    return current_;
+}
+
+bool ThemeSelection::select(const std::string &manifestId)
+{
+    const std::optional<std::string> themeId = themeIdFrom(manifestId);
+    if (themeId && !installed_(*themeId))
+    {
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    customActive_ = themeId.has_value();
+    return true;
+}
+
+bool ThemeSelection::needsSelection(const std::string &selected) const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return themeIdFrom(selected) != current_;
+}
+
+ThemeRefresh ThemeSelection::refresh()
+{
+    const std::optional<std::string> themeId = current();
+    if (!themeId)
+    {
+        return ThemeRefresh::None;
+    }
+    if (installed_(*themeId))
+    {
+        return ThemeRefresh::Reapply;
+    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    customActive_ = false;
+    return ThemeRefresh::Reset;
+}
+
+std::optional<std::string> ThemeSelection::followDiscordTheme(const std::string &discordTheme)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    discordTheme_ = discordTheme;
+    if (customActive_ || current_ == discordTheme)
+    {
+        return std::nullopt;
+    }
+    return discordTheme;
+}
 }

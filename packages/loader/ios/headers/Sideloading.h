@@ -12,4 +12,10 @@
 
 @end
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void SetAlternateIconName(NSString *iconName, void (^completion)(NSError *error));
+#ifdef __cplusplus
+}
+#endif

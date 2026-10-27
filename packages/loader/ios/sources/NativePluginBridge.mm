@@ -24,6 +24,7 @@
 #import "CoreConversions.h"
 #import "Logger.h"
 #import "NativeAddressValidation.h"
+#import "NativeAssociationPolicy.h"
 #import "NativeConversionBudget.h"
 #import "NativeEvaluations.h"
 #import "NativeFFI.h"
@@ -376,14 +377,13 @@ static void   dispatchVoidObjectObjectObjectHook(id object, SEL selector, id tab
 static Value  makeHook(Runtime &runtime, const Value *args, size_t count);
 static void invokeHookOriginal(const std::shared_ptr<HookDispatcher> &dispatcher, void **arguments,
                                void *returnValue);
-static const char *structEncoding(const std::string &name);
-static void        setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                      const Value *args, size_t count);
-static void        removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                         const Value *args, size_t count);
-static void        clearHookReturnCache(const std::shared_ptr<HookState> &state);
-static void        setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                          const Value *args, size_t count);
+static void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
+                               const Value *args, size_t count);
+static void removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
+                                  const Value *args, size_t count);
+static void clearHookReturnCache(const std::shared_ptr<HookState> &state);
+static void setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
+                                   const Value *args, size_t count);
 static void removeHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
                                       const Value *args, size_t count);
 
@@ -1533,13 +1533,6 @@ static void validateNativeScalarArgument(id value, const std::string &type)
     {
         throw std::runtime_error("Native scalar argument is out of range");
     }
-}
-
-static bool isNativeScalarType(const std::string &type)
-{
-    return type == "bool" || type == "float" || type == "double" || type == "i8" || type == "u8" ||
-           type == "i16" || type == "u16" || type == "i32" || type == "u32" || type == "i64" ||
-           type == "u64";
 }
 
 static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *signature, id object,
@@ -2802,35 +2795,6 @@ Value HookTokenHost::get(Runtime &runtime, const PropNameID &name)
     return Value::undefined();
 }
 
-static const char *structEncoding(const std::string &name)
-{
-    if (name == "NSRange")
-    {
-        return "{_NSRange=QQ}";
-    }
-    if (name == "CGPoint")
-    {
-        return "{CGPoint=dd}";
-    }
-    if (name == "CGSize")
-    {
-        return "{CGSize=dd}";
-    }
-    if (name == "CGRect")
-    {
-        return "{CGRect={CGPoint=dd}{CGSize=dd}}";
-    }
-    if (name == "UIEdgeInsets")
-    {
-        return "{UIEdgeInsets=dddd}";
-    }
-    if (name == "CGAffineTransform")
-    {
-        return "{CGAffineTransform=dddddd}";
-    }
-    return nullptr;
-}
-
 Value StructHost::get(Runtime &runtime, const PropNameID &name)
 {
     std::string property = name.utf8(runtime);
@@ -3283,7 +3247,7 @@ static id hookCacheComponent(const loader::ffi::Type &spec, const uint8_t *bytes
     }
     if (spec.kind == loader::ffi::Kind::Struct)
     {
-        const char *encoding = structEncoding(spec.layout->name);
+        const char *encoding = nativeStructEncoding(spec.layout->name);
         return encoding ? [NSValue value:bytes withObjCType:encoding] : nil;
     }
     return nil;
@@ -4775,35 +4739,38 @@ static Value setIvar(Runtime &runtime, const Value *args, size_t count)
     throw JSError(runtime, "Unsupported ivar type");
 }
 
+static objc_AssociationPolicy objcAssociationPolicy(loader::native::AssociationPolicy policy)
+{
+    switch (policy)
+    {
+        case loader::native::AssociationPolicy::Assign:
+            return OBJC_ASSOCIATION_ASSIGN;
+        case loader::native::AssociationPolicy::Retain:
+            return OBJC_ASSOCIATION_RETAIN;
+        case loader::native::AssociationPolicy::Copy:
+            return OBJC_ASSOCIATION_COPY;
+        case loader::native::AssociationPolicy::CopyNonatomic:
+            return OBJC_ASSOCIATION_COPY_NONATOMIC;
+        case loader::native::AssociationPolicy::RetainNonatomic:
+            return OBJC_ASSOCIATION_RETAIN_NONATOMIC;
+    }
+    return OBJC_ASSOCIATION_RETAIN_NONATOMIC;
+}
+
 static objc_AssociationPolicy associationPolicy(Runtime &runtime, const Value *value)
 {
     if (!value || !value->isString())
     {
-        return OBJC_ASSOCIATION_RETAIN_NONATOMIC;
+        return objcAssociationPolicy(loader::native::kDefaultAssociationPolicy);
     }
 
-    NSString *name = jsiString(runtime, *value);
-    if ([name isEqualToString:@"assign"])
+    std::optional<loader::native::AssociationPolicy> policy =
+        loader::native::associationPolicyNamed(value->asString(runtime).utf8(runtime));
+    if (!policy)
     {
-        return OBJC_ASSOCIATION_ASSIGN;
+        throw JSError(runtime, "Unsupported native association policy");
     }
-    if ([name isEqualToString:@"retain"])
-    {
-        return OBJC_ASSOCIATION_RETAIN;
-    }
-    if ([name isEqualToString:@"copy"])
-    {
-        return OBJC_ASSOCIATION_COPY;
-    }
-    if ([name isEqualToString:@"copyNonatomic"])
-    {
-        return OBJC_ASSOCIATION_COPY_NONATOMIC;
-    }
-    if ([name isEqualToString:@"retainNonatomic"])
-    {
-        return OBJC_ASSOCIATION_RETAIN_NONATOMIC;
-    }
-    throw JSError(runtime, "Unsupported native association policy");
+    return objcAssociationPolicy(*policy);
 }
 
 static void installObjC(Runtime &runtime, Object &objc)
@@ -5176,7 +5143,7 @@ static std::optional<Value> objcFFIStructResult(Runtime                         
                                                 const loader::ffi::StructLayout &layout,
                                                 const uint8_t                   *source)
 {
-    const char *encoding = structEncoding(layout.name);
+    const char *encoding = nativeStructEncoding(layout.name);
     if (!encoding)
     {
         return std::nullopt;

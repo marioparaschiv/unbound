@@ -322,6 +322,20 @@ std::vector<MenuSection> menu(const SettingsStore &settings, const MenuOptions &
             settingsSection(settings, options)};
 }
 
+static bool menuOption(const nlohmann::json &input, const char *key)
+{
+    const auto value = input.find(key);
+    if (value == input.end())
+    {
+        return false;
+    }
+    if (value->is_boolean())
+    {
+        return value->get<bool>();
+    }
+    return value->is_number() && value->get<double>() != 0;
+}
+
 MenuOptions menuOptions(const std::string &json)
 {
     const nlohmann::json input = nlohmann::json::parse(json, nullptr, false);
@@ -329,8 +343,8 @@ MenuOptions menuOptions(const std::string &json)
     {
         return {};
     }
-    return {input.value("openAppFolder", false), input.value("copyAppFolderPath", false),
-            input.value("unboundIcon", false)};
+    return {menuOption(input, "openAppFolder"), menuOption(input, "copyAppFolderPath"),
+            menuOption(input, "unboundIcon")};
 }
 
 static const char *kindName(MenuItemKind kind)
@@ -510,6 +524,14 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
     if (action == "hold-milliseconds")
     {
         return std::to_string(kThreeFingerHoldMilliseconds);
+    }
+    if (action == "menu-step")
+    {
+        return menuStepFor(argument);
+    }
+    if (action == "menu-outcome")
+    {
+        return menuOutcomeFor(argument);
     }
     return "";
 }

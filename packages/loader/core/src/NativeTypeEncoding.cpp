@@ -108,3 +108,32 @@ std::string nativeFFITypeName(const char *encoding)
     }
     return {};
 }
+
+const char *nativeStructEncoding(std::string_view name)
+{
+    if (name == "NSRange")
+    {
+        return "{_NSRange=QQ}";
+    }
+    if (name == "CGPoint")
+    {
+        return "{CGPoint=dd}";
+    }
+    if (name == "CGSize")
+    {
+        return "{CGSize=dd}";
+    }
+    if (name == "CGRect")
+    {
+        return "{CGRect={CGPoint=dd}{CGSize=dd}}";
+    }
+    if (name == "UIEdgeInsets")
+    {
+        return "{UIEdgeInsets=dddd}";
+    }
+    if (name == "CGAffineTransform")
+    {
+        return "{CGAffineTransform=dddddd}";
+    }
+    return nullptr;
+}

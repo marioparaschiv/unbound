@@ -32,10 +32,12 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)preferenceEnabled:(NSString *)action;
 
 + (CGFloat)devOverlayButtonSide;
-+ (CGFloat)devOverlayButtonMargin;
 + (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets;
 + (CGPoint)clampDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds insets:(UIEdgeInsets)insets;
 + (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds;
++ (CGRect)devOverlayButtonFrameForCenter:(CGPoint)center;
++ (CGRect)devOverlayCollapsedFrameForCenter:(CGPoint)center screen:(CGRect)screen;
++ (BOOL)devOverlayVisibleOnVirtualDevice:(BOOL)virtualDevice debugBuild:(BOOL)debugBuild;
 
 + (NSString *)incompatibleHostMessage;
 + (NSString *)developmentBuildBanner;

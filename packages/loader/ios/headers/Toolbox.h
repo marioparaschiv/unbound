@@ -12,7 +12,13 @@
 #import "Updater.h"
 #import "Utilities.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void showToolboxSheet(void);
+#ifdef __cplusplus
+}
+#endif
 
 @interface Toolbox : NSObject
 + (void)showToolboxMenu;
