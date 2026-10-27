@@ -9,6 +9,7 @@ import cn from '~/lib/cn';
 type AuthorBylineProps = ComponentProps<'span'> & {
 	authors: ResolvedAuthor[];
 	linkProfiles?: boolean;
+	prefixed?: boolean;
 };
 
 type AuthorNameProps = {
@@ -44,14 +45,20 @@ function AuthorName({ author, linkProfiles }: AuthorNameProps) {
 // Discord's piles show three avatars, then a "+N" chip.
 const MAX_AVATARS = 3;
 
-/** "by" followed by the authors' avatars in a pile, then their names. */
-function AuthorByline({ authors, linkProfiles = false, className, ...props }: AuthorBylineProps) {
+/** "by" (when prefixed) followed by the authors' avatars in a pile, then their names. */
+function AuthorByline({
+	authors,
+	linkProfiles = false,
+	prefixed = true,
+	className,
+	...props
+}: AuthorBylineProps) {
 	return (
 		<span
 			className={cn('inline-flex items-center gap-1.5 min-w-0 max-w-full', className)}
 			{...props}
 		>
-			by
+			{prefixed ? 'by' : null}
 			<AvatarPile size={16} totalCount={authors.length} aria-hidden>
 				{authors.slice(0, MAX_AVATARS).map((author) => (
 					<UserAvatar

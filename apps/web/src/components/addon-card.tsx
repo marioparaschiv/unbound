@@ -42,7 +42,7 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 						</Link>
 					</Text>
 					<Text as='div' variant='text-xs' color='muted' className='truncate'>
-						<AuthorByline authors={addon.authors} />
+						<AuthorByline authors={addon.authors} prefixed={false} />
 					</Text>
 				</div>
 				<Text variant='text-xs' color='muted' className='self-start mt-1 shrink-0'>
