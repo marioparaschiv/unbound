@@ -4,6 +4,7 @@ export type PlanEnv = Record<string, string | undefined>;
 
 export type PullRequestPlan = {
 	enabled: boolean;
+	stage: boolean;
 	bundleUrl: string;
 	loaderUrl: string;
 	reason: string;
@@ -20,11 +21,9 @@ export type CommentInput = {
 
 const REQUIRED_VARIABLES = ['S3_ENDPOINT', 'S3_REGION', 'S3_PUBLIC_BUCKET', 'CDN_URL'] as const;
 
-const REQUIRED_SECRETS = [
-	'S3_ACCESS_KEY_ID',
-	'S3_SECRET_ACCESS_KEY',
-	'UNBOUND_BUNDLE_SIGNING_KEY',
-] as const;
+const BUCKET_SECRETS = ['S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const;
+
+const DEFAULT_SIGNING_SECRET = 'UNBOUND_BUNDLE_SIGNING_KEY';
 
 const SAFE_URL = /^https:\/\/[A-Za-z0-9.-]+(:[0-9]+)?\/[A-Za-z0-9._~/-]*\/$/;
 
@@ -36,6 +35,7 @@ const SAFE_URL = /^https:\/\/[A-Za-z0-9.-]+(:[0-9]+)?\/[A-Za-z0-9._~/-]*\/$/;
 export function planPullRequestBuilds(env: PlanEnv): PullRequestPlan {
 	const off = (reason: string): PullRequestPlan => ({
 		enabled: false,
+		stage: false,
 		bundleUrl: '',
 		loaderUrl: '',
 		reason,
@@ -46,39 +46,69 @@ export function planPullRequestBuilds(env: PlanEnv): PullRequestPlan {
 		return off('S3 uploads only run for pull requests.');
 	}
 
+	const urls = pullRequestUrls(env.CDN_URL, pullRequest);
+
 	if (env.IS_FORK === 'true') {
-		return off(
-			'S3 uploads are skipped for pull requests from forks: they get no secrets, so their bundles are unsigned and a release loader would reject them. Test fork builds from the artifacts above.',
-		);
+		if (!urls) {
+			return off(
+				'This fork build is not staged for S3 because the CDN_URL variable is not available to it. Test it from the artifacts above.',
+			);
+		}
+
+		return {
+			enabled: false,
+			stage: true,
+			...urls,
+			reason: 'This fork build runs without secrets, so the trusted Pull Request Builds Publish workflow signs its bundles with the pull request key and uploads it once this run succeeds.',
+		};
 	}
 
 	const missing = [
 		...REQUIRED_VARIABLES.filter((name) => !env[name]?.trim()).map(
 			(name) => `variable ${name}`,
 		),
-		...REQUIRED_SECRETS.filter((name) => env[`HAS_${name}`] !== 'true').map(
-			(name) => `secret ${name}`,
-		),
+		...[...BUCKET_SECRETS, env.SIGNING_KEY_SECRET || DEFAULT_SIGNING_SECRET]
+			.filter((name) => env[`HAS_${name}`] !== 'true')
+			.map((name) => `secret ${name}`),
 	];
 
 	if (missing.length) {
 		return off(`S3 uploads are off until these are configured: ${missing.join(', ')}.`);
 	}
 
-	const base = env.CDN_URL!.trim().replace(/\/+$/, '');
-	const bundleUrl = `${base}/unbound/pr/${pullRequest}/`;
-	const loaderUrl = `${base}/loader/pr/${pullRequest}/`;
-
-	if (!SAFE_URL.test(bundleUrl)) {
-		return off(`S3 uploads are off because CDN_URL is not a plain https URL: ${base}`);
+	if (!urls) {
+		return off('S3 uploads are off because CDN_URL is not a plain https URL.');
 	}
 
-	return { enabled: true, bundleUrl, loaderUrl, reason: '' };
+	return { enabled: true, stage: false, ...urls, reason: '' };
+}
+
+/**
+ * @description The bundle and loader base URLs of a pull request, when the CDN URL is usable in a loader build.
+ * @param cdnUrl The public base URL of the bucket.
+ * @param pullRequest The pull request number.
+ * @returns Both base URLs, or `undefined` when the CDN URL is missing or not a plain https URL.
+ */
+export function pullRequestUrls(
+	cdnUrl: string | undefined,
+	pullRequest: string,
+): Pick<PullRequestPlan, 'bundleUrl' | 'loaderUrl'> | undefined {
+	const base = cdnUrl?.trim().replace(/\/+$/, '');
+
+	if (!base || !/^[1-9][0-9]*$/.test(pullRequest)) {
+		return;
+	}
+
+	const bundleUrl = `${base}/unbound/pr/${pullRequest}/`;
+
+	return SAFE_URL.test(bundleUrl)
+		? { bundleUrl, loaderUrl: `${base}/loader/pr/${pullRequest}/` }
+		: void 0;
 }
 
 /**
  * @description Decides whether a closed pull request's builds can be deleted from the bucket.
- * @param env The pull request number, whether it comes from a fork, the bucket variables, and which secrets are set.
+ * @param env The pull request number, the bucket variables, and which secrets are set.
  * @returns An empty string when the cleanup runs, otherwise why it is skipped.
  */
 export function cleanupSkipReason(env: PlanEnv): string {
@@ -86,17 +116,13 @@ export function cleanupSkipReason(env: PlanEnv): string {
 		return 'Cleanup only runs for pull requests.';
 	}
 
-	if (env.IS_FORK === 'true') {
-		return 'Pull requests from forks upload nothing to S3, so there is nothing to delete.';
-	}
-
 	const missing = [
 		...REQUIRED_VARIABLES.filter((name) => name !== 'CDN_URL' && !env[name]?.trim()).map(
 			(name) => `variable ${name}`,
 		),
-		...REQUIRED_SECRETS.filter(
-			(name) => name !== 'UNBOUND_BUNDLE_SIGNING_KEY' && env[`HAS_${name}`] !== 'true',
-		).map((name) => `secret ${name}`),
+		...BUCKET_SECRETS.filter((name) => env[`HAS_${name}`] !== 'true').map(
+			(name) => `secret ${name}`,
+		),
 	];
 
 	return missing.length
@@ -160,6 +186,7 @@ if (import.meta.main) {
 
 		writeOutputs(process.env.GITHUB_OUTPUT, {
 			enabled: String(plan.enabled),
+			stage: String(plan.stage),
 			bundle_url: plan.bundleUrl,
 			loader_url: plan.loaderUrl,
 			reason: plan.reason,

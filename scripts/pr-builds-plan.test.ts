@@ -26,18 +26,28 @@ describe('planPullRequestBuilds', () => {
 	test('uploads a same-repository pull request under stable per-PR paths', () => {
 		expect(planPullRequestBuilds(configured)).toEqual({
 			enabled: true,
+			stage: false,
 			bundleUrl: 'https://cdn.example.test/unbound/pr/42/',
 			loaderUrl: 'https://cdn.example.test/loader/pr/42/',
 			reason: '',
 		});
 	});
 
-	test('skips forks, which get no secrets to sign with', () => {
-		const plan = planPullRequestBuilds({ ...configured, IS_FORK: 'true' });
+	test('stages forks for the trusted publisher instead of uploading them', () => {
+		const plan = planPullRequestBuilds({
+			PR_NUMBER: '42',
+			IS_FORK: 'true',
+			CDN_URL: 'https://cdn.example.test',
+		});
 
-		expect(plan.enabled).toBe(false);
-		expect(plan.bundleUrl).toBe('');
-		expect(plan.reason).toContain('forks');
+		expect(plan).toEqual({
+			enabled: false,
+			stage: true,
+			bundleUrl: 'https://cdn.example.test/unbound/pr/42/',
+			loaderUrl: 'https://cdn.example.test/loader/pr/42/',
+			reason: expect.stringContaining('pull request key'),
+		});
+		expect(planPullRequestBuilds({ PR_NUMBER: '42', IS_FORK: 'true' }).stage).toBe(false);
 	});
 
 	test('names everything that still has to be configured', () => {
@@ -52,6 +62,22 @@ describe('planPullRequestBuilds', () => {
 		expect(plan.reason).toBe(
 			'S3 uploads are off until these are configured: variable S3_ENDPOINT, variable S3_REGION, variable S3_PUBLIC_BUCKET, variable CDN_URL, secret S3_ACCESS_KEY_ID, secret S3_SECRET_ACCESS_KEY, secret UNBOUND_BUNDLE_SIGNING_KEY.',
 		);
+	});
+
+	test('names the signing secret the caller signs with', () => {
+		const plan = planPullRequestBuilds({
+			...configured,
+			SIGNING_KEY_SECRET: 'UNBOUND_PR_BUNDLE_SIGNING_KEY',
+		});
+
+		expect(plan.reason).toContain('secret UNBOUND_PR_BUNDLE_SIGNING_KEY');
+		expect(
+			planPullRequestBuilds({
+				...configured,
+				SIGNING_KEY_SECRET: 'UNBOUND_PR_BUNDLE_SIGNING_KEY',
+				HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: 'true',
+			}).enabled,
+		).toBe(true);
 	});
 
 	test('needs the signing key, since keyed loaders reject unsigned bundles', () => {
@@ -91,7 +117,7 @@ describe('cleanupSkipReason', () => {
 		expect(cleanupSkipReason({ ...configured, S3_REGION: '' })).toBe(
 			'S3 cleanup is off until these are configured: variable S3_REGION.',
 		);
-		expect(cleanupSkipReason({ ...configured, IS_FORK: 'true' })).toContain('forks');
+		expect(cleanupSkipReason({ ...configured, IS_FORK: 'true' })).toBe('');
 	});
 });
 
