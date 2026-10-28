@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "cfd2ab82-fc40-4698-82c3-f8a8a1b8a5f8",
+  "prevIds": [
+    "754c95a9-98e1-4048-a3b1-cc9925894c42"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "team_member",
+        "position"
+      ],
+      "writes": [
+        "s|col|public.team_member.position",
+        "n|col|public.team_member.position",
+        "e|col|public.team_member.position"
+      ],
+      "reads": [
+        "n|tbl|public.team_member",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "team_member",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

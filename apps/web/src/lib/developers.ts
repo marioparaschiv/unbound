@@ -3,9 +3,9 @@ import { z } from 'zod';
 
 import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';
 import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
-import { compareGroups, TEAM_GROUPS, type TeamGroup } from '~/lib/team/roles';
+import { compareGroups, TEAM_GROUPS, type StaffRole, type TeamGroup } from '~/lib/team/roles';
 import type { DiscordId } from '~/lib/authors/discord-users';
-import { readTeamGroups } from '~/lib/team/snapshot';
+import { readTeamMembers, type TeamMemberRow } from '~/lib/team/snapshot';
 import { listListedAddons } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
@@ -27,7 +27,7 @@ export type Developer = {
 };
 
 export type DevelopersPage = {
-	/** Sorted by group order, then name (localeCompare 'en', sensitivity base), then discordId. Stable across pages. */
+	/** Sorted by group, then staff role (admin before moderator), then manual position, then name, then discordId. Stable across pages. */
 	developers: Developer[];
 	/** `null` on the last page. */
 	nextCursor: string | null;
@@ -39,16 +39,45 @@ export type DeveloperProfile = {
 	group: TeamGroup;
 };
 
+/** Where a person sits within their group: their staff role's rank, then their manual position. */
+type Order = { staff: number; position: number };
+
 type Person = DeveloperProfile & {
 	aliases: Set<string>;
+	order: Order;
 };
 
-type SortKey = [group: TeamGroup, name: string, discordId: DiscordId];
+type SortKey = [
+	group: TeamGroup,
+	staff: number,
+	position: number,
+	name: string,
+	discordId: DiscordId,
+];
 
-const CURSOR = z.tuple([z.enum(TEAM_GROUPS), z.string(), addonAuthorSchema.shape.id]);
+const CURSOR = z.tuple([
+	z.enum(TEAM_GROUPS),
+	z.number().int(),
+	z.number().int(),
+	z.string(),
+	addonAuthorSchema.shape.id,
+]);
+
+const STAFF_RANK: Record<StaffRole, number> = { admin: 0, moderator: 1 };
+// Below every staff role, so the rest of a group sorts after the staff.
+const UNSTAFFED_RANK = 2;
+// Sorts a person with no manual position after everyone who has one.
+const UNPOSITIONED = 2_147_483_647;
+
+function orderOf(member: TeamMemberRow | undefined): Order {
+	return {
+		staff: member?.staffRole ? STAFF_RANK[member.staffRole] : UNSTAFFED_RANK,
+		position: member?.position ?? UNPOSITIONED,
+	};
+}
 
 async function loadPeople(ctx: AppContext): Promise<Map<DiscordId, Person>> {
-	const [listed, team] = await Promise.all([listListedAddons(ctx), readTeamGroups(ctx)]);
+	const [listed, team] = await Promise.all([listListedAddons(ctx), readTeamMembers(ctx)]);
 	// A team member's own entry, for those no listed addon credits; the id doubles as the fallback name.
 	const teamAuthors = [...team.keys()].map((id) => ({ name: id, id }));
 	const resolve = await loadAuthors(ctx, [
@@ -65,7 +94,8 @@ async function loadPeople(ctx: AppContext): Promise<Map<DiscordId, Person>> {
 				author,
 				aliases: new Set(),
 				addons: [],
-				group: team.get(author.discordId) ?? 'addon-developer',
+				group: team.get(author.discordId)?.group ?? 'addon-developer',
+				order: orderOf(team.get(author.discordId)),
 			};
 
 			person.addons.push(card);
@@ -78,10 +108,16 @@ async function loadPeople(ctx: AppContext): Promise<Map<DiscordId, Person>> {
 	}
 
 	for (const author of resolve(teamAuthors).filter(isIdentified)) {
-		const group = team.get(author.discordId);
+		const member = team.get(author.discordId);
 
-		if (group && !people.has(author.discordId)) {
-			people.set(author.discordId, { author, aliases: new Set(), addons: [], group });
+		if (member && !people.has(author.discordId)) {
+			people.set(author.discordId, {
+				author,
+				aliases: new Set(),
+				addons: [],
+				group: member.group,
+				order: orderOf(member),
+			});
 		}
 	}
 
@@ -97,12 +133,23 @@ function matches(person: Person, search: string): boolean {
 }
 
 function sortKey(person: Person): SortKey {
-	return [person.group, person.author.name, person.author.discordId];
+	return [
+		person.group,
+		person.order.staff,
+		person.order.position,
+		person.author.name,
+		person.author.discordId,
+	];
 }
 
-function compareKeys([groupA, nameA, idA]: SortKey, [groupB, nameB, idB]: SortKey): number {
+function compareKeys(
+	[groupA, staffA, positionA, nameA, idA]: SortKey,
+	[groupB, staffB, positionB, nameB, idB]: SortKey,
+): number {
 	return (
 		compareGroups(groupA, groupB) ||
+		staffA - staffB ||
+		positionA - positionB ||
 		nameA.localeCompare(nameB, 'en', { sensitivity: 'base' }) ||
 		idA.localeCompare(idB)
 	);
@@ -125,7 +172,7 @@ function decodeCursor(cursor: string): SortKey {
  * the other Discord ids credited by the newest version of a listed addon.
  * @param ctx The application context.
  * @param query The name filter and the cursor to page from.
- * @returns The page, in group then name order, and the cursor of the next one.
+ * @returns The page, in group, staff role, position then name order, and the cursor of the next one.
  */
 export async function listDevelopers(
 	ctx: AppContext,

@@ -1,6 +1,6 @@
 import { notInArray, sql } from 'drizzle-orm';
 
-import type { DiscordTeamGroup, TeamStanding } from '~/lib/team/roles';
+import type { DiscordTeamGroup, StaffRole, TeamStanding } from '~/lib/team/roles';
 import type { DiscordId } from '~/lib/authors/discord-users';
 import type { GuildMember } from '~/lib/team/guild-members';
 import { discordProfile, teamMember } from '~/db/schema';
@@ -12,17 +12,29 @@ export type TeamEntry = {
 	standing: TeamStanding;
 };
 
+/** A team member as the snapshot stores them, without their id. */
+export type TeamMemberRow = {
+	group: DiscordTeamGroup;
+	staffRole: StaffRole | null;
+	position: number | null;
+};
+
 /**
- * @description Reads the team group of everyone in the last team snapshot.
+ * @description Reads everyone in the last team snapshot.
  * @param ctx The application context.
- * @returns Each member's group by Discord id.
+ * @returns Each member by Discord id.
  */
-export async function readTeamGroups(ctx: AppContext): Promise<Map<DiscordId, DiscordTeamGroup>> {
+export async function readTeamMembers(ctx: AppContext): Promise<Map<DiscordId, TeamMemberRow>> {
 	const rows = await ctx.db
-		.select({ discordId: teamMember.discordId, group: teamMember.group })
+		.select({
+			discordId: teamMember.discordId,
+			group: teamMember.group,
+			staffRole: teamMember.staffRole,
+			position: teamMember.position,
+		})
 		.from(teamMember);
 
-	return new Map(rows.map((row) => [row.discordId, row.group]));
+	return new Map(rows.map(({ discordId, ...row }) => [discordId, row]));
 }
 
 /**
@@ -85,4 +97,4 @@ export async function writeTeamSnapshot(ctx: AppContext, team: TeamEntry[]): Pro
 	});
 }
 
-export default { readTeamGroups, writeTeamSnapshot };
+export default { readTeamMembers, writeTeamSnapshot };
