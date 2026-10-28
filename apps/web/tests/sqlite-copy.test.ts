@@ -32,9 +32,9 @@ import {
 	REPOSITORY_ID,
 } from './helpers/sqlite-source';
 import { copySqlite, TargetNotEmptyError, VerificationError } from '../scripts/copy-sqlite/copy';
+import { codecs, postgresDoubleText } from '../scripts/copy-sqlite/codecs';
 import { tables } from '../scripts/copy-sqlite/registry';
 import { createTestDatabase } from './helpers/database';
-import { codecs } from '../scripts/copy-sqlite/codecs';
 
 type Snapshot = Record<string, string>;
 
@@ -225,6 +225,37 @@ describe('copySqlite', () => {
 		expect(error.message).toBe(
 			'Source tables the Postgres schema does not know: bot_feed_cursor.',
 		);
+	});
+
+	test('formats doubles exactly as Postgres prints them', async () => {
+		const { db } = await setup();
+		const values = [
+			0,
+			-0,
+			1,
+			-1,
+			0.1,
+			0.30000000000000004,
+			1.5,
+			12.25,
+			1e-4,
+			9.9e-5,
+			1e-7,
+			123456789012345,
+			1e15,
+			1e16,
+			1.7976931348623157e308,
+			5e-324,
+			-2.5e-10,
+			Number.NaN,
+			Infinity,
+			-Infinity,
+		];
+		const inputs = values.map((value) => (Object.is(value, -0) ? '-0' : String(value)));
+		const rows = await db.$client<{ text: string }[]>`
+			select value::float8::text as text from unnest(${inputs}::text[]) with ordinality as input(value, position) order by position`;
+
+		expect(rows.map((row) => row.text)).toEqual(values.map(postgresDoubleText));
 	});
 
 	test('copies timestamps from year 1 to year 9999 and names the row of one past them', async () => {
