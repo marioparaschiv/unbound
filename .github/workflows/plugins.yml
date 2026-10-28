@@ -39,6 +39,11 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ github.token }}
               run: |
+                  latest="https://github.com/$GITHUB_REPOSITORY/releases/download/loader-latest/Unbound.ipa"
+                  if curl --fail --location --silent --show-error --retry 3 --retry-all-errors "$latest" -o "$RUNNER_TEMP/Unbound.ipa"; then
+                    printf 'available=true\n' >> "$GITHUB_OUTPUT"
+                    exit 0
+                  fi
                   ipa_url=""
                   for repository in "$GITHUB_REPOSITORY" unbound-app/loader-ios; do
                     releases="$(curl --fail --silent --show-error --retry 3 \

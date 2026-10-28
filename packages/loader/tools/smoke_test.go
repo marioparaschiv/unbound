@@ -334,3 +334,28 @@ func TestParseSmokeEvalOutputMarksTimeoutsAsRetryable(t *testing.T) {
 		t.Fatalf("an evaluation that threw must fail at once, got %v", err)
 	}
 }
+
+func TestRetrySmokeCommandRetriesUntilSuccess(t *testing.T) {
+	calls := 0
+	output, err := retrySmokeCommand(3, func() (string, error) {
+		calls++
+		if calls < 3 {
+			return "", errors.New("signal: killed")
+		}
+		return "listed", nil
+	})
+	if err != nil || output != "listed" || calls != 3 {
+		t.Fatalf("got %q, %v after %d calls", output, err, calls)
+	}
+}
+
+func TestRetrySmokeCommandReturnsTheLastError(t *testing.T) {
+	calls := 0
+	_, err := retrySmokeCommand(2, func() (string, error) {
+		calls++
+		return "", errors.New("signal: killed")
+	})
+	if err == nil || calls != 2 {
+		t.Fatalf("got %v after %d calls", err, calls)
+	}
+}

@@ -335,11 +335,10 @@ jobs:
                   path: packages/loader/module
 
             - name: Download LSPatch
-              env:
-                  GH_TOKEN: ${{ github.token }}
               run: |
                   set -euo pipefail
-                  gh release download "$LSPATCH_VERSION" -R JingMatrix/LSPatch -p "$LSPATCH_JAR"
+                  curl --fail --location --silent --show-error --retry 5 --retry-all-errors \
+                    "https://github.com/JingMatrix/LSPatch/releases/download/$LSPATCH_VERSION/$LSPATCH_JAR" -o "$LSPATCH_JAR"
                   echo "$LSPATCH_SHA256  $LSPATCH_JAR" | sha256sum -c -
 
             - name: Download Discord

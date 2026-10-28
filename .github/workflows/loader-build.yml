@@ -135,7 +135,7 @@ on:
 permissions: {}
 
 concurrency:
-    group: ${{ inputs.release == true && 'loader-release' || format('build-{0}-{1}', github.workflow, github.ref) }}
+    group: ${{ inputs.release == true && 'loader-release' || format('build-{0}-{1}-{2}', github.workflow, github.ref, github.event_name) }}
     cancel-in-progress: false
 
 defaults:
