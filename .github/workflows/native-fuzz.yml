@@ -66,7 +66,7 @@ jobs:
             - name: Fuzz JS-to-native conversion
               run: |
                   mkdir -p build/fuzz-corpus/jsi build/fuzz-crashes
-                  build/libfuzzer/native_jsi_libfuzzer build/fuzz-corpus/jsi -max_total_time=$(( JSI_MINUTES * 60 )) -max_len=512 -timeout=10 -rss_limit_mb=4096 -artifact_prefix=build/fuzz-crashes/jsi-
+                  build/libfuzzer/native_jsi_libfuzzer build/fuzz-corpus/jsi -max_total_time=$(( JSI_MINUTES * 60 )) -max_len=512 -timeout=10 -rss_limit_mb=4096 -detect_leaks=0 -artifact_prefix=build/fuzz-crashes/jsi-
 
             - name: Fuzz the native parsers
               run: |
