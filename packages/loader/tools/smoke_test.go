@@ -323,3 +323,14 @@ func TestSmokeLogWatcherForgetsAFirstLaunchCrash(t *testing.T) {
 		t.Fatalf("a relaunch must be reported, got:\n%s", report)
 	}
 }
+
+func TestParseSmokeEvalOutputMarksTimeoutsAsRetryable(t *testing.T) {
+	_, err := parseSmokeEvalOutput([]byte(`{"type":"eval-result","id":"1","ok":false,"error":"Evaluation timed out after 30000ms."}`+"\n"), nil)
+	if !errors.Is(err, errSmokeEvalTimedOut) {
+		t.Fatalf("a timed-out evaluation must be retryable, got %v", err)
+	}
+	_, err = parseSmokeEvalOutput([]byte(`{"type":"eval-result","id":"1","ok":false,"error":"ReferenceError: unbound is not defined"}`+"\n"), nil)
+	if err == nil || errors.Is(err, errSmokeEvalTimedOut) || !strings.Contains(err.Error(), "threw on the device") {
+		t.Fatalf("an evaluation that threw must fail at once, got %v", err)
+	}
+}
