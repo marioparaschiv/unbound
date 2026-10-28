@@ -43,7 +43,7 @@ function FaqAnswer({ children, className }: FaqAnswerProps) {
 
 function FaqPage() {
 	return (
-		<div className='flex flex-col flex-1 gap-4 md:mx-auto mb-12 px-4 w-full container'>
+		<div className='flex flex-col flex-1 gap-4 mb-12 page-frame'>
 			<div className='flex flex-col gap-2'>
 				<Text variant='heading-lg'>Frequently Asked Questions</Text>
 				<Text variant='text-md' color='muted'>

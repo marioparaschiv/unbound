@@ -21,7 +21,7 @@ type ProseChildrenProps = {
 /** A long-form page (terms, privacy, license): a title block, then sections, then a footnote. */
 function ProsePage({ title, description, footer, children }: ProsePageProps) {
 	return (
-		<div className='flex flex-col flex-1 gap-4 md:mx-auto mb-12 px-2 container'>
+		<div className='flex flex-col flex-1 gap-4 mb-12 page-frame'>
 			<div className='flex flex-col gap-2'>
 				<Text variant='heading-lg'>{title}</Text>
 				<Text variant='text-md' color='muted'>

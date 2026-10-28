@@ -16,7 +16,7 @@ function DashboardPage() {
 	const { addons, timeline, githubLinked } = Route.useLoaderData();
 
 	return (
-		<div className='flex flex-col gap-6 md:mx-auto mb-12 px-2 container'>
+		<div className='flex flex-col gap-6 mb-12 page-frame'>
 			<div className='flex flex-wrap justify-between items-end gap-4'>
 				<div className='flex flex-col gap-2'>
 					<Text variant='heading-lg'>Your Addons</Text>

@@ -36,7 +36,11 @@ const ROUTES: NavRoute[] = [
 	{ path: '/faq', title: 'FAQ', icon: IconBookmark },
 ];
 
-const INDICATOR_TRANSITION = { duration: 0.3, ease: 'easeInOut' } as const;
+const INDICATOR_TRANSITION = { type: 'spring', stiffness: 500, damping: 38 } as const;
+
+// One raised pill marks the hovered or current page, in the desktop bar and the mobile drawer.
+const NAV_SURFACE = 'bg-accent [--ledge:var(--ledge-secondary)] press';
+const NAV_PILL = cn('absolute inset-0 rounded-control pointer-events-none', NAV_SURFACE);
 
 function Header() {
 	const pathname = useLocation({ select: (location) => location.pathname });
@@ -48,29 +52,29 @@ function Header() {
 
 	return (
 		<header className='flex flex-col items-center'>
-			<div
-				id='header'
-				className='z-20 sticky flex justify-center items-center mx-auto my-6 px-2 md:px-0 h-18 pointer-events-none container'
-			>
-				<div className='flex flex-col bg-background bg-linear-to-b to-accent/40 shadow-lg backdrop-blur-md px-5 border rounded-3xl w-full text-foreground pointer-events-auto'>
-					<div className='flex flex-1 items-center gap-4'>
-						<Link to='/'>
-							<Logo className='size-16 text-foreground hover:scale-110 transition-all duration-300 cursor-pointer' />
+			<div id='header' className='z-20 sticky my-6 pointer-events-none page-frame'>
+				<div className='bg-card/80 shadow-surface backdrop-blur-md p-2 pl-3 border rounded-surface w-full text-foreground pointer-events-auto'>
+					<div className='flex items-center gap-3 h-10'>
+						<Link
+							to='/'
+							className='flex items-center rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo press-flat'
+						>
+							<Logo className='size-14 text-foreground' />
 						</Link>
 
-						<Separator orientation='vertical' className='hidden sm:flex h-5!' />
+						<Separator orientation='vertical' className='hidden md:flex h-5!' />
 
 						<div className='relative flex-1'>
 							<nav
-								className='hidden md:flex gap-2'
+								className='hidden md:flex gap-1'
 								onMouseLeave={() => setHovered(null)}
 							>
 								{ROUTES.map((route) => (
 									<Link
 										key={route.path}
 										className={cn(
-											'relative px-4 py-2 rounded-lg font-semibold text-muted-foreground hover:text-foreground text-base tracking-tight transition-colors duration-150 cursor-pointer',
-											route.path === pathname && 'text-foreground bg-accent',
+											'inline-flex relative items-center px-4 rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo h-10 font-semibold text-muted-foreground hover:text-foreground text-base tracking-tight transition-colors cursor-pointer press-flat',
+											route.path === pathname && 'text-foreground',
 										)}
 										onMouseEnter={() => setHovered(route.path)}
 										to={route.path}
@@ -79,7 +83,7 @@ function Header() {
 											<motion.span
 												layoutId='header-highlight'
 												transition={INDICATOR_TRANSITION}
-												className='absolute inset-0 bg-accent/50 rounded-lg pointer-events-none'
+												className={NAV_PILL}
 											/>
 										) : null}
 										<span className='relative'>{route.title}</span>
@@ -107,9 +111,13 @@ function Header() {
 											<DrawerClose key={route.path} asChild>
 												<Link
 													className={cn(
-														'flex items-center gap-4 px-4 py-3 rounded-xl text-muted-foreground text-base transition-colors',
-														pathname === route.path &&
-															'bg-accent text-foreground font-semibold',
+														'flex items-center gap-4 px-4 rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo h-12 text-muted-foreground text-base',
+														pathname === route.path
+															? cn(
+																	NAV_SURFACE,
+																	'text-foreground font-semibold',
+																)
+															: 'press-flat',
 													)}
 													to={route.path}
 												>

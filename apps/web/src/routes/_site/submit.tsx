@@ -17,7 +17,7 @@ function SubmitAddonPage() {
 	}
 
 	return (
-		<div className='flex flex-col gap-6 md:mx-auto mb-12 px-2 container'>
+		<div className='flex flex-col gap-6 mb-12 page-frame'>
 			<div className='flex flex-col gap-2'>
 				<Text variant='heading-lg'>Submit Addon</Text>
 				<Text variant='text-md' color='muted'>

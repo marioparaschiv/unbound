@@ -140,7 +140,7 @@ function DevelopersContent() {
 
 function DevelopersPage() {
 	return (
-		<div className='flex flex-col flex-1 gap-4 md:mx-auto px-4 w-full container'>
+		<div className='flex flex-col flex-1 gap-4 page-frame'>
 			<div className='flex flex-col gap-2'>
 				<Text variant='heading-lg'>Developers</Text>
 				<Text variant='text-md' color='muted'>
