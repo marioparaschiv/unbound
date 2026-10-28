@@ -52,20 +52,20 @@ const controllerListeners = new Set<(connected: boolean, count: number) => void>
 const PLUGIN_PUSH_TIMEOUT_MS = 60_000;
 
 /**
- * @description Registers the connected device, rejecting a second one so eval routing stays
- * unambiguous.
+ * @description Registers the connected device, replacing any earlier one so a relaunched or
+ * reconnecting app always takes over from a socket that died without closing.
  * @param socket The device's socket.
- * @returns Whether the device was accepted (false if one is already connected).
  */
-export function attachDevice(socket: SocketLike): boolean {
-	if (state.device) {
-		return false;
+export function attachDevice(socket: SocketLike) {
+	const previous = state.device;
+
+	if (previous) {
+		detachDevice(previous);
+		previous.close();
 	}
 
 	state.device = socket;
 	broadcastDeviceStatus(true);
-
-	return true;
 }
 
 /**

@@ -71,13 +71,6 @@ export function setupWebSocket() {
 				return;
 			}
 
-			// The device is single: a second one would make eval routing ambiguous.
-			if (session.state.device) {
-				return new Response(JSON.stringify({ error: 'A device is already connected.' }), {
-					status: 503,
-				});
-			}
-
 			server.upgrade(request, { data: { role: 'device' } });
 		},
 		websocket: {
@@ -105,7 +98,9 @@ export function setupWebSocket() {
 					return;
 				}
 
-				handleDeviceMessage(message);
+				if (ws === session.state.device) {
+					handleDeviceMessage(message);
+				}
 			},
 			close(ws) {
 				if (ws.data.role === 'controller') {
@@ -175,7 +170,10 @@ function handleDeviceMessage(raw: string) {
 	const message = parseMessage(raw);
 
 	if (!message) {
-		system('red', 'Parsing failed on message from device');
+		system(
+			'red',
+			`Parsing failed on message from device: ${JSON.stringify(raw.slice(0, 200))}`,
+		);
 
 		return;
 	}

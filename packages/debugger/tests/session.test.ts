@@ -81,3 +81,31 @@ describe('evaluateForController', () => {
 		]);
 	});
 });
+
+describe('attachDevice', () => {
+	test('lets a reconnecting device replace one that never closed', async () => {
+		let closed = false;
+		const stale = { ...recordingSocket(), close: () => void (closed = true) };
+
+		attachDevice(stale);
+		attachController(controller);
+		evaluateForController(controller, { type: 'eval', id: 'stuck', code: 'x', timeout: 1_000 });
+
+		attachDevice(device);
+		evaluateForController(controller, { type: 'eval', id: 'fresh', code: 'y', timeout: 200 });
+		handleDeviceMessage({ type: 'eval-result', id: 'fresh', ok: true, value: '1' });
+		await Bun.sleep(10);
+
+		expect(closed).toBe(true);
+		expect(device.frames).toEqual([{ type: 'eval', id: 'fresh', code: 'y' }]);
+		expect(evalResults(controller)).toEqual([
+			{
+				type: 'eval-result',
+				id: 'stuck',
+				ok: false,
+				error: 'Device disconnected before the evaluation completed.',
+			},
+			{ type: 'eval-result', id: 'fresh', ok: true, value: '1' },
+		]);
+	});
+});

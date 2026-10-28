@@ -11,14 +11,27 @@ func (watcher *smokeLogWatcher) markLaunch() {
 	watcher.mu.Lock()
 	defer watcher.mu.Unlock()
 	watcher.launchedAt = watcher.now()
+	watcher.runtimeAt = time.Time{}
 	watcher.startup = smokeStartupTimes{}
+}
+
+func (watcher *smokeLogWatcher) markRuntime() {
+	if watcher.launchedAt.IsZero() || !watcher.runtimeAt.IsZero() {
+		return
+	}
+	watcher.runtimeAt = watcher.now()
+	watcher.startup.runtime = watcher.runtimeAt.Sub(watcher.launchedAt)
 }
 
 func (watcher *smokeLogWatcher) recordMilestone(milestone *time.Duration) {
 	if watcher.launchedAt.IsZero() || *milestone != 0 {
 		return
 	}
-	*milestone = watcher.now().Sub(watcher.launchedAt)
+	start := watcher.launchedAt
+	if !watcher.runtimeAt.IsZero() {
+		start = watcher.runtimeAt
+	}
+	*milestone = watcher.now().Sub(start)
 }
 
 func startupBudgetProblems(times smokeStartupTimes, budget smokeStartupBudget, crashes []string) []string {
@@ -42,7 +55,7 @@ func milestoneProblem(milestone string, took, budget time.Duration) string {
 	case took == 0:
 		return fmt.Sprintf("startup never reached %s, which has a %s budget", milestone, budget)
 	case took > budget:
-		return fmt.Sprintf("startup took %s to reach %s, over its %s budget", roundStartup(took), milestone, budget)
+		return fmt.Sprintf("Unbound took %s to reach %s, over its %s budget", roundStartup(took), milestone, budget)
 	default:
 		return ""
 	}
@@ -50,17 +63,22 @@ func milestoneProblem(milestone string, took, budget time.Duration) string {
 
 func renderStartupTimes(times smokeStartupTimes, budget smokeStartupBudget) string {
 	var report strings.Builder
-	report.WriteString("| Startup milestone | Time from launch | Budget |\n| --- | --- | --- |\n")
-	fmt.Fprintf(&report, "| Unbound's bundle executed | %s | %s |\n", describeStartupTime(times.bundle), describeBudget(budget.bundle))
-	fmt.Fprintf(&report, "| Every plugin loaded | %s | %s |\n\n", describeStartupTime(times.plugins), describeBudget(budget.plugins))
+	origin := "launch"
+	if times.runtime != 0 {
+		origin = "Discord's runtime starting"
+	}
+	report.WriteString("| Startup milestone | Time | Budget |\n| --- | --- | --- |\n")
+	fmt.Fprintf(&report, "| Discord's runtime started | %s | none |\n", describeStartupTimeAfter(times.runtime, "launch"))
+	fmt.Fprintf(&report, "| Unbound's bundle executed | %s | %s |\n", describeStartupTimeAfter(times.bundle, origin), describeBudget(budget.bundle))
+	fmt.Fprintf(&report, "| Every plugin loaded | %s | %s |\n\n", describeStartupTimeAfter(times.plugins, origin), describeBudget(budget.plugins))
 	return report.String()
 }
 
-func describeStartupTime(took time.Duration) string {
+func describeStartupTimeAfter(took time.Duration, origin string) string {
 	if took == 0 {
 		return "not reached"
 	}
-	return roundStartup(took).String()
+	return roundStartup(took).String() + " after " + origin
 }
 
 func describeBudget(budget time.Duration) string {

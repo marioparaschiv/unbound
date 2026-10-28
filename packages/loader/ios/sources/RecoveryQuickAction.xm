@@ -16,6 +16,8 @@ static NSString *recoveryShortcutType(void)
     return type;
 }
 
+static NSArray<UIApplicationShortcutItem *> *discordShortcutItems = @[];
+
 static void showRecoveryStatus(NSString *status)
 {
     UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay"
@@ -86,8 +88,7 @@ static void showRecoveryStatus(NSString *status)
 
 + (void)refresh
 {
-    UIApplication *application = [UIApplication sharedApplication];
-    application.shortcutItems  = application.shortcutItems ?: @[];
+    [UIApplication sharedApplication].shortcutItems = discordShortcutItems;
 }
 
 @end
@@ -96,7 +97,8 @@ static void showRecoveryStatus(NSString *status)
 
 - (void)setShortcutItems:(NSArray<UIApplicationShortcutItem *> *)shortcutItems
 {
-    %orig([RecoveryQuickAction itemsWithRecoveryAction:shortcutItems]);
+    discordShortcutItems = [shortcutItems copy] ?: @[];
+    %orig([RecoveryQuickAction itemsWithRecoveryAction:discordShortcutItems]);
 }
 
 %end
