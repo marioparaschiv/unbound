@@ -52,6 +52,7 @@ function SortControls<T extends string>({ options, value, order, onChange }: Sor
 						<Button
 							variant='outline'
 							type='button'
+							className='min-w-23'
 							onClick={() => onChange(value, order === 'asc' ? 'desc' : 'asc')}
 						>
 							{order === 'asc' ? (
@@ -69,7 +70,7 @@ function SortControls<T extends string>({ options, value, order, onChange }: Sor
 			</TooltipProvider>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant='outline' type='button'>
+					<Button variant='outline' type='button' className='min-w-23'>
 						<IconSortArrows size={24} />
 						<span className='hidden sm:inline'>Sort</span>
 					</Button>
