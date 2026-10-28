@@ -1,0 +1,205 @@
+//! Replays `fixtures/session-v8.jsonl`, a session recorded from react-devtools-core 8.0.0 against
+//! `harness/device.mjs`, through the parse → decode → store pipeline.
+
+use std::collections::HashSet;
+
+use serde_json::Value as Json;
+use unbound_devtools_core::inspect::InspectedElement;
+use unbound_devtools_core::protocol::{self, Inbound, InspectedKind};
+use unbound_devtools_core::{ElementId, ElementKind, PathSegment, Store, Value, operations};
+
+fn inbound_frames() -> Vec<Inbound> {
+	include_str!("fixtures/session-v8.jsonl")
+		.lines()
+		.filter(|line| line.contains(r#""dir":"in""#))
+		.map(|line| protocol::parse(line).expect("every recorded frame parses"))
+		.collect()
+}
+
+fn replayed_store() -> Store {
+	let mut store = Store::default();
+
+	for frame in inbound_frames() {
+		if let Inbound::Operations(raw) = frame {
+			let batch = operations::decode(&raw).expect("batch decodes");
+			store.apply(&batch).expect("batch applies");
+		}
+	}
+
+	store
+}
+
+fn outline(store: &Store, collapsed: &HashSet<ElementId>) -> Vec<String> {
+	store
+		.rows(collapsed)
+		.iter()
+		.map(|row| {
+			let element = store.get(row.id).expect("row element exists");
+			let key = element
+				.key
+				.as_deref()
+				.map(|key| format!(" key={key}"))
+				.unwrap_or_default();
+
+			format!(
+				"{}{} {}{key}",
+				"  ".repeat(row.depth as usize),
+				element.name,
+				element.kind.label()
+			)
+		})
+		.collect()
+}
+
+#[test]
+fn replay_builds_the_host_tree_after_the_filter_change() {
+	let store = replayed_store();
+
+	assert_eq!(
+		store.roots().len(),
+		1,
+		"one root after the remount replaced the first"
+	);
+	assert_eq!(
+		outline(&store, &HashSet::new()),
+		[
+			"App function",
+			"  Context.Provider context",
+			"    Counter class",
+			"      Text host",
+			"    Channel function",
+			"      ScrollView host",
+			"        MessageRow memo key=m0",
+			"          View host",
+			"            Text host",
+			"        MessageRow memo key=m1",
+			"          View host",
+			"            Text host",
+			"        MessageRow memo key=m2",
+			"          View host",
+			"            Text host",
+			"    ChatInput forward_ref",
+			"      TextInput host",
+		]
+	);
+
+	let row = store
+		.walk(None)
+		.find(|e| e.key.as_deref() == Some("m1"))
+		.expect("m1 exists");
+	assert_eq!(
+		row.hocs.iter().map(|h| h.as_ref()).collect::<Vec<_>>(),
+		["Memo"]
+	);
+	assert_eq!(
+		store
+			.ancestors(row.id)
+			.map(|e| e.name.to_string())
+			.collect::<Vec<_>>(),
+		["ScrollView", "Channel", "Context.Provider", "App", "Root"]
+	);
+}
+
+#[test]
+fn collapsing_hides_only_the_subtree() {
+	let store = replayed_store();
+	let channel = store
+		.walk(None)
+		.find(|e| &*e.name == "Channel")
+		.expect("Channel exists")
+		.id;
+	let rows = store.rows(&HashSet::from([channel]));
+	let outline = outline(&store, &HashSet::from([channel]));
+
+	assert_eq!(
+		outline[4..],
+		[
+			"    Channel function",
+			"    ChatInput forward_ref",
+			"      TextInput host"
+		]
+	);
+	let channel_row = rows
+		.iter()
+		.find(|row| row.id == channel)
+		.expect("Channel row");
+	assert!(channel_row.has_children && !channel_row.expanded);
+}
+
+fn inspected(response_id: u64) -> (Json, Option<Vec<PathSegment>>, InspectedKind) {
+	inbound_frames()
+		.into_iter()
+		.find_map(|frame| match frame {
+			Inbound::InspectedElement(payload) if payload.response_id == response_id => {
+				Some((payload.value, payload.path, payload.kind))
+			}
+			_ => None,
+		})
+		.expect("response recorded")
+}
+
+fn key(segment: &str) -> PathSegment {
+	PathSegment::Key(segment.to_owned())
+}
+
+#[test]
+fn dehydrated_values_become_typed_placeholders() {
+	let (value, _, kind) = inspected(7);
+	assert_eq!(kind, InspectedKind::FullData);
+	let element = InspectedElement::from_payload(&value).expect("full-data parses");
+
+	assert_eq!(element.key.as_deref(), Some("m2"));
+	assert_eq!(element.kind, ElementKind::Memo);
+	let props = element.props.as_ref().expect("props");
+	assert_eq!(
+		props.get(&[key("message"), key("content")]),
+		Some(&Value::String("hello 2".to_owned()))
+	);
+
+	let Some(Value::Dehydrated(author)) = props.get(&[key("message"), key("author")]) else {
+		panic!("message.author is a placeholder");
+	};
+	assert_eq!(
+		(author.kind.as_str(), author.inspectable, author.size),
+		("object", true, Some(3))
+	);
+
+	let names: Vec<&str> = element
+		.hooks
+		.iter()
+		.map(|hook| hook.name.as_str())
+		.collect();
+	assert_eq!(names, ["State", "Context", "Ref", "Effect"]);
+	assert_eq!(element.hooks[0].id, Some(0));
+	assert!(element.hooks[0].editable);
+	assert!(matches!(&element.hooks[3].value, Value::Dehydrated(meta) if meta.kind == "function"));
+	assert_eq!(
+		element.owners.first().map(|owner| owner.name.as_str()),
+		Some("Channel")
+	);
+}
+
+#[test]
+fn a_hydrated_path_splices_into_the_element() {
+	let (value, _, _) = inspected(7);
+	let mut element = InspectedElement::from_payload(&value).expect("full-data parses");
+	let (hydrated, path, kind) = inspected(12);
+	let path = path.expect("hydrated-path carries its path");
+
+	assert_eq!(kind, InspectedKind::HydratedPath);
+	let author = Value::from_dehydrated_at(&hydrated, &path);
+	element.set_value_at(&path, author);
+
+	let username = element.value_at(&[key("props"), key("author"), key("username")]);
+	assert_eq!(username, Some(Value::String("user2".to_owned())));
+
+	let deep = element.value_at(&[key("props"), key("author"), key("nested"), key("deep")]);
+	let Some(Value::Dehydrated(deep)) = deep else {
+		panic!("nested.deep is still a placeholder one level further down");
+	};
+	assert_eq!(deep.preview_long, "{deeper: Array(3)}");
+
+	let mut props = element.props.clone().expect("props");
+	props.set(&[key("author"), key("nested")], Value::Number(42.0));
+	assert_eq!(props.to_json()["author"]["nested"], Json::from(42));
+}
