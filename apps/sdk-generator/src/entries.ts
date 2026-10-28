@@ -19,8 +19,10 @@ export function resolveSource(specifier: string, fromDir: string): string | unde
 		? join(ALIAS_ROOT, specifier.slice(2))
 		: resolve(fromDir, specifier);
 
-	if (existsSync(`${base}.ts`)) {
-		return `${base}.ts`;
+	for (const extension of ['.ts', '.tsx']) {
+		if (existsSync(`${base}${extension}`)) {
+			return `${base}${extension}`;
+		}
 	}
 
 	if (existsSync(join(base, 'index.ts'))) {

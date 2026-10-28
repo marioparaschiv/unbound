@@ -6,7 +6,7 @@ import { join } from 'node:path';
 
 await import('./helpers/addons');
 
-mock.module('~/api/metro', () => ({
+mock.module('~/api/metro/search', () => ({
 	findByName: () => undefined,
 	findByProps: () => undefined,
 }));

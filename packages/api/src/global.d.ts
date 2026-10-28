@@ -188,6 +188,7 @@ declare global {
 export interface UnboundGlobal {
 	assets: typeof import('./assets.d.ts');
 	commands: typeof import('./commands.d.ts');
+	dialogs: typeof import('./dialogs.d.ts');
 	fs: typeof import('./fs.d.ts');
 	i18n: typeof import('./i18n.d.ts');
 	metro: typeof import('./metro/index.d.ts');

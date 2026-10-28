@@ -2,6 +2,7 @@
 
 export * as assets from './assets';
 export * as commands from './commands';
+export * as dialogs from './dialogs';
 export * as fs from './fs';
 export * as i18n from './i18n';
 export * as metro from './metro/index';

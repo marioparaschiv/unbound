@@ -156,5 +156,6 @@
 	"UNBOUND_DEPENDENCY_UPDATE": "{affected, plural, =0 {• Update {name} to {version}} one {• Update {name} to {version}, which # other plugin also uses} other {• Update {name} to {version}, which # other plugins also use}}",
 	"UNBOUND_DEPENDENCIES_CONFIRM": "Install all",
 	"UNBOUND_DEPENDENCIES_UNAVAILABLE": "The marketplace has no version that fits: {names}. Nothing was installed.",
-	"UNBOUND_DEPENDENCY_FAILED": "Couldn't install {name}, so the plugin wasn't installed."
+	"UNBOUND_DEPENDENCY_FAILED": "Couldn't install {name}, so the plugin wasn't installed.",
+	"UNBOUND_OK": "OK"
 }

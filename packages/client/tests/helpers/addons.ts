@@ -34,6 +34,7 @@ mock.module('~/api/storage', () => {
 });
 
 mock.module('react-native', () => ({
+	Alert: { alert: () => undefined },
 	NativeModules: {},
 	TurboModuleRegistry: { get: () => undefined },
 	Switch: 'Switch',
