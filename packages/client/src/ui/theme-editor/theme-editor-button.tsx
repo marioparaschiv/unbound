@@ -1,7 +1,7 @@
 import { SafeAreaView, View } from 'react-native';
 
-import ThemeEditorStore from '~/stores/theme-editor';
 import { RootNavigation, Screens as NativeScreens } from '~/api/metro/common';
+import ThemeEditorStore from '~/stores/theme-editor';
 import { Discord } from '~/api/metro/components';
 import { Screens } from '~/lib/constants';
 import { Messages } from '~/api/i18n';

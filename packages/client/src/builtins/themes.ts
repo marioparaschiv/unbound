@@ -1,5 +1,5 @@
-import type { Theme } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
+import type { Theme } from '@unbound-app/types';
 import { cloneElement } from 'react';
 
 import { findRootThemeProvider, mapThemeProvider } from '~/lib/root-theme-provider';

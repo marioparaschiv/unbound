@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { cloneElement, isValidElement } from 'react';
 
+import type { AnyProps } from '~/api/metro';
 import { findByFilePath } from '~/api/metro';
 
 /** The props of Discord's root theme provider that Unbound reads or rewrites. */
@@ -17,7 +18,7 @@ type RootThemeModule = {
 
 const ROOT_THEME_PROVIDER_PATH = 'modules/themes/RootThemeContextProvider.native.tsx';
 
-function isRootThemeModule(mdl: Record<PropertyKey, unknown> | undefined): mdl is RootThemeModule {
+function isRootThemeModule(mdl: AnyProps | undefined): mdl is RootThemeModule {
 	return typeof mdl?.RootThemeContextProvider === 'function';
 }
 
