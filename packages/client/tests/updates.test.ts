@@ -290,3 +290,19 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyUpdate', () => {
 		expect(events).toEqual([]);
 	});
 });
+
+describe('listInstalled', () => {
+	beforeEach(resetDevice);
+
+	test('leaves out a development copy until it is installed from the store again', () => {
+		const manager = new FakeAddons();
+
+		seed(manager, 'up.store', true);
+		seed(manager, 'up.pushed', true);
+		manager.markDevelopmentCopy('up.pushed');
+
+		expect(listInstalled(PLUGINS, manager).map((entry) => entry.id)).toEqual(['up.store']);
+		expect(manager.isDevelopmentCopy('up.pushed')).toBe(true);
+		expect(manager.isDevelopmentCopy('up.store')).toBe(false);
+	});
+});

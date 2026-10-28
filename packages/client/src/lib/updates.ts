@@ -16,7 +16,8 @@ import type { Addons } from '~/managers/addons';
 export type UpdatableKind = Exclude<ManagerKind, ManagerKind.Fonts>;
 
 /** The part of an addon manager the updater drives; each manager narrows the entity type. */
-export type UpdatableManager = Pick<Addons<Addon>, 'getEntities' | 'getEntity' | 'update'>;
+export type UpdatableManager = Pick<Addons<Addon>, 'getEntities' | 'getEntity' | 'update'> &
+	Partial<Pick<Addons<Addon>, 'isDevelopmentCopy'>>;
 
 export type UpdateCheckOptions = {
 	/** Origin of the Unbound web API. */
@@ -141,15 +142,18 @@ function digestOf(id: string, bundle: string): string {
  * @returns One entry per installed addon.
  */
 export function listInstalled(kind: UpdatableKind, manager: UpdatableManager): InstalledEntry[] {
-	return manager.getEntities().map((entity) => ({
-		kind,
-		id: entity.id,
-		name: entity.data.name,
-		version: entity.data.version,
-		...(typeof entity.bundle === 'string' && entity.bundle
-			? { sha256: digestOf(entity.id, entity.bundle) }
-			: {}),
-	}));
+	return manager
+		.getEntities()
+		.filter((entity) => !manager.isDevelopmentCopy?.(entity.id))
+		.map((entity) => ({
+			kind,
+			id: entity.id,
+			name: entity.data.name,
+			version: entity.data.version,
+			...(typeof entity.bundle === 'string' && entity.bundle
+				? { sha256: digestOf(entity.id, entity.bundle) }
+				: {}),
+		}));
 }
 
 /**
