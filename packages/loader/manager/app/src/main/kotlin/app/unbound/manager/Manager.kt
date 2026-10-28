@@ -101,7 +101,9 @@ class Manager private constructor(private val context: Context) {
         val checked = views(state, emptyMap()).map { Checked(it.target, it.installed, it.decision, it.record) }
 
         for (action in planCheck(checked, state.settings.autoUpdate, context.packageName)) {
-            store.log(action.target, "Check found ${action.update.latest.tag}: ${action::class.simpleName}")
+            // Not action::class.simpleName: R8 renames the class in release builds.
+            val verb = if (action is CheckAction.Install) "installing" else "notifying"
+            store.log(action.target, "Check found ${action.update.latest.tag}: $verb")
             store.markNotified(action.target, action.update.latest.asset.sha256)
             when (action) {
                 is CheckAction.Install -> start(action.target, action.update.latest)
