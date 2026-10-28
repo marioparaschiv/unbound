@@ -4,8 +4,8 @@
 mod common;
 
 use serde_json::Value as Json;
-use unbound_devtools_core::query::{self, FindQuery, NameMatch};
 use unbound_devtools_core::Devtools;
+use unbound_devtools_core::query::{self, FindQuery, NameMatch};
 
 use common::{session, settle, spawn_device_with, wait_for};
 

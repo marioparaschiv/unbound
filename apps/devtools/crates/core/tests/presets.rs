@@ -28,23 +28,34 @@ fn config_dir() -> &'static std::path::Path {
 
 /// Accepts one controller, reports a device, answers its eval with `url` and hands back the code.
 async fn fake_bridge(url: &str) -> (SocketAddr, oneshot::Receiver<String>) {
-	let listener = TcpListener::bind("127.0.0.1:0").await.expect("bridge binds");
+	let listener = TcpListener::bind("127.0.0.1:0")
+		.await
+		.expect("bridge binds");
 	let addr = listener.local_addr().expect("bridge addr");
 	let (code_tx, code_rx) = oneshot::channel();
 	let url = url.to_owned();
 
 	tokio::spawn(async move {
 		let (stream, _) = listener.accept().await.expect("controller dials");
-		let mut socket = tokio_tungstenite::accept_async(stream).await.expect("handshake");
+		let mut socket = tokio_tungstenite::accept_async(stream)
+			.await
+			.expect("handshake");
 		let status = json!({ "type": "device-status", "connected": true });
-		socket.send(Message::text(status.to_string())).await.expect("status sends");
+		socket
+			.send(Message::text(status.to_string()))
+			.await
+			.expect("status sends");
 
 		let Some(Ok(Message::Text(text))) = socket.next().await else {
 			return;
 		};
 		let request: Json = serde_json::from_str(&text).expect("JSON request");
-		let result = json!({ "type": "eval-result", "id": request["id"], "ok": true, "value": url });
-		socket.send(Message::text(result.to_string())).await.expect("result sends");
+		let result =
+			json!({ "type": "eval-result", "id": request["id"], "ok": true, "value": url });
+		socket
+			.send(Message::text(result.to_string()))
+			.await
+			.expect("result sends");
 		let _ = code_tx.send(request["code"].as_str().unwrap_or_default().to_owned());
 	});
 
@@ -75,14 +86,20 @@ async fn connect_device_to_reaches_the_targets_bridge() {
 		advertise_host: Some("100.64.0.5".to_owned()),
 	};
 
-	let url = devtools.connect_device_to(target).await.expect("the device dials");
+	let url = devtools
+		.connect_device_to(target)
+		.await
+		.expect("the device dials");
 
 	assert_eq!(url, "ws://100.64.0.5:8097");
 	assert_eq!(
 		code.await.expect("eval received"),
 		bridge::connect_script(Some("100.64.0.5"), port)
 	);
-	assert!(matches!(devtools.status().bridge, BridgeState::DeviceConnected));
+	assert!(matches!(
+		devtools.status().bridge,
+		BridgeState::DeviceConnected
+	));
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -93,8 +110,14 @@ async fn connect_device_to_reports_an_unresolvable_host() {
 		advertise_host: None,
 	};
 
-	let failure = devtools.connect_device_to(target).await.expect_err("unresolvable");
-	assert!(failure.to_string().contains("no-such-host.invalid"), "{failure}");
+	let failure = devtools
+		.connect_device_to(target)
+		.await
+		.expect_err("unresolvable");
+	assert!(
+		failure.to_string().contains("no-such-host.invalid"),
+		"{failure}"
+	);
 	assert!(matches!(devtools.status().bridge, BridgeState::Unreachable));
 }
 
@@ -108,14 +131,20 @@ async fn a_saved_preset_connects_and_becomes_the_default() {
 
 	devtools.save_preset(preset.clone()).expect("saved");
 	assert!(devtools.presets_revision() > revision);
-	assert!(devtools.save_preset(preset).is_err(), "a duplicate is rejected");
+	assert!(
+		devtools.save_preset(preset).is_err(),
+		"a duplicate is rejected"
+	);
 
 	let url = devtools
 		.connect_preset(&name.to_uppercase())
 		.await
 		.expect("the device dials");
 	assert_eq!(url, "ws://10.0.0.7:8097");
-	assert_eq!(code.await.expect("eval received"), bridge::connect_script(None, port));
+	assert_eq!(
+		code.await.expect("eval received"),
+		bridge::connect_script(None, port)
+	);
 
 	let file = PresetFile::locate().expect("located");
 	assert!(file.path().starts_with(config_dir()));

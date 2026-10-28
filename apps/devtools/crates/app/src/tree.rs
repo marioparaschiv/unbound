@@ -327,14 +327,7 @@ impl Workspace {
 				cx.listener(|this, _, window, cx| window.focus(&this.tree_focus, cx)),
 			)
 			.child(self.render_tree_header(cx))
-			.child(
-				div()
-					.flex_1()
-					.min_h_0()
-					.flex()
-					.flex_col()
-					.child(list),
-			)
+			.child(div().flex_1().min_h_0().flex().flex_col().child(list))
 			.child(self.render_breadcrumbs(width, window, cx))
 	}
 }

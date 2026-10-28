@@ -582,7 +582,11 @@ impl Element for TextElement {
 		let line = window
 			.text_system()
 			.shape_line(text, font_size, &runs, None);
-		let cursor_x = if input.content.is_empty() { px(0.) } else { line.x_for_index(cursor) };
+		let cursor_x = if input.content.is_empty() {
+			px(0.)
+		} else {
+			line.x_for_index(cursor)
+		};
 		let width = bounds.size.width - px(2.);
 		let mut scroll = input.scroll;
 		if cursor_x - scroll > width {

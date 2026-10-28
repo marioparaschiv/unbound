@@ -9,7 +9,14 @@ use crate::input::TextInput;
 
 actions!(
 	device_menu,
-	[MenuUp, MenuDown, MenuConfirm, MenuDismiss, FormNext, FormPrev]
+	[
+		MenuUp,
+		MenuDown,
+		MenuConfirm,
+		MenuDismiss,
+		FormNext,
+		FormPrev
+	]
 );
 
 pub const MENU_CONTEXT: &str = "DeviceMenu";
@@ -145,7 +152,12 @@ impl Workspace {
 		cx.notify();
 	}
 
-	pub fn activate_menu_item(&mut self, item: MenuItem, window: &mut Window, cx: &mut Context<Self>) {
+	pub fn activate_menu_item(
+		&mut self,
+		item: MenuItem,
+		window: &mut Window,
+		cx: &mut Context<Self>,
+	) {
 		let choice = match item {
 			MenuItem::Preset(name) => DeviceChoice::Preset(name),
 			MenuItem::Default => DeviceChoice::Default,
@@ -192,7 +204,11 @@ impl Workspace {
 	}
 
 	pub fn submit_preset_form(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-		let Some(form) = self.device_menu.as_mut().and_then(|menu| menu.form.as_mut()) else {
+		let Some(form) = self
+			.device_menu
+			.as_mut()
+			.and_then(|menu| menu.form.as_mut())
+		else {
 			return;
 		};
 		let [name, bridge, host] = form.fields().map(|field| field.read(cx).text().to_owned());
@@ -205,7 +221,11 @@ impl Workspace {
 		let name = match saved {
 			Ok(name) => name,
 			Err(error) => {
-				if let Some(form) = self.device_menu.as_mut().and_then(|menu| menu.form.as_mut()) {
+				if let Some(form) = self
+					.device_menu
+					.as_mut()
+					.and_then(|menu| menu.form.as_mut())
+				{
 					form.error = Some(error);
 				}
 				cx.notify();
@@ -286,7 +306,11 @@ impl Workspace {
 	}
 
 	fn cycle_field(&mut self, step: usize, window: &mut Window, cx: &mut Context<Self>) {
-		let Some(form) = self.device_menu.as_ref().and_then(|menu| menu.form.as_ref()) else {
+		let Some(form) = self
+			.device_menu
+			.as_ref()
+			.and_then(|menu| menu.form.as_ref())
+		else {
 			return;
 		};
 		let fields = form.fields();

@@ -129,8 +129,10 @@ pub async fn find_by_props(
 		.filter_map(|(_, inspection)| inspection.as_ref().ok())
 		.map(crate::InspectedElement::to_json)
 		.collect();
-	let mut verdicts = run_jq_deep(predicate, inputs, |outputs| outputs.map(|outputs| truthy(&outputs)))?
-		.into_iter();
+	let mut verdicts = run_jq_deep(predicate, inputs, |outputs| {
+		outputs.map(|outputs| truthy(&outputs))
+	})?
+	.into_iter();
 	let limit = query.limit.unwrap_or(usize::MAX);
 
 	for (id, inspection) in inspections {

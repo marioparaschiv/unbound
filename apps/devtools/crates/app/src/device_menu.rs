@@ -18,10 +18,7 @@ const ROW_HEIGHT: f32 = 32.;
 const TWO_LINE_ROW_HEIGHT: f32 = 40.;
 
 fn divider() -> Div {
-	div()
-		.my(px(4.))
-		.h(px(1.))
-		.bg(theme::color(theme::BORDER))
+	div().my(px(4.)).h(px(1.)).bg(theme::color(theme::BORDER))
 }
 
 /// A menu line: highlighted by the keyboard or the pointer, the same way.
@@ -120,7 +117,9 @@ impl Workspace {
 			.hover(|part| part.bg(theme::color(theme::HOVER)))
 			.child(icon(assets::PLUG, theme::ICON, theme::TEXT_SECONDARY))
 			.child(label)
-			.tooltip(tooltip("Ask the device to connect over the debugger bridge"))
+			.tooltip(tooltip(
+				"Ask the device to connect over the debugger bridge",
+			))
 			.on_click(cx.listener(|this, _, _, cx| {
 				let choice = this.default_choice();
 				this.connect(choice, cx);
@@ -137,7 +136,11 @@ impl Workspace {
 			.cursor_pointer()
 			.when(open, |part| part.bg(theme::color(theme::HOVER)))
 			.hover(|part| part.bg(theme::color(theme::HOVER)))
-			.child(icon(assets::CHEVRON_DOWN, theme::CHEVRON, theme::TEXT_SECONDARY))
+			.child(icon(
+				assets::CHEVRON_DOWN,
+				theme::CHEVRON,
+				theme::TEXT_SECONDARY,
+			))
 			.on_click(cx.listener(|this, _, window, cx| this.toggle_device_menu(window, cx)));
 		div()
 			.relative()
@@ -169,7 +172,11 @@ impl Workspace {
 	}
 
 	/// A transparent layer under the open menu: a click anywhere else closes it, chevron included.
-	pub fn render_menu_backdrop(&self, window: &Window, cx: &mut Context<Self>) -> Option<AnyElement> {
+	pub fn render_menu_backdrop(
+		&self,
+		window: &Window,
+		cx: &mut Context<Self>,
+	) -> Option<AnyElement> {
 		self.device_menu.as_ref()?;
 		let size = window.viewport_size();
 		Some(
@@ -194,7 +201,9 @@ impl Workspace {
 		let menu = self.device_menu.as_ref().expect("the menu is open");
 		let body = match &menu.form {
 			Some(form) => self.render_preset_form(form, window, cx).into_any_element(),
-			None => self.render_menu_items(menu.highlighted, cx).into_any_element(),
+			None => self
+				.render_menu_items(menu.highlighted, cx)
+				.into_any_element(),
 		};
 		div()
 			.id("device-menu")
@@ -250,29 +259,34 @@ impl Workspace {
 			}
 			let row = match &item {
 				MenuItem::Preset(name) => {
-					let Some(preset) = presets.and_then(|presets: &Presets| presets.get(name)) else {
+					let Some(preset) = presets.and_then(|presets: &Presets| presets.get(name))
+					else {
 						continue;
 					};
 					let remove_name = name.clone();
-					menu_row(format!("preset-{ix}").into(), is_highlighted, TWO_LINE_ROW_HEIGHT)
-						.child(two_lines(preset.name.clone(), preset.bridge.to_string()))
-						.child(
-							div()
-								.id(SharedString::from(format!("remove-{ix}")))
-								.flex_none()
-								.size(theme::ICON_BUTTON)
-								.flex()
-								.items_center()
-								.justify_center()
-								.rounded(theme::RADIUS_CONTROL)
-								.hover(|button| button.bg(theme::color(theme::BORDER)))
-								.child(icon(assets::X, theme::ICON, theme::TEXT_MUTED))
-								.tooltip(tooltip("Remove this device"))
-								.on_click(cx.listener(move |this, _, _, cx| {
-									cx.stop_propagation();
-									this.remove_preset(&remove_name, cx);
-								})),
-						)
+					menu_row(
+						format!("preset-{ix}").into(),
+						is_highlighted,
+						TWO_LINE_ROW_HEIGHT,
+					)
+					.child(two_lines(preset.name.clone(), preset.bridge.to_string()))
+					.child(
+						div()
+							.id(SharedString::from(format!("remove-{ix}")))
+							.flex_none()
+							.size(theme::ICON_BUTTON)
+							.flex()
+							.items_center()
+							.justify_center()
+							.rounded(theme::RADIUS_CONTROL)
+							.hover(|button| button.bg(theme::color(theme::BORDER)))
+							.child(icon(assets::X, theme::ICON, theme::TEXT_MUTED))
+							.tooltip(tooltip("Remove this device"))
+							.on_click(cx.listener(move |this, _, _, cx| {
+								cx.stop_propagation();
+								this.remove_preset(&remove_name, cx);
+							})),
+					)
 				}
 				MenuItem::Default => {
 					menu_row("preset-default".into(), is_highlighted, TWO_LINE_ROW_HEIGHT).child(
@@ -352,11 +366,9 @@ impl Workspace {
 								this.menu_dismiss(&crate::devices::MenuDismiss, window, cx)
 							})),
 					)
-					.child(
-						primary_button("form-save", "Save", false).on_click(cx.listener(
-							|this, _, window, cx| this.submit_preset_form(window, cx),
-						)),
-					),
+					.child(primary_button("form-save", "Save", false).on_click(
+						cx.listener(|this, _, window, cx| this.submit_preset_form(window, cx)),
+					)),
 			)
 	}
 }
