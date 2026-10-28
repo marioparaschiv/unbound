@@ -1,4 +1,4 @@
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { IconChevronLeft, IconChevronRight } from 'nucleo-micro-bold';
 
 import { Button } from '~/components/ui/button';
 import Text from '~/components/ui/text';

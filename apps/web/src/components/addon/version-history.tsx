@@ -1,4 +1,4 @@
-import { IconGitCommit } from '@tabler/icons-react';
+import { IconCodeCommit } from 'nucleo-micro-bold';
 
 import { commitUrl, formatDate, shortSha } from '~/components/addon/format';
 import ChangelogSections from '~/components/changelog-sections';
@@ -45,7 +45,7 @@ function VersionEntry({ version, latest }: VersionEntryProps) {
 							href={commitUrl(version.source)}
 							className='inline-flex items-center gap-1 font-mono text-muted-foreground hover:text-foreground text-xs transition-colors'
 						>
-							<IconGitCommit className='size-3.5' />
+							<IconCodeCommit className='size-3.5' />
 							{shortSha(version.source.commitSha)}
 						</ExternalLink>
 					) : null}

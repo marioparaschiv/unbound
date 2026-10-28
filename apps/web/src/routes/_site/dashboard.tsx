@@ -1,5 +1,5 @@
 import { Link, createFileRoute, redirect } from '@tanstack/react-router';
-import { IconUpload } from '@tabler/icons-react';
+import { IconUpload } from 'nucleo-micro-bold';
 
 import SubmissionTimeline from '~/components/dashboard/submission-timeline';
 import DashboardSection from '~/components/dashboard/dashboard-section';
@@ -23,7 +23,7 @@ function DashboardPage() {
 			>
 				<Button asChild>
 					<Link to='/submit'>
-						<IconUpload />
+						<IconUpload size={24} />
 						Submit Addon
 					</Link>
 				</Button>

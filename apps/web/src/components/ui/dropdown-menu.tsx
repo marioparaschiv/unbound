@@ -1,4 +1,4 @@
-import { IconCheck, IconChevronRight, IconCircle } from '@tabler/icons-react';
+import { IconCheck, IconChevronRight, IconShapeCircleFilled } from 'nucleo-micro-bold';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import type { ComponentProps } from 'react';
 
@@ -136,7 +136,7 @@ function DropdownMenuRadioItem({
 		>
 			<span className='pointer-events-none absolute left-2 flex size-3.5 items-center justify-center'>
 				<DropdownMenuPrimitive.ItemIndicator>
-					<IconCircle className='size-2 fill-current' />
+					<IconShapeCircleFilled className='size-2 fill-current' />
 				</DropdownMenuPrimitive.ItemIndicator>
 			</span>
 			{children}

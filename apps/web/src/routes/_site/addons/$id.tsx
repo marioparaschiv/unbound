@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
-import { IconMoodEmpty } from '@tabler/icons-react';
+import { IconFaceNeutral } from 'nucleo-micro-bold';
 
 import {
 	Empty,
@@ -66,7 +66,7 @@ function AddonNotFound() {
 		<Empty className='flex-1 my-auto'>
 			<EmptyHeader>
 				<EmptyMedia variant='icon'>
-					<IconMoodEmpty />
+					<IconFaceNeutral size={24} />
 				</EmptyMedia>
 				<EmptyTitle>Addon Not Found</EmptyTitle>
 				<EmptyDescription>

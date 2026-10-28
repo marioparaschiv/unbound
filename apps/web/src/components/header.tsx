@@ -1,11 +1,11 @@
 import {
 	IconBookmark,
-	IconHome,
+	IconHouse,
 	IconMenu2,
 	IconPalette,
 	IconPlug,
 	IconUsers,
-} from '@tabler/icons-react';
+} from 'nucleo-micro-bold';
 import { Link, useLocation } from '@tanstack/react-router';
 import type { ComponentType } from 'react';
 import { motion } from 'motion/react';
@@ -29,7 +29,7 @@ type NavRoute = {
 };
 
 const ROUTES: NavRoute[] = [
-	{ path: '/', title: 'Home', icon: IconHome },
+	{ path: '/', title: 'Home', icon: IconHouse },
 	{ path: '/plugins', title: 'Plugins', icon: IconPlug },
 	{ path: '/themes', title: 'Themes', icon: IconPalette },
 	{ path: '/developers', title: 'Developers', icon: IconUsers },
@@ -102,7 +102,7 @@ function Header() {
 										className='md:hidden flex'
 										aria-label='Open menu'
 									>
-										<IconMenu2 />
+										<IconMenu2 size={24} />
 									</Button>
 								</DrawerTrigger>
 								<DrawerContent>

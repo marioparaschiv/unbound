@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { IconCheck, IconCopy } from '@tabler/icons-react';
+import { IconCheck, IconCopies } from 'nucleo-micro-bold';
 import { motion, MotionConfig } from 'motion/react';
 import { useState } from 'react';
 
@@ -52,7 +52,7 @@ function InstallLine() {
 			{copied ? (
 				<IconCheck className='size-4 text-emerald-400' />
 			) : (
-				<IconCopy className='size-4 text-muted-foreground group-hover:text-foreground transition-colors' />
+				<IconCopies className='size-4 text-muted-foreground group-hover:text-foreground transition-colors' />
 			)}
 		</button>
 	);

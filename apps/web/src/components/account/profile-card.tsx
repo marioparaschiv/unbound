@@ -1,5 +1,5 @@
 import { useNavigate, useRouter } from '@tanstack/react-router';
-import { IconLogout } from '@tabler/icons-react';
+import { IconRectLogout } from 'nucleo-micro-bold';
 import { useTransition } from 'react';
 import { toast } from 'sonner';
 
@@ -57,7 +57,7 @@ function ProfileCard({ user }: ProfileCardProps) {
 						disabled={isPending}
 						onClick={signOut}
 					>
-						<IconLogout size={14} />
+						<IconRectLogout size={14} />
 						Log Out
 					</Button>
 				</div>

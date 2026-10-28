@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import { reviewQueueQuerySchema } from '@unbound-app/contracts/review';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createServerFn } from '@tanstack/react-start';
-import { IconInbox } from '@tabler/icons-react';
+import { IconArchive } from 'nucleo-micro-bold';
 
 import {
 	Empty,
@@ -65,7 +65,7 @@ function ReviewPage() {
 				<Empty className='border'>
 					<EmptyHeader>
 						<EmptyMedia variant='icon'>
-							<IconInbox />
+							<IconArchive size={24} />
 						</EmptyMedia>
 						<EmptyTitle>Nothing to review</EmptyTitle>
 						<EmptyDescription>

@@ -1,4 +1,4 @@
-import { IconCheck, IconChevronDown, IconChevronUp, IconSelector } from '@tabler/icons-react';
+import { IconCheck, IconChevronDown, IconChevronExpandY, IconChevronUp } from 'nucleo-micro-bold';
 import { Select as SelectPrimitive } from '@base-ui/react/select';
 import type { VariantProps } from 'class-variance-authority';
 import { cva } from 'class-variance-authority';
@@ -66,7 +66,7 @@ function SelectTrigger({ className, size = 'default', children, ...props }: Sele
 		>
 			{children}
 			<SelectPrimitive.Icon
-				render={<IconSelector className='text-muted-foreground -mr-1 size-4' />}
+				render={<IconChevronExpandY className='text-muted-foreground -mr-1 size-4' />}
 			/>
 		</SelectPrimitive.Trigger>
 	);
@@ -85,7 +85,7 @@ function SelectScrollUpButton({
 			)}
 			{...props}
 		>
-			<IconChevronUp />
+			<IconChevronUp size={24} />
 		</SelectPrimitive.ScrollUpArrow>
 	);
 }
@@ -103,7 +103,7 @@ function SelectScrollDownButton({
 			)}
 			{...props}
 		>
-			<IconChevronDown />
+			<IconChevronDown size={24} />
 		</SelectPrimitive.ScrollDownArrow>
 	);
 }
@@ -177,7 +177,7 @@ function SelectItem({
 					<span className='pointer-events-none absolute right-2 flex size-4 items-center justify-center' />
 				}
 			>
-				<IconCheck />
+				<IconCheck size={24} />
 			</SelectPrimitive.ItemIndicator>
 		</SelectPrimitive.Item>
 	);

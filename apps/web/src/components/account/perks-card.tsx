@@ -6,7 +6,7 @@ import {
 	badgeLabelSchema,
 } from '@unbound-app/contracts/sponsors';
 import type { Badge, BadgeClaim } from '@unbound-app/contracts/sponsors';
-import { IconCheck, IconLock, IconTrash } from '@tabler/icons-react';
+import { IconCheck, IconLock, IconTrash } from 'nucleo-micro-bold';
 import { useRouter } from '@tanstack/react-router';
 import { useState, useTransition } from 'react';
 import type { FormEvent } from 'react';

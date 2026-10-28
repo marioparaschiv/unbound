@@ -1,6 +1,6 @@
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import type { ComponentProps, ReactNode } from 'react';
-import { IconCheck } from '@tabler/icons-react';
+import { IconCheck } from 'nucleo-micro-bold';
 
 import { InputGroup, InputGroupInput } from '~/components/ui/input-group';
 import cn from '~/lib/cn';
@@ -99,7 +99,7 @@ function ComboboxItem({
 					<span className='pointer-events-none absolute right-2 flex size-4 items-center justify-center' />
 				}
 			>
-				<IconCheck />
+				<IconCheck size={24} />
 			</ComboboxPrimitive.ItemIndicator>
 		</ComboboxPrimitive.Item>
 	);

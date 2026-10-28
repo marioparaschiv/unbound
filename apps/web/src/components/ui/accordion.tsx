@@ -1,5 +1,5 @@
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
-import { IconChevronDown } from '@tabler/icons-react';
+import { IconChevronDown } from 'nucleo-micro-bold';
 import type { ComponentProps } from 'react';
 
 import cn from '~/lib/cn';

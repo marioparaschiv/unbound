@@ -1,5 +1,5 @@
 import type { Submission } from '@unbound-app/contracts/publish';
-import { IconRefresh, IconUpload } from '@tabler/icons-react';
+import { IconRefresh, IconUpload } from 'nucleo-micro-bold';
 import { useRouter } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
@@ -34,13 +34,13 @@ type IntentCopy = {
 const INTENTS: Record<SubmitIntent, IntentCopy> = {
 	republish: {
 		label: 'Republish',
-		icon: <IconRefresh />,
+		icon: <IconRefresh size={24} />,
 		description:
 			'Push the changes, then pick the commit that has them. The new submission replaces the one with changes requested and goes back into the review queue.',
 	},
 	update: {
 		label: 'Submit update',
-		icon: <IconUpload />,
+		icon: <IconUpload size={24} />,
 		description:
 			'Pick the commit with the new version. The live version stays until reviewers approve it.',
 	},

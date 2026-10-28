@@ -1,7 +1,7 @@
 import type { MaintainerRole } from '@unbound-app/contracts/addons';
 import type { MaintainerEntry } from '@unbound-app/contracts/admin';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { IconX } from '@tabler/icons-react';
+import { IconXmark } from 'nucleo-micro-bold';
 
 import {
 	Select,
@@ -100,7 +100,7 @@ function MaintainerEditor({ id, members, users, onChange, onPick }: MaintainerEd
 								aria-label={`Remove ${known?.name ?? member.userId}`}
 								onClick={() => remove(member.userId)}
 							>
-								<IconX className='size-4' />
+								<IconXmark className='size-4' />
 							</Button>
 						</li>
 					);

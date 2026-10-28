@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
-import { IconMoodEmpty } from '@tabler/icons-react';
+import { IconFaceNeutral } from 'nucleo-micro-bold';
 
 import {
 	Empty,
@@ -94,7 +94,7 @@ function DeveloperNotFound() {
 		<Empty className='flex-1 my-auto'>
 			<EmptyHeader>
 				<EmptyMedia variant='icon'>
-					<IconMoodEmpty />
+					<IconFaceNeutral size={24} />
 				</EmptyMedia>
 				<EmptyTitle>Developer Not Found</EmptyTitle>
 				<EmptyDescription>No listed addon credits this developer.</EmptyDescription>

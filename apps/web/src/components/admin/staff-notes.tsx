@@ -1,4 +1,4 @@
-import { IconNote, IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconNote, IconPen, IconTrash } from 'nucleo-micro-bold';
 import type { Subject } from '@unbound-app/contracts/admin';
 import { Link, useRouter } from '@tanstack/react-router';
 import { useState, useTransition } from 'react';
@@ -169,7 +169,7 @@ function NoteItem({ note, canWrite, disabled, run }: NoteItemProps) {
 								disabled={disabled}
 								onClick={() => setDraft(note.body)}
 							>
-								<IconPencil />
+								<IconPen size={24} />
 							</Button>
 							<ConfirmDialog
 								trigger={
@@ -179,7 +179,7 @@ function NoteItem({ note, canWrite, disabled, run }: NoteItemProps) {
 										aria-label='Delete note'
 										disabled={disabled}
 									>
-										<IconTrash />
+										<IconTrash size={24} />
 									</Button>
 								}
 								title='Delete this note?'

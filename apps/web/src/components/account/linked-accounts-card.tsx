@@ -1,4 +1,4 @@
-import { IconLink, IconUnlink } from '@tabler/icons-react';
+import { IconLink, IconLinkSlash } from 'nucleo-micro-bold';
 import type { ComponentType, SVGProps } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { useTransition } from 'react';
@@ -97,7 +97,7 @@ function ProviderRow({ provider, account }: ProviderRowProps) {
 					}
 					onClick={() => unlink(account.id)}
 				>
-					<IconUnlink size={14} />
+					<IconLinkSlash size={14} />
 					Unlink
 				</Button>
 			) : (

@@ -1,4 +1,4 @@
-import { IconPalette, IconPlug } from '@tabler/icons-react';
+import { IconPalette, IconPlug } from 'nucleo-micro-bold';
 
 import InstallAddonButton from '~/components/install-addon-button';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';

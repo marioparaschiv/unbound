@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { IconArrowRight } from '@tabler/icons-react';
+import { IconArrowRight } from 'nucleo-micro-bold';
 
 type Variant = {
 	to: '/landing/terminal' | '/landing/sticker' | '/landing/editorial';

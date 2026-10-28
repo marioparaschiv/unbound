@@ -1,5 +1,5 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { IconX } from '@tabler/icons-react';
+import { IconXmark } from 'nucleo-micro-bold';
 import type { ComponentProps } from 'react';
 
 import cn from '~/lib/cn';
@@ -60,7 +60,7 @@ function DialogContent({
 						data-slot='dialog-close'
 						className="press-flat data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-item p-1 opacity-70 hover:opacity-100 hover:bg-accent focus-visible:ring-4 focus-visible:ring-halo focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
 					>
-						<IconX />
+						<IconXmark size={24} />
 						<span className='sr-only'>Close</span>
 					</DialogPrimitive.Close>
 				) : null}

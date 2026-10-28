@@ -1,5 +1,5 @@
 import type { ListRepositoryAddonsResponse, RepositoryAddon } from '@unbound-app/contracts/source';
-import { IconEye, IconRefresh } from '@tabler/icons-react';
+import { IconEye, IconRefresh } from 'nucleo-micro-bold';
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
 
@@ -55,7 +55,7 @@ function AddonOption({ addon, selected, disabled, onPick }: AddonOptionProps) {
 				disabled={disabled}
 				onClick={onPick}
 			>
-				<IconEye />
+				<IconEye size={24} />
 				Preview
 			</Button>
 		</li>
@@ -93,7 +93,7 @@ function AddonPicker({
 							required
 						/>
 						<Button type='submit' variant='outline' disabled={disabled}>
-							<IconRefresh />
+							<IconRefresh size={24} />
 							Read
 						</Button>
 					</div>

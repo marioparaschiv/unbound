@@ -1,4 +1,4 @@
-import { IconUsers, IconX, IconZoom, IconZoomCancel } from '@tabler/icons-react';
+import { IconMagnifier, IconMagnifierMinus, IconUsers, IconXmark } from 'nucleo-micro-bold';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import type { ChangeEvent, FormEvent } from 'react';
@@ -70,7 +70,7 @@ function DevelopersContent() {
 			<Empty className='flex-1 my-auto'>
 				<EmptyHeader>
 					<EmptyMedia variant='icon'>
-						<IconUsers />
+						<IconUsers size={24} />
 					</EmptyMedia>
 					<EmptyTitle>No Developers Yet</EmptyTitle>
 					<EmptyDescription>
@@ -87,7 +87,7 @@ function DevelopersContent() {
 			<form onSubmit={handleSubmit} className='flex gap-2'>
 				<InputGroup className='w-full'>
 					<InputGroupAddon>
-						<IconZoom />
+						<IconMagnifier size={24} />
 					</InputGroupAddon>
 					<InputGroupInput
 						className='h-full'
@@ -102,7 +102,7 @@ function DevelopersContent() {
 				<Empty className='flex-1 my-auto'>
 					<EmptyHeader>
 						<EmptyMedia variant='icon'>
-							<IconZoomCancel />
+							<IconMagnifierMinus size={24} />
 						</EmptyMedia>
 						<EmptyTitle>No Developers Found</EmptyTitle>
 						<EmptyDescription>
@@ -111,7 +111,7 @@ function DevelopersContent() {
 					</EmptyHeader>
 					<EmptyContent>
 						<Button onClick={clearSearch}>
-							<IconX />
+							<IconXmark size={24} />
 							Clear Search
 						</Button>
 					</EmptyContent>

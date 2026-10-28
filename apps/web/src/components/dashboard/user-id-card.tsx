@@ -1,4 +1,4 @@
-import { IconCopy } from '@tabler/icons-react';
+import { IconCopies } from 'nucleo-micro-bold';
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import copyText from '~/components/dashboard/copy-text';
@@ -22,7 +22,7 @@ function UserIdCard({ userId }: UserIdCardProps) {
 			<CardContent className='flex gap-2'>
 				<Input readOnly value={userId} aria-label='Your user ID' className='font-mono' />
 				<Button variant='outline' onClick={() => copyText(userId, 'ID')}>
-					<IconCopy />
+					<IconCopies size={24} />
 					Copy
 				</Button>
 			</CardContent>

@@ -1,4 +1,4 @@
-import { IconPalette, IconPlug } from '@tabler/icons-react';
+import { IconPalette, IconPlug } from 'nucleo-micro-bold';
 import { Link } from '@tanstack/react-router';
 
 import SubmitDialog from '~/components/dashboard/submit-dialog';

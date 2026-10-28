@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router';
-import { IconArrowLeft, IconBan, IconUserCheck } from '@tabler/icons-react';
+import { IconArrowLeft, IconBan, IconUserCheck } from 'nucleo-micro-bold';
 
 import { formatDate, formatDateTime } from '~/components/admin/format-date';
 import SubmissionHistory from '~/components/admin/submission-history';

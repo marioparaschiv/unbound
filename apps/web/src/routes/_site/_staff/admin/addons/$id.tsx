@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft } from 'nucleo-micro-bold';
 
 import AddonSettingsForm from '~/components/admin/addon-settings/addon-settings-form';
 import SubmissionHistory from '~/components/admin/submission-history';

@@ -1,11 +1,11 @@
 import {
+	IconMagnifier,
+	IconMagnifierMinus,
 	IconPalette,
 	IconPlug,
 	IconPlus,
-	IconX,
-	IconZoom,
-	IconZoomCancel,
-} from '@tabler/icons-react';
+	IconXmark,
+} from 'nucleo-micro-bold';
 import type { AddonSort, SortOrder } from '@unbound-app/contracts/addons';
 import type { ChangeEvent, ComponentType, FormEvent } from 'react';
 import { Link, useRouteContext } from '@tanstack/react-router';
@@ -91,7 +91,7 @@ function SubmitButton() {
 	return (
 		<Button asChild>
 			<Link to={session ? '/submit' : '/login'}>
-				<IconPlus />
+				<IconPlus size={24} />
 				<span className='hidden sm:inline'>Submit</span>
 			</Link>
 		</Button>
@@ -142,7 +142,7 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 			<Empty className='flex-1 my-auto'>
 				<EmptyHeader>
 					<EmptyMedia variant='icon'>
-						<IconZoomCancel />
+						<IconMagnifierMinus size={24} />
 					</EmptyMedia>
 					<EmptyTitle>No {copy.title} Found</EmptyTitle>
 					<EmptyDescription>
@@ -151,7 +151,7 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 				</EmptyHeader>
 				<EmptyContent>
 					<Button onClick={onClearSearch}>
-						<IconX />
+						<IconXmark size={24} />
 						Clear Search
 					</Button>
 				</EmptyContent>
@@ -223,7 +223,7 @@ function AddonListing({ type, page, search, onSearchChange }: AddonListingProps)
 				<form onSubmit={handleSubmit} className='flex gap-2'>
 					<InputGroup className='w-full'>
 						<InputGroupAddon>
-							<IconZoom />
+							<IconMagnifier size={24} />
 						</InputGroupAddon>
 						<InputGroupInput
 							className='h-full'

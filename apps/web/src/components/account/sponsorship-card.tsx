@@ -1,4 +1,4 @@
-import { IconExternalLink, IconHeart } from '@tabler/icons-react';
+import { IconExternalLink, IconHeart } from 'nucleo-micro-bold';
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import type { SponsorOverview } from '~/lib/sponsors/overview';

@@ -1,5 +1,5 @@
 import type { AddonType } from '@unbound-app/contracts/addons';
-import { IconDownload } from '@tabler/icons-react';
+import { IconDownload } from 'nucleo-micro-bold';
 import { toast } from 'sonner';
 
 import type { ButtonProps } from '~/components/ui/button';
@@ -50,7 +50,7 @@ function InstallAddonButton({
 			variant={variant}
 			onClick={copy}
 		>
-			<IconDownload />
+			<IconDownload size={24} />
 			{iconOnly ? null : 'Install'}
 		</Button>
 	);

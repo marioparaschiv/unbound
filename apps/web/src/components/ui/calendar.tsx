@@ -3,7 +3,7 @@ import {
 	IconChevronLeft,
 	IconChevronRight,
 	IconChevronUp,
-} from '@tabler/icons-react';
+} from 'nucleo-micro-bold';
 import type { ChevronProps, DayButtonProps, RootProps, WeekNumberProps } from 'react-day-picker';
 import { DayPicker, getDefaultClassNames } from 'react-day-picker';
 import type { ComponentProps } from 'react';

@@ -1,5 +1,5 @@
 import { Link, Outlet, createFileRoute, redirect } from '@tanstack/react-router';
-import { IconFileCheck, IconPackage, IconUsers } from '@tabler/icons-react';
+import { IconBox, IconFileCheck, IconUsers } from 'nucleo-micro-bold';
 import type { ComponentType } from 'react';
 
 import type { StaffSectionId } from '~/lib/auth/staff-areas';
@@ -13,7 +13,7 @@ type IconProps = {
 const SECTION_ICONS: Record<StaffSectionId, ComponentType<IconProps>> = {
 	review: IconFileCheck,
 	users: IconUsers,
-	addons: IconPackage,
+	addons: IconBox,
 };
 
 function StaffLayout() {

@@ -1,4 +1,4 @@
-import { IconAlertTriangle } from '@tabler/icons-react';
+import { IconTriangleWarning } from 'nucleo-micro-bold';
 
 import SubmitDialog from '~/components/dashboard/submit-dialog';
 import { getStatusStyle } from '~/components/dashboard/status';
@@ -36,7 +36,7 @@ function AttentionList({ addons, githubLinked }: AttentionListProps) {
 							STYLE.pill,
 						)}
 					>
-						<IconAlertTriangle size={16} />
+						<IconTriangleWarning size={16} />
 					</span>
 					<div className='flex flex-col flex-1 gap-1 min-w-48'>
 						<Text variant='text-sm' className='font-medium'>

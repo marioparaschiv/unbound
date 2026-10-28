@@ -1,4 +1,4 @@
-import { IconBan, IconChevronDown, IconUserCheck, IconUserCog } from '@tabler/icons-react';
+import { IconBan, IconChevronDown, IconUserCheck, IconUserPen } from 'nucleo-micro-bold';
 import { useId, useState, useTransition } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
@@ -48,7 +48,7 @@ function RoleMenu({ user, disabled, run }: UserActionProps) {
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button variant='outline' size='sm' disabled={disabled}>
-					<IconUserCog />
+					<IconUserPen size={24} />
 					Role
 					<IconChevronDown className='size-3' />
 				</Button>
@@ -89,7 +89,7 @@ function BanDialog({ user, disabled, run }: UserActionProps) {
 		<ConfirmDialog
 			trigger={
 				<Button variant='destructive' size='sm' disabled={disabled}>
-					<IconBan />
+					<IconBan size={24} />
 					Ban
 				</Button>
 			}
@@ -144,7 +144,7 @@ function UserActions({ user, canSetRole, canBan, isSelf }: UserActionsProps) {
 			{canSetRole ? <RoleMenu user={user} disabled={disabled} run={run} /> : null}
 			{canBan && user.banned ? (
 				<Button variant='secondary' size='sm' onClick={unban} disabled={disabled}>
-					<IconUserCheck />
+					<IconUserCheck size={24} />
 					Unban
 				</Button>
 			) : null}

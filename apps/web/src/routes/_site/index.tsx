@@ -1,11 +1,11 @@
 import {
-	IconBrandOpenSource,
 	IconCode,
-	IconDeviceMobile,
+	IconCodeBranch,
+	IconMobile,
 	IconPalette,
 	IconPlug,
 	IconUsers,
-} from '@tabler/icons-react';
+} from 'nucleo-micro-bold';
 import type { ComponentType, CSSProperties, MouseEvent } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { motion } from 'motion/react';
@@ -45,12 +45,12 @@ const FEATURES: Feature[] = [
 		description: 'Personalize your Discord with custom themes and color schemes.',
 	},
 	{
-		icon: IconBrandOpenSource,
+		icon: IconCodeBranch,
 		title: 'Open Source',
 		description: 'Fully open-source and auditable under GPLv3. Transparency you can trust.',
 	},
 	{
-		icon: IconDeviceMobile,
+		icon: IconMobile,
 		title: 'Cross-Platform',
 		description:
 			'Built for both Android and iOS, bringing the same powerful customization to every mobile device.',

@@ -1,9 +1,10 @@
 import type { PushableRepository } from '@unbound-app/contracts/source';
-import { IconBrandGithub, IconSearch } from '@tabler/icons-react';
+import { IconMagnifier } from 'nucleo-micro-bold';
 import type { FormEvent } from 'react';
 import { useId } from 'react';
 
 import { Field, FieldDescription, FieldLabel } from '~/components/ui/field';
+import GitHubIcon from '~/components/icons/github';
 import { Button } from '~/components/ui/button';
 import Input from '~/components/ui/input';
 import Text from '~/components/ui/text';
@@ -44,7 +45,7 @@ function RepositoryPicker({
 						required
 					/>
 					<Button type='submit' variant='outline' disabled={disabled || !value.trim()}>
-						<IconSearch />
+						<IconMagnifier size={24} />
 						Find addons
 					</Button>
 				</div>
@@ -69,7 +70,7 @@ function RepositoryPicker({
 								disabled={disabled}
 								onClick={() => onPick(entry.repository)}
 							>
-								<IconBrandGithub />
+								<GitHubIcon />
 								{entry.repository}
 							</Button>
 						))}

@@ -1,6 +1,6 @@
 import type { Components, UrlTransform } from 'react-markdown';
 import type { ComponentProps, ReactNode } from 'react';
-import { IconPhoto } from '@tabler/icons-react';
+import { IconPhoto } from 'nucleo-micro-bold';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 

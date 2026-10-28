@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
 import { adminUsersSearchSchema } from '@unbound-app/contracts/admin';
-import { IconBan, IconUserCheck } from '@tabler/icons-react';
+import { IconBan, IconUserCheck } from 'nucleo-micro-bold';
 
 import { formatDate } from '~/components/admin/format-date';
 import UserActions from '~/components/admin/user-actions';

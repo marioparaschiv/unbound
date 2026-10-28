@@ -1,7 +1,7 @@
 import type { Maintainer, MaintainersResponse } from '@unbound-app/contracts/addons';
 import { maintainersResponseSchema } from '@unbound-app/contracts/addons';
+import { IconUserPlus, IconXmark } from 'nucleo-micro-bold';
 import { useEffect, useState, useTransition } from 'react';
-import { IconUserPlus, IconX } from '@tabler/icons-react';
 import { useRouter } from '@tanstack/react-router';
 import type { FormEvent } from 'react';
 import { toast } from 'sonner';
@@ -61,7 +61,7 @@ function MaintainerRow({ maintainer, disabled, onRemove }: MaintainerRowProps) {
 				disabled={disabled}
 				onClick={() => onRemove(maintainer.id)}
 			>
-				<IconX size={14} />
+				<IconXmark size={14} />
 				Remove
 			</Button>
 		</div>
@@ -156,7 +156,7 @@ function MaintainersDialog({ addonId, userId, open, onOpenChange }: MaintainersD
 						required
 					/>
 					<Button type='submit' disabled={isPending || !newUserId.trim()}>
-						<IconUserPlus />
+						<IconUserPlus size={24} />
 						Add
 					</Button>
 				</form>

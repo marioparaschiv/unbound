@@ -1,8 +1,9 @@
-import { IconBrandGithub, IconStar } from '@tabler/icons-react';
+import { IconStar } from 'nucleo-micro-bold';
 
 import { directoryUrl, formatCount, formatDate, shortSha } from '~/components/addon/format';
 import { DetailRow, ExternalLink, SidebarCard } from '~/components/addon/sidebar-card';
 import type { MarketplaceSource } from '~/lib/marketplace';
+import GitHubIcon from '~/components/icons/github';
 import Text from '~/components/ui/text';
 
 type SourceCardProps = {
@@ -24,7 +25,7 @@ function SourceCard({ source }: SourceCardProps) {
 				href={`https://github.com/${pin.repository}/tree/${pin.commitSha}`}
 				className='group flex items-center gap-2.5 bg-muted/50 hover:bg-muted px-3 py-2 border rounded-control min-w-0 press-flat'
 			>
-				<IconBrandGithub className='size-4 text-muted-foreground shrink-0' />
+				<GitHubIcon className='size-4 text-muted-foreground shrink-0' />
 				<Text as='span' variant='text-sm' className='font-medium truncate'>
 					{pin.repository}
 				</Text>
