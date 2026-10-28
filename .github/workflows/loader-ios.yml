@@ -559,7 +559,7 @@ jobs:
               if: inputs.only_apt_repo == true
               run: |
                   mkdir -p apt-repo/repo/debs
-                  LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("loader-v")) and (.isPrerelease | not))][0].tagName')
+                  LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("discord-")) and (.tagName | endswith("-ios")) and (.isPrerelease | not))][0].tagName')
                   gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*arm64.deb' --dir apt-repo/repo/debs --clobber
 
             - name: Capture new deb filename
@@ -582,26 +582,18 @@ jobs:
               run: |
                   set -euo pipefail
                   if [ -z "$VERSION_SELECTOR" ]; then
-                    LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("loader-v")) and (.isPrerelease | not))][0].tagName')
+                    LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("discord-")) and (.tagName | endswith("-ios")) and (.isPrerelease | not))][0].tagName')
                     gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
                   else
                     selector="${VERSION_SELECTOR#v}"
-                    tag="loader-v$selector"
-                    if ! gh release download "$tag" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber; then
-                      if [[ "$selector" == *_* ]]; then
-                        train="${selector%%_*}"
-                        build="${selector#*_}"
-                        if [[ "$train" != *.* ]]; then
-                          gh release download "loader-v${train}.0_${build}" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
-                        else
-                          exit 1
-                        fi
-                      elif [[ "$selector" != *.* ]]; then
-                        gh release download "${tag}.0" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
-                      else
-                        exit 1
-                      fi
-                    fi
+                    selector="${selector%-ios-testflight}"
+                    train="${selector%%_*}"
+                    build=""
+                    if [[ "$selector" == *_* ]]; then build="_${selector#*_}"; fi
+                    if [[ "$train" != *.* ]]; then train="${train}.0"; fi
+                    platform=ios
+                    if [ -n "$build" ]; then platform=ios-testflight; fi
+                    gh release download "discord-${train}${build}-${platform}" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
                   fi
 
             - name: Restore live site state
@@ -665,7 +657,9 @@ jobs:
                   NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
                   DATE=$(date -u +"%Y-%m-%d")
                   IPA_SIZE=$(stat -c%s "$APP_FILE")
-                  DOWNLOAD_URL=https://github.com/${{ github.repository }}/releases/download/loader-v$VERSION/$NAME.ipa
+                  RELEASE_TAG="discord-$VERSION-ios"
+                  if [[ "$IS_TESTFLIGHT" == true ]]; then RELEASE_TAG="discord-$VERSION-ios-testflight"; fi
+                  DOWNLOAD_URL=https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/$NAME.ipa
                   NEW_ENTRY=$(jq -n --arg version "$VERSION" --arg date "$DATE" --arg size "$IPA_SIZE" --arg downloadURL "$DOWNLOAD_URL" '{version: $version, date: $date, size: ($size | tonumber), downloadURL: $downloadURL, localizedDescription: "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."}')
 
                   VERSION_EXISTS=$(jq --arg version "$VERSION" --argjson index "$APP_INDEX" '.apps[$index].versions | map(select(.version == $version)) | length' apt-repo/repo/app-repo.json)

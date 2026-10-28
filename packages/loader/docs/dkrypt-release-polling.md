@@ -19,11 +19,11 @@ The TestFlight catalog routes already require an API key with TestFlight access.
 
 ## Loader update feed
 
-After a stable combined release is created, CI publishes one iOS and one Android loader record through `POST /api/v1/loader/releases`. The endpoint uses the `x-api-key` header and the `loader: ['publish']` permission introduced by client PR #180. Configure the restricted CI account's API key as the GitHub Actions secret `UNBOUND_API_KEY` and the endpoint as the `UNBOUND_API_URL` repository variable; do not use an administrator key. The published version comes from the packaged tweak's Debian version, shared with the Android module, while each record links directly to its platform asset in the matching GitHub release. CI attaches categorized loader change notes and publishes records only when the packaged loader SemVer is newer than the existing platform records.
+After the stable iOS and Android releases are created, CI publishes one iOS and one Android loader record through `POST /api/v1/loader/releases`. The endpoint uses the `x-api-key` header and the `loader: ['publish']` permission introduced by client PR #180. Configure the restricted CI account's API key as the GitHub Actions secret `UNBOUND_API_KEY` and the endpoint as the `UNBOUND_API_URL` repository variable; do not use an administrator key. The published version comes from the packaged tweak's Debian version, shared with the Android module, while each record links directly to its platform asset in the matching GitHub release. CI attaches categorized loader change notes and publishes records only when the packaged loader SemVer is newer than the existing platform records.
 
 TestFlight Discord builds are not published as loader updates because they currently share the stable loader package version. Publishing them would replace the stable URL for that same platform/version. Publish loader prereleases only after the packaged loader version itself is given a SemVer prerelease identifier.
 
-Loader changelogs are generated from conventional commits since the previous change to the Debian Version field. They do not use Discord-generated release notes or include the Discord app version. The Discord-tagged release URL is used only to locate the matching combined release assets.
+Loader changelogs are generated from conventional commits since the previous change to the Debian Version field. They do not use Discord-generated release notes or include the Discord app version. The Discord-tagged release URLs are used only to locate each platform's release assets.
 
 ## Polling behavior
 
@@ -33,9 +33,9 @@ The scheduled workflow should run the following checks independently so an unava
 2. Query the Android stable package source and map its version code to Discord's marketing version.
 3. Select the newest Android version that is not newer than the current App Store version. Confirm the exact Android base package is downloadable, then ask dkrypt to decrypt that exact iOS marketing version. The build's existing IPA and APK version checks remain the final guard; any absent historical iOS version or source mismatch fails closed without creating a release.
 4. Use the iTunes track ID to list TestFlight trains and builds through dkrypt. Choose the newest non-expired build for the Discord bundle ID, represented as `major.minor_build`.
-5. Check whether the matching GitHub release tag already exists before dispatching either build. Stable tags use `v{version}`; TestFlight prerelease tags use `v{version}_{build}`.
+5. Check whether the matching GitHub release tag already exists before dispatching either build. Every tag names the Discord build and its platform: stable releases are `discord-{version}-ios` and `discord-{version}-android`, and TestFlight prereleases are `discord-{version}_{build}-ios-testflight`.
 6. Call the existing reusable build workflow with the exact candidate. Stable builds include matching iOS and Android artifacts. TestFlight builds produce an iOS prerelease only.
-7. Resolve Discord's Google Play beta and alpha builds through sniff and the Android version tracker, taking the newest version code any eligible track serves. Tag them `loader-v{version}-android-beta` and `loader-v{version}-android-alpha`, and build them as Android-only prereleases from the exact version code. These do not need dkrypt.
+7. Resolve Discord's Google Play beta and alpha builds through sniff and the Android version tracker, taking the newest version code any eligible track serves. Tag them `discord-{version}-android-beta` and `discord-{version}-android-alpha`, and build them as Android-only prereleases from the exact version code. These do not need dkrypt.
 
 The workflow should be concurrency-protected per channel, tolerate an unchanged catalog as a no-op, retry transient network errors, and never fall back to a different app version. The API key belongs only in GitHub Actions secrets. Stable decrypt requests need the `com.hammerandchisel.discord` bundle scope; TestFlight polling additionally needs dkrypt's TestFlight API scope.
 

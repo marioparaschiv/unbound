@@ -110,7 +110,7 @@ func runReleaseCandidate(args []string) error {
 		return err
 	}
 	if version := candidate.Version; version != "" {
-		tag := "loader-v" + version
+		tag := loaderReleaseTag(config.channel, version)
 		exists, err := githubReleaseExists(context.Background(), config.httpClient, config.githubAPIURL, config.githubRepository, tag, config.githubToken)
 		if err != nil {
 			return err
@@ -140,6 +140,16 @@ func discoverReleaseCandidate(ctx context.Context, config releasePollConfig) (re
 	}
 	version, err := discoverStableCandidate(ctx, config, lookup.Version)
 	return releaseCandidate{Version: version}, err
+}
+
+func loaderReleaseTag(channel, version string) string {
+	switch channel {
+	case "stable":
+		return releaseTag(version, "ios")
+	case "testflight":
+		return releaseTag(version, "ios-testflight")
+	}
+	return "discord-" + version
 }
 
 var testflightVersionPattern = regexp.MustCompile(`^[0-9]+(\.[0-9]+)+_[0-9]+$`)
