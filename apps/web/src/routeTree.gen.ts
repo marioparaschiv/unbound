@@ -27,6 +27,10 @@ import { Route as SiteStaffReviewRouteImport } from './routes/_site/_staff/revie
 import { Route as SiteAddonsIdRouteImport } from './routes/_site/addons/$id'
 import { Route as SiteDevelopersIndexRouteImport } from './routes/_site/developers/index'
 import { Route as SiteDevelopersDiscordIdRouteImport } from './routes/_site/developers/$discordId'
+import { Route as SiteLandingIndexRouteImport } from './routes/_site/landing/index'
+import { Route as SiteLandingEditorialRouteImport } from './routes/_site/landing/editorial'
+import { Route as SiteLandingStickerRouteImport } from './routes/_site/landing/sticker'
+import { Route as SiteLandingTerminalRouteImport } from './routes/_site/landing/terminal'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1AddonsRouteImport } from './routes/api/v1/addons'
 import { Route as ApiV1CatalogRouteImport } from './routes/api/v1/catalog'
@@ -148,6 +152,26 @@ const SiteDevelopersIndexRoute = SiteDevelopersIndexRouteImport.update({
 const SiteDevelopersDiscordIdRoute = SiteDevelopersDiscordIdRouteImport.update({
   id: '/developers/$discordId',
   path: '/developers/$discordId',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
+const SiteLandingIndexRoute = SiteLandingIndexRouteImport.update({
+  id: '/landing/',
+  path: '/landing/',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
+const SiteLandingEditorialRoute = SiteLandingEditorialRouteImport.update({
+  id: '/landing/editorial',
+  path: '/landing/editorial',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
+const SiteLandingStickerRoute = SiteLandingStickerRouteImport.update({
+  id: '/landing/sticker',
+  path: '/landing/sticker',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
+const SiteLandingTerminalRoute = SiteLandingTerminalRouteImport.update({
+  id: '/landing/terminal',
+  path: '/landing/terminal',
   getParentRoute: () => SiteRouteRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -344,6 +368,9 @@ export interface FileRoutesByFullPath {
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
   '/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
+  '/landing/editorial': typeof SiteLandingEditorialRoute
+  '/landing/sticker': typeof SiteLandingStickerRoute
+  '/landing/terminal': typeof SiteLandingTerminalRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -354,6 +381,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/developers/': typeof SiteDevelopersIndexRoute
+  '/landing/': typeof SiteLandingIndexRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -396,6 +424,9 @@ export interface FileRoutesByTo {
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
   '/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
+  '/landing/editorial': typeof SiteLandingEditorialRoute
+  '/landing/sticker': typeof SiteLandingStickerRoute
+  '/landing/terminal': typeof SiteLandingTerminalRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -406,6 +437,7 @@ export interface FileRoutesByTo {
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/developers': typeof SiteDevelopersIndexRoute
+  '/landing': typeof SiteLandingIndexRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -451,6 +483,9 @@ export interface FileRoutesById {
   '/_site/_staff/review': typeof SiteStaffReviewRoute
   '/_site/addons/$id': typeof SiteAddonsIdRoute
   '/_site/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
+  '/_site/landing/editorial': typeof SiteLandingEditorialRoute
+  '/_site/landing/sticker': typeof SiteLandingStickerRoute
+  '/_site/landing/terminal': typeof SiteLandingTerminalRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -461,6 +496,7 @@ export interface FileRoutesById {
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/_site/developers/': typeof SiteDevelopersIndexRoute
+  '/_site/landing/': typeof SiteLandingIndexRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -505,6 +541,9 @@ export interface FileRouteTypes {
     | '/review'
     | '/addons/$id'
     | '/developers/$discordId'
+    | '/landing/editorial'
+    | '/landing/sticker'
+    | '/landing/terminal'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -515,6 +554,7 @@ export interface FileRouteTypes {
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
     | '/developers/'
+    | '/landing/'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -557,6 +597,9 @@ export interface FileRouteTypes {
     | '/review'
     | '/addons/$id'
     | '/developers/$discordId'
+    | '/landing/editorial'
+    | '/landing/sticker'
+    | '/landing/terminal'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -567,6 +610,7 @@ export interface FileRouteTypes {
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
     | '/developers'
+    | '/landing'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -611,6 +655,9 @@ export interface FileRouteTypes {
     | '/_site/_staff/review'
     | '/_site/addons/$id'
     | '/_site/developers/$discordId'
+    | '/_site/landing/editorial'
+    | '/_site/landing/sticker'
+    | '/_site/landing/terminal'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -621,6 +668,7 @@ export interface FileRouteTypes {
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
     | '/_site/developers/'
+    | '/_site/landing/'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -798,6 +846,34 @@ declare module '@tanstack/react-router' {
       path: '/developers/$discordId'
       fullPath: '/developers/$discordId'
       preLoaderRoute: typeof SiteDevelopersDiscordIdRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
+    '/_site/landing/': {
+      id: '/_site/landing/'
+      path: '/landing'
+      fullPath: '/landing/'
+      preLoaderRoute: typeof SiteLandingIndexRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
+    '/_site/landing/editorial': {
+      id: '/_site/landing/editorial'
+      path: '/landing/editorial'
+      fullPath: '/landing/editorial'
+      preLoaderRoute: typeof SiteLandingEditorialRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
+    '/_site/landing/sticker': {
+      id: '/_site/landing/sticker'
+      path: '/landing/sticker'
+      fullPath: '/landing/sticker'
+      preLoaderRoute: typeof SiteLandingStickerRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
+    '/_site/landing/terminal': {
+      id: '/_site/landing/terminal'
+      path: '/landing/terminal'
+      fullPath: '/landing/terminal'
+      preLoaderRoute: typeof SiteLandingTerminalRouteImport
       parentRoute: typeof SiteRouteRoute
     }
     '/api/auth/$': {
@@ -1077,7 +1153,11 @@ interface SiteRouteRouteChildren {
   SiteIndexRoute: typeof SiteIndexRoute
   SiteAddonsIdRoute: typeof SiteAddonsIdRoute
   SiteDevelopersDiscordIdRoute: typeof SiteDevelopersDiscordIdRoute
+  SiteLandingEditorialRoute: typeof SiteLandingEditorialRoute
+  SiteLandingStickerRoute: typeof SiteLandingStickerRoute
+  SiteLandingTerminalRoute: typeof SiteLandingTerminalRoute
   SiteDevelopersIndexRoute: typeof SiteDevelopersIndexRoute
+  SiteLandingIndexRoute: typeof SiteLandingIndexRoute
 }
 
 const SiteRouteRouteChildren: SiteRouteRouteChildren = {
@@ -1094,7 +1174,11 @@ const SiteRouteRouteChildren: SiteRouteRouteChildren = {
   SiteIndexRoute: SiteIndexRoute,
   SiteAddonsIdRoute: SiteAddonsIdRoute,
   SiteDevelopersDiscordIdRoute: SiteDevelopersDiscordIdRoute,
+  SiteLandingEditorialRoute: SiteLandingEditorialRoute,
+  SiteLandingStickerRoute: SiteLandingStickerRoute,
+  SiteLandingTerminalRoute: SiteLandingTerminalRoute,
   SiteDevelopersIndexRoute: SiteDevelopersIndexRoute,
+  SiteLandingIndexRoute: SiteLandingIndexRoute,
 }
 
 const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
