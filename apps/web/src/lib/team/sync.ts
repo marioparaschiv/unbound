@@ -1,10 +1,9 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { deriveStanding, readTeamSyncConfig, type TeamRoleIds } from '~/lib/team/roles';
 import { reconcileSiteRoles, type RoleChange } from '~/lib/team/site-roles';
-import { deriveStanding, readTeamSyncConfig } from '~/lib/team/roles';
 import { writeTeamSnapshot, type TeamEntry } from '~/lib/team/snapshot';
 import { fetchGuildMembers } from '~/lib/team/guild-members';
-import type { TeamRoleIds } from '~/lib/team/roles';
 import type { AppContext } from '~/lib/context';
 
 const logger = createLogger('Web', 'Team');

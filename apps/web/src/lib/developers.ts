@@ -1,3 +1,6 @@
+import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
+import { z } from 'zod';
+
 import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';
 import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
 import { compareGroups, TEAM_GROUPS, type TeamGroup } from '~/lib/team/roles';
@@ -6,8 +9,6 @@ import { readTeamGroups } from '~/lib/team/snapshot';
 import { listListedAddons } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
-import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
-import { z } from 'zod';
 
 export type { TeamGroup } from '~/lib/team/roles';
 

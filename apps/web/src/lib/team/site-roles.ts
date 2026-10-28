@@ -1,11 +1,10 @@
 import { and, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { account, addon, addonMaintainer, teamMember, user } from '~/db/schema';
+import { STAFF_ROLES, type StaffRole } from '~/lib/team/roles';
 import { setRoleWithRecord } from '~/lib/moderation-events';
-import type { StaffRole } from '~/lib/team/roles';
-import type { Database } from '~/db/database';
 import { DEFAULT_ROLE } from '~/lib/auth/access';
-import { STAFF_ROLES } from '~/lib/team/roles';
+import type { Database } from '~/db/database';
 
 export type SiteRolePlan = {
 	/** Whether a staff role Discord no longer grants is taken away; off under the lockout guard. */
