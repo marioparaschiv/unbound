@@ -12,18 +12,29 @@ type DeveloperCardProps = ComponentProps<typeof Card> & {
 	developer: Developer;
 };
 
-/** A credited author's card. */
+/** A team member's or credited author's card, backed by a blur of their avatar. */
 function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 	const { author, addonCount } = developer;
+	const badge = author.kind === 'user' ? author.badge : undefined;
 
 	return (
 		<Card
 			className={cn(
-				'relative p-0 gap-0 rounded-lg transition-transform duration-200 ease-in-out hover:-translate-y-1 hover:shadow-lg flex-row items-center',
+				'relative isolate overflow-hidden p-0 gap-0 rounded-lg transition-transform duration-200 ease-in-out hover:-translate-y-1 hover:shadow-lg flex-row items-center',
 				className,
 			)}
 			{...props}
 		>
+			{author.avatarUrl ? (
+				<img
+					src={author.avatarUrl}
+					alt=''
+					aria-hidden
+					loading='lazy'
+					decoding='async'
+					className='absolute inset-0 -z-10 size-full object-cover scale-150 blur-2xl opacity-20 pointer-events-none select-none'
+				/>
+			) : null}
 			<div className='flex items-center justify-center size-10 shrink-0 rounded-lg bg-accent m-4 mr-0 overflow-hidden'>
 				<UserAvatar
 					className='size-full rounded-lg object-cover'
@@ -41,14 +52,16 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 						{author.name}
 					</Link>
 				</Text>
-				<div className='flex items-center gap-2 min-w-0'>
-					<Text variant='text-xs' color='muted'>
-						{addonCount} {addonCount === 1 ? 'addon' : 'addons'}
-					</Text>
-					{author.kind === 'user' && author.badge ? (
-						<UserBadge badge={author.badge} />
-					) : null}
-				</div>
+				{addonCount > 0 || badge ? (
+					<div className='flex items-center gap-2 min-w-0'>
+						{addonCount > 0 ? (
+							<Text variant='text-xs' color='muted'>
+								{addonCount} {addonCount === 1 ? 'addon' : 'addons'}
+							</Text>
+						) : null}
+						{badge ? <UserBadge badge={badge} /> : null}
+					</div>
+				) : null}
 			</CardContent>
 		</Card>
 	);
