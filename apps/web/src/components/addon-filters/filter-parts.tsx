@@ -165,6 +165,8 @@ export function CommandList({
 }: CommandListProps) {
 	const [active, setActive] = useState(0);
 	const input = useRef<HTMLInputElement>(null);
+	// Whether the pointer moved the highlight, which glides its row into view instead of jumping.
+	const pointed = useRef(false);
 
 	// `autoFocus` would scroll the menu's clipped box to the new view mid-animation; this focuses in place.
 	useLayoutEffect(() => {
@@ -187,9 +189,20 @@ export function CommandList({
 	const highlighted = visible[current];
 
 	// Only a move of the highlight scrolls; a page arriving must not yank the list back to it.
+	// Arrow keys stay instant, so a held key never runs ahead of the list.
 	useLayoutEffect(() => {
-		list.current?.querySelector('[data-active=true]')?.scrollIntoView({ block: 'nearest' });
+		const smooth =
+			pointed.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		list.current
+			?.querySelector('[data-active=true]')
+			?.scrollIntoView({ block: 'nearest', behavior: smooth ? 'smooth' : 'auto' });
 	}, [current]);
+
+	function point(index: number) {
+		pointed.current = true;
+		setActive(index);
+	}
 
 	useEffect(() => {
 		if (present) {
@@ -203,6 +216,7 @@ export function CommandList({
 
 			const step = event.key === 'ArrowDown' ? 1 : -1;
 
+			pointed.current = false;
 			setActive((current + step + visible.length) % Math.max(visible.length, 1));
 
 			return;
@@ -254,6 +268,7 @@ export function CommandList({
 					placeholder={placeholder}
 					onChange={(event) => {
 						onQueryChange(event.target.value);
+						pointed.current = false;
 						setActive(0);
 					}}
 					onKeyDown={handleKeyDown}
@@ -303,9 +318,9 @@ export function CommandList({
 						aria-posinset={index + 1}
 						aria-setsize={total ?? visible.length}
 						data-active={index === current}
-						onMouseMove={touch ? undefined : () => setActive(index)}
+						onMouseMove={touch ? undefined : () => point(index)}
 						// The browser re-hit-tests after the view swaps under a still pointer; enter picks that row up.
-						onMouseEnter={touch ? undefined : () => setActive(index)}
+						onMouseEnter={touch ? undefined : () => point(index)}
 						onClick={item.onSelect}
 						className={cn(
 							'flex items-center rounded-menu-item corner-continuous outline-none text-left cursor-default',
