@@ -1,7 +1,10 @@
 import { createLogger } from '@unbound-app/logger';
+import { cloneElement } from 'react';
 
+import { findRootThemeProvider, mapThemeProvider } from '~/lib/root-theme-provider';
+import type { RootThemeElement } from '~/lib/root-theme-provider';
+import { find, findByProps, findStore } from '~/api/metro';
 import { resolveThemeColor } from '~/lib/theme-colors';
-import { findByProps, findStore } from '~/api/metro';
 import { createPatcher } from '~/api/patcher';
 import ThemeStore from '~/stores/themes';
 
@@ -24,8 +27,20 @@ type ColorTokens = {
 	};
 };
 
+type ThemedContext = {
+	key: string;
+};
+
+type ExperimentsCopy = {
+	source: string[] | undefined;
+	revision: number;
+	copy: string[];
+};
+
 let unsubscribe: (() => void) | null = null;
 let restoreRaw: (() => void) | null = null;
+let revision = 0;
+let experiments: ExperimentsCopy | null = null;
 
 // The editor's draft is its own slot over the applied theme, so a sync apply mid-edit never clobbers it.
 function currentTheme() {
@@ -58,6 +73,49 @@ function refreshDiscordTheme() {
 	findStore('Theme')?.emitChange?.();
 }
 
+function experimentsFor(source: string[] | undefined) {
+	if (experiments?.source !== source || experiments.revision !== revision) {
+		experiments = { source, revision, copy: [...(source ?? [])] };
+	}
+
+	return experiments.copy;
+}
+
+// Discord caches styles per context key and memoises the root context on its props; a new key and prop
+// identity per theme revision make themed components recompute their colours.
+function patchThemeContext() {
+	const context = find(
+		(mdl) => typeof mdl?.createThemedContext === 'function' && !('ThemeContextProvider' in mdl),
+		{ interop: false },
+	);
+	const root = findRootThemeProvider();
+
+	if (!context || !root) {
+		Logger.error('Failed to find the theme context, so theme changes need a restart.');
+
+		return;
+	}
+
+	Patcher.after(context, 'createThemedContext', ({ result }) => {
+		const themed: ThemedContext = result;
+
+		return { ...themed, key: `${themed.key}#${revision}` };
+	});
+
+	Patcher.after(root, 'RootThemeContextProvider', ({ result }) => {
+		const element: RootThemeElement = result;
+
+		// Subscribes the root to theme changes; `revision` was already bumped by the store listener.
+		ThemeStore((state) => state.preview ?? state.data);
+
+		return mapThemeProvider(element, (provider) =>
+			cloneElement(provider, {
+				enabledExperiments: experimentsFor(provider.props.enabledExperiments),
+			}),
+		);
+	});
+}
+
 /** Recolours Discord's JavaScript colour tokens with the applied theme and follows theme changes. */
 export function start() {
 	const tokens: ColorTokens | undefined = findByProps('SemanticColor')?.default;
@@ -79,7 +137,9 @@ export function start() {
 	});
 
 	applyRawColors(tokens.unsafe_rawColors);
+	patchThemeContext();
 	unsubscribe = ThemeStore.subscribe(() => {
+		revision++;
 		applyRawColors(tokens.unsafe_rawColors);
 		refreshDiscordTheme();
 	});
