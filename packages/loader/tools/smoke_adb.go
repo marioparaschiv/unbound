@@ -33,9 +33,9 @@ var androidSplitABIs = map[string]string{
 
 type androidSmokeTarget struct {
 	serial string
-	apks   string
-	abi    string
-	pid    string
+	// apks is empty when the smoke test checks the Discord already on the device.
+	apks string
+	pid  string
 }
 
 func runAndroidSmoke(args []string) error {
@@ -43,15 +43,23 @@ func runAndroidSmoke(args []string) error {
 	options := registerSmokeFlags(set)
 	serial := set.String("serial", firstNonEmpty(os.Getenv("ANDROID_SERIAL"), "emulator-5554"), "adb serial of the emulator")
 	apks := set.String("apks", "", "directory of the patched Discord split APKs")
+	installed := set.Bool("installed", false, "test the Discord already installed on the device instead of installing one")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
-	if *apks == "" {
-		return errors.New("usage: smoke android --apks <dir> [--serial <serial>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>]")
+	if err := validateAndroidSmokeSource(*apks, *installed); err != nil {
+		return err
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	return runSmokeTest(ctx, "android", options, &androidSmokeTarget{serial: *serial, apks: *apks})
+}
+
+func validateAndroidSmokeSource(apks string, installed bool) error {
+	if (apks == "") == installed {
+		return nil
+	}
+	return errors.New("usage: smoke android (--apks <dir> | --installed) [--serial <serial>] [--plugins <dir>] [--client <dir>] [--artifacts <dir>]")
 }
 
 func firstNonEmpty(values ...string) string {
@@ -96,16 +104,7 @@ func (target *androidSmokeTarget) prepare(ctx context.Context, plugins []smokePl
 	if strings.TrimSpace(identity) != "0" {
 		return errors.New("adb has no root on this emulator; use a google_apis system image")
 	}
-	abi, err := target.shell(ctx, time.Minute, "getprop ro.product.cpu.abi")
-	if err != nil {
-		return err
-	}
-	target.abi = strings.TrimSpace(abi)
-	splits, err := selectAndroidSplits(target.apks, target.abi)
-	if err != nil {
-		return err
-	}
-	if _, err := target.adb(ctx, 10*time.Minute, append([]string{"install-multiple", "-r", "-d"}, splits...)...); err != nil {
+	if err := target.install(ctx); err != nil {
 		return err
 	}
 	if _, err := target.shell(ctx, time.Minute, "rm -rf "+smokeAndroidStaging+" && mkdir -p "+smokeAndroidStaging+"/Plugins"); err != nil {
@@ -135,7 +134,9 @@ func (target *androidSmokeTarget) prepare(ctx context.Context, plugins []smokePl
 		}
 	}
 	documents := smokeAndroidData + "/files/Unbound"
+	// --installed keeps a running Discord alive, and launch would only bring it to the front.
 	install := strings.Join([]string{
+		"am force-stop " + smokeAndroidPackage,
 		"mkdir -p " + documents,
 		"cp -R " + smokeAndroidStaging + "/. " + documents + "/",
 		"chown -R $(stat -c %u:%g " + smokeAndroidData + ") " + smokeAndroidData + "/files",
@@ -159,6 +160,25 @@ func (target *androidSmokeTarget) waitForBoot(ctx context.Context) error {
 		time.Sleep(smokePollInterval)
 	}
 	return errors.New("the emulator did not finish booting")
+}
+
+func (target *androidSmokeTarget) install(ctx context.Context) error {
+	if target.apks == "" {
+		if _, err := target.shell(ctx, time.Minute, "pm path "+smokeAndroidPackage); err != nil {
+			return fmt.Errorf("%s is not installed on %s: %w", smokeAndroidPackage, target.serial, err)
+		}
+		return nil
+	}
+	abi, err := target.shell(ctx, time.Minute, "getprop ro.product.cpu.abi")
+	if err != nil {
+		return err
+	}
+	splits, err := selectAndroidSplits(target.apks, strings.TrimSpace(abi))
+	if err != nil {
+		return err
+	}
+	_, err = target.adb(ctx, 10*time.Minute, append([]string{"install-multiple", "-r", "-d"}, splits...)...)
+	return err
 }
 
 func selectAndroidSplits(directory, abi string) ([]string, error) {

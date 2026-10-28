@@ -559,7 +559,7 @@ go run ./tools smoke android --apks patched-discord --client ../client/dist
 go run ./tools smoke ios --app Payload/Discord.app --client ../client/dist
 ```
 
-`--apks` is a directory of patched split APKs, from which the base, the emulator's ABI split and the other config splits are installed. Without `--client` the app keeps its default bundle URL. The simulator build retargets frameworks that only declare an iPhoneOS deployment target, such as `CydiaSubstrate.framework`, to the simulator platform, since the simulator refuses to load them otherwise.
+`--apks` is a directory of patched split APKs, from which the base, the emulator's ABI split and the other config splits are installed. `--installed` replaces `--apks` and tests the `com.discord` already on the device without reinstalling it, so a Discord installed by the Unbound Manager keeps the manager as its installer. Without `--client` the app keeps its default bundle URL. The simulator build retargets frameworks that only declare an iPhoneOS deployment target, such as `CydiaSubstrate.framework`, to the simulator platform, since the simulator refuses to load them otherwise.
 
 To smoke-test a jailbroken iPhone that already runs the loader, drive it through jb-p1lot:
 
