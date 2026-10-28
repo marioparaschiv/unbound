@@ -7,6 +7,9 @@ import type { CommandRunner } from '~/lib/run-command';
 
 export type PluginFile = { name: string; path: string };
 
+/** The file `ubd install` leaves in a plugin's folder so the client treats it as a development copy. */
+export const DEVELOPMENT_MARKER = 'development';
+
 export type PluginPayload = { id: string; files: PluginFile[] };
 
 export type InstallOptions = {

@@ -6,6 +6,7 @@ import { mock } from 'bun:test';
 export const writes: string[] = [];
 export const states: Record<string, boolean> = {};
 export const persists: number[] = [];
+export const existingFiles = new Set<string>();
 
 mock.module('~/api/fs', () => ({
 	default: {
@@ -13,7 +14,7 @@ mock.module('~/api/fs', () => ({
 		write: async (path: string) => void writes.push(path),
 		read: async () => '',
 		rm: async () => true,
-		exists: async () => false,
+		exists: async (path: string) => existingFiles.has(path),
 	},
 }));
 
@@ -152,6 +153,7 @@ export function resetDevice() {
 	writes.length = 0;
 	persists.length = 0;
 	storedSettings.clear();
+	existingFiles.clear();
 
 	for (const key of Object.keys(states)) {
 		delete states[key];

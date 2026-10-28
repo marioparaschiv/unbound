@@ -1,9 +1,9 @@
 import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 
 import type { InstallOptions, PluginPayload } from '~/lib/plugin-install';
+import { DEVELOPMENT_MARKER, logToStderr } from '~/lib/plugin-install';
 import { formatDuration, runCommand } from '~/lib/run-command';
 import type { CommandResult } from '~/lib/run-command';
-import { logToStderr } from '~/lib/plugin-install';
 
 export const ANDROID_PLUGINS_DIRECTORY = '/data/data/com.discord/files/Unbound/Plugins';
 
@@ -115,7 +115,7 @@ function copyIntoPlaceScript(plugin: PluginPayload, destination: string): string
 		.map((file, index) => `cp ${staged[index]} ${destination}/${file.name}`)
 		.join(' && ');
 
-	return `mkdir -p ${destination} && ${copies} && chown -R $(stat -c %u:%g ${ANDROID_PLUGINS_DIRECTORY}) ${destination} && chmod 600 ${destination}/* && rm -f ${staged.join(' ')}`;
+	return `mkdir -p ${destination} && ${copies} && touch ${destination}/${DEVELOPMENT_MARKER} && chown -R $(stat -c %u:%g ${ANDROID_PLUGINS_DIRECTORY}) ${destination} && chmod 600 ${destination}/* && rm -f ${staged.join(' ')}`;
 }
 
 export default installOnAndroid;
