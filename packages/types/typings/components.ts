@@ -358,6 +358,10 @@ export type IconButtonProps = {
 /** `FloatingActionButton`: a single-icon FAB, typically pinned to a screen corner. */
 export type FloatingActionButtonProps = {
 	icon?: ReactNode | number;
+	/** Distance from the parent's bottom edge; Discord defaults to 16 and springs to changes. */
+	positionBottom?: number;
+	positionRight?: number;
+	accessibilityLabel?: string;
 	style?: StyleProp<ViewStyle>;
 	onPress?: DiscordFunction<void>;
 };

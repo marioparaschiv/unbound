@@ -1,3 +1,4 @@
+export { default as themeEditorButton } from '~/builtins/theme-editor-button';
 export { default as discordSupport } from '~/builtins/discord-support';
 export { default as errorBoundary } from '~/builtins/error-boundary';
 export { default as hotRefresh } from '~/builtins/hot-refresh';

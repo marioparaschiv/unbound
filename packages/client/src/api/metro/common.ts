@@ -11,6 +11,7 @@ export const Screens = findByPropsLazy('FullWindowOverlay');
 export const SVG = findByPropsLazy('Svg', 'Path');
 export const Commands = findByPropsLazy('getBuiltInCommands');
 export const Moment = findByPropsLazy('isMoment');
+export const RootNavigation = findByPropsLazy('getRootNavigationRef');
 
 export const Util = findByPropsLazy('inspect');
 export const Flux = findByPropsLazy('Store', 'connectStores');

@@ -34,7 +34,10 @@ function patchToastContainer() {
 	}
 
 	for (const [module, key] of targets) {
-		Patcher.after(module, key, ({ result }) => {
+		// `instead`, so `after` patches on the same container (the theme editor button) wrap this result in
+		// any registration order. The original always runs to keep its hooks stable when the setting flips.
+		Patcher.instead(module, key, ({ args, original, this: self }) => {
+			const result = original.apply(self, args);
 			const settings = Settings.useSettingsStore(({ key }) => key?.startsWith('toasts'));
 
 			if (settings.get('toasts.enabled', true)) {
