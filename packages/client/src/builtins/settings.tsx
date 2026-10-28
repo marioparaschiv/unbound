@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 
 import { findByProps, findByName, findByFilePath } from '~/api/metro';
 import MarketplacePage from '~/ui/settings/marketplace';
+import { ThemeEditorPage } from '~/ui/theme-editor';
 import { Screens, CLIENT_NAME } from '~/lib/constants';
 import CloudSyncPage from '~/ui/settings/cloud-sync';
 import DeveloperPage from '~/ui/settings/developer';
@@ -129,6 +130,12 @@ const builtInEntries: Record<string, SettingsEntry> = {
 		key: Screens.Assets,
 		useTitle: () => Messages.UNBOUND_ASSET_BROWSER,
 		getComponent: () => AssetsPage,
+		hidden: true,
+	}),
+	[Screens.ThemeEditor]: route({
+		key: Screens.ThemeEditor,
+		useTitle: () => Messages.UNBOUND_THEME_EDITOR,
+		getComponent: () => ThemeEditorPage,
 		hidden: true,
 	}),
 	[Screens.Custom]: route({
