@@ -2,6 +2,7 @@
 export { Plugins as plugins, Themes as themes, Icons as icons, Fonts as fonts } from '~/managers';
 export * as commands from '~/api/commands';
 export * as settings from '~/api/settings';
+export * as dialogs from '~/api/dialogs';
 export * as patcher from '~/api/patcher';
 export * as storage from '~/api/storage';
 export * as assets from '~/api/assets';

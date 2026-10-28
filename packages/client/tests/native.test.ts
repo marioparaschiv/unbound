@@ -22,6 +22,7 @@ type NativePluginGlobal = typeof globalThis & {
 };
 
 mock.module('react-native', () => ({
+	Alert: { alert: () => undefined },
 	NativeModules: {},
 	TurboModuleRegistry: { get: () => undefined },
 	Switch: 'Switch',

@@ -1,8 +1,8 @@
 import type { AddonRelease } from '@unbound-app/contracts/updates';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
-import { Alert } from 'react-native';
 
 import { dependentsOf, planDependencies, type ListedDependency } from '~/lib/addon-dependencies';
+import { confirm, showDialog } from '~/api/dialogs';
 import MarketplaceStore from '~/stores/marketplace';
 import { Messages, format } from '~/api/i18n';
 import { ManagerKind } from '~/lib/constants';
@@ -33,20 +33,6 @@ function toRelease(listed: ListedAddon): AddonRelease {
 	const { version, manifestUrl, bundleUrl, sha256, changelog, changes } = listed.latestVersion;
 
 	return { id: listed.id, version, manifestUrl, bundleUrl, sha256, changelog, changes };
-}
-
-function ask(title: string, message: string, confirm: string): Promise<boolean> {
-	return new Promise((resolve) => {
-		Alert.alert(
-			title,
-			message,
-			[
-				{ text: Messages.UNBOUND_CANCEL, style: 'cancel', onPress: () => resolve(false) },
-				{ text: confirm, onPress: () => resolve(true) },
-			],
-			{ cancelable: true, onDismiss: () => resolve(false) },
-		);
-	});
 }
 
 function describePlan(install: ListedDependency[], update: ListedDependency[]): string {
@@ -90,10 +76,13 @@ export async function installDependencies(addon: ListedAddon): Promise<boolean> 
 	const name = addon.latestVersion.manifest.name;
 
 	if (plan.unavailable.length) {
-		Alert.alert(
-			format('UNBOUND_DEPENDENCIES_TITLE', { name }),
-			format('UNBOUND_DEPENDENCIES_UNAVAILABLE', { names: plan.unavailable.join(', ') }),
-		);
+		showDialog({
+			title: format('UNBOUND_DEPENDENCIES_TITLE', { name }),
+			body: format('UNBOUND_DEPENDENCIES_UNAVAILABLE', {
+				names: plan.unavailable.join(', '),
+			}),
+			cancel: Messages.UNBOUND_OK,
+		});
 
 		return false;
 	}
@@ -102,11 +91,12 @@ export async function installDependencies(addon: ListedAddon): Promise<boolean> 
 		return true;
 	}
 
-	const approved = await ask(
-		format('UNBOUND_DEPENDENCIES_TITLE', { name }),
-		`${format('UNBOUND_DEPENDENCIES_BODY', { count: plan.ordered.length })}\n\n${describePlan(plan.install, plan.update)}`,
-		Messages.UNBOUND_DEPENDENCIES_CONFIRM,
-	);
+	const approved = await confirm({
+		title: format('UNBOUND_DEPENDENCIES_TITLE', { name }),
+		body: `${format('UNBOUND_DEPENDENCIES_BODY', { count: plan.ordered.length })}\n\n${describePlan(plan.install, plan.update)}`,
+		confirmLabel: Messages.UNBOUND_DEPENDENCIES_CONFIRM,
+		cancelLabel: Messages.UNBOUND_CANCEL,
+	});
 
 	if (!approved) {
 		return false;
