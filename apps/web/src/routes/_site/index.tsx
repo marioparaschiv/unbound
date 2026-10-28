@@ -12,6 +12,7 @@ import { motion } from 'motion/react';
 
 import { Card, CardDescription, CardTitle } from '~/components/ui/card';
 import type { CssVariables } from '~/lib/css-variables';
+import HeroShowcase from '~/components/hero-showcase';
 import { Button } from '~/components/ui/button';
 import cn from '~/lib/cn';
 
@@ -157,9 +158,7 @@ function HomePage() {
 						</a>
 					</Button>
 				</div>
-				<div className='after:z-10 after:absolute relative after:inset-0 after:bg-[linear-gradient(to_bottom,transparent_0%,var(--color-background)_55%)] mt-16 md:mt-8 w-full max-w-[1600px] after:pointer-events-none'>
-					<img src='/img/hero.png' alt='Unbound hero' className='w-full' />
-				</div>
+				<HeroShowcase fade className='mt-16 md:mt-8 w-full max-w-[1600px]' />
 			</div>
 			<FeatureGrid />
 			<div className='relative w-full overflow-hidden'>
