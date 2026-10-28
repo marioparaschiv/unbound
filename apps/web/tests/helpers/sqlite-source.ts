@@ -73,11 +73,6 @@ INSERT INTO perk_claim (user_id, perk_id, config, created_at, updated_at, revoke
 INSERT INTO sync_document (user_id, revision, document, updated_at) VALUES ('u1', 3, '${DOCUMENT_JSON}', 1700000000000);
 INSERT INTO discord_profile (discord_id, username, global_name, avatar_hash, fetched_at) VALUES
 	('111', 'zoe', NULL, NULL, 1700000000000);
-INSERT INTO team_member (discord_id, "group", staff_role, position, synced_at) VALUES
-	('222', 'core', 'admin', 1, 1700000000000);
-INSERT INTO crash_report (id, kind, platform, client_version, loader_version, discord_version, os_version, device_model, addon_id, addon_version, addon_trust, phase, seconds, message, stack, log, received_at) VALUES
-	('c1', 'addon', 'ios', '1.0.0', '1.0.0', '353.0', '26.0', 'iPhone12,8', 'unbound.moyai', '1.0.0', 'signed', 'start', 1.25e-7, 'boom', NULL, NULL, 1700000000000),
-	('c2', 'native', 'android', '1.0.0', '1.0.0', '353.0', '16', 'Pixel', NULL, NULL, NULL, NULL, 12.5, NULL, NULL, NULL, 1700000000001);
 INSERT INTO bot_feed_change (feed, key, seq, changed_at) VALUES ('releases', 'android:9.9.9', ${FEED_SEQ}, 1700000000000);
 `;
 

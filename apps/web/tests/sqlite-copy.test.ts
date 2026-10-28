@@ -110,6 +110,9 @@ async function failure(promise: Promise<TableReport[]>): Promise<Error> {
 	throw new Error('Expected the copy to fail.');
 }
 
+// Tables created after the move to Postgres, which the frozen SQLite schema never had.
+const NEWER_THAN_SQLITE: ReadonlySet<string> = new Set(['team_member', 'crash_report']);
+
 describe('copySqlite', () => {
 	test('copies every table and verifies each against the source', async () => {
 		const context = await setup();
@@ -124,14 +127,21 @@ describe('copySqlite', () => {
 				`SELECT count(*)::int AS n FROM "${report.table}"`,
 			);
 
-			expect(report).toMatchObject({ match: true, present: true });
-			expect(report.rows).toBe(sourceCount(context.source, report.table));
+			expect(report).toMatchObject({
+				match: true,
+				present: !NEWER_THAN_SQLITE.has(report.table),
+			});
+			expect(report.rows).toBe(
+				NEWER_THAN_SQLITE.has(report.table) ? 0 : sourceCount(context.source, report.table),
+			);
 			expect(row?.n).toBe(report.rows);
 			expect(report.targetRows).toBe(report.rows);
 			expect(report.targetChecksum).toBe(report.checksum);
 		}
 
-		expect(reports.every((report) => report.rows > 0)).toBe(true);
+		expect(
+			reports.every((report) => report.rows > 0 || NEWER_THAN_SQLITE.has(report.table)),
+		).toBe(true);
 	});
 
 	test('reads every column type back exactly through the app schema', async () => {
