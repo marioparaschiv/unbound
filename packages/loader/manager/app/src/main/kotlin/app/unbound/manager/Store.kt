@@ -33,8 +33,9 @@ data class Persisted(
 /**
  * Sole owner of `state.json` and the per-target logs. [apply] is the only way a phase changes: it runs
  * the reducer under the mutex and logs the transition, so runner, receiver and UI never race on a record.
+ * [onChange] hears every phase change, whoever applied the event.
  */
-class Store(private val dir: File) {
+class Store(private val dir: File, private val onChange: (Target, Phase, Phase) -> Unit) {
     private val file = AtomicFile(File(dir, "state.json"))
     private val mutex = Mutex()
     private val mutableState = MutableStateFlow(load())
@@ -56,6 +57,7 @@ class Store(private val dir: File) {
 
         write(mutableState.value.let { it.copy(records = it.records + (target to after)) })
         log(target, "${before.phase.label()} + ${event.label()} -> ${after.phase.label()}")
+        if (after.phase != before.phase) onChange(target, before.phase, after.phase)
         after
     }
 

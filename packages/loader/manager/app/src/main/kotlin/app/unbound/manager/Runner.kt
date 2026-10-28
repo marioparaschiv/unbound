@@ -4,7 +4,6 @@ import android.content.Context
 import app.unbound.manager.core.Effect
 import app.unbound.manager.core.Event
 import app.unbound.manager.core.Failure
-import app.unbound.manager.core.Phase
 import app.unbound.manager.core.Target
 import app.unbound.manager.core.effect
 import app.unbound.manager.effects.Sessions
@@ -49,12 +48,7 @@ class Runner(
                 Event.Fail(Failure.Unexpected(error.message ?: error.javaClass.simpleName))
             } ?: return
 
-            val next = store.apply(target, event)
-
-            if (next == record) return
-            if (record.phase is Phase.Confirming && next.phase == Phase.Idle) {
-                Notifier.updated(context, target, record.phase.artifact.release)
-            }
+            if (store.apply(target, event) == record) return
         }
     }
 

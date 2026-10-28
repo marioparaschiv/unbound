@@ -21,6 +21,8 @@ data class Artifact(
     val signer: String,
     /** Epoch millis. An installed package updated after this with our versionCode and signer is this artifact. */
     val verifiedAt: Long,
+    /** The versionCode installed when the splits were verified, null for a first install. */
+    val previousVersionCode: Long? = null,
 )
 
 enum class Step { DOWNLOAD, VERIFY, INSTALL, CONFIRM }
@@ -65,7 +67,13 @@ sealed interface Event {
 
     data object Downloaded : Event
 
-    data class Verified(val versionCode: Long, val splits: List<String>, val signer: String, val at: Long) : Event
+    data class Verified(
+        val versionCode: Long,
+        val splits: List<String>,
+        val signer: String,
+        val at: Long,
+        val previousVersionCode: Long?,
+    ) : Event
 
     /** The runner wrote every split into [sessionId] and is about to commit it. */
     data class SessionReady(val sessionId: Int, val at: Long) : Event
@@ -105,7 +113,7 @@ fun TargetRecord.on(event: Event): TargetRecord {
 
         is Phase.Verifying -> when (event) {
             is Event.Verified -> Phase.Committing(
-                Artifact(phase.release, event.versionCode, event.splits, event.signer, event.at),
+                Artifact(phase.release, event.versionCode, event.splits, event.signer, event.at, event.previousVersionCode),
             )
 
             is Event.Fail -> phase.release.failedAt(Step.VERIFY, event, null)

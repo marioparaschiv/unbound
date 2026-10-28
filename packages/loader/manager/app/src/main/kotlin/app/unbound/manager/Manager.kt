@@ -2,6 +2,7 @@ package app.unbound.manager
 
 import android.content.Context
 import android.content.Intent
+import app.unbound.manager.core.Announcement
 import app.unbound.manager.core.CheckAction
 import app.unbound.manager.core.CheckOutcome
 import app.unbound.manager.core.Checked
@@ -14,6 +15,7 @@ import app.unbound.manager.core.Settings
 import app.unbound.manager.core.Target
 import app.unbound.manager.core.TargetRecord
 import app.unbound.manager.core.UpdateDecision
+import app.unbound.manager.core.announcement
 import app.unbound.manager.core.decide
 import app.unbound.manager.core.inFlight
 import app.unbound.manager.core.planCheck
@@ -50,7 +52,7 @@ data class TargetView(
 /** The one entry point for screens, the worker and the receiver. */
 class Manager private constructor(private val context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val store = Store(context.filesDir)
+    private val store = Store(context.filesDir, ::announce)
     private val trusted = trustedSigners(context)
     private val refreshes = MutableStateFlow(0)
     private val mutableChecking = MutableStateFlow(false)
@@ -72,6 +74,9 @@ class Manager private constructor(private val context: Context) {
     }.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     val logRevision: StateFlow<Int> = store.logRevision
+
+    /** The target whose installer screen is resumed. Its failures show there, so they post no notification. */
+    @Volatile var onScreen: Target? = null
 
     init {
         resume()
@@ -153,6 +158,14 @@ class Manager private constructor(private val context: Context) {
     }
 
     internal fun log(target: Target, message: String) = store.log(target, message)
+
+    private fun announce(target: Target, before: Phase, after: Phase) {
+        when (val announcement = announcement(before, after)) {
+            is Announcement.Landed -> Notifier.landed(context, target, announcement)
+            is Announcement.Failed -> if (onScreen != target) Notifier.failed(context, target, announcement)
+            null -> Unit
+        }
+    }
 
     private suspend fun start(target: Target, release: Release) {
         Notifier.clearNews(context, target)

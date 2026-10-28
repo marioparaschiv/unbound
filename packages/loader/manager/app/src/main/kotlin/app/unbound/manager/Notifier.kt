@@ -6,9 +6,10 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import app.unbound.manager.core.Release
+import app.unbound.manager.core.Announcement
 import app.unbound.manager.core.Target
 import app.unbound.manager.core.UpdateDecision
+import app.unbound.manager.ui.describe
 import app.unbound.manager.ui.shortTitle
 import app.unbound.manager.ui.title
 
@@ -75,10 +76,25 @@ object Notifier {
         manager(context).notify(newsId(target), notification)
     }
 
-    fun updated(context: Context, target: Target, release: Release) {
+    fun landed(context: Context, target: Target, landed: Announcement.Landed) {
+        val version = landed.release.version
+        val title = if (landed.firstInstall) "Installed ${target.shortTitle} $version" else "Updated ${target.shortTitle} to $version"
         val notification = Notification.Builder(context, channel(context, target))
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("Updated ${target.shortTitle} to ${release.version}")
+            .setContentTitle(title)
+            .setContentIntent(openTarget(context, target))
+            .setAutoCancel(true)
+            .build()
+
+        manager(context).notify(newsId(target), notification)
+    }
+
+    /** The body opens the target's installer screen, where the log and Share log are. */
+    fun failed(context: Context, target: Target, failed: Announcement.Failed) {
+        val notification = Notification.Builder(context, channel(context, target))
+            .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setContentTitle("Couldn't update ${target.shortTitle}")
+            .setContentText(failed.failure.describe())
             .setContentIntent(openTarget(context, target))
             .setAutoCancel(true)
             .build()

@@ -67,7 +67,8 @@ fun verify(
     }
 
     log("Verified ${info.packageName} versionCode $versionCode signed by $signer")
-    return Event.Verified(versionCode, entries, signer, System.currentTimeMillis())
+    val previous = (installed as? InstalledPackageState.Present)?.versionCode
+    return Event.Verified(versionCode, entries, signer, System.currentTimeMillis(), previous)
 }
 
 private fun unpack(target: Target, archive: File, out: File): SplitChoice {
