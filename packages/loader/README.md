@@ -13,6 +13,7 @@ Unbound Loader injects [Unbound](https://github.com/unbound-app/client) into Dis
 | `core/`      | Shared C++20 core: settings store, addon scanning, preload script, bundle updater, load pipeline, `NativePlatform` JSI bridge, native plugin async runtime |
 | `ios/`       | The Theos tweak (ElleKit, rootless) and its iOS app-extension submodules                                                                                   |
 | `android/`   | The LSPosed module (modern libxposed API) and its NDK library, built with Gradle                                                                           |
+| `manager/`   | The Unbound Manager, an Android app that installs and updates patched Discord or the LSPosed module                                                        |
 | `bootstrap/` | The shared optional React DevTools bundle (`devtools.js`) for both platforms                                                                               |
 | `vendor/`    | Third-party code: the pinned libffi submodule, nlohmann/json, the React Native JSI headers, Monocypher and a BearSSL subset                                |
 | `apt-repo/`  | Debian package and SideStore-compatible iOS distribution feeds                                                                                             |
@@ -45,6 +46,10 @@ Builds are in the [Releases](https://github.com/marioparaschiv/unbound/releases/
 
 ### Android
 
+The [Unbound Manager](#android-manager) is the recommended way to install Unbound on Android, with or without root. Download `unbound-manager.apk` from the newest [`manager-v*` release](https://github.com/marioparaschiv/unbound/releases), or [add the Unbound Manager to Obtainium](obtainium://app/%7B%22id%22%3A%22app.unbound.manager%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20Manager%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eunbound-manager%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Emanager-v%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D). It installs patched Discord or the LSPosed module on the channel you pick and keeps it up to date.
+
+To install without the manager, use Obtainium or a split-APK installer with the packages below.
+
 **Rooted (LSPosed/Vector):** install `app.unbound.android.lsposed.apk`, enable the module, and scope it to `com.discord`. The module works with every Discord channel.
 
 [Add the Unbound LSPosed module to Obtainium](obtainium://app/%7B%22id%22%3A%22app.unbound.android%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20Loader%20%28LSPosed%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eapp%5C%5C%5C%5C.unbound%5C%5C%5C%5C.android%5C%5C%5C%5C.lsposed%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eloader-v%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D) to receive updates from GitHub Releases. The release workflow requires a persistent Android signing key so installed copies can be updated safely.
@@ -59,9 +64,31 @@ Every release of the module is signed with the same key. Check a downloaded APK 
 | Beta    | `loader-v<version>-android-beta` (prerelease)  | `Unbound-beta.apks`  | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20%28Discord%20beta%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound-beta%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eloader-v%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B-android-beta%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D)    |
 | Alpha   | `loader-v<version>-android-alpha` (prerelease) | `Unbound-alpha.apks` | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20%28Discord%20alpha%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound-alpha%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eloader-v%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B-android-alpha%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D) |
 
-The Obtainium configs are [`obtainium.json`](obtainium.json) for the module and `obtainium-<channel>.json` for patched Discord. Each patched config filters release titles to its own channel's tags and falls back past the newer releases of other channels.
+The Obtainium configs are [`obtainium.json`](obtainium.json) for the module, `obtainium-<channel>.json` for patched Discord and [`obtainium-manager.json`](obtainium-manager.json) for the manager. Each patched config filters release titles to its own channel's tags and falls back past the newer releases of other channels.
 
 Stable releases attach both Android packages next to the iOS Debian package, `Unbound.ipa` and the iOS simulator archive. Beta and alpha prereleases attach the module and the patched Discord for that channel.
+
+## Android Manager
+
+The Unbound Manager (`app.unbound.manager`) is an Android app in `manager/`, a Gradle project separate from `android/`. It installs patched Discord or the LSPosed module on the stable, beta or alpha channel, from the same GitHub releases and with the same title filters as the Obtainium configs. Before it installs a build, it checks the asset's sha256 digest and that the APK is signed with `3923c381141ea804a1a311c69b616ac9c360d4fb0dccb5fbcd09a6b8b78842c5`.
+
+It checks for updates every 6 hours. With **Update automatically** on, it installs updates to apps it installed itself without asking on Android 12 and later. Otherwise it posts a notification with an **Update** action, in one channel per target: "Patched Discord updates", "LSPosed module updates" and "Manager updates". The manager updates itself from its own releases the same way.
+
+`.github/workflows/manager-android.yml` runs ktlint, the unit tests and an R8-minified `:app:assembleRelease` for every pull request and push to `main` that touches `manager/`, and uploads the APK as the `unbound manager` artifact. A push to `main` that changes `manager/version.properties`, or a manual run on `main`, also publishes the release:
+
+| Release tag              | Assets                                                  | Prerelease | Latest |
+| ------------------------ | ------------------------------------------------------- | ---------- | ------ |
+| `manager-v<versionName>` | `unbound-manager.apk` and `unbound-manager-mapping.txt` | No         | No     |
+
+The release job requires the `ANDROID_SIGNING_*` secrets and fails unless `apksigner verify --print-certs` shows the digest above. If the tag already exists, the workflow skips the release. Raise `versionCode` together with `versionName`, because Android refuses an update whose version code is not higher. `unbound-manager-mapping.txt` is the R8 mapping that turns a minified stack trace from a shared log back into source names.
+
+Without the signing variables, `:app:assembleRelease` signs with the debug key. To build and test locally:
+
+```sh
+./manager/gradlew -p manager :app:ktlintCheck :app:testDebugUnitTest :app:assembleRelease
+```
+
+The emulator end-to-end test installs builds that `go run ./tools manager-fixture` serves as a fake GitHub releases API (see [Android Manager release fixture](#android-manager-release-fixture)). [`manager/e2e/`](manager/e2e/README.md) has the build properties for a fixture build, a uiautomator driver and a script that forces the periodic update check.
 
 ## Release pipeline
 
@@ -532,7 +559,7 @@ go run ./tools smoke android --apks patched-discord --client ../client/dist
 go run ./tools smoke ios --app Payload/Discord.app --client ../client/dist
 ```
 
-`--apks` is a directory of patched split APKs, from which the base, the emulator's ABI split and the other config splits are installed. Without `--client` the app keeps its default bundle URL. The simulator build retargets frameworks that only declare an iPhoneOS deployment target, such as `CydiaSubstrate.framework`, to the simulator platform, since the simulator refuses to load them otherwise.
+`--apks` is a directory of patched split APKs, from which the base, the emulator's ABI split and the other config splits are installed. `--installed` replaces `--apks` and tests the `com.discord` already on the device without reinstalling it, so a Discord installed by the Unbound Manager keeps the manager as its installer. Without `--client` the app keeps its default bundle URL. The simulator build retargets frameworks that only declare an iPhoneOS deployment target, such as `CydiaSubstrate.framework`, to the simulator platform, since the simulator refuses to load them otherwise.
 
 To smoke-test a jailbroken iPhone that already runs the loader, drive it through jb-p1lot:
 

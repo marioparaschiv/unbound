@@ -76,7 +76,7 @@ fun HomeScreen(manager: Manager, views: List<TargetView>, onOpen: (Target) -> Un
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Picker("Install as", Mode.entries, settings.mode, Mode::title) { mode -> manager.updateSettings { it.copy(mode = mode) } }
-            Picker("Channel", Channel.entries, settings.channel, Channel::label) { channel ->
+            Picker("Channel", Channel.entries, settings.channel, Channel::title) { channel ->
                 manager.updateSettings { it.copy(channel = channel) }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -140,7 +140,6 @@ fun HomeScreen(manager: Manager, views: List<TargetView>, onOpen: (Target) -> Un
     }
 }
 
-/** Asks for POST_NOTIFICATIONS once when Home first shows without it, and rereads the grant on every resume. */
 @Composable
 private fun rememberNotificationPermission(): Boolean {
     val context = LocalContext.current

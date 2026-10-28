@@ -13,10 +13,6 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import app.unbound.manager.core.Target
 
-/**
- * Runs [Manager.drive] for one target. Unique work `install-<target>` keeps one runner per target, and
- * WorkManager reruns it after process death, where the loop resumes from the persisted phase.
- */
 class InstallWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     private val target = inputData.getString(KEY_TARGET)?.let { name -> Target.entries.find { it.name == name } }
 
@@ -45,7 +41,6 @@ class InstallWorker(context: Context, params: WorkerParameters) : CoroutineWorke
     companion object {
         private const val KEY_TARGET = "target"
 
-        /** [replace] cancels a running runner first, so a cancelled download stops instead of finishing. */
         fun enqueue(context: Context, target: Target, replace: Boolean) {
             val request = OneTimeWorkRequestBuilder<InstallWorker>()
                 .setInputData(workDataOf(KEY_TARGET to target.name))

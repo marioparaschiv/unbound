@@ -6,7 +6,6 @@ import android.os.Build
 import app.unbound.manager.core.InstalledPackageState
 import java.security.MessageDigest
 
-/** What PackageManager shows for [packageName] right now. */
 fun PackageManager.installedState(packageName: String): InstalledPackageState {
     val info = try {
         getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)

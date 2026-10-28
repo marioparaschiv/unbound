@@ -6,15 +6,14 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import app.unbound.manager.core.Release
+import app.unbound.manager.core.Announcement
 import app.unbound.manager.core.Target
 import app.unbound.manager.core.UpdateDecision
+import app.unbound.manager.ui.describe
 import app.unbound.manager.ui.shortTitle
 import app.unbound.manager.ui.title
 
-/** One channel per target. Each target owns three notification ids: install progress, the confirm prompt, and update news. */
 object Notifier {
-    /** The foreground notification while a download runs. */
     fun progress(context: Context, target: Target, done: Long, total: Long): Notification =
         Notification.Builder(context, channel(context, target))
             .setSmallIcon(android.R.drawable.stat_sys_download)
@@ -32,14 +31,10 @@ object Notifier {
     /** Removes a progress notification posted without a foreground service. A foreground one ignores this. */
     fun clearProgress(context: Context, target: Target) = manager(context).cancel(progressId(target))
 
-    /**
-     * Wraps the installer's confirm Intent so a tap starts it with the user's grant, which a receiver cannot.
-     * It doubles as the proof, after process death, that the Intent was not lost. Dismissing it cancels the install.
-     */
     fun confirm(context: Context, target: Target, intent: Intent) {
-        val dismissed = Intent(context, InstallResultReceiver::class.java)
-            .setAction(InstallResultReceiver.ACTION_CONFIRM_DISMISSED)
-            .putExtra(InstallResultReceiver.EXTRA_TARGET, target.name)
+        val dismissed = Intent(context, ManagerActionsReceiver::class.java)
+            .setAction(ManagerActionsReceiver.ACTION_CONFIRM_DISMISSED)
+            .putExtra(ManagerActionsReceiver.EXTRA_TARGET, target.name)
         val notification = Notification.Builder(context, channel(context, target))
             .setSmallIcon(android.R.drawable.stat_sys_warning)
             .setContentTitle("Tap to finish installing ${target.title}")
@@ -51,11 +46,10 @@ object Notifier {
         manager(context).notify(confirmId(target), notification)
     }
 
-    /** Tapping Update installs in the background; tapping the body opens the target's changelog. */
     fun available(context: Context, target: Target, update: UpdateDecision.Available) {
-        val install = Intent(context, InstallResultReceiver::class.java)
-            .setAction(InstallResultReceiver.ACTION_UPDATE)
-            .putExtra(InstallResultReceiver.EXTRA_TARGET, target.name)
+        val install = Intent(context, ManagerActionsReceiver::class.java)
+            .setAction(ManagerActionsReceiver.ACTION_UPDATE)
+            .putExtra(ManagerActionsReceiver.EXTRA_TARGET, target.name)
         val newer = update.skipped.size
         val notification = Notification.Builder(context, channel(context, target))
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
@@ -75,10 +69,24 @@ object Notifier {
         manager(context).notify(newsId(target), notification)
     }
 
-    fun updated(context: Context, target: Target, release: Release) {
+    fun landed(context: Context, target: Target, landed: Announcement.Landed) {
+        val version = landed.release.version
+        val title = if (landed.firstInstall) "Installed ${target.shortTitle} $version" else "Updated ${target.shortTitle} to $version"
         val notification = Notification.Builder(context, channel(context, target))
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
-            .setContentTitle("Updated ${target.shortTitle} to ${release.version}")
+            .setContentTitle(title)
+            .setContentIntent(openTarget(context, target))
+            .setAutoCancel(true)
+            .build()
+
+        manager(context).notify(newsId(target), notification)
+    }
+
+    fun failed(context: Context, target: Target, failed: Announcement.Failed) {
+        val notification = Notification.Builder(context, channel(context, target))
+            .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setContentTitle("Couldn't update ${target.shortTitle}")
+            .setContentText(failed.failure.describe())
             .setContentIntent(openTarget(context, target))
             .setAutoCancel(true)
             .build()

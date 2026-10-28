@@ -1,0 +1,7 @@
+{
+	"id": "app.unbound.manager",
+	"url": "https://github.com/marioparaschiv/unbound",
+	"author": "unbound-app",
+	"name": "Unbound Manager",
+	"additionalSettings": "{\"apkFilterRegEx\":\"^unbound-manager\\\\.apk$\",\"filterReleaseTitlesByRegEx\":\"^manager-v\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\"}"
+}

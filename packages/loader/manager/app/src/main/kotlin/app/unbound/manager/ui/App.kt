@@ -15,7 +15,6 @@ import androidx.compose.ui.platform.LocalContext
 import app.unbound.manager.Manager
 import app.unbound.manager.core.Target
 
-/** Two screens: home, and the installer for one target. */
 @Composable
 fun App(manager: Manager, open: Target?, onOpen: (Target?) -> Unit) {
     val context = LocalContext.current

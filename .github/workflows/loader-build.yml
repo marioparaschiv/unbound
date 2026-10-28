@@ -11,6 +11,7 @@ on:
         branches: [main]
         paths:
             - 'packages/loader/**'
+            - '!packages/loader/manager/**'
             - '.github/workflows/loader-*.yml'
             - '.github/actions/**'
             - '.gitmodules'

@@ -14,14 +14,9 @@ import java.io.File
 import java.io.IOException
 import java.util.zip.ZipFile
 
-/** Where [verify] unpacks the splits of [release] for the session to read. */
 fun splitsDir(dir: File, release: Release): File = File(dir, "${release.asset.sha256}.splits")
 
-/**
- * Unpacks the splits this device needs from the downloaded asset (a single APK becomes `base.apk`),
- * then checks the base: package name, a trusted signer, and no downgrade. PackageInstaller rejects
- * splits signed differently from the base, so the base signer covers the set. Pure over files, safe to rerun.
- */
+/** PackageInstaller rejects splits signed differently from the base, so the base signer covers the set. */
 fun verify(
     packageManager: PackageManager,
     target: Target,
@@ -67,7 +62,8 @@ fun verify(
     }
 
     log("Verified ${info.packageName} versionCode $versionCode signed by $signer")
-    return Event.Verified(versionCode, entries, signer, System.currentTimeMillis())
+    val previous = (installed as? InstalledPackageState.Present)?.versionCode
+    return Event.Verified(versionCode, entries, signer, System.currentTimeMillis(), previous)
 }
 
 private fun unpack(target: Target, archive: File, out: File): SplitChoice {

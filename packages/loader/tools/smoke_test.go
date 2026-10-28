@@ -237,6 +237,21 @@ func TestSelectAndroidSplitsPicksTheEmulatorsABI(t *testing.T) {
 	}
 }
 
+func TestAndroidSmokeTakesEitherAPKsOrTheInstalledDiscord(t *testing.T) {
+	if err := validateAndroidSmokeSource("patched-discord", false); err != nil {
+		t.Fatalf("--apks alone must be accepted: %v", err)
+	}
+	if err := validateAndroidSmokeSource("", true); err != nil {
+		t.Fatalf("--installed alone must be accepted: %v", err)
+	}
+	if validateAndroidSmokeSource("patched-discord", true) == nil {
+		t.Fatal("--apks and --installed together must be rejected")
+	}
+	if validateAndroidSmokeSource("", false) == nil {
+		t.Fatal("one of --apks or --installed is required")
+	}
+}
+
 func TestSelectSimulatorPicksTheNewestIOSRuntime(t *testing.T) {
 	listing := []byte(`{"runtimes":[
 		{"identifier":"com.apple.CoreSimulator.SimRuntime.iOS-17-5","platform":"iOS","version":"17.5","isAvailable":true,"supportedDeviceTypes":[{"identifier":"iPhone-15","productFamily":"iPhone"}]},

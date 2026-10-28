@@ -1,6 +1,5 @@
 package app.unbound.manager.core
 
-/** GitHub release-notes markdown as plain text: headings, emphasis, code marks and link targets dropped, list items as bullets. */
 fun plainText(markdown: String): String = markdown.lines().joinToString("\n") { line ->
     line.trimEnd()
         .replace(HEADING, "")

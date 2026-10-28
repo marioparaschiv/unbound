@@ -23,7 +23,7 @@ class PhaseTest {
 
     private val landed = present("353.0 - Alpha", lastUpdateTime = 7_000, versionCode = 353_200)
     private val start = Event.Start(next)
-    private val verified = Event.Verified(353_200, listOf("base.apk"), TRUSTED, 5_000)
+    private val verified = Event.Verified(353_200, listOf("base.apk"), TRUSTED, 5_000, previousVersionCode = null)
     private val ready = Event.SessionReady(7, 6_000)
     private val needsUser = Event.NeedsUser(7)
     private val staleNeedsUser = Event.NeedsUser(8)
@@ -47,7 +47,6 @@ class PhaseTest {
 
     private fun notApplied() = record(Phase.Failed(release, Step.CONFIRM, Failure.NotApplied))
 
-    /** Every accepted (phase, event) pair. Any pair not listed must leave the record unchanged. */
     private val accepted: List<Triple<Phase, Event, TargetRecord>> = listOf(
         Triple(idle, start, record(Phase.Downloading(next))),
         Triple(failed, start, record(Phase.Downloading(next))),
@@ -99,6 +98,34 @@ class PhaseTest {
             .fold(TargetRecord()) { record, event -> record.on(event) }
 
         assertEquals(TargetRecord(phase = idle, installedFrom = InstalledFrom(next.asset.sha256, 7_000)), done)
+    }
+
+    @Test
+    fun `a landed build says installed after a first install and updated after an update`() {
+        val update = verified.copy(previousVersionCode = 353_100)
+
+        for ((event, firstInstall) in listOf(verified to true, update to false)) {
+            val confirming = record(verifying).on(event).on(ready).on(finished).phase
+
+            assertEquals(Announcement.Landed(release, firstInstall), announcement(confirming, record(confirming).on(observedLanded).phase))
+        }
+    }
+
+    @Test
+    fun `only landing and failing announce anything`() {
+        val announced = phases.flatMap { phase -> events.map { phase to record(phase).on(it).phase } }
+            .filter { (before, after) -> before != after }
+            .mapNotNull { (before, after) -> announcement(before, after) }
+            .toSet()
+
+        assertEquals(
+            setOf(
+                Announcement.Landed(release, firstInstall = true),
+                Announcement.Failed(release, offline),
+                Announcement.Failed(release, Failure.NotApplied),
+            ),
+            announced,
+        )
     }
 
     @Test

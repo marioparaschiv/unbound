@@ -19,7 +19,6 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.time.Instant
 
-/** Everything the manager persists, in one file so a phase change and its siblings are written atomically. */
 @Serializable
 data class Persisted(
     val settings: Settings = Settings(),
@@ -30,11 +29,7 @@ data class Persisted(
     fun record(target: Target): TargetRecord = records[target] ?: TargetRecord()
 }
 
-/**
- * Sole owner of `state.json` and the per-target logs. [apply] is the only way a phase changes: it runs
- * the reducer under the mutex and logs the transition, so runner, receiver and UI never race on a record.
- */
-class Store(private val dir: File) {
+class Store(private val dir: File, private val onChange: (Target, Phase, Phase) -> Unit) {
     private val file = AtomicFile(File(dir, "state.json"))
     private val mutex = Mutex()
     private val mutableState = MutableStateFlow(load())
@@ -42,7 +37,6 @@ class Store(private val dir: File) {
 
     val state: StateFlow<Persisted> = mutableState
 
-    /** Bumped on every log line so a screen showing a log knows to reread it. */
     val logRevision: StateFlow<Int> = mutableLogRevision
 
     suspend fun apply(target: Target, event: Event): TargetRecord = mutex.withLock {
@@ -56,6 +50,7 @@ class Store(private val dir: File) {
 
         write(mutableState.value.let { it.copy(records = it.records + (target to after)) })
         log(target, "${before.phase.label()} + ${event.label()} -> ${after.phase.label()}")
+        if (after.phase != before.phase) onChange(target, before.phase, after.phase)
         after
     }
 
@@ -71,7 +66,6 @@ class Store(private val dir: File) {
         write(mutableState.value.copy(lastCheck = check))
     }
 
-    /** Remembers that the build with [sha256] was announced or auto-installed, so the next check skips it. */
     suspend fun markNotified(target: Target, sha256: String): Unit = mutex.withLock {
         val state = mutableState.value
         write(state.copy(records = state.records + (target to state.record(target).copy(notifiedSha256 = sha256))))
@@ -79,7 +73,6 @@ class Store(private val dir: File) {
 
     fun logFile(target: Target): File = File(dir, "logs/${target.name.lowercase()}.log")
 
-    /** Appends one timestamped line. The log is append-only; the user shares it as is. */
     fun log(target: Target, message: String) {
         synchronized(this) {
             val log = logFile(target)
