@@ -58,6 +58,12 @@ sealed interface Failure {
     data object NotApplied : Failure {
         override val retryable get() = true
     }
+
+    /** An exception no step expected, recorded so the runner stops instead of crashing into a retry loop. */
+    @Serializable
+    data class Unexpected(val message: String) : Failure {
+        override val retryable get() = true
+    }
 }
 
 /** PackageInstaller.STATUS_FAILURE (1), STATUS_FAILURE_ABORTED (3, the user said no) and STATUS_FAILURE_STORAGE (6). */
