@@ -152,6 +152,7 @@ jobs:
             release_version: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
             is_testflight: ${{ steps.resolve.outputs.is_testflight || steps.select.outputs.is_testflight }}
             android_code: ${{ steps.select.outputs.code }}
+            ipa_available: ${{ steps.decrypt.outcome != 'failure' }}
         steps:
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -207,7 +208,9 @@ jobs:
                   } >> "$GITHUB_OUTPUT"
 
             - name: Decrypt the source IPA
+              id: decrypt
               if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == ''
+              continue-on-error: ${{ inputs.release != true }}
               uses: castdrian/dkrypt@v1.1.1
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
@@ -235,9 +238,13 @@ jobs:
                   fetch_args+=(--channel "$channel" --version "$REQUESTED_VERSION" --output source.ipa)
                   go run ./tools fetch "${fetch_args[@]}"
 
+            - name: Skip iOS without a source IPA
+              if: steps.decrypt.outcome == 'failure'
+              run: echo "::warning title=No iOS source::dkrypt could not provide the Discord IPA, so this build skips iOS and still builds Android."
+
             - name: Resolve source version
               id: resolve
-              if: steps.select.outputs.platform == 'ios'
+              if: steps.select.outputs.platform == 'ios' && steps.decrypt.outcome != 'failure'
               env:
                   INPUT_IS_TESTFLIGHT: ${{ inputs.is_testflight }}
                   INPUT_RELEASE: ${{ inputs.release }}
@@ -266,7 +273,7 @@ jobs:
                   } >> "$GITHUB_OUTPUT"
 
             - name: Keep the source IPA for the gate and the iOS build
-              if: steps.select.outputs.platform == 'ios'
+              if: steps.select.outputs.platform == 'ios' && steps.decrypt.outcome != 'failure'
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: discord-source-ipa
@@ -368,7 +375,7 @@ jobs:
 
     ios:
         needs: [resolve-source, compat-gate]
-        if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || needs.resolve-source.result == 'success') && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
+        if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || (needs.resolve-source.result == 'success' && needs.resolve-source.outputs.ipa_available != 'false')) && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
         permissions:
             contents: write
             actions: read
