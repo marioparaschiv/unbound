@@ -18,7 +18,7 @@ const buttonVariants = cva(
 				destructive:
 					'press [--ledge:var(--ledge-secondary)] bg-secondary text-destructive hover:bg-accent focus-visible:ring-destructive/30',
 				outline:
-					'press [--ledge:var(--ledge-outline)] border border-(--field-border) bg-secondary text-secondary-foreground hover:bg-accent hover:text-accent-foreground',
+					'press [--ledge:var(--ledge-outline)] bg-secondary text-secondary-foreground hover:bg-accent hover:text-accent-foreground',
 				secondary:
 					'press [--ledge:var(--ledge-secondary)] bg-secondary text-secondary-foreground hover:bg-accent hover:text-accent-foreground',
 				ghost: 'press-flat hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
