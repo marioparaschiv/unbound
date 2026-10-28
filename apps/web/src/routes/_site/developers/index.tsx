@@ -20,7 +20,6 @@ import type { CssVariables } from '~/lib/css-variables';
 import { listDevelopers } from '~/lib/developers';
 import { Button } from '~/components/ui/button';
 import Text from '~/components/ui/text';
-import Pager from '~/components/pager';
 import app from '~/lib/app';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -29,16 +28,13 @@ const GRID_STYLE: CssVariables = { '--col-width': '300px' };
 
 const fetchDevelopers = createServerFn({ method: 'GET' })
 	.validator(pageSearchSchema)
-	.handler(({ data }) =>
-		listDevelopers(app, { search: data.search ?? '', page: data.page ?? 1 }),
-	);
+	.handler(({ data }) => listDevelopers(app, { search: data.search ?? '' }));
 
 function DevelopersContent() {
-	const { developers, total, pageSize } = Route.useLoaderData();
+	const { developers } = Route.useLoaderData();
 	const params = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = params.search ?? '';
-	const page = params.page ?? 1;
 	const [searchInput, setSearchInput] = useState(search);
 
 	const navigateToSearch = useMemo(
@@ -65,7 +61,7 @@ function DevelopersContent() {
 		void navigate({ search: toPageSearch('', 1) });
 	}
 
-	if (total === 0 && !search) {
+	if (developers.length === 0 && !search) {
 		return (
 			<Empty className='flex-1 my-auto'>
 				<EmptyHeader>
@@ -117,22 +113,11 @@ function DevelopersContent() {
 					</EmptyContent>
 				</Empty>
 			) : (
-				<>
-					<div style={GRID_STYLE} className='fill-grid gap-3'>
-						{developers.map((developer) => (
-							<DeveloperCard developer={developer} key={developer.author.discordId} />
-						))}
-					</div>
-
-					<Pager
-						className='px-0 pt-4 pb-0'
-						page={page}
-						pageSize={pageSize}
-						total={total}
-						noun='developers'
-						onPageChange={(next) => navigate({ search: toPageSearch(search, next) })}
-					/>
-				</>
+				<div style={GRID_STYLE} className='fill-grid gap-3'>
+					{developers.map((developer) => (
+						<DeveloperCard developer={developer} key={developer.author.discordId} />
+					))}
+				</div>
 			)}
 		</div>
 	);
