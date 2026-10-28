@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import type { Plugin } from '@unbound-app/types';
 
-import { makeManifest, resetDevice, states } from './helpers/addons';
+import { makeManifest, resetDevice, states, writes } from './helpers/addons';
 
 const { Plugins } = await import('~/managers/plugins');
 
@@ -120,5 +120,29 @@ describe('plugin bytecode', () => {
 
 		expect(Reflect.get(globalThis, '__bytecodeTestFresh')).toBe(true);
 		Reflect.deleteProperty(globalThis, '__bytecodeTestFresh');
+	});
+
+	test('runs a pushed bundle from the bytecode pushed with it', async () => {
+		scan('({ start() {}, stop() {} })');
+		const plugins = new Plugins();
+
+		plugins.initialize();
+		evaluations = [];
+		writes.length = 0;
+
+		const result = await plugins.reload(
+			'bytecode.example',
+			'({ start() { globalThis.__bytecodeTestPushedSource = true; }, stop() {} })',
+			{ ...makeManifest('bytecode.example'), bytecode: { '98': 'digest' } },
+			'xh+8Aw==',
+		);
+
+		expect(result).toEqual({ ok: true });
+		expect(writes).toContain('Unbound/Plugins/bytecode.example/index.98.hbc');
+		expect(evaluations).toEqual([
+			['bytecode.example', 98],
+			['bytecode', 0],
+		]);
+		expect(Reflect.get(globalThis, '__bytecodeTestPushedSource')).toBeUndefined();
 	});
 });

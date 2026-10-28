@@ -178,9 +178,20 @@ async function handleEvalRequest(id: string, code: string) {
 
 // A thin transport caller: the reload lifecycle lives on the Plugins manager. Report the manager's
 // own returned outcome straight back over the wire so the CLI stages the reload result.
+function runtimeBytecode(request: PluginPushRequest): string | undefined {
+	const version = window.UNBOUND_LOADER?.bytecodeVersion;
+
+	return version ? request.bytecode?.[String(version)] : void 0;
+}
+
 async function handlePluginPush(request: PluginPushRequest) {
 	try {
-		const result = await plugins.reload(request.addonId, request.bundle, request.manifest);
+		const result = await plugins.reload(
+			request.addonId,
+			request.bundle,
+			request.manifest,
+			runtimeBytecode(request),
+		);
 
 		if (result.ok) {
 			plugins.markDevelopmentCopy(request.addonId);

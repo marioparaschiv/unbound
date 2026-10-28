@@ -1,12 +1,13 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, utimesSync } from 'node:fs';
 import type { PluginPushResult } from '@unbound-app/debugger-protocol';
 import { describe, expect, test, afterEach, spyOn } from 'bun:test';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import type { ReloadContext, BuiltAddon } from '../src/lib/reload-transport';
 
-import { createReloadTransport } from '../src/lib/reload-transport';
+import { createReloadTransport, readBuiltAddon } from '../src/lib/reload-transport';
 
 type RecordedPush = { addonId: string; bundle: string };
 
@@ -148,5 +149,34 @@ describe('createReloadTransport', () => {
 
 		expect(client.pushes).toEqual([]);
 		expect(errors).toContain(join(plugin.output, 'index.js'));
+	});
+});
+
+describe('readBuiltAddon', () => {
+	test('sends the bytecode built with the bundle and lists its digests in the manifest', () => {
+		const plugin = builtPlugin();
+		const compiled = Buffer.from([0xc6, 0x1f, 0xbc, 0x03, 0x01]);
+
+		writeFileSync(join(plugin.output, 'index.98.hbc'), compiled);
+
+		const built = readBuiltAddon(plugin);
+
+		expect(built.bytecode).toEqual({ '98': compiled.toString('base64') });
+		expect(built.manifest.bytecode).toEqual({
+			'98': createHash('sha512').update(compiled).digest('hex'),
+		});
+	});
+
+	test('leaves out bytecode older than the bundle', () => {
+		const plugin = builtPlugin();
+		const stale = join(plugin.output, 'index.98.hbc');
+
+		writeFileSync(stale, 'old');
+		utimesSync(stale, new Date(0), new Date(0));
+
+		const built = readBuiltAddon(plugin);
+
+		expect(built.bytecode).toBeUndefined();
+		expect(built.manifest.bytecode).toBeUndefined();
 	});
 });
