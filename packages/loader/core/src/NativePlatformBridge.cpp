@@ -10,6 +10,7 @@
 #include "LoaderFiles.h"
 #include "LoaderFreezeWatchdog.h"
 #include "LoaderJSI.h"
+#include "LoaderJSON.h"
 #include "NativePluginRuntime.h"
 
 namespace loader {
@@ -31,7 +32,7 @@ jsi::Value toJSIValue(jsi::Runtime &runtime, const nlohmann::json &value)
         case nlohmann::json::value_t::number_float:
             return jsi::Value(value.get<double>());
         case nlohmann::json::value_t::string:
-            return jsi::String::createFromUtf8(runtime, value.get<std::string>());
+            return jsi::String::createFromUtf8(runtime, withValidUTF8(value.get<std::string>()));
         case nlohmann::json::value_t::array: {
             jsi::Array array(runtime, value.size());
             for (size_t index = 0; index < value.size(); index++)
@@ -44,7 +45,8 @@ jsi::Value toJSIValue(jsi::Runtime &runtime, const nlohmann::json &value)
             jsi::Object object(runtime);
             for (auto entry = value.begin(); entry != value.end(); ++entry)
             {
-                object.setProperty(runtime, entry.key().c_str(),
+                object.setProperty(runtime,
+                                   jsi::PropNameID::forUtf8(runtime, withValidUTF8(entry.key())),
                                    toJSIValue(runtime, entry.value()));
             }
             return object;

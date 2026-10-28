@@ -5,6 +5,8 @@
 #include <limits>
 #include <nlohmann/json.hpp>
 
+#include "LoaderJSON.h"
+
 namespace loader {
 static constexpr size_t kSha512HexSize = 128;
 
@@ -109,7 +111,7 @@ static std::string stringField(const nlohmann::json &object, const char *key)
 
 std::optional<BundleManifest> parseBundleManifest(const std::string &text)
 {
-    nlohmann::json json = nlohmann::json::parse(text, nullptr, false);
+    nlohmann::json json = parseBoundedJSON(text);
     if (json.is_discarded() || !json.is_object())
     {
         return std::nullopt;
@@ -188,7 +190,7 @@ std::optional<BundleBaseline> parseBaseline(const std::string &text)
     {
         return std::nullopt;
     }
-    nlohmann::json json = nlohmann::json::parse(text, nullptr, false);
+    nlohmann::json json = parseBoundedJSON(text);
     if (json.is_discarded() || !json.is_object())
     {
         return std::nullopt;
