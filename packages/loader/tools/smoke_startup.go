@@ -31,7 +31,7 @@ func (watcher *smokeLogWatcher) recordMilestone(milestone *time.Duration) {
 	if !watcher.runtimeAt.IsZero() {
 		start = watcher.runtimeAt
 	}
-	*milestone = watcher.now().Sub(start)
+	*milestone = max(watcher.now().Sub(start), time.Nanosecond)
 }
 
 func startupBudgetProblems(times smokeStartupTimes, budget smokeStartupBudget, crashes []string) []string {

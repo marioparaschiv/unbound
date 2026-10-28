@@ -480,7 +480,7 @@ jobs:
                   emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect
                   disable-animations: true
                   working-directory: packages/loader
-                  script: go run ./tools smoke android --apks smoke/apks --client ../client/dist --artifacts smoke/artifacts --timeout 12m --bundle-budget 45s --plugins-budget 20s --plugin-start-budget 1s
+                  script: go run ./tools smoke android --apks smoke/apks --client ../client/dist --artifacts smoke/artifacts --timeout 12m --bundle-budget 30s --plugins-budget 20s --plugin-start-budget 1s
 
             - name: Compare startup and the console with main
               if: success() && github.event_name == 'pull_request'
