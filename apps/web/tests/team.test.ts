@@ -17,6 +17,7 @@ const IDS: TeamRoleIds = {
 	'development-team': '900000000000000003',
 	contributor: '900000000000000004',
 	management: '900000000000000005',
+	'addon-developer': '900000000000000006',
 };
 const OTHER_ROLE = '900000000000000099';
 
@@ -126,6 +127,10 @@ describe('deriveStanding', () => {
 		});
 		expect(deriveStanding([IDS.contributor], IDS)).toEqual({
 			group: 'contributor',
+			staffRole: null,
+		});
+		expect(deriveStanding([IDS['addon-developer']], IDS)).toEqual({
+			group: 'addon-developer',
 			staffRole: null,
 		});
 		expect(deriveStanding([OTHER_ROLE], IDS)).toBeUndefined();

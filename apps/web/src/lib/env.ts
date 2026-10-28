@@ -55,6 +55,7 @@ export const envSchema = z.object({
 	DISCORD_DEVELOPMENT_TEAM_ROLE_ID: z.string().regex(/^\d+$/).optional(),
 	DISCORD_MANAGEMENT_ROLE_ID: z.string().regex(/^\d+$/).optional(),
 	DISCORD_CONTRIBUTOR_ROLE_ID: z.string().regex(/^\d+$/).default('967799585844113418'),
+	DISCORD_ADDON_DEVELOPER_ROLE_ID: z.string().regex(/^\d+$/).default('952688684107456612'),
 	TEAM_SYNC_INTERVAL_SECONDS: positiveInt.default(900),
 
 	/** The sponsored account. The webhook also needs the secret; the reconcile also needs the token. */

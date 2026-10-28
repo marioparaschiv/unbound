@@ -6,13 +6,19 @@ export const TEAM_GROUPS = ['development-team', 'staff', 'contributor', 'addon-d
 
 export type TeamGroup = (typeof TEAM_GROUPS)[number];
 
-/** The groups a Discord role can grant; everyone else credited by a listed addon is `addon-developer`. */
-export type DiscordTeamGroup = Exclude<TeamGroup, 'addon-developer'>;
+/** The groups a Discord role can grant; anyone else a listed addon credits is `addon-developer` too. */
+export type DiscordTeamGroup = TeamGroup;
 
 /** The site roles a Discord role can grant, and the only ones the sync ever takes away. */
 export type StaffRole = Extract<Role, 'admin' | 'moderator'>;
 
-export type DiscordTeamRole = 'admin' | 'staff' | 'development-team' | 'management' | 'contributor';
+export type DiscordTeamRole =
+	| 'admin'
+	| 'staff'
+	| 'development-team'
+	| 'management'
+	| 'contributor'
+	| 'addon-developer';
 
 export type TeamRoleIds = Record<DiscordTeamRole, string>;
 
@@ -33,6 +39,7 @@ const GROUP_GRANTS: Grant<DiscordTeamGroup>[] = [
 	['admin', 'staff'],
 	['staff', 'staff'],
 	['contributor', 'contributor'],
+	['addon-developer', 'addon-developer'],
 ];
 
 // Development Team and Management rank above Admin in the guild, so they grant admin too.
@@ -64,7 +71,14 @@ export function readTeamSyncConfig(env: Env): TeamSyncConfig {
 	if (admin && staff && development && management) {
 		return {
 			kind: 'on',
-			ids: { admin, staff, 'development-team': development, management, contributor },
+			ids: {
+				admin,
+				staff,
+				'development-team': development,
+				management,
+				contributor,
+				'addon-developer': env.DISCORD_ADDON_DEVELOPER_ROLE_ID,
+			},
 		};
 	}
 

@@ -20,6 +20,7 @@ const IDS: TeamRoleIds = {
 	'development-team': '900000000000000003',
 	contributor: '900000000000000004',
 	management: '900000000000000005',
+	'addon-developer': '900000000000000006',
 };
 
 const ALICE = '100000000000000001';
