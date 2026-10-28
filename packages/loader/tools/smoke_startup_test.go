@@ -123,3 +123,18 @@ func TestSmokeLogWatcherTimesUnboundFromDiscordsRuntime(t *testing.T) {
 		t.Fatalf("Discord's own launch time counted against Unbound's budget: %v", problems)
 	}
 }
+
+func TestSmokeLogWatcherCountsAMilestoneReachedWithTheRuntime(t *testing.T) {
+	clock := time.Date(2026, 10, 28, 19, 0, 0, 0, time.UTC)
+	watcher := newSmokeLogWatcher(&androidSmokeTarget{})
+	watcher.now = func() time.Time { return clock }
+	watcher.markLaunch()
+	clock = clock.Add(time.Minute)
+	watcher.observe("I Unbound : [runtime] Metro module capture installed before Discord bundle.")
+	watcher.observe("I Unbound : [plugins] Loaded 2 plugins.")
+	result := &smokeResult{loaded: map[string]bool{}, failures: map[string][]string{}}
+	watcher.snapshot(result)
+	if problems := startupBudgetProblems(result.startup, smokeStartupBudget{plugins: time.Second}, nil); len(problems) != 0 {
+		t.Fatalf("plugins loaded in the same instant as the runtime were reported as missing: %v", problems)
+	}
+}
