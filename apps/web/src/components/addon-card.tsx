@@ -59,6 +59,7 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 					className='z-10 relative ml-auto'
 					size='icon-sm'
 					variant='ghost'
+					id={addon.id}
 					type={addon.type}
 					manifestUrl={addon.manifestUrl}
 					iconOnly

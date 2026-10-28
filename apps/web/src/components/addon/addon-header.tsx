@@ -35,7 +35,12 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 						<span>· v{addon.version}</span>
 					</Text>
 				</div>
-				<InstallAddonButton size='lg' type={addon.type} manifestUrl={addon.manifestUrl} />
+				<InstallAddonButton
+					size='lg'
+					id={addon.id}
+					type={addon.type}
+					manifestUrl={addon.manifestUrl}
+				/>
 			</div>
 			<Text variant='text-md' color='muted' className='max-w-3xl'>
 				{addon.description}
