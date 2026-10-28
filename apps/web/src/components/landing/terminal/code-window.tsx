@@ -93,7 +93,7 @@ function CodeWindow() {
 	if (!file) return null;
 
 	return (
-		<div className='bg-[#0d0d10] shadow-2xl border border-white/10 rounded-2xl w-full min-w-0 overflow-hidden font-mono text-[13px] leading-6'>
+		<div className='bg-[#0d0d10] shadow-float border border-white/10 rounded-surface w-full min-w-0 overflow-hidden font-mono text-[13px] leading-6'>
 			<div className='flex items-center gap-2 px-4 border-white/10 border-b h-11'>
 				<span className='bg-white/15 rounded-full size-2.5' />
 				<span className='bg-white/15 rounded-full size-2.5' />

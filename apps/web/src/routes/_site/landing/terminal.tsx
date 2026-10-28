@@ -45,7 +45,7 @@ function InstallLine() {
 		<button
 			type='button'
 			onClick={copy}
-			className='group flex items-center gap-3 bg-white/[0.03] hover:bg-white/[0.06] px-4 border border-white/10 rounded-xl w-full sm:w-auto h-12 font-mono text-sm text-left transition-colors'
+			className='group flex items-center gap-3 bg-white/[0.03] hover:bg-white/[0.06] px-4 border border-white/10 rounded-control w-full sm:w-auto h-12 font-mono text-sm text-left transition-colors'
 		>
 			<span className='text-emerald-400 select-none'>$</span>
 			<span className='flex-1 truncate'>{INSTALL_COMMAND}</span>
@@ -114,7 +114,7 @@ function TerminalLanding() {
 					/>
 				</section>
 				<section className='z-20 relative -mt-16 sm:-mt-32 md:-mt-56 mb-24 px-4 w-full max-w-4xl'>
-					<div className='bg-[#0d0d10]/80 backdrop-blur-md p-6 md:p-8 border border-white/10 rounded-2xl font-mono text-sm'>
+					<div className='bg-[#0d0d10]/80 backdrop-blur-md p-6 md:p-8 border border-white/10 rounded-surface font-mono text-sm'>
 						<p className='mb-4 text-muted-foreground'>
 							<span className='text-emerald-400'>$</span> ls unbound/
 						</p>

@@ -43,7 +43,7 @@ function LandingVariants() {
 					<li key={to}>
 						<Link
 							to={to}
-							className='group flex items-center gap-4 bg-secondary/30 hover:bg-secondary/60 p-5 border rounded-xl transition-colors'
+							className='group flex items-center gap-4 bg-secondary/30 hover:bg-secondary/60 p-5 border rounded-surface transition-colors'
 						>
 							<div className='flex flex-col flex-1 gap-1'>
 								<span className='font-semibold text-lg'>{name}</span>
