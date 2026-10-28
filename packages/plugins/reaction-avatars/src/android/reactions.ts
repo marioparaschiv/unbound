@@ -55,6 +55,7 @@ const AVATAR_GAP = 4;
 const MAX_SEARCH_DEPTH = 6;
 const SIZE_PARAMETERS = ['int', 'int', 'int', 'int'];
 const UNMOUNT_WAIT_MS = 1000;
+const DISPOSE_WAIT_MS = 3000;
 
 function settledWithin<T>(pending: Promise<T> | null, timeout: number): Promise<T | null> {
 	if (!pending) return Promise.resolve(null);
@@ -467,11 +468,12 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 
 			const views = [...bound.values()];
 
-			await Promise.all([...pills.values()].map(removePill));
-
 			const [first] = views;
+			const removed = Promise.all([...pills.values()].map(removePill)).then(async () => {
+				if (first) await layoutHostingList(java, first.messageView).catch(() => undefined);
+			});
 
-			if (first) await layoutHostingList(java, first.messageView).catch(() => undefined);
+			await settledWithin(removed, DISPOSE_WAIT_MS);
 
 			bound.clear();
 		},
