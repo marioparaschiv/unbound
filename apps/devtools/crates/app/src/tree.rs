@@ -105,6 +105,7 @@ impl Workspace {
 		let id = row.id;
 		let selected = self.selected == Some(id);
 		let matched = self.search.set.contains(&id);
+		let indent = (row.depth as f32 - shift as f32) * theme::INDENT;
 		let depth = row.depth.saturating_sub(shift);
 		let guides = (0..depth).map(|level| {
 			div()
@@ -125,7 +126,7 @@ impl Workspace {
 			.flex()
 			.items_center()
 			.gap(px(4.))
-			.pl(px(theme::INSET + depth as f32 * theme::INDENT))
+			.pl(px(theme::INSET + indent.max(0.)))
 			.pr(px(theme::INSET))
 			.whitespace_nowrap()
 			.overflow_hidden()
@@ -146,6 +147,7 @@ impl Workspace {
 				div()
 					.id(("chevron", ix))
 					.flex_none()
+					.ml(px(indent.min(0.)))
 					.w(px(theme::INDENT))
 					.h_full()
 					.flex()
