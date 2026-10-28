@@ -142,6 +142,25 @@ func installedBridgeMethods(source string, patterns ...*regexp.Regexp) map[strin
 	return installed
 }
 
+func coreFabricMethods(fabric string, platform string) map[string]bool {
+	methods := map[string]bool{}
+	synchronous := strings.Contains(platform, "FabricCalls::SyncAndAsync")
+	for _, match := range regexp.MustCompile(`fabric\.define\("(\w+)"`).FindAllStringSubmatch(fabric, -1) {
+		methods[match[1]+"Async"] = true
+		if synchronous {
+			methods[match[1]] = true
+		}
+	}
+	return methods
+}
+
+func withCoreFabric(installed map[string]map[string]bool, fabric string, platform string) map[string]map[string]bool {
+	if strings.Contains(platform, "makeFabricNamespace(") {
+		installed["fabric"] = coreFabricMethods(fabric, platform)
+	}
+	return installed
+}
+
 func TestPlatformBridgesInstallEveryAdvertisedCapabilityMethod(t *testing.T) {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
@@ -161,11 +180,15 @@ func TestPlatformBridgesInstallEveryAdvertisedCapabilityMethod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fabric, err := os.ReadFile(filepath.Join(root, "core", "src", "NativeFabric.cpp"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	setProperty := regexp.MustCompile(`\b(objc|ffi|fabric|debug)\.setProperty\(\s*runtime,\s*"(\w+)"`)
 	defined := regexp.MustCompile(`define\(\s*runtime,\s*(\w+),\s*"(\w+)"`)
 	platforms := map[string]map[string]map[string]bool{
-		"kIOSNativePluginCapabilities":     installedBridgeMethods(string(ios), setProperty),
-		"kAndroidNativePluginCapabilities": installedBridgeMethods(string(android), defined, setProperty),
+		"kIOSNativePluginCapabilities":     withCoreFabric(installedBridgeMethods(string(ios), setProperty), string(fabric), string(ios)),
+		"kAndroidNativePluginCapabilities": withCoreFabric(installedBridgeMethods(string(android), defined, setProperty), string(fabric), string(android)),
 	}
 	for list, installed := range platforms {
 		declared := regexp.MustCompile(`(?s)` + list + `\s*=\s*\{(.*?)\};`).FindStringSubmatch(string(header))

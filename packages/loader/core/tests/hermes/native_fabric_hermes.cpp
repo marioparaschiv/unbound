@@ -147,7 +147,7 @@ static const char *const kFabricChecks = R"JS((function () {
 		} catch (error) {}
 	}
 	var surface = fabric.mount('container', 'Card', { surfaceId: 'a', revision: 1 });
-	check(surface.id === 'surface-1', 'mount returns a surface with its id');
+	check(typeof surface === 'object' && surface.id === undefined, 'mount returns an opaque surface');
 	fabric.update(surface, { revision: 2 });
 	fabric.setSize(surface, { width: 10, height: 20 }, { width: 30, height: 40 });
 	fabric.setFrame(surface, { x: 1, y: 2, width: 3, height: 4 });

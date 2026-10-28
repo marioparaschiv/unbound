@@ -22,24 +22,6 @@ class FabricSurface final : public jsi::HostObject
 public:
     explicit FabricSurface(std::shared_ptr<FabricAdapter> adapter) : adapter_(std::move(adapter)) {}
 
-    jsi::Value get(jsi::Runtime &runtime, const jsi::PropNameID &name) override
-    {
-        if (name.utf8(runtime) != "id")
-        {
-            return jsi::Value::undefined();
-        }
-        std::lock_guard<std::mutex> lock(mutex_);
-        return id_.empty() ? jsi::Value::undefined()
-                           : jsi::Value(jsi::String::createFromUtf8(runtime, id_));
-    }
-
-    std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &runtime) override
-    {
-        std::vector<jsi::PropNameID> names;
-        names.push_back(jsi::PropNameID::forAscii(runtime, "id"));
-        return names;
-    }
-
     void activate(std::string id, uint64_t generation)
     {
         std::lock_guard<std::mutex> lock(mutex_);
