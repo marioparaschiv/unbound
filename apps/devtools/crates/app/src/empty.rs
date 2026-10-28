@@ -4,6 +4,7 @@ use gpui::{Context, FontWeight, SharedString, div, img, prelude::*, px};
 use unbound_devtools_core::ConnectionState;
 
 use crate::app::Workspace;
+use crate::devices::DeviceChoice;
 use crate::widgets::primary_button;
 use crate::{assets, theme};
 
@@ -41,10 +42,10 @@ impl Workspace {
 				.text_color(theme::color(theme::TEXT_FAINT))
 				.child(format!("Agents can attach at {url}"))
 		});
-		let label = if self.connecting {
-			"Connecting"
-		} else {
-			"Connect device"
+		let label = match (self.connecting, self.default_choice()) {
+			(true, _) => "Connecting".to_owned(),
+			(false, DeviceChoice::Default) => "Connect device".to_owned(),
+			(false, DeviceChoice::Preset(name)) => format!("Connect {name}"),
 		};
 		div().flex_1().flex().items_center().justify_center().child(
 			div()
@@ -71,7 +72,10 @@ impl Workspace {
 					column.child(
 						primary_button("connect-empty", label, self.connecting)
 							.mt(px(8.))
-							.on_click(cx.listener(|this, _, _, cx| this.connect_device(cx))),
+							.on_click(cx.listener(|this, _, _, cx| {
+								let choice = this.default_choice();
+								this.connect(choice, cx);
+							})),
 					)
 				})
 				.children(mcp),

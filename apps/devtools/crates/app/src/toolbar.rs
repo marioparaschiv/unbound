@@ -4,7 +4,7 @@ use gpui::{Context, Focusable, MouseButton, Window, div, img, prelude::*, px};
 use unbound_devtools_core::ConnectionState;
 
 use crate::app::Workspace;
-use crate::widgets::{ghost_button, icon, icon_button, tooltip};
+use crate::widgets::{icon, icon_button, tooltip};
 use crate::{assets, theme};
 
 /// How the status bar renders the connection: plain text, red only when it needs action.
@@ -109,11 +109,6 @@ impl Workspace {
 	}
 
 	pub fn render_toolbar(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-		let connect_label = if self.connecting {
-			"Connecting…"
-		} else {
-			"Connect device"
-		};
 		let error = self.search.error.clone().or_else(|| self.banner.clone());
 		let bar = div()
 			.flex_none()
@@ -155,14 +150,9 @@ impl Workspace {
 					.min_w_0()
 					.pl(px(theme::INSET))
 					.flex()
+					.pr(px(theme::INSET))
 					.justify_end()
-					.child(
-						ghost_button("connect", assets::PLUG, connect_label)
-							.tooltip(tooltip(
-								"Ask the device to connect over the debugger bridge",
-							))
-							.on_click(cx.listener(|this, _, _, cx| this.connect_device(cx))),
-					),
+					.child(self.render_connect(window, cx)),
 			);
 		div()
 			.flex_none()

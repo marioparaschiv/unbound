@@ -3,6 +3,8 @@
 
 mod app;
 mod assets;
+mod device_menu;
+mod devices;
 mod empty;
 mod input;
 mod inspection;

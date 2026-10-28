@@ -11,8 +11,9 @@ use gpui::{
 	MouseUpEvent, ScrollStrategy, Task, UniformListScrollHandle, Window, actions, div, prelude::*,
 	px,
 };
-use unbound_devtools_core::{Config, Devtools, ElementId, Row, Status};
+use unbound_devtools_core::{Config, Devtools, ElementId, Presets, Row, Status};
 
+use crate::devices::{self, DeviceMenu};
 use crate::input::{self, TextInput};
 use crate::inspection::Inspection;
 use crate::search::Search;
@@ -34,6 +35,7 @@ actions!(search, [NextMatch, PrevMatch, ClearSearch]);
 
 pub fn bind_keys(cx: &mut App) {
 	input::bind_keys(cx);
+	devices::bind_keys(cx);
 	let tree = Some("Tree");
 	let search = Some("Search");
 	cx.bind_keys([
@@ -79,6 +81,10 @@ pub struct Workspace {
 	/// `react-native-renderer 19.2.3`, learned from the first inspection.
 	pub renderer: Option<String>,
 	pub connecting: bool,
+	/// The saved devices as last read, or why they could not be read.
+	pub presets: Result<Presets, String>,
+	pub presets_revision: u64,
+	pub device_menu: Option<DeviceMenu>,
 	/// A transient error shown under the toolbar.
 	pub banner: Option<String>,
 	pub copied: bool,
@@ -143,6 +149,9 @@ impl Workspace {
 			resizing: false,
 			renderer: None,
 			connecting: false,
+			presets: Ok(Presets::default()),
+			presets_revision: 0,
+			device_menu: None,
 			banner: None,
 			copied: false,
 			highlighted: None,
@@ -151,6 +160,7 @@ impl Workspace {
 			copied_reset: None,
 			_watch: watch,
 		};
+		this.reload_presets();
 		this.revision_changed(cx);
 		this
 	}
@@ -158,6 +168,9 @@ impl Workspace {
 	fn revision_changed(&mut self, cx: &mut Context<Self>) {
 		let was_host = self.status.show_host_components;
 		self.status = self.devtools.status();
+		if self.presets_revision != self.devtools.presets_revision() {
+			self.reload_presets();
+		}
 		if was_host != self.status.show_host_components {
 			// The backend remounts with new ids, so per-id view state is stale.
 			self.collapsed.clear();
@@ -348,32 +361,6 @@ impl Workspace {
 		self.devtools.set_show_host_components(show);
 	}
 
-	pub fn connect_device(&mut self, cx: &mut Context<Self>) {
-		if self.connecting {
-			return;
-		}
-		self.connecting = true;
-		let devtools = self.devtools.clone();
-		let request = on_runtime(
-			&self.devtools,
-			async move { devtools.connect_device().await },
-		);
-		cx.spawn(async move |this, cx| {
-			let result = request.await;
-			this.update(cx, |this, cx| {
-				this.connecting = false;
-				match result {
-					Some(Ok(_)) => cx.notify(),
-					Some(Err(error)) => this.show_error(format!("Connect device: {error:#}"), cx),
-					None => this.show_error("Connect device was cancelled.".into(), cx),
-				}
-			})
-			.ok();
-		})
-		.detach();
-		cx.notify();
-	}
-
 	pub fn show_error(&mut self, message: String, cx: &mut Context<Self>) {
 		self.banner = Some(message);
 		self.banner_reset = Some(cx.spawn(async move |this, cx| {
@@ -502,5 +489,6 @@ impl Render for Workspace {
 			.child(self.render_toolbar(window, cx))
 			.child(body)
 			.child(self.render_status(cx))
+			.children(self.render_menu_backdrop(window, cx))
 	}
 }
