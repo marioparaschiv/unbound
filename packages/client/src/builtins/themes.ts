@@ -27,11 +27,18 @@ type ColorTokens = {
 let unsubscribe: (() => void) | null = null;
 let restoreRaw: (() => void) | null = null;
 
+// The editor's draft is its own slot over the applied theme, so a sync apply mid-edit never clobbers it.
+function currentTheme() {
+	const { preview, data } = ThemeStore.getState();
+
+	return preview ?? data;
+}
+
 function applyRawColors(raw: Record<string, string>) {
 	restoreRaw?.();
 	restoreRaw = null;
 
-	const theme = ThemeStore.getState().data;
+	const theme = currentTheme();
 	const overrides = Object.entries(theme?.raw ?? {}).filter(
 		([name, value]) => typeof value === 'string' && name in raw,
 	);
@@ -65,7 +72,7 @@ export function start() {
 	Patcher.instead(resolver, 'resolveSemanticColor', ({ args, original, this: self }) => {
 		const name = resolver.getSemanticColorName(args[1]);
 		const color = name
-			? resolveThemeColor(ThemeStore.getState().data, name, tokens.unsafe_rawColors)
+			? resolveThemeColor(currentTheme(), name, tokens.unsafe_rawColors)
 			: undefined;
 
 		return color ?? original.apply(self, args);
