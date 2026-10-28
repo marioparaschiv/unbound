@@ -1,0 +1,133 @@
+---
+title: 'CLI'
+description: 'Scaffold, build, hot reload and publish addons, and inspect Discord on a connected device, with ubd.'
+icon: 'terminal'
+---
+
+`ubd` is Unbound's command line tool, published on npm as [`@unbound-app/cli`](https://www.npmjs.com/package/@unbound-app/cli). It needs [Bun](https://bun.sh).
+
+```bash
+bunx @unbound-app/cli --help
+```
+
+Every command takes `--help` for its flags and `--json` to print the raw result instead of the formatted transcript.
+
+### Commands that talk to the device
+
+Commands that act on the running client, such as `eval`, `push`, `reload` and `dev`, go through the debugger bridge. Start it first with `bunx @unbound-app/debugger` and connect the device to it, as described in [debugging](/development/debugging). They use port `9090` unless you pass `--port`.
+
+`install`, `device` and `logs` don't need the bridge. They reach Discord directly: over `adb` on a rooted Android device or emulator, or through jb-p1lot on a jailbroken iPhone when you pass `--ios` or `--udid`. Use `--serial` to pick one of several Android devices.
+
+### Make an addon
+
+<Steps>
+	<Step title='Scaffold it'>
+		`ubd create` asks for anything you don't pass as a flag.
+
+		```bash
+		ubd create --kind plugin --name hello-world --shape repository --git-init --install
+		```
+
+		| Flag | Meaning |
+		| --- | --- |
+		| `--kind` | `plugin` or `theme`. |
+		| `--shape` | `repository` for a workspace that can hold several addons, or `addon` for a single one. |
+		| `--name` | The addon name, in kebab-case. |
+		| `--id` | The manifest id. Defaults to `<author name>.<name>`. |
+		| `--display-name`, `--description` | The name and one-line description shown in Unbound. |
+		| `--author-name`, `--author-id` | You, and your Discord id. |
+		| `--dir` | Where to create it. Defaults to `./<name>`. |
+		| `--git-init`, `--install` | Initialize git and install dependencies. Repository shape only. |
+	</Step>
+	<Step title='Build and hot reload it'>
+		Run these from the workspace.
+
+		```bash
+		ubd build
+		ubd dev
+		```
+
+		`build` builds every addon once and reports which succeeded. `dev` watches every addon, rebuilds only the one whose files changed, and reloads it in the running client after each successful build.
+
+		To send one plugin to the device without watching, use `push`. It builds the plugin, installs it if the device doesn't have it yet, and hot reloads it. Pass `--build=false` to push the existing build.
+
+		```bash
+		ubd push hello-world
+		```
+	</Step>
+	<Step title='Install it for cold starts'>
+		`install` copies a built plugin into Discord's plugin folder, so it loads on the next cold start. `--restart` restarts Discord right away.
+
+		```bash
+		ubd install hello-world --restart
+		ubd install hello-world --ios --restart
+		```
+	</Step>
+	<Step title='Publish it'>
+		Log in once by approving a code on the website, then submit the addon for review. Its build output must be committed and pushed.
+
+		```bash
+		ubd login
+		ubd publish
+		```
+
+		`publish` takes `--addon` (required when the workspace has several addons), `--ref` (defaults to the tag on `HEAD`, otherwise its commit), and `--repository` (defaults to the `origin` remote). `ubd logout` deletes the stored credentials.
+	</Step>
+</Steps>
+
+### Run code and reload
+
+| Command | What it does |
+| --- | --- |
+| `ubd eval <code>` | Evaluates JavaScript in the running client and prints the result and any console output. `--timeout` sets how long to wait, in milliseconds. |
+| `ubd reload` | Reloads the bundle and waits until the fresh bundle reconnects to the bridge. `--timeout` defaults to `60000`. |
+| `ubd modules [pattern]` | Searches Discord's Metro modules by file path or export name, and lists each match's id, whether it has loaded, and its exports. `--max` defaults to `40`. |
+| `ubd trace <props...>` | Records calls to a function of one of Discord's modules, such as `generateMessageRowData`, and summarises the first calls' arguments and results. |
+| `ubd timing` | Measures a zero-delay JavaScript timer and a native main-thread round trip. `--rounds` defaults to `3`. |
+
+`trace` and `hook` record for `--duration` milliseconds (default `3000`) and describe the first `--samples` calls (default `10`).
+
+### Inspect native code
+
+| Command | What it does |
+| --- | --- |
+| `ubd views [filter]` | Prints the native view tree: Android views of the current activity, or iOS views of every visible window, with each view's size, visibility, text and handle. |
+| `ubd inspect <class\|views\|find> [name]` | Inspects native code. `class` lists a class's constructors, methods and fields (`--filter` narrows them), and `views` dumps view subtrees (`--class` keeps only one view class). |
+| `ubd hook <className> [method]` | Records calls to an Android Java method or an iOS Objective-C selector. On Android, `--parameters` gives the Java parameter types, such as `android.view.MotionEvent`. |
+| `ubd spans [match]` | Prints the text and spans of Android text views that contain some text, with each span's class and range, and invisible characters escaped. |
+
+### Logs and device state
+
+`ubd logs` tails Discord's log, filtered to Unbound, the JavaScript console and crashes. On Android it follows `adb logcat` for `com.discord` across restarts. On an iPhone it reads the unified log.
+
+| Flag | Meaning |
+| --- | --- |
+| `--level` | The lowest level to print: `verbose`, `debug`, `info`, `warn`, `error` or `fatal`. Defaults to `verbose`. |
+| `--grep` | Print only lines matching a regular expression. |
+| `--since` | Start from history: a duration such as `5m`, a time such as `14:30`, or a date. On iOS, history only holds notices, errors and faults. |
+| `--follow=false` | Print the history and exit. |
+| `--symbolicate` | Rewrite Hermes frames of the client bundle to source positions, using the source maps in `packages/client/dist`. `--bundle` picks the bundle. |
+| `--pull` | Copy the loader's own log files off the device instead of tailing. They survive restarts and include the JavaScript console. `--out` sets the folder. |
+
+`ubd device` saves and restores Discord's Unbound state, which is useful for testing from a known starting point:
+
+```bash
+ubd device save clean
+ubd device list
+ubd device restore clean --restart
+ubd device reset
+```
+
+### AI clients
+
+`ubd mcp` serves the bridge commands above, plus `install` and `device`, as tools of a stdio [MCP](https://modelcontextprotocol.io) server over one connection to the bridge, so an AI client can evaluate code, inspect views, and push plugins. `build`, `dev`, `create`, `logs`, `login`, `logout` and `publish` stay CLI only.
+
+Two tools are also available from the command line under `ubd mcp`: `ubd mcp route` prints the focused navigation route with its params and navigator path, and `ubd mcp open <screen>` opens an Unbound or Discord settings screen from anywhere in the app.
+
+```json
+{
+	"mcpServers": {
+		"unbound": { "command": "bunx", "args": ["@unbound-app/cli", "mcp"] }
+	}
+}
+```

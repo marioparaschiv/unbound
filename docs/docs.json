@@ -70,7 +70,11 @@
 					{
 						"group": "Development",
 						"icon": "code",
-						"pages": ["development/debugging", "development/local-builds"]
+						"pages": [
+							"development/debugging",
+							"development/cli",
+							"development/local-builds"
+						]
 					},
 					{
 						"group": "API Reference",
