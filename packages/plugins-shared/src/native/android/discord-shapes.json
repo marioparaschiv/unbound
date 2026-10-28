@@ -6,6 +6,13 @@
 		"firstParameter": "com.discord.chat.bridge.Message",
 		"pick": "most-parameters"
 	},
+	"messageTagBind": {
+		"owner": "com.discord.chat.presentation.message.MessageTagView",
+		"member": "method",
+		"static": false,
+		"firstParameter": "java.lang.String",
+		"pick": "most-parameters"
+	},
 	"messageId": {
 		"owner": "com.discord.chat.presentation.message.MessageView",
 		"member": "field",

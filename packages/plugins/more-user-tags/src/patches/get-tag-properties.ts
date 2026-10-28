@@ -63,8 +63,7 @@ export function patchGetTagProperties(
 		});
 		const text = combineTagText(result.opTagText, tag.displayName);
 
-		// Only the iOS gradient renderer reads the appearances.
-		if (platform === 'ios') appearances.set(text, appearance);
+		appearances.set(text, appearance);
 
 		return withTag(
 			result,

@@ -9,6 +9,7 @@ import {
 
 import { createGradientPainter, type TagLayer } from '~/native/gradient-layer';
 import type { LabelAppearances } from '~/label-appearances';
+import { startAndroidTagGradients } from '~/android/tag-gradients';
 import { createNativeColors } from '~/native/colors';
 
 type PendingUpdate = { label: NativeObjectHandle; timer: ReturnType<typeof setTimeout> };
@@ -22,10 +23,10 @@ export type TagGradients = {
 };
 
 /**
- * @description Draws role-color gradients behind Discord's native message tags on iOS.
+ * @description Draws role-color gradients behind Discord's native message tags.
  * @param context The plugin context, whose Objective-C bridge draws the gradients.
  * @param appearances The colors the tag patch chose for each tag text.
- * @returns The gradients feature; on Android, or when a class or capability is missing, `start` applies nothing.
+ * @returns The gradients feature; when a class or capability is missing, `start` applies nothing.
  */
 export function createTagGradients(
 	context: PluginContext,
@@ -34,7 +35,13 @@ export function createTagGradients(
 	let teardown = Promise.resolve();
 
 	function start(): () => void {
-		if (context.platform === 'android') return () => {};
+		if (context.platform === 'android') {
+			const stop = startAndroidTagGradients(context, appearances);
+
+			return () => {
+				teardown = stop();
+			};
+		}
 
 		if (
 			!ensureCapabilities('More User Tags: gradients', context.native, context.capabilities)
