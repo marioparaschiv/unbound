@@ -32,7 +32,7 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 					aria-hidden
 					loading='lazy'
 					decoding='async'
-					className='absolute inset-0 -z-10 size-full object-cover scale-150 blur-2xl opacity-20 pointer-events-none select-none'
+					className='absolute inset-0 -z-10 size-full object-cover scale-150 blur-3xl opacity-10 pointer-events-none select-none'
 				/>
 			) : null}
 			<div className='flex items-center justify-center size-10 shrink-0 rounded-lg bg-accent m-4 mr-0 overflow-hidden'>
