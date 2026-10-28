@@ -8,10 +8,10 @@ import {
 } from 'nucleo-micro-bold';
 import { Link, useLocation } from '@tanstack/react-router';
 import type { ComponentType } from 'react';
-import { motion } from 'motion/react';
 import { useState } from 'react';
 
 import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from '~/components/ui/drawer';
+import { Segmented, SegmentedItem } from '~/components/ui/segmented';
 import AccountMenu from '~/components/account-menu';
 import { Button } from '~/components/ui/button';
 import Logo from '~/components/icons/logo';
@@ -35,19 +35,9 @@ const ROUTES: NavRoute[] = [
 	{ path: '/faq', title: 'FAQ', icon: IconBookmark },
 ];
 
-const INDICATOR_TRANSITION = { type: 'spring', stiffness: 500, damping: 38 } as const;
-
-// One soft key marks the hovered or current page, in the desktop capsule and the mobile drawer.
-const NAV_KEY = 'bg-accent shadow-key';
-const NAV_PILL = cn('absolute inset-0 rounded-inner pointer-events-none', NAV_KEY);
-
 function Header() {
 	const pathname = useLocation({ select: (location) => location.pathname });
-	const [hovered, setHovered] = useState<string | null>(null);
 	const [drawerOpen, setDrawerOpen] = useState(false);
-
-	// The highlight follows the hovered link and rests on the current page's link otherwise.
-	const highlighted = hovered ?? pathname;
 
 	return (
 		<header className='flex flex-col items-center'>
@@ -61,31 +51,24 @@ function Header() {
 						<Logo className='w-13 h-auto aspect-[474/202] text-foreground' />
 					</Link>
 
-					<nav
-						className='hidden md:flex items-center gap-0.5 bg-card shadow-surface p-1 rounded-control ring-1 ring-border ring-inset w-max'
-						onMouseLeave={() => setHovered(null)}
+					<Segmented
+						value={pathname}
+						layoutId='header-highlight'
+						className='hidden md:flex'
 					>
 						{ROUTES.map((route) => (
-							<Link
+							<SegmentedItem
 								key={route.path}
-								className={cn(
-									'inline-flex relative items-center px-3.5 rounded-inner outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-9 font-semibold text-muted-foreground hover:text-foreground text-base tracking-tight transition-colors cursor-pointer press-flat',
-									route.path === pathname && 'text-foreground',
-								)}
-								onMouseEnter={() => setHovered(route.path)}
-								to={route.path}
+								value={route.path}
+								className='text-base tracking-tight'
+								asChild
 							>
-								{route.path === highlighted ? (
-									<motion.span
-										layoutId='header-highlight'
-										transition={INDICATOR_TRANSITION}
-										className={NAV_PILL}
-									/>
-								) : null}
-								<span className='relative'>{route.title}</span>
-							</Link>
+								<Link to={route.path}>
+									<span className='relative'>{route.title}</span>
+								</Link>
+							</SegmentedItem>
 						))}
-					</nav>
+					</Segmented>
 
 					<div className='flex items-center justify-self-end gap-2 col-start-3'>
 						<AccountMenu />
@@ -108,10 +91,7 @@ function Header() {
 												className={cn(
 													'flex items-center gap-4 px-4 rounded-inner outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-12 text-muted-foreground text-base',
 													pathname === route.path
-														? cn(
-																NAV_KEY,
-																'text-foreground font-semibold',
-															)
+														? 'bg-accent shadow-key text-foreground font-semibold'
 														: 'press-flat',
 												)}
 												to={route.path}
