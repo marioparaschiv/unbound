@@ -40,6 +40,7 @@ object NativeUI {
     private val viewsByHandle = HashMap<String, WeakReference<View>>()
     private var handleGeneration = -1L
     private var nextHandle = 1L
+    private const val PRUNE_INTERVAL = 256
     private val mountedViews = java.util.Collections.newSetFromMap(WeakHashMap<View, Boolean>())
 
     fun lookup(queryJSON: String): String {
@@ -223,9 +224,14 @@ object NativeUI {
         viewsByObject[view]?.let { return it }
 
         val id = "$handleGeneration-${nextHandle++}"
+        if (nextHandle % PRUNE_INTERVAL == 0L) pruneReleasedViews()
         viewsByObject[view] = id
         viewsByHandle[id] = WeakReference(view)
         return id
+    }
+
+    private fun pruneReleasedViews() {
+        viewsByHandle.values.removeAll { it.get() == null }
     }
 
     private fun synchronizeGeneration() {

@@ -1,29 +1,9 @@
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 import type { HighlighterCore, ThemedToken } from 'shiki';
-import typescript from '@shikijs/langs/typescript';
-import javascript from '@shikijs/langs/javascript';
 import { createHighlighterCore } from 'shiki/core';
-import lightPlus from '@shikijs/themes/light-plus';
-import darkPlus from '@shikijs/themes/dark-plus';
-import markdown from '@shikijs/langs/markdown';
-import python from '@shikijs/langs/python';
-import kotlin from '@shikijs/langs/kotlin';
-import swift from '@shikijs/langs/swift';
-import jsonc from '@shikijs/langs/jsonc';
-import java from '@shikijs/langs/java';
-import html from '@shikijs/langs/html';
-import rust from '@shikijs/langs/rust';
-import yaml from '@shikijs/langs/yaml';
-import bash from '@shikijs/langs/bash';
-import json from '@shikijs/langs/json';
-import css from '@shikijs/langs/css';
-import cpp from '@shikijs/langs/cpp';
-import sql from '@shikijs/langs/sql';
-import tsx from '@shikijs/langs/tsx';
-import go from '@shikijs/langs/go';
-import c from '@shikijs/langs/c';
 
 import { getLanguageMetadata, grammarUrl } from '~/catalog';
+import { bundledGrammar, bundledThemes } from '~/bundled';
 import { highlightCodeToTokens, shouldUseHighlightJs } from '~/highlight-js';
 import { isLightTheme, loadThemeDefinition, themeUrl } from '~/themes';
 import { Limits, Palette, PLUGIN_NAME } from '~/constants';
@@ -59,45 +39,16 @@ function isLightColor(hex: string): boolean | undefined {
  * @returns `appearance` reads a theme's card colors, `tokenize` highlights a code block.
  */
 export function createHighlighter() {
-	const bundledGrammars = new Map<string, GrammarInput>();
 	const pendingGrammars = new Map<string, Promise<void>>();
 	const pendingThemes = new Map<string, Promise<void>>();
 	const tokenCache = new Map<string, TokenLines>();
 	let core: Promise<HighlighterCore | null> | null = null;
 	let loaded: HighlighterCore | null = null;
 
-	for (const grammar of [
-		bash,
-		c,
-		cpp,
-		css,
-		go,
-		html,
-		java,
-		javascript,
-		json,
-		jsonc,
-		kotlin,
-		markdown,
-		python,
-		rust,
-		sql,
-		swift,
-		tsx,
-		typescript,
-		yaml,
-	]) {
-		for (const language of grammar) {
-			for (const name of [language.name, ...(language.aliases ?? [])]) {
-				bundledGrammars.set(name, grammar);
-			}
-		}
-	}
-
 	function getCore() {
 		core ??= createHighlighterCore({
 			langs: [],
-			themes: [darkPlus, lightPlus],
+			themes: bundledThemes(),
 			engine: createJavaScriptRegexEngine({ target: 'ES2018', forgiving: true }),
 		})
 			.then((highlighter) => (loaded = highlighter))
@@ -146,7 +97,7 @@ export function createHighlighter() {
 		let pending = pendingGrammars.get(language);
 
 		if (!pending) {
-			const grammar = bundledGrammars.get(language) ?? fetchGrammar(language);
+			const grammar = bundledGrammar(language) ?? fetchGrammar(language);
 
 			pending = Promise.resolve(grammar)
 				.then((input) => highlighter.loadLanguage(input))

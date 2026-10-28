@@ -360,6 +360,12 @@ export type AddonManifest = {
 		version: 1;
 		ed25519: string;
 	};
+	/** Marks a plugin other plugins build on, which the plugin list hides by default. */
+	library?: boolean;
+	/** The addons this one needs, by id, each with the semver range it accepts, such as `^1.2.0`. */
+	dependencies?: Record<string, string>;
+	/** The SHA-512 of each bundle compiled to Hermes bytecode, by bytecode version; covered by `signature`. */
+	bytecode?: Record<string, string>;
 	/** Set by the loader and installer: whether the bundle carries a valid Unbound signature. */
 	trust?: AddonTrust;
 	/** Requirements on the Unbound client running the addon. */
@@ -1768,6 +1774,12 @@ export type NativeCancelablePromise<T> = Promise<T> & {
 	cancel(): void;
 };
 export type NativeClassHandle = NativeHandle;
+/** A plugin bundle the loader evaluated from bytecode: it takes the scoped React and returns the plugin module. */
+export type NativeCompiledPlugin = (react: typeof React$1) =>
+	| Plugin$1
+	| {
+			default: Plugin$1;
+	  };
 export type NativeCrashPhase = 'starting' | 'running' | 'frozen';
 export type NativeCrashedAddon = {
 	readonly id: string;
@@ -1781,6 +1793,7 @@ export type NativeDebugBridge = {
 export type NativeDebugEnvironment = {
 	isVirtualDevice: boolean;
 	hostAddress: string | null;
+	resources?: NativeResourceCounts;
 };
 export type NativeDebugEvaluation = {
 	id: string;
@@ -2112,6 +2125,8 @@ export type NativeObjectHandle = NativeHandle;
 export type NativePlatformAddons = {
 	/** Checks a manifest's `signature` against its bundle. */
 	verify(manifest: string, bundle: string): NativeAddonVerification;
+	/** Evaluates an installed plugin's bundle compiled for this bytecode version, if its digest matches the manifest. */
+	evaluateBytecode?(folder: string, bytecodeVersion: number): NativeCompiledPlugin | undefined;
 };
 export type NativePlatformApp = {
 	getAppSource(): string;
@@ -2191,6 +2206,12 @@ export type NativePluginRuntimeBridge = Pick<
 > &
 	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities'>>;
 export type NativePointer = NativeHandle;
+export type NativeResourceCounts = {
+	hooks: number;
+	surfaces: number;
+	cachedReturns: number;
+	handles: number;
+};
 export type NativeRuntimeBridge = {
 	subscribe(
 		event: NativeRuntimeEventName,

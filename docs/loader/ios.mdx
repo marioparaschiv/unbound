@@ -21,7 +21,7 @@ To browse the folder in the Files app, open `On My iPhone` -> `<App Name>` -> `U
 		| `Fonts` | Installed font files, stored directly in this folder with no subfolders. |
 		| `Icons/<id>` | An installed icon pack, in a folder named after the pack's id. Its images follow the same layout as Discord's asset tree. |
 
-		To remove an addon, delete its folder. The loader scans these directories at startup, so changes take effect only after the app restarts.
+		To remove an addon, delete its folder. The loader scans these directories each time the app loads its bundle, so changes take effect after the app restarts or reloads.
 
 		The toolbox's **Wipe Plugins**, **Wipe Themes**, **Wipe Fonts**, and **Wipe Icon Packs** actions each permanently delete the matching directory. **Factory Reset** deletes the entire `Unbound` folder, including `settings.json` and the bundle.
 	</Accordion>

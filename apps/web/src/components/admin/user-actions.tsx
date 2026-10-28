@@ -57,7 +57,7 @@ function RoleMenu({ user, disabled, run }: UserActionProps) {
 				{ROLES.map((role) => (
 					<DropdownMenuItem
 						key={role}
-						onSelect={() => setRole(role)}
+						onClick={() => setRole(role)}
 						disabled={user.role === role}
 						className='capitalize'
 					>

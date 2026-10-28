@@ -44,6 +44,17 @@ static const char *const kBridgeChecks = R"JS((function () {
 	check(platform.settings.apply([{ store: 'unbound', key: 'answer', remove: true }, { store: 'other', key: 'kept', value: true }]) === true, 'settings remove');
 	check(throws(function () { platform.settings.apply('not changes'); }), 'settings apply rejects a non-array');
 	check(platform.settings.apply([{ key: 'no store' }, 7, null]) === true, 'settings apply skips malformed changes');
+	var cyclic = { name: 'loop' };
+	cyclic.self = cyclic;
+	check(throws(function () { platform.settings.apply([{ store: 'unbound', key: 'cyclic', value: cyclic }]); }), 'settings apply refuses a value that refers to itself');
+	var deep = {};
+	var cursor = deep;
+	for (var level = 0; level < 5000; level++) { cursor.next = {}; cursor = cursor.next; }
+	check(throws(function () { platform.settings.apply([{ store: 'unbound', key: 'deep', value: deep }]); }), 'settings apply refuses a value nested thousands deep');
+	var nested = {};
+	var nestedCursor = nested;
+	for (var depth = 0; depth < 140; depth++) { nestedCursor.next = {}; nestedCursor = nestedCursor.next; }
+	check(throws(function () { platform.settings.apply([{ store: 'unbound', key: 'nested', value: nested }]); }), 'settings apply refuses a value past the native depth limit');
 
 	check(platform.files.remove('Plugins/doomed') === true, 'files remove inside documents');
 	check(platform.files.remove('Plugins/doomed') === false, 'files remove twice');

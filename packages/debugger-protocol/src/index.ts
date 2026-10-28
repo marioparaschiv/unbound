@@ -62,10 +62,26 @@ export type LogMessage = {
 	message: string;
 };
 
-/** Bridge → controller, once on attach and whenever the device connects or drops. */
+/** What a device reports about itself when it connects. */
+export type DeviceInfo = {
+	platform: string;
+	discordVersion: string;
+	loaderVersion: string;
+	clientVersion: string;
+};
+
+/** Device → bridge, once its socket opens, so the bridge can say which device is attached. */
+export type DeviceHello = {
+	type: 'hello';
+	device: DeviceInfo;
+};
+
+/** Bridge → controller, once on attach and whenever the device connects, drops or says hello. */
 export type DeviceStatus = {
 	type: 'device-status';
 	connected: boolean;
+	/** Present once the connected device has said hello. */
+	device?: DeviceInfo;
 };
 
 /** Every framed message on the wire. */
@@ -75,6 +91,7 @@ export type BridgeMessage =
 	| PluginPushRequest
 	| PluginPushResult
 	| LogMessage
+	| DeviceHello
 	| DeviceStatus;
 
 /** The default port the bridge listens on and controllers dial. */
@@ -93,6 +110,7 @@ const MESSAGE_TYPES: ReadonlySet<string> = new Set<BridgeMessage['type']>([
 	'plugin-push',
 	'plugin-push-result',
 	'log',
+	'hello',
 	'device-status',
 ]);
 
@@ -154,11 +172,32 @@ function hasRequiredFields(frame: unknown): frame is BridgeMessage {
 				typeof frame.manifest === 'object' &&
 				frame.manifest !== null
 			);
+		case 'hello':
+			return 'device' in frame && isDeviceInfo(frame.device);
 		case 'device-status':
-			return 'connected' in frame && typeof frame.connected === 'boolean';
+			return (
+				'connected' in frame &&
+				typeof frame.connected === 'boolean' &&
+				(!('device' in frame) || frame.device === undefined || isDeviceInfo(frame.device))
+			);
 		default:
 			return false;
 	}
+}
+
+function isDeviceInfo(value: unknown): value is DeviceInfo {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'platform' in value &&
+		typeof value.platform === 'string' &&
+		'discordVersion' in value &&
+		typeof value.discordVersion === 'string' &&
+		'loaderVersion' in value &&
+		typeof value.loaderVersion === 'string' &&
+		'clientVersion' in value &&
+		typeof value.clientVersion === 'string'
+	);
 }
 
 function isBridgeMessage(value: unknown): value is BridgeMessage {

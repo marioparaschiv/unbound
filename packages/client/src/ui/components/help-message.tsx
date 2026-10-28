@@ -2,7 +2,7 @@ import type { ColorValue } from 'react-native';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
-import { Discord } from '~/api/metro/components';
+import { Discord } from '~/api/metro/design';
 import { Theme } from '~/api/metro/common';
 import { Icons } from '~/api/assets';
 

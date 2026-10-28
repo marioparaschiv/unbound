@@ -104,8 +104,12 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
         {
             continue;
         }
-        current = {parsed.value("id", ""), parsed.value("name", ""),
-                   static_cast<double>(now - sentAt) / 1000.0, false};
+        auto textOf = [&parsed](const char *key) {
+            auto field = parsed.find(key);
+            return field != parsed.end() && field->is_string() ? field->get<std::string>()
+                                                               : std::string();
+        };
+        current = {textOf("id"), textOf("name"), static_cast<double>(now - sentAt) / 1000.0, false};
         if (current.id.empty())
         {
             continue;

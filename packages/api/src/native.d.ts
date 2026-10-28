@@ -67,7 +67,10 @@ import type {
 	NativePlatformBridge,
 	NativePluginCapability,
 	NativePluginPlatform,
+	NativeResourceCounts,
 } from './_internal';
+import * as React$1 from 'react';
+import { ReactNode } from 'react';
 declare const NativePlatform$1: NativePlatformBridge | undefined;
 
 export declare class NativePluginCapabilityError extends Error {
@@ -110,6 +113,11 @@ export declare const DeviceInfo: DeviceInfoType;
  * @returns The first matching native module.
  */
 export declare function getNativeModule<T>(...names: string[]): T;
+/**
+ * @description Reads how many native resources the loader holds: installed hooks, mounted surfaces, cached hook return values and Java handles still referenced from JavaScript.
+ * @returns The counts, or `undefined` when the loader does not report them.
+ */
+export declare function getNativeResources(): NativeResourceCounts | undefined;
 /**
  * @description Reads Hermes' runtime metadata, such as the bytecode version, GC, and build channel.
  * @returns The runtime property map, or an empty object when Hermes internals are unavailable.
@@ -185,7 +193,6 @@ export type DeviceInfoType = {
 };
 export type HermesRuntimeProperties = ReturnType<HermesInternalObject['getRuntimeProperties']>;
 export type UndocumentedNativeMethod = () => Promise<unknown>;
-
 export { NativePlatform$1 as NativePlatform };
 
 export {};

@@ -2,6 +2,7 @@ import type { Addon, IconPack, IconPackManifest, UnboundAsset } from '@unbound-a
 import toError from '@unbound-app/utils/to-error';
 import type { ImageProps } from 'react-native';
 
+import { safeRelativePath, isSafeIconPackMain } from '~/lib/addon-paths';
 import { Assets, ReactNative as RN } from '~/api/metro/common';
 import { ManagerType } from '~/managers/base';
 import { Addons } from '~/managers/addons';
@@ -51,6 +52,15 @@ export class Icons extends Addons<Addon> {
 
 	protected get entityType() {
 		return 'icon-pack' as const;
+	}
+
+	/**
+	 * @description Accepts the built-in pack's empty `main`, a GitHub tree URL to download from, or a relative path.
+	 * @param main The manifest's `main`.
+	 * @returns Whether an icon pack may use it.
+	 */
+	protected isAcceptableMain(main: unknown): main is string {
+		return isSafeIconPackMain(main);
 	}
 
 	get applied(): IconPack {
@@ -328,7 +338,16 @@ export class Icons extends Addons<Addon> {
 			await Promise.all(
 				batch.map(async (node) => {
 					const raw = `https://raw.githubusercontent.com/${user}/${repo}/${ref}/${node.path}`;
-					const relative = sub ? node.path.slice(sub.length + 1) : node.path;
+					const relative = safeRelativePath(
+						sub ? node.path.slice(sub.length + 1) : node.path,
+					);
+
+					if (!relative) {
+						this.logger.warn(`Skipping icon ${node.path}: its path leaves the pack.`);
+
+						return;
+					}
+
 					const buf = await fetch(raw).then((res) => res.arrayBuffer());
 					const data = Buffer.from(buf).toString('base64');
 

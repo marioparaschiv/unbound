@@ -47,6 +47,9 @@
 	--radius-control: var(--radius);
 	--radius-inner: calc(var(--radius-control) - 4px);
 	--radius-surface: calc(var(--radius) + 8px);
+	/* Menus nest their rows concentrically: a row's radius is the menu's minus the menu's 6px (p-1.5) padding. */
+	--radius-menu: calc(var(--radius) + 4px);
+	--radius-menu-item: calc(var(--radius-menu) - 6px);
 
 	--shadow-field: var(--field-shadow);
 	--shadow-surface: var(--surface-shadow);
@@ -108,7 +111,6 @@
 	--control-body: calc(var(--control-h) - var(--ledge-depth));
 	--card-pad: 1.25rem;
 	--ledge-depth: 4px;
-	--press-lift: 1px;
 	--press-duration: 180ms;
 	--highlight: oklch(1 0 0 / 0.6);
 	--ledge-primary: oklch(0.42 0.14 17);
@@ -216,20 +218,16 @@ code {
 	clip-path: inset(0);
 }
 
+/* The dot grid is rotated inside the SVG, which has no intrinsic size and so fills the whole box. Rotating
+the element instead needed a square sized from the width, which left tall phone pages half uncovered. */
 .dotted-bg::before {
 	content: '';
 	position: absolute;
-	width: 300%;
-	height: 0;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%) rotate(35deg);
-	padding-bottom: 300%;
-	background: linear-gradient(145deg, hsla(0, 0%, 35%, 0.25), transparent 100%);
+	inset: 0;
+	background: linear-gradient(to bottom, hsla(0, 0%, 35%, 0.25), transparent);
 	z-index: -1;
 	pointer-events: none;
-	mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='75' cy='75' r='10'/%3E%3C/svg%3E")
-		center/16px repeat;
+	mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cpattern id='d' width='16' height='16' patternUnits='userSpaceOnUse' patternTransform='rotate(35)'%3E%3Ccircle cx='12' cy='12' r='1.6'/%3E%3C/pattern%3E%3Crect width='100%25' height='100%25' fill='url(%23d)'/%3E%3C/svg%3E");
 }
 
 .dotted-bg::after {
@@ -287,6 +285,11 @@ body::before {
 	);
 }
 
+/* Apple's continuous corners: the curve eases into the straight edge instead of meeting it at a kink. */
+@utility corner-continuous {
+	corner-shape: superellipse(1.5);
+}
+
 /* The page column: header, content and footer all share its width and gutter. */
 @utility page-frame {
 	@apply container mx-auto px-(--page-gutter);
@@ -317,61 +320,26 @@ body::before {
 }
 
 /* A raised control on a solid ledge in `--ledge`. The ledge takes layout space below the body, so the
-footprint matches a field; a press moves that space above the body instead of overlapping neighbours. */
+footprint matches a field. `--press-y` (px, sprung by PressSprings) slides the body onto the ledge:
+only translate and shadow change, so a press never relayouts its neighbours. */
 @utility press {
-	--tw-shadow: inset 0 1px 0 var(--highlight), 0 var(--ledge-depth) 0 var(--ledge, transparent);
+	--tw-shadow:
+		inset 0 1px 0 var(--highlight),
+		0 calc(var(--ledge-depth) - var(--press-y, 0) * 1px) 0 var(--ledge, transparent);
 	box-shadow:
 		var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000),
 		var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 	margin-bottom: var(--ledge-depth);
-	transition-property:
-		color, background-color, border-color, box-shadow, translate, margin, opacity;
+	translate: 0 calc(var(--press-y, 0) * 1px);
+	transition-property: color, background-color, border-color, opacity;
 	transition-duration: var(--press-duration);
-	transition-timing-function: var(--ease-spring);
-
-	&:hover:not(:disabled, [aria-disabled='true']) {
-		translate: 0 calc(var(--press-lift) * -1);
-		--tw-shadow:
-			inset 0 1px 0 var(--highlight),
-			0 calc(var(--ledge-depth) + var(--press-lift)) 0 var(--ledge, transparent);
-	}
-
-	&:active:not(:disabled, [aria-disabled='true']) {
-		translate: none;
-		margin-top: var(--ledge-depth);
-		margin-bottom: 0;
-		--tw-shadow: inset 0 1px 0 var(--highlight), 0 0 0 var(--ledge, transparent);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		transition-property: color, background-color, border-color, box-shadow, opacity;
-
-		&:hover:not(:disabled, [aria-disabled='true']) {
-			translate: none;
-		}
-
-		&:active:not(:disabled, [aria-disabled='true']) {
-			margin-top: 0;
-			margin-bottom: var(--ledge-depth);
-		}
-	}
 }
 
-/* Press feedback for controls with no raised surface, such as ghost and link buttons. */
+/* Press feedback for controls with no raised surface, such as ghost and link buttons; `--press-scale` is sprung. */
 @utility press-flat {
-	transition-property: color, background-color, border-color, box-shadow, scale, opacity;
+	scale: var(--press-scale, 1);
+	transition-property: color, background-color, border-color, box-shadow, opacity;
 	transition-duration: var(--press-duration);
-	transition-timing-function: var(--ease-spring);
-
-	&:active:not(:disabled, [aria-disabled='true']) {
-		scale: 0.96;
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		&:active:not(:disabled, [aria-disabled='true']) {
-			scale: none;
-		}
-	}
 }
 
 @utility hide-scrollbar {
@@ -389,7 +357,7 @@ footprint matches a field; a press moves that space above the body instead of ov
 /* A CSS animation plays from the first server-rendered paint, before hydration, so entrances never flash. */
 @keyframes reveal {
 	from {
-		opacity: 0;
+		opacity: var(--reveal-opacity, 0);
 		filter: blur(var(--reveal-blur, 0px));
 		transform: translateY(var(--reveal-offset, 12px)) scale(var(--reveal-scale, 1));
 	}

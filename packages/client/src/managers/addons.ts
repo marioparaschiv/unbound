@@ -24,17 +24,21 @@ import {
 	finishAddonStart,
 	withAddonAttribution,
 } from '~/api/crash-guard';
+import { compiledBundlePath, isSafeAddonId, isSafeAddonMain } from '~/lib/addon-paths';
 import { consentCapabilities, consentKey, needsConsent } from '~/lib/native-consent';
 import type { AddonAttribution, AddonFreeze } from '~/api/crash-guard';
 import type { CrashReportAddon } from '~/lib/crash-reports';
 import type { NativeConsents } from '~/lib/native-consent';
 import { Manager, ManagerType } from '~/managers/base';
+import { unpatchAllByCaller } from '~/api/patcher';
 import { reportCrash } from '~/lib/crash-reports';
 import { showToast } from '~/api/toasts';
 import storage from '~/api/storage';
 import fs from '~/api/fs';
 
 type AddonResolveable = string | Addon;
+
+const DEVELOPMENT_MARKER = 'development';
 
 const managerDirectories: Record<ManagerType, string> = {
 	[ManagerType.PLUGINS]: 'Plugins',
@@ -158,6 +162,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			};
 
 			this.entities.set(manifest.id, entity as T);
+			void this.adoptDevelopmentMarker(manifest.id);
 
 			const states = this.getStates();
 
@@ -344,15 +349,21 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		try {
 			const manifest = await this.fetchManifest(url);
 			const origin = url.split('/').slice(0, -1).join('/');
-			const bundle = await this.fetchBundle(new URL(manifest.main, `${origin}/`).toString());
+			const bundleUrl = new URL(manifest.main, `${origin}/`).toString();
+			const [bundle, bytecode] = await Promise.all([
+				this.fetchBundle(bundleUrl),
+				this.fetchBytecode(manifest, bundleUrl),
+			]);
 			const trusted = this.verifySignature(manifest, bundle, this.getEntity(manifest.id));
 
 			await this.persist(bundle, trusted);
+			await this.persistBytecode(trusted, bytecode);
 
 			this.load(bundle, trusted);
 			const entity = this.getEntity(manifest.id);
 
 			if (entity) {
+				this.clearDevelopmentCopy(entity.id);
 				this.recordSource(entity.id, url);
 				this.emit('installed', entity);
 			}
@@ -382,6 +393,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 				this.fetchManifest(update.manifestUrl),
 				this.fetchBundle(update.bundleUrl),
 			]);
+			const bytecode = await this.fetchBytecode(manifest, update.bundleUrl);
 
 			// `fetchBundle` decodes the body as UTF-8; re-encoding gives back the served bytes for
 			// any valid UTF-8 bundle, and anything else fails closed as a mismatch.
@@ -402,6 +414,8 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 				return;
 			}
+
+			await this.persistBytecode(manifest, bytecode);
 
 			this.emit('updated', resolved);
 		} catch (error) {
@@ -426,6 +440,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			await this.unload(resolved);
 			await fs.rm(this.directoryOf(resolved.id));
 			this.forgetSource(resolved.id);
+			this.clearDevelopmentCopy(resolved.id);
 			this.emit('deleted', resolved);
 		} catch (error) {
 			this.logger.error(`Failed to delete addon ${resolved.id}:`, error);
@@ -691,6 +706,12 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			error ??= toError(disposeError);
 		}
 
+		try {
+			unpatchAllByCaller(resolved.id);
+		} catch (unpatchError) {
+			error ??= toError(unpatchError);
+		}
+
 		if (error) {
 			const failure = toError(error);
 
@@ -901,6 +922,34 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		return { ...rest, trust: result.status };
 	}
 
+	private async fetchBytecode(
+		manifest: AddonManifest,
+		bundleUrl: string,
+	): Promise<string | undefined> {
+		const bytecodeVersion = globalThis.UNBOUND_LOADER?.bytecodeVersion;
+
+		if (!bytecodeVersion || !manifest.bytecode?.[String(bytecodeVersion)]) return;
+
+		try {
+			const res = await fetch(compiledBundlePath(bundleUrl, bytecodeVersion), {
+				cache: 'no-cache',
+			});
+
+			if (!res.ok) {
+				throw new Error(`status ${res.status}`);
+			}
+
+			return Buffer.from(await res.arrayBuffer()).toString('base64');
+		} catch (error) {
+			this.logger.warn(
+				`Failed to fetch the bytecode of ${manifest.id}, it will run from source:`,
+				error,
+			);
+
+			return undefined;
+		}
+	}
+
 	private async fetchBundle(url: string): Promise<string> {
 		const res = await fetch(url, { cache: 'no-cache' });
 
@@ -931,6 +980,24 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 		await fs.write(`${dir}/manifest.json`, JSON.stringify(manifest));
 		await fs.write(`${dir}/${manifest.main}`, bundle);
+	}
+
+	/**
+	 * @description Writes the bundle compiled for this runtime beside the source, where the loader looks for it on the next launch.
+	 * @param manifest The addon's validated manifest.
+	 * @param bytecode The compiled bundle, base64-encoded.
+	 */
+	protected async persistBytecode(
+		manifest: AddonManifest,
+		bytecode: string | undefined,
+	): Promise<void> {
+		const bytecodeVersion = globalThis.UNBOUND_LOADER?.bytecodeVersion;
+
+		if (!bytecode || !bytecodeVersion) return;
+
+		const path = `${this.directoryOf(manifest.id)}/${compiledBundlePath(manifest.main, bytecodeVersion)}`;
+
+		await fs.write(path, bytecode, 'base64');
 	}
 
 	/**
@@ -968,9 +1035,68 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	}
 
 	/**
+	 * @description Marks an addon as a development copy pushed from a dev machine, so update checks leave it alone until it is installed from the store again.
+	 * @param id The addon's id.
+	 */
+	markDevelopmentCopy(id: string): void {
+		this.settings.set('development', { ...this.getDevelopmentCopies(), [id]: true });
+	}
+
+	/**
+	 * @description Whether an addon is a development copy pushed from a dev machine.
+	 * @param id The addon's id.
+	 * @returns `true` until the addon is installed from the store or deleted.
+	 */
+	isDevelopmentCopy(id: string): boolean {
+		return this.getDevelopmentCopies()[id] === true;
+	}
+
+	private getDevelopmentCopies(): Record<string, boolean> {
+		return this.settings.get('development', {});
+	}
+
+	/**
+	 * @description Stops treating an addon as a development copy, removing the marker `ubd install` leaves, so update checks include it again.
+	 * @param id The addon's id.
+	 */
+	clearDevelopmentCopy(id: string): void {
+		void fs.rm(this.developmentMarkerOf(id)).catch(() => undefined);
+
+		const copies = this.getDevelopmentCopies();
+
+		if (!(id in copies)) return;
+
+		delete copies[id];
+		this.settings.set('development', copies);
+	}
+
+	private developmentMarkerOf(id: string): string {
+		return `${this.directoryOf(id)}/${DEVELOPMENT_MARKER}`;
+	}
+
+	private async adoptDevelopmentMarker(id: string): Promise<void> {
+		try {
+			if (await fs.exists(this.developmentMarkerOf(id))) {
+				this.markDevelopmentCopy(id);
+			}
+		} catch {
+			return;
+		}
+	}
+
+	/**
 	 * @description Validates an addon manifest, throwing if a required field is missing or malformed.
 	 * @param manifest The manifest to validate.
 	 */
+	/**
+	 * @description Checks a manifest's `main` before the addon is installed or loaded.
+	 * @param main The manifest's `main`.
+	 * @returns Whether it is a relative path inside the addon's folder.
+	 */
+	protected isAcceptableMain(main: unknown): main is string {
+		return isSafeAddonMain(main);
+	}
+
 	protected validateManifest(manifest: AddonManifest) {
 		const required = ['id', 'name', 'description', 'authors', 'version', 'main'];
 
@@ -978,6 +1104,14 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			if (!(field in manifest) || manifest[field as keyof AddonManifest] === undefined) {
 				throw new Error(`Manifest missing required field: ${field}`);
 			}
+		}
+
+		if (!isSafeAddonId(manifest.id)) {
+			throw new Error('Manifest id must be alphanumeric segments joined by ".", "_" or "-"');
+		}
+
+		if (!this.isAcceptableMain(manifest.main)) {
+			throw new Error('Manifest main must be a relative path inside the addon');
 		}
 
 		if (!Array.isArray(manifest.authors) || manifest.authors.length === 0) {

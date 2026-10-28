@@ -36,6 +36,8 @@ type workflowStep struct {
 	Run  string            `yaml:"run"`
 	With map[string]string `yaml:"with"`
 	Env  map[string]string `yaml:"env"`
+
+	ContinueOnError string `yaml:"continue-on-error"`
 }
 
 type workflowJob struct {
@@ -134,10 +136,21 @@ func TestParsedReleaseBuildsWaitForTheGate(t *testing.T) {
 func TestParsedIOSBuildReusesTheResolvedIPA(t *testing.T) {
 	build := loadWorkflow(t, "loader-build.yml")
 	keep := build.job(t, "resolve-source").step(t, "Keep the source IPA for the gate and the iOS build")
-	if keep.With["name"] != "discord-source-ipa" || keep.If != "steps.select.outputs.platform == 'ios'" {
-		t.Fatalf("resolve-source must keep every iOS source IPA as discord-source-ipa, got %+v", keep)
+	if keep.With["name"] != "discord-source-ipa" || keep.If != "steps.select.outputs.platform == 'ios' && steps.decrypt.outcome != 'failure'" {
+		t.Fatalf("resolve-source must keep every iOS source IPA it obtained as discord-source-ipa, got %+v", keep)
+	}
+	decrypt := build.job(t, "resolve-source").step(t, "Decrypt the source IPA")
+	if decrypt.ID != "decrypt" || decrypt.ContinueOnError != "true" {
+		t.Fatalf("the IPA download must fail softly so the job can decide, got %+v", decrypt)
+	}
+	require := build.job(t, "resolve-source").step(t, "Require the iOS source for a release")
+	if require.If != "steps.decrypt.outcome == 'failure' && (inputs.release == true || inputs.release == 'true')" || !strings.Contains(require.Run, "exit 1") {
+		t.Fatalf("a release must fail without the iOS source, got %+v", require)
 	}
 	ios := build.job(t, "ios")
+	if !strings.Contains(ios.If, "needs.resolve-source.outputs.ipa_available != 'false'") {
+		t.Fatalf("the iOS build must skip without a source IPA, runs if %q", ios.If)
+	}
 	if ios.Uses != "./.github/workflows/loader-ios.yml" || ios.With["source_ipa_artifact"] != "${{ needs.resolve-source.result == 'success' && 'discord-source-ipa' || '' }}" {
 		t.Fatalf("the iOS build must receive the resolved IPA, got %+v", ios.With)
 	}
@@ -468,8 +481,9 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 		t.Fatal("the release must zip each platform's symbols")
 	}
 	for step, archives := range map[string][]string{
-		"Publish stable release":        {"unbound-ios-symbols.zip", "unbound-android-symbols.zip"},
-		"Publish TestFlight prerelease": {"unbound-ios-symbols.zip"},
+		"Publish stable iOS release":     {"unbound-ios-symbols.zip"},
+		"Publish stable Android release": {"unbound-android-symbols.zip"},
+		"Publish TestFlight prerelease":  {"unbound-ios-symbols.zip"},
 	} {
 		files := release.step(t, step).With["files"]
 		for _, archive := range archives {
@@ -478,8 +492,13 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 			}
 		}
 	}
-	if strings.Contains(release.step(t, "Publish TestFlight prerelease").With["files"], "android-symbols") {
-		t.Fatal("a TestFlight prerelease has no Android build to attach symbols for")
+	for _, step := range []string{"Publish TestFlight prerelease", "Publish stable iOS release"} {
+		if strings.Contains(release.step(t, step).With["files"], "android") {
+			t.Fatalf("%s must attach only iOS assets", step)
+		}
+	}
+	if strings.Contains(release.step(t, "Publish stable Android release").With["files"], "ios") {
+		t.Fatal("the stable Android release must attach only Android assets")
 	}
 	prerelease := build.job(t, "android-prerelease")
 	if prerelease.step(t, "Download Android native symbols").With["name"] != "android symbols" || !strings.Contains(prerelease.step(t, "Publish Android prerelease").With["files"], "release-assets/unbound-android-symbols.zip") {
@@ -789,27 +808,24 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 	}
 }
 
-func TestParsedBackfillSignsOnlyOnDemand(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "backfill-signatures.yml"))
+func TestParsedManualBuildIsNotARelease(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "loader-build.yml"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	var trigger struct {
-		On map[string]any `yaml:"on"`
+	var workflow struct {
+		On struct {
+			WorkflowDispatch struct {
+				Inputs map[string]struct {
+					Default any `yaml:"default"`
+				} `yaml:"inputs"`
+			} `yaml:"workflow_dispatch"`
+		} `yaml:"on"`
 	}
-	if err := yaml.Unmarshal(data, &trigger); err != nil {
+	if err := yaml.Unmarshal(data, &workflow); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := trigger.On["workflow_dispatch"]; !ok || len(trigger.On) != 1 {
-		t.Fatalf("the backfill must only run when dispatched, triggers %v", trigger.On)
-	}
-	job := loadWorkflow(t, "backfill-signatures.yml").job(t, "backfill")
-	backfill := job.step(t, "Sign unsigned stable and beta bundles")
-	if backfill.If != "steps.config.outputs.enabled == 'true'" || !strings.HasPrefix(backfill.Run, "bun run --cwd packages/client backfill-signatures") {
-		t.Fatalf("the backfill must stay inert without credentials, got %+v", backfill)
-	}
-	s3 := loadWorkflow(t, "ci.yml").job(t, "s3")
-	if run := s3.step(t, "Run the S3 tests against MinIO").Run; !strings.Contains(run, "bun run test:s3") || !strings.Contains(run, "backfill-signatures.s3.ts") {
-		t.Fatalf("CI must prove the backfill against MinIO, runs %q", run)
+	if release, ok := workflow.On.WorkflowDispatch.Inputs["release"]; !ok || release.Default != false {
+		t.Fatalf("a manual loader build must not default to a release, release input %+v", release)
 	}
 }

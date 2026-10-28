@@ -29,13 +29,25 @@ export const exec = (bin, args, { timeoutMs } = {}) =>
 		),
 	);
 
-/** Run the `vphone.sh` wrapper with the given subcommand args. @param {string[]} args @returns {Promise<string>} */
+/**
+ * Run the `vphone.sh` wrapper with the given subcommand args.
+ * @param {string[]} args
+ * @returns {Promise<string>}
+ */
 export const vphone = (args) => exec(SCRIPTS.vphone, args);
 
-/** Wrap text as a successful MCP tool result. @param {string} text @returns {object} */
+/**
+ * Wrap text as a successful MCP tool result.
+ * @param {string} text
+ * @returns {object}
+ */
 export const ok = (text) => ({ content: [{ type: 'text', text: text || '(no output)' }] });
 
-/** Wrap an error as a failed MCP tool result. @param {Error} err @returns {object} */
+/**
+ * Wrap an error as a failed MCP tool result.
+ * @param {Error} err
+ * @returns {object}
+ */
 export const fail = (err) => ({
 	content: [{ type: 'text', text: `Error: ${err.message}` }],
 	isError: true,
@@ -48,6 +60,7 @@ export const fail = (err) => ({
  * @param {string} description Human/LLM-facing description.
  * @param {Record<string, import('zod').ZodTypeAny>} schema Zod input schema (use {} for no args).
  * @param {(args: object) => Promise<string>} handler Returns the text payload; thrown errors become tool errors.
+ * @returns {ReturnType<import('@modelcontextprotocol/sdk/server/mcp.js').McpServer['tool']>}
  */
 export const define = (server, name, description, schema, handler) =>
 	server.tool(name, description, schema, async (args) => {

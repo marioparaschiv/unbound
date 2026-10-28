@@ -39,7 +39,14 @@
 			"native.objc.associations",
 			"native.objc.hooks"
 		],
-		"android": []
+		"android": [
+			"native.java.classes",
+			"native.java.invoke",
+			"native.java.invokeAsync",
+			"native.java.construct",
+			"native.java.fields",
+			"native.java.hooks"
+		]
 	},
 	"minNativePluginApi": "1.0.0",
 	"main": "index.tsx"

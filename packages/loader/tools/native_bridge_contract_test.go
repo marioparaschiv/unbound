@@ -47,13 +47,12 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 		"ffi_prep_closure_loc",
 		"dispatchFFIHook",
 		"dispatchVoidHook",
-		"dispatchObjectObjectHook",
-		"dispatchBoolObjectObjectHook",
-		"dispatchObjectCGRectHook",
-		"dispatchCGSizeNoArgumentHook",
-		"dispatchVoidObjectHook",
-		"dispatchVoidNSUIntegerHook",
-		"dispatchVoidObjectObjectHook",
+		"dispatchTypedHook",
+		"fallbackHooks()",
+		"fallbackHook<int8_t, id, id>(\"i8\", {\"object\", \"object\"})",
+		"fallbackHook<id, CGRect>(\"object\", {\"struct:CGRect\"})",
+		"fallbackHook<CGSize>(\"struct:CGSize\", {})",
+		"fallbackHook<void, id, id>(\"void\", {\"object\", \"object\"})",
 		"replaceObjectArgument",
 		"instanceTarget",
 		"isExecutableAddress",
@@ -76,7 +75,7 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	if !containsCode(sourceText, "Native hook closure is unavailable on this device") {
 		t.Fatal("native hook closure fail-closed diagnostic is missing from the loader")
 	}
-	if !containsCode(sourceText, `signature.arguments[2].name == "u64"`) {
+	if !containsCode(sourceText, `fallbackHook<void, NSUInteger>("void", {"u64"})`) {
 		t.Fatal("native unsigned 64-bit argument hooks do not have a precompiled fallback")
 	}
 	if !containsCode(sourceText, "class NativeDataBuffer") ||
@@ -105,23 +104,15 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 		!containsCode(sourceText[rawFunctionHandler:], "return makeFunction(name, argCount, runtime, wrappedHandler);") {
 		t.Fatal("raw native bridge handlers bypass structured error wrapping")
 	}
-	if !containsCode(sourceText, `signature.result.name == "object" && signature.arguments.size() == 3`) {
+	if !containsCode(sourceText, `fallbackHook<id, id>("object", {"object"})`) {
 		t.Fatal("native object-return hooks do not have a precompiled fallback")
 	}
-	if !containsCode(sourceText, `signature.result.name == "bool" || signature.result.name == "i8"`) ||
-		!containsCode(sourceText, `signature.arguments.size() == 4`) {
-		t.Fatal("native boolean hooks with two object arguments do not have a precompiled fallback")
-	}
-	if !containsCode(sourceText, `signature.arguments[2].name == "struct:CGRect"`) {
-		t.Fatal("native object-return CGRect hooks do not have a precompiled fallback")
+	if !containsCode(sourceText, `name == "bool" ? std::string_view("i8")`) {
+		t.Fatal("native boolean hooks do not share the i8 precompiled fallbacks")
 	}
 	if !containsCode(typeText, `fields == "{CGPoint=dd}{CGSize=dd}"`) ||
 		!containsCode(typeText, `fields == "dd"`) {
 		t.Fatal("native type parsing must validate CGRect and CGPoint field layouts")
-	}
-	if !containsCode(sourceText, `signature.result.name != "struct:CGSize"`) ||
-		!containsCode(sourceText, `signature.arguments.size() == 2`) {
-		t.Fatal("native no-argument CGSize hooks do not have a precompiled fallback")
 	}
 	if !containsCode(sourceText, "Native hook original() cannot cross runtime threads") {
 		t.Fatal("native hook original thread safety diagnostic is missing from the loader")
@@ -251,17 +242,12 @@ func TestAndroidNativeBridgeContractIsSynchronized(t *testing.T) {
 		`define(runtime, debug, "environment",`,
 		`bridge.addNamespace("debug"`,
 		`bridge.addNamespace("fabric"`,
-		`define(runtime, fabric, "mountAsync",`,
-		`define(runtime, fabric, "updateAsync",`,
-		`define(runtime, fabric, "setSizeAsync",`,
-		`define(runtime, fabric, "setFrameAsync",`,
-		`define(runtime, fabric, "measureAsync",`,
-		`define(runtime, fabric, "unmountAsync",`,
+		"loader::native::makeFabricNamespace(",
+		"loader::native::FabricCalls::AsyncOnly",
 		"loader::native::onRuntimeGenerationChanged(",
 		"retireHookListeners();",
 		"installedHooks().adopt(",
 		"hookReturnValues().clearAll();",
-		"mountedSurfaces().releaseAll();",
 		"serializeJavaBatch(rt, args[0])",
 		"executeMainAsynchronously(",
 		"bridge.install();",
@@ -337,12 +323,8 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		"[invocation retainArguments]",
 		"Native super invocation cannot synchronously cross to the main thread",
 		`"invokeSuperAsync"`,
-		`"mountAsync"`,
-		`"updateAsync"`,
-		`"setSizeAsync"`,
-		`"setFrameAsync"`,
-		`"measureAsync"`,
-		`"unmountAsync"`,
+		"loader::native::makeFabricNamespace(",
+		"loader::native::FabricCalls::SyncAndAsync",
 		"NATIVE_WRONG_THREAD",
 		"static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)",
 		"Native batch requires at most 64 steps",

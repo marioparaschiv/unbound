@@ -6,6 +6,7 @@ import * as React$1 from 'react';
 import { ComponentProps, ComponentType, ElementType, ReactNode } from 'react';
 import * as RN from 'react-native';
 import { ColorValue, ImageStyle, TextStyle, ViewStyle } from 'react-native';
+
 declare const HelpMessageTypes$1: any;
 declare const HelpMessageTypes: {
 	readonly 0: 'WARNING';

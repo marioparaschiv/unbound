@@ -36,9 +36,11 @@ static std::optional<CrashRecord> readRecord(const std::string &path)
     }
 
     CrashRecord record;
-    record.addon.id   = id->get<std::string>();
-    record.addon.name = parsed.value("name", record.addon.id);
-    auto crashes      = parsed.find("crashes");
+    record.addon.id = id->get<std::string>();
+    auto name       = parsed.find("name");
+    record.addon.name =
+        name != parsed.end() && name->is_string() ? name->get<std::string>() : record.addon.id;
+    auto crashes = parsed.find("crashes");
     record.crashes =
         crashes != parsed.end() && crashes->is_number_integer() ? crashes->get<int>() : 0;
     return record;

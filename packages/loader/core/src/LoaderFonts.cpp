@@ -110,9 +110,13 @@ static std::optional<TableLocation> nameTableIn(const std::string &directory, si
     for (uint16_t index = 0; index < *tables; index++)
     {
         const size_t record = fontOffset + 12 + static_cast<size_t>(index) * 16;
-        const auto   tag    = readU32(directory, record);
-        const auto   offset = readU32(directory, record + 8);
-        const auto   length = readU32(directory, record + 12);
+        if (record + 16 > directory.size())
+        {
+            break;
+        }
+        const auto tag    = readU32(directory, record);
+        const auto offset = readU32(directory, record + 8);
+        const auto length = readU32(directory, record + 12);
         if (tag && offset && length && *tag == 0x6E616D65)
         {
             return TableLocation{*offset, *length};
@@ -135,12 +139,16 @@ static std::optional<std::string> nameFromNameTable(const std::string &table, ui
     std::optional<std::string> mac;
     for (uint16_t index = 0; index < *count; index++)
     {
-        const size_t record   = 6 + static_cast<size_t>(index) * 12;
-        const auto   platform = readU16(table, record);
-        const auto   language = readU16(table, record + 4);
-        const auto   nameID   = readU16(table, record + 6);
-        const auto   length   = readU16(table, record + 8);
-        const auto   offset   = readU16(table, record + 10);
+        const size_t record = 6 + static_cast<size_t>(index) * 12;
+        if (record + 12 > table.size())
+        {
+            break;
+        }
+        const auto platform = readU16(table, record);
+        const auto language = readU16(table, record + 4);
+        const auto nameID   = readU16(table, record + 6);
+        const auto length   = readU16(table, record + 8);
+        const auto offset   = readU16(table, record + 10);
         if (!platform || !language || !nameID || !length || !offset || *nameID != wantedID)
         {
             continue;

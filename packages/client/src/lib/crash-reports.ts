@@ -3,9 +3,9 @@ import { createApiClient } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
 import type { Api } from '@unbound-app/web/api';
 
-import type { CrashEnvironment, CrashEvent } from '~/lib/crash-report';
+import { currentEnvironment } from '~/lib/environment';
 import { buildCrashReport } from '~/lib/crash-report';
-import { BundleInfo } from '~/api/native';
+import type { CrashEvent } from '~/lib/crash-report';
 import storage from '~/api/storage';
 import fs from '~/api/fs';
 
@@ -31,23 +31,6 @@ async function readLoaderLog(): Promise<string | undefined> {
 	} catch {
 		return undefined;
 	}
-}
-
-function currentEnvironment(clientVersion: string): CrashEnvironment | undefined {
-	const platform = globalThis.NativePlatform;
-
-	if (!platform || (platform.platform !== 'ios' && platform.platform !== 'android')) {
-		return undefined;
-	}
-
-	return {
-		platform: platform.platform,
-		clientVersion,
-		loaderVersion: String(globalThis.UNBOUND_LOADER?.version ?? 'unknown'),
-		discordVersion: String(BundleInfo?.Version ?? 'unknown'),
-		osVersion: platform.device.getOSVersionString(),
-		deviceModel: platform.device.getDeviceModel(),
-	};
 }
 
 /**

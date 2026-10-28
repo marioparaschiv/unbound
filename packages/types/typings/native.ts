@@ -1,4 +1,6 @@
-import type { AddonManifest } from './addons';
+import type * as React from 'react';
+
+import type { AddonManifest, Plugin } from './addons';
 
 export const NATIVE_PLUGIN_CAPABILITIES = [
 	'native.objc.classes',
@@ -468,9 +470,17 @@ export type NativeDebugEvaluation = {
 	logs?: { level: 1 | 2 | 3; message: string }[];
 };
 
+export type NativeResourceCounts = {
+	hooks: number;
+	surfaces: number;
+	cachedReturns: number;
+	handles: number;
+};
+
 export type NativeDebugEnvironment = {
 	isVirtualDevice: boolean;
 	hostAddress: string | null;
+	resources?: NativeResourceCounts;
 };
 
 export type NativeDebugBridge = {
@@ -613,9 +623,14 @@ export type NativeAddonVerification = {
 	readonly problem?: string;
 };
 
+/** A plugin bundle the loader evaluated from bytecode: it takes the scoped React and returns the plugin module. */
+export type NativeCompiledPlugin = (react: typeof React) => Plugin | { default: Plugin };
+
 export type NativePlatformAddons = {
 	/** Checks a manifest's `signature` against its bundle. */
 	verify(manifest: string, bundle: string): NativeAddonVerification;
+	/** Evaluates an installed plugin's bundle compiled for this bytecode version, if its digest matches the manifest. */
+	evaluateBytecode?(folder: string, bytecodeVersion: number): NativeCompiledPlugin | undefined;
 };
 
 export type NativePlatformFonts = {

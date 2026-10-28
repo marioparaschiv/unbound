@@ -5,9 +5,11 @@ import { memo } from 'react';
 import { Discord } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
 import { ManagerKind } from '~/lib/constants';
+import { ManagerType } from '~/managers/base';
 import { getManager } from '~/managers/utils';
 import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';
+import { Messages } from '~/api/i18n';
 import { Icons } from '~/api/assets';
 
 import AddonOverflow from './addon-overflow';
@@ -21,13 +23,15 @@ import AddonTitle from './addon-title';
 type AddonCardProps = {
 	addon: Addon;
 	kind: ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons;
+	/** Whether the plugin is a library other plugins build on. */
+	library?: boolean;
 };
 
 /**
  * @description One addon card: the title, authors and controls on top, the description and icon below.
  * Failed addons dim and show the manager's recorded error; recovery mode disables interaction.
  */
-function AddonCard({ addon, kind }: AddonCardProps) {
+function AddonCard({ addon, kind, library }: AddonCardProps) {
 	const styles = useStyles();
 	const manager = getManager(kind);
 	const { name, version, authors, description } = addon.data;
@@ -37,6 +41,16 @@ function AddonCard({ addon, kind }: AddonCardProps) {
 		false,
 	);
 	const disabled = addon.failed || recovery;
+	const developmentCopy =
+		useSettingsStore(
+			ManagerType[manager.type].toLowerCase(),
+			({ key }) => key === 'development',
+		).get<Record<string, boolean>>('development', {})[addon.id] === true;
+	const tag = library
+		? Messages.UNBOUND_LIBRARY
+		: developmentCopy
+			? Messages.UNBOUND_DEVELOPMENT_COPY
+			: void 0;
 
 	const trailing =
 		kind === ManagerKind.Plugins ? (
@@ -56,14 +70,14 @@ function AddonCard({ addon, kind }: AddonCardProps) {
 		>
 			<View style={styles.top}>
 				<View style={styles.heading}>
-					<AddonTitle name={name} version={version} />
+					<AddonTitle name={name} version={version} tag={tag} />
 					{authors?.length ? <AddonAuthors authors={authors} /> : null}
 				</View>
 				<View style={styles.actions}>
 					{kind === ManagerKind.Plugins ? (
 						<AddonSettings addon={addon} disabled={disabled} />
 					) : null}
-					<AddonOverflow addon={addon} kind={kind} />
+					<AddonOverflow addon={addon} kind={kind} developmentCopy={developmentCopy} />
 					{trailing}
 				</View>
 			</View>

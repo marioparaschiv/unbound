@@ -195,7 +195,7 @@ abstract class GenerateDiscordShapes : DefaultTask() {
 }
 
 val generateDiscordShapes = tasks.register<GenerateDiscordShapes>("generateDiscordShapes") {
-    shapes.set(repositoryRoot.resolveSibling("plugins-shared/src/native/android/discord-shapes.json"))
+    shapes.set(repositoryRoot.resolve("android/discord-shapes.json"))
 }
 
 val copyBootstrapResources = tasks.register<CopyBootstrapResources>("copyBootstrapResources") {

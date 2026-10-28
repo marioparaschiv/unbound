@@ -92,6 +92,9 @@
 	"overrides": {
 		"typescript": "5.9.3"
 	},
+	"patchedDependencies": {
+		"possess@1.1.0": "patches/possess@1.1.0.patch"
+	},
 	"trustedDependencies": [
 		"lefthook"
 	]

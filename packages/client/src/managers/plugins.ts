@@ -13,7 +13,22 @@ import { Addons } from '~/managers/addons';
 /**
  * @description Manages plugins, building on the base {@link Addons} manager to load and evaluate plugin bundles.
  */
+type PluginFactory = (react: ReturnType<typeof createScopedReact>) => ReturnType<typeof JSON.parse>;
+
+type ScannedPlugin = {
+	bundle: string;
+	folder: string;
+};
+
+type EvaluatedPlugin = {
+	bundle: string;
+	factory: PluginFactory;
+};
+
 export class Plugins extends Addons<PluginEntity> {
+	private scanned = new Map<string, ScannedPlugin>();
+	private evaluated = new Map<string, EvaluatedPlugin>();
+
 	/**
 	 * @description Creates the plugins manager bound to the {@link ManagerType.PLUGINS} type.
 	 */
@@ -28,10 +43,24 @@ export class Plugins extends Addons<PluginEntity> {
 		setFreezeListener((freeze) => this.handleFreeze(freeze));
 
 		for (const { bundle, manifest } of window.UNBOUND_PLUGINS ?? []) {
+			if ('folder' in manifest && typeof manifest.folder === 'string') {
+				this.scanned.set(manifest.id, { bundle, folder: manifest.folder });
+			}
+
 			this.load(bundle, manifest);
 		}
 
 		this.initialized = true;
+	}
+
+	/**
+	 * @description Unloads a plugin and forgets its evaluated bundle, so a deleted plugin's code is not kept.
+	 * @param entity The plugin to unload, as its id or the entity itself.
+	 */
+	unload(entity: string | Addon): void | Promise<void> {
+		this.evaluated.delete(typeof entity === 'string' ? entity : entity.id);
+
+		return super.unload(entity);
 	}
 
 	/**
@@ -65,8 +94,7 @@ export class Plugins extends Addons<PluginEntity> {
 	 * @returns The resolved plugin instance.
 	 */
 	protected handleBundle(bundle: string, id: string): Plugin {
-		// oxlint-disable-next-line no-eval
-		const iife = eval(`((React) => { return ${bundle} })`);
+		const iife = this.factoryFor(bundle, id);
 
 		return withRefreshScope(id, () => {
 			const payload = iife(createScopedReact());
@@ -74,6 +102,51 @@ export class Plugins extends Addons<PluginEntity> {
 
 			return instance?.default ?? instance;
 		});
+	}
+
+	private factoryFor(bundle: string, id: string): PluginFactory {
+		const cached = this.evaluated.get(id);
+
+		if (cached?.bundle === bundle) {
+			return cached.factory;
+		}
+
+		const factory = this.compiledFactory(bundle, id) ?? this.sourceFactory(bundle);
+
+		this.evaluated.set(id, { bundle, factory });
+
+		return factory;
+	}
+
+	private sourceFactory(bundle: string): PluginFactory {
+		// oxlint-disable-next-line no-eval
+		return eval(`((React) => { return ${bundle} })`);
+	}
+
+	/**
+	 * @description Evaluates the bytecode the loader compiled for this runtime, when the bundle being
+	 * started is the one it scanned at launch, so a hot-reloaded or updated bundle always runs from source.
+	 * @param bundle The bundle about to start.
+	 * @param id The plugin's id.
+	 * @returns The compiled plugin factory, or `undefined` to evaluate the source.
+	 */
+	private compiledFactory(bundle: string, id: string): PluginFactory | undefined {
+		const scanned = this.scanned.get(id);
+		const bytecodeVersion = window.UNBOUND_LOADER?.bytecodeVersion;
+		const addons = globalThis.NativePlatform?.addons;
+
+		if (!scanned || scanned.bundle !== bundle || !bytecodeVersion || !addons?.evaluateBytecode)
+			return;
+
+		try {
+			const factory = addons.evaluateBytecode(scanned.folder, bytecodeVersion);
+
+			return typeof factory === 'function' ? (factory as PluginFactory) : undefined;
+		} catch (error) {
+			this.logger.warn(`Failed to evaluate the bytecode of ${id}, using its source:`, error);
+
+			return undefined;
+		}
 	}
 
 	protected get entityType() {

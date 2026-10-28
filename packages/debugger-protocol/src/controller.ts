@@ -1,6 +1,6 @@
 import type { AddonManifest } from '@unbound-app/types';
 
-import type { EvalResult, LogMessage, PluginPushResult } from './index';
+import type { DeviceInfo, EvalResult, LogMessage, PluginPushResult } from './index';
 
 import {
 	DEFAULT_EVAL_TIMEOUT_MS,
@@ -43,6 +43,7 @@ export class ControllerClient {
 	private readonly pending = new Map<string, PendingEval>();
 	private readonly pendingPushes = new Map<string, PendingPush>();
 	private deviceConnected = false;
+	private deviceInfo: DeviceInfo | undefined;
 	private closed = false;
 	private readonly url: string;
 
@@ -94,6 +95,11 @@ export class ControllerClient {
 	/** @description Whether a device is currently connected to the bridge. */
 	get isDeviceConnected(): boolean {
 		return this.deviceConnected;
+	}
+
+	/** @description What the connected device reported about itself in its hello, once it has said hello. */
+	get device(): DeviceInfo | undefined {
+		return this.deviceInfo;
 	}
 
 	/**
@@ -186,6 +192,7 @@ export class ControllerClient {
 
 		if (message.type === 'device-status') {
 			this.deviceConnected = message.connected;
+			this.deviceInfo = message.connected ? message.device : void 0;
 
 			return;
 		}

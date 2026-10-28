@@ -336,7 +336,8 @@ uint32_t AndroidLoader::runtimeBytecodeVersion()
 
 loader::PreloadPayload AndroidLoader::preloadPayload()
 {
-    return loader::makePreloadPayload(settings_, addons_, availableFonts(), configuration_.origin);
+    return loader::makePreloadPayload(settings_, addons_, availableFonts(), configuration_.origin,
+                                      runtimeBytecodeVersion());
 }
 
 void AndroidLoader::installNativeModules(jsi::Runtime &runtime)

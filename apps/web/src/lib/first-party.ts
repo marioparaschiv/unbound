@@ -13,13 +13,13 @@ import { VERSION_SOURCE, writeArtifact } from '~/lib/artifacts';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { recordReviewDecision } from '~/lib/moderation-events';
 import { addon, addonVersion, submission } from '~/db/schema';
+import { publishVersion, replaceVersion } from '~/lib/review';
 import type { AddonSource } from '~/lib/addon-source';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
-import { publishVersion } from '~/lib/review';
 import { ApiError } from '~/lib/api/errors';
 import one from '~/db/one';
 
@@ -29,7 +29,17 @@ type ClaimReader = Pick<Transaction, 'select'>;
 const BUILD_TAG_PREFIX = 'plugin-builds/';
 
 /** What publishing a version would do: create or update the addon, or nothing when it is already live. */
-type Claim = { kind: SubmissionKind } | { kind: 'unchanged'; sha256: string };
+type Claim = { kind: SubmissionKind } | { kind: 'replace' } | { kind: 'unchanged'; sha256: string };
+
+/** What a version's live content is compared on: the bundle and the bundles compiled from it. */
+type Content = Pick<AddonSource, 'sha256' | 'manifest'>;
+
+function sameBytecode(left: PublishedManifest['bytecode'], right: PublishedManifest['bytecode']) {
+	const leftEntries = Object.entries(left ?? {}).toSorted(([a], [b]) => a.localeCompare(b));
+	const rightEntries = Object.entries(right ?? {}).toSorted(([a], [b]) => a.localeCompare(b));
+
+	return JSON.stringify(leftEntries) === JSON.stringify(rightEntries);
+}
 
 function isRepository(candidate: string | null, repository: string): boolean {
 	return candidate?.toLowerCase() === repository.toLowerCase();
@@ -55,8 +65,9 @@ async function checkClaim(
 	tx: ClaimReader,
 	repository: string,
 	callerId: string,
-	manifest: PublishedManifest,
+	content: Content,
 ): Promise<Claim> {
+	const { manifest } = content;
 	const [existing] = await tx
 		.select({ repository: addon.repository })
 		.from(addon)
@@ -92,13 +103,24 @@ async function checkClaim(
 	}
 
 	const [live] = await tx
-		.select({ sha256: addonVersion.sha256 })
+		.select({ sha256: addonVersion.sha256, manifest: addonVersion.manifest })
 		.from(addonVersion)
 		.where(
 			and(eq(addonVersion.addonId, manifest.id), eq(addonVersion.version, manifest.version)),
 		);
 
-	return live ? { kind: 'unchanged', sha256: live.sha256 } : { kind: 'update' };
+	if (!live) {
+		return { kind: 'update' };
+	}
+
+	if (
+		live.sha256 !== content.sha256 ||
+		!sameBytecode(live.manifest.bytecode, manifest.bytecode)
+	) {
+		return { kind: 'replace' };
+	}
+
+	return { kind: 'unchanged', sha256: live.sha256 };
 }
 
 // Mirrors an approval: the files are public before this commits, and the claim is checked again.
@@ -112,7 +134,7 @@ function commitApproved(
 	const { manifest, pin } = source;
 
 	return ctx.db.transaction(async (tx) => {
-		const claim = await checkClaim(tx, repository, caller.user.id, manifest);
+		const claim = await checkClaim(tx, repository, caller.user.id, source);
 
 		if (claim.kind === 'unchanged') {
 			return claim;
@@ -126,7 +148,7 @@ function commitApproved(
 					id,
 					addonId: manifest.id,
 					authorId: caller.user.id,
-					kind: claim.kind,
+					kind: claim.kind === 'replace' ? 'update' : claim.kind,
 					status: 'approved',
 					version: manifest.version,
 					manifest,
@@ -150,7 +172,12 @@ function commitApproved(
 			commitSha: pin.commitSha,
 			ref: pin.ref,
 		});
-		await publishVersion(tx, row, source.sha256, now);
+
+		if (claim.kind === 'replace') {
+			await replaceVersion(tx, row, source.sha256, now);
+		} else {
+			await publishVersion(tx, row, source.sha256, now);
+		}
 
 		return claim;
 	});
@@ -194,14 +221,14 @@ export async function publishFirstParty(
 
 	const published = { addonId: manifest.id, version: manifest.version };
 	const claim = await ctx.db.transaction((tx) =>
-		checkClaim(tx, repository, caller.user.id, manifest),
+		checkClaim(tx, repository, caller.user.id, source),
 	);
 
 	if (claim.kind === 'unchanged') {
 		return { status: 'unchanged', ...published, sha256: claim.sha256 };
 	}
 
-	await writeArtifact(ctx, { ...published, manifest }, source.bundle);
+	await writeArtifact(ctx, { ...published, manifest }, source.bundle, source.bytecode);
 
 	const committed = await commitApproved(ctx, caller, repository, source, ctx.now());
 
@@ -211,7 +238,11 @@ export async function publishFirstParty(
 
 	requestProfileRefresh();
 
-	return { status: 'published', ...published, sha256: source.sha256 };
+	return {
+		status: committed.kind === 'replace' ? 'replaced' : 'published',
+		...published,
+		sha256: source.sha256,
+	};
 }
 
 /**
@@ -231,7 +262,7 @@ export async function listFirstPartyAddons(
 		columns: { id: true },
 		with: {
 			versions: {
-				columns: { version: true },
+				columns: { version: true, sha256: true, manifest: true },
 				orderBy: { versionKey: 'desc' },
 				limit: 1,
 				with: VERSION_SOURCE,
@@ -247,6 +278,8 @@ export async function listFirstPartyAddons(
 						id,
 						version: newest.version,
 						commitSha: newest.submission?.source?.commitSha ?? null,
+						sha256: newest.sha256,
+						...(newest.manifest.bytecode ? { bytecode: newest.manifest.bytecode } : {}),
 					},
 				]
 			: [],

@@ -6,11 +6,10 @@ import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import ensureClasses from '@unbound-plugins/shared/native/ensure-classes';
 import { viewKey } from '@unbound-plugins/shared/native/view-key';
 
+import { currentGuildId, guildAliases, type GuildAliases } from '~/composer-aliases';
 import { ChannelStore, GuildMemberStore, SelectedChannelStore, UserStore } from '~/modules';
-import { presentNames, uniqueNames, type NameOwner } from '~/names';
 import { createMentionPainter } from '~/native/mention-painter';
-import { longestFirst, matchMention } from '~/mentions';
-import { guildIdOf } from '~/channel-guild';
+import { matchMention } from '~/mentions';
 import { PLUGIN_NAME } from '~/constants';
 import type { NativeValue } from '~/types';
 
@@ -19,36 +18,6 @@ type TextViewState = {
 	original: NativeValue;
 	view: NativeValue;
 };
-
-type GuildAliases = {
-	owners: Map<string, string>;
-	names: string[];
-};
-
-function currentGuildId(): string | undefined {
-	return guildIdOf(SelectedChannelStore.getChannelId());
-}
-
-// The composer shows a mention as plain "@name" text, so names are matched against every member's names.
-function guildAliases(guildId: string): GuildAliases {
-	const members = (GuildMemberStore.getMembers(guildId) ?? []).slice(0, 5_000);
-	const owners = uniqueNames(
-		members.map((member): NameOwner<string> => {
-			const user = UserStore.getUser(member.userId);
-			const tag =
-				user?.username && user.discriminator && user.discriminator !== '0'
-					? `${user.username}#${user.discriminator}`
-					: null;
-
-			return [
-				presentNames(member.nick, user?.globalName, user?.username, tag),
-				member.userId,
-			];
-		}),
-	);
-
-	return { owners, names: longestFirst(owners.keys()) };
-}
 
 /**
  * @description Paints mentions typed in the native chat input with the mentioned member's role colors.
@@ -238,6 +207,7 @@ export function colorChatInputMentions(objc: NativeObjCBridge): () => Promise<vo
 		for (const selector of [
 			'setAttributedText:',
 			'setText:',
+			'textViewDidChange:',
 			'layoutSubviews',
 			'didMoveToWindow',
 		]) {

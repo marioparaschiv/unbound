@@ -129,6 +129,37 @@ std::vector<std::string> listDirectory(const std::string &path)
     return entries;
 }
 
+static bool containedIn(const std::filesystem::path &root, const std::filesystem::path &path)
+{
+    auto rootEnd = root.end();
+    return std::mismatch(root.begin(), rootEnd, path.begin(), path.end()).first == rootEnd;
+}
+
+std::optional<std::string> resolveInsideDirectory(const std::string &directory,
+                                                  const std::string &relative)
+{
+    const std::filesystem::path normal = std::filesystem::path(relative).lexically_normal();
+    if (relative.empty() || normal.empty() || normal.is_absolute() || normal.has_root_name() ||
+        *normal.begin() == "..")
+    {
+        return std::nullopt;
+    }
+
+    std::error_code             error;
+    const std::filesystem::path root = std::filesystem::weakly_canonical(directory, error);
+    if (error)
+    {
+        return std::nullopt;
+    }
+    const std::filesystem::path resolved =
+        std::filesystem::weakly_canonical(std::filesystem::path(directory) / normal, error);
+    if (error || !containedIn(root, resolved))
+    {
+        return std::nullopt;
+    }
+    return (std::filesystem::path(directory) / normal).string();
+}
+
 std::string joinPath(const std::string &base, const std::string &component)
 {
     if (component.empty())

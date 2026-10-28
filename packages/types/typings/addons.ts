@@ -37,6 +37,12 @@ export type AddonManifest = {
 		version: 1;
 		ed25519: string;
 	};
+	/** Marks a plugin other plugins build on, which the plugin list hides by default. */
+	library?: boolean;
+	/** The addons this one needs, by id, each with the semver range it accepts, such as `^1.2.0`. */
+	dependencies?: Record<string, string>;
+	/** The SHA-512 of each bundle compiled to Hermes bytecode, by bytecode version; covered by `signature`. */
+	bytecode?: Record<string, string>;
 	/** Set by the loader and installer: whether the bundle carries a valid Unbound signature. */
 	trust?: AddonTrust;
 	/** Requirements on the Unbound client running the addon. */

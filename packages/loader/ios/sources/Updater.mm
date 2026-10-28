@@ -1,5 +1,3 @@
-#import "Updater.h"
-
 #include <istream>
 #include <ostream>
 #include <streambuf>
@@ -9,6 +7,7 @@
 #include "LoaderHotReload.h"
 #include "LoaderUpdater.h"
 #import "SettingsCore.h"
+#import "Unbound.h"
 #import "UpdaterCore.h"
 
 using unbound::ios::toNSString;
@@ -101,17 +100,15 @@ static loader::BundleUpdater &bundleUpdater()
     return *updater;
 }
 
-static NSException *updaterException(const std::exception &error)
-{
-    return [[NSException alloc] initWithName:@"BundleUpdateFailed"
-                                      reason:toNSString(error.what())
-                                    userInfo:nil];
-}
-
 static std::optional<std::string> optionalUpdateURL()
 {
-    NSString *updateURL = [Updater resolveUpdateURL];
-    return updateURL ? std::optional<std::string>(toStdString(updateURL)) : std::nullopt;
+    NSString *hostAddress = [Utilities getVirtualDeviceHostAddress];
+    return loader::resolveUpdateURL(
+        iosUpdaterSettings(),
+        hostAddress ? std::optional<std::string>(toStdString(hostAddress)) : std::nullopt,
+        [](const std::string &probe, double timeout) {
+            return isServingBundle([NSURL URLWithString:toNSString(probe)], timeout);
+        });
 }
 
 loader::BundleUpdater &UnboundBundleUpdater()
@@ -128,66 +125,3 @@ std::optional<std::string> UnboundUpdateURL()
 {
     return optionalUpdateURL();
 }
-
-@implementation Updater
-
-+ (NSString *)resolveUpdateURL
-{
-    NSString                  *hostAddress = [Utilities getVirtualDeviceHostAddress];
-    std::optional<std::string> url         = loader::resolveUpdateURL(
-        iosUpdaterSettings(),
-        hostAddress ? std::optional<std::string>(toStdString(hostAddress)) : std::nullopt,
-        [](const std::string &probe, double timeout) {
-            return isServingBundle([NSURL URLWithString:toNSString(probe)], timeout);
-        });
-    return url ? toNSString(*url) : nil;
-}
-
-+ (NSString *)resolveBundlePath
-{
-    try
-    {
-        return toNSString(bundleUpdater().resolveBundlePath());
-    }
-    catch (const std::exception &error)
-    {
-        @throw updaterException(error);
-    }
-}
-
-+ (NSString *)downloadBundle:(NSString *)preferredPath
-{
-    try
-    {
-        return toNSString(bundleUpdater().downloadBundle(toStdString(preferredPath),
-                                                         optionalUpdateURL(),
-                                                         [CoreBridge mainBundleBytecodeVersion]));
-    }
-    catch (const std::exception &error)
-    {
-        @throw updaterException(error);
-    }
-}
-
-+ (BOOL)markBundleAttempted:(NSString *)path
-{
-    return bundleUpdater().markBundleAttempted(toStdString(path));
-}
-
-+ (BOOL)acceptBundle:(NSString *)path
-{
-    return bundleUpdater().acceptBundle(toStdString(path));
-}
-
-+ (void)rejectBundle:(NSString *)path
-{
-    bundleUpdater().rejectBundle(toStdString(path));
-}
-
-+ (NSURL *)getDownloadURL
-{
-    return [NSURL URLWithString:toNSString(bundleUpdater().downloadURL(
-                                    optionalUpdateURL(), [CoreBridge mainBundleBytecodeVersion]))];
-}
-
-@end

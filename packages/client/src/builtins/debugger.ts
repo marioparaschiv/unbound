@@ -1,4 +1,5 @@
 import type {
+	DeviceHello,
 	PluginPushRequest,
 	PluginPushResult,
 	EvalResult,
@@ -8,7 +9,8 @@ import { parseMessage } from '@unbound-app/debugger-protocol';
 import type { PluginEntity } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 
-import { DEBUGGER_ADDRESS } from '~/lib/constants';
+import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/lib/constants';
+import { currentEnvironment } from '~/lib/environment';
 import { createPatcher } from '~/api/patcher';
 import { plugins } from '~/managers/plugins';
 import { showToast } from '~/api/toasts';
@@ -91,6 +93,7 @@ function connect(isReconnect = false) {
 	ws = new WebSocket(`ws://${address}`);
 
 	ws.addEventListener('open', () => {
+		sayHello();
 		Logger.success(isReconnect ? 'Reconnected' : 'Connected');
 	});
 
@@ -179,6 +182,10 @@ async function handlePluginPush(request: PluginPushRequest) {
 	try {
 		const result = await plugins.reload(request.addonId, request.bundle, request.manifest);
 
+		if (result.ok) {
+			plugins.markDevelopmentCopy(request.addonId);
+		}
+
 		reply({
 			type: 'plugin-push-result',
 			id: request.id,
@@ -187,6 +194,28 @@ async function handlePluginPush(request: PluginPushRequest) {
 		});
 	} catch (error) {
 		reply({ type: 'plugin-push-result', id: request.id, ok: false, error: inspect(error) });
+	}
+}
+
+function sayHello() {
+	const environment = currentEnvironment(CLIENT_VERSION);
+
+	if (!environment || ws?.readyState !== WebSocket.OPEN) return;
+
+	const hello: DeviceHello = {
+		type: 'hello',
+		device: {
+			platform: environment.platform,
+			discordVersion: environment.discordVersion,
+			loaderVersion: environment.loaderVersion,
+			clientVersion: environment.clientVersion,
+		},
+	};
+
+	try {
+		ws.send(JSON.stringify(hello));
+	} catch {
+		return;
 	}
 }
 

@@ -255,3 +255,22 @@ func TestWriteReleaseCandidateOutputIncludesTheAndroidCode(t *testing.T) {
 		t.Fatalf("unexpected output contents %q", contents)
 	}
 }
+
+func TestLoaderReleaseTagsNameThePlatformOfPrereleases(t *testing.T) {
+	for channel, want := range map[string]string{
+		"stable":        "discord-350.8-ios",
+		"testflight":    "discord-352.0_118977-ios-testflight",
+		"android-beta":  "discord-351.12-android-beta",
+		"android-alpha": "discord-352.8-android-alpha",
+	} {
+		version := map[string]string{
+			"stable":        "350.8",
+			"testflight":    "352.0_118977",
+			"android-beta":  "351.12-android-beta",
+			"android-alpha": "352.8-android-alpha",
+		}[channel]
+		if got := loaderReleaseTag(channel, version); got != want {
+			t.Fatalf("%s release tag is %s, want %s", channel, got, want)
+		}
+	}
+}

@@ -53,7 +53,12 @@ static std::optional<RGBAColor> parseFunction(const std::string &value)
     {
         try
         {
-            components.push_back(std::stod(trim(part)));
+            double component = std::stod(trim(part));
+            if (!std::isfinite(component))
+            {
+                return std::nullopt;
+            }
+            components.push_back(component);
         }
         catch (...)
         {

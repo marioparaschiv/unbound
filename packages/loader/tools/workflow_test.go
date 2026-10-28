@@ -190,7 +190,9 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		"value: ${{ jobs.android.outputs.module_filename }}",
 		"value: ${{ jobs.android.outputs.patched_filename }}",
 		"name: ios-simulator",
-		"name: Publish stable release",
+		"name: Publish stable iOS release",
+		"name: Publish stable Android release",
+		"go run ./tools release-names --release-version",
 		"name: Publish TestFlight prerelease",
 		"if: inputs.is_testflight != true",
 	} {
@@ -291,7 +293,12 @@ func TestObtainiumConfigTracksTheRootedAndroidModule(t *testing.T) {
 	if err := json.Unmarshal([]byte(config.AdditionalSettings), &settings); err != nil {
 		t.Fatal(err)
 	}
-	for title, wanted := range map[string]bool{"loader-v350.8": true, "v0.9.0": false} {
+	for title, wanted := range map[string]bool{
+		"Unbound 1.0.1 for Discord 350.8, Android":       true,
+		"Unbound 1.0.1 for Discord 351.12, Android beta": true,
+		"Unbound 1.0.1 for Discord 350.8, iOS":           false,
+		"v0.9.0":                                         false,
+	} {
 		if matched, err := regexp.MatchString(settings.FilterReleaseTitlesByRegEx, title); err != nil || matched != wanted {
 			t.Fatalf("Obtainium release filter %q on %q matched %v, want %v", settings.FilterReleaseTitlesByRegEx, title, matched, wanted)
 		}
@@ -391,8 +398,8 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 		"go run ./tools publish-loader-releases",
 		"loader-release",
 		"loader-release",
-		"--ios-url \"$release_url/$IOS_DEB_FILENAME\"",
-		"--android-url \"$release_url/$ANDROID_MODULE_FILENAME\"",
+		"--ios-url \"$release_url/$IOS_RELEASE_TAG/$IOS_DEB_FILENAME\"",
+		"--android-url \"$release_url/$ANDROID_RELEASE_TAG/$ANDROID_MODULE_FILENAME\"",
 		"needs.resolve-source.outputs.is_testflight != 'true'",
 	} {
 		if !strings.Contains(contents, required) {
@@ -522,8 +529,9 @@ func TestLoaderReleasesUseTheirOwnTagNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(build), "tag_name: v") || !strings.Contains(string(build), "tag_name: loader-v") {
-		t.Fatal("loader releases must be tagged loader-v<version> so they never collide with client tags")
+	if strings.Contains(string(build), "tag_name: v") || strings.Contains(string(build), "tag_name: loader-v") ||
+		strings.Count(string(build), "tag_name: ${{ needs.resolve-source.outputs.") != 4 {
+		t.Fatal("loader releases must take the discord-<version>-<platform> tags release-names chose, so they never collide with client tags")
 	}
 	ios, err := os.ReadFile(filepath.Join(workflows, "loader-ios.yml"))
 	if err != nil {
@@ -536,8 +544,8 @@ func TestLoaderReleasesUseTheirOwnTagNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(poll), `tag := "loader-v" + version`) {
-		t.Fatal("the release poll must look for loader-v<version> releases")
+	if !strings.Contains(string(poll), `return "discord-" + version`) {
+		t.Fatal("the release poll must look for discord-<version>-<platform> releases")
 	}
 }
 
@@ -692,11 +700,11 @@ func readObtainiumConfig(t *testing.T, name string) obtainiumTestConfig {
 
 func TestObtainiumConfigsTrackOneDiscordChannelEach(t *testing.T) {
 	releases := map[string]string{
-		"stable": "loader-v350.8",
-		"beta":   "loader-v351.12-android-beta",
-		"alpha":  "loader-v352.8-android-alpha",
+		"stable": "Unbound 1.0.1 for Discord 350.8, Android",
+		"beta":   "Unbound 1.0.1 for Discord 351.12, Android beta",
+		"alpha":  "Unbound 1.0.1 for Discord 352.8, Android alpha",
 	}
-	others := []string{"loader-v351.0_118370", "loader-latest", "Unbound loader (latest)", "v0.9.0"}
+	others := []string{"Unbound 1.0.1 for Discord 350.8, iOS", "Unbound 1.0.1 for Discord 351.0 (118370), iOS TestFlight", "loader-latest", "Unbound loader (latest)", "v0.9.0"}
 	assets := map[string]string{"stable": "Unbound.apks", "beta": "Unbound-beta.apks", "alpha": "Unbound-alpha.apks"}
 	for channel := range releases {
 		config := readObtainiumConfig(t, "obtainium-"+channel+".json")
@@ -832,7 +840,7 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		t.Fatal("the Android prerelease job could not be located")
 	}
 	prerelease := build[prereleaseStart:appRepoStart]
-	for _, required := range []string{"tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}", "prerelease: true", "make_latest: false", "needs.android.outputs.patched_filename", "needs.android.outputs.module_filename"} {
+	for _, required := range []string{"tag_name: ${{ needs.resolve-source.outputs.android_release_tag }}", "name: ${{ needs.resolve-source.outputs.android_release_title }}", "prerelease: true", "make_latest: false", "needs.android.outputs.patched_filename", "needs.android.outputs.module_filename"} {
 		if !strings.Contains(prerelease, required) {
 			t.Fatalf("the Android prerelease is missing %q", required)
 		}

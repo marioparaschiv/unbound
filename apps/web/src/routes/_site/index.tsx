@@ -75,7 +75,7 @@ const FEATURES: Feature[] = [
 // The hero enters in sequence: title letters, then the tagline's words, then the actions and art.
 const TAGLINE_DELAY_MS = 250;
 const ACTIONS_STYLE = revealStyle('hero', 450);
-const ART_STYLE = revealStyle('showcase', 600);
+const ART_DELAY_MS = 600;
 
 const GLOW_POSITION: CSSProperties = { left: 'var(--glow-x)', top: 'var(--glow-y)' };
 const GLOW_RING_MASK = 'radial-gradient(250px at var(--glow-x) var(--glow-y), white, transparent)';
@@ -99,7 +99,7 @@ function trackGlow(event: MouseEvent<HTMLDivElement>) {
 
 function FeatureGrid() {
 	return (
-		<div className='z-20 relative mx-auto -mt-24 sm:-mt-40 md:-mt-80 mb-12 px-4 w-full max-w-6xl'>
+		<div className='z-20 relative mx-auto -mt-[40vw] md:-mt-80 mb-12 px-4 w-full max-w-6xl'>
 			<div
 				className='group/features relative gap-4 grid grid-cols-1 md:grid-cols-3'
 				onMouseMove={trackGlow}
@@ -140,11 +140,11 @@ function FeatureGrid() {
 function HomePage() {
 	return (
 		<div className='flex flex-col flex-1 items-center'>
-			<div className='flex flex-col justify-center items-center gap-6 px-4 pt-[8vh] overflow-hidden'>
+			<div className='flex flex-col justify-center items-center gap-6 px-4 pt-[8vh] w-full overflow-hidden'>
 				<h1 className='font-secondary font-bold text-5xl md:text-6xl lg:text-7xl text-fade'>
 					<BlurReveal text='Unbound' split='letter' preset='hero' />
 				</h1>
-				<h2 className='font-secondary font-semibold text-2xl md:text-3xl lg:text-4xl text-fade'>
+				<h2 className='font-secondary font-semibold text-2xl md:text-3xl lg:text-4xl text-center text-fade'>
 					<BlurReveal
 						text='Transform your discord experience.'
 						preset='hero'
@@ -161,10 +161,11 @@ function HomePage() {
 						</a>
 					</Button>
 				</div>
+				{/* Below md the image overhangs the viewport by its transparent margins, leaving the phones about 8px from each edge. */}
 				<HeroShowcase
 					fade
-					className='mt-16 md:mt-8 w-full max-w-[1600px] animate-reveal'
-					style={ART_STYLE}
+					delay={ART_DELAY_MS}
+					className='mt-8 w-[calc(130vw-20px)] max-w-none md:w-full md:max-w-[1600px]'
 				/>
 			</div>
 			<FeatureGrid />

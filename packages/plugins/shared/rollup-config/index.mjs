@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -9,6 +10,12 @@ import iife from 'rollup-plugin-iife';
 import { swc } from 'rollup-plugin-swc3';
 
 import { hermesExpressionEntrypoint } from './entrypoint.mjs';
+import { hermesBytecode } from './hermes-bytecode.mjs';
+import { lazyModules } from './lazy-modules.mjs';
+
+const { bytecodeVersions } = createRequire(import.meta.url)(
+	'../../../client/scripts/build/hermes.json',
+);
 
 const runtimeGlobals = {
 	'@unbound-app/api': 'window.unbound',
@@ -83,23 +90,31 @@ function manifestToDist(pluginRoot) {
 /**
  * Builds the rollup config every plugin shares.
  * @param {string} pluginUrl The `import.meta.url` of the plugin's `rollup.config.mjs`.
- * @param {{ settingsPanel?: boolean }} options Set `settingsPanel` when the plugin exports `getSettingsPanel`.
+ * @param {{ settingsPanel?: boolean, lazyModules?: string[], bytecode?: boolean }} options Set `settingsPanel` when the plugin exports `getSettingsPanel`, list `lazyModules` whose code should only run once the plugin first uses them, and set `bytecode: false` to skip compiling Hermes bytecode.
  */
-export function createPluginConfig(pluginUrl, { settingsPanel = false } = {}) {
+export function createPluginConfig(
+	pluginUrl,
+	{ settingsPanel = false, lazyModules: deferred = [], bytecode = true } = {},
+) {
 	const pluginRoot = fileURLToPath(new URL('.', pluginUrl));
 	const sourceRoot = resolve(pluginRoot, 'src');
+	const modulePlugins = () => [
+		sourceAlias(sourceRoot),
+		nodeResolve(),
+		commonjs(),
+		json(),
+		swc({ tsconfig: false }),
+	];
 
 	return {
 		input: findFile(resolve(sourceRoot, 'index')),
 		external: isExternal,
 		plugins: [
-			sourceAlias(sourceRoot),
-			nodeResolve(),
-			commonjs(),
-			json(),
-			swc({ tsconfig: false }),
+			lazyModules(deferred, { plugins: modulePlugins, external: isExternal, globals }),
+			...modulePlugins(),
 			iife(),
 			hermesExpressionEntrypoint({ hasSettingsPanel: settingsPanel }),
+			...(bytecode ? [hermesBytecode({ versions: bytecodeVersions })] : []),
 			manifestToDist(pluginRoot),
 		],
 		output: {
@@ -114,3 +129,5 @@ export function createPluginConfig(pluginUrl, { settingsPanel = false } = {}) {
 }
 
 export { hermesExpressionEntrypoint } from './entrypoint.mjs';
+export { lazyModules, lazyModuleSource } from './lazy-modules.mjs';
+export { bytecodeFileName, bytecodeSource, hermesBytecode } from './hermes-bytecode.mjs';

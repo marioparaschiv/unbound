@@ -22,6 +22,7 @@ type NativePluginGlobal = typeof globalThis & {
 };
 
 mock.module('react-native', () => ({
+	Alert: { alert: () => undefined },
 	NativeModules: {},
 	TurboModuleRegistry: { get: () => undefined },
 	Switch: 'Switch',
@@ -300,7 +301,7 @@ const {
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
 } = await import('~/api/native');
-const { createPluginContext, validateNativePluginRequirements } =
+const { createPluginContext, validateNativePluginRequirements, withNativeConstants } =
 	await import('~/api/native-runtime');
 
 afterEach(() => {
@@ -1176,5 +1177,27 @@ describe('native crash attribution', () => {
 			Reflect.deleteProperty(nativePlatformBridge, 'crashGuard');
 			resetCrashGuard();
 		}
+	});
+});
+
+type ClientInfoConstants = { Version?: string; Build?: string };
+
+type ClientInfoModule = ClientInfoConstants & { getConstants: () => ClientInfoConstants };
+
+describe('withNativeConstants', () => {
+	test('reads an Android TurboModule constants as properties', () => {
+		const module = { getConstants: () => ({ Version: '352.10', Build: '352110' }) };
+
+		expect(withNativeConstants<ClientInfoModule>(module)).toMatchObject({
+			Version: '352.10',
+			Build: '352110',
+		});
+	});
+
+	test('leaves an iOS module with direct properties as it is', () => {
+		const module = { Version: '351.0', Build: '118370' };
+
+		expect(withNativeConstants(module)).toBe(module);
+		expect(withNativeConstants(undefined)).toBeUndefined();
 	});
 });

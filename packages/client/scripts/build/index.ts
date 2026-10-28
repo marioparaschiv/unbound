@@ -1,6 +1,5 @@
 import { rolldown, watch, type RolldownOptions, type OutputOptions, type Plugin } from 'rolldown';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import hermes from '@unbound-app/rollup-plugin-hermes';
 import { cp, mkdir, rm } from 'node:fs/promises';
 import replace from '@rollup/plugin-replace';
 import { dev } from 'rolldown/experimental';
@@ -23,6 +22,7 @@ import {
 import globals, { shimmedModules } from './plugins/globals';
 import refresh, { refreshRuntime } from './plugins/refresh';
 import downlevel, { lower } from './plugins/downlevel';
+import hermesVersions from './plugins/hermes-versions';
 import generateManifest from './plugins/manifest';
 import { bytecodeVersions } from './hermes.json';
 import worklets from './plugins/worklets';
@@ -102,10 +102,7 @@ const config: RolldownOptions = {
 			sourceMaps: !IS_DEV_BUILD,
 		}),
 		downlevel(root),
-		hermes({
-			versions: bytecodeVersions.length,
-			flags: IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map'],
-		}),
+		hermesVersions(bytecodeVersions, IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map']),
 		generateManifest(GIT_REVISION, bytecodeVersions, IS_DEV_BUILD, BUILD_CHANNEL),
 		...(IS_DEV_BUILD ? [locales()] : []),
 	],

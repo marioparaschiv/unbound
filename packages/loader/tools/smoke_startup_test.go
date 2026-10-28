@@ -65,7 +65,7 @@ func TestStartupBudgetProblems(t *testing.T) {
 func TestRenderSmokeReportShowsStartupTimes(t *testing.T) {
 	result := &smokeResult{platform: "android", loaded: map[string]bool{}, startup: smokeStartupTimes{bundle: 4230 * time.Millisecond}, budget: smokeStartupBudget{plugins: time.Minute}}
 	report := renderSmokeReport(result)
-	if !strings.Contains(report, "| Unbound's bundle executed | 4.2s | none |") || !strings.Contains(report, "| Every plugin loaded | not reached | 1m0s |") {
+	if !strings.Contains(report, "| Unbound's bundle executed | 4.2s after launch | none |") || !strings.Contains(report, "| Every plugin loaded | not reached | 1m0s |") {
 		t.Fatalf("startup table missing from report:\n%s", report)
 	}
 }
@@ -87,5 +87,54 @@ func TestRenderSlowestStartsListsTheSlowestFirst(t *testing.T) {
 	}
 	if describeStartMs(nil) != "—" || describeStartMs(ms(12.4)) != "12 ms" {
 		t.Fatal("unexpected start cell")
+	}
+}
+
+func TestPluginStartBudgetFlagsSlowPlugins(t *testing.T) {
+	ms := func(value float64) *float64 { return &value }
+	statuses := []smokePluginStatus{{ID: "unbound.fast", StartMs: ms(40)}, {ID: "unbound.slow", StartMs: ms(1200)}, {ID: "unbound.untimed"}}
+	problems := pluginStartBudgetProblems(statuses, time.Second)
+	if len(problems) != 1 || !strings.Contains(problems[0], "unbound.slow took 1200 ms to start, over the 1s plugin start budget") {
+		t.Fatalf("unexpected problems %v", problems)
+	}
+	if pluginStartBudgetProblems(statuses, 0) != nil {
+		t.Fatal("no budget only reports")
+	}
+}
+
+func TestSmokeLogWatcherTimesUnboundFromDiscordsRuntime(t *testing.T) {
+	clock := time.Date(2026, 10, 28, 19, 0, 0, 0, time.UTC)
+	watcher := newSmokeLogWatcher(&androidSmokeTarget{})
+	watcher.now = func() time.Time { return clock }
+	watcher.markLaunch()
+	clock = clock.Add(5 * time.Minute)
+	watcher.observe("I Unbound : [runtime] Metro module capture installed before Discord bundle.")
+	clock = clock.Add(4 * time.Second)
+	watcher.observe("I Unbound : [default] Unbound's bundle was successfully executed.")
+	clock = clock.Add(time.Second)
+	watcher.observe("I Unbound : [plugins] Loaded 2 plugins.")
+	result := &smokeResult{loaded: map[string]bool{}, failures: map[string][]string{}}
+	watcher.snapshot(result)
+	want := smokeStartupTimes{runtime: 5 * time.Minute, bundle: 4 * time.Second, plugins: 5 * time.Second}
+	if result.startup != want {
+		t.Fatalf("Unbound's milestones should start when Discord's runtime does, got %+v, want %+v", result.startup, want)
+	}
+	if problems := startupBudgetProblems(result.startup, smokeStartupBudget{bundle: time.Minute, plugins: time.Minute}, nil); len(problems) != 0 {
+		t.Fatalf("Discord's own launch time counted against Unbound's budget: %v", problems)
+	}
+}
+
+func TestSmokeLogWatcherCountsAMilestoneReachedWithTheRuntime(t *testing.T) {
+	clock := time.Date(2026, 10, 28, 19, 0, 0, 0, time.UTC)
+	watcher := newSmokeLogWatcher(&androidSmokeTarget{})
+	watcher.now = func() time.Time { return clock }
+	watcher.markLaunch()
+	clock = clock.Add(time.Minute)
+	watcher.observe("I Unbound : [runtime] Metro module capture installed before Discord bundle.")
+	watcher.observe("I Unbound : [plugins] Loaded 2 plugins.")
+	result := &smokeResult{loaded: map[string]bool{}, failures: map[string][]string{}}
+	watcher.snapshot(result)
+	if problems := startupBudgetProblems(result.startup, smokeStartupBudget{plugins: time.Second}, nil); len(problems) != 0 {
+		t.Fatalf("plugins loaded in the same instant as the runtime were reported as missing: %v", problems)
 	}
 }

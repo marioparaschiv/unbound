@@ -1,4 +1,5 @@
 import type {
+	DeviceInfo,
 	LogMessage,
 	EvalResult,
 	EvalRequest,
@@ -35,16 +36,18 @@ type PendingPush = {
 
 export const state: {
 	device: SocketLike | null;
+	deviceInfo: DeviceInfo | null;
 	controllers: Set<SocketLike>;
 } = {
 	device: null,
+	deviceInfo: null,
 	controllers: new Set(),
 };
 
 const pending = new Map<string, PendingEval>();
 const pendingPushes = new Map<string, PendingPush>();
 const logListeners = new Set<(log: LogMessage) => void>();
-const deviceListeners = new Set<(connected: boolean) => void>();
+const deviceListeners = new Set<(connected: boolean, device: DeviceInfo | null) => void>();
 const evalListeners = new Set<(code: string) => void>();
 const resultListeners = new Set<(result: EvalResult) => void>();
 const controllerListeners = new Set<(connected: boolean, count: number) => void>();
@@ -52,20 +55,20 @@ const controllerListeners = new Set<(connected: boolean, count: number) => void>
 const PLUGIN_PUSH_TIMEOUT_MS = 60_000;
 
 /**
- * @description Registers the connected device, rejecting a second one so eval routing stays
- * unambiguous.
+ * @description Registers the connected device, replacing any earlier one so a relaunched or
+ * reconnecting app always takes over from a socket that died without closing.
  * @param socket The device's socket.
- * @returns Whether the device was accepted (false if one is already connected).
  */
-export function attachDevice(socket: SocketLike): boolean {
-	if (state.device) {
-		return false;
+export function attachDevice(socket: SocketLike) {
+	const previous = state.device;
+
+	if (previous) {
+		detachDevice(previous);
+		previous.close();
 	}
 
 	state.device = socket;
 	broadcastDeviceStatus(true);
-
-	return true;
 }
 
 /**
@@ -77,6 +80,7 @@ export function detachDevice(socket: SocketLike) {
 	if (state.device !== socket) return;
 
 	state.device = null;
+	state.deviceInfo = null;
 
 	for (const [id, entry] of pending) {
 		clearTimeout(entry.timer);
@@ -284,6 +288,13 @@ export function handleDeviceMessage(message: BridgeMessage) {
 		return;
 	}
 
+	if (message.type === 'hello') {
+		state.deviceInfo = message.device;
+		broadcastDeviceStatus(true);
+
+		return;
+	}
+
 	if (message.type !== 'log') return;
 
 	for (const socket of state.controllers) socket.send(JSON.stringify(message));
@@ -307,7 +318,9 @@ export function onLog(listener: (log: LogMessage) => void): () => void {
  * @param listener Called with whether a device is now connected.
  * @returns An unsubscribe function.
  */
-export function onDevice(listener: (connected: boolean) => void): () => void {
+export function onDevice(
+	listener: (connected: boolean, device: DeviceInfo | null) => void,
+): () => void {
 	deviceListeners.add(listener);
 
 	return () => void deviceListeners.delete(listener);
@@ -363,11 +376,13 @@ function getControllerDelivery(socket: SocketLike): (result: EvalResult) => void
 }
 
 function sendDeviceStatus(socket: SocketLike, connected: boolean) {
-	socket.send(JSON.stringify({ type: 'device-status', connected }));
+	const device = connected ? (state.deviceInfo ?? void 0) : void 0;
+
+	socket.send(JSON.stringify({ type: 'device-status', connected, device }));
 }
 
 function broadcastDeviceStatus(connected: boolean) {
 	for (const socket of state.controllers) sendDeviceStatus(socket, connected);
 
-	for (const listener of deviceListeners) listener(connected);
+	for (const listener of deviceListeners) listener(connected, state.deviceInfo);
 }

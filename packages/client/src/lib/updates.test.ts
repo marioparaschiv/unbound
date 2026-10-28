@@ -60,6 +60,19 @@ describe('buildUpdatesRequest', () => {
 		});
 	});
 
+	test("sends each installed bundle's digest, so a rebuild of the same version is offered", () => {
+		const digest = 'f'.repeat(64);
+		const request = buildUpdatesRequest(
+			[{ ...entry('dev.alpha'), sha256: digest }, entry('dev.beta')],
+			'1.4.0',
+		);
+
+		expect(request?.addons).toEqual([
+			{ id: 'dev.alpha', version: '1.0.0', sha256: digest },
+			{ id: 'dev.beta', version: '1.0.0' },
+		]);
+	});
+
 	test('sends nothing when no installed addon can be checked', () => {
 		expect(buildUpdatesRequest([], '1.4.0')).toBeUndefined();
 		expect(buildUpdatesRequest([entry('local plugin')], '1.4.0')).toBeUndefined();

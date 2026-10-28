@@ -6,6 +6,7 @@
 #include <iterator>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -16,7 +17,9 @@
 #include "NativeBoundedValue.h"
 #include "NativeEvaluations.h"
 #include "NativeFFI.h"
+#include "NativeFabric.h"
 #include "NativeGeometry.h"
+#include "NativeHandleLeases.h"
 #include "NativeHookReturnCache.h"
 #include "NativeLimits.h"
 #include "NativePlatformBridge.h"
@@ -757,6 +760,47 @@ static std::string serializeJavaValue(jsi::Runtime &runtime, const jsi::Value &v
     return loader::native::serializeBounded(runtime, value, kNativeArgumentsConversion);
 }
 
+static std::optional<std::string> javaHandleId(const nlohmann::json &value)
+{
+    auto type   = value.find("type");
+    auto id     = value.find(type == value.end() ? "id" : "value");
+    bool tagged = type != value.end() && type->is_string() && *type == "handle";
+    bool bare   = type == value.end() && value.size() == 1;
+    if ((tagged || bare) && id != value.end() && id->is_string() &&
+        id->get<std::string>().rfind("java-", 0) == 0)
+    {
+        return id->get<std::string>();
+    }
+    return std::nullopt;
+}
+
+static std::mutex                                    gJavaLeasesMutex;
+static std::shared_ptr<loader::native::HandleLeases> gJavaLeases;
+
+static void leaseJavaHandles(const JavaCallbacks &callbacks)
+{
+    std::lock_guard<std::mutex> lock(gJavaLeasesMutex);
+    if (gJavaLeases)
+    {
+        return;
+    }
+    gJavaLeases = std::make_shared<loader::native::HandleLeases>(
+        javaHandleId, [callbacks](const std::string &id, uint64_t issues) {
+            callJavaVoid(callbacks, callbacks.javaRelease,
+                         {nlohmann::json{{"id", id}, {"issues", issues}}.dump()});
+        });
+}
+
+static jsi::Value adoptJavaValue(jsi::Runtime &runtime, const nlohmann::json &value)
+{
+    std::shared_ptr<loader::native::HandleLeases> leases;
+    {
+        std::lock_guard<std::mutex> lock(gJavaLeasesMutex);
+        leases = gJavaLeases;
+    }
+    return leases ? leases->adopt(runtime, value) : loader::toJSIValue(runtime, value);
+}
+
 static jsi::Value parseJavaResult(jsi::Runtime &runtime, const std::string &response)
 {
     nlohmann::json result = nlohmann::json::parse(response, nullptr, false);
@@ -765,7 +809,7 @@ static jsi::Value parseJavaResult(jsi::Runtime &runtime, const std::string &resp
         throw std::runtime_error("The Android Java adapter returned invalid data");
     }
 
-    return loader::toJSIValue(runtime, result);
+    return adoptJavaValue(runtime, result);
 }
 
 static jsi::Value javaAsynchronously(jsi::Runtime &runtime, std::function<std::string()> work)
@@ -821,7 +865,7 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
                 return;
             }
 
-            listener->call(runtime, loader::toJSIValue(runtime, parsed));
+            listener->call(runtime, adoptJavaValue(runtime, parsed));
         });
 }
 
@@ -865,12 +909,6 @@ static std::string hookTokenId(jsi::Runtime &runtime, const jsi::Value &value)
 static loader::native::NativeResourceRegistry &installedHooks()
 {
     static loader::native::NativeResourceRegistry registry(loader::native::nativeHookBudget());
-    return registry;
-}
-
-static loader::native::NativeResourceRegistry &mountedSurfaces()
-{
-    static loader::native::NativeResourceRegistry registry(loader::native::nativeSurfaceBudget());
     return registry;
 }
 
@@ -935,7 +973,6 @@ static void watchRuntimeGenerations(const JavaCallbacks &callbacks)
             retireHookListeners();
             hookReturnValues().clearAll();
             installedHooks().releaseAll();
-            mountedSurfaces().releaseAll();
             callBridgeVoid(callbacks, callbacks.runtimeReplaced);
         });
     });
@@ -1207,101 +1244,89 @@ static jsi::Object makeDebugNamespace(jsi::Runtime &runtime, const JavaCallbacks
     return debug;
 }
 
-static jsi::Object makeFabricNamespace(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
+class AndroidFabricView final : public loader::native::FabricView
 {
-    jsi::Object fabric(runtime);
-    define(runtime, fabric, "mountAsync", 3,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 2,
-                                "Mounting a React surface requires a container and a module name");
-               std::string container  = surfaceContainer(rt, args[0]);
-               std::string moduleName = javaName(rt, args[1]);
-               std::string properties = count > 2 && !args[2].isUndefined() && !args[2].isNull()
-                                            ? serializeNativeProperties(rt, args[2])
-                                            : std::string("{}");
-               auto reservation       = std::make_shared<loader::native::NativeResourceReservation>(
-                   loader::native::nativeSurfaceBudget(), "Too many React surfaces are mounted");
-               return javaAsynchronously(rt, [callbacks, container = std::move(container),
-                                              moduleName = std::move(moduleName),
-                                              properties = std::move(properties), reservation]() {
-                   std::string    handle = callJavaString(callbacks, callbacks.fabricMount,
-                                                          {container, moduleName, properties});
-                   nlohmann::json parsed = nlohmann::json::parse(handle, nullptr, false);
-                   if (parsed.is_discarded() || !parsed.contains("id") || !parsed["id"].is_string())
-                   {
-                       throw std::runtime_error(
-                           "The Android surface adapter returned an invalid handle");
-                   }
-                   mountedSurfaces().adopt(parsed["id"].get<std::string>(), *reservation);
-                   return handle;
-               });
-           });
-    define(runtime, fabric, "updateAsync", 2,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 2,
-                                "Updating a React surface requires a handle and properties");
-               std::string handle     = serializeJavaHandle(rt, args[0]);
-               std::string properties = serializeNativeProperties(rt, args[1]);
-               return javaAsynchronously(rt, [callbacks, handle = std::move(handle),
-                                              properties = std::move(properties)]() {
-                   callJavaVoid(callbacks, callbacks.fabricUpdate, {handle, properties});
-                   return std::string();
-               });
-           });
-    define(runtime, fabric, "setSizeAsync", 3,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(
-                   count, 3,
-                   "Sizing a React surface requires a handle, a minimum size and a maximum size");
-               std::string handle  = serializeJavaHandle(rt, args[0]);
-               std::string minimum = serializeSize(rt, args[1]);
-               std::string maximum = serializeSize(rt, args[2]);
-               return javaAsynchronously(rt, [callbacks, handle = std::move(handle),
-                                              minimum = std::move(minimum),
-                                              maximum = std::move(maximum)]() {
-                   callJavaVoid(callbacks, callbacks.fabricSetSize, {handle, minimum, maximum});
-                   return std::string();
-               });
-           });
-    define(runtime, fabric, "setFrameAsync", 2,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 2, "Framing a React surface requires a handle and a frame");
-               std::string handle = serializeJavaHandle(rt, args[0]);
-               std::string frame  = serializeFrame(rt, args[1]);
-               return javaAsynchronously(
-                   rt, [callbacks, handle = std::move(handle), frame = std::move(frame)]() {
-                       callJavaVoid(callbacks, callbacks.fabricSetFrame, {handle, frame});
-                       return std::string();
-                   });
-           });
-    define(runtime, fabric, "measureAsync", 1,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 1, "Measuring a view requires a handle");
-               std::string handle = serializeJavaHandle(rt, args[0]);
-               return javaAsynchronously(rt, [callbacks, handle = std::move(handle)]() {
-                   return callJavaString(callbacks, callbacks.fabricMeasure, {handle});
-               });
-           });
-    define(runtime, fabric, "unmountAsync", 1,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 1, "Unmounting a React surface requires a handle");
-               std::string id =
-                   loader::native::parseHandleId(rt, args[0], "A React surface handle");
-               return javaAsynchronously(rt, [callbacks, id = std::move(id)]() {
-                   if (callJavaBoolean(callbacks, callbacks.fabricUnmount,
-                                       loader::native::handleJSON(id)))
-                   {
-                       mountedSurfaces().release(id);
-                   }
-                   return std::string();
-               });
-           });
-    return fabric;
-}
+public:
+    explicit AndroidFabricView(std::string handle) : handle(std::move(handle)) {}
+
+    std::string handle;
+};
+
+class AndroidFabricAdapter final : public loader::native::FabricAdapter
+{
+public:
+    explicit AndroidFabricAdapter(const JavaCallbacks &callbacks) : callbacks_(callbacks) {}
+
+    std::shared_ptr<loader::native::FabricView> view(jsi::Runtime     &runtime,
+                                                     const jsi::Value &handle) override
+    {
+        return std::make_shared<AndroidFabricView>(surfaceContainer(runtime, handle));
+    }
+
+    std::string mount(const loader::native::FabricView &container, const std::string &moduleName,
+                      const nlohmann::json &properties) override
+    {
+        std::string handle =
+            callJavaString(callbacks_, callbacks_.fabricMount,
+                           {static_cast<const AndroidFabricView &>(container).handle, moduleName,
+                            properties.dump()});
+        nlohmann::json parsed = nlohmann::json::parse(handle, nullptr, false);
+        if (parsed.is_discarded() || !parsed.contains("id") || !parsed["id"].is_string())
+        {
+            throw std::runtime_error("The Android surface adapter returned an invalid handle");
+        }
+        return parsed["id"].get<std::string>();
+    }
+
+    void update(const std::string &surface, const nlohmann::json &properties) override
+    {
+        callJavaVoid(callbacks_, callbacks_.fabricUpdate,
+                     {loader::native::handleJSON(surface), properties.dump()});
+    }
+
+    void setSize(const std::string &surface, const loader::native::NativeSize &minimum,
+                 const loader::native::NativeSize &maximum) override
+    {
+        callJavaVoid(callbacks_, callbacks_.fabricSetSize,
+                     {loader::native::handleJSON(surface), loader::native::toJSON(minimum).dump(),
+                      loader::native::toJSON(maximum).dump()});
+    }
+
+    void setFrame(const std::string &surface, const loader::native::NativeFrame &frame) override
+    {
+        callJavaVoid(callbacks_, callbacks_.fabricSetFrame,
+                     {loader::native::handleJSON(surface), loader::native::toJSON(frame).dump()});
+    }
+
+    loader::native::NativeFrame measure(const loader::native::FabricView &view) override
+    {
+        return measureHandle(static_cast<const AndroidFabricView &>(view).handle);
+    }
+
+    loader::native::NativeFrame measureSurface(const std::string &surface) override
+    {
+        return measureHandle(loader::native::handleJSON(surface));
+    }
+
+    void unmount(const std::string &surface) override
+    {
+        callJavaBoolean(callbacks_, callbacks_.fabricUnmount, loader::native::handleJSON(surface));
+    }
+
+private:
+    loader::native::NativeFrame measureHandle(const std::string &handle)
+    {
+        return loader::native::parseFrame(
+            nlohmann::json::parse(callJavaString(callbacks_, callbacks_.fabricMeasure, {handle})));
+    }
+
+    JavaCallbacks callbacks_;
+};
 
 void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
 {
     watchRuntimeGenerations(callbacks);
+    leaseJavaHandles(callbacks);
 
     loader::native::NativePluginRootBuilder bridge(runtime,
                                                    loader::native::NativePluginPlatform::Android);
@@ -1310,7 +1335,9 @@ void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &call
     bridge.addNamespace("ffi", makeFFINamespace(runtime));
     bridge.addNamespace("hooks", makeHooksNamespace(runtime, callbacks));
     bridge.addNamespace("debug", makeDebugNamespace(runtime, callbacks));
-    bridge.addNamespace("fabric", makeFabricNamespace(runtime, callbacks));
+    bridge.addNamespace("fabric", loader::native::makeFabricNamespace(
+                                      runtime, std::make_shared<AndroidFabricAdapter>(callbacks),
+                                      loader::native::FabricCalls::AsyncOnly));
     bridge.install();
 }
 }
