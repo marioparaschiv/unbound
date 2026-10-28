@@ -20,16 +20,39 @@ export type HermesConfig = {
 };
 
 /**
- * @description Picks the bytecode versions the build compiles: the newest ones the hermesc manifest
- * publishes, as many as the build ships today.
+ * @description Picks the bytecode versions the build compiles: every version `hermes.json` declares,
+ * plus any newer one the hermesc manifest publishes. It never drops a version, since Discord may still
+ * run it; dropping one is a deliberate edit to `hermes.json`.
  * @param manifest The hermesc manifest.
  * @param current The bytecode versions `hermes.json` declares.
  * @returns The versions `hermes.json` should declare, newest first.
  */
 export function nextBytecodeVersions(manifest: HermescManifest, current: number[]): number[] {
 	const published = manifest.latest.filter((version) => manifest.versions[String(version)]);
+	const oldest = current.length ? Math.min(...current) : (published[0] ?? 0);
+	const newer = published.filter((version) => version > Math.max(...current, 0));
 
-	return published.slice(0, Math.max(current.length, 1));
+	return [...new Set([...newer, ...current])]
+		.filter((version) => version >= oldest)
+		.sort((left, right) => right - left);
+}
+
+/**
+ * @description Counts how many of the hermesc manifest's newest versions a build must resolve so it
+ * includes every version it ships, for builds that select hermesc by count.
+ * @param latest The hermesc manifest's versions, newest first.
+ * @param wanted The bytecode versions the build ships.
+ * @returns The count to resolve.
+ */
+export function hermescCount(latest: number[], wanted: number[]): number {
+	const positions = wanted.map((version) => latest.indexOf(version));
+	const missing = wanted.filter((_, index) => (positions[index] ?? -1) < 0);
+
+	if (missing.length) {
+		throw new Error(`hermesc does not publish bytecode ${missing.join(', ')}.`);
+	}
+
+	return Math.max(...positions, 0) + 1;
 }
 
 /**

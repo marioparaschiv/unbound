@@ -270,7 +270,7 @@ Browser login (`LoaderBrowserLogin`) and the tweak's Mach-O attestation digest (
 	"revision": "b53f3860",
 	"channel": "beta",
 	"buildTime": "2026-10-27T12:06:15.507Z",
-	"bytecodeVersions": [98, 96, 94],
+	"bytecodeVersions": [98],
 	"nativeBridge": { "api": "1.0.0", "abi": "1.0.0" },
 	"sha512": {
 		"unbound.98.bundle": "<128 hex digits>",
