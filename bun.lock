@@ -126,7 +126,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.10.0",
+      "version": "0.10.0-a2d2f18c6e332e846f3d343eb39b0183506381df9cd2268669fc93000e9bea30",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -670,6 +670,7 @@
         "@rollup/plugin-commonjs": "^29.0.3",
         "@rollup/plugin-json": "^6.1.0",
         "@rollup/plugin-node-resolve": "^16.0.3",
+        "rollup": "^4.62.2",
         "rollup-plugin-iife": "^0.8.0",
         "rollup-plugin-swc3": "^0.12.1",
       },
@@ -2848,7 +2849,7 @@
 
     "npm-run-path": ["npm-run-path@6.0.0", "", { "dependencies": { "path-key": "^4.0.0", "unicorn-magic": "^0.3.0" } }, "sha512-9qny7Z9DsQU8Ou39ERsPU4OZQlSTP47ShQzuKZ6PRXpYLtIFgl/DEBYEXKlvcEa+9tHVcK8CF81Y2V72qaZhWA=="],
 
-    "nucleo-micro-bold": ["nucleo-micro-bold@1.2.1", "", { "dependencies": { "tslib": "^2.0.0" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" }, "hasInstallScript": true }, "sha512-fpcM4WXZ0m1hHT72HlHH/oazJ/8kM+MpEoD2zigpfQVFo+wGXxcokDAQ2beR9xmzi7XmN5RXb6QBi9Ug3dXNjQ=="],
+    "nucleo-micro-bold": ["nucleo-micro-bold@1.2.1", "", { "dependencies": { "tslib": "^2.0.0" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-fpcM4WXZ0m1hHT72HlHH/oazJ/8kM+MpEoD2zigpfQVFo+wGXxcokDAQ2beR9xmzi7XmN5RXb6QBi9Ug3dXNjQ=="],
 
     "nullthrows": ["nullthrows@1.1.1", "", {}, "sha512-2vPPEi+Z7WqML2jZYddDIfy5Dqb0r2fze2zTxNNknZaFpVHU3mFB3R+DWeJWGVx0ecvttSGlJTI+WG+8Z4cDWw=="],
 
