@@ -4,6 +4,7 @@ import android.content.Context
 import app.unbound.manager.core.Effect
 import app.unbound.manager.core.Event
 import app.unbound.manager.core.Failure
+import app.unbound.manager.core.Phase
 import app.unbound.manager.core.Target
 import app.unbound.manager.core.effect
 import app.unbound.manager.effects.Sessions
@@ -27,7 +28,7 @@ class Runner(
     private val context: Context,
     private val store: Store,
     private val confirmations: Confirmations,
-    private val trusted: Set<String>,
+    private val trusted: Map<Target, Set<String>>,
 ) {
     private val sessions = Sessions(context)
     private val mutableProgress = MutableStateFlow<Map<Target, Progress>>(emptyMap())
@@ -48,7 +49,12 @@ class Runner(
                 Event.Fail(Failure.Unexpected(error.message ?: error.javaClass.simpleName))
             } ?: return
 
-            if (store.apply(target, event) == record) return
+            val next = store.apply(target, event)
+
+            if (next == record) return
+            if (record.phase is Phase.Confirming && next.phase == Phase.Idle) {
+                Notifier.updated(context, target, record.phase.artifact.release)
+            }
         }
     }
 
@@ -72,7 +78,7 @@ class Runner(
                 target,
                 effect.release,
                 dir,
-                trusted,
+                trusted.getValue(target),
                 context.packageManager.installedState(target.packageName),
                 log,
             )

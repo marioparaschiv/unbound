@@ -10,7 +10,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/** PackageInstaller results and dismissed confirm notifications. Manifest-registered, so a result wakes a dead process. */
+/**
+ * PackageInstaller results, dismissed confirm notifications and the Update action of an "available"
+ * notification. Manifest-registered, so each wakes a dead process without opening the app.
+ */
 class InstallResultReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val target = intent.getStringExtra(EXTRA_TARGET)?.let { name -> Target.entries.find { it.name == name } } ?: return
@@ -29,6 +32,8 @@ class InstallResultReceiver : BroadcastReceiver() {
                     )
 
                     ACTION_CONFIRM_DISMISSED -> manager.cancel(target)
+
+                    ACTION_UPDATE -> manager.installNow(target)
                 }
             } finally {
                 pending.finish()
@@ -39,6 +44,7 @@ class InstallResultReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_SESSION_RESULT = "app.unbound.manager.SESSION_RESULT"
         const val ACTION_CONFIRM_DISMISSED = "app.unbound.manager.CONFIRM_DISMISSED"
+        const val ACTION_UPDATE = "app.unbound.manager.UPDATE"
         const val EXTRA_TARGET = "target"
     }
 }

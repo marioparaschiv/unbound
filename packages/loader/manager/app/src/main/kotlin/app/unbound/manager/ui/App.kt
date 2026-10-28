@@ -11,16 +11,13 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import app.unbound.manager.Manager
 import app.unbound.manager.core.Target
 
 /** Two screens: home, and the installer for one target. */
 @Composable
-fun App(manager: Manager) {
+fun App(manager: Manager, open: Target?, onOpen: (Target?) -> Unit) {
     val context = LocalContext.current
     val dark = isSystemInDarkTheme()
     val colors = when {
@@ -30,16 +27,15 @@ fun App(manager: Manager) {
     }
 
     MaterialTheme(colorScheme = colors) {
-        var open by rememberSaveable { mutableStateOf<Target?>(null) }
         val views by manager.views.collectAsState()
         val view = views.find { it.target == open }
 
         if (view == null) {
-            HomeScreen(manager, views, onOpen = { open = it })
+            HomeScreen(manager, views, onOpen = onOpen)
             return@MaterialTheme
         }
 
-        BackHandler { open = null }
-        InstallerScreen(manager, view, onBack = { open = null })
+        BackHandler { onOpen(null) }
+        InstallerScreen(manager, view, onBack = { onOpen(null) })
     }
 }

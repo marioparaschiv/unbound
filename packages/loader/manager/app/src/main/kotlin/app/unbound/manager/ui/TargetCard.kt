@@ -27,16 +27,19 @@ fun TargetCard(view: TargetView, channel: Channel, onInstall: () -> Unit, onOpen
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(view.target.title, style = MaterialTheme.typography.titleMedium)
             Text("Installed: ${view.installed.label()}")
-            Text("Latest ${channel.label}: ${view.latest?.let { "${it.version} (${it.tag})" } ?: "no release yet"}")
-            Text(view.decision.label(), style = MaterialTheme.typography.bodyMedium)
+            val stream = if (view.target == Target.MANAGER) "Latest" else "Latest ${channel.label}"
+            Text("$stream: ${view.latest?.let { "${it.version} (${it.tag})" } ?: "no release yet"}")
+            Text(view.decision.label(view.target), style = MaterialTheme.typography.bodyMedium)
 
             val decision = view.decision
             when {
                 view.phase.inFlight -> Button(onClick = onOpen) { Text("Installing… show progress") }
                 decision is UpdateDecision.Blocked -> Blocked(view.target, onUninstall)
+                view.target == Target.MANAGER && decision !is UpdateDecision.Available && view.phase !is Phase.Failed -> Unit
                 else -> Button(onClick = onInstall, enabled = view.installable != null) { Text(view.primaryLabel()) }
             }
             if (view.phase is Phase.Failed) OutlinedButton(onClick = onOpen) { Text("Show what failed") }
+            if (decision is UpdateDecision.Available && !view.phase.inFlight) OutlinedButton(onClick = onOpen) { Text("What's new") }
             if (view.target == Target.MODULE && view.installed is InstalledPackageState.Present) ModuleHint()
         }
     }
@@ -70,8 +73,8 @@ private fun InstalledPackageState.label(): String = when (this) {
     is InstalledPackageState.Present -> "$versionName ($versionCode)"
 }
 
-private fun UpdateDecision.label(): String = when (this) {
-    UpdateDecision.NoRelease -> "Nothing to install on this channel yet."
+private fun UpdateDecision.label(target: Target): String = when (this) {
+    UpdateDecision.NoRelease -> if (target == Target.MANAGER) "No release published yet." else "Nothing to install on this channel yet."
     is UpdateDecision.NotInstalled -> "Not installed."
     is UpdateDecision.UpToDate -> "Up to date."
     is UpdateDecision.Available -> "Update available: ${skipped.size} newer build${if (skipped.size == 1) "" else "s"}."

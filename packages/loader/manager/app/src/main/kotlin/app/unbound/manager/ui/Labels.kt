@@ -1,6 +1,7 @@
 package app.unbound.manager.ui
 
 import app.unbound.manager.core.Channel
+import app.unbound.manager.core.CheckOutcome
 import app.unbound.manager.core.Failure
 import app.unbound.manager.core.Mode
 import app.unbound.manager.core.Step
@@ -10,6 +11,14 @@ val Target.title: String
     get() = when (this) {
         Target.DISCORD -> "Patched Discord"
         Target.MODULE -> "LSPosed module"
+        Target.MANAGER -> "Unbound Manager"
+    }
+
+/** The app's own name, for sentences such as "Updated Discord to 353.1". */
+val Target.shortTitle: String
+    get() = when (this) {
+        Target.DISCORD -> "Discord"
+        Target.MODULE -> "the LSPosed module"
         Target.MANAGER -> "Unbound Manager"
     }
 
@@ -30,6 +39,18 @@ val Step.title: String
         Step.INSTALL -> "Install"
         Step.CONFIRM -> "Confirm"
     }
+
+fun CheckOutcome.label(): String = when (this) {
+    is CheckOutcome.Checked -> when (updates) {
+        0 -> "up to date"
+        1 -> "1 update"
+        else -> "$updates updates"
+    }
+
+    CheckOutcome.RateLimited -> "GitHub rate limit reached, will retry later"
+
+    is CheckOutcome.Failed -> message
+}
 
 /** One sentence the user can act on. */
 fun Failure.describe(): String = when (this) {

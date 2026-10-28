@@ -35,6 +35,7 @@ import app.unbound.manager.Manager
 import app.unbound.manager.TargetView
 import app.unbound.manager.core.InstalledPackageState
 import app.unbound.manager.core.Phase
+import app.unbound.manager.core.Release
 import app.unbound.manager.core.Step
 import app.unbound.manager.core.StepState
 import app.unbound.manager.core.StepStatus
@@ -42,7 +43,12 @@ import app.unbound.manager.core.Target
 import app.unbound.manager.core.UpdateDecision
 import app.unbound.manager.core.cancellable
 import app.unbound.manager.core.inFlight
+import app.unbound.manager.core.plainText
 import app.unbound.manager.core.steps
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 /** The step runner: four steps projected from the phase, the target's log below. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,8 +90,12 @@ fun InstallerScreen(manager: Manager, view: TargetView, onBack: () -> Unit) {
             }
             if (done && view.target == Target.MODULE) ModuleHint()
 
+            val update = view.decision as? UpdateDecision.Available
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (phase is Phase.Failed) Button(onClick = { manager.install(view.target) }) { Text("Retry") }
+                if (phase == Phase.Idle && update != null) {
+                    Button(onClick = { manager.install(view.target) }) { Text("Update to ${update.latest.version}") }
+                }
                 if (phase.cancellable) {
                     OutlinedButton(onClick = { manager.cancel(view.target) }) { Text(if (phase.inFlight) "Cancel" else "Dismiss") }
                 }
@@ -98,6 +108,8 @@ fun InstallerScreen(manager: Manager, view: TargetView, onBack: () -> Unit) {
                 }) { Text("Share log") }
             }
 
+            if (update != null) Changelog(update.skipped)
+
             Text("Log", style = MaterialTheme.typography.titleSmall)
             Text(
                 log.lines().takeLast(LOG_LINES).joinToString("\n"),
@@ -106,6 +118,19 @@ fun InstallerScreen(manager: Manager, view: TargetView, onBack: () -> Unit) {
                 lineHeight = 14.sp,
                 modifier = Modifier.padding(bottom = 24.dp),
             )
+        }
+    }
+}
+
+/** Every build newer than the installed one, newest first, with its release notes as plain text. */
+@Composable
+private fun Changelog(releases: List<Release>) {
+    Text("What's new", style = MaterialTheme.typography.titleSmall)
+    for (release in releases) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(release.tag, style = MaterialTheme.typography.titleSmall)
+            Text(DATE.format(Instant.ofEpochMilli(release.publishedAt)), style = MaterialTheme.typography.bodySmall)
+            Text(plainText(release.notes).ifEmpty { "No release notes." }, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -132,6 +157,8 @@ private fun InstalledPackageState.versionLabel(): String = when (this) {
     is InstalledPackageState.Present -> "$versionName ($versionCode)"
     InstalledPackageState.Missing -> "nothing"
 }
+
+private val DATE = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault())
 
 private const val MEGABYTE = 1_000_000
 private const val LOG_LINES = 80
