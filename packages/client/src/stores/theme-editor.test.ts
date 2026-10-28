@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import type { Theme } from '@unbound-app/types';
 
 import type { ThemeEditorSession } from './theme-editor';
+
 import ThemeEditorStore from './theme-editor';
 import ThemeStore from './themes';
 

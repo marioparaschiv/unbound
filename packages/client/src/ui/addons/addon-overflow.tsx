@@ -5,9 +5,9 @@ import { Pressable } from 'react-native';
 import { useMemo, memo } from 'react';
 
 import { openThemeEditor } from '~/ui/theme-editor/open-theme-editor';
-import { ManagerKind } from '~/lib/constants';
 import { isLocalThemeId } from '~/lib/local-themes';
 import { Discord } from '~/api/metro/components';
+import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
 import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';

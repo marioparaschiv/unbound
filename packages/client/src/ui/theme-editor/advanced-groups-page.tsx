@@ -5,8 +5,8 @@ import { Screens } from '~/lib/constants';
 import ThemeStore from '~/stores/themes';
 import { Page } from '~/ui/components';
 
-import useEditorScreen from './use-editor-screen';
 import { ADVANCED_GROUPS } from './token-registry';
+import useEditorScreen from './use-editor-screen';
 import TokenGroupPage from './token-group-page';
 
 type AdvancedGroupsPageProps = {

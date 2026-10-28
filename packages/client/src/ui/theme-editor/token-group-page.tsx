@@ -6,8 +6,8 @@ import type { TokenWrite } from '~/lib/theme-draft';
 import { Messages, format } from '~/api/i18n';
 import { Icons } from '~/api/assets';
 
-import useStyles from './token-group-page.style';
 import useEditorScreen from './use-editor-screen';
+import useStyles from './token-group-page.style';
 import ColorRow from './color-row';
 
 type TokenGroupPageProps = {

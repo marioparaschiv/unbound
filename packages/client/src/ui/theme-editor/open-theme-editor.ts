@@ -44,10 +44,10 @@ export function openThemeEditor(navigation: Navigation, id?: LocalThemeId): void
 	}
 
 	function restart() {
-		const { begin, end } = ThemeEditorStore.getState();
+		const store = ThemeEditorStore.getState();
 
-		end();
-		begin(createSession(id));
+		store.end();
+		store.begin(createSession(id));
 		open();
 	}
 
