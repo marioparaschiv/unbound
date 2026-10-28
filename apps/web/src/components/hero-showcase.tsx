@@ -38,8 +38,10 @@ function HeroShowcase({
 			<img src={HERO_SRC} alt={alt} className='relative w-full' />
 			{/* The fade reaches past the image so it also covers the glow that the blur spreads outside it. */}
 			{fade ? (
-				<div className='z-10 absolute -inset-x-1/4 top-0 -bottom-1/4 bg-[linear-gradient(to_bottom,transparent_0%,var(--color-background)_44%)] pointer-events-none' />
+				<div className='z-10 absolute -inset-x-1/4 top-0 -bottom-1/4 pointer-events-none hero-fade' />
 			) : null}
+			{/* Noise over the glow and the fade dithers their dark gradients. */}
+			<div className='z-10 absolute -inset-x-1/4 top-0 -bottom-1/4 pointer-events-none grain' />
 		</div>
 	);
 }

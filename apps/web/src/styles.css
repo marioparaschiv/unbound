@@ -246,6 +246,39 @@ code {
 	}
 }
 
+/* Fine noise that dithers dark gradients so their 8-bit steps stop reading as bands. */
+@utility grain {
+	&::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+		background-size: 160px;
+		mix-blend-mode: overlay;
+		opacity: 0.025;
+	}
+
+	&:is(.dark *)::after {
+		opacity: 0.035;
+	}
+}
+
+/* The hero's bottom fade, eased in and out so the dark end has no steep ramp to band on. */
+@utility hero-fade {
+	background-image: linear-gradient(
+		to bottom in oklab,
+		color-mix(in oklab, var(--color-background) 0.0%, transparent) 0.00%,
+		color-mix(in oklab, var(--color-background) 5.5%, transparent) 6.29%,
+		color-mix(in oklab, var(--color-background) 19.8%, transparent) 12.57%,
+		color-mix(in oklab, var(--color-background) 39.4%, transparent) 18.86%,
+		color-mix(in oklab, var(--color-background) 60.6%, transparent) 25.14%,
+		color-mix(in oklab, var(--color-background) 80.2%, transparent) 31.43%,
+		color-mix(in oklab, var(--color-background) 94.5%, transparent) 37.71%,
+		color-mix(in oklab, var(--color-background) 100.0%, transparent) 44.00%
+	);
+}
+
 /* The page column: header, content and footer all share its width and gutter. */
 @utility page-frame {
 	@apply container mx-auto px-(--page-gutter);
