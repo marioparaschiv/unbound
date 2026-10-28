@@ -11,7 +11,6 @@ import { createFileRoute, Link } from '@tanstack/react-router';
 import { motion } from 'motion/react';
 
 import { Card, CardDescription, CardTitle } from '~/components/ui/card';
-import type { CssVariables } from '~/lib/css-variables';
 import HeroShowcase from '~/components/hero-showcase';
 import { Button } from '~/components/ui/button';
 import cn from '~/lib/cn';
@@ -76,7 +75,6 @@ const REVEAL_TO = { opacity: 1, y: 0 };
 const REVEAL_VIEWPORT = { amount: 0.3 };
 const REVEAL_TRANSITION = { duration: 0.25, ease: 'easeOut' } as const;
 
-const GLOW_ORIGIN: CssVariables = { '--glow-x': '0px', '--glow-y': '0px' };
 const GLOW_POSITION: CSSProperties = { left: 'var(--glow-x)', top: 'var(--glow-y)' };
 const GLOW_RING_MASK = 'radial-gradient(250px at var(--glow-x) var(--glow-y), white, transparent)';
 const GLOW_RING: CSSProperties = { maskImage: GLOW_RING_MASK, WebkitMaskImage: GLOW_RING_MASK };
@@ -89,7 +87,7 @@ const GRID_VIGNETTE: CSSProperties = {
 // Every card's glow follows the pointer across the whole grid, so the offsets are written
 // straight to each card's CSS variables instead of re-rendering on every mouse move.
 function trackGlow(event: MouseEvent<HTMLDivElement>) {
-	for (const card of event.currentTarget.querySelectorAll<HTMLElement>('[data-feature]')) {
+	for (const card of event.currentTarget.querySelectorAll<HTMLElement>('[data-feature-glow]')) {
 		const rect = card.getBoundingClientRect();
 
 		card.style.setProperty('--glow-x', `${event.clientX - rect.left}px`);
@@ -107,15 +105,17 @@ function FeatureGrid() {
 				{FEATURES.map(({ icon: Icon, title, description, wide }, index) => (
 					<motion.div
 						key={title}
-						data-feature
-						style={GLOW_ORIGIN}
 						initial={REVEAL_FROM}
 						whileInView={REVEAL_TO}
 						viewport={REVEAL_VIEWPORT}
 						transition={{ ...REVEAL_TRANSITION, delay: 0.05 * index }}
 						className={cn(wide && 'md:col-span-2')}
 					>
-						<Card className='relative gap-3 bg-secondary/30 backdrop-blur-md p-6 border-transparent h-full overflow-hidden'>
+						{/* The glow starts off-card, so a pointer resting on the grid shows none until it moves. */}
+						<Card
+							data-feature-glow
+							className='relative [--glow-x:-9999px] [--glow-y:-9999px] gap-3 bg-secondary/30 backdrop-blur-md p-6 border-transparent h-full overflow-hidden'
+						>
 							<div
 								className='absolute bg-primary/8 blur-3xl rounded-full size-80 opacity-0 group-hover/features:opacity-100 transition-opacity -translate-x-1/2 -translate-y-1/2 duration-200 pointer-events-none'
 								style={GLOW_POSITION}
