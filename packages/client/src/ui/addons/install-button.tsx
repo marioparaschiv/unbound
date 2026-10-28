@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 
+import { openThemeEditor } from '~/ui/theme-editor/open-theme-editor';
 import { ManagerKind, Screens } from '~/lib/constants';
 import { Discord } from '~/api/metro/components';
 import { Icons } from '~/api/assets';
@@ -27,7 +28,7 @@ function InstallButton({ kind }: InstallButtonProps) {
 					{
 						label: format('UNBOUND_CREATE_THEME'),
 						icon: Icons['PaintbrushThinIcon'],
-						onPress: () => navigation.push(Screens.ThemeEditor, {}),
+						onPress: () => openThemeEditor(navigation),
 					},
 				]
 			: [];

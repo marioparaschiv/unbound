@@ -4,7 +4,8 @@ import type { Addon } from '@unbound-app/types';
 import { Pressable } from 'react-native';
 import { useMemo, memo } from 'react';
 
-import { ManagerKind, Screens } from '~/lib/constants';
+import { openThemeEditor } from '~/ui/theme-editor/open-theme-editor';
+import { ManagerKind } from '~/lib/constants';
 import { isLocalThemeId } from '~/lib/local-themes';
 import { Discord } from '~/api/metro/components';
 import { getManager } from '~/managers/utils';
@@ -28,15 +29,15 @@ function AddonOverflow({ addon, kind }: AddonOverflowProps) {
 	const styles = useRoundStyles();
 	const navigation = Discord.useNavigation();
 	const manager = getManager(kind);
-	const editable = kind === ManagerKind.Themes && isLocalThemeId(addon.id);
+	const localId = kind === ManagerKind.Themes && isLocalThemeId(addon.id) ? addon.id : undefined;
 
 	const items = useMemo<ContextMenuItem[]>(
 		() => [
-			...(editable
+			...(localId
 				? [
 						{
 							label: format('UNBOUND_EDIT'),
-							action: () => navigation.push(Screens.ThemeEditor, { id: addon.id }),
+							action: () => openThemeEditor(navigation, localId),
 						},
 					]
 				: []),
@@ -46,7 +47,7 @@ function AddonOverflow({ addon, kind }: AddonOverflowProps) {
 				action: () => void manager.delete(addon.id),
 			},
 		],
-		[manager, navigation, editable, addon.id],
+		[manager, navigation, localId, addon.id],
 	);
 
 	// The menu anchors to the Pressable it renders; wrapping the trigger in a component breaks it.

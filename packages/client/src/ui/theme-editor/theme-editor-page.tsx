@@ -1,70 +1,35 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Theme } from '@unbound-app/types';
+import { useEffect, useMemo, useState } from 'react';
 
-import { createDraft, isEdited, readDraft } from '~/lib/theme-draft';
-import { createLocalThemeId } from '~/lib/local-themes';
-import type { LocalThemeId } from '~/lib/local-themes';
+import ThemeEditorStore from '~/stores/theme-editor';
 import { Discord } from '~/api/metro/components';
 import { Messages, format } from '~/api/i18n';
+import { isEdited } from '~/lib/theme-draft';
 import { themes } from '~/managers/themes';
 import { Screens } from '~/lib/constants';
 import { showToast } from '~/api/toasts';
 import ThemeStore from '~/stores/themes';
 import { Page } from '~/ui/components';
 
-import { ADVANCED_GROUPS, BASIC_CATEGORIES, availableRows, groupTokens } from './token-registry';
-import { currentAppearance, liveTokenNames } from './token-color';
-import TokenGroupPage from './token-group-page';
+import { BASIC_CATEGORIES, availableRows, groupTokens } from './token-registry';
+import AdvancedGroupsPage from './advanced-groups-page';
+import useEditorScreen from './use-editor-screen';
+import { liveTokenNames } from './token-color';
 import ColorRow from './color-row';
 
-type ThemeEditorParams = {
-	id?: LocalThemeId;
-};
-
-type ThemeEditorPageProps = {
-	route: { params?: ThemeEditorParams };
-};
-
-/** What the editor opened with; every dirty check compares against it. */
-type EditorSession = {
-	id: LocalThemeId;
-	initial: Theme;
-	name: string;
-	description: string;
-};
-
-type BeforeRemoveEvent = {
-	preventDefault: () => void;
-};
-
-function openSession(id: LocalThemeId | undefined): EditorSession {
-	const entity = id ? themes.getEntity(id) : undefined;
-	const bundle = entity ? readDraft(entity.bundle) : undefined;
-
-	return {
-		// The id is fixed for the session, so saving twice or retrying overwrites one theme.
-		id: id ?? createLocalThemeId(),
-		initial: bundle ?? createDraft(currentAppearance()),
-		name: entity?.data.name ?? '',
-		description: entity?.data.description ?? '',
-	};
-}
-
 /**
- * @description The theme editor: name and description, the curated colours, and every Discord colour by
- * group. Discord shows the draft while the editor is open; leaving without saving drops it.
+ * @description The theme editor: name and description, the curated colours, and a link to every Discord
+ * colour by group. The draft stays applied after leaving until it is saved or discarded.
  */
-function ThemeEditorPage({ route }: ThemeEditorPageProps) {
+function ThemeEditorPage() {
 	const navigation = Discord.useNavigation();
-	const [session] = useState(() => openSession(route.params?.id));
-	const [name, setName] = useState(session.name);
-	const [description, setDescription] = useState(session.description);
-	const [busy, setBusy] = useState(false);
+	const session = ThemeEditorStore((state) => state.session);
 	const preview = ThemeStore((state) => state.preview);
-	const saved = useRef(false);
-	const discarding = useRef(false);
-	const dirty = useRef(false);
+	const [busy, setBusy] = useState(false);
 
+	useEditorScreen();
+
+	const name = session?.name ?? '';
+	const description = session?.description ?? '';
 	const names = useMemo(() => liveTokenNames(), []);
 	const groups = useMemo(() => groupTokens(names), [names]);
 	const categories = useMemo(() => {
@@ -76,25 +41,13 @@ function ThemeEditorPage({ route }: ThemeEditorPageProps) {
 		})).filter(({ rows }) => rows.length);
 	}, [names]);
 
-	useEffect(() => {
-		dirty.current =
-			(preview !== null && preview !== session.initial) ||
-			name !== session.name ||
-			description !== session.description;
-	}, [preview, name, description]);
-
+	const edited = preview ? names.filter((token) => isEdited(preview, [token])).length : 0;
 	const canSave = Boolean(name.trim()) && !busy;
-
-	useEffect(() => {
-		ThemeStore.getState().setPreview(session.initial);
-
-		return () => ThemeStore.getState().setPreview(null);
-	}, []);
 
 	async function save() {
 		const draft = ThemeStore.getState().preview;
 
-		if (!draft || !canSave) return;
+		if (!session || !draft || !canSave) return;
 
 		setBusy(true);
 
@@ -115,13 +68,13 @@ function ThemeEditorPage({ route }: ThemeEditorPageProps) {
 			return;
 		}
 
-		saved.current = true;
+		ThemeEditorStore.getState().end();
 		navigation.goBack();
 	}
 
 	useEffect(() => {
 		navigation.setOptions({
-			title: session.name || Messages.UNBOUND_THEME_EDITOR,
+			title: name.trim() || Messages.UNBOUND_THEME_EDITOR,
 			headerRight: () => (
 				<Discord.Button
 					size='sm'
@@ -133,33 +86,25 @@ function ThemeEditorPage({ route }: ThemeEditorPageProps) {
 				/>
 			),
 		});
-	}, [canSave, busy, name, description]);
+	}, [canSave, busy, session]);
 
-	useEffect(
-		() =>
-			navigation.addListener('beforeRemove', (event: BeforeRemoveEvent) => {
-				if (saved.current || discarding.current || !dirty.current) return;
+	function discard() {
+		Discord.showConfirmModal({
+			title: Messages.UNBOUND_THEME_DISCARD,
+			content: Messages.UNBOUND_THEME_DISCARD_CONFIRM,
+			confirmText: Messages.UNBOUND_THEME_DISCARD,
+			cancelText: Messages.UNBOUND_CANCEL,
+			onConfirm: () => {
+				ThemeEditorStore.getState().end();
+				navigation.goBack();
+			},
+		});
+	}
 
-				event.preventDefault();
-
-				Discord.showConfirmModal({
-					title: Messages.UNBOUND_THEME_DISCARD,
-					content: Messages.UNBOUND_THEME_DISCARD_CONFIRM,
-					confirmText: Messages.UNBOUND_THEME_DISCARD,
-					cancelText: Messages.UNBOUND_CANCEL,
-					onConfirm: () => {
-						discarding.current = true;
-						navigation.goBack();
-					},
-				});
-			}),
-		[],
-	);
-
-	function openGroup(key: string, title: string) {
+	function openAdvanced() {
 		navigation.push(Screens.Custom, {
-			title,
-			render: () => <TokenGroupPage tokens={groups.get(key) ?? []} />,
+			title: Messages.UNBOUND_THEME_ADVANCED,
+			render: () => <AdvancedGroupsPage groups={groups} />,
 		});
 	}
 
@@ -170,7 +115,9 @@ function ThemeEditorPage({ route }: ThemeEditorPageProps) {
 				<Discord.TextInput
 					value={name}
 					placeholder={Messages.UNBOUND_THEME_NAME_PLACEHOLDER}
-					onChange={setName}
+					onChange={(value: string) =>
+						ThemeEditorStore.getState().setDetails({ name: value })
+					}
 				/>
 			</Discord.Stack>
 			<Discord.Stack spacing={8}>
@@ -178,7 +125,9 @@ function ThemeEditorPage({ route }: ThemeEditorPageProps) {
 				<Discord.TextInput
 					value={description}
 					placeholder={Messages.UNBOUND_THEME_DESCRIPTION_PLACEHOLDER}
-					onChange={setDescription}
+					onChange={(value: string) =>
+						ThemeEditorStore.getState().setDetails({ description: value })
+					}
 				/>
 			</Discord.Stack>
 
@@ -194,37 +143,33 @@ function ThemeEditorPage({ route }: ThemeEditorPageProps) {
 				</Discord.TableRowGroup>
 			))}
 
-			<Discord.TableRowGroup
-				title={Messages.UNBOUND_THEME_ADVANCED}
-				description={Messages.UNBOUND_THEME_ADVANCED_HINT}
-			>
-				{ADVANCED_GROUPS.map(({ key, title }) => {
-					const tokens = groups.get(key) ?? [];
-					const edited = preview
-						? tokens.filter((token) => isEdited(preview, [token])).length
-						: 0;
-
-					return tokens.length ? (
-						<Discord.TableRow
-							key={key}
-							label={format(title)}
-							arrow
-							trailing={
-								<Discord.TableRow.TrailingText
-									text={
-										edited
-											? format('UNBOUND_THEME_EDITED_COUNT', {
-													edited,
-													total: tokens.length,
-												})
-											: String(tokens.length)
-									}
-								/>
+			<Discord.TableRowGroup>
+				<Discord.TableRow
+					label={Messages.UNBOUND_THEME_ADVANCED}
+					subLabel={Messages.UNBOUND_THEME_ADVANCED_HINT}
+					arrow
+					trailing={
+						<Discord.TableRow.TrailingText
+							text={
+								edited
+									? format('UNBOUND_THEME_EDITED_COUNT', {
+											edited,
+											total: names.length,
+										})
+									: String(names.length)
 							}
-							onPress={() => openGroup(key, format(title))}
 						/>
-					) : null;
-				})}
+					}
+					onPress={openAdvanced}
+				/>
+			</Discord.TableRowGroup>
+
+			<Discord.TableRowGroup>
+				<Discord.TableRow
+					label={Messages.UNBOUND_THEME_DISCARD}
+					variant='danger'
+					onPress={discard}
+				/>
 			</Discord.TableRowGroup>
 		</Page>
 	);
