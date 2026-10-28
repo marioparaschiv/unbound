@@ -7,6 +7,7 @@ import { Messages, format } from '~/api/i18n';
 import { Icons } from '~/api/assets';
 
 import useStyles from './token-group-page.style';
+import useEditorScreen from './use-editor-screen';
 import ColorRow from './color-row';
 
 type TokenGroupPageProps = {
@@ -24,6 +25,9 @@ type TokenRowInfo = {
 function TokenGroupPage({ tokens }: TokenGroupPageProps) {
 	const styles = useStyles();
 	const [search, setSearch] = useState('');
+
+	useEditorScreen();
+
 	// One stable write list per token, so the memoised rows skip re-renders on each keystroke.
 	const writes = useMemo(
 		() => new Map(tokens.map((token): [string, readonly [TokenWrite]] => [token, [{ token }]])),

@@ -660,6 +660,7 @@ export type Navigation<T = any> = {
 	pop: () => void;
 	navigate: (route: string, params?: T) => void;
 	goBack: () => void;
+	isFocused: () => boolean;
 	setOptions: (options: NavigationOptions) => void;
 	addListener: (event: string, callback: DiscordFunction) => DiscordFunction<void>;
 };
