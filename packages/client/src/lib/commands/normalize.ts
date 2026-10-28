@@ -100,6 +100,12 @@ const RESERVED_IDS = 100;
 
 /** Thrown by `register` for a tree Discord would reject. Nothing from that call is registered. */
 export class CommandDefinitionError extends Error {
+	/**
+	 * @description Creates the error with a message naming the owner and the command.
+	 * @param owner The owner that registered the command.
+	 * @param path The command's path, space-separated.
+	 * @param reason Which rule the command breaks.
+	 */
 	constructor(
 		public readonly owner: string,
 		public readonly path: string,
