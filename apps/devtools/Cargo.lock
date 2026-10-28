@@ -6067,6 +6067,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "unbound-devtools-core",
+ "unicode-segmentation",
 ]
 
 [[package]]
