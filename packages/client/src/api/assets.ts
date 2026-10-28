@@ -1,6 +1,6 @@
 import type { UnboundAsset } from '@unbound-app/types/assets';
 
-import { initializeModule } from '~/api/metro';
+import { initializeModule } from '~/api/metro/search';
 import { Assets } from '~/api/metro/common';
 import Cache from '~/lib/cache';
 

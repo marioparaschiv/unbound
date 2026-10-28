@@ -21,6 +21,7 @@ import {
 	ViewProps,
 	ViewStyle,
 } from 'react-native';
+
 declare const HelpMessageTypes$1: any;
 declare const HelpMessageTypes: {
 	readonly 0: 'WARNING';

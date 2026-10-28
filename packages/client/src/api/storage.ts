@@ -10,7 +10,6 @@ import isEmpty from '@unbound-app/utils/is-empty';
 import { useEffect, useState } from 'react';
 
 import { EventEmitter } from '~/lib/event-emitter';
-import { NativePlatform } from '~/api/native';
 
 /** Payload describing a settings change, passed to `changed` listeners and predicates. */
 export type SettingsPayload = {
@@ -261,7 +260,7 @@ function record({ store, key, value }: SettingsPayload) {
  * @returns A promise that resolves once the loader has stored the changes.
  */
 export async function persist() {
-	const settingsBridge = NativePlatform?.settings;
+	const settingsBridge = globalThis.NativePlatform?.settings;
 
 	if (!settingsBridge || !pending.length) return;
 
