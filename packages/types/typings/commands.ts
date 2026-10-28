@@ -79,6 +79,7 @@ export type ReplyEmbed = {
 export type PublicReply = {
 	content: string;
 	tts?: boolean;
+	ephemeral?: false;
 };
 
 /** Shown only to the user, as a bot message. */

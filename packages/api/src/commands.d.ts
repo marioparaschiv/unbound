@@ -218,6 +218,7 @@ export type OptionValue<K extends OptionKind> = OptionKindTypes[K]['value'];
 export type PublicReply = {
 	content: string;
 	tts?: boolean;
+	ephemeral?: false;
 };
 /** An option value as Discord passes it. User, channel and role options arrive as id strings. */
 export type RawOptionValue = string | number | boolean;
