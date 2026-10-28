@@ -20,6 +20,12 @@ static const nlohmann::json &bundleSection(const nlohmann::json &theme, const ch
     return bundle.contains(name) && bundle[name].is_object() ? bundle[name] : emptyObject();
 }
 
+static std::string stringField(const nlohmann::json &object, const char *key)
+{
+    auto field = object.find(key);
+    return field != object.end() && field->is_string() ? field->get<std::string>() : std::string();
+}
+
 const nlohmann::json *findTheme(const nlohmann::json &themes, const std::string &id)
 {
     if (!themes.is_array() || id.empty())
@@ -30,7 +36,7 @@ const nlohmann::json *findTheme(const nlohmann::json &themes, const std::string 
     for (const nlohmann::json &theme : themes)
     {
         if (theme.is_object() && theme.contains("manifest") && theme["manifest"].is_object() &&
-            theme["manifest"].value("id", std::string()) == id)
+            stringField(theme["manifest"], "id") == id)
         {
             return &theme;
         }
@@ -90,8 +96,8 @@ ThemeColors resolveThemeColors(const nlohmann::json &theme)
             continue;
         }
 
-        std::string              type  = entry->value("type", std::string());
-        std::string              value = entry->value("value", std::string());
+        std::string              type  = stringField(*entry, "type");
+        std::string              value = stringField(*entry, "value");
         std::optional<RGBAColor> color;
 
         if (type == "color")

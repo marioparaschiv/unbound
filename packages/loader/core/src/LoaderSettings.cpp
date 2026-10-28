@@ -315,7 +315,8 @@ bool SettingsStore::apply(const nlohmann::json &changes)
             {
                 continue;
             }
-            if (change.value("clear", false))
+            if (change.contains("clear") && change["clear"].is_boolean() &&
+                change["clear"].get<bool>())
             {
                 dirty_ = data_.erase(change["store"].get<std::string>()) > 0 || dirty_;
                 continue;
@@ -327,7 +328,8 @@ bool SettingsStore::apply(const nlohmann::json &changes)
 
             const std::string store = change["store"].get<std::string>();
             const std::string key   = change["key"].get<std::string>();
-            if (change.value("remove", false))
+            if (change.contains("remove") && change["remove"].is_boolean() &&
+                change["remove"].get<bool>())
             {
                 removeLocked(store, key);
             }
