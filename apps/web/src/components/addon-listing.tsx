@@ -22,11 +22,13 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import type { MarketplacePage, MarketplaceSearch } from '~/lib/marketplace';
 import type { MarketplaceAddon } from '~/lib/marketplace-addon';
 import type { SortOption } from '~/components/sort-controls';
 import { fetchMarketplacePage } from '~/lib/marketplace';
 import type { CssVariables } from '~/lib/css-variables';
+import BlurReveal from '~/components/motion/blur-reveal';
 import SortControls from '~/components/sort-controls';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
@@ -103,6 +105,8 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 	const copy = COPY[type];
 	const [addons, setAddons] = useState<MarketplaceAddon[]>(page.addons);
 	const [cursor, setCursor] = useState(page.nextCursor);
+	// The newest page staggers in from its own first card rather than from the top of the grid.
+	const [batchStart, setBatchStart] = useState(0);
 	const [loading, startLoading] = useTransition();
 
 	function loadMore() {
@@ -112,6 +116,7 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 			try {
 				const next = await fetchMarketplacePage({ data: { ...search, type, cursor } });
 
+				setBatchStart(addons.length);
 				setAddons((previous) => [...previous, ...next.addons]);
 				setCursor(next.nextCursor);
 			} catch (error) {
@@ -162,8 +167,13 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 	return (
 		<>
 			<div style={GRID_STYLE} className='fill-grid'>
-				{addons.map((addon) => (
-					<AddonCard addon={addon} key={addon.id} />
+				{addons.map((addon, index) => (
+					<AddonCard
+						addon={addon}
+						key={addon.id}
+						className='animate-reveal'
+						style={staggerStyle(Math.max(index - batchStart, 0))}
+					/>
 				))}
 			</div>
 
@@ -219,7 +229,9 @@ function AddonListing({ type, page, search, onSearchChange }: AddonListingProps)
 	return (
 		<div className='flex flex-col flex-1 gap-4 md:mx-auto px-4 w-full container'>
 			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>{copy.title}</Text>
+				<Text variant='heading-lg'>
+					<BlurReveal text={copy.title} />
+				</Text>
 				<Text variant='text-md' color='muted'>
 					{copy.description}
 				</Text>
