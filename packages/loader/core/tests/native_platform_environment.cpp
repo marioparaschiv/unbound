@@ -8,6 +8,9 @@ int main()
     nlohmann::json                 unset = loader::debugEnvironment(provider);
     assert(unset["isVirtualDevice"] == false);
     assert(unset["hostAddress"].is_null());
+    assert(unset["resources"]["hooks"] == 0);
+    assert(unset["resources"]["surfaces"] == 0);
+    assert(unset["resources"]["leasedHandles"] == 0);
 
     provider.isVirtualDevice = [] {
         return true;

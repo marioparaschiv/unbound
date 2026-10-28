@@ -13,6 +13,7 @@
 #include "LoaderJSI.h"
 #include "LoaderJSON.h"
 #include "NativePluginRuntime.h"
+#include "NativeResourceBudget.h"
 
 namespace loader {
 namespace jsi = facebook::jsi;
@@ -446,7 +447,8 @@ nlohmann::json debugEnvironment(const NativePlatformProvider &provider)
     std::optional<std::string> host =
         provider.virtualDeviceHost ? provider.virtualDeviceHost() : std::nullopt;
     return {{"isVirtualDevice", provider.isVirtualDevice && provider.isVirtualDevice()},
-            {"hostAddress", host ? nlohmann::json(*host) : nlohmann::json(nullptr)}};
+            {"hostAddress", host ? nlohmann::json(*host) : nlohmann::json(nullptr)},
+            {"resources", native::nativeResourceCounts()}};
 }
 
 nlohmann::json currentDebugEnvironment()

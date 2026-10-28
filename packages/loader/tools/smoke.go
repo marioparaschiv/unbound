@@ -113,6 +113,7 @@ type smokeResult struct {
 	failures  map[string][]string
 	crashes   []string
 	statuses  []smokePluginStatus
+	resources *smokeResources
 	evalError string
 	problems  []string
 	relaunch  string
@@ -329,6 +330,9 @@ func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, t
 	} else {
 		statuses, evalErr = evaluateSmokeStatuses(ctx, target, options, deadline)
 	}
+	if evalErr == nil {
+		result.resources = measureSmokeResources(ctx, options)
+	}
 	settle := time.Now().Add(5 * time.Second)
 	for time.Now().Before(settle) && ctx.Err() == nil {
 		time.Sleep(time.Second)
@@ -536,6 +540,7 @@ func renderSmokeReport(result *smokeResult) string {
 	}
 	report.WriteString(renderStartupTimes(result.startup, result.budget))
 	report.WriteString(renderSlowestStarts(result.statuses))
+	report.WriteString(renderSmokeResources(result.resources))
 	report.WriteString("| Plugin | Loaded by the loader | Debugger status | Start |\n| --- | --- | --- | --- |\n")
 	for _, plugin := range result.plugins {
 		loaded := "no"
