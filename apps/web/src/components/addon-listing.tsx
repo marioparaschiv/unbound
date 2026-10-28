@@ -89,10 +89,10 @@ function SubmitButton() {
 	const session = useRouteContext({ from: '__root__', select: (context) => context.session });
 
 	return (
-		<Button asChild>
+		<Button asChild className='flex-1 sm:flex-none'>
 			<Link to={session ? '/submit' : '/login'}>
 				<IconPlus size={24} />
-				<span className='hidden sm:inline'>Submit</span>
+				Submit
 			</Link>
 		</Button>
 	);
@@ -220,7 +220,10 @@ function AddonListing({ type, page, search, onSearchChange }: AddonListingProps)
 		<div className='flex flex-col flex-1 gap-6 page-frame'>
 			<PageHeader title={copy.title} description={copy.description} />
 			<div className='flex flex-col flex-1 gap-6'>
-				<form onSubmit={handleSubmit} className='flex gap-2'>
+				<form
+					onSubmit={handleSubmit}
+					className='flex flex-wrap sm:flex-nowrap gap-x-2 gap-y-3'
+				>
 					<InputGroup className='w-full'>
 						<InputGroupAddon>
 							<IconMagnifier size={24} />
