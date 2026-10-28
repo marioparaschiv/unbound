@@ -32,6 +32,7 @@
 #import "NativeConversionBudget.h"
 #import "NativeEvaluations.h"
 #import "NativeFFI.h"
+#import "NativeFabric.h"
 #import "NativeGeometry.h"
 #import "NativeLimits.h"
 #import "NativeNumericValidation.h"
@@ -142,69 +143,6 @@ public:
 
 private:
     std::vector<uint8_t> bytes_;
-};
-
-class FabricSurfaceHost final : public HostObject
-{
-public:
-    FabricSurfaceHost(void) = default;
-
-    void setSurface(id surface, UIView *containerView, UIView *surfaceView, uint64_t generation)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        surface_     = surface;
-        view_        = containerView;
-        surfaceView_ = surfaceView;
-        generation_  = generation;
-        active_      = true;
-    }
-
-    id surface(void) const
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return surface_;
-    }
-
-    UIView *view(void) const
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return view_;
-    }
-
-    UIView *surfaceView(void) const
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return surfaceView_;
-    }
-
-    bool active(void) const
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return active_;
-    }
-
-    uint64_t generation(void) const
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return generation_;
-    }
-
-    void clear(void)
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        surface_     = nil;
-        view_        = nil;
-        surfaceView_ = nil;
-        active_      = false;
-    }
-
-private:
-    mutable std::mutex mutex_;
-    __strong id        surface_     = nil;
-    __strong UIView   *view_        = nil;
-    __strong UIView   *surfaceView_ = nil;
-    bool               active_      = false;
-    uint64_t           generation_  = 0;
 };
 
 using loader::ffi::PointerHost;
@@ -319,10 +257,8 @@ static std::mutex                                                            gHo
 static std::unordered_map<std::string, std::shared_ptr<HookDispatcher>>      gDispatchers;
 static std::unordered_map<HookDispatcher *, std::shared_ptr<HookDispatcher>> gClosureDispatchers;
 static std::atomic_uint64_t                                                  gNextHookIdentifier{1};
-static __weak id  gRuntimeExecutorInstance = nil;
-static __weak id  gFabricHostInstance      = nil;
-static std::mutex gFabricSurfaceMutex;
-static std::unordered_map<FabricSurfaceHost *, std::shared_ptr<FabricSurfaceHost>> gFabricSurfaces;
+static __weak id gRuntimeExecutorInstance = nil;
+static __weak id gFabricHostInstance      = nil;
 
 static os_log_t nativePerformanceLog()
 {
@@ -842,55 +778,6 @@ static void executeMainSynchronously(std::function<void(void)> callback)
     loader::native::executeMainSynchronously(objcGuarded(std::move(callback)));
 }
 
-static std::shared_ptr<FabricSurfaceHost> fabricSurfaceHost(Runtime &runtime, const Value &value)
-{
-    if (!value.isObject())
-    {
-        throw JSError(runtime, "fabric surface handle is invalid");
-    }
-
-    Object object = value.asObject(runtime);
-    if (!object.isHostObject<FabricSurfaceHost>(runtime))
-    {
-        throw JSError(runtime, "fabric surface handle is invalid");
-    }
-
-    return object.getHostObject<FabricSurfaceHost>(runtime);
-}
-
-static NSDictionary *fabricProperties(Runtime &runtime, const Value *value)
-{
-    if (!value || value->isNull() || value->isUndefined())
-    {
-        return @{};
-    }
-
-    if (!value->isObject() || value->asObject(runtime).isArray(runtime))
-    {
-        throw JSError(runtime, "fabric surface properties must be an object");
-    }
-    ConversionState state(kNativePropertiesConversion);
-    id              object = valueToObjCValue(runtime, *value, state);
-    if (![object isKindOfClass:[NSDictionary class]])
-    {
-        throw JSError(runtime, "fabric surface properties must be an object");
-    }
-
-    return object;
-}
-
-static CGSize fabricSize(Runtime &runtime, const Value &value)
-{
-    loader::native::NativeSize size = loader::native::parseSize(runtime, value);
-    return CGSizeMake(size.width, size.height);
-}
-
-static CGRect fabricFrame(Runtime &runtime, const Value &value)
-{
-    loader::native::NativeFrame frame = loader::native::parseFrame(runtime, value);
-    return CGRectMake(frame.x, frame.y, frame.width, frame.height);
-}
-
 static void fabricStart(id surface)
 {
     using Function = void (*)(id, SEL);
@@ -922,48 +809,33 @@ static void fabricSetMinimumSize(id surface, CGSize minimumSize, CGSize maximumS
                               maximumSize);
 }
 
-static void forgetFabricSurface(FabricSurfaceHost *surfaceHost)
+static void fabricRequire(bool condition, const char *message)
 {
-    std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
-    if (gFabricSurfaces.erase(surfaceHost) > 0)
+    if (!condition)
     {
-        loader::native::nativeSurfaceBudget().release();
+        throw std::runtime_error(message);
     }
 }
 
-static NSString *fabricModuleName(Runtime &runtime, const Value &value)
-{
-    std::string name = loader::native::parseName(
-        runtime, value, loader::native::kMaximumNativeNameBytes, "A Fabric module name");
-    return [NSString stringWithUTF8String:name.c_str()] ?: @"";
-}
+struct IOSFabricSurface {
+    __strong id      surface     = nil;
+    __strong UIView *view        = nil;
+    __strong UIView *surfaceView = nil;
+};
 
-static void fabricMountNative(id host, UIView *containerView, NSString *moduleName,
-                              NSDictionary                             *properties,
-                              const std::shared_ptr<FabricSurfaceHost> &surfaceHost,
-                              uint64_t                                  generation)
+static IOSFabricSurface fabricMountNative(id host, UIView *containerView, NSString *moduleName,
+                                          NSDictionary *properties)
 {
     NativeOperationSignpost signpost("fabric mount");
-    if (generation != loader::native::runtimeGeneration())
-    {
-        throw std::runtime_error("Fabric runtime was replaced before mounting");
-    }
-    loader::native::NativeResourceReservation reservation(loader::native::nativeSurfaceBudget(),
-                                                          "Too many React surfaces are mounted");
-    if (![host respondsToSelector:@selector(createSurfaceWithModuleName:mode:initialProperties:)])
-    {
-        throw std::runtime_error("Fabric host does not expose surface creation");
-    }
+    fabricRequire(host != nil, "Fabric host is unavailable");
+    fabricRequire(
+        [host respondsToSelector:@selector(createSurfaceWithModuleName:mode:initialProperties:)],
+        "Fabric host does not expose surface creation");
     id surface = [host createSurfaceWithModuleName:moduleName mode:0 initialProperties:properties];
-    if (!surface)
-    {
-        throw std::runtime_error("Fabric host could not create the requested surface");
-    }
-    if (![surface respondsToSelector:@selector(start)] ||
-        ![surface respondsToSelector:@selector(view)])
-    {
-        throw std::runtime_error("Fabric surface does not expose start and view");
-    }
+    fabricRequire(surface != nil, "Fabric host could not create the requested surface");
+    fabricRequire([surface respondsToSelector:@selector(start)] &&
+                      [surface respondsToSelector:@selector(view)],
+                  "Fabric surface does not expose start and view");
 
     fabricStart(surface);
     UIView *view = fabricView(surface);
@@ -985,88 +857,7 @@ static void fabricMountNative(id host, UIView *containerView, NSString *moduleNa
     [containerView addSubview:surfaceContainer];
     [surfaceContainer setNeedsLayout];
     [surfaceContainer layoutIfNeeded];
-    surfaceHost->setSurface(surface, surfaceContainer, view, generation);
-    bool replaced = false;
-    {
-        std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
-        replaced = generation != loader::native::runtimeGeneration();
-        if (!replaced)
-        {
-            gFabricSurfaces[surfaceHost.get()] = surfaceHost;
-            reservation.commit();
-        }
-    }
-    if (replaced)
-    {
-        [surfaceContainer removeFromSuperview];
-        fabricStop(surface);
-        surfaceHost->clear();
-        throw std::runtime_error("Fabric runtime was replaced while mounting");
-    }
-}
-
-static Value fabricMount(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count < 2 || !args[1].isString())
-    {
-        throw JSError(runtime, "fabric.mount expects a container and module name");
-    }
-
-    id container = objcValue(runtime, args[0]);
-    if (![container isKindOfClass:[UIView class]])
-    {
-        throw JSError(runtime, "fabric.mount expects a UIView container");
-    }
-
-    id host = gFabricHostInstance;
-    if (!host)
-    {
-        throw JSError(runtime, "Fabric host is unavailable");
-    }
-
-    NSString     *moduleName  = fabricModuleName(runtime, args[1]);
-    NSDictionary *properties  = fabricProperties(runtime, count > 2 ? &args[2] : nullptr);
-    auto          surfaceHost = std::make_shared<FabricSurfaceHost>();
-    uint64_t      generation  = loader::native::runtimeGeneration();
-
-    executeMainSynchronously([host, container, moduleName, properties, surfaceHost, generation]() {
-        fabricMountNative(host, (UIView *) container, moduleName, properties, surfaceHost,
-                          generation);
-    });
-
-    return Object::createFromHostObject(runtime, std::move(surfaceHost));
-}
-
-static Value fabricMountAsync(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count < 2 || !args[1].isString())
-    {
-        throw JSError(runtime, "fabric.mountAsync expects a container and module name");
-    }
-    id container = objcValue(runtime, args[0]);
-    if (![container isKindOfClass:[UIView class]])
-    {
-        throw JSError(runtime, "fabric.mountAsync expects a UIView container");
-    }
-    id host = gFabricHostInstance;
-    if (!host)
-    {
-        throw JSError(runtime, "Fabric host is unavailable");
-    }
-
-    NSString     *moduleName  = fabricModuleName(runtime, args[1]);
-    NSDictionary *properties  = fabricProperties(runtime, count > 2 ? &args[2] : nullptr);
-    auto          surfaceHost = std::make_shared<FabricSurfaceHost>();
-    uint64_t      generation  = loader::native::runtimeGeneration();
-    return executeMainAsynchronously(
-        runtime,
-        [host, container, moduleName, properties, surfaceHost, generation]() {
-            fabricMountNative(host, (UIView *) container, moduleName, properties, surfaceHost,
-                              generation);
-        },
-        [surfaceHost](Runtime &completionRuntime) {
-            return Value(Object::createFromHostObject(completionRuntime, surfaceHost));
-        });
+    return {surface, surfaceContainer, view};
 }
 
 static void fabricUpdateNative(id surface, NSDictionary *properties)
@@ -1115,269 +906,141 @@ static void fabricUnmountNative(id surface, UIView *view)
     }
 }
 
-static void invalidateRuntimeFabricSurfaces(uint64_t generation)
+class IOSFabricView final : public loader::native::FabricView
 {
-    std::vector<std::shared_ptr<FabricSurfaceHost>> stale;
+public:
+    explicit IOSFabricView(UIView *view) : view_(view) {}
+
+    UIView *view() const
     {
-        std::lock_guard<std::mutex> lock(gFabricSurfaceMutex);
-        for (auto iterator = gFabricSurfaces.begin(); iterator != gFabricSurfaces.end();)
+        return view_;
+    }
+
+private:
+    __strong UIView *view_;
+};
+
+static NSDictionary *fabricDictionary(const nlohmann::json &properties)
+{
+    id object = unbound::ios::objectFromJSON(properties);
+    return [object isKindOfClass:[NSDictionary class]] ? object : @{};
+}
+
+static loader::native::NativeFrame nativeFrame(CGRect frame)
+{
+    return {frame.origin.x, frame.origin.y, frame.size.width, frame.size.height};
+}
+
+static CGSize cgSize(const loader::native::NativeSize &size)
+{
+    return CGSizeMake(size.width, size.height);
+}
+
+class IOSFabricAdapter final : public loader::native::FabricAdapter
+{
+public:
+    std::shared_ptr<loader::native::FabricView> view(Runtime &runtime, const Value &handle) override
+    {
+        id object = objcValue(runtime, handle);
+        if (![object isKindOfClass:[UIView class]])
         {
-            if (iterator->second->generation() >= generation)
-            {
-                ++iterator;
-                continue;
-            }
-            stale.push_back(iterator->second);
-            iterator = gFabricSurfaces.erase(iterator);
-            loader::native::nativeSurfaceBudget().release();
+            throw JSError(runtime, "Fabric expects a UIView");
         }
+        return std::make_shared<IOSFabricView>((UIView *) object);
     }
-    if (stale.empty())
-        return;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        @autoreleasepool
-        {
-            for (const auto &surfaceHost : stale)
-            {
-                if (!surfaceHost->active())
-                    continue;
-                @try
-                {
-                    fabricUnmountNative(surfaceHost->surface(), surfaceHost->view());
-                }
-                @catch (NSException *exception)
-                {
-                    [Logger
-                         error:LOG_CATEGORY_PLUGINS
-                        format:@"Failed to release a stale Fabric surface: %@", exception.reason];
-                }
-                surfaceHost->clear();
-            }
-        }
-    });
-}
 
-static Value fabricUpdate(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count < 2)
+    std::string mount(const loader::native::FabricView &container, const std::string &moduleName,
+                      const nlohmann::json &properties) override
     {
-        throw JSError(runtime, "fabric.update expects a surface and properties");
-    }
-
-    std::shared_ptr<FabricSurfaceHost> surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    NSDictionary                      *properties  = fabricProperties(runtime, &args[1]);
-    id                                 surface     = surfaceHost->surface();
-    if (!surfaceHost->active() || !surface)
-    {
-        return Value::undefined();
-    }
-
-    executeMainSynchronously([surface, properties]() {
-        fabricUpdateNative(surface, properties);
-    });
-    return Value::undefined();
-}
-
-static Value fabricSetSize(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count < 3)
-    {
-        throw JSError(runtime, "fabric.setSize expects a surface, minimum size, and maximum size");
-    }
-
-    std::shared_ptr<FabricSurfaceHost> surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    CGSize                             minimumSize = fabricSize(runtime, args[1]);
-    CGSize                             maximumSize = fabricSize(runtime, args[2]);
-    id                                 surface     = surfaceHost->surface();
-    if (!surfaceHost->active() || !surface)
-    {
-        return Value::undefined();
-    }
-
-    executeMainSynchronously([surface, minimumSize, maximumSize]() {
-        fabricSetSizeNative(surface, minimumSize, maximumSize);
-    });
-    return Value::undefined();
-}
-
-static Value fabricSetFrame(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count < 2)
-    {
-        throw JSError(runtime, "fabric.setFrame expects a surface and frame");
-    }
-
-    std::shared_ptr<FabricSurfaceHost> surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    CGRect                             frame       = fabricFrame(runtime, args[1]);
-    UIView                            *view        = surfaceHost->view();
-    UIView                            *surfaceView = surfaceHost->surfaceView();
-    if (!surfaceHost->active() || !view)
-    {
-        return Value::undefined();
-    }
-
-    executeMainSynchronously([view, surfaceView, frame]() {
-        fabricSetFrameNative(view, surfaceView, frame);
-    });
-    return Value::undefined();
-}
-
-static Value fabricMeasure(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count == 0)
-    {
-        throw JSError(runtime, "fabric.measure expects a UIView");
-    }
-
-    id object = objcValue(runtime, args[0]);
-    if (![object isKindOfClass:[UIView class]])
-    {
-        throw JSError(runtime, "fabric.measure expects a UIView");
-    }
-
-    auto frame = std::make_shared<CGRect>(CGRectZero);
-    executeMainSynchronously([object, frame]() {
-        *frame = [(UIView *) object frame];
-    });
-
-    Object result(runtime);
-    result.setProperty(runtime, "x", frame->origin.x);
-    result.setProperty(runtime, "y", frame->origin.y);
-    result.setProperty(runtime, "width", frame->size.width);
-    result.setProperty(runtime, "height", frame->size.height);
-    return result;
-}
-
-static Value fabricUnmount(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count == 0)
-    {
-        throw JSError(runtime, "fabric.unmount expects a surface");
-    }
-
-    std::shared_ptr<FabricSurfaceHost> surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    id                                 surface     = surfaceHost->surface();
-    UIView                            *view        = surfaceHost->view();
-    if (!surfaceHost->active())
-    {
-        return Value::undefined();
-    }
-
-    executeMainSynchronously([surface, view]() {
-        fabricUnmountNative(surface, view);
-    });
-    surfaceHost->clear();
-    forgetFabricSurface(surfaceHost.get());
-    return Value::undefined();
-}
-
-static Value fabricVoidResult(Runtime &)
-{
-    return Value::undefined();
-}
-
-static Value fabricUpdateAsync(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count < 2)
-    {
-        throw JSError(runtime, "fabric.updateAsync expects a surface and properties");
-    }
-    auto          surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    NSDictionary *properties  = fabricProperties(runtime, &args[1]);
-    return executeMainAsynchronously(
-        runtime,
-        [surfaceHost, properties]() {
-            if (surfaceHost->active())
-                fabricUpdateNative(surfaceHost->surface(), properties);
-        },
-        fabricVoidResult);
-}
-
-static Value fabricSetSizeAsync(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count < 3)
-    {
-        throw JSError(runtime,
-                      "fabric.setSizeAsync expects a surface, minimum size, and maximum size");
-    }
-    auto   surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    CGSize minimumSize = fabricSize(runtime, args[1]);
-    CGSize maximumSize = fabricSize(runtime, args[2]);
-    return executeMainAsynchronously(
-        runtime,
-        [surfaceHost, minimumSize, maximumSize]() {
-            if (surfaceHost->active())
-            {
-                fabricSetSizeNative(surfaceHost->surface(), minimumSize, maximumSize);
-            }
-        },
-        fabricVoidResult);
-}
-
-static Value fabricSetFrameAsync(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count < 2)
-    {
-        throw JSError(runtime, "fabric.setFrameAsync expects a surface and frame");
-    }
-    auto   surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    CGRect frame       = fabricFrame(runtime, args[1]);
-    return executeMainAsynchronously(
-        runtime,
-        [surfaceHost, frame]() {
-            if (surfaceHost->active())
-            {
-                fabricSetFrameNative(surfaceHost->view(), surfaceHost->surfaceView(), frame);
-            }
-        },
-        fabricVoidResult);
-}
-
-static Value fabricMeasureAsync(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count == 0)
-    {
-        throw JSError(runtime, "fabric.measureAsync expects a UIView");
-    }
-    id object = objcValue(runtime, args[0]);
-    if (![object isKindOfClass:[UIView class]])
-    {
-        throw JSError(runtime, "fabric.measureAsync expects a UIView");
-    }
-    auto frame = std::make_shared<CGRect>(CGRectZero);
-    return executeMainAsynchronously(
-        runtime,
-        [object, frame]() {
-            *frame = [(UIView *) object frame];
-        },
-        [frame](Runtime &completionRuntime) {
-            Object result(completionRuntime);
-            result.setProperty(completionRuntime, "x", frame->origin.x);
-            result.setProperty(completionRuntime, "y", frame->origin.y);
-            result.setProperty(completionRuntime, "width", frame->size.width);
-            result.setProperty(completionRuntime, "height", frame->size.height);
-            return Value(std::move(result));
+        IOSFabricSurface mounted;
+        guarded([&]() {
+            NSString *name = [NSString stringWithUTF8String:moduleName.c_str()] ?: @"";
+            mounted = fabricMountNative(gFabricHostInstance,
+                                        static_cast<const IOSFabricView &>(container).view(), name,
+                                        fabricDictionary(properties));
         });
-}
-
-static Value fabricUnmountAsync(Runtime &runtime, const Value *args, size_t count)
-{
-    if (count == 0)
-    {
-        throw JSError(runtime, "fabric.unmountAsync expects a surface");
+        std::lock_guard<std::mutex> lock(mutex_);
+        std::string                 id = "surface-" + std::to_string(next_++);
+        surfaces_[id]                  = mounted;
+        return id;
     }
-    auto surfaceHost = fabricSurfaceHost(runtime, args[0]);
-    return executeMainAsynchronously(
-        runtime,
-        [surfaceHost]() {
-            if (!surfaceHost->active())
+
+    void update(const std::string &surface, const nlohmann::json &properties) override
+    {
+        IOSFabricSurface mounted    = find(surface);
+        NSDictionary    *dictionary = fabricDictionary(properties);
+        guarded([&]() {
+            fabricUpdateNative(mounted.surface, dictionary);
+        });
+    }
+
+    void setSize(const std::string &surface, const loader::native::NativeSize &minimum,
+                 const loader::native::NativeSize &maximum) override
+    {
+        IOSFabricSurface mounted = find(surface);
+        guarded([&]() {
+            fabricSetSizeNative(mounted.surface, cgSize(minimum), cgSize(maximum));
+        });
+    }
+
+    void setFrame(const std::string &surface, const loader::native::NativeFrame &frame) override
+    {
+        IOSFabricSurface mounted = find(surface);
+        guarded([&]() {
+            fabricSetFrameNative(mounted.view, mounted.surfaceView,
+                                 CGRectMake(frame.x, frame.y, frame.width, frame.height));
+        });
+    }
+
+    loader::native::NativeFrame measure(const loader::native::FabricView &view) override
+    {
+        return nativeFrame(static_cast<const IOSFabricView &>(view).view().frame);
+    }
+
+    loader::native::NativeFrame measureSurface(const std::string &surface) override
+    {
+        return nativeFrame(find(surface).view.frame);
+    }
+
+    void unmount(const std::string &surface) override
+    {
+        IOSFabricSurface mounted;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            auto                        found = surfaces_.find(surface);
+            if (found == surfaces_.end())
+            {
                 return;
-            fabricUnmountNative(surfaceHost->surface(), surfaceHost->view());
-            surfaceHost->clear();
-            forgetFabricSurface(surfaceHost.get());
-        },
-        fabricVoidResult);
-}
+            }
+            mounted = found->second;
+            surfaces_.erase(found);
+        }
+        guarded([&]() {
+            fabricUnmountNative(mounted.surface, mounted.view);
+        });
+    }
+
+private:
+    static void guarded(std::function<void(void)> operation)
+    {
+        objcGuarded(std::move(operation))();
+    }
+
+    IOSFabricSurface find(const std::string &surface)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto                        found = surfaces_.find(surface);
+        if (found == surfaces_.end())
+        {
+            throw std::runtime_error("The Fabric surface is no longer mounted");
+        }
+        return found->second;
+    }
+
+    std::mutex                                        mutex_;
+    std::unordered_map<std::string, IOSFabricSurface> surfaces_;
+    uint64_t                                          next_ = 1;
+};
 
 static id valueToData(Runtime &runtime, const Value &value)
 {
@@ -4995,28 +4658,6 @@ static void installFFI(Runtime &runtime, Object &ffi)
     ffi.setProperty(runtime, "call", makeFunction("call", 3, runtime, loader::ffi::callFunction));
 }
 
-static void installFabric(Runtime &runtime, Object &fabric)
-{
-    fabric.setProperty(runtime, "mount", makeFunction("mount", 3, runtime, fabricMount));
-    fabric.setProperty(runtime, "mountAsync",
-                       makeFunction("mountAsync", 3, runtime, fabricMountAsync));
-    fabric.setProperty(runtime, "update", makeFunction("update", 2, runtime, fabricUpdate));
-    fabric.setProperty(runtime, "updateAsync",
-                       makeFunction("updateAsync", 2, runtime, fabricUpdateAsync));
-    fabric.setProperty(runtime, "setSize", makeFunction("setSize", 3, runtime, fabricSetSize));
-    fabric.setProperty(runtime, "setSizeAsync",
-                       makeFunction("setSizeAsync", 3, runtime, fabricSetSizeAsync));
-    fabric.setProperty(runtime, "setFrame", makeFunction("setFrame", 2, runtime, fabricSetFrame));
-    fabric.setProperty(runtime, "setFrameAsync",
-                       makeFunction("setFrameAsync", 2, runtime, fabricSetFrameAsync));
-    fabric.setProperty(runtime, "measure", makeFunction("measure", 1, runtime, fabricMeasure));
-    fabric.setProperty(runtime, "measureAsync",
-                       makeFunction("measureAsync", 1, runtime, fabricMeasureAsync));
-    fabric.setProperty(runtime, "unmount", makeFunction("unmount", 1, runtime, fabricUnmount));
-    fabric.setProperty(runtime, "unmountAsync",
-                       makeFunction("unmountAsync", 1, runtime, fabricUnmountAsync));
-}
-
 static Value environment(Runtime &runtime, const Value *, size_t)
 {
     return loader::toJSIValue(runtime, loader::currentDebugEnvironment());
@@ -5047,7 +4688,6 @@ void setNativePluginFabricHost(id instance)
 static void invalidateRuntimeResources(uint64_t generation)
 {
     invalidateRuntimeHooks(generation);
-    invalidateRuntimeFabricSurfaces(generation);
 }
 
 void registerNativePluginBridge(Runtime &runtime)
@@ -5069,9 +4709,9 @@ void registerNativePluginBridge(Runtime &runtime)
     installFFI(runtime, ffi);
     bridge.addNamespace("ffi", std::move(ffi));
 
-    Object fabric(runtime);
-    installFabric(runtime, fabric);
-    bridge.addNamespace("fabric", std::move(fabric));
+    bridge.addNamespace(
+        "fabric", loader::native::makeFabricNamespace(runtime, std::make_shared<IOSFabricAdapter>(),
+                                                      loader::native::FabricCalls::SyncAndAsync));
 
     Object debug(runtime);
     installDebug(runtime, debug);
