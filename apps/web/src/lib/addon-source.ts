@@ -491,16 +491,6 @@ export async function listRepositoryAddons(
 }
 
 /**
- * @description Reads one addon at the commit the author previewed. Refuses, in order: no push access,
- * a ref that moved (`source_changed`), a path that is not a registered addon (`addon_not_found`), an
- * invalid manifest, a missing or oversize bundle, oversize texts and an invalid changelog.
- * @param ctx The application context.
- * @param github The caller's GitHub client.
- * @param request The repository, addon path, ref, commit and detail overrides.
- * @param requirePush Whether the client must be able to push; first-party publishing is trusted by its credential instead.
- * @returns The source, its bytes verified against git's blob ids.
- */
-/**
  * @description Names the compiled bundle beside a bundle, as the loader and client look it up.
  * @param bundlePath The bundle's path, such as `dist/index.js`.
  * @param bytecodeVersion The Hermes bytecode version.
@@ -556,6 +546,16 @@ async function readBytecode(
 
 /**
  *
+ */
+/**
+ * @description Reads one addon at the commit the author previewed. Refuses, in order: no push access,
+ * a ref that moved (`source_changed`), a path that is not a registered addon (`addon_not_found`), an
+ * invalid manifest, a missing or oversize bundle, oversize texts and an invalid changelog.
+ * @param ctx The application context.
+ * @param github The caller's GitHub client.
+ * @param request The repository, addon path, ref, commit and detail overrides.
+ * @param requirePush Whether the client must be able to push; first-party publishing is trusted by its credential instead.
+ * @returns The source, its bytes verified against git's blob ids.
  */
 export async function readAddonSource(
 	ctx: AppContext,
