@@ -56,7 +56,8 @@ function AccountMenu() {
 			<DropdownMenuTrigger asChild>
 				<Button variant='ghost' className='group/account border-none'>
 					<UserAvatar src={user.image} name={user.name} size='xs' />
-					{user.name}
+					{/* Between md and lg the nav fills the bar, so the trigger shrinks to the avatar. */}
+					<span className='md:max-lg:sr-only'>{user.name}</span>
 					<IconChevronDown className='group-data-[state=open]/account:rotate-180! transition-transform' />
 				</Button>
 			</DropdownMenuTrigger>

@@ -53,13 +53,13 @@ function Header() {
 	return (
 		<header className='flex flex-col items-center'>
 			<div id='header' className='z-20 sticky my-6 pointer-events-none page-frame'>
-				<div className='bg-card/80 shadow-surface backdrop-blur-md p-2 pl-3 border rounded-surface w-full text-foreground pointer-events-auto'>
-					<div className='flex items-center gap-3 h-10'>
+				<div className='bg-card/80 shadow-surface backdrop-blur-md pt-2.5 pr-2.5 pb-3.5 pl-3.5 border rounded-surface w-full text-foreground pointer-events-auto'>
+					<div className='flex items-center gap-3 h-11'>
 						<Link
 							to='/'
-							className='flex items-center rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo press-flat'
+							className='flex justify-center items-center rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo size-11 shrink-0 press-flat'
 						>
-							<Logo className='size-14 text-foreground' />
+							<Logo className='size-9 text-foreground' />
 						</Link>
 
 						<Separator orientation='vertical' className='hidden md:flex h-5!' />
@@ -73,7 +73,7 @@ function Header() {
 									<Link
 										key={route.path}
 										className={cn(
-											'inline-flex relative items-center px-4 rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo h-10 font-semibold text-muted-foreground hover:text-foreground text-base tracking-tight transition-colors cursor-pointer press-flat',
+											'inline-flex relative items-center px-4 rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo h-11 font-semibold text-muted-foreground hover:text-foreground text-base tracking-tight transition-colors cursor-pointer press-flat',
 											route.path === pathname && 'text-foreground',
 										)}
 										onMouseEnter={() => setHovered(route.path)}
@@ -102,7 +102,7 @@ function Header() {
 										className='md:hidden flex'
 										aria-label='Open menu'
 									>
-										<IconMenu2 size={16} />
+										<IconMenu2 />
 									</Button>
 								</DrawerTrigger>
 								<DrawerContent>
