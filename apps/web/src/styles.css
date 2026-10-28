@@ -216,20 +216,16 @@ code {
 	clip-path: inset(0);
 }
 
+/* The dot grid is rotated inside the SVG, which has no intrinsic size and so fills the whole box. Rotating
+the element instead needed a square sized from the width, which left tall phone pages half uncovered. */
 .dotted-bg::before {
 	content: '';
 	position: absolute;
-	width: 300%;
-	height: 0;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%) rotate(35deg);
-	padding-bottom: 300%;
-	background: linear-gradient(145deg, hsla(0, 0%, 35%, 0.25), transparent 100%);
+	inset: 0;
+	background: linear-gradient(to bottom, hsla(0, 0%, 35%, 0.25), transparent);
 	z-index: -1;
 	pointer-events: none;
-	mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='75' cy='75' r='10'/%3E%3C/svg%3E")
-		center/16px repeat;
+	mask: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cpattern id='d' width='16' height='16' patternUnits='userSpaceOnUse' patternTransform='rotate(35)'%3E%3Ccircle cx='12' cy='12' r='1.6'/%3E%3C/pattern%3E%3Crect width='100%25' height='100%25' fill='url(%23d)'/%3E%3C/svg%3E");
 }
 
 .dotted-bg::after {
@@ -389,7 +385,7 @@ footprint matches a field; a press moves that space above the body instead of ov
 /* A CSS animation plays from the first server-rendered paint, before hydration, so entrances never flash. */
 @keyframes reveal {
 	from {
-		opacity: 0;
+		opacity: var(--reveal-opacity, 0);
 		filter: blur(var(--reveal-blur, 0px));
 		transform: translateY(var(--reveal-offset, 12px)) scale(var(--reveal-scale, 1));
 	}
