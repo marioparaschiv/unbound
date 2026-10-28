@@ -12,6 +12,7 @@ import type {
 } from '@unbound-app/types/commands';
 
 import type { DiscordOptionExtras } from '~/lib/commands/options';
+import { UNBOUND_ICON } from '~/lib/commands/unbound-icon';
 import { getKind } from '~/lib/commands/options';
 
 /** A picker section. Its id is also every one of its commands' `applicationId`. */
@@ -120,11 +121,11 @@ export class CommandDefinitionError extends Error {
  * @description Resolves an owner's section: its own, keyed by the owner, or the shared Unbound section.
  * @param owner The owner id.
  * @param input The section the owner asked for, if any.
- * @returns The section; without an icon, the commands built-in draws a default one.
+ * @returns The section. The shared one shows the Unbound logo; an owner's section without an icon gets a default.
  */
 export function resolveSection(owner: string, input: SectionInput | undefined): Section {
 	if (!input) {
-		return { id: UNBOUND_SECTION_ID, name: 'Unbound', icon: undefined };
+		return { id: UNBOUND_SECTION_ID, name: 'Unbound', icon: UNBOUND_ICON };
 	}
 
 	if (typeof input.name !== 'string' || !input.name.trim()) {
