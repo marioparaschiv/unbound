@@ -1,4 +1,5 @@
 import type {
+	NativeResourceCounts,
 	NativeAssociationKey,
 	NativeCancelablePromise,
 	NativeFabricBridge,
@@ -66,6 +67,7 @@ export type {
 	NativePluginErrorCode,
 	NativePointer,
 	NativeRuntimeBridge,
+	NativeResourceCounts,
 	NativeRuntimeEventName,
 	NativeRuntimeEventToken,
 	NativeSerializableObject,
@@ -194,6 +196,18 @@ export function getRuntimeProperties(): HermesRuntimeProperties {
 	const hermes = typeof HermesInternal === 'undefined' ? null : HermesInternal;
 
 	return isHermesInternal(hermes) ? hermes.getRuntimeProperties() : {};
+}
+
+/**
+ * @description Reads how many native resources the loader holds: installed hooks, mounted surfaces, cached hook return values and Java handles still referenced from JavaScript.
+ * @returns The counts, or `undefined` when the loader does not report them.
+ */
+export function getNativeResources(): NativeResourceCounts | undefined {
+	try {
+		return nativePluginBridge?.debug?.environment().resources;
+	} catch {
+		return undefined;
+	}
 }
 
 type HermesRuntimeProperties = ReturnType<HermesInternalObject['getRuntimeProperties']>;

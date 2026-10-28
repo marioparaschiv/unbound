@@ -459,6 +459,7 @@ export type NativeDebugBridge = {
 export type NativeDebugEnvironment = {
 	isVirtualDevice: boolean;
 	hostAddress: string | null;
+	resources?: NativeResourceCounts;
 };
 export type NativeDebugEvaluation = {
 	id: string;
@@ -871,6 +872,12 @@ export type NativePluginRuntimeBridge = Pick<
 > &
 	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities'>>;
 export type NativePointer = NativeHandle;
+export type NativeResourceCounts = {
+	hooks: number;
+	surfaces: number;
+	cachedReturns: number;
+	leasedHandles: number;
+};
 export type NativeRuntimeBridge = {
 	subscribe(
 		event: NativeRuntimeEventName,

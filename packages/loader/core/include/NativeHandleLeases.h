@@ -14,6 +14,8 @@ using HandleRelease = std::function<void(const std::string &id, uint64_t issues)
 
 class HandleLeaseLedger;
 
+size_t leasedHandleCount();
+
 class HandleLeases
 {
 public:

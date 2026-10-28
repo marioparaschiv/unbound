@@ -470,9 +470,17 @@ export type NativeDebugEvaluation = {
 	logs?: { level: 1 | 2 | 3; message: string }[];
 };
 
+export type NativeResourceCounts = {
+	hooks: number;
+	surfaces: number;
+	cachedReturns: number;
+	leasedHandles: number;
+};
+
 export type NativeDebugEnvironment = {
 	isVirtualDevice: boolean;
 	hostAddress: string | null;
+	resources?: NativeResourceCounts;
 };
 
 export type NativeDebugBridge = {

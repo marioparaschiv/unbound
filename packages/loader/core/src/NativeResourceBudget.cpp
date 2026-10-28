@@ -1,5 +1,6 @@
 #include "NativeResourceBudget.h"
 
+#include "NativeHandleLeases.h"
 #include "NativeLimits.h"
 #include "NativePluginRuntime.h"
 
@@ -116,5 +117,13 @@ NativeResourceBudget &nativeCachedReturnBudget()
 {
     static NativeResourceBudget budget(kMaximumNativeCachedReturnValues);
     return budget;
+}
+
+nlohmann::json nativeResourceCounts()
+{
+    return {{"hooks", nativeHookBudget().used()},
+            {"surfaces", nativeSurfaceBudget().used()},
+            {"cachedReturns", nativeCachedReturnBudget().used()},
+            {"leasedHandles", leasedHandleCount()}};
 }
 }

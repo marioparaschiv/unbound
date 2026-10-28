@@ -1,5 +1,6 @@
 #include "NativeHandleLeases.h"
 
+#include <atomic>
 #include <mutex>
 #include <stdexcept>
 #include <unordered_map>
@@ -12,6 +13,13 @@ namespace jsi = facebook::jsi;
 
 static constexpr size_t kMaximumAdoptedDepth = 128;
 
+static std::atomic<size_t> gLeasedHandles{0};
+
+size_t leasedHandleCount()
+{
+    return gLeasedHandles.load();
+}
+
 class HandleLeaseLedger final : public std::enable_shared_from_this<HandleLeaseLedger>
 {
 public:
@@ -21,7 +29,12 @@ public:
     {
         std::lock_guard<std::mutex> lock(mutex_);
         forgetStaleGeneration();
-        Entry &entry = entries_[id];
+        auto [found, inserted] = entries_.try_emplace(id);
+        if (inserted)
+        {
+            gLeasedHandles++;
+        }
+        Entry &entry = found->second;
         entry.live++;
         entry.issues++;
         return generation_;
@@ -44,6 +57,7 @@ public:
             }
             issues = found->second.issues;
             entries_.erase(found);
+            gLeasedHandles--;
         }
         scheduleRelease(id, issues);
     }
@@ -65,6 +79,7 @@ private:
         uint64_t current = runtimeGeneration();
         if (current != generation_)
         {
+            gLeasedHandles -= entries_.size();
             entries_.clear();
             generation_ = current;
         }

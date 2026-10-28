@@ -73,6 +73,7 @@ export {
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
 	getNativeModule,
+	getNativeResources,
 	getRuntimeProperties,
 	reload,
 } from '~/api/native-runtime';

@@ -27,6 +27,7 @@ type smokeStartupRecord struct {
 	PluginsMs float64             `json:"pluginsMs,omitempty"`
 	Plugins   map[string]float64  `json:"plugins,omitempty"`
 	Console   []smokeConsoleEntry `json:"console"`
+	Resources *smokeResources     `json:"resources,omitempty"`
 	Recorded  bool                `json:"consoleRecorded,omitempty"`
 }
 
@@ -42,6 +43,7 @@ func startupRecord(result *smokeResult) smokeStartupRecord {
 		PluginsMs: float64(result.startup.plugins.Milliseconds()),
 		Plugins:   map[string]float64{},
 		Console:   append([]smokeConsoleEntry{}, result.console...),
+		Resources: result.resources,
 		Recorded:  true,
 	}
 	for _, status := range result.statuses {
@@ -79,7 +81,11 @@ func runSmokeRegression(args []string) error {
 	report := renderConsoleReport(record, baseline)
 	if !*consoleOnly {
 		startup := renderRegressionReport(record, baseline)
-		report = regressionReport{markdown: startup.markdown + report.markdown, warnings: append(startup.warnings, report.warnings...)}
+		resources := renderResourceReport(record, baseline)
+		report = regressionReport{
+			markdown: startup.markdown + resources.markdown + report.markdown,
+			warnings: append(append(startup.warnings, resources.warnings...), report.warnings...),
+		}
 	}
 	fmt.Print(report.markdown)
 	for _, warning := range report.warnings {

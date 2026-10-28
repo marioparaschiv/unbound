@@ -102,6 +102,7 @@ export type {
 	NativePluginPlatform,
 	NativePluginRuntimeBridge,
 	NativePointer,
+	NativeResourceCounts,
 	NativeRuntimeBridge,
 	NativeRuntimeEventName,
 	NativeRuntimeEventToken,

@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <set>
 #include <string>
 
@@ -61,4 +62,6 @@ private:
 NativeResourceBudget &nativeHookBudget();
 NativeResourceBudget &nativeCachedReturnBudget();
 NativeResourceBudget &nativeSurfaceBudget();
+
+nlohmann::json nativeResourceCounts();
 }
