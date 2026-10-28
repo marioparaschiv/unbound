@@ -227,6 +227,10 @@ For iOS, `xcrun simctl list devices available` shows installable runtimes and de
 
 For physical jailbroken-device testing, install jb-p1lot and check pairing and bridge status with `jb-p1lot device_list` and `jb-p1lot device_status --device <UDID>`. The Go environment report uses these read-only status calls and never performs device actions. The vphone path remains available through `vphone-cli vm list`, `vphone-cli vm launch`, and `vphone-cli vm stop`; its VM bundles and firmware are kept outside this repository.
 
+### Android Manager release fixture
+
+`go run ./tools manager-fixture --root <dir>` serves a fake GitHub Releases API for the Android Manager's emulator tests. Each subdirectory of `<dir>` is a release tag, its files are the assets, and an optional `release.json` sets `name`, `prerelease`, `body` and `published_at`. `GET /releases` rescans the directory on every request, so a tag added while it runs appears on the next update check; assets download from `--base-url` (default `http://10.0.2.2:8790`, the host as seen from the emulator).
+
 ### Live reload (HMR)
 
 1. Run the client's dev server (`bun run serve` in `packages/client`). It serves the bundle and a Server-Sent Events stream at `/__hot`.
