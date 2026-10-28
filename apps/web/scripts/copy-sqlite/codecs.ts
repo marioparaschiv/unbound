@@ -24,6 +24,7 @@ export type ColumnType =
 	| 'PgJson'
 	| 'PgBigInt53'
 	| 'PgInteger'
+	| 'PgDoublePrecision'
 	| 'PgText';
 
 const INT32 = { min: -(2n ** 31n), max: 2n ** 31n - 1n };
@@ -102,6 +103,59 @@ function wholeJson(value: Exclude<SourceValue, null>): string {
 	parseJson(parsed);
 
 	return parsed;
+}
+
+/**
+ * @description Formats a double the way Postgres prints a `double precision`: the shortest digits that
+ * round-trip, in plain notation from 1e-4 up to 1e15 and otherwise as `d.ddde±XX`.
+ * @param value The double.
+ * @returns Postgres's text for it.
+ */
+export function postgresDoubleText(value: number): string {
+	if (Number.isNaN(value)) {
+		return 'NaN';
+	}
+
+	if (!Number.isFinite(value)) {
+		return value > 0 ? 'Infinity' : '-Infinity';
+	}
+
+	if (value === 0) {
+		return Object.is(value, -0) ? '-0' : '0';
+	}
+
+	const [mantissa = '', exponentText = '0'] = value.toExponential().split('e');
+	const exponent = Number(exponentText);
+	const sign = mantissa.startsWith('-') ? '-' : '';
+	const digits = mantissa.replace('-', '').replace('.', '');
+
+	if (exponent < -4 || exponent >= 15) {
+		const scaled = digits.length > 1 ? `${digits[0]}.${digits.slice(1)}` : digits;
+		const magnitude = String(Math.abs(exponent)).padStart(2, '0');
+
+		return `${sign}${scaled}e${exponent < 0 ? '-' : '+'}${magnitude}`;
+	}
+
+	if (exponent < 0) {
+		return `${sign}0.${'0'.repeat(-exponent - 1)}${digits}`;
+	}
+
+	const whole = digits.slice(0, exponent + 1).padEnd(exponent + 1, '0');
+	const fraction = digits.slice(exponent + 1);
+
+	return `${sign}${whole}${fraction ? `.${fraction}` : ''}`;
+}
+
+function double(value: Exclude<SourceValue, null>): string {
+	if (typeof value === 'number') {
+		return postgresDoubleText(value);
+	}
+
+	if (typeof value === 'bigint' && BigInt(Number(value)) === value) {
+		return postgresDoubleText(Number(value));
+	}
+
+	throw new TypeError(`Expected a number, got ${describe(value)}.`);
 }
 
 function identity(canonical: string) {
@@ -193,6 +247,7 @@ export const codecs: Record<ColumnType, Codec> = {
 		write: cast,
 		readBack: asText,
 	},
+	PgDoublePrecision: { select: identity, parse: double, write: cast, readBack: asText },
 	PgText: { select: asBytes, parse: text, write: cast, readBack: identity },
 };
 

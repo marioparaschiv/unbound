@@ -48,6 +48,7 @@ export type {
 	NativeCallOptions,
 	NativeCancelablePromise,
 	NativeClassHandle,
+	NativeCompiledPlugin,
 	NativeCrashPhase,
 	NativeCrashedAddon,
 	NativeDebugBridge,
@@ -170,7 +171,7 @@ export type {
 	UnboundAsset,
 } from './_internal';
 import type { NativePlatformBridge } from './_internal';
-import * as ReactModule from 'react';
+import * as React$1 from 'react';
 import * as ReactNativeModule from 'react-native';
 
 declare global {
@@ -180,7 +181,7 @@ declare global {
 	 */
 	var $$DEV$$: boolean;
 	var NativePlatform: NativePlatformBridge | undefined;
-	var React: typeof ReactModule;
+	var React: typeof React$1;
 	var ReactNative: typeof ReactNativeModule;
 }
 
