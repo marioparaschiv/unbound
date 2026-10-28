@@ -18,7 +18,7 @@ pub mod value;
 
 pub use inspect::{Hook, InspectedElement, OwnerRef, Section};
 pub use query::{FindQuery, JqFilter, NameMatch};
-pub use session::{BridgeState, Config, ConnectionState, Devtools, Status};
+pub use session::{BridgeState, Config, ConnectionState, Devtools, RequestError, Status};
 pub use store::{Element, ElementId, ElementKind, RendererId, Row, Store};
 pub use value::{Meta, Path, PathSegment, Value};
 

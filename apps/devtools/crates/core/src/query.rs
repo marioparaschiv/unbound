@@ -10,6 +10,9 @@ use jaq_core::{Ctx, Vars, unwrap_valr};
 use jaq_json::Val;
 use serde_json::{Value as Json, json};
 
+use futures_util::{StreamExt, stream};
+
+use crate::session::Devtools;
 use crate::store::{Element, ElementId, ElementKind, Store};
 
 #[derive(Clone, Debug)]
@@ -66,6 +69,77 @@ pub fn find(store: &Store, query: &FindQuery) -> Vec<ElementId> {
 		.map(|element| element.id)
 		.take(query.limit.unwrap_or(usize::MAX))
 		.collect()
+}
+
+/// The most elements [`find_by_props`] inspects for one query.
+pub const MAX_PROPS_CANDIDATES: usize = 200;
+/// How many inspections [`find_by_props`] keeps in flight.
+const PROPS_CONCURRENCY: usize = 8;
+
+/// What [`find_by_props`] found and how far it looked.
+#[derive(Debug, Default)]
+pub struct PropsMatches {
+	pub ids: Vec<ElementId>,
+	/// Candidates that passed the store filters, before the [`MAX_PROPS_CANDIDATES`] cap.
+	pub candidates: usize,
+	pub inspected: usize,
+	/// Candidates the device could not inspect or the predicate errored on, with why.
+	pub failures: Vec<(ElementId, String)>,
+}
+
+impl PropsMatches {
+	pub fn capped(&self) -> bool {
+		self.candidates > MAX_PROPS_CANDIDATES
+	}
+}
+
+/// [`find`], then keeps the candidates whose inspected element (as
+/// [`crate::InspectedElement::to_json`]) satisfies the jq `predicate`, e.g.
+/// `.props.message.id == "1"`. Inspects at most [`MAX_PROPS_CANDIDATES`], a few at a time.
+pub async fn find_by_props(
+	devtools: &Devtools,
+	query: &FindQuery,
+	predicate: &str,
+) -> Result<PropsMatches, String> {
+	JqFilter::compile(predicate).map(drop)?;
+
+	let candidates = {
+		let store = devtools.store();
+		find(
+			&store,
+			&FindQuery {
+				limit: None,
+				..query.clone()
+			},
+		)
+	};
+	let inspections: Vec<_> = stream::iter(candidates.iter().take(MAX_PROPS_CANDIDATES).copied())
+		.map(|id| async move { (id, devtools.inspect(id).await) })
+		.buffered(PROPS_CONCURRENCY)
+		.collect()
+		.await;
+	let filter = JqFilter::compile(predicate)?;
+	let mut matches = PropsMatches {
+		candidates: candidates.len(),
+		inspected: inspections.len(),
+		..Default::default()
+	};
+	let limit = query.limit.unwrap_or(usize::MAX);
+
+	for (id, inspection) in inspections {
+		let verdict = inspection
+			.map_err(|error| error.to_string())
+			.and_then(|element| filter.matches(element.to_json()));
+
+		match verdict {
+			Ok(true) if matches.ids.len() < limit => matches.ids.push(id),
+			Ok(_) => {}
+			// A predicate can fail on one shape (`test` on a missing string) and hold on others.
+			Err(error) => matches.failures.push((id, error)),
+		}
+	}
+
+	Ok(matches)
 }
 
 /// The tree as nested JSON: `{id, name, kind, key, hocs, errors, warnings, children: [...]}`.
