@@ -218,26 +218,25 @@ func TestBundleKeyVerifyCommandDefaultsToTheKeyForTheBuildKind(t *testing.T) {
 	}
 }
 
-func TestBundleKeyVerifyRejectsTamperedMissingAndForeignSignatures(t *testing.T) {
+func TestBundleKeyVerifyNeedsOnlyTheSignedManifest(t *testing.T) {
 	_, private, public := generatedKey(t)
 	_, foreign, _ := generatedKey(t)
+	bundles := map[string][]byte{"unbound.98.bundle": []byte("bytecode"), "unbound.js": []byte("source")}
+
 	dist := t.TempDir()
-	tampered := writeSignedBundle(t, dist, "unbound.98.bundle", []byte("original"), private)
-	if err := os.WriteFile(tampered, []byte("tampered"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	writeSignedBundle(t, dist, "unbound.96.bundle", []byte("other key"), foreign)
-	if err := os.WriteFile(filepath.Join(dist, "unbound.js"), []byte("unsigned"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	_, err := verifyBundleSignatures(dist, public)
-	if err == nil {
-		t.Fatal("verify accepted bad signatures")
-	}
-	for _, want := range []string{"unbound.98.bundle: signature does not match", "unbound.96.bundle: signature does not match", "unbound.js: no signature"} {
-		if !strings.Contains(err.Error(), want) {
-			t.Fatalf("error %q does not mention %q", err, want)
+	for name, contents := range bundles {
+		if err := os.WriteFile(filepath.Join(dist, name), contents, 0o644); err != nil {
+			t.Fatal(err)
 		}
+	}
+	writeSignedManifest(t, dist, bundles, private, 0)
+	if _, err := verifyBundleSignatures(dist, public); err != nil {
+		t.Fatalf("bundles without their own signature failed beside a signed manifest: %v", err)
+	}
+
+	writeSignedManifest(t, dist, bundles, foreign, 0)
+	if _, err := verifyBundleSignatures(dist, public); err == nil || !strings.Contains(err.Error(), "manifest.json: signature does not match") {
+		t.Fatalf("verify accepted a manifest signed with another key: %v", err)
 	}
 }
 

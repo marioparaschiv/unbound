@@ -797,28 +797,3 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 		t.Fatal("the publisher must comment on the confirmed pull request")
 	}
 }
-
-func TestParsedBackfillSignsOnlyOnDemand(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "backfill-signatures.yml"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var trigger struct {
-		On map[string]any `yaml:"on"`
-	}
-	if err := yaml.Unmarshal(data, &trigger); err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := trigger.On["workflow_dispatch"]; !ok || len(trigger.On) != 1 {
-		t.Fatalf("the backfill must only run when dispatched, triggers %v", trigger.On)
-	}
-	job := loadWorkflow(t, "backfill-signatures.yml").job(t, "backfill")
-	backfill := job.step(t, "Sign unsigned stable and beta bundles")
-	if backfill.If != "steps.config.outputs.enabled == 'true'" || !strings.HasPrefix(backfill.Run, "bun run --cwd packages/client backfill-signatures") {
-		t.Fatalf("the backfill must stay inert without credentials, got %+v", backfill)
-	}
-	s3 := loadWorkflow(t, "ci.yml").job(t, "s3")
-	if run := s3.step(t, "Run the S3 tests against MinIO").Run; !strings.Contains(run, "bun run test:s3") || !strings.Contains(run, "backfill-signatures.s3.ts") {
-		t.Fatalf("CI must prove the backfill against MinIO, runs %q", run)
-	}
-}

@@ -281,7 +281,7 @@ Browser login (`LoaderBrowserLogin`) and the tweak's Mach-O attestation digest (
 
 `channel` comes from `UNBOUND_CHANNEL` (`build-bundle.yml` sets `beta` for pushes to main and `stable` for releases; local builds write `local`, dev builds `dev`). `buildTime` is ISO 8601 in UTC. `sha512` holds the lowercase hex SHA-512 of every bundle in the build. `nativeBridge` holds the native bridge `api` and `abi` versions from `core/include/NativePluginVersion.h` that the bundle was built against.
 
-When `UNBOUND_BUNDLE_SIGNING_KEY` holds a PEM PKCS#8 Ed25519 key, the build refreshes `sha512` and writes a base64 Ed25519 signature next to every bundle (`<bundle>.sig`) and next to the manifest (`manifest.json.sig`). Each signature covers the exact bytes of its file. Without the key, the build writes no signatures and still succeeds, so local and fork builds keep working.
+When `UNBOUND_BUNDLE_SIGNING_KEY` holds a PEM PKCS#8 Ed25519 key, the build refreshes `sha512` and writes a base64 Ed25519 signature of the manifest's exact bytes to `manifest.json.sig`. The bundles are covered by their SHA-512 in the signed manifest. Without the key, the build writes no signatures and still succeeds, so local and fork builds keep working.
 
 To sign a build that already exists, run `bun run --cwd packages/client sign [--dir <dist>] [--pr <n>] [--key-env <VAR>]`. It reads the key from `UNBOUND_BUNDLE_SIGNING_KEY`, or from `UNBOUND_PR_BUNDLE_SIGNING_KEY` with `--pr`; `--key-env` names another variable. `bun run --cwd packages/client verify-signatures [--dir <dist>] [--pr <n>]` and `go run ./tools bundle-key verify --dir <dist> [--pr <n>]` check a build against the committed public key: every signature, the manifest's fields, and that the manifest hashes exactly the bundles in the build.
 
@@ -305,7 +305,7 @@ A signature alone would let a server replay an older, legitimately signed build.
 The baseline resets when:
 
 - the update URL changes (`loader.update.url`, a custom bundle from the toolbox, or the default URL again). A channel is served from its own URL, so switching channels switches URLs.
-- a bundle is promoted without a signed manifest: from a dev server, with `loader.update.unsigned`, from a loader built without a key, or through the transitional bundle-only path.
+- a bundle is promoted without a signed manifest: from a dev server, with `loader.update.unsigned`, or from a loader built without a key.
 
 ### Exempt from the checks
 
@@ -317,13 +317,9 @@ Signature, hash and anti-rollback checks are all skipped when:
 
 The `.trust` record of such a candidate names the exemption, and the candidate is discarded if the exemption no longer applies when it is about to run.
 
-### Bundle-only transition
+### Signed manifests only
 
-Loaders from #271 verify only `<bundle>.sig`, and older loaders verify nothing, so the published output keeps the per-bundle `.sig` files beside the signed manifest. A loader from this release still accepts a bundle that only has a valid `<bundle>.sig` while the update URL serves no valid `manifest.json.sig`, but only while it has no baseline for that URL. Once a URL has served a signed manifest, an unsigned or invalid manifest from it is refused. Plan:
-
-1. This release: the build publishes the signed manifest and the per-bundle `.sig` files; loaders prefer the manifest and fall back to `<bundle>.sig` only without a baseline.
-2. The loader release after builds.unbound.rip and the release bucket have served signed manifests for a full release cycle removes the bundle-only fallback, so every loader requires a signed manifest. Tracked in #283, due on or after 2027-01-15.
-3. Once loaders from #271 are no longer supported, the build stops writing per-bundle `.sig` files. Tracked in #284, due on or after 2027-02-15.
+A bundle is only accepted through a signed manifest that lists its SHA-512. A bundle with only its own signature is refused, and a stored `.trust` record of the old `bundle` kind counts as unverified, so that bundle is downloaded again through a signed manifest.
 
 ### Signed plugins
 
@@ -341,10 +337,10 @@ At startup the loader checks every plugin under `Unbound/Plugins` that has a `si
 
 Every pull request that runs the loader build (`loader-ci.yml`), forks included, also gets its latest build in the public bucket, so it can be tested with no settings changes:
 
-| Prefix                 | Contents                                                                                                                                                                                                                                          |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unbound/pr/<number>/` | the pull request's client build: the signed `manifest.json` with `bytecodeVersions`, `channel` `pr-<number>` and each bundle's SHA-512, every `unbound.<bytecode>.bundle` and `unbound.js` it emits, each bundle's `.sig` and `manifest.json.sig` |
-| `loader/pr/<number>/`  | the rootless `.deb`, `Unbound.ipa`, `app.unbound.android.lsposed.apk` and `Unbound.apks`                                                                                                                                                          |
+| Prefix                 | Contents                                                                                                                                                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unbound/pr/<number>/` | the pull request's client build: the signed `manifest.json` with `bytecodeVersions`, `channel` `pr-<number>` and each bundle's SHA-512, every `unbound.<bytecode>.bundle` and `unbound.js` it emits, and `manifest.json.sig` |
+| `loader/pr/<number>/`  | the rootless `.deb`, `Unbound.ipa`, `app.unbound.android.lsposed.apk` and `Unbound.apks`                                                                                                                                     |
 
 Each push overwrites both prefixes and deletes files the new build no longer has, so the links stay the same for the life of the pull request. The client is built with `TMPDIR` on the runner disk so hermesc emits every bytecode version and with `UNBOUND_CHANNEL=pr-<number>`, so a pull request loader never takes another channel's manifest at that URL. It is then signed with the pull request key through `bun run --cwd packages/client sign --dir dist --pr <number>` and checked with `verify-signatures --dir dist --pr <number>` before anything is uploaded. Pull request bundles are never signed with the production key, so only that pull request's loader accepts them. The pull request comment lists the bundle base URL and each loader build under **S3**, next to the artifact links.
 
@@ -366,21 +362,13 @@ Pull requests from forks are published without ever giving the fork's code a sec
 
 1. The fork's `pull_request` run builds everything secret-free. Its `stage-fork-pr-builds` job builds the client unsigned and uploads it as the `pr client bundle` artifact, with the pull request number in the `pr number` artifact.
 2. When that run succeeds, `pr-builds-publish.yml` starts on `workflow_run` in the base repository. It checks out the default branch and only reads the fork's artifacts as data. `bun scripts/pr-builds-fork.ts` takes the claimed number, or the one GitHub linked to the run, and accepts it only if the API shows an open pull request into this repository whose head is exactly the run's commit and fork. `bun scripts/pr-builds-fork.ts check-manifest` refuses a manifest whose channel is not `pr-<number>`.
-3. It signs the bundles and the manifest with the pull request key, which replaces any `.sig` the fork supplied, verifies them, uploads the client and loader builds to the same prefixes, and posts the S3 links on the pull request.
+3. It signs the manifest with the pull request key, which replaces any `.sig` the fork supplied, verifies them, uploads the client and loader builds to the same prefixes, and posts the S3 links on the pull request.
 
 The publisher needs the same variables and secrets, and writes why it did nothing to its job summary otherwise.
 
 When any pull request closes, forks included, `pr-builds-cleanup.yml` runs on `pull_request_target` from the default branch and deletes both prefixes with `bun scripts/pr-builds.ts delete <number>`. It needs the bucket variables and the two S3 secrets, and does nothing without them.
 
-### Backfilling release signatures
-
-Stable and beta versions published before bundle signing have no `.sig`, and keyed loaders reject them. `backfill-signatures.yml` is dispatched by hand. It lists every `unbound/stable/<version>/` and `unbound/beta/<version>/` prefix, signs each `unbound.js` and `unbound.<bytecode>.bundle` that has no signature with `UNBOUND_BUNDLE_SIGNING_KEY`, and uploads only the new `.sig` objects. It never overwrites an existing object, so a second run changes nothing. It needs the bucket variables, the two S3 secrets and the signing key:
-
-```bash
-bun run --cwd packages/client backfill-signatures
-```
-
-`bun run test:s3` runs it, and the pull request upload, against a throwaway MinIO in podman. The `s3` job in `ci.yml` does the same on every push.
+`bun run test:s3` runs the pull request upload against a throwaway MinIO in podman. The `s3` job in `ci.yml` does the same on every push.
 
 ## Discord compatibility scan
 
