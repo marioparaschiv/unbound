@@ -50,6 +50,7 @@
 	--shadow-field: var(--field-shadow);
 	--shadow-surface: var(--surface-shadow);
 	--shadow-float: var(--float-shadow);
+	--shadow-thumb: inset 0 1px 0 var(--highlight), 0 1px 3px oklch(0 0 0 / 0.3);
 
 	--color-halo: var(--halo);
 
