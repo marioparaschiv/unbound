@@ -1,0 +1,21 @@
+{
+	"name": "multi-account",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Unlocks the built-in multi-account switcher on iOS.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c"
+	},
+	"dependencies": {
+		"@unbound-plugins/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-plugins/rollup-config": "workspace:*",
+		"react-native": "^0.86.0",
+		"rollup": "^4.62.2"
+	}
+}
