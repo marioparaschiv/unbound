@@ -1,0 +1,76 @@
+name: Delete Per-Bundle Signatures
+
+on:
+    workflow_dispatch:
+        inputs:
+            delete:
+                description: 'Delete them; otherwise only list them'
+                type: boolean
+                default: false
+
+permissions:
+    contents: read
+
+concurrency:
+    group: delete-bundle-signatures
+    cancel-in-progress: false
+
+jobs:
+    delete:
+        name: Remove per-bundle .sig objects
+        runs-on: ubuntu-26.04
+        timeout-minutes: 30
+        steps:
+            - name: Check the bucket configuration
+              id: config
+              env:
+                  S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+                  S3_REGION: ${{ vars.S3_REGION }}
+                  S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
+                  HAS_S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID != '' }}
+                  HAS_S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY != '' }}
+              run: |
+                  missing=()
+                  for name in S3_ENDPOINT S3_REGION S3_PUBLIC_BUCKET; do
+                    [ -n "${!name}" ] || missing+=("variable $name")
+                  done
+                  for name in S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY; do
+                    flag="HAS_$name"
+                    [ "${!flag}" = true ] || missing+=("secret $name")
+                  done
+                  if [ "${#missing[@]}" -gt 0 ]; then
+                    joined=$(printf '%s, ' "${missing[@]}")
+                    reason="Nothing was touched until these are configured: ${joined%, }."
+                    echo "$reason" >> "$GITHUB_STEP_SUMMARY"
+                    echo "::notice::$reason"
+                    echo "enabled=false" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "enabled=true" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Checkout code
+              if: steps.config.outputs.enabled == 'true'
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 1
+                  persist-credentials: false
+
+            - name: Setup Bun dependencies
+              if: steps.config.outputs.enabled == 'true'
+              uses: ./.github/actions/setup-bun-deps
+              with:
+                  bun-version: canary
+
+            - name: Find and delete per-bundle signatures
+              if: steps.config.outputs.enabled == 'true'
+              env:
+                  S3_ENDPOINT: ${{ vars.S3_ENDPOINT }}
+                  S3_REGION: ${{ vars.S3_REGION }}
+                  S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET }}
+                  S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+                  S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+                  DELETE: ${{ inputs.delete }}
+              run: |
+                  args=()
+                  if [ "$DELETE" = true ]; then args+=(--delete); fi
+                  bun packages/client/scripts/build/delete-bundle-signatures.ts "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY"

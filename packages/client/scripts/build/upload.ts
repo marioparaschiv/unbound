@@ -75,7 +75,10 @@ export function versionPrefix(target: UploadTarget): string {
  * @param prefix The key prefix.
  * @returns The keys under the prefix.
  */
-export async function listKeys(bucket: PublicBucket, prefix: string): Promise<string[]> {
+export async function listKeys(
+	bucket: Pick<PublicBucket, 'list'>,
+	prefix: string,
+): Promise<string[]> {
 	const keys: string[] = [];
 	let continuationToken: string | undefined;
 
