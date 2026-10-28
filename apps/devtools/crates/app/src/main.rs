@@ -114,6 +114,9 @@ fn run_gui(config: Config, mcp_port: Option<u16>) {
 		.with_assets(assets::Assets)
 		.with_quit_mode(QuitMode::LastWindowClosed)
 		.run(move |cx: &mut App| {
+			if let Err(error) = assets::load_fonts(cx) {
+				tracing::error!("Could not load the bundled fonts: {error:#}");
+			}
 			app::bind_keys(cx);
 			let bounds = Bounds::centered(None, size(px(1280.), px(800.)), cx);
 			let options = WindowOptions {

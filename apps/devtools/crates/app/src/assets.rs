@@ -1,9 +1,10 @@
-//! Images and icons compiled into the binary, so it runs from any directory. The icons are Lucide
-//! (ISC, `assets/icons/LICENSE`) with the stroke raised to 2.25 so they stay crisp at 10 to 14 px.
+//! Images, icons and fonts compiled into the binary, so it runs from any directory. The icons are
+//! Lucide (ISC, `assets/icons/LICENSE`) with the stroke raised to 2.25 so they stay crisp at 10 to
+//! 14 px. The fonts are Inter and JetBrains Mono (SIL OFL 1.1, `assets/fonts/*-OFL.txt`).
 
 use std::borrow::Cow;
 
-use gpui::{AssetSource, SharedString};
+use gpui::{App, AssetSource, SharedString};
 
 pub const LOGO: &str = "logo.png";
 pub const CHEVRON_RIGHT: &str = "icons/chevron-right.svg";
@@ -16,6 +17,8 @@ pub const CROSSHAIR: &str = "icons/crosshair.svg";
 pub const TERMINAL: &str = "icons/terminal.svg";
 pub const PLUG: &str = "icons/plug.svg";
 pub const LAYERS: &str = "icons/layers.svg";
+
+const FONTS: &str = "fonts/";
 
 const FILES: &[(&str, &[u8])] = &[
 	(LOGO, include_bytes!("../../../../../assets/logo.png")),
@@ -35,6 +38,26 @@ const FILES: &[(&str, &[u8])] = &[
 	(TERMINAL, include_bytes!("../assets/icons/terminal.svg")),
 	(PLUG, include_bytes!("../assets/icons/plug.svg")),
 	(LAYERS, include_bytes!("../assets/icons/layers.svg")),
+	(
+		"fonts/Inter-Regular.ttf",
+		include_bytes!("../assets/fonts/Inter-Regular.ttf"),
+	),
+	(
+		"fonts/Inter-Medium.ttf",
+		include_bytes!("../assets/fonts/Inter-Medium.ttf"),
+	),
+	(
+		"fonts/Inter-SemiBold.ttf",
+		include_bytes!("../assets/fonts/Inter-SemiBold.ttf"),
+	),
+	(
+		"fonts/JetBrainsMono-Regular.ttf",
+		include_bytes!("../assets/fonts/JetBrainsMono-Regular.ttf"),
+	),
+	(
+		"fonts/JetBrainsMono-Italic.ttf",
+		include_bytes!("../assets/fonts/JetBrainsMono-Italic.ttf"),
+	),
 ];
 
 pub struct Assets;
@@ -54,4 +77,14 @@ impl AssetSource for Assets {
 			.map(|(name, _)| SharedString::from(*name))
 			.collect())
 	}
+}
+
+/// Registers the bundled fonts with the text system; call before the first window opens.
+pub fn load_fonts(cx: &App) -> gpui::Result<()> {
+	let source = cx.asset_source();
+	let mut fonts = Vec::new();
+	for path in source.list(FONTS)? {
+		fonts.extend(source.load(&path)?);
+	}
+	cx.text_system().add_fonts(fonts)
 }

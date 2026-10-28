@@ -79,21 +79,11 @@ pub const TREE_MIN: f32 = 360.;
 pub const INSPECTOR_MAX: f32 = 640.;
 pub const INSPECTOR_DEFAULT: f32 = 400.;
 
+/// Bundled in `assets/fonts/`, so every platform draws the same faces.
 pub fn ui_font() -> SharedString {
-	// gpui finds no font for `.SystemUIFont` on Linux and logs a miss for every weight.
-	if cfg!(any(target_os = "macos", target_os = "windows")) {
-		".SystemUIFont".into()
-	} else {
-		"DejaVu Sans".into()
-	}
+	"Inter".into()
 }
 
 pub fn mono_font() -> SharedString {
-	if cfg!(target_os = "macos") {
-		"Menlo".into()
-	} else if cfg!(target_os = "windows") {
-		"Consolas".into()
-	} else {
-		"DejaVu Sans Mono".into()
-	}
+	"JetBrains Mono".into()
 }
