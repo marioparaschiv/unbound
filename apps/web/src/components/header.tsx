@@ -32,7 +32,7 @@ const ROUTES: NavRoute[] = [
 	{ path: '/', title: 'Home', icon: IconHome },
 	{ path: '/plugins', title: 'Plugins', icon: IconPlug },
 	{ path: '/themes', title: 'Themes', icon: IconPalette },
-	{ path: '/developers', title: 'Developers', icon: IconUsers },
+	{ path: '/developers', title: 'Team', icon: IconUsers },
 	{ path: '/faq', title: 'FAQ', icon: IconBookmark },
 ];
 
@@ -82,7 +82,8 @@ function Header() {
 												className='absolute inset-0 bg-accent/50 rounded-lg pointer-events-none'
 											/>
 										) : null}
-										<span className='relative'>{route.title}</span>
+										{/* The highlight lives in whichever link is hovered, which can come later in the DOM than this label while it slides past, so the label sits above every highlight. */}
+										<span className='z-10 relative'>{route.title}</span>
 									</Link>
 								))}
 							</nav>
