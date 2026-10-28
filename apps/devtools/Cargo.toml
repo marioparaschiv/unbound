@@ -18,7 +18,11 @@ serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "sync", "macros", "time", "io-std"] }
 tokio-tungstenite = "0.30"
 futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
-rmcp = { version = "3.8", features = ["server", "transport-io", "transport-streamable-http-server"] }
+rmcp = { version = "3.8", features = [
+	"server",
+	"transport-io",
+	"transport-streamable-http-server",
+] }
 schemars = "1"
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
 jaq-core = "3.1"
@@ -30,7 +34,10 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4", features = ["derive", "env"] }
 uuid = { version = "1", features = ["v4"] }
 gpui = { package = "gpui-fast", version = "0.1.12" }
-gpui_platform = { package = "gpui-fast-platform", version = "0.1.12", features = ["x11", "wayland"] }
+gpui_platform = { package = "gpui-fast-platform", version = "0.1.12", features = [
+	"x11",
+	"wayland",
+] }
 
 [profile.release]
 lto = "thin"
