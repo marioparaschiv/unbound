@@ -2,8 +2,8 @@ import type { Addon, IconPack, IconPackManifest, UnboundAsset } from '@unbound-a
 import toError from '@unbound-app/utils/to-error';
 import type { ImageProps } from 'react-native';
 
+import { safeRelativePath, isSafeIconPackMain } from '~/lib/addon-paths';
 import { Assets, ReactNative as RN } from '~/api/metro/common';
-import { safeRelativePath } from '~/lib/addon-paths';
 import { ManagerType } from '~/managers/base';
 import { Addons } from '~/managers/addons';
 import fs from '~/api/fs';
@@ -52,6 +52,15 @@ export class Icons extends Addons<Addon> {
 
 	protected get entityType() {
 		return 'icon-pack' as const;
+	}
+
+	/**
+	 * @description Accepts the built-in pack's empty `main`, a GitHub tree URL to download from, or a relative path.
+	 * @param main The manifest's `main`.
+	 * @returns Whether an icon pack may use it.
+	 */
+	protected isAcceptableMain(main: unknown): main is string {
+		return isSafeIconPackMain(main);
 	}
 
 	get applied(): IconPack {

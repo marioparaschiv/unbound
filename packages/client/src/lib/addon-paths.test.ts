@@ -4,6 +4,7 @@ import {
 	compiledBundlePath,
 	isSafeAddonId,
 	isSafeAddonMain,
+	isSafeIconPackMain,
 	safeFontFileName,
 	safeRelativePath,
 } from './addon-paths';
@@ -65,4 +66,28 @@ test('names the compiled bundle beside its source', () => {
 		'https://example.com/a.b/dist/index.96.hbc',
 	);
 	expect(compiledBundlePath('index', 94)).toBe('index.94.hbc');
+});
+
+test('icon packs accept the built-in pack and GitHub trees but nothing that leaves the pack', () => {
+	for (const main of [
+		'',
+		'https://github.com/owner/pack/tree/main/icons',
+		'https://github.com/owner/pack',
+		'pack.json',
+	]) {
+		expect(isSafeIconPackMain(main)).toBe(true);
+	}
+
+	for (const main of [
+		'../settings.json',
+		'/etc/passwd',
+		'https://github.com/owner/pack/../../../settings.json',
+		'https://example.com/pack',
+		7,
+	]) {
+		expect(isSafeIconPackMain(main)).toBe(false);
+	}
+
+	expect(isSafeAddonMain('')).toBe(false);
+	expect(isSafeAddonMain('https://github.com/owner/plugin')).toBe(false);
 });

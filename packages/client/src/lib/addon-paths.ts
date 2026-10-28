@@ -13,6 +13,25 @@ export function compiledBundlePath(path: string, bytecodeVersion: number): strin
 	return `${path.replace(/\.[^./]+$/, '')}.${bytecodeVersion}.hbc`;
 }
 
+const GITHUB_TREE_URL = /^https:\/\/(?:www\.)?github\.com\/[^/\s]+\/[^/\s]+(?:\/|$)/;
+
+/**
+ * @description Checks an icon pack's `main`: empty for the built-in pack, a GitHub tree URL the pack is downloaded from, or a relative path inside the pack.
+ * @param main The `main` from an icon pack manifest.
+ * @returns Whether an icon pack may use it.
+ */
+export function isSafeIconPackMain(main: unknown): main is string {
+	if (main === '') {
+		return true;
+	}
+
+	if (typeof main === 'string' && GITHUB_TREE_URL.test(main)) {
+		return !main.split('/').some((segment) => segment === '..' || segment === '.');
+	}
+
+	return isSafeAddonMain(main);
+}
+
 /**
  * @description Checks that an addon id can name its folder: alphanumeric segments joined by ".", "_" or "-".
  * @param id The id from a manifest.
