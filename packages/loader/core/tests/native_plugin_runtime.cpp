@@ -77,4 +77,6 @@ int main()
 
     assert(tracker.advance(&first) == 3u);
     assert(tracker.generation() == 3);
+    assert(tracker.advance(&first, false) == 4u);
+    assert(!tracker.advance(&first, true));
 }

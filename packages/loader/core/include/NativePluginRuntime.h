@@ -61,7 +61,7 @@ using RuntimeGenerationListener = std::function<void(uint64_t generation)>;
 class RuntimeGenerationTracker
 {
 public:
-    std::optional<uint64_t> advance(const void *runtime);
+    std::optional<uint64_t> advance(const void *runtime, bool alreadyRegistered = true);
     uint64_t                generation() const;
     void                    addListener(RuntimeGenerationListener listener);
     void                    notify(uint64_t generation) const;

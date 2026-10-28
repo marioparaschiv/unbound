@@ -139,8 +139,7 @@ static const char *const kRuntimeChecks = R"JS((function () {
 	return JSON.stringify(failures);
 })())JS";
 
-static std::unique_ptr<jsi::Runtime> runChecks(loader::native::NativeErrorDelivery delivery,
-                                               const char                         *mode)
+static void runChecks(loader::native::NativeErrorDelivery delivery, const char *mode)
 {
     loader::native::setNativeErrorDelivery(delivery);
     auto runtime = facebook::hermes::makeHermesRuntime();
@@ -161,14 +160,33 @@ static std::unique_ptr<jsi::Runtime> runChecks(loader::native::NativeErrorDelive
         std::fprintf(stderr, "%s: %s\n", mode, failure.get<std::string>().c_str());
     }
     require(failures.empty(), std::string(mode) + ": every JavaScript check passes");
-    return runtime;
+}
+
+static void freshRuntimesAdvanceTheGeneration()
+{
+    const void *previousAddress = nullptr;
+    bool        reusedAnAddress = false;
+    for (int round = 0; round < 8; round++)
+    {
+        auto     runtime = facebook::hermes::makeHermesRuntime();
+        uint64_t before  = loader::native::runtimeGeneration();
+        uint64_t current = loader::native::registerRuntime(*runtime);
+        require(current > before, "a fresh runtime advances the generation");
+        require(loader::native::registerRuntime(*runtime) == current,
+                "registering the same runtime again keeps its generation");
+        reusedAnAddress |= runtime.get() == previousAddress;
+        previousAddress = runtime.get();
+    }
+    std::printf("native runtime: fresh runtimes advance the generation%s\n",
+                reusedAnAddress ? ", including one at a reused address" : "");
 }
 
 int main()
 {
     loader::bootstrap::setScriptSource(bootstrapScript);
-    auto throwing   = runChecks(loader::native::NativeErrorDelivery::Throw, "throw delivery");
-    auto enveloping = runChecks(loader::native::NativeErrorDelivery::Envelope, "envelope delivery");
+    runChecks(loader::native::NativeErrorDelivery::Throw, "throw delivery");
+    runChecks(loader::native::NativeErrorDelivery::Envelope, "envelope delivery");
+    freshRuntimesAdvanceTheGeneration();
     std::printf("native runtime: all checks passed on Hermes in both error deliveries%s\n",
                 UNBOUND_TEST_FFI ? ", FFI included" : "");
     return 0;
