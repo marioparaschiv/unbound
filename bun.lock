@@ -855,6 +855,9 @@
     "lefthook",
     "@swc/core",
   ],
+  "patchedDependencies": {
+    "possess@1.1.0": "patches/possess@1.1.0.patch",
+  },
   "overrides": {
     "typescript": "5.9.3",
   },
