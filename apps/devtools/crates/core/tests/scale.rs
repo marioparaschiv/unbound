@@ -4,7 +4,7 @@ use serde_json::Value as Json;
 use unbound_devtools_core::Devtools;
 use unbound_devtools_core::query::{self, FindQuery, NameMatch};
 
-use common::{session, settle, spawn_device_with, wait_for};
+use common::{session, spawn_device_with, wait_for, wait_for_remount};
 
 fn rows(devtools: &Devtools) -> usize {
 	query::find(
@@ -32,7 +32,7 @@ async fn queries_survive(depth: u32, width: u32) {
 		rows(devtools) == width as usize
 	})
 	.await;
-	settle(&devtools).await;
+	wait_for_remount(&devtools).await;
 
 	let deepest = devtools
 		.store()

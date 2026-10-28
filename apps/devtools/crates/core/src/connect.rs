@@ -88,7 +88,7 @@ impl Devtools {
 		change: impl FnOnce(&mut Presets) -> Result<T, PresetError>,
 	) -> Result<T, PresetError> {
 		let out = {
-			let _writing = self.inner.presets.lock();
+			let _writing = self.inner.presets_write.lock();
 			PresetFile::locate()?.update(change)?
 		};
 		self.inner.presets_revision.fetch_add(1, Ordering::Relaxed);

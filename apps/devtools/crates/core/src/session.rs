@@ -134,7 +134,7 @@ pub(crate) struct Inner {
 	pub(crate) inspections: Mutex<HashMap<ElementId, InspectedElement>>,
 	pub(crate) next_generation: AtomicU64,
 	next_request: AtomicU64,
-	pub(crate) presets: Mutex<()>,
+	pub(crate) presets_write: Mutex<()>,
 	pub(crate) presets_revision: AtomicU64,
 }
 
@@ -234,7 +234,7 @@ impl Devtools {
 			inspections: Mutex::new(HashMap::new()),
 			next_generation: AtomicU64::new(0),
 			next_request: AtomicU64::new(0),
-			presets: Mutex::new(()),
+			presets_write: Mutex::new(()),
 			presets_revision: AtomicU64::new(0),
 		});
 

@@ -81,12 +81,12 @@ pub async fn connected_session() -> Option<(Devtools, Device)> {
 			.any(|element| &*element.name == "MessageRow")
 	})
 	.await;
-	settle(&devtools).await;
+	wait_for_remount(&devtools).await;
 
 	Some((devtools, device))
 }
 
-pub async fn settle(devtools: &Devtools) {
+pub async fn wait_for_remount(devtools: &Devtools) {
 	let mut changes = devtools.changes();
 
 	while tokio::time::timeout(Duration::from_millis(400), changes.changed())

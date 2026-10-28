@@ -102,7 +102,7 @@ impl Inner {
 			state.filters.clone()
 		};
 
-		self.pending.lock().clear();
+		self.fail_pending_requests();
 		tracing::info!(%peer, "backend connected");
 
 		for message in [
@@ -147,9 +147,13 @@ impl Inner {
 		self.reset_tree(&mut state);
 		drop(state);
 
-		self.pending.lock().clear();
+		self.fail_pending_requests();
 		tracing::info!("backend disconnected");
 		self.bump();
+	}
+
+	fn fail_pending_requests(&self) {
+		self.pending.lock().clear();
 	}
 
 	fn receive(&self, text: &str) {
