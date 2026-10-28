@@ -23,6 +23,17 @@ if (!releasesUrl.matches(Regex("https?://[^\\s\"]+"))) {
     throw GradleException("unboundReleasesUrl must be an http or https URL, got $releasesUrl")
 }
 
+val signingStoreFile = System.getenv("ANDROID_SIGNING_STORE_FILE")
+val signingStorePassword = System.getenv("ANDROID_SIGNING_STORE_PASSWORD")
+val signingKeyAlias = System.getenv("ANDROID_SIGNING_KEY_ALIAS")
+val signingKeyPassword = System.getenv("ANDROID_SIGNING_KEY_PASSWORD")
+val releaseSigningValues = listOf(signingStoreFile, signingStorePassword, signingKeyAlias, signingKeyPassword)
+val hasReleaseSigning = releaseSigningValues.all { !it.isNullOrBlank() }
+
+if (releaseSigningValues.any { !it.isNullOrBlank() } && !hasReleaseSigning) {
+    throw GradleException("Android release signing requires all ANDROID_SIGNING_* values")
+}
+
 android {
     namespace = "app.unbound.manager"
     compileSdk = 36
@@ -36,6 +47,26 @@ android {
 
         buildConfigField("String", "TRUSTED_SIGNER_SHA256", "\"${trustedSigners.joinToString(",")}\"")
         buildConfigField("String", "RELEASES_URL", "\"$releasesUrl\"")
+    }
+
+    if (hasReleaseSigning) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(signingStoreFile!!)
+                storePassword = signingStorePassword
+                keyAlias = signingKeyAlias
+                keyPassword = signingKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            signingConfig = signingConfigs.getByName(if (hasReleaseSigning) "release" else "debug")
+        }
     }
 
     buildFeatures {

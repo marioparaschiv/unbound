@@ -5,6 +5,7 @@ on:
         types: [opened, synchronize, reopened, ready_for_review]
         paths:
             - 'packages/loader/**'
+            - '!packages/loader/manager/**'
             - '.github/workflows/loader-*.yml'
             - '.github/actions/**'
             - '.github/workflows/pr-builds-cleanup.yml'

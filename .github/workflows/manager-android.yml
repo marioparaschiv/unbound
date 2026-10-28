@@ -1,0 +1,182 @@
+name: Manager Android
+
+on:
+    pull_request:
+        paths:
+            - 'packages/loader/manager/**'
+            - '.github/workflows/manager-android.yml'
+    push:
+        branches: [main]
+        paths:
+            - 'packages/loader/manager/**'
+            - '.github/workflows/manager-android.yml'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: manager-android-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+    run:
+        working-directory: packages/loader/manager
+
+env:
+    UNBOUND_SIGNER_SHA256: 3923c381141ea804a1a311c69b616ac9c360d4fb0dccb5fbcd09a6b8b78842c5
+
+jobs:
+    build:
+        name: Test and build the manager
+        runs-on: ubuntu-26.04
+        timeout-minutes: 20
+        env:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+        outputs:
+            release: ${{ steps.plan.outputs.release }}
+            tag: ${{ steps.plan.outputs.tag }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 1
+
+            - name: Decide whether to release
+              id: plan
+              env:
+                  BEFORE: ${{ github.event.before }}
+              run: |
+                  set -euo pipefail
+                  version=$(sed -n 's/^versionName=//p' version.properties)
+                  test -n "$version"
+                  tag="manager-v$version"
+                  echo "tag=$tag" >> "$GITHUB_OUTPUT"
+                  release=false
+                  if [ "$GITHUB_REF" != refs/heads/main ]; then
+                      :
+                  elif [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+                      release=true
+                  elif [ "$GITHUB_EVENT_NAME" = push ]; then
+                      git fetch --quiet --depth=1 origin "$BEFORE"
+                      if ! git diff --quiet "$BEFORE" "$GITHUB_SHA" -- version.properties; then
+                          release=true
+                      fi
+                  fi
+                  if [ "$release" = true ] && git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+                      echo "::notice::$tag already exists, skipping the release"
+                      release=false
+                  fi
+                  echo "release=$release" >> "$GITHUB_OUTPUT"
+
+            - name: Setup Java
+              uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
+              with:
+                  distribution: temurin
+                  java-version: '17'
+
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6
+
+            - name: Install the Android platform
+              run: |
+                  set -eu
+                  yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+                  "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" > /dev/null
+
+            - name: Configure persistent release signing
+              env:
+                  REQUIRE_RELEASE_SIGNING: ${{ steps.plan.outputs.release }}
+              run: |
+                  set -euo pipefail
+                  if [ -z "$ANDROID_SIGNING_KEYSTORE_BASE64" ]; then
+                      if [ "$REQUIRE_RELEASE_SIGNING" = true ]; then
+                          echo "::error::Android release signing secrets are required to publish the manager"
+                          exit 1
+                      fi
+                      exit 0
+                  fi
+                  keystore="$RUNNER_TEMP/unbound-android-release.keystore"
+                  printf '%s' "$ANDROID_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+                  echo "ANDROID_SIGNING_STORE_FILE=$keystore" >> "$GITHUB_ENV"
+
+            - name: Lint
+              run: ./gradlew :app:ktlintCheck --build-cache --quiet --console=plain
+
+            - name: Test
+              run: ./gradlew :app:testDebugUnitTest --build-cache --quiet --console=plain
+
+            - name: Build
+              run: |
+                  set -euo pipefail
+                  ./gradlew :app:assembleRelease --build-cache --quiet --console=plain
+                  cp app/build/outputs/apk/release/app-release.apk unbound-manager.apk
+
+            - name: Upload the manager
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: unbound manager
+                  path: packages/loader/manager/unbound-manager.apk
+                  if-no-files-found: error
+                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
+
+            - name: Upload the R8 mapping
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: unbound manager mapping
+                  path: packages/loader/manager/app/build/outputs/mapping/release/mapping.txt
+                  if-no-files-found: error
+                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
+
+    release:
+        name: Publish the manager release
+        needs: build
+        if: needs.build.outputs.release == 'true'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            contents: write
+        steps:
+            - name: Download the manager
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: unbound manager
+                  path: packages/loader/manager
+
+            - name: Download the R8 mapping
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: unbound manager mapping
+                  path: packages/loader/manager/mapping
+
+            - name: Name the R8 mapping
+              run: mv mapping/mapping.txt unbound-manager-mapping.txt
+
+            - name: Check the signer
+              run: |
+                  set -euo pipefail
+                  build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+                  certificates=$("$build_tools/apksigner" verify --print-certs unbound-manager.apk)
+                  printf '%s\n' "$certificates"
+                  if ! grep -Eq "^(V[0-9.]+ )?Signer( #1)?:? certificate SHA-256 digest: $UNBOUND_SIGNER_SHA256$" <<< "$certificates"; then
+                      echo "::error::unbound-manager.apk is not signed with the Unbound release key"
+                      exit 1
+                  fi
+
+            - name: Publish the release
+              uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+              with:
+                  tag_name: ${{ needs.build.outputs.tag }}
+                  name: ${{ needs.build.outputs.tag }}
+                  target_commitish: ${{ github.sha }}
+                  files: |
+                      packages/loader/manager/unbound-manager.apk
+                      packages/loader/manager/unbound-manager-mapping.txt
+                  generate_release_notes: true
+                  prerelease: false
+                  make_latest: false
+                  fail_on_unmatched_files: true
+                  token: ${{ github.token }}
