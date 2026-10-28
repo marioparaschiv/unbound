@@ -1,14 +1,15 @@
+import { BundleInfo, getRuntimeProperties, reload } from '~/api/native';
+import { CLIENT_VERSION, Screens, VERSION } from '~/lib/constants';
+import { React, ReactNative, Util } from '~/api/metro/common';
 import { createCommands, option } from '~/api/commands';
 import { Discord } from '~/api/metro/components';
 import { findByProps } from '~/api/metro';
-import { Util } from '~/api/metro/common';
-import { Screens } from '~/lib/constants';
 import debug from '~/builtins/debugger';
 import { Messages } from '~/api/i18n';
-import { reload } from '~/api/native';
 import storage from '~/api/storage';
 
 import formatCodeBlock from './format-code-block';
+import formatDebugInfo from './format-debug-info';
 
 const Commands = createCommands('unbound');
 const Settings = storage.getStore('unbound');
@@ -37,22 +38,39 @@ export function start() {
 			execute: () => void reload(),
 		},
 		debug: {
-			description: 'Turn the WebSocket debugger on or off',
-			execute() {
-				const enabled = !Settings.get('debugger.enabled', false);
+			description: 'Send your Unbound, Discord and device versions',
+			execute: () => formatDebugInfo(readDebugInfo()),
+		},
+		debugger: {
+			description: 'Turn the WebSocket debugger on or off, or connect it to an address',
+			options: {
+				address: option.string({
+					description: 'The bridge address, such as 192.168.1.2:9090',
+				}),
+			},
+			execute({ address }) {
+				const enabled = address ? true : !Settings.get('debugger.enabled', false);
+
+				if (address) {
+					Settings.set('debugger.address', address.trim());
+				}
 
 				Settings.set('debugger.enabled', enabled);
 
-				// The debugger only listens for this setting while it runs, so drive it directly.
+				// The debugger only listens for these settings while it runs, so restart it directly.
+				debug.stop();
+
 				if (enabled) {
 					debug.start();
-				} else {
-					debug.stop();
 				}
+
+				const target = Settings.get('debugger.address', '') || 'the default address';
 
 				return {
 					ephemeral: true,
-					content: `Debugger ${enabled ? 'enabled' : 'disabled'}.`,
+					content: enabled
+						? `Debugger enabled, connecting to ${target}.`
+						: 'Debugger disabled.',
 				};
 			},
 		},
@@ -78,6 +96,30 @@ export function start() {
 /** Removes Unbound's slash commands. */
 export function stop() {
 	Commands.unregisterAll();
+}
+
+function readDebugInfo() {
+	const platform = globalThis.NativePlatform;
+	const { Platform } = ReactNative;
+	const rn = Platform.constants.reactNativeVersion;
+	const runtime = getRuntimeProperties();
+	const system =
+		Platform.OS === 'android'
+			? `Android ${Platform.constants.Release} (SDK ${Platform.Version})`
+			: `iOS ${Platform.Version}`;
+
+	return {
+		client: `v${CLIENT_VERSION} ${VERSION}`,
+		loader: String(globalThis.UNBOUND_LOADER?.version ?? 'unknown'),
+		discord: String(BundleInfo?.Version ?? 'unknown'),
+		discordBuild: String(BundleInfo?.Build ?? 'unknown'),
+		react: React.version,
+		reactNative: rn ? `${rn.major}.${rn.minor}.${rn.patch}` : 'unknown',
+		hermes: String(runtime['OSS Release Version'] ?? 'unknown'),
+		bytecode: String(runtime['Bytecode Version'] ?? 'unknown'),
+		system,
+		device: platform?.device.getDeviceModel() ?? 'unknown',
+	};
 }
 
 function confirmRecovery() {

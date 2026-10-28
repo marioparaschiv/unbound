@@ -171,7 +171,8 @@ Unbound registers these commands in the **Unbound** section. You can't register 
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/eval code:<code> [send:]` | Evaluates the code, awaits the result, and shows it in a `js` code block that only you can see. With `send: True`, sends the result to the channel. |
 | `/reload`                   | Reloads Discord.                                                                                                                                    |
-| `/debug`                    | Turns the WebSocket debugger on or off, and tells you which.                                                                                        |
+| `/debug`                    | Sends your Unbound, loader, Discord, React, Hermes, system and device versions to the channel.                                                      |
+| `/debugger [address:]`      | Turns the WebSocket debugger on or off. With an address, saves it and connects there.                                                               |
 | `/recovery`                 | Asks for confirmation, then turns recovery mode on or off and restarts. Recovery mode stops all addons from loading.                                |
 | `/plugins`                  | Opens the Unbound plugins settings.                                                                                                                 |
 | `/themes`                   | Opens the Unbound themes settings.                                                                                                                  |
