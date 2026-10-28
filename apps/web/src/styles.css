@@ -109,8 +109,8 @@
 	--ledge-primary: oklch(0.42 0.14 17);
 	--ledge-secondary: oklch(0.87 0.004 286);
 	--ledge-outline: oklch(0.87 0.004 286);
-	--halo: oklch(0.56 0.16 17 / 0.25);
-	--halo-border: oklch(0.56 0.16 17 / 0.7);
+	--halo: oklch(0.2 0.005 286 / 0.22);
+	--halo-border: oklch(0.2 0.005 286 / 0.5);
 	--link: oklch(0.5 0.16 17);
 	--header: oklch(0.985 0.001 286);
 	--header-pill: oklch(0.94 0.002 286);
@@ -165,8 +165,8 @@
 	--ledge-primary: oklch(0.42 0.14 17);
 	--ledge-secondary: oklch(0.2 0.006 286);
 	--ledge-outline: oklch(0.2 0.006 286);
-	--halo: oklch(0.62 0.17 17 / 0.3);
-	--halo-border: oklch(0.66 0.16 17 / 0.75);
+	--halo: oklch(1 0 0 / 0.28);
+	--halo-border: oklch(1 0 0 / 0.55);
 	--link: oklch(0.76 0.11 17);
 	--header: oklch(0.185 0.005 286);
 	--header-pill: oklch(0.26 0.006 286);
