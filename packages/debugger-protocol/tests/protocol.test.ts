@@ -105,3 +105,31 @@ describe('eval round-trip', () => {
 		expect(parseMessage(serializeMessage(message))).toEqual(message);
 	});
 });
+
+describe('hello', () => {
+	const device = {
+		platform: 'ios',
+		discordVersion: '351.0',
+		loaderVersion: '1.0.0',
+		clientVersion: '0.9.0',
+	};
+
+	test('a device hello and a status carrying it parse intact', () => {
+		const hello = { type: 'hello', device };
+		const status = { type: 'device-status', connected: true, device };
+
+		expect(parseMessage(JSON.stringify(hello))).toEqual(hello);
+		expect(parseMessage(JSON.stringify(status))).toEqual(status);
+	});
+
+	test('a hello missing a version is rejected', () => {
+		const { clientVersion: _, ...partial } = device;
+
+		expect(parseMessage(JSON.stringify({ type: 'hello', device: partial }))).toBeUndefined();
+		expect(
+			parseMessage(
+				JSON.stringify({ type: 'device-status', connected: true, device: partial }),
+			),
+		).toBeUndefined();
+	});
+});

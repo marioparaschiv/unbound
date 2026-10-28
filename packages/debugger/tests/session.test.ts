@@ -109,3 +109,25 @@ describe('attachDevice', () => {
 		]);
 	});
 });
+
+describe('device hello', () => {
+	test('reports the device to controllers until it disconnects', () => {
+		const info = {
+			platform: 'android',
+			discordVersion: '352.10',
+			loaderVersion: '1.0.0',
+			clientVersion: '0.9.0',
+		};
+
+		attachDevice(device);
+		attachController(controller);
+		handleDeviceMessage({ type: 'hello', device: info });
+		detachDevice(device);
+
+		expect(controller.frames).toEqual([
+			{ type: 'device-status', connected: true },
+			{ type: 'device-status', connected: true, device: info },
+			{ type: 'device-status', connected: false },
+		]);
+	});
+});
