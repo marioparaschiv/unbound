@@ -13,11 +13,9 @@ import app.unbound.manager.core.Target
 import java.io.File
 import java.io.IOException
 
-/** The PackageInstaller side of the runner. Each call reads the session's real state, so a rerun converges. */
 class Sessions(private val context: Context) {
     private val installer = context.packageManager.packageInstaller
 
-    /** Sweeps orphans from a crash, then writes every split into a fresh session. Committing waits for SessionReady to be persisted. */
     fun open(target: Target, artifact: Artifact, splits: File, log: (String) -> Unit): Event {
         abandonAll(target, log)
 
@@ -51,7 +49,6 @@ class Sessions(private val context: Context) {
         return Event.SessionReady(id, System.currentTimeMillis())
     }
 
-    /** Gone: the result is in, PackageManager will tell. Open: commit it. Committed: wait for the broadcast (null). */
     fun commit(target: Target, sessionId: Int, log: (String) -> Unit): Event? {
         val info = installer.getSessionInfo(sessionId) ?: return Event.SessionFinished(sessionId)
 
@@ -68,7 +65,6 @@ class Sessions(private val context: Context) {
         return null
     }
 
-    /** Gone: SessionFinished. Someone still holds the confirm Intent ([held]): wait. Otherwise it is lost: Recommit. */
     fun awaitUser(sessionId: Int, held: Boolean): Event? {
         installer.getSessionInfo(sessionId) ?: return Event.SessionFinished(sessionId)
 

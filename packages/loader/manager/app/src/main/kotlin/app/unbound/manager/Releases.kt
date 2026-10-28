@@ -16,16 +16,13 @@ data class FeedCache(val etag: String?, val feed: Feed)
 sealed interface FetchResult {
     data class Fresh(val cache: FeedCache) : FetchResult
 
-    /** The caller's cache is still current. */
     data object NotModified : FetchResult
 
-    /** [resetAt] is epoch millis from x-ratelimit-reset, null when GitHub did not say. */
     data class RateLimited(val resetAt: Long?) : FetchResult
 
     data class Failed(val message: String) : FetchResult
 }
 
-/** Blocking GET of the releases list. Sends If-None-Match when [cache] has an ETag. */
 fun fetchReleases(url: String, cache: FeedCache?): FetchResult {
     val connection = URL(url + (if ('?' in url) "&" else "?") + "per_page=100").openConnection() as HttpURLConnection
 

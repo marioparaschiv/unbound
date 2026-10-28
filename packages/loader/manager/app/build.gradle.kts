@@ -47,7 +47,6 @@ android {
 
         buildConfigField("String", "TRUSTED_SIGNER_SHA256", "\"${trustedSigners.joinToString(",")}\"")
         buildConfigField("String", "RELEASES_URL", "\"$releasesUrl\"")
-        // Plain HTTP only when the feed itself is, as for the emulator fixture server on 10.0.2.2.
         manifestPlaceholders["usesCleartextTraffic"] = releasesUrl.startsWith("http://").toString()
     }
 

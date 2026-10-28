@@ -13,9 +13,7 @@ import app.unbound.manager.ui.describe
 import app.unbound.manager.ui.shortTitle
 import app.unbound.manager.ui.title
 
-/** One channel per target. Each target owns three notification ids: install progress, the confirm prompt, and update news. */
 object Notifier {
-    /** The foreground notification while a download runs. */
     fun progress(context: Context, target: Target, done: Long, total: Long): Notification =
         Notification.Builder(context, channel(context, target))
             .setSmallIcon(android.R.drawable.stat_sys_download)
@@ -33,10 +31,6 @@ object Notifier {
     /** Removes a progress notification posted without a foreground service. A foreground one ignores this. */
     fun clearProgress(context: Context, target: Target) = manager(context).cancel(progressId(target))
 
-    /**
-     * Wraps the installer's confirm Intent so a tap starts it with the user's grant, which a receiver cannot.
-     * It doubles as the proof, after process death, that the Intent was not lost. Dismissing it cancels the install.
-     */
     fun confirm(context: Context, target: Target, intent: Intent) {
         val dismissed = Intent(context, InstallResultReceiver::class.java)
             .setAction(InstallResultReceiver.ACTION_CONFIRM_DISMISSED)
@@ -52,7 +46,6 @@ object Notifier {
         manager(context).notify(confirmId(target), notification)
     }
 
-    /** Tapping Update installs in the background; tapping the body opens the target's changelog. */
     fun available(context: Context, target: Target, update: UpdateDecision.Available) {
         val install = Intent(context, InstallResultReceiver::class.java)
             .setAction(InstallResultReceiver.ACTION_UPDATE)
@@ -89,7 +82,6 @@ object Notifier {
         manager(context).notify(newsId(target), notification)
     }
 
-    /** The body opens the target's installer screen, where the log and Share log are. */
     fun failed(context: Context, target: Target, failed: Announcement.Failed) {
         val notification = Notification.Builder(context, channel(context, target))
             .setSmallIcon(android.R.drawable.stat_notify_error)

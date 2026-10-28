@@ -17,7 +17,6 @@ import app.unbound.manager.ui.App
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    /** The target whose screen is open, or null for Home. A notification tap sets it through [EXTRA_TARGET]. */
     private var open by mutableStateOf<Target?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {

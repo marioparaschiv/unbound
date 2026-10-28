@@ -1,16 +1,11 @@
 package app.unbound.manager.core
 
-/** Which entries of a `.apks` bundle this device installs, or why it cannot install any. */
 sealed interface SplitChoice {
     data class Install(val entries: List<String>) : SplitChoice
 
     data class Reject(val failure: Failure) : SplitChoice
 }
 
-/**
- * Base, the split for the first of [supportedAbis] (Build.SUPPORTED_ABIS order) that the bundle has,
- * and every other split except the ABI splits for other ABIs. A bundle with no ABI splits is universal.
- */
 fun selectSplits(entries: List<String>, supportedAbis: List<String>): SplitChoice {
     val apks = entries.filter { it.endsWith(".apk") && '/' !in it }
     val bases = apks.filter { it.startsWith("base") }

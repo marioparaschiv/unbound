@@ -16,13 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import java.io.File
 
-/** Bytes on disk of the running download. In memory only: the phase is what survives a restart. */
 data class Progress(val done: Long, val total: Long)
 
-/**
- * The loop `phase -> effect -> event -> store.apply`. One runs per target at a time (unique work), and
- * a resume after process death is the same loop from the persisted phase.
- */
 class Runner(
     private val context: Context,
     private val store: Store,
@@ -34,7 +29,6 @@ class Runner(
 
     val progress: StateFlow<Map<Target, Progress>> = mutableProgress
 
-    /** Returns when the phase is at rest or waits on Android or the user. [foreground] is called before a download. */
     suspend fun drive(target: Target, foreground: suspend () -> Unit) {
         while (true) {
             val record = store.state.value.record(target)
@@ -94,7 +88,6 @@ class Runner(
         }
     }
 
-    /** Publishes progress at most once per permille so the UI and notification are not flooded. */
     private fun report(target: Target, done: Long, total: Long) {
         val previous = mutableProgress.value[target]
 

@@ -12,14 +12,8 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
 
-/** Where [download] leaves a verified copy of [asset]. Named by digest, so a rebuild of the same tag never collides. */
 fun archiveFile(dir: File, asset: Asset): File = File(dir, asset.sha256)
 
-/**
- * Resumes into `<sha256>.part` with a Range request, then renames it to [archiveFile] once size and
- * digest match. A file already at [archiveFile] with the right digest is a no-op, so rerunning is free.
- * [progress] gets (bytes on disk, total). Cancelling the coroutine stops between chunks and keeps the part.
- */
 suspend fun download(asset: Asset, dir: File, progress: (Long, Long) -> Unit, log: (String) -> Unit): Event {
     val file = archiveFile(dir, asset)
 
@@ -91,7 +85,6 @@ private suspend fun fetch(asset: Asset, part: File, progress: (Long, Long) -> Un
     }
 }
 
-/** Lowercase hex SHA-256 of [file]. */
 fun sha256(file: File): String {
     val digest = MessageDigest.getInstance("SHA-256")
 

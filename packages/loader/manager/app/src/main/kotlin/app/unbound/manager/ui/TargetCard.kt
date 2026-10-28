@@ -20,7 +20,6 @@ import app.unbound.manager.core.Target
 import app.unbound.manager.core.UpdateDecision
 import app.unbound.manager.core.inFlight
 
-/** Every label is a function of the view; the card holds no state. */
 @Composable
 fun TargetCard(view: TargetView, channel: Channel, onInstall: () -> Unit, onOpen: () -> Unit, onUninstall: () -> Unit) {
     Card(Modifier.fillMaxWidth()) {
@@ -45,7 +44,6 @@ fun TargetCard(view: TargetView, channel: Channel, onInstall: () -> Unit, onOpen
     }
 }
 
-/** Play Store Discord: the user must uninstall it, and should know what that costs before they do. */
 @Composable
 private fun Blocked(target: Target, onUninstall: () -> Unit) {
     val app = if (target == Target.DISCORD) "Discord" else target.packageName

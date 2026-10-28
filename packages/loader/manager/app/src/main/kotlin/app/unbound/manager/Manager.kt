@@ -32,24 +32,20 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Everything a screen shows for one target. Derived on every change, never stored. */
 data class TargetView(
     val target: Target,
     val installed: InstalledPackageState,
     val decision: UpdateDecision,
     val record: TargetRecord,
-    /** Newest release of this target on the channel. */
     val latest: Release?,
     val progress: Progress?,
 ) {
     val phase: Phase get() = record.phase
 
-    /** What Install, Update, Reinstall or Retry would start: the newest release, or the failed one if the channel has none. */
     val installable: Release?
         get() = if (decision is UpdateDecision.Blocked) null else latest ?: (phase as? Phase.Failed)?.release
 }
 
-/** The one entry point for screens, the worker and the receiver. */
 class Manager private constructor(private val context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val store = Store(context.filesDir, ::announce)
@@ -68,14 +64,12 @@ class Manager private constructor(private val context: Context) {
         it.lastCheck
     }.stateIn(scope, SharingStarted.Eagerly, store.state.value.lastCheck)
 
-    /** The targets the current mode tracks, the manager itself included. */
     val views: StateFlow<List<TargetView>> = combine(store.state, refreshes, runner.progress) { state, _, progress ->
         views(state, progress)
     }.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     val logRevision: StateFlow<Int> = store.logRevision
 
-    /** The target whose installer screen is resumed. Its failures show there, so they post no notification. */
     @Volatile var onScreen: Target? = null
 
     init {
@@ -84,7 +78,6 @@ class Manager private constructor(private val context: Context) {
         refresh()
     }
 
-    /** Restarts the runner of every target with an install in flight, after process death or the manager's own update. */
     fun resume() {
         scope.launch {
             for (target in Target.entries) {
@@ -93,13 +86,11 @@ class Manager private constructor(private val context: Context) {
         }
     }
 
-    /** Rereads installed packages and refetches the release list (a 304 when unchanged). */
     fun refresh() {
         refreshes.value++
         scope.launch { fetch() }
     }
 
-    /** The periodic check: fetch, then install or announce each new build once. */
     suspend fun check() {
         fetch()
         val state = store.state.value
@@ -117,18 +108,15 @@ class Manager private constructor(private val context: Context) {
         }
     }
 
-    /** Idempotent: a second tap while an install runs changes nothing. */
     fun install(target: Target) {
         scope.launch { installNow(target) }
     }
 
-    /** [install] for a caller that must not return before the install is queued, such as a receiver. */
     internal suspend fun installNow(target: Target) {
         val release = view(target, store.state.value, null).installable ?: return
         start(target, release)
     }
 
-    /** Stops the install if its phase allows, then reruns the runner so cleanup abandons the session and files. */
     fun cancel(target: Target) {
         scope.launch {
             store.apply(target, Event.Cancel)
@@ -213,7 +201,6 @@ class Manager private constructor(private val context: Context) {
     }
 
     companion object {
-        /** Releases of Discord and the module carry the pinned Unbound key. The manager's must match the key it runs with. */
         private fun trustedSigners(context: Context): Map<Target, Set<String>> {
             val pinned = BuildConfig.TRUSTED_SIGNER_SHA256.split(",").toSet()
             val own = (context.packageManager.installedState(context.packageName) as InstalledPackageState.Present).signers

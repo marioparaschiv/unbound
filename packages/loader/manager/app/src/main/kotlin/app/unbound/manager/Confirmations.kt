@@ -17,7 +17,6 @@ class Confirmations(private val context: Context) {
     private val held: MutableSet<Target> = ConcurrentHashMap.newKeySet()
     private val mutablePending = MutableStateFlow<Map<Target, Intent>>(emptyMap())
 
-    /** Intents no activity has launched yet. */
     val pending: StateFlow<Map<Target, Intent>> = mutablePending
 
     fun hold(target: Target, intent: Intent) {
@@ -26,7 +25,6 @@ class Confirmations(private val context: Context) {
         mutablePending.update { it + (target to intent) }
     }
 
-    /** For a resumed activity to launch. The notification stays until the session ends. */
     fun take(target: Target): Intent? {
         var taken: Intent? = null
         mutablePending.update {

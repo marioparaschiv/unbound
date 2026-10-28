@@ -50,7 +50,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-/** The step runner: four steps projected from the phase, the target's log below. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InstallerScreen(manager: Manager, view: TargetView, onBack: () -> Unit) {
@@ -122,7 +121,6 @@ fun InstallerScreen(manager: Manager, view: TargetView, onBack: () -> Unit) {
     }
 }
 
-/** Every build newer than the installed one, newest first, with its release notes as plain text. */
 @Composable
 private fun Changelog(releases: List<Release>) {
     Text("What's new", style = MaterialTheme.typography.titleSmall)

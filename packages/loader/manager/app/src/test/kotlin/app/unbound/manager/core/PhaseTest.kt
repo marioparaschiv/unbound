@@ -47,7 +47,6 @@ class PhaseTest {
 
     private fun notApplied() = record(Phase.Failed(release, Step.CONFIRM, Failure.NotApplied))
 
-    /** Every accepted (phase, event) pair. Any pair not listed must leave the record unchanged. */
     private val accepted: List<Triple<Phase, Event, TargetRecord>> = listOf(
         Triple(idle, start, record(Phase.Downloading(next))),
         Triple(failed, start, record(Phase.Downloading(next))),

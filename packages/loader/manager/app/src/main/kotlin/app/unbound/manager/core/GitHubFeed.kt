@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.Instant
 
-/** Every published release, parsed but not yet projected onto a target, so a channel switch needs no refetch. */
 @Serializable
 data class Feed(val releases: List<PublishedRelease>)
 
@@ -16,11 +15,9 @@ data class PublishedRelease(
     val prerelease: Boolean,
     val notes: String,
     val publishedAt: Long,
-    /** Only assets that carry a sha256 digest. */
     val assets: List<Asset>,
 )
 
-/** Parses GitHub's list-releases JSON, dropping drafts and assets without a sha256 digest. */
 fun parseFeed(json: String): Feed {
     val releases = JSON.decodeFromString<List<WireRelease>>(json)
         .filter { !it.draft && it.publishedAt != null }
@@ -37,7 +34,6 @@ fun parseFeed(json: String): Feed {
     return Feed(releases)
 }
 
-/** This target's releases on [channel], newest first by asset.updatedAt. */
 fun Feed.releasesFor(target: Target, channel: Channel): List<Release> {
     val assetName = target.assetName(channel)
 

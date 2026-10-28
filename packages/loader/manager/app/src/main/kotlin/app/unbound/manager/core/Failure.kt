@@ -2,7 +2,6 @@ package app.unbound.manager.core
 
 import kotlinx.serialization.Serializable
 
-/** Why an install stopped. [retryable] decides whether the UI offers Retry or explains what the user must change. */
 @Serializable
 sealed interface Failure {
     val retryable: Boolean
@@ -47,24 +46,20 @@ sealed interface Failure {
         override val retryable get() = true
     }
 
-    /** A PackageInstaller STATUS_FAILURE_* result. */
     @Serializable
     data class InstallerRejected(val status: Int, val message: String?) : Failure {
         override val retryable get() = status in RETRYABLE_INSTALLER_STATUSES
     }
 
-    /** The session ended but PackageManager does not show the expected build. */
     @Serializable
     data object NotApplied : Failure {
         override val retryable get() = true
     }
 
-    /** An exception no step expected, recorded so the runner stops instead of crashing into a retry loop. */
     @Serializable
     data class Unexpected(val message: String) : Failure {
         override val retryable get() = true
     }
 }
 
-/** PackageInstaller.STATUS_FAILURE (1), STATUS_FAILURE_ABORTED (3, the user said no) and STATUS_FAILURE_STORAGE (6). */
 private val RETRYABLE_INSTALLER_STATUSES = setOf(1, 3, 6)

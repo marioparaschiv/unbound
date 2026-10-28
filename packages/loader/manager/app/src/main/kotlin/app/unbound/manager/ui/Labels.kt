@@ -14,7 +14,6 @@ val Target.title: String
         Target.MANAGER -> "Unbound Manager"
     }
 
-/** The app's own name, for sentences such as "Updated Discord to 353.1". */
 val Target.shortTitle: String
     get() = when (this) {
         Target.DISCORD -> "Discord"
@@ -22,7 +21,6 @@ val Target.shortTitle: String
         Target.MANAGER -> "Unbound Manager"
     }
 
-/** Not `title`: Channel already has a member of that name, the release title regex. */
 val Channel.label: String
     get() = name.lowercase().replaceFirstChar(Char::uppercase)
 
@@ -52,7 +50,6 @@ fun CheckOutcome.label(): String = when (this) {
     is CheckOutcome.Failed -> message
 }
 
-/** One sentence the user can act on. */
 fun Failure.describe(): String = when (this) {
     is Failure.Network -> "The download failed: $message"
     is Failure.HashMismatch -> "The download does not match the published checksum."

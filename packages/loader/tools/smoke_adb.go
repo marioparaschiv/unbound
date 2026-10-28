@@ -33,9 +33,8 @@ var androidSplitABIs = map[string]string{
 
 type androidSmokeTarget struct {
 	serial string
-	// apks is empty when the smoke test checks the Discord already on the device.
-	apks string
-	pid  string
+	apks   string
+	pid    string
 }
 
 func runAndroidSmoke(args []string) error {
