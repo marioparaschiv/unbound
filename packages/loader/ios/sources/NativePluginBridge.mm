@@ -16,8 +16,10 @@
 #import <os/signpost.h>
 #import <stdexcept>
 #import <string>
+#import <string_view>
 #import <substrate.h>
 #import <thread>
+#import <type_traits>
 #import <unordered_map>
 #import <unordered_set>
 #import <vector>
@@ -360,24 +362,7 @@ static Value executeMainAsynchronously(Runtime &runtime, std::function<void(void
                                        std::function<Value(Runtime &)> result);
 static std::function<void(void)> objcGuarded(std::function<void(void)> operation);
 static void                      dispatchVoidHook(id object, SEL selector);
-static CGSize                    dispatchCGSizeHook(id object, SEL selector, CGSize size);
-static CGSize                    dispatchCGSizeNoArgumentHook(id object, SEL selector);
-static CGSize dispatchCGSizePriorityHook(id object, SEL selector, CGSize size, float horizontal,
-                                         float vertical);
-static CGSize dispatchCGSizeDoublePriorityHook(id object, SEL selector, CGSize size,
-                                               double horizontal, double vertical);
-static CGRect dispatchCGRectObjectHook(id object, SEL selector, id indexPath);
-static double dispatchDoubleObjectObjectHook(id object, SEL selector, id tableView, id indexPath);
-static int8_t dispatchBoolObjectObjectHook(id object, SEL selector, id first, id second);
-static int8_t dispatchBoolObjectHook(id object, SEL selector, id value);
-static int8_t dispatchBoolClassHook(id object, SEL selector, Class value);
-static int8_t dispatchBoolSelectorHook(id object, SEL selector, SEL value);
-static void   dispatchVoidObjectHook(id object, SEL selector, id value);
-static void   dispatchVoidNSUIntegerHook(id object, SEL selector, NSUInteger value);
-static void   dispatchVoidObjectObjectHook(id object, SEL selector, id first, id second);
-static void   dispatchVoidObjectObjectObjectHook(id object, SEL selector, id tableView, id cell,
-                                                 id indexPath);
-static Value  makeHook(Runtime &runtime, const Value *args, size_t count);
+static Value                     makeHook(Runtime &runtime, const Value *args, size_t count);
 static void invokeHookOriginal(const std::shared_ptr<HookDispatcher> &dispatcher, void **arguments,
                                void *returnValue);
 static void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
@@ -3851,346 +3836,104 @@ static void dispatchFFIHook(ffi_cif *cif, void *returnValue, void **arguments, v
     }
 }
 
-static CGSize dispatchCGSizeHook(id object, SEL selector, CGSize size)
+template <typename Result, typename... Arguments>
+static Result dispatchTypedHook(id object, SEL selector, Arguments... values)
 {
     @autoreleasepool
     {
-        void  *arguments[] = {&object, &selector, &size};
-        CGSize result      = CGSizeZero;
-        dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
-        return result;
+        void *arguments[] = {&object, &selector, &values...};
+        if constexpr (std::is_void_v<Result>)
+        {
+            dispatchFFIHookBody(nullptr, nullptr, arguments, nullptr);
+        }
+        else if constexpr (std::is_same_v<Result, id> || std::is_same_v<Result, Class>)
+        {
+            void *returnValue = nullptr;
+            dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
+            return (__bridge Result) returnValue;
+        }
+        else
+        {
+            Result returnValue{};
+            dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
+            return returnValue;
+        }
     }
 }
 
-static CGSize dispatchCGSizeNoArgumentHook(id object, SEL selector)
+struct FallbackHook {
+    std::string_view              result;
+    std::vector<std::string_view> arguments;
+    void                         *code;
+};
+
+template <typename Result, typename... Arguments>
+static FallbackHook fallbackHook(std::string_view result, std::vector<std::string_view> arguments)
 {
-    @autoreleasepool
-    {
-        void  *arguments[] = {&object, &selector};
-        CGSize result      = CGSizeZero;
-        dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
-        return result;
-    }
+    return {result, std::move(arguments),
+            reinterpret_cast<void *>(dispatchTypedHook<Result, Arguments...>)};
 }
 
-static CGSize dispatchCGSizePriorityHook(id object, SEL selector, CGSize size, float horizontal,
-                                         float vertical)
+static const std::vector<FallbackHook> &fallbackHooks()
 {
-    @autoreleasepool
-    {
-        void  *arguments[] = {&object, &selector, &size, &horizontal, &vertical};
-        CGSize result      = CGSizeZero;
-        dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
-        return result;
-    }
+    static const std::vector<FallbackHook> hooks = {
+        fallbackHook<id>("object", {}),
+        fallbackHook<Class>("class", {}),
+        fallbackHook<int8_t>("i8", {}),
+        fallbackHook<int8_t, id, id>("i8", {"object", "object"}),
+        fallbackHook<int8_t, id>("i8", {"object"}),
+        fallbackHook<int8_t, Class>("i8", {"class"}),
+        fallbackHook<int8_t, SEL>("i8", {"selector"}),
+        fallbackHook<id, CGRect>("object", {"struct:CGRect"}),
+        fallbackHook<id, id>("object", {"object"}),
+        fallbackHook<void, id>("void", {"object"}),
+        fallbackHook<void, NSUInteger>("void", {"u64"}),
+        fallbackHook<void, int8_t>("void", {"i8"}),
+        fallbackHook<void, id, id>("void", {"object", "object"}),
+        fallbackHook<void, id, id, id>("void", {"object", "object", "object"}),
+        fallbackHook<CGRect, id>("struct:CGRect", {"object"}),
+        fallbackHook<double, id, id>("double", {"object", "object"}),
+        fallbackHook<CGSize>("struct:CGSize", {}),
+        fallbackHook<CGSize, CGSize>("struct:CGSize", {"struct:CGSize"}),
+        fallbackHook<CGSize, CGSize, float, float>("struct:CGSize",
+                                                   {"struct:CGSize", "float", "float"}),
+        fallbackHook<CGSize, CGSize, double, double>("struct:CGSize",
+                                                     {"struct:CGSize", "double", "double"}),
+    };
+    return hooks;
 }
 
-static CGSize dispatchCGSizeDoublePriorityHook(id object, SEL selector, CGSize size,
-                                               double horizontal, double vertical)
+static std::string_view fallbackTypeName(const std::string &name)
 {
-    @autoreleasepool
-    {
-        void  *arguments[] = {&object, &selector, &size, &horizontal, &vertical};
-        CGSize result      = CGSizeZero;
-        dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
-        return result;
-    }
+    return name == "bool" ? std::string_view("i8") : std::string_view(name);
 }
 
-static CGRect dispatchCGRectObjectHook(id object, SEL selector, id indexPath)
+static bool matchesFallbackHook(const HookSignature &signature, const FallbackHook &hook)
 {
-    @autoreleasepool
+    if (fallbackTypeName(signature.result.name) != hook.result ||
+        signature.arguments.size() != hook.arguments.size() + 2)
     {
-        void  *arguments[] = {&object, &selector, &indexPath};
-        CGRect result      = CGRectZero;
-        dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
-        return result;
+        return false;
     }
-}
-
-static double dispatchDoubleObjectObjectHook(id object, SEL selector, id tableView, id indexPath)
-{
-    @autoreleasepool
+    for (size_t index = 0; index < hook.arguments.size(); index++)
     {
-        void  *arguments[] = {&object, &selector, &tableView, &indexPath};
-        double result      = 0;
-        dispatchFFIHookBody(nullptr, &result, arguments, nullptr);
-        return result;
+        if (fallbackTypeName(signature.arguments[index + 2].name) != hook.arguments[index])
+        {
+            return false;
+        }
     }
-}
-
-static void dispatchVoidObjectObjectObjectHook(id object, SEL selector, id tableView, id cell,
-                                               id indexPath)
-{
-    @autoreleasepool
-    {
-        void *arguments[] = {&object, &selector, &tableView, &cell, &indexPath};
-        dispatchFFIHookBody(nullptr, nullptr, arguments, nullptr);
-    }
-}
-
-static void dispatchVoidObjectHook(id object, SEL selector, id value)
-{
-    @autoreleasepool
-    {
-        void *arguments[] = {&object, &selector, &value};
-        dispatchFFIHookBody(nullptr, nullptr, arguments, nullptr);
-    }
-}
-
-static void dispatchVoidNSUIntegerHook(id object, SEL selector, NSUInteger value)
-{
-    @autoreleasepool
-    {
-        void *arguments[] = {&object, &selector, &value};
-        dispatchFFIHookBody(nullptr, nullptr, arguments, nullptr);
-    }
-}
-
-static void dispatchVoidBooleanHook(id object, SEL selector, int8_t value)
-{
-    @autoreleasepool
-    {
-        void *arguments[] = {&object, &selector, &value};
-        dispatchFFIHookBody(nullptr, nullptr, arguments, nullptr);
-    }
-}
-
-static int8_t dispatchBooleanHook(id object, SEL selector)
-{
-    @autoreleasepool
-    {
-        void  *arguments[] = {&object, &selector};
-        int8_t returnValue = 0;
-        dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
-        return returnValue;
-    }
-}
-
-static id dispatchObjectHook(id object, SEL selector)
-{
-    @autoreleasepool
-    {
-        void *arguments[] = {&object, &selector};
-        void *returnValue = nullptr;
-        dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
-        return (__bridge id) returnValue;
-    }
-}
-
-static Class dispatchClassHook(id object, SEL selector)
-{
-    @autoreleasepool
-    {
-        void *arguments[] = {&object, &selector};
-        void *returnValue = nullptr;
-        dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
-        return (__bridge Class) returnValue;
-    }
-}
-
-static id dispatchObjectObjectHook(id object, SEL selector, id value)
-{
-    @autoreleasepool
-    {
-        void *arguments[] = {&object, &selector, &value};
-        void *returnValue = nullptr;
-        dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
-        id result = (__bridge id) returnValue;
-        return result;
-    }
-}
-
-static int8_t dispatchBoolObjectObjectHook(id object, SEL selector, id first, id second)
-{
-    @autoreleasepool
-    {
-        void  *arguments[] = {&object, &selector, &first, &second};
-        int8_t returnValue = 0;
-        dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
-        return returnValue;
-    }
-}
-
-static int8_t dispatchBoolObjectHook(id object, SEL selector, id value)
-{
-    @autoreleasepool
-    {
-        void  *arguments[] = {&object, &selector, &value};
-        int8_t returnValue = 0;
-        dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
-        return returnValue;
-    }
-}
-
-static int8_t dispatchBoolClassHook(id object, SEL selector, Class value)
-{
-    @autoreleasepool
-    {
-        void  *arguments[] = {&object, &selector, &value};
-        int8_t returnValue = 0;
-        dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
-        return returnValue;
-    }
-}
-
-static int8_t dispatchBoolSelectorHook(id object, SEL selector, SEL value)
-{
-    @autoreleasepool
-    {
-        void  *arguments[] = {&object, &selector, &value};
-        int8_t returnValue = 0;
-        dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
-        return returnValue;
-    }
-}
-
-static id dispatchObjectCGRectHook(id object, SEL selector, CGRect rect)
-{
-    @autoreleasepool
-    {
-        void *arguments[] = {&object, &selector, &rect};
-        void *returnValue = nullptr;
-        dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
-        id result = (__bridge id) returnValue;
-        return result;
-    }
-}
-
-static void dispatchVoidObjectObjectHook(id object, SEL selector, id first, id second)
-{
-    @autoreleasepool
-    {
-        void *arguments[] = {&object, &selector, &first, &second};
-        dispatchFFIHookBody(nullptr, nullptr, arguments, nullptr);
-    }
+    return true;
 }
 
 static void *fallbackHookCode(const HookSignature &signature)
 {
-    if (signature.result.name == "object" && signature.arguments.size() == 2)
+    for (const FallbackHook &hook : fallbackHooks())
     {
-        return reinterpret_cast<void *>(dispatchObjectHook);
+        if (matchesFallbackHook(signature, hook))
+        {
+            return hook.code;
+        }
     }
-
-    if (signature.result.name == "class" && signature.arguments.size() == 2)
-    {
-        return reinterpret_cast<void *>(dispatchClassHook);
-    }
-
-    if ((signature.result.name == "bool" || signature.result.name == "i8") &&
-        signature.arguments.size() == 2)
-    {
-        return reinterpret_cast<void *>(dispatchBooleanHook);
-    }
-
-    if ((signature.result.name == "bool" || signature.result.name == "i8") &&
-        signature.arguments.size() == 4 && signature.arguments[2].name == "object" &&
-        signature.arguments[3].name == "object")
-    {
-        return reinterpret_cast<void *>(dispatchBoolObjectObjectHook);
-    }
-
-    if ((signature.result.name == "bool" || signature.result.name == "i8") &&
-        signature.arguments.size() == 3 && signature.arguments[2].name == "object")
-    {
-        return reinterpret_cast<void *>(dispatchBoolObjectHook);
-    }
-
-    if ((signature.result.name == "bool" || signature.result.name == "i8") &&
-        signature.arguments.size() == 3 && signature.arguments[2].name == "class")
-    {
-        return reinterpret_cast<void *>(dispatchBoolClassHook);
-    }
-
-    if ((signature.result.name == "bool" || signature.result.name == "i8") &&
-        signature.arguments.size() == 3 && signature.arguments[2].name == "selector")
-    {
-        return reinterpret_cast<void *>(dispatchBoolSelectorHook);
-    }
-
-    if (signature.result.name == "object" && signature.arguments.size() == 3 &&
-        signature.arguments[2].name == "struct:CGRect")
-    {
-        return reinterpret_cast<void *>(dispatchObjectCGRectHook);
-    }
-
-    if (signature.result.name == "object" && signature.arguments.size() == 3 &&
-        signature.arguments[2].name == "object")
-    {
-        return reinterpret_cast<void *>(dispatchObjectObjectHook);
-    }
-
-    if (signature.result.name == "void" && signature.arguments.size() == 3 &&
-        signature.arguments[2].name == "object")
-    {
-        return reinterpret_cast<void *>(dispatchVoidObjectHook);
-    }
-
-    if (signature.result.name == "void" && signature.arguments.size() == 3 &&
-        signature.arguments[2].name == "u64")
-    {
-        return reinterpret_cast<void *>(dispatchVoidNSUIntegerHook);
-    }
-
-    if (signature.result.name == "void" && signature.arguments.size() == 3 &&
-        (signature.arguments[2].name == "bool" || signature.arguments[2].name == "i8"))
-    {
-        return reinterpret_cast<void *>(dispatchVoidBooleanHook);
-    }
-
-    if (signature.result.name == "void" && signature.arguments.size() == 4 &&
-        signature.arguments[2].name == "object" && signature.arguments[3].name == "object")
-    {
-        return reinterpret_cast<void *>(dispatchVoidObjectObjectHook);
-    }
-
-    if (signature.result.name == "void" && signature.arguments.size() == 5 &&
-        signature.arguments[2].name == "object" && signature.arguments[3].name == "object" &&
-        signature.arguments[4].name == "object")
-    {
-        return reinterpret_cast<void *>(dispatchVoidObjectObjectObjectHook);
-    }
-
-    if (signature.result.name == "struct:CGRect" && signature.arguments.size() == 3 &&
-        signature.arguments[2].name == "object")
-    {
-        return reinterpret_cast<void *>(dispatchCGRectObjectHook);
-    }
-
-    if (signature.result.name == "double" && signature.arguments.size() == 4 &&
-        signature.arguments[2].name == "object" && signature.arguments[3].name == "object")
-    {
-        return reinterpret_cast<void *>(dispatchDoubleObjectObjectHook);
-    }
-
-    if (signature.result.name != "struct:CGSize")
-    {
-        return nullptr;
-    }
-
-    if (signature.arguments.size() == 2)
-    {
-        return reinterpret_cast<void *>(dispatchCGSizeNoArgumentHook);
-    }
-
-    if (signature.arguments.size() == 3 && signature.arguments[2].name == "struct:CGSize")
-    {
-        return reinterpret_cast<void *>(dispatchCGSizeHook);
-    }
-
-    if (signature.arguments.size() == 5 && signature.arguments[2].name == "struct:CGSize" &&
-        signature.arguments[3].name == "float" && signature.arguments[4].name == "float")
-    {
-        return reinterpret_cast<void *>(dispatchCGSizePriorityHook);
-    }
-
-    if (signature.arguments.size() == 5 && signature.arguments[2].name == "struct:CGSize" &&
-        signature.arguments[3].name == "double" && signature.arguments[4].name == "double")
-    {
-        return reinterpret_cast<void *>(dispatchCGSizeDoublePriorityHook);
-    }
-
     return nullptr;
 }
 
