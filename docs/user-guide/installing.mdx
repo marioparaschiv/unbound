@@ -102,12 +102,61 @@ Unbound runs inside the Discord app, so you install a modified Discord rather th
 			Android support is at an early stage. The Android version doesn't have the recovery menu (toolbox), custom fonts, or the extra Sentry and Firebase blocking yet. See [Privacy](/user-guide/privacy).
 		</Note>
 
-		Unbound for Android comes in two forms. Both are attached to Unbound's [GitHub releases](https://github.com/marioparaschiv/unbound/releases), and [Obtainium](https://obtainium.imranr.dev) can install them and keep them updated.
+		Unbound for Android comes in two forms:
 
 		- **Patched Discord**, for devices without root. This is Discord with Unbound already built in.
 		- **The Xposed module**, for rooted devices with LSPosed. It loads Unbound into the Discord app you already have.
 
-		### Not rooted
+		The **Unbound Manager** app installs either one and keeps it up to date. It's the recommended way to install Unbound on Android. The manager needs Android 9 or later.
+
+		### Install with the Unbound Manager
+
+		<Steps>
+			<Step title='Download the Manager'>
+				On your Android device, open Unbound's [GitHub releases](https://github.com/marioparaschiv/unbound/releases). Find the newest release whose name starts with `manager-v`, and download `unbound-manager.apk` from it.
+			</Step>
+			<Step title='Install the Manager'>
+				Open the downloaded file. If Android asks, allow your browser to install unknown apps, then tap **Install**.
+			</Step>
+			<Step title='Pick What to Install'>
+				Open **Unbound Manager**. Under **Install as**, pick **Patched Discord** if your device isn't rooted, or **LSPosed module** if it is.
+
+				Under **Channel**, pick **Stable** for Discord's regular Google Play release. **Beta** and **Alpha** follow Discord's Google Play beta and alpha. Alpha builds change the most, and parts of Unbound may break on them before a fix lands.
+			</Step>
+			<Step title='Install'>
+				Tap **Install**. The first time, the manager asks you to allow it to install apps. Tap **Open settings**, turn on **Allow from this source**, go back, and tap **Install** again.
+
+				The manager downloads the build, checks it, and installs it. On the first install, Android asks you to confirm once. Tap **Install** in Android's dialog. If the manager is in the background at that moment, it posts a notification instead. Tap the notification to finish.
+			</Step>
+		</Steps>
+
+		#### If Discord from Google Play is installed
+
+		The patched Discord is signed differently from the Google Play version, so Android won't install it over the top. The **Patched Discord** card says so, and warns that uninstalling Discord deletes its local data, including your login.
+
+		Tap **Uninstall Discord** on the card. Confirm in Android's uninstall dialog, then go back to the manager and tap **Install**. You need to log in to Discord again afterwards.
+
+		#### Finish on a rooted device
+
+		After the manager installs the module, turn it on in your Xposed manager:
+
+		<Steps>
+			<Step title='Enable the Module'>
+				Open LSPosed or your other Xposed manager and enable the **Unbound** module.
+			</Step>
+			<Step title='Scope It to Discord'>
+				Select **Discord** (`com.discord`) in the module's scope.
+			</Step>
+			<Step title='Restart Discord'>
+				Force stop Discord from Android's app settings, then open it again.
+			</Step>
+		</Steps>
+
+		### Other ways to install
+
+		Both forms are attached to Unbound's [GitHub releases](https://github.com/marioparaschiv/unbound/releases). [Obtainium](https://obtainium.imranr.dev) can install them and keep them updated.
+
+		#### Not rooted
 
 		The patched Discord is built for three Discord channels. Pick one, the same way you would join Discord's beta or alpha on Google Play.
 
@@ -151,7 +200,7 @@ Unbound runs inside the Discord app, so you install a modified Discord rather th
 
 		Without Obtainium, download the bundle for your channel from the [GitHub releases](https://github.com/marioparaschiv/unbound/releases) and install it with a split-APK installer such as SAI.
 
-		### Rooted
+		#### Rooted
 
 		On a rooted device, Unbound is an Xposed module. You need:
 

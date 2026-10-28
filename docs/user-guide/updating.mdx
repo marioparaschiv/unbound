@@ -7,7 +7,7 @@ icon: 'arrows-rotate'
 Unbound has two parts that update separately:
 
 - **The bundle** is Unbound itself, a single JavaScript file. It updates on its own every time you open Discord.
-- **The app or tweak** is the modified Discord you installed. You update it yourself, the same way you installed it.
+- **The app or tweak** is the modified Discord you installed. You update it the same way you installed it. On Android, the Unbound Manager can install these updates for you.
 
 To see which bundle you're running, open the **General** page in the **Unbound** section of Discord's settings and look at the **Unbound** row under **Version Info**.
 
@@ -110,13 +110,32 @@ When a new version of the app or tweak comes out, install it the same way you in
 		If Discord shows **This version of Discord is incompatible with this version of the Tweak.**, your Discord app is too old for the installed tweak. Update Discord from the App Store, then open it again.
 	</Tab>
 	<Tab title='Android'>
-		#### Patched Discord
+		#### With the Unbound Manager
+
+		If you installed Unbound with the [Unbound Manager](/user-guide/installing), it checks for new builds every 6 hours, on the channel you picked.
+
+		- If **Update automatically** is on and the manager installed the app, Android 12 and later install the update without asking you. The switch is on the manager's home screen, and it's on by default.
+		- Otherwise the manager posts a notification with an **Update** button. Tap **Update** once to install.
+
+		The manager updates itself the same way. When an update is waiting, the manager lists the changes in every release since the build you have.
+
+		The notifications come in three channels: **Patched Discord updates**, **LSPosed module updates**, and **Manager updates**. You can turn each one off in Android's notification settings.
+
+		<Note>
+			On Android 13 and later, the manager needs the notification permission to tell you about updates. Allow it when the manager asks, or turn on notifications for **Unbound Manager** in Android's app settings.
+		</Note>
+
+		The manager never touches the bundle. The bundle keeps updating itself inside Discord, as described in [Automatic bundle updates](#automatic-bundle-updates).
+
+		After the manager updates the Xposed module, force stop Discord from Android's app settings and open it again, so the new module loads.
+
+		#### Patched Discord without the manager
 
 		If you added Unbound to [Obtainium](/user-guide/installing), it shows an update when a new build for your channel is out. Tap **Update**. Stable, beta and alpha each get their own builds, so you only see updates for the channel you picked.
 
 		If you installed a bundle from GitHub by hand, download the newer one for the same channel from the [GitHub releases](https://github.com/marioparaschiv/unbound/releases) and install it over the old one with your split-APK installer.
 
-		#### Xposed module
+		#### Xposed module without the manager
 
 		If you added the module to Obtainium, update it there. Otherwise download the newer `app.unbound.android.lsposed.apk` from the [latest release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest) and install it over the old one like any other Android app update.
 
