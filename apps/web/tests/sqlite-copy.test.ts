@@ -131,7 +131,9 @@ describe('copySqlite', () => {
 				match: true,
 				present: !NEWER_THAN_SQLITE.has(report.table),
 			});
-			expect(report.rows).toBe(sourceCount(context.source, report.table));
+			expect(report.rows).toBe(
+				NEWER_THAN_SQLITE.has(report.table) ? 0 : sourceCount(context.source, report.table),
+			);
 			expect(row?.n).toBe(report.rows);
 			expect(report.targetRows).toBe(report.rows);
 			expect(report.targetChecksum).toBe(report.checksum);
