@@ -19,7 +19,7 @@ import { PLUGIN_NAME } from '~/constants';
 const CHAT_INPUT = 'com.discord.chat.input.views.DCDChatInput';
 const MENTION_SPAN = 'com.discord.chat.input.spans.DCDColorSpan';
 const COLOR_FIELD = 'mColor';
-const PAINT_DELAYS_MS = [50, 300, 800, 1500];
+const PAINT_DELAYS_MS = [0, 50, 150, 300, 800, 1500];
 
 type Native = { java: NativeJavaBridge; hooks: NativeJavaHooksBridge };
 
