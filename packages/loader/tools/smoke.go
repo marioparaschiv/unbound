@@ -30,6 +30,7 @@ var (
 	smokeAddonFailure     = regexp.MustCompile(`Failed to (?:start|load) addon ([\w.-]+)`)
 	smokeBundleExecuted   = "Unbound's bundle was successfully executed."
 	errSmokeNotConnected  = errors.New("no device is connected to the debugger bridge")
+	errSmokeEvalTimedOut  = errors.New("the debugger evaluation timed out")
 	smokeStatusExpression = `(function () {
 	var manager = unbound.plugins;
 	var entities = manager.getEntities();
@@ -376,7 +377,7 @@ func evaluateSmokeStatuses(ctx context.Context, target smokeTarget, options *smo
 			return statuses, nil
 		}
 		lastErr = err
-		if !errors.Is(err, errSmokeNotConnected) {
+		if !errors.Is(err, errSmokeNotConnected) && !errors.Is(err, errSmokeEvalTimedOut) {
 			return nil, err
 		}
 		time.Sleep(smokePollInterval)
@@ -414,6 +415,9 @@ func parseSmokeEvalOutput(output []byte, runErr error) ([]smokePluginStatus, err
 		message := result.Error
 		if message == "" {
 			message = result.Text
+		}
+		if strings.Contains(message, "Evaluation timed out") {
+			return nil, fmt.Errorf("%w: %s", errSmokeEvalTimedOut, message)
 		}
 		return nil, fmt.Errorf("the plugin status check threw on the device: %s", message)
 	}
