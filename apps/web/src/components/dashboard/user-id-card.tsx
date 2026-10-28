@@ -14,7 +14,7 @@ function UserIdCard({ userId }: UserIdCardProps) {
 	return (
 		<Card className='gap-4'>
 			<CardHeader>
-				<CardTitle className='text-base'>Your User ID</CardTitle>
+				<CardTitle>Your User ID</CardTitle>
 				<Text variant='text-sm' color='muted'>
 					Share it with an addon’s owner so they can add you as a maintainer.
 				</Text>
