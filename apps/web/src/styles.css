@@ -391,7 +391,7 @@ footprint matches a field; a press moves that space above the body instead of ov
 	from {
 		opacity: 0;
 		filter: blur(var(--reveal-blur, 0px));
-		transform: translateY(var(--reveal-offset, 12px));
+		transform: translateY(var(--reveal-offset, 12px)) scale(var(--reveal-scale, 1));
 	}
 }
 

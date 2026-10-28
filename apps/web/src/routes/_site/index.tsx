@@ -75,7 +75,7 @@ const FEATURES: Feature[] = [
 // The hero enters in sequence: title letters, then the tagline's words, then the actions and art.
 const TAGLINE_DELAY_MS = 250;
 const ACTIONS_STYLE = revealStyle('hero', 450);
-const ART_STYLE = revealStyle('card', 600);
+const ART_STYLE = revealStyle('showcase', 600);
 
 const GLOW_POSITION: CSSProperties = { left: 'var(--glow-x)', top: 'var(--glow-y)' };
 const GLOW_RING_MASK = 'radial-gradient(250px at var(--glow-x) var(--glow-y), white, transparent)';
