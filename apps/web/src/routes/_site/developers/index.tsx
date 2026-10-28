@@ -35,7 +35,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 const teamSearchSchema = pageSearchSchema.pick({ search: true });
 
 const fetchDevelopers = createServerFn({ method: 'GET' })
-	.validator(z.object({ search: z.string().max(100), cursor: z.string().max(100).optional() }))
+	.validator(z.object({ search: z.string().max(100), cursor: z.string().max(512).optional() }))
 	.handler(({ data }) => listDevelopers(app, data));
 
 const fetchPage = (query: DevelopersQuery) => fetchDevelopers({ data: query });
