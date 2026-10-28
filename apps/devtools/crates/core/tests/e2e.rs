@@ -9,7 +9,7 @@ use serde_json::json;
 use unbound_devtools_core::query::{self, FindQuery, NameMatch};
 use unbound_devtools_core::{ConnectionState, ElementKind, PathSegment, Section, Value};
 
-use common::{connected_session, find_one, key, wait_for};
+use common::{connected_session, find_one, key, session, spawn_device, wait_for};
 
 #[tokio::test(flavor = "multi_thread")]
 async fn inspects_edits_and_filters_a_live_backend() {
@@ -116,6 +116,51 @@ async fn inspects_edits_and_filters_a_live_backend() {
 		) && devtools.store().is_empty()
 	})
 	.await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_rerendering_device_keeps_the_tree_in_step() {
+	let (devtools, addr) = session();
+	let Some(_device) = spawn_device(addr.port(), Some(40)) else {
+		return;
+	};
+	let row_keys = |devtools: &unbound_devtools_core::Devtools| -> Vec<String> {
+		let store = devtools.store();
+		query::find(
+			&store,
+			&FindQuery {
+				name: Some(NameMatch::Exact("MessageRow".into())),
+				..Default::default()
+			},
+		)
+		.iter()
+		.filter_map(|id| store.get(*id)?.key.as_deref().map(str::to_owned))
+		.collect()
+	};
+
+	// The device cycles 3, 4, 5, 6, 7 messages; seeing 7 then 3 means adds and removes applied.
+	wait_for(&devtools, "seven rows", |devtools| {
+		row_keys(devtools).len() == 7
+	})
+	.await;
+	wait_for(&devtools, "back to three rows", |devtools| {
+		row_keys(devtools).len() == 3
+	})
+	.await;
+	assert_eq!(row_keys(&devtools), ["m0", "m1", "m2"]);
+
+	let store = devtools.store();
+	for element in store.walk(None) {
+		let listed_by_parent = element
+			.parent
+			.and_then(|parent| store.get(parent))
+			.is_none_or(|parent| parent.children.contains(&element.id));
+		assert!(
+			listed_by_parent,
+			"#{} is missing from its parent's children",
+			element.id.0
+		);
+	}
 }
 
 #[tokio::test(flavor = "multi_thread")]

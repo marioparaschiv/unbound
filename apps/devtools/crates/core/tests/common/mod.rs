@@ -44,9 +44,16 @@ pub fn session() -> (Devtools, SocketAddr) {
 	(devtools, addr)
 }
 
-pub fn spawn_device(port: u16) -> Option<Device> {
+/// The harness device; with `tick_ms` it re-renders with 3 to 7 messages on that interval.
+pub fn spawn_device(port: u16, tick_ms: Option<u32>) -> Option<Device> {
 	let script = concat!(env!("CARGO_MANIFEST_DIR"), "/../../harness/device.mjs");
-	let child = Command::new("bun")
+	let mut command = Command::new("bun");
+
+	if let Some(tick_ms) = tick_ms {
+		command.env("TICK_MS", tick_ms.to_string());
+	}
+
+	let child = command
 		.arg(script)
 		.arg(port.to_string())
 		.stdout(Stdio::null())
@@ -67,7 +74,7 @@ pub fn spawn_device(port: u16) -> Option<Device> {
 /// A session with the harness device attached and its tree loaded, or `None` without bun.
 pub async fn connected_session() -> Option<(Devtools, Device)> {
 	let (devtools, addr) = session();
-	let device = spawn_device(addr.port())?;
+	let device = spawn_device(addr.port(), None)?;
 
 	wait_for(&devtools, "MessageRow from the device", |devtools| {
 		devtools
