@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { ErasedTree, Section } from './normalize';
+
 import { CommandDefinitionError, normalize } from './normalize';
 import { createRegistry } from './registry';
 

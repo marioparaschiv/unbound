@@ -3,8 +3,9 @@ import { describe, expect, test } from 'bun:test';
 
 import type { AutocompleteAction, CommandEffects, DiscordContext, RawOption } from './run';
 import type { ErasedArgs, ErasedTree, Section } from './normalize';
-import { createExecute } from './run';
+
 import { normalize } from './normalize';
+import { createExecute } from './run';
 import { option } from './options';
 
 const section: Section = { id: 'unbound:demo', name: 'Demo', icon: undefined };
@@ -95,7 +96,8 @@ describe('createExecute', () => {
 						add: {
 							description: 'Add',
 							options: { name: option.string({ required: true }) },
-							execute: ({ name }) => `added ${String(name)}`,
+							execute: ({ name }) =>
+								typeof name === 'string' ? `added ${name}` : undefined,
 						},
 					},
 				},

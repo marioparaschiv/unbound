@@ -71,7 +71,7 @@ function toNumber(value: RawOptionValue): number | undefined {
  * THE option-kind table. Adding a kind is one row here plus its entry in `OptionKindTypes`; builders,
  * normalization and parsing read every per-kind difference from the row.
  */
-export const OptionKinds: KindTable = {
+const OptionKinds: KindTable = {
 	string: {
 		type: OptionType.STRING,
 		parse: ({ value }) => (typeof value === 'string' ? value : undefined),

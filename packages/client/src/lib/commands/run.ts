@@ -12,8 +12,8 @@ import type {
 } from '@unbound-app/types/commands';
 
 import type { CommandRecord, ErasedArgs, Section } from '~/lib/commands/normalize';
-import type { Resolvers } from '~/lib/commands/options';
 import { OptionType, getKind } from '~/lib/commands/options';
+import type { Resolvers } from '~/lib/commands/options';
 
 /** An option node as Discord's executeCommand passes it to `execute`. Groups and subcommands nest. */
 export type RawOption = {

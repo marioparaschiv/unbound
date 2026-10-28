@@ -1,12 +1,6 @@
 import type { EphemeralReply, IconSource } from '@unbound-app/types/commands';
 import { createLogger } from '@unbound-app/logger';
 
-import type {
-	CommandEnums,
-	DiscordCommand,
-	IndexSection,
-	IndexState,
-} from '~/lib/commands/discord';
 import {
 	DEFAULT_ENUMS,
 	isOverridableDenial,
@@ -14,16 +8,22 @@ import {
 	toDiscordCommand,
 	withSections,
 } from '~/lib/commands/discord';
+import type {
+	CommandEnums,
+	DiscordCommand,
+	IndexSection,
+	IndexState,
+} from '~/lib/commands/discord';
 import type { CommandRecord, Section } from '~/lib/commands/normalize';
 import { Clyde, Commands, Dispatcher } from '~/api/metro/common';
 import type { CommandEffects } from '~/lib/commands/run';
+import { findByProps, findStore } from '~/api/metro';
 import { registry } from '~/lib/commands/registry';
 import { createExecute } from '~/lib/commands/run';
-import { findByProps, findStore } from '~/api/metro';
 import { createPatcher } from '~/api/patcher';
+import { getIDByName } from '~/api/assets';
 import { Messages } from '~/api/metro/api';
 import { Users } from '~/api/metro/stores';
-import { getIDByName } from '~/api/assets';
 
 /** The Discord side of one registry version. */
 type DiscordIndex = {

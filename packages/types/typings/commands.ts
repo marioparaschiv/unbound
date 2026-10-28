@@ -167,7 +167,7 @@ export type OptionSpec<
 
 /** A handler's args, derived from its options: a required option is `V`, an optional one `V | undefined`. */
 export type OptionArgs<O> = {
-	[K in keyof O]: O[K] extends OptionSpec<infer _K, infer R, infer V>
+	[K in keyof O]: O[K] extends OptionSpec<OptionKind, infer R, infer V>
 		? R extends true
 			? V
 			: V | undefined

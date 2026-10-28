@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { IndexSection, IndexState } from './discord';
+
 import { isOverridableDenial, toDiscordCommand, withSections } from './discord';
 import { normalize } from './normalize';
 import { option } from './options';

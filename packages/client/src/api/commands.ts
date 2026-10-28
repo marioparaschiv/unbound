@@ -12,8 +12,8 @@ import type {
 import { createLogger } from '@unbound-app/logger';
 
 import { normalize, resolveSection } from '~/lib/commands/normalize';
-import type { ErasedTree } from '~/lib/commands/normalize';
 import { option as builders } from '~/lib/commands/options';
+import type { ErasedTree } from '~/lib/commands/normalize';
 import { registry } from '~/lib/commands/registry';
 import { plugins } from '~/managers/plugins';
 
