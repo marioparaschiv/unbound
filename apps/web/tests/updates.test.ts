@@ -249,6 +249,35 @@ describe('findUpdates', () => {
 		}
 	});
 
+	test('offers a version rebuilt in place only to clients whose bundle differs', async () => {
+		const [live] = await newestCompatibleVersions(ctx, {
+			clientVersion: '2.0.0',
+			addons: [{ id: 'up.current', version: '1.0.0' }],
+		});
+		const stale = '0'.repeat(64);
+
+		expect(live?.sha256).toMatch(/^[\da-f]{64}$/);
+		expect(
+			await findUpdates(ctx, {
+				clientVersion: '2.0.0',
+				addons: [{ id: 'up.current', version: '1.0.0', sha256: live?.sha256 }],
+			}),
+		).toEqual({ updates: [] });
+
+		const { updates } = await findUpdates(ctx, {
+			clientVersion: '2.0.0',
+			addons: [{ id: 'up.current', version: '1.0.0', sha256: stale }],
+		});
+
+		expect(updates).toHaveLength(1);
+		expect(updates[0]).toMatchObject({
+			id: 'up.current',
+			version: '1.0.0',
+			sha256: live?.sha256,
+		});
+		expect(updates[0]?.changelogs).toEqual([]);
+	});
+
 	test('offers the served version to a client on a withdrawn one, in three statements', async () => {
 		const statements = spyOn(ctx.db.$client, 'unsafe');
 

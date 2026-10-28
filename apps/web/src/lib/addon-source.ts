@@ -40,6 +40,8 @@ export type AddonSource = {
 	/** The manifest at the commit, `main` rewritten to the published bundle's name. */
 	manifest: PublishedManifest;
 	bundle: Uint8Array;
+	/** The bundle compiled to Hermes bytecode, by bytecode version, as `manifest.bytecode` lists it. */
+	bytecode: ReadonlyMap<string, Uint8Array>;
 	bundleSize: number;
 	sha256: string;
 	addonMd: string | null;
@@ -498,6 +500,63 @@ export async function listRepositoryAddons(
  * @param requirePush Whether the client must be able to push; first-party publishing is trusted by its credential instead.
  * @returns The source, its bytes verified against git's blob ids.
  */
+/**
+ * @description Names the compiled bundle beside a bundle, as the loader and client look it up.
+ * @param bundlePath The bundle's path, such as `dist/index.js`.
+ * @param bytecodeVersion The Hermes bytecode version.
+ * @returns The compiled bundle's path, such as `dist/index.98.hbc`.
+ */
+export function compiledBundlePath(bundlePath: string, bytecodeVersion: string): string {
+	return `${bundlePath.replace(/\.[^./]+$/, '')}.${bytecodeVersion}.hbc`;
+}
+
+async function readBytecode(
+	env: Env,
+	github: GitHubClient,
+	repository: string,
+	tree: GitTree,
+	bundlePath: string,
+	manifest: PublishedManifest,
+	commitSha: string,
+): Promise<Map<string, Uint8Array>> {
+	const compiled = new Map<string, Uint8Array>();
+
+	for (const [bytecodeVersion, digest] of Object.entries(manifest.bytecode ?? {})) {
+		const path = compiledBundlePath(bundlePath, bytecodeVersion);
+		const entry = tree.get(path);
+
+		if (!entry || entry.size === 0) {
+			throw new ApiError(
+				'artifact_missing',
+				`manifest.bytecode lists ${bytecodeVersion}, but ${path} is not committed at ${shortSha(commitSha)}.`,
+			);
+		}
+
+		if (entry.size > env.ADDON_MAX_BYTES) {
+			throw new ApiError(
+				'artifact_too_large',
+				`${path} is ${entry.size} bytes; bundles may be at most ${env.ADDON_MAX_BYTES} bytes.`,
+			);
+		}
+
+		const bytes = await github.readBlob(repository, entry.sha);
+
+		if (new Bun.CryptoHasher('sha512').update(bytes).digest('hex') !== digest) {
+			throw new ApiError(
+				'artifact_mismatch',
+				`${path} does not match its SHA-512 in manifest.bytecode.`,
+			);
+		}
+
+		compiled.set(bytecodeVersion, bytes);
+	}
+
+	return compiled;
+}
+
+/**
+ *
+ */
 export async function readAddonSource(
 	ctx: AppContext,
 	github: GitHubClient,
@@ -556,8 +615,9 @@ export async function readAddonSource(
 
 	const changelogPath = childPath(path, CHANGELOG_MD);
 	const addonMdPath = childPath(path, ADDON_MD);
-	const [bundle, extraTexts] = await Promise.all([
+	const [bundle, bytecode, extraTexts] = await Promise.all([
 		github.readBlob(repository, bundleEntry.sha),
+		readBytecode(ctx.env, github, repository, tree, addon.bundle, manifest, commitSha),
 		readTexts(github, repository, tree, [addonMdPath, changelogPath]),
 	]);
 
@@ -573,6 +633,7 @@ export async function readAddonSource(
 		},
 		manifest,
 		bundle,
+		bytecode,
 		bundleSize: bundle.length,
 		sha256: new Bun.CryptoHasher('sha256').update(bundle).digest('hex'),
 		addonMd: extraTexts.get(addonMdPath) ?? null,

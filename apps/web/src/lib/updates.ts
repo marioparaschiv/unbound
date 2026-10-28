@@ -170,7 +170,8 @@ async function withdrawnInstalls(
 
 /**
  * @description Resolves the client's update check: per listed addon, the newest live compatible version
- * above the install with the changelogs it skips, or below a withdrawn install without them.
+ * above the install with the changelogs it skips, below a withdrawn install without them, or the
+ * same version rebuilt in place when the installed bundle's SHA-256 differs from it.
  * @param ctx The application context.
  * @param request The client version and installed addons.
  * @returns The available updates.
@@ -186,12 +187,15 @@ export async function findUpdates(
 	const installed = new Map(
 		request.addons.map((entry) => [entry.id, toVersionKey(entry.version)]),
 	);
+	const digests = new Map(request.addons.map((entry) => [entry.id, entry.sha256]));
 	const rows = await newestCompatibleVersions(ctx, request);
 	const newer: UpdateRange[] = [];
 	const ahead: InstalledVersion[] = [];
+	const rebuilt = new Set<string>();
 
-	for (const { addonId, versionKey } of rows) {
+	for (const { addonId, versionKey, sha256 } of rows) {
 		const from = installed.get(addonId) ?? '';
+		const installedDigest = digests.get(addonId);
 
 		if (!versionKey) {
 			continue;
@@ -201,6 +205,8 @@ export async function findUpdates(
 			newer.push({ addonId, from, to: versionKey });
 		} else if (versionKey < from) {
 			ahead.push({ addonId, key: from });
+		} else if (installedDigest && installedDigest !== sha256) {
+			rebuilt.add(addonId);
 		}
 	}
 
@@ -209,7 +215,10 @@ export async function findUpdates(
 		ahead.length > 0 ? withdrawnInstalls(ctx, ahead) : new Set<string>(),
 	]);
 	const newerIds = new Set(newer.map((range) => range.addonId));
-	const offered = rows.filter((row) => newerIds.has(row.addonId) || withdrawn.has(row.addonId));
+	const offered = rows.filter(
+		(row) =>
+			newerIds.has(row.addonId) || withdrawn.has(row.addonId) || rebuilt.has(row.addonId),
+	);
 
 	if (offered.length === 0) {
 		return { updates: [] };

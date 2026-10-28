@@ -6,7 +6,7 @@ import {
 	repositoryInputSchema,
 	sourcePinSchema,
 } from './source';
-import { addonIdSchema } from './manifest';
+import { addonIdSchema, bytecodeDigestsSchema } from './manifest';
 import { z } from './zod';
 
 /** `listing` claims a new addon id; `update` publishes a new version of an addon the caller maintains. */
@@ -94,7 +94,7 @@ export const publishFirstPartyRequestSchema = z.object({
 });
 
 /** `unchanged` when that version was already published, so a re-run is a no-op. */
-export const firstPartyPublishStatusSchema = z.enum(['published', 'unchanged']);
+export const firstPartyPublishStatusSchema = z.enum(['published', 'replaced', 'unchanged']);
 
 export const publishFirstPartyResponseSchema = z.object({
 	status: firstPartyPublishStatusSchema,
@@ -111,6 +111,10 @@ export const firstPartyAddonSchema = z.object({
 	version: z.string(),
 	/** The commit that version was read from, or `null` for a legacy upload. */
 	commitSha: z.nullable(z.string()),
+	/** The SHA-256 of that version's published bundle. */
+	sha256: z.optional(z.string()),
+	/** That version's `manifest.bytecode`, when it ships compiled bundles. */
+	bytecode: z.optional(bytecodeDigestsSchema),
 });
 
 export const listFirstPartyAddonsResponseSchema = z.object({

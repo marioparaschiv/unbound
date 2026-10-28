@@ -5,6 +5,8 @@ import { z } from './zod';
 export const installedAddonSchema = z.object({
 	id: addonIdSchema,
 	version: semverSchema,
+	/** The SHA-256 of the installed bundle, so a version rebuilt in place is offered again. */
+	sha256: z.optional(z.string().check(z.regex(/^[\da-f]{64}$/))),
 });
 
 export const updatesRequestSchema = z.object({

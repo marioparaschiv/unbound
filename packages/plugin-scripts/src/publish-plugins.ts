@@ -2,6 +2,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node
 import type { PublishFirstPartyRequest } from '@unbound-app/contracts/publish';
 import type { WorkspaceFiles } from '@unbound-app/contracts/workspace';
 import type { KeyObject } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -153,6 +154,21 @@ function readOptions(): Options {
 	};
 }
 
+function builtContent(root: string, bundle: string): Pick<LocalPlugin, 'sha256' | 'bytecode'> {
+	const path = join(root, WORKSPACE_DIR, bundle);
+
+	if (!existsSync(path)) return {};
+
+	const compiled = findCompiledBundles(root, `${WORKSPACE_DIR}/${bundle}`);
+
+	return {
+		sha256: createHash('sha256').update(readFileSync(path)).digest('hex'),
+		bytecode: bytecodeDigests(
+			new Map([...compiled].map(([version, file]) => [version, file.contents])),
+		),
+	};
+}
+
 function discoverPlugins(root: string): LocalPlugin[] {
 	const workspace = join(root, WORKSPACE_DIR);
 	const config = workspaceConfigSchema.parse(
@@ -187,7 +203,13 @@ function discoverPlugins(root: string): LocalPlugin[] {
 			throw new Error(`${addon.id}: manifest.json has no string "version".`);
 		}
 
-		plugins.push({ id: addon.id, dir, version: manifest.version, bundle: addon.bundle });
+		plugins.push({
+			id: addon.id,
+			dir,
+			version: manifest.version,
+			bundle: addon.bundle,
+			...builtContent(root, addon.bundle),
+		});
 	}
 
 	return plugins;
@@ -210,7 +232,12 @@ async function fetchPublished(options: Options): Promise<PublishedVersions> {
 
 	const { addons } = listFirstPartyAddonsResponseSchema.parse(body);
 
-	return new Map(addons.map(({ id, version, commitSha }) => [id, { version, commitSha }]));
+	return new Map(
+		addons.map(({ id, version, commitSha, sha256, bytecode }) => [
+			id,
+			{ version, commitSha, sha256, bytecode },
+		]),
+	);
 }
 
 // The published build commit's parent is the main commit it was built from; failing that, the commit that set the published version.
@@ -272,6 +299,19 @@ function prepareRelease(options: Options, decision: SelectedDecision, date: stri
 	const { plugin } = decision;
 	const path = `${WORKSPACE_DIR}/${plugin.dir}/CHANGELOG.md`;
 	const existing = tryGit(root, ['show', `HEAD:${path}`]);
+	const current = existing.ok
+		? selectRelease(parseChangelog(existing.stdout), plugin.version)
+		: undefined;
+
+	// A rebuild of the published version keeps its changelog entry as it is.
+	if (decision.reason === 'rebuilt' && existing.ok && current) {
+		return {
+			plugin,
+			changelog: existing.stdout,
+			entry: renderRelease(plugin.version, current).trimEnd(),
+		};
+	}
+
 	const release = createRelease({
 		commits: listCommits(root, plugin.dir, findChangelogBase(options, decision)),
 		date,
@@ -514,6 +554,8 @@ function describeDecision(decision: PluginDecision): string {
 			return `publish ${label} (unpublished)`;
 		case 'newer':
 			return `publish ${label} (live: ${decision.published.version})`;
+		case 'rebuilt':
+			return `publish ${label} (rebuilt: its output differs from the live build)`;
 		case 'already-published':
 			return `skip    ${label} (already published)`;
 		case 'behind-published':

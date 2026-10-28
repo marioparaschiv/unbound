@@ -7,6 +7,7 @@ import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/
 import { createApiClient } from '@unbound-app/web/client';
 import type { Addon } from '@unbound-app/types';
 import type { Api } from '@unbound-app/web/api';
+import sha256 from '@unbound-app/utils/sha256';
 
 import type { ManagerKind } from '~/lib/constants';
 import type { Addons } from '~/managers/addons';
@@ -29,6 +30,8 @@ export type InstalledEntry = {
 	id: string;
 	name: string;
 	version: string;
+	/** The installed bundle's SHA-256, so a version rebuilt in place is offered again. */
+	sha256?: string;
 };
 
 /** An update waiting to be applied: the installed addon and the release it moves to. */
@@ -67,7 +70,9 @@ export function buildUpdatesRequest(
 	entries: InstalledEntry[],
 	clientVersion: string,
 ): UpdatesRequest | undefined {
-	const addons = [...checkable(entries).values()].map(({ id, version }) => ({ id, version }));
+	const addons = [...checkable(entries).values()].map(({ id, version, sha256 }) =>
+		sha256 ? { id, version, sha256 } : { id, version },
+	);
 
 	if (!addons.length) return;
 
@@ -105,6 +110,30 @@ export function toPendingUpdates(
 		.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+type BundleDigest = {
+	bundle: string;
+	digest: string;
+};
+
+const bundleDigests = new Map<string, BundleDigest>();
+
+function digestOf(id: string, bundle: string): string {
+	const cached = bundleDigests.get(id);
+
+	if (cached?.bundle === bundle) {
+		return cached.digest;
+	}
+
+	const digest = sha256(bundle);
+
+	bundleDigests.set(id, { bundle, digest });
+
+	return digest;
+}
+
+/**
+ *
+ */
 /**
  * @description Lists a manager's installed addons for an update check.
  * @param kind The manager's kind, carried onto each entry.
@@ -117,6 +146,9 @@ export function listInstalled(kind: UpdatableKind, manager: UpdatableManager): I
 		id: entity.id,
 		name: entity.data.name,
 		version: entity.data.version,
+		...(typeof entity.bundle === 'string' && entity.bundle
+			? { sha256: digestOf(entity.id, entity.bundle) }
+			: {}),
 	}));
 }
 

@@ -6,12 +6,20 @@ export type LocalPlugin = {
 	version: string;
 	/** The built bundle, relative to `packages/plugins`. */
 	bundle: string;
+	/** The built bundle's SHA-256, when it has been built. */
+	sha256?: string;
+	/** The SHA-512 of each bundle compiled to Hermes bytecode, by bytecode version. */
+	bytecode?: Record<string, string>;
 };
 
 /** The newest version the backend published for an addon, delisted or not, and the commit it was read from. */
 export type PublishedVersion = {
 	version: string;
 	commitSha: string | null;
+	/** The published bundle's SHA-256. */
+	sha256?: string;
+	/** The published `manifest.bytecode`. */
+	bytecode?: Record<string, string>;
 };
 
 export type PublishedVersions = Map<string, PublishedVersion>;
@@ -19,6 +27,7 @@ export type PublishedVersions = Map<string, PublishedVersion>;
 export type PluginDecision =
 	| { status: 'selected'; reason: 'unpublished'; plugin: LocalPlugin }
 	| { status: 'selected'; reason: 'newer'; plugin: LocalPlugin; published: PublishedVersion }
+	| { status: 'selected'; reason: 'rebuilt'; plugin: LocalPlugin; published: PublishedVersion }
 	| {
 			status: 'skipped';
 			reason: 'already-published' | 'behind-published';
@@ -54,6 +63,19 @@ type SelectedStatus = {
 	status: 'selected';
 };
 
+function sameDigests(left: Record<string, string> = {}, right: Record<string, string> = {}) {
+	const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+
+	return [...keys].every((key) => left[key] === right[key]);
+}
+
+// Before release, versions stay put and a rebuild with different output replaces the live one.
+function isRebuilt(plugin: LocalPlugin, published: PublishedVersion): boolean {
+	if (!plugin.sha256 || !published.sha256) return false;
+
+	return plugin.sha256 !== published.sha256 || !sameDigests(plugin.bytecode, published.bytecode);
+}
+
 function decide(plugin: LocalPlugin, published: PublishedVersion | undefined): PluginDecision {
 	if (!published) {
 		return { status: 'selected', reason: 'unpublished', plugin };
@@ -63,6 +85,10 @@ function decide(plugin: LocalPlugin, published: PublishedVersion | undefined): P
 
 	if (order > 0) {
 		return { status: 'selected', reason: 'newer', plugin, published };
+	}
+
+	if (order === 0 && isRebuilt(plugin, published)) {
+		return { status: 'selected', reason: 'rebuilt', plugin, published };
 	}
 
 	return {
