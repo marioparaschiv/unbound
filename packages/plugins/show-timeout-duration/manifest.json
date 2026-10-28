@@ -18,5 +18,12 @@
 	],
 	"version": "1.0.0",
 	"icon": "TimerIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "8aa3edd85b76153e4ec4ea1f2231d9ff7a4c3e3a131876b3e0cea6a3af16ec8e3a37754ea08e7b94221f08b5871279886feefd64faa4f6c1ebb04bf85fcb9397"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "i65ZoQ6pw/4iYLFJ7IBxup/KOKlBbfcPQ0rZMqnhCF5felJsyN4Xpkbvtl/KAdF48JpvqBKKvCwbVvypNF6WCQ=="
+	}
 }
