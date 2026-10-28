@@ -103,7 +103,7 @@ function readBase(remoteRevision: number): SyncDocument {
 async function attempt(request: ApiRequest, strategy: SyncStrategy) {
 	const remote = await request('GET /api/v1/sync', { response: syncStateSchema });
 	const base = readBase(remote.revision);
-	const { document, actions } = plan(strategy, base, collectLocalDocument(), remote.document);
+	const { document, actions } = plan(strategy, base, collectLocalDocument(base), remote.document);
 
 	applying = true;
 
