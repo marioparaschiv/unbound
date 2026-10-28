@@ -182,6 +182,10 @@ async function handlePluginPush(request: PluginPushRequest) {
 	try {
 		const result = await plugins.reload(request.addonId, request.bundle, request.manifest);
 
+		if (result.ok) {
+			plugins.markDevelopmentCopy(request.addonId);
+		}
+
 		reply({
 			type: 'plugin-push-result',
 			id: request.id,

@@ -360,6 +360,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			const entity = this.getEntity(manifest.id);
 
 			if (entity) {
+				this.clearDevelopmentCopy(entity.id);
 				this.recordSource(entity.id, url);
 				this.emit('installed', entity);
 			}
@@ -436,6 +437,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			await this.unload(resolved);
 			await fs.rm(this.directoryOf(resolved.id));
 			this.forgetSource(resolved.id);
+			this.clearDevelopmentCopy(resolved.id);
 			this.emit('deleted', resolved);
 		} catch (error) {
 			this.logger.error(`Failed to delete addon ${resolved.id}:`, error);
@@ -1027,6 +1029,36 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	 */
 	protected getStates(): Record<string, boolean> {
 		return this.settings.get('states', {});
+	}
+
+	/**
+	 * @description Marks an addon as a development copy pushed from a dev machine, so update checks leave it alone until it is installed from the store again.
+	 * @param id The addon's id.
+	 */
+	markDevelopmentCopy(id: string): void {
+		this.settings.set('development', { ...this.getDevelopmentCopies(), [id]: true });
+	}
+
+	/**
+	 * @description Whether an addon is a development copy pushed from a dev machine.
+	 * @param id The addon's id.
+	 * @returns `true` until the addon is installed from the store or deleted.
+	 */
+	isDevelopmentCopy(id: string): boolean {
+		return this.getDevelopmentCopies()[id] === true;
+	}
+
+	private getDevelopmentCopies(): Record<string, boolean> {
+		return this.settings.get('development', {});
+	}
+
+	private clearDevelopmentCopy(id: string): void {
+		const copies = this.getDevelopmentCopies();
+
+		if (!(id in copies)) return;
+
+		delete copies[id];
+		this.settings.set('development', copies);
 	}
 
 	/**

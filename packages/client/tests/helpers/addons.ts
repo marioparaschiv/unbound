@@ -17,10 +17,17 @@ mock.module('~/api/fs', () => ({
 	},
 }));
 
+export const storedSettings = new Map<string, unknown>();
+
 mock.module('~/api/storage', () => {
 	const store = {
-		get: <T>(key: string, fallback: T) => (key === 'states' ? states : fallback),
-		set: () => {},
+		get: <T>(key: string, fallback: T) =>
+			key === 'states' ? states : ((storedSettings.get(key) as T | undefined) ?? fallback),
+		set: <T>(key: string, value: T) => {
+			if (key !== 'states') {
+				storedSettings.set(key, value);
+			}
+		},
 	};
 
 	return {
@@ -144,6 +151,7 @@ export class FakeAddons extends Addons<Addon> {
 export function resetDevice() {
 	writes.length = 0;
 	persists.length = 0;
+	storedSettings.clear();
 
 	for (const key of Object.keys(states)) {
 		delete states[key];
