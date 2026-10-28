@@ -8,7 +8,7 @@ export type {
 	TextFieldProps,
 } from '../_internal';
 import type { DesignComponentName, DesignModule, SwitchProps } from '../_internal';
-import * as ReactModule from 'react';
+import * as React$1 from 'react';
 import { ComponentType, ElementType, ReactNode } from 'react';
 import {
 	AccessibilityState,
@@ -77,10 +77,10 @@ export declare function auditDesignComponents(): DesignComponentAudit;
 export declare function isRenderable(
 	value:
 		| DesignModule[keyof DesignModule]
-		| ReactModule.ElementType
-		| Record<string, ReactModule.ComponentType<never>>
+		| React$1.ElementType
+		| Record<string, React$1.ComponentType<never>>
 		| undefined,
-): value is ReactModule.ElementType;
+): value is React$1.ElementType;
 /**
  * @description Registers the component the design module returns when a Discord build lacks the
  * named one or ships something React can't render.
@@ -98,12 +98,12 @@ export type DesignComponentAudit = {
 	missing: DesignComponentName[];
 };
 export type HelpMessageProps = {
-	children?: ReactModule.ReactNode;
+	children?: React$1.ReactNode;
 	messageType?: HelpMessageType;
 	textVariant?: string;
 	textColor?: ColorValue;
 	borderRadius?: number;
-	button?: ReactModule.ReactNode;
+	button?: React$1.ReactNode;
 };
 export type HelpMessageType = (typeof HelpMessageTypes)[keyof typeof HelpMessageTypes & string];
 export { HelpMessageTypes$1 as HelpMessageTypes };

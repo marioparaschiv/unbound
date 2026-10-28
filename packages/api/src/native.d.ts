@@ -68,6 +68,8 @@ import type {
 	NativePluginCapability,
 	NativePluginPlatform,
 } from './_internal';
+import * as React$1 from 'react';
+import { ReactNode } from 'react';
 declare const NativePlatform$1: NativePlatformBridge | undefined;
 
 export declare class NativePluginCapabilityError extends Error {
@@ -185,7 +187,6 @@ export type DeviceInfoType = {
 };
 export type HermesRuntimeProperties = ReturnType<HermesInternalObject['getRuntimeProperties']>;
 export type UndocumentedNativeMethod = () => Promise<unknown>;
-
 export { NativePlatform$1 as NativePlatform };
 
 export {};

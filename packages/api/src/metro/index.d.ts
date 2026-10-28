@@ -3,7 +3,7 @@
 export type { DiscordFunction } from '../_internal';
 import type { DesignComponentName, DiscordFunction } from '../_internal';
 import type { PredicateResult } from '../utils';
-import * as ReactModule from 'react';
+import * as React$1 from 'react';
 import { ComponentType, ElementType, ReactNode } from 'react';
 import {
 	AccessibilityState,
@@ -26,6 +26,7 @@ declare const HelpMessageTypes: {
 	readonly ERROR: 2;
 	readonly SUCCESS: 3;
 };
+declare const React$1: typeof import('react');
 /** @internal */
 declare const CACHE_KEY: unique symbol;
 export declare const off: typeof removeListener;
@@ -133,12 +134,12 @@ export type DesignComponentAudit = {
 	missing: DesignComponentName[];
 };
 export type HelpMessageProps = {
-	children?: ReactModule.ReactNode;
+	children?: React$1.ReactNode;
 	messageType?: HelpMessageType;
 	textVariant?: string;
 	textColor?: ColorValue;
 	borderRadius?: number;
-	button?: ReactModule.ReactNode;
+	button?: React$1.ReactNode;
 };
 export type HelpMessageType = (typeof HelpMessageTypes)[keyof typeof HelpMessageTypes & string];
 /** Widens a single result to an array when the search was made with `all: true`. */
