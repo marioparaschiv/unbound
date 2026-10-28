@@ -208,14 +208,14 @@ impl<'a> Rows<'a> {
 		let edit_path = value_path.clone();
 		let row = base_row(&path, depth)
 			.child(chevron(expandable, expanded))
-			.when_some(hook.id, |row, id| {
-				row.child(
-					div()
-						.flex_none()
-						.text_color(theme::color(theme::TEXT_FAINT))
-						.child(format!("{id} ")),
-				)
-			})
+			.child(
+				div()
+					.flex_none()
+					.min_w(px(16.))
+					.pr(px(4.))
+					.text_color(theme::color(theme::TEXT_FAINT))
+					.children(hook.id.map(|id| id.to_string())),
+			)
 			.child(
 				div()
 					.flex_none()

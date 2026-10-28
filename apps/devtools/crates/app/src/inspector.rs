@@ -71,6 +71,11 @@ impl Workspace {
 	) -> impl IntoElement {
 		let id = element.id;
 		let highlighted = self.highlighted == Some(id);
+		// The store's name is authoritative; an inspection can arrive without one.
+		let name = match self.devtools.store().get(id) {
+			Some(stored) => stored.name.to_string(),
+			None => element.name.clone(),
+		};
 		div()
 			.flex_none()
 			.flex()
@@ -92,7 +97,7 @@ impl Workspace {
 							.truncate()
 							.text_size(theme::TEXT_TITLE)
 							.font_weight(FontWeight::SEMIBOLD)
-							.child(element.name.clone()),
+							.child(name),
 					)
 					.child(pill(
 						element.kind.label(),
@@ -259,7 +264,7 @@ impl Workspace {
 				}
 				mono_row(0.)
 					.text_color(theme::color(theme::TEXT_SECONDARY))
-					.child(div().min_w_0().truncate().child(location))
+					.child(div().min_w_0().overflow_hidden().text_ellipsis_start().child(location))
 					.into_any_element()
 			})
 			.collect();
