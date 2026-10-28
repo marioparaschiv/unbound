@@ -1,16 +1,10 @@
-import {
-	IconMagnifier,
-	IconMagnifierMinus,
-	IconPalette,
-	IconPlug,
-	IconPlus,
-	IconXmark,
-} from 'nucleo-micro-bold';
-import type { AddonSort, SortOrder } from '@unbound-app/contracts/addons';
-import type { ChangeEvent, ComponentType, FormEvent } from 'react';
-import { Link, useRouteContext } from '@tanstack/react-router';
-import { useMemo, useState, useTransition } from 'react';
+import { IconMagnifierMinus, IconPalette, IconPlug, IconPlus, IconXmark } from 'nucleo-micro-bold';
+import { Link, useRouteContext, useRouterState } from '@tanstack/react-router';
+import type { AddonSort } from '@unbound-app/contracts/addons';
+import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
 import debounce from '@unbound-app/utils/debounce';
+import type { ComponentType } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -21,18 +15,19 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from '~/components/ui/empty';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
-import type { MarketplacePage, MarketplaceSearch } from '~/lib/marketplace';
+import { filtersFromSearch, searchFromFilters, type AddonFilter } from '~/lib/addon-filters';
+import { TagList } from '~/components/addon-filters/filter-parts';
 import { staggerStyle } from '~/components/motion/reveal-style';
-import type { MarketplaceAddon } from '~/lib/marketplace-addon';
-import type { SortOption } from '~/components/sort-controls';
-import { fetchMarketplacePage } from '~/lib/marketplace';
+import { listingQuery } from '~/queries/marketplace/listing';
+import FilterBar from '~/components/addon-filters/filter-bar';
+import SortMenu from '~/components/addon-filters/sort-menu';
+import type { MarketplaceSearch } from '~/lib/marketplace';
 import type { CssVariables } from '~/lib/css-variables';
-import SortControls from '~/components/sort-controls';
 import PageHeader from '~/components/page-header';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
+import cn from '~/lib/cn';
 
 type ListingType = 'plugin' | 'theme';
 
@@ -49,16 +44,14 @@ type ListingCopy = {
 
 type AddonListingProps = {
 	type: ListingType;
-	page: MarketplacePage;
 	search: MarketplaceSearch;
 	onSearchChange: (search: MarketplaceSearch) => void;
 };
 
 type AddonResultsProps = {
 	type: ListingType;
-	page: MarketplacePage;
 	search: MarketplaceSearch;
-	onClearSearch: () => void;
+	onClearFilters: () => void;
 };
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -80,12 +73,6 @@ const COPY: Record<ListingType, ListingCopy> = {
 	},
 };
 
-const SORT_OPTIONS: SortOption<AddonSort>[] = [
-	{ value: 'name', label: 'Name' },
-	{ value: 'created', label: 'Date' },
-	{ value: 'updated', label: 'Last Updated' },
-];
-
 function SubmitButton() {
 	const session = useRouteContext({ from: '__root__', select: (context) => context.session });
 
@@ -99,32 +86,27 @@ function SubmitButton() {
 	);
 }
 
-// Keyed by the search, so a new search starts again from the loader's first page.
-function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) {
+function AddonResults({ type, search, onClearFilters }: AddonResultsProps) {
 	const copy = COPY[type];
-	const [addons, setAddons] = useState<MarketplaceAddon[]>(page.addons);
-	const [cursor, setCursor] = useState(page.nextCursor);
+	const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
+		listingQuery(type, search),
+	);
+	// A new search or filter keeps the old cards up, dimmed, until the loader has its results.
+	const loading = useRouterState({ select: (state) => state.status === 'pending' });
+	const addons = data.pages.flatMap((page) => page.addons);
 	// The newest page staggers in from its own first card rather than from the top of the grid.
-	const [batchStart, setBatchStart] = useState(0);
-	const [loading, startLoading] = useTransition();
+	const batchStart = addons.length - (data.pages.at(-1)?.addons.length ?? 0);
+	const filtered = Boolean(search.q) || filtersFromSearch(search).length > 0;
 
-	function loadMore() {
-		if (!cursor) return;
+	async function loadMore() {
+		const result = await fetchNextPage();
 
-		startLoading(async () => {
-			try {
-				const next = await fetchMarketplacePage({ data: { ...search, type, cursor } });
-
-				setBatchStart(addons.length);
-				setAddons((previous) => [...previous, ...next.addons]);
-				setCursor(next.nextCursor);
-			} catch (error) {
-				toast.error(`Failed to load more ${copy.plural}: ${String(error)}`);
-			}
-		});
+		if (result.isError) {
+			toast.error(`Failed to load more ${copy.plural}: ${String(result.error)}`);
+		}
 	}
 
-	if (addons.length === 0 && !search.q) {
+	if (addons.length === 0 && !filtered) {
 		return (
 			<Empty className='flex-1 my-auto'>
 				<EmptyHeader>
@@ -148,15 +130,15 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 					<EmptyMedia variant='icon'>
 						<IconMagnifierMinus size={24} />
 					</EmptyMedia>
-					<EmptyTitle>No {copy.title} Found</EmptyTitle>
+					<EmptyTitle>No Results</EmptyTitle>
 					<EmptyDescription>
-						No {copy.plural} match your search. Try adjusting your search terms.
+						No {copy.plural} match this search and these filters.
 					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
-					<Button onClick={onClearSearch}>
+					<Button onClick={onClearFilters}>
 						<IconXmark size={24} />
-						Clear Search
+						Clear Filters
 					</Button>
 				</EmptyContent>
 			</Empty>
@@ -165,21 +147,30 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 
 	return (
 		<>
-			<div style={GRID_STYLE} className='fill-grid'>
+			<div
+				style={GRID_STYLE}
+				aria-busy={loading}
+				className={cn('transition-opacity fill-grid', loading ? 'opacity-60' : null)}
+			>
 				{addons.map((addon, index) => (
 					<AddonCard
 						addon={addon}
 						key={addon.id}
 						className='animate-reveal'
 						style={staggerStyle(Math.max(index - batchStart, 0))}
+						details={addon.tags.length > 0 ? <TagList tags={addon.tags} /> : null}
 					/>
 				))}
 			</div>
 
-			{cursor ? (
+			{hasNextPage ? (
 				<div className='flex justify-center border-t border-border pt-4'>
-					<Button variant='outline' onClick={loadMore} disabled={loading}>
-						{loading ? <Spinner /> : null}
+					<Button
+						variant='outline'
+						onClick={() => void loadMore()}
+						disabled={isFetchingNextPage}
+					>
+						{isFetchingNextPage ? <Spinner /> : null}
 						Load More
 					</Button>
 				</div>
@@ -188,9 +179,10 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 	);
 }
 
-function AddonListing({ type, page, search, onSearchChange }: AddonListingProps) {
+function AddonListing({ type, search, onSearchChange }: AddonListingProps) {
 	const copy = COPY[type];
 	const [searchInput, setSearchInput] = useState(search.q ?? '');
+	const filters = filtersFromSearch(search);
 
 	const searchLater = useMemo(
 		() =>
@@ -201,65 +193,45 @@ function AddonListing({ type, page, search, onSearchChange }: AddonListingProps)
 		[onSearchChange, search],
 	);
 
-	function handleSubmit(event: FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-		onSearchChange({ ...search, q: searchInput || undefined });
+	function changeQuery(q: string) {
+		setSearchInput(q);
+		searchLater(q);
 	}
 
-	function handleChange(event: ChangeEvent<HTMLInputElement>) {
-		setSearchInput(event.target.value);
-		searchLater(event.target.value);
+	function changeFilters(next: AddonFilter[]) {
+		onSearchChange({ ...search, ...searchFromFilters(next) });
 	}
 
-	function clearSearch() {
+	function clearFilters() {
 		setSearchInput('');
-		onSearchChange({ ...search, q: undefined });
+		onSearchChange({ ...search, ...searchFromFilters([]), q: undefined });
 	}
 
-	function changeSort(sort: AddonSort, order: SortOrder) {
-		// The defaults stay out of the URL so the bare path is the canonical first page.
-		onSearchChange({
-			...search,
-			sort: sort === 'name' ? undefined : sort,
-			order: order === 'asc' ? undefined : order,
-		});
+	function changeSort(sort: AddonSort) {
+		// The default stays out of the URL so the bare path is the canonical first page.
+		onSearchChange({ ...search, sort: sort === 'name' ? undefined : sort });
 	}
 
 	return (
 		<div className='flex flex-col flex-1 gap-6 page-frame'>
 			<PageHeader title={copy.title} description={copy.description} />
 			<div className='flex flex-col flex-1 gap-6'>
-				<form
-					onSubmit={handleSubmit}
-					className='flex flex-wrap sm:flex-nowrap gap-x-2 gap-y-3'
-				>
-					<InputGroup className='w-full'>
-						<InputGroupAddon>
-							<IconMagnifier size={24} />
-						</InputGroupAddon>
-						<InputGroupInput
-							className='h-full'
-							placeholder={`Search ${copy.title}...`}
-							value={searchInput}
-							onChange={handleChange}
-						/>
-					</InputGroup>
-					<SortControls
-						options={SORT_OPTIONS}
-						value={search.sort ?? 'name'}
-						order={search.order ?? 'asc'}
-						onChange={changeSort}
-					/>
-					<SubmitButton />
-				</form>
-
-				<AddonResults
-					key={`${search.q}|${search.sort}|${search.order}`}
+				<FilterBar
 					type={type}
-					page={page}
-					search={search}
-					onClearSearch={clearSearch}
+					filters={filters}
+					onFiltersChange={changeFilters}
+					query={searchInput}
+					onQueryChange={changeQuery}
+					placeholder={`Search ${copy.title}...`}
+					actions={
+						<>
+							<SortMenu value={search.sort ?? 'name'} onChange={changeSort} />
+							<SubmitButton />
+						</>
+					}
 				/>
+
+				<AddonResults type={type} search={search} onClearFilters={clearFilters} />
 			</div>
 		</div>
 	);

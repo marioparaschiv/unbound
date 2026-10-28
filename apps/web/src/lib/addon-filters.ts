@@ -6,6 +6,9 @@ import type {
 	SortOrder,
 } from '@unbound-app/contracts/addons';
 
+import type { AuthorOption } from '~/lib/authors/directory';
+import type { TagOption } from '~/lib/addon-tags';
+
 export type FilterField = 'tag' | 'author' | 'updated';
 
 /** One condition, Linear style: a field, how it compares, and the picked values. */
@@ -79,6 +82,36 @@ export const SORT_OPTIONS: SortDefinition[] = [
  */
 export function splitList(list: string | undefined): string[] {
 	return list ? [...new Set(list.split(','))] : [];
+}
+
+/**
+ * @description Turns tags into menu rows, each with its dot and count.
+ * @param tags The tags.
+ * @returns The rows.
+ */
+export function tagOptions(tags: TagOption[]): FilterOption[] {
+	return tags.map((tag) => ({
+		value: tag.id,
+		label: tag.label,
+		color: tag.color,
+		avatarUrl: null,
+		count: tag.count,
+	}));
+}
+
+/**
+ * @description Turns authors into menu rows, each with its avatar and count.
+ * @param authors The authors.
+ * @returns The rows.
+ */
+export function authorOptions(authors: AuthorOption[]): FilterOption[] {
+	return authors.map((author) => ({
+		value: author.id,
+		label: author.name,
+		color: null,
+		avatarUrl: author.avatarUrl,
+		count: author.count,
+	}));
 }
 
 /**
@@ -242,6 +275,8 @@ export default {
 	UPDATED_WINDOWS,
 	SORT_OPTIONS,
 	splitList,
+	tagOptions,
+	authorOptions,
 	sortOrder,
 	filtersFromSearch,
 	searchFromFilters,

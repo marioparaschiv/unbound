@@ -1,6 +1,7 @@
 import { animated, useReducedMotion, useTransition } from '@react-spring/web';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { AddonType } from '@unbound-app/contracts/addons';
 import { cloneElement, useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import type { ReactElement, ReactNode } from 'react';
 import { IconChevronLeft } from 'nucleo-micro-bold';
 
@@ -11,14 +12,23 @@ import {
 	BottomSheetTitle,
 	BottomSheetTrigger,
 } from '~/components/ui/bottom-sheet';
-import MorphHeight, { MORPH_EXPO, MORPH_SPRING } from '~/components/prototype/morph-height';
-import type { AddonFilter, FilterField, TaggedAddon } from '~/lib/prototype/addon-filters';
-import { CommandList, FieldIcon, OptionMark } from '~/components/prototype/filter-parts';
-import type { CommandItem, CommandListProps } from '~/components/prototype/filter-parts';
-import { FIELD_ORDER, FIELDS, toggleFilterValue } from '~/lib/prototype/addon-filters';
+import {
+	FIELD_ORDER,
+	FIELDS,
+	tagOptions,
+	toggleFilterValue,
+	UPDATED_WINDOWS,
+	type AddonFilter,
+	type FilterField,
+	type FilterOption,
+} from '~/lib/addon-filters';
+import MorphHeight, { MORPH_EXPO, MORPH_SPRING } from '~/components/addon-filters/morph-height';
+import { CommandList, FieldIcon, OptionMark } from '~/components/addon-filters/filter-parts';
+import type { CommandItem, CommandListProps } from '~/components/addon-filters/filter-parts';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
-import useAuthorPages from '~/queries/prototype/use-author-pages';
-import { authorsQuery } from '~/queries/prototype/authors';
+import useAuthorPages from '~/queries/marketplace/use-author-pages';
+import { authorsQuery } from '~/queries/marketplace/authors';
+import { tagsQuery } from '~/queries/marketplace/tags';
 import { buttonVariants } from '~/components/ui/button';
 import useIsMobile from '~/hooks/use-is-mobile';
 import cn from '~/lib/cn';
@@ -37,7 +47,8 @@ type ViewStyle = {
 const VIEW_BLUR = 3;
 
 type FilterMenuProps = {
-	addons: TaggedAddon[];
+	/** The listing's addon type, which scopes the tag counts and the author search. */
+	type: AddonType;
 	filters: AddonFilter[];
 	onChange: (filters: AddonFilter[]) => void;
 	/** Opens straight into one field's values, as a chip's value segment does. */
@@ -51,7 +62,7 @@ type FilterMenuProps = {
 
 /** Linear's filter menu: pick a field, then tick its values; typing at the top level searches every value. */
 function FilterMenu({
-	addons,
+	type,
 	filters,
 	onChange,
 	field: fixedField,
@@ -66,20 +77,31 @@ function FilterMenu({
 	const reduced = useReducedMotion();
 	const mobile = useIsMobile();
 	// Authors can run to thousands, so their list pages in from the server instead of arriving whole.
-	const authors = useAuthorPages(open && field === 'author', query);
+	// Typing at the top level searches them through the same endpoint.
+	const authors = useAuthorPages(
+		type,
+		open && (field === 'author' || (field === null && query.trim() !== '')),
+		query,
+	);
+	const tags = useQuery({ ...tagsQuery(type), select: tagOptions });
 	const queryClient = useQueryClient();
+	const options: Record<FilterField, FilterOption[]> = {
+		tag: tags.data ?? [],
+		author: authors.options,
+		updated: UPDATED_WINDOWS,
+	};
 
 	// Fills the cache the Author view reads, so opening it after a hover shows rows, not skeletons.
 	function prefetchAuthors() {
-		void queryClient.prefetchInfiniteQuery(authorsQuery(''));
+		void queryClient.prefetchInfiniteQuery(authorsQuery(type, ''));
 	}
 
 	// Phones have no hover to predict a tap, so the sheet warms the author list as it opens.
 	useEffect(() => {
 		if (open && mobile) {
-			void queryClient.prefetchInfiniteQuery(authorsQuery(''));
+			void queryClient.prefetchInfiniteQuery(authorsQuery(type, ''));
 		}
-	}, [open, mobile, queryClient]);
+	}, [open, mobile, queryClient, type]);
 
 	function changeOpen(next: boolean) {
 		onOpenChange(next);
@@ -90,14 +112,10 @@ function FilterMenu({
 		setQuery('');
 	}
 
-	function valueItems(
-		target: FilterField,
-		prefixed: boolean,
-		options = FIELDS[target].options(addons),
-	): CommandItem[] {
+	function valueItems(target: FilterField, prefixed: boolean): CommandItem[] {
 		const picked = filters.find((filter) => filter.field === target)?.values ?? [];
 
-		return options.map((option) => ({
+		return options[target].map((option) => ({
 			key: `${target}:${option.value}`,
 			label: option.label,
 			prefix: prefixed ? `${FIELDS[target].label} ›` : undefined,
@@ -130,7 +148,7 @@ function FilterMenu({
 	const back = field && !fixedField ? () => setField(null) : undefined;
 	const paged = field === 'author';
 	const items = field
-		? valueItems(field, false, paged ? authors.options : undefined)
+		? valueItems(field, false)
 		: query
 			? [...fieldItems, ...FIELD_ORDER.flatMap((candidate) => valueItems(candidate, true))]
 			: fieldItems;

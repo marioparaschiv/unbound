@@ -1,6 +1,21 @@
 import { IconBarsFilter, IconMagnifier, IconPlus, IconXmark } from 'nucleo-micro-bold';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import type { AddonType } from '@unbound-app/contracts/addons';
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 
+import {
+	authorOptions,
+	FIELDS,
+	operatorLabel,
+	removeFilter,
+	setFilterOperator,
+	tagOptions,
+	UPDATED_WINDOWS,
+	windowLabel,
+	type AddonFilter,
+	type FilterOption,
+} from '~/lib/addon-filters';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -8,35 +23,61 @@ import {
 	DropdownMenuRadioItem,
 	DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
-import {
-	FIELDS,
-	operatorLabel,
-	removeFilter,
-	setFilterOperator,
-	valueLabel,
-} from '~/lib/prototype/addon-filters';
-import type { AddonFilter, FilterOperator, TaggedAddon } from '~/lib/prototype/addon-filters';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
-import type { FilterBarProps } from '~/components/prototype/prototype-listing';
-import { FieldIcon, OptionMark } from '~/components/prototype/filter-parts';
-import FilterMenu from '~/components/prototype/filter-menu';
+import { FieldIcon, OptionMark } from '~/components/addon-filters/filter-parts';
+import { pickedAuthorsQuery } from '~/queries/marketplace/authors';
+import FilterMenu from '~/components/addon-filters/filter-menu';
+import { tagsQuery } from '~/queries/marketplace/tags';
 import { buttonVariants } from '~/components/ui/button';
 import cn from '~/lib/cn';
 
+type FilterBarProps = {
+	type: AddonType;
+	filters: AddonFilter[];
+	onFiltersChange: (filters: AddonFilter[]) => void;
+	query: string;
+	onQueryChange: (query: string) => void;
+	placeholder: string;
+	/** The controls after the Filter button, such as the sort menu. */
+	actions: ReactNode;
+};
+
 type FilterChipProps = {
+	type: AddonType;
 	filter: AddonFilter;
-	addons: TaggedAddon[];
 	filters: AddonFilter[];
 	onChange: (filters: AddonFilter[]) => void;
 };
 
+type ValueSummaryProps = Pick<FilterChipProps, 'type' | 'filter'>;
+
 const SEGMENT =
 	'flex items-center gap-1.5 px-2 h-full hover:bg-accent transition-colors outline-none';
 
-function ValueSummary({ filter, addons }: Pick<FilterChipProps, 'filter' | 'addons'>) {
-	const options = FIELDS[filter.field]
-		.options(addons)
-		.filter((option) => filter.values.includes(option.value));
+// The picked values' rows, read from the caches the menu fills; a value not loaded yet shows its id.
+function usePickedOptions({ type, filter }: ValueSummaryProps): FilterOption[] {
+	const tags = useQuery({ ...tagsQuery(type), select: tagOptions });
+	const authors = useQuery({
+		...pickedAuthorsQuery(filter.field === 'author' ? filter.values : []),
+		enabled: filter.field === 'author',
+		select: authorOptions,
+		placeholderData: keepPreviousData,
+	});
+	const known = { tag: tags.data, author: authors.data, updated: UPDATED_WINDOWS }[filter.field];
+
+	return filter.values.map(
+		(value) =>
+			known?.find((option) => option.value === value) ?? {
+				value,
+				label: filter.field === 'updated' ? windowLabel(value) : value,
+				color: null,
+				avatarUrl: null,
+			},
+	);
+}
+
+function ValueSummary({ type, filter }: ValueSummaryProps) {
+	const options = usePickedOptions({ type, filter });
 
 	return (
 		<>
@@ -46,16 +87,16 @@ function ValueSummary({ filter, addons }: Pick<FilterChipProps, 'filter' | 'addo
 				))}
 			</span>
 			<span>
-				{filter.values.length > 2
-					? `${filter.values.length} ${FIELDS[filter.field].plural}`
-					: filter.values.map((value) => valueLabel(filter.field, value)).join(', ')}
+				{options.length > 2
+					? `${options.length} ${FIELDS[filter.field].plural}`
+					: options.map((option) => option.label).join(', ')}
 			</span>
 		</>
 	);
 }
 
 /** One condition as Linear draws it: field, operator, values and a remove button, each its own hit target. */
-function FilterChip({ filter, addons, filters, onChange }: FilterChipProps) {
+function FilterChip({ type, filter, filters, onChange }: FilterChipProps) {
 	const [open, setOpen] = useState(false);
 	const field = FIELDS[filter.field];
 
@@ -72,15 +113,15 @@ function FilterChip({ filter, addons, filters, onChange }: FilterChipProps) {
 				<DropdownMenuContent align='start'>
 					<DropdownMenuRadioGroup
 						value={filter.operator}
-						onValueChange={(operator) =>
-							onChange(
-								setFilterOperator(
-									filters,
-									filter.field,
-									operator as FilterOperator,
-								),
-							)
-						}
+						onValueChange={(next) => {
+							const operator = field.operators.find(
+								(candidate) => candidate === next,
+							);
+
+							if (operator) {
+								onChange(setFilterOperator(filters, filter.field, operator));
+							}
+						}}
 					>
 						{field.operators.map((operator) => (
 							<DropdownMenuRadioItem key={operator} value={operator}>
@@ -91,7 +132,7 @@ function FilterChip({ filter, addons, filters, onChange }: FilterChipProps) {
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<FilterMenu
-				addons={addons}
+				type={type}
 				filters={filters}
 				onChange={onChange}
 				field={filter.field}
@@ -100,7 +141,7 @@ function FilterChip({ filter, addons, filters, onChange }: FilterChipProps) {
 				triggerClassName={cn(SEGMENT, 'font-medium')}
 				triggerLabel={`Edit ${field.label}`}
 			>
-				<ValueSummary filter={filter} addons={addons} />
+				<ValueSummary type={type} filter={filter} />
 			</FilterMenu>
 			<button
 				type='button'
@@ -114,25 +155,32 @@ function FilterChip({ filter, addons, filters, onChange }: FilterChipProps) {
 	);
 }
 
-function LinearFilterBar({
-	addons,
-	results,
+/**
+ * @description The listing's search field, Linear-style Filter menu and condition chips; F opens the menu.
+ * @param props The listing type, the filters, the search text and the controls beside the Filter button.
+ * @returns The bar.
+ */
+function FilterBar({
+	type,
 	filters,
 	onFiltersChange,
 	query,
 	onQueryChange,
-	sort,
+	placeholder,
+	actions,
 }: FilterBarProps) {
 	const [menuOpen, setMenuOpen] = useState(false);
 
 	// Linear opens the filter menu on F from anywhere outside a text field.
 	useEffect(() => {
 		function handleKeyDown(event: KeyboardEvent) {
-			const target = event.target as HTMLElement;
+			const target = event.target;
 
-			if (event.key !== 'f' || event.metaKey || event.ctrlKey) return;
+			if (event.key !== 'f' || event.metaKey || event.ctrlKey || event.altKey) return;
 
-			if (target.closest('input, textarea, [contenteditable]')) return;
+			if (target instanceof Element && target.closest('input, textarea, [contenteditable]')) {
+				return;
+			}
 
 			event.preventDefault();
 			setMenuOpen(true);
@@ -152,13 +200,13 @@ function LinearFilterBar({
 					</InputGroupAddon>
 					<InputGroupInput
 						className='h-full'
-						placeholder='Search Plugins...'
+						placeholder={placeholder}
 						value={query}
 						onChange={(event) => onQueryChange(event.target.value)}
 					/>
 				</InputGroup>
 				<FilterMenu
-					addons={addons}
+					type={type}
 					filters={filters}
 					onChange={onFiltersChange}
 					open={menuOpen}
@@ -175,15 +223,15 @@ function LinearFilterBar({
 						F
 					</kbd>
 				</FilterMenu>
-				{sort}
+				{actions}
 			</div>
 			{filters.length > 0 ? (
 				<div className='flex flex-wrap items-center gap-2'>
 					{filters.map((filter) => (
 						<FilterChip
 							key={filter.field}
+							type={type}
 							filter={filter}
-							addons={addons}
 							filters={filters}
 							onChange={onFiltersChange}
 						/>
@@ -196,13 +244,10 @@ function LinearFilterBar({
 					>
 						<IconPlus className='size-3.5' />
 					</button>
-					<span className='ml-auto text-muted-foreground text-sm tabular-nums'>
-						{results.length} of {addons.length}
-					</span>
 					<button
 						type='button'
 						onClick={() => onFiltersChange([])}
-						className='font-medium text-muted-foreground hover:text-foreground text-sm'
+						className='ml-auto font-medium text-muted-foreground hover:text-foreground text-sm'
 					>
 						Clear
 					</button>
@@ -212,4 +257,4 @@ function LinearFilterBar({
 	);
 }
 
-export default LinearFilterBar;
+export default FilterBar;

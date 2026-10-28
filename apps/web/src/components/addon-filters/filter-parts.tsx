@@ -9,10 +9,10 @@ import {
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 
-import type { FilterField, FilterOption, TaggedAddon } from '~/lib/prototype/addon-filters';
-import { EndSentinel, SkeletonRows } from '~/components/prototype/skeleton-rows';
-import { getTag } from '~/lib/prototype/addon-filters';
+import { EndSentinel, SkeletonRows } from '~/components/addon-filters/skeleton-rows';
+import type { FilterField, FilterOption } from '~/lib/addon-filters';
 import UserAvatar from '~/components/user-avatar';
+import type { AddonTag } from '~/lib/addon-tags';
 import cn from '~/lib/cn';
 
 export type CommandItem = {
@@ -69,7 +69,7 @@ type TagDotProps = {
 };
 
 type TagListProps = {
-	addon: TaggedAddon;
+	tags: AddonTag[];
 };
 
 const FIELD_ICONS = { tag: IconTag, author: IconUser, updated: IconCalendar };
@@ -87,11 +87,16 @@ export function FieldIcon({ field, className }: FieldIconProps) {
 
 /**
  * @description A tag's colour dot.
- * @param props The Tailwind background class and extra classes.
+ * @param props The tag's CSS color and extra classes.
  * @returns The dot.
  */
 export function TagDot({ color, className }: TagDotProps) {
-	return <span className={cn('rounded-full size-2 shrink-0', color, className)} />;
+	return (
+		<span
+			style={{ backgroundColor: color }}
+			className={cn('rounded-full size-2 shrink-0', className)}
+		/>
+	);
 }
 
 /**
@@ -119,28 +124,22 @@ export function OptionMark({ field, option, size = 'sm' }: OptionMarkProps) {
 }
 
 /**
- * @description The tags under an addon card, each a coloured dot and its name.
- * @param props The addon whose tags to show.
+ * @description The tags under an addon card on one line, each a coloured dot and its name.
+ * @param props The tags to show.
  * @returns The tag row.
  */
-export function TagList({ addon }: TagListProps) {
+export function TagList({ tags }: TagListProps) {
 	return (
 		<div className='flex gap-1.5 min-w-0 overflow-hidden'>
-			{addon.tags.map((id) => {
-				const tag = getTag(id);
-
-				if (!tag) return null;
-
-				return (
-					<span
-						key={id}
-						className='inline-flex items-center gap-1.5 px-2 py-0.5 border border-border rounded-full font-medium text-[11px] text-muted-foreground'
-					>
-						<TagDot color={tag.color} className='size-1.5' />
-						{tag.label}
-					</span>
-				);
-			})}
+			{tags.map((tag) => (
+				<span
+					key={tag.id}
+					className='inline-flex items-center gap-1.5 px-2 py-0.5 border border-border rounded-full font-medium text-[11px] text-muted-foreground whitespace-nowrap shrink-0'
+				>
+					<TagDot color={tag.color} className='size-1.5' />
+					{tag.label}
+				</span>
+			))}
 		</div>
 	);
 }

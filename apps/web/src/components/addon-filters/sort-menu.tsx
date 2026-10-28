@@ -15,15 +15,16 @@ import {
 	BottomSheetTitle,
 	BottomSheetTrigger,
 } from '~/components/ui/bottom-sheet';
-import type { ListingSort } from '~/lib/prototype/addon-filters';
-import { SORT_OPTIONS } from '~/lib/prototype/addon-filters';
+import type { AddonSort } from '@unbound-app/contracts/addons';
+
+import { SORT_OPTIONS } from '~/lib/addon-filters';
 import { buttonVariants } from '~/components/ui/button';
 import useIsMobile from '~/hooks/use-is-mobile';
 import cn from '~/lib/cn';
 
 type SortMenuProps = {
-	value: ListingSort;
-	onChange: (sort: ListingSort) => void;
+	value: AddonSort;
+	onChange: (sort: AddonSort) => void;
 };
 
 /**

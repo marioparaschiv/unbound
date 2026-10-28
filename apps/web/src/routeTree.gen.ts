@@ -27,9 +27,6 @@ import { Route as SiteStaffReviewRouteImport } from './routes/_site/_staff/revie
 import { Route as SiteAddonsIdRouteImport } from './routes/_site/addons/$id'
 import { Route as SiteDevelopersIndexRouteImport } from './routes/_site/developers/index'
 import { Route as SiteDevelopersDiscordIdRouteImport } from './routes/_site/developers/$discordId'
-import { Route as SiteFiltersFacetsRouteImport } from './routes/_site/filters/facets'
-import { Route as SiteFiltersLinearRouteImport } from './routes/_site/filters/linear'
-import { Route as SiteFiltersQueryRouteImport } from './routes/_site/filters/query'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1AddonsRouteImport } from './routes/api/v1/addons'
 import { Route as ApiV1CatalogRouteImport } from './routes/api/v1/catalog'
@@ -151,21 +148,6 @@ const SiteDevelopersIndexRoute = SiteDevelopersIndexRouteImport.update({
 const SiteDevelopersDiscordIdRoute = SiteDevelopersDiscordIdRouteImport.update({
   id: '/developers/$discordId',
   path: '/developers/$discordId',
-  getParentRoute: () => SiteRouteRoute,
-} as any)
-const SiteFiltersFacetsRoute = SiteFiltersFacetsRouteImport.update({
-  id: '/filters/facets',
-  path: '/filters/facets',
-  getParentRoute: () => SiteRouteRoute,
-} as any)
-const SiteFiltersLinearRoute = SiteFiltersLinearRouteImport.update({
-  id: '/filters/linear',
-  path: '/filters/linear',
-  getParentRoute: () => SiteRouteRoute,
-} as any)
-const SiteFiltersQueryRoute = SiteFiltersQueryRouteImport.update({
-  id: '/filters/query',
-  path: '/filters/query',
   getParentRoute: () => SiteRouteRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -362,9 +344,6 @@ export interface FileRoutesByFullPath {
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
   '/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
-  '/filters/facets': typeof SiteFiltersFacetsRoute
-  '/filters/linear': typeof SiteFiltersLinearRoute
-  '/filters/query': typeof SiteFiltersQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -417,9 +396,6 @@ export interface FileRoutesByTo {
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
   '/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
-  '/filters/facets': typeof SiteFiltersFacetsRoute
-  '/filters/linear': typeof SiteFiltersLinearRoute
-  '/filters/query': typeof SiteFiltersQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -475,9 +451,6 @@ export interface FileRoutesById {
   '/_site/_staff/review': typeof SiteStaffReviewRoute
   '/_site/addons/$id': typeof SiteAddonsIdRoute
   '/_site/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
-  '/_site/filters/facets': typeof SiteFiltersFacetsRoute
-  '/_site/filters/linear': typeof SiteFiltersLinearRoute
-  '/_site/filters/query': typeof SiteFiltersQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -532,9 +505,6 @@ export interface FileRouteTypes {
     | '/review'
     | '/addons/$id'
     | '/developers/$discordId'
-    | '/filters/facets'
-    | '/filters/linear'
-    | '/filters/query'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -587,9 +557,6 @@ export interface FileRouteTypes {
     | '/review'
     | '/addons/$id'
     | '/developers/$discordId'
-    | '/filters/facets'
-    | '/filters/linear'
-    | '/filters/query'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -644,9 +611,6 @@ export interface FileRouteTypes {
     | '/_site/_staff/review'
     | '/_site/addons/$id'
     | '/_site/developers/$discordId'
-    | '/_site/filters/facets'
-    | '/_site/filters/linear'
-    | '/_site/filters/query'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -834,27 +798,6 @@ declare module '@tanstack/react-router' {
       path: '/developers/$discordId'
       fullPath: '/developers/$discordId'
       preLoaderRoute: typeof SiteDevelopersDiscordIdRouteImport
-      parentRoute: typeof SiteRouteRoute
-    }
-    '/_site/filters/facets': {
-      id: '/_site/filters/facets'
-      path: '/filters/facets'
-      fullPath: '/filters/facets'
-      preLoaderRoute: typeof SiteFiltersFacetsRouteImport
-      parentRoute: typeof SiteRouteRoute
-    }
-    '/_site/filters/linear': {
-      id: '/_site/filters/linear'
-      path: '/filters/linear'
-      fullPath: '/filters/linear'
-      preLoaderRoute: typeof SiteFiltersLinearRouteImport
-      parentRoute: typeof SiteRouteRoute
-    }
-    '/_site/filters/query': {
-      id: '/_site/filters/query'
-      path: '/filters/query'
-      fullPath: '/filters/query'
-      preLoaderRoute: typeof SiteFiltersQueryRouteImport
       parentRoute: typeof SiteRouteRoute
     }
     '/api/auth/$': {
@@ -1134,9 +1077,6 @@ interface SiteRouteRouteChildren {
   SiteIndexRoute: typeof SiteIndexRoute
   SiteAddonsIdRoute: typeof SiteAddonsIdRoute
   SiteDevelopersDiscordIdRoute: typeof SiteDevelopersDiscordIdRoute
-  SiteFiltersFacetsRoute: typeof SiteFiltersFacetsRoute
-  SiteFiltersLinearRoute: typeof SiteFiltersLinearRoute
-  SiteFiltersQueryRoute: typeof SiteFiltersQueryRoute
   SiteDevelopersIndexRoute: typeof SiteDevelopersIndexRoute
 }
 
@@ -1154,9 +1094,6 @@ const SiteRouteRouteChildren: SiteRouteRouteChildren = {
   SiteIndexRoute: SiteIndexRoute,
   SiteAddonsIdRoute: SiteAddonsIdRoute,
   SiteDevelopersDiscordIdRoute: SiteDevelopersDiscordIdRoute,
-  SiteFiltersFacetsRoute: SiteFiltersFacetsRoute,
-  SiteFiltersLinearRoute: SiteFiltersLinearRoute,
-  SiteFiltersQueryRoute: SiteFiltersQueryRoute,
   SiteDevelopersIndexRoute: SiteDevelopersIndexRoute,
 }
 
