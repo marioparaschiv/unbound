@@ -1,0 +1,249 @@
+/** A Discord user, as the user store returns it. Only the fields commands rely on. */
+export type CommandUser = {
+	id: string;
+	username: string;
+	globalName?: string | null;
+	bot?: boolean;
+};
+
+/** A Discord channel, as the channel store returns it. */
+export type CommandChannel = {
+	id: string;
+	type: number;
+	name?: string;
+	guild_id?: string | null;
+};
+
+/** A Discord guild. */
+export type CommandGuild = {
+	id: string;
+	name: string;
+};
+
+/** A Discord guild role. */
+export type CommandRole = {
+	id: string;
+	name: string;
+	color?: number;
+};
+
+/** Where a command runs. Discord never runs a command without a channel. */
+export type CommandContext = {
+	channel: CommandChannel;
+	guild: CommandGuild | undefined;
+};
+
+/** An option value as Discord passes it. User, channel and role options arrive as id strings. */
+export type RawOptionValue = string | number | boolean;
+
+/** What autocomplete sees: where it runs and the raw values of the other options filled in so far. */
+export type AutocompleteContext = CommandContext & {
+	values: Readonly<Record<string, RawOptionValue>>;
+};
+
+/** A value with the label the picker shows for it. */
+export type ChoiceWithLabel<V extends string | number> = {
+	label: string;
+	value: V;
+};
+
+/** A choice or suggestion: a bare value, shown as itself, or a value with a label. */
+export type Choice<V extends string | number> = V | ChoiceWithLabel<V>;
+
+/** A value, or a promise of one. */
+export type Awaitable<T> = T | Promise<T>;
+
+/** Suggests values for an option while the user types. At most 25 are shown. */
+export type Autocomplete<V extends string | number> = (
+	query: string,
+	context: AutocompleteContext,
+) => Awaitable<readonly Choice<V>[]>;
+
+/** A field of an embed in an ephemeral reply. */
+export type ReplyEmbedField = {
+	name: string;
+	value: string;
+	inline?: boolean;
+};
+
+/** An embed in an ephemeral reply. */
+export type ReplyEmbed = {
+	title?: string;
+	description?: string;
+	url?: string;
+	color?: number;
+	fields?: readonly ReplyEmbedField[];
+};
+
+/** Sent by Discord as a normal message from the user. */
+export type PublicReply = {
+	content: string;
+	tts?: boolean;
+};
+
+/** Shown only to the user, as a bot message. */
+export type EphemeralReply = {
+	ephemeral: true;
+	content?: string;
+	embeds?: readonly ReplyEmbed[];
+};
+
+/** What `execute` returns. A string is shorthand for `{ content }`; nothing means the command did its own work. */
+export type Reply = string | PublicReply | EphemeralReply | undefined | void;
+
+/** An asset id from `assets.Icons`, or a `data:` or `https:` uri. */
+export type IconSource = number | string;
+
+/** A section of the `/` picker owned by one owner. */
+export type SectionInput = {
+	name: string;
+	icon?: IconSource;
+};
+
+/** Options of `createCommands`. */
+export type CommandsOptions = {
+	/** The owner's own picker section. Omitted, commands go in the shared Unbound section. */
+	section?: SectionInput;
+};
+
+/** Settings of `option.string`. */
+export type StringOptionSettings = {
+	minLength?: number;
+	maxLength?: number;
+	autocomplete?: Autocomplete<string>;
+};
+
+/** Settings of `option.integer` and `option.number`. */
+export type NumberOptionSettings = {
+	minValue?: number;
+	maxValue?: number;
+	autocomplete?: Autocomplete<number>;
+};
+
+/** Settings of `option.channel`. */
+export type ChannelOptionSettings = {
+	/** Discord channel types the picker offers. */
+	channelTypes?: readonly number[];
+};
+
+type NoSettings = Record<never, never>;
+
+/** Each option kind's handler value and builder settings. The client's kind table implements every key. */
+export type OptionKindTypes = {
+	string: { value: string; settings: StringOptionSettings };
+	integer: { value: number; settings: NumberOptionSettings };
+	number: { value: number; settings: NumberOptionSettings };
+	boolean: { value: boolean; settings: NoSettings };
+	user: { value: CommandUser; settings: NoSettings };
+	channel: { value: CommandChannel; settings: ChannelOptionSettings };
+	role: { value: CommandRole; settings: NoSettings };
+};
+
+/** The option kinds: one builder each on `option`. */
+export type OptionKind = keyof OptionKindTypes;
+
+/** The value a handler receives for a kind. */
+export type OptionValue<K extends OptionKind> = OptionKindTypes[K]['value'];
+
+/** The settings a kind's builder accepts beyond `description` and `required`. */
+export type OptionSettings<K extends OptionKind> = OptionKindTypes[K]['settings'];
+
+// Carries the parsed value type from a builder to `OptionArgs` without existing at runtime.
+declare const valueType: unique symbol;
+
+/** One declared option, made by an `option` builder. */
+export type OptionSpec<
+	K extends OptionKind = OptionKind,
+	R extends boolean = boolean,
+	V = OptionValue<K>,
+> = {
+	readonly kind: K;
+	readonly required: R;
+	readonly description: string | undefined;
+	readonly settings: OptionSettings<K>;
+	readonly choices: readonly Choice<string | number>[] | undefined;
+	readonly [valueType]?: V;
+};
+
+/** A handler's args, derived from its options: a required option is `V`, an optional one `V | undefined`. */
+export type OptionArgs<O> = {
+	[K in keyof O]: O[K] extends OptionSpec<infer _K, infer R, infer V>
+		? R extends true
+			? V
+			: V | undefined
+		: never;
+};
+
+/**
+ * A command that runs. `O` is inferred from `options` and types `execute`'s args.
+ * `execute` uses method syntax so its parameter stays bivariant and the registry can hold it erased.
+ */
+export type LeafCommand<O> = {
+	description: string;
+	options?: O;
+	execute(args: OptionArgs<O>, context: CommandContext): Awaitable<Reply>;
+	subcommands?: never;
+};
+
+/** A command that only groups subcommands: `/root sub` or `/root group sub`. */
+export type CommandGroup<S> = {
+	description: string;
+	subcommands: CommandTree<S>;
+	options?: never;
+	execute?: never;
+};
+
+/** A leaf or a group. */
+export type CommandNode<T> = LeafCommand<T> | CommandGroup<T>;
+
+/**
+ * Commands keyed by name, at every level. TypeScript infers `T` per key by reversing this mapped type,
+ * from `options` on a leaf and from `subcommands` on a group. A conditional type here breaks inference.
+ */
+export type CommandTree<T> = { [K in keyof T]: CommandNode<T[K]> };
+
+/** The handle `createCommands` returns, scoped to one owner. */
+export type CommandsHandle = {
+	/**
+	 * Adds commands. Registering a root name this owner already has replaces that whole command.
+	 * Returns a function that removes this call's commands; it is safe to call twice or after a sweep.
+	 */
+	register<T>(commands: CommandTree<T>): () => void;
+	/** Removes every command of this owner. */
+	unregisterAll(): void;
+};
+
+/** Settings every builder accepts. */
+export type BuilderInput<K extends OptionKind, R extends boolean> = OptionSettings<K> & {
+	description?: string;
+	required?: R;
+};
+
+/** Settings `option.choice` accepts. */
+export type ChoiceInput<R extends boolean> = {
+	description?: string;
+	required?: R;
+};
+
+/** One kind's builder. */
+export type OptionBuilder<K extends OptionKind> = <const R extends boolean = false>(
+	settings?: BuilderInput<K, R>,
+) => OptionSpec<K, R>;
+
+/** The kind a choice list maps to: strings are a string option, numbers an integer or number option. */
+export type ChoiceKind<V extends string | number> = V extends string
+	? 'string'
+	: 'integer' | 'number';
+
+/** The `option` builders: one per kind, plus `choice`. */
+export type OptionBuilders = { [K in OptionKind]: OptionBuilder<K> } & {
+	/**
+	 * Restricts an option to listed values; the handler gets their literal union.
+	 * @param choices Values, or `{ label, value }` pairs. 1 to 25, with unique labels.
+	 * @param settings The option's description and whether it is required.
+	 */
+	choice<const V extends string | number, const R extends boolean = false>(
+		choices: readonly Choice<V>[],
+		settings?: ChoiceInput<R>,
+	): OptionSpec<ChoiceKind<V>, R, V>;
+};
