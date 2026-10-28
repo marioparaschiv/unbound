@@ -43,6 +43,7 @@ jobs:
                   CONFIG_PRESENT_ATTESTATION_PK: ${{ secrets.ATTESTATION_PK != '' }}
                   CONFIG_PRESENT_GPG_KEY: ${{ secrets.GPG_KEY != '' }}
                   CONFIG_PRESENT_DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY != '' }}
+                  CONFIG_PRESENT_HERMES_SYNC_TOKEN: ${{ secrets.HERMES_SYNC_TOKEN != '' }}
                   CONFIG_PRESENT_UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY != '' }}
                   CONFIG_PRESENT_UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL != '' }}
                   CONFIG_PRESENT_S3_ENDPOINT: ${{ vars.S3_ENDPOINT != '' }}
