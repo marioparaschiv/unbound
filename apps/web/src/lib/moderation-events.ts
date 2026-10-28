@@ -311,6 +311,32 @@ export async function recordAuthAdminAction(db: Database, action: AuthAdminActio
 }
 
 /**
+ * @description Sets a user's role and records `user.role_set` in one transaction, as an admin's
+ * role change through Better Auth is recorded.
+ * @param db The database.
+ * @param userId The user.
+ * @param role The new role.
+ * @param meta Who changed it, `null` for the system, and when.
+ * @returns Resolves once the role is set.
+ */
+export async function setRoleWithRecord(
+	db: Database,
+	userId: string,
+	role: string,
+	meta: ActionMeta,
+): Promise<void> {
+	await db.transaction(async (tx) => {
+		await tx.update(user).set({ role, updatedAt: meta.at }).where(eq(user.id, userId));
+		await appendEvent(tx, {
+			subject: { type: 'user', id: userId },
+			...meta,
+			kind: 'user.role_set',
+			data: { role },
+		});
+	});
+}
+
+/**
  * @description Deletes a user and records `user.deleted` in one transaction, counting the open
  * submissions and staff notes the cascade removes. A failed delete records nothing.
  * @param db The database.
@@ -361,5 +387,6 @@ export default {
 	listEvents,
 	getEventTimeline,
 	recordAuthAdminAction,
+	setRoleWithRecord,
 	deleteUserWithRecord,
 };

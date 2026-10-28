@@ -47,6 +47,15 @@ export const envSchema = z.object({
 	DISCORD_PROFILE_TTL_SECONDS: positiveInt.default(86_400),
 	DISCORD_PROFILE_SWEEP_INTERVAL_SECONDS: positiveInt.default(3600),
 
+	/** The Unbound Discord server whose roles decide the Team page and staff site roles. */
+	DISCORD_GUILD_ID: z.string().regex(/^\d+$/).default('950850315601711176'),
+	/** The team role ids; while any is unset the team sync stays off. */
+	DISCORD_ADMIN_ROLE_ID: z.string().regex(/^\d+$/).optional(),
+	DISCORD_STAFF_ROLE_ID: z.string().regex(/^\d+$/).optional(),
+	DISCORD_DEVELOPMENT_TEAM_ROLE_ID: z.string().regex(/^\d+$/).optional(),
+	DISCORD_CONTRIBUTOR_ROLE_ID: z.string().regex(/^\d+$/).default('967799585844113418'),
+	TEAM_SYNC_INTERVAL_SECONDS: positiveInt.default(900),
+
 	/** The sponsored account. The webhook also needs the secret; the reconcile also needs the token. */
 	GITHUB_SPONSORS_LOGIN: z.string().min(1).optional(),
 	/** A token of the sponsored account that can read its sponsorships through GraphQL. */
