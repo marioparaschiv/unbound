@@ -42,7 +42,7 @@ impl Workspace {
 				.child(format!("Agents can attach at {url}"))
 		});
 		let label = if self.connecting {
-			"Connecting…"
+			"Connecting"
 		} else {
 			"Connect device"
 		};

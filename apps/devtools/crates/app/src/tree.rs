@@ -27,6 +27,8 @@ fn name_spans(element: &Element, matched: bool) -> gpui::Div {
 	div()
 		.flex()
 		.flex_none()
+		.font_family(theme::mono_font())
+		.text_size(theme::TEXT_MONO)
 		.child(div().text_color(theme::color(theme::TEXT_FAINT)).child("<"))
 		.child(
 			div()
@@ -53,11 +55,11 @@ fn name_spans(element: &Element, matched: bool) -> gpui::Div {
 		.child(div().text_color(theme::color(theme::TEXT_FAINT)).child(">"))
 }
 
-/// The width of one character of the monospace font at `size`.
-fn mono_advance(window: &Window, size: Pixels) -> f32 {
+/// The width of `text` in the UI font at `size`.
+fn ui_text_width(window: &Window, text: &str, size: Pixels) -> f32 {
 	let run = TextRun {
-		len: 1,
-		font: font(theme::mono_font()),
+		len: text.len(),
+		font: font(theme::ui_font()),
 		color: theme::hsla(theme::TEXT),
 		background_color: None,
 		underline: None,
@@ -66,7 +68,7 @@ fn mono_advance(window: &Window, size: Pixels) -> f32 {
 	f32::from(
 		window
 			.text_system()
-			.shape_line("0".into(), size, &[run], None)
+			.shape_line(SharedString::from(text.to_owned()), size, &[run], None)
 			.width(),
 	)
 }
@@ -187,15 +189,14 @@ impl Workspace {
 			.into_any_element()
 	}
 
-	/// The selection's ancestors, root first. When they overflow `width`, the farthest ones give
-	/// way to a leading ellipsis so the nearest stay visible.
+	/// The selection's ancestors, root first. When they overflow `width`, the farthest ones are
+	/// dropped and a leading chevron hints at them, so the nearest stay visible.
 	fn render_breadcrumbs(
 		&self,
 		width: f32,
 		window: &Window,
 		cx: &mut Context<Self>,
 	) -> impl IntoElement {
-		let advance = mono_advance(window, theme::TEXT_SMALL);
 		let store = self.devtools.store();
 		let mut chain: Vec<&Element> = Vec::new();
 		if let Some(selected) = self.selected.and_then(|id| store.get(id)) {
@@ -207,14 +208,13 @@ impl Workspace {
 			);
 		}
 		let separator = f32::from(theme::CHEVRON) + 2. * CRUMB_GAP;
-		let ellipsis = advance + 2. * CRUMB_PADDING + separator;
 		let mut budget = width - 2. * theme::INSET;
 		let mut shown = 0;
 		for (ix, element) in chain.iter().enumerate() {
-			let cost = element.name.chars().count() as f32 * advance
+			let cost = ui_text_width(window, &element.name, theme::TEXT_SMALL)
 				+ 2. * CRUMB_PADDING
 				+ if ix > 0 { separator } else { 0. };
-			let reserve = if ix + 1 < chain.len() { ellipsis } else { 0. };
+			let reserve = if ix + 1 < chain.len() { separator } else { 0. };
 			if cost + reserve > budget && shown > 0 {
 				break;
 			}
@@ -271,15 +271,6 @@ impl Workspace {
 						.px(px(CRUMB_PADDING))
 						.text_color(theme::color(theme::TEXT_FAINT))
 						.child("No selection"),
-				)
-			})
-			.when(truncated, |bar| {
-				bar.child(
-					div()
-						.flex_none()
-						.px(px(CRUMB_PADDING))
-						.text_color(theme::color(theme::TEXT_FAINT))
-						.child("…"),
 				)
 			})
 			.children(crumbs)
@@ -342,14 +333,8 @@ impl Workspace {
 					.min_h_0()
 					.flex()
 					.flex_col()
-					.font_family(theme::mono_font())
-					.text_size(theme::TEXT_MONO)
 					.child(list),
 			)
-			.child(
-				div()
-					.font_family(theme::mono_font())
-					.child(self.render_breadcrumbs(width, window, cx)),
-			)
+			.child(self.render_breadcrumbs(width, window, cx))
 	}
 }

@@ -79,6 +79,8 @@ fn base_row(path: &Path, depth: usize) -> gpui::Stateful<gpui::Div> {
 		.pr(px(theme::INSET))
 		.whitespace_nowrap()
 		.overflow_hidden()
+		.font_family(theme::mono_font())
+		.text_size(theme::TEXT_MONO)
 		.hover(|row| row.bg(theme::color(theme::HOVER)))
 }
 
@@ -176,8 +178,9 @@ impl<'a> Rows<'a> {
 				self.out.push(
 					base_row(&child(path, key("$loading")), depth)
 						.child(chevron(false, false))
+						.font_family(theme::ui_font())
 						.text_color(theme::color(theme::TEXT_FAINT))
-						.child("loading…")
+						.child("Loading")
 						.into_any_element(),
 				);
 			}

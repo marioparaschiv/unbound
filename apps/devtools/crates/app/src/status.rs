@@ -34,11 +34,10 @@ impl Workspace {
 			BridgeState::Unknown | BridgeState::DeviceConnected => None,
 		};
 		let counts = (status.elements > 0).then(|| {
-			format!(
-				"{} · {}",
+			[
 				plural(status.elements, "component", "components"),
 				plural(status.roots, "root", "roots"),
-			)
+			]
 		});
 		let mcp = status.mcp_url.clone().map(|url| {
 			let label = if self.copied {
@@ -75,7 +74,12 @@ impl Workspace {
 			)
 			.children(bridge.map(|bridge| div().flex_none().child(bridge)))
 			.child(div().flex_1())
-			.children(counts.map(|counts| div().flex_none().child(counts)))
+			.children(
+				counts
+					.into_iter()
+					.flatten()
+					.map(|count| div().flex_none().child(count)),
+			)
 			.children(mcp)
 	}
 }

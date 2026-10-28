@@ -20,16 +20,22 @@ fn centered(text: impl Into<SharedString>, color: u32) -> gpui::Div {
 		.child(text.into())
 }
 
-fn mono_row(depth: f32) -> gpui::Div {
+fn section_row() -> gpui::Div {
 	div()
 		.flex()
 		.items_center()
 		.gap(px(6.))
 		.min_h(theme::VALUE_ROW_HEIGHT)
-		.pl(px(theme::INSET + theme::INDENT + depth))
+		.pl(px(theme::INSET + theme::INDENT))
 		.pr(px(theme::INSET))
 		.whitespace_nowrap()
 		.overflow_hidden()
+}
+
+fn mono_row() -> gpui::Div {
+	section_row()
+		.font_family(theme::mono_font())
+		.text_size(theme::TEXT_MONO)
 }
 
 impl Workspace {
@@ -51,7 +57,7 @@ impl Workspace {
 		let Some(element) = inspection.element.as_ref() else {
 			return match &inspection.error {
 				Some(error) => panel.child(centered(error.clone(), theme::ERROR)),
-				None => panel.child(centered("Inspecting…", theme::TEXT_FAINT)),
+				None => panel.child(centered("Inspecting", theme::TEXT_FAINT)),
 			};
 		};
 		let sections = self.render_sections(inspection, element, cx);
@@ -63,8 +69,6 @@ impl Workspace {
 				.overflow_y_scroll()
 				.pt(px(4.))
 				.pb(px(8.))
-				.font_family(theme::mono_font())
-				.text_size(theme::TEXT_MONO)
 				.children(sections),
 		)
 	}
@@ -120,7 +124,6 @@ impl Workspace {
 				div()
 					.flex_none()
 					.pr(px(4.))
-					.font_family(theme::mono_font())
 					.text_size(theme::TEXT_SMALL)
 					.text_color(theme::color(theme::TEXT_FAINT))
 					.child(format!("#{}", id.0)),
@@ -158,7 +161,6 @@ impl Workspace {
 			.h(theme::VALUE_ROW_HEIGHT + px(4.))
 			.pl(px(theme::INSET))
 			.pr(px(theme::INSET))
-			.font_family(theme::ui_font())
 			.cursor_pointer()
 			.child(
 				div()
@@ -225,7 +227,7 @@ impl Workspace {
 				} else {
 					theme::SYN_COMPONENT
 				};
-				mono_row(0.)
+				mono_row()
 					.id(SharedString::from(format!("owner{}", id.0)))
 					.cursor_pointer()
 					.hover(|row| row.bg(theme::color(theme::HOVER)))
@@ -254,7 +256,7 @@ impl Workspace {
 				for part in [source.line, source.column].into_iter().flatten() {
 					location.push_str(&format!(":{part}"));
 				}
-				mono_row(0.)
+				mono_row()
 					.text_color(theme::color(theme::TEXT_SECONDARY))
 					.child(
 						div()
@@ -274,7 +276,7 @@ impl Workspace {
 			.map(|entry| (entry, theme::ERROR))
 			.chain(element.warnings.iter().map(|entry| (entry, theme::WARNING)))
 			.map(|((message, count), color)| {
-				mono_row(0.)
+				section_row()
 					.child(
 						div()
 							.min_w_0()
