@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <stdexcept>
 
 #include "LoaderAddonActivity.h"
 #include "LoaderAddonSignature.h"
@@ -54,7 +55,9 @@ jsi::Value toJSIValue(jsi::Runtime &runtime, const nlohmann::json &value)
     return jsi::Value::undefined();
 }
 
-nlohmann::json fromJSIValue(jsi::Runtime &runtime, const jsi::Value &value)
+static constexpr size_t kMaximumConvertedDepth = 128;
+
+static nlohmann::json convertJSIValue(jsi::Runtime &runtime, const jsi::Value &value, size_t depth)
 {
     if (value.isUndefined() || value.isNull())
     {
@@ -77,6 +80,13 @@ nlohmann::json fromJSIValue(jsi::Runtime &runtime, const jsi::Value &value)
         return nullptr;
     }
 
+    if (depth > kMaximumConvertedDepth)
+    {
+        throw std::invalid_argument("Native value nests deeper than " +
+                                    std::to_string(kMaximumConvertedDepth) +
+                                    " levels or refers to itself");
+    }
+
     jsi::Object object = value.getObject(runtime);
     if (object.isArray(runtime))
     {
@@ -84,7 +94,8 @@ nlohmann::json fromJSIValue(jsi::Runtime &runtime, const jsi::Value &value)
         nlohmann::json result = nlohmann::json::array();
         for (size_t index = 0; index < array.size(runtime); index++)
         {
-            result.push_back(fromJSIValue(runtime, array.getValueAtIndex(runtime, index)));
+            result.push_back(
+                convertJSIValue(runtime, array.getValueAtIndex(runtime, index), depth + 1));
         }
         return result;
     }
@@ -99,9 +110,15 @@ nlohmann::json fromJSIValue(jsi::Runtime &runtime, const jsi::Value &value)
     for (size_t index = 0; index < names.size(runtime); index++)
     {
         std::string name = names.getValueAtIndex(runtime, index).getString(runtime).utf8(runtime);
-        result[name]     = fromJSIValue(runtime, object.getProperty(runtime, name.c_str()));
+        result[name] =
+            convertJSIValue(runtime, object.getProperty(runtime, name.c_str()), depth + 1);
     }
     return result;
+}
+
+nlohmann::json fromJSIValue(jsi::Runtime &runtime, const jsi::Value &value)
+{
+    return convertJSIValue(runtime, value, 1);
 }
 
 template <typename Provider>

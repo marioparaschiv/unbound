@@ -8,6 +8,82 @@
 #include "LoaderLog.h"
 
 namespace loader {
+static constexpr size_t kMaximumSettingsDepth = 128;
+
+static bool textNestsTooDeeply(const std::string &text)
+{
+    size_t depth    = 0;
+    bool   inString = false;
+    bool   escaped  = false;
+    for (char character : text)
+    {
+        if (inString)
+        {
+            if (escaped)
+            {
+                escaped = false;
+            }
+            else if (character == '\\')
+            {
+                escaped = true;
+            }
+            else if (character == '"')
+            {
+                inString = false;
+            }
+            continue;
+        }
+        if (character == '"')
+        {
+            inString = true;
+        }
+        else if (character == '{' || character == '[')
+        {
+            if (++depth > kMaximumSettingsDepth)
+            {
+                return true;
+            }
+        }
+        else if ((character == '}' || character == ']') && depth > 0)
+        {
+            depth--;
+        }
+    }
+    return false;
+}
+
+static bool valueNestsTooDeeply(const nlohmann::json &value)
+{
+    std::vector<std::pair<const nlohmann::json *, size_t>> pending{{&value, 1}};
+    while (!pending.empty())
+    {
+        auto [current, depth] = pending.back();
+        pending.pop_back();
+        if (!current->is_structured())
+        {
+            continue;
+        }
+        if (depth > kMaximumSettingsDepth)
+        {
+            return true;
+        }
+        for (const nlohmann::json &child : *current)
+        {
+            pending.emplace_back(&child, depth + 1);
+        }
+    }
+    return false;
+}
+
+static nlohmann::json parseSettings(const std::string &text)
+{
+    if (textNestsTooDeeply(text))
+    {
+        return nlohmann::json(nlohmann::json::value_t::discarded);
+    }
+    return nlohmann::json::parse(text, nullptr, false);
+}
+
 static std::vector<std::string> splitKeyPath(const std::string &key)
 {
     std::vector<std::string> parts;
@@ -57,8 +133,7 @@ void SettingsStore::refreshLocked() const
         return;
     }
     std::optional<std::string> contents = readTextFile(path_);
-    nlohmann::json             parsed =
-        contents ? nlohmann::json::parse(*contents, nullptr, false) : nlohmann::json();
+    nlohmann::json             parsed   = contents ? parseSettings(*contents) : nlohmann::json();
     if (parsed.is_object())
     {
         data_ = std::move(parsed);
@@ -78,7 +153,7 @@ void SettingsStore::load()
         return;
     }
 
-    nlohmann::json parsed = nlohmann::json::parse(*contents, nullptr, false);
+    nlohmann::json parsed = parseSettings(*contents);
     if (parsed.is_discarded() || !parsed.is_object())
     {
         log(LogLevel::Error, LOG_CATEGORY_SETTINGS,
@@ -122,7 +197,7 @@ std::string SettingsStore::serialize() const
 
 bool SettingsStore::replace(const std::string &json)
 {
-    nlohmann::json parsed = nlohmann::json::parse(json, nullptr, false);
+    nlohmann::json parsed = parseSettings(json);
     if (parsed.is_discarded() || !parsed.is_object())
     {
         return false;
@@ -226,7 +301,7 @@ void SettingsStore::remove(const std::string &store, const std::string &key)
 
 bool SettingsStore::apply(const nlohmann::json &changes)
 {
-    if (!changes.is_array())
+    if (!changes.is_array() || valueNestsTooDeeply(changes))
     {
         return false;
     }
