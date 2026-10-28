@@ -73,9 +73,10 @@ void setNativeErrorDelivery(NativeErrorDelivery delivery)
     gErrorDelivery.store(delivery);
 }
 
-std::optional<uint64_t> RuntimeGenerationTracker::advance(const void *runtime)
+std::optional<uint64_t> RuntimeGenerationTracker::advance(const void *runtime,
+                                                          bool        alreadyRegistered)
 {
-    if (runtime_ == runtime)
+    if (runtime_ == runtime && alreadyRegistered)
     {
         return std::nullopt;
     }
@@ -131,20 +132,32 @@ std::shared_ptr<NativePluginExecutor> executor()
     return gExecutor;
 }
 
+static constexpr const char *kRuntimeGenerationMarker = "__unboundRuntimeGeneration";
+
+static bool carriesGeneration(jsi::Runtime &runtime, uint64_t generation)
+{
+    jsi::Value marker = runtime.global().getProperty(runtime, kRuntimeGenerationMarker);
+    return marker.isNumber() && marker.getNumber() == static_cast<double>(generation);
+}
+
 uint64_t registerRuntime(jsi::Runtime &runtime)
 {
+    bool alreadyRegistered = carriesGeneration(runtime, gGenerations.generation());
     std::optional<uint64_t> advanced;
     {
         std::lock_guard<std::mutex> lock(gStateMutex);
-        advanced       = gGenerations.advance(&runtime);
+        advanced       = gGenerations.advance(&runtime, alreadyRegistered);
         gRuntime       = &runtime;
         gRuntimeThread = std::this_thread::get_id();
     }
+    uint64_t generation = gGenerations.generation();
+    runtime.global().setProperty(runtime, kRuntimeGenerationMarker,
+                                 jsi::Value(static_cast<double>(generation)));
     if (advanced)
     {
         gGenerations.notify(*advanced);
     }
-    return gGenerations.generation();
+    return generation;
 }
 
 uint64_t runtimeGeneration()
