@@ -390,4 +390,32 @@ class NativeJavaTest {
         assertEquals(9, value(NativeJava.getField(second, "x")).getInt("value"))
         assertEquals(1, value(NativeJava.getField(first, "x")).getInt("value"))
     }
+
+    @Test
+    fun aHandleIsReleasedOnlyOnceEveryIssueOfItIs() {
+        val list = NativeJava.construct("java.util.ArrayList", "[]")
+        val id = handleId(list)
+        val again = value(NativeJava.invoke(list, "subList", """[{"type":"int","value":0},{"type":"int","value":0}]"""))
+        val self = value(NativeJava.invoke(NativeJava.getClass("java.util.Objects"), "requireNonNull", "[$list]"))
+        assertEquals(id, self.getString("value"))
+        assertNotEquals(id, again.getString("value"))
+        val before = NativeJava.liveHandles()
+
+        NativeJava.release("""{"id":"$id","issues":1}""")
+        assertEquals(before, NativeJava.liveHandles())
+
+        NativeJava.release("""{"id":"$id","issues":1}""")
+        assertEquals(before - 1, NativeJava.liveHandles())
+        assertThrows(IllegalArgumentException::class.java) { NativeJava.invoke(list, "size", "[]") }
+    }
+
+    @Test
+    fun aReleaseWithoutIssuesStillDropsTheHandle() {
+        val list = NativeJava.construct("java.util.ArrayList", "[]")
+        NativeJava.invoke(NativeJava.getClass("java.util.Objects"), "requireNonNull", "[$list]")
+
+        NativeJava.release(list)
+
+        assertThrows(IllegalArgumentException::class.java) { NativeJava.invoke(list, "size", "[]") }
+    }
 }

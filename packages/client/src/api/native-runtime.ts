@@ -210,6 +210,8 @@ type AssociationBinding = {
 	key: NativeAssociationKey;
 };
 
+const JAVA_HANDLE_PRUNE_SIZE = 1_024;
+
 const nativePluginGlobal = globalThis as NativePluginRuntimeGlobal;
 const nativePluginBridge = nativePluginGlobal.NativePlugin;
 
@@ -834,7 +836,7 @@ function createScopedNativePlugin(
 	const tokens = new Set<NativeHookToken>();
 	const surfaces = new Set<NativeFabricSurface>();
 	const uiSurfaces = new Set<NativeUIHandle>();
-	const javaHandles = new Set<NativeJavaReference>();
+	const javaHandles = new Set<WeakRef<NativeJavaReference>>();
 	const javaHookTokens = new Set<NativeJavaHookToken>();
 	const runtimeTokens = new Set<NativeRuntimeEventToken>();
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
@@ -1178,9 +1180,25 @@ function createScopedNativePlugin(
 	};
 
 	function trackJavaHandle(handle: NativeJavaHandle): NativeJavaHandle {
-		javaHandles.add(handle);
+		if (javaHandles.size >= JAVA_HANDLE_PRUNE_SIZE) {
+			for (const tracked of javaHandles) {
+				if (!tracked.deref()) {
+					javaHandles.delete(tracked);
+				}
+			}
+		}
+
+		javaHandles.add(new WeakRef(handle));
 
 		return handle;
+	}
+
+	function untrackJavaHandle(handle: NativeJavaReference) {
+		for (const tracked of javaHandles) {
+			if (tracked.deref() === handle) {
+				javaHandles.delete(tracked);
+			}
+		}
 	}
 
 	const java: NativeJavaBridge = {
@@ -1247,7 +1265,7 @@ function createScopedNativePlugin(
 			nativeJavaCapabilityRequirements.setAssociatedObject,
 		),
 		release: (handle) => {
-			javaHandles.delete(handle);
+			untrackJavaHandle(handle);
 			scopeMethod(
 				javaBridge.release.bind(javaBridge),
 				nativeJavaCapabilityRequirements.release,
@@ -1407,7 +1425,13 @@ function createScopedNativePlugin(
 
 			uiSurfaces.clear();
 
-			for (const handle of javaHandles) {
+			for (const tracked of javaHandles) {
+				const handle = tracked.deref();
+
+				if (!handle) {
+					continue;
+				}
+
 				try {
 					javaBridge.release(handle);
 				} catch {

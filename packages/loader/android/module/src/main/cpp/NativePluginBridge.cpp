@@ -6,6 +6,7 @@
 #include <iterator>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -18,6 +19,7 @@
 #include "NativeFFI.h"
 #include "NativeFabric.h"
 #include "NativeGeometry.h"
+#include "NativeHandleLeases.h"
 #include "NativeHookReturnCache.h"
 #include "NativeLimits.h"
 #include "NativePlatformBridge.h"
@@ -758,6 +760,47 @@ static std::string serializeJavaValue(jsi::Runtime &runtime, const jsi::Value &v
     return loader::native::serializeBounded(runtime, value, kNativeArgumentsConversion);
 }
 
+static std::optional<std::string> javaHandleId(const nlohmann::json &value)
+{
+    auto type   = value.find("type");
+    auto id     = value.find(type == value.end() ? "id" : "value");
+    bool tagged = type != value.end() && type->is_string() && *type == "handle";
+    bool bare   = type == value.end() && value.size() == 1;
+    if ((tagged || bare) && id != value.end() && id->is_string() &&
+        id->get<std::string>().rfind("java-", 0) == 0)
+    {
+        return id->get<std::string>();
+    }
+    return std::nullopt;
+}
+
+static std::mutex                                    gJavaLeasesMutex;
+static std::shared_ptr<loader::native::HandleLeases> gJavaLeases;
+
+static void leaseJavaHandles(const JavaCallbacks &callbacks)
+{
+    std::lock_guard<std::mutex> lock(gJavaLeasesMutex);
+    if (gJavaLeases)
+    {
+        return;
+    }
+    gJavaLeases = std::make_shared<loader::native::HandleLeases>(
+        javaHandleId, [callbacks](const std::string &id, uint64_t issues) {
+            callJavaVoid(callbacks, callbacks.javaRelease,
+                         {nlohmann::json{{"id", id}, {"issues", issues}}.dump()});
+        });
+}
+
+static jsi::Value adoptJavaValue(jsi::Runtime &runtime, const nlohmann::json &value)
+{
+    std::shared_ptr<loader::native::HandleLeases> leases;
+    {
+        std::lock_guard<std::mutex> lock(gJavaLeasesMutex);
+        leases = gJavaLeases;
+    }
+    return leases ? leases->adopt(runtime, value) : loader::toJSIValue(runtime, value);
+}
+
 static jsi::Value parseJavaResult(jsi::Runtime &runtime, const std::string &response)
 {
     nlohmann::json result = nlohmann::json::parse(response, nullptr, false);
@@ -766,7 +809,7 @@ static jsi::Value parseJavaResult(jsi::Runtime &runtime, const std::string &resp
         throw std::runtime_error("The Android Java adapter returned invalid data");
     }
 
-    return loader::toJSIValue(runtime, result);
+    return adoptJavaValue(runtime, result);
 }
 
 static jsi::Value javaAsynchronously(jsi::Runtime &runtime, std::function<std::string()> work)
@@ -822,7 +865,7 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
                 return;
             }
 
-            listener->call(runtime, loader::toJSIValue(runtime, parsed));
+            listener->call(runtime, adoptJavaValue(runtime, parsed));
         });
 }
 
@@ -1283,6 +1326,7 @@ private:
 void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
 {
     watchRuntimeGenerations(callbacks);
+    leaseJavaHandles(callbacks);
 
     loader::native::NativePluginRootBuilder bridge(runtime,
                                                    loader::native::NativePluginPlatform::Android);
