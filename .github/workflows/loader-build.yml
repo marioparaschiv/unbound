@@ -152,6 +152,10 @@ jobs:
             release_version: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
             is_testflight: ${{ steps.resolve.outputs.is_testflight || steps.select.outputs.is_testflight }}
             android_code: ${{ steps.select.outputs.code }}
+            ios_release_tag: ${{ steps.names.outputs.ios_release_tag }}
+            ios_release_title: ${{ steps.names.outputs.ios_release_title }}
+            android_release_tag: ${{ steps.names.outputs.android_release_tag }}
+            android_release_title: ${{ steps.names.outputs.android_release_title }}
             ipa_available: ${{ steps.decrypt.outcome != 'failure' }}
         steps:
             - name: Checkout resolver
@@ -193,6 +197,8 @@ jobs:
                     {
                       echo "is_testflight=false"
                       echo "platform=android"
+                      echo "release_version=$release_version"
+                      echo "code=$(jq -r '.code' <<< "$release")"
                     } >> "$GITHUB_OUTPUT"
                     exit 0
                   fi
@@ -271,12 +277,19 @@ jobs:
                     fi
                   fi
                   release_version="$version"
-                  if [ "$INPUT_IS_TESTFLIGHT" = true ]; then release_version="${version}_${build}"; fi
+                  if [ "$INPUT_IS_TESTFLIGHT" = true ]; then release_version="${version}_${build}-ios-testflight"; fi
                   {
                     echo "version=$version"
                     echo "release_version=$release_version"
                     echo "is_testflight=$INPUT_IS_TESTFLIGHT"
                   } >> "$GITHUB_OUTPUT"
+
+            - name: Name the releases
+              id: names
+              if: inputs.release == true
+              env:
+                  RELEASE_VERSION: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
+              run: go run ./tools release-names --release-version "$RELEASE_VERSION"
 
             - name: Keep the source IPA for the gate and the iOS build
               if: steps.select.outputs.platform == 'ios' && steps.decrypt.outcome != 'failure'
@@ -475,18 +488,31 @@ jobs:
                     fi
                   done
 
-            - name: Publish stable release
+            - name: Publish stable iOS release
               if: needs.resolve-source.outputs.is_testflight != 'true'
               uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
               with:
-                  tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}
+                  tag_name: ${{ needs.resolve-source.outputs.ios_release_tag }}
+                  name: ${{ needs.resolve-source.outputs.ios_release_title }}
                   files: |
                       packages/loader/release-assets/${{ needs.ios.outputs.deb_filename }}
                       packages/loader/release-assets/${{ needs.ios.outputs.ipa_filename }}
                       packages/loader/release-assets/${{ needs.ios.outputs.simulator_filename }}
+                      packages/loader/release-assets/unbound-ios-symbols.zip
+                  generate_release_notes: true
+                  make_latest: false
+                  fail_on_unmatched_files: true
+                  token: ${{ github.token }}
+
+            - name: Publish stable Android release
+              if: needs.resolve-source.outputs.is_testflight != 'true'
+              uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
+              with:
+                  tag_name: ${{ needs.resolve-source.outputs.android_release_tag }}
+                  name: ${{ needs.resolve-source.outputs.android_release_title }}
+                  files: |
                       packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
                       packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
-                      packages/loader/release-assets/unbound-ios-symbols.zip
                       packages/loader/release-assets/unbound-android-symbols.zip
                   generate_release_notes: true
                   make_latest: false
@@ -497,7 +523,8 @@ jobs:
               if: needs.resolve-source.outputs.is_testflight != 'true'
               env:
                   GH_TOKEN: ${{ github.token }}
-                  RELEASE_VERSION: ${{ needs.resolve-source.outputs.release_version }}
+                  IOS_RELEASE_TAG: ${{ needs.resolve-source.outputs.ios_release_tag }}
+                  ANDROID_RELEASE_TAG: ${{ needs.resolve-source.outputs.android_release_tag }}
               run: |
                   set -euo pipefail
                   gh release delete loader-latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
@@ -505,7 +532,7 @@ jobs:
                     --repo "$GITHUB_REPOSITORY" \
                     --target "$GITHUB_SHA" \
                     --title "Unbound loader (latest)" \
-                    --notes "The most recent stable loader, currently loader-v$RELEASE_VERSION." \
+                    --notes "The most recent stable loader, currently $IOS_RELEASE_TAG and $ANDROID_RELEASE_TAG." \
                     --latest=false \
                     "release-assets/${{ needs.ios.outputs.deb_filename }}" \
                     "release-assets/${{ needs.ios.outputs.ipa_filename }}" \
@@ -517,7 +544,8 @@ jobs:
               if: needs.resolve-source.outputs.is_testflight == 'true'
               uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
               with:
-                  tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}
+                  tag_name: ${{ needs.resolve-source.outputs.ios_release_tag }}
+                  name: ${{ needs.resolve-source.outputs.ios_release_title }}
                   files: |
                       packages/loader/release-assets/${{ needs.ios.outputs.deb_filename }}
                       packages/loader/release-assets/${{ needs.ios.outputs.ipa_filename }}
@@ -534,7 +562,8 @@ jobs:
               env:
                   UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
                   UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
-                  RELEASE_VERSION: ${{ needs.resolve-source.outputs.release_version }}
+                  IOS_RELEASE_TAG: ${{ needs.resolve-source.outputs.ios_release_tag }}
+                  ANDROID_RELEASE_TAG: ${{ needs.resolve-source.outputs.android_release_tag }}
                   IOS_DEB_FILENAME: ${{ needs.ios.outputs.deb_filename }}
                   ANDROID_MODULE_FILENAME: ${{ needs.android.outputs.module_filename }}
               run: |
@@ -544,15 +573,15 @@ jobs:
                   api_url="${UNBOUND_API_URL%/}/api/v1/loader/releases"
                   deb_path="release-assets/$IOS_DEB_FILENAME"
                   loader_version=$(dpkg-deb -f "$deb_path" Version)
-                  release_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/loader-v$RELEASE_VERSION"
+                  release_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download"
                   go run ./tools generate-loader-changelog \
                     --version "$loader_version" \
                     --output release-assets/loader-changelog.md
                   go run ./tools publish-loader-releases \
                     --api-url "$api_url" \
                     --version "$loader_version" \
-                    --ios-url "$release_url/$IOS_DEB_FILENAME" \
-                    --android-url "$release_url/$ANDROID_MODULE_FILENAME" \
+                    --ios-url "$release_url/$IOS_RELEASE_TAG/$IOS_DEB_FILENAME" \
+                    --android-url "$release_url/$ANDROID_RELEASE_TAG/$ANDROID_MODULE_FILENAME" \
                     --changelog-file release-assets/loader-changelog.md
 
     android-prerelease:
@@ -588,7 +617,8 @@ jobs:
             - name: Publish Android prerelease
               uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
               with:
-                  tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}
+                  tag_name: ${{ needs.resolve-source.outputs.android_release_tag }}
+                  name: ${{ needs.resolve-source.outputs.android_release_title }}
                   files: |
                       packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
                       packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}

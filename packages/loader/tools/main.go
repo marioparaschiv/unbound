@@ -37,6 +37,8 @@ func run(args []string) error {
 		return runDiscordAPK(args[1:])
 	case "release-candidate":
 		return runReleaseCandidate(args[1:])
+	case "release-names":
+		return runReleaseNames(args[1:])
 	case "publish-loader-releases":
 		return runPublishLoaderReleases(args[1:])
 	case "generate-loader-changelog":
