@@ -5,6 +5,7 @@
 #include "LoaderAddonSignature.h"
 #include "LoaderFiles.h"
 #include "LoaderFonts.h"
+#include "LoaderJSON.h"
 #include "LoaderLog.h"
 #include "LoaderThemes.h"
 
@@ -43,7 +44,7 @@ static std::optional<nlohmann::json> parseObjectFile(const std::string &path,
         return std::nullopt;
     }
 
-    nlohmann::json parsed = nlohmann::json::parse(*contents, nullptr, false);
+    nlohmann::json parsed = parseBoundedJSON(*contents);
     if (parsed.is_discarded() || !parsed.is_object())
     {
         log(LogLevel::Info, category, "Skipping " + folder + " as its " + label + " is invalid.");
