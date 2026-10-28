@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Usage: launch.sh [--name N] [--port N] [--no-s3]
-# Starts a throwaway apps/web instance: fake OAuth, fake GitHub, throwaway Postgres database, local MinIO, seeded users.
+# Starts a throwaway apps/web instance: fake OAuth, fake GitHub, fake Discord, throwaway Postgres database, local MinIO, seeded users.
 set -euo pipefail
 
 . "$(dirname "$(readlink -f "$0")")/lib.sh"
@@ -51,6 +51,9 @@ fi
 GITHUB_PORT=$((PORT + 1))
 until port_free "$GITHUB_PORT"; do GITHUB_PORT=$((GITHUB_PORT + 1)); done
 GITHUB_TOKEN=verify-web-github
+DISCORD_PORT=$((GITHUB_PORT + 1))
+until port_free "$DISCORD_PORT"; do DISCORD_PORT=$((DISCORD_PORT + 1)); done
+DISCORD_GUILD_ID=950850315601711176
 
 mkdir -p "$DIR"
 # Cookies ignore ports, so a per-instance *.localhost host keeps this session cookie from colliding
@@ -96,7 +99,12 @@ BETTER_AUTH_SECRET=$(head -c 32 /dev/urandom | base64 | tr -d '/+=')
 DISCORD_CLIENT_ID=verify-web-discord
 DISCORD_CLIENT_SECRET=verify-web-discord-secret
 DISCORD_BOT_TOKEN=verify-web-discord-bot-token
-DISCORD_API_URL=${VERIFY_WEB_DISCORD_API_URL:-http://127.0.0.1:9/api/v10}
+DISCORD_API_URL=${VERIFY_WEB_DISCORD_API_URL:-http://127.0.0.1:$DISCORD_PORT/api/v10}
+DISCORD_GUILD_ID=$DISCORD_GUILD_ID
+DISCORD_ADMIN_ROLE_ID=1500000000000000001
+DISCORD_STAFF_ROLE_ID=1500000000000000002
+DISCORD_DEVELOPMENT_TEAM_ROLE_ID=1500000000000000003
+DISCORD_CONTRIBUTOR_ROLE_ID=1500000000000000004
 GITHUB_CLIENT_ID=verify-web-github
 GITHUB_CLIENT_SECRET=verify-web-github-secret
 GITHUB_API_URL=http://127.0.0.1:$GITHUB_PORT
@@ -133,6 +141,10 @@ PANE_PID="$(tmux list-panes -t "=$SESSION:vite" -F '#{pane_pid}')"
 tmux new-window -d -t "=$SESSION:" -n github -e "PATH=$PATH" \
 	"exec >'$DIR/github.log' 2>&1; exec bun '$SKILL_DIR/scripts/fake-github.ts' $GITHUB_PORT $GITHUB_TOKEN"
 GITHUB_PID="$(tmux list-panes -t "=$SESSION:github" -F '#{pane_pid}')"
+# The team sync lists the guild's members from this fake; scripts/team.ts holds the seeded team.
+tmux new-window -d -t "=$SESSION:" -n discord -e "PATH=$PATH" \
+	"exec >'$DIR/discord.log' 2>&1; exec bun '$SKILL_DIR/scripts/fake-discord.ts' $DISCORD_PORT $DISCORD_GUILD_ID"
+DISCORD_PID="$(tmux list-panes -t "=$SESSION:discord" -F '#{pane_pid}')"
 
 cat >"$DIR/instance.env" <<EOF
 PORT=$PORT
@@ -141,6 +153,8 @@ PANE_PID=$PANE_PID
 GITHUB_PID=$GITHUB_PID
 GITHUB_URL=http://127.0.0.1:$GITHUB_PORT
 GITHUB_TOKEN=$GITHUB_TOKEN
+DISCORD_PID=$DISCORD_PID
+DISCORD_URL=http://127.0.0.1:$DISCORD_PORT
 MINIO_ADDR=$MINIO_ADDR
 EOF
 

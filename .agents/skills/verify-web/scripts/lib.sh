@@ -27,8 +27,8 @@ parse_name() {
 	DATABASE="unbound_web_verify_${INSTANCE//-/_}"
 }
 
-# instance.env holds PORT, URL, PANE_PID, GITHUB_PID, GITHUB_URL, GITHUB_TOKEN, MINIO_ADDR (empty
-# when S3 is off).
+# instance.env holds PORT, URL, PANE_PID, GITHUB_PID, GITHUB_URL, GITHUB_TOKEN, DISCORD_PID,
+# DISCORD_URL, MINIO_ADDR (empty when S3 is off).
 load_instance() {
 	[ -f "$DIR/instance.env" ] || return 1
 	# shellcheck disable=SC1091
