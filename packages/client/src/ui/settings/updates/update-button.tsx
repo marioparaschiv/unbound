@@ -1,4 +1,5 @@
-import type { ButtonSize } from '@unbound-app/types';
+import type { DesignModule } from '@unbound-app/types/components';
+import type { ComponentProps } from 'react';
 
 import { Discord } from '~/api/metro/components';
 import UpdatesStore from '~/stores/updates';
@@ -7,7 +8,7 @@ import { Messages } from '~/api/i18n';
 type UpdateButtonProps = {
 	id: string;
 	text: string;
-	size?: ButtonSize;
+	size?: ComponentProps<DesignModule['Button']>['size'];
 	grow?: boolean;
 	onUpdated?: () => void;
 };

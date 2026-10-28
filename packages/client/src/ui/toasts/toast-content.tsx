@@ -1,6 +1,6 @@
-import type { TextProps } from '@unbound-app/types';
+import type { DesignModule } from '@unbound-app/types/components';
+import type { ComponentProps, ComponentType } from 'react';
 import { createElement, memo } from 'react';
-import type { ComponentType } from 'react';
 import { View } from 'react-native';
 
 import { Discord } from '~/api/metro/components';
@@ -14,7 +14,7 @@ type ToastContentProps = {
 
 type FieldProps = {
 	value: string | ComponentType;
-} & Omit<TextProps, 'children'>;
+} & Omit<ComponentProps<DesignModule['Text']>, 'children'>;
 
 function Field({ value, ...props }: FieldProps) {
 	if (typeof value === 'function') {

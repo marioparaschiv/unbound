@@ -1,4 +1,3 @@
-import type { ContextMenuItem } from '@unbound-app/types/components';
 import type { PressableProps } from 'react-native';
 import type { Addon } from '@unbound-app/types';
 import { Pressable } from 'react-native';
@@ -27,7 +26,7 @@ function AddonOverflow({ addon, kind }: AddonOverflowProps) {
 	const styles = useRoundStyles();
 	const manager = getManager(kind);
 
-	const items = useMemo<ContextMenuItem[]>(
+	const items = useMemo(
 		() => [
 			{
 				label: format('UNBOUND_DELETE'),

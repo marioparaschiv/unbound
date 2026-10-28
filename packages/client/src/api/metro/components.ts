@@ -1,11 +1,6 @@
-import type {
-	DesignComponentName,
-	DesignModule,
-	SwitchProps,
-	TextFieldProps,
-} from '@unbound-app/types/components';
+import type { DesignComponentName, DesignModule } from '@unbound-app/types/components';
+import type { ComponentProps, ComponentType, ElementType } from 'react';
 import { DESIGN_COMPONENTS } from '@unbound-app/types/components';
-import type { ComponentType, ElementType } from 'react';
 import firstOf from '@unbound-app/utils/first-of';
 import lazy from '@unbound-app/utils/lazy';
 import { createElement } from 'react';
@@ -20,6 +15,9 @@ import {
 import type { HelpMessageProps } from '~/ui/components/help-message';
 import { findByPropsLazy } from '~/api/metro/wrappers';
 import { findByName } from '~/api/metro';
+
+type SwitchProps = ComponentProps<DesignModule['FormSwitch']>;
+type SearchFieldProps = ComponentProps<DesignModule['SearchField']>;
 
 const designModule: DesignModule = findByPropsLazy('createStyles', 'dismissAlerts', 'ContextMenu');
 const designFallbacks = new Map<DesignComponentName, ComponentType<never>>();
@@ -67,8 +65,6 @@ export function registerDesignFallback<K extends DesignComponentName>(
 ): void {
 	designFallbacks.set(name, component as ComponentType<never>);
 }
-
-type SearchFieldProps = Omit<TextFieldProps, 'leadingIcon'>;
 
 const designTarget: DesignModule = Object.create(null);
 

@@ -21,6 +21,7 @@
 		}
 	},
 	"dependencies": {
+		"@unbound-app/discord-types": "workspace:*",
 		"possess": "catalog:"
 	},
 	"peerDependencies": {

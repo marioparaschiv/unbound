@@ -1,5 +1,6 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
-import type { ButtonSize } from '@unbound-app/types';
+import type { DesignModule } from '@unbound-app/types/components';
+import type { ComponentProps } from 'react';
 
 import { Discord } from '~/api/metro/components';
 import { Messages, format } from '~/api/i18n';
@@ -17,7 +18,7 @@ type LoaderUpdateRowProps = {
 type DownloadButtonProps = {
 	url: string;
 	text: string;
-	size?: ButtonSize;
+	size?: ComponentProps<DesignModule['Button']>['size'];
 	grow?: boolean;
 };
 
