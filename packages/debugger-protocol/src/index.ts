@@ -42,6 +42,8 @@ export type PluginPushRequest = {
 	addonId: string;
 	bundle: string;
 	manifest: AddonManifest;
+	/** The bundle compiled to Hermes bytecode, base64-encoded, by bytecode version; its digests are in `manifest.bytecode`. */
+	bytecode?: Record<string, string>;
 };
 
 /** The outcome of a {@link PluginPushRequest}, sent device → bridge → the one waiting controller. */
@@ -170,7 +172,10 @@ function hasRequiredFields(frame: unknown): frame is BridgeMessage {
 				typeof frame.bundle === 'string' &&
 				'manifest' in frame &&
 				typeof frame.manifest === 'object' &&
-				frame.manifest !== null
+				frame.manifest !== null &&
+				(!('bytecode' in frame) ||
+					frame.bytecode === void 0 ||
+					isStringRecord(frame.bytecode))
 			);
 		case 'hello':
 			return 'device' in frame && isDeviceInfo(frame.device);
@@ -197,6 +202,15 @@ function isDeviceInfo(value: unknown): value is DeviceInfo {
 		typeof value.loaderVersion === 'string' &&
 		'clientVersion' in value &&
 		typeof value.clientVersion === 'string'
+	);
+}
+
+function isStringRecord(value: unknown): value is Record<string, string> {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		!Array.isArray(value) &&
+		Object.values(value).every((entry) => typeof entry === 'string')
 	);
 }
 

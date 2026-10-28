@@ -36,6 +36,21 @@ describe('plugin-push round-trip', () => {
 		expect(parseMessage(serializeMessage(message))).toEqual(message);
 	});
 
+	test('a plugin-push carrying bytecode survives intact, and malformed bytecode is rejected', () => {
+		const message: PluginPushRequest = {
+			type: 'plugin-push',
+			id: 'push-1',
+			addonId: manifest.id,
+			bundle: 'module.exports = {};',
+			manifest,
+			bytecode: { '98': 'xh+8Aw==' },
+		};
+
+		expect(parseMessage(serializeMessage(message))).toEqual(message);
+		expect(parseMessage(JSON.stringify({ ...message, bytecode: { '98': 1 } }))).toBeUndefined();
+		expect(parseMessage(JSON.stringify({ ...message, bytecode: ['x'] }))).toBeUndefined();
+	});
+
 	test('a valid plugin-push-result survives serialize → parse intact', () => {
 		const ok: PluginPushResult = { type: 'plugin-push-result', id: 'push-1', ok: true };
 		const failed: PluginPushResult = {
