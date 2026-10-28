@@ -64,11 +64,14 @@ async function release(
 	await seedVersion(web.ctx, ownerId, next, sha256(published));
 }
 
-function seed(manager: FakeAddons, id: string, started: boolean, version: string = '1.0.0') {
+const INSTALLED = '1.0.0';
+const INSTALLED_SHA256 = sha256(INSTALLED);
+
+function seed(manager: FakeAddons, id: string, started: boolean, version: string = INSTALLED) {
 	manager.seed({
 		id,
 		data: makeManifest(id, version),
-		bundle: 'old',
+		bundle: version,
 		instance: started ? makeInstance('old', manager.log) : null,
 		started,
 		failed: false,
@@ -176,9 +179,12 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyUpdate', () => {
 
 		expect(pending).toEqual([]);
 		expect(requests).toEqual([
-			{ clientVersion: CLIENT_VERSION, addons: [{ id: 'up.current', version: '1.0.0' }] },
+			{
+				clientVersion: CLIENT_VERSION,
+				addons: [{ id: 'up.current', version: '1.0.0', sha256: INSTALLED_SHA256 }],
+			},
 		]);
-		expect(manager.getEntity('up.current')?.bundle).toBe('old');
+		expect(manager.getEntity('up.current')?.bundle).toBe(INSTALLED);
 		expect(manager.log).toEqual([]);
 		expect(writes).toEqual([]);
 		expect(events).toEqual([]);
@@ -201,9 +207,9 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyUpdate', () => {
 			{
 				clientVersion: CLIENT_VERSION,
 				addons: [
-					{ id: 'up.applied', version: '1.0.0' },
-					{ id: 'local.addon', version: '1.0.0' },
-					{ id: 'up.disabled', version: '1.0.0' },
+					{ id: 'up.applied', version: '1.0.0', sha256: INSTALLED_SHA256 },
+					{ id: 'local.addon', version: '1.0.0', sha256: INSTALLED_SHA256 },
+					{ id: 'up.disabled', version: '1.0.0', sha256: INSTALLED_SHA256 },
 				],
 			},
 		]);
@@ -235,8 +241,8 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyUpdate', () => {
 		expect(disabled?.started).toBe(false);
 		expect(others.log).toEqual([]);
 
-		expect(plugins.getEntity('local.addon')?.bundle).toBe('old');
-		expect(others.getEntity('local.unversioned')?.bundle).toBe('old');
+		expect(plugins.getEntity('local.addon')?.bundle).toBe(INSTALLED);
+		expect(others.getEntity('local.unversioned')?.bundle).toBe('dev');
 		expect(writes.toSorted()).toEqual([
 			'Unbound/Plugins/up.applied/index.js',
 			'Unbound/Plugins/up.applied/manifest.json',
@@ -258,7 +264,7 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyUpdate', () => {
 		const tampered = manager.getEntity('up.tampered');
 
 		expect(tampered?.data.version).toBe('1.0.0');
-		expect(tampered?.bundle).toBe('old');
+		expect(tampered?.bundle).toBe(INSTALLED);
 		expect(tampered?.started).toBe(true);
 		expect(manager.log).toEqual([]);
 		expect(writes).toEqual([]);
@@ -278,7 +284,7 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyUpdate', () => {
 			Error,
 		);
 
-		expect(manager.getEntity('up.applied')?.bundle).toBe('old');
+		expect(manager.getEntity('up.applied')?.bundle).toBe(INSTALLED);
 		expect(manager.log).toEqual([]);
 		expect(writes).toEqual([]);
 		expect(events).toEqual([]);
