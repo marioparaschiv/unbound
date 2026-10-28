@@ -51,6 +51,8 @@
 		"packages/plugins/**",
 		"packages/plugin-scripts/**",
 		"packages/loader/bootstrap/devtools.js",
+		"apps/devtools/harness/**",
+		"apps/devtools/target/**",
 		"packages/loader/vendor/**",
 		"packages/loader/apt-repo/**",
 		"packages/loader/ios/**",

@@ -1,0 +1,37 @@
+[workspace]
+resolver = "3"
+members = ["crates/core", "crates/app"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/marioparaschiv/unbound"
+
+[workspace.dependencies]
+unbound-devtools-core = { path = "crates/core" }
+anyhow = "1"
+thiserror = "2"
+parking_lot = "0.12"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "sync", "macros", "time", "io-std"] }
+tokio-tungstenite = "0.30"
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+rmcp = { version = "3.8", features = ["server", "transport-io", "transport-streamable-http-server"] }
+schemars = "1"
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
+jaq-core = "3.1"
+jaq-std = "3.0"
+jaq-json = "2.0"
+regex = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4", features = ["derive", "env"] }
+uuid = { version = "1", features = ["v4"] }
+gpui = { package = "gpui-fast", version = "0.1.12" }
+gpui_platform = { package = "gpui-fast-platform", version = "0.1.12", features = ["x11", "wayland"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
