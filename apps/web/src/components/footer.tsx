@@ -62,7 +62,7 @@ function FooterColumn({ title, links }: FooterColumnProps) {
 
 function Footer() {
 	return (
-		<footer className='mt-auto bg-background border-t'>
+		<footer className='relative mt-auto bg-background border-t'>
 			<div className='pt-16 pb-10 md:pb-12 page-frame'>
 				<div className='flex flex-col lg:flex-row gap-8'>
 					<div className='lg:flex-1'>

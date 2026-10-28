@@ -40,8 +40,6 @@ function HeroShowcase({
 			{fade ? (
 				<div className='z-10 absolute -inset-x-1/4 top-0 -bottom-1/4 pointer-events-none hero-fade' />
 			) : null}
-			{/* Noise over the glow and the fade dithers their dark gradients. */}
-			<div className='z-10 absolute -inset-x-1/4 top-0 -bottom-1/4 pointer-events-none grain' />
 		</div>
 	);
 }
