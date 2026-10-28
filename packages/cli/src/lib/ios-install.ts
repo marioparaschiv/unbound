@@ -4,8 +4,8 @@ import { delimiter, join } from 'node:path';
 import { homedir, tmpdir } from 'node:os';
 
 import type { InstallOptions, PluginPayload } from '~/lib/plugin-install';
+import { DEVELOPMENT_MARKER, logToStderr } from '~/lib/plugin-install';
 import type { CommandResult } from '~/lib/run-command';
-import { logToStderr } from '~/lib/plugin-install';
 import { runCommand } from '~/lib/run-command';
 import { createTarGz } from '~/lib/tar';
 
@@ -222,7 +222,7 @@ export function unpackScript(id: string, archive: string): string {
 		'done',
 		`if [ -z "$root" ]; then rm -f "$archive"; echo '${ERROR_MARKER}No Discord data container with an Unbound folder was found. Launch Discord with Unbound once, then retry.'; exit 1; fi`,
 		`dest="$root/Plugins/${id}"`,
-		`mkdir -p "$dest" && ${DEVICE_TAR} -xzf "$archive" --no-same-owner -C "$dest" && chown mobile:mobile "$root/Plugins" "$dest" "$dest"/* && chmod 644 "$dest"/*`,
+		`mkdir -p "$dest" && ${DEVICE_TAR} -xzf "$archive" --no-same-owner -C "$dest" && touch "$dest/${DEVELOPMENT_MARKER}" && chown mobile:mobile "$root/Plugins" "$dest" "$dest"/* && chmod 644 "$dest"/*`,
 		'status=$?',
 		'rm -f "$archive"',
 		`if [ $status -eq 0 ]; then echo "${INSTALLED_MARKER}$dest"; else echo '${ERROR_MARKER}Unpacking the plugin failed.'; fi`,

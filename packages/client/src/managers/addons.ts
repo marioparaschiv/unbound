@@ -38,6 +38,8 @@ import fs from '~/api/fs';
 
 type AddonResolveable = string | Addon;
 
+const DEVELOPMENT_MARKER = 'development';
+
 const managerDirectories: Record<ManagerType, string> = {
 	[ManagerType.PLUGINS]: 'Plugins',
 	[ManagerType.THEMES]: 'Themes',
@@ -160,6 +162,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			};
 
 			this.entities.set(manifest.id, entity as T);
+			void this.adoptDevelopmentMarker(manifest.id);
 
 			const states = this.getStates();
 
@@ -1052,13 +1055,33 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		return this.settings.get('development', {});
 	}
 
-	private clearDevelopmentCopy(id: string): void {
+	/**
+	 * @description Stops treating an addon as a development copy, removing the marker `ubd install` leaves, so update checks include it again.
+	 * @param id The addon's id.
+	 */
+	clearDevelopmentCopy(id: string): void {
+		void fs.rm(this.developmentMarkerOf(id)).catch(() => undefined);
+
 		const copies = this.getDevelopmentCopies();
 
 		if (!(id in copies)) return;
 
 		delete copies[id];
 		this.settings.set('development', copies);
+	}
+
+	private developmentMarkerOf(id: string): string {
+		return `${this.directoryOf(id)}/${DEVELOPMENT_MARKER}`;
+	}
+
+	private async adoptDevelopmentMarker(id: string): Promise<void> {
+		try {
+			if (await fs.exists(this.developmentMarkerOf(id))) {
+				this.markDevelopmentCopy(id);
+			}
+		} catch {
+			return;
+		}
 	}
 
 	/**
