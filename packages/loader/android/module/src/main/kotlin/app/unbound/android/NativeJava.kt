@@ -168,6 +168,7 @@ object NativeJava {
             }
 
             val result = outcome.getOrElse {
+                releaseIssuedHandles(results)
                 throw IllegalStateException(
                     "Java batch operation $index failed: ${it.message ?: it.toString()}",
                     it,
@@ -177,6 +178,20 @@ object NativeJava {
         }
 
         return results.toString()
+    }
+
+    private fun releaseIssuedHandles(value: Any?) {
+        when (value) {
+            is JSONArray -> (0 until value.length()).forEach { releaseIssuedHandles(value.opt(it)) }
+
+            is JSONObject -> {
+                if (value.optString("type") == "handle" && value.opt("value") is String) {
+                    release(JSONObject().put("id", value.getString("value")).put("issues", 1).toString())
+                    return
+                }
+                value.keys().forEach { releaseIssuedHandles(value.opt(it)) }
+            }
+        }
     }
 
     fun createAssociationKey(): String {
