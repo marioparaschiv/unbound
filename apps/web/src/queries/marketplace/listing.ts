@@ -1,6 +1,6 @@
-import type { QueryClient } from '@tanstack/react-query';
 import type { AddonType } from '@unbound-app/contracts/addons';
 import { infiniteQueryOptions } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 
 import { fetchMarketplacePage, type MarketplaceSearch } from '~/lib/marketplace';
 import { pickedAuthorsQuery, authorsQuery } from '~/queries/marketplace/authors';

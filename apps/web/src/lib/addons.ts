@@ -10,8 +10,8 @@ import type {
 	Maintainer,
 	MyAddonsResponse,
 } from '@unbound-app/contracts/addons';
-import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
 import { and, desc, EmptyFilter, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm';
+import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
 import type { PinnableField } from '@unbound-app/contracts/admin';
 import { z } from 'zod';
@@ -22,14 +22,14 @@ import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
 import { VERSION_SOURCE, toAddonVersion } from '~/lib/artifacts';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
 import type { CursorKey, CursorPosition } from '~/lib/keyset';
+import { addon, addonTag, addonVersion } from '~/db/schema';
 import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { likeContains } from '~/lib/like-contains';
-import { addon, addonTag, addonVersion } from '~/db/schema';
-import { splitList } from '~/lib/addon-filters';
 import type { Transaction } from '~/db/database';
+import { splitList } from '~/lib/addon-filters';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';

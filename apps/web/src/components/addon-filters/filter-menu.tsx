@@ -6,13 +6,6 @@ import type { ReactElement, ReactNode } from 'react';
 import { IconChevronLeft } from 'nucleo-micro-bold';
 
 import {
-	BottomSheet,
-	BottomSheetClose,
-	BottomSheetContent,
-	BottomSheetTitle,
-	BottomSheetTrigger,
-} from '~/components/ui/bottom-sheet';
-import {
 	FIELD_ORDER,
 	FIELDS,
 	tagOptions,
@@ -22,14 +15,21 @@ import {
 	type FilterField,
 	type FilterOption,
 } from '~/lib/addon-filters';
+import {
+	BottomSheet,
+	BottomSheetClose,
+	BottomSheetContent,
+	BottomSheetTitle,
+	BottomSheetTrigger,
+} from '~/components/ui/bottom-sheet';
 import MorphHeight, { MORPH_EXPO, MORPH_SPRING } from '~/components/addon-filters/morph-height';
 import { CommandList, FieldIcon, OptionMark } from '~/components/addon-filters/filter-parts';
 import type { CommandItem, CommandListProps } from '~/components/addon-filters/filter-parts';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
 import useAuthorPages from '~/queries/marketplace/use-author-pages';
 import { authorsQuery } from '~/queries/marketplace/authors';
-import { tagsQuery } from '~/queries/marketplace/tags';
 import { buttonVariants } from '~/components/ui/button';
+import { tagsQuery } from '~/queries/marketplace/tags';
 import useIsMobile from '~/hooks/use-is-mobile';
 import cn from '~/lib/cn';
 

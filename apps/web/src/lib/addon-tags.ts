@@ -1,5 +1,5 @@
-import type { AddonType } from '@unbound-app/contracts/addons';
 import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import type { AddonType } from '@unbound-app/contracts/addons';
 
 import { addon, addonTag, tag } from '~/db/schema';
 import type { AppContext } from '~/lib/context';

@@ -1,7 +1,8 @@
-// Usage: bun seed-tags.ts <sessions.json>, run by launch.sh --tags after seed.ts, from apps/web with the instance env loaded.
-// Seeds tags and enough tagged plugins and themes, by enough authors, to filter and page the author menu.
-import { addon, addonMaintainer, addonTag, tag } from '../../../../apps/web/src/db/schema';
+// Usage: bun seed-tags.ts <sessions.json>, run by launch.sh --tags after seed.ts.
+// Seeds tags, and enough tagged addons by enough authors to filter and page the author menu.
 import type { DiscordId } from '../../../../apps/web/src/lib/authors/discord-users';
+
+import { addon, addonMaintainer, addonTag, tag } from '../../../../apps/web/src/db/schema';
 import { manifest, seedVersion } from '../../../../apps/web/tests/helpers';
 import { createAppContext } from '../../../../apps/web/src/lib/context';
 import { createDatabase } from '../../../../apps/web/src/db/database';

@@ -1,7 +1,7 @@
 import { IconMagnifierMinus, IconPalette, IconPlug, IconPlus, IconXmark } from 'nucleo-micro-bold';
 import { Link, useRouteContext, useRouterState } from '@tanstack/react-router';
-import type { AddonSort } from '@unbound-app/contracts/addons';
 import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
+import type { AddonSort } from '@unbound-app/contracts/addons';
 import debounce from '@unbound-app/utils/debounce';
 import type { ComponentType } from 'react';
 import { useMemo, useState } from 'react';
@@ -18,8 +18,8 @@ import {
 import { filtersFromSearch, searchFromFilters, type AddonFilter } from '~/lib/addon-filters';
 import { TagList } from '~/components/addon-filters/filter-parts';
 import { staggerStyle } from '~/components/motion/reveal-style';
-import { listingQuery } from '~/queries/marketplace/listing';
 import FilterBar from '~/components/addon-filters/filter-bar';
+import { listingQuery } from '~/queries/marketplace/listing';
 import SortMenu from '~/components/addon-filters/sort-menu';
 import type { MarketplaceSearch } from '~/lib/marketplace';
 import type { CssVariables } from '~/lib/css-variables';

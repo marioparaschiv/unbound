@@ -1,3 +1,4 @@
+import type { AddonSort } from '@unbound-app/contracts/addons';
 import { IconCheck, IconSortArrows } from 'nucleo-micro-bold';
 import { useState } from 'react';
 
@@ -15,10 +16,8 @@ import {
 	BottomSheetTitle,
 	BottomSheetTrigger,
 } from '~/components/ui/bottom-sheet';
-import type { AddonSort } from '@unbound-app/contracts/addons';
-
-import { SORT_OPTIONS } from '~/lib/addon-filters';
 import { buttonVariants } from '~/components/ui/button';
+import { SORT_OPTIONS } from '~/lib/addon-filters';
 import useIsMobile from '~/hooks/use-is-mobile';
 import cn from '~/lib/cn';
 

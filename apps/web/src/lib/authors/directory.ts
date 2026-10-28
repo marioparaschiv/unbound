@@ -1,5 +1,5 @@
-import type { AddonType } from '@unbound-app/contracts/addons';
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
+import type { AddonType } from '@unbound-app/contracts/addons';
 import { z } from 'zod';
 
 import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';

@@ -8,8 +8,8 @@ import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod/mini';
 
-import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
 import { listTags, readAddonTags, type AddonTag, type TagOption } from '~/lib/addon-tags';
+import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
 import { searchAuthors, type AuthorPage } from '~/lib/authors/directory';
 import { getAddonDetails, listAddons } from '~/lib/addons';
 import { loadAuthors } from '~/lib/authors/resolve';

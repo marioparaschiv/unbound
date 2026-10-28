@@ -27,8 +27,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/in
 import { FieldIcon, OptionMark } from '~/components/addon-filters/filter-parts';
 import { pickedAuthorsQuery } from '~/queries/marketplace/authors';
 import FilterMenu from '~/components/addon-filters/filter-menu';
-import { tagsQuery } from '~/queries/marketplace/tags';
 import { buttonVariants } from '~/components/ui/button';
+import { tagsQuery } from '~/queries/marketplace/tags';
 import cn from '~/lib/cn';
 
 type FilterBarProps = {
