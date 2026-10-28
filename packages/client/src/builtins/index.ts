@@ -4,6 +4,7 @@ export { default as hotRefresh } from '~/builtins/hot-refresh';
 export { default as cloudSync } from '~/builtins/cloud-sync';
 export { default as staffMode } from '~/builtins/staff-mode';
 export { default as commands } from '~/builtins/commands';
+export { default as coreCommands } from '~/builtins/core-commands';
 export { default as settings } from '~/builtins/settings';
 export { default as tracking } from '~/builtins/tracking';
 export { default as updater } from '~/builtins/updater';
