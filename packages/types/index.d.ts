@@ -3,7 +3,6 @@
 // Pulls in the React and React Native typings from this package's own node_modules.
 import './global';
 
-export * from './typings/color-picker';
 export * from './typings/components';
 export * from './typings/settings';
 export * from './typings/addons';

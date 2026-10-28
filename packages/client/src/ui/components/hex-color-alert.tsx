@@ -1,4 +1,4 @@
-import type { ColorPickerOptions } from '@unbound-app/types/color-picker';
+import type { ColorPickerOptions } from '@unbound-app/types/components';
 import { useState } from 'react';
 
 import { intToHex, parseColor } from '~/lib/theme-draft';

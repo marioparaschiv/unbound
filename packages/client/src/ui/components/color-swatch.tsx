@@ -1,4 +1,4 @@
-import type { ColorBlockProps } from '@unbound-app/types/color-picker';
+import type { ColorBlockProps } from '@unbound-app/types/components';
 import { Pressable, View } from 'react-native';
 
 import { intToHex } from '~/lib/theme-draft';

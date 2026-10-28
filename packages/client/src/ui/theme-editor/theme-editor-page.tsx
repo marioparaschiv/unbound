@@ -165,29 +165,29 @@ function ThemeEditorPage({ route }: ThemeEditorPageProps) {
 
 	return (
 		<Page>
-			<Discord.TableRowGroup
-				title={Messages.UNBOUND_THEME_DETAILS}
-				description={Messages.UNBOUND_THEME_EDITOR_HINT}
-			>
-				<Discord.TableRow label={Messages.UNBOUND_THEME_NAME}>
-					<Discord.TextInput
-						value={name}
-						placeholder={Messages.UNBOUND_THEME_NAME_PLACEHOLDER}
-						onChange={setName}
-					/>
-				</Discord.TableRow>
-				<Discord.TableRow label={Messages.UNBOUND_THEME_DESCRIPTION}>
-					<Discord.TextInput
-						value={description}
-						placeholder={Messages.UNBOUND_THEME_DESCRIPTION_PLACEHOLDER}
-						multiline
-						onChange={setDescription}
-					/>
-				</Discord.TableRow>
-			</Discord.TableRowGroup>
+			<Discord.Stack spacing={8}>
+				<Discord.TableRowGroupTitle title={Messages.UNBOUND_THEME_NAME} />
+				<Discord.TextInput
+					value={name}
+					placeholder={Messages.UNBOUND_THEME_NAME_PLACEHOLDER}
+					onChange={setName}
+				/>
+			</Discord.Stack>
+			<Discord.Stack spacing={8}>
+				<Discord.TableRowGroupTitle title={Messages.UNBOUND_THEME_DESCRIPTION} />
+				<Discord.TextInput
+					value={description}
+					placeholder={Messages.UNBOUND_THEME_DESCRIPTION_PLACEHOLDER}
+					onChange={setDescription}
+				/>
+			</Discord.Stack>
 
-			{categories.map(({ category, rows }) => (
-				<Discord.TableRowGroup key={category.key} title={format(category.title)}>
+			{categories.map(({ category, rows }, index) => (
+				<Discord.TableRowGroup
+					key={category.key}
+					title={format(category.title)}
+					description={index === 0 ? Messages.UNBOUND_THEME_EDITOR_HINT : undefined}
+				>
 					{rows.map((row) => (
 						<ColorRow key={row.key} label={format(row.label)} tokens={row.tokens} />
 					))}

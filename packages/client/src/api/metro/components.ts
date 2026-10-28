@@ -1,10 +1,11 @@
 import type {
+	ColorBlockProps,
+	ColorPickerOptions,
 	DesignComponentName,
 	DesignModule,
 	SwitchProps,
 	TextFieldProps,
 } from '@unbound-app/types/components';
-import type { ColorBlockProps, ColorPickerOptions } from '@unbound-app/types/color-picker';
 import { DESIGN_COMPONENTS } from '@unbound-app/types/components';
 import type { ComponentType, ElementType } from 'react';
 import firstOf from '@unbound-app/utils/first-of';
