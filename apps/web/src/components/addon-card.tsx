@@ -17,7 +17,7 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 	return (
 		<Card
 			className={cn(
-				'relative gap-0 hover:shadow-lg p-0 rounded-lg transition-transform hover:-translate-y-1 duration-200 ease-in-out',
+				'relative gap-0 p-0 transition-[translate,box-shadow] duration-(--press-duration) ease-spring hover:-translate-y-0.5 hover:shadow-float motion-reduce:hover:translate-y-0',
 				className,
 			)}
 			{...props}

@@ -22,7 +22,7 @@ function SavePanel({ form }: SavePanelProps) {
 					className={cn(
 						'flex-row flex-wrap md:flex-nowrap items-center gap-3 px-4 py-3',
 						changed
-							? 'bottom-4 z-10 sticky bg-card/90 supports-[backdrop-filter]:bg-card/75 shadow-lg backdrop-blur-md'
+							? 'bottom-4 z-10 sticky bg-card/90 supports-[backdrop-filter]:bg-card/75 shadow-float backdrop-blur-md'
 							: null,
 					)}
 				>

@@ -39,7 +39,7 @@ function SignIn({
 			<Button
 				variant='outline'
 				size='lg'
-				className='w-full gap-2 rounded-lg'
+				className='w-full gap-2'
 				disabled={isPending}
 				onClick={signIn}
 			>

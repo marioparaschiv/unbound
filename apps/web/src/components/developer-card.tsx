@@ -19,7 +19,7 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 	return (
 		<Card
 			className={cn(
-				'relative p-0 gap-0 rounded-lg transition-transform duration-200 ease-in-out hover:-translate-y-1 hover:shadow-lg flex-row items-center',
+				'relative p-0 gap-0 flex-row items-center transition-[translate,box-shadow] duration-(--press-duration) ease-spring hover:-translate-y-0.5 hover:shadow-float motion-reduce:hover:translate-y-0',
 				className,
 			)}
 			{...props}

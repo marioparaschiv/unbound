@@ -28,7 +28,7 @@ function AccountMenu() {
 
 	if (!session) {
 		return (
-			<Button asChild variant='default' className='rounded-md'>
+			<Button asChild variant='default'>
 				<Link to='/login'>
 					<IconLogin />
 					Login
@@ -54,7 +54,7 @@ function AccountMenu() {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant='ghost' className='group/account border-none rounded-md h-10'>
+				<Button variant='ghost' className='group/account border-none'>
 					<UserAvatar src={user.image} name={user.name} size='xs' />
 					{user.name}
 					<IconChevronDown className='group-data-[state=open]/account:rotate-180! transition-transform' />

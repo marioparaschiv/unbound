@@ -121,10 +121,10 @@ function FeatureGrid() {
 								style={GLOW_POSITION}
 							/>
 							<div
-								className='absolute inset-0 rounded-xl ring-1 ring-primary/15 ring-inset opacity-0 group-hover/features:opacity-100 transition-opacity duration-200 pointer-events-none'
+								className='absolute inset-0 rounded-[inherit] ring-1 ring-primary/15 ring-inset opacity-0 group-hover/features:opacity-100 transition-opacity duration-200 pointer-events-none'
 								style={GLOW_RING}
 							/>
-							<div className='absolute inset-0 ring-border/50 rounded-xl ring-1 ring-inset pointer-events-none' />
+							<div className='absolute inset-0 ring-border/50 rounded-[inherit] ring-1 ring-inset pointer-events-none' />
 							<div className='relative flex justify-center items-center bg-accent/50 backdrop-blur-md rounded-lg size-10'>
 								<Icon className='size-5' />
 							</div>
