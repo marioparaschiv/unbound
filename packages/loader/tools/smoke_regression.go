@@ -107,7 +107,7 @@ func readStartupRecord(path string) (smokeStartupRecord, error) {
 }
 
 func baselineStartupRecords(repository, workflow, branch, artifact string, limit int) ([]smokeStartupRecord, error) {
-	output, err := exec.Command("gh", "run", "list", "--repo", repository, "--workflow", workflow, "--branch", branch, "--event", "push", "--status", "success", "--limit", strconv.Itoa(limit), "--json", "databaseId", "--jq", ".[].databaseId").Output()
+	output, err := exec.Command("gh", "run", "list", "--repo", repository, "--workflow", workflow, "--branch", branch, "--status", "success", "--limit", strconv.Itoa(limit), "--json", "databaseId", "--jq", ".[].databaseId").Output()
 	if err != nil {
 		return nil, fmt.Errorf("list %s runs on %s: %w", workflow, branch, err)
 	}
