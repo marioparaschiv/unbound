@@ -4,8 +4,8 @@ import { eq } from 'drizzle-orm';
 import { getDeveloper, listDevelopers } from '~/lib/developers';
 import type { ManifestAuthor } from '~/lib/authors/resolve';
 import type { TeamRoleIds } from '~/lib/team/roles';
-import { syncTeam } from '~/lib/team/sync';
 import { ApiError } from '~/lib/api/errors';
+import { syncTeam } from '~/lib/team/sync';
 import { addon } from '~/db/schema';
 
 import { createTestContext, signInWithDiscord } from './helpers/context';

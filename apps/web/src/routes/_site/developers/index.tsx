@@ -18,6 +18,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/in
 import type { DevelopersPage, DevelopersQuery } from '~/lib/developers';
 import useInfiniteDevelopers from '~/hooks/use-infinite-developers';
 import TeamSections from '~/components/team/team-sections';
+import BlurReveal from '~/components/motion/blur-reveal';
 import { pageSearchSchema } from '~/lib/page-search';
 import { listDevelopers } from '~/lib/developers';
 import { Button } from '~/components/ui/button';
@@ -165,7 +166,9 @@ function TeamPage() {
 	return (
 		<div className='flex flex-col flex-1 gap-4 md:mx-auto px-4 w-full container'>
 			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>Team</Text>
+				<Text variant='heading-lg'>
+					<BlurReveal text='Team' />
+				</Text>
 				<Text variant='text-md' color='muted'>
 					The people that make your addon experience possible.
 				</Text>

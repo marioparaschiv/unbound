@@ -1,3 +1,4 @@
+import { staggerStyle } from '~/components/motion/reveal-style';
 import type { Developer, TeamGroup } from '~/lib/developers';
 import DeveloperCard from '~/components/developer-card';
 import type { CssVariables } from '~/lib/css-variables';
@@ -45,8 +46,13 @@ function TeamSections({ developers }: TeamSectionsProps) {
 						{TEAM_GROUPS[section.group].heading}
 					</Text>
 					<div style={GRID_STYLE} className='fill-grid gap-3'>
-						{section.developers.map((developer) => (
-							<DeveloperCard developer={developer} key={developer.author.discordId} />
+						{section.developers.map((developer, index) => (
+							<DeveloperCard
+								developer={developer}
+								key={developer.author.discordId}
+								className='animate-reveal'
+								style={staggerStyle(index)}
+							/>
 						))}
 					</div>
 				</section>
