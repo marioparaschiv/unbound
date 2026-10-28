@@ -36,6 +36,8 @@ type workflowStep struct {
 	Run  string            `yaml:"run"`
 	With map[string]string `yaml:"with"`
 	Env  map[string]string `yaml:"env"`
+
+	ContinueOnError string `yaml:"continue-on-error"`
 }
 
 type workflowJob struct {
@@ -134,10 +136,17 @@ func TestParsedReleaseBuildsWaitForTheGate(t *testing.T) {
 func TestParsedIOSBuildReusesTheResolvedIPA(t *testing.T) {
 	build := loadWorkflow(t, "loader-build.yml")
 	keep := build.job(t, "resolve-source").step(t, "Keep the source IPA for the gate and the iOS build")
-	if keep.With["name"] != "discord-source-ipa" || keep.If != "steps.select.outputs.platform == 'ios'" {
-		t.Fatalf("resolve-source must keep every iOS source IPA as discord-source-ipa, got %+v", keep)
+	if keep.With["name"] != "discord-source-ipa" || keep.If != "steps.select.outputs.platform == 'ios' && steps.decrypt.outcome != 'failure'" {
+		t.Fatalf("resolve-source must keep every iOS source IPA it obtained as discord-source-ipa, got %+v", keep)
+	}
+	decrypt := build.job(t, "resolve-source").step(t, "Decrypt the source IPA")
+	if decrypt.ID != "decrypt" || decrypt.ContinueOnError != "${{ inputs.release != true }}" {
+		t.Fatalf("only a release may fail on a missing source IPA, got %+v", decrypt)
 	}
 	ios := build.job(t, "ios")
+	if !strings.Contains(ios.If, "needs.resolve-source.outputs.ipa_available != 'false'") {
+		t.Fatalf("the iOS build must skip without a source IPA, runs if %q", ios.If)
+	}
 	if ios.Uses != "./.github/workflows/loader-ios.yml" || ios.With["source_ipa_artifact"] != "${{ needs.resolve-source.result == 'success' && 'discord-source-ipa' || '' }}" {
 		t.Fatalf("the iOS build must receive the resolved IPA, got %+v", ios.With)
 	}
