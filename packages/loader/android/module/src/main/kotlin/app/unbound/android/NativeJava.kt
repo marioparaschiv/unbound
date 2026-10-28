@@ -14,6 +14,7 @@ object NativeJava {
     private var nextAssociation = 1L
     private val objectsByHandle = HashMap<String, Any>()
     private val handlesByIdentity = HashMap<IdentityKey, String>()
+    private val issuesByHandle = HashMap<String, Long>()
     private var nextHandle = 1L
 
     private class IdentityKey(val target: Any) {
@@ -211,17 +212,28 @@ object NativeJava {
     }
 
     fun release(handleJSON: String) {
-        val id = parseHandle(handleJSON)
+        val request = JSONObject(handleJSON)
+        val id = request.getString("id")
+        val released = request.optLong("issues", -1L)
         synchronized(this) {
+            val remaining = if (released < 0) 0L else (issuesByHandle[id] ?: 0L) - released
+            if (remaining > 0) {
+                issuesByHandle[id] = remaining
+                return
+            }
+            issuesByHandle.remove(id)
             val target = objectsByHandle.remove(id) ?: return
             handlesByIdentity.remove(IdentityKey(target))
         }
     }
 
+    fun liveHandles(): Int = synchronized(this) { objectsByHandle.size }
+
     fun releaseAll() {
         synchronized(this) {
             objectsByHandle.clear()
             handlesByIdentity.clear()
+            issuesByHandle.clear()
             associations.clear()
             nextHandle = 1L
             nextAssociation = 1L
@@ -548,11 +560,11 @@ object NativeJava {
 
     private fun handle(target: Any): String = synchronized(this) {
         val key = IdentityKey(target)
-        handlesByIdentity[key]?.let { return it }
-
-        val id = "java-${nextHandle++}"
-        objectsByHandle[id] = target
-        handlesByIdentity[key] = id
+        val id = handlesByIdentity[key] ?: "java-${nextHandle++}".also {
+            objectsByHandle[it] = target
+            handlesByIdentity[key] = it
+        }
+        issuesByHandle[id] = (issuesByHandle[id] ?: 0L) + 1
         return id
     }
 }
