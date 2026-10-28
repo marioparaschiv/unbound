@@ -481,8 +481,9 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 		t.Fatal("the release must zip each platform's symbols")
 	}
 	for step, archives := range map[string][]string{
-		"Publish stable release":        {"unbound-ios-symbols.zip", "unbound-android-symbols.zip"},
-		"Publish TestFlight prerelease": {"unbound-ios-symbols.zip"},
+		"Publish stable iOS release":     {"unbound-ios-symbols.zip"},
+		"Publish stable Android release": {"unbound-android-symbols.zip"},
+		"Publish TestFlight prerelease":  {"unbound-ios-symbols.zip"},
 	} {
 		files := release.step(t, step).With["files"]
 		for _, archive := range archives {
@@ -491,8 +492,13 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 			}
 		}
 	}
-	if strings.Contains(release.step(t, "Publish TestFlight prerelease").With["files"], "android-symbols") {
-		t.Fatal("a TestFlight prerelease has no Android build to attach symbols for")
+	for _, step := range []string{"Publish TestFlight prerelease", "Publish stable iOS release"} {
+		if strings.Contains(release.step(t, step).With["files"], "android") {
+			t.Fatalf("%s must attach only iOS assets", step)
+		}
+	}
+	if strings.Contains(release.step(t, "Publish stable Android release").With["files"], "ios") {
+		t.Fatal("the stable Android release must attach only Android assets")
 	}
 	prerelease := build.job(t, "android-prerelease")
 	if prerelease.step(t, "Download Android native symbols").With["name"] != "android symbols" || !strings.Contains(prerelease.step(t, "Publish Android prerelease").With["files"], "release-assets/unbound-android-symbols.zip") {
