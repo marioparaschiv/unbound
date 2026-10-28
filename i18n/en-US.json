@@ -128,5 +128,17 @@
 	"UNBOUND_SHARE_DIRECT_MESSAGE": "Direct message",
 	"UNBOUND_SHARE_UNREADABLE": "Discord can't open the shared files.",
 	"UNBOUND_SHARE_NO_DESTINATIONS": "There's no recent channel or DM to share to.",
-	"UNBOUND_SHARE_FAILED": "Couldn't attach the shared files."
+	"UNBOUND_SHARE_FAILED": "Couldn't attach the shared files.",
+	"UNBOUND_CRASH_TITLE": "Something crashed",
+	"UNBOUND_CRASH_DESCRIPTION": "Discord or one of your plugins hit an error. Try again, reload, or start in recovery mode with every plugin off.",
+	"UNBOUND_CRASH_STACK": "Stack trace",
+	"UNBOUND_CRASH_COMPONENT_STACK": "Component stack",
+	"UNBOUND_CRASH_SHOW": "Show",
+	"UNBOUND_CRASH_HIDE": "Hide",
+	"UNBOUND_CRASH_RETRY": "Try again",
+	"UNBOUND_CRASH_RELOAD": "Reload Discord",
+	"UNBOUND_CRASH_RECOVERY": "Restart in recovery mode",
+	"UNBOUND_CRASH_COPY": "Copy error",
+	"UNBOUND_CRASH_COPIED": "Copied",
+	"UNBOUND_CRASH_REPORT": "Report bug"
 }
