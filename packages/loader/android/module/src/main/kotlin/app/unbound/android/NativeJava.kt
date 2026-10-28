@@ -23,6 +23,12 @@ object NativeJava {
 
     private var pluginClassLoader: ClassLoader? = null
 
+    private val methodsByName = java.util.concurrent.ConcurrentHashMap<Class<*>, Map<String, List<Method>>>()
+    private val resolvedMethods = java.util.concurrent.ConcurrentHashMap<MethodKey, Method>()
+    private val resolvedFields = java.util.concurrent.ConcurrentHashMap<Pair<Class<*>, String>, Field>()
+
+    private data class MethodKey(val owner: Class<*>, val static: Boolean, val name: String, val arguments: List<String>)
+
     fun useClassLoader(classLoader: ClassLoader) {
         synchronized(this) { pluginClassLoader = classLoader }
     }
@@ -256,18 +262,33 @@ object NativeJava {
 
     private fun findMethod(target: Any, name: String, arguments: List<Argument>): Method {
         val owner = if (target is Class<*>) target else target.javaClass
+        val key = MethodKey(owner, target is Class<*>, name, arguments.map(::argumentKey))
+        resolvedMethods[key]?.let { return it }
+
         val searched = if (target is Class<*>) listOf(owner, Class::class.java) else listOf(owner)
         val candidates = searched
-            .flatMap(::methods)
-            .filter { it.name == name && it.parameterCount == arguments.size }
+            .flatMap { methodsNamed(it, name) }
+            .filter { it.parameterCount == arguments.size }
         require(candidates.isNotEmpty()) { "No method $name on ${owner.name} takes ${arguments.size} arguments" }
 
-        return candidates.filter { matches(it.parameterTypes, arguments) }
+        val method = candidates.filter { matches(it.parameterTypes, arguments) }
             .minByOrNull { specificity(it.parameterTypes, arguments) }
             ?: throw IllegalArgumentException(
                 "No overload of $name on ${owner.name} accepts these arguments; it has ${signatures(candidates.map { it.parameterTypes })}",
             )
+        method.isAccessible = true
+        resolvedMethods[key] = method
+        return method
     }
+
+    private fun argumentKey(argument: Argument): String = when (argument) {
+        is Absent -> "null:${argument.declaredType?.name}"
+        is Reference -> "object:${argument.target.javaClass.name}"
+        is Scalar -> "value:${argument.declaredType?.name}:${argument.value?.javaClass?.name}"
+    }
+
+    private fun methodsNamed(owner: Class<*>, name: String): List<Method> =
+        methodsByName.getOrPut(owner) { methods(owner).groupBy { it.name } }[name].orEmpty()
 
     private fun methods(owner: Class<*>): List<Method> {
         val collected = ArrayList<Method>()
@@ -282,6 +303,12 @@ object NativeJava {
 
     private fun findField(target: Any, name: String): Field {
         val owner = if (target is Class<*>) target else target.javaClass
+        return resolvedFields.getOrPut(owner to name) {
+            declaredField(owner, name).also { it.isAccessible = true }
+        }
+    }
+
+    private fun declaredField(owner: Class<*>, name: String): Field {
         var current: Class<*>? = owner
         while (current != null) {
             runCatching { return current!!.getDeclaredField(name) }

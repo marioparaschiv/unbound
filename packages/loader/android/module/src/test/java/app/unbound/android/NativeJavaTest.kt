@@ -349,4 +349,45 @@ class NativeJavaTest {
         assertTrue(error.message!!.startsWith("No constructor of java.lang.StringBuilder accepts these arguments; it has "))
         assertTrue(error.message!!.contains("(int)"))
     }
+
+    @Test
+    fun repeatedCallsKeepChoosingTheOverloadTheirArgumentsMatch() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+        val text = """[{"type":"string","value":"a"}]"""
+        val character = """[{"type":"char","value":"b"}]"""
+        val number = """[{"type":"int","value":7}]"""
+        val absent = """[{"type":"null","class":"java.lang.CharSequence"}]"""
+
+        repeat(3) {
+            NativeJava.invoke(builder, "append", text)
+            NativeJava.invoke(builder, "append", character)
+            NativeJava.invoke(builder, "append", number)
+            NativeJava.invoke(builder, "append", absent)
+        }
+
+        assertEquals("ab7nullab7nullab7null", value(NativeJava.invoke(builder, "toString", "[]")).getString("value"))
+    }
+
+    @Test
+    fun cachedLookupsStillSeparateStaticAndInstanceCalls() {
+        val integer = NativeJava.getClass("java.lang.Integer")
+        val parse = """[{"type":"string","value":"42"}]"""
+
+        repeat(2) {
+            assertEquals(42, value(NativeJava.invoke(integer, "parseInt", parse)).getInt("value"))
+            assertEquals("java.lang.Integer", value(NativeJava.invoke(integer, "getName", "[]")).getString("value"))
+        }
+    }
+
+    @Test
+    fun cachedFieldsResolveOnEveryInstance() {
+        val first = NativeJava.construct("java.awt.Point", """[{"type":"int","value":1},{"type":"int","value":2}]""")
+        val second = NativeJava.construct("java.awt.Point", """[{"type":"int","value":3},{"type":"int","value":4}]""")
+
+        assertEquals(1, value(NativeJava.getField(first, "x")).getInt("value"))
+        assertEquals(3, value(NativeJava.getField(second, "x")).getInt("value"))
+        NativeJava.setField(second, "x", """{"type":"int","value":9}""")
+        assertEquals(9, value(NativeJava.getField(second, "x")).getInt("value"))
+        assertEquals(1, value(NativeJava.getField(first, "x")).getInt("value"))
+    }
 }
