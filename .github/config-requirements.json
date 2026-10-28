@@ -44,6 +44,11 @@
 		"required": true,
 		"purpose": "Downloads decrypted Discord IPAs for iOS builds and compatibility scans."
 	},
+	"HERMES_SYNC_TOKEN": {
+		"kind": "secret",
+		"required": false,
+		"purpose": "Lets the hermesc sync open its pull request as a user, so the pull request's own CI runs; without it the sync uses GITHUB_TOKEN."
+	},
 	"UNBOUND_API_KEY": {
 		"kind": "secret",
 		"required": true,
