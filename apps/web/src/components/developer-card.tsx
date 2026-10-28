@@ -24,9 +24,9 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 			)}
 			{...props}
 		>
-			<div className='flex items-center justify-center size-10 shrink-0 rounded-lg bg-accent m-4 mr-0 overflow-hidden'>
+			<div className='flex items-center justify-center size-10 shrink-0 rounded-control bg-accent m-4 mr-0 overflow-hidden'>
 				<UserAvatar
-					className='size-full rounded-lg object-cover'
+					className='size-full rounded-control object-cover'
 					src={author.avatarUrl}
 					name={author.name}
 				/>
@@ -36,7 +36,7 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 					<Link
 						to='/developers/$discordId'
 						params={{ discordId: author.discordId }}
-						className='after:absolute after:inset-0 after:rounded-lg'
+						className='after:absolute after:inset-0 after:rounded-surface'
 					>
 						{author.name}
 					</Link>

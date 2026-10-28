@@ -22,7 +22,7 @@ function SourceCard({ source }: SourceCardProps) {
 		<SidebarCard title='Source'>
 			<ExternalLink
 				href={`https://github.com/${pin.repository}/tree/${pin.commitSha}`}
-				className='group flex items-center gap-2.5 bg-muted/50 hover:bg-muted px-3 py-2 border rounded-lg min-w-0 transition-colors'
+				className='group flex items-center gap-2.5 bg-muted/50 hover:bg-muted px-3 py-2 border rounded-control min-w-0 press-flat'
 			>
 				<IconBrandGithub className='size-4 text-muted-foreground shrink-0' />
 				<Text as='span' variant='text-sm' className='font-medium truncate'>

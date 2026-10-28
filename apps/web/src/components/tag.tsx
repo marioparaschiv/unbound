@@ -5,7 +5,7 @@ import type { ComponentProps } from 'react';
 import cn from '~/lib/cn';
 
 const tagVariants = cva(
-	'inline-flex items-center px-1.5 py-0.5 rounded font-medium text-[10px] shrink-0',
+	'inline-flex items-center px-2 py-0.5 rounded-full font-semibold text-[10px] shrink-0',
 	{
 		variants: {
 			variant: {

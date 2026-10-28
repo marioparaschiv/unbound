@@ -100,7 +100,7 @@ function SubmissionPreview({ preview, draft, disabled, onDraftChange }: Submissi
 					ADDON.md
 				</Text>
 				{preview.addonMd ? (
-					<div className='p-4 border border-border rounded-lg max-h-[32rem] overflow-auto'>
+					<div className='p-4 border border-border rounded-control max-h-[32rem] overflow-auto'>
 						<Markdown source={preview.addonMd} pin={source} />
 					</div>
 				) : (

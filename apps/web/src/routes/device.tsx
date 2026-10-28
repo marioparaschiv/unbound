@@ -121,7 +121,7 @@ function DeviceApproval({ user, initialCode }: DeviceApprovalProps) {
 					</form>
 				) : (
 					<div className='flex flex-col gap-4'>
-						<div className='flex items-center gap-3 rounded-lg border bg-accent/30 p-4'>
+						<div className='flex items-center gap-3 rounded-control border bg-accent/30 p-4'>
 							<IconDeviceDesktop className='size-5 shrink-0 text-muted-foreground' />
 							<span className='font-mono text-sm tracking-widest'>{code}</span>
 						</div>

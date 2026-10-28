@@ -56,7 +56,7 @@ function DeveloperPage() {
 			<header className='flex sm:flex-row flex-col sm:items-center gap-4'>
 				<UserAvatar
 					size='xl'
-					className='rounded-xl object-cover'
+					className='rounded-surface object-cover'
 					src={author.avatarUrl}
 					name={author.name}
 				/>

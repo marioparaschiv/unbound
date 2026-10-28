@@ -125,7 +125,7 @@ function FeatureGrid() {
 								style={GLOW_RING}
 							/>
 							<div className='absolute inset-0 ring-border/50 rounded-[inherit] ring-1 ring-inset pointer-events-none' />
-							<div className='relative flex justify-center items-center bg-accent/50 backdrop-blur-md rounded-lg size-10'>
+							<div className='relative flex justify-center items-center bg-accent/50 backdrop-blur-md rounded-control size-10'>
 								<Icon className='size-5' />
 							</div>
 							<CardTitle className='relative'>{title}</CardTitle>

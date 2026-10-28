@@ -138,7 +138,7 @@ const COMPONENTS: Components = {
 	),
 	hr: () => <hr className='border-border' />,
 	pre: ({ children }) => (
-		<pre className='bg-muted p-4 border rounded-lg overflow-x-auto font-mono text-sm leading-relaxed [&>code]:bg-transparent [&>code]:p-0 [&>code]:rounded-none [&>code]:text-[length:inherit]'>
+		<pre className='bg-muted p-4 border rounded-control overflow-x-auto font-mono text-sm leading-relaxed [&>code]:bg-transparent [&>code]:p-0 [&>code]:rounded-none [&>code]:text-[length:inherit]'>
 			{children}
 		</pre>
 	),
@@ -148,7 +148,7 @@ const COMPONENTS: Components = {
 		</code>
 	),
 	table: ({ children }) => (
-		<div className='border rounded-lg overflow-x-auto'>
+		<div className='border rounded-control overflow-x-auto'>
 			<table className='w-full text-sm border-collapse'>{children}</table>
 		</div>
 	),

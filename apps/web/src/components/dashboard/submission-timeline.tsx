@@ -45,7 +45,7 @@ function SubmissionTimeline({ entries }: SubmissionTimelineProps) {
 							{DATE_FORMAT.format(new Date(entry.at))}
 						</Text>
 						{entry.note ? (
-							<div className='flex flex-col gap-0.5 bg-muted/50 mt-2 px-3 py-2 rounded-md'>
+							<div className='flex flex-col gap-0.5 bg-muted/50 mt-2 px-3 py-2 rounded-control'>
 								<Text variant='text-xs' color='muted' className='font-medium'>
 									Reviewer note
 								</Text>

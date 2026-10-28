@@ -22,7 +22,7 @@ type StepProps = {
 
 function Step({ index, title, description, done, children }: StepProps) {
 	return (
-		<li className='flex flex-col gap-3 bg-card p-4 border rounded-xl text-left'>
+		<li className='flex flex-col gap-3 bg-card shadow-surface p-4 border rounded-surface text-left'>
 			<div className='flex items-center gap-2'>
 				<span
 					className={cn(
@@ -46,8 +46,8 @@ function Step({ index, title, description, done, children }: StepProps) {
 
 function FirstRun({ githubLinked, hasSubmitted }: FirstRunProps) {
 	return (
-		<section className='flex flex-col items-center gap-6 p-6 sm:p-10 border border-dashed rounded-xl text-center'>
-			<div className='place-items-center grid bg-muted rounded-xl size-12'>
+		<section className='flex flex-col items-center gap-6 p-6 sm:p-10 border border-dashed rounded-surface text-center'>
+			<div className='place-items-center grid bg-muted rounded-control size-12'>
 				<IconPackage className='size-6' />
 			</div>
 			<div className='flex flex-col gap-1'>

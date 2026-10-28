@@ -26,7 +26,7 @@ function AttentionList({ addons, githubLinked }: AttentionListProps) {
 				<div
 					key={id}
 					className={cn(
-						'flex flex-wrap items-start gap-3 p-4 border rounded-xl',
+						'flex flex-wrap items-start gap-3 p-4 border rounded-control',
 						STYLE.callout,
 					)}
 				>

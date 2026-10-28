@@ -23,7 +23,7 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 			{...props}
 		>
 			<CardHeader className='flex flex-row items-center gap-3 p-4 pb-0'>
-				<div className='flex justify-center items-center bg-accent rounded-lg size-10 shrink-0'>
+				<div className='flex justify-center items-center bg-accent rounded-control size-10 shrink-0'>
 					{addon.type === 'theme' ? (
 						<IconPalette className='size-5' />
 					) : (
@@ -36,7 +36,7 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 						<Link
 							to='/addons/$id'
 							params={{ id: addon.id }}
-							className='after:absolute after:inset-0 after:rounded-lg'
+							className='after:absolute after:inset-0 after:rounded-surface'
 						>
 							{addon.name}
 						</Link>
