@@ -1,8 +1,9 @@
 //! Finding elements: the `findInReactTree` of this app.
 //!
 //! Two layers. [`find`] filters the tree by name, key, kind and subtree with no device round trip.
-//! [`JqFilter`] runs a jq program (via jaq) over the tree as JSON, or over inspected props, so
-//! `.. | objects | select(.name == "MessageRow" and .key != null) | .id` works as an agent expects.
+//! [`run_jq_on_tree`] runs a jq program (via jaq) over the tree as JSON, and [`find_by_props`] over
+//! inspected props, so `.. | objects | select(.name == "MessageRow" and .key != null) | .id` works
+//! as an agent expects.
 
 use jaq_core::data::JustLut;
 use jaq_core::load::{Arena, File, Loader};
@@ -118,18 +119,25 @@ pub async fn find_by_props(
 		.buffered(PROPS_CONCURRENCY)
 		.collect()
 		.await;
-	let filter = JqFilter::compile(predicate)?;
 	let mut matches = PropsMatches {
 		candidates: candidates.len(),
 		inspected: inspections.len(),
 		..Default::default()
 	};
+	let inputs = inspections
+		.iter()
+		.filter_map(|(_, inspection)| inspection.as_ref().ok())
+		.map(crate::InspectedElement::to_json)
+		.collect();
+	let mut verdicts = run_jq_deep(predicate, inputs, |outputs| outputs.map(|outputs| truthy(&outputs)))?
+		.into_iter();
 	let limit = query.limit.unwrap_or(usize::MAX);
 
 	for (id, inspection) in inspections {
-		let verdict = inspection
-			.map_err(|error| error.to_string())
-			.and_then(|element| filter.matches(element.to_json()));
+		let verdict = match inspection {
+			Ok(_) => verdicts.next().unwrap_or(Ok(false)),
+			Err(error) => Err(error.to_string()),
+		};
 
 		match verdict {
 			Ok(true) if matches.ids.len() < limit => matches.ids.push(id),
@@ -149,18 +157,66 @@ pub fn tree_json(store: &Store, root: Option<ElementId>, max_depth: Option<u32>)
 	let max_depth = max_depth.unwrap_or(u32::MAX);
 
 	match root {
-		Some(id) => node_json(store, id, 0, max_depth),
+		Some(id) => node_json(store, id, max_depth),
 		None => store
 			.roots()
 			.iter()
-			.map(|id| node_json(store, *id, 0, max_depth))
+			.map(|id| node_json(store, *id, max_depth))
 			.collect(),
 	}
 }
 
-fn node_json(store: &Store, id: ElementId, depth: u32, max_depth: u32) -> Json {
+/// An element whose children are still being built.
+struct OpenNode<'a> {
+	node: Json,
+	depth: u32,
+	pending: std::slice::Iter<'a, ElementId>,
+	children: Vec<Json>,
+}
+
+enum Visited<'a> {
+	Done(Json),
+	Open(OpenNode<'a>),
+}
+
+/// Builds bottom-up with an explicit stack: React Native trees nest hundreds of levels deep.
+fn node_json(store: &Store, id: ElementId, max_depth: u32) -> Json {
+	let mut stack = match visit(store, id, 0, max_depth) {
+		Visited::Done(node) => return node,
+		Visited::Open(open) => vec![open],
+	};
+
+	while let Some(top) = stack.last_mut() {
+		if let Some(child) = top.pending.next() {
+			match visit(store, *child, top.depth + 1, max_depth) {
+				Visited::Done(node) => top.children.push(node),
+				Visited::Open(open) => stack.push(open),
+			}
+
+			continue;
+		}
+
+		let Some(OpenNode {
+			mut node, children, ..
+		}) = stack.pop()
+		else {
+			break;
+		};
+
+		node["children"] = Json::Array(children);
+
+		match stack.last_mut() {
+			Some(parent) => parent.children.push(node),
+			None => return node,
+		}
+	}
+
+	Json::Null
+}
+
+fn visit(store: &Store, id: ElementId, depth: u32, max_depth: u32) -> Visited<'_> {
 	let Some(element) = store.get(id) else {
-		return Json::Null;
+		return Visited::Done(Json::Null);
 	};
 	let mut node = json!({
 		"id": element.id,
@@ -175,15 +231,65 @@ fn node_json(store: &Store, id: ElementId, depth: u32, max_depth: u32) -> Json {
 	if depth >= max_depth && !element.children.is_empty() {
 		node["truncated"] = Json::from(store.walk(Some(id)).count() - 1);
 		node["children"] = json!([]);
-		return node;
+		return Visited::Done(node);
 	}
 
-	node["children"] = element
-		.children
-		.iter()
-		.map(|child| node_json(store, *child, depth + 1, max_depth))
-		.collect();
-	node
+	Visited::Open(OpenNode {
+		node,
+		depth,
+		pending: element.children.iter(),
+		children: Vec::with_capacity(element.children.len()),
+	})
+}
+
+/// Runs `program` over [`tree_json`] of `root` (every root when `None`) and maps each output
+/// through `each`. The MCP `query` tool and the GUI's jq search both go through here.
+///
+/// # Errors
+///
+/// When the program does not compile, fails on the tree, or its thread cannot start.
+pub fn run_jq_on_tree<T: Send>(
+	devtools: &Devtools,
+	root: Option<ElementId>,
+	program: &str,
+	each: impl Fn(Json) -> T + Sync,
+) -> Result<Vec<T>, String> {
+	let tree = tree_json(&devtools.store(), root, None);
+	let mut results = run_jq_deep(program, vec![tree], |outputs| {
+		outputs.map(|outputs| outputs.into_iter().map(&each).collect::<Vec<_>>())
+	})?;
+
+	results.pop().unwrap_or_else(|| Ok(Vec::new()))
+}
+
+/// The jq thread's stack. jaq's evaluator, its JSON reader and writer, and dropping a nested
+/// [`Json`] all recurse once per tree level, and Discord's tree overflowed a default 2 MiB stack.
+/// Pages are committed only as touched, so this reserves address space, not memory.
+const JQ_STACK_BYTES: usize = 512 << 20;
+
+/// Compiles `program`, runs it over each input and hands the outputs to `each`, all on a fresh
+/// thread with a [`JQ_STACK_BYTES`] stack, so every deep value is built and dropped there.
+fn run_jq_deep<T: Send>(
+	program: &str,
+	inputs: Vec<Json>,
+	each: impl Fn(Result<Vec<Json>, String>) -> T + Sync,
+) -> Result<Vec<T>, String> {
+	std::thread::scope(|scope| {
+		std::thread::Builder::new()
+			.name("jq".into())
+			.stack_size(JQ_STACK_BYTES)
+			.spawn_scoped(scope, || {
+				let filter = JqFilter::compile(program)?;
+
+				Ok(inputs
+					.into_iter()
+					.map(|input| each(filter.run(input)))
+					.collect())
+			})
+			.map_err(|error| format!("cannot start the jq thread: {error}"))?
+			.join()
+			.map_err(|_| "the jq thread panicked".to_owned())?
+	})
 }
 
 /// An indented text outline for agents: `  <MessageRow key="m1"> #42 memo`.
@@ -319,7 +425,8 @@ impl JqFilter {
 		&self.source
 	}
 
-	/// Every output the program yields for `input`.
+	/// Every output the program yields for `input`, on this thread. A deeply nested `input` can
+	/// overflow its stack; [`run_jq_on_tree`] runs on one sized for the element tree.
 	pub fn run(&self, input: Json) -> Result<Vec<Json>, String> {
 		let input = jaq_json::read::parse_single(input.to_string().as_bytes())
 			.map_err(|error| format!("jq input: {error:?}"))?;
@@ -338,18 +445,43 @@ impl JqFilter {
 
 	/// True when the program's first output is truthy (jq's `select` semantics).
 	pub fn matches(&self, input: Json) -> Result<bool, String> {
-		let first = self.run(input)?.into_iter().next();
-
-		Ok(!matches!(
-			first,
-			None | Some(Json::Null) | Some(Json::Bool(false))
-		))
+		Ok(truthy(&self.run(input)?))
 	}
 }
 
-/// jaq prints compact JSON; the few values JSON lacks (`NaN`, byte strings) come back as text.
-fn val_to_json(value: &Val) -> Json {
-	let text = value.to_string();
+fn truthy(outputs: &[Json]) -> bool {
+	!matches!(
+		outputs.first(),
+		None | Some(Json::Null) | Some(Json::Bool(false))
+	)
+}
 
-	serde_json::from_str(&text).unwrap_or(Json::String(text))
+/// Converts directly: serde_json's parser refuses input nested past 128 levels, and a subtree of
+/// the element tree is deeper. Values JSON lacks (`NaN`, byte strings) come back as text.
+fn val_to_json(value: &Val) -> Json {
+	match value {
+		Val::Null => Json::Null,
+		Val::Bool(bool) => Json::Bool(*bool),
+		Val::Num(num) => {
+			let text = num.to_string();
+
+			serde_json::from_str(&text).unwrap_or(Json::String(text))
+		}
+		Val::TStr(bytes) => Json::String(String::from_utf8_lossy(bytes).into_owned()),
+		Val::BStr(_) => Json::String(value.to_string()),
+		Val::Arr(items) => items.iter().map(val_to_json).collect(),
+		Val::Obj(entries) => Json::Object(
+			entries
+				.iter()
+				.map(|(key, value)| {
+					let key = match key {
+						Val::TStr(bytes) => String::from_utf8_lossy(bytes).into_owned(),
+						other => other.to_string(),
+					};
+
+					(key, val_to_json(value))
+				})
+				.collect(),
+		),
+	}
 }

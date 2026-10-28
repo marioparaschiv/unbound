@@ -7,8 +7,8 @@ use std::time::Duration;
 
 use gpui::{Context, Task};
 use serde_json::Value as Json;
-use unbound_devtools_core::query::{find, tree_json};
-use unbound_devtools_core::{Devtools, ElementId, FindQuery, JqFilter, NameMatch};
+use unbound_devtools_core::query::{find, run_jq_on_tree};
+use unbound_devtools_core::{Devtools, ElementId, FindQuery, NameMatch};
 
 use crate::app::Workspace;
 
@@ -91,9 +91,8 @@ impl Search {
 					Ok(find(&devtools.store(), &query))
 				}
 				Mode::Jq(program) => {
-					let input = tree_json(&devtools.store(), None, None);
 					cx.background_executor()
-						.spawn(async move { run_jq(&program, input) })
+						.spawn(async move { jq_matches(&devtools, &program) })
 						.await
 				}
 			};
@@ -146,16 +145,16 @@ impl Workspace {
 	}
 }
 
-fn run_jq(program: &str, input: Json) -> Result<Vec<ElementId>, String> {
-	let outputs = JqFilter::compile(program)?.run(input)?;
+fn jq_matches(devtools: &Devtools, program: &str) -> Result<Vec<ElementId>, String> {
+	let outputs = run_jq_on_tree(devtools, None, program, |output| match output {
+		Json::Number(n) => n.as_i64(),
+		Json::Object(object) => object.get("id").and_then(Json::as_i64),
+		_ => None,
+	})?;
 	let mut seen = HashSet::new();
 	Ok(outputs
-		.iter()
-		.filter_map(|output| match output {
-			Json::Number(n) => n.as_i64(),
-			Json::Object(object) => object.get("id").and_then(Json::as_i64),
-			_ => None,
-		})
+		.into_iter()
+		.flatten()
 		.map(ElementId)
 		.filter(|id| seen.insert(*id))
 		.collect())

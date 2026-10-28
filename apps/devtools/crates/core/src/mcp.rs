@@ -35,7 +35,7 @@ use serde_json::Value as Json;
 
 use crate::inspect::Section;
 use crate::presets::{ConnectTarget, DevicePreset, parse_host};
-use crate::query::{self, FindQuery, JqFilter, NameMatch};
+use crate::query::{self, FindQuery, NameMatch};
 use crate::session::Devtools;
 use crate::store::{ElementId, ElementKind};
 use crate::value::Path;
@@ -333,13 +333,18 @@ impl DevtoolsServer {
 		`[.. | objects | select(.kind == \"memo\") | .id]`. Only names and keys, not props: use \
 		find with props for those.")]
 	async fn query(&self, Parameters(params): Parameters<QueryParams>) -> Result<String, String> {
-		let tree = query::tree_json(&self.devtools.store(), params.root.map(ElementId), None);
-		let outputs = JqFilter::compile(&params.jq)?.run(tree)?;
-		let text = outputs
-			.iter()
-			.map(Json::to_string)
-			.collect::<Vec<_>>()
-			.join("\n");
+		let devtools = self.devtools.clone();
+		let outputs = tokio::task::spawn_blocking(move || {
+			query::run_jq_on_tree(
+				&devtools,
+				params.root.map(ElementId),
+				&params.jq,
+				|output| output.to_string(),
+			)
+		})
+		.await
+		.map_err(|error| format!("the query did not finish: {error}"))??;
+		let text = outputs.join("\n");
 
 		Ok(format::cap(text, MAX_OUTPUT_CHARS))
 	}
