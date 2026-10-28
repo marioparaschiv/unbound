@@ -63,6 +63,11 @@
 	--font-secondary: Manrope, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Tailwind's built-in ease-out is too weak to feel responsive; every `ease-out` utility uses this one. */
+@theme {
+	--ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
 :root {
 	color-scheme: light;
 	--radius: 1rem;
@@ -379,6 +384,45 @@ footprint matches a field; a press moves that space above the body instead of ov
 /* The padding keeps descenders inside the clip, which `leading-none` alone shrinks below the glyphs. */
 @utility single-line {
 	@apply truncate py-1 leading-none;
+}
+
+/* A CSS animation plays from the first server-rendered paint, before hydration, so entrances never flash. */
+@keyframes reveal {
+	from {
+		opacity: 0;
+		filter: blur(var(--reveal-blur, 0px));
+		transform: translateY(var(--reveal-offset, 12px));
+	}
+}
+
+/* `backwards` drops the animated styles once it ends, so hover transforms and backdrop blurs work again. */
+@utility animate-reveal {
+	animation: reveal var(--reveal-duration, 300ms) var(--ease-out) var(--reveal-delay, 0ms)
+		backwards;
+}
+
+/*
+ * A foreground-to-muted text gradient made with a mask, because `bg-clip-text` drops the text of children
+ * that animate on their own layers. The padding keeps their offset and blur inside the mask.
+ */
+@utility text-fade {
+	color: var(--color-foreground);
+	padding: 0.5em;
+	margin: -0.5em;
+	mask-image: linear-gradient(to bottom right, #000, rgb(0 0 0 / 0.6));
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-reveal {
+		animation: none;
+	}
+
+	/* Beats the inline styles motion writes, so scroll reveals show their content from the start. */
+	[data-reveal] {
+		opacity: 1 !important;
+		filter: none !important;
+		transform: none !important;
+	}
 }
 
 @utility fill-grid {

@@ -19,6 +19,7 @@ import (
 const (
 	cyanRepository     = "https://github.com/asdfzxcvbn/pyzule-rw"
 	cyanCommit         = "740d3716dcd98c20c000f12cdb88f1f0b2a533a4"
+	linkRelayAppName   = "UnboundLink.app"
 	pillowVersion      = "11.3.0"
 	simforgeRepository = "https://github.com/EthanArbuckle/simforge"
 	simforgeCommit     = "c1de4439aa00a6057d497f6097fecda530800a29"
@@ -272,6 +273,9 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 		return err
 	}
 	if err := validateIPAExtensions(sourceEntries, finalEntries); err != nil {
+		return err
+	}
+	if err := rejectLinkRelayApp(finalEntries); err != nil {
 		return err
 	}
 	if err := validateIPAExtensionExecutables(options.output); err != nil {
@@ -629,6 +633,17 @@ func validateIPAExtensions(sourceEntries, finalEntries []string) error {
 	}
 	sort.Strings(missing)
 	return fmt.Errorf("final IPA is missing required extensions: %s", strings.Join(missing, ", "))
+}
+
+func rejectLinkRelayApp(entries []string) error {
+	for _, entry := range entries {
+		for _, part := range strings.Split(entry, "/") {
+			if part == linkRelayAppName {
+				return fmt.Errorf("final IPA must not contain %s (Discord itself claims unbound:// in a sideloaded IPA): %s", linkRelayAppName, entry)
+			}
+		}
+	}
+	return nil
 }
 
 func validateIPAExtensionExecutables(path string) error {

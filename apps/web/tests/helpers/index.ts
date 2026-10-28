@@ -12,3 +12,4 @@ export * from './storage';
 export * from './addons';
 export * from './github';
 export * from './server';
+export * from './team';

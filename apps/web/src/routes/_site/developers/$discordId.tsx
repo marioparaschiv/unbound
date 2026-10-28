@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
-import { IconFaceNeutral } from 'nucleo-micro-bold';
+import { IconBox, IconFaceNeutral } from 'nucleo-micro-bold';
 
 import {
 	Empty,
@@ -12,6 +12,7 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import type { IdentifiedAuthor } from '~/lib/authors/resolve';
+import TEAM_GROUPS from '~/components/team/team-groups';
 import type { CssVariables } from '~/lib/css-variables';
 import { formatDate } from '~/components/addon/format';
 import UserAvatar from '~/components/user-avatar';
@@ -20,6 +21,7 @@ import { Button } from '~/components/ui/button';
 import UserBadge from '~/components/user-badge';
 import { getDeveloper } from '~/lib/developers';
 import Text from '~/components/ui/text';
+import Tag from '~/components/tag';
 import app from '~/lib/app';
 
 type DeveloperDetailsProps = {
@@ -49,7 +51,7 @@ function DeveloperDetails({ author }: DeveloperDetailsProps) {
 }
 
 function DeveloperPage() {
-	const { author, addons } = Route.useLoaderData();
+	const { author, addons, group } = Route.useLoaderData();
 
 	return (
 		<div className='flex flex-col flex-1 gap-8 page-frame'>
@@ -68,6 +70,9 @@ function DeveloperPage() {
 						{author.kind === 'user' && author.badge ? (
 							<UserBadge badge={author.badge} />
 						) : null}
+						<Tag variant={group === 'addon-developer' ? 'default' : 'primary'}>
+							{TEAM_GROUPS[group].member}
+						</Tag>
 					</div>
 					<Text variant='text-sm' color='muted'>
 						<DeveloperDetails author={author} />
@@ -79,11 +84,25 @@ function DeveloperPage() {
 				<Text as='h2' variant='heading-sm'>
 					Addons
 				</Text>
-				<div style={GRID_STYLE} className='fill-grid gap-3'>
-					{addons.map((addon) => (
-						<AddonCard addon={addon} key={addon.id} />
-					))}
-				</div>
+				{addons.length === 0 ? (
+					<Empty className='border border-dashed'>
+						<EmptyHeader>
+							<EmptyMedia variant='icon'>
+								<IconBox size={24} />
+							</EmptyMedia>
+							<EmptyTitle>No Addons Yet</EmptyTitle>
+							<EmptyDescription>
+								No listed addon credits {author.name} yet.
+							</EmptyDescription>
+						</EmptyHeader>
+					</Empty>
+				) : (
+					<div style={GRID_STYLE} className='fill-grid gap-3'>
+						{addons.map((addon) => (
+							<AddonCard addon={addon} key={addon.id} />
+						))}
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -96,12 +115,14 @@ function DeveloperNotFound() {
 				<EmptyMedia variant='icon'>
 					<IconFaceNeutral size={24} />
 				</EmptyMedia>
-				<EmptyTitle>Developer Not Found</EmptyTitle>
-				<EmptyDescription>No listed addon credits this developer.</EmptyDescription>
+				<EmptyTitle>Not Found</EmptyTitle>
+				<EmptyDescription>
+					This person is not on the team and no listed addon credits them.
+				</EmptyDescription>
 			</EmptyHeader>
 			<EmptyContent>
 				<Button asChild>
-					<Link to='/developers'>Browse Developers</Link>
+					<Link to='/developers'>Browse Team</Link>
 				</Button>
 			</EmptyContent>
 		</Empty>
@@ -121,9 +142,7 @@ export const Route = createFileRoute('/_site/developers/$discordId')({
 		return developer;
 	},
 	head: ({ loaderData }) => ({
-		meta: [
-			{ title: loaderData ? `Unbound | ${loaderData.author.name}` : 'Unbound | Developer' },
-		],
+		meta: [{ title: loaderData ? `Unbound | ${loaderData.author.name}` : 'Unbound | Team' }],
 	}),
 	component: DeveloperPage,
 	notFoundComponent: DeveloperNotFound,

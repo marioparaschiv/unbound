@@ -16,7 +16,7 @@ if tmux has-session -t "=$SESSION" 2>/dev/null; then
 fi
 
 # vite runs as a node child of the pane pid; match children by parent pid, never by name.
-for pane in ${PANE_PID:-} ${GITHUB_PID:-}; do
+for pane in ${PANE_PID:-} ${GITHUB_PID:-} ${DISCORD_PID:-}; do
 	for pid in $(pgrep -P "$pane") "$pane"; do
 		kill -0 "$pid" 2>/dev/null || continue
 		kill "$pid"

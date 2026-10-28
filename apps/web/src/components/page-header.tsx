@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import BlurReveal from '~/components/motion/blur-reveal';
 import Text from '~/components/ui/text';
 
 type PageHeaderProps = {
@@ -18,7 +19,9 @@ function PageHeader({ title, description, children }: PageHeaderProps) {
 	return (
 		<div className='flex flex-wrap justify-between items-end gap-4 mb-2'>
 			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>{title}</Text>
+				<Text variant='heading-lg'>
+					{typeof title === 'string' ? <BlurReveal text={title} /> : title}
+				</Text>
 				{description ? (
 					<Text variant='text-md' color='muted'>
 						{description}

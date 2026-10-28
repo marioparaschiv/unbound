@@ -73,6 +73,11 @@ repo="$(curl -s --max-time 10 -H "authorization: Bearer ${GITHUB_TOKEN:-}" "${GI
 grep -q '"push":true' <<<"$repo" && r=ok || r="fake GitHub did not serve verify/addons: ${repo:0:200}"
 check "fake GitHub ${GITHUB_URL:-}" "$r"
 
+admin_id="$(bun -e "import { discordIdOf } from '$SKILL_DIR/scripts/team.ts'; console.log(discordIdOf('admin'))")"
+guild="$(curl -s --max-time 10 "${DISCORD_URL:-http://127.0.0.1:9}/api/v10/guilds/950850315601711176/members/$admin_id")"
+grep -q '"Verify Admin"' <<<"$guild" && r=ok || r="fake Discord did not serve the admin member: ${guild:0:200}"
+check "fake Discord ${DISCORD_URL:-}" "$r"
+
 if [ -n "$MINIO_ADDR" ]; then
 	code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://$MINIO_ADDR/minio/health/live")"
 	[ "$code" = 200 ] && r=ok || r="HTTP $code"

@@ -9,4 +9,5 @@ export { default as updater } from '~/builtins/updater';
 export { default as debug } from '~/builtins/debugger';
 export { default as themes } from '~/builtins/themes';
 export { default as toasts } from '~/builtins/toasts';
+export { default as links } from '~/builtins/links';
 export { default as i18n } from '~/builtins/i18n';

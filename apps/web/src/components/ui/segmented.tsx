@@ -25,7 +25,8 @@ type SegmentedItemProps = ComponentProps<'a'> & {
 	asChild?: boolean;
 };
 
-const PILL_TRANSITION = { type: 'spring', stiffness: 500, damping: 38 } as const;
+// Hovering is frequent, so the pill answers at once with a strong ease-out instead of easing in.
+const PILL_TRANSITION = { duration: 0.25, ease: [0.23, 1, 0.32, 1] } as const;
 
 // Each tone names its surface and pill tokens, so the header and page variants share every class.
 const TONES: Record<SegmentedTone, string> = {

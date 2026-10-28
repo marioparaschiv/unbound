@@ -23,6 +23,7 @@ import {
 } from '~/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
 import type { MarketplacePage, MarketplaceSearch } from '~/lib/marketplace';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import type { MarketplaceAddon } from '~/lib/marketplace-addon';
 import type { SortOption } from '~/components/sort-controls';
 import { fetchMarketplacePage } from '~/lib/marketplace';
@@ -103,6 +104,8 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 	const copy = COPY[type];
 	const [addons, setAddons] = useState<MarketplaceAddon[]>(page.addons);
 	const [cursor, setCursor] = useState(page.nextCursor);
+	// The newest page staggers in from its own first card rather than from the top of the grid.
+	const [batchStart, setBatchStart] = useState(0);
 	const [loading, startLoading] = useTransition();
 
 	function loadMore() {
@@ -112,6 +115,7 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 			try {
 				const next = await fetchMarketplacePage({ data: { ...search, type, cursor } });
 
+				setBatchStart(addons.length);
 				setAddons((previous) => [...previous, ...next.addons]);
 				setCursor(next.nextCursor);
 			} catch (error) {
@@ -162,8 +166,13 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 	return (
 		<>
 			<div style={GRID_STYLE} className='fill-grid'>
-				{addons.map((addon) => (
-					<AddonCard addon={addon} key={addon.id} />
+				{addons.map((addon, index) => (
+					<AddonCard
+						addon={addon}
+						key={addon.id}
+						className='animate-reveal'
+						style={staggerStyle(Math.max(index - batchStart, 0))}
+					/>
 				))}
 			</div>
 

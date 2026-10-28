@@ -1,5 +1,6 @@
 #include "NativePlatformBridge.h"
 
+#include <atomic>
 #include <mutex>
 
 #include "LoaderAddonActivity.h"
@@ -12,6 +13,8 @@
 
 namespace loader {
 namespace jsi = facebook::jsi;
+
+static std::atomic<bool> launchURLClaimed{false};
 
 jsi::Value toJSIValue(jsi::Runtime &runtime, const nlohmann::json &value)
 {
@@ -317,6 +320,12 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
     jsi::Object app(runtime);
     app.setProperty(runtime, "getAppSource",
                     stringGetter(runtime, "getAppSource", provider->appSource));
+    app.setProperty(runtime, "claimLaunchURL",
+                    native::makeFunction(runtime, "claimLaunchURL", 0,
+                                         [](jsi::Runtime &, const jsi::Value &, const jsi::Value *,
+                                            size_t) -> jsi::Value {
+                                             return jsi::Value(!launchURLClaimed.exchange(true));
+                                         }));
     platform.setProperty(runtime, "app", std::move(app));
 
     if (!provider->documents.empty())

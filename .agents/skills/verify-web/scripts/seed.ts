@@ -7,7 +7,7 @@ import {
 	seedSubmission,
 	seedVersion,
 	signInWithDiscord,
-	snowflakeAt,
+	addTeamMembers,
 } from '../../../../apps/web/tests/helpers';
 import { addon, addonMaintainer } from '../../../../apps/web/src/db/schema';
 import { getArtifactKeys } from '../../../../apps/web/src/lib/artifacts';
@@ -15,6 +15,7 @@ import { createAppContext } from '../../../../apps/web/src/lib/context';
 import { createDatabase } from '../../../../apps/web/src/db/database';
 import { toAddonSummary } from '../../../../apps/web/src/lib/addons';
 import { parseEnv } from '../../../../apps/web/src/lib/env';
+import { discordIdOf, GUILD_MEMBERS, ROLES } from './team';
 
 type SeededSession = {
 	userId: string;
@@ -23,12 +24,9 @@ type SeededSession = {
 	cookie: string;
 };
 
-// `ci` is the account CI's API key belongs to; it publishes first-party addons.
-const ROLES = ['user', 'developer', 'moderator', 'admin', 'ci'] as const;
 // seedSubmission records 1024-byte bundles, so the staged and published bytes match that size.
 const BUNDLE = new TextEncoder().encode(`console.log('verify-web');\n`.padEnd(1024, ' '));
 const SHA256 = new Bun.CryptoHasher('sha256').update(BUNDLE).digest('hex');
-const ACCOUNT_CREATED = new Date('2020-01-01T00:00:00Z');
 
 const output = process.argv[2];
 
@@ -43,10 +41,10 @@ const s3 = process.env.VERIFY_WEB_S3 === '1';
 const githubToken = process.env.VERIFY_WEB_GITHUB_TOKEN;
 const sessions: Record<string, SeededSession> = {};
 
-for (const [index, role] of ROLES.entries()) {
+for (const role of ROLES) {
 	const name = `Verify ${role[0]?.toUpperCase()}${role.slice(1)}`;
 	const signedIn = await signInWithDiscord(ctx, {
-		id: snowflakeAt(new Date(ACCOUNT_CREATED.getTime() + index)),
+		id: discordIdOf(role),
 		name,
 		email: `${role}@verify-web.local`,
 	});
@@ -62,6 +60,12 @@ for (const [index, role] of ROLES.entries()) {
 
 	sessions[role] = { userId: signedIn.userId, name, token: signedIn.token, cookie };
 }
+
+// The way staff add people by hand: the sync looks them up and corrects each group from their roles.
+await addTeamMembers(
+	ctx,
+	GUILD_MEMBERS.map((member) => member.id),
+);
 
 const developer = sessions.developer;
 const approved = manifest('verify.hello', '1.0.0', {

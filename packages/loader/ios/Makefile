@@ -53,8 +53,11 @@ BUNDLE_NAME = UnboundResources
 $(BUNDLE_NAME)_INSTALL_PATH = "/Library/Application\ Support/"
 $(BUNDLE_NAME)_RESOURCE_DIRS = "$(RESOURCES_DIR)"
 
+SUBPROJECTS += link-helper
+
 include $(THEOS_MAKE_PATH)/tweak.mk
 include $(THEOS_MAKE_PATH)/bundle.mk
+include $(THEOS_MAKE_PATH)/aggregate.mk
 
 SHELL := /bin/bash
 TOOLS ?= $(TOOLS_COMMAND)

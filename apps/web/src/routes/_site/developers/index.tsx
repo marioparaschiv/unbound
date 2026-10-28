@@ -4,6 +4,7 @@ import { createServerFn } from '@tanstack/react-start';
 import type { ChangeEvent, FormEvent } from 'react';
 import debounce from '@unbound-app/utils/debounce';
 import { useMemo, useState } from 'react';
+import { z } from 'zod';
 
 import {
 	Empty,
@@ -14,37 +15,75 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
-import { pageSearchSchema, toPageSearch } from '~/lib/page-search';
-import DeveloperCard from '~/components/developer-card';
-import type { CssVariables } from '~/lib/css-variables';
+import type { DevelopersPage, DevelopersQuery } from '~/lib/developers';
+import useInfiniteDevelopers from '~/hooks/use-infinite-developers';
+import TeamSections from '~/components/team/team-sections';
+import { pageSearchSchema } from '~/lib/page-search';
 import PageHeader from '~/components/page-header';
 import { listDevelopers } from '~/lib/developers';
 import { Button } from '~/components/ui/button';
-import Pager from '~/components/pager';
+import Spinner from '~/components/ui/spinner';
+import Text from '~/components/ui/text';
 import app from '~/lib/app';
+
+type TeamListProps = {
+	first: DevelopersPage;
+	search: string;
+};
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-const GRID_STYLE: CssVariables = { '--col-width': '300px' };
+const teamSearchSchema = pageSearchSchema.pick({ search: true });
 
 const fetchDevelopers = createServerFn({ method: 'GET' })
-	.validator(pageSearchSchema)
-	.handler(({ data }) =>
-		listDevelopers(app, { search: data.search ?? '', page: data.page ?? 1 }),
+	.validator(z.object({ search: z.string().max(100), cursor: z.string().max(512).optional() }))
+	.handler(({ data }) => listDevelopers(app, data));
+
+const fetchPage = (query: DevelopersQuery) => fetchDevelopers({ data: query });
+
+function TeamList({ first, search }: TeamListProps) {
+	const { developers, status, hasMore, sentinelRef, retry } = useInfiniteDevelopers(
+		first,
+		search,
+		fetchPage,
 	);
 
-function DevelopersContent() {
-	const { developers, total, pageSize } = Route.useLoaderData();
+	return (
+		<>
+			<TeamSections developers={developers} />
+
+			{hasMore ? (
+				<div ref={sentinelRef} className='flex justify-center items-center gap-3 min-h-10'>
+					{status === 'loading' ? (
+						<Spinner className='size-5 text-muted-foreground' />
+					) : null}
+					{status === 'error' ? (
+						<>
+							<Text variant='text-sm' color='muted'>
+								Couldn't load more.
+							</Text>
+							<Button variant='outline' onClick={retry}>
+								Try Again
+							</Button>
+						</>
+					) : null}
+				</div>
+			) : null}
+		</>
+	);
+}
+
+function TeamContent() {
+	const first = Route.useLoaderData();
 	const params = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = params.search ?? '';
-	const page = params.page ?? 1;
 	const [searchInput, setSearchInput] = useState(search);
 
 	const navigateToSearch = useMemo(
 		() =>
 			debounce(
-				(value: string) => void navigate({ search: toPageSearch(value, 1) }),
+				(value: string) => void navigate({ search: { search: value || undefined } }),
 				SEARCH_DEBOUNCE_MS,
 			),
 		[navigate],
@@ -52,7 +91,7 @@ function DevelopersContent() {
 
 	function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		void navigate({ search: toPageSearch(searchInput, 1) });
+		void navigate({ search: { search: searchInput || undefined } });
 	}
 
 	function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -62,20 +101,20 @@ function DevelopersContent() {
 
 	function clearSearch() {
 		setSearchInput('');
-		void navigate({ search: toPageSearch('', 1) });
+		void navigate({ search: {} });
 	}
 
-	if (total === 0 && !search) {
+	if (first.developers.length === 0 && !search) {
 		return (
 			<Empty className='flex-1 my-auto'>
 				<EmptyHeader>
 					<EmptyMedia variant='icon'>
 						<IconUsers size={24} />
 					</EmptyMedia>
-					<EmptyTitle>No Developers Yet</EmptyTitle>
+					<EmptyTitle>Nobody Here Yet</EmptyTitle>
 					<EmptyDescription>
-						There are no developers yet. Developers will appear here once their addons
-						are listed.
+						The team and addon developers will appear here once they join or list an
+						addon.
 					</EmptyDescription>
 				</EmptyHeader>
 			</Empty>
@@ -91,22 +130,22 @@ function DevelopersContent() {
 					</InputGroupAddon>
 					<InputGroupInput
 						className='h-full'
-						placeholder='Search Developers...'
+						placeholder='Search Team...'
 						value={searchInput}
 						onChange={handleChange}
 					/>
 				</InputGroup>
 			</form>
 
-			{developers.length === 0 ? (
+			{first.developers.length === 0 ? (
 				<Empty className='flex-1 my-auto'>
 					<EmptyHeader>
 						<EmptyMedia variant='icon'>
 							<IconMagnifierMinus size={24} />
 						</EmptyMedia>
-						<EmptyTitle>No Developers Found</EmptyTitle>
+						<EmptyTitle>Nobody Found</EmptyTitle>
 						<EmptyDescription>
-							No developers match your search. Try adjusting your search terms.
+							Nobody matches your search. Try adjusting your search terms.
 						</EmptyDescription>
 					</EmptyHeader>
 					<EmptyContent>
@@ -117,43 +156,28 @@ function DevelopersContent() {
 					</EmptyContent>
 				</Empty>
 			) : (
-				<>
-					<div style={GRID_STYLE} className='fill-grid'>
-						{developers.map((developer) => (
-							<DeveloperCard developer={developer} key={developer.author.discordId} />
-						))}
-					</div>
-
-					<Pager
-						className='px-0 pt-4 pb-0'
-						page={page}
-						pageSize={pageSize}
-						total={total}
-						noun='developers'
-						onPageChange={(next) => navigate({ search: toPageSearch(search, next) })}
-					/>
-				</>
+				<TeamList first={first} search={search} key={search} />
 			)}
 		</div>
 	);
 }
 
-function DevelopersPage() {
+function TeamPage() {
 	return (
 		<div className='flex flex-col flex-1 gap-6 page-frame'>
 			<PageHeader
-				title='Developers'
-				description='The contributors that make your addon experience possible.'
+				title='Team'
+				description='The people that make your addon experience possible.'
 			/>
-			<DevelopersContent />
+			<TeamContent />
 		</div>
 	);
 }
 
 export const Route = createFileRoute('/_site/developers/')({
-	head: () => ({ meta: [{ title: 'Unbound | Developers' }] }),
-	validateSearch: pageSearchSchema,
+	head: () => ({ meta: [{ title: 'Unbound | Team' }] }),
+	validateSearch: teamSearchSchema,
 	loaderDeps: ({ search }) => search,
-	loader: ({ deps }) => fetchDevelopers({ data: deps }),
-	component: DevelopersPage,
+	loader: ({ deps }) => fetchDevelopers({ data: { search: deps.search ?? '' } }),
+	component: TeamPage,
 });

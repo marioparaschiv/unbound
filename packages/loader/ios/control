@@ -6,7 +6,7 @@ Architecture: iphoneos-arm
 Maintainer: eternal, acquitelol, Adrian Castro
 Author: Unbound Team
 Section: Tweaks
-Depends: ellekit
+Depends: ellekit, uikittools
 SileoDepiction: https://builds.unbound.rip/repo/depictions/unbound.json
 Icon: https://assets.unbound.rip/logo/logo.png
 Conflicts: app.enmity, mod.vendetta, app.pyoncord

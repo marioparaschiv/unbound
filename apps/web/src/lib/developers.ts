@@ -1,106 +1,199 @@
+import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
+import { z } from 'zod';
+
+import { compareGroups, TEAM_GROUPS, type StaffRole, type TeamGroup } from '~/lib/team/roles';
 import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';
 import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
+import { readTeamMembers, type TeamMemberRow } from '~/lib/team/snapshot';
 import type { DiscordId } from '~/lib/authors/discord-users';
 import { listListedAddons } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
+import { ApiError } from '~/lib/api/errors';
+
+export type { TeamGroup } from '~/lib/team/roles';
 
 export type DevelopersQuery = {
-	/** Matches anywhere in the developer's name or a manifest name for them, case-insensitively. */
+	/** Case-insensitive name/alias match; empty for all. */
 	search: string;
-	/** 1-based. */
-	page: number;
+	/** Opaque cursor from the previous page's `nextCursor`; absent for the first page. */
+	cursor?: string;
 };
 
 export type Developer = {
 	author: IdentifiedAuthor;
+	/** Listed addons crediting them; 0 for team members with none. */
 	addonCount: number;
+	group: TeamGroup;
 };
 
 export type DevelopersPage = {
+	/** Sorted by group, then staff role (admin before moderator), then manual position, then name, then discordId. Stable across pages. */
 	developers: Developer[];
-	total: number;
-	pageSize: number;
+	/** `null` on the last page. */
+	nextCursor: string | null;
 };
 
 export type DeveloperProfile = {
 	author: IdentifiedAuthor;
 	addons: MarketplaceAddon[];
+	group: TeamGroup;
 };
 
-type Credit = DeveloperProfile & {
+/** Where a person sits within their group: their staff role's rank, then their manual position. */
+type Order = { staff: number; position: number };
+
+type Person = DeveloperProfile & {
 	aliases: Set<string>;
+	order: Order;
 };
 
-async function loadCredits(ctx: AppContext): Promise<Map<DiscordId, Credit>> {
-	const listed = await listListedAddons(ctx);
-	const resolve = await loadAuthors(
-		ctx,
-		listed.map((entry) => entry.latestVersion.manifest.authors),
-	);
-	const credits = new Map<DiscordId, Credit>();
+type SortKey = [
+	group: TeamGroup,
+	staff: number,
+	position: number,
+	name: string,
+	discordId: DiscordId,
+];
+
+const CURSOR = z.tuple([
+	z.enum(TEAM_GROUPS),
+	z.number().int(),
+	z.number().int(),
+	z.string(),
+	addonAuthorSchema.shape.id,
+]);
+
+const STAFF_RANK: Record<StaffRole, number> = { admin: 0, moderator: 1 };
+// Below every staff role, so the rest of a group sorts after the staff.
+const UNSTAFFED_RANK = 2;
+// Sorts a person with no manual position after everyone who has one.
+const UNPOSITIONED = 2_147_483_647;
+
+function orderOf(member: TeamMemberRow | undefined): Order {
+	return {
+		staff: member?.staffRole ? STAFF_RANK[member.staffRole] : UNSTAFFED_RANK,
+		position: member?.position ?? UNPOSITIONED,
+	};
+}
+
+async function loadPeople(ctx: AppContext): Promise<Map<DiscordId, Person>> {
+	const [listed, team] = await Promise.all([listListedAddons(ctx), readTeamMembers(ctx)]);
+	// A team member's own entry, for those no listed addon credits; the id doubles as the fallback name.
+	const teamAuthors = [...team.keys()].map((id) => ({ name: id, id }));
+	const resolve = await loadAuthors(ctx, [
+		...listed.map((entry) => entry.latestVersion.manifest.authors),
+		teamAuthors,
+	]);
+	const people = new Map<DiscordId, Person>();
 
 	for (const entry of listed) {
 		const card = toMarketplaceAddon(entry, entry.latestVersion, resolve);
 
 		for (const author of card.authors.filter(isIdentified)) {
-			const credit = credits.get(author.discordId) ?? {
+			const person = people.get(author.discordId) ?? {
 				author,
 				aliases: new Set(),
 				addons: [],
+				group: team.get(author.discordId)?.group ?? 'addon-developer',
+				order: orderOf(team.get(author.discordId)),
 			};
 
-			credit.addons.push(card);
-			credits.set(author.discordId, credit);
+			person.addons.push(card);
+			people.set(author.discordId, person);
 		}
 
 		for (const author of entry.latestVersion.manifest.authors) {
-			credits.get(author.id)?.aliases.add(author.name);
+			people.get(author.id)?.aliases.add(author.name);
 		}
 	}
 
-	return credits;
+	for (const author of resolve(teamAuthors).filter(isIdentified)) {
+		const member = team.get(author.discordId);
+
+		if (member && !people.has(author.discordId)) {
+			people.set(author.discordId, {
+				author,
+				aliases: new Set(),
+				addons: [],
+				group: member.group,
+				order: orderOf(member),
+			});
+		}
+	}
+
+	return people;
 }
 
-function matches(credit: Credit, search: string): boolean {
+function matches(person: Person, search: string): boolean {
 	const needle = search.toLowerCase();
 
-	return [credit.author.name, ...credit.aliases].some((name) =>
+	return [person.author.name, ...person.aliases].some((name) =>
 		name.toLowerCase().includes(needle),
 	);
 }
 
-function byName(a: Credit, b: Credit): number {
+function sortKey(person: Person): SortKey {
+	return [
+		person.group,
+		person.order.staff,
+		person.order.position,
+		person.author.name,
+		person.author.discordId,
+	];
+}
+
+function compareKeys(
+	[groupA, staffA, positionA, nameA, idA]: SortKey,
+	[groupB, staffB, positionB, nameB, idB]: SortKey,
+): number {
 	return (
-		a.author.name.localeCompare(b.author.name, 'en', { sensitivity: 'base' }) ||
-		a.author.discordId.localeCompare(b.author.discordId)
+		compareGroups(groupA, groupB) ||
+		staffA - staffB ||
+		positionA - positionB ||
+		nameA.localeCompare(nameB, 'en', { sensitivity: 'base' }) ||
+		idA.localeCompare(idB)
 	);
 }
 
+function encodeCursor(key: SortKey): string {
+	return Buffer.from(JSON.stringify(key)).toString('base64url');
+}
+
+function decodeCursor(cursor: string): SortKey {
+	try {
+		return CURSOR.parse(JSON.parse(Buffer.from(cursor, 'base64url').toString()));
+	} catch {
+		throw new ApiError('invalid_request', 'The cursor does not belong to this list.');
+	}
+}
+
 /**
- * @description Lists one page of developers: the distinct Discord ids credited by the newest version
- * of a listed addon, ordered by resolved name.
+ * @description Lists one page of the Team: everyone holding a team role in the Unbound Discord, then
+ * the other Discord ids credited by the newest version of a listed addon.
  * @param ctx The application context.
- * @param query The name filter and page number.
- * @returns The page, the total number of matching developers and the page size.
+ * @param query The name filter and the cursor to page from.
+ * @returns The page, in group, staff role, position then name order, and the cursor of the next one.
  */
 export async function listDevelopers(
 	ctx: AppContext,
 	query: DevelopersQuery,
 ): Promise<DevelopersPage> {
 	const pageSize = ctx.env.DEVELOPER_LIST_PAGE_SIZE;
-	const credits = [...(await loadCredits(ctx)).values()];
-	const found = query.search
-		? credits.filter((credit) => matches(credit, query.search))
-		: credits;
-	const start = (query.page - 1) * pageSize;
+	const after = query.cursor ? decodeCursor(query.cursor) : undefined;
+	const found = [...(await loadPeople(ctx)).values()]
+		.filter((person) => !query.search || matches(person, query.search))
+		.filter((person) => !after || compareKeys(sortKey(person), after) > 0)
+		.toSorted((a, b) => compareKeys(sortKey(a), sortKey(b)));
+	const page = found.slice(0, pageSize);
+	const last = page.at(-1);
 
 	return {
-		developers: found
-			.toSorted(byName)
-			.slice(start, start + pageSize)
-			.map((credit) => ({ author: credit.author, addonCount: credit.addons.length })),
-		total: found.length,
-		pageSize,
+		developers: page.map((person) => ({
+			author: person.author,
+			addonCount: person.addons.length,
+			group: person.group,
+		})),
+		nextCursor: found.length > pageSize && last ? encodeCursor(sortKey(last)) : null,
 	};
 }
 
@@ -108,17 +201,18 @@ export async function listDevelopers(
  * @description Loads a developer's public page.
  * @param ctx The application context.
  * @param discordId The developer's Discord id.
- * @returns The developer and their listed addons, or `undefined` when no listed addon credits the id.
+ * @returns The developer, their group and their listed addons, or `undefined` when they are neither on
+ * the team nor credited by a listed addon.
  */
 export async function getDeveloper(
 	ctx: AppContext,
 	discordId: DiscordId,
 ): Promise<DeveloperProfile | undefined> {
-	const credit = (await loadCredits(ctx)).get(discordId);
+	const person = (await loadPeople(ctx)).get(discordId);
 
-	if (!credit) return;
+	if (!person) return;
 
-	return { author: credit.author, addons: credit.addons };
+	return { author: person.author, addons: person.addons, group: person.group };
 }
 
 export default { listDevelopers, getDeveloper };

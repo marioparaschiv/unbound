@@ -34,6 +34,8 @@ static const char *const kBridgeChecks = R"JS((function () {
 	check(platform.device.isRooted() === true, 'rooted');
 	check(platform.device.isVirtualDevice() === true, 'virtual device');
 	check(platform.app.getAppSource() === 'tests', 'app source');
+	check(platform.app.claimLaunchURL() === true, 'first launch URL claim');
+	check(platform.app.claimLaunchURL() === false, 'second launch URL claim');
 
 	var fonts = platform.fonts.list();
 	check(Array.isArray(fonts) && fonts.length === 1 && fonts[0].name === 'Test Sans', 'fonts list');
@@ -123,6 +125,14 @@ int main()
                      failure.get<std::string>().c_str());
     }
     require(failures.empty(), "every JavaScript check passes");
+
+    auto reloaded = facebook::hermes::makeHermesRuntime();
+    loader::installNativePlatform(*reloaded, provider);
+    jsi::Value reclaimed = reloaded->evaluateJavaScript(
+        std::make_shared<jsi::StringBuffer>("globalThis.NativePlatform.app.claimLaunchURL()"),
+        "reload-claim.js");
+    require(reclaimed.isBool() && !reclaimed.getBool(),
+            "a reloaded runtime sees the launch URL as claimed");
     require(!settings.get("unbound", "answer").has_value(), "a removed setting is gone natively");
     require(settings.getBoolean("other", "kept", false), "an applied setting is stored natively");
     require(!std::filesystem::exists(documents / "Plugins" / "doomed"),

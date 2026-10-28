@@ -11,6 +11,7 @@ import { betterAuth } from 'better-auth';
 import { deleteUserWithRecord, recordAuthAdminAction } from '~/lib/moderation-events';
 import { API_KEY_HEADER, CLI_CLIENT_ID } from '~/api/client';
 import { DEFAULT_ROLE, ac, roles } from '~/lib/auth/access';
+import { grantTeamRole } from '~/lib/team/site-roles';
 import type { FileRoutesByTo } from '~/routeTree.gen';
 import { purgeUserSubmissions } from '~/lib/staging';
 import type { Database } from '~/db/database';
@@ -48,7 +49,8 @@ export type Session = Auth['$Infer']['Session'];
  * @description Builds the Better Auth instance: Discord is the only sign-up path, GitHub can only be
  * linked to an existing session, and the CLI authenticates through device authorization or API keys.
  * Banning a user cancels their open submissions and deletes their staged files, and bans, unbans and
- * role changes are recorded as moderation events.
+ * role changes are recorded as moderation events. Linking Discord grants the staff role the team
+ * snapshot names.
  * @param db The database the auth tables live in.
  * @param env The validated environment.
  * @param storage The object storage, for purging a banned user's staged files.
@@ -99,6 +101,24 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 			},
 		},
 		databaseHooks: {
+			account: {
+				create: {
+					// Staff get their role on first sign-in instead of at the next team sync.
+					after: async (created) => {
+						if (created.providerId !== 'discord') return;
+
+						try {
+							await grantTeamRole(db, created.userId, new Date());
+						} catch (error) {
+							// The sign-in already committed; the next team sync grants the role.
+							logger.error(
+								`Failed to grant the team role of user ${created.userId}:`,
+								error,
+							);
+						}
+					},
+				},
+			},
 			user: {
 				update: {
 					// The admin plugin's ban is a user update; purging here also covers bans made outside it.

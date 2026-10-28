@@ -8,10 +8,12 @@ import {
 } from 'nucleo-micro-bold';
 import type { ComponentType, CSSProperties, MouseEvent } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { motion } from 'motion/react';
 
 import { Card, CardDescription, CardTitle } from '~/components/ui/card';
 import HeroShowcase from '~/components/hero-showcase';
+import { revealStyle } from '~/components/motion/reveal-style';
+import BlurReveal from '~/components/motion/blur-reveal';
+import Reveal from '~/components/motion/reveal';
 import { Button } from '~/components/ui/button';
 import cn from '~/lib/cn';
 
@@ -70,10 +72,10 @@ const FEATURES: Feature[] = [
 	},
 ];
 
-const REVEAL_FROM = { opacity: 0, y: 20 };
-const REVEAL_TO = { opacity: 1, y: 0 };
-const REVEAL_VIEWPORT = { amount: 0.3 };
-const REVEAL_TRANSITION = { duration: 0.25, ease: 'easeOut' } as const;
+// The hero enters in sequence: title letters, then the tagline's words, then the actions and art.
+const TAGLINE_DELAY_MS = 250;
+const ACTIONS_STYLE = revealStyle('hero', 450);
+const ART_STYLE = revealStyle('card', 600);
 
 const GLOW_POSITION: CSSProperties = { left: 'var(--glow-x)', top: 'var(--glow-y)' };
 const GLOW_RING_MASK = 'radial-gradient(250px at var(--glow-x) var(--glow-y), white, transparent)';
@@ -103,12 +105,9 @@ function FeatureGrid() {
 				onMouseMove={trackGlow}
 			>
 				{FEATURES.map(({ icon: Icon, title, description, wide }, index) => (
-					<motion.div
+					<Reveal
 						key={title}
-						initial={REVEAL_FROM}
-						whileInView={REVEAL_TO}
-						viewport={REVEAL_VIEWPORT}
-						transition={{ ...REVEAL_TRANSITION, delay: 0.05 * index }}
+						delay={0.05 * index}
 						className={cn(wide && 'md:col-span-2')}
 					>
 						{/* The glow starts off-card, so a pointer resting on the grid shows none until it moves. */}
@@ -131,7 +130,7 @@ function FeatureGrid() {
 							<CardTitle className='relative'>{title}</CardTitle>
 							<CardDescription className='relative'>{description}</CardDescription>
 						</Card>
-					</motion.div>
+					</Reveal>
 				))}
 			</div>
 		</div>
@@ -141,14 +140,18 @@ function FeatureGrid() {
 function HomePage() {
 	return (
 		<div className='flex flex-col flex-1 items-center'>
-			<div className='slide-in-from-bottom-36 flex flex-col justify-center items-center gap-6 px-4 pt-[8vh] overflow-hidden animate-in duration-700 fade-in zoom-in-90'>
-				<h1 className='bg-clip-text bg-gradient-to-br from-foreground to-muted-foreground font-secondary font-bold text-transparent text-5xl md:text-6xl lg:text-7xl'>
-					Unbound
+			<div className='flex flex-col justify-center items-center gap-6 px-4 pt-[8vh] overflow-hidden'>
+				<h1 className='font-secondary font-bold text-5xl md:text-6xl lg:text-7xl text-fade'>
+					<BlurReveal text='Unbound' split='letter' preset='hero' />
 				</h1>
-				<h2 className='bg-clip-text bg-gradient-to-br from-foreground to-muted-foreground font-secondary font-semibold text-transparent text-2xl md:text-3xl lg:text-4xl'>
-					Transform your discord experience.
+				<h2 className='font-secondary font-semibold text-2xl md:text-3xl lg:text-4xl text-fade'>
+					<BlurReveal
+						text='Transform your discord experience.'
+						preset='hero'
+						delay={TAGLINE_DELAY_MS}
+					/>
 				</h2>
-				<div className='flex gap-4 mt-4'>
+				<div className='flex gap-4 mt-4 animate-reveal' style={ACTIONS_STYLE}>
 					<Button asChild variant='default' size='lg' className='min-w-40'>
 						<Link to='/plugins'>Get Started</Link>
 					</Button>
@@ -158,19 +161,17 @@ function HomePage() {
 						</a>
 					</Button>
 				</div>
-				<HeroShowcase fade className='mt-16 md:mt-8 w-full max-w-[1600px]' />
+				<HeroShowcase
+					fade
+					className='mt-16 md:mt-8 w-full max-w-[1600px] animate-reveal'
+					style={ART_STYLE}
+				/>
 			</div>
 			<FeatureGrid />
 			<div className='relative w-full overflow-hidden'>
 				<div className='absolute inset-0' style={GRID_BACKGROUND} />
 				<div className='absolute inset-0' style={GRID_VIGNETTE} />
-				<motion.div
-					initial={REVEAL_FROM}
-					whileInView={REVEAL_TO}
-					viewport={REVEAL_VIEWPORT}
-					transition={REVEAL_TRANSITION}
-					className='z-10 relative flex flex-col items-center gap-4 mx-auto my-24 px-4 w-full max-w-6xl text-center'
-				>
+				<Reveal className='z-10 relative flex flex-col items-center gap-4 mx-auto my-24 px-4 w-full max-w-6xl text-center'>
 					<h3 className='bg-clip-text bg-gradient-to-br from-foreground to-muted-foreground font-semibold text-transparent text-2xl md:text-3xl'>
 						Are you a developer?
 					</h3>
@@ -183,7 +184,7 @@ function HomePage() {
 							Start Building
 						</a>
 					</Button>
-				</motion.div>
+				</Reveal>
 			</div>
 		</div>
 	);
