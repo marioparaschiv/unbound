@@ -10,7 +10,6 @@
 #import "MobileGestalt.h"
 #import "Settings.h"
 #import "Themes.h"
-#import "Updater.h"
 #import "Utilities.h"
 
 #ifdef __cplusplus

@@ -91,8 +91,6 @@ int csops(pid_t pid, unsigned int ops, void *useraddr, size_t usersize);
       warning:(BOOL)warning
           tts:(BOOL)tts;
 
-+ (void)alertWarning:(NSString *)message title:(NSString *)title timeout:(NSInteger)timeout;
-
 + (void)speakAlertContent:(NSString *)title message:(NSString *)message;
 
 + (UIAlertAction *)createDiscordInviteButton;
@@ -106,15 +104,11 @@ int csops(pid_t pid, unsigned int ops, void *useraddr, size_t usersize);
 
 + (NSData *)fetchDataWithTimeout:(NSURL *)url timeout:(NSTimeInterval)timeout;
 
-+ (dispatch_source_t)createDebounceTimer:(double)delay
-                                   queue:(dispatch_queue_t)queue
-                                   block:(dispatch_block_t)block;
 + (void)runOnMainThread:(dispatch_block_t)block;
 
 + (BOOL)isAppStoreApp;
 + (BOOL)isTestFlightApp;
 + (BOOL)isTrollStoreApp;
-+ (NSString *)getTrollStoreVariant;
 + (BOOL)isLiveContainerApp;
 + (BOOL)isSystemApp;
 + (BOOL)isJailbroken;
@@ -135,8 +129,6 @@ int csops(pid_t pid, unsigned int ops, void *useraddr, size_t usersize);
 + (BOOL)isJITAvailable;
 
 + (BOOL)isRNNewArchEnabled;
-
-+ (UIColor *)parseColor:(NSString *)color;
 
 + (UIWindow *)keyWindow;
 + (UIViewController *)topViewController;

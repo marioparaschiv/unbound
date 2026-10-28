@@ -166,65 +166,6 @@ static NSString      *documents = nil;
     return [manager fileExistsAtPath:path];
 }
 
-+ (BOOL)isDirectory:(NSString *)path
-{
-    BOOL isDirectory = NO;
-
-    [manager fileExistsAtPath:path isDirectory:&isDirectory];
-
-    return isDirectory;
-}
-
-+ (void)writeFile:(NSString *)path contents:(NSData *)contents
-{
-    NSError *error;
-    if (![contents writeToFile:path options:NSDataWritingAtomic error:&error])
-    {
-        [Logger error:LOG_CATEGORY_FILESYSTEM
-               format:@"Atomic write to %@ failed. (%@)", path, error];
-    }
-}
-
-+ (id)delete:(NSString *)path
-{
-    if (![manager fileExistsAtPath:path])
-    {
-        NSError *error = [NSError errorWithDomain:NSCocoaErrorDomain
-                                             code:NSFileNoSuchFileError
-                                         userInfo:@{NSFilePathErrorKey : path}];
-
-        return error;
-    }
-
-    NSError *error;
-    [manager removeItemAtPath:path error:&error];
-
-    return error ? error : path;
-}
-
-+ (NSData *)readFile:(NSString *)path
-{
-    if (![manager fileExistsAtPath:path])
-    {
-        @throw [[NSException alloc]
-            initWithName:@"FileNotFound"
-                  reason:[NSString stringWithFormat:@"File at path %@ was not found.", path]
-                userInfo:nil];
-    }
-
-    NSError *error = nil;
-    NSData  *data  = [NSData dataWithContentsOfFile:path options:0 error:&error];
-
-    if (error)
-    {
-        @throw [[NSException alloc] initWithName:error.domain
-                                          reason:error.localizedDescription
-                                        userInfo:nil];
-    }
-
-    return data;
-}
-
 + (BOOL)createDirectory:(NSString *)path
 {
     if ([manager fileExistsAtPath:path])
@@ -241,14 +182,6 @@ static NSString      *documents = nil;
     return err ? false : true;
 }
 
-+ (NSArray *)readDirectory:(NSString *)path
-{
-    NSError *err;
-    NSArray *files = [manager contentsOfDirectoryAtPath:path error:&err];
-
-    return err ? @[] : files;
-}
-
 + (void)monitor:(NSString *)filePath onChange:(void (^)())onChange autoRestart:(BOOL)autoRestart
 {
     dispatch_block_t callback = onChange;
@@ -258,12 +191,6 @@ static NSString      *documents = nil;
             callback();
         }
     });
-}
-
-+ (void)stopMonitoring:(NSString *)path
-{
-    fileWatcher().unwatch(toStdString(path));
-    [Logger debug:LOG_CATEGORY_FILESYSTEM format:@"monitor for %@ was destroyed", path];
 }
 
 + (NSHTTPURLResponse *)download:(NSURL *)url
