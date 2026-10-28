@@ -1182,11 +1182,13 @@ describe('native crash attribution', () => {
 
 type ClientInfoConstants = { Version?: string; Build?: string };
 
+type ClientInfoModule = ClientInfoConstants & { getConstants: () => ClientInfoConstants };
+
 describe('withNativeConstants', () => {
 	test('reads an Android TurboModule constants as properties', () => {
 		const module = { getConstants: () => ({ Version: '352.10', Build: '352110' }) };
 
-		expect(withNativeConstants<ClientInfoConstants>(module)).toMatchObject({
+		expect(withNativeConstants<ClientInfoModule>(module)).toMatchObject({
 			Version: '352.10',
 			Build: '352110',
 		});
