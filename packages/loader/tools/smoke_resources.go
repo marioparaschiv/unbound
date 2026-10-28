@@ -53,11 +53,20 @@ func parseSmokeResources(value string) *smokeResources {
 	return resources
 }
 
+const (
+	smokeExpressionEvalTimeout = 30 * time.Second
+	smokeCycleEvalTimeout      = 4 * time.Minute
+)
+
 func evaluateSmokeExpression(ctx context.Context, options *smokeOptions, expression string) (string, error) {
+	return evaluateSmokeExpressionWithin(ctx, options, expression, smokeExpressionEvalTimeout)
+}
+
+func evaluateSmokeExpressionWithin(ctx context.Context, options *smokeOptions, expression string, timeout time.Duration) (string, error) {
 	cli := filepath.Join(options.repository, "packages", "cli", "src", "index.ts")
-	evalCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	evalCtx, cancel := context.WithTimeout(ctx, timeout+30*time.Second)
 	defer cancel()
-	output, err := exec.CommandContext(evalCtx, "bun", cli, "eval", "--json", "--port", strconv.Itoa(options.bridgePort), "--timeout", "30000", expression).Output()
+	output, err := exec.CommandContext(evalCtx, "bun", cli, "eval", "--json", "--port", strconv.Itoa(options.bridgePort), "--timeout", strconv.FormatInt(timeout.Milliseconds(), 10), expression).Output()
 	var result struct {
 		OK    bool   `json:"ok"`
 		Value string `json:"value"`
