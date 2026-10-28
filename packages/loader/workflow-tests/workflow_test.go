@@ -140,8 +140,12 @@ func TestParsedIOSBuildReusesTheResolvedIPA(t *testing.T) {
 		t.Fatalf("resolve-source must keep every iOS source IPA it obtained as discord-source-ipa, got %+v", keep)
 	}
 	decrypt := build.job(t, "resolve-source").step(t, "Decrypt the source IPA")
-	if decrypt.ID != "decrypt" || decrypt.ContinueOnError != "${{ inputs.release != true }}" {
-		t.Fatalf("only a release may fail on a missing source IPA, got %+v", decrypt)
+	if decrypt.ID != "decrypt" || decrypt.ContinueOnError != "true" {
+		t.Fatalf("the IPA download must fail softly so the job can decide, got %+v", decrypt)
+	}
+	require := build.job(t, "resolve-source").step(t, "Require the iOS source for a release")
+	if require.If != "steps.decrypt.outcome == 'failure' && (inputs.release == true || inputs.release == 'true')" || !strings.Contains(require.Run, "exit 1") {
+		t.Fatalf("a release must fail without the iOS source, got %+v", require)
 	}
 	ios := build.job(t, "ios")
 	if !strings.Contains(ios.If, "needs.resolve-source.outputs.ipa_available != 'false'") {

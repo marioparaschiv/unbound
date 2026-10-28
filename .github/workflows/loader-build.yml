@@ -210,7 +210,7 @@ jobs:
             - name: Decrypt the source IPA
               id: decrypt
               if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == ''
-              continue-on-error: ${{ inputs.release != true }}
+              continue-on-error: true
               uses: castdrian/dkrypt@v1.1.1
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
@@ -237,6 +237,12 @@ jobs:
                   if [ "$INPUT_AUTHENTICATED_SOURCE" = true ]; then fetch_args+=(--authenticated-source); fi
                   fetch_args+=(--channel "$channel" --version "$REQUESTED_VERSION" --output source.ipa)
                   go run ./tools fetch "${fetch_args[@]}"
+
+            - name: Require the iOS source for a release
+              if: steps.decrypt.outcome == 'failure' && (inputs.release == true || inputs.release == 'true')
+              run: |
+                  echo "::error title=No iOS source::dkrypt could not provide the Discord IPA, and a release must build both platforms."
+                  exit 1
 
             - name: Skip iOS without a source IPA
               if: steps.decrypt.outcome == 'failure'
