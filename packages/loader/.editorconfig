@@ -14,3 +14,4 @@ ktlint_code_style = intellij_idea
 ktlint_standard_no-wildcard-imports = enabled
 ktlint_standard_function-signature = disabled
 ktlint_standard_chain-method-continuation = disabled
+ktlint_function_naming_ignore_when_annotated_with = Composable
