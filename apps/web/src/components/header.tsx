@@ -64,7 +64,7 @@ function Header() {
 
 						<Separator orientation='vertical' className='hidden md:flex h-5!' />
 
-						<div className='relative flex-1'>
+						<div className='hidden md:block relative flex-1'>
 							<nav
 								className='hidden md:flex gap-1'
 								onMouseLeave={() => setHovered(null)}
@@ -92,7 +92,7 @@ function Header() {
 							</nav>
 						</div>
 
-						<div className='flex justify-center items-center gap-2'>
+						<div className='flex justify-center items-center gap-2 ml-auto'>
 							<AccountMenu />
 							<Drawer direction='top' open={drawerOpen} onOpenChange={setDrawerOpen}>
 								<DrawerTrigger asChild>
