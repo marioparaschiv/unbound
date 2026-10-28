@@ -876,7 +876,7 @@ export type NativeResourceCounts = {
 	hooks: number;
 	surfaces: number;
 	cachedReturns: number;
-	leasedHandles: number;
+	handles: number;
 };
 export type NativeRuntimeBridge = {
 	subscribe(

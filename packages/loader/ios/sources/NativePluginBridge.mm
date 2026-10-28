@@ -103,10 +103,20 @@ using namespace facebook::jsi;
 
 namespace {
 
+static std::atomic<size_t> gLiveObjCHandles{0};
+
 class ObjCHandleHost final : public HostObject
 {
 public:
-    explicit ObjCHandleHost(id value) : value_(value) {}
+    explicit ObjCHandleHost(id value) : value_(value)
+    {
+        gLiveObjCHandles++;
+    }
+
+    ~ObjCHandleHost() override
+    {
+        gLiveObjCHandles--;
+    }
 
     id value(void) const
     {
@@ -4698,6 +4708,9 @@ void registerNativePluginBridge(Runtime &runtime)
         loader::native::onRuntimeGenerationChanged(invalidateRuntimeResources);
     });
     loader::native::registerRuntime(runtime);
+    loader::native::setPlatformHandleCounter([] {
+        return gLiveObjCHandles.load();
+    });
     loader::native::NativePluginRootBuilder bridge(runtime,
                                                    loader::native::NativePluginPlatform::IOS);
 

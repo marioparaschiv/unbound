@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <set>
@@ -63,5 +64,6 @@ NativeResourceBudget &nativeHookBudget();
 NativeResourceBudget &nativeCachedReturnBudget();
 NativeResourceBudget &nativeSurfaceBudget();
 
+void           setPlatformHandleCounter(std::function<size_t()> counter);
 nlohmann::json nativeResourceCounts();
 }

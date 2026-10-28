@@ -1,6 +1,7 @@
 #include <cassert>
 
 #include "NativePlatformBridge.h"
+#include "NativeResourceBudget.h"
 
 int main()
 {
@@ -10,7 +11,12 @@ int main()
     assert(unset["hostAddress"].is_null());
     assert(unset["resources"]["hooks"] == 0);
     assert(unset["resources"]["surfaces"] == 0);
-    assert(unset["resources"]["leasedHandles"] == 0);
+    assert(unset["resources"]["handles"] == 0);
+    loader::native::setPlatformHandleCounter([] {
+        return size_t(3);
+    });
+    assert(loader::debugEnvironment(provider)["resources"]["handles"] == 3);
+    loader::native::setPlatformHandleCounter(nullptr);
 
     provider.isVirtualDevice = [] {
         return true;
