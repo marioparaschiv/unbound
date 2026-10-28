@@ -33,6 +33,7 @@ export async function syncTeam(
 
 		return standing ? [{ member, standing }] : [];
 	});
+
 	await writeTeamSnapshot(ctx, team);
 
 	const changes = await reconcileSiteRoles(ctx.db, ctx.now());
