@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
-import { createServerFn } from '@tanstack/react-start';
 import { IconBox, IconFaceNeutral } from 'nucleo-micro-bold';
+import { createServerFn } from '@tanstack/react-start';
 
 import {
 	Empty,

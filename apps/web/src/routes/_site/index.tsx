@@ -10,9 +10,9 @@ import type { ComponentType, CSSProperties, MouseEvent } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 
 import { Card, CardDescription, CardTitle } from '~/components/ui/card';
-import HeroShowcase from '~/components/hero-showcase';
 import { revealStyle } from '~/components/motion/reveal-style';
 import BlurReveal from '~/components/motion/blur-reveal';
+import HeroShowcase from '~/components/hero-showcase';
 import Reveal from '~/components/motion/reveal';
 import { Button } from '~/components/ui/button';
 import cn from '~/lib/cn';
