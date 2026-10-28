@@ -13,6 +13,7 @@ import { Icons } from '~/api/assets';
 import { format } from '~/api/i18n';
 
 import useRoundStyles from './round-button.style';
+import confirmDelete from './confirm-delete';
 
 type AddonOverflowProps = {
 	addon: Addon;
@@ -20,8 +21,8 @@ type AddonOverflowProps = {
 };
 
 /**
- * @description The round overflow (⋯) button of an addon card, opening a menu whose Delete item removes
- * the addon through its manager.
+ * @description The round overflow (⋯) button of an addon card, opening a menu whose Delete item asks
+ * first, then removes the addon, and any plugins that depend on it if asked, through its manager.
  */
 function AddonOverflow({ addon, kind }: AddonOverflowProps) {
 	const styles = useRoundStyles();
@@ -32,10 +33,10 @@ function AddonOverflow({ addon, kind }: AddonOverflowProps) {
 			{
 				label: format('UNBOUND_DELETE'),
 				variant: 'destructive',
-				action: () => void manager.delete(addon.id),
+				action: () => confirmDelete(manager, addon),
 			},
 		],
-		[manager, addon.id],
+		[manager, addon],
 	);
 
 	// The menu anchors to the Pressable it renders; wrapping the trigger in a component breaks it.

@@ -140,5 +140,21 @@
 	"UNBOUND_CRASH_RECOVERY": "Restart in recovery mode",
 	"UNBOUND_CRASH_COPY": "Copy error",
 	"UNBOUND_CRASH_COPIED": "Copied",
-	"UNBOUND_CRASH_REPORT": "Report bug"
+	"UNBOUND_CRASH_REPORT": "Report bug",
+	"UNBOUND_LIBRARY": "Library",
+	"UNBOUND_SHOW_LIBRARIES": "{count, plural, one {+# library} other {+# libraries}}",
+	"UNBOUND_HIDE_LIBRARIES": "Hide libraries",
+	"UNBOUND_DELETE_TITLE": "Delete {name}?",
+	"UNBOUND_DELETE_BODY": "Its files are removed from this device.",
+	"UNBOUND_DELETE_LIBRARY_BODY": "{count, plural, one {# plugin needs it} other {# plugins need it}} and will stop working without it: {names}.",
+	"UNBOUND_DELETE_LIBRARY_ONLY": "Delete only the library",
+	"UNBOUND_DELETE_LIBRARY_AND_DEPENDENTS": "{count, plural, one {Delete it and # plugin} other {Delete it and # plugins}}",
+	"UNBOUND_DELETED_WITH_DEPENDENTS": "{count, plural, one {Deleted {name} and # plugin that needed it.} other {Deleted {name} and # plugins that needed it.}}",
+	"UNBOUND_DEPENDENCIES_TITLE": "{name} needs other plugins",
+	"UNBOUND_DEPENDENCIES_BODY": "{count, plural, one {Install # plugin first?} other {Install # plugins first?}}",
+	"UNBOUND_DEPENDENCY_INSTALL": "• Install {name}",
+	"UNBOUND_DEPENDENCY_UPDATE": "{affected, plural, =0 {• Update {name} to {version}} one {• Update {name} to {version}, which # other plugin also uses} other {• Update {name} to {version}, which # other plugins also use}}",
+	"UNBOUND_DEPENDENCIES_CONFIRM": "Install all",
+	"UNBOUND_DEPENDENCIES_UNAVAILABLE": "The marketplace has no version that fits: {names}. Nothing was installed.",
+	"UNBOUND_DEPENDENCY_FAILED": "Couldn't install {name}, so the plugin wasn't installed."
 }

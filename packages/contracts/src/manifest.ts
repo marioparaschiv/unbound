@@ -67,6 +67,10 @@ export const addonManifestSchema = z.looseObject({
 	minNativePluginApi: z.optional(z.string()),
 	unbound: z.optional(z.object({ min: z.optional(semverSchema) })),
 	bytecode: z.optional(bytecodeDigestsSchema),
+	/** Marks a plugin other plugins build on, which the plugin list hides by default. */
+	library: z.optional(z.boolean()),
+	/** The addons this one needs, by id, each with the semver range it accepts. */
+	dependencies: z.optional(z.record(addonIdSchema, z.string().check(z.minLength(1)))),
 });
 
 export type PublishedManifest = z.infer<typeof addonManifestSchema>;
