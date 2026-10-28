@@ -1,5 +1,6 @@
 import {
 	checkUpdatesEndpoint,
+	MAINTENANCE_URL,
 	createTestContext,
 	manifest,
 	seedApprovedAddon,
@@ -9,6 +10,7 @@ import {
 } from '@unbound-app/web/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { updatesRequestSchema } from '@unbound-app/contracts/updates';
+import type { TestContext } from '@unbound-app/web/testing';
 import type { Addon } from '@unbound-app/types';
 
 import type { InstalledEntry, PendingUpdate, UpdatableKind } from '~/lib/updates';
@@ -32,20 +34,14 @@ const cdn = Bun.serve({
 	},
 });
 
-const web = await createTestContext({ CDN_URL: cdn.url.origin });
-const api = serveEndpoints(web.ctx, { 'POST /api/v1/updates': checkUpdatesEndpoint });
+let web: TestContext;
+let api: ReturnType<typeof serveEndpoints>;
 
 // Bound and stopped up front, so nothing is listening on its port.
 const closed = Bun.serve({ port: 0, fetch: () => new Response() });
 const unreachableUrl = closed.url.origin;
 
 closed.stop(true);
-
-afterAll(async () => {
-	api.stop(true);
-	cdn.stop(true);
-	await web.close();
-});
 
 function sha256(bundle: string): string {
 	return new Bun.CryptoHasher('sha256').update(bundle).digest('hex');
@@ -67,24 +63,6 @@ async function release(
 
 	await seedVersion(web.ctx, ownerId, next, sha256(published));
 }
-
-beforeAll(async () => {
-	const { userId } = await signInWithDiscord(web.ctx, {
-		id: '80351110224678920',
-		name: 'Owner',
-		email: 'owner@example.com',
-	});
-
-	for (const id of ['up.applied', 'up.disabled', 'up.tampered', 'up.current']) {
-		await seedApprovedAddon(web.ctx, userId, manifest(id, '1.0.0'));
-	}
-
-	await release(userId, 'up.applied', '1.1.0', 'applied-1.1.0');
-	await release(userId, 'up.disabled', '1.1.0', 'disabled-1.1.0');
-	await release(userId, 'up.tampered', '1.1.0', 'tampered-served', 'tampered-reviewed');
-});
-
-beforeEach(resetDevice);
 
 function seed(manager: FakeAddons, id: string, started: boolean, version: string = '1.0.0') {
 	manager.seed({
@@ -160,7 +138,34 @@ async function sentBodies(calls: Parameters<typeof fetch>[]) {
 	);
 }
 
-describe('fetchUpdates and applyUpdate', () => {
+describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyUpdate', () => {
+	afterAll(async () => {
+		api.stop(true);
+		cdn.stop(true);
+		await web.close();
+	});
+
+	beforeAll(async () => {
+		web = await createTestContext({ CDN_URL: cdn.url.origin });
+		api = serveEndpoints(web.ctx, { 'POST /api/v1/updates': checkUpdatesEndpoint });
+
+		const { userId } = await signInWithDiscord(web.ctx, {
+			id: '80351110224678920',
+			name: 'Owner',
+			email: 'owner@example.com',
+		});
+
+		for (const id of ['up.applied', 'up.disabled', 'up.tampered', 'up.current']) {
+			await seedApprovedAddon(web.ctx, userId, manifest(id, '1.0.0'));
+		}
+
+		await release(userId, 'up.applied', '1.1.0', 'applied-1.1.0');
+		await release(userId, 'up.disabled', '1.1.0', 'disabled-1.1.0');
+		await release(userId, 'up.tampered', '1.1.0', 'tampered-served', 'tampered-reviewed');
+	});
+
+	beforeEach(resetDevice);
+
 	test('sends one request when nothing is newer and leaves addons untouched', async () => {
 		const manager = new FakeAddons();
 		const events = recordEvents(manager);
