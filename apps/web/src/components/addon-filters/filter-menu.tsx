@@ -122,6 +122,8 @@ function FilterMenu({
 			mark: <OptionMark field={target} option={option} size={mobile ? 'lg' : 'md'} />,
 			checked: picked.includes(option.value),
 			count: option.count,
+			// The author search ran on the server, where a manifest's other names for an author match too.
+			matched: target === 'author',
 			onSelect: () => {
 				onChange(toggleFilterValue(filters, target, option.value));
 

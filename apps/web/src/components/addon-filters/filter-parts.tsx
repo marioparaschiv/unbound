@@ -28,6 +28,8 @@ export type CommandItem = {
 	onSelect: () => void;
 	/** Runs when the row becomes highlighted, by pointer or keyboard; used to prefetch what it opens. */
 	onHighlight?: () => void;
+	/** Already matches the query, as a server search's rows do, which can match on names the label lacks. */
+	matched?: boolean;
 };
 
 export type CommandListProps = {
@@ -173,8 +175,10 @@ export function CommandList({
 	}, [present, touch]);
 	const needle = query.trim().toLowerCase();
 	const visible = needle
-		? items.filter((item) =>
-				`${item.prefix ?? ''} ${item.label}`.toLowerCase().includes(needle),
+		? items.filter(
+				(item) =>
+					item.matched ||
+					`${item.prefix ?? ''} ${item.label}`.toLowerCase().includes(needle),
 			)
 		: items;
 	const current = Math.min(active, Math.max(visible.length - 1, 0));
