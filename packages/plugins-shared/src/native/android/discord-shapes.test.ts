@@ -9,6 +9,7 @@ import {
 	messageIdField,
 } from './discord-views';
 import { hasShapeConstructor, shapeField, shapeMethod } from './discord-shapes';
+import shapes from './discord-shapes.json';
 
 const MESSAGE = 'com.discord.chat.bridge.Message';
 const STRING = 'java.lang.String';
