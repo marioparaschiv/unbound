@@ -69,7 +69,11 @@ class PhaseTest {
         Triple(awaitingUser, failSession, record(Phase.Failed(release, Step.INSTALL, offline))),
         Triple(awaitingUser, Event.Recommit, record(committing)),
         Triple(awaitingUser, Event.Cancel, record(idle)),
-        Triple(confirming, observedLanded, base.copy(phase = idle, installedFrom = InstalledFrom(release.asset.sha256, 7_000))),
+        Triple(
+            confirming,
+            observedLanded,
+            TargetRecord(phase = idle, installedFrom = InstalledFrom(release.asset.sha256, 7_000), notifiedSha256 = null),
+        ),
         Triple(confirming, observedMissing, notApplied()),
         Triple(confirming, observedOldBuild, notApplied()),
         Triple(confirming, observedBeforeVerify, notApplied()),

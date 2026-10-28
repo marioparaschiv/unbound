@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 data class TargetRecord(
     val phase: Phase = Phase.Idle,
     val installedFrom: InstalledFrom? = null,
-    /** Asset digest already notified about, so the periodic check notifies once per build. */
+    /** Asset digest the periodic check already announced or auto-installed, so it acts once per build. Cleared when a build lands. */
     val notifiedSha256: String? = null,
 )
 
@@ -165,7 +165,12 @@ private fun TargetRecord.confirm(artifact: Artifact, installed: InstalledPackage
 
     if (!landed) return copy(phase = Phase.Failed(artifact.release, Step.CONFIRM, Failure.NotApplied))
 
-    return copy(phase = Phase.Idle, installedFrom = InstalledFrom(artifact.release.asset.sha256, installed.lastUpdateTime))
+    // The announced build is consumed once a build lands, so a later downgrade is offered again.
+    return copy(
+        phase = Phase.Idle,
+        installedFrom = InstalledFrom(artifact.release.asset.sha256, installed.lastUpdateTime),
+        notifiedSha256 = null,
+    )
 }
 
 enum class StepState { PENDING, RUNNING, DONE, FAILED }
