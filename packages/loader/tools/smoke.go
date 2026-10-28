@@ -115,6 +115,7 @@ type smokeResult struct {
 	statuses  []smokePluginStatus
 	resources *smokeResources
 	cycle     *smokeCycle
+	faults    []smokeFaultResult
 	evalError string
 	problems  []string
 	relaunch  string
@@ -345,6 +346,9 @@ func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, t
 		}
 	}
 	watcher.snapshot(result)
+	if evalErr == nil && !watcher.crashed() {
+		result.faults = runSmokeFaults(ctx, target, options, result.startup.runtime)
+	}
 	result.statuses = statuses
 	if evalErr != nil {
 		result.evalError = evalErr.Error()
@@ -475,6 +479,7 @@ func smokeProblems(result *smokeResult) []string {
 		return problems
 	}
 	problems = append(problems, cycleProblems(result.cycle)...)
+	problems = append(problems, faultProblems(result.faults)...)
 	byID := map[string]smokePluginStatus{}
 	for _, status := range result.statuses {
 		byID[status.ID] = status
@@ -545,6 +550,7 @@ func renderSmokeReport(result *smokeResult) string {
 	report.WriteString(renderSlowestStarts(result.statuses))
 	report.WriteString(renderSmokeResources(result.resources))
 	report.WriteString(renderSmokeCycle(result.cycle))
+	report.WriteString(renderSmokeFaults(result.faults))
 	report.WriteString("| Plugin | Loaded by the loader | Debugger status | Start |\n| --- | --- | --- | --- |\n")
 	for _, plugin := range result.plugins {
 		loaded := "no"
