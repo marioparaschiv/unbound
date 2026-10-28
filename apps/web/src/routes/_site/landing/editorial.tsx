@@ -80,15 +80,10 @@ function EditorialLanding() {
 								Discord and lets add-ons change its modules, its state and its UI.
 							</p>
 							<div className='flex gap-3'>
-								<Button asChild size='lg' className='rounded-full'>
+								<Button asChild size='lg'>
 									<Link to='/plugins'>Get Started</Link>
 								</Button>
-								<Button
-									asChild
-									variant='secondary'
-									size='lg'
-									className='rounded-full'
-								>
+								<Button asChild variant='secondary' size='lg'>
 									<a href={DOCS_URL} target='_blank' rel='noopener noreferrer'>
 										Documentation
 									</a>
