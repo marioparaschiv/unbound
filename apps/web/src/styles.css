@@ -45,11 +45,13 @@
 	/* Plump design tokens: every primitive reads its radius, depth and motion from here. */
 	--radius-item: calc(var(--radius) - 6px);
 	--radius-control: var(--radius);
+	--radius-inner: calc(var(--radius-control) - 4px);
 	--radius-surface: calc(var(--radius) + 8px);
 
 	--shadow-field: var(--field-shadow);
 	--shadow-surface: var(--surface-shadow);
 	--shadow-float: var(--float-shadow);
+	--shadow-key: var(--key-shadow);
 	--shadow-thumb: inset 0 1px 0 var(--highlight), 0 1px 3px oklch(0 0 0 / 0.3);
 
 	--color-halo: var(--halo);
@@ -113,6 +115,7 @@
 	--field: oklch(0.955 0.003 285);
 	--field-border: oklch(0 0 0 / 8%);
 	--field-shadow: inset 0 2px 3px oklch(0 0 0 / 0.07), inset 0 -1px 0 oklch(1 0 0 / 0.8);
+	--key-shadow: inset 0 1px 0 oklch(1 0 0 / 0.8), 0 1px 2px oklch(0 0 0 / 0.08);
 	--surface-shadow:
 		inset 0 1px 0 oklch(1 0 0 / 0.7), 0 1px 2px oklch(0 0 0 / 0.06),
 		0 10px 28px -14px oklch(0 0 0 / 0.2);
@@ -166,6 +169,7 @@
 	--field: oklch(0.15 0.006 285);
 	--field-border: oklch(1 0 0 / 7%);
 	--field-shadow: inset 0 2px 3px oklch(0 0 0 / 0.3), inset 0 -1px 0 oklch(1 0 0 / 0.04);
+	--key-shadow: inset 0 1px 0 var(--highlight), 0 1px 2px oklch(0 0 0 / 0.4);
 	--surface-shadow:
 		inset 0 1px 0 oklch(1 0 0 / 0.06), 0 1px 2px oklch(0 0 0 / 0.3),
 		0 12px 32px -14px oklch(0 0 0 / 0.6);
