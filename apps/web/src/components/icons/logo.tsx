@@ -6,7 +6,7 @@ function Logo(props: SVGProps<SVGSVGElement>) {
 			xmlns='http://www.w3.org/2000/svg'
 			width='1em'
 			height='1em'
-			viewBox='0 0 512 512'
+			viewBox='20 155 474 202'
 			{...props}
 		>
 			<path

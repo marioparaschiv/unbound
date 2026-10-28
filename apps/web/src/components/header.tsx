@@ -59,7 +59,7 @@ function Header() {
 							to='/'
 							className='flex justify-center items-center rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo size-11 shrink-0 press-flat'
 						>
-							<Logo className='size-9 text-foreground' />
+							<Logo className='size-11 text-foreground' />
 						</Link>
 
 						<Separator orientation='vertical' className='hidden md:flex h-5!' />
