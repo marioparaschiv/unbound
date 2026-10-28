@@ -56,9 +56,9 @@ function Header() {
 				<div className='items-center grid grid-cols-[1fr_auto_1fr] h-11'>
 					<Link
 						to='/'
-						className='flex justify-center items-center justify-self-start rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-halo size-11 press-flat'
+						className='flex items-center justify-self-start pr-2.5 pl-0 rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-11 press-flat'
 					>
-						<Logo className='size-11 text-foreground' />
+						<Logo className='w-13 h-auto aspect-[474/202] text-foreground' />
 					</Link>
 
 					<nav
