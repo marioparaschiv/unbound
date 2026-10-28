@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 import hermesManifest from '@unbound-app/rollup-plugin-hermes/dist/manifest.js';
 
 const run = promisify(execFile);
-const { resolveHermesTargets } = hermesManifest;
+const { fetchManifest, resolveHermesTargets } = hermesManifest;
 
 /**
  * Wraps a plugin bundle the way the client evaluates its source, so the compiled program's completion value is the same factory.
@@ -53,8 +53,21 @@ async function compile(hermesc, source, output) {
 }
 
 /**
- * Compiles each plugin bundle to Hermes bytecode for the newest bytecode versions the client supports.
- * @param {{ versions: number }} options How many of the newest bytecode versions to compile for.
+ * Counts how many of hermesc's newest versions to resolve so every wanted version is among them.
+ * @param {number[]} latest hermesc's versions, newest first.
+ * @param {number[]} wanted The bytecode versions to compile for.
+ */
+export function hermescCount(latest, wanted) {
+	const missing = wanted.filter((version) => !latest.includes(version));
+
+	if (missing.length) throw new Error(`hermesc does not publish bytecode ${missing.join(', ')}.`);
+
+	return Math.max(...wanted.map((version) => latest.indexOf(version)), 0) + 1;
+}
+
+/**
+ * Compiles each plugin bundle to Hermes bytecode for exactly the bytecode versions the client ships.
+ * @param {{ versions: number[] }} options The bytecode versions to compile for.
  */
 export function hermesBytecode({ versions }) {
 	let targets;
@@ -62,7 +75,11 @@ export function hermesBytecode({ versions }) {
 	return {
 		name: 'hermes-bytecode',
 		async generateBundle(_outputOptions, bundle) {
-			targets ??= await resolveHermesTargets(this, { versions });
+			targets ??= (
+				await resolveHermesTargets(this, {
+					versions: hermescCount((await fetchManifest(this)).latest, versions),
+				})
+			).filter((target) => versions.includes(target.version));
 			const executable = process.platform === 'win32' ? 'hermesc.exe' : 'hermesc';
 			const directory = await mkdtemp(join(tmpdir(), 'plugin-bytecode-'));
 

@@ -114,7 +114,7 @@ export function createPluginConfig(
 			...modulePlugins(),
 			iife(),
 			hermesExpressionEntrypoint({ hasSettingsPanel: settingsPanel }),
-			...(bytecode ? [hermesBytecode({ versions: bytecodeVersions.length })] : []),
+			...(bytecode ? [hermesBytecode({ versions: bytecodeVersions })] : []),
 			manifestToDist(pluginRoot),
 		],
 		output: {
