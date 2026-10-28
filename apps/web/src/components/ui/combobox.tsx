@@ -56,7 +56,7 @@ function ComboboxContent({
 				<ComboboxPrimitive.Popup
 					data-slot='combobox-content'
 					className={cn(
-						'group/combobox-content bg-popover text-popover-foreground data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-[8rem] origin-(--transform-origin) overflow-hidden rounded-md border shadow-md duration-100',
+						'group/combobox-content bg-popover text-popover-foreground data-[open]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[open]:fade-in-0 data-[closed]:zoom-out-95 data-[open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative max-h-(--available-height) w-(--anchor-width) max-w-(--available-width) min-w-[8rem] origin-(--transform-origin) overflow-hidden rounded-control border shadow-float duration-100',
 						className,
 					)}
 					{...props}
@@ -71,7 +71,7 @@ function ComboboxList({ className, ...props }: ComponentProps<typeof ComboboxPri
 		<ComboboxPrimitive.List
 			data-slot='combobox-list'
 			className={cn(
-				'max-h-[min(--spacing(72),var(--available-height))] scroll-py-1 overflow-y-auto overscroll-contain p-1 data-[empty]:p-0',
+				'max-h-[min(--spacing(72),var(--available-height))] scroll-py-1 overflow-y-auto overscroll-contain p-1.5 data-[empty]:p-0',
 				className,
 			)}
 			{...props}
@@ -88,7 +88,7 @@ function ComboboxItem({
 		<ComboboxPrimitive.Item
 			data-slot='combobox-item'
 			className={cn(
-				"data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+				"data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-item py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
 				className,
 			)}
 			{...props}
