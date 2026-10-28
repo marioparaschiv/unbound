@@ -1,8 +1,8 @@
 import type { ReactElement, ReactNode } from 'react';
 import { cloneElement, isValidElement } from 'react';
 
-import type { AnyProps } from '~/api/metro';
 import { findByFilePath } from '~/api/metro';
+import type { AnyProps } from '~/api/metro';
 
 /** The props of Discord's root theme provider that Unbound reads or rewrites. */
 export type RootThemeProps = {
