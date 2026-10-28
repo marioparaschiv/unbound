@@ -28,7 +28,12 @@ function HeroShowcase({
 				alt=''
 				aria-hidden
 				draggable={false}
-				className='absolute inset-0 w-full translate-y-[4%] scale-[1.04] opacity-60 blur-[32px] md:blur-[72px] brightness-250 saturate-300 pointer-events-none select-none'
+				className='absolute inset-0 w-full translate-y-[4%] scale-[1.04] opacity-30 blur-[48px] md:blur-[100px] brightness-140 saturate-130 pointer-events-none select-none'
+			/>
+			{/* A violet underglow ties the phones to the accent; a gradient, because drop-shadow on the 2880px image is costly to scroll. */}
+			<div
+				aria-hidden
+				className='absolute inset-x-[8%] top-[20%] -bottom-[10%] bg-[radial-gradient(ellipse_at_center,var(--glow),transparent_70%)] pointer-events-none'
 			/>
 			<img src={HERO_SRC} alt={alt} className='relative w-full' />
 			{/* The fade reaches past the image so it also covers the glow that the blur spreads outside it. */}
