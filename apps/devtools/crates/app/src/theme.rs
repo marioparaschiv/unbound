@@ -17,7 +17,6 @@ pub const TEXT_FAINT: u32 = 0x52525B;
 pub const ACCENT: u32 = 0xE0525F;
 pub const ACCENT_HOVER: u32 = 0xEA6470;
 
-pub const SUCCESS: u32 = 0x3FB27F;
 pub const WARNING: u32 = 0xE5A943;
 pub const ERROR: u32 = 0xE5484D;
 
@@ -54,27 +53,39 @@ pub fn hsla(hex: u32) -> Hsla {
 
 pub const TEXT_UI: Pixels = px(13.);
 pub const TEXT_SMALL: Pixels = px(12.);
-pub const TEXT_EYEBROW: Pixels = px(10.5);
+pub const TEXT_EYEBROW: Pixels = px(11.);
 pub const TEXT_MONO: Pixels = px(12.5);
-pub const TEXT_TITLE: Pixels = px(15.);
-pub const TEXT_HERO: Pixels = px(17.);
+pub const TEXT_TITLE: Pixels = px(13.);
+pub const TEXT_HERO: Pixels = px(16.);
 
-pub const RADIUS_CONTROL: Pixels = px(6.);
-pub const RADIUS_CARD: Pixels = px(8.);
-pub const RADIUS_PILL: Pixels = px(999.);
+pub const RADIUS_CONTROL: Pixels = px(4.);
 
-pub const TOOLBAR_HEIGHT: Pixels = px(44.);
-pub const STATUS_HEIGHT: Pixels = px(24.);
-pub const BREADCRUMB_HEIGHT: Pixels = px(26.);
-pub const ROW_HEIGHT: Pixels = px(22.);
-pub const INDENT: f32 = 12.;
+pub const TOOLBAR_HEIGHT: Pixels = px(40.);
+pub const PANEL_HEADER_HEIGHT: Pixels = px(32.);
+pub const STATUS_HEIGHT: Pixels = px(28.);
+pub const BREADCRUMB_HEIGHT: Pixels = px(28.);
+pub const ROW_HEIGHT: Pixels = px(24.);
+pub const VALUE_ROW_HEIGHT: Pixels = px(22.);
+pub const ICON_BUTTON: Pixels = px(24.);
+pub const ICON: Pixels = px(14.);
+pub const CHEVRON: Pixels = px(10.);
+/// Indent per tree level; equal to the chevron slot so a child's guide sits under its parent's chevron.
+pub const INDENT: f32 = 16.;
+/// Horizontal inset shared by panel headers, rows and section headers so their content lines up.
+pub const INSET: f32 = 8.;
 
 pub const INSPECTOR_MIN: f32 = 320.;
+pub const TREE_MIN: f32 = 360.;
 pub const INSPECTOR_MAX: f32 = 640.;
 pub const INSPECTOR_DEFAULT: f32 = 400.;
 
 pub fn ui_font() -> SharedString {
-	".SystemUIFont".into()
+	// gpui finds no font for `.SystemUIFont` on Linux and logs a miss for every weight.
+	if cfg!(any(target_os = "macos", target_os = "windows")) {
+		".SystemUIFont".into()
+	} else {
+		"DejaVu Sans".into()
+	}
 }
 
 pub fn mono_font() -> SharedString {

@@ -1,77 +1,125 @@
 //! Small styled building blocks shared by the views.
 
-use gpui::{Div, FontWeight, SharedString, Stateful, div, prelude::*, px};
+use gpui::{
+	AnyView, App, Context, Div, FontWeight, SharedString, Stateful, Svg, Window, div, prelude::*,
+	px, svg,
+};
 
 use crate::theme;
 
-/// A rounded label: kind badges, HOC names, counts.
-pub fn pill(text: impl Into<SharedString>, fg: u32, bg: gpui::Rgba) -> Div {
+pub fn icon(path: &'static str, size: gpui::Pixels, color: u32) -> Svg {
+	svg()
+		.path(path)
+		.flex_none()
+		.size(size)
+		.text_color(theme::color(color))
+}
+
+/// A tree or value chevron, pointing right when collapsed and down when expanded.
+pub fn chevron(expanded: bool) -> Svg {
+	let path = if expanded {
+		crate::assets::CHEVRON_DOWN
+	} else {
+		crate::assets::CHEVRON_RIGHT
+	};
+	icon(path, theme::CHEVRON, theme::TEXT_MUTED)
+}
+
+/// A small label for kinds, HOC names and counts.
+pub fn badge(text: impl Into<SharedString>, fg: u32) -> Div {
 	div()
 		.flex_none()
-		.px(px(6.))
-		.h(px(16.))
 		.flex()
 		.items_center()
-		.rounded(theme::RADIUS_PILL)
-		.bg(bg)
+		.h(px(16.))
+		.px(px(4.))
+		.rounded(px(3.))
+		.bg(theme::color(theme::SYN_HOC_BG))
 		.text_color(theme::color(fg))
-		.text_size(px(10.5))
+		.text_size(px(11.))
+		.line_height(px(16.))
 		.child(text.into())
 }
 
-pub fn dot(color: u32) -> Div {
-	div()
-		.flex_none()
-		.size(px(6.))
-		.rounded(theme::RADIUS_PILL)
-		.bg(theme::color(color))
+struct Tooltip(SharedString);
+
+impl Render for Tooltip {
+	fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+		div()
+			.font_family(theme::ui_font())
+			.text_size(theme::TEXT_SMALL)
+			.text_color(theme::color(theme::TEXT))
+			.px(px(8.))
+			.py(px(4.))
+			.rounded(theme::RADIUS_CONTROL)
+			.bg(theme::color(theme::ELEVATED))
+			.border_1()
+			.border_color(theme::color(theme::BORDER_STRONG))
+			.child(self.0.clone())
+	}
 }
 
-/// A quiet bordered button; `active` tints it with the accent.
-pub fn button(
-	id: impl Into<SharedString>,
+pub fn tooltip(text: &'static str) -> impl Fn(&mut Window, &mut App) -> AnyView + 'static {
+	move |_, cx| cx.new(|_| Tooltip(text.into())).into()
+}
+
+/// A square ghost button holding one icon; `active` tints the icon with the accent.
+pub fn icon_button(id: &'static str, path: &'static str, active: bool) -> Stateful<Div> {
+	div()
+		.id(id)
+		.flex_none()
+		.size(theme::ICON_BUTTON)
+		.flex()
+		.items_center()
+		.justify_center()
+		.rounded(theme::RADIUS_CONTROL)
+		.cursor_pointer()
+		.when(active, |button| button.bg(theme::accent_soft()))
+		.hover(|button| button.bg(theme::color(theme::HOVER)))
+		.child(icon(
+			path,
+			theme::ICON,
+			if active {
+				theme::ACCENT_HOVER
+			} else {
+				theme::TEXT_SECONDARY
+			},
+		))
+}
+
+/// A ghost button with an icon and a label.
+pub fn ghost_button(
+	id: &'static str,
+	path: &'static str,
 	label: impl Into<SharedString>,
-	active: bool,
 ) -> Stateful<Div> {
-	let id: SharedString = id.into();
 	div()
 		.id(id)
 		.flex_none()
 		.flex()
 		.items_center()
-		.h(px(24.))
+		.gap(px(6.))
+		.h(theme::ICON_BUTTON)
 		.px(px(8.))
 		.rounded(theme::RADIUS_CONTROL)
-		.border_1()
-		.text_size(theme::TEXT_SMALL)
 		.cursor_pointer()
-		.map(|button| {
-			if active {
-				button
-					.border_color(theme::alpha(theme::ACCENT, 0.4))
-					.bg(theme::accent_soft())
-					.text_color(theme::color(theme::ACCENT_HOVER))
-			} else {
-				button
-					.border_color(theme::color(theme::BORDER_STRONG))
-					.text_color(theme::color(theme::TEXT_SECONDARY))
-					.hover(|button| {
-						button
-							.bg(theme::color(theme::HOVER))
-							.text_color(theme::color(theme::TEXT))
-					})
-			}
+		.text_size(theme::TEXT_SMALL)
+		.text_color(theme::color(theme::TEXT_SECONDARY))
+		.hover(|button| {
+			button
+				.bg(theme::color(theme::HOVER))
+				.text_color(theme::color(theme::TEXT))
 		})
+		.child(icon(path, theme::ICON, theme::TEXT_SECONDARY))
 		.child(label.into())
 }
 
 /// The accent-filled primary action.
 pub fn primary_button(
-	id: impl Into<SharedString>,
+	id: &'static str,
 	label: impl Into<SharedString>,
 	busy: bool,
 ) -> Stateful<Div> {
-	let id: SharedString = id.into();
 	div()
 		.id(id)
 		.flex_none()
@@ -96,11 +144,25 @@ pub fn primary_button(
 		.child(label.into())
 }
 
-/// The 10.5 px uppercase section label.
+/// The uppercase section label.
 pub fn eyebrow(text: &str) -> Div {
 	div()
 		.text_size(theme::TEXT_EYEBROW)
-		.font_weight(FontWeight::SEMIBOLD)
 		.text_color(theme::color(theme::TEXT_MUTED))
 		.child(text.to_uppercase())
+}
+
+/// A 32 px panel header: the bar above the tree and the inspector.
+pub fn panel_header() -> Div {
+	div()
+		.flex_none()
+		.h(theme::PANEL_HEADER_HEIGHT)
+		.flex()
+		.items_center()
+		.gap(px(4.))
+		.pl(px(theme::INSET + 4.))
+		.pr(px(6.))
+		.border_b_1()
+		.border_color(theme::color(theme::BORDER))
+		.bg(theme::color(theme::PANEL))
 }

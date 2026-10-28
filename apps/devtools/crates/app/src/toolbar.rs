@@ -1,62 +1,22 @@
-//! The top bar: brand, search field, connection pill, host toggle, and "Connect device".
+//! The top bar: brand, the centered search field, and "Connect device".
 
-use std::time::Duration;
-
-use gpui::{
-	Animation, AnimationExt, Context, Focusable, MouseButton, SharedString, Window, bounce, div,
-	ease_in_out, img, prelude::*, px, svg,
-};
+use gpui::{Context, Focusable, MouseButton, Window, div, img, prelude::*, px};
 use unbound_devtools_core::ConnectionState;
 
 use crate::app::Workspace;
-use crate::widgets::{button, dot, primary_button};
+use crate::widgets::{ghost_button, icon, icon_button, tooltip};
 use crate::{assets, theme};
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Tone {
-	Success,
-	Waiting,
-	Error,
-}
-
-impl Tone {
-	pub fn color(self) -> u32 {
-		match self {
-			Tone::Success => theme::SUCCESS,
-			Tone::Waiting => theme::WARNING,
-			Tone::Error => theme::ERROR,
-		}
-	}
-}
-
-/// A status dot; the waiting one breathes so it reads as "still trying".
-pub fn status_dot(tone: Tone, id: &'static str) -> impl IntoElement {
-	let dot = dot(tone.color());
-	if tone != Tone::Waiting {
-		return dot.into_any_element();
-	}
-	dot.with_animation(
-		id,
-		Animation::new(Duration::from_millis(1400))
-			.repeat()
-			.with_easing(bounce(ease_in_out)),
-		|dot, t| dot.opacity(0.35 + 0.65 * t),
-	)
-	.into_any_element()
-}
-
-fn icon(path: &'static str, color: u32) -> impl IntoElement {
-	svg()
-		.path(path)
-		.flex_none()
-		.size(px(14.))
-		.text_color(theme::color(color))
+/// How the status bar renders the connection: plain text, red only when it needs action.
+pub struct Connection {
+	pub label: String,
+	pub failed: bool,
 }
 
 impl Workspace {
-	pub fn connection(&self) -> (Tone, String) {
+	pub fn connection(&self) -> Connection {
 		let port = self.config.listen.port();
-		match &self.status.connection {
+		let (label, failed) = match &self.status.connection {
 			ConnectionState::Connected {
 				backend_version, ..
 			} => {
@@ -66,88 +26,91 @@ impl Workspace {
 						.map(|version| format!("backend {version}"))
 				});
 				let label = match detail {
-					Some(detail) => format!("Connected · {detail}"),
+					Some(detail) => format!("Connected to {detail}"),
 					None => "Connected".to_string(),
 				};
-				(Tone::Success, label)
+				(label, false)
 			}
 			ConnectionState::Listening { addr } => {
-				(Tone::Waiting, format!("Waiting on :{}", addr.port()))
+				(format!("Waiting for a device on :{}", addr.port()), false)
 			}
 			ConnectionState::UnsupportedRenderer { .. } => {
-				(Tone::Error, "Unsupported renderer".to_string())
+				("Unsupported React renderer".to_string(), true)
 			}
 			ConnectionState::Failed { error } if error.to_lowercase().contains("in use") => {
-				(Tone::Error, format!("Port {port} in use"))
+				(format!("Port {port} is in use"), true)
 			}
-			ConnectionState::Failed { .. } => (Tone::Error, format!("Can't listen on :{port}")),
-		}
+			ConnectionState::Failed { .. } => (format!("Can't listen on :{port}"), true),
+		};
+		Connection { label, failed }
 	}
 
 	fn render_search(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
 		let focused = self.search_input.focus_handle(cx).is_focused(window);
+		let has_text = !self.search_input.read(cx).text().is_empty();
 		let search = &self.search;
 		let counter = search.is_active().then(|| {
 			let current = search.active.map_or(0, |ix| ix + 1);
-			format!("{current} / {}", search.matches.len())
+			format!("{current} of {}", search.matches.len())
 		});
-		let step = |id: &'static str, path: &'static str, forward: bool| {
-			div()
-				.id(id)
-				.flex_none()
-				.size(px(20.))
-				.flex()
-				.items_center()
-				.justify_center()
-				.rounded(px(4.))
-				.cursor_pointer()
-				.hover(|step| step.bg(theme::color(theme::HOVER)))
-				.child(icon(path, theme::TEXT_SECONDARY))
-				.on_click(cx.listener(move |this, _, _, cx| this.step_match(forward, cx)))
-		};
 		div()
 			.key_context("Search")
 			.flex()
 			.items_center()
-			.gap(px(8.))
+			.gap(px(6.))
 			.w_full()
-			.max_w(px(560.))
-			.h(px(30.))
-			.pl(px(10.))
-			.pr(px(4.))
-			.rounded(theme::RADIUS_CARD)
+			.max_w(px(520.))
+			.h(px(28.))
+			.pl(px(8.))
+			.pr(px(2.))
+			.rounded(theme::RADIUS_CONTROL)
 			.bg(theme::color(theme::ELEVATED))
 			.border_1()
 			.border_color(if focused {
-				theme::alpha(theme::ACCENT, 0.55)
+				theme::alpha(theme::ACCENT, 0.6)
 			} else {
 				theme::color(theme::BORDER)
 			})
-			.child(icon(assets::SEARCH, theme::TEXT_MUTED))
+			.child(icon(assets::SEARCH, theme::ICON, theme::TEXT_MUTED))
 			.child(self.search_input.clone())
 			.when_some(counter, |field, counter| {
+				field.child(
+					div()
+						.flex_none()
+						.pr(px(2.))
+						.text_size(theme::TEXT_SMALL)
+						.text_color(theme::color(theme::TEXT_MUTED))
+						.child(counter),
+				)
+			})
+			.when(search.is_active(), |field| {
 				field
 					.child(
-						div()
-							.flex_none()
-							.text_size(theme::TEXT_SMALL)
-							.text_color(theme::color(theme::TEXT_MUTED))
-							.child(counter),
+						icon_button("match-prev", assets::CHEVRON_UP, false)
+							.size(px(22.))
+							.tooltip(tooltip("Previous match  ⇧↵"))
+							.on_click(cx.listener(|this, _, _, cx| this.step_match(false, cx))),
 					)
 					.child(
-						div()
-							.flex()
-							.child(step("match-prev", assets::CHEVRON_UP, false))
-							.child(step("match-next", assets::CHEVRON_DOWN, true)),
+						icon_button("match-next", assets::CHEVRON_DOWN, false)
+							.size(px(22.))
+							.tooltip(tooltip("Next match  ↵"))
+							.on_click(cx.listener(|this, _, _, cx| this.step_match(true, cx))),
 					)
+			})
+			.when(has_text, |field| {
+				field.child(
+					icon_button("search-clear", assets::X, false)
+						.size(px(22.))
+						.tooltip(tooltip("Clear  Esc"))
+						.on_click(cx.listener(|this, _, window, cx| this.clear_query(window, cx))),
+				)
 			})
 	}
 
 	pub fn render_toolbar(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-		let (tone, label) = self.connection();
-		let show_host = self.status.show_host_components;
 		let connect_label = if self.connecting {
-			"Connecting..."
+			"Connecting…"
 		} else {
 			"Connect device"
 		};
@@ -158,60 +121,46 @@ impl Workspace {
 			.flex()
 			.items_center()
 			.gap(px(12.))
-			.px(px(12.))
+			// Equal side padding keeps the search field centered on the window.
+			.px(px(4.))
 			.bg(theme::color(theme::PANEL))
 			.border_b_1()
 			.border_color(theme::color(theme::BORDER))
 			.child(
 				div()
-					.flex_none()
+					.flex_1()
+					.min_w_0()
 					.flex()
 					.items_center()
 					.gap(px(8.))
-					.child(img(assets::LOGO).size(px(20.)).rounded(px(5.)))
+					.pl(px(theme::INSET))
+					.child(img(assets::LOGO).flex_none().size(px(18.)).rounded(px(4.)))
 					.child(
 						div()
 							.text_color(theme::color(theme::TEXT_SECONDARY))
-							.child("DevTools"),
+							.child("Unbound DevTools"),
 					),
 			)
 			.child(
 				div()
-					.flex_1()
-					.min_w_0()
+					.flex_none()
+					.w(px(520.))
 					.flex()
-					.justify_center()
 					.child(self.render_search(window, cx)),
 			)
 			.child(
+				// The inner `pl` mirrors the brand column's padding, so both flex to the same width.
 				div()
-					.flex_none()
+					.flex_1()
+					.min_w_0()
+					.pl(px(theme::INSET))
 					.flex()
-					.items_center()
 					.justify_end()
-					.gap(px(8.))
 					.child(
-						div()
-							.flex()
-							.items_center()
-							.gap(px(6.))
-							.max_w(px(320.))
-							.h(px(24.))
-							.px(px(8.))
-							.rounded(theme::RADIUS_PILL)
-							.bg(theme::color(theme::ELEVATED))
-							.border_1()
-							.border_color(theme::color(theme::BORDER))
-							.text_size(theme::TEXT_SMALL)
-							.text_color(theme::color(theme::TEXT_SECONDARY))
-							.child(status_dot(tone, "connection-pulse"))
-							.child(div().min_w_0().truncate().child(SharedString::from(label))),
-					)
-					.child(button("host", "Host", show_host).on_click(
-						cx.listener(move |this, _, _, _| this.set_show_host_components(!show_host)),
-					))
-					.child(
-						primary_button("connect", connect_label, self.connecting)
+						ghost_button("connect", assets::PLUG, connect_label)
+							.tooltip(tooltip(
+								"Ask the device to connect over the debugger bridge",
+							))
 							.on_click(cx.listener(|this, _, _, cx| this.connect_device(cx))),
 					),
 			);
@@ -224,8 +173,8 @@ impl Workspace {
 						.id("banner")
 						.flex()
 						.items_center()
-						.h(px(24.))
-						.px(px(12.))
+						.h(px(28.))
+						.px(px(theme::INSET + 4.))
 						.bg(theme::alpha(theme::ERROR, 0.08))
 						.border_b_1()
 						.border_color(theme::alpha(theme::ERROR, 0.25))

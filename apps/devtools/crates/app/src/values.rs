@@ -5,9 +5,8 @@ use unbound_devtools_core::{Hook, InspectedElement, Path, PathSegment, Value};
 
 use crate::app::Workspace;
 use crate::inspection::{Inspection, child, is_editable, key};
-use crate::theme;
+use crate::{theme, widgets};
 
-const ROW_HEIGHT: f32 = 20.;
 const PREVIEW_CHARS: usize = 96;
 
 /// The preview text, its color, and whether it is set in italic (functions).
@@ -60,15 +59,14 @@ fn row_id(path: &Path) -> SharedString {
 	format!("value{path:?}").into()
 }
 
+/// The fixed chevron slot every value row starts with, so keys line up whether or not they expand.
 fn chevron(expandable: bool, expanded: bool) -> impl IntoElement {
 	div()
-		.w(px(12.))
 		.flex_none()
-		.text_color(theme::color(theme::TEXT_MUTED))
-		.text_size(px(10.))
-		.when(expandable, |chevron| {
-			chevron.child(if expanded { "▾" } else { "▸" })
-		})
+		.w(px(theme::INDENT))
+		.flex()
+		.justify_center()
+		.when(expandable, |slot| slot.child(widgets::chevron(expanded)))
 }
 
 fn base_row(path: &Path, depth: usize) -> gpui::Stateful<gpui::Div> {
@@ -76,9 +74,9 @@ fn base_row(path: &Path, depth: usize) -> gpui::Stateful<gpui::Div> {
 		.id(row_id(path))
 		.flex()
 		.items_center()
-		.h(px(ROW_HEIGHT))
-		.pl(px(12. + depth as f32 * theme::INDENT))
-		.pr(px(12.))
+		.h(theme::VALUE_ROW_HEIGHT)
+		.pl(px(theme::INSET + depth as f32 * theme::INDENT))
+		.pr(px(theme::INSET))
 		.whitespace_nowrap()
 		.overflow_hidden()
 		.hover(|row| row.bg(theme::color(theme::HOVER)))

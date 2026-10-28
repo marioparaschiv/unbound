@@ -1,20 +1,22 @@
-//! The component tree: a virtualized list of rows plus the selection's breadcrumb bar.
+//! The component tree: a header, a virtualized list of rows, and the selection's breadcrumbs.
 
 use std::ops::Range;
 
 use gpui::{
-	AnyElement, ClickEvent, Context, MouseButton, SharedString, div, prelude::*, px, uniform_list,
+	AnyElement, ClickEvent, Context, MouseButton, Pixels, SharedString, TextRun, Window, div, font,
+	prelude::*, px, uniform_list,
 };
 use unbound_devtools_core::{Element, ElementKind, Row, Store};
 
 use crate::app::Workspace;
-use crate::theme;
-use crate::widgets::pill;
+use crate::widgets::{badge, chevron, icon, icon_button, panel_header, tooltip};
+use crate::{assets, theme};
 
 /// Rows deeper than this many levels past the selection's are shifted left, so Discord's deep
 /// trees stay readable without horizontal scrolling.
 const VISIBLE_LEVELS: u32 = 16;
-const BREADCRUMB_LIMIT: usize = 24;
+const CRUMB_PADDING: f32 = 4.;
+const CRUMB_GAP: f32 = 2.;
 
 fn name_spans(element: &Element, matched: bool) -> gpui::Div {
 	let name_color = if element.kind == ElementKind::Host {
@@ -51,6 +53,24 @@ fn name_spans(element: &Element, matched: bool) -> gpui::Div {
 		.child(div().text_color(theme::color(theme::TEXT_FAINT)).child(">"))
 }
 
+/// The width of one character of the monospace font at `size`.
+fn mono_advance(window: &Window, size: Pixels) -> f32 {
+	let run = TextRun {
+		len: 1,
+		font: font(theme::mono_font()),
+		color: theme::hsla(theme::TEXT),
+		background_color: None,
+		underline: None,
+		strikethrough: None,
+	};
+	f32::from(
+		window
+			.text_system()
+			.shape_line("0".into(), size, &[run], None)
+			.width(),
+	)
+}
+
 impl Workspace {
 	fn indent_shift(&self, store: &Store) -> u32 {
 		self.selected
@@ -58,14 +78,20 @@ impl Workspace {
 			.map_or(0, |element| element.depth.saturating_sub(VISIBLE_LEVELS))
 	}
 
-	fn render_rows(&self, range: Range<usize>, cx: &mut Context<Self>) -> Vec<AnyElement> {
+	fn render_rows(
+		&self,
+		range: Range<usize>,
+		window: &mut Window,
+		cx: &mut Context<Self>,
+	) -> Vec<AnyElement> {
+		let focused = self.tree_focus.contains_focused(window, cx);
 		let store = self.devtools.store();
 		let shift = self.indent_shift(&store);
 		range
 			.filter_map(|ix| {
 				let row = *self.rows.get(ix)?;
 				let element = store.get(row.id)?;
-				Some(self.render_row(ix, row, element, shift, cx))
+				Some(self.render_row(ix, row, element, shift, focused, cx))
 			})
 			.collect()
 	}
@@ -76,6 +102,7 @@ impl Workspace {
 		row: Row,
 		element: &Element,
 		shift: u32,
+		focused: bool,
 		cx: &mut Context<Self>,
 	) -> AnyElement {
 		let id = row.id;
@@ -87,7 +114,9 @@ impl Workspace {
 				.absolute()
 				.top_0()
 				.bottom_0()
-				.left(px(8. + level as f32 * theme::INDENT + 5.))
+				.left(px(theme::INSET
+					+ level as f32 * theme::INDENT
+					+ theme::INDENT / 2.))
 				.w(px(1.))
 				.bg(theme::color(theme::BORDER))
 		});
@@ -99,73 +128,55 @@ impl Workspace {
 			.flex()
 			.items_center()
 			.gap(px(4.))
-			.pl(px(8. + depth as f32 * theme::INDENT))
-			.pr(px(8.))
+			.pl(px(theme::INSET + depth as f32 * theme::INDENT))
+			.pr(px(theme::INSET))
 			.whitespace_nowrap()
 			.overflow_hidden()
-			.map(|row| {
-				if selected {
-					row.bg(theme::accent_soft())
-				} else {
-					row.hover(|row| row.bg(theme::color(theme::HOVER)))
-				}
+			.border_1()
+			.map(|row| match (selected, focused) {
+				(true, true) => row
+					.bg(theme::accent_soft())
+					.border_color(theme::alpha(theme::ACCENT, 0.35)),
+				(true, false) => row
+					.bg(theme::color(theme::SYN_HOC_BG))
+					.border_color(gpui::transparent_black()),
+				(false, _) => row
+					.border_color(gpui::transparent_black())
+					.hover(|row| row.bg(theme::color(theme::HOVER))),
 			})
 			.children(guides)
-			.when(selected, |row| {
-				row.child(
-					div()
-						.absolute()
-						.left_0()
-						.top_0()
-						.bottom_0()
-						.w(px(2.))
-						.bg(theme::color(theme::ACCENT)),
-				)
-			})
 			.child(
 				div()
 					.id(("chevron", ix))
-					.w(px(12.))
-					.ml(px(-4.))
 					.flex_none()
+					.w(px(theme::INDENT))
+					.h_full()
 					.flex()
+					.items_center()
 					.justify_center()
-					.text_size(px(10.))
-					.text_color(theme::color(theme::TEXT_MUTED))
-					.when(row.has_children, |chevron| {
-						chevron
-							.child(if row.expanded { "▾" } else { "▸" })
-							.on_mouse_down(
-								MouseButton::Left,
-								cx.listener(move |this, _, _, cx| {
-									cx.stop_propagation();
-									this.toggle(id, cx);
-								}),
-							)
+					.when(row.has_children, |slot| {
+						slot.child(chevron(row.expanded)).on_mouse_down(
+							MouseButton::Left,
+							cx.listener(move |this, _, _, cx| {
+								cx.stop_propagation();
+								this.toggle(id, cx);
+							}),
+						)
 					}),
 			)
 			.child(name_spans(element, matched))
-			.children(element.hocs.iter().map(|hoc| {
-				pill(
-					hoc.to_string(),
-					theme::SYN_HOC_TEXT,
-					theme::color(theme::SYN_HOC_BG),
-				)
-			}))
+			.children(
+				element
+					.hocs
+					.iter()
+					.map(|hoc| badge(hoc.to_string(), theme::SYN_HOC_TEXT)),
+			)
 			.child(div().flex_1())
 			.when(element.errors > 0, |row| {
-				row.child(pill(
-					element.errors.to_string(),
-					theme::ERROR,
-					theme::alpha(theme::ERROR, 0.16),
-				))
+				row.child(badge(element.errors.to_string(), theme::ERROR))
 			})
 			.when(element.warnings > 0, |row| {
-				row.child(pill(
-					element.warnings.to_string(),
-					theme::WARNING,
-					theme::alpha(theme::WARNING, 0.16),
-				))
+				row.child(badge(element.warnings.to_string(), theme::WARNING))
 			})
 			.on_click(cx.listener(move |this, event: &ClickEvent, _, cx| {
 				if event.click_count() == 2 && row.has_children {
@@ -176,32 +187,58 @@ impl Workspace {
 			.into_any_element()
 	}
 
-	fn render_breadcrumbs(&self, cx: &mut Context<Self>) -> impl IntoElement {
+	/// The selection's ancestors, root first. When they overflow `width`, the farthest ones give
+	/// way to a leading ellipsis so the nearest stay visible.
+	fn render_breadcrumbs(
+		&self,
+		width: f32,
+		window: &Window,
+		cx: &mut Context<Self>,
+	) -> impl IntoElement {
+		let advance = mono_advance(window, theme::TEXT_SMALL);
 		let store = self.devtools.store();
 		let mut chain: Vec<&Element> = Vec::new();
 		if let Some(selected) = self.selected.and_then(|id| store.get(id)) {
 			chain.push(selected);
-			let ancestors = store
-				.ancestors(selected.id)
-				.filter(|element| element.kind != ElementKind::Root);
-			chain.extend(ancestors.take(BREADCRUMB_LIMIT - 1));
-			chain.reverse();
+			chain.extend(
+				store
+					.ancestors(selected.id)
+					.filter(|element| element.kind != ElementKind::Root),
+			);
 		}
+		let separator = f32::from(theme::CHEVRON) + 2. * CRUMB_GAP;
+		let ellipsis = advance + 2. * CRUMB_PADDING + separator;
+		let mut budget = width - 2. * theme::INSET;
+		let mut shown = 0;
+		for (ix, element) in chain.iter().enumerate() {
+			let cost = element.name.chars().count() as f32 * advance
+				+ 2. * CRUMB_PADDING
+				+ if ix > 0 { separator } else { 0. };
+			let reserve = if ix + 1 < chain.len() { ellipsis } else { 0. };
+			if cost + reserve > budget && shown > 0 {
+				break;
+			}
+			budget -= cost;
+			shown += 1;
+		}
+		let truncated = shown < chain.len();
+		chain.truncate(shown);
+		chain.reverse();
 		let last = chain.len().saturating_sub(1);
 		let crumbs = chain.into_iter().enumerate().flat_map(|(ix, element)| {
 			let id = element.id;
-			let color = if ix == last {
-				theme::TEXT
-			} else {
-				theme::TEXT_SECONDARY
-			};
+			let current = ix == last;
 			let crumb = div()
 				.id(("crumb", ix))
 				.flex_none()
-				.px(px(4.))
-				.rounded(px(4.))
+				.px(px(CRUMB_PADDING))
+				.rounded(theme::RADIUS_CONTROL)
 				.cursor_pointer()
-				.text_color(theme::color(color))
+				.text_color(theme::color(if current {
+					theme::TEXT
+				} else {
+					theme::TEXT_SECONDARY
+				}))
 				.hover(|crumb| {
 					crumb
 						.bg(theme::color(theme::HOVER))
@@ -210,12 +247,8 @@ impl Workspace {
 				.child(element.name.to_string())
 				.on_click(cx.listener(move |this, _, _, cx| this.select(Some(id), cx)))
 				.into_any_element();
-			let separator = (ix > 0).then(|| {
-				div()
-					.flex_none()
-					.text_color(theme::color(theme::TEXT_FAINT))
-					.child("›")
-					.into_any_element()
+			let separator = (ix > 0 || truncated).then(|| {
+				icon(assets::CHEVRON_RIGHT, theme::CHEVRON, theme::TEXT_FAINT).into_any_element()
 			});
 			separator.into_iter().chain(Some(crumb))
 		});
@@ -224,23 +257,68 @@ impl Workspace {
 			.h(theme::BREADCRUMB_HEIGHT)
 			.flex()
 			.items_center()
-			.justify_end()
-			.gap(px(2.))
-			.px(px(8.))
+			.gap(px(CRUMB_GAP))
+			.px(px(theme::INSET))
 			.overflow_hidden()
 			.whitespace_nowrap()
 			.border_t_1()
 			.border_color(theme::color(theme::BORDER))
 			.bg(theme::color(theme::PANEL))
 			.text_size(theme::TEXT_SMALL)
+			.when(last == 0 && shown == 0, |bar| {
+				bar.child(
+					div()
+						.px(px(CRUMB_PADDING))
+						.text_color(theme::color(theme::TEXT_FAINT))
+						.child("No selection"),
+				)
+			})
+			.when(truncated, |bar| {
+				bar.child(
+					div()
+						.flex_none()
+						.px(px(CRUMB_PADDING))
+						.text_color(theme::color(theme::TEXT_FAINT))
+						.child("…"),
+				)
+			})
 			.children(crumbs)
 	}
 
-	pub fn render_tree_panel(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+	fn render_tree_header(&self, cx: &mut Context<Self>) -> impl IntoElement {
+		let show_host = self.status.show_host_components;
+		panel_header()
+			.child(
+				div()
+					.flex_1()
+					.text_color(theme::color(theme::TEXT_SECONDARY))
+					.child("Components"),
+			)
+			.child(
+				icon_button("host", assets::LAYERS, show_host)
+					.tooltip(tooltip(if show_host {
+						"Hide host components"
+					} else {
+						"Show host components"
+					}))
+					.on_click(
+						cx.listener(move |this, _, _, _| this.set_show_host_components(!show_host)),
+					),
+			)
+	}
+
+	pub fn render_tree_panel(
+		&mut self,
+		window: &mut Window,
+		cx: &mut Context<Self>,
+	) -> impl IntoElement {
+		let width = f32::from(window.viewport_size().width) - self.inspector_width(window) - 1.;
 		let list = uniform_list(
 			"tree",
 			self.rows.len(),
-			cx.processor(|this, range: Range<usize>, _, cx| this.render_rows(range, cx)),
+			cx.processor(|this, range: Range<usize>, window, cx| {
+				this.render_rows(range, window, cx)
+			}),
 		)
 		.track_scroll(&self.scroll)
 		.flex_1()
@@ -257,9 +335,21 @@ impl Workspace {
 				MouseButton::Left,
 				cx.listener(|this, _, window, cx| window.focus(&this.tree_focus, cx)),
 			)
-			.font_family(theme::mono_font())
-			.text_size(theme::TEXT_MONO)
-			.child(list)
-			.child(self.render_breadcrumbs(cx).into_any_element())
+			.child(self.render_tree_header(cx))
+			.child(
+				div()
+					.flex_1()
+					.min_h_0()
+					.flex()
+					.flex_col()
+					.font_family(theme::mono_font())
+					.text_size(theme::TEXT_MONO)
+					.child(list),
+			)
+			.child(
+				div()
+					.font_family(theme::mono_font())
+					.child(self.render_breadcrumbs(width, window, cx)),
+			)
 	}
 }

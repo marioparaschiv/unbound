@@ -1,11 +1,11 @@
-//! The bottom bar: element counts, the MCP endpoint (click to copy), and the bridge state.
+//! The bottom bar: connection state, element counts, and the MCP endpoint (click to copy).
 
 use gpui::{Context, div, prelude::*, px};
 use unbound_devtools_core::BridgeState;
 
 use crate::app::Workspace;
-use crate::theme;
-use crate::widgets::dot;
+use crate::widgets::{ghost_button, tooltip};
+use crate::{assets, theme};
 
 /// Groups thousands: `1284` reads `1,284`.
 pub fn thousands(n: usize) -> String {
@@ -27,30 +27,28 @@ fn plural(n: usize, one: &str, many: &str) -> String {
 impl Workspace {
 	pub fn render_status(&self, cx: &mut Context<Self>) -> impl IntoElement {
 		let status = &self.status;
-		let (bridge_color, bridge_label) = match status.bridge {
-			BridgeState::Unknown => (theme::TEXT_FAINT, "Bridge"),
-			BridgeState::Unreachable => (theme::ERROR, "Bridge unreachable"),
-			BridgeState::NoDevice => (theme::WARNING, "Bridge: no device"),
-			BridgeState::DeviceConnected => (theme::SUCCESS, "Bridge"),
+		let connection = self.connection();
+		let bridge = match status.bridge {
+			BridgeState::Unreachable => Some("Bridge unreachable"),
+			BridgeState::NoDevice => Some("Bridge has no device"),
+			BridgeState::Unknown | BridgeState::DeviceConnected => None,
 		};
+		let counts = (status.elements > 0).then(|| {
+			format!(
+				"{} · {}",
+				plural(status.elements, "component", "components"),
+				plural(status.roots, "root", "roots"),
+			)
+		});
 		let mcp = status.mcp_url.clone().map(|url| {
 			let label = if self.copied {
 				"Copied".to_string()
 			} else {
-				format!("MCP {url}")
+				format!("MCP  {}", url.trim_start_matches("http://"))
 			};
-			div()
-				.id("mcp-url")
-				.px(px(4.))
-				.rounded(px(4.))
-				.cursor_pointer()
-				.hover(|mcp| mcp.bg(theme::color(theme::HOVER)))
-				.text_color(theme::color(if self.copied {
-					theme::SUCCESS
-				} else {
-					theme::TEXT_SECONDARY
-				}))
-				.child(label)
+			ghost_button("mcp-url", assets::COPY, label)
+				.h(px(22.))
+				.tooltip(tooltip("Copy the MCP endpoint for an agent"))
 				.on_click(cx.listener(|this, _, _, cx| this.copy_mcp_url(cx)))
 		});
 		div()
@@ -59,28 +57,26 @@ impl Workspace {
 			.flex()
 			.items_center()
 			.gap(px(12.))
-			.px(px(8.))
+			.pl(px(theme::INSET + 4.))
+			.pr(px(theme::INSET - 4.))
 			.bg(theme::color(theme::PANEL))
 			.border_t_1()
 			.border_color(theme::color(theme::BORDER))
 			.text_size(theme::TEXT_SMALL)
 			.text_color(theme::color(theme::TEXT_MUTED))
-			.child(div().px(px(4.)).child(format!(
-				"{} · {}",
-				plural(status.elements, "component", "components"),
-				plural(status.roots, "root", "roots"),
-			)))
-			.child(div().flex_1())
-			.children(mcp)
 			.child(
 				div()
-					.flex()
-					.items_center()
-					.gap(px(6.))
-					.px(px(4.))
-					.child(dot(bridge_color))
-					.child(bridge_label),
+					.min_w_0()
+					.truncate()
+					.when(connection.failed, |text| {
+						text.text_color(theme::color(theme::ERROR))
+					})
+					.child(connection.label),
 			)
+			.children(bridge.map(|bridge| div().flex_none().child(bridge)))
+			.child(div().flex_1())
+			.children(counts.map(|counts| div().flex_none().child(counts)))
+			.children(mcp)
 	}
 }
 

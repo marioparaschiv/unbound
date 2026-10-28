@@ -96,8 +96,12 @@ impl Workspace {
 		window: &mut Window,
 		cx: &mut Context<Self>,
 	) -> Self {
-		let search_input =
-			cx.new(|cx| TextInput::new("Search components   /   or jq: .name == \"View\"", cx));
+		let search_input = cx.new(|cx| {
+			TextInput::new(
+				"Search components, or a jq filter like .name == \"View\"",
+				cx,
+			)
+		});
 		cx.subscribe(&search_input, |this, _, _: &input::Changed, cx| {
 			this.query_changed(cx)
 		})
@@ -331,6 +335,10 @@ impl Workspace {
 	}
 
 	fn clear_search(&mut self, _: &ClearSearch, window: &mut Window, cx: &mut Context<Self>) {
+		self.clear_query(window, cx);
+	}
+
+	pub fn clear_query(&mut self, window: &mut Window, cx: &mut Context<Self>) {
 		self.search_input
 			.update(cx, |input, cx| input.clear(window, cx));
 		window.focus(&self.tree_focus, cx);
@@ -416,26 +424,42 @@ impl Workspace {
 		self.resizing = false;
 	}
 
-	fn render_body(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+	/// The inspector's drawn width: the dragged width, narrowed so the tree keeps `TREE_MIN`.
+	pub fn inspector_width(&self, window: &Window) -> f32 {
+		let room = f32::from(window.viewport_size().width) - theme::TREE_MIN;
+		self.inspector_width.min(room).max(theme::INSPECTOR_MIN)
+	}
+
+	fn render_body(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+		let line = if self.resizing {
+			theme::ACCENT
+		} else {
+			theme::BORDER
+		};
 		div()
 			.flex()
 			.flex_1()
 			.min_h_0()
-			.child(self.render_tree_panel(cx))
+			.child(self.render_tree_panel(window, cx))
 			.child(
+				// A 1 px line inside a 7 px grab area that overlaps both panels.
 				div()
 					.id("divider")
-					.w(px(5.))
-					.mx(px(-2.))
+					.group("divider")
+					.flex_none()
+					.w(px(7.))
+					.mx(px(-3.))
 					.h_full()
 					.flex()
 					.justify_center()
 					.cursor_col_resize()
-					.child(div().w(px(1.)).h_full().bg(theme::color(if self.resizing {
-						theme::BORDER_STRONG
-					} else {
-						theme::BORDER
-					})))
+					.child(
+						div()
+							.w(px(1.))
+							.h_full()
+							.bg(theme::color(line))
+							.group_hover("divider", |line| line.bg(theme::color(theme::ACCENT))),
+					)
 					.on_mouse_down(
 						MouseButton::Left,
 						cx.listener(|this, _, _, cx| {
@@ -444,7 +468,7 @@ impl Workspace {
 						}),
 					),
 			)
-			.child(self.render_inspector(cx))
+			.child(self.render_inspector(window, cx))
 	}
 }
 
@@ -453,7 +477,7 @@ impl Render for Workspace {
 		let body = if self.devtools.store().is_empty() {
 			self.render_empty(cx).into_any_element()
 		} else {
-			self.render_body(cx).into_any_element()
+			self.render_body(window, cx).into_any_element()
 		};
 		div()
 			.size_full()

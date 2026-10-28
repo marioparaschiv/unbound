@@ -1,13 +1,13 @@
 //! The right-hand inspector: header, actions, and the collapsible value sections.
 
-use gpui::{AnyElement, Context, FontWeight, SharedString, div, prelude::*, px};
+use gpui::{AnyElement, Context, SharedString, Window, div, prelude::*, px};
 use unbound_devtools_core::{ElementKind, InspectedElement, Path};
 
 use crate::app::Workspace;
 use crate::inspection::{Inspection, key};
-use crate::theme;
 use crate::values::Rows;
-use crate::widgets::{button, eyebrow, pill};
+use crate::widgets::{badge, chevron, eyebrow, icon_button, panel_header, tooltip};
+use crate::{assets, theme};
 
 fn centered(text: impl Into<SharedString>, color: u32) -> gpui::Div {
 	div()
@@ -25,17 +25,21 @@ fn mono_row(depth: f32) -> gpui::Div {
 		.flex()
 		.items_center()
 		.gap(px(6.))
-		.min_h(px(20.))
-		.pl(px(24. + depth))
-		.pr(px(12.))
+		.min_h(theme::VALUE_ROW_HEIGHT)
+		.pl(px(theme::INSET + theme::INDENT + depth))
+		.pr(px(theme::INSET))
 		.whitespace_nowrap()
 		.overflow_hidden()
 }
 
 impl Workspace {
-	pub fn render_inspector(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+	pub fn render_inspector(
+		&mut self,
+		window: &Window,
+		cx: &mut Context<Self>,
+	) -> impl IntoElement {
 		let panel = div()
-			.w(px(self.inspector_width))
+			.w(px(self.inspector_width(window)))
 			.flex_none()
 			.h_full()
 			.flex()
@@ -57,7 +61,8 @@ impl Workspace {
 				.flex_1()
 				.min_h_0()
 				.overflow_y_scroll()
-				.pb(px(12.))
+				.pt(px(4.))
+				.pb(px(8.))
 				.font_family(theme::mono_font())
 				.text_size(theme::TEXT_MONO)
 				.children(sections),
@@ -76,78 +81,63 @@ impl Workspace {
 			Some(stored) => stored.name.to_string(),
 			None => element.name.clone(),
 		};
-		div()
-			.flex_none()
-			.flex()
-			.flex_col()
-			.gap(px(8.))
-			.px(px(12.))
-			.py(px(12.))
-			.border_b_1()
-			.border_color(theme::color(theme::BORDER))
+		panel_header()
+			.gap(px(6.))
 			.child(
 				div()
-					.flex()
-					.items_center()
-					.gap(px(8.))
-					.min_w_0()
-					.child(
-						div()
-							.min_w_0()
-							.truncate()
-							.text_size(theme::TEXT_TITLE)
-							.font_weight(FontWeight::SEMIBOLD)
-							.child(name),
-					)
-					.child(pill(
-						element.kind.label(),
-						theme::TEXT_SECONDARY,
-						theme::color(theme::SYN_HOC_BG),
-					))
-					.when_some(element.key.clone(), |row, key| {
-						row.child(
+					.flex_none()
+					.max_w(px(200.))
+					.truncate()
+					.text_size(theme::TEXT_TITLE)
+					.child(name),
+			)
+			.child(badge(element.kind.label(), theme::TEXT_SECONDARY))
+			.when_some(element.key.clone(), |row, key| {
+				row.child(
+					div()
+						.flex()
+						.min_w_0()
+						.overflow_hidden()
+						.font_family(theme::mono_font())
+						.text_size(theme::TEXT_SMALL)
+						.child(
 							div()
-								.flex()
+								.flex_none()
+								.text_color(theme::color(theme::SYN_KEY_ATTR))
+								.child("key="),
+						)
+						.child(
+							div()
 								.min_w_0()
 								.truncate()
-								.font_family(theme::mono_font())
-								.text_size(theme::TEXT_SMALL)
-								.child(
-									div()
-										.text_color(theme::color(theme::SYN_KEY_ATTR))
-										.child("key="),
-								)
-								.child(
-									div()
-										.text_color(theme::color(theme::SYN_KEY_VALUE))
-										.child(format!("\"{key}\"")),
-								),
-						)
-					})
-					.child(div().flex_1())
-					.child(
-						div()
-							.flex_none()
-							.font_family(theme::mono_font())
-							.text_size(theme::TEXT_SMALL)
-							.text_color(theme::color(theme::TEXT_FAINT))
-							.child(format!("#{}", id.0)),
-					),
-			)
+								.text_color(theme::color(theme::SYN_KEY_VALUE))
+								.child(format!("\"{key}\"")),
+						),
+				)
+			})
+			.child(div().flex_1())
 			.child(
 				div()
-					.flex()
-					.gap(px(8.))
-					.child(
-						button("highlight", "Highlight", highlighted).on_click(
-							cx.listener(move |this, _, _, cx| this.toggle_highlight(id, cx)),
-						),
-					)
-					.child(
-						button("log", "Log to console", false).on_click(
-							cx.listener(move |this, _, _, cx| this.log_to_console(id, cx)),
-						),
-					),
+					.flex_none()
+					.pr(px(4.))
+					.font_family(theme::mono_font())
+					.text_size(theme::TEXT_SMALL)
+					.text_color(theme::color(theme::TEXT_FAINT))
+					.child(format!("#{}", id.0)),
+			)
+			.child(
+				icon_button("highlight", assets::CROSSHAIR, highlighted)
+					.tooltip(tooltip(if highlighted {
+						"Stop highlighting on device"
+					} else {
+						"Highlight on device"
+					}))
+					.on_click(cx.listener(move |this, _, _, cx| this.toggle_highlight(id, cx))),
+			)
+			.child(
+				icon_button("log", assets::TERMINAL, false)
+					.tooltip(tooltip("Log to the device console"))
+					.on_click(cx.listener(move |this, _, _, cx| this.log_to_console(id, cx))),
 			)
 	}
 
@@ -165,17 +155,18 @@ impl Workspace {
 			.id(title)
 			.flex()
 			.items_center()
-			.h(px(28.))
-			.mt(px(4.))
-			.px(px(12.))
+			.h(theme::VALUE_ROW_HEIGHT + px(4.))
+			.pl(px(theme::INSET))
+			.pr(px(theme::INSET))
 			.font_family(theme::ui_font())
 			.cursor_pointer()
 			.child(
 				div()
-					.w(px(12.))
-					.text_size(px(10.))
-					.text_color(theme::color(theme::TEXT_FAINT))
-					.child(if folded { "▸" } else { "▾" }),
+					.flex_none()
+					.w(px(theme::INDENT))
+					.flex()
+					.justify_center()
+					.child(chevron(!folded)),
 			)
 			.child(eyebrow(title))
 			.on_click(cx.listener(move |this, _, _, cx| {
@@ -186,6 +177,7 @@ impl Workspace {
 			}));
 		Some(
 			div()
+				.pb(px(4.))
 				.child(header)
 				.when(!folded, |section| section.children(rows))
 				.into_any_element(),
@@ -291,9 +283,7 @@ impl Workspace {
 							.text_color(theme::color(color))
 							.child(message.clone()),
 					)
-					.when(*count > 1, |row| {
-						row.child(pill(count.to_string(), color, theme::alpha(color, 0.14)))
-					})
+					.when(*count > 1, |row| row.child(badge(count.to_string(), color)))
 					.into_any_element()
 			})
 			.collect();

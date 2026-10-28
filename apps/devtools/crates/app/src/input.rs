@@ -73,6 +73,7 @@ pub struct TextInput {
 	marked_range: Option<Range<usize>>,
 	last_layout: Option<ShapedLine>,
 	last_bounds: Option<Bounds<Pixels>>,
+	scroll: Pixels,
 	is_selecting: bool,
 }
 
@@ -89,6 +90,7 @@ impl TextInput {
 			marked_range: None,
 			last_layout: None,
 			last_bounds: None,
+			scroll: px(0.),
 			is_selecting: false,
 		}
 	}
@@ -484,6 +486,9 @@ struct TextElement {
 }
 
 struct PrepaintState {
+	/// The element's bounds shifted left by the horizontal scroll, so the cursor stays visible.
+	text_bounds: Bounds<Pixels>,
+	scroll: Pixels,
 	line: Option<ShapedLine>,
 	cursor: Option<PaintQuad>,
 	selection: Option<PaintQuad>,
@@ -577,6 +582,23 @@ impl Element for TextElement {
 		let line = window
 			.text_system()
 			.shape_line(text, font_size, &runs, None);
+		let cursor_x = if input.content.is_empty() { px(0.) } else { line.x_for_index(cursor) };
+		let width = bounds.size.width - px(2.);
+		let mut scroll = input.scroll;
+		if cursor_x - scroll > width {
+			scroll = cursor_x - width;
+		}
+		if cursor_x < scroll {
+			scroll = cursor_x;
+		}
+		let overflow = line.width() - width;
+		if scroll > overflow {
+			scroll = if overflow > px(0.) { overflow } else { px(0.) };
+		}
+		let bounds = Bounds::new(
+			point(bounds.left() - scroll, bounds.top()),
+			size(bounds.size.width + scroll, bounds.size.height),
+		);
 		let height = bounds.bottom() - bounds.top();
 		let (selection, cursor) = if selected_range.is_empty() {
 			let x = if input.content.is_empty() {
@@ -597,6 +619,8 @@ impl Element for TextElement {
 			(Some(fill(quad, theme::alpha(theme::ACCENT, 0.3))), None)
 		};
 		PrepaintState {
+			text_bounds: bounds,
+			scroll,
 			line: Some(line),
 			cursor,
 			selection,
@@ -607,13 +631,14 @@ impl Element for TextElement {
 		&mut self,
 		_: Option<&GlobalElementId>,
 		_: Option<&gpui::InspectorElementId>,
-		bounds: Bounds<Pixels>,
+		_: Bounds<Pixels>,
 		_: &mut Self::RequestLayoutState,
 		prepaint: &mut Self::PrepaintState,
 		window: &mut Window,
 		cx: &mut App,
 	) {
 		let focus_handle = self.input.read(cx).focus_handle.clone();
+		let bounds = prepaint.text_bounds;
 		window.handle_input(
 			&focus_handle,
 			ElementInputHandler::new(bounds, self.input.clone()),
@@ -643,6 +668,7 @@ impl Element for TextElement {
 		self.input.update(cx, |input, _| {
 			input.last_layout = has_content.then_some(line);
 			input.last_bounds = Some(bounds);
+			input.scroll = prepaint.scroll;
 		});
 	}
 }
