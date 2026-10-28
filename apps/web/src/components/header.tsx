@@ -36,7 +36,8 @@ const ROUTES: NavRoute[] = [
 	{ path: '/faq', title: 'FAQ', icon: IconBookmark },
 ];
 
-const INDICATOR_TRANSITION = { duration: 0.3, ease: 'easeInOut' } as const;
+// Hovering is frequent, so the highlight answers at once with a strong ease-out instead of easing in.
+const INDICATOR_TRANSITION = { duration: 0.25, ease: [0.23, 1, 0.32, 1] } as const;
 
 function Header() {
 	const pathname = useLocation({ select: (location) => location.pathname });
@@ -55,7 +56,7 @@ function Header() {
 				<div className='flex flex-col bg-background bg-linear-to-b to-accent/40 shadow-lg backdrop-blur-md px-5 border rounded-3xl w-full text-foreground pointer-events-auto'>
 					<div className='flex flex-1 items-center gap-4'>
 						<Link to='/'>
-							<Logo className='size-16 text-foreground hover:scale-110 transition-all duration-300 cursor-pointer' />
+							<Logo className='size-16 text-foreground hover:scale-110 active:scale-[0.97] transition-[scale] duration-200 ease-out cursor-pointer' />
 						</Link>
 
 						<Separator orientation='vertical' className='hidden sm:flex h-5!' />
