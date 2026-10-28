@@ -7,6 +7,7 @@ import {
 	seedSubmission,
 	seedVersion,
 	signInWithDiscord,
+	addTeamMembers,
 } from '../../../../apps/web/tests/helpers';
 import { addon, addonMaintainer } from '../../../../apps/web/src/db/schema';
 import { getArtifactKeys } from '../../../../apps/web/src/lib/artifacts';
@@ -14,7 +15,7 @@ import { createAppContext } from '../../../../apps/web/src/lib/context';
 import { createDatabase } from '../../../../apps/web/src/db/database';
 import { toAddonSummary } from '../../../../apps/web/src/lib/addons';
 import { parseEnv } from '../../../../apps/web/src/lib/env';
-import { discordIdOf, ROLES } from './team';
+import { discordIdOf, GUILD_MEMBERS, ROLES } from './team';
 
 type SeededSession = {
 	userId: string;
@@ -59,6 +60,12 @@ for (const role of ROLES) {
 
 	sessions[role] = { userId: signedIn.userId, name, token: signedIn.token, cookie };
 }
+
+// The way staff add people by hand: the sync looks them up and corrects each group from their roles.
+await addTeamMembers(
+	ctx,
+	GUILD_MEMBERS.map((member) => member.id),
+);
 
 const developer = sessions.developer;
 const approved = manifest('verify.hello', '1.0.0', {

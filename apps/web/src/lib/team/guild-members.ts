@@ -1,7 +1,7 @@
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
 import { z } from 'zod';
 
-import type { DiscordUser } from '~/lib/authors/discord-users';
+import type { DiscordId, DiscordUser } from '~/lib/authors/discord-users';
 import { isBotTokenHost } from '~/lib/discord';
 import type { Env } from '~/lib/env';
 
@@ -10,10 +10,13 @@ export type GuildMember = {
 	roleIds: string[];
 };
 
-// Discord's maximum for `GET /guilds/{id}/members`.
-const PAGE_LIMIT = 1000;
-
 const REQUEST_TIMEOUT_MS = 30_000;
+
+// Retries of one lookup Discord rate limits before the sync gives up on this run.
+const RATE_LIMIT_RETRIES = 3;
+
+// Unknown Member and Unknown User: not in the guild, or a deleted account.
+const ABSENT_CODES = new Set([10_007, 10_013]);
 
 const memberSchema = z.object({
 	user: z.object({
@@ -25,53 +28,34 @@ const memberSchema = z.object({
 	roles: z.array(z.string()),
 });
 
-const pageSchema = z.array(memberSchema).max(PAGE_LIMIT);
+const errorSchema = z.object({ code: z.number().optional(), retry_after: z.number().optional() });
 
-async function fetchPage(env: Env, after: string, signal?: AbortSignal) {
+async function fetchMember(
+	env: Env,
+	id: DiscordId,
+	signal?: AbortSignal,
+): Promise<GuildMember | undefined> {
 	const base = `${env.DISCORD_API_URL.replace(/\/$/, '')}/`;
-	const url = new URL(`guilds/${env.DISCORD_GUILD_ID}/members`, base);
-
-	url.searchParams.set('limit', String(PAGE_LIMIT));
-	url.searchParams.set('after', after);
+	const url = new URL(`guilds/${env.DISCORD_GUILD_ID}/members/${id}`, base);
 
 	if (!isBotTokenHost(url)) {
 		throw new Error(`Refusing to send the Discord bot token to ${url.host}.`);
 	}
 
-	const response = await fetch(url, {
-		headers: { authorization: `Bot ${env.DISCORD_BOT_TOKEN}` },
-		redirect: 'error',
-		signal: AbortSignal.any([
-			AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-			...(signal ? [signal] : []),
-		]),
-	});
+	for (let attempt = 0; ; attempt++) {
+		const response = await fetch(url, {
+			headers: { authorization: `Bot ${env.DISCORD_BOT_TOKEN}` },
+			redirect: 'error',
+			signal: AbortSignal.any([
+				AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+				...(signal ? [signal] : []),
+			]),
+		});
 
-	if (!response.ok) {
-		throw new Error(
-			`Discord answered ${response.status} listing the members of guild ${env.DISCORD_GUILD_ID}.`,
-		);
-	}
+		if (response.ok) {
+			const member = memberSchema.parse(await response.json());
 
-	return pageSchema.parse(await response.json());
-}
-
-/**
- * @description Lists every member of the Unbound guild with the bot token, a page of 1000 at a time.
- * Needs the bot's Server Members privileged intent.
- * @param env The validated environment.
- * @param signal Cancels the listing.
- * @returns Every member; throws on any failed or malformed page, so a partial list is never returned.
- */
-export async function fetchGuildMembers(env: Env, signal?: AbortSignal): Promise<GuildMember[]> {
-	const members: GuildMember[] = [];
-	let after = '0';
-
-	for (;;) {
-		const page = await fetchPage(env, after, signal);
-
-		for (const member of page) {
-			members.push({
+			return {
 				user: {
 					id: member.user.id,
 					username: member.user.username,
@@ -79,17 +63,52 @@ export async function fetchGuildMembers(env: Env, signal?: AbortSignal): Promise
 					avatarHash: member.user.avatar ?? null,
 				},
 				roleIds: member.roles,
-			});
+			};
 		}
 
-		const last = page.at(-1);
+		const body = errorSchema.safeParse(await response.json().catch(() => ({})));
+		const error = body.success ? body.data : {};
 
-		if (page.length < PAGE_LIMIT || !last) {
-			return members;
+		if (response.status === 404 && error.code !== undefined && ABSENT_CODES.has(error.code)) {
+			return;
 		}
 
-		after = last.user.id;
+		if (response.status === 429 && attempt < RATE_LIMIT_RETRIES) {
+			await Bun.sleep((error.retry_after ?? 1) * 1000);
+
+			continue;
+		}
+
+		throw new Error(
+			`Discord answered ${response.status} reading member ${id} of guild ${env.DISCORD_GUILD_ID}.`,
+		);
 	}
+}
+
+/**
+ * @description Reads the named members of the Unbound guild one at a time with the bot token, so it
+ * needs no privileged intent.
+ * @param env The validated environment.
+ * @param ids The Discord ids to look up.
+ * @param signal Cancels the lookups.
+ * @returns The ids that are guild members; throws on any other failure, so a partial read is never returned.
+ */
+export async function fetchGuildMembers(
+	env: Env,
+	ids: Iterable<DiscordId>,
+	signal?: AbortSignal,
+): Promise<GuildMember[]> {
+	const members: GuildMember[] = [];
+
+	for (const id of ids) {
+		const member = await fetchMember(env, id, signal);
+
+		if (member) {
+			members.push(member);
+		}
+	}
+
+	return members;
 }
 
 export default { fetchGuildMembers };

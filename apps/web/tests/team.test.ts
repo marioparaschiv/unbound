@@ -8,6 +8,7 @@ import { syncTeam } from '~/lib/team/sync';
 import { createTestContext, signInWithDiscord } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
 import { serveDiscord } from './helpers/discord';
+import { addTeamMembers } from './helpers/team';
 
 const GUILD = '950850315601711176';
 const IDS: TeamRoleIds = {
@@ -27,8 +28,10 @@ const FORMER_MODERATOR = '100000000000000005';
 const FORMER_ADMIN = '100000000000000006';
 const CI = '100000000000000007';
 const NEWCOMER = '100000000000000008';
-// Past the 1000 filler members, so only the second member page lists it.
-const LAST_PAGE = '300000000000000000';
+// Added to the snapshot by hand but not in the guild.
+const ABSENT = '100000000000000010';
+// Holds a team role, but nothing on the site knows them.
+const STRANGER = '100000000000000011';
 
 const discord = serveDiscord(
 	{ [CONTRIBUTOR]: { username: 'carl', global_name: 'Carl', avatar: 'c4' } },
@@ -43,6 +46,7 @@ const discord = serveDiscord(
 				[FORMER_ADMIN]: [],
 				[CI]: [IDS.admin],
 				[NEWCOMER]: [IDS.staff],
+				[STRANGER]: [IDS.staff],
 			},
 		},
 	},
@@ -94,6 +98,7 @@ beforeAll(async () => {
 	await signIn(FORMER_MODERATOR, 'moderator');
 	await signIn(FORMER_ADMIN, 'admin');
 	await signIn(CI, 'ci');
+	await addTeamMembers(ctx, [CONTRIBUTOR, NEWCOMER, ABSENT]);
 
 	const maintainer = users[FORMER_MODERATOR] ?? '';
 
@@ -143,9 +148,8 @@ describe('readTeamSyncConfig', () => {
 
 describe('syncTeam', () => {
 	test('snapshots the team, caches profiles and assigns site roles as the system', async () => {
-		const result = await syncTeam(ctx, IDS);
+		await syncTeam(ctx, IDS);
 
-		expect(result.lockoutGuard).toBe(false);
 		expect(await snapshot()).toEqual([
 			[ADMIN, 'staff', 'admin'],
 			[STAFF, 'staff', 'moderator'],
@@ -157,8 +161,8 @@ describe('syncTeam', () => {
 		expect(await roleOf(ADMIN)).toBe('admin');
 		expect(await roleOf(STAFF)).toBe('moderator');
 		expect(await roleOf(DEVELOPER)).toBe('admin');
-		expect(await roleOf(FORMER_MODERATOR)).toBe('developer');
-		expect(await roleOf(FORMER_ADMIN)).toBe('user');
+		expect(await roleOf(FORMER_MODERATOR)).toBe('moderator');
+		expect(await roleOf(FORMER_ADMIN)).toBe('admin');
 		expect(await roleOf(CI)).toBe('ci');
 
 		const [profile] = await ctx.db
@@ -185,17 +189,12 @@ describe('syncTeam', () => {
 		expect((await syncTeam(ctx, IDS)).changes).toEqual([]);
 	});
 
-	test('writes nothing when a later member page fails', async () => {
+	test('writes nothing when a lookup fails', async () => {
 		const before = await snapshot();
 
-		for (let index = 0; index < 1000; index++) {
-			members.set(String(200_000_000_000_000_000n + BigInt(index)), []);
-		}
-
-		members.set(STAFF, []);
-		members.set(LAST_PAGE, [IDS.contributor]);
-		discord.overrideMembers((after) =>
-			after === '0' ? undefined : Response.json({ message: 'Oops' }, { status: 500 }),
+		members.set(CONTRIBUTOR, []);
+		discord.overrideMembers((id) =>
+			id === NEWCOMER ? Response.json({ message: 'Oops' }, { status: 500 }) : undefined,
 		);
 
 		try {
@@ -210,33 +209,51 @@ describe('syncTeam', () => {
 		}
 
 		expect(await snapshot()).toEqual(before);
-		expect(await roleOf(STAFF)).toBe('moderator');
+		members.set(CONTRIBUTOR, [IDS.contributor]);
 	});
 
-	test('pages through every member', async () => {
-		const result = await syncTeam(ctx, IDS);
+	test('retries a rate-limited lookup', async () => {
+		let limited = false;
 
-		expect(result.changes).toEqual([
-			{ userId: users[STAFF] ?? '', from: 'moderator', to: 'user' },
-		]);
-		expect(await snapshot()).toContainEqual([LAST_PAGE, 'contributor', null]);
+		discord.overrideMembers((id) => {
+			if (id !== CONTRIBUTOR || limited) return;
+
+			limited = true;
+
+			return Response.json({ message: 'Slow down', retry_after: 0 }, { status: 429 });
+		});
+
+		try {
+			await syncTeam(ctx, IDS);
+		} finally {
+			discord.overrideMembers(null);
+		}
+
+		expect(limited).toBe(true);
+		expect(await snapshot()).toContainEqual([CONTRIBUTOR, 'contributor', null]);
 	});
 
-	test('demotes no one when no member holds a role granting admin', async () => {
-		members.set(ADMIN, [IDS.contributor]);
-		members.set(DEVELOPER, [IDS.contributor]);
-		members.set(CI, []);
-		members.set(NEWCOMER, [IDS.contributor]);
+	test('only looks up people the site knows', async () => {
+		const team = await snapshot();
+
+		expect(team.map(([id]) => id)).not.toContain(STRANGER);
+		expect(team.map(([id]) => id)).not.toContain(ABSENT);
+	});
+
+	test('never takes a role away or lowers one set by hand', async () => {
+		members.set(ADMIN, [IDS.staff]);
+		members.set(STAFF, []);
 
 		const result = await syncTeam(ctx, IDS);
 
-		expect(result.lockoutGuard).toBe(true);
 		expect(result.changes).toEqual([]);
 		expect(await roleOf(ADMIN)).toBe('admin');
-		expect(await snapshot()).toContainEqual([ADMIN, 'contributor', null]);
+		expect(await roleOf(STAFF)).toBe('moderator');
+		expect(await snapshot()).toContainEqual([ADMIN, 'staff', 'moderator']);
+		expect((await snapshot()).map(([id]) => id)).not.toContain(STAFF);
 
 		members.set(ADMIN, [IDS.admin]);
-		members.set(DEVELOPER, [IDS['development-team'], IDS.contributor]);
+		members.set(STAFF, [IDS.staff]);
 		members.set(NEWCOMER, [IDS.staff]);
 		await syncTeam(ctx, IDS);
 	});

@@ -11,6 +11,7 @@ import { addon } from '~/db/schema';
 import { createTestContext, signInWithDiscord } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
 import { serveDiscord } from './helpers/discord';
+import { addTeamMembers } from './helpers/team';
 
 const GUILD = '950850315601711176';
 const IDS: TeamRoleIds = {
@@ -108,6 +109,7 @@ beforeAll(async () => {
 	);
 	await publish('dana.plugin', [{ name: 'Dana', id: DANA }], ci.userId);
 	await ctx.db.update(addon).set({ delistedAt: new Date() }).where(eq(addon.id, 'dana.plugin'));
+	await addTeamMembers(ctx, [ZED, CARL]);
 	await syncTeam(ctx, IDS);
 });
 
@@ -143,6 +145,7 @@ describe('listDevelopers', () => {
 		const first = await listDevelopers(ctx, { search: '' });
 
 		discord.guilds.get(GUILD)?.set(ADA, [IDS['development-team']]);
+		await addTeamMembers(ctx, [ADA]);
 		await syncTeam(ctx, IDS);
 
 		const second = await listDevelopers(ctx, { search: '', cursor: first.nextCursor ?? '' });

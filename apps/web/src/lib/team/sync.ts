@@ -4,6 +4,7 @@ import { deriveStanding, readTeamSyncConfig, type TeamRoleIds } from '~/lib/team
 import { reconcileSiteRoles, type RoleChange } from '~/lib/team/site-roles';
 import { writeTeamSnapshot, type TeamEntry } from '~/lib/team/snapshot';
 import { fetchGuildMembers } from '~/lib/team/guild-members';
+import { readCandidateIds } from '~/lib/team/candidates';
 import type { AppContext } from '~/lib/context';
 
 const logger = createLogger('Web', 'Team');
@@ -11,43 +12,32 @@ const logger = createLogger('Web', 'Team');
 export type TeamSyncResult = {
 	team: number;
 	changes: RoleChange[];
-	/** Set when no member held a role granting admin, so no staff role was taken away. */
-	lockoutGuard: boolean;
 };
 
 /**
- * @description Lists the Unbound guild's members, replaces the team snapshot with those holding a
- * team role and brings site staff roles in line with it. A failed listing writes nothing, and a
- * listing with no admin-granting member demotes no one.
+ * @description Looks up every candidate in the Unbound guild, replaces the team snapshot with those
+ * holding a team role and grants the staff site roles it names. A failed lookup writes nothing.
  * @param ctx The application context.
  * @param ids The team role ids.
- * @param signal Cancels the member listing.
- * @returns The team size, the role changes made and whether the lockout guard held demotions back.
+ * @param signal Cancels the lookups.
+ * @returns The team size and the role grants made.
  */
 export async function syncTeam(
 	ctx: AppContext,
 	ids: TeamRoleIds,
 	signal?: AbortSignal,
 ): Promise<TeamSyncResult> {
-	const members = await fetchGuildMembers(ctx.env, signal);
+	const members = await fetchGuildMembers(ctx.env, await readCandidateIds(ctx), signal);
 	const team = members.flatMap((member): TeamEntry[] => {
 		const standing = deriveStanding(member.roleIds, ids);
 
 		return standing ? [{ member, standing }] : [];
 	});
-	const lockoutGuard = !team.some(({ standing }) => standing.staffRole === 'admin');
-
-	if (lockoutGuard) {
-		logger.error(
-			`No member of guild ${ctx.env.DISCORD_GUILD_ID} holds a role granting admin; skipping demotions.`,
-		);
-	}
-
 	await writeTeamSnapshot(ctx, team);
 
-	const changes = await reconcileSiteRoles(ctx.db, { demote: !lockoutGuard, at: ctx.now() });
+	const changes = await reconcileSiteRoles(ctx.db, ctx.now());
 
-	return { team: team.length, changes, lockoutGuard };
+	return { team: team.length, changes };
 }
 
 /**

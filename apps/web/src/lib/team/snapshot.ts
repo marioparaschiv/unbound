@@ -26,10 +26,10 @@ export async function readTeamGroups(ctx: AppContext): Promise<Map<DiscordId, Di
 }
 
 /**
- * @description Replaces the team snapshot with a complete member listing's team, and caches each
+ * @description Replaces the team snapshot with the looked-up candidates' team, and caches each
  * member's Discord profile so they resolve a name and avatar without a site account.
  * @param ctx The application context.
- * @param team Every guild member holding a team role.
+ * @param team Every looked-up guild member holding a team role.
  * @returns Resolves once the snapshot and profiles are written together.
  */
 export async function writeTeamSnapshot(ctx: AppContext, team: TeamEntry[]): Promise<void> {

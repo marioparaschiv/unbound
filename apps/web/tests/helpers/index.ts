@@ -7,6 +7,7 @@ export type { AppContext } from '~/lib/context';
 export * as schema from '~/db/schema';
 export * from './database';
 export * from './sponsors';
+export * from './team';
 export * from './context';
 export * from './storage';
 export * from './addons';
