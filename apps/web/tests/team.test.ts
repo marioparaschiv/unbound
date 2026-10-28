@@ -15,6 +15,7 @@ const IDS: TeamRoleIds = {
 	staff: '900000000000000002',
 	'development-team': '900000000000000003',
 	contributor: '900000000000000004',
+	management: '900000000000000005',
 };
 const OTHER_ROLE = '900000000000000099';
 
@@ -112,7 +113,11 @@ describe('deriveStanding', () => {
 		});
 		expect(deriveStanding([IDS.contributor, IDS.staff, IDS['development-team']], IDS)).toEqual({
 			group: 'development-team',
-			staffRole: 'moderator',
+			staffRole: 'admin',
+		});
+		expect(deriveStanding([IDS.management, IDS.staff], IDS)).toEqual({
+			group: 'staff',
+			staffRole: 'admin',
 		});
 		expect(deriveStanding([IDS.contributor], IDS)).toEqual({
 			group: 'contributor',
@@ -130,6 +135,7 @@ describe('readTeamSyncConfig', () => {
 				'DISCORD_ADMIN_ROLE_ID',
 				'DISCORD_STAFF_ROLE_ID',
 				'DISCORD_DEVELOPMENT_TEAM_ROLE_ID',
+				'DISCORD_MANAGEMENT_ROLE_ID',
 			],
 		});
 	});
@@ -143,14 +149,14 @@ describe('syncTeam', () => {
 		expect(await snapshot()).toEqual([
 			[ADMIN, 'staff', 'admin'],
 			[STAFF, 'staff', 'moderator'],
-			[DEVELOPER, 'development-team', null],
+			[DEVELOPER, 'development-team', 'admin'],
 			[CONTRIBUTOR, 'contributor', null],
 			[CI, 'staff', 'admin'],
 			[NEWCOMER, 'staff', 'moderator'],
 		]);
 		expect(await roleOf(ADMIN)).toBe('admin');
 		expect(await roleOf(STAFF)).toBe('moderator');
-		expect(await roleOf(DEVELOPER)).toBe('user');
+		expect(await roleOf(DEVELOPER)).toBe('admin');
 		expect(await roleOf(FORMER_MODERATOR)).toBe('developer');
 		expect(await roleOf(FORMER_ADMIN)).toBe('user');
 		expect(await roleOf(CI)).toBe('ci');
@@ -216,8 +222,9 @@ describe('syncTeam', () => {
 		expect(await snapshot()).toContainEqual([LAST_PAGE, 'contributor', null]);
 	});
 
-	test('demotes no one when no member holds the Admin role', async () => {
+	test('demotes no one when no member holds a role granting admin', async () => {
 		members.set(ADMIN, [IDS.contributor]);
+		members.set(DEVELOPER, [IDS.contributor]);
 		members.set(CI, []);
 		members.set(NEWCOMER, [IDS.contributor]);
 
@@ -229,6 +236,7 @@ describe('syncTeam', () => {
 		expect(await snapshot()).toContainEqual([ADMIN, 'contributor', null]);
 
 		members.set(ADMIN, [IDS.admin]);
+		members.set(DEVELOPER, [IDS['development-team'], IDS.contributor]);
 		members.set(NEWCOMER, [IDS.staff]);
 		await syncTeam(ctx, IDS);
 	});

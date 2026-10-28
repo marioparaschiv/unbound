@@ -18,6 +18,7 @@ const IDS: TeamRoleIds = {
 	staff: '900000000000000002',
 	'development-team': '900000000000000003',
 	contributor: '900000000000000004',
+	management: '900000000000000005',
 };
 
 const ALICE = '100000000000000001';

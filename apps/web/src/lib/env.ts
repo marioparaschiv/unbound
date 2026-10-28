@@ -53,6 +53,7 @@ export const envSchema = z.object({
 	DISCORD_ADMIN_ROLE_ID: z.string().regex(/^\d+$/).optional(),
 	DISCORD_STAFF_ROLE_ID: z.string().regex(/^\d+$/).optional(),
 	DISCORD_DEVELOPMENT_TEAM_ROLE_ID: z.string().regex(/^\d+$/).optional(),
+	DISCORD_MANAGEMENT_ROLE_ID: z.string().regex(/^\d+$/).optional(),
 	DISCORD_CONTRIBUTOR_ROLE_ID: z.string().regex(/^\d+$/).default('967799585844113418'),
 	TEAM_SYNC_INTERVAL_SECONDS: positiveInt.default(900),
 

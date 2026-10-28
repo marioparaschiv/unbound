@@ -12,7 +12,7 @@ export type DiscordTeamGroup = Exclude<TeamGroup, 'addon-developer'>;
 /** The site roles a Discord role can grant, and the only ones the sync ever takes away. */
 export type StaffRole = Extract<Role, 'admin' | 'moderator'>;
 
-export type DiscordTeamRole = 'admin' | 'staff' | 'development-team' | 'contributor';
+export type DiscordTeamRole = 'admin' | 'staff' | 'development-team' | 'management' | 'contributor';
 
 export type TeamRoleIds = Record<DiscordTeamRole, string>;
 
@@ -29,17 +29,21 @@ type Grant<T> = [role: DiscordTeamRole, value: T];
 // Highest first: a member holding several roles gets the first match.
 const GROUP_GRANTS: Grant<DiscordTeamGroup>[] = [
 	['development-team', 'development-team'],
+	['management', 'staff'],
 	['admin', 'staff'],
 	['staff', 'staff'],
 	['contributor', 'contributor'],
 ];
 
+// Development Team and Management rank above Admin in the guild, so they grant admin too.
 const STAFF_ROLE_GRANTS: Grant<StaffRole>[] = [
+	['development-team', 'admin'],
+	['management', 'admin'],
 	['admin', 'admin'],
 	['staff', 'moderator'],
 ];
 
-export const STAFF_ROLES: StaffRole[] = STAFF_ROLE_GRANTS.map(([, role]) => role);
+export const STAFF_ROLES: StaffRole[] = ['admin', 'moderator'];
 
 /**
  * @description Reads the team role ids from the environment.
@@ -51,19 +55,24 @@ export function readTeamSyncConfig(env: Env): TeamSyncConfig {
 		admin: env.DISCORD_ADMIN_ROLE_ID,
 		staff: env.DISCORD_STAFF_ROLE_ID,
 		'development-team': env.DISCORD_DEVELOPMENT_TEAM_ROLE_ID,
+		management: env.DISCORD_MANAGEMENT_ROLE_ID,
 		contributor: env.DISCORD_CONTRIBUTOR_ROLE_ID,
 	};
-	const { admin, staff, contributor } = ids;
+	const { admin, staff, management, contributor } = ids;
 	const development = ids['development-team'];
 
-	if (admin && staff && development) {
-		return { kind: 'on', ids: { admin, staff, 'development-team': development, contributor } };
+	if (admin && staff && development && management) {
+		return {
+			kind: 'on',
+			ids: { admin, staff, 'development-team': development, management, contributor },
+		};
 	}
 
 	const missing = [
 		admin ? null : 'DISCORD_ADMIN_ROLE_ID',
 		staff ? null : 'DISCORD_STAFF_ROLE_ID',
 		development ? null : 'DISCORD_DEVELOPMENT_TEAM_ROLE_ID',
+		management ? null : 'DISCORD_MANAGEMENT_ROLE_ID',
 	].filter((name) => name !== null);
 
 	return { kind: 'off', missing };

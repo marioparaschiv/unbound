@@ -14,6 +14,7 @@ export const TEAM_ROLE_IDS = {
 	staff: '1500000000000000002',
 	developmentTeam: '1500000000000000003',
 	contributor: '1500000000000000004',
+	management: '1500000000000000005',
 };
 
 export type TeamMemberSeed = {

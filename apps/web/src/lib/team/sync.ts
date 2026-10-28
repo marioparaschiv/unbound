@@ -11,14 +11,14 @@ const logger = createLogger('Web', 'Team');
 export type TeamSyncResult = {
 	team: number;
 	changes: RoleChange[];
-	/** Set when no member held the Admin role, so no staff role was taken away. */
+	/** Set when no member held a role granting admin, so no staff role was taken away. */
 	lockoutGuard: boolean;
 };
 
 /**
  * @description Lists the Unbound guild's members, replaces the team snapshot with those holding a
  * team role and brings site staff roles in line with it. A failed listing writes nothing, and a
- * listing with no Admin demotes no one.
+ * listing with no admin-granting member demotes no one.
  * @param ctx The application context.
  * @param ids The team role ids.
  * @param signal Cancels the member listing.
@@ -39,7 +39,7 @@ export async function syncTeam(
 
 	if (lockoutGuard) {
 		logger.error(
-			`No member of guild ${ctx.env.DISCORD_GUILD_ID} holds the Admin role ${ids.admin}; skipping demotions.`,
+			`No member of guild ${ctx.env.DISCORD_GUILD_ID} holds a role granting admin; skipping demotions.`,
 		);
 	}
 
