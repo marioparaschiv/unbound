@@ -27,7 +27,7 @@ function FaqLink({ href, children }: FaqLinkProps) {
 			href={href}
 			target='_blank'
 			rel='noopener noreferrer'
-			className='text-primary hover:underline'
+			className='text-link underline-offset-4 hover:underline'
 		>
 			{children}
 		</a>

@@ -18,11 +18,11 @@ const buttonVariants = cva(
 				destructive:
 					'press [--ledge:var(--ledge-destructive)] bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/30 dark:bg-destructive/60 dark:hover:bg-destructive/70',
 				outline:
-					'press [--ledge:var(--ledge-outline)] border bg-background hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
+					'press [--ledge:var(--ledge-outline)] border border-(--field-border) bg-secondary text-secondary-foreground hover:bg-accent hover:text-accent-foreground',
 				secondary:
-					'press [--ledge:var(--ledge-secondary)] bg-secondary text-secondary-foreground hover:bg-secondary/80',
+					'press [--ledge:var(--ledge-secondary)] bg-secondary text-secondary-foreground hover:bg-accent hover:text-accent-foreground',
 				ghost: 'press-flat hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
-				link: 'press-flat text-primary underline-offset-4 hover:underline',
+				link: 'press-flat text-link underline-offset-4 hover:underline',
 			},
 			size: {
 				default: "h-11 px-5 has-[>svg]:px-4 [&_svg:not([class*='size-'])]:size-4.5",

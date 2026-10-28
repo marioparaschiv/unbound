@@ -21,8 +21,7 @@ type LinkProps = {
 
 const REMARK_PLUGINS = [remarkGfm];
 const LINK_REL = 'nofollow ugc noopener noreferrer';
-const LINK_CLASS =
-	'font-medium text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground transition-colors';
+const LINK_CLASS = 'font-medium text-link underline-offset-4 hover:underline';
 
 function Link({ href, children }: LinkProps) {
 	if (!href) {
