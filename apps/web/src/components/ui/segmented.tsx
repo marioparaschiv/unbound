@@ -67,7 +67,7 @@ function Segmented({
 			<nav
 				data-slot='segmented'
 				className={cn(
-					'flex items-center gap-0.5 bg-(--segmented-bg) shadow-surface p-1 rounded-control ring-1 ring-border ring-inset w-max h-(--control-h)',
+					'isolate flex items-center gap-0.5 bg-(--segmented-bg) shadow-surface p-1 rounded-control ring-1 ring-border ring-inset w-max h-(--control-h)',
 					TONES[tone],
 					className,
 				)}
@@ -97,12 +97,13 @@ function SegmentedItem({
 	const { active, highlighted, layoutId, setHovered } = useSegmented();
 	const Component = asChild ? Slot : 'a';
 
+	// Labels sit at z-10 so a sliding pill stays under them, even inside a pressed item scaled into its own layer.
 	return (
 		<Component
 			data-slot='segmented-item'
 			data-active={value === active}
 			className={cn(
-				'inline-flex relative items-center px-3.5 rounded-inner outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-9 font-semibold text-muted-foreground hover:text-foreground data-[active=true]:text-foreground transition-colors cursor-pointer press-flat',
+				'inline-flex relative items-center px-3.5 rounded-inner outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-9 font-semibold text-muted-foreground hover:text-foreground data-[active=true]:text-foreground transition-colors cursor-pointer press-flat [&>:not([data-slot=segmented-pill])]:relative [&>:not([data-slot=segmented-pill])]:z-10',
 				className,
 			)}
 			onMouseEnter={(event) => {
@@ -113,9 +114,10 @@ function SegmentedItem({
 		>
 			{value === highlighted ? (
 				<motion.span
+					data-slot='segmented-pill'
 					layoutId={layoutId}
 					transition={PILL_TRANSITION}
-					className='absolute inset-0 rounded-inner bg-(--segmented-pill) shadow-key pointer-events-none'
+					className='-z-10 absolute inset-0 rounded-inner bg-(--segmented-pill) shadow-key pointer-events-none'
 				/>
 			) : null}
 			<Slottable>{children}</Slottable>
