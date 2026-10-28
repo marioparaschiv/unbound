@@ -172,7 +172,7 @@ function HomePage() {
 					transition={REVEAL_TRANSITION}
 					className='z-10 relative flex flex-col items-center gap-4 mx-auto my-24 px-4 w-full max-w-6xl text-center'
 				>
-					<h3 className='bg-clip-text bg-gradient-to-br from-foreground to-muted-foreground font-secondary font-semibold text-transparent text-2xl md:text-3xl'>
+					<h3 className='bg-clip-text bg-gradient-to-br from-foreground to-muted-foreground font-semibold text-transparent text-2xl md:text-3xl'>
 						Are you a developer?
 					</h3>
 					<p className='max-w-lg text-muted-foreground'>

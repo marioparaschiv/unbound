@@ -37,7 +37,7 @@ export const Route = createRootRoute({
 			{ rel: 'icon', href: '/favicon-dark.ico', media: '(prefers-color-scheme: dark)' },
 			{
 				rel: 'stylesheet',
-				href: 'https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap',
+				href: 'https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Manrope:wght@600..700&display=swap',
 			},
 		],
 	}),
