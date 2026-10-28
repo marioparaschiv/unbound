@@ -15,11 +15,11 @@ import type {
 	IndexState,
 } from '~/lib/commands/discord';
 import type { CommandRecord, Section } from '~/lib/commands/normalize';
-import { UNBOUND_ICON } from '~/lib/commands/unbound-icon';
-import { commandId } from '~/lib/commands/normalize';
 import { Clyde, Commands, Dispatcher } from '~/api/metro/common';
+import { UNBOUND_ICON } from '~/lib/commands/unbound-icon';
 import type { CommandEffects } from '~/lib/commands/run';
 import { findByProps, findStore } from '~/api/metro';
+import { commandId } from '~/lib/commands/normalize';
 import { registry } from '~/lib/commands/registry';
 import { createExecute } from '~/lib/commands/run';
 import { createPatcher } from '~/api/patcher';
