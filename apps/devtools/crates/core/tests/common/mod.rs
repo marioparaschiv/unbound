@@ -46,14 +46,17 @@ pub fn session() -> (Devtools, SocketAddr) {
 
 /// The harness device; with `tick_ms` it re-renders with 3 to 7 messages on that interval.
 pub fn spawn_device(port: u16, tick_ms: Option<u32>) -> Option<Device> {
-	let script = concat!(env!("CARGO_MANIFEST_DIR"), "/../../harness/device.mjs");
-	let mut command = Command::new("bun");
-
-	if let Some(tick_ms) = tick_ms {
-		command.env("TICK_MS", tick_ms.to_string());
+	match tick_ms {
+		Some(tick_ms) => spawn_device_with(port, &[("TICK_MS", tick_ms)]),
+		None => spawn_device_with(port, &[]),
 	}
+}
 
-	let child = command
+/// The harness device with env settings such as `DEPTH`, `WIDTH` and `TICK_MS`.
+pub fn spawn_device_with(port: u16, env: &[(&str, u32)]) -> Option<Device> {
+	let script = concat!(env!("CARGO_MANIFEST_DIR"), "/../../harness/device.mjs");
+	let child = Command::new("bun")
+		.envs(env.iter().map(|(name, value)| (name, value.to_string())))
 		.arg(script)
 		.arg(port.to_string())
 		.stdout(Stdio::null())
