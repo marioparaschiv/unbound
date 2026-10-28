@@ -51,7 +51,7 @@ on:
                 description: 'dkrypt service base URL'
                 type: string
             release:
-                default: true
+                default: false
                 description: 'Create a GitHub release'
                 type: boolean
             only_app_repo:

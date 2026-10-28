@@ -801,3 +801,25 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 		t.Fatal("the publisher must comment on the confirmed pull request")
 	}
 }
+
+func TestParsedManualBuildIsNotARelease(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "loader-build.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var workflow struct {
+		On struct {
+			WorkflowDispatch struct {
+				Inputs map[string]struct {
+					Default any `yaml:"default"`
+				} `yaml:"inputs"`
+			} `yaml:"workflow_dispatch"`
+		} `yaml:"on"`
+	}
+	if err := yaml.Unmarshal(data, &workflow); err != nil {
+		t.Fatal(err)
+	}
+	if release, ok := workflow.On.WorkflowDispatch.Inputs["release"]; !ok || release.Default != false {
+		t.Fatalf("a manual loader build must not default to a release, release input %+v", release)
+	}
+}
