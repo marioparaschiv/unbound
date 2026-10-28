@@ -98,6 +98,7 @@ type smokeTarget interface {
 	running(ctx context.Context) bool
 	isLoaderLine(line string) bool
 	isCrashLine(line string) bool
+	consoleEntry(line string) (smokeConsoleEntry, bool)
 	collect(ctx context.Context, artifacts string)
 }
 
@@ -114,6 +115,7 @@ type smokeResult struct {
 	relaunch  string
 	startup   smokeStartupTimes
 	budget    smokeStartupBudget
+	console   []smokeConsoleEntry
 }
 
 func runSmoke(args []string) error {
@@ -555,11 +557,12 @@ type smokeLogWatcher struct {
 	crashes    []string
 	launchedAt time.Time
 	startup    smokeStartupTimes
+	console    smokeConsoleSet
 	now        func() time.Time
 }
 
 func newSmokeLogWatcher(target smokeTarget) *smokeLogWatcher {
-	return &smokeLogWatcher{target: target, loaded: map[string]bool{}, failures: map[string][]string{}, now: time.Now}
+	return &smokeLogWatcher{target: target, loaded: map[string]bool{}, failures: map[string][]string{}, console: smokeConsoleSet{}, now: time.Now}
 }
 
 func (watcher *smokeLogWatcher) consume(logs io.Reader, sink io.Writer) {
@@ -577,6 +580,9 @@ func (watcher *smokeLogWatcher) observe(line string) {
 	defer watcher.mu.Unlock()
 	if watcher.target.isCrashLine(line) {
 		watcher.crashes = append(watcher.crashes, strings.TrimSpace(line))
+	}
+	if entry, ok := watcher.target.consoleEntry(line); ok {
+		watcher.console.add(entry)
 	}
 	if match := smokeAddonFailure.FindStringSubmatch(line); match != nil {
 		watcher.failures[match[1]] = append(watcher.failures[match[1]], strings.TrimSpace(line))
@@ -660,6 +666,7 @@ func (watcher *smokeLogWatcher) snapshot(result *smokeResult) {
 		result.failures[id] = append([]string(nil), lines...)
 	}
 	result.crashes = append([]string(nil), watcher.crashes...)
+	result.console = watcher.console.sorted()
 }
 
 func serveSmokeBundle(directory string, port int, requestLog string) (*http.Server, error) {

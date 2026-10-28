@@ -371,6 +371,7 @@ jobs:
         if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || needs.resolve-source.result == 'success') && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
         permissions:
             contents: write
+            actions: read
             id-token: write
             attestations: write
             artifact-metadata: write
@@ -590,6 +591,7 @@ jobs:
         needs: [resolve-source, ios, android, release]
         permissions:
             contents: write
+            actions: read
             id-token: write
             attestations: write
             artifact-metadata: write

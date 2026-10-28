@@ -35,7 +35,7 @@ func TestRegressionReportNeedsHistory(t *testing.T) {
 
 func TestRegressionReportWarnsWithMedians(t *testing.T) {
 	report := renderRegressionReport(smokeStartupRecord{BundleMs: 30000, PluginsMs: 5000}, baselineRecords(10000, 5000, 20, 3))
-	if len(report.warnings) != 1 || !strings.Contains(report.warnings[0], "against a median of 10001 ms") {
+	if len(report.warnings) != 1 || !strings.Contains(report.warnings[0].message, "against a median of 10001 ms") {
 		t.Fatalf("unexpected warnings %v", report.warnings)
 	}
 	if !strings.Contains(report.markdown, "| Unbound's bundle executed | 30.0s | 10.0s |") {
