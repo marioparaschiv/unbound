@@ -1,11 +1,11 @@
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
 import { z } from 'zod';
 
+import { compareGroups, TEAM_GROUPS, type StaffRole, type TeamGroup } from '~/lib/team/roles';
 import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';
 import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
-import { compareGroups, TEAM_GROUPS, type StaffRole, type TeamGroup } from '~/lib/team/roles';
-import type { DiscordId } from '~/lib/authors/discord-users';
 import { readTeamMembers, type TeamMemberRow } from '~/lib/team/snapshot';
+import type { DiscordId } from '~/lib/authors/discord-users';
 import { listListedAddons } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
