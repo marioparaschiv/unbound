@@ -1,14 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * vphone MCP server — exposes the virtual iPhone (vphone) tooling as MCP tools.
- *
- * Every tool delegates to the shell scripts under `.claude/skills/vphone-ssh/scripts/`,
- * keeping a single source of truth for the device's quirks (scp -O, password sudo,
- * jq settings merges, the logarchive→ndjson log pipeline). The connection is
- * configured via env on the wrapper: VPHONE_HOST, VPHONE_PORT, VPHONE_USER, VPHONE_PASS.
- */
-
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
@@ -149,10 +140,13 @@ define(
 	},
 	({ since, seconds, filter }) => {
 		// `since` -> exact window from an absolute time; otherwise a relative look-back.
-		const [mode, value] = since != null ? ['since', since] : ['show', seconds ?? 30];
+		const [mode, value] =
+			since !== undefined && since !== null ? ['since', since] : ['show', seconds ?? 30];
 		const args = [mode, String(value), ...(filter ? [filter] : [])];
 		// Budget: cover the whole window plus archive-pull overhead.
-		const windowSecs = since != null ? Math.floor(Date.now() / 1000) - since : value;
+		const windowSecs =
+			since !== undefined && since !== null ? Math.floor(Date.now() / 1000) - since : value;
+
 		return exec(SCRIPTS.logs, args, { timeoutMs: (Math.max(windowSecs, 30) + 30) * 1000 });
 	},
 );

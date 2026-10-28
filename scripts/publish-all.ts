@@ -15,6 +15,7 @@ function publishOrder(): string[] {
 
 	function visit(dir: string) {
 		const manifest = publics.get(dir);
+
 		if (!manifest || visited.has(dir)) return;
 
 		visited.add(dir);
