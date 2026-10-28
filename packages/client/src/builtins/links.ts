@@ -3,7 +3,7 @@ import { parseUnboundLink } from '@unbound-app/contracts/links';
 import { createLogger } from '@unbound-app/logger';
 
 import { getInstalledVersion, MARKETPLACE_TABS } from '~/ui/marketplace/targets';
-import { findByPropsLazy } from '~/api/metro/wrappers';
+import { navigationReady } from '~/lib/navigation-ready';
 import { getNativeModule } from '~/api/native-runtime';
 import MarketplaceStore from '~/stores/marketplace';
 import type { ManagerKind } from '~/lib/constants';
@@ -15,6 +15,8 @@ import { showToast } from '~/api/toasts';
 import type { LinkOutcome, LinkTargets } from './resolve-unbound-link';
 
 import resolveUnboundLink from './resolve-unbound-link';
+import parseShareLink from './share-link';
+import { receiveShare } from './share';
 
 type LinkEvent = { url: string };
 type LinkSubscription = { remove: () => void };
@@ -22,25 +24,13 @@ type InitialDeepLink = { url: string | null; isDeferred: boolean };
 type DeepLinkManagerType = { getInitialURL: () => Promise<InitialDeepLink | null> };
 
 const Logger = createLogger('Links');
-const Navigation = findByPropsLazy('getRootNavigationRef');
 const DeepLinkManager: DeepLinkManagerType | undefined = getNativeModule('DeepLinkManager');
-
-const NAVIGATION_TIMEOUT_MS = 30_000;
-const NAVIGATION_POLL_MS = 100;
 
 let subscription: LinkSubscription | undefined;
 let handling = false;
 
 async function open(kind: ManagerKind, id: string) {
-	const ref = Navigation.getRootNavigationRef();
-
-	for (let waited = 0; !ref.isReady(); waited += NAVIGATION_POLL_MS) {
-		if (waited >= NAVIGATION_TIMEOUT_MS) {
-			throw new Error('Discord navigation never became ready.');
-		}
-
-		await new Promise((resolve) => setTimeout(resolve, NAVIGATION_POLL_MS));
-	}
+	const ref = await navigationReady();
 
 	ref.navigate('settings', {
 		screen: Screens.Marketplace,
@@ -107,6 +97,14 @@ async function receive(link: UnboundLink) {
 }
 
 function onURL(event: LinkEvent) {
+	const shared = parseShareLink(event.url);
+
+	if (shared) {
+		void receiveShare(shared);
+
+		return;
+	}
+
 	const link = parseUnboundLink(event.url);
 
 	if (link) {
@@ -121,21 +119,35 @@ async function readLaunchURL(): Promise<string | null> {
 	return deepLink?.url ?? Linking.getInitialURL();
 }
 
+function claimLaunchURL(subject: string): boolean {
+	if (globalThis.NativePlatform?.app.claimLaunchURL?.() ?? true) {
+		return true;
+	}
+
+	Logger.info(`The launch link for ${subject} was handled before this reload.`);
+
+	return false;
+}
+
 function onLaunchURL(url: string | null) {
-	const link = url ? parseUnboundLink(url) : undefined;
+	const shared = url ? parseShareLink(url) : undefined;
 
-	if (!link) return;
-
-	if (!(globalThis.NativePlatform?.app.claimLaunchURL?.() ?? true)) {
-		Logger.info(`The launch link for ${link.id} was handled before this reload.`);
+	if (shared) {
+		if (claimLaunchURL('shared files')) {
+			void receiveShare(shared);
+		}
 
 		return;
 	}
 
-	void receive(link);
+	const link = url ? parseUnboundLink(url) : undefined;
+
+	if (link && claimLaunchURL(link.id)) {
+		void receive(link);
+	}
 }
 
-/** Hands Unbound links to the Marketplace: the launch URL once per process, then every link opened while running. */
+/** Hands Unbound links to the Marketplace and shared files to a destination picker: the launch URL once per process, then every link opened while running. */
 export function start() {
 	subscription = Linking.addEventListener('url', onURL);
 	readLaunchURL()

@@ -121,5 +121,12 @@
 	"UNBOUND_FFI_CONSENT_BODY": "{name} wants to call native functions directly. A plugin with this access can read and change anything in Discord, and a mistake in it can crash the app. Only allow it if you trust where it came from.",
 	"UNBOUND_FFI_CONSENT_ALLOW": "Allow",
 	"UNBOUND_CRASH_REPORTS": "Send Crash Reports",
-	"UNBOUND_CRASH_REPORTS_DESCRIPTION": "When a plugin crashes, freezes or fails to start, send its id and version, the Unbound and Discord versions, your device model and the last lines of Unbound's log to the Unbound team. Tokens, passwords and email addresses are removed from the log first, but anything a plugin logged can be in it. Your account is never included."
+	"UNBOUND_CRASH_REPORTS_DESCRIPTION": "When a plugin crashes, freezes or fails to start, send its id and version, the Unbound and Discord versions, your device model and the last lines of Unbound's log to the Unbound team. Tokens, passwords and email addresses are removed from the log first, but anything a plugin logged can be in it. Your account is never included.",
+	"UNBOUND_SHARE_TITLE": "Share",
+	"UNBOUND_SHARE_PICK": "{count, plural, one {Send # file to} other {Send # files to}}",
+	"UNBOUND_SHARE_ADDED": "{count, plural, one {Attached # file} other {Attached # files}} in {destination}. Add a message and send.",
+	"UNBOUND_SHARE_DIRECT_MESSAGE": "Direct message",
+	"UNBOUND_SHARE_UNREADABLE": "Discord can't open the shared files.",
+	"UNBOUND_SHARE_NO_DESTINATIONS": "There's no recent channel or DM to share to.",
+	"UNBOUND_SHARE_FAILED": "Couldn't attach the shared files."
 }
