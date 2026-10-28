@@ -1033,6 +1033,15 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	 * @description Validates an addon manifest, throwing if a required field is missing or malformed.
 	 * @param manifest The manifest to validate.
 	 */
+	/**
+	 * @description Checks a manifest's `main` before the addon is installed or loaded.
+	 * @param main The manifest's `main`.
+	 * @returns Whether it is a relative path inside the addon's folder.
+	 */
+	protected isAcceptableMain(main: unknown): main is string {
+		return isSafeAddonMain(main);
+	}
+
 	protected validateManifest(manifest: AddonManifest) {
 		const required = ['id', 'name', 'description', 'authors', 'version', 'main'];
 
@@ -1046,7 +1055,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			throw new Error('Manifest id must be alphanumeric segments joined by ".", "_" or "-"');
 		}
 
-		if (!isSafeAddonMain(manifest.main)) {
+		if (!this.isAcceptableMain(manifest.main)) {
 			throw new Error('Manifest main must be a relative path inside the addon');
 		}
 
