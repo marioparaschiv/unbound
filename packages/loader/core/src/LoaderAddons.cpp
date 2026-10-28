@@ -2,7 +2,9 @@
 
 #include <optional>
 
+#include "HermesBytecodeHeader.h"
 #include "LoaderAddonSignature.h"
+#include "LoaderBundleSignature.h"
 #include "LoaderFiles.h"
 #include "LoaderFonts.h"
 #include "LoaderJSON.h"
@@ -77,6 +79,57 @@ static std::optional<std::string> resolveManifestEntry(const std::string    &dir
     }
 
     return path;
+}
+
+static bool isSingleFolderName(const std::string &folder)
+{
+    return !folder.empty() && folder != "." && folder != ".." &&
+           folder.find_first_of(std::string("/\\\0", 3)) == std::string::npos;
+}
+
+static std::string bytecodePathFor(const std::string &entry, uint32_t bytecodeVersion)
+{
+    size_t      slash = entry.find_last_of('/');
+    size_t      dot   = entry.find_last_of('.');
+    std::string stem  = dot != std::string::npos && (slash == std::string::npos || dot > slash)
+                            ? entry.substr(0, dot)
+                            : entry;
+    return stem + "." + std::to_string(bytecodeVersion) + ".hbc";
+}
+
+std::optional<std::string> readPluginBytecode(const std::string &documents,
+                                              const std::string &folder, uint32_t bytecodeVersion)
+{
+    if (!isSingleFolderName(folder) || bytecodeVersion == 0)
+    {
+        return std::nullopt;
+    }
+    std::string                   directory = joinPath(joinPath(documents, "Plugins"), folder);
+    std::optional<nlohmann::json> manifest =
+        parseObjectFile(joinPath(directory, "manifest.json"), folder, "plugins", "manifest");
+    if (!manifest)
+    {
+        return std::nullopt;
+    }
+    auto digests = manifest->find("bytecode");
+    if (digests == manifest->end() || !isValidBytecodeDigests(*digests))
+    {
+        return std::nullopt;
+    }
+    auto                       digest = digests->find(std::to_string(bytecodeVersion));
+    std::optional<std::string> entry  = resolveManifestEntry(directory, *manifest, "main");
+    if (digest == digests->end() || !entry)
+    {
+        return std::nullopt;
+    }
+    std::optional<std::string> bytecode = readTextFile(bytecodePathFor(*entry, bytecodeVersion));
+    if (!bytecode || !isHermesBytecode(bytecode->data(), bytecode->size()) ||
+        hermesBytecodeVersion(bytecode->data(), bytecode->size()) != bytecodeVersion ||
+        sha512Hex(*bytecode) != digest->get<std::string>())
+    {
+        return std::nullopt;
+    }
+    return bytecode;
 }
 
 nlohmann::json scanPlugins(const std::string &documents)

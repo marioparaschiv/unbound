@@ -3,7 +3,7 @@ import type { PublishFirstPartyRequest } from '@unbound-app/contracts/publish';
 import type { WorkspaceFiles } from '@unbound-app/contracts/workspace';
 import type { KeyObject } from 'node:crypto';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import {
@@ -31,6 +31,7 @@ import { getSelected, selectPlugins } from './select-plugins';
 import {
 	parsePluginSigningKey,
 	PLUGIN_SIGNING_KEY_VARIABLE,
+	bytecodeDigests,
 	signPlugin,
 	withSignature,
 } from './sign-plugin';
@@ -307,6 +308,35 @@ function readSigningKey(): KeyObject | undefined {
 	return parsePluginSigningKey(pem);
 }
 
+/**
+ * @description Finds the bundles a plugin build compiled to Hermes bytecode beside its source bundle.
+ * @param root The repository root.
+ * @param bundle The source bundle's path from the root, such as `packages/plugins/x/dist/index.js`.
+ * @returns Each compiled bundle as a build file, by Hermes bytecode version.
+ */
+export function findCompiledBundles(root: string, bundle: string): Map<number, BuildFile> {
+	const directory = dirname(bundle);
+	const stem = basename(bundle).replace(/\.[^.]+$/, '');
+	const prefix = `${stem}.`;
+	const compiled = new Map<number, BuildFile>();
+
+	for (const name of readdirSync(join(root, directory)).sort()) {
+		const version =
+			name.startsWith(prefix) && name.endsWith('.hbc')
+				? name.slice(prefix.length, -'.hbc'.length)
+				: '';
+
+		if (/^\d{1,10}$/.test(version)) {
+			compiled.set(Number(version), {
+				path: `${directory}/${name}`,
+				contents: readFileSync(join(root, directory, name)),
+			});
+		}
+	}
+
+	return compiled;
+}
+
 function collectFiles(root: string, releases: PluginRelease[], key?: KeyObject): BuildFile[] {
 	const files: BuildFile[] = [];
 
@@ -325,12 +355,17 @@ function collectFiles(root: string, releases: PluginRelease[], key?: KeyObject):
 
 		if (key) {
 			const manifest = `${WORKSPACE_DIR}/${plugin.dir}/manifest.json`;
-			const signature = signPlugin(key, plugin.id, plugin.version, contents);
+			const compiled = findCompiledBundles(root, bundle);
+			const digests = bytecodeDigests(
+				new Map([...compiled].map(([version, file]) => [version, file.contents])),
+			);
+			const signature = signPlugin(key, plugin.id, plugin.version, contents, digests);
 
+			files.push(...compiled.values());
 			files.push({
 				path: manifest,
 				contents: new TextEncoder().encode(
-					withSignature(readFileSync(join(root, manifest), 'utf8'), signature),
+					withSignature(readFileSync(join(root, manifest), 'utf8'), signature, digests),
 				),
 			});
 		}

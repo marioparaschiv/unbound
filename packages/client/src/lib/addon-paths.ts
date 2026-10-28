@@ -4,6 +4,16 @@ const FONT_EXTENSION = /\.(?:ttf|otf|ttc|woff2?)$/i;
 const FONT_NAME_UNSAFE = /[^\w .()-]+/g;
 
 /**
+ * @description Names the bundle compiled to Hermes bytecode beside a source bundle, as the loader looks it up.
+ * @param path The source bundle's path or URL, such as `dist/index.js`.
+ * @param bytecodeVersion The Hermes bytecode version.
+ * @returns The compiled bundle's path, such as `dist/index.98.hbc`.
+ */
+export function compiledBundlePath(path: string, bytecodeVersion: number): string {
+	return `${path.replace(/\.[^./]+$/, '')}.${bytecodeVersion}.hbc`;
+}
+
+/**
  * @description Checks that an addon id can name its folder: alphanumeric segments joined by ".", "_" or "-".
  * @param id The id from a manifest.
  * @returns Whether the id is safe to use as a folder name.
