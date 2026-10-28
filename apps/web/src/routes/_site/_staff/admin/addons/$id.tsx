@@ -83,7 +83,7 @@ function AdminAddonPage() {
 								key={maintainer.id}
 								to='/admin/users/$id'
 								params={{ id: maintainer.id }}
-								className='flex items-center gap-2 hover:bg-accent/50 px-2 py-1 rounded-lg'
+								className='flex items-center gap-2 hover:bg-accent/50 px-2 py-1 rounded-item press-flat'
 							>
 								<UserAvatar
 									src={maintainer.image}

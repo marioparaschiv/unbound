@@ -101,7 +101,7 @@ function TransferDialog({ addon, disabled, run }: AddonActionProps) {
 					onPick={setSelected}
 				/>
 				{selected ? (
-					<div className='flex items-center gap-3 bg-accent px-3 py-2 rounded-lg'>
+					<div className='flex items-center gap-3 bg-accent px-3 py-2 rounded-control'>
 						<UserAvatar src={selected.image} name={selected.name} size='xs' />
 						<Text as='span' variant='text-sm' className='flex-1 truncate'>
 							{selected.name}

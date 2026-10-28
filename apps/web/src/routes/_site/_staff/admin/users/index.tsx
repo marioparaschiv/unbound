@@ -72,7 +72,7 @@ function UsersPage() {
 							<span className='block max-w-[200px] truncate'>{user.email}</span>
 						</td>
 						<td className='px-4 py-3'>
-							<span className='bg-muted px-2 py-0.5 rounded font-medium text-xs capitalize'>
+							<span className='bg-muted px-2 py-0.5 rounded-full font-medium text-xs capitalize'>
 								{user.role}
 							</span>
 						</td>

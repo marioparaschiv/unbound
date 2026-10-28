@@ -54,7 +54,7 @@ function MaintainerEditor({ id, members, users, onChange, onPick }: MaintainerEd
 					return (
 						<li
 							key={member.userId}
-							className='flex items-center gap-3 px-2 py-1 border border-border rounded-md'
+							className='flex items-center gap-3 px-2 py-1 border border-border rounded-control'
 						>
 							<UserAvatar
 								src={known?.image ?? null}

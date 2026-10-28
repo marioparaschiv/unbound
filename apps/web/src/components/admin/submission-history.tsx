@@ -51,7 +51,7 @@ function UserLink({ user }: UserLinkProps) {
 
 function Decision({ decision }: DecisionProps) {
 	return (
-		<li className='flex flex-col gap-1.5 bg-muted/50 px-3 py-2 rounded-md'>
+		<li className='flex flex-col gap-1.5 bg-muted/50 px-3 py-2 rounded-control'>
 			<div className='flex flex-wrap items-center gap-2'>
 				<StatusPill status={decision.decision} />
 				<UserLink user={decision.reviewer} />

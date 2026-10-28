@@ -22,8 +22,8 @@ function StaffLayout() {
 	return (
 		<div className='flex md:flex-row flex-col flex-1 gap-6 mb-12 page-frame'>
 			<aside className='md:w-64 shrink-0'>
-				<div className='top-6 sticky bg-linear-to-b from-transparent to-accent/50 shadow-lg backdrop-blur-md p-5 border rounded-3xl text-foreground'>
-					<Text variant='heading-sm' className='mb-4 px-2'>
+				<div className='top-6 sticky bg-card/80 shadow-surface backdrop-blur-md p-3 border rounded-surface text-foreground'>
+					<Text variant='heading-sm' className='mt-1 mb-3 px-3'>
 						Staff
 					</Text>
 					<nav className='flex flex-col gap-1'>
@@ -34,7 +34,7 @@ function StaffLayout() {
 								<Link
 									key={section.id}
 									to={section.to}
-									className='flex items-center gap-3 data-[status=active]:bg-accent hover:bg-accent/50 px-3 py-2 rounded-xl text-muted-foreground data-[status=active]:text-foreground hover:text-foreground text-sm transition-colors'
+									className='flex items-center gap-3 data-[status=active]:bg-accent hover:bg-accent/50 data-[status=active]:[--ledge:var(--ledge-secondary)] px-3 rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo h-10 font-semibold text-muted-foreground data-[status=active]:text-foreground hover:text-foreground text-sm press-flat data-[status=active]:press'
 								>
 									<Icon size={18} />
 									{section.label}

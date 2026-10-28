@@ -348,7 +348,7 @@ function EventLog({ subject, timeline }: EventLogProps) {
 							{event.reason ? (
 								<Text
 									variant='text-sm'
-									className='bg-muted/50 px-3 py-2 rounded-md break-words whitespace-pre-wrap'
+									className='bg-muted/50 px-3 py-2 rounded-control break-words whitespace-pre-wrap'
 								>
 									{event.reason}
 								</Text>
