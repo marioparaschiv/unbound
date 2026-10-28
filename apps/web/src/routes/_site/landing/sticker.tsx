@@ -50,7 +50,7 @@ function StickerLanding() {
 					<motion.span
 						initial={{ opacity: 0, y: -10 }}
 						animate={{ opacity: 1, y: 0 }}
-						className='bg-brand/15 px-4 py-1.5 border border-brand/40 rounded-full font-medium text-[#A5ADFF] text-sm'
+						className='bg-primary/15 px-4 py-1.5 border border-primary/40 rounded-full font-medium text-[#A5ADFF] text-sm'
 					>
 						a mod for the Discord app on iOS and Android
 					</motion.span>
@@ -68,11 +68,7 @@ function StickerLanding() {
 						and Discord goes back to normal.
 					</p>
 					<div className='flex flex-wrap justify-center gap-3'>
-						<Button
-							asChild
-							size='lg'
-							className='bg-brand hover:bg-brand/90 [--ledge:var(--ledge-brand)] min-w-40 text-white'
-						>
+						<Button asChild size='lg' className='min-w-40'>
 							<Link to='/plugins'>Get Started</Link>
 						</Button>
 						<Button asChild variant='secondary' size='lg' className='min-w-40'>
@@ -130,7 +126,7 @@ function StickerLanding() {
 						whileInView={{ opacity: 1, rotate: -1.5, y: 0 }}
 						viewport={{ once: true, amount: 0.4 }}
 						transition={{ type: 'spring', stiffness: 160, damping: 18 }}
-						className='flex flex-col items-center gap-5 bg-brand shadow-[0_10px_0_var(--ledge-brand)] p-10 md:p-14 rounded-[2rem] text-white text-center'
+						className='flex flex-col items-center gap-5 bg-primary shadow-[0_10px_0_var(--ledge-primary)] p-10 md:p-14 rounded-[2rem] text-white text-center'
 					>
 						<h2 className='font-secondary font-bold text-3xl md:text-5xl leading-tight'>
 							Pick a plugin. You can always take it back off.
@@ -143,14 +139,14 @@ function StickerLanding() {
 							<Button
 								asChild
 								size='lg'
-								className='bg-white hover:bg-white/90 [--ledge:var(--ledge-brand)] min-w-40 text-black'
+								className='bg-white hover:bg-white/90 [--ledge:var(--ledge-primary)] min-w-40 text-black'
 							>
 								<Link to='/plugins'>Get Started</Link>
 							</Button>
 							<Button
 								asChild
 								size='lg'
-								className='bg-black/25 hover:bg-black/35 [--ledge:var(--ledge-brand)] min-w-40 text-white'
+								className='bg-black/25 hover:bg-black/35 [--ledge:var(--ledge-primary)] min-w-40 text-white'
 							>
 								<a href={DOCS_URL} target='_blank' rel='noopener noreferrer'>
 									Documentation
