@@ -17,14 +17,19 @@ type RootThemeModule = {
 
 const ROOT_THEME_PROVIDER_PATH = 'modules/themes/RootThemeContextProvider.native.tsx';
 
+function isRootThemeModule(mdl: Record<PropertyKey, unknown> | undefined): mdl is RootThemeModule {
+	return typeof mdl?.RootThemeContextProvider === 'function';
+}
+
 /**
  * @description Finds the module whose `RootThemeContextProvider` wraps the whole app in Discord's theme context.
  * @returns The module to patch, or `undefined` when this Discord build lacks it.
  */
 export function findRootThemeProvider(): RootThemeModule | undefined {
+	// The module object itself, not a copy: the patcher replaces the export on it.
 	const root = findByFilePath(ROOT_THEME_PROVIDER_PATH, { interop: false });
 
-	return typeof root?.RootThemeContextProvider === 'function' ? root : undefined;
+	return isRootThemeModule(root) ? root : undefined;
 }
 
 /**

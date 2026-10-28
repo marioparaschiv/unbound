@@ -121,6 +121,8 @@ export class Themes extends Addons<ThemeEntity> {
 
 		if (!result.ok) return;
 
+		// Before `enable`: the loader only selects themes it has scanned, and only reads colours on a scan.
+		globalThis.NativePlatform?.themes?.reload();
 		this.enable(id);
 
 		if (this.errors.has(id)) return;

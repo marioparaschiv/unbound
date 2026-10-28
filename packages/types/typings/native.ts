@@ -620,6 +620,13 @@ export type NativePlatformFonts = {
 	list(): NativeFontEntry[];
 };
 
+export type NativePlatformThemes = {
+	/** Draws a theme bundle's colours natively over the selected theme, or restores it with `null`. */
+	preview(bundle: string | null): boolean;
+	/** Rescans the installed themes from disk and reapplies the selected one with fresh colours. */
+	reload(): void;
+};
+
 export type NativePlatformSettings = {
 	apply(changes: readonly NativeSettingsChange[]): boolean;
 };
@@ -635,6 +642,7 @@ export type NativePlatformBridge = {
 	readonly settings?: NativePlatformSettings;
 	readonly fonts?: NativePlatformFonts;
 	readonly addons?: NativePlatformAddons;
+	readonly themes?: NativePlatformThemes;
 	readonly ios?: NativePlatformIOSBridge;
 };
 

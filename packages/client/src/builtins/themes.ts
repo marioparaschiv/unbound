@@ -1,3 +1,4 @@
+import type { Theme } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 import { cloneElement } from 'react';
 
@@ -41,12 +42,24 @@ let unsubscribe: (() => void) | null = null;
 let restoreRaw: (() => void) | null = null;
 let revision = 0;
 let experiments: ExperimentsCopy | null = null;
+let nativePreview: Theme | null = null;
 
 // The editor's draft is its own slot over the applied theme, so a sync apply mid-edit never clobbers it.
 function currentTheme() {
 	const { preview, data } = ThemeStore.getState();
 
 	return preview ?? data;
+}
+
+// The loader colours native surfaces (screen backgrounds, sheets) from disk at launch; the draft reaches them
+// only through this call. Older loaders lack it and keep those surfaces on the saved theme.
+function syncNativePreview() {
+	const { preview } = ThemeStore.getState();
+
+	if (preview === nativePreview) return;
+
+	nativePreview = preview;
+	globalThis.NativePlatform?.themes?.preview(preview ? JSON.stringify(preview) : null);
 }
 
 function applyRawColors(raw: Record<string, string>) {
@@ -74,11 +87,15 @@ function refreshDiscordTheme() {
 }
 
 function experimentsFor(source: string[] | undefined) {
-	if (experiments?.source !== source || experiments.revision !== revision) {
-		experiments = { source, revision, copy: [...(source ?? [])] };
+	if (experiments && experiments.source === source && experiments.revision === revision) {
+		return experiments.copy;
 	}
 
-	return experiments.copy;
+	const next: ExperimentsCopy = { source, revision, copy: [...(source ?? [])] };
+
+	experiments = next;
+
+	return next.copy;
 }
 
 // Discord caches styles per context key and memoises the root context on its props; a new key and prop
@@ -141,6 +158,7 @@ export function start() {
 	unsubscribe = ThemeStore.subscribe(() => {
 		revision++;
 		applyRawColors(tokens.unsafe_rawColors);
+		syncNativePreview();
 		refreshDiscordTheme();
 	});
 }
@@ -149,6 +167,12 @@ export function start() {
 export function stop() {
 	unsubscribe?.();
 	unsubscribe = null;
+
+	if (nativePreview) {
+		nativePreview = null;
+		globalThis.NativePlatform?.themes?.preview(null);
+	}
+
 	restoreRaw?.();
 	restoreRaw = null;
 	Patcher.unpatchAll();
