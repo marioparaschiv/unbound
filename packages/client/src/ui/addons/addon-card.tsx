@@ -8,6 +8,7 @@ import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
 import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';
+import { Messages } from '~/api/i18n';
 import { Icons } from '~/api/assets';
 
 import AddonOverflow from './addon-overflow';
@@ -21,13 +22,15 @@ import AddonTitle from './addon-title';
 type AddonCardProps = {
 	addon: Addon;
 	kind: ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons;
+	/** Whether the plugin is a library other plugins build on. */
+	library?: boolean;
 };
 
 /**
  * @description One addon card: the title, authors and controls on top, the description and icon below.
  * Failed addons dim and show the manager's recorded error; recovery mode disables interaction.
  */
-function AddonCard({ addon, kind }: AddonCardProps) {
+function AddonCard({ addon, kind, library }: AddonCardProps) {
 	const styles = useStyles();
 	const manager = getManager(kind);
 	const { name, version, authors, description } = addon.data;
@@ -56,7 +59,11 @@ function AddonCard({ addon, kind }: AddonCardProps) {
 		>
 			<View style={styles.top}>
 				<View style={styles.heading}>
-					<AddonTitle name={name} version={version} />
+					<AddonTitle
+						name={name}
+						version={version}
+						tag={library ? Messages.UNBOUND_LIBRARY : void 0}
+					/>
 					{authors?.length ? <AddonAuthors authors={authors} /> : null}
 				</View>
 				<View style={styles.actions}>

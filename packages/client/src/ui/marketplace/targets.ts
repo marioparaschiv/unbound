@@ -1,5 +1,6 @@
 import type { AddonType, ListedAddon } from '@unbound-app/contracts/addons';
 
+import { installDependencies } from '~/ui/marketplace/install-dependencies';
 import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
 import { Messages } from '~/api/i18n';
@@ -78,6 +79,10 @@ export async function installListed(kind: ManagerKind, addon: ListedAddon): Prom
 
 	if (kind === ManagerKind.Fonts) {
 		return Boolean(await getManager(kind).install(bundleUrl));
+	}
+
+	if (kind === ManagerKind.Plugins && !(await installDependencies(addon))) {
+		return false;
 	}
 
 	return Boolean(await getManager(kind).install(manifestUrl));
