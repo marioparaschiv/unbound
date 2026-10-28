@@ -264,7 +264,13 @@ impl Workspace {
 				}
 				mono_row(0.)
 					.text_color(theme::color(theme::TEXT_SECONDARY))
-					.child(div().min_w_0().overflow_hidden().text_ellipsis_start().child(location))
+					.child(
+						div()
+							.min_w_0()
+							.overflow_hidden()
+							.text_ellipsis_start()
+							.child(location),
+					)
 					.into_any_element()
 			})
 			.collect();

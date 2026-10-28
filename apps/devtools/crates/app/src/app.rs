@@ -189,7 +189,13 @@ impl Workspace {
 	}
 
 	fn sync_selection(&mut self, cx: &mut Context<Self>) {
-		let selected = self.devtools.selected();
+		let mut selected = self.devtools.selected();
+		let vanished = selected.is_some_and(|id| self.devtools.store().get(id).is_none());
+		if vanished {
+			// A remount (filter change, reconnect) reassigns every id; the old selection is gone.
+			self.devtools.select(None);
+			selected = None;
+		}
 		if selected == self.selected {
 			return;
 		}

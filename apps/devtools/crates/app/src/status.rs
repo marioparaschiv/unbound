@@ -44,10 +44,7 @@ impl Workspace {
 				.px(px(4.))
 				.rounded(px(4.))
 				.cursor_pointer()
-				.hover(|mcp| {
-					mcp.bg(theme::color(theme::HOVER))
-						.text_color(theme::color(theme::TEXT))
-				})
+				.hover(|mcp| mcp.bg(theme::color(theme::HOVER)))
 				.text_color(theme::color(if self.copied {
 					theme::SUCCESS
 				} else {

@@ -324,17 +324,15 @@ impl Workspace {
 		cx.notify();
 	}
 
+	/// The device can only store the element it inspected last, so inspect, store, then log.
 	pub fn log_to_console(&mut self, id: ElementId, cx: &mut Context<Self>) {
-		let name = match self.devtools.store_as_global(id, Vec::new()) {
-			Ok(name) => name,
-			Err(error) => {
-				self.show_error(format!("Log to console: {error}"), cx);
-				return;
-			}
-		};
 		let devtools = self.devtools.clone();
-		let code = format!("console.log({name})");
-		let request = on_runtime(&self.devtools, async move { devtools.eval(&code).await });
+		let request = on_runtime(&self.devtools, async move {
+			devtools.inspect(id).await?;
+			let name = devtools.store_as_global(id, Vec::new())?;
+			devtools.eval(&format!("console.log({name})")).await?;
+			anyhow::Ok(())
+		});
 		cx.spawn(async move |this, cx| {
 			if let Some(Err(error)) = request.await {
 				this.update(cx, |this, cx| {

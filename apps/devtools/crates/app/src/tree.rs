@@ -30,7 +30,8 @@ fn name_spans(element: &Element, matched: bool) -> gpui::Div {
 			div()
 				.text_color(theme::color(name_color))
 				.when(matched, |name| {
-					name.text_decoration_1().text_decoration_color(theme::color(theme::ACCENT))
+					name.text_decoration_1()
+						.text_decoration_color(theme::color(theme::ACCENT))
 				})
 				.child(SharedString::from(element.name.to_string())),
 		)
@@ -180,7 +181,9 @@ impl Workspace {
 		let mut chain: Vec<&Element> = Vec::new();
 		if let Some(selected) = self.selected.and_then(|id| store.get(id)) {
 			chain.push(selected);
-			let ancestors = store.ancestors(selected.id).filter(|element| element.kind != ElementKind::Root);
+			let ancestors = store
+				.ancestors(selected.id)
+				.filter(|element| element.kind != ElementKind::Root);
 			chain.extend(ancestors.take(BREADCRUMB_LIMIT - 1));
 			chain.reverse();
 		}

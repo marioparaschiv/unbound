@@ -151,12 +151,7 @@ impl Workspace {
 		} else {
 			"Connect device"
 		};
-		let error = self
-			.search
-			.error
-			.as_ref()
-			.map(|error| format!("jq: {error}"))
-			.or_else(|| self.banner.clone());
+		let error = self.search.error.clone().or_else(|| self.banner.clone());
 		let bar = div()
 			.flex_none()
 			.h(theme::TOOLBAR_HEIGHT)
