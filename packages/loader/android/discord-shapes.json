@@ -1,0 +1,53 @@
+{
+	"reactSurface": {
+		"parameterOf": "com.facebook.react.runtime.ReactInstance",
+		"unlessClass": "com.facebook.react.ReactHost",
+		"member": "constructor",
+		"parameters": ["android.content.Context", "java.lang.String", "android.os.Bundle"],
+		"pick": "only"
+	},
+	"reactSurfaceHandler": {
+		"ownerShape": "reactSurface",
+		"unlessClass": "com.facebook.react.ReactHost",
+		"member": "field",
+		"type": "com.facebook.react.fabric.SurfaceHandlerBinding",
+		"pick": "only"
+	},
+	"reactSurfaceReferences": {
+		"ownerShape": "reactSurface",
+		"unlessClass": "com.facebook.react.ReactHost",
+		"member": "field",
+		"type": "java.util.concurrent.atomic.AtomicReference",
+		"count": 2,
+		"pick": "all"
+	},
+	"reactSurfaceHost": {
+		"ownerShape": "reactSurface",
+		"unlessClass": "com.facebook.react.ReactHost",
+		"member": "method",
+		"parameterCount": 0,
+		"returnsAssignableFrom": "com.facebook.react.runtime.ReactHostImpl",
+		"pick": "only"
+	},
+	"reactFabric": {
+		"owner": "com.facebook.react.runtime.ReactInstance",
+		"unlessClass": "com.facebook.react.ReactHost",
+		"member": "field",
+		"type": "com.facebook.react.fabric.FabricUIManager",
+		"pick": "only"
+	},
+	"reactHostDelegate": {
+		"owner": "com.facebook.react.runtime.ReactHostImpl",
+		"unlessClass": "com.facebook.react.ReactHost",
+		"member": "field",
+		"type": "com.facebook.react.defaults.DefaultReactHostDelegate",
+		"pick": "only"
+	},
+	"reactSurfaceViewFactory": {
+		"owner": "com.facebook.react.defaults.DefaultReactHostDelegate",
+		"unlessClass": "com.facebook.react.ReactHost",
+		"member": "field",
+		"typeAssignableTo": "kotlin.jvm.functions.Function2",
+		"pick": "only"
+	}
+}

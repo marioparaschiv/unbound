@@ -579,7 +579,7 @@ func TestDiscordShapesMatchTheHelpers(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(shapes) == 0 {
-		t.Fatalf("%s has no shapes", discordShapesPath)
+		t.Fatalf("%v hold no shapes", discordShapesPaths)
 	}
 	sources, err := collectCompatReferences(root)
 	if err != nil {
