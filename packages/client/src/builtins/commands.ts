@@ -15,6 +15,8 @@ import type {
 	IndexState,
 } from '~/lib/commands/discord';
 import type { CommandRecord, Section } from '~/lib/commands/normalize';
+import { UNBOUND_ICON } from '~/lib/commands/unbound-icon';
+import { commandId } from '~/lib/commands/normalize';
 import { Clyde, Commands, Dispatcher } from '~/api/metro/common';
 import type { CommandEffects } from '~/lib/commands/run';
 import { findByProps, findStore } from '~/api/metro';
@@ -46,6 +48,8 @@ const DEFAULT_ICON = 'ic_application_command_24px';
 // Keeps each unchanged command's identity across versions, so Discord's memoized lists stay valid.
 const discordCommands = new WeakMap<CommandRecord, DiscordCommand>();
 const states = new WeakMap<IndexState, MemoState>();
+// Bot avatars this built-in added, keyed by section, removed again on stop.
+const avatars = new Set<string>();
 let enums: CommandEnums = DEFAULT_ENUMS;
 let effects: CommandEffects | undefined;
 let IndexStore: ReturnType<typeof findStore> | undefined;
@@ -63,6 +67,7 @@ export function start() {
 	patchAccess();
 	patchIcons();
 	patchBuiltIns();
+	patchInstall();
 
 	unsubscribe = registry.subscribe(scheduleChange);
 	scheduleChange();
@@ -73,6 +78,7 @@ export function stop() {
 	unsubscribe?.();
 	unsubscribe = undefined;
 	Patcher.unpatchAll();
+	removeAvatars();
 	index = undefined;
 	IndexStore?.emitChange?.();
 }
@@ -119,8 +125,39 @@ function showEphemeral(channelId: string, reply: EphemeralReply, section: Sectio
 		embeds: reply.embeds ?? [],
 	});
 
-	message.author = { ...message.author, username: section.name };
+	message.author = {
+		...message.author,
+		// Clyde's id would group the reply under Clyde's avatar.
+		id: commandId('unbound:author', section.id),
+		username: section.name,
+		avatar: registerAvatar(section),
+	};
+
 	Messages.receiveMessage(channelId, message, true);
+}
+
+// Discord draws a bot author's avatar from BOT_AVATARS[author.avatar]: an asset id or an image uri string.
+function registerAvatar(section: Section): string | undefined {
+	const Avatars = findByProps('BOT_AVATARS', 'ensureAvatarSource');
+
+	if (!Avatars?.BOT_AVATARS) return;
+
+	const key = `unbound:${section.id}`;
+
+	Avatars.BOT_AVATARS[key] = section.icon ?? UNBOUND_ICON;
+	avatars.add(key);
+
+	return key;
+}
+
+function removeAvatars() {
+	const Avatars = findByProps('BOT_AVATARS', 'ensureAvatarSource');
+
+	for (const key of avatars) {
+		delete Avatars?.BOT_AVATARS?.[key];
+	}
+
+	avatars.clear();
 }
 
 function getIndex(): DiscordIndex {
@@ -276,6 +313,29 @@ function patchBuiltIns() {
 
 		return missing.length ? [...result, ...missing] : result;
 	});
+}
+
+function patchInstall() {
+	const Install = findByProps('installApplicationOnDemandIfNeeded');
+
+	if (!Install) {
+		Logger.error('Failed to find installApplicationOnDemandIfNeeded; commands may not run.');
+
+		return;
+	}
+
+	// Sending a command first installs its application, which fetches /applications/<id>/public and rejects for ours.
+	Patcher.instead(
+		Install,
+		'installApplicationOnDemandIfNeeded',
+		({ args, original, this: self }) => {
+			if (getIndex().sectionIds.has(args[0]?.applicationId)) {
+				return Promise.resolve({ isAuthorized: true });
+			}
+
+			return original.apply(self, args);
+		},
+	);
 }
 
 export default { start, stop };
