@@ -13,8 +13,8 @@ import { Card, CardDescription, CardTitle } from '~/components/ui/card';
 import { revealStyle } from '~/components/motion/reveal-style';
 import BlurReveal from '~/components/motion/blur-reveal';
 import type { CssVariables } from '~/lib/css-variables';
-import { Button } from '~/components/ui/button';
 import Reveal from '~/components/motion/reveal';
+import { Button } from '~/components/ui/button';
 import cn from '~/lib/cn';
 
 type IconProps = {

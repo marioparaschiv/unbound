@@ -4,9 +4,9 @@ import LinkedAccountsCard from '~/components/account/linked-accounts-card';
 import SponsorshipCard from '~/components/account/sponsorship-card';
 import ApiKeysCard from '~/components/account/api-keys-card';
 import ProfileCard from '~/components/account/profile-card';
+import BlurReveal from '~/components/motion/blur-reveal';
 import PerksCard from '~/components/account/perks-card';
 import { getAccountOverview } from '~/lib/auth/account';
-import BlurReveal from '~/components/motion/blur-reveal';
 import Text from '~/components/ui/text';
 
 function AccountPage() {

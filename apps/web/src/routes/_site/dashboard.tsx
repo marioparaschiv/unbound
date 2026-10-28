@@ -6,9 +6,9 @@ import DashboardSection from '~/components/dashboard/dashboard-section';
 import AttentionList from '~/components/dashboard/attention-list';
 import UserIdCard from '~/components/dashboard/user-id-card';
 import AddonList from '~/components/dashboard/addon-list';
+import BlurReveal from '~/components/motion/blur-reveal';
 import FirstRun from '~/components/dashboard/first-run';
 import { Button } from '~/components/ui/button';
-import BlurReveal from '~/components/motion/blur-reveal';
 import { getDashboard } from '~/lib/publishing';
 import Text from '~/components/ui/text';
 

@@ -22,13 +22,13 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
-import { staggerStyle } from '~/components/motion/reveal-style';
 import type { MarketplacePage, MarketplaceSearch } from '~/lib/marketplace';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import type { MarketplaceAddon } from '~/lib/marketplace-addon';
 import type { SortOption } from '~/components/sort-controls';
-import { fetchMarketplacePage } from '~/lib/marketplace';
-import type { CssVariables } from '~/lib/css-variables';
 import BlurReveal from '~/components/motion/blur-reveal';
+import type { CssVariables } from '~/lib/css-variables';
+import { fetchMarketplacePage } from '~/lib/marketplace';
 import SortControls from '~/components/sort-controls';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';

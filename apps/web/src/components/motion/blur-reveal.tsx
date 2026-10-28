@@ -18,7 +18,11 @@ const SPLIT_STAGGER_MS: Record<BlurRevealSplit, number> = {
 };
 
 function BlurReveal({ text, split = 'word', preset = 'heading', delay = 0 }: BlurRevealProps) {
-	const parts = split === 'letter' ? [...text] : text.split(' ');
+	// Graphemes, so an emoji or accented letter stays one piece.
+	const parts =
+		split === 'letter'
+			? Array.from(new Intl.Segmenter().segment(text), ({ segment }) => segment)
+			: text.split(' ');
 	const stagger = SPLIT_STAGGER_MS[split];
 
 	return (
