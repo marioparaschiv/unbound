@@ -255,6 +255,10 @@ func (target *iosSmokeTarget) isLoaderLine(line string) bool {
 	return strings.Contains(line, "app.unbound")
 }
 
+func (target *iosSmokeTarget) consoleEntry(line string) (smokeConsoleEntry, bool) {
+	return iosConsoleEntry(line)
+}
+
 func (target *iosSmokeTarget) isCrashLine(string) bool {
 	return false
 }

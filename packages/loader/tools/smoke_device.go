@@ -329,6 +329,10 @@ func (target *deviceSmokeTarget) isLoaderLine(string) bool {
 	return true
 }
 
+func (target *deviceSmokeTarget) consoleEntry(line string) (smokeConsoleEntry, bool) {
+	return deviceConsoleEntry(line)
+}
+
 func (target *deviceSmokeTarget) isCrashLine(string) bool {
 	return false
 }

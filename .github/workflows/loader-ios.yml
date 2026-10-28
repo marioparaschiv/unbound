@@ -461,6 +461,7 @@ jobs:
         timeout-minutes: 45
         permissions:
             contents: read
+            actions: read
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -503,6 +504,13 @@ jobs:
               env:
                   APP_PATH: ${{ steps.app.outputs.path }}
               run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --timeout 25m --bundle-budget 8m --plugins-budget 8m
+
+            - name: Compare the console with main
+              if: success() && github.event_name == 'pull_request'
+              continue-on-error: true
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: go run ./tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY" --artifact "ios smoke test" --console-only
 
             - name: Upload smoke test logs
               if: always()

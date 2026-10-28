@@ -23,9 +23,11 @@ const (
 )
 
 type smokeStartupRecord struct {
-	BundleMs  float64            `json:"bundleMs,omitempty"`
-	PluginsMs float64            `json:"pluginsMs,omitempty"`
-	Plugins   map[string]float64 `json:"plugins,omitempty"`
+	BundleMs  float64             `json:"bundleMs,omitempty"`
+	PluginsMs float64             `json:"pluginsMs,omitempty"`
+	Plugins   map[string]float64  `json:"plugins,omitempty"`
+	Console   []smokeConsoleEntry `json:"console"`
+	Recorded  bool                `json:"consoleRecorded,omitempty"`
 }
 
 type startupRegression struct {
@@ -39,6 +41,8 @@ func startupRecord(result *smokeResult) smokeStartupRecord {
 		BundleMs:  float64(result.startup.bundle.Milliseconds()),
 		PluginsMs: float64(result.startup.plugins.Milliseconds()),
 		Plugins:   map[string]float64{},
+		Console:   append([]smokeConsoleEntry{}, result.console...),
+		Recorded:  true,
 	}
 	for _, status := range result.statuses {
 		if status.StartMs != nil {
@@ -55,6 +59,7 @@ func runSmokeRegression(args []string) error {
 	workflow := set.String("workflow", "loader-build.yml", "workflow whose default-branch runs are the baseline")
 	branch := set.String("branch", "main", "branch whose runs are the baseline")
 	artifact := set.String("artifact", "android smoke test", "smoke artifact name in those runs")
+	consoleOnly := set.Bool("console-only", false, "compare only console errors and warnings, not startup times")
 	runs := set.Int("runs", 10, "how many recent successful runs to compare against")
 	summary := set.String("summary", os.Getenv("GITHUB_STEP_SUMMARY"), "markdown file to append the comparison to")
 	if err := set.Parse(args); err != nil {
@@ -71,10 +76,14 @@ func runSmokeRegression(args []string) error {
 	if err != nil {
 		return err
 	}
-	report := renderRegressionReport(record, baseline)
+	report := renderConsoleReport(record, baseline)
+	if !*consoleOnly {
+		startup := renderRegressionReport(record, baseline)
+		report = regressionReport{markdown: startup.markdown + report.markdown, warnings: append(startup.warnings, report.warnings...)}
+	}
 	fmt.Print(report.markdown)
 	for _, warning := range report.warnings {
-		fmt.Printf("::warning title=Startup regression::%s\n", warning)
+		fmt.Printf("::warning title=%s::%s\n", warning.title, warning.message)
 	}
 	if *summary != "" {
 		if file, err := os.OpenFile(*summary, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644); err == nil {
@@ -109,7 +118,7 @@ func baselineStartupRecords(repository, workflow, branch, artifact string, limit
 			return nil, err
 		}
 		if exec.Command("gh", "run", "download", id, "--repo", repository, "--name", artifact, "--dir", directory).Run() == nil {
-			if record, err := readStartupRecord(filepath.Join(directory, smokeStartupFile)); err == nil && record.BundleMs > 0 {
+			if record, err := readStartupRecord(filepath.Join(directory, smokeStartupFile)); err == nil && (record.BundleMs > 0 || record.Recorded) {
 				records = append(records, record)
 			}
 		}
@@ -118,9 +127,42 @@ func baselineStartupRecords(repository, workflow, branch, artifact string, limit
 	return records, nil
 }
 
+type regressionWarning struct {
+	title   string
+	message string
+}
+
 type regressionReport struct {
 	markdown string
-	warnings []string
+	warnings []regressionWarning
+}
+
+func renderConsoleReport(current smokeStartupRecord, baseline []smokeStartupRecord) regressionReport {
+	var markdown strings.Builder
+	markdown.WriteString("## Console compared with main\n\n")
+	recorded := []smokeStartupRecord{}
+	for _, record := range baseline {
+		if record.Recorded {
+			recorded = append(recorded, record)
+		}
+	}
+	if !current.Recorded || len(recorded) < regressionMinimumSamples {
+		fmt.Fprintf(&markdown, "Only %d recent main runs recorded console messages, so there is nothing to compare against yet.\n\n", len(recorded))
+		return regressionReport{markdown: markdown.String()}
+	}
+	fresh := newConsoleEntries(current.Console, recorded)
+	if len(fresh) == 0 {
+		fmt.Fprintf(&markdown, "No console error or warning that the last %d main runs did not also log.\n\n", len(recorded))
+		return regressionReport{markdown: markdown.String()}
+	}
+	fmt.Fprintf(&markdown, "Logged here but in none of the last %d main runs:\n\n| Level | Message |\n| --- | --- |\n", len(recorded))
+	warnings := []regressionWarning{}
+	for _, entry := range fresh {
+		fmt.Fprintf(&markdown, "| %s | `%s` |\n", entry.Level, strings.ReplaceAll(entry.Message, "|", "\\|"))
+		warnings = append(warnings, regressionWarning{title: "New console " + entry.Level, message: entry.Message})
+	}
+	markdown.WriteString("\n")
+	return regressionReport{markdown: markdown.String(), warnings: warnings}
 }
 
 func renderRegressionReport(current smokeStartupRecord, baseline []smokeStartupRecord) regressionReport {
@@ -138,12 +180,12 @@ func renderRegressionReport(current smokeStartupRecord, baseline []smokeStartupR
 		markdown.WriteString("No startup regression.\n\n")
 		return regressionReport{markdown: markdown.String()}
 	}
-	warnings := []string{}
+	warnings := []regressionWarning{}
 	markdown.WriteString("Slower than main:\n\n")
 	for _, regression := range regressions {
 		line := fmt.Sprintf("%s took %.0f ms against a median of %.0f ms", regression.name, regression.current, regression.baseline)
 		fmt.Fprintf(&markdown, "- %s\n", line)
-		warnings = append(warnings, line)
+		warnings = append(warnings, regressionWarning{title: "Startup regression", message: line})
 	}
 	markdown.WriteString("\n")
 	return regressionReport{markdown: markdown.String(), warnings: warnings}
