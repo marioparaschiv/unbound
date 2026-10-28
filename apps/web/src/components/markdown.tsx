@@ -1,6 +1,6 @@
 import type { Components, UrlTransform } from 'react-markdown';
 import type { ComponentProps, ReactNode } from 'react';
-import { IconPhoto } from '@tabler/icons-react';
+import { IconPhoto } from 'nucleo-micro-bold';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -21,8 +21,7 @@ type LinkProps = {
 
 const REMARK_PLUGINS = [remarkGfm];
 const LINK_REL = 'nofollow ugc noopener noreferrer';
-const LINK_CLASS =
-	'font-medium text-foreground underline underline-offset-4 decoration-border hover:decoration-foreground transition-colors';
+const LINK_CLASS = 'font-medium text-link underline-offset-4 hover:underline';
 
 function Link({ href, children }: LinkProps) {
 	if (!href) {
@@ -138,7 +137,7 @@ const COMPONENTS: Components = {
 	),
 	hr: () => <hr className='border-border' />,
 	pre: ({ children }) => (
-		<pre className='bg-muted p-4 border rounded-lg overflow-x-auto font-mono text-sm leading-relaxed [&>code]:bg-transparent [&>code]:p-0 [&>code]:rounded-none [&>code]:text-[length:inherit]'>
+		<pre className='bg-muted p-4 border rounded-control overflow-x-auto font-mono text-sm leading-relaxed [&>code]:bg-transparent [&>code]:p-0 [&>code]:rounded-none [&>code]:text-[length:inherit]'>
 			{children}
 		</pre>
 	),
@@ -148,7 +147,7 @@ const COMPONENTS: Components = {
 		</code>
 	),
 	table: ({ children }) => (
-		<div className='border rounded-lg overflow-x-auto'>
+		<div className='border rounded-control overflow-x-auto'>
 			<table className='w-full text-sm border-collapse'>{children}</table>
 		</div>
 	),

@@ -1,4 +1,4 @@
-import { IconArrowsSort, IconSortAscending, IconSortDescending } from '@tabler/icons-react';
+import { IconAscendingSorting, IconDescendingSorting, IconSortArrows } from 'nucleo-micro-bold';
 import { sortOrderSchema, type SortOrder } from '@unbound-app/contracts/addons';
 
 import {
@@ -52,9 +52,14 @@ function SortControls<T extends string>({ options, value, order, onChange }: Sor
 						<Button
 							variant='outline'
 							type='button'
+							className='min-w-23'
 							onClick={() => onChange(value, order === 'asc' ? 'desc' : 'asc')}
 						>
-							{order === 'asc' ? <IconSortAscending /> : <IconSortDescending />}
+							{order === 'asc' ? (
+								<IconAscendingSorting size={24} />
+							) : (
+								<IconDescendingSorting size={24} />
+							)}
 							<span className='hidden sm:inline'>
 								{order === 'asc' ? 'Asc' : 'Desc'}
 							</span>
@@ -65,8 +70,8 @@ function SortControls<T extends string>({ options, value, order, onChange }: Sor
 			</TooltipProvider>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant='outline' type='button'>
-						<IconArrowsSort />
+					<Button variant='outline' type='button' className='min-w-23'>
+						<IconSortArrows size={24} />
 						<span className='hidden sm:inline'>Sort</span>
 					</Button>
 				</DropdownMenuTrigger>

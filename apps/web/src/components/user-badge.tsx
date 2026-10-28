@@ -1,20 +1,20 @@
 import {
+	IconAward,
 	IconBolt,
 	IconCode,
-	IconCoffee,
-	IconCrown,
 	IconFlame,
+	IconHandHoldingHeart,
 	IconHeart,
-	IconMoon,
 	IconMusic,
+	IconNightShift,
 	IconPalette,
 	IconRocket,
-	IconSparkles,
+	IconSparkle,
 	IconStar,
-} from '@tabler/icons-react';
+} from 'nucleo-micro-bold';
 import type { Badge, BadgeColor, BadgeIcon } from '@unbound-app/contracts/sponsors';
-import type { Icon } from '@tabler/icons-react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ComponentType } from 'react';
+import type { IconProps } from 'nucleo-micro-bold';
 
 import cn from '~/lib/cn';
 
@@ -22,19 +22,19 @@ type UserBadgeProps = ComponentProps<'span'> & {
 	badge: Badge;
 };
 
-export const BADGE_ICON_COMPONENTS: Record<BadgeIcon, Icon> = {
+export const BADGE_ICON_COMPONENTS: Record<BadgeIcon, ComponentType<IconProps>> = {
 	heart: IconHeart,
 	star: IconStar,
-	sparkles: IconSparkles,
+	sparkles: IconSparkle,
 	bolt: IconBolt,
 	flame: IconFlame,
-	crown: IconCrown,
+	crown: IconAward,
 	rocket: IconRocket,
 	code: IconCode,
 	palette: IconPalette,
 	music: IconMusic,
-	coffee: IconCoffee,
-	moon: IconMoon,
+	coffee: IconHandHoldingHeart,
+	moon: IconNightShift,
 };
 
 export const BADGE_COLOR_CLASSES: Record<BadgeColor, string> = {

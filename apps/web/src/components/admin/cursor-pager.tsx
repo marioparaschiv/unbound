@@ -1,4 +1,4 @@
-import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { IconChevronLeft, IconChevronRight } from 'nucleo-micro-bold';
 import type { PageDirection } from '@unbound-app/contracts/admin';
 
 import { Button } from '~/components/ui/button';

@@ -1,4 +1,4 @@
-import { IconCopy, IconDots, IconExternalLink, IconShield, IconUsers } from '@tabler/icons-react';
+import { IconCopies, IconDots, IconExternalLink, IconShield, IconUsers } from 'nucleo-micro-bold';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 
@@ -32,25 +32,25 @@ function AddonMenu({ addon, userId }: AddonMenuProps) {
 						size='icon-sm'
 						aria-label={`More actions for ${addon.name}`}
 					>
-						<IconDots />
+						<IconDots size={24} />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align='end'>
 					<DropdownMenuItem onSelect={() => copyText(addon.id, 'addon ID')}>
-						<IconCopy />
+						<IconCopies size={24} />
 						Copy addon ID
 					</DropdownMenuItem>
 					{actions.publicPage ? (
 						<DropdownMenuItem asChild>
 							<Link to='/addons/$id' params={{ id: addon.id }}>
-								<IconExternalLink />
+								<IconExternalLink size={24} />
 								View public page
 							</Link>
 						</DropdownMenuItem>
 					) : null}
 					{actions.maintainers ? (
 						<DropdownMenuItem onSelect={() => setMaintainersOpen(true)}>
-							<IconUsers />
+							<IconUsers size={24} />
 							Maintainers
 						</DropdownMenuItem>
 					) : null}
@@ -59,7 +59,7 @@ function AddonMenu({ addon, userId }: AddonMenuProps) {
 							<DropdownMenuSeparator />
 							<DropdownMenuItem asChild>
 								<Link to='/admin/addons/$id' params={{ id: addon.id }}>
-									<IconShield />
+									<IconShield size={24} />
 									Manage in admin
 								</Link>
 							</DropdownMenuItem>

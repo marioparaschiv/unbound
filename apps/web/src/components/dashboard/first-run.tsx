@@ -1,4 +1,4 @@
-import { IconCheck, IconExternalLink, IconPackage, IconUpload } from '@tabler/icons-react';
+import { IconBox, IconCheck, IconExternalLink, IconUpload } from 'nucleo-micro-bold';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
@@ -22,7 +22,7 @@ type StepProps = {
 
 function Step({ index, title, description, done, children }: StepProps) {
 	return (
-		<li className='flex flex-col gap-3 bg-card p-4 border rounded-xl text-left'>
+		<li className='flex flex-col gap-3 bg-card shadow-surface p-4 border rounded-surface text-left'>
 			<div className='flex items-center gap-2'>
 				<span
 					className={cn(
@@ -46,9 +46,9 @@ function Step({ index, title, description, done, children }: StepProps) {
 
 function FirstRun({ githubLinked, hasSubmitted }: FirstRunProps) {
 	return (
-		<section className='flex flex-col items-center gap-6 p-6 sm:p-10 border border-dashed rounded-xl text-center'>
-			<div className='place-items-center grid bg-muted rounded-xl size-12'>
-				<IconPackage className='size-6' />
+		<section className='flex flex-col items-center gap-6 p-6 sm:p-10 border border-dashed rounded-surface text-center'>
+			<div className='place-items-center grid bg-muted rounded-control size-12'>
+				<IconBox className='size-6' />
 			</div>
 			<div className='flex flex-col gap-1'>
 				<Text variant='heading-sm'>Publish your first addon</Text>
@@ -77,7 +77,7 @@ function FirstRun({ githubLinked, hasSubmitted }: FirstRunProps) {
 				>
 					<Button asChild variant='outline' size='sm' className='self-start'>
 						<a href='https://docs.unbound.rip' target='_blank' rel='noreferrer'>
-							<IconExternalLink />
+							<IconExternalLink size={24} />
 							Read the docs
 						</a>
 					</Button>
@@ -90,7 +90,7 @@ function FirstRun({ githubLinked, hasSubmitted }: FirstRunProps) {
 				>
 					<Button asChild size='sm' className='self-start'>
 						<Link to='/submit'>
-							<IconUpload />
+							<IconUpload size={24} />
 							{hasSubmitted ? 'Submit an addon' : 'Submit your first addon'}
 						</Link>
 					</Button>

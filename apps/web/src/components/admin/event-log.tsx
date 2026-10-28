@@ -319,7 +319,7 @@ function EventLog({ subject, timeline }: EventLogProps) {
 
 	if (events.length === 0) {
 		return (
-			<Card className='p-5'>
+			<Card className='p-(--card-pad)'>
 				<Text variant='text-sm' color='muted'>
 					No moderation events yet.
 				</Text>
@@ -331,7 +331,7 @@ function EventLog({ subject, timeline }: EventLogProps) {
 		<Card className='gap-0 p-0 divide-y divide-border'>
 			<ol className='flex flex-col divide-y divide-border'>
 				{events.map((event) => (
-					<li key={event.id} className='flex gap-3 p-4'>
+					<li key={event.id} className='flex gap-3 p-(--card-pad)'>
 						<UserAvatar
 							src={event.actor?.image ?? null}
 							name={event.actor?.name ?? '?'}
@@ -348,7 +348,7 @@ function EventLog({ subject, timeline }: EventLogProps) {
 							{event.reason ? (
 								<Text
 									variant='text-sm'
-									className='bg-muted/50 px-3 py-2 rounded-md break-words whitespace-pre-wrap'
+									className='bg-muted/50 px-3 py-2 rounded-control break-words whitespace-pre-wrap'
 								>
 									{event.reason}
 								</Text>
@@ -358,7 +358,7 @@ function EventLog({ subject, timeline }: EventLogProps) {
 				))}
 			</ol>
 			{before === null ? null : (
-				<div className='flex justify-center px-4 py-3'>
+				<div className='flex justify-center px-(--card-pad) py-3'>
 					<Button variant='outline' size='sm' onClick={loadOlder} disabled={isLoading}>
 						Load older events
 					</Button>

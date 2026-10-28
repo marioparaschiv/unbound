@@ -1,4 +1,4 @@
-import { IconCircleCheck, IconCircleX, IconDeviceDesktop } from '@tabler/icons-react';
+import { IconCircleCheck, IconCircleXmark, IconMonitor } from 'nucleo-micro-bold';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { useState, useTransition } from 'react';
 import type { FormEvent } from 'react';
@@ -75,7 +75,7 @@ function DeviceApproval({ user, initialCode }: DeviceApprovalProps) {
 					{approved ? (
 						<IconCircleCheck className='size-10 text-foreground' />
 					) : (
-						<IconCircleX className='size-10 text-destructive' />
+						<IconCircleXmark className='size-10 text-destructive' />
 					)}
 					<CardTitle>{approved ? 'Device approved' : 'Device denied'}</CardTitle>
 					<CardDescription>
@@ -121,8 +121,8 @@ function DeviceApproval({ user, initialCode }: DeviceApprovalProps) {
 					</form>
 				) : (
 					<div className='flex flex-col gap-4'>
-						<div className='flex items-center gap-3 rounded-lg border bg-accent/30 p-4'>
-							<IconDeviceDesktop className='size-5 shrink-0 text-muted-foreground' />
+						<div className='flex items-center gap-3 rounded-control border bg-accent/30 p-4'>
+							<IconMonitor className='size-5 shrink-0 text-muted-foreground' />
 							<span className='font-mono text-sm tracking-widest'>{code}</span>
 						</div>
 						<FieldError>{error}</FieldError>

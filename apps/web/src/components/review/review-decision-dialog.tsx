@@ -1,6 +1,6 @@
 import { reviewSubmissionResponseSchema } from '@unbound-app/contracts/review';
 import type { ReviewDecision } from '@unbound-app/contracts/publish';
-import { IconCheck, IconMessage, IconX } from '@tabler/icons-react';
+import { IconCheck, IconMsg, IconXmark } from 'nucleo-micro-bold';
 import { useId, useState, useTransition } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import type { FormEvent, ReactNode } from 'react';
@@ -41,7 +41,7 @@ type DecisionCopy = {
 const DECISIONS: Record<ReviewDecision, DecisionCopy> = {
 	approved: {
 		label: 'Approve',
-		icon: <IconCheck />,
+		icon: <IconCheck size={24} />,
 		variant: 'default',
 		description:
 			'This publishes exactly the staged bundle. A new listing makes its submitter the owner.',
@@ -51,7 +51,7 @@ const DECISIONS: Record<ReviewDecision, DecisionCopy> = {
 	},
 	rejected: {
 		label: 'Reject',
-		icon: <IconX />,
+		icon: <IconXmark size={24} />,
 		variant: 'destructive',
 		description: 'This deletes the staged bundle. A rejected new listing frees its addon id.',
 		noteLabel: 'Reason',
@@ -60,7 +60,7 @@ const DECISIONS: Record<ReviewDecision, DecisionCopy> = {
 	},
 	changes_requested: {
 		label: 'Request Changes',
-		icon: <IconMessage />,
+		icon: <IconMsg size={24} />,
 		variant: 'outline',
 		description: 'The submission leaves the queue until the author publishes again.',
 		noteLabel: 'Requested changes',
@@ -112,7 +112,7 @@ function ReviewDecisionDialog({ entry, decision }: ReviewDecisionDialogProps) {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button variant={copy.variant} size='sm'>
+				<Button variant={copy.variant}>
 					{copy.icon}
 					{copy.label}
 				</Button>

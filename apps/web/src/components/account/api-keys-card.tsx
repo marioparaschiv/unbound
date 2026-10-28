@@ -1,4 +1,4 @@
-import { IconCopy, IconKey, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconCopies, IconLockPassword, IconPlus, IconTrash } from 'nucleo-micro-bold';
 import { useRouter } from '@tanstack/react-router';
 import { useState, useTransition } from 'react';
 import type { FormEvent } from 'react';
@@ -77,7 +77,7 @@ function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
 	return (
 		<div className='flex justify-between items-center gap-4'>
 			<div className='flex items-center gap-3 min-w-0'>
-				<IconKey size={16} className='shrink-0 text-muted-foreground' />
+				<IconLockPassword size={16} className='shrink-0 text-muted-foreground' />
 				<div className='flex flex-col min-w-0'>
 					<Text variant='text-sm' className='font-medium truncate'>
 						{label}
@@ -140,7 +140,7 @@ function CreatedKeyDialog({ secret, onClose }: CreatedKeyDialogProps) {
 				<Input readOnly value={secret ?? ''} className='font-mono' />
 				<DialogFooter>
 					<Button variant='outline' onClick={copy}>
-						<IconCopy />
+						<IconCopies size={24} />
 						Copy
 					</Button>
 					<Button onClick={onClose}>Done</Button>
@@ -193,7 +193,7 @@ function ApiKeysCard({ apiKeys }: ApiKeysCardProps) {
 						required
 					/>
 					<Button type='submit' disabled={isPending || !name.trim()}>
-						<IconPlus />
+						<IconPlus size={24} />
 						Create
 					</Button>
 				</form>
@@ -202,7 +202,7 @@ function ApiKeysCard({ apiKeys }: ApiKeysCardProps) {
 					<Empty className='p-6 md:p-6'>
 						<EmptyHeader>
 							<EmptyMedia variant='icon'>
-								<IconKey />
+								<IconLockPassword size={24} />
 							</EmptyMedia>
 							<EmptyTitle>No API keys</EmptyTitle>
 							<EmptyDescription>Create one to publish from CI.</EmptyDescription>

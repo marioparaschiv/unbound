@@ -20,7 +20,7 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 	return (
 		<Card
 			className={cn(
-				'relative isolate overflow-hidden p-0 gap-0 rounded-lg transition-transform duration-200 ease-in-out hover:-translate-y-1 hover:shadow-lg flex-row items-center',
+				'relative isolate overflow-hidden p-0 gap-0 flex-row items-center transition-[translate,box-shadow] duration-(--press-duration) ease-spring hover:-translate-y-0.5 hover:shadow-float motion-reduce:hover:translate-y-0',
 				className,
 			)}
 			{...props}
@@ -35,19 +35,19 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 					className='absolute inset-0 -z-10 size-full object-cover scale-150 blur-3xl saturate-150 opacity-15 pointer-events-none select-none'
 				/>
 			) : null}
-			<div className='flex items-center justify-center size-10 shrink-0 rounded-lg bg-accent m-4 mr-0 overflow-hidden'>
+			<div className='flex items-center justify-center size-10 shrink-0 rounded-control bg-accent m-(--card-pad) mr-0 overflow-hidden'>
 				<UserAvatar
-					className='size-full rounded-lg object-cover'
+					className='size-full rounded-control object-cover'
 					src={author.avatarUrl}
 					name={author.name}
 				/>
 			</div>
-			<CardContent className='flex flex-col gap-0.5 p-4 min-w-0'>
+			<CardContent className='flex flex-col gap-0.5 p-(--card-pad) min-w-0'>
 				<Text variant='heading-sm' className='truncate leading-tight!'>
 					<Link
 						to='/developers/$discordId'
 						params={{ discordId: author.discordId }}
-						className='after:absolute after:inset-0 after:rounded-lg'
+						className='after:absolute after:inset-0 after:rounded-surface'
 					>
 						{author.name}
 					</Link>

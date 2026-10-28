@@ -9,7 +9,7 @@ function ManifestDiffTable({ entry }: ManifestDiffTableProps) {
 	const { previousVersion } = entry;
 
 	return (
-		<div className='border border-border rounded-lg overflow-x-auto'>
+		<div className='border border-border rounded-control overflow-x-auto'>
 			<table className='w-full text-sm'>
 				<thead className='bg-muted/50 border-b border-border text-muted-foreground'>
 					<tr>

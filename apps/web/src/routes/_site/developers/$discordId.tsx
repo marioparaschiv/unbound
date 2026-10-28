@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
-import { IconMoodEmpty, IconPackage } from '@tabler/icons-react';
+import { IconBox, IconFaceNeutral } from 'nucleo-micro-bold';
 import { createServerFn } from '@tanstack/react-start';
 
 import {
@@ -54,11 +54,11 @@ function DeveloperPage() {
 	const { author, addons, group } = Route.useLoaderData();
 
 	return (
-		<div className='flex flex-col flex-1 gap-8 md:mx-auto mb-12 px-4 w-full container'>
+		<div className='flex flex-col flex-1 gap-8 page-frame'>
 			<header className='flex sm:flex-row flex-col sm:items-center gap-4'>
 				<UserAvatar
 					size='xl'
-					className='rounded-xl object-cover'
+					className='rounded-surface object-cover'
 					src={author.avatarUrl}
 					name={author.name}
 				/>
@@ -88,7 +88,7 @@ function DeveloperPage() {
 					<Empty className='border border-dashed'>
 						<EmptyHeader>
 							<EmptyMedia variant='icon'>
-								<IconPackage />
+								<IconBox size={24} />
 							</EmptyMedia>
 							<EmptyTitle>No Addons Yet</EmptyTitle>
 							<EmptyDescription>
@@ -113,7 +113,7 @@ function DeveloperNotFound() {
 		<Empty className='flex-1 my-auto'>
 			<EmptyHeader>
 				<EmptyMedia variant='icon'>
-					<IconMoodEmpty />
+					<IconFaceNeutral size={24} />
 				</EmptyMedia>
 				<EmptyTitle>Not Found</EmptyTitle>
 				<EmptyDescription>

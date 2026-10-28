@@ -12,8 +12,8 @@ import type { CreateSubmissionRequest, Submission } from '@unbound-app/contracts
 import type { SubmissionPreview as Preview } from '@unbound-app/contracts/review';
 import { createSubmissionResponseSchema } from '@unbound-app/contracts/publish';
 import { submissionPreviewResponseSchema } from '@unbound-app/contracts/review';
-import { IconBrandGithub, IconSend } from '@tabler/icons-react';
 import { useEffect, useState, useTransition } from 'react';
+import { IconPaperPlane2 } from 'nucleo-micro-bold';
 import { Link } from '@tanstack/react-router';
 
 import type { DetailsDraft } from '~/components/submit/submission-preview';
@@ -23,6 +23,7 @@ import { createBrowserClient } from '~/lib/api/browser-client';
 import AddonPicker from '~/components/submit/addon-picker';
 import getApiErrorMessage from '~/lib/api/error-message';
 import type { PendingSource } from '~/lib/dashboard';
+import GitHubIcon from '~/components/icons/github';
 import { FieldError } from '~/components/ui/field';
 import { Button } from '~/components/ui/button';
 import Text from '~/components/ui/text';
@@ -169,7 +170,7 @@ function SubmitForm({ githubLinked, lockedAddonId, pendingSource, onSubmitted }:
 				</Text>
 				<Button asChild variant='outline'>
 					<Link to='/account'>
-						<IconBrandGithub />
+						<GitHubIcon />
 						Link GitHub
 					</Link>
 				</Button>
@@ -220,7 +221,7 @@ function SubmitForm({ githubLinked, lockedAddonId, pendingSource, onSubmitted }:
 					onClick={submit}
 					className='w-full md:w-auto md:self-start'
 				>
-					<IconSend />
+					<IconPaperPlane2 size={24} />
 					{isPending ? 'Submitting...' : 'Submit for Review'}
 				</Button>
 			) : null}

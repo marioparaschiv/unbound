@@ -1,18 +1,20 @@
 import type { CssVariables } from '~/lib/css-variables';
 
-/** How strongly an element enters: the hero is a one-off moment, headings and cards are seen often. */
-export type RevealPreset = 'hero' | 'heading' | 'card';
+/** How strongly an element enters: the hero and its showcase are one-off moments, headings and cards are seen often. */
+export type RevealPreset = 'hero' | 'showcase' | 'heading' | 'card';
 
 type RevealTiming = {
 	duration: number;
 	blur: number;
 	offset: string;
+	scale: number;
 };
 
 const PRESETS: Record<RevealPreset, RevealTiming> = {
-	hero: { duration: 700, blur: 10, offset: '0.4em' },
-	heading: { duration: 350, blur: 4, offset: '0.2em' },
-	card: { duration: 300, blur: 0, offset: '12px' },
+	hero: { duration: 700, blur: 10, offset: '0.4em', scale: 1 },
+	showcase: { duration: 700, blur: 0, offset: '9rem', scale: 0.9 },
+	heading: { duration: 350, blur: 4, offset: '0.2em', scale: 1 },
+	card: { duration: 300, blur: 0, offset: '12px', scale: 1 },
 };
 
 const STAGGER_MS = 40;
@@ -22,17 +24,18 @@ const STAGGER_CAP = 8;
 
 /**
  * @description Builds the CSS variables the `animate-reveal` utility reads.
- * @param preset How far, how blurred and how long the element enters.
+ * @param preset How far, how blurred, how scaled and how long the element enters.
  * @param delay Milliseconds to wait before it starts.
  * @returns Inline styles to spread onto an element with the `animate-reveal` class.
  */
 export function revealStyle(preset: RevealPreset, delay: number = 0): CssVariables {
-	const { duration, blur, offset } = PRESETS[preset];
+	const { duration, blur, offset, scale } = PRESETS[preset];
 
 	return {
 		'--reveal-duration': `${duration}ms`,
 		'--reveal-blur': `${blur}px`,
 		'--reveal-offset': offset,
+		'--reveal-scale': scale,
 		'--reveal-delay': `${delay}ms`,
 	};
 }

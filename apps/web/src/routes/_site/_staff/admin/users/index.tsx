@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
 import { adminUsersSearchSchema } from '@unbound-app/contracts/admin';
-import { IconBan, IconUserCheck } from '@tabler/icons-react';
+import { IconBan, IconUserCheck } from 'nucleo-micro-bold';
 
 import { formatDate } from '~/components/admin/format-date';
 import UserActions from '~/components/admin/user-actions';
@@ -8,9 +8,9 @@ import AdminTable from '~/components/admin/admin-table';
 import SearchForm from '~/components/admin/search-form';
 import { fetchAdminUsers } from '~/lib/admin-functions';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
+import PageHeader from '~/components/page-header';
 import UserAvatar from '~/components/user-avatar';
 import { hasPermission } from '~/lib/auth/access';
-import Text from '~/components/ui/text';
 
 const COLUMNS = ['User', 'Email', 'Role', 'Status', 'Joined'];
 
@@ -24,12 +24,10 @@ function UsersPage() {
 
 	return (
 		<div className='flex flex-col gap-6'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>Users</Text>
-				<Text variant='text-md' color='muted'>
-					Search users, change their roles and ban or unban them.
-				</Text>
-			</div>
+			<PageHeader
+				title='Users'
+				description='Search users, change their roles and ban or unban them.'
+			/>
 
 			<SearchForm
 				key={search}
@@ -72,7 +70,7 @@ function UsersPage() {
 							<span className='block max-w-[200px] truncate'>{user.email}</span>
 						</td>
 						<td className='px-4 py-3'>
-							<span className='bg-muted px-2 py-0.5 rounded font-medium text-xs capitalize'>
+							<span className='bg-muted px-2 py-0.5 rounded-full font-medium text-xs capitalize'>
 								{user.role}
 							</span>
 						</td>

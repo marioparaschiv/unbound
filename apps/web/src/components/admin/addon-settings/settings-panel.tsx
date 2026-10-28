@@ -21,7 +21,7 @@ function SettingsPanel({ title, description, hint, children }: SettingsPanelProp
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className='text-base'>{title}</CardTitle>
+				<CardTitle>{title}</CardTitle>
 				<CardDescription>{description}</CardDescription>
 			</CardHeader>
 			<CardContent>{children}</CardContent>

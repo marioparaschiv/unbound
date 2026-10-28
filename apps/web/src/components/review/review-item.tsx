@@ -1,4 +1,4 @@
-import { IconDownload, IconFileCode, IconLock } from '@tabler/icons-react';
+import { IconDownload, IconLock, IconSquareCode } from 'nucleo-micro-bold';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '~/components/ui/card';
 import ReviewDecisionDialog from '~/components/review/review-decision-dialog';
@@ -66,15 +66,15 @@ function ReviewItem({ entry }: ReviewItemProps) {
 				<AddonMdReview entry={entry} />
 
 				<div className='flex flex-wrap gap-2'>
-					<Button asChild variant='outline' size='sm'>
+					<Button asChild variant='outline'>
 						<a href={entry.artifact.url} target='_blank' rel='noopener noreferrer'>
-							<IconDownload />
+							<IconDownload size={24} />
 							Download staged bundle
 						</a>
 					</Button>
-					<Button asChild variant='outline' size='sm'>
+					<Button asChild variant='outline'>
 						<a href={getBundleUrl(source)} target='_blank' rel='noopener noreferrer'>
-							<IconFileCode />
+							<IconSquareCode size={24} />
 							Bundle at {shortSha(source.commitSha)}
 						</a>
 					</Button>

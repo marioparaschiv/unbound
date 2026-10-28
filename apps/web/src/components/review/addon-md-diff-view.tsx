@@ -43,7 +43,7 @@ function LineRow({ line }: LineRowProps) {
 /** A unified line diff with the old and new line numbers, added lines green and removed red. */
 function AddonMdDiffView({ lines }: AddonMdDiffViewProps) {
 	return (
-		<div className='border border-border rounded-lg max-h-[32rem] overflow-auto'>
+		<div className='border border-border rounded-control max-h-[32rem] overflow-auto'>
 			<table className='w-full font-mono text-xs leading-5 border-collapse'>
 				<tbody>
 					{lines.map((line, index) => (

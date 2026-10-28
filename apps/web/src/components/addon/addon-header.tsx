@@ -1,4 +1,4 @@
-import { IconPalette, IconPlug } from '@tabler/icons-react';
+import { IconPalette, IconPlug } from 'nucleo-micro-bold';
 
 import InstallAddonButton from '~/components/install-addon-button';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
@@ -18,10 +18,10 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 	return (
 		<header className='flex flex-col gap-4'>
 			<div className='flex sm:flex-row flex-col sm:items-center gap-4'>
-				<div className='flex justify-center items-center bg-accent border rounded-xl size-16 shrink-0'>
+				<div className='flex justify-center items-center bg-accent border rounded-surface size-16 shrink-0'>
 					<Icon className='size-8' />
 				</div>
-				<div className='flex flex-col flex-1 gap-1 min-w-0'>
+				<div className='flex flex-col flex-1 gap-2 min-w-0'>
 					<Text as='h1' variant='heading-lg' className='truncate'>
 						{addon.name}
 					</Text>

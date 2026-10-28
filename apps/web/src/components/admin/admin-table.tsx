@@ -17,7 +17,7 @@ const HEADER_CLASS = 'px-4 py-3 font-medium text-muted-foreground text-sm text-l
 
 function AdminTable({ columns, empty, noun, children, ...pager }: AdminTableProps) {
 	return (
-		<div className='bg-card border border-border rounded-lg overflow-hidden'>
+		<div className='bg-card shadow-surface border border-border rounded-surface overflow-hidden'>
 			<div className='overflow-x-auto'>
 				<table className='w-full'>
 					<thead className='bg-muted/50 border-b border-border'>

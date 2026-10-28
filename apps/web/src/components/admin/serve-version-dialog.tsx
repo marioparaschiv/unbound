@@ -1,6 +1,6 @@
 import { serveVersionRequestSchema } from '@unbound-app/contracts/admin';
 import { useRouter } from '@tanstack/react-router';
-import { IconHistory } from '@tabler/icons-react';
+import { IconHistory } from 'nucleo-micro-bold';
 import { useState, useTransition } from 'react';
 import type { FormEvent } from 'react';
 import { toast } from 'sonner';
@@ -91,7 +91,7 @@ function ServeVersionDialog({ addonId, versions, version }: ServeVersionDialogPr
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
 				<Button variant='outline' size='sm'>
-					<IconHistory />
+					<IconHistory size={24} />
 					Serve this version
 				</Button>
 			</DialogTrigger>
@@ -134,7 +134,7 @@ function ServeVersionDialog({ addonId, versions, version }: ServeVersionDialogPr
 							Cancel
 						</Button>
 						<Button type='submit' disabled={isPending}>
-							<IconHistory />
+							<IconHistory size={24} />
 							Serve {version}
 						</Button>
 					</DialogFooter>

@@ -1,11 +1,11 @@
 import {
 	IconChevronDown,
-	IconLayoutDashboard,
-	IconLogin,
-	IconLogout,
+	IconGridLayout,
+	IconRectLogin,
+	IconRectLogout,
 	IconShield,
 	IconUser,
-} from '@tabler/icons-react';
+} from 'nucleo-micro-bold';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
 import { toast } from 'sonner';
 
@@ -28,9 +28,9 @@ function AccountMenu() {
 
 	if (!session) {
 		return (
-			<Button asChild variant='default' className='rounded-md'>
+			<Button asChild variant='default'>
 				<Link to='/login'>
-					<IconLogin />
+					<IconRectLogin size={24} />
 					Login
 				</Link>
 			</Button>
@@ -54,36 +54,40 @@ function AccountMenu() {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant='ghost' className='group/account border-none rounded-md h-10'>
+				<Button variant='ghost' className='group/account border-none'>
 					<UserAvatar src={user.image} name={user.name} size='xs' />
-					{user.name}
-					<IconChevronDown className='group-data-[state=open]/account:rotate-180! transition-transform' />
+					{/* Between md and lg the nav fills the bar, so the trigger shrinks to the avatar. */}
+					<span className='md:max-lg:sr-only'>{user.name}</span>
+					<IconChevronDown
+						size={24}
+						className='group-data-[state=open]/account:rotate-180! transition-transform'
+					/>
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent>
 				<DropdownMenuItem asChild>
 					<Link to='/account'>
-						<IconUser />
+						<IconUser size={24} />
 						Account
 					</Link>
 				</DropdownMenuItem>
 				<DropdownMenuItem asChild>
 					<Link to='/dashboard'>
-						<IconLayoutDashboard />
+						<IconGridLayout size={24} />
 						Dashboard
 					</Link>
 				</DropdownMenuItem>
 				{getStaffAreas(user.role).map((area) => (
 					<DropdownMenuItem key={area.id} asChild>
 						<Link to={area.to}>
-							<IconShield />
+							<IconShield size={24} />
 							{area.label}
 						</Link>
 					</DropdownMenuItem>
 				))}
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onSelect={signOut} variant='destructive'>
-					<IconLogout />
+					<IconRectLogout size={24} />
 					Log Out
 				</DropdownMenuItem>
 			</DropdownMenuContent>

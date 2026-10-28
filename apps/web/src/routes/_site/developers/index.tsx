@@ -1,4 +1,4 @@
-import { IconUsers, IconX, IconZoom, IconZoomCancel } from '@tabler/icons-react';
+import { IconMagnifier, IconMagnifierMinus, IconUsers, IconXmark } from 'nucleo-micro-bold';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createServerFn } from '@tanstack/react-start';
 import type { ChangeEvent, FormEvent } from 'react';
@@ -18,8 +18,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/in
 import type { DevelopersPage, DevelopersQuery } from '~/lib/developers';
 import useInfiniteDevelopers from '~/hooks/use-infinite-developers';
 import TeamSections from '~/components/team/team-sections';
-import BlurReveal from '~/components/motion/blur-reveal';
 import { pageSearchSchema } from '~/lib/page-search';
+import PageHeader from '~/components/page-header';
 import { listDevelopers } from '~/lib/developers';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
@@ -62,7 +62,7 @@ function TeamList({ first, search }: TeamListProps) {
 							<Text variant='text-sm' color='muted'>
 								Couldn't load more.
 							</Text>
-							<Button variant='outline' size='sm' onClick={retry}>
+							<Button variant='outline' onClick={retry}>
 								Try Again
 							</Button>
 						</>
@@ -109,7 +109,7 @@ function TeamContent() {
 			<Empty className='flex-1 my-auto'>
 				<EmptyHeader>
 					<EmptyMedia variant='icon'>
-						<IconUsers />
+						<IconUsers size={24} />
 					</EmptyMedia>
 					<EmptyTitle>Nobody Here Yet</EmptyTitle>
 					<EmptyDescription>
@@ -122,11 +122,11 @@ function TeamContent() {
 	}
 
 	return (
-		<div className='flex flex-col flex-1 gap-5 mb-12'>
+		<div className='flex flex-col flex-1 gap-6'>
 			<form onSubmit={handleSubmit} className='flex gap-2'>
 				<InputGroup className='w-full'>
 					<InputGroupAddon>
-						<IconZoom />
+						<IconMagnifier size={24} />
 					</InputGroupAddon>
 					<InputGroupInput
 						className='h-full'
@@ -141,7 +141,7 @@ function TeamContent() {
 				<Empty className='flex-1 my-auto'>
 					<EmptyHeader>
 						<EmptyMedia variant='icon'>
-							<IconZoomCancel />
+							<IconMagnifierMinus size={24} />
 						</EmptyMedia>
 						<EmptyTitle>Nobody Found</EmptyTitle>
 						<EmptyDescription>
@@ -150,7 +150,7 @@ function TeamContent() {
 					</EmptyHeader>
 					<EmptyContent>
 						<Button onClick={clearSearch}>
-							<IconX />
+							<IconXmark size={24} />
 							Clear Search
 						</Button>
 					</EmptyContent>
@@ -164,15 +164,11 @@ function TeamContent() {
 
 function TeamPage() {
 	return (
-		<div className='flex flex-col flex-1 gap-4 md:mx-auto px-4 w-full container'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>
-					<BlurReveal text='Team' />
-				</Text>
-				<Text variant='text-md' color='muted'>
-					The people that make your addon experience possible.
-				</Text>
-			</div>
+		<div className='flex flex-col flex-1 gap-6 page-frame'>
+			<PageHeader
+				title='Team'
+				description='The people that make your addon experience possible.'
+			/>
 			<TeamContent />
 		</div>
 	);

@@ -1,18 +1,18 @@
 import {
-	IconBrandOpenSource,
 	IconCode,
-	IconDeviceMobile,
+	IconCodeBranch,
+	IconMobile,
 	IconPalette,
 	IconPlug,
 	IconUsers,
-} from '@tabler/icons-react';
+} from 'nucleo-micro-bold';
 import type { ComponentType, CSSProperties, MouseEvent } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 
 import { Card, CardDescription, CardTitle } from '~/components/ui/card';
 import { revealStyle } from '~/components/motion/reveal-style';
 import BlurReveal from '~/components/motion/blur-reveal';
-import type { CssVariables } from '~/lib/css-variables';
+import HeroShowcase from '~/components/hero-showcase';
 import Reveal from '~/components/motion/reveal';
 import { Button } from '~/components/ui/button';
 import cn from '~/lib/cn';
@@ -46,12 +46,12 @@ const FEATURES: Feature[] = [
 		description: 'Personalize your Discord with custom themes and color schemes.',
 	},
 	{
-		icon: IconBrandOpenSource,
+		icon: IconCodeBranch,
 		title: 'Open Source',
 		description: 'Fully open-source and auditable under GPLv3. Transparency you can trust.',
 	},
 	{
-		icon: IconDeviceMobile,
+		icon: IconMobile,
 		title: 'Cross-Platform',
 		description:
 			'Built for both Android and iOS, bringing the same powerful customization to every mobile device.',
@@ -75,9 +75,8 @@ const FEATURES: Feature[] = [
 // The hero enters in sequence: title letters, then the tagline's words, then the actions and art.
 const TAGLINE_DELAY_MS = 250;
 const ACTIONS_STYLE = revealStyle('hero', 450);
-const ART_STYLE = revealStyle('card', 600);
+const ART_STYLE = revealStyle('showcase', 600);
 
-const GLOW_ORIGIN: CssVariables = { '--glow-x': '0px', '--glow-y': '0px' };
 const GLOW_POSITION: CSSProperties = { left: 'var(--glow-x)', top: 'var(--glow-y)' };
 const GLOW_RING_MASK = 'radial-gradient(250px at var(--glow-x) var(--glow-y), white, transparent)';
 const GLOW_RING: CSSProperties = { maskImage: GLOW_RING_MASK, WebkitMaskImage: GLOW_RING_MASK };
@@ -90,7 +89,7 @@ const GRID_VIGNETTE: CSSProperties = {
 // Every card's glow follows the pointer across the whole grid, so the offsets are written
 // straight to each card's CSS variables instead of re-rendering on every mouse move.
 function trackGlow(event: MouseEvent<HTMLDivElement>) {
-	for (const card of event.currentTarget.querySelectorAll<HTMLElement>('[data-feature]')) {
+	for (const card of event.currentTarget.querySelectorAll<HTMLElement>('[data-feature-glow]')) {
 		const rect = card.getBoundingClientRect();
 
 		card.style.setProperty('--glow-x', `${event.clientX - rect.left}px`);
@@ -108,22 +107,24 @@ function FeatureGrid() {
 				{FEATURES.map(({ icon: Icon, title, description, wide }, index) => (
 					<Reveal
 						key={title}
-						data-feature
-						style={GLOW_ORIGIN}
 						delay={0.05 * index}
 						className={cn(wide && 'md:col-span-2')}
 					>
-						<Card className='relative gap-3 bg-secondary/30 backdrop-blur-md p-6 border-transparent h-full overflow-hidden'>
+						{/* The glow starts off-card, so a pointer resting on the grid shows none until it moves. */}
+						<Card
+							data-feature-glow
+							className='relative [--glow-x:-9999px] [--glow-y:-9999px] gap-3 bg-secondary/30 backdrop-blur-md p-6 border-transparent h-full overflow-hidden'
+						>
 							<div
 								className='absolute bg-primary/8 blur-3xl rounded-full size-80 opacity-0 group-hover/features:opacity-100 transition-opacity -translate-x-1/2 -translate-y-1/2 duration-200 pointer-events-none'
 								style={GLOW_POSITION}
 							/>
 							<div
-								className='absolute inset-0 rounded-xl ring-1 ring-primary/15 ring-inset opacity-0 group-hover/features:opacity-100 transition-opacity duration-200 pointer-events-none'
+								className='absolute inset-0 rounded-[inherit] ring-1 ring-primary/15 ring-inset opacity-0 group-hover/features:opacity-100 transition-opacity duration-200 pointer-events-none'
 								style={GLOW_RING}
 							/>
-							<div className='absolute inset-0 ring-border/50 rounded-xl ring-1 ring-inset pointer-events-none' />
-							<div className='relative flex justify-center items-center bg-accent/50 backdrop-blur-md rounded-lg size-10'>
+							<div className='absolute inset-0 ring-border/50 rounded-[inherit] ring-1 ring-inset pointer-events-none' />
+							<div className='relative flex justify-center items-center bg-accent/50 backdrop-blur-md rounded-control size-10'>
 								<Icon className='size-5' />
 							</div>
 							<CardTitle className='relative'>{title}</CardTitle>
@@ -160,19 +161,18 @@ function HomePage() {
 						</a>
 					</Button>
 				</div>
-				<div
-					className='after:z-10 after:absolute relative after:inset-0 after:bg-[linear-gradient(to_bottom,transparent_0%,var(--color-background)_55%)] mt-16 md:mt-8 w-full max-w-[1600px] after:pointer-events-none animate-reveal'
+				<HeroShowcase
+					fade
+					className='mt-16 md:mt-8 w-full max-w-[1600px] animate-reveal'
 					style={ART_STYLE}
-				>
-					<img src='/img/hero.png' alt='Unbound hero' className='w-full' />
-				</div>
+				/>
 			</div>
 			<FeatureGrid />
 			<div className='relative w-full overflow-hidden'>
 				<div className='absolute inset-0' style={GRID_BACKGROUND} />
 				<div className='absolute inset-0' style={GRID_VIGNETTE} />
 				<Reveal className='z-10 relative flex flex-col items-center gap-4 mx-auto my-24 px-4 w-full max-w-6xl text-center'>
-					<h3 className='bg-clip-text bg-gradient-to-br from-foreground to-muted-foreground font-secondary font-semibold text-transparent text-2xl md:text-3xl'>
+					<h3 className='bg-clip-text bg-gradient-to-br from-foreground to-muted-foreground font-semibold text-transparent text-2xl md:text-3xl'>
 						Are you a developer?
 					</h3>
 					<p className='max-w-lg text-muted-foreground'>

@@ -1,5 +1,5 @@
 import { addonResponseSchema, maintainersResponseSchema } from '@unbound-app/contracts/addons';
-import { IconArrowsExchange, IconEye, IconEyeOff } from '@tabler/icons-react';
+import { IconEye, IconSwap, IconViewMinusSign } from 'nucleo-micro-bold';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { useRouter } from '@tanstack/react-router';
 import { useState, useTransition } from 'react';
@@ -49,7 +49,7 @@ function DelistDialog({ addon, disabled, run }: AddonActionProps) {
 		<ConfirmDialog
 			trigger={
 				<Button variant='destructive' size='sm' disabled={disabled}>
-					<IconEyeOff />
+					<IconViewMinusSign size={24} />
 					Delist
 				</Button>
 			}
@@ -83,7 +83,7 @@ function TransferDialog({ addon, disabled, run }: AddonActionProps) {
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
 				<Button variant='outline' size='sm' disabled={disabled}>
-					<IconArrowsExchange />
+					<IconSwap size={24} />
 					Transfer
 				</Button>
 			</DialogTrigger>
@@ -101,7 +101,7 @@ function TransferDialog({ addon, disabled, run }: AddonActionProps) {
 					onPick={setSelected}
 				/>
 				{selected ? (
-					<div className='flex items-center gap-3 bg-accent px-3 py-2 rounded-lg'>
+					<div className='flex items-center gap-3 bg-accent px-3 py-2 rounded-control'>
 						<UserAvatar src={selected.image} name={selected.name} size='xs' />
 						<Text as='span' variant='text-sm' className='flex-1 truncate'>
 							{selected.name}
@@ -113,7 +113,7 @@ function TransferDialog({ addon, disabled, run }: AddonActionProps) {
 						Cancel
 					</Button>
 					<Button onClick={transfer} disabled={disabled || !selected}>
-						<IconArrowsExchange />
+						<IconSwap size={24} />
 						Transfer
 					</Button>
 				</DialogFooter>
@@ -155,7 +155,7 @@ function AddonActions({ addon, canDelist, canTransfer }: AddonActionsProps) {
 			{canTransfer ? <TransferDialog addon={addon} disabled={isPending} run={run} /> : null}
 			{canDelist && addon.delistedAt ? (
 				<Button variant='secondary' size='sm' onClick={relist} disabled={isPending}>
-					<IconEye />
+					<IconEye size={24} />
 					Relist
 				</Button>
 			) : null}

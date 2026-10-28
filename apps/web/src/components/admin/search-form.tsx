@@ -1,5 +1,5 @@
 import { ADMIN_SEARCH_MAX_LENGTH, ADMIN_SEARCH_MIN_LENGTH } from '@unbound-app/contracts/admin';
-import { IconZoom } from '@tabler/icons-react';
+import { IconMagnifier } from 'nucleo-micro-bold';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
 
@@ -30,7 +30,7 @@ function SearchForm({ search, placeholder, onSearch }: SearchFormProps) {
 		<form onSubmit={submit} className='flex gap-2'>
 			<InputGroup className='max-w-sm'>
 				<InputGroupAddon>
-					<IconZoom />
+					<IconMagnifier size={24} />
 				</InputGroupAddon>
 				<InputGroupInput
 					placeholder={placeholder}

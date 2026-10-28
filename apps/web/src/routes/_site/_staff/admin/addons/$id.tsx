@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft } from 'nucleo-micro-bold';
 
 import AddonSettingsForm from '~/components/admin/addon-settings/addon-settings-form';
 import SubmissionHistory from '~/components/admin/submission-history';
@@ -56,7 +56,7 @@ function AdminAddonPage() {
 					</div>
 					<AddonActions addon={addon} canDelist={canDelist} canTransfer={canTransfer} />
 				</div>
-				<Card className='gap-4 grid grid-cols-2 md:grid-cols-4 px-5 py-4'>
+				<Card className='gap-4 grid grid-cols-2 md:grid-cols-4 p-(--card-pad)'>
 					<DetailFact label='Type'>
 						<span className='capitalize'>{addon.type}</span>
 					</DetailFact>
@@ -77,13 +77,13 @@ function AdminAddonPage() {
 				</DetailSection>
 			) : (
 				<DetailSection title='Maintainers'>
-					<Card className='flex-row flex-wrap gap-3 px-5 py-4'>
+					<Card className='flex-row flex-wrap gap-3 p-(--card-pad)'>
 						{maintainers.map((maintainer) => (
 							<Link
 								key={maintainer.id}
 								to='/admin/users/$id'
 								params={{ id: maintainer.id }}
-								className='flex items-center gap-2 hover:bg-accent/50 px-2 py-1 rounded-lg'
+								className='flex items-center gap-2 hover:bg-accent/50 px-2 py-1 rounded-item press-flat'
 							>
 								<UserAvatar
 									src={maintainer.image}

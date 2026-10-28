@@ -33,7 +33,7 @@ function AuthorRow({ author }: AuthorRowProps) {
 		<div className='flex items-center gap-3'>
 			<UserAvatar
 				size='sm'
-				className='rounded-lg object-cover'
+				className='rounded-item object-cover'
 				src={author.avatarUrl}
 				name={author.name}
 			/>

@@ -40,7 +40,10 @@ function AddonMdReview({ entry }: AddonMdReviewProps) {
 					{SUMMARIES[diff.state]}
 				</Text>
 				{views.length > 1 ? (
-					<div role='tablist' className='flex gap-1 bg-muted ml-auto p-0.5 rounded-md'>
+					<div
+						role='tablist'
+						className='flex gap-1 bg-muted shadow-field ml-auto p-1 rounded-control'
+					>
 						{views.map((candidate) => (
 							<button
 								key={candidate}
@@ -49,8 +52,9 @@ function AddonMdReview({ entry }: AddonMdReviewProps) {
 								aria-selected={candidate === view}
 								onClick={() => setSelected(candidate)}
 								className={cn(
-									'px-2.5 py-1 rounded text-muted-foreground text-xs transition-colors',
-									candidate === view && 'bg-background text-foreground shadow-xs',
+									'px-3 py-1 rounded-item font-semibold text-muted-foreground text-xs press-flat',
+									candidate === view &&
+										'bg-background text-foreground shadow-surface',
 								)}
 							>
 								{VIEW_LABELS[candidate]}
@@ -61,7 +65,7 @@ function AddonMdReview({ entry }: AddonMdReviewProps) {
 			</div>
 
 			{view === 'rendered' && addonMd !== null ? (
-				<div className='p-4 border border-border rounded-lg max-h-[32rem] overflow-auto'>
+				<div className='p-4 border border-border rounded-control max-h-[32rem] overflow-auto'>
 					<Markdown source={addonMd} pin={source} />
 				</div>
 			) : null}

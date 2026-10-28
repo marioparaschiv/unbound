@@ -1,4 +1,4 @@
-import { IconNote, IconPencil, IconTrash } from '@tabler/icons-react';
+import { IconNote, IconPen, IconTrash } from 'nucleo-micro-bold';
 import type { Subject } from '@unbound-app/contracts/admin';
 import { Link, useRouter } from '@tanstack/react-router';
 import { useState, useTransition } from 'react';
@@ -102,7 +102,7 @@ function NoteComposer({ subject, disabled, run }: NoteComposerProps) {
 	}
 
 	return (
-		<Card className='p-4'>
+		<Card className='p-(--card-pad)'>
 			<NoteEditor
 				value={body}
 				onChange={setBody}
@@ -137,7 +137,7 @@ function NoteItem({ note, canWrite, disabled, run }: NoteItemProps) {
 	}
 
 	return (
-		<li className='flex gap-3 p-4'>
+		<li className='flex gap-3 p-(--card-pad)'>
 			<UserAvatar
 				src={note.author?.image ?? null}
 				name={note.author?.name ?? '?'}
@@ -169,7 +169,7 @@ function NoteItem({ note, canWrite, disabled, run }: NoteItemProps) {
 								disabled={disabled}
 								onClick={() => setDraft(note.body)}
 							>
-								<IconPencil />
+								<IconPen size={24} />
 							</Button>
 							<ConfirmDialog
 								trigger={
@@ -179,7 +179,7 @@ function NoteItem({ note, canWrite, disabled, run }: NoteItemProps) {
 										aria-label='Delete note'
 										disabled={disabled}
 									>
-										<IconTrash />
+										<IconTrash size={24} />
 									</Button>
 								}
 								title='Delete this note?'
@@ -236,7 +236,7 @@ function StaffNotes({ subject, notes, canWrite }: StaffNotesProps) {
 		<div className='flex flex-col gap-3'>
 			{canWrite ? <NoteComposer subject={subject} disabled={isPending} run={run} /> : null}
 			{notes.length === 0 ? (
-				<Card className='flex-row items-center gap-2 p-5'>
+				<Card className='flex-row items-center gap-2 p-(--card-pad)'>
 					<IconNote className='size-4 text-muted-foreground' />
 					<Text variant='text-sm' color='muted'>
 						No staff notes yet.

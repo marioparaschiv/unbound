@@ -1,11 +1,11 @@
 import {
+	IconMagnifier,
+	IconMagnifierMinus,
 	IconPalette,
 	IconPlug,
 	IconPlus,
-	IconX,
-	IconZoom,
-	IconZoomCancel,
-} from '@tabler/icons-react';
+	IconXmark,
+} from 'nucleo-micro-bold';
 import type { AddonSort, SortOrder } from '@unbound-app/contracts/addons';
 import type { ChangeEvent, ComponentType, FormEvent } from 'react';
 import { Link, useRouteContext } from '@tanstack/react-router';
@@ -26,14 +26,13 @@ import type { MarketplacePage, MarketplaceSearch } from '~/lib/marketplace';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import type { MarketplaceAddon } from '~/lib/marketplace-addon';
 import type { SortOption } from '~/components/sort-controls';
-import BlurReveal from '~/components/motion/blur-reveal';
 import { fetchMarketplacePage } from '~/lib/marketplace';
 import type { CssVariables } from '~/lib/css-variables';
 import SortControls from '~/components/sort-controls';
+import PageHeader from '~/components/page-header';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
-import Text from '~/components/ui/text';
 
 type ListingType = 'plugin' | 'theme';
 
@@ -91,10 +90,10 @@ function SubmitButton() {
 	const session = useRouteContext({ from: '__root__', select: (context) => context.session });
 
 	return (
-		<Button asChild>
+		<Button asChild className='flex-1 sm:flex-none'>
 			<Link to={session ? '/submit' : '/login'}>
-				<IconPlus />
-				<span className='hidden sm:inline'>Submit</span>
+				<IconPlus size={24} />
+				Submit
 			</Link>
 		</Button>
 	);
@@ -147,7 +146,7 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 			<Empty className='flex-1 my-auto'>
 				<EmptyHeader>
 					<EmptyMedia variant='icon'>
-						<IconZoomCancel />
+						<IconMagnifierMinus size={24} />
 					</EmptyMedia>
 					<EmptyTitle>No {copy.title} Found</EmptyTitle>
 					<EmptyDescription>
@@ -156,7 +155,7 @@ function AddonResults({ type, page, search, onClearSearch }: AddonResultsProps) 
 				</EmptyHeader>
 				<EmptyContent>
 					<Button onClick={onClearSearch}>
-						<IconX />
+						<IconXmark size={24} />
 						Clear Search
 					</Button>
 				</EmptyContent>
@@ -227,20 +226,16 @@ function AddonListing({ type, page, search, onSearchChange }: AddonListingProps)
 	}
 
 	return (
-		<div className='flex flex-col flex-1 gap-4 md:mx-auto px-4 w-full container'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>
-					<BlurReveal text={copy.title} />
-				</Text>
-				<Text variant='text-md' color='muted'>
-					{copy.description}
-				</Text>
-			</div>
-			<div className='flex flex-col flex-1 gap-5 mb-12'>
-				<form onSubmit={handleSubmit} className='flex gap-2'>
+		<div className='flex flex-col flex-1 gap-6 page-frame'>
+			<PageHeader title={copy.title} description={copy.description} />
+			<div className='flex flex-col flex-1 gap-6'>
+				<form
+					onSubmit={handleSubmit}
+					className='flex flex-wrap sm:flex-nowrap gap-x-2 gap-y-3'
+				>
 					<InputGroup className='w-full'>
 						<InputGroupAddon>
-							<IconZoom />
+							<IconMagnifier size={24} />
 						</InputGroupAddon>
 						<InputGroupInput
 							className='h-full'

@@ -1,6 +1,6 @@
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { useRef, useState, useTransition } from 'react';
-import { IconSearch } from '@tabler/icons-react';
+import { IconMagnifier } from 'nucleo-micro-bold';
 import { toast } from 'sonner';
 
 import {
@@ -126,7 +126,7 @@ function UserSearch({ id, placeholder, className, disabledIds, onPick }: UserSea
 				autoComplete='off'
 			>
 				<InputGroupAddon>
-					<IconSearch />
+					<IconMagnifier size={24} />
 				</InputGroupAddon>
 			</ComboboxInput>
 			<ComboboxContent className='min-w-64'>

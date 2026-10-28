@@ -3,7 +3,7 @@ import {
 	IconChevronLeft,
 	IconChevronRight,
 	IconChevronUp,
-} from '@tabler/icons-react';
+} from 'nucleo-micro-bold';
 import type { ChevronProps, DayButtonProps, RootProps, WeekNumberProps } from 'react-day-picker';
 import { DayPicker, getDefaultClassNames } from 'react-day-picker';
 import type { ComponentProps } from 'react';
@@ -64,8 +64,8 @@ function CalendarDayButton({ className, day, modifiers, ...props }: DayButtonPro
 			data-range-end={Boolean(modifiers.range_end)}
 			data-range-middle={Boolean(modifiers.range_middle)}
 			className={cn(
-				'hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring/50 inline-flex items-center justify-center rounded-md text-sm transition-all outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50',
-				'data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md',
+				'press-flat hover:bg-accent hover:text-accent-foreground focus-visible:ring-halo inline-flex items-center justify-center rounded-item text-sm outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50',
+				'data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground group-data-[focused=true]/day:ring-halo flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] data-[range-end=true]:rounded-item data-[range-end=true]:rounded-r-item data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-item data-[range-start=true]:rounded-l-item',
 				className,
 			)}
 			{...props}
@@ -107,7 +107,7 @@ function Calendar({
 				month_grid: 'w-full border-collapse',
 				weekdays: cn('flex', defaults.weekdays),
 				weekday: cn(
-					'text-muted-foreground flex-1 rounded-md text-[0.8rem] font-normal select-none',
+					'text-muted-foreground flex-1 rounded-item text-[0.8rem] font-normal select-none',
 					defaults.weekday,
 				),
 				week: cn('mt-2 flex w-full', defaults.week),
@@ -117,14 +117,14 @@ function Calendar({
 					defaults.week_number,
 				),
 				day: cn(
-					'group/day relative aspect-square h-full w-full p-0 text-center select-none [&:first-child[data-selected=true]_button]:rounded-l-md [&:last-child[data-selected=true]_button]:rounded-r-md',
+					'group/day relative aspect-square h-full w-full p-0 text-center select-none [&:first-child[data-selected=true]_button]:rounded-l-item [&:last-child[data-selected=true]_button]:rounded-r-item',
 					defaults.day,
 				),
-				range_start: cn('bg-accent rounded-l-md', defaults.range_start),
+				range_start: cn('bg-accent rounded-l-item', defaults.range_start),
 				range_middle: cn('rounded-none', defaults.range_middle),
-				range_end: cn('bg-accent rounded-r-md', defaults.range_end),
+				range_end: cn('bg-accent rounded-r-item', defaults.range_end),
 				today: cn(
-					'bg-accent text-accent-foreground rounded-md data-[selected=true]:rounded-none',
+					'bg-accent text-accent-foreground rounded-item data-[selected=true]:rounded-none',
 					defaults.today,
 				),
 				outside: cn(

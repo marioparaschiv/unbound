@@ -1,4 +1,4 @@
-import { IconPalette, IconPlug } from '@tabler/icons-react';
+import { IconPalette, IconPlug } from 'nucleo-micro-bold';
 import { Link } from '@tanstack/react-router';
 import type { ComponentProps } from 'react';
 
@@ -17,13 +17,13 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 	return (
 		<Card
 			className={cn(
-				'relative gap-0 hover:shadow-lg p-0 rounded-lg transition-[translate,box-shadow] hover:-translate-y-1 duration-200 ease-out',
+				'relative gap-0 p-0 transition-[translate,box-shadow] duration-(--press-duration) ease-spring hover:-translate-y-0.5 hover:shadow-float motion-reduce:hover:translate-y-0',
 				className,
 			)}
 			{...props}
 		>
-			<CardHeader className='flex flex-row items-center gap-3 p-4 pb-0'>
-				<div className='flex justify-center items-center bg-accent rounded-lg size-10 shrink-0'>
+			<CardHeader className='flex flex-row items-center gap-3 p-(--card-pad) pb-0'>
+				<div className='flex justify-center items-center bg-accent rounded-control size-10 shrink-0'>
 					{addon.type === 'theme' ? (
 						<IconPalette className='size-5' />
 					) : (
@@ -36,7 +36,7 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 						<Link
 							to='/addons/$id'
 							params={{ id: addon.id }}
-							className='after:absolute after:inset-0 after:rounded-lg'
+							className='after:absolute after:inset-0 after:rounded-surface'
 						>
 							{addon.name}
 						</Link>
@@ -49,12 +49,12 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 					v{addon.version}
 				</Text>
 			</CardHeader>
-			<CardContent className='flex flex-col gap-3 p-4'>
+			<CardContent className='flex flex-col gap-3 px-(--card-pad) pt-3 pb-0'>
 				<Text variant='text-sm' color='muted' className='line-clamp-2'>
 					{addon.description}
 				</Text>
 			</CardContent>
-			<CardFooter className='flex items-center gap-3 mt-auto px-4 pt-0 pb-3'>
+			<CardFooter className='flex items-center gap-3 mt-auto px-(--card-pad) pt-2 pb-(--card-pad)'>
 				<InstallAddonButton
 					className='z-10 relative ml-auto'
 					size='icon-sm'
