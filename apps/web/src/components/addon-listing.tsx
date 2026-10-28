@@ -28,10 +28,10 @@ import type { SortOption } from '~/components/sort-controls';
 import { fetchMarketplacePage } from '~/lib/marketplace';
 import type { CssVariables } from '~/lib/css-variables';
 import SortControls from '~/components/sort-controls';
+import PageHeader from '~/components/page-header';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
-import Text from '~/components/ui/text';
 
 type ListingType = 'plugin' | 'theme';
 
@@ -217,14 +217,9 @@ function AddonListing({ type, page, search, onSearchChange }: AddonListingProps)
 	}
 
 	return (
-		<div className='flex flex-col flex-1 gap-4 page-frame'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>{copy.title}</Text>
-				<Text variant='text-md' color='muted'>
-					{copy.description}
-				</Text>
-			</div>
-			<div className='flex flex-col flex-1 gap-5 mb-12'>
+		<div className='flex flex-col flex-1 gap-6 page-frame'>
+			<PageHeader title={copy.title} description={copy.description} />
+			<div className='flex flex-col flex-1 gap-6'>
 				<form onSubmit={handleSubmit} className='flex gap-2'>
 					<InputGroup className='w-full'>
 						<InputGroupAddon>

@@ -8,6 +8,7 @@ import {
 	AccordionTrigger,
 } from '~/components/ui/accordion';
 import { ProseItem, ProseList } from '~/components/prose';
+import PageHeader from '~/components/page-header';
 import Text from '~/components/ui/text';
 
 type FaqLinkProps = {
@@ -43,13 +44,11 @@ function FaqAnswer({ children, className }: FaqAnswerProps) {
 
 function FaqPage() {
 	return (
-		<div className='flex flex-col flex-1 gap-4 mb-12 page-frame'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>Frequently Asked Questions</Text>
-				<Text variant='text-md' color='muted'>
-					Find answers to common questions about Unbound.
-				</Text>
-			</div>
+		<div className='flex flex-col flex-1 gap-6 page-frame'>
+			<PageHeader
+				title='Frequently Asked Questions'
+				description='Find answers to common questions about Unbound.'
+			/>
 
 			<Accordion type='multiple'>
 				<AccordionItem value='what-is'>

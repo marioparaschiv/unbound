@@ -21,7 +21,7 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 				<div className='flex justify-center items-center bg-accent border rounded-surface size-16 shrink-0'>
 					<Icon className='size-8' />
 				</div>
-				<div className='flex flex-col flex-1 gap-1 min-w-0'>
+				<div className='flex flex-col flex-1 gap-2 min-w-0'>
 					<Text as='h1' variant='heading-lg' className='truncate'>
 						{addon.name}
 					</Text>

@@ -8,8 +8,8 @@ import { fetchAdminAddons } from '~/lib/admin-functions';
 import AdminTable from '~/components/admin/admin-table';
 import SearchForm from '~/components/admin/search-form';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
+import PageHeader from '~/components/page-header';
 import { hasPermission } from '~/lib/auth/access';
-import Text from '~/components/ui/text';
 
 const COLUMNS = ['Addon', 'Latest', 'Owners', 'Status'];
 
@@ -24,12 +24,10 @@ function AddonsPage() {
 
 	return (
 		<div className='flex flex-col gap-6'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>Addons</Text>
-				<Text variant='text-md' color='muted'>
-					Delist or relist addons and transfer their ownership.
-				</Text>
-			</div>
+			<PageHeader
+				title='Addons'
+				description='Delist or relist addons and transfer their ownership.'
+			/>
 
 			<SearchForm
 				key={search}

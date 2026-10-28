@@ -17,9 +17,9 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/in
 import { pageSearchSchema, toPageSearch } from '~/lib/page-search';
 import DeveloperCard from '~/components/developer-card';
 import type { CssVariables } from '~/lib/css-variables';
+import PageHeader from '~/components/page-header';
 import { listDevelopers } from '~/lib/developers';
 import { Button } from '~/components/ui/button';
-import Text from '~/components/ui/text';
 import Pager from '~/components/pager';
 import app from '~/lib/app';
 
@@ -83,7 +83,7 @@ function DevelopersContent() {
 	}
 
 	return (
-		<div className='flex flex-col flex-1 gap-5 mb-12'>
+		<div className='flex flex-col flex-1 gap-6'>
 			<form onSubmit={handleSubmit} className='flex gap-2'>
 				<InputGroup className='w-full'>
 					<InputGroupAddon>
@@ -118,7 +118,7 @@ function DevelopersContent() {
 				</Empty>
 			) : (
 				<>
-					<div style={GRID_STYLE} className='fill-grid gap-3'>
+					<div style={GRID_STYLE} className='fill-grid'>
 						{developers.map((developer) => (
 							<DeveloperCard developer={developer} key={developer.author.discordId} />
 						))}
@@ -140,13 +140,11 @@ function DevelopersContent() {
 
 function DevelopersPage() {
 	return (
-		<div className='flex flex-col flex-1 gap-4 page-frame'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>Developers</Text>
-				<Text variant='text-md' color='muted'>
-					The contributors that make your addon experience possible.
-				</Text>
-			</div>
+		<div className='flex flex-col flex-1 gap-6 page-frame'>
+			<PageHeader
+				title='Developers'
+				description='The contributors that make your addon experience possible.'
+			/>
 			<DevelopersContent />
 		</div>
 	);

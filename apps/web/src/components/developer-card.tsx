@@ -24,14 +24,14 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 			)}
 			{...props}
 		>
-			<div className='flex items-center justify-center size-10 shrink-0 rounded-control bg-accent m-4 mr-0 overflow-hidden'>
+			<div className='flex items-center justify-center size-10 shrink-0 rounded-control bg-accent m-(--card-pad) mr-0 overflow-hidden'>
 				<UserAvatar
 					className='size-full rounded-control object-cover'
 					src={author.avatarUrl}
 					name={author.name}
 				/>
 			</div>
-			<CardContent className='flex flex-col gap-0.5 p-4 min-w-0'>
+			<CardContent className='flex flex-col gap-0.5 p-(--card-pad) min-w-0'>
 				<Text variant='heading-sm' className='truncate leading-tight!'>
 					<Link
 						to='/developers/$discordId'

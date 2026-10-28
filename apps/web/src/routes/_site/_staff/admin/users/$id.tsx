@@ -52,7 +52,7 @@ function AdminUserPage() {
 						isSelf={user.id === viewer.id}
 					/>
 				</div>
-				<Card className='gap-4 grid grid-cols-2 md:grid-cols-4 px-5 py-4'>
+				<Card className='gap-4 grid grid-cols-2 md:grid-cols-4 p-(--card-pad)'>
 					<DetailFact label='Email'>
 						<span className='break-all'>{user.email}</span>
 					</DetailFact>
@@ -87,7 +87,7 @@ function AdminUserPage() {
 
 			<DetailSection title='Addons'>
 				{addons.length === 0 ? (
-					<Card className='p-5'>
+					<Card className='p-(--card-pad)'>
 						<Text variant='text-sm' color='muted'>
 							Maintains no addons.
 						</Text>

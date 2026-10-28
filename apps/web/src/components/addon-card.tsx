@@ -22,7 +22,7 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 			)}
 			{...props}
 		>
-			<CardHeader className='flex flex-row items-center gap-3 p-4 pb-0'>
+			<CardHeader className='flex flex-row items-center gap-3 p-(--card-pad) pb-0'>
 				<div className='flex justify-center items-center bg-accent rounded-control size-10 shrink-0'>
 					{addon.type === 'theme' ? (
 						<IconPalette className='size-5' />
@@ -49,12 +49,12 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 					v{addon.version}
 				</Text>
 			</CardHeader>
-			<CardContent className='flex flex-col gap-3 p-4'>
+			<CardContent className='flex flex-col gap-3 px-(--card-pad) pt-3 pb-0'>
 				<Text variant='text-sm' color='muted' className='line-clamp-2'>
 					{addon.description}
 				</Text>
 			</CardContent>
-			<CardFooter className='flex items-center gap-3 mt-auto px-4 pt-0 pb-3'>
+			<CardFooter className='flex items-center gap-3 mt-auto px-(--card-pad) pt-2 pb-(--card-pad)'>
 				<InstallAddonButton
 					className='z-10 relative ml-auto'
 					size='icon-sm'

@@ -52,7 +52,7 @@ function DeveloperPage() {
 	const { author, addons } = Route.useLoaderData();
 
 	return (
-		<div className='flex flex-col flex-1 gap-8 mb-12 page-frame'>
+		<div className='flex flex-col flex-1 gap-8 page-frame'>
 			<header className='flex sm:flex-row flex-col sm:items-center gap-4'>
 				<UserAvatar
 					size='xl'

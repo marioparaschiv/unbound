@@ -6,20 +6,18 @@ import ApiKeysCard from '~/components/account/api-keys-card';
 import ProfileCard from '~/components/account/profile-card';
 import PerksCard from '~/components/account/perks-card';
 import { getAccountOverview } from '~/lib/auth/account';
-import Text from '~/components/ui/text';
+import PageHeader from '~/components/page-header';
 
 function AccountPage() {
 	const { user } = Route.useRouteContext();
 	const { accounts, apiKeys, sponsor } = Route.useLoaderData();
 
 	return (
-		<div className='flex flex-col gap-6 mb-12 page-frame'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>Account Settings</Text>
-				<Text variant='text-md' color='muted'>
-					Manage your account information, linked accounts, sponsorship and API keys.
-				</Text>
-			</div>
+		<div className='flex flex-col gap-6 page-frame'>
+			<PageHeader
+				title='Account Settings'
+				description='Manage your account information, linked accounts, sponsorship and API keys.'
+			/>
 
 			<ProfileCard user={user} />
 			<LinkedAccountsCard accounts={accounts} />

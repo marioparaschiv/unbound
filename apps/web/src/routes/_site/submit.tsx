@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import SubmitForm from '~/components/submit/submit-form';
 import { getSubmitOverview } from '~/lib/publishing';
-import Text from '~/components/ui/text';
+import PageHeader from '~/components/page-header';
 
 function SubmitAddonPage() {
 	const { githubLinked } = Route.useLoaderData();
@@ -17,15 +17,11 @@ function SubmitAddonPage() {
 	}
 
 	return (
-		<div className='flex flex-col gap-6 mb-12 page-frame'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>Submit Addon</Text>
-				<Text variant='text-md' color='muted'>
-					Submit a new theme or plugin, or an update to one you maintain, for review. This
-					is the same flow as ubd publish: reviewers see exactly the files at the commit
-					you pick.
-				</Text>
-			</div>
+		<div className='flex flex-col gap-6 page-frame'>
+			<PageHeader
+				title='Submit Addon'
+				description='Submit a new theme or plugin, or an update to one you maintain, for review. This is the same flow as ubd publish: reviewers see exactly the files at the commit you pick.'
+			/>
 
 			<Card>
 				<CardHeader>

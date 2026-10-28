@@ -98,6 +98,7 @@
 
 	--page-gutter: 1rem;
 	--control-h: 2.75rem;
+	--card-pad: 1.25rem;
 	--ledge-depth: 4px;
 	--press-lift: 1px;
 	--press-duration: 180ms;
@@ -221,6 +222,19 @@ code {
 	z-index: -1;
 	pointer-events: none;
 	background: linear-gradient(to bottom, transparent, var(--background) 60%);
+}
+
+@media (width >= 48rem) {
+	:root {
+		--page-gutter: 1.5rem;
+		--card-pad: 1.5rem;
+	}
+}
+
+@media (width >= 64rem) {
+	:root {
+		--page-gutter: 2rem;
+	}
 }
 
 /* The page column: header, content and footer all share its width and gutter. */

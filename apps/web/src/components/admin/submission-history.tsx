@@ -71,7 +71,7 @@ function Decision({ decision }: DecisionProps) {
 function SubmissionHistory({ submissions, label }: SubmissionHistoryProps) {
 	if (submissions.length === 0) {
 		return (
-			<Card className='p-5'>
+			<Card className='p-(--card-pad)'>
 				<Text variant='text-sm' color='muted'>
 					No submissions.
 				</Text>
@@ -82,7 +82,7 @@ function SubmissionHistory({ submissions, label }: SubmissionHistoryProps) {
 	return (
 		<Card className='p-0 gap-0 divide-y divide-border'>
 			{submissions.map((submission) => (
-				<div key={submission.id} className='flex flex-col gap-3 p-4'>
+				<div key={submission.id} className='flex flex-col gap-3 p-(--card-pad)'>
 					<div className='flex flex-wrap items-center gap-2'>
 						{label === 'addon' ? (
 							<Text as='span' variant='text-sm' className='font-mono'>

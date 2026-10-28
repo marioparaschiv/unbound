@@ -52,7 +52,7 @@ function Header() {
 
 	return (
 		<header className='flex flex-col items-center'>
-			<div id='header' className='z-20 sticky my-6 pointer-events-none page-frame'>
+			<div id='header' className='z-20 sticky mt-6 pointer-events-none page-frame'>
 				<div className='bg-card/80 shadow-surface backdrop-blur-md pt-2.5 pr-2.5 pb-3.5 pl-3.5 border rounded-surface w-full text-foreground pointer-events-auto'>
 					<div className='flex items-center gap-3 h-11'>
 						<Link

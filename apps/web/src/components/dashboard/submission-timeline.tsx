@@ -14,7 +14,7 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', time
 
 function SubmissionTimeline({ entries }: SubmissionTimelineProps) {
 	return (
-		<Card className='p-5'>
+		<Card className='p-(--card-pad)'>
 			<ol className='flex flex-col'>
 				{entries.map((entry, index) => (
 					<li key={entry.id} className='relative pb-5 last:pb-0 pl-6'>

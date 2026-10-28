@@ -25,7 +25,7 @@ function AddonPage() {
 	const { source } = addon;
 
 	return (
-		<div className='flex flex-col flex-1 gap-8 mb-12 page-frame'>
+		<div className='flex flex-col flex-1 gap-8 page-frame'>
 			<AddonHeader addon={addon} />
 
 			<div className='items-start gap-6 grid grid-cols-1 lg:grid-cols-3'>

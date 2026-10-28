@@ -56,7 +56,7 @@ function AdminAddonPage() {
 					</div>
 					<AddonActions addon={addon} canDelist={canDelist} canTransfer={canTransfer} />
 				</div>
-				<Card className='gap-4 grid grid-cols-2 md:grid-cols-4 px-5 py-4'>
+				<Card className='gap-4 grid grid-cols-2 md:grid-cols-4 p-(--card-pad)'>
 					<DetailFact label='Type'>
 						<span className='capitalize'>{addon.type}</span>
 					</DetailFact>
@@ -77,7 +77,7 @@ function AdminAddonPage() {
 				</DetailSection>
 			) : (
 				<DetailSection title='Maintainers'>
-					<Card className='flex-row flex-wrap gap-3 px-5 py-4'>
+					<Card className='flex-row flex-wrap gap-3 p-(--card-pad)'>
 						{maintainers.map((maintainer) => (
 							<Link
 								key={maintainer.id}

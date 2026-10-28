@@ -12,14 +12,14 @@ type UserIdCardProps = {
 
 function UserIdCard({ userId }: UserIdCardProps) {
 	return (
-		<Card className='gap-4 py-5'>
-			<CardHeader className='px-5'>
+		<Card className='gap-4'>
+			<CardHeader>
 				<CardTitle className='text-base'>Your User ID</CardTitle>
 				<Text variant='text-sm' color='muted'>
 					Share it with an addon’s owner so they can add you as a maintainer.
 				</Text>
 			</CardHeader>
-			<CardContent className='flex gap-2 px-5'>
+			<CardContent className='flex gap-2'>
 				<Input readOnly value={userId} aria-label='Your user ID' className='font-mono' />
 				<Button variant='outline' onClick={() => copyText(userId, 'ID')}>
 					<IconCopy />

@@ -102,7 +102,7 @@ function NoteComposer({ subject, disabled, run }: NoteComposerProps) {
 	}
 
 	return (
-		<Card className='p-4'>
+		<Card className='p-(--card-pad)'>
 			<NoteEditor
 				value={body}
 				onChange={setBody}
@@ -137,7 +137,7 @@ function NoteItem({ note, canWrite, disabled, run }: NoteItemProps) {
 	}
 
 	return (
-		<li className='flex gap-3 p-4'>
+		<li className='flex gap-3 p-(--card-pad)'>
 			<UserAvatar
 				src={note.author?.image ?? null}
 				name={note.author?.name ?? '?'}
@@ -236,7 +236,7 @@ function StaffNotes({ subject, notes, canWrite }: StaffNotesProps) {
 		<div className='flex flex-col gap-3'>
 			{canWrite ? <NoteComposer subject={subject} disabled={isPending} run={run} /> : null}
 			{notes.length === 0 ? (
-				<Card className='flex-row items-center gap-2 p-5'>
+				<Card className='flex-row items-center gap-2 p-(--card-pad)'>
 					<IconNote className='size-4 text-muted-foreground' />
 					<Text variant='text-sm' color='muted'>
 						No staff notes yet.

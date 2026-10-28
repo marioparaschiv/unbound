@@ -28,7 +28,7 @@ function describeLive(addon: DashboardAddon): string {
 
 function AddonRow({ addon, userId, githubLinked }: AddonRowProps) {
 	return (
-		<li className='flex flex-wrap items-center gap-x-4 gap-y-3 p-4'>
+		<li className='flex flex-wrap items-center gap-x-4 gap-y-3 p-(--card-pad)'>
 			<div className='flex justify-center items-center bg-accent rounded-control size-10 shrink-0'>
 				{addon.type === 'theme' ? (
 					<IconPalette className='size-5' />

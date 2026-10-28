@@ -8,9 +8,9 @@ import AdminTable from '~/components/admin/admin-table';
 import SearchForm from '~/components/admin/search-form';
 import { fetchAdminUsers } from '~/lib/admin-functions';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
+import PageHeader from '~/components/page-header';
 import UserAvatar from '~/components/user-avatar';
 import { hasPermission } from '~/lib/auth/access';
-import Text from '~/components/ui/text';
 
 const COLUMNS = ['User', 'Email', 'Role', 'Status', 'Joined'];
 
@@ -24,12 +24,10 @@ function UsersPage() {
 
 	return (
 		<div className='flex flex-col gap-6'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>Users</Text>
-				<Text variant='text-md' color='muted'>
-					Search users, change their roles and ban or unban them.
-				</Text>
-			</div>
+			<PageHeader
+				title='Users'
+				description='Search users, change their roles and ban or unban them.'
+			/>
 
 			<SearchForm
 				key={search}

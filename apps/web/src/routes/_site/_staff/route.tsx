@@ -20,7 +20,7 @@ function StaffLayout() {
 	const { sections } = Route.useRouteContext();
 
 	return (
-		<div className='flex md:flex-row flex-col flex-1 gap-6 mb-12 page-frame'>
+		<div className='flex md:flex-row flex-col flex-1 gap-6 page-frame'>
 			<aside className='md:w-64 shrink-0'>
 				<div className='top-6 sticky bg-card/80 shadow-surface backdrop-blur-md p-3 border rounded-surface text-foreground'>
 					<Text variant='heading-sm' className='mt-1 mb-3 px-3'>
