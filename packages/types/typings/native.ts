@@ -566,6 +566,8 @@ export type NativePlatformIOSBridge = {
 
 export type NativePlatformApp = {
 	getAppSource(): string;
+	/** True for the first caller in this process; a reloaded runtime sees false. Missing on older loaders. */
+	claimLaunchURL?(): boolean;
 };
 
 export type NativePlatformFiles = {
