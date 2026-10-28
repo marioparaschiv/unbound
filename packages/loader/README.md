@@ -88,12 +88,7 @@ Without the signing variables, `:app:assembleRelease` signs with the debug key. 
 ./manager/gradlew -p manager :app:ktlintCheck :app:testDebugUnitTest :app:assembleRelease
 ```
 
-The emulator end-to-end test installs builds that `go run ./tools manager-fixture` serves as a fake GitHub releases API (see [Android Manager release fixture](#android-manager-release-fixture)). Sign the test builds with a throwaway key, and add its digest to the trusted signers of a debug build:
-
-```sh
-./manager/gradlew -p manager :app:assembleDebug -PunboundReleasesUrl=http://10.0.2.2:8790/releases -PunboundTrustedSigners=3923c381141ea804a1a311c69b616ac9c360d4fb0dccb5fbcd09a6b8b78842c5,<throwaway digest>
-go run ./tools manager-fixture --root <dir>
-```
+The emulator end-to-end test installs builds that `go run ./tools manager-fixture` serves as a fake GitHub releases API (see [Android Manager release fixture](#android-manager-release-fixture)). [`manager/e2e/`](manager/e2e/README.md) has the build properties for a fixture build, a uiautomator driver and a script that forces the periodic update check.
 
 ## Release pipeline
 
