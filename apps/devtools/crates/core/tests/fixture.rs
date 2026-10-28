@@ -6,7 +6,10 @@ use std::collections::HashSet;
 use serde_json::Value as Json;
 use unbound_devtools_core::inspect::InspectedElement;
 use unbound_devtools_core::protocol::{self, Inbound, InspectedKind};
-use unbound_devtools_core::{ElementId, ElementKind, PathSegment, Store, Value, operations};
+use unbound_devtools_core::query;
+use unbound_devtools_core::{
+	ElementId, ElementKind, FindQuery, JqFilter, NameMatch, PathSegment, Store, Value, operations,
+};
 
 fn inbound_frames() -> Vec<Inbound> {
 	include_str!("fixtures/session-v8.jsonl")
@@ -97,6 +100,134 @@ fn replay_builds_the_host_tree_after_the_filter_change() {
 			.map(|e| e.name.to_string())
 			.collect::<Vec<_>>(),
 		["ScrollView", "Channel", "Context.Provider", "App", "Root"]
+	);
+}
+
+#[test]
+fn find_filters_by_name_key_kind_and_subtree() {
+	let store = replayed_store();
+	let keys = |ids: Vec<ElementId>| -> Vec<String> {
+		ids.iter()
+			.map(|id| {
+				store
+					.get(*id)
+					.and_then(|e| e.key.as_deref())
+					.unwrap_or("-")
+					.to_owned()
+			})
+			.collect()
+	};
+	let rows = FindQuery {
+		name: Some(NameMatch::Contains("messagerow".into())),
+		..Default::default()
+	};
+
+	assert_eq!(keys(query::find(&store, &rows)), ["m0", "m1", "m2"]);
+	assert_eq!(
+		keys(query::find(
+			&store,
+			&FindQuery {
+				key: Some("m1".into()),
+				..rows.clone()
+			}
+		)),
+		["m1"]
+	);
+	assert_eq!(
+		keys(query::find(
+			&store,
+			&FindQuery {
+				limit: Some(2),
+				..rows.clone()
+			}
+		)),
+		["m0", "m1"]
+	);
+
+	let counter = query::find(
+		&store,
+		&FindQuery {
+			name: Some(NameMatch::Exact("Counter".into())),
+			..Default::default()
+		},
+	);
+	let hosts_in_counter = query::find(
+		&store,
+		&FindQuery {
+			kinds: vec![ElementKind::Host],
+			within: counter.first().copied(),
+			..Default::default()
+		},
+	);
+	let names: Vec<_> = hosts_in_counter
+		.iter()
+		.map(|id| store.get(*id).map(|e| e.name.to_string()))
+		.collect();
+	assert_eq!(names, [Some("Text".to_owned())]);
+}
+
+#[test]
+fn tree_text_outlines_with_ids_kinds_and_limits() {
+	let store = replayed_store();
+	let text = query::tree_text(&store, None, None, 1000);
+	let lines: Vec<&str> = text.lines().collect();
+
+	assert_eq!(lines.len(), 17);
+	assert!(lines[0].starts_with("<App> #"), "{text}");
+	assert!(
+		lines[2].starts_with("    <Counter> #") && lines[2].ends_with(" class"),
+		"{text}"
+	);
+	assert!(
+		lines[6].starts_with("        <MessageRow key=\"m0\"> #") && lines[6].ends_with(" memo")
+	);
+
+	let capped = query::tree_text(&store, None, None, 3);
+	assert_eq!(capped.lines().count(), 4);
+	assert!(
+		capped.ends_with("14 more elements not shown (raise max_nodes or pick a root)"),
+		"{capped}"
+	);
+
+	let shallow = query::tree_text(&store, None, Some(1), 100);
+	assert_eq!(shallow.lines().count(), 2, "{shallow}");
+	assert!(
+		shallow
+			.lines()
+			.nth(1)
+			.is_some_and(|line| line.ends_with("(+15 below)")),
+		"{shallow}"
+	);
+}
+
+#[test]
+fn jq_runs_over_the_tree_json() {
+	let store = replayed_store();
+	let tree = query::tree_json(&store, None, None);
+	let keys = JqFilter::compile(r#"[.. | objects | select(.name == "MessageRow") | .key]"#)
+		.expect("compiles")
+		.run(tree.clone())
+		.expect("runs");
+
+	assert_eq!(keys, [serde_json::json!(["m0", "m1", "m2"])]);
+
+	let is_memo = JqFilter::compile(r#".kind == "memo""#).expect("compiles");
+	assert!(
+		is_memo
+			.matches(serde_json::json!({ "kind": "memo" }))
+			.expect("runs")
+	);
+	assert!(
+		!is_memo
+			.matches(serde_json::json!({ "kind": "host" }))
+			.expect("runs")
+	);
+	assert!(JqFilter::compile("select(").is_err());
+
+	let shallow = query::tree_json(&store, None, Some(2));
+	assert_eq!(
+		shallow[0]["children"][0]["children"][0]["truncated"],
+		serde_json::json!(15)
 	);
 }
 
