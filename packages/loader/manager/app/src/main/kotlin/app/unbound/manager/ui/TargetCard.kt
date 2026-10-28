@@ -26,7 +26,7 @@ fun TargetCard(view: TargetView, channel: Channel, onInstall: () -> Unit, onOpen
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(view.target.title, style = MaterialTheme.typography.titleMedium)
             Text("Installed: ${view.installed.label()}")
-            val stream = if (view.target == Target.MANAGER) "Latest" else "Latest ${channel.label}"
+            val stream = if (view.target == Target.MANAGER) "Latest" else "Latest ${channel.title}"
             Text("$stream: ${view.latest?.let { "${it.version} (${it.tag})" } ?: "no release yet"}")
             Text(view.decision.label(view.target), style = MaterialTheme.typography.bodyMedium)
 

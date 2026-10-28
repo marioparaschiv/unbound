@@ -21,7 +21,7 @@ val Target.shortTitle: String
         Target.MANAGER -> "Unbound Manager"
     }
 
-val Channel.label: String
+val Channel.title: String
     get() = name.lowercase().replaceFirstChar(Char::uppercase)
 
 val Mode.title: String

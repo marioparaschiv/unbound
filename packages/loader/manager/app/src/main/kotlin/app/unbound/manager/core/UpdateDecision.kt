@@ -35,6 +35,6 @@ fun decide(
 }
 
 private fun Release.isNewerThan(target: Target, installed: InstalledPackageState.Present, tracked: Boolean): Boolean {
-    val installedVersion = Version.parse(installed.versionName)?.takeIf { target.namesVersion && !tracked }
+    val installedVersion = Version.parse(installed.versionName)?.takeIf { target.versionNameIsReleaseVersion && !tracked }
     return if (installedVersion != null) version > installedVersion else asset.updatedAt > installed.lastUpdateTime
 }

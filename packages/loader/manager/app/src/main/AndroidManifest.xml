@@ -31,7 +31,7 @@
         </activity>
 
         <receiver
-            android:name=".InstallResultReceiver"
+            android:name=".ManagerActionsReceiver"
             android:exported="false" />
 
         <receiver

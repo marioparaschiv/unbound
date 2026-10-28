@@ -32,9 +32,9 @@ object Notifier {
     fun clearProgress(context: Context, target: Target) = manager(context).cancel(progressId(target))
 
     fun confirm(context: Context, target: Target, intent: Intent) {
-        val dismissed = Intent(context, InstallResultReceiver::class.java)
-            .setAction(InstallResultReceiver.ACTION_CONFIRM_DISMISSED)
-            .putExtra(InstallResultReceiver.EXTRA_TARGET, target.name)
+        val dismissed = Intent(context, ManagerActionsReceiver::class.java)
+            .setAction(ManagerActionsReceiver.ACTION_CONFIRM_DISMISSED)
+            .putExtra(ManagerActionsReceiver.EXTRA_TARGET, target.name)
         val notification = Notification.Builder(context, channel(context, target))
             .setSmallIcon(android.R.drawable.stat_sys_warning)
             .setContentTitle("Tap to finish installing ${target.title}")
@@ -47,9 +47,9 @@ object Notifier {
     }
 
     fun available(context: Context, target: Target, update: UpdateDecision.Available) {
-        val install = Intent(context, InstallResultReceiver::class.java)
-            .setAction(InstallResultReceiver.ACTION_UPDATE)
-            .putExtra(InstallResultReceiver.EXTRA_TARGET, target.name)
+        val install = Intent(context, ManagerActionsReceiver::class.java)
+            .setAction(ManagerActionsReceiver.ACTION_UPDATE)
+            .putExtra(ManagerActionsReceiver.EXTRA_TARGET, target.name)
         val newer = update.skipped.size
         val notification = Notification.Builder(context, channel(context, target))
             .setSmallIcon(android.R.drawable.stat_sys_download_done)

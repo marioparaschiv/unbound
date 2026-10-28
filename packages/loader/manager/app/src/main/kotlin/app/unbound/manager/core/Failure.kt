@@ -4,62 +4,36 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface Failure {
-    val retryable: Boolean
+    @Serializable
+    data class Network(val message: String) : Failure
 
     @Serializable
-    data class Network(val message: String) : Failure {
-        override val retryable get() = true
-    }
+    data class HashMismatch(val expected: String, val actual: String) : Failure
 
     @Serializable
-    data class HashMismatch(val expected: String, val actual: String) : Failure {
-        override val retryable get() = true
-    }
+    data class BadArchive(val message: String) : Failure
 
     @Serializable
-    data class BadArchive(val message: String) : Failure {
-        override val retryable get() = false
-    }
+    data class WrongPackage(val expected: String, val actual: String) : Failure
 
     @Serializable
-    data class WrongPackage(val expected: String, val actual: String) : Failure {
-        override val retryable get() = false
-    }
+    data class UntrustedSigner(val digest: String) : Failure
 
     @Serializable
-    data class UntrustedSigner(val digest: String) : Failure {
-        override val retryable get() = false
-    }
+    data class Downgrade(val installed: Long, val incoming: Long) : Failure
 
     @Serializable
-    data class Downgrade(val installed: Long, val incoming: Long) : Failure {
-        override val retryable get() = false
-    }
+    data object NoSplitForDevice : Failure
 
     @Serializable
-    data object NoSplitForDevice : Failure {
-        override val retryable get() = false
-    }
+    data object InsufficientStorage : Failure
 
     @Serializable
-    data object InsufficientStorage : Failure {
-        override val retryable get() = true
-    }
+    data class InstallerRejected(val status: Int, val message: String?) : Failure
 
     @Serializable
-    data class InstallerRejected(val status: Int, val message: String?) : Failure {
-        override val retryable get() = status in RETRYABLE_INSTALLER_STATUSES
-    }
+    data object NotApplied : Failure
 
     @Serializable
-    data object NotApplied : Failure {
-        override val retryable get() = true
-    }
-
-    @Serializable
-    data class Unexpected(val message: String) : Failure {
-        override val retryable get() = true
-    }
+    data class Unexpected(val message: String) : Failure
 }
-
-private val RETRYABLE_INSTALLER_STATUSES = setOf(1, 3, 6)

@@ -50,7 +50,7 @@ class Manager private constructor(private val context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val store = Store(context.filesDir, ::announce)
     private val trusted = trustedSigners(context)
-    private val refreshes = MutableStateFlow(0)
+    private val packageReads = MutableStateFlow(0)
     private val mutableChecking = MutableStateFlow(false)
 
     val confirmations = Confirmations(context)
@@ -64,7 +64,7 @@ class Manager private constructor(private val context: Context) {
         it.lastCheck
     }.stateIn(scope, SharingStarted.Eagerly, store.state.value.lastCheck)
 
-    val views: StateFlow<List<TargetView>> = combine(store.state, refreshes, runner.progress) { state, _, progress ->
+    val views: StateFlow<List<TargetView>> = combine(store.state, packageReads, runner.progress) { state, _, progress ->
         views(state, progress)
     }.stateIn(scope, SharingStarted.Eagerly, emptyList())
 
@@ -87,7 +87,7 @@ class Manager private constructor(private val context: Context) {
     }
 
     fun refresh() {
-        refreshes.value++
+        packageReads.value++
         scope.launch { fetch() }
     }
 

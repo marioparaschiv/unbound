@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
-import app.unbound.manager.InstallResultReceiver
+import app.unbound.manager.ManagerActionsReceiver
 import app.unbound.manager.core.Artifact
 import app.unbound.manager.core.Event
 import app.unbound.manager.core.Failure
@@ -82,9 +82,9 @@ class Sessions(private val context: Context) {
     private fun resultSender(target: Target, sessionId: Int) = PendingIntent.getBroadcast(
         context,
         sessionId,
-        Intent(context, InstallResultReceiver::class.java)
-            .setAction(InstallResultReceiver.ACTION_SESSION_RESULT)
-            .putExtra(InstallResultReceiver.EXTRA_TARGET, target.name),
+        Intent(context, ManagerActionsReceiver::class.java)
+            .setAction(ManagerActionsReceiver.ACTION_SESSION_RESULT)
+            .putExtra(ManagerActionsReceiver.EXTRA_TARGET, target.name),
         PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     ).intentSender
 }

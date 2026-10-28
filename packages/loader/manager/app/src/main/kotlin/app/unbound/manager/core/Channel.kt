@@ -2,7 +2,7 @@ package app.unbound.manager.core
 
 import kotlinx.serialization.Serializable
 
-enum class Channel(val title: Regex, val prerelease: Boolean, val discordAsset: String) {
+enum class Channel(val titlePattern: Regex, val prerelease: Boolean, val discordAsset: String) {
     STABLE(Regex("""^loader-v\d+\.\d+$"""), prerelease = false, discordAsset = "Unbound.apks"),
     BETA(Regex("""^loader-v\d+\.\d+-android-beta$"""), prerelease = true, discordAsset = "Unbound-beta.apks"),
     ALPHA(Regex("""^loader-v\d+\.\d+-android-alpha$"""), prerelease = true, discordAsset = "Unbound-alpha.apks"),
@@ -13,10 +13,10 @@ enum class Mode(val targets: List<Target>) {
     LSPOSED(listOf(Target.MODULE, Target.MANAGER)),
 }
 
-enum class Target(val packageName: String, val split: Boolean, val namesVersion: Boolean) {
-    DISCORD("com.discord", split = true, namesVersion = true),
-    MODULE("app.unbound.android", split = false, namesVersion = false),
-    MANAGER("app.unbound.manager", split = false, namesVersion = true),
+enum class Target(val packageName: String, val split: Boolean, val versionNameIsReleaseVersion: Boolean) {
+    DISCORD("com.discord", split = true, versionNameIsReleaseVersion = true),
+    MODULE("app.unbound.android", split = false, versionNameIsReleaseVersion = false),
+    MANAGER("app.unbound.manager", split = false, versionNameIsReleaseVersion = true),
     ;
 
     fun assetName(channel: Channel): String = when (this) {
@@ -27,7 +27,7 @@ enum class Target(val packageName: String, val split: Boolean, val namesVersion:
 
     fun accepts(title: String, prerelease: Boolean, channel: Channel): Boolean = when (this) {
         MANAGER -> MANAGER_TITLE.matches(title)
-        DISCORD, MODULE -> channel.title.matches(title) && prerelease == channel.prerelease
+        DISCORD, MODULE -> channel.titlePattern.matches(title) && prerelease == channel.prerelease
     }
 }
 

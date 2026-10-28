@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class InstallResultReceiver : BroadcastReceiver() {
+class ManagerActionsReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val target = intent.getStringExtra(EXTRA_TARGET)?.let { name -> Target.entries.find { it.name == name } } ?: return
         val manager = Manager.get(context)
