@@ -92,4 +92,33 @@ describe('plugin bytecode', () => {
 		expect(Reflect.get(globalThis, '__bytecodeTestReloaded')).toBe(true);
 		Reflect.deleteProperty(globalThis, '__bytecodeTestReloaded');
 	});
+
+	test('restarts a plugin without loading its bytecode again', async () => {
+		scan('({ start() {}, stop() {} })');
+		const plugins = new Plugins();
+
+		plugins.initialize();
+		await plugins.stop('bytecode.example');
+		plugins.start('bytecode.example');
+
+		expect(evaluations).toEqual([
+			['bytecode.example', 98],
+			['bytecode', 0],
+			['bytecode', 0],
+		]);
+	});
+
+	test('evaluates a new bundle even after the old one was cached', () => {
+		scan('({ start() {}, stop() {} })');
+		const plugins = new Plugins();
+
+		plugins.initialize();
+		plugins.load(
+			'({ start() { globalThis.__bytecodeTestFresh = true; }, stop() {} })',
+			makeManifest('bytecode.example'),
+		);
+
+		expect(Reflect.get(globalThis, '__bytecodeTestFresh')).toBe(true);
+		Reflect.deleteProperty(globalThis, '__bytecodeTestFresh');
+	});
 });

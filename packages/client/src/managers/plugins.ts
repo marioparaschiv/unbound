@@ -20,8 +20,14 @@ type ScannedPlugin = {
 	folder: string;
 };
 
+type EvaluatedPlugin = {
+	bundle: string;
+	factory: PluginFactory;
+};
+
 export class Plugins extends Addons<PluginEntity> {
 	private scanned = new Map<string, ScannedPlugin>();
+	private evaluated = new Map<string, EvaluatedPlugin>();
 
 	/**
 	 * @description Creates the plugins manager bound to the {@link ManagerType.PLUGINS} type.
@@ -45,6 +51,16 @@ export class Plugins extends Addons<PluginEntity> {
 		}
 
 		this.initialized = true;
+	}
+
+	/**
+	 * @description Unloads a plugin and forgets its evaluated bundle, so a deleted plugin's code is not kept.
+	 * @param entity The plugin to unload, as its id or the entity itself.
+	 */
+	unload(entity: string | Addon): void | Promise<void> {
+		this.evaluated.delete(typeof entity === 'string' ? entity : entity.id);
+
+		return super.unload(entity);
 	}
 
 	/**
@@ -78,7 +94,7 @@ export class Plugins extends Addons<PluginEntity> {
 	 * @returns The resolved plugin instance.
 	 */
 	protected handleBundle(bundle: string, id: string): Plugin {
-		const iife: PluginFactory = this.compiledFactory(bundle, id) ?? this.sourceFactory(bundle);
+		const iife = this.factoryFor(bundle, id);
 
 		return withRefreshScope(id, () => {
 			const payload = iife(createScopedReact());
@@ -86,6 +102,20 @@ export class Plugins extends Addons<PluginEntity> {
 
 			return instance?.default ?? instance;
 		});
+	}
+
+	private factoryFor(bundle: string, id: string): PluginFactory {
+		const cached = this.evaluated.get(id);
+
+		if (cached?.bundle === bundle) {
+			return cached.factory;
+		}
+
+		const factory = this.compiledFactory(bundle, id) ?? this.sourceFactory(bundle);
+
+		this.evaluated.set(id, { bundle, factory });
+
+		return factory;
 	}
 
 	private sourceFactory(bundle: string): PluginFactory {
