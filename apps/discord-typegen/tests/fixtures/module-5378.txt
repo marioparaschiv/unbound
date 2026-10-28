@@ -1,0 +1,230 @@
+    r10 = r7.__d;
+    r0 = 5378;
+    r9 = [19, 17, 21, 5089, 560, 578, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun5379: for(var _fun5379_ip = 0; ; ) switch(_fun5379_ip) {
+case 0:
+            r4 = a1;
+            var _closure0_slot0 = r4;
+            r2 = a5;
+            r3 = a6;
+            var _closure0_slot1 = r3;
+            r1 = global;
+            r8 = r1.Object;
+            r7 = r8.defineProperty;
+            r6 = '__esModule';
+            r1 = {'value': true};
+            r1 = r7.bind(r8)(r2, r6, r1);
+            r6 = r3[r0];
+            r0 = undefined;
+            r1 = a3;
+            r1 = r1.bind(r0)(r6);
+            r1 = r3[r1];
+            r1 = r4.bind(r0)(r1);
+            r1 = r1.View;
+            var _closure0_slot2 = r1;
+            r1 = r3[r2];
+            r1 = r4.bind(r0)(r1);
+            r1 = r1.jsx;
+            var _closure0_slot3 = r1;
+            r1 = r3[r3];
+            r7 = r4.bind(r0)(r1);
+            r6 = r7.createStyles;
+            r1 = function(a0, a1, a2, a3) {
+                _fun34795: for(var _fun34795_ip = 0; ; ) switch(_fun34795_ip) {
+case 0:
+                    r1 = {'width': '100%', 'gap': null, 'alignItems': null, 'justifyContent': null, 'flexDirection': null};
+                    r0 = a0;
+                    r1[1] = r0;
+                    r0 = a2;
+                    r1[2] = r0;
+                    r0 = a3;
+                    r1[3] = r0;
+                    r2 = 'column';
+                    r3 = 'horizontal';
+                    r0 = a1;
+                    if(!(r3 === r0)) { _fun34795_ip = 50; continue _fun34795 }
+case 46:
+                    r2 = 'row';
+case 50:
+                    r0 = {'stack': null};
+                    r1[4] = r2;
+                    r0[0] = r1;
+                    return r0;
+                }
+            };
+            r1 = r6.bind(r7)(r1);
+            var _closure0_slot4 = r1;
+            r1 = r3[r4];
+            r6 = r4.bind(r0)(r1);
+            r1 = r6.isReactCompilerEnabled;
+            r1 = r1.bind(r6)();
+            if(r1) { _fun5379_ip = 160; continue _fun5379 }
+case 153:
+            r1 = function(a0) { // Original name: Stack, environment: r5
+                _fun34797: for(var _fun34797_ip = 0; ; ) switch(_fun34797_ip) {
+case 0:
+                    r2 = a0;
+                    r1 = r2.spacing;
+                    r9 = 8;
+                    r0 = undefined;
+                    if(!(r0 !== r1)) { _fun34797_ip = 21; continue _fun34797 }
+case 18:
+                    r9 = r1;
+case 21:
+                    r1 = r2.direction;
+                    r8 = 'vertical';
+                    if(!(r0 !== r1)) { _fun34797_ip = 38; continue _fun34797 }
+case 35:
+                    r8 = r1;
+case 38:
+                    r1 = r2.align;
+                    r6 = 'stretch';
+                    if(!(r0 !== r1)) { _fun34797_ip = 55; continue _fun34797 }
+case 52:
+                    r6 = r1;
+case 55:
+                    r1 = r2.justify;
+                    r3 = 'flex-start';
+                    if(!(r0 !== r1)) { _fun34797_ip = 74; continue _fun34797 }
+case 71:
+                    r3 = r1;
+case 74:
+                    r4 = r2.children;
+                    r7 = r2.style;
+                    r5 = r2.onLayout;
+                    r2 = _closure0_slot4;
+                    r14 = undefined;
+                    r13 = r9;
+                    r12 = r8;
+                    r11 = r6;
+                    r10 = r3;
+                    r6 = r15[r2](r14, r13, r12, r11, r10);
+                    r3 = _closure0_slot3;
+                    r2 = _closure0_slot2;
+                    r1 = {'style': null, 'onLayout': null, 'children': null};
+                    r8 = r6.stack;
+                    r6 = new Array(2);
+                    r6[0] = r8;
+                    r6[1] = r7;
+                    r1[0] = r6;
+                    r1[1] = r5;
+                    r1[2] = r4;
+                    r1 = r3.bind(r0)(r2, r1);
+                    return r1;
+                }
+            };
+            _fun5379_ip = 165; continue _fun5379;
+case 160:
+            r1 = function(a0) { // Original name: Stack, environment: r5
+                _fun34796: for(var _fun34796_ip = 0; ; ) switch(_fun34796_ip) {
+case 0:
+                    r6 = a0;
+                    r4 = _closure0_slot0;
+                    r2 = _closure0_slot1;
+                    r2 = r2[r5];
+                    r1 = undefined;
+                    r4 = r4.bind(r1)(r2);
+                    r2 = r4.c;
+                    r0 = 7;
+                    r4 = r2.bind(r4)(r0);
+                    r8 = r6.spacing;
+                    r5 = r6.direction;
+                    r2 = r6.align;
+                    r12 = r6.justify;
+                    r7 = r6.children;
+                    r9 = r6.style;
+                    r6 = r6.onLayout;
+                    r11 = _closure0_slot4;
+                    r10 = 8;
+                    if(!(r1 !== r8)) { _fun34796_ip = 92; continue _fun34796 }
+case 89:
+                    r10 = r8;
+case 92:
+                    r8 = 'vertical';
+                    if(!(r1 !== r5)) { _fun34796_ip = 103; continue _fun34796 }
+case 100:
+                    r8 = r5;
+case 103:
+                    r5 = 'stretch';
+                    if(!(r1 !== r2)) { _fun34796_ip = 114; continue _fun34796 }
+case 111:
+                    r5 = r2;
+case 114:
+                    r2 = 'flex-start';
+                    if(!(r1 !== r12)) { _fun34796_ip = 127; continue _fun34796 }
+case 124:
+                    r2 = r12;
+case 127:
+                    r17 = undefined;
+                    r16 = r10;
+                    r15 = r8;
+                    r14 = r5;
+                    r13 = r2;
+                    r8 = r18[r11](r17, r16, r15, r14, r13);
+                    r2 = r4[r0];
+                    if(!(r2 === r9)) { _fun34796_ip = 173; continue _fun34796 }
+case 153:
+                    r5 = r4[r1];
+                    r2 = r8.stack;
+                    if(!(r5 === r2)) { _fun34796_ip = 173; continue _fun34796 }
+case 167:
+                    r5 = r4[r2];
+                    _fun34796_ip = 220; continue _fun34796;
+case 173:
+                    r10 = r8.stack;
+                    r2 = new Array(2);
+                    r2[0] = r10;
+                    r2[1] = r9;
+                    r0 = 0;
+                    r4[r0] = r9;
+                    r8 = r8.stack;
+                    r0 = 1;
+                    r4[r0] = r8;
+                    r0 = 2;
+                    r4[r0] = r2;
+                    r5 = r2;
+case 220:
+                    r2 = r4[r3];
+                    if(!(r2 === r7)) { _fun34796_ip = 250; continue _fun34796 }
+case 228:
+                    r2 = r4[r4];
+                    if(!(r2 === r6)) { _fun34796_ip = 250; continue _fun34796 }
+case 236:
+                    r2 = r4[r5];
+                    if(!(r2 === r5)) { _fun34796_ip = 250; continue _fun34796 }
+case 244:
+                    r2 = r4[r6];
+                    _fun34796_ip = 317; continue _fun34796;
+case 250:
+                    r9 = _closure0_slot3;
+                    r8 = _closure0_slot2;
+                    r3 = {'style': null, 'onLayout': null, 'children': null};
+                    r3[0] = r5;
+                    r3[1] = r6;
+                    r3[2] = r7;
+                    r3 = r9.bind(r1)(r8, r3);
+                    r0 = 3;
+                    r4[r0] = r7;
+                    r0 = 4;
+                    r4[r0] = r6;
+                    r0 = 5;
+                    r4[r0] = r5;
+                    r0 = 6;
+                    r4[r0] = r3;
+                    r2 = r3;
+case 317:
+                    return r2;
+                }
+            };
+case 165:
+            r3 = r3[r6];
+            r5 = r4.bind(r0)(r3);
+            r4 = r5.fileFinishedImporting;
+            r3 = 'design/components/Stack/native/Stack.native.tsx';
+            r3 = r4.bind(r5)(r3);
+            r2['Stack'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

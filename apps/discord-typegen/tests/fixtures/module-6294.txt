@@ -1,0 +1,231 @@
+    r10 = r7.__d;
+    r0 = 6294;
+    r9 = [108, 19, 21, 560, 578, 6295, 6296, 6300, 6304, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun6295: for(var _fun6295_ip = 0; ; ) switch(_fun6295_ip) {
+case 0:
+            r4 = a1;
+            var _closure0_slot0 = r4;
+            r2 = a5;
+            r3 = a6;
+            var _closure0_slot1 = r3;
+            r1 = ['ref'];
+            var _closure0_slot2 = r1;
+            r1 = global;
+            r8 = r1.Object;
+            r7 = r8.defineProperty;
+            r6 = '__esModule';
+            r1 = {'value': true};
+            r1 = r7.bind(r8)(r2, r6, r1);
+            r6 = r3[r0];
+            r0 = undefined;
+            r1 = a2;
+            r1 = r1.bind(r0)(r6);
+            var _closure0_slot3 = r1;
+            r6 = r3[r1];
+            r1 = a3;
+            r1 = r1.bind(r0)(r6);
+            r1 = r3[r2];
+            r1 = r4.bind(r0)(r1);
+            r1 = r1.jsx;
+            var _closure0_slot4 = r1;
+            r1 = r3[r3];
+            r6 = r4.bind(r0)(r1);
+            r1 = r6.isReactCompilerEnabled;
+            r1 = r1.bind(r6)();
+            if(r1) { _fun6295_ip = 144; continue _fun6295 }
+case 137:
+            r1 = function(a0) { // Original name: TextField, environment: r5
+                _fun38746: for(var _fun38746_ip = 0; ; ) switch(_fun38746_ip) {
+case 0:
+                    r5 = a0;
+                    r7 = r5.ref;
+                    r14 = {};
+                    r1 = null;
+                    r12 = Object.assign(Object.create(r1), {'ref': 0});
+                    r13 = r5;
+                    r10 = copyDataProperties(r15, r14, r13);
+                    r3 = _closure0_slot0;
+                    r2 = _closure0_slot1;
+                    r5 = r2[r5];
+                    r0 = undefined;
+                    r6 = r3.bind(r0)(r5);
+                    r5 = r6.useTextField;
+                    r5 = r5.bind(r6)(r10, r7);
+                    r8 = r5.innerRef;
+                    r9 = r5.inputProps;
+                    r7 = r5.state;
+                    r5 = r2[r6];
+                    r6 = r3.bind(r0)(r5);
+                    r5 = r6.useInputClearButtonConfig;
+                    r6 = r5.bind(r6)(r10, r7);
+                    r1 = r1 != r6;
+                    r7 = undefined;
+                    if(!r1) { _fun38746_ip = 143; continue _fun38746 }
+case 111:
+                    r5 = {'trailing': null, 'trailingPressableProps': null};
+                    r11 = r6.content;
+                    r5[0] = r11;
+                    r6 = r6.pressableProps;
+                    r5[1] = r6;
+                    r7 = r5;
+case 143:
+                    r5 = r2[r7];
+                    r6 = r3.bind(r0)(r5);
+                    r5 = r6.useInputAttachments;
+                    r5 = r5.bind(r6)(r10, r7);
+                    r7 = r5.leading;
+                    r6 = r5.trailing;
+                    r5 = r5.inputStyle;
+                    r4 = _closure0_slot4;
+                    r2 = r2[r8];
+                    r2 = r3.bind(r0)(r2);
+                    r3 = r2.BaseTextField;
+                    r2 = {};
+                    r14 = r2;
+                    r13 = r9;
+                    r9 = copyDataProperties(r15, r14);
+                    r2['ref'] = r8;
+                    r2['leading'] = r7;
+                    r2['trailing'] = r6;
+                    r2['inputStyle'] = r5;
+                    r2 = r4.bind(r0)(r3, r2);
+                    return r2;
+                }
+            };
+            _fun6295_ip = 149; continue _fun6295;
+case 144:
+            r1 = function(a0) { // Original name: TextField, environment: r5
+                _fun38745: for(var _fun38745_ip = 0; ; ) switch(_fun38745_ip) {
+case 0:
+                    r9 = a0;
+                    r11 = _closure0_slot0;
+                    r4 = _closure0_slot1;
+                    r3 = r4[r4];
+                    r1 = undefined;
+                    r5 = r11.bind(r1)(r3);
+                    r3 = r5.c;
+                    r0 = 11;
+                    r5 = r3.bind(r5)(r0);
+                    r3 = r5[r0];
+                    if(!(r3 === r9)) { _fun38745_ip = 56; continue _fun38745 }
+case 46:
+                    r7 = r5[r1];
+                    r8 = r5[r2];
+                    _fun38745_ip = 101; continue _fun38745;
+case 56:
+                    r6 = r9.ref;
+                    r10 = _closure0_slot3;
+                    r3 = _closure0_slot2;
+                    r3 = r10.bind(r1)(r9, r3);
+                    r0 = 0;
+                    r5[r0] = r9;
+                    r0 = 1;
+                    r5[r0] = r3;
+                    r0 = 2;
+                    r5[r0] = r6;
+                    r8 = r6;
+                    r7 = r3;
+case 101:
+                    r3 = r4[r5];
+                    r6 = r11.bind(r1)(r3);
+                    r3 = r6.useTextField;
+                    r3 = r3.bind(r6)(r7, r8);
+                    r9 = r3.innerRef;
+                    r8 = r3.inputProps;
+                    r10 = r3.state;
+                    r3 = r4[r6];
+                    r6 = r11.bind(r1)(r3);
+                    r3 = r6.useInputClearButtonConfig;
+                    r6 = r3.bind(r6)(r7, r10);
+                    r3 = r5[r3];
+                    r10 = r7;
+                    if(!(r3 === r6)) { _fun38745_ip = 177; continue _fun38745 }
+case 171:
+                    r7 = r5[r4];
+                    _fun38745_ip = 237; continue _fun38745;
+case 177:
+                    r2 = null;
+                    r2 = r2 != r6;
+                    r3 = undefined;
+                    if(!r2) { _fun38745_ip = 220; continue _fun38745 }
+case 188:
+                    r13 = {'trailing': null, 'trailingPressableProps': null};
+                    r14 = r6.content;
+                    r13[0] = r14;
+                    r14 = r6.pressableProps;
+                    r13[1] = r14;
+                    r3 = r13;
+case 220:
+                    r0 = 3;
+                    r5[r0] = r6;
+                    r0 = 4;
+                    r5[r0] = r3;
+                    r7 = r3;
+case 237:
+                    r3 = r4[r7];
+                    r6 = r11.bind(r1)(r3);
+                    r3 = r6.useInputAttachments;
+                    r3 = r3.bind(r6)(r10, r7);
+                    r7 = r3.leading;
+                    r6 = r3.trailing;
+                    r10 = r3.inputStyle;
+                    r3 = r5[r5];
+                    if(!(r3 === r10)) { _fun38745_ip = 322; continue _fun38745 }
+case 284:
+                    r3 = r5[r6];
+                    if(!(r3 === r9)) { _fun38745_ip = 322; continue _fun38745 }
+case 292:
+                    r3 = r5[r7];
+                    if(!(r3 === r8)) { _fun38745_ip = 322; continue _fun38745 }
+case 300:
+                    r3 = r5[r8];
+                    if(!(r3 === r7)) { _fun38745_ip = 322; continue _fun38745 }
+case 308:
+                    r3 = r5[r9];
+                    if(!(r3 === r6)) { _fun38745_ip = 322; continue _fun38745 }
+case 316:
+                    r3 = r5[r10];
+                    _fun38745_ip = 428; continue _fun38745;
+case 322:
+                    r12 = _closure0_slot4;
+                    r4 = r4[r8];
+                    r4 = r11.bind(r1)(r4);
+                    r11 = r4.BaseTextField;
+                    r4 = {};
+                    r16 = r4;
+                    r15 = r8;
+                    r13 = copyDataProperties(r17, r16);
+                    r4['ref'] = r9;
+                    r4['leading'] = r7;
+                    r4['trailing'] = r6;
+                    r4['inputStyle'] = r10;
+                    r4 = r12.bind(r1)(r11, r4);
+                    r0 = 5;
+                    r5[r0] = r10;
+                    r0 = 6;
+                    r5[r0] = r9;
+                    r0 = 7;
+                    r5[r0] = r8;
+                    r0 = 8;
+                    r5[r0] = r7;
+                    r0 = 9;
+                    r5[r0] = r6;
+                    r0 = 10;
+                    r5[r0] = r4;
+                    r3 = r4;
+case 428:
+                    return r3;
+                }
+            };
+case 149:
+            r3 = r3[r9];
+            r5 = r4.bind(r0)(r3);
+            r4 = r5.fileFinishedImporting;
+            r3 = 'design/components/TextField/native/TextField.native.tsx';
+            r3 = r4.bind(r5)(r3);
+            r2['TextField'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

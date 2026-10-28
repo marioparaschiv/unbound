@@ -11,6 +11,7 @@
 	"ignorePatterns": [
 		"*.gen.ts",
 		"drizzle",
+		"packages/discord-types/src/**",
 		"packages/cli/templates/**",
 		"CHANGELOG.md",
 		"packages/loader/bootstrap/devtools.js",

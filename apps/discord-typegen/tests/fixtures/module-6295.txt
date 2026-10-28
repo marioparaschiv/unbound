@@ -1,0 +1,851 @@
+    r10 = r7.__d;
+    r0 = 6295;
+    r9 = [31, 19, 560, 578, 5373, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun6296: for(var _fun6296_ip = 0; ; ) switch(_fun6296_ip) {
+case 0:
+            r5 = a1;
+            var _closure0_slot0 = r5;
+            r2 = a5;
+            r4 = a6;
+            var _closure0_slot1 = r4;
+            r1 = global;
+            r8 = r1.Object;
+            r7 = r8.defineProperty;
+            r3 = '__esModule';
+            r1 = {'value': true};
+            r1 = r7.bind(r8)(r2, r3, r1);
+            r3 = r4[r0];
+            r0 = undefined;
+            r1 = a2;
+            r1 = r1.bind(r0)(r3);
+            var _closure0_slot2 = r1;
+            r3 = r4[r1];
+            r1 = a3;
+            r1 = r1.bind(r0)(r3);
+            var _closure0_slot3 = r1;
+            r1 = r4[r2];
+            r3 = r5.bind(r0)(r1);
+            r1 = r3.isReactCompilerEnabled;
+            r1 = r1.bind(r3)();
+            if(r1) { _fun6296_ip = 116; continue _fun6296 }
+case 109:
+            r3 = function(a0) { // Original name: useTextFieldState, environment: r6
+                _fun38748: for(var _fun38748_ip = 0; ; ) switch(_fun38748_ip) {
+case 0:
+                    r7 = a0;
+                    r6 = r7.value;
+                    r11 = r7.defaultValue;
+                    r4 = r7.onChange;
+                    var _closure1_slot0 = r4;
+                    r9 = r7.onClear;
+                    var _closure1_slot1 = r9;
+                    r8 = _closure0_slot3;
+                    r10 = r8.useState;
+                    r2 = null;
+                    r7 = r6;
+                    if(!(r6 == r2)) { _fun38748_ip = 64; continue _fun38748 }
+case 61:
+                    r7 = r11;
+case 64:
+                    if(!(r7 == r2)) { _fun38748_ip = 72; continue _fun38748 }
+case 68:
+                    r7 = '';
+case 72:
+                    r7 = r10.bind(r8)(r7);
+                    r5 = _closure0_slot2;
+                    r0 = 2;
+                    r1 = undefined;
+                    r7 = r5.bind(r1)(r7, r0);
+                    r5 = r7[r0];
+                    r7 = r7[r1];
+                    var _closure1_slot2 = r7;
+                    if(!(r6 == r2)) { _fun38748_ip = 111; continue _fun38748 }
+case 108:
+                    r6 = r5;
+case 111:
+                    r5 = r6.length;
+                    r0 = 0;
+                    r2 = r5 > r0;
+                    r7 = r8.useCallback;
+                    r5 = new Array(1);
+                    r5[0] = r4;
+                    r4 = function(a0) { // Environment: r3
+                        _fun93230: for(var _fun93230_ip = 0; ; ) switch(_fun93230_ip) {
+case 0:
+                            r3 = a0;
+                            r4 = _closure1_slot2;
+                            r0 = undefined;
+                            r4 = r4.bind(r0)(r3);
+                            r2 = _closure1_slot0;
+                            r1 = null;
+                            if(!(r2 != r1)) { _fun93230_ip = 32; continue _fun93230 }
+case 27:
+                            r2 = r2.bind(r0)(r3);
+case 32:
+                            return r0;
+                        }
+                    };
+                    r5 = r7.bind(r8)(r4, r5);
+                    var _closure1_slot3 = r5;
+                    r7 = r8.useCallback;
+                    r4 = new Array(2);
+                    r4[0] = r5;
+                    r4[1] = r9;
+                    r3 = function() { // Environment: r3
+                        _fun93231: for(var _fun93231_ip = 0; ; ) switch(_fun93231_ip) {
+case 0:
+                            r4 = _closure1_slot3;
+                            r3 = '';
+                            r0 = undefined;
+                            r3 = r4.bind(r0)(r3);
+                            r2 = _closure1_slot1;
+                            r1 = null;
+                            if(!(r2 != r1)) { _fun93231_ip = 32; continue _fun93231 }
+case 28:
+                            r2 = r2.bind(r0)();
+case 32:
+                            return r0;
+                        }
+                    };
+                    r4 = r7.bind(r8)(r3, r4);
+                    r3 = {'value': null, 'setTextValue': null, 'clear': null, 'hasValue': null};
+                    r3[0] = r6;
+                    r3[1] = r5;
+                    r3[2] = r4;
+                    r3[3] = r2;
+                    return r3;
+                }
+            };
+            _fun6296_ip = 121; continue _fun6296;
+case 116:
+            r3 = function(a0) { // Original name: useTextFieldState, environment: r6
+                _fun38747: for(var _fun38747_ip = 0; ; ) switch(_fun38747_ip) {
+case 0:
+                    r5 = a0;
+                    r7 = _closure0_slot0;
+                    r6 = _closure0_slot1;
+                    r6 = r6[r3];
+                    r2 = undefined;
+                    r7 = r7.bind(r2)(r6);
+                    r6 = r7.c;
+                    r0 = 10;
+                    r6 = r6.bind(r7)(r0);
+                    r7 = r5.value;
+                    r13 = r5.defaultValue;
+                    r10 = r5.onChange;
+                    var _closure1_slot0 = r10;
+                    r5 = r5.onClear;
+                    var _closure1_slot1 = r5;
+                    r12 = _closure0_slot3;
+                    r11 = r12.useState;
+                    r3 = null;
+                    r9 = r7;
+                    if(!(r7 == r3)) { _fun38747_ip = 96; continue _fun38747 }
+case 93:
+                    r9 = r13;
+case 96:
+                    if(!(r9 == r3)) { _fun38747_ip = 104; continue _fun38747 }
+case 100:
+                    r9 = '';
+case 104:
+                    r9 = r11.bind(r12)(r9);
+                    r8 = _closure0_slot2;
+                    r0 = 2;
+                    r9 = r8.bind(r2)(r9, r0);
+                    r8 = r9[r0];
+                    r9 = r9[r1];
+                    var _closure1_slot2 = r9;
+                    if(!(r7 == r3)) { _fun38747_ip = 141; continue _fun38747 }
+case 138:
+                    r7 = r8;
+case 141:
+                    r8 = r7.length;
+                    r1 = 0;
+                    r3 = r8 > r1;
+                    r8 = r6[r0];
+                    if(!(r8 === r10)) { _fun38747_ip = 166; continue _fun38747 }
+case 160:
+                    r8 = r6[r1];
+                    _fun38747_ip = 187; continue _fun38747;
+case 166:
+                    r9 = function(a0) { // Original name: n, environment: r4
+                        _fun93228: for(var _fun93228_ip = 0; ; ) switch(_fun93228_ip) {
+case 0:
+                            r3 = a0;
+                            r4 = _closure1_slot2;
+                            r0 = undefined;
+                            r4 = r4.bind(r0)(r3);
+                            r2 = _closure1_slot0;
+                            r1 = null;
+                            if(!(r2 != r1)) { _fun93228_ip = 32; continue _fun93228 }
+case 27:
+                            r2 = r2.bind(r0)(r3);
+case 32:
+                            return r0;
+                        }
+                    };
+                    r6[r1] = r10;
+                    r1 = 1;
+                    r6[r1] = r9;
+                    r8 = r9;
+case 187:
+                    var _closure1_slot3 = r8;
+                    r9 = r6[r2];
+                    if(!(r9 === r5)) { _fun38747_ip = 213; continue _fun38747 }
+case 199:
+                    r9 = r6[r3];
+                    if(!(r9 === r8)) { _fun38747_ip = 213; continue _fun38747 }
+case 207:
+                    r9 = r6[r4];
+                    _fun38747_ip = 241; continue _fun38747;
+case 213:
+                    r4 = function() { // Original name: V, environment: r4
+                        _fun93229: for(var _fun93229_ip = 0; ; ) switch(_fun93229_ip) {
+case 0:
+                            r4 = _closure1_slot3;
+                            r3 = '';
+                            r0 = undefined;
+                            r3 = r4.bind(r0)(r3);
+                            r2 = _closure1_slot1;
+                            r1 = null;
+                            if(!(r2 != r1)) { _fun93229_ip = 32; continue _fun93229 }
+case 28:
+                            r2 = r2.bind(r0)();
+case 32:
+                            return r0;
+                        }
+                    };
+                    r6[r0] = r5;
+                    r0 = 3;
+                    r6[r0] = r8;
+                    r0 = 4;
+                    r6[r0] = r4;
+                    r9 = r4;
+case 241:
+                    r4 = r6[r5];
+                    if(!(r4 === r9)) { _fun38747_ip = 279; continue _fun38747 }
+case 249:
+                    r4 = r6[r6];
+                    if(!(r4 === r3)) { _fun38747_ip = 279; continue _fun38747 }
+case 257:
+                    r4 = r6[r7];
+                    if(!(r4 === r8)) { _fun38747_ip = 279; continue _fun38747 }
+case 265:
+                    r4 = r6[r8];
+                    if(!(r4 === r7)) { _fun38747_ip = 279; continue _fun38747 }
+case 273:
+                    r4 = r6[r9];
+                    _fun38747_ip = 343; continue _fun38747;
+case 279:
+                    r5 = {'value': null, 'setTextValue': null, 'clear': null, 'hasValue': null};
+                    r5[0] = r7;
+                    r5[1] = r8;
+                    r5[2] = r9;
+                    r5[3] = r3;
+                    r0 = 5;
+                    r6[r0] = r9;
+                    r0 = 6;
+                    r6[r0] = r3;
+                    r0 = 7;
+                    r6[r0] = r8;
+                    r0 = 8;
+                    r6[r0] = r7;
+                    r0 = 9;
+                    r6[r0] = r5;
+                    r4 = r5;
+case 343:
+                    return r4;
+                }
+            };
+case 121:
+            var _closure0_slot4 = r3;
+            r1 = r4[r2];
+            r7 = r5.bind(r0)(r1);
+            r1 = r7.isReactCompilerEnabled;
+            r1 = r1.bind(r7)();
+            if(r1) { _fun6296_ip = 153; continue _fun6296 }
+case 146:
+            r1 = function(a0, a1) { // Original name: useTextField, environment: r6
+                _fun38750: for(var _fun38750_ip = 0; ; ) switch(_fun38750_ip) {
+case 0:
+                    r5 = a0;
+                    var _closure1_slot0 = r5;
+                    r8 = _closure0_slot3;
+                    r2 = r8.useRef;
+                    r0 = null;
+                    r2 = r2.bind(r8)(r0);
+                    var _closure1_slot1 = r2;
+                    r7 = r8.useCallback;
+                    r6 = new Array(2);
+                    r6[0] = r2;
+                    r4 = r5.onClear;
+                    r6[1] = r4;
+                    r4 = function() { // Environment: r1
+                        _fun93234: for(var _fun93234_ip = 0; ; ) switch(_fun93234_ip) {
+case 0:
+                            r4 = _closure1_slot1;
+                            r3 = r4.current;
+                            r0 = null;
+                            if(!(r3 != r0)) { _fun93234_ip = 28; continue _fun93234 }
+case 18:
+                            r2 = r3.clear;
+                            r2 = r2.bind(r3)();
+case 28:
+                            r1 = _closure1_slot0;
+                            r1 = r1.onClear;
+                            if(!(r1 != r0)) { _fun93234_ip = 48; continue _fun93234 }
+case 42:
+                            r0 = undefined;
+                            r1 = r1.bind(r0)();
+case 48:
+                            r2 = _closure0_slot0;
+                            r1 = _closure0_slot1;
+                            r1 = r1[r4];
+                            r0 = undefined;
+                            r3 = r2.bind(r0)(r1);
+                            r2 = r3.setAccessibilityFocus;
+                            r1 = {'ref': null};
+                            r1[0] = r4;
+                            r1 = r2.bind(r3)(r1);
+                            return r0;
+                        }
+                    };
+                    r6 = r7.bind(r8)(r4, r6);
+                    r4 = _closure0_slot4;
+                    r3 = {};
+                    r11 = r3;
+                    r10 = r5;
+                    r7 = copyDataProperties(r12, r11);
+                    r3['onClear'] = r6;
+                    r0 = undefined;
+                    r4 = r4.bind(r0)(r3);
+                    var _closure1_slot2 = r4;
+                    r7 = r8.useImperativeHandle;
+                    r6 = new Array(2);
+                    r6[0] = r2;
+                    r6[1] = r4;
+                    r3 = function() { // Environment: r1
+                        r0 = {'blur': null, 'focus': null, 'isFocused': null, 'getText': null, 'setText': null, 'measure': null, 'measureInWindow': null, 'measureLayout': null};
+                        r2 = function() { // Original name: blur, environment: r1
+                            _fun139568: for(var _fun139568_ip = 0; ; ) switch(_fun139568_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r2 = r1.current;
+                                r0 = null;
+                                if(!(r2 != r0)) { _fun139568_ip = 28; continue _fun139568 }
+case 18:
+                                r1 = r2.blur;
+                                r1 = r1.bind(r2)();
+case 28:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[0] = r2;
+                        r2 = function() { // Original name: focus, environment: r1
+                            _fun139569: for(var _fun139569_ip = 0; ; ) switch(_fun139569_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r2 = r1.current;
+                                r0 = null;
+                                if(!(r2 != r0)) { _fun139569_ip = 28; continue _fun139569 }
+case 18:
+                                r1 = r2.focus;
+                                r1 = r1.bind(r2)();
+case 28:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[1] = r2;
+                        r2 = function() { // Original name: isFocused, environment: r1
+                            _fun139570: for(var _fun139570_ip = 0; ; ) switch(_fun139570_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r3 = r1.current;
+                                r0 = null;
+                                r0 = r3 == r0;
+                                r1 = undefined;
+                                if(r0) { _fun139570_ip = 33; continue _fun139570 }
+case 23:
+                                r2 = r3.isFocused;
+                                r1 = r2.bind(r3)();
+case 33:
+                                r0 = true;
+                                r0 = r0 === r1;
+                                return r0;
+                            }
+                        };
+                        r0[2] = r2;
+                        r2 = function() { // Original name: getText, environment: r1
+                            r0 = _closure1_slot2;
+                            r0 = r0.value;
+                            return r0;
+                        };
+                        r0[3] = r2;
+                        r2 = function(a0) { // Original name: setText, environment: r1
+                            _fun139572: for(var _fun139572_ip = 0; ; ) switch(_fun139572_ip) {
+case 0:
+                                r4 = a0;
+                                r2 = '';
+                                if(!(r2 !== r4)) { _fun139572_ip = 67; continue _fun139572 }
+case 14:
+                                r2 = _closure1_slot1;
+                                r5 = r2.current;
+                                r0 = null;
+                                if(!(r5 != r0)) { _fun139572_ip = 50; continue _fun139572 }
+case 29:
+                                r3 = r5.setNativeProps;
+                                r2 = {'text': null};
+                                r2[0] = r4;
+                                r2 = r3.bind(r5)(r2);
+case 50:
+                                r3 = _closure1_slot2;
+                                r2 = r3.setTextValue;
+                                r2 = r2.bind(r3)(r4);
+                                _fun139572_ip = 81; continue _fun139572;
+case 67:
+                                r2 = _closure1_slot2;
+                                r1 = r2.clear;
+                                r1 = r1.bind(r2)();
+case 81:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[4] = r2;
+                        r2 = function(a0) { // Original name: measure, environment: r1
+                            _fun139573: for(var _fun139573_ip = 0; ; ) switch(_fun139573_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r3 = r1.current;
+                                r0 = null;
+                                if(!(r3 != r0)) { _fun139573_ip = 32; continue _fun139573 }
+case 18:
+                                r2 = a0;
+                                r1 = r3.measure;
+                                r1 = r1.bind(r3)(r2);
+case 32:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[5] = r2;
+                        r2 = function(a0) { // Original name: measureInWindow, environment: r1
+                            _fun139574: for(var _fun139574_ip = 0; ; ) switch(_fun139574_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r3 = r1.current;
+                                r0 = null;
+                                if(!(r3 != r0)) { _fun139574_ip = 32; continue _fun139574 }
+case 18:
+                                r2 = a0;
+                                r1 = r3.measureInWindow;
+                                r1 = r1.bind(r3)(r2);
+case 32:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[6] = r2;
+                        r1 = function(a0, a1, a2) { // Original name: measureLayout, environment: r1
+                            _fun139575: for(var _fun139575_ip = 0; ; ) switch(_fun139575_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r5 = r1.current;
+                                r0 = null;
+                                if(!(r5 != r0)) { _fun139575_ip = 40; continue _fun139575 }
+case 18:
+                                r4 = a0;
+                                r3 = a1;
+                                r2 = a2;
+                                r1 = r5.measureLayout;
+                                r1 = r1.bind(r5)(r4, r3, r2);
+case 40:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[7] = r1;
+                        return r0;
+                    };
+                    r1 = a1;
+                    r1 = r7.bind(r8)(r1, r3, r6);
+                    r1 = r5.disabled;
+                    r3 = r0 !== r1;
+                    if(!r3) { _fun38750_ip = 152; continue _fun38750 }
+case 149:
+                    r3 = r1;
+case 152:
+                    r1 = {'innerRef': null, 'state': null, 'inputProps': null};
+                    r1[0] = r2;
+                    r1[1] = r4;
+                    r2 = {};
+                    r11 = r2;
+                    r10 = r5;
+                    r6 = copyDataProperties(r12, r11);
+                    r2['onChange'] = r0;
+                    r4 = r4.setTextValue;
+                    r2['onChangeText'] = r4;
+                    r0 = !r3;
+                    r2['editable'] = r0;
+                    r4 = !r3;
+                    if(r3) { _fun38750_ip = 221; continue _fun38750 }
+case 215:
+                    r4 = r5.focusable;
+case 221:
+                    r2['focusable'] = r4;
+                    r2['aria-disabled'] = r3;
+                    r1[2] = r2;
+                    return r1;
+                }
+            };
+            _fun6296_ip = 158; continue _fun6296;
+case 153:
+            r1 = function(a0, a1) { // Original name: useTextField, environment: r6
+                _fun38749: for(var _fun38749_ip = 0; ; ) switch(_fun38749_ip) {
+case 0:
+                    r9 = a0;
+                    var _closure1_slot0 = r9;
+                    r6 = _closure0_slot0;
+                    r5 = _closure0_slot1;
+                    r5 = r5[r3];
+                    r1 = undefined;
+                    r6 = r6.bind(r1)(r5);
+                    r5 = r6.c;
+                    r0 = 17;
+                    r5 = r5.bind(r6)(r0);
+                    r11 = _closure0_slot3;
+                    r6 = r11.useRef;
+                    r2 = null;
+                    r8 = r6.bind(r11)(r2);
+                    var _closure1_slot1 = r8;
+                    r7 = r5[r0];
+                    r6 = r9.onClear;
+                    if(!(r7 === r6)) { _fun38749_ip = 85; continue _fun38749 }
+case 79:
+                    r10 = r5[r1];
+                    _fun38749_ip = 114; continue _fun38749;
+case 85:
+                    r6 = function() { // Original name: l, environment: r3
+                        _fun93232: for(var _fun93232_ip = 0; ; ) switch(_fun93232_ip) {
+case 0:
+                            r4 = _closure1_slot1;
+                            r3 = r4.current;
+                            r0 = null;
+                            if(!(r3 != r0)) { _fun93232_ip = 28; continue _fun93232 }
+case 18:
+                            r2 = r3.clear;
+                            r2 = r2.bind(r3)();
+case 28:
+                            r1 = _closure1_slot0;
+                            r1 = r1.onClear;
+                            if(!(r1 != r0)) { _fun93232_ip = 48; continue _fun93232 }
+case 42:
+                            r0 = undefined;
+                            r1 = r1.bind(r0)();
+case 48:
+                            r2 = _closure0_slot0;
+                            r1 = _closure0_slot1;
+                            r1 = r1[r4];
+                            r0 = undefined;
+                            r3 = r2.bind(r0)(r1);
+                            r2 = r3.setAccessibilityFocus;
+                            r1 = {'ref': null};
+                            r1[0] = r4;
+                            r1 = r2.bind(r3)(r1);
+                            return r0;
+                        }
+                    };
+                    r7 = r9.onClear;
+                    r0 = 0;
+                    r5[r0] = r7;
+                    r0 = 1;
+                    r5[r0] = r6;
+                    r10 = r6;
+case 114:
+                    r6 = r5[r2];
+                    if(!(r6 === r10)) { _fun38749_ip = 136; continue _fun38749 }
+case 122:
+                    r6 = r5[r3];
+                    if(!(r6 === r9)) { _fun38749_ip = 136; continue _fun38749 }
+case 130:
+                    r6 = r5[r4];
+                    _fun38749_ip = 178; continue _fun38749;
+case 136:
+                    r7 = {};
+                    r15 = r7;
+                    r14 = r9;
+                    r12 = copyDataProperties(r16, r15);
+                    r7['onClear'] = r10;
+                    r0 = 2;
+                    r5[r0] = r10;
+                    r0 = 3;
+                    r5[r0] = r9;
+                    r0 = 4;
+                    r5[r0] = r7;
+                    r6 = r7;
+case 178:
+                    r4 = _closure0_slot4;
+                    r7 = r4.bind(r1)(r6);
+                    var _closure1_slot2 = r7;
+                    r4 = r5[r5];
+                    if(!(r4 === r7)) { _fun38749_ip = 209; continue _fun38749 }
+case 199:
+                    r10 = r5[r6];
+                    r6 = r5[r7];
+                    _fun38749_ip = 255; continue _fun38749;
+case 209:
+                    r3 = function() { // Original name: f, environment: r3
+                        r0 = {'blur': null, 'focus': null, 'isFocused': null, 'getText': null, 'setText': null, 'measure': null, 'measureInWindow': null, 'measureLayout': null};
+                        r2 = function() { // Original name: blur, environment: r1
+                            _fun139560: for(var _fun139560_ip = 0; ; ) switch(_fun139560_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r2 = r1.current;
+                                r0 = null;
+                                if(!(r2 != r0)) { _fun139560_ip = 28; continue _fun139560 }
+case 18:
+                                r1 = r2.blur;
+                                r1 = r1.bind(r2)();
+case 28:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[0] = r2;
+                        r2 = function() { // Original name: focus, environment: r1
+                            _fun139561: for(var _fun139561_ip = 0; ; ) switch(_fun139561_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r2 = r1.current;
+                                r0 = null;
+                                if(!(r2 != r0)) { _fun139561_ip = 28; continue _fun139561 }
+case 18:
+                                r1 = r2.focus;
+                                r1 = r1.bind(r2)();
+case 28:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[1] = r2;
+                        r2 = function() { // Original name: isFocused, environment: r1
+                            _fun139562: for(var _fun139562_ip = 0; ; ) switch(_fun139562_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r3 = r1.current;
+                                r0 = null;
+                                r0 = r3 == r0;
+                                r1 = undefined;
+                                if(r0) { _fun139562_ip = 33; continue _fun139562 }
+case 23:
+                                r2 = r3.isFocused;
+                                r1 = r2.bind(r3)();
+case 33:
+                                r0 = true;
+                                r0 = r0 === r1;
+                                return r0;
+                            }
+                        };
+                        r0[2] = r2;
+                        r2 = function() { // Original name: getText, environment: r1
+                            r0 = _closure1_slot2;
+                            r0 = r0.value;
+                            return r0;
+                        };
+                        r0[3] = r2;
+                        r2 = function(a0) { // Original name: setText, environment: r1
+                            _fun139564: for(var _fun139564_ip = 0; ; ) switch(_fun139564_ip) {
+case 0:
+                                r4 = a0;
+                                r2 = '';
+                                if(!(r2 !== r4)) { _fun139564_ip = 67; continue _fun139564 }
+case 14:
+                                r2 = _closure1_slot1;
+                                r5 = r2.current;
+                                r0 = null;
+                                if(!(r5 != r0)) { _fun139564_ip = 50; continue _fun139564 }
+case 29:
+                                r3 = r5.setNativeProps;
+                                r2 = {'text': null};
+                                r2[0] = r4;
+                                r2 = r3.bind(r5)(r2);
+case 50:
+                                r3 = _closure1_slot2;
+                                r2 = r3.setTextValue;
+                                r2 = r2.bind(r3)(r4);
+                                _fun139564_ip = 81; continue _fun139564;
+case 67:
+                                r2 = _closure1_slot2;
+                                r1 = r2.clear;
+                                r1 = r1.bind(r2)();
+case 81:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[4] = r2;
+                        r2 = function(a0) { // Original name: measure, environment: r1
+                            _fun139565: for(var _fun139565_ip = 0; ; ) switch(_fun139565_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r3 = r1.current;
+                                r0 = null;
+                                if(!(r3 != r0)) { _fun139565_ip = 32; continue _fun139565 }
+case 18:
+                                r2 = a0;
+                                r1 = r3.measure;
+                                r1 = r1.bind(r3)(r2);
+case 32:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[5] = r2;
+                        r2 = function(a0) { // Original name: measureInWindow, environment: r1
+                            _fun139566: for(var _fun139566_ip = 0; ; ) switch(_fun139566_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r3 = r1.current;
+                                r0 = null;
+                                if(!(r3 != r0)) { _fun139566_ip = 32; continue _fun139566 }
+case 18:
+                                r2 = a0;
+                                r1 = r3.measureInWindow;
+                                r1 = r1.bind(r3)(r2);
+case 32:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[6] = r2;
+                        r1 = function(a0, a1, a2) { // Original name: measureLayout, environment: r1
+                            _fun139567: for(var _fun139567_ip = 0; ; ) switch(_fun139567_ip) {
+case 0:
+                                r1 = _closure1_slot1;
+                                r5 = r1.current;
+                                r0 = null;
+                                if(!(r5 != r0)) { _fun139567_ip = 40; continue _fun139567 }
+case 18:
+                                r4 = a0;
+                                r3 = a1;
+                                r2 = a2;
+                                r1 = r5.measureLayout;
+                                r1 = r1.bind(r5)(r4, r3, r2);
+case 40:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r0[7] = r1;
+                        return r0;
+                    };
+                    r4 = new Array(2);
+                    r4[0] = r8;
+                    r4[1] = r7;
+                    r0 = 5;
+                    r5[r0] = r7;
+                    r0 = 6;
+                    r5[r0] = r3;
+                    r0 = 7;
+                    r5[r0] = r4;
+                    r6 = r4;
+                    r10 = r3;
+case 255:
+                    r4 = a1;
+                    r3 = r11.useImperativeHandle;
+                    r3 = r3.bind(r11)(r4, r10, r6);
+                    r3 = r9.disabled;
+                    r10 = r1 !== r3;
+                    if(!r10) { _fun38749_ip = 286; continue _fun38749 }
+case 283:
+                    r10 = r3;
+case 286:
+                    r2 = !r10;
+                    r4 = !r10;
+                    if(r10) { _fun38749_ip = 301; continue _fun38749 }
+case 295:
+                    r4 = r9.focusable;
+case 301:
+                    r3 = r5[r8];
+                    if(!(r3 === r10)) { _fun38749_ip = 353; continue _fun38749 }
+case 309:
+                    r3 = r5[r9];
+                    if(!(r3 === r9)) { _fun38749_ip = 353; continue _fun38749 }
+case 317:
+                    r6 = r5[r10];
+                    r3 = r7.setTextValue;
+                    if(!(r6 === r3)) { _fun38749_ip = 353; continue _fun38749 }
+case 331:
+                    r3 = r5[r11];
+                    if(!(r3 === r2)) { _fun38749_ip = 353; continue _fun38749 }
+case 339:
+                    r3 = r5[r12];
+                    if(!(r3 === r4)) { _fun38749_ip = 353; continue _fun38749 }
+case 347:
+                    r6 = r5[r13];
+                    _fun38749_ip = 452; continue _fun38749;
+case 353:
+                    r3 = {};
+                    r15 = r3;
+                    r14 = r9;
+                    r11 = copyDataProperties(r16, r15);
+                    r3['onChange'] = r1;
+                    r11 = r7.setTextValue;
+                    r3['onChangeText'] = r11;
+                    r3['editable'] = r2;
+                    r3['focusable'] = r4;
+                    r3['aria-disabled'] = r10;
+                    r0 = 8;
+                    r5[r0] = r10;
+                    r0 = 9;
+                    r5[r0] = r9;
+                    r9 = r7.setTextValue;
+                    r0 = 10;
+                    r5[r0] = r9;
+                    r0 = 11;
+                    r5[r0] = r2;
+                    r0 = 12;
+                    r5[r0] = r4;
+                    r0 = 13;
+                    r5[r0] = r3;
+                    r6 = r3;
+case 452:
+                    r3 = r5[r14];
+                    if(!(r3 === r7)) { _fun38749_ip = 474; continue _fun38749 }
+case 460:
+                    r3 = r5[r15];
+                    if(!(r3 === r6)) { _fun38749_ip = 474; continue _fun38749 }
+case 468:
+                    r3 = r5[r16];
+                    _fun38749_ip = 520; continue _fun38749;
+case 474:
+                    r4 = {'innerRef': null, 'state': null, 'inputProps': null};
+                    r4[0] = r8;
+                    r4[1] = r7;
+                    r4[2] = r6;
+                    r0 = 14;
+                    r5[r0] = r7;
+                    r0 = 15;
+                    r5[r0] = r6;
+                    r0 = 16;
+                    r5[r0] = r4;
+                    r3 = r4;
+case 520:
+                    return r3;
+                }
+            };
+case 158:
+            r4 = r4[r5];
+            r6 = r5.bind(r0)(r4);
+            r5 = r6.fileFinishedImporting;
+            r4 = 'design/components/TextField/native/useTextField.native.tsx';
+            r4 = r5.bind(r6)(r4);
+            r2['useTextFieldState'] = r3;
+            r2['useTextField'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

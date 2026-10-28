@@ -1,0 +1,106 @@
+/** One metro module from the decompile: its id, source path (absent for node_modules), deps and factory text. */
+export type ModuleRecord = {
+	id: number;
+	path: string | undefined;
+	deps: number[];
+	source: string;
+};
+
+/** The light per-module index kept for every module, component or not, so dependency targets resolve. */
+export type ModuleSummary = {
+	id: number;
+	path: string | undefined;
+	exportNames: string[];
+};
+
+/** A value read from another module: `require(deps[i]).name`, with `name` a dotted member path. */
+export type ImportRef = {
+	kind: 'import';
+	moduleId: number;
+	name: string;
+};
+
+/** A component defined in the same module. It holds the record, since unnamed components get named last. */
+export type LocalRef = {
+	kind: 'local';
+	component: ComponentRecord;
+};
+
+/** Where a JSX element, a forwarded prop or a static points, before cross-module resolution. */
+export type TargetRef = ImportRef | LocalRef;
+
+/** A hook call the props went through: the imported hook and the member of its result that was read. */
+export type HookRef = {
+	hook: ImportRef;
+	member: string | undefined;
+};
+
+/** A component the rest props are spread into, and the hook they passed through on the way, if any. */
+export type RestTarget = {
+	target: TargetRef;
+	through: HookRef | undefined;
+};
+
+export type ComponentKind = 'function' | 'memo' | 'forwardRef' | 'class';
+
+export type LiteralValue = string | number | boolean | null;
+
+/** One thing the decompile showed about a prop. A prop's evidence is the list of these. */
+export type PropObservation =
+	| { kind: 'default'; value: LiteralValue }
+	| { kind: 'default-expression' }
+	| { kind: 'compared'; value: LiteralValue }
+	| { kind: 'called'; argCount: number }
+	| { kind: 'forwarded'; target: TargetRef; key: string }
+	| { kind: 'spread'; target: TargetRef }
+	| { kind: 'member'; name: string }
+	| { kind: 'guarded' }
+	| { kind: 'name-only' };
+
+export type PropEvidence = PropObservation[];
+
+/** A static attached to a component (`Button.Icon = ButtonIcon`). */
+export type StaticRecord = {
+	name: string;
+	target: TargetRef | undefined;
+	literal: LiteralValue | undefined;
+};
+
+export type ComponentRecord = {
+	name: string;
+	moduleId: number;
+	path: string | undefined;
+	exportNames: string[];
+	kind: ComponentKind;
+	rendersJsx: boolean;
+	props: Map<string, PropEvidence>;
+	/** Components the rest props (or the whole props object) are spread into. */
+	restTargets: RestTarget[];
+	/** The props object (or its rest) is handed to a call the walk cannot follow, such as a hook. */
+	propsEscape: boolean;
+	statics: StaticRecord[];
+	/** For a hook: per member of its result (`''` for the result itself) that spreads its argument, the keys set there. */
+	overrides: Map<string, Set<string>>;
+};
+
+/** An export of a parsed module whose value comes from another module. */
+export type ReExport = {
+	exportName: string;
+	target: ImportRef;
+};
+
+/** A component reachable as `require(path)[exportName]`, directly or through re-exports. */
+export type ExportEntry = {
+	path: string;
+	exportName: string;
+	component: ComponentRecord;
+};
+
+/** What extraction produced for one module. */
+export type ModuleFacts = {
+	moduleId: number;
+	components: ComponentRecord[];
+	/** Exported `useX` functions, walked like components so a component spreading their result can be typed. */
+	hooks: ComponentRecord[];
+	reExports: ReExport[];
+};

@@ -1,0 +1,711 @@
+    r10 = r7.__d;
+    r0 = 6882;
+    r9 = [31, 108, 19, 17, 21, 5089, 560, 578, 1383, 4421, 5085, 6883, 6181, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun6883: for(var _fun6883_ip = 0; ; ) switch(_fun6883_ip) {
+case 0:
+            r4 = a1;
+            var _closure0_slot0 = r4;
+            r6 = a2;
+            r2 = a5;
+            r3 = a6;
+            var _closure0_slot1 = r3;
+            r1 = ['value', 'onValueChange', 'label', 'subLabel', 'trailing', 'disabled', 'accessibilityHint', 'variant'];
+            var _closure0_slot2 = r1;
+            r1 = global;
+            r9 = r1.Object;
+            r8 = r9.defineProperty;
+            r7 = '__esModule';
+            r1 = {'value': true};
+            r1 = r8.bind(r9)(r2, r7, r1);
+            r1 = r3[r0];
+            r0 = undefined;
+            r1 = r6.bind(r0)(r1);
+            var _closure0_slot3 = r1;
+            r1 = r3[r1];
+            r1 = r6.bind(r0)(r1);
+            var _closure0_slot4 = r1;
+            r6 = r3[r2];
+            r1 = a3;
+            r1 = r1.bind(r0)(r6);
+            var _closure0_slot5 = r1;
+            r1 = r3[r3];
+            r1 = r4.bind(r0)(r1);
+            r1 = r1.View;
+            var _closure0_slot6 = r1;
+            r1 = r3[r4];
+            r1 = r4.bind(r0)(r1);
+            r6 = r1.jsx;
+            var _closure0_slot7 = r6;
+            r1 = r1.jsxs;
+            var _closure0_slot8 = r1;
+            r1 = r3[r5];
+            r7 = r4.bind(r0)(r1);
+            r6 = r7.createStyles;
+            r1 = function() {
+                r0 = {'labelWithTrailing': null};
+                r1 = {'flexDirection': 'row', 'alignItems': 'center', 'gap': 8};
+                r0[0] = r1;
+                return r0;
+            };
+            r1 = r6.bind(r7)(r1);
+            var _closure0_slot9 = r1;
+            r1 = r3[r6];
+            r6 = r4.bind(r0)(r1);
+            r1 = r6.isReactCompilerEnabled;
+            r1 = r1.bind(r6)();
+            if(r1) { _fun6883_ip = 216; continue _fun6883 }
+case 209:
+            r1 = function(a0) { // Original name: TableSwitchRow, environment: r5
+                _fun39993: for(var _fun39993_ip = 0; ; ) switch(_fun39993_ip) {
+case 0:
+                    r6 = a0;
+                    r11 = r6.value;
+                    var _closure1_slot0 = r11;
+                    r4 = r6.onValueChange;
+                    var _closure1_slot1 = r4;
+                    r26 = r6.label;
+                    r15 = r6.subLabel;
+                    r23 = r6.trailing;
+                    r9 = r6.disabled;
+                    r1 = undefined;
+                    if(!(r9 === r1)) { _fun39993_ip = 58; continue _fun39993 }
+case 56:
+                    r9 = false;
+case 58:
+                    r13 = r6.accessibilityHint;
+                    r28 = r6.variant;
+                    r31 = {};
+                    r3 = null;
+                    r29 = Object.assign(Object.create(r3), {'value': 0, 'onValueChange': 0, 'label': 0, 'subLabel': 0, 'trailing': 0, 'disabled': 0, 'accessibilityHint': 0, 'variant': 0});
+                    r30 = r6;
+                    r17 = copyDataProperties(r32, r31, r30);
+                    var _closure1_slot2 = r1;
+                    r4 = _closure0_slot9;
+                    r22 = r4.bind(r1)();
+                    r8 = _closure0_slot0;
+                    r7 = _closure0_slot1;
+                    r4 = r7[r8];
+                    r5 = r8.bind(r1)(r4);
+                    r4 = r5.isAndroid;
+                    r14 = r4.bind(r5)();
+                    r4 = r7[r9];
+                    r5 = r8.bind(r1)(r4);
+                    r4 = r5.getNodeText;
+                    r19 = r4.bind(r5)(r26);
+                    r4 = r7[r9];
+                    r5 = r8.bind(r1)(r4);
+                    r4 = r5.getNodeText;
+                    r10 = r4.bind(r5)(r15);
+                    r24 = _closure0_slot5;
+                    r4 = r24.useState;
+                    r5 = r4.bind(r24)(r11);
+                    r4 = _closure0_slot3;
+                    r0 = 2;
+                    r4 = r4.bind(r1)(r5, r0);
+                    r16 = r4[r0];
+                    r4 = r4[r1];
+                    _closure1_slot2 = r4;
+                    r6 = r24.useEffect;
+                    r5 = new Array(1);
+                    r5[0] = r11;
+                    r4 = function() { // Environment: r12
+                        r2 = _closure1_slot2;
+                        r1 = _closure1_slot0;
+                        r0 = undefined;
+                        r1 = r2.bind(r0)(r1);
+                        return r0;
+                    };
+                    r4 = r6.bind(r24)(r4, r5);
+                    r6 = _closure0_slot7;
+                    r4 = r7[r12];
+                    r4 = r8.bind(r1)(r4);
+                    r5 = r4.TableRow;
+                    r4 = {};
+                    r31 = r4;
+                    r30 = r17;
+                    r17 = copyDataProperties(r32, r31);
+                    r4['variant'] = r28;
+                    r2 = false;
+                    r4['arrow'] = r2;
+                    r17 = r26;
+                    if(!(r3 != r23)) { _fun39993_ip = 417; continue _fun39993 }
+case 292:
+                    r21 = _closure0_slot8;
+                    r20 = _closure0_slot6;
+                    r18 = {'style': null, 'children': null};
+                    r22 = r22.labelWithTrailing;
+                    r18[0] = r22;
+                    r22 = r24.isValidElement;
+                    r22 = r22.bind(r24)(r26);
+                    r24 = r26;
+                    if(r22) { _fun39993_ip = 395; continue _fun39993 }
+case 337:
+                    r22 = r7[r10];
+                    r22 = r8.bind(r1)(r22);
+                    r25 = r22.Text;
+                    r27 = 'mobile-text-heading-primary';
+                    r22 = 'danger';
+                    if(!(r22 === r28)) { _fun39993_ip = 371; continue _fun39993 }
+case 365:
+                    r27 = 'text-feedback-critical';
+case 371:
+                    r22 = {'variant': 'text-md/semibold', 'color': null, 'includeFontPadding': true, 'children': null};
+                    r22[1] = r27;
+                    r22[3] = r26;
+                    r24 = r6.bind(r1)(r25, r22);
+case 395:
+                    r22 = new Array(2);
+                    r22[0] = r24;
+                    r22[1] = r23;
+                    r18[1] = r22;
+                    r17 = r21.bind(r1)(r20, r18);
+case 417:
+                    r4['label'] = r17;
+                    r4['subLabel'] = r15;
+                    r4['disabled'] = r9;
+                    r15 = {'disabled': null, 'checked': null};
+                    r15[0] = r9;
+                    r15[1] = r16;
+                    r4['accessibilityState'] = r15;
+                    r2 = true;
+                    r4['accessible'] = r2;
+                    r15 = 'switch';
+                    r4['accessibilityRole'] = r15;
+                    r18 = r10;
+                    if(!(r18 == r3)) { _fun39993_ip = 488; continue _fun39993 }
+case 484:
+                    r18 = '';
+case 488:
+                    r10 = function() { // Original name: handleOnPress, environment: r12
+                        _fun94790: for(var _fun94790_ip = 0; ; ) switch(_fun94790_ip) {
+case 0:
+                            r3 = _closure1_slot1;
+                            r0 = null;
+                            r0 = r3 == r0;
+                            r1 = undefined;
+                            r2 = undefined;
+                            if(r0) { _fun94790_ip = 32; continue _fun94790 }
+case 20:
+                            r4 = _closure1_slot0;
+                            r0 = !r4;
+                            r2 = r3.bind(r1)(r0);
+case 32:
+                            return r2;
+                        }
+                    };
+                    r15 = global;
+                    r15 = r15.HermesInternal;
+                    r17 = r15.concat;
+                    r16 = ', ';
+                    r15 = '';
+                    r15 = r17.bind(r15)(r19, r16, r18);
+                    r4['accessibilityLabel'] = r15;
+                    r4['accessibilityHint'] = r13;
+                    r13 = undefined;
+                    if(!r14) { _fun39993_ip = 545; continue _fun39993 }
+case 542:
+                    r13 = r10;
+case 545:
+                    r4['onPress'] = r13;
+                    r12 = function() { // Original name: handleAccessibilityTap, environment: r12
+                        r3 = _closure1_slot2;
+                        r4 = _closure1_slot0;
+                        r1 = !r4;
+                        r0 = undefined;
+                        r3 = r3.bind(r0)(r1);
+                        r3 = global;
+                        r3 = r3.setTimeout;
+                        r2 = function() { // Environment: r2
+                            _fun140095: for(var _fun140095_ip = 0; ; ) switch(_fun140095_ip) {
+case 0:
+                                r2 = _closure1_slot1;
+                                r0 = null;
+                                if(!(r2 != r0)) { _fun140095_ip = 27; continue _fun140095 }
+case 13:
+                                r3 = _closure1_slot0;
+                                r1 = !r3;
+                                r0 = undefined;
+                                r2 = r2.bind(r0)(r1);
+case 27:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r2 = r3.bind(r0)(r2);
+                        return r0;
+                    };
+                    r4['onAccessibilityTap'] = r12;
+                    r7 = r7[r11];
+                    r7 = r8.bind(r1)(r7);
+                    r8 = r7.FormSwitch;
+                    r7 = {'aria-hidden': true, 'value': null, 'onValueChange': null, 'disabled': null};
+                    r7[1] = r11;
+                    r7[2] = r10;
+                    r7[3] = r9;
+                    r7 = r6.bind(r1)(r8, r7);
+                    r4['trailing'] = r7;
+                    r4 = r6.bind(r1)(r5, r4);
+                    return r4;
+                }
+            };
+            _fun6883_ip = 221; continue _fun6883;
+case 216:
+            r1 = function(a0) { // Original name: TableSwitchRow, environment: r5
+                _fun39992: for(var _fun39992_ip = 0; ; ) switch(_fun39992_ip) {
+case 0:
+                    r26 = a0;
+                    r17 = _closure0_slot0;
+                    r4 = _closure0_slot1;
+                    r3 = r4[r7];
+                    r1 = undefined;
+                    r5 = r17.bind(r1)(r3);
+                    r3 = r5.c;
+                    r0 = 47;
+                    r5 = r3.bind(r5)(r0);
+                    r3 = r5[r0];
+                    if(!(r3 === r26)) { _fun39992_ip = 101; continue _fun39992 }
+case 52:
+                    r16 = r5[r1];
+                    r23 = r5[r2];
+                    r8 = r5[r3];
+                    var _closure1_slot0 = r8;
+                    r13 = r5[r4];
+                    r12 = r5[r5];
+                    r3 = r5[r6];
+                    r9 = r5[r7];
+                    r19 = r5[r8];
+                    var _closure1_slot1 = r19;
+                    r6 = r5[r9];
+                    _fun39992_ip = 263; continue _fun39992;
+case 101:
+                    r24 = r26.value;
+                    _closure1_slot1 = r24;
+                    r14 = r26.onValueChange;
+                    _closure1_slot0 = r14;
+                    r11 = r26.label;
+                    r20 = r26.subLabel;
+                    r22 = r26.trailing;
+                    r21 = r26.disabled;
+                    r10 = r26.accessibilityHint;
+                    r25 = r26.variant;
+                    r27 = _closure0_slot4;
+                    r15 = _closure0_slot2;
+                    r15 = r27.bind(r1)(r26, r15);
+                    r0 = 0;
+                    r5[r0] = r26;
+                    r0 = 1;
+                    r5[r0] = r10;
+                    r0 = 2;
+                    r5[r0] = r11;
+                    r0 = 3;
+                    r5[r0] = r14;
+                    r0 = 4;
+                    r5[r0] = r15;
+                    r0 = 5;
+                    r5[r0] = r20;
+                    r0 = 6;
+                    r5[r0] = r21;
+                    r0 = 7;
+                    r5[r0] = r22;
+                    r0 = 8;
+                    r5[r0] = r24;
+                    r0 = 9;
+                    r5[r0] = r25;
+                    r6 = r25;
+                    r19 = r24;
+                    r9 = r22;
+                    r3 = r21;
+                    r12 = r20;
+                    r13 = r15;
+                    r8 = r14;
+                    r23 = r11;
+                    r16 = r10;
+case 263:
+                    r15 = r1 !== r3;
+                    if(!r15) { _fun39992_ip = 273; continue _fun39992 }
+case 270:
+                    r15 = r3;
+case 273:
+                    r3 = _closure0_slot9;
+                    r11 = r3.bind(r1)();
+                    r3 = r4[r8];
+                    r10 = r17.bind(r1)(r3);
+                    r3 = r10.isAndroid;
+                    r3 = r3.bind(r10)();
+                    r10 = r5[r10];
+                    if(!(r10 === r8)) { _fun39992_ip = 322; continue _fun39992 }
+case 308:
+                    r10 = r5[r11];
+                    if(!(r10 === r19)) { _fun39992_ip = 322; continue _fun39992 }
+case 316:
+                    r20 = r5[r12];
+                    _fun39992_ip = 353; continue _fun39992;
+case 322:
+                    r10 = function() { // Original name: handleOnPress, environment: r7
+                        _fun94787: for(var _fun94787_ip = 0; ; ) switch(_fun94787_ip) {
+case 0:
+                            r3 = _closure1_slot0;
+                            r0 = null;
+                            r0 = r3 == r0;
+                            r1 = undefined;
+                            r2 = undefined;
+                            if(r0) { _fun94787_ip = 32; continue _fun94787 }
+case 20:
+                            r4 = _closure1_slot1;
+                            r0 = !r4;
+                            r2 = r3.bind(r1)(r0);
+case 32:
+                            return r2;
+                        }
+                    };
+                    r0 = 10;
+                    r5[r0] = r8;
+                    r0 = 11;
+                    r5[r0] = r19;
+                    r0 = 12;
+                    r5[r0] = r10;
+                    r20 = r10;
+case 353:
+                    r10 = r5[r13];
+                    if(!(r10 === r23)) { _fun39992_ip = 367; continue _fun39992 }
+case 361:
+                    r22 = r5[r14];
+                    _fun39992_ip = 404; continue _fun39992;
+case 367:
+                    r10 = r4[r9];
+                    r14 = r17.bind(r1)(r10);
+                    r10 = r14.getNodeText;
+                    r10 = r10.bind(r14)(r23);
+                    r0 = 13;
+                    r5[r0] = r23;
+                    r0 = 14;
+                    r5[r0] = r10;
+                    r22 = r10;
+case 404:
+                    r10 = r5[r15];
+                    if(!(r10 === r12)) { _fun39992_ip = 418; continue _fun39992 }
+case 412:
+                    r21 = r5[r16];
+                    _fun39992_ip = 455; continue _fun39992;
+case 418:
+                    r10 = r4[r9];
+                    r14 = r17.bind(r1)(r10);
+                    r10 = r14.getNodeText;
+                    r10 = r10.bind(r14)(r12);
+                    r0 = 15;
+                    r5[r0] = r12;
+                    r0 = 16;
+                    r5[r0] = r10;
+                    r21 = r10;
+case 455:
+                    r28 = _closure0_slot5;
+                    r10 = r28.useState;
+                    r14 = r10.bind(r28)(r19);
+                    r10 = _closure0_slot3;
+                    r0 = 2;
+                    r14 = r10.bind(r1)(r14, r0);
+                    r10 = r14[r0];
+                    r14 = r14[r1];
+                    var _closure1_slot2 = r14;
+                    r14 = r5[r17];
+                    if(!(r14 === r19)) { _fun39992_ip = 512; continue _fun39992 }
+case 502:
+                    r25 = r5[r18];
+                    r24 = r5[r19];
+                    _fun39992_ip = 554; continue _fun39992;
+case 512:
+                    r14 = function() { // Original name: k, environment: r7
+                        r2 = _closure1_slot2;
+                        r1 = _closure1_slot1;
+                        r0 = undefined;
+                        r1 = r2.bind(r0)(r1);
+                        return r0;
+                    };
+                    r26 = new Array(1);
+                    r26[0] = r19;
+                    r0 = 17;
+                    r5[r0] = r19;
+                    r0 = 18;
+                    r5[r0] = r14;
+                    r0 = 19;
+                    r5[r0] = r26;
+                    r24 = r26;
+                    r25 = r14;
+case 554:
+                    r14 = r28.useEffect;
+                    r14 = r14.bind(r28)(r25, r24);
+                    r14 = r5[r20];
+                    if(!(r14 === r8)) { _fun39992_ip = 587; continue _fun39992 }
+case 573:
+                    r14 = r5[r21];
+                    if(!(r14 === r19)) { _fun39992_ip = 587; continue _fun39992 }
+case 581:
+                    r14 = r5[r22];
+                    _fun39992_ip = 618; continue _fun39992;
+case 587:
+                    r7 = function() { // Original name: handleAccessibilityTap, environment: r7
+                        r3 = _closure1_slot2;
+                        r4 = _closure1_slot1;
+                        r1 = !r4;
+                        r0 = undefined;
+                        r3 = r3.bind(r0)(r1);
+                        r3 = global;
+                        r3 = r3.setTimeout;
+                        r2 = function() { // Environment: r2
+                            _fun140094: for(var _fun140094_ip = 0; ; ) switch(_fun140094_ip) {
+case 0:
+                                r2 = _closure1_slot0;
+                                r0 = null;
+                                if(!(r2 != r0)) { _fun140094_ip = 27; continue _fun140094 }
+case 13:
+                                r3 = _closure1_slot1;
+                                r1 = !r3;
+                                r0 = undefined;
+                                r2 = r2.bind(r0)(r1);
+case 27:
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r2 = r3.bind(r0)(r2);
+                        return r0;
+                    };
+                    r0 = 20;
+                    r5[r0] = r8;
+                    r0 = 21;
+                    r5[r0] = r19;
+                    r0 = 22;
+                    r5[r0] = r7;
+                    r14 = r7;
+case 618:
+                    r7 = r5[r23];
+                    if(!(r7 === r23)) { _fun39992_ip = 659; continue _fun39992 }
+case 626:
+                    r7 = r5[r24];
+                    if(!(r7 === r11)) { _fun39992_ip = 659; continue _fun39992 }
+case 634:
+                    r7 = r5[r25];
+                    if(!(r7 === r9)) { _fun39992_ip = 659; continue _fun39992 }
+case 642:
+                    r7 = r5[r26];
+                    if(!(r7 === r6)) { _fun39992_ip = 659; continue _fun39992 }
+case 650:
+                    r8 = r5[r27];
+                    _fun39992_ip = 838; continue _fun39992;
+case 659:
+                    r2 = null;
+                    r7 = r23;
+                    if(!(r2 != r9)) { _fun39992_ip = 800; continue _fun39992 }
+case 671:
+                    r26 = _closure0_slot8;
+                    r25 = _closure0_slot6;
+                    r24 = {'style': null, 'children': null};
+                    r27 = r11.labelWithTrailing;
+                    r24[0] = r27;
+                    r27 = r28.isValidElement;
+                    r27 = r27.bind(r28)(r23);
+                    r28 = r23;
+                    if(r27) { _fun39992_ip = 778; continue _fun39992 }
+case 716:
+                    r30 = _closure0_slot7;
+                    r27 = r4[r10];
+                    r27 = r17.bind(r1)(r27);
+                    r29 = r27.Text;
+                    r31 = 'mobile-text-heading-primary';
+                    r27 = 'danger';
+                    if(!(r27 === r6)) { _fun39992_ip = 754; continue _fun39992 }
+case 748:
+                    r31 = 'text-feedback-critical';
+case 754:
+                    r27 = {'variant': 'text-md/semibold', 'color': null, 'includeFontPadding': true, 'children': null};
+                    r27[1] = r31;
+                    r27[3] = r23;
+                    r28 = r30.bind(r1)(r29, r27);
+case 778:
+                    r27 = new Array(2);
+                    r27[0] = r28;
+                    r27[1] = r9;
+                    r24[1] = r27;
+                    r7 = r26.bind(r1)(r25, r24);
+case 800:
+                    r0 = 23;
+                    r5[r0] = r23;
+                    r0 = 24;
+                    r5[r0] = r11;
+                    r0 = 25;
+                    r5[r0] = r9;
+                    r0 = 26;
+                    r5[r0] = r6;
+                    r0 = 27;
+                    r5[r0] = r7;
+                    r8 = r7;
+case 838:
+                    r7 = r5[r28];
+                    if(!(r7 === r10)) { _fun39992_ip = 860; continue _fun39992 }
+case 846:
+                    r7 = r5[r29];
+                    if(!(r7 === r15)) { _fun39992_ip = 860; continue _fun39992 }
+case 854:
+                    r7 = r5[r30];
+                    _fun39992_ip = 902; continue _fun39992;
+case 860:
+                    r9 = {'disabled': null, 'checked': null};
+                    r9[0] = r15;
+                    r9[1] = r10;
+                    r0 = 28;
+                    r5[r0] = r10;
+                    r0 = 29;
+                    r5[r0] = r15;
+                    r0 = 30;
+                    r5[r0] = r9;
+                    r7 = r9;
+case 902:
+                    r2 = null;
+                    if(!(r21 == r2)) { _fun39992_ip = 912; continue _fun39992 }
+case 908:
+                    r21 = '';
+case 912:
+                    r9 = global;
+                    r9 = r9.HermesInternal;
+                    r11 = r9.concat;
+                    r10 = ', ';
+                    r9 = '';
+                    r11 = r11.bind(r9)(r22, r10, r21);
+                    r10 = undefined;
+                    if(!r3) { _fun39992_ip = 950; continue _fun39992 }
+case 947:
+                    r10 = r20;
+case 950:
+                    r3 = r5[r31];
+                    if(!(r3 === r15)) { _fun39992_ip = 980; continue _fun39992 }
+case 958:
+                    r3 = r5[r32];
+                    if(!(r3 === r20)) { _fun39992_ip = 980; continue _fun39992 }
+case 966:
+                    r3 = r5[r33];
+                    if(!(r3 === r19)) { _fun39992_ip = 980; continue _fun39992 }
+case 974:
+                    r9 = r5[r34];
+                    _fun39992_ip = 1058; continue _fun39992;
+case 980:
+                    r22 = _closure0_slot7;
+                    r3 = r4[r11];
+                    r3 = r17.bind(r1)(r3);
+                    r21 = r3.FormSwitch;
+                    r3 = {'aria-hidden': true, 'value': null, 'onValueChange': null, 'disabled': null};
+                    r3[1] = r19;
+                    r3[2] = r20;
+                    r3[3] = r15;
+                    r3 = r22.bind(r1)(r21, r3);
+                    r0 = 31;
+                    r5[r0] = r15;
+                    r0 = 32;
+                    r5[r0] = r20;
+                    r0 = 33;
+                    r5[r0] = r19;
+                    r0 = 34;
+                    r5[r0] = r3;
+                    r9 = r3;
+case 1058:
+                    r3 = r5[r35];
+                    if(!(r3 === r16)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1066:
+                    r3 = r5[r36];
+                    if(!(r3 === r15)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1074:
+                    r3 = r5[r37];
+                    if(!(r3 === r14)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1082:
+                    r3 = r5[r38];
+                    if(!(r3 === r13)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1090:
+                    r3 = r5[r39];
+                    if(!(r3 === r12)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1098:
+                    r3 = r5[r40];
+                    if(!(r3 === r11)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1106:
+                    r3 = r5[r41];
+                    if(!(r3 === r10)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1114:
+                    r3 = r5[r42];
+                    if(!(r3 === r9)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1122:
+                    r3 = r5[r43];
+                    if(!(r3 === r8)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1130:
+                    r3 = r5[r44];
+                    if(!(r3 === r7)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1138:
+                    r3 = r5[r45];
+                    if(!(r3 === r6)) { _fun39992_ip = 1155; continue _fun39992 }
+case 1146:
+                    r3 = r5[r46];
+                    _fun39992_ip = 1364; continue _fun39992;
+case 1155:
+                    r18 = _closure0_slot7;
+                    r4 = r4[r12];
+                    r4 = r17.bind(r1)(r4);
+                    r17 = r4.TableRow;
+                    r4 = {};
+                    r34 = r4;
+                    r33 = r13;
+                    r19 = copyDataProperties(r35, r34);
+                    r4['variant'] = r6;
+                    r2 = false;
+                    r4['arrow'] = r2;
+                    r4['label'] = r8;
+                    r4['subLabel'] = r12;
+                    r4['disabled'] = r15;
+                    r4['accessibilityState'] = r7;
+                    r2 = true;
+                    r4['accessible'] = r2;
+                    r19 = 'switch';
+                    r4['accessibilityRole'] = r19;
+                    r4['accessibilityLabel'] = r11;
+                    r4['accessibilityHint'] = r16;
+                    r4['onPress'] = r10;
+                    r4['onAccessibilityTap'] = r14;
+                    r4['trailing'] = r9;
+                    r4 = r18.bind(r1)(r17, r4);
+                    r0 = 35;
+                    r5[r0] = r16;
+                    r0 = 36;
+                    r5[r0] = r15;
+                    r0 = 37;
+                    r5[r0] = r14;
+                    r0 = 38;
+                    r5[r0] = r13;
+                    r0 = 39;
+                    r5[r0] = r12;
+                    r0 = 40;
+                    r5[r0] = r11;
+                    r0 = 41;
+                    r5[r0] = r10;
+                    r0 = 42;
+                    r5[r0] = r9;
+                    r0 = 43;
+                    r5[r0] = r8;
+                    r0 = 44;
+                    r5[r0] = r7;
+                    r0 = 45;
+                    r5[r0] = r6;
+                    r0 = 46;
+                    r5[r0] = r4;
+                    r3 = r4;
+case 1364:
+                    return r3;
+                }
+            };
+case 221:
+            r3 = r3[r13];
+            r5 = r4.bind(r0)(r3);
+            r4 = r5.fileFinishedImporting;
+            r3 = 'design/components/TableRow/native/TableSwitchRow.native.tsx';
+            r3 = r4.bind(r5)(r3);
+            r2['TableSwitchRow'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

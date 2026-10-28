@@ -47,6 +47,7 @@
 		"dist",
 		"*.gen.ts",
 		"packages/api/src/**",
+		"packages/discord-types/src/**",
 		"packages/cli/templates/**",
 		"packages/plugins/**",
 		"packages/plugin-scripts/**",
