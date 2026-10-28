@@ -5,6 +5,7 @@ import { getDeveloper, listDevelopers } from '~/lib/developers';
 import type { ManifestAuthor } from '~/lib/authors/resolve';
 import type { TeamRoleIds } from '~/lib/team/roles';
 import { syncTeam } from '~/lib/team/sync';
+import { ApiError } from '~/lib/api/errors';
 import { addon } from '~/db/schema';
 
 import { createTestContext, signInWithDiscord } from './helpers/context';
@@ -156,9 +157,12 @@ describe('listDevelopers', () => {
 	});
 
 	test('rejects a cursor from another list', async () => {
-		await expect(listDevelopers(ctx, { search: '', cursor: 'bm9wZQ' })).rejects.toThrow(
-			/cursor/,
+		const error = await listDevelopers(ctx, { search: '', cursor: 'bm9wZQ' }).then(
+			() => null,
+			(cause: unknown) => cause,
 		);
+
+		expect(error).toBeInstanceOf(ApiError);
 	});
 
 	test('shows a linked account under its Unbound name', async () => {

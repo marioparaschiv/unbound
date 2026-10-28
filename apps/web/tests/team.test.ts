@@ -193,7 +193,12 @@ describe('syncTeam', () => {
 		);
 
 		try {
-			await expect(syncTeam(ctx, IDS)).rejects.toThrow(/500/);
+			const error = await syncTeam(ctx, IDS).then(
+				() => null,
+				(cause: unknown) => cause,
+			);
+
+			expect(String(error)).toMatch(/500/);
 		} finally {
 			discord.overrideMembers(null);
 		}

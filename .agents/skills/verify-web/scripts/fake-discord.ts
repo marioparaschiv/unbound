@@ -1,7 +1,6 @@
 // Usage: bun fake-discord.ts <port> <guild id>, run by launch.sh. Serves the Unbound guild's members
 // with the seeded team roles, and `/users/{id}` for them.
 import { serveDiscord, type FakeDiscordUser } from '../../../../apps/web/tests/helpers/discord';
-
 import { GUILD_MEMBERS } from './team';
 
 const port = Number(process.argv[2]);

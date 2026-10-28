@@ -14,7 +14,6 @@ import { createAppContext } from '../../../../apps/web/src/lib/context';
 import { createDatabase } from '../../../../apps/web/src/db/database';
 import { toAddonSummary } from '../../../../apps/web/src/lib/addons';
 import { parseEnv } from '../../../../apps/web/src/lib/env';
-
 import { discordIdOf, ROLES } from './team';
 
 type SeededSession = {
