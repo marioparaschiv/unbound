@@ -6,6 +6,7 @@ import { createPluginContext } from '~/api/native-runtime';
 import type { AddonAttribution } from '~/api/crash-guard';
 import type { ReloadResult } from '~/managers/addons';
 import { reload as reloadApp } from '~/api/native';
+import { registry } from '~/lib/commands/registry';
 import { ManagerType } from '~/managers/base';
 import { Addons } from '~/managers/addons';
 
@@ -80,7 +81,19 @@ export class Plugins extends Addons<PluginEntity> {
 	}
 
 	protected createContext(entity: PluginEntity): PluginContext {
-		return createPluginContext(entity.data, this.attribution(entity));
+		const context = createPluginContext(entity.data, this.attribution(entity));
+
+		return {
+			...context,
+			dispose() {
+				try {
+					context.dispose();
+				} finally {
+					// Every way a plugin ends disposes its context, a failed start and a throwing stop included.
+					registry.release(entity.id);
+				}
+			},
+		};
 	}
 
 	protected attribution(entity: PluginEntity): AddonAttribution | undefined {

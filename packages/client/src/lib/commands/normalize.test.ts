@@ -131,8 +131,8 @@ describe('normalize', () => {
 
 describe('resolveSection', () => {
 	test('uses the shared section unless the owner names its own', () => {
-		expect(resolveSection('unbound.demo', undefined, 7).id).toBe('unbound');
-		expect(resolveSection('unbound.demo', { name: ' Demo ' }, 7)).toEqual({
+		expect(resolveSection('unbound.demo', undefined).id).toBe('unbound');
+		expect(resolveSection('unbound.demo', { name: ' Demo ' })).toEqual({
 			id: 'unbound:unbound.demo',
 			name: 'Demo',
 			icon: undefined,

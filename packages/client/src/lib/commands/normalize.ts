@@ -114,16 +114,11 @@ export class CommandDefinitionError extends Error {
  * @description Resolves an owner's section: its own, keyed by the owner, or the shared Unbound section.
  * @param owner The owner id.
  * @param input The section the owner asked for, if any.
- * @param unboundIcon The icon of the shared section.
- * @returns The section.
+ * @returns The section; without an icon, the commands built-in draws a default one.
  */
-export function resolveSection(
-	owner: string,
-	input: SectionInput | undefined,
-	unboundIcon: IconSource | undefined,
-): Section {
+export function resolveSection(owner: string, input: SectionInput | undefined): Section {
 	if (!input) {
-		return { id: UNBOUND_SECTION_ID, name: 'Unbound', icon: unboundIcon };
+		return { id: UNBOUND_SECTION_ID, name: 'Unbound', icon: undefined };
 	}
 
 	if (typeof input.name !== 'string' || !input.name.trim()) {
