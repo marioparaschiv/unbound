@@ -30,6 +30,7 @@ import type { AddonAttribution, AddonFreeze } from '~/api/crash-guard';
 import type { CrashReportAddon } from '~/lib/crash-reports';
 import type { NativeConsents } from '~/lib/native-consent';
 import { Manager, ManagerType } from '~/managers/base';
+import { unpatchAllByCaller } from '~/api/patcher';
 import { reportCrash } from '~/lib/crash-reports';
 import { showToast } from '~/api/toasts';
 import storage from '~/api/storage';
@@ -698,6 +699,12 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			context?.dispose();
 		} catch (disposeError) {
 			error ??= toError(disposeError);
+		}
+
+		try {
+			unpatchAllByCaller(resolved.id);
+		} catch (unpatchError) {
+			error ??= toError(unpatchError);
 		}
 
 		if (error) {
