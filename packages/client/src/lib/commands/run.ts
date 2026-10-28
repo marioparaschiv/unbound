@@ -141,7 +141,7 @@ function route(
 		return { content: reply };
 	}
 
-	if ('ephemeral' in reply) {
+	if ('ephemeral' in reply && reply.ephemeral) {
 		effects.showEphemeral(context.channel.id, reply, record.section);
 
 		return;
