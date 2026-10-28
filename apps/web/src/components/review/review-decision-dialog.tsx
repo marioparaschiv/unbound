@@ -112,7 +112,7 @@ function ReviewDecisionDialog({ entry, decision }: ReviewDecisionDialogProps) {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button variant={copy.variant} size='sm'>
+				<Button variant={copy.variant}>
 					{copy.icon}
 					{copy.label}
 				</Button>

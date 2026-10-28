@@ -66,13 +66,13 @@ function ReviewItem({ entry }: ReviewItemProps) {
 				<AddonMdReview entry={entry} />
 
 				<div className='flex flex-wrap gap-2'>
-					<Button asChild variant='outline' size='sm'>
+					<Button asChild variant='outline'>
 						<a href={entry.artifact.url} target='_blank' rel='noopener noreferrer'>
 							<IconDownload size={24} />
 							Download staged bundle
 						</a>
 					</Button>
-					<Button asChild variant='outline' size='sm'>
+					<Button asChild variant='outline'>
 						<a href={getBundleUrl(source)} target='_blank' rel='noopener noreferrer'>
 							<IconSquareCode size={24} />
 							Bundle at {shortSha(source.commitSha)}
