@@ -115,7 +115,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 	},
 };
 
-function collectKind(kind: SyncKind): SyncKindDocument {
+function collectKind(kind: SyncKind, base: SyncKindDocument | undefined): SyncKindDocument {
 	const adapter = adapters[kind];
 	const installs = Object.entries(getSources(kind))
 		.filter(([id]) => SYNC_ID_PATTERN.test(id))
@@ -125,7 +125,13 @@ function collectKind(kind: SyncKind): SyncKindDocument {
 		installs.some((install) => install.id === applied) ||
 		(kind === 'icons' && applied === SYNC_DEFAULT_ICON_PACK);
 
-	return { installs, applied: known ? applied : null };
+	if (applied === null || known) {
+		return { installs, applied };
+	}
+
+	// Other devices can't install an addon with no source, such as an editor theme. Reporting the agreed
+	// value keeps their choice instead of telling them to remove it.
+	return { installs, applied: base?.applied ?? null };
 }
 
 function clone(store: SyncSettingsStore): SyncSettingsStore {
@@ -135,14 +141,15 @@ function clone(store: SyncSettingsStore): SyncSettingsStore {
 /**
  * @description Reads this device's side of Cloud Sync: the URL, enabled and applied state of every
  * addon installed from a URL, the core settings minus device-local keys, and those addons' settings.
+ * @param base The last document both sides agreed on, reported for an applied addon that has no source.
  * @returns The document, detached from the live settings.
  */
-export function collectLocalDocument(): SyncDocument {
+export function collectLocalDocument(base: SyncDocument | null = null): SyncDocument {
 	const addons: Record<SyncKind, SyncKindDocument> = {
-		plugins: collectKind('plugins'),
-		themes: collectKind('themes'),
-		icons: collectKind('icons'),
-		fonts: collectKind('fonts'),
+		plugins: collectKind('plugins', base?.addons.plugins),
+		themes: collectKind('themes', base?.addons.themes),
+		icons: collectKind('icons', base?.addons.icons),
+		fonts: collectKind('fonts', base?.addons.fonts),
 	};
 	const ids = new Set(
 		Object.values(addons).flatMap(({ installs }) => installs.map((install) => install.id)),

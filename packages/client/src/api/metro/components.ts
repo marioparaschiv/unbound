@@ -1,4 +1,6 @@
 import type {
+	ColorBlockProps,
+	ColorPickerOptions,
 	DesignComponentName,
 	DesignModule,
 	SwitchProps,
@@ -19,7 +21,7 @@ import {
 } from '~/ui/components/design-fallbacks';
 import type { HelpMessageProps } from '~/ui/components/help-message';
 import { findByPropsLazy } from '~/api/metro/wrappers';
-import { findByName } from '~/api/metro';
+import { findByName, findByProps } from '~/api/metro';
 
 const designModule: DesignModule = findByPropsLazy('createStyles', 'dismissAlerts', 'ContextMenu');
 const designFallbacks = new Map<DesignComponentName, ComponentType<never>>();
@@ -161,6 +163,56 @@ export function Switch(props: SwitchProps) {
 		) ?? FallbackSwitch);
 
 	return createElement(component, props);
+}
+let colorBlock: ComponentType<ColorBlockProps> | undefined;
+
+/**
+ * @description Discord's colour picker swatch, or Unbound's own on builds without it, picked on first render.
+ * @param props The 0xRRGGBB colour, whether it is selected, a style override and an optional press handler.
+ * @returns The swatch element.
+ */
+export function ColorBlock(props: ColorBlockProps) {
+	const component: ComponentType<ColorBlockProps> = (colorBlock ??=
+		firstOf(
+			() => {
+				const found: ComponentType<ColorBlockProps> | undefined = findByName('ColorBlock');
+
+				return isRenderable(found) ? found : undefined;
+			},
+			() => require('~/ui/components/color-swatch').default,
+		) ?? require('~/ui/components/color-swatch').default);
+
+	return createElement(component, props);
+}
+
+type ColorPickerOpener = (options: ColorPickerOptions) => void;
+
+let colorPicker: ColorPickerOpener | undefined;
+
+function openHexColorAlert(options: ColorPickerOptions) {
+	const HexColorAlert = require('~/ui/components/hex-color-alert').default;
+	const key = 'unbound-color-picker';
+
+	Discord.openAlert(
+		key,
+		createElement(HexColorAlert, { ...options, onClose: () => Discord.dismissAlert(key) }),
+	);
+}
+
+/**
+ * @description Opens Discord's colour picker sheet, or Unbound's hex colour alert on builds without it.
+ * @param options The 0xRRGGBB starting colour, suggested `#rrggbb` swatches and the select callback.
+ */
+export function showColorPicker(options: ColorPickerOptions): void {
+	// Only a hit is cached: the sheet's module may not be initialised the first time this runs.
+	colorPicker ??= firstOf(() => {
+		const found: ColorPickerOpener | undefined =
+			findByProps('CUSTOM_COLOR_PICKER_KEY')?.default;
+
+		return typeof found === 'function' ? found : undefined;
+	});
+
+	(colorPicker ?? openHexColorAlert)(options);
 }
 export const Forms = lazy(
 	() =>

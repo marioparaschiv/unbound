@@ -358,6 +358,10 @@ export type IconButtonProps = {
 /** `FloatingActionButton`: a single-icon FAB, typically pinned to a screen corner. */
 export type FloatingActionButtonProps = {
 	icon?: ReactNode | number;
+	/** Distance from the parent's bottom edge; Discord defaults to 16 and springs to changes. */
+	positionBottom?: number;
+	positionRight?: number;
+	accessibilityLabel?: string;
 	style?: StyleProp<ViewStyle>;
 	onPress?: DiscordFunction<void>;
 };
@@ -631,6 +635,27 @@ export type ContextMenuProps = {
 };
 
 /* ------------------------------------------------------------------ *
+ * Colour picker
+ * ------------------------------------------------------------------ */
+
+/** Options for Discord's custom colour picker sheet (`showCustomColorPickerActionSheet`). Colours are 0xRRGGBB integers. */
+export type ColorPickerOptions = {
+	color: number;
+	/** Swatches offered under the picker, as `#rrggbb`. */
+	suggestedColors?: string[];
+	/** Called with the picked colour on confirm, and with the current colour when the sheet is dismissed. */
+	onSelect: (color: number) => void;
+};
+
+/** Discord's colour picker swatch (`ColorBlock`): a rounded block, pressable only with `onSelect`. */
+export type ColorBlockProps = {
+	color: number;
+	selected?: boolean;
+	style?: StyleProp<ViewStyle>;
+	onSelect?: (color: number) => void;
+};
+
+/* ------------------------------------------------------------------ *
  * Navigation
  * ------------------------------------------------------------------ */
 
@@ -639,6 +664,7 @@ export type Navigation<T = any> = {
 	pop: () => void;
 	navigate: (route: string, params?: T) => void;
 	goBack: () => void;
+	isFocused: () => boolean;
 	setOptions: (options: NavigationOptions) => void;
 	addListener: (event: string, callback: DiscordFunction) => DiscordFunction<void>;
 };
