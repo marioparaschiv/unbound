@@ -40,7 +40,14 @@ function HeroShowcase({
 					aria-hidden
 					className='absolute inset-x-[8%] top-[20%] -bottom-[10%] bg-[radial-gradient(ellipse_at_center,var(--glow),transparent_70%)] pointer-events-none'
 				/>
-				<img src={HERO_SRC} alt={alt} className='relative w-full' />
+				{/* High priority makes the server render a preload in the head, so the image is ready when the phones slide in. */}
+				<img
+					src={HERO_SRC}
+					alt={alt}
+					loading='eager'
+					fetchPriority='high'
+					className='relative w-full'
+				/>
 			</div>
 			{/* The fade reaches past the image so it also covers the glow that the blur spreads outside it. */}
 			{fade ? (

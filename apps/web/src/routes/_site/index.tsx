@@ -161,11 +161,11 @@ function HomePage() {
 						</a>
 					</Button>
 				</div>
-				{/* Below md the image overhangs the viewport by its transparent margins, so the phones span it edge to edge. */}
+				{/* Below md the image overhangs the viewport by its transparent margins, leaving the phones about 8px from each edge. */}
 				<HeroShowcase
 					fade
 					delay={ART_DELAY_MS}
-					className='mt-8 w-[130vw] max-w-none md:w-full md:max-w-[1600px]'
+					className='mt-8 w-[calc(130vw-20px)] max-w-none md:w-full md:max-w-[1600px]'
 				/>
 			</div>
 			<FeatureGrid />
