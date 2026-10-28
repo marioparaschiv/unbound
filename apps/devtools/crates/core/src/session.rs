@@ -14,7 +14,6 @@ use serde::Serialize;
 use serde_json::Value as Json;
 use tokio::sync::{mpsc, oneshot, watch};
 
-use crate::bridge;
 use crate::inspect::{InspectedElement, Section};
 use crate::protocol::{
 	ComponentFilter, InspectedElementPayload, InspectedKind, Outbound, OverrideTarget,
@@ -23,7 +22,7 @@ use crate::store::{ElementId, ElementKind, RendererId, Store};
 use crate::value::{Path, PathSegment, Value};
 
 const INSPECT_TIMEOUT: Duration = Duration::from_secs(5);
-const EVAL_TIMEOUT_MS: u64 = 10_000;
+pub(crate) const EVAL_TIMEOUT_MS: u64 = 10_000;
 
 #[derive(Clone, Debug)]
 pub struct Config {
@@ -104,7 +103,7 @@ pub enum RequestError {
 
 #[derive(Clone)]
 pub struct Devtools {
-	inner: Arc<Inner>,
+	pub(crate) inner: Arc<Inner>,
 }
 
 /// The active backend connection. Dropping it closes the socket's writer.
@@ -137,6 +136,9 @@ pub(crate) struct Inner {
 	pub(crate) inspections: Mutex<HashMap<ElementId, InspectedElement>>,
 	pub(crate) next_generation: AtomicU64,
 	next_request: AtomicU64,
+	/// Serializes this process's load-modify-save of `devices.json` (GUI and MCP share it).
+	pub(crate) presets: Mutex<()>,
+	pub(crate) presets_revision: AtomicU64,
 }
 
 impl Drop for Inner {
@@ -237,6 +239,8 @@ impl Devtools {
 			inspections: Mutex::new(HashMap::new()),
 			next_generation: AtomicU64::new(0),
 			next_request: AtomicU64::new(0),
+			presets: Mutex::new(()),
+			presets_revision: AtomicU64::new(0),
 		});
 
 		if let Ok((_, listener)) = listener {
@@ -443,46 +447,6 @@ impl Devtools {
 		Ok(format!("$reactTemp{count}"))
 	}
 
-	/// Asks the device, over the Unbound debugger bridge, to dial this frontend
-	/// (`DevTools.connect`). Returns the address the device was told to dial.
-	pub async fn connect_device(&self) -> anyhow::Result<String> {
-		let port = {
-			let state = self.inner.state.lock();
-			state
-				.listen_addr
-				.map_or(self.inner.config.listen.port(), |addr| addr.port())
-		};
-		let script = bridge::connect_script(self.inner.config.advertise_host.as_deref(), port);
-
-		self.eval(&script).await
-	}
-
-	/// Evaluates JavaScript on device over the bridge. Pairs with [`Self::store_as_global`].
-	pub async fn eval(&self, code: &str) -> anyhow::Result<String> {
-		let address = self.inner.config.bridge;
-		let code = code.to_owned();
-		let outcome = self
-			.on_runtime(async move { bridge::eval(address, &code, EVAL_TIMEOUT_MS).await })
-			.await
-			.map_err(|error| anyhow::anyhow!("bridge task failed: {error}"))?;
-
-		let bridge_state = match &outcome {
-			Err(_) => BridgeState::Unreachable,
-			Ok(outcome) if outcome.device_connected => BridgeState::DeviceConnected,
-			Ok(_) => BridgeState::NoDevice,
-		};
-		self.inner.state.lock().bridge = bridge_state;
-		self.inner.bump();
-
-		let outcome = outcome?;
-
-		if !outcome.ok {
-			anyhow::bail!("{}", outcome.text);
-		}
-
-		Ok(outcome.text)
-	}
-
 	fn renderer_of(&self, id: ElementId) -> Result<RendererId, RequestError> {
 		self.inner
 			.store
@@ -493,7 +457,7 @@ impl Devtools {
 	}
 
 	/// Runs `future` on the session runtime, so callers on any executor can await tokio work.
-	async fn on_runtime<F>(&self, future: F) -> Result<F::Output, tokio::task::JoinError>
+	pub(crate) async fn on_runtime<F>(&self, future: F) -> Result<F::Output, tokio::task::JoinError>
 	where
 		F: Future + Send + 'static,
 		F::Output: Send + 'static,

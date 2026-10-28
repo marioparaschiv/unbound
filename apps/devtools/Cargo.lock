@@ -6076,6 +6076,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "dirs",
  "futures-util",
  "jaq-core",
  "jaq-json",

@@ -6,9 +6,11 @@
 //! both thin front-ends over one [`Devtools`] handle, so an agent sees exactly what the user sees.
 
 pub mod bridge;
+mod connect;
 pub mod inspect;
 pub mod mcp;
 pub mod operations;
+pub mod presets;
 pub mod protocol;
 pub mod query;
 mod server;
@@ -17,6 +19,7 @@ pub mod store;
 pub mod value;
 
 pub use inspect::{Hook, InspectedElement, OwnerRef, Section};
+pub use presets::{BridgeAddr, ConnectTarget, DevicePreset, PresetError, Presets};
 pub use query::{FindQuery, JqFilter, NameMatch};
 pub use session::{BridgeState, Config, ConnectionState, Devtools, RequestError, Status};
 pub use store::{Element, ElementId, ElementKind, RendererId, Row, Store};

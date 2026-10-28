@@ -5,7 +5,9 @@
 //!
 //! Tools:
 //! - `status`: connection, bridge, element counts, selection.
-//! - `connect_device`: ask the device over the Unbound bridge to dial this app.
+//! - `connect_device`: ask the device over the Unbound bridge to dial this app, on the command
+//!   line's bridge, a saved device (`preset`) or any `bridge`.
+//! - `list_presets`, `save_preset`, `remove_preset`: the saved devices the GUI's menu shows.
 //! - `tree`: indented outline from a root id, with depth and node limits.
 //! - `find`: findInReactTree. Filter by name (exact, contains, regex), key, kind, subtree, and
 //!   optionally a jq predicate over each candidate's inspected element (`.props.message.id == "1"`).
@@ -32,13 +34,14 @@ use serde::Deserialize;
 use serde_json::Value as Json;
 
 use crate::inspect::Section;
+use crate::presets::{ConnectTarget, DevicePreset, parse_host};
 use crate::query::{self, FindQuery, JqFilter, NameMatch};
 use crate::session::Devtools;
 use crate::store::{ElementId, ElementKind};
 use crate::value::Path;
 
 const INSTRUCTIONS: &str = "React DevTools for the Discord app running Unbound. \
-Workflow: `status` (is a device attached? if not, `connect_device`), then `find` or `tree` to get \
+Workflow: `status` (is a device attached? if not, `list_presets` and `connect_device`), then `find` or `tree` to get \
 element ids, `inspect` an id for its props, state and hooks, then `select`, `highlight` or \
 `override` it. Ids change when the tree remounts (after `filters`), so find again afterwards.";
 
@@ -136,6 +139,33 @@ struct StoreGlobalParams {
 	path: Path,
 }
 
+#[derive(Deserialize, JsonSchema, Default)]
+struct ConnectParams {
+	/// A saved device's name from list_presets (case-insensitive).
+	preset: Option<String>,
+	/// A debugger bridge as host:port, e.g. `100.64.0.2:9090`, instead of a preset.
+	bridge: Option<String>,
+	/// With `bridge`: the host the device should dial back to reach this app. Omit to use the
+	/// host in the device's debugger.address setting.
+	advertise_host: Option<String>,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct SavePresetParams {
+	/// A unique name, e.g. `iPhone VM`.
+	name: String,
+	/// The device's debugger bridge as host:port, e.g. `100.64.0.2:9090`.
+	bridge: String,
+	/// The host the device should dial back to reach this app. Omit to use the host in the
+	/// device's debugger.address setting.
+	advertise_host: Option<String>,
+}
+
+#[derive(Deserialize, JsonSchema)]
+struct PresetNameParams {
+	name: String,
+}
+
 #[derive(Deserialize, JsonSchema)]
 struct EvalParams {
 	/// JavaScript evaluated on device; the last expression is returned.
@@ -154,18 +184,87 @@ impl DevtoolsServer {
 
 	#[tool(
 		description = "Ask the device, over the Unbound debugger bridge, to dial this app. \
-		Needs the debugger bridge running and Discord started with loader.devtools on."
+		No arguments: the bridge this app was started with. `preset`: a saved device from \
+		list_presets (it becomes the GUI's default). `bridge` (+ optional `advertise_host`): any \
+		other bridge, once. Needs the bridge running and Discord started with loader.devtools on."
 	)]
-	async fn connect_device(&self) -> Result<String, String> {
-		let url = self
-			.devtools
-			.connect_device()
-			.await
-			.map_err(|error| format!("{error:#}"))?;
+	async fn connect_device(
+		&self,
+		Parameters(params): Parameters<ConnectParams>,
+	) -> Result<String, String> {
+		let connected = match (params.preset, params.bridge, params.advertise_host) {
+			(Some(_), Some(_), _) | (Some(_), _, Some(_)) => {
+				return Err("pass either preset, or bridge with advertise_host".into());
+			}
+			(None, None, Some(_)) => return Err("advertise_host needs a bridge".into()),
+			(Some(name), None, None) => self.devtools.connect_preset(&name).await,
+			(None, Some(bridge), host) => {
+				let target = ConnectTarget {
+					bridge: bridge.parse().map_err(|error| format!("{error}"))?,
+					advertise_host: parse_host(host.as_deref().unwrap_or_default())
+						.map_err(|error| error.to_string())?,
+				};
+				self.devtools.connect_device_to(target).await
+			}
+			(None, None, None) => self.devtools.connect_device().await,
+		};
+		let url = connected.map_err(|error| format!("{error:#}"))?;
 
 		Ok(format!(
 			"The device is dialing {url}; call status in a moment to see the tree."
 		))
+	}
+
+	#[tool(
+		description = "Saved devices (name, bridge host:port, optional dial-back host), the \
+		last one connected, and this app's own bridge. Pass a name to connect_device as preset."
+	)]
+	async fn list_presets(&self) -> Result<String, String> {
+		let presets = self.devtools.presets().map_err(|error| error.to_string())?;
+		let json = serde_json::json!({
+			"devices": presets.devices,
+			"last_used": presets.last_used,
+			"default_bridge": self.devtools.default_target().bridge,
+		});
+
+		Ok(format::pretty(&json))
+	}
+
+	#[tool(
+		description = "Save a device so connect_device (and the GUI's Connect menu) can dial it \
+		by name. Names are unique, case-insensitive; remove_preset first to change one."
+	)]
+	async fn save_preset(
+		&self,
+		Parameters(params): Parameters<SavePresetParams>,
+	) -> Result<String, String> {
+		let preset = DevicePreset::parse(
+			&params.name,
+			&params.bridge,
+			params.advertise_host.as_deref().unwrap_or_default(),
+		)
+		.map_err(|error| error.to_string())?;
+		let name = preset.name.clone();
+
+		self.devtools
+			.save_preset(preset)
+			.map_err(|error| error.to_string())?;
+		Ok(format!(
+			"Saved {name:?}. Connect with connect_device {{\"preset\": {name:?}}}."
+		))
+	}
+
+	#[tool(description = "Delete a saved device by name.")]
+	async fn remove_preset(
+		&self,
+		Parameters(params): Parameters<PresetNameParams>,
+	) -> Result<String, String> {
+		let removed = self
+			.devtools
+			.remove_preset(&params.name)
+			.map_err(|error| error.to_string())?;
+
+		Ok(format!("Removed {:?}.", removed.name))
 	}
 
 	#[tool(
