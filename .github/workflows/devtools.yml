@@ -47,7 +47,7 @@ jobs:
                   libwayland-dev
 
             - name: Install Rust
-              run: rustup toolchain install stable --profile minimal --component clippy && rustup default stable
+              run: rustup toolchain install stable --profile minimal --component clippy --component rustfmt && rustup default stable
 
             - name: Cache cargo
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
@@ -68,6 +68,9 @@ jobs:
               if: runner.os == 'Linux'
               working-directory: apps/devtools/harness
               run: bun install --frozen-lockfile
+
+            - name: Format
+              run: cargo fmt --check
 
             - name: Clippy
               run: cargo clippy --workspace --all-targets -- -D warnings
