@@ -24,9 +24,9 @@ import {
 	finishAddonStart,
 	withAddonAttribution,
 } from '~/api/crash-guard';
+import { compiledBundlePath, isSafeAddonId, isSafeAddonMain } from '~/lib/addon-paths';
 import { consentCapabilities, consentKey, needsConsent } from '~/lib/native-consent';
 import type { AddonAttribution, AddonFreeze } from '~/api/crash-guard';
-import { isSafeAddonId, isSafeAddonMain } from '~/lib/addon-paths';
 import type { CrashReportAddon } from '~/lib/crash-reports';
 import type { NativeConsents } from '~/lib/native-consent';
 import { Manager, ManagerType } from '~/managers/base';
@@ -345,10 +345,15 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		try {
 			const manifest = await this.fetchManifest(url);
 			const origin = url.split('/').slice(0, -1).join('/');
-			const bundle = await this.fetchBundle(new URL(manifest.main, `${origin}/`).toString());
+			const bundleUrl = new URL(manifest.main, `${origin}/`).toString();
+			const [bundle, bytecode] = await Promise.all([
+				this.fetchBundle(bundleUrl),
+				this.fetchBytecode(manifest, bundleUrl),
+			]);
 			const trusted = this.verifySignature(manifest, bundle, this.getEntity(manifest.id));
 
 			await this.persist(bundle, trusted);
+			await this.persistBytecode(trusted, bytecode);
 
 			this.load(bundle, trusted);
 			const entity = this.getEntity(manifest.id);
@@ -383,6 +388,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 				this.fetchManifest(update.manifestUrl),
 				this.fetchBundle(update.bundleUrl),
 			]);
+			const bytecode = await this.fetchBytecode(manifest, update.bundleUrl);
 
 			// `fetchBundle` decodes the body as UTF-8; re-encoding gives back the served bytes for
 			// any valid UTF-8 bundle, and anything else fails closed as a mismatch.
@@ -403,6 +409,8 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 				return;
 			}
+
+			await this.persistBytecode(manifest, bytecode);
 
 			this.emit('updated', resolved);
 		} catch (error) {
@@ -902,6 +910,34 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		return { ...rest, trust: result.status };
 	}
 
+	private async fetchBytecode(
+		manifest: AddonManifest,
+		bundleUrl: string,
+	): Promise<string | undefined> {
+		const bytecodeVersion = globalThis.UNBOUND_LOADER?.bytecodeVersion;
+
+		if (!bytecodeVersion || !manifest.bytecode?.[String(bytecodeVersion)]) return;
+
+		try {
+			const res = await fetch(compiledBundlePath(bundleUrl, bytecodeVersion), {
+				cache: 'no-cache',
+			});
+
+			if (!res.ok) {
+				throw new Error(`status ${res.status}`);
+			}
+
+			return Buffer.from(await res.arrayBuffer()).toString('base64');
+		} catch (error) {
+			this.logger.warn(
+				`Failed to fetch the bytecode of ${manifest.id}, it will run from source:`,
+				error,
+			);
+
+			return undefined;
+		}
+	}
+
 	private async fetchBundle(url: string): Promise<string> {
 		const res = await fetch(url, { cache: 'no-cache' });
 
@@ -932,6 +968,24 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 		await fs.write(`${dir}/manifest.json`, JSON.stringify(manifest));
 		await fs.write(`${dir}/${manifest.main}`, bundle);
+	}
+
+	/**
+	 * @description Writes the bundle compiled for this runtime beside the source, where the loader looks for it on the next launch.
+	 * @param manifest The addon's validated manifest.
+	 * @param bytecode The compiled bundle, base64-encoded.
+	 */
+	protected async persistBytecode(
+		manifest: AddonManifest,
+		bytecode: string | undefined,
+	): Promise<void> {
+		const bytecodeVersion = globalThis.UNBOUND_LOADER?.bytecodeVersion;
+
+		if (!bytecode || !bytecodeVersion) return;
+
+		const path = `${this.directoryOf(manifest.id)}/${compiledBundlePath(manifest.main, bytecodeVersion)}`;
+
+		await fs.write(path, bytecode, 'base64');
 	}
 
 	/**

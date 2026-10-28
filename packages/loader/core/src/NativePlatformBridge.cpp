@@ -6,6 +6,7 @@
 
 #include "LoaderAddonActivity.h"
 #include "LoaderAddonSignature.h"
+#include "LoaderAddons.h"
 #include "LoaderCrashGuard.h"
 #include "LoaderFiles.h"
 #include "LoaderFreezeWatchdog.h"
@@ -407,6 +408,32 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                 }
                 return result;
             }));
+    addons.setProperty(
+        runtime, "evaluateBytecode",
+        native::makeFunction(runtime, "evaluateBytecode", 2,
+                             [provider](jsi::Runtime     &rt, const jsi::Value &,
+                                        const jsi::Value *args, size_t count) -> jsi::Value {
+                                 if (!provider || provider->documents.empty() || count < 2 ||
+                                     !args[0].isString() || !args[1].isNumber())
+                                 {
+                                     return jsi::Value::undefined();
+                                 }
+                                 double requested = args[1].getNumber();
+                                 if (!(requested > 0 && requested <= UINT32_MAX) ||
+                                     requested != static_cast<uint32_t>(requested))
+                                 {
+                                     return jsi::Value::undefined();
+                                 }
+                                 std::string                folder = args[0].getString(rt).utf8(rt);
+                                 std::optional<std::string> bytecode = readPluginBytecode(
+                                     provider->documents, folder, static_cast<uint32_t>(requested));
+                                 if (!bytecode)
+                                 {
+                                     return jsi::Value::undefined();
+                                 }
+                                 return evaluateBytecode(rt, std::move(*bytecode),
+                                                         "unbound-plugin:" + folder);
+                             }));
     platform.setProperty(runtime, "addons", std::move(addons));
 
     platform.setProperty(runtime, "platform",

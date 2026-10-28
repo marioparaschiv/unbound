@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isSafeAddonId, isSafeAddonMain, safeFontFileName, safeRelativePath } from './addon-paths';
+import {
+	compiledBundlePath,
+	isSafeAddonId,
+	isSafeAddonMain,
+	safeFontFileName,
+	safeRelativePath,
+} from './addon-paths';
 
 describe('addon paths', () => {
 	test('addon ids must be plain folder names', () => {
@@ -51,4 +57,12 @@ describe('addon paths', () => {
 		expect(safeFontFileName('https://cdn.example/not-a-font.js', 'f.ttf')).toBe('f.ttf');
 		expect(safeFontFileName('https://cdn.example/%E0%A4%A', 'f.ttf')).toBe('f.ttf');
 	});
+});
+
+test('names the compiled bundle beside its source', () => {
+	expect(compiledBundlePath('dist/index.js', 98)).toBe('dist/index.98.hbc');
+	expect(compiledBundlePath('https://example.com/a.b/dist/index.js', 96)).toBe(
+		'https://example.com/a.b/dist/index.96.hbc',
+	);
+	expect(compiledBundlePath('index', 94)).toBe('index.94.hbc');
 });

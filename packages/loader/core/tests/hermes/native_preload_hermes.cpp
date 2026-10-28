@@ -10,8 +10,10 @@
 #include <sstream>
 #include <string>
 
+#include "HermesBytecodeHeader.h"
 #include "LoaderAddons.h"
 #include "LoaderBootstrap.h"
+#include "LoaderBundleSignature.h"
 #include "LoaderPreload.h"
 #include "LoaderSettings.h"
 #include "NativePlatformBridge.h"
@@ -53,6 +55,22 @@ static void plugin(const fs::path &documents, const std::string &folder,
     write(documents / "Plugins" / folder / "index.js", bundle);
 }
 
+static std::string compiledPlugin(const fs::path &documents, uint32_t &version)
+{
+    fs::path source = documents / "compiled-source.js";
+    fs::path output = documents / "compiled.hbc";
+    write(source, "((React) => { return ({ marker: React.tag + '-bytecode' }) })");
+    std::string command = std::string("\"") + UNBOUND_HERMESC + "\" --emit-binary -O -g0 --out \"" +
+                          output.string() + "\" \"" + source.string() + "\"";
+    require(std::system(command.c_str()) == 0, "hermesc compiles the plugin");
+    version = loader::hermesBytecodeVersionOfFile(output.string());
+    require(version > 0, "hermesc writes Hermes bytecode");
+    std::ifstream     file(output, std::ios::binary);
+    std::stringstream contents;
+    contents << file.rdbuf();
+    return contents.str();
+}
+
 static const char *const kPreloadChecks = R"JS((function () {
 	var failures = [];
 	function check(condition, name) {
@@ -61,7 +79,7 @@ static const char *const kPreloadChecks = R"JS((function () {
 	var plugins = globalThis.UNBOUND_PLUGINS;
 	check(Array.isArray(plugins), 'UNBOUND_PLUGINS is an array');
 	var ids = plugins.map(function (entry) { return entry.manifest.id; }).sort();
-	check(JSON.stringify(ids) === JSON.stringify(['a.binary', 'a.large', 'a.plain', 'a.unicode']), 'exactly the loadable plugins arrive, got ' + JSON.stringify(ids));
+	check(JSON.stringify(ids) === JSON.stringify(['a.binary', 'a.compiled', 'a.large', 'a.plain', 'a.tampered', 'a.unicode']), 'exactly the loadable plugins arrive, got ' + JSON.stringify(ids));
 	var byId = {};
 	plugins.forEach(function (entry) { byId[entry.manifest.id] = entry; });
 	check(byId['a.plain'].bundle === 'module.exports = 1;', 'a plain bundle arrives unchanged');
@@ -76,6 +94,18 @@ static const char *const kPreloadChecks = R"JS((function () {
 	check(Array.isArray(globalThis.UNBOUND_FONTS), 'UNBOUND_FONTS is an array');
 	check(Array.isArray(globalThis.UNBOUND_AVAILABLE_FONTS) && globalThis.UNBOUND_AVAILABLE_FONTS[0] === 'System', 'available fonts arrive');
 	check(globalThis.UNBOUND_LOADER.origin === 'https://example.invalid' && typeof globalThis.UNBOUND_LOADER.version === 'string', 'loader info arrives');
+	var version = globalThis.UNBOUND_LOADER.bytecodeVersion;
+	check(typeof version === 'number' && version > 0, 'the runtime bytecode version arrives');
+	var addons = globalThis.NativePlatform.addons;
+	var factory = addons.evaluateBytecode('compiled', version);
+	check(typeof factory === 'function', 'a plugin compiled for this runtime evaluates to its factory');
+	var instance = factory && factory({ tag: 'scoped' });
+	check(instance && instance.marker === 'scoped-bytecode', 'the factory receives the scoped React');
+	check(addons.evaluateBytecode('compiled', version + 1) === undefined, 'another bytecode version is not loaded');
+	check(addons.evaluateBytecode('tampered', version) === undefined, 'bytecode that does not match its digest is not loaded');
+	check(addons.evaluateBytecode('../Plugins/compiled', version) === undefined, 'a folder outside Plugins is refused');
+	check(addons.evaluateBytecode('plain', version) === undefined, 'a plugin without bytecode is not loaded');
+	check(addons.evaluateBytecode('compiled', -1) === undefined && addons.evaluateBytecode('compiled', 1.5) === undefined, 'a malformed version is refused');
 	return JSON.stringify(failures);
 })())JS";
 
@@ -104,15 +134,33 @@ int main()
     write(documents / "Themes" / "good" / "manifest.json", R"({"id":"theme.good","name":"Good"})");
     write(documents / "Themes" / "good" / "bundle.json", R"({"semantic":{},"raw":{}})");
     write(documents / "settings.json", R"({"unbound":{"answer":42},"名前":{"ü":1}})");
+    uint32_t    version  = 0;
+    std::string bytecode = compiledPlugin(documents, version);
+    plugin(documents, "compiled",
+           R"({"id":"a.compiled","name":"Compiled","main":"index.js","bytecode":{")" +
+               std::to_string(version) + R"(":")" + loader::sha512Hex(bytecode) + R"("}})",
+           "module.exports = 5;");
+    write(documents / "Plugins" / "compiled" / ("index." + std::to_string(version) + ".hbc"),
+          bytecode);
+    plugin(documents, "tampered",
+           R"({"id":"a.tampered","main":"index.js","bytecode":{")" + std::to_string(version) +
+               R"(":")" + loader::sha512Hex("something else") + R"("}})",
+           "module.exports = 6;");
+    write(documents / "Plugins" / "tampered" / ("index." + std::to_string(version) + ".hbc"),
+          bytecode);
 
     loader::SettingsStore settings((documents / "settings.json").string());
     settings.load();
     loader::AddonState addons;
     addons.scan(documents.string());
     loader::PreloadPayload payload = loader::makePreloadPayload(
-        settings, addons, nlohmann::json::array({"System"}), "https://example.invalid");
+        settings, addons, nlohmann::json::array({"System"}), "https://example.invalid", version);
 
-    auto runtime = facebook::hermes::makeHermesRuntime();
+    auto runtime        = facebook::hermes::makeHermesRuntime();
+    auto provider       = std::make_shared<loader::NativePlatformProvider>();
+    provider->platform  = "host";
+    provider->documents = documents.string();
+    loader::installNativePlatform(*runtime, provider);
     auto preload = loader::bootstrap::function(*runtime, loader::bootstrap::kPreload);
     require(preload.has_value(), "the preload bootstrap evaluates to a function");
     preload->call(*runtime, loader::toJSIValue(*runtime, loader::preloadData(payload)));

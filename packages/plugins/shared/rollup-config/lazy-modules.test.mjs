@@ -41,6 +41,7 @@ afterAll(async () => {
 async function buildPlugin(lazyModules) {
 	const config = createPluginConfig(pathToFileURL(join(pluginRoot, 'rollup.config.mjs')).href, {
 		lazyModules,
+		bytecode: false,
 	});
 	const bundle = await rollup(config);
 	const { output } = await bundle.generate(config.output);

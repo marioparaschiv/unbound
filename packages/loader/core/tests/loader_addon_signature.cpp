@@ -125,5 +125,41 @@ int main()
 
     assert(loader::addonSigningMessage("a", "1.0.0", "x") ==
            "unbound-addon/v1\na\n1.0.0\n" + loader::sha512Hex("x"));
+
+    std::string    newer   = loader::sha512Hex("98");
+    std::string    older   = loader::sha512Hex("96");
+    nlohmann::json digests = {{"98", newer}, {"96", older}};
+    assert(loader::addonSigningMessage("a", "1.0.0", "x", digests) ==
+           "unbound-addon/v1\na\n1.0.0\n" + loader::sha512Hex("x") + "\nbytecode 96 " + older +
+               "\nbytecode 98 " + newer);
+
+    nlohmann::json withBytecode = {
+        {"id", "unbound.example"}, {"version", "1.2.3"}, {"bytecode", digests}};
+    withBytecode["signature"] = {{"version", 1},
+                                 {"ed25519", production.sign(loader::addonSigningMessage(
+                                                 "unbound.example", "1.2.3", bundle, digests))}};
+    assert(loader::verifyAddonSignature(withBytecode, bundle, trust).status ==
+           loader::AddonSignatureStatus::Signed);
+
+    nlohmann::json swapped    = withBytecode;
+    swapped["bytecode"]["98"] = loader::sha512Hex("tampered");
+    assert(loader::verifyAddonSignature(swapped, bundle, trust).status ==
+           loader::AddonSignatureStatus::Invalid);
+
+    nlohmann::json added = manifest;
+    added["bytecode"]    = digests;
+    assert(loader::verifyAddonSignature(added, bundle, trust).status ==
+           loader::AddonSignatureStatus::Invalid);
+
+    for (const nlohmann::json &bad :
+         {nlohmann::json("x"), nlohmann::json({{"98", "short"}}), nlohmann::json({{"v98", newer}}),
+          nlohmann::json({{"98", 1}}), nlohmann::json({{"98", std::string(128, 'A')}})})
+    {
+        nlohmann::json malformedBytecode = withBytecode;
+        malformedBytecode["bytecode"]    = bad;
+        assert(!loader::isValidBytecodeDigests(bad));
+        assert(loader::verifyAddonSignature(malformedBytecode, bundle, trust).status ==
+               loader::AddonSignatureStatus::Invalid);
+    }
     return 0;
 }

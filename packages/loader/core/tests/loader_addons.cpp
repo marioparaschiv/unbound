@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "LoaderAddons.h"
+#include "LoaderBundleSignature.h"
 #include "LoaderFiles.h"
 #include "LoaderPreload.h"
 #include "LoaderVersion.h"
@@ -42,9 +43,54 @@ static void pluginEntriesStayInsideTheirFolder()
     std::filesystem::remove_all(root);
 }
 
+static std::string fakeBytecode(uint32_t version, const std::string &body)
+{
+    std::string bytes = {'\xC6', '\x1F', '\xBC', '\x03', '\xC1', '\x03', '\x19', '\x1F'};
+    for (int shift = 0; shift < 32; shift += 8)
+    {
+        bytes.push_back(static_cast<char>((version >> shift) & 0xFF));
+    }
+    return bytes + body;
+}
+
+static void pluginBytecodeMatchesItsManifest()
+{
+    const auto        root     = makeTemporaryDirectory();
+    const auto        folder   = root / "Plugins" / "compiled";
+    const std::string bytecode = fakeBytecode(98, "body");
+    const std::string manifest = R"({"id":"a.compiled","main":"dist/index.js","bytecode":{"98":")" +
+                                 loader::sha512Hex(bytecode) + R"(","96":")" +
+                                 loader::sha512Hex("other") + R"("}})";
+    write(folder / "manifest.json", manifest);
+    write(folder / "dist" / "index.js", "module.exports = 1;");
+    write(folder / "dist" / "index.98.hbc", bytecode);
+    write(folder / "dist" / "index.96.hbc", fakeBytecode(96, "stale"));
+
+    assert(loader::readPluginBytecode(root.string(), "compiled", 98) == bytecode);
+    assert(!loader::readPluginBytecode(root.string(), "compiled", 96));
+    assert(!loader::readPluginBytecode(root.string(), "compiled", 94));
+    assert(!loader::readPluginBytecode(root.string(), "compiled", 0));
+    assert(!loader::readPluginBytecode(root.string(), "../Plugins/compiled", 98));
+    assert(!loader::readPluginBytecode(root.string(), "..", 98));
+    assert(!loader::readPluginBytecode(root.string(), "", 98));
+    assert(!loader::readPluginBytecode(root.string(), "missing", 98));
+
+    write(folder / "dist" / "index.98.hbc", fakeBytecode(96, "body"));
+    assert(!loader::readPluginBytecode(root.string(), "compiled", 98));
+    write(folder / "dist" / "index.98.hbc", bytecode + " ");
+    assert(!loader::readPluginBytecode(root.string(), "compiled", 98));
+
+    write(folder / "manifest.json", R"({"id":"a.compiled","main":"dist/index.js"})");
+    write(folder / "dist" / "index.98.hbc", bytecode);
+    assert(!loader::readPluginBytecode(root.string(), "compiled", 98));
+
+    std::filesystem::remove_all(root);
+}
+
 int main()
 {
     pluginEntriesStayInsideTheirFolder();
+    pluginBytecodeMatchesItsManifest();
 
     const auto root = makeTemporaryDirectory();
 
@@ -106,7 +152,9 @@ int main()
     loader::SettingsStore settings((root / "settings.json").string());
     settings.set("unbound", "recovery", false);
     loader::PreloadPayload made = loader::makePreloadPayload(
-        settings, addons, nlohmann::json::array({"Ginto"}), "Unbound.dylib");
+        settings, addons, nlohmann::json::array({"Ginto"}), "Unbound.dylib", 98);
+    assert(made.bytecodeVersion == 98);
+    assert(loader::preloadData(made)["loader"]["bytecodeVersion"] == 98);
     assert(made.plugins[0]["manifest"]["id"] == "a.good");
     assert(made.availableFonts == nlohmann::json::array({"Ginto"}));
     assert(made.settings["unbound"].contains("recovery"));

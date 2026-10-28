@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
+	bytecodeDigests,
 	parsePluginSigningKey,
 	pluginSigningMessage,
 	signPlugin,
@@ -25,6 +26,40 @@ describe('plugin signatures', () => {
 		expect(
 			pluginSigningMessage('unbound.example', '1.2.3', new TextEncoder().encode('x')),
 		).toBe(`unbound-addon/v1\nunbound.example\n1.2.3\n${digest}`);
+	});
+
+	test('covers bytecode digests in version order, as the loader does', () => {
+		const sha512 = (text: string) => createHash('sha512').update(text).digest('hex');
+		const digests = bytecodeDigests(
+			new Map([
+				[98, new TextEncoder().encode('98')],
+				[96, new TextEncoder().encode('96')],
+			]),
+		);
+
+		expect(digests).toEqual({ 98: sha512('98'), 96: sha512('96') });
+		expect(pluginSigningMessage('a', '1.0.0', new TextEncoder().encode('x'), digests)).toBe(
+			`unbound-addon/v1\na\n1.0.0\n${sha512('x')}\nbytecode 96 ${sha512('96')}\nbytecode 98 ${sha512('98')}`,
+		);
+
+		const signature = signPlugin(privateKey, 'a', '1.0.0', bundle, digests);
+
+		expect(verifyPluginSignature(rawPublicKey, 'a', '1.0.0', bundle, signature, digests)).toBe(
+			true,
+		);
+		expect(verifyPluginSignature(rawPublicKey, 'a', '1.0.0', bundle, signature)).toBe(false);
+		expect(
+			verifyPluginSignature(rawPublicKey, 'a', '1.0.0', bundle, signature, {
+				...digests,
+				98: sha512('tampered'),
+			}),
+		).toBe(false);
+		expect(JSON.parse(withSignature('{"id":"a"}', signature, digests))).toEqual({
+			id: 'a',
+			bytecode: digests,
+			signature,
+		});
+		expect(JSON.parse(withSignature('{"id":"a"}', signature))).toEqual({ id: 'a', signature });
 	});
 
 	test('verifies against the matching public key only', () => {

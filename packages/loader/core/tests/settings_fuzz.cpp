@@ -209,7 +209,8 @@ static void exercise(loader::SettingsStore &store)
     loader::toolbox::menuJSON(store, loader::toolbox::MenuOptions{});
     loader::devoverlay::menuJSON(store);
     loader::AddonState addons;
-    loader::makePreloadPayload(store, addons, nlohmann::json::array(), "https://example.invalid");
+    loader::makePreloadPayload(store, addons, nlohmann::json::array(), "https://example.invalid",
+                               98);
     store.serialize();
     store.snapshot();
     store.getString("unbound", "loader.update.url", "");
