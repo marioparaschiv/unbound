@@ -1,5 +1,3 @@
-//! Design tokens. Every color, size and font the app draws with comes from here.
-
 use gpui::{Hsla, Pixels, Rgba, SharedString, px, rgb, rgba};
 
 pub const APP: u32 = 0x0E0E10;
@@ -37,12 +35,10 @@ pub fn color(hex: u32) -> Rgba {
 	rgb(hex)
 }
 
-/// `hex` at `alpha` (0 to 1).
 pub fn alpha(hex: u32, alpha: f32) -> Rgba {
 	rgba((hex << 8) | (alpha.clamp(0.0, 1.0) * 255.0).round() as u32)
 }
 
-/// The selected row's background: the accent at 14 %.
 pub fn accent_soft() -> Rgba {
 	alpha(ACCENT, 0.14)
 }
@@ -69,9 +65,7 @@ pub const VALUE_ROW_HEIGHT: Pixels = px(22.);
 pub const ICON_BUTTON: Pixels = px(24.);
 pub const ICON: Pixels = px(14.);
 pub const CHEVRON: Pixels = px(10.);
-/// Indent per tree level; equal to the chevron slot so a child's guide sits under its parent's chevron.
 pub const INDENT: f32 = 16.;
-/// Horizontal inset shared by panel headers, rows and section headers so their content lines up.
 pub const INSET: f32 = 8.;
 
 pub const INSPECTOR_MIN: f32 = 320.;
@@ -79,7 +73,6 @@ pub const TREE_MIN: f32 = 360.;
 pub const INSPECTOR_MAX: f32 = 640.;
 pub const INSPECTOR_DEFAULT: f32 = 400.;
 
-/// Bundled in `assets/fonts/`, so every platform draws the same faces.
 pub fn ui_font() -> SharedString {
 	"Inter".into()
 }

@@ -1,5 +1,3 @@
-//! The bottom bar: connection state, element counts, and the MCP endpoint (click to copy).
-
 use gpui::{Context, div, prelude::*, px};
 use unbound_devtools_core::BridgeState;
 
@@ -7,7 +5,6 @@ use crate::app::Workspace;
 use crate::widgets::{ghost_button, tooltip};
 use crate::{assets, theme};
 
-/// Groups thousands: `1284` reads `1,284`.
 pub fn thousands(n: usize) -> String {
 	let digits = n.to_string();
 	let mut out = String::with_capacity(digits.len() + digits.len() / 3);

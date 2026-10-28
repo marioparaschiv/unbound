@@ -1,5 +1,5 @@
 //! A single-line text input, adapted from Zed's `crates/gpui/examples/input.rs`. GPUI ships no
-//! text field; this one supports typing, IME marking, selection, and the clipboard.
+//! text field.
 
 use std::ops::Range;
 
@@ -61,7 +61,6 @@ pub fn bind_keys(cx: &mut App) {
 	]);
 }
 
-/// Emitted whenever the text changes.
 pub struct Changed;
 
 pub struct TextInput {
@@ -486,7 +485,6 @@ struct TextElement {
 }
 
 struct PrepaintState {
-	/// The element's bounds shifted left by the horizontal scroll, so the cursor stays visible.
 	text_bounds: Bounds<Pixels>,
 	scroll: Pixels,
 	line: Option<ShapedLine>,

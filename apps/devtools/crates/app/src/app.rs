@@ -1,6 +1,3 @@
-//! The window's root view. It owns the view state (collapsed set, scroll, search, inspector) and
-//! follows the core's revision counter; the core owns the tree and the selection.
-
 use std::collections::HashSet;
 use std::future::Future;
 use std::rc::Rc;
@@ -70,7 +67,6 @@ pub struct Workspace {
 	pub collapsed: HashSet<ElementId>,
 	pub rows: Rc<Vec<Row>>,
 	pub scroll: UniformListScrollHandle,
-	/// The selection this view last acted on; differs from the core's after an MCP `select`.
 	pub selected: Option<ElementId>,
 	pub search: Search,
 	pub search_input: Entity<TextInput>,
@@ -78,14 +74,11 @@ pub struct Workspace {
 	pub folded_sections: HashSet<&'static str>,
 	pub inspector_width: f32,
 	pub resizing: bool,
-	/// `react-native-renderer 19.2.3`, learned from the first inspection.
 	pub renderer: Option<String>,
 	pub connecting: bool,
-	/// The saved devices as last read, or why they could not be read.
 	pub presets: Result<Presets, String>,
 	pub presets_revision: u64,
 	pub device_menu: Option<DeviceMenu>,
-	/// A transient error shown under the toolbar.
 	pub banner: Option<String>,
 	pub copied: bool,
 	pub highlighted: Option<ElementId>,
@@ -123,7 +116,6 @@ impl Workspace {
 					{
 						break;
 					}
-					// Coalesce bursts of operations into at most one update per frame.
 					cx.background_executor()
 						.timer(Duration::from_millis(16))
 						.await;
@@ -198,7 +190,6 @@ impl Workspace {
 		self.rows.iter().position(|row| row.id == id)
 	}
 
-	/// Moves the shared selection; the core tells MCP clients, this view follows immediately.
 	pub fn select(&mut self, id: Option<ElementId>, cx: &mut Context<Self>) {
 		self.devtools.select(id);
 		self.sync_selection(cx);
@@ -209,7 +200,6 @@ impl Workspace {
 		let mut selected = self.devtools.selected();
 		let vanished = selected.is_some_and(|id| self.devtools.store().get(id).is_none());
 		if vanished {
-			// A remount (filter change, reconnect) reassigns every id; the old selection is gone.
 			self.devtools.select(None);
 			selected = None;
 		}
@@ -231,7 +221,6 @@ impl Workspace {
 		self.inspect(id, cx);
 	}
 
-	/// Expands `id`'s ancestors and scrolls it into view.
 	fn reveal(&mut self, id: ElementId) {
 		let expanded = {
 			let store = self.devtools.store();
@@ -411,7 +400,6 @@ impl Workspace {
 		self.resizing = false;
 	}
 
-	/// The inspector's drawn width: the dragged width, narrowed so the tree keeps `TREE_MIN`.
 	pub fn inspector_width(&self, window: &Window) -> f32 {
 		let room = f32::from(window.viewport_size().width) - theme::TREE_MIN;
 		self.inspector_width.min(room).max(theme::INSPECTOR_MIN)
@@ -429,7 +417,6 @@ impl Workspace {
 			.min_h_0()
 			.child(self.render_tree_panel(window, cx))
 			.child(
-				// A 1 px line inside a 7 px grab area that overlaps both panels.
 				div()
 					.id("divider")
 					.group("divider")

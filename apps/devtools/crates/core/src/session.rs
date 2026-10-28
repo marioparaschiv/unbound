@@ -106,7 +106,6 @@ pub struct Devtools {
 	pub(crate) inner: Arc<Inner>,
 }
 
-/// The active backend connection. Dropping it closes the socket's writer.
 pub(crate) struct Backend {
 	pub(crate) generation: u64,
 	pub(crate) peer: SocketAddr,
@@ -132,11 +131,9 @@ pub(crate) struct Inner {
 	pub(crate) state: Mutex<State>,
 	pub(crate) changes: watch::Sender<u64>,
 	pub(crate) pending: Mutex<HashMap<u64, oneshot::Sender<InspectedElementPayload>>>,
-	/// The last full inspection per element, so `inspect_path` can splice hydrated values in.
 	pub(crate) inspections: Mutex<HashMap<ElementId, InspectedElement>>,
 	pub(crate) next_generation: AtomicU64,
 	next_request: AtomicU64,
-	/// Serializes this process's load-modify-save of `devices.json` (GUI and MCP share it).
 	pub(crate) presets: Mutex<()>,
 	pub(crate) presets_revision: AtomicU64,
 }
@@ -156,7 +153,6 @@ impl Inner {
 			.send_modify(|revision| *revision = revision.wrapping_add(1));
 	}
 
-	/// Queues a frame for the active backend. False when none is connected.
 	pub(crate) fn send(&self, message: &Outbound) -> bool {
 		let state = self.state.lock();
 
@@ -168,7 +164,6 @@ impl Inner {
 		})
 	}
 
-	/// Forgets everything tied to the backend's element ids.
 	pub(crate) fn reset_tree(&self, state: &mut State) {
 		self.store.write().clear();
 		self.inspections.lock().clear();
@@ -456,7 +451,6 @@ impl Devtools {
 			.ok_or(RequestError::NotFound(id))
 	}
 
-	/// Runs `future` on the session runtime, so callers on any executor can await tokio work.
 	pub(crate) async fn on_runtime<F>(&self, future: F) -> Result<F::Output, tokio::task::JoinError>
 	where
 		F: Future + Send + 'static,
@@ -465,7 +459,6 @@ impl Devtools {
 		self.inner.handle.spawn(future).await
 	}
 
-	/// Sends an `inspectElement` and waits for the `inspectedElement` whose `responseID` matches.
 	async fn request(
 		&self,
 		build: impl FnOnce(u64) -> Outbound,
@@ -486,7 +479,6 @@ impl Devtools {
 
 		match waited {
 			Ok(Ok(payload)) => Ok(payload),
-			// The connection dropped and took the pending request with it.
 			Ok(Err(_)) => Err(RequestError::NotConnected),
 			Err(_) => {
 				self.inner.pending.lock().remove(&request_id);
@@ -495,7 +487,6 @@ impl Devtools {
 		}
 	}
 
-	/// Turns a full-data, no-change or failure reply into the element, caching full data.
 	fn settle(
 		&self,
 		id: ElementId,

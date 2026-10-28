@@ -118,7 +118,6 @@ impl fmt::Display for BridgeAddr {
 	}
 }
 
-/// A DNS name or IPv4 literal; IPv6 literals arrive bracketed and parse as a `SocketAddr`.
 fn is_host_name(host: &str) -> bool {
 	!host.is_empty()
 		&& host
@@ -234,7 +233,6 @@ impl Presets {
 		Ok(removed)
 	}
 
-	/// Rejects what [`Self::insert`] would have: a hand-edited file with two devices of one name.
 	fn validate(&self) -> Result<(), String> {
 		for (ix, preset) in self.devices.iter().enumerate() {
 			if preset.name.trim().is_empty() {
@@ -485,7 +483,6 @@ mod tests {
 		file.update(|presets| presets.insert(vm())).expect("saved");
 		let before = std::fs::read(file.path()).expect("read");
 
-		// A directory where the temp file goes makes the write fail before the rename.
 		let temp = dir.join(format!(".{FILE_NAME}.{}.tmp", std::process::id()));
 		std::fs::create_dir_all(&temp).expect("blocker");
 		let mut presets = file.load().expect("loaded");

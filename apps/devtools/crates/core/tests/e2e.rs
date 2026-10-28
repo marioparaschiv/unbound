@@ -1,6 +1,3 @@
-//! Drives a real react-devtools-core 8 backend: `harness/device.mjs` runs Unbound's devtools.js
-//! against react-test-renderer and dials the session under test.
-
 mod common;
 
 use std::time::Duration;
@@ -138,7 +135,6 @@ async fn a_rerendering_device_keeps_the_tree_in_step() {
 		.collect()
 	};
 
-	// The device cycles 3, 4, 5, 6, 7 messages; seeing 7 then 3 means adds and removes applied.
 	wait_for(&devtools, "seven rows", |devtools| {
 		row_keys(devtools).len() == 7
 	})

@@ -1,5 +1,3 @@
-//! Inspector value rows: `key: preview` lines that expand inline, colored by value type.
-
 use gpui::{AnyElement, Context, SharedString, div, prelude::*, px};
 use unbound_devtools_core::{Hook, InspectedElement, Path, PathSegment, Value};
 
@@ -9,7 +7,6 @@ use crate::{theme, widgets};
 
 const PREVIEW_CHARS: usize = 96;
 
-/// The preview text, its color, and whether it is set in italic (functions).
 fn preview(value: &Value) -> (String, u32, bool) {
 	match value {
 		Value::Null | Value::Undefined | Value::Bool(_) => {
@@ -59,7 +56,6 @@ fn row_id(path: &Path) -> SharedString {
 	format!("value{path:?}").into()
 }
 
-/// The fixed chevron slot every value row starts with, so keys line up whether or not they expand.
 fn chevron(expandable: bool, expanded: bool) -> impl IntoElement {
 	div()
 		.flex_none()
@@ -99,7 +95,6 @@ impl<'a> Rows<'a> {
 		}
 	}
 
-	/// Pushes the children of a section's root value (the props object's keys, say).
 	pub fn push_entries(&mut self, root: &Value, path: Path, cx: &mut Context<Workspace>) {
 		let entries = children(root);
 		if entries.is_empty() {

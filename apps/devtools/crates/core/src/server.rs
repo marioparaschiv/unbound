@@ -1,6 +1,3 @@
-//! The WebSocket listener backends dial. One backend is active at a time: a new connection
-//! replaces the old one and resets the store, as react-devtools standalone does.
-
 use std::net::SocketAddr;
 use std::sync::Weak;
 use std::sync::atomic::Ordering;
@@ -15,8 +12,6 @@ use crate::operations;
 use crate::protocol::{self, Inbound, Outbound};
 use crate::session::{Backend, ConnectionState, Inner};
 
-/// Accepts backends until the session is dropped. Holds the session weakly so dropping the last
-/// [`crate::Devtools`] handle shuts everything down.
 pub(crate) async fn listen(inner: Weak<Inner>, listener: std::net::TcpListener) {
 	let listener = match TcpListener::from_std(listener) {
 		Ok(listener) => listener,
@@ -59,7 +54,6 @@ async fn serve(inner: Weak<Inner>, stream: tokio::net::TcpStream, peer: SocketAd
 		return;
 	};
 
-	// Ends when the session drops this backend's sender: replaced, detached or shut down.
 	let writer = tokio::spawn(async move {
 		while let Some(text) = queue.recv().await {
 			if sink.send(Message::text(text)).await.is_err() {
@@ -90,7 +84,6 @@ async fn serve(inner: Weak<Inner>, stream: tokio::net::TcpStream, peer: SocketAd
 }
 
 impl Inner {
-	/// Makes `peer` the active backend and asks it for its version and the current tree.
 	fn attach(&self, peer: SocketAddr, outbound: mpsc::UnboundedSender<String>) -> u64 {
 		let generation = self.next_generation.fetch_add(1, Ordering::Relaxed) + 1;
 		let filters = {
@@ -109,7 +102,6 @@ impl Inner {
 			state.filters.clone()
 		};
 
-		// Dropping the old connection's waiters fails its in-flight requests as `NotConnected`.
 		self.pending.lock().clear();
 		tracing::info!(%peer, "backend connected");
 
@@ -233,7 +225,6 @@ impl Inner {
 		}
 
 		{
-			// Lock order everywhere: state, then store, then inspections.
 			let mut state = self.state.lock();
 			let store = self.store.read();
 

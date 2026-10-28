@@ -1,5 +1,3 @@
-//! Connecting a device over the Unbound debugger bridge, and the saved devices that name bridges.
-
 use std::net::SocketAddr;
 use std::sync::atomic::Ordering;
 
@@ -98,8 +96,6 @@ impl Devtools {
 		Ok(out)
 	}
 
-	/// Records the main button's target after a successful connect. The connect already worked, so
-	/// a file that cannot be written is logged, not returned.
 	fn remember(&self, last_used: Option<String>) {
 		let remembered = self.update_presets(|presets| {
 			presets.last_used = last_used;

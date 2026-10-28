@@ -1,5 +1,3 @@
-//! The component tree: a header, a virtualized list of rows, and the selection's breadcrumbs.
-
 use std::ops::Range;
 
 use gpui::{
@@ -12,8 +10,6 @@ use crate::app::Workspace;
 use crate::widgets::{badge, chevron, icon, icon_button, panel_header, tooltip};
 use crate::{assets, theme};
 
-/// Rows deeper than this many levels past the selection's are shifted left, so Discord's deep
-/// trees stay readable without horizontal scrolling.
 const VISIBLE_LEVELS: u32 = 16;
 const CRUMB_PADDING: f32 = 4.;
 const CRUMB_GAP: f32 = 2.;
@@ -55,7 +51,6 @@ fn name_spans(element: &Element, matched: bool) -> gpui::Div {
 		.child(div().text_color(theme::color(theme::TEXT_FAINT)).child(">"))
 }
 
-/// The width of `text` in the UI font at `size`.
 fn ui_text_width(window: &Window, text: &str, size: Pixels) -> f32 {
 	let run = TextRun {
 		len: text.len(),
@@ -189,8 +184,6 @@ impl Workspace {
 			.into_any_element()
 	}
 
-	/// The selection's ancestors, root first. When they overflow `width`, the farthest ones are
-	/// dropped and a leading chevron hints at them, so the nearest stay visible.
 	fn render_breadcrumbs(
 		&self,
 		width: f32,

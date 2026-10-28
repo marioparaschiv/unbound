@@ -1,6 +1,3 @@
-//! Saved devices through the session: `connect_device_to` and `connect_preset` against an in-test
-//! debugger bridge, with `devices.json` in a private config dir.
-
 use std::net::SocketAddr;
 use std::sync::OnceLock;
 
@@ -26,7 +23,6 @@ fn config_dir() -> &'static std::path::Path {
 	})
 }
 
-/// Accepts one controller, reports a device, answers its eval with `url` and hands back the code.
 async fn fake_bridge(url: &str) -> (SocketAddr, oneshot::Receiver<String>) {
 	let listener = TcpListener::bind("127.0.0.1:0")
 		.await
@@ -62,7 +58,6 @@ async fn fake_bridge(url: &str) -> (SocketAddr, oneshot::Receiver<String>) {
 	(addr, code_rx)
 }
 
-/// A session whose own bridge is a closed port, so only a target or preset can reach a device.
 fn session() -> (Devtools, u16) {
 	config_dir();
 	let devtools = Devtools::start(Config {

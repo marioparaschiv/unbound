@@ -243,7 +243,6 @@ fn hooks_from_value(value: &Value) -> Vec<Hook> {
 		.collect()
 }
 
-/// The inverse of [`hooks_from_value`], in the backend's shape, so hook paths address it.
 fn hooks_to_value(hooks: &[Hook]) -> Value {
 	Value::Array(
 		hooks

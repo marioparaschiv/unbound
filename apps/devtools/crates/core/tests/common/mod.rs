@@ -7,7 +7,6 @@ use std::time::Duration;
 use unbound_devtools_core::query::{self, FindQuery, NameMatch};
 use unbound_devtools_core::{Config, ConnectionState, Devtools, ElementId, PathSegment};
 
-/// `harness/device.mjs` under bun; killed on drop.
 pub struct Device(Child);
 
 impl Device {
@@ -27,7 +26,6 @@ pub fn key(segment: &str) -> PathSegment {
 	PathSegment::Key(segment.to_owned())
 }
 
-/// A session on an ephemeral port. The bridge address points at a closed port.
 pub fn session() -> (Devtools, SocketAddr) {
 	let devtools = Devtools::start(Config {
 		listen: "127.0.0.1:0".parse().expect("valid addr"),
@@ -44,7 +42,6 @@ pub fn session() -> (Devtools, SocketAddr) {
 	(devtools, addr)
 }
 
-/// The harness device; with `tick_ms` it re-renders with 3 to 7 messages on that interval.
 pub fn spawn_device(port: u16, tick_ms: Option<u32>) -> Option<Device> {
 	match tick_ms {
 		Some(tick_ms) => spawn_device_with(port, &[("TICK_MS", tick_ms)]),
@@ -52,7 +49,6 @@ pub fn spawn_device(port: u16, tick_ms: Option<u32>) -> Option<Device> {
 	}
 }
 
-/// The harness device with env settings such as `DEPTH`, `WIDTH` and `TICK_MS`.
 pub fn spawn_device_with(port: u16, env: &[(&str, u32)]) -> Option<Device> {
 	let script = concat!(env!("CARGO_MANIFEST_DIR"), "/../../harness/device.mjs");
 	let child = Command::new("bun")
@@ -74,7 +70,6 @@ pub fn spawn_device_with(port: u16, env: &[(&str, u32)]) -> Option<Device> {
 	}
 }
 
-/// A session with the harness device attached and its tree loaded, or `None` without bun.
 pub async fn connected_session() -> Option<(Devtools, Device)> {
 	let (devtools, addr) = session();
 	let device = spawn_device(addr.port(), None)?;
@@ -91,7 +86,6 @@ pub async fn connected_session() -> Option<(Devtools, Device)> {
 	Some((devtools, device))
 }
 
-/// Waits out the remount the session's on-connect filter update triggers, which reassigns ids.
 pub async fn settle(devtools: &Devtools) {
 	let mut changes = devtools.changes();
 
@@ -101,7 +95,6 @@ pub async fn settle(devtools: &Devtools) {
 	{}
 }
 
-/// Waits on [`Devtools::changes`] until `ready` holds, failing after 15 s.
 pub async fn wait_for(devtools: &Devtools, what: &str, ready: impl Fn(&Devtools) -> bool) {
 	let mut changes = devtools.changes();
 	let deadline = tokio::time::Instant::now() + Duration::from_secs(15);

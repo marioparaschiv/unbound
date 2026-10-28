@@ -1,6 +1,3 @@
-//! `unbound-devtools`: React DevTools for Unbound as a native window, with an MCP endpoint so an
-//! agent can share the session. `unbound-devtools mcp` serves the same tools over stdio, headless.
-
 mod app;
 mod assets;
 mod device_menu;

@@ -1,5 +1,3 @@
-//! Small styled building blocks shared by the views.
-
 use gpui::{
 	AnyView, App, Context, Div, FontWeight, SharedString, Stateful, Svg, Window, div, prelude::*,
 	px, svg,
@@ -15,7 +13,6 @@ pub fn icon(path: &'static str, size: gpui::Pixels, color: u32) -> Svg {
 		.text_color(theme::color(color))
 }
 
-/// A tree or value chevron, pointing right when collapsed and down when expanded.
 pub fn chevron(expanded: bool) -> Svg {
 	let path = if expanded {
 		crate::assets::CHEVRON_DOWN
@@ -25,7 +22,6 @@ pub fn chevron(expanded: bool) -> Svg {
 	icon(path, theme::CHEVRON, theme::TEXT_MUTED)
 }
 
-/// A small label for kinds, HOC names and counts.
 pub fn badge(text: impl Into<SharedString>, fg: u32) -> Div {
 	div()
 		.flex_none()
@@ -63,7 +59,6 @@ pub fn tooltip(text: &'static str) -> impl Fn(&mut Window, &mut App) -> AnyView 
 	move |_, cx| cx.new(|_| Tooltip(text.into())).into()
 }
 
-/// A square ghost button holding one icon; `active` tints the icon with the accent.
 pub fn icon_button(id: &'static str, path: &'static str, active: bool) -> Stateful<Div> {
 	div()
 		.id(id)
@@ -87,7 +82,6 @@ pub fn icon_button(id: &'static str, path: &'static str, active: bool) -> Statef
 		))
 }
 
-/// A ghost button with an icon and a label.
 pub fn ghost_button(
 	id: &'static str,
 	path: &'static str,
@@ -114,7 +108,6 @@ pub fn ghost_button(
 		.child(label.into())
 }
 
-/// The accent-filled primary action.
 pub fn primary_button(
 	id: &'static str,
 	label: impl Into<SharedString>,
@@ -144,7 +137,6 @@ pub fn primary_button(
 		.child(label.into())
 }
 
-/// The uppercase section label.
 pub fn eyebrow(text: &str) -> Div {
 	div()
 		.text_size(theme::TEXT_EYEBROW)
@@ -152,7 +144,6 @@ pub fn eyebrow(text: &str) -> Div {
 		.child(text.to_uppercase())
 }
 
-/// A 32 px panel header: the bar above the tree and the inspector.
 pub fn panel_header() -> Div {
 	div()
 		.flex_none()

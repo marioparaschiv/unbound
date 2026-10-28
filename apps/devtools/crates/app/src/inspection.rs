@@ -1,8 +1,3 @@
-//! The inspected element cache: loading, lazy hydration of placeholders, and boolean overrides.
-//!
-//! Every value is addressed by the path the backend uses: `["props", "author", "name"]`, or for
-//! hooks `["hooks", 2, "subHooks", 0, "value", "count"]`.
-
 use std::collections::HashSet;
 
 use gpui::{Context, Task};
@@ -45,7 +40,6 @@ pub fn child(path: &Path, segment: PathSegment) -> Path {
 	path
 }
 
-/// The hook a `["hooks", i, ("subHooks", j)*, ...]` path names, and the rest of the path.
 fn hook_at<'a, 'p>(
 	hooks: &'a [Hook],
 	path: &'p [PathSegment],
@@ -127,7 +121,6 @@ fn needs_hydration(value: Option<&Value>) -> bool {
 	matches!(value, Some(Value::Dehydrated(meta)) if meta.inspectable)
 }
 
-/// Where an override for `path` goes, or `None` when the value is read-only.
 fn override_target(element: &InspectedElement, path: &[PathSegment]) -> Option<(Section, Path)> {
 	let [PathSegment::Key(section), rest @ ..] = path else {
 		return None;
@@ -200,7 +193,6 @@ impl Workspace {
 				inspection.error = Some(error);
 			}
 		}
-		// A fresh inspection drops hydrated placeholders; reload the ones still expanded.
 		let stale: Vec<Path> = inspection
 			.element
 			.as_ref()
@@ -278,7 +270,6 @@ impl Workspace {
 		cx.notify();
 	}
 
-	/// Flips a boolean on device, showing the new value right away.
 	pub fn toggle_bool(&mut self, path: Path, cx: &mut Context<Self>) {
 		let Some(inspection) = self.inspection.as_mut() else {
 			return;

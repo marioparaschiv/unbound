@@ -34,7 +34,6 @@ pub enum BridgeError {
 	Timeout(u64),
 }
 
-/// Bridge frames this client reads; everything else (logs, plugin pushes) is skipped.
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 enum BridgeFrame {
@@ -54,7 +53,6 @@ enum BridgeFrame {
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 /// The bridge sends `device-status` right after a controller attaches.
 const STATUS_WAIT: Duration = Duration::from_millis(1500);
-/// Slack on top of the eval timeout for the bridge's own reply.
 const REPLY_GRACE_MS: u64 = 2000;
 
 pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Result<EvalOutcome> {
@@ -117,7 +115,6 @@ pub async fn eval(bridge: SocketAddr, code: &str, timeout_ms: u64) -> anyhow::Re
 	Ok(outcome)
 }
 
-/// The next frame this client understands, or `None` once the socket closes.
 async fn next_frame<S>(socket: &mut S) -> Option<BridgeFrame>
 where
 	S: futures_util::Stream<Item = Result<Message, tokio_tungstenite::tungstenite::Error>> + Unpin,

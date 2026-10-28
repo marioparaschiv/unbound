@@ -1,6 +1,3 @@
-//! Discord-scale trees: React Native nests hundreds of components deep, and nothing that walks or
-//! queries the tree may overflow a stack on that.
-
 mod common;
 
 use serde_json::Value as Json;
@@ -20,7 +17,6 @@ fn rows(devtools: &Devtools) -> usize {
 	.len()
 }
 
-/// Each output as compact JSON text, as the MCP `query` tool returns it.
 fn jq(devtools: &Devtools, program: &str) -> Vec<String> {
 	query::run_jq_on_tree(devtools, None, program, |output| output.to_string()).expect("jq runs")
 }
@@ -43,7 +39,6 @@ async fn queries_survive(depth: u32, width: u32) {
 		.walk(None)
 		.map(|element| element.depth)
 		.max();
-	// Host Views are filtered out, so a third of the nesting levels are not elements.
 	assert!(
 		deepest >= Some(depth * 2 / 3),
 		"the tree is {deepest:?} deep"

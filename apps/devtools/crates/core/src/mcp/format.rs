@@ -1,5 +1,3 @@
-//! Text the MCP tools return: compact lines an agent can act on.
-
 use serde_json::Value as Json;
 
 use crate::query::{MAX_PROPS_CANDIDATES, PropsMatches};
@@ -8,7 +6,6 @@ use crate::store::{ElementId, Store};
 pub(super) const KIND_LABELS: &str = "function, class, memo, forward_ref, host, context, \
 	suspense, suspense_list, profiler, activity, view_transition, tracing_marker, virtual, other";
 
-/// `#42 <MessageRow key="m1"> memo  in ScrollView > Channel > App`, one per id.
 pub(super) fn matches(store: &Store, ids: &[ElementId], props: Option<&PropsMatches>) -> String {
 	let mut lines = vec![match ids.len() {
 		0 => "No matches.".to_owned(),

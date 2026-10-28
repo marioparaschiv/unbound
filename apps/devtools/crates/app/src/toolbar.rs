@@ -1,5 +1,3 @@
-//! The top bar: brand, the centered search field, and "Connect device".
-
 use gpui::{Context, Focusable, MouseButton, Window, div, img, prelude::*, px};
 use unbound_devtools_core::ConnectionState;
 
@@ -7,7 +5,6 @@ use crate::app::Workspace;
 use crate::widgets::{icon, icon_button, tooltip};
 use crate::{assets, theme};
 
-/// How the status bar renders the connection: plain text, red only when it needs action.
 pub struct Connection {
 	pub label: String,
 	pub failed: bool,
@@ -116,7 +113,6 @@ impl Workspace {
 			.flex()
 			.items_center()
 			.gap(px(12.))
-			// Equal side padding keeps the search field centered on the window.
 			.px(px(4.))
 			.bg(theme::color(theme::PANEL))
 			.border_b_1()
@@ -144,7 +140,6 @@ impl Workspace {
 					.child(self.render_search(window, cx)),
 			)
 			.child(
-				// The inner `pl` mirrors the brand column's padding, so both flex to the same width.
 				div()
 					.flex_1()
 					.min_w_0()

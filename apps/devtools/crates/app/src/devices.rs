@@ -1,6 +1,3 @@
-//! The "Connect device" split button's state: which device the main part dials, the dropdown's
-//! items and highlight, and the inline "Save as preset" form.
-
 use gpui::{App, AppContext, Context, Entity, FocusHandle, Focusable, KeyBinding, Window, actions};
 use unbound_devtools_core::{DevicePreset, Presets};
 
@@ -35,14 +32,12 @@ pub fn bind_keys(cx: &mut App) {
 	]);
 }
 
-/// What a connect dials: the command line's bridge, or a saved device by name.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DeviceChoice {
 	Default,
 	Preset(String),
 }
 
-/// One selectable line of the menu, in display order.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MenuItem {
 	Preset(String),
@@ -69,7 +64,6 @@ pub struct DeviceMenu {
 	pub form: Option<PresetForm>,
 }
 
-/// The menu's items for `presets`; an unreadable file still offers the default.
 pub fn menu_items(presets: &Result<Presets, String>) -> Vec<MenuItem> {
 	let saved = presets.iter().flat_map(|presets| &presets.devices);
 	saved
@@ -84,7 +78,6 @@ impl Workspace {
 		self.presets = self.devtools.presets().map_err(|error| error.to_string());
 	}
 
-	/// The main button's target: the last preset connected, while it still exists.
 	pub fn default_choice(&self) -> DeviceChoice {
 		match self.presets.as_ref().ok().and_then(Presets::last_used) {
 			Some(preset) => DeviceChoice::Preset(preset.name.clone()),
@@ -185,7 +178,6 @@ impl Workspace {
 		cx.notify();
 	}
 
-	/// The bridge the main button would dial, as the bridge field's placeholder.
 	fn default_target_hint(&self) -> String {
 		let preset = self.presets.as_ref().ok().and_then(Presets::last_used);
 		match preset {

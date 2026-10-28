@@ -1,4 +1,3 @@
-// Recorder frontend: accepts one backend, logs every frame to JSONL, inspects a few elements.
 // usage: bun record.mjs <out.jsonl> [port=8097]
 import { WebSocketServer } from 'ws';
 import { writeFileSync, appendFileSync } from 'node:fs';

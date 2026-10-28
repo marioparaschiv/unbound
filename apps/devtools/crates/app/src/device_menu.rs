@@ -1,6 +1,3 @@
-//! Draws the "Connect device" split button, its dropdown of saved devices, and the inline form
-//! that saves one. State and actions live in `devices.rs`.
-
 use gpui::{
 	Anchor, AnyElement, Context, Div, Entity, Focusable, FontWeight, MouseButton, SharedString,
 	Stateful, Window, anchored, deferred, div, point, prelude::*, px,
@@ -21,7 +18,6 @@ fn divider() -> Div {
 	div().my(px(4.)).h(px(1.)).bg(theme::color(theme::BORDER))
 }
 
-/// A menu line: highlighted by the keyboard or the pointer, the same way.
 fn menu_row(id: SharedString, highlighted: bool, height: f32) -> Stateful<Div> {
 	div()
 		.id(id)
@@ -36,7 +32,6 @@ fn menu_row(id: SharedString, highlighted: bool, height: f32) -> Stateful<Div> {
 		.hover(|row| row.bg(theme::color(theme::HOVER)))
 }
 
-/// Name over a muted address.
 fn two_lines(title: String, detail: String) -> Div {
 	div()
 		.flex_1()
@@ -88,7 +83,6 @@ fn field(label: &'static str, input: &Entity<TextInput>, focused: bool) -> Div {
 }
 
 impl Workspace {
-	/// The main part dials the default choice; the chevron opens the menu.
 	pub fn render_connect(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
 		let open = self.device_menu.is_some();
 		let target = match self.default_choice() {
@@ -171,7 +165,6 @@ impl Workspace {
 			})
 	}
 
-	/// A transparent layer under the open menu: a click anywhere else closes it, chevron included.
 	pub fn render_menu_backdrop(
 		&self,
 		window: &Window,

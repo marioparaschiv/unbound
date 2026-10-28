@@ -1,6 +1,3 @@
-//! Replays `fixtures/session-v8.jsonl`, a session recorded from react-devtools-core 8.0.0 against
-//! `harness/device.mjs`, through the parse → decode → store pipeline.
-
 use std::collections::HashSet;
 
 use serde_json::Value as Json;

@@ -1,6 +1,3 @@
-//! `connect_device` against an in-test debugger bridge, and the device-side connect script run
-//! under bun with a stubbed `DevTools` and `unbound.storage`.
-
 use std::net::SocketAddr;
 use std::process::Command;
 
@@ -11,8 +8,6 @@ use tokio::sync::oneshot;
 use tokio_tungstenite::tungstenite::Message;
 use unbound_devtools_core::{BridgeState, Config, ConnectionState, Devtools, bridge};
 
-/// Accepts one controller, announces `device_connected`, answers its eval with `reply` and hands
-/// the eval's code back to the test.
 async fn fake_bridge(
 	device_connected: bool,
 	reply: Json,
@@ -117,7 +112,6 @@ async fn connect_device_without_a_device_or_bridge() {
 	assert!(matches!(devtools.status().bridge, BridgeState::Unreachable));
 }
 
-/// Runs `script` twice under bun with stubbed device globals; `None` without bun.
 fn run_on_fake_device(script: &str, devtools_loaded: bool, address: &str) -> Option<Json> {
 	let harness = format!(
 		r#"

@@ -79,7 +79,6 @@ impl AssetSource for Assets {
 	}
 }
 
-/// Registers the bundled fonts with the text system; call before the first window opens.
 pub fn load_fonts(cx: &App) -> gpui::Result<()> {
 	let source = cx.asset_source();
 	let mut fonts = Vec::new();

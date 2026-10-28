@@ -2,23 +2,6 @@
 //! for trees and JSON for inspected values. The GUI serves it over streamable HTTP at
 //! `http://127.0.0.1:8098/mcp` (sharing the user's session and selection); `unbound-devtools mcp`
 //! serves it over stdio with no window.
-//!
-//! Tools:
-//! - `status`: connection, bridge, element counts, selection.
-//! - `connect_device`: ask the device over the Unbound bridge to dial this app, on the command
-//!   line's bridge, a saved device (`preset`) or any `bridge`.
-//! - `list_presets`, `save_preset`, `remove_preset`: the saved devices the GUI's menu shows.
-//! - `tree`: indented outline from a root id, with depth and node limits.
-//! - `find`: findInReactTree. Filter by name (exact, contains, regex), key, kind, subtree, and
-//!   optionally a jq predicate over each candidate's inspected element (`.props.message.id == "1"`).
-//! - `query`: run any jq program over the tree JSON.
-//! - `inspect`: props, state, hooks, context, owners and source of one element; `path` expands a
-//!   placeholder.
-//! - `select` / `selected`: move or read the GUI's selection.
-//! - `override`: edit a prop, state, hook or context value on device.
-//! - `highlight`: flash an element's view on device.
-//! - `filters`: show or hide host components.
-//! - `store_global` and `eval`: expose a value as `$reactTemp<n>` and run JS against it.
 
 mod format;
 

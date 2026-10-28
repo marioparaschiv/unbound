@@ -72,9 +72,7 @@ pub fn find(store: &Store, query: &FindQuery) -> Vec<ElementId> {
 		.collect()
 }
 
-/// The most elements [`find_by_props`] inspects for one query.
 pub const MAX_PROPS_CANDIDATES: usize = 200;
-/// How many inspections [`find_by_props`] keeps in flight.
 const PROPS_CONCURRENCY: usize = 8;
 
 /// What [`find_by_props`] found and how far it looked.
@@ -144,7 +142,6 @@ pub async fn find_by_props(
 		match verdict {
 			Ok(true) if matches.ids.len() < limit => matches.ids.push(id),
 			Ok(_) => {}
-			// A predicate can fail on one shape (`test` on a missing string) and hold on others.
 			Err(error) => matches.failures.push((id, error)),
 		}
 	}
@@ -168,7 +165,6 @@ pub fn tree_json(store: &Store, root: Option<ElementId>, max_depth: Option<u32>)
 	}
 }
 
-/// An element whose children are still being built.
 struct OpenNode<'a> {
 	node: Json,
 	depth: u32,
@@ -181,7 +177,6 @@ enum Visited<'a> {
 	Open(OpenNode<'a>),
 }
 
-/// Builds bottom-up with an explicit stack: React Native trees nest hundreds of levels deep.
 fn node_json(store: &Store, id: ElementId, max_depth: u32) -> Json {
 	let mut stack = match visit(store, id, 0, max_depth) {
 		Visited::Done(node) => return node,
@@ -269,8 +264,6 @@ pub fn run_jq_on_tree<T: Send>(
 /// Pages are committed only as touched, so this reserves address space, not memory.
 const JQ_STACK_BYTES: usize = 512 << 20;
 
-/// Compiles `program`, runs it over each input and hands the outputs to `each`, all on a fresh
-/// thread with a [`JQ_STACK_BYTES`] stack, so every deep value is built and dropped there.
 fn run_jq_deep<T: Send>(
 	program: &str,
 	inputs: Vec<Json>,

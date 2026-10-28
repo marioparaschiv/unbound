@@ -211,7 +211,6 @@ impl Value {
 		}
 	}
 
-	/// How a value reads inside a parent's preview: containers collapse to `{…}` / `Array(n)`.
 	fn nested_preview(&self) -> String {
 		match self {
 			Self::Null => "null".to_owned(),
@@ -327,7 +326,6 @@ fn format_number(n: f64) -> String {
 	}
 }
 
-/// Whole numbers print without a fraction so jq's `.count == 42` and previews read naturally.
 fn number_json(n: f64) -> Json {
 	const MAX_SAFE_INTEGER: f64 = 9_007_199_254_740_991.0;
 

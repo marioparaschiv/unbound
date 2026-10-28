@@ -1,5 +1,3 @@
-//! The body before any device has sent a tree.
-
 use gpui::{Context, FontWeight, SharedString, div, img, prelude::*, px};
 use unbound_devtools_core::ConnectionState;
 

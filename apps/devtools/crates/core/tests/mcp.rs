@@ -1,6 +1,3 @@
-//! Drives the MCP server over plain HTTP JSON-RPC, as an MCP client would, against a session with
-//! the harness device attached.
-
 mod common;
 
 use serde_json::{Value as Json, json};
@@ -13,7 +10,6 @@ use common::connected_session;
 struct Reply {
 	session: Option<String>,
 	status: u16,
-	/// The JSON-RPC message, from a JSON body or the SSE stream's `data:` line.
 	message: Option<Json>,
 }
 

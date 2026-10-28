@@ -1,5 +1,3 @@
-//! The right-hand inspector: header, actions, and the collapsible value sections.
-
 use gpui::{AnyElement, Context, SharedString, Window, div, prelude::*, px};
 use unbound_devtools_core::{ElementKind, InspectedElement, Path};
 
@@ -80,7 +78,6 @@ impl Workspace {
 	) -> impl IntoElement {
 		let id = element.id;
 		let highlighted = self.highlighted == Some(id);
-		// The store's name is authoritative; an inspection can arrive without one.
 		let name = match self.devtools.store().get(id) {
 			Some(stored) => stored.name.to_string(),
 			None => element.name.clone(),

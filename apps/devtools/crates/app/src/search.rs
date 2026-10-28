@@ -1,7 +1,3 @@
-//! The search box's matches. Plain text is a case-insensitive name search; text starting with `.`
-//! or `jq:` is a jq program over the tree JSON, and every output that is an element object or an id
-//! counts as a match.
-
 use std::collections::HashSet;
 use std::time::Duration;
 
@@ -40,7 +36,6 @@ pub struct Search {
 	pub set: HashSet<ElementId>,
 	pub active: Option<usize>,
 	pub error: Option<String>,
-	/// A query edit is pending, so its result should select the first match.
 	select_first: bool,
 	task: Option<Task<()>>,
 }
@@ -59,7 +54,6 @@ impl Search {
 		self.schedule(devtools, delay, true, cx);
 	}
 
-	/// Recomputes matches after `delay`, replacing any pending run.
 	pub fn schedule(
 		&mut self,
 		devtools: Devtools,
@@ -101,7 +95,6 @@ impl Search {
 		}));
 	}
 
-	/// Moves the active match and returns it.
 	pub fn step(&mut self, forward: bool) -> Option<ElementId> {
 		let len = self.matches.len();
 		if len == 0 {

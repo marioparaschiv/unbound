@@ -1,4 +1,3 @@
-// Fake device: runs Unbound's real devtools.js backend against react-test-renderer and dials a frontend.
 // usage: [DEPTH=n] [WIDTH=n] [TICK_MS=n] bun device.mjs [port=8097] [host=127.0.0.1]
 // DEPTH nests the app n components deep (function, memo, host View in turn) and WIDTH adds n sibling
 // rows at the bottom, to mimic Discord-scale trees.
