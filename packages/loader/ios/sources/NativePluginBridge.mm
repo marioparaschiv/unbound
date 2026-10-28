@@ -41,6 +41,7 @@
 #import "NativePluginRoot.h"
 #import "NativePluginRuntime.h"
 #import "NativeResourceBudget.h"
+#import "NativeStructLayouts.h"
 #import "NativeTraversalOptions.h"
 #import "NativeTypeEncoding.h"
 
@@ -1084,61 +1085,24 @@ static Value structResult(Runtime &runtime, NSString *name, NSValue *value)
 
 static Value structValue(Runtime &runtime, NSString *name, const Value &fields)
 {
-    if (!fields.isObject())
+    const loader::native::StructLayout *layout =
+        loader::native::structLayout(std::string(name.UTF8String ?: ""));
+    if (!layout)
     {
-        throw JSError(runtime, "Native struct fields must be an object");
+        throw JSError(runtime, "Unsupported native struct");
     }
-
-    Object object = fields.asObject(runtime);
-    if ([name isEqualToString:@"NSRange"])
+    std::vector<uint8_t> bytes;
+    try
     {
-        NSRange range = NSMakeRange((NSUInteger) object.getProperty(runtime, "location").asNumber(),
-                                    (NSUInteger) object.getProperty(runtime, "length").asNumber());
-        return structResult(runtime, name, [NSValue valueWithRange:range]);
+        bytes = loader::native::structFromJS(runtime, *layout, fields);
     }
-    if ([name isEqualToString:@"CGPoint"])
+    catch (const std::invalid_argument &error)
     {
-        CGPoint point = CGPointMake(object.getProperty(runtime, "x").asNumber(),
-                                    object.getProperty(runtime, "y").asNumber());
-        return structResult(runtime, name, [NSValue valueWithCGPoint:point]);
+        throw JSError(runtime, error.what());
     }
-    if ([name isEqualToString:@"CGSize"])
-    {
-        CGSize size = CGSizeMake(object.getProperty(runtime, "width").asNumber(),
-                                 object.getProperty(runtime, "height").asNumber());
-        return structResult(runtime, name, [NSValue valueWithCGSize:size]);
-    }
-    if ([name isEqualToString:@"CGRect"])
-    {
-        Object origin = object.getPropertyAsObject(runtime, "origin");
-        Object size   = object.getPropertyAsObject(runtime, "size");
-        CGRect rect   = CGRectMake(origin.getProperty(runtime, "x").asNumber(),
-                                   origin.getProperty(runtime, "y").asNumber(),
-                                   size.getProperty(runtime, "width").asNumber(),
-                                   size.getProperty(runtime, "height").asNumber());
-        return structResult(runtime, name, [NSValue valueWithCGRect:rect]);
-    }
-    if ([name isEqualToString:@"UIEdgeInsets"])
-    {
-        UIEdgeInsets insets = UIEdgeInsetsMake(object.getProperty(runtime, "top").asNumber(),
-                                               object.getProperty(runtime, "left").asNumber(),
-                                               object.getProperty(runtime, "bottom").asNumber(),
-                                               object.getProperty(runtime, "right").asNumber());
-        return structResult(runtime, name, [NSValue valueWithUIEdgeInsets:insets]);
-    }
-    if ([name isEqualToString:@"CGAffineTransform"])
-    {
-        CGAffineTransform transform =
-            CGAffineTransformMake(object.getProperty(runtime, "a").asNumber(),
-                                  object.getProperty(runtime, "b").asNumber(),
-                                  object.getProperty(runtime, "c").asNumber(),
-                                  object.getProperty(runtime, "d").asNumber(),
-                                  object.getProperty(runtime, "tx").asNumber(),
-                                  object.getProperty(runtime, "ty").asNumber());
-        return structResult(runtime, name, [NSValue valueWithCGAffineTransform:transform]);
-    }
-
-    throw JSError(runtime, "Unsupported native struct");
+    std::string encoding(layout->encoding);
+    return structResult(runtime, name,
+                        [NSValue valueWithBytes:bytes.data() objCType:encoding.c_str()]);
 }
 
 static Value returnValue(Runtime &runtime, NSInvocation *invocation, NSMethodSignature *signature)
@@ -2545,99 +2509,16 @@ Value StructHost::get(Runtime &runtime, const PropNameID &name)
 
 static Value structFields(Runtime &runtime, NSString *name, NSValue *value)
 {
-    if (!value)
+    const loader::native::StructLayout *layout =
+        value ? loader::native::structLayoutForTypeName(std::string(name.UTF8String ?: ""))
+              : nullptr;
+    if (!layout)
     {
         return Value::undefined();
     }
-
-    NSString *canonicalName = name;
-    if ([name containsString:@"_NSRange"])
-    {
-        canonicalName = @"NSRange";
-    }
-    else if ([name containsString:@"CGAffineTransform"])
-    {
-        canonicalName = @"CGAffineTransform";
-    }
-    else if ([name containsString:@"UIEdgeInsets"])
-    {
-        canonicalName = @"UIEdgeInsets";
-    }
-    else if ([name containsString:@"CGRect"])
-    {
-        canonicalName = @"CGRect";
-    }
-    else if ([name containsString:@"CGPoint"])
-    {
-        canonicalName = @"CGPoint";
-    }
-    else if ([name containsString:@"CGSize"])
-    {
-        canonicalName = @"CGSize";
-    }
-
-    Object result(runtime);
-    if ([canonicalName isEqualToString:@"NSRange"])
-    {
-        NSRange range = NSMakeRange(0, 0);
-        [value getValue:&range];
-        result.setProperty(runtime, "location", (double) range.location);
-        result.setProperty(runtime, "length", (double) range.length);
-        return result;
-    }
-    if ([canonicalName isEqualToString:@"CGPoint"])
-    {
-        CGPoint point = CGPointZero;
-        [value getValue:&point];
-        result.setProperty(runtime, "x", point.x);
-        result.setProperty(runtime, "y", point.y);
-        return result;
-    }
-    if ([canonicalName isEqualToString:@"CGSize"])
-    {
-        CGSize size = CGSizeZero;
-        [value getValue:&size];
-        result.setProperty(runtime, "width", size.width);
-        result.setProperty(runtime, "height", size.height);
-        return result;
-    }
-    if ([canonicalName isEqualToString:@"CGRect"])
-    {
-        CGRect rect = CGRectZero;
-        [value getValue:&rect];
-        Object origin(runtime);
-        origin.setProperty(runtime, "x", rect.origin.x);
-        origin.setProperty(runtime, "y", rect.origin.y);
-        Object size(runtime);
-        size.setProperty(runtime, "width", rect.size.width);
-        size.setProperty(runtime, "height", rect.size.height);
-        result.setProperty(runtime, "origin", origin);
-        result.setProperty(runtime, "size", size);
-        return result;
-    }
-    if ([canonicalName isEqualToString:@"UIEdgeInsets"])
-    {
-        UIEdgeInsets insets = UIEdgeInsetsZero;
-        [value getValue:&insets];
-        result.setProperty(runtime, "top", insets.top);
-        result.setProperty(runtime, "left", insets.left);
-        result.setProperty(runtime, "bottom", insets.bottom);
-        result.setProperty(runtime, "right", insets.right);
-        return result;
-    }
-    if ([canonicalName isEqualToString:@"CGAffineTransform"])
-    {
-        CGAffineTransform transform = CGAffineTransformIdentity;
-        [value getValue:&transform];
-        result.setProperty(runtime, "a", transform.a);
-        result.setProperty(runtime, "b", transform.b);
-        result.setProperty(runtime, "c", transform.c);
-        result.setProperty(runtime, "d", transform.d);
-        result.setProperty(runtime, "tx", transform.tx);
-        result.setProperty(runtime, "ty", transform.ty);
-        return result;
-    }
-    return Value::undefined();
+    std::vector<uint8_t> bytes(layout->size);
+    [value getValue:bytes.data() size:bytes.size()];
+    return loader::native::structToJS(runtime, *layout, bytes.data());
 }
 
 struct HookInvocation {
