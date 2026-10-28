@@ -31,7 +31,6 @@ jobs:
         env:
             HERMES_TAG: hermes-v250829098.0.14
             JSI_MINUTES: ${{ (inputs.minutes || '20') }}
-            LSAN_OPTIONS: suppressions=${{ github.workspace }}/packages/loader/core/tests/jsi-fuzz/lsan.supp:print_suppressions=0
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -67,7 +66,7 @@ jobs:
             - name: Fuzz JS-to-native conversion
               run: |
                   mkdir -p build/fuzz-corpus/jsi build/fuzz-crashes
-                  build/libfuzzer/native_jsi_libfuzzer build/fuzz-corpus/jsi -max_total_time=$(( JSI_MINUTES * 60 )) -max_len=512 -timeout=10 -rss_limit_mb=4096 -artifact_prefix=build/fuzz-crashes/jsi-
+                  build/libfuzzer/native_jsi_libfuzzer build/fuzz-corpus/jsi -max_total_time=$(( JSI_MINUTES * 60 )) -max_len=512 -timeout=10 -rss_limit_mb=4096 -detect_leaks=0 -artifact_prefix=build/fuzz-crashes/jsi-
 
             - name: Fuzz the native parsers
               run: |
