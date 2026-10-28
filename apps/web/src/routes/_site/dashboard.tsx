@@ -6,6 +6,7 @@ import DashboardSection from '~/components/dashboard/dashboard-section';
 import AttentionList from '~/components/dashboard/attention-list';
 import UserIdCard from '~/components/dashboard/user-id-card';
 import AddonList from '~/components/dashboard/addon-list';
+import BlurReveal from '~/components/motion/blur-reveal';
 import FirstRun from '~/components/dashboard/first-run';
 import { Button } from '~/components/ui/button';
 import { getDashboard } from '~/lib/publishing';
@@ -19,7 +20,9 @@ function DashboardPage() {
 		<div className='flex flex-col gap-6 md:mx-auto mb-12 px-2 container'>
 			<div className='flex flex-wrap justify-between items-end gap-4'>
 				<div className='flex flex-col gap-2'>
-					<Text variant='heading-lg'>Your Addons</Text>
+					<Text variant='heading-lg'>
+						<BlurReveal text='Your Addons' />
+					</Text>
 					<Text variant='text-md' color='muted'>
 						Manage what you publish and follow each submission through review.
 					</Text>
