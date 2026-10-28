@@ -65,7 +65,8 @@ pub const VALUE_ROW_HEIGHT: Pixels = px(22.);
 pub const ICON_BUTTON: Pixels = px(24.);
 pub const ICON: Pixels = px(14.);
 pub const CHEVRON: Pixels = px(10.);
-pub const INDENT: f32 = 16.;
+pub const CHEVRON_SLOT: f32 = 16.;
+pub const INDENT: f32 = CHEVRON_SLOT;
 pub const INSET: f32 = 8.;
 
 pub const INSPECTOR_MIN: f32 = 320.;

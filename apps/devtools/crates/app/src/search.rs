@@ -129,7 +129,7 @@ impl Workspace {
 			}
 		}
 		search.active = self
-			.selected
+			.synced_selection
 			.and_then(|id| search.matches.iter().position(|&m| m == id));
 		if select_first && search.active.is_none() {
 			self.step_match(true, cx);

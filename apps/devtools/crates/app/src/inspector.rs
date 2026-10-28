@@ -162,7 +162,7 @@ impl Workspace {
 			.child(
 				div()
 					.flex_none()
-					.w(px(theme::INDENT))
+					.w(px(theme::CHEVRON_SLOT))
 					.flex()
 					.justify_center()
 					.child(chevron(!folded)),

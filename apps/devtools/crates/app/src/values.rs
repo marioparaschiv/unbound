@@ -7,23 +7,43 @@ use crate::{theme, widgets};
 
 const PREVIEW_CHARS: usize = 96;
 
-fn preview(value: &Value) -> (String, u32, bool) {
+struct Preview {
+	text: String,
+	color: u32,
+	italic: bool,
+}
+
+impl Preview {
+	fn plain(text: String, color: u32) -> Self {
+		Self {
+			text,
+			color,
+			italic: false,
+		}
+	}
+}
+
+fn preview(value: &Value) -> Preview {
 	match value {
 		Value::Null | Value::Undefined | Value::Bool(_) => {
-			(value.preview(PREVIEW_CHARS), theme::SYN_LITERAL, false)
+			Preview::plain(value.preview(PREVIEW_CHARS), theme::SYN_LITERAL)
 		}
-		Value::Number(_) => (value.preview(PREVIEW_CHARS), theme::SYN_NUMBER, false),
-		Value::String(_) => (value.preview(PREVIEW_CHARS), theme::SYN_STRING, false),
+		Value::Number(_) => Preview::plain(value.preview(PREVIEW_CHARS), theme::SYN_NUMBER),
+		Value::String(_) => Preview::plain(value.preview(PREVIEW_CHARS), theme::SYN_STRING),
 		Value::Array(_) | Value::Object(_) => {
-			(value.preview(PREVIEW_CHARS), theme::TEXT_SECONDARY, false)
+			Preview::plain(value.preview(PREVIEW_CHARS), theme::TEXT_SECONDARY)
 		}
 		Value::Dehydrated(meta) => match meta.kind.as_str() {
 			"function" => {
 				let name = meta.name.as_deref().unwrap_or_default();
-				(format!("ƒ {name}()"), theme::SYN_FUNCTION, true)
+				Preview {
+					text: format!("ƒ {name}()"),
+					color: theme::SYN_FUNCTION,
+					italic: true,
+				}
 			}
-			"react_element" => (meta.preview_short.clone(), theme::SYN_ELEMENT, false),
-			_ => (meta.preview_short.clone(), theme::TEXT_SECONDARY, false),
+			"react_element" => Preview::plain(meta.preview_short.clone(), theme::SYN_ELEMENT),
+			_ => Preview::plain(meta.preview_short.clone(), theme::TEXT_SECONDARY),
 		},
 	}
 }
@@ -59,7 +79,7 @@ fn row_id(path: &Path) -> SharedString {
 fn chevron(expandable: bool, expanded: bool) -> impl IntoElement {
 	div()
 		.flex_none()
-		.w(px(theme::INDENT))
+		.w(px(theme::CHEVRON_SLOT))
 		.flex()
 		.justify_center()
 		.when(expandable, |slot| slot.child(widgets::chevron(expanded)))
@@ -116,7 +136,11 @@ impl<'a> Rows<'a> {
 	) {
 		let expandable = is_expandable(value);
 		let expanded = expandable && self.inspection.expanded.contains(&path);
-		let (text, color, italic) = preview(value);
+		let Preview {
+			text,
+			color,
+			italic,
+		} = preview(value);
 		let editable = matches!(value, Value::Bool(_)) && is_editable(self.element, &path);
 		let mut row = base_row(&path, depth).child(chevron(expandable, expanded));
 		if let Some(label) = label {
@@ -196,7 +220,11 @@ impl<'a> Rows<'a> {
 		let value_path = child(&path, key("value"));
 		let expandable = !hook.sub_hooks.is_empty() || is_expandable(&hook.value);
 		let expanded = expandable && self.inspection.expanded.contains(&value_path);
-		let (text, color, italic) = preview(&hook.value);
+		let Preview {
+			text,
+			color,
+			italic,
+		} = preview(&hook.value);
 		let editable =
 			matches!(hook.value, Value::Bool(_)) && is_editable(self.element, &value_path);
 		let show_value = hook.sub_hooks.is_empty() || !matches!(hook.value, Value::Undefined);

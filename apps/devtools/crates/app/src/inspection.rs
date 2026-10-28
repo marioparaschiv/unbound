@@ -193,24 +193,31 @@ impl Workspace {
 				inspection.error = Some(error);
 			}
 		}
-		let stale: Vec<Path> = inspection
-			.element
+		self.rehydrate_expanded(id, cx);
+		cx.notify();
+	}
+
+	fn rehydrate_expanded(&mut self, id: ElementId, cx: &mut Context<Self>) {
+		let Some(inspection) = self
+			.inspection
 			.as_ref()
-			.map(|element| {
-				let mut paths: Vec<Path> = inspection
-					.expanded
-					.iter()
-					.filter(|path| needs_hydration(value_at(element, path)))
-					.cloned()
-					.collect();
-				paths.sort_by_key(Vec::len);
-				paths
-			})
-			.unwrap_or_default();
+			.filter(|inspection| inspection.id == id)
+		else {
+			return;
+		};
+		let Some(element) = &inspection.element else {
+			return;
+		};
+		let mut stale: Vec<Path> = inspection
+			.expanded
+			.iter()
+			.filter(|path| needs_hydration(value_at(element, path)))
+			.cloned()
+			.collect();
+		stale.sort_by_key(Vec::len);
 		for path in stale {
 			self.hydrate(id, path, cx);
 		}
-		cx.notify();
 	}
 
 	fn hydrate(&mut self, id: ElementId, path: Path, cx: &mut Context<Self>) {

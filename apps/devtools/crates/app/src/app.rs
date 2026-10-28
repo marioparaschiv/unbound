@@ -30,6 +30,8 @@ actions!(
 );
 actions!(search, [NextMatch, PrevMatch, ClearSearch]);
 
+const CHANGE_COALESCING_FRAME: Duration = Duration::from_millis(16);
+
 pub fn bind_keys(cx: &mut App) {
 	input::bind_keys(cx);
 	devices::bind_keys(cx);
@@ -67,7 +69,7 @@ pub struct Workspace {
 	pub collapsed: HashSet<ElementId>,
 	pub rows: Rc<Vec<Row>>,
 	pub scroll: UniformListScrollHandle,
-	pub selected: Option<ElementId>,
+	pub synced_selection: Option<ElementId>,
 	pub search: Search,
 	pub search_input: Entity<TextInput>,
 	pub inspection: Option<Inspection>,
@@ -117,7 +119,7 @@ impl Workspace {
 						break;
 					}
 					cx.background_executor()
-						.timer(Duration::from_millis(16))
+						.timer(CHANGE_COALESCING_FRAME)
 						.await;
 				}
 			}
@@ -132,7 +134,7 @@ impl Workspace {
 			collapsed: HashSet::new(),
 			rows: Rc::default(),
 			scroll: UniformListScrollHandle::new(),
-			selected: None,
+			synced_selection: None,
 			search: Search::default(),
 			search_input,
 			inspection: None,
@@ -171,7 +173,7 @@ impl Workspace {
 		self.sync_selection(cx);
 		self.search
 			.schedule(self.devtools.clone(), Duration::from_millis(150), false, cx);
-		if let Some(id) = self.selected {
+		if let Some(id) = self.synced_selection {
 			self.reinspect = Some(cx.spawn(async move |this, cx| {
 				cx.background_executor()
 					.timer(Duration::from_millis(150))
@@ -203,10 +205,10 @@ impl Workspace {
 			self.devtools.select(None);
 			selected = None;
 		}
-		if selected == self.selected {
+		if selected == self.synced_selection {
 			return;
 		}
-		self.selected = selected;
+		self.synced_selection = selected;
 		self.reinspect = None;
 		if self.highlighted.is_some() {
 			self.highlighted = None;
@@ -254,7 +256,7 @@ impl Workspace {
 	}
 
 	fn selected_row(&self) -> Option<(usize, Row)> {
-		let id = self.selected?;
+		let id = self.synced_selection?;
 		let ix = self.row_index(id)?;
 		Some((ix, self.rows[ix]))
 	}

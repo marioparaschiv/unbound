@@ -70,7 +70,7 @@ fn ui_text_width(window: &Window, text: &str, size: Pixels) -> f32 {
 
 impl Workspace {
 	fn indent_shift(&self, store: &Store) -> u32 {
-		self.selected
+		self.synced_selection
 			.and_then(|id| store.get(id))
 			.map_or(0, |element| element.depth.saturating_sub(VISIBLE_LEVELS))
 	}
@@ -103,7 +103,7 @@ impl Workspace {
 		cx: &mut Context<Self>,
 	) -> AnyElement {
 		let id = row.id;
-		let selected = self.selected == Some(id);
+		let selected = self.synced_selection == Some(id);
 		let matched = self.search.set.contains(&id);
 		let indent = (row.depth as f32 - shift as f32) * theme::INDENT;
 		let depth = row.depth.saturating_sub(shift);
@@ -148,7 +148,7 @@ impl Workspace {
 					.id(("chevron", ix))
 					.flex_none()
 					.ml(px(indent.min(0.)))
-					.w(px(theme::INDENT))
+					.w(px(theme::CHEVRON_SLOT))
 					.h_full()
 					.flex()
 					.items_center()
@@ -194,7 +194,7 @@ impl Workspace {
 	) -> impl IntoElement {
 		let store = self.devtools.store();
 		let mut chain: Vec<&Element> = Vec::new();
-		if let Some(selected) = self.selected.and_then(|id| store.get(id)) {
+		if let Some(selected) = self.synced_selection.and_then(|id| store.get(id)) {
 			chain.push(selected);
 			chain.extend(
 				store
