@@ -232,8 +232,9 @@ class DiscordShapesTest {
     }
 
     @Test
-    fun bundlesEveryRuleFromTheSharedJson() {
-        assertTrue(DISCORD_SHAPE_RULES.keys.containsAll(listOf("messageBind", "reactSurface", "reactSurfaceViewFactory")))
+    fun bundlesOnlyTheLoadersOwnShapes() {
+        assertTrue(DISCORD_SHAPE_RULES.keys.containsAll(listOf("reactSurface", "reactSurfaceViewFactory")))
+        assertTrue(DISCORD_SHAPE_RULES.keys.none { it == "messageBind" || it == "messageTagBind" })
         DISCORD_SHAPE_RULES.values.forEach { rule ->
             assertTrue(rule.member in setOf("field", "method", "constructor"))
             assertTrue(rule.pick in setOf("only", "most-parameters", "all"))
