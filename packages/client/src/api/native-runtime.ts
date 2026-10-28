@@ -166,12 +166,27 @@ export function getNativeModule<T>(...names: string[]): T {
 	].find((x) => x) as T;
 }
 
+/**
+ * @description Reads a native module's constants, which Android TurboModules expose only through `getConstants()`.
+ * @param module The resolved module.
+ * @returns The module with its constants readable as properties.
+ */
+export function withNativeConstants<T extends object>(module: T | undefined): T | undefined {
+	if (!module || !('getConstants' in module) || typeof module.getConstants !== 'function') {
+		return module;
+	}
+
+	return { ...module, ...(module.getConstants() as Partial<T>) };
+}
+
 /** The resolved native client info module, exposing build and release metadata. */
-export const BundleInfo: BundleInfoType = getNativeModule(
-	'NativeClientInfoModule',
-	'InfoDictionaryManager',
-	'RTNClientInfoManager',
-);
+export const BundleInfo: BundleInfoType = withNativeConstants(
+	getNativeModule<BundleInfoType>(
+		'NativeClientInfoModule',
+		'InfoDictionaryManager',
+		'RTNClientInfoManager',
+	),
+) as BundleInfoType;
 /** The resolved native bundle updater module, used to check for updates and reload the bundle. */
 export const BundleManager: DCDBundleManagerType = getNativeModule('BundleUpdaterManager');
 /** The resolved native device module, exposing hardware and OS details. */

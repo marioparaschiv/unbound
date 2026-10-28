@@ -5,10 +5,12 @@ import inspectCommand from '~/commands/inspect';
 import installCommand from '~/commands/install';
 import modulesCommand from '~/commands/modules';
 import publishCommand from '~/commands/publish';
+import bridgeCommand from '~/commands/bridge';
 import createCommand from '~/commands/create';
 import deviceCommand from '~/commands/device';
 import logoutCommand from '~/commands/logout';
 import reloadCommand from '~/commands/reload';
+import statusCommand from '~/commands/status';
 import timingCommand from '~/commands/timing';
 import buildCommand from '~/commands/build';
 import loginCommand from '~/commands/login';
@@ -32,6 +34,8 @@ export const commands: CommandDefinition<z.ZodObject<z.ZodRawShape>>[] = [
 	openCommand,
 	routeCommand,
 	reloadCommand,
+	statusCommand,
+	bridgeCommand,
 	pushCommand,
 	installCommand,
 	deviceCommand,
