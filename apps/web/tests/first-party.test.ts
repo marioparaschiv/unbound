@@ -409,6 +409,7 @@ describe('GET /api/v1/first-party/addons', () => {
 			id: 'fp.delisted',
 			version: '1.0.0',
 			commitSha: request.commitSha,
+			sha256: await liveSha256(ctx, 'fp.delisted', '1.0.0'),
 		});
 		expect(addons.map(({ id }) => id)).not.toContain('fp.elsewhere');
 	});
