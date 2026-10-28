@@ -11,7 +11,7 @@ import type {
 	MyAddonsResponse,
 } from '@unbound-app/contracts/addons';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
-import { and, desc, EmptyFilter, eq, isNull, or, sql } from 'drizzle-orm';
+import { and, desc, EmptyFilter, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
 import type { PinnableField } from '@unbound-app/contracts/admin';
 import { z } from 'zod';
@@ -27,7 +27,8 @@ import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { likeContains } from '~/lib/like-contains';
-import { addon, addonVersion } from '~/db/schema';
+import { addon, addonTag, addonVersion } from '~/db/schema';
+import { splitList } from '~/lib/addon-filters';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
@@ -62,6 +63,12 @@ type ListedAddonRow = Pick<AddonRow, 'id' | 'type' | 'name' | 'description'> & {
 type PinnableColumn = (typeof addon)[PinnableField];
 
 type ManifestTypeFields = Pick<PublishedManifest, 'type' | 'main'>;
+
+type ListingTable = Pick<typeof addon, 'id' | 'updatedAt'>;
+
+type ListingFilters = NonNullable<ListAddonsQuery>;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const SORT_COLUMNS = {
 	name: 'name',
@@ -261,11 +268,54 @@ function listingKey(row: AddonRow, sort: AddonSort): CursorKey {
 	return [value instanceof Date ? value.getTime() : value, row.id];
 }
 
+function tagFilter(table: ListingTable, query: ListingFilters) {
+	const tags = splitList(query.tags);
+
+	if (tags.length === 0) return;
+
+	const tagged = sql`from ${addonTag} where ${addonTag.addonId} = ${table.id} and ${inArray(addonTag.tagId, tags)}`;
+
+	switch (query.tagMatch ?? 'any') {
+		case 'any': {
+			return sql`exists (select 1 ${tagged})`;
+		}
+		case 'all': {
+			return sql`(select count(*) ${tagged}) = ${tags.length}`;
+		}
+		case 'none': {
+			return sql`not exists (select 1 ${tagged})`;
+		}
+	}
+}
+
+// Authors are the newest live version's manifest `authors`, the ones the listing card credits.
+function authorFilter(table: ListingTable, query: ListingFilters) {
+	const ids = splitList(query.authors);
+
+	if (ids.length === 0) return;
+
+	const served = sql`select ${addonVersion.manifest} -> 'authors' from ${addonVersion} where ${addonVersion.addonId} = ${table.id} and ${addonVersion.withdrawnBy} is null order by ${addonVersion.versionKey} desc limit 1`;
+	const credited = sql`exists (select 1 from json_array_elements((${served})) as author where author ->> 'id' in (${sql.join(
+		ids.map((id) => sql`${id}`),
+		sql`, `,
+	)}))`;
+
+	return query.authorMatch === 'none' ? sql`not ${credited}` : credited;
+}
+
+function updatedFilter(ctx: AppContext, table: ListingTable, query: ListingFilters) {
+	if (!query.updated) return;
+
+	const since = new Date(ctx.now().getTime() - Number(query.updated) * DAY_MS);
+
+	return query.updatedMatch === 'none' ? lt(table.updatedAt, since) : gte(table.updatedAt, since);
+}
+
 /**
  * @description Builds the one statement behind {@link listAddons}: one page plus a lookahead row,
  * keyset-paginated over the sort column and id so every filter and sort reads one index.
  * @param ctx The application context.
- * @param query The type filter, search text, sort and the previous page's cursor.
+ * @param query The type, tag, author and update filters, search text, sort and the previous page's cursor.
  * @returns The unexecuted relational query.
  */
 export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) {
@@ -282,6 +332,9 @@ export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) 
 					q
 						? or(likeContains(table.name, q), likeContains(table.description, q))
 						: undefined,
+					tagFilter(table, query),
+					authorFilter(table, query),
+					updatedFilter(ctx, table, query),
 					after ? afterKey([table[column], table.id], after, order) : undefined,
 				) ?? sql`true`,
 		},
