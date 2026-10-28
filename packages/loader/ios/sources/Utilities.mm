@@ -185,11 +185,6 @@ static NSString *bundle = nil;
     [self presentAlert:message title:title buttons:buttons timeout:0 warning:warning tts:tts];
 }
 
-+ (void)alertWarning:(NSString *)message title:(NSString *)title timeout:(NSInteger)timeout
-{
-    [self presentAlert:message title:title buttons:nil timeout:timeout warning:YES tts:YES];
-}
-
 + (void)alert:(NSString *)message
         title:(NSString *)title
       buttons:(NSArray<UIAlertAction *> *)buttons
@@ -454,23 +449,6 @@ static NSString *bundle = nil;
     return resultData;
 }
 
-+ (dispatch_source_t)createDebounceTimer:(double)delay
-                                   queue:(dispatch_queue_t)queue
-                                   block:(dispatch_block_t)block
-{
-    dispatch_source_t timer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, queue);
-
-    if (timer)
-    {
-        dispatch_source_set_timer(timer, dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_SEC),
-                                  DISPATCH_TIME_FOREVER, (1ull * NSEC_PER_SEC) / 10);
-        dispatch_source_set_event_handler(timer, block);
-        dispatch_resume(timer);
-    }
-
-    return timer;
-}
-
 + (BOOL)isRNNewArchEnabled
 {
     NSBundle *bundle         = [NSBundle mainBundle];
@@ -560,16 +538,6 @@ static NSString *bundle = nil;
                   isTrollStore ? @"YES" : @"NO"];
 
     return isTrollStoreApp;
-}
-
-+ (NSString *)getTrollStoreVariant
-{
-    NSString     *bundlePath      = [[NSBundle mainBundle] bundlePath];
-    NSDictionary *trollStorePaths = [self checkTrollStorePaths:bundlePath];
-
-    return toNSString(
-        loader::environment::trollStoreVariant([trollStorePaths[@"isTrollStore"] boolValue],
-                                               [trollStorePaths[@"isTrollStoreLite"] boolValue]));
 }
 
 + (BOOL)isSystemApp
@@ -919,11 +887,6 @@ static __weak DCDBundleUpdaterManager *gBundleUpdater = nil;
     }
 
     dispatch_async(dispatch_get_main_queue(), ^{ [updater reload]; });
-}
-
-+ (UIColor *)parseColor:(NSString *)color
-{
-    return [color isKindOfClass:[NSString class]] ? [CoreBridge colorFromString:color] : nil;
 }
 
 @end
