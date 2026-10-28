@@ -418,4 +418,20 @@ class NativeJavaTest {
 
         assertThrows(IllegalArgumentException::class.java) { NativeJava.invoke(list, "size", "[]") }
     }
+
+    @Test
+    fun aFailedBatchReleasesTheHandlesItAlreadyIssued() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+        val before = NativeJava.liveHandles()
+        val steps = """[
+            {"op":"invoke","handle":$builder,"name":"reverse","args":[]},
+            {"op":"invoke","handle":$builder,"name":"doesNotExist","args":[]}
+        ]"""
+
+        assertThrows(IllegalStateException::class.java) { NativeJava.batch(steps) }
+        assertEquals(before, NativeJava.liveHandles())
+
+        NativeJava.release("""{"id":"${handleId(builder)}","issues":1}""")
+        assertEquals(before - 1, NativeJava.liveHandles())
+    }
 }
