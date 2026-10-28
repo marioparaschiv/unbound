@@ -387,3 +387,31 @@ CREATE TABLE `discord_profile` (
 	`fetched_at` integer NOT NULL
 );
 CREATE INDEX `discord_profile_fetchedAt_idx` ON `discord_profile` (`fetched_at`);
+CREATE TABLE `team_member` (
+	`discord_id` text PRIMARY KEY,
+	`group` text NOT NULL,
+	`staff_role` text,
+	`position` integer,
+	`synced_at` integer NOT NULL
+);
+CREATE TABLE `crash_report` (
+	`id` text PRIMARY KEY,
+	`kind` text NOT NULL,
+	`platform` text NOT NULL,
+	`client_version` text NOT NULL,
+	`loader_version` text NOT NULL,
+	`discord_version` text NOT NULL,
+	`os_version` text NOT NULL,
+	`device_model` text NOT NULL,
+	`addon_id` text,
+	`addon_version` text,
+	`addon_trust` text,
+	`phase` text,
+	`seconds` real,
+	`message` text,
+	`stack` text,
+	`log` text,
+	`received_at` integer NOT NULL
+);
+CREATE INDEX `crash_report_addonId_receivedAt_idx` ON `crash_report` (`addon_id`, `received_at`);
+CREATE INDEX `crash_report_receivedAt_idx` ON `crash_report` (`received_at`);
