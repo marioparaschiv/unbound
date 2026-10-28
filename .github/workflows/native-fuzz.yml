@@ -43,12 +43,15 @@ jobs:
             - name: Check Hermes matches the vendored JSI
               run: cmp vendor/react/jsi/jsi.h build/hermes-src/API/jsi/jsi/jsi.h
 
+            - name: Pin Hermes and vendored source times
+              run: find build/hermes-src vendor -exec touch -h -d '2000-01-01T00:00:00Z' {} +
+
             - name: Cache the fuzzer build
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
               with:
                   path: packages/loader/build/libfuzzer
-                  key: native-libfuzzer-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/core/**') }}
-                  restore-keys: native-libfuzzer-${{ runner.os }}-${{ env.HERMES_TAG }}-
+                  key: native-libfuzzer-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}-${{ hashFiles('packages/loader/vendor/**') }}-${{ hashFiles('packages/loader/core/**') }}
+                  restore-keys: native-libfuzzer-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}-
 
             - name: Restore the corpus
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
