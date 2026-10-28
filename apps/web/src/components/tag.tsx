@@ -11,7 +11,7 @@ const tagVariants = cva(
 			variant: {
 				default: 'bg-secondary text-muted-foreground',
 				primary:
-					'bg-primary/10 text-primary dark:bg-primary/15 dark:text-[oklch(0.8_0.1_285)]',
+					'bg-primary/10 text-primary dark:bg-primary/15 dark:text-[oklch(0.8_0.09_17)]',
 				destructive: 'bg-destructive/15 text-destructive',
 				warning: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
 			},

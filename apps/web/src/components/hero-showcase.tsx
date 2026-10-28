@@ -30,7 +30,7 @@ function HeroShowcase({
 				draggable={false}
 				className='absolute inset-0 w-full translate-y-[4%] scale-[1.04] opacity-30 blur-[48px] md:blur-[100px] brightness-140 saturate-130 pointer-events-none select-none'
 			/>
-			{/* A violet underglow ties the phones to the accent; a gradient, because drop-shadow on the 2880px image is costly to scroll. */}
+			{/* An underglow in the accent ties the phones to it; a gradient, because drop-shadow on the 2880px image is costly to scroll. */}
 			<div
 				aria-hidden
 				className='absolute inset-x-[8%] top-[20%] -bottom-[10%] bg-[radial-gradient(ellipse_at_center,var(--glow),transparent_70%)] pointer-events-none'

@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 
 import cn from '~/lib/cn';
 
-type SegmentedTone = 'card';
+type SegmentedTone = 'card' | 'header';
 
 type SegmentedContextValue = {
 	active: string | null;
@@ -30,6 +30,7 @@ const PILL_TRANSITION = { type: 'spring', stiffness: 500, damping: 38 } as const
 // Each tone names its surface and pill tokens, so the header and page variants share every class.
 const TONES: Record<SegmentedTone, string> = {
 	card: '[--segmented-bg:var(--card)] [--segmented-pill:var(--accent)]',
+	header: '[--segmented-bg:var(--header)] [--segmented-pill:var(--header-pill)]',
 };
 
 const SegmentedContext = createContext<SegmentedContextValue | null>(null);

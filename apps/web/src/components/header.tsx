@@ -54,6 +54,7 @@ function Header() {
 					<Segmented
 						value={pathname}
 						layoutId='header-highlight'
+						tone='header'
 						className='hidden md:flex'
 					>
 						{ROUTES.map((route) => (
