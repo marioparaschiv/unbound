@@ -75,7 +75,7 @@ permissions:
     contents: read
 
 concurrency:
-    group: android-${{ github.workflow }}-${{ github.ref }}
+    group: android-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
     cancel-in-progress: true
 
 defaults:

@@ -59,7 +59,7 @@ on:
 permissions: {}
 
 concurrency:
-    group: ios-${{ github.workflow }}-${{ github.ref }}
+    group: ios-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
     cancel-in-progress: false
 
 env:
