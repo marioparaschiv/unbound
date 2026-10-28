@@ -1,12 +1,12 @@
 import { createCommands, option } from '~/api/commands';
 import { Discord } from '~/api/metro/components';
-import { Screens } from '~/lib/constants';
-import { Util } from '~/api/metro/common';
 import { findByProps } from '~/api/metro';
+import { Util } from '~/api/metro/common';
+import { Screens } from '~/lib/constants';
+import debug from '~/builtins/debugger';
 import { Messages } from '~/api/i18n';
 import { reload } from '~/api/native';
 import storage from '~/api/storage';
-import debug from '~/builtins/debugger';
 
 import formatCodeBlock from './format-code-block';
 
@@ -58,11 +58,11 @@ export function start() {
 		},
 		recovery: {
 			description: 'Turn recovery mode on or off and restart',
-			execute: () => void confirmRecovery(),
+			execute: () => confirmRecovery(),
 		},
 		plugins: {
 			description: 'Open the Unbound plugins settings',
-			execute: () => void openScreen(Screens.Plugins),
+			execute: () => openScreen(Screens.Plugins),
 		},
 		themes: {
 			description: 'Open the Unbound themes settings',
