@@ -22,8 +22,8 @@ import {
 import globals, { shimmedModules } from './plugins/globals';
 import refresh, { refreshRuntime } from './plugins/refresh';
 import downlevel, { lower } from './plugins/downlevel';
-import generateManifest from './plugins/manifest';
 import hermesVersions from './plugins/hermes-versions';
+import generateManifest from './plugins/manifest';
 import { bytecodeVersions } from './hermes.json';
 import worklets from './plugins/worklets';
 import signBundles from './sign';
