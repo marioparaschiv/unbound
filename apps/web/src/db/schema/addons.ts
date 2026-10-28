@@ -92,6 +92,34 @@ export const addonMaintainer = pgTable(
 	],
 );
 
+/** A label addons are filed under. Tags and their addons are added in the database; there is no UI for it yet. */
+export const tag = pgTable('tag', {
+	/** A slug, such as `privacy`. */
+	id: text('id').primaryKey(),
+	label: text('label').notNull(),
+	/** A CSS color, painted as the tag's dot. */
+	color: text('color').notNull(),
+	/** Menus list tags by this, lowest first. */
+	position: integer('position').notNull(),
+	createdAt: timestampMs('created_at').defaultNow().notNull(),
+});
+
+export const addonTag = pgTable(
+	'addon_tag',
+	{
+		addonId: text('addon_id')
+			.notNull()
+			.references(() => addon.id, { onDelete: 'cascade' }),
+		tagId: text('tag_id')
+			.notNull()
+			.references(() => tag.id, { onDelete: 'cascade' }),
+	},
+	(table) => [
+		primaryKey({ columns: [table.addonId, table.tagId] }),
+		index('addon_tag_tagId_idx').on(table.tagId),
+	],
+);
+
 export const submission = pgTable(
 	'submission',
 	{

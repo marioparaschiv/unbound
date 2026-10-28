@@ -1,0 +1,338 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "4616b9c3-2e1f-4aa4-8568-a2576d6dd892",
+  "prevIds": [
+    "cfd2ab82-fc40-4698-82c3-f8a8a1b8a5f8"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "addon_tag"
+      ],
+      "writes": [
+        "s|tbl|public.addon_tag",
+        "n|tbl|public.addon_tag",
+        "e|tbl|public.addon_tag",
+        "n|rel|public.addon_tag",
+        "n|type|public.addon_tag",
+        "n|rel|public.addon_tag_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "public",
+        "tag"
+      ],
+      "writes": [
+        "s|tbl|public.tag",
+        "n|tbl|public.tag",
+        "e|tbl|public.tag",
+        "n|rel|public.tag",
+        "n|type|public.tag",
+        "n|rel|public.tag_pkey"
+      ],
+      "reads": [
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "create_index",
+      "statementTarget": [
+        "index",
+        "public",
+        "addon_tag",
+        "addon_tag_tagId_idx"
+      ],
+      "writes": [
+        "s|idx|public.addon_tag_tagId_idx",
+        "n|idx|public.addon_tag_tagId_idx",
+        "e|idx|public.addon_tag_tagId_idx",
+        "n|rel|public.addon_tag_tagId_idx"
+      ],
+      "reads": [
+        "n|tbl|public.addon_tag",
+        "n|sch|public",
+        "n|col|public.addon_tag.tag_id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "addon_tag"
+      ],
+      "writes": [
+        "s|fk|public.addon_tag.addon_tag_addon_id_addon_id_fkey",
+        "n|fk|public.addon_tag.addon_tag_addon_id_addon_id_fkey",
+        "e|fk|public.addon_tag.addon_tag_addon_id_addon_id_fkey",
+        "n|con|public.addon_tag.addon_tag_addon_id_addon_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.addon_tag",
+        "n|sch|public",
+        "n|tbl|public.addon",
+        "n|sch|public",
+        "n|col|public.addon_tag.addon_id",
+        "n|col|public.addon.id",
+        "e|uniqueness|public.addon.id"
+      ]
+    },
+    {
+      "statementType": "create_fk",
+      "statementTarget": [
+        "table",
+        "public",
+        "addon_tag"
+      ],
+      "writes": [
+        "s|fk|public.addon_tag.addon_tag_tag_id_tag_id_fkey",
+        "n|fk|public.addon_tag.addon_tag_tag_id_tag_id_fkey",
+        "e|fk|public.addon_tag.addon_tag_tag_id_tag_id_fkey",
+        "n|con|public.addon_tag.addon_tag_tag_id_tag_id_fkey"
+      ],
+      "reads": [
+        "n|tbl|public.addon_tag",
+        "n|sch|public",
+        "n|tbl|public.tag",
+        "n|sch|public",
+        "n|col|public.addon_tag.tag_id",
+        "n|col|public.tag.id",
+        "e|uniqueness|public.tag.id"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "addon_tag",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "name": "tag",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "addon_tag",
+        "name": "addon_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "addon_tag",
+        "name": "tag_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "tag",
+        "name": "id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "tag",
+        "name": "label",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "tag",
+        "name": "color",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "tag",
+        "name": "position",
+        "type": "integer",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "tag",
+        "name": "created_at",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "addon_tag",
+        "name": "addon_tag_tagId_idx",
+        "nameExplicit": true,
+        "columns": [
+          {
+            "value": "tag_id",
+            "isExpression": false,
+            "asc": true,
+            "nullsFirst": false,
+            "opclass": null
+          }
+        ],
+        "isUnique": false,
+        "where": null,
+        "with": "",
+        "method": "btree",
+        "concurrently": false,
+        "entityType": "indexes"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "addon_tag",
+        "name": "addon_tag_addon_id_addon_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "addon_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "addon",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "addon_tag",
+        "name": "addon_tag_tag_id_tag_id_fkey",
+        "nameExplicit": false,
+        "columns": [
+          "tag_id"
+        ],
+        "schemaTo": "public",
+        "tableTo": "tag",
+        "columnsTo": [
+          "id"
+        ],
+        "onUpdate": "NO ACTION",
+        "onDelete": "CASCADE",
+        "entityType": "fks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "addon_tag",
+        "name": "addon_tag_pkey",
+        "columns": [
+          "addon_id",
+          "tag_id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "tag",
+        "name": "tag_pkey",
+        "columns": [
+          "id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

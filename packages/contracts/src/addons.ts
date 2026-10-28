@@ -47,6 +47,19 @@ export const addonSortSchema = z.enum(['name', 'created', 'updated']);
 
 export const sortOrderSchema = z.enum(['asc', 'desc']);
 
+/** How a filter's values combine: has any of them, has all of them, or has none of them. */
+export const filterMatchSchema = z.enum(['any', 'all', 'none']);
+
+/** A filter that compares one value per addon, which can match one of the values or none of them. */
+export const singleMatchSchema = z.enum(['any', 'none']);
+
+/** A tag's id: a lowercase slug. */
+export const tagIdSchema = z.string().check(z.regex(/^[a-z\d]+(?:-[a-z\d]+)*$/), z.maxLength(64));
+
+const TAG_LIST = /^[a-z\d]+(?:-[a-z\d]+)*(?:,[a-z\d]+(?:-[a-z\d]+)*)*$/;
+
+const SNOWFLAKE_LIST = /^[1-9]\d{0,19}(?:,[1-9]\d{0,19})*$/;
+
 export const listAddonsQuerySchema = z.optional(
 	z.object({
 		type: z.optional(addonTypeSchema),
@@ -56,6 +69,31 @@ export const listAddonsQuerySchema = z.optional(
 		sort: z.optional(addonSortSchema),
 		/** Defaults to `asc`. */
 		order: z.optional(sortOrderSchema),
+		/** Comma-separated tag ids, compared by `tagMatch`. */
+		tags: z.optional(
+			z
+				.string()
+				.check(z.regex(TAG_LIST, 'Must be comma-separated tag ids.'), z.maxLength(512)),
+		),
+		/** Defaults to `any`: the addon has at least one of `tags`. */
+		tagMatch: z.optional(filterMatchSchema),
+		/** Comma-separated Discord ids, matched against the newest version's manifest `authors[].id`. */
+		authors: z.optional(
+			z
+				.string()
+				.check(
+					z.regex(SNOWFLAKE_LIST, 'Must be comma-separated Discord ids.'),
+					z.maxLength(512),
+				),
+		),
+		/** Defaults to `any`: one of `authors` is credited. `none` keeps addons crediting none of them. */
+		authorMatch: z.optional(singleMatchSchema),
+		/** A number of days, compared with when the newest version was approved by `updatedMatch`. */
+		updated: z.optional(
+			z.string().check(z.regex(/^[1-9]\d{0,3}$/, 'Must be a number of days up to 9999.')),
+		),
+		/** Defaults to `any`: updated within `updated` days. `none` keeps addons updated before then. */
+		updatedMatch: z.optional(singleMatchSchema),
 		/** The previous page's `nextCursor`, requested with the same filters and sort. */
 		cursor: z.optional(z.string().check(z.maxLength(512))),
 	}),
@@ -125,6 +163,8 @@ export type AddonResponse = z.infer<typeof addonResponseSchema>;
 export type AddonType = z.infer<typeof addonTypeSchema>;
 export type AddonSort = z.infer<typeof addonSortSchema>;
 export type SortOrder = z.infer<typeof sortOrderSchema>;
+export type FilterMatch = z.infer<typeof filterMatchSchema>;
+export type SingleMatch = z.infer<typeof singleMatchSchema>;
 export type ListAddonsQuery = z.infer<typeof listAddonsQuerySchema>;
 export type ListedAddon = z.infer<typeof listedAddonSchema>;
 export type ListAddonsResponse = z.infer<typeof listAddonsResponseSchema>;
@@ -145,6 +185,9 @@ export default {
 	addonTypeSchema,
 	addonSortSchema,
 	sortOrderSchema,
+	filterMatchSchema,
+	singleMatchSchema,
+	tagIdSchema,
 	listAddonsQuerySchema,
 	listedAddonSchema,
 	listAddonsResponseSchema,

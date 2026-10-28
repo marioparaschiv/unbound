@@ -36,7 +36,7 @@ function AddonMenu({ addon, userId }: AddonMenuProps) {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align='end'>
-					<DropdownMenuItem onSelect={() => copyText(addon.id, 'addon ID')}>
+					<DropdownMenuItem onClick={() => copyText(addon.id, 'addon ID')}>
 						<IconCopies size={24} />
 						Copy addon ID
 					</DropdownMenuItem>
@@ -49,7 +49,7 @@ function AddonMenu({ addon, userId }: AddonMenuProps) {
 						</DropdownMenuItem>
 					) : null}
 					{actions.maintainers ? (
-						<DropdownMenuItem onSelect={() => setMaintainersOpen(true)}>
+						<DropdownMenuItem onClick={() => setMaintainersOpen(true)}>
 							<IconUsers size={24} />
 							Maintainers
 						</DropdownMenuItem>

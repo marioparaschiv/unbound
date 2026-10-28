@@ -1,25 +1,50 @@
-import { listAddonsQuerySchema, type AddonVersion } from '@unbound-app/contracts/addons';
+import {
+	addonTypeSchema,
+	listAddonsQuerySchema,
+	type AddonVersion,
+} from '@unbound-app/contracts/addons';
 import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod/mini';
 
+import { listTags, readAddonTags, type AddonTag, type TagOption } from '~/lib/addon-tags';
 import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
+import { searchAuthors, type AuthorPage } from '~/lib/authors/directory';
 import { getAddonDetails, listAddons } from '~/lib/addons';
 import { loadAuthors } from '~/lib/authors/resolve';
+import { splitList } from '~/lib/addon-filters';
 import app from '~/lib/app';
 
 export type MarketplaceSearch = z.infer<typeof marketplaceSearchSchema>;
 
-/** The `/plugins` and `/themes` URL search parameters. */
+/** The `/plugins` and `/themes` URL search parameters. The sort brings its own order. */
 export const marketplaceSearchSchema = z.pick(listAddonsQuerySchema.def.innerType, {
 	q: true,
 	sort: true,
-	order: true,
+	tags: true,
+	tagMatch: true,
+	authors: true,
+	authorMatch: true,
+	updated: true,
+	updatedMatch: true,
 });
 
+const listingQuery = listAddonsQuerySchema.def.innerType.shape;
+
+const authorSearchSchema = z.object({
+	type: z.optional(addonTypeSchema),
+	q: listingQuery.q,
+	/** Comma-separated Discord ids, the way the listing's `authors` takes them. */
+	ids: listingQuery.authors,
+	cursor: listingQuery.cursor,
+});
+
+/** An addon card on `/plugins` and `/themes`, with the tags it shows. */
+export type ListingAddon = MarketplaceAddon & { tags: AddonTag[] };
+
 export type MarketplacePage = {
-	addons: MarketplaceAddon[];
+	addons: ListingAddon[];
 	nextCursor: string | null;
 };
 
@@ -53,18 +78,46 @@ export const fetchMarketplacePage = createServerFn({ method: 'GET' })
 	.validator(listAddonsQuerySchema)
 	.handler(async ({ data }): Promise<MarketplacePage> => {
 		const page = await listAddons(app, data);
-		const resolve = await loadAuthors(
-			app,
-			page.addons.map((entry) => entry.latestVersion.manifest.authors),
-		);
+		const [resolve, tags] = await Promise.all([
+			loadAuthors(
+				app,
+				page.addons.map((entry) => entry.latestVersion.manifest.authors),
+			),
+			readAddonTags(
+				app,
+				page.addons.map((entry) => entry.id),
+			),
+		]);
 
 		return {
-			addons: page.addons.map((entry) =>
-				toMarketplaceAddon(entry, entry.latestVersion, resolve),
-			),
+			addons: page.addons.map((entry) => ({
+				...toMarketplaceAddon(entry, entry.latestVersion, resolve),
+				tags: tags.get(entry.id) ?? [],
+			})),
 			nextCursor: page.nextCursor,
 		};
 	});
+
+/**
+ * @description Lists every tag with how many listed addons of the type carry it, for the Tags filter.
+ * @returns The tags in menu order.
+ */
+export const fetchMarketplaceTags = createServerFn({ method: 'GET' })
+	.validator(addonTypeSchema)
+	.handler(({ data }): Promise<TagOption[]> => listTags(app, data));
+
+/**
+ * @description Searches the authors of listed addons for the Author filter, one page at a time.
+ * @returns The page, its next cursor and how many authors match.
+ */
+export const fetchMarketplaceAuthors = createServerFn({ method: 'GET' })
+	.validator(authorSearchSchema)
+	.handler(({ data }): Promise<AuthorPage> =>
+		searchAuthors(app, {
+			...data,
+			ids: data.ids ? splitList(data.ids) : undefined,
+		}),
+	);
 
 /**
  * @description Loads a listed addon's public page.
@@ -98,4 +151,10 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 		};
 	});
 
-export default { marketplaceSearchSchema, fetchMarketplacePage, fetchMarketplaceAddon };
+export default {
+	marketplaceSearchSchema,
+	fetchMarketplacePage,
+	fetchMarketplaceTags,
+	fetchMarketplaceAuthors,
+	fetchMarketplaceAddon,
+};

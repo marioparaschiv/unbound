@@ -40,12 +40,14 @@ export const RETIRED_SOURCE_TABLES: ReadonlySet<string> = new Set(['bot_feed_cha
 
 /**
  * The app tables newer than production's SQLite file, which then copy as empty: #231's profiles,
- * #322's team members and the client's crash reports.
+ * #322's team members, the client's crash reports and the addon tags.
  */
 export const OPTIONAL_SOURCE_TABLES: ReadonlySet<string> = new Set([
 	'discord_profile',
 	'team_member',
 	'crash_report',
+	'tag',
+	'addon_tag',
 ]);
 
 /**

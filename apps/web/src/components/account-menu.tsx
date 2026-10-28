@@ -86,7 +86,7 @@ function AccountMenu() {
 					</DropdownMenuItem>
 				))}
 				<DropdownMenuSeparator />
-				<DropdownMenuItem onSelect={signOut} variant='destructive'>
+				<DropdownMenuItem onClick={() => void signOut()} variant='destructive'>
 					<IconRectLogout size={24} />
 					Log Out
 				</DropdownMenuItem>
