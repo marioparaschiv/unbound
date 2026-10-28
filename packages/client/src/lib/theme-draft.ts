@@ -23,7 +23,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function parseHex(digits: string): ParsedColor {
-	const full = digits.length <= 4 ? [...digits].map((digit) => digit + digit).join('') : digits;
+	const full = digits.length <= 4 ? digits.replace(/./g, '$&$&') : digits;
 	const rgb = parseInt(full.slice(0, 6), 16);
 	const alpha = full.length === 8 ? parseInt(full.slice(6), 16) / 255 : 1;
 

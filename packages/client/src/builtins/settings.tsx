@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 
 import { findByProps, findByName, findByFilePath } from '~/api/metro';
 import MarketplacePage from '~/ui/settings/marketplace';
-import { ThemeEditorPage } from '~/ui/theme-editor';
 import { Screens, CLIENT_NAME } from '~/lib/constants';
 import CloudSyncPage from '~/ui/settings/cloud-sync';
 import DeveloperPage from '~/ui/settings/developer';
+import { ThemeEditorPage } from '~/ui/theme-editor';
 import { Discord } from '~/api/metro/components';
 import CustomScreen from '~/ui/settings/custom';
 import GeneralPage from '~/ui/settings/general';

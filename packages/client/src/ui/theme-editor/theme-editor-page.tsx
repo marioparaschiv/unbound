@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Theme } from '@unbound-app/types';
 
-import type { LocalThemeId } from '~/lib/local-themes';
-import { createLocalThemeId } from '~/lib/local-themes';
 import { createDraft, isEdited, readDraft } from '~/lib/theme-draft';
+import { createLocalThemeId } from '~/lib/local-themes';
+import type { LocalThemeId } from '~/lib/local-themes';
 import { Discord } from '~/api/metro/components';
 import { Messages, format } from '~/api/i18n';
 import { themes } from '~/managers/themes';
-import { showToast } from '~/api/toasts';
 import { Screens } from '~/lib/constants';
+import { showToast } from '~/api/toasts';
 import ThemeStore from '~/stores/themes';
 import { Page } from '~/ui/components';
 
@@ -76,10 +76,12 @@ function ThemeEditorPage({ route }: ThemeEditorPageProps) {
 		})).filter(({ rows }) => rows.length);
 	}, [names]);
 
-	dirty.current =
-		(preview !== null && preview !== session.initial) ||
-		name !== session.name ||
-		description !== session.description;
+	useEffect(() => {
+		dirty.current =
+			(preview !== null && preview !== session.initial) ||
+			name !== session.name ||
+			description !== session.description;
+	}, [preview, name, description]);
 
 	const canSave = Boolean(name.trim()) && !busy;
 

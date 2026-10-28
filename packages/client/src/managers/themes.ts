@@ -3,8 +3,8 @@ import toError from '@unbound-app/utils/to-error';
 
 import type { LocalThemeId } from '~/lib/local-themes';
 import { ManagerType } from '~/managers/base';
-import { Addons } from '~/managers/addons';
 import { Users } from '~/api/metro/stores';
+import { Addons } from '~/managers/addons';
 import ThemeStore from '~/stores/themes';
 
 /** The name and description a theme editor session saves into the manifest. */

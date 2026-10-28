@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 
-import { ColorBlock, Discord, showColorPicker } from '~/api/metro/components';
 import { applyPick, intToHex, isEdited, parseColor, resetTokens } from '~/lib/theme-draft';
+import { ColorBlock, Discord, showColorPicker } from '~/api/metro/components';
 import type { TokenWrite } from '~/lib/theme-draft';
 import ThemeStore from '~/stores/themes';
 import { Icons } from '~/api/assets';

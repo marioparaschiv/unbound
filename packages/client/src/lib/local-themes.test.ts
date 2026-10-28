@@ -1,5 +1,5 @@
-import { SYNC_ID_PATTERN } from '@unbound-app/contracts/sync';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
+import { SYNC_ID_PATTERN } from '@unbound-app/contracts/sync';
 import { describe, expect, test } from 'bun:test';
 
 import { createLocalThemeId, isLocalThemeId } from './local-themes';

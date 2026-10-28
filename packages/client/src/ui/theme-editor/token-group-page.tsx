@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
-import type { TokenWrite } from '~/lib/theme-draft';
 import { Discord, FlashList } from '~/api/metro/components';
+import type { TokenWrite } from '~/lib/theme-draft';
 import { Messages, format } from '~/api/i18n';
 import { Icons } from '~/api/assets';
 

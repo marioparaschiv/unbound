@@ -1,5 +1,5 @@
-import type { Theme } from '@unbound-app/types';
 import { describe, expect, test } from 'bun:test';
+import type { Theme } from '@unbound-app/types';
 
 import {
 	applyPick,

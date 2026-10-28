@@ -1,6 +1,6 @@
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import type { SyncDocument } from '@unbound-app/contracts/sync';
 import { emptySyncDocument } from '@unbound-app/contracts/sync';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 type Stores = Record<string, Record<string, string | null | Record<string, string | boolean>>>;
 
