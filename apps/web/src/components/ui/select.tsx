@@ -8,15 +8,15 @@ import cn from '~/lib/cn';
 
 const selectTriggerVariants = cva(
 	[
-		"border-input data-[placeholder]:text-muted-foreground dark:bg-input/30 dark:hover:bg-input/50 flex w-fit items-center justify-between gap-2 rounded-control border bg-muted/50 px-3.5 text-sm whitespace-nowrap shadow-field transition-[color,box-shadow,border-color] duration-(--press-duration) outline-none select-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-		'focus-visible:border-halo focus-visible:ring-4 focus-visible:ring-halo',
+		"field data-[placeholder]:text-muted-foreground flex w-fit items-center justify-between gap-2 px-4 text-base md:text-[15px] whitespace-nowrap outline-none select-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+		'focus-visible:ring-4 focus-visible:ring-halo',
 		'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
 	],
 	{
 		variants: {
 			size: {
-				default: 'h-10',
-				sm: 'h-8.5 px-3',
+				default: 'h-11',
+				sm: 'h-9 px-3 text-sm md:text-sm',
 			},
 		},
 		defaultVariants: {

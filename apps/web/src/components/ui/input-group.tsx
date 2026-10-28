@@ -8,14 +8,14 @@ import Input from '~/components/ui/input';
 import cn from '~/lib/cn';
 
 const inputGroupAddonVariants = cva(
-	"text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none [&>svg:not([class*='size-'])]:size-4 [&>kbd]:rounded-item group-data-[disabled=true]/input-group:opacity-50",
+	"text-muted-foreground group-has-[[data-slot=input-group-control]:focus-visible]/input-group:text-foreground transition-colors duration-(--press-duration) flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none [&>svg:not([class*='size-'])]:size-4.5 [&>kbd]:rounded-item group-data-[disabled=true]/input-group:opacity-50",
 	{
 		variants: {
 			align: {
 				'inline-start':
-					'order-first pl-3 has-[>button]:ml-[-0.45rem] has-[>kbd]:ml-[-0.35rem]',
+					'order-first pl-4 has-[>button]:ml-[-0.45rem] has-[>kbd]:ml-[-0.35rem]',
 				'inline-end':
-					'order-last pr-3 has-[>button]:mr-[-0.45rem] has-[>kbd]:mr-[-0.35rem]',
+					'order-last pr-4 has-[>button]:mr-[-0.45rem] has-[>kbd]:mr-[-0.35rem]',
 				'block-start':
 					'order-first w-full justify-start px-3 pt-3 [.border-b]:pb-3 group-has-[>input]/input-group:pt-2.5',
 				'block-end':
@@ -53,13 +53,13 @@ function InputGroup({ className, ...props }: ComponentProps<'div'>) {
 			data-slot='input-group'
 			role='group'
 			className={cn(
-				'group/input-group border-input bg-muted/50 dark:bg-input/30 relative flex w-full items-center rounded-control border shadow-field transition-[color,box-shadow,border-color] duration-(--press-duration) outline-none',
-				'h-10 min-w-0 has-[>textarea]:h-auto',
-				'has-[>[data-align=inline-start]]:[&>input]:pl-2',
-				'has-[>[data-align=inline-end]]:[&>input]:pr-2',
+				'field group/input-group relative flex w-full items-center outline-none',
+				'h-11 min-w-0 has-[>textarea]:h-auto',
+				'has-[>[data-align=inline-start]]:[&>input]:pl-3',
+				'has-[>[data-align=inline-end]]:[&>input]:pr-3',
 				'has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3',
 				'has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3',
-				'has-[[data-slot=input-group-control]:focus-visible]:border-halo has-[[data-slot=input-group-control]:focus-visible]:ring-halo has-[[data-slot=input-group-control]:focus-visible]:ring-4',
+				'has-[[data-slot=input-group-control]:focus-visible]:ring-halo has-[[data-slot=input-group-control]:focus-visible]:ring-4',
 				'has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[[data-slot][aria-invalid=true]]:border-destructive dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40',
 				className,
 			)}

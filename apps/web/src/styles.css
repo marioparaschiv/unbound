@@ -97,6 +97,7 @@
 	--sidebar-ring: var(--ring);
 
 	--page-gutter: 1rem;
+	--control-h: 2.75rem;
 	--ledge-depth: 4px;
 	--press-lift: 1px;
 	--press-duration: 180ms;
@@ -225,6 +226,30 @@ code {
 /* The page column: header, content and footer all share its width and gutter. */
 @utility page-frame {
 	@apply container mx-auto px-(--page-gutter);
+}
+
+/* The sunk-in text field shared by inputs, textareas, selects and input groups. Focus lights it up. */
+@utility field {
+	/* A control inside an input group is part of the group's field, not a field of its own. */
+	&:where(:not([data-slot='input-group-control'])) {
+		background-color: var(--field);
+		border: 1.5px solid var(--field-border);
+		border-radius: var(--radius-control);
+		--tw-shadow: var(--field-shadow);
+		box-shadow:
+			var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000),
+			var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+			var(--tw-shadow);
+		transition-property: background-color, border-color, box-shadow, color;
+		transition-duration: var(--press-duration);
+		transition-timing-function: var(--ease-spring);
+	}
+
+	&:where(:not([data-slot='input-group-control'])):focus-visible,
+	&:has([data-slot='input-group-control']:focus-visible) {
+		border-color: var(--color-halo);
+		background-color: oklch(from var(--field) calc(l + 0.02) c h);
+	}
 }
 
 /* A raised control on a solid ledge in `--ledge`: hover lifts it, press sinks it into the page. */

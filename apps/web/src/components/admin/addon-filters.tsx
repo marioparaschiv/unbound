@@ -120,7 +120,7 @@ function MaintainerPicker({ id, selected, maintainer, onChange }: MaintainerPick
 		return (
 			<div
 				className={cn(
-					'border-input bg-muted/50 dark:bg-input/30 flex h-10 items-center gap-2 rounded-control border pr-1 pl-2 text-sm shadow-field',
+					'field flex h-11 items-center gap-2 pr-1.5 pl-2 text-sm',
 					MAINTAINER_WIDTH,
 				)}
 			>
