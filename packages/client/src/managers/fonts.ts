@@ -1,6 +1,7 @@
 import type { FontEntity } from '@unbound-app/types';
 
 import { Manager, ManagerType } from '~/managers/base';
+import { safeFontFileName } from '~/lib/addon-paths';
 import { Constants } from '~/api/metro/common';
 import storage from '~/api/storage';
 import fs from '~/api/fs';
@@ -116,7 +117,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	 */
 	async install(url: string): Promise<string | undefined> {
 		try {
-			const file = url.split('/').pop() ?? `font-${Date.now()}.ttf`;
+			const file = safeFontFileName(url, `font-${Date.now()}.ttf`);
 
 			const data = await fetch(url, { cache: 'no-cache' }).then((res) => {
 				if (!res.ok) {

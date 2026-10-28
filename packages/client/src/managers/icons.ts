@@ -3,6 +3,7 @@ import toError from '@unbound-app/utils/to-error';
 import type { ImageProps } from 'react-native';
 
 import { Assets, ReactNative as RN } from '~/api/metro/common';
+import { safeRelativePath } from '~/lib/addon-paths';
 import { ManagerType } from '~/managers/base';
 import { Addons } from '~/managers/addons';
 import fs from '~/api/fs';
@@ -328,7 +329,16 @@ export class Icons extends Addons<Addon> {
 			await Promise.all(
 				batch.map(async (node) => {
 					const raw = `https://raw.githubusercontent.com/${user}/${repo}/${ref}/${node.path}`;
-					const relative = sub ? node.path.slice(sub.length + 1) : node.path;
+					const relative = safeRelativePath(
+						sub ? node.path.slice(sub.length + 1) : node.path,
+					);
+
+					if (!relative) {
+						this.logger.warn(`Skipping icon ${node.path}: its path leaves the pack.`);
+
+						return;
+					}
+
 					const buf = await fetch(raw).then((res) => res.arrayBuffer());
 					const data = Buffer.from(buf).toString('base64');
 

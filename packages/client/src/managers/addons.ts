@@ -26,6 +26,7 @@ import {
 } from '~/api/crash-guard';
 import { consentCapabilities, consentKey, needsConsent } from '~/lib/native-consent';
 import type { AddonAttribution, AddonFreeze } from '~/api/crash-guard';
+import { isSafeAddonId, isSafeAddonMain } from '~/lib/addon-paths';
 import type { CrashReportAddon } from '~/lib/crash-reports';
 import type { NativeConsents } from '~/lib/native-consent';
 import { Manager, ManagerType } from '~/managers/base';
@@ -978,6 +979,14 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			if (!(field in manifest) || manifest[field as keyof AddonManifest] === undefined) {
 				throw new Error(`Manifest missing required field: ${field}`);
 			}
+		}
+
+		if (!isSafeAddonId(manifest.id)) {
+			throw new Error('Manifest id must be alphanumeric segments joined by ".", "_" or "-"');
+		}
+
+		if (!isSafeAddonMain(manifest.main)) {
+			throw new Error('Manifest main must be a relative path inside the addon');
 		}
 
 		if (!Array.isArray(manifest.authors) || manifest.authors.length === 0) {

@@ -31,6 +31,14 @@ export const addonIdSchema = z
 		),
 	);
 
+// The bundle is published next to the manifest at `addons/{id}/{version}/{main}` and resolved
+// relative to the manifest URL, so `main` may not leave that directory.
+export const addonMainSchema = z
+	.string()
+	.check(
+		z.regex(/^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*$/, 'Must be a relative path inside the addon.'),
+	);
+
 export const addonAuthorSchema = z.object({
 	name: z.string().check(z.minLength(1)),
 	id: z.templateLiteral([z.int().check(z.nonnegative())]),
@@ -47,16 +55,7 @@ export const addonManifestSchema = z.looseObject({
 	description: z.string(),
 	authors: z.array(addonAuthorSchema).check(z.minLength(1)),
 	icon: z.optional(z.union([z.string(), z.object({ uri: z.string() })])),
-	// The bundle is published next to the manifest at `addons/{id}/{version}/{main}` and resolved
-	// relative to the manifest URL, so `main` may not leave that directory.
-	main: z
-		.string()
-		.check(
-			z.regex(
-				/^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*$/,
-				'Must be a relative path inside the addon.',
-			),
-		),
+	main: addonMainSchema,
 	version: semverSchema,
 	capabilities: z.optional(z.array(z.enum(NATIVE_PLUGIN_CAPABILITIES))),
 	minNativePluginApi: z.optional(z.string()),
@@ -68,6 +67,7 @@ export type PublishedManifest = z.infer<typeof addonManifestSchema>;
 export default {
 	semverSchema,
 	addonIdSchema,
+	addonMainSchema,
 	addonAuthorSchema,
 	addonManifestSchema,
 };
