@@ -113,7 +113,6 @@ async function checkClaim(
 		return { kind: 'update' };
 	}
 
-	// Before release, first-party versions stay put and a rebuild replaces the live one in place.
 	if (
 		live.sha256 !== content.sha256 ||
 		!sameBytecode(live.manifest.bytecode, manifest.bytecode)

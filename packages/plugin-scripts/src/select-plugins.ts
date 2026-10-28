@@ -69,7 +69,6 @@ function sameDigests(left: Record<string, string> = {}, right: Record<string, st
 	return [...keys].every((key) => left[key] === right[key]);
 }
 
-// Before release, versions stay put and a rebuild with different output replaces the live one.
 function isRebuilt(plugin: LocalPlugin, published: PublishedVersion): boolean {
 	if (!plugin.sha256 || !published.sha256) return false;
 

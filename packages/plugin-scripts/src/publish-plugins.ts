@@ -303,7 +303,6 @@ function prepareRelease(options: Options, decision: SelectedDecision, date: stri
 		? selectRelease(parseChangelog(existing.stdout), plugin.version)
 		: undefined;
 
-	// A rebuild of the published version keeps its changelog entry as it is.
 	if (decision.reason === 'rebuilt' && existing.ok && current) {
 		return {
 			plugin,

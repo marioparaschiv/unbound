@@ -110,7 +110,6 @@ async function failure(promise: Promise<TableReport[]>): Promise<Error> {
 	throw new Error('Expected the copy to fail.');
 }
 
-// Tables created after the move to Postgres, which the frozen SQLite schema never had.
 const NEWER_THAN_SQLITE: ReadonlySet<string> = new Set(['team_member', 'crash_report']);
 
 describe('copySqlite', () => {
