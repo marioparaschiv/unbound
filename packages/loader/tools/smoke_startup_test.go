@@ -65,7 +65,7 @@ func TestStartupBudgetProblems(t *testing.T) {
 func TestRenderSmokeReportShowsStartupTimes(t *testing.T) {
 	result := &smokeResult{platform: "android", loaded: map[string]bool{}, startup: smokeStartupTimes{bundle: 4230 * time.Millisecond}, budget: smokeStartupBudget{plugins: time.Minute}}
 	report := renderSmokeReport(result)
-	if !strings.Contains(report, "| Unbound's bundle executed | 4.2s | none |") || !strings.Contains(report, "| Every plugin loaded | not reached | 1m0s |") {
+	if !strings.Contains(report, "| Unbound's bundle executed | 4.2s after launch | none |") || !strings.Contains(report, "| Every plugin loaded | not reached | 1m0s |") {
 		t.Fatalf("startup table missing from report:\n%s", report)
 	}
 }
@@ -99,5 +99,27 @@ func TestPluginStartBudgetFlagsSlowPlugins(t *testing.T) {
 	}
 	if pluginStartBudgetProblems(statuses, 0) != nil {
 		t.Fatal("no budget only reports")
+	}
+}
+
+func TestSmokeLogWatcherTimesUnboundFromDiscordsRuntime(t *testing.T) {
+	clock := time.Date(2026, 10, 28, 19, 0, 0, 0, time.UTC)
+	watcher := newSmokeLogWatcher(&androidSmokeTarget{})
+	watcher.now = func() time.Time { return clock }
+	watcher.markLaunch()
+	clock = clock.Add(5 * time.Minute)
+	watcher.observe("I Unbound : [runtime] Metro module capture installed before Discord bundle.")
+	clock = clock.Add(4 * time.Second)
+	watcher.observe("I Unbound : [default] Unbound's bundle was successfully executed.")
+	clock = clock.Add(time.Second)
+	watcher.observe("I Unbound : [plugins] Loaded 2 plugins.")
+	result := &smokeResult{loaded: map[string]bool{}, failures: map[string][]string{}}
+	watcher.snapshot(result)
+	want := smokeStartupTimes{runtime: 5 * time.Minute, bundle: 4 * time.Second, plugins: 5 * time.Second}
+	if result.startup != want {
+		t.Fatalf("Unbound's milestones should start when Discord's runtime does, got %+v, want %+v", result.startup, want)
+	}
+	if problems := startupBudgetProblems(result.startup, smokeStartupBudget{bundle: time.Minute, plugins: time.Minute}, nil); len(problems) != 0 {
+		t.Fatalf("Discord's own launch time counted against Unbound's budget: %v", problems)
 	}
 }

@@ -503,7 +503,7 @@ jobs:
             - name: Run the smoke test
               env:
                   APP_PATH: ${{ steps.app.outputs.path }}
-              run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --timeout 25m --bundle-budget 8m --plugins-budget 8m
+              run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --timeout 25m --bundle-budget 2m --plugins-budget 2m
 
             - name: Compare the console with main
               if: success() && github.event_name == 'pull_request'

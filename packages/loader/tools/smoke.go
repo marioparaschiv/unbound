@@ -29,6 +29,7 @@ var (
 	smokeLoadedCount      = regexp.MustCompile(`Loaded (\d+) plugins?\.`)
 	smokeAddonFailure     = regexp.MustCompile(`Failed to (?:start|load) addon ([\w.-]+)`)
 	smokeBundleExecuted   = "Unbound's bundle was successfully executed."
+	smokeRuntimeCreated   = "Metro module capture "
 	errSmokeNotConnected  = errors.New("no device is connected to the debugger bridge")
 	errSmokeEvalTimedOut  = errors.New("the debugger evaluation timed out")
 	smokeStatusExpression = `(function () {
@@ -72,6 +73,7 @@ type smokeStartupBudget struct {
 }
 
 type smokeStartupTimes struct {
+	runtime time.Duration
 	bundle  time.Duration
 	plugins time.Duration
 }
@@ -560,6 +562,7 @@ type smokeLogWatcher struct {
 	failures   map[string][]string
 	crashes    []string
 	launchedAt time.Time
+	runtimeAt  time.Time
 	startup    smokeStartupTimes
 	console    smokeConsoleSet
 	now        func() time.Time
@@ -593,6 +596,9 @@ func (watcher *smokeLogWatcher) observe(line string) {
 	}
 	if !watcher.target.isLoaderLine(line) {
 		return
+	}
+	if strings.Contains(line, smokeRuntimeCreated) {
+		watcher.markRuntime()
 	}
 	if strings.Contains(line, smokeBundleExecuted) {
 		watcher.recordMilestone(&watcher.startup.bundle)
