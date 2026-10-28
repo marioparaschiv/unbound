@@ -297,6 +297,12 @@ jobs:
             LSPATCH_JAR: lspatch-v1.2-487-release.jar
             LSPATCH_SHA256: d238fdc414d121b7fa454d8b4ccf420df3a8c97d563761861ff92bd9c5da2165
             DISCORD_CERT_SHA256: 3c39d23cf9367849a5c699395647fe0e5bfea5a1f1f40d8c717ddc70f8bfa113
+            UNBOUND_CERT_SHA256: 3923c381141ea804a1a311c69b616ac9c360d4fb0dccb5fbcd09a6b8b78842c5
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            REQUIRE_RELEASE_SIGNING: ${{ inputs.release }}
             DISCORD_TRACKER: https://tracker.vendetta.rocks/tracker
             DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
             DISCORD_CHANNEL: ${{ inputs.discord_channel || 'stable' }}
@@ -331,6 +337,20 @@ jobs:
                   set -euo pipefail
                   gh release download "$LSPATCH_VERSION" -R JingMatrix/LSPatch -p "$LSPATCH_JAR"
                   echo "$LSPATCH_SHA256  $LSPATCH_JAR" | sha256sum -c -
+
+            - name: Configure persistent release signing
+              run: |
+                  set -euo pipefail
+                  if [ -z "$ANDROID_SIGNING_KEYSTORE_BASE64" ]; then
+                      if [ "$REQUIRE_RELEASE_SIGNING" = true ]; then
+                          echo "::error::Android release signing secrets are required so patched Discord updates keep the same signer"
+                          exit 1
+                      fi
+                      exit 0
+                  fi
+                  keystore="$RUNNER_TEMP/unbound-android-release.keystore"
+                  printf '%s' "$ANDROID_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+                  echo "ANDROID_SIGNING_STORE_FILE=$keystore" >> "$GITHUB_ENV"
 
             - name: Download Discord
               id: discord
@@ -381,7 +401,21 @@ jobs:
               run: |
                   set -euo pipefail
                   mkdir patched
-                  java -jar "$LSPATCH_JAR" discord/*.apk -m module/*.apk -l 2 -o patched -f
+                  signing=()
+                  if [ -n "${ANDROID_SIGNING_STORE_FILE:-}" ]; then
+                      signing=(-k "$ANDROID_SIGNING_STORE_FILE" "$ANDROID_SIGNING_STORE_PASSWORD" "$ANDROID_SIGNING_KEY_ALIAS" "$ANDROID_SIGNING_KEY_PASSWORD")
+                  fi
+                  java -jar "$LSPATCH_JAR" discord/*.apk -m module/*.apk -l 2 -o patched -f "${signing[@]}"
+                  if [ -n "${ANDROID_SIGNING_STORE_FILE:-}" ]; then
+                      apksigner=$(find "$ANDROID_HOME/build-tools" -mindepth 2 -maxdepth 2 -name apksigner | sort -V | tail -1)
+                      for apk in patched/*.apk; do
+                          certificates=$("$apksigner" verify --min-sdk-version 28 --print-certs "$apk")
+                          if ! grep -Eq "^(V[0-9.]+ )?Signer( #1)?:? certificate SHA-256 digest: $UNBOUND_CERT_SHA256" <<< "$certificates"; then
+                              echo "::error::$apk is not signed with the Unbound release key"
+                              exit 1
+                          fi
+                      done
+                  fi
                   mkdir emulator
                   mv patched/config.x86_64*.apk emulator/
                   name="Unbound.apks"
