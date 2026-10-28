@@ -1,33 +1,38 @@
 import { createLogger } from '@unbound-app/logger';
+import { cloneElement } from 'react';
 
-import { findByFilePath, findByProps } from '~/api/metro';
+import { findRootThemeProvider, mapThemeProvider } from '~/lib/root-theme-provider';
+import type { RootThemeElement } from '~/lib/root-theme-provider';
 import { ThemeEditorButton } from '~/ui/theme-editor';
 import { createPatcher } from '~/api/patcher';
-
-import findToastContainers from './find-toast-containers';
 
 const Patcher = createPatcher('unbound::theme-editor-button');
 const Logger = createLogger('ThemeEditorButton');
 
-/** Mounts the floating theme editor button beside Discord's app-wide toast container. */
+/** Mounts the floating theme editor button inside Discord's root theme provider, so it exists on every screen. */
 export function start() {
-	// Only the outermost container: on iOS it renders the inner one, which would draw a second button.
-	const [target] = findToastContainers(findByFilePath, findByProps);
+	const root = findRootThemeProvider();
 
-	if (!target) {
-		Logger.error('Failed to find ToastContainer component');
+	if (!root) {
+		Logger.error('Failed to find the root theme provider.');
 
 		return;
 	}
 
-	const [module, key] = target;
+	Patcher.after(root, 'RootThemeContextProvider', ({ result }) => {
+		const element: RootThemeElement = result;
 
-	Patcher.after(module, key, ({ result }) => (
-		<>
-			{result}
-			<ThemeEditorButton />
-		</>
-	));
+		return mapThemeProvider(element, (provider) =>
+			cloneElement(provider, {
+				children: (
+					<>
+						{provider.props.children}
+						<ThemeEditorButton />
+					</>
+				),
+			}),
+		);
+	});
 }
 
 /** Removes the floating theme editor button. */

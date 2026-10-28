@@ -1,7 +1,7 @@
 import { SafeAreaView, View } from 'react-native';
 
 import ThemeEditorStore from '~/stores/theme-editor';
-import { RootNavigation } from '~/api/metro/common';
+import { RootNavigation, Screens as NativeScreens } from '~/api/metro/common';
 import { Discord } from '~/api/metro/components';
 import { Screens } from '~/lib/constants';
 import { Messages } from '~/api/i18n';
@@ -26,17 +26,21 @@ function ThemeEditorButton() {
 
 	if (!visible) return null;
 
+	// The toast container has no size of its own and settings open in a native sheet above it, so the
+	// button gets its own full-window layer, as toasts do.
 	return (
-		<SafeAreaView style={styles.container} pointerEvents='box-none'>
-			<View style={styles.safeArea} pointerEvents='box-none'>
-				<Discord.FloatingActionButton
-					icon={Icons['PaintbrushThinIcon'] ?? 0}
-					positionBottom={BOTTOM_OFFSET}
-					accessibilityLabel={Messages.UNBOUND_THEME_EDITOR_RESUME}
-					onPress={resume}
-				/>
-			</View>
-		</SafeAreaView>
+		<NativeScreens.FullWindowOverlay>
+			<SafeAreaView style={styles.container} pointerEvents='box-none'>
+				<View style={styles.safeArea} pointerEvents='box-none'>
+					<Discord.FloatingActionButton
+						icon={Icons['PaintbrushThinIcon'] ?? 0}
+						positionBottom={BOTTOM_OFFSET}
+						accessibilityLabel={Messages.UNBOUND_THEME_EDITOR_RESUME}
+						onPress={resume}
+					/>
+				</View>
+			</SafeAreaView>
+		</NativeScreens.FullWindowOverlay>
 	);
 }
 
