@@ -25,14 +25,24 @@ const buttonVariants = cva(
 				link: 'press-flat text-link underline-offset-4 hover:underline',
 			},
 			size: {
-				default: "h-11 px-5 has-[>svg]:px-4 [&_svg:not([class*='size-'])]:size-4.5",
-				sm: 'h-9 gap-1.5 px-3.5 has-[>svg]:px-3',
-				lg: "h-12 px-7 has-[>svg]:px-5 [&_svg:not([class*='size-'])]:size-4.5",
-				icon: "size-11 [&_svg:not([class*='size-'])]:size-4.5",
-				'icon-sm': 'size-9',
-				'icon-lg': "size-12 [&_svg:not([class*='size-'])]:size-4.5",
+				default:
+					"h-(--control-body) px-5 has-[>svg]:px-4 [&_svg:not([class*='size-'])]:size-4.5",
+				sm: 'h-8 gap-1.5 px-3.5 has-[>svg]:px-3',
+				lg: "h-11 px-7 has-[>svg]:px-5 [&_svg:not([class*='size-'])]:size-4.5",
+				icon: "size-(--control-body) [&_svg:not([class*='size-'])]:size-4.5",
+				'icon-sm': 'size-8',
+				'icon-lg': "size-11 [&_svg:not([class*='size-'])]:size-4.5",
 			},
 		},
+		// Flat controls have no ledge, so their body fills the whole footprint.
+		compoundVariants: [
+			{ variant: ['ghost', 'link'], size: 'default', className: 'h-(--control-h)' },
+			{ variant: ['ghost', 'link'], size: 'sm', className: 'h-9' },
+			{ variant: ['ghost', 'link'], size: 'lg', className: 'h-12' },
+			{ variant: ['ghost', 'link'], size: 'icon', className: 'size-(--control-h)' },
+			{ variant: ['ghost', 'link'], size: 'icon-sm', className: 'size-9' },
+			{ variant: ['ghost', 'link'], size: 'icon-lg', className: 'size-12' },
+		],
 		defaultVariants: {
 			variant: 'default',
 			size: 'default',

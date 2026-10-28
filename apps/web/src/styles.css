@@ -100,6 +100,7 @@
 
 	--page-gutter: 1rem;
 	--control-h: 2.75rem;
+	--control-body: calc(var(--control-h) - var(--ledge-depth));
 	--card-pad: 1.25rem;
 	--ledge-depth: 4px;
 	--press-lift: 1px;
@@ -308,13 +309,16 @@ code {
 	}
 }
 
-/* A raised control on a solid ledge in `--ledge`: hover lifts it, press sinks it into the page. */
+/* A raised control on a solid ledge in `--ledge`. The ledge takes layout space below the body, so the
+footprint matches a field; a press moves that space above the body instead of overlapping neighbours. */
 @utility press {
 	--tw-shadow: inset 0 1px 0 var(--highlight), 0 var(--ledge-depth) 0 var(--ledge, transparent);
 	box-shadow:
 		var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000),
 		var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-	transition-property: color, background-color, border-color, box-shadow, translate, opacity;
+	margin-bottom: var(--ledge-depth);
+	transition-property:
+		color, background-color, border-color, box-shadow, translate, margin, opacity;
 	transition-duration: var(--press-duration);
 	transition-timing-function: var(--ease-spring);
 
@@ -326,16 +330,22 @@ code {
 	}
 
 	&:active:not(:disabled, [aria-disabled='true']) {
-		translate: 0 var(--ledge-depth);
+		translate: none;
+		margin-top: var(--ledge-depth);
+		margin-bottom: 0;
 		--tw-shadow: inset 0 1px 0 var(--highlight), 0 0 0 var(--ledge, transparent);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
 		transition-property: color, background-color, border-color, box-shadow, opacity;
 
-		&:hover:not(:disabled, [aria-disabled='true']),
-		&:active:not(:disabled, [aria-disabled='true']) {
+		&:hover:not(:disabled, [aria-disabled='true']) {
 			translate: none;
+		}
+
+		&:active:not(:disabled, [aria-disabled='true']) {
+			margin-top: 0;
+			margin-bottom: var(--ledge-depth);
 		}
 	}
 }
