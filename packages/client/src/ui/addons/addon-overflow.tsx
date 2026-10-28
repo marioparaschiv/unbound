@@ -4,8 +4,9 @@ import type { Addon } from '@unbound-app/types';
 import { Pressable } from 'react-native';
 import { useMemo, memo } from 'react';
 
-import type { ManagerKind } from '~/lib/constants';
+import { ManagerKind, Screens } from '~/lib/constants';
 import { Discord } from '~/api/metro/components';
+import { isLocalThemeId } from '~/lib/local-themes';
 import { getManager } from '~/managers/utils';
 import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';
@@ -21,21 +22,31 @@ type AddonOverflowProps = {
 
 /**
  * @description The round overflow (⋯) button of an addon card, opening a menu whose Delete item removes
- * the addon through its manager.
+ * the addon through its manager. Themes made in the theme editor also get an Edit item.
  */
 function AddonOverflow({ addon, kind }: AddonOverflowProps) {
 	const styles = useRoundStyles();
+	const navigation = Discord.useNavigation();
 	const manager = getManager(kind);
+	const editable = kind === ManagerKind.Themes && isLocalThemeId(addon.id);
 
 	const items = useMemo<ContextMenuItem[]>(
 		() => [
+			...(editable
+				? [
+						{
+							label: format('UNBOUND_EDIT'),
+							action: () => navigation.push(Screens.ThemeEditor, { id: addon.id }),
+						},
+					]
+				: []),
 			{
 				label: format('UNBOUND_DELETE'),
 				variant: 'destructive',
 				action: () => void manager.delete(addon.id),
 			},
 		],
-		[manager, addon.id],
+		[manager, navigation, editable, addon.id],
 	);
 
 	// The menu anchors to the Pressable it renders; wrapping the trigger in a component breaks it.

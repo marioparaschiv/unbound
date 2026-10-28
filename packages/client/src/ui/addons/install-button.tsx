@@ -1,8 +1,7 @@
 import { View } from 'react-native';
 
-import type { ManagerKind } from '~/lib/constants';
+import { ManagerKind, Screens } from '~/lib/constants';
 import { Discord } from '~/api/metro/components';
-import { Screens } from '~/lib/constants';
 import { Icons } from '~/api/assets';
 import { format } from '~/api/i18n';
 
@@ -15,12 +14,23 @@ type InstallButtonProps = {
 
 /**
  * @description A floating action button that offers to install one addon kind by URL or to browse the
- * marketplace on that kind's tab. It always takes an explicit `kind`; the Design page computes it from
- * the active tab.
+ * marketplace on that kind's tab, and on the Themes tab to create a theme. It always takes an explicit
+ * `kind`; the Design page computes it from the active tab.
  */
 function InstallButton({ kind }: InstallButtonProps) {
 	const navigation = Discord.useNavigation();
 	const styles = useStyles();
+
+	const create =
+		kind === ManagerKind.Themes
+			? [
+					{
+						label: format('UNBOUND_CREATE_THEME'),
+						icon: Icons['PaintbrushThinIcon'],
+						onPress: () => navigation.push(Screens.ThemeEditor, {}),
+					},
+				]
+			: [];
 
 	// An action sheet rather than a context menu: the FAB positions itself, so it has no layout box
 	// for a menu to anchor to.
@@ -29,6 +39,7 @@ function InstallButton({ kind }: InstallButtonProps) {
 			key: 'unbound-install',
 			header: { title: format('UNBOUND_INSTALL') },
 			options: [
+				...create,
 				{
 					label: format('UNBOUND_INSTALL_FROM_URL'),
 					icon: Icons['LinkIcon'],
