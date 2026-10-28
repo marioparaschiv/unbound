@@ -3,6 +3,7 @@ package app.unbound.manager
 import android.util.AtomicFile
 import app.unbound.manager.core.Event
 import app.unbound.manager.core.InstalledPackageState
+import app.unbound.manager.core.LastCheck
 import app.unbound.manager.core.Phase
 import app.unbound.manager.core.Settings
 import app.unbound.manager.core.Target
@@ -24,6 +25,7 @@ data class Persisted(
     val settings: Settings = Settings(),
     val records: Map<Target, TargetRecord> = emptyMap(),
     val feed: FeedCache? = null,
+    val lastCheck: LastCheck? = null,
 ) {
     fun record(target: Target): TargetRecord = records[target] ?: TargetRecord()
 }
@@ -63,6 +65,16 @@ class Store(private val dir: File) {
 
     suspend fun updateFeed(feed: FeedCache): Unit = mutex.withLock {
         write(mutableState.value.copy(feed = feed))
+    }
+
+    suspend fun recordCheck(check: LastCheck): Unit = mutex.withLock {
+        write(mutableState.value.copy(lastCheck = check))
+    }
+
+    /** Remembers that the build with [sha256] was announced or auto-installed, so the next check skips it. */
+    suspend fun markNotified(target: Target, sha256: String): Unit = mutex.withLock {
+        val state = mutableState.value
+        write(state.copy(records = state.records + (target to state.record(target).copy(notifiedSha256 = sha256))))
     }
 
     fun logFile(target: Target): File = File(dir, "logs/${target.name.lowercase()}.log")

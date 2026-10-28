@@ -6,10 +6,13 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import app.unbound.manager.core.Release
 import app.unbound.manager.core.Target
+import app.unbound.manager.core.UpdateDecision
+import app.unbound.manager.ui.shortTitle
 import app.unbound.manager.ui.title
 
-/** One channel per target. Each target owns two notification ids: install progress and the confirm prompt. */
+/** One channel per target. Each target owns three notification ids: install progress, the confirm prompt, and update news. */
 object Notifier {
     /** The foreground notification while a download runs. */
     fun progress(context: Context, target: Target, done: Long, total: Long): Notification =
@@ -48,6 +51,43 @@ object Notifier {
         manager(context).notify(confirmId(target), notification)
     }
 
+    /** Tapping Update installs in the background; tapping the body opens the target's changelog. */
+    fun available(context: Context, target: Target, update: UpdateDecision.Available) {
+        val install = Intent(context, InstallResultReceiver::class.java)
+            .setAction(InstallResultReceiver.ACTION_UPDATE)
+            .putExtra(InstallResultReceiver.EXTRA_TARGET, target.name)
+        val newer = update.skipped.size
+        val notification = Notification.Builder(context, channel(context, target))
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentTitle("${target.shortTitle} ${update.latest.version} is available")
+            .setContentText(if (newer == 1) "Tap Update to install it." else "$newer new builds. Tap Update to install the newest.")
+            .setContentIntent(openTarget(context, target))
+            .setAutoCancel(true)
+            .addAction(
+                Notification.Action.Builder(
+                    null,
+                    "Update",
+                    PendingIntent.getBroadcast(context, UPDATE_REQUEST_BASE + target.ordinal, install, IMMUTABLE_UPDATE),
+                ).build(),
+            )
+            .build()
+
+        manager(context).notify(newsId(target), notification)
+    }
+
+    fun updated(context: Context, target: Target, release: Release) {
+        val notification = Notification.Builder(context, channel(context, target))
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentTitle("Updated ${target.shortTitle} to ${release.version}")
+            .setContentIntent(openTarget(context, target))
+            .setAutoCancel(true)
+            .build()
+
+        manager(context).notify(newsId(target), notification)
+    }
+
+    fun clearNews(context: Context, target: Target) = manager(context).cancel(newsId(target))
+
     fun hasConfirm(context: Context, target: Target): Boolean = manager(context).activeNotifications.any { it.id == confirmId(target) }
 
     fun clearConfirm(context: Context, target: Target) = manager(context).cancel(confirmId(target))
@@ -56,14 +96,24 @@ object Notifier {
 
     private fun confirmId(target: Target): Int = CONFIRM_ID_BASE + target.ordinal
 
+    private fun newsId(target: Target): Int = NEWS_ID_BASE + target.ordinal
+
     private fun channel(context: Context, target: Target): String {
         val id = "target-${target.name.lowercase()}"
-        manager(context).createNotificationChannel(NotificationChannel(id, target.title, NotificationManager.IMPORTANCE_DEFAULT))
+        val name = "${target.title} updates"
+        manager(context).createNotificationChannel(NotificationChannel(id, name, NotificationManager.IMPORTANCE_DEFAULT))
         return id
     }
 
     private fun openApp(context: Context) =
         PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+
+    private fun openTarget(context: Context, target: Target) = PendingIntent.getActivity(
+        context,
+        OPEN_REQUEST_BASE + target.ordinal,
+        Intent(context, MainActivity::class.java).putExtra(MainActivity.EXTRA_TARGET, target.name),
+        IMMUTABLE_UPDATE,
+    )
 
     private fun manager(context: Context) = context.getSystemService(NotificationManager::class.java)
 }
@@ -71,4 +121,7 @@ object Notifier {
 private const val PROGRESS_SCALE = 1000
 private const val PROGRESS_ID_BASE = 100
 private const val CONFIRM_ID_BASE = 200
+private const val NEWS_ID_BASE = 300
+private const val UPDATE_REQUEST_BASE = 100
+private const val OPEN_REQUEST_BASE = 200
 private const val IMMUTABLE_UPDATE = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
