@@ -34,8 +34,6 @@ function decode(text: string): string | undefined {
 	}
 }
 
-// The extension percent-encodes each file URL before URLComponents encodes the query again, so a
-// value can arrive encoded more than once; decode until it reads as a file URL.
 function fileURLOf(value: string): string | undefined {
 	let current = value;
 

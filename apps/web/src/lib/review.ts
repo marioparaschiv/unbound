@@ -229,6 +229,32 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
  * @param publishedAt The approval time.
  * @returns Resolves once the version is live.
  */
+/**
+ * @description Replaces a live version in place with a rebuild of the same version, as first-party CI
+ * publishes before release: the row takes the new submission, manifest and bundle digest.
+ * @param tx The transaction.
+ * @param row The approved submission carrying the rebuild.
+ * @param sha256 The new bundle's SHA-256.
+ * @param publishedAt When the rebuild went live.
+ */
+export async function replaceVersion(
+	tx: Transaction,
+	row: SubmissionRow,
+	sha256: string,
+	publishedAt: Date,
+): Promise<void> {
+	const { addonId, version, ...values } = toVersionRow(row, sha256, publishedAt);
+
+	await tx
+		.update(addonVersion)
+		.set(values)
+		.where(and(eq(addonVersion.addonId, addonId), eq(addonVersion.version, version)));
+	await refreshAddonSummary(tx, addonId);
+}
+
+/**
+ *
+ */
 export async function publishVersion(
 	tx: Transaction,
 	row: SubmissionRow,
@@ -355,4 +381,4 @@ export async function reviewSubmission(
 	};
 }
 
-export default { toVersionRow, publishVersion, listReviewQueue, reviewSubmission };
+export default { toVersionRow, publishVersion, replaceVersion, listReviewQueue, reviewSubmission };

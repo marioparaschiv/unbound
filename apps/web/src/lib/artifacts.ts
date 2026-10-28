@@ -29,6 +29,16 @@ export type ArtifactKeys = {
 	bundle: string;
 };
 
+/**
+ * @description Builds the public bucket key of a version's bundle compiled for one bytecode version, beside the bundle.
+ * @param bundleKey The bundle's key.
+ * @param bytecodeVersion The Hermes bytecode version.
+ * @returns The compiled bundle's key.
+ */
+export function getBytecodeKey(bundleKey: string, bytecodeVersion: string): string {
+	return `${bundleKey.replace(/\.[^./]+$/, '')}.${bytecodeVersion}.hbc`;
+}
+
 /** The version an artifact is published as. */
 export type ArtifactVersion = {
 	addonId: string;
@@ -55,15 +65,20 @@ export function getArtifactKeys(addonId: string, version: string, main: string):
  * @param ctx The application context.
  * @param target The addon id, version and manifest the files are published as.
  * @param bundle The verified bundle bytes.
+ * @param bytecode The verified compiled bundles, by bytecode version.
  */
 export async function writeArtifact(
 	ctx: AppContext,
 	target: ArtifactVersion,
 	bundle: Uint8Array,
+	bytecode: ReadonlyMap<string, Uint8Array> = new Map(),
 ): Promise<void> {
 	const keys = getArtifactKeys(target.addonId, target.version, target.manifest.main);
 
 	await Promise.all([
+		...[...bytecode].map(([bytecodeVersion, bytes]) =>
+			ctx.storage.public.write(getBytecodeKey(keys.bundle, bytecodeVersion), bytes),
+		),
 		ctx.storage.public.write(keys.bundle, bundle),
 		ctx.storage.public.write(keys.manifest, JSON.stringify(target.manifest), {
 			type: 'application/json',
