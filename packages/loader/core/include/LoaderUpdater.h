@@ -80,7 +80,6 @@ private:
         std::string manifestText;
         std::string manifestSignature;
         std::string expectedSha512;
-        bool        bundleSignatureOnly = false;
     };
 
     std::string                bundlePath(const std::string &extension) const;

@@ -58,20 +58,22 @@ function sha512(contents: string | Buffer) {
 }
 
 describe('bundle signing', () => {
-	test('signs every bundle and the manifest with signatures the public key verifies', () => {
+	test('signs only the manifest, which the public key verifies', () => {
 		const dir = makeDist();
 		const { pem, publicKey } = makeKey();
 
-		expect(signBundles(dir, pem)).toEqual(['unbound.98.bundle', 'unbound.js', MANIFEST_FILE]);
+		expect(signBundles(dir, pem)).toEqual([MANIFEST_FILE]);
 
-		for (const file of ['unbound.js', 'unbound.98.bundle', MANIFEST_FILE]) {
-			const signature = signatureOf(dir, file);
+		const signature = signatureOf(dir, MANIFEST_FILE);
 
-			expect(signature).toHaveLength(64);
-			expect(verify(null, readFileSync(join(dir, file)), publicKey, signature)).toBe(true);
+		expect(signature).toHaveLength(64);
+		expect(verify(null, readFileSync(join(dir, MANIFEST_FILE)), publicKey, signature)).toBe(
+			true,
+		);
+
+		for (const file of ['unbound.js', 'unbound.98.bundle', 'unbound.98.bundle.map']) {
+			expect(existsSync(join(dir, `${file}${SIGNATURE_SUFFIX}`))).toBe(false);
 		}
-
-		expect(existsSync(join(dir, `unbound.98.bundle.map${SIGNATURE_SUFFIX}`))).toBe(false);
 	});
 
 	test('records the SHA-512 of every bundle in the signed manifest', () => {
@@ -110,21 +112,16 @@ describe('bundle signing', () => {
 		expect(verify(null, contents, publicKey, signature)).toBe(false);
 	});
 
-	test('a tampered bundle no longer matches its signature', () => {
+	test('a tampered bundle no longer matches the signed manifest', () => {
 		const dir = makeDist();
-		const { pem, publicKey } = makeKey();
+		const { pem } = makeKey();
 
 		signBundles(dir, pem);
 		writeFileSync(join(dir, 'unbound.js'), 'console.log(2);');
 
-		expect(
-			verify(
-				null,
-				readFileSync(join(dir, 'unbound.js')),
-				publicKey,
-				signatureOf(dir, 'unbound.js'),
-			),
-		).toBe(false);
+		const manifest = JSON.parse(readFileSync(join(dir, MANIFEST_FILE), 'utf8'));
+
+		expect(manifest.sha512['unbound.js']).not.toBe(sha512('console.log(2);'));
 	});
 
 	test('leaves the build unsigned without a key and drops stale signatures', () => {
@@ -202,23 +199,18 @@ describe('bundle signature check', () => {
 		expect(findUnsignedBundles(dir, publicKeyBase64)).toEqual([]);
 	});
 
-	test('names unsigned, tampered and foreign-key files', () => {
+	test('names a foreign-key manifest and tampered bundles', () => {
 		const dir = makeDist();
 		const { pem, publicKeyBase64 } = makeKey();
 
 		signBundles(dir, makeKey().pem);
-		writeFileSync(join(dir, 'unbound.96.bundle'), 'unsigned');
 		expect(findUnsignedBundles(dir, publicKeyBase64)).toEqual([
-			'unbound.96.bundle has no signature.',
-			'unbound.98.bundle does not match its signature.',
-			'unbound.js does not match its signature.',
 			'manifest.json does not match its signature.',
 		]);
 
 		signBundles(dir, pem);
 		writeFileSync(join(dir, 'unbound.js'), 'tampered');
 		expect(findUnsignedBundles(dir, publicKeyBase64)).toEqual([
-			'unbound.js does not match its signature.',
 			'unbound.js does not match its SHA-512 in manifest.json.',
 		]);
 	});
@@ -229,10 +221,6 @@ describe('bundle signature check', () => {
 
 		signBundles(dir, pem);
 		writeFileSync(join(dir, 'unbound.96.bundle'), 'added later');
-		writeFileSync(
-			join(dir, `unbound.96.bundle${SIGNATURE_SUFFIX}`),
-			readFileSync(join(dir, `unbound.js${SIGNATURE_SUFFIX}`)),
-		);
 
 		expect(findUnsignedBundles(dir, publicKeyBase64)).toContain(
 			'unbound.96.bundle does not match its SHA-512 in manifest.json.',
@@ -246,8 +234,12 @@ describe('bundle signature check', () => {
 		signBundles(dir, pem, { pullRequest: 5 });
 
 		expect(findUnsignedBundles(dir, publicKeyBase64, 5)).toEqual([]);
-		expect(findUnsignedBundles(dir, publicKeyBase64, 6)).toHaveLength(3);
-		expect(findUnsignedBundles(dir, publicKeyBase64)).toHaveLength(3);
+		expect(findUnsignedBundles(dir, publicKeyBase64, 6)).toEqual([
+			'manifest.json does not match its signature.',
+		]);
+		expect(findUnsignedBundles(dir, publicKeyBase64)).toEqual([
+			'manifest.json does not match its signature.',
+		]);
 	});
 
 	test('accepts the committed public key formats', () => {

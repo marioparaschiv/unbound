@@ -202,17 +202,7 @@ std::optional<std::string> BundleUpdater::candidateProblem(const std::string &ca
     std::string signature = recordField(record, "signature");
     if (kind == "bundle")
     {
-        if (verifyTrustedSignature(*bundle, signature, trust_) == TrustedSigner::None)
-        {
-            return std::string("its stored signature does not match");
-        }
-        std::optional<BundleBaseline> active = baseline();
-        if (active && active->source == source)
-        {
-            return std::string("it has no signed manifest, but the active bundle from ") + source +
-                   " does";
-        }
-        return std::nullopt;
+        return std::string("it was verified by its own signature, without a signed manifest");
     }
 
     if (kind != "manifest")
@@ -388,17 +378,9 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
 
     if (signer == TrustedSigner::None)
     {
-        if (active && active->source == plan.source)
-        {
-            log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-                "Refused the update: " + manifestURL +
-                    " has no valid signature, but the active bundle came from a signed manifest.");
-            throw std::runtime_error("Bundle manifest failed signature verification");
-        }
-        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-            manifestURL + " has no valid signature; checking the bundle's own signature instead.");
-        plan.bundleSignatureOnly = true;
-        return plan;
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Refused the update: " + manifestURL + " has no valid signature.");
+        throw std::runtime_error("Bundle manifest failed signature verification");
     }
 
     if (!manifest->isSignable())
@@ -463,44 +445,17 @@ std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &pla
         return std::nullopt;
     }
 
-    if (!plan.bundleSignatureOnly)
-    {
-        if (sha512Hex(*bundle) != plan.expectedSha512)
-        {
-            log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-                "Rejected the downloaded bundle: its SHA-512 does not match the signed manifest.");
-            return std::nullopt;
-        }
-        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-            "Bundle signature verified: " + urlFileName(plan.url) +
-                " matches the signed manifest.");
-        record["kind"]      = "manifest";
-        record["manifest"]  = plan.manifestText;
-        record["signature"] = plan.manifestSignature;
-        return record.dump();
-    }
-
-    std::optional<std::string> signature = fetch(plan.url + kBundleSignatureSuffix);
-    if (!signature)
+    if (sha512Hex(*bundle) != plan.expectedSha512)
     {
         log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Rejected the downloaded bundle: " + plan.url + kBundleSignatureSuffix +
-                " could not be fetched.");
+            "Rejected the downloaded bundle: its SHA-512 does not match the signed manifest.");
         return std::nullopt;
     }
-
-    TrustedSigner signer = verifyTrustedSignature(*bundle, *signature, trust_);
-    if (signer == TrustedSigner::None)
-    {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Rejected the downloaded bundle: its signature does not match.");
-        return std::nullopt;
-    }
-
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-        "Bundle signature verified with " + describeSigner(signer, trust_) + ".");
-    record["kind"]      = "bundle";
-    record["signature"] = *signature;
+        "Bundle signature verified: " + urlFileName(plan.url) + " matches the signed manifest.");
+    record["kind"]      = "manifest";
+    record["manifest"]  = plan.manifestText;
+    record["signature"] = plan.manifestSignature;
     return record.dump();
 }
 

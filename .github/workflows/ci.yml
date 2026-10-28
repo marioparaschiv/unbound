@@ -105,4 +105,4 @@ jobs:
             - name: Install podman
               run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
             - name: Run the S3 tests against MinIO
-              run: bun run test:s3 ./packages/client/tests/upload.s3.ts ./packages/client/tests/backfill-signatures.s3.ts
+              run: bun run test:s3 ./packages/client/tests/upload.s3.ts
