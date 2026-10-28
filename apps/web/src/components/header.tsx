@@ -57,7 +57,7 @@ function Header() {
 					<div className='flex items-center gap-3 h-11'>
 						<Link
 							to='/'
-							className='flex justify-center items-center rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo size-11 shrink-0 press-flat'
+							className='flex justify-center items-center rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-halo size-11 shrink-0 press-flat'
 						>
 							<Logo className='size-11 text-foreground' />
 						</Link>
@@ -73,7 +73,7 @@ function Header() {
 									<Link
 										key={route.path}
 										className={cn(
-											'inline-flex relative items-center px-4 rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo h-11 font-semibold text-muted-foreground hover:text-foreground text-base tracking-tight transition-colors cursor-pointer press-flat',
+											'inline-flex relative items-center px-4 rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-11 font-semibold text-muted-foreground hover:text-foreground text-base tracking-tight transition-colors cursor-pointer press-flat',
 											route.path === pathname && 'text-foreground',
 										)}
 										onMouseEnter={() => setHovered(route.path)}
@@ -111,7 +111,7 @@ function Header() {
 											<DrawerClose key={route.path} asChild>
 												<Link
 													className={cn(
-														'flex items-center gap-4 px-4 rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo h-12 text-muted-foreground text-base',
+														'flex items-center gap-4 px-4 rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-12 text-muted-foreground text-base',
 														pathname === route.path
 															? cn(
 																	NAV_SURFACE,

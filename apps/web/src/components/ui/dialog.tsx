@@ -58,7 +58,7 @@ function DialogContent({
 				{showCloseButton ? (
 					<DialogPrimitive.Close
 						data-slot='dialog-close'
-						className="press-flat data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-item p-1 opacity-70 hover:opacity-100 hover:bg-accent focus-visible:ring-4 focus-visible:ring-halo focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+						className="press-flat data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-item p-1 opacity-70 hover:opacity-100 hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-halo focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
 					>
 						<IconXmark size={24} />
 						<span className='sr-only'>Close</span>

@@ -10,7 +10,7 @@ function Switch({ className, ...props }: ComponentProps<typeof SwitchPrimitive.R
 			className={cn(
 				'group/switch peer relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-transparent p-0.5 shadow-field transition-[color,background-color,box-shadow] duration-(--press-duration) outline-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50',
 				'data-[checked]:bg-primary data-[unchecked]:bg-input dark:data-[unchecked]:bg-input/80',
-				'focus-visible:ring-4 focus-visible:ring-halo',
+				'focus-visible:ring-[3px] focus-visible:ring-halo',
 				'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
 				className,
 			)}

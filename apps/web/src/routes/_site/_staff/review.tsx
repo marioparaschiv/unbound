@@ -53,7 +53,7 @@ function ReviewPage() {
 						key={filter.label}
 						from={Route.fullPath}
 						search={{ kind: filter.kind }}
-						className='inline-flex items-center data-[status=active]:bg-accent hover:bg-accent/50 [--ledge:var(--ledge-outline)] data-[status=active]:[--ledge:var(--ledge-secondary)] px-4 border rounded-control outline-none focus-visible:ring-4 focus-visible:ring-halo h-9 font-semibold text-muted-foreground data-[status=active]:text-foreground text-sm press'
+						className='inline-flex items-center data-[status=active]:bg-accent hover:bg-accent/50 [--ledge:var(--ledge-outline)] data-[status=active]:[--ledge:var(--ledge-secondary)] px-4 border rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-9 font-semibold text-muted-foreground data-[status=active]:text-foreground text-sm press'
 						activeOptions={{ includeSearch: true }}
 					>
 						{filter.label}

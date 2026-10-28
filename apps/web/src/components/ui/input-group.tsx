@@ -59,7 +59,7 @@ function InputGroup({ className, ...props }: ComponentProps<'div'>) {
 				'has-[>[data-align=inline-end]]:[&>input]:pr-3',
 				'has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3',
 				'has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3',
-				'has-[[data-slot=input-group-control]:focus-visible]:ring-halo has-[[data-slot=input-group-control]:focus-visible]:ring-4',
+				'has-[[data-slot=input-group-control]:focus-visible]:ring-halo has-[[data-slot=input-group-control]:focus-visible]:ring-[3px]',
 				'has-[[data-slot][aria-invalid=true]]:ring-destructive/20 has-[[data-slot][aria-invalid=true]]:border-destructive dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40',
 				className,
 			)}

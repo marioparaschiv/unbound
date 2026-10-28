@@ -9,7 +9,7 @@ import cn from '~/lib/cn';
 const selectTriggerVariants = cva(
 	[
 		"field data-[placeholder]:text-muted-foreground flex w-fit items-center justify-between gap-2 px-4 text-base md:text-[15px] whitespace-nowrap outline-none select-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-		'focus-visible:ring-4 focus-visible:ring-halo',
+		'focus-visible:ring-[3px] focus-visible:ring-halo',
 		'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
 	],
 	{
