@@ -1,5 +1,164 @@
 ---
 title: 'Commands'
-description: ''
+description: "Add slash commands to Discord's chat input, with typed options, autocomplete and subcommands."
 icon: 'square-terminal'
 ---
+
+### Adding a command
+
+`createCommands` returns a handle for one owner. Call `register` on it with your commands, keyed by name. The commands appear in the `/` picker and in the list that opens when you type `/`.
+
+```ts
+import { commands } from '@unbound-app/api';
+// equivalent: import * as commands from '@unbound-app/api/commands';
+// runtime global: unbound.commands
+
+const Commands = commands.createCommands('my-plugin');
+
+function start() {
+	Commands.register({
+		hello: {
+			description: 'Say hello',
+			options: {
+				name: commands.option.string({ description: 'Who to greet', required: true }),
+			},
+			execute: ({ name }) => `Hello, ${name}!`,
+		},
+	});
+}
+
+export default { start };
+```
+
+`name` is a `string` in `execute` because the option is required. Returning a string sends it to the channel as a normal message from you.
+
+You don't need a `stop` for commands. Unbound removes a plugin's commands when the plugin stops, fails to start, is disabled, is unloaded, or is reloaded with `ubd push`. Command ids come from the owner id and the command's path, so a reload registers the same ids and Discord's recently used list keeps them.
+
+### The owner id
+
+<ParamField path='owner' type='string' required>
+	The id that owns the commands, the same way `patcher.createPatcher` takes a caller. In a plugin,
+	pass the plugin's `id` from `manifest.json`. Unbound removes commands by this id when the plugin
+	ends. In an Unbound built-in, pass `'unbound'` and call `unregisterAll()` in `stop`.
+</ParamField>
+<ParamField path='options.section' type='{ name: string; icon?: number | string }'>
+	Gives the owner its own section in the picker. `icon` is an asset id from `assets.Icons`, or a
+	`data:` or `https:` uri. Without `section`, commands go in the shared **Unbound** section.
+</ParamField>
+
+```ts
+import { assets, commands } from '@unbound-app/api';
+
+const Commands = commands.createCommands('my-plugin', {
+	section: { name: 'My Plugin', icon: assets.Icons.ic_application_command_24px },
+});
+```
+
+<Warning>
+	If the owner is not the id of an installed plugin, Unbound logs a warning and does not remove
+	the commands for you. Call `unregisterAll()` in `stop`.
+</Warning>
+
+A section belongs to one owner. In a channel where Discord shows only text commands, your commands appear in Discord's **Built-In** section.
+
+### Options
+
+`options` is a record keyed by option name. Make each value with a builder on `commands.option`.
+
+| Builder                | `execute` receives                            | Extra settings                           |
+| ---------------------- | --------------------------------------------- | ---------------------------------------- |
+| `option.string()`      | `string`                                      | `minLength`, `maxLength`, `autocomplete` |
+| `option.integer()`     | `number`, a whole number                      | `minValue`, `maxValue`, `autocomplete`   |
+| `option.number()`      | `number`                                      | `minValue`, `maxValue`, `autocomplete`   |
+| `option.boolean()`     | `boolean`                                     | none                                     |
+| `option.user()`        | `CommandUser`, read from Discord's user store | none                                     |
+| `option.channel()`     | `CommandChannel`                              | `channelTypes`                           |
+| `option.role()`        | `CommandRole`                                 | none                                     |
+| `option.choice([...])` | one of the listed values, as a literal type   | none                                     |
+
+Every builder takes `description` and `required`. A required option has the type `T`. An optional option has the type `T | undefined`, so default it while you destructure: `execute({ style = 'wave' })`. Unbound lists required options before optional ones, because Discord requires that order.
+
+Mentionable and attachment options are not supported.
+
+### Choices
+
+`option.choice` takes values, or `{ label, value }` pairs when the picker should show a label other than the value. It accepts 1 to 25 choices with unique labels. The picker shows at most 10 matches at a time.
+
+```ts
+style: commands.option.choice(['wave', 'bow', { label: 'High five', value: 'high-five' }]),
+```
+
+`style` is `'wave' | 'bow' | 'high-five' | undefined` in `execute`. Numbers make an integer option, or a number option if one of them has a fraction.
+
+### Autocomplete
+
+Give a `string`, `integer` or `number` option an `autocomplete` function. It receives what the user typed and a context with `channel`, `guild`, and `values`. `values` holds the raw values of the other options filled in so far. Return values, or `{ label, value }` pairs, synchronously or from a promise. The picker shows the first 25.
+
+```ts
+fruit: commands.option.string({
+	required: true,
+	autocomplete: (query) => FRUITS.filter((fruit) => fruit.startsWith(query)),
+}),
+```
+
+If `autocomplete` throws, the picker shows no suggestions and Unbound logs the error.
+
+### Subcommands
+
+A command with `subcommands` instead of `options` and `execute` is a group. `subcommands` is a record with the same shape. Discord allows two levels below the root: `/root group command`.
+
+```ts
+Commands.register({
+	tag: {
+		description: 'Manage tags',
+		subcommands: {
+			add: {
+				description: 'Add a tag',
+				options: { name: commands.option.string({ required: true }) },
+				execute: ({ name }) => addTag(name),
+			},
+			list: {
+				description: 'List your tags',
+				execute: () => ({ ephemeral: true, content: listTags() }),
+			},
+		},
+	},
+});
+```
+
+### Replies
+
+What `execute` returns decides what happens. `execute` can be `async`.
+
+| Return value                             | Result                                                                                            |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `undefined`                              | Nothing. The command did its own work.                                                            |
+| `'text'` or `{ content, tts? }`          | Discord sends it to the channel as a normal message from you, as a reply if you have one pending. |
+| `{ ephemeral: true, content?, embeds? }` | A bot message that only you can see.                                                              |
+
+The second argument of `execute` is the context: `channel`, and `guild` outside of DMs.
+
+### Errors
+
+If `execute` throws or rejects, you see an ephemeral message such as `/tag add failed: <error message>`, and Unbound logs the error with the owner id. If Discord can't find the user, channel, or role an option names, you see the same kind of message and `execute` does not run.
+
+`register` throws a `CommandDefinitionError` and registers nothing from that call when the commands break one of Discord's rules:
+
+- Names are 1 to 32 lowercase letters, digits, `-`, or `_`.
+- Descriptions are 1 to 100 characters.
+- A command has at most 25 options, and a group has 1 to 25 subcommands.
+- A command has either `execute` or `subcommands`.
+- Another owner already registered the same root name.
+
+### Removing commands
+
+`register` returns a function that removes the commands from that call. Use it for commands that come and go while your plugin runs. You can call it more than once, and after the plugin stopped. Registering a root name that the same owner already registered replaces the whole command, subcommands included.
+
+```ts
+const unregister = Commands.register({ ping: { description: 'Ping', execute: () => 'Pong!' } });
+
+// later:
+unregister();
+```
+
+`unregisterAll()` removes every command of the owner.

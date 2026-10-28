@@ -1,217 +1,186 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Unbound",
-  "colors": {
-    "primary": "#c74050",
-    "light": "#c74050",
-    "dark": "#c74050"
-  },
-  "favicon": "/logo/dark.svg",
-  "navigation": {
-    "tabs": [
-      {
-        "tab": "User Guide",
-        "icon": "user",
-        "groups": [
-          {
-            "group": "Get Started",
-            "icon": "house",
-            "pages": [
-              "overview",
-              "user-guide/installing",
-              "user-guide/updating",
-              "roadmap"
-            ]
-          },
-          {
-            "group": "Using Unbound",
-            "icon": "mobile",
-            "pages": [
-              "user-guide/managing-addons",
-              "user-guide/marketplace",
-              "user-guide/settings",
-              "user-guide/fonts",
-              "user-guide/cloud-sync",
-              "user-guide/ios-extensions"
-            ]
-          },
-          {
-            "group": "Help",
-            "icon": "life-ring",
-            "pages": [
-              "user-guide/troubleshooting",
-              "user-guide/privacy"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Developer Guide",
-        "icon": "code",
-        "groups": [
-          {
-            "group": "Addons",
-            "icon": "puzzle-piece",
-            "pages": [
-              "addons/introduction",
-              "addons/creating",
-              "addons/manifest"
-            ]
-          },
-          {
-            "group": "Plugins",
-            "icon": "plug",
-            "pages": [
-              "plugins/introduction",
-              "plugins/react-patching",
-              "plugins/flux"
-            ]
-          },
-          {
-            "group": "Themes",
-            "icon": "paintbrush",
-            "pages": [
-              "themes/introduction",
-              "themes/types",
-              "themes/backgrounds"
-            ]
-          },
-          {
-            "group": "Icon Packs",
-            "icon": "icons",
-            "pages": [
-              "icon-packs/introduction"
-            ]
-          },
-          {
-            "group": "Development",
-            "icon": "code",
-            "pages": [
-              "development/debugging",
-              "development/local-builds"
-            ]
-          },
-          {
-            "group": "API Reference",
-            "icon": "folder-tree",
-            "pages": [
-              "modules/introduction",
-              {
-                "group": "Modifying Discord",
-                "icon": "discord",
-                "pages": [
-                  "modules/metro",
-                  "modules/components",
-                  "modules/patcher"
-                ]
-              },
-              {
-                "group": "Data & Files",
-                "icon": "hard-drive",
-                "pages": [
-                  "modules/storage",
-                  "modules/fs",
-                  "modules/assets"
-                ]
-              },
-              {
-                "group": "Interface",
-                "icon": "window-maximize",
-                "pages": [
-                  "modules/settings",
-                  "modules/toasts",
-                  "modules/i18n"
-                ]
-              },
-              {
-                "group": "Runtime",
-                "icon": "microchip",
-                "pages": [
-                  "modules/managers",
-                  "modules/native",
-                  "modules/utilities"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Loader",
-            "icon": "arrow-right-to-bracket",
-            "pages": [
-              "loader/introduction",
-              "loader/ios",
-              "loader/android",
-              "loader/configuration",
-              "loader/settings"
-            ]
-          }
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Discord Community",
-          "href": "https://discord.gg/unbound",
-          "icon": "discord"
-        },
-        {
-          "anchor": "GitHub",
-          "href": "https://github.com/unbound-app",
-          "icon": "github"
-        }
-      ]
-    }
-  },
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/overview"
-    },
-    {
-      "source": "/plugins/debugger",
-      "destination": "/development/debugging"
-    },
-    {
-      "source": "/loader/local-build",
-      "destination": "/development/local-builds"
-    },
-    {
-      "source": "/plugins/patching",
-      "destination": "/modules/patcher"
-    }
-  ],
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "api": {
-    "mdx": {
-      "auth": {
-        "method": "bearer"
-      }
-    }
-  },
-  "appearance": {
-    "default": "dark",
-    "strict": true
-  },
-  "background": {
-    "decoration": "grid",
-    "color": {
-      "light": "#fcfcfc",
-      "dark": "#0c0c0c"
-    }
-  },
-  "search": {
-    "prompt": "Search documentation..."
-  },
-  "footer": {
-    "socials": {
-      "x": "https://twitter.com/UnboundClient",
-      "github": "https://github.com/unbound-app",
-      "discord": "https://discord.gg/unbound"
-    }
-  }
+	"$schema": "https://mintlify.com/docs.json",
+	"theme": "mint",
+	"name": "Unbound",
+	"colors": {
+		"primary": "#c74050",
+		"light": "#c74050",
+		"dark": "#c74050"
+	},
+	"favicon": "/logo/dark.svg",
+	"navigation": {
+		"tabs": [
+			{
+				"tab": "User Guide",
+				"icon": "user",
+				"groups": [
+					{
+						"group": "Get Started",
+						"icon": "house",
+						"pages": [
+							"overview",
+							"user-guide/installing",
+							"user-guide/updating",
+							"roadmap"
+						]
+					},
+					{
+						"group": "Using Unbound",
+						"icon": "mobile",
+						"pages": [
+							"user-guide/managing-addons",
+							"user-guide/marketplace",
+							"user-guide/settings",
+							"user-guide/fonts",
+							"user-guide/cloud-sync",
+							"user-guide/ios-extensions"
+						]
+					},
+					{
+						"group": "Help",
+						"icon": "life-ring",
+						"pages": ["user-guide/troubleshooting", "user-guide/privacy"]
+					}
+				]
+			},
+			{
+				"tab": "Developer Guide",
+				"icon": "code",
+				"groups": [
+					{
+						"group": "Addons",
+						"icon": "puzzle-piece",
+						"pages": ["addons/introduction", "addons/creating", "addons/manifest"]
+					},
+					{
+						"group": "Plugins",
+						"icon": "plug",
+						"pages": ["plugins/introduction", "plugins/react-patching", "plugins/flux"]
+					},
+					{
+						"group": "Themes",
+						"icon": "paintbrush",
+						"pages": ["themes/introduction", "themes/types", "themes/backgrounds"]
+					},
+					{
+						"group": "Icon Packs",
+						"icon": "icons",
+						"pages": ["icon-packs/introduction"]
+					},
+					{
+						"group": "Development",
+						"icon": "code",
+						"pages": ["development/debugging", "development/local-builds"]
+					},
+					{
+						"group": "API Reference",
+						"icon": "folder-tree",
+						"pages": [
+							"modules/introduction",
+							{
+								"group": "Modifying Discord",
+								"icon": "discord",
+								"pages": ["modules/metro", "modules/components", "modules/patcher"]
+							},
+							{
+								"group": "Data & Files",
+								"icon": "hard-drive",
+								"pages": ["modules/storage", "modules/fs", "modules/assets"]
+							},
+							{
+								"group": "Interface",
+								"icon": "window-maximize",
+								"pages": [
+									"modules/settings",
+									"modules/toasts",
+									"modules/commands",
+									"modules/i18n"
+								]
+							},
+							{
+								"group": "Runtime",
+								"icon": "microchip",
+								"pages": ["modules/managers", "modules/native", "modules/utilities"]
+							}
+						]
+					},
+					{
+						"group": "Loader",
+						"icon": "arrow-right-to-bracket",
+						"pages": [
+							"loader/introduction",
+							"loader/ios",
+							"loader/android",
+							"loader/configuration",
+							"loader/settings"
+						]
+					}
+				]
+			}
+		],
+		"global": {
+			"anchors": [
+				{
+					"anchor": "Discord Community",
+					"href": "https://discord.gg/unbound",
+					"icon": "discord"
+				},
+				{
+					"anchor": "GitHub",
+					"href": "https://github.com/unbound-app",
+					"icon": "github"
+				}
+			]
+		}
+	},
+	"redirects": [
+		{
+			"source": "/",
+			"destination": "/overview"
+		},
+		{
+			"source": "/plugins/debugger",
+			"destination": "/development/debugging"
+		},
+		{
+			"source": "/loader/local-build",
+			"destination": "/development/local-builds"
+		},
+		{
+			"source": "/plugins/patching",
+			"destination": "/modules/patcher"
+		}
+	],
+	"logo": {
+		"light": "/logo/light.svg",
+		"dark": "/logo/dark.svg"
+	},
+	"api": {
+		"mdx": {
+			"auth": {
+				"method": "bearer"
+			}
+		}
+	},
+	"appearance": {
+		"default": "dark",
+		"strict": true
+	},
+	"background": {
+		"decoration": "grid",
+		"color": {
+			"light": "#fcfcfc",
+			"dark": "#0c0c0c"
+		}
+	},
+	"search": {
+		"prompt": "Search documentation..."
+	},
+	"footer": {
+		"socials": {
+			"x": "https://twitter.com/UnboundClient",
+			"github": "https://github.com/unbound-app",
+			"discord": "https://discord.gg/unbound"
+		}
+	}
 }
