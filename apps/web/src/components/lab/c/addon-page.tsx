@@ -210,7 +210,7 @@ function Storefront({
 	}
 
 	return (
-		<div className='flex flex-col gap-8 pb-28'>
+		<div className='flex flex-col gap-8'>
 			<div className='flex flex-wrap justify-between items-center gap-3 text-sm'>
 				<Link
 					to='/lab/$variant/addons'
