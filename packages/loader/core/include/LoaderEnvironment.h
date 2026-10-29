@@ -38,4 +38,15 @@ bool        isVirtualDeviceMachine(const std::string &machine);
 std::string osVersionLabel(const std::string &version, const std::optional<std::string> &build);
 
 std::optional<std::string> defaultIPv4Gateway(const uint8_t *table, size_t length);
+
+struct HookFramework {
+    std::string name;
+    std::string package;
+};
+
+std::optional<HookFramework> hookFrameworkForImage(const std::string &imagePath,
+                                                   bool               exportsLibhookerAPI);
+std::optional<std::string>   dpkgPackageVersion(const std::string &status,
+                                                const std::string &package);
+std::string                  frameworkLabel(const std::string &name, const std::string &version);
 }
