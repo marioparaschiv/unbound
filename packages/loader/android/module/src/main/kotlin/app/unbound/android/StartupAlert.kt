@@ -6,17 +6,17 @@ import android.app.AlertDialog
 object StartupAlert {
     private const val TITLE = "Unbound"
 
-    @Volatile private var pending: String? = null
+    @Volatile private var pending: Pair<String, String>? = null
 
-    fun report(message: String) {
-        pending = message
+    fun report(message: String, title: String = TITLE) {
+        pending = title to message
     }
 
     fun onResumed(activity: Activity) {
-        val message = pending ?: return
+        val (title, message) = pending ?: return
         pending = null
         AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-            .setTitle(TITLE)
+            .setTitle(title)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok, null)
             .show()

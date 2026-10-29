@@ -85,6 +85,9 @@ object NativeBridge {
     external fun nativeDevOverlayButtonSide(): Double
 
     @JvmStatic
+    external fun nativeAttestation(): String
+
+    @JvmStatic
     external fun nativeIncompatibleHostMessage(): String
 
     @JvmStatic

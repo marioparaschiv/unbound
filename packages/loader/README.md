@@ -257,7 +257,7 @@ At the next launch, the shared core reads any marker that was left behind before
 - Ed25519 comes from `vendor/monocypher`.
 - Random bytes come from `arc4random_buf` on iOS and Android, and from `getrandom` on Linux hosts.
 
-Browser login (`LoaderBrowserLogin`) and the tweak's Mach-O attestation digest (`LoaderAttestation`) use this interface. Only the P-256 check of the attestation signature stays on the Security framework. `core/tests/vectors/crypto-cross-check.txt` holds vectors made with OpenSSL and with WebCrypto, the way the Safari extension seals a login. The core tests, a CommonCrypto test on macOS and the module's `javax.crypto` unit test all check them.
+Browser login (`LoaderBrowserLogin`) and the loader's attestation digest (`LoaderAttestation`, for the iOS Mach-O and the Android ELF library) use this interface. Only the P-256 check of the attestation signature stays on the platform: the Security framework on iOS and `java.security` on Android. `core/tests/vectors/crypto-cross-check.txt` holds vectors made with OpenSSL and with WebCrypto, the way the Safari extension seals a login. The core tests, a CommonCrypto test on macOS and the module's `javax.crypto` unit test all check them.
 
 ## Signed client bundles
 
