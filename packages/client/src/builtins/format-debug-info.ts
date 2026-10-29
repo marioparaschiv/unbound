@@ -24,14 +24,17 @@ export type DebugInfo = {
  * @returns The message text.
  */
 export function formatDebugInfo(info: DebugInfo): string {
-	const loader = [`\`${info.loaderOrigin}\``, info.framework].filter(Boolean).join(', ');
+	const loader = [info.loaderOrigin, info.framework]
+		.filter(Boolean)
+		.map((part) => `\`${part}\``)
+		.join(', ');
 
 	return [
 		'### Unbound Debug Info',
 		`- **Unbound:** ${info.client} (\`${info.commit}\`), loader ${info.loader} (${loader})`,
-		`- **Discord:** ${info.discord}, build ${info.discordBuild} (${info.appSource})`,
+		`- **Discord:** ${info.discord}, build ${info.discordBuild} (\`${info.appSource}\`)`,
 		`- **Device:** ${info.device} on ${info.platform} ${info.os}`,
-		...(info.flags.length ? [`- **State:** ${info.flags.join(', ')}`] : []),
+		`- **State:** ${info.flags.join(', ')}`,
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
 	].join('\n');
 }

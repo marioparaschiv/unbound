@@ -46,10 +46,16 @@ object DeviceName {
             .getOrNull()
     }
 
-    fun current(context: Context?): String = label(
-        Build.MANUFACTURER,
-        Build.MODEL,
-        MARKET_NAME_PROPERTIES.firstNotNullOfOrNull(::systemProperty),
-        deviceName(context),
-    )
+    fun emulatorLabel(model: String): String = "Android Emulator ($model)"
+
+    fun current(context: Context?): String = if (Platform.isEmulator()) {
+        emulatorLabel(Build.MODEL)
+    } else {
+        label(
+            Build.MANUFACTURER,
+            Build.MODEL,
+            MARKET_NAME_PROPERTIES.firstNotNullOfOrNull(::systemProperty),
+            deviceName(context),
+        )
+    }
 }
