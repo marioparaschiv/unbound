@@ -40,6 +40,36 @@ export type PrinterOptions = {
 
 export const DISCORD_PACKAGE = 'com.discord';
 
+const LOADER_LOG_LINE = /^(\d{4}-\d\d-\d\dT[\d:.]+Z) ([DIWE]) \[([^\]]+)\] (.*)$/;
+const LOADER_LOG_LEVELS: Record<string, LogLevel> = {
+	D: 'debug',
+	I: 'info',
+	W: 'warn',
+	E: 'error',
+};
+
+/**
+ * @description Reads one line of the loader's own log file, `Unbound/Logs/unbound.log`.
+ * @param line The line, such as `2026-10-29T17:38:51.031Z W [plugins] message`.
+ * @returns The entry, tagged with its category, or `undefined` for a line in another format.
+ */
+export function parseLoaderLogLine(line: string): LogEntry | undefined {
+	const match = LOADER_LOG_LINE.exec(line);
+
+	if (!match) {
+		return;
+	}
+
+	return {
+		kind: 'entry',
+		epochMs: Date.parse(match[1]!),
+		level: LOADER_LOG_LEVELS[match[2]!] ?? 'info',
+		tag: match[3]!,
+		pid: 0,
+		message: match[4]!,
+	};
+}
+
 const ANDROID_TAGS = new Set(['Unbound', 'ReactNativeJS', 'unknown:ReactNative']);
 const ANDROID_CRASH_TAGS = new Set(['AndroidRuntime', 'libc']);
 const LOGCAT_LINE = /^\s*(\d+)\.(\d{3})\s+(\d+)\s+(\d+)\s+([VDIWEFS])\s+(.*?)\s*:(?: (.*)|)$/;

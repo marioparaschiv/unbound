@@ -7,6 +7,7 @@ import {
 	createAndroidLogSource,
 	createIOSLogSource,
 	DISCORD_PACKAGE,
+	parseLoaderLogLine,
 	parseSince,
 	type LogEvent,
 	type LogLevel,
@@ -52,6 +53,12 @@ const LOGCAT_BUFFERS = 'main,system,crash';
 const LOGCAT_EPOCH = /^\s*(\d+)\.(\d{3})\s/;
 const MACOS_LOG_TOOL = '/usr/bin/log';
 const IDEVICESYSLOG = 'idevicesyslog';
+const DISCORD_BUNDLE_ID = 'com.hammerandchisel.discord';
+const LOADER_LOG_PATH = 'Documents/Unbound/Logs/unbound.log';
+const SYSLOG_SILENCE_MS = 6_000;
+const LOG_FILE_POLL_MS = 1_000;
+const LOG_FILE_CHUNK_BYTES = 65_536;
+const PILOT_TIMEOUT_MS = 15_000;
 const IOS_HISTORY_PREDICATE = [
 	'(process == "Discord" AND (senderImagePath ENDSWITH "/Discord" OR senderImagePath CONTAINS[c] "unbound"))',
 	'((process == "ReportCrash" OR process == "osanalyticshelper" OR process == "ReportMemoryException") AND eventMessage CONTAINS "Discord")',
@@ -228,8 +235,17 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
 		return { ok: true, text: '-- End of the log. --' };
 	}
 
+	let usingFile = false;
+	let heardSyslog = false;
+
 	function forward(line: string) {
+		if (usingFile) {
+			return;
+		}
+
 		for (const event of source.push(line)) {
+			heardSyslog ||= event.kind === 'entry';
+
 			if (event.kind === 'notice' || historyEnd === void 0 || event.epochMs > historyEnd) {
 				emit(event);
 			}
@@ -243,6 +259,20 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
 	}
 
 	onLive = forward;
+
+	void Bun.sleep(SYSLOG_SILENCE_MS).then(() => {
+		if (heardSyslog) {
+			return;
+		}
+
+		usingFile = true;
+		emit({
+			kind: 'notice',
+			message:
+				"The iPhone's unified log is not streaming; following Unbound's log file instead.",
+		});
+		void followLoaderLogFile({ udid, pilot, run, emit, since: historyEnd });
+	});
 
 	for (;;) {
 		const ended = await live;
@@ -263,6 +293,117 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
 		emit({ kind: 'notice', message: 'idevicesyslog stopped; reattaching.' });
 		await Bun.sleep(REATTACH_DELAY_MS);
 		live = streamLines(syslog, ['-u', udid, '--no-colors'], forward);
+	}
+}
+
+export type LoaderLogFileOptions = {
+	udid: string;
+	pilot: string;
+	run: CommandRunner;
+	emit: (event: LogEvent) => void;
+	since?: number;
+	polls?: number;
+	intervalMs?: number;
+};
+
+async function pilotShell(
+	options: LoaderLogFileOptions,
+	command: string,
+): Promise<string | undefined> {
+	const result = await options.run(
+		options.pilot,
+		['shell_exec', '--device', options.udid, '--command', command],
+		PILOT_TIMEOUT_MS,
+	);
+
+	if (!result.ok) {
+		return;
+	}
+
+	try {
+		const parsed = JSON.parse(result.stdout) as { exitCode?: number; output?: string };
+
+		return parsed.exitCode === 0 ? (parsed.output ?? '') : undefined;
+	} catch {
+		return;
+	}
+}
+
+async function loaderLogPath(options: LoaderLogFileOptions): Promise<string | undefined> {
+	const result = await options.run(
+		options.pilot,
+		['app_container', '--device', options.udid, '--bundleId', DISCORD_BUNDLE_ID],
+		PILOT_TIMEOUT_MS,
+	);
+
+	if (!result.ok) {
+		return;
+	}
+
+	try {
+		const container = (JSON.parse(result.stdout) as { dataContainer?: string }).dataContainer;
+
+		return container ? `${container}/${LOADER_LOG_PATH}` : undefined;
+	} catch {
+		return;
+	}
+}
+
+/**
+ * @description Follows the loader's own log file on a jailbroken iPhone through jb-p1lot, for when the unified log does not stream. It holds Unbound's native log and the JavaScript console, not Discord's own lines or crash reports.
+ * @param options The device, the jb-p1lot binary and runner, where each entry goes, the time before which entries are skipped, and how many polls to make (unlimited when left out).
+ * @returns When the polls are done, or once the file cannot be found.
+ */
+export async function followLoaderLogFile(options: LoaderLogFileOptions): Promise<void> {
+	const path = await loaderLogPath(options);
+
+	if (!path) {
+		options.emit({ kind: 'notice', message: "Discord's data container was not found." });
+
+		return;
+	}
+
+	const quoted = `'${path.replaceAll("'", "'\\''")}'`;
+	let offset = Number((await pilotShell(options, `wc -c < ${quoted}`))?.trim() ?? 0) || 0;
+	let pending = '';
+
+	for (let poll = 0; options.polls === void 0 || poll < options.polls; poll++) {
+		await Bun.sleep(options.intervalMs ?? LOG_FILE_POLL_MS);
+
+		const size = Number((await pilotShell(options, `wc -c < ${quoted}`))?.trim());
+
+		if (!Number.isFinite(size) || size === offset) {
+			continue;
+		}
+
+		if (size < offset) {
+			options.emit({ kind: 'notice', message: 'The log file rotated.' });
+			offset = 0;
+			pending = '';
+		}
+
+		const chunk = await pilotShell(
+			options,
+			`tail -c +${offset + 1} ${quoted} | head -c ${LOG_FILE_CHUNK_BYTES}`,
+		);
+
+		if (chunk === undefined) {
+			continue;
+		}
+
+		offset += Buffer.byteLength(chunk);
+
+		const lines = (pending + chunk).split('\n');
+
+		pending = lines.pop() ?? '';
+
+		for (const line of lines) {
+			const entry = parseLoaderLogLine(line);
+
+			if (entry && (options.since === void 0 || entry.epochMs > options.since)) {
+				options.emit(entry);
+			}
+		}
 	}
 }
 

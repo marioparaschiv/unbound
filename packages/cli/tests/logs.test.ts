@@ -9,13 +9,14 @@ import {
 	createAndroidLogSource,
 	createIOSLogSource,
 	createLogPrinter,
+	parseLoaderLogLine,
 	parseLogLevel,
 	parseSince,
 	parseSyslogLine,
 	unquoteConsoleArguments,
 } from '../src/lib/log-lines';
+import { followLoaderLogFile, parseArchiveEvent, tailAndroid } from '../src/lib/log-tail';
 import { createFrameRewriter, listBundles } from '../src/lib/log-symbolicator';
-import { parseArchiveEvent, tailAndroid } from '../src/lib/log-tail';
 
 const NOW = new Date(2026, 9, 26, 22, 30, 0).getTime();
 const roots: string[] = [];
@@ -382,5 +383,80 @@ describe('tailAndroid', () => {
 
 		expect(commands).toContain('-s emulator-5554 logcat -v threadtime -v epoch');
 		expect(commands).toContain('-T 1793049800.000 -d');
+	});
+});
+
+describe('parseLoaderLogLine', () => {
+	test('reads the time, level and category of a loader log line', () => {
+		expect(
+			parseLoaderLogLine('2026-10-29T17:38:51.031Z W [plugins] Chat Bubbles called x'),
+		).toEqual({
+			kind: 'entry',
+			epochMs: Date.parse('2026-10-29T17:38:51.031Z'),
+			level: 'warn',
+			tag: 'plugins',
+			pid: 0,
+			message: 'Chat Bubbles called x',
+		});
+		expect(parseLoaderLogLine('not a log line')).toBeUndefined();
+	});
+});
+
+describe('followLoaderLogFile', () => {
+	test('prints the lines appended to the log file after it starts', async () => {
+		const file = ['2026-10-29T17:00:00.000Z I [default] old\n'];
+		const appended =
+			'2026-10-29T17:00:01.000Z I [console] hello\n2026-10-29T17:00:02.000Z E [plu';
+		const rest = 'gins] broke\n';
+		const events: LogEvent[] = [];
+		let polls = 0;
+
+		await followLoaderLogFile({
+			udid: 'phone',
+			pilot: 'jb-p1lot',
+			polls: 3,
+			intervalMs: 0,
+			emit: (event) => events.push(event),
+			run: async (_command, args) => {
+				if (args[0] === 'app_container') {
+					return { ok: true, stdout: JSON.stringify({ dataContainer: '/data' }) };
+				}
+
+				const command = args.at(-1)!;
+
+				if (command.startsWith('wc')) {
+					polls++;
+
+					if (polls === 2) {
+						file.push(appended);
+					}
+
+					if (polls === 3) {
+						file.push(rest);
+					}
+
+					return {
+						ok: true,
+						stdout: JSON.stringify({
+							exitCode: 0,
+							output: `${file.join('').length}\n`,
+						}),
+					};
+				}
+
+				const from = Number(/tail -c \+(\d+)/.exec(command)![1]) - 1;
+
+				return {
+					ok: true,
+					stdout: JSON.stringify({ exitCode: 0, output: file.join('').slice(from) }),
+				};
+			},
+		});
+
+		expect(
+			events.map((event) =>
+				event.kind === 'entry' ? `${event.tag}: ${event.message}` : event.message,
+			),
+		).toEqual(['console: hello', 'plugins: broke']);
 	});
 });
