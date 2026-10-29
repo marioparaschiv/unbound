@@ -23,7 +23,8 @@
 		"./registry": "./src/registry.ts"
 	},
 	"scripts": {
-		"build": "tsdown"
+		"build": "tsdown",
+		"typecheck": "tsc --noEmit -p ."
 	},
 	"dependencies": {
 		"zod": "^4.0.0"

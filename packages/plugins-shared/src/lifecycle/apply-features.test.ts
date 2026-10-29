@@ -7,8 +7,12 @@ describe('applyFeatures', () => {
 		const calls: string[] = [];
 
 		const dispose = applyFeatures('Test', [
-			() => () => calls.push('a'),
-			() => () => calls.push('b'),
+			() => () => {
+				calls.push('a');
+			},
+			() => () => {
+				calls.push('b');
+			},
 		]);
 
 		dispose();
@@ -20,11 +24,15 @@ describe('applyFeatures', () => {
 		const calls: string[] = [];
 
 		const dispose = applyFeatures('Test', [
-			() => () => calls.push('a'),
+			() => () => {
+				calls.push('a');
+			},
 			() => {
 				throw new Error('missing');
 			},
-			() => () => calls.push('never'),
+			() => () => {
+				calls.push('never');
+			},
 		]);
 
 		expect(calls).toEqual(['a']);
@@ -50,7 +58,9 @@ describe('applyFeatures', () => {
 						resolve();
 					};
 				}),
-			() => () => calls.push('sync'),
+			() => () => {
+				calls.push('sync');
+			},
 		]);
 
 		const pending = dispose();

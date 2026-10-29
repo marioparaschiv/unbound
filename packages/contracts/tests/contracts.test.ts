@@ -156,7 +156,7 @@ describe('updatesResponseSchema', () => {
 		changelog: null,
 		changes: null,
 		changelogs: [],
-		reason: 'withdrawn',
+		reason: 'withdrawn' as const,
 	};
 
 	test('parses an update entry', () => {

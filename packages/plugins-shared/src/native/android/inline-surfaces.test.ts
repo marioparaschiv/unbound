@@ -4,7 +4,7 @@ import { createInlineSurfaces, type InlineDefinition } from './inline-surfaces';
 
 type FakeValue = {
 	type: string;
-	value?: string | number;
+	value?: string | number | boolean;
 };
 
 type Call = {

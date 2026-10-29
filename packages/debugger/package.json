@@ -21,7 +21,8 @@
 	"type": "module",
 	"module": "src/index.ts",
 	"scripts": {
-		"build": "tsdown"
+		"build": "tsdown",
+		"typecheck": "tsc --noEmit -p ."
 	},
 	"dependencies": {
 		"@unbound-app/debugger-protocol": "workspace:*",

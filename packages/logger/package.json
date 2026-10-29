@@ -10,6 +10,9 @@
 	"exports": {
 		".": "./src/index.ts"
 	},
+	"scripts": {
+		"typecheck": "tsc --noEmit -p ."
+	},
 	"devDependencies": {
 		"@types/bun": "catalog:"
 	}

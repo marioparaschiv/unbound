@@ -35,6 +35,9 @@
 		"./storage": "./src/storage.d.ts",
 		"./toasts": "./src/toasts.d.ts"
 	},
+	"scripts": {
+		"typecheck": "tsc --noEmit -p ."
+	},
 	"devDependencies": {
 		"@unbound-app/client": "workspace:*",
 		"@unbound-app/sdk-generator": "workspace:*"

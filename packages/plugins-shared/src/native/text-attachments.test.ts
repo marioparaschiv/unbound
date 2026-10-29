@@ -12,10 +12,11 @@ import {
 	removeAttachedViews,
 	textEngine,
 	viewAttachment,
+	type TextAttachmentArgument,
 	type TextAttachmentBridge,
 } from './text-attachments';
 
-type Call = { target: unknown; selector: string; args: unknown[] };
+type Call = { target: NativeObjectHandle; selector: string; args: TextAttachmentArgument[] };
 
 type BridgeOptions = {
 	textView?: boolean;

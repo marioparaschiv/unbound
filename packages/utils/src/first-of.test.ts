@@ -18,7 +18,7 @@ describe('firstOf', () => {
 		}
 
 		expect(
-			firstOf<string>(
+			firstOf<[string, string, string, string]>(
 				missing,
 				() => null,
 				() => undefined,
