@@ -224,3 +224,11 @@ test('fails a plugin for errors it did not log last run', () => {
 		)[0],
 	).toMatchObject({ behavior: 'fail', note: 'new errors: boom' });
 });
+
+test('stages a reply, an attachment-only message and a forward beside the text fixtures', () => {
+	const script = fixtureScript('1', '2');
+
+	expect(script).toContain('Fixture reply to the message above');
+	expect(script).toContain('message_snapshots');
+	expect(script).toContain("filename: 'fixture.png'");
+});

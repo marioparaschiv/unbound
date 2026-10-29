@@ -88,6 +88,12 @@ export const FIXTURE_MESSAGES = [
 	'Fixture message link https://discord.com/channels/{guild}/{channel}/{message}',
 ];
 
+export const LAYOUT_FIXTURES = {
+	original: 'Fixture original for the reply',
+	reply: 'Fixture reply to the message above',
+	forwarded: 'Fixture forwarded text',
+};
+
 export function parseChannel(value: string): { guild: string; channel: string } {
 	const match = /^(\d+)\/(\d+)$/.exec(value.trim());
 
@@ -111,6 +117,17 @@ export function fixtureScript(guild: string, channel: string): string {
 		var content = contents[index].replace('{self}', self).replace('{guild}', ${JSON.stringify(guild)}).replace('{channel}', ${JSON.stringify(channel)}).replace('{message}', linked ? linked.id : '');
 		actions.receiveMessage(${JSON.stringify(channel)}, bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: content }));
 	}
+	var make = function (fields) { return Object.assign(bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: '' }), { flags: 0 }, fields); };
+	var reference = function (message, type) { return { type: type, channel_id: ${JSON.stringify(channel)}, guild_id: ${JSON.stringify(guild)}, message_id: message.id }; };
+	var original = make({ content: ${JSON.stringify(LAYOUT_FIXTURES.original)} });
+	var me = metro.findStore('User').getCurrentUser();
+	var image = 'https://cdn.discordapp.com/avatars/' + me.id + '/' + me.avatar + '.png?size=128';
+	actions.receiveMessage(${JSON.stringify(channel)}, original);
+	[
+		make({ type: 19, content: ${JSON.stringify(LAYOUT_FIXTURES.reply)}, message_reference: reference(original, 0), referenced_message: original }),
+		make({ attachments: [{ id: String(Date.now()), filename: 'fixture.png', url: image, proxy_url: image, width: 128, height: 128, content_type: 'image/png', size: 4096 }] }),
+		make({ message_reference: reference(original, 1), message_snapshots: [{ message: { content: ${JSON.stringify(LAYOUT_FIXTURES.forwarded)}, timestamp: new Date().toISOString(), type: 0, embeds: [], attachments: [], flags: 0 } }] }),
+	].forEach(function (message) { actions.receiveMessage(${JSON.stringify(channel)}, message); });
 	await new Promise(function (resolve) { setTimeout(resolve, 1500); });
 	return 'staged';
 })()`;
