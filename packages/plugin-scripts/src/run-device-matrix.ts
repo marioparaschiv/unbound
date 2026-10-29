@@ -17,10 +17,11 @@ export type DeviceRun = {
 	changes: string[];
 	scrollToasts?: string[];
 	emptyToasts?: string[];
+	scrollStuck?: boolean;
 	error?: string;
 };
 
-type ScrollResult = { swipes: number; toasts: string[]; emptyToasts?: string[] };
+type ScrollResult = { swipes: number; moved?: boolean; toasts: string[]; emptyToasts?: string[] };
 
 const COLLECTOR = resolve(import.meta.dir, 'collect-device-matrix.ts');
 
@@ -93,6 +94,9 @@ export function renderSummary(runs: DeviceRun[]): string {
 	const toasts = runs
 		.filter((run) => run.scrollToasts?.length)
 		.map((run) => `- ${run.device.name}: ${run.scrollToasts!.join(', ')}`);
+	const stuck = runs
+		.filter((run) => run.scrollStuck)
+		.map((run) => `- ${run.device.name}: the swipes did not move the message list`);
 	const empty = runs
 		.filter((run) => run.emptyToasts?.length)
 		.map((run) => `- ${run.device.name}: ${run.emptyToasts!.join(', ')}`);
@@ -102,11 +106,16 @@ export function renderSummary(runs: DeviceRun[]): string {
 		'',
 		...totals,
 		...(rows.length ? ['', header, divider, ...rows] : []),
-		...(!rows.length && !toasts.length && !empty.length && runs.every((run) => !run.error)
+		...(!rows.length &&
+		!toasts.length &&
+		!empty.length &&
+		!stuck.length &&
+		runs.every((run) => !run.error)
 			? ['', 'Every plugin passed on every device.']
 			: []),
 		...(toasts.length ? ['', '### Toasts while scrolling', '', ...toasts] : []),
 		...(empty.length ? ['', '### Empty toasts', '', ...empty] : []),
+		...(stuck.length ? ['', '### Scrolling', '', ...stuck] : []),
 		...(offMain.length ? ['', '### Off-main view calls', '', ...offMain] : []),
 		...(errors.length ? ['', '### Plugin errors', '', ...errors] : []),
 		...(skipped.length
@@ -161,7 +170,11 @@ async function collect(
 	const checks = readChecks(out).filter((check) => !only || ids.has(check.id));
 
 	const scroll = readScroll(out);
-	const toasts = { scrollToasts: scroll?.toasts, emptyToasts: scroll?.emptyToasts };
+	const toasts = {
+		scrollToasts: scroll?.toasts,
+		emptyToasts: scroll?.emptyToasts,
+		scrollStuck: scroll?.moved === false,
+	};
 
 	if (exit !== 0) {
 		const reason = failureReason(lines) ?? `exited with ${exit}`;

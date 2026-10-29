@@ -415,7 +415,7 @@ export function swipeCommands(
 	const bottom = Math.round(screen.height * 0.75);
 
 	return Array.from({ length: swipes }, (_, index) => {
-		const [from, to] = index % 2 === 0 ? [top, bottom] : [bottom, top];
+		const [from, to] = index < swipes / 2 ? [top, bottom] : [bottom, top];
 
 		if (target.kind === 'ios') {
 			const points = JSON.stringify([
@@ -461,8 +461,35 @@ async function screenSize(target: ScreenshotTarget): Promise<ScreenSize> {
 	return parseScreenSize(stdout) ?? { width: 1080, height: 2400 };
 }
 
-async function scrollStress(target: ScreenshotTarget): Promise<number> {
-	const commands = swipeCommands(target, await screenSize(target), SCROLL_SWIPES);
+export const SCROLL_FILLER = 30;
+const TOAST_SETTLE_MS = 5_500;
+
+export function scrollFillerScript(channel: string): string {
+	return `(async function () {
+	var metro = unbound.metro;
+	var actions = metro.findByProps('sendMessage', 'receiveMessage');
+	var bot = metro.findByProps('createBotMessage');
+	var self = metro.findStore('User').getCurrentUser().id;
+	for (var index = 0; index < ${SCROLL_FILLER}; index++) {
+		var content = index % 3 === 0 ? 'Scroll filler ' + index + ' for <@' + self + '>' : 'Scroll filler ' + index;
+		actions.receiveMessage(${JSON.stringify(channel)}, bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: content }));
+	}
+	await new Promise(function (resolve) { setTimeout(resolve, 1500); });
+	return 'staged';
+})()`;
+}
+
+export type ScrollOutcome = { swipes: number; moved?: boolean };
+
+async function sameScreen(before: string, after: string): Promise<boolean | undefined> {
+	if (!existsSync(before) || !existsSync(after)) return undefined;
+
+	const [a, b] = await Promise.all([Bun.file(before).bytes(), Bun.file(after).bytes()]);
+
+	return a.length === b.length && a.every((byte, index) => byte === b[index]);
+}
+
+async function swipeAll(commands: string[][]): Promise<number> {
 	let performed = 0;
 
 	for (const command of commands) {
@@ -470,6 +497,20 @@ async function scrollStress(target: ScreenshotTarget): Promise<number> {
 	}
 
 	return performed;
+}
+
+async function scrollStress(target: ScreenshotTarget, out: string): Promise<ScrollOutcome> {
+	const commands = swipeCommands(target, await screenSize(target), SCROLL_SWIPES);
+	const half = commands.length / 2;
+	const before = join(out, 'scroll-before.png');
+	const after = join(out, 'scroll-after.png');
+	const capturedBefore = await screenshot(target, before);
+	const older = await swipeAll(commands.slice(0, half));
+	const capturedAfter = await screenshot(target, after);
+	const newer = await swipeAll(commands.slice(half));
+	const same = capturedBefore && capturedAfter ? await sameScreen(before, after) : undefined;
+
+	return { swipes: older + newer, moved: same === undefined ? undefined : !same };
 }
 
 export function toastLogScript(): string {
@@ -629,8 +670,12 @@ async function main(): Promise<void> {
 		);
 	}
 
+	if (fixtures) await evaluate(port, scrollFillerScript(fixtures.channel));
+
+	await Bun.sleep(TOAST_SETTLE_MS);
+
 	const scrollSince = new Date().toISOString();
-	const swipes = await scrollStress(target);
+	const { swipes, moved } = await scrollStress(target, out);
 
 	await Bun.sleep(2_000);
 
@@ -640,9 +685,11 @@ async function main(): Promise<void> {
 
 	writeFileSync(
 		join(out, 'scroll.json'),
-		`${JSON.stringify({ swipes, toasts, emptyToasts }, null, '\t')}\n`,
+		`${JSON.stringify({ swipes, moved, toasts, emptyToasts }, null, '\t')}\n`,
 	);
-	console.error(`scrolled ${swipes} times; ${toasts.length} toasts appeared`);
+	console.error(
+		`scrolled ${swipes} times${moved === false ? ' without moving the list' : ''}; ${toasts.length} toasts appeared`,
+	);
 
 	const logLines = JSON.parse(await evaluate(port, pluginLogScript())) as string[];
 	const warnings = parseOffMainWarnings(logLines, since);

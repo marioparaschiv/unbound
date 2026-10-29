@@ -246,7 +246,13 @@ test('reads the physical screen size, preferring an override', () => {
 	expect(parseScreenSize('')).toBeUndefined();
 });
 
-test('swipes alternately down and up the middle of the screen', () => {
+test('swipes towards older messages for the first half, then back', () => {
+	const directions = swipeCommands({ kind: 'android' }, { width: 1080, height: 2400 }, 4).map(
+		(command) => command.slice(-4, -1).join(' '),
+	);
+
+	expect(directions).toEqual(['720 540 1800', '720 540 1800', '1800 540 720', '1800 540 720']);
+
 	const android = swipeCommands(
 		{ kind: 'android', serial: 'emulator-5554' },
 		{ width: 1080, height: 2400 },
