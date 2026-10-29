@@ -177,8 +177,10 @@ const HOOK_FAILURE = /^(\S+) E \[plugins\] Native plugin (?:hook|callback) faile
 const CONSOLE_ERROR = /^(\S+) E \[console\] '?\[([^\]:]+)(?::[^\]]*)?\]:? ?'?,? ?(.*)$/;
 const ERROR_LENGTH = 160;
 
+const REPEAT_SUFFIX = / \[repeated \d+ times\]$/;
+
 function errorText(text: string): string {
-	return text.replace(/\s+/g, ' ').trim().slice(0, ERROR_LENGTH);
+	return text.replace(REPEAT_SUFFIX, '').replace(/\s+/g, ' ').trim().slice(0, ERROR_LENGTH);
 }
 
 export function parsePluginErrors(lines: string[], since: string): Map<string, string[]> {

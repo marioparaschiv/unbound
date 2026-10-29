@@ -347,3 +347,15 @@ test('names the first frame outside the toast API as the caller', () => {
 	).toBe('copyLink');
 	expect(toastCaller('Error\\n    at showToast (address at unbound:1:4)')).toBeUndefined();
 });
+
+test('counts a repeated hook failure as the same error', () => {
+	const errors = parsePluginErrors(
+		[
+			'2026-10-29T18:00:01.000Z E [plugins] Native plugin hook failed in Avatar Radius: boom',
+			'2026-10-29T18:00:11.000Z E [plugins] Native plugin hook failed in Avatar Radius: boom [repeated 40 times]',
+		],
+		'2026-10-29T18:00:00.000Z',
+	);
+
+	expect([...errors]).toEqual([['Avatar Radius', ['boom']]]);
+});

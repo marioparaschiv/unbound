@@ -4,6 +4,7 @@
 #include <memory>
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace loader::threading {
@@ -60,6 +61,52 @@ std::optional<std::string> OffMainViewWarnings::warning(AddonSlot addon, const s
     return addonName(addon) + " called " + call +
            " off the main thread. Views are only safe on the main thread; use invokeAsync "
            "instead.";
+}
+
+static constexpr auto kRepeatSummaryInterval = std::chrono::seconds(10);
+
+struct HookFailureThrottle::State {
+    struct Seen {
+        std::chrono::steady_clock::time_point loggedAt;
+        size_t                                suppressed = 0;
+    };
+
+    Clock                                 clock;
+    std::mutex                            mutex;
+    std::unordered_map<std::string, Seen> seen;
+};
+
+HookFailureThrottle::HookFailureThrottle(Clock clock) : state_(std::make_shared<State>())
+{
+    state_->clock = std::move(clock);
+}
+
+std::optional<std::string> HookFailureThrottle::admit(AddonSlot addon, const std::string &reason)
+{
+    std::lock_guard<std::mutex> lock(state_->mutex);
+    const auto                  now = state_->clock();
+    auto [entry, inserted] = state_->seen.try_emplace(std::to_string(addon) + " " + reason);
+    State::Seen &seen      = entry->second;
+    if (inserted)
+    {
+        seen.loggedAt = now;
+        return hookFailureMessage(addon, reason);
+    }
+    if (now - seen.loggedAt < kRepeatSummaryInterval)
+    {
+        seen.suppressed++;
+        return std::nullopt;
+    }
+    size_t repeats  = seen.suppressed + 1;
+    seen.loggedAt   = now;
+    seen.suppressed = 0;
+    return hookFailureMessage(addon, reason) + " [repeated " + std::to_string(repeats) + " times]";
+}
+
+std::optional<std::string> throttledHookFailure(AddonSlot addon, const std::string &reason)
+{
+    static auto *throttle = new HookFailureThrottle();
+    return throttle->admit(addon, reason);
 }
 
 std::string hookFailureMessage(AddonSlot addon, const std::string &reason)
