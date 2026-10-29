@@ -127,10 +127,44 @@ export function developerModeScript(enabled: boolean): string {
 })()`;
 }
 
-export function offMainLogScript(): string {
+export function pluginLogScript(): string {
 	return `Promise.resolve(unbound.fs.read('Unbound/Logs/unbound.log')).then(function (text) {
-	return JSON.stringify(String(text).split('\\n').filter(function (line) { return line.indexOf('off the main thread') !== -1; }));
+	return JSON.stringify(String(text).split('\\n').filter(function (line) { return line.indexOf('off the main thread') !== -1 || line.indexOf(' E [') !== -1; }));
 }, function () { return '[]'; })`;
+}
+
+const HOOK_FAILURE = /^(\S+) E \[plugins\] Native plugin hook failed in (.+?): (.*)$/;
+const CONSOLE_ERROR = /^(\S+) E \[console\] '?\[([^\]:]+)(?::[^\]]*)?\]:? ?'?,? ?(.*)$/;
+const LIFECYCLE_NOISE = [
+	'Native async invocation was cancelled',
+	'native plugin scope has been disposed',
+	'The Java handle is unavailable',
+];
+const ERROR_LENGTH = 160;
+
+function errorText(text: string): string {
+	return text.replace(/\s+/g, ' ').trim().slice(0, ERROR_LENGTH);
+}
+
+export function parsePluginErrors(lines: string[], since: string): Map<string, string[]> {
+	const errors = new Map<string, Set<string>>();
+
+	for (const line of lines) {
+		const match = HOOK_FAILURE.exec(line) ?? CONSOLE_ERROR.exec(line);
+
+		if (!match || match[1]! < since) continue;
+
+		const message = errorText(match[3]!);
+
+		if (!message || LIFECYCLE_NOISE.some((noise) => message.includes(noise))) continue;
+
+		const plugin = errors.get(match[2]!) ?? new Set<string>();
+
+		plugin.add(message);
+		errors.set(match[2]!, plugin);
+	}
+
+	return new Map([...errors].map(([plugin, found]) => [plugin, [...found].sort()]));
 }
 
 export function parseOffMainWarnings(lines: string[], since: string): Map<string, string[]> {
@@ -150,27 +184,40 @@ export function parseOffMainWarnings(lines: string[], since: string): Map<string
 	return new Map([...calls].map(([plugin, found]) => [plugin, [...found].sort()]));
 }
 
-export function applyOffMainPolicy(
+type LogFinding = { field: 'offMainCalls' | 'errors'; label: string; separator: string };
+
+const LOG_FINDINGS: LogFinding[] = [
+	{ field: 'offMainCalls', label: 'off-main view calls', separator: ', ' },
+	{ field: 'errors', label: 'errors', separator: '; ' },
+];
+
+export function applyLogPolicy(
 	checks: MeasuredCheck[],
 	baseline: MeasuredCheck[] | undefined,
 	strict: boolean,
 ): MeasuredCheck[] {
-	const known = new Map(baseline?.map((check) => [check.id, new Set(check.offMainCalls ?? [])]));
+	const earlier = new Map(baseline?.map((check) => [check.id, check]));
 
 	return checks.map((check) => {
-		const calls = check.offMainCalls ?? [];
-		const flagged = strict
-			? calls
-			: calls.filter((call) => known.has(check.id) && !known.get(check.id)!.has(call));
+		const failures = LOG_FINDINGS.flatMap(({ field, label, separator }) => {
+			const found = check[field] ?? [];
+			const previous = earlier.get(check.id);
+			const known = new Set(previous?.[field] ?? []);
+			const flagged = strict
+				? found
+				: found.filter((entry) => previous !== undefined && !known.has(entry));
 
-		if (!flagged.length) return check;
+			return flagged.length
+				? [`${strict ? '' : 'new '}${label}: ${flagged.join(separator)}`]
+				: [];
+		});
 
-		const failure = `${strict ? 'off-main' : 'new off-main'} view calls: ${flagged.join(', ')}`;
+		if (!failures.length) return check;
 
 		return {
 			...check,
 			behavior: 'fail',
-			note: [check.note, failure].filter(Boolean).join('; '),
+			note: [check.note, ...failures].filter(Boolean).join('; '),
 		};
 	});
 }
@@ -433,10 +480,9 @@ async function main(): Promise<void> {
 		);
 	}
 
-	const warnings = parseOffMainWarnings(
-		JSON.parse(await evaluate(port, offMainLogScript())) as string[],
-		since,
-	);
+	const logLines = JSON.parse(await evaluate(port, pluginLogScript())) as string[];
+	const warnings = parseOffMainWarnings(logLines, since);
+	const errors = parsePluginErrors(logLines, since);
 
 	if (!developerMode) await evaluate(port, developerModeScript(false));
 
@@ -445,6 +491,10 @@ async function main(): Promise<void> {
 		const calls = name ? warnings.get(name) : undefined;
 
 		if (calls?.length) check.offMainCalls = calls;
+
+		const logged = name ? errors.get(name) : undefined;
+
+		if (logged?.length) check.errors = logged;
 	}
 
 	const baseline = readBaseline(
@@ -453,11 +503,7 @@ async function main(): Promise<void> {
 
 	const compared = baseline?.filter((check) => !only || only.has(check.id));
 
-	checks.splice(
-		0,
-		checks.length,
-		...applyOffMainPolicy(checks, compared, Boolean(values.strict)),
-	);
+	checks.splice(0, checks.length, ...applyLogPolicy(checks, compared, Boolean(values.strict)));
 
 	const saved = only && baseline ? mergeChecks(baseline, checks) : checks;
 

@@ -26,4 +26,5 @@ private:
 };
 
 std::string addonName(AddonSlot addon);
+std::string hookFailureMessage(AddonSlot addon, const std::string &reason);
 }

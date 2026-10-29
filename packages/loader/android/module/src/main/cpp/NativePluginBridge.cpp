@@ -14,6 +14,8 @@
 
 #include "JniEnvironment.h"
 #include "LoaderAddonActivity.h"
+#include "LoaderLog.h"
+#include "LoaderThreadWarnings.h"
 #include "NativeBoundedValue.h"
 #include "NativeEvaluations.h"
 #include "NativeFFI.h"
@@ -418,14 +420,23 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
 
     loader::AddonScope scope(listener.addon);
     loader::native::executeRuntimeAsynchronously(
-        [listener = listener.callback, payload](jsi::Runtime &runtime) {
+        [callback = listener.callback, addon = listener.addon, payload](jsi::Runtime &runtime) {
             nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
             if (parsed.is_discarded())
             {
                 return;
             }
 
-            listener->call(runtime, adoptJavaValue(runtime, parsed));
+            loader::AddonScope runtimeScope(addon);
+            try
+            {
+                callback->call(runtime, adoptJavaValue(runtime, parsed));
+            }
+            catch (const std::exception &exception)
+            {
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                            loader::threading::hookFailureMessage(addon, exception.what()));
+            }
         });
 }
 

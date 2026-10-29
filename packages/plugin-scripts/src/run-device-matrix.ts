@@ -73,6 +73,11 @@ export function renderSummary(runs: DeviceRun[]): string {
 			.filter((check) => check.offMainCalls?.length)
 			.map((check) => `- ${run.device.name}, ${check.id}: ${listCalls(check.offMainCalls!)}`),
 	);
+	const errors = runs.flatMap((run) =>
+		run.checks
+			.filter((check) => check.errors?.length)
+			.map((check) => `- ${run.device.name}, ${check.id}: ${check.errors!.join('; ')}`),
+	);
 	const changes = runs.flatMap((run) =>
 		run.changes.map((change) => `- ${run.device.name}: ${change}`),
 	);
@@ -86,6 +91,7 @@ export function renderSummary(runs: DeviceRun[]): string {
 			? ['', 'Every plugin passed on every device.']
 			: []),
 		...(offMain.length ? ['', '### Off-main view calls', '', ...offMain] : []),
+		...(errors.length ? ['', '### Plugin errors', '', ...errors] : []),
 		...(changes.length ? ['', '### Changes since the last run', '', ...changes] : []),
 	].join('\n');
 }
