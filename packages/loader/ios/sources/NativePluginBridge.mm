@@ -3044,6 +3044,26 @@ static void clearHookReturnCache(const std::shared_ptr<HookState> &state)
     [state->returnCache removeAllObjects];
 }
 
+struct ActiveHookCall {
+    __unsafe_unretained id object;
+    SEL                    selector;
+    Class                  cls;
+};
+
+static thread_local std::vector<ActiveHookCall> tActiveHookCalls;
+
+static Class hookLookupStart(id object, SEL selector)
+{
+    for (auto call = tActiveHookCalls.rbegin(); call != tActiveHookCalls.rend(); ++call)
+    {
+        if (call->object == object && call->selector == selector)
+        {
+            return class_getSuperclass(call->cls);
+        }
+    }
+    return object_getClass(object);
+}
+
 static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selector,
                                                           void *closureData = nullptr)
 {
@@ -3058,15 +3078,12 @@ static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selecto
         closure->second->activeCalls.fetch_add(1);
         return closure->second;
     }
-    auto iterator = gDispatchers.find(hookKey(object_getClass(object), selector));
-    if (iterator == gDispatchers.end())
+    auto  iterator = gDispatchers.end();
+    Class cls      = hookLookupStart(object, selector);
+    while (cls && iterator == gDispatchers.end())
     {
-        Class cls = object_getClass(object);
-        while (cls && iterator == gDispatchers.end())
-        {
-            iterator = gDispatchers.find(hookKey(cls, selector));
-            cls      = class_getSuperclass(cls);
-        }
+        iterator = gDispatchers.find(hookKey(cls, selector));
+        cls      = class_getSuperclass(cls);
     }
     if (iterator == gDispatchers.end())
     {
@@ -3078,13 +3095,15 @@ static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selecto
 }
 
 struct HookCallGuard {
-    explicit HookCallGuard(std::shared_ptr<HookDispatcher> dispatcher)
+    HookCallGuard(std::shared_ptr<HookDispatcher> dispatcher, id object, SEL selector)
         : dispatcher(std::move(dispatcher)), signpost("hook dispatch")
     {
+        tActiveHookCalls.push_back({object, selector, this->dispatcher->cls});
     }
 
     ~HookCallGuard()
     {
+        tActiveHookCalls.pop_back();
         dispatcher->activeCalls.fetch_sub(1);
     }
 
@@ -3111,7 +3130,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         return;
     }
 
-    HookCallGuard                           guard(dispatcher);
+    HookCallGuard                           guard(dispatcher, object, selector);
     std::vector<std::shared_ptr<HookState>> hooks;
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
@@ -3494,7 +3513,7 @@ static void dispatchVoidHook(id object, SEL selector)
             return;
         }
 
-        HookCallGuard guard(dispatcher);
+        HookCallGuard guard(dispatcher, object, selector);
         void         *arguments[] = {&object, &selector};
         auto          invocation  = hookInvocation(dispatcher, arguments, nullptr);
 
