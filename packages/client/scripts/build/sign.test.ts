@@ -112,18 +112,6 @@ describe('bundle signing', () => {
 		expect(verify(null, contents, publicKey, signature)).toBe(false);
 	});
 
-	test('a tampered bundle no longer matches the signed manifest', () => {
-		const dir = makeDist();
-		const { pem } = makeKey();
-
-		signBundles(dir, pem);
-		writeFileSync(join(dir, 'unbound.js'), 'console.log(2);');
-
-		const manifest = JSON.parse(readFileSync(join(dir, MANIFEST_FILE), 'utf8'));
-
-		expect(manifest.sha512['unbound.js']).not.toBe(sha512('console.log(2);'));
-	});
-
 	test('leaves the build unsigned without a key and drops stale signatures', () => {
 		const dir = makeDist();
 

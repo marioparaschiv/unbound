@@ -52,7 +52,7 @@ mock.module('react-native', () => ({
 
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.
-export const { Manager, ManagerType } = await import('~/managers/base');
+export const { ManagerType } = await import('~/managers/base');
 export const { Addons } = await import('~/managers/addons');
 export const { createPluginContext } = await import('~/api/native-runtime');
 

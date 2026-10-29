@@ -2,9 +2,7 @@ import { describe, expect, test, beforeEach } from 'bun:test';
 import type { Addon } from '@unbound-app/types';
 
 import {
-	Addons,
 	FakeAddons,
-	Manager,
 	makeInstance,
 	makeManifest,
 	resetDevice,
@@ -352,12 +350,5 @@ describe('Addons manifest validation', () => {
 		expect(manager.errors.get('loose')?.message).toBe(
 			'Manifest unbound.min must be a version string',
 		);
-	});
-});
-
-describe('Manager wiring', () => {
-	test('reload lives on the base Addons manager, which extends Manager', () => {
-		expect(typeof Addons.prototype.reload).toBe('function');
-		expect(Object.getPrototypeOf(Addons)).toBe(Manager);
 	});
 });

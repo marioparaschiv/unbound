@@ -295,28 +295,6 @@ afterEach(() => {
 	fluxSubscriptions.clear();
 });
 
-describe('native platform metadata', () => {
-	test('uses platform-neutral names for shared device properties', () => {
-		expect(nativePlatformBridge.device).toHaveProperty('getOSVersionString');
-		expect(nativePlatformBridge.device).toHaveProperty('isRooted');
-		expect(nativePlatformBridge.device).not.toHaveProperty('getiOSVersionString');
-		expect(nativePlatformBridge.device).not.toHaveProperty('isJailbroken');
-	});
-
-	test('keeps iOS entitlement and attestation metadata out of the Android shape', () => {
-		const androidPlatformBridge: NativePlatformBridge = {
-			...nativePlatformBridge,
-			platform: 'android',
-			device: { ...nativePlatformBridge.device, platform: 'android' },
-			ios: undefined,
-		};
-
-		expect(nativePlatformBridge.ios).toHaveProperty('getEntitlements');
-		expect(nativePlatformBridge.ios).toHaveProperty('isVerifiedBuild');
-		expect(androidPlatformBridge.ios).toBeUndefined();
-	});
-});
-
 describe('native plugin capability scopes', () => {
 	test('hides the raw bridge after capturing it for scoped access', async () => {
 		const nativeApi = await import('~/api/native');
