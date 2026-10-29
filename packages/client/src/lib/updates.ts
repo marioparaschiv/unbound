@@ -16,7 +16,10 @@ import type { Addons } from '~/managers/addons';
 export type UpdatableKind = Exclude<ManagerKind, ManagerKind.Fonts>;
 
 /** The part of an addon manager the updater drives; each manager narrows the entity type. */
-export type UpdatableManager = Pick<Addons<Addon>, 'getEntities' | 'getEntity' | 'update'> &
+export type UpdatableManager = Pick<
+	Addons<Addon>,
+	'getEntities' | 'getEntity' | 'update' | 'getHeldVersion'
+> &
 	Partial<Pick<Addons<Addon>, 'isDevelopmentCopy' | 'clearDevelopmentCopy'>>;
 
 export type UpdateCheckOptions = {
@@ -183,6 +186,32 @@ export async function fetchUpdates(
 }
 
 /**
+ * @description Whether the updater applies an update on its own. A held addon only takes the ones that
+ * replace a withdrawn or rebuilt install, never a newer version.
+ * @param update The update the server offered.
+ * @param held Whether the user holds the addon at its installed version.
+ * @returns Whether to apply it without asking.
+ */
+export function autoApplies(update: AddonUpdate, held: boolean): boolean {
+	return !held || update.reason !== 'newer';
+}
+
+/**
+ * @description Picks the pending updates the updater applies on its own, reading each hold now.
+ * @param updates The pending updates.
+ * @param managerOf Returns the manager of an addon kind.
+ * @returns The updates `autoApplies` lets through.
+ */
+export function automaticUpdates(
+	updates: PendingUpdate[],
+	managerOf: (kind: UpdatableKind) => UpdatableManager,
+): PendingUpdate[] {
+	return updates.filter((entry) =>
+		autoApplies(entry.update, managerOf(entry.kind).getHeldVersion(entry.id) !== void 0),
+	);
+}
+
+/**
  * @description Has the owning manager apply a pending update.
  * @param manager The manager the addon belongs to.
  * @param pending The update.
@@ -224,6 +253,8 @@ export default {
 	toPendingUpdates,
 	listInstalled,
 	fetchUpdates,
+	autoApplies,
+	automaticUpdates,
 	applyUpdate,
 	reinstallFromStore,
 };

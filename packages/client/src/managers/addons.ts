@@ -369,6 +369,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			if (entity) {
 				this.clearDevelopmentCopy(entity.id);
 				this.recordSource(entity.id, url);
+				this.releaseStaleHold(entity.id);
 				this.emit('installed', entity);
 			}
 
@@ -420,6 +421,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 				return;
 			}
 
+			this.releaseStaleHold(resolved.id);
 			this.emit('updated', resolved);
 		} catch (error) {
 			const failure = toError(error);
@@ -444,6 +446,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			await fs.rm(this.directoryOf(resolved.id));
 			this.forgetSource(resolved.id);
 			this.clearDevelopmentCopy(resolved.id);
+			this.releaseHold(resolved.id);
 			this.emit('deleted', resolved);
 		} catch (error) {
 			this.logger.error(`Failed to delete addon ${resolved.id}:`, error);
@@ -1071,6 +1074,50 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 		delete copies[id];
 		this.settings.set('development', copies);
+	}
+
+	/**
+	 * @description Holds an addon at a version the user chose, so automatic updates leave it there until they update it themselves.
+	 * @param id The addon's id.
+	 * @param version The version to hold it at.
+	 */
+	holdVersion(id: string, version: string): void {
+		this.settings.set('held', { ...this.getHolds(), [id]: version });
+	}
+
+	/**
+	 * @description The version an addon is held at, counted only while that version is the installed one.
+	 * @param id The addon's id.
+	 * @returns The held version, or `undefined` when it is not held or runs another version.
+	 */
+	getHeldVersion(id: string): string | undefined {
+		const held = this.getHolds()[id];
+
+		return held !== void 0 && held === this.getEntity(id)?.data.version ? held : void 0;
+	}
+
+	private getHolds(): Record<string, string> {
+		return this.settings.get('held', {});
+	}
+
+	/**
+	 * @description Stops holding an addon at a version, so automatic updates include it again.
+	 * @param id The addon's id.
+	 */
+	releaseHold(id: string): void {
+		const holds = this.getHolds();
+
+		if (!(id in holds)) return;
+
+		delete holds[id];
+		this.settings.set('held', holds);
+	}
+
+	// A hold left on a version the addon moved off would otherwise come back if it returns there.
+	private releaseStaleHold(id: string): void {
+		if (this.getHeldVersion(id) !== void 0) return;
+
+		this.releaseHold(id);
 	}
 
 	private developmentMarkerOf(id: string): string {

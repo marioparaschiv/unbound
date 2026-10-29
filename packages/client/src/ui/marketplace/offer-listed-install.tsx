@@ -1,12 +1,12 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
-import type { ManagerKind } from '~/lib/constants';
 import { Discord } from '~/api/metro/components';
 import { getInstallStatus } from '~/lib/catalog';
+import { ManagerKind } from '~/lib/constants';
 import { showToast } from '~/api/toasts';
 import { format } from '~/api/i18n';
 
-import { getInstalledVersion, installListed, updateListed } from './targets';
+import { getInstalledVersion, installFont, installVersion } from './targets';
 
 const ALERT_KEY = 'unbound-offer-listed-install';
 
@@ -68,7 +68,10 @@ export async function offerListedInstall(kind: ManagerKind, addon: ListedAddon):
 		return false;
 	}
 
-	const ok = await (status === 'update' ? updateListed : installListed)(kind, addon);
+	const ok =
+		kind === ManagerKind.Fonts
+			? await installFont(addon)
+			: await installVersion(kind, addon, addon.latestVersion);
 
 	if (!ok) {
 		showToast({

@@ -4,8 +4,8 @@ import toError from '@unbound-app/utils/to-error';
 import { Platform } from 'react-native';
 import { create } from 'zustand';
 
+import { applyUpdate, automaticUpdates, fetchUpdates, listInstalled } from '~/lib/updates';
 import type { PendingUpdate, UpdatableKind, UpdatableManager } from '~/lib/updates';
-import { applyUpdate, fetchUpdates, listInstalled } from '~/lib/updates';
 import { API_URL, CLIENT_VERSION, ManagerKind } from '~/lib/constants';
 import { fetchLoaderUpdate } from '~/lib/loader-updates';
 import { getManager } from '~/managers/utils';
@@ -34,6 +34,7 @@ type UpdatesStore = {
 	check: () => Promise<void>;
 	/** Applies one pending update. Resolves whether the addon now runs the new version. */
 	apply: (id: string) => Promise<boolean>;
+	/** Applies every pending update except newer versions of held addons. */
 	applyAll: () => Promise<void>;
 };
 
@@ -148,7 +149,10 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 
 			if (state.status !== 'ready') return;
 
-			await Promise.all(state.updates.map((entry) => apply(entry.id)));
+			// Read at apply time, so a version the user picked since the check stays held.
+			await Promise.all(
+				automaticUpdates(state.updates, manager).map((entry) => apply(entry.id)),
+			);
 		},
 	};
 });
