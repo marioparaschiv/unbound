@@ -11,7 +11,7 @@
 		{ "name": "fres", "id": "843448897737064448" },
 		{ "name": "adrian", "id": "224617799434108928" }
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "PaintPaletteIcon",
 	"capabilities": [],
 	"platformCapabilities": {
