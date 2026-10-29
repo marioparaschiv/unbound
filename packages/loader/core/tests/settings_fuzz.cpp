@@ -40,8 +40,6 @@ static const char *const kKeyPaths[] = {"loader.enabled",
                                         "recovery",
                                         "developer",
                                         "dev-overlay.position",
-                                        "chat.bubbles",
-                                        "chat.avatarRadius",
                                         "fonts.overrides",
                                         "applied",
                                         "active",
@@ -204,8 +202,6 @@ static void exercise(loader::SettingsStore &store)
     loader::preferences::fontOverrides(store);
     loader::preferences::gestureEnabled(store, loader::preferences::ToolboxGesture::Shake);
     loader::preferences::gestureEnabled(store, loader::preferences::ToolboxGesture::ThreeFinger);
-    loader::preferences::messageBubbles(store);
-    loader::preferences::avatarRadius(store);
     loader::toolbox::menuJSON(store, loader::toolbox::MenuOptions{});
     loader::devoverlay::menuJSON(store);
     loader::AddonState addons;

@@ -1,0 +1,21 @@
+{
+	"name": "avatar-radius",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Rounds avatars to a corner radius you choose instead of circles.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@unbound-plugins/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-plugins/rollup-config": "workspace:*",
+		"rollup": "^4.62.2"
+	}
+}

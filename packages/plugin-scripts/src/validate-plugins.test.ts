@@ -30,7 +30,7 @@ test('the workspace contains only first-party plugins', () => {
 		return entry.isDirectory() && !['node_modules', 'shared'].includes(entry.name);
 	});
 
-	expect(plugins).toHaveLength(32);
+	expect(plugins).toHaveLength(34);
 	expect(
 		plugins.every((plugin) => {
 			const manifestPath = join(PLUGINS_DIR, plugin.name, 'manifest.json');

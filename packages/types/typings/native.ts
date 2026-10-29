@@ -373,7 +373,7 @@ export type NativeJavaValue =
 	| {
 			type: 'array';
 			componentType: string;
-			value: (NativeJavaValue | string | number | boolean)[];
+			value: (NativeJavaValue | NativeJavaHandle | string | number | boolean)[];
 	  };
 
 export type NativeJavaHandleValue = { type: 'handle'; value: string };
