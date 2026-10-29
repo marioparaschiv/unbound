@@ -1,6 +1,7 @@
-import { createFileRoute, Link, notFound } from '@tanstack/react-router';
+import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
+import { IconEye, IconFaceNeutral } from 'nucleo-micro-bold';
 import { useSuspenseQuery } from '@tanstack/react-query';
-import { IconFaceNeutral } from 'nucleo-micro-bold';
+import { z } from 'zod/mini';
 
 import {
 	Empty,
@@ -16,15 +17,50 @@ import { staggerStyle } from '~/components/motion/reveal-style';
 import AddonHeader from '~/components/addon/addon-header';
 import AuthorsCard from '~/components/addon/authors-card';
 import ScrollShadow from '~/components/ui/scroll-shadow';
-import { addonQuery } from '~/queries/marketplace/addon';
+import { addonQuery, submissionPreviewQuery } from '~/queries/marketplace/addon';
 import AboutCard from '~/components/addon/about-card';
 import { Button } from '~/components/ui/button';
 import Markdown from '~/components/markdown';
 import Text from '~/components/ui/text';
 
+/** `?submission=<id>` shows a pending submission as if published; only its reviewers get the preview. */
+const addonSearchSchema = z.object({
+	submission: z.catch(z.optional(z.uuid()), undefined),
+});
+
+type ExitPreviewProps = {
+	id: string;
+};
+
+/** Goes back to the page that opened the preview, restored from the back/forward cache; else the live page. */
+function ExitPreview({ id }: ExitPreviewProps) {
+	const navigate = useNavigate();
+
+	function exit() {
+		const referrer = document.referrer ? new URL(document.referrer) : null;
+
+		if (referrer?.origin === location.origin && history.length > 1) {
+			history.back();
+
+			return;
+		}
+
+		void navigate({ to: '/addons/$id', params: { id }, search: {} });
+	}
+
+	return (
+		<Button variant='outline' size='sm' onClick={exit}>
+			Exit preview
+		</Button>
+	);
+}
+
 function AddonPage() {
 	const { id } = Route.useParams();
-	const { data: addon } = useSuspenseQuery(addonQuery(id));
+	const { submission } = Route.useSearch();
+	const { data: preview } = useSuspenseQuery(submissionPreviewQuery(id, submission));
+	const { data: live } = useSuspenseQuery(addonQuery(id));
+	const addon = preview ?? live;
 
 	// A refetch can find the addon delisted since the page loaded.
 	if (!addon) {
@@ -57,6 +93,16 @@ function AddonPage() {
 
 	return (
 		<div className='flex flex-col flex-1 gap-8 page-frame'>
+			{preview ? (
+				<Card className='flex-row items-center gap-3 px-(--card-pad) py-3'>
+					<IconEye className='size-5 text-muted-foreground shrink-0' />
+					<Text variant='text-sm' className='flex-1'>
+						Previewing the submitted v{preview.version}. Only reviewers see this; it is
+						not published.
+					</Text>
+					<ExitPreview id={id} />
+				</Card>
+			) : null}
 			<AddonHeader addon={addon} />
 
 			<div className='items-start gap-6 grid grid-cols-1 lg:grid-cols-3'>
@@ -100,9 +146,15 @@ function AddonNotFound() {
 }
 
 export const Route = createFileRoute('/_site/addons/$id')({
+	validateSearch: addonSearchSchema,
+	loaderDeps: ({ search }) => ({ submission: search.submission }),
 	// `loader` comes before `head` so `head` can infer the loader data's type.
-	loader: async ({ context, params }) => {
-		const addon = await context.queryClient.ensureQueryData(addonQuery(params.id));
+	loader: async ({ context, params, deps }) => {
+		const [preview, live] = await Promise.all([
+			context.queryClient.ensureQueryData(submissionPreviewQuery(params.id, deps.submission)),
+			context.queryClient.ensureQueryData(addonQuery(params.id)),
+		]);
+		const addon = preview ?? live;
 
 		if (!addon) {
 			throw notFound();

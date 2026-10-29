@@ -1,9 +1,10 @@
-import { Link, Outlet, createFileRoute, redirect } from '@tanstack/react-router';
+import { Link, Outlet, createFileRoute, redirect, useLocation } from '@tanstack/react-router';
 import { IconBox, IconFileCheck, IconUsers } from 'nucleo-micro-bold';
 import type { ComponentType } from 'react';
 
 import type { StaffSectionId } from '~/lib/auth/staff-areas';
 import { getStaffSections } from '~/lib/auth/staff-areas';
+import LabSwitcher from '~/components/lab/lab-switcher';
 import Text from '~/components/ui/text';
 
 type IconProps = {
@@ -18,6 +19,12 @@ const SECTION_ICONS: Record<StaffSectionId, ComponentType<IconProps>> = {
 
 function StaffLayout() {
 	const { sections } = Route.useRouteContext();
+	const isLab = useLocation({ select: (location) => location.pathname.startsWith('/lab') });
+
+	// The design lab variants each bring their own shell.
+	if (isLab) {
+		return <Outlet />;
+	}
 
 	return (
 		<div className='flex md:flex-row flex-col flex-1 gap-6 page-frame'>
@@ -47,6 +54,7 @@ function StaffLayout() {
 			<main className='flex-1 min-w-0'>
 				<Outlet />
 			</main>
+			<LabSwitcher />
 		</div>
 	);
 }
