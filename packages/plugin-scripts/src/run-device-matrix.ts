@@ -122,6 +122,17 @@ export function renderSummary(runs: DeviceRun[]): string {
 
 		return [...(line ? [`- ${run.device.name}: ${line}${detail}`] : []), ...springBoard];
 	});
+	const leaks = runs.flatMap((run) => {
+		const measured = run.checks
+			.filter((check) => check.leakPerCycleMB !== undefined)
+			.sort((a, b) => (b.leakPerCycleMB ?? 0) - (a.leakPerCycleMB ?? 0))
+			.slice(0, 3)
+			.map((check) => `${check.id} ${check.leakPerCycleMB} MB`);
+
+		return measured.length
+			? [`- ${run.device.name}, most growth per cycle: ${measured.join(', ')}`]
+			: [];
+	});
 	const dropped = runs.flatMap((run) =>
 		(run.drops ?? []).map((drop) => `- ${run.device.name}, during ${drop}`),
 	);
@@ -150,6 +161,7 @@ export function renderSummary(runs: DeviceRun[]): string {
 		...(stuck.length ? ['', '### Scrolling', '', ...stuck] : []),
 		...(dropped.length ? ['', '### Device drops', '', ...dropped] : []),
 		...(memory.length ? ['', '### Discord memory over the run', '', ...memory] : []),
+		...(leaks.length ? ['', '### Leak check', '', ...leaks] : []),
 		...(offMain.length ? ['', '### Off-main view calls', '', ...offMain] : []),
 		...(errors.length ? ['', '### Plugin errors', '', ...errors] : []),
 		...(skipped.length
@@ -200,13 +212,17 @@ async function collect(
 	channel: string | undefined,
 	only: string | undefined,
 	lenient = false,
+	leakCycles?: number,
 ): Promise<DeviceRun> {
 	mkdirSync(out, { recursive: true });
 	rmSync(join(out, 'scroll.json'), { force: true });
 	rmSync(join(out, 'memory.json'), { force: true });
 	rmSync(join(out, 'selftest.json'), { force: true });
 
-	const args = [...collectorArgs(device, out, channel, only), ...(lenient ? ['--lenient'] : [])];
+	const args = [
+		...collectorArgs(device, out, channel, only, leakCycles),
+		...(lenient ? ['--lenient'] : []),
+	];
 	const child = Bun.spawn(['bun', COLLECTOR, ...args], {
 		stdout: 'pipe',
 		stderr: 'pipe',
@@ -249,13 +265,14 @@ async function main(): Promise<void> {
 			only: { type: 'string' },
 			channel: { type: 'string' },
 			lenient: { type: 'boolean' },
+			'leak-cycles': { type: 'string' },
 		},
 	});
 	const config = readMatrixConfig(resolve(values.config));
 
 	if (!config?.devices.length || !values.out) {
 		throw new Error(
-			`Usage: bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir> [--only <id,id>] [--channel <guild id>/<channel id>] [--lenient] [--config ${MATRIX_CONFIG_PATH}], with the devices listed in the config.`,
+			`Usage: bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir> [--only <id,id>] [--channel <guild id>/<channel id>] [--lenient] [--leak-cycles <n>] [--config ${MATRIX_CONFIG_PATH}], with the devices listed in the config.`,
 		);
 	}
 
@@ -263,7 +280,14 @@ async function main(): Promise<void> {
 	const channel = values.channel ?? config.channel;
 	const runs = await Promise.all(
 		config.devices.map((device) =>
-			collect(device, join(out, deviceSlug(device)), channel, values.only, values.lenient),
+			collect(
+				device,
+				join(out, deviceSlug(device)),
+				channel,
+				values.only,
+				values.lenient,
+				values['leak-cycles'] ? Number(values['leak-cycles']) : undefined,
+			),
 		),
 	);
 	const summary = renderSummary(runs);
