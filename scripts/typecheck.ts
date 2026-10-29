@@ -1,3 +1,4 @@
+import { parseArgs } from 'node:util';
 import { resolve } from 'node:path';
 
 export type ProjectResult = { project: string; errors: string[] };
@@ -82,11 +83,20 @@ async function typecheck(project: string): Promise<ProjectResult> {
 	return { project, errors: code !== 0 && !errors.length ? [output.trim()] : errors };
 }
 
-async function main(): Promise<void> {
+async function buildWebTypes(): Promise<boolean> {
 	const types = await run(['bun', 'run', '--filter', '@unbound-app/web', 'build:types'], root);
 
 	if (types.code !== 0) {
 		console.error(types.output);
+	}
+
+	return types.code === 0;
+}
+
+async function main(): Promise<void> {
+	const { values } = parseArgs({ options: { 'web-types-built': { type: 'boolean' } } });
+
+	if (!values['web-types-built'] && !(await buildWebTypes())) {
 		process.exitCode = 1;
 
 		return;
