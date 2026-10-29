@@ -7,7 +7,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import iife from 'rollup-plugin-iife';
-import { swc } from 'rollup-plugin-swc3';
+import { minify, swc } from 'rollup-plugin-swc3';
 
 import { hermesExpressionEntrypoint } from './entrypoint.mjs';
 import { hermesBytecode } from './hermes-bytecode.mjs';
@@ -35,6 +35,13 @@ function globals(id) {
 function isExternal(id) {
 	return Boolean(globals(id));
 }
+
+const minifyOptions = {
+	compress: { keep_classnames: true, keep_fnames: true },
+	mangle: false,
+	keep_classnames: true,
+	keep_fnames: true,
+};
 
 const extensions = ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'];
 const indexFiles = ['index.tsx', 'index.ts', 'index.jsx', 'index.js'];
@@ -113,6 +120,7 @@ export function createPluginConfig(
 			lazyModules(deferred, { plugins: modulePlugins, external: isExternal, globals }),
 			...modulePlugins(),
 			iife(),
+			minify(minifyOptions),
 			hermesExpressionEntrypoint({ hasSettingsPanel: settingsPanel }),
 			...(bytecode ? [hermesBytecode({ versions: bytecodeVersions })] : []),
 			manifestToDist(pluginRoot),
