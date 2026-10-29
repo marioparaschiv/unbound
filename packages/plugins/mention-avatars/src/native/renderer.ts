@@ -127,7 +127,7 @@ export function createRenderer(
 		images.dispose();
 	}
 
-	return { schedule, reuse, clear, dispose };
+	return { schedule, reuse, clear, dispose, rendered: textViews.rendered };
 }
 
 export default createRenderer;

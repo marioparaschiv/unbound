@@ -1,6 +1,6 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { drawnSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import ensureClasses from '@unbound-plugins/shared/native/ensure-classes';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
@@ -28,6 +28,7 @@ import { hookMessageCells } from '~/native/cells';
 import { createSession } from '~/native/session';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
+let drawn: (() => number) | undefined;
 
 function start(context: PluginContext) {
 	const { objc, fabric } = context.native;
@@ -58,6 +59,7 @@ function start(context: PluginContext) {
 			return;
 		}
 
+		drawn = android.drawn;
 		dispose = applyFeatures('Message Link Embeds', [
 			() => android.dispose,
 			() => whenLoaded(FastImageSource, patchFastImage),
@@ -90,6 +92,8 @@ function start(context: PluginContext) {
 
 	const { session } = embeds;
 
+	drawn = embeds.drawn;
+
 	dispose = applyFeatures('Message Link Embeds', [
 		() => embeds.dispose,
 		() => whenLoaded(FastImageSource, patchFastImage),
@@ -104,8 +108,9 @@ function stop() {
 	const finished = dispose();
 
 	dispose = () => undefined;
+	drawn = undefined;
 
 	return finished;
 }
 
-export default { start, stop, selfTest: featureSelfTest };
+export default { start, stop, selfTest: () => drawnSelfTest(drawn, 'embeds') };

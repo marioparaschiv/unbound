@@ -1,7 +1,7 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import hookMessageCells from '@unbound-plugins/shared/native/message-cell-hooks';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { drawnSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
@@ -21,6 +21,7 @@ import {
 } from '~/modules';
 
 let dispose = () => {};
+let rendered: (() => number) | undefined;
 
 function start(context: PluginContext) {
 	const { objc } = context.native;
@@ -46,6 +47,7 @@ function start(context: PluginContext) {
 	if (context.platform === 'android') {
 		const android = createAndroidRenderer(context.native, index, showAtSymbol);
 
+		rendered = android.rendered;
 		dispose = applyFeatures('Mention Avatars', [
 			() => android.dispose,
 			() => patchRowGenerator(index),
@@ -56,6 +58,8 @@ function start(context: PluginContext) {
 
 	const renderer = createRenderer(objc, index, showAtSymbol);
 	const scanner = createVisibleCellScanner(objc, renderer.schedule);
+
+	rendered = renderer.rendered;
 
 	dispose = applyFeatures('Mention Avatars', [
 		() => renderer.dispose,
@@ -74,6 +78,11 @@ function start(context: PluginContext) {
 function stop() {
 	dispose();
 	dispose = () => {};
+	rendered = undefined;
 }
 
-export default { start, stop, selfTest: featureSelfTest };
+export default {
+	start,
+	stop,
+	selfTest: () => drawnSelfTest(rendered, 'mention avatars'),
+};

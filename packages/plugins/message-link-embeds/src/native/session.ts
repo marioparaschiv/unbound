@@ -77,5 +77,5 @@ export function createSession(
 		session.linked.clear();
 	}
 
-	return { session, dispose };
+	return { session, dispose, drawn: () => session.surfaces.size };
 }

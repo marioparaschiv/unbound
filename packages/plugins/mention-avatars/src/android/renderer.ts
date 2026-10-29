@@ -343,6 +343,7 @@ export function createAndroidRenderer(
 	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
 
 	return {
+		rendered: () => rules.size,
 		dispose() {
 			for (const scan of scans) clearTimeout(scan);
 
