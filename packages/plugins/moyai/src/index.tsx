@@ -4,6 +4,7 @@ import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import type { PluginContext } from '@unbound-app/api/native';
 import { native } from '@unbound-app/api';
+import { Platform } from 'react-native';
 
 import SettingsPanel from '~/components/settings-panel';
 import { subscribeMessages } from '~/events/message-create';
@@ -18,7 +19,7 @@ function start(context: PluginContext) {
 
 	if (!ensureModules('Moyai', { DCDSoundManager, SelectedChannelStore })) return;
 
-	const player = createPlayer(DCDSoundManager, context.platform);
+	const player = createPlayer(DCDSoundManager, context.platform ?? Platform.OS);
 
 	dispose = applyFeatures('Moyai', [
 		() => player.dispose,

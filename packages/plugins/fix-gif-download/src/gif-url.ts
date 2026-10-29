@@ -72,10 +72,11 @@ function directGifUrl(value: string): string | null {
 		}
 
 		if (url.searchParams.get('animated') === 'true' && /\.(?:webp|avif|mp4)$/.test(pathname)) {
-			url.pathname = url.pathname.replace(/\.(?:webp|avif|mp4)$/i, '.gif');
-			url.searchParams.set('format', 'gif');
+			const gif = withPathname(url, url.pathname.replace(/\.(?:webp|avif|mp4)$/i, '.gif'));
 
-			return url.toString();
+			gif.searchParams.set('format', 'gif');
+
+			return gif.toString();
 		}
 
 		const host = url.hostname.toLowerCase();
@@ -87,9 +88,7 @@ function directGifUrl(value: string): string | null {
 		}
 
 		if (host === 'tenor.com') {
-			url.pathname = `${url.pathname}.gif`;
-
-			return url.toString();
+			return withPathname(url, `${url.pathname}.gif`).toString();
 		}
 	} catch {
 		// Not a URL.
@@ -125,9 +124,7 @@ function asGifUrl(value: string): string | null {
 
 		if (url.searchParams.has('format')) url.searchParams.set('format', 'gif');
 
-		url.pathname = url.pathname.replace(/\.(?:mp4|webm|webp)$/i, '.gif');
-
-		return url.toString();
+		return withPathname(url, url.pathname.replace(/\.(?:mp4|webm|webp)$/i, '.gif')).toString();
 	} catch {
 		return value.replace(/\.(?:mp4|webm)(?=$|[?#])/i, '.gif');
 	}
@@ -139,6 +136,10 @@ function asGifUrl(value: string): string | null {
  * @param depth How deep into nested media records the search already is.
  * @returns The GIF URL, or `null` when none can be derived without a network request.
  */
+function withPathname(url: URL, pathname: string): URL {
+	return new URL(`${pathname}${url.search}${url.hash}`, url.origin);
+}
+
 export function getPreferredGifUrl(value: unknown, depth: number = 0): string | null {
 	if (depth > 3) return null;
 
