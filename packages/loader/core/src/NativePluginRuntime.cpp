@@ -11,6 +11,7 @@
 #include "LoaderLog.h"
 #include "NativeCallActivity.h"
 #include "NativeOperationGate.h"
+#include "RuntimeStallGate.h"
 
 namespace loader::native {
 namespace jsi = facebook::jsi;
@@ -29,6 +30,7 @@ static std::atomic<NativeErrorDelivery> gErrorDelivery{NativeErrorDelivery::Thro
 #endif
 static std::atomic_uint64_t gNextInvocation{1};
 static std::atomic_uint     gMainThreadRuntimeWaits{0};
+static RuntimeStallGate     gMainThreadRuntimeStall;
 
 NativeCodedError::NativeCodedError(std::string code, const std::string &message)
     : std::runtime_error(message), code_(std::move(code))
@@ -641,6 +643,12 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
         return false;
     }
 
+    bool mainThread = target->isMainThread();
+    if (mainThread && gMainThreadRuntimeStall.stalled())
+    {
+        return false;
+    }
+
     struct State {
         std::mutex              mutex;
         std::condition_variable done;
@@ -655,6 +663,7 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
     AddonSlot addon      = currentAddon();
     target->runOnRuntime([state, callback = std::move(callback), expected, generation,
                           addon](jsi::Runtime &runtime) {
+        gMainThreadRuntimeStall.answered();
         bool               completed = false;
         std::exception_ptr failure;
         if (!state->cancelled.load() && expected == &runtime &&
@@ -678,7 +687,6 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
         state->done.notify_all();
     });
 
-    bool mainThread = target->isMainThread();
     if (mainThread)
     {
         gMainThreadRuntimeWaits.fetch_add(1);
@@ -694,6 +702,10 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
     if (!signaled)
     {
         state->cancelled.store(true);
+        if (mainThread)
+        {
+            gMainThreadRuntimeStall.timedOut();
+        }
         return false;
     }
 
