@@ -195,6 +195,9 @@ export function createNativeCards(native: Native) {
 			contentCache.delete(contentCache.keys().next().value!);
 
 		contentCache.set(key, content);
+		void content.then(({ tokens }) => {
+			if (!tokens && contentCache.get(key) === content) contentCache.delete(key);
+		});
 
 		return content;
 	}

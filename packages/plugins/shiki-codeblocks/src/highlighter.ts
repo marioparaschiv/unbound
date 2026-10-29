@@ -23,6 +23,26 @@ export type ThemeAppearance = {
 
 export type Highlighter = ReturnType<typeof createHighlighter>;
 
+const LOAD_RETRY_DELAYS_MS = [1_000, 3_000, 9_000];
+
+function wait(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRetries<T>(load: () => Promise<T>, delays: number[]): Promise<T> {
+	for (let attempt = 0; ; attempt++) {
+		try {
+			return await load();
+		} catch (error) {
+			const delay = delays[attempt];
+
+			if (delay === undefined) throw error;
+
+			await wait(delay);
+		}
+	}
+}
+
 function isLightColor(hex: string): boolean | undefined {
 	const rgb = hex.replace('#', '').slice(0, 6);
 
@@ -38,9 +58,13 @@ function isLightColor(hex: string): boolean | undefined {
 /**
  * @description Creates a Shiki highlighter that loads grammars and themes on demand and caches recent tokens.
  * @param registrations Where bundled languages' registrations come from.
+ * @param retryDelays How long to wait before each retry of a grammar or theme that failed to load.
  * @returns `appearance` reads a theme's card colors, `tokenize` highlights a code block.
  */
-export function createHighlighter(registrations?: RegistrationSource) {
+export function createHighlighter(
+	registrations?: RegistrationSource,
+	retryDelays: number[] = LOAD_RETRY_DELAYS_MS,
+) {
 	const pendingGrammars = new Map<string, Promise<void>>();
 	const pendingThemes = new Map<string, Promise<void>>();
 	const tokenCache = new Map<string, TokenLines>();
@@ -59,6 +83,7 @@ export function createHighlighter(registrations?: RegistrationSource) {
 					`[${PLUGIN_NAME}] Failed to initialize the Shiki highlighter:`,
 					error,
 				);
+				core = null;
 
 				return null;
 			});
@@ -99,8 +124,13 @@ export function createHighlighter(registrations?: RegistrationSource) {
 		let pending = pendingGrammars.get(language);
 
 		if (!pending) {
-			pending = loadBundledGrammar(language, registrations)
-				.then((bundled) => bundled ?? fetchGrammar(language))
+			pending = withRetries(
+				() =>
+					loadBundledGrammar(language, registrations).then(
+						(bundled) => bundled ?? fetchGrammar(language),
+					),
+				retryDelays,
+			)
 				.then((input) => highlighter.loadLanguage(input))
 				.finally(() => pendingGrammars.delete(language));
 
@@ -116,7 +146,7 @@ export function createHighlighter(registrations?: RegistrationSource) {
 		let pending = pendingThemes.get(theme);
 
 		if (!pending) {
-			pending = loadThemeDefinition(themeUrl(theme))
+			pending = withRetries(() => loadThemeDefinition(themeUrl(theme)), retryDelays)
 				.then((definition) =>
 					highlighter.loadTheme({ ...definition, name: theme } as ThemeInput),
 				)
