@@ -24,7 +24,6 @@ import { Route as SiteSubmitRouteImport } from './routes/_site/submit'
 import { Route as SiteTermsRouteImport } from './routes/_site/terms'
 import { Route as SiteThemesRouteImport } from './routes/_site/themes'
 import { Route as DevelopersSplatRouteImport } from './routes/developers/$'
-import { Route as SiteStaffLabRouteRouteImport } from './routes/_site/_staff/lab/route'
 import { Route as SiteStaffReviewRouteImport } from './routes/_site/_staff/review'
 import { Route as SiteAddonsIdRouteImport } from './routes/_site/addons/$id'
 import { Route as SiteProfilesDiscordIdRouteImport } from './routes/_site/profiles/$discordId'
@@ -39,8 +38,6 @@ import { Route as ApiV1SyncRouteImport } from './routes/api/v1/sync'
 import { Route as ApiV1UpdatesRouteImport } from './routes/api/v1/updates'
 import { Route as ApiWebhooksGithubSponsorsRouteImport } from './routes/api/webhooks/github-sponsors'
 import { Route as SiteStaffAdminIndexRouteImport } from './routes/_site/_staff/admin/index'
-import { Route as SiteStaffLabIndexRouteImport } from './routes/_site/_staff/lab/index'
-import { Route as SiteStaffLabVariantRouteRouteImport } from './routes/_site/_staff/lab/$variant/route'
 import { Route as ApiV1FirstPartyAddonsRouteImport } from './routes/api/v1/first-party/addons'
 import { Route as ApiV1FirstPartyPublishRouteImport } from './routes/api/v1/first-party/publish'
 import { Route as ApiV1GithubAddonsRouteImport } from './routes/api/v1/github/addons'
@@ -56,7 +53,6 @@ import { Route as SiteStaffAdminAddonsIndexRouteImport } from './routes/_site/_s
 import { Route as SiteStaffAdminAddonsIdRouteImport } from './routes/_site/_staff/admin/addons/$id'
 import { Route as SiteStaffAdminUsersIndexRouteImport } from './routes/_site/_staff/admin/users/index'
 import { Route as SiteStaffAdminUsersIdRouteImport } from './routes/_site/_staff/admin/users/$id'
-import { Route as SiteStaffLabVariantReviewRouteImport } from './routes/_site/_staff/lab/$variant/review'
 import { Route as ApiV1AddonsIdDelistRouteImport } from './routes/api/v1/addons/$id/delist'
 import { Route as ApiV1AddonsIdIconRouteImport } from './routes/api/v1/addons/$id/icon'
 import { Route as ApiV1AddonsIdMaintainersRouteImport } from './routes/api/v1/addons/$id/maintainers'
@@ -65,10 +61,6 @@ import { Route as ApiV1AddonsIdTransferRouteImport } from './routes/api/v1/addon
 import { Route as ApiV1AddonsIdVersionsRouteImport } from './routes/api/v1/addons/$id/versions'
 import { Route as ApiV1SubmissionsIdReviewRouteImport } from './routes/api/v1/submissions/$id/review'
 import { Route as ApiV1UsersIdBadgesRouteImport } from './routes/api/v1/users/$id/badges'
-import { Route as SiteStaffLabVariantAddonsIndexRouteImport } from './routes/_site/_staff/lab/$variant/addons/index'
-import { Route as SiteStaffLabVariantAddonsIdRouteImport } from './routes/_site/_staff/lab/$variant/addons/$id'
-import { Route as SiteStaffLabVariantUsersIndexRouteImport } from './routes/_site/_staff/lab/$variant/users/index'
-import { Route as SiteStaffLabVariantUsersIdRouteImport } from './routes/_site/_staff/lab/$variant/users/$id'
 import { Route as ApiV1AddonsIdMaintainersUserIdRouteImport } from './routes/api/v1/addons/$id/maintainers/$userId'
 import { Route as ApiV1LoaderReleasesPlatformVersionRouteImport } from './routes/api/v1/loader/releases/$platform/$version'
 import { Route as ApiV1UsersIdBadgeRevokeRouteImport } from './routes/api/v1/users/$id/badge/revoke'
@@ -146,11 +138,6 @@ const DevelopersSplatRoute = DevelopersSplatRouteImport.update({
   path: '/developers/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SiteStaffLabRouteRoute = SiteStaffLabRouteRouteImport.update({
-  id: '/lab',
-  path: '/lab',
-  getParentRoute: () => SiteStaffRouteRoute,
-} as any)
 const SiteStaffReviewRoute = SiteStaffReviewRouteImport.update({
   id: '/review',
   path: '/review',
@@ -222,17 +209,6 @@ const SiteStaffAdminIndexRoute = SiteStaffAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => SiteStaffRouteRoute,
 } as any)
-const SiteStaffLabIndexRoute = SiteStaffLabIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => SiteStaffLabRouteRoute,
-} as any)
-const SiteStaffLabVariantRouteRoute =
-  SiteStaffLabVariantRouteRouteImport.update({
-    id: '/$variant',
-    path: '/$variant',
-    getParentRoute: () => SiteStaffLabRouteRoute,
-  } as any)
 const ApiV1FirstPartyAddonsRoute = ApiV1FirstPartyAddonsRouteImport.update({
   id: '/api/v1/first-party/addons',
   path: '/api/v1/first-party/addons',
@@ -310,12 +286,6 @@ const SiteStaffAdminUsersIdRoute = SiteStaffAdminUsersIdRouteImport.update({
   path: '/admin/users/$id',
   getParentRoute: () => SiteStaffRouteRoute,
 } as any)
-const SiteStaffLabVariantReviewRoute =
-  SiteStaffLabVariantReviewRouteImport.update({
-    id: '/review',
-    path: '/review',
-    getParentRoute: () => SiteStaffLabVariantRouteRoute,
-  } as any)
 const ApiV1AddonsIdDelistRoute = ApiV1AddonsIdDelistRouteImport.update({
   id: '/$id/delist',
   path: '/$id/delist',
@@ -358,30 +328,6 @@ const ApiV1UsersIdBadgesRoute = ApiV1UsersIdBadgesRouteImport.update({
   path: '/api/v1/users/$id/badges',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SiteStaffLabVariantAddonsIndexRoute =
-  SiteStaffLabVariantAddonsIndexRouteImport.update({
-    id: '/addons/',
-    path: '/addons/',
-    getParentRoute: () => SiteStaffLabVariantRouteRoute,
-  } as any)
-const SiteStaffLabVariantAddonsIdRoute =
-  SiteStaffLabVariantAddonsIdRouteImport.update({
-    id: '/addons/$id',
-    path: '/addons/$id',
-    getParentRoute: () => SiteStaffLabVariantRouteRoute,
-  } as any)
-const SiteStaffLabVariantUsersIndexRoute =
-  SiteStaffLabVariantUsersIndexRouteImport.update({
-    id: '/users/',
-    path: '/users/',
-    getParentRoute: () => SiteStaffLabVariantRouteRoute,
-  } as any)
-const SiteStaffLabVariantUsersIdRoute =
-  SiteStaffLabVariantUsersIdRouteImport.update({
-    id: '/users/$id',
-    path: '/users/$id',
-    getParentRoute: () => SiteStaffLabVariantRouteRoute,
-  } as any)
 const ApiV1AddonsIdMaintainersUserIdRoute =
   ApiV1AddonsIdMaintainersUserIdRouteImport.update({
     id: '/$userId',
@@ -414,7 +360,6 @@ export interface FileRoutesByFullPath {
   '/terms': typeof SiteTermsRoute
   '/themes': typeof SiteThemesRoute
   '/developers/$': typeof DevelopersSplatRoute
-  '/lab': typeof SiteStaffLabRouteRouteWithChildren
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
   '/profiles/$discordId': typeof SiteProfilesDiscordIdRoute
@@ -428,7 +373,6 @@ export interface FileRoutesByFullPath {
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/team/': typeof SiteTeamIndexRoute
-  '/lab/$variant': typeof SiteStaffLabVariantRouteRouteWithChildren
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -441,10 +385,8 @@ export interface FileRoutesByFullPath {
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
   '/admin/': typeof SiteStaffAdminIndexRoute
-  '/lab/': typeof SiteStaffLabIndexRoute
   '/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
   '/admin/users/$id': typeof SiteStaffAdminUsersIdRoute
-  '/lab/$variant/review': typeof SiteStaffLabVariantReviewRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
   '/api/v1/addons/$id/icon': typeof ApiV1AddonsIdIconRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
@@ -455,13 +397,9 @@ export interface FileRoutesByFullPath {
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/admin/addons/': typeof SiteStaffAdminAddonsIndexRoute
   '/admin/users/': typeof SiteStaffAdminUsersIndexRoute
-  '/lab/$variant/addons/$id': typeof SiteStaffLabVariantAddonsIdRoute
-  '/lab/$variant/users/$id': typeof SiteStaffLabVariantUsersIdRoute
   '/api/v1/addons/$id/maintainers/$userId': typeof ApiV1AddonsIdMaintainersUserIdRoute
   '/api/v1/loader/releases/$platform/$version': typeof ApiV1LoaderReleasesPlatformVersionRoute
   '/api/v1/users/$id/badge/revoke': typeof ApiV1UsersIdBadgeRevokeRoute
-  '/lab/$variant/addons/': typeof SiteStaffLabVariantAddonsIndexRoute
-  '/lab/$variant/users/': typeof SiteStaffLabVariantUsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/device': typeof DeviceRoute
@@ -490,7 +428,6 @@ export interface FileRoutesByTo {
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/team': typeof SiteTeamIndexRoute
-  '/lab/$variant': typeof SiteStaffLabVariantRouteRouteWithChildren
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -503,10 +440,8 @@ export interface FileRoutesByTo {
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
   '/admin': typeof SiteStaffAdminIndexRoute
-  '/lab': typeof SiteStaffLabIndexRoute
   '/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
   '/admin/users/$id': typeof SiteStaffAdminUsersIdRoute
-  '/lab/$variant/review': typeof SiteStaffLabVariantReviewRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
   '/api/v1/addons/$id/icon': typeof ApiV1AddonsIdIconRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
@@ -517,13 +452,9 @@ export interface FileRoutesByTo {
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/admin/addons': typeof SiteStaffAdminAddonsIndexRoute
   '/admin/users': typeof SiteStaffAdminUsersIndexRoute
-  '/lab/$variant/addons/$id': typeof SiteStaffLabVariantAddonsIdRoute
-  '/lab/$variant/users/$id': typeof SiteStaffLabVariantUsersIdRoute
   '/api/v1/addons/$id/maintainers/$userId': typeof ApiV1AddonsIdMaintainersUserIdRoute
   '/api/v1/loader/releases/$platform/$version': typeof ApiV1LoaderReleasesPlatformVersionRoute
   '/api/v1/users/$id/badge/revoke': typeof ApiV1UsersIdBadgeRevokeRoute
-  '/lab/$variant/addons': typeof SiteStaffLabVariantAddonsIndexRoute
-  '/lab/$variant/users': typeof SiteStaffLabVariantUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -542,7 +473,6 @@ export interface FileRoutesById {
   '/_site/themes': typeof SiteThemesRoute
   '/developers/$': typeof DevelopersSplatRoute
   '/_site/': typeof SiteIndexRoute
-  '/_site/_staff/lab': typeof SiteStaffLabRouteRouteWithChildren
   '/_site/_staff/review': typeof SiteStaffReviewRoute
   '/_site/addons/$id': typeof SiteAddonsIdRoute
   '/_site/profiles/$discordId': typeof SiteProfilesDiscordIdRoute
@@ -556,7 +486,6 @@ export interface FileRoutesById {
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/_site/team/': typeof SiteTeamIndexRoute
-  '/_site/_staff/lab/$variant': typeof SiteStaffLabVariantRouteRouteWithChildren
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -569,10 +498,8 @@ export interface FileRoutesById {
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
   '/_site/_staff/admin/': typeof SiteStaffAdminIndexRoute
-  '/_site/_staff/lab/': typeof SiteStaffLabIndexRoute
   '/_site/_staff/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
   '/_site/_staff/admin/users/$id': typeof SiteStaffAdminUsersIdRoute
-  '/_site/_staff/lab/$variant/review': typeof SiteStaffLabVariantReviewRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
   '/api/v1/addons/$id/icon': typeof ApiV1AddonsIdIconRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
@@ -583,13 +510,9 @@ export interface FileRoutesById {
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/_site/_staff/admin/addons/': typeof SiteStaffAdminAddonsIndexRoute
   '/_site/_staff/admin/users/': typeof SiteStaffAdminUsersIndexRoute
-  '/_site/_staff/lab/$variant/addons/$id': typeof SiteStaffLabVariantAddonsIdRoute
-  '/_site/_staff/lab/$variant/users/$id': typeof SiteStaffLabVariantUsersIdRoute
   '/api/v1/addons/$id/maintainers/$userId': typeof ApiV1AddonsIdMaintainersUserIdRoute
   '/api/v1/loader/releases/$platform/$version': typeof ApiV1LoaderReleasesPlatformVersionRoute
   '/api/v1/users/$id/badge/revoke': typeof ApiV1UsersIdBadgeRevokeRoute
-  '/_site/_staff/lab/$variant/addons/': typeof SiteStaffLabVariantAddonsIndexRoute
-  '/_site/_staff/lab/$variant/users/': typeof SiteStaffLabVariantUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -607,7 +530,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/themes'
     | '/developers/$'
-    | '/lab'
     | '/review'
     | '/addons/$id'
     | '/profiles/$discordId'
@@ -621,7 +543,6 @@ export interface FileRouteTypes {
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
     | '/team/'
-    | '/lab/$variant'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -634,10 +555,8 @@ export interface FileRouteTypes {
     | '/api/v1/submissions/preview'
     | '/api/v1/sync/oauth'
     | '/admin/'
-    | '/lab/'
     | '/admin/addons/$id'
     | '/admin/users/$id'
-    | '/lab/$variant/review'
     | '/api/v1/addons/$id/delist'
     | '/api/v1/addons/$id/icon'
     | '/api/v1/addons/$id/maintainers'
@@ -648,13 +567,9 @@ export interface FileRouteTypes {
     | '/api/v1/users/$id/badges'
     | '/admin/addons/'
     | '/admin/users/'
-    | '/lab/$variant/addons/$id'
-    | '/lab/$variant/users/$id'
     | '/api/v1/addons/$id/maintainers/$userId'
     | '/api/v1/loader/releases/$platform/$version'
     | '/api/v1/users/$id/badge/revoke'
-    | '/lab/$variant/addons/'
-    | '/lab/$variant/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/device'
@@ -683,7 +598,6 @@ export interface FileRouteTypes {
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
     | '/team'
-    | '/lab/$variant'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -696,10 +610,8 @@ export interface FileRouteTypes {
     | '/api/v1/submissions/preview'
     | '/api/v1/sync/oauth'
     | '/admin'
-    | '/lab'
     | '/admin/addons/$id'
     | '/admin/users/$id'
-    | '/lab/$variant/review'
     | '/api/v1/addons/$id/delist'
     | '/api/v1/addons/$id/icon'
     | '/api/v1/addons/$id/maintainers'
@@ -710,13 +622,9 @@ export interface FileRouteTypes {
     | '/api/v1/users/$id/badges'
     | '/admin/addons'
     | '/admin/users'
-    | '/lab/$variant/addons/$id'
-    | '/lab/$variant/users/$id'
     | '/api/v1/addons/$id/maintainers/$userId'
     | '/api/v1/loader/releases/$platform/$version'
     | '/api/v1/users/$id/badge/revoke'
-    | '/lab/$variant/addons'
-    | '/lab/$variant/users'
   id:
     | '__root__'
     | '/_site'
@@ -734,7 +642,6 @@ export interface FileRouteTypes {
     | '/_site/themes'
     | '/developers/$'
     | '/_site/'
-    | '/_site/_staff/lab'
     | '/_site/_staff/review'
     | '/_site/addons/$id'
     | '/_site/profiles/$discordId'
@@ -748,7 +655,6 @@ export interface FileRouteTypes {
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
     | '/_site/team/'
-    | '/_site/_staff/lab/$variant'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -761,10 +667,8 @@ export interface FileRouteTypes {
     | '/api/v1/submissions/preview'
     | '/api/v1/sync/oauth'
     | '/_site/_staff/admin/'
-    | '/_site/_staff/lab/'
     | '/_site/_staff/admin/addons/$id'
     | '/_site/_staff/admin/users/$id'
-    | '/_site/_staff/lab/$variant/review'
     | '/api/v1/addons/$id/delist'
     | '/api/v1/addons/$id/icon'
     | '/api/v1/addons/$id/maintainers'
@@ -775,13 +679,9 @@ export interface FileRouteTypes {
     | '/api/v1/users/$id/badges'
     | '/_site/_staff/admin/addons/'
     | '/_site/_staff/admin/users/'
-    | '/_site/_staff/lab/$variant/addons/$id'
-    | '/_site/_staff/lab/$variant/users/$id'
     | '/api/v1/addons/$id/maintainers/$userId'
     | '/api/v1/loader/releases/$platform/$version'
     | '/api/v1/users/$id/badge/revoke'
-    | '/_site/_staff/lab/$variant/addons/'
-    | '/_site/_staff/lab/$variant/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -916,13 +816,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevelopersSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_site/_staff/lab': {
-      id: '/_site/_staff/lab'
-      path: '/lab'
-      fullPath: '/lab'
-      preLoaderRoute: typeof SiteStaffLabRouteRouteImport
-      parentRoute: typeof SiteStaffRouteRoute
-    }
     '/_site/_staff/review': {
       id: '/_site/_staff/review'
       path: '/review'
@@ -1020,20 +913,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof SiteStaffAdminIndexRouteImport
       parentRoute: typeof SiteStaffRouteRoute
-    }
-    '/_site/_staff/lab/': {
-      id: '/_site/_staff/lab/'
-      path: '/'
-      fullPath: '/lab/'
-      preLoaderRoute: typeof SiteStaffLabIndexRouteImport
-      parentRoute: typeof SiteStaffLabRouteRoute
-    }
-    '/_site/_staff/lab/$variant': {
-      id: '/_site/_staff/lab/$variant'
-      path: '/$variant'
-      fullPath: '/lab/$variant'
-      preLoaderRoute: typeof SiteStaffLabVariantRouteRouteImport
-      parentRoute: typeof SiteStaffLabRouteRoute
     }
     '/api/v1/first-party/addons': {
       id: '/api/v1/first-party/addons'
@@ -1140,13 +1019,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteStaffAdminUsersIdRouteImport
       parentRoute: typeof SiteStaffRouteRoute
     }
-    '/_site/_staff/lab/$variant/review': {
-      id: '/_site/_staff/lab/$variant/review'
-      path: '/review'
-      fullPath: '/lab/$variant/review'
-      preLoaderRoute: typeof SiteStaffLabVariantReviewRouteImport
-      parentRoute: typeof SiteStaffLabVariantRouteRoute
-    }
     '/api/v1/addons/$id/delist': {
       id: '/api/v1/addons/$id/delist'
       path: '/$id/delist'
@@ -1203,34 +1075,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1UsersIdBadgesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_site/_staff/lab/$variant/addons/': {
-      id: '/_site/_staff/lab/$variant/addons/'
-      path: '/addons'
-      fullPath: '/lab/$variant/addons/'
-      preLoaderRoute: typeof SiteStaffLabVariantAddonsIndexRouteImport
-      parentRoute: typeof SiteStaffLabVariantRouteRoute
-    }
-    '/_site/_staff/lab/$variant/addons/$id': {
-      id: '/_site/_staff/lab/$variant/addons/$id'
-      path: '/addons/$id'
-      fullPath: '/lab/$variant/addons/$id'
-      preLoaderRoute: typeof SiteStaffLabVariantAddonsIdRouteImport
-      parentRoute: typeof SiteStaffLabVariantRouteRoute
-    }
-    '/_site/_staff/lab/$variant/users/': {
-      id: '/_site/_staff/lab/$variant/users/'
-      path: '/users'
-      fullPath: '/lab/$variant/users/'
-      preLoaderRoute: typeof SiteStaffLabVariantUsersIndexRouteImport
-      parentRoute: typeof SiteStaffLabVariantRouteRoute
-    }
-    '/_site/_staff/lab/$variant/users/$id': {
-      id: '/_site/_staff/lab/$variant/users/$id'
-      path: '/users/$id'
-      fullPath: '/lab/$variant/users/$id'
-      preLoaderRoute: typeof SiteStaffLabVariantUsersIdRouteImport
-      parentRoute: typeof SiteStaffLabVariantRouteRoute
-    }
     '/api/v1/addons/$id/maintainers/$userId': {
       id: '/api/v1/addons/$id/maintainers/$userId'
       path: '/$userId'
@@ -1255,43 +1099,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface SiteStaffLabVariantRouteRouteChildren {
-  SiteStaffLabVariantReviewRoute: typeof SiteStaffLabVariantReviewRoute
-  SiteStaffLabVariantAddonsIdRoute: typeof SiteStaffLabVariantAddonsIdRoute
-  SiteStaffLabVariantUsersIdRoute: typeof SiteStaffLabVariantUsersIdRoute
-  SiteStaffLabVariantAddonsIndexRoute: typeof SiteStaffLabVariantAddonsIndexRoute
-  SiteStaffLabVariantUsersIndexRoute: typeof SiteStaffLabVariantUsersIndexRoute
-}
-
-const SiteStaffLabVariantRouteRouteChildren: SiteStaffLabVariantRouteRouteChildren =
-  {
-    SiteStaffLabVariantReviewRoute: SiteStaffLabVariantReviewRoute,
-    SiteStaffLabVariantAddonsIdRoute: SiteStaffLabVariantAddonsIdRoute,
-    SiteStaffLabVariantUsersIdRoute: SiteStaffLabVariantUsersIdRoute,
-    SiteStaffLabVariantAddonsIndexRoute: SiteStaffLabVariantAddonsIndexRoute,
-    SiteStaffLabVariantUsersIndexRoute: SiteStaffLabVariantUsersIndexRoute,
-  }
-
-const SiteStaffLabVariantRouteRouteWithChildren =
-  SiteStaffLabVariantRouteRoute._addFileChildren(
-    SiteStaffLabVariantRouteRouteChildren,
-  )
-
-interface SiteStaffLabRouteRouteChildren {
-  SiteStaffLabVariantRouteRoute: typeof SiteStaffLabVariantRouteRouteWithChildren
-  SiteStaffLabIndexRoute: typeof SiteStaffLabIndexRoute
-}
-
-const SiteStaffLabRouteRouteChildren: SiteStaffLabRouteRouteChildren = {
-  SiteStaffLabVariantRouteRoute: SiteStaffLabVariantRouteRouteWithChildren,
-  SiteStaffLabIndexRoute: SiteStaffLabIndexRoute,
-}
-
-const SiteStaffLabRouteRouteWithChildren =
-  SiteStaffLabRouteRoute._addFileChildren(SiteStaffLabRouteRouteChildren)
-
 interface SiteStaffRouteRouteChildren {
-  SiteStaffLabRouteRoute: typeof SiteStaffLabRouteRouteWithChildren
   SiteStaffReviewRoute: typeof SiteStaffReviewRoute
   SiteStaffAdminIndexRoute: typeof SiteStaffAdminIndexRoute
   SiteStaffAdminAddonsIdRoute: typeof SiteStaffAdminAddonsIdRoute
@@ -1301,7 +1109,6 @@ interface SiteStaffRouteRouteChildren {
 }
 
 const SiteStaffRouteRouteChildren: SiteStaffRouteRouteChildren = {
-  SiteStaffLabRouteRoute: SiteStaffLabRouteRouteWithChildren,
   SiteStaffReviewRoute: SiteStaffReviewRoute,
   SiteStaffAdminIndexRoute: SiteStaffAdminIndexRoute,
   SiteStaffAdminAddonsIdRoute: SiteStaffAdminAddonsIdRoute,
