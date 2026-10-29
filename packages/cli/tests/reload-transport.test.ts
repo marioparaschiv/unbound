@@ -156,8 +156,12 @@ describe('readBuiltAddon', () => {
 	test('sends the bytecode built with the bundle and lists its digests in the manifest', () => {
 		const plugin = builtPlugin();
 		const compiled = Buffer.from([0xc6, 0x1f, 0xbc, 0x03, 0x01]);
+		const bytecode = join(plugin.output, 'index.98.hbc');
+		const bundle = join(plugin.output, 'index.js');
 
-		writeFileSync(join(plugin.output, 'index.98.hbc'), compiled);
+		writeFileSync(bytecode, compiled);
+		utimesSync(bytecode, new Date(1_000_000), new Date(1_000_000));
+		utimesSync(bundle, new Date(1_000_500), new Date(1_000_500));
 
 		const built = readBuiltAddon(plugin);
 
@@ -167,7 +171,7 @@ describe('readBuiltAddon', () => {
 		});
 	});
 
-	test('leaves out bytecode older than the bundle', () => {
+	test('leaves out bytecode from an earlier build', () => {
 		const plugin = builtPlugin();
 		const stale = join(plugin.output, 'index.98.hbc');
 
