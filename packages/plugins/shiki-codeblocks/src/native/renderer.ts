@@ -22,6 +22,7 @@ import { MessageStore, settings } from '~/modules';
 import { createFlatRecovery } from '~/flat-recovery';
 import { onAppForeground } from '~/foreground';
 import { createHighlighter } from '~/highlighter';
+import { readPreferences } from '~/preferences';
 import { changesCardLayout } from '~/preferences';
 
 import {
@@ -274,6 +275,9 @@ export function startRenderer(objc: NativeObjCBridge): () => void {
 		signal: controller.signal,
 	};
 	const timers = new Set<ReturnType<typeof setTimeout>>();
+
+	session.highlighter.warm(readPreferences().theme);
+
 	const [required, ...optional] = labelHooks(session, timers);
 	const hooks: NativeHookToken[] = [objc.hook(...required)];
 

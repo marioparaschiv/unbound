@@ -102,6 +102,8 @@ export function createNativeCards(native: Native) {
 	if (!connectTextRewrites(java, MESSAGE_CONTENT_VIEW)) return undefined;
 
 	const highlighter = createHighlighter();
+
+	highlighter.warm(readPreferences().theme);
 	const cards = new Map<string, Card>();
 	const listeners = new Map<string, Set<() => void>>();
 	const layouts = new Map<string, Layout>();
