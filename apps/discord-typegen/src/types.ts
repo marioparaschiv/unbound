@@ -41,6 +41,12 @@ export type RestTarget = {
 	through: HookRef | undefined;
 };
 
+/** A hook the props are passed to as its first argument, and the keys the passed object sets over them. */
+export type HookCall = {
+	hook: TargetRef;
+	sets: string[];
+};
+
 export type ComponentKind = 'function' | 'memo' | 'forwardRef' | 'class';
 
 export type LiteralValue = string | number | boolean | null;
@@ -78,6 +84,7 @@ export type ComponentRecord = {
 	restTargets: RestTarget[];
 	/** The props object (or its rest) is handed to a call the walk cannot follow, such as a hook. */
 	propsEscape: boolean;
+	hookCalls: HookCall[];
 	statics: StaticRecord[];
 	/** For a hook: per member of its result (`''` for the result itself) that spreads its argument, the keys set there. */
 	overrides: Map<string, Set<string>>;

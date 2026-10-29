@@ -2215,6 +2215,7 @@ export type RecyclerViewComponentProps = {
 		CellRendererComponent?: unknown;
 		ItemSeparatorComponent?: unknown;
 		ListEmptyComponent?: unknown;
+		ListEmptyComponentStyle?: React.ComponentProps<typeof RN.View>['style'];
 		ListFooterComponent?: unknown;
 		ListFooterComponentStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		ListHeaderComponent?: unknown;
@@ -2230,6 +2231,7 @@ export type RecyclerViewComponentProps = {
 		onRefresh?: (...args: any[]) => unknown;
 		overrideProps?: unknown;
 		progressViewOffset?: unknown;
+		refreshControl?: unknown;
 		refreshing?: unknown;
 		renderItem?: ViewHolderCollectionProps['renderItem'];
 		renderScrollComponent?: (...args: any[]) => React.ReactNode;

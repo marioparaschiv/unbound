@@ -2377,7 +2377,7 @@ export type GuildEventEntityTypeSelectionComponent = React.ComponentType<GuildEv
  */
 export type GuildEventLocationProps = {
 		location?: DesignTextInputProps['value'];
-		onChange?: (...args: any[]) => unknown;
+		onChange?: DesignTextInputProps['onChange'];
 		onFocus?: DesignTextInputProps['onFocus'];
 	};
 export type GuildEventLocationComponent = React.ComponentType<GuildEventLocationProps>;
@@ -2396,7 +2396,7 @@ export type GuildScheduledEventsGuildEventRecurrenceComponent = React.ComponentT
  * @see modules/guild_scheduled_events/native/components/GuildEventModalComponents.tsx
  */
 export type GuildEventTopicProps = {
-		onChange?: (...args: any[]) => unknown;
+		onChange?: DesignTextInputProps['onChange'];
 		topic?: DesignTextInputProps['value'];
 	};
 export type GuildEventTopicComponent = React.ComponentType<GuildEventTopicProps>;
@@ -3810,12 +3810,12 @@ export type GuildSettingsRoleEditDisplayProps = {
 		formErrors: { name?: unknown };
 		guild: { id?: unknown };
 		hoist?: unknown;
-		locked?: TableRowProps['disabled'];
+		locked?: DesignTextInputProps['disabled'];
 		mentionable?: unknown;
 		name?: DesignTextInputProps['value'];
 		onHoistChanged?: TableSwitchRowProps['onValueChange'];
 		onMentionableChanged?: TableSwitchRowProps['onValueChange'];
-		onNameChanged?: (...args: any[]) => unknown;
+		onNameChanged?: DesignTextInputProps['onChange'];
 		role: InRolePromptNoticeProps['role'];
 	};
 export type GuildSettingsRoleEditDisplayComponent = React.ComponentType<GuildSettingsRoleEditDisplayProps>;
@@ -5266,7 +5266,7 @@ export type GuildFolderSettingsSceneProps = {
 		color?: unknown;
 		name?: DesignTextInputProps['value'];
 		onColorChange?: (...args: any[]) => unknown;
-		onNameChange?: (...args: any[]) => unknown;
+		onNameChange?: DesignTextInputProps['onChange'];
 	};
 export type GuildFolderSettingsSceneComponent = React.ComponentType<GuildFolderSettingsSceneProps>;
 /**
@@ -7987,7 +7987,10 @@ export type ComponentStateContextProviderComponent = React.ComponentType<Compone
  */
 export type InteractionIframeModalProps = {
 		application: { bot?: unknown; id?: unknown; name?: unknown };
+		channelId?: string;
+		customId?: string;
 		id?: string;
+		iframePath?: unknown;
 		title?: DesignTextProps['children'];
 	};
 export type InteractionIframeModalComponent = React.ComponentType<InteractionIframeModalProps & Record<string, unknown>>;
@@ -7996,6 +7999,10 @@ export type InteractionIframeModalComponent = React.ComponentType<InteractionIfr
  * @see modules/interaction_components/native/InteractionModal.tsx
  */
 export type InteractionModalProps = {
+		application?: unknown;
+		channelId?: string;
+		components?: unknown;
+		customId?: string;
 		title?: DesignTextProps['children'];
 	};
 export type InteractionModalComponent = React.ComponentType<InteractionModalProps & Record<string, unknown>>;
@@ -9458,7 +9465,7 @@ export type AddFriendByIdInputProps = {
 		autoFocus?: TextFieldProps['autoFocus'];
 		headerText?: unknown;
 		headerTextStyle?: DesignTextProps['style'];
-		onChangeText?: (...args: any[]) => unknown;
+		onChangeText?: TextFieldProps['onChange'];
 		onFocus?: TextFieldProps['onFocus'];
 		onKeyPress?: TextFieldProps['onKeyPress'];
 		onSelectionChange?: TextFieldProps['onSelectionChange'];
@@ -13825,12 +13832,12 @@ export type ClipboardCopyInputProps = {
 		/** @default true */
 		autoFocus?: DesignTextInputProps['autoFocus'];
 		error?: unknown;
-		isDisabled?: boolean;
+		isDisabled?: DesignTextInputProps['disabled'];
 		isValidClipboardCode?: boolean;
 		keyboardType?: DesignTextInputProps['keyboardType'];
 		label?: unknown;
 		maxLength?: DesignTextInputProps['maxLength'];
-		onChangeCode?: (...args: any[]) => unknown;
+		onChangeCode?: DesignTextInputProps['onChange'];
 		placeholder?: DesignTextInputProps['placeholder'];
 		textContentType?: DesignTextInputProps['textContentType'];
 	};
@@ -16052,7 +16059,7 @@ export type SingleCodeInputProps = {
 		codeType?: unknown;
 		/** @default 6 */
 		count?: DesignTextInputProps['maxLength'];
-		disabled?: BaseTextButtonProps['disabled'];
+		disabled?: DesignTextInputProps['disabled'];
 		error?: unknown;
 		/** @default false */
 		loading?: BaseTextButtonProps['loading'];
@@ -16224,7 +16231,7 @@ export type PollDurationSelectionRowComponent = React.ComponentType<PollDuration
  */
 export type PollQuestionInputProps = {
 		error?: { length?: unknown };
-		onChange?: (...args: any[]) => unknown;
+		onChange?: DesignTextInputProps['onChange'];
 		onSubmitEditing?: DesignTextInputProps['onSubmitEditing'];
 		ref?: DesignTextInputProps['ref'];
 	};

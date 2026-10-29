@@ -11,6 +11,7 @@ import {
 	element,
 	isHookName,
 	observe,
+	recordHookCall,
 	recordOverrides,
 	wrap,
 } from './evidence';
@@ -636,8 +637,17 @@ function apply(frame: Frame, fn: Value, args: Value[]): Value {
 			return escape(args);
 		case 'import':
 			bindClassMethods(args);
+			recordHookCall(fn, first);
 
 			return escape(args, fn);
+		case 'function':
+			bindClassMethods(args);
+
+			if (fn.fn.component && isHookName(fn.fn.component.name)) {
+				recordHookCall({ kind: 'local', component: fn.fn.component }, first);
+			}
+
+			return escape(args);
 		default:
 			bindClassMethods(args);
 

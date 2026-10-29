@@ -3,6 +3,7 @@ import type { InferEnv, InferredType } from './rules';
 import type { Resolved, Resolver } from './resolve';
 import type { HostProps } from './hosts';
 
+import { createHookReads } from './hook-args';
 import { RULES, literalType } from './rules';
 
 /** What rest props can be typed from: a generated component or a React Native host. */
@@ -90,6 +91,48 @@ export function infer(
 
 			break;
 		}
+	}
+
+	// Whether a key of the props still reaches the rest base, which then types it.
+	function reachesBase(component: ComponentRecord, key: string): boolean {
+		const rest = restOf.get(component);
+
+		if (!rest || restOmits.get(component)?.includes(key)) {
+			return false;
+		}
+
+		if (rest.kind === 'host') {
+			return hosts.get(rest.name)?.has(key) ?? false;
+		}
+
+		return rest.component.props.has(key) || reachesBase(rest.component, key);
+	}
+
+	const hookReads = createHookReads(resolve);
+	const adopted = new Set<ComponentRecord>();
+
+	// A key a hook reads from the props becomes the component's own, unless the base already declares it. Bases
+	// adopt first, so the check sees their final keys.
+	function adopt(component: ComponentRecord) {
+		if (adopted.has(component)) return;
+
+		adopted.add(component);
+
+		const rest = restOf.get(component);
+
+		if (rest?.kind === 'component') {
+			adopt(rest.component);
+		}
+
+		for (const [key, evidence] of hookReads(component)) {
+			if (!component.props.has(key) && !reachesBase(component, key)) {
+				component.props.set(key, [...evidence]);
+			}
+		}
+	}
+
+	for (const component of components) {
+		adopt(component);
 	}
 
 	function isOpen(component: ComponentRecord): boolean {

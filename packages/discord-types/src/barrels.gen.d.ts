@@ -1452,19 +1452,29 @@ export type SliderComponent = React.ComponentType<SliderProps & Record<string, u
  * Props of `SplitTextField` (function). Exports: SplitTextField.
  * @see design/components/SplitTextInput/native/SplitTextField.native.tsx
  */
-export type SplitTextFieldProps = Omit<BaseTextFieldProps, 'aria-disabled' | 'editable' | 'focusable' | 'leadingPressableProps' | 'leadingText' | 'onChange' | 'onChangeText' | 'ref' | 'round' | 'size'> & {
+export type SplitTextFieldProps = Omit<BaseTextFieldProps, 'aria-disabled' | 'clearable' | 'disabled' | 'editable' | 'focusable' | 'leadingPressableProps' | 'leadingText' | 'onChange' | 'onChangeText' | 'onClear' | 'ref' | 'round' | 'size' | 'trailingIcon' | 'trailingPressableProps' | 'trailingText'> & {
+		clearable?: unknown;
+		/** @default false */
+		disabled?: boolean;
+		focusable?: unknown;
 		leadingPressableProps?: unknown;
 		leadingText?: { length?: unknown };
+		onChange?: (...args: any[]) => unknown;
+		onClear?: (...args: any[]) => unknown;
 		ref?: React.Ref<any>;
 		round?: unknown;
 		size?: unknown;
+		trailingIcon?: unknown;
+		trailingPressableProps?: unknown;
+		trailingText?: DesignTextProps['children'];
 	};
 export type SplitTextFieldComponent = React.ComponentType<SplitTextFieldProps & Record<string, unknown>>;
 /**
  * Props of `SplitTextInput` (function). Exports: SplitTextInput.
  * @see design/components/SplitTextInput/native/SplitTextInput.native.tsx
  */
-export type SplitTextInputProps = Omit<SplitTextFieldProps, 'ref' | 'required'> & {
+export type SplitTextInputProps = Omit<SplitTextFieldProps, 'label' | 'ref' | 'required'> & {
+		label?: unknown;
 		ref?: SplitTextFieldProps['ref'];
 		required?: unknown;
 	};
@@ -1835,10 +1845,11 @@ export type SearchFieldComponent = React.ComponentType<SearchFieldProps & Record
  * Props of `TextAreaField` (function). Exports: TextAreaField.
  * @see design/components/TextField/native/TextAreaField.native.tsx
  */
-export type TextAreaFieldProps = Omit<InputTextInputProps, 'disabled' | 'label' | 'maxLength' | 'ref'> & {
+export type TextAreaFieldProps = Omit<InputTextInputProps, 'disabled' | 'label' | 'maxLength' | 'onClear' | 'ref'> & {
 		disabled?: boolean;
 		label?: unknown;
 		maxLength?: unknown;
+		onClear?: (...args: any[]) => unknown;
 		ref?: React.Ref<any>;
 	};
 export type TextAreaFieldComponent = React.ComponentType<TextAreaFieldProps & Record<string, unknown>>;
@@ -1846,18 +1857,33 @@ export type TextAreaFieldComponent = React.ComponentType<TextAreaFieldProps & Re
  * Props of `TextField` (function). Exports: TextField.
  * @see design/components/TextField/native/TextField.native.tsx
  */
-export type TextFieldProps = Omit<BaseTextFieldProps, 'aria-disabled' | 'editable' | 'focusable' | 'onChange' | 'onChangeText' | 'ref'> & {
+export type TextFieldProps = Omit<BaseTextFieldProps, 'aria-disabled' | 'clearable' | 'disabled' | 'editable' | 'focusable' | 'leadingPressableProps' | 'leadingText' | 'onChange' | 'onChangeText' | 'onClear' | 'ref' | 'trailingIcon' | 'trailingPressableProps' | 'trailingText'> & {
+		clearable?: unknown;
+		/** @default false */
+		disabled?: boolean;
+		focusable?: unknown;
+		leadingPressableProps?: unknown;
+		leadingText?: DesignTextProps['children'];
+		onChange?: (...args: any[]) => unknown;
+		onClear?: (...args: any[]) => unknown;
 		ref?: React.Ref<any>;
+		trailingIcon?: unknown;
+		trailingPressableProps?: unknown;
+		trailingText?: DesignTextProps['children'];
 	};
 export type TextFieldComponent = React.ComponentType<TextFieldProps & Record<string, unknown>>;
 /**
  * Props of `GhostInput` (function). Exports: GhostInput.
  * @see design/components/TextInput/native/GhostInput.native.tsx
  */
-export type GhostInputProps = Omit<InputTextInputProps, 'autoFocus' | 'centered' | 'containerStyle' | 'required' | 'size' | 'status'> & {
+export type GhostInputProps = Omit<InputTextInputProps, 'autoFocus' | 'centered' | 'containerStyle' | 'disabled' | 'label' | 'onClear' | 'required' | 'size' | 'status'> & {
 		autoFocus?: InputTextInputProps['autoFocus'];
 		centered?: unknown;
 		containerStyle?: InputProps['containerStyle'];
+		/** @default false */
+		disabled?: boolean;
+		label?: unknown;
+		onClear?: (...args: any[]) => unknown;
 		required?: unknown;
 		size?: unknown;
 		status?: unknown;
@@ -1876,8 +1902,9 @@ export type TextAreaComponent = React.ComponentType<TextAreaProps & Record<strin
  * Props of `TextInput` (function). Exports: TextInput.
  * @see design/components/TextInput/native/TextInput.native.tsx
  */
-export type DesignTextInputProps = Omit<TextFieldProps, 'errorMessage' | 'ref' | 'required' | 'status'> & {
+export type DesignTextInputProps = Omit<TextFieldProps, 'errorMessage' | 'label' | 'ref' | 'required' | 'status'> & {
 		errorMessage?: unknown;
+		label?: unknown;
 		ref?: TextFieldProps['ref'];
 		required?: unknown;
 		status?: unknown;

@@ -9624,11 +9624,11 @@ export type ConjureAppIdentitySectionComponent = React.ComponentType<ConjureAppI
 export type ConjureAppIdentityTextFieldsProps = {
 		description?: TextAreaProps['value'];
 		/** @default false */
-		disabled?: TextAreaProps['disabled'];
+		disabled?: DesignTextInputProps['disabled'];
 		name?: DesignTextInputProps['value'];
 		nameError?: unknown;
 		onDescriptionChange?: TextAreaProps['onChange'];
-		onNameChange?: (...args: any[]) => unknown;
+		onNameChange?: DesignTextInputProps['onChange'];
 	};
 export type ConjureAppIdentityTextFieldsComponent = React.ComponentType<ConjureAppIdentityTextFieldsProps>;
 /**
@@ -10973,7 +10973,7 @@ export type GuildTemplateResolvedProps = {
 		guildTemplate?: { name?: unknown; serializedSourceGuild?: unknown; state?: unknown };
 		icon?: unknown;
 		name?: DesignTextInputProps['value'];
-		setName?: unknown;
+		setName?: DesignTextInputProps['onChange'];
 	};
 export type GuildTemplateResolvedComponent = React.ComponentType<GuildTemplateResolvedProps>;
 /**
@@ -11004,7 +11004,7 @@ export type CreateGuildProps = {
 		guild: { icon?: unknown; name?: unknown; staffOnly?: unknown };
 		onCreate?: BaseTextButtonProps['onPress'];
 		onIconPress?: (...args: any[]) => unknown;
-		onNameChange?: (...args: any[]) => unknown;
+		onNameChange?: DesignTextInputProps['onChange'];
 		onStaffOnlyChange?: TableSwitchRowProps['onValueChange'];
 		submitting?: BaseTextButtonProps['loading'];
 	};
@@ -11607,7 +11607,7 @@ export type DismissableContentsListHeaderProps = {
 		dailyCapOverridden?: unknown;
 		initialSearchQuery?: SearchFieldProps['defaultValue'];
 		newUserMinAgeRequiredOverridden?: unknown;
-		onSearchChange?: (...args: any[]) => unknown;
+		onSearchChange?: SearchFieldProps['onChange'];
 	};
 export type DismissableContentsListHeaderComponent = React.ComponentType<DismissableContentsListHeaderProps>;
 /**
@@ -12814,7 +12814,7 @@ export type ModulesEmojiPickerListComponentProps = {
 		bottomSheetIndex: { get?: unknown };
 		categoryIndexActive: { set?: unknown };
 		data: { hasGuildData?: unknown; hasSearchUpsell?: unknown };
-		guildId?: string;
+		guildId?: EmojiPickerListPremiumSearchUpsellProps['guildId'];
 		inPortalKeyboard?: unknown;
 		onLongPressEmoji: (...args: any[]) => unknown;
 		onPressEmoji: (...args: any[]) => unknown;
@@ -12908,6 +12908,8 @@ export type EmojiPickerListRowComponent = React.ComponentType<EmojiPickerListRow
  * @see modules/emoji_picker/native/components/EmojiPickerPremiumSearchUpsell.tsx
  */
 export type EmojiPickerListPremiumSearchUpsellProps = {
+		analyticsLocations?: unknown;
+		guildId?: string;
 		useTier0UpsellContent?: boolean;
 	};
 export type EmojiPickerListPremiumSearchUpsellComponent = React.ComponentType<EmojiPickerListPremiumSearchUpsellProps & Record<string, unknown>>;
@@ -15600,7 +15602,7 @@ export type GIFPickerCategoryViewComponent = React.ComponentType<GIFPickerCatego
  */
 export type FavoritesSearchProps = {
 		columnWidth?: unknown;
-		onQueryChange?: (...args: any[]) => unknown;
+		onQueryChange?: SearchFieldProps['onChange'];
 	};
 export type FavoritesSearchComponent = React.ComponentType<FavoritesSearchProps>;
 /**
@@ -15611,7 +15613,7 @@ export type GIFPickerHeaderProps = {
 		categoryType?: unknown;
 		columnWidth?: unknown;
 		onFavoritesQueryChange?: FavoritesSearchProps['onQueryChange'];
-		onQueryChange?: (...args: any[]) => unknown;
+		onQueryChange?: SearchFieldProps['onChange'];
 		onQueryClear?: PressableOpacityProps['onPress'];
 		searchInputRef?: SearchFieldProps['ref'];
 	};
@@ -17180,7 +17182,7 @@ export type TermsFieldListItemComponent = React.ComponentType<TermsFieldListItem
  */
 export type TextInputFieldProps = {
 		field: { label?: unknown; response?: unknown };
-		onChange?: (...args: any[]) => unknown;
+		onChange?: DesignTextInputProps['onChange'];
 	};
 export type TextInputFieldComponent = React.ComponentType<TextInputFieldProps>;
 /**

@@ -52,6 +52,7 @@ export function componentFor(ctx: ModuleContext, name: string): ComponentRecord 
 			props: new Map(),
 			restTargets: [],
 			propsEscape: false,
+			hookCalls: [],
 			statics: [],
 			overrides: new Map(),
 		};
@@ -149,6 +150,24 @@ function addOverrides(hook: ComponentRecord, value: Value, member: string) {
 	for (const key of value.object.entries.keys()) keys.add(key);
 
 	hook.overrides.set(member, keys);
+}
+
+/**
+ * @description Records a hook call whose first argument is the props, or an object spreading them, so the caller
+ * can inherit the keys the hook reads from it.
+ * @param hook The called hook.
+ * @param argument The first argument.
+ */
+export function recordHookCall(hook: TargetRef, argument: Value | undefined) {
+	if (!argument) return;
+
+	const sets = argument.kind === 'object' ? [...argument.object.entries.keys()] : [];
+
+	for (const source of spreadSources(argument)) {
+		if (source.kind === 'props') {
+			source.component.hookCalls.push({ hook, sets });
+		}
+	}
 }
 
 /**
@@ -349,6 +368,7 @@ function fileName(path: string | undefined): string | undefined {
 export default {
 	isHookName,
 	recordOverrides,
+	recordHookCall,
 	nameComponents,
 	observe,
 	componentFor,

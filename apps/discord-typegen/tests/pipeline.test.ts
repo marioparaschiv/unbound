@@ -117,8 +117,22 @@ describe('TextField', () => {
 
 	test('keys a hook sets over the spread props are dropped from the rest type', () => {
 		expect(props).toStartWith(
-			"export type TextFieldProps = Omit<BaseTextFieldProps, 'aria-disabled' | 'editable' | 'focusable' | 'onChange' | 'onChangeText' | 'ref'> & {",
+			"export type TextFieldProps = Omit<BaseTextFieldProps, 'aria-disabled' | 'disabled' | 'editable' | 'focusable' | 'onChange' | 'onChangeText' | 'onClear' | 'ref'> & {",
 		);
+	});
+
+	test('props read by the hooks the props pass through are typed from the hooks', () => {
+		expect(props).toContain('onChange?: (...args: any[]) => unknown;');
+		expect(props).toContain('onClear?: (...args: any[]) => unknown;');
+		expect(props).toContain('/** @default false */ disabled?: boolean;');
+	});
+
+	test('a hook-read key the base still receives keeps the base type', () => {
+		expect(props).not.toContain('value?:');
+	});
+
+	test('a key the hook sets over the props is not adopted', () => {
+		expect(props).not.toContain('onChangeText?:');
 	});
 
 	test('a component spreading a hook result still accepts the keys the hook reads', () => {
