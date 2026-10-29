@@ -78,6 +78,7 @@ struct IssueFacts {
     std::string registration;
     bool        virtualDevice = false;
     std::string framework;
+    bool        rooted = false;
 };
 
 struct ToolboxContext {
@@ -152,8 +153,9 @@ IssueFacts  issueFacts(const NativePlatformProvider &provider, const std::string
 IssueReport issueReport(const NativePlatformProvider &provider, const std::string &platform,
                         const std::string &discordVersion);
 std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFacts &facts);
-std::string                                      issueBody(const IssueReport &report);
-std::string                                      issueURL(const IssueReport &report);
+std::string discordLine(const std::string &label, const std::string &appSource);
+std::string issueBody(const IssueReport &report);
+std::string issueURL(const IssueReport &report);
 
 MenuStep                 menuStep(const nlohmann::json &item, bool confirmed);
 MenuOutcome              menuOutcome(const nlohmann::json &item, const std::string &result);

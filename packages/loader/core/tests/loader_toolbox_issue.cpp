@@ -52,16 +52,21 @@ int main()
         return std::string("<plist/>");
     };
 
+    ios.isRooted = [] {
+        return true;
+    };
+    ios.framework = [] {
+        return std::string("ElleKit");
+    };
+
     const auto report = loader::toolbox::issueReport(ios, "iOS", "300.0 (1234)");
     assert(report.platform == "iOS");
-    assert(row(report, "Device") == "iPhone SE");
-    assert(row(report, "iOS Version") == "26.0.1");
-    assert(row(report, "Discord Version") == "300.0 (1234)");
-    assert(row(report, "Unbound Version") == loader::loaderVersion());
+    assert(row(report, "Unbound") ==
+           std::string("loader ") + loader::loaderVersion() + " (`Unbound.dylib`, `ElleKit`)");
     assert(std::isdigit(static_cast<unsigned char>(loader::loaderVersion()[0])));
-    assert(row(report, "App Source") == "TrollStore");
-    assert(row(report, "App Registration") == "System");
-    assert(row(report, "Virtual Device") == "No");
+    assert(row(report, "Discord") == "300.0 Stable, build 1234 (TrollStore)");
+    assert(row(report, "Device") == "iPhone SE on iOS 26.0.1");
+    assert(row(report, "State") == "jailbroken, system app");
     assert(report.attachments.size() == 1);
     assert(report.attachments[0].first == "Entitlements" &&
            report.attachments[0].second == "<plist/>");
@@ -87,19 +92,21 @@ int main()
         return std::string("Vector");
     };
 
-    const auto androidReport = loader::toolbox::issueReport(android, "Android", "");
-    assert(row(androidReport, "Android Version") == "16");
-    assert(row(androidReport, "Discord Version") == "unknown");
-    assert(row(androidReport, "App Source") == "Google Play");
-    assert(row(androidReport, "Framework") == "Vector");
-    assert(row(androidReport, "App Registration") == "User");
-    assert(row(androidReport, "Virtual Device") == "Yes");
+    const auto androidReport =
+        loader::toolbox::issueReport(android, "Android", "352.10 - Beta (352110)");
+    assert(row(androidReport, "Unbound") ==
+           std::string("loader ") + loader::loaderVersion() + " (`libunbound.so`, `Vector`)");
+    assert(row(androidReport, "Discord") == "352.10 Beta, build 352110 (Google Play)");
+    assert(row(androidReport, "Device") == "Google Pixel 9 on Android 16");
+    assert(row(androidReport, "State") == "stock, emulator");
     assert(androidReport.attachments.empty());
 
-    const auto bare = loader::toolbox::issueReport({}, "Android", "1.0");
-    assert(row(bare, "Device") == "unknown");
-    assert(row(bare, "App Registration") == "<missing>");
-    assert(row(bare, "App Source") == "<missing>");
+    const auto bare = loader::toolbox::issueReport({}, "Android", "");
+    assert(row(bare, "Device") == "unknown on Android unknown");
+    assert(row(bare, "Discord") == "unknown");
+    assert(loader::toolbox::discordLine("351.0", "App Store") == "351.0 (App Store)");
+    assert(loader::toolbox::discordLine("352.0 (52)", "TestFlight") ==
+           "352.0 Beta, build 52 (TestFlight)");
 
     const auto            root = makeTemporaryDirectory();
     loader::SettingsStore settings((root / "settings.json").string());
@@ -128,15 +135,15 @@ int main()
     const std::string issue = loader::toolbox::perform(context, "issue-url", "300.0 (1234)");
     assert(issue.find("bug%28iOS%29") != std::string::npos);
     assert(issue.find("iPhone%20SE") != std::string::npos);
-    assert(issue.find("Device") < issue.find("iOS%20Version"));
-    assert(issue.find("300.0%20%281234%29") != std::string::npos);
-    assert(issue.find("App%20Registration%2A%2A%3A%20System") != std::string::npos);
+    assert(issue.find("Unbound%3A%2A%2A") < issue.find("Device%3A%2A%2A"));
+    assert(issue.find("300.0%20Stable%2C%20build%201234") != std::string::npos);
+    assert(issue.find("State%3A%2A%2A%20jailbroken") != std::string::npos);
     assert(issue.find("Entitlements") != std::string::npos);
     assert(loader::currentNativePlatformProvider()->platform == "ios");
 
     loader::setNativePlatformProvider(nullptr);
     const std::string unknown = loader::toolbox::perform(context, "issue-url", "");
-    assert(unknown.find("Device%2A%2A%3A%20unknown") != std::string::npos);
+    assert(unknown.find("Device%3A%2A%2A%20unknown") != std::string::npos);
 
     std::filesystem::remove_all(root);
     return 0;

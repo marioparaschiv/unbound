@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <regex>
 #include <system_error>
 
 #include "LoaderDevOverlay.h"
@@ -213,32 +214,75 @@ static std::string flag(bool value)
     return value ? "true" : "false";
 }
 
+std::string discordLine(const std::string &label, const std::string &appSource)
+{
+    static const std::regex pattern(R"(^\s*(.*?)(?:\s*-\s*(alpha|beta))?\s*\((\d+)\)\s*$)",
+                                    std::regex::icase);
+    const std::string       source = appSource.empty() ? std::string() : " (" + appSource + ")";
+    std::smatch             match;
+
+    if (label.empty())
+    {
+        return "unknown" + source;
+    }
+    if (!std::regex_match(label, match, pattern))
+    {
+        return label + source;
+    }
+
+    std::string channel = match[2].str();
+    if (channel.empty())
+    {
+        channel = appSource == "TestFlight" ? "Beta" : "Stable";
+    }
+    else
+    {
+        channel[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(channel[0])));
+        for (size_t index = 1; index < channel.size(); index++)
+        {
+            channel[index] =
+                static_cast<char>(std::tolower(static_cast<unsigned char>(channel[index])));
+        }
+    }
+    return match[1].str() + " " + channel + ", build " + match[3].str() + source;
+}
+
+static std::string loaderFile(const std::string &platform)
+{
+    return platform == "iOS" ? "Unbound.dylib" : "libunbound.so";
+}
+
 std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFacts &facts)
 {
     const auto known = [](const std::string &value) {
         return value.empty() ? std::string("unknown") : value;
     };
-    std::vector<std::pair<std::string, std::string>> rows = {
-        {"Device", known(facts.device)},
-        {facts.platform + " Version", known(facts.osVersion)},
-        {"Discord Version", known(facts.discordVersion)},
-        {"Unbound Version", known(facts.unboundVersion)},
-    };
-
-    if (!facts.appSource.empty())
-    {
-        rows.emplace_back("App Source", facts.appSource);
-    }
+    const bool  android = facts.platform == "Android";
+    std::string loader =
+        "loader " + known(facts.unboundVersion) + " (`" + loaderFile(facts.platform) + "`";
     if (!facts.framework.empty())
     {
-        rows.emplace_back("Framework", facts.framework);
+        loader += ", `" + facts.framework + "`";
     }
-    if (!facts.registration.empty())
+    loader += ")";
+
+    std::string state =
+        android ? (facts.rooted ? "rooted" : "stock") : (facts.rooted ? "jailbroken" : "jailed");
+    if (facts.virtualDevice)
     {
-        rows.emplace_back("App Registration", facts.registration);
+        state += android ? ", emulator" : ", simulator";
     }
-    rows.emplace_back("Virtual Device", facts.virtualDevice ? "Yes" : "No");
-    return rows;
+    if (facts.registration == "System")
+    {
+        state += ", system app";
+    }
+
+    return {
+        {"Unbound", loader},
+        {"Discord", discordLine(facts.discordVersion, facts.appSource)},
+        {"Device", known(facts.device) + " on " + facts.platform + " " + known(facts.osVersion)},
+        {"State", state},
+    };
 }
 
 static MenuItem restartingAction(std::string id, std::string title, std::string action,
@@ -463,7 +507,8 @@ IssueFacts issueFacts(const NativePlatformProvider &provider, const std::string 
                      provided(provider.appSource),
                      "",
                      provider.isVirtualDevice && provider.isVirtualDevice(),
-                     provided(provider.framework)};
+                     provided(provider.framework),
+                     provider.isRooted && provider.isRooted()};
     if (provider.isSystemApp)
     {
         facts.registration = provider.isSystemApp() ? "System" : "User";
@@ -598,7 +643,7 @@ std::string issueBody(const IssueReport &report)
 
     for (const auto &[name, value] : report.environment)
     {
-        body += "- **" + name + "**: " + value + "\n";
+        body += "- **" + name + ":** " + value + "\n";
     }
 
     for (const auto &[title, content] : report.attachments)

@@ -76,7 +76,7 @@ int main()
     loader::toolbox::IssueReport report{
         "Android", {{"Device", "Pixel 9"}, {"Android Version", "16"}}, {{"Logs", "line"}}};
     const std::string body = loader::toolbox::issueBody(report);
-    assert(body.find("- **Device**: Pixel 9\n") != std::string::npos);
+    assert(body.find("- **Device:** Pixel 9\n") != std::string::npos);
     assert(body.find("### Logs\n```\nline\n```") != std::string::npos);
 
     const std::string url = loader::toolbox::issueURL(report);
@@ -117,9 +117,9 @@ int main()
     assert(loader::toolbox::perform(context, "unknown", "").empty());
     const auto rows = loader::toolbox::issueEnvironment(
         {"Android", "Pixel", "16", "350.8", "1.0.0", "", "", true});
-    assert(rows.size() == 5);
-    assert(rows[1].first == "Android Version");
-    assert(rows.back().first == "Virtual Device" && rows.back().second == "Yes");
+    assert(rows.size() == 4);
+    assert(rows[0].first == "Unbound" && rows[2].second == "Pixel on Android 16");
+    assert(rows.back().first == "State" && rows.back().second == "stock, emulator");
 
     assert(loader::toolbox::factoryReset(root.string()));
     assert(loader::listDirectory(root.string()).empty());
