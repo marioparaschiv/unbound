@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 
-import { Screens, SOCIAL_LINKS, DISCORD_INVITE, VERSION } from '~/lib/constants';
+import { Screens, SOCIAL_LINKS, DISCORD_INVITE, VERSION, REPOSITORY } from '~/lib/constants';
+import { readDebugInfo, readEntitlements } from '~/builtins/debug-report';
 import { BundleInfo, reload, getRuntimeProperties } from '~/api/native';
 import { CRASH_REPORTS_SETTING } from '~/lib/crash-reports';
 import { Linking, Invites } from '~/api/metro/api';
+import { issueURL } from '~/builtins/issue-report';
 import { Discord } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
 import Unbound from '~/ui/icons/unbound';
@@ -120,6 +122,11 @@ function GeneralPage() {
 					onPress={() => Linking.openURL(SOCIAL_LINKS.Docs)}
 				/>
 				<Discord.TableRow
+					label={Messages.UNBOUND_REPORT_ISSUE}
+					icon={<Discord.TableRowIcon source={Icons.BugIcon ?? Icons.WarningIcon} />}
+					onPress={() => Linking.openURL(issueURL(readDebugInfo(), readEntitlements()))}
+				/>
+				<Discord.TableRow
 					label={Messages.UNBOUND_SUPPORT_SERVER}
 					icon={<Discord.TableRowIcon source={Icons.ClydeIcon} />}
 					onPress={() =>
@@ -137,7 +144,7 @@ function GeneralPage() {
 					value={VERSION}
 					icon={<Discord.TableRowIcon IconComponent={Unbound} />}
 					onPress={() =>
-						Linking.openURL(`https://github.com/unbound-mod/client/commit/${VERSION}`)
+						Linking.openURL(`https://github.com/${REPOSITORY}/commit/${VERSION}`)
 					}
 				/>
 				<InfoRow

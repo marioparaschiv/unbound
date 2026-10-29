@@ -133,6 +133,7 @@
 	"UNBOUND_GITHUB": "GitHub",
 	"UNBOUND_DOCS": "Documentation",
 	"UNBOUND_SUPPORT_SERVER": "Support Server",
+	"UNBOUND_REPORT_ISSUE": "Report an Issue",
 	"UNBOUND_THEME_RESTART_CONFIRM": "Restart now so the theme applies everywhere?",
 	"UNBOUND_FFI_CONSENT_TITLE": "Allow direct native access?",
 	"UNBOUND_FFI_CONSENT_BODY": "{name} wants to call native functions directly. A plugin with this access can read and change anything in Discord, and a mistake in it can crash the app. Only allow it if you trust where it came from.",

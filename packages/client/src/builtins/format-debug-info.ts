@@ -19,24 +19,32 @@ export type DebugInfo = {
 };
 
 /**
- * @description Formats the client's debug information as a Discord message: a heading and one labelled line per component.
+ * @description Lists the client's debug information as Markdown bullets, one labelled line per component.
  * @param info The versions and device details.
- * @returns The message text.
+ * @returns The lines, shared by `/debug` and the GitHub issue report.
  */
-export function formatDebugInfo(info: DebugInfo): string {
+export function debugLines(info: DebugInfo): string[] {
 	const loader = [info.loaderOrigin, info.framework]
 		.filter(Boolean)
 		.map((part) => `\`${part}\``)
 		.join(', ');
 
 	return [
-		'### Unbound Debug Info',
 		`- **Unbound:** ${info.client} (\`${info.commit}\`), loader ${info.loader} (${loader})`,
 		`- **Discord:** ${info.discord}, build ${info.discordBuild} (\`${info.appSource}\`)`,
 		`- **Device:** ${info.device} on ${info.platform} ${info.os}`,
 		`- **State:** ${info.flags.join(', ')}`,
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
-	].join('\n');
+	];
+}
+
+/**
+ * @description Formats the client's debug information as a Discord message: a heading and one labelled line per component.
+ * @param info The versions and device details.
+ * @returns The message text.
+ */
+export function formatDebugInfo(info: DebugInfo): string {
+	return ['### Unbound Debug Info', ...debugLines(info)].join('\n');
 }
 
 export default formatDebugInfo;

@@ -1,3 +1,5 @@
+import { REPOSITORY } from '~/lib/repository';
+
 /** Build-time token replaced with a boolean literal by the `replace` plugin. */
 declare const $$DEV$$: boolean;
 
@@ -55,8 +57,10 @@ export const Screens = {
 } as const;
 
 /** External links surfaced on the General settings page. */
+export { REPOSITORY };
+
 export const SOCIAL_LINKS = {
-	GitHub: 'https://github.com/unbound-mod',
+	GitHub: `https://github.com/${REPOSITORY}`,
 	Docs: 'https://docs.unbound.rip/',
 } as const;
 
