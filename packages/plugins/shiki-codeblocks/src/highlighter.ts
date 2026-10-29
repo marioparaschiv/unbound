@@ -9,6 +9,7 @@ import { highlightCodeToTokens, shouldUseHighlightJs } from '~/highlight-js';
 import { isLightTheme, loadThemeDefinition, themeUrl } from '~/themes';
 import { Limits, Palette, PLUGIN_NAME } from '~/constants';
 import type { CodeBlock } from '~/fences';
+import { sharedTokenStore, type TokenStore } from '~/token-store';
 
 type ThemeInput = Parameters<HighlighterCore['loadTheme']>[0];
 type GrammarInput = Parameters<HighlighterCore['loadLanguage']>[0];
@@ -59,11 +60,13 @@ function isLightColor(hex: string): boolean | undefined {
  * @description Creates a Shiki highlighter that loads grammars and themes on demand and caches recent tokens.
  * @param registrations Where bundled languages' registrations come from.
  * @param retryDelays How long to wait before each retry of a grammar or theme that failed to load.
- * @returns `appearance` reads a theme's card colors, `tokenize` highlights a code block.
+ * @param store Where results are kept across restarts.
+ * @returns `appearance` reads a theme's card colors, `tokenize` highlights a code block, and `warm` starts Shiki and loads a theme ahead of the first block.
  */
 export function createHighlighter(
 	registrations?: RegistrationSource,
 	retryDelays: number[] = LOAD_RETRY_DELAYS_MS,
+	store: TokenStore | undefined = sharedTokenStore(),
 ) {
 	const pendingGrammars = new Map<string, Promise<void>>();
 	const pendingThemes = new Map<string, Promise<void>>();
@@ -192,6 +195,18 @@ export function createHighlighter(
 			return tokens;
 		}
 
+		if (store) {
+			await store.ready;
+
+			const stored = store.get(key);
+
+			if (stored) {
+				remember(key, stored);
+
+				return stored;
+			}
+		}
+
 		const highlighter = await getCore();
 
 		if (!highlighter) return null;
@@ -201,6 +216,7 @@ export function createHighlighter(
 		const tokens = highlighter.codeToTokensBase(code, { lang: language, theme });
 
 		remember(key, tokens);
+		store?.set(key, tokens);
 
 		return tokens;
 	}
@@ -229,7 +245,13 @@ export function createHighlighter(
 		return tokens;
 	}
 
-	return { appearance, tokenize };
+	function warm(theme: string) {
+		void getCore()
+			.then((highlighter) => (highlighter ? loadTheme(highlighter, theme) : undefined))
+			.catch(() => undefined);
+	}
+
+	return { appearance, tokenize, warm };
 }
 
 export default { createHighlighter };
