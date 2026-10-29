@@ -41,6 +41,7 @@ describe('message layout', () => {
 			body: { x: 68, y: 38, width: 291, height: 50 },
 			text: { index: 12, offset: 0 },
 			mediaRight: 180,
+			headerBottom: 38,
 		});
 	});
 

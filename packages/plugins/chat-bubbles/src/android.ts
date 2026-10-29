@@ -6,6 +6,7 @@ import type {
 import {
 	currentDecorView,
 	findViewsOfClass,
+	readCalls,
 	runOnMain,
 } from '@unbound-plugins/shared/native/android/views';
 import {
@@ -59,8 +60,6 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		javaNumber(java.invoke(view, method, [])) ?? 0;
 	const isInstance = (type: NativeJavaReference, view: NativeJavaReference) =>
 		javaFlag(java.invoke(type, 'isInstance', [view]));
-	const reads = (view: NativeJavaReference, methods: string[]) =>
-		methods.map((name) => ({ op: 'invoke', handle: view, name, args: [] }) as const);
 
 	async function directChildren(group: NativeJavaReference, className: string) {
 		const found = await java.findViews!(group, className, { maxDepth: 1, maxResults: 256 });
@@ -76,7 +75,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	async function textWidth(view: NativeJavaReference, width: number): Promise<number> {
 		const [layoutValue, paddingLeft, paddingRight] = await runOnMain(
 			java,
-			reads(view, ['getLayout', 'getTotalPaddingLeft', 'getTotalPaddingRight']),
+			readCalls(view, ['getLayout', 'getTotalPaddingLeft', 'getTotalPaddingRight']),
 		);
 		const layout = javaReference(layoutValue);
 
@@ -111,8 +110,8 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 		const kids = await directChildren(accessories, 'android.view.View');
 		const values = await runOnMain(java, [
-			...reads(accessories, ['getLeft', 'getTop']),
-			...kids.flatMap((child) => reads(child, CHILD_READS)),
+			...readCalls(accessories, ['getLeft', 'getTop']),
+			...kids.flatMap((child) => readCalls(child, CHILD_READS)),
 		]);
 		const measured = kids.map((child, index) => {
 			const [visibility, width, height, left, right, top, bottom] = values
@@ -177,7 +176,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		if (!header) return;
 
 		const [visibility, height, bottom] = (
-			await runOnMain(java, reads(header, ['getVisibility', 'getHeight', 'getBottom']))
+			await runOnMain(java, readCalls(header, ['getVisibility', 'getHeight', 'getBottom']))
 		).map((value) => javaNumber(value) ?? 0);
 
 		return visibility === VISIBLE && height! > 0 ? bottom : undefined;
@@ -220,7 +219,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		const scale = await density(row);
 		const [rowWidth, rowHeight, currentBackground] = await runOnMain(
 			java,
-			reads(row, ['getWidth', 'getHeight', 'getBackground']),
+			readCalls(row, ['getWidth', 'getHeight', 'getBackground']),
 		);
 		const style = currentAppearance();
 		const frame = bubbleFrame(

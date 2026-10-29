@@ -33,6 +33,22 @@ export function readViewText(java: SpanBridge, view: NativeJavaReference): ViewT
 }
 
 /**
+ * @description Reads a text view's text on the main thread.
+ * @param java The plugin's Java bridge.
+ * @param view The text view.
+ * @returns The text and its string, or `null` when the view has no text.
+ */
+export async function readViewTextAsync(
+	java: SpanBridge & Pick<NativeJavaBridge, 'invokeAsync'>,
+	view: NativeJavaReference,
+): Promise<ViewText | null> {
+	const text = javaReference(await java.invokeAsync(view, 'getText', []));
+	const string = text ? javaText(java.invoke(text, 'toString', [])) : undefined;
+
+	return text && string !== undefined ? { text, string } : null;
+}
+
+/**
  * @description Lists the spans of one class over a whole `Spanned`, with their ranges and flags.
  * @param java The plugin's Java bridge.
  * @param text The `Spanned`.

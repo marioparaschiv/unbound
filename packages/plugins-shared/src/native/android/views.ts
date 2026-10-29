@@ -44,13 +44,23 @@ export function currentDecorView(java: ViewBridge): NativeJavaReference | null {
 }
 
 /**
+ * @description Builds batch operations that call methods without arguments on one view, such as its geometry getters.
+ * @param view The view.
+ * @param names The method names.
+ * @returns One operation per method, in order.
+ */
+export function readCalls(view: NativeJavaReference, names: string[]): NativeJavaBatchOperation[] {
+	return names.map((name) => ({ op: 'invoke', handle: view, name, args: [] }));
+}
+
+/**
  * @description Runs Java operations on the main thread in batches the bridge accepts, or on the calling thread with a loader that cannot.
  * @param java The plugin's Java bridge.
  * @param operations The operations.
  * @returns Each operation's result, in order.
  */
 export async function runOnMain(
-	java: ViewBridge,
+	java: Pick<NativeJavaBridge, 'batch' | 'batchAsync'>,
 	operations: NativeJavaBatchOperation[],
 ): Promise<NativeJavaValue[]> {
 	const results: NativeJavaValue[] = [];
@@ -145,6 +155,7 @@ export default {
 	currentActivity,
 	currentDecorView,
 	findViewsOfClass,
+	readCalls,
 	runOnMain,
 	scheduleStartupScans,
 };

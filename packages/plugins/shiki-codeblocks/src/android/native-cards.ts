@@ -17,10 +17,12 @@ import {
 	javaNumber,
 	javaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
-import { readViewText } from '@unbound-plugins/shared/native/android/spans';
+import { readViewTextAsync } from '@unbound-plugins/shared/native/android/spans';
 import {
 	currentDecorView,
 	findViewsOfClass,
+	readCalls,
+	runOnMain,
 	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
@@ -149,8 +151,8 @@ export function createNativeCards(native: Native) {
 		for (const listener of listeners.get(surfaceId) ?? []) listener();
 	}
 
-	function displayDensity(textView: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(textView, 'getResources', []));
+	async function displayDensity(textView: NativeJavaReference): Promise<number> {
+		const resources = javaReference(await java.invokeAsync(textView, 'getResources', []));
 		const metrics = resources
 			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
 			: null;
@@ -158,13 +160,22 @@ export function createNativeCards(native: Native) {
 		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
 	}
 
-	function textWidth(textView: NativeJavaReference, density: number): number {
-		return (
-			((javaNumber(java.invoke(textView, 'getWidth', [])) ?? 0) -
-				(javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0) -
-				(javaNumber(java.invoke(textView, 'getTotalPaddingRight', [])) ?? 0)) /
-			density
+	async function textGeometry(textView: NativeJavaReference) {
+		const [width, left, right, attached] = await runOnMain(
+			java,
+			readCalls(textView, [
+				'getWidth',
+				'getTotalPaddingLeft',
+				'getTotalPaddingRight',
+				'isAttachedToWindow',
+			]),
 		);
+
+		return {
+			contentWidth:
+				(javaNumber(width) ?? 0) - (javaNumber(left) ?? 0) - (javaNumber(right) ?? 0),
+			attached: javaFlag(attached),
+		};
 	}
 
 	function cardContent(block: CodeBlock, width: number): Promise<CardContent> {
@@ -285,7 +296,7 @@ export function createNativeCards(native: Native) {
 
 	async function render(textView: NativeJavaReference) {
 		const key = viewKey(textView as NativeJavaValue);
-		const content = readViewText(java, textView);
+		const content = await readViewTextAsync(java, textView);
 
 		if (!key || !content || inline.isDefined(content.string)) return;
 
@@ -301,11 +312,12 @@ export function createNativeCards(native: Native) {
 			return;
 		}
 
-		const density = displayDensity(textView);
+		const density = await displayDensity(textView);
 		const rendered = renderedText(content.string, slots);
 		const previous = layouts.get(rendered);
-		const detached = !javaFlag(java.invoke(textView, 'isAttachedToWindow', []));
-		const width = previous && detached ? previous.width : textWidth(textView, density);
+		const geometry = await textGeometry(textView);
+		const width =
+			previous && !geometry.attached ? previous.width : geometry.contentWidth / density;
 
 		if (width < MIN_WIDTH) {
 			awaitingSize.set(key, textView);
@@ -332,13 +344,13 @@ export function createNativeCards(native: Native) {
 		const key = viewKey(textView as NativeJavaValue);
 		const rendered = key ? renderedByView.get(key) : undefined;
 		const layout = rendered ? layouts.get(rendered) : undefined;
-		const shown = readViewText(java, textView)?.string;
+		const shown = (await readViewTextAsync(java, textView))?.string;
 
 		if (disposed || !rendered || !layout || (shown !== rendered && shown !== layout.original)) {
 			return;
 		}
 
-		const width = textWidth(textView, layout.density);
+		const width = (await textGeometry(textView)).contentWidth / layout.density;
 
 		if (width < MIN_WIDTH || Math.abs(width - layout.width) < 1) return;
 
