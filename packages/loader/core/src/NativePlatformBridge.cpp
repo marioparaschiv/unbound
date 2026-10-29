@@ -321,8 +321,6 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
     if (provider->platform == "ios")
     {
         jsi::Object ios(runtime);
-        ios.setProperty(runtime, "isVerifiedBuild",
-                        booleanGetter(runtime, "isVerifiedBuild", provider->isVerifiedBuild));
         ios.setProperty(runtime, "getEntitlements",
                         native::makeFunction(runtime, "getEntitlements", 0,
                                              [provider](jsi::Runtime &rt, const jsi::Value &,
@@ -343,6 +341,8 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                     stringGetter(runtime, "getAppSource", provider->appSource));
     app.setProperty(runtime, "getFramework",
                     stringGetter(runtime, "getFramework", provider->framework));
+    app.setProperty(runtime, "isVerifiedBuild",
+                    booleanGetter(runtime, "isVerifiedBuild", provider->isVerifiedBuild));
     app.setProperty(runtime, "claimLaunchURL",
                     native::makeFunction(runtime, "claimLaunchURL", 0,
                                          [](jsi::Runtime &, const jsi::Value &, const jsi::Value *,

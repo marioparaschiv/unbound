@@ -64,6 +64,7 @@ object Platform {
         .put("isSystemApp", appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0)
         .put("appSource", InstallSource.current(application()))
         .put("framework", frameworkName)
+        .put("isVerifiedBuild", Attestation.current().verified)
         .put("isVirtualDevice", isEmulator())
         .put("virtualDeviceHost", emulatorHostAddress() ?: JSONObject.NULL)
 

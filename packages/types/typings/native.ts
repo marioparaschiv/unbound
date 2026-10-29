@@ -520,7 +520,6 @@ export type NativePlatformDevice = {
 };
 
 export type NativePlatformIOSBridge = {
-	isVerifiedBuild(): boolean;
 	getEntitlements(): NativeSerializableObject;
 	getEntitlementsAsPlist(): string;
 };
@@ -529,6 +528,8 @@ export type NativePlatformApp = {
 	getAppSource(): string;
 	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. Missing on older loaders. */
 	getFramework?(): string;
+	/** Whether the loader's embedded attestation verified against Unbound's pinned key. False for development builds. Missing on older loaders. */
+	isVerifiedBuild?(): boolean;
 	/** True for the first caller in this process; a reloaded runtime sees false. Missing on older loaders. */
 	claimLaunchURL?(): boolean;
 };

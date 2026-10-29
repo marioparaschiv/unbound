@@ -247,7 +247,6 @@ const manifest: AddonManifest = {
 };
 
 const iosPlatformDetails = {
-	isVerifiedBuild: () => false,
 	getEntitlements: () => ({}),
 	getEntitlementsAsPlist: () => '',
 };
