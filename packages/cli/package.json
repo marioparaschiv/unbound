@@ -26,6 +26,8 @@
 		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p ."
 	},
 	"dependencies": {
+		"@babel/core": "^7.29.7",
+		"@babel/plugin-transform-block-scoping": "^7.29.11",
 		"@clack/prompts": "^1.7.0",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@unbound-app/debugger-protocol": "workspace:*",
