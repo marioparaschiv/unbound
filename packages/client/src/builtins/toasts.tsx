@@ -1,17 +1,24 @@
 import type { ToastOptions } from '@unbound-app/types/toasts';
-import { createLogger } from '@unbound-app/logger';
 
-import { find, findByFilePath, findByProps } from '~/api/metro';
+import type { MetroFilter } from '~/api/metro/filters';
 import { createPatcher } from '~/api/patcher';
+import { onModuleLoaded } from '~/api/metro';
 import { ToastContainer } from '~/ui/toasts';
+import { CACHE_KEY } from '~/lib/constants';
 import { showToast } from '~/api/toasts';
 import storage from '~/api/storage';
 
-import findToastContainers from './find-toast-containers';
+import waitForToastContainers from './wait-for-toast-containers';
 
 const Patcher = createPatcher('unbound::toasts');
-const Logger = createLogger('Toasts');
 const Settings = storage.getStore('unbound');
+
+const byToastAPI: MetroFilter = (x) => x.open && x.close && Object.keys(x).length === 2;
+
+// A cache key lets the wait watch the API's module alone on later launches.
+byToastAPI[CACHE_KEY] = 'unbound::toastAPI';
+
+const waits: Array<() => void> = [];
 
 /** Replaces Discord's toast container and toast API with Unbound's toasts. */
 export function start() {
@@ -21,40 +28,31 @@ export function start() {
 
 /** Restores Discord's toast container and toast API. */
 export function stop() {
+	waits.splice(0).map((stopWaiting) => stopWaiting());
 	Patcher.unpatchAll();
 }
 
 function patchToastContainer() {
-	const targets = findToastContainers(findByFilePath, findByProps);
+	waits.push(
+		waitForToastContainers(onModuleLoaded, ([module, key]) => {
+			Patcher.after(module, key, ({ result }) => {
+				const settings = Settings.useSettingsStore(({ key }) => key?.startsWith('toasts'));
 
-	if (!targets.length) {
-		Logger.error('Failed to find ToastContainer component');
+				if (settings.get('toasts.enabled', true)) {
+					return <ToastContainer />;
+				}
 
-		return;
-	}
-
-	for (const [module, key] of targets) {
-		Patcher.after(module, key, ({ result }) => {
-			const settings = Settings.useSettingsStore(({ key }) => key?.startsWith('toasts'));
-
-			if (settings.get('toasts.enabled', true)) {
-				return <ToastContainer />;
-			}
-
-			return result;
-		});
-	}
+				return result;
+			});
+		}),
+	);
 }
 
 function patchToastAPI() {
-	const Toasts = find((x) => x.open && x.close && Object.keys(x).length === 2, { lazy: true });
+	waits.push(onModuleLoaded(byToastAPI, patchOpen));
+}
 
-	if (!Toasts?.open) {
-		Logger.error('Failed to find Toaster API');
-
-		return;
-	}
-
+function patchOpen(Toasts: MetroExport) {
 	Patcher.instead(Toasts, 'open', ({ args, original, this: self }) => {
 		if (!Settings.get('toasts.enabled', true)) {
 			return original.apply(self, args);

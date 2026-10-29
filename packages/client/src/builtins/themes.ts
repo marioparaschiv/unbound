@@ -49,8 +49,8 @@ function applyRawColors(raw: Record<string, string>) {
 }
 
 function refreshDiscordTheme() {
-	// Runs only when the user changes theme, by which point Discord has loaded its theme store.
-	findStore('Theme')?.emitChange?.();
+	// A theme store Discord has not loaded yet has nothing to refresh.
+	findStore('Theme', { initialize: false })?.emitChange?.();
 }
 
 /** Recolours Discord's JavaScript colour tokens with the applied theme once Discord loads them, and follows theme changes. */

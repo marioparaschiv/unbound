@@ -1,10 +1,9 @@
 import type { SettingsScreen, SettingsEntry } from '@unbound-app/types';
-import { createLogger } from '@unbound-app/logger';
 import { useState, useEffect } from 'react';
 
-import { findByProps, findByName, findByFilePath } from '~/api/metro';
 import MarketplacePage from '~/ui/settings/marketplace';
 import { Screens, CLIENT_NAME } from '~/lib/constants';
+import { filters, onModuleLoaded } from '~/api/metro';
 import CloudSyncPage from '~/ui/settings/cloud-sync';
 import DeveloperPage from '~/ui/settings/developer';
 import { Discord } from '~/api/metro/components';
@@ -21,10 +20,9 @@ import { getIDByName } from '~/api/assets';
 import { getStore } from '~/api/storage';
 import { Messages } from '~/api/i18n';
 
-import findSettingsOverview from './find-settings-overview';
+import waitForSettingsOverview from './wait-for-settings-overview';
 
 const Patcher = createPatcher('unbound::settings');
-const Logger = createLogger('Core', 'Settings');
 const Storage = getStore('unbound');
 
 const unpatches: Array<() => void> = [];
@@ -157,12 +155,13 @@ export function stop() {
 }
 
 function patchRendererConfig() {
-	const module = findByProps('SETTING_RENDERER_CONFIG');
+	// Redefined as the module loads, before Discord's code that imports it reads the config.
+	unpatches.push(
+		onModuleLoaded(filters.byProps('SETTING_RENDERER_CONFIG'), redefineRendererConfig),
+	);
+}
 
-	if (!module) {
-		return Logger.error('Failed to find SETTING_RENDERER_CONFIG.');
-	}
-
+function redefineRendererConfig(module: MetroExport) {
 	const original = module.SETTING_RENDERER_CONFIG;
 	let current = original;
 
@@ -184,12 +183,10 @@ function patchRendererConfig() {
 }
 
 function patchOverview() {
-	const Overview = findSettingsOverview(findByName, findByFilePath);
+	unpatches.push(waitForSettingsOverview(onModuleLoaded, patchOverviewScreen));
+}
 
-	if (!Overview) {
-		return Logger.error('Failed to find SettingsOverviewScreen.');
-	}
-
+function patchOverviewScreen(Overview: MetroExport) {
 	Patcher.after(Overview, 'default', ({ result }) => {
 		const [, forceUpdate] = useState({});
 
