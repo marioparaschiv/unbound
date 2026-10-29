@@ -19,6 +19,7 @@ import {
 import { MAINTAINERS, replaceMaintainers, toMaintainers } from '~/lib/maintainers';
 import type { ActionMeta, EventTimeline } from '~/lib/moderation-events';
 import { appendEvent, getEventTimeline } from '~/lib/moderation-events';
+import { isAddonIcon, renderAddonIcon } from '~/lib/addon-icons';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import type { AdminSubmission } from '~/lib/admin-submissions';
 import { addon, addonMaintainer, user } from '~/db/schema';
@@ -35,7 +36,9 @@ import type { AddonRow } from '~/lib/addons';
 import { ApiError } from '~/lib/api/errors';
 
 export type AdminAddonRecord = AdminAddon &
-	Pick<AddonRow, 'type' | 'description' | 'repository'> & {
+	Pick<AddonRow, 'type' | 'description' | 'repository' | 'icon'> & {
+		/** The saved icon's SVG markup, rendered on the server; `null` for the type's default. */
+		iconSvg: string | null;
 		/** When the served version was approved. */
 		updatedAt: string;
 		/** Which summary fields a staff edit owns; the others follow the served version's manifest. */
@@ -106,6 +109,10 @@ const GROUP_PERMISSIONS = {
 	maintainers: { addon: ['transfer'] },
 } as const satisfies Record<keyof EditDiff, Permissions>;
 
+function isPinnable(field: string): field is PinnableField {
+	return PINNABLE_FIELDS.some((pinnable) => pinnable === field);
+}
+
 function isPinned(row: AddonRow, field: PinnableField): boolean {
 	return Boolean(row.pinnedFields & PINNED_FIELDS[field]);
 }
@@ -120,6 +127,7 @@ function toEditableState(row: AddonRow, members: MaintainerEntry[]): EditableSta
 		description: isPinned(row, 'description') ? row.description : null,
 		type: isPinned(row, 'type') ? row.type : null,
 		repository: row.repository,
+		icon: row.icon,
 		delisted: row.delistedAt !== null,
 		maintainers: members,
 	};
@@ -134,12 +142,12 @@ function revisionOf(state: EditableState): string {
 function diffEdit(current: EditableState, edit: EditAddonRequest): EditDiff {
 	const fields: FieldChange[] = [];
 
-	for (const field of [...PINNABLE_FIELDS, 'repository'] as const) {
+	for (const field of [...PINNABLE_FIELDS, 'repository', 'icon'] as const) {
 		const from = current[field];
 		const to = edit[field];
 
 		if (from !== to) {
-			fields.push({ field, from, to, pinned: field !== 'repository' && to !== null });
+			fields.push({ field, from, to, pinned: isPinnable(field) && to !== null });
 		}
 	}
 
@@ -165,7 +173,7 @@ function selectMembers(tx: Transaction, addonId: string): Promise<MaintainerEntr
 }
 
 async function writeFields(tx: Transaction, addonId: string, edit: EditAddonRequest) {
-	const { name, description, type, repository } = edit;
+	const { name, description, type, repository, icon } = edit;
 	let pinnedFields = 0;
 
 	for (const field of PINNABLE_FIELDS) {
@@ -179,6 +187,7 @@ async function writeFields(tx: Transaction, addonId: string, edit: EditAddonRequ
 		.set({
 			pinnedFields,
 			repository,
+			icon,
 			name: name ?? undefined,
 			description: description ?? undefined,
 			type: type ?? undefined,
@@ -267,6 +276,8 @@ export async function getAdminAddon(
 			type: rest.type,
 			description: rest.description,
 			repository: rest.repository,
+			icon: rest.icon,
+			iconSvg: renderAddonIcon(rest.icon),
 			updatedAt: rest.updatedAt.toISOString(),
 			pinned: {
 				name: isPinned(rest, 'name'),
@@ -350,6 +361,10 @@ export async function editAddon(
 
 		if (diff.fields.length > 0) {
 			requirePermission(caller, GROUP_PERMISSIONS.fields);
+		}
+
+		if (edit.icon !== null && edit.icon !== current.icon && !isAddonIcon(edit.icon)) {
+			throw new ApiError('invalid_request', `${edit.icon} is not an icon you can pick.`);
 		}
 
 		if (diff.delisted) {

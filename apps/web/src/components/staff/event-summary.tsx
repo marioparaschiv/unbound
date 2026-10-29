@@ -1,25 +1,12 @@
-import type { MaintainerEntry, ModerationEvent, Subject } from '@unbound-app/contracts/admin';
+import type { MaintainerEntry, ModerationEvent } from '@unbound-app/contracts/admin';
 import type { MaintainerRole } from '@unbound-app/contracts/addons';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
-import { toast } from 'sonner';
 
-import { moderationEventsQuery } from '~/queries/moderation-events/moderation-events';
+import describeFieldChange from '~/components/admin/describe-field-change';
 import { formatDateTime } from '~/components/admin/format-date';
 import type { EventTimeline } from '~/lib/moderation-events';
-import getApiErrorMessage from '~/lib/api/error-message';
-import UserAvatar from '~/components/user-avatar';
-import { Button } from '~/components/ui/button';
-import { Card } from '~/components/ui/card';
-import Text from '~/components/ui/text';
-
-type EventLogProps = {
-	subject: Subject;
-	/** The newest page, from the subject's admin page; older pages load on demand. */
-	timeline: EventTimeline;
-};
 
 type Users = EventTimeline['users'];
 
@@ -95,7 +82,12 @@ function MemberName({ userId, users }: MemberNameProps) {
 	);
 }
 
-function ActorName({ actor, kind }: ActorNameProps) {
+/**
+ * @description Names who performed a moderation event, linking to their staff page.
+ * @param props The acting user, or `null`, and the event kind.
+ * @returns The actor's name.
+ */
+export function ActorName({ actor, kind }: ActorNameProps) {
 	if (!actor) {
 		return (
 			<span className='font-medium text-foreground'>
@@ -133,7 +125,12 @@ function describeMemberChange(change: MemberChange, users: Users): ReactNode {
 	);
 }
 
-function EventSummary({ event, users }: EventSummaryProps) {
+/**
+ * @description Describes what a moderation event did, as a sentence that follows its actor's name.
+ * @param props The event and the users it names by id.
+ * @returns The sentence.
+ */
+export function EventSummary({ event, users }: EventSummaryProps) {
 	switch (event.kind) {
 		case 'review.decided': {
 			const { decision, submissionKind, version, build } = event.data;
@@ -176,17 +173,7 @@ function EventSummary({ event, users }: EventSummaryProps) {
 		}
 
 		case 'addon.edited': {
-			return (
-				<>
-					edited{' '}
-					{event.data.changes
-						.map(
-							(change) =>
-								`${change.field} to ${change.to === null ? 'follow the manifest' : `"${change.to}"`}`,
-						)
-						.join(', ')}
-				</>
-			);
+			return <>edited {event.data.changes.map(describeFieldChange).join(', ')}</>;
 		}
 
 		case 'addon.rollback': {
@@ -296,78 +283,4 @@ function EventSummary({ event, users }: EventSummaryProps) {
 	}
 }
 
-function EventLog({ subject, timeline }: EventLogProps) {
-	const { data, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
-		...moderationEventsQuery(subject),
-		// The subject's page shipped the newest page, so the log starts from it instead of asking again.
-		initialData: { pages: [timeline], pageParams: [undefined] },
-	});
-	const { pages } = data;
-	const events = pages.flatMap((page) => page.items);
-	const users: Users = Object.fromEntries(pages.flatMap((page) => Object.entries(page.users)));
-
-	async function loadOlder() {
-		const result = await fetchNextPage();
-
-		if (result.isError) {
-			toast.error(getApiErrorMessage(result.error));
-		}
-	}
-
-	if (events.length === 0) {
-		return (
-			<Card className='p-(--card-pad)'>
-				<Text variant='text-sm' color='muted'>
-					No moderation events yet.
-				</Text>
-			</Card>
-		);
-	}
-
-	return (
-		<Card className='gap-0 p-0 divide-y divide-border'>
-			<ol className='flex flex-col divide-y divide-border'>
-				{events.map((event) => (
-					<li key={event.id} className='flex gap-3 p-(--card-pad)'>
-						<UserAvatar
-							src={event.actor?.image ?? null}
-							name={event.actor?.name ?? '?'}
-							size='sm'
-						/>
-						<div className='flex flex-col flex-1 gap-1.5 min-w-0'>
-							<Text variant='text-sm' color='muted'>
-								<ActorName actor={event.actor} kind={event.kind} />{' '}
-								<EventSummary event={event} users={users} />
-							</Text>
-							<Text variant='text-xs' color='muted'>
-								{formatDateTime(event.createdAt)}
-							</Text>
-							{event.reason ? (
-								<Text
-									variant='text-sm'
-									className='bg-muted/50 px-3 py-2 rounded-control break-words whitespace-pre-wrap'
-								>
-									{event.reason}
-								</Text>
-							) : null}
-						</div>
-					</li>
-				))}
-			</ol>
-			{hasNextPage ? (
-				<div className='flex justify-center px-(--card-pad) py-3'>
-					<Button
-						variant='outline'
-						size='sm'
-						onClick={() => void loadOlder()}
-						disabled={isFetchingNextPage}
-					>
-						Load older events
-					</Button>
-				</div>
-			) : null}
-		</Card>
-	);
-}
-
-export default EventLog;
+export default { EventSummary, ActorName };
