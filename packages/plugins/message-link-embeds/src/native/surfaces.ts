@@ -6,6 +6,7 @@ import type {
 import { safeInvoke } from '@unbound-plugins/shared/native/safe-invoke';
 import {
 	MESSAGE_TEXT_VIEW_CLASSES,
+	ownedAttachments,
 	placeAttachedViews,
 	textAttachmentBridge,
 	textEngine,
@@ -26,7 +27,7 @@ import { linkFont, surfaceInsertion } from '~/native/attachment';
 import type { EmbeddedContent } from '~/embedded-content';
 import type { Message, RowGenerator } from '~/modules';
 import type { Session } from '~/native/session';
-import { Surface } from '~/constants';
+import { PLUGIN_ID, Surface } from '~/constants';
 
 type Timer = ReturnType<typeof setTimeout>;
 
@@ -183,6 +184,21 @@ export function updateSurface(
 	attributedText: NativeObjectHandle,
 	range: TextRange,
 ) {
+	const text = nativeString(session.objc, safeInvoke(session.objc, attributedText, 'string'));
+	const [owned] =
+		text === undefined
+			? []
+			: ownedAttachments(textAttachmentBridge(session.objc), attributedText, text, PLUGIN_ID);
+
+	if (text !== undefined && owned !== undefined) {
+		surface.rendered = attributedText;
+		surface.renderedText = text;
+		surface.attachmentIndex = owned;
+		placeHost(session, surface);
+
+		return;
+	}
+
 	surface.original = attributedText;
 	surface.range = range;
 	surface.font = linkFont(session.objc, attributedText, range);
