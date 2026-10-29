@@ -10,6 +10,9 @@ import {
 	parsePluginErrors,
 	parseOffMainWarnings,
 	withReconnects,
+	parseScreenSize,
+	parseToastLines,
+	swipeCommands,
 	type CycleResult,
 } from './collect-device-matrix';
 import { validateDeviceMatrix } from './device-matrix';
@@ -230,4 +233,73 @@ test('stages a reply, an attachment-only message and a forward beside the text f
 	expect(script).toContain('Fixture reply to the message above');
 	expect(script).toContain('message_snapshots');
 	expect(script).toContain("filename: 'fixture.png'");
+});
+
+test('reads the physical screen size, preferring an override', () => {
+	expect(parseScreenSize('Physical size: 1080x2400')).toEqual({ width: 1080, height: 2400 });
+	expect(parseScreenSize('Physical size: 1080x2400\nOverride size: 720x1600')).toEqual({
+		width: 720,
+		height: 1600,
+	});
+	expect(parseScreenSize('')).toBeUndefined();
+});
+
+test('swipes alternately down and up the middle of the screen', () => {
+	const android = swipeCommands(
+		{ kind: 'android', serial: 'emulator-5554' },
+		{ width: 1080, height: 2400 },
+		2,
+	);
+
+	expect(android).toEqual([
+		[
+			'adb',
+			'-s',
+			'emulator-5554',
+			'shell',
+			'input',
+			'swipe',
+			'540',
+			'720',
+			'540',
+			'1800',
+			'120',
+		],
+		[
+			'adb',
+			'-s',
+			'emulator-5554',
+			'shell',
+			'input',
+			'swipe',
+			'540',
+			'1800',
+			'540',
+			'720',
+			'120',
+		],
+	]);
+
+	const [ios] = swipeCommands({ kind: 'ios', udid: 'abc' }, { width: 1080, height: 2400 }, 1);
+
+	expect(ios).toEqual([
+		'jb-p1lot',
+		'ui_action',
+		'--device',
+		'abc',
+		'--action',
+		'swipe',
+		'--points',
+		'[{"x":188,"y":200},{"x":188,"y":500}]',
+	]);
+});
+
+test('lists the toasts shown or dropped after the scroll started', () => {
+	const lines = [
+		"2026-10-29T18:00:01.000Z I [console] '»', '[Toasts]', 'Showing a toast:', 'Before'",
+		"2026-10-29T18:00:03.000Z I [console] '»', '[Toasts]', 'Showing a toast:', 'Copied'",
+		"2026-10-29T18:00:04.000Z W [console] '»', '[Toasts]', 'Ignored a toast with nothing to show', 'Error\\n at showToast'",
+	];
+
+	expect(parseToastLines(lines, '2026-10-29T18:00:02.000Z')).toEqual(['Copied', 'empty toast']);
 });

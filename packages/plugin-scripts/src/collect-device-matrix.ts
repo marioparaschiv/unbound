@@ -371,6 +371,106 @@ function evaluate(port: number, code: string): Promise<string> {
 	return withReconnects(() => evaluateOnce(port, code));
 }
 
+export const SCROLL_SWIPES = 12;
+const SCROLL_SWIPE_MS = 120;
+const IOS_POINTS = { width: 375, height: 667 };
+
+export type ScreenSize = { width: number; height: number };
+
+export function parseScreenSize(output: string): ScreenSize | undefined {
+	const sizes = [...output.matchAll(/(\d+)x(\d+)/g)];
+	const size = sizes.at(-1);
+
+	return size ? { width: Number(size[1]), height: Number(size[2]) } : undefined;
+}
+
+export function swipeCommands(
+	target: ScreenshotTarget,
+	size: ScreenSize,
+	swipes: number,
+): string[][] {
+	const screen = target.kind === 'ios' ? IOS_POINTS : size;
+	const x = Math.round(screen.width / 2);
+	const top = Math.round(screen.height * 0.3);
+	const bottom = Math.round(screen.height * 0.75);
+
+	return Array.from({ length: swipes }, (_, index) => {
+		const [from, to] = index % 2 === 0 ? [top, bottom] : [bottom, top];
+
+		if (target.kind === 'ios') {
+			const points = JSON.stringify([
+				{ x, y: from },
+				{ x, y: to },
+			]);
+
+			return [
+				'jb-p1lot',
+				'ui_action',
+				'--device',
+				target.udid,
+				'--action',
+				'swipe',
+				'--points',
+				points,
+			];
+		}
+
+		const serial = target.serial ? ['-s', target.serial] : [];
+
+		return [
+			'adb',
+			...serial,
+			'shell',
+			'input',
+			'swipe',
+			`${x}`,
+			`${from}`,
+			`${x}`,
+			`${to}`,
+			`${SCROLL_SWIPE_MS}`,
+		];
+	});
+}
+
+async function screenSize(target: ScreenshotTarget): Promise<ScreenSize> {
+	if (target.kind === 'ios') return IOS_POINTS;
+
+	const serial = target.serial ? ['-s', target.serial] : [];
+	const { stdout } = await run(['adb', ...serial, 'shell', 'wm', 'size']);
+
+	return parseScreenSize(stdout) ?? { width: 1080, height: 2400 };
+}
+
+async function scrollStress(target: ScreenshotTarget): Promise<number> {
+	const commands = swipeCommands(target, await screenSize(target), SCROLL_SWIPES);
+	let performed = 0;
+
+	for (const command of commands) {
+		if ((await run(command)).ok) performed += 1;
+	}
+
+	return performed;
+}
+
+export function toastLogScript(): string {
+	return `Promise.resolve(unbound.fs.read('Unbound/Logs/unbound.log')).then(function (text) {
+	return JSON.stringify(String(text).split('\\n').filter(function (line) { return line.indexOf('[Toasts]') !== -1; }));
+}, function () { return '[]'; })`;
+}
+
+const TOAST_LINE =
+	/^(\S+) \w \[console\] .*\[Toasts\]'?,? ?'?(Showing a toast:|Ignored a toast[^']*)'?,? ?'?([^']*)/;
+
+export function parseToastLines(lines: string[], since: string): string[] {
+	return lines.flatMap((line) => {
+		const match = TOAST_LINE.exec(line);
+
+		if (!match || match[1]! < since) return [];
+
+		return match[2]!.startsWith('Showing') ? [match[3]!.trim() || 'untitled'] : ['empty toast'];
+	});
+}
+
 async function screenshot(target: ScreenshotTarget, file: string): Promise<boolean> {
 	if (target.kind === 'android') {
 		const serial = target.serial ? ['-s', target.serial] : [];
@@ -491,6 +591,19 @@ async function main(): Promise<void> {
 			`${check.lifecycle === 'pass' && check.behavior === 'pass' ? 'pass' : 'FAIL'} ${plugin.id}`,
 		);
 	}
+
+	const scrollSince = new Date().toISOString();
+	const swipes = await scrollStress(target);
+
+	await Bun.sleep(2_000);
+
+	const toasts = parseToastLines(
+		JSON.parse(await evaluate(port, toastLogScript())) as string[],
+		scrollSince,
+	);
+
+	writeFileSync(join(out, 'scroll.json'), `${JSON.stringify({ swipes, toasts }, null, '\t')}\n`);
+	console.error(`scrolled ${swipes} times; ${toasts.length} toasts appeared`);
 
 	const logLines = JSON.parse(await evaluate(port, pluginLogScript())) as string[];
 	const warnings = parseOffMainWarnings(logLines, since);

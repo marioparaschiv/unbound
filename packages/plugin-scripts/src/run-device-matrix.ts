@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -15,8 +15,11 @@ export type DeviceRun = {
 	device: MatrixDevice;
 	checks: MeasuredCheck[];
 	changes: string[];
+	scrollToasts?: string[];
 	error?: string;
 };
+
+type ScrollResult = { swipes: number; toasts: string[] };
 
 const COLLECTOR = resolve(import.meta.dir, 'collect-device-matrix.ts');
 
@@ -81,19 +84,35 @@ export function renderSummary(runs: DeviceRun[]): string {
 	const changes = runs.flatMap((run) =>
 		run.changes.map((change) => `- ${run.device.name}: ${change}`),
 	);
+	const toasts = runs
+		.filter((run) => run.scrollToasts?.length)
+		.map((run) => `- ${run.device.name}: ${run.scrollToasts!.join(', ')}`);
 
 	return [
 		'## Device matrix',
 		'',
 		...totals,
 		...(rows.length ? ['', header, divider, ...rows] : []),
-		...(!rows.length && runs.every((run) => !run.error)
+		...(!rows.length && !toasts.length && runs.every((run) => !run.error)
 			? ['', 'Every plugin passed on every device.']
 			: []),
+		...(toasts.length ? ['', '### Toasts while scrolling', '', ...toasts] : []),
 		...(offMain.length ? ['', '### Off-main view calls', '', ...offMain] : []),
 		...(errors.length ? ['', '### Plugin errors', '', ...errors] : []),
 		...(changes.length ? ['', '### Changes since the last run', '', ...changes] : []),
 	].join('\n');
+}
+
+function readScrollToasts(out: string): string[] | undefined {
+	const file = join(out, 'scroll.json');
+
+	return existsSync(file)
+		? (JSON.parse(readFileSync(file, 'utf8')) as ScrollResult).toasts
+		: undefined;
+}
+
+export function runFailed(run: DeviceRun): boolean {
+	return Boolean(run.error || run.scrollToasts?.length || !run.checks.every(passed));
 }
 
 function readChecks(out: string): MeasuredCheck[] {
@@ -110,6 +129,7 @@ async function collect(
 	lenient = false,
 ): Promise<DeviceRun> {
 	mkdirSync(out, { recursive: true });
+	rmSync(join(out, 'scroll.json'), { force: true });
 
 	const args = [...collectorArgs(device, out, channel, only), ...(lenient ? ['--lenient'] : [])];
 	const child = Bun.spawn(['bun', COLLECTOR, ...args], {
@@ -124,13 +144,15 @@ async function collect(
 	const ids = new Set(only?.split(','));
 	const checks = readChecks(out).filter((check) => !only || ids.has(check.id));
 
+	const scrollToasts = readScrollToasts(out);
+
 	if (exit !== 0) {
 		const reason = failureReason(lines) ?? `exited with ${exit}`;
 
-		return { device, checks, changes, error: `collector failed: ${reason}` };
+		return { device, checks, changes, scrollToasts, error: `collector failed: ${reason}` };
 	}
 
-	return { device, checks, changes };
+	return { device, checks, changes, scrollToasts };
 }
 
 async function main(): Promise<void> {
@@ -163,7 +185,7 @@ async function main(): Promise<void> {
 	writeFileSync(join(out, 'summary.md'), `${summary}\n`);
 	console.log(summary);
 
-	if (runs.some((run) => run.error || !run.checks.every(passed))) process.exitCode = 1;
+	if (runs.some(runFailed)) process.exitCode = 1;
 }
 
 if (import.meta.main) await main();

@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 
 import { collectorArgs, deviceSlug, parseMatrixConfig } from './matrix-config';
 import type { MeasuredCheck } from './compare-device-matrix';
-import { failureReason, listCalls, renderSummary } from './run-device-matrix';
+import { failureReason, listCalls, renderSummary, runFailed } from './run-device-matrix';
 
 const phone = { name: 'iPhone SE', port: 9090, udid: 'abc' };
 const emulator = { name: 'Android Emulator', port: 9091, serial: 'emulator-5554' };
@@ -94,4 +94,21 @@ test('names the collector error instead of the runtime footer', () => {
 			'error: script "plugins:collect-device-matrix" exited with code 1',
 		]),
 	).toBe('Evaluation failed: "Evaluation timed out after 60000ms."');
+});
+
+test('fails a device that showed toasts while scrolling and lists them', () => {
+	const check: MeasuredCheck = {
+		id: 'unbound.alpha',
+		behavior: 'pass',
+		lifecycle: 'pass',
+		evidence: [],
+	};
+	const quiet = { device: phone, checks: [check], changes: [], scrollToasts: [] };
+	const noisy = { device: emulator, checks: [check], changes: [], scrollToasts: ['empty toast'] };
+	const summary = renderSummary([quiet, noisy]);
+
+	expect(runFailed(quiet)).toBe(false);
+	expect(runFailed(noisy)).toBe(true);
+	expect(summary).toContain('### Toasts while scrolling\n\n- Android Emulator: empty toast');
+	expect(summary).not.toContain('Every plugin passed on every device.');
 });
