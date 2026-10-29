@@ -24,6 +24,7 @@ export const PROJECTS = [
 	'packages/plugins-shared',
 	'packages/types',
 	'packages/utils',
+	'scripts',
 ];
 
 export const TSC_ARGS = [

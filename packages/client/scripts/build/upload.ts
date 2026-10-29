@@ -65,7 +65,7 @@ export class IncompleteVersionError extends Error {
  * @param target The channel and version.
  * @returns `unbound/{channel}/{version}/`.
  */
-export function versionPrefix(target: UploadTarget): string {
+export function versionPrefix(target: Pick<UploadTarget, 'channel' | 'version'>): string {
 	return `unbound/${target.channel}/${target.version}/`;
 }
 

@@ -10,6 +10,7 @@
         "@semantic-release/exec": "^7.1.0",
         "@semantic-release/git": "^11.0.1",
         "@stylistic/eslint-plugin": "^5.10.0",
+        "@types/bun": "catalog:",
         "dts-bundle-generator": "^9.5.1",
         "eslint-plugin-jsdoc": "^65.4.2",
         "eslint-plugin-perfectionist": "^5.9.1",
