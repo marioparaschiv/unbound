@@ -27,6 +27,8 @@ export type ResolvedAuthor =
 	| (AuthorFace & {
 			kind: 'user';
 			discordId: DiscordId;
+			/** `null` until their Discord profile is cached. */
+			username: string | null;
 			userId: string;
 			role: string;
 			badge: PublicBadge | null;
@@ -73,9 +75,11 @@ function pickAuthor(
 		return {
 			kind: 'user',
 			discordId: author.id,
+			username: found?.username ?? null,
 			userId: linked.id,
-			name: linked.name,
-			avatarUrl: linked.image ?? discordAvatarUrl,
+			// The account copied its name and avatar from Discord once, at sign-up; the cached profile is newer.
+			name: found ? (found.globalName ?? found.username) : linked.name,
+			avatarUrl: found ? discordAvatarUrl : (linked.image ?? discordAvatarUrl),
 			role: linked.role ?? DEFAULT_ROLE,
 			badge: linked.badge,
 			memberSince: linked.createdAt.toISOString(),
