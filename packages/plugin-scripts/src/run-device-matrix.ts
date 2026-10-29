@@ -30,6 +30,23 @@ function cell(check: MeasuredCheck | undefined): string {
 	return passed(check) ? 'pass' : `**fail**: ${check.note ?? 'failed'}`;
 }
 
+const LISTED_CALLS = 6;
+
+export function failureReason(lines: string[]): string | undefined {
+	const errors = lines.filter(
+		(line) => line.startsWith('error: ') && !line.includes('exited with code'),
+	);
+
+	return errors.at(-1)?.slice('error: '.length) ?? lines.filter(Boolean).at(-1);
+}
+
+export function listCalls(calls: string[]): string {
+	const listed = calls.slice(0, LISTED_CALLS).map((call) => `\`${call}\``);
+	const more = calls.length - listed.length;
+
+	return more > 0 ? `${listed.join(', ')} and ${more} more` : listed.join(', ');
+}
+
 export function renderSummary(runs: DeviceRun[]): string {
 	const ids = [...new Set(runs.flatMap((run) => run.checks.map((check) => check.id)))].sort();
 	const totals = runs.map((run) => {
@@ -54,10 +71,7 @@ export function renderSummary(runs: DeviceRun[]): string {
 	const offMain = runs.flatMap((run) =>
 		run.checks
 			.filter((check) => check.offMainCalls?.length)
-			.map(
-				(check) =>
-					`- ${run.device.name}, ${check.id}: ${check.offMainCalls!.map((call) => `\`${call}\``).join(', ')}`,
-			),
+			.map((check) => `- ${run.device.name}, ${check.id}: ${listCalls(check.offMainCalls!)}`),
 	);
 	const changes = runs.flatMap((run) =>
 		run.changes.map((change) => `- ${run.device.name}: ${change}`),
@@ -67,9 +81,10 @@ export function renderSummary(runs: DeviceRun[]): string {
 		'## Device matrix',
 		'',
 		...totals,
-		...(rows.length
-			? ['', header, divider, ...rows]
-			: ['', 'Every plugin passed on every device.']),
+		...(rows.length ? ['', header, divider, ...rows] : []),
+		...(!rows.length && runs.every((run) => !run.error)
+			? ['', 'Every plugin passed on every device.']
+			: []),
 		...(offMain.length ? ['', '### Off-main view calls', '', ...offMain] : []),
 		...(changes.length ? ['', '### Changes since the last run', '', ...changes] : []),
 	].join('\n');
@@ -102,7 +117,7 @@ async function collect(
 	const checks = readChecks(out).filter((check) => !only || ids.has(check.id));
 
 	if (exit !== 0) {
-		const reason = lines.filter(Boolean).pop() ?? `exited with ${exit}`;
+		const reason = failureReason(lines) ?? `exited with ${exit}`;
 
 		return { device, checks, changes, error: `collector failed: ${reason}` };
 	}
