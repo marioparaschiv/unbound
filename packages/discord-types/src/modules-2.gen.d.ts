@@ -3,7 +3,7 @@ import type * as React from 'react';
 import type * as RN from 'react-native';
 import type { ActionSheetCloseButtonComponent, ActionSheetCloseButtonProps, ActionSheetComponent, ActionSheetProps, AlertActionButtonComponent, AlertActionButtonProps, AlertModalComponent, AlertModalProps, AvatarDuoPileComponent, AvatarDuoPileProps, BaseTextButtonComponent, BaseTextButtonProps, BottomSheetTitleHeaderComponent, BottomSheetTitleHeaderProps, ButtonIconButtonComponent, ButtonIconButtonProps, DesignCardComponent, DesignCardProps, DesignTextComponent, DesignTextInputComponent, DesignTextInputProps, DesignTextProps, FloatingActionButtonComponent, FloatingActionButtonProps, FormRowComponent, FormRowProps, FormsFormCheckboxComponent, FormsFormCheckboxProps, FormsFormRadioComponent, FormsFormRadioProps, HeaderActionButtonComponent, HeaderActionButtonProps, ImageButtonComponent, ImageButtonProps, InputComponent, InputProps, NavigatorComponent, NavigatorProps, PressableHighlightComponent, PressableHighlightProps, PressableOpacityComponent, PressableOpacityProps, PromoSheetComponent, PromoSheetProps, SearchFieldComponent, SearchFieldProps, SheetBottomSheetComponent, SheetBottomSheetProps, SplitTextInputComponent, SplitTextInputProps, StackComponent, StackProps, TableCheckboxRowComponent, TableCheckboxRowProps, TableRadioGroupComponent, TableRadioGroupProps, TableRadioRowComponent, TableRadioRowProps, TableRowComponent, TableRowGroupComponent, TableRowGroupProps, TableRowInnerComponent, TableRowInnerProps, TableRowProps, TableSwitchRowComponent, TableSwitchRowProps, TextAreaComponent, TextAreaProps, TextFieldComponent, TextFieldProps, TextHeadingComponent, TextHeadingProps } from './barrels.gen';
 import type { ColorBlockComponent, ColorBlockProps, ConnectedStreamPreviewComponent, ConnectedStreamPreviewProps, FastImageComponent, FastImageProps, RolePillComponent, RolePillProps, SafeAreaPaddingViewComponent, SafeAreaPaddingViewProps, TouchableBackgroundComponent, TouchableBackgroundProps, VideoComponentComponent, VideoComponentProps } from './components_native.gen';
-import type { BadgeMaskedBadgeComponent, BadgeMaskedBadgeProps, ClipViewComponent, ClipViewProps, DragHandleComponent, DragHandleProps, FreeFormLabelComponent, FreeFormLabelProps, FreeFormTextInputComponent, FreeFormTextInputProps, InputButtonComponent, InputButtonProps, PhoneHangUpIconComponent, PhoneHangUpIconProps, PlusLargeIconComponent, PlusLargeIconProps, RadioIndicatorComponent, RadioIndicatorProps, TagListInputComponent, TagListInputProps, VoidFormLabelComponent, VoidFormLabelProps } from './design.gen';
+import type { BadgeMaskedBadgeComponent, BadgeMaskedBadgeProps, ClipViewComponent, ClipViewProps, DragHandleComponent, DragHandleProps, FreeFormLabelComponent, FreeFormLabelProps, FreeFormTextInputComponent, FreeFormTextInputProps, InputButtonComponent, InputButtonProps, PhoneHangUpIconComponent, PhoneHangUpIconProps, PlusLargeIconComponent, PlusLargeIconProps, RadioIndicatorComponent, RadioIndicatorProps, TagListInputComponent, TagListInputProps, VoidFormLabelComponent, VoidFormLabelProps, VoidRoleDotComponent, VoidRoleDotProps } from './design.gen';
 import type { FlashListComponent, FlashListProps } from './discord_common.gen';
 import type { ActionSheetEmojiRowComponent, ActionSheetEmojiRowProps, ActivityStatusComponent, ActivityStatusProps, AvatarDecorationSampleV2Component, AvatarDecorationSampleV2Props, ChannelListPanelBackdropComponent, ChannelListPanelBackdropProps, ChatTTITrackerComponent, ChatTTITrackerProps, ChatViewComponent, ChatViewProps, CollectiblesShopEntryButtonComponent, CollectiblesShopEntryButtonProps, CreatorMonetizationSettingsDisabledContextProviderComponent, CreatorMonetizationSettingsDisabledContextProviderProps, EmojisEmojiComponent, EmojisEmojiProps, ExperimentDetailsComponent, ExperimentDetailsProps, ExpressionPickerKeyboardComponent, ExpressionPickerKeyboardProps, FastestListComponent, FastestListProps, ForumPostMediaSpoilerComponent, ForumPostMediaSpoilerProps, GIFPickerComponent, GIFPickerProps, GroupDMAvatarComponent, GroupDMAvatarProps, GroupDMNitroCapCoachmarkComponent, GroupDMNitroCapCoachmarkProps, GuildIconInnerComponent, GuildIconInnerProps, KickConfirmComponent, KickConfirmProps, NameplateComponent, NameplateProps, OptionsChannelIconComponent, OptionsChannelIconProps, ProfileEffectUserPreviewComponent, ProfileEffectUserPreviewProps, UsernameWithEffectsComponent, UsernameWithEffectsProps, VerifiedRoleIconComponent, VerifiedRoleIconProps } from './modules-1.gen';
 import type { ApplicationIconAndNameComponent, ApplicationIconAndNameProps, DiscordTagComponent, DiscordTagProps, NavTTISurfaceProviderComponent, NavTTISurfaceProviderProps, PremiumFeaturesBackgroundComponent, PremiumFeaturesBackgroundProps, PremiumPillComponent, PremiumPillProps, PremiumUpsellTooltipActionSheetComponent, PremiumUpsellTooltipActionSheetProps, SafetyToolsButtonComponent, SafetyToolsButtonProps, SearchScreenSearchBarComponent, SearchScreenSearchBarProps, ShareChatInputComponent, ShareChatInputProps, StageChannelAgeVerificationNoticeComponent, StageChannelAgeVerificationNoticeProps, StickersStickerComponent, StickersStickerProps, UserProfileCardComponent, UserProfileCardProps, WidgetSectionComponent, WidgetSectionProps, YouScreenUserProfileContentComponent, YouScreenUserProfileContentProps } from './modules-3.gen';
@@ -341,7 +341,8 @@ export type ImagePickerIconProps = {
 		disabled?: boolean;
 		image?: { uri?: unknown };
 		imageUploadSize?: unknown;
-		previewResizeMode?: 'center' | (string & {});
+		/** @default 'cover' */
+		previewResizeMode?: FastImageProps['resizeMode'];
 		previewShape?: number;
 		setImage?: unknown;
 		size?: number;
@@ -396,6 +397,7 @@ export type FormTrialActiveUserLimitPickerComponent = React.ComponentType<FormTr
  */
 export type FormTrialIntervalPickerProps = {
 		disabled?: FormDropdownProps['disabled'];
+		/** @default null */
 		interval?: unknown;
 		onChange?: (...args: any[]) => unknown;
 		trialIntervalOptions?: unknown;
@@ -3761,6 +3763,7 @@ export type RolesZComponent = React.ComponentType<RolesZProps>;
 export type AddConnectionButtonProps = {
 		excludedApplications?: unknown;
 		excludedConnections?: unknown;
+		/** @default null */
 		gameApplicationIds?: unknown;
 		handleConnectionTapped: (...args: any[]) => unknown;
 		integrations?: unknown;
@@ -4000,7 +4003,7 @@ export type SelectConnectionActionSheetProps = {
 		addConnection: (...args: any[]) => unknown;
 		excludedApplications: { has?: unknown };
 		excludedConnections: { has?: unknown };
-		gameApplicationIds?: unknown;
+		gameApplicationIds?: { filter?: unknown };
 		integrations?: { filter?: unknown };
 		onCompleteApplication: (...args: any[]) => unknown;
 		onCompleteIdentityApplication?: (...args: any[]) => unknown;
@@ -4244,7 +4247,8 @@ export type GuildSidebarChannelIconProps = {
 		isRulesChannel?: boolean;
 		locked?: unknown;
 		mode?: BaseChannelIconProps['mode'];
-		selected?: boolean;
+		/** @default false */
+		selected?: DMChannelIconProps['selected'];
 	};
 export type GuildSidebarChannelIconComponent = React.ComponentType<GuildSidebarChannelIconProps>;
 /**
@@ -4387,7 +4391,8 @@ export type VoiceUserItemProps = Omit<VoiceUserNameItemProps, 'channelId' | 'col
 		localMute?: unknown;
 		member?: { avatar?: unknown };
 		mute?: unknown;
-		platform?: unknown;
+		/** @default '' */
+		platform?: string;
 		serverDeaf?: unknown;
 		serverMute?: unknown;
 		stream?: unknown;
@@ -5263,7 +5268,7 @@ export type GuildFolderSettingsModalComponent = React.ComponentType<GuildFolderS
  * @see modules/guilds_bar/native/GuildsBarFolderSettingsModal.tsx
  */
 export type GuildFolderSettingsSceneProps = {
-		color?: unknown;
+		color?: ColorBlockProps['color'];
 		name?: DesignTextInputProps['value'];
 		onColorChange?: (...args: any[]) => unknown;
 		onNameChange?: DesignTextInputProps['onChange'];
@@ -5298,6 +5303,7 @@ export type GuildsBarGeoRestrictedGuildComponent = React.ComponentType<GuildsBar
  * @see modules/guilds_bar/native/GuildsBarGuild.tsx
  */
 export type GuildsBarGuildProps = {
+		/** @default null */
 		guildId?: HomeDrawerGuildRowProps['guildId'];
 		/** @default false */
 		hideExpandedChildren?: boolean;
@@ -5334,6 +5340,7 @@ export type GuildsBarGuildFolderProps = {
 		foldersChanged?: { get?: unknown; set?: unknown };
 		/** @default false */
 		hideExpandedChildren?: boolean;
+		/** @default null */
 		id?: FolderBGInnerProps['folderId'];
 		/** @default false */
 		isDragPreview?: GuildsBarAnimatedItemWrapperProps['isDragPreview'];
@@ -5842,7 +5849,8 @@ export type ContentInventoryEntryRowProps = {
 		content: CustomStatusEntryRowProps['content'];
 		/** @default false */
 		renderForScreenshot?: CustomStatusEntryRowProps['renderForScreenshot'];
-		visible?: boolean;
+		/** @default false */
+		visible?: CustomStatusEntryRowProps['visible'];
 	};
 export type ContentInventoryEntryRowComponent = React.ComponentType<ContentInventoryEntryRowProps>;
 /**
@@ -6136,7 +6144,8 @@ export type MediaOnlyRowPreviewProps = {
 		lineClamp?: unknown;
 		message: { set?: unknown };
 		messageOptions?: unknown;
-		muted?: unknown;
+		/** @default false */
+		muted?: boolean;
 	};
 export type MediaOnlyRowPreviewComponent = React.ComponentType<MediaOnlyRowPreviewProps & Record<string, unknown>>;
 /**
@@ -6147,7 +6156,8 @@ export type MessageRowPreviewProps = {
 		lineClamp?: unknown;
 		message?: unknown;
 		messageOptions?: unknown;
-		muted?: unknown;
+		/** @default false */
+		muted?: boolean;
 		pointerEvents?: 'auto' | (string & {});
 	};
 export type MessageRowPreviewComponent = React.ComponentType<MessageRowPreviewProps & Record<string, unknown>>;
@@ -6159,7 +6169,8 @@ export type NonMediaEmbedsRowPreviewProps = {
 		lineClamp?: number;
 		message: { set?: unknown };
 		messageOptions?: unknown;
-		muted?: unknown;
+		/** @default false */
+		muted?: boolean;
 	};
 export type NonMediaEmbedsRowPreviewComponent = React.ComponentType<NonMediaEmbedsRowPreviewProps & Record<string, unknown>>;
 /**
@@ -6342,7 +6353,8 @@ export type SimplePostComponent = React.ComponentType<SimplePostProps>;
  */
 export type ThreadAsCommentsProps = {
 		guild?: unknown;
-		inForum?: unknown;
+		/** @default false */
+		inForum?: boolean;
 		onPress?: PressableHighlightProps['onPress'];
 		parentMessage: { id?: unknown };
 		style?: PressableHighlightProps['style'];
@@ -7020,7 +7032,8 @@ export type InAppNotificationsMessagePreviewComponent = React.ComponentType<InAp
 export type LocationTextProps = {
 		author?: unknown;
 		channel: { type?: unknown };
-		color?: unknown;
+		/** @default 'text-muted' */
+		color?: DesignTextProps['color'];
 		location?: DesignTextProps['children'];
 		parentChannel?: { type?: unknown };
 	};
@@ -7033,7 +7046,7 @@ export type MessageNotificationHeaderProps = {
 		author?: { colorString?: unknown; nick?: unknown };
 		channel?: LocationTextProps['channel'];
 		guild?: unknown;
-		locationTextColor?: unknown;
+		locationTextColor?: LocationTextProps['color'];
 		parentChannel?: LocationTextProps['parentChannel'];
 	};
 export type MessageNotificationHeaderComponent = React.ComponentType<MessageNotificationHeaderProps>;
@@ -7121,6 +7134,7 @@ export type NotificationPressableComponent = React.ComponentType<NotificationPre
  * @see modules/in_app_notifications/native/NotificationContent.tsx
  */
 export type NotificationContentProps = {
+		/** @default null */
 		accessoryLabelNode?: React.ComponentProps<typeof RN.View>['children'];
 		children?: React.ComponentProps<typeof RN.View>['children'];
 		header: { type?: unknown };
@@ -7436,7 +7450,7 @@ export type SettingsUpsellsTableRowProps = {
 		description?: InAppReportsUpsellsTableRowProps['description'];
 		disabledTitle?: InAppReportsUpsellsTableRowProps['disabledTitle'];
 		onButtonClick: (...args: any[]) => unknown;
-		title?: unknown;
+		title?: InAppReportsUpsellsTableRowProps['title'];
 		trackSettingsUpsellsAction: (...args: any[]) => unknown;
 	};
 export type SettingsUpsellsTableRowComponent = React.ComponentType<SettingsUpsellsTableRowProps>;
@@ -7474,7 +7488,7 @@ export type InAppReportsUpsellsTableRowProps = {
 		disabledTitle?: TableRowProps['label'];
 		icon?: TableRowProps['icon'];
 		onPress?: TableRowProps['onPress'];
-		title?: unknown;
+		title?: TableRowProps['label'];
 		/** @default 'default' */
 		variant?: TableRowProps['variant'];
 	};
@@ -7684,7 +7698,8 @@ export type InstantInviteAgeTextComponent = React.ComponentType<InstantInviteAge
  * @see modules/instant_invite/native/components/InstantInviteEmptyState.tsx
  */
 export type InstantInviteEmptyStateProps = {
-		link?: unknown;
+		/** @default '' */
+		link?: FreeFormTextInputProps['value'];
 		onCopy?: FreeFormTextInputProps['onPress'];
 		onPressSettings?: PressableOpacityProps['onPress'];
 		onShare?: BaseTextButtonProps['onPress'];
@@ -8205,7 +8220,7 @@ export type SelectComponentActionSheetProps = {
 		onRemoveOptionItem?: SelectionHeaderProps['onRemoveOptionItem'];
 		options: { length?: unknown };
 		renderDescription?: SelectionOptionItemProps['renderDescription'];
-		renderHeaderIcon?: (...args: any[]) => React.ReactNode;
+		renderHeaderIcon?: SelectionHeaderProps['renderIcon'];
 		renderIcon?: SelectionHeaderProps['renderIcon'];
 		renderOptionSuffix?: SelectionOptionItemProps['renderOptionSuffix'];
 		selectedCount?: number;
@@ -8221,7 +8236,7 @@ export type SelectComponentActionSheetComponent = React.ComponentType<SelectComp
  */
 export type SelectionHeaderProps = {
 		labelComponent?: { label?: unknown };
-		onPressOptionItem: (...args: any[]) => unknown;
+		onPressOptionItem?: (...args: any[]) => unknown;
 		onQueryChange?: (...args: any[]) => unknown;
 		onRemoveOptionItem?: (...args: any[]) => unknown;
 		renderIcon: (...args: any[]) => unknown;
@@ -8248,6 +8263,7 @@ export type SelectionOptionItemProps = {
 		renderDescription?: (...args: any[]) => unknown;
 		renderIcon: (...args: any[]) => unknown;
 		renderOptionSuffix?: (...args: any[]) => unknown;
+		/** @default false */
 		selected?: boolean;
 		skipIcon?: unknown;
 		start?: TableRowProps['start'];
@@ -8592,7 +8608,8 @@ export type GuildComponent = React.ComponentType<GuildProps>;
 export type InitialResultsInnerProps = {
 		expandedHistory?: unknown;
 		history: { length?: unknown };
-		selectedGuildId?: string;
+		/** @default 'default' */
+		selectedGuildId?: 'default' | (string & {});
 		toggleExpandedHistory?: CategoryItemInnerProps['onPress'];
 		unreads: { length?: unknown; some?: unknown };
 	};
@@ -8670,7 +8687,8 @@ export type LaunchpadChannelSubtitleProps = {
 		channelId?: string;
 		connected?: unknown;
 		guildId?: string;
-		muted?: unknown;
+		/** @default false */
+		muted?: boolean;
 		subtitle?: unknown;
 		textProps?: unknown;
 	};
@@ -8683,7 +8701,8 @@ export type LaunchpadChannelTitleProps = {
 		connected?: unknown;
 		muted?: unknown;
 		resolvedUnreadSetting?: unknown;
-		title?: unknown;
+		/** @default '' */
+		title?: DesignTextProps['children'];
 		unread?: unknown;
 	};
 export type LaunchpadChannelTitleComponent = React.ComponentType<LaunchpadChannelTitleProps>;
@@ -8752,8 +8771,8 @@ export type SimpleGuildProps = {
 		/** @default true */
 		animated?: boolean;
 		backgroundColor?: 'transparent' | (string & {});
-		badge?: unknown;
-		borderRadius?: number | string;
+		badge?: SimpleGuildContainerAnimatedProps['badge'];
+		borderRadius?: SimpleGuildContainerAnimatedProps['borderRadius'];
 		guildIconRef?: SimpleGuildContainerAnimatedProps['guildIconRef'];
 		guildId?: string;
 		iconSize?: unknown;
@@ -8765,7 +8784,7 @@ export type SimpleGuildProps = {
 		selected?: GuildIconInnerProps['selected'];
 		size?: number;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
-		unread?: unknown;
+		unread?: SimpleGuildContainerAnimatedProps['unread'];
 	};
 export type SimpleGuildComponent = React.ComponentType<SimpleGuildProps>;
 /**
@@ -8813,7 +8832,8 @@ export type SimpleGuildContainerAnimatedProps = {
 		activityIndicatorState?: SimpleGuildActivityIndicatorProps['activityIndicatorState'];
 		backgroundColor?: unknown;
 		badge?: SimpleGuildContainerBadgeProps['badge'];
-		borderRadius?: unknown;
+		/** @default 24 */
+		borderRadius?: number;
 		children?: React.ReactNode;
 		folder?: unknown;
 		guildIconRef?: React.ComponentProps<typeof RN.Pressable>['ref'];
@@ -8915,9 +8935,10 @@ export type ChannelContentProps = {
 		lastMessageTimestampString?: DesignTextProps['children'];
 		locked?: unknown;
 		mentionBadge?: React.ComponentProps<typeof RN.View>['children'];
-		mentionCount?: unknown;
+		/** @default 0 */
+		mentionCount?: number;
 		muted?: unknown;
-		name?: unknown;
+		name?: LaunchpadChannelTitleProps['title'];
 		needSubscriptionToAccess?: SubscriptionGatedChannelIconProps['locked'];
 		resolvedUnreadSetting?: unknown;
 		subtitle?: React.ComponentProps<typeof RN.View>['children'];
@@ -9185,6 +9206,7 @@ export type HeaderChannelTitleProps = {
 		/** @default false */
 		disableArrow?: boolean;
 		guildId?: UsernameWithEffectsProps['guildId'];
+		/** @default null */
 		icon?: React.ComponentProps<typeof RN.View>['children'];
 		subtitle?: React.ComponentProps<typeof RN.View>['children'];
 		title?: DesignTextProps['children'];
@@ -9853,13 +9875,14 @@ export type SharedComponentsBadgeComponent = React.ComponentType<SharedComponent
  */
 export type ChannelRowPreviewProps = {
 		channel: { guild_id?: unknown };
-		color?: 'mobile-text-heading-primary' | 'text-default' | 'text-muted' | 'text-strong' | (string & {});
+		color?: DesignTextProps['color'];
 		layout?: unknown;
 		/** @default 1 */
 		lineClamp?: DesignTextProps['lineClamp'];
 		message: { channel_id?: unknown };
 		muted?: boolean;
-		variant?: 'text-xs/medium' | (string & {});
+		/** @default 'text-sm/normal' */
+		variant?: DesignTextProps['variant'];
 	};
 export type ChannelRowPreviewComponent = React.ComponentType<ChannelRowPreviewProps>;
 /**
@@ -9970,7 +9993,7 @@ export type GenericHeaderTitleProps = {
 		/** @default 'text-default' */
 		subtitleColor?: DesignTextProps['color'];
 		title?: DesignTextProps['children'];
-		variant?: 'heading-lg/semibold' | 'redesign/heading-18/bold' | (string & {});
+		variant?: DesignTextProps['variant'];
 	};
 export type GenericHeaderTitleComponent = React.ComponentType<GenericHeaderTitleProps & Record<string, unknown>>;
 /**
@@ -10123,9 +10146,10 @@ export type ChannelContentComponentProps = {
 		layout?: unknown;
 		locked?: unknown;
 		mentionBadge?: React.ComponentProps<typeof RN.View>['children'];
-		mentionCount?: unknown;
+		/** @default 0 */
+		mentionCount?: number;
 		muted?: unknown;
-		name?: unknown;
+		name?: GuildChannelsChannelTitleProps['title'];
 		needSubscriptionToAccess?: SubscriptionGatedChannelIconProps['locked'];
 		resolvedUnreadSetting?: unknown;
 		subtitle?: React.ComponentProps<typeof RN.View>['children'];
@@ -10141,7 +10165,8 @@ export type GuildChannelsChannelSubtitleProps = {
 		connected?: unknown;
 		guildId?: string;
 		layout?: unknown;
-		muted?: unknown;
+		/** @default false */
+		muted?: boolean;
 		subtitle?: unknown;
 		textProps?: unknown;
 	};
@@ -10155,7 +10180,8 @@ export type GuildChannelsChannelTitleProps = {
 		layout?: unknown;
 		muted?: unknown;
 		resolvedUnreadSetting?: unknown;
-		title?: unknown;
+		/** @default '' */
+		title?: DesignTextProps['children'];
 		unread?: unknown;
 	};
 export type GuildChannelsChannelTitleComponent = React.ComponentType<GuildChannelsChannelTitleProps>;
@@ -10226,7 +10252,7 @@ export type ActionCardProps = {
 		imageSource?: FastImageProps['source'];
 		onPress?: HappeningNowCardProps['onPress'];
 		/** @default false */
-		panelVariant?: boolean;
+		panelVariant?: HappeningNowCardProps['panelVariant'];
 		text?: DesignTextProps['children'];
 	};
 export type ActionCardComponent = React.ComponentType<ActionCardProps>;
@@ -10302,7 +10328,8 @@ export type HappeningNowCardProps = {
 		children?: DesignCardProps['children'];
 		onLongPress?: (...args: any[]) => unknown;
 		onPress?: DesignCardProps['onPress'];
-		panelVariant?: unknown;
+		/** @default false */
+		panelVariant?: boolean;
 		style?: DesignCardProps['style'];
 		width?: 'full' | 'large' | 'medium' | (string & {});
 	};
@@ -10323,7 +10350,8 @@ export type HappeningNowCardHeaderComponent = React.ComponentType<HappeningNowCa
  */
 export type HappeningNowCardSubtitleProps = Omit<DesignTextProps, 'children' | 'variant'> & {
 		children?: DesignTextProps['children'];
-		variant?: 'text-xs/bold' | (string & {});
+		/** @default 'text-sm/normal' */
+		variant?: DesignTextProps['variant'];
 	};
 export type HappeningNowCardSubtitleComponent = React.ComponentType<HappeningNowCardSubtitleProps & Record<string, unknown>>;
 /**
@@ -10336,7 +10364,7 @@ export type HappeningNowCardActiveChannelProps = {
 		guildId?: HappeningNowAvatarStackProps['guildId'];
 		index?: unknown;
 		/** @default false */
-		panelVariant?: boolean;
+		panelVariant?: HappeningNowCardProps['panelVariant'];
 	};
 export type HappeningNowCardActiveChannelComponent = React.ComponentType<HappeningNowCardActiveChannelProps>;
 /**
@@ -10349,7 +10377,7 @@ export type HappeningNowActivityCardProps = {
 		guildId?: HappeningNowLiveStageContentProps['guildId'];
 		index?: unknown;
 		/** @default false */
-		panelVariant?: CustomStatusActivityCardProps['panelVariant'];
+		panelVariant?: HappeningNowCardProps['panelVariant'];
 		renderingContext?: HappeningNowLiveStageContentProps['renderingContext'];
 		status?: unknown;
 		stream?: IconOrPreviewProps['stream'];
@@ -10404,7 +10432,7 @@ export type HappeningNowCardEmbeddedActivityProps = {
 		guildId?: HappeningNowAvatarStackProps['guildId'];
 		index?: unknown;
 		/** @default false */
-		panelVariant?: HappeningNowCardPlaceholderProps['panelVariant'];
+		panelVariant?: HappeningNowCardProps['panelVariant'];
 		userId?: string;
 		voiceState: { channelId?: unknown };
 	};
@@ -10425,7 +10453,7 @@ export type HappeningNowCardEventProps = {
 		index?: unknown;
 		isLive?: boolean;
 		/** @default false */
-		panelVariant?: boolean;
+		panelVariant?: HappeningNowCardProps['panelVariant'];
 	};
 export type HappeningNowCardEventComponent = React.ComponentType<HappeningNowCardEventProps>;
 /**
@@ -10436,7 +10464,7 @@ export type HappeningNowCardLiveStageProps = {
 		fullwidth?: unknown;
 		index?: unknown;
 		/** @default false */
-		panelVariant?: HappeningNowActivityCardProps['panelVariant'];
+		panelVariant?: HappeningNowCardProps['panelVariant'];
 		renderingContext?: HappeningNowLiveStageContentProps['renderingContext'];
 		stage: HappeningNowLiveStageContentProps['stage'];
 	};
@@ -10459,7 +10487,7 @@ export type HappeningNowLiveStageContentComponent = React.ComponentType<Happenin
 export type HappeningNowCardPlaceholderProps = {
 		fullWidth?: unknown;
 		/** @default false */
-		panelVariant?: boolean;
+		panelVariant?: HappeningNowCardProps['panelVariant'];
 	};
 export type HappeningNowCardPlaceholderComponent = React.ComponentType<HappeningNowCardPlaceholderProps>;
 /**
@@ -10486,7 +10514,7 @@ export type HappeningNowCardUserProps = {
 		guildId?: string;
 		index?: unknown;
 		/** @default false */
-		panelVariant?: boolean;
+		panelVariant?: HappeningNowCardProps['panelVariant'];
 		userId?: string;
 	};
 export type HappeningNowCardUserComponent = React.ComponentType<HappeningNowCardUserProps>;
@@ -10499,7 +10527,7 @@ export type VoiceChannelCardProps = {
 		guildId?: GroupAvatarProps['guildId'];
 		index?: unknown;
 		/** @default false */
-		panelVariant?: HappeningNowCardPlaceholderProps['panelVariant'];
+		panelVariant?: HappeningNowCardProps['panelVariant'];
 		voiceState: HappeningNowVoiceCardSubtitleProps['voiceState'];
 	};
 export type VoiceChannelCardComponent = React.ComponentType<VoiceChannelCardProps>;
@@ -10513,7 +10541,7 @@ export type CustomStatusActivityCardProps = {
 		guildId?: string;
 		onPress?: HappeningNowCardProps['onPress'];
 		/** @default false */
-		panelVariant?: boolean;
+		panelVariant?: HappeningNowCardProps['panelVariant'];
 		user: (...args: any[]) => unknown;
 		userTitle?: HappeningNowCardHeaderProps['children'];
 	};
@@ -10634,14 +10662,14 @@ export type NewMessageUserListProps = {
 		defaultNoResultsFound?: React.ComponentProps<typeof RN.View>['children'];
 		disabledUserIds?: { includes?: unknown };
 		forceSearchResults?: unknown;
-		noResultActions?: unknown;
+		noResultActions?: UserFlashListActionsProps['actions'];
 		onForceSearchResults?: NewMessagesTagListInputProps['onForceSearchResults'];
 		onQueryChanged?: (...args: any[]) => unknown;
 		onSearchFocus?: NewMessagesTagListInputProps['onFocus'];
 		onSelectUser?: NewMessagesTagListInputProps['onSelectUser'];
 		overrideResults?: unknown;
 		rowMode?: unknown;
-		selectedUserIds: { includes?: unknown };
+		selectedUserIds: NewMessagesTagListInputProps['selectedUserIds'];
 		tagListInputRef?: NewMessagesTagListInputProps['tagListInputRef'];
 		/** @default true */
 		withAffinitySuggestions?: boolean;
@@ -10675,7 +10703,7 @@ export type NewMessagesTagListInputProps = {
 		onFocus?: TagListInputProps['onFocus'];
 		onForceSearchResults?: PressableOpacityProps['onPress'];
 		onSelectUser: (...args: any[]) => unknown;
-		selectedUserIds?: unknown;
+		selectedUserIds?: { map?: unknown };
 		tagListInputRef?: TagListInputProps['ref'];
 	};
 export type NewMessagesTagListInputComponent = React.ComponentType<NewMessagesTagListInputProps>;
@@ -10737,7 +10765,7 @@ export type SearchableUserListProps = {
 		onScroll?: UsersFastListInnerProps['onScroll'];
 		onSelectUser: (...args: any[]) => unknown;
 		rowMode?: unknown;
-		selectedUserIds?: { includes?: unknown };
+		selectedUserIds?: { includes?: unknown; map?: unknown };
 		/** @default true */
 		withAffinitySuggestions?: boolean;
 		/** @default true */
@@ -10850,13 +10878,15 @@ export type UserListUserRowProps = Omit<TableRowProps, 'accessibilityActions' | 
 		onLongPress?: (...args: any[]) => unknown;
 		onPress?: (...args: any[]) => unknown;
 		premiumSince?: unknown;
-		roleColors?: unknown;
+		/** @default null */
+		roleColors?: VoidRoleDotProps['colors'];
 		/** @default false */
 		selected?: TableCheckboxRowProps['checked'];
 		subLabel?: unknown;
 		trailing?: unknown;
 		type?: unknown;
 		user: UserRowSubLabelProps['user'];
+		/** @default null */
 		usernameColor?: unknown;
 	};
 export type UserListUserRowComponent = React.ComponentType<UserListUserRowProps & Record<string, unknown>>;
@@ -11813,7 +11843,7 @@ export type YouScreenContainerComponent = React.ComponentType<YouScreenContainer
 export type YouScreenNavIconProps = {
 		IconComponent?: unknown;
 		accessibilityLabel?: DesignTextProps['children'];
-		label?: unknown;
+		label?: DesignTextProps['children'];
 		onPress?: (...args: any[]) => unknown;
 		ref?: React.Ref<any>;
 		/** @default false */
@@ -12231,7 +12261,8 @@ export type MaskedLinkModalComponent = React.ComponentType<MaskedLinkModalProps>
  * @see modules/media/native/AttachmentPreview.tsx
  */
 export type MediaAttachmentIconProps = {
-		fileName?: unknown;
+		/** @default '' */
+		fileName?: string;
 	};
 export type MediaAttachmentIconComponent = React.ComponentType<MediaAttachmentIconProps>;
 /**
@@ -12261,7 +12292,7 @@ export type AttachmentPreviewComponent = React.ComponentType<AttachmentPreviewPr
  */
 export type DefaultAttachmentPreviewProps = {
 		borderRadius?: unknown;
-		fileName?: FilenameTextProps['fileName'];
+		fileName?: MediaAttachmentIconProps['fileName'];
 		maxFileWidth?: unknown;
 	};
 export type DefaultAttachmentPreviewComponent = React.ComponentType<DefaultAttachmentPreviewProps>;
@@ -12270,6 +12301,7 @@ export type DefaultAttachmentPreviewComponent = React.ComponentType<DefaultAttac
  * @see modules/media/native/AttachmentPreview.tsx
  */
 export type FilenameTextProps = {
+		/** @default '' */
 		fileName?: DesignTextProps['children'];
 	};
 export type FilenameTextComponent = React.ComponentType<FilenameTextProps>;
@@ -12279,7 +12311,7 @@ export type FilenameTextComponent = React.ComponentType<FilenameTextProps>;
  */
 export type ImageThumbnailProps = {
 		borderRadius?: unknown;
-		fileName?: '' | (string & {});
+		fileName?: string;
 		height?: unknown;
 		style?: FastImageProps['style'];
 		uri: { startsWith?: unknown };
@@ -13024,7 +13056,8 @@ export type OverlayObscureToggleButtonComponent = React.ComponentType<OverlayObs
  * @see modules/media_viewer/native/components/overlay/MediaModalOverlayAltText.tsx
  */
 export type MediaModalOverlayAltTextButtonProps = {
-		description?: unknown;
+		/** @default '' */
+		description?: string;
 	};
 export type MediaModalOverlayAltTextButtonComponent = React.ComponentType<MediaModalOverlayAltTextButtonProps>;
 /**
@@ -13181,7 +13214,7 @@ export type MediaModalWebVideoFileComponent = React.ComponentType<MediaModalWebV
 export type MediaModalWebViewBaseProps = {
 		baseURL?: string;
 		/** @default '' */
-		injectedJavaScript?: '' | (string & {});
+		injectedJavaScript?: string;
 		onDataReceived: (...args: any[]) => unknown;
 		onToggleOverlay: (...args: any[]) => unknown;
 		playerState?: number;
@@ -13566,6 +13599,7 @@ export type MessagesRendererProps = {
 		userSettingsLocale?: unknown;
 		visibleMessagesWindowHandler?: unknown;
 		voiceInviteDataByChannelId?: string;
+		/** @default null */
 		voiceStateChannelIdSummaryForGuild?: unknown;
 		voiceStatePrivateChannelId?: string;
 	};
@@ -13575,7 +13609,7 @@ export type MessagesRendererComponent = React.ComponentType<MessagesRendererProp
  * @see modules/messages/native/RoleMembersActionSheet.tsx
  */
 export type RoleMembersActionSheetProps = {
-		channelId?: string;
+		channelId?: GuildChannelUserListProps['channelId'];
 		guildId?: GuildChannelUserListProps['guildId'];
 		roleId?: GuildChannelUserListProps['roleId'];
 	};
@@ -13870,6 +13904,7 @@ export type BackupScreenComponent = React.ComponentType<BackupScreenProps>;
 export type MFAOptionScreenProps = {
 		content?: SafeAreaPaddingViewProps['children'];
 		error?: DesignTextProps['children'];
+		/** @default false */
 		headerImage?: StackProps['children'];
 		headerText?: TextHeadingProps['children'];
 		input?: StackProps['children'];
@@ -14134,6 +14169,7 @@ export type ForYouHoistedItemsHeaderComponent = React.ComponentType<ForYouHoiste
  */
 export type ForYouItemActionButtonsProps = Omit<React.ComponentProps<typeof RN.View>, 'actionButtons' | 'actionsNode' | 'compactMode' | 'item' | 'onSoftAckItem' | 'rowIndex'> & {
 		actionButtons?: { map?: unknown };
+		/** @default null */
 		actionsNode?: React.ComponentProps<typeof RN.View>['children'];
 		compactMode?: unknown;
 		item: { deeplink?: unknown; id?: unknown; type?: unknown };
@@ -14733,7 +14769,8 @@ export type NUFGuildTemplatesComponent = React.ComponentType<NUFGuildTemplatesPr
  */
 export type NewUserModalProps = {
 		initialOnboardingStepIndex?: unknown;
-		initialRouteName?: unknown;
+		/** @default 'choose-avatar' */
+		initialRouteName?: 'choose-avatar' | (string & {});
 	};
 export type NewUserModalComponent = React.ComponentType<NewUserModalProps>;
 /**
@@ -15019,7 +15056,7 @@ export type ErrorResultComponent = React.ComponentType<ErrorResultProps>;
  */
 export type GuildSelectorProps = {
 		disabled?: boolean;
-		error?: '' | (string & {});
+		error?: string;
 		guilds: { filter?: unknown; find?: unknown };
 		onGuildChange: (...args: any[]) => unknown;
 		selectedGuildId?: string;
@@ -15081,7 +15118,7 @@ export type SuccessResultModalComponent = React.ComponentType<SuccessResultModal
  * @see modules/oauth2/native/WebhookGuildChannelSelector.tsx
  */
 export type WebhookGuildChannelSelectorProps = {
-		error?: '' | (string & {});
+		error?: string;
 		onChannelChange: (...args: any[]) => unknown;
 		selectedChannelId?: string;
 		selectedGuildId?: (...args: any[]) => unknown;
@@ -15197,7 +15234,7 @@ export type ConnectGuardianBottomSheetComponent = React.ComponentType<ConnectGua
  */
 export type ConnectGuardianCardProps = {
 		expiresAt?: unknown;
-		linkCode?: '' | (string & {});
+		linkCode?: string;
 		onRefresh?: (...args: any[]) => unknown;
 		/** @default 'none' */
 		shareActions?: 'compact' | 'full' | 'none' | (string & {});
@@ -16087,7 +16124,8 @@ export type PhoneXComponent = React.ComponentType<PhoneXProps>;
  * @see modules/phone/native/FormPhoneOrEmail.tsx
  */
 export type CountryCodeSelectorProps = {
-		alpha2?: unknown;
+		/** @default '' */
+		alpha2?: string;
 		countryCode?: unknown;
 		onPress?: PressableOpacityProps['onPress'];
 		show?: unknown;
@@ -16098,7 +16136,7 @@ export type CountryCodeSelectorComponent = React.ComponentType<CountryCodeSelect
  * @see modules/phone/native/FormPhoneOrEmail.tsx
  */
 export type FormPhoneOrEmailProps = Omit<FreeFormTextInputProps, 'alpha2' | 'countryCode' | 'error' | 'forceMode' | 'hint' | 'label' | 'onChangeText' | 'onPressCountrySelector' | 'ref' | 'style' | 'textInputStyle' | 'value'> & {
-		alpha2?: unknown;
+		alpha2?: CountryCodeSelectorProps['alpha2'];
 		countryCode?: unknown;
 		error?: VoidFormLabelProps['children'];
 		forceMode?: unknown;
@@ -16123,7 +16161,8 @@ export type PhoneGComponent = React.ComponentType<PhoneGProps>;
  * @see modules/phone/native/PhoneOrEmailInput.tsx
  */
 export type PhoneOrEmailInputProps = Omit<SplitTextInputProps, 'alpha2' | 'countryCode' | 'forceMode' | 'onChange' | 'onPressCountrySelector' | 'ref'> & {
-		alpha2?: unknown;
+		/** @default '' */
+		alpha2?: string;
 		countryCode?: unknown;
 		forceMode?: unknown;
 		onChange?: (...args: any[]) => unknown;
@@ -16486,7 +16525,8 @@ export type GiftingBadgesCoachmarkActionSheetComponent = React.ComponentType<Gif
  */
 export type HasBadgeCoachmarkProps = {
 		currentTier: { name?: unknown };
-		giftCount?: unknown;
+		/** @default 0 */
+		giftCount?: number;
 		markAsDismissed: (...args: any[]) => unknown;
 		variant?: 'noCount' | (string & {});
 	};
@@ -17050,11 +17090,15 @@ export type PremiumGiftPromotionDetailsBaseProps = {
 		graphic?: React.ComponentProps<typeof RN.View>['children'];
 		style?: React.ComponentProps<typeof RN.View>['style'];
 		subtitle?: DesignTextProps['children'];
-		subtitleColor?: unknown;
-		subtitleVariant?: unknown;
+		/** @default 'text-subtle' */
+		subtitleColor?: DesignTextProps['color'];
+		/** @default 'text-sm/medium' */
+		subtitleVariant?: DesignTextProps['variant'];
 		title?: DesignTextProps['children'];
-		titleColor?: unknown;
-		titleVariant?: unknown;
+		/** @default 'text-default' */
+		titleColor?: DesignTextProps['color'];
+		/** @default 'text-md/semibold' */
+		titleVariant?: DesignTextProps['variant'];
 		topContent?: React.ComponentProps<typeof RN.View>['children'];
 	};
 export type PremiumGiftPromotionDetailsBaseComponent = React.ComponentType<PremiumGiftPromotionDetailsBaseProps>;
@@ -17527,7 +17571,8 @@ export type GuildPowerupCardFooterActiveComponent = React.ComponentType<GuildPow
  */
 export type GuildPowerupCardFooterCostProps = {
 		cost?: unknown;
-		costDecorator?: unknown;
+		/** @default '' */
+		costDecorator?: string;
 	};
 export type GuildPowerupCardFooterCostComponent = React.ComponentType<GuildPowerupCardFooterCostProps>;
 /**
@@ -17560,7 +17605,7 @@ export type GuildPowerupCardFooterStatusComponent = React.ComponentType<GuildPow
  */
 export type GuildPowerupsCardFooterProps = {
 		cost?: unknown;
-		costDecorator?: string;
+		costDecorator?: GuildPowerupCardFooterCostProps['costDecorator'];
 		status?: GuildPowerupCardFooterStatusProps['status'];
 		style?: React.ComponentProps<typeof RN.View>['style'];
 	};
@@ -17756,7 +17801,8 @@ export type Tier3OverrideNoticeComponent = React.ComponentType<Tier3OverrideNoti
 export type GuildPowerupsPerkCardProps = Omit<GuildPowerupsCardFooterProps, 'badge' | 'description' | 'imageUrl' | 'isImageAnimated' | 'onPress' | 'riveComponent' | 'status' | 'style' | 'title'> & {
 		badge?: 'beta' | 'new' | (string & {});
 		description?: DesignTextProps['children'];
-		imageUrl?: string;
+		/** @default '' */
+		imageUrl?: GuildPowerupsImageProps['imageUrl'];
 		/** @default true */
 		isImageAnimated?: GuildPowerupsImageProps['isAnimated'];
 		onPress?: GuildPowerupsCardProps['onPress'];

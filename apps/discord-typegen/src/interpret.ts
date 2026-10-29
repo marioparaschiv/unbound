@@ -1,7 +1,8 @@
 import { ts } from 'ts-morph';
 
-import type { FunctionInfo, ModuleContext, ObjectBuild, PropValue, Value } from './values';
+import type { FunctionInfo, ModuleContext, ObjectBuild, Value } from './values';
 import type { ComponentRecord, ImportRef } from './types';
+import type { PendingDefault } from './defaults';
 
 import {
 	assignKey,
@@ -15,16 +16,9 @@ import {
 	recordOverrides,
 	wrap,
 } from './evidence';
+import { isComparison, landsOn, pendingDefault, presenceCheck } from './defaults';
 import { UNKNOWN, member, spreadSources } from './values';
 import intern from './intern';
-
-/**
- * A destructuring default: an `if (test) jump`, then one assignment. Hermes emits three shapes:
- * @example if(!(rP === undefined)) { jump } rP = 'md'; // copy: false
- * @example rD = 'md'; if(!(undefined !== rP)) { jump } rD = rP; // copy: true
- * @example rD = undefined !== rP; if(!rD) { jump } rD = rP; // copy: true, default false
- */
-type PendingDefault = { register: string; prop: PropValue; copy: boolean };
 
 type Frame = {
 	ctx: ModuleContext;
@@ -39,12 +33,6 @@ type Frame = {
 };
 
 const ORIGINAL_NAME = /Original name: ([^,\s]+)/;
-const COMPARISONS = new Set([
-	ts.SyntaxKind.EqualsEqualsEqualsToken,
-	ts.SyntaxKind.ExclamationEqualsEqualsToken,
-	ts.SyntaxKind.EqualsEqualsToken,
-	ts.SyntaxKind.ExclamationEqualsToken,
-]);
 
 const REQUIRE = 1;
 const IMPORT_DEFAULT = 2;
@@ -190,58 +178,7 @@ function walkIf(frame: Frame, node: ts.IfStatement) {
 		walkStatement(frame, node.elseStatement);
 	}
 
-	frame.pendingDefault = undefinedCheck(frame, node.expression);
-}
-
-function undefinedCheck(frame: Frame, test: ts.Expression): PendingDefault | undefined {
-	if (!ts.isPrefixUnaryExpression(test) || test.operator !== ts.SyntaxKind.ExclamationToken) {
-		return;
-	}
-
-	const inner = test.operand;
-
-	if (ts.isIdentifier(inner)) {
-		const marker = frame.regs.get(inner.text);
-
-		return marker?.kind === 'defined' ? { ...marker, copy: true } : undefined;
-	}
-
-	if (!ts.isParenthesizedExpression(inner) || !ts.isBinaryExpression(inner.expression)) return;
-
-	const { operatorToken } = inner.expression;
-	const check = definedCheck(frame, inner.expression);
-
-	if (!check) return;
-
-	switch (operatorToken.kind) {
-		case ts.SyntaxKind.EqualsEqualsEqualsToken:
-			return { ...check, copy: false };
-		case ts.SyntaxKind.ExclamationEqualsEqualsToken:
-			return { ...check, copy: true };
-		default:
-			return undefined;
-	}
-}
-
-/** Matches `rP <op> rUndefined` in either order, with rP holding a prop. */
-function definedCheck(frame: Frame, node: ts.BinaryExpression) {
-	for (const [a, b] of [
-		[node.left, node.right],
-		[node.right, node.left],
-	] as const) {
-		if (!ts.isIdentifier(a) || !ts.isIdentifier(b)) {
-			continue;
-		}
-
-		const value = frame.regs.get(a.text);
-		const other = frame.regs.get(b.text);
-
-		if (value?.kind === 'prop' && other?.kind === 'literal' && other.value === undefined) {
-			return { register: a.text, prop: value };
-		}
-	}
-
-	return undefined;
+	frame.pendingDefault = pendingDefault(frame.regs, node);
 }
 
 function consumeDefault(frame: Frame, expression: ts.Expression): boolean {
@@ -251,11 +188,19 @@ function consumeDefault(frame: Frame, expression: ts.Expression): boolean {
 		return false;
 	}
 
+	if (!landsOn(expression, pending.label)) {
+		return false;
+	}
+
 	const target = expression.left.text;
 	const { right } = expression;
+	const held = frame.regs.get(target);
+	// A set may write a copy of the tested register: `rX = rP; if (!(rP == null)) jump; rX = d`.
 	const matches = pending.copy
 		? ts.isIdentifier(right) && right.text === pending.register
-		: target === pending.register;
+		: held?.kind === 'prop' &&
+			held.component === pending.prop.component &&
+			held.name === pending.prop.name;
 
 	if (!matches) {
 		return false;
@@ -263,18 +208,22 @@ function consumeDefault(frame: Frame, expression: ts.Expression): boolean {
 
 	frame.pendingDefault = void 0;
 
-	const value = pending.copy ? (frame.regs.get(target) ?? UNKNOWN) : evaluate(frame, right);
+	const value = pending.copy ? (held ?? UNKNOWN) : evaluate(frame, right);
 
 	if (value.kind === 'literal' && value.value !== undefined) {
 		observe(pending.prop, { kind: 'default', value: value.value });
-	} else if (value.kind === 'defined') {
-		observe(pending.prop, { kind: 'default', value: false });
+	} else if (value.kind === 'presence' && value.register === pending.register) {
+		// The target still holds the test, which has this value when the prop is absent.
+		observe(pending.prop, { kind: 'default', value: !value.present });
 	} else if (!pending.copy) {
 		observe(pending.prop, { kind: 'default-expression' });
 	}
 
 	// The register holds the prop, defaulted, from here on.
-	frame.regs.set(target, pending.prop);
+	frame.regs.set(
+		target,
+		value.kind === 'prop' ? { ...pending.prop, fallback: value } : pending.prop,
+	);
 
 	return true;
 }
@@ -509,16 +458,16 @@ function binary(frame: Frame, node: ts.BinaryExpression): Value {
 	const left = evaluate(frame, node.left);
 	const right = evaluate(frame, node.right);
 
-	if (!COMPARISONS.has(node.operatorToken.kind)) {
+	if (!isComparison(node.operatorToken.kind)) {
 		return UNKNOWN;
 	}
 
-	const check = definedCheck(frame, node);
+	const presence = presenceCheck(frame.regs, node);
 
-	if (check && node.operatorToken.kind === ts.SyntaxKind.ExclamationEqualsEqualsToken) {
-		observe(check.prop, { kind: 'guarded' });
+	if (presence) {
+		observe(presence.prop, { kind: 'guarded' });
 
-		return { kind: 'defined', ...check };
+		return presence;
 	}
 
 	for (const [a, b] of [

@@ -3,10 +3,10 @@ import type * as React from 'react';
 import type * as RN from 'react-native';
 import type { AccessibilityViewComponent, AccessibilityViewProps, ActionSheetComponent, ActionSheetProps, ActionSheetRowComponent, ActionSheetRowProps, AlertActionButtonComponent, AlertActionButtonProps, AlertModalComponent, AlertModalProps, BaseTextButtonComponent, BaseTextButtonProps, ButtonIconButtonComponent, ButtonIconButtonProps, ContextMenuComponent, ContextMenuProps, DesignCardComponent, DesignCardProps, DesignCheckboxComponent, DesignCheckboxProps, DesignTextComponent, DesignTextInputComponent, DesignTextInputProps, DesignTextProps, FormsFormRadioComponent, FormsFormRadioProps, FormsFormSwitchComponent, FormsFormSwitchProps, GhostInputComponent, GhostInputProps, ImageButtonComponent, ImageButtonProps, InputComponent, InputProps, ModalActionButtonComponent, ModalActionButtonProps, ModalContentComponent, ModalContentProps, ModalDisclaimerComponent, ModalDisclaimerProps, ModalFloatingActionComponent, ModalFloatingActionProps, PlainTextExperimentProviderComponent, PlainTextExperimentProviderProps, PressableHighlightComponent, PressableHighlightProps, PressableOpacityComponent, PressableOpacityProps, RowButtonComponent, RowButtonProps, SheetBottomSheetComponent, SheetBottomSheetProps, StackComponent, StackProps, TableRadioGroupComponent, TableRadioGroupProps, TableRadioRowComponent, TableRadioRowProps, TableRowComponent, TableRowGroupComponent, TableRowGroupProps, TableRowGroupTitleComponent, TableRowGroupTitleProps, TableRowIconComponent, TableRowIconProps, TableRowProps, TableSwitchRowComponent, TableSwitchRowProps, TabsComponent, TabsProps, TextFieldComponent, TextFieldProps, TextHeadingComponent, TextHeadingProps, ToggleIconButtonComponent, ToggleIconButtonProps, VisualEffectViewComponent, VisualEffectViewProps } from './barrels.gen';
 import type { AlertConnectedComponent, AlertConnectedProps, CommonActionButtonComponent, CommonActionButtonProps, FastImageComponent, FastImageProps, GatedContentComponent, GatedContentProps, GiftPurchaseButtonComponent, GiftPurchaseButtonProps, GoogleManagementLinkComponent, GoogleManagementLinkProps, ImageWithPlaceholderComponent, ImageWithPlaceholderProps, SafeAreaPaddingViewComponent, SafeAreaPaddingViewProps, VideoComponentComponent, VideoComponentProps, VolumeSliderComponent, VolumeSliderProps } from './components_native.gen';
-import type { BaseIconImageComponent, BaseIconImageProps, CircleInformationIconComponent, CircleInformationIconProps, ClydeIconComponent, ClydeIconProps, FormInputComponent, FormInputProps, GeneratedVideoIconComponent, GeneratedVideoIconProps, HeaderButtonComponent, HeaderButtonProps, MicrophoneSlashIconComponent, MicrophoneSlashIconProps, PencilIconComponent, PencilIconProps, SpendEarnOrbsLightThemeLottieComponent, SpendEarnOrbsLightThemeLottieProps, TabsGradientComponent, TabsGradientProps, VoiceLockIconComponent, VoiceLockIconProps, VoidRoleDotComponent, VoidRoleDotProps } from './design.gen';
+import type { BaseIconImageComponent, BaseIconImageProps, CircleInformationIconComponent, CircleInformationIconProps, ClydeIconComponent, ClydeIconProps, FormInputComponent, FormInputProps, GeneratedVideoIconComponent, GeneratedVideoIconProps, HeaderButtonComponent, HeaderButtonProps, MicrophoneSlashIconComponent, MicrophoneSlashIconProps, PencilIconComponent, PencilIconProps, ReactionIconComponent, ReactionIconProps, SpendEarnOrbsLightThemeLottieComponent, SpendEarnOrbsLightThemeLottieProps, TabsGradientComponent, TabsGradientProps, VoiceLockIconComponent, VoiceLockIconProps, VoidRoleDotComponent, VoidRoleDotProps } from './design.gen';
 import type { FlashListComponent, FlashListProps } from './discord_common.gen';
 import type { ActionButtonsButtonComponent, ActionButtonsButtonProps, ActivityStatusComponent, ActivityStatusProps, BadgeCatalogIconComponent, BadgeCatalogIconProps, CardDetailsV2Component, CardDetailsV2Props, ChatInputComponent, ChatInputProps, CollectiblesShopCheckoutDetailsComponent, CollectiblesShopCheckoutDetailsProps, CustomThemedGradientComponent, CustomThemedGradientProps, DisplayNameStylesFlywheelProfileCoachmarkComponent, DisplayNameStylesFlywheelProfileCoachmarkProps, EditAvatarDecorationRowComponent, EditAvatarDecorationRowProps, EditNameplateRowComponent, EditNameplateRowProps, EditProfileEffectRowComponent, EditProfileEffectRowProps, EditProfileFrameRowComponent, EditProfileFrameRowProps, EmbeddedActivityViewInnerComponent, EmbeddedActivityViewInnerProps, ExpressionPickerCategoriesComponent, ExpressionPickerCategoriesProps, GameTagChipletComponent, GameTagChipletProps, GroupDMAvatarComponent, GroupDMAvatarProps, GuildIconInnerComponent, GuildIconInnerProps, NameplatesNameplatePreviewComponent, NameplatesNameplatePreviewProps, ProfileEffectUserPreviewComponent, ProfileEffectUserPreviewProps, ProfileFrameUserPreviewComponent, ProfileFrameUserPreviewProps, SlowModeIndicatorComponent, SlowModeIndicatorProps, StreamQualityLiveIndicatorComponent, StreamQualityLiveIndicatorProps, TableRowApplicationIconComponent, TableRowApplicationIconProps, ThemedGradientComponent, ThemedGradientProps, UnifiedGiftModalComponent, UnifiedGiftModalProps, UnsupportedFeatureModalComponent, UnsupportedFeatureModalProps, UsernameWithEffectsComponent, UsernameWithEffectsProps, VerifiedRoleIconComponent, VerifiedRoleIconProps, VideoBackgroundComponent, VideoBackgroundProps } from './modules-1.gen';
-import type { APNGPlayerComponent, APNGPlayerProps, AttachmentPreviewComponent, AttachmentPreviewProps, BurstReactionAnimationPreviewComponent, BurstReactionAnimationPreviewProps, ChannelHeaderComponent, ChannelHeaderProps, CodeFieldComponent, CodeFieldProps, GenericHeaderTitleComponent, GenericHeaderTitleProps, GuildChannelUserListComponent, GuildChannelUserListProps, GuildChannelsVoiceOrStageSummaryRowComponent, GuildChannelsVoiceOrStageSummaryRowProps, GuildEventVoiceBannerComponent, GuildEventVoiceBannerProps, GuildSidebarChannelInfoComponent, GuildSidebarChannelInfoProps, HappeningNowCardHeaderComponent, HappeningNowCardHeaderProps, HappeningNowCardSubtitleComponent, HappeningNowCardSubtitleProps, JankVoicePanelTabReporterComponent, JankVoicePanelTabReporterProps, MediaModalComponent, MediaModalProps, MediaModalSheetWrapperComponent, MediaModalSheetWrapperProps, MediaViewerOverlayButtonComponent, MediaViewerOverlayButtonProps, ModalStackNavigatorComponent, ModalStackNavigatorProps, NativeMessageChannelRowPreviewComponent, NativeMessageChannelRowPreviewProps, NitroUpsellButtonComponent, NitroUpsellButtonProps, ThreadChannelUserListComponent, ThreadChannelUserListProps, UserListChannelRowComponent, UserListChannelRowProps, UserListUserRowComponent, UserListUserRowProps, UsersFastListInnerComponent, UsersFastListInnerProps, YouExpiringTrialOfferCardComponent, YouExpiringTrialOfferCardProps } from './modules-2.gen';
+import type { APNGPlayerComponent, APNGPlayerProps, AttachmentPreviewComponent, AttachmentPreviewProps, BurstReactionAnimationPreviewComponent, BurstReactionAnimationPreviewProps, ChannelHeaderComponent, ChannelHeaderProps, CodeFieldComponent, CodeFieldProps, GenericHeaderTitleComponent, GenericHeaderTitleProps, GuildChannelUserListComponent, GuildChannelUserListProps, GuildChannelsVoiceOrStageSummaryRowComponent, GuildChannelsVoiceOrStageSummaryRowProps, GuildEventVoiceBannerComponent, GuildEventVoiceBannerProps, GuildSidebarChannelInfoComponent, GuildSidebarChannelInfoProps, HappeningNowCardHeaderComponent, HappeningNowCardHeaderProps, HappeningNowCardSubtitleComponent, HappeningNowCardSubtitleProps, JankVoicePanelTabReporterComponent, JankVoicePanelTabReporterProps, MediaAttachmentIconComponent, MediaAttachmentIconProps, MediaModalComponent, MediaModalProps, MediaModalSheetWrapperComponent, MediaModalSheetWrapperProps, MediaViewerOverlayButtonComponent, MediaViewerOverlayButtonProps, ModalStackNavigatorComponent, ModalStackNavigatorProps, NativeMessageChannelRowPreviewComponent, NativeMessageChannelRowPreviewProps, NitroUpsellButtonComponent, NitroUpsellButtonProps, ThreadChannelUserListComponent, ThreadChannelUserListProps, UserListChannelRowComponent, UserListChannelRowProps, UserListUserRowComponent, UserListUserRowProps, UsersFastListInnerComponent, UsersFastListInnerProps, YouExpiringTrialOfferCardComponent, YouExpiringTrialOfferCardProps } from './modules-2.gen';
 import type { Module6234HeaderComponent, Module6234HeaderProps } from './node-modules.gen';
 /**
  * Props of `MarketingPageBannerTile` (function). Exports: default.
@@ -592,7 +592,7 @@ export type AdVideoPlayerProps = {
 		showTranscriptButton?: boolean;
 		source?: unknown;
 		style?: React.ComponentProps<typeof RN.View>['style'];
-		videoRef?: unknown;
+		videoRef?: { current?: unknown };
 	};
 export type AdVideoPlayerComponent = React.ComponentType<AdVideoPlayerProps>;
 /**
@@ -1817,6 +1817,7 @@ export type QuestDockBountySmokePlaceholderComponent = React.ComponentType<Quest
  */
 export type QuestDockContentCollapsedProps = {
 		children?: React.ReactNode;
+		/** @default true */
 		hideOnExpand?: boolean;
 	};
 export type QuestDockContentCollapsedComponent = React.ComponentType<QuestDockContentCollapsedProps>;
@@ -2155,7 +2156,7 @@ export type QuestHomeProps = {
 		filters: { length?: unknown };
 		isNavigationComplete?: boolean;
 		onClearFilters?: EmptyStateFilteredProps['onClearFilters'];
-		scrollToQuestId?: '' | (string & {});
+		scrollToQuestId?: string;
 		sortMethod?: unknown;
 	};
 export type QuestHomeComponent = React.ComponentType<QuestHomeProps>;
@@ -2706,7 +2707,9 @@ export type VideoQuestModalRewardProps = {
 		/** @default 'lg' */
 		size?: QuestProgressIndicatorProps['size'];
 		style?: StackProps['style'];
+		/** @default true */
 		withQuestName?: boolean;
+		/** @default true */
 		withRewardAvailableCopy?: boolean;
 		withRewardTileAnimation?: boolean;
 	};
@@ -2840,7 +2843,8 @@ export type BurstReactionToggleComponent = React.ComponentType<BurstReactionTogg
  */
 export type EmojiPickerRowButtonProps = {
 		emojiContainerSize?: unknown;
-		iconSize?: unknown;
+		/** @default 'md' */
+		iconSize?: ReactionIconProps['size'];
 		onPress?: PressableOpacityProps['onPress'];
 		styles?: PressableOpacityProps['style'];
 	};
@@ -3258,6 +3262,7 @@ export type OverviewScreenComponent = React.ComponentType<OverviewScreenProps>;
  * @see modules/safety_flows/native/SafetyFlowTaskScreen.tsx
  */
 export type SafetyFlowTaskScreenProps = {
+		/** @default false */
 		ImageComponent?: StackProps['children'];
 		/** @default null */
 		action?: ModalActionButtonProps['text'];
@@ -4326,7 +4331,8 @@ export type SearchListRowProps = {
 		header?: PressableHighlightProps['children'];
 		icon?: React.ComponentProps<typeof RN.View>['children'];
 		iconContainerStyle?: React.ComponentProps<typeof RN.View>['style'];
-		iconWidth?: number | string;
+		/** @default 0 */
+		iconWidth?: number;
 		label?: DesignTextProps['children'];
 		onAccessibilityAction?: PressableHighlightProps['onAccessibilityAction'];
 		onPress?: PressableHighlightProps['onPress'];
@@ -4383,7 +4389,7 @@ export type SearchEmbedMediaImageComponent = React.ComponentType<SearchEmbedMedi
  */
 export type SearchFileMediaImageProps = {
 		containerStyle?: React.ComponentProps<typeof RN.View>['style'];
-		fileName?: unknown;
+		fileName?: MediaAttachmentIconProps['fileName'];
 		height?: unknown;
 		width?: unknown;
 	};
@@ -5004,7 +5010,7 @@ export type BaseMessagesScreenProps = {
 		isFirstPageLoading?: boolean;
 		isFocused?: boolean;
 		isNextPageLoading?: boolean;
-		keywordResultCount?: unknown;
+		keywordResultCount?: number;
 		numColumns?: SearchListProps['numColumns'];
 		searchContext?: unknown;
 		/** @default null */
@@ -5265,7 +5271,8 @@ export type TakeActionButtonsComponent = React.ComponentType<TakeActionButtonsPr
  * @see modules/self_mod/shared/native/ConfirmBlockUserAlert.tsx
  */
 export type ConfirmBlockUserAlertProps = {
-		blockButtonVariant?: 'primary' | (string & {});
+		/** @default 'destructive' */
+		blockButtonVariant?: BaseTextButtonProps['variant'];
 		channelId?: string;
 		description?: unknown;
 		onBlock: (...args: any[]) => unknown;
@@ -5394,7 +5401,8 @@ export type SafetyToolsSafetyTipsActionSheetComponent = React.ComponentType<Safe
 export type ModulesSelfModFProps = {
 		onpress?: BaseTextButtonProps['onPress'];
 		text?: BaseTextButtonProps['text'];
-		variant?: unknown;
+		/** @default 'primary' */
+		variant?: BaseTextButtonProps['variant'];
 	};
 export type ModulesSelfModFComponent = React.ComponentType<ModulesSelfModFProps>;
 /**
@@ -5548,8 +5556,10 @@ export type SettingsListComponent = React.ComponentType<SettingsListProps>;
  */
 export type DisabledActionDescriptionWithLinkProps = {
 		description?: DesignTextProps['children'];
-		descriptionColor?: 'mobile-text-heading-primary' | (string & {});
-		descriptionVariant?: 'text-md/semibold' | (string & {});
+		/** @default 'text-subtle' */
+		descriptionColor?: DesignTextProps['color'];
+		/** @default 'text-xs/medium' */
+		descriptionVariant?: DesignTextProps['variant'];
 		disabledActionLabel?: DesignTextProps['children'];
 	};
 export type DisabledActionDescriptionWithLinkComponent = React.ComponentType<DisabledActionDescriptionWithLinkProps>;
@@ -5912,7 +5922,7 @@ export type ShareChatInputProps = {
 		onPressEmoji?: PressableOpacityProps['onPress'];
 		onSelectionChange?: (...args: any[]) => unknown;
 		onSend?: (...args: any[]) => unknown;
-		text?: unknown;
+		text?: FormInputProps['value'];
 	};
 export type ShareChatInputComponent = React.ComponentType<ShareChatInputProps>;
 /**
@@ -5969,7 +5979,7 @@ export type ShareScreenFooterProps = {
 		preview?: unknown;
 		sendLabel?: BaseTextButtonProps['text'];
 		setText?: ShareChatInputProps['onChange'];
-		text?: unknown;
+		text?: ShareChatInputProps['text'];
 	};
 export type ShareScreenFooterComponent = React.ComponentType<ShareScreenFooterProps>;
 /**
@@ -6181,7 +6191,7 @@ export type PurchaseSuccessModalBaseProps = {
 		ctaLoading?: BaseTextButtonProps['loading'];
 		finePrint?: DesignTextProps['children'];
 		onClose?: BaseTextButtonProps['onPress'];
-		onCtaPress?: (...args: any[]) => unknown;
+		onCtaPress?: BaseTextButtonProps['onPress'];
 		sku?: unknown;
 		title?: DesignTextProps['children'];
 	};
@@ -7966,7 +7976,8 @@ export type NavTTIViewComponent = React.ComponentType<NavTTIViewProps & Record<s
 export type VisualizedExcludedNavTTIViewProps = {
 		children?: React.ReactNode;
 		descendantTracking?: unknown;
-		name?: unknown;
+		/** @default '(unnamed)' */
+		name?: '(unnamed)' | (string & {});
 		tracking?: unknown;
 	};
 export type VisualizedExcludedNavTTIViewComponent = React.ComponentType<VisualizedExcludedNavTTIViewProps>;
@@ -8526,6 +8537,7 @@ export type ConnectedUserAccountProps = {
 		account: { metadata?: unknown; name?: unknown; type?: unknown; verified?: unknown };
 		locale?: unknown;
 		showInvisibleIcon?: boolean;
+		/** @default true */
 		showMetadata?: boolean;
 		style?: React.ComponentProps<typeof RN.View>['style'];
 		theme?: unknown;
@@ -9049,7 +9061,7 @@ export type UserProfileAlertUserReportedComponent = React.ComponentType<UserProf
  */
 export type UserProfileApplicationWidgetCardProps = {
 		cardStyle?: UserProfileCardProps['style'];
-		rendererProps?: unknown;
+		rendererProps?: { hasIdentity?: unknown; isLoading?: unknown; resolutionContext?: unknown; surfaceConfigs?: unknown };
 		userId?: string;
 		widget: { applicationId?: unknown };
 	};
@@ -9181,7 +9193,8 @@ export type UserProfileFormRowProps = {
 		icon?: unknown;
 		isDestructive?: boolean;
 		label?: DesignTextProps['children'];
-		labelColor?: unknown;
+		/** @default 'text-feedback-critical' */
+		labelColor?: DesignTextProps['color'];
 		onPress?: PressableOpacityProps['onPress'];
 		sublabel?: React.ComponentProps<typeof RN.View>['children'];
 	};
@@ -9364,7 +9377,7 @@ export type UserProfileEditSectionComponent = React.ComponentType<UserProfileEdi
  */
 export type PrimaryInfoProps = {
 		badgeContainerBackground?: unknown;
-		badgesOverride?: unknown;
+		badgesOverride?: UserProfilePrimaryInfoProps['badges'];
 		channelId?: string;
 		displayNameOverride?: UserProfilePrimaryInfoProps['displayName'];
 		displayProfile?: { isLoaded?: unknown; pronouns?: unknown };
@@ -9510,9 +9523,10 @@ export type UserProfileCustomStatusBubbleProps = {
 		emojiOnlyStyle?: React.ComponentProps<typeof RN.View>['style'];
 		hasCustomProfileTheme?: boolean;
 		onPressTruncatedStatus?: PressableOpacityProps['onPress'];
+		/** @default '' */
 		placeholderText?: TextStatusContentProps['text'];
 		previewEmoji?: unknown;
-		previewText?: '' | (string & {});
+		previewText?: string;
 		prompt?: unknown;
 		ref?: React.Ref<any>;
 		/** @default false */
@@ -9673,7 +9687,7 @@ export type UserProfileEditFormLabelBadgesComponent = React.ComponentType<UserPr
  */
 export type UserProfileEditFormSwitchProps = {
 		accessibilityHint?: PressableHighlightProps['accessibilityHint'];
-		accessibilityLabel?: unknown;
+		accessibilityLabel?: PressableHighlightProps['accessibilityLabel'];
 		/** @default false */
 		disabled?: FormsFormSwitchProps['disabled'];
 		label?: InputProps['label'];
@@ -10130,7 +10144,7 @@ export type UserProfilePreviewProps = {
 		avatarDecorationOverride?: unknown;
 		/** @default false */
 		compact?: boolean;
-		displayName?: unknown;
+		displayName?: UserProfilePrimaryInfoProps['displayName'];
 		displayNameStylesOverride?: unknown;
 		guildId?: UserProfileAvatarProps['guildId'];
 		/** @default false */
@@ -10237,7 +10251,7 @@ export type UserProfilePrimaryInfoProps = {
 		badges?: ProfileBadgeRowsProps['badges'];
 		canOpenBadgeDirectory?: ProfileBadgeRowsProps['canOpenBadgeDirectory'];
 		catalogBadges?: ProfileBadgeRowsProps['catalogBadges'];
-		displayName?: '' | (string & {});
+		displayName?: DisplayNameProps['name'];
 		displayNameAccessibilityHint?: DisplayNameProps['accessibilityHint'];
 		displayNameAccessibilityRole?: 'header' | (string & {});
 		guildId?: DisplayNameProps['guildId'];
@@ -10722,7 +10736,7 @@ export type WidgetSectionComponent = React.ComponentType<WidgetSectionProps>;
  * @see modules/user_profile/native/UserProfileWidgetsBoard.tsx
  */
 export type WidgetTagsProps = {
-		tags?: unknown;
+		tags?: { flatMap?: unknown };
 	};
 export type WidgetTagsComponent = React.ComponentType<WidgetTagsProps>;
 /**
@@ -11696,10 +11710,11 @@ export type TwoWayLinkMComponent = React.ComponentType<TwoWayLinkMProps>;
  */
 export type TwoWayLinkLandingProps = {
 		body?: DesignTextProps['children'];
-		headerConnect?: unknown;
+		headerConnect?: DesignTextProps['children'];
 		headerReconnect?: DesignTextProps['children'];
 		img?: FastImageProps['source'];
-		imgStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+		/** @default false */
+		imgStyle?: FastImageProps['style'];
 		learnMoreLink?: unknown;
 		onNext?: BaseTextButtonProps['onPress'];
 		platformType?: unknown;
@@ -11713,7 +11728,8 @@ export type TwoWayLinkLandingComponent = React.ComponentType<TwoWayLinkLandingPr
 export type TwoWayLinkPreConnectProps = {
 		body?: DesignTextProps['children'];
 		img?: FastImageProps['source'];
-		imgStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+		/** @default false */
+		imgStyle?: FastImageProps['style'];
 		onError: (...args: any[]) => unknown;
 		onNext: (...args: any[]) => unknown;
 		platformType: (...args: any[]) => unknown;
@@ -12240,8 +12256,10 @@ export type UserSettingsDesignSystemBackdropComponent = React.ComponentType<User
  * @see modules/user_settings/design_system/native/UserSettingsDesignSystemButton.tsx
  */
 export type ExampleButtonProps = {
-		grow?: boolean;
-		text?: string;
+		/** @default false */
+		grow?: BaseTextButtonProps['grow'];
+		/** @default '' */
+		text?: BaseTextButtonProps['text'];
 		variant?: BaseTextButtonProps['variant'];
 	};
 export type ExampleButtonComponent = React.ComponentType<ExampleButtonProps>;
@@ -12258,7 +12276,8 @@ export type ExampleCustomIconToggleButtonComponent = React.ComponentType<Example
 export type ExampleIconButtonProps = {
 		/** @default false */
 		showLabel?: boolean;
-		variant?: ButtonIconButtonProps['variant'];
+		/** @default '' */
+		variant?: ButtonIconButtonProps['label'];
 	};
 export type ExampleIconButtonComponent = React.ComponentType<ExampleIconButtonProps>;
 /**
@@ -13457,6 +13476,7 @@ export type ProfilesItemSeparatorComponentComponent = React.ComponentType<Profil
 export type UserPrimaryGuildListBottomSheetProps = {
 		availableGuilds: { length?: unknown };
 		onSelectGuild?: ProfilesItemProps['onSelectGuild'];
+		/** @default null */
 		selectedGuildId?: string;
 	};
 export type UserPrimaryGuildListBottomSheetComponent = React.ComponentType<UserPrimaryGuildListBottomSheetProps>;
@@ -13486,7 +13506,7 @@ export type MobileQuestPreviewContainerComponent = React.ComponentType<MobileQue
  * @see modules/user_settings/quests/native/MobileQuestPreviewControlBar.tsx
  */
 export type MobileQuestPreviewControlBarProps = {
-		questId?: (...args: any[]) => unknown;
+		questId?: MobileSearchableSelectProps['value'];
 		refreshQuest?: ButtonIconButtonProps['onPress'];
 		setQuestId?: (...args: any[]) => unknown;
 	};
@@ -13503,7 +13523,8 @@ export type MobileSearchableSelectProps = {
 		onChange: (...args: any[]) => unknown;
 		options: { filter?: unknown; length?: unknown };
 		placeholder?: unknown;
-		value?: unknown;
+		/** @default '' */
+		value?: string;
 	};
 export type MobileSearchableSelectComponent = React.ComponentType<MobileSearchableSelectProps>;
 /**
@@ -13678,7 +13699,8 @@ export type AddPhoneComponent = React.ComponentType<AddPhoneProps>;
  * @see modules/verification/native/components/ChangeEmailCollectReasons.tsx
  */
 export type ChangeEmailCollectReasonsProps = {
-		changeEmailReason?: unknown;
+		/** @default '' */
+		changeEmailReason?: TableRadioGroupProps['value'];
 		setChangeEmailReason: (...args: any[]) => unknown;
 	};
 export type ChangeEmailCollectReasonsComponent = React.ComponentType<ChangeEmailCollectReasonsProps>;
@@ -13790,7 +13812,7 @@ export type VerificationModalComponent = React.ComponentType<VerificationModalPr
 export type VerificationVerifyPhoneProps = {
 		backgroundStyle?: CodeFieldProps['backgroundStyle'];
 		disableKeyboardAvoidingView?: CodeFieldProps['disableKeyboardAvoidingView'];
-		error?: unknown;
+		error?: CodeFieldProps['error'];
 		/** @default false */
 		loading?: CodeFieldProps['loading'];
 		onCodeEnteredIntercept: (...args: any[]) => unknown;
@@ -14408,7 +14430,7 @@ export type ParticipantTitleComponent = React.ComponentType<ParticipantTitleProp
 export type PictureInPictureProps = {
 		channel: { id?: unknown };
 		children?: React.ComponentProps<typeof RN.View>['children'];
-		preferredPosition?: { TOP_LEFT?: unknown };
+		preferredPosition?: unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
 export type PictureInPictureComponent = React.ComponentType<PictureInPictureProps>;
@@ -14823,6 +14845,7 @@ export type BalanceWidgetPillButtonComponent = React.ComponentType<BalanceWidget
  * @see modules/virtual_currency/native/OrbCheckoutAmountTag.tsx
  */
 export type OrbCheckoutAmountTagProps = {
+		/** @default '--' */
 		orbAmount?: DesignTextProps['children'];
 	};
 export type OrbCheckoutAmountTagComponent = React.ComponentType<OrbCheckoutAmountTagProps>;
@@ -14837,6 +14860,7 @@ export type OrbCheckoutMenuComponent = React.ComponentType<OrbCheckoutMenuProps>
  * @see modules/virtual_currency/native/OrbLottieAnimation.tsx
  */
 export type OrbLottieAnimationProps = {
+		/** @default 'spend' */
 		animationType?: SpendEarnOrbsLightThemeLottieProps['animation'];
 		ref?: React.Ref<any>;
 	};
@@ -15166,7 +15190,8 @@ export type VoiceChannelAppsIComponent = React.ComponentType<VoiceChannelAppsIPr
 export type VoiceChannelAppActionSheetProps = {
 		guildId?: string;
 		onChange: (...args: any[]) => unknown;
-		selectedApplicationId?: string;
+		/** @default 'none' */
+		selectedApplicationId?: TableRadioGroupProps['value'];
 	};
 export type VoiceChannelAppActionSheetComponent = React.ComponentType<VoiceChannelAppActionSheetProps>;
 /**
@@ -15207,7 +15232,7 @@ export type AnimatedEffectEmojiComponent = React.ComponentType<AnimatedEffectEmo
  */
 export type VoiceChannelEffectsEmojiProps = {
 		surrogates?: unknown;
-		url?: '' | (string & {});
+		url?: string;
 	};
 export type VoiceChannelEffectsEmojiComponent = React.ComponentType<VoiceChannelEffectsEmojiProps>;
 /**
@@ -15378,6 +15403,7 @@ export type VoicePanelContainerComponent = React.ComponentType<VoicePanelContain
 export type VoicePanelControllerProps = {
 		channelId?: string;
 		children?: React.ReactNode;
+		/** @default null */
 		guildId?: string;
 		transitionCleanUp?: unknown;
 		transitionState?: unknown;
@@ -15508,7 +15534,8 @@ export type AnimatedStreamCardProps = {
 		layout?: CardVideoRendererProps['layout'];
 		sharedCoords?: CardVideoRendererProps['sharedCoords'];
 		streamGuildId?: string;
-		streamId?: string;
+		/** @default null */
+		streamId?: CardVideoRendererProps['streamId'];
 		userId?: CardVideoRendererProps['userId'];
 		userNick?: unknown;
 	};
@@ -15841,7 +15868,7 @@ export type VoicePanelControlsDrawerTitleProps = {
 		blurStyle?: HeaderGlassBlurProps['blurStyle'];
 		/** @default false */
 		disablePill?: boolean;
-		shown?: { get?: unknown };
+		shown?: HeaderGlassBlurProps['shown'];
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		title?: DesignTextProps['children'];
 	};
@@ -16081,7 +16108,8 @@ export type ParticipantsTextComponent = React.ComponentType<ParticipantsTextProp
  * @see modules/voice_panel/native/controls/activities/ActivityShelfItemBackground.tsx
  */
 export type ActivityShelfItemBackgroundProps = {
-		accessibilityLabel?: unknown;
+		/** @default '' */
+		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		aspectRatio?: number;
 		imageBackground: { state?: unknown; url?: unknown };
 	};
@@ -16120,7 +16148,7 @@ export type AnimatedButtonWrapperProps = {
 		onPress?: (...args: any[]) => unknown;
 		onPressIn?: (...args: any[]) => unknown;
 		onPressOut?: (...args: any[]) => unknown;
-		pressed?: unknown;
+		pressed?: { set?: unknown };
 		props: { height?: unknown; width?: unknown };
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
@@ -16706,7 +16734,8 @@ export type HeaderGlassBlurComponent = React.ComponentType<HeaderGlassBlurProps>
  */
 export type VoicePanelIconButtonProps = Omit<ButtonIconButtonProps, 'layout' | 'overrideVariant' | 'ref' | 'style'> & {
 		layout?: unknown;
-		overrideVariant?: 'primary-overlay' | (string & {});
+		/** @default 'secondary-overlay' */
+		overrideVariant?: ButtonIconButtonProps['variant'];
 		ref?: React.Ref<any>;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};

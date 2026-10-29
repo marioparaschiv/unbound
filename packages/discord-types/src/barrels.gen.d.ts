@@ -162,7 +162,7 @@ export type AccessibilityViewComponent = React.ComponentType<AccessibilityViewPr
 export type DesignActivityIndicatorProps = Omit<React.ComponentProps<typeof RN.ActivityIndicator>, 'animating' | 'color' | 'size'> & {
 		/** @default true */
 		animating?: React.ComponentProps<typeof RN.ActivityIndicator>['animating'];
-		color?: unknown;
+		color?: React.ComponentProps<typeof RN.ActivityIndicator>['color'];
 		/** @default 'large' */
 		size?: React.ComponentProps<typeof RN.ActivityIndicator>['size'];
 	};
@@ -172,7 +172,7 @@ export type DesignActivityIndicatorComponent = React.ComponentType<DesignActivit
  * @see design/components/AlertModal/native/AlertModal.native.tsx
  */
 export type AlertActionButtonProps = Omit<BaseTextButtonProps, 'loading' | 'onPress'> & {
-		loading?: boolean;
+		loading?: BaseTextButtonProps['loading'];
 		onPress: (...args: any[]) => unknown;
 	};
 export type AlertActionButtonComponent = React.ComponentType<AlertActionButtonProps & Record<string, unknown>>;
@@ -228,7 +228,8 @@ export type ButtonBaseButtonProps = {
 		accessibilityElementsHidden?: unknown;
 		accessibilityHint?: unknown;
 		accessibilityLabel?: unknown;
-		accessibilityRole?: 'none' | (string & {});
+		/** @default 'button' */
+		accessibilityRole?: 'button' | 'none' | (string & {});
 		accessibilityState?: unknown;
 		accessibilityValue?: unknown;
 		accessible?: unknown;
@@ -306,6 +307,7 @@ export type BaseTextButtonProps = Omit<ButtonBaseButtonProps, 'accessibilityLabe
 		text?: React.ComponentProps<typeof RN.Text>['children'];
 		textElement?: unknown;
 		textVariant?: 'heading-md/bold' | 'text-md/semibold' | (string & {});
+		/** @default 'primary' */
 		variant?: 'active' | 'critical-primary' | 'critical-secondary' | 'destructive' | 'experimental_premium-basic' | 'experimental_premium-primary' | 'experimental_premium-secondary' | 'expressive' | 'primary' | 'primary-overlay' | 'secondary' | 'secondary-overlay' | 'tertiary' | 'toggle-on' | (string & {});
 	};
 export type BaseTextButtonStatics = {
@@ -389,8 +391,10 @@ export type PillWrapperComponent = React.ComponentType<PillWrapperProps>;
 export type FloatingActionButtonProps = Omit<BaseIconButtonProps, 'accessibilityLabel' | 'icon' | 'positionBottom' | 'positionRight'> & {
 		accessibilityLabel?: string;
 		icon?: unknown;
-		positionBottom?: number | string;
-		positionRight?: unknown;
+		/** @default 16 */
+		positionBottom?: number;
+		/** @default 16 */
+		positionRight?: number;
 	};
 export type FloatingActionButtonComponent = React.ComponentType<FloatingActionButtonProps & Record<string, unknown>>;
 /**
@@ -453,6 +457,7 @@ export type ButtonGroupComponent = React.ComponentType<ButtonGroupProps & Record
  * @see design/components/Card/native/Card.native.tsx
  */
 export type DesignCardProps = Omit<React.ComponentProps<typeof RN.View>, 'accessibilityRole' | 'border' | 'end' | 'onPress' | 'radius' | 'shadow' | 'start' | 'style' | 'variant'> & {
+		/** @default 'button' */
 		accessibilityRole?: 'button' | 'togglebutton' | (string & {});
 		/** @default 'faint' */
 		border?: 'control-secondary' | 'faint' | 'none' | 'strong' | 'subtle' | (string & {});
@@ -489,7 +494,8 @@ export type CoachmarkProps = {
 		buttonIcon?: unknown;
 		buttonLabel?: BaseTextButtonProps['text'];
 		buttonShiny?: unknown;
-		buttonVariant?: unknown;
+		/** @default 'secondary' */
+		buttonVariant?: 'secondary' | (string & {});
 		description?: DesignTextProps['children'];
 		enterExitAnimatedStyles?: unknown;
 		experimental_withBlurBackground?: unknown;
@@ -514,7 +520,7 @@ export type CoachmarkComponent = React.ComponentType<CoachmarkProps>;
 export type ContextMenuProps = {
 		/** @default 'auto' */
 		align?: 'above' | 'auto' | 'below' | 'left' | (string & {});
-		buttonRef?: unknown;
+		buttonRef?: { observe?: unknown };
 		children: (...args: any[]) => unknown;
 		/** @default false */
 		disableGesture?: boolean;
@@ -545,7 +551,7 @@ export type ContextMenuContainerComponent = React.ComponentType<ContextMenuConta
  * @see design/components/Dialog/native/Dialog.native.tsx
  */
 export type DialogProps = Omit<AccessibilityViewProps, 'dialogKey' | 'onDismiss' | 'zIndex'> & {
-		dialogKey?: unknown;
+		dialogKey?: AccessibilityViewProps['nativeID'];
 		onDismiss?: AccessibilityViewProps['onAccessibilityEscape'];
 		zIndex?: unknown;
 	};
@@ -969,7 +975,7 @@ export type HeaderActionButtonProps = {
 		IconComponentSize?: unknown;
 		accessibilityActions?: PressableOpacityProps['accessibilityActions'];
 		accessibilityHint?: PressableOpacityProps['accessibilityHint'];
-		accessibilityLabel?: unknown;
+		accessibilityLabel?: PressableOpacityProps['accessibilityLabel'];
 		disabled?: PressableOpacityProps['disabled'];
 		foregroundRipple?: boolean;
 		hitSlop?: PressableOpacityProps['hitSlop'];
@@ -1008,7 +1014,8 @@ export type NavigationStackProps = {
 		headerRightContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		headerStatusBarHeight?: unknown;
 		headerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
-		headerTitleAlign?: unknown;
+		/** @default 'center' */
+		headerTitleAlign?: 'center' | (string & {});
 		headerTitleContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		hideTitle?: boolean;
 		initialRouteName?: unknown;
@@ -1162,6 +1169,7 @@ export type PileOverflowComponent = React.ComponentType<PileOverflowProps>;
  */
 export type RedesignCompatProps = {
 		children?: React.ReactNode;
+		/** @default true */
 		enabled?: boolean;
 	};
 export type RedesignCompatComponent = React.ComponentType<RedesignCompatProps>;
@@ -1561,6 +1569,7 @@ export type TableCheckboxRowComponent = React.ComponentType<TableCheckboxRowProp
 export type TableRadioGroupProps = {
 		accessibilityLabel?: TableRowGroupProps['accessibilityLabel'];
 		children?: React.ReactNode;
+		/** @default null */
 		defaultValue?: unknown;
 		description?: TableRowGroupProps['description'];
 		groupRef?: unknown;
@@ -1568,6 +1577,7 @@ export type TableRadioGroupProps = {
 		helperText?: TableRowGroupProps['helperText'];
 		onChange?: (...args: any[]) => unknown;
 		title?: TableRowGroupProps['title'];
+		/** @default null */
 		value?: string;
 	};
 export type TableRadioGroupComponent = React.ComponentType<TableRadioGroupProps>;
@@ -1581,7 +1591,7 @@ export type TableRadioRowProps = Omit<TableRowProps, 'accessibilityHint' | 'disa
 		disabled?: TableRowProps['disabled'];
 		label?: TableRowProps['label'];
 		legacyCompat_onPress?: (...args: any[]) => unknown;
-		legacyCompat_selected?: unknown;
+		legacyCompat_selected?: FormsFormRadioProps['selected'];
 		subLabel?: TableRowProps['subLabel'];
 		value?: unknown;
 	};
@@ -1796,7 +1806,9 @@ export type DesignTextProps = {
 		/** @default false */
 		animated?: boolean;
 		children?: React.ReactNode;
+		/** @default 'text-default' */
 		color?: 'button-outline-primary-text' | 'channels-default' | 'control-brand-foreground' | 'control-critical-primary-text-default' | 'control-secondary-text-default' | 'input-placeholder-text-default' | 'input-text-error-default' | 'interactive-text-active' | 'interactive-text-default' | 'interactive-text-hover' | 'mobile-text-heading-primary' | 'none' | 'premium-nitro-pink-text' | 'redesign-button-tertiary-text' | 'redesign-channel-name-muted-text' | 'redesign-channel-name-text' | 'status-positive' | 'text-brand' | 'text-default' | 'text-feedback-critical' | 'text-feedback-info' | 'text-feedback-positive' | 'text-feedback-warning' | 'text-link' | 'text-muted' | 'text-overlay-dark' | 'text-overlay-light' | 'text-strong' | 'text-subtle' | 'text-voice-connected' | 'user-profile-about-me-heading-text' | 'voice-channel-user-limit-text' | (string & {});
+		/** @default 'tail' */
 		ellipsizeMode?: 'clip' | 'middle' | 'tail' | (string & {});
 		/** @default false */
 		experimental_useNativeText?: boolean;
@@ -1877,8 +1889,10 @@ export type TextFieldComponent = React.ComponentType<TextFieldProps & Record<str
  * @see design/components/TextInput/native/GhostInput.native.tsx
  */
 export type GhostInputProps = Omit<InputTextInputProps, 'autoFocus' | 'centered' | 'containerStyle' | 'disabled' | 'label' | 'onClear' | 'required' | 'size' | 'status'> & {
+		/** @default true */
 		autoFocus?: InputTextInputProps['autoFocus'];
-		centered?: unknown;
+		/** @default true */
+		centered?: boolean;
 		containerStyle?: InputProps['containerStyle'];
 		/** @default false */
 		disabled?: boolean;
@@ -2115,17 +2129,66 @@ export type AIShimmerInnerProps = {
 		color?: DesignTextProps['color'];
 		delay?: unknown;
 		duration?: unknown;
-		glyphColor?: unknown;
+		glyphColor?: ShimmerLayersProps['glyphColor'];
 		initialDelay?: unknown;
 		onComplete?: (...args: any[]) => unknown;
 		onStart?: (...args: any[]) => unknown;
 		ref?: React.Ref<any>;
 		style?: React.ComponentProps<typeof RN.View>['style'];
 		text?: unknown;
-		trailingWidth?: unknown;
+		/** @default 0 */
+		trailingWidth?: number;
 		variant?: DesignTextProps['variant'];
 	};
 export type AIShimmerInnerComponent = React.ComponentType<AIShimmerInnerProps>;
+/**
+ * Props of `GlyphBand` (memo). Exports: none.
+ * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
+ */
+export type GlyphBandProps = {
+		animationProgress: { get?: unknown };
+		color?: AIGlyphTextProps['color'];
+		fontSize?: unknown;
+		glyphChoices?: unknown;
+		overshootInSlots?: unknown;
+		slotCount?: unknown;
+		style?: AIGlyphTextProps['style'];
+	};
+export type GlyphBandComponent = React.ComponentType<GlyphBandProps>;
+/**
+ * Props of `ShimmerLayers` (function). Exports: none.
+ * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
+ */
+export type ShimmerLayersProps = {
+		animationProgress?: GlyphBandProps['animationProgress'];
+		animationWidth?: unknown;
+		clippingWindowWidth?: unknown;
+		color?: ShimmerTextSlotProps['color'];
+		crossFadeOpacity?: unknown;
+		glyphColor?: GlyphBandProps['color'];
+		glyphCount?: unknown;
+		glyphFontSize?: unknown;
+		overshoot?: unknown;
+		pass: { band?: unknown; slotA?: unknown; slotB?: unknown };
+		styles: ShimmerTextSlotProps['styles'];
+		variant?: ShimmerTextSlotProps['variant'];
+	};
+export type ShimmerLayersComponent = React.ComponentType<ShimmerLayersProps>;
+/**
+ * Props of `ShimmerTextSlot` (function). Exports: none.
+ * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
+ */
+export type ShimmerTextSlotProps = {
+		animatedStyles: { plainText?: unknown; plainWindow?: unknown; shiftedInnerWindow?: unknown; shiftedOuterWindow?: unknown; shiftedText?: unknown };
+		animationWidth?: unknown;
+		clippingWindowWidth?: unknown;
+		color?: DesignTextProps['color'];
+		shiftedText?: DesignTextProps['children'];
+		styles: { layer?: unknown; window?: unknown };
+		text?: DesignTextProps['children'];
+		variant?: DesignTextProps['variant'];
+	};
+export type ShimmerTextSlotComponent = React.ComponentType<ShimmerTextSlotProps>;
 /**
  * Props of `FormArrow` (function). Exports: default.
  * @see design/void/Form/native/FormArrow.tsx
@@ -2192,7 +2255,8 @@ export type FormRowProps = {
 		accessibilityActions?: PressableHighlightProps['accessibilityActions'];
 		accessibilityHint?: PressableHighlightProps['accessibilityHint'];
 		accessibilityLabel?: PressableHighlightProps['accessibilityLabel'];
-		accessibilityRole?: TableRowProps['accessibilityRole'];
+		/** @default 'button' */
+		accessibilityRole?: PressableHighlightProps['accessibilityRole'];
 		accessibilityState?: TableRowProps['accessibilityState'];
 		/** @default true */
 		accessible?: TableRowProps['accessible'];
@@ -2217,6 +2281,7 @@ export type FormRowProps = {
 		/** @default false */
 		start?: TableRowProps['start'];
 		style?: PressableHighlightProps['style'];
+		/** @default null */
 		subLabel?: FormSubLabelProps['text'];
 		trailing?: unknown;
 		trailingWrapperStyle?: React.ComponentProps<typeof RN.View>['style'];
@@ -2271,8 +2336,9 @@ export type VoidIconComponent = React.ComponentType<VoidIconProps> & VoidIconSta
  * @see design/void/Pressables/native/Pressables.tsx
  */
 export type PressableBaseProps = Omit<React.ComponentProps<typeof RN.Pressable>, 'activeOpacity' | 'androidRippleConfig' | 'children' | 'innerRef' | 'style' | 'type' | 'underlayColor'> & {
-		activeOpacity?: unknown;
-		androidRippleConfig?: unknown;
+		/** @default 0.2 */
+		activeOpacity?: number;
+		androidRippleConfig?: { cornerRadius?: unknown };
 		children?: React.ComponentProps<typeof RN.Pressable>['children'];
 		innerRef?: React.ComponentProps<typeof RN.Pressable>['ref'];
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
@@ -2295,7 +2361,7 @@ export type PressableHighlightComponent = React.ComponentType<PressableHighlight
  */
 export type PressableOpacityProps = Omit<PressableBaseProps, 'activeOpacity' | 'ref'> & {
 		/** @default 0.2 */
-		activeOpacity?: number;
+		activeOpacity?: PressableBaseProps['activeOpacity'];
 		ref?: PressableBaseProps['innerRef'];
 	};
 export type PressableOpacityComponent = React.ComponentType<PressableOpacityProps & Record<string, unknown>>;

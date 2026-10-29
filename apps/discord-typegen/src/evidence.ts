@@ -117,6 +117,10 @@ function forward(value: Value, target: TargetRef, key: string) {
 	if (value.kind === 'prop') {
 		observe(value, { kind: 'forwarded', target, key });
 
+		if (value.fallback) {
+			forward(value.fallback, target, key);
+		}
+
 		return;
 	}
 

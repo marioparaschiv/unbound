@@ -1,0 +1,810 @@
+    r10 = r7.__d;
+    r0 = 5085;
+    r9 = [108, 19, 17, 1098, 21, 4451, 589, 12, 5086, 5087, 5089, 560, 5094, 5095, 5098, 1384, 5099, 383, 578, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun5086: for(var _fun5086_ip = 0; ; ) switch(_fun5086_ip) {
+case 0:
+            r6 = a1;
+            var _closure0_slot0 = r6;
+            r12 = a2;
+            var _closure0_slot1 = r12;
+            r2 = a5;
+            r5 = a6;
+            var _closure0_slot2 = r5;
+            r1 = ['variant', 'color', 'style', 'children', 'lineClamp', 'includeFontPadding', 'ellipsizeMode', 'tabularNumbers', 'animated', 'experimental_useNativeText', 'ref'];
+            var _closure0_slot3 = r1;
+            r1 = ['color', 'fontSize', 'fontFamily', 'fontWeight', 'fontStyle', 'textAlign', 'textAlignVertical', 'verticalAlign', 'textDecorationLine', 'lineHeight', 'letterSpacing'];
+            var _closure0_slot4 = r1;
+            r1 = ['color', 'fontSize', 'fontFamily', 'fontWeight', 'fontStyle', 'textAlign', 'textAlignVertical', 'verticalAlign', 'textDecorationLine', 'lineHeight', 'letterSpacing'];
+            var _closure0_slot5 = r1;
+            r1 = ['ref'];
+            var _closure0_slot6 = r1;
+            r1 = global;
+            r9 = r1.Object;
+            r8 = r9.defineProperty;
+            r4 = '__esModule';
+            r3 = {'value': true};
+            r3 = r8.bind(r9)(r2, r4, r3);
+            r3 = r5[r0];
+            r0 = undefined;
+            r3 = r12.bind(r0)(r3);
+            var _closure0_slot7 = r3;
+            r4 = r5[r1];
+            r3 = a3;
+            r3 = r3.bind(r0)(r4);
+            var _closure0_slot8 = r3;
+            r3 = r5[r2];
+            r3 = r6.bind(r0)(r3);
+            r9 = r3.Text;
+            var _closure0_slot9 = r9;
+            r3 = r3.unstable_TextAncestorContext;
+            var _closure0_slot10 = r3;
+            r3 = r5[r3];
+            r3 = r6.bind(r0)(r3);
+            r3 = r3.Fonts;
+            r4 = r5[r4];
+            r4 = r6.bind(r0)(r4);
+            r4 = r4.jsx;
+            var _closure0_slot11 = r4;
+            r4 = r5[r5];
+            r8 = r12.bind(r0)(r4);
+            r4 = r8.createAnimatedComponent;
+            r4 = r4.bind(r8)(r9);
+            var _closure0_slot12 = r4;
+            r4 = new Array(1);
+            r8 = {'includeFontPadding': true};
+            r4[0] = r8;
+            var _closure0_slot13 = r4;
+            r4 = new Array(0);
+            var _closure0_slot14 = r4;
+            r9 = r1.Object;
+            r8 = r9.fromEntries;
+            r11 = r1.Object;
+            r10 = r11.keys;
+            r4 = r5[r6];
+            r4 = r12.bind(r0)(r4);
+            r4 = r4.colors;
+            r11 = r10.bind(r11)(r4);
+            r10 = r11.map;
+            r4 = function(a0) { // Environment: r7
+                r2 = a0;
+                r3 = _closure0_slot1;
+                r1 = _closure0_slot2;
+                r1 = r1[r7];
+                r0 = undefined;
+                r3 = r3.bind(r0)(r1);
+                r1 = r3.kebabCase;
+                r3 = r1.bind(r3)(r2);
+                r1 = new Array(2);
+                r1[0] = r3;
+                r1[1] = r2;
+                return r1;
+            };
+            r4 = r10.bind(r11)(r4);
+            r4 = r8.bind(r9)(r4);
+            var _closure0_slot15 = r4;
+            r10 = {400: null, 500: null, 600: null, 700: null, 800: null};
+            r4 = r3.PRIMARY_NORMAL;
+            r10[400] = r4;
+            r4 = r3.PRIMARY_MEDIUM;
+            r10[500] = r4;
+            r4 = r3.PRIMARY_SEMIBOLD;
+            r10[600] = r4;
+            r4 = r3.PRIMARY_BOLD;
+            r10[700] = r4;
+            r4 = r3.PRIMARY_EXTRABOLD;
+            r10[800] = r4;
+            r12 = {800: null};
+            r4 = r3.GINTO_NORD_EXTRA_BOLD;
+            r12[800] = r4;
+            r11 = {700: null};
+            r4 = r3.GINTO_DISCORD_NORD_BOLD;
+            r11[700] = r4;
+            r9 = {400: null, 700: null};
+            r4 = r3.CODE_NORMAL;
+            r9[400] = r4;
+            r4 = r3.CODE_BOLD;
+            r9[700] = r4;
+            r8 = {800: null};
+            r4 = r3.GINTO_NORD_EXTRA_BOLD_ITALIC;
+            r8[800] = r4;
+            r4 = {700: null, 900: null};
+            r13 = r3.GINTO_DISCORD_NORD_BOLD_ITALIC;
+            r4[700] = r13;
+            r3 = r3.GINTO_DISCORD_NORD_BLACK_ITALIC;
+            r4[900] = r3;
+            r3 = {'headline': null, 'nitro': null, 'primary': null, 'code': null};
+            r3[0] = r12;
+            r3[1] = r11;
+            r3[2] = r10;
+            r3[3] = r9;
+            var _closure0_slot16 = r3;
+            r3 = {'headline': null, 'nitro': null};
+            r3[0] = r8;
+            r3[1] = r4;
+            var _closure0_slot17 = r3;
+            r4 = r1.Object;
+            r3 = r4.fromEntries;
+            r8 = r5[r8];
+            r8 = r6.bind(r0)(r8);
+            r10 = r8.TextVariantsFlat;
+            r9 = r10.map;
+            r8 = function(a0) { // Environment: r7
+                _fun33193: for(var _fun33193_ip = 0; ; ) switch(_fun33193_ip) {
+case 0:
+                    r6 = a0;
+                    r5 = r6.name;
+                    r1 = null;
+                    r4 = 'code';
+                    r3 = null;
+                    if(!(r4 !== r5)) { _fun33193_ip = 273; continue _fun33193 }
+case 23:
+                    r5 = r6.name;
+                    r4 = new Array(2);
+                    r4[0] = r5;
+                    r5 = {'fontSize': null, 'lineHeight': null, 'textTransform': null};
+                    r7 = r6.size;
+                    r5[0] = r7;
+                    r7 = r6.lineHeight;
+                    r5[1] = r7;
+                    r8 = r6.uppercase;
+                    r7 = 'none';
+                    if(!r8) { _fun33193_ip = 82; continue _fun33193 }
+case 78:
+                    r7 = 'uppercase';
+case 82:
+                    r5[2] = r7;
+                    r12 = r6.fontStack;
+                    r8 = r6.weight;
+                    r7 = r8.toString;
+                    r11 = r7.bind(r8)();
+                    r7 = r6.italic;
+                    if(r7) { _fun33193_ip = 143; continue _fun33193 }
+case 119:
+                    r7 = {'fontFamily': null};
+                    r8 = _closure0_slot16;
+                    r8 = r8[r12];
+                    r8 = r8[r11];
+                    r7[0] = r8;
+                    _fun33193_ip = 216; continue _fun33193;
+case 143:
+                    r8 = _closure0_slot17;
+                    r8 = r8[r12];
+                    r2 = r8 == r1;
+                    r10 = undefined;
+                    if(r2) { _fun33193_ip = 164; continue _fun33193 }
+case 160:
+                    r10 = r8[r11];
+case 164:
+                    if(!(r1 == r10)) { _fun33193_ip = 196; continue _fun33193 }
+case 168:
+                    r8 = {'fontFamily': null, 'fontStyle': 'italic'};
+                    r9 = _closure0_slot16;
+                    r9 = r9[r12];
+                    r9 = r9[r11];
+                    r8[0] = r9;
+                    _fun33193_ip = 213; continue _fun33193;
+case 196:
+                    r9 = {'fontFamily': null, 'fontStyle': 'normal'};
+                    r9[0] = r10;
+                    r8 = r9;
+case 213:
+                    r7 = r8;
+case 216:
+                    r14 = r5;
+                    r13 = r7;
+                    r7 = copyDataProperties(r15, r14);
+                    r1 = false;
+                    r5['includeFontPadding'] = r1;
+                    r7 = 'letterSpacing';
+                    r2 = r7 in r6;
+                    r1 = undefined;
+                    if(!r2) { _fun33193_ip = 260; continue _fun33193 }
+case 247:
+                    r6 = r6.letterSpacing;
+                    r0 = 10;
+                    r1 = r6 / r0;
+case 260:
+                    r5['letterSpacing'] = r1;
+                    r4[1] = r5;
+                    r3 = r4;
+case 273:
+                    return r3;
+                }
+            };
+            r9 = r9.bind(r10)(r8);
+            r8 = r9.filter;
+            r1 = r1.Boolean;
+            r1 = r8.bind(r9)(r1);
+            r4 = r3.bind(r4)(r1);
+            var _closure0_slot18 = r4;
+            r1 = r5[r9];
+            r3 = r6.bind(r0)(r1);
+            r1 = r3.withManaTextMigrationHighlight;
+            r4 = r1.bind(r3)(r4);
+            r1 = r5[r10];
+            r8 = r6.bind(r0)(r1);
+            r3 = r8.createStyles;
+            r1 = function(a0, a1) { // Environment: r7
+                _fun33194: for(var _fun33194_ip = 0; ; ) switch(_fun33194_ip) {
+case 0:
+                    r4 = a0;
+                    r0 = undefined;
+                    r1 = 'none';
+                    r3 = undefined;
+                    if(!(r1 !== r4)) { _fun33194_ip = 52; continue _fun33194 }
+case 15:
+                    r5 = _closure0_slot1;
+                    r2 = _closure0_slot2;
+                    r2 = r2[r6];
+                    r2 = r5.bind(r0)(r2);
+                    r2 = r2.colors;
+                    r1 = _closure0_slot15;
+                    r1 = r1[r4];
+                    r3 = r2[r1];
+case 52:
+                    r1 = a1;
+                    r2 = {'color': null, 'fontVariant': null};
+                    r2[0] = r3;
+                    r3 = undefined;
+                    if(!r1) { _fun33194_ip = 84; continue _fun33194 }
+case 74:
+                    r3 = ['tabular-nums'];
+case 84:
+                    r1 = {'text': null};
+                    r2[1] = r3;
+                    r1[0] = r2;
+                    return r1;
+                }
+            };
+            r1 = r3.bind(r8)(r1);
+            var _closure0_slot19 = r1;
+            r1 = r5[r11];
+            r3 = r6.bind(r0)(r1);
+            r1 = r3.isReactCompilerEnabled;
+            r1 = r1.bind(r3)();
+            if(r1) { _fun5086_ip = 730; continue _fun5086 }
+case 723:
+            r3 = function(a0) { // Original name: Text, environment: r7
+                _fun33196: for(var _fun33196_ip = 0; ; ) switch(_fun33196_ip) {
+case 0:
+                    r15 = a0;
+                    r21 = r15.variant;
+                    r14 = r15.color;
+                    r16 = r15.style;
+                    r23 = r15.children;
+                    r10 = r15.lineClamp;
+                    r17 = r15.includeFontPadding;
+                    r2 = undefined;
+                    if(!(r17 === r2)) { _fun33196_ip = 42; continue _fun33196 }
+case 40:
+                    r17 = false;
+case 42:
+                    r9 = r15.ellipsizeMode;
+                    r11 = r15.tabularNumbers;
+                    if(!(r11 === r2)) { _fun33196_ip = 60; continue _fun33196 }
+case 58:
+                    r11 = false;
+case 60:
+                    r7 = r15.animated;
+                    if(!(r7 === r2)) { _fun33196_ip = 72; continue _fun33196 }
+case 70:
+                    r7 = false;
+case 72:
+                    r12 = r15.experimental_useNativeText;
+                    if(!(r12 === r2)) { _fun33196_ip = 84; continue _fun33196 }
+case 82:
+                    r12 = false;
+case 84:
+                    r13 = r15.ref;
+                    r27 = {};
+                    r4 = null;
+                    r25 = Object.assign(Object.create(r4), {'variant': 0, 'color': 0, 'style': 0, 'children': 0, 'lineClamp': 0, 'includeFontPadding': 0, 'ellipsizeMode': 0, 'tabularNumbers': 0, 'animated': 0, 'experimental_useNativeText': 0, 'ref': 0});
+                    r26 = r15;
+                    r8 = copyDataProperties(r28, r27, r26);
+                    r5 = _closure0_slot19;
+                    if(!(r14 == r4)) { _fun33196_ip = 128; continue _fun33196 }
+case 122:
+                    r14 = 'text-default';
+case 128:
+                    r20 = r5.bind(r2)(r14, r11);
+                    r11 = _closure0_slot0;
+                    r5 = _closure0_slot2;
+                    r14 = r5[r12];
+                    r15 = r11.bind(r2)(r14);
+                    r14 = r15.usePlainTextExperimentEnabled;
+                    r19 = r14.bind(r15)();
+                    r18 = _closure0_slot8;
+                    r15 = r18.useContext;
+                    r14 = _closure0_slot10;
+                    r18 = r15.bind(r18)(r14);
+                    r14 = r5[r13];
+                    r15 = r11.bind(r2)(r14);
+                    r14 = r15.useTypographyVariantRemap;
+                    r3 = false;
+                    r21 = r14.bind(r15)(r21, r3);
+                    r14 = r5[r9];
+                    r24 = r11.bind(r2)(r14);
+                    r22 = r24.useManaTextMigrationHighlight;
+                    r14 = _closure0_slot18;
+                    r15 = r14[r21];
+                    r15 = r22.bind(r24)(r15, r16);
+                    r21 = r14[r21];
+                    r14 = new Array(4);
+                    r14[0] = r21;
+                    r20 = r20.text;
+                    r14[1] = r20;
+                    if(r17) { _fun33196_ip = 262; continue _fun33196 }
+case 256:
+                    r17 = _closure0_slot14;
+                    _fun33196_ip = 266; continue _fun33196;
+case 262:
+                    r17 = _closure0_slot13;
+case 266:
+                    r25 = 2;
+                    r27 = r14;
+                    r26 = r17;
+                    r1 = arraySpread(r28, r27, r26);
+                    r14[1] = r16;
+                    r0 = 1;
+                    r0 = r1 + r0;
+                    r14[0] = r15;
+                    r15 = r5[r14];
+                    r17 = r11.bind(r2)(r15);
+                    r16 = r17.getPlainTextEligibility;
+                    r15 = {'animated': null, 'children': null, 'enabled': null, 'experimentalUseNativeText': null, 'hasRef': null, 'hasTextAncestor': null, 'isIOS': null, 'props': null, 'style': null};
+                    r15[0] = r7;
+                    r15[1] = r23;
+                    r15[2] = r19;
+                    r15[3] = r12;
+                    r3 = r4 != r13;
+                    r15[4] = r3;
+                    r15[5] = r18;
+                    r18 = r5[r15];
+                    r19 = r11.bind(r2)(r18);
+                    r18 = r19.isIOS;
+                    r18 = r18.bind(r19)();
+                    r15[6] = r18;
+                    r15[7] = r8;
+                    r15[8] = r14;
+                    r24 = r16.bind(r17)(r15);
+                    r15 = r5[r14];
+                    r16 = r11.bind(r2)(r15);
+                    r15 = r16.isPlainTextEligible;
+                    r15 = r15.bind(r16)(r24);
+                    if(r15) { _fun33196_ip = 506; continue _fun33196 }
+case 408:
+                    if(r12) { _fun33196_ip = 426; continue _fun33196 }
+case 411:
+                    if(r7) { _fun33196_ip = 420; continue _fun33196 }
+case 414:
+                    r12 = _closure0_slot9;
+                    _fun33196_ip = 424; continue _fun33196;
+case 420:
+                    r12 = _closure0_slot12;
+case 424:
+                    _fun33196_ip = 441; continue _fun33196;
+case 426:
+                    r7 = r5[r17];
+                    r7 = r11.bind(r2)(r7);
+                    r12 = r7.NativeText;
+case 441:
+                    r11 = _closure0_slot11;
+                    r7 = {'style': null, 'numberOfLines': null, 'ellipsizeMode': null, 'allowFontScaling': true, 'ref': null};
+                    r7[0] = r14;
+                    r7[1] = r10;
+                    r14 = r9;
+                    if(!(r9 == r4)) { _fun33196_ip = 474; continue _fun33196 }
+case 470:
+                    r14 = 'tail';
+case 474:
+                    r7[2] = r14;
+                    r7[4] = r13;
+                    r27 = r7;
+                    r26 = r8;
+                    r13 = copyDataProperties(r28, r27);
+                    r7['children'] = r23;
+                    r7 = r11.bind(r2)(r12, r7);
+                    return r7;
+case 506:
+                    r22 = r24.color;
+                    r20 = r24.fontSize;
+                    r19 = r24.fontFamily;
+                    r21 = r24.fontWeight;
+                    r18 = r24.fontStyle;
+                    r16 = r24.textAlign;
+                    r15 = r24.textAlignVertical;
+                    r17 = r24.verticalAlign;
+                    r14 = r24.textDecorationLine;
+                    r13 = r24.lineHeight;
+                    r12 = r24.letterSpacing;
+                    r11 = _closure0_slot7;
+                    r7 = _closure0_slot5;
+                    r11 = r11.bind(r2)(r24, r7);
+                    r7 = _closure0_slot11;
+                    r6 = _closure0_slot1;
+                    r5 = r5[r16];
+                    r6 = r6.bind(r2)(r5);
+                    r5 = {'text': null, 'color': null, 'fontSize': null, 'fontFamily': null, 'fontWeight': null, 'fontStyle': null, 'textAlign': null, 'textAlignVertical': null, 'textDecorationLine': null, 'lineHeight': null, 'letterSpacing': null, 'hasLetterSpacing': null, 'style': null, 'numberOfLines': null, 'ellipsizeMode': null, 'allowFontScaling': true};
+                    r5[0] = r23;
+                    r5[1] = r22;
+                    r5[2] = r20;
+                    r5[3] = r19;
+                    r3 = r4 != r21;
+                    r19 = undefined;
+                    if(!r3) { _fun33196_ip = 650; continue _fun33196 }
+case 637:
+                    r20 = global;
+                    r20 = r20.String;
+                    r19 = r20.bind(r2)(r21);
+case 650:
+                    r5[4] = r19;
+                    r5[5] = r18;
+                    r5[6] = r16;
+                    if(!(r4 != r17)) { _fun33196_ip = 684; continue _fun33196 }
+case 666:
+                    r16 = 'center';
+                    r18 = 'middle';
+                    if(!(r18 !== r17)) { _fun33196_ip = 681; continue _fun33196 }
+case 678:
+                    r16 = r17;
+case 681:
+                    r15 = r16;
+case 684:
+                    r3 = r2 !== r12;
+                    r5[7] = r15;
+                    r5[8] = r14;
+                    r5[9] = r13;
+                    r5[10] = r12;
+                    r5[11] = r3;
+                    r5[12] = r11;
+                    r5[13] = r10;
+                    if(!(r9 == r4)) { _fun33196_ip = 724; continue _fun33196 }
+case 720:
+                    r9 = 'tail';
+case 724:
+                    r5[14] = r9;
+                    r27 = r5;
+                    r26 = r8;
+                    r8 = copyDataProperties(r28, r27);
+                    r5 = r7.bind(r2)(r6, r5);
+                    return r5;
+                }
+            };
+            _fun5086_ip = 735; continue _fun5086;
+case 730:
+            r3 = function(a0) { // Original name: Text, environment: r7
+                _fun33195: for(var _fun33195_ip = 0; ; ) switch(_fun33195_ip) {
+case 0:
+                    r13 = a0;
+                    r21 = r13.variant;
+                    r12 = r13.color;
+                    r16 = r13.style;
+                    r23 = r13.children;
+                    r10 = r13.lineClamp;
+                    r7 = r13.includeFontPadding;
+                    r9 = r13.ellipsizeMode;
+                    r15 = r13.tabularNumbers;
+                    r11 = r13.animated;
+                    r5 = r13.experimental_useNativeText;
+                    r14 = r13.ref;
+                    r24 = _closure0_slot7;
+                    r8 = _closure0_slot3;
+                    r2 = undefined;
+                    r8 = r24.bind(r2)(r13, r8);
+                    r17 = r2 !== r7;
+                    if(!r17) { _fun33195_ip = 92; continue _fun33195 }
+case 89:
+                    r17 = r7;
+case 92:
+                    r7 = r2 !== r11;
+                    if(!r7) { _fun33195_ip = 102; continue _fun33195 }
+case 99:
+                    r7 = r11;
+case 102:
+                    r13 = r2 !== r5;
+                    if(!r13) { _fun33195_ip = 112; continue _fun33195 }
+case 109:
+                    r13 = r5;
+case 112:
+                    r11 = _closure0_slot19;
+                    r4 = null;
+                    if(!(r12 == r4)) { _fun33195_ip = 128; continue _fun33195 }
+case 122:
+                    r12 = 'text-default';
+case 128:
+                    r5 = r2 !== r15;
+                    if(!r5) { _fun33195_ip = 138; continue _fun33195 }
+case 135:
+                    r5 = r15;
+case 138:
+                    r20 = r11.bind(r2)(r12, r5);
+                    r12 = _closure0_slot0;
+                    r5 = _closure0_slot2;
+                    r11 = r5[r12];
+                    r15 = r12.bind(r2)(r11);
+                    r11 = r15.usePlainTextExperimentEnabled;
+                    r19 = r11.bind(r15)();
+                    r18 = _closure0_slot8;
+                    r15 = r18.useContext;
+                    r11 = _closure0_slot10;
+                    r18 = r15.bind(r18)(r11);
+                    r11 = r5[r13];
+                    r15 = r12.bind(r2)(r11);
+                    r11 = r15.useTypographyVariantRemap;
+                    r3 = false;
+                    r21 = r11.bind(r15)(r21, r3);
+                    r11 = r5[r9];
+                    r25 = r12.bind(r2)(r11);
+                    r22 = r25.useManaTextMigrationHighlight;
+                    r15 = _closure0_slot18;
+                    r11 = r15[r21];
+                    r11 = r22.bind(r25)(r11, r16);
+                    r21 = r15[r21];
+                    r15 = new Array(4);
+                    r15[0] = r21;
+                    r20 = r20.text;
+                    r15[1] = r20;
+                    if(r17) { _fun33195_ip = 272; continue _fun33195 }
+case 266:
+                    r17 = _closure0_slot14;
+                    _fun33195_ip = 276; continue _fun33195;
+case 272:
+                    r17 = _closure0_slot13;
+case 276:
+                    r26 = 2;
+                    r28 = r15;
+                    r27 = r17;
+                    r1 = arraySpread(r29, r28, r27);
+                    r15[1] = r16;
+                    r0 = 1;
+                    r0 = r1 + r0;
+                    r15[0] = r11;
+                    r11 = r5[r14];
+                    r17 = r12.bind(r2)(r11);
+                    r16 = r17.getPlainTextEligibility;
+                    r11 = {'animated': null, 'children': null, 'enabled': null, 'experimentalUseNativeText': null, 'hasRef': null, 'hasTextAncestor': null, 'isIOS': null, 'props': null, 'style': null};
+                    r11[0] = r7;
+                    r11[1] = r23;
+                    r11[2] = r19;
+                    r11[3] = r13;
+                    r3 = r4 != r14;
+                    r11[4] = r3;
+                    r11[5] = r18;
+                    r18 = r5[r15];
+                    r19 = r12.bind(r2)(r18);
+                    r18 = r19.isIOS;
+                    r18 = r18.bind(r19)();
+                    r11[6] = r18;
+                    r11[7] = r8;
+                    r11[8] = r15;
+                    r11 = r16.bind(r17)(r11);
+                    r16 = r5[r14];
+                    r17 = r12.bind(r2)(r16);
+                    r16 = r17.isPlainTextEligible;
+                    r16 = r16.bind(r17)(r11);
+                    if(r16) { _fun33195_ip = 516; continue _fun33195 }
+case 418:
+                    if(r13) { _fun33195_ip = 436; continue _fun33195 }
+case 421:
+                    if(r7) { _fun33195_ip = 430; continue _fun33195 }
+case 424:
+                    r13 = _closure0_slot9;
+                    _fun33195_ip = 434; continue _fun33195;
+case 430:
+                    r13 = _closure0_slot12;
+case 434:
+                    _fun33195_ip = 451; continue _fun33195;
+case 436:
+                    r7 = r5[r17];
+                    r7 = r12.bind(r2)(r7);
+                    r13 = r7.NativeText;
+case 451:
+                    r12 = _closure0_slot11;
+                    r7 = {'style': null, 'numberOfLines': null, 'ellipsizeMode': null, 'allowFontScaling': true, 'ref': null};
+                    r7[0] = r15;
+                    r7[1] = r10;
+                    r15 = r9;
+                    if(!(r9 == r4)) { _fun33195_ip = 484; continue _fun33195 }
+case 480:
+                    r15 = 'tail';
+case 484:
+                    r7[2] = r15;
+                    r7[4] = r14;
+                    r28 = r7;
+                    r27 = r8;
+                    r14 = copyDataProperties(r29, r28);
+                    r7['children'] = r23;
+                    r7 = r12.bind(r2)(r13, r7);
+                    return r7;
+case 516:
+                    r22 = r11.color;
+                    r20 = r11.fontSize;
+                    r19 = r11.fontFamily;
+                    r21 = r11.fontWeight;
+                    r18 = r11.fontStyle;
+                    r16 = r11.textAlign;
+                    r15 = r11.textAlignVertical;
+                    r17 = r11.verticalAlign;
+                    r14 = r11.textDecorationLine;
+                    r13 = r11.lineHeight;
+                    r12 = r11.letterSpacing;
+                    r7 = _closure0_slot4;
+                    r11 = r24.bind(r2)(r11, r7);
+                    r7 = _closure0_slot11;
+                    r6 = _closure0_slot1;
+                    r5 = r5[r16];
+                    r6 = r6.bind(r2)(r5);
+                    r5 = {'text': null, 'color': null, 'fontSize': null, 'fontFamily': null, 'fontWeight': null, 'fontStyle': null, 'textAlign': null, 'textAlignVertical': null, 'textDecorationLine': null, 'lineHeight': null, 'letterSpacing': null, 'hasLetterSpacing': null, 'style': null, 'numberOfLines': null, 'ellipsizeMode': null, 'allowFontScaling': true};
+                    r5[0] = r23;
+                    r5[1] = r22;
+                    r5[2] = r20;
+                    r5[3] = r19;
+                    r3 = r4 != r21;
+                    r19 = undefined;
+                    if(!r3) { _fun33195_ip = 656; continue _fun33195 }
+case 643:
+                    r20 = global;
+                    r20 = r20.String;
+                    r19 = r20.bind(r2)(r21);
+case 656:
+                    r5[4] = r19;
+                    r5[5] = r18;
+                    r5[6] = r16;
+                    if(!(r4 != r17)) { _fun33195_ip = 690; continue _fun33195 }
+case 672:
+                    r16 = 'center';
+                    r18 = 'middle';
+                    if(!(r18 !== r17)) { _fun33195_ip = 687; continue _fun33195 }
+case 684:
+                    r16 = r17;
+case 687:
+                    r15 = r16;
+case 690:
+                    r3 = r2 !== r12;
+                    r5[7] = r15;
+                    r5[8] = r14;
+                    r5[9] = r13;
+                    r5[10] = r12;
+                    r5[11] = r3;
+                    r5[12] = r11;
+                    r5[13] = r10;
+                    if(!(r9 == r4)) { _fun33195_ip = 730; continue _fun33195 }
+case 726:
+                    r9 = 'tail';
+case 730:
+                    r5[14] = r9;
+                    r28 = r5;
+                    r27 = r8;
+                    r8 = copyDataProperties(r29, r28);
+                    r5 = r7.bind(r2)(r6, r5);
+                    return r5;
+                }
+            };
+case 735:
+            var _closure0_slot20 = r3;
+            r1 = r5[r11];
+            r8 = r6.bind(r0)(r1);
+            r1 = r8.isReactCompilerEnabled;
+            r1 = r1.bind(r8)();
+            if(r1) { _fun5086_ip = 767; continue _fun5086 }
+case 760:
+            r1 = function(a0) { // Original name: Heading, environment: r7
+                r5 = a0;
+                r7 = r5.ref;
+                r10 = {};
+                r0 = null;
+                r8 = Object.assign(Object.create(r0), {'ref': 0});
+                r9 = r5;
+                r6 = copyDataProperties(r11, r10, r9);
+                r4 = _closure0_slot0;
+                r3 = _closure0_slot2;
+                r3 = r3[r13];
+                r0 = undefined;
+                r5 = r4.bind(r0)(r3);
+                r4 = r5.useTypographyVariantRemap;
+                r3 = r6.variant;
+                r1 = true;
+                r5 = r4.bind(r5)(r3, r1);
+                r4 = _closure0_slot11;
+                r3 = _closure0_slot20;
+                r2 = {'ref': null};
+                r2[0] = r7;
+                r10 = r2;
+                r9 = r6;
+                r6 = copyDataProperties(r11, r10);
+                r6 = 'header';
+                r2['accessibilityRole'] = r6;
+                r2['variant'] = r5;
+                r2 = r4.bind(r0)(r3, r2);
+                return r2;
+            };
+            _fun5086_ip = 772; continue _fun5086;
+case 767:
+            r1 = function(a0) { // Original name: Heading, environment: r7
+                _fun33197: for(var _fun33197_ip = 0; ; ) switch(_fun33197_ip) {
+case 0:
+                    r11 = a0;
+                    r6 = _closure0_slot0;
+                    r3 = _closure0_slot2;
+                    r5 = r3[r18];
+                    r1 = undefined;
+                    r7 = r6.bind(r1)(r5);
+                    r5 = r7.c;
+                    r0 = 7;
+                    r5 = r5.bind(r7)(r0);
+                    r7 = r5[r0];
+                    if(!(r7 === r11)) { _fun33197_ip = 56; continue _fun33197 }
+case 46:
+                    r8 = r5[r1];
+                    r7 = r5[r2];
+                    _fun33197_ip = 101; continue _fun33197;
+case 56:
+                    r10 = r11.ref;
+                    r12 = _closure0_slot7;
+                    r9 = _closure0_slot6;
+                    r9 = r12.bind(r1)(r11, r9);
+                    r0 = 0;
+                    r5[r0] = r11;
+                    r0 = 1;
+                    r5[r0] = r9;
+                    r0 = 2;
+                    r5[r0] = r10;
+                    r7 = r10;
+                    r8 = r9;
+case 101:
+                    r3 = r3[r13];
+                    r9 = r6.bind(r1)(r3);
+                    r6 = r9.useTypographyVariantRemap;
+                    r3 = r8.variant;
+                    r2 = true;
+                    r6 = r6.bind(r9)(r3, r2);
+                    r3 = r5[r3];
+                    if(!(r3 === r8)) { _fun33197_ip = 159; continue _fun33197 }
+case 137:
+                    r3 = r5[r4];
+                    if(!(r3 === r7)) { _fun33197_ip = 159; continue _fun33197 }
+case 145:
+                    r3 = r5[r5];
+                    if(!(r3 === r6)) { _fun33197_ip = 159; continue _fun33197 }
+case 153:
+                    r3 = r5[r6];
+                    _fun33197_ip = 240; continue _fun33197;
+case 159:
+                    r10 = _closure0_slot11;
+                    r9 = _closure0_slot20;
+                    r4 = {'ref': null};
+                    r4[0] = r7;
+                    r14 = r4;
+                    r13 = r8;
+                    r11 = copyDataProperties(r15, r14);
+                    r11 = 'header';
+                    r4['accessibilityRole'] = r11;
+                    r4['variant'] = r6;
+                    r4 = r10.bind(r1)(r9, r4);
+                    r0 = 3;
+                    r5[r0] = r8;
+                    r0 = 4;
+                    r5[r0] = r7;
+                    r0 = 5;
+                    r5[r0] = r6;
+                    r0 = 6;
+                    r5[r0] = r4;
+                    r3 = r4;
+case 240:
+                    return r3;
+                }
+            };
+case 772:
+            r5 = r5[r19];
+            r7 = r6.bind(r0)(r5);
+            r6 = r7.fileFinishedImporting;
+            r5 = 'design/components/Text/native/Text.tsx';
+            r5 = r6.bind(r7)(r5);
+            r2['TextStyleSheet'] = r4;
+            r2['Text'] = r3;
+            r2['Heading'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

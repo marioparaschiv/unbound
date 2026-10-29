@@ -12,7 +12,8 @@ export type FastListStickySectionRendererComponentProps = {
 		horizontal?: boolean;
 		layoutSize?: unknown;
 		layoutStart?: unknown;
-		nextSectionLayoutPosition?: unknown;
+		/** @default 0 */
+		nextSectionLayoutPosition?: number;
 		recyclerKey?: unknown;
 		scrollPosValue?: { get?: unknown };
 		section?: unknown;

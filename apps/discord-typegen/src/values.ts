@@ -50,7 +50,21 @@ export type ExportBinding = { name: string; value: Value };
 export type StaticOwner = { component: ComponentRecord; parent: ComponentRecord; key: string };
 export type GetterBinding = { name: string; fn: FunctionInfo };
 
-export type PropValue = { kind: 'prop'; component: ComponentRecord; name: string };
+/** A prop read; `fallback` is the prop that stands in when it is unset (`label ?? accessibilityLabel`). */
+export type PropValue = {
+	kind: 'prop';
+	component: ComponentRecord;
+	name: string;
+	fallback?: PropValue;
+};
+
+/** A test of whether the prop in `register` is set: strict against `undefined`, or loose against `null`. */
+export type PresenceTest = {
+	kind: 'presence';
+	prop: PropValue;
+	register: string;
+	present: boolean;
+};
 
 /** What a register, closure slot or expression holds, as far as one textual pass can tell. */
 export type Value =
@@ -70,8 +84,8 @@ export type Value =
 	| { kind: 'instance'; component: ComponentRecord }
 	/** The result of a call that received a component's props, such as `useTextField(rest)` or a compiled rest helper. */
 	| { kind: 'derived'; component: ComponentRecord; through: HookRef | undefined }
-	/** `undefined !== rP`: the test Hermes reuses as the value of a `false` destructuring default. */
-	| { kind: 'defined'; prop: PropValue; register: string }
+	/** `undefined !== rP` or `null == rP`: a nullish test of a prop, true when the prop is `present` or absent. */
+	| PresenceTest
 	| { kind: 'object'; object: ObjectBuild }
 	| { kind: 'array'; items: Value[] }
 	| { kind: 'element' };

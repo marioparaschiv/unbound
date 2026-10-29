@@ -107,7 +107,8 @@ export type Module6219BadgeComponent = React.ComponentType<Module6219BadgeProps 
  * @see module 6348 (no source path)
  */
 export type Module6348BaseButtonProps = Omit<RawButtonProps, 'delayLongPress' | 'onActivate' | 'onActiveStateChange' | 'onBegin' | 'onDeactivate' | 'onFinalize' | 'onLongPress' | 'onPress' | 'style'> & {
-		delayLongPress?: unknown;
+		/** @default 600 */
+		delayLongPress?: number;
 		onActivate?: (...args: any[]) => unknown;
 		onActiveStateChange?: (...args: any[]) => unknown;
 		onBegin?: (...args: any[]) => unknown;
@@ -154,7 +155,8 @@ export type BasicProps = {
 		containerStyle?: React.ComponentProps<typeof RN.View>['style'];
 		data: { length?: unknown; map?: unknown };
 		dotStyle?: Module10129PaginationItemProps['dotStyle'];
-		horizontal?: unknown;
+		/** @default true */
+		horizontal?: boolean;
 		onPress?: (...args: any[]) => unknown;
 		progress?: Module10129PaginationItemProps['animValue'];
 		renderItem?: (...args: any[]) => unknown;
@@ -166,9 +168,11 @@ export type BasicComponent = React.ComponentType<BasicProps>;
  * @see module 6348 (no source path)
  */
 export type BorderlessButtonProps = {
-		activeOpacity?: unknown;
+		/** @default 0.3 */
+		activeOpacity?: number;
 		children?: React.ReactNode;
 		onActiveStateChange?: (...args: any[]) => unknown;
+		/** @default null */
 		ref?: React.Ref<any>;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
@@ -395,10 +399,12 @@ export type BottomSheetHostingContainerComponentComponent = React.ComponentType<
  * @see module 6513 (no source path)
  */
 export type BottomSheetModalComponentProps = {
-		animateOnMount?: unknown;
+		/** @default true */
+		animateOnMount?: boolean;
 		children?: React.ReactNode;
 		containerComponent?: unknown;
 		enableDismissOnClose?: boolean;
+		/** @default true */
 		enablePanDownToClose?: boolean;
 		/** @default 0 */
 		index?: number;
@@ -594,6 +600,7 @@ export type CardContentComponent = React.ComponentType<CardContentProps>;
  */
 export type CardStackProps = {
 		closingRouteKeys: { includes?: unknown };
+		/** @default true */
 		detachInactiveScreens?: MaybeScreenContainerProps['enabled'];
 		insets: { bottom?: unknown; left?: unknown; right?: unknown; top?: unknown };
 		isParentHeaderShown?: CardContainerInnerProps['isParentHeaderShown'];
@@ -712,11 +719,13 @@ export type CustomProps = {
 		customReanimatedStyle?: Module10131PaginationItemProps['customReanimatedStyle'];
 		data: { length?: unknown; map?: unknown };
 		dotStyle?: Module10131PaginationItemProps['dotStyle'];
-		horizontal?: unknown;
+		/** @default true */
+		horizontal?: boolean;
 		onPress?: (...args: any[]) => unknown;
 		progress?: Module10131PaginationItemProps['animValue'];
 		renderItem?: (...args: any[]) => unknown;
-		size?: unknown;
+		/** @default 0 */
+		size?: number;
 	};
 export type CustomComponent = React.ComponentType<CustomProps>;
 /**
@@ -930,9 +939,11 @@ export type Module335FlatListProps = {
 		columnWrapperStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		extraData?: unknown;
 		keyExtractor?: unknown;
-		numColumns?: unknown;
+		/** @default 1 */
+		numColumns?: number;
 		onViewableItemsChanged?: (...args: any[]) => unknown;
-		removeClippedSubviews?: unknown;
+		/** @default false */
+		removeClippedSubviews?: boolean;
 		renderItem?: (...args: any[]) => React.ReactNode;
 		/** @default false */
 		strictMode?: boolean;
@@ -1037,7 +1048,8 @@ export type GenericTouchableProps = {
 		shouldActivateOnStart?: boolean;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		testID?: string;
-		touchSoundDisabled?: unknown;
+		/** @default false */
+		touchSoundDisabled?: boolean;
 		userSelect?: unknown;
 	};
 export type GenericTouchableComponent = React.ComponentType<GenericTouchableProps>;
@@ -1096,7 +1108,7 @@ export type Module6234HeaderProps = {
 		headerShadowVisible?: boolean;
 		headerStatusBarHeight?: unknown;
 		headerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
-		headerTintColor?: unknown;
+		headerTintColor?: Module6241HeaderIconProps['tintColor'];
 		headerTitle?: unknown;
 		/** @default 'center' */
 		headerTitleAlign?: 'center' | 'left' | (string & {});
@@ -1211,13 +1223,14 @@ export type HeaderSearchBarInternalProps = Omit<React.ComponentProps<typeof RN.T
 		cancelButtonText?: Module6230TextProps['children'];
 		/** @default 'search' */
 		enterKeyHint?: React.ComponentProps<typeof RN.TextInput>['enterKeyHint'];
-		inputType?: unknown;
+		/** @default 'text' */
+		inputType?: 'text' | (string & {});
 		onChangeText?: React.ComponentProps<typeof RN.TextInput>['onChange'];
 		onClose: (...args: any[]) => unknown;
 		/** @default 'Search' */
 		placeholder?: React.ComponentProps<typeof RN.TextInput>['placeholder'];
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
-		tintColor?: unknown;
+		tintColor?: Module6241HeaderIconProps['tintColor'];
 		visible?: boolean;
 	};
 export type HeaderSearchBarInternalComponent = React.ComponentType<HeaderSearchBarInternalProps>;
@@ -1357,6 +1370,7 @@ export type InternalTextInputProps = {
 		forwardedRef?: unknown;
 		hitSlop: (...args: any[]) => unknown;
 		id?: string;
+		/** @default false */
 		multiline?: boolean;
 		nativeID?: unknown;
 		numberOfLines?: unknown;
@@ -1446,6 +1460,7 @@ export type KeyboardAvoidingViewProps = Omit<View_withRefProps, 'behavior' | 'ch
 		behavior?: 'height' | 'padding' | 'position' | (string & {});
 		children?: React.ReactNode;
 		contentContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+		/** @default true */
 		enabled?: boolean;
 		keyboardVerticalOffset?: unknown;
 		onLayout?: (...args: any[]) => unknown;
@@ -1458,9 +1473,11 @@ export type KeyboardAvoidingViewComponent = React.ComponentType<KeyboardAvoiding
  */
 export type KeyboardProviderProps = {
 		children?: React.ReactNode;
+		/** @default true */
 		enabled?: boolean;
 		navigationBarTranslucent?: unknown;
-		preload?: (...args: any[]) => unknown;
+		/** @default true */
+		preload?: boolean;
 		preserveEdgeToEdge?: unknown;
 		statusBarTranslucent?: unknown;
 	};
@@ -1477,6 +1494,7 @@ export type KeyboardToolbarProps = Omit<React.ComponentProps<typeof RN.View>, 'b
 		content?: unknown;
 		/** @default 'Done' */
 		doneText?: 'Done' | (string & {});
+		/** @default true */
 		enabled?: boolean;
 		icon?: unknown;
 		insets?: { left?: unknown; right?: unknown };
@@ -1485,6 +1503,7 @@ export type KeyboardToolbarProps = Omit<React.ComponentProps<typeof RN.View>, 'b
 		onNextCallback?: (...args: any[]) => unknown;
 		onPrevCallback?: (...args: any[]) => unknown;
 		opacity?: unknown;
+		/** @default true */
 		showArrows?: boolean;
 		theme?: unknown;
 	};
@@ -2288,6 +2307,7 @@ export type SafeAreaListenerComponent = React.ComponentType<SafeAreaListenerProp
 export type Module4899SafeAreaProviderProps = {
 		children?: React.ReactNode;
 		initialMetrics?: { frame?: unknown; insets?: unknown };
+		/** @default null */
 		initialSafeAreaInsets?: unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
@@ -2374,6 +2394,7 @@ export type Module6259ScreenProps = {
 		children?: React.ReactNode;
 		focused?: boolean;
 		header?: React.ComponentProps<typeof RN.View>['children'];
+		/** @default true */
 		headerShown?: boolean;
 		headerStatusBarHeight?: unknown;
 		headerTransparent?: unknown;
@@ -2415,7 +2436,8 @@ export type ScreenStackProps = {
 		goBackGesture?: unknown;
 		nativeContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		onFinishTransitioning?: (...args: any[]) => unknown;
-		screenEdgeGesture?: unknown;
+		/** @default false */
+		screenEdgeGesture?: boolean;
 		screensRefs?: { current?: unknown };
 		transitionAnimation?: unknown;
 	};
@@ -2439,9 +2461,13 @@ export type ScreenStackHeaderCenterViewComponent = React.ComponentType<ScreenSta
  * @see module 5335 (no source path)
  */
 export type ScreenStackHeaderConfigProps = {
+		/** @default false */
 		disableBottomInsetApplication?: boolean;
+		/** @default false */
 		disableLeftInsetApplication?: boolean;
+		/** @default false */
 		disableRightInsetApplication?: boolean;
+		/** @default false */
 		disableTopInsetApplication?: boolean;
 		experimental_userInterfaceStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		headerLeftBarButtonItems?: unknown;
@@ -2485,7 +2511,8 @@ export type ScreenStackItemProps = Omit<Module5326ScreenProps, 'activityState' |
 		scrollEdgeEffects?: unknown;
 		sheetAllowedDetents?: 'fitToContents' | (string & {});
 		shouldFreeze?: Module5326ScreenProps['shouldFreeze'];
-		stackPresentation?: unknown;
+		/** @default 'push' */
+		stackPresentation?: 'formSheet' | 'push' | (string & {});
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		unstable_sheetFooter?: (...args: any[]) => unknown;
 	};
@@ -2513,8 +2540,8 @@ export type ScrollAnchorComponent = React.ComponentType<ScrollAnchorProps>;
  */
 export type Module362ScrollViewProps = {
 		StickyHeaderComponent?: unknown;
-		alwaysBounceHorizontal?: { horizontal?: unknown };
-		alwaysBounceVertical?: { horizontal?: unknown };
+		alwaysBounceHorizontal?: unknown;
+		alwaysBounceVertical?: unknown;
 		children?: React.ReactNode;
 		contentContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		contentInset?: { top?: unknown };
@@ -2614,7 +2641,8 @@ export type Module5340SearchBarComponent = React.ComponentType<Module5340SearchB
  * @see module 380 (no source path)
  */
 export type SectionListProps = {
-		stickySectionHeadersEnabled?: unknown;
+		/** @default true */
+		stickySectionHeadersEnabled?: boolean;
 	};
 export type SectionListComponent = React.ComponentType<SectionListProps & Record<string, unknown>>;
 /**
@@ -2863,6 +2891,7 @@ export type SvgImageComponent = React.ComponentType<SvgImageProps & Record<strin
  * @see module 7657 (no source path)
  */
 export type SvgUriProps = {
+		/** @default null */
 		fallback?: unknown;
 		onError?: (...args: any[]) => unknown;
 		onLoad?: (...args: any[]) => unknown;
@@ -2874,6 +2903,7 @@ export type SvgUriComponent = React.ComponentType<SvgUriProps>;
  * @see module 7657 (no source path)
  */
 export type SvgXmlProps = {
+		/** @default null */
 		fallback?: unknown;
 		onError?: (...args: any[]) => unknown;
 		override?: unknown;
@@ -2885,7 +2915,8 @@ export type SvgXmlComponent = React.ComponentType<SvgXmlProps>;
  * @see module 424 (no source path)
  */
 export type Module424SwitchProps = {
-		accessibilityRole?: unknown;
+		/** @default 'switch' */
+		accessibilityRole?: 'switch' | (string & {});
 		disabled?: boolean;
 		ios_backgroundColor?: unknown;
 		onChange?: (...args: any[]) => unknown;
@@ -2972,14 +3003,15 @@ export type TextImplProps = {
 		allowFontScaling?: boolean;
 		'aria-busy'?: unknown;
 		'aria-checked'?: unknown;
-		'aria-disabled'?: unknown;
+		'aria-disabled'?: boolean;
 		'aria-expanded'?: unknown;
 		'aria-hidden'?: boolean;
 		'aria-label'?: unknown;
 		'aria-selected'?: unknown;
 		children?: React.ReactNode;
 		disabled?: boolean;
-		ellipsizeMode?: unknown;
+		/** @default 'tail' */
+		ellipsizeMode?: 'tail' | (string & {});
 		id?: string;
 		nativeID?: unknown;
 		numberOfLines?: unknown;
@@ -3105,7 +3137,8 @@ export type Module6448TouchableProps = {
 		activeUnderlayOpacity?: number;
 		androidRipple?: unknown;
 		animationDuration?: { hover?: unknown; in?: unknown; longPress?: unknown; out?: unknown; tap?: unknown };
-		cancelOnLeave?: unknown;
+		/** @default true */
+		cancelOnLeave?: boolean;
 		children?: React.ReactNode;
 		/** @default 1 */
 		defaultOpacity?: number;
@@ -3120,6 +3153,7 @@ export type Module6448TouchableProps = {
 		onPress?: (...args: any[]) => unknown;
 		onPressIn?: (...args: any[]) => unknown;
 		onPressOut?: (...args: any[]) => unknown;
+		/** @default null */
 		ref?: React.Ref<any>;
 		testID?: string;
 		/** @default 'transparent' */
@@ -3173,7 +3207,8 @@ export type TouchableHighlightImplProps = {
 		accessibilityValue?: { max?: unknown; min?: unknown; now?: unknown; text?: unknown };
 		accessibilityViewIsModal?: unknown;
 		accessible?: boolean;
-		activeOpacity?: unknown;
+		/** @default 0.85 */
+		activeOpacity?: number;
 		'aria-hidden'?: boolean;
 		'aria-label'?: unknown;
 		'aria-live'?: 'off' | (string & {});
@@ -3185,7 +3220,8 @@ export type TouchableHighlightImplProps = {
 		children?: React.ReactNode;
 		delayLongPress?: unknown;
 		delayPressIn?: unknown;
-		delayPressOut?: unknown;
+		/** @default 0 */
+		delayPressOut?: number;
 		disabled?: boolean;
 		focusable?: boolean;
 		hasTVPreferredFocus?: boolean;
@@ -3234,7 +3270,8 @@ export type Module291TouchableOpacityProps = {
 		accessibilityValue?: { max?: unknown; min?: unknown; now?: unknown; text?: unknown };
 		accessibilityViewIsModal?: unknown;
 		accessible?: boolean;
-		activeOpacity?: unknown;
+		/** @default 0.2 */
+		activeOpacity?: number;
 		'aria-busy'?: unknown;
 		'aria-checked'?: unknown;
 		'aria-disabled'?: unknown;
@@ -3427,6 +3464,7 @@ export type VirtualCollectionViewProps = {
 		items: { at?: unknown; size?: unknown };
 		/** @default false */
 		removeClippedSubviews?: boolean;
+		/** @default '' */
 		testID?: string;
 	};
 export type VirtualCollectionViewComponent = React.ComponentType<VirtualCollectionViewProps>;
@@ -3496,7 +3534,7 @@ export type VirtualizedListProps = {
 		getItemLayout?: unknown;
 		horizontal?: unknown;
 		initialScrollIndex?: unknown;
-		invertStickyHeaders?: { inverted?: unknown };
+		invertStickyHeaders?: unknown;
 		inverted?: boolean;
 		maintainVisibleContentPosition?: { minIndexForVisible?: unknown };
 		onEndReached?: (...args: any[]) => unknown;
@@ -3506,10 +3544,12 @@ export type VirtualizedListProps = {
 		onStartReachedThreshold?: (...args: any[]) => unknown;
 		renderItem?: (...args: any[]) => React.ReactNode;
 		renderScrollComponent?: (...args: any[]) => React.ReactNode;
-		scrollEventThrottle?: unknown;
+		/** @default 0.0001 */
+		scrollEventThrottle?: number;
 		stickyHeaderIndices?: unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
-		updateCellsBatchingPeriod?: unknown;
+		/** @default 50 */
+		updateCellsBatchingPeriod?: number;
 	};
 export type VirtualizedListComponent = React.ComponentType<VirtualizedListProps & Record<string, unknown>>;
 /**

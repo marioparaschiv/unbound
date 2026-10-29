@@ -180,10 +180,11 @@ export const RULES: readonly Rule[] = [
 		name: 'literal-union',
 		infer: ({ name, evidence }) => {
 			const passed = literalsOf(evidence, ['passed']);
+			// An empty string is a blank text fallback (`name ?? ''`), not a member of a set of options.
 			const values = [
 				...literalsOf(evidence, ['default', 'compared']),
 				...(isEnumLike(name, passed) ? passed : []),
-			];
+			].filter((value) => value !== '');
 
 			if (values.length === 0 || !values.every((value) => typeof value === 'string')) return;
 

@@ -3,7 +3,7 @@ import type * as React from 'react';
 import type * as RN from 'react-native';
 import type { ActionSheetCloseButtonComponent, ActionSheetCloseButtonProps, ActionSheetHeaderPressableTextComponent, ActionSheetHeaderPressableTextProps, BaseTextButtonComponent, BaseTextButtonProps, BottomSheetTitleHeaderComponent, BottomSheetTitleHeaderProps, ButtonIconButtonComponent, ButtonIconButtonProps, DesignActivityIndicatorComponent, DesignActivityIndicatorProps, DesignTextComponent, DesignTextProps, FormsFormRadioComponent, FormsFormRadioProps, NavigationContainerInnerComponent, NavigationContainerInnerProps, PressableHighlightComponent, PressableHighlightProps, PressableOpacityComponent, PressableOpacityProps, RowButtonComponent, RowButtonProps, SheetBottomSheetComponent, SheetBottomSheetProps, StackComponent, StackProps, TableRadioGroupComponent, TableRadioGroupProps, TableRadioRowComponent, TableRadioRowProps, TableRowComponent, TableRowIconComponent, TableRowIconProps, TableRowProps, TextHeadingComponent, TextHeadingProps } from './barrels.gen';
 import type { BoostTier3IconComponent, BoostTier3IconProps } from './design.gen';
-import type { AppChannelApplicationSelectorComponent, AppChannelApplicationSelectorProps, ChannelAccessInfoComponent, ChannelAccessInfoProps, ChatFloatingNavButtonComponent, ChatFloatingNavButtonProps, DiscordGestureHandlerRootViewComponent, DiscordGestureHandlerRootViewProps, GroupDMAvatarComponent, GroupDMAvatarProps, GuildIconInnerComponent, GuildIconInnerProps } from './modules-1.gen';
+import type { AppChannelApplicationSelectorComponent, AppChannelApplicationSelectorProps, ChannelAccessInfoComponent, ChannelAccessInfoProps, ChatFloatingNavButtonComponent, ChatFloatingNavButtonProps, DiscordGestureHandlerRootViewComponent, DiscordGestureHandlerRootViewProps, GroupDMAvatarComponent, GroupDMAvatarProps, GuildIconInnerComponent, GuildIconInnerProps, VerifiedRoleIconComponent, VerifiedRoleIconProps } from './modules-1.gen';
 import type { AttachmentPreviewComponent, AttachmentPreviewProps, BurstReactionAnimationPreviewComponent, BurstReactionAnimationPreviewProps, DetailedGuildIdentityUserRowComponent, DetailedGuildIdentityUserRowProps, SubscriptionRenewalMutationsNoticeComponent, SubscriptionRenewalMutationsNoticeProps } from './modules-2.gen';
 import type { ModulesSafeAreaProviderComponent, ModulesSafeAreaProviderProps, UserSettingsAuthedAppDeleteWarningModalComponent, UserSettingsAuthedAppDeleteWarningModalProps } from './modules-3.gen';
 /**
@@ -1112,7 +1112,7 @@ export type CommonNotificationsComponent = React.ComponentType<CommonNotificatio
 export type RolePillProps = {
 		color?: unknown;
 		disableInteraction?: PressableHighlightProps['disabled'];
-		guildId?: string;
+		guildId?: VerifiedRoleIconProps['guildId'];
 		role: { colorString?: unknown; id?: unknown; name?: unknown; tags?: unknown };
 	};
 export type RolePillComponent = React.ComponentType<RolePillProps>;
@@ -1153,6 +1153,7 @@ export type SlideoutButtonComponent = React.ComponentType<SlideoutButtonProps> &
  * @see components_native/common/SortableListView.tsx
  */
 export type CommonRowProps = {
+		/** @default false */
 		active?: boolean;
 		hideContent?: boolean;
 		hovering?: unknown;
@@ -1467,7 +1468,7 @@ export type PremiumFeatureListProps = {
 		iconStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		labelStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		rowStyle?: React.ComponentProps<typeof RN.View>['style'];
-		separator?: '' | (string & {});
+		separator?: string;
 		style?: React.ComponentProps<typeof RN.View>['style'];
 	};
 export type PremiumFeatureListComponent = React.ComponentType<PremiumFeatureListProps>;

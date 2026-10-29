@@ -11,8 +11,8 @@ import { splitModules } from '../src/split';
 import { TYPES_DIR } from '../src/paths';
 
 // Verbatim slices of discord-350's main.js: react-native's entry, Stack, TableRow, NavigatorScreen, TableSwitchRow,
-// TextField, useTextField, BaseTextField, ErrorText.
-const FIXTURE_IDS = [17, 5378, 6181, 6722, 6882, 6294, 6295, 6304, 6290];
+// TextField, useTextField, BaseTextField, ErrorText, Text.
+const FIXTURE_IDS = [17, 5378, 6181, 6722, 6882, 6294, 6295, 6304, 6290, 5085];
 const lines = FIXTURE_IDS.flatMap((id) =>
 	readFileSync(join(import.meta.dir, 'fixtures', `module-${id}.txt`), 'utf8').split('\n'),
 );
@@ -142,6 +142,14 @@ describe('call-site literals', () => {
 		expect(passedType('columns', [2])).toBe('number');
 		expect(passedType('hidden', [true])).toBe('boolean');
 		expect(passedType('size', ['sm', 16])).toBeUndefined();
+	});
+});
+
+describe('Text', () => {
+	test('a `??` fallback types and documents the prop like a destructuring default', () => {
+		expect(alias('design.gen.d.ts', 'TextProps')).toContain(
+			"/** @default 'text-default' */ color?: 'text-default' | 'text-feedback-critical' | (string & {});",
+		);
 	});
 });
 
