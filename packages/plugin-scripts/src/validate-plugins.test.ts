@@ -12,6 +12,7 @@ import {
 	validatePluginDirectory,
 	validatePluginFolder,
 	validatePluginDocs,
+	validateTextInputProps,
 } from './validate-plugins';
 import { PLUGINS_DIR } from './paths';
 
@@ -268,4 +269,28 @@ test('rejects an unknown platformCapabilities platform', () => {
 	});
 
 	expect(errors.join('\n')).toContain('web');
+});
+
+test('flags TextInput props Discord ignores', () => {
+	const source = [
+		'<Discord.TextInput',
+		'\ttitle="Radius"',
+		'\thelpText="From 0 to 32."',
+		'\tonChange={(value) => set({ radius: value > 1 ? value : 1 })}',
+		'/>',
+	].join('\n');
+
+	expect(validateTextInputProps(source)).toEqual([
+		'line 1: Discord.TextInput ignores title, use label instead',
+		'line 1: Discord.TextInput ignores helpText, use description instead',
+	]);
+});
+
+test('accepts TextInput label and description, and other components with a title', () => {
+	const source = [
+		'<Discord.TextInput label="Radius" description="From 0 to 32." value={String(radius)} />',
+		'<Discord.TableRow title="Radius" />',
+	].join('\n');
+
+	expect(validateTextInputProps(source)).toEqual([]);
 });

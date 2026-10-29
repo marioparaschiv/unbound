@@ -4,7 +4,7 @@ import {
 } from '@unbound-app/types/native';
 import { formatChangelogIssues, parseChangelog } from '@unbound-app/contracts/changelog';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
 import { PLUGINS_DIR } from './paths';
 
@@ -21,6 +21,11 @@ const DISPLAY_NAME_PATTERN =
 	/^(?:[A-Z][a-z0-9]*|[A-Z]{2,}[a-z]?)(?: (?:[A-Z][a-z0-9]*|[A-Z]{2,}[a-z]?))*$/;
 const BRAND_NAME_PATTERN = /^[A-Z][a-z0-9]+[A-Z]{2,}$/;
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
+const DISCORD_TEXT_INPUT = '<Discord.TextInput';
+const IGNORED_TEXT_INPUT_PROPS: Record<string, string> = {
+	title: 'label',
+	helpText: 'description',
+};
 
 type PluginManifest = {
 	id?: unknown;
@@ -230,6 +235,63 @@ export function validatePluginDocs(pluginDirectory: string, version: string | un
 	return errors;
 }
 
+function openingTag(source: string, start: number): string {
+	let depth = 0;
+
+	for (let index = start; index < source.length; index++) {
+		const character = source[index];
+
+		if (character === '{') depth++;
+		else if (character === '}') depth--;
+		else if (character === '>' && depth === 0) return source.slice(start, index + 1);
+	}
+
+	return source.slice(start);
+}
+
+export function validateTextInputProps(source: string): string[] {
+	const errors: string[] = [];
+
+	for (
+		let start = source.indexOf(DISCORD_TEXT_INPUT);
+		start !== -1;
+		start = source.indexOf(DISCORD_TEXT_INPUT, start + 1)
+	) {
+		const tag = openingTag(source, start);
+		const line = source.slice(0, start).split('\n').length;
+
+		for (const [prop, replacement] of Object.entries(IGNORED_TEXT_INPUT_PROPS)) {
+			if (new RegExp(`\\s${prop}=`).test(tag)) {
+				errors.push(
+					`line ${line}: Discord.TextInput ignores ${prop}, use ${replacement} instead`,
+				);
+			}
+		}
+	}
+
+	return errors;
+}
+
+function sourceFiles(directory: string): string[] {
+	if (!existsSync(directory)) return [];
+
+	return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+		const path = join(directory, entry.name);
+
+		if (entry.isDirectory()) return sourceFiles(path);
+
+		return /\.[jt]sx$/.test(entry.name) ? [path] : [];
+	});
+}
+
+export function validatePluginSources(pluginDirectory: string): string[] {
+	return sourceFiles(join(pluginDirectory, 'src')).flatMap((file) =>
+		validateTextInputProps(readFileSync(file, 'utf8')).map(
+			(error) => `${relative(pluginDirectory, file)} ${error}`,
+		),
+	);
+}
+
 export function validatePluginDirectory(pluginsDirectory: string): string[] {
 	const errors: string[] = [];
 	const ids = new Map<string, string>();
@@ -268,6 +330,9 @@ export function validatePluginDirectory(pluginsDirectory: string): string[] {
 			pluginDirectory,
 			typeof version === 'string' ? version : undefined,
 		))
+			errors.push(`${folder}: ${error}`);
+
+		for (const error of validatePluginSources(pluginDirectory))
 			errors.push(`${folder}: ${error}`);
 
 		if (manifest && typeof manifest === 'object' && !Array.isArray(manifest)) {
