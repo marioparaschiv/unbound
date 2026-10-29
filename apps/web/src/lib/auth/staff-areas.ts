@@ -15,10 +15,10 @@ export type StaffSectionId = 'review' | 'users' | 'addons';
 
 export type StaffSection = StaffLink<StaffSectionId>;
 
-/** The staff sections linked from the account menu, each shown only to roles granting its permissions. */
+/** The staff areas the account menu can link, highest first; a role sees only the first it is granted. */
 export const STAFF_AREAS: StaffArea[] = [
-	{ id: 'review', label: 'Review', to: '/review', permissions: { submission: ['review'] } },
 	{ id: 'admin', label: 'Admin', to: '/admin', permissions: { user: ['ban'] } },
+	{ id: 'review', label: 'Review', to: '/review', permissions: { submission: ['review'] } },
 ];
 
 /** The pages of the staff sidebar, in order; a page opens only for roles granting its permissions. */
@@ -39,12 +39,12 @@ export const STAFF_SECTIONS: Record<StaffSectionId, StaffSection> = {
 };
 
 /**
- * @description Picks the staff sections a role may open, by permission rather than role name.
+ * @description Picks the one staff area the account menu links for a role, by permission rather than role name.
  * @param role The user's `role` column, possibly comma-separated or unset.
- * @returns The sections to link, in menu order.
+ * @returns The highest area the role may open, or `undefined` for non-staff.
  */
-export function getStaffAreas(role: string | null | undefined): StaffArea[] {
-	return STAFF_AREAS.filter((area) => hasPermission(role, area.permissions));
+export function getStaffArea(role: string | null | undefined): StaffArea | undefined {
+	return STAFF_AREAS.find((area) => hasPermission(role, area.permissions));
 }
 
 /**
@@ -58,4 +58,4 @@ export function getStaffSections(role: string | null | undefined): StaffSection[
 	);
 }
 
-export default { STAFF_AREAS, STAFF_SECTIONS, getStaffAreas, getStaffSections };
+export default { STAFF_AREAS, STAFF_SECTIONS, getStaffArea, getStaffSections };

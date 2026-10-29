@@ -18,7 +18,7 @@ import {
 	DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
 import { signOutMutation } from '~/queries/account/session';
-import { getStaffAreas } from '~/lib/auth/staff-areas';
+import { getStaffArea } from '~/lib/auth/staff-areas';
 import UserAvatar from '~/components/user-avatar';
 import { Button } from '~/components/ui/button';
 
@@ -39,6 +39,7 @@ function AccountMenu() {
 	}
 
 	const { user } = session;
+	const staffArea = getStaffArea(user.role);
 
 	function signOut() {
 		mutate(undefined, { onError: (error) => toast.error(error.message) });
@@ -70,14 +71,14 @@ function AccountMenu() {
 						Dashboard
 					</Link>
 				</DropdownMenuItem>
-				{getStaffAreas(user.role).map((area) => (
-					<DropdownMenuItem key={area.id} asChild>
-						<Link to={area.to}>
+				{staffArea ? (
+					<DropdownMenuItem asChild>
+						<Link to={staffArea.to}>
 							<IconShield size={24} />
-							{area.label}
+							{staffArea.label}
 						</Link>
 					</DropdownMenuItem>
-				))}
+				) : null}
 				<DropdownMenuSeparator />
 				<DropdownMenuItem onClick={signOut} variant='destructive'>
 					<IconRectLogout size={24} />
