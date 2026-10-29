@@ -501,6 +501,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
 
 	return {
+		drawn: () => embeds.size,
 		dispose() {
 			for (const scan of scans) clearTimeout(scan);
 

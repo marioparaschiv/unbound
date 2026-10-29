@@ -69,4 +69,29 @@ export function featureSelfTest(): SelfTestResult {
 	};
 }
 
-export default { featureSelfTest, recordApplied, recordFailure, recordSkip, resetHealth };
+/**
+ * @description Reports whether the plugin's features are applied and drew something, for the device matrix, which opens fixture messages first.
+ * @param drawn How many things the plugin has drawn on screen, or `undefined` when it never started drawing.
+ * @param noun What it draws, plural, such as `embeds`.
+ * @returns `ok` when the features are applied and at least one thing is drawn.
+ */
+export function drawnSelfTest(drawn: (() => number) | undefined, noun: string): SelfTestResult {
+	const features = featureSelfTest();
+
+	if (!features.ok) return features;
+
+	const count = drawn?.() ?? 0;
+
+	return count > 0
+		? { ok: true, detail: `${count} ${noun} drawn on screen` }
+		: { ok: false, detail: `no ${noun} are drawn on screen` };
+}
+
+export default {
+	drawnSelfTest,
+	featureSelfTest,
+	recordApplied,
+	recordFailure,
+	recordSkip,
+	resetHealth,
+};

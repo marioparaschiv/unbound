@@ -84,6 +84,7 @@ export const FIXTURE_MESSAGES = [
 	'```ts\nconst answer: number = 42;\nfunction double(value: number) {\n\treturn value * 2;\n}\n```',
 	'Fixture mention <@{self}> with a link https://discord.com/channels/{guild}/{channel}',
 	'Plain fixture message for bubbles and avatars.',
+	'Fixture message link https://discord.com/channels/{guild}/{channel}/{message}',
 ];
 
 export function parseChannel(value: string): { guild: string; channel: string } {
@@ -102,9 +103,11 @@ export function fixtureScript(guild: string, channel: string): string {
 	var actions = metro.findByProps('sendMessage', 'receiveMessage');
 	var bot = metro.findByProps('createBotMessage');
 	var self = metro.findStore('User').getCurrentUser().id;
-	var contents = ${JSON.stringify(FIXTURE_MESSAGES)};
+	var loaded = metro.findStore('Message').getMessages(${JSON.stringify(channel)});
+	var linked = (loaded && loaded.toArray ? loaded.toArray() : []).filter(function (message) { return message.author && !message.author.bot && /^\\d+$/.test(message.id); }).pop();
+	var contents = ${JSON.stringify(FIXTURE_MESSAGES)}.filter(function (content) { return linked || content.indexOf('{message}') === -1; });
 	for (var index = 0; index < contents.length; index++) {
-		var content = contents[index].replace('{self}', self).replace('{guild}', ${JSON.stringify(guild)}).replace('{channel}', ${JSON.stringify(channel)});
+		var content = contents[index].replace('{self}', self).replace('{guild}', ${JSON.stringify(guild)}).replace('{channel}', ${JSON.stringify(channel)}).replace('{message}', linked ? linked.id : '');
 		actions.receiveMessage(${JSON.stringify(channel)}, bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: content }));
 	}
 	await new Promise(function (resolve) { setTimeout(resolve, 1500); });

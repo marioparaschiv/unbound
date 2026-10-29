@@ -371,6 +371,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
 
 	return {
+		drawn: () => embeds.size,
 		dispose() {
 			for (const scan of scans) clearTimeout(scan);
 

@@ -228,6 +228,7 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 		restore,
 		forget,
 		hasCell: (key: string) => cellViews.has(key),
+		rendered: () => states.size,
 		forgetCell(key: string) {
 			cellViews.delete(key);
 		},
