@@ -2,9 +2,11 @@ import { expect, test } from 'bun:test';
 
 import {
 	describeMemory,
+	describeSpringBoard,
 	largestGrowers,
 	parseAndroidPss,
 	parseIOSFootprint,
+	parseProcessMemory,
 } from './device-memory';
 
 test('reads Discord itself from the process list, not its extensions', () => {
