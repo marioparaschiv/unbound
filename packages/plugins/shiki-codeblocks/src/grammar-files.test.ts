@@ -68,7 +68,7 @@ describe('grammar files', () => {
 		expect(requests).toEqual([grammarModuleUrl('css')]);
 		expect(second).toEqual(first);
 		expect([...files.keys()]).toEqual([
-			`Unbound/Cache/shiki-codeblocks/langs-${SHIKI_LANGS_VERSION}/css.json`,
+			`Unbound/cache/shiki-codeblocks/langs-${SHIKI_LANGS_VERSION}/css.json`,
 		]);
 	});
 
