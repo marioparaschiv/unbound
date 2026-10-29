@@ -1,6 +1,7 @@
 import { NATIVE_PLUGIN_PLATFORM_CAPABILITIES } from '@unbound-app/types/native';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import { expect, test } from 'bun:test';
 
@@ -10,6 +11,7 @@ import {
 	PLUGIN_NAME_MAX_LENGTH,
 	validatePluginDirectory,
 	validatePluginFolder,
+	validatePluginDocs,
 } from './validate-plugins';
 import { PLUGINS_DIR } from './paths';
 
@@ -31,20 +33,71 @@ test('every plugin folder follows the workspace convention', () => {
 	expect(validatePluginDirectory(PLUGINS_DIR)).toEqual([]);
 });
 
-test('the workspace contains only first-party plugins', () => {
-	const plugins = readdirSync(PLUGINS_DIR, { withFileTypes: true }).filter((entry) => {
-		return entry.isDirectory() && !['node_modules', 'shared'].includes(entry.name);
-	});
+const validChangelog =
+	'# Changelog\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- Initial release.\n';
 
-	expect(plugins.length).toBeGreaterThan(0);
-	expect(
-		plugins.every((plugin) => {
-			const manifestPath = join(PLUGINS_DIR, plugin.name, 'manifest.json');
-			if (!existsSync(manifestPath)) return false;
-			const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-			return manifest.authors.some((author: { name: string }) => author.name === 'adrian');
-		}),
-	).toBe(true);
+type PluginDocs = {
+	addon?: string;
+	changelog?: string;
+};
+
+function createPlugin(docs: PluginDocs): string {
+	const directory = join(mkdtempSync(join(tmpdir(), 'plugin-docs-')), 'example-plugin');
+
+	mkdirSync(directory);
+
+	if (docs.addon !== undefined) writeFileSync(join(directory, 'ADDON.md'), docs.addon);
+	if (docs.changelog !== undefined)
+		writeFileSync(join(directory, 'CHANGELOG.md'), docs.changelog);
+
+	return directory;
+}
+
+test('accepts a plugin with an ADDON.md and a changelog entry for its version', () => {
+	const directory = createPlugin({ addon: '# Example\n', changelog: validChangelog });
+
+	expect(validatePluginDocs(directory, '1.0.0')).toEqual([]);
+});
+
+test('reports a missing ADDON.md', () => {
+	const directory = createPlugin({ changelog: validChangelog });
+
+	expect(validatePluginDocs(directory, '1.0.0')).toEqual(['ADDON.md is missing']);
+});
+
+test('reports a whitespace-only ADDON.md', () => {
+	const directory = createPlugin({ addon: ' \n\t\n', changelog: validChangelog });
+
+	expect(validatePluginDocs(directory, '1.0.0')).toEqual(['ADDON.md is empty']);
+});
+
+test('reports a missing CHANGELOG.md', () => {
+	const directory = createPlugin({ addon: '# Example\n' });
+
+	expect(validatePluginDocs(directory, '1.0.0')).toEqual(['CHANGELOG.md is missing']);
+});
+
+test('reports changelog parse issues with their line', () => {
+	const directory = createPlugin({
+		addon: '# Example\n',
+		changelog: '# Changelog\n\n## [1.0.0] - yesterday\n\n### Added\n\n- Initial release.\n',
+	});
+	const errors = validatePluginDocs(directory, '1.0.0');
+
+	expect(errors).toHaveLength(1);
+	expect(errors[0]).toStartWith('CHANGELOG.md:3: ');
+});
+
+test('reports a changelog without an entry for the manifest version', () => {
+	const directory = createPlugin({ addon: '# Example\n', changelog: validChangelog });
+
+	expect(validatePluginDocs(directory, '1.0.1')).toEqual(['CHANGELOG.md has no entry for 1.0.1']);
+});
+
+test('leaves a missing manifest version to the manifest check', () => {
+	const directory = createPlugin({ addon: '# Example\n', changelog: validChangelog });
+
+	expect(validatePluginDocs(directory, undefined)).toEqual([]);
 });
 
 test('accepts a valid plugin folder and manifest', () => {

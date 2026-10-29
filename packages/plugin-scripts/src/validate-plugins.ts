@@ -2,6 +2,7 @@ import {
 	NATIVE_PLUGIN_CAPABILITIES,
 	NATIVE_PLUGIN_PLATFORM_CAPABILITIES,
 } from '@unbound-app/types/native';
+import { formatChangelogIssues, parseChangelog } from '@unbound-app/contracts/changelog';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -203,6 +204,32 @@ export function validatePluginFolder(folder: string, manifest: unknown): string[
 	return errors;
 }
 
+/**
+ * @description Checks that a plugin ships an ADDON.md and a CHANGELOG.md with an entry for its version.
+ * @param pluginDirectory The plugin's folder.
+ * @param version The manifest's version, or `undefined` when the manifest has none.
+ * @returns Every problem found, empty when the docs are in order.
+ */
+export function validatePluginDocs(pluginDirectory: string, version: string | undefined): string[] {
+	const errors: string[] = [];
+	const addonPath = join(pluginDirectory, 'ADDON.md');
+	const changelogPath = join(pluginDirectory, 'CHANGELOG.md');
+
+	if (!existsSync(addonPath)) errors.push('ADDON.md is missing');
+	else if (!readFileSync(addonPath, 'utf8').trim()) errors.push('ADDON.md is empty');
+
+	if (!existsSync(changelogPath)) return [...errors, 'CHANGELOG.md is missing'];
+
+	const parsed = parseChangelog(readFileSync(changelogPath, 'utf8'));
+	for (const issue of parsed.issues) errors.push(formatChangelogIssues([issue]));
+
+	if (parsed.issues.length === 0 && version?.trim() && !parsed.releases.has(version)) {
+		errors.push(`CHANGELOG.md has no entry for ${version}`);
+	}
+
+	return errors;
+}
+
 export function validatePluginDirectory(pluginsDirectory: string): string[] {
 	const errors: string[] = [];
 	const ids = new Map<string, string>();
@@ -233,6 +260,14 @@ export function validatePluginDirectory(pluginsDirectory: string): string[] {
 		}
 
 		for (const error of validatePluginFolder(folder, manifest))
+			errors.push(`${folder}: ${error}`);
+
+		const version = (manifest as PluginManifest | null)?.version;
+
+		for (const error of validatePluginDocs(
+			pluginDirectory,
+			typeof version === 'string' ? version : undefined,
+		))
 			errors.push(`${folder}: ${error}`);
 
 		if (manifest && typeof manifest === 'object' && !Array.isArray(manifest)) {
