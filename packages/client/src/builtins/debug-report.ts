@@ -89,8 +89,16 @@ export function readDebugInfo(): DebugInfo {
 	};
 }
 
+/**
+ * @description Reads the app's entitlements as a plist on iOS.
+ * @returns The plist, or an empty string on Android or when the loader cannot read them.
+ */
+export function readEntitlements(): string {
+	return attempt(() => globalThis.NativePlatform?.ios?.getEntitlementsAsPlist(), '');
+}
+
 async function uploadEntitlements(channelId: string): Promise<CloudUpload | undefined> {
-	const plist = attempt(() => globalThis.NativePlatform?.ios?.getEntitlementsAsPlist(), '');
+	const plist = readEntitlements();
 
 	if (!plist || !CloudUploader.CloudUpload) {
 		return undefined;
@@ -151,4 +159,4 @@ export async function sendDebugReport(channelId?: string): Promise<string | unde
 	return undefined;
 }
 
-export default { readDebugInfo, sendDebugReport };
+export default { readDebugInfo, readEntitlements, sendDebugReport };
