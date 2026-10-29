@@ -1,9 +1,9 @@
 import { IconBox, IconCodePullRequest, IconNote, IconShield } from 'nucleo-micro-bold';
 import type { ModerationEvent, Subject } from '@unbound-app/contracts/admin';
 import { createContext, useContext, useState } from 'react';
-import { Link } from '@tanstack/react-router';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { ComponentType, ReactNode } from 'react';
+import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 
 import { moderationEventsQuery } from '~/queries/moderation-events/moderation-events';

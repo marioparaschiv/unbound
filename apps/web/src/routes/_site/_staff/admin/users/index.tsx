@@ -2,8 +2,8 @@ import { adminUsersSearchSchema } from '@unbound-app/contracts/admin';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 
 import { adminUsersQuery } from '~/queries/admin-users/admin-users';
-import UsersPage from '~/components/staff/users-page';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
+import UsersPage from '~/components/staff/users-page';
 import { hasPermission } from '~/lib/auth/access';
 
 export const Route = createFileRoute('/_site/_staff/admin/users/')({
