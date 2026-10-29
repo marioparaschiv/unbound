@@ -119,17 +119,15 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
         }
         createDirectories(state->directory);
         writeTextFileAtomically(frozenPath(state->directory), record);
-        auto call         = nativeCallOnThread(state->runtimeThread.load());
-        current.detail    = describeNativeCall(call, nativeCallClock());
-        std::string stack = native::describeSampledStack(
-            native::sampleJavaScriptStack(state->options.sampling), call.has_value());
-        if (!stack.empty())
-        {
-            current.detail += " " + stack;
-        }
+        auto call                        = nativeCallOnThread(state->runtimeThread.load());
+        current.detail                   = describeNativeCall(call, nativeCallClock());
+        std::vector<std::string> frames  = native::sampleJavaScriptStack(state->options.sampling);
+        std::string              sampled = native::describeSampledStack(frames, call.has_value());
+        current.stack                    = native::formatSampledStack(frames);
         log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
             "Discord's JavaScript thread has been frozen in " + current.name + " for " +
-                std::to_string(now - sentAt) + " ms. " + current.detail);
+                std::to_string(now - sentAt) + " ms. " + current.detail +
+                (sampled.empty() ? "" : " " + sampled));
         reported = true;
     }
 }
@@ -195,6 +193,11 @@ void startFreezeWatchdog(const std::string &directory)
                     event.setProperty(runtime, "seconds", report.seconds);
                     event.setProperty(runtime, "detail",
                                       jsi::String::createFromUtf8(runtime, report.detail));
+                    if (!report.stack.empty())
+                    {
+                        event.setProperty(runtime, "stack",
+                                          jsi::String::createFromUtf8(runtime, report.stack));
+                    }
                     listener.asObject(runtime).asFunction(runtime).call(runtime, event);
                 });
             });

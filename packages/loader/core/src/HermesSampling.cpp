@@ -205,6 +205,16 @@ std::string describeSampledStack(const std::vector<std::string> &frames, bool in
     return text + ".";
 }
 
+std::string formatSampledStack(const std::vector<std::string> &frames)
+{
+    std::string text;
+    for (const std::string &frame : frames)
+    {
+        text += (text.empty() ? "    at " : "\n    at ") + frame;
+    }
+    return text;
+}
+
 static JavaScriptSampler gSampler;
 
 void setJavaScriptSampler(JavaScriptSampler sampler)
