@@ -74,7 +74,7 @@ export default { start, stop, getSettingsPanel: () => <SettingsPanel /> };
 
 A feature never runs half-working. When anything it depends on is missing, it logs one line and does nothing. The rest of the plugin keeps working.
 
-- Call `ensureModules(name, { ...handles })` from `@unbound-plugins/shared/metro/ensure-modules`. It returns `false` and logs the missing names. Check in `start` only the modules every feature needs. Check a module that one feature needs at the top of that feature's apply function, and return a no-op cleanup when it is missing.
+- Call `ensureModules(name, { ...handles })` from `@unbound-plugins/shared/metro/ensure-modules`. It returns `false` and logs the missing names. It never loads a module: a lazy handle counts as missing only when a search of this build found nothing for it, and as present while that is unknown. Pass it the handles themselves. A property read such as `{ send: MessageActions.sendMessage }` loads the module before the check runs. Check in `start` only the modules every feature needs. Check a module that one feature needs at the top of that feature's apply function, and return a no-op cleanup when it is missing.
 - A module that only makes a feature nicer, such as haptics or a theme color, is optional: use it with `?.` and keep working without it.
 - Check that a patched method exists and has the expected shape before patching it. The patcher throws on a missing method.
 - A missing native bridge is a truthy object whose methods throw. Check the capabilities in `context.native` before using it, not `ensureModules`.
@@ -91,7 +91,9 @@ export const settings = storage.getStore('unbound.my-plugin');
 export const Patcher = patcher.createPatcher('unbound.my-plugin');
 ```
 
-- Pass `{ lazy: true }` to every lookup so the search runs on first use.
+- Pass `{ lazy: true }` to every lookup so the search runs on first use. Nothing in `start` or at module scope may read a property of a handle, or call a lookup without `{ lazy: true }`. Either one loads the module, and every module it imports, at plugin start.
+- A class to construct or a component to render cannot be a lazy handle. Read the handle's `module` where the class or component is used, such as when an embed renders, not in `start`.
+- To patch every module that matches a filter, not just the first, pass loaded ones from `metro.find(filter, { all: true, initialize: false })` and later ones from `metro.addListener`. A plain `{ all: true }` search loads every module in the build.
 - Prefer what Unbound already resolves: `metro.common` (`Dispatcher`, `Clipboard`, `Constants`, `Theme`, `Moment`, `Reanimated`), `metro.stores`, `metro.api`, and `metro.components` (`Discord`, `Forms`, `Media`).
 - Prefer `findStore`, `findByProps`, and `findByName` over a hand-written filter. A custom filter goes through `metro.filters.createCacheable`.
 - Resolve React Native native modules with `native.getNativeModule(...names)`.
@@ -106,7 +108,7 @@ export function patchMessageStore(): () => void {
 }
 ```
 
-- **Lazy patching.** Patch a module when it loads, not before. Patch the lazy handle from `modules.ts` directly, as above: the patch waits for the module instead of loading it, and lands before Discord reads the method. When the patch target is computed from the module, such as a render function or a prototype, use `whenLoaded(source, apply)` from `@unbound-plugins/shared/metro/when-loaded`, where `source` is a metro filter, a file path, or an array of candidates in order of preference. Use `whenAllLoaded(sources, apply)` from the same file for a feature that needs several such modules. Both return the cleanup for `stop`.
+- **Lazy patching.** Patch a module when it loads, not before. Patch the lazy handle from `modules.ts` directly, as above: the patch waits for the module instead of loading it, and lands before Discord reads the method. When the patch target is computed from the module, such as a render function or a prototype, or the patch first checks the module's shape (`typeof Module.default === 'function'`), use `whenLoaded(source, apply)` from `@unbound-plugins/shared/metro/when-loaded`, where `source` is a metro filter, a file path, or an array of candidates in order of preference. Use `whenAllLoaded(sources, apply)` from the same file for a feature that needs several such modules. Both return the cleanup for `stop`.
 - **Setting-gated patching.** When a feature is behind a setting, apply its patch only while the setting is on. Use `whileEnabled(settings, key, default, apply)` from `@unbound-plugins/shared/settings/while-enabled`. It listens to the store through Unbound's settings listener, applies the feature when the key turns on, and removes it when the key turns off. Do not check the setting inside an always-on patch.
 
 ## Native code
