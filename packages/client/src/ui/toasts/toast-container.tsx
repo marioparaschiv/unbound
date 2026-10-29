@@ -11,9 +11,27 @@ import Toast from './toast';
 const androidInset =
 	Platform.OS === 'android' ? { paddingTop: StatusBar.currentHeight ?? 0 } : null;
 
+type ToastOverlayProps = {
+	ids: string[];
+};
+
+// Styles load Discord's design module, so they are read only once a toast shows.
+function ToastOverlay({ ids }: ToastOverlayProps) {
+	const styles = useStyles();
+
+	return (
+		<Screens.FullWindowOverlay>
+			<SafeAreaView style={[styles.container, androidInset]} pointerEvents='box-none'>
+				{ids.map((id) => (
+					<Toast key={id} id={id} />
+				))}
+			</SafeAreaView>
+		</Screens.FullWindowOverlay>
+	);
+}
+
 function ToastContainer() {
 	const settings = useSettingsStore('unbound', ({ key }) => key === 'toasts.maxOnScreen');
-	const styles = useStyles();
 
 	const maxOnScreen = settings.get<number>('toasts.maxOnScreen', 3);
 
@@ -32,15 +50,7 @@ function ToastContainer() {
 	// floating windows (dialogs, action sheets) that may already be open.
 	if (!ids.length) return null;
 
-	return (
-		<Screens.FullWindowOverlay>
-			<SafeAreaView style={[styles.container, androidInset]} pointerEvents='box-none'>
-				{ids.map((id) => (
-					<Toast key={id} id={id} />
-				))}
-			</SafeAreaView>
-		</Screens.FullWindowOverlay>
-	);
+	return <ToastOverlay ids={ids} />;
 }
 
 export default ToastContainer;
