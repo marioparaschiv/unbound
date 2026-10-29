@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/discord-types",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Generated TypeScript types for the React Native components in Discord's mobile app.",
 	"author": {
 		"name": "Mario P.",
