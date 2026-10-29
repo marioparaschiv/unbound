@@ -3,15 +3,16 @@ import { describe, expect, test } from 'bun:test';
 import { formatDebugInfo } from './format-debug-info';
 
 const info = {
-	client: 'v0.10.0',
+	client: 'v0.11.0',
+	commit: '402cbbf6',
 	loader: '1.0.0',
 	loaderOrigin: 'Unbound.dylib',
-	discord: '352.0',
-	discordBuild: '114462',
+	discord: '351.0',
+	discordBuild: '118370',
 	appSource: 'App Store',
 	react: '19.2.3',
 	reactNative: '0.86.0',
-	hermes: '0.12.0',
+	hermes: '250829098.0.15',
 	bytecode: '98',
 	platform: 'iOS',
 	os: '26.0.1 (23A355)',
@@ -20,24 +21,20 @@ const info = {
 };
 
 describe('formatDebugInfo', () => {
-	test('lists each component on its own quoted line', () => {
-		const text = formatDebugInfo(info);
-		const quoted = text.split('\n').filter((line) => line.startsWith('> '));
-
-		expect(text).toContain('**Unbound Debug Info**');
-		expect(quoted).toHaveLength(6);
-
-		for (const value of Object.values(info).flat()) {
-			expect(quoted.some((line) => line.includes(value))).toBe(true);
-		}
+	test('puts every detail under a heading, one labelled line per component', () => {
+		expect(formatDebugInfo(info)).toBe(
+			[
+				'### Unbound Debug Info',
+				'- **Unbound:** v0.11.0 (`402cbbf6`), loader 1.0.0 (`Unbound.dylib`)',
+				'- **Discord:** 351.0 (118370) via App Store',
+				'- **Device:** iPhone SE (2nd generation) on iOS 26.0.1 (23A355)',
+				'- **State:** jailbroken, verified build',
+				'- **Runtime:** React 19.2.3, React Native 0.86.0, Hermes 250829098.0.15 (bytecode 98)',
+			].join('\n'),
+		);
 	});
 
-	test('names the device state next to the device', () => {
-		expect(formatDebugInfo(info)).toContain(
-			'> Device: iPhone SE (2nd generation) (jailbroken, verified build)',
-		);
-		expect(formatDebugInfo({ ...info, flags: [] })).toContain(
-			'> Device: iPhone SE (2nd generation)\n',
-		);
+	test('leaves the state line out when there is nothing to say', () => {
+		expect(formatDebugInfo({ ...info, flags: [] })).not.toContain('**State:**');
 	});
 });
