@@ -14,7 +14,10 @@
 	],
 	"version": "1.0.1",
 	"icon": "UserSquareIcon",
-	"platforms": ["ios", "android"],
+	"platforms": [
+		"ios",
+		"android"
+	],
 	"capabilities": [],
 	"platformCapabilities": {
 		"ios": [
@@ -36,5 +39,12 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "3c1458a48283f5263a19cba974433d87804c0b4919769ddd3cf8aad555d29afa6b1a621f5e148a2cb43a2e3b34bdd2335c69ec6409eb2c33861ae44f233f712c"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "J0iF1oZWZXcxzS22k83sYioUEa2gbkCq0u1S+N2lqsc2APbJ+cvtFeqiVeR7r6HQHegD/FnDeU7UQajnspUcBQ=="
+	}
 }
