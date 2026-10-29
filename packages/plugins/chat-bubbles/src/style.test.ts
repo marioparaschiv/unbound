@@ -11,6 +11,7 @@ describe('bubble style', () => {
 			horizontalPadding: 8,
 			verticalPadding: 4,
 			color: { red: 0, green: 0, blue: 0, alpha: 0.4 },
+			ownColor: { red: 0, green: 0, blue: 0, alpha: 0.4 },
 		});
 		expect(bubbleAppearance(reader({}), true).color).toEqual({
 			red: 1,
@@ -36,6 +37,23 @@ describe('bubble style', () => {
 		expect(appearance.horizontalPadding).toBe(12);
 		expect(appearance.verticalPadding).toBe(0);
 		expect(appearance.color).toEqual({ red: 1, green: 136 / 255, blue: 0, alpha: 0.75 });
+	});
+
+	test("uses its own color for the user's messages, falling back to the bubble color", () => {
+		const custom = bubbleAppearance(
+			reader({ color: '#000', ownColor: '#5865f2', opacity: 50 }),
+			false,
+		);
+
+		expect(custom.ownColor).toEqual({
+			red: 88 / 255,
+			green: 101 / 255,
+			blue: 242 / 255,
+			alpha: 0.5,
+		});
+		expect(
+			bubbleAppearance(reader({ color: '#f80', ownColor: 'blue' }), false).ownColor,
+		).toEqual({ red: 1, green: 136 / 255, blue: 0, alpha: 0.4 });
 	});
 
 	test('ignores colors that are not hex', () => {

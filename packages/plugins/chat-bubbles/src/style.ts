@@ -12,6 +12,7 @@ export type BubbleAppearance = {
 	horizontalPadding: number;
 	verticalPadding: number;
 	color: BubbleColor;
+	ownColor: BubbleColor;
 };
 
 export type SettingReader = (key: string) => unknown;
@@ -51,10 +52,11 @@ export function parseHexColor(value: unknown): Omit<BubbleColor, 'alpha'> | unde
  * @description Builds the bubble's look from the plugin's settings.
  * @param read Reads one setting.
  * @param light Whether Discord shows its light theme, which picks the default color.
- * @returns The radius, padding and color to draw bubbles with.
+ * @returns The radius, padding and colors to draw bubbles with, `ownColor` for the user's own messages.
  */
 export function bubbleAppearance(read: SettingReader, light: boolean): BubbleAppearance {
 	const base = parseHexColor(read('color')) ?? (light ? BubbleStyle.light : BubbleStyle.dark);
+	const own = parseHexColor(read('ownColor')) ?? base;
 	const opacity = bounded(read('opacity'), BubbleStyle.opacity, BubbleLimits.opacity);
 
 	return {
@@ -70,6 +72,7 @@ export function bubbleAppearance(read: SettingReader, light: boolean): BubbleApp
 			BubbleLimits.padding,
 		),
 		color: { ...base, alpha: opacity / 100 },
+		ownColor: { ...own, alpha: opacity / 100 },
 	};
 }
 
