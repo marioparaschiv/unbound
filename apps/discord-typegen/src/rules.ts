@@ -18,6 +18,7 @@ export type RuleName =
 	| 'name'
 	| 'passed'
 	| 'members'
+	| 'inherited'
 	| 'unknown';
 
 /** A referenced generated component or React Native host, so the emitter can import it. */
@@ -41,6 +42,8 @@ export type InferEnv = {
 	componentProp: (target: TargetRef, key: string) => InferredType | undefined;
 	/** The type of `key` on a React Native host target, when the host declares it. */
 	hostProp: (target: TargetRef, key: string) => InferredType | undefined;
+	/** The type of `key` on the component's rest base, when the base still receives and types it. */
+	restProp: (component: ComponentRecord, key: string) => InferredType | undefined;
 };
 
 export type Rule = {
@@ -135,6 +138,13 @@ function isPolymorphic(evidence: PropEvidence): boolean {
 	return evidence.some((observation) => observation.kind === 'typeof');
 }
 
+// Kinds that show a prop is read or tested for presence, but nothing about what it holds.
+const NEUTRAL_KINDS: ReadonlySet<PropObservation['kind']> = new Set([
+	'name-only',
+	'guarded',
+	'default-expression',
+]);
+
 function firstForwarded(
 	evidence: PropEvidence,
 	lookup: (target: TargetRef, key: string) => InferredType | undefined,
@@ -147,9 +157,18 @@ function firstForwarded(
 
 		const found = lookup(observation.target, observation.key);
 
-		if (found) {
-			return { ...found, rule };
+		if (!found) {
+			continue;
 		}
+
+		// `isValidElement(icon) ? icon : <Icon source={icon} />` forwards only what is not an element.
+		const element =
+			observation.key !== 'children' &&
+			evidence.some((item) => item.kind === 'element-tested');
+
+		return element
+			? { ...found, text: `React.ReactElement | ${found.text}`, rule }
+			: { ...found, rule };
 	}
 
 	return undefined;
@@ -273,6 +292,15 @@ export const RULES: readonly Rule[] = [
 
 			return typed(`{ ${members.join('; ')} }`, 'members');
 		},
+	},
+	// The base's type is a guess about this component's own use, so any evidence of that use rules it out: a call,
+	// a member read, a typeof test, a literal, a forward or spread elsewhere, or a pass to a function.
+	{
+		name: 'inherited',
+		infer: ({ component, name }, env) =>
+			component.props.get(name)?.every((observation) => NEUTRAL_KINDS.has(observation.kind))
+				? env.restProp(component, name)
+				: undefined,
 	},
 	{ name: 'unknown', infer: () => typed('unknown', 'unknown') },
 ];

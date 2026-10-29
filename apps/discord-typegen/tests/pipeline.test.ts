@@ -13,7 +13,7 @@ import { TYPES_DIR } from '../src/paths';
 // Verbatim module slices of discord-350's main.js; each fixture names its source path.
 const FIXTURE_IDS = [
 	17, 5378, 6181, 6722, 6882, 6294, 6295, 6304, 6290, 5085, 4732, 6196, 4428, 4439, 9432, 6288,
-	6289, 9291, 11732, 16446,
+	6289, 9291, 11732, 16446, 6305, 5388, 5382, 7548,
 ];
 const lines = FIXTURE_IDS.flatMap((id) =>
 	readFileSync(join(import.meta.dir, 'fixtures', `module-${id}.txt`), 'utf8').split('\n'),
@@ -212,6 +212,45 @@ describe('positional arguments', () => {
 	test("a positional parameter's default types the prop passed to it", () => {
 		expect(alias('modules.gen.d.ts', 'ChannelUnreadBadgeProps')).toContain(
 			'launchpad?: boolean;',
+		);
+	});
+});
+
+describe('rest base fallback', () => {
+	test('a prop read off the rest and only null-checked takes the rest base type', () => {
+		expect(alias('design.gen.d.ts', 'TextInputProps')).toContain(
+			"keyboardAppearance?: React.ComponentProps<typeof RN.TextInput>['keyboardAppearance'];",
+		);
+		expect(alias('design.gen.d.ts', 'BaseTextFieldProps')).toContain(
+			"autoComplete?: TextInputProps['autoComplete'];",
+		);
+	});
+
+	test('a prop the component uses itself does not take the rest base type', () => {
+		expect(alias('design.gen.d.ts', 'BaseTextFieldProps')).toContain(
+			'defaultValue?: { replace?: unknown };',
+		);
+	});
+});
+
+describe('animated components', () => {
+	test('a prop forwarded to createAnimatedComponent(Pressable) takes the host type', () => {
+		const props = alias('design.gen.d.ts', 'BaseButtonProps');
+
+		expect(props).toContain(
+			"accessibilityLabel?: React.ComponentProps<typeof RN.Pressable>['accessibilityLabel'];",
+		);
+		expect(props).toContain(
+			"hitSlop?: React.ComponentProps<typeof RN.TouchableOpacity>['hitSlop'];",
+		);
+	});
+
+	test('a prop rendered as is when isValidElement and forwarded otherwise also accepts an element', () => {
+		expect(alias('design.gen.d.ts', 'BaseIconButtonProps')).toContain(
+			"icon?: React.ReactElement | IconProps['source'];",
+		);
+		expect(alias('design.gen.d.ts', 'IconProps')).toContain(
+			"source?: React.ComponentProps<typeof RN.Image>['source'];",
 		);
 	});
 });

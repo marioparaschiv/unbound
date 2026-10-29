@@ -89,6 +89,8 @@ export type Value =
 	| ImportRef
 	| { kind: 'jsx' }
 	| { kind: 'wrapper'; wrapper: 'memo' | 'forwardRef' }
+	/** `createAnimatedComponent`, whose result renders the component it is given with the same props. */
+	| { kind: 'animated' }
 	| { kind: 'function'; fn: FunctionInfo }
 	| { kind: 'wrapped'; fn: FunctionInfo; wrapper: 'memo' | 'forwardRef' }
 	| { kind: 'props'; component: ComponentRecord }
@@ -133,6 +135,10 @@ export function member(base: Value, name: string): Value {
 
 		if (WRAPPERS.has(name)) {
 			return { kind: 'wrapper', wrapper: name as 'memo' | 'forwardRef' };
+		}
+
+		if (name === 'createAnimatedComponent') {
+			return { kind: 'animated' };
 		}
 
 		return { kind: 'import', moduleId: base.moduleId, name: path };

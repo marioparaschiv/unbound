@@ -620,6 +620,8 @@ function apply(frame: Frame, fn: Value, args: Value[]): Value {
 			return element(frame.ctx, frame.renderer, first ?? UNKNOWN, second ?? UNKNOWN);
 		case 'wrapper':
 			return wrap(fn.wrapper, first);
+		case 'animated':
+			return first && targetOf(first) ? first : UNKNOWN;
 		case 'prop':
 		case 'props':
 			observe(asProp(fn)!, { kind: 'called', argCount: args.length });
@@ -662,8 +664,14 @@ function passArguments(fn: Value, args: Value[]) {
 	for (const [index, arg] of args.entries()) {
 		const prop = asProp(arg);
 
-		if (prop) {
-			observe(prop, { kind: 'argument', callee, index });
+		if (!prop) {
+			continue;
+		}
+
+		observe(prop, { kind: 'argument', callee, index });
+
+		if (callee.kind === 'import' && /(?:^|\.)isValidElement$/.test(callee.name)) {
+			observe(prop, { kind: 'element-tested' });
 		}
 	}
 }

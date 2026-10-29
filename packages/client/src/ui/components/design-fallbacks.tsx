@@ -92,7 +92,7 @@ export function FallbackSwitch({
 	return (
 		<Switch
 			value={value === true}
-			disabled={disabled}
+			disabled={disabled ?? undefined}
 			accessibilityLabel={
 				typeof accessibilityLabel === 'string' ? accessibilityLabel : undefined
 			}

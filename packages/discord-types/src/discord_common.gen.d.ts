@@ -578,7 +578,7 @@ export type TransitionItemComponent = React.ComponentType<TransitionItemProps>;
  * Props of `AnimatedFlashList` (function). Exports: AnimatedFlashList.
  * @see ../discord_common/js/packages/flash-list/index.js
  */
-export type AnimatedFlashListProps = {
+export type AnimatedFlashListProps = Omit<RecyclerViewComponentProps, 'ref'> & {
 		ref?: React.Ref<any>;
 	};
 export type AnimatedFlashListComponent = React.ComponentType<AnimatedFlashListProps & Record<string, unknown>>;
@@ -596,7 +596,7 @@ export type FlashListBottomSheetFlashListComponent = React.ComponentType<FlashLi
  * Props of `BottomSheetMasonryFlashList` (function). Exports: BottomSheetMasonryFlashList.
  * @see ../discord_common/js/packages/flash-list/index.js
  */
-export type BottomSheetMasonryFlashListProps = {
+export type BottomSheetMasonryFlashListProps = Omit<RecyclerViewComponentProps, 'preventNativeModalDismiss' | 'ref' | 'refreshControl'> & {
 		preventNativeModalDismiss?: boolean;
 		ref?: React.Ref<any>;
 		refreshControl?: unknown;

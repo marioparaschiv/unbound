@@ -7,6 +7,7 @@ export type DesignBarrelComponents = {
 		AIShimmer: AIShimmerComponent;
 		AccessibilityAnnouncerLiveRegion: AccessibilityAnnouncerLiveRegionComponent;
 		AccessibilityView: AccessibilityViewComponent;
+		AccessibilityViewAnimated: AccessibilityViewComponent;
 		ActionSheet: ActionSheetComponent;
 		ActionSheetCloseButton: ActionSheetCloseButtonComponent;
 		ActionSheetHeaderBar: ActionSheetHeaderBarComponent;
@@ -143,7 +144,7 @@ export type ManaContextProviderProps = {
 	};
 export type ManaContextProviderComponent = React.ComponentType<ManaContextProviderProps>;
 /**
- * Props of `AccessibilityView` (function). Exports: AccessibilityView.
+ * Props of `AccessibilityView` (function). Exports: AccessibilityView, AccessibilityViewAnimated.
  * @see design/components/AccessibilityView/AccessibilityView.native.tsx
  */
 export type AccessibilityViewProps = Omit<React.ComponentProps<typeof RN.View>, 'accessibilityViewIsModal' | 'collapsable' | 'nativeID' | 'onAccessibilityEscape' | 'ref'> & {
@@ -224,34 +225,34 @@ export type BackdropComponent = React.ComponentType<BackdropProps>;
  * @see design/components/Button/native/BaseButton.native.tsx
  */
 export type ButtonBaseButtonProps = {
-		accessibilityActions?: unknown;
-		accessibilityElementsHidden?: unknown;
-		accessibilityHint?: unknown;
-		accessibilityLabel?: unknown;
+		accessibilityActions?: React.ComponentProps<typeof RN.Pressable>['accessibilityActions'];
+		accessibilityElementsHidden?: React.ComponentProps<typeof RN.TouchableOpacity>['accessibilityElementsHidden'];
+		accessibilityHint?: React.ComponentProps<typeof RN.Pressable>['accessibilityHint'];
+		accessibilityLabel?: React.ComponentProps<typeof RN.Pressable>['accessibilityLabel'];
 		/** @default 'button' */
-		accessibilityRole?: 'button' | 'none' | (string & {});
+		accessibilityRole?: React.ComponentProps<typeof RN.Pressable>['accessibilityRole'];
 		accessibilityState?: unknown;
-		accessibilityValue?: unknown;
-		accessible?: unknown;
+		accessibilityValue?: React.ComponentProps<typeof RN.Pressable>['accessibilityValue'];
+		accessible?: React.ComponentProps<typeof RN.Pressable>['accessible'];
 		children?: React.ReactNode;
 		/** @default false */
 		disabled?: boolean;
-		hitSlop?: unknown;
-		importantForAccessibility?: unknown;
+		hitSlop?: React.ComponentProps<typeof RN.TouchableOpacity>['hitSlop'];
+		importantForAccessibility?: React.ComponentProps<typeof RN.TouchableOpacity>['importantForAccessibility'];
 		/** @default false */
 		loading?: boolean;
-		onAccessibilityAction?: (...args: any[]) => unknown;
+		onAccessibilityAction?: React.ComponentProps<typeof RN.Pressable>['onAccessibilityAction'];
 		onLayout?: (...args: any[]) => unknown;
-		onLongPress?: (...args: any[]) => unknown;
+		onLongPress?: React.ComponentProps<typeof RN.Pressable>['onLongPress'];
 		onPress?: (...args: any[]) => unknown;
-		onPressDisabled?: (...args: any[]) => unknown;
+		onPressDisabled?: React.ComponentProps<typeof RN.TouchableOpacity>['onPress'];
 		onPressIn?: (...args: any[]) => unknown;
 		onPressOut?: (...args: any[]) => unknown;
-		pointerEvents?: unknown;
+		pointerEvents?: React.ComponentProps<typeof RN.Pressable>['pointerEvents'];
 		pressed?: unknown;
-		ref?: React.Ref<any>;
+		ref?: React.ComponentProps<typeof RN.TouchableOpacity>['ref'];
 		scaleAmountInPx?: unknown;
-		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+		style?: React.ComponentProps<typeof RN.TouchableOpacity>['style'];
 		/** @default 'primary' */
 		variant?: 'none' | 'primary' | 'primary-overlay' | 'secondary-overlay' | (string & {});
 	};
@@ -261,7 +262,7 @@ export type ButtonBaseButtonComponent = React.ComponentType<ButtonBaseButtonProp
  * @see design/components/Button/native/BaseIconButton.native.tsx
  */
 export type BaseIconButtonProps = Omit<ButtonBaseButtonProps, 'icon' | 'loading' | 'maxFontSizeMultiplier' | 'pillStyle' | 'ref' | 'scaleAmountInPx' | 'size' | 'style' | 'variant'> & {
-		icon?: unknown;
+		icon?: React.ReactElement | VoidIconProps['source'];
 		loading?: ButtonPillProps['loading'];
 		maxFontSizeMultiplier?: unknown;
 		pillStyle?: ButtonPillProps['style'];
@@ -279,13 +280,13 @@ export type BaseIconButtonComponent = React.ComponentType<BaseIconButtonProps & 
  * @see design/components/Button/native/BaseTextButton.native.tsx
  */
 export type BaseTextButtonProps = Omit<ButtonBaseButtonProps, 'accessibilityLabel' | 'accessibilityRole' | 'collapseText' | 'grow' | 'icon' | 'iconOpticalOffsetMargin' | 'iconPosition' | 'loading' | 'maxFontSizeMultiplier' | 'onLayout' | 'onPressIn' | 'onPressOut' | 'pillStyle' | 'pointerEvents' | 'ref' | 'shiny' | 'shrink' | 'size' | 'style' | 'text' | 'textElement' | 'textVariant' | 'variant'> & {
-		accessibilityLabel?: unknown;
+		accessibilityLabel?: ButtonBaseButtonProps['accessibilityLabel'];
 		/** @default 'button' */
 		accessibilityRole?: ButtonBaseButtonProps['accessibilityRole'];
 		collapseText?: CollapsingTextProps['collapseText'];
 		/** @default false */
 		grow?: boolean;
-		icon?: unknown;
+		icon?: React.ReactElement | BaseTextButtonIconProps['icon'];
 		/** @default 0 */
 		iconOpticalOffsetMargin?: number;
 		/** @default 'start' */
@@ -296,7 +297,7 @@ export type BaseTextButtonProps = Omit<ButtonBaseButtonProps, 'accessibilityLabe
 		onPressIn?: (...args: any[]) => unknown;
 		onPressOut?: (...args: any[]) => unknown;
 		pillStyle?: ButtonPillProps['style'];
-		pointerEvents?: 'none' | (string & {});
+		pointerEvents?: ButtonBaseButtonProps['pointerEvents'];
 		ref?: ButtonBaseButtonProps['ref'];
 		/** @default false */
 		shiny?: boolean;
@@ -315,6 +316,18 @@ export type BaseTextButtonStatics = {
 	};
 export type BaseTextButtonComponent = React.ComponentType<BaseTextButtonProps> & BaseTextButtonStatics;
 /**
+ * Props of `BaseTextButtonIcon` (function). Exports: none.
+ * @see design/components/Button/native/BaseTextButton.native.tsx
+ */
+export type BaseTextButtonIconProps = {
+		icon?: VoidIconProps['source'];
+		iconOpticalOffsetMargin?: unknown;
+		iconPosition?: unknown;
+		size?: 'lg' | 'sm' | (string & {});
+		style?: VoidIconProps['style'];
+	};
+export type BaseTextButtonIconComponent = React.ComponentType<BaseTextButtonIconProps>;
+/**
  * Props of `CollapsingText` (function). Exports: none.
  * @see design/components/Button/native/BaseTextButton.native.tsx
  */
@@ -329,8 +342,8 @@ export type CollapsingTextComponent = React.ComponentType<CollapsingTextProps>;
  */
 export type TextButtonIconProps = {
 		/** @default true */
-		disableColor?: boolean;
-		source?: unknown;
+		disableColor?: VoidIconProps['disableColor'];
+		source?: VoidIconProps['source'];
 		/** @default 'icon' */
 		variant?: 'entity' | 'icon' | (string & {});
 	};
@@ -407,7 +420,7 @@ export type ButtonShineComponent = React.ComponentType<ButtonShineProps>;
  * @see design/components/Button/native/FloatingActionButton.native.tsx
  */
 export type FloatingActionButtonProps = Omit<BaseIconButtonProps, 'accessibilityLabel' | 'icon' | 'positionBottom' | 'positionRight'> & {
-		accessibilityLabel?: string;
+		accessibilityLabel?: BaseIconButtonProps['accessibilityLabel'];
 		icon?: unknown;
 		/** @default 16 */
 		positionBottom?: number;
@@ -420,8 +433,8 @@ export type FloatingActionButtonComponent = React.ComponentType<FloatingActionBu
  * @see design/components/Button/native/IconButton.native.tsx
  */
 export type ButtonIconButtonProps = Omit<BaseIconButtonProps, 'accessibilityHint' | 'accessibilityLabel' | 'grow' | 'label' | 'maxFontSizeMultiplier' | 'ref'> & {
-		accessibilityHint?: unknown;
-		accessibilityLabel?: string;
+		accessibilityHint?: BaseIconButtonProps['accessibilityHint'];
+		accessibilityLabel?: BaseIconButtonProps['accessibilityLabel'];
 		grow?: boolean;
 		label?: DesignTextProps['children'];
 		maxFontSizeMultiplier?: number | string;
@@ -433,7 +446,7 @@ export type ButtonIconButtonComponent = React.ComponentType<ButtonIconButtonProp
  * @see design/components/Button/native/ImageButton.native.tsx
  */
 export type ImageButtonProps = Omit<BaseIconButtonProps, 'accessibilityLabel' | 'grow' | 'image' | 'label' | 'maxFontSizeMultiplier' | 'onPressIn' | 'onPressOut' | 'ref' | 'size'> & {
-		accessibilityLabel?: unknown;
+		accessibilityLabel?: BaseIconButtonProps['accessibilityLabel'];
 		grow?: boolean;
 		image?: React.ComponentProps<typeof RN.Image>['source'];
 		label?: DesignTextProps['children'];
@@ -509,7 +522,7 @@ export type DesignCheckboxComponent = React.ComponentType<DesignCheckboxProps>;
  * @see design/components/Coachmark/native/Coachmark.native.tsx
  */
 export type CoachmarkProps = {
-		buttonIcon?: unknown;
+		buttonIcon?: BaseTextButtonProps['icon'];
 		buttonLabel?: BaseTextButtonProps['text'];
 		buttonShiny?: unknown;
 		/** @default 'secondary' */
@@ -621,7 +634,7 @@ export type FormsFormSwitchProps = {
 		accessibilityHint?: unknown;
 		accessibilityLabel?: unknown;
 		'aria-hidden'?: boolean;
-		disabled?: boolean;
+		disabled?: React.ComponentProps<typeof RN.Pressable>['disabled'];
 		onValueChange?: (...args: any[]) => unknown;
 		value?: unknown;
 	};
@@ -665,7 +678,7 @@ export type InputFieldContainerComponent = React.ComponentType<InputFieldContain
  * @see design/components/Input/native/NativeTextInput.native.tsx
  */
 export type InputTextInputProps = Omit<React.ComponentProps<typeof RN.TextInput>, 'keyboardAppearance' | 'multiline' | 'ref'> & {
-		keyboardAppearance?: unknown;
+		keyboardAppearance?: React.ComponentProps<typeof RN.TextInput>['keyboardAppearance'];
 		multiline?: boolean;
 		ref?: React.Ref<any>;
 	};
@@ -1235,13 +1248,13 @@ export type SegmentedControlItemComponent = React.ComponentType<SegmentedControl
  * @see design/components/SegmentedControl/native/SegmentedControlPages.native.tsx
  */
 export type SegmentedControlPagesProps = {
-		bounces?: unknown;
+		bounces?: React.ComponentProps<typeof RN.ScrollView>['bounces'];
 		nativeGesture?: unknown;
 		onBeginDragWorklet?: (...args: any[]) => unknown;
 		onEndDragWorklet?: (...args: any[]) => unknown;
 		onScrollWorklet?: (...args: any[]) => unknown;
 		state: { activeIndex?: unknown; items?: unknown; onPageChangeRef?: unknown; pageWidth?: unknown; pagerRef?: unknown; pressedIndex?: unknown; scrollOverflow?: unknown; scrollTarget?: unknown; visiblePageRange?: unknown };
-		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+		style?: React.ComponentProps<typeof RN.ScrollView>['style'];
 	};
 export type SegmentedControlPagesComponent = React.ComponentType<SegmentedControlPagesProps>;
 /**
@@ -1544,7 +1557,7 @@ export type RowButtonProps = Omit<TableRowInnerProps, 'arrow' | 'disabled' | 'ex
 		/** @default false */
 		disabled?: TableRowInnerProps['disabled'];
 		experimental_withBlurBackground?: boolean;
-		icon?: TableRowIconProps['source'];
+		icon?: React.ReactElement | TableRowIconProps['source'];
 		onPress?: RowButtonWrapperProps['onPress'];
 		/** @default 'secondary' */
 		variant?: 'primary' | 'secondary' | (string & {});
@@ -1575,9 +1588,9 @@ export type TableCheckboxRowProps = Omit<TableRowProps, 'accessibilityHint' | 'c
 		checked?: FormsFormCheckboxProps['checked'];
 		/** @default false */
 		disabled?: TableRowProps['disabled'];
-		label?: TableRowProps['label'];
+		label?: React.ReactElement | TableRowProps['label'];
 		onPress: (...args: any[]) => unknown;
-		subLabel?: TableRowProps['subLabel'];
+		subLabel?: React.ReactElement | TableRowProps['subLabel'];
 	};
 export type TableCheckboxRowComponent = React.ComponentType<TableCheckboxRowProps & Record<string, unknown>>;
 /**
@@ -1607,10 +1620,10 @@ export type TableRadioRowProps = Omit<TableRowProps, 'accessibilityHint' | 'disa
 		accessibilityHint?: TableRowProps['accessibilityHint'];
 		/** @default false */
 		disabled?: TableRowProps['disabled'];
-		label?: TableRowProps['label'];
+		label?: React.ReactElement | TableRowProps['label'];
 		legacyCompat_onPress?: (...args: any[]) => unknown;
 		legacyCompat_selected?: FormsFormRadioProps['selected'];
-		subLabel?: TableRowProps['subLabel'];
+		subLabel?: React.ReactElement | TableRowProps['subLabel'];
 		value?: unknown;
 	};
 export type TableRadioRowComponent = React.ComponentType<TableRadioRowProps & Record<string, unknown>>;
@@ -1736,7 +1749,7 @@ export type TableSwitchRowProps = Omit<TableRowProps, 'accessibilityHint' | 'dis
 		disabled?: FormsFormSwitchProps['disabled'];
 		label?: DesignTextProps['children'];
 		onValueChange?: (...args: any[]) => unknown;
-		subLabel?: TableRowProps['subLabel'];
+		subLabel?: React.ReactElement | TableRowProps['subLabel'];
 		trailing?: React.ComponentProps<typeof RN.View>['children'];
 		value?: boolean;
 		variant?: TableRowProps['variant'];
@@ -1746,7 +1759,7 @@ export type TableSwitchRowComponent = React.ComponentType<TableSwitchRowProps & 
  * Props of `TabItem` (function). Exports: TabItem.
  * @see design/components/Tabs/native/TabItem.native.tsx
  */
-export type TabItemProps = {
+export type TabItemProps = Omit<React.ComponentProps<typeof RN.Pressable>, 'count' | 'grow' | 'index' | 'itemCount' | 'label' | 'pressed' | 'state' | 'variant'> & {
 		count?: TabItemCountProps['count'];
 		grow?: unknown;
 		index?: unknown;
@@ -1845,7 +1858,7 @@ export type DesignTextComponent = React.ComponentType<DesignTextProps & Record<s
  * @see design/components/TextField/native/BaseTextField.native.tsx
  */
 export type BaseTextFieldProps = Omit<InputTextInputProps, 'autoComplete' | 'defaultValue' | 'enableAndroidSanitizedInputWorkaround' | 'inputStyle' | 'keyboardType' | 'leading' | 'leadingIcon' | 'onChangeText' | 'ref' | 'round' | 'secureTextEntry' | 'size' | 'trailing' | 'value'> & {
-		autoComplete?: unknown;
+		autoComplete?: InputTextInputProps['autoComplete'];
 		defaultValue?: { replace?: unknown };
 		enableAndroidSanitizedInputWorkaround?: boolean;
 		inputStyle?: InputTextInputProps['style'];
@@ -1878,7 +1891,7 @@ export type SearchFieldComponent = React.ComponentType<SearchFieldProps & Record
 export type TextAreaFieldProps = Omit<InputTextInputProps, 'disabled' | 'label' | 'maxLength' | 'onClear' | 'ref'> & {
 		disabled?: boolean;
 		label?: unknown;
-		maxLength?: unknown;
+		maxLength?: InputTextInputProps['maxLength'];
 		onClear?: (...args: any[]) => unknown;
 		ref?: React.Ref<any>;
 	};
@@ -2089,16 +2102,16 @@ export type ToastEntityContentComponent = React.ComponentType<ToastEntityContent
  * @see design/visual-identities/ai/AIGlyphText.native.tsx
  */
 export type AIGlyphTextProps = {
-		allowFontScaling?: boolean;
+		allowFontScaling?: React.ComponentProps<typeof RN.Text>['allowFontScaling'];
 		/** @default false */
 		animated?: boolean;
-		children?: React.ReactNode;
+		children?: React.ComponentProps<typeof RN.Text>['children'];
 		/** @default 'text-default' */
 		color?: 'none' | 'text-default' | (string & {});
-		ellipsizeMode?: 'clip' | (string & {});
-		numberOfLines?: number;
+		ellipsizeMode?: React.ComponentProps<typeof RN.Text>['ellipsizeMode'];
+		numberOfLines?: React.ComponentProps<typeof RN.Text>['numberOfLines'];
 		size?: unknown;
-		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+		style?: React.ComponentProps<typeof RN.Text>['style'];
 	};
 export type AIGlyphTextComponent = React.ComponentType<AIGlyphTextProps>;
 /**
@@ -2285,7 +2298,7 @@ export type FormRowProps = {
 		end?: TableRowProps['end'];
 		/** @default false */
 		hasError?: boolean;
-		label?: FormLabelProps['text'];
+		label?: React.ReactElement | FormLabelProps['text'];
 		labelStyle?: FormLabelProps['style'];
 		leading?: unknown;
 		leadingStyle?: React.ComponentProps<typeof RN.View>['style'];
@@ -2300,7 +2313,7 @@ export type FormRowProps = {
 		start?: TableRowProps['start'];
 		style?: PressableHighlightProps['style'];
 		/** @default null */
-		subLabel?: FormSubLabelProps['text'];
+		subLabel?: React.ReactElement | FormSubLabelProps['text'];
 		trailing?: unknown;
 		trailingWrapperStyle?: React.ComponentProps<typeof RN.View>['style'];
 		variant?: TableRowProps['variant'];

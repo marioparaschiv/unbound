@@ -166,32 +166,48 @@ export function infer(
 		return rest ? hasTypedKey(rest.component, key) : false;
 	}
 
-	const env: InferEnv = {
-		componentProp(target, key) {
-			const resolved = resolve(target);
-
-			if (resolved?.kind !== 'component') return;
-
-			const name = names.get(resolved.component);
-
-			if (!name || !hasTypedKey(resolved.component, key)) return;
-
-			return {
-				text: `${name}Props[${literalType(key)}]`,
-				rule: 'forwarded',
-				refs: [{ kind: 'component', component: resolved.component }],
-			};
-		},
-		hostProp(target, key) {
-			const resolved = resolve(target);
-
-			if (resolved?.kind !== 'host' || !hosts.get(resolved.name)?.has(key)) return;
+	// `key` of a generated component or React Native host, as a reference, when that target types it.
+	function propOf(resolved: Resolved | undefined, key: string): InferredType | undefined {
+		if (resolved?.kind === 'host') {
+			if (!hosts.get(resolved.name)?.has(key)) return;
 
 			return {
 				text: `React.ComponentProps<typeof RN.${resolved.name}>[${literalType(key)}]`,
 				rule: 'host',
 				refs: [{ kind: 'host' }],
 			};
+		}
+
+		if (resolved?.kind !== 'component') return;
+
+		const name = names.get(resolved.component);
+
+		if (!name || !hasTypedKey(resolved.component, key)) return;
+
+		return {
+			text: `${name}Props[${literalType(key)}]`,
+			rule: 'forwarded',
+			refs: [{ kind: 'component', component: resolved.component }],
+		};
+	}
+
+	const env: InferEnv = {
+		componentProp(target, key) {
+			const resolved = resolve(target);
+
+			return resolved?.kind === 'component' ? propOf(resolved, key) : undefined;
+		},
+		hostProp(target, key) {
+			const resolved = resolve(target);
+
+			return resolved?.kind === 'host' ? propOf(resolved, key) : undefined;
+		},
+		restProp(component, key) {
+			if (restOmits.get(component)?.includes(key)) return;
+
+			const found = propOf(restOf.get(component), key);
+
+			return found ? { ...found, rule: 'inherited' } : undefined;
 		},
 	};
 

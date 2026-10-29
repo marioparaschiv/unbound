@@ -167,14 +167,14 @@ export type BasicComponent = React.ComponentType<BasicProps>;
  * Props of `BorderlessButton` (function). Exports: BorderlessButton.
  * @see module 6348 (no source path)
  */
-export type BorderlessButtonProps = {
+export type BorderlessButtonProps = Omit<Module6348BaseButtonProps, 'activeOpacity' | 'children' | 'onActiveStateChange' | 'ref' | 'style'> & {
 		/** @default 0.3 */
 		activeOpacity?: number;
 		children?: React.ReactNode;
 		onActiveStateChange?: (...args: any[]) => unknown;
 		/** @default null */
 		ref?: React.Ref<any>;
-		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+		style?: Module6348BaseButtonProps['style'];
 	};
 export type BorderlessButtonComponent = React.ComponentType<BorderlessButtonProps & Record<string, unknown>>;
 /**
@@ -474,7 +474,7 @@ export type Module6228ButtonComponent = React.ComponentType<Module6228ButtonProp
  * @see module 6228 (no source path)
  */
 export type ButtonBaseProps = Omit<PlatformPressableInternalProps, 'android_ripple' | 'children' | 'color' | 'style' | 'variant'> & {
-		android_ripple?: unknown;
+		android_ripple?: PlatformPressableInternalProps['android_ripple'];
 		children?: Module6230TextProps['children'];
 		color?: unknown;
 		style?: PlatformPressableInternalProps['style'];
@@ -1059,7 +1059,7 @@ export type GenericTouchableComponent = React.ComponentType<GenericTouchableProp
  * @see module 6354 (no source path)
  */
 export type Module6354GestureDetectorProps = Omit<NativeDetectorProps, 'gesture'> & {
-		gesture?: unknown;
+		gesture?: NativeDetectorProps['gesture'];
 	};
 export type Module6354GestureDetectorComponent = React.ComponentType<Module6354GestureDetectorProps>;
 /**
@@ -1177,7 +1177,7 @@ export type HeaderBackgroundComponent = React.ComponentType<HeaderBackgroundProp
  * @see module 6246 (no source path)
  */
 export type HeaderButtonInternalProps = {
-		accessibilityLabel?: unknown;
+		accessibilityLabel?: PlatformPressableInternalProps['aria-label'];
 		children?: PlatformPressableInternalProps['children'];
 		disabled?: PlatformPressableInternalProps['disabled'];
 		href?: unknown;
@@ -1185,7 +1185,7 @@ export type HeaderButtonInternalProps = {
 		pressColor?: unknown;
 		pressOpacity?: PlatformPressableInternalProps['pressOpacity'];
 		style?: PlatformPressableInternalProps['style'];
-		testID?: string;
+		testID?: PlatformPressableInternalProps['testID'];
 	};
 export type HeaderButtonInternalComponent = React.ComponentType<HeaderButtonInternalProps>;
 /**
@@ -2017,9 +2017,9 @@ export type PerformanceMonitorComponent = React.ComponentType<PerformanceMonitor
  * Props of `PlatformPressableInternal` (forwardRef). Exports: PlatformPressable.
  * @see module 6229 (no source path)
  */
-export type PlatformPressableInternalProps = {
-		android_ripple?: unknown;
-		children?: React.ReactNode;
+export type PlatformPressableInternalProps = Omit<React.ComponentProps<typeof RN.Pressable>, 'android_ripple' | 'children' | 'disabled' | 'hoverEffect' | 'href' | 'onPress' | 'onPressIn' | 'onPressOut' | 'pressColor' | 'pressOpacity' | 'style'> & {
+		android_ripple?: React.ComponentProps<typeof RN.Pressable>['android_ripple'];
+		children?: React.ComponentProps<typeof RN.Pressable>['children'];
 		disabled?: boolean;
 		hoverEffect?: unknown;
 		href?: unknown;
@@ -2029,7 +2029,7 @@ export type PlatformPressableInternalProps = {
 		pressColor?: unknown;
 		/** @default 0.3 */
 		pressOpacity?: number;
-		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+		style?: React.ComponentProps<typeof RN.Pressable>['style'];
 	};
 export type PlatformPressableInternalComponent = React.ComponentType<PlatformPressableInternalProps>;
 /**
@@ -2186,7 +2186,7 @@ export type RawButtonComponent = React.ComponentType<RawButtonProps>;
  * Props of `ReanimatedNativeStackScreen` (forwardRef). Exports: default.
  * @see module 16335 (no source path)
  */
-export type ReanimatedNativeStackScreenProps = {
+export type ReanimatedNativeStackScreenProps = Omit<InnerScreenProps, 'children'> & {
 		children?: React.ReactNode;
 	};
 export type ReanimatedNativeStackScreenComponent = React.ComponentType<ReanimatedNativeStackScreenProps & Record<string, unknown>>;

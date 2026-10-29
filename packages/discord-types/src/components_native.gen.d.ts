@@ -1087,7 +1087,7 @@ export type CommonPComponent = React.ComponentType<CommonPProps>;
  */
 export type MessageLoadingSpinnerProps = Omit<DesignActivityIndicatorProps, 'animate' | 'color'> & {
 		animate?: DesignActivityIndicatorProps['animating'];
-		color?: unknown;
+		color?: DesignActivityIndicatorProps['color'];
 	};
 export type MessageLoadingSpinnerComponent = React.ComponentType<MessageLoadingSpinnerProps & Record<string, unknown>>;
 /**

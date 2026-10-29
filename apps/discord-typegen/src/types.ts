@@ -75,6 +75,8 @@ export type PropObservation =
 	| { kind: 'name-only' }
 	/** Its type is tested at runtime, so it may take several shapes. */
 	| { kind: 'typeof' }
+	/** Tested with `isValidElement`, so it may be a React element rendered as is. */
+	| { kind: 'element-tested' }
 	/** Passed as positional argument `index` to a function, whose parameter evidence then applies too. */
 	| { kind: 'argument'; callee: TargetRef; index: number };
 

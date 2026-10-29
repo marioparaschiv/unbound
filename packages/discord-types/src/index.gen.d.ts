@@ -383,6 +383,7 @@ export type DiscordComponentsByPath = {
 		};
 		'design/components/AccessibilityView/AccessibilityView.native.tsx': {
 			AccessibilityView: AccessibilityViewComponent;
+			AccessibilityViewAnimated: AccessibilityViewComponent;
 		};
 		'design/components/ActivityIndicator/native/ActivityIndicator.native.tsx': {
 			ActivityIndicator: DesignActivityIndicatorComponent;
@@ -11707,6 +11708,7 @@ export type DiscordComponentsByName = {
 		AccessibilityIcon: AccessibilityIconComponent;
 		AccessibilityPreferencesContextProvider: AccessibilityPreferencesContextProviderComponent;
 		AccessibilityView: AccessibilityViewComponent;
+		AccessibilityViewAnimated: AccessibilityViewComponent;
 		AccountDisabledOrDeletionScheduled: AccountDisabledOrDeletionScheduledComponent;
 		AccountEditPassword: AccountEditPasswordComponent;
 		AccountLinkBanner: AccountLinkBannerComponent;
