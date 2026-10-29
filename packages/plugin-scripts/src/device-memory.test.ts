@@ -46,3 +46,17 @@ test('lists the plugin cycles that grew memory the most', () => {
 		]),
 	).toEqual(['unbound.b (+12 MB)', 'unbound.c (+6 MB)']);
 });
+
+test('reads SpringBoard and flags it above the warning level', () => {
+	const output = JSON.stringify({
+		processes: [{ name: 'SpringBoard', footprintMB: 76.2, peakFootprintMB: 94.9 }],
+	});
+
+	expect(parseProcessMemory(output, 'SpringBoard')).toEqual({ footprintMB: 76.2, peakMB: 94.9 });
+	expect(describeSpringBoard({ footprintMB: 76.2, peakMB: 94.9 })).toBe(
+		'SpringBoard 76 MB (peak 95 MB)',
+	);
+	expect(describeSpringBoard({ footprintMB: 391, peakMB: 396 })).toBe(
+		'SpringBoard 391 MB (peak 396 MB), **above 300 MB: check the device agent for a leak**',
+	);
+});
