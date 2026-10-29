@@ -6,7 +6,7 @@ import { grammarOrder } from '~/bundled';
 
 export type RegistrationSource = (name: string) => Promise<LanguageRegistration>;
 
-const CACHE_DIRECTORY = `Unbound/Cache/shiki-codeblocks/langs-${SHIKI_LANGS_VERSION}`;
+const CACHE_DIRECTORY = `Unbound/cache/shiki-codeblocks/langs-${SHIKI_LANGS_VERSION}`;
 
 /**
  * @description Builds the CDN URL of a bundled language's module, pinned to the Shiki version the plugin was built with.
