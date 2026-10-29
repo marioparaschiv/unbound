@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { resolveAddonTarget } from '~/lib/addon-target';
 import { readBuiltAddon } from '~/lib/reload-transport';
+import { staleBuildReason } from '~/lib/stale-build';
 import { waitForDevice } from '~/lib/context';
 import { NOT_CONNECTED } from '~/lib/device';
 
@@ -25,10 +26,17 @@ const pushCommand: CommandDefinition<typeof schema> = {
 	schema,
 	cli: { positionals: ['addon'] },
 	async handler({ addon: target, build }, { client }) {
+		const startedAt = Date.now();
 		const resolved = await resolveAddonTarget(target, build);
 
 		if ('error' in resolved) {
 			return { ok: false, text: resolved.error };
+		}
+
+		const stale = staleBuildReason(resolved.addon, build ? startedAt : undefined);
+
+		if (stale) {
+			return { ok: false, text: `Not pushing ${resolved.addon.id}: ${stale}` };
 		}
 
 		await waitForDevice(client);
