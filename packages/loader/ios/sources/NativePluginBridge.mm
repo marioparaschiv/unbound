@@ -3778,7 +3778,8 @@ static bool developerModeEnabled()
 static void warnOffMainViewCall(id object, NSString *selectorName)
 {
     if ([NSThread isMainThread] || !developerModeEnabled() ||
-        ![object isKindOfClass:[UIView class]])
+        ![object isKindOfClass:[UIView class]] ||
+        [NSObject instancesRespondToSelector:NSSelectorFromString(selectorName)])
     {
         return;
     }
