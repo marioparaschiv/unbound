@@ -718,7 +718,15 @@ async function main(): Promise<void> {
 
 		for (let attempt = 0; !check; attempt++) {
 			try {
+				const before = await discordMemory(target, run);
+
 				check = await measure(plugin);
+
+				const after = await discordMemory(target, run);
+
+				if (before !== undefined && after !== undefined) {
+					check.memoryDeltaMB = Math.round(after - before);
+				}
 			} catch (error) {
 				if (!isDisconnect(error)) throw error;
 

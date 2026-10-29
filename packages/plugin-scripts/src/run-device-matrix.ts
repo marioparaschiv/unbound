@@ -3,7 +3,7 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import type { MeasuredCheck } from './compare-device-matrix';
-import { describeMemory, type MemoryReport } from './device-memory';
+import { describeMemory, largestGrowers, type MemoryReport } from './device-memory';
 import {
 	MATRIX_CONFIG_PATH,
 	collectorArgs,
@@ -99,8 +99,10 @@ export function renderSummary(runs: DeviceRun[]): string {
 		.map((run) => `- ${run.device.name}: ${run.scrollToasts!.join(', ')}`);
 	const memory = runs.flatMap((run) => {
 		const line = run.memory ? describeMemory(run.memory) : undefined;
+		const growers = largestGrowers(run.checks);
+		const detail = growers.length ? `; largest plugin cycles: ${growers.join(', ')}` : '';
 
-		return line ? [`- ${run.device.name}: ${line}`] : [];
+		return line ? [`- ${run.device.name}: ${line}${detail}`] : [];
 	});
 	const dropped = runs.flatMap((run) =>
 		(run.drops ?? []).map((drop) => `- ${run.device.name}, during ${drop}`),

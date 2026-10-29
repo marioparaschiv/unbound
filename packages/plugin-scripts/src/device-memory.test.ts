@@ -1,6 +1,11 @@
 import { expect, test } from 'bun:test';
 
-import { describeMemory, parseAndroidPss, parseIOSFootprint } from './device-memory';
+import {
+	describeMemory,
+	largestGrowers,
+	parseAndroidPss,
+	parseIOSFootprint,
+} from './device-memory';
 
 test('reads Discord itself from the process list, not its extensions', () => {
 	const output = JSON.stringify({
@@ -29,4 +34,15 @@ test('describes the change over a run', () => {
 		'312 MB → 300 MB (−12 MB), Discord relaunched during the run',
 	);
 	expect(describeMemory({ beforeMB: 312, relaunched: false })).toBeUndefined();
+});
+
+test('lists the plugin cycles that grew memory the most', () => {
+	expect(
+		largestGrowers([
+			{ id: 'unbound.a', memoryDeltaMB: 3 },
+			{ id: 'unbound.b', memoryDeltaMB: 12 },
+			{ id: 'unbound.c', memoryDeltaMB: 6 },
+			{ id: 'unbound.d' },
+		]),
+	).toEqual(['unbound.b (+12 MB)', 'unbound.c (+6 MB)']);
 });
