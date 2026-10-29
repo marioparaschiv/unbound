@@ -134,7 +134,32 @@ async function run(command: string[]): Promise<{ ok: boolean; stdout: string; st
 	return { ok: code === 0, stdout, stderr };
 }
 
-async function evaluate(port: number, code: string): Promise<string> {
+const RECONNECT_PATTERN = /disconnected|No device is connected/i;
+const RECONNECT_ATTEMPTS = 3;
+const RECONNECT_WAIT_MS = 5_000;
+
+export function isDisconnect(error: unknown): boolean {
+	return error instanceof Error && RECONNECT_PATTERN.test(error.message);
+}
+
+export async function withReconnects<T>(
+	attempt: () => Promise<T>,
+	wait = (ms: number) => Bun.sleep(ms),
+	attempts = RECONNECT_ATTEMPTS,
+): Promise<T> {
+	for (let retry = 0; ; retry++) {
+		try {
+			return await attempt();
+		} catch (error) {
+			if (retry >= attempts || !isDisconnect(error)) throw error;
+
+			console.error(`Device disconnected, retrying in ${RECONNECT_WAIT_MS / 1000}s.`);
+			await wait(RECONNECT_WAIT_MS);
+		}
+	}
+}
+
+async function evaluateOnce(port: number, code: string): Promise<string> {
 	const { stdout, stderr } = await run([
 		'bun',
 		CLI,
@@ -154,6 +179,10 @@ async function evaluate(port: number, code: string): Promise<string> {
 	}
 
 	return reply.value;
+}
+
+function evaluate(port: number, code: string): Promise<string> {
+	return withReconnects(() => evaluateOnce(port, code));
 }
 
 async function screenshot(target: ScreenshotTarget, file: string): Promise<boolean> {

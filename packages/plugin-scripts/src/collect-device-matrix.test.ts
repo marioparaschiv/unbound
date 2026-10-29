@@ -1,6 +1,11 @@
 import { expect, test } from 'bun:test';
 
-import { checkFromCycle, cycleScript, type CycleResult } from './collect-device-matrix';
+import {
+	checkFromCycle,
+	cycleScript,
+	withReconnects,
+	type CycleResult,
+} from './collect-device-matrix';
 import { validateDeviceMatrix } from './device-matrix';
 
 const healthy: CycleResult = {
@@ -82,4 +87,36 @@ test('a failing self-test fails the behavior with its detail', () => {
 	expect(check.behavior).toBe('fail');
 	expect(check.lifecycle).toBe('pass');
 	expect(check.note).toBe('self-test failed: used 1 colors');
+});
+
+test('retries an evaluation the device dropped, then gives up', async () => {
+	let calls = 0;
+	const flaky = async () => {
+		calls++;
+		if (calls < 2)
+			throw new Error(
+				'Evaluation failed: "Device disconnected before the evaluation completed."',
+			);
+
+		return 'ok';
+	};
+
+	expect(await withReconnects(flaky, async () => undefined)).toBe('ok');
+
+	const gone = async () => {
+		throw new Error('Evaluation failed: "No device is connected to the debugger."');
+	};
+
+	await expect(withReconnects(gone, async () => undefined, 2)).rejects.toThrow('No device');
+});
+
+test('does not retry other evaluation failures', async () => {
+	let calls = 0;
+	const broken = async () => {
+		calls++;
+		throw new Error('Evaluation failed: "TypeError"');
+	};
+
+	await expect(withReconnects(broken, async () => undefined)).rejects.toThrow('TypeError');
+	expect(calls).toBe(1);
 });
