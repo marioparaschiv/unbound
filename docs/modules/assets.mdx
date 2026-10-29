@@ -6,7 +6,7 @@ icon: 'face-smile'
 
 ### What are assets?
 
-`assets` lets you look up Discord's bundled images and icons by name. At startup it indexes every bundled asset by name, so you can ask for `'ChatIcon'` and get the correct id for the current build.
+`assets` lets you look up Discord's bundled images and icons by name, so you can ask for `'ChatIcon'` and get the correct id for the current build. Unbound records each asset as Discord loads it. Looking up an asset Discord has not loaded yet loads that one asset first.
 
 Discord ships each image and icon as a Metro module that exports a numeric id, and the app resolves that id into an image. Components that render an icon take the id. Ids change between Discord versions, so a hardcoded id is unreliable.
 
@@ -17,18 +17,23 @@ Look up an asset by name and type (`png` or `svg`). The type defaults to `png`.
 ```ts
 import { assets } from '@unbound-app/api';
 
-const icon = assets.getByName('ChatIcon');     // full asset record
-const id = assets.getIDByName('ChatIcon');     // just the id
-const byId = assets.getByID(id);               // back the other way
+const icon = assets.getByName('ChatIcon'); // full asset record
+const id = assets.getIDByName('ChatIcon'); // just the id
+const byId = assets.getByID(id); // back the other way
 ```
 
-| Function | Returns |
-| --- | --- |
-| `getByName(name, type?)` | The asset record |
-| `getIDByName(name, type?)` | The asset's numeric id |
-| `getByID(id)` | The asset record for an id |
-| `getAll()` | Every indexed asset |
-| `find(predicate)` | The first asset matching a predicate |
+| Function                   | Returns                              |
+| -------------------------- | ------------------------------------ |
+| `getByName(name, type?)`   | The asset record                     |
+| `getIDByName(name, type?)` | The asset's numeric id               |
+| `getByID(id)`              | The asset record for an id           |
+| `getAll()`                 | Every asset                          |
+| `find(predicate)`          | The first asset matching a predicate |
+
+<Note>
+	`getAll` and `find` load every asset Discord ships the first time either runs. Prefer
+	`getByName` or `getIDByName` when you know the name.
+</Note>
 
 ### The Icons proxy
 
@@ -38,9 +43,10 @@ const byId = assets.getByID(id);               // back the other way
 import { Icons } from '@unbound-app/api/assets';
 
 // Icons.ChatIcon === assets.getIDByName('ChatIcon')
-<Image source={Icons.ChatIcon} />
+<Image source={Icons.ChatIcon} />;
 ```
 
 <Tip>
-	`Icons` is shorthand for `getIDByName`. Use it when you want an id inline. Use `getByName` when you need the full record (name, type, dimensions).
+	`Icons` is shorthand for `getIDByName`. Use it when you want an id inline. Use `getByName` when
+	you need the full record (name, type, dimensions).
 </Tip>
