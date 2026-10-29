@@ -4,9 +4,10 @@ import { readRect } from '@unbound-plugins/shared/native/rect';
 import { viewKey } from '@unbound-plugins/shared/native/view-key';
 
 import { messageLayout, type SnapshotNode } from '~/message-layout';
-import { BubbleStyle, IOSClass, PLUGIN_NAME } from '~/constants';
+import { IOSClass, PLUGIN_NAME } from '~/constants';
 import { bubbleFrame } from '~/geometry';
-import { bubbleColor } from '~/theme';
+import type { BubbleColor } from '~/style';
+import { currentAppearance } from '~/theme';
 
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
 const TEXT_MEASURE_HEIGHT = 100_000;
@@ -44,9 +45,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 	let flushing = false;
 	let disposed = false;
 
-	function color() {
-		const { red, green, blue, alpha } = bubbleColor();
-
+	function color({ red, green, blue, alpha }: BubbleColor) {
 		return objc.call(
 			objc.getClass('UIColor')!,
 			'colorWithRed:green:blue:alpha:',
@@ -66,7 +65,6 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		const layer = objc.call(bubble, 'layer') as NativeObjectHandle;
 
 		bubbles.set(key, { cell, bubble });
-		await objc.invokeAsync(layer, 'setCornerRadius:', [BubbleStyle.radius]);
 		await objc.invokeAsync(layer, 'setMasksToBounds:', [true]);
 		await objc.invokeAsync(bubble, 'setUserInteractionEnabled:', [false]);
 		await objc.invokeAsync(cell, 'insertSubview:atIndex:', [bubble, 0]);
@@ -110,10 +108,16 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		const text = textView
 			? layout.text!.offset + textWidth(objc, textView, layout.body.width)
 			: 0;
-		const frame = bubbleFrame(layout.body, Math.max(text, layout.mediaRight));
+		const style = currentAppearance();
+		const frame = bubbleFrame(layout.body, Math.max(text, layout.mediaRight), {
+			horizontal: style.horizontalPadding,
+			vertical: style.verticalPadding,
+		});
 		const bubble = await bubbleFor(key, cell);
+		const layer = objc.call(bubble, 'layer') as NativeObjectHandle;
 
-		await objc.invokeAsync(bubble, 'setBackgroundColor:', [color()]);
+		await objc.invokeAsync(layer, 'setCornerRadius:', [style.radius]);
+		await objc.invokeAsync(bubble, 'setBackgroundColor:', [color(style.color)]);
 		await objc.invokeAsync(bubble, 'setFrame:', [
 			objc.struct('CGRect', {
 				origin: { x: frame.x, y: frame.y },

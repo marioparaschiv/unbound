@@ -84,8 +84,8 @@ function SettingsPanel() {
 				</View>
 			) : null}
 			<Discord.TextInput
-				title='Custom theme URL'
-				helpText='An HTTPS link to a VS Code theme JSON file overrides the selected theme.'
+				label='Custom theme URL'
+				description='An HTTPS link to a VS Code theme JSON file overrides the selected theme.'
 				value={customTheme}
 				onChange={setCustomTheme}
 				onEndEditing={saveCustomTheme}
@@ -94,7 +94,7 @@ function SettingsPanel() {
 				placeholder='https://example.com/theme.json'
 			/>
 			<Discord.TextInput
-				title='Background opacity (%)'
+				label='Background opacity (%)'
 				value={opacity}
 				onChange={setOpacity}
 				onEndEditing={saveOpacity}

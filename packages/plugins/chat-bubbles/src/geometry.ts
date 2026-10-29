@@ -1,10 +1,13 @@
-import { BubbleStyle } from '~/constants';
-
 export type Box = {
 	x: number;
 	y: number;
 	width: number;
 	height: number;
+};
+
+export type Padding = {
+	horizontal: number;
+	vertical: number;
 };
 
 export type Edges = {
@@ -18,13 +21,12 @@ export type Edges = {
  * @description Narrows a message body to its content and grows it by the bubble padding.
  * @param body The message body's frame.
  * @param contentWidth How far the body's text and media reach from its left edge, or 0 when unknown.
- * @param scale Multiplies the padding, such as the display density.
+ * @param padding The room around the content, in the body's units.
  * @returns The bubble's frame.
  */
-export function bubbleFrame(body: Box, contentWidth: number, scale = 1): Box {
+export function bubbleFrame(body: Box, contentWidth: number, padding: Padding): Box {
 	const width = contentWidth > 0 && contentWidth < body.width ? contentWidth : body.width;
-	const horizontal = BubbleStyle.horizontalPadding * scale;
-	const vertical = BubbleStyle.verticalPadding * scale;
+	const { horizontal, vertical } = padding;
 
 	return {
 		x: body.x - horizontal,

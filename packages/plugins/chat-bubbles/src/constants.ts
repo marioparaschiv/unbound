@@ -4,8 +4,15 @@ export const BubbleStyle = {
 	radius: 10,
 	horizontalPadding: 8,
 	verticalPadding: 4,
-	dark: { red: 0, green: 0, blue: 0, alpha: 0.4 },
-	light: { red: 1, green: 1, blue: 1, alpha: 0.4 },
+	opacity: 40,
+	dark: { red: 0, green: 0, blue: 0 },
+	light: { red: 1, green: 1, blue: 1 },
+};
+
+export const BubbleLimits = {
+	radius: 32,
+	padding: 24,
+	opacity: 100,
 };
 
 export const IOSClass = {

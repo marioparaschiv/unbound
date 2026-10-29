@@ -14,8 +14,9 @@ import {
 } from '@unbound-plugins/shared/native/android/java-values';
 
 import { bubbleFrame, rowInsets, union, type Edges } from '~/geometry';
-import { AndroidClass, BubbleStyle, PLUGIN_NAME } from '~/constants';
-import { argb, bubbleColor } from '~/theme';
+import { AndroidClass, PLUGIN_NAME } from '~/constants';
+import { currentAppearance } from '~/theme';
+import { argb } from '~/style';
 
 type AndroidNative = {
 	java: NativeJavaBridge;
@@ -167,6 +168,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		if (!area) return restore(row);
 
 		const scale = density(row);
+		const style = currentAppearance();
 		const frame = bubbleFrame(
 			{
 				x: area.left,
@@ -175,13 +177,16 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 				height: area.bottom - area.top,
 			},
 			0,
-			scale,
+			{
+				horizontal: style.horizontalPadding * scale,
+				vertical: style.verticalPadding * scale,
+			},
 		);
 		const insets = rowInsets(frame, number(row, 'getWidth'), number(row, 'getHeight'));
 		const shape = java.construct('android.graphics.drawable.GradientDrawable', []);
 
-		java.invoke(shape, 'setCornerRadius', [javaFloat(BubbleStyle.radius * scale)]);
-		java.invoke(shape, 'setColor', [javaInt(argb(bubbleColor()))]);
+		java.invoke(shape, 'setCornerRadius', [javaFloat(style.radius * scale)]);
+		java.invoke(shape, 'setColor', [javaInt(argb(style.color))]);
 
 		const bubble = java.construct('android.graphics.drawable.LayerDrawable', [
 			{ type: 'array', componentType: 'android.graphics.drawable.Drawable', value: [shape] },

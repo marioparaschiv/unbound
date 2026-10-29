@@ -1,10 +1,11 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { PluginContext } from '@unbound-app/api/native';
 
+import SettingsPanel from '~/components/settings-panel';
+import { subscribeAppearance } from '~/theme';
 import { drawAndroidBubbles } from '~/android';
 import { drawIOSBubbles } from '~/ios';
 import { PLUGIN_NAME } from '~/constants';
-import { subscribeTheme } from '~/theme';
 
 let dispose: () => void | Promise<void> = () => {};
 
@@ -15,7 +16,7 @@ function start(context: PluginContext) {
 		context.platform === 'android'
 			? drawAndroidBubbles(context.native)
 			: drawIOSBubbles(context.native.objc);
-	const unsubscribe = subscribeTheme(() => bubbles.refresh());
+	const unsubscribe = subscribeAppearance(() => bubbles.refresh());
 
 	dispose = () => {
 		unsubscribe();
@@ -32,4 +33,8 @@ function stop() {
 	return stopping;
 }
 
-export default { start, stop };
+export default {
+	start,
+	stop,
+	getSettingsPanel: () => <SettingsPanel />,
+};

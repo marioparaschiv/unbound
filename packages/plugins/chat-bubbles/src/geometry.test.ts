@@ -2,9 +2,11 @@ import { describe, expect, test } from 'bun:test';
 
 import { bubbleFrame, rowInsets, union } from './geometry';
 
+const padding = { horizontal: 8, vertical: 4 };
+
 describe('bubble geometry', () => {
 	test('hugs the content and adds the padding around it', () => {
-		expect(bubbleFrame({ x: 68, y: 38, width: 291, height: 50 }, 120)).toEqual({
+		expect(bubbleFrame({ x: 68, y: 38, width: 291, height: 50 }, 120, padding)).toEqual({
 			x: 60,
 			y: 34,
 			width: 136,
@@ -13,12 +15,17 @@ describe('bubble geometry', () => {
 	});
 
 	test('keeps the full body width when the content is unknown or wider', () => {
-		expect(bubbleFrame({ x: 0, y: 0, width: 100, height: 20 }, 0).width).toBe(116);
-		expect(bubbleFrame({ x: 0, y: 0, width: 100, height: 20 }, 400).width).toBe(116);
+		expect(bubbleFrame({ x: 0, y: 0, width: 100, height: 20 }, 0, padding).width).toBe(116);
+		expect(bubbleFrame({ x: 0, y: 0, width: 100, height: 20 }, 400, padding).width).toBe(116);
 	});
 
-	test('scales the padding by density', () => {
-		expect(bubbleFrame({ x: 100, y: 100, width: 50, height: 10 }, 0, 2)).toEqual({
+	test('uses the padding it is given', () => {
+		expect(
+			bubbleFrame({ x: 100, y: 100, width: 50, height: 10 }, 0, {
+				horizontal: 16,
+				vertical: 8,
+			}),
+		).toEqual({
 			x: 84,
 			y: 92,
 			width: 82,

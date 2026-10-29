@@ -20,8 +20,8 @@ function SettingsPanel() {
 	return (
 		<Page>
 			<Discord.TextInput
-				title='Corner radius'
-				helpText={`How round avatar corners are, from 0 for square to ${MAXIMUM_RADIUS}. A radius past half an avatar's size keeps it a circle.`}
+				label='Corner radius'
+				description={`How round avatar corners are, from 0 for square to ${MAXIMUM_RADIUS}. A radius past half an avatar's size keeps it a circle.`}
 				value={radius}
 				onChange={setRadius}
 				onEndEditing={saveRadius}

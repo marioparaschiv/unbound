@@ -9,6 +9,7 @@ const settingsPlugins = [
 	'avatar-radius',
 	'channel-typing-indicators',
 	'character-counter',
+	'chat-bubbles',
 	'custom-commands',
 	'message-latency',
 	'more-user-tags',
