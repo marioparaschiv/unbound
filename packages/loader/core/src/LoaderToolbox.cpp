@@ -233,16 +233,14 @@ std::string discordLine(const std::string &label, const std::string &appSource)
     std::string channel = match[2].str();
     if (channel.empty())
     {
-        channel = appSource == "TestFlight" ? "Beta" : "Stable";
+        channel = appSource == "TestFlight" ? "beta" : "stable";
     }
     else
     {
-        channel[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(channel[0])));
-        for (size_t index = 1; index < channel.size(); index++)
-        {
-            channel[index] =
-                static_cast<char>(std::tolower(static_cast<unsigned char>(channel[index])));
-        }
+        std::transform(channel.begin(), channel.end(), channel.begin(),
+                       [](unsigned char character) {
+                           return std::tolower(character);
+                       });
     }
     return match[1].str() + " " + channel + ", build " + match[3].str() + source;
 }
