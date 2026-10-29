@@ -28,6 +28,9 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to initialize Unbound", it) }
     }
 
+    private fun frameworkLabel(appInfo: ApplicationInfo, classLoader: ClassLoader): String =
+        Platform.frameworkLabel(frameworkName, frameworkVersion, Platform.isLSPatched(appInfo, classLoader))
+
     private fun initialize(param: PackageReadyParam) {
         val moduleInfo = moduleApplicationInfo
         val appInfo = param.applicationInfo
@@ -47,7 +50,7 @@ class Unbound : XposedModule() {
             readBootstrapScripts(moduleInfo.sourceDir).toString(),
             NATIVE_LIBRARY,
             bytecodeVersion,
-            Platform.describe(appInfo, frameworkName).toString(),
+            Platform.describe(appInfo, frameworkLabel(appInfo, param.classLoader)).toString(),
         )
 
         Logger.info(LogCategory.DEFAULT, "Hermes bytecode version $bytecodeVersion, documents at $documents")

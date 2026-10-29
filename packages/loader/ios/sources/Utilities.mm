@@ -816,16 +816,49 @@ static NSString *defaultGatewayAddress(void)
 
 + (NSString *)getInjectionFramework
 {
-    for (uint32_t index = 0; index < _dyld_image_count(); index++)
+    Dl_info hookProvider   = {0};
+    Dl_info libhookerAPI   = {0};
+    void   *messageHook    = dlsym(RTLD_DEFAULT, "MSHookMessageEx");
+    void   *libhookerHooks = dlsym(RTLD_DEFAULT, "LHHookFunctions");
+    if (!messageHook || !dladdr(messageHook, &hookProvider) || !hookProvider.dli_fname)
     {
-        const char *name = _dyld_get_image_name(index);
-        if (name && strstr(name, "libellekit"))
+        return @"";
+    }
+
+    bool        sameImage = libhookerHooks && dladdr(libhookerHooks, &libhookerAPI) &&
+                            libhookerAPI.dli_fbase == hookProvider.dli_fbase;
+    char        resolved[PATH_MAX];
+    const char *path =
+        realpath(hookProvider.dli_fname, resolved) ? resolved : hookProvider.dli_fname;
+    auto framework = loader::environment::hookFrameworkForImage(path, sameImage);
+    if (!framework)
+    {
+        return @"";
+    }
+
+    return toNSString(loader::environment::frameworkLabel(
+        framework->name, toStdString([self versionOfHookFramework:*framework imagePath:@(path)])));
+}
+
++ (NSString *)versionOfHookFramework:(const loader::environment::HookFramework &)framework
+                           imagePath:(NSString *)imagePath
+{
+    for (NSString *status in @[ @"/var/jb/Library/dpkg/status", @"/Library/dpkg/status" ])
+    {
+        NSString *text = [NSString stringWithContentsOfFile:status
+                                                   encoding:NSUTF8StringEncoding
+                                                      error:nil];
+        auto      version =
+            text ? loader::environment::dpkgPackageVersion(toStdString(text), framework.package)
+                 : std::nullopt;
+        if (version)
         {
-            return @"ElleKit";
+            return toNSString(*version);
         }
     }
 
-    return @"";
+    NSBundle *bundle = [NSBundle bundleWithPath:imagePath.stringByDeletingLastPathComponent];
+    return bundle.infoDictionary[@"CFBundleShortVersionString"] ?: @"";
 }
 
 + (NSString *)getAppSource
