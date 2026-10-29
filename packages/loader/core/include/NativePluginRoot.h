@@ -67,11 +67,8 @@ inline constexpr std::array<std::string_view, 5> kJavaHookMethods        = {
 inline constexpr std::array<std::string_view, 1> kJavaBatchMethods        = {"batch"};
 inline constexpr std::array<std::string_view, 1> kDebugEvaluationMethods  = {"recordEvaluation"};
 inline constexpr std::array<std::string_view, 1> kDebugEnvironmentMethods = {"environment"};
-inline constexpr std::array<std::string_view, 2> kUILookupMethods         = {"lookup", "snapshot"};
-inline constexpr std::array<std::string_view, 3> kUIMountMethods  = {"mount", "update", "unmount"};
-inline constexpr std::array<std::string_view, 2> kUILayoutMethods = {"measure", "setFrame"};
 
-inline constexpr std::array<NativeCapabilityBinding, 26> kNativeCapabilityBindings = {{
+inline constexpr std::array<NativeCapabilityBinding, 23> kNativeCapabilityBindings = {{
     {"native.objc.classes", "objc", kObjCClassMethods},
     {"native.objc.invoke", "objc", kObjCInvokeMethods},
     {"native.objc.invokeAsync", "objc", kObjCInvokeAsyncMethods},
@@ -95,9 +92,6 @@ inline constexpr std::array<NativeCapabilityBinding, 26> kNativeCapabilityBindin
     {"native.java.associations", "java", kAssociationMethods},
     {"native.debug.evaluations", "debug", kDebugEvaluationMethods},
     {"native.debug.environment", "debug", kDebugEnvironmentMethods},
-    {"native.ui.lookup", "ui", kUILookupMethods},
-    {"native.ui.mount", "ui", kUIMountMethods},
-    {"native.ui.layout", "ui", kUILayoutMethods},
 }};
 
 inline constexpr std::array<const char *, 15> kIOSNativePluginCapabilities = {
@@ -108,8 +102,7 @@ inline constexpr std::array<const char *, 15> kIOSNativePluginCapabilities = {
     "native.runtime.events",    "native.debug.evaluations", "native.debug.environment",
 };
 
-inline constexpr std::array<const char *, 17> kAndroidNativePluginCapabilities = {
-    "native.ui.lookup",         "native.ui.layout",         "native.ui.mount",
+inline constexpr std::array<const char *, 14> kAndroidNativePluginCapabilities = {
     "native.runtime.events",    "native.java.classes",      "native.java.invoke",
     "native.java.invokeAsync",  "native.java.fields",       "native.java.construct",
     "native.java.hooks",        "native.java.batch",        "native.java.associations",

@@ -66,10 +66,6 @@ object NativeBridge {
 
     external fun nativeThreeFingerEvent(event: String, pointers: Int): String
 
-    external fun nativeParseColor(value: String): Long
-
-    fun parseColor(value: String): Int? = nativeParseColor(value).takeIf { it >= 0 }?.toInt()
-
     @JvmStatic
     external fun nativeMessageBubbleStyle(): DoubleArray
 
@@ -128,30 +124,6 @@ object NativeBridge {
     fun isMainThread(): Boolean = Looper.myLooper() == Looper.getMainLooper()
 
     @JvmStatic
-    fun lookupViews(queryJSON: String): String = NativeUI.lookup(queryJSON)
-
-    @JvmStatic
-    fun snapshotViews(queryJSON: String): String = NativeUI.snapshot(queryJSON)
-
-    @JvmStatic
-    fun measureView(handleJSON: String): String = NativeUI.measureView(handleJSON)
-
-    @JvmStatic
-    fun setViewFrame(handleJSON: String, frameJSON: String) =
-        NativeUI.setViewFrame(handleJSON, frameJSON)
-
-    @JvmStatic
-    fun mountView(containerHandleJSON: String, moduleName: String, propertiesJSON: String): String =
-        NativeUI.mountView(containerHandleJSON, moduleName, propertiesJSON)
-
-    @JvmStatic
-    fun updateView(handleJSON: String, propertiesJSON: String) =
-        NativeUI.updateView(handleJSON, propertiesJSON)
-
-    @JvmStatic
-    fun unmountView(handleJSON: String) = NativeUI.unmountView(handleJSON)
-
-    @JvmStatic
     external fun nativeDispatchHookEvent(token: String, payloadJSON: String)
 
     @JvmStatic
@@ -193,7 +165,6 @@ object NativeBridge {
         NativeJava.releaseAll()
         Handler(Looper.getMainLooper()).post {
             NativeFabric.unmountAll()
-            NativeUI.unmountAll()
         }
     }
 

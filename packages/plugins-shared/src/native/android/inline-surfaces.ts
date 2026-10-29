@@ -152,6 +152,10 @@ export function createInlineSurfaces(
 			}
 
 			void remount(group, index, host, slot.surfaceId).then(() => {
+				if (disposed || !entry.groups.includes(group)) return;
+
+				active.refresh(entry.rendered);
+
 				if (remounts > 1) {
 					watchForBlank(entry, group, index, remounts - 1);
 				}

@@ -5,14 +5,12 @@ import type {
 	NativePluginRuntimeBridge,
 	NativePlatformBridge,
 	NativeSerializableObject,
+	NativeHandle,
 	NativeJavaArgument,
 	NativeJavaHandle,
 	NativeJavaHookToken,
 	NativeJavaReference,
 	NativeJavaValue,
-	NativeUIHandle,
-	NativeUIQuery,
-	NativeViewSnapshotNode,
 } from '@unbound-app/types';
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 
@@ -71,7 +69,6 @@ const unmounted: NativeFabricSurface[] = [];
 const asynchronouslyUnmounted: NativeFabricSurface[] = [];
 const cancelled: string[] = [];
 const removedSubscriptions: string[] = [];
-const uiUnmounted: NativeUIHandle[] = [];
 const javaInvokeArguments: (NativeJavaArgument[] | undefined)[] = [];
 const javaReleased: NativeJavaHandle[] = [];
 const javaHandle: NativeJavaHandle = Object.create(null);
@@ -82,7 +79,7 @@ const javaInvokeFailure = Object.assign(new Error('No method noSuchMethod'), {
 	code: 'NATIVE_BRIDGE_ERROR',
 });
 let javaInvokeFails = false;
-const nativeHandle: NativeUIHandle = Object.create(null);
+const nativeHandle: NativeHandle = Object.create(null);
 const capabilities = [
 	'native.objc.classes',
 	'native.objc.invoke',
@@ -109,9 +106,6 @@ const capabilities = [
 	'native.fabric.async',
 	'native.debug.evaluations',
 	'native.debug.environment',
-	'native.ui.lookup',
-	'native.ui.mount',
-	'native.ui.layout',
 ] as const;
 
 function cancellable<T>(promise: Promise<T>, name: string) {
@@ -180,20 +174,6 @@ const bridge: NativePluginBridge = {
 			remove: () => removedSubscriptions.push(event),
 		}),
 	},
-	ui: {
-		lookup: () => cancellable(Promise.resolve([]), 'ui-lookup'),
-		snapshot: () => cancellable(Promise.resolve({ generation: 1, nodes: [] }), 'ui-snapshot'),
-		mount: () => cancellable(Promise.resolve(nativeHandle), 'ui-mount'),
-		update: () => cancellable(Promise.resolve(), 'ui-update'),
-		setFrame: () => cancellable(Promise.resolve(), 'ui-frame'),
-		measure: () =>
-			cancellable(Promise.resolve({ x: 0, y: 0, width: 0, height: 0 }), 'ui-measure'),
-		unmount: (handle: NativeUIHandle) => {
-			uiUnmounted.push(handle);
-
-			return cancellable(Promise.resolve(), 'ui-unmount');
-		},
-	},
 	java: {
 		getClass: () => nativeHandle,
 		className: () => ({ type: 'string', value: 'java.lang.Class' }),
@@ -250,7 +230,6 @@ const iosSpecificBridges = {
 };
 const genericBridges = {
 	runtime: bridge.runtime,
-	ui: bridge.ui,
 };
 
 const manifest: AddonManifest = {
@@ -313,7 +292,6 @@ afterEach(() => {
 	asynchronouslyUnmounted.length = 0;
 	cancelled.length = 0;
 	removedSubscriptions.length = 0;
-	uiUnmounted.length = 0;
 	fluxSubscriptions.clear();
 });
 
@@ -529,138 +507,6 @@ describe('native plugin capability scopes', () => {
 		expect(fluxSubscriptions.has('MESSAGE_CREATE')).toBe(false);
 		context.dispose();
 	});
-
-	test('gates semantic UI operations by capability', () => {
-		const context = createPluginContext({ ...manifest, capabilities: [] });
-
-		expect(() => context.native.ui.lookup({ role: 'message', root: nativeHandle })).toThrow(
-			NativePluginCapabilityError,
-		);
-	});
-
-	test('unmounts semantic UI surfaces when a plugin context stops', async () => {
-		Object.assign(nativePlatformBridge.device, { platform: 'android' });
-		Object.assign(nativePlatformBridge, { platform: 'android' });
-		const context = createPluginContext({
-			...manifest,
-			capabilities: ['native.ui.mount'],
-		});
-		const handle = await context.native.ui.mount(nativeHandle, 'MessagePreview', {
-			id: 'message-1',
-		});
-
-		context.dispose();
-		await Promise.resolve();
-		expect(uiUnmounted).toEqual([handle]);
-	});
-
-	test('adapts iOS snapshots and Fabric operations to the semantic UI bridge', async () => {
-		const root: NativeUIHandle = Object.create(null);
-		const textView: NativeUIHandle = Object.create(null);
-		const snapshotNodes: NativeViewSnapshotNode[] = [
-			{
-				view: root,
-				parent: -1,
-				depth: 0,
-				className: 'UIView',
-				frame: { x: 0, y: 0, width: 300, height: 200 },
-				text: null,
-				visible: true,
-			},
-			{
-				view: textView,
-				parent: 0,
-				depth: 1,
-				className: 'UILabel',
-				frame: { x: 8, y: 10, width: 100, height: 24 },
-				text: 'Ready',
-				visible: true,
-			},
-		];
-		const fabricOperations: string[] = [];
-
-		Object.assign(bridge, {
-			ui: undefined,
-			objc: {
-				...bridge.objc,
-				snapshot: () => cancellable(Promise.resolve(snapshotNodes), 'ios-snapshot'),
-			},
-			fabric: {
-				...bridge.fabric,
-				mountAsync: () => {
-					fabricOperations.push('mount');
-
-					return cancellable(Promise.resolve(nativeHandle), 'ios-mount');
-				},
-				updateAsync: () => {
-					fabricOperations.push('update');
-
-					return cancellable(Promise.resolve(), 'ios-update');
-				},
-				setFrameAsync: () => {
-					fabricOperations.push('setFrame');
-
-					return cancellable(Promise.resolve(), 'ios-setFrame');
-				},
-				measureAsync: () => {
-					fabricOperations.push('measure');
-
-					return cancellable(
-						Promise.resolve({ x: 8, y: 10, width: 100, height: 24 }),
-						'ios-measure',
-					);
-				},
-				unmountAsync: (surface: NativeFabricSurface) => {
-					fabricOperations.push('unmount');
-					asynchronouslyUnmounted.push(surface);
-
-					return cancellable(Promise.resolve(), 'ios-unmount');
-				},
-			},
-		});
-
-		const context = createPluginContext({
-			...manifest,
-			platformCapabilities: {
-				ios: ['native.objc.snapshot', 'native.fabric.async'],
-			},
-		});
-		const query = { role: 'text', root, attributes: { text: 'Ready' }, maxResults: 1 };
-		const snapshot = await context.native.ui.snapshot(query);
-
-		expect(snapshot.nodes).toEqual([
-			{
-				id: textView,
-				parent: root,
-				role: 'text',
-				frame: { x: 8, y: 10, width: 100, height: 24 },
-				attributes: {
-					className: 'UILabel',
-					simpleClassName: 'UILabel',
-					text: 'Ready',
-					visible: true,
-				},
-			},
-		]);
-		expect(await context.native.ui.lookup(query)).toEqual([textView]);
-
-		const surface = await context.native.ui.mount(root, 'MessageCard', { title: 'Test' });
-
-		await context.native.ui.update(surface, { title: 'Updated' });
-		await context.native.ui.setFrame(surface, { x: 8, y: 10, width: 100, height: 24 });
-		expect(await context.native.ui.measure(surface)).toEqual({
-			x: 8,
-			y: 10,
-			width: 100,
-			height: 24,
-		});
-
-		context.dispose();
-		await Promise.resolve();
-
-		expect(fabricOperations).toEqual(['mount', 'update', 'setFrame', 'measure', 'unmount']);
-		expect(asynchronouslyUnmounted).toEqual([nativeHandle]);
-	});
 });
 
 describe('native plugin negotiation', () => {
@@ -668,7 +514,7 @@ describe('native plugin negotiation', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });
 		Object.assign(bridge, {
-			capabilities: ['native.runtime.events', 'native.ui.lookup'],
+			capabilities: ['native.runtime.events'],
 			objc: undefined,
 			ffi: undefined,
 			fabric: undefined,
@@ -693,102 +539,13 @@ describe('native plugin negotiation', () => {
 		Object.assign(bridge, iosSpecificBridges);
 	});
 
-	test('supports an Android bridge with only bounded UI lookup operations', async () => {
-		Object.assign(nativePlatformBridge.device, { platform: 'android' });
-		Object.assign(nativePlatformBridge, { platform: 'android' });
-		Object.assign(bridge, {
-			capabilities: ['native.ui.lookup'],
-			objc: undefined,
-			ffi: undefined,
-			fabric: undefined,
-			runtime: undefined,
-			ui: {
-				lookup: () => cancellable(Promise.resolve([nativeHandle]), 'ui-lookup'),
-				snapshot: () =>
-					cancellable(Promise.resolve({ generation: 7, nodes: [] }), 'ui-snapshot'),
-			},
-		});
-
-		const context = createPluginContext({
-			...manifest,
-			platformCapabilities: { android: ['native.ui.lookup'] },
-		});
-
-		expect(await context.native.ui.lookup({ role: 'text', root: nativeHandle })).toEqual([
-			nativeHandle,
-		]);
-		expect(await context.native.ui.snapshot({ role: 'text', root: nativeHandle })).toEqual({
-			generation: 7,
-			nodes: [],
-		});
-		expect(() => context.native.runtime.subscribe('ui.changed', () => undefined)).toThrow(
-			NativePluginCapabilityError,
-		);
-		context.dispose();
-	});
-
-	test('allows rootless bounded UI queries on Android and keeps roots mandatory on iOS', async () => {
-		const androidQueries: NativeUIQuery[] = [];
-
-		Object.assign(nativePlatformBridge.device, { platform: 'android' });
-		Object.assign(nativePlatformBridge, { platform: 'android' });
-		Object.assign(bridge, {
-			capabilities: ['native.ui.lookup'],
-			ui: {
-				...genericBridges.ui,
-				lookup: (query: NativeUIQuery) => {
-					androidQueries.push(query);
-
-					return cancellable(Promise.resolve([nativeHandle]), 'ui-lookup');
-				},
-				snapshot: (query: NativeUIQuery) => {
-					androidQueries.push(query);
-
-					return cancellable(
-						Promise.resolve({ generation: 9, nodes: [] }),
-						'ui-snapshot',
-					);
-				},
-			},
-		});
-
-		const androidContext = createPluginContext({
-			...manifest,
-			platformCapabilities: { android: ['native.ui.lookup'] },
-		});
-
-		expect(await androidContext.native.ui.lookup({ role: 'text' })).toEqual([nativeHandle]);
-		expect(await androidContext.native.ui.snapshot({ role: 'text' })).toEqual({
-			generation: 9,
-			nodes: [],
-		});
-		expect(androidQueries).toEqual([{ role: 'text' }, { role: 'text' }]);
-		androidContext.dispose();
-
-		Object.assign(nativePlatformBridge.device, { platform: 'ios' });
-		Object.assign(nativePlatformBridge, { platform: 'ios' });
-		Object.assign(bridge, {
-			capabilities: ['native.objc.snapshot'],
-		});
-
-		const iosContext = createPluginContext({
-			...manifest,
-			capabilities: ['native.objc.snapshot'],
-		});
-
-		expect(() => iosContext.native.ui.lookup({ role: 'text' })).toThrow(
-			'iOS native UI queries require a root handle.',
-		);
-		iosContext.dispose();
-	});
-
 	test('selects capabilities for the current platform', () => {
 		const context = createPluginContext({
 			...manifest,
 			capabilities: ['native.runtime.events'],
 			platformCapabilities: {
 				ios: ['native.objc.classes'],
-				android: ['native.ui.lookup'],
+				android: ['native.java.classes'],
 			},
 		});
 
@@ -799,19 +556,22 @@ describe('native plugin negotiation', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });
 		Object.assign(bridge, {
-			capabilities: ['native.runtime.events', 'native.ui.lookup'],
+			capabilities: ['native.runtime.events', 'native.java.classes'],
 		});
 		const androidContext = createPluginContext({
 			...manifest,
 			capabilities: ['native.runtime.events'],
 			platformCapabilities: {
 				ios: ['native.objc.classes'],
-				android: ['native.ui.lookup'],
+				android: ['native.java.classes'],
 			},
 		});
 
 		expect(androidContext.platform).toBe('android');
-		expect(androidContext.capabilities).toEqual(['native.runtime.events', 'native.ui.lookup']);
+		expect(androidContext.capabilities).toEqual([
+			'native.runtime.events',
+			'native.java.classes',
+		]);
 		androidContext.dispose();
 	});
 
@@ -819,7 +579,7 @@ describe('native plugin negotiation', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });
 		Object.assign(bridge, {
-			capabilities: ['native.runtime.events', 'native.ui.lookup'],
+			capabilities: ['native.runtime.events'],
 		});
 
 		expect(() =>
@@ -1036,7 +796,7 @@ describe('native plugin negotiation', () => {
 	test('rejects a plugin that does not support the host platform', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });
-		Object.assign(bridge, { capabilities: ['native.runtime.events', 'native.ui.lookup'] });
+		Object.assign(bridge, { capabilities: ['native.runtime.events', 'native.java.classes'] });
 
 		const build = () =>
 			createPluginContext({
@@ -1069,7 +829,7 @@ describe('native plugin negotiation', () => {
 			createPluginContext({
 				...manifest,
 				platformCapabilities: {
-					android: ['native.ui.lookup'],
+					android: ['native.java.classes'],
 				},
 			}),
 		).toThrow(NativePluginPlatformError);

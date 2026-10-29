@@ -112,7 +112,7 @@ func TestHostFunctionsOnlyComeFromTheGuardedFactory(t *testing.T) {
 func TestAndroidKotlinLeavesBridgeLimitsToCore(t *testing.T) {
 	root := loaderRoot(t)
 	directory := filepath.Join(root, "android", "module", "src", "main", "kotlin", "app", "unbound", "android")
-	for _, name := range []string{"NativeJava.kt", "NativeHooks.kt", "NativeFabric.kt", "NativeUI.kt", "NativeBridge.kt"} {
+	for _, name := range []string{"NativeJava.kt", "NativeHooks.kt", "NativeFabric.kt", "ViewGeometry.kt", "NativeBridge.kt"} {
 		source, err := os.ReadFile(filepath.Join(directory, name))
 		if err != nil {
 			t.Fatal(err)
