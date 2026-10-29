@@ -2,6 +2,9 @@ export type FakeDiscordUser = {
 	username: string;
 	global_name?: string | null;
 	avatar?: string | null;
+	banner?: string | null;
+	/** The banner they set for a guild alone, served by every member lookup. */
+	member_banner?: string | null;
 };
 
 export type FakeDiscordRequest = {
@@ -78,8 +81,10 @@ export function serveDiscord(
 				username: user?.username ?? `user${id}`,
 				global_name: user?.global_name ?? null,
 				avatar: user?.avatar ?? null,
+				banner: user?.banner ?? null,
 			},
 			roles,
+			banner: user?.member_banner ?? null,
 		});
 	}
 
@@ -119,6 +124,7 @@ export function serveDiscord(
 			username: user.username,
 			global_name: user.global_name ?? null,
 			avatar: user.avatar ?? null,
+			banner: user.banner ?? null,
 		});
 	}
 

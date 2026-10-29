@@ -39,7 +39,7 @@ export async function readTeamMembers(ctx: AppContext): Promise<Map<DiscordId, T
 
 /**
  * @description Replaces the team snapshot with the looked-up candidates' team, and caches each
- * member's Discord profile so they resolve a name and avatar without a site account.
+ * member's Discord profile so they resolve a name, avatar and banners without a site account.
  * @param ctx The application context.
  * @param team Every looked-up guild member holding a team role.
  * @returns Resolves once the snapshot and profiles are written together.
@@ -77,11 +77,13 @@ export async function writeTeamSnapshot(ctx: AppContext, team: TeamEntry[]): Pro
 		await tx
 			.insert(discordProfile)
 			.values(
-				team.map(({ member: { user } }) => ({
-					discordId: user.id,
-					username: user.username,
-					globalName: user.globalName,
-					avatarHash: user.avatarHash,
+				team.map(({ member }) => ({
+					discordId: member.user.id,
+					username: member.user.username,
+					globalName: member.user.globalName,
+					avatarHash: member.user.avatarHash,
+					bannerHash: member.user.bannerHash,
+					guildBannerHash: member.bannerHash,
 					fetchedAt: now,
 				})),
 			)
@@ -91,6 +93,8 @@ export async function writeTeamSnapshot(ctx: AppContext, team: TeamEntry[]): Pro
 					username: sql`excluded.username`,
 					globalName: sql`excluded.global_name`,
 					avatarHash: sql`excluded.avatar_hash`,
+					bannerHash: sql`excluded.banner_hash`,
+					guildBannerHash: sql`excluded.guild_banner_hash`,
 					fetchedAt: sql`excluded.fetched_at`,
 				},
 			});

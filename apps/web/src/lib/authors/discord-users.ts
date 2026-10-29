@@ -11,6 +11,7 @@ export type DiscordUser = {
 	username: string;
 	globalName: string | null;
 	avatarHash: string | null;
+	bannerHash: string | null;
 };
 
 export type DiscordLookup =
@@ -35,6 +36,7 @@ const discordUserSchema = z.object({
 		.nullish()
 		.transform((value) => value || null),
 	avatar: z.string().nullish(),
+	banner: z.string().nullish(),
 });
 
 const rateLimitSchema = z.object({ retry_after: z.number().nonnegative() });
@@ -106,6 +108,7 @@ export async function fetchDiscordUser(
 			username: parsed.data.username,
 			globalName: parsed.data.global_name ?? null,
 			avatarHash: parsed.data.avatar ?? null,
+			bannerHash: parsed.data.banner ?? null,
 		},
 	};
 }

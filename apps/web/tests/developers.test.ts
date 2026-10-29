@@ -35,8 +35,8 @@ const ZOE = '100000000000000009';
 
 const discord = serveDiscord(
 	{
-		[ALICE]: { username: 'alice', global_name: 'Alice' },
-		[ZED]: { username: 'zed', global_name: 'Zed', avatar: 'z1' },
+		[ALICE]: { username: 'alice', global_name: 'Alice', banner: 'a1', member_banner: 'ag1' },
+		[ZED]: { username: 'zed', global_name: 'Zed', avatar: 'z1', banner: 'a_z2' },
 		[CARL]: { username: 'carl' },
 		[AARON]: { username: 'aaron', global_name: 'Aaron' },
 		[ZOE]: { username: 'zoe', global_name: 'Zoe' },
@@ -235,5 +235,15 @@ describe('getDeveloper', () => {
 	test('finds nothing for an id only a delisted addon credits, or for 0', async () => {
 		expect(await getDeveloper(ctx, DANA)).toBeUndefined();
 		expect(await getDeveloper(ctx, '0')).toBeUndefined();
+	});
+
+	test('shows the guild banner, else the profile banner, else none', async () => {
+		expect((await getDeveloper(ctx, ALICE))?.bannerUrl).toBe(
+			`https://cdn.discordapp.com/guilds/${GUILD}/users/${ALICE}/banners/ag1.png?size=1024`,
+		);
+		expect((await getDeveloper(ctx, ZED))?.bannerUrl).toBe(
+			`https://cdn.discordapp.com/banners/${ZED}/a_z2.gif?size=1024`,
+		);
+		expect((await getDeveloper(ctx, CARL))?.bannerUrl).toBeNull();
 	});
 });
