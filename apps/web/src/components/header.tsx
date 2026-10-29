@@ -51,12 +51,7 @@ function Header() {
 						<Logo className='w-13 h-auto aspect-[474/202] text-foreground' />
 					</Link>
 
-					<Segmented
-						value={pathname}
-						layoutId='header-highlight'
-						tone='header'
-						className='hidden md:flex'
-					>
+					<Segmented value={pathname} tone='header' className='hidden md:flex'>
 						{ROUTES.map((route) => (
 							<SegmentedItem
 								key={route.path}

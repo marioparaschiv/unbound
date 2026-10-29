@@ -1,19 +1,22 @@
 import { Link, createFileRoute, redirect } from '@tanstack/react-router';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { IconUpload } from 'nucleo-micro-bold';
 
 import SubmissionTimeline from '~/components/dashboard/submission-timeline';
 import DashboardSection from '~/components/dashboard/dashboard-section';
 import AttentionList from '~/components/dashboard/attention-list';
+import { dashboardQuery } from '~/queries/dashboard/dashboard';
 import UserIdCard from '~/components/dashboard/user-id-card';
 import AddonList from '~/components/dashboard/addon-list';
 import FirstRun from '~/components/dashboard/first-run';
 import PageHeader from '~/components/page-header';
 import { Button } from '~/components/ui/button';
-import { getDashboard } from '~/lib/publishing';
 
 function DashboardPage() {
 	const { user } = Route.useRouteContext();
-	const { addons, timeline, githubLinked } = Route.useLoaderData();
+	const {
+		data: { addons, timeline, githubLinked },
+	} = useSuspenseQuery(dashboardQuery());
 
 	return (
 		<div className='flex flex-col gap-6 page-frame'>
@@ -62,6 +65,8 @@ export const Route = createFileRoute('/_site/dashboard')({
 
 		return { user: context.session.user };
 	},
-	loader: () => getDashboard(),
+	loader: async ({ context }) => {
+		await context.queryClient.ensureQueryData(dashboardQuery());
+	},
 	component: DashboardPage,
 });

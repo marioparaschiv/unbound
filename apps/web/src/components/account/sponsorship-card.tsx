@@ -1,14 +1,12 @@
 import { IconExternalLink, IconHeart } from 'nucleo-micro-bold';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { accountOverviewQuery } from '~/queries/account/account';
 import type { SponsorOverview } from '~/lib/sponsors/overview';
 import { Button } from '~/components/ui/button';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
-
-type SponsorshipCardProps = {
-	sponsor: SponsorOverview;
-};
 
 type SponsorCtaProps = {
 	url: string | null;
@@ -98,7 +96,9 @@ function SponsorshipDetails({ sponsor, sponsorship }: SponsorshipDetailsProps) {
 	);
 }
 
-function SponsorshipCard({ sponsor }: SponsorshipCardProps) {
+function SponsorshipCard() {
+	const { sponsor } = useSuspenseQuery(accountOverviewQuery()).data;
+
 	return (
 		<Card className='gap-4'>
 			<CardHeader>

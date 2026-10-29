@@ -5,14 +5,17 @@ import { useState } from 'react';
 
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
 import { Button } from '~/components/ui/button';
+import Spinner from '~/components/ui/spinner';
 
 type SearchFormProps = {
 	search: string;
 	placeholder: string;
 	onSearch: (search: string) => void;
+	/** Whether the list behind the form still shows the last search while the new one loads. */
+	pending?: boolean;
 };
 
-function SearchForm({ search, placeholder, onSearch }: SearchFormProps) {
+function SearchForm({ search, placeholder, onSearch, pending = false }: SearchFormProps) {
 	const [value, setValue] = useState(search);
 
 	function submit(event: FormEvent<HTMLFormElement>) {
@@ -39,6 +42,11 @@ function SearchForm({ search, placeholder, onSearch }: SearchFormProps) {
 					value={value}
 					onChange={(event) => setValue(event.target.value)}
 				/>
+				{pending ? (
+					<InputGroupAddon align='inline-end'>
+						<Spinner />
+					</InputGroupAddon>
+				) : null}
 			</InputGroup>
 			<Button type='submit' variant='secondary'>
 				Search

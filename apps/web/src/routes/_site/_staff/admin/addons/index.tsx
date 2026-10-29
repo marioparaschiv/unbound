@@ -1,10 +1,11 @@
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
 import { adminAddonsSearchSchema } from '@unbound-app/contracts/admin';
+import { useQuery } from '@tanstack/react-query';
 
 import type { AddonFilterValues } from '~/components/admin/addon-filters';
+import { adminAddonsQuery } from '~/queries/admin-addons/admin-addons';
 import AddonActions from '~/components/admin/addon-actions';
 import AddonFilters from '~/components/admin/addon-filters';
-import { fetchAdminAddons } from '~/lib/admin-functions';
 import AdminTable from '~/components/admin/admin-table';
 import SearchForm from '~/components/admin/search-form';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
@@ -15,12 +16,18 @@ const COLUMNS = ['Addon', 'Latest', 'Owners', 'Status'];
 
 function AddonsPage() {
 	const { user: viewer } = Route.useRouteContext();
-	const { items: addons, next, prev, maintainer } = Route.useLoaderData();
-	const { q, cursor: _cursor, dir: _dir, ...filters } = Route.useSearch();
+	const params = Route.useSearch();
+	const { data, isPlaceholderData } = useQuery(adminAddonsQuery(params));
+	const { q, cursor: _cursor, dir: _dir, ...filters } = params;
 	const search = q ?? '';
 	const navigate = useNavigate({ from: Route.fullPath });
 	const canDelist = hasPermission(viewer.role, { addon: ['delist'] });
 	const canTransfer = hasPermission(viewer.role, { addon: ['transfer'] });
+
+	// The loader filled the cache and a new search keeps the last page, so this holds only while a failure is thrown.
+	if (!data) return null;
+
+	const { items: addons, next, prev, maintainer } = data;
 
 	return (
 		<div className='flex flex-col gap-6'>
@@ -33,6 +40,7 @@ function AddonsPage() {
 				key={search}
 				search={search}
 				placeholder='Search by id or name...'
+				pending={isPlaceholderData}
 				onSearch={(value) => navigate({ search: { ...filters, q: value || undefined } })}
 			/>
 
@@ -48,15 +56,6 @@ function AddonsPage() {
 				noun='addons'
 				next={next}
 				prev={prev}
-				onPageChange={(cursor, dir) =>
-					navigate({
-						search: (current) => ({
-							...current,
-							cursor,
-							dir: dir === 'prev' ? dir : undefined,
-						}),
-					})
-				}
 			>
 				{addons.map((addon) => (
 					<tr key={addon.id} className='hover:bg-muted/30'>
@@ -108,6 +107,11 @@ export const Route = createFileRoute('/_site/_staff/admin/addons/')({
 		}
 	},
 	loaderDeps: ({ search }) => search,
-	loader: ({ deps }) => fetchAdminAddons({ data: deps }),
+	loader: async ({ context, deps, cause }) => {
+		// A search, filter or page change on the page keeps the old page up while the list fetches the new one.
+		if (cause === 'stay') return;
+
+		await context.queryClient.ensureQueryData(adminAddonsQuery(deps));
+	},
 	component: AddonsPage,
 });

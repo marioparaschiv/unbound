@@ -1,15 +1,15 @@
 import type { MaintainerEntry, ModerationEvent, Subject } from '@unbound-app/contracts/admin';
 import type { MaintainerRole } from '@unbound-app/contracts/addons';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { useState, useTransition } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 
+import { moderationEventsQuery } from '~/queries/moderation-events/moderation-events';
 import { formatDateTime } from '~/components/admin/format-date';
 import type { EventTimeline } from '~/lib/moderation-events';
 import getApiErrorMessage from '~/lib/api/error-message';
-import { fetchEvents } from '~/lib/admin-functions';
 import UserAvatar from '~/components/user-avatar';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
@@ -17,7 +17,7 @@ import Text from '~/components/ui/text';
 
 type EventLogProps = {
 	subject: Subject;
-	/** The newest page; older pages load on demand. */
+	/** The newest page, from the subject's admin page; older pages load on demand. */
 	timeline: EventTimeline;
 };
 
@@ -297,24 +297,21 @@ function EventSummary({ event, users }: EventSummaryProps) {
 }
 
 function EventLog({ subject, timeline }: EventLogProps) {
-	const [pages, setPages] = useState([timeline]);
-	const [isLoading, startLoading] = useTransition();
+	const { data, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
+		...moderationEventsQuery(subject),
+		// The subject's page shipped the newest page, so the log starts from it instead of asking again.
+		initialData: { pages: [timeline], pageParams: [undefined] },
+	});
+	const { pages } = data;
 	const events = pages.flatMap((page) => page.items);
 	const users: Users = Object.fromEntries(pages.flatMap((page) => Object.entries(page.users)));
-	const before = pages.at(-1)?.before ?? null;
 
-	function loadOlder() {
-		if (before === null) return;
+	async function loadOlder() {
+		const result = await fetchNextPage();
 
-		startLoading(async () => {
-			try {
-				const page = await fetchEvents({ data: { subject, before } });
-
-				setPages((current) => [...current, page]);
-			} catch (error) {
-				toast.error(getApiErrorMessage(error));
-			}
-		});
+		if (result.isError) {
+			toast.error(getApiErrorMessage(result.error));
+		}
 	}
 
 	if (events.length === 0) {
@@ -357,13 +354,18 @@ function EventLog({ subject, timeline }: EventLogProps) {
 					</li>
 				))}
 			</ol>
-			{before === null ? null : (
+			{hasNextPage ? (
 				<div className='flex justify-center px-(--card-pad) py-3'>
-					<Button variant='outline' size='sm' onClick={loadOlder} disabled={isLoading}>
+					<Button
+						variant='outline'
+						size='sm'
+						onClick={() => void loadOlder()}
+						disabled={isFetchingNextPage}
+					>
 						Load older events
 					</Button>
 				</div>
-			)}
+			) : null}
 		</Card>
 	);
 }

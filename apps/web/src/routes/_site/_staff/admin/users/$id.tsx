@@ -1,14 +1,15 @@
 import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router';
 import { IconArrowLeft, IconBan, IconUserCheck } from 'nucleo-micro-bold';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { formatDate, formatDateTime } from '~/components/admin/format-date';
 import SubmissionHistory from '~/components/admin/submission-history';
+import { adminUserQuery } from '~/queries/admin-users/admin-users';
 import DetailSection from '~/components/admin/detail-section';
 import StatusPill from '~/components/dashboard/status-pill';
 import UserActions from '~/components/admin/user-actions';
 import DetailFact from '~/components/admin/detail-fact';
 import StaffNotes from '~/components/admin/staff-notes';
-import { fetchAdminUser } from '~/lib/admin-functions';
 import EventLog from '~/components/admin/event-log';
 import UserAvatar from '~/components/user-avatar';
 import { hasPermission } from '~/lib/auth/access';
@@ -18,7 +19,15 @@ import Tag from '~/components/tag';
 
 function AdminUserPage() {
 	const { user: viewer } = Route.useRouteContext();
-	const { user, addons, submissions, events, notes } = Route.useLoaderData();
+	const { id } = Route.useParams();
+	const { data: view } = useSuspenseQuery(adminUserQuery(id));
+
+	// A refetch after the user was deleted finds nothing.
+	if (!view) {
+		throw notFound();
+	}
+
+	const { user, addons, submissions, events, notes } = view;
 	const canSetRole = hasPermission(viewer.role, { user: ['set-role'] });
 	const canBan = hasPermission(viewer.role, { user: ['ban'] });
 	const canWriteNotes = hasPermission(viewer.role, { note: ['write'] });
@@ -133,11 +142,7 @@ function AdminUserPage() {
 			</DetailSection>
 
 			<DetailSection title='Moderation log'>
-				<EventLog
-					key={events.items[0]?.id ?? 0}
-					subject={{ type: 'user', id: user.id }}
-					timeline={events}
-				/>
+				<EventLog subject={{ type: 'user', id: user.id }} timeline={events} />
 			</DetailSection>
 		</div>
 	);
@@ -150,8 +155,8 @@ export const Route = createFileRoute('/_site/_staff/admin/users/$id')({
 		}
 	},
 	// `loader` comes before `head` so `head` can infer the loader data's type.
-	loader: async ({ params }) => {
-		const view = await fetchAdminUser({ data: params.id });
+	loader: async ({ context, params }) => {
+		const view = await context.queryClient.ensureQueryData(adminUserQuery(params.id));
 
 		if (!view) {
 			throw notFound();

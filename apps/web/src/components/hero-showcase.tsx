@@ -9,7 +9,17 @@ type HeroShowcaseProps = ComponentProps<'div'> & {
 	delay?: number;
 };
 
-const HERO_SRC = '/img/hero.png';
+const GLOW_SRC = '/img/hero-glow.avif';
+
+const HERO_WIDTHS = [768, 1280, 1600, 2048, 2880];
+
+const HERO_SRC = '/img/hero-1600.avif';
+
+const HERO_SRCSET = HERO_WIDTHS.map((width) => `/img/hero-${width}.avif ${width}w`).join(', ');
+
+// How wide the home page draws the showcase: 130vw - 20px below md, the padded page up to 1600px above it.
+const HERO_SIZES =
+	'(min-width: 1632px) 1600px, (min-width: 768px) calc(100vw - 32px), calc(130vw - 20px)';
 
 /**
  * @description The hero phones over an ambient glow cast in each region's own colour.
@@ -28,12 +38,13 @@ function HeroShowcase({
 			{/* Only the phones move, so they rise from under the fade, which holds still. */}
 			<div className='relative animate-reveal' style={revealStyle('showcase', delay)}>
 				{/* A blurred copy of the image averages each region's colour, so every phone glows in its own hue. */}
+				{/* The blur is baked in with a quarter-width margin for its spread: a live CSS blur this wide stalls the page as the reveal ends. */}
 				<img
-					src={HERO_SRC}
+					src={GLOW_SRC}
 					alt=''
 					aria-hidden
 					draggable={false}
-					className='absolute inset-0 w-full translate-y-[4%] scale-[1.04] opacity-30 blur-[48px] md:blur-[100px] brightness-140 saturate-130 pointer-events-none select-none'
+					className='absolute -top-1/3 -left-1/4 w-[150%] max-w-none opacity-30 pointer-events-none select-none'
 				/>
 				{/* An underglow in the accent ties the phones to it; a gradient, because drop-shadow on the 2880px image is costly to scroll. */}
 				<div
@@ -43,6 +54,8 @@ function HeroShowcase({
 				{/* High priority makes the server render a preload in the head, so the image is ready when the phones slide in. */}
 				<img
 					src={HERO_SRC}
+					srcSet={HERO_SRCSET}
+					sizes={HERO_SIZES}
 					alt={alt}
 					loading='eager'
 					fetchPriority='high'

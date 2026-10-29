@@ -22,6 +22,7 @@ export const Route = createFileRoute('/_site/plugins')({
 	head: () => ({ meta: [{ title: 'Unbound | Plugins' }] }),
 	validateSearch: marketplaceSearchSchema,
 	loaderDeps: ({ search }) => search,
-	loader: ({ context, deps }) => prefetchListing(context.queryClient, 'plugin', deps),
+	loader: ({ context, deps, cause }) =>
+		prefetchListing(context.queryClient, 'plugin', deps, cause),
 	component: PluginsPage,
 });

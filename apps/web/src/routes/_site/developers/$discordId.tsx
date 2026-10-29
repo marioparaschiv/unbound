@@ -1,7 +1,6 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
-import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
 import { IconBox, IconFaceNeutral } from 'nucleo-micro-bold';
-import { createServerFn } from '@tanstack/react-start';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
 import {
 	Empty,
@@ -11,6 +10,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from '~/components/ui/empty';
+import { developerQuery } from '~/queries/developers/developers';
 import type { IdentifiedAuthor } from '~/lib/authors/resolve';
 import TEAM_GROUPS from '~/components/team/team-groups';
 import type { CssVariables } from '~/lib/css-variables';
@@ -19,20 +19,14 @@ import UserAvatar from '~/components/user-avatar';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
 import UserBadge from '~/components/user-badge';
-import { getDeveloper } from '~/lib/developers';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
-import app from '~/lib/app';
 
 type DeveloperDetailsProps = {
 	author: IdentifiedAuthor;
 };
 
 const GRID_STYLE: CssVariables = { '--col-width': '300px' };
-
-const fetchDeveloper = createServerFn({ method: 'GET' })
-	.validator(addonAuthorSchema.shape.id)
-	.handler(async ({ data }) => (await getDeveloper(app, data)) ?? null);
 
 function DeveloperDetails({ author }: DeveloperDetailsProps) {
 	switch (author.kind) {
@@ -51,7 +45,15 @@ function DeveloperDetails({ author }: DeveloperDetailsProps) {
 }
 
 function DeveloperPage() {
-	const { author, addons, group } = Route.useLoaderData();
+	const { discordId } = Route.useParams();
+	const { data: developer } = useSuspenseQuery(developerQuery(discordId));
+
+	// A refetch can find them gone from the team and every listing since the page loaded.
+	if (!developer) {
+		throw notFound();
+	}
+
+	const { author, addons, group } = developer;
 
 	return (
 		<div className='flex flex-col flex-1 gap-8 page-frame'>
@@ -131,9 +133,10 @@ function DeveloperNotFound() {
 
 export const Route = createFileRoute('/_site/developers/$discordId')({
 	// `loader` comes before `head` so `head` can infer the loader data's type.
-	loader: async ({ params }) => {
-		const parsed = addonAuthorSchema.shape.id.safeParse(params.discordId);
-		const developer = parsed.success ? await fetchDeveloper({ data: parsed.data }) : null;
+	loader: async ({ context, params }) => {
+		const developer = await context.queryClient.ensureQueryData(
+			developerQuery(params.discordId),
+		);
 
 		if (!developer) {
 			throw notFound();

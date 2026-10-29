@@ -40,6 +40,9 @@ export function getRouter() {
 		context: { queryClient },
 		parseSearch,
 		stringifySearch,
+		// Hovering or focusing a link runs its loaders early; the query cache, not the router, decides what is fresh.
+		defaultPreload: 'intent',
+		defaultPreloadStaleTime: 0,
 	});
 
 	// Streams what loaders prefetch into the HTML, hydrates it into the client's cache, and provides the client.

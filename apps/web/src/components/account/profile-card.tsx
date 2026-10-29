@@ -1,14 +1,13 @@
-import { useNavigate, useRouter } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
+import { useRouter } from '@tanstack/react-router';
 import { IconRectLogout } from 'nucleo-micro-bold';
-import { useTransition } from 'react';
 import { toast } from 'sonner';
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import getAuthErrorMessage from '~/lib/auth/error-message';
+import { signOutMutation } from '~/queries/account/session';
 import type { SessionUser } from '~/lib/auth/session';
 import UserAvatar from '~/components/user-avatar';
 import { Button } from '~/components/ui/button';
-import authClient from '~/lib/auth/client';
 import Text from '~/components/ui/text';
 
 type ProfileCardProps = {
@@ -17,22 +16,10 @@ type ProfileCardProps = {
 
 function ProfileCard({ user }: ProfileCardProps) {
 	const router = useRouter();
-	const navigate = useNavigate();
-	const [isPending, startTransition] = useTransition();
+	const { mutate, isPending } = useMutation(signOutMutation(router, '/'));
 
 	function signOut() {
-		startTransition(async () => {
-			const { error } = await authClient.signOut();
-
-			if (error) {
-				toast.error(getAuthErrorMessage(error));
-
-				return;
-			}
-
-			await navigate({ to: '/' });
-			await router.invalidate();
-		});
+		mutate(undefined, { onError: (error) => toast.error(error.message) });
 	}
 
 	return (

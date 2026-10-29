@@ -385,7 +385,7 @@ only translate and shadow change, so a press never relayouts its neighbours. */
 		animation: none;
 	}
 
-	/* Beats the inline styles motion writes, so scroll reveals show their content from the start. */
+	/* Beats the hidden inline styles Reveal writes, so scroll reveals show their content from the start. */
 	[data-reveal] {
 		opacity: 1 !important;
 		filter: none !important;

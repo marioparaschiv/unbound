@@ -1,6 +1,5 @@
 import type { Submission } from '@unbound-app/contracts/publish';
 import { IconRefresh, IconUpload } from 'nucleo-micro-bold';
-import { useRouter } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -13,7 +12,9 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '~/components/ui/dialog';
+import { repositoryAddonsQuery } from '~/queries/submissions/submissions';
 import type { PendingSource, SubmitIntent } from '~/lib/dashboard';
+import usePrefetchIntent from '~/queries/use-prefetch-intent';
 import SubmitForm from '~/components/submit/submit-form';
 import { Button } from '~/components/ui/button';
 
@@ -53,20 +54,22 @@ function SubmitDialog({
 	source,
 	variant = 'default',
 }: SubmitDialogProps) {
-	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const copy = INTENTS[intent];
+	// The form reads the last submission's repository as it opens, the slowest thing the dialog waits on.
+	const prefetch = usePrefetchIntent(
+		repositoryAddonsQuery(source && githubLinked ? { repository: source.repository } : null),
+	);
 
-	async function handleSubmitted(submitted: Submission) {
+	function handleSubmitted(submitted: Submission) {
 		setOpen(false);
 		toast.success(`Submitted ${submitted.addonId} ${submitted.version} for review`);
-		await router.invalidate();
 	}
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button variant={variant} size='sm'>
+				<Button variant={variant} size='sm' {...prefetch}>
 					{copy.icon}
 					{copy.label}
 				</Button>

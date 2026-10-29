@@ -1,6 +1,6 @@
 import { IconMagnifierMinus, IconPalette, IconPlug, IconPlus, IconXmark } from 'nucleo-micro-bold';
-import { Link, useRouteContext, useRouterState } from '@tanstack/react-router';
-import { useSuspenseInfiniteQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
+import { Link, useRouteContext } from '@tanstack/react-router';
 import type { AddonSort } from '@unbound-app/contracts/addons';
 import debounce from '@unbound-app/utils/debounce';
 import type { ComponentType } from 'react';
@@ -88,11 +88,15 @@ function SubmitButton() {
 
 function AddonResults({ type, search, onClearFilters }: AddonResultsProps) {
 	const copy = COPY[type];
-	const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useSuspenseInfiniteQuery(
-		listingQuery(type, search),
-	);
-	// A new search or filter keeps the old cards up, dimmed, until the loader has its results.
-	const loading = useRouterState({ select: (state) => state.status === 'pending' });
+	// A new search or filter keeps the old cards up, dimmed, until its results arrive.
+	const { data, isPlaceholderData, fetchNextPage, hasNextPage, isFetchingNextPage } =
+		useInfiniteQuery({ ...listingQuery(type, search), placeholderData: keepPreviousData });
+
+	// The route loader fills the first search's cache, and every later search has the previous results.
+	if (!data) {
+		return <Spinner className='m-auto size-6 text-muted-foreground' />;
+	}
+
 	const addons = data.pages.flatMap((page) => page.addons);
 	// The newest page staggers in from its own first card rather than from the top of the grid.
 	const batchStart = addons.length - (data.pages.at(-1)?.addons.length ?? 0);
@@ -149,8 +153,11 @@ function AddonResults({ type, search, onClearFilters }: AddonResultsProps) {
 		<>
 			<div
 				style={GRID_STYLE}
-				aria-busy={loading}
-				className={cn('transition-opacity fill-grid', loading ? 'opacity-60' : null)}
+				aria-busy={isPlaceholderData}
+				className={cn(
+					'transition-opacity fill-grid',
+					isPlaceholderData ? 'opacity-60' : null,
+				)}
 			>
 				{addons.map((addon, index) => (
 					<AddonCard
@@ -168,7 +175,7 @@ function AddonResults({ type, search, onClearFilters }: AddonResultsProps) {
 					<Button
 						variant='outline'
 						onClick={() => void loadMore()}
-						disabled={isFetchingNextPage}
+						disabled={isFetchingNextPage || isPlaceholderData}
 					>
 						{isFetchingNextPage ? <Spinner /> : null}
 						Load More

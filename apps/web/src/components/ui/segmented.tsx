@@ -1,7 +1,6 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useLayoutEffect, useRef, useState } from 'react';
 import { Slot, Slottable } from '@radix-ui/react-slot';
-import type { ComponentProps } from 'react';
-import { motion } from 'motion/react';
+import type { ComponentProps, RefObject } from 'react';
 
 import cn from '~/lib/cn';
 
@@ -10,13 +9,13 @@ type SegmentedTone = 'card' | 'header';
 type SegmentedContextValue = {
 	active: string | null;
 	highlighted: string | null;
-	layoutId: string;
 	setHovered: (value: string | null) => void;
+	/** Where the pill was as it left an item, for one mounting in the same commit to slide from. */
+	lastPill: RefObject<DOMRect | null>;
 };
 
 type SegmentedProps = ComponentProps<'nav'> & {
 	value: string | null;
-	layoutId: string;
 	tone?: SegmentedTone;
 };
 
@@ -26,7 +25,10 @@ type SegmentedItemProps = ComponentProps<'a'> & {
 };
 
 // Hovering is frequent, so the pill answers at once with a strong ease-out instead of easing in.
-const PILL_TRANSITION = { duration: 0.25, ease: [0.23, 1, 0.32, 1] } as const;
+const PILL_TIMING: KeyframeAnimationOptions = {
+	duration: 250,
+	easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
+};
 
 // Each tone names its surface and pill tokens, so the header and page variants share every class.
 const TONES: Record<SegmentedTone, string> = {
@@ -46,24 +48,63 @@ function useSegmented() {
 	return context;
 }
 
+// One pill per control, moved by unmounting it from one item and mounting it in the next: it slides from the old
+// box by animating its insets, so it keeps its true size and corner radius throughout.
+function SegmentedPill() {
+	const { lastPill } = useSegmented();
+	const ref = useRef<HTMLSpanElement>(null);
+
+	useLayoutEffect(() => {
+		const pill = ref.current;
+
+		if (!pill) return;
+
+		const from = lastPill.current;
+		const to = pill.getBoundingClientRect();
+
+		if (from) {
+			pill.animate(
+				{
+					top: [`${from.top - to.top}px`, '0px'],
+					right: [`${to.right - from.right}px`, '0px'],
+					bottom: [`${to.bottom - from.bottom}px`, '0px'],
+					left: [`${from.left - to.left}px`, '0px'],
+				},
+				PILL_TIMING,
+			);
+		}
+
+		// Read mid-slide, so an interrupted slide continues from where it is. Only a pill mounting in this same
+		// commit slides from it; a later one appears in place.
+		return () => {
+			lastPill.current = pill.getBoundingClientRect();
+			queueMicrotask(() => {
+				lastPill.current = null;
+			});
+		};
+	}, [lastPill]);
+
+	return (
+		<span
+			ref={ref}
+			data-slot='segmented-pill'
+			className='-z-10 absolute inset-0 rounded-inner bg-(--segmented-pill) shadow-key pointer-events-none'
+		/>
+	);
+}
+
 /**
  * @description A capsule of links where one soft pill marks the hovered item, or the active one at rest.
- * @param props The nav's props, the active item's value, the pill's shared layout id and the surface tone.
+ * @param props The nav's props, the active item's value and the surface tone.
  * @returns The segmented control.
  */
-function Segmented({
-	value,
-	layoutId,
-	tone = 'card',
-	className,
-	onMouseLeave,
-	...props
-}: SegmentedProps) {
+function Segmented({ value, tone = 'card', className, onMouseLeave, ...props }: SegmentedProps) {
 	const [hovered, setHovered] = useState<string | null>(null);
+	const lastPill = useRef<DOMRect | null>(null);
 
 	return (
 		<SegmentedContext.Provider
-			value={{ active: value, highlighted: hovered ?? value, layoutId, setHovered }}
+			value={{ active: value, highlighted: hovered ?? value, setHovered, lastPill }}
 		>
 			<nav
 				data-slot='segmented'
@@ -95,7 +136,7 @@ function SegmentedItem({
 	onMouseEnter,
 	...props
 }: SegmentedItemProps) {
-	const { active, highlighted, layoutId, setHovered } = useSegmented();
+	const { active, highlighted, setHovered } = useSegmented();
 	const Component = asChild ? Slot : 'a';
 
 	// Labels sit at z-10 so a sliding pill stays under them, even inside a pressed item scaled into its own layer.
@@ -113,14 +154,7 @@ function SegmentedItem({
 			}}
 			{...props}
 		>
-			{value === highlighted ? (
-				<motion.span
-					data-slot='segmented-pill'
-					layoutId={layoutId}
-					transition={PILL_TRANSITION}
-					className='-z-10 absolute inset-0 rounded-inner bg-(--segmented-pill) shadow-key pointer-events-none'
-				/>
-			) : null}
+			{value === highlighted ? <SegmentedPill /> : null}
 			<Slottable>{children}</Slottable>
 		</Component>
 	);

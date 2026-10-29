@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { IconFaceNeutral } from 'nucleo-micro-bold';
 
 import {
@@ -15,13 +16,20 @@ import VersionHistory from '~/components/addon/version-history';
 import AddonHeader from '~/components/addon/addon-header';
 import AuthorsCard from '~/components/addon/authors-card';
 import DetailsCard from '~/components/addon/details-card';
-import { fetchMarketplaceAddon } from '~/lib/marketplace';
+import { addonQuery } from '~/queries/marketplace/addon';
 import SourceCard from '~/components/addon/source-card';
 import { Button } from '~/components/ui/button';
 import Markdown from '~/components/markdown';
 
 function AddonPage() {
-	const addon = Route.useLoaderData();
+	const { id } = Route.useParams();
+	const { data: addon } = useSuspenseQuery(addonQuery(id));
+
+	// A refetch can find the addon delisted since the page loaded.
+	if (!addon) {
+		throw notFound();
+	}
+
 	const { source } = addon;
 
 	return (
@@ -84,8 +92,8 @@ function AddonNotFound() {
 
 export const Route = createFileRoute('/_site/addons/$id')({
 	// `loader` comes before `head` so `head` can infer the loader data's type.
-	loader: async ({ params }) => {
-		const addon = await fetchMarketplaceAddon({ data: params.id });
+	loader: async ({ context, params }) => {
+		const addon = await context.queryClient.ensureQueryData(addonQuery(params.id));
 
 		if (!addon) {
 			throw notFound();
