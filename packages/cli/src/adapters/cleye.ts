@@ -3,7 +3,7 @@ import { CONFIG_FILENAME } from '@unbound-app/contracts/workspace';
 import { command, type Command } from 'cleye';
 import { z } from 'zod';
 
-import { fieldToFlag, isArrayField } from '~/lib/zod-flags';
+import { fieldToFlag, isArrayField, negatedFlags } from '~/lib/zod-flags';
 import { readStdin, isStdinPiped } from '~/lib/stdin';
 import { createContext } from '~/lib/context';
 
@@ -66,6 +66,14 @@ export function toCleyeCommand(definition: CommandDefinition<z.ZodObject<z.ZodRa
 		(parsed) => {
 			const { json, ...flagInput } = parsed.flags;
 			const input: CommandInput = { ...flagInput };
+			const booleans = Object.keys(flags).filter((name) => flags[name]!.type === Boolean);
+			const { off, unmatched } = negatedFlags(parsed.unknownFlags, booleans);
+
+			for (const name of off) input[name] = false;
+
+			for (const name of unmatched) {
+				process.stderr.write(`Ignoring unknown flag --${name}.\n`);
+			}
 
 			for (const name of positionalNames) {
 				input[name] = parsed._[name as keyof typeof parsed._];
