@@ -33,7 +33,8 @@ const Patcher = patcher.createPatcher('my-plugin');
 The instance has four methods:
 
 <ResponseField name='before' type='typeof before'>
-	Adds a `before` patch. Your `defaultOptions` are merged with the options you pass per call, and per-call options win.
+	Adds a `before` patch. Your `defaultOptions` are merged with the options you pass per call, and
+	per-call options win.
 </ResponseField>
 <ResponseField name='after' type='typeof after'>
 	Adds an `after` patch, with the same option merging.
@@ -42,11 +43,13 @@ The instance has four methods:
 	Adds an `instead` patch, with the same option merging.
 </ResponseField>
 <ResponseField name='unpatchAll' type='() => void'>
-	Removes every patch registered under this instance's `caller`. Equivalent to `patcher.unpatchAllByCaller(caller)`.
+	Removes every patch registered under this instance's `caller`. Equivalent to
+	`patcher.unpatchAllByCaller(caller)`.
 </ResponseField>
 
 <Note>
-	Two instances created with the same name share a caller, so calling `unpatchAll` on either one removes the patches of both.
+	Two instances created with the same name share a caller, so calling `unpatchAll` on either one
+	removes the patches of both.
 </Note>
 
 ### The three patch types
@@ -57,32 +60,33 @@ Pick the type by when your code needs to run relative to the original:
 	<Tab title='Before'>
 		Runs *before* the original. Mutate `args`, or return a new array, to change what the original receives. Use it to rewrite inputs.
 
-		```ts
-		Patcher.before(Module, 'method', ({ args }) => {
-			args[0] = 'replaced';
-		});
-		```
-	</Tab>
-	<Tab title='After'>
-		Runs *after* the original and receives its `result`. Return a new value to replace the result, or return nothing to keep it. This is the most common patch type.
+    	```ts
+    	Patcher.before(Module, 'method', ({ args }) => {
+    		args[0] = 'replaced';
+    	});
+    	```
+    </Tab>
+    <Tab title='After'>
+    	Runs *after* the original and receives its `result`. Return a new value to replace the result, or return nothing to keep it. This is the most common patch type.
 
-		```ts
-		Patcher.after(Module, 'method', ({ result }) => {
-			return transform(result);
-		});
-		```
-	</Tab>
-	<Tab title='Instead'>
-		Replaces the original. The original only runs if you call `original` yourself, so you control whether, when, and how it runs.
+    	```ts
+    	Patcher.after(Module, 'method', ({ result }) => {
+    		return transform(result);
+    	});
+    	```
+    </Tab>
+    <Tab title='Instead'>
+    	Replaces the original. The original only runs if you call `original` yourself, so you control whether, when, and how it runs.
 
-		```ts
-		Patcher.instead(Module, 'method', ({ args, original }) => {
-			if (shouldBlock(args)) return;
+    	```ts
+    	Patcher.instead(Module, 'method', ({ args, original }) => {
+    		if (shouldBlock(args)) return;
 
-			return original(...args);
-		});
-		```
-	</Tab>
+    		return original(...args);
+    	});
+    	```
+    </Tab>
+
 </Tabs>
 
 ### Applying a patch
@@ -102,40 +106,65 @@ unpatch();
 	The object (or function) that owns the method.
 </ParamField>
 <ParamField path='method' type='PropOf<parent>' required>
-	The property name of the method on `parent`. The type only accepts keys whose values are functions or constructors.
+	The property name of the method on `parent`. The type only accepts keys whose values are
+	functions or constructors.
 </ParamField>
 <ParamField path='callback' type='PatchCallback' required>
-	Called with a [`PatchContext`](#the-patch-context) each time the patched method runs. It is also called with the same `this` as the patched method.
+	Called with a [`PatchContext`](#the-patch-context) each time the patched method runs. It is also
+	called with the same `this` as the patched method.
 </ParamField>
 <ParamField path='options' type='PatchOptions'>
 	Per-patch [options](#patch-options).
 </ParamField>
 
 <Warning>
-	If `parent[method]` is missing or isn't a function, the call throws `The prop you provided does not exist on the parent object or is not a function.`
+	If `parent[method]` is missing or isn't a function, the call throws `The prop you provided does
+	not exist on the parent object or is not a function.`
 </Warning>
 
 The first patch on a method replaces `parent[method]` with a wrapper function. Later patches on the same method reuse that wrapper. The wrapper copies the original's own properties (except `length`), and its `toString()` returns the original's source.
+
+### Lazy patching
+
+Patch a lazy module handle, not a resolved module. This is the preferred way to patch a Discord module. Pass a handle from a `{ lazy: true }` search as `parent`, and the patch waits for the module instead of loading it:
+
+```ts
+const MessageRowData = metro.findByProps('generateMessageRowData', { lazy: true });
+
+Patcher.after(MessageRowData, 'generateMessageRowData', ({ result }) => transform(result));
+```
+
+- If the module has already loaded, the patch applies at once, as with any other parent.
+- If it has not, nothing loads now. The patch applies while the module initializes, before the Discord code that required it reads the method. A copy Discord takes of the method at import, such as `const { method } = require(...)`, is patched too.
+- The returned function, `unpatchAll`, and stopping your plugin all cancel a patch that is still waiting.
+- Reading any property of the handle, such as `Module.prototype`, still runs the search and loads the module. To patch something nested, wait for the module with [`metro.onModuleLoaded`](/modules/metro#waiting-for-a-module) and patch inside its callback.
+
+A module that never loads costs one cached lookup at `start` and nothing after.
 
 ### The patch context
 
 Every callback receives a context object. All callbacks on the same call share one context, so a `before` patch can store data on it for an `after` patch to read.
 
 <ResponseField name='args' type='Args'>
-	The arguments the method was called with. Mutate it, or return a new array from a `before` patch, to change what the original receives.
+	The arguments the method was called with. Mutate it, or return a new array from a `before`
+	patch, to change what the original receives.
 </ResponseField>
 <ResponseField name='this' type='Self'>
 	The `this` value the method was called with.
 </ResponseField>
 <ResponseField name='result' type='Res | null'>
-	The return value so far. It is `null` until the original or an `instead` patch produces a value, so read it in `after` patches.
+	The return value so far. It is `null` until the original or an `instead` patch produces a value,
+	so read it in `after` patches.
 </ResponseField>
 <ResponseField name='original' type='(...args) => Res'>
-	Calls the unpatched method. It always uses the `this` of the current call, so `original(...args)` keeps the right context. When the patched function is called with `new`, `original` constructs with `new` too.
+	Calls the unpatched method. It always uses the `this` of the current call, so
+	`original(...args)` keeps the right context. When the patched function is called with `new`,
+	`original` constructs with `new` too.
 </ResponseField>
 
 <Note>
-	Calling `original` from a `before` or `after` patch runs the original an extra time. The wrapper still makes its own call.
+	Calling `original` from a `before` or `after` patch runs the original an extra time. The wrapper
+	still makes its own call.
 </Note>
 
 ### The `this` context
@@ -146,51 +175,53 @@ Every callback receives a context object. All callbacks on the same call share o
 	<Tab title='Class Method'>
 		For a method on a class prototype, `this` is the **instance** the method was called on. Read its `props`, `state`, or fields through `ctx.this`.
 
-		```ts
-		Patcher.after(Component.prototype, 'render', ({ this: self, result }) => {
-			// self is the component instance
-			if (self.props.hidden) return null;
-			return result;
-		});
-		```
-	</Tab>
-	<Tab title='Object Method'>
-		For a method on a plain object, `this` is usually that **object**, because `obj.method()` binds `this` to `obj`.
+    	```ts
+    	Patcher.after(Component.prototype, 'render', ({ this: self, result }) => {
+    		// self is the component instance
+    		if (self.props.hidden) return null;
+    		return result;
+    	});
+    	```
+    </Tab>
+    <Tab title='Object Method'>
+    	For a method on a plain object, `this` is usually that **object**, because `obj.method()` binds `this` to `obj`.
 
-		```ts
-		Patcher.before(Store, 'getValue', ({ this: self }) => {
-			// self is typically the Store object
-		});
-		```
-	</Tab>
-	<Tab title='Bound Function'>
-		Some functions are bound to a fixed context ahead of time, either with `.bind(...)` or by being stored as an already-bound reference. For these, `this` is the **value they were bound to**, not the object you accessed the function through. For a standalone or arrow function it can be `undefined`.
+    	```ts
+    	Patcher.before(Store, 'getValue', ({ this: self }) => {
+    		// self is typically the Store object
+    	});
+    	```
+    </Tab>
+    <Tab title='Bound Function'>
+    	Some functions are bound to a fixed context ahead of time, either with `.bind(...)` or by being stored as an already-bound reference. For these, `this` is the **value they were bound to**, not the object you accessed the function through. For a standalone or arrow function it can be `undefined`.
 
-		```ts
-		Patcher.instead(Module, 'handler', ({ args, original, this: self }) => {
-			// self is whatever the function was bound to, which may differ
-			// from Module, or be undefined.
-			return original(...args);
-		});
-		```
-	</Tab>
+    	```ts
+    	Patcher.instead(Module, 'handler', ({ args, original, this: self }) => {
+    		// self is whatever the function was bound to, which may differ
+    		// from Module, or be undefined.
+    		return original(...args);
+    	});
+    	```
+    </Tab>
+
 </Tabs>
 
 ### Return values
 
 A callback can change the call by mutating `ctx` or by returning a value. The wrapper treats the return value differently for each patch type:
 
-| Patch | Return value | Effect |
-| --- | --- | --- |
-| `before` | an array | Replaces `ctx.args` |
-| `before` | anything else | Ignored |
-| `instead` | anything except `undefined` | Becomes `ctx.result` |
-| `after` | anything except `undefined` | Replaces `ctx.result` |
+| Patch     | Return value                | Effect                |
+| --------- | --------------------------- | --------------------- |
+| `before`  | an array                    | Replaces `ctx.args`   |
+| `before`  | anything else               | Ignored               |
+| `instead` | anything except `undefined` | Becomes `ctx.result`  |
+| `after`   | anything except `undefined` | Replaces `ctx.result` |
 
 Returning `undefined` from `instead` or `after` leaves `ctx.result` as it was. To make the call return `undefined`, set `ctx.result = undefined` instead of returning it.
 
 <Warning>
-	If no `instead` patch calls `original` and returns a value, the call returns `null`, the initial value of `ctx.result`. Only use `instead` when you mean to take over the call.
+	If no `instead` patch calls `original` and returns a value, the call returns `null`, the initial
+	value of `ctx.result`. Only use `instead` when you mean to take over the call.
 </Warning>
 
 ### Execution order
@@ -210,8 +241,8 @@ The patcher infers `Args`, `Res`, and `Self` from the target function. If the mo
 ```ts
 // Given getUser(id: number): { name: string; age: number }
 Patcher.after(Module, 'getUser', (ctx) => {
-	ctx.args;   // [id: number]
-	ctx.this;   // typeof Module
+	ctx.args; // [id: number]
+	ctx.this; // typeof Module
 	ctx.result; // { name: string; age: number } | null
 });
 ```
@@ -222,8 +253,8 @@ If you define a callback outside the patch call, type it with `PatchContext<Args
 import { patcher, type PatchContext } from '@unbound-app/api/patcher';
 
 function logUser(ctx: PatchContext<[id: number], { name: string }>) {
-	console.log(ctx.args[0]);   // number
-	console.log(ctx.result);    // { name: string } | null
+	console.log(ctx.args[0]); // number
+	console.log(ctx.result); // { name: string } | null
 }
 
 Patcher.after(Module, 'getUser', logUser);
@@ -234,20 +265,29 @@ Patcher.after(Module, 'getUser', logUser);
 `PatchOptions` can be passed to `createPatcher` as defaults or to a single patch call as the fourth argument.
 
 <ParamField path='caller' type='string'>
-	The name the patch is grouped under. `unpatchAllByCaller` and an instance's `unpatchAll` remove patches by this name.
+	The name the patch is grouped under. `unpatchAllByCaller` and an instance's `unpatchAll` remove
+	patches by this name.
 </ParamField>
 <ParamField path='once' type='boolean'>
-	Removes the patch after its callback runs once. Use it for targets that only exist for one call or one render, such as a child component created fresh on each parent render. See [Temporary patches from a parent](/plugins/react-patching#temporary-patches-from-a-parent).
+	Removes the patch after its callback runs once. Use it for targets that only exist for one call
+	or one render, such as a child component created fresh on each parent render. See [Temporary
+	patches from a parent](/plugins/react-patching#temporary-patches-from-a-parent).
 </ParamField>
 
 ```ts
-Patcher.after(Module, 'method', ({ result }) => {
-	return result;
-}, { once: true });
+Patcher.after(
+	Module,
+	'method',
+	({ result }) => {
+		return result;
+	},
+	{ once: true },
+);
 ```
 
 <Note>
-	A `once` patch is removed only after its callback returns. If the callback throws, the patch stays in place and runs again on the next call.
+	A `once` patch is removed only after its callback returns. If the callback throws, the patch
+	stays in place and runs again on the next call.
 </Note>
 
 ### Patching classes
@@ -304,26 +344,30 @@ export default {
 ```
 
 <Warning>
-	You must call `unpatchAll` in `stop`. Otherwise your patches keep running after the plugin is disabled. If you patched a component's render, also force a re-render so the original UI comes back. See [cleaning up](/plugins/react-patching#cleaning-up).
+	You must call `unpatchAll` in `stop`. Otherwise your patches keep running after the plugin is
+	disabled. If you patched a component's render, also force a re-render so the original UI comes
+	back. See [cleaning up](/plugins/react-patching#cleaning-up).
 </Warning>
 
 There are four ways to remove patches:
 
-| Call | Removes |
-| --- | --- |
-| The function returned by `before`/`after`/`instead` | That one patch |
-| `instance.unpatchAll()` | Every patch under the instance's caller |
-| `patcher.unpatchAllByCaller(caller)` | Every patch under `caller` |
-| `patcher.unpatchAll()` | Every patch, from every caller |
+| Call                                                | Removes                                 |
+| --------------------------------------------------- | --------------------------------------- |
+| The function returned by `before`/`after`/`instead` | That one patch                          |
+| `instance.unpatchAll()`                             | Every patch under the instance's caller |
+| `patcher.unpatchAllByCaller(caller)`                | Every patch under `caller`              |
+| `patcher.unpatchAll()`                              | Every patch, from every caller          |
 
 When the last patch on a method is removed, the original function is written back to `parent[method]` and the method's entry is dropped from `patches`.
 
 <Warning>
-	`patcher.unpatchAll()` removes patches applied by every plugin and by Unbound itself. In a plugin, use your instance's `unpatchAll` or `unpatchAllByCaller` with your own caller name.
+	`patcher.unpatchAll()` removes patches applied by every plugin and by Unbound itself. In a
+	plugin, use your instance's `unpatchAll` or `unpatchAllByCaller` with your own caller name.
 </Warning>
 
 <Tip>
-	If you always use your plugin `id` as the caller name, any code can clean up your patches with `patcher.unpatchAllByCaller(id)`.
+	If you always use your plugin `id` as the caller name, any code can clean up your patches with
+	`patcher.unpatchAllByCaller(id)`.
 </Tip>
 
 ### Inspecting patches
@@ -331,7 +375,8 @@ When the last patch on a method is removed, the original function is written bac
 Use these exports to check what is patched, for debugging and tooling.
 
 <ResponseField name='patches' type='PatchedModule[]'>
-	One entry for every patched method. Each entry has `parent` (a weak reference, read it with `parent.deref()`), `method`, `original`, and `patches`: a record of `Set`s keyed by `PatchType`.
+	One entry for every patched method. Each entry has `parent` (a weak reference, read it with
+	`parent.deref()`), `method`, `original`, and `patches`: a record of `Set`s keyed by `PatchType`.
 </ResponseField>
 <ResponseField name='PatchType' type='enum'>
 	`Before = 0`, `Instead = 1`, `After = 2`. These are the keys of `PatchedModule.patches`.
@@ -347,7 +392,8 @@ const isPatched = Boolean(Module.method[patcher.PATCH_SYMBOL]);
 ```
 
 <Note>
-	The patcher keeps only a weak reference to each parent, so patching an object doesn't keep it in memory. Where `WeakRef` isn't available, it falls back to a strong reference.
+	The patcher keeps only a weak reference to each parent, so patching an object doesn't keep it in
+	memory. Where `WeakRef` isn't available, it falls back to a strong reference.
 </Note>
 
 ### Types
@@ -358,14 +404,14 @@ Import types from the patcher entry point:
 import type { PatchContext, PatchCallback, PatchOptions } from '@unbound-app/api/patcher';
 ```
 
-| Type | Describes |
-| --- | --- |
-| `PatchContext<Args, Res, Self>` | The context object passed to callbacks |
-| `PatchCallback<Args, Res, Self>` | A callback: `(ctx: PatchContext) => any` |
-| `PatchOptions` | `{ once?: boolean; caller?: string }` |
-| `Patch<Args, Res, Self>` | A stored patch: `PatchOptions` plus its `callback` |
-| `PatcherInstance` | The object returned by `createPatcher` |
-| `PatchedModule` | An entry in `patches` |
-| `PatchParent` | Anything that can own a patched method: a function or an object |
-| `PropOf<M>` | The string keys of `M` whose values are functions or constructors |
-| `ParentRef` | The weak reference stored in `PatchedModule.parent` |
+| Type                             | Describes                                                         |
+| -------------------------------- | ----------------------------------------------------------------- |
+| `PatchContext<Args, Res, Self>`  | The context object passed to callbacks                            |
+| `PatchCallback<Args, Res, Self>` | A callback: `(ctx: PatchContext) => any`                          |
+| `PatchOptions`                   | `{ once?: boolean; caller?: string }`                             |
+| `Patch<Args, Res, Self>`         | A stored patch: `PatchOptions` plus its `callback`                |
+| `PatcherInstance`                | The object returned by `createPatcher`                            |
+| `PatchedModule`                  | An entry in `patches`                                             |
+| `PatchParent`                    | Anything that can own a patched method: a function or an object   |
+| `PropOf<M>`                      | The string keys of `M` whose values are functions or constructors |
+| `ParentRef`                      | The weak reference stored in `PatchedModule.parent`               |

@@ -1,30 +1,31 @@
-type ModuleResolver = () => WeakKey | undefined;
+/** What a lazy module proxy stands for, so a patch on the proxy can wait for its module instead of loading it. */
+export type LazyModule = {
+	/** Calls `onLoad` with the proxy's module once it loads, without loading it; returns a function that stops waiting. */
+	wait: (onLoad: (mdl: MetroExport) => void) => () => void;
+	/** Makes `mdl` the proxy's module unless the proxy already resolved, and returns the proxy's module. */
+	adopt: (mdl: MetroExport) => MetroExport;
+};
 
-const lazyModules = new WeakMap<WeakKey, ModuleResolver>();
+const lazyModules = new WeakMap<WeakKey, LazyModule>();
 
 /**
- * @description Records a lazy module proxy with the function that resolves it.
+ * @description Records a lazy module proxy with how to wait for its module.
  * @param proxy The proxy handed to callers.
- * @param resolve Resolves the real module, or `undefined` while it is not loaded.
+ * @param lazy How to wait for the proxy's module and adopt it.
  */
-export function registerLazyModule(proxy: WeakKey, resolve: ModuleResolver): void {
-	lazyModules.set(proxy, resolve);
+export function registerLazyModule(proxy: WeakKey, lazy: LazyModule): void {
+	lazyModules.set(proxy, lazy);
 }
 
 /**
- * @description Swaps a lazy module proxy for the module it stands for, so patches made through different proxies share one parent.
- * @template T The value's type.
+ * @description Reads how to wait for a lazy module proxy's module.
  * @param value A lazy module proxy or any other value.
- * @returns The resolved module, or `value` when it is not a lazy proxy or its module is not loaded yet.
+ * @returns The proxy's entry, or `undefined` when `value` is not a lazy proxy.
  */
-export function resolveLazyModule<T>(value: T): T {
-	if (typeof value !== 'object' || value === null) {
-		return value;
-	}
+export function getLazyModule(value: MetroExport): LazyModule | undefined {
+	if (typeof value !== 'object' || value === null) return;
 
-	const resolved = lazyModules.get(value)?.();
-
-	return (resolved ?? value) as T;
+	return lazyModules.get(value);
 }
 
-export default { registerLazyModule, resolveLazyModule };
+export default { registerLazyModule, getLazyModule };

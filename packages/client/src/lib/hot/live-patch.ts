@@ -15,7 +15,6 @@ import {
 import { ORIGINAL, commit, cut, fits, resolve } from '~/lib/hot/instances';
 import { HOOK_FIBERS, reconcile, withAlternates } from '~/lib/hot/refresh';
 import type { Decision, Fiber, FiberType } from '~/lib/hot/refresh';
-import { resolveLazyModule } from '~/api/metro/lazy-registry';
 import { currentAddonAttribution } from '~/api/crash-guard';
 import type { Instance, Layout } from '~/lib/hot/instances';
 import type { AddonAttribution } from '~/api/crash-guard';
@@ -129,7 +128,7 @@ function attributedCallback(callback: PatchCallback, attribution: AddonAttributi
 /**
  * @description Patches a method so mounted components rendering it pick the patch up in place, hooks included.
  * @param phase When the callback runs.
- * @param patchedParent The object holding the method, or a lazy module proxy standing for it.
+ * @param parent The object holding the method.
  * @param method The method's key.
  * @param callback The patch callback.
  * @param options possess's patch options.
@@ -137,12 +136,11 @@ function attributedCallback(callback: PatchCallback, attribution: AddonAttributi
  */
 export function patch(
 	phase: PatchType,
-	patchedParent: PatchParent,
+	parent: PatchParent,
 	method: string,
 	callback: PatchCallback,
 	options: PatchOptions = {},
 ): () => void {
-	const parent = resolveLazyModule(patchedParent);
 	const attribution = currentAddonAttribution();
 	const live: LivePatch = {
 		phase,

@@ -8,7 +8,6 @@ import type {
 	MetroInternalOptions,
 	MetroSearchOptions,
 	MetroStoreOptions,
-	MetroLazySearchOptions,
 	MetroBulkItem,
 	MetroStringFindWithOptions,
 	AnyProps,
@@ -20,10 +19,15 @@ import Filters, { type MetroFilter } from '~/api/metro/filters';
 import { registerLazyModule } from '~/api/metro/lazy-registry';
 import { provideFinders } from '~/api/metro/finders';
 import { blacklist, data } from '~/api/metro/state';
+import { onModuleLoaded } from '~/api/metro/wait';
 import Cache, { ModuleFlags } from '~/lib/cache';
 import { CACHE_KEY } from '~/lib/constants';
 
 const Logger = createLogger('Metro');
+
+// Sentinel key no real module owns, used to detect catch-all proxies. Defined once so the probe is
+// a plain property lookup with no per-call allocation. Declared before the registry walk, which reads it.
+const INVALID_EXPORT_SYMBOL = Symbol('is-invalid-export');
 
 // Walk the entire module registry once at import time, wrapping each module factory so we can
 // track the importing module, harden invalid exports, and run our patches as modules initialize.
@@ -182,61 +186,6 @@ export function removeListener(listener: (mdl: any, id: number) => void) {
 
 export const on = addListener;
 export const off = removeListener;
-
-/**
- * @description Resolves a module matching `filter`, waiting for it to load if it is not yet present.
- * @param filter The filter to match against.
- * @param options Search options, excluding `lazy` and `all`, plus an optional `signal` to abort the wait.
- * @returns The matched module, or a promise that resolves once a matching module is required, or
- * `undefined` if the supplied signal aborts first.
- */
-export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = {}) {
-	const existing = find(filter, options);
-
-	// `find` reports a miss as `null`.
-	if (existing !== null && existing !== void 0) {
-		return existing;
-	}
-
-	const { signal } = options;
-
-	if (signal?.aborted) {
-		return Promise.resolve(void 0);
-	}
-
-	return new Promise((resolve) => {
-		function settle(mdl: any) {
-			remove();
-			signal?.removeEventListener('abort', abort);
-			resolve(mdl);
-		}
-
-		function abort() {
-			settle(void 0);
-		}
-
-		function callback(mdl, id) {
-			// A raw filter, such as `byFilePath`, reads the module record, as `find` does.
-			if (filter.isRaw) {
-				const record = window.modules.get(id);
-
-				return record && filter(record, id) ? settle(mdl) : void 0;
-			}
-
-			if (filter(mdl, id)) {
-				return settle(mdl);
-			}
-
-			if (mdl.default && filter(mdl.default, id)) {
-				return settle((options.interop ?? true) ? mdl.default : mdl);
-			}
-		}
-
-		const remove = addListener(callback);
-
-		signal?.addEventListener('abort', abort, { once: true });
-	});
-}
 
 /**
  * @description Core synchronous module search. Tries the per-key cache fast-path first, then falls
@@ -619,9 +568,15 @@ function searchExports(
  */
 function searchWithOptions(
 	args: any[],
-	options: MetroInternalOptions,
+	options: MetroInternalOptions & MetroSearchOptions,
 	filter: DiscordFunction | string,
 ) {
+	if (typeof filter === 'string') {
+		filter = Filters[filter] as MetroFilter;
+	}
+
+	if (!filter) return;
+
 	if (options.lazy) {
 		let cache;
 
@@ -666,16 +621,24 @@ function searchWithOptions(
 			},
 		);
 
-		registerLazyModule(proxy, resolve);
+		// A bulk or `all` search stands for several modules, and a `raw` one for a module record, so a
+		// patch on such a proxy resolves it as before instead of waiting.
+		if (!options.bulk && !options.all && !options.raw) {
+			const search = filter(...args);
+			const { esModules, interop } = options;
+
+			registerLazyModule(proxy, {
+				wait: (onLoad) => onModuleLoaded(search, onLoad, { esModules, interop }),
+				adopt(mdl) {
+					cache ??= mdl;
+
+					return cache;
+				},
+			});
+		}
 
 		return proxy;
 	}
-
-	if (typeof filter === 'string') {
-		filter = Filters[filter] as MetroFilter;
-	}
-
-	if (!filter) return;
 
 	if (options.bulk) {
 		return bulk(
@@ -697,10 +660,6 @@ function searchWithOptions(
 
 	return find(filter(...args), options);
 }
-
-// Sentinel key no real module owns, used to detect catch-all proxies. Defined once so the probe is
-// a plain property lookup with no per-call allocation.
-const INVALID_EXPORT_SYMBOL = Symbol('is-invalid-export');
 
 /**
  * @description Detects a "catch-all" proxy: an object whose `has` trap claims it contains keys it
@@ -757,4 +716,4 @@ function parseOptions<O, A extends any[] = string[]>(
 	return [args as A, filter(args[args.length - 1]) ? args.pop() : fallback];
 }
 
-provideFinders({ findByProps, findByName, findByFilePath, findByPrototypes, findStore });
+provideFinders({ findByProps, findByName, findByFilePath, findByPrototypes, findStore, find });

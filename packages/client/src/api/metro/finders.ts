@@ -1,4 +1,5 @@
 import type { MetroStoreOptions } from '~/api/metro/types';
+import type { find } from '~/api/metro/search';
 
 export type TermOrOptions = string | MetroStoreOptions;
 
@@ -12,6 +13,7 @@ export type Finders = {
 	findByFilePath: ProvidedFinder;
 	findByPrototypes: ProvidedFinder;
 	findStore: ProvidedFinder;
+	find: typeof find;
 };
 
 let provided: Finders | undefined;
@@ -29,10 +31,12 @@ export function provideFinders(finders: Finders) {
  * @param name The search function.
  * @returns The search function.
  */
-export function finder(name: keyof Finders): Finder {
+export function finder(name: 'find'): Finders['find'];
+export function finder(name: Exclude<keyof Finders, 'find'>): Finder;
+export function finder(name: keyof Finders) {
 	if (!provided) {
 		throw new Error(`Metro search is not loaded yet, so ${name} cannot run.`);
 	}
 
-	return provided[name] as Finder;
+	return provided[name];
 }

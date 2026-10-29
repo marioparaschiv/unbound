@@ -2,15 +2,27 @@
  * @description The function patcher, built on `possess`. Exposes `createPatcher` for scoped patchers along
  * with the standalone `before`/`after`/`instead` hooks and unpatch helpers. Patching a React component
  * updates its mounted instances in place, keeping their state, including when a callback calls hooks.
+ * Patching a lazy module proxy waits for its module to load instead of loading it.
  * This is the public surface behind `unbound.patcher` and `@unbound-app/api/patcher`.
  */
 import type { PatchCallback, PatchOptions, PatchParent, PatcherInstance, PropOf } from 'possess';
 import uuid from '@unbound-app/utils/uuid';
 import * as Possess from 'possess';
 
+import { currentAddonAttribution, withAddonAttribution } from '~/api/crash-guard';
 import { patch, recordRemovals } from '~/lib/hot/live-patch';
+import { getLazyModule } from '~/api/metro/lazy-registry';
 
 type ScopedPatcher = Pick<PatcherInstance, 'before' | 'instead' | 'after'>;
+
+type Apply = (parent: PatchParent) => () => void;
+
+type PendingPatch = {
+	caller: string | undefined;
+	cancel: () => void;
+};
+
+const pending = new Set<PendingPatch>();
 
 export * from 'possess';
 
@@ -30,7 +42,9 @@ export function before<M extends PatchParent, P extends PropOf<M>>(
 	callback: Parameters<typeof Possess.before<M, P>>[2],
 	options?: PatchOptions,
 ): () => void {
-	return patch(Possess.PatchType.Before, parent, method, callback as PatchCallback, options);
+	return whenLoaded(parent, options?.caller, (target) =>
+		patch(Possess.PatchType.Before, target, method, callback as PatchCallback, options),
+	);
 }
 
 /**
@@ -49,7 +63,9 @@ export function instead<M extends PatchParent, P extends PropOf<M>>(
 	callback: Parameters<typeof Possess.before<M, P>>[2],
 	options?: PatchOptions,
 ): () => void {
-	return patch(Possess.PatchType.Instead, parent, method, callback as PatchCallback, options);
+	return whenLoaded(parent, options?.caller, (target) =>
+		patch(Possess.PatchType.Instead, target, method, callback as PatchCallback, options),
+	);
 }
 
 /**
@@ -68,51 +84,74 @@ export function after<M extends PatchParent, P extends PropOf<M>>(
 	callback: Parameters<typeof Possess.before<M, P>>[2],
 	options?: PatchOptions,
 ): () => void {
-	return patch(Possess.PatchType.After, parent, method, callback as PatchCallback, options);
+	return whenLoaded(parent, options?.caller, (target) =>
+		patch(Possess.PatchType.After, target, method, callback as PatchCallback, options),
+	);
 }
 
-function trackPatches<T extends (...args: never[]) => () => void>(
-	method: T,
-	unpatches: Set<() => void>,
-): T {
-	function register(...args: never[]): () => void {
-		const unpatch = Reflect.apply(method, undefined, args);
-		const parent = args[0] as object;
-		const key = args[1] as PropertyKey;
-		const installed = Reflect.get(parent, key);
-		let active = true;
+// A lazy module proxy's module may not have loaded, so the patch waits for it rather than loading it.
+function whenLoaded(parent: PatchParent, caller: string | undefined, apply: Apply): () => void {
+	const lazy = getLazyModule(parent);
 
-		function remove(): void {
-			if (!active) return;
-
-			active = false;
-			unpatches.delete(remove);
-
-			if (Reflect.get(parent, key) !== installed) {
-				const replacement = Reflect.get(parent, key);
-				const descriptor = Object.getOwnPropertyDescriptor(parent, key);
-
-				try {
-					unpatch();
-				} finally {
-					if (descriptor) {
-						Object.defineProperty(parent, key, descriptor);
-					} else {
-						Reflect.set(parent, key, replacement);
-					}
-				}
-
-				return;
-			}
-
-			unpatch();
-		}
-		unpatches.add(remove);
-
-		return remove;
+	if (!lazy) {
+		return apply(parent);
 	}
 
-	return register as T;
+	const attribution = currentAddonAttribution();
+	const entry: PendingPatch = { caller, cancel };
+	let unpatch: (() => void) | undefined;
+
+	pending.add(entry);
+
+	const stop = lazy.wait((mdl) => {
+		pending.delete(entry);
+		unpatch = withAddonAttribution(attribution, () => apply(lazy.adopt(mdl)));
+	});
+
+	function cancel() {
+		pending.delete(entry);
+		stop();
+	}
+
+	return () => {
+		cancel();
+		unpatch?.();
+		unpatch = undefined;
+	};
+}
+
+// Removing a patch that a later patch has wrapped keeps that wrapper installed.
+function keepLaterWrapper(parent: PatchParent, key: PropertyKey, unpatch: () => void) {
+	const installed = Reflect.get(parent, key);
+
+	return () => {
+		if (Reflect.get(parent, key) === installed) {
+			unpatch();
+
+			return;
+		}
+
+		const replacement = Reflect.get(parent, key);
+		const descriptor = Object.getOwnPropertyDescriptor(parent, key);
+
+		try {
+			unpatch();
+		} finally {
+			if (descriptor) {
+				Object.defineProperty(parent, key, descriptor);
+			} else {
+				Reflect.set(parent, key, replacement);
+			}
+		}
+	};
+}
+
+function cancelPending(matches: (caller: string | undefined) => boolean) {
+	for (const entry of pending) {
+		if (matches(entry.caller)) {
+			entry.cancel();
+		}
+	}
 }
 
 /**
@@ -126,6 +165,30 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 
 	defaults.caller ??= uuid();
 	const unpatches = new Set<() => void>();
+
+	function scopedPatch(
+		phase: Possess.PatchType,
+		parent: PatchParent,
+		method: string,
+		callback: PatchCallback,
+		options: PatchOptions,
+	): () => void {
+		const merged = { ...defaults, ...options };
+		const unpatch = whenLoaded(parent, merged.caller, (target) =>
+			keepLaterWrapper(target, method, patch(phase, target, method, callback, merged)),
+		);
+
+		function remove(): void {
+			if (!unpatches.delete(remove)) return;
+
+			unpatch();
+		}
+
+		unpatches.add(remove);
+
+		return remove;
+	}
+
 	const scoped: ScopedPatcher = {
 		before<M extends PatchParent, P extends PropOf<M>>(
 			parent: M,
@@ -133,7 +196,13 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 			callback: Parameters<typeof Possess.before<M, P>>[2],
 			options: PatchOptions = {},
 		) {
-			return before(parent, method, callback, { ...defaults, ...options });
+			return scopedPatch(
+				Possess.PatchType.Before,
+				parent,
+				method,
+				callback as PatchCallback,
+				options,
+			);
 		},
 		instead<M extends PatchParent, P extends PropOf<M>>(
 			parent: M,
@@ -141,7 +210,13 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 			callback: Parameters<typeof Possess.before<M, P>>[2],
 			options: PatchOptions = {},
 		) {
-			return instead(parent, method, callback, { ...defaults, ...options });
+			return scopedPatch(
+				Possess.PatchType.Instead,
+				parent,
+				method,
+				callback as PatchCallback,
+				options,
+			);
 		},
 		after<M extends PatchParent, P extends PropOf<M>>(
 			parent: M,
@@ -149,14 +224,18 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 			callback: Parameters<typeof Possess.before<M, P>>[2],
 			options: PatchOptions = {},
 		) {
-			return after(parent, method, callback, { ...defaults, ...options });
+			return scopedPatch(
+				Possess.PatchType.After,
+				parent,
+				method,
+				callback as PatchCallback,
+				options,
+			);
 		},
 	};
 
 	return {
-		before: trackPatches(scoped.before, unpatches),
-		instead: trackPatches(scoped.instead, unpatches),
-		after: trackPatches(scoped.after, unpatches),
+		...scoped,
 		unpatchAll(): void {
 			for (const unpatch of unpatches) unpatch();
 		},
@@ -167,6 +246,7 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
  * @description Removes every patch.
  */
 export function unpatchAll(): void {
+	cancelPending(() => true);
 	recordRemovals(() => true);
 	Possess.unpatchAll();
 }
@@ -176,6 +256,7 @@ export function unpatchAll(): void {
  * @param caller The caller id.
  */
 export function unpatchAllByCaller(caller: string): void {
+	cancelPending((pendingCaller) => pendingCaller === caller);
 	recordRemovals((patch) => patch.caller === caller);
 	Possess.unpatchAllByCaller(caller);
 }

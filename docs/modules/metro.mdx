@@ -21,7 +21,8 @@ Messages.sendMessage(channelId, { content: 'Hello from Unbound' });
 ```
 
 <Note>
-	Learn this module first. The search patterns on this page come up throughout the rest of the API.
+	Learn this module first. The search patterns on this page come up throughout the rest of the
+	API.
 </Note>
 
 ### Finding modules
@@ -32,51 +33,58 @@ Each `findBy*` helper matches a module by one kind of identifying trait, such as
 	<Tab title='By props'>
 		Match a module by the properties it exposes. This is the most common search.
 
-		```ts
-		const Clipboard = metro.findByProps('setString', 'getString');
-		```
-	</Tab>
-	<Tab title='By name'>
-		Match a function or component by the name of its default export.
+    	```ts
+    	const Clipboard = metro.findByProps('setString', 'getString');
+    	```
+    </Tab>
+    <Tab title='By name'>
+    	Match a function or component by the name of its default export.
 
-		```ts
-		const Button = metro.findByName('Button');
-		```
-	</Tab>
-	<Tab title='By store'>
-		Match a flux store by name. `Store` is appended for you.
+    	```ts
+    	const Button = metro.findByName('Button');
+    	```
+    </Tab>
+    <Tab title='By store'>
+    	Match a flux store by name. `Store` is appended for you.
 
-		```ts
-		const UserStore = metro.findStore('User');
-		const me = UserStore.getCurrentUser();
-		```
-	</Tab>
+    	```ts
+    	const UserStore = metro.findStore('User');
+    	const me = UserStore.getCurrentUser();
+    	```
+    </Tab>
+
 </Tabs>
 
 All search helpers:
 
-| Helper | Matches on |
-| --- | --- |
-| `findByProps(...names)` | Properties present on the export |
-| `findByName(name)` | The name of the default export |
-| `findByDisplayName(name)` | The export's `displayName` |
-| `findByFilePath(path)` | The source file a module was imported from |
-| `findByPrototypes(...names)` | Methods present on the export's prototype |
-| `findStore(name)` | A flux store's registered name |
+| Helper                       | Matches on                                 |
+| ---------------------------- | ------------------------------------------ |
+| `findByProps(...names)`      | Properties present on the export           |
+| `findByName(name)`           | The name of the default export             |
+| `findByDisplayName(name)`    | The export's `displayName`                 |
+| `findByFilePath(path)`       | The source file a module was imported from |
+| `findByPrototypes(...names)` | Methods present on the export's prototype  |
+| `findStore(name)`            | A flux store's registered name             |
 
 <Note>
-	On mobile, use `findByName` for components, since most are identified by their `name`. `findByDisplayName` covers components that set a `displayName`, which is less common on mobile than on desktop.
+	On mobile, use `findByName` for components, since most are identified by their `name`.
+	`findByDisplayName` covers components that set a `displayName`, which is less common on mobile
+	than on desktop.
 </Note>
 
 <Warning>
-	Mobile has no search by source string. Desktop clients can match a module by string literals in its source, which is the usual way to find a function component there. The mobile bundle doesn't expose module source in the same way, so this technique isn't available. If a component has no props, prototype, or name to match on, reach it through its parent instead. See [Reaching into a render](/plugins/react-patching#reaching-into-a-render).
+	Mobile has no search by source string. Desktop clients can match a module by string literals in
+	its source, which is the usual way to find a function component there. The mobile bundle doesn't
+	expose module source in the same way, so this technique isn't available. If a component has no
+	props, prototype, or name to match on, reach it through its parent instead. See [Reaching into a
+	render](/plugins/react-patching#reaching-into-a-render).
 </Warning>
 
 ### Filters
 
 A filter is a predicate that returns `true` for the module you want. Every `findBy*` helper is a shortcut for a filter.
 
-Filters live on `metro.filters`. If the built-in helpers don't fit the shape you need, build your own filter and pass it to `find` (or `findLazy`).
+Filters live on `metro.filters`. If the built-in helpers don't fit the shape you need, build your own filter and pass it to `find` (or `onModuleLoaded`).
 
 ```ts
 import { metro } from '@unbound-app/api';
@@ -87,7 +95,8 @@ const Messages = metro.find(filter);
 ```
 
 <Tip>
-	Use `find` with a raw filter only when no `findBy*` helper can express the match, for example a combination of conditions. Otherwise use the helpers: they're shorter and cache better.
+	Use `find` with a raw filter only when no `findBy*` helper can express the match, for example a
+	combination of conditions. Otherwise use the helpers: they're shorter and cache better.
 </Tip>
 
 ### Lazy resolution & caching
@@ -107,8 +116,31 @@ Clipboard.setString('copied!');
 ```
 
 <Note>
-	Use lazy resolution for module handles declared at module scope. This is how Unbound references dozens of modules without paying for all of them at launch.
+	Use lazy resolution for module handles declared at module scope. This is how Unbound references
+	dozens of modules without paying for all of them at launch.
 </Note>
+
+Patching a lazy handle does not run its search. The patch waits for the module to load. See [Lazy patching](/modules/patcher#lazy-patching).
+
+### Waiting for a module
+
+Neither of these functions loads a module. They wait for Discord to load it.
+
+`onModuleLoaded(filter, onLoad, options?)` calls `onLoad` with the module matching `filter`. If the module has already loaded, `onLoad` runs at once. Otherwise it runs while the module initializes, before the Discord code that required it gets its exports. It returns a function that stops waiting.
+
+```ts
+const stop = metro.onModuleLoaded(metro.filters.byName('ChatManager'), (ChatManager) => {
+	Patcher.instead(ChatManager.prototype, 'createRow', ({ args, original }) => original(...args));
+});
+```
+
+`waitForModule(filter, options?)` is the same wait as a Promise. Pass a `signal` to abandon it, and the Promise then resolves with `undefined`.
+
+```ts
+const UserProfileStore = await metro.waitForModule(metro.filters.byStore('UserProfile'));
+```
+
+The first match is cached like a search, so on later launches the wait listens only for that module. Both take `esModules` and `interop`, with the same meaning as for `find`.
 
 ### Caching custom filters
 
@@ -129,7 +161,8 @@ const handler = metro.find(byActionHandler('MESSAGE_CREATE'));
 ```
 
 <Tip>
-	The key must fully describe the filter's inputs. If two searches should return different modules, they need different keys. Otherwise they collide in the cache.
+	The key must fully describe the filter's inputs. If two searches should return different
+	modules, they need different keys. Otherwise they collide in the cache.
 </Tip>
 
 ### Common modules & stores
@@ -140,18 +173,19 @@ Metro pre-resolves the modules most addons need: React, React Native, the dispat
 	<Accordion title='metro.common: shared modules' icon='cubes'>
 		Framework and app-level handles you would otherwise look up with `findByProps` again and again: `React`, `ReactNative`, `Dispatcher`, `Constants`, `Clipboard`, `Theme`, `Flux`, `Assets`, `i18n`, and more.
 
-		```ts
-		const { React, Dispatcher } = metro.common;
-		```
-	</Accordion>
-	<Accordion title='metro.stores: flux stores' icon='database'>
-		Pre-resolved flux stores such as `Users`, `Guilds`, and `Theme`.
+    	```ts
+    	const { React, Dispatcher } = metro.common;
+    	```
+    </Accordion>
+    <Accordion title='metro.stores: flux stores' icon='database'>
+    	Pre-resolved flux stores such as `Users`, `Guilds`, and `Theme`.
 
-		```ts
-		const me = metro.stores.Users.getCurrentUser();
-		```
-	</Accordion>
-	<Accordion title='metro.api: request helpers' icon='cloud'>
-		Action-creator modules such as `Messages`, `Linking`, and `Profiles`, used to trigger actions in the app.
-	</Accordion>
+    	```ts
+    	const me = metro.stores.Users.getCurrentUser();
+    	```
+    </Accordion>
+    <Accordion title='metro.api: request helpers' icon='cloud'>
+    	Action-creator modules such as `Messages`, `Linking`, and `Profiles`, used to trigger actions in the app.
+    </Accordion>
+
 </AccordionGroup>

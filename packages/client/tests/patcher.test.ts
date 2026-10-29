@@ -32,7 +32,14 @@ describe('patcher', () => {
 				},
 			);
 
-			registerLazyModule(proxy, () => math);
+			registerLazyModule(proxy, {
+				wait(onLoad) {
+					onLoad(math);
+
+					return () => {};
+				},
+				adopt: (mdl) => mdl,
+			});
 
 			return proxy as typeof math;
 		}
