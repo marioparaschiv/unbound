@@ -143,7 +143,7 @@ The default object lists members roughly in definition order (constants first, t
 
 ### 3.4 Native loaders
 
-`packages/loader` holds the native loaders: the shared C++ core, the iOS tweak (Objective-C and Logos), the Android LSPosed module (Kotlin and C++) and their Go build tooling. This guide covers TypeScript only. The loader tree is outside the Bun workspaces and is excluded from oxlint and oxfmt. Build and test it with `bun run loader:test`, `bun run loader:validate` or `go -C packages/loader run ./tools <command>`.
+`packages/loader` holds the native loaders: the shared C++ core, the iOS tweak (Objective-C and Logos), the Android Xposed module (Kotlin and C++) and their Go build tooling. This guide covers TypeScript only. The loader tree is outside the Bun workspaces and is excluded from oxlint and oxfmt. Build and test it with `bun run loader:test`, `bun run loader:validate` or `go -C packages/loader run ./tools <command>`.
 
 ## 4. TypeScript
 

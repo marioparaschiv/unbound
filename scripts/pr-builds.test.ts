@@ -116,18 +116,18 @@ describe('uploadLoaderBuilds', () => {
 	test('replaces the pull request loader builds under stable names', async () => {
 		const { bucket, objects } = createMemoryBucket({ 'loader/pr/42/Old.ipa': 'stale' });
 		const ipa = join(dist, 'Unbound.ipa');
-		const apk = join(dist, 'app.unbound.android.lsposed.apk');
+		const apk = join(dist, 'app.unbound.android.xposed.apk');
 
 		await Bun.write(ipa, 'ipa');
 		await Bun.write(apk, 'apk');
 
 		expect(await uploadLoaderBuilds(bucket, '42', [ipa, apk])).toEqual([
 			'loader/pr/42/Unbound.ipa',
-			'loader/pr/42/app.unbound.android.lsposed.apk',
+			'loader/pr/42/app.unbound.android.xposed.apk',
 		]);
 		expect([...objects.keys()].toSorted()).toEqual([
 			'loader/pr/42/Unbound.ipa',
-			'loader/pr/42/app.unbound.android.lsposed.apk',
+			'loader/pr/42/app.unbound.android.xposed.apk',
 		]);
 	});
 

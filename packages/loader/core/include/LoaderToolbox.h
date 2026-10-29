@@ -77,6 +77,7 @@ struct IssueFacts {
     std::string appSource;
     std::string registration;
     bool        virtualDevice = false;
+    std::string framework;
 };
 
 struct ToolboxContext {

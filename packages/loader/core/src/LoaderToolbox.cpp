@@ -229,6 +229,10 @@ std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFac
     {
         rows.emplace_back("App Source", facts.appSource);
     }
+    if (!facts.framework.empty())
+    {
+        rows.emplace_back("Framework", facts.framework);
+    }
     if (!facts.registration.empty())
     {
         rows.emplace_back("App Registration", facts.registration);
@@ -458,7 +462,8 @@ IssueFacts issueFacts(const NativePlatformProvider &provider, const std::string 
                      loaderVersion(),
                      provided(provider.appSource),
                      "",
-                     provider.isVirtualDevice && provider.isVirtualDevice()};
+                     provider.isVirtualDevice && provider.isVirtualDevice(),
+                     provided(provider.framework)};
     if (provider.isSystemApp)
     {
         facts.registration = provider.isSystemApp() ? "System" : "User";

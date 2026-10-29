@@ -383,7 +383,7 @@ func reportAndroidSetup(serial string) {
 		return output
 	}
 	fmt.Printf("  su root: %t\n", strings.Contains(shell("su -c id"), "uid=0(root)"))
-	fmt.Printf("  Xposed framework: %s\n", valueOr(xposedFramework(shell("su -c 'ls /data/adb/modules'")), "missing; install LSPosed or Vector as a Magisk module"))
+	fmt.Printf("  Xposed framework: %s\n", valueOr(xposedFramework(shell("su -c 'ls /data/adb/modules'")), "missing; install Vector as a Magisk module"))
 	fmt.Printf("  Unbound module: %t\n", strings.Contains(shell("pm path app.unbound.android"), "package:"))
 	fmt.Printf("  Discord: %s\n", valueOr(packageVersionName(shell("dumpsys package com.discord")), "not installed"))
 	overlays := enabledEmulationOverlays(shell("cmd overlay list android"))
