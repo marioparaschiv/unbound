@@ -43,8 +43,9 @@ function attempt<T>(read: () => T | null | undefined, fallback: T): T {
 
 function deviceFlags(android: boolean): string[] {
 	const device = globalThis.NativePlatform?.device;
+	const rooted = attempt(() => device?.isRooted(), false);
 	const flags = [
-		attempt(() => device?.isRooted(), false) && (android ? 'rooted' : 'jailbroken'),
+		android ? (rooted ? 'rooted' : 'stock') : rooted ? 'jailbroken' : 'jailed',
 		attempt(() => device?.isVirtualDevice(), false) && (android ? 'emulator' : 'simulator'),
 		attempt(() => device?.isSystemApp(), false) && 'system app',
 	];

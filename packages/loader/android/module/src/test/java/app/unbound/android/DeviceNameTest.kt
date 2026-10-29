@@ -33,6 +33,11 @@ class DeviceNameTest {
     }
 
     @Test
+    fun anEmulatorSaysItIsOne() {
+        assertEquals("Android Emulator (sdk_gphone64_arm64)", DeviceName.emulatorLabel("sdk_gphone64_arm64"))
+    }
+
+    @Test
     fun anEmulatorKeepsItsModel() {
         assertEquals(
             "Google sdk_gphone64_arm64",
