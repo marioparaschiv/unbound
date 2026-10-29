@@ -17,6 +17,7 @@ import BlurReveal from '~/components/motion/blur-reveal';
 import TEAM_GROUPS from '~/components/team/team-groups';
 import type { CssVariables } from '~/lib/css-variables';
 import { formatDate } from '~/components/addon/format';
+import AvatarGlow from '~/components/avatar-glow';
 import UserAvatar from '~/components/user-avatar';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
@@ -59,39 +60,48 @@ function DeveloperPage() {
 
 	return (
 		<div className='flex flex-col flex-1 gap-8 page-frame'>
-			<header className='flex sm:flex-row flex-col sm:items-center gap-4'>
-				<UserAvatar
-					size='xl'
-					className='rounded-surface object-cover animate-reveal'
+			<header className='flex flex-col'>
+				<div
+					aria-hidden
+					className='relative isolate h-28 sm:h-40 overflow-hidden rounded-surface border bg-card animate-reveal'
 					style={staggerStyle(0)}
-					src={author.avatarUrl}
-					name={author.name}
-				/>
-				<div className='flex flex-col flex-1 gap-1 min-w-0'>
-					<div className='flex items-center gap-2 min-w-0'>
-						<Text as='h1' variant='heading-lg' className='truncate'>
-							<BlurReveal text={author.name} />
-						</Text>
-						<div
-							className='flex items-center gap-2 animate-reveal'
+				>
+					<AvatarGlow src={author.avatarUrl} className='opacity-60' />
+				</div>
+				<div className='flex sm:flex-row flex-col gap-4 -mt-10 px-4 sm:px-6'>
+					<UserAvatar
+						size='xl'
+						className='relative size-20 text-4xl rounded-surface object-cover ring-4 ring-background animate-reveal'
+						style={staggerStyle(0)}
+						src={author.avatarUrl}
+						name={author.name}
+					/>
+					<div className='flex flex-col flex-1 gap-1 sm:pt-12 min-w-0'>
+						<div className='flex items-center gap-2 min-w-0'>
+							<Text as='h1' variant='heading-lg' className='truncate'>
+								<BlurReveal text={author.name} />
+							</Text>
+							<div
+								className='flex items-center gap-2 animate-reveal'
+								style={staggerStyle(1)}
+							>
+								{author.kind === 'user' && author.badge ? (
+									<UserBadge badge={author.badge} />
+								) : null}
+								<Tag variant={group === 'addon-developer' ? 'default' : 'primary'}>
+									{TEAM_GROUPS[group].member}
+								</Tag>
+							</div>
+						</div>
+						<Text
+							variant='text-sm'
+							color='muted'
+							className='animate-reveal'
 							style={staggerStyle(1)}
 						>
-							{author.kind === 'user' && author.badge ? (
-								<UserBadge badge={author.badge} />
-							) : null}
-							<Tag variant={group === 'addon-developer' ? 'default' : 'primary'}>
-								{TEAM_GROUPS[group].member}
-							</Tag>
-						</div>
+							<DeveloperDetails author={author} />
+						</Text>
 					</div>
-					<Text
-						variant='text-sm'
-						color='muted'
-						className='animate-reveal'
-						style={staggerStyle(1)}
-					>
-						<DeveloperDetails author={author} />
-					</Text>
 				</div>
 			</header>
 

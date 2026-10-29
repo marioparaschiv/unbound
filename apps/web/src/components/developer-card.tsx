@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import type { ComponentProps } from 'react';
 
 import { Card, CardContent } from '~/components/ui/card';
+import AvatarGlow from '~/components/avatar-glow';
 import UserAvatar from '~/components/user-avatar';
 import type { Developer } from '~/lib/developers';
 import UserBadge from '~/components/user-badge';
@@ -25,16 +26,7 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 			)}
 			{...props}
 		>
-			{author.avatarUrl ? (
-				<img
-					src={author.avatarUrl}
-					alt=''
-					aria-hidden
-					loading='lazy'
-					decoding='async'
-					className='absolute -inset-24 -z-10 size-[calc(100%+12rem)] max-w-none object-cover blur-2xl saturate-300 opacity-40 pointer-events-none select-none'
-				/>
-			) : null}
+			{author.avatarUrl ? <AvatarGlow src={author.avatarUrl} className='opacity-40' /> : null}
 			<div
 				aria-hidden
 				className='absolute inset-0 -z-10 rounded-[inherit] bg-card/50 pointer-events-none'
