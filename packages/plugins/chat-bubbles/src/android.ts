@@ -3,7 +3,11 @@ import type {
 	NativeJavaHooksBridge,
 	NativeJavaReference,
 } from '@unbound-app/api/native';
-import { currentDecorView, findViewsOfClass } from '@unbound-plugins/shared/native/android/views';
+import {
+	currentDecorView,
+	findViewsOfClass,
+	runOnMain,
+} from '@unbound-plugins/shared/native/android/views';
 import {
 	javaFlag,
 	javaFloat,
@@ -52,19 +56,28 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		javaNumber(java.invoke(view, method, [])) ?? 0;
 	const isInstance = (type: NativeJavaReference, view: NativeJavaReference) =>
 		javaFlag(java.invoke(type, 'isInstance', [view]));
+	const reads = (view: NativeJavaReference, methods: string[]) =>
+		methods.map((name) => ({ op: 'invoke', handle: view, name, args: [] }) as const);
 
-	function children(group: NativeJavaReference): NativeJavaReference[] {
-		const count = number(group, 'getChildCount');
+	async function directChildren(group: NativeJavaReference, className: string) {
+		const found = await java.findViews!(group, className, { maxDepth: 1, maxResults: 256 });
 
-		return Array.from({ length: count }, (_, index) =>
-			javaReference(java.invoke(group, 'getChildAt', [javaInt(index)])),
-		).filter((child): child is NativeJavaReference => Boolean(child));
+		return found
+			.map((child) => javaReference(child))
+			.filter(
+				(child): child is NativeJavaReference =>
+					!!child && !sameJavaReference(child, group),
+			);
 	}
 
-	function textWidth(view: NativeJavaReference): number {
-		const layout = javaReference(java.invoke(view, 'getLayout', []));
+	async function textWidth(view: NativeJavaReference, width: number): Promise<number> {
+		const [layoutValue, paddingLeft, paddingRight] = await runOnMain(
+			java,
+			reads(view, ['getLayout', 'getTotalPaddingLeft', 'getTotalPaddingRight']),
+		);
+		const layout = javaReference(layoutValue);
 
-		if (!layout) return number(view, 'getWidth');
+		if (!layout) return width;
 
 		let widest = 0;
 
@@ -75,46 +88,57 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			);
 		}
 
-		return (
-			Math.ceil(widest) +
-			number(view, 'getTotalPaddingLeft') +
-			number(view, 'getTotalPaddingRight')
-		);
+		return Math.ceil(widest) + (javaNumber(paddingLeft) ?? 0) + (javaNumber(paddingRight) ?? 0);
 	}
 
-	function contentArea(row: NativeJavaReference): Edges | undefined {
-		const accessories = children(row).find((child) => isInstance(accessoriesClass, child));
+	const CHILD_READS = [
+		'getVisibility',
+		'getWidth',
+		'getHeight',
+		'getLeft',
+		'getRight',
+		'getTop',
+		'getBottom',
+	];
+
+	async function contentArea(row: NativeJavaReference): Promise<Edges | undefined> {
+		const [accessories] = await directChildren(row, AndroidClass.accessories);
 
 		if (!accessories) return;
 
-		const shown = children(accessories).filter(
-			(child) =>
-				number(child, 'getVisibility') === VISIBLE &&
-				number(child, 'getWidth') > 0 &&
-				number(child, 'getHeight') > 0,
-		);
-		const area = union(
-			shown.map((child) => {
-				const left = number(child, 'getLeft');
-				const right = number(child, 'getRight');
-				const tightened =
-					shown.length === 1 && isInstance(contentClass, child)
-						? Math.min(right, left + textWidth(child))
-						: right;
+		const kids = await directChildren(accessories, 'android.view.View');
+		const values = await runOnMain(java, [
+			...reads(accessories, ['getLeft', 'getTop']),
+			...kids.flatMap((child) => reads(child, CHILD_READS)),
+		]);
+		const measured = kids.map((child, index) => {
+			const [visibility, width, height, left, right, top, bottom] = values
+				.slice(2 + index * CHILD_READS.length, 2 + (index + 1) * CHILD_READS.length)
+				.map((value) => javaNumber(value) ?? 0);
 
-				return {
-					left,
-					top: number(child, 'getTop'),
-					right: tightened,
-					bottom: number(child, 'getBottom'),
-				};
-			}),
+			return { child, visibility, width, height, left, right, top, bottom };
+		});
+		const shown = measured.filter(
+			(child) => child.visibility === VISIBLE && child.width > 0 && child.height > 0,
+		);
+		const only =
+			shown.length === 1 && isInstance(contentClass, shown[0]!.child) ? shown[0] : undefined;
+		const tightRight = only
+			? Math.min(only.right, only.left + (await textWidth(only.child, only.width)))
+			: undefined;
+		const area = union(
+			shown.map((child) => ({
+				left: child.left,
+				top: child.top,
+				right: child === only ? tightRight! : child.right,
+				bottom: child.bottom,
+			})),
 		);
 
 		if (!area) return;
 
-		const x = number(accessories, 'getLeft');
-		const y = number(accessories, 'getTop');
+		const x = javaNumber(values[0]) ?? 0;
+		const y = javaNumber(values[1]) ?? 0;
 
 		return {
 			left: area.left + x,
@@ -124,20 +148,19 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		};
 	}
 
-	function isNested(row: NativeJavaReference): boolean {
-		let current = javaReference(java.invoke(row, 'getParent', []));
+	async function isNested(row: NativeJavaReference): Promise<boolean> {
+		const [outer] = await java.findViews!(row, AndroidClass.messageView, {
+			direction: 'ancestors',
+			maxDepth: MAX_ANCESTORS,
+			maxResults: 1,
+			stopAtMatch: true,
+		});
 
-		for (let depth = 0; current && depth < MAX_ANCESTORS; depth++) {
-			if (isInstance(messageClass, current)) return true;
-
-			current = javaReference(java.invoke(current, 'getParent', []));
-		}
-
-		return false;
+		return !!javaReference(outer);
 	}
 
-	function density(row: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(row, 'getResources', []));
+	async function density(row: NativeJavaReference): Promise<number> {
+		const resources = javaReference(await java.invokeAsync(row, 'getResources', []));
 		const metrics = resources
 			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
 			: null;
@@ -175,11 +198,15 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	}
 
 	async function place(row: NativeJavaReference) {
-		const area = contentArea(row);
+		const area = await contentArea(row);
 
 		if (!area) return restore(row);
 
-		const scale = density(row);
+		const scale = await density(row);
+		const [rowWidth, rowHeight, currentBackground] = await runOnMain(
+			java,
+			reads(row, ['getWidth', 'getHeight', 'getBackground']),
+		);
 		const style = currentAppearance();
 		const frame = bubbleFrame(
 			{
@@ -194,7 +221,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 				vertical: style.verticalPadding * scale,
 			},
 		);
-		const insets = rowInsets(frame, number(row, 'getWidth'), number(row, 'getHeight'));
+		const insets = rowInsets(frame, javaNumber(rowWidth) ?? 0, javaNumber(rowHeight) ?? 0);
 		const shape = java.construct('android.graphics.drawable.GradientDrawable', []);
 
 		java.invoke(shape, 'setCornerRadius', [javaFloat(style.radius * scale)]);
@@ -214,7 +241,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			javaInt(insets.bottom),
 		]);
 		java.invoke(bubble, 'setPadding', [javaInt(0), javaInt(0), javaInt(0), javaInt(0)]);
-		const current = javaReference(java.invoke(row, 'getBackground', []));
+		const current = javaReference(currentBackground);
 		const drawn = javaReference(java.getAssociatedObject(row, ours));
 
 		if (!drawn || !current || !sameJavaReference(current, drawn)) {
@@ -249,6 +276,12 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		}
 	}
 
+	async function scheduleRow(accessories: NativeJavaReference) {
+		const row = javaReference(await java.invokeAsync(accessories, 'getParent', []));
+
+		if (row && isInstance(messageClass, row) && !(await isNested(row))) schedule(row);
+	}
+
 	const token = hooks.hook(
 		AndroidClass.recycler,
 		'onLayout',
@@ -259,9 +292,9 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 			if (!accessories || !isInstance(accessoriesClass, accessories)) return;
 
-			const row = javaReference(java.invoke(accessories, 'getParent', []));
-
-			if (row && isInstance(messageClass, row) && !isNested(row)) schedule(row);
+			void scheduleRow(accessories).catch((error) => {
+				console.error(`[${PLUGIN_NAME}] Failed to find a bubble's row:`, error);
+			});
 		},
 	);
 
@@ -271,7 +304,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		if (!root) return;
 
 		for (const row of await findViewsOfClass(java, root, AndroidClass.messageView)) {
-			if (!isNested(row)) schedule(row);
+			if (!(await isNested(row))) schedule(row);
 		}
 	}
 
