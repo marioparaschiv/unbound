@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { afterEach, describe, expect, test } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -35,6 +35,28 @@ function addon() {
 	};
 }
 
+function linkShared(addonDir: string, dependencies: Record<string, string>) {
+	const shared = mkdtempSync(join(tmpdir(), 'stale-shared-'));
+
+	directories.push(shared);
+	mkdirSync(join(shared, 'src'));
+	writeFileSync(join(shared, 'package.json'), JSON.stringify({ name: '@scope/shared' }));
+	writeFileSync(join(shared, 'src', 'util.ts'), 'export {};');
+	writeFileSync(join(shared, 'src', 'util.test.ts'), 'test');
+	writeFileSync(join(addonDir, 'package.json'), JSON.stringify({ dependencies }));
+	mkdirSync(join(addonDir, 'node_modules', '@scope'), { recursive: true });
+	symlinkSync(shared, join(addonDir, 'node_modules', '@scope', 'shared'));
+
+	const at = (path: string, seconds: number) => utimesSync(join(shared, path), seconds, seconds);
+
+	at('package.json', 1_000);
+	at('src/util.ts', 1_000);
+	at('src/util.test.ts', 1_000);
+	utimesSync(join(addonDir, 'package.json'), 1_000, 1_000);
+
+	return at;
+}
+
 afterEach(() => {
 	for (const dir of directories.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
@@ -58,5 +80,32 @@ describe('staleBuildReason', () => {
 		expect(staleBuildReason(addon().built, 5_000_000)).toBe(
 			'The build did not write dist/index.js.',
 		);
+	});
+
+	test('names a shared workspace file edited after the bundle was built', () => {
+		const { built } = addon();
+		const at = linkShared(built.dir, { '@scope/shared': 'workspace:*' });
+
+		at('src/util.ts', 3_000);
+
+		expect(staleBuildReason(built)).toBe(
+			'dist/index.js is older than @scope/shared/src/util.ts; build it again.',
+		);
+	});
+
+	test('ignores shared test files and packages that are not workspace links', () => {
+		const { built } = addon();
+		const testOnly = linkShared(built.dir, { '@scope/shared': 'workspace:*' });
+
+		testOnly('src/util.test.ts', 3_000);
+
+		expect(staleBuildReason(built)).toBeUndefined();
+
+		const other = addon();
+		const registry = linkShared(other.built.dir, { '@scope/shared': '^1.0.0' });
+
+		registry('src/util.ts', 3_000);
+
+		expect(staleBuildReason(other.built)).toBeUndefined();
 	});
 });
