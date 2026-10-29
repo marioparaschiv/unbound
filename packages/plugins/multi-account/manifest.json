@@ -1,0 +1,14 @@
+{
+	"id": "unbound.multi-account",
+	"name": "Multi Account",
+	"description": "Unlocks Discord's built-in multi-account switcher on mobile.",
+	"authors": [
+		{
+			"name": "n35da",
+			"id": "1547629837273923684"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "UserCircleIcon",
+	"main": "index.ts"
+}

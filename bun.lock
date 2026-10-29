@@ -128,7 +128,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.10.0-a661157579540710d5cf6432601c1d2fe7fdc62b2571f70a9ed63698dc82a7af",
+      "version": "0.10.0-4506d9441ad5d2e3ce4f74889d36abf34aefaed89aa843135a2b78c30101a3de",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -576,6 +576,21 @@
     },
     "packages/plugins/moyai": {
       "name": "moyai",
+      "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.62.2",
+      },
+    },
+    "packages/plugins/multi-account": {
+      "name": "multi-account",
       "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
@@ -2856,6 +2871,8 @@
     "moyai": ["moyai@workspace:packages/plugins/moyai"],
 
     "ms": ["ms@2.1.3", "", {}, "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="],
+
+    "multi-account": ["multi-account@workspace:packages/plugins/multi-account"],
 
     "mz": ["mz@2.7.0", "", { "dependencies": { "any-promise": "^1.0.0", "object-assign": "^4.0.1", "thenify-all": "^1.0.0" } }, "sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q=="],
 
