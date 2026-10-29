@@ -2512,6 +2512,7 @@ struct HookInvocation {
     std::atomic_bool                             active{true};
     std::atomic_bool                             originalCalled{false};
     std::atomic_bool                             deferredOriginalRequested{false};
+    std::vector<std::pair<size_t, void *>>       deferredReplacements;
 };
 
 static std::shared_ptr<HookInvocation>
@@ -2574,8 +2575,20 @@ static void copyHookResult(const std::shared_ptr<HookInvocation> &invocation, vo
            loader::ffi::typeSize(invocation->dispatcher->signature->result));
 }
 
+static void applyDeferredHookReplacements(const std::shared_ptr<HookInvocation> &invocation)
+{
+    std::lock_guard<std::mutex> lock(invocation->lifecycleMutex);
+    for (const auto &[index, rawObject] : invocation->deferredReplacements)
+    {
+        void *value = rawObject;
+        memcpy(invocation->nativeArguments[index], &value, sizeof(value));
+    }
+    invocation->deferredReplacements.clear();
+}
+
 static bool invokeDeferredHookOriginal(const std::shared_ptr<HookInvocation> &invocation)
 {
+    applyDeferredHookReplacements(invocation);
     if (!invocation->deferredOriginalRequested.exchange(false) || invocation->originalCalled.load())
     {
         return false;
@@ -2656,10 +2669,6 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                 {
                     throw JSError(rt, "Native hook arguments can only be replaced synchronously");
                 }
-                if (std::this_thread::get_id() != original->hookThread)
-                {
-                    throw JSError(rt, "Native hook arguments cannot cross runtime threads");
-                }
                 if (count < 2 || !args[0].isNumber())
                 {
                     throw JSError(rt,
@@ -2694,6 +2703,11 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                         std::make_shared<ObjCHandleHost>(object));
                 }
                 memcpy(original->arguments[argumentIndex].data(), &rawObject, sizeof(rawObject));
+                if (std::this_thread::get_id() != original->hookThread)
+                {
+                    original->deferredReplacements.emplace_back(argumentIndex, rawObject);
+                    return Value::undefined();
+                }
                 memcpy(original->nativeArguments[argumentIndex], &rawObject, sizeof(rawObject));
                 return Value::undefined();
             }));

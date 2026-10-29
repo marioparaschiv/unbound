@@ -59,12 +59,12 @@ inline constexpr std::array<std::string_view, 5> kJavaClassMethods      = {
 };
 inline constexpr std::array<std::string_view, 1> kJavaConstructMethods   = {"construct"};
 inline constexpr std::array<std::string_view, 2> kJavaFieldMethods       = {"getField", "setField"};
-inline constexpr std::array<std::string_view, 1> kJavaInvokeMethods      = {"invoke"};
+inline constexpr std::array<std::string_view, 2> kJavaInvokeMethods      = {"invoke", "findViews"};
 inline constexpr std::array<std::string_view, 1> kJavaInvokeAsyncMethods = {"invokeAsync"};
 inline constexpr std::array<std::string_view, 5> kJavaHookMethods        = {
     "hook", "remove", "setReturnValue", "removeReturnValue", "clearReturnValues",
 };
-inline constexpr std::array<std::string_view, 1> kJavaBatchMethods        = {"batch"};
+inline constexpr std::array<std::string_view, 2> kJavaBatchMethods        = {"batch", "batchAsync"};
 inline constexpr std::array<std::string_view, 1> kDebugEvaluationMethods  = {"recordEvaluation"};
 inline constexpr std::array<std::string_view, 1> kDebugEnvironmentMethods = {"environment"};
 
