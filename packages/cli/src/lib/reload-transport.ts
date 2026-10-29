@@ -140,6 +140,8 @@ export function readBuiltAddon(addon: BuiltAddon): ReadAddon {
 	};
 }
 
+const SAME_BUILD_WINDOW_MS = 10_000;
+
 function readFreshBytecode(bundlePath: string): Map<string, Buffer> {
 	const directory = dirname(bundlePath);
 	const prefix = `${basename(bundlePath).replace(/\.[^.]+$/, '')}.`;
@@ -153,7 +155,10 @@ function readFreshBytecode(bundlePath: string): Map<string, Buffer> {
 				: '';
 		const path = join(directory, name);
 
-		if (/^\d{1,10}$/.test(version) && statSync(path).mtimeMs >= builtAt) {
+		if (
+			/^\d{1,10}$/.test(version) &&
+			Math.abs(statSync(path).mtimeMs - builtAt) <= SAME_BUILD_WINDOW_MS
+		) {
 			compiled.set(version, readFileSync(path));
 		}
 	}

@@ -14,12 +14,14 @@ import {
 	type TextRewriteEdit,
 	type TextRewrites,
 } from './text-rewrites';
-import { javaReference, javaText } from './java-values';
+import { javaInt, javaNumber, javaReference, javaText } from './java-values';
 
 const NEEDS_HOST_PARAMETERS = ['android.widget.TextView', 'java.lang.String'];
 const MAX_GROUPS_PER_TEXT = 4;
 const INITIAL_GROUPS = 2;
 const MAX_DEFINITIONS = 48;
+const BLANK_SURFACE_CHECK_MS = 1_500;
+const BLANK_SURFACE_REMOUNTS = 2;
 
 export type InlineSlot = TextRewriteAnchor & {
 	surfaceId: string;
@@ -107,22 +109,67 @@ export function createInlineSurfaces(
 
 		for (const [index, slot] of entry.slots.entries()) {
 			const host = java.construct('android.widget.FrameLayout', context ? [context] : []);
-			const mount = fabric
-				.mountAsync(host, options.surfaceModule, { surfaceId: slot.surfaceId })
-				.catch(() => null);
+			const mount = mountSurface(host, slot.surfaceId);
 
 			group.hosts.push(host);
 			group.mounts.push(mount);
 			void mount.then(() => {
 				const current = entry.slots[index];
 
-				if (!disposed && current && entry.groups.includes(group)) {
-					active.addHost(group.id, entry.rendered, host, anchorOf(current));
+				if (!(!disposed && current && entry.groups.includes(group))) {
+					return;
 				}
+
+				active.addHost(group.id, entry.rendered, host, anchorOf(current));
+				watchForBlank(entry, group, index, BLANK_SURFACE_REMOUNTS);
 			});
 		}
 
 		entry.groups.push(group);
+	}
+
+	function mountSurface(host: NativeJavaHandle, surfaceId: string) {
+		return fabric.mountAsync(host, options.surfaceModule, { surfaceId }).catch(() => null);
+	}
+
+	function isBlank(host: NativeJavaHandle): boolean {
+		try {
+			const root = javaReference(java.invoke(host, 'getChildAt', [javaInt(0)]));
+
+			return !root || javaNumber(java.invoke(root, 'getChildCount', [])) === 0;
+		} catch {
+			return false;
+		}
+	}
+
+	function watchForBlank(entry: Entry, group: Group, index: number, remounts: number) {
+		setTimeout(() => {
+			const host = group.hosts[index];
+			const slot = entry.slots[index];
+
+			if (disposed || !host || !slot || !entry.groups.includes(group) || !isBlank(host)) {
+				return;
+			}
+
+			void remount(group, index, host, slot.surfaceId).then(() => {
+				if (remounts > 1) {
+					watchForBlank(entry, group, index, remounts - 1);
+				}
+			});
+		}, BLANK_SURFACE_CHECK_MS);
+	}
+
+	async function remount(group: Group, index: number, host: NativeJavaHandle, surfaceId: string) {
+		const stale = await group.mounts[index];
+
+		if (stale) {
+			await fabric.unmountAsync(stale).catch(() => undefined);
+		}
+
+		const mount = mountSurface(host, surfaceId);
+
+		group.mounts[index] = mount;
+		await mount;
 	}
 
 	async function removeGroup(group: Group) {
