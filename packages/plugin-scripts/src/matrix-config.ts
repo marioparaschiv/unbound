@@ -55,6 +55,7 @@ export function collectorArgs(
 	out: string,
 	channel: string | undefined,
 	only: string | undefined,
+	leakCycles?: number,
 ): string[] {
 	return [
 		'--port',
@@ -67,6 +68,7 @@ export function collectorArgs(
 		...(device.serial ? ['--serial', device.serial] : []),
 		...(channel ? ['--channel', channel] : []),
 		...(only ? ['--only', only] : []),
+		...(leakCycles ? ['--leak-cycles', String(leakCycles)] : []),
 	];
 }
 

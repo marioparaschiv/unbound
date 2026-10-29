@@ -12,6 +12,7 @@ export type MeasuredCheck = DeviceCheck & {
 	errors?: string[];
 	skippedHooks?: string[];
 	memoryDeltaMB?: number;
+	leakPerCycleMB?: number;
 };
 
 const SLOWER_FACTOR = 2;

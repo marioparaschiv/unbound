@@ -8,6 +8,7 @@ import { readMatrixConfig } from './matrix-config';
 import { PLUGINS_DIR, REPO_ROOT } from './paths';
 import { dropBaseline, dropReason, relaunchCommands } from './device-drops';
 import { discordMemory, springBoardMemory } from './device-memory';
+import { growthPerCycle, leakNote, liveHeapScript } from './leak-check';
 import {
 	SELF_TEST_MARKER,
 	judgeSelfTest,
@@ -664,6 +665,7 @@ async function main(): Promise<void> {
 			device: { type: 'string' },
 			baseline: { type: 'string' },
 			lenient: { type: 'boolean' },
+			'leak-cycles': { type: 'string' },
 		},
 	});
 
@@ -805,6 +807,53 @@ async function main(): Promise<void> {
 		console.error(
 			`${check.lifecycle === 'pass' && check.behavior === 'pass' ? 'pass' : 'FAIL'} ${plugin.id}`,
 		);
+	}
+
+	const leakCycles = Number(values['leak-cycles'] ?? 0);
+
+	async function cycleQuietly(id: string): Promise<void> {
+		const result = JSON.parse(await evaluate(port, cycleScript(id))) as CycleResult;
+
+		if (result.installed && !result.wasStarted) await evaluate(port, restoreScript(id));
+	}
+
+	async function leakCheck(check: MeasuredCheck): Promise<void> {
+		await cycleQuietly(check.id);
+
+		const before = Number(await evaluate(port, liveHeapScript()));
+
+		for (let cycle = 0; cycle < leakCycles; cycle++) await cycleQuietly(check.id);
+
+		const perCycle = growthPerCycle(
+			before,
+			Number(await evaluate(port, liveHeapScript())),
+			leakCycles,
+		);
+
+		if (perCycle === undefined) return;
+
+		check.leakPerCycleMB = perCycle;
+
+		const note = leakNote(perCycle, leakCycles);
+
+		if (note) {
+			check.behavior = 'fail';
+			check.note = [check.note, note].filter(Boolean).join('; ');
+		}
+
+		console.error(`leak check ${check.id}: ${perCycle} MB per cycle`);
+	}
+
+	if (leakCycles > 0) {
+		for (const check of checks) {
+			try {
+				await leakCheck(check);
+			} catch (error) {
+				if (!isDisconnect(error)) throw error;
+
+				await recover(`the leak check of ${check.id}`);
+			}
+		}
 	}
 
 	async function afterRecovery<T>(label: string, step: () => Promise<T>): Promise<T> {
