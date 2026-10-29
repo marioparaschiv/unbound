@@ -212,6 +212,12 @@ describe('formatFoundViews', () => {
 	});
 });
 
+function requestIn(code: string) {
+	const match = /\(unbound, (\{.*\})\)\)\)\(\);$/s.exec(code);
+
+	return match ? (JSON.parse(match[1]) as Record<string, string | number>) : undefined;
+}
+
 describe('inspect command', () => {
 	test('sends the request with the walk timeout and formats the report', async () => {
 		const codes: string[] = [];
@@ -223,8 +229,7 @@ describe('inspect command', () => {
 		expect(output.ok).toBe(true);
 		expect(output.text.split('\n')[0]).toBe('class android.widget.TextView');
 		expect(codes[0]).toMatch(/^60000 /);
-		expect(codes[0]).toContain('"kind":"class"');
-		expect(codes[0]).toContain('"name":"TextView"');
+		expect(requestIn(codes[0])).toEqual({ kind: 'class', name: 'TextView' });
 	});
 
 	test('roots a view dump at a class and passes the depth and chunk size', async () => {
@@ -244,11 +249,13 @@ describe('inspect command', () => {
 		const maxNodes = inspectCommand.schema.parse({ what: 'views' }).max;
 
 		expect(codes[0]).toStartWith('90000 ');
-		expect(codes[0]).toContain('"kind":"views"');
-		expect(codes[0]).toContain('"className":"android.widget.FrameLayout"');
-		expect(codes[0]).toContain('"maxDepth":3');
-		expect(codes[0]).toContain(`"maxNodes":${maxNodes},`);
-		expect(codes[0]).toMatch(/"chunk":\d+/);
+		expect(requestIn(codes[0])).toMatchObject({
+			kind: 'views',
+			className: 'android.widget.FrameLayout',
+			maxDepth: 3,
+			maxNodes,
+			chunk: expect.any(Number),
+		});
 	});
 
 	test('passes device errors through and asks for a missing class', async () => {
