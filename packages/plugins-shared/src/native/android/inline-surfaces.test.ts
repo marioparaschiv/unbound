@@ -185,12 +185,16 @@ describe('createInlineSurfaces', () => {
 			await Promise.resolve();
 
 			const first = state.mounted[0];
-			const flush = async () => {
+
+			async function flush() {
 				for (let tick = 0; tick < 8; tick++) await Promise.resolve();
-			};
-			const remounts = () =>
-				state.unmounted.filter((surface) => surface.value === `surface-${first.value}`)
-					.length;
+			}
+
+			function remounts() {
+				return state.unmounted.filter(
+					(surface) => surface.value === `surface-${first.value}`,
+				).length;
+			}
 
 			state.blank.add(String(first.value));
 

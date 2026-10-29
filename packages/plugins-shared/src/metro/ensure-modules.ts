@@ -1,5 +1,7 @@
 import type { metro } from '@unbound-app/api';
 
+import { recordSkip } from '../lifecycle/health';
+
 // Metro results, lazy proxies and native modules are all untyped `find` results; only their presence matters.
 type ModuleHandle = ReturnType<typeof metro.find>;
 type ModuleHandles = Record<string, ModuleHandle>;
@@ -48,6 +50,7 @@ export function ensureModules(plugin: string, modules: ModuleHandles): boolean {
 		return true;
 	}
 
+	recordSkip(`${plugin}: modules not found: ${missing.join(', ')}`);
 	console.error(`[${plugin}] Skipped, modules not found: ${missing.join(', ')}.`);
 
 	return false;

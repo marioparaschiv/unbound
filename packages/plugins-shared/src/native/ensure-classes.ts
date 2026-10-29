@@ -1,5 +1,7 @@
 import type { NativeObjCBridge } from '@unbound-app/api/native';
 
+import { recordSkip } from '../lifecycle/health';
+
 /**
  * @description Checks that every Objective-C class a plugin hooks or allocates exists, so `start` can bail out before applying a partial feature.
  * @param plugin The plugin's display name, used in the log line.
@@ -14,6 +16,7 @@ export function ensureClasses(plugin: string, objc: NativeObjCBridge, classes: s
 		return true;
 	}
 
+	recordSkip(`${plugin}: native classes not found: ${missing.join(', ')}`);
 	console.error(`[${plugin}] Not starting, native classes not found: ${missing.join(', ')}.`);
 
 	return false;

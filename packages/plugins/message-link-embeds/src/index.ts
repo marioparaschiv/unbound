@@ -1,5 +1,6 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import ensureClasses from '@unbound-plugins/shared/native/ensure-classes';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
@@ -107,4 +108,4 @@ function stop() {
 	return finished;
 }
 
-export default { start, stop };
+export default { start, stop, selfTest: featureSelfTest };

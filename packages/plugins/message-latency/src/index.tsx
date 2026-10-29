@@ -1,5 +1,6 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureClasses from '@unbound-plugins/shared/native/ensure-classes';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
@@ -90,5 +91,6 @@ async function stop() {
 export default {
 	start,
 	stop,
+	selfTest: featureSelfTest,
 	getSettingsPanel: () => <SettingsPanel />,
 };

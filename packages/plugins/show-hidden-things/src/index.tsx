@@ -1,4 +1,5 @@
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 
 import { patchInvitePermissions } from '~/patches/invite-permissions';
@@ -23,5 +24,6 @@ function stop() {
 export default {
 	start,
 	stop,
+	selfTest: featureSelfTest,
 	getSettingsPanel: () => <SettingsPanel />,
 };

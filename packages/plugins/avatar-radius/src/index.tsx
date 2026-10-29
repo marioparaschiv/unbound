@@ -10,10 +10,13 @@ import { settings } from '~/modules';
 
 let dispose: () => void | Promise<void> = () => {};
 
+const radiusSetting = () => storedRadius(settings.get('radius', undefined));
+let rounded: (() => number) | null = null;
+
 function start(context: PluginContext) {
 	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
 
-	const radius = () => storedRadius(settings.get('radius', undefined));
+	const radius = radiusSetting;
 	const avatars =
 		context.platform === 'android'
 			? roundAndroidAvatars(context.native, radius)
@@ -23,8 +26,10 @@ function start(context: PluginContext) {
 		() => avatars.refresh(),
 	);
 
+	rounded = avatars.rounded;
 	dispose = () => {
 		unsubscribe();
+		rounded = null;
 
 		return avatars.dispose();
 	};
@@ -38,8 +43,17 @@ function stop() {
 	return stopping;
 }
 
+function selfTest() {
+	if (!rounded) {
+		return { ok: false, detail: 'avatars are not being rounded' };
+	}
+
+	return { ok: true, detail: `${rounded()} avatars rounded to ${radiusSetting()} points` };
+}
+
 export default {
 	start,
 	stop,
+	selfTest,
 	getSettingsPanel: () => <SettingsPanel />,
 };

@@ -1,3 +1,5 @@
+import { recordApplied, recordFailure } from './health';
+
 type Cleanup = () => void | Promise<void>;
 type Feature = () => Cleanup;
 
@@ -19,6 +21,8 @@ export function applyFeatures(
 	const cleanups: Cleanup[] = [];
 
 	function dispose(): Promise<void> | undefined {
+		recordApplied(-cleanups.length);
+
 		const pending = cleanups
 			.splice(0)
 			.reverse()
@@ -40,8 +44,11 @@ export function applyFeatures(
 		for (const feature of features) {
 			cleanups.push(feature());
 		}
+
+		recordApplied(cleanups.length);
 	} catch (error) {
 		void dispose();
+		recordFailure(error instanceof Error ? error.message : String(error));
 		console.error(`[${plugin}] Failed to start, reverted:`, error);
 	}
 

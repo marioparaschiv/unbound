@@ -175,7 +175,13 @@ async function evaluateOnce(port: number, code: string): Promise<string> {
 	const reply = JSON.parse(line || '{}') as { ok?: boolean; value?: string; error?: unknown };
 
 	if (!reply.ok || typeof reply.value !== 'string') {
-		throw new Error(`Evaluation failed: ${JSON.stringify(reply.error ?? stderr.trim())}`);
+		const reason = reply.error ?? stderr.trim();
+
+		throw new Error(
+			reason
+				? `Evaluation failed: ${JSON.stringify(reason)}`
+				: 'Device disconnected without a reply.',
+		);
 	}
 
 	return reply.value;
