@@ -11,6 +11,7 @@ import { createLogger } from '@unbound-app/logger';
 
 import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/lib/constants';
 import { currentEnvironment } from '~/lib/environment';
+import { reloadSummary } from '~/lib/reload-summary';
 import { createPatcher } from '~/api/patcher';
 import { plugins } from '~/managers/plugins';
 import { showToast } from '~/api/toasts';
@@ -23,6 +24,7 @@ const Settings = storage.getStore('unbound');
 // How long to wait before re-dialling the bridge after a drop or failed attempt, so a reloaded app
 // or a restarted bridge reconnects on its own without waiting for the next AppState transition.
 const RECONNECT_DELAY_MS = 2000;
+const RELOAD_BATCH_MS = 4000;
 
 let ws: WebSocket | null = null;
 let sending = false;
@@ -359,11 +361,19 @@ function listenToSettings() {
 // Toast hot reloads on the device. This builtin only runs with the debugger enabled, so it is
 // dev-gated by construction.
 function listenToReloads() {
+	let reloaded: string[] = [];
+	let reset: ReturnType<typeof setTimeout> | undefined;
+
 	function onReloaded(entity: PluginEntity) {
+		reloaded.push(entity.data.name);
+		clearTimeout(reset);
+		reset = setTimeout(() => {
+			reloaded = [];
+		}, RELOAD_BATCH_MS);
 		showToast({
-			id: `reload:${entity.id}`,
+			id: 'hot-reload',
 			title: 'Hot reload',
-			content: `Reloaded ${entity.data.name}.`,
+			content: reloadSummary(reloaded),
 		});
 	}
 
@@ -379,6 +389,7 @@ function listenToReloads() {
 	plugins.on('reload-error', onReloadError);
 
 	return [
+		() => clearTimeout(reset),
 		() => void plugins.off('reloaded', onReloaded),
 		() => void plugins.off('reload-error', onReloadError),
 	];
