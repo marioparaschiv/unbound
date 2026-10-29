@@ -224,7 +224,7 @@ static NSString      *documents = nil;
               if (error != nil)
               {
                   NSString *reason =
-                      [NSString stringWithFormat:@"%@ %ld", error.domain, (long) error.code];
+                      [NSString stringWithFormat:@"%@ %d", error.domain, (int32_t) error.code];
                   exception = [[NSException alloc] initWithName:@"DownloadFailed"
                                                          reason:reason
                                                        userInfo:nil];
