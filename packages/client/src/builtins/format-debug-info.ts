@@ -31,7 +31,7 @@ export function debugLines(info: DebugInfo): string[] {
 
 	return [
 		`- **Unbound:** ${info.client} (\`${info.commit}\`), loader ${info.loader} (${loader})`,
-		`- **Discord:** ${info.discord}, build ${info.discordBuild} (\`${info.appSource}\`)`,
+		`- **Discord:** ${info.discord}, build ${info.discordBuild} (${info.appSource})`,
 		`- **Device:** ${info.device} on ${info.platform} ${info.os}`,
 		`- **State:** ${info.flags.join(', ')}`,
 		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
