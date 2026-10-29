@@ -111,6 +111,15 @@ define(21, (_, __, ___, ____, module) => {
 define(22, (_, __, ___, ____, module) => {
 	module.exports = { viaFind: () => 22 };
 });
+define(23, (_, __, ___, ____, module) => {
+	module.exports = { presentLoaded: () => 23 };
+});
+define(24, (_, __, ___, ____, module) => {
+	module.exports = { presentCached: () => 24 };
+});
+define(25, (_, __, ___, ____, module) => {
+	module.exports = { presentUnseen: () => 25 };
+});
 metroRequire(0);
 metroRequire(1);
 
@@ -141,6 +150,7 @@ const metro = await import('~/api/metro/search');
 // Other test files mock `~/api/metro/wrappers`, so the handles come from the function behind it.
 const { findLazy } = await import('~/api/metro/finders');
 const { onModuleLoaded, waitForModule } = await import('~/api/metro/wait');
+const { getModulePresence } = await import('~/api/metro/presence');
 const { byProps } = await import('~/api/metro/filters');
 const { CACHE_KEY } = await import('~/lib/constants');
 const { after, createPatcher, unpatchAll, unpatchAllByCaller } = await import('~/api/patcher');
@@ -327,6 +337,44 @@ describe('a lazy wrapper handle (findByPropsLazy and the like)', () => {
 		expect('fifth' in Fifth).toBe(true);
 		expect({ ...Fifth }.fifth).toBe(metroRequire(15).fifth);
 		expect(Object.getPrototypeOf(Fifth)).toBe(Object.prototype);
+	});
+});
+
+describe('getModulePresence', () => {
+	test('reports a lazy handle as loaded, present, missing or unknown without loading anything', () => {
+		metroRequire(23);
+		cachedIds['byProps::presentCached'] = [24];
+		cachedIds['byProps::presentGone'] = [];
+
+		const before = loadedIds();
+		const presence = {
+			loaded: getModulePresence(metro.findByProps('presentLoaded', { lazy: true })),
+			present: getModulePresence(metro.findByProps('presentCached', { lazy: true })),
+			missing: getModulePresence(metro.findByProps('presentGone', { lazy: true })),
+			unknown: getModulePresence(findLazy('findByProps', ['presentUnseen'])),
+		};
+
+		expect(presence).toEqual({
+			loaded: 'loaded',
+			present: 'present',
+			missing: 'missing',
+			unknown: 'unknown',
+		});
+		expect(loadedIds()).toEqual(before);
+	});
+
+	test('reports a cached module as loaded once Discord loads it', () => {
+		cachedIds['byProps::presentCached'] = [24];
+
+		const Cached = metro.findByProps('presentCached', { lazy: true });
+
+		metroRequire(24);
+
+		expect(getModulePresence(Cached)).toBe('loaded');
+	});
+
+	test('has nothing to report for a value that is not a lazy handle', () => {
+		expect(getModulePresence({ presentLoaded: () => 23 })).toBeUndefined();
 	});
 });
 

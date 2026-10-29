@@ -1,9 +1,13 @@
+import type { MetroModulePresence } from '~/api/metro/types';
+
 /** What a lazy module proxy stands for, so a patch on the proxy can wait for its module instead of loading it. */
 export type LazyModule = {
 	/** Calls `onLoad` with the proxy's module once it loads, without loading it; returns a function that stops waiting. */
 	wait: (onLoad: (mdl: MetroExport) => void) => () => void;
 	/** Makes `mdl` the proxy's module unless the proxy already resolved, and returns the proxy's module. */
 	adopt: (mdl: MetroExport) => MetroExport;
+	/** Reports what is known of the proxy's module without loading it. */
+	presence: () => MetroModulePresence;
 };
 
 // Plugins read this key's own descriptor to tell a lazy proxy from a module without resolving it.

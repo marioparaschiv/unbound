@@ -74,6 +74,9 @@ export function findLazy(name: Exclude<keyof Finders, 'find'>, args: TermOrOptio
 			return noop;
 		},
 		adopt: (mdl) => getLazyModule(inner())?.adopt(mdl) ?? mdl,
+		// As with `wait`, a search that cannot wait is resolved.
+		presence: () =>
+			getLazyModule(inner())?.presence() ?? (inner().module ? 'loaded' : 'missing'),
 	});
 }
 

@@ -30,6 +30,7 @@ describe('patcher', () => {
 					return () => {};
 				},
 				adopt: (mdl) => mdl,
+				presence: () => 'loaded',
 			});
 		}
 		const calls: string[] = [];

@@ -31,6 +31,12 @@ export type MetroStoreOptions = {
 /** Options for {@link onModuleLoaded}: whether to also match a module's `default` export, and to return it on such a match. */
 export type MetroModuleLoadedOptions = Pick<MetroSearchOptions, 'esModules' | 'interop'>;
 
+/**
+ * What is known of a module without initializing it: `loaded` once initialized, `present` when an earlier search
+ * found it in this build, `missing` when a full search of this build found nothing, and `unknown` otherwise.
+ */
+export type MetroModulePresence = 'loaded' | 'present' | 'missing' | 'unknown';
+
 /** Options for {@link waitForModule}, adding a `signal` that abandons the wait when aborted. */
 export type MetroWaitForModuleOptions = {
 	signal?: AbortSignal;

@@ -7,5 +7,6 @@ export * as stores from '~/api/metro/stores';
 export { CACHE_KEY } from '~/lib/constants';
 export * as api from '~/api/metro/api';
 export type * from '~/api/metro/types';
+export { getModulePresence } from '~/api/metro/presence';
 export * from '~/api/metro/search';
 export * from '~/api/metro/wait';
