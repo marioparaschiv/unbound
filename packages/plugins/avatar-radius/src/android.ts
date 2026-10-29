@@ -16,6 +16,7 @@ import {
 } from '@unbound-plugins/shared/native/android/java-values';
 
 import { AvatarClass, PLUGIN_NAME } from '~/constants';
+import { mayBeAvatar } from '~/image-sources';
 
 type AndroidNative = {
 	java: NativeJavaBridge;
@@ -68,6 +69,7 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 	const roundedBorder = java.createAssociationKey();
 	const circles = new Map<string, boolean>();
 	const borderClasses = new Map<string, boolean>();
+	const sourcePaths = new Map<string, { holder: string; uri: string } | null>();
 	const tracked: Rounded[] = [];
 	let disposed = false;
 
@@ -189,6 +191,55 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		return Math.abs(width - height) <= SQUARE_TOLERANCE ? Math.min(width, height) : -1;
 	}
 
+	function uriField(type: string): string | undefined {
+		if (type.startsWith('java.') || type.startsWith('android.') || !type.includes('.')) {
+			return undefined;
+		}
+
+		try {
+			return java
+				.describe(type)
+				.fields?.find((field) => !field.static && field.type === 'android.net.Uri')?.name;
+		} catch {
+			return undefined;
+		}
+	}
+
+	function sourcePath(name: string) {
+		if (sourcePaths.has(name)) return sourcePaths.get(name)!;
+
+		let found: { holder: string; uri: string } | null = null;
+
+		for (let current: string | null | undefined = name; current && current !== attachClass;) {
+			const description = java.describe(current);
+
+			for (const field of description.fields ?? []) {
+				const uri = field.static ? undefined : uriField(field.type);
+
+				if (uri) {
+					found = { holder: field.name, uri };
+					break;
+				}
+			}
+
+			if (found) break;
+
+			current = description.superclass;
+		}
+
+		sourcePaths.set(name, found);
+
+		return found;
+	}
+
+	function imageUrl(view: NativeJavaReference): string | undefined {
+		const path = sourcePath(javaText(java.className(view)) ?? '');
+		const holder = path ? javaReference(java.getField(view, path.holder)) : null;
+		const uri = holder && path ? javaReference(java.getField(holder, path.uri)) : null;
+
+		return uri ? javaText(java.invoke(uri, 'toString', [])) : undefined;
+	}
+
 	async function adoptBorder(view: NativeJavaReference): Promise<Rounded | null> {
 		if (!hasBorderRadius(view)) return null;
 
@@ -199,7 +250,9 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 			size = squareSize(view);
 		}
 
-		if (size <= 0 || disposed || !clipsToCircle(view, size)) return null;
+		if (size <= 0 || disposed || !clipsToCircle(view, size) || !mayBeAvatar(imageUrl(view))) {
+			return null;
+		}
 
 		const rounded: Rounded = { kind: 'border', view, circle: size / 2 };
 
