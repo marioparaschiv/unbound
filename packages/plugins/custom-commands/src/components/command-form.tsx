@@ -98,7 +98,7 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 		<Discord.Stack spacing={16}>
 			<Discord.TableRowGroupTitle title={original ? 'Edit command' : 'Create command'} />
 			<Discord.TextInput
-				title='Command name'
+				label='Command name'
 				placeholder='greet'
 				autoCapitalize='none'
 				autoCorrect={false}
@@ -106,7 +106,7 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 				onChange={setName}
 			/>
 			<Discord.TextInput
-				title='Description (optional)'
+				label='Description (optional)'
 				placeholder='Shown in the slash-command list'
 				autoCapitalize='none'
 				autoCorrect={false}
@@ -115,9 +115,9 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 				onChange={setDescription}
 			/>
 			<Discord.TextInput
-				title='Response'
+				label='Response'
 				placeholder='Hello {{user}}! I am feeling {{mood = great}}.'
-				helpText='Use {{argument}} for required text or {{argument = default}} for optional text. Type \n for a line break. Every command also has an optional ephemeral switch.'
+				description='Use {{argument}} for required text or {{argument = default}} for optional text. Type \n for a line break. Every command also has an optional ephemeral switch.'
 				autoCapitalize='none'
 				autoCorrect={false}
 				multiline

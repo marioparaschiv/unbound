@@ -1,40 +1,28 @@
-import { BubbleStyle } from '~/constants';
-import { ThemeStore } from '~/modules';
-
-export type BubbleColor = (typeof BubbleStyle)['dark'];
+import { bubbleAppearance, type BubbleAppearance } from '~/style';
+import { settings, ThemeStore } from '~/modules';
 
 /**
- * @description Picks the bubble color for the theme Discord is showing.
- * @returns A translucent black on dark themes and a translucent white on the light theme.
+ * @description Reads the bubble's look for the theme Discord is showing.
+ * @returns The radius, padding and color from the plugin's settings.
  */
-export function bubbleColor(): BubbleColor {
-	return ThemeStore.theme === 'light' ? BubbleStyle.light : BubbleStyle.dark;
+export function currentAppearance(): BubbleAppearance {
+	return bubbleAppearance((key) => settings.get(key, undefined), ThemeStore.theme === 'light');
 }
 
 /**
- * @description Packs a bubble color into an Android ARGB integer.
- * @param color The color.
- * @returns The signed 32-bit ARGB value.
- */
-export function argb({ red, green, blue, alpha }: BubbleColor): number {
-	const channel = (value: number) => Math.round(value * 255);
-
-	return (
-		(channel(alpha) << 24) | (channel(red) << 16) | (channel(green) << 8) | channel(blue) | 0
-	);
-}
-
-/**
- * @description Calls `listener` whenever the theme changes.
+ * @description Calls `listener` whenever the theme or a bubble setting changes.
  * @param listener The function to call.
  * @returns A function that stops listening.
  */
-export function subscribeTheme(listener: () => void): () => void {
-	if (!ThemeStore.addChangeListener) return () => {};
+export function subscribeAppearance(listener: () => void): () => void {
+	const unsubscribeSettings = settings.addListener(() => true, listener);
 
-	ThemeStore.addChangeListener(listener);
+	ThemeStore.addChangeListener?.(listener);
 
-	return () => ThemeStore.removeChangeListener(listener);
+	return () => {
+		unsubscribeSettings();
+		ThemeStore.removeChangeListener?.(listener);
+	};
 }
 
-export default { argb, bubbleColor, subscribeTheme };
+export default { currentAppearance, subscribeAppearance };
