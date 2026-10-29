@@ -311,7 +311,6 @@ static void  executeRuntimeAsynchronously(std::function<void(Runtime &)> callbac
 static Value executeMainAsynchronously(Runtime &runtime, std::function<void(void)> operation,
                                        std::function<Value(Runtime &)> result);
 static std::function<void(void)> objcGuarded(std::function<void(void)> operation);
-static void                      dispatchVoidHook(id object, SEL selector);
 static Value                     makeHook(Runtime &runtime, const Value *args, size_t count);
 static void invokeHookOriginal(const std::shared_ptr<HookDispatcher> &dispatcher, void **arguments,
                                void *returnValue);
@@ -3044,26 +3043,6 @@ static void clearHookReturnCache(const std::shared_ptr<HookState> &state)
     [state->returnCache removeAllObjects];
 }
 
-struct ActiveHookCall {
-    __unsafe_unretained id object;
-    SEL                    selector;
-    Class                  cls;
-};
-
-static thread_local std::vector<ActiveHookCall> tActiveHookCalls;
-
-static Class hookLookupStart(id object, SEL selector)
-{
-    for (auto call = tActiveHookCalls.rbegin(); call != tActiveHookCalls.rend(); ++call)
-    {
-        if (call->object == object && call->selector == selector)
-        {
-            return class_getSuperclass(call->cls);
-        }
-    }
-    return object_getClass(object);
-}
-
 static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selector,
                                                           void *closureData = nullptr)
 {
@@ -3079,7 +3058,7 @@ static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selecto
         return closure->second;
     }
     auto  iterator = gDispatchers.end();
-    Class cls      = hookLookupStart(object, selector);
+    Class cls      = object_getClass(object);
     while (cls && iterator == gDispatchers.end())
     {
         iterator = gDispatchers.find(hookKey(cls, selector));
@@ -3095,15 +3074,13 @@ static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selecto
 }
 
 struct HookCallGuard {
-    HookCallGuard(std::shared_ptr<HookDispatcher> dispatcher, id object, SEL selector)
+    explicit HookCallGuard(std::shared_ptr<HookDispatcher> dispatcher)
         : dispatcher(std::move(dispatcher)), signpost("hook dispatch")
     {
-        tActiveHookCalls.push_back({object, selector, this->dispatcher->cls});
     }
 
     ~HookCallGuard()
     {
-        tActiveHookCalls.pop_back();
         dispatcher->activeCalls.fetch_sub(1);
     }
 
@@ -3130,7 +3107,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         return;
     }
 
-    HookCallGuard                           guard(dispatcher, object, selector);
+    HookCallGuard                           guard(dispatcher);
     std::vector<std::shared_ptr<HookState>> hooks;
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
@@ -3368,41 +3345,50 @@ static void dispatchFFIHook(ffi_cif *cif, void *returnValue, void **arguments, v
 }
 
 template <typename Result, typename... Arguments>
-static Result dispatchTypedHook(id object, SEL selector, Arguments... values)
+static Result dispatchTypedHook(HookDispatcher *dispatcher, id object, SEL selector,
+                                Arguments... values)
 {
     @autoreleasepool
     {
         void *arguments[] = {&object, &selector, &values...};
         if constexpr (std::is_void_v<Result>)
         {
-            dispatchFFIHookBody(nullptr, nullptr, arguments, nullptr);
+            dispatchFFIHookBody(nullptr, nullptr, arguments, dispatcher);
         }
         else if constexpr (std::is_same_v<Result, id> || std::is_same_v<Result, Class>)
         {
             void *returnValue = nullptr;
-            dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
+            dispatchFFIHookBody(nullptr, &returnValue, arguments, dispatcher);
             return (__bridge Result) returnValue;
         }
         else
         {
             Result returnValue{};
-            dispatchFFIHookBody(nullptr, &returnValue, arguments, nullptr);
+            dispatchFFIHookBody(nullptr, &returnValue, arguments, dispatcher);
             return returnValue;
         }
     }
 }
 
+template <typename Result, typename... Arguments>
+static IMP makeTypedHook(HookDispatcher *dispatcher)
+{
+    SEL selector = dispatcher->selector;
+    return imp_implementationWithBlock(^Result(id object, Arguments... values) {
+        return dispatchTypedHook<Result, Arguments...>(dispatcher, object, selector, values...);
+    });
+}
+
 struct FallbackHook {
     std::string_view              result;
     std::vector<std::string_view> arguments;
-    void                         *code;
+    IMP (*make)(HookDispatcher *dispatcher);
 };
 
 template <typename Result, typename... Arguments>
 static FallbackHook fallbackHook(std::string_view result, std::vector<std::string_view> arguments)
 {
-    return {result, std::move(arguments),
-            reinterpret_cast<void *>(dispatchTypedHook<Result, Arguments...>)};
+    return {result, std::move(arguments), makeTypedHook<Result, Arguments...>};
 }
 
 static const std::vector<FallbackHook> &fallbackHooks()
@@ -3491,186 +3477,21 @@ static bool matchesFallbackHook(const HookSignature &signature, const FallbackHo
     return true;
 }
 
-static void *fallbackHookCode(const HookSignature &signature)
+static void *fallbackHookCode(HookDispatcher *dispatcher)
 {
     for (const FallbackHook &hook : fallbackHooks())
     {
-        if (matchesFallbackHook(signature, hook))
+        if (matchesFallbackHook(*dispatcher->signature, hook))
         {
-            return hook.code;
+            return (void *) hook.make(dispatcher);
         }
+    }
+    if (dispatcher->signature->result.name == "void" &&
+        dispatcher->signature->arguments.size() == 2)
+    {
+        return (void *) makeTypedHook<void>(dispatcher);
     }
     return nullptr;
-}
-
-static void dispatchVoidHook(id object, SEL selector)
-{
-    @autoreleasepool
-    {
-        auto dispatcher = findHookDispatcher(object, selector);
-        if (!dispatcher)
-        {
-            return;
-        }
-
-        HookCallGuard guard(dispatcher, object, selector);
-        void         *arguments[] = {&object, &selector};
-        auto          invocation  = hookInvocation(dispatcher, arguments, nullptr);
-
-        std::vector<std::shared_ptr<HookState>> hooks;
-        {
-            std::lock_guard<std::mutex> lock(gHookMutex);
-            for (const std::shared_ptr<HookState> &state : dispatcher->hooks)
-            {
-                if (state->active &&
-                    state->runtimeGeneration == loader::native::runtimeGeneration() &&
-                    (!state->instanceTarget || state->instanceTarget == object))
-                {
-                    hooks.push_back(state);
-                }
-            }
-        }
-        if (hooks.empty())
-        {
-            invokeHookOriginal(dispatcher, arguments, nullptr);
-            return;
-        }
-
-        bool                                    replacementApplied = false;
-        bool                                    originalCalled     = false;
-        std::vector<std::shared_ptr<HookState>> onceHooks;
-
-        for (const std::shared_ptr<HookState> &state : hooks)
-        {
-            if (!state->active)
-            {
-                continue;
-            }
-
-            loader::AddonScope addonScope(state->addon);
-            if (state->hasBefore)
-            {
-                try
-                {
-                    runHookCallback(state, selector,
-                                    [invocation, object, selector, state](Runtime &runtime) {
-                                        auto callbacks = state->callbacks.lock();
-                                        if (!callbacks || !callbacks->before)
-                                        {
-                                            return;
-                                        }
-                                        Object context = hookContext(runtime, invocation, object,
-                                                                     selector, true, state->addon);
-                                        callbacks->before->call(runtime, context);
-                                    });
-                }
-                catch (const std::exception &exception)
-                {
-                    logHookFailure(exception);
-                }
-                if (invokeDeferredHookOriginal(invocation))
-                    originalCalled = true;
-            }
-
-            if (invocation->originalCalled.load() && !originalCalled)
-            {
-                originalCalled = true;
-            }
-
-            if (state->hasReplace)
-            {
-                try
-                {
-                    std::shared_ptr<std::vector<uint8_t>> replacementResult =
-                        hookReturnBuffer(invocation);
-                    bool completed = runHookCallback(
-                        state, selector,
-                        [invocation, object, selector, state, replacementResult](Runtime &runtime) {
-                            auto callbacks = state->callbacks.lock();
-                            if (!callbacks || !callbacks->replace)
-                            {
-                                throw std::runtime_error("Native hook callback expired");
-                            }
-                            Object context = hookContext(runtime, invocation, object, selector,
-                                                         true, state->addon);
-                            Value  result  = callbacks->replace->call(runtime, context);
-                            if (!setHookReturn(runtime, invocation->dispatcher->signature->result,
-                                               result, replacementResult->data()))
-                            {
-                                throw JSError(
-                                    runtime,
-                                    "Native hook replacement returned an unsupported value");
-                            }
-                        });
-                    if (completed)
-                    {
-                        replacementApplied = true;
-                        copyHookResult(invocation, nullptr);
-                    }
-                }
-                catch (const std::exception &exception)
-                {
-                    logHookFailure(exception);
-                }
-                if (invokeDeferredHookOriginal(invocation))
-                    originalCalled = true;
-            }
-
-            if (state->once)
-            {
-                onceHooks.push_back(state);
-            }
-        }
-
-        if (!originalCalled && !replacementApplied)
-        {
-            invokeHookOriginal(dispatcher, arguments, nullptr);
-            copyHookResult(invocation, nullptr);
-        }
-
-        for (const std::shared_ptr<HookState> &state : hooks)
-        {
-            if (!state->active || !state->hasAfter)
-            {
-                continue;
-            }
-
-            loader::AddonScope addonScope(state->addon);
-            __strong id        retainedObject = object;
-            executeRuntimeAsynchronously(
-                [invocation, retainedObject, selector, state](Runtime &runtime) {
-                    bool pending = state->afterOncePending.exchange(false);
-                    if (!state->active.load() && !pending)
-                    {
-                        return;
-                    }
-                    auto callbacks = state->callbacks.lock();
-                    if (!callbacks || !callbacks->after)
-                        return;
-                    loader::AddonScope runtimeScope(state->addon);
-                    try
-                    {
-                        Object context = hookContext(runtime, invocation, retainedObject, selector,
-                                                     false, state->addon);
-                        callbacks->after->call(runtime, context);
-                    }
-                    catch (const std::exception &exception)
-                    {
-                        logHookFailure(exception);
-                    }
-                });
-        }
-
-        {
-            std::lock_guard<std::mutex> lock(invocation->lifecycleMutex);
-            invocation->active.store(false);
-        }
-
-        for (const std::shared_ptr<HookState> &state : onceHooks)
-        {
-            removeHook(state, true);
-        }
-    }
 }
 
 static Value makeHook(Runtime &runtime, const Value *args, size_t count)
@@ -3798,12 +3619,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
             };
             if (!prepareClosure())
             {
-                dispatcher->code = fallbackHookCode(*dispatcher->signature);
-                if (!dispatcher->code && signature->result.name == "void" &&
-                    signature->arguments.size() == 2)
-                {
-                    dispatcher->code = (void *) dispatchVoidHook;
-                }
+                dispatcher->code = fallbackHookCode(dispatcher.get());
                 if (!dispatcher->code)
                 {
                     std::string signatureName = dispatcher->signature->result.name + "(";
@@ -3819,10 +3635,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
                                       signatureName);
                 }
             }
-            if (dispatcher->closure)
-            {
-                gClosureDispatchers[dispatcher.get()] = dispatcher;
-            }
+            gClosureDispatchers[dispatcher.get()] = dispatcher;
             MSHookMessageEx(cls, selector, (IMP) dispatcher->code, &dispatcher->original);
             gDispatchers[key] = dispatcher;
         }
