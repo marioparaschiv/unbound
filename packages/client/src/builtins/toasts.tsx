@@ -1,4 +1,3 @@
-import type { ToastOptions } from '@unbound-app/types/toasts';
 import { createLogger } from '@unbound-app/logger';
 
 import { find, findByFilePath, findByProps } from '~/api/metro';
@@ -7,6 +6,7 @@ import { ToastContainer } from '~/ui/toasts';
 import { showToast } from '~/api/toasts';
 import storage from '~/api/storage';
 
+import discordToastOptions, { type DiscordToastOptions } from './discord-toast-options';
 import findToastContainers from './find-toast-containers';
 
 const Patcher = createPatcher('unbound::toasts');
@@ -60,15 +60,19 @@ function patchToastAPI() {
 			return original.apply(self, args);
 		}
 
-		const [options] = args as [ToastOptions];
+		const [options] = args as [DiscordToastOptions | undefined];
+		const mapped = discordToastOptions(options ?? {});
 
-		options.title = options.content;
-		options.tintedIcon = false;
-		delete options.content;
+		if (!mapped) {
+			Logger.warn(
+				'Ignored a Discord toast with nothing to show:',
+				Object.keys(options ?? {}),
+			);
 
-		options.duration ??= 5000;
+			return;
+		}
 
-		return showToast(options);
+		return showToast(mapped);
 	});
 }
 
