@@ -2,38 +2,47 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 type Module = { name: string };
 type Filter = ((module: Module) => boolean) & { path?: string };
-type Wait = { filter: Filter; signal: AbortSignal; resolve: (module?: Module) => void };
+type Wait = { filter: Filter; onLoad: (module: Module) => void; stopped: boolean };
 
 const loaded = new Map<Filter, Module>();
 const waits: Wait[] = [];
 
-function findLazy(filter: Filter, { signal }: { signal: AbortSignal }) {
+function onModuleLoaded(filter: Filter, onLoad: (module: Module) => void) {
 	const module = loaded.get(filter);
 
 	if (module) {
-		return module;
+		onLoad(module);
+
+		return () => {};
 	}
 
-	return new Promise<Module | undefined>((resolve) => {
-		waits.push({ filter, signal, resolve });
-		signal.addEventListener('abort', () => resolve(undefined));
-	});
+	const wait: Wait = { filter, onLoad, stopped: false };
+
+	waits.push(wait);
+
+	return () => {
+		wait.stopped = true;
+	};
+}
+
+function load(wait: Wait, module: Module) {
+	if (!wait.stopped) {
+		wait.onLoad(module);
+	}
 }
 
 function byFilePath(path: string): Filter {
 	return Object.assign(() => false, { path });
 }
 
-void mock.module('@unbound-app/api', () => ({ metro: { findLazy, filters: { byFilePath } } }));
+void mock.module('@unbound-app/api', () => ({
+	metro: { onModuleLoaded, filters: { byFilePath } },
+}));
 
 const { whenAllLoaded, whenLoaded } = await import('./when-loaded');
 
 function filter(): Filter {
 	return () => false;
-}
-
-function flush() {
-	return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 beforeEach(() => {
@@ -42,7 +51,7 @@ beforeEach(() => {
 });
 
 describe('whenLoaded', () => {
-	test('applies to a loaded module and removes the feature once on cleanup', async () => {
+	test('applies to a loaded module at once and removes the feature once on cleanup', () => {
 		const source = filter();
 		const events: string[] = [];
 
@@ -54,23 +63,22 @@ describe('whenLoaded', () => {
 			return () => events.push('remove');
 		});
 
-		await flush();
+		expect(events).toEqual(['apply loaded']);
+
 		cleanup();
 		cleanup();
 
 		expect(events).toEqual(['apply loaded', 'remove']);
 	});
 
-	test('applies once the module loads later', async () => {
+	test('applies once the module loads later', () => {
 		const applied: string[] = [];
 
 		whenLoaded<Module>(filter(), (module) => void applied.push(module.name));
-		await flush();
 
 		expect(applied).toEqual([]);
 
-		waits[0].resolve({ name: 'late' });
-		await flush();
+		load(waits[0], { name: 'late' });
 
 		expect(applied).toEqual(['late']);
 	});
@@ -81,52 +89,39 @@ describe('whenLoaded', () => {
 		expect(waits[0].filter.path).toBe('modules/chat/native/TypingIndicator.tsx');
 	});
 
-	test('never applies after cleanup and abandons the wait', async () => {
+	test('never applies after cleanup and stops the wait', () => {
 		let applied = false;
 		const cleanup = whenLoaded<Module>(filter(), () => void (applied = true));
 
 		cleanup();
-		waits[0].resolve({ name: 'late' });
-		await flush();
+		load(waits[0], { name: 'late' });
 
-		expect(waits[0].signal.aborted).toBe(true);
+		expect(waits[0].stopped).toBe(true);
 		expect(applied).toBe(false);
 	});
 
-	test('does not apply to a loaded module when cleaned up in the same tick', async () => {
-		const source = filter();
-		let applied = false;
-
-		loaded.set(source, { name: 'loaded' });
-		whenLoaded<Module>(source, () => void (applied = true))();
-		await flush();
-
-		expect(applied).toBe(false);
-	});
-
-	test('prefers the first loaded source, otherwise the first source to load', async () => {
+	test('prefers the first loaded source, otherwise the first source to load', () => {
 		const [first, second, third] = [filter(), filter(), filter()];
 		const applied: string[] = [];
 
 		loaded.set(third, { name: 'third' });
 		whenLoaded<Module>([first, second, third], (module) => void applied.push(module.name));
-		await flush();
 
 		expect(applied).toEqual(['third']);
-		expect(waits.every((wait) => wait.signal.aborted)).toBe(true);
+		expect(waits.every((wait) => wait.stopped)).toBe(true);
 
 		waits.length = 0;
 		whenLoaded<Module>([first, second], (module) => void applied.push(module.name));
-		waits[1].resolve({ name: 'second' });
-		await flush();
+		load(waits[1], { name: 'second' });
+		load(waits[0], { name: 'first' });
 
 		expect(applied).toEqual(['third', 'second']);
-		expect(waits[0].signal.aborted).toBe(true);
+		expect(waits[0].stopped).toBe(true);
 	});
 });
 
 describe('whenAllLoaded', () => {
-	test('applies once every module has loaded and removes the feature on cleanup', async () => {
+	test('applies once every module has loaded and removes the feature on cleanup', () => {
 		const [first, second] = [filter(), filter()];
 		const events: string[] = [];
 
@@ -138,24 +133,20 @@ describe('whenAllLoaded', () => {
 			return () => events.push('remove');
 		});
 
-		await flush();
-
 		expect(events).toEqual([]);
 
-		waits[0].resolve({ name: 'second' });
-		await flush();
+		load(waits[0], { name: 'second' });
 		cleanup();
 
 		expect(events).toEqual(['apply', 'remove']);
 	});
 
-	test('never applies when cleaned up while waiting', async () => {
+	test('never applies when cleaned up while waiting', () => {
 		let applied = false;
 		const cleanup = whenAllLoaded([filter()], () => void (applied = true));
 
 		cleanup();
-		waits[0].resolve({ name: 'late' });
-		await flush();
+		load(waits[0], { name: 'late' });
 
 		expect(applied).toBe(false);
 	});

@@ -106,7 +106,7 @@ export function patchMessageStore(): () => void {
 }
 ```
 
-- **Lazy patching.** Patch a module when it loads, not before. For a module that may not be loaded at `start`, use `whenLoaded(source, apply)` from `@unbound-plugins/shared/metro/when-loaded`, where `source` is a metro filter, a file path, or an array of candidates in order of preference. Use `whenAllLoaded(sources, apply)` from the same file for a feature that needs several such modules. Both return the cleanup for `stop`.
+- **Lazy patching.** Patch a module when it loads, not before. Patch the lazy handle from `modules.ts` directly, as above: the patch waits for the module instead of loading it, and lands before Discord reads the method. When the patch target is computed from the module, such as a render function or a prototype, use `whenLoaded(source, apply)` from `@unbound-plugins/shared/metro/when-loaded`, where `source` is a metro filter, a file path, or an array of candidates in order of preference. Use `whenAllLoaded(sources, apply)` from the same file for a feature that needs several such modules. Both return the cleanup for `stop`.
 - **Setting-gated patching.** When a feature is behind a setting, apply its patch only while the setting is on. Use `whileEnabled(settings, key, default, apply)` from `@unbound-plugins/shared/settings/while-enabled`. It listens to the store through Unbound's settings listener, applies the feature when the key turns on, and removes it when the key turns off. Do not check the setting inside an always-on patch.
 
 ## Native code
