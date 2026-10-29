@@ -150,3 +150,24 @@ test('fails a device that showed an empty toast at any point', () => {
 		'### Empty toasts\n\n- iPhone SE: empty toast from copyLink',
 	);
 });
+
+test('lists device drops with their reason', () => {
+	const check: MeasuredCheck = {
+		id: 'unbound.alpha',
+		behavior: 'pass',
+		lifecycle: 'pass',
+		evidence: [],
+	};
+	const summary = renderSummary([
+		{
+			device: phone,
+			checks: [check],
+			changes: [],
+			drops: ['unbound.alpha: jetsam killed SpringBoard (highwater, 1350 MB)'],
+		},
+	]);
+
+	expect(summary).toContain(
+		'### Device drops\n\n- iPhone SE, during unbound.alpha: jetsam killed SpringBoard (highwater, 1350 MB)',
+	);
+});

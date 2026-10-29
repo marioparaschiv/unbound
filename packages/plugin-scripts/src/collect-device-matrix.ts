@@ -3,9 +3,10 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import { compareRuns, renderChanges, type MeasuredCheck } from './compare-device-matrix';
-import { catalogPlugins, renderDeviceMatrix } from './device-matrix';
+import { catalogPlugins, renderDeviceMatrix, type CatalogPlugin } from './device-matrix';
 import { readMatrixConfig } from './matrix-config';
 import { PLUGINS_DIR, REPO_ROOT } from './paths';
+import { dropBaseline, dropReason, relaunchCommands } from './device-drops';
 
 export type CycleResult = {
 	id: string;
@@ -391,6 +392,26 @@ function evaluate(port: number, code: string): Promise<string> {
 	return withReconnects(() => evaluateOnce(port, code));
 }
 
+const BRIDGE_ATTEMPTS = 40;
+const BRIDGE_WAIT_MS = 3_000;
+const BRIDGE_SETTLE_MS = 8_000;
+
+async function waitForBridge(port: number): Promise<void> {
+	for (let attempt = 0; attempt < BRIDGE_ATTEMPTS; attempt++) {
+		const ready = await evaluateOnce(port, "'ready'").catch(() => undefined);
+
+		if (ready === 'ready') {
+			await Bun.sleep(BRIDGE_SETTLE_MS);
+
+			return;
+		}
+
+		await Bun.sleep(BRIDGE_WAIT_MS);
+	}
+
+	throw new Error('Device disconnected: Discord did not come back after a relaunch.');
+}
+
 export const SCROLL_SWIPES = 12;
 const SCROLL_SWIPE_MS = 120;
 const IOS_POINTS = { width: 375, height: 667 };
@@ -480,6 +501,8 @@ export function scrollFillerScript(channel: string): string {
 }
 
 export type ScrollOutcome = { swipes: number; moved?: boolean };
+
+type ScrollReport = ScrollOutcome & { toasts: string[]; emptyToasts: string[] };
 
 async function sameScreen(before: string, after: string): Promise<boolean | undefined> {
 	if (!existsSync(before) || !existsSync(after)) return undefined;
@@ -647,7 +670,9 @@ async function main(): Promise<void> {
 	await evaluate(port, developerModeScript(true));
 	await new Promise((done) => setTimeout(done, 1_500));
 
-	for (const plugin of catalog) {
+	const dropsBefore = await dropBaseline(target, run);
+
+	async function measure(plugin: CatalogPlugin): Promise<MeasuredCheck> {
 		if (
 			fixtures &&
 			(await evaluate(port, fixturesPresentScript(fixtures.channel))) !== 'present'
@@ -662,7 +687,50 @@ async function main(): Promise<void> {
 
 		if (result.installed && !result.wasStarted) await evaluate(port, restoreScript(plugin.id));
 
-		const check = checkFromCycle(result, captured ? `${plugin.id}.png` : undefined);
+		return checkFromCycle(result, captured ? `${plugin.id}.png` : undefined);
+	}
+
+	async function recover(id: string): Promise<string> {
+		const reason =
+			(await dropReason(target, dropsBefore, run)) ??
+			'Discord stopped answering, and no crash or memory report explains it';
+
+		console.error(`dropped: ${id}: ${reason}`);
+
+		for (const command of relaunchCommands(target)) await run(command);
+
+		await waitForBridge(port);
+
+		if (fixtures) await evaluate(port, fixtureScript(fixtures.guild, fixtures.channel));
+
+		await evaluate(port, developerModeScript(true));
+		Object.assign(dropsBefore, await dropBaseline(target, run));
+
+		return reason;
+	}
+
+	for (const plugin of catalog) {
+		let check: MeasuredCheck | undefined;
+
+		for (let attempt = 0; !check; attempt++) {
+			try {
+				check = await measure(plugin);
+			} catch (error) {
+				if (!isDisconnect(error)) throw error;
+
+				const reason = await recover(plugin.id);
+
+				if (attempt >= 1) {
+					check = {
+						id: plugin.id,
+						behavior: 'fail',
+						lifecycle: 'fail',
+						evidence: [],
+						note: `the device dropped twice: ${reason}`,
+					};
+				}
+			}
+		}
 
 		checks.push(check);
 		console.error(
@@ -670,28 +738,48 @@ async function main(): Promise<void> {
 		);
 	}
 
-	if (fixtures) await evaluate(port, scrollFillerScript(fixtures.channel));
+	async function afterRecovery<T>(label: string, step: () => Promise<T>): Promise<T> {
+		try {
+			return await step();
+		} catch (error) {
+			if (!isDisconnect(error)) throw error;
 
-	await Bun.sleep(TOAST_SETTLE_MS);
+			await recover(label);
 
-	const scrollSince = new Date().toISOString();
-	const { swipes, moved } = await scrollStress(target, out);
+			return step();
+		}
+	}
 
-	await Bun.sleep(2_000);
+	async function scrollPhase(): Promise<ScrollReport> {
+		if (fixtures) await evaluate(port, scrollFillerScript(fixtures.channel));
 
-	const toastLines = JSON.parse(await evaluate(port, toastLogScript())) as string[];
-	const toasts = parseToastLines(toastLines, scrollSince);
-	const emptyToasts = parseToastLines(toastLines, since).filter(isEmptyToast);
+		await Bun.sleep(TOAST_SETTLE_MS);
 
-	writeFileSync(
-		join(out, 'scroll.json'),
-		`${JSON.stringify({ swipes, moved, toasts, emptyToasts }, null, '\t')}\n`,
-	);
+		const scrollSince = new Date().toISOString();
+		const { swipes, moved } = await scrollStress(target, out);
+
+		await Bun.sleep(2_000);
+
+		const toastLines = JSON.parse(await evaluate(port, toastLogScript())) as string[];
+
+		return {
+			swipes,
+			moved,
+			toasts: parseToastLines(toastLines, scrollSince),
+			emptyToasts: parseToastLines(toastLines, since).filter(isEmptyToast),
+		};
+	}
+
+	const scroll = await afterRecovery('the scroll check', scrollPhase);
+
+	writeFileSync(join(out, 'scroll.json'), `${JSON.stringify(scroll, null, '\t')}\n`);
 	console.error(
-		`scrolled ${swipes} times${moved === false ? ' without moving the list' : ''}; ${toasts.length} toasts appeared`,
+		`scrolled ${scroll.swipes} times${scroll.moved === false ? ' without moving the list' : ''}; ${scroll.toasts.length} toasts appeared`,
 	);
 
-	const logLines = JSON.parse(await evaluate(port, pluginLogScript())) as string[];
+	const logLines = JSON.parse(
+		await afterRecovery('the log read', () => evaluate(port, pluginLogScript())),
+	) as string[];
 	const warnings = parseOffMainWarnings(logLines, since);
 	const errors = parsePluginErrors(logLines, since);
 	const skippedHooks = parseSkippedHooks(logLines, since);
