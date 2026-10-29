@@ -1,0 +1,136 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { parseArgs } from 'node:util';
+
+import type { MeasuredCheck } from './compare-device-matrix';
+import {
+	MATRIX_CONFIG_PATH,
+	collectorArgs,
+	deviceSlug,
+	readMatrixConfig,
+	type MatrixDevice,
+} from './matrix-config';
+
+export type DeviceRun = {
+	device: MatrixDevice;
+	checks: MeasuredCheck[];
+	changes: string[];
+	error?: string;
+};
+
+const COLLECTOR = resolve(import.meta.dir, 'collect-device-matrix.ts');
+
+function passed(check: MeasuredCheck): boolean {
+	return check.behavior === 'pass' && check.lifecycle === 'pass';
+}
+
+function cell(check: MeasuredCheck | undefined): string {
+	if (!check) return '—';
+
+	return passed(check) ? 'pass' : `**fail**: ${check.note ?? 'failed'}`;
+}
+
+export function renderSummary(runs: DeviceRun[]): string {
+	const ids = [...new Set(runs.flatMap((run) => run.checks.map((check) => check.id)))].sort();
+	const totals = runs.map((run) => {
+		const passing = run.checks.filter(passed).length;
+		const outcome = run.error ?? `${passing}/${run.checks.length} passed`;
+
+		return `- **${run.device.name}:** ${outcome}`;
+	});
+	const failing = ids.filter((id) =>
+		runs.some((run) => {
+			const check = run.checks.find((candidate) => candidate.id === id);
+
+			return check && !passed(check);
+		}),
+	);
+	const header = `| Plugin | ${runs.map((run) => run.device.name).join(' | ')} |`;
+	const divider = `| --- | ${runs.map(() => '---').join(' | ')} |`;
+	const rows = failing.map(
+		(id) =>
+			`| ${id} | ${runs.map((run) => cell(run.checks.find((check) => check.id === id))).join(' | ')} |`,
+	);
+	const changes = runs.flatMap((run) =>
+		run.changes.map((change) => `- ${run.device.name}: ${change}`),
+	);
+
+	return [
+		'## Device matrix',
+		'',
+		...totals,
+		...(rows.length
+			? ['', header, divider, ...rows]
+			: ['', 'Every plugin passed on every device.']),
+		...(changes.length ? ['', '### Changes since the last run', '', ...changes] : []),
+	].join('\n');
+}
+
+function readChecks(out: string): MeasuredCheck[] {
+	const file = join(out, 'results.json');
+
+	return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as MeasuredCheck[]) : [];
+}
+
+async function collect(
+	device: MatrixDevice,
+	out: string,
+	channel: string | undefined,
+	only: string | undefined,
+): Promise<DeviceRun> {
+	mkdirSync(out, { recursive: true });
+
+	const child = Bun.spawn(['bun', COLLECTOR, ...collectorArgs(device, out, channel, only)], {
+		stdout: 'pipe',
+		stderr: 'pipe',
+	});
+	const [stderr, exit] = await Promise.all([new Response(child.stderr).text(), child.exited]);
+	const lines = stderr.split('\n');
+	const changes = lines
+		.filter((line) => line.startsWith('changed: '))
+		.map((line) => line.slice('changed: '.length));
+	const ids = new Set(only?.split(','));
+	const checks = readChecks(out).filter((check) => !only || ids.has(check.id));
+
+	if (exit !== 0) {
+		const reason = lines.filter(Boolean).pop() ?? `exited with ${exit}`;
+
+		return { device, checks, changes, error: `collector failed: ${reason}` };
+	}
+
+	return { device, checks, changes };
+}
+
+async function main(): Promise<void> {
+	const { values } = parseArgs({
+		options: {
+			config: { type: 'string', default: MATRIX_CONFIG_PATH },
+			out: { type: 'string' },
+			only: { type: 'string' },
+			channel: { type: 'string' },
+		},
+	});
+	const config = readMatrixConfig(resolve(values.config));
+
+	if (!config?.devices.length || !values.out) {
+		throw new Error(
+			`Usage: bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir> [--only <id,id>] [--channel <guild id>/<channel id>] [--config ${MATRIX_CONFIG_PATH}], with the devices listed in the config.`,
+		);
+	}
+
+	const out = resolve(values.out);
+	const channel = values.channel ?? config.channel;
+	const runs = await Promise.all(
+		config.devices.map((device) =>
+			collect(device, join(out, deviceSlug(device)), channel, values.only),
+		),
+	);
+	const summary = renderSummary(runs);
+
+	writeFileSync(join(out, 'summary.md'), `${summary}\n`);
+	console.log(summary);
+
+	if (runs.some((run) => run.error || !run.checks.every(passed))) process.exitCode = 1;
+}
+
+if (import.meta.main) await main();

@@ -1,0 +1,7 @@
+{
+	"channel": "<guild id>/<channel id>",
+	"devices": [
+		{ "name": "iPhone", "port": 9090, "udid": "<iPhone UDID>" },
+		{ "name": "Android Emulator", "port": 9091, "serial": "emulator-5554" }
+	]
+}

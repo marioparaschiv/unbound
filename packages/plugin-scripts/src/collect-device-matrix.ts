@@ -4,6 +4,7 @@ import { parseArgs } from 'node:util';
 
 import { compareRuns, renderChanges, type MeasuredCheck } from './compare-device-matrix';
 import { catalogPlugins, renderDeviceMatrix } from './device-matrix';
+import { readMatrixConfig } from './matrix-config';
 import { PLUGINS_DIR, REPO_ROOT } from './paths';
 
 export type CycleResult = {
@@ -326,8 +327,10 @@ async function main(): Promise<void> {
 
 	mkdirSync(out, { recursive: true });
 
-	if (values.channel) {
-		const { guild, channel } = parseChannel(values.channel);
+	const fixtureChannel = values.channel ?? readMatrixConfig()?.channel;
+
+	if (fixtureChannel) {
+		const { guild, channel } = parseChannel(fixtureChannel);
 
 		await evaluate(port, fixtureScript(guild, channel));
 	}

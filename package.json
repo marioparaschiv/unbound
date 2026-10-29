@@ -71,6 +71,7 @@
 		"plugins:sync-icons": "bun packages/plugin-scripts/src/sync-plugin-icons.ts",
 		"plugins:device-matrix": "bun packages/plugin-scripts/src/device-matrix.ts",
 		"plugins:collect-device-matrix": "bun packages/plugin-scripts/src/collect-device-matrix.ts",
+		"plugins:run-device-matrix": "bun packages/plugin-scripts/src/run-device-matrix.ts",
 		"release": "semantic-release"
 	},
 	"devDependencies": {
