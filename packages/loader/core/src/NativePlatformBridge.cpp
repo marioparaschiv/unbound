@@ -341,6 +341,8 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
     jsi::Object app(runtime);
     app.setProperty(runtime, "getAppSource",
                     stringGetter(runtime, "getAppSource", provider->appSource));
+    app.setProperty(runtime, "getFramework",
+                    stringGetter(runtime, "getFramework", provider->framework));
     app.setProperty(runtime, "claimLaunchURL",
                     native::makeFunction(runtime, "claimLaunchURL", 0,
                                          [](jsi::Runtime &, const jsi::Value &, const jsi::Value *,

@@ -20,6 +20,7 @@ struct NativePlatformProvider {
     std::function<nlohmann::json()>             entitlements;
     std::function<std::string()>                entitlementsAsPlist;
     std::function<std::string()>                appSource;
+    std::function<std::string()>                framework;
     std::function<bool()>                       isVirtualDevice;
     std::function<std::optional<std::string>()> virtualDeviceHost;
     std::string                                 documents;

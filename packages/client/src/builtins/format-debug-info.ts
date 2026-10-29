@@ -4,6 +4,7 @@ export type DebugInfo = {
 	commit: string;
 	loader: string;
 	loaderOrigin: string;
+	framework: string;
 	discord: string;
 	discordBuild: string;
 	appSource: string;
@@ -23,13 +24,15 @@ export type DebugInfo = {
  * @returns The message text.
  */
 export function formatDebugInfo(info: DebugInfo): string {
+	const loader = [`\`${info.loaderOrigin}\``, info.framework].filter(Boolean).join(', ');
+
 	return [
 		'### Unbound Debug Info',
-		`- **Unbound:** ${info.client} (\`${info.commit}\`), loader ${info.loader} (\`${info.loaderOrigin}\`)`,
-		`- **Discord:** ${info.discord} (${info.discordBuild}) via ${info.appSource}`,
+		`- **Unbound:** ${info.client} (\`${info.commit}\`), loader ${info.loader} (${loader})`,
+		`- **Discord:** ${info.discord}, build ${info.discordBuild} (${info.appSource})`,
 		`- **Device:** ${info.device} on ${info.platform} ${info.os}`,
 		...(info.flags.length ? [`- **State:** ${info.flags.join(', ')}`] : []),
-		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (bytecode ${info.bytecode})`,
+		`- **Runtime:** React ${info.react}, React Native ${info.reactNative}, Hermes ${info.hermes} (HBC ${info.bytecode})`,
 	].join('\n');
 }
 

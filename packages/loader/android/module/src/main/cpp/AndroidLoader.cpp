@@ -69,6 +69,7 @@ platformProvider(const LoaderConfiguration &configuration, loader::SettingsStore
     provider->isRooted          = flag("isRooted");
     provider->isSystemApp       = flag("isSystemApp");
     provider->appSource         = text("appSource");
+    provider->framework         = text("framework");
     provider->isVirtualDevice   = flag("isVirtualDevice");
     provider->virtualDeviceHost = [info]() -> std::optional<std::string> {
         const auto host = info.find("virtualDeviceHost");

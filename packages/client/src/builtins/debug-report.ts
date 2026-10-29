@@ -43,13 +43,10 @@ function attempt<T>(read: () => T | null | undefined, fallback: T): T {
 
 function deviceFlags(android: boolean): string[] {
 	const device = globalThis.NativePlatform?.device;
-	const ios = globalThis.NativePlatform?.ios;
 	const flags = [
 		attempt(() => device?.isRooted(), false) && (android ? 'rooted' : 'jailbroken'),
 		attempt(() => device?.isVirtualDevice(), false) && (android ? 'emulator' : 'simulator'),
 		attempt(() => device?.isSystemApp(), false) && 'system app',
-		ios &&
-			(attempt(() => ios.isVerifiedBuild(), false) ? 'verified build' : 'unverified build'),
 	];
 
 	return flags.filter((flag): flag is string => typeof flag === 'string');
@@ -78,7 +75,8 @@ export function readDebugInfo(): DebugInfo {
 		loaderOrigin: String(loader?.origin ?? 'unknown origin'),
 		discord: String(bundle.Version ?? 'unknown'),
 		discordBuild: String(bundle.Build ?? 'unknown'),
-		appSource: attempt(() => platform?.app.getAppSource(), 'an unknown source'),
+		appSource: attempt(() => platform?.app.getAppSource(), '') || 'unknown source',
+		framework: attempt(() => platform?.app.getFramework?.(), ''),
 		react: React.version,
 		reactNative: rn ? `${rn.major}.${rn.minor}.${rn.patch}` : 'unknown',
 		hermes: String(runtime['OSS Release Version'] ?? 'unknown'),

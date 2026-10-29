@@ -114,6 +114,7 @@ int csops(pid_t pid, unsigned int ops, void *useraddr, size_t usersize);
 + (BOOL)isJailbroken;
 
 + (NSString *)getAppSource;
++ (NSString *)getInjectionFramework;
 
 + (NSString *)getDeviceModel;
 + (NSString *)getiOSVersionString;
