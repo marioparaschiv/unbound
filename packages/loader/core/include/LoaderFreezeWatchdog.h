@@ -12,6 +12,7 @@ struct FreezeReport {
     std::string name;
     double      seconds  = 0;
     bool        resolved = false;
+    std::string detail;
 };
 
 struct FreezeWatchdogOptions {

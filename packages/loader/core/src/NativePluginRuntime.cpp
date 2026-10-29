@@ -9,6 +9,7 @@
 #include "LoaderAddonActivity.h"
 #include "LoaderBootstrap.h"
 #include "LoaderLog.h"
+#include "NativeCallActivity.h"
 #include "NativeOperationGate.h"
 
 namespace loader::native {
@@ -312,12 +313,29 @@ static std::optional<jsi::Function> failureGuard(jsi::Runtime &runtime)
     return created.asObject(runtime).asFunction(runtime);
 }
 
+static constexpr size_t kLabelledArguments  = 3;
+static constexpr size_t kArgumentLabelLimit = 64;
+
+static std::string firstStringArgument(jsi::Runtime &runtime, const jsi::Value *args, size_t count)
+{
+    for (size_t index = 0; index < count && index < kLabelledArguments; index++)
+    {
+        if (args[index].isString())
+        {
+            std::string text = args[index].getString(runtime).utf8(runtime);
+            return text.size() > kArgumentLabelLimit ? text.substr(0, kArgumentLabelLimit) : text;
+        }
+    }
+    return {};
+}
+
 jsi::Function makeFunction(jsi::Runtime &runtime, const char *name, unsigned int argumentCount,
                            jsi::HostFunctionType handler)
 {
-    jsi::HostFunctionType guarded =
-        [handler = std::move(handler)](jsi::Runtime &rt, const jsi::Value &thisValue,
-                                       const jsi::Value *args, size_t count) -> jsi::Value {
+    jsi::HostFunctionType guarded = [handler = std::move(handler), label = std::string(name)](
+                                        jsi::Runtime &rt, const jsi::Value &thisValue,
+                                        const jsi::Value *args, size_t count) -> jsi::Value {
+        NativeCallScope scope(label, firstStringArgument(rt, args, count));
         return guard(rt, [&]() {
             return handler(rt, thisValue, args, count);
         });
