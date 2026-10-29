@@ -9,6 +9,7 @@ import {
 	DISCORD_PACKAGE,
 	parseLoaderLogLine,
 	parseSince,
+	type LogEntry,
 	type LogEvent,
 	type LogLevel,
 	type SyslogRecord,
@@ -58,6 +59,7 @@ const LOADER_LOG_PATH = 'Documents/Unbound/Logs/unbound.log';
 const SYSLOG_SILENCE_MS = 6_000;
 const LOG_FILE_POLL_MS = 1_000;
 const LOG_FILE_CHUNK_BYTES = 65_536;
+const LOG_FILE_TAIL_LINES = 200;
 const PILOT_TIMEOUT_MS = 15_000;
 const IOS_HISTORY_PREDICATE = [
 	'(process == "Discord" AND (senderImagePath ENDSWITH "/Discord" OR senderImagePath CONTAINS[c] "unbound"))',
@@ -219,19 +221,38 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
 		});
 
 		const history = await readIOSHistory(udid, start, run, syslog, options.logTool);
+		const records = 'error' in history ? [] : history.records;
 
-		if ('error' in history) {
-			return { ok: false, text: history.error };
-		}
-
-		for (const record of history.records) {
+		for (const record of records) {
 			emitAll(source.pushRecord(record), emit);
 		}
 
-		historyEnd = history.records.at(-1)?.epochMs ?? historyEnd;
+		historyEnd = records.at(-1)?.epochMs ?? historyEnd;
+
+		if (!records.length) {
+			emit({
+				kind: 'notice',
+				message: `${'error' in history ? `The log archive could not be read (${history.error})` : 'The log archive held nothing'}; reading Unbound's log files instead.`,
+			});
+
+			const entries = await readLoaderLogHistory({ udid, pilot, run }, start);
+
+			if (!entries) {
+				return { ok: false, text: "Unbound's log files could not be read either." };
+			}
+
+			emitAll(entries, emit);
+			historyEnd = entries.at(-1)?.epochMs ?? historyEnd;
+		}
 	}
 
 	if (!live) {
+		if (start === void 0) {
+			const entries = await readLoaderLogHistory({ udid, pilot, run });
+
+			emitAll(entries ?? [], emit);
+		}
+
 		return { ok: true, text: '-- End of the log. --' };
 	}
 
@@ -296,20 +317,20 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
 	}
 }
 
-export type LoaderLogFileOptions = {
+export type PilotTarget = {
 	udid: string;
 	pilot: string;
 	run: CommandRunner;
+};
+
+export type LoaderLogFileOptions = PilotTarget & {
 	emit: (event: LogEvent) => void;
 	since?: number;
 	polls?: number;
 	intervalMs?: number;
 };
 
-async function pilotShell(
-	options: LoaderLogFileOptions,
-	command: string,
-): Promise<string | undefined> {
+async function pilotShell(options: PilotTarget, command: string): Promise<string | undefined> {
 	const result = await options.run(
 		options.pilot,
 		['shell_exec', '--device', options.udid, '--command', command],
@@ -329,7 +350,7 @@ async function pilotShell(
 	}
 }
 
-async function loaderLogPath(options: LoaderLogFileOptions): Promise<string | undefined> {
+async function loaderLogPath(options: PilotTarget): Promise<string | undefined> {
 	const result = await options.run(
 		options.pilot,
 		['app_container', '--device', options.udid, '--bundleId', DISCORD_BUNDLE_ID],
@@ -349,6 +370,45 @@ async function loaderLogPath(options: LoaderLogFileOptions): Promise<string | un
 	}
 }
 
+function quote(path: string): string {
+	return `'${path.replaceAll("'", "'\\''")}'`;
+}
+
+/**
+ * @description Reads the history in the loader's own log files on a jailbroken iPhone through jb-p1lot, for when the log archive holds nothing: the entries since a time, from the rotated file and the current one, or else the current file's last lines.
+ * @param target The device, and the jb-p1lot binary and runner.
+ * @param start The time the history starts at, or `undefined` for the last lines.
+ * @returns The entries, oldest first, or `undefined` when the files cannot be read.
+ */
+export async function readLoaderLogHistory(
+	target: PilotTarget,
+	start?: number,
+): Promise<LogEntry[] | undefined> {
+	const path = await loaderLogPath(target);
+
+	if (!path) {
+		return;
+	}
+
+	const rotated = path.replace(/\.log$/, '.1.log');
+	const command =
+		start === void 0
+			? `tail -n ${LOG_FILE_TAIL_LINES} ${quote(path)}`
+			: `cat ${quote(rotated)} ${quote(path)} 2>/dev/null; true`;
+	const text = await pilotShell(target, command);
+
+	if (text === undefined) {
+		return;
+	}
+
+	return text
+		.split('\n')
+		.map(parseLoaderLogLine)
+		.filter(
+			(entry): entry is LogEntry => !!entry && (start === void 0 || entry.epochMs >= start),
+		);
+}
+
 /**
  * @description Follows the loader's own log file on a jailbroken iPhone through jb-p1lot, for when the unified log does not stream. It holds Unbound's native log and the JavaScript console, not Discord's own lines or crash reports.
  * @param options The device, the jb-p1lot binary and runner, where each entry goes, the time before which entries are skipped, and how many polls to make (unlimited when left out).
@@ -363,7 +423,7 @@ export async function followLoaderLogFile(options: LoaderLogFileOptions): Promis
 		return;
 	}
 
-	const quoted = `'${path.replaceAll("'", "'\\''")}'`;
+	const quoted = quote(path);
 	let offset = Number((await pilotShell(options, `wc -c < ${quoted}`))?.trim() ?? 0) || 0;
 	let pending = '';
 

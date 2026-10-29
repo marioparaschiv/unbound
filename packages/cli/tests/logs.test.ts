@@ -15,7 +15,12 @@ import {
 	parseSyslogLine,
 	unquoteConsoleArguments,
 } from '../src/lib/log-lines';
-import { followLoaderLogFile, parseArchiveEvent, tailAndroid } from '../src/lib/log-tail';
+import {
+	followLoaderLogFile,
+	parseArchiveEvent,
+	readLoaderLogHistory,
+	tailAndroid,
+} from '../src/lib/log-tail';
 import { createFrameRewriter, listBundles } from '../src/lib/log-symbolicator';
 
 const NOW = new Date(2026, 9, 26, 22, 30, 0).getTime();
@@ -458,5 +463,41 @@ describe('followLoaderLogFile', () => {
 				event.kind === 'entry' ? `${event.tag}: ${event.message}` : event.message,
 			),
 		).toEqual(['console: hello', 'plugins: broke']);
+	});
+});
+
+describe('readLoaderLogHistory', () => {
+	const files = [
+		'2026-10-29T16:00:00.000Z I [default] rotated',
+		'2026-10-29T17:00:00.000Z I [console] current',
+		'2026-10-29T17:30:00.000Z W [plugins] latest',
+	].join('\n');
+	const commands: string[] = [];
+	const target = {
+		udid: 'phone',
+		pilot: 'jb-p1lot',
+		run: async (_command: string, args: string[]) => {
+			if (args[0] === 'app_container') {
+				return { ok: true as const, stdout: JSON.stringify({ dataContainer: '/data' }) };
+			}
+
+			commands.push(args.at(-1)!);
+
+			return { ok: true as const, stdout: JSON.stringify({ exitCode: 0, output: files }) };
+		},
+	};
+
+	test('reads the rotated and current files from a start time', async () => {
+		const entries = await readLoaderLogHistory(target, Date.parse('2026-10-29T16:30:00.000Z'));
+
+		expect(entries?.map((entry) => entry.message)).toEqual(['current', 'latest']);
+		expect(commands.at(-1)).toContain("'/data/Documents/Unbound/Logs/unbound.1.log'");
+	});
+
+	test('reads the last lines without a start time', async () => {
+		const entries = await readLoaderLogHistory(target);
+
+		expect(entries).toHaveLength(3);
+		expect(commands.at(-1)).toStartWith('tail -n 200');
 	});
 });
