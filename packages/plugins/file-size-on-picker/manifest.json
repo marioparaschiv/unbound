@@ -14,11 +14,24 @@
 	],
 	"version": "1.0.1",
 	"icon": "ImageIcon",
-	"platforms": ["ios", "android"],
+	"platforms": [
+		"ios",
+		"android"
+	],
 	"capabilities": [],
 	"platformCapabilities": {
-		"android": ["native.java.classes", "native.java.invoke"]
+		"android": [
+			"native.java.classes",
+			"native.java.invoke"
+		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "a9452334e7b3c0b41e7126ed45316c8e3925caa1b0c53944a479eefec4189f3a30adaa8d2a6824f0d508b917089d5c0bc2ff8db46e794c47687cf0ebd85bda91"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "tqWLWuwudG6Cs184HvvZxXuW03tcdSt7znw2Q4ii+RkLFHiJ5Bj5vwZgqzLXS9GZ6aDG3CG3fwL4DUSNP9xPBQ=="
+	}
 }
