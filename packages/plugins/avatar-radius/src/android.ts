@@ -22,15 +22,36 @@ type AndroidNative = {
 	hooks: NativeJavaHooksBridge;
 };
 
+type Rounded =
+	| { kind: 'outline'; view: NativeJavaReference }
+	| { kind: 'border'; view: NativeJavaReference; circle: number };
+
 const PROBE_SIZE = 100;
 const MAX_TRACKED = 512;
+const CORNER_PROBE = 0.135;
+const SIZE_RETRIES = 3;
+const SIZE_RETRY_MS = 50;
+const SQUARE_TOLERANCE = 1;
 
 function isMissing(value: NativeJavaValue | null | undefined): boolean {
 	return !value || value.type === 'null';
 }
 
+function isBorderRadiusSetter(method: {
+	name: string;
+	static?: boolean;
+	parameters: string[];
+}): boolean {
+	return (
+		!method.static &&
+		method.name === 'setBorderRadius' &&
+		method.parameters.length === 1 &&
+		method.parameters[0] === 'float'
+	);
+}
+
 /**
- * @description Rounds Discord's circular avatar views to the chosen radius as they attach to a window.
+ * @description Rounds Discord's circular avatars to the chosen radius as they attach to a window: the native chat avatars through their outline, and React Native images everywhere else through their border radius.
  * @param native The plugin's Java and hook bridges.
  * @param radius Reads the chosen radius in density-independent pixels.
  * @returns `refresh`, which re-rounds the avatars it rounded, and `dispose`, which brings back the circles.
@@ -45,7 +66,8 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 	const originalOutline = java.createAssociationKey();
 	const originalBackground = java.createAssociationKey();
 	const circles = new Map<string, boolean>();
-	const tracked: NativeJavaReference[] = [];
+	const borderClasses = new Map<string, boolean>();
+	const tracked: Rounded[] = [];
 	let disposed = false;
 
 	function isCircle(provider: NativeJavaReference, view: NativeJavaReference): boolean {
@@ -78,37 +100,143 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		return circle;
 	}
 
-	function track(view: NativeJavaReference) {
-		tracked.push(view);
+	function track(rounded: Rounded) {
+		tracked.push(rounded);
 
 		if (tracked.length > MAX_TRACKED) tracked.shift();
 	}
 
-	function adopt(view: NativeJavaReference): boolean {
-		if (!isMissing(java.getAssociatedObject(view, originalOutline))) return true;
+	function adoptOutline(view: NativeJavaReference): Rounded | null {
+		if (!isMissing(java.getAssociatedObject(view, originalOutline))) {
+			return { kind: 'outline', view };
+		}
 
 		const provider = javaReference(java.invoke(view, 'getOutlineProvider', []));
 
-		if (!provider || !isCircle(provider, view)) return false;
+		if (!provider || !isCircle(provider, view)) return null;
 
 		java.setAssociatedObject(view, originalOutline, provider);
 		java.setAssociatedObject(view, originalBackground, java.invoke(view, 'getBackground', []));
-		track(view);
 
-		return true;
+		const rounded: Rounded = { kind: 'outline', view };
+
+		track(rounded);
+
+		return rounded;
 	}
 
-	async function round(view: NativeJavaReference) {
-		if (disposed || !adopt(view)) return;
+	function hasBorderRadius(view: NativeJavaReference): boolean {
+		const name = javaText(java.className(view)) ?? '';
+		const known = borderClasses.get(name);
 
+		if (known !== undefined) return known;
+
+		let supported = false;
+
+		for (let current: string | null | undefined = name; current && current !== attachClass;) {
+			const description = java.describe(current);
+
+			supported = description.methods.some(isBorderRadiusSetter);
+
+			if (supported) break;
+
+			current = description.superclass;
+		}
+
+		borderClasses.set(name, supported);
+
+		return supported;
+	}
+
+	function regionContains(region: NativeJavaReference, x: number, y: number): boolean {
+		return javaFlag(java.invoke(region, 'contains', [javaInt(x), javaInt(y)]));
+	}
+
+	function clipsToCircle(view: NativeJavaReference, size: number): boolean {
+		const background = javaReference(java.invoke(view, 'getBackground', []));
+
+		if (!background) return false;
+
+		const outline = java.construct('android.graphics.Outline', []);
+
+		java.invoke(background, 'getOutline', [outline]);
+
+		const path = javaReference(java.getField(outline, 'mPath'));
+
+		if (!path) return false;
+
+		const bounds = java.construct('android.graphics.Region', [
+			javaInt(0),
+			javaInt(0),
+			javaInt(size),
+			javaInt(size),
+		]);
+		const region = java.construct('android.graphics.Region', []);
+
+		java.invoke(region, 'setPath', [path, bounds]);
+
+		const corner = Math.floor(size * CORNER_PROBE);
+		const center = Math.floor(size / 2);
+
+		return !regionContains(region, corner, corner) && regionContains(region, center, center);
+	}
+
+	function squareSize(view: NativeJavaReference): number {
+		const width = javaNumber(java.invoke(view, 'getWidth', [])) ?? 0;
+		const height = javaNumber(java.invoke(view, 'getHeight', [])) ?? 0;
+
+		return Math.abs(width - height) <= SQUARE_TOLERANCE ? Math.min(width, height) : -1;
+	}
+
+	async function adoptBorder(view: NativeJavaReference): Promise<Rounded | null> {
+		if (!hasBorderRadius(view)) return null;
+
+		let size = squareSize(view);
+
+		for (let retry = 0; size === 0 && retry < SIZE_RETRIES; retry++) {
+			await new Promise((resolve) => setTimeout(resolve, SIZE_RETRY_MS));
+			size = squareSize(view);
+		}
+
+		if (size <= 0 || disposed || !clipsToCircle(view, size)) return null;
+
+		const rounded: Rounded = { kind: 'border', view, circle: size / 2 };
+
+		track(rounded);
+
+		return rounded;
+	}
+
+	function adopt(view: NativeJavaReference): Promise<Rounded | null> | Rounded | null {
+		if (javaFlag(java.invoke(avatarClass, 'isInstance', [view]))) return adoptOutline(view);
+
+		return adoptBorder(view);
+	}
+
+	function density(view: NativeJavaReference): number {
 		const resources = javaReference(java.invoke(view, 'getResources', []));
 		const metrics = resources
 			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
 			: null;
-		const density = metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
+
+		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
+	}
+
+	async function apply(rounded: Rounded) {
+		if (disposed) return;
+
+		const { view } = rounded;
+		const corner = radius() * density(view);
+
+		if (rounded.kind === 'border') {
+			await java.invokeAsync(view, 'setBorderRadius', [javaFloat(corner)]);
+
+			return;
+		}
+
 		const background = java.construct('android.graphics.drawable.GradientDrawable', []);
 
-		java.invoke(background, 'setCornerRadius', [javaFloat(radius() * density)]);
+		java.invoke(background, 'setCornerRadius', [javaFloat(corner)]);
 		java.invoke(background, 'setColor', [javaInt(0)]);
 
 		await java.invokeAsync(view, 'setBackground', [background]);
@@ -117,7 +245,23 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		await java.invokeAsync(view, 'invalidateOutline', []);
 	}
 
-	async function restore(view: NativeJavaReference) {
+	async function round(view: NativeJavaReference) {
+		if (disposed) return;
+
+		const rounded = await adopt(view);
+
+		if (rounded) await apply(rounded);
+	}
+
+	async function restore(rounded: Rounded) {
+		const { view } = rounded;
+
+		if (rounded.kind === 'border') {
+			await java.invokeAsync(view, 'setBorderRadius', [javaFloat(rounded.circle)]);
+
+			return;
+		}
+
 		const provider = java.getAssociatedObject(view, originalOutline);
 
 		if (isMissing(provider)) return;
@@ -145,28 +289,25 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		({ self }) => {
 			const view = javaReference(self);
 
-			if (view && javaFlag(java.invoke(avatarClass, 'isInstance', [view]))) {
-				round(view).catch(report);
-			}
+			if (view) round(view).catch(report);
 		},
 	);
 
 	const root = currentDecorView(java);
 
 	if (root) {
-		for (const view of findViewsOfClass(java, root, AvatarClass.android))
-			round(view).catch(report);
+		for (const view of findViewsOfClass(java, root, attachClass)) round(view).catch(report);
 	}
 
 	return {
 		refresh() {
-			for (const view of tracked) round(view).catch(report);
+			for (const rounded of tracked) apply(rounded).catch(report);
 		},
 		async dispose() {
 			disposed = true;
 			hooks.remove(token);
 
-			await Promise.all(tracked.splice(0).map((view) => restore(view).catch(report)));
+			await Promise.all(tracked.splice(0).map((rounded) => restore(rounded).catch(report)));
 		},
 	};
 }
