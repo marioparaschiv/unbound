@@ -72,37 +72,69 @@ function NumberInput({ setting }: { setting: NumberSetting }) {
 	);
 }
 
-function SettingsPanel() {
-	const store = settings.useSettingsStore();
-	const [color, setColor] = useState(String(store.get('color', '')));
+type ColorSetting = {
+	key: string;
+	title: string;
+	description: string;
+	placeholder: string;
+};
 
-	function saveColor() {
+const COLOR_SETTINGS: ColorSetting[] = [
+	{
+		key: 'color',
+		title: 'Color',
+		description:
+			'A hex color such as #5865F2. Leave it empty to follow the theme: black on dark themes, white on the light theme.',
+		placeholder: '#000000',
+	},
+	{
+		key: 'ownColor',
+		title: 'Your messages',
+		description:
+			'A hex color for bubbles around your own messages. Leave it empty to use the color above.',
+		placeholder: 'Same as above',
+	},
+];
+
+function ColorInput({ setting }: { setting: ColorSetting }) {
+	const store = settings.useSettingsStore();
+	const [color, setColor] = useState(String(store.get(setting.key, '')));
+
+	function save() {
 		const trimmed = color.trim();
 
 		if (trimmed && !parseHexColor(trimmed)) {
-			setColor(String(store.get('color', '')));
+			setColor(String(store.get(setting.key, '')));
 
 			return;
 		}
 
-		store.set('color', trimmed);
+		store.set(setting.key, trimmed);
 	}
 
+	return (
+		<Discord.TextInput
+			label={setting.title}
+			description={setting.description}
+			value={color}
+			onChange={setColor}
+			onEndEditing={save}
+			onSubmitEditing={save}
+			autoCapitalize='none'
+			placeholder={setting.placeholder}
+		/>
+	);
+}
+
+function SettingsPanel() {
 	return (
 		<Page>
 			{NUMBER_SETTINGS.map((setting) => (
 				<NumberInput key={setting.key} setting={setting} />
 			))}
-			<Discord.TextInput
-				label='Color'
-				description='A hex color such as #5865F2. Leave it empty to follow the theme: black on dark themes, white on the light theme.'
-				value={color}
-				onChange={setColor}
-				onEndEditing={saveColor}
-				onSubmitEditing={saveColor}
-				autoCapitalize='none'
-				placeholder='#000000'
-			/>
+			{COLOR_SETTINGS.map((setting) => (
+				<ColorInput key={setting.key} setting={setting} />
+			))}
 		</Page>
 	);
 }

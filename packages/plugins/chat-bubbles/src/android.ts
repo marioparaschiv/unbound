@@ -10,13 +10,16 @@ import {
 	javaInt,
 	javaNumber,
 	javaReference,
+	javaText,
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
+import { messageIdField } from '@unbound-plugins/shared/native/android/discord-views';
 
 import { bubbleFrame, rowInsets, union, type Edges } from '~/geometry';
 import { AndroidClass, PLUGIN_NAME } from '~/constants';
 import { currentAppearance } from '~/theme';
 import { argb } from '~/style';
+import { isOwnMessage } from '~/author';
 
 type AndroidNative = {
 	java: NativeJavaBridge;
@@ -36,6 +39,7 @@ const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
 export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	const accessoriesClass = java.getClass(AndroidClass.accessories);
 	const messageClass = java.getClass(AndroidClass.messageView);
+	const idField = messageIdField(java);
 	const contentClass = java.getClass(AndroidClass.content);
 	const ours = java.createAssociationKey();
 	const original = java.createAssociationKey();
@@ -162,6 +166,14 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		]);
 	}
 
+	function messageId(row: NativeJavaReference): string | undefined {
+		try {
+			return javaText(java.getField(row, idField));
+		} catch {
+			return undefined;
+		}
+	}
+
 	async function place(row: NativeJavaReference) {
 		const area = contentArea(row);
 
@@ -186,7 +198,9 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		const shape = java.construct('android.graphics.drawable.GradientDrawable', []);
 
 		java.invoke(shape, 'setCornerRadius', [javaFloat(style.radius * scale)]);
-		java.invoke(shape, 'setColor', [javaInt(argb(style.color))]);
+		java.invoke(shape, 'setColor', [
+			javaInt(argb(isOwnMessage(messageId(row)) ? style.ownColor : style.color)),
+		]);
 
 		const bubble = java.construct('android.graphics.drawable.LayerDrawable', [
 			{ type: 'array', componentType: 'android.graphics.drawable.Drawable', value: [shape] },

@@ -2,12 +2,14 @@ import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/nati
 import { findVisibleCells } from '@unbound-plugins/shared/native/visible-cells';
 import { readRect } from '@unbound-plugins/shared/native/rect';
 import { viewKey } from '@unbound-plugins/shared/native/view-key';
+import { readNativeMessageInfo } from '@unbound-plugins/shared/native/message-info';
 
 import { messageLayout, type SnapshotNode } from '~/message-layout';
 import { IOSClass, PLUGIN_NAME } from '~/constants';
 import { bubbleFrame } from '~/geometry';
 import type { BubbleColor } from '~/style';
 import { currentAppearance } from '~/theme';
+import { isOwnMessage } from '~/author';
 
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
 const TEXT_MEASURE_HEIGHT = 100_000;
@@ -117,7 +119,12 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		const layer = objc.call(bubble, 'layer') as NativeObjectHandle;
 
 		await objc.invokeAsync(layer, 'setCornerRadius:', [style.radius]);
-		await objc.invokeAsync(bubble, 'setBackgroundColor:', [color(style.color)]);
+		const info = await readNativeMessageInfo(cell, objc).catch(() => undefined);
+		const own = isOwnMessage(info?.messageId, info?.channelId);
+
+		await objc.invokeAsync(bubble, 'setBackgroundColor:', [
+			color(own ? style.ownColor : style.color),
+		]);
 		await objc.invokeAsync(bubble, 'setFrame:', [
 			objc.struct('CGRect', {
 				origin: { x: frame.x, y: frame.y },
