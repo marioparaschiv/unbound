@@ -3,13 +3,34 @@
 	"name": "Role Color Everywhere",
 	"description": "Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.",
 	"authors": [
-		{ "name": "King Fish", "id": "499400512559382538" },
-		{ "name": "lewisakura", "id": "96269247411400704" },
-		{ "name": "AutumnVN", "id": "393694671383166998" },
-		{ "name": "Kyuuhachi", "id": "236588665420251137" },
-		{ "name": "jamesbt365", "id": "158567567487795200" },
-		{ "name": "fres", "id": "843448897737064448" },
-		{ "name": "adrian", "id": "224617799434108928" }
+		{
+			"name": "King Fish",
+			"id": "499400512559382538"
+		},
+		{
+			"name": "lewisakura",
+			"id": "96269247411400704"
+		},
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "Kyuuhachi",
+			"id": "236588665420251137"
+		},
+		{
+			"name": "jamesbt365",
+			"id": "158567567487795200"
+		},
+		{
+			"name": "fres",
+			"id": "843448897737064448"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
 	],
 	"version": "1.0.1",
 	"icon": "PaintPaletteIcon",
@@ -33,5 +54,12 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "85432c18d1c584890d0a5cc304dd96a1e9f2156445b7fa9645b62813a60e66875b520daa87017d72832e748917f509786d53ab407f2c1d21235876f3c84fdf31"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "2a5u7IZ3vaVomwSZXsK3i084XST8UAN871xNMP6rT+QFoYlgfFxBIKtr+O6k7vN4iXBigeaNz2wGmyw/CGK7Cw=="
+	}
 }
