@@ -1,11 +1,13 @@
-import { IconPalette, IconPlug } from 'nucleo-micro-bold';
 import { Link } from '@tanstack/react-router';
+import { useState } from 'react';
 
+import AddonIconPopout from '~/components/dashboard/addon-icon-popout';
 import SubmitDialog from '~/components/dashboard/submit-dialog';
 import StatusPill from '~/components/dashboard/status-pill';
 import AddonMenu from '~/components/dashboard/addon-menu';
 import RoleTag from '~/components/dashboard/role-tag';
 import type { DashboardAddon } from '~/lib/dashboard';
+import AddonIcon from '~/components/addon-icon';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 
@@ -27,15 +29,25 @@ function describeLive(addon: DashboardAddon): string {
 }
 
 function AddonRow({ addon, userId, githubLinked }: AddonRowProps) {
+	const [iconOpen, setIconOpen] = useState(false);
+
 	return (
 		<li className='flex flex-wrap items-center gap-x-4 gap-y-3 p-(--card-pad)'>
-			<div className='flex justify-center items-center bg-accent rounded-control size-10 shrink-0'>
-				{addon.type === 'theme' ? (
-					<IconPalette className='size-5' />
-				) : (
-					<IconPlug className='size-5' />
-				)}
-			</div>
+			{addon.actions.icon && addon.kind === 'published' ? (
+				<AddonIconPopout
+					addonId={addon.id}
+					name={addon.name}
+					type={addon.type}
+					icon={addon.icon}
+					iconSvg={addon.iconSvg}
+					open={iconOpen}
+					onOpenChange={setIconOpen}
+				/>
+			) : (
+				<div className='flex justify-center items-center bg-accent rounded-control size-10 shrink-0'>
+					<AddonIcon type={addon.type} svg={addon.iconSvg} className='size-5' />
+				</div>
+			)}
 
 			<div className='flex flex-col flex-1 gap-1.5 min-w-40'>
 				<div className='flex flex-wrap items-center gap-2'>
@@ -83,7 +95,7 @@ function AddonRow({ addon, userId, githubLinked }: AddonRowProps) {
 						source={addon.pending?.source}
 					/>
 				) : null}
-				<AddonMenu addon={addon} userId={userId} />
+				<AddonMenu addon={addon} userId={userId} onChangeIcon={() => setIconOpen(true)} />
 			</div>
 		</li>
 	);

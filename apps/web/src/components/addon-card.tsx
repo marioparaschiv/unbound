@@ -1,4 +1,3 @@
-import { IconPalette, IconPlug } from 'nucleo-micro-bold';
 import type { ComponentProps, ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 
@@ -6,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card'
 import InstallAddonButton from '~/components/install-addon-button';
 import type { MarketplaceAddon } from '~/lib/marketplace-addon';
 import AuthorByline from '~/components/author-byline';
+import AddonIcon from '~/components/addon-icon';
 import Text from '~/components/ui/text';
 import cn from '~/lib/cn';
 
@@ -28,11 +28,7 @@ function AddonCard({ addon, details, footer, className, ...props }: AddonCardPro
 		>
 			<CardHeader className='flex flex-row items-start gap-3 p-(--card-pad) pb-0'>
 				<div className='flex justify-center items-center bg-accent rounded-control size-10 shrink-0'>
-					{addon.type === 'theme' ? (
-						<IconPalette className='size-5' />
-					) : (
-						<IconPlug className='size-5' />
-					)}
+					<AddonIcon type={addon.type} svg={addon.iconSvg} className='size-5' />
 				</div>
 				<div className='flex flex-col flex-1 gap-0.5 min-w-0'>
 					<Text variant='heading-sm' className='truncate leading-tight!'>

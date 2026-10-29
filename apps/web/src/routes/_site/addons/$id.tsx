@@ -11,16 +11,16 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import ContributorsCard from '~/components/addon/contributors-card';
 import VersionHistory from '~/components/addon/version-history';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import AddonHeader from '~/components/addon/addon-header';
 import AuthorsCard from '~/components/addon/authors-card';
-import DetailsCard from '~/components/addon/details-card';
+import ScrollShadow from '~/components/ui/scroll-shadow';
 import { addonQuery } from '~/queries/marketplace/addon';
-import SourceCard from '~/components/addon/source-card';
+import AboutCard from '~/components/addon/about-card';
 import { Button } from '~/components/ui/button';
 import Markdown from '~/components/markdown';
+import Text from '~/components/ui/text';
 
 function AddonPage() {
 	const { id } = Route.useParams();
@@ -32,49 +32,47 @@ function AddonPage() {
 	}
 
 	const { source } = addon;
+	const sidebar = [
+		<AuthorsCard key='authors' authors={addon.authors} />,
+		<Card key='changelog' className='gap-4'>
+			<CardHeader>
+				<CardTitle>What's New</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<ScrollShadow
+					contentClassName='max-h-96 overflow-y-auto overscroll-contain [scrollbar-width:thin]'
+					shadowClassName='inset-x-0 h-10'
+					fromClassName='from-card'
+				>
+					<VersionHistory versions={addon.versions} />
+				</ScrollShadow>
+			</CardContent>
+		</Card>,
+		<AboutCard key='about' addon={addon} />,
+	].map((card, index) => (
+		<div key={card.key} className='min-w-0 animate-reveal' style={staggerStyle(4 + index)}>
+			{card}
+		</div>
+	));
 
 	return (
 		<div className='flex flex-col flex-1 gap-8 page-frame'>
 			<AddonHeader addon={addon} />
 
 			<div className='items-start gap-6 grid grid-cols-1 lg:grid-cols-3'>
-				<div className='flex flex-col gap-6 lg:col-span-2 min-w-0'>
-					{source?.addonMd ? (
-						<Card className='animate-reveal' style={staggerStyle(4)}>
-							<CardContent>
-								<Markdown source={source.addonMd} pin={source.pin} />
-							</CardContent>
-						</Card>
-					) : null}
-
-					<Card className='animate-reveal' style={staggerStyle(5)}>
-						<CardHeader>
-							<CardTitle>Version History</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<VersionHistory versions={addon.versions} />
-						</CardContent>
-					</Card>
-				</div>
-
-				<aside className='flex flex-col gap-6 min-w-0'>
-					{source ? (
-						<div className='animate-reveal' style={staggerStyle(4)}>
-							<SourceCard source={source} />
-						</div>
-					) : null}
-					{source && source.details.contributors.length > 0 ? (
-						<div className='animate-reveal' style={staggerStyle(5)}>
-							<ContributorsCard contributors={source.details.contributors} />
-						</div>
-					) : null}
-					<div className='animate-reveal' style={staggerStyle(6)}>
-						<DetailsCard addon={addon} />
-					</div>
-					<div className='animate-reveal' style={staggerStyle(7)}>
-						<AuthorsCard authors={addon.authors} />
-					</div>
-				</aside>
+				<Card className='lg:col-span-2 min-w-0 animate-reveal' style={staggerStyle(4)}>
+					<CardContent>
+						{/* Without an ADDON.md the manifest description stands in, as review and submit tell authors. */}
+						{source?.addonMd ? (
+							<Markdown source={source.addonMd} pin={source.pin} />
+						) : (
+							<Text variant='text-md' color='muted'>
+								{addon.description}
+							</Text>
+						)}
+					</CardContent>
+				</Card>
+				<aside className='flex flex-col gap-6 min-w-0'>{sidebar}</aside>
 			</div>
 		</div>
 	);

@@ -11,6 +11,7 @@ import { LATEST_VERSION, getManifestType } from '~/lib/addons';
 import { OPEN_SUBMISSION_STATUSES } from '~/lib/submissions';
 import { submission, submissionSource } from '~/db/schema';
 import type { Caller, CallerUser } from '~/lib/api/caller';
+import { renderAddonIcon } from '~/lib/addon-icons';
 import { hasPermission } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
 
@@ -27,6 +28,8 @@ export type AddonActions = {
 	/** `null` when no submission is possible now, e.g. while the viewer's own listing is in review. */
 	submit: SubmitIntent | null;
 	maintainers: boolean;
+	/** Every maintainer of an approved addon picks its website icon. */
+	icon: boolean;
 	publicPage: boolean;
 	/** Staff with `addon:delist` manage delisting and transfers on the admin addons page. */
 	staffManage: boolean;
@@ -58,6 +61,8 @@ type AddonBase = {
 	id: string;
 	name: string;
 	type: AddonType;
+	/** The picked icon's SVG markup, rendered on the server; `null` for the type's default. */
+	iconSvg: string | null;
 	actions: AddonActions;
 };
 
@@ -66,6 +71,8 @@ export type PublishedAddon = AddonBase & {
 	kind: 'published';
 	role: MaintainerRole;
 	visibility: Visibility;
+	/** The website icon's Nucleo Micro Bold name; `null` for the type's default. */
+	icon: string | null;
 	live: LiveVersion | null;
 	pending: PendingSubmission | null;
 };
@@ -257,6 +264,7 @@ function actionsFor(viewer: CallerUser, addon: AddonFacts): AddonActions {
 	return {
 		submit: submitIntentFor(viewer, addon),
 		maintainers: published && addon.role === 'owner',
+		icon: published,
 		publicPage: published && addon.visibility === 'listed',
 		staffManage: published && hasPermission(viewer.role, { addon: ['delist'] }),
 	};
@@ -276,6 +284,8 @@ function toPublishedAddon(
 		type: row.type,
 		role,
 		visibility: row.delistedAt ? 'delisted' : 'listed',
+		icon: row.icon,
+		iconSvg: renderAddonIcon(row.icon),
 		live: latest
 			? { version: latest.version, publishedAt: latest.publishedAt.toISOString() }
 			: null,
@@ -294,6 +304,7 @@ function toListingAddon(viewer: CallerUser, record: OpenRecord): ListingAddon {
 		id: record.addonId,
 		name: record.name,
 		type: record.type,
+		iconSvg: null,
 		pending: toPending(record, viewer),
 	};
 

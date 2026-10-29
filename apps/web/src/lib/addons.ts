@@ -44,6 +44,7 @@ export type AddonDetails = {
 	type: AddonType;
 	name: string;
 	description: string;
+	icon: string | null;
 	createdAt: string;
 	/** Newest first, withdrawn ones left out; the first is served. */
 	versions: AddonVersion[];
@@ -56,7 +57,7 @@ export type AddonDetails = {
 
 type SourcedVersionRow = AddonVersionRow & { submission: VersionSubmission | null };
 
-type ListedAddonRow = Pick<AddonRow, 'id' | 'type' | 'name' | 'description'> & {
+type ListedAddonRow = Pick<AddonRow, 'id' | 'type' | 'name' | 'description' | 'icon'> & {
 	versions: SourcedVersionRow[];
 };
 
@@ -360,6 +361,7 @@ function toListedAddons(ctx: AppContext, rows: ListedAddonRow[]): ListedAddon[] 
 						type: row.type,
 						name: row.name,
 						description: row.description,
+						icon: row.icon,
 						latestVersion: toAddonVersion(ctx.env, latest, latest.submission),
 					},
 				]
@@ -445,6 +447,7 @@ export async function getAddonDetails(
 		type: row.type,
 		name: row.name,
 		description: row.description,
+		icon: row.icon,
 		createdAt: row.createdAt.toISOString(),
 		versions: row.versions.map((version) =>
 			toAddonVersion(ctx.env, version, version.submission),

@@ -14,6 +14,7 @@ type StatusStyle = {
 type ToneClasses = {
 	pill: string;
 	dot: string;
+	text: string;
 	callout: string;
 };
 
@@ -33,26 +34,31 @@ export const TONES: Record<Tone, ToneClasses> = {
 	success: {
 		pill: 'bg-emerald-500/15 text-emerald-400',
 		dot: 'bg-emerald-400',
+		text: 'text-emerald-400',
 		callout: 'border-emerald-500/30 bg-emerald-500/10',
 	},
 	info: {
 		pill: 'bg-sky-500/15 text-sky-400',
 		dot: 'bg-sky-400',
+		text: 'text-sky-400',
 		callout: 'border-sky-500/30 bg-sky-500/10',
 	},
 	warning: {
 		pill: 'bg-amber-500/15 text-amber-400',
 		dot: 'bg-amber-400',
+		text: 'text-amber-400',
 		callout: 'border-amber-500/30 bg-amber-500/10',
 	},
 	danger: {
 		pill: 'bg-red-500/15 text-red-400',
 		dot: 'bg-red-400',
+		text: 'text-red-400',
 		callout: 'border-red-500/30 bg-red-500/10',
 	},
 	neutral: {
 		pill: 'bg-muted text-muted-foreground',
 		dot: 'bg-muted-foreground',
+		text: 'text-muted-foreground',
 		callout: 'bg-muted/50',
 	},
 };

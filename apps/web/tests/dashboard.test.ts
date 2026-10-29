@@ -75,13 +75,27 @@ describe('dashboard rows', () => {
 			visibility: 'listed',
 			live: { version: '1.0.0', publishedAt: NOW.toISOString() },
 			pending: null,
-			actions: { submit: 'update', maintainers: true, publicPage: true, staffManage: false },
+			icon: null,
+			iconSvg: null,
+			actions: {
+				submit: 'update',
+				maintainers: true,
+				icon: true,
+				publicPage: true,
+				staffManage: false,
+			},
 		});
 		expect(listing).toMatchObject({
 			kind: 'listing',
 			name: 'Fresh',
 			pending: { version: '0.1.0', status: 'pending_review', mine: true },
-			actions: { submit: null, maintainers: false, publicPage: false, staffManage: false },
+			actions: {
+				submit: null,
+				maintainers: false,
+				icon: false,
+				publicPage: false,
+				staffManage: false,
+			},
 		});
 	});
 

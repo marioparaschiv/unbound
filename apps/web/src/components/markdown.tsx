@@ -1,8 +1,8 @@
-import type { Components, UrlTransform } from 'react-markdown';
-import type { ComponentProps, ReactNode } from 'react';
 import { IconPhoto } from 'nucleo-micro-bold';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import type { Token, Tokens } from 'marked';
+import type { ReactNode } from 'react';
+import { useMemo } from 'react';
+import { Lexer } from 'marked';
 
 import { resolveMarkdownUrl, type MarkdownPin } from '~/lib/markdown-url';
 import Text from '~/components/ui/text';
@@ -12,16 +12,59 @@ type MarkdownProps = {
 	pin: MarkdownPin;
 };
 
-type ImageLinkProps = Pick<ComponentProps<'img'>, 'src' | 'alt'>;
-
 type LinkProps = {
 	href: string | undefined;
 	children: ReactNode;
 };
 
-const REMARK_PLUGINS = [remarkGfm];
+type HeadingStyle = {
+	as: 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+	variant: 'heading-md' | 'heading-sm' | 'text-md' | 'text-sm';
+	className?: string;
+};
+
 const LINK_REL = 'nofollow ugc noopener noreferrer';
 const LINK_CLASS = 'font-medium text-link underline-offset-4 hover:underline';
+
+// Headings shift down one level: the page's own title is the only h1.
+const HEADINGS: Record<number, HeadingStyle> = {
+	1: { as: 'h2', variant: 'heading-md' },
+	2: { as: 'h3', variant: 'heading-md' },
+	3: { as: 'h4', variant: 'heading-sm' },
+	4: { as: 'h5', variant: 'text-md', className: 'font-semibold' },
+	5: { as: 'h6', variant: 'text-md', className: 'font-semibold' },
+	6: { as: 'h6', variant: 'text-sm', className: 'font-semibold' },
+};
+
+const ALIGN_CLASSES = { left: 'text-left', center: 'text-center', right: 'text-right' } as const;
+
+// marked decodes numeric character references but leaves named ones for an HTML renderer.
+const NAMED_ENTITIES: Record<string, string> = {
+	amp: '&',
+	lt: '<',
+	gt: '>',
+	quot: '"',
+	apos: "'",
+	nbsp: '\u00A0',
+	copy: '©',
+	reg: '®',
+	trade: '™',
+	hellip: '…',
+	mdash: '—',
+	ndash: '–',
+	middot: '·',
+	larr: '←',
+	rarr: '→',
+	harr: '↔',
+};
+
+const NAMED_ENTITY = /&([a-z]+);/gi;
+
+function decodeEntities(text: string): string {
+	return text.includes('&')
+		? text.replace(NAMED_ENTITY, (entity, name: string) => NAMED_ENTITIES[name] ?? entity)
+		: text;
+}
 
 function Link({ href, children }: LinkProps) {
 	if (!href) {
@@ -43,129 +86,238 @@ function Link({ href, children }: LinkProps) {
 	);
 }
 
-// An image becomes a link to the file, so no remote content loads on the page.
-function ImageLink({ src, alt }: ImageLinkProps) {
-	const label = alt?.trim() || 'Image';
-	const href = typeof src === 'string' ? src : undefined;
+function renderInline(tokens: Token[] | undefined, pin: MarkdownPin): ReactNode[] {
+	return (tokens ?? []).map((token, index) => renderInlineToken(token, pin, index));
+}
+
+// Raw HTML never renders: its tags drop out and the text between them stays.
+function renderInlineToken(token: Token, pin: MarkdownPin, key: number): ReactNode {
+	switch (token.type) {
+		case 'text': {
+			const text = token as Tokens.Text;
+
+			return text.tokens ? renderInline(text.tokens, pin) : decodeEntities(text.text);
+		}
+		case 'escape': {
+			return (token as Tokens.Escape).text;
+		}
+		case 'strong': {
+			return (
+				<strong key={key} className='font-semibold text-foreground'>
+					{renderInline((token as Tokens.Strong).tokens, pin)}
+				</strong>
+			);
+		}
+		case 'em': {
+			return <em key={key}>{renderInline((token as Tokens.Em).tokens, pin)}</em>;
+		}
+		case 'del': {
+			return (
+				<del key={key} className='text-muted-foreground/70'>
+					{renderInline((token as Tokens.Del).tokens, pin)}
+				</del>
+			);
+		}
+		case 'codespan': {
+			return (
+				<code
+					key={key}
+					className='bg-muted px-1.5 py-0.5 rounded-md font-mono text-[0.875em] text-foreground'
+				>
+					{(token as Tokens.Codespan).text}
+				</code>
+			);
+		}
+		case 'br': {
+			return <br key={key} />;
+		}
+		case 'link': {
+			const link = token as Tokens.Link;
+
+			return (
+				<Link key={key} href={resolveMarkdownUrl(link.href, pin, 'link')?.href}>
+					{renderInline(link.tokens, pin)}
+				</Link>
+			);
+		}
+		case 'image': {
+			// An image becomes a link to the file, so no remote content loads on the page.
+			const image = token as Tokens.Image;
+
+			return (
+				<Link key={key} href={resolveMarkdownUrl(image.href, pin, 'image')?.href}>
+					<IconPhoto className='inline mr-1 size-4 align-[-0.125em]' aria-hidden />
+					{decodeEntities(image.text.trim()) || 'Image'}
+				</Link>
+			);
+		}
+		default: {
+			return null;
+		}
+	}
+}
+
+function renderBlocks(tokens: Token[], pin: MarkdownPin): ReactNode[] {
+	return tokens.map((token, index) => renderBlock(token, pin, index));
+}
+
+function renderListItem(item: Tokens.ListItem, pin: MarkdownPin, key: number): ReactNode {
+	// A tight item holds bare text; a loose one holds paragraphs.
+	const body = item.tokens.map((token, index) =>
+		token.type === 'text'
+			? renderInlineToken(token, pin, index)
+			: renderBlock(token, pin, index),
+	);
+
+	if (item.task) {
+		return (
+			<li key={key} className='flex items-baseline gap-2 [&>input]:accent-primary'>
+				{body}
+			</li>
+		);
+	}
 
 	return (
-		<Link href={href}>
-			<IconPhoto className='inline mr-1 size-4 align-[-0.125em]' aria-hidden />
-			{label}
-		</Link>
+		<li key={key} className='pl-1 marker:text-muted-foreground/60'>
+			{body}
+		</li>
 	);
 }
 
-const COMPONENTS: Components = {
-	h1: ({ children }) => (
-		<Text as='h2' variant='heading-md'>
-			{children}
-		</Text>
-	),
-	h2: ({ children }) => (
-		<Text as='h3' variant='heading-md'>
-			{children}
-		</Text>
-	),
-	h3: ({ children }) => (
-		<Text as='h4' variant='heading-sm'>
-			{children}
-		</Text>
-	),
-	h4: ({ children }) => (
-		<Text as='h5' variant='text-md' className='font-semibold'>
-			{children}
-		</Text>
-	),
-	h5: ({ children }) => (
-		<Text as='h6' variant='text-md' className='font-semibold'>
-			{children}
-		</Text>
-	),
-	h6: ({ children }) => (
-		<Text as='h6' variant='text-sm' className='font-semibold'>
-			{children}
-		</Text>
-	),
-	p: ({ children }) => (
-		<Text variant='text-md' color='muted'>
-			{children}
-		</Text>
-	),
-	a: ({ href, children }) => <Link href={href}>{children}</Link>,
-	img: ({ src, alt }) => <ImageLink src={src} alt={alt} />,
-	ul: ({ className, children }) => (
-		<Text
-			as='ul'
-			variant='text-md'
-			color='muted'
-			className={
-				className === 'contains-task-list'
-					? 'flex flex-col gap-1'
-					: 'flex flex-col gap-1 pl-6 list-disc'
-			}
-		>
-			{children}
-		</Text>
-	),
-	ol: ({ start, children }) => (
-		<Text
-			as='ol'
-			variant='text-md'
-			color='muted'
-			start={start}
-			className='flex flex-col gap-1 pl-6 list-decimal'
-		>
-			{children}
-		</Text>
-	),
-	li: ({ className, children }) => (
-		<li
-			className={
-				className === 'task-list-item'
-					? 'flex items-baseline gap-2 [&>input]:accent-primary'
-					: 'pl-1 marker:text-muted-foreground/60'
-			}
-		>
-			{children}
-		</li>
-	),
-	blockquote: ({ children }) => (
-		<blockquote className='flex flex-col gap-3 pl-4 border-border border-l-2'>
-			{children}
-		</blockquote>
-	),
-	hr: () => <hr className='border-border' />,
-	pre: ({ children }) => (
-		<pre className='bg-muted p-4 border rounded-control overflow-x-auto font-mono text-sm leading-relaxed [&>code]:bg-transparent [&>code]:p-0 [&>code]:rounded-none [&>code]:text-[length:inherit]'>
-			{children}
-		</pre>
-	),
-	code: ({ children }) => (
-		<code className='bg-muted px-1.5 py-0.5 rounded-md font-mono text-[0.875em] text-foreground'>
-			{children}
-		</code>
-	),
-	table: ({ children }) => (
-		<div className='border rounded-control overflow-x-auto'>
-			<table className='w-full text-sm border-collapse'>{children}</table>
+function renderTable(table: Tokens.Table, pin: MarkdownPin, key: number): ReactNode {
+	return (
+		<div key={key} className='border rounded-control overflow-x-auto'>
+			<table className='w-full text-sm border-collapse'>
+				<thead className='bg-muted/50'>
+					<tr className='border-b last:border-b-0'>
+						{table.header.map((cell, index) => (
+							<th
+								key={index}
+								className={`px-3 py-2 font-medium text-foreground ${ALIGN_CLASSES[cell.align ?? 'left']}`}
+							>
+								{renderInline(cell.tokens, pin)}
+							</th>
+						))}
+					</tr>
+				</thead>
+				<tbody>
+					{table.rows.map((row, rowIndex) => (
+						<tr key={rowIndex} className='border-b last:border-b-0'>
+							{row.map((cell, index) => (
+								<td
+									key={index}
+									className={`px-3 py-2 text-muted-foreground align-top ${ALIGN_CLASSES[cell.align ?? 'left']}`}
+								>
+									{renderInline(cell.tokens, pin)}
+								</td>
+							))}
+						</tr>
+					))}
+				</tbody>
+			</table>
 		</div>
-	),
-	thead: ({ children }) => <thead className='bg-muted/50'>{children}</thead>,
-	tr: ({ children }) => <tr className='border-b last:border-b-0'>{children}</tr>,
-	th: ({ style, children }) => (
-		<th style={style} className='px-3 py-2 font-medium text-foreground text-left'>
-			{children}
-		</th>
-	),
-	td: ({ style, children }) => (
-		<td style={style} className='px-3 py-2 text-muted-foreground align-top'>
-			{children}
-		</td>
-	),
-	del: ({ children }) => <del className='text-muted-foreground/70'>{children}</del>,
-	strong: ({ children }) => <strong className='font-semibold text-foreground'>{children}</strong>,
-};
+	);
+}
+
+// Raw HTML blocks and link definitions render nothing; definitions already resolved their links.
+function renderBlock(token: Token, pin: MarkdownPin, key: number): ReactNode {
+	switch (token.type) {
+		case 'heading': {
+			const heading = token as Tokens.Heading;
+			const style = HEADINGS[heading.depth] ?? HEADINGS[6];
+
+			return (
+				<Text
+					key={key}
+					as={style?.as}
+					variant={style?.variant}
+					className={style?.className}
+				>
+					{renderInline(heading.tokens, pin)}
+				</Text>
+			);
+		}
+		case 'paragraph': {
+			return (
+				<Text key={key} variant='text-md' color='muted'>
+					{renderInline((token as Tokens.Paragraph).tokens, pin)}
+				</Text>
+			);
+		}
+		case 'text': {
+			return (
+				<Text key={key} variant='text-md' color='muted'>
+					{renderInlineToken(token, pin, key)}
+				</Text>
+			);
+		}
+		case 'list': {
+			const list = token as Tokens.List;
+			const tasks = list.items.some((item) => item.task);
+			const items = list.items.map((item, index) => renderListItem(item, pin, index));
+
+			return list.ordered ? (
+				<Text
+					key={key}
+					as='ol'
+					variant='text-md'
+					color='muted'
+					start={typeof list.start === 'number' ? list.start : undefined}
+					className='flex flex-col gap-1 pl-6 list-decimal'
+				>
+					{items}
+				</Text>
+			) : (
+				<Text
+					key={key}
+					as='ul'
+					variant='text-md'
+					color='muted'
+					className={tasks ? 'flex flex-col gap-1' : 'flex flex-col gap-1 pl-6 list-disc'}
+				>
+					{items}
+				</Text>
+			);
+		}
+		case 'checkbox': {
+			return (
+				<input
+					key={key}
+					type='checkbox'
+					checked={(token as Tokens.Checkbox).checked}
+					disabled
+					readOnly
+				/>
+			);
+		}
+		case 'blockquote': {
+			return (
+				<blockquote key={key} className='flex flex-col gap-3 pl-4 border-border border-l-2'>
+					{renderBlocks((token as Tokens.Blockquote).tokens, pin)}
+				</blockquote>
+			);
+		}
+		case 'code': {
+			return (
+				<pre
+					key={key}
+					className='bg-muted p-4 border rounded-control overflow-x-auto font-mono text-sm leading-relaxed'
+				>
+					<code>{`${(token as Tokens.Code).text}\n`}</code>
+				</pre>
+			);
+		}
+		case 'table': {
+			return renderTable(token as Tokens.Table, pin, key);
+		}
+		case 'hr': {
+			return <hr key={key} className='border-border' />;
+		}
+		default: {
+			return null;
+		}
+	}
+}
 
 /**
  * @description Renders an addon's ADDON.md: GitHub-flavoured markdown without raw HTML, with every
@@ -174,21 +326,13 @@ const COMPONENTS: Components = {
  * @returns The rendered document.
  */
 function Markdown({ source, pin }: MarkdownProps) {
-	const urlTransform: UrlTransform = (url, key) =>
-		resolveMarkdownUrl(url, pin, key === 'src' ? 'image' : 'link')?.href;
-
-	return (
-		<div className='flex flex-col gap-4 min-w-0 break-words'>
-			<ReactMarkdown
-				remarkPlugins={REMARK_PLUGINS}
-				components={COMPONENTS}
-				urlTransform={urlTransform}
-				skipHtml
-			>
-				{source}
-			</ReactMarkdown>
-		</div>
+	// marked only tokenizes here; React builds the elements, so nothing renders as raw HTML.
+	const content = useMemo(
+		() => renderBlocks(Lexer.lex(source, { gfm: true }), pin),
+		[source, pin],
 	);
+
+	return <div className='flex flex-col gap-4 min-w-0 break-words'>{content}</div>;
 }
 
 export type { MarkdownProps };

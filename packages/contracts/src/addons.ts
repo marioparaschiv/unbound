@@ -99,9 +99,14 @@ export const listAddonsQuerySchema = z.optional(
 	}),
 );
 
+/** An icon the website shows for an addon: a Nucleo Micro Bold export name, such as `IconPlug`. */
+export const addonIconSchema = z.string().check(z.regex(/^Icon[A-Z][A-Za-z\d]*$/), z.maxLength(64));
+
 export const listedAddonSchema = z.object({
 	id: addonIdSchema,
 	type: addonTypeSchema,
+	/** The website icon a maintainer picked; `null` for the type's default. Optional so catalogs stored before it still parse. */
+	icon: z.optional(z.nullable(addonIconSchema)),
 	/** The display name: the served version's, unless staff pinned another. Optional so catalogs stored before it still parse. */
 	name: z.optional(z.string()),
 	/** The display description: the served version's, unless staff pinned another. Optional like `name`. */
@@ -127,6 +132,15 @@ export const catalogResponseSchema = z.object({
 /** Every live version of one listed addon, newest first. */
 export const addonVersionsResponseSchema = z.object({
 	versions: z.array(addonVersionSchema),
+});
+
+/** `null` resets the addon to its type's default icon. */
+export const setAddonIconRequestSchema = z.object({
+	icon: z.nullable(addonIconSchema),
+});
+
+export const addonIconResponseSchema = z.object({
+	icon: z.nullable(addonIconSchema),
 });
 
 export const maintainerSchema = z.extend(userSummarySchema, {
@@ -172,6 +186,9 @@ export type FilterMatch = z.infer<typeof filterMatchSchema>;
 export type SingleMatch = z.infer<typeof singleMatchSchema>;
 export type ListAddonsQuery = z.infer<typeof listAddonsQuerySchema>;
 export type ListedAddon = z.infer<typeof listedAddonSchema>;
+export type AddonIcon = z.infer<typeof addonIconSchema>;
+export type SetAddonIconRequest = z.infer<typeof setAddonIconRequestSchema>;
+export type AddonIconResponse = z.infer<typeof addonIconResponseSchema>;
 export type ListAddonsResponse = z.infer<typeof listAddonsResponseSchema>;
 export type CatalogResponse = z.infer<typeof catalogResponseSchema>;
 export type AddonVersionsResponse = z.infer<typeof addonVersionsResponseSchema>;
@@ -195,10 +212,13 @@ export default {
 	singleMatchSchema,
 	tagIdSchema,
 	listAddonsQuerySchema,
+	addonIconSchema,
 	listedAddonSchema,
 	listAddonsResponseSchema,
 	catalogResponseSchema,
 	addonVersionsResponseSchema,
+	setAddonIconRequestSchema,
+	addonIconResponseSchema,
 	maintainerSchema,
 	addMaintainerRequestSchema,
 	maintainersResponseSchema,
