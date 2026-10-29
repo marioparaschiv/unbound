@@ -136,7 +136,12 @@ export function messageLayout(nodes: SnapshotNode[]): MessageLayout | undefined 
 
 	if (body === undefined) return;
 
-	const frame = absolute(nodes, body);
+	const columnLeft = absolute(nodes, column).x;
+	const laidOut = absolute(nodes, body);
+	const frame =
+		laidOut.x > columnLeft
+			? { ...laidOut, x: columnLeft, width: laidOut.width + laidOut.x - columnLeft }
+			: laidOut;
 	const above = childrenOf(nodes, column)
 		.filter((child) => child !== body && shows(nodes[child]!))
 		.map((child) => absolute(nodes, child))

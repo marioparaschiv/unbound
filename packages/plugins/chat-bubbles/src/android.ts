@@ -55,6 +55,26 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	const pending: NativeJavaReference[] = [];
 	let scheduled = false;
 	let disposed = false;
+	let contentStart = Number.POSITIVE_INFINITY;
+	const measuredLefts: { row: NativeJavaReference; left: number }[] = [];
+
+	function noteContentStart(row: NativeJavaReference, left: number) {
+		const index = measuredLefts.findIndex((entry) => sameJavaReference(entry.row, row));
+
+		if (index >= 0) measuredLefts.splice(index, 1);
+
+		measuredLefts.push({ row, left });
+
+		if (measuredLefts.length > MAX_TRACKED) measuredLefts.shift();
+
+		if (left >= contentStart) return;
+
+		contentStart = left;
+
+		for (const entry of measuredLefts) {
+			if (entry.left > contentStart) schedule(entry.row);
+		}
+	}
 
 	const number = (view: NativeJavaReference, method: string) =>
 		javaNumber(java.invoke(view, method, [])) ?? 0;
@@ -142,8 +162,10 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		const x = javaNumber(values[0]) ?? 0;
 		const y = javaNumber(values[1]) ?? 0;
 
+		noteContentStart(row, area.left + x);
+
 		return {
-			left: area.left + x,
+			left: Math.min(area.left + x, contentStart),
 			top: area.top + y,
 			right: area.right + x,
 			bottom: area.bottom + y,

@@ -45,6 +45,14 @@ describe('message layout', () => {
 		});
 	});
 
+	test('reaches back to the content column for an indented body, like a forwarded message', () => {
+		const forwarded = cell.map((entry, index) =>
+			index === 7 ? node(4, 'UIView', [20, 22, 271, 50]) : entry,
+		);
+
+		expect(messageLayout(forwarded)?.body).toEqual({ x: 68, y: 38, width: 291, height: 50 });
+	});
+
 	test('skips an empty last child and hidden content', () => {
 		const hidden = cell.map((entry, index) =>
 			index === 13 ? { ...entry, visible: false } : entry,
