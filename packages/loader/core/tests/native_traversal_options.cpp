@@ -44,7 +44,11 @@ int main()
 
     auto visited =
         parseTraversalOptions({{"maxVisited", 4096}, {"maxNodes", 3}}, TraversalProfile::Search);
-    assert(visited.maxNodes == 2048);
+    assert(visited.maxNodes == 4096);
+
+    auto capped =
+        parseTraversalOptions({{"maxVisited", 20000}, {"maxDepth", 500}}, TraversalProfile::Search);
+    assert(capped.maxNodes == 8192 && capped.maxDepth == 128);
 
     auto exact = parseTraversalOptions({{"maxDepth", 3}, {"maxNodes", 40}, {"maxResults", 2}},
                                        TraversalProfile::Query);

@@ -10,6 +10,7 @@ import { cornerRadius } from '~/radius';
 const CIRCLE_RATIO = 0.44;
 const SQUARE_TOLERANCE = 1;
 const MAX_TRACKED = 512;
+const IMAGE_SEARCH = { maxDepth: 96, maxVisited: 8_000 };
 
 type FastImage = { core: NativeObjectHandle; frame: NativeObjectHandle | null; width: number };
 
@@ -138,7 +139,7 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 	};
 
 	void roundVisible(objc, radius());
-	void findVisibleCells(objc, AvatarClass.iosImage).then((cores) => {
+	void findVisibleCells(objc, AvatarClass.iosImage, undefined, IMAGE_SEARCH).then((cores) => {
 		for (const core of cores) {
 			const image = adoptFastImage(core);
 			const key = image && viewKey(objc, core);
