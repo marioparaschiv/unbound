@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeHookContext,
 	NativeHookHandlers,
@@ -247,7 +248,9 @@ function labelLanguages(session: Session): void {
 			}
 		})
 		.catch((error) => {
-			console.error(`[${PLUGIN_NAME}] Failed to load the language catalog:`, error);
+			if (!isCancellation(error)) {
+				console.error(`[${PLUGIN_NAME}] Failed to load the language catalog:`, error);
+			}
 		});
 }
 

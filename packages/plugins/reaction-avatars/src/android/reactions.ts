@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
@@ -385,7 +386,9 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 					: undefined,
 			)
 			.catch((error) => {
-				console.error('[Reaction Avatars] Failed to draw Android reactors:', error);
+				if (!isCancellation(error)) {
+					console.error('[Reaction Avatars] Failed to draw Android reactors:', error);
+				}
 			})
 			.finally(() => {
 				if (queues.get(key) === next) queues.delete(key);

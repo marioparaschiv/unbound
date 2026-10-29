@@ -152,11 +152,6 @@ export function pluginLogScript(): string {
 
 const HOOK_FAILURE = /^(\S+) E \[plugins\] Native plugin hook failed in (.+?): (.*)$/;
 const CONSOLE_ERROR = /^(\S+) E \[console\] '?\[([^\]:]+)(?::[^\]]*)?\]:? ?'?,? ?(.*)$/;
-const LIFECYCLE_NOISE = [
-	'Native async invocation was cancelled',
-	'native plugin scope has been disposed',
-	'The Java handle is unavailable',
-];
 const ERROR_LENGTH = 160;
 
 function errorText(text: string): string {
@@ -173,7 +168,7 @@ export function parsePluginErrors(lines: string[], since: string): Map<string, s
 
 		const message = errorText(match[3]!);
 
-		if (!message || LIFECYCLE_NOISE.some((noise) => message.includes(noise))) continue;
+		if (!message) continue;
 
 		const plugin = errors.get(match[2]!) ?? new Set<string>();
 

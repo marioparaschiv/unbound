@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import {
 	javaNumber,
 	javaReference,
@@ -74,7 +75,12 @@ export function createAndroidFileSizes(java: NativeJavaBridge): AndroidFileSizes
 				sizes.set(uri, statSize(uri));
 			} catch (error) {
 				sizes.set(uri, undefined);
-				console.error(`[File Size On Picker] Could not read the size of ${uri}:`, error);
+				if (!isCancellation(error)) {
+					console.error(
+						`[File Size On Picker] Could not read the size of ${uri}:`,
+						error,
+					);
+				}
 			}
 		}
 

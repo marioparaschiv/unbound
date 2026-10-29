@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeJavaBridge,
@@ -12,8 +13,6 @@ import {
 	messageIdField,
 } from '@unbound-plugins/shared/native/android/discord-views';
 import {
-	javaFlag,
-	javaInt,
 	javaNumber,
 	javaReference,
 	javaText,
@@ -309,10 +308,12 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 	function schedule(messageView: NativeJavaReference, messageId: string) {
 		setTimeout(() => {
 			render(messageView, messageId).catch((error) => {
-				console.error(
-					'[Message Link Embeds] Failed to embed a linked message on Android:',
-					error,
-				);
+				if (!isCancellation(error)) {
+					console.error(
+						'[Message Link Embeds] Failed to embed a linked message on Android:',
+						error,
+					);
+				}
 			});
 		}, 0);
 	}

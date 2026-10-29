@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import { safeCall, safeInvokeAsync } from '@unbound-plugins/shared/native/safe-invoke';
 import type { NativeHookToken, NativeObjCBridge } from '@unbound-app/api/native';
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
@@ -176,7 +177,9 @@ export function colorChatInputMentions(objc: NativeObjCBridge): () => Promise<vo
 			pending.delete(key);
 
 			void update(view).catch((error) => {
-				console.error(`[${PLUGIN_NAME}] Failed to paint composer mentions:`, error);
+				if (!isCancellation(error)) {
+					console.error(`[${PLUGIN_NAME}] Failed to paint composer mentions:`, error);
+				}
 			});
 		}, 0);
 
@@ -228,7 +231,9 @@ export function colorChatInputMentions(objc: NativeObjCBridge): () => Promise<vo
 			for (const view of views) schedule(view);
 		})
 		.catch((error) => {
-			console.error(`[${PLUGIN_NAME}] Failed to scan the composer:`, error);
+			if (!isCancellation(error)) {
+				console.error(`[${PLUGIN_NAME}] Failed to scan the composer:`, error);
+			}
 		});
 
 	return async () => {

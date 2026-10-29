@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type { NativeObjectHandle } from '@unbound-app/api/native';
 import {
 	placeAttachedViews,
@@ -150,10 +151,12 @@ export function applyTheme(session: Session, surface: Surface): void {
 
 	const pending = surface.parts.map(({ placement }) =>
 		session.highlighter.tokenize(placement.block, theme, hljs).catch((error) => {
-			console.error(
-				`[${PLUGIN_NAME}] Failed to tokenize ${placement.block.language} code block:`,
-				error,
-			);
+			if (!isCancellation(error)) {
+				console.error(
+					`[${PLUGIN_NAME}] Failed to tokenize ${placement.block.language} code block:`,
+					error,
+				);
+			}
 
 			return null;
 		}),
@@ -192,10 +195,12 @@ export function applyTheme(session: Session, surface: Surface): void {
 			}
 		})
 		.catch((error) => {
-			console.error(
-				`[${PLUGIN_NAME}] Failed to render code blocks after a theme change:`,
-				error,
-			);
+			if (!isCancellation(error)) {
+				console.error(
+					`[${PLUGIN_NAME}] Failed to render code blocks after a theme change:`,
+					error,
+				);
+			}
 		});
 }
 

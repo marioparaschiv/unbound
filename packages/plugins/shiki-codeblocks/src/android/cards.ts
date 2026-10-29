@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
@@ -292,10 +293,12 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 			setTimeout(() => {
 				for (const card of entry.cards) {
 					place(entry, card).catch((error) => {
-						console.error(
-							`[${PLUGIN_NAME}] Failed to place an Android code card:`,
-							error,
-						);
+						if (!isCancellation(error)) {
+							console.error(
+								`[${PLUGIN_NAME}] Failed to place an Android code card:`,
+								error,
+							);
+						}
 					});
 				}
 			}, delay);
@@ -473,7 +476,12 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 			const next = previous
 				.then(() => render(textView))
 				.catch((error) => {
-					console.error(`[${PLUGIN_NAME}] Failed to draw an Android code card:`, error);
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}] Failed to draw an Android code card:`,
+							error,
+						);
+					}
 				})
 				.finally(() => {
 					if (renders.get(key) === next) renders.delete(key);
@@ -517,10 +525,12 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		() => {
 			for (const entry of views.values()) {
 				repaint(entry).catch((error) => {
-					console.error(
-						`[${PLUGIN_NAME}] Failed to repaint an Android code card:`,
-						error,
-					);
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}] Failed to repaint an Android code card:`,
+							error,
+						);
+					}
 				});
 			}
 		},

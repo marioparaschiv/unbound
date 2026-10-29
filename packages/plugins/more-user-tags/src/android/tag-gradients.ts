@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeJavaBridge,
 	NativeJavaHookToken,
@@ -150,7 +151,12 @@ export function startAndroidTagGradients(
 			if (!tagView || !text || stopped) return;
 
 			paint(tagView, text).catch((error) => {
-				console.error('[More User Tags: gradients] Failed to paint an Android tag:', error);
+				if (!isCancellation(error)) {
+					console.error(
+						'[More User Tags: gradients] Failed to paint an Android tag:',
+						error,
+					);
+				}
 			});
 		},
 	);

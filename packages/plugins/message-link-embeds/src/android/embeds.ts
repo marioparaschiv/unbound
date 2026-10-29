@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
@@ -101,10 +102,12 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 	const linked = createLinkedMessages(controller.signal, (key) => {
 		for (const { messageView, messageId } of waiting.get(key)?.values() ?? []) {
 			render(messageView, messageId).catch((error) => {
-				console.error(
-					'[Message Link Embeds] Failed to embed a linked message on Android:',
-					error,
-				);
+				if (!isCancellation(error)) {
+					console.error(
+						'[Message Link Embeds] Failed to embed a linked message on Android:',
+						error,
+					);
+				}
 			});
 		}
 
@@ -300,7 +303,12 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		for (const delay of SETTLE_DELAYS) {
 			setTimeout(() => {
 				place(embed).catch((error) => {
-					console.error('[Message Link Embeds] Failed to place an Android embed:', error);
+					if (!isCancellation(error)) {
+						console.error(
+							'[Message Link Embeds] Failed to place an Android embed:',
+							error,
+						);
+					}
 				});
 			}, delay);
 		}
@@ -449,10 +457,12 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 
 			setTimeout(() => {
 				render(messageView, messageId).catch((error) => {
-					console.error(
-						'[Message Link Embeds] Failed to embed a linked message on Android:',
-						error,
-					);
+					if (!isCancellation(error)) {
+						console.error(
+							'[Message Link Embeds] Failed to embed a linked message on Android:',
+							error,
+						);
+					}
 				});
 			}, 0);
 		},
@@ -471,10 +481,12 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 
 			awaitingSize.delete(key);
 			render(pending.messageView, pending.messageId).catch((error) => {
-				console.error(
-					'[Message Link Embeds] Failed to embed a linked message on Android:',
-					error,
-				);
+				if (!isCancellation(error)) {
+					console.error(
+						'[Message Link Embeds] Failed to embed a linked message on Android:',
+						error,
+					);
+				}
 			});
 		},
 	);
@@ -489,10 +501,12 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 
 			if (messageId) {
 				render(messageView, messageId).catch((error) => {
-					console.error(
-						'[Message Link Embeds] Failed to embed a linked message on Android:',
-						error,
-					);
+					if (!isCancellation(error)) {
+						console.error(
+							'[Message Link Embeds] Failed to embed a linked message on Android:',
+							error,
+						);
+					}
 				});
 			}
 		}

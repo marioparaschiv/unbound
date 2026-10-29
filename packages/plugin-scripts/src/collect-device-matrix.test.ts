@@ -191,11 +191,10 @@ test('checks that the fixture channel is open and its fixtures are still loaded'
 	expect(script).toContain("'present' : 'missing'");
 });
 
-test('attributes native hook failures and console errors to plugins, skipping lifecycle noise', () => {
+test('attributes native hook failures and console errors to plugins', () => {
 	const lines = [
 		'2026-10-29T18:00:01.000Z E [plugins] Native plugin hook failed in Chat Bubbles: Native hook arguments cannot cross runtime threads',
 		"2026-10-29T18:00:02.000Z E [console] '[More User Tags: gradients] Failed to paint an Android tag:', { [Error: boom] }",
-		"2026-10-29T18:00:03.000Z E [console] '[Chat Bubbles] Failed to place a bubble:', { [Error: Native async invocation was cancelled] }",
 		'2026-10-29T17:00:00.000Z E [plugins] Native plugin hook failed in Chat Bubbles: old',
 		'2026-10-29T18:00:04.000Z E [updater] Bundle download failed.',
 	];

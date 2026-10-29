@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
@@ -236,7 +237,12 @@ export function createAndroidIndicators(
 		for (const delay of SETTLE_DELAYS) {
 			setTimeout(() => {
 				place(indicator).catch((error) => {
-					console.error('[Message Latency] Failed to place an Android indicator:', error);
+					if (!isCancellation(error)) {
+						console.error(
+							'[Message Latency] Failed to place an Android indicator:',
+							error,
+						);
+					}
 				});
 			}, delay);
 		}
@@ -329,7 +335,9 @@ export function createAndroidIndicators(
 					: undefined,
 			)
 			.catch((error) => {
-				console.error('[Message Latency] Failed to draw an Android indicator:', error);
+				if (!isCancellation(error)) {
+					console.error('[Message Latency] Failed to draw an Android indicator:', error);
+				}
 			})
 			.finally(() => {
 				if (queues.get(key) === next) queues.delete(key);
