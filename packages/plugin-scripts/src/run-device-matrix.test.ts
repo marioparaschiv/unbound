@@ -112,3 +112,20 @@ test('fails a device that showed toasts while scrolling and lists them', () => {
 	expect(summary).toContain('### Toasts while scrolling\n\n- Android Emulator: empty toast');
 	expect(summary).not.toContain('Every plugin passed on every device.');
 });
+
+test('lists skipped hooks without failing the run', () => {
+	const check: MeasuredCheck = {
+		id: 'unbound.chat-bubbles',
+		behavior: 'pass',
+		lifecycle: 'pass',
+		evidence: [],
+		skippedHooks: ['setBackgroundColor:'],
+	};
+	const run = { device: phone, checks: [check], changes: [], scrollToasts: [] };
+	const summary = renderSummary([run]);
+
+	expect(runFailed(run)).toBe(false);
+	expect(summary).toContain(
+		'### Hooks skipped while JavaScript was busy\n\n- iPhone SE, unbound.chat-bubbles: `setBackgroundColor:`',
+	);
+});
