@@ -17,7 +17,10 @@ import {
 	javaText,
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
-import { messageIdField } from '@unbound-plugins/shared/native/android/discord-views';
+import {
+	messageIdField,
+	viewByIdNameAsync,
+} from '@unbound-plugins/shared/native/android/discord-views';
 
 import { bubbleFrame, rowInsets, union, type Edges } from '~/geometry';
 import { AndroidClass, PLUGIN_NAME } from '~/constants';
@@ -168,6 +171,18 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
 	}
 
+	async function headerBottom(row: NativeJavaReference): Promise<number | undefined> {
+		const header = await viewByIdNameAsync(java, row, 'header');
+
+		if (!header) return;
+
+		const [visibility, height, bottom] = (
+			await runOnMain(java, reads(header, ['getVisibility', 'getHeight', 'getBottom']))
+		).map((value) => javaNumber(value) ?? 0);
+
+		return visibility === VISIBLE && height! > 0 ? bottom : undefined;
+	}
+
 	function track(row: NativeJavaReference) {
 		if (tracked.some((entry) => sameJavaReference(entry, row))) return;
 
@@ -220,6 +235,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 				horizontal: style.horizontalPadding * scale,
 				vertical: style.verticalPadding * scale,
 			},
+			await headerBottom(row),
 		);
 		const insets = rowInsets(frame, javaNumber(rowWidth) ?? 0, javaNumber(rowHeight) ?? 0);
 		const shape = java.construct('android.graphics.drawable.GradientDrawable', []);

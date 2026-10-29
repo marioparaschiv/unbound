@@ -19,6 +19,7 @@ export type MessageLayout = {
 	body: Box;
 	text?: { index: number; offset: number };
 	mediaRight: number;
+	headerBottom?: number;
 };
 
 function shows(node: SnapshotNode): boolean {
@@ -136,6 +137,13 @@ export function messageLayout(nodes: SnapshotNode[]): MessageLayout | undefined 
 	if (body === undefined) return;
 
 	const frame = absolute(nodes, body);
+	const above = childrenOf(nodes, column)
+		.filter((child) => child !== body && shows(nodes[child]!))
+		.map((child) => absolute(nodes, child))
+		.filter((box) => box.y + box.height <= frame.y + 1);
+	const headerBottom = above.length
+		? Math.max(...above.map((box) => box.y + box.height))
+		: undefined;
 	const [text] = descendants(nodes, body, isText);
 	const mediaRight = Math.max(
 		0,
@@ -153,6 +161,7 @@ export function messageLayout(nodes: SnapshotNode[]): MessageLayout | undefined 
 				? undefined
 				: { index: text, offset: absolute(nodes, text).x - frame.x },
 		mediaRight,
+		...(headerBottom === undefined ? {} : { headerBottom }),
 	};
 }
 
