@@ -397,6 +397,29 @@ static jsi::Value javaSynchronously(jsi::Runtime &runtime, const JavaCallbacks &
     return parseJavaResult(runtime, callJavaString(callbacks, method, arguments));
 }
 
+static constexpr const char *kCatchingCallName = "__unboundCatchingCall";
+static constexpr const char *kCatchingCallSource =
+    "(function (listener, value) { try { listener(value); return undefined; } catch (error) { "
+    "return String(error && error.message ? error.message : error); } })";
+
+static jsi::Function catchingCall(jsi::Runtime &runtime)
+{
+    jsi::Object global = runtime.global();
+    jsi::Value  cached = global.getProperty(runtime, kCatchingCallName);
+    if (cached.isObject() && cached.asObject(runtime).isFunction(runtime))
+    {
+        return cached.asObject(runtime).asFunction(runtime);
+    }
+    jsi::Function created =
+        runtime
+            .evaluateJavaScript(std::make_shared<jsi::StringBuffer>(kCatchingCallSource),
+                                "unbound-catching-call")
+            .asObject(runtime)
+            .asFunction(runtime);
+    global.setProperty(runtime, kCatchingCallName, created);
+    return created;
+}
+
 struct HookListener {
     std::shared_ptr<jsi::Function> callback;
     loader::AddonSlot              addon = loader::kNoAddon;
@@ -428,14 +451,13 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
             }
 
             loader::AddonScope runtimeScope(addon);
-            try
-            {
-                callback->call(runtime, adoptJavaValue(runtime, parsed));
-            }
-            catch (const std::exception &exception)
+            jsi::Value failure = catchingCall(runtime).call(runtime, jsi::Value(runtime, *callback),
+                                                            adoptJavaValue(runtime, parsed));
+            if (failure.isString())
             {
                 loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                            loader::threading::hookFailureMessage(addon, exception.what()));
+                            loader::threading::hookFailureMessage(
+                                addon, failure.asString(runtime).utf8(runtime)));
             }
         });
 }
