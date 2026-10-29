@@ -1,10 +1,12 @@
 import { findByPropsLazy, findStoreLazy } from '~/api/metro/wrappers';
 import { BundleInfo, getRuntimeProperties } from '~/api/native';
+import { Messages as MessageActions } from '~/api/metro/api';
 import { CLIENT_VERSION, VERSION } from '~/lib/constants';
 import { React, ReactNative } from '~/api/metro/common';
 import { discordChannel } from '~/lib/discord-support';
 import type { BundleInfoType } from '~/api/native';
-import { Messages } from '~/api/metro/api';
+import { showToast } from '~/api/toasts';
+import { Messages } from '~/api/i18n';
 import fs from '~/api/fs';
 
 import formatDebugInfo, { type DebugInfo } from './format-debug-info';
@@ -105,6 +107,14 @@ export function readEntitlements(): string {
 	return attempt(() => globalThis.NativePlatform?.ios?.getEntitlementsAsPlist(), '');
 }
 
+function warnTextOnly() {
+	showToast({
+		title: Messages.UNBOUND_DEBUG_INFO,
+		content: Messages.UNBOUND_DEBUG_ENTITLEMENTS_FAILED,
+		icon: 'WarningIcon',
+	});
+}
+
 async function uploadEntitlements(channelId: string): Promise<CloudUpload | undefined> {
 	const plist = readEntitlements();
 
@@ -146,21 +156,28 @@ export async function sendDebugReport(channelId?: string): Promise<string | unde
 	const report = formatDebugInfo(readDebugInfo());
 	const target: string | undefined =
 		channelId ?? attempt(() => SelectedChannelStore.getChannelId(), undefined);
+	const wantsEntitlements = Boolean(readEntitlements());
 	const entitlements = target
 		? await uploadEntitlements(target).catch(() => undefined)
 		: undefined;
 
 	if (!target || !entitlements) {
+		if (wantsEntitlements) {
+			warnTextOnly();
+		}
+
 		return report;
 	}
 
-	const result: SendResult = await Messages._sendMessage(
+	const result: SendResult = await MessageActions._sendMessage(
 		target,
 		{ content: report, tts: false, invalidEmojis: [], validNonShortcutEmojis: [] },
 		{ attachmentsToUpload: [entitlements] },
 	);
 
 	if (result?.ok === false) {
+		warnTextOnly();
+
 		return report;
 	}
 
