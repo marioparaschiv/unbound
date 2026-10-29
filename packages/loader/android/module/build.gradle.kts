@@ -30,6 +30,7 @@ fun gitOutput(vararg arguments: String): String = providers.exec {
 
 fun buildConfigString(value: String): String = "\"" + value.filter { it.isLetterOrDigit() || it in " ._:/()-" } + "\""
 
+val commitHash = gitOutput("rev-parse", "HEAD")
 val commitShortHash = gitOutput("rev-parse", "--short", "HEAD")
 val commitSubject = gitOutput("log", "-1", "--pretty=format:%s")
 val commitBranch = gitOutput("branch", "--show-current").ifEmpty { "detached" }
@@ -63,6 +64,7 @@ android {
         buildConfigField("String", "COMMIT_SUBJECT", buildConfigString(commitSubject))
         buildConfigField("String", "COMMIT_BRANCH", buildConfigString(commitBranch))
         buildConfigField("String", "BUILD_TIMESTAMP", buildConfigString(buildTimestamp))
+        buildConfigField("boolean", "ATTESTATION_ENABLED", "false")
 
         externalNativeBuild {
             cmake {
@@ -95,6 +97,7 @@ android {
 
     buildTypes {
         release {
+            buildConfigField("boolean", "ATTESTATION_ENABLED", "true")
             isMinifyEnabled = true
             proguardFiles("proguard-rules.pro")
             ndk {
@@ -136,6 +139,27 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+tasks.matching { it.name == "stripReleaseDebugSymbols" }.configureEach {
+    val toolsDirectory = repositoryRoot
+    val stripped = outputs.files
+    val hash = commitHash
+    val version = packageVersion
+    outputs.cacheIf { false }
+    doLast {
+        val libraries = stripped.files.firstOrNull { it.resolve("lib").isDirectory }?.resolve("lib")
+            ?: throw GradleException("The stripped native libraries were not found")
+        providers.exec {
+            workingDir = toolsDirectory
+            commandLine(
+                "go", "run", "./tools", "attest", "stage-elf",
+                "--dir", libraries.absolutePath,
+                "--commit-hash", hash,
+                "--package-version", version,
+            )
+        }.result.get().assertNormalExitValue()
     }
 }
 

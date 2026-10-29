@@ -190,6 +190,7 @@ jobs:
             ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
             ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
             ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
             UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
         outputs:
             module_filename: ${{ steps.collect.outputs.module_filename }}
@@ -209,6 +210,9 @@ jobs:
 
             - name: Setup Gradle
               uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6
+
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
             - name: Install NDK and CMake
               run: |

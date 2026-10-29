@@ -19,6 +19,8 @@ static constexpr size_t      kSignSize     = 16;
 static constexpr size_t      kSection      = 512;
 static constexpr size_t      kSignature    = 1024;
 static constexpr size_t      kSignatureLen = 64;
+static constexpr const char *kGoELFCanonicalDigest =
+    "29d2713b315ef31b19e1cebfa5f0b4c5b9a793b91b2df7e62f51437009b61c17";
 static constexpr const char *kGoCanonicalDigest =
     "fc022ffc817e367f6293adf91242fbe729532a55fec2c0d5455d7e6b7628fe48";
 
@@ -255,6 +257,70 @@ static void rejectsMalformedLayouts()
     assert(!parseSlice(sectionAfterSignature));
 }
 
+static constexpr uint16_t kAArch64 = 183;
+
+static std::string attestedELF()
+{
+    std::string data(1024, '\0');
+    data.replace(0, 4,
+                 "\x7f"
+                 "ELF",
+                 4);
+    data[4] = 2;
+    data[5] = 1;
+    putLittle(data, 18, kAArch64, 2);
+    putLittle(data, 40, 512, 8);
+    putLittle(data, 58, 64, 2);
+    putLittle(data, 60, 3, 2);
+    putLittle(data, 62, 2, 2);
+
+    const char names[] = "\0.unbound.attestation\0.shstrtab";
+    data.replace(400, sizeof(names), names, sizeof(names));
+    putLittle(data, 512 + 64, 1, 4);
+    putLittle(data, 512 + 64 + 24, 128, 8);
+    putLittle(data, 512 + 64 + 32, kSectionSize, 8);
+    putLittle(data, 512 + 128, 22, 4);
+    putLittle(data, 512 + 128 + 24, 400, 8);
+    putLittle(data, 512 + 128 + 32, sizeof(names), 8);
+
+    putLittle(data, 128, kMagic, 4);
+    putLittle(data, 132, kVersion, 2);
+    putLittle(data, 134, kAlgorithmP256SHA256, 2);
+    putLittle(data, 136, kSectionSize, 4);
+    putLittle(data, 140, kKeyID, 4);
+    putLittle(data, 144, kAArch64, 4);
+    putLittle(data, 128 + kSignatureLengthOffset, 3, 2);
+    data.replace(128 + kSignatureOffset, 3, "sig");
+    data.replace(128 + kCommitHashOffset, 7, "abc1234");
+    data.replace(900, 5, "code!");
+
+    const SliceLayout layout = *parseELF(data);
+    data.replace(128 + kDigestOffset, crypto::kSHA256Bytes, *canonicalDigest(data, layout));
+    return data;
+}
+
+static void evaluatesELFLibraries()
+{
+    const std::string data   = attestedELF();
+    const SliceLayout layout = *parseELF(data);
+    assert(layout.sectionOffset == 128);
+    assert(layout.cpuType == kAArch64);
+    assert(crypto::hex(*canonicalDigest(data, layout)) == kGoELFCanonicalDigest);
+
+    const Evaluation evaluation = evaluate(data, kAArch64, 0);
+    assert(!evaluation.failure);
+    assert(evaluation.record.commitHash == "abc1234");
+    assert(*evaluate(data, 62, 0).failure == "the library was built for another architecture");
+
+    std::string tampered = data;
+    tampered[900]        = 'C';
+    assert(*evaluate(tampered, kAArch64, 0).failure == "ELF digest mismatch");
+
+    std::string unnamed = data;
+    unnamed[401]        = 'x';
+    assert(!parseELF(unnamed));
+}
+
 static void decodesPinnedKey()
 {
     const std::string point = *publicKeyPoint();
@@ -271,5 +337,6 @@ int main()
     selectsFatSlices();
     rejectsMalformedLayouts();
     decodesPinnedKey();
+    evaluatesELFLibraries();
     return 0;
 }

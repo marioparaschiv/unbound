@@ -32,7 +32,7 @@
 	"ATTESTATION_PK": {
 		"kind": "secret",
 		"required": true,
-		"purpose": "Signs the iOS loader's build attestation."
+		"purpose": "Signs the build attestation embedded in the iOS and Android loaders."
 	},
 	"GPG_KEY": {
 		"kind": "secret",

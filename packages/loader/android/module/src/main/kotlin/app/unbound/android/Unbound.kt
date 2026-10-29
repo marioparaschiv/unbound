@@ -58,6 +58,7 @@ class Unbound : XposedModule() {
         SettingsWatcher.start(documents)
         SettingsWatcher.onChange(::onSettingsChanged)
         hookActivityLifecycle()
+        if (BuildConfig.ATTESTATION_ENABLED && !attestationVerified()) return
         val hooked = runCatching { hookBundleLoading(param.classLoader) }
             .onFailure { Logger.error(LogCategory.RUNTIME, "Failed to hook the ReactInstance bundle loader", it) }
         if (hooked.isFailure) {
@@ -75,6 +76,17 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to install the toolbox gestures", it) }
         runCatching { TextRewrites.install(this) }
             .onFailure { Logger.error(LogCategory.PLUGINS, "Failed to hook text rewrites", it) }
+    }
+
+    private fun attestationVerified(): Boolean {
+        val attestation = Attestation.current()
+        if (attestation.verified) {
+            Logger.info(LogCategory.DEFAULT, "Embedded attestation verified, ${attestation.detail}")
+            return true
+        }
+        Logger.error(LogCategory.DEFAULT, "Embedded attestation failed: ${attestation.detail}")
+        StartupAlert.report(attestation.warningMessage, attestation.warningTitle)
+        return false
     }
 
     private fun onSettingsChanged() {

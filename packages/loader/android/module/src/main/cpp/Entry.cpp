@@ -2,6 +2,7 @@
 #include <jni.h>
 #include <mutex>
 
+#include "AndroidAttestation.h"
 #include "AndroidFileWatcher.h"
 #include "AndroidHermesSampler.h"
 #include "AndroidHotReload.h"
@@ -516,6 +517,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativeAppendLogFile", "(ILjava/lang/String;Ljava/lang/String;)V",
          reinterpret_cast<void *>(nativeAppendLogFile)},
         {"nativeDevOverlayButtonSide", "()D", reinterpret_cast<void *>(nativeDevOverlayButtonSide)},
+        {"nativeAttestation", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeAttestation)},
         {"nativeIncompatibleHostMessage", "()Ljava/lang/String;",
          reinterpret_cast<void *>(nativeIncompatibleHostMessage)},
         {"nativeDevelopmentBuildBanner",

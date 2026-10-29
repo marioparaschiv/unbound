@@ -72,7 +72,8 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	if !containsCode(sourceText, "Native hook closure is unavailable on this device") {
 		t.Fatal("native hook closure fail-closed diagnostic is missing from the loader")
 	}
-	if !containsCode(sourceText, `fallbackHook<void, NSUInteger>("void", {"u64"})`) {
+	if !containsCode(sourceText, `fallbackHook<void, int64_t>("void", {"i64"})`) ||
+		!containsCode(sourceText, `{"u64", "i64"}`) {
 		t.Fatal("native unsigned 64-bit argument hooks do not have a precompiled fallback")
 	}
 	if !containsCode(sourceText, "class NativeDataBuffer") ||
@@ -104,7 +105,7 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	if !containsCode(sourceText, `fallbackHook<id, id>("object", {"object"})`) {
 		t.Fatal("native object-return hooks do not have a precompiled fallback")
 	}
-	if !containsCode(sourceText, `name == "bool" ? std::string_view("i8")`) {
+	if !containsCode(sourceText, `{"bool", "i8"}`) {
 		t.Fatal("native boolean hooks do not share the i8 precompiled fallbacks")
 	}
 	if !containsCode(typeText, `fields == "{CGPoint=dd}{CGSize=dd}"`) ||
