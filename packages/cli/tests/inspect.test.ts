@@ -212,10 +212,10 @@ describe('formatFoundViews', () => {
 	});
 });
 
-function requestIn(code: string) {
-	const match = /\(unbound, (\{.*\})\)\)\)\(\);$/s.exec(code);
+function requestIn(code: string | undefined) {
+	const request = /\(unbound, (\{.*\})\)\)\)\(\);$/s.exec(code ?? '')?.[1];
 
-	return match ? (JSON.parse(match[1]) as Record<string, string | number>) : undefined;
+	return request ? (JSON.parse(request) as Record<string, string | number>) : undefined;
 }
 
 describe('inspect command', () => {
