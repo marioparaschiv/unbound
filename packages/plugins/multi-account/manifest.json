@@ -10,5 +10,12 @@
 	],
 	"version": "1.0.0",
 	"icon": "UserCircleIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "14139c8ec98bfdcc4f95718ce7c204a2357e9638e07564b3e1891efc0224b5f831aa35b99458983617c1c1d9cc84241a0b138bd717b67e068b02f94d5ceadfa0"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "tDTnQp8yi5OFynQk7xXsoqozRiekiM1X/mwjKNYR0zDV8cSiAzdQZzgw4Mli6OAyiINAsCUP2QZgFNv6PdSMAQ=="
+	}
 }

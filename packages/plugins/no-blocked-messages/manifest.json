@@ -22,5 +22,12 @@
 	],
 	"version": "1.0.1",
 	"icon": "EyeSlashIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "b650caad86d35adb5562481407ae03bf0351d2ee4bd9f110cbe2a936c44c2436df936cc8d60db0f9c68d4331189ae6f768c7636eecc5b99a790a35e29e1cb916"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "fNO//rnIKiGb+3Xb3lhdxtxON7RCsTbFTItOCuZ9Qapu6UxUCc/ds3/50vr4Vfthu8GLtHYIfnM7Ruc/a1MsDg=="
+	}
 }
