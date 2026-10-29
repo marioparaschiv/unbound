@@ -35,6 +35,9 @@ int main()
     assert(warnings.warning(kNoAddon, "-[UIView bounds]")->rfind("an unknown plugin", 0) == 0);
 
     assert(hookFailureMessage(plugin, "boom") == "Native plugin hook failed in Example: boom");
+    assert(hookSkippedMessage(plugin, "layoutSubviews") ==
+           "Native plugin hook skipped in Example: the JavaScript thread did not answer the "
+           "layoutSubviews hook within 100 ms, so it did not run");
 
     developerMode = false;
     now += std::chrono::seconds(1);
