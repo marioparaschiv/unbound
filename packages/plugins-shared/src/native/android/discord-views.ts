@@ -83,6 +83,49 @@ export function viewByIdName(
 	return id ? javaReference(java.invoke(view, 'findViewById', [javaInt(id)])) : null;
 }
 
+/**
+ * @description Finds a descendant view by the name of its Discord resource id, reading the views on the main thread.
+ * @param java The Java bridge.
+ * @param view The view to search under.
+ * @param name The id's resource name, such as `accessories_view`.
+ * @returns The view, or `null` when the view has no such descendant.
+ */
+export async function viewByIdNameAsync(
+	java: NativeJavaBridge,
+	view: NativeJavaReference,
+	name: string,
+): Promise<NativeJavaReference | null> {
+	let id = viewIds.get(name);
+
+	if (id === undefined) {
+		const resources = javaReference(await java.invokeAsync(view, 'getResources', []));
+
+		id = resources ? resourceId(java, resources, name) : undefined;
+	}
+
+	return id ? javaReference(await java.invokeAsync(view, 'findViewById', [javaInt(id)])) : null;
+}
+
+function resourceId(
+	java: NativeJavaBridge,
+	resources: NativeJavaReference,
+	name: string,
+): number | undefined {
+	const id = javaNumber(
+		java.invoke(resources, 'getIdentifier', [
+			javaString(name),
+			javaString('id'),
+			javaString(DISCORD_PACKAGE),
+		]),
+	);
+
+	if (id) {
+		viewIds.set(name, id);
+	}
+
+	return id;
+}
+
 function viewId(
 	java: NativeJavaBridge,
 	view: NativeJavaReference,
