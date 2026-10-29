@@ -35,6 +35,7 @@ struct JavaCallbacks {
     jmethodID hooksRemove              = nullptr;
     jmethodID runtimeReplaced          = nullptr;
     jmethodID javaBatch                = nullptr;
+    jmethodID javaFindViews            = nullptr;
     jmethodID javaCreateAssociationKey = nullptr;
     jmethodID javaGetAssociatedObject  = nullptr;
     jmethodID javaSetAssociatedObject  = nullptr;

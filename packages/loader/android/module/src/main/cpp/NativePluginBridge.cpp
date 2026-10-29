@@ -25,6 +25,7 @@
 #include "NativePlatformBridge.h"
 #include "NativePluginRoot.h"
 #include "NativeResourceBudget.h"
+#include "NativeTraversalOptions.h"
 
 namespace unbound::android {
 namespace jsi = facebook::jsi;
@@ -653,6 +654,36 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
                requireArguments(count, 1, "A Java batch requires an operation list");
                return parseJavaResult(rt, callJavaString(callbacks, callbacks.javaBatch,
                                                          {serializeJavaBatch(rt, args[0])}));
+           });
+    define(runtime, java, "batchAsync", 1,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 1, "A Java batch requires an operation list");
+               std::vector<std::string> arguments{serializeJavaBatch(rt, args[0])};
+               return javaAsynchronously(rt, [callbacks, arguments = std::move(arguments)]() {
+                   return callJavaString(callbacks, callbacks.javaBatch, arguments);
+               });
+           });
+    define(runtime, java, "findViews", 3,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 2, "A Java view search requires a view and a class name");
+               const jsi::Value none;
+               const auto       options = loader::native::parseTraversalOptions(
+                   rt, count > 2 ? args[2] : none, loader::native::TraversalProfile::Search);
+               nlohmann::json normalized = {
+                   {"maxDepth", options.maxDepth},
+                   {"maxNodes", options.maxNodes},
+                   {"maxResults", options.maxResults},
+                   {"attachedOnly", options.attachedOnly},
+                   {"stopAtMatch", options.stopAtMatch},
+                   {"direction", options.direction == loader::native::TraversalDirection::Ancestors
+                                     ? "ancestors"
+                                     : "descendants"},
+               };
+               std::vector<std::string> arguments{serializeJavaHandle(rt, args[0]),
+                                                  javaName(rt, args[1]), normalized.dump()};
+               return javaAsynchronously(rt, [callbacks, arguments = std::move(arguments)]() {
+                   return callJavaString(callbacks, callbacks.javaFindViews, arguments);
+               });
            });
     define(runtime, java, "createAssociationKey", 0,
            [callbacks](jsi::Runtime &rt, const jsi::Value *, size_t) {

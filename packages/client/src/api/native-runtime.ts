@@ -292,6 +292,8 @@ const nativeJavaCapabilityRequirements: Record<keyof NativeJavaBridge, NativePlu
 	setField: 'native.java.fields',
 	release: 'native.java.classes',
 	batch: 'native.java.batch',
+	batchAsync: 'native.java.batch',
+	findViews: 'native.java.invoke',
 	createAssociationKey: 'native.java.associations',
 	getAssociatedObject: 'native.java.associations',
 	setAssociatedObject: 'native.java.associations',
@@ -1083,6 +1085,17 @@ function createScopedNativePlugin(
 			javaBridge.batch.bind(javaBridge),
 			nativeJavaCapabilityRequirements.batch,
 		),
+		batchAsync: scopeAsyncMethod(
+			javaBridge.batchAsync?.bind(javaBridge),
+			nativeJavaCapabilityRequirements.batchAsync,
+			'Asynchronous Java batches are unavailable.',
+		),
+		findViews: (root, className, options) =>
+			scopeAsyncMethod(
+				javaBridge.findViews?.bind(javaBridge),
+				nativeJavaCapabilityRequirements.findViews,
+				'Java view searches are unavailable.',
+			)(root, className, options),
 		createAssociationKey: scopeMethod(
 			javaBridge.createAssociationKey.bind(javaBridge),
 			nativeJavaCapabilityRequirements.createAssociationKey,

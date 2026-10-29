@@ -24,7 +24,7 @@ import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewri
 import {
 	currentDecorView,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
 import { registerMessageSurface, type SurfaceContent } from '~/components/message-surface';
@@ -356,19 +356,19 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		},
 	);
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || disposed) return;
 
-		for (const messageView of findViewsOfClass(java, decor, MESSAGE_VIEW)) {
+		for (const messageView of await findViewsOfClass(java, decor, MESSAGE_VIEW)) {
 			const messageId = javaText(java.getField(messageView, messageIdField(java)));
 
 			if (messageId) schedule(messageView, messageId);
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	const scans = scheduleStartupScans('Message Link Embeds', scanVisible);
 
 	return {
 		drawn: () => embeds.size,

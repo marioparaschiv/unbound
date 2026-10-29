@@ -26,7 +26,7 @@ import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-c
 import {
 	currentDecorView,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 import { metro } from '@unbound-app/api';
 
@@ -439,19 +439,19 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		metro.common.Dispatcher.subscribe(action, onReactionChange);
 	}
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || disposed) return;
 
-		for (const messageView of findViewsOfClass(java, decor, MESSAGE_VIEW)) {
+		for (const messageView of await findViewsOfClass(java, decor, MESSAGE_VIEW)) {
 			const messageId = javaText(java.getField(messageView, idField));
 
 			if (messageId) schedule(messageView, messageId);
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	const scans = scheduleStartupScans('Reaction Avatars', scanVisible);
 
 	return {
 		async dispose() {

@@ -186,6 +186,18 @@ object NativeJava {
         return results.toString()
     }
 
+    fun findViews(handleJSON: String, className: String, optionsJSON: String): String {
+        val root = resolve(parseHandle(handleJSON)) as? View
+            ?: throw IllegalArgumentException("findViews needs a view to start from")
+        val target = loadHostClass(className)
+        val search = ViewSearch.from(JSONObject(optionsJSON))
+        val results = JSONArray()
+
+        for (view in search.run(root, target)) results.put(JSONObject(serialize(view)))
+
+        return results.toString()
+    }
+
     private fun releaseIssuedHandles(value: Any?) {
         when (value) {
             is JSONArray -> (0 until value.length()).forEach { releaseIssuedHandles(value.opt(it)) }

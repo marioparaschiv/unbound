@@ -207,6 +207,10 @@ object NativeBridge {
     fun javaBatch(operationsJSON: String): String = NativeJava.batch(operationsJSON)
 
     @JvmStatic
+    fun javaFindViews(handleJSON: String, className: String, optionsJSON: String): String =
+        NativeJava.findViews(handleJSON, className, optionsJSON)
+
+    @JvmStatic
     fun javaCreateAssociationKey(): String = NativeJava.createAssociationKey()
 
     @JvmStatic

@@ -15,7 +15,7 @@ import {
 import {
 	currentDecorView,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import { shapeMethod } from '@unbound-plugins/shared/native/android/discord-shapes';
@@ -153,20 +153,20 @@ export function startAndroidTagGradients(
 		},
 	);
 
-	function tagText(tagView: NativeJavaReference): string | undefined {
-		const [label] = findViewsOfClass(java, tagView, TEXT_VIEW);
+	async function tagText(tagView: NativeJavaReference): Promise<string | undefined> {
+		const [label] = await findViewsOfClass(java, tagView, TEXT_VIEW);
 		const text = label ? javaReference(java.invoke(label, 'getText', [])) : null;
 
 		return text ? javaText(java.invoke(text, 'toString', [])) : undefined;
 	}
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || stopped) return;
 
-		for (const tagView of findViewsOfClass(java, decor, TAG_VIEW)) {
-			const text = tagText(tagView);
+		for (const tagView of await findViewsOfClass(java, decor, TAG_VIEW)) {
+			const text = await tagText(tagView);
 
 			if (text) {
 				paint(tagView, text).catch(() => undefined);
@@ -174,7 +174,7 @@ export function startAndroidTagGradients(
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	const scans = scheduleStartupScans('More User Tags', scanVisible);
 
 	return async () => {
 		stopped = true;

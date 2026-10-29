@@ -34,7 +34,7 @@ import { readViewText, spansOf } from '@unbound-plugins/shared/native/android/sp
 import {
 	currentDecorView,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
 import { createBlockBackgroundFinder } from '~/android/block-backgrounds';
@@ -524,17 +524,17 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		},
 	);
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || disposed) return;
 
-		for (const textView of findViewsOfClass(java, decor, MESSAGE_CONTENT_VIEW)) {
+		for (const textView of await findViewsOfClass(java, decor, MESSAGE_CONTENT_VIEW)) {
 			schedule(textView);
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	const scans = scheduleStartupScans('Shiki Codeblocks', scanVisible);
 
 	return {
 		dispose() {

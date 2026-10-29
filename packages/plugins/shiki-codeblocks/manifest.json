@@ -27,6 +27,7 @@
 		"android": [
 			"native.java.classes",
 			"native.java.invoke",
+			"native.java.batch",
 			"native.java.invokeAsync",
 			"native.java.construct",
 			"native.java.hooks",

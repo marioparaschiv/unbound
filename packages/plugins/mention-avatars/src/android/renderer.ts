@@ -18,7 +18,7 @@ import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewri
 import {
 	currentDecorView,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 import {
 	javaFlag,
@@ -332,15 +332,15 @@ export function createAndroidRenderer(
 		},
 	);
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || disposed) return;
 
-		for (const view of findViewsOfClass(java, decor, TEXT_VIEW)) schedule(view);
+		for (const view of await findViewsOfClass(java, decor, TEXT_VIEW)) schedule(view);
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	const scans = scheduleStartupScans('Mention Avatars', scanVisible);
 
 	return {
 		rendered: () => rules.size,
