@@ -11,7 +11,7 @@ export function hermesExpressionEntrypoint({ hasSettingsPanel = false } = {}) {
 				let code = chunk.code.trim();
 				code = code.replace(/^var\s+[A-Za-z_$][\w$]*\s*=\s*/, '');
 				code = code.replace(/;\s*$/, '');
-				chunk.code = `({__plugin:null,__load(){if(this.__plugin)return this.__plugin;this.__plugin=${code};return this.__plugin;},start(context){const module=this.__load();const plugin=module?.default??module;if(plugin&&typeof plugin.start==='function')return plugin.start(context);},stop(){const module=this.__load();const plugin=module?.default??module;if(plugin&&typeof plugin.stop==='function')return plugin.stop();}${settingsPanelMethod}})`;
+				chunk.code = `({__plugin:null,__load(){if(this.__plugin)return this.__plugin;this.__plugin=${code};return this.__plugin;},start(context){const module=this.__load();const plugin=module?.default??module;if(plugin&&typeof plugin.start==='function')return plugin.start(context);},stop(){const module=this.__load();const plugin=module?.default??module;if(plugin&&typeof plugin.stop==='function')return plugin.stop();},selfTest(){const module=this.__load();const plugin=module?.default??module;if(plugin&&typeof plugin.selfTest==='function')return plugin.selfTest();}${settingsPanelMethod}})`;
 			}
 		},
 	};

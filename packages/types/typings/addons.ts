@@ -75,11 +75,19 @@ export type PluginEntity = Addon & {
 	instance: Plugin | null;
 };
 
+/** What a plugin's self-test found: whether the plugin works on this device, and why. */
+export type PluginSelfTestResult = {
+	ok: boolean;
+	detail: string;
+};
+
 /** The lifecycle and settings contract implemented by a plugin. */
 export type Plugin = {
 	start?(context?: PluginContext): void;
 	stop?(): void | Promise<void>;
 	getSettingsPanel?(): ReactNode;
+	/** Checks, without side effects, that the running plugin works on this device; the device matrix calls it after a restart. */
+	selfTest?(): PluginSelfTestResult | Promise<PluginSelfTestResult>;
 };
 
 /** An {@link Addon} whose instance is a {@link Theme}, tracking its registration state. */

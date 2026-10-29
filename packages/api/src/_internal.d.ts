@@ -2760,6 +2760,11 @@ export type PluginContext = {
 export type PluginEntity = Addon & {
 	instance: Plugin$1 | null;
 };
+/** What a plugin's self-test found: whether the plugin works on this device, and why. */
+export type PluginSelfTestResult = {
+	ok: boolean;
+	detail: string;
+};
 /**
  * Props of `PostponeRender` (function). Exports: PostponeRender.
  * @see design/components/Navigator/native/PostponeRender.native.tsx
@@ -3942,6 +3947,8 @@ type Plugin$1 = {
 	start?(context?: PluginContext): void;
 	stop?(): void | Promise<void>;
 	getSettingsPanel?(): React$1.ReactNode;
+	/** Checks, without side effects, that the running plugin works on this device; the device matrix calls it after a restart. */
+	selfTest?(): PluginSelfTestResult | Promise<PluginSelfTestResult>;
 };
 
 export { Plugin$1 as Plugin };
