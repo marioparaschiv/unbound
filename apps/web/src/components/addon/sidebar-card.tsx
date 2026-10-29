@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import Text from '~/components/ui/text';
 
 type SidebarCardProps = {
-	title: string;
+	title: ReactNode;
 	children: ReactNode;
 };
 

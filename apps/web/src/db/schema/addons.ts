@@ -47,6 +47,8 @@ export const addon = pgTable(
 		pinnedFields: integer('pinned_fields').default(0).notNull(),
 		/** The GitHub `owner/name` of the addon's source. Addon-level, never copied from a manifest. */
 		repository: text('repository'),
+		/** The website icon a maintainer picked, a Nucleo Micro Bold export name; `null` for the type's default. */
+		icon: text('icon'),
 	},
 	(table) => [
 		...LISTING_SORTS.flatMap((key) => [

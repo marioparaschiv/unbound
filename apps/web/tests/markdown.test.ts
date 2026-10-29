@@ -80,6 +80,13 @@ describe('Markdown', () => {
 		expect(html).toMatch(/<h3[^>]*>Section<\/h3>/);
 	});
 
+	test('decodes character references in text but not in code', () => {
+		const html = render('Tom &amp; Jerry &copy; 2026 &#8594; `&amp;`');
+
+		expect(html).toContain('Tom &amp; Jerry © 2026 → ');
+		expect(html).toMatch(/<code[^>]*>&amp;amp;<\/code>/);
+	});
+
 	test('renders GitHub-flavoured tables, task lists, strikethrough and code', () => {
 		const html = render(
 			[

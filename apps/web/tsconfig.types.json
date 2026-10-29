@@ -8,6 +8,7 @@
 		"outDir": "dist/types"
 	},
 	"files": [
+		"src/virtual-modules.d.ts",
 		"src/api/index.ts",
 		"src/api/client.ts",
 		"src/lib/bot/index.ts",

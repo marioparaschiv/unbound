@@ -1,10 +1,9 @@
-import { IconPalette, IconPlug } from 'nucleo-micro-bold';
-
 import InstallAddonButton from '~/components/install-addon-button';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import BlurReveal from '~/components/motion/blur-reveal';
-import AuthorByline from '~/components/author-byline';
+import { formatDate } from '~/components/addon/format';
+import AddonIcon from '~/components/addon-icon';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 
@@ -15,7 +14,7 @@ type AddonHeaderProps = {
 /** The addon's identity, install button and repository tags. */
 function AddonHeader({ addon }: AddonHeaderProps) {
 	const tags = addon.source?.details.tags ?? [];
-	const Icon = addon.type === 'theme' ? IconPalette : IconPlug;
+	const [latest] = addon.versions;
 
 	return (
 		<header className='flex flex-col gap-4'>
@@ -24,9 +23,9 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 					className='flex justify-center items-center bg-accent border rounded-surface size-16 shrink-0 animate-reveal'
 					style={staggerStyle(0)}
 				>
-					<Icon className='size-8' />
+					<AddonIcon type={addon.type} svg={addon.iconSvg} className='size-8' />
 				</div>
-				<div className='flex flex-col flex-1 gap-2 min-w-0'>
+				<div className='flex flex-col flex-1 gap-1.5 min-w-0'>
 					<Text as='h1' variant='heading-lg' className='truncate'>
 						<BlurReveal text={addon.name} />
 					</Text>
@@ -37,11 +36,11 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 						className='flex flex-wrap gap-1.5 animate-reveal'
 						style={staggerStyle(1)}
 					>
-						<AuthorByline authors={addon.authors} linkProfiles />
-						<span>· v{addon.version}</span>
+						<span>v{addon.version}</span>
+						{latest ? <span>· Updated {formatDate(latest.publishedAt)}</span> : null}
 					</Text>
 				</div>
-				<div className='animate-reveal' style={staggerStyle(2)}>
+				<div className='max-sm:hidden animate-reveal' style={staggerStyle(2)}>
 					<InstallAddonButton
 						size='lg'
 						id={addon.id}
@@ -50,14 +49,17 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 					/>
 				</div>
 			</div>
-			<Text
-				variant='text-md'
-				color='muted'
-				className='max-w-3xl animate-reveal'
-				style={staggerStyle(2)}
-			>
-				{addon.description}
-			</Text>
+			{/* Without an ADDON.md the page's main card shows the description, so it isn't repeated here. */}
+			{addon.source?.addonMd ? (
+				<Text
+					variant='text-md'
+					color='muted'
+					className='max-w-3xl animate-reveal'
+					style={staggerStyle(2)}
+				>
+					{addon.description}
+				</Text>
+			) : null}
 			{tags.length > 0 ? (
 				<ul
 					className='flex flex-wrap gap-1.5 animate-reveal'
@@ -66,11 +68,21 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 				>
 					{tags.map((tag) => (
 						<li key={tag}>
-							<Tag className='px-2 py-1 text-xs'>{tag}</Tag>
+							<Tag className='px-2 py-1 text-xs capitalize'>{tag}</Tag>
 						</li>
 					))}
 				</ul>
 			) : null}
+			{/* Phones get the button full width under the description, right above the ADDON.md. */}
+			<div className='sm:hidden animate-reveal' style={staggerStyle(3)}>
+				<InstallAddonButton
+					size='lg'
+					className='w-full'
+					id={addon.id}
+					type={addon.type}
+					manifestUrl={addon.manifestUrl}
+				/>
+			</div>
 		</header>
 	);
 }
