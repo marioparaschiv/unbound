@@ -66,4 +66,34 @@ describe('createHighlighter', () => {
 			light: false,
 		});
 	});
+	test('retries a grammar that failed to download before highlighting', async () => {
+		let failures = 1;
+		const flaky = async (name: string) => {
+			if (failures-- > 0) throw new TypeError('Network request failed');
+
+			return localRegistration(name);
+		};
+		const tokens = await createWithSource(flaky, [0]).tokenize(
+			{ code: 'const answer = 42;', language: 'typescript' },
+			'dark-plus',
+			'secondary',
+		);
+		const colors = new Set(tokens?.[0].map((token) => token.color));
+
+		expect(colors.size).toBeGreaterThan(1);
+	});
+
+	test('gives up once its retries run out, so the next block tries again', async () => {
+		let attempts = 0;
+		const offline = async () => {
+			attempts++;
+			throw new TypeError('Network request failed');
+		};
+		const highlighter = createWithSource(offline, [0]);
+		const block = { code: 'const answer = 42;', language: 'typescript' };
+
+		await expect(highlighter.tokenize(block, 'dark-plus', 'secondary')).rejects.toThrow();
+		await expect(highlighter.tokenize(block, 'dark-plus', 'secondary')).rejects.toThrow();
+		expect(attempts).toBe(4);
+	});
 });
