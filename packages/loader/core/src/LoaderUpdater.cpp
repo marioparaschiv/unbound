@@ -322,9 +322,11 @@ std::string BundleUpdater::selectURL(const BundleSource                  &source
 {
     if (!manifest)
     {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Failed to fetch manifest; falling back to JavaScript bundle");
-        return source.directURL.value_or(source.baseURL + "unbound.js");
+        std::string fallback = source.directURL.value_or(source.baseURL + "unbound.js");
+        log(LogLevel::Warning, LOG_CATEGORY_UPDATER,
+            "No usable manifest at " + source.baseURL + kBundleManifestName + "; falling back to " +
+                fallback);
+        return fallback;
     }
 
     std::string versions;

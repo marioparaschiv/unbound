@@ -105,8 +105,10 @@ void LoaderPipeline::prefetchBundle()
         }
         catch (const std::exception &error)
         {
-            log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
-                std::string("Bundle download failed. (") + error.what() + ")");
+            bool cached = signaled || fileExists(updater_.resolveBundlePath());
+            log(cached ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
+                std::string("Bundle download failed. (") + error.what() + ")" +
+                    (cached ? "; using the cached bundle" : ""));
         }
 
         if (!signaled && preferFresh && token == prefetchToken_.load())
