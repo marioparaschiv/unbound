@@ -1,5 +1,5 @@
-import type { UnboundAsset } from '@unbound-app/types';
 import { describe, expect, mock, test } from 'bun:test';
+import type { UnboundAsset } from '@unbound-app/types';
 
 import { existingFiles, makeManifest, resetDevice } from './helpers/addons';
 

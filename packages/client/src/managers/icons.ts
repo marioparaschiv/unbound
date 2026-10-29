@@ -1,7 +1,7 @@
 import type { Addon, IconPack, IconPackManifest, UnboundAsset } from '@unbound-app/types';
 import toError from '@unbound-app/utils/to-error';
-import noop from '@unbound-app/utils/noop';
 import type { ImageProps } from 'react-native';
+import noop from '@unbound-app/utils/noop';
 
 import { safeRelativePath, isSafeIconPackMain } from '~/lib/addon-paths';
 import { getByID, onAssetRegistered } from '~/api/assets';

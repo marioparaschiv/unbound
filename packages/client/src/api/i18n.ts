@@ -1,8 +1,8 @@
 import { createLogger } from '@unbound-app/logger';
 
 import { Dispatcher, i18n as Discord, Moment } from '~/api/metro/common';
-import { DEV, I18N_BASE_URL } from '~/lib/constants';
 import { findByName, filters, onModuleLoaded } from '~/api/metro';
+import { DEV, I18N_BASE_URL } from '~/lib/constants';
 import { getStore } from '~/api/storage';
 import fs from '~/api/fs';
 
