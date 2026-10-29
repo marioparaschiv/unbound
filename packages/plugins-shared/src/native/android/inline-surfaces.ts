@@ -212,7 +212,9 @@ export function createInlineSurfaces(
 
 	return {
 		define(definition) {
-			if (disposed) return false;
+			if (disposed) {
+				return false;
+			}
 
 			const existing = entries.get(definition.rendered);
 

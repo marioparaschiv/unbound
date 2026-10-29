@@ -48,7 +48,9 @@ function fakeNative(available: boolean, state: FakeState) {
 					state.calls.push({ method, args });
 				}
 
-				if (method === 'put') return { type: 'boolean', value: !state.declined };
+				if (method === 'put') {
+					return { type: 'boolean', value: !state.declined };
+				}
 
 				if (method === 'getChildAt') {
 					return handle(`root-${target.value}`);
