@@ -18,6 +18,7 @@ namespace {
     constexpr const char *kMakeRootAPI = "_ZN8facebook6hermes17makeHermesRootAPIEv";
     constexpr jsi::UUID   kRootAPIUUID{0xb654d898, 0xdfad, 0x11ef, 0x859a, 0x325096b39f47};
     constexpr double      kSamplingHz        = 400;
+    constexpr size_t      kNativeFrameHops   = 16;
     constexpr const char *kHermesLibraries[] = {"libhermesvm.so", "libhermes.so"};
 
 #if __has_include(<link.h>)
@@ -100,6 +101,29 @@ namespace {
         return name != frame.end() && name->is_string() ? name->get<std::string>() : std::string();
     }
 
+    std::string idOf(const nlohmann::json &value)
+    {
+        return value.is_string() ? value.get<std::string>() : value.dump();
+    }
+
+    std::string parentOf(const nlohmann::json &frame)
+    {
+        auto parent = frame.find("parent");
+        return parent == frame.end() ? std::string() : idOf(*parent);
+    }
+
+    bool isPluginFrame(const std::string &name)
+    {
+        size_t open = name.find('(');
+        if (open == std::string::npos || name.back() != ')')
+        {
+            return false;
+        }
+        std::string location = name.substr(open + 1, name.size() - open - 2);
+        return location.rfind("unbound:", 0) != 0 && location.rfind("address at unbound", 0) != 0 &&
+               location != "unbound";
+    }
+
     bool isJavaScript(const nlohmann::json &frame)
     {
         auto category = frame.find("category");
@@ -121,9 +145,20 @@ std::vector<std::string> hottestStack(const std::string &chromeTrace, size_t dep
     for (const nlohmann::json &sample : trace["samples"])
     {
         auto leaf = sample.find("sf");
-        if (leaf != sample.end())
+        if (leaf == sample.end())
         {
-            counts[leaf->is_string() ? leaf->get<std::string>() : leaf->dump()]++;
+            continue;
+        }
+        std::string frame = idOf(*leaf);
+        for (size_t hops = 0;
+             frames.contains(frame) && !isJavaScript(frames[frame]) && hops < kNativeFrameHops;
+             hops++)
+        {
+            frame = parentOf(frames[frame]);
+        }
+        if (frames.contains(frame) && isJavaScript(frames[frame]))
+        {
+            counts[frame]++;
         }
     }
 
@@ -131,7 +166,7 @@ std::vector<std::string> hottestStack(const std::string &chromeTrace, size_t dep
     size_t      best = 0;
     for (const auto &[frame, count] : counts)
     {
-        if (frames.contains(frame) && isJavaScript(frames[frame]) && count > best)
+        if (count > best)
         {
             hottest = frame;
             best    = count;
@@ -146,25 +181,23 @@ std::vector<std::string> hottestStack(const std::string &chromeTrace, size_t dep
             break;
         }
         const nlohmann::json &frame = frames[current];
-        if (isJavaScript(frame))
+        if (isJavaScript(frame) && isPluginFrame(frameName(frame)))
         {
             stack.push_back(frameName(frame));
         }
-        auto parent = frame.find("parent");
-        current     = parent == frame.end() ? std::string()
-                      : parent->is_string() ? parent->get<std::string>()
-                                            : parent->dump();
+        current = parentOf(frame);
     }
     return stack;
 }
 
-std::string describeSampledStack(const std::vector<std::string> &frames)
+std::string describeSampledStack(const std::vector<std::string> &frames, bool insideNativeCall)
 {
     if (frames.empty())
     {
         return {};
     }
-    std::string text = "Its JavaScript was in " + frames.front();
+    std::string text =
+        (insideNativeCall ? "The call came from " : "Its JavaScript was in ") + frames.front();
     for (size_t index = 1; index < frames.size(); index++)
     {
         text += ", called from " + frames[index];

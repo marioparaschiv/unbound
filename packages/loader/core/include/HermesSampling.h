@@ -14,6 +14,7 @@ void setJavaScriptSampler(JavaScriptSampler sampler);
 
 std::vector<std::string> hottestStack(const std::string &chromeTrace,
                                       size_t             depth = kSampledStackDepth);
-std::string              describeSampledStack(const std::vector<std::string> &frames);
+std::string              describeSampledStack(const std::vector<std::string> &frames,
+                                              bool                            insideNativeCall = false);
 std::vector<std::string> sampleJavaScriptStack(std::chrono::milliseconds duration);
 }
