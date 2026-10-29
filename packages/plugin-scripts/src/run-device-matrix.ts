@@ -10,6 +10,7 @@ import {
 	type MemoryReport,
 } from './device-memory';
 import type { SelfTestResult } from './loader-self-test';
+import { describeTimings, type PhaseTimings } from './timings';
 import {
 	MATRIX_CONFIG_PATH,
 	collectorArgs,
@@ -28,6 +29,7 @@ export type DeviceRun = {
 	drops?: string[];
 	memory?: MemoryReport;
 	selfTest?: SelfTestResult;
+	timings?: PhaseTimings;
 	error?: string;
 };
 
@@ -133,6 +135,9 @@ export function renderSummary(runs: DeviceRun[]): string {
 			? [`- ${run.device.name}, most growth per cycle: ${measured.join(', ')}`]
 			: [];
 	});
+	const durations = runs
+		.filter((run) => run.timings)
+		.map((run) => `- ${run.device.name}: ${describeTimings(run.timings!)}`);
 	const dropped = runs.flatMap((run) =>
 		(run.drops ?? []).map((drop) => `- ${run.device.name}, during ${drop}`),
 	);
@@ -163,6 +168,7 @@ export function renderSummary(runs: DeviceRun[]): string {
 		...(dropped.length ? ['', '### Device drops', '', ...dropped] : []),
 		...(memory.length ? ['', '### Discord memory over the run', '', ...memory] : []),
 		...(leaks.length ? ['', '### Leak check', '', ...leaks] : []),
+		...(durations.length ? ['', '### Duration', '', ...durations] : []),
 		...(offMain.length ? ['', '### Off-main view calls', '', ...offMain] : []),
 		...(errors.length ? ['', '### Plugin errors', '', ...errors] : []),
 		...(skipped.length
@@ -176,6 +182,12 @@ function readMemory(out: string): MemoryReport | undefined {
 	const file = join(out, 'memory.json');
 
 	return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as MemoryReport) : undefined;
+}
+
+function readTimings(out: string): PhaseTimings | undefined {
+	const file = join(out, 'timing.json');
+
+	return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as PhaseTimings) : undefined;
 }
 
 function readSelfTest(out: string): SelfTestResult | undefined {
@@ -221,6 +233,7 @@ async function collect(
 	rmSync(join(out, 'scroll.json'), { force: true });
 	rmSync(join(out, 'memory.json'), { force: true });
 	rmSync(join(out, 'selftest.json'), { force: true });
+	rmSync(join(out, 'timing.json'), { force: true });
 
 	const args = [
 		...collectorArgs(device, out, channel, only, leakCycles),
@@ -245,6 +258,7 @@ async function collect(
 	const toasts = {
 		drops,
 		selfTest: readSelfTest(out),
+		timings: readTimings(out),
 		memory: readMemory(out),
 		scrollToasts: scroll?.toasts,
 		emptyToasts: scroll?.emptyToasts,

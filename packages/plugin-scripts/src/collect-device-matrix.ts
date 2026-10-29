@@ -9,6 +9,7 @@ import { PLUGINS_DIR, REPO_ROOT } from './paths';
 import { dropBaseline, dropReason, relaunchCommands } from './device-drops';
 import { discordMemory, springBoardMemory } from './device-memory';
 import { growthPerCycle, leakNote, liveHeapScript } from './leak-check';
+import { createTimings } from './timings';
 import {
 	SELF_TEST_MARKER,
 	judgeSelfTest,
@@ -685,6 +686,7 @@ async function main(): Promise<void> {
 
 	mkdirSync(out, { recursive: true });
 
+	const timings = createTimings();
 	const fixtureChannel = values.channel ?? readMatrixConfig()?.channel;
 	const fixtures = fixtureChannel ? parseChannel(fixtureChannel) : undefined;
 
@@ -764,6 +766,8 @@ async function main(): Promise<void> {
 		return judgeSelfTest(counts, parsePluginErrors(lines, started));
 	}
 
+	timings.lap('setup');
+
 	let loaderCheck: SelfTestResult;
 
 	try {
@@ -779,6 +783,7 @@ async function main(): Promise<void> {
 
 	writeFileSync(join(out, 'selftest.json'), `${JSON.stringify(loaderCheck, null, '\t')}\n`);
 	console.error(`${loaderCheck.ok ? 'pass' : 'FAIL'} loader self-test: ${loaderCheck.detail}`);
+	timings.lap('self-test');
 
 	for (const plugin of catalog) {
 		let check: MeasuredCheck | undefined;
@@ -852,6 +857,8 @@ async function main(): Promise<void> {
 		console.error(`leak check ${check.id}: ${perCycle} MB per cycle`);
 	}
 
+	timings.lap('plugin cycles');
+
 	if (leakCycles > 0) {
 		for (const check of checks) {
 			try {
@@ -863,6 +870,8 @@ async function main(): Promise<void> {
 			}
 		}
 	}
+
+	if (leakCycles > 0) timings.lap('leak check');
 
 	async function afterRecovery<T>(label: string, step: () => Promise<T>): Promise<T> {
 		try {
@@ -898,6 +907,8 @@ async function main(): Promise<void> {
 
 	const scroll = await afterRecovery('the scroll check', scrollPhase);
 
+	timings.lap('scroll');
+
 	writeFileSync(join(out, 'scroll.json'), `${JSON.stringify(scroll, null, '\t')}\n`);
 
 	const memory = {
@@ -918,6 +929,9 @@ async function main(): Promise<void> {
 	const warnings = parseOffMainWarnings(logLines, since);
 	const errors = withoutSelfTest(parsePluginErrors(logLines, since));
 	const skippedHooks = parseSkippedHooks(logLines, since);
+
+	timings.lap('logs');
+	writeFileSync(join(out, 'timing.json'), `${JSON.stringify(timings.result(), null, '\t')}\n`);
 
 	if (!developerMode) await evaluate(port, developerModeScript(false));
 
