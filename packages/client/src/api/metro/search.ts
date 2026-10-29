@@ -16,7 +16,7 @@ import type {
 	MetroFunctionSignatureOrArray,
 } from '~/api/metro/types';
 import Filters, { type MetroFilter } from '~/api/metro/filters';
-import { registerLazyModule } from '~/api/metro/lazy-registry';
+import { createLazyModule } from '~/api/metro/lazy-registry';
 import { provideFinders } from '~/api/metro/finders';
 import { blacklist, data } from '~/api/metro/state';
 import { onModuleLoaded } from '~/api/metro/wait';
@@ -586,58 +586,23 @@ function searchWithOptions(
 			return cache;
 		}
 
-		const proxy = new Proxy(
-			{
-				__METRO_LAZY__: true,
-				get module() {
-					return cache;
-				},
-			},
-			{
-				get(_, prop) {
-					if (!prop || typeof prop !== 'string') return;
-
-					resolve();
-
-					if (prop === 'module') {
-						return cache;
-					}
-
-					return cache?.[prop];
-				},
-				set(_, prop, value) {
-					return Object.defineProperty(resolve() ?? {}, prop, {
-						value,
-						writable: true,
-						configurable: true,
-					});
-				},
-				// The patcher installs its wrapper with `Object.defineProperty`, which must reach the real module.
-				defineProperty(_, prop, descriptor) {
-					const module = resolve();
-
-					return Boolean(module) && Reflect.defineProperty(module, prop, descriptor);
-				},
-			},
-		);
-
 		// A bulk or `all` search stands for several modules, and a `raw` one for a module record, so a
 		// patch on such a proxy resolves it as before instead of waiting.
-		if (!options.bulk && !options.all && !options.raw) {
-			const search = filter(...args);
-			const { esModules, interop } = options;
-
-			registerLazyModule(proxy, {
-				wait: (onLoad) => onModuleLoaded(search, onLoad, { esModules, interop }),
-				adopt(mdl) {
-					cache ??= mdl;
-
-					return cache;
-				},
-			});
+		if (options.bulk || options.all || options.raw) {
+			return createLazyModule(resolve);
 		}
 
-		return proxy;
+		const search = filter(...args);
+		const { esModules, interop } = options;
+
+		return createLazyModule(resolve, {
+			wait: (onLoad) => onModuleLoaded(search, onLoad, { esModules, interop }),
+			adopt(mdl) {
+				cache ??= mdl;
+
+				return cache;
+			},
+		});
 	}
 
 	if (options.bulk) {

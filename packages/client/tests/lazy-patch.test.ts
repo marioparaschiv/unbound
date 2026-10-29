@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 
-type Exports = Record<string, (...args: number[]) => number>;
+type Exports = Record<string, (...args: number[]) => number | null>;
 type Factory = (
 	global: typeof globalThis,
 	require: (id: number) => Exports,
@@ -13,7 +13,7 @@ const cachedIds: Record<string, number[]> = {};
 
 Object.assign(globalThis, { $$DEV$$: false, window: globalThis });
 
-// A fake Metro registry: module 1 is loaded before Unbound, the rest load on demand.
+// A fake Metro registry: modules 0 and 1 are loaded before Unbound, the rest load on demand.
 const modules = new Map<number, MetroModuleRecord>();
 
 function define(id: number, factory: Factory) {
@@ -36,6 +36,10 @@ function metroRequire(id: number): Exports {
 	return record.publicModule.exports;
 }
 
+// The renderer, with no React surface mounted under bun.
+define(0, (_, __, ___, ____, module) => {
+	module.exports = { getPublicInstanceFromRootTag: () => null };
+});
 define(1, (_, __, ___, ____, module) => {
 	module.exports = { double: (n) => n * 2 };
 });
@@ -78,9 +82,20 @@ define(12, (_, __, ___, ____, module) => {
 define(13, (_, __, ___, ____, module) => {
 	module.exports = { abandoned: () => 13 };
 });
+define(14, (_, __, ___, ____, module) => {
+	module.exports = { quadruple: (n) => n * 4 };
+});
+define(15, (_, __, ___, ____, module) => {
+	module.exports = { fifth: (n) => n / 5 };
+});
+metroRequire(0);
 metroRequire(1);
 
-Object.assign(globalThis, { modules, __r: metroRequire });
+Object.assign(globalThis, {
+	modules,
+	__r: metroRequire,
+	ErrorUtils: { getGlobalHandler: () => undefined, setGlobalHandler: () => undefined },
+});
 
 mock.module('~/lib/cache', () => ({
 	ModuleFlags: { BLACKLISTED: 1 },
@@ -96,12 +111,9 @@ mock.module('~/lib/cache', () => ({
 	},
 }));
 
-// No React surface is mounted under bun, so the renderer finds no roots.
-mock.module('~/api/metro/wrappers', () => ({
-	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
-}));
-
 const metro = await import('~/api/metro/search');
+// Other test files mock `~/api/metro/wrappers`, so the handles come from the function behind it.
+const { findLazy } = await import('~/api/metro/finders');
 const { onModuleLoaded, waitForModule } = await import('~/api/metro/wait');
 const { byProps } = await import('~/api/metro/filters');
 const { after, createPatcher, unpatchAll, unpatchAllByCaller } = await import('~/api/patcher');
@@ -250,5 +262,30 @@ describe('patching a lazy module', () => {
 
 		expect(isLoaded(5)).toBe(false);
 		expect(metroRequire(5).half(8)).toBe(4);
+	});
+});
+
+describe('a lazy wrapper handle (findByPropsLazy and the like)', () => {
+	test('a patch on it waits for the module instead of loading it', () => {
+		const Quadrupler = findLazy('findByProps', ['quadruple']);
+
+		createPatcher('lazy.quadruple').after(Quadrupler, 'quadruple', ({ result }) => result + 1);
+
+		expect(isLoaded(14)).toBe(false);
+		expect(metroRequire(14).quadruple(2)).toBe(9);
+		expect(Quadrupler.quadruple(2)).toBe(9);
+	});
+
+	test('reading it loads the module and behaves as the module for every operation', () => {
+		cachedIds['byProps::fifth'] = [15];
+
+		const Fifth = findLazy('findByProps', ['fifth']);
+
+		expect(Fifth.fifth(10)).toBe(2);
+		expect(isLoaded(15)).toBe(true);
+		expect(Object.keys(Fifth)).toEqual(['fifth']);
+		expect('fifth' in Fifth).toBe(true);
+		expect({ ...Fifth }.fifth).toBe(metroRequire(15).fifth);
+		expect(Object.getPrototypeOf(Fifth)).toBe(Object.prototype);
 	});
 });

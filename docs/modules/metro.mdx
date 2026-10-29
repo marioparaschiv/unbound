@@ -167,7 +167,7 @@ const handler = metro.find(byActionHandler('MESSAGE_CREATE'));
 
 ### Common modules & stores
 
-Metro pre-resolves the modules most addons need: React, React Native, the dispatcher, constants, and the main flux stores. Use these instead of searching for them again.
+Metro exposes handles to the modules most addons need: React, React Native, the dispatcher, constants, and the main flux stores. Use these instead of searching for them again. Apart from `React` and `ReactNative`, each handle is lazy, like the result of a `{ lazy: true }` search. Reading it runs its search, and patching it waits for the module to load.
 
 <AccordionGroup>
 	<Accordion title='metro.common: shared modules' icon='cubes'>
@@ -178,7 +178,7 @@ Metro pre-resolves the modules most addons need: React, React Native, the dispat
     	```
     </Accordion>
     <Accordion title='metro.stores: flux stores' icon='database'>
-    	Pre-resolved flux stores such as `Users`, `Guilds`, and `Theme`.
+    	Lazy handles to flux stores such as `Users`, `Guilds`, and `Theme`.
 
     	```ts
     	const me = metro.stores.Users.getCurrentUser();

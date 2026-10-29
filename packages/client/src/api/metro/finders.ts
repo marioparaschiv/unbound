@@ -1,3 +1,6 @@
+import noop from '@unbound-app/utils/noop';
+
+import { createLazyModule, getLazyModule } from '~/api/metro/lazy-registry';
 import type { MetroStoreOptions } from '~/api/metro/types';
 import type { find } from '~/api/metro/search';
 
@@ -39,4 +42,47 @@ export function finder(name: keyof Finders) {
 	}
 
 	return provided[name];
+}
+
+/**
+ * @description Creates a lazy handle for a search that may run before the metro search has loaded.
+ * @param name The search function.
+ * @param args The search terms, optionally followed by an options bag.
+ * @returns A lazy module proxy; reading it runs the search, and a patch on it waits for the module to load.
+ */
+export function findLazy(name: Exclude<keyof Finders, 'find'>, args: TermOrOptions[]): MetroExport {
+	let search: MetroExport;
+
+	// The `{ lazy: true }` search is made on first use, since a handle may be declared before the search module loads.
+	function inner() {
+		search ??= finder(name)(...withLazy(args));
+
+		return search;
+	}
+
+	return createLazyModule(() => inner().module, {
+		wait(onLoad) {
+			const lazy = getLazyModule(inner());
+
+			if (lazy) {
+				return lazy.wait(onLoad);
+			}
+
+			// A bulk, `all` or `raw` search does not wait, so the patch resolves it as before.
+			onLoad(inner().module);
+
+			return noop;
+		},
+		adopt: (mdl) => getLazyModule(inner())?.adopt(mdl) ?? mdl,
+	});
+}
+
+function withLazy(args: TermOrOptions[]): TermOrOptions[] {
+	const last = args.at(-1);
+
+	if (typeof last === 'object') {
+		return [...args.slice(0, -1), { ...last, lazy: true }];
+	}
+
+	return [...args, { lazy: true }];
 }
