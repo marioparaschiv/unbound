@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeJavaArgument,
 	NativeJavaBridge,
@@ -348,7 +349,9 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 	}
 
 	function report(error: unknown) {
-		console.error(`[${PLUGIN_NAME}] Failed to round an avatar:`, error);
+		if (!isCancellation(error)) {
+			console.error(`[${PLUGIN_NAME}] Failed to round an avatar:`, error);
+		}
 	}
 
 	const token = hooks.hook(

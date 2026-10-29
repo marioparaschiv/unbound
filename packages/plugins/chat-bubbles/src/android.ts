@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
@@ -297,7 +298,9 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			if (disposed) return;
 
 			await place(row).catch((error) => {
-				console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
+				if (!isCancellation(error)) {
+					console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
+				}
 			});
 		}
 	}
@@ -330,7 +333,9 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			if (!accessories || !isInstance(accessoriesClass, accessories)) return;
 
 			void scheduleRow(accessories).catch((error) => {
-				console.error(`[${PLUGIN_NAME}] Failed to find a bubble's row:`, error);
+				if (!isCancellation(error)) {
+					console.error(`[${PLUGIN_NAME}] Failed to find a bubble's row:`, error);
+				}
 			});
 		},
 	);
@@ -345,18 +350,22 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		}
 	}
 
-	refreshVisible().catch((error) =>
-		console.error(`[${PLUGIN_NAME}] Failed to scan the views on screen:`, error),
-	);
+	refreshVisible().catch((error) => {
+		if (!isCancellation(error)) {
+			console.error(`[${PLUGIN_NAME}] Failed to scan the views on screen:`, error);
+		}
+	});
 
 	return {
 		placed: () => tracked.length,
 		refresh() {
 			for (const row of tracked) schedule(row);
 
-			refreshVisible().catch((error) =>
-				console.error(`[${PLUGIN_NAME}] Failed to scan the views on screen:`, error),
-			);
+			refreshVisible().catch((error) => {
+				if (!isCancellation(error)) {
+					console.error(`[${PLUGIN_NAME}] Failed to scan the views on screen:`, error);
+				}
+			});
 		},
 		async dispose() {
 			disposed = true;
@@ -366,7 +375,9 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			await Promise.all(
 				tracked.splice(0).map((row) =>
 					restore(row).catch((error) => {
-						console.error(`[${PLUGIN_NAME}] Failed to restore a row:`, error);
+						if (!isCancellation(error)) {
+							console.error(`[${PLUGIN_NAME}] Failed to restore a row:`, error);
+						}
 					}),
 				),
 			);

@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
 import { findVisibleCells } from '@unbound-plugins/shared/native/visible-cells';
 import { readRect } from '@unbound-plugins/shared/native/rect';
@@ -176,7 +177,9 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 
 				pending.delete(key);
 				await place(key, queued).catch((error) => {
-					console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
+					if (!isCancellation(error)) {
+						console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
+					}
 				});
 			}
 		} finally {

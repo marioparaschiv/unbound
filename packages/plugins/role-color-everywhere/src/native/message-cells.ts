@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import { safeCall, safeInvokeAsync } from '@unbound-plugins/shared/native/safe-invoke';
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
 import hookMessageCells from '@unbound-plugins/shared/native/message-cell-hooks';
@@ -273,7 +274,9 @@ export function colorMessageMentions(objc: NativeObjCBridge): () => Promise<void
 				.catch((error) => {
 					if (stopped) return;
 
-					console.error(`[${PLUGIN_NAME}] Failed to paint native mentions:`, error);
+					if (!isCancellation(error)) {
+						console.error(`[${PLUGIN_NAME}] Failed to paint native mentions:`, error);
+					}
 				})
 				.finally(() => {
 					pendingCells.delete(key);
@@ -311,7 +314,12 @@ export function colorMessageMentions(objc: NativeObjCBridge): () => Promise<void
 				timers.delete(timer);
 
 				void scanVisibleCells().catch((error) => {
-					console.error(`[${PLUGIN_NAME}] Failed to scan visible message cells:`, error);
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}] Failed to scan visible message cells:`,
+							error,
+						);
+					}
 				});
 			}, delay);
 

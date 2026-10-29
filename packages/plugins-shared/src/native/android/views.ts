@@ -6,6 +6,7 @@ import type {
 } from '@unbound-app/api/native';
 
 import { javaFlag, javaInt, javaNumber, javaReference } from './java-values';
+import { isCancellation } from '../cancellation';
 
 export type ViewBridge = Pick<
 	NativeJavaBridge,
@@ -144,9 +145,11 @@ export function scheduleStartupScans(
 ): ReturnType<typeof setTimeout>[] {
 	return STARTUP_SCAN_DELAYS.map((delay) =>
 		setTimeout(() => {
-			scan().catch((error) =>
-				console.error(`[${label}] Failed to scan the views on screen:`, error),
-			);
+			scan().catch((error) => {
+				if (!isCancellation(error)) {
+					console.error(`[${label}] Failed to scan the views on screen:`, error);
+				}
+			});
 		}, delay),
 	);
 }

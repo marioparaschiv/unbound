@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
@@ -148,7 +149,12 @@ export function colorAndroidChatInputMentions({ java, hooks }: Native): () => Pr
 		state.timers = PAINT_DELAYS_MS.map((delay) =>
 			setTimeout(() => {
 				paint(view).catch((error) => {
-					console.error(`[${PLUGIN_NAME}: composer mentions] Failed to paint:`, error);
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}: composer mentions] Failed to paint:`,
+							error,
+						);
+					}
 				});
 			}, delay),
 		);

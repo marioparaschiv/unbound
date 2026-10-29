@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeJavaBridge,
@@ -371,7 +372,9 @@ export function createNativeCards(native: Native) {
 			if (disposed) return;
 
 			render(textView).catch((error) => {
-				console.error(`[${PLUGIN_NAME}] Failed to draw an Android code card:`, error);
+				if (!isCancellation(error)) {
+					console.error(`[${PLUGIN_NAME}] Failed to draw an Android code card:`, error);
+				}
 			});
 		}, 0);
 	}
@@ -386,7 +389,9 @@ export function createNativeCards(native: Native) {
 		}
 
 		define(rendered, layout).catch((error) => {
-			console.error(`[${PLUGIN_NAME}] Failed to repaint an Android code card:`, error);
+			if (!isCancellation(error)) {
+				console.error(`[${PLUGIN_NAME}] Failed to repaint an Android code card:`, error);
+			}
 		});
 	}, onAppForeground);
 
@@ -422,7 +427,12 @@ export function createNativeCards(native: Native) {
 
 			if (resized) {
 				resize(resized).catch((error) => {
-					console.error(`[${PLUGIN_NAME}] Failed to resize an Android code card:`, error);
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}] Failed to resize an Android code card:`,
+							error,
+						);
+					}
 				});
 			}
 		},
@@ -433,10 +443,12 @@ export function createNativeCards(native: Native) {
 		() => {
 			for (const [rendered, layout] of layouts) {
 				define(rendered, layout).catch((error) => {
-					console.error(
-						`[${PLUGIN_NAME}] Failed to repaint an Android code card:`,
-						error,
-					);
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}] Failed to repaint an Android code card:`,
+							error,
+						);
+					}
 				});
 			}
 		},

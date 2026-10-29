@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import { colorAndroidChatInputMentions } from '~/android/chat-input';
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { PluginContext } from '@unbound-app/api/native';
@@ -21,7 +22,9 @@ export function createNativeMentions(context: PluginContext): NativeMentions {
 
 	function enqueue(step: () => void | Promise<void>) {
 		queue = queue.then(step).catch((error) => {
-			console.error(`[${PLUGIN_NAME}] Failed to update native mentions:`, error);
+			if (!isCancellation(error)) {
+				console.error(`[${PLUGIN_NAME}] Failed to update native mentions:`, error);
+			}
 		});
 	}
 
@@ -44,7 +47,9 @@ export function createNativeMentions(context: PluginContext): NativeMentions {
 				try {
 					removers.push(apply(objc));
 				} catch (error) {
-					console.error(`[${PLUGIN_NAME}] Failed to color native mentions:`, error);
+					if (!isCancellation(error)) {
+						console.error(`[${PLUGIN_NAME}] Failed to color native mentions:`, error);
+					}
 				}
 			}
 		});
