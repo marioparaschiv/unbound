@@ -12,6 +12,11 @@ pre-commit:
         plugins:
             run: bun run plugins:validate
 
+pre-push:
+    commands:
+        affected-checks:
+            run: bun scripts/pre-push.ts
+
 commit-msg:
     commands:
         commitlint:
