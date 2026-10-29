@@ -32,9 +32,14 @@ bool OffMainViewWarnings::enabled()
     const auto                  now = state_->clock();
     if (!state_->hasChecked || now - state_->checkedAt >= kDeveloperModeRecheck)
     {
-        state_->hasChecked = true;
-        state_->checkedAt  = now;
-        state_->enabled    = state_->developerMode && state_->developerMode();
+        const bool wasEnabled = state_->enabled;
+        state_->hasChecked    = true;
+        state_->checkedAt     = now;
+        state_->enabled       = state_->developerMode && state_->developerMode();
+        if (state_->enabled && !wasEnabled)
+        {
+            state_->warned.clear();
+        }
     }
     return state_->enabled;
 }

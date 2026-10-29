@@ -53,6 +53,7 @@ test('summarises every device and lists only the plugins that failed somewhere',
 					lifecycle: 'pass',
 					evidence: [],
 					note: 'no embeds',
+					offMainCalls: ['android.view.View.getWidth()'],
 				},
 			],
 			changes: ['unbound.beta now fails'],
@@ -64,4 +65,5 @@ test('summarises every device and lists only the plugins that failed somewhere',
 	expect(summary).toContain('| unbound.beta | pass | **fail**: no embeds |');
 	expect(summary).not.toContain('| unbound.alpha |');
 	expect(summary).toContain('- Android Emulator: unbound.beta now fails');
+	expect(summary).toContain('- Android Emulator, unbound.beta: `android.view.View.getWidth()`');
 });

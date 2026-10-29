@@ -6,7 +6,7 @@ export type CheckMetrics = {
 	leakedHooks: number;
 };
 
-export type MeasuredCheck = DeviceCheck & { metrics?: CheckMetrics };
+export type MeasuredCheck = DeviceCheck & { metrics?: CheckMetrics; offMainCalls?: string[] };
 
 const SLOWER_FACTOR = 2;
 const SLOWER_MARGIN_MS = 200;
@@ -67,6 +67,12 @@ export function compareRuns(previous: MeasuredCheck[], current: MeasuredCheck[])
 		}
 
 		changes.push(...metricChanges(check.id, earlier.metrics, check.metrics));
+
+		const known = new Set(earlier.offMainCalls ?? []);
+		const added = (check.offMainCalls ?? []).filter((call) => !known.has(call));
+
+		if (added.length)
+			changes.push(`${check.id} makes new off-main view calls: ${added.join(', ')}`);
 	}
 
 	for (const check of previous) {

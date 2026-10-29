@@ -59,3 +59,19 @@ test('merges a partial run into the previous results', () => {
 		'c:pass',
 	]);
 });
+
+test('reports off-main view calls a plugin did not make before', () => {
+	const check = {
+		id: 'unbound.alpha',
+		behavior: 'pass',
+		lifecycle: 'pass',
+		evidence: [],
+	} as const;
+
+	expect(
+		compareRuns(
+			[{ ...check, evidence: [], offMainCalls: ['-[UIView layer]'] }],
+			[{ ...check, evidence: [], offMainCalls: ['-[UIView bounds]', '-[UIView layer]'] }],
+		),
+	).toEqual(['unbound.alpha makes new off-main view calls: -[UIView bounds]']);
+});

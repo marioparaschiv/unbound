@@ -5,6 +5,7 @@ import {
 	cycleScript,
 	fixtureScript,
 	parseChannel,
+	parseOffMainWarnings,
 	withReconnects,
 	type CycleResult,
 } from './collect-device-matrix';
@@ -139,4 +140,21 @@ test('the fixture script opens the channel and injects local messages only', () 
 	expect(script).toContain('receiveMessage');
 	expect(script).not.toContain('sendMessage(');
 	expect(() => new Function(`return ${script}`)).not.toThrow();
+});
+
+test('reads the off-main view calls each plugin made since the run began', () => {
+	const lines = [
+		'2026-10-29T17:00:00.000Z W [plugins] Chat Bubbles called -[UIView layer] off the main thread. Views are only safe on the main thread; use invokeAsync instead.',
+		'2026-10-29T18:00:01.000Z W [plugins] Chat Bubbles called -[UIView bounds] off the main thread. Views are only safe on the main thread; use invokeAsync instead.',
+		'2026-10-29T18:00:02.000Z W [plugins] Chat Bubbles called -[UIView bounds] off the main thread. Views are only safe on the main thread; use invokeAsync instead.',
+		'2026-10-29T18:00:03.000Z W [plugins] Avatar Radius called android.view.View.getWidth() off the main thread. Views are only safe on the main thread; use invokeAsync instead.',
+		'2026-10-29T18:00:04.000Z I [plugins] unrelated',
+	];
+
+	expect(parseOffMainWarnings(lines, '2026-10-29T18:00:00.000Z')).toEqual(
+		new Map([
+			['Chat Bubbles', ['-[UIView bounds]']],
+			['Avatar Radius', ['android.view.View.getWidth()']],
+		]),
+	);
 });
