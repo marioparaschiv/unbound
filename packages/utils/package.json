@@ -10,7 +10,13 @@
 	"exports": {
 		"./*": "./src/*.ts"
 	},
+	"scripts": {
+		"typecheck": "tsc --noEmit -p ."
+	},
 	"dependencies": {
 		"@unbound-app/types": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "catalog:"
 	}
 }

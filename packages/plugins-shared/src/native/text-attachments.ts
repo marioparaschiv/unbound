@@ -27,8 +27,11 @@ export function messageTextViewClass(objc: Pick<NativeObjCBridge, 'getClass'>): 
 
 export const CODE_BLOCK_ATTRIBUTE = 'ContentNodeAttribute:DrawingDataLayers';
 
+export type SerializedObject = { [key: string]: TextAttributeValue | SerializedObject };
+
 export type TextAttachmentValue =
 	| NativeHandle
+	| SerializedObject
 	| number
 	| string
 	| boolean

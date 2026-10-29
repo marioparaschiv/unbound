@@ -20,6 +20,9 @@
 			"default": "./typings/*.ts"
 		}
 	},
+	"scripts": {
+		"typecheck": "tsc --noEmit -p ."
+	},
 	"dependencies": {
 		"@unbound-app/discord-types": "workspace:*",
 		"possess": "catalog:"

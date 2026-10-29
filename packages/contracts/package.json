@@ -12,6 +12,9 @@
 	"exports": {
 		"./*": "./src/*.ts"
 	},
+	"scripts": {
+		"typecheck": "tsc --noEmit -p ."
+	},
 	"dependencies": {
 		"@unbound-app/types": "workspace:*",
 		"picomatch": "^4.0.7",

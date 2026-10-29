@@ -919,6 +919,9 @@
       "dependencies": {
         "@unbound-app/types": "workspace:*",
       },
+      "devDependencies": {
+        "@types/bun": "catalog:",
+      },
     },
   },
   "trustedDependencies": [

@@ -95,7 +95,7 @@ describe('parseMessage rejection', () => {
 	});
 
 	test('accepts a well-formed log line', () => {
-		const log = { type: 'log', level: 2, message: 'hi' };
+		const log = { type: 'log', level: 2, message: 'hi' } as const;
 
 		expect(parseMessage(JSON.stringify(log))).toEqual(log);
 	});
@@ -130,8 +130,8 @@ describe('hello', () => {
 	};
 
 	test('a device hello and a status carrying it parse intact', () => {
-		const hello = { type: 'hello', device };
-		const status = { type: 'device-status', connected: true, device };
+		const hello = { type: 'hello', device } as const;
+		const status = { type: 'device-status', connected: true, device } as const;
 
 		expect(parseMessage(JSON.stringify(hello))).toEqual(hello);
 		expect(parseMessage(JSON.stringify(status))).toEqual(status);
