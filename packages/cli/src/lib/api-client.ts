@@ -10,7 +10,7 @@ import { readCredentials } from '~/lib/credentials';
  * @param env The validated environment.
  * @returns The authentication headers.
  */
-export function getAuthHeaders(env: Env): Headers {
+function getAuthHeaders(env: Env): Headers {
 	if (env.UNBOUND_API_KEY) {
 		return new Headers({ [API_KEY_HEADER]: env.UNBOUND_API_KEY });
 	}

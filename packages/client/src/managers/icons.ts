@@ -20,7 +20,7 @@ type ImageRenderContext = {
 };
 
 /** The built-in pack: a no-op passthrough that renders Discord's own icons. */
-export const defaultPack: IconPack = {
+const defaultPack: IconPack = {
 	bundle: 'Default',
 	manifest: {
 		id: 'default',

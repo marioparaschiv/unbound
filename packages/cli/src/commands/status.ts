@@ -123,7 +123,7 @@ export function describeDevice(device: DeviceInfo | undefined): string {
  * @param report The plugin and resource counts read from the device.
  * @returns The lines `ubd status` prints.
  */
-export function formatStatus(device: DeviceInfo | undefined, report: DeviceStatusReport): string {
+function formatStatus(device: DeviceInfo | undefined, report: DeviceStatusReport): string {
 	const lines = [
 		`Device: ${describeDevice(device)}`,
 		`Plugins: ${report.started} started, ${report.failed.length} failed, ${report.stopped.length} off`,

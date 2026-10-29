@@ -28,17 +28,6 @@ export function nativeString(objc: NativeObjCBridge, value: unknown): string | u
 }
 
 /**
- * @description Builds an `NSRange`.
- * @param objc The Objective-C bridge.
- * @param location The range's start.
- * @param length The range's length.
- * @returns The struct.
- */
-export function nativeRange(objc: NativeObjCBridge, location: number, length: number) {
-	return objc.struct('NSRange', { location, length });
-}
-
-/**
  * @description Builds a `CGRect` at the origin.
  * @param objc The Objective-C bridge.
  * @param width The rectangle's width.
