@@ -1,5 +1,5 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { Children, isValidElement, type ReactElement } from 'react';
+import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 
 type AvatarProps = { user: { id: string }; guildId?: string };
 
@@ -18,7 +18,7 @@ mock.module('~/modules', () => ({
 
 const { withTypingAvatars } = await import('./typing-avatars');
 
-type Rendered = ReactElement<{ children?: unknown; users?: { id: string }[]; guildId?: string }>;
+type Rendered = ReactElement<{ children?: ReactNode; users?: { id: string }[]; guildId?: string }>;
 
 function avatarsOf(wrapped: unknown): AvatarProps[] {
 	const [avatars] = Children.toArray((wrapped as Rendered).props.children) as Rendered[];

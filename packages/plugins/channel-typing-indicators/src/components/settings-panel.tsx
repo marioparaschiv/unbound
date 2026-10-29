@@ -37,15 +37,17 @@ function SettingsPanel() {
 			</Discord.TableRowGroup>
 			<Discord.TableRadioGroup
 				title='Appearance'
-				value={store.get('indicatorMode', IndicatorMode.Dots | IndicatorMode.Avatars)}
-				onChange={(value) => store.set('indicatorMode', value)}
+				value={String(
+					store.get('indicatorMode', IndicatorMode.Dots | IndicatorMode.Avatars),
+				)}
+				onChange={(value) => store.set('indicatorMode', Number(value))}
 			>
 				<Discord.TableRadioRow
 					label='Avatars and animated dots'
-					value={IndicatorMode.Dots | IndicatorMode.Avatars}
+					value={String(IndicatorMode.Dots | IndicatorMode.Avatars)}
 				/>
-				<Discord.TableRadioRow label='Animated dots' value={IndicatorMode.Dots} />
-				<Discord.TableRadioRow label='Avatars' value={IndicatorMode.Avatars} />
+				<Discord.TableRadioRow label='Animated dots' value={String(IndicatorMode.Dots)} />
+				<Discord.TableRadioRow label='Avatars' value={String(IndicatorMode.Avatars)} />
 			</Discord.TableRadioGroup>
 		</Page>
 	);
