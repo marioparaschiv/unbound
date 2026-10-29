@@ -107,11 +107,11 @@ async function collect(
 	out: string,
 	channel: string | undefined,
 	only: string | undefined,
-	strict = false,
+	lenient = false,
 ): Promise<DeviceRun> {
 	mkdirSync(out, { recursive: true });
 
-	const args = [...collectorArgs(device, out, channel, only), ...(strict ? ['--strict'] : [])];
+	const args = [...collectorArgs(device, out, channel, only), ...(lenient ? ['--lenient'] : [])];
 	const child = Bun.spawn(['bun', COLLECTOR, ...args], {
 		stdout: 'pipe',
 		stderr: 'pipe',
@@ -140,14 +140,14 @@ async function main(): Promise<void> {
 			out: { type: 'string' },
 			only: { type: 'string' },
 			channel: { type: 'string' },
-			strict: { type: 'boolean' },
+			lenient: { type: 'boolean' },
 		},
 	});
 	const config = readMatrixConfig(resolve(values.config));
 
 	if (!config?.devices.length || !values.out) {
 		throw new Error(
-			`Usage: bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir> [--only <id,id>] [--channel <guild id>/<channel id>] [--strict] [--config ${MATRIX_CONFIG_PATH}], with the devices listed in the config.`,
+			`Usage: bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir> [--only <id,id>] [--channel <guild id>/<channel id>] [--lenient] [--config ${MATRIX_CONFIG_PATH}], with the devices listed in the config.`,
 		);
 	}
 
@@ -155,7 +155,7 @@ async function main(): Promise<void> {
 	const channel = values.channel ?? config.channel;
 	const runs = await Promise.all(
 		config.devices.map((device) =>
-			collect(device, join(out, deviceSlug(device)), channel, values.only, values.strict),
+			collect(device, join(out, deviceSlug(device)), channel, values.only, values.lenient),
 		),
 	);
 	const summary = renderSummary(runs);

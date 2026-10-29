@@ -136,7 +136,7 @@ Diagnostics report:
 
 Wherever possible, failures are converted to structured JavaScript errors.
 
-In developer mode, the loader logs a warning the first time a plugin calls a view method from the JavaScript thread, naming the plugin, the class and the method: a `UIView` method other than `NSObject`'s through `objc.call` on iOS, or a `View` method through `java.invoke` on Android. Move such calls to `invokeAsync`, `batch`/`batchAsync` or `findViews`. The device matrix collects these warnings per plugin, fails a plugin that makes calls it did not make in the last run, and with `--strict` fails any plugin that makes one.
+In developer mode, the loader logs a warning the first time a plugin calls a view method from the JavaScript thread, naming the plugin, the class and the method: a `UIView` method other than `NSObject`'s through `objc.call` on iOS, or a `View` method through `java.invoke` on Android. Move such calls to `invokeAsync`, `batch`/`batchAsync` or `findViews`. The device matrix collects these warnings, and each plugin's own errors (its hook failures and console errors prefixed with its name), and fails any plugin that has one. With `--lenient` it fails only a plugin whose calls or errors are new since the last run.
 
 The bridge is intended for approved, trusted plugins. Capability declarations provide least-privilege scoping, but they are not a sandbox. They do not restrict a plugin that is already authorized to invoke native operations.
 
