@@ -37,6 +37,8 @@ async function textWidth(
 	return Math.ceil(readRect(measured).width);
 }
 
+type PendingCell = { cell: NativeObjectHandle; onlyWhenResized: boolean };
+
 /**
  * @description Draws a rounded bubble behind each iOS message, sized to its text and media.
  * @param objc The Objective-C bridge.
@@ -44,7 +46,7 @@ async function textWidth(
  */
 export function drawIOSBubbles(objc: NativeObjCBridge) {
 	const bubbles = new Map<string, { cell: NativeObjectHandle; bubble: NativeObjectHandle }>();
-	const pending = new Map<string, NativeObjectHandle>();
+	const pending = new Map<string, PendingCell>();
 	const placedSizes = new Map<string, string>();
 	const ownership = new Map<string, boolean>();
 	const clear = clearColor(objc);
@@ -68,7 +70,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		if (existing) return existing.bubble;
 
 		const bubble = objc.alloc('UIView');
-		const layer = objc.call(bubble, 'layer') as NativeObjectHandle;
+		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
 
 		bubbles.set(key, { cell, bubble });
 		await objc.invokeAsync(layer, 'setMasksToBounds:', [true]);
@@ -79,7 +81,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 	}
 
 	async function isNested(cell: NativeObjectHandle): Promise<boolean> {
-		const parent = objc.call(cell, 'superview') as NativeObjectHandle | null;
+		const parent = (await objc.invokeAsync(cell, 'superview', [])) as NativeObjectHandle | null;
 
 		if (!parent) return false;
 
@@ -93,8 +95,8 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		return Boolean(outer);
 	}
 
-	function sizeOf(cell: NativeObjectHandle): string {
-		const { width, height } = readRect(objc.call(cell, 'bounds'));
+	async function sizeOf(cell: NativeObjectHandle): Promise<string> {
+		const { width, height } = readRect(await objc.invokeAsync(cell, 'bounds', []));
 
 		return `${Math.round(width)}x${Math.round(height)}`;
 	}
@@ -113,8 +115,12 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		return own ?? false;
 	}
 
-	async function place(key: string, cell: NativeObjectHandle) {
-		placedSizes.set(key, sizeOf(cell));
+	async function place(key: string, { cell, onlyWhenResized }: PendingCell) {
+		const size = await sizeOf(cell);
+
+		if (onlyWhenResized && bubbles.has(key) && placedSizes.get(key) === size) return;
+
+		placedSizes.set(key, size);
 
 		if (await isNested(cell)) return;
 
@@ -142,7 +148,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 			vertical: style.verticalPadding,
 		});
 		const bubble = await bubbleFor(key, cell);
-		const layer = objc.call(bubble, 'layer') as NativeObjectHandle;
+		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
 
 		await objc.invokeAsync(layer, 'setCornerRadius:', [style.radius]);
 		const own = await isOwn(key, cell);
@@ -164,10 +170,10 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 
 		try {
 			while (pending.size && !disposed) {
-				const [key, cell] = pending.entries().next().value!;
+				const [key, queued] = pending.entries().next().value!;
 
 				pending.delete(key);
-				await place(key, cell).catch((error) => {
+				await place(key, queued).catch((error) => {
 					console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
 				});
 			}
@@ -181,9 +187,12 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 
 		if (disposed || key === undefined) return;
 
-		if (onlyWhenResized && bubbles.has(key) && placedSizes.get(key) === sizeOf(cell)) return;
+		const queued = pending.get(key);
 
-		pending.set(key, cell);
+		pending.set(key, {
+			cell,
+			onlyWhenResized: onlyWhenResized && (queued?.onlyWhenResized ?? true),
+		});
 
 		if (!flushing) setTimeout(() => void flush(), 0);
 	}
