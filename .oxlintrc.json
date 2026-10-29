@@ -70,6 +70,12 @@
 			"rules": {
 				"eslint/no-unused-expressions": "off"
 			}
+		},
+		{
+			"files": ["packages/plugins-shared/src/native/app-surface.ts"],
+			"rules": {
+				"typescript/no-implied-eval": "off"
+			}
 		}
 	]
 }
