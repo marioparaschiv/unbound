@@ -456,6 +456,32 @@ export async function getAddonDetails(
 }
 
 /**
+ * @description Lists every approved version of a listed addon that no rollback withdrew, newest first.
+ * @param ctx The application context.
+ * @param id The addon id.
+ * @returns The versions, or `undefined` when the addon does not exist or is delisted.
+ */
+export async function listAddonVersions(
+	ctx: AppContext,
+	id: string,
+): Promise<AddonVersion[] | undefined> {
+	const row = await ctx.db.query.addon.findFirst({
+		where: { id, delistedAt: { isNull: true } },
+		with: {
+			versions: {
+				where: LIVE_VERSIONS,
+				orderBy: { versionKey: 'desc' },
+				with: VERSION_SOURCE,
+			},
+		},
+	});
+
+	if (!row) return;
+
+	return row.versions.map((version) => toAddonVersion(ctx.env, version, version.submission));
+}
+
+/**
  * @description Lists the addons the caller maintains with their newest version and open submissions,
  * plus the caller's new listings still in the queue.
  * @param ctx The application context.
@@ -520,5 +546,6 @@ export default {
 	listListedAddons,
 	getCatalog,
 	getAddonDetails,
+	listAddonVersions,
 	listMyAddons,
 };
