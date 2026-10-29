@@ -4,6 +4,7 @@ import {
 	checkFromCycle,
 	cycleScript,
 	fixtureScript,
+	fixturesPresentScript,
 	parseChannel,
 	applyOffMainPolicy,
 	parseOffMainWarnings,
@@ -179,4 +180,12 @@ test('fails a plugin for off-main calls it did not make last run, or for any wit
 		behavior: 'fail',
 		note: 'off-main view calls: a(), b()',
 	});
+});
+
+test('checks that the fixture channel is open and its fixtures are still loaded', () => {
+	const script = fixturesPresentScript('2');
+
+	expect(script).toContain('getMessages("2")');
+	expect(script).toContain('Plain fixture message for bubbles and avatars.');
+	expect(script).toContain("'present' : 'missing'");
 });
