@@ -229,15 +229,16 @@ struct HookDispatcher {
 };
 
 struct HookState {
-    uint64_t                      identifier;
-    uint64_t                      runtimeGeneration;
-    std::weak_ptr<HookCallbacks>  callbacks;
-    bool                          hasBefore  = false;
-    bool                          hasAfter   = false;
-    bool                          hasReplace = false;
-    std::weak_ptr<HookDispatcher> dispatcher;
-    __strong id                   instanceTarget = nil;
-    std::mutex                    returnCacheMutex;
+    uint64_t                       identifier;
+    uint64_t                       runtimeGeneration;
+    std::weak_ptr<HookCallbacks>   callbacks;
+    std::shared_ptr<HookCallbacks> ownedCallbacks;
+    bool                           hasBefore  = false;
+    bool                           hasAfter   = false;
+    bool                           hasReplace = false;
+    std::weak_ptr<HookDispatcher>  dispatcher;
+    __strong id                    instanceTarget = nil;
+    std::mutex                     returnCacheMutex;
     __strong NSMutableDictionary<NSArray *, NSData *> *returnCache =
         [NSMutableDictionary dictionary];
     bool              cacheOnly = false;
@@ -250,10 +251,7 @@ struct HookState {
 class HookTokenHost final : public HostObject
 {
 public:
-    HookTokenHost(std::shared_ptr<HookState> state, std::shared_ptr<HookCallbacks> callbacks)
-        : state_(std::move(state)), callbacks_(std::move(callbacks))
-    {
-    }
+    explicit HookTokenHost(std::shared_ptr<HookState> state) : state_(std::move(state)) {}
 
     std::shared_ptr<HookState> state(void) const
     {
@@ -263,8 +261,7 @@ public:
     Value get(Runtime &runtime, const PropNameID &name) override;
 
 private:
-    std::shared_ptr<HookState>     state_;
-    std::shared_ptr<HookCallbacks> callbacks_;
+    std::shared_ptr<HookState> state_;
 };
 
 static std::mutex                                                            gHookMutex;
@@ -2355,6 +2352,15 @@ static Class classFromValue(Runtime &runtime, const Value &value)
     return Nil;
 }
 
+static void releaseHookCallbacks(const std::shared_ptr<HookState> &state)
+{
+    std::shared_ptr<HookCallbacks> owned = std::move(state->ownedCallbacks);
+    if (owned)
+    {
+        executeRuntimeAsynchronously([owned = std::move(owned)](Runtime &) {});
+    }
+}
+
 static void removeHook(const std::shared_ptr<HookState> &state, bool preserveAfter = false,
                        bool restoreImplementation = true)
 {
@@ -2369,6 +2375,10 @@ static void removeHook(const std::shared_ptr<HookState> &state, bool preserveAft
     }
     loader::native::nativeHookBudget().release();
     clearHookReturnCache(state);
+    if (!state->afterOncePending.load())
+    {
+        releaseHookCallbacks(state);
+    }
 
     std::shared_ptr<HookDispatcher> dispatcher = state->dispatcher.lock();
     if (!dispatcher)
@@ -3324,6 +3334,10 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             {
                 logHookFailure(exception);
             }
+            if (pending)
+            {
+                state->ownedCallbacks.reset();
+            }
         });
     }
 
@@ -3665,6 +3679,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     state->identifier        = gNextHookIdentifier.fetch_add(1);
     state->runtimeGeneration = loader::native::runtimeGeneration();
     state->callbacks         = callbacks;
+    state->ownedCallbacks    = callbacks;
     state->hasBefore         = callbacks->before != nullptr;
     state->hasAfter          = callbacks->after != nullptr;
     state->hasReplace        = callbacks->replace != nullptr;
@@ -3678,7 +3693,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         dispatcher->hooks.push_back(state);
     }
     reservation.commit();
-    return Object::createFromHostObject(runtime, std::make_shared<HookTokenHost>(state, callbacks));
+    return Object::createFromHostObject(runtime, std::make_shared<HookTokenHost>(state));
 }
 
 static void warnOffMainViewCall(id object, NSString *selectorName)
