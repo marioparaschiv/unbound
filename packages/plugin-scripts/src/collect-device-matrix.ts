@@ -68,6 +68,7 @@ export function cycleScript(id: string): string {
 	var updated = manager.getEntity(id);
 	result.updated = Boolean(updated && updated.started);
 	result.hooksUpdated = hooks();
+	await new Promise(function (resolve) { setTimeout(resolve, 1000); });
 	var instance = updated && updated.instance;
 	if (result.updated && instance && typeof instance.selfTest === 'function') {
 		try {
@@ -76,6 +77,38 @@ export function cycleScript(id: string): string {
 		} catch (failure) { result.selfTest = { ok: false, detail: message(failure) }; }
 	}
 	return JSON.stringify(result);
+})()`;
+}
+
+export const FIXTURE_MESSAGES = [
+	'```ts\nconst answer: number = 42;\nfunction double(value: number) {\n\treturn value * 2;\n}\n```',
+	'Fixture mention <@{self}> with a link https://discord.com/channels/{guild}/{channel}',
+	'Plain fixture message for bubbles and avatars.',
+];
+
+export function parseChannel(value: string): { guild: string; channel: string } {
+	const match = /^(\d+)\/(\d+)$/.exec(value.trim());
+
+	if (!match) throw new Error('Pass --channel as <guild id>/<channel id>.');
+
+	return { guild: match[1]!, channel: match[2]! };
+}
+
+export function fixtureScript(guild: string, channel: string): string {
+	return `(async function () {
+	var metro = unbound.metro;
+	metro.findByProps('transitionToGuild').transitionToGuild(${JSON.stringify(guild)}, ${JSON.stringify(channel)});
+	await new Promise(function (resolve) { setTimeout(resolve, 1500); });
+	var actions = metro.findByProps('sendMessage', 'receiveMessage');
+	var bot = metro.findByProps('createBotMessage');
+	var self = metro.findStore('User').getCurrentUser().id;
+	var contents = ${JSON.stringify(FIXTURE_MESSAGES)};
+	for (var index = 0; index < contents.length; index++) {
+		var content = contents[index].replace('{self}', self).replace('{guild}', ${JSON.stringify(guild)}).replace('{channel}', ${JSON.stringify(channel)});
+		actions.receiveMessage(${JSON.stringify(channel)}, bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: content }));
+	}
+	await new Promise(function (resolve) { setTimeout(resolve, 1500); });
+	return 'staged';
 })()`;
 }
 
@@ -269,6 +302,7 @@ async function main(): Promise<void> {
 			ios: { type: 'boolean' },
 			udid: { type: 'string' },
 			only: { type: 'string' },
+			channel: { type: 'string' },
 			device: { type: 'string' },
 			baseline: { type: 'string' },
 		},
@@ -276,7 +310,7 @@ async function main(): Promise<void> {
 
 	if (!values.out) {
 		throw new Error(
-			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>]',
+			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>] [--channel <guild id>/<channel id>]',
 		);
 	}
 
@@ -288,6 +322,12 @@ async function main(): Promise<void> {
 	const checks: MeasuredCheck[] = [];
 
 	mkdirSync(out, { recursive: true });
+
+	if (values.channel) {
+		const { guild, channel } = parseChannel(values.channel);
+
+		await evaluate(port, fixtureScript(guild, channel));
+	}
 
 	for (const plugin of catalog) {
 		const result = JSON.parse(await evaluate(port, cycleScript(plugin.id))) as CycleResult;
