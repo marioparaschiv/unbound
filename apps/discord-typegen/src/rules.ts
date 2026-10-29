@@ -293,8 +293,7 @@ export const RULES: readonly Rule[] = [
 			return typed(`{ ${members.join('; ')} }`, 'members');
 		},
 	},
-	// The base's type is a guess about this component's own use, so any evidence of that use rules it out: a call,
-	// a member read, a typeof test, a literal, a forward or spread elsewhere, or a pass to a function.
+	// The base's type is a guess about this component's own use, so any evidence of that use rules it out.
 	{
 		name: 'inherited',
 		infer: ({ component, name }, env) =>
