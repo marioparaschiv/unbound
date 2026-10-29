@@ -175,6 +175,17 @@ export function applyOffMainPolicy(
 	});
 }
 
+export function fixturesPresentScript(channel: string): string {
+	return `(function () {
+	var metro = unbound.metro;
+	var selected = metro.findStore('SelectedChannel').getChannelId();
+	var loaded = metro.findStore('Message').getMessages(${JSON.stringify(channel)});
+	var messages = loaded && loaded.toArray ? loaded.toArray() : [];
+	var staged = messages.some(function (message) { return message.content === ${JSON.stringify(FIXTURE_MESSAGES[2])}; });
+	return selected === ${JSON.stringify(channel)} && staged ? 'present' : 'missing';
+})()`;
+}
+
 export function restoreScript(id: string): string {
 	return `Promise.resolve(unbound.plugins.stop(${JSON.stringify(id)})).then(function () { return "stopped"; })`;
 }
@@ -388,12 +399,9 @@ async function main(): Promise<void> {
 	mkdirSync(out, { recursive: true });
 
 	const fixtureChannel = values.channel ?? readMatrixConfig()?.channel;
+	const fixtures = fixtureChannel ? parseChannel(fixtureChannel) : undefined;
 
-	if (fixtureChannel) {
-		const { guild, channel } = parseChannel(fixtureChannel);
-
-		await evaluate(port, fixtureScript(guild, channel));
-	}
+	if (fixtures) await evaluate(port, fixtureScript(fixtures.guild, fixtures.channel));
 
 	const since = new Date(Date.now() - 2_000).toISOString();
 	const developerMode = (await evaluate(port, developerModeScript(false))) === 'true';
@@ -403,6 +411,14 @@ async function main(): Promise<void> {
 	await new Promise((done) => setTimeout(done, 1_500));
 
 	for (const plugin of catalog) {
+		if (
+			fixtures &&
+			(await evaluate(port, fixturesPresentScript(fixtures.channel))) !== 'present'
+		) {
+			console.error(`fixtures were gone before ${plugin.id}; staging them again`);
+			await evaluate(port, fixtureScript(fixtures.guild, fixtures.channel));
+		}
+
 		const result = JSON.parse(await evaluate(port, cycleScript(plugin.id))) as CycleResult;
 		const file = join(out, `${plugin.id}.png`);
 		const captured = result.installed && (await screenshot(target, file));
