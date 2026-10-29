@@ -1,20 +1,15 @@
-import { BundleInfo, getRuntimeProperties, reload } from '~/api/native';
-import { CLIENT_VERSION, Screens, VERSION } from '~/lib/constants';
-import { React, ReactNative, Util } from '~/api/metro/common';
 import { createCommands, option } from '~/api/commands';
-import type { BundleInfoType } from '~/api/native';
 import { Discord } from '~/api/metro/components';
 import { findByProps } from '~/api/metro';
+import { Util } from '~/api/metro/common';
+import { Screens } from '~/lib/constants';
 import debug from '~/builtins/debugger';
 import { Messages } from '~/api/i18n';
+import { reload } from '~/api/native';
 import storage from '~/api/storage';
 
 import formatCodeBlock from './format-code-block';
-import formatDebugInfo from './format-debug-info';
-
-type NativeBundleInfo = Partial<BundleInfoType> & {
-	getConstants?: () => Partial<BundleInfoType>;
-};
+import { sendDebugReport } from './debug-report';
 
 const Commands = createCommands('unbound');
 const Settings = storage.getStore('unbound');
@@ -43,8 +38,8 @@ export function start() {
 			execute: () => void reload(),
 		},
 		debug: {
-			description: 'Send your Unbound, Discord and device versions',
-			execute: () => formatDebugInfo(readDebugInfo()),
+			description: 'Send debug info',
+			execute: (_args, context) => sendDebugReport(context?.channel?.id),
 		},
 		debugger: {
 			description: 'Turn the WebSocket debugger on or off, or connect it to an address',
@@ -101,38 +96,6 @@ export function start() {
 /** Removes Unbound's slash commands. */
 export function stop() {
 	Commands.unregisterAll();
-}
-
-// A TurboModule serves its constants through getConstants() instead of as properties.
-function readBundleInfo(): Partial<BundleInfoType> {
-	const info: NativeBundleInfo = BundleInfo ?? {};
-
-	return info.getConstants?.() ?? info;
-}
-
-function readDebugInfo() {
-	const platform = globalThis.NativePlatform;
-	const bundle = readBundleInfo();
-	const { Platform } = ReactNative;
-	const rn = Platform.constants.reactNativeVersion;
-	const runtime = getRuntimeProperties();
-	const system =
-		Platform.OS === 'android'
-			? `Android ${Platform.constants.Release} (SDK ${Platform.Version})`
-			: `iOS ${Platform.Version}`;
-
-	return {
-		client: `v${CLIENT_VERSION} ${VERSION}`,
-		loader: String(globalThis.UNBOUND_LOADER?.version ?? 'unknown'),
-		discord: String(bundle.Version ?? 'unknown'),
-		discordBuild: String(bundle.Build ?? 'unknown'),
-		react: React.version,
-		reactNative: rn ? `${rn.major}.${rn.minor}.${rn.patch}` : 'unknown',
-		hermes: String(runtime['OSS Release Version'] ?? 'unknown'),
-		bytecode: String(runtime['Bytecode Version'] ?? 'unknown'),
-		system,
-		device: platform?.device.getDeviceModel() ?? 'unknown',
-	};
 }
 
 function confirmRecovery() {
