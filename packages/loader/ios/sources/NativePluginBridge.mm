@@ -3,6 +3,7 @@
 #import <UIKit/UIKit.h>
 #import <algorithm>
 #import <atomic>
+#import <chrono>
 #import <cmath>
 #import <cstdint>
 #import <cstring>
@@ -26,6 +27,7 @@
 
 #import "CoreConversions.h"
 #import "LoaderAddonActivity.h"
+#include "LoaderPreferences.h"
 #import "Logger.h"
 #import "NativeAddressValidation.h"
 #import "NativeAssociationPolicy.h"
@@ -44,6 +46,7 @@
 #import "NativeStructLayouts.h"
 #import "NativeTraversalOptions.h"
 #import "NativeTypeEncoding.h"
+#import "SettingsCore.h"
 
 using namespace facebook;
 using namespace facebook::jsi;
@@ -3310,16 +3313,48 @@ static const std::vector<FallbackHook> &fallbackHooks()
         fallbackHook<id>("object", {}),
         fallbackHook<Class>("class", {}),
         fallbackHook<int8_t>("i8", {}),
+        fallbackHook<int64_t>("i64", {}),
+        fallbackHook<int32_t>("i32", {}),
+        fallbackHook<double>("double", {}),
+        fallbackHook<float>("float", {}),
+        fallbackHook<CGPoint>("struct:CGPoint", {}),
+        fallbackHook<CGRect>("struct:CGRect", {}),
+        fallbackHook<UIEdgeInsets>("struct:UIEdgeInsets", {}),
+        fallbackHook<NSRange>("struct:NSRange", {}),
         fallbackHook<int8_t, id, id>("i8", {"object", "object"}),
         fallbackHook<int8_t, id>("i8", {"object"}),
         fallbackHook<int8_t, Class>("i8", {"class"}),
         fallbackHook<int8_t, SEL>("i8", {"selector"}),
+        fallbackHook<int8_t, int64_t>("i8", {"i64"}),
+        fallbackHook<int8_t, CGPoint, id>("i8", {"struct:CGPoint", "object"}),
         fallbackHook<id, CGRect>("object", {"struct:CGRect"}),
+        fallbackHook<id, CGPoint, id>("object", {"struct:CGPoint", "object"}),
         fallbackHook<id, id>("object", {"object"}),
+        fallbackHook<id, int64_t>("object", {"i64"}),
+        fallbackHook<id, id, int64_t>("object", {"object", "i64"}),
+        fallbackHook<int64_t, id>("i64", {"object"}),
+        fallbackHook<int64_t, id, int64_t>("i64", {"object", "i64"}),
         fallbackHook<void, id>("void", {"object"}),
-        fallbackHook<void, NSUInteger>("void", {"u64"}),
+        fallbackHook<void, int64_t>("void", {"i64"}),
+        fallbackHook<void, int32_t>("void", {"i32"}),
         fallbackHook<void, int8_t>("void", {"i8"}),
+        fallbackHook<void, double>("void", {"double"}),
+        fallbackHook<void, float>("void", {"float"}),
+        fallbackHook<void, CGPoint>("void", {"struct:CGPoint"}),
+        fallbackHook<void, CGSize>("void", {"struct:CGSize"}),
+        fallbackHook<void, CGRect>("void", {"struct:CGRect"}),
+        fallbackHook<void, UIEdgeInsets>("void", {"struct:UIEdgeInsets"}),
+        fallbackHook<void, NSRange>("void", {"struct:NSRange"}),
+        fallbackHook<void, CGAffineTransform>("void", {"struct:CGAffineTransform"}),
+        fallbackHook<void, int8_t, int8_t>("void", {"i8", "i8"}),
+        fallbackHook<void, CGPoint, int8_t>("void", {"struct:CGPoint", "i8"}),
+        fallbackHook<void, id, int8_t>("void", {"object", "i8"}),
+        fallbackHook<void, id, int64_t>("void", {"object", "i64"}),
+        fallbackHook<void, id, double>("void", {"object", "double"}),
+        fallbackHook<void, id, CGRect>("void", {"object", "struct:CGRect"}),
+        fallbackHook<void, int64_t, id>("void", {"i64", "object"}),
         fallbackHook<void, id, id>("void", {"object", "object"}),
+        fallbackHook<void, id, int64_t, int8_t>("void", {"object", "i64", "i8"}),
         fallbackHook<void, id, id, id>("void", {"object", "object", "object"}),
         fallbackHook<CGRect, id>("struct:CGRect", {"object"}),
         fallbackHook<double, id, id>("double", {"object", "object"}),
@@ -3335,7 +3370,10 @@ static const std::vector<FallbackHook> &fallbackHooks()
 
 static std::string_view fallbackTypeName(const std::string &name)
 {
-    return name == "bool" ? std::string_view("i8") : std::string_view(name);
+    static const std::unordered_map<std::string_view, std::string_view> sameRegister = {
+        {"bool", "i8"}, {"u8", "i8"}, {"u16", "i16"}, {"u32", "i32"}, {"u64", "i64"}};
+    auto alias = sameRegister.find(name);
+    return alias == sameRegister.end() ? std::string_view(name) : alias->second;
 }
 
 static bool matchesFallbackHook(const HookSignature &signature, const FallbackHook &hook)
@@ -3716,6 +3754,54 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     return Object::createFromHostObject(runtime, std::make_shared<HookTokenHost>(state, callbacks));
 }
 
+static std::string addonName(loader::AddonSlot slot)
+{
+    nlohmann::json record = nlohmann::json::parse(loader::addonRecord(slot), nullptr, false);
+    return record.is_object() ? record.value("name", std::string("an unknown plugin"))
+                              : std::string("an unknown plugin");
+}
+
+static bool developerModeEnabled()
+{
+    static std::atomic<int64_t> checkedAt{0};
+    static std::atomic<bool>    enabled{false};
+    int64_t                     now = std::chrono::duration_cast<std::chrono::seconds>(
+                                          std::chrono::steady_clock::now().time_since_epoch())
+                                          .count();
+    if (checkedAt.exchange(now) != now)
+    {
+        enabled = loader::preferences::developerMode(UnboundSettingsStore());
+    }
+    return enabled;
+}
+
+static void warnOffMainViewCall(id object, NSString *selectorName)
+{
+    if ([NSThread isMainThread] || !developerModeEnabled() ||
+        ![object isKindOfClass:[UIView class]])
+    {
+        return;
+    }
+
+    loader::AddonSlot slot = loader::currentAddon();
+    std::string key = std::to_string(slot) + " " + NSStringFromClass([object class]).UTF8String +
+                      " " + selectorName.UTF8String;
+    static std::mutex                      warnedMutex;
+    static std::unordered_set<std::string> warned;
+    {
+        std::lock_guard<std::mutex> lock(warnedMutex);
+        if (!warned.insert(key).second)
+        {
+            return;
+        }
+    }
+
+    [Logger warning:LOG_CATEGORY_PLUGINS
+             format:@"%s called -[%@ %@] off the main thread. UIKit is only safe on the main "
+                    @"thread; use invokeAsync instead.",
+                    addonName(slot).c_str(), NSStringFromClass([object class]), selectorName];
+}
+
 static Value objcFunction(Runtime &runtime, const Value &target, const Value &selectorValue,
                           const Value *args, size_t count, size_t start)
 {
@@ -3725,6 +3811,8 @@ static Value objcFunction(Runtime &runtime, const Value &target, const Value &se
     {
         throw JSError(runtime, "objc.call expects an object handle and selector");
     }
+
+    warnOffMainViewCall(object, selectorName);
 
     return invokeObject(runtime, object, NSSelectorFromString(selectorName),
                         argumentArray(runtime, args, count, start));
