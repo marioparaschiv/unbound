@@ -143,10 +143,12 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 			? layout.text!.offset + (await textWidth(objc, textView, layout.body.width))
 			: 0;
 		const style = currentAppearance();
-		const frame = bubbleFrame(layout.body, Math.max(text, layout.mediaRight), {
-			horizontal: style.horizontalPadding,
-			vertical: style.verticalPadding,
-		});
+		const frame = bubbleFrame(
+			layout.body,
+			Math.max(text, layout.mediaRight),
+			{ horizontal: style.horizontalPadding, vertical: style.verticalPadding },
+			layout.headerBottom,
+		);
 		const bubble = await bubbleFor(key, cell);
 		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
 

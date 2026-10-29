@@ -19,6 +19,17 @@ describe('bubble geometry', () => {
 		expect(bubbleFrame({ x: 0, y: 0, width: 100, height: 20 }, 400, padding).width).toBe(116);
 	});
 
+	test('stops at the header above the body instead of covering it', () => {
+		expect(bubbleFrame({ x: 68, y: 38, width: 291, height: 50 }, 120, padding, 36)).toEqual({
+			x: 60,
+			y: 36,
+			width: 136,
+			height: 56,
+		});
+		expect(bubbleFrame({ x: 68, y: 38, width: 291, height: 50 }, 120, padding, 30).y).toBe(34);
+		expect(bubbleFrame({ x: 68, y: 38, width: 291, height: 50 }, 120, padding, 50).y).toBe(38);
+	});
+
 	test('uses the padding it is given', () => {
 		expect(
 			bubbleFrame({ x: 100, y: 100, width: 50, height: 10 }, 0, {

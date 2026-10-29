@@ -18,21 +18,32 @@ export type Edges = {
 };
 
 /**
- * @description Narrows a message body to its content and grows it by the bubble padding.
+ * @description Narrows a message body to its content and grows it by the bubble padding, without reaching above the message's header.
  * @param body The message body's frame.
  * @param contentWidth How far the body's text and media reach from its left edge, or 0 when unknown.
  * @param padding The room around the content, in the body's units.
+ * @param ceiling Where the header above the body ends, such as the author's name and timestamp, or `undefined` when the message has none.
  * @returns The bubble's frame.
  */
-export function bubbleFrame(body: Box, contentWidth: number, padding: Padding): Box {
+export function bubbleFrame(
+	body: Box,
+	contentWidth: number,
+	padding: Padding,
+	ceiling?: number,
+): Box {
 	const width = contentWidth > 0 && contentWidth < body.width ? contentWidth : body.width;
 	const { horizontal, vertical } = padding;
+	const bottom = body.y + body.height + vertical;
+	const top =
+		ceiling === undefined
+			? body.y - vertical
+			: Math.max(body.y - vertical, Math.min(ceiling, body.y));
 
 	return {
 		x: body.x - horizontal,
-		y: body.y - vertical,
+		y: top,
 		width: width + horizontal * 2,
-		height: body.height + vertical * 2,
+		height: bottom - top,
 	};
 }
 
