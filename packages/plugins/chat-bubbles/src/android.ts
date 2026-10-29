@@ -23,6 +23,7 @@ type AndroidNative = {
 };
 
 const MAX_TRACKED = 256;
+const MAX_ANCESTORS = 16;
 const VISIBLE = 0;
 const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
 
@@ -116,6 +117,18 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			right: area.right + x,
 			bottom: area.bottom + y,
 		};
+	}
+
+	function isNested(row: NativeJavaReference): boolean {
+		let current = javaReference(java.invoke(row, 'getParent', []));
+
+		for (let depth = 0; current && depth < MAX_ANCESTORS; depth++) {
+			if (isInstance(messageClass, current)) return true;
+
+			current = javaReference(java.invoke(current, 'getParent', []));
+		}
+
+		return false;
 	}
 
 	function density(row: NativeJavaReference): number {
@@ -229,15 +242,18 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 			const row = javaReference(java.invoke(accessories, 'getParent', []));
 
-			if (row && isInstance(messageClass, row)) schedule(row);
+			if (row && isInstance(messageClass, row) && !isNested(row)) schedule(row);
 		},
 	);
 
 	function refreshVisible() {
 		const root = currentDecorView(java);
 
-		if (root)
-			for (const row of findViewsOfClass(java, root, AndroidClass.messageView)) schedule(row);
+		if (!root) return;
+
+		for (const row of findViewsOfClass(java, root, AndroidClass.messageView)) {
+			if (!isNested(row)) schedule(row);
+		}
 	}
 
 	refreshVisible();
