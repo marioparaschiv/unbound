@@ -118,11 +118,14 @@ describe('refreshDiscordProfiles', () => {
 			kind: 'found',
 			user: { username: 'fresh-old' },
 		});
-		expect(profiles.get('102')).toEqual({
+		const refreshed = profiles.get('102');
+
+		expect(refreshed).toMatchObject({
 			kind: 'found',
 			user: { id: '102', username: 'stale-new', globalName: 'Stale', avatarHash: 'a_hash' },
-			fetchedAt: clock,
 		});
+		// toMatchObject ignores Date values, so the fetch time is pinned on its own.
+		expect(refreshed?.fetchedAt).toEqual(clock);
 		expect(profiles.get('103')).toMatchObject({
 			kind: 'found',
 			user: { username: 'missing-new' },

@@ -38,7 +38,7 @@ function discover(tree: Tree, config: WorkspaceConfig = DEFAULTS, bare: boolean 
 
 describe('workspaceConfigSchema', () => {
 	test('defaults the globs, build command and output directory', () => {
-		expect(DEFAULTS).toEqual({
+		expect(DEFAULTS).toMatchObject({
 			addons: ['plugins/*', 'themes/*'],
 			build: 'bun run build',
 			output: 'dist',

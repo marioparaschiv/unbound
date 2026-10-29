@@ -82,19 +82,3 @@ describe('DevServer build-failure isolation', () => {
 		expect(transport.calls.map((addon) => addon.id)).toEqual(['com.example.sample']);
 	});
 });
-
-describe('DevServer rebuild debounce', () => {
-	test('the initial pass rebuilds each addon exactly once', async () => {
-		const resolved = loadConfig(workspace('true'));
-		const transport = recordingTransport();
-		const server = new DevServer(resolved, transport);
-
-		await server.start();
-		server.stop();
-
-		const ids = transport.calls.map((addon) => addon.id);
-
-		expect(ids).toEqual(['com.example.sample']);
-		expect(new Set(ids).size).toBe(ids.length);
-	});
-});

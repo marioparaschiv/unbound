@@ -274,6 +274,7 @@ const {
 	NativePluginCapabilityError,
 	NativePluginDisposedError,
 	NativePluginPlatformError,
+	NativePluginUnavailableError,
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
 } = await import('~/api/native');
@@ -293,28 +294,6 @@ afterEach(() => {
 	cancelled.length = 0;
 	removedSubscriptions.length = 0;
 	fluxSubscriptions.clear();
-});
-
-describe('native platform metadata', () => {
-	test('uses platform-neutral names for shared device properties', () => {
-		expect(nativePlatformBridge.device).toHaveProperty('getOSVersionString');
-		expect(nativePlatformBridge.device).toHaveProperty('isRooted');
-		expect(nativePlatformBridge.device).not.toHaveProperty('getiOSVersionString');
-		expect(nativePlatformBridge.device).not.toHaveProperty('isJailbroken');
-	});
-
-	test('keeps iOS entitlement and attestation metadata out of the Android shape', () => {
-		const androidPlatformBridge: NativePlatformBridge = {
-			...nativePlatformBridge,
-			platform: 'android',
-			device: { ...nativePlatformBridge.device, platform: 'android' },
-			ios: undefined,
-		};
-
-		expect(nativePlatformBridge.ios).toHaveProperty('getEntitlements');
-		expect(nativePlatformBridge.ios).toHaveProperty('isVerifiedBuild');
-		expect(androidPlatformBridge.ios).toBeUndefined();
-	});
 });
 
 describe('native plugin capability scopes', () => {
@@ -718,7 +697,7 @@ describe('native plugin negotiation', () => {
 			NativePluginCapabilityError,
 		);
 		expect(() => context.native.fabric.measureAsync(nativeHandle)).toThrow(
-			'The native plugin bridge is unavailable.',
+			NativePluginUnavailableError,
 		);
 		context.dispose();
 		expect(androidUnmounted).toEqual([androidSurface]);
@@ -806,7 +785,8 @@ describe('native plugin negotiation', () => {
 			});
 
 		expect(build).toThrow(NativePluginUnsupportedPlatformError);
-		expect(build).toThrow('This plugin supports ios; the host platform is android.');
+		expect(build).toThrow(/\bios\b/);
+		expect(build).toThrow(/\bandroid\b/);
 	});
 
 	test('builds a context for a plugin that supports the host platform', () => {

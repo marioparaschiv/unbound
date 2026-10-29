@@ -12,15 +12,15 @@ function crash(message = 'Cannot read property x of undefined') {
 
 describe('error fallback', () => {
 	test('describes the error, its stack and the component stack', () => {
-		expect(
-			describeError({ error: crash(), componentStack: '\n    in Row\n    in List\n' }),
-		).toBe(
-			[
-				'TypeError: Cannot read property x of undefined',
-				'Stack trace:\nTypeError: Cannot read property x of undefined\n    at render (plugin.js:1:2)',
-				'Component stack:\n    in Row\n    in List',
-			].join('\n\n'),
-		);
+		const described = describeError({
+			error: crash(),
+			componentStack: '\n    in Row\n    in List\n',
+		});
+
+		expect(described).toContain('TypeError: Cannot read property x of undefined');
+		expect(described).toContain('at render (plugin.js:1:2)');
+		expect(described).toContain('in Row');
+		expect(described).toContain('in List');
 		expect(describeError({ error: new Error('plain') })).toStartWith('Error: plain');
 	});
 

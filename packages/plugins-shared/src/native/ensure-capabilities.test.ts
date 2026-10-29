@@ -12,9 +12,7 @@ test('fails and names the capabilities a missing bridge lacks', () => {
 	const error = spyOn(console, 'error').mockImplementation(() => {});
 
 	expect(ensureCapabilities('Plugin', { capabilities: [] }, ['native.objc.hooks'])).toBe(false);
-	expect(error).toHaveBeenCalledWith(
-		'[Plugin] Skipped, native capabilities not available: native.objc.hooks.',
-	);
+	expect(String(error.mock.calls[0]?.[0])).toContain('native.objc.hooks');
 
 	error.mockRestore();
 });

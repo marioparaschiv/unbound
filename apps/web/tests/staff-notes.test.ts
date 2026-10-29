@@ -90,16 +90,19 @@ describe('staff notes', () => {
 		});
 		const author = { id: moderator.userId, name: moderator.name, image: null };
 
-		expect(await listStaffNotes(ctx, moderator.caller, subject)).toEqual([
+		const listed = await listStaffNotes(ctx, moderator.caller, subject);
+
+		expect(listed).toMatchObject([
 			{
 				id: created.id,
 				author,
 				body: 'Obfuscated bundle.',
-				createdAt: clock,
 				editedAt: null,
 				mine: true,
 			},
 		]);
+		// toMatchObject ignores Date values, so the creation time is pinned on its own.
+		expect(listed[0]?.createdAt).toEqual(clock);
 
 		const editedAt = tick();
 

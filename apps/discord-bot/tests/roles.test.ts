@@ -157,10 +157,13 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 
 		await dispatcher().reconcile(context(discord.client));
 
-		expect(discord.added).toEqual([
-			{ discordId: '1', roleId: 'r-a' },
-			{ discordId: '1', roleId: 'r-s' },
-		]);
+		expect(discord.added).toHaveLength(2);
+		expect(discord.added).toEqual(
+			expect.arrayContaining([
+				{ discordId: '1', roleId: 'r-a' },
+				{ discordId: '1', roleId: 'r-s' },
+			]),
+		);
 	});
 
 	test('with no contributor list, grants Addon Developer and Sponsor but not Contributor', async () => {
@@ -170,7 +173,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 
 		await roles.reconcile(context(discord.client));
 
-		expect(discord.added.map((grant) => grant.roleId)).toEqual(['r-a', 'r-s']);
+		expect(discord.added.map((grant) => grant.roleId).toSorted()).toEqual(['r-a', 'r-s']);
 	});
 
 	test('grants nothing when github_id is null', async () => {
@@ -194,10 +197,13 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		await roles.handle(USER_PAYLOAD, current);
 		await roles.reconcile(current);
 
-		expect(discord.added).toEqual([
-			{ discordId: '1', roleId: 'r-c' },
-			{ discordId: '1', roleId: 'r-s' },
-		]);
+		expect(discord.added).toHaveLength(2);
+		expect(discord.added).toEqual(
+			expect.arrayContaining([
+				{ discordId: '1', roleId: 'r-c' },
+				{ discordId: '1', roleId: 'r-s' },
+			]),
+		);
 		expect(discord.held('1')).toEqual(new Set(['r-c', 'r-s']));
 		expect(await grants()).toHaveLength(2);
 	});
@@ -370,9 +376,8 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		await dispatcher().reconcile(context(discord.client));
 
 		expect(discord.added).toEqual([{ discordId: '1', roleId: 'r-c' }]);
-		expect(logged(error)).toContain(
-			'Cannot grant "Sponsor" (position 6): the bot\'s highest role "Unbound" (position 5) is not above it. In Server Settings > Roles, drag "Unbound" above "Sponsor".',
-		);
+		expect(logged(error)).toContain('Cannot grant "Sponsor"');
+		expect(logged(error)).toContain('"Unbound"');
 	});
 
 	test('logs a guild problem once while it persists, again when it changes, and once when it clears', async () => {
@@ -430,10 +435,14 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 
 		await dispatcher().reconcile(context(discord.client));
 
-		expect(discord.added).toEqual([
-			{ discordId: '1', roleId: 'r-s' },
-			{ discordId: '2', roleId: 'r-s' },
-		]);
+		function roleIdsFor(discordId: string) {
+			return discord.added
+				.filter((grant) => grant.discordId === discordId)
+				.map((grant) => grant.roleId);
+		}
+
+		expect(roleIdsFor('1')).toEqual(['r-s']);
+		expect(roleIdsFor('2')).toEqual(['r-s']);
 		expect(count(error, 'Missing Permissions (50013)')).toBe(1);
 	});
 
@@ -447,7 +456,7 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		discord.join('1');
 		await Promise.all([reconciled, roles.handle(USER_PAYLOAD, current), roles.drain()]);
 
-		expect(discord.added.map((grant) => grant.roleId)).toEqual(['r-c', 'r-s']);
+		expect(discord.added.map((grant) => grant.roleId).toSorted()).toEqual(['r-c', 'r-s']);
 		expect(discord.fetched).toEqual(['1']);
 	});
 
@@ -523,10 +532,13 @@ describe.skipIf(!DATABASE_URL)('roles dispatcher', () => {
 		await linkGitHub(database.web, member.userId, 'token');
 		await roles.handle(`user:${member.userId}`, real);
 
-		expect(discord.added).toEqual([
-			{ discordId: member.discordId, roleId: 'r-a' },
-			{ discordId: member.discordId, roleId: 'r-s' },
-		]);
+		expect(discord.added).toHaveLength(2);
+		expect(discord.added).toEqual(
+			expect.arrayContaining([
+				{ discordId: member.discordId, roleId: 'r-a' },
+				{ discordId: member.discordId, roleId: 'r-s' },
+			]),
+		);
 		expect(await grants()).toHaveLength(2);
 	});
 });

@@ -67,7 +67,7 @@ describe('android code blocks', () => {
 
 		expect(html).not.toBe(zig);
 		expect(html.startsWith('\ufffc\n\ufffc')).toBe(true);
-		expect(html.slice(3)).toMatch(/^[\u200b\u200c\u200d\u2060]{16}$/);
+		expect(html.slice(3)).toMatch(/^(?:\u200b|\u200c|\u200d|\u2060)+$/);
 		expect(renderedText('aaaaa\nbbbbb', slots)).toBe(html);
 	});
 

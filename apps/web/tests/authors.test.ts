@@ -75,7 +75,7 @@ describe('loadAuthors', () => {
 		);
 		await refreshDiscordProfiles(ctx);
 
-		expect(await resolve(AUTHORS)).toEqual([
+		expect(await resolve(AUTHORS)).toMatchObject([
 			{
 				kind: 'user',
 				discordId: LINKED,

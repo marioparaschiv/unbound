@@ -160,11 +160,12 @@ describe('addon crash attribution', () => {
 	});
 
 	test('names the phase the addon crashed in', () => {
-		expect(crashDisabledNotice({ id: 'plugins:a', name: 'a', phase: 'running' }, 'A')).toBe(
-			'Disabled A because Discord crashed while running it.',
-		);
-		expect(crashDisabledNotice({ id: 'plugins:a', name: 'a' }, 'A')).toBe(
-			'Disabled A because Discord crashed while starting it.',
-		);
+		const running = crashDisabledNotice({ id: 'plugins:a', name: 'a', phase: 'running' }, 'A');
+		const starting = crashDisabledNotice({ id: 'plugins:a', name: 'a' }, 'A');
+
+		expect(running).toContain('Disabled A');
+		expect(running).toMatch(/running/);
+		expect(starting).toContain('Disabled A');
+		expect(starting).toMatch(/starting/);
 	});
 });

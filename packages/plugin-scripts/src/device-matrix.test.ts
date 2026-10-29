@@ -1,3 +1,6 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { expect, test } from 'bun:test';
 
 import { catalogPlugins, renderDeviceMatrix, validateDeviceMatrix } from './device-matrix';
@@ -23,8 +26,29 @@ const checks = [
 	},
 ];
 
+type Manifest = {
+	id: string;
+};
+
 test('the device matrix discovers the complete plugin catalog', () => {
-	expect(catalogPlugins(PLUGINS_DIR)).toHaveLength(34);
+	const onDisk = readdirSync(PLUGINS_DIR, { withFileTypes: true })
+		.filter(
+			(entry) =>
+				entry.isDirectory() && existsSync(join(PLUGINS_DIR, entry.name, 'manifest.json')),
+		)
+		.map((entry) => {
+			const text = readFileSync(join(PLUGINS_DIR, entry.name, 'manifest.json'), 'utf8');
+
+			return (JSON.parse(text) as Manifest).id;
+		})
+		.sort();
+
+	expect(onDisk.length).toBeGreaterThan(0);
+	expect(
+		catalogPlugins(PLUGINS_DIR)
+			.map((plugin) => plugin.id)
+			.sort(),
+	).toEqual(onDisk);
 });
 
 test('the device matrix accepts one evidenced result per plugin', () => {

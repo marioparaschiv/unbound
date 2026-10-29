@@ -1,5 +1,6 @@
 import {
 	emptySyncDocument,
+	SYNC_KINDS,
 	syncDeleteResponseSchema,
 	syncOAuthConfigSchema,
 	syncSignInResponseSchema,
@@ -397,8 +398,10 @@ describe('stripping', () => {
 		});
 		const state = syncStateSchema.parse(await response.json());
 
-		expect(Object.keys(state.document)).toEqual(['addons', 'settings']);
-		expect(Object.keys(state.document.addons)).toEqual(['plugins', 'themes', 'icons', 'fonts']);
+		expect(Object.keys(state.document).toSorted()).toEqual(
+			Object.keys(emptySyncDocument()).toSorted(),
+		);
+		expect(Object.keys(state.document.addons).toSorted()).toEqual([...SYNC_KINDS].toSorted());
 	});
 
 	test('keeps applied only when it names a kept install or the default icon pack', async () => {
