@@ -171,3 +171,21 @@ test('lists device drops with their reason', () => {
 		'### Device drops\n\n- iPhone SE, during unbound.alpha: jetsam killed SpringBoard (highwater, 1350 MB)',
 	);
 });
+
+test('does not call a run clean when the loader self-test failed', () => {
+	const check: MeasuredCheck = {
+		id: 'unbound.alpha',
+		behavior: 'pass',
+		lifecycle: 'pass',
+		evidence: [],
+	};
+	const run = {
+		device: phone,
+		checks: [check],
+		changes: [],
+		selfTest: { ok: false, detail: 'the self-test hook never fired' },
+	};
+
+	expect(runFailed(run)).toBe(true);
+	expect(renderSummary([run])).not.toContain('Every plugin passed on every device.');
+});
