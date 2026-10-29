@@ -142,14 +142,14 @@ function DeveloperNotFound() {
 			</EmptyHeader>
 			<EmptyContent>
 				<Button asChild>
-					<Link to='/developers'>Browse Team</Link>
+					<Link to='/team'>Browse Team</Link>
 				</Button>
 			</EmptyContent>
 		</Empty>
 	);
 }
 
-export const Route = createFileRoute('/_site/developers/$discordId')({
+export const Route = createFileRoute('/_site/profiles/$discordId')({
 	// `loader` comes before `head` so `head` can infer the loader data's type.
 	loader: async ({ context, params }) => {
 		const developer = await context.queryClient.ensureQueryData(
