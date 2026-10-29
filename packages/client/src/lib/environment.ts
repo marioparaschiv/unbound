@@ -20,5 +20,6 @@ export function currentEnvironment(clientVersion: string): CrashEnvironment | un
 		discordVersion: String(BundleInfo?.Version ?? 'unknown'),
 		osVersion: platform.device.getOSVersionString(),
 		deviceModel: platform.device.getDeviceModel(),
+		verifiedBuild: platform.app.isVerifiedBuild?.() ?? false,
 	};
 }

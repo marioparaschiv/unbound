@@ -70,6 +70,7 @@ platformProvider(const LoaderConfiguration &configuration, loader::SettingsStore
     provider->isSystemApp       = flag("isSystemApp");
     provider->appSource         = text("appSource");
     provider->framework         = text("framework");
+    provider->isVerifiedBuild   = flag("isVerifiedBuild");
     provider->isVirtualDevice   = flag("isVirtualDevice");
     provider->virtualDeviceHost = [info]() -> std::optional<std::string> {
         const auto host = info.find("virtualDeviceHost");

@@ -142,7 +142,7 @@ android {
     }
 }
 
-tasks.matching { it.name == "stripReleaseDebugSymbols" }.configureEach {
+tasks.matching { it.name.matches(Regex("strip\\w*DebugSymbols")) }.configureEach {
     val toolsDirectory = repositoryRoot
     val stripped = outputs.files
     val hash = commitHash

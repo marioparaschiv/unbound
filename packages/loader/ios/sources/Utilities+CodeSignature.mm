@@ -74,7 +74,7 @@ using unbound::ios::toStdString;
 #if ATTESTATION_ENABLED
     return VerifyEmbeddedAttestation() ? YES : NO;
 #else
-    return YES;
+    return NO;
 #endif
 }
 
