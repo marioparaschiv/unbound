@@ -409,6 +409,90 @@ export async function readLoaderLogHistory(
 		);
 }
 
+type LogFileRange = { data: Buffer; size: number };
+
+type LogFileReader = { read: (offset: number) => Promise<LogFileRange | undefined>; size: number };
+
+const END_OF_FILE = Number.MAX_SAFE_INTEGER;
+
+async function readRangeDirectly(
+	target: PilotTarget,
+	path: string,
+	offset: number,
+): Promise<LogFileRange | undefined> {
+	const result = await target.run(
+		target.pilot,
+		[
+			'file_read',
+			'--device',
+			target.udid,
+			'--path',
+			path,
+			'--offset',
+			String(offset),
+			'--maxBytes',
+			String(LOG_FILE_CHUNK_BYTES),
+		],
+		PILOT_TIMEOUT_MS,
+	);
+
+	if (!result.ok) {
+		return;
+	}
+
+	try {
+		const parsed = JSON.parse(result.stdout) as { data?: string; size?: number };
+
+		return typeof parsed.size === 'number'
+			? { data: Buffer.from(parsed.data ?? '', 'base64'), size: parsed.size }
+			: undefined;
+	} catch {
+		return;
+	}
+}
+
+async function readRangeThroughShell(
+	target: PilotTarget,
+	path: string,
+	offset: number,
+): Promise<LogFileRange | undefined> {
+	const quoted = quote(path);
+	const size = Number((await pilotShell(target, `wc -c < ${quoted}`))?.trim());
+
+	if (!Number.isFinite(size)) {
+		return;
+	}
+
+	if (offset >= size) {
+		return { data: Buffer.alloc(0), size };
+	}
+
+	const chunk = await pilotShell(
+		target,
+		`tail -c +${offset + 1} ${quoted} | head -c ${LOG_FILE_CHUNK_BYTES}`,
+	);
+
+	return chunk === undefined ? undefined : { data: Buffer.from(chunk), size };
+}
+
+/**
+ * @description Picks how to read ranges of the loader's log file: jb-p1lot's ranged `file_read` when the daemon supports it, otherwise `wc` and `tail` through `shell_exec`.
+ * @param target The device, and the jb-p1lot binary and runner.
+ * @param path The log file.
+ * @returns A reader taking the byte offset to read from, and the file's size when it was picked.
+ */
+export async function logFileReader(target: PilotTarget, path: string): Promise<LogFileReader> {
+	const direct = await readRangeDirectly(target, path, END_OF_FILE);
+
+	if (direct) {
+		return { read: (offset) => readRangeDirectly(target, path, offset), size: direct.size };
+	}
+
+	const read = (offset: number) => readRangeThroughShell(target, path, offset);
+
+	return { read, size: (await read(END_OF_FILE))?.size ?? 0 };
+}
+
 /**
  * @description Follows the loader's own log file on a jailbroken iPhone through jb-p1lot, for when the unified log does not stream. It holds Unbound's native log and the JavaScript console, not Discord's own lines or crash reports.
  * @param options The device, the jb-p1lot binary and runner, where each entry goes, the time before which entries are skipped, and how many polls to make (unlimited when left out).
@@ -423,39 +507,43 @@ export async function followLoaderLogFile(options: LoaderLogFileOptions): Promis
 		return;
 	}
 
-	const quoted = quote(path);
-	let offset = Number((await pilotShell(options, `wc -c < ${quoted}`))?.trim() ?? 0) || 0;
-	let pending = '';
+	const reader = await logFileReader(options, path);
+	const { read } = reader;
+	let offset = reader.size;
+	let pending = Buffer.alloc(0);
 
 	for (let poll = 0; options.polls === void 0 || poll < options.polls; poll++) {
 		await Bun.sleep(options.intervalMs ?? LOG_FILE_POLL_MS);
 
-		const size = Number((await pilotShell(options, `wc -c < ${quoted}`))?.trim());
+		let range = await read(offset);
 
-		if (!Number.isFinite(size) || size === offset) {
+		if (!range) {
 			continue;
 		}
 
-		if (size < offset) {
+		if (range.size < offset) {
 			options.emit({ kind: 'notice', message: 'The log file rotated.' });
 			offset = 0;
-			pending = '';
+			pending = Buffer.alloc(0);
+			range = await read(0);
 		}
 
-		const chunk = await pilotShell(
-			options,
-			`tail -c +${offset + 1} ${quoted} | head -c ${LOG_FILE_CHUNK_BYTES}`,
-		);
-
-		if (chunk === undefined) {
+		if (!range?.data.length) {
 			continue;
 		}
 
-		offset += Buffer.byteLength(chunk);
+		offset += range.data.length;
+		pending = Buffer.concat([pending, range.data]);
 
-		const lines = (pending + chunk).split('\n');
+		const end = pending.lastIndexOf(0x0a);
 
-		pending = lines.pop() ?? '';
+		if (end < 0) {
+			continue;
+		}
+
+		const lines = pending.subarray(0, end).toString('utf8').split('\n');
+
+		pending = pending.subarray(end + 1);
 
 		for (const line of lines) {
 			const entry = parseLoaderLogLine(line);
