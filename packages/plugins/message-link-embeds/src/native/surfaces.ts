@@ -92,7 +92,7 @@ export type EmbeddedSurface = {
  * @param forceRefresh Whether to resize the row even when the embed's height did not change.
  * @returns `true` when the label now shows the embed.
  */
-export function applyAttachment(
+function applyAttachment(
 	session: Session,
 	surface: EmbeddedSurface,
 	forceRefresh: boolean = false,

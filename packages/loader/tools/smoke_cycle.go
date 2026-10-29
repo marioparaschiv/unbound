@@ -8,12 +8,16 @@ import (
 )
 
 type smokeCycleResult struct {
-	ID          string  `json:"id"`
-	StopMs      float64 `json:"stopMs"`
-	Error       string  `json:"error"`
-	Restarted   bool    `json:"restarted"`
-	HooksBefore float64 `json:"hooksBefore"`
-	HooksAfter  float64 `json:"hooksAfter"`
+	ID           string  `json:"id"`
+	StopMs       float64 `json:"stopMs"`
+	Error        string  `json:"error"`
+	Restarted    bool    `json:"restarted"`
+	HooksBefore  float64 `json:"hooksBefore"`
+	HooksStopped float64 `json:"hooksStopped"`
+	HooksAfter   float64 `json:"hooksAfter"`
+	UpdateError  string  `json:"updateError"`
+	Updated      bool    `json:"updated"`
+	HooksUpdated float64 `json:"hooksUpdated"`
 }
 
 type smokeCycle struct {
@@ -44,12 +48,24 @@ const smokeCycleExpression = `(async function () {
 		var started = Date.now();
 		try { await manager.stop(id); } catch (failure) { error = String(failure && failure.message ? failure.message : failure); }
 		var stopMs = Date.now() - started;
+		var hooksStopped = hooks();
 		try { await manager.start(id); } catch (failure) { error = error || String(failure && failure.message ? failure.message : failure); }
 		await settle();
 		var after = manager.errors.get(id);
 		if (!error && after && after !== before) error = String(after && after.message ? after.message : after);
 		var entity = manager.getEntity(id);
-		results.push({ id: id, stopMs: stopMs, error: error, restarted: Boolean(entity && entity.started), hooksBefore: hooksBefore, hooksAfter: hooks() });
+		var restarted = Boolean(entity && entity.started);
+		var hooksAfter = hooks();
+		var updateError = '';
+		if (restarted) {
+			try {
+				var update = await manager.reload(id, entity.bundle, entity.data);
+				if (!update.ok) updateError = String(update.error && update.error.message ? update.error.message : update.error);
+			} catch (failure) { updateError = String(failure && failure.message ? failure.message : failure); }
+			await settle();
+		}
+		var updated = manager.getEntity(id);
+		results.push({ id: id, stopMs: stopMs, error: error, restarted: restarted, hooksBefore: hooksBefore, hooksStopped: hooksStopped, hooksAfter: hooksAfter, updateError: updateError, updated: Boolean(updated && updated.started), hooksUpdated: hooks() });
 	}
 	return JSON.stringify(results);
 })()`
@@ -87,6 +103,10 @@ func cycleProblems(cycle *smokeCycle) []string {
 			problems = append(problems, fmt.Sprintf("%s took %.0f ms to stop, over the %d ms limit", plugin.ID, plugin.StopMs, smokeCycleStopLimitMs))
 		case plugin.HooksAfter > plugin.HooksBefore:
 			problems = append(problems, fmt.Sprintf("%s left %.0f hooks installed after restarting, up from %.0f", plugin.ID, plugin.HooksAfter, plugin.HooksBefore))
+		case ownHooks(plugin) > 0 && plugin.HooksAfter <= plugin.HooksStopped:
+			problems = append(problems, fmt.Sprintf("%s did not re-apply its %.0f hooks after restarting", plugin.ID, ownHooks(plugin)))
+		default:
+			problems = append(problems, updateProblems(plugin)...)
 		}
 	}
 	if cycle.before == nil || cycle.after == nil {
@@ -96,6 +116,24 @@ func cycleProblems(cycle *smokeCycle) []string {
 		problems = append(problems, fmt.Sprintf("restarting every plugin left %.0f native handles referenced, up from %.0f", cycle.after.Handles, cycle.before.Handles))
 	}
 	return problems
+}
+
+func ownHooks(plugin smokeCycleResult) float64 {
+	return plugin.HooksBefore - plugin.HooksStopped
+}
+
+func updateProblems(plugin smokeCycleResult) []string {
+	switch {
+	case plugin.UpdateError != "":
+		return []string{fmt.Sprintf("%s failed its update: %s", plugin.ID, plugin.UpdateError)}
+	case !plugin.Updated:
+		return []string{fmt.Sprintf("%s was not running after its update", plugin.ID)}
+	case plugin.HooksUpdated > plugin.HooksAfter:
+		return []string{fmt.Sprintf("%s left %.0f hooks installed after its update, up from %.0f", plugin.ID, plugin.HooksUpdated, plugin.HooksAfter)}
+	case ownHooks(plugin) > 0 && plugin.HooksUpdated <= plugin.HooksAfter-ownHooks(plugin):
+		return []string{fmt.Sprintf("%s did not re-apply its %.0f hooks after its update", plugin.ID, ownHooks(plugin))}
+	}
+	return nil
 }
 
 func renderSmokeCycle(cycle *smokeCycle) string {
@@ -109,7 +147,7 @@ func renderSmokeCycle(cycle *smokeCycle) string {
 		}
 	}
 	var report strings.Builder
-	fmt.Fprintf(&report, "Stopped and restarted %d plugins. Slowest stop: `%s` %.0f ms.\n\n", len(cycle.plugins), slowest.ID, slowest.StopMs)
+	fmt.Fprintf(&report, "Stopped, restarted and updated %d plugins. Slowest stop: `%s` %.0f ms.\n\n", len(cycle.plugins), slowest.ID, slowest.StopMs)
 	if cycle.before != nil && cycle.after != nil {
 		fmt.Fprintf(&report, "| After the cycle | Before | After |\n| --- | --- | --- |\n| Native handles | %.0f | %.0f |\n| Hooks | %.0f | %.0f |\n| Surfaces | %.0f | %.0f |\n\n",
 			cycle.before.Handles, cycle.after.Handles, cycle.before.Hooks, cycle.after.Hooks, cycle.before.Surfaces, cycle.after.Surfaces)

@@ -1,0 +1,21 @@
+{
+	"name": "chat-bubbles",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Draws a rounded bubble behind each message.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@unbound-plugins/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-plugins/rollup-config": "workspace:*",
+		"rollup": "^4.62.2"
+	}
+}

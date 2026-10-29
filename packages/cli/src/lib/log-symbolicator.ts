@@ -17,7 +17,7 @@ const HERMES_FRAME = 'address at ';
  * @param start The directory to search upwards from.
  * @returns The `packages/client` directory, or `undefined` outside the monorepo.
  */
-export function findClientDirectory(start: string = process.cwd()): string | undefined {
+function findClientDirectory(start: string = process.cwd()): string | undefined {
 	const sibling = resolve(import.meta.dirname, '..', '..', '..', 'client');
 
 	if (existsSync(join(sibling, SYMBOLICATE_SCRIPT))) {

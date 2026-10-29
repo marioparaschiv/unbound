@@ -3,7 +3,8 @@ import type { HighlighterCore, ThemedToken } from 'shiki';
 import { createHighlighterCore } from 'shiki/core';
 
 import { getLanguageMetadata, grammarUrl } from '~/catalog';
-import { bundledGrammar, bundledThemes } from '~/bundled';
+import { loadBundledGrammar, type RegistrationSource } from '~/grammar-files';
+import { bundledThemes } from '~/bundled';
 import { highlightCodeToTokens, shouldUseHighlightJs } from '~/highlight-js';
 import { isLightTheme, loadThemeDefinition, themeUrl } from '~/themes';
 import { Limits, Palette, PLUGIN_NAME } from '~/constants';
@@ -36,9 +37,10 @@ function isLightColor(hex: string): boolean | undefined {
 
 /**
  * @description Creates a Shiki highlighter that loads grammars and themes on demand and caches recent tokens.
+ * @param registrations Where bundled languages' registrations come from.
  * @returns `appearance` reads a theme's card colors, `tokenize` highlights a code block.
  */
-export function createHighlighter() {
+export function createHighlighter(registrations?: RegistrationSource) {
 	const pendingGrammars = new Map<string, Promise<void>>();
 	const pendingThemes = new Map<string, Promise<void>>();
 	const tokenCache = new Map<string, TokenLines>();
@@ -97,9 +99,8 @@ export function createHighlighter() {
 		let pending = pendingGrammars.get(language);
 
 		if (!pending) {
-			const grammar = bundledGrammar(language) ?? fetchGrammar(language);
-
-			pending = Promise.resolve(grammar)
+			pending = loadBundledGrammar(language, registrations)
+				.then((bundled) => bundled ?? fetchGrammar(language))
 				.then((input) => highlighter.loadLanguage(input))
 				.finally(() => pendingGrammars.delete(language));
 

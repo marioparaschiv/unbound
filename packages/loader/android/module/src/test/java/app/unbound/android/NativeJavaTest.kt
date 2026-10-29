@@ -53,6 +53,21 @@ class NativeJavaTest {
     }
 
     @Test
+    fun constructPicksTheMostSpecificOverload() {
+        val color = NativeJava.construct("android.graphics.drawable.ColorDrawable", "[]")
+        val insets = listOf(10, 20, 30, 40).joinToString(",") { """{"type":"int","value":$it}""" }
+        val inset = NativeJava.construct("android.graphics.drawable.InsetDrawable", "[$color,$insets]")
+        val padding = NativeJava.construct("android.graphics.Rect", "[]")
+
+        NativeJava.invoke(inset, "getPadding", "[$padding]")
+
+        val edges = listOf("left", "top", "right", "bottom").map {
+            value(NativeJava.getField(padding, it)).getInt("value")
+        }
+        assertEquals(listOf(10, 20, 30, 40), edges)
+    }
+
+    @Test
     fun argumentsAcceptTheHandleShapeTheBridgeReturns() {
         val element = NativeJava.construct("java.lang.StringBuilder", "[]")
         val list = NativeJava.construct("java.util.ArrayList", "[]")

@@ -25,12 +25,6 @@ import type {
 	NativeRuntimeEventName,
 	NativeRuntimeEventToken,
 	NativeSerializableObject,
-	NativeUIBridge,
-	NativeUIHandle,
-	NativeUIQuery,
-	NativeUISnapshot,
-	NativeUISnapshotNode,
-	NativeViewSnapshotNode,
 	PluginContext,
 } from '@unbound-app/types';
 import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
@@ -73,10 +67,6 @@ export type {
 	NativeSerializableObject,
 	NativeStruct,
 	NativeThreadPolicy,
-	NativeUIBridge,
-	NativeUIHandle,
-	NativeUIQuery,
-	NativeUISnapshot,
 	PluginContext,
 } from '@unbound-app/types/native';
 
@@ -290,16 +280,6 @@ const capabilityRequirements: Record<string, NativePluginCapability> = {
 	subscribe: 'native.runtime.events',
 };
 
-const nativeUICapabilityRequirements: Record<keyof NativeUIBridge, NativePluginCapability> = {
-	lookup: 'native.ui.lookup',
-	snapshot: 'native.ui.lookup',
-	mount: 'native.ui.mount',
-	update: 'native.ui.mount',
-	setFrame: 'native.ui.layout',
-	measure: 'native.ui.layout',
-	unmount: 'native.ui.mount',
-};
-
 const nativeJavaCapabilityRequirements: Record<keyof NativeJavaBridge, NativePluginCapability> = {
 	getClass: 'native.java.classes',
 	className: 'native.java.classes',
@@ -331,16 +311,6 @@ const nativeHooksCapabilityRequirements: Record<
 	removeReturnValue: 'native.java.hooks',
 	clearReturnValues: 'native.java.hooks',
 	remove: 'native.java.hooks',
-};
-
-const iosNativeUICapabilityRequirements: Record<keyof NativeUIBridge, NativePluginCapability> = {
-	lookup: 'native.objc.snapshot',
-	snapshot: 'native.objc.snapshot',
-	mount: 'native.fabric.async',
-	update: 'native.fabric.async',
-	setFrame: 'native.fabric.async',
-	measure: 'native.fabric.async',
-	unmount: 'native.fabric.async',
 };
 
 export class NativePluginUnavailableError extends Error {
@@ -466,7 +436,6 @@ function unavailableNativePlugin() {
 		{},
 		{ get: () => unavailableMethod },
 	) as NativeRuntimeBridge;
-	const unavailableUI = new Proxy({}, { get: () => unavailableMethod }) as NativeUIBridge;
 	const unavailableJava = new Proxy({}, { get: () => unavailableMethod }) as NativeJavaBridge;
 	const unavailableHooks = new Proxy(
 		{},
@@ -482,7 +451,6 @@ function unavailableNativePlugin() {
 		ffi: unavailableFFI,
 		fabric: unavailableFabric,
 		runtime: unavailableRuntime,
-		ui: unavailableUI,
 		java: unavailableJava,
 		hooks: unavailableHooks,
 		debug: unavailableDebug,
@@ -644,85 +612,6 @@ type ScopedNativePlugin = {
 	dispose: () => void;
 };
 
-function mapCancelable<T, U>(source: NativeCancelablePromise<T>, mapper: (value: T) => U) {
-	const promise = source.then(mapper);
-
-	return Object.assign(promise, { cancel: () => source.cancel() });
-}
-
-function boundedNativeUICount(
-	value: number | undefined,
-	fallback: number,
-	minimum: number,
-	maximum: number,
-): number {
-	if (value === undefined) {
-		return fallback;
-	}
-
-	if (!Number.isInteger(value)) {
-		throw new RangeError('Native UI query limits must be integers.');
-	}
-
-	return Math.max(minimum, Math.min(value, maximum));
-}
-
-function nativeViewRole(className: string): string {
-	const separator = className.lastIndexOf('.');
-	const simpleClassName = className.slice(separator + 1).toLowerCase();
-
-	if (simpleClassName.includes('button') || simpleClassName.includes('control')) {
-		return 'button';
-	}
-
-	if (simpleClassName.includes('image')) {
-		return 'image';
-	}
-
-	if (simpleClassName.includes('text') || simpleClassName.includes('label')) {
-		return 'text';
-	}
-
-	if (simpleClassName.includes('view') || simpleClassName.includes('container')) {
-		return 'container';
-	}
-
-	return 'view';
-}
-
-function nativeViewAttributes(node: NativeViewSnapshotNode): NativeSerializableObject {
-	const separator = node.className.lastIndexOf('.');
-
-	return {
-		className: node.className,
-		simpleClassName: node.className.slice(separator + 1),
-		text: node.text,
-		visible: node.visible,
-	};
-}
-
-function matchesNativeUIQuery(node: NativeUISnapshotNode, query: NativeUIQuery): boolean {
-	const className = node.attributes.className;
-	const simpleClassName = node.attributes.simpleClassName;
-
-	if (
-		query.role !== '*' &&
-		query.role !== node.role &&
-		query.role !== className &&
-		query.role !== simpleClassName
-	) {
-		return false;
-	}
-
-	for (const [key, expected] of Object.entries(query.attributes ?? {})) {
-		if (JSON.stringify(node.attributes[key]) !== JSON.stringify(expected)) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
 function withFallback<T extends object>(bridge: Partial<T> | undefined, fallback: T): T {
 	return new Proxy(fallback, {
 		get: (target, property) => {
@@ -731,71 +620,6 @@ function withFallback<T extends object>(bridge: Partial<T> | undefined, fallback
 			return bridge?.[key] ?? target[key];
 		},
 	});
-}
-
-function createIOSNativeUIBridge(
-	objc: NativeObjCBridge,
-	fabric: NativeFabricBridge,
-): NativeUIBridge {
-	let generation = 0;
-
-	function snapshot(query: NativeUIQuery): NativeCancelablePromise<NativeUISnapshot> {
-		if (!query.root) {
-			throw new NativePluginUnavailableError('iOS native UI queries require a root handle.');
-		}
-
-		const maxDepth = boundedNativeUICount(query.maxDepth, 8, 0, 12);
-		const maxNodes = boundedNativeUICount(query.maxNodes, 100, 1, 256);
-		const maxResults = boundedNativeUICount(query.maxResults, 128, 1, 256);
-		const currentGeneration = ++generation;
-		const captured = objc.snapshot(query.root, { maxDepth, maxNodes });
-
-		return mapCancelable(captured, (views) => ({
-			generation: currentGeneration,
-			nodes: views
-				.map((view) => {
-					const parent = view.parent >= 0 ? (views[view.parent]?.view ?? null) : null;
-
-					return {
-						id: view.view,
-						parent,
-						role: nativeViewRole(view.className),
-						frame: view.frame,
-						attributes: nativeViewAttributes(view),
-					};
-				})
-				.filter((node) => matchesNativeUIQuery(node, query))
-				.slice(0, maxResults),
-		}));
-	}
-
-	return {
-		lookup(query) {
-			return mapCancelable(snapshot(query), (result) => result.nodes.map((node) => node.id));
-		},
-		snapshot,
-		mount(container, moduleName, properties) {
-			if (!container) {
-				throw new NativePluginUnavailableError(
-					'iOS native UI mounting requires a container.',
-				);
-			}
-
-			return fabric.mountAsync(container, moduleName, properties);
-		},
-		update(surface, properties) {
-			return fabric.updateAsync(surface, properties);
-		},
-		setFrame(surface, frame) {
-			return fabric.setFrameAsync(surface, frame);
-		},
-		measure(view) {
-			return fabric.measureAsync(view);
-		},
-		unmount(surface) {
-			return fabric.unmountAsync(surface);
-		},
-	};
 }
 
 type AttributedMethod = {
@@ -853,18 +677,11 @@ function createScopedNativePlugin(
 				(capabilities.includes('native.runtime.events')
 					? createFluxRuntimeBridge()
 					: fallbackBridge.runtime));
-	const uiBridge =
-		platform === 'ios'
-			? createIOSNativeUIBridge(objcBridge, fabricBridge)
-			: attributeBridge(bridge.ui ?? fallbackBridge.ui, attribute);
-	const uiCapabilities =
-		platform === 'ios' ? iosNativeUICapabilityRequirements : nativeUICapabilityRequirements;
 	const javaBridge = attributeBridge(bridge.java ?? fallbackBridge.java, attribute);
 	const hooksBridge = attributeBridge(bridge.hooks ?? fallbackBridge.hooks, attribute);
 	const debugBridge = attributeBridge(bridge.debug ?? fallbackBridge.debug, attribute);
 	const tokens = new Set<NativeHookToken>();
 	const surfaces = new Set<NativeFabricSurface>();
-	const uiSurfaces = new Set<NativeUIHandle>();
 	const javaHandles = new Set<WeakRef<NativeJavaReference>>();
 	const javaHookTokens = new Set<NativeJavaHookToken>();
 	const runtimeTokens = new Set<NativeRuntimeEventToken>();
@@ -873,7 +690,6 @@ function createScopedNativePlugin(
 	let disposed = false;
 	const mountAsync = fabricBridge.mountAsync?.bind(fabricBridge);
 	const unmountAsync = fabricBridge.unmountAsync?.bind(fabricBridge);
-	const unmountUI = uiBridge.unmount?.bind(uiBridge);
 
 	function trackInvocation<T>(pending: NativeCancelablePromise<T>): NativeCancelablePromise<T> {
 		pendingInvocations.add(pending);
@@ -1048,20 +864,6 @@ function createScopedNativePlugin(
 					}
 
 					token.clearReturnValues();
-				},
-				setSizeHeightFloor(self, args, floor) {
-					if (disposed) {
-						throw new NativePluginDisposedError();
-					}
-
-					token.setSizeHeightFloor(self, args, floor);
-				},
-				removeSizeHeightFloor(self, args) {
-					if (disposed) {
-						throw new NativePluginDisposedError();
-					}
-
-					token.removeSizeHeightFloor(self, args);
 				},
 				remove() {
 					token.remove();
@@ -1345,72 +1147,6 @@ function createScopedNativePlugin(
 		},
 	};
 
-	const ui: NativeUIBridge = {
-		lookup: scopeAsyncMethod(
-			uiBridge.lookup?.bind(uiBridge),
-			uiCapabilities.lookup,
-			'Native UI lookup is unavailable.',
-		),
-		snapshot: scopeAsyncMethod(
-			uiBridge.snapshot?.bind(uiBridge),
-			uiCapabilities.snapshot,
-			'Native UI snapshots are unavailable.',
-		),
-		mount: (container, moduleName, properties) => {
-			if (disposed) {
-				throw new NativePluginDisposedError();
-			}
-
-			requireCapability(capabilities, uiCapabilities.mount);
-			const pending = trackInvocation(uiBridge.mount(container, moduleName, properties));
-
-			pending.then(
-				(handle) => {
-					if (disposed) {
-						if (unmountUI) {
-							void unmountUI(handle).catch(() => undefined);
-						}
-					} else {
-						uiSurfaces.add(handle);
-					}
-				},
-				() => undefined,
-			);
-
-			return pending;
-		},
-		update: scopeAsyncMethod(
-			uiBridge.update?.bind(uiBridge),
-			uiCapabilities.update,
-			'Native UI updates are unavailable.',
-		),
-		setFrame: scopeAsyncMethod(
-			uiBridge.setFrame?.bind(uiBridge),
-			uiCapabilities.setFrame,
-			'Native UI layout updates are unavailable.',
-		),
-		measure: scopeAsyncMethod(
-			uiBridge.measure?.bind(uiBridge),
-			uiCapabilities.measure,
-			'Native UI measurement is unavailable.',
-		),
-		unmount: (handle) => {
-			if (disposed) {
-				throw new NativePluginDisposedError();
-			}
-
-			requireCapability(capabilities, uiCapabilities.unmount);
-			const pending = trackInvocation(uiBridge.unmount(handle));
-
-			pending.then(
-				() => uiSurfaces.delete(handle),
-				() => undefined,
-			);
-
-			return pending;
-		},
-	};
-
 	return {
 		bridge: {
 			apiVersion: bridge.apiVersion,
@@ -1420,7 +1156,6 @@ function createScopedNativePlugin(
 			ffi,
 			fabric,
 			runtime,
-			ui,
 			java,
 			hooks,
 			debug,
@@ -1445,14 +1180,6 @@ function createScopedNativePlugin(
 			for (const surface of surfaces) disposeSurface(surface);
 
 			surfaces.clear();
-
-			for (const surface of uiSurfaces) {
-				if (unmountUI) {
-					void unmountUI(surface).catch(() => undefined);
-				}
-			}
-
-			uiSurfaces.clear();
 
 			for (const tracked of javaHandles) {
 				const handle = tracked.deref();

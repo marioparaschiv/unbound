@@ -22,13 +22,6 @@ struct JavaCallbacks {
     jmethodID scheduleRuntime          = nullptr;
     jmethodID scheduleMain             = nullptr;
     jmethodID isMainThread             = nullptr;
-    jmethodID lookupViews              = nullptr;
-    jmethodID snapshotViews            = nullptr;
-    jmethodID measureView              = nullptr;
-    jmethodID setViewFrame             = nullptr;
-    jmethodID mountView                = nullptr;
-    jmethodID updateView               = nullptr;
-    jmethodID unmountView              = nullptr;
     jmethodID javaGetClass             = nullptr;
     jmethodID javaClassName            = nullptr;
     jmethodID javaDescribe             = nullptr;

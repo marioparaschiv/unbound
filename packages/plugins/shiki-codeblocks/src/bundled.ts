@@ -67,23 +67,25 @@ const grammars: Record<(typeof BUNDLED_LANGUAGES)[number], LanguageRegistration[
 	yaml,
 };
 
-const grammarByName = new Map<string, LanguageRegistration[]>();
+const grammarNames = new Map<string, string[]>();
 
 for (const grammar of Object.values(grammars)) {
+	const order = grammar.map((language) => language.name);
+
 	for (const language of grammar) {
 		for (const name of [language.name, ...(language.aliases ?? [])]) {
-			grammarByName.set(name, grammar);
+			grammarNames.set(name, order);
 		}
 	}
 }
 
 /**
- * @description Looks up a grammar bundled with the plugin by language name or alias.
+ * @description Lists the registrations a bundled language loads, by language name or alias.
  * @param name The language name or alias.
- * @returns The grammar's registrations, embedded languages first, or `undefined` when it isn't bundled.
+ * @returns The registration names, embedded languages first, or `undefined` when it isn't bundled.
  */
-export function bundledGrammar(name: string): LanguageRegistration[] | undefined {
-	return grammarByName.get(name);
+export function grammarOrder(name: string): string[] | undefined {
+	return grammarNames.get(name);
 }
 
 /**
@@ -94,4 +96,4 @@ export function bundledThemes(): ThemeRegistration[] {
 	return [darkPlus, lightPlus];
 }
 
-export default { BUNDLED_LANGUAGES, BUNDLED_THEMES, bundledGrammar, bundledThemes };
+export default { BUNDLED_LANGUAGES, BUNDLED_THEMES, grammarOrder, bundledThemes };

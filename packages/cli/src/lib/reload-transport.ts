@@ -1,9 +1,10 @@
 import type { ControllerClient } from '@unbound-app/debugger-protocol/controller';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import type { AddonManifest } from '@unbound-app/types';
-import { readFileSync, existsSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
 import toError from '@unbound-app/utils/to-error';
-import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 
 import { waitForDevice } from '~/lib/context';
 
@@ -26,7 +27,11 @@ export type ReloadTransport = {
 	reload(addon: BuiltAddon): Promise<void>;
 };
 
-export type ReadAddon = { manifest: AddonManifest; bundle: string };
+export type ReadAddon = {
+	manifest: AddonManifest;
+	bundle: string;
+	bytecode?: Record<string, string>;
+};
 
 /**
  * How long the watcher waits for a dropped device to reconnect before dropping a reload. Longer than
@@ -77,11 +82,11 @@ export function createReloadTransport(
 			}
 
 			try {
-				const { manifest, bundle } = readBuiltAddon(addon);
+				const built = readBuiltAddon(addon);
 
 				process.stdout.write(`Pushing ${addon.id}…\n`);
 
-				const result = await client.pushPlugin({ addonId: addon.id, bundle, manifest });
+				const result = await client.pushPlugin({ addonId: addon.id, ...built });
 
 				if (result.ok) {
 					process.stdout.write(`Reloaded ${addon.id}.\n`);
@@ -120,8 +125,54 @@ export function readBuiltAddon(addon: BuiltAddon): ReadAddon {
 	}
 
 	const bundle = readFileSync(bundlePath, 'utf8');
+	const bytecode = addon.static ? new Map<string, Buffer>() : readFreshBytecode(bundlePath);
 
-	return { manifest, bundle };
+	if (!bytecode.size) {
+		return { manifest, bundle };
+	}
+
+	return {
+		manifest: { ...manifest, bytecode: sha512Digests(bytecode) },
+		bundle,
+		bytecode: Object.fromEntries(
+			[...bytecode].map(([version, contents]) => [version, contents.toString('base64')]),
+		),
+	};
+}
+
+const SAME_BUILD_WINDOW_MS = 10_000;
+
+function readFreshBytecode(bundlePath: string): Map<string, Buffer> {
+	const directory = dirname(bundlePath);
+	const prefix = `${basename(bundlePath).replace(/\.[^.]+$/, '')}.`;
+	const builtAt = statSync(bundlePath).mtimeMs;
+	const compiled = new Map<string, Buffer>();
+
+	for (const name of readdirSync(directory).sort()) {
+		const version =
+			name.startsWith(prefix) && name.endsWith('.hbc')
+				? name.slice(prefix.length, -'.hbc'.length)
+				: '';
+		const path = join(directory, name);
+
+		if (
+			/^\d{1,10}$/.test(version) &&
+			Math.abs(statSync(path).mtimeMs - builtAt) <= SAME_BUILD_WINDOW_MS
+		) {
+			compiled.set(version, readFileSync(path));
+		}
+	}
+
+	return compiled;
+}
+
+function sha512Digests(compiled: Map<string, Buffer>): Record<string, string> {
+	return Object.fromEntries(
+		[...compiled].map(([version, contents]) => [
+			version,
+			createHash('sha512').update(contents).digest('hex'),
+		]),
+	);
 }
 
 export default createReloadTransport;

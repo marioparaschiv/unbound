@@ -30,6 +30,7 @@ type PluginPush = {
 	addonId: string;
 	bundle: string;
 	manifest: AddonManifest;
+	bytecode?: Record<string, string>;
 };
 
 const EVAL_RESULT_GRACE_MS = 5_000;

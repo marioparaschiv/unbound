@@ -213,7 +213,7 @@ async function transferArchive(
  * @param archive The staged archive's path on the device.
  * @returns The shell script, which prints the destination on success and the reason on failure.
  */
-export function unpackScript(id: string, archive: string): string {
+function unpackScript(id: string, archive: string): string {
 	return [
 		`archive='${archive}'`,
 		`root=''`,

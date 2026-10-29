@@ -68,7 +68,7 @@ function isSyncMode(value: string): value is SyncMode {
 }
 
 /** @returns Whether the cloud already held a setup at sign-in and the user has not chosen how to combine it with this device. */
-export function needsFirstSyncChoice(): boolean {
+function needsFirstSyncChoice(): boolean {
 	return Store.get('pendingChoice', false);
 }
 

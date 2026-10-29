@@ -30,7 +30,7 @@ test('the workspace contains only first-party plugins', () => {
 		return entry.isDirectory() && !['node_modules', 'shared'].includes(entry.name);
 	});
 
-	expect(plugins).toHaveLength(32);
+	expect(plugins).toHaveLength(34);
 	expect(
 		plugins.every((plugin) => {
 			const manifestPath = join(PLUGINS_DIR, plugin.name, 'manifest.json');
@@ -178,7 +178,7 @@ test('rejects platformCapabilities for a platform the plugin does not support', 
 		validatePluginFolder('example-plugin', {
 			...validManifest,
 			platforms: ['ios'],
-			platformCapabilities: { android: ['native.ui.lookup'] },
+			platformCapabilities: { android: ['native.java.classes'] },
 		}),
 	).toContain('platformCapabilities declares android, which is not in platforms');
 });
@@ -205,7 +205,7 @@ test('rejects an unknown platformCapabilities platform', () => {
 	expect(
 		validatePluginFolder('example-plugin', {
 			...validManifest,
-			platformCapabilities: { web: ['native.ui.lookup'] },
+			platformCapabilities: { web: ['native.java.classes'] },
 		}),
 	).toContain('platformCapabilities contains an unsupported platform: web');
 });

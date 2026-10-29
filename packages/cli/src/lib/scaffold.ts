@@ -13,7 +13,7 @@ const GITIGNORE_SOURCE = 'gitignore';
  * @param tokens The token values to inject.
  * @returns The substituted string.
  */
-export function substitute(input: string, tokens: Tokens): string {
+function substitute(input: string, tokens: Tokens): string {
 	return input.replace(/\{\{(\w+)\}\}/g, (match, token: string) => {
 		return token in tokens ? tokens[token as keyof Tokens] : match;
 	});

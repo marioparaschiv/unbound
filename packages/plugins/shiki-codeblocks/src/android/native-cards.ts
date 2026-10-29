@@ -25,7 +25,14 @@ import {
 } from '@unbound-plugins/shared/native/android/views';
 
 import { createBlockBackgroundFinder } from '~/android/block-backgrounds';
-import { codeSlots, placeholderOffsets, sourceBlock, type CodeSlot } from '~/android/code-ranges';
+import {
+	codeSlots,
+	placeholderOffsets,
+	placeholderTexts,
+	renderedText,
+	sourceBlock,
+	type CodeSlot,
+} from '~/android/code-ranges';
 import { registerCodeCardSurface, type CardContent } from '~/components/code-card';
 import { MessageStore, SelectedChannelStore, settings } from '~/modules';
 import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
@@ -35,7 +42,6 @@ import { parseFencedCodeBlocks, type CodeBlock } from '~/fences';
 import { codeBlockLayout } from '~/layout';
 
 const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
-const PLACEHOLDER = '￼';
 const TOP_GAP = 2;
 const MIN_WIDTH = 80;
 const SIZE_PARAMETERS = ['int', 'int', 'int', 'int'];
@@ -79,16 +85,6 @@ function channelBlocks(): CodeBlock[] {
 			? parseFencedCodeBlocks(message.content)
 			: [],
 	);
-}
-
-function renderedText(original: string, slots: CodeSlot[]): string {
-	let text = original;
-
-	for (const slot of slots.slice().reverse()) {
-		text = text.slice(0, slot.start) + PLACEHOLDER + text.slice(slot.end);
-	}
-
-	return text;
 }
 
 /**
@@ -218,6 +214,7 @@ export function createNativeCards(native: Native) {
 		if (disposed) return;
 
 		const offsets = placeholderOffsets(layout.slots);
+		const placeholders = placeholderTexts(layout.original, layout.slots);
 		const heights = contents.map(
 			(content) => codeBlockLayout(content.code, layout.width, content.overflow).height,
 		);
@@ -243,7 +240,7 @@ export function createNativeCards(native: Native) {
 			edits: layout.slots.map((slot, index) => ({
 				start: slot.start,
 				end: slot.end,
-				text: PLACEHOLDER,
+				text: placeholders[index]!,
 				spacerOffset: 0,
 				width: px(layout.width),
 				height: px(heights[index]! + TOP_GAP),
