@@ -57,7 +57,24 @@ A `cacheOnly` hook can supply an exact return value with `setReturnValue(self, a
 
 `objc.snapshot(root, options)` uses the separate `native.objc.snapshot` capability to inspect a `UIView` subtree in one asynchronous main-thread pass. It returns nodes in breadth-first order with retained view handles, parent indices, class names, frames, label text, and visibility. The default limits are eight levels and 100 nodes; requests above 12 levels or 256 nodes are clamped to those maximums, and non-integer limits are rejected. A snapshot is only a point-in-time view: plugins must discard results after cell reuse, channel changes, or scope disposal, and must not retain whole snapshots in long-lived caches. The returned promise is cancellable. Plugins should filter for relevant nodes and apply any UI changes through asynchronous calls or batches.
 
-`objc.findViews(root, className, options)` shares the snapshot capability and performs a bounded breadth-first class-name search on the main thread. It returns only matching retained view handles rather than materializing every traversed node. By default it visits at most 512 views to depth 24 and returns at most 64 matches; larger requests are clamped to 2,048 visits, depth 40, and 256 matches. `attachedOnly` restricts matches to views in a window, and `stopAtMatch` skips descendants of matched views. A plugin must still verify its lifecycle and cell identity after awaiting the result.
+`objc.findViews(root, className, options)` shares the snapshot capability and performs a bounded breadth-first class-name search on the main thread. It returns only matching retained view handles rather than materializing every traversed node. By default it visits at most 512 views to depth 24 and returns at most 64 matches; larger requests are clamped to 8,192 visits, depth 128, and 256 matches. `attachedOnly` restricts matches to views in a window, and `stopAtMatch` skips descendants of matched views. `direction: 'ancestors'` walks up the superview chain instead. A plugin must still verify its lifecycle and cell identity after awaiting the result.
+
+## Java bridge
+
+On Android, `context.native.java` exposes the same kind of surface through reflection:
+
+- Classes and objects: `getClass`, `describe`, `className`, `construct`, `respondsTo`, `release`
+- Method calls and fields: `invoke`, `invokeAsync`, `getField`, `setField`
+- Batches and searches: `batch`, `batchAsync`, `findViews`
+- Associated objects: `createAssociationKey`, `getAssociatedObject`, `setAssociatedObject`
+
+`invoke`, `getField`, `setField` and `batch` run on the JavaScript thread. Android views must only be touched on the main thread, so a plugin reads and changes views through the asynchronous operations instead:
+
+- `invokeAsync(handle, method, args)` (`native.java.invokeAsync`) runs one method on the main thread and resolves with its converted result.
+- `batchAsync(operations)` (`native.java.batch`) runs a list of independent `invoke`, `getField`, `setField` and `respondsTo` operations on the main thread in one hop, up to 64 per call, and resolves with every result in order. Use it to read several values from one view, such as a view's width, height and padding, instead of one `invokeAsync` per getter.
+- `findViews(root, className, options)` (`native.java.invoke`) searches the view tree on the main thread in one call, with the same options and limits as `objc.findViews`. It replaces walking `getChildCount` and `getChildAt` from JavaScript, which costs one call per view; a search of Discord's whole chat takes about 50 ms. Use `maxDepth: 1` for a view's direct children, which include the root itself, and `direction: 'ancestors'` with `stopAtMatch` to find the nearest enclosing view of a class.
+
+Synchronous calls on objects that are not views, such as a `Layout`, `Outline`, `Rect` or a class's `isInstance`, are fine from the JavaScript thread. `plugins-shared/src/native/android/views.ts` wraps these operations: `findViewsOfClass`, `runOnMain` (which splits operations into batches and falls back to `batch` on older loaders) and `readCalls`, which builds batch operations for argument-less getters.
 
 ## Raw FFI
 
@@ -118,6 +135,8 @@ Diagnostics report:
 - hook problems: hook failures, handler exceptions
 
 Wherever possible, failures are converted to structured JavaScript errors.
+
+In developer mode, the loader logs a warning the first time a plugin calls a view method from the JavaScript thread, naming the plugin, the class and the method: a `UIView` method other than `NSObject`'s through `objc.call` on iOS, or a `View` method through `java.invoke` on Android. Move such calls to `invokeAsync`, `batch`/`batchAsync` or `findViews`. The device matrix collects these warnings per plugin, fails a plugin that makes calls it did not make in the last run, and with `--strict` fails any plugin that makes one.
 
 The bridge is intended for approved, trusted plugins. Capability declarations provide least-privilege scoping, but they are not a sandbox. They do not restrict a plugin that is already authorized to invoke native operations.
 
