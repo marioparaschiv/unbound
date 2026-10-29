@@ -15,6 +15,7 @@
 #import <objc/runtime.h>
 #import <optional>
 #import <os/signpost.h>
+#import <set>
 #import <stdexcept>
 #import <string>
 #import <string_view>
@@ -2631,8 +2632,26 @@ static Value hookValue(Runtime &runtime, const loader::ffi::Type &type,
     return loader::ffi::readValue(runtime, type, bytes.data());
 }
 
+static void logDroppedHookCall(loader::AddonSlot addon, SEL selector, const std::string &call)
+{
+    static std::mutex            warnedMutex;
+    static std::set<std::string> warned;
+    std::string                  name = sel_getName(selector);
+    {
+        std::lock_guard<std::mutex> lock(warnedMutex);
+        if (!warned.insert(std::to_string(addon) + " " + name + " " + call).second)
+        {
+            return;
+        }
+    }
+    std::string reason =
+        "the " + name + " hook answered after its 100 ms limit, so its " + call + " was dropped";
+    [Logger error:LOG_CATEGORY_PLUGINS
+           format:@"%s", loader::threading::hookFailureMessage(addon, reason).c_str()];
+}
+
 static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation> &invocation,
-                          id object, SEL selector, bool allowOriginal)
+                          id object, SEL selector, bool allowOriginal, loader::AddonSlot addon)
 {
     Object context(runtime);
     context.setProperty(
@@ -2657,11 +2676,15 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
         runtime, "replaceObjectArgument",
         Function::createFromHostFunction(
             runtime, PropNameID::forUtf8(runtime, "replaceObjectArgument"), 2,
-            [original, allowOriginal](Runtime &rt, const Value &, const Value *args,
-                                      size_t count) -> Value {
+            [original, allowOriginal, addon, selector](Runtime     &rt, const Value &,
+                                                       const Value *args, size_t count) -> Value {
                 std::lock_guard<std::mutex> lock(original->lifecycleMutex);
                 if (!original->active.load())
                 {
+                    if (allowOriginal)
+                    {
+                        logDroppedHookCall(addon, selector, "argument replacement");
+                    }
                     throw JSError(rt,
                                   "Native hook arguments are unavailable after the hook returns");
                 }
@@ -2715,10 +2738,15 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
         runtime, "original",
         Function::createFromHostFunction(
             runtime, PropNameID::forUtf8(runtime, "original"), 0,
-            [original, allowOriginal](Runtime &rt, const Value &, const Value *, size_t) -> Value {
+            [original, allowOriginal, addon, selector](Runtime &rt, const Value &, const Value *,
+                                                       size_t) -> Value {
                 std::lock_guard<std::mutex> lock(original->lifecycleMutex);
                 if (!original->active.load())
                 {
+                    if (allowOriginal)
+                    {
+                        logDroppedHookCall(addon, selector, "original() call");
+                    }
                     throw JSError(rt,
                                   "Native hook original() is unavailable after the hook returns");
                 }
@@ -3178,7 +3206,8 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
                         auto callbacks = state->callbacks.lock();
                         if (!callbacks || !callbacks->before)
                             return;
-                        Object context = hookContext(runtime, invocation, object, selector, true);
+                        Object context =
+                            hookContext(runtime, invocation, object, selector, true, state->addon);
                         callbacks->before->call(runtime, context);
                     });
             }
@@ -3208,8 +3237,9 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
                         {
                             throw std::runtime_error("Native hook callback expired");
                         }
-                        Object context = hookContext(runtime, invocation, object, selector, true);
-                        Value  result  = callbacks->replace->call(runtime, context);
+                        Object context =
+                            hookContext(runtime, invocation, object, selector, true, state->addon);
+                        Value result = callbacks->replace->call(runtime, context);
                         if (!setHookReturn(runtime, invocation->dispatcher->signature->result,
                                            result, replacementResult->data()))
                         {
@@ -3266,7 +3296,8 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             loader::AddonScope runtimeScope(state->addon);
             try
             {
-                Object context = hookContext(runtime, invocation, retainedObject, selector, false);
+                Object context =
+                    hookContext(runtime, invocation, retainedObject, selector, false, state->addon);
                 callbacks->after->call(runtime, context);
             }
             catch (const std::exception &exception)
@@ -3485,7 +3516,8 @@ static void dispatchVoidHook(id object, SEL selector)
                         auto callbacks = state->callbacks.lock();
                         if (!callbacks || !callbacks->before)
                             return;
-                        Object context = hookContext(runtime, invocation, object, selector, true);
+                        Object context =
+                            hookContext(runtime, invocation, object, selector, true, state->addon);
                         callbacks->before->call(runtime, context);
                     });
                 }
@@ -3508,23 +3540,24 @@ static void dispatchVoidHook(id object, SEL selector)
                 {
                     std::shared_ptr<std::vector<uint8_t>> replacementResult =
                         hookReturnBuffer(invocation);
-                    bool completed = executeRuntimeSynchronously([invocation, object, selector,
-                                                                  state, replacementResult](
-                                                                     Runtime &runtime) {
-                        auto callbacks = state->callbacks.lock();
-                        if (!callbacks || !callbacks->replace)
-                        {
-                            throw std::runtime_error("Native hook callback expired");
-                        }
-                        Object context = hookContext(runtime, invocation, object, selector, true);
-                        Value  result  = callbacks->replace->call(runtime, context);
-                        if (!setHookReturn(runtime, invocation->dispatcher->signature->result,
-                                           result, replacementResult->data()))
-                        {
-                            throw JSError(runtime,
-                                          "Native hook replacement returned an unsupported value");
-                        }
-                    });
+                    bool completed = executeRuntimeSynchronously(
+                        [invocation, object, selector, state, replacementResult](Runtime &runtime) {
+                            auto callbacks = state->callbacks.lock();
+                            if (!callbacks || !callbacks->replace)
+                            {
+                                throw std::runtime_error("Native hook callback expired");
+                            }
+                            Object context = hookContext(runtime, invocation, object, selector,
+                                                         true, state->addon);
+                            Value  result  = callbacks->replace->call(runtime, context);
+                            if (!setHookReturn(runtime, invocation->dispatcher->signature->result,
+                                               result, replacementResult->data()))
+                            {
+                                throw JSError(
+                                    runtime,
+                                    "Native hook replacement returned an unsupported value");
+                            }
+                        });
                     if (completed)
                     {
                         replacementApplied = true;
@@ -3573,8 +3606,8 @@ static void dispatchVoidHook(id object, SEL selector)
                     loader::AddonScope runtimeScope(state->addon);
                     try
                     {
-                        Object context =
-                            hookContext(runtime, invocation, retainedObject, selector, false);
+                        Object context = hookContext(runtime, invocation, retainedObject, selector,
+                                                     false, state->addon);
                         callbacks->after->call(runtime, context);
                     }
                     catch (const std::exception &exception)
