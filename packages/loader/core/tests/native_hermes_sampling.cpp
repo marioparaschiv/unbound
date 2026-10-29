@@ -24,6 +24,9 @@ int main()
     assert(loader::native::describeSampledStack(stack, true) ==
            "The call came from spin(plugin:4:2), called from start(plugin:1:10).");
     assert(loader::native::describeSampledStack({}).empty());
+    assert(loader::native::formatSampledStack(stack) ==
+           "    at spin(plugin:4:2)\n    at start(plugin:1:10)");
+    assert(loader::native::formatSampledStack({}).empty());
     assert(loader::native::hottestStack("{broken").empty());
     nlohmann::json wrapped = {
         {"stackFrames",

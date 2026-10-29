@@ -556,11 +556,13 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			addon: this.reportedAddon(entity),
 			seconds: freeze.seconds,
 			...(freeze.detail ? { message: freeze.detail } : {}),
+			...(freeze.stack ? { stack: freeze.stack } : {}),
 		});
 		const detail = freeze.detail ? ` ${freeze.detail}` : '';
+		const stack = freeze.stack ? `\n${freeze.stack}` : '';
 
 		this.logger.warn(
-			`${entity.data.name} froze Discord for ${seconds} seconds (freeze ${count} this session).${detail}`,
+			`${entity.data.name} froze Discord for ${seconds} seconds (freeze ${count} this session).${detail}${stack}`,
 		);
 
 		if (disable) {
