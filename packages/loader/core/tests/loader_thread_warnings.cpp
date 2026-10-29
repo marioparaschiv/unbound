@@ -34,6 +34,8 @@ int main()
     assert(warnings.warning(plugin, "android.view.View.getWidth()"));
     assert(warnings.warning(kNoAddon, "-[UIView bounds]")->rfind("an unknown plugin", 0) == 0);
 
+    assert(hookFailureMessage(plugin, "boom") == "Native plugin hook failed in Example: boom");
+
     developerMode = false;
     now += std::chrono::seconds(1);
     assert(!warnings.warning(plugin, "-[UIView bounds]"));

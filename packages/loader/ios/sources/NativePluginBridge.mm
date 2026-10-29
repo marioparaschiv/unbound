@@ -3047,7 +3047,10 @@ struct HookCallGuard {
 
 static void logHookFailure(const std::exception &exception)
 {
-    [Logger error:LOG_CATEGORY_PLUGINS format:@"Native plugin hook failed: %s", exception.what()];
+    [Logger error:LOG_CATEGORY_PLUGINS
+           format:@"%s",
+                  loader::threading::hookFailureMessage(loader::currentAddon(), exception.what())
+                      .c_str()];
 }
 
 static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *userData)
@@ -3250,19 +3253,27 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
 
         loader::AddonScope addonScope(state->addon);
         __strong id        retainedObject = object;
-        executeRuntimeAsynchronously(
-            [invocation, retainedObject, selector, state](Runtime &runtime) {
-                bool pending = state->afterOncePending.exchange(false);
-                if (!state->active.load() && !pending)
-                {
-                    return;
-                }
-                auto callbacks = state->callbacks.lock();
-                if (!callbacks || !callbacks->after)
-                    return;
+        executeRuntimeAsynchronously([invocation, retainedObject, selector,
+                                      state](Runtime &runtime) {
+            bool pending = state->afterOncePending.exchange(false);
+            if (!state->active.load() && !pending)
+            {
+                return;
+            }
+            auto callbacks = state->callbacks.lock();
+            if (!callbacks || !callbacks->after)
+                return;
+            loader::AddonScope runtimeScope(state->addon);
+            try
+            {
                 Object context = hookContext(runtime, invocation, retainedObject, selector, false);
                 callbacks->after->call(runtime, context);
-            });
+            }
+            catch (const std::exception &exception)
+            {
+                logHookFailure(exception);
+            }
+        });
     }
 
     {
@@ -3549,19 +3560,28 @@ static void dispatchVoidHook(id object, SEL selector)
 
             loader::AddonScope addonScope(state->addon);
             __strong id        retainedObject = object;
-            executeRuntimeAsynchronously([invocation, retainedObject, selector,
-                                          state](Runtime &runtime) {
-                bool pending = state->afterOncePending.exchange(false);
-                if (!state->active.load() && !pending)
-                {
-                    return;
-                }
-                auto callbacks = state->callbacks.lock();
-                if (!callbacks || !callbacks->after)
-                    return;
-                Object context = hookContext(runtime, invocation, retainedObject, selector, false);
-                callbacks->after->call(runtime, context);
-            });
+            executeRuntimeAsynchronously(
+                [invocation, retainedObject, selector, state](Runtime &runtime) {
+                    bool pending = state->afterOncePending.exchange(false);
+                    if (!state->active.load() && !pending)
+                    {
+                        return;
+                    }
+                    auto callbacks = state->callbacks.lock();
+                    if (!callbacks || !callbacks->after)
+                        return;
+                    loader::AddonScope runtimeScope(state->addon);
+                    try
+                    {
+                        Object context =
+                            hookContext(runtime, invocation, retainedObject, selector, false);
+                        callbacks->after->call(runtime, context);
+                    }
+                    catch (const std::exception &exception)
+                    {
+                        logHookFailure(exception);
+                    }
+                });
         }
 
         {

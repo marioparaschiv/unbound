@@ -6,7 +6,11 @@ export type CheckMetrics = {
 	leakedHooks: number;
 };
 
-export type MeasuredCheck = DeviceCheck & { metrics?: CheckMetrics; offMainCalls?: string[] };
+export type MeasuredCheck = DeviceCheck & {
+	metrics?: CheckMetrics;
+	offMainCalls?: string[];
+	errors?: string[];
+};
 
 const SLOWER_FACTOR = 2;
 const SLOWER_MARGIN_MS = 200;
@@ -73,6 +77,11 @@ export function compareRuns(previous: MeasuredCheck[], current: MeasuredCheck[])
 
 		if (added.length)
 			changes.push(`${check.id} makes new off-main view calls: ${added.join(', ')}`);
+
+		const knownErrors = new Set(earlier.errors ?? []);
+		const newErrors = (check.errors ?? []).filter((error) => !knownErrors.has(error));
+
+		if (newErrors.length) changes.push(`${check.id} logs new errors: ${newErrors.join('; ')}`);
 	}
 
 	for (const check of previous) {

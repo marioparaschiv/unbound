@@ -62,6 +62,11 @@ std::optional<std::string> OffMainViewWarnings::warning(AddonSlot addon, const s
            "instead.";
 }
 
+std::string hookFailureMessage(AddonSlot addon, const std::string &reason)
+{
+    return "Native plugin hook failed in " + addonName(addon) + ": " + reason;
+}
+
 std::string addonName(AddonSlot addon)
 {
     nlohmann::json record = nlohmann::json::parse(addonRecord(addon), nullptr, false);
