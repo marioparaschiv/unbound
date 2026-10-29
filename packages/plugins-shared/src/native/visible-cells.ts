@@ -30,6 +30,8 @@ function once(seen: Set<string>, key: string | undefined): boolean {
 	return true;
 }
 
+export type VisibleCellLimits = { maxDepth?: number; maxVisited?: number };
+
 /**
  * @description Finds the cells of a class on screen in every window, for cells that appeared before a plugin hooked them.
  * @param objc The Objective-C bridge from `context.native`.
@@ -42,7 +44,7 @@ export async function findVisibleCells(
 	objc: NativeObjCBridge,
 	className: string,
 	signal?: AbortSignal,
-	limits: { maxDepth?: number; maxVisited?: number } = {},
+	limits: VisibleCellLimits = {},
 ): Promise<NativeObjectHandle[]> {
 	const UIApplication = objc.getClass('UIApplication');
 

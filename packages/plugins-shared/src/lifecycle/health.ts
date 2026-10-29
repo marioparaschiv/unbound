@@ -78,7 +78,9 @@ export function featureSelfTest(): SelfTestResult {
 export function drawnSelfTest(drawn: (() => number) | undefined, noun: string): SelfTestResult {
 	const features = featureSelfTest();
 
-	if (!features.ok) return features;
+	if (!features.ok) {
+		return features;
+	}
 
 	const count = drawn?.() ?? 0;
 
