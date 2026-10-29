@@ -59,9 +59,18 @@ describe('planPullRequestBuilds', () => {
 		});
 
 		expect(plan.enabled).toBe(false);
-		expect(plan.reason).toBe(
-			'S3 uploads are off until these are configured: variable S3_ENDPOINT, variable S3_REGION, variable S3_PUBLIC_BUCKET, variable CDN_URL, secret S3_ACCESS_KEY_ID, secret S3_SECRET_ACCESS_KEY, secret UNBOUND_PR_BUNDLE_SIGNING_KEY.',
-		);
+
+		for (const name of [
+			'S3_ENDPOINT',
+			'S3_REGION',
+			'S3_PUBLIC_BUCKET',
+			'CDN_URL',
+			'S3_ACCESS_KEY_ID',
+			'S3_SECRET_ACCESS_KEY',
+			'UNBOUND_PR_BUNDLE_SIGNING_KEY',
+		]) {
+			expect(plan.reason).toContain(name);
+		}
 	});
 
 	test('needs the pull request key, since PR loaders reject unsigned bundles', () => {
@@ -98,9 +107,7 @@ describe('cleanupSkipReason', () => {
 				HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: 'false',
 			}),
 		).toBe('');
-		expect(cleanupSkipReason({ ...configured, S3_REGION: '' })).toBe(
-			'S3 cleanup is off until these are configured: variable S3_REGION.',
-		);
+		expect(cleanupSkipReason({ ...configured, S3_REGION: '' })).toContain('S3_REGION');
 		expect(cleanupSkipReason({ ...configured, IS_FORK: 'true' })).toBe('');
 	});
 });

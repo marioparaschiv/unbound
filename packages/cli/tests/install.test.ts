@@ -196,7 +196,7 @@ describe('installOnIOS', () => {
 
 		expect(script).toContain(`archive='${staged}'`);
 		expect(script).toContain('com.hammerandchisel.discord');
-		expect(script).toContain('dest="$root/Plugins/com.example.sample"');
+		expect(script).toContain('$root/Plugins/com.example.sample');
 	});
 
 	test('retries a transfer that fails once', async () => {

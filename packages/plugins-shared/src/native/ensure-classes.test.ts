@@ -28,9 +28,10 @@ describe('ensureClasses', () => {
 		const error = spyOn(console, 'error').mockImplementation(() => {});
 
 		expect(ensureClasses('Plugin', bridgeWith('UIView'), ['UIView', 'YYLabel'])).toBe(false);
-		expect(error).toHaveBeenCalledWith(
-			'[Plugin] Not starting, native classes not found: YYLabel.',
-		);
+		const message = String(error.mock.calls[0]?.[0]);
+
+		expect(message).toContain('YYLabel');
+		expect(message).not.toContain('UIView');
 
 		error.mockRestore();
 	});

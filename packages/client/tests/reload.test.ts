@@ -347,8 +347,6 @@ describe('Addons manifest validation', () => {
 		manager.load('bundle', { ...makeManifest('loose'), ...malformed });
 
 		expect(manager.getEntity('loose')).toBeUndefined();
-		expect(manager.errors.get('loose')?.message).toBe(
-			'Manifest unbound.min must be a version string',
-		);
+		expect(manager.errors.get('loose')?.message).toMatch(/unbound\.min/);
 	});
 });

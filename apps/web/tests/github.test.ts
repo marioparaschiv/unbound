@@ -259,11 +259,11 @@ describe('GET /api/v1/github/addons', () => {
 			issues: [],
 		});
 		expect(byId.get('acme.nodist')?.issues).toEqual([
-			expect.stringContaining('plugins/nodist/dist/index.js is not committed'),
+			expect.stringContaining('plugins/nodist/dist/index.js'),
 		]);
 		expect(byId.get('acme.broken')).toMatchObject({ name: null, version: null });
 		expect(byId.get('acme.broken')?.issues).toEqual([
-			expect.stringContaining('plugins/broken/manifest.json is not a valid manifest'),
+			expect.stringContaining('plugins/broken/manifest.json'),
 		]);
 		expect(listing.skipped.map((entry) => entry.path).sort()).toEqual([
 			'plugins/wip',

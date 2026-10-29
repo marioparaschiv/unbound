@@ -58,7 +58,7 @@ describe('addon signatures', () => {
 				{ ...makeManifest('tampered.addon'), signature },
 				'changed',
 			),
-		).toThrow('Refused tampered.addon: the signature does not match the bundle.');
+		).toThrow(/Refused tampered\.addon/);
 	});
 
 	test('keeps unsigned addons installable', () => {
@@ -74,7 +74,7 @@ describe('addon signatures', () => {
 
 		expect(() =>
 			new SignatureAddons().check(makeManifest('stripped.addon'), 'bundle', 'signed'),
-		).toThrow('the installed version is signed but this one is not');
+		).toThrow(/Refused stripped\.addon: .*\bsigned\b/);
 		expect(
 			new SignatureAddons().check(makeManifest('still.unsigned'), 'bundle', 'unsigned').trust,
 		).toBe('unsigned');

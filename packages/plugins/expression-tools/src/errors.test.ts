@@ -12,6 +12,8 @@ test('prefers the API message, then the error message, then the response text', 
 });
 
 test('falls back to a generic sentence', () => {
-	expect(getErrorMessage({ body: {} })).toBe('The operation could not be completed.');
-	expect(getErrorMessage(null)).toBe('The operation could not be completed.');
+	const fallback = getErrorMessage(null);
+
+	expect(fallback).toMatch(/^[A-Z].*\.$/);
+	expect(getErrorMessage({ body: {} })).toBe(fallback);
 });

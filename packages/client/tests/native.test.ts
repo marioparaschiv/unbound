@@ -274,6 +274,7 @@ const {
 	NativePluginCapabilityError,
 	NativePluginDisposedError,
 	NativePluginPlatformError,
+	NativePluginUnavailableError,
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
 } = await import('~/api/native');
@@ -696,7 +697,7 @@ describe('native plugin negotiation', () => {
 			NativePluginCapabilityError,
 		);
 		expect(() => context.native.fabric.measureAsync(nativeHandle)).toThrow(
-			'The native plugin bridge is unavailable.',
+			NativePluginUnavailableError,
 		);
 		context.dispose();
 		expect(androidUnmounted).toEqual([androidSurface]);
@@ -784,7 +785,8 @@ describe('native plugin negotiation', () => {
 			});
 
 		expect(build).toThrow(NativePluginUnsupportedPlatformError);
-		expect(build).toThrow('This plugin supports ios; the host platform is android.');
+		expect(build).toThrow(/\bios\b/);
+		expect(build).toThrow(/\bandroid\b/);
 	});
 
 	test('builds a context for a plugin that supports the host platform', () => {

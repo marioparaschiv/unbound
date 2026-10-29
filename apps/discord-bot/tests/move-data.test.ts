@@ -129,9 +129,11 @@ describe.skipIf(!DATABASE_URL)('move-data', () => {
 		await target`delete from bot.tag where name = 'docs'`;
 		await target`update bot.addon_message set posted_hash = 'drifted' where addon_id = 'move.gone'`;
 
-		expect(await refusal(moveData(source, target, OPTIONS))).toBe(
-			'bot.addon_message row move.gone is ["move.gone","11","503","drifted","1790812802000",null], but the source has ["move.gone","11","503","posted","1790812802000",null]: the bot already ran against this database. Stop it and decide which rows to keep; nothing was written.',
-		);
+		const refused = await refusal(moveData(source, target, OPTIONS));
+
+		expect(refused).toContain('bot.addon_message row move.gone');
+		expect(refused).toContain('drifted');
+		expect(refused).toContain('nothing was written');
 		expect([
 			...(await target`select posted_hash from bot.addon_message where addon_id = 'move.gone'`),
 		]).toEqual([{ posted_hash: 'drifted' }]);

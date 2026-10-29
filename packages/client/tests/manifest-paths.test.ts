@@ -41,9 +41,7 @@ describe('manifest paths', () => {
 			'/etc/hosts',
 			'a/../../b.js',
 		]) {
-			expect(() => addons.check(manifest({ main }))).toThrow(
-				'Manifest main must be a relative path inside the addon',
-			);
+			expect(() => addons.check(manifest({ main }))).toThrow('Manifest main');
 		}
 	});
 

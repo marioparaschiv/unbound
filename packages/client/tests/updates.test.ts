@@ -276,9 +276,10 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyUpdate', () => {
 		expect(manager.log).toEqual([]);
 		expect(writes).toEqual([]);
 		expect(events).toEqual(['update-error:up.tampered']);
-		expect(manager.errors.get('up.tampered')?.message).toBe(
-			`Bundle SHA-256 ${sha256('tampered-served')} does not match ${sha256('tampered-reviewed')}.`,
-		);
+		const message = manager.errors.get('up.tampered')?.message;
+
+		expect(message).toContain(sha256('tampered-served'));
+		expect(message).toContain(sha256('tampered-reviewed'));
 	});
 
 	test('rejects and changes nothing when the server is unreachable', async () => {

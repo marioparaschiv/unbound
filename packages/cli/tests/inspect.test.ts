@@ -222,8 +222,9 @@ describe('inspect command', () => {
 
 		expect(output.ok).toBe(true);
 		expect(output.text.split('\n')[0]).toBe('class android.widget.TextView');
-		expect(codes[0]).toStartWith('60000 (async () => JSON.stringify(await (');
-		expect(codes[0]).toContain('{"kind":"class","name":"TextView"}');
+		expect(codes[0]).toMatch(/^60000 /);
+		expect(codes[0]).toContain('"kind":"class"');
+		expect(codes[0]).toContain('"name":"TextView"');
 	});
 
 	test('roots a view dump at a class and passes the depth and chunk size', async () => {
@@ -240,10 +241,14 @@ describe('inspect command', () => {
 			clientAnswering(report, codes),
 		);
 
+		const maxNodes = inspectCommand.schema.parse({ what: 'views' }).max;
+
 		expect(codes[0]).toStartWith('90000 ');
-		expect(codes[0]).toContain(
-			'{"kind":"views","className":"android.widget.FrameLayout","maxDepth":3,"maxNodes":2000,"chunk":100}',
-		);
+		expect(codes[0]).toContain('"kind":"views"');
+		expect(codes[0]).toContain('"className":"android.widget.FrameLayout"');
+		expect(codes[0]).toContain('"maxDepth":3');
+		expect(codes[0]).toContain(`"maxNodes":${maxNodes},`);
+		expect(codes[0]).toMatch(/"chunk":\d+/);
 	});
 
 	test('passes device errors through and asks for a missing class', async () => {

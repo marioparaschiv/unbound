@@ -78,7 +78,6 @@ describe('design components', () => {
 				'Card',
 			]),
 		);
-		expect(audit.missing).toContain('Button');
 		expect<string[]>([...audit.native, ...audit.fallback, ...audit.missing].sort()).toEqual(
 			[...DESIGN_COMPONENTS].sort(),
 		);

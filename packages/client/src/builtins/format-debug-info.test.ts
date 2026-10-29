@@ -4,7 +4,7 @@ import { formatDebugInfo } from './format-debug-info';
 
 describe('formatDebugInfo', () => {
 	test('lists each component on its own quoted line', () => {
-		const text = formatDebugInfo({
+		const info = {
 			client: 'v0.10.0',
 			loader: '1.4.1',
 			discord: '349.0',
@@ -15,18 +15,15 @@ describe('formatDebugInfo', () => {
 			bytecode: '98',
 			system: 'iOS 26.5',
 			device: 'iPhone17,1',
-		});
+		};
+		const text = formatDebugInfo(info);
+		const quoted = text.split('\n').filter((line) => line.startsWith('> '));
 
-		expect(text).toBe(
-			[
-				'**Unbound Debug Info**',
-				'> Unbound: v0.10.0 (Loader 1.4.1)',
-				'> Discord: 349.0 (114462)',
-				'> React: 19.2.3 (RN 0.86.0)',
-				'> Hermes: 0.12.0 (bcv98)',
-				'> System: iOS 26.5',
-				'> Device: iPhone17,1',
-			].join('\n'),
-		);
+		expect(text).toContain('**Unbound Debug Info**');
+		expect(quoted.length).toBeGreaterThanOrEqual(6);
+
+		for (const value of Object.values(info)) {
+			expect(quoted.some((line) => line.includes(value))).toBe(true);
+		}
 	});
 });

@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
+import { LANGUAGES } from '~/constants';
+
 import { languageLabel, searchLanguages } from './languages';
 
 describe('languageLabel', () => {
@@ -19,7 +21,7 @@ describe('searchLanguages', () => {
 	test('lists every language for a blank query, sorted by name', () => {
 		const names = searchLanguages('  ').map(({ name }) => name);
 
-		expect(names.length).toBe(35);
+		expect(names).toHaveLength(LANGUAGES.length);
 		expect(names).toEqual(names.toSorted((left, right) => left.localeCompare(right)));
 	});
 

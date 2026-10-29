@@ -122,9 +122,11 @@ describe('plugin signatures', () => {
 			signature,
 		);
 
-		expect(text.endsWith('}\n')).toBe(true);
-		expect(text).toContain('\t"id": "unbound.example"');
-		expect(JSON.parse(text).signature).toEqual(signature);
+		expect(JSON.parse(text)).toEqual({
+			id: 'unbound.example',
+			version: '1.2.3',
+			signature,
+		});
 	});
 
 	test('produces the vector the loader core test verifies', () => {

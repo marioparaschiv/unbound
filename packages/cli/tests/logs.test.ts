@@ -378,8 +378,9 @@ describe('tailAndroid', () => {
 			'Unbound Loading bundle',
 			"ReactNativeJS '»', '[Core]', 'Failed'",
 		]);
-		expect(await Bun.file(calls).text()).toContain(
-			'-s emulator-5554 logcat -v threadtime -v epoch -b main,system,crash -T 1793049800.000 -d',
-		);
+		const commands = await Bun.file(calls).text();
+
+		expect(commands).toContain('-s emulator-5554 logcat -v threadtime -v epoch');
+		expect(commands).toContain('-T 1793049800.000 -d');
 	});
 });

@@ -9,6 +9,7 @@ import {
 } from '@unbound-app/web/testing';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { createBotReads, type BotReads } from '@unbound-app/web/bot';
+import { readdirSync, readFileSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import postgres from 'postgres';
@@ -26,6 +27,20 @@ const SUPERUSER_URL = process.env.POSTGRES_SUPERUSER_URL;
 const SCRIPT = join(import.meta.dirname, '..', 'scripts', 'provision.sql');
 // A busy shared cluster can hold a CREATE or DROP DATABASE for seconds.
 const DATABASE_DDL_TIMEOUT_MS = 30_000;
+const MIGRATIONS = join(import.meta.dirname, '..', 'drizzle');
+const FUNCTION_DECLARATION = /CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+bot\.(\w+)\s*\(/gi;
+
+// Every function the bot's migrations create, read from their SQL, so a new hook needs no edit here.
+function declaredFunctions(): string[] {
+	const sql = readdirSync(MIGRATIONS, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory())
+		.map((entry) => readFileSync(join(MIGRATIONS, entry.name, 'migration.sql'), 'utf8'))
+		.join('\n');
+
+	return [
+		...new Set([...sql.matchAll(FUNCTION_DECLARATION)].map(([, name = '']) => name)),
+	].toSorted();
+}
 
 // Real roles, not the test cluster's usual one, because grants are the thing under test.
 describe.skipIf(!SUPERUSER_URL)('provision.sql', () => {
@@ -245,15 +260,15 @@ describe.skipIf(!SUPERUSER_URL)('provision.sql', () => {
 			return `user:${userId}`;
 		});
 		await migrateDatabase(bot);
-		expect(await owners()).toHaveLength(7);
+		expect((await owners()).map((row) => row.proname).toSorted()).toEqual(declaredFunctions());
 		expect(new Set((await owners()).map((row) => row.owner))).toEqual(new Set([names.hooks]));
 	});
 
 	test('each phase converges on a rerun, and grant then lock reopens and recloses the triggers', async () => {
 		const locked = await state();
 
-		expect(locked.grants.map((grant) => grant.privilege_type)).toEqual(
-			Array.from({ length: 6 }, () => 'SELECT'),
+		expect(new Set(locked.grants.map((grant) => grant.privilege_type))).toEqual(
+			new Set(['SELECT']),
 		);
 
 		await target.unsafe(`GRANT SELECT ON public.session TO ${names.bot}`);

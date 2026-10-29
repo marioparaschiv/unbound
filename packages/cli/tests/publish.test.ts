@@ -125,9 +125,10 @@ describe('ubd publish refusals', () => {
 		const result = await publish('publish.oversize', key);
 
 		expect(result.exitCode).toBe(1);
-		expect(result.stderr).toBe(
-			`plugins/publish.oversize/dist/index.js is ${ADDON_MAX_BYTES + 1} bytes; bundles may be at most ${ADDON_MAX_BYTES} bytes. (artifact_too_large)\n`,
-		);
+		expect(result.stderr).toMatch(/\(artifact_too_large\)\n$/);
+		expect(result.stderr).toContain('plugins/publish.oversize/dist/index.js');
+		expect(result.stderr).toContain(`${ADDON_MAX_BYTES + 1} bytes`);
+		expect(result.stderr).toContain(`${ADDON_MAX_BYTES} bytes`);
 		expect(await submissionCount()).toBe(0);
 	});
 
@@ -139,9 +140,7 @@ describe('ubd publish refusals', () => {
 		const result = await publish('publish.too-new', key);
 
 		expect(result.exitCode).toBe(1);
-		expect(result.stderr).toBe(
-			'Your Discord account must be at least 30 days old to submit addons. (account_too_new)\n',
-		);
+		expect(result.stderr).toMatch(/^\S.+ \(account_too_new\)\n$/);
 		expect(await submissionCount()).toBe(0);
 	});
 

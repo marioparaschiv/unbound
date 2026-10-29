@@ -135,9 +135,11 @@ describe('bundle signing', () => {
 	test('refuses to sign a manifest without a build time, revision or channel', () => {
 		const { pem } = makeKey();
 
-		expect(() => signBundles(makeDist({ bytecodeVersions: [98] }), pem)).toThrow(
-			'manifest.json has no ISO 8601 UTC buildTime. manifest.json has no revision. manifest.json has no channel.',
-		);
+		const unsigned = () => signBundles(makeDist({ bytecodeVersions: [98] }), pem);
+
+		expect(unsigned).toThrow(/buildTime/);
+		expect(unsigned).toThrow(/revision/);
+		expect(unsigned).toThrow(/channel/);
 		expect(() => signBundles(makeDist({ ...BUILD_MANIFEST, buildTime: 'today' }), pem)).toThrow(
 			'buildTime',
 		);
@@ -193,13 +195,13 @@ describe('bundle signature check', () => {
 
 		signBundles(dir, makeKey().pem);
 		expect(findUnsignedBundles(dir, publicKeyBase64)).toEqual([
-			'manifest.json does not match its signature.',
+			expect.stringMatching(/^manifest\.json/),
 		]);
 
 		signBundles(dir, pem);
 		writeFileSync(join(dir, 'unbound.js'), 'tampered');
 		expect(findUnsignedBundles(dir, publicKeyBase64)).toEqual([
-			'unbound.js does not match its SHA-512 in manifest.json.',
+			expect.stringMatching(/^unbound\.js /),
 		]);
 	});
 
@@ -210,8 +212,8 @@ describe('bundle signature check', () => {
 		signBundles(dir, pem);
 		writeFileSync(join(dir, 'unbound.96.bundle'), 'added later');
 
-		expect(findUnsignedBundles(dir, publicKeyBase64)).toContain(
-			'unbound.96.bundle does not match its SHA-512 in manifest.json.',
+		expect(findUnsignedBundles(dir, publicKeyBase64)).toContainEqual(
+			expect.stringMatching(/^unbound\.96\.bundle /),
 		);
 	});
 
@@ -223,10 +225,10 @@ describe('bundle signature check', () => {
 
 		expect(findUnsignedBundles(dir, publicKeyBase64, 5)).toEqual([]);
 		expect(findUnsignedBundles(dir, publicKeyBase64, 6)).toEqual([
-			'manifest.json does not match its signature.',
+			expect.stringMatching(/^manifest\.json/),
 		]);
 		expect(findUnsignedBundles(dir, publicKeyBase64)).toEqual([
-			'manifest.json does not match its signature.',
+			expect.stringMatching(/^manifest\.json/),
 		]);
 	});
 

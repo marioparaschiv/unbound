@@ -72,10 +72,10 @@ describe('checkConfig', () => {
 	test('names DATABASE_DIRECT_URL alone when only the pooled url is set', () => {
 		const { DATABASE_DIRECT_URL: _, ...pooledOnly } = ENV;
 		const result = checkConfig(pooledOnly, GUILD_ID);
+		const problems = result.ok ? '' : result.message;
 
-		expect(result.ok ? '' : result.message).toBe(
-			'Refusing to start, the configuration is incomplete:\n  - env DATABASE_DIRECT_URL is not set',
-		);
+		expect(problems).toContain('env DATABASE_DIRECT_URL is not set');
+		expect(problems.match(/^\s+- /gm)).toHaveLength(1);
 	});
 
 	test('migrations read the direct url and refuse the pooled one alone', () => {

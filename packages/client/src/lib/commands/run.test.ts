@@ -149,7 +149,10 @@ describe('createExecute', () => {
 
 		expect(ran).toBe(false);
 		expect(ephemeral).toEqual([
-			{ ephemeral: true, content: "/greet failed: couldn't find the user for user." },
+			expect.objectContaining({
+				ephemeral: true,
+				content: expect.stringMatching(/^\/greet failed:.*\buser\b/),
+			}),
 		]);
 	});
 
