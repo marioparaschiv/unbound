@@ -91,17 +91,18 @@ function FilterMenu({
 		updated: UPDATED_WINDOWS,
 	};
 
-	// Fills the cache the Author view reads, so opening it after a hover shows rows, not skeletons.
+	// Fills the cache the Author view reads once the trigger or the Author row is hovered, so the view
+	// shows rows, not skeletons, and a listing nobody filters never asks for its authors.
 	function prefetchAuthors() {
 		void queryClient.prefetchInfiniteQuery(authorsQuery(type, ''));
 	}
 
-	// Phones have no hover to predict a tap, so the sheet warms the author list as it opens.
+	// A tap or the F key opens the menu with no hover first, so opening warms the author list too.
 	useEffect(() => {
-		if (open && mobile) {
+		if (open) {
 			void queryClient.prefetchInfiniteQuery(authorsQuery(type, ''));
 		}
-	}, [open, mobile, queryClient, type]);
+	}, [open, queryClient, type]);
 
 	function changeOpen(next: boolean) {
 		onOpenChange(next);
@@ -246,7 +247,12 @@ function FilterMenu({
 
 	return (
 		<Popover open={open} onOpenChange={changeOpen}>
-			<PopoverTrigger aria-label={triggerLabel} className={triggerClassName}>
+			<PopoverTrigger
+				aria-label={triggerLabel}
+				className={triggerClassName}
+				onPointerEnter={prefetchAuthors}
+				onFocus={prefetchAuthors}
+			>
 				{children}
 			</PopoverTrigger>
 			<PopoverContent

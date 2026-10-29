@@ -1,7 +1,7 @@
 import { IconCopies, IconLockPassword, IconPlus, IconTrash } from 'nucleo-micro-bold';
-import { useRouter } from '@tanstack/react-router';
-import { useState, useTransition } from 'react';
-import type { FormEvent } from 'react';
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
+import { useForm } from '@tanstack/react-form';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -13,6 +13,11 @@ import {
 	DialogTitle,
 } from '~/components/ui/dialog';
 import {
+	accountOverviewQuery,
+	createApiKeyMutation,
+	deleteApiKeyMutation,
+} from '~/queries/account/account';
+import {
 	Empty,
 	EmptyDescription,
 	EmptyHeader,
@@ -20,18 +25,12 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import getAuthErrorMessage from '~/lib/auth/error-message';
 import ConfirmDialog from '~/components/confirm-dialog';
 import type { AccountApiKey } from '~/lib/auth/account';
 import Separator from '~/components/ui/separator';
 import { Button } from '~/components/ui/button';
-import authClient from '~/lib/auth/client';
 import Input from '~/components/ui/input';
 import Text from '~/components/ui/text';
-
-type ApiKeysCardProps = {
-	apiKeys: AccountApiKey[];
-};
 
 type ApiKeyRowProps = {
 	apiKey: AccountApiKey;
@@ -55,22 +54,13 @@ function describeKey(apiKey: AccountApiKey): string {
 }
 
 function ApiKeyRow({ apiKey }: ApiKeyRowProps) {
-	const router = useRouter();
-	const [isPending, startTransition] = useTransition();
+	const { mutate, isPending } = useMutation(deleteApiKeyMutation());
 	const label = apiKey.name ?? 'Unnamed key';
 
 	function revoke() {
-		startTransition(async () => {
-			const { error } = await authClient.apiKey.delete({ keyId: apiKey.id });
-
-			if (error) {
-				toast.error(getAuthErrorMessage(error));
-
-				return;
-			}
-
-			await router.invalidate();
-			toast.success(`Revoked ${label}`);
+		mutate(apiKey.id, {
+			onSuccess: () => toast.success(`Revoked ${label}`),
+			onError: (error) => toast.error(error.message),
 		});
 	}
 
@@ -150,29 +140,23 @@ function CreatedKeyDialog({ secret, onClose }: CreatedKeyDialogProps) {
 	);
 }
 
-function ApiKeysCard({ apiKeys }: ApiKeysCardProps) {
-	const router = useRouter();
-	const [name, setName] = useState('');
+function ApiKeysCard() {
+	const { apiKeys } = useSuspenseQuery(accountOverviewQuery()).data;
 	const [secret, setSecret] = useState<string | null>(null);
-	const [isPending, startTransition] = useTransition();
+	const { mutateAsync, isPending } = useMutation(createApiKeyMutation());
+	const form = useForm({
+		defaultValues: { name: '' },
+		onSubmit: async ({ value, formApi }) => {
+			try {
+				const created = await mutateAsync(value.name.trim());
 
-	function create(event: FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-
-		startTransition(async () => {
-			const { data, error } = await authClient.apiKey.create({ name: name.trim() });
-
-			if (error) {
-				toast.error(getAuthErrorMessage(error));
-
-				return;
+				formApi.reset();
+				setSecret(created.key);
+			} catch (error) {
+				toast.error(error instanceof Error ? error.message : String(error));
 			}
-
-			setName('');
-			setSecret(data.key);
-			await router.invalidate();
-		});
-	}
+		},
+	});
 
 	return (
 		<Card className='gap-4'>
@@ -183,19 +167,35 @@ function ApiKeysCard({ apiKeys }: ApiKeysCardProps) {
 				</Text>
 			</CardHeader>
 			<CardContent className='flex flex-col gap-3'>
-				<form onSubmit={create} className='flex gap-2'>
-					<Input
-						value={name}
-						onChange={(event) => setName(event.target.value)}
-						placeholder='Key name, e.g. GitHub Actions'
-						aria-label='Key name'
-						disabled={isPending}
-						required
-					/>
-					<Button type='submit' disabled={isPending || !name.trim()}>
-						<IconPlus size={24} />
-						Create
-					</Button>
+				<form
+					onSubmit={(event) => {
+						event.preventDefault();
+						void form.handleSubmit();
+					}}
+					className='flex gap-2'
+				>
+					<form.Field name='name'>
+						{(field) => (
+							<>
+								<Input
+									value={field.state.value}
+									onChange={(event) => field.handleChange(event.target.value)}
+									onBlur={field.handleBlur}
+									placeholder='Key name, e.g. GitHub Actions'
+									aria-label='Key name'
+									disabled={isPending}
+									required
+								/>
+								<Button
+									type='submit'
+									disabled={isPending || !field.state.value.trim()}
+								>
+									<IconPlus size={24} />
+									Create
+								</Button>
+							</>
+						)}
+					</form.Field>
 				</form>
 
 				{apiKeys.length === 0 ? (

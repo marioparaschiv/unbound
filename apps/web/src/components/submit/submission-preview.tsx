@@ -1,26 +1,15 @@
 import type { SubmissionPreview as Preview } from '@unbound-app/contracts/review';
 import type { ReactNode } from 'react';
-import { useId } from 'react';
 
-import { Field, FieldDescription, FieldGroup, FieldLabel } from '~/components/ui/field';
 import ChangelogSections from '~/components/changelog-sections';
 import SourcePinLink from '~/components/source-pin-link';
 import { getBundleUrl } from '~/lib/github-urls';
 import Markdown from '~/components/markdown';
-import Input from '~/components/ui/input';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 
-export type DetailsDraft = {
-	homepage: string;
-	tags: string;
-};
-
 type SubmissionPreviewProps = {
 	preview: Preview;
-	draft: DetailsDraft;
-	disabled: boolean;
-	onDraftChange: (draft: DetailsDraft) => void;
 };
 
 type FactProps = {
@@ -41,8 +30,7 @@ function Fact({ label, children }: FactProps) {
 	);
 }
 
-function SubmissionPreview({ preview, draft, disabled, onDraftChange }: SubmissionPreviewProps) {
-	const id = useId();
+function SubmissionPreview({ preview }: SubmissionPreviewProps) {
 	const { manifest, source, details } = preview;
 
 	return (
@@ -109,34 +97,6 @@ function SubmissionPreview({ preview, draft, disabled, onDraftChange }: Submissi
 					</Text>
 				)}
 			</div>
-
-			<FieldGroup>
-				<Field>
-					<FieldLabel htmlFor={`${id}-homepage`}>Homepage</FieldLabel>
-					<Input
-						id={`${id}-homepage`}
-						type='url'
-						value={draft.homepage}
-						onChange={(event) =>
-							onDraftChange({ ...draft, homepage: event.target.value })
-						}
-						placeholder='https://'
-						disabled={disabled}
-					/>
-				</Field>
-				<Field>
-					<FieldLabel htmlFor={`${id}-tags`}>Tags</FieldLabel>
-					<Input
-						id={`${id}-tags`}
-						value={draft.tags}
-						onChange={(event) => onDraftChange({ ...draft, tags: event.target.value })}
-						disabled={disabled}
-					/>
-					<FieldDescription>
-						Comma-separated. Defaults to the repository’s topics.
-					</FieldDescription>
-				</Field>
-			</FieldGroup>
 		</div>
 	);
 }

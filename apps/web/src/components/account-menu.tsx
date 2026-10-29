@@ -7,6 +7,7 @@ import {
 	IconUser,
 } from 'nucleo-micro-bold';
 import { Link, useRouteContext, useRouter } from '@tanstack/react-router';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import {
@@ -16,15 +17,15 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
-import getAuthErrorMessage from '~/lib/auth/error-message';
+import { signOutMutation } from '~/queries/account/session';
 import { getStaffAreas } from '~/lib/auth/staff-areas';
 import UserAvatar from '~/components/user-avatar';
 import { Button } from '~/components/ui/button';
-import authClient from '~/lib/auth/client';
 
 function AccountMenu() {
 	const router = useRouter();
 	const session = useRouteContext({ from: '__root__', select: (context) => context.session });
+	const { mutate } = useMutation(signOutMutation(router));
 
 	if (!session) {
 		return (
@@ -39,16 +40,8 @@ function AccountMenu() {
 
 	const { user } = session;
 
-	async function signOut() {
-		const { error } = await authClient.signOut();
-
-		if (error) {
-			toast.error(getAuthErrorMessage(error));
-
-			return;
-		}
-
-		await router.invalidate();
+	function signOut() {
+		mutate(undefined, { onError: (error) => toast.error(error.message) });
 	}
 
 	return (
@@ -86,7 +79,7 @@ function AccountMenu() {
 					</DropdownMenuItem>
 				))}
 				<DropdownMenuSeparator />
-				<DropdownMenuItem onClick={() => void signOut()} variant='destructive'>
+				<DropdownMenuItem onClick={signOut} variant='destructive'>
 					<IconRectLogout size={24} />
 					Log Out
 				</DropdownMenuItem>

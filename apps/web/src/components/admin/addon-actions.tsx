@@ -1,8 +1,7 @@
-import { addonResponseSchema, maintainersResponseSchema } from '@unbound-app/contracts/addons';
 import { IconEye, IconSwap, IconViewMinusSign } from 'nucleo-micro-bold';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { useRouter } from '@tanstack/react-router';
-import { useState, useTransition } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -14,7 +13,11 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '~/components/ui/dialog';
-import { createBrowserClient } from '~/lib/api/browser-client';
+import {
+	delistAddonMutation,
+	relistAddonMutation,
+	transferAddonMutation,
+} from '~/queries/admin-addons/addon-mutations';
 import getApiErrorMessage from '~/lib/api/error-message';
 import UserSearch from '~/components/admin/user-search';
 import ConfirmDialog from '~/components/confirm-dialog';
@@ -29,22 +32,19 @@ type AddonActionsProps = {
 	canTransfer: boolean;
 };
 
-type AddonActionProps = {
+type DelistDialogProps = {
 	addon: AdminAddon;
 	disabled: boolean;
-	run: (action: () => Promise<void>, success: string) => void;
+	onDelist: () => void;
 };
 
-function DelistDialog({ addon, disabled, run }: AddonActionProps) {
-	function delist() {
-		run(async () => {
-			await createBrowserClient()('POST /api/v1/addons/$id/delist', {
-				params: { id: addon.id },
-				response: addonResponseSchema,
-			});
-		}, `Delisted ${addon.id}`);
-	}
+type TransferDialogProps = {
+	addon: AdminAddon;
+	disabled: boolean;
+	onTransfer: (user: UserSummary) => void;
+};
 
+function DelistDialog({ addon, disabled, onDelist }: DelistDialogProps) {
 	return (
 		<ConfirmDialog
 			trigger={
@@ -56,12 +56,12 @@ function DelistDialog({ addon, disabled, run }: AddonActionProps) {
 			title={`Delist ${addon.id}?`}
 			description='It disappears from listings and update checks. Its published files stay up, so existing installs keep working. You can relist it later.'
 			confirmLabel='Delist Addon'
-			onConfirm={delist}
+			onConfirm={onDelist}
 		/>
 	);
 }
 
-function TransferDialog({ addon, disabled, run }: AddonActionProps) {
+function TransferDialog({ addon, disabled, onTransfer }: TransferDialogProps) {
 	const [open, setOpen] = useState(false);
 	const [selected, setSelected] = useState<UserSummary | null>(null);
 	const owners = new Set(addon.owners.map((owner) => owner.id));
@@ -70,13 +70,7 @@ function TransferDialog({ addon, disabled, run }: AddonActionProps) {
 		if (!selected) return;
 
 		setOpen(false);
-		run(async () => {
-			await createBrowserClient()('POST /api/v1/addons/$id/transfer', {
-				params: { id: addon.id },
-				body: { userId: selected.id },
-				response: maintainersResponseSchema,
-			});
-		}, `${selected.name} now owns ${addon.id}`);
+		onTransfer(selected);
 	}
 
 	return (
@@ -123,44 +117,56 @@ function TransferDialog({ addon, disabled, run }: AddonActionProps) {
 }
 
 function AddonActions({ addon, canDelist, canTransfer }: AddonActionsProps) {
-	const router = useRouter();
-	const [isPending, startTransition] = useTransition();
+	const delist = useMutation(delistAddonMutation());
+	const relist = useMutation(relistAddonMutation());
+	const transfer = useMutation(transferAddonMutation());
+	const isPending = delist.isPending || relist.isPending || transfer.isPending;
 
-	function run(action: () => Promise<void>, success: string) {
-		startTransition(async () => {
-			try {
-				await action();
-			} catch (error) {
-				toast.error(getApiErrorMessage(error));
+	// Awaited rather than `mutate(..., { onSuccess })`: on a filtered list the write can drop this row, and
+	// per-call callbacks skip an unmounted caller.
+	async function run<T>(action: Promise<T>, success: string) {
+		try {
+			await action;
+		} catch (error) {
+			toast.error(getApiErrorMessage(error));
 
-				return;
-			}
+			return;
+		}
 
-			await router.invalidate();
-			toast.success(success);
-		});
-	}
-
-	function relist() {
-		run(async () => {
-			await createBrowserClient()('POST /api/v1/addons/$id/relist', {
-				params: { id: addon.id },
-				response: addonResponseSchema,
-			});
-		}, `Relisted ${addon.id}`);
+		toast.success(success);
 	}
 
 	return (
 		<div className='flex justify-end items-center gap-2'>
-			{canTransfer ? <TransferDialog addon={addon} disabled={isPending} run={run} /> : null}
+			{canTransfer ? (
+				<TransferDialog
+					addon={addon}
+					disabled={isPending}
+					onTransfer={(user) =>
+						void run(
+							transfer.mutateAsync({ id: addon.id, userId: user.id }),
+							`${user.name} now owns ${addon.id}`,
+						)
+					}
+				/>
+			) : null}
 			{canDelist && addon.delistedAt ? (
-				<Button variant='secondary' size='sm' onClick={relist} disabled={isPending}>
+				<Button
+					variant='secondary'
+					size='sm'
+					onClick={() => void run(relist.mutateAsync(addon.id), `Relisted ${addon.id}`)}
+					disabled={isPending}
+				>
 					<IconEye size={24} />
 					Relist
 				</Button>
 			) : null}
 			{canDelist && !addon.delistedAt ? (
-				<DelistDialog addon={addon} disabled={isPending} run={run} />
+				<DelistDialog
+					addon={addon}
+					disabled={isPending}
+					onDelist={() => void run(delist.mutateAsync(addon.id), `Delisted ${addon.id}`)}
+				/>
 			) : null}
 		</div>
 	);

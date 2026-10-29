@@ -1,8 +1,10 @@
 import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { IconArrowLeft } from 'nucleo-micro-bold';
 
 import AddonSettingsForm from '~/components/admin/addon-settings/addon-settings-form';
 import SubmissionHistory from '~/components/admin/submission-history';
+import { adminAddonQuery } from '~/queries/admin-addons/admin-addons';
 import DetailSection from '~/components/admin/detail-section';
 import AddonActions from '~/components/admin/addon-actions';
 import { formatDate } from '~/components/admin/format-date';
@@ -10,7 +12,6 @@ import VersionTable from '~/components/admin/version-table';
 import StatusPill from '~/components/dashboard/status-pill';
 import DetailFact from '~/components/admin/detail-fact';
 import StaffNotes from '~/components/admin/staff-notes';
-import { fetchAdminAddon } from '~/lib/admin-functions';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
 import EventLog from '~/components/admin/event-log';
 import UserAvatar from '~/components/user-avatar';
@@ -21,7 +22,14 @@ import Tag from '~/components/tag';
 
 function AdminAddonPage() {
 	const { user: viewer } = Route.useRouteContext();
-	const view = Route.useLoaderData();
+	const { id } = Route.useParams();
+	const { data: view } = useSuspenseQuery(adminAddonQuery(id));
+
+	// A refetch after the addon was deleted finds nothing.
+	if (!view) {
+		throw notFound();
+	}
+
 	const { addon, maintainers, versions, submissions, events, notes } = view;
 	const canEdit = hasPermission(viewer.role, { addon: ['edit'] });
 	const canDelist = hasPermission(viewer.role, { addon: ['delist'] });
@@ -119,11 +127,7 @@ function AdminAddonPage() {
 			</DetailSection>
 
 			<DetailSection title='Moderation log'>
-				<EventLog
-					key={events.items[0]?.id ?? 0}
-					subject={{ type: 'addon', id: addon.id }}
-					timeline={events}
-				/>
+				<EventLog subject={{ type: 'addon', id: addon.id }} timeline={events} />
 			</DetailSection>
 		</div>
 	);
@@ -136,8 +140,8 @@ export const Route = createFileRoute('/_site/_staff/admin/addons/$id')({
 		}
 	},
 	// `loader` comes before `head` so `head` can infer the loader data's type.
-	loader: async ({ params }) => {
-		const view = await fetchAdminAddon({ data: params.id });
+	loader: async ({ context, params }) => {
+		const view = await context.queryClient.ensureQueryData(adminAddonQuery(params.id));
 
 		if (!view) {
 			throw notFound();

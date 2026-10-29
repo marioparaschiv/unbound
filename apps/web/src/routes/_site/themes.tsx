@@ -22,6 +22,7 @@ export const Route = createFileRoute('/_site/themes')({
 	head: () => ({ meta: [{ title: 'Unbound | Themes' }] }),
 	validateSearch: marketplaceSearchSchema,
 	loaderDeps: ({ search }) => search,
-	loader: ({ context, deps }) => prefetchListing(context.queryClient, 'theme', deps),
+	loader: ({ context, deps, cause }) =>
+		prefetchListing(context.queryClient, 'theme', deps, cause),
 	component: ThemesPage,
 });

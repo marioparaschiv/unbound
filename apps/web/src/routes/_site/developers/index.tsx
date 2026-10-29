@@ -1,10 +1,9 @@
 import { IconMagnifier, IconMagnifierMinus, IconUsers, IconXmark } from 'nucleo-micro-bold';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { createServerFn } from '@tanstack/react-start';
 import type { ChangeEvent, FormEvent } from 'react';
 import debounce from '@unbound-app/utils/debounce';
+import { z } from '@unbound-app/contracts/zod';
 import { useMemo, useState } from 'react';
-import { z } from 'zod';
 
 import {
 	Empty,
@@ -15,39 +14,27 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
-import type { DevelopersPage, DevelopersQuery } from '~/lib/developers';
-import useInfiniteDevelopers from '~/hooks/use-infinite-developers';
+import useTeamPages, { type TeamPages } from '~/queries/developers/use-team-pages';
+import { teamQuery } from '~/queries/developers/developers';
 import TeamSections from '~/components/team/team-sections';
 import { pageSearchSchema } from '~/lib/page-search';
 import PageHeader from '~/components/page-header';
-import { listDevelopers } from '~/lib/developers';
+import type { Developer } from '~/lib/developers';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
 import Text from '~/components/ui/text';
-import app from '~/lib/app';
 
-type TeamListProps = {
-	first: DevelopersPage;
-	search: string;
+type TeamListProps = Omit<TeamPages, 'developers'> & {
+	developers: Developer[];
 };
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-const teamSearchSchema = pageSearchSchema.pick({ search: true });
+const teamSearchSchema = z.pick(pageSearchSchema, { search: true });
 
-const fetchDevelopers = createServerFn({ method: 'GET' })
-	.validator(z.object({ search: z.string().max(100), cursor: z.string().max(512).optional() }))
-	.handler(({ data }) => listDevelopers(app, data));
-
-const fetchPage = (query: DevelopersQuery) => fetchDevelopers({ data: query });
-
-function TeamList({ first, search }: TeamListProps) {
-	const { developers, status, hasMore, sentinelRef, retry } = useInfiniteDevelopers(
-		first,
-		search,
-		fetchPage,
-	);
-
+// A new search keeps the old people up until its own arrive. They are not dimmed meanwhile: fading the
+// cards repaints every blurred avatar and delayed the new results by 11 to 20 ms.
+function TeamList({ developers, status, hasMore, sentinelRef, retry }: TeamListProps) {
 	return (
 		<>
 			<TeamSections developers={developers} />
@@ -74,10 +61,10 @@ function TeamList({ first, search }: TeamListProps) {
 }
 
 function TeamContent() {
-	const first = Route.useLoaderData();
 	const params = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const search = params.search ?? '';
+	const { developers, ...pages } = useTeamPages(search);
 	const [searchInput, setSearchInput] = useState(search);
 
 	const navigateToSearch = useMemo(
@@ -104,7 +91,11 @@ function TeamContent() {
 		void navigate({ search: {} });
 	}
 
-	if (first.developers.length === 0 && !search) {
+	if (!developers) {
+		return <Spinner className='m-auto size-6 text-muted-foreground' />;
+	}
+
+	if (developers.length === 0 && !search) {
 		return (
 			<Empty className='flex-1 my-auto'>
 				<EmptyHeader>
@@ -137,7 +128,7 @@ function TeamContent() {
 				</InputGroup>
 			</form>
 
-			{first.developers.length === 0 ? (
+			{developers.length === 0 ? (
 				<Empty className='flex-1 my-auto'>
 					<EmptyHeader>
 						<EmptyMedia variant='icon'>
@@ -156,7 +147,7 @@ function TeamContent() {
 					</EmptyContent>
 				</Empty>
 			) : (
-				<TeamList first={first} search={search} key={search} />
+				<TeamList developers={developers} {...pages} />
 			)}
 		</div>
 	);
@@ -178,6 +169,17 @@ export const Route = createFileRoute('/_site/developers/')({
 	head: () => ({ meta: [{ title: 'Unbound | Team' }] }),
 	validateSearch: teamSearchSchema,
 	loaderDeps: ({ search }) => search,
-	loader: ({ deps }) => fetchDevelopers({ data: { search: deps.search ?? '' } }),
+	loader: async ({ context, deps, cause }) => {
+		const team = teamQuery(deps.search ?? '');
+
+		// A search typed on the page starts its fetch here, but the old people stay up until it lands.
+		if (cause === 'stay') {
+			void context.queryClient.prefetchInfiniteQuery(team);
+
+			return;
+		}
+
+		await context.queryClient.ensureInfiniteQueryData(team);
+	},
 	component: TeamPage,
 });

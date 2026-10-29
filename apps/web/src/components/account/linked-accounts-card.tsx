@@ -1,27 +1,25 @@
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { IconLink, IconLinkSlash } from 'nucleo-micro-bold';
 import type { ComponentType, SVGProps } from 'react';
-import { useRouter } from '@tanstack/react-router';
-import { useTransition } from 'react';
 import { toast } from 'sonner';
 
+import {
+	accountOverviewQuery,
+	linkSocialMutation,
+	unlinkAccountMutation,
+} from '~/queries/account/account';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import getAuthErrorMessage from '~/lib/auth/error-message';
 import type { LinkedAccount } from '~/lib/auth/account';
 import DiscordIcon from '~/components/icons/discord';
 import GitHubIcon from '~/components/icons/github';
 import Separator from '~/components/ui/separator';
 import { Button } from '~/components/ui/button';
-import authClient from '~/lib/auth/client';
 import Text from '~/components/ui/text';
 
 type Provider = {
 	id: 'discord' | 'github';
 	name: string;
 	icon: ComponentType<SVGProps<SVGSVGElement>>;
-};
-
-type LinkedAccountsCardProps = {
-	accounts: LinkedAccount[];
 };
 
 type ProviderRowProps = {
@@ -36,35 +34,19 @@ const PROVIDERS: Provider[] = [
 ];
 
 function ProviderRow({ provider, account }: ProviderRowProps) {
-	const router = useRouter();
-	const [isPending, startTransition] = useTransition();
+	const linkSocial = useMutation(linkSocialMutation());
+	const unlinkAccount = useMutation(unlinkAccountMutation());
+	const isPending = linkSocial.isPending || unlinkAccount.isPending;
 	const isPrimary = provider.id === 'discord';
 
 	function link() {
-		startTransition(async () => {
-			const { error } = await authClient.linkSocial({
-				provider: provider.id,
-				callbackURL: '/account',
-			});
-
-			if (error) {
-				toast.error(getAuthErrorMessage(error));
-			}
-		});
+		linkSocial.mutate(provider.id, { onError: (error) => toast.error(error.message) });
 	}
 
 	function unlink(accountId: string) {
-		startTransition(async () => {
-			const { error } = await authClient.unlinkAccount({ accountId });
-
-			if (error) {
-				toast.error(getAuthErrorMessage(error));
-
-				return;
-			}
-
-			await router.invalidate();
-			toast.success(`${provider.name} unlinked`);
+		unlinkAccount.mutate(accountId, {
+			onSuccess: () => toast.success(`${provider.name} unlinked`),
+			onError: (error) => toast.error(error.message),
 		});
 	}
 
@@ -116,7 +98,9 @@ function ProviderRow({ provider, account }: ProviderRowProps) {
 	);
 }
 
-function LinkedAccountsCard({ accounts }: LinkedAccountsCardProps) {
+function LinkedAccountsCard() {
+	const { accounts } = useSuspenseQuery(accountOverviewQuery()).data;
+
 	return (
 		<Card className='gap-4'>
 			<CardHeader>
