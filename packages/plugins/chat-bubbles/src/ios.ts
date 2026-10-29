@@ -74,7 +74,24 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		return bubble;
 	}
 
+	async function isNested(cell: NativeObjectHandle): Promise<boolean> {
+		const parent = objc.call(cell, 'superview') as NativeObjectHandle | null;
+
+		if (!parent) return false;
+
+		const [outer] = await objc.findViews(parent, IOSClass.messageCell, {
+			direction: 'ancestors',
+			maxDepth: 24,
+			maxResults: 1,
+			stopAtMatch: true,
+		});
+
+		return Boolean(outer);
+	}
+
 	async function place(key: string, cell: NativeObjectHandle) {
+		if (await isNested(cell)) return;
+
 		const nodes = (await objc.snapshot(cell, SNAPSHOT)) as SnapshotNode[];
 
 		if (disposed) return;
