@@ -5,6 +5,7 @@ export const PermissionUtils = metro.findByProps('computePermissions', 'canEvery
 	lazy: true,
 });
 export const TagProperties = metro.findByName('getTagProperties', { interop: false, lazy: true });
+export const byTagProperties = metro.filters.byName('getTagProperties');
 export const GuildMemberStore = metro.findStore('GuildMember', { lazy: true });
 export const ChannelStore = metro.findStore('Channel', { lazy: true });
 export const GuildStore = metro.stores.Guilds;
