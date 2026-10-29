@@ -28,4 +28,5 @@ private:
 std::string addonName(AddonSlot addon);
 std::string hookFailureMessage(AddonSlot addon, const std::string &reason);
 std::string hookSkippedMessage(AddonSlot addon, const std::string &selector);
+std::string callbackFailureMessage(AddonSlot addon, const std::string &reason);
 }

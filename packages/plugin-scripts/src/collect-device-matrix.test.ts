@@ -317,3 +317,14 @@ test('collects the hooks each plugin had skipped since the run began', () => {
 		['Avatar Radius', ['setFrame:']],
 	]);
 });
+
+test('attributes async native callback failures to their plugin', () => {
+	const errors = parsePluginErrors(
+		[
+			'2026-10-29T18:00:01.000Z E [plugins] Native plugin callback failed in Avatar Radius: boom',
+		],
+		'2026-10-29T18:00:00.000Z',
+	);
+
+	expect([...errors]).toEqual([['Avatar Radius', ['boom']]]);
+});

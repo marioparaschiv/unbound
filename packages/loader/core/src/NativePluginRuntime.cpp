@@ -9,6 +9,7 @@
 #include "LoaderAddonActivity.h"
 #include "LoaderBootstrap.h"
 #include "LoaderLog.h"
+#include "LoaderThreadWarnings.h"
 #include "NativeCallActivity.h"
 #include "NativeOperationGate.h"
 #include "RuntimeStallGate.h"
@@ -618,11 +619,12 @@ void executeRuntimeAsynchronously(std::function<void(jsi::Runtime &)> callback)
             catch (const std::exception &error)
             {
                 log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                    std::string("Native plugin callback failed: ") + error.what());
+                    threading::callbackFailureMessage(addon, error.what()));
             }
             catch (...)
             {
-                log(LogLevel::Error, LOG_CATEGORY_PLUGINS, "Native plugin callback failed");
+                log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                    threading::callbackFailureMessage(addon, "an unknown error"));
             }
         });
 }

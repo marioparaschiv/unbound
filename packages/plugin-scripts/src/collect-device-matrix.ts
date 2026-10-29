@@ -150,7 +150,7 @@ export function pluginLogScript(): string {
 }, function () { return '[]'; })`;
 }
 
-const HOOK_FAILURE = /^(\S+) E \[plugins\] Native plugin hook failed in (.+?): (.*)$/;
+const HOOK_FAILURE = /^(\S+) E \[plugins\] Native plugin (?:hook|callback) failed in (.+?): (.*)$/;
 const CONSOLE_ERROR = /^(\S+) E \[console\] '?\[([^\]:]+)(?::[^\]]*)?\]:? ?'?,? ?(.*)$/;
 const ERROR_LENGTH = 160;
 

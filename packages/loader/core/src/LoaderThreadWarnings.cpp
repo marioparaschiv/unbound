@@ -67,6 +67,11 @@ std::string hookFailureMessage(AddonSlot addon, const std::string &reason)
     return "Native plugin hook failed in " + addonName(addon) + ": " + reason;
 }
 
+std::string callbackFailureMessage(AddonSlot addon, const std::string &reason)
+{
+    return "Native plugin callback failed in " + addonName(addon) + ": " + reason;
+}
+
 std::string hookSkippedMessage(AddonSlot addon, const std::string &selector)
 {
     return "Native plugin hook skipped in " + addonName(addon) +
