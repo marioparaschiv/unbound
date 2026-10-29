@@ -453,11 +453,15 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
             loader::AddonScope runtimeScope(addon);
             jsi::Value failure = catchingCall(runtime).call(runtime, jsi::Value(runtime, *callback),
                                                             adoptJavaValue(runtime, parsed));
-            if (failure.isString())
+            if (!failure.isString())
             {
-                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                            loader::threading::hookFailureMessage(
-                                addon, failure.asString(runtime).utf8(runtime)));
+                return;
+            }
+            std::optional<std::string> message = loader::threading::throttledHookFailure(
+                addon, failure.asString(runtime).utf8(runtime));
+            if (message)
+            {
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS, *message);
             }
         });
 }

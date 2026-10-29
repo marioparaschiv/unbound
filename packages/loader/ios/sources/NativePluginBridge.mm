@@ -3090,10 +3090,12 @@ struct HookCallGuard {
 
 static void logHookFailure(const std::exception &exception)
 {
-    [Logger error:LOG_CATEGORY_PLUGINS
-           format:@"%s",
-                  loader::threading::hookFailureMessage(loader::currentAddon(), exception.what())
-                      .c_str()];
+    std::optional<std::string> message =
+        loader::threading::throttledHookFailure(loader::currentAddon(), exception.what());
+    if (message)
+    {
+        [Logger error:LOG_CATEGORY_PLUGINS format:@"%s", message->c_str()];
+    }
 }
 
 static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, void *userData)
