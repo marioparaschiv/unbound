@@ -2,6 +2,7 @@ import { findByPropsLazy, findStoreLazy } from '~/api/metro/wrappers';
 import { BundleInfo, getRuntimeProperties } from '~/api/native';
 import { CLIENT_VERSION, VERSION } from '~/lib/constants';
 import { React, ReactNative } from '~/api/metro/common';
+import { discordChannel } from '~/lib/discord-support';
 import type { BundleInfoType } from '~/api/native';
 import { Messages } from '~/api/metro/api';
 import fs from '~/api/fs';
@@ -41,6 +42,12 @@ function attempt<T>(read: () => T | null | undefined, fallback: T): T {
 	}
 }
 
+function channelOf(version: string, appSource: string) {
+	const parsed = discordChannel(version, appSource);
+
+	return { discord: parsed.version, discordChannel: parsed.channel };
+}
+
 function deviceFlags(android: boolean): string[] {
 	const device = globalThis.NativePlatform?.device;
 	const rooted = attempt(() => device?.isRooted(), false);
@@ -65,6 +72,7 @@ export function readDebugInfo(): DebugInfo {
 	const android = Platform.OS === 'android';
 	const rn = Platform.constants.reactNativeVersion;
 	const runtime = getRuntimeProperties();
+	const appSource = attempt(() => platform?.app.getAppSource(), '') || 'unknown source';
 	const os = android
 		? `${Platform.constants.Release} (SDK ${Platform.Version})`
 		: attempt(() => platform?.device.getOSVersionString(), String(Platform.Version));
@@ -74,9 +82,9 @@ export function readDebugInfo(): DebugInfo {
 		commit: String(VERSION),
 		loader: String(loader?.version ?? 'unknown'),
 		loaderOrigin: String(loader?.origin ?? 'unknown origin'),
-		discord: String(bundle.Version ?? 'unknown'),
+		...channelOf(String(bundle.Version ?? 'unknown'), appSource),
 		discordBuild: String(bundle.Build ?? 'unknown'),
-		appSource: attempt(() => platform?.app.getAppSource(), '') || 'unknown source',
+		appSource,
 		framework: attempt(() => platform?.app.getFramework?.(), ''),
 		react: React.version,
 		reactNative: rn ? `${rn.major}.${rn.minor}.${rn.patch}` : 'unknown',
