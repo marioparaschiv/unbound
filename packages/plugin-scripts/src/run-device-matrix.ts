@@ -195,6 +195,8 @@ function readScroll(out: string): ScrollResult | undefined {
 export function runFailed(run: DeviceRun): boolean {
 	return Boolean(
 		run.error ||
+		run.selfTest?.ok === false ||
+		run.scrollStuck ||
 		run.scrollToasts?.length ||
 		run.emptyToasts?.length ||
 		!run.checks.every(passed),

@@ -189,3 +189,16 @@ test('does not call a run clean when the loader self-test failed', () => {
 	expect(runFailed(run)).toBe(true);
 	expect(renderSummary([run])).not.toContain('Every plugin passed on every device.');
 });
+
+test('fails a run whose swipes did not move the list', () => {
+	const check: MeasuredCheck = {
+		id: 'unbound.alpha',
+		behavior: 'pass',
+		lifecycle: 'pass',
+		evidence: [],
+	};
+
+	expect(runFailed({ device: phone, checks: [check], changes: [], scrollStuck: true })).toBe(
+		true,
+	);
+});
