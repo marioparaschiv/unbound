@@ -313,6 +313,7 @@ export type {
 	Plugin,
 	PluginContext,
 	PluginEntity,
+	PluginSelfTestResult,
 	PostponeRenderProps,
 	PressableBaseProps,
 	PressableHighlightProps,

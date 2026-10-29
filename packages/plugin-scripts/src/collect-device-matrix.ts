@@ -17,6 +17,7 @@ export type CycleResult = {
 	hooksStopped: number;
 	hooksAfter: number;
 	hooksUpdated: number;
+	selfTest?: { ok: boolean; detail: string };
 };
 
 export type ScreenshotTarget = { kind: 'android'; serial?: string } | { kind: 'ios'; udid: string };
@@ -60,6 +61,13 @@ export function cycleScript(id: string): string {
 	var updated = manager.getEntity(id);
 	result.updated = Boolean(updated && updated.started);
 	result.hooksUpdated = hooks();
+	var instance = updated && updated.instance;
+	if (result.updated && instance && typeof instance.selfTest === 'function') {
+		try {
+			var report = await instance.selfTest();
+			if (report) result.selfTest = { ok: Boolean(report.ok), detail: String(report.detail) };
+		} catch (failure) { result.selfTest = { ok: false, detail: message(failure) }; }
+	}
 	return JSON.stringify(result);
 })()`;
 }
@@ -95,17 +103,23 @@ export function checkFromCycle(result: CycleResult, screenshot?: string): Device
 
 	const evidence = [
 		`cycle: hooks ${result.hooksBefore}→${result.hooksStopped}→${result.hooksAfter}→${result.hooksUpdated}`,
+		...(result.selfTest ? [`self-test: ${result.selfTest.detail}`] : []),
 		...(screenshot ? [`screenshot: ${screenshot}`] : []),
 	];
 	const failure = lifecycleFailure(result);
-	const behavior = result.error || !result.updated ? 'fail' : 'pass';
+	const selfTestFailure =
+		result.selfTest && !result.selfTest.ok
+			? `self-test failed: ${result.selfTest.detail}`
+			: undefined;
+	const behavior = result.error || !result.updated || selfTestFailure ? 'fail' : 'pass';
+	const note = [failure, selfTestFailure].filter(Boolean).join('; ');
 
 	return {
 		id: result.id,
 		behavior,
 		lifecycle: failure ? 'fail' : 'pass',
 		evidence,
-		...(failure ? { note: failure } : {}),
+		...(note ? { note } : {}),
 	};
 }
 

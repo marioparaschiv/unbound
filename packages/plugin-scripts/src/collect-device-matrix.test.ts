@@ -68,3 +68,18 @@ test('the cycle script names the plugin it cycles and parses', () => {
 	expect(script).toContain('"unbound.alpha"');
 	expect(() => new Function(`return ${script}`)).not.toThrow();
 });
+
+test('a passing self-test is recorded as evidence', () => {
+	const check = checkFromCycle({ ...healthy, selfTest: { ok: true, detail: 'sample cleaned' } });
+
+	expect(check.behavior).toBe('pass');
+	expect(check.evidence).toContain('self-test: sample cleaned');
+});
+
+test('a failing self-test fails the behavior with its detail', () => {
+	const check = checkFromCycle({ ...healthy, selfTest: { ok: false, detail: 'used 1 colors' } });
+
+	expect(check.behavior).toBe('fail');
+	expect(check.lifecycle).toBe('pass');
+	expect(check.note).toBe('self-test failed: used 1 colors');
+});

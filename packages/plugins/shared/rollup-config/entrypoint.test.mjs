@@ -70,3 +70,20 @@ test('does not evaluate a plugin merely to check whether it has settings', () =>
 	expect(entry.getSettingsPanel).toBeUndefined();
 	expect(globalThis.__sharedPluginEntrypointCalls).toEqual([]);
 });
+
+test('forwards a self-test, and returns nothing for a plugin without one', async () => {
+	const withTest = {
+		code: '({default:{selfTest(){return {ok:true,detail:"fine"};}}})',
+		type: 'chunk',
+	};
+	const without = { code: '({default:{}})', type: 'chunk' };
+	const bundle = hermesExpressionEntrypoint();
+
+	bundle.generateBundle({}, { a: withTest, b: without });
+
+	expect(await Function(`return ${withTest.code}`)().selfTest()).toEqual({
+		ok: true,
+		detail: 'fine',
+	});
+	expect(Function(`return ${without.code}`)().selfTest()).toBeUndefined();
+});
