@@ -555,6 +555,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			phase: 'frozen',
 			addon: this.reportedAddon(entity),
 			seconds: freeze.seconds,
+			...(freeze.detail ? { message: freeze.detail } : {}),
 		});
 		const detail = freeze.detail ? ` ${freeze.detail}` : '';
 
