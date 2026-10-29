@@ -16,10 +16,11 @@ export type DeviceRun = {
 	checks: MeasuredCheck[];
 	changes: string[];
 	scrollToasts?: string[];
+	emptyToasts?: string[];
 	error?: string;
 };
 
-type ScrollResult = { swipes: number; toasts: string[] };
+type ScrollResult = { swipes: number; toasts: string[]; emptyToasts?: string[] };
 
 const COLLECTOR = resolve(import.meta.dir, 'collect-device-matrix.ts');
 
@@ -92,16 +93,20 @@ export function renderSummary(runs: DeviceRun[]): string {
 	const toasts = runs
 		.filter((run) => run.scrollToasts?.length)
 		.map((run) => `- ${run.device.name}: ${run.scrollToasts!.join(', ')}`);
+	const empty = runs
+		.filter((run) => run.emptyToasts?.length)
+		.map((run) => `- ${run.device.name}: ${run.emptyToasts!.join(', ')}`);
 
 	return [
 		'## Device matrix',
 		'',
 		...totals,
 		...(rows.length ? ['', header, divider, ...rows] : []),
-		...(!rows.length && !toasts.length && runs.every((run) => !run.error)
+		...(!rows.length && !toasts.length && !empty.length && runs.every((run) => !run.error)
 			? ['', 'Every plugin passed on every device.']
 			: []),
 		...(toasts.length ? ['', '### Toasts while scrolling', '', ...toasts] : []),
+		...(empty.length ? ['', '### Empty toasts', '', ...empty] : []),
 		...(offMain.length ? ['', '### Off-main view calls', '', ...offMain] : []),
 		...(errors.length ? ['', '### Plugin errors', '', ...errors] : []),
 		...(skipped.length
@@ -111,16 +116,19 @@ export function renderSummary(runs: DeviceRun[]): string {
 	].join('\n');
 }
 
-function readScrollToasts(out: string): string[] | undefined {
+function readScroll(out: string): ScrollResult | undefined {
 	const file = join(out, 'scroll.json');
 
-	return existsSync(file)
-		? (JSON.parse(readFileSync(file, 'utf8')) as ScrollResult).toasts
-		: undefined;
+	return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as ScrollResult) : undefined;
 }
 
 export function runFailed(run: DeviceRun): boolean {
-	return Boolean(run.error || run.scrollToasts?.length || !run.checks.every(passed));
+	return Boolean(
+		run.error ||
+		run.scrollToasts?.length ||
+		run.emptyToasts?.length ||
+		!run.checks.every(passed),
+	);
 }
 
 function readChecks(out: string): MeasuredCheck[] {
@@ -152,15 +160,16 @@ async function collect(
 	const ids = new Set(only?.split(','));
 	const checks = readChecks(out).filter((check) => !only || ids.has(check.id));
 
-	const scrollToasts = readScrollToasts(out);
+	const scroll = readScroll(out);
+	const toasts = { scrollToasts: scroll?.toasts, emptyToasts: scroll?.emptyToasts };
 
 	if (exit !== 0) {
 		const reason = failureReason(lines) ?? `exited with ${exit}`;
 
-		return { device, checks, changes, scrollToasts, error: `collector failed: ${reason}` };
+		return { device, checks, changes, ...toasts, error: `collector failed: ${reason}` };
 	}
 
-	return { device, checks, changes, scrollToasts };
+	return { device, checks, changes, ...toasts };
 }
 
 async function main(): Promise<void> {

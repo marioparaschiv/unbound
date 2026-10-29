@@ -129,3 +129,24 @@ test('lists skipped hooks without failing the run', () => {
 		'### Hooks skipped while JavaScript was busy\n\n- iPhone SE, unbound.chat-bubbles: `setBackgroundColor:`',
 	);
 });
+
+test('fails a device that showed an empty toast at any point', () => {
+	const check: MeasuredCheck = {
+		id: 'unbound.alpha',
+		behavior: 'pass',
+		lifecycle: 'pass',
+		evidence: [],
+	};
+	const run = {
+		device: phone,
+		checks: [check],
+		changes: [],
+		scrollToasts: [],
+		emptyToasts: ['empty toast from copyLink'],
+	};
+
+	expect(runFailed(run)).toBe(true);
+	expect(renderSummary([run])).toContain(
+		'### Empty toasts\n\n- iPhone SE: empty toast from copyLink',
+	);
+});

@@ -13,6 +13,7 @@ import {
 	parseScreenSize,
 	parseToastLines,
 	parseSkippedHooks,
+	toastCaller,
 	swipeCommands,
 	type CycleResult,
 } from './collect-device-matrix';
@@ -299,10 +300,13 @@ test('lists the toasts shown or dropped after the scroll started', () => {
 	const lines = [
 		"2026-10-29T18:00:01.000Z I [console] '»', '[Toasts]', 'Showing a toast:', 'Before'",
 		"2026-10-29T18:00:03.000Z I [console] '»', '[Toasts]', 'Showing a toast:', 'Copied'",
-		"2026-10-29T18:00:04.000Z W [console] '»', '[Toasts]', 'Ignored a toast with nothing to show', 'Error\\n at showToast'",
+		"2026-10-29T18:00:04.000Z W [console] '»', '[Toasts]', 'Ignored a toast with nothing to show', 'Error\\n    at showToast (address at unbound:1:40533)\\n    at copyLink (address at unbound:1:9)'",
 	];
 
-	expect(parseToastLines(lines, '2026-10-29T18:00:02.000Z')).toEqual(['Copied', 'empty toast']);
+	expect(parseToastLines(lines, '2026-10-29T18:00:02.000Z')).toEqual([
+		'Copied',
+		'empty toast from copyLink',
+	]);
 });
 
 test('collects the hooks each plugin had skipped since the run began', () => {
@@ -327,4 +331,13 @@ test('attributes async native callback failures to their plugin', () => {
 	);
 
 	expect([...errors]).toEqual([['Avatar Radius', ['boom']]]);
+});
+
+test('names the first frame outside the toast API as the caller', () => {
+	expect(
+		toastCaller(
+			'Error\\n    at showToast (address at unbound:1:4)\\n    at anonymous (address at unbound:1:5)\\n    at copyLink (address at unbound:1:6)',
+		),
+	).toBe('copyLink');
+	expect(toastCaller('Error\\n    at showToast (address at unbound:1:4)')).toBeUndefined();
 });

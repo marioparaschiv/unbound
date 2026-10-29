@@ -65,7 +65,8 @@ function patchToastAPI() {
 
 		if (!mapped) {
 			Logger.warn(
-				'Ignored a Discord toast with nothing to show:',
+				'Ignored a Discord toast with nothing to show',
+				new Error().stack,
 				Object.keys(options ?? {}),
 			);
 
