@@ -2,7 +2,7 @@
 	"name": "multi-account",
 	"version": "1.0.0",
 	"private": true,
-	"description": "Unlocks the built-in multi-account switcher on iOS.",
+	"description": "Unlocks the built-in multi-account switcher on mobile.",
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c"
