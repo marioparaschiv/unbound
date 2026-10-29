@@ -27,7 +27,7 @@ export type Tokens = {
  * shipped alongside via the package `files` field.
  * @returns The absolute path to the `templates` directory.
  */
-export function templatesDir(): string {
+function templatesDir(): string {
 	let dir = import.meta.dirname;
 
 	while (true) {

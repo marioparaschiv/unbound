@@ -73,7 +73,7 @@ async function listenerPids(port: number): Promise<number[]> {
  * @param port The bridge's port.
  * @returns The path in the system temporary directory.
  */
-export function bridgeLogPath(port: number): string {
+function bridgeLogPath(port: number): string {
 	return join(tmpdir(), `unbound-bridge-${port}.log`);
 }
 

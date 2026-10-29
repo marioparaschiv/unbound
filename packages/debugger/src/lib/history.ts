@@ -26,6 +26,6 @@ export function addHistoryItem(item: string) {
 }
 
 /** @description Writes the REPL history to disk. */
-export function persistHistory() {
+function persistHistory() {
 	HISTORY_FILE.write(JSON.stringify(history, null, 2));
 }

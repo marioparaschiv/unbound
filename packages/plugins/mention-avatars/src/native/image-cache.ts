@@ -31,7 +31,7 @@ export function bundledFilePath(url: string): string | undefined {
  * @param objc The plugin's Objective-C bridge, used to read bundled files.
  * @returns The bytes, or `null` for an unsupported URL or a failed read.
  */
-export async function loadImageBytes(url: string, objc: FileReader): Promise<ImageBytes | null> {
+async function loadImageBytes(url: string, objc: FileReader): Promise<ImageBytes | null> {
 	const path = bundledFilePath(url);
 
 	if (path) {

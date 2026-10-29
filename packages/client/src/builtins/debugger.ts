@@ -278,7 +278,7 @@ function inspect(value: unknown): string {
  * @returns A frame the bridge accepts: string text and a level of 1, 2 or 3.
  */
 // UNKNOWN: nativeLoggingHook is called by native code and other patches with whatever they pass.
-export function logFrame(message: unknown, level: unknown): LogMessage {
+function logFrame(message: unknown, level: unknown): LogMessage {
 	return {
 		type: 'log',
 		level: level === 2 || level === 3 ? level : 1,

@@ -51,7 +51,7 @@ const managerDirectories: Record<ManagerType, string> = {
 export type ReloadResult = { ok: true } | { ok: false; error: Error };
 
 /** A single freeze at least this long disables the addon at once. */
-export const LONG_FREEZE_SECONDS = 20;
+const LONG_FREEZE_SECONDS = 20;
 
 type AddonEvents<T extends Addon> = {
 	loaded: (entity: T) => void;

@@ -14,7 +14,7 @@ export const state: {
 	isInitialized: false,
 };
 
-export const MESSAGE_LEVELS = {
+const MESSAGE_LEVELS = {
 	1: terminal.gray,
 	2: terminal.yellow,
 	3: terminal.red,
@@ -231,7 +231,7 @@ function handleControllerMessage(ws: session.SocketLike, raw: string) {
  * @description Finds the machine's first external IPv4 address, for devices on the LAN to dial.
  * @returns The address, or `undefined` if the machine has none.
  */
-export function getLocalAddress(): string | undefined {
+function getLocalAddress(): string | undefined {
 	const interfaces = os.networkInterfaces();
 
 	for (const ifaces of Object.values(interfaces)) {
