@@ -479,7 +479,7 @@ export function toastLogScript(): string {
 }
 
 const TOAST_LINE =
-	/^(\S+) \w \[console\] .*\[Toasts\]'?,? ?'?(Showing a toast:|Ignored a toast[^']*)'?,? ?'?([^']*)/;
+	/^(\S+) \w \[console\] .*\[Toasts\]'?,? ?'?(Showing a toast:|Ignored a (?:Discord )?toast[^']*)'?,? ?'?([^']*)/;
 
 export function parseToastLines(lines: string[], since: string): string[] {
 	return lines.flatMap((line) => {
@@ -487,8 +487,25 @@ export function parseToastLines(lines: string[], since: string): string[] {
 
 		if (!match || match[1]! < since) return [];
 
-		return match[2]!.startsWith('Showing') ? [match[3]!.trim() || 'untitled'] : ['empty toast'];
+		if (match[2]!.startsWith('Showing')) return [match[3]!.trim() || 'untitled'];
+
+		const caller = toastCaller(match[3]!);
+
+		return [caller ? `empty toast from ${caller}` : 'empty toast'];
 	});
+}
+
+const STACK_FRAME = /\bat ([\w$.]+) \(/g;
+const TOAST_FRAMES = new Set(['Error', 'showToast', 'addToast', 'open', 'instead']);
+
+export function toastCaller(stack: string): string | undefined {
+	return [...stack.matchAll(STACK_FRAME)]
+		.map((frame) => frame[1]!)
+		.find((name) => !TOAST_FRAMES.has(name) && name !== 'anonymous' && name !== 'eval');
+}
+
+export function isEmptyToast(toast: string): boolean {
+	return toast.startsWith('empty toast');
 }
 
 async function screenshot(target: ScreenshotTarget, file: string): Promise<boolean> {
@@ -617,12 +634,14 @@ async function main(): Promise<void> {
 
 	await Bun.sleep(2_000);
 
-	const toasts = parseToastLines(
-		JSON.parse(await evaluate(port, toastLogScript())) as string[],
-		scrollSince,
-	);
+	const toastLines = JSON.parse(await evaluate(port, toastLogScript())) as string[];
+	const toasts = parseToastLines(toastLines, scrollSince);
+	const emptyToasts = parseToastLines(toastLines, since).filter(isEmptyToast);
 
-	writeFileSync(join(out, 'scroll.json'), `${JSON.stringify({ swipes, toasts }, null, '\t')}\n`);
+	writeFileSync(
+		join(out, 'scroll.json'),
+		`${JSON.stringify({ swipes, toasts, emptyToasts }, null, '\t')}\n`,
+	);
 	console.error(`scrolled ${swipes} times; ${toasts.length} toasts appeared`);
 
 	const logLines = JSON.parse(await evaluate(port, pluginLogScript())) as string[];
