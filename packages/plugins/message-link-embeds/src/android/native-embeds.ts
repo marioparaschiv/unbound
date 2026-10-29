@@ -18,12 +18,14 @@ import {
 	javaReference,
 	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
-import { readViewText } from '@unbound-plugins/shared/native/android/spans';
+import { readViewTextAsync, type ViewText } from '@unbound-plugins/shared/native/android/spans';
 import { connectTextRewrites } from '@unbound-plugins/shared/native/android/text-rewrites';
 import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 import {
 	currentDecorView,
 	findViewsOfClass,
+	readCalls,
+	runOnMain,
 	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
@@ -188,50 +190,41 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		define(embed);
 	}
 
-	function contentTextView(
+	async function contentTextView(
 		messageView: NativeJavaReference,
 		channelName: string,
-	): NativeJavaReference | null {
-		const stack: NativeJavaReference[] = [messageView];
-		const contentClass = java.getClass(MESSAGE_CONTENT_VIEW);
-		const groupClass = java.getClass('android.view.ViewGroup');
+	): Promise<{ view: NativeJavaReference; text: ViewText } | null> {
+		const views = await java.findViews!(messageView, MESSAGE_CONTENT_VIEW, {
+			maxDepth: 64,
+			maxVisited: 2_000,
+			maxResults: 32,
+			stopAtMatch: true,
+		});
 
-		while (stack.length) {
-			const view = stack.pop()!;
+		for (const value of views) {
+			const view = javaReference(value);
+			const text = view ? await readViewTextAsync(java, view) : null;
 
-			if (javaFlag(java.invoke(contentClass, 'isInstance', [view]))) {
-				const text = readViewText(java, view)?.string ?? '';
-
-				if (findRenderedLinkRange(text, channelName)) return view;
-
-				continue;
-			}
-
-			if (!javaFlag(java.invoke(groupClass, 'isInstance', [view]))) continue;
-
-			const count = javaNumber(java.invoke(view, 'getChildCount', [])) ?? 0;
-
-			for (let index = count - 1; index >= 0; index--) {
-				const child = javaReference(java.invoke(view, 'getChildAt', [javaInt(index)]));
-
-				if (child) stack.push(child);
-			}
+			if (view && text && findRenderedLinkRange(text.string, channelName))
+				return { view, text };
 		}
 
 		return null;
 	}
 
-	function textWidth(textView: NativeJavaReference, density: number): number {
-		return (
-			((javaNumber(java.invoke(textView, 'getWidth', [])) ?? 0) -
-				(javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0) -
-				(javaNumber(java.invoke(textView, 'getTotalPaddingRight', [])) ?? 0)) /
-			density
-		);
+	async function textWidth(textView: NativeJavaReference, density: number): Promise<number> {
+		const [width, left, right] = (
+			await runOnMain(
+				java,
+				readCalls(textView, ['getWidth', 'getTotalPaddingLeft', 'getTotalPaddingRight']),
+			)
+		).map((value) => javaNumber(value) ?? 0) as [number, number, number];
+
+		return (width - left - right) / density;
 	}
 
-	function displayDensity(textView: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(textView, 'getResources', []));
+	async function displayDensity(textView: NativeJavaReference): Promise<number> {
+		const resources = javaReference(await java.invokeAsync(textView, 'getResources', []));
 		const metrics = resources
 			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
 			: null;
@@ -239,7 +232,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
 	}
 
-	function render(messageView: NativeJavaReference, messageId: string) {
+	async function render(messageView: NativeJavaReference, messageId: string) {
 		const key = viewKey(messageView as NativeJavaValue);
 		const channelId = currentChannelId();
 		const source: Message | undefined = channelId
@@ -262,15 +255,18 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		}
 
 		const channelName = linkedChannelName(target, linkedMessage);
-		const textView = channelName ? contentTextView(messageView, channelName) : null;
-		const content = textView ? readViewText(java, textView) : null;
+		const found = channelName ? await contentTextView(messageView, channelName) : null;
+		const textView = found?.view;
+		const content = found?.text;
 
-		if (!channelName || !textView || !content || inline.isDefined(content.string)) return;
+		if (disposed || !channelName || !textView || !content || inline.isDefined(content.string)) {
+			return;
+		}
 
 		const range = findRenderedLinkRange(content.string, channelName);
 		const built = buildEmbeddedContent(renderers, linkedMessage, target.channelId);
-		const density = displayDensity(textView);
-		const width = textWidth(textView, density);
+		const density = await displayDensity(textView);
+		const width = await textWidth(textView, density);
 
 		if (!range || !built) return;
 
@@ -312,14 +308,12 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 
 	function schedule(messageView: NativeJavaReference, messageId: string) {
 		setTimeout(() => {
-			try {
-				render(messageView, messageId);
-			} catch (error) {
+			render(messageView, messageId).catch((error) => {
 				console.error(
 					'[Message Link Embeds] Failed to embed a linked message on Android:',
 					error,
 				);
-			}
+			});
 		}, 0);
 	}
 

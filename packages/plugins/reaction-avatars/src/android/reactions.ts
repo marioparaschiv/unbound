@@ -27,6 +27,7 @@ import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-c
 import {
 	currentDecorView,
 	findViewsOfClass,
+	readCalls,
 	runOnMain,
 	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
@@ -291,10 +292,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		const views = row ? (await children(row)).filter(isReactionView) : [];
 		const visibility = await runOnMain(
 			java,
-			views.map(
-				(view) =>
-					({ op: 'invoke', handle: view, name: 'getVisibility', args: [] }) as const,
-			),
+			views.flatMap((view) => readCalls(view, ['getVisibility'])),
 		);
 		const reactions = message?.reactions ?? [];
 		const used = new Set<number>();

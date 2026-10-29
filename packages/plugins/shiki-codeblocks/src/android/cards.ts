@@ -244,8 +244,8 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		if (!isCurrent(entry, card)) return;
 
 		const height = card.height * entry.density;
-		const container = hostContainer(java, entry.textView);
-		const position = reservedTop(java, entry.textView, card.placeholder);
+		const container = await hostContainer(java, entry.textView);
+		const position = await reservedTop(java, entry.textView, card.placeholder);
 
 		if (!container || !position) return;
 
@@ -271,7 +271,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		if (card.mounting && !card.disposed) {
 			const mounted = await card.mounting.catch(() => null);
 
-			if (!hostHasContent(java, card.host)) {
+			if (!(await hostHasContent(java, card.host))) {
 				card.mounting = null;
 
 				if (mounted) await fabric.unmountAsync(mounted).catch(() => undefined);
@@ -362,28 +362,30 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 
 		const reusable = existing?.cards ?? [];
 		const offsets = placeholderOffsets(slots);
-		const cards = contents.map((cardContent, index): Card => {
-			const previous = reusable[index];
-			const fields = {
-				...cardContent,
-				block: blocks[index]!,
-				placeholder: offsets[index]!,
-				height: codeBlockLayout(cardContent.code, width, cardContent.overflow).height,
-			};
+		const cards = await Promise.all(
+			contents.map(async (cardContent, index): Promise<Card> => {
+				const previous = reusable[index];
+				const fields = {
+					...cardContent,
+					block: blocks[index]!,
+					placeholder: offsets[index]!,
+					height: codeBlockLayout(cardContent.code, width, cardContent.overflow).height,
+				};
 
-			if (previous && !previous.disposed && previous.code === cardContent.code) {
-				return Object.assign(previous, fields, { revision: previous.revision + 1 });
-			}
+				if (previous && !previous.disposed && previous.code === cardContent.code) {
+					return Object.assign(previous, fields, { revision: previous.revision + 1 });
+				}
 
-			return {
-				...fields,
-				id: `shiki-card-android-${nextId++}`,
-				host: createHost(java, textView),
-				mounting: null,
-				revision: 0,
-				disposed: false,
-			};
-		});
+				return {
+					...fields,
+					id: `shiki-card-android-${nextId++}`,
+					host: await createHost(java, textView),
+					mounting: null,
+					revision: 0,
+					disposed: false,
+				};
+			}),
+		);
 
 		for (const card of reusable) {
 			if (!cards.includes(card)) void teardown(card);

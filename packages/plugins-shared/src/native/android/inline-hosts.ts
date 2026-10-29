@@ -13,10 +13,11 @@ import {
 	javaText,
 	sameJavaReference,
 } from './java-values';
+import { readCalls, runOnMain } from './views';
 
 export type InlineHostBridge = Pick<
 	NativeJavaBridge,
-	'getClass' | 'invoke' | 'invokeAsync' | 'construct' | 'className'
+	'getClass' | 'invoke' | 'invokeAsync' | 'construct' | 'className' | 'batch' | 'batchAsync'
 >;
 
 export type InlinePosition = {
@@ -82,23 +83,24 @@ function hostsFreely(java: InlineHostBridge, view: NativeJavaReference): boolean
  * @param textView The text view the reserved room is in.
  * @returns The ancestor and the text view's offset inside it, or `null` when none was found.
  */
-export function hostContainer(
+export async function hostContainer(
 	java: InlineHostBridge,
 	textView: NativeJavaReference,
-): HostContainer | null {
+): Promise<HostContainer | null> {
 	let x = 0;
 	let y = 0;
 	let current: NativeJavaReference | null = textView;
 
 	for (let depth = 0; current && depth < MAX_ANCESTOR_DEPTH; depth++) {
-		x +=
-			(javaNumber(java.invoke(current, 'getLeft', [])) ?? 0) -
-			(javaNumber(java.invoke(current, 'getScrollX', [])) ?? 0);
-		y +=
-			(javaNumber(java.invoke(current, 'getTop', [])) ?? 0) -
-			(javaNumber(java.invoke(current, 'getScrollY', [])) ?? 0);
+		const [left, scrollX, top, scrollY, parentValue] = await runOnMain(
+			java,
+			readCalls(current, ['getLeft', 'getScrollX', 'getTop', 'getScrollY', 'getParent']),
+		);
 
-		const parent = javaReference(java.invoke(current, 'getParent', []));
+		x += (javaNumber(left) ?? 0) - (javaNumber(scrollX) ?? 0);
+		y += (javaNumber(top) ?? 0) - (javaNumber(scrollY) ?? 0);
+
+		const parent = javaReference(parentValue);
 
 		if (!parent) return null;
 
@@ -120,13 +122,17 @@ export function hostContainer(
  * @param height The reserved room's height, in pixels.
  * @returns The room's top-left corner inside the text view, or `null` before the text is laid out.
  */
-export function reservedPosition(
+export async function reservedPosition(
 	java: InlineHostBridge,
 	textView: NativeJavaReference,
 	index: number,
 	height: number,
-): InlinePosition | null {
-	const layout = javaReference(java.invoke(textView, 'getLayout', []));
+): Promise<InlinePosition | null> {
+	const [layoutValue, paddingLeft, paddingTop] = await runOnMain(
+		java,
+		readCalls(textView, ['getLayout', 'getTotalPaddingLeft', 'getTotalPaddingTop']),
+	);
+	const layout = javaReference(layoutValue);
 
 	if (!layout) return null;
 
@@ -135,8 +141,8 @@ export function reservedPosition(
 	const left = javaNumber(java.invoke(layout, 'getPrimaryHorizontal', [javaInt(index)])) ?? 0;
 
 	return {
-		x: left + (javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0),
-		y: bottom - height + (javaNumber(java.invoke(textView, 'getTotalPaddingTop', [])) ?? 0),
+		x: left + (javaNumber(paddingLeft) ?? 0),
+		y: bottom - height + (javaNumber(paddingTop) ?? 0),
 	};
 }
 
@@ -147,12 +153,16 @@ export function reservedPosition(
  * @param index The index of the placeholder character carrying the spacer span.
  * @returns The line's top-left corner at the placeholder inside the text view, or `null` before the text is laid out.
  */
-export function reservedTop(
+export async function reservedTop(
 	java: InlineHostBridge,
 	textView: NativeJavaReference,
 	index: number,
-): InlinePosition | null {
-	const layout = javaReference(java.invoke(textView, 'getLayout', []));
+): Promise<InlinePosition | null> {
+	const [layoutValue, paddingLeft, paddingTop] = await runOnMain(
+		java,
+		readCalls(textView, ['getLayout', 'getTotalPaddingLeft', 'getTotalPaddingTop']),
+	);
+	const layout = javaReference(layoutValue);
 
 	if (!layout) return null;
 
@@ -161,8 +171,8 @@ export function reservedTop(
 	const left = javaNumber(java.invoke(layout, 'getPrimaryHorizontal', [javaInt(index)])) ?? 0;
 
 	return {
-		x: left + (javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0),
-		y: top + (javaNumber(java.invoke(textView, 'getTotalPaddingTop', [])) ?? 0),
+		x: left + (javaNumber(paddingLeft) ?? 0),
+		y: top + (javaNumber(paddingTop) ?? 0),
 	};
 }
 
@@ -172,11 +182,11 @@ export function reservedTop(
  * @param textView A view whose context the host shares.
  * @returns The host view.
  */
-export function createHost(
+export async function createHost(
 	java: InlineHostBridge,
 	textView: NativeJavaReference,
-): NativeJavaHandle {
-	const context = javaReference(java.invoke(textView, 'getContext', []));
+): Promise<NativeJavaHandle> {
+	const context = javaReference(await java.invokeAsync(textView, 'getContext', []));
 
 	return java.construct('android.widget.FrameLayout', context ? [context] : []);
 }
@@ -334,8 +344,11 @@ export async function layoutHostingList(
  * @param host The host view.
  * @returns Whether the host has at least one child view.
  */
-export function hostHasContent(java: InlineHostBridge, host: NativeJavaReference): boolean {
-	return (javaNumber(java.invoke(host, 'getChildCount', [])) ?? 0) > 0;
+export async function hostHasContent(
+	java: InlineHostBridge,
+	host: NativeJavaReference,
+): Promise<boolean> {
+	return (javaNumber(await java.invokeAsync(host, 'getChildCount', [])) ?? 0) > 0;
 }
 
 /**

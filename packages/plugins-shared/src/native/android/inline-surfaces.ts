@@ -42,6 +42,7 @@ type Group = {
 
 type Entry = InlineDefinition & {
 	groups: Group[];
+	context?: Promise<NativeJavaReference | null>;
 };
 
 export type InlineSurfaces = {
@@ -100,12 +101,29 @@ export function createInlineSurfaces(
 	let nextGroup = 0;
 	let disposed = false;
 
+	function contextOf(entry: Entry): Promise<NativeJavaReference | null> {
+		entry.context ??= java
+			.invokeAsync(entry.textView, 'getContext', [])
+			.then((value) => javaReference(value))
+			.catch(() => null);
+
+		return entry.context;
+	}
+
 	function createGroup(entry: Entry) {
 		if (disposed || entry.groups.length >= MAX_GROUPS_PER_TEXT) return;
 
-		const context = javaReference(java.invoke(entry.textView, 'getContext', []));
 		const group: Group = { id: `${options.groupPrefix}-${nextGroup++}`, hosts: [], mounts: [] };
 
+		entry.groups.push(group);
+		void contextOf(entry).then((context) => {
+			if (!disposed && entry.groups.includes(group)) {
+				fillGroup(entry, group, context);
+			}
+		});
+	}
+
+	function fillGroup(entry: Entry, group: Group, context: NativeJavaReference | null) {
 		for (const [index, slot] of entry.slots.entries()) {
 			const host = java.construct('android.widget.FrameLayout', context ? [context] : []);
 			const mount = mountSurface(host, slot.surfaceId);
@@ -123,19 +141,17 @@ export function createInlineSurfaces(
 				watchForBlank(entry, group, index, 0);
 			});
 		}
-
-		entry.groups.push(group);
 	}
 
 	function mountSurface(host: NativeJavaHandle, surfaceId: string) {
 		return fabric.mountAsync(host, options.surfaceModule, { surfaceId }).catch(() => null);
 	}
 
-	function isBlank(host: NativeJavaHandle): boolean {
+	async function isBlank(host: NativeJavaHandle): Promise<boolean> {
 		try {
-			const root = javaReference(java.invoke(host, 'getChildAt', [javaInt(0)]));
+			const root = javaReference(await java.invokeAsync(host, 'getChildAt', [javaInt(0)]));
 
-			return !root || javaNumber(java.invoke(root, 'getChildCount', [])) === 0;
+			return !root || javaNumber(await java.invokeAsync(root, 'getChildCount', [])) === 0;
 		} catch {
 			return false;
 		}
@@ -146,22 +162,23 @@ export function createInlineSurfaces(
 
 		if (delay === undefined) return;
 
-		setTimeout(() => {
-			const host = group.hosts[index];
-			const slot = entry.slots[index];
+		setTimeout(() => void recheck(entry, group, index, attempt), delay);
+	}
 
-			if (disposed || !host || !slot || !entry.groups.includes(group) || !isBlank(host)) {
-				return;
-			}
+	async function recheck(entry: Entry, group: Group, index: number, attempt: number) {
+		const host = group.hosts[index];
+		const slot = entry.slots[index];
 
-			void remount(group, index, host, slot.surfaceId).then(() => {
-				if (disposed || !entry.groups.includes(group)) return;
+		if (disposed || !host || !slot || !entry.groups.includes(group) || !(await isBlank(host))) {
+			return;
+		}
 
-				active.refresh(entry.rendered);
+		await remount(group, index, host, slot.surfaceId);
 
-				watchForBlank(entry, group, index, attempt + 1);
-			});
-		}, delay);
+		if (disposed || !entry.groups.includes(group)) return;
+
+		active.refresh(entry.rendered);
+		watchForBlank(entry, group, index, attempt + 1);
 	}
 
 	async function remount(group: Group, index: number, host: NativeJavaHandle, surfaceId: string) {

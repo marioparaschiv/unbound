@@ -120,7 +120,7 @@ export function colorAndroidChatInputMentions({ java, hooks }: Native): () => Pr
 
 	async function paint(view: NativeJavaReference) {
 		const guildId = currentGuildId();
-		const editable = javaReference(java.invoke(view, 'getText', []));
+		const editable = javaReference(await java.invokeAsync(view, 'getText', []));
 		const text = editable ? javaText(java.invoke(editable, 'toString', [])) : undefined;
 
 		if (!guildId || !editable || !text?.includes('@') || stopped) return;
@@ -186,7 +186,9 @@ export function colorAndroidChatInputMentions({ java, hooks }: Native): () => Pr
 		}
 
 		for (const state of inputs.values()) {
-			const editable = javaReference(java.invoke(state.view, 'getText', []));
+			const editable = javaReference(
+				await java.invokeAsync(state.view, 'getText', []).catch(() => null),
+			);
 
 			for (const { span } of recolored.values()) {
 				if (editable) await refresh(editable, span).catch(() => undefined);

@@ -13,7 +13,7 @@ import {
 	decodeBitmap,
 	inlineDrawable,
 } from '@unbound-plugins/shared/native/android/images';
-import { readViewText, spansOf } from '@unbound-plugins/shared/native/android/spans';
+import { readViewTextAsync, spansOf } from '@unbound-plugins/shared/native/android/spans';
 import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 import {
 	currentDecorView,
@@ -246,8 +246,8 @@ export function createAndroidRenderer(
 		active.reapply(view);
 	}
 
-	function render(view: NativeJavaReference) {
-		const content = readViewText(java, view);
+	async function render(view: NativeJavaReference) {
+		const content = await readViewTextAsync(java, view);
 
 		if (!content?.string.includes('@') || renderedTexts.has(content.string)) return;
 
@@ -264,7 +264,7 @@ export function createAndroidRenderer(
 
 		if (!placements.length) return;
 
-		const resources = javaReference(java.invoke(view, 'getResources'));
+		const resources = javaReference(await java.invokeAsync(view, 'getResources', []));
 
 		if (!resources) return;
 
@@ -310,11 +310,7 @@ export function createAndroidRenderer(
 
 			if (disposed) return;
 
-			try {
-				render(view);
-			} catch {
-				views.delete(key);
-			}
+			render(view).catch(() => views.delete(key));
 		}, 0);
 	}
 

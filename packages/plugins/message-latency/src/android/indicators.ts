@@ -25,11 +25,13 @@ import {
 	MESSAGE_VIEW,
 	messageBindMethod,
 	messageIdField,
-	viewByIdName,
+	viewByIdNameAsync,
 } from '@unbound-plugins/shared/native/android/discord-views';
 import {
 	currentDecorView,
 	findViewsOfClass,
+	readCalls,
+	runOnMain,
 	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
@@ -123,8 +125,8 @@ export function createAndroidIndicators(
 		for (const listener of listeners.get(indicator.id) ?? []) listener();
 	}
 
-	function density(view: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(view, 'getResources', []));
+	async function density(view: NativeJavaReference): Promise<number> {
+		const resources = javaReference(await java.invokeAsync(view, 'getResources', []));
 		const metrics = resources
 			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
 			: null;
@@ -132,16 +134,18 @@ export function createAndroidIndicators(
 		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
 	}
 
-	function startDrawable(authorName: NativeJavaReference): NativeJavaReference | null {
-		const drawables = java.invoke(authorName, 'getCompoundDrawablesRelative', []);
+	async function startDrawable(
+		authorName: NativeJavaReference,
+	): Promise<NativeJavaReference | null> {
+		const drawables = await java.invokeAsync(authorName, 'getCompoundDrawablesRelative', []);
 
 		return javaReference(
 			java.invoke(java.getClass('java.lang.reflect.Array'), 'get', [drawables, javaInt(0)]),
 		);
 	}
 
-	function createSpacer(authorName: NativeJavaReference): NativeJavaHandle {
-		const scale = density(authorName);
+	async function createSpacer(authorName: NativeJavaReference): Promise<NativeJavaHandle> {
+		const scale = await density(authorName);
 		const spacer = java.construct('android.graphics.drawable.ColorDrawable', [javaInt(0)]);
 
 		java.invoke(spacer, 'setBounds', [
@@ -171,7 +175,7 @@ export function createAndroidIndicators(
 
 		await removeHost(java, indicator.host).catch(() => undefined);
 
-		if (sameJavaReference(startDrawable(indicator.authorName), indicator.spacer)) {
+		if (sameJavaReference(await startDrawable(indicator.authorName), indicator.spacer)) {
 			await java.invokeAsync(indicator.authorName, 'setCompoundDrawablesRelative', [
 				NO_DRAWABLE,
 				NO_DRAWABLE,
@@ -185,16 +189,16 @@ export function createAndroidIndicators(
 	async function place(indicator: Indicator) {
 		if (indicator.disposed) return;
 
-		const scale = density(indicator.authorName);
-		const container = hostContainer(java, indicator.authorName);
+		const scale = await density(indicator.authorName);
+		const container = await hostContainer(java, indicator.authorName);
 
 		if (!container) return;
 
 		const width = Icon.controlWidth * scale;
 		const height = Icon.controlHeight * scale;
-		const nameHeight = javaNumber(java.invoke(indicator.authorName, 'getHeight', [])) ?? 0;
-		const paddingStart =
-			javaNumber(java.invoke(indicator.authorName, 'getPaddingStart', [])) ?? 0;
+		const [nameHeight, paddingStart] = (
+			await runOnMain(java, readCalls(indicator.authorName, ['getHeight', 'getPaddingStart']))
+		).map((value) => javaNumber(value) ?? 0) as [number, number];
 
 		await placeHost(
 			java,
@@ -238,8 +242,8 @@ export function createAndroidIndicators(
 		}
 	}
 
-	function isVisible(view: NativeJavaReference): boolean {
-		return javaNumber(java.invoke(view, 'getVisibility', [])) === VISIBLE;
+	async function isVisible(view: NativeJavaReference): Promise<boolean> {
+		return javaNumber(await java.invokeAsync(view, 'getVisibility', [])) === VISIBLE;
 	}
 
 	async function render(messageView: NativeJavaReference, messageId: string) {
@@ -249,9 +253,10 @@ export function createAndroidIndicators(
 
 		const record = records.get(messageId);
 		const existing = indicators.get(key);
-		const header = viewByIdName(java, messageView, 'header');
-		const authorName = viewByIdName(java, messageView, 'author_name');
-		const shown = header && authorName && isVisible(header) && isVisible(authorName);
+		const header = await viewByIdNameAsync(java, messageView, 'header');
+		const authorName = await viewByIdNameAsync(java, messageView, 'author_name');
+		const shown =
+			header && authorName && (await isVisible(header)) && (await isVisible(authorName));
 
 		if (!record || !shown) {
 			if (existing) await remove(existing);
@@ -259,7 +264,7 @@ export function createAndroidIndicators(
 			return;
 		}
 
-		const current = startDrawable(authorName);
+		const current = await startDrawable(authorName);
 
 		if (existing && !existing.disposed && sameJavaReference(existing.authorName, authorName)) {
 			existing.messageId = messageId;
@@ -289,8 +294,8 @@ export function createAndroidIndicators(
 			id: `message-latency-android-${nextId++}`,
 			messageView,
 			authorName,
-			host: createHost(java, authorName),
-			spacer: createSpacer(authorName),
+			host: await createHost(java, authorName),
+			spacer: await createSpacer(authorName),
 			mounting: null,
 			messageId,
 			record,

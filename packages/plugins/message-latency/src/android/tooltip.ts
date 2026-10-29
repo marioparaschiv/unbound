@@ -118,8 +118,8 @@ export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidT
 		}
 	}
 
-	function metricsOf(view: NativeJavaReference): Metrics {
-		const resources = javaReference(java.invoke(view, 'getResources', []));
+	async function metricsOf(view: NativeJavaReference): Promise<Metrics> {
+		const resources = javaReference(await java.invokeAsync(view, 'getResources', []));
 		const metrics = resources
 			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
 			: null;
@@ -138,16 +138,18 @@ export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidT
 
 		java.invoke(paint, 'setTextSize', [javaFloat(Tooltip.fontSize * metrics.scaledDensity)]);
 
-		const builder = java.invoke(java.getClass('android.text.StaticLayout$Builder'), 'obtain', [
-			javaString(text),
-			javaInt(0),
-			javaInt(text.length),
-			paint,
-			javaInt(Math.round(maxWidth * metrics.density)),
-		]);
-		const layout = javaReference(builder) ? java.invoke(builder, 'build', []) : null;
+		const builder = javaReference(
+			java.invoke(java.getClass('android.text.StaticLayout$Builder'), 'obtain', [
+				javaString(text),
+				javaInt(0),
+				javaInt(text.length),
+				paint,
+				javaInt(Math.round(maxWidth * metrics.density)),
+			]),
+		);
+		const layout = builder ? javaReference(java.invoke(builder, 'build', [])) : null;
 
-		if (!javaReference(layout)) return null;
+		if (!layout) return null;
 
 		const lines = javaNumber(java.invoke(layout, 'getLineCount', [])) ?? 0;
 		let width = 0;
@@ -165,10 +167,10 @@ export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidT
 		};
 	}
 
-	function iconFrame(host: NativeJavaReference, density: number) {
+	async function iconFrame(host: NativeJavaReference, density: number) {
 		const rect = java.construct('android.graphics.Rect', []);
 
-		java.invoke(host, 'getGlobalVisibleRect', [rect]);
+		await java.invokeAsync(host, 'getGlobalVisibleRect', [rect]);
 
 		return {
 			x: (javaNumber(java.getField(rect, 'left')) ?? 0) / density,
@@ -191,16 +193,18 @@ export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidT
 
 		if (!surfaceName) return;
 
-		const metrics = metricsOf(decor);
+		const metrics = await metricsOf(decor);
 		const bounds = {
 			x: 0,
 			y: 0,
-			width: (javaNumber(java.invoke(decor, 'getWidth', [])) ?? 0) / metrics.density,
-			height: (javaNumber(java.invoke(decor, 'getHeight', [])) ?? 0) / metrics.density,
+			width:
+				(javaNumber(await java.invokeAsync(decor, 'getWidth', [])) ?? 0) / metrics.density,
+			height:
+				(javaNumber(await java.invokeAsync(decor, 'getHeight', [])) ?? 0) / metrics.density,
 		};
 		const text = measure(anchor.tooltip, tooltipTextWidth(bounds.width), metrics);
 		const placement = text
-			? placeTooltip(text, iconFrame(anchor.host, metrics.density), bounds)
+			? placeTooltip(text, await iconFrame(anchor.host, metrics.density), bounds)
 			: null;
 
 		if (!placement) return;
@@ -211,7 +215,7 @@ export function createAndroidTooltips({ java, hooks, fabric }: Native): AndroidT
 			width: frame.width * metrics.density,
 			height: frame.height * metrics.density,
 		};
-		const host = createHost(java, decor);
+		const host = await createHost(java, decor);
 		let surface: NativeFabricSurface | null = null;
 
 		try {

@@ -33,39 +33,44 @@ const handle = (value: string): FakeValue => ({ type: 'handle', value });
 function fakeNative(available: boolean, state: FakeState) {
 	let hosts = 0;
 
-	return {
-		java: {
-			getClass(name: string): FakeValue {
-				if (!available) {
-					throw new Error(`${name} is missing`);
-				}
+	const java = {
+		getClass(name: string): FakeValue {
+			if (!available) {
+				throw new Error(`${name} is missing`);
+			}
 
-				return { type: 'class', value: name };
-			},
-			getField: () => handle('rewrites'),
-			invoke(target: FakeValue, method: string, args: FakeValue[] = []): FakeValue {
-				if (target.value === 'rewrites') {
-					state.calls.push({ method, args });
-				}
-
-				if (method === 'put') {
-					return { type: 'boolean', value: !state.declined };
-				}
-
-				if (method === 'getChildAt') {
-					return handle(`root-${target.value}`);
-				}
-
-				if (method === 'getChildCount') {
-					const host = String(target.value).replace('root-', '');
-
-					return { type: 'int', value: state.blank.has(host) ? 0 : 1 };
-				}
-
-				return handle('context');
-			},
-			construct: () => handle(`host-${hosts++}`),
+			return { type: 'class', value: name };
 		},
+		getField: () => handle('rewrites'),
+		invoke(target: FakeValue, method: string, args: FakeValue[] = []): FakeValue {
+			if (target.value === 'rewrites') {
+				state.calls.push({ method, args });
+			}
+
+			if (method === 'put') {
+				return { type: 'boolean', value: !state.declined };
+			}
+
+			if (method === 'getChildAt') {
+				return handle(`root-${target.value}`);
+			}
+
+			if (method === 'getChildCount') {
+				const host = String(target.value).replace('root-', '');
+
+				return { type: 'int', value: state.blank.has(host) ? 0 : 1 };
+			}
+
+			return handle('context');
+		},
+		invokeAsync(target: FakeValue, method: string, args: FakeValue[] = []): Promise<FakeValue> {
+			return Promise.resolve(java.invoke(target, method, args));
+		},
+		construct: () => handle(`host-${hosts++}`),
+	};
+
+	return {
+		java,
 		hooks: {
 			hook(
 				_class: string,
@@ -155,15 +160,15 @@ describe('createInlineSurfaces', () => {
 			const { state, surfaces } = setup();
 
 			surfaces!.define(definition);
-			await Promise.resolve();
-			await Promise.resolve();
+
+			for (let tick = 0; tick < 16; tick++) await Promise.resolve();
 
 			const first = state.mounted[0];
 
 			state.blank.add(String(first.value));
 			jest.advanceTimersByTime(1_000);
 
-			for (let tick = 0; tick < 8; tick++) await Promise.resolve();
+			for (let tick = 0; tick < 16; tick++) await Promise.resolve();
 
 			expect(state.unmounted).toEqual([handle(`surface-${first.value}`)]);
 			expect(state.mounted.filter((host) => host.value === first.value)).toHaveLength(2);
@@ -181,13 +186,13 @@ describe('createInlineSurfaces', () => {
 			const { state, surfaces } = setup();
 
 			surfaces!.define(definition);
-			await Promise.resolve();
-			await Promise.resolve();
+
+			for (let tick = 0; tick < 16; tick++) await Promise.resolve();
 
 			const first = state.mounted[0];
 
 			async function flush() {
-				for (let tick = 0; tick < 8; tick++) await Promise.resolve();
+				for (let tick = 0; tick < 16; tick++) await Promise.resolve();
 			}
 
 			function remounts() {
@@ -238,10 +243,11 @@ describe('createInlineSurfaces', () => {
 		expect(methods(state).filter((method) => method === 'addHost')).toHaveLength(3);
 	});
 
-	test('updates anchors and refreshes rows when a slot is resized', () => {
+	test('updates anchors and refreshes rows when a slot is resized', async () => {
 		const { state, surfaces } = setup();
 
 		surfaces!.define(definition);
+		await settled();
 		surfaces!.define({ ...definition, slots: [{ ...definition.slots[0], height: 40 }] });
 
 		expect(methods(state).filter((method) => method === 'updateAnchor')).toHaveLength(2);
@@ -262,6 +268,7 @@ describe('createInlineSurfaces', () => {
 		const { state, surfaces } = setup();
 
 		surfaces!.define(definition);
+		await settled();
 		await surfaces!.dispose();
 
 		expect(methods(state)).toContain('remove');

@@ -104,8 +104,10 @@ export function startAndroidTagGradients(
 	let stopped = false;
 
 	async function paint(tagView: NativeJavaReference, text: string) {
-		const layout = javaReference(java.invoke(tagView, 'getChildAt', [javaInt(0)]));
-		const background = layout ? javaReference(java.invoke(layout, 'getBackground', [])) : null;
+		const layout = javaReference(await java.invokeAsync(tagView, 'getChildAt', [javaInt(0)]));
+		const background = layout
+			? javaReference(await java.invokeAsync(layout, 'getBackground', []))
+			: null;
 		const key = viewKey(tagView);
 
 		if (!layout || !background || className(java, background) !== PAINT_DRAWABLE) return;
@@ -155,7 +157,7 @@ export function startAndroidTagGradients(
 
 	async function tagText(tagView: NativeJavaReference): Promise<string | undefined> {
 		const [label] = await findViewsOfClass(java, tagView, TEXT_VIEW);
-		const text = label ? javaReference(java.invoke(label, 'getText', [])) : null;
+		const text = label ? javaReference(await java.invokeAsync(label, 'getText', [])) : null;
 
 		return text ? javaText(java.invoke(text, 'toString', [])) : undefined;
 	}
@@ -183,7 +185,9 @@ export function startAndroidTagGradients(
 		for (const scan of scans) clearTimeout(scan);
 
 		for (const { layout, original, gradient } of painted.values()) {
-			const current = javaReference(java.invoke(layout, 'getBackground', []));
+			const current = javaReference(
+				await java.invokeAsync(layout, 'getBackground', []).catch(() => null),
+			);
 
 			if (current && sameJavaReference(current, gradient)) {
 				await java.invokeAsync(layout, 'setBackground', [original]).catch(() => undefined);

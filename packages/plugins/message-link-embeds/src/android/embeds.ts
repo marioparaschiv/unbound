@@ -245,8 +245,8 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 	async function place(embed: Embed) {
 		if (!isCurrent(embed)) return;
 
-		const container = hostContainer(java, embed.textView);
-		const position = reservedPosition(
+		const container = await hostContainer(java, embed.textView);
+		const position = await reservedPosition(
 			java,
 			embed.textView,
 			embed.placeholder,
@@ -277,7 +277,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		if (embed.mounting && !embed.disposed) {
 			const mounted = await embed.mounting.catch(() => null);
 
-			if (!hostHasContent(java, embed.host)) {
+			if (!(await hostHasContent(java, embed.host))) {
 				embed.mounting = null;
 
 				if (mounted) await fabric.unmountAsync(mounted).catch(() => undefined);
@@ -408,7 +408,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 						id: `message-link-android-${nextId++}`,
 						messageView,
 						textView,
-						host: createHost(java, textView),
+						host: await createHost(java, textView),
 						mounting: null,
 						messageId,
 						target,
