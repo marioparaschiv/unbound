@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import type { ComponentProps } from 'react';
 
 import { Card, CardContent } from '~/components/ui/card';
+import AvatarGlow from '~/components/avatar-glow';
 import UserAvatar from '~/components/user-avatar';
 import type { Developer } from '~/lib/developers';
 import UserBadge from '~/components/user-badge';
@@ -25,24 +26,19 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 			)}
 			{...props}
 		>
-			{author.avatarUrl ? (
-				<img
-					src={author.avatarUrl}
-					alt=''
-					aria-hidden
-					loading='lazy'
-					decoding='async'
-					className='absolute inset-0 -z-10 size-full object-cover scale-150 blur-3xl saturate-150 opacity-15 pointer-events-none select-none'
-				/>
-			) : null}
-			<div className='flex items-center justify-center size-10 shrink-0 rounded-control bg-accent m-(--card-pad) mr-0 overflow-hidden'>
+			{author.avatarUrl ? <AvatarGlow src={author.avatarUrl} className='opacity-40' /> : null}
+			<div
+				aria-hidden
+				className='absolute inset-0 -z-10 rounded-[inherit] bg-card/50 pointer-events-none'
+			/>
+			<div className='flex items-center justify-center size-12 shrink-0 rounded-control bg-accent m-3 mr-0 overflow-hidden'>
 				<UserAvatar
 					className='size-full rounded-control object-cover'
 					src={author.avatarUrl}
 					name={author.name}
 				/>
 			</div>
-			<CardContent className='flex flex-col gap-0.5 p-(--card-pad) min-w-0'>
+			<CardContent className='flex flex-col gap-0.5 p-3 min-w-0'>
 				<Text variant='heading-sm' className='truncate leading-tight!'>
 					<Link
 						to='/profiles/$discordId'
