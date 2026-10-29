@@ -8,6 +8,7 @@ export type SelfTestCounts = {
 	base?: number;
 	derived?: number;
 	error?: string;
+	cancellations?: Record<string, string>;
 };
 
 /**
@@ -60,6 +61,45 @@ export function selfTestFinishScript(): string {
 }
 
 /**
+ * @description Runs native calls that end early through the self-test host: one cancelled straight away, one still queued when the host stops (the host is started again after), and on Android one made on a released handle.
+ * @returns A script whose result is the JSON outcome of each case: `resolved`, `cancellation`, or `other: <message>`.
+ */
+export function selfTestCancellationScript(): string {
+	return `(async function () {
+	var entities = [...unbound.plugins.entities.values()].filter(function (entity) { return entity.started && entity.context && entity.context.native; });
+	var can = function (entity, platform, capability) { return entity.context.platform === platform && (entity.context.capabilities || []).indexOf(capability) !== -1; };
+	var host = entities.find(function (entity) { return can(entity, 'ios', 'native.objc.invoke'); }) || entities.find(function (entity) { return can(entity, 'android', 'native.java.invoke'); });
+	if (!host) return JSON.stringify({ error: 'no running plugin can make native calls' });
+	var classify = function (error) {
+		var text = String(error && error.message ? error.message : error);
+		return error && (error.code === 'NATIVE_PLUGIN_SCOPE_DISPOSED' || /cancel|disposed|unavailable/i.test(text)) ? 'cancellation' : 'other: ' + text;
+	};
+	var settle = function (call) { return call.then(function () { return 'resolved'; }, classify); };
+	var native = host.context.native;
+	var ios = host.context.platform === 'ios';
+	var target = ios
+		? native.objc.call(native.objc.getClass('UIApplication'), 'sharedApplication')
+		: native.java.getField(native.java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE');
+	var call = function (handle) { return ios ? native.objc.invokeAsync(handle, 'description', []) : native.java.invokeAsync(handle, 'toString', []); };
+	var outcomes = {};
+	var cancelled = call(target);
+	cancelled.cancel();
+	outcomes.cancelled = await settle(cancelled);
+	if (!ios) {
+		var released = native.java.getField(native.java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE');
+		native.java.release(released);
+		try { outcomes.released = await settle(call(released)); } catch (error) { outcomes.released = classify(error); }
+	}
+	var queued = call(target);
+	var stopping = unbound.plugins.stop(host.id);
+	outcomes.stopped = await settle(queued);
+	await stopping;
+	await unbound.plugins.start(host.id);
+	return JSON.stringify({ host: host.data.name, cancellations: outcomes });
+})()`;
+}
+
+/**
  * @description Judges the self-test from its counts and the plugin errors logged meanwhile.
  * @param counts What the hooks recorded.
  * @param errors Logged plugin errors by plugin name.
@@ -85,10 +125,33 @@ export function judgeSelfTest(
 		return { ok: false, detail: `the thrown hook error was not logged against ${counts.host}` };
 	}
 
+	const wrong = Object.entries(counts.cancellations ?? {}).filter(
+		([, outcome]) => outcome !== 'resolved' && outcome !== 'cancellation',
+	);
+
+	if (wrong.length) {
+		return {
+			ok: false,
+			detail: `native work ended early did not end as a cancellation: ${wrong.map(([name, outcome]) => `${name} ${outcome}`).join('; ')}`,
+		};
+	}
+
+	const logged = (errors.get(counts.host ?? '') ?? []).filter(
+		(error) => !error.includes(SELF_TEST_MARKER),
+	);
+
+	if (logged.length) {
+		return { ok: false, detail: `cancelled native work was logged as an error: ${logged[0]}` };
+	}
+
 	const chain = counts.platform === 'ios' ? `, subclass ${counts.derived}` : '';
+	const outcomes = Object.entries(counts.cancellations ?? {}).map(
+		([name, outcome]) => `${name} ${outcome}`,
+	);
+	const ended = outcomes.length ? `; early endings: ${outcomes.join(', ')}` : '';
 
 	return {
 		ok: true,
-		detail: `hooks fired (base ${counts.base}${chain}) and the error named ${counts.host}`,
+		detail: `hooks fired (base ${counts.base}${chain}) and the error named ${counts.host}${ended}`,
 	};
 }

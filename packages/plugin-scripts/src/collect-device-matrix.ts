@@ -12,6 +12,7 @@ import { growthPerCycle, leakNote, liveHeapScript } from './leak-check';
 import {
 	SELF_TEST_MARKER,
 	judgeSelfTest,
+	selfTestCancellationScript,
 	selfTestFinishScript,
 	selfTestStartScript,
 	type SelfTestCounts,
@@ -748,6 +749,13 @@ async function main(): Promise<void> {
 		await Bun.sleep(1_500);
 
 		const counts = JSON.parse(await evaluate(port, selfTestFinishScript())) as SelfTestCounts;
+		const ended = JSON.parse(
+			await evaluate(port, selfTestCancellationScript()),
+		) as SelfTestCounts;
+
+		if (ended.error) return { ok: false, detail: ended.error };
+
+		if (ended.host === counts.host) counts.cancellations = ended.cancellations;
 
 		await Bun.sleep(1_000);
 
