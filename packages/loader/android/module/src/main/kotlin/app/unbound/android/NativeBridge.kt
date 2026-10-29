@@ -88,6 +88,9 @@ object NativeBridge {
     external fun nativeAttestation(): String
 
     @JvmStatic
+    external fun nativeWarnOffMainViewCall(call: String)
+
+    @JvmStatic
     external fun nativeIncompatibleHostMessage(): String
 
     @JvmStatic

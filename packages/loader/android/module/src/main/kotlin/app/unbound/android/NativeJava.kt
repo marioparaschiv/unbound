@@ -1,5 +1,7 @@
 package app.unbound.android
 
+import android.os.Looper
+import android.view.View
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.reflect.Field
@@ -116,6 +118,10 @@ object NativeJava {
 
         if (receiver == null && target !is Class<*>) {
             throw IllegalArgumentException("$name is static but was called on an instance")
+        }
+
+        if (receiver is View && !Looper.getMainLooper().isCurrentThread) {
+            NativeBridge.nativeWarnOffMainViewCall("${receiver.javaClass.name}.$name()")
         }
 
         method.isAccessible = true

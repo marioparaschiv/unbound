@@ -28,6 +28,7 @@
 #import "CoreConversions.h"
 #import "LoaderAddonActivity.h"
 #include "LoaderPreferences.h"
+#include "LoaderThreadWarnings.h"
 #import "Logger.h"
 #import "NativeAddressValidation.h"
 #import "NativeAssociationPolicy.h"
@@ -3754,53 +3755,23 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     return Object::createFromHostObject(runtime, std::make_shared<HookTokenHost>(state, callbacks));
 }
 
-static std::string addonName(loader::AddonSlot slot)
-{
-    nlohmann::json record = nlohmann::json::parse(loader::addonRecord(slot), nullptr, false);
-    return record.is_object() ? record.value("name", std::string("an unknown plugin"))
-                              : std::string("an unknown plugin");
-}
-
-static bool developerModeEnabled()
-{
-    static std::atomic<int64_t> checkedAt{0};
-    static std::atomic<bool>    enabled{false};
-    int64_t                     now = std::chrono::duration_cast<std::chrono::seconds>(
-                                          std::chrono::steady_clock::now().time_since_epoch())
-                                          .count();
-    if (checkedAt.exchange(now) != now)
-    {
-        enabled = loader::preferences::developerMode(UnboundSettingsStore());
-    }
-    return enabled;
-}
-
 static void warnOffMainViewCall(id object, NSString *selectorName)
 {
-    if ([NSThread isMainThread] || !developerModeEnabled() ||
-        ![object isKindOfClass:[UIView class]] ||
+    static loader::threading::OffMainViewWarnings warnings([] {
+        return loader::preferences::developerMode(UnboundSettingsStore());
+    });
+    if ([NSThread isMainThread] || !warnings.enabled() || ![object isKindOfClass:[UIView class]] ||
         [NSObject instancesRespondToSelector:NSSelectorFromString(selectorName)])
     {
         return;
     }
 
-    loader::AddonSlot slot = loader::currentAddon();
-    std::string key = std::to_string(slot) + " " + NSStringFromClass([object class]).UTF8String +
-                      " " + selectorName.UTF8String;
-    static std::mutex                      warnedMutex;
-    static std::unordered_set<std::string> warned;
+    NSString *call =
+        [NSString stringWithFormat:@"-[%@ %@]", NSStringFromClass([object class]), selectorName];
+    if (auto warning = warnings.warning(loader::currentAddon(), call.UTF8String))
     {
-        std::lock_guard<std::mutex> lock(warnedMutex);
-        if (!warned.insert(key).second)
-        {
-            return;
-        }
+        [Logger warning:LOG_CATEGORY_PLUGINS format:@"%s", warning->c_str()];
     }
-
-    [Logger warning:LOG_CATEGORY_PLUGINS
-             format:@"%s called -[%@ %@] off the main thread. UIKit is only safe on the main "
-                    @"thread; use invokeAsync instead.",
-                    addonName(slot).c_str(), NSStringFromClass([object class]), selectorName];
 }
 
 static Value objcFunction(Runtime &runtime, const Value &target, const Value &selectorValue,
