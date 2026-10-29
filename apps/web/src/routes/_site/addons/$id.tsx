@@ -11,13 +11,13 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from '~/components/ui/empty';
+import { addonQuery, submissionPreviewQuery } from '~/queries/marketplace/addon';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import VersionHistory from '~/components/addon/version-history';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import AddonHeader from '~/components/addon/addon-header';
 import AuthorsCard from '~/components/addon/authors-card';
 import ScrollShadow from '~/components/ui/scroll-shadow';
-import { addonQuery, submissionPreviewQuery } from '~/queries/marketplace/addon';
 import AboutCard from '~/components/addon/about-card';
 import { Button } from '~/components/ui/button';
 import Markdown from '~/components/markdown';

@@ -19,9 +19,9 @@ import {
 import { MAINTAINERS, replaceMaintainers, toMaintainers } from '~/lib/maintainers';
 import type { ActionMeta, EventTimeline } from '~/lib/moderation-events';
 import { appendEvent, getEventTimeline } from '~/lib/moderation-events';
+import { isAddonIcon, renderAddonIcon } from '~/lib/addon-icons';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import type { AdminSubmission } from '~/lib/admin-submissions';
-import { isAddonIcon, renderAddonIcon } from '~/lib/addon-icons';
 import { addon, addonMaintainer, user } from '~/db/schema';
 import type { AdminAddon } from '~/lib/admin-addons';
 import { requirePermission } from '~/lib/api/caller';

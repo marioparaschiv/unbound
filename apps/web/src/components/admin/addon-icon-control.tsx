@@ -1,11 +1,11 @@
 import type { AddonType } from '@unbound-app/contracts/addons';
 import { useState } from 'react';
 
+import AtlasIcon, { warmAddonIconAtlas } from '~/components/addon-icon-picker/atlas-icon';
 import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover';
 import AddonIconPicker from '~/components/addon-icon-picker/addon-icon-picker';
-import AtlasIcon, { warmAddonIconAtlas } from '~/components/addon-icon-picker/atlas-icon';
-import { Button } from '~/components/ui/button';
 import AddonIcon from '~/components/addon-icon';
+import { Button } from '~/components/ui/button';
 import cn from '~/lib/cn';
 
 type AddonIconControlProps = {

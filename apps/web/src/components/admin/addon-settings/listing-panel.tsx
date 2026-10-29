@@ -8,10 +8,10 @@ import {
 	SelectValue,
 } from '~/components/ui/select';
 import type { AddonSettingsForm } from '~/components/admin/addon-settings/use-addon-settings-form';
+import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
 import PinnableField from '~/components/admin/addon-settings/pinnable-field';
 import SettingsPanel from '~/components/admin/addon-settings/settings-panel';
 import type { AdminAddonRecord, ManifestSummary } from '~/lib/admin-addon';
-import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
 import AddonIconControl from '~/components/admin/addon-icon-control';
 import Textarea from '~/components/ui/textarea';
 import Input from '~/components/ui/input';
