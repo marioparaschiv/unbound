@@ -122,7 +122,8 @@ bool isIgnoredError(const ErrorReport &report)
 
 bool isIgnoredException(const std::string &name)
 {
-    return name == "CHHapticErrorCodeServerInitFailedException";
+    return name == "CHHapticErrorCodeServerInitFailedException" || name == "DownloadFailed" ||
+           name == "DownloadTimedOut" || name == "DownloadWriteFailed";
 }
 
 bool needsExtensionCheck(bool appStore, bool testFlight, bool trollStore)

@@ -82,8 +82,8 @@ download(const std::string &url, const std::string &destination,
     }
     @catch (NSException *exception)
     {
-        [Logger error:LOG_CATEGORY_UPDATER
-               format:@"Bundle download failed. (%@)", exception.reason];
+        [Logger info:LOG_CATEGORY_UPDATER
+              format:@"Downloading %@ failed: %@", toNSString(url), exception.reason];
         return std::nullopt;
     }
 }

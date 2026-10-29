@@ -223,8 +223,10 @@ static NSString      *documents = nil;
 
               if (error != nil)
               {
+                  NSString *reason =
+                      [NSString stringWithFormat:@"%@ %ld", error.domain, (long) error.code];
                   exception = [[NSException alloc] initWithName:@"DownloadFailed"
-                                                         reason:error.localizedDescription
+                                                         reason:reason
                                                        userInfo:nil];
               }
               else if ([response statusCode] == 200)
