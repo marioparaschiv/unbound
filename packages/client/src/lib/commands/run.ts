@@ -237,7 +237,7 @@ export function contextKey(options: RawOption[]): string {
  * @param options The options executeCommand passed.
  * @returns The leaf's own options.
  */
-export function leafOptions(options: RawOption[]): RawOption[] {
+function leafOptions(options: RawOption[]): RawOption[] {
 	let current = options;
 
 	while (

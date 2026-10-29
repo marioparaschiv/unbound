@@ -12,8 +12,10 @@ The database lives on the local cluster that `DATABASE_DIRECT_URL` in `apps/web/
 ## Launch
 
 ```bash
-.agents/skills/verify-web/scripts/launch.sh            # [--name N] [--port N] [--no-s3]
+.agents/skills/verify-web/scripts/launch.sh            # [--name N] [--port N] [--no-s3] [--tags]
 ```
+
+`--tags` also runs `scripts/seed-tags.ts`: 8 tags, and 14 plugins and 4 themes by 16 authors, for the listing filters. It adds authors to the Team pages, so leave it off when you count them.
 
 It is ready when it prints `ready: http://verify-web-<name>.localhost:<port>`, after `GET /` returned 200 and the doctor passed. The boot takes about 10 s. Re-running it while the instance is healthy only prints the URL. If the instance is unhealthy, it tears it down and boots fresh. A failed boot tears itself down and keeps the vite log at `/tmp/verify-web/<name>.failed.log`.
 

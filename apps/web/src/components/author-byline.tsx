@@ -33,7 +33,7 @@ function AuthorName({ author, linkProfiles }: AuthorNameProps) {
 
 	return (
 		<Link
-			to='/developers/$discordId'
+			to='/profiles/$discordId'
 			params={{ discordId: author.discordId }}
 			className='underline-offset-4 hover:underline'
 		>

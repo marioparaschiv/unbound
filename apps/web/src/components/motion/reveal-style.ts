@@ -1,7 +1,7 @@
 import type { CssVariables } from '~/lib/css-variables';
 
 /** How strongly an element enters: the hero and its showcase are one-off moments, headings and cards are seen often. */
-export type RevealPreset = 'hero' | 'showcase' | 'heading' | 'card';
+export type RevealPreset = 'hero' | 'showcase' | 'heading' | 'card' | 'scroll';
 
 type RevealTiming = {
 	duration: number;
@@ -17,6 +17,8 @@ const PRESETS: Record<RevealPreset, RevealTiming> = {
 	showcase: { duration: 900, blur: 0, offset: '45%', scale: 1, opacity: 1 },
 	heading: { duration: 350, blur: 4, offset: '0.2em', scale: 1, opacity: 0 },
 	card: { duration: 300, blur: 0, offset: '12px', scale: 1, opacity: 0 },
+	// Sections further down the page enter as they scroll into view.
+	scroll: { duration: 500, blur: 4, offset: '16px', scale: 1, opacity: 0 },
 };
 
 const STAGGER_MS = 40;

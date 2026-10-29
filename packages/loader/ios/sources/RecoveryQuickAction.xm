@@ -179,9 +179,11 @@ static void showRecoveryStatus(NSString *status)
 
 - (void)setShortcutItems:(NSArray<UIApplicationShortcutItem *> *)shortcutItems
 {
-    if (![shortcutItems isEqualToArray:currentDiscordShortcutItems])
+    NSArray<UIApplicationShortcutItem *> *items =
+        [shortcutItems isKindOfClass:[NSArray class]] ? shortcutItems : @[];
+    if (![items isEqualToArray:currentDiscordShortcutItems])
     {
-        currentDiscordShortcutItems = [shortcutItems copy] ?: @[];
+        currentDiscordShortcutItems = [items copy];
         saveDiscordShortcutItems(currentDiscordShortcutItems);
     }
     %orig([RecoveryQuickAction itemsWithRecoveryAction:currentDiscordShortcutItems]);

@@ -17,7 +17,7 @@ export type UpdatableKind = Exclude<ManagerKind, ManagerKind.Fonts>;
 
 /** The part of an addon manager the updater drives; each manager narrows the entity type. */
 export type UpdatableManager = Pick<Addons<Addon>, 'getEntities' | 'getEntity' | 'update'> &
-	Partial<Pick<Addons<Addon>, 'isDevelopmentCopy'>>;
+	Partial<Pick<Addons<Addon>, 'isDevelopmentCopy' | 'clearDevelopmentCopy'>>;
 
 export type UpdateCheckOptions = {
 	/** Origin of the Unbound web API. */
@@ -197,4 +197,33 @@ export async function applyUpdate(
 	return manager.getEntity(pending.id)?.data.version === pending.update.version;
 }
 
-export default { buildUpdatesRequest, toPendingUpdates, listInstalled, fetchUpdates, applyUpdate };
+/**
+ * @description Replaces a development copy with the store's published build: clears its development mark, then checks just that addon and applies the update the store returns.
+ * @param kind The manager's kind.
+ * @param manager The manager the addon belongs to.
+ * @param id The addon's id.
+ * @param options The API origin and this client's version.
+ * @returns Whether the store's build was applied; `false` when the installed bundle already matches the store or the store does not publish it.
+ */
+export async function reinstallFromStore(
+	kind: UpdatableKind,
+	manager: UpdatableManager,
+	id: string,
+	options: UpdateCheckOptions,
+): Promise<boolean> {
+	manager.clearDevelopmentCopy?.(id);
+
+	const entries = listInstalled(kind, manager).filter((entry) => entry.id === id);
+	const [pending] = await fetchUpdates(entries, options);
+
+	return pending ? applyUpdate(manager, pending) : false;
+}
+
+export default {
+	buildUpdatesRequest,
+	toPendingUpdates,
+	listInstalled,
+	fetchUpdates,
+	applyUpdate,
+	reinstallFromStore,
+};

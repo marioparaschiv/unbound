@@ -1,11 +1,14 @@
-import type { Maintainer, MaintainersResponse } from '@unbound-app/contracts/addons';
-import { maintainersResponseSchema } from '@unbound-app/contracts/addons';
+import type { Maintainer } from '@unbound-app/contracts/addons';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { IconUserPlus, IconXmark } from 'nucleo-micro-bold';
-import { useEffect, useState, useTransition } from 'react';
-import { useRouter } from '@tanstack/react-router';
-import type { FormEvent } from 'react';
+import { useForm } from '@tanstack/react-form';
 import { toast } from 'sonner';
 
+import {
+	addMaintainerMutation,
+	maintainersQuery,
+	removeMaintainerMutation,
+} from '~/queries/dashboard/maintainers';
 import {
 	Dialog,
 	DialogContent,
@@ -13,7 +16,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '~/components/ui/dialog';
-import { createBrowserClient } from '~/lib/api/browser-client';
 import getApiErrorMessage from '~/lib/api/error-message';
 import RoleTag from '~/components/dashboard/role-tag';
 import Separator from '~/components/ui/separator';
@@ -69,68 +71,28 @@ function MaintainerRow({ maintainer, disabled, onRemove }: MaintainerRowProps) {
 }
 
 function MaintainersDialog({ addonId, userId, open, onOpenChange }: MaintainersDialogProps) {
-	const router = useRouter();
-	const [maintainers, setMaintainers] = useState<Maintainer[] | null>(null);
-	const [newUserId, setNewUserId] = useState('');
-	const [isPending, startTransition] = useTransition();
-
-	function run(action: () => Promise<MaintainersResponse>) {
-		startTransition(async () => {
-			try {
-				const response = await action();
-
-				setMaintainers(response.maintainers);
-			} catch (error) {
-				toast.error(getApiErrorMessage(error));
-			}
-		});
-	}
-
-	useEffect(() => {
-		if (!open) return;
-
-		run(() =>
-			createBrowserClient()('GET /api/v1/addons/$id/maintainers', {
-				params: { id: addonId },
-				response: maintainersResponseSchema,
-			}),
-		);
-	}, [open, addonId]);
-
-	function add(event: FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-
-		const target = newUserId.trim();
-
-		run(async () => {
-			const response = await createBrowserClient()('POST /api/v1/addons/$id/maintainers', {
-				params: { id: addonId },
-				body: { userId: target },
-				response: maintainersResponseSchema,
+	const { data, error } = useQuery({ ...maintainersQuery(addonId), enabled: open });
+	const addition = useMutation(addMaintainerMutation(addonId));
+	const removal = useMutation(removeMaintainerMutation(addonId));
+	const isPending = addition.isPending || removal.isPending;
+	const form = useForm({
+		defaultValues: { userId: '' },
+		onSubmit: ({ value }) => {
+			addition.mutate(value.userId.trim(), {
+				onSuccess: () => form.reset(),
+				onError: (cause) => toast.error(getApiErrorMessage(cause)),
 			});
-
-			setNewUserId('');
-
-			return response;
-		});
-	}
+		},
+	});
 
 	function remove(memberId: string) {
-		run(async () => {
-			const response = await createBrowserClient()(
-				'DELETE /api/v1/addons/$id/maintainers/$userId',
-				{
-					params: { id: addonId, userId: memberId },
-					response: maintainersResponseSchema,
-				},
-			);
-
-			if (memberId === userId) {
-				onOpenChange(false);
-				await router.invalidate();
-			}
-
-			return response;
+		removal.mutate(memberId, {
+			onSuccess: () => {
+				if (memberId === userId) {
+					onOpenChange(false);
+				}
+			},
+			onError: (cause) => toast.error(getApiErrorMessage(cause)),
 		});
 	}
 
@@ -145,25 +107,40 @@ function MaintainersDialog({ addonId, userId, open, onOpenChange }: MaintainersD
 					</DialogDescription>
 				</DialogHeader>
 
-				<form onSubmit={add} className='flex gap-2'>
-					<Input
-						value={newUserId}
-						onChange={(event) => setNewUserId(event.target.value)}
-						placeholder='User ID'
-						aria-label='User ID'
-						className='font-mono'
-						disabled={isPending}
-						required
-					/>
-					<Button type='submit' disabled={isPending || !newUserId.trim()}>
-						<IconUserPlus size={24} />
-						Add
-					</Button>
+				<form
+					onSubmit={(event) => {
+						event.preventDefault();
+						void form.handleSubmit();
+					}}
+				>
+					<form.Field name='userId'>
+						{(field) => (
+							<div className='flex gap-2'>
+								<Input
+									value={field.state.value}
+									onChange={(event) => field.handleChange(event.target.value)}
+									onBlur={field.handleBlur}
+									placeholder='User ID'
+									aria-label='User ID'
+									className='font-mono'
+									disabled={isPending}
+									required
+								/>
+								<Button
+									type='submit'
+									disabled={isPending || !field.state.value.trim()}
+								>
+									<IconUserPlus size={24} />
+									Add
+								</Button>
+							</div>
+						)}
+					</form.Field>
 				</form>
 
-				{maintainers ? (
+				{data ? (
 					<div className='flex flex-col gap-3'>
-						{maintainers.map((maintainer) => (
+						{data.maintainers.map((maintainer) => (
 							<div key={maintainer.id} className='flex flex-col gap-3'>
 								<Separator />
 								<MaintainerRow
@@ -174,6 +151,10 @@ function MaintainersDialog({ addonId, userId, open, onOpenChange }: MaintainersD
 							</div>
 						))}
 					</div>
+				) : error ? (
+					<Text variant='text-sm' color='destructive'>
+						{getApiErrorMessage(error)}
+					</Text>
 				) : (
 					<Spinner className='mx-auto' />
 				)}

@@ -10,6 +10,8 @@ import {
 	DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
 import MaintainersDialog from '~/components/dashboard/maintainers-dialog';
+import { maintainersQuery } from '~/queries/dashboard/maintainers';
+import usePrefetchIntent from '~/queries/use-prefetch-intent';
 import copyText from '~/components/dashboard/copy-text';
 import type { DashboardAddon } from '~/lib/dashboard';
 import { Button } from '~/components/ui/button';
@@ -21,6 +23,7 @@ type AddonMenuProps = {
 
 function AddonMenu({ addon, userId }: AddonMenuProps) {
 	const [maintainersOpen, setMaintainersOpen] = useState(false);
+	const prefetchMaintainers = usePrefetchIntent(maintainersQuery(addon.id));
 	const { actions } = addon;
 
 	return (
@@ -36,7 +39,7 @@ function AddonMenu({ addon, userId }: AddonMenuProps) {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align='end'>
-					<DropdownMenuItem onSelect={() => copyText(addon.id, 'addon ID')}>
+					<DropdownMenuItem onClick={() => copyText(addon.id, 'addon ID')}>
 						<IconCopies size={24} />
 						Copy addon ID
 					</DropdownMenuItem>
@@ -49,7 +52,10 @@ function AddonMenu({ addon, userId }: AddonMenuProps) {
 						</DropdownMenuItem>
 					) : null}
 					{actions.maintainers ? (
-						<DropdownMenuItem onSelect={() => setMaintainersOpen(true)}>
+						<DropdownMenuItem
+							onClick={() => setMaintainersOpen(true)}
+							{...prefetchMaintainers}
+						>
 							<IconUsers size={24} />
 							Maintainers
 						</DropdownMenuItem>

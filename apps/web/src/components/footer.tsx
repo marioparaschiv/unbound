@@ -20,7 +20,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 const PRODUCT_LINKS: FooterLink[] = [
 	{ label: 'Plugins', href: '/plugins' },
 	{ label: 'Themes', href: '/themes' },
-	{ label: 'Developers', href: '/developers' },
+	{ label: 'Developers', href: '/team' },
 ];
 
 const SUPPORT_LINKS: FooterLink[] = [

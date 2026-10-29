@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useCallback } from 'react';
 
-import { fetchMarketplacePage, marketplaceSearchSchema } from '~/lib/marketplace';
+import { prefetchListing } from '~/queries/marketplace/listing';
+import { marketplaceSearchSchema } from '~/lib/marketplace';
 import type { MarketplaceSearch } from '~/lib/marketplace';
 import AddonListing from '~/components/addon-listing';
 
 function PluginsPage() {
-	const page = Route.useLoaderData();
 	const search = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 
@@ -15,13 +15,14 @@ function PluginsPage() {
 		[navigate],
 	);
 
-	return <AddonListing type='plugin' page={page} search={search} onSearchChange={changeSearch} />;
+	return <AddonListing type='plugin' search={search} onSearchChange={changeSearch} />;
 }
 
 export const Route = createFileRoute('/_site/plugins')({
 	head: () => ({ meta: [{ title: 'Unbound | Plugins' }] }),
 	validateSearch: marketplaceSearchSchema,
 	loaderDeps: ({ search }) => search,
-	loader: ({ deps }) => fetchMarketplacePage({ data: { ...deps, type: 'plugin' } }),
+	loader: ({ context, deps, cause }) =>
+		prefetchListing(context.queryClient, 'plugin', deps, cause),
 	component: PluginsPage,
 });

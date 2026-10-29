@@ -20,8 +20,14 @@ type ScannedPlugin = {
 	folder: string;
 };
 
+type EvaluatedPlugin = {
+	bundle: string;
+	factory: PluginFactory;
+};
+
 export class Plugins extends Addons<PluginEntity> {
 	private scanned = new Map<string, ScannedPlugin>();
+	private evaluated = new Map<string, EvaluatedPlugin>();
 
 	/**
 	 * @description Creates the plugins manager bound to the {@link ManagerType.PLUGINS} type.
@@ -48,19 +54,35 @@ export class Plugins extends Addons<PluginEntity> {
 	}
 
 	/**
+	 * @description Unloads a plugin and forgets its evaluated bundle, so a deleted plugin's code is not kept.
+	 * @param entity The plugin to unload, as its id or the entity itself.
+	 */
+	unload(entity: string | Addon): void | Promise<void> {
+		this.evaluated.delete(typeof entity === 'string' ? entity : entity.id);
+
+		return super.unload(entity);
+	}
+
+	/**
 	 * @description Restarts a plugin on its new bundle, then re-renders its mounted components in place.
 	 * A component whose hooks changed can't keep its state, so the app reloads instead.
 	 * @param entity The plugin to reload, as its id or the entity itself.
 	 * @param bundle The freshly built bundle source.
 	 * @param manifest The freshly built, validated manifest.
+	 * @param bytecode The bundle compiled for this runtime, base64-encoded, which then runs instead of the source.
 	 * @returns The reload outcome.
 	 */
 	async reload(
 		entity: string | Addon,
 		bundle: string,
 		manifest: AddonManifest,
+		bytecode?: string,
 	): Promise<ReloadResult> {
-		const result = await super.reload(entity, bundle, manifest);
+		if (bytecode) {
+			this.scanned.set(manifest.id, { bundle, folder: manifest.id });
+		}
+
+		const result = await super.reload(entity, bundle, manifest, bytecode);
 
 		if (result.ok && performRefresh().needsRemount) {
 			this.logger.info(`${manifest.id} changed a component's hooks; reloading.`);
@@ -78,7 +100,7 @@ export class Plugins extends Addons<PluginEntity> {
 	 * @returns The resolved plugin instance.
 	 */
 	protected handleBundle(bundle: string, id: string): Plugin {
-		const iife: PluginFactory = this.compiledFactory(bundle, id) ?? this.sourceFactory(bundle);
+		const iife = this.factoryFor(bundle, id);
 
 		return withRefreshScope(id, () => {
 			const payload = iife(createScopedReact());
@@ -88,14 +110,28 @@ export class Plugins extends Addons<PluginEntity> {
 		});
 	}
 
+	private factoryFor(bundle: string, id: string): PluginFactory {
+		const cached = this.evaluated.get(id);
+
+		if (cached?.bundle === bundle) {
+			return cached.factory;
+		}
+
+		const factory = this.compiledFactory(bundle, id) ?? this.sourceFactory(bundle);
+
+		this.evaluated.set(id, { bundle, factory });
+
+		return factory;
+	}
+
 	private sourceFactory(bundle: string): PluginFactory {
 		// oxlint-disable-next-line no-eval
 		return eval(`((React) => { return ${bundle} })`);
 	}
 
 	/**
-	 * @description Evaluates the bytecode the loader compiled for this runtime, when the bundle being
-	 * started is the one it scanned at launch, so a hot-reloaded or updated bundle always runs from source.
+	 * @description Evaluates the bytecode compiled for this runtime, when the bundle being started is the
+	 * one the loader scanned at launch or one reloaded with its bytecode, so any other bundle runs from source.
 	 * @param bundle The bundle about to start.
 	 * @param id The plugin's id.
 	 * @returns The compiled plugin factory, or `undefined` to evaluate the source.

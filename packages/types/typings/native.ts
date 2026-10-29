@@ -26,9 +26,6 @@ export const NATIVE_PLUGIN_CAPABILITIES = [
 	'native.java.associations',
 	'native.debug.evaluations',
 	'native.debug.environment',
-	'native.ui.lookup',
-	'native.ui.mount',
-	'native.ui.layout',
 ] as const;
 
 export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
@@ -51,9 +48,6 @@ export const NATIVE_PLUGIN_PLATFORM_CAPABILITIES = {
 		'native.runtime.events',
 		'native.debug.environment',
 		'native.debug.evaluations',
-		'native.ui.layout',
-		'native.ui.lookup',
-		'native.ui.mount',
 	],
 	ios: [
 		'native.fabric.async',
@@ -207,8 +201,6 @@ export type NativeHookToken = {
 	setReturnValue(self: NativeObjectHandle, args: unknown[], value: unknown): void;
 	removeReturnValue(self: NativeObjectHandle, args: unknown[]): void;
 	clearReturnValues(): void;
-	setSizeHeightFloor(self: NativeObjectHandle, args: unknown[], floor: number): void;
-	removeSizeHeightFloor(self: NativeObjectHandle, args: unknown[]): void;
 	remove(): void;
 };
 
@@ -368,30 +360,6 @@ export type NativeRuntimeBridge = {
 	): NativeRuntimeEventToken;
 };
 
-export type NativeUIHandle = NativeHandle;
-
-export type NativeUIQuery = {
-	role: string;
-	root?: NativeUIHandle;
-	attributes?: NativeSerializableObject;
-	maxDepth?: number;
-	maxNodes?: number;
-	maxResults?: number;
-};
-
-export type NativeUISnapshotNode = {
-	id: NativeUIHandle;
-	parent: NativeUIHandle | null;
-	role: string;
-	frame: NativeFabricFrame | null;
-	attributes: NativeSerializableObject;
-};
-
-export type NativeUISnapshot = {
-	generation: number;
-	nodes: NativeUISnapshotNode[];
-};
-
 export type NativeJavaHandle = NativeHandle;
 
 export type NativeJavaValue =
@@ -405,7 +373,7 @@ export type NativeJavaValue =
 	| {
 			type: 'array';
 			componentType: string;
-			value: (NativeJavaValue | string | number | boolean)[];
+			value: (NativeJavaValue | NativeJavaHandle | string | number | boolean)[];
 	  };
 
 export type NativeJavaHandleValue = { type: 'handle'; value: string };
@@ -474,7 +442,7 @@ export type NativeResourceCounts = {
 	hooks: number;
 	surfaces: number;
 	cachedReturns: number;
-	leasedHandles: number;
+	handles: number;
 };
 
 export type NativeDebugEnvironment = {
@@ -540,23 +508,6 @@ export type NativeJavaBridge = {
 	getField(handle: NativeJavaReference, name: string): NativeJavaValue;
 	setField(handle: NativeJavaReference, name: string, value: NativeJavaArgument): void;
 	release(handle: NativeJavaReference): void;
-};
-
-export type NativeUIBridge = {
-	lookup(query: NativeUIQuery): NativeCancelablePromise<NativeUIHandle[]>;
-	snapshot(query: NativeUIQuery): NativeCancelablePromise<NativeUISnapshot>;
-	mount(
-		container: NativeUIHandle,
-		moduleName: string,
-		properties?: NativeSerializableObject,
-	): NativeCancelablePromise<NativeUIHandle>;
-	update(
-		handle: NativeUIHandle,
-		properties: NativeSerializableObject,
-	): NativeCancelablePromise<void>;
-	setFrame(handle: NativeUIHandle, frame: NativeFabricFrame): NativeCancelablePromise<void>;
-	measure(handle: NativeUIHandle): NativeCancelablePromise<NativeFabricFrame>;
-	unmount(handle: NativeUIHandle): NativeCancelablePromise<void>;
 };
 
 export type NativePlatformDevice = {
@@ -663,7 +614,6 @@ export type NativePluginBridge = {
 	readonly ffi: NativeFFIBridge;
 	readonly fabric: NativeFabricBridge;
 	readonly runtime: NativeRuntimeBridge;
-	readonly ui: NativeUIBridge;
 	readonly java: NativeJavaBridge;
 	readonly hooks: NativeJavaHooksBridge;
 	readonly debug: NativeDebugBridge;

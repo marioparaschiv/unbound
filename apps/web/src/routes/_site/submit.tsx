@@ -1,14 +1,17 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import type { Submission } from '@unbound-app/contracts/publish';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
+import { submitOverviewQuery } from '~/queries/submissions/submissions';
 import SubmitForm from '~/components/submit/submit-form';
-import { getSubmitOverview } from '~/lib/publishing';
 import PageHeader from '~/components/page-header';
 
 function SubmitAddonPage() {
-	const { githubLinked } = Route.useLoaderData();
+	const {
+		data: { githubLinked },
+	} = useSuspenseQuery(submitOverviewQuery());
 	const navigate = useNavigate();
 
 	async function handleSubmitted(submission: Submission) {
@@ -46,6 +49,8 @@ export const Route = createFileRoute('/_site/submit')({
 			throw redirect({ to: '/login' });
 		}
 	},
-	loader: () => getSubmitOverview(),
+	loader: async ({ context }) => {
+		await context.queryClient.ensureQueryData(submitOverviewQuery());
+	},
 	component: SubmitAddonPage,
 });

@@ -9,6 +9,7 @@ import {
 	messageIdField,
 } from './discord-views';
 import { hasShapeConstructor, shapeField, shapeMethod } from './discord-shapes';
+import shapes from './discord-shapes.json';
 
 const MESSAGE = 'com.discord.chat.bridge.Message';
 const STRING = 'java.lang.String';
@@ -182,12 +183,16 @@ describe('Discord shapes', () => {
 		expect(() => shapeField(stable, 'reactionEmoji')).toThrow('needs the class to look in');
 	});
 
-	test("refuse shapes only the Android loader's matcher applies", () => {
-		expect(() => shapeField(stable, 'reactSurfaceViewFactory')).toThrow(
-			'uses typeAssignableTo, which only the Android loader applies',
-		);
-		expect(() => hasShapeConstructor(stable, 'reactSurface', MESSAGE_VIEW)).toThrow(
-			'uses parameterOf, which only the Android loader applies',
-		);
+	test("plugin shapes use only keys the plugins' resolver applies", () => {
+		for (const [name, shape] of Object.entries(shapes)) {
+			for (const key of [
+				'ownerShape',
+				'parameterOf',
+				'typeAssignableTo',
+				'returnsAssignableFrom',
+			]) {
+				expect({ name, key, used: key in shape }).toEqual({ name, key, used: false });
+			}
+		}
 	});
 });

@@ -110,7 +110,12 @@ async function failure(promise: Promise<TableReport[]>): Promise<Error> {
 	throw new Error('Expected the copy to fail.');
 }
 
-const NEWER_THAN_SQLITE: ReadonlySet<string> = new Set(['team_member', 'crash_report']);
+const NEWER_THAN_SQLITE: ReadonlySet<string> = new Set([
+	'team_member',
+	'crash_report',
+	'tag',
+	'addon_tag',
+]);
 
 describe('copySqlite', () => {
 	test('copies every table and verifies each against the source', async () => {

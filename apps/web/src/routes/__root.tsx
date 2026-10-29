@@ -1,7 +1,9 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router';
+import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
-import { getSession } from '~/lib/auth/session';
+import PressSprings from '~/components/motion/press-springs';
+import type { RouterContext } from '~/queries/query-client';
+import { sessionQuery } from '~/queries/account/session';
 import Toaster from '~/components/ui/sonner';
 import stylesheet from '~/styles.css?url';
 
@@ -18,13 +20,14 @@ function RootDocument({ children }: RootDocumentProps) {
 			<body className='flex flex-col min-h-dvh [view-transition-name:main-content]'>
 				{children}
 				<Toaster />
+				<PressSprings />
 				<Scripts />
 			</body>
 		</html>
 	);
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<RouterContext>()({
 	head: () => ({
 		meta: [
 			{ charSet: 'utf-8' },
@@ -41,6 +44,8 @@ export const Route = createRootRoute({
 			},
 		],
 	}),
-	beforeLoad: async () => ({ session: await getSession() }),
+	beforeLoad: async ({ context }) => ({
+		session: await context.queryClient.fetchQuery(sessionQuery()),
+	}),
 	shellComponent: RootDocument,
 });

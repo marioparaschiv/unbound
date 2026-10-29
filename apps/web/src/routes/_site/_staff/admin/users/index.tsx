@@ -1,12 +1,13 @@
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router';
 import { adminUsersSearchSchema } from '@unbound-app/contracts/admin';
 import { IconBan, IconUserCheck } from 'nucleo-micro-bold';
+import { useQuery } from '@tanstack/react-query';
 
+import { adminUsersQuery } from '~/queries/admin-users/admin-users';
 import { formatDate } from '~/components/admin/format-date';
 import UserActions from '~/components/admin/user-actions';
 import AdminTable from '~/components/admin/admin-table';
 import SearchForm from '~/components/admin/search-form';
-import { fetchAdminUsers } from '~/lib/admin-functions';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
 import PageHeader from '~/components/page-header';
 import UserAvatar from '~/components/user-avatar';
@@ -16,11 +17,17 @@ const COLUMNS = ['User', 'Email', 'Role', 'Status', 'Joined'];
 
 function UsersPage() {
 	const { user: viewer } = Route.useRouteContext();
-	const { items: users, next, prev } = Route.useLoaderData();
-	const search = Route.useSearch().q ?? '';
+	const params = Route.useSearch();
+	const { data, isPlaceholderData } = useQuery(adminUsersQuery(params));
+	const search = params.q ?? '';
 	const navigate = useNavigate({ from: Route.fullPath });
 	const canSetRole = hasPermission(viewer.role, { user: ['set-role'] });
 	const canBan = hasPermission(viewer.role, { user: ['ban'] });
+
+	// The loader filled the cache and a new search keeps the last page, so this holds only while a failure is thrown.
+	if (!data) return null;
+
+	const { items: users, next, prev } = data;
 
 	return (
 		<div className='flex flex-col gap-6'>
@@ -33,6 +40,7 @@ function UsersPage() {
 				key={search}
 				search={search}
 				placeholder='Search by id, name or email...'
+				pending={isPlaceholderData}
 				onSearch={(value) => navigate({ search: { q: value || undefined } })}
 			/>
 
@@ -42,15 +50,6 @@ function UsersPage() {
 				noun='users'
 				next={next}
 				prev={prev}
-				onPageChange={(cursor, dir) =>
-					navigate({
-						search: (current) => ({
-							...current,
-							cursor,
-							dir: dir === 'prev' ? dir : undefined,
-						}),
-					})
-				}
 			>
 				{users.map((user) => (
 					<tr key={user.id} className='hover:bg-muted/30'>
@@ -117,6 +116,11 @@ export const Route = createFileRoute('/_site/_staff/admin/users/')({
 		}
 	},
 	loaderDeps: ({ search }) => search,
-	loader: ({ deps }) => fetchAdminUsers({ data: deps }),
+	loader: async ({ context, deps, cause }) => {
+		// A search or page change on the page keeps the old page up while the list fetches the new one.
+		if (cause === 'stay') return;
+
+		await context.queryClient.ensureQueryData(adminUsersQuery(deps));
+	},
 	component: UsersPage,
 });

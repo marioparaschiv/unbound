@@ -70,15 +70,12 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to install the Recovery Mode shortcut", it) }
         runCatching { Toolbox.install(this) }
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to install the toolbox gestures", it) }
-        runCatching { ChatUI.install(this, param.classLoader) }
-            .onFailure { Logger.error(LogCategory.CHATUI, "Failed to hook the chat UI", it) }
         runCatching { TextRewrites.install(this) }
             .onFailure { Logger.error(LogCategory.PLUGINS, "Failed to hook text rewrites", it) }
     }
 
     private fun onSettingsChanged() {
         HotReload.sync()
-        ChatUI.reload()
         ActivityTracker.currentActivity()?.let(DevOverlay::onResumed)
     }
 

@@ -1,7 +1,6 @@
 import { IconChevronLeft, IconChevronRight } from 'nucleo-micro-bold';
-import type { PageDirection } from '@unbound-app/contracts/admin';
 
-import { Button } from '~/components/ui/button';
+import PageLink from '~/components/page-link';
 import cn from '~/lib/cn';
 
 type CursorPagerProps = {
@@ -9,11 +8,10 @@ type CursorPagerProps = {
 	next: string | null;
 	/** The current page's `prev` cursor; `null` on the first page. */
 	prev: string | null;
-	onPageChange: (cursor: string, dir: PageDirection) => void;
 	className?: string;
 };
 
-function CursorPager({ next, prev, onPageChange, className }: CursorPagerProps) {
+function CursorPager({ next, prev, className }: CursorPagerProps) {
 	if (!next && !prev) return null;
 
 	return (
@@ -23,24 +21,18 @@ function CursorPager({ next, prev, onPageChange, className }: CursorPagerProps) 
 				className,
 			)}
 		>
-			<Button
-				variant='outline'
-				size='sm'
-				onClick={() => prev && onPageChange(prev, 'prev')}
-				disabled={!prev}
+			<PageLink
+				search={prev ? (current) => ({ ...current, cursor: prev, dir: 'prev' }) : null}
 			>
 				<IconChevronLeft className='size-4' />
 				Previous
-			</Button>
-			<Button
-				variant='outline'
-				size='sm'
-				onClick={() => next && onPageChange(next, 'next')}
-				disabled={!next}
+			</PageLink>
+			<PageLink
+				search={next ? (current) => ({ ...current, cursor: next, dir: undefined }) : null}
 			>
 				Next
 				<IconChevronRight className='size-4' />
-			</Button>
+			</PageLink>
 		</div>
 	);
 }

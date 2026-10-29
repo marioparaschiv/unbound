@@ -41,6 +41,7 @@
 #import "NativePluginRoot.h"
 #import "NativePluginRuntime.h"
 #import "NativeResourceBudget.h"
+#import "NativeStructLayouts.h"
 #import "NativeTraversalOptions.h"
 #import "NativeTypeEncoding.h"
 
@@ -103,10 +104,20 @@ using namespace facebook::jsi;
 
 namespace {
 
+static std::atomic<size_t> gLiveObjCHandles{0};
+
 class ObjCHandleHost final : public HostObject
 {
 public:
-    explicit ObjCHandleHost(id value) : value_(value) {}
+    explicit ObjCHandleHost(id value) : value_(value)
+    {
+        gLiveObjCHandles++;
+    }
+
+    ~ObjCHandleHost() override
+    {
+        gLiveObjCHandles--;
+    }
 
     id value(void) const
     {
@@ -224,8 +235,6 @@ struct HookState {
     std::mutex                    returnCacheMutex;
     __strong NSMutableDictionary<NSArray *, NSData *> *returnCache =
         [NSMutableDictionary dictionary];
-    __strong NSMutableDictionary<NSArray *, NSNumber *> *sizeHeightFloors =
-        [NSMutableDictionary dictionary];
     bool              cacheOnly = false;
     bool              once      = false;
     loader::AddonSlot addon     = loader::kNoAddon;
@@ -306,10 +315,6 @@ static void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState
 static void removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
                                   const Value *args, size_t count);
 static void clearHookReturnCache(const std::shared_ptr<HookState> &state);
-static void setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                   const Value *args, size_t count);
-static void removeHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                      const Value *args, size_t count);
 
 class IOSNativePluginExecutor final : public loader::native::NativePluginExecutor
 {
@@ -1074,61 +1079,24 @@ static Value structResult(Runtime &runtime, NSString *name, NSValue *value)
 
 static Value structValue(Runtime &runtime, NSString *name, const Value &fields)
 {
-    if (!fields.isObject())
+    const loader::native::StructLayout *layout =
+        loader::native::structLayout(std::string(name.UTF8String ?: ""));
+    if (!layout)
     {
-        throw JSError(runtime, "Native struct fields must be an object");
+        throw JSError(runtime, "Unsupported native struct");
     }
-
-    Object object = fields.asObject(runtime);
-    if ([name isEqualToString:@"NSRange"])
+    std::vector<uint8_t> bytes;
+    try
     {
-        NSRange range = NSMakeRange((NSUInteger) object.getProperty(runtime, "location").asNumber(),
-                                    (NSUInteger) object.getProperty(runtime, "length").asNumber());
-        return structResult(runtime, name, [NSValue valueWithRange:range]);
+        bytes = loader::native::structFromJS(runtime, *layout, fields);
     }
-    if ([name isEqualToString:@"CGPoint"])
+    catch (const std::invalid_argument &error)
     {
-        CGPoint point = CGPointMake(object.getProperty(runtime, "x").asNumber(),
-                                    object.getProperty(runtime, "y").asNumber());
-        return structResult(runtime, name, [NSValue valueWithCGPoint:point]);
+        throw JSError(runtime, error.what());
     }
-    if ([name isEqualToString:@"CGSize"])
-    {
-        CGSize size = CGSizeMake(object.getProperty(runtime, "width").asNumber(),
-                                 object.getProperty(runtime, "height").asNumber());
-        return structResult(runtime, name, [NSValue valueWithCGSize:size]);
-    }
-    if ([name isEqualToString:@"CGRect"])
-    {
-        Object origin = object.getPropertyAsObject(runtime, "origin");
-        Object size   = object.getPropertyAsObject(runtime, "size");
-        CGRect rect   = CGRectMake(origin.getProperty(runtime, "x").asNumber(),
-                                   origin.getProperty(runtime, "y").asNumber(),
-                                   size.getProperty(runtime, "width").asNumber(),
-                                   size.getProperty(runtime, "height").asNumber());
-        return structResult(runtime, name, [NSValue valueWithCGRect:rect]);
-    }
-    if ([name isEqualToString:@"UIEdgeInsets"])
-    {
-        UIEdgeInsets insets = UIEdgeInsetsMake(object.getProperty(runtime, "top").asNumber(),
-                                               object.getProperty(runtime, "left").asNumber(),
-                                               object.getProperty(runtime, "bottom").asNumber(),
-                                               object.getProperty(runtime, "right").asNumber());
-        return structResult(runtime, name, [NSValue valueWithUIEdgeInsets:insets]);
-    }
-    if ([name isEqualToString:@"CGAffineTransform"])
-    {
-        CGAffineTransform transform =
-            CGAffineTransformMake(object.getProperty(runtime, "a").asNumber(),
-                                  object.getProperty(runtime, "b").asNumber(),
-                                  object.getProperty(runtime, "c").asNumber(),
-                                  object.getProperty(runtime, "d").asNumber(),
-                                  object.getProperty(runtime, "tx").asNumber(),
-                                  object.getProperty(runtime, "ty").asNumber());
-        return structResult(runtime, name, [NSValue valueWithCGAffineTransform:transform]);
-    }
-
-    throw JSError(runtime, "Unsupported native struct");
+    std::string encoding(layout->encoding);
+    return structResult(runtime, name,
+                        [NSValue valueWithBytes:bytes.data() objCType:encoding.c_str()]);
 }
 
 static Value returnValue(Runtime &runtime, NSInvocation *invocation, NSMethodSignature *signature)
@@ -2496,26 +2464,6 @@ Value HookTokenHost::get(Runtime &runtime, const PropNameID &name)
                 return Value::undefined();
             });
     }
-    if (property == "setSizeHeightFloor")
-    {
-        std::shared_ptr<HookState> state = state_;
-        return Function::createFromHostFunction(
-            runtime, PropNameID::forUtf8(runtime, "setSizeHeightFloor"), 3,
-            [state](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-                setHookSizeHeightFloor(rt, state, args, count);
-                return Value::undefined();
-            });
-    }
-    if (property == "removeSizeHeightFloor")
-    {
-        std::shared_ptr<HookState> state = state_;
-        return Function::createFromHostFunction(
-            runtime, PropNameID::forUtf8(runtime, "removeSizeHeightFloor"), 2,
-            [state](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-                removeHookSizeHeightFloor(rt, state, args, count);
-                return Value::undefined();
-            });
-    }
     return Value::undefined();
 }
 
@@ -2535,99 +2483,16 @@ Value StructHost::get(Runtime &runtime, const PropNameID &name)
 
 static Value structFields(Runtime &runtime, NSString *name, NSValue *value)
 {
-    if (!value)
+    const loader::native::StructLayout *layout =
+        value ? loader::native::structLayoutForTypeName(std::string(name.UTF8String ?: ""))
+              : nullptr;
+    if (!layout)
     {
         return Value::undefined();
     }
-
-    NSString *canonicalName = name;
-    if ([name containsString:@"_NSRange"])
-    {
-        canonicalName = @"NSRange";
-    }
-    else if ([name containsString:@"CGAffineTransform"])
-    {
-        canonicalName = @"CGAffineTransform";
-    }
-    else if ([name containsString:@"UIEdgeInsets"])
-    {
-        canonicalName = @"UIEdgeInsets";
-    }
-    else if ([name containsString:@"CGRect"])
-    {
-        canonicalName = @"CGRect";
-    }
-    else if ([name containsString:@"CGPoint"])
-    {
-        canonicalName = @"CGPoint";
-    }
-    else if ([name containsString:@"CGSize"])
-    {
-        canonicalName = @"CGSize";
-    }
-
-    Object result(runtime);
-    if ([canonicalName isEqualToString:@"NSRange"])
-    {
-        NSRange range = NSMakeRange(0, 0);
-        [value getValue:&range];
-        result.setProperty(runtime, "location", (double) range.location);
-        result.setProperty(runtime, "length", (double) range.length);
-        return result;
-    }
-    if ([canonicalName isEqualToString:@"CGPoint"])
-    {
-        CGPoint point = CGPointZero;
-        [value getValue:&point];
-        result.setProperty(runtime, "x", point.x);
-        result.setProperty(runtime, "y", point.y);
-        return result;
-    }
-    if ([canonicalName isEqualToString:@"CGSize"])
-    {
-        CGSize size = CGSizeZero;
-        [value getValue:&size];
-        result.setProperty(runtime, "width", size.width);
-        result.setProperty(runtime, "height", size.height);
-        return result;
-    }
-    if ([canonicalName isEqualToString:@"CGRect"])
-    {
-        CGRect rect = CGRectZero;
-        [value getValue:&rect];
-        Object origin(runtime);
-        origin.setProperty(runtime, "x", rect.origin.x);
-        origin.setProperty(runtime, "y", rect.origin.y);
-        Object size(runtime);
-        size.setProperty(runtime, "width", rect.size.width);
-        size.setProperty(runtime, "height", rect.size.height);
-        result.setProperty(runtime, "origin", origin);
-        result.setProperty(runtime, "size", size);
-        return result;
-    }
-    if ([canonicalName isEqualToString:@"UIEdgeInsets"])
-    {
-        UIEdgeInsets insets = UIEdgeInsetsZero;
-        [value getValue:&insets];
-        result.setProperty(runtime, "top", insets.top);
-        result.setProperty(runtime, "left", insets.left);
-        result.setProperty(runtime, "bottom", insets.bottom);
-        result.setProperty(runtime, "right", insets.right);
-        return result;
-    }
-    if ([canonicalName isEqualToString:@"CGAffineTransform"])
-    {
-        CGAffineTransform transform = CGAffineTransformIdentity;
-        [value getValue:&transform];
-        result.setProperty(runtime, "a", transform.a);
-        result.setProperty(runtime, "b", transform.b);
-        result.setProperty(runtime, "c", transform.c);
-        result.setProperty(runtime, "d", transform.d);
-        result.setProperty(runtime, "tx", transform.tx);
-        result.setProperty(runtime, "ty", transform.ty);
-        return result;
-    }
-    return Value::undefined();
+    std::vector<uint8_t> bytes(layout->size);
+    [value getValue:bytes.data() size:bytes.size()];
+    return loader::native::structToJS(runtime, *layout, bytes.data());
 }
 
 struct HookInvocation {
@@ -3110,103 +2975,8 @@ static void clearHookReturnCache(const std::shared_ptr<HookState> &state)
         return;
     }
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-    loader::native::nativeCachedReturnBudget().release(state->returnCache.count +
-                                                       state->sizeHeightFloors.count);
+    loader::native::nativeCachedReturnBudget().release(state->returnCache.count);
     [state->returnCache removeAllObjects];
-    [state->sizeHeightFloors removeAllObjects];
-}
-
-static void setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                   const Value *args, size_t count)
-{
-    if (!state || !state->cacheOnly || count < 3 || !args[2].isNumber())
-    {
-        throw JSError(runtime, "Native hook size floor requires a number");
-    }
-
-    std::shared_ptr<HookDispatcher> dispatcher = state->dispatcher.lock();
-    if (!dispatcher || dispatcher->signature->result.name != "struct:CGSize")
-    {
-        throw JSError(runtime, "Native hook size floor requires a CGSize return type");
-    }
-
-    double floor = args[2].getNumber();
-    if (!std::isfinite(floor) || floor < 0 || floor > 4096)
-    {
-        throw JSError(runtime, "Native hook size floor is outside the supported range");
-    }
-
-    NSArray                    *key = hookReturnCacheKey(runtime, state, args, count);
-    std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-    if (floor == 0)
-    {
-        releaseHookCacheEntry(state->sizeHeightFloors, key);
-    }
-    else
-    {
-        reserveHookCacheEntry(runtime, state, state->sizeHeightFloors, key);
-        state->sizeHeightFloors[key] = @(floor);
-    }
-}
-
-static void removeHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                      const Value *args, size_t count)
-{
-    NSArray                    *key = hookReturnCacheKey(runtime, state, args, count);
-    std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-    releaseHookCacheEntry(state->sizeHeightFloors, key);
-}
-
-static void applyHookSizeHeightFloors(const std::shared_ptr<HookDispatcher>         &dispatcher,
-                                      const std::vector<std::shared_ptr<HookState>> &hooks,
-                                      void **arguments, void *returnValue)
-{
-    if (!returnValue || dispatcher->signature->result.name != "struct:CGSize" ||
-        loader::ffi::typeSize(dispatcher->signature->result) < sizeof(CGSize))
-    {
-        return;
-    }
-
-    NSArray *key = nil;
-    CGSize   size{};
-    memcpy(&size, returnValue, sizeof(size));
-    if (!std::isfinite(size.height) || size.height < 0)
-    {
-        return;
-    }
-
-    for (const std::shared_ptr<HookState> &state : hooks)
-    {
-        if (!state->active || !state->cacheOnly)
-        {
-            continue;
-        }
-
-        NSNumber *floorValue = nil;
-        {
-            std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-            if (state->sizeHeightFloors.count == 0)
-            {
-                continue;
-            }
-            if (!key)
-            {
-                key = hookReturnCacheKey(dispatcher, arguments);
-            }
-            if (key)
-            {
-                floorValue = state->sizeHeightFloors[key];
-            }
-        }
-        if (!floorValue)
-        {
-            continue;
-        }
-
-        size.height = std::max(size.height, floorValue.doubleValue);
-    }
-
-    memcpy(returnValue, &size, sizeof(size));
 }
 
 static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selector,
@@ -3335,7 +3105,6 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         {
             invokeHookOriginal(dispatcher, arguments, returnValue);
         }
-        applyHookSizeHeightFloors(dispatcher, hooks, arguments, returnValue);
         for (const std::shared_ptr<HookState> &state : onceHooks)
         {
             removeHook(state);
@@ -3453,8 +3222,6 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         invokeHookOriginal(dispatcher, arguments, returnValue);
         copyHookResult(invocation, returnValue);
     }
-
-    applyHookSizeHeightFloors(dispatcher, hooks, arguments, returnValue);
 
     for (const std::shared_ptr<HookState> &state : hooks)
     {
@@ -4698,6 +4465,9 @@ void registerNativePluginBridge(Runtime &runtime)
         loader::native::onRuntimeGenerationChanged(invalidateRuntimeResources);
     });
     loader::native::registerRuntime(runtime);
+    loader::native::setPlatformHandleCounter([] {
+        return gLiveObjCHandles.load();
+    });
     loader::native::NativePluginRootBuilder bridge(runtime,
                                                    loader::native::NativePluginPlatform::IOS);
 

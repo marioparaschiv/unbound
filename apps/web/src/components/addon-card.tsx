@@ -1,6 +1,6 @@
 import { IconPalette, IconPlug } from 'nucleo-micro-bold';
+import type { ComponentProps, ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-import type { ComponentProps } from 'react';
 
 import { Card, CardContent, CardFooter, CardHeader } from '~/components/ui/card';
 import InstallAddonButton from '~/components/install-addon-button';
@@ -11,9 +11,13 @@ import cn from '~/lib/cn';
 
 type AddonCardProps = ComponentProps<typeof Card> & {
 	addon: MarketplaceAddon;
+	/** Rendered under the description, such as the addon's tags. */
+	details?: ReactNode;
+	/** Rendered at the start of the footer, beside the install button. */
+	footer?: ReactNode;
 };
 
-function AddonCard({ addon, className, ...props }: AddonCardProps) {
+function AddonCard({ addon, details, footer, className, ...props }: AddonCardProps) {
 	return (
 		<Card
 			className={cn(
@@ -22,7 +26,7 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 			)}
 			{...props}
 		>
-			<CardHeader className='flex flex-row items-center gap-3 p-(--card-pad) pb-0'>
+			<CardHeader className='flex flex-row items-start gap-3 p-(--card-pad) pb-0'>
 				<div className='flex justify-center items-center bg-accent rounded-control size-10 shrink-0'>
 					{addon.type === 'theme' ? (
 						<IconPalette className='size-5' />
@@ -53,16 +57,26 @@ function AddonCard({ addon, className, ...props }: AddonCardProps) {
 				<Text variant='text-sm' color='muted' className='line-clamp-2'>
 					{addon.description}
 				</Text>
+				{details}
 			</CardContent>
-			<CardFooter className='flex items-center gap-3 mt-auto px-(--card-pad) pt-2 pb-(--card-pad)'>
+			<CardFooter className='flex flex-wrap items-center gap-3 mt-auto px-(--card-pad) pt-4 pb-(--card-pad)'>
+				{footer}
+				{/* Phones get a filled primary button whose hit area reaches 44px; wider screens a quiet ghost one. */}
 				<InstallAddonButton
-					className='z-10 relative ml-auto'
-					size='icon-sm'
+					className='sm:hidden z-10 relative after:absolute after:-inset-1.5 ml-auto min-w-36'
+					size='sm'
+					id={addon.id}
+					type={addon.type}
+					manifestUrl={addon.manifestUrl}
+				/>
+				{/* The ghost button's padding bleeds into the card's, so its label lines up with the edges. */}
+				<InstallAddonButton
+					className='hidden sm:inline-flex z-10 relative -my-2 -mr-3 ml-auto text-foreground'
+					size='sm'
 					variant='ghost'
 					id={addon.id}
 					type={addon.type}
 					manifestUrl={addon.manifestUrl}
-					iconOnly
 				/>
 			</CardFooter>
 		</Card>

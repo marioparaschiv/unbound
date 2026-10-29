@@ -89,9 +89,6 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.java.associations',
 	'native.debug.evaluations',
 	'native.debug.environment',
-	'native.ui.lookup',
-	'native.ui.mount',
-	'native.ui.layout',
 ];
 export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 	readonly android: readonly [
@@ -109,9 +106,6 @@ export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 		'native.runtime.events',
 		'native.debug.environment',
 		'native.debug.evaluations',
-		'native.ui.layout',
-		'native.ui.lookup',
-		'native.ui.mount',
 	];
 	readonly ios: readonly [
 		'native.fabric.async',
@@ -585,8 +579,6 @@ export type NativeHookToken = {
 	setReturnValue(self: NativeObjectHandle, args: unknown[], value: unknown): void;
 	removeReturnValue(self: NativeObjectHandle, args: unknown[]): void;
 	clearReturnValues(): void;
-	setSizeHeightFloor(self: NativeObjectHandle, args: unknown[], floor: number): void;
-	removeSizeHeightFloor(self: NativeObjectHandle, args: unknown[]): void;
 	remove(): void;
 };
 export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
@@ -716,7 +708,7 @@ export type NativeJavaValue =
 	| {
 			type: 'array';
 			componentType: string;
-			value: (NativeJavaValue | string | number | boolean)[];
+			value: (NativeJavaValue | NativeJavaHandle | string | number | boolean)[];
 	  };
 export type NativeObjCBridge = {
 	getClass(name: string): NativeClassHandle | null;
@@ -848,7 +840,6 @@ export type NativePluginBridge = {
 	readonly ffi: NativeFFIBridge;
 	readonly fabric: NativeFabricBridge;
 	readonly runtime: NativeRuntimeBridge;
-	readonly ui: NativeUIBridge;
 	readonly java: NativeJavaBridge;
 	readonly hooks: NativeJavaHooksBridge;
 	readonly debug: NativeDebugBridge;
@@ -876,7 +867,7 @@ export type NativeResourceCounts = {
 	hooks: number;
 	surfaces: number;
 	cachedReturns: number;
-	leasedHandles: number;
+	handles: number;
 };
 export type NativeRuntimeBridge = {
 	subscribe(
@@ -932,42 +923,6 @@ export type NativeStructFields = {
 	[field: string]: NativeStructField;
 };
 export type NativeThreadPolicy = 'current' | 'main';
-export type NativeUIBridge = {
-	lookup(query: NativeUIQuery): NativeCancelablePromise<NativeUIHandle[]>;
-	snapshot(query: NativeUIQuery): NativeCancelablePromise<NativeUISnapshot>;
-	mount(
-		container: NativeUIHandle,
-		moduleName: string,
-		properties?: NativeSerializableObject,
-	): NativeCancelablePromise<NativeUIHandle>;
-	update(
-		handle: NativeUIHandle,
-		properties: NativeSerializableObject,
-	): NativeCancelablePromise<void>;
-	setFrame(handle: NativeUIHandle, frame: NativeFabricFrame): NativeCancelablePromise<void>;
-	measure(handle: NativeUIHandle): NativeCancelablePromise<NativeFabricFrame>;
-	unmount(handle: NativeUIHandle): NativeCancelablePromise<void>;
-};
-export type NativeUIHandle = NativeHandle;
-export type NativeUIQuery = {
-	role: string;
-	root?: NativeUIHandle;
-	attributes?: NativeSerializableObject;
-	maxDepth?: number;
-	maxNodes?: number;
-	maxResults?: number;
-};
-export type NativeUISnapshot = {
-	generation: number;
-	nodes: NativeUISnapshotNode[];
-};
-export type NativeUISnapshotNode = {
-	id: NativeUIHandle;
-	parent: NativeUIHandle | null;
-	role: string;
-	frame: NativeFabricFrame | null;
-	attributes: NativeSerializableObject;
-};
 export type NativeViewSearchOptions = {
 	maxDepth?: number;
 	maxVisited?: number;

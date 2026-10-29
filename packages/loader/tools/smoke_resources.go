@@ -14,7 +14,7 @@ type smokeResources struct {
 	Hooks         float64 `json:"hooks"`
 	Surfaces      float64 `json:"surfaces"`
 	CachedReturns float64 `json:"cachedReturns"`
-	LeasedHandles float64 `json:"leasedHandles"`
+	Handles       float64 `json:"handles"`
 }
 
 const (
@@ -53,11 +53,20 @@ func parseSmokeResources(value string) *smokeResources {
 	return resources
 }
 
+const (
+	smokeExpressionEvalTimeout = 30 * time.Second
+	smokeCycleEvalTimeout      = 4 * time.Minute
+)
+
 func evaluateSmokeExpression(ctx context.Context, options *smokeOptions, expression string) (string, error) {
+	return evaluateSmokeExpressionWithin(ctx, options, expression, smokeExpressionEvalTimeout)
+}
+
+func evaluateSmokeExpressionWithin(ctx context.Context, options *smokeOptions, expression string, timeout time.Duration) (string, error) {
 	cli := filepath.Join(options.repository, "packages", "cli", "src", "index.ts")
-	evalCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	evalCtx, cancel := context.WithTimeout(ctx, timeout+30*time.Second)
 	defer cancel()
-	output, err := exec.CommandContext(evalCtx, "bun", cli, "eval", "--json", "--port", strconv.Itoa(options.bridgePort), "--timeout", "30000", expression).Output()
+	output, err := exec.CommandContext(evalCtx, "bun", cli, "eval", "--json", "--port", strconv.Itoa(options.bridgePort), "--timeout", strconv.FormatInt(timeout.Milliseconds(), 10), expression).Output()
 	var result struct {
 		OK    bool   `json:"ok"`
 		Value string `json:"value"`
@@ -79,15 +88,15 @@ func renderSmokeResources(resources *smokeResources) string {
 	if resources == nil {
 		return ""
 	}
-	return fmt.Sprintf("| Native resource after GC | Count |\n| --- | --- |\n| Java handles referenced from JavaScript | %.0f |\n| Installed hooks | %.0f |\n| Mounted surfaces | %.0f |\n| Cached hook return values | %.0f |\n\n",
-		resources.LeasedHandles, resources.Hooks, resources.Surfaces, resources.CachedReturns)
+	return fmt.Sprintf("| Native resource after GC | Count |\n| --- | --- |\n| Native handles referenced from JavaScript | %.0f |\n| Installed hooks | %.0f |\n| Mounted surfaces | %.0f |\n| Cached hook return values | %.0f |\n\n",
+		resources.Handles, resources.Hooks, resources.Surfaces, resources.CachedReturns)
 }
 
-func leasedHandlesOf(record smokeStartupRecord) (float64, bool) {
+func handlesOf(record smokeStartupRecord) (float64, bool) {
 	if record.Resources == nil {
 		return 0, false
 	}
-	return record.Resources.LeasedHandles, true
+	return record.Resources.Handles, true
 }
 
 func renderResourceReport(current smokeStartupRecord, baseline []smokeStartupRecord) regressionReport {
@@ -100,12 +109,12 @@ func renderResourceReport(current smokeStartupRecord, baseline []smokeStartupRec
 	if current.Resources == nil || len(measured) < regressionMinimumSamples {
 		return regressionReport{}
 	}
-	median := medianOf(measured, leasedHandlesOf)
-	value := current.Resources.LeasedHandles
-	markdown := fmt.Sprintf("## Native resources compared with main\n\n| Resource | This run | Median of %d main runs |\n| --- | --- | --- |\n| Java handles referenced after GC | %.0f | %.0f |\n\n", len(measured), value, median)
+	median := medianOf(measured, handlesOf)
+	value := current.Resources.Handles
+	markdown := fmt.Sprintf("## Native resources compared with main\n\n| Resource | This run | Median of %d main runs |\n| --- | --- | --- |\n| Native handles referenced after GC | %.0f | %.0f |\n\n", len(measured), value, median)
 	if value <= median*handleRegressionRatio || value-median <= handleRegressionMinimum {
 		return regressionReport{markdown: markdown}
 	}
-	line := fmt.Sprintf("%.0f Java handles stayed referenced after GC against a median of %.0f", value, median)
+	line := fmt.Sprintf("%.0f native handles stayed referenced after GC against a median of %.0f", value, median)
 	return regressionReport{markdown: markdown + "- " + line + "\n\n", warnings: []regressionWarning{{title: "Native resource regression", message: line}}}
 }

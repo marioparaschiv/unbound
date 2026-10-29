@@ -13,10 +13,17 @@ import { updatesRequestSchema } from '@unbound-app/contracts/updates';
 import type { TestContext } from '@unbound-app/web/testing';
 import type { Addon } from '@unbound-app/types';
 
+import { applyUpdate, fetchUpdates, listInstalled, reinstallFromStore } from '~/lib/updates';
 import type { InstalledEntry, PendingUpdate, UpdatableKind } from '~/lib/updates';
-import { applyUpdate, fetchUpdates, listInstalled } from '~/lib/updates';
 
-import { FakeAddons, makeInstance, makeManifest, resetDevice, writes } from './helpers/addons';
+import {
+	FakeAddons,
+	existingFiles,
+	makeInstance,
+	makeManifest,
+	resetDevice,
+	writes,
+} from './helpers/addons';
 
 const CLIENT_VERSION = '1.0.0';
 
@@ -304,5 +311,40 @@ describe('listInstalled', () => {
 		expect(listInstalled(PLUGINS, manager).map((entry) => entry.id)).toEqual(['up.store']);
 		expect(manager.isDevelopmentCopy('up.pushed')).toBe(true);
 		expect(manager.isDevelopmentCopy('up.store')).toBe(false);
+	});
+});
+
+describe('development markers', () => {
+	beforeEach(resetDevice);
+
+	test('a plugin installed with ubd install loads as a development copy', async () => {
+		const manager = new FakeAddons();
+
+		existingFiles.add('Unbound/Plugins/up.installed/development');
+		manager.load('', makeManifest('up.installed', '1.0.0'));
+		manager.load('', makeManifest('up.store', '1.0.0'));
+		await Bun.sleep(0);
+
+		expect(manager.isDevelopmentCopy('up.installed')).toBe(true);
+		expect(manager.isDevelopmentCopy('up.store')).toBe(false);
+	});
+});
+
+describe('reinstallFromStore', () => {
+	beforeEach(resetDevice);
+
+	test('clears the development mark even when the store has nothing newer', async () => {
+		const manager = new FakeAddons();
+
+		seed(manager, 'up.pushed', true);
+		manager.markDevelopmentCopy('up.pushed');
+
+		const applied = await reinstallFromStore(PLUGINS, manager, 'up.pushed', {
+			baseUrl: 'http://127.0.0.1:9',
+			clientVersion: CLIENT_VERSION,
+		}).catch(() => false);
+
+		expect(applied).toBe(false);
+		expect(manager.isDevelopmentCopy('up.pushed')).toBe(false);
 	});
 });

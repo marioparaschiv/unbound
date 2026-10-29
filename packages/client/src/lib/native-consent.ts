@@ -1,7 +1,7 @@
 import type { AddonManifest, NativePluginCapability } from '@unbound-app/types';
 
 /** Capabilities that reach native code without the bridge's type and object checks. */
-export const CONSENT_CAPABILITIES: readonly NativePluginCapability[] = [
+const CONSENT_CAPABILITIES: readonly NativePluginCapability[] = [
 	'native.ffi.symbols',
 	'native.ffi.call',
 ];

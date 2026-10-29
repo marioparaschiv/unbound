@@ -2,6 +2,8 @@ import { IconPalette, IconPlug } from 'nucleo-micro-bold';
 
 import InstallAddonButton from '~/components/install-addon-button';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import { staggerStyle } from '~/components/motion/reveal-style';
+import BlurReveal from '~/components/motion/blur-reveal';
 import AuthorByline from '~/components/author-byline';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
@@ -18,35 +20,50 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 	return (
 		<header className='flex flex-col gap-4'>
 			<div className='flex sm:flex-row flex-col sm:items-center gap-4'>
-				<div className='flex justify-center items-center bg-accent border rounded-surface size-16 shrink-0'>
+				<div
+					className='flex justify-center items-center bg-accent border rounded-surface size-16 shrink-0 animate-reveal'
+					style={staggerStyle(0)}
+				>
 					<Icon className='size-8' />
 				</div>
 				<div className='flex flex-col flex-1 gap-2 min-w-0'>
 					<Text as='h1' variant='heading-lg' className='truncate'>
-						{addon.name}
+						<BlurReveal text={addon.name} />
 					</Text>
 					<Text
 						as='div'
 						variant='text-sm'
 						color='muted'
-						className='flex flex-wrap gap-1.5'
+						className='flex flex-wrap gap-1.5 animate-reveal'
+						style={staggerStyle(1)}
 					>
 						<AuthorByline authors={addon.authors} linkProfiles />
 						<span>· v{addon.version}</span>
 					</Text>
 				</div>
-				<InstallAddonButton
-					size='lg'
-					id={addon.id}
-					type={addon.type}
-					manifestUrl={addon.manifestUrl}
-				/>
+				<div className='animate-reveal' style={staggerStyle(2)}>
+					<InstallAddonButton
+						size='lg'
+						id={addon.id}
+						type={addon.type}
+						manifestUrl={addon.manifestUrl}
+					/>
+				</div>
 			</div>
-			<Text variant='text-md' color='muted' className='max-w-3xl'>
+			<Text
+				variant='text-md'
+				color='muted'
+				className='max-w-3xl animate-reveal'
+				style={staggerStyle(2)}
+			>
 				{addon.description}
 			</Text>
 			{tags.length > 0 ? (
-				<ul className='flex flex-wrap gap-1.5' aria-label='Tags'>
+				<ul
+					className='flex flex-wrap gap-1.5 animate-reveal'
+					style={staggerStyle(3)}
+					aria-label='Tags'
+				>
 					{tags.map((tag) => (
 						<li key={tag}>
 							<Tag className='px-2 py-1 text-xs'>{tag}</Tag>

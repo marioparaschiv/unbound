@@ -47,6 +47,9 @@
 	--radius-control: var(--radius);
 	--radius-inner: calc(var(--radius-control) - 4px);
 	--radius-surface: calc(var(--radius) + 8px);
+	/* Menus nest their rows concentrically: a row's radius is the menu's minus the menu's 6px (p-1.5) padding. */
+	--radius-menu: calc(var(--radius) + 4px);
+	--radius-menu-item: calc(var(--radius-menu) - 6px);
 
 	--shadow-field: var(--field-shadow);
 	--shadow-surface: var(--surface-shadow);
@@ -108,7 +111,6 @@
 	--control-body: calc(var(--control-h) - var(--ledge-depth));
 	--card-pad: 1.25rem;
 	--ledge-depth: 4px;
-	--press-lift: 1px;
 	--press-duration: 180ms;
 	--highlight: oklch(1 0 0 / 0.6);
 	--ledge-primary: oklch(0.42 0.14 17);
@@ -283,6 +285,11 @@ body::before {
 	);
 }
 
+/* Apple's continuous corners: the curve eases into the straight edge instead of meeting it at a kink. */
+@utility corner-continuous {
+	corner-shape: superellipse(1.5);
+}
+
 /* The page column: header, content and footer all share its width and gutter. */
 @utility page-frame {
 	@apply container mx-auto px-(--page-gutter);
@@ -313,61 +320,26 @@ body::before {
 }
 
 /* A raised control on a solid ledge in `--ledge`. The ledge takes layout space below the body, so the
-footprint matches a field; a press moves that space above the body instead of overlapping neighbours. */
+footprint matches a field. `--press-y` (px, sprung by PressSprings) slides the body onto the ledge:
+only translate and shadow change, so a press never relayouts its neighbours. */
 @utility press {
-	--tw-shadow: inset 0 1px 0 var(--highlight), 0 var(--ledge-depth) 0 var(--ledge, transparent);
+	--tw-shadow:
+		inset 0 1px 0 var(--highlight),
+		0 calc(var(--ledge-depth) - var(--press-y, 0) * 1px) 0 var(--ledge, transparent);
 	box-shadow:
 		var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000),
 		var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 	margin-bottom: var(--ledge-depth);
-	transition-property:
-		color, background-color, border-color, box-shadow, translate, margin, opacity;
+	translate: 0 calc(var(--press-y, 0) * 1px);
+	transition-property: color, background-color, border-color, opacity;
 	transition-duration: var(--press-duration);
-	transition-timing-function: var(--ease-spring);
-
-	&:hover:not(:disabled, [aria-disabled='true']) {
-		translate: 0 calc(var(--press-lift) * -1);
-		--tw-shadow:
-			inset 0 1px 0 var(--highlight),
-			0 calc(var(--ledge-depth) + var(--press-lift)) 0 var(--ledge, transparent);
-	}
-
-	&:active:not(:disabled, [aria-disabled='true']) {
-		translate: none;
-		margin-top: var(--ledge-depth);
-		margin-bottom: 0;
-		--tw-shadow: inset 0 1px 0 var(--highlight), 0 0 0 var(--ledge, transparent);
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		transition-property: color, background-color, border-color, box-shadow, opacity;
-
-		&:hover:not(:disabled, [aria-disabled='true']) {
-			translate: none;
-		}
-
-		&:active:not(:disabled, [aria-disabled='true']) {
-			margin-top: 0;
-			margin-bottom: var(--ledge-depth);
-		}
-	}
 }
 
-/* Press feedback for controls with no raised surface, such as ghost and link buttons. */
+/* Press feedback for controls with no raised surface, such as ghost and link buttons; `--press-scale` is sprung. */
 @utility press-flat {
-	transition-property: color, background-color, border-color, box-shadow, scale, opacity;
+	scale: var(--press-scale, 1);
+	transition-property: color, background-color, border-color, box-shadow, opacity;
 	transition-duration: var(--press-duration);
-	transition-timing-function: var(--ease-spring);
-
-	&:active:not(:disabled, [aria-disabled='true']) {
-		scale: 0.96;
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		&:active:not(:disabled, [aria-disabled='true']) {
-			scale: none;
-		}
-	}
 }
 
 @utility hide-scrollbar {
@@ -413,7 +385,7 @@ footprint matches a field; a press moves that space above the body instead of ov
 		animation: none;
 	}
 
-	/* Beats the inline styles motion writes, so scroll reveals show their content from the start. */
+	/* Beats the hidden inline styles Reveal writes, so scroll reveals show their content from the start. */
 	[data-reveal] {
 		opacity: 1 !important;
 		filter: none !important;

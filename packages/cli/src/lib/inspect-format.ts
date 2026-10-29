@@ -61,7 +61,7 @@ export function formatClassReport(report: ClassReport, filter = ''): string {
  * @param indent Whether to indent it by its depth.
  * @returns The printable line.
  */
-export function formatViewRecord(view: ViewRecord, indent = true): string {
+function formatViewRecord(view: ViewRecord, indent = true): string {
 	const parts = [
 		`${indent ? '  '.repeat(view.depth) : ''}${view.className.replace(DISCORD_PREFIX, '~')}`,
 	];

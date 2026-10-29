@@ -207,6 +207,7 @@ export function colorChatInputMentions(objc: NativeObjCBridge): () => Promise<vo
 		for (const selector of [
 			'setAttributedText:',
 			'setText:',
+			'textViewDidChange:',
 			'layoutSubviews',
 			'didMoveToWindow',
 		]) {

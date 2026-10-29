@@ -89,8 +89,8 @@ type Walk = {
 	records: CommandRecord[];
 };
 
-export const UNBOUND_SECTION_ID = 'unbound';
-export const SUB_COMMAND_SEPARATOR = '\u0000';
+const UNBOUND_SECTION_ID = 'unbound';
+const SUB_COMMAND_SEPARATOR = '\u0000';
 
 const NAME = /^[-_\p{L}\p{N}]{1,32}$/u;
 const MAX_DEPTH = 3;

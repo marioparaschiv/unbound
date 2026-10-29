@@ -1,6 +1,8 @@
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
-import type { ComponentProps } from 'react';
+import { createContext, useContext, useRef } from 'react';
+import type { ComponentProps, RefObject } from 'react';
 
+import { pressFreeAnchor } from '~/components/motion/press-springs';
 import cn from '~/lib/cn';
 
 type PopoverContentProps = ComponentProps<typeof PopoverPrimitive.Popup> &
@@ -9,25 +11,57 @@ type PopoverContentProps = ComponentProps<typeof PopoverPrimitive.Popup> &
 		'align' | 'alignOffset' | 'side' | 'sideOffset'
 	>;
 
+// The trigger the popup hangs from, so the positioner can measure it without its press motion.
+const TriggerContext = createContext<RefObject<HTMLElement | null> | null>(null);
+
 function Popover(props: ComponentProps<typeof PopoverPrimitive.Root>) {
-	return <PopoverPrimitive.Root data-slot='popover' {...props} />;
+	const trigger = useRef<HTMLElement | null>(null);
+
+	return (
+		<TriggerContext.Provider value={trigger}>
+			<PopoverPrimitive.Root data-slot='popover' {...props} />
+		</TriggerContext.Provider>
+	);
 }
 
-function PopoverTrigger(props: ComponentProps<typeof PopoverPrimitive.Trigger>) {
-	return <PopoverPrimitive.Trigger data-slot='popover-trigger' {...props} />;
+function PopoverTrigger({ ref, ...props }: ComponentProps<typeof PopoverPrimitive.Trigger>) {
+	const trigger = useContext(TriggerContext);
+
+	return (
+		<PopoverPrimitive.Trigger
+			data-slot='popover-trigger'
+			ref={(node: HTMLButtonElement | null) => {
+				if (trigger) {
+					trigger.current = node;
+				}
+
+				if (typeof ref === 'function') {
+					ref(node);
+				} else if (ref) {
+					ref.current = node;
+				}
+			}}
+			{...props}
+		/>
+	);
 }
 
 function PopoverContent({
 	className,
 	side = 'bottom',
-	sideOffset = 4,
+	// Clears the 4px ledge under raised triggers, then leaves a visible gap.
+	sideOffset = 10,
 	align = 'center',
 	alignOffset = 0,
 	...props
 }: PopoverContentProps) {
+	const trigger = useContext(TriggerContext);
+
 	return (
 		<PopoverPrimitive.Portal>
+			{/* Anchored to where the trigger rests, so a press springing its trigger never drags the popup along. */}
 			<PopoverPrimitive.Positioner
+				anchor={() => (trigger?.current ? pressFreeAnchor(trigger.current) : null)}
 				side={side}
 				sideOffset={sideOffset}
 				align={align}
