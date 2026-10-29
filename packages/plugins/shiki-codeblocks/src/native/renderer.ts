@@ -19,6 +19,8 @@ import { CARD_SETTINGS, Limits, PLUGIN_ID, PLUGIN_NAME } from '~/constants';
 import { locateCodeBlocks, parseFencedCodeBlocks, type CodeBlockPlacement } from '~/fences';
 import { getLanguageMetadata, loadLanguageCatalog } from '~/catalog';
 import { MessageStore, settings } from '~/modules';
+import { createFlatRecovery } from '~/flat-recovery';
+import { onAppForeground } from '~/foreground';
 import { createHighlighter } from '~/highlighter';
 import { changesCardLayout } from '~/preferences';
 
@@ -31,7 +33,7 @@ import {
 } from './surfaces';
 import { detachSurface, surfaceMatchesCell, visibleChannelId } from './session';
 import { cellForLabel, messageIdentity } from './cells';
-import type { Session } from './session';
+import type { Session, Surface } from './session';
 import { createNativeUI } from './ui';
 
 type HookSpec = [className: string, selector: string, handlers: NativeHookHandlers];
@@ -260,6 +262,13 @@ export function startRenderer(objc: NativeObjCBridge): () => void {
 		ui: createNativeUI(objc),
 		text: textAttachmentBridge(objc),
 		highlighter: createHighlighter(),
+		recovery: createFlatRecovery<Surface>((surface) => {
+			if (session.surfaces.get(surface.labelKey) === surface) {
+				applyTheme(session, surface);
+			} else {
+				session.recovery.mark(surface, false);
+			}
+		}, onAppForeground),
 		surfaces: new Map(),
 		applying: new Set(),
 		signal: controller.signal,
@@ -283,6 +292,7 @@ export function startRenderer(objc: NativeObjCBridge): () => void {
 
 	return () => {
 		controller.abort();
+		session.recovery.dispose();
 
 		for (const hook of hooks) hook.remove();
 

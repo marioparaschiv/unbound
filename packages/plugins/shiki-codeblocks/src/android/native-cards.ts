@@ -38,6 +38,8 @@ import {
 import { registerCodeCardSurface, type CardContent } from '~/components/code-card';
 import { MessageStore, SelectedChannelStore, settings } from '~/modules';
 import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
+import { createFlatRecovery } from '~/flat-recovery';
+import { onAppForeground } from '~/foreground';
 import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';
 import { parseFencedCodeBlocks, type CodeBlock } from '~/fences';
@@ -219,6 +221,11 @@ export function createNativeCards(native: Native) {
 
 		if (disposed) return;
 
+		recovery.mark(
+			rendered,
+			contents.some((content) => !content.tokens),
+		);
+
 		const offsets = placeholderOffsets(layout.slots);
 		const placeholders = placeholderTexts(layout.original, layout.slots);
 		const heights = contents.map(
@@ -355,6 +362,20 @@ export function createNativeCards(native: Native) {
 		}, 0);
 	}
 
+	const recovery = createFlatRecovery((rendered: string) => {
+		const layout = layouts.get(rendered);
+
+		if (!layout) {
+			recovery.mark(rendered, false);
+
+			return;
+		}
+
+		define(rendered, layout).catch((error) => {
+			console.error(`[${PLUGIN_NAME}] Failed to repaint an Android code card:`, error);
+		});
+	}, onAppForeground);
+
 	const token = hooks.hook(
 		DRAWEE_TEXT_VIEW,
 		DRAWEE_TEXT_SETTER,
@@ -429,6 +450,7 @@ export function createNativeCards(native: Native) {
 			awaitingSize.clear();
 			renderedByView.clear();
 			retries.clear();
+			recovery.dispose();
 			unsubscribe();
 			layouts.clear();
 			listeners.clear();
