@@ -14,7 +14,10 @@
 	],
 	"version": "1.0.1",
 	"icon": "TimerIcon",
-	"platforms": ["ios", "android"],
+	"platforms": [
+		"ios",
+		"android"
+	],
 	"capabilities": [],
 	"platformCapabilities": {
 		"ios": [
@@ -42,5 +45,12 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "a2c6658158e46c28708e59083f1dfa2a4e6419ac6a74bd511aeeacef424c9c36e454f602a30d9050f6631902120de6f08d4e4de3cf87fbaf1f752870bbf344fb"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "2/e7jH9D5Fb0CFr0/4Ltw7piJ28JtUel/d0kVmZ/lBtPymMYa2iYxf0BmYmLZDMQ3lo2M0t4qsPi73CH+JmWBw=="
+	}
 }

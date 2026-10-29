@@ -24,7 +24,10 @@
 			"id": "224617799434108928"
 		}
 	],
-	"platforms": ["ios", "android"],
+	"platforms": [
+		"ios",
+		"android"
+	],
 	"capabilities": [],
 	"platformCapabilities": {
 		"ios": [
@@ -51,5 +54,12 @@
 	"minNativePluginApi": "1.0.0",
 	"version": "1.0.1",
 	"icon": "ReactionIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "c4a6d6e2e7f6d551b74546f81d64d9455cb3e3bada86575a9defa91d59c7ce7c3e80a31f8514b6f3d4f5d26681c41c359e31856fa3c4c4e2d963e0a12b2760b1"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "KDFdfvMQVLy1jfoxcSAWg5CrMikPAcd/qlR7J08U5xaGszPApqOyD38SdZwj/IqV8aCmh+D356iJr1Zrd1OMBg=="
+	}
 }
