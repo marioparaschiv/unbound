@@ -41,3 +41,35 @@ test('keeps self-test errors out of the host plugin results', () => {
 
 	expect([...withoutSelfTest(errors)]).toEqual([['Avatar Radius', ['boom']]]);
 });
+
+test('fails when native work ended early is not a cancellation', () => {
+	expect(
+		judgeSelfTest(
+			{
+				host: 'Chat Bubbles',
+				platform: 'android',
+				base: 12,
+				cancellations: { cancelled: 'cancellation', stopped: 'other: boom' },
+			},
+			attributed,
+		).detail,
+	).toBe('native work ended early did not end as a cancellation: stopped other: boom');
+});
+
+test('fails when a cancellation was logged as an error', () => {
+	const errors = new Map([
+		['Chat Bubbles', [SELF_TEST_MARKER, 'Native async invocation was cancelled']],
+	]);
+
+	expect(
+		judgeSelfTest(
+			{
+				host: 'Chat Bubbles',
+				platform: 'android',
+				base: 12,
+				cancellations: { cancelled: 'cancellation' },
+			},
+			errors,
+		).detail,
+	).toBe('cancelled native work was logged as an error: Native async invocation was cancelled');
+});
