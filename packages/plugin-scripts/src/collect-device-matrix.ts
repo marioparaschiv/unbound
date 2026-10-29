@@ -146,7 +146,7 @@ export function developerModeScript(enabled: boolean): string {
 
 export function pluginLogScript(): string {
 	return `Promise.resolve(unbound.fs.read('Unbound/Logs/unbound.log')).then(function (text) {
-	return JSON.stringify(String(text).split('\\n').filter(function (line) { return line.indexOf('off the main thread') !== -1 || line.indexOf(' E [') !== -1; }));
+	return JSON.stringify(String(text).split('\\n').filter(function (line) { return line.indexOf('off the main thread') !== -1 || line.indexOf(' E [') !== -1 || line.indexOf('Native plugin hook skipped in') !== -1; }));
 }, function () { return '[]'; })`;
 }
 
@@ -194,6 +194,26 @@ export function parseOffMainWarnings(lines: string[], since: string): Map<string
 	}
 
 	return new Map([...calls].map(([plugin, found]) => [plugin, [...found].sort()]));
+}
+
+const SKIPPED_HOOK =
+	/^(\S+) \w \[plugins\] Native plugin hook skipped in (.+?): the JavaScript thread did not answer the (\S+) hook/;
+
+export function parseSkippedHooks(lines: string[], since: string): Map<string, string[]> {
+	const skipped = new Map<string, Set<string>>();
+
+	for (const line of lines) {
+		const match = SKIPPED_HOOK.exec(line);
+
+		if (!match || match[1]! < since) continue;
+
+		const plugin = skipped.get(match[2]!) ?? new Set<string>();
+
+		plugin.add(match[3]!);
+		skipped.set(match[2]!, plugin);
+	}
+
+	return new Map([...skipped].map(([plugin, found]) => [plugin, [...found].sort()]));
 }
 
 type LogFinding = { field: 'offMainCalls' | 'errors'; label: string; separator: string };
@@ -608,6 +628,7 @@ async function main(): Promise<void> {
 	const logLines = JSON.parse(await evaluate(port, pluginLogScript())) as string[];
 	const warnings = parseOffMainWarnings(logLines, since);
 	const errors = parsePluginErrors(logLines, since);
+	const skippedHooks = parseSkippedHooks(logLines, since);
 
 	if (!developerMode) await evaluate(port, developerModeScript(false));
 
@@ -620,6 +641,10 @@ async function main(): Promise<void> {
 		const logged = name ? errors.get(name) : undefined;
 
 		if (logged?.length) check.errors = logged;
+
+		const skipped = name ? skippedHooks.get(name) : undefined;
+
+		if (skipped?.length) check.skippedHooks = skipped;
 	}
 
 	const baseline = readBaseline(

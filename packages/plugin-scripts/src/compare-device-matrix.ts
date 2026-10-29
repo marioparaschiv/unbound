@@ -10,6 +10,7 @@ export type MeasuredCheck = DeviceCheck & {
 	metrics?: CheckMetrics;
 	offMainCalls?: string[];
 	errors?: string[];
+	skippedHooks?: string[];
 };
 
 const SLOWER_FACTOR = 2;

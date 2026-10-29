@@ -12,6 +12,7 @@ import {
 	withReconnects,
 	parseScreenSize,
 	parseToastLines,
+	parseSkippedHooks,
 	swipeCommands,
 	type CycleResult,
 } from './collect-device-matrix';
@@ -302,4 +303,17 @@ test('lists the toasts shown or dropped after the scroll started', () => {
 	];
 
 	expect(parseToastLines(lines, '2026-10-29T18:00:02.000Z')).toEqual(['Copied', 'empty toast']);
+});
+
+test('collects the hooks each plugin had skipped since the run began', () => {
+	const lines = [
+		'2026-10-29T17:59:00.000Z W [plugins] Native plugin hook skipped in Chat Bubbles: the JavaScript thread did not answer the layoutSubviews hook within 100 ms, so it did not run',
+		'2026-10-29T18:00:01.000Z W [plugins] Native plugin hook skipped in Chat Bubbles: the JavaScript thread did not answer the setBackgroundColor: hook within 100 ms, so it did not run',
+		'2026-10-29T18:00:02.000Z W [plugins] Native plugin hook skipped in Avatar Radius: the JavaScript thread did not answer the setFrame: hook within 100 ms, so it did not run',
+	];
+
+	expect([...parseSkippedHooks(lines, '2026-10-29T18:00:00.000Z')]).toEqual([
+		['Chat Bubbles', ['setBackgroundColor:']],
+		['Avatar Radius', ['setFrame:']],
+	]);
 });

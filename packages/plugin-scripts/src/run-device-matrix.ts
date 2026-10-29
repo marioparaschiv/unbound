@@ -81,6 +81,11 @@ export function renderSummary(runs: DeviceRun[]): string {
 			.filter((check) => check.errors?.length)
 			.map((check) => `- ${run.device.name}, ${check.id}: ${check.errors!.join('; ')}`),
 	);
+	const skipped = runs.flatMap((run) =>
+		run.checks
+			.filter((check) => check.skippedHooks?.length)
+			.map((check) => `- ${run.device.name}, ${check.id}: ${listCalls(check.skippedHooks!)}`),
+	);
 	const changes = runs.flatMap((run) =>
 		run.changes.map((change) => `- ${run.device.name}: ${change}`),
 	);
@@ -99,6 +104,9 @@ export function renderSummary(runs: DeviceRun[]): string {
 		...(toasts.length ? ['', '### Toasts while scrolling', '', ...toasts] : []),
 		...(offMain.length ? ['', '### Off-main view calls', '', ...offMain] : []),
 		...(errors.length ? ['', '### Plugin errors', '', ...errors] : []),
+		...(skipped.length
+			? ['', '### Hooks skipped while JavaScript was busy', '', ...skipped]
+			: []),
 		...(changes.length ? ['', '### Changes since the last run', '', ...changes] : []),
 	].join('\n');
 }
