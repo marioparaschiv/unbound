@@ -3,6 +3,14 @@
 	"ignorePatterns": ["**/dist/**", "**/node_modules/**"],
 	"rules": {
 		"eslint/no-control-regex": "off",
-		"unicorn/no-useless-spread": "off"
+		"unicorn/no-useless-spread": "off",
+		"eslint/no-unused-vars": [
+			"error",
+			{
+				"ignoreRestSiblings": true,
+				"caughtErrors": "none",
+				"argsIgnorePattern": "^_"
+			}
+		]
 	}
 }

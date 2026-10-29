@@ -152,6 +152,7 @@ export function renderSummary(runs: DeviceRun[]): string {
 		!toasts.length &&
 		!empty.length &&
 		!stuck.length &&
+		!loaderFailed &&
 		runs.every((run) => !run.error)
 			? ['', 'Every plugin passed on every device.']
 			: []),
