@@ -37,8 +37,6 @@ export function getRouter() {
 	const router = createRouter({
 		routeTree,
 		scrollRestoration: true,
-		// Cross-fades route changes; the root layout already names `main-content` as the transition's group.
-		defaultViewTransition: true,
 		context: { queryClient },
 		parseSearch,
 		stringifySearch,
