@@ -18,6 +18,7 @@ export type DeviceRun = {
 	scrollToasts?: string[];
 	emptyToasts?: string[];
 	scrollStuck?: boolean;
+	drops?: string[];
 	error?: string;
 };
 
@@ -94,6 +95,9 @@ export function renderSummary(runs: DeviceRun[]): string {
 	const toasts = runs
 		.filter((run) => run.scrollToasts?.length)
 		.map((run) => `- ${run.device.name}: ${run.scrollToasts!.join(', ')}`);
+	const dropped = runs.flatMap((run) =>
+		(run.drops ?? []).map((drop) => `- ${run.device.name}, during ${drop}`),
+	);
 	const stuck = runs
 		.filter((run) => run.scrollStuck)
 		.map((run) => `- ${run.device.name}: the swipes did not move the message list`);
@@ -116,6 +120,7 @@ export function renderSummary(runs: DeviceRun[]): string {
 		...(toasts.length ? ['', '### Toasts while scrolling', '', ...toasts] : []),
 		...(empty.length ? ['', '### Empty toasts', '', ...empty] : []),
 		...(stuck.length ? ['', '### Scrolling', '', ...stuck] : []),
+		...(dropped.length ? ['', '### Device drops', '', ...dropped] : []),
 		...(offMain.length ? ['', '### Off-main view calls', '', ...offMain] : []),
 		...(errors.length ? ['', '### Plugin errors', '', ...errors] : []),
 		...(skipped.length
@@ -166,11 +171,15 @@ async function collect(
 	const changes = lines
 		.filter((line) => line.startsWith('changed: '))
 		.map((line) => line.slice('changed: '.length));
+	const drops = lines
+		.filter((line) => line.startsWith('dropped: '))
+		.map((line) => line.slice('dropped: '.length));
 	const ids = new Set(only?.split(','));
 	const checks = readChecks(out).filter((check) => !only || ids.has(check.id));
 
 	const scroll = readScroll(out);
 	const toasts = {
+		drops,
 		scrollToasts: scroll?.toasts,
 		emptyToasts: scroll?.emptyToasts,
 		scrollStuck: scroll?.moved === false,
