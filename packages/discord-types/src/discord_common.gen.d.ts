@@ -587,7 +587,7 @@ export type AnimatedFlashListComponent = React.ComponentType<AnimatedFlashListPr
  * @see ../discord_common/js/packages/flash-list/index.js
  */
 export type FlashListBottomSheetFlashListProps = Omit<Module6529BottomSheetFlashListProps, 'preventNativeModalDismiss' | 'ref' | 'refreshControl'> & {
-		preventNativeModalDismiss?: unknown;
+		preventNativeModalDismiss?: boolean;
 		ref?: React.Ref<any>;
 		refreshControl?: unknown;
 	};
@@ -597,7 +597,7 @@ export type FlashListBottomSheetFlashListComponent = React.ComponentType<FlashLi
  * @see ../discord_common/js/packages/flash-list/index.js
  */
 export type BottomSheetMasonryFlashListProps = {
-		preventNativeModalDismiss?: unknown;
+		preventNativeModalDismiss?: boolean;
 		ref?: React.Ref<any>;
 		refreshControl?: unknown;
 	};

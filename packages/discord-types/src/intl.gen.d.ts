@@ -7,6 +7,6 @@ import type * as RN from 'react-native';
  */
 export type IntlLinkProps = {
 		children?: React.ReactNode;
-		target?: { accessibilityRole?: unknown; onClick?: unknown };
+		target?: unknown;
 	};
 export type IntlLinkComponent = React.ComponentType<IntlLinkProps>;

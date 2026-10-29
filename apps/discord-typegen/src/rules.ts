@@ -130,6 +130,11 @@ export function isEnumLike(name: string, values: LiteralValue[]): boolean {
 	);
 }
 
+// A value whose type is tested may be a function or an object on one path and something else on another.
+function isPolymorphic(evidence: PropEvidence): boolean {
+	return evidence.some((observation) => observation.kind === 'typeof');
+}
+
 function firstForwarded(
 	evidence: PropEvidence,
 	lookup: (target: TargetRef, key: string) => InferredType | undefined,
@@ -227,7 +232,8 @@ export const RULES: readonly Rule[] = [
 	{
 		name: 'called',
 		infer: ({ evidence }) =>
-			evidence.some((observation) => observation.kind === 'called')
+			evidence.some((observation) => observation.kind === 'called') &&
+			!isPolymorphic(evidence)
 				? typed(FUNCTION_TYPE, 'called')
 				: undefined,
 	},
@@ -251,6 +257,8 @@ export const RULES: readonly Rule[] = [
 	{
 		name: 'members',
 		infer: ({ evidence }) => {
+			if (isPolymorphic(evidence)) return;
+
 			const names = new Set<string>();
 
 			for (const observation of evidence) {

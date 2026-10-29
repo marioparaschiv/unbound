@@ -2,7 +2,7 @@
 import type * as React from 'react';
 import type * as RN from 'react-native';
 import type { ActionSheetCloseButtonComponent, ActionSheetCloseButtonProps, ActionSheetHeaderPressableTextComponent, ActionSheetHeaderPressableTextProps, BaseTextButtonComponent, BaseTextButtonProps, BottomSheetTitleHeaderComponent, BottomSheetTitleHeaderProps, ButtonIconButtonComponent, ButtonIconButtonProps, DesignActivityIndicatorComponent, DesignActivityIndicatorProps, DesignTextComponent, DesignTextProps, FormsFormRadioComponent, FormsFormRadioProps, NavigationContainerInnerComponent, NavigationContainerInnerProps, PressableHighlightComponent, PressableHighlightProps, PressableOpacityComponent, PressableOpacityProps, RowButtonComponent, RowButtonProps, SheetBottomSheetComponent, SheetBottomSheetProps, StackComponent, StackProps, TableRadioGroupComponent, TableRadioGroupProps, TableRadioRowComponent, TableRadioRowProps, TableRowComponent, TableRowIconComponent, TableRowIconProps, TableRowProps, TextHeadingComponent, TextHeadingProps } from './barrels.gen';
-import type { BoostTier3IconComponent, BoostTier3IconProps } from './design.gen';
+import type { BoostTier3IconComponent, BoostTier3IconProps, NavigatorCloseButtonComponent, NavigatorCloseButtonProps } from './design.gen';
 import type { AppChannelApplicationSelectorComponent, AppChannelApplicationSelectorProps, ChannelAccessInfoComponent, ChannelAccessInfoProps, ChatFloatingNavButtonComponent, ChatFloatingNavButtonProps, DiscordGestureHandlerRootViewComponent, DiscordGestureHandlerRootViewProps, GroupDMAvatarComponent, GroupDMAvatarProps, GuildIconInnerComponent, GuildIconInnerProps, VerifiedRoleIconComponent, VerifiedRoleIconProps } from './modules-1.gen';
 import type { AttachmentPreviewComponent, AttachmentPreviewProps, BurstReactionAnimationPreviewComponent, BurstReactionAnimationPreviewProps, DetailedGuildIdentityUserRowComponent, DetailedGuildIdentityUserRowProps, SubscriptionRenewalMutationsNoticeComponent, SubscriptionRenewalMutationsNoticeProps } from './modules-2.gen';
 import type { ModulesSafeAreaProviderComponent, ModulesSafeAreaProviderProps, UserSettingsAuthedAppDeleteWarningModalComponent, UserSettingsAuthedAppDeleteWarningModalProps } from './modules-3.gen';
@@ -109,7 +109,7 @@ export type LinkInnerComponent = React.ComponentType<LinkInnerProps>;
  * @see components_native/ChangeLogStandardTemplate.tsx
  */
 export type ListItem_8096Props = {
-		children?: (...args: any[]) => unknown;
+		children?: React.ReactNode;
 	};
 export type ListItem_8096Component = React.ComponentType<ListItem_8096Props>;
 /**
@@ -142,7 +142,7 @@ export type AddMembersComponent = React.ComponentType<AddMembersProps & Record<s
  * @see components_native/CreateChannelModal.tsx
  */
 export type ChannelTypeRowProps = {
-		channelType?: unknown;
+		channelType?: number;
 		isBeta?: boolean;
 		isPrivate?: boolean;
 		onPress: (...args: any[]) => unknown;
@@ -239,7 +239,7 @@ export type ConnectedInAppNotificationSettingsScreenComponent = React.ComponentT
  */
 export type InAppNotificationSettingsModalProps = {
 		channelId?: string;
-		onClose?: (...args: any[]) => unknown;
+		onClose?: NavigatorCloseButtonProps['onPress'];
 	};
 export type InAppNotificationSettingsModalComponent = React.ComponentType<InAppNotificationSettingsModalProps>;
 /**
@@ -327,7 +327,7 @@ export type ConnectedStreamPreviewComponent = React.ComponentType<ConnectedStrea
  * @see components_native/TouchableStreamPreview.tsx
  */
 export type StreamPreviewContainerProps = {
-		channel: { id?: unknown; isGuildStageVoice?: unknown };
+		channel: { getGuildId?: unknown; id?: unknown; isGuildStageVoice?: unknown; type?: unknown; userLimit?: unknown };
 		disableTransition?: boolean;
 		onPress?: (...args: any[]) => unknown;
 		stream: ConnectedStreamPreviewProps['stream'];
@@ -459,7 +459,7 @@ export type VideoEmptyStateProps = Omit<React.ComponentProps<typeof RN.View>, 'a
 		avError?: unknown;
 		removeCloseButton?: unknown;
 		removeSplashImage?: unknown;
-		stream: { channelId?: unknown };
+		stream: { channelId?: unknown; guildId?: unknown; ownerId?: unknown; streamType?: unknown };
 		style?: React.ComponentProps<typeof RN.View>['style'];
 		type?: 'NONE' | 'STREAM_ENDED' | 'STREAM_FAILED' | (string & {});
 	};
@@ -581,7 +581,7 @@ export type OverrideOptionProps = {
 		onPress?: React.ComponentProps<typeof RN.Pressable>['onPress'];
 		permissionTitle?: unknown;
 		selected?: boolean;
-		styles: { allowActive?: unknown; allowSelected?: unknown; denyActive?: unknown; denySelected?: unknown; iconWrapper?: unknown; passthroughActive?: unknown; passthroughSelected?: unknown };
+		styles: { allowActive?: unknown; allowSelected?: unknown; denyActive?: unknown; denySelected?: unknown; icon?: unknown; iconWrapper?: unknown; passthroughActive?: unknown; passthroughSelected?: unknown };
 		type?: 'ALLOW' | 'DENY' | 'PASSTHROUGH' | (string & {});
 	};
 export type OverrideOptionComponent = React.ComponentType<OverrideOptionProps>;
@@ -590,9 +590,9 @@ export type OverrideOptionComponent = React.ComponentType<OverrideOptionProps>;
  * @see components_native/channel_settings/ChannelSettingsPermissionsOverrides.tsx
  */
 export type ChannelSettingsPermissionsOverridesProps = {
-		channelId: (...args: any[]) => unknown;
-		fromCreate?: (...args: any[]) => unknown;
-		id: DetailedGuildIdentityUserRowProps['userId'];
+		channelId?: string;
+		fromCreate?: unknown;
+		id?: DetailedGuildIdentityUserRowProps['userId'];
 		type?: 'MEMBER' | (string & {});
 	};
 export type ChannelSettingsPermissionsOverridesComponent = React.ComponentType<ChannelSettingsPermissionsOverridesProps>;
@@ -610,7 +610,7 @@ export type AddPermissionComponent = React.ComponentType<AddPermissionProps>;
  */
 export type CategorySyncProps = {
 		category?: ChannelPermissionSyncModuleProps['category'];
-		channel?: ChannelPermissionSyncModuleProps['channel'];
+		channel?: unknown;
 		isEditing?: boolean;
 		locked?: unknown;
 	};
@@ -620,8 +620,8 @@ export type CategorySyncComponent = React.ComponentType<CategorySyncProps>;
  * @see components_native/channel_settings/ChannelSettingsPermissionsOverview.tsx
  */
 export type ChannelPermissionSyncModuleProps = {
-		category: (...args: any[]) => unknown;
-		channel: (...args: any[]) => unknown;
+		category?: { id?: unknown; isObfuscated?: unknown; isThread?: unknown; name?: unknown; recipients?: unknown; type?: unknown };
+		channel?: unknown;
 		locked?: unknown;
 	};
 export type ChannelPermissionSyncModuleComponent = React.ComponentType<ChannelPermissionSyncModuleProps>;
@@ -692,7 +692,7 @@ export type ChannelSettingsRoleRowProps = {
 		isEditing?: boolean;
 		onDelete?: TableRowProps['onPress'];
 		onSelect?: (...args: any[]) => unknown;
-		role: { colorString?: unknown; colorStrings?: unknown; name?: unknown };
+		role: { colorString?: unknown; colorStrings?: unknown; guildId?: unknown; id?: unknown; name?: unknown };
 	};
 export type ChannelSettingsRoleRowComponent = React.ComponentType<ChannelSettingsRoleRowProps>;
 /**
@@ -803,7 +803,7 @@ export type ChatBeginningRowIconComponent = React.ComponentType<ChatBeginningRow
  * @see components_native/chat/ChatBeginningRow.tsx
  */
 export type ChatBeginningRowThreadProps = {
-		channel: { guild_id?: unknown; id?: unknown; isForumPost?: unknown; isNSFW?: unknown; ownerId?: unknown; threadMetadata?: unknown };
+		channel: { accessPermissions?: unknown; appliedTags?: unknown; guild_id?: unknown; id?: unknown; isForumPost?: unknown; isModeratorReportChannel?: unknown; isNSFW?: unknown; ownerId?: unknown; parent_id?: unknown; permissionOverwrites?: unknown; threadMetadata?: unknown };
 	};
 export type ChatBeginningRowThreadComponent = React.ComponentType<ChatBeginningRowThreadProps>;
 /**
@@ -832,7 +832,7 @@ export type DeauthorizeAppButtonComponent = React.ComponentType<DeauthorizeAppBu
  * @see components_native/chat/ChatBeginningRow.tsx
  */
 export type EditConjuredAppButtonProps = {
-		project?: unknown;
+		project?: { guild_id?: unknown; id?: unknown; preview_guild_id?: unknown };
 	};
 export type EditConjuredAppButtonComponent = React.ComponentType<EditConjuredAppButtonProps>;
 /**
@@ -1309,7 +1309,7 @@ export type ViewEmptyStateComponent = React.ComponentType<ViewEmptyStateProps>;
  * @see components_native/common/VoiceSensitivity.tsx
  */
 export type VoiceSensitivityProps = {
-		auto?: (...args: any[]) => unknown;
+		auto?: unknown;
 		onThresholdChange: (...args: any[]) => unknown;
 		threshold?: unknown;
 	};
@@ -1327,7 +1327,7 @@ export type VolumeSliderProps = {
 		onResponderGrant?: (...args: any[]) => unknown;
 		onValueChange: (...args: any[]) => unknown;
 		style?: React.ComponentProps<typeof RN.View>['style'];
-		value?: unknown;
+		value?: number;
 	};
 export type VolumeSliderComponent = React.ComponentType<VolumeSliderProps & Record<string, unknown>>;
 /**
@@ -1359,9 +1359,9 @@ export type RoleColorPickerActionSheetComponent = React.ComponentType<RoleColorP
  * @see components_native/premium/GiftPurchaseButton.tsx
  */
 export type GiftPurchaseButtonProps = {
-		analyticsLocation?: (...args: any[]) => unknown;
-		planId: (...args: any[]) => unknown;
-		recipientUserId: (...args: any[]) => unknown;
+		analyticsLocation?: unknown;
+		planId?: string;
+		recipientUserId?: string;
 		style?: React.ComponentProps<typeof RN.View>['style'];
 		/** @default 'primary' */
 		variant?: BaseTextButtonProps['variant'];
@@ -1414,7 +1414,7 @@ export type PremiumIconComponentComponent = React.ComponentType<PremiumIconCompo
  */
 export type OutboundPromotionCardProps = {
 		code?: unknown;
-		outboundPromotion: { id?: unknown; outboundTermsAndConditions?: unknown; outboundTitle?: unknown };
+		outboundPromotion: { endDate?: unknown; id?: unknown; outboundRedemptionEndDate?: unknown; outboundTermsAndConditions?: unknown; outboundTitle?: unknown };
 	};
 export type OutboundPromotionCardComponent = React.ComponentType<OutboundPromotionCardProps>;
 /**
@@ -1433,7 +1433,7 @@ export type OutboundPromotionClaimAlertProps = {
 		code?: DesignTextProps['children'];
 		onCancel: (...args: any[]) => unknown;
 		onClaim: (...args: any[]) => unknown;
-		outboundPromotion: { id?: unknown; outboundRedemptionModalBody?: unknown; outboundTitle?: unknown; partnerId?: unknown };
+		outboundPromotion: { id?: unknown; outboundRedemptionModalBody?: unknown; outboundRedemptionPageLink?: unknown; outboundRedemptionUrlFormat?: unknown; outboundTitle?: unknown; partnerId?: unknown };
 	};
 export type OutboundPromotionClaimAlertComponent = React.ComponentType<OutboundPromotionClaimAlertProps>;
 /**
@@ -1524,9 +1524,9 @@ export type PremiumSubscriptionDetailsComponent = React.ComponentType<PremiumSub
  */
 export type PremiumSubscriptionHeaderProps = {
 		onClickManagePremiumGuild?: BaseTextButtonProps['onPress'];
-		renewalInvoicePreview?: unknown;
+		renewalInvoicePreview?: { invoiceItems?: unknown };
 		style?: React.ComponentProps<typeof RN.View>['style'];
-		subscription?: { isACOM?: unknown; isOnPlatformMatchingExternalPaymentGateway?: unknown; paymentGatewayPlanId?: unknown; renewalMutations?: unknown; status?: unknown };
+		subscription?: { additionalPlans?: unknown; hasActiveTrial?: unknown; id?: unknown; isACOM?: unknown; isOnPlatformMatchingExternalPaymentGateway?: unknown; isPurchasedExternally?: unknown; isPurchasedViaApple?: unknown; items?: unknown; paymentGateway?: unknown; paymentGatewayPlanId?: unknown; paymentGatewaySubscriptionId?: unknown; planId?: unknown; renewalMutations?: unknown; status?: unknown; type?: unknown };
 	};
 export type PremiumSubscriptionHeaderComponent = React.ComponentType<PremiumSubscriptionHeaderProps>;
 /**
@@ -1627,7 +1627,7 @@ export type PremiumUpsellAlertProps = {
 		analyticsLocations?: unknown;
 		analyticsProperties?: unknown;
 		imageSource?: unknown;
-		initialUpsellKey?: 'animated-emoji' | 'app-icons' | 'custom-profiles' | 'global-emoji' | 'global-sticker' | 'guild-cap' | 'longer-message' | 'premium-guild-profile' | 'upload' | (string & {});
+		initialUpsellKey?: 'animated-emoji' | 'app-icons' | 'custom-profiles' | 'global-emoji' | 'global-sticker' | 'guild-cap' | 'longer-message' | 'premium-guild-profile' | 'shop-member-pricing' | 'stream-high-quality' | 'upload' | (string & {});
 		onClose?: (...args: any[]) => unknown;
 	};
 export type PremiumUpsellAlertComponent = React.ComponentType<PremiumUpsellAlertProps>;
@@ -1674,8 +1674,8 @@ export type PremiumGuildPreviewComponent = React.ComponentType<PremiumGuildPrevi
  * @see components_native/premium/premium_guild_subscribe_modal/PremiumGuildPreview.tsx
  */
 export type PremiumGuildTierPillProps = {
-		theme?: unknown;
-		tier?: unknown;
+		theme?: 'dark' | 'darker' | 'midnight' | (string & {});
+		tier?: number;
 	};
 export type PremiumGuildTierPillComponent = React.ComponentType<PremiumGuildTierPillProps>;
 /**
@@ -1713,8 +1713,8 @@ export type SubscribeConfirmationComponent = React.ComponentType<SubscribeConfir
  * @see components_native/premium/premium_guild_subscribe_modal/SubscribeModalConfirmation.tsx
  */
 export type SubscribeModalConfirmationProps = {
-		guildBoostSlots?: (...args: any[]) => unknown;
-		guildId: (...args: any[]) => unknown;
+		guildBoostSlots?: { length?: unknown };
+		guildId?: string;
 		intent?: unknown;
 		location?: unknown;
 		onResult?: (...args: any[]) => unknown;

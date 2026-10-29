@@ -799,7 +799,7 @@ export type EnsureSingleNavigatorComponent = React.ComponentType<EnsureSingleNav
  */
 export type ErrorBoundaryProps = {
 		beforeCapture?: (...args: any[]) => unknown;
-		children?: (...args: any[]) => unknown;
+		children?: React.ReactNode;
 		dialogOptions?: unknown;
 		fallback?: unknown;
 		handled?: unknown;
@@ -883,12 +883,10 @@ export type FeedbackWidgetProps = {
 		addScreenshotButtonLabel?: unknown;
 		cancelButtonLabel?: unknown;
 		captureScreenshotButtonLabel?: unknown;
-		captureScreenshotError?: unknown;
 		emailLabel?: unknown;
 		emailPlaceholder?: React.ComponentProps<typeof RN.TextInput>['placeholder'];
 		enableScreenshot?: boolean;
 		enableTakeScreenshot?: boolean;
-		errorTitle?: unknown;
 		formTitle?: unknown;
 		imagePicker?: unknown;
 		isEmailRequired?: boolean;
@@ -906,7 +904,10 @@ export type FeedbackWidgetProps = {
 		styles?: unknown;
 		submitButtonLabel?: unknown;
 	};
-export type FeedbackWidgetComponent = React.ComponentType<FeedbackWidgetProps>;
+export type FeedbackWidgetStatics = {
+		_savedState: unknown;
+	};
+export type FeedbackWidgetComponent = React.ComponentType<FeedbackWidgetProps> & FeedbackWidgetStatics;
 /**
  * Props of `FeedbackWidgetProvider` (class). Exports: none.
  * @see module 1073 (no source path)
@@ -1116,7 +1117,7 @@ export type Module6234HeaderProps = {
 		headerTitleContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		headerTitleStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		headerTransparent?: unknown;
-		layout?: { width?: unknown };
+		layout?: { height?: unknown; width?: unknown };
 		/** @default false */
 		modal?: boolean;
 		title?: unknown;
@@ -1130,7 +1131,7 @@ export type Module6697HeaderProps = {
 		back?: { href?: unknown; title?: unknown };
 		layout?: HeaderSegmentProps['layout'];
 		navigation: { canGoBack?: unknown; dispatch?: unknown; isFocused?: unknown };
-		options: { headerBackTitle?: unknown; headerStatusBarHeight?: unknown };
+		options: { headerBackTitle?: unknown; headerStatusBarHeight?: unknown; headerTitle?: unknown; title?: unknown };
 		progress?: HeaderSegmentProps['progress'];
 		route: { key?: unknown; name?: unknown };
 		styleInterpolator?: HeaderSegmentProps['styleInterpolator'];
@@ -1256,7 +1257,7 @@ export type HeaderSegmentProps = Omit<Module6234HeaderProps, 'backHref' | 'heade
 		headerRightContainerStyle?: Module6234HeaderProps['headerRightContainerStyle'];
 		headerStatusBarHeight?: unknown;
 		headerStyle?: Module6234HeaderProps['headerStyle'];
-		headerTitle?: (...args: any[]) => unknown;
+		headerTitle?: unknown;
 		headerTitleContainerStyle?: Module6234HeaderProps['headerTitleContainerStyle'];
 		layout: Module6234HeaderProps['layout'];
 		modal?: Module6234HeaderProps['modal'];
@@ -1338,7 +1339,7 @@ export type InnerScreenComponent = React.ComponentType<InnerScreenProps & Record
 export type InterceptingGestureDetectorProps = {
 		children?: React.ReactNode;
 		enableContextMenu?: boolean;
-		gesture?: { config?: unknown; detectorCallbacks?: unknown; handlerTag?: unknown; handlerTags?: unknown };
+		gesture?: { config?: unknown; detectorCallbacks?: unknown; externalSimultaneousHandlers?: unknown; gestureRelations?: unknown; gestures?: unknown; handlerTag?: unknown; handlerTags?: unknown; type?: unknown };
 		touchAction?: unknown;
 		userSelect?: unknown;
 	};
@@ -1374,10 +1375,16 @@ export type InternalTextInputProps = {
 		multiline?: boolean;
 		nativeID?: unknown;
 		numberOfLines?: unknown;
+		onBlur?: (...args: any[]) => unknown;
+		onChange?: (...args: any[]) => unknown;
+		onChangeText?: (...args: any[]) => unknown;
 		onContentSizeChange?: (...args: any[]) => unknown;
+		onFocus?: (...args: any[]) => unknown;
 		onPress?: (...args: any[]) => unknown;
 		onPressIn?: (...args: any[]) => unknown;
 		onPressOut?: (...args: any[]) => unknown;
+		onScroll?: (...args: any[]) => unknown;
+		onSelectionChange?: (...args: any[]) => unknown;
 		rejectResponderTermination?: unknown;
 		rows?: unknown;
 		selection?: { end?: unknown; start?: unknown };
@@ -1386,7 +1393,7 @@ export type InternalTextInputProps = {
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		submitBehavior?: 'newline' | (string & {});
 		tabIndex?: unknown;
-		value?: (...args: any[]) => unknown;
+		value?: unknown;
 	};
 export type InternalTextInputComponent = React.ComponentType<InternalTextInputProps & Record<string, unknown>>;
 /**
@@ -1398,7 +1405,7 @@ export type ItemLayoutProps = {
 		children: (...args: any[]) => unknown;
 		handlerOffset?: unknown;
 		index?: unknown;
-		visibleRanges?: unknown;
+		visibleRanges?: { value?: unknown };
 	};
 export type ItemLayoutComponent = React.ComponentType<ItemLayoutProps>;
 /**
@@ -1533,7 +1540,7 @@ export type LayoutAnimationConfigProps = {
 		children?: React.ReactNode;
 		itemKey?: unknown;
 		skipEntering?: SkipEnteringProps['shouldSkip'];
-		skipExiting?: unknown;
+		skipExiting?: boolean;
 	};
 export type LayoutAnimationConfigComponent = React.ComponentType<LayoutAnimationConfigProps>;
 /**
@@ -1622,7 +1629,7 @@ export type LegacyScrollViewComponent = React.ComponentType<LegacyScrollViewProp
 export type LegacyTextProps = Omit<React.ComponentProps<typeof RN.Text>, 'onLongPress' | 'onPress' | 'ref'> & {
 		onLongPress?: React.ComponentProps<typeof RN.Text>['onLongPress'];
 		onPress?: React.ComponentProps<typeof RN.Text>['onPress'];
-		ref?: (...args: any[]) => unknown;
+		ref?: React.Ref<any>;
 	};
 export type LegacyTextComponent = React.ComponentType<LegacyTextProps & Record<string, unknown>>;
 /**
@@ -1697,7 +1704,7 @@ export type LottieViewProps = {
 		duration?: unknown;
 		hover?: unknown;
 		resizeMode?: unknown;
-		source?: { fr?: unknown; op?: unknown };
+		source?: unknown;
 		speed?: unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		textFiltersAndroid?: unknown;
@@ -1840,7 +1847,7 @@ export type Module405ModalComponent = React.ComponentType<Module405ModalProps>;
 export type NativeDetectorProps = {
 		children?: React.ReactNode;
 		enableContextMenu?: boolean;
-		gesture: { config?: unknown; detectorCallbacks?: unknown; handlerTag?: unknown; handlerTags?: unknown };
+		gesture: { config?: unknown; detectorCallbacks?: unknown; externalSimultaneousHandlers?: unknown; gestureRelations?: unknown; gestures?: unknown; handlerTag?: unknown; handlerTags?: unknown; type?: unknown };
 		touchAction?: unknown;
 		userSelect?: unknown;
 	};
@@ -1919,8 +1926,8 @@ export type NavigationStateListenerProviderComponent = React.ComponentType<Navig
  * @see module 4807 (no source path)
  */
 export type NavigatorComponentProps = {
-		screenListeners?: (...args: any[]) => unknown;
-		screenOptions?: (...args: any[]) => unknown;
+		screenListeners?: unknown;
+		screenOptions?: unknown;
 	};
 export type NavigatorComponentComponent = React.ComponentType<NavigatorComponentProps>;
 /**
@@ -2030,7 +2037,7 @@ export type PlatformPressableInternalComponent = React.ComponentType<PlatformPre
  * @see module 7638 (no source path)
  */
 export type PolygonProps = {
-		points?: unknown;
+		points?: { join?: unknown };
 	};
 export type PolygonComponent = React.ComponentType<PolygonProps & Record<string, unknown>>;
 /**
@@ -2038,7 +2045,7 @@ export type PolygonComponent = React.ComponentType<PolygonProps & Record<string,
  * @see module 7640 (no source path)
  */
 export type PolylineProps = {
-		points?: unknown;
+		points?: { join?: unknown };
 	};
 export type PolylineComponent = React.ComponentType<PolylineProps & Record<string, unknown>>;
 /**
@@ -2099,7 +2106,7 @@ export type PressableProps = Omit<View_withRefProps, 'accessibilityLabel' | 'acc
 		'aria-valuetext'?: unknown;
 		blockNativeResponder?: unknown;
 		cancelable?: unknown;
-		children?: (...args: any[]) => unknown;
+		children?: React.ReactNode;
 		delayHoverIn?: unknown;
 		delayHoverOut?: unknown;
 		delayLongPress?: unknown;
@@ -2117,7 +2124,7 @@ export type PressableProps = Omit<View_withRefProps, 'accessibilityLabel' | 'acc
 		onPressOut?: (...args: any[]) => unknown;
 		pressRetentionOffset?: unknown;
 		ref?: React.Ref<any>;
-		style?: (...args: any[]) => unknown;
+		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		testOnly_pressed?: boolean;
 		unstable_pressDelay?: unknown;
 	};
@@ -2128,7 +2135,7 @@ export type PressableComponent = React.ComponentType<PressableProps & Record<str
  */
 export type PressableText_withRefProps = {
 		selectable?: boolean;
-		textPressabilityProps?: unknown;
+		textPressabilityProps?: { onLongPress?: unknown; onPress?: unknown; onPressIn?: unknown; onPressOut?: unknown; onResponderGrant?: unknown; onResponderMove?: unknown; onResponderRelease?: unknown; onResponderTerminate?: unknown; onResponderTerminationRequest?: unknown; onStartShouldSetResponder?: unknown; pressRetentionOffset?: unknown; suppressHighlighting?: unknown };
 		textProps?: unknown;
 	};
 export type PressableText_withRefComponent = React.ComponentType<PressableText_withRefProps>;
@@ -2137,7 +2144,7 @@ export type PressableText_withRefComponent = React.ComponentType<PressableText_w
  * @see module 382 (no source path)
  */
 export type PressableVirtualText_withRefProps = {
-		textPressabilityProps?: unknown;
+		textPressabilityProps?: { onLongPress?: unknown; onPress?: unknown; onPressIn?: unknown; onPressOut?: unknown; onResponderGrant?: unknown; onResponderMove?: unknown; onResponderRelease?: unknown; onResponderTerminate?: unknown; onResponderTerminationRequest?: unknown; onStartShouldSetResponder?: unknown; pressRetentionOffset?: unknown; suppressHighlighting?: unknown };
 		textProps?: unknown;
 	};
 export type PressableVirtualText_withRefComponent = React.ComponentType<PressableVirtualText_withRefProps>;
@@ -2470,8 +2477,8 @@ export type ScreenStackHeaderConfigProps = {
 		/** @default false */
 		disableTopInsetApplication?: boolean;
 		experimental_userInterfaceStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
-		headerLeftBarButtonItems?: unknown;
-		headerRightBarButtonItems?: unknown;
+		headerLeftBarButtonItems?: { map?: unknown };
+		headerRightBarButtonItems?: { map?: unknown };
 		hidden?: boolean;
 	};
 export type ScreenStackHeaderConfigComponent = React.ComponentType<ScreenStackHeaderConfigProps & Record<string, unknown>>;
@@ -2545,7 +2552,7 @@ export type Module362ScrollViewProps = {
 		children?: React.ReactNode;
 		contentContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		contentInset?: { top?: unknown };
-		decelerationRate?: unknown;
+		decelerationRate?: 'fast' | 'normal' | (string & {});
 		experimental_endDraggingSensitivityMultiplier?: unknown;
 		horizontal?: boolean;
 		innerViewRef?: unknown;
@@ -2627,7 +2634,7 @@ export type ScrollableContainerComponent = React.ComponentType<ScrollableContain
  */
 export type Module5340SearchBarProps = {
 		hideNavigationBar?: boolean;
-		obscureBackground?: unknown;
+		obscureBackground?: boolean;
 		onBlur?: (...args: any[]) => unknown;
 		onCancelButtonPress?: (...args: any[]) => unknown;
 		onChangeText?: (...args: any[]) => unknown;
@@ -2651,7 +2658,7 @@ export type SectionListComponent = React.ComponentType<SectionListProps & Record
  */
 export type SentryRoutesProps = {
 		children?: React.ReactNode;
-		locationArg?: { pathname?: unknown };
+		locationArg?: unknown;
 		routes: { forEach?: unknown };
 	};
 export type SentryRoutesComponent = React.ComponentType<SentryRoutesProps>;
@@ -2907,7 +2914,7 @@ export type SvgXmlProps = {
 		fallback?: unknown;
 		onError?: (...args: any[]) => unknown;
 		override?: unknown;
-		xml?: unknown;
+		xml?: { indexOf?: unknown; length?: unknown; slice?: unknown; split?: unknown };
 	};
 export type SvgXmlComponent = React.ComponentType<SvgXmlProps>;
 /**
@@ -3089,6 +3096,14 @@ export type TimeToDisplayProps = {
 	};
 export type TimeToDisplayComponent = React.ComponentType<TimeToDisplayProps>;
 /**
+ * Props of `TimeToDisplayWrapper` (function). Exports: none.
+ * @see module 1066 (no source path)
+ */
+export type TimeToDisplayWrapperProps = Omit<TimeToFullDisplayProps, 'record'> & {
+		record?: unknown;
+	};
+export type TimeToDisplayWrapperComponent = React.ComponentType<TimeToDisplayWrapperProps & Record<string, unknown>>;
+/**
  * Props of `TimeToFullDisplay` (function). Exports: TimeToFullDisplay.
  * @see module 1066 (no source path)
  */
@@ -3136,7 +3151,7 @@ export type Module6448TouchableProps = {
 		/** @default 0.105 */
 		activeUnderlayOpacity?: number;
 		androidRipple?: unknown;
-		animationDuration?: { hover?: unknown; in?: unknown; longPress?: unknown; out?: unknown; tap?: unknown };
+		animationDuration?: unknown;
 		/** @default true */
 		cancelOnLeave?: boolean;
 		children?: React.ReactNode;
@@ -3484,7 +3499,7 @@ export type VirtualColumnLayoutComponent = React.ComponentType<VirtualColumnLayo
 export type VirtualDetectorProps = {
 		children?: React.ReactNode;
 		enableContextMenu?: boolean;
-		gesture: { config?: unknown; detectorCallbacks?: unknown; handlerTag?: unknown; handlerTags?: unknown };
+		gesture: { config?: unknown; detectorCallbacks?: unknown; externalSimultaneousHandlers?: unknown; gestureRelations?: unknown; gestures?: unknown; handlerTag?: unknown; handlerTags?: unknown; type?: unknown };
 		touchAction?: unknown;
 		userSelect?: unknown;
 	};

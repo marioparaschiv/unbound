@@ -1,0 +1,259 @@
+    r10 = r7.__d;
+    r0 = 16446;
+    r9 = [19, 17, 11731, 5968, 21, 5089, 560, 11732, 5387, 9280, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun16447: for(var _fun16447_ip = 0; ; ) switch(_fun16447_ip) {
+case 0:
+            r4 = a1;
+            var _closure0_slot0 = r4;
+            r2 = a2;
+            var _closure0_slot1 = r2;
+            r2 = a5;
+            r3 = a6;
+            var _closure0_slot2 = r3;
+            r5 = global;
+            r8 = r5.Object;
+            r7 = r8.defineProperty;
+            r6 = '__esModule';
+            r5 = {'value': true};
+            r5 = r7.bind(r8)(r2, r6, r5);
+            r6 = r3[r0];
+            r0 = undefined;
+            r5 = a3;
+            r6 = r5.bind(r0)(r6);
+            r5 = r3[r1];
+            r5 = r4.bind(r0)(r5);
+            r5 = r5.View;
+            var _closure0_slot3 = r5;
+            r5 = r3[r2];
+            r5 = r4.bind(r0)(r5);
+            r5 = r5.MUTED_OPACITY_CONTENT;
+            var _closure0_slot4 = r5;
+            r5 = r3[r3];
+            r5 = r4.bind(r0)(r5);
+            r5 = r5.UnreadSetting;
+            var _closure0_slot5 = r5;
+            r5 = r3[r4];
+            r5 = r4.bind(r0)(r5);
+            r5 = r5.jsx;
+            var _closure0_slot6 = r5;
+            r5 = r3[r5];
+            r8 = r4.bind(r0)(r5);
+            r7 = r8.createStyles;
+            r5 = {'unreadBadge': null, 'unreadBadgePanel': null};
+            r9 = {'flexGrow': 0, 'flexShrink': 0, 'position': 'absolute'};
+            r5[0] = r9;
+            r9 = {'marginLeft': 4294967280};
+            r5[1] = r9;
+            r5 = r7.bind(r8)(r5);
+            var _closure0_slot7 = r5;
+            r5 = r3[r6];
+            r7 = r4.bind(r0)(r5);
+            r5 = r7.isReactCompilerEnabled;
+            r5 = r5.bind(r7)();
+            if(r5) { _fun16447_ip = 240; continue _fun16447 }
+case 231:
+            r5 = function(a0) { // Original name: ChannelUnreadBadge, environment: r1
+                _fun73612: for(var _fun73612_ip = 0; ; ) switch(_fun73612_ip) {
+case 0:
+                    r3 = a0;
+                    r4 = r3.unread;
+                    r12 = r3.resolvedUnreadSetting;
+                    r11 = r3.muted;
+                    r16 = r3.isThread;
+                    r7 = r3.layout;
+                    r6 = r3.launchpad;
+                    r14 = r3.panelVariant;
+                    r1 = undefined;
+                    if(!(r14 === r1)) { _fun73612_ip = 53; continue _fun73612 }
+case 51:
+                    r14 = false;
+case 53:
+                    r3 = _closure0_slot7;
+                    r17 = r3.bind(r1)();
+                    r13 = _closure0_slot0;
+                    r10 = _closure0_slot2;
+                    r3 = r10[r7];
+                    r5 = r13.bind(r1)(r3);
+                    r3 = r5.getLayoutStyles;
+                    r8 = r3.bind(r5)(r7, r6);
+                    r3 = r10[r8];
+                    r5 = r13.bind(r1)(r3);
+                    r3 = r5.useFontScale;
+                    r15 = r3.bind(r5)();
+                    r3 = null;
+                    if(!r4) { _fun73612_ip = 358; continue _fun73612 }
+case 120:
+                    r6 = _closure0_slot6;
+                    r5 = _closure0_slot3;
+                    r4 = r17.unreadBadge;
+                    r7 = new Array(4);
+                    r7[0] = r4;
+                    r4 = undefined;
+                    if(!r14) { _fun73612_ip = 153; continue _fun73612 }
+case 147:
+                    r4 = r17.unreadBadgePanel;
+case 153:
+                    r7[1] = r4;
+                    r4 = r8.unreadBadge;
+                    if(r16) { _fun73612_ip = 173; continue _fun73612 }
+case 166:
+                    r16 = r4.position;
+                    _fun73612_ip = 179; continue _fun73612;
+case 173:
+                    r16 = r4.positionThread;
+case 179:
+                    r4 = {'style': null, 'children': null};
+                    r7[2] = r16;
+                    r16 = r10[r7];
+                    r17 = r13.bind(r1)(r16);
+                    r16 = r17.makeSizeStyle;
+                    r8 = r8.unreadBadge;
+                    r8 = r8.size;
+                    r8 = r16.bind(r17)(r8);
+                    r7[3] = r8;
+                    r4[0] = r7;
+                    r8 = _closure0_slot1;
+                    r7 = r10[r9];
+                    r8 = r8.bind(r1)(r7);
+                    r7 = {'classic': null, 'size': null, 'badgeStyle': null};
+                    r7[0] = r14;
+                    r10 = r10[r9];
+                    r10 = r13.bind(r1)(r10);
+                    r13 = r10.CHANNEL_BADGE_SIZE;
+                    r10 = global;
+                    r14 = r10.Math;
+                    r10 = r14.max;
+                    r0 = 1;
+                    r10 = r10.bind(r14)(r15, r0);
+                    r10 = r13 * r10;
+                    r7[1] = r10;
+                    r10 = _closure0_slot5;
+                    r10 = r10.ALL_MESSAGES;
+                    if(!(r12 === r10)) { _fun73612_ip = 324; continue _fun73612 }
+case 318:
+                    r10 = r0;
+                    if(!r11) { _fun73612_ip = 328; continue _fun73612 }
+case 324:
+                    r10 = _closure0_slot4;
+case 328:
+                    r9 = {'opacity': null};
+                    r9[0] = r10;
+                    r7[2] = r9;
+                    r7 = r6.bind(r1)(r8, r7);
+                    r4[1] = r7;
+                    r3 = r6.bind(r1)(r5, r4);
+case 358:
+                    return r3;
+                }
+            };
+            _fun16447_ip = 247; continue _fun16447;
+case 240:
+            r5 = function(a0) { // Original name: ChannelUnreadBadge, environment: r1
+                _fun73611: for(var _fun73611_ip = 0; ; ) switch(_fun73611_ip) {
+case 0:
+                    r2 = a0;
+                    r3 = r2.unread;
+                    r11 = r2.resolvedUnreadSetting;
+                    r10 = r2.muted;
+                    r15 = r2.isThread;
+                    r6 = r2.layout;
+                    r5 = r2.launchpad;
+                    r2 = r2.panelVariant;
+                    r1 = undefined;
+                    r13 = r1 !== r2;
+                    if(!r13) { _fun73611_ip = 57; continue _fun73611 }
+case 54:
+                    r13 = r2;
+case 57:
+                    r2 = _closure0_slot7;
+                    r16 = r2.bind(r1)();
+                    r12 = _closure0_slot0;
+                    r9 = _closure0_slot2;
+                    r2 = r9[r7];
+                    r4 = r12.bind(r1)(r2);
+                    r2 = r4.getLayoutStyles;
+                    r7 = r2.bind(r4)(r6, r5);
+                    r2 = r9[r8];
+                    r4 = r12.bind(r1)(r2);
+                    r2 = r4.useFontScale;
+                    r14 = r2.bind(r4)();
+                    r2 = null;
+                    if(!r3) { _fun73611_ip = 362; continue _fun73611 }
+case 124:
+                    r5 = _closure0_slot6;
+                    r4 = _closure0_slot3;
+                    r3 = r16.unreadBadge;
+                    r6 = new Array(4);
+                    r6[0] = r3;
+                    r3 = undefined;
+                    if(!r13) { _fun73611_ip = 157; continue _fun73611 }
+case 151:
+                    r3 = r16.unreadBadgePanel;
+case 157:
+                    r6[1] = r3;
+                    r3 = r7.unreadBadge;
+                    if(r15) { _fun73611_ip = 177; continue _fun73611 }
+case 170:
+                    r15 = r3.position;
+                    _fun73611_ip = 183; continue _fun73611;
+case 177:
+                    r15 = r3.positionThread;
+case 183:
+                    r3 = {'style': null, 'children': null};
+                    r6[2] = r15;
+                    r15 = r9[r7];
+                    r16 = r12.bind(r1)(r15);
+                    r15 = r16.makeSizeStyle;
+                    r7 = r7.unreadBadge;
+                    r7 = r7.size;
+                    r7 = r15.bind(r16)(r7);
+                    r6[3] = r7;
+                    r3[0] = r6;
+                    r7 = _closure0_slot1;
+                    r6 = r9[r9];
+                    r7 = r7.bind(r1)(r6);
+                    r6 = {'classic': null, 'size': null, 'badgeStyle': null};
+                    r6[0] = r13;
+                    r9 = r9[r9];
+                    r9 = r12.bind(r1)(r9);
+                    r12 = r9.CHANNEL_BADGE_SIZE;
+                    r9 = global;
+                    r13 = r9.Math;
+                    r9 = r13.max;
+                    r0 = 1;
+                    r9 = r9.bind(r13)(r14, r0);
+                    r9 = r12 * r9;
+                    r6[1] = r9;
+                    r9 = _closure0_slot5;
+                    r9 = r9.ALL_MESSAGES;
+                    if(!(r11 === r9)) { _fun73611_ip = 328; continue _fun73611 }
+case 322:
+                    r9 = r0;
+                    if(!r10) { _fun73611_ip = 332; continue _fun73611 }
+case 328:
+                    r9 = _closure0_slot4;
+case 332:
+                    r8 = {'opacity': null};
+                    r8[0] = r9;
+                    r6[2] = r8;
+                    r6 = r5.bind(r1)(r7, r6);
+                    r3[1] = r6;
+                    r2 = r5.bind(r1)(r4, r3);
+case 362:
+                    return r2;
+                }
+            };
+case 247:
+            r1 = r6.memo;
+            r1 = r1.bind(r6)(r5);
+            r3 = r3[r10];
+            r5 = r4.bind(r0)(r3);
+            r4 = r5.fileFinishedImporting;
+            r3 = 'modules/main_tabs_v2/native/shared_components/guild_channels/ChannelUnreadBadge.tsx';
+            r3 = r4.bind(r5)(r3);
+            r2['default'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

@@ -173,7 +173,7 @@ export type DesignActivityIndicatorComponent = React.ComponentType<DesignActivit
  */
 export type AlertActionButtonProps = Omit<BaseTextButtonProps, 'loading' | 'onPress'> & {
 		loading?: BaseTextButtonProps['loading'];
-		onPress: (...args: any[]) => unknown;
+		onPress?: (...args: any[]) => unknown;
 	};
 export type AlertActionButtonComponent = React.ComponentType<AlertActionButtonProps & Record<string, unknown>>;
 /**
@@ -253,7 +253,7 @@ export type ButtonBaseButtonProps = {
 		scaleAmountInPx?: unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		/** @default 'primary' */
-		variant?: 'none' | 'primary' | (string & {});
+		variant?: 'none' | 'primary' | 'primary-overlay' | 'secondary-overlay' | (string & {});
 	};
 export type ButtonBaseButtonComponent = React.ComponentType<ButtonBaseButtonProps>;
 /**
@@ -282,7 +282,7 @@ export type BaseTextButtonProps = Omit<ButtonBaseButtonProps, 'accessibilityLabe
 		accessibilityLabel?: unknown;
 		/** @default 'button' */
 		accessibilityRole?: ButtonBaseButtonProps['accessibilityRole'];
-		collapseText?: unknown;
+		collapseText?: CollapsingTextProps['collapseText'];
 		/** @default false */
 		grow?: boolean;
 		icon?: unknown;
@@ -314,6 +314,15 @@ export type BaseTextButtonStatics = {
 		Icon: TextButtonIconComponent;
 	};
 export type BaseTextButtonComponent = React.ComponentType<BaseTextButtonProps> & BaseTextButtonStatics;
+/**
+ * Props of `CollapsingText` (function). Exports: none.
+ * @see design/components/Button/native/BaseTextButton.native.tsx
+ */
+export type CollapsingTextProps = {
+		children?: React.ReactNode;
+		collapseText?: { get?: unknown };
+	};
+export type CollapsingTextComponent = React.ComponentType<CollapsingTextProps>;
 /**
  * Props of `TextButtonIcon` (function). Exports: none.
  * @see design/components/Button/native/BaseTextButton.native.tsx
@@ -362,7 +371,7 @@ export type LoadingButtonPillProps = {
 		loaderSize?: 'md' | (string & {});
 		/** @default false */
 		loading?: boolean;
-		pressed?: unknown;
+		pressed?: PillWrapperProps['pressed'];
 		size?: unknown;
 		style?: PillWrapperProps['style'];
 		/** @default 'primary' */
@@ -377,14 +386,22 @@ export type PillWrapperProps = {
 		children?: React.ReactNode;
 		expressivePressState?: unknown;
 		expressiveRiveRef?: unknown;
-		pressed?: unknown;
+		pressed?: { get?: unknown };
 		/** @default false */
 		shiny?: boolean;
 		size?: unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
-		variant?: 'experimental_premium-basic' | 'experimental_premium-primary' | 'expressive' | (string & {});
+		variant?: ButtonShineProps['variant'];
 	};
 export type PillWrapperComponent = React.ComponentType<PillWrapperProps>;
+/**
+ * Props of `ButtonShine` (function). Exports: ButtonShine.
+ * @see design/components/Button/native/ButtonShine.native.tsx
+ */
+export type ButtonShineProps = {
+		variant?: 'primary' | 'secondary' | 'tertiary' | (string & {});
+	};
+export type ButtonShineComponent = React.ComponentType<ButtonShineProps>;
 /**
  * Props of `FloatingActionButton` (function). Exports: FloatingActionButton.
  * @see design/components/Button/native/FloatingActionButton.native.tsx
@@ -621,7 +638,7 @@ export type InputProps = {
 		label?: DesignTextProps['children'];
 		labelId?: string;
 		labelTrailing?: React.ComponentProps<typeof RN.View>['children'];
-		required?: unknown;
+		required?: boolean;
 	};
 export type InputComponent = React.ComponentType<InputProps>;
 /**
@@ -1114,7 +1131,7 @@ export type SceneLoadingIndicatorComponent = React.ComponentType<SceneLoadingInd
 export type AvatarDuoPileProps = {
 		'aria-label'?: PileProps['aria-label'];
 		children?: PileProps['children'];
-		names?: unknown;
+		names?: { length?: unknown };
 		size: { map?: unknown };
 	};
 export type AvatarDuoPileComponent = React.ComponentType<AvatarDuoPileProps & Record<string, unknown>>;
@@ -1124,7 +1141,7 @@ export type AvatarDuoPileComponent = React.ComponentType<AvatarDuoPileProps & Re
  */
 export type AvatarPileProps = {
 		children?: PileProps['children'];
-		names?: unknown;
+		names?: { length?: unknown };
 		size?: unknown;
 		totalCount?: number;
 	};
@@ -1135,7 +1152,7 @@ export type AvatarPileComponent = React.ComponentType<AvatarPileProps>;
  */
 export type GuildIconPileProps = {
 		children?: PileProps['children'];
-		names?: unknown;
+		names?: { length?: unknown };
 		size?: unknown;
 		totalCount?: number;
 	};
@@ -1386,7 +1403,7 @@ export type BottomSheetBackdropComponentComponent = React.ComponentType<BottomSh
 export type BottomSheetTextInputProps = Omit<VoidTextInputProps, 'onBlur' | 'onFocus' | 'ref'> & {
 		onBlur?: (...args: any[]) => unknown;
 		onFocus?: (...args: any[]) => unknown;
-		ref?: (...args: any[]) => unknown;
+		ref?: React.Ref<any>;
 	};
 export type BottomSheetTextInputComponent = React.ComponentType<BottomSheetTextInputProps & Record<string, unknown>>;
 /**
@@ -1467,7 +1484,7 @@ export type SplitTextFieldProps = Omit<BaseTextFieldProps, 'aria-disabled' | 'cl
 		disabled?: boolean;
 		focusable?: unknown;
 		leadingPressableProps?: unknown;
-		leadingText?: { length?: unknown };
+		leadingText?: DesignTextProps['children'];
 		onChange?: (...args: any[]) => unknown;
 		onClear?: (...args: any[]) => unknown;
 		ref?: React.Ref<any>;
@@ -1485,7 +1502,7 @@ export type SplitTextFieldComponent = React.ComponentType<SplitTextFieldProps & 
 export type SplitTextInputProps = Omit<SplitTextFieldProps, 'label' | 'ref' | 'required'> & {
 		label?: unknown;
 		ref?: SplitTextFieldProps['ref'];
-		required?: unknown;
+		required?: boolean;
 	};
 export type SplitTextInputComponent = React.ComponentType<SplitTextInputProps & Record<string, unknown>>;
 /**
@@ -1899,7 +1916,7 @@ export type GhostInputProps = Omit<InputTextInputProps, 'autoFocus' | 'centered'
 		disabled?: boolean;
 		label?: unknown;
 		onClear?: (...args: any[]) => unknown;
-		required?: unknown;
+		required?: boolean;
 		size?: unknown;
 		status?: unknown;
 	};
@@ -1910,7 +1927,7 @@ export type GhostInputComponent = React.ComponentType<GhostInputProps & Record<s
  */
 export type TextAreaProps = Omit<TextAreaFieldProps, 'ref' | 'required'> & {
 		ref?: TextAreaFieldProps['ref'];
-		required?: unknown;
+		required?: boolean;
 	};
 export type TextAreaComponent = React.ComponentType<TextAreaProps & Record<string, unknown>>;
 /**
@@ -1969,7 +1986,7 @@ export type BackgroundBlurFillProps = {
 		android_blurTargetViewNativeId?: VisualEffectViewProps['android_blurTargetViewNativeId'];
 		android_fallbackColor?: unknown;
 		blurAmount?: VisualEffectViewProps['blurAmount'];
-		blurStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+		blurStyle?: 'default' | (string & {});
 		blurTheme?: unknown;
 		style?: VisualEffectViewProps['style'];
 		tintColor?: unknown;
@@ -2387,7 +2404,7 @@ export type VisualEffectViewProps = Omit<React.ComponentProps<typeof RN.View>, '
 		/** @default 1 */
 		blurAmount?: number;
 		/** @default 'default' */
-		blurStyle?: 'default' | (string & {});
+		blurStyle?: 'default' | 'ultra-thin' | (string & {});
 		blurTheme?: 'dark' | 'light' | (string & {});
 		ref?: React.Ref<any>;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;

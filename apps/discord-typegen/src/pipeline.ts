@@ -9,6 +9,7 @@ import { createParser, extractModule } from './extract';
 import { assignNames, sortComponents } from './naming';
 import { bindPassed, isHookName } from './evidence';
 import { buildReport } from './report';
+import { parseCallees } from './callees';
 import { infer } from './infer';
 import { emit } from './emit';
 
@@ -42,6 +43,7 @@ export async function runPipeline(
 	const parser = createParser();
 	const summaries: ModuleSummary[] = [];
 	const facts: ModuleFacts[] = [];
+	const unparsed = new Map<number, ModuleRecord>();
 
 	for await (const module of modules) {
 		const summary = summarize(module);
@@ -54,8 +56,13 @@ export async function runPipeline(
 		// hook modules, whose summaries type the components spreading a hook's result.
 		if (reExports || hooks || isComponentCandidate(module.source)) {
 			facts.push(extractModule(parser, module));
+		} else if (summary.exportNames.length > 0) {
+			// Kept until the parsed modules show which of these define functions their props are passed to.
+			unparsed.set(module.id, module);
 		}
 	}
+
+	parseCallees(parser, facts, unparsed);
 
 	const reactNative = findReactNative(summaries);
 	const resolve = createResolver(facts, reactNative, new Set(hosts.keys()));
@@ -64,7 +71,10 @@ export async function runPipeline(
 
 	const found = facts.flatMap((module) => module.components);
 
-	resolveConstantRefs(found, createConstantLookup(facts));
+	resolveConstantRefs(
+		facts.flatMap((module) => [...module.components, ...module.functions]),
+		createConstantLookup(facts),
+	);
 
 	const components = sortComponents(found.filter(isComponent));
 	const names = assignNames(components);

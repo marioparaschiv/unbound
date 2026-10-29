@@ -1,4 +1,4 @@
-import type { ComponentRecord, HookRef } from './types';
+import type { ComponentRecord, HookRef, PropEvidence } from './types';
 import type { InferEnv, InferredType } from './rules';
 import type { Resolved, Resolver } from './resolve';
 import type { HostProps } from './hosts';
@@ -71,8 +71,8 @@ export function infer(
 	function overridden(through: HookRef | undefined): string[] {
 		const resolved = through ? resolve(through.hook) : undefined;
 		const keys =
-			resolved?.kind === 'hook'
-				? resolved.hook.overrides.get(through?.member ?? '')
+			resolved?.kind === 'function'
+				? resolved.fn.overrides.get(through?.member ?? '')
 				: undefined;
 
 		return [...(keys ?? [])].sort();
@@ -195,6 +195,38 @@ export function infer(
 		},
 	};
 
+	// Splices in the evidence of each parameter the prop is passed to, transitively; `seen` breaks cycles.
+	function withArguments(
+		evidence: PropEvidence,
+		seen: Set<PropEvidence> = new Set(),
+	): PropEvidence {
+		seen.add(evidence);
+
+		return evidence.flatMap((observation) => {
+			if (observation.kind !== 'argument') {
+				return [observation];
+			}
+
+			const resolved = resolve(observation.callee);
+			const callee =
+				resolved?.kind === 'function'
+					? resolved.fn
+					: resolved?.kind === 'component'
+						? resolved.component
+						: undefined;
+			const parameter = callee?.params.get(observation.index);
+			// Argument 0 is also the props object, so the keys read off it are its members.
+			const members: PropEvidence =
+				observation.index === 0 && callee
+					? [...callee.props.keys()].map((name) => ({ kind: 'member', name }))
+					: [];
+
+			return parameter && !seen.has(parameter)
+				? [...withArguments(parameter, seen), ...members]
+				: members;
+		});
+	}
+
 	// Returns undefined only while the prop is itself being inferred further up the stack (a cycle).
 	function typeOf(component: ComponentRecord, name: string): InferredType | undefined {
 		let props = memo.get(component);
@@ -212,7 +244,7 @@ export function infer(
 
 		props.set(name, null);
 
-		const input = { component, name, evidence: component.props.get(name) ?? [] };
+		const input = { component, name, evidence: withArguments(component.props.get(name) ?? []) };
 		let result: InferredType | undefined;
 
 		for (const rule of RULES) {

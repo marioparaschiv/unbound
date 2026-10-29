@@ -40,13 +40,32 @@ export function isHookName(name: string): boolean {
  * @param observation What was observed.
  */
 export function observe(prop: PropValue, observation: PropObservation) {
-	const evidence = prop.component.props.get(prop.name);
+	const { component, name } = prop;
+	const evidence =
+		typeof name === 'number' ? component.params.get(name) : component.props.get(name);
 
 	if (evidence) {
 		evidence.push(observation);
+	} else if (typeof name === 'number') {
+		component.params.set(name, [observation]);
 	} else {
-		prop.component.props.set(prop.name, [observation]);
+		component.props.set(name, [observation]);
 	}
+}
+
+/**
+ * @description Views a value as a prop or positional parameter, the whole props object being parameter 0.
+ * @param value The value.
+ * @returns The prop, or undefined when the value is neither.
+ */
+export function asProp(value: Value): PropValue | undefined {
+	if (value.kind === 'prop') {
+		return value;
+	}
+
+	return value.kind === 'props'
+		? { kind: 'prop', component: value.component, name: 0 }
+		: undefined;
 }
 
 /**
@@ -68,6 +87,7 @@ export function componentFor(ctx: ModuleContext, name: string): ComponentRecord 
 			kind: 'function',
 			rendersJsx: false,
 			props: new Map(),
+			params: new Map(),
 			restTargets: [],
 			propsEscape: false,
 			hookCalls: [],
@@ -123,11 +143,13 @@ export function element(
 }
 
 function forward(value: Value, target: TargetRef, key: string) {
-	if (value.kind === 'prop') {
-		observe(value, { kind: 'forwarded', target, key });
+	const prop = asProp(value);
 
-		if (value.fallback) {
-			forward(value.fallback, target, key);
+	if (prop) {
+		observe(prop, { kind: 'forwarded', target, key });
+
+		if (prop.fallback) {
+			forward(prop.fallback, target, key);
 		}
 
 		return;
@@ -369,6 +391,12 @@ export function bindClassMethods(args: Value[]) {
 			}
 
 			method.fn.owner = ctor.fn.component;
+
+			// A lowercase method is walked for its class, not tracked as a function of its own.
+			if (method.fn.component && !/^[A-Z#]/.test(method.fn.component.name)) {
+				method.fn.component = void 0;
+			}
+
 			ctor.fn.component.kind = 'class';
 		}
 	}
@@ -447,6 +475,7 @@ function fileName(path: string | undefined): string | undefined {
 
 export default {
 	isHookName,
+	asProp,
 	recordOverrides,
 	recordHookCall,
 	nameComponents,

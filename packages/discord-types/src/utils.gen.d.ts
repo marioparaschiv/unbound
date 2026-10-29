@@ -67,8 +67,8 @@ export type ChangeLogParagraphComponent = React.ComponentType<ChangeLogParagraph
  * @see utils/native/ChangeLogUtils.tsx
  */
 export type ChangeLogStrongProps = {
-		node?: unknown;
-		output?: unknown;
+		node?: { content?: unknown };
+		output?: (...args: any[]) => unknown;
 		state?: { textColor?: unknown };
 	};
 export type ChangeLogStrongComponent = React.ComponentType<ChangeLogStrongProps>;

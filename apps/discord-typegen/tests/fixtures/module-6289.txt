@@ -1,0 +1,67 @@
+    r10 = r7.__d;
+    r0 = 6289;
+    r9 = [1128, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        r4 = a1;
+        var _closure0_slot0 = r4;
+        r2 = a5;
+        r3 = a6;
+        var _closure0_slot1 = r3;
+        r5 = global;
+        r8 = r5.Object;
+        r7 = r8.defineProperty;
+        r6 = '__esModule';
+        r5 = {'value': true};
+        r5 = r7.bind(r8)(r2, r6, r5);
+        r3 = r3[r1];
+        r0 = undefined;
+        r5 = r4.bind(r0)(r3);
+        r4 = r5.fileFinishedImporting;
+        r3 = 'design/components/Input/native/getRequiredFieldA11yName.native.tsx';
+        r3 = r4.bind(r5)(r3);
+        r1 = function(a0, a1) { // Original name: getRequiredFieldA11yName, environment: r1
+            _fun38740: for(var _fun38740_ip = 0; ; ) switch(_fun38740_ip) {
+case 0:
+                r8 = a0;
+                r0 = null;
+                r1 = r0 != r8;
+                r0 = undefined;
+                r2 = undefined;
+                if(!r1) { _fun38740_ip = 127; continue _fun38740 }
+case 16:
+                r7 = '';
+                r2 = undefined;
+                if(!(r7 !== r8)) { _fun38740_ip = 127; continue _fun38740 }
+case 26:
+                r3 = a1;
+                r1 = true;
+                r2 = undefined;
+                if(!(r1 === r3)) { _fun38740_ip = 127; continue _fun38740 }
+case 37:
+                r6 = _closure0_slot0;
+                r3 = _closure0_slot1;
+                r4 = r3[r0];
+                r4 = r6.bind(r0)(r4);
+                r5 = r4.intl;
+                r4 = r5.string;
+                r3 = r3[r0];
+                r3 = r6.bind(r0)(r3);
+                r3 = r3.t;
+                r3 = r3.EkokLy;
+                r10 = r4.bind(r5)(r3);
+                r3 = global;
+                r3 = r3.HermesInternal;
+                r5 = r3.concat;
+                r9 = ')';
+                r11 = ' (';
+                r13 = r7;
+                r12 = r8;
+                r2 = r14[r5](r13, r12, r11, r10, r9);
+case 127:
+                return r2;
+            }
+        };
+        r2['getRequiredFieldA11yName'] = r1;
+        return r0;
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

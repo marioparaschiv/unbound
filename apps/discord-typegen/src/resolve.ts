@@ -9,11 +9,11 @@ import type {
 
 import { compare } from './naming';
 
-/** A target after cross-module resolution: a component of this build, a React Native host component, or a hook. */
+/** A target after cross-module resolution: a component of this build, a React Native host component, or a function. */
 export type Resolved =
 	| { kind: 'component'; component: ComponentRecord }
 	| { kind: 'host'; name: string }
-	| { kind: 'hook'; hook: ComponentRecord };
+	| { kind: 'function'; fn: ComponentRecord };
 
 export type Resolver = (target: TargetRef) => Resolved | undefined;
 
@@ -54,7 +54,7 @@ export function createResolver(
 	hosts: ReadonlySet<string>,
 ): Resolver {
 	const byExport = new Map<string, ComponentRecord>();
-	const hooksByExport = new Map<string, ComponentRecord>();
+	const functionsByExport = new Map<string, ComponentRecord>();
 	const reExports = new Map<string, ImportRef>();
 
 	for (const module of facts) {
@@ -64,9 +64,9 @@ export function createResolver(
 			}
 		}
 
-		for (const hook of module.hooks) {
-			for (const name of hook.exportNames) {
-				hooksByExport.set(`${module.moduleId}:${name}`, hook);
+		for (const fn of module.functions) {
+			for (const name of fn.exportNames) {
+				functionsByExport.set(`${module.moduleId}:${name}`, fn);
 			}
 		}
 
@@ -77,7 +77,7 @@ export function createResolver(
 
 	function resolveImport(moduleId: number, name: string, hops: number): Resolved | undefined {
 		const component = byExport.get(`${moduleId}:${name}`);
-		const hook = hooksByExport.get(`${moduleId}:${name}`);
+		const fn = functionsByExport.get(`${moduleId}:${name}`);
 		const reExport = reExports.get(`${moduleId}:${name}`);
 
 		if (hops > MAX_HOPS) return;
@@ -91,8 +91,8 @@ export function createResolver(
 			return { kind: 'component', component };
 		}
 
-		if (hook) {
-			return { kind: 'hook', hook };
+		if (fn) {
+			return { kind: 'function', fn };
 		}
 
 		if (reExport) {

@@ -1,11 +1,12 @@
 import { ts } from 'ts-morph';
 
 import type { FunctionInfo, ModuleContext, ObjectBuild, Value } from './values';
+import type { Frame } from './frame';
 import type { ComponentRecord, ImportRef } from './types';
-import type { PendingDefault } from './defaults';
 
 import {
 	assignComputed,
+	asProp,
 	assignKey,
 	bindClassMethods,
 	componentFor,
@@ -18,20 +19,9 @@ import {
 	wrap,
 } from './evidence';
 import { isComparison, landsOn, pendingDefault, presenceCheck } from './defaults';
-import { UNKNOWN, member, spreadSources } from './values';
+import { param, readSlot, undoSlotWrites, writeSlot } from './frame';
+import { UNKNOWN, member, spreadSources, targetOf } from './values';
 import intern from './intern';
-
-type Frame = {
-	ctx: ModuleContext;
-	fn: FunctionInfo | undefined;
-	regs: Map<string, Value>;
-	params: Value[];
-	self: Value;
-	/** The component JSX rendered in this frame is attributed to. */
-	renderer: ComponentRecord | undefined;
-	nested: FunctionInfo[];
-	pendingDefault: PendingDefault | undefined;
-};
 
 const ORIGINAL_NAME = /Original name: ([^,\s]+)/;
 
@@ -76,6 +66,7 @@ export function walkFunction(
 	}
 
 	for (const nested of frame.nested) {
+		const mark = ctx.slotWrites.length;
 		const props: Value = nested.component
 			? { kind: 'props', component: nested.component }
 			: UNKNOWN;
@@ -85,6 +76,7 @@ export function walkFunction(
 		const owner = nested.component ?? nested.owner ?? renderer;
 
 		walkFunction(ctx, nested.node.body, [props], instance, nested, owner);
+		undoSlotWrites(ctx, mark);
 	}
 }
 
@@ -279,16 +271,27 @@ function evaluate(frame: Frame, node: ts.Expression): Value {
 			return binary(frame, node as ts.BinaryExpression);
 		case ts.SyntaxKind.PrefixUnaryExpression:
 			return guard(evaluate(frame, (node as ts.PrefixUnaryExpression).operand));
-		case ts.SyntaxKind.TypeOfExpression:
-			return guard(evaluate(frame, (node as ts.TypeOfExpression).expression));
+		case ts.SyntaxKind.TypeOfExpression: {
+			const value = evaluate(frame, (node as ts.TypeOfExpression).expression);
+			const prop = asProp(value);
+
+			if (prop) {
+				observe(prop, { kind: 'typeof' });
+			}
+
+			return guard(value);
+		}
+
 		default:
 			return UNKNOWN;
 	}
 }
 
 function guard(value: Value): Value {
-	if (value.kind === 'prop') {
-		observe(value, { kind: 'guarded' });
+	const prop = asProp(value);
+
+	if (prop) {
+		observe(prop, { kind: 'guarded' });
 	}
 
 	return UNKNOWN;
@@ -308,11 +311,12 @@ function readIdentifier(frame: Frame, name: string): Value {
 	}
 
 	if (/^a\d+$/.test(name)) {
-		return frame.params[Number(name.slice(1))] ?? UNKNOWN;
+		return param(frame, Number(name.slice(1)));
 	}
 
-	const slot = name.startsWith('_closure');
-	const value = (slot ? frame.ctx.slots.get(name) : frame.regs.get(name)) ?? UNKNOWN;
+	const value = name.startsWith('_closure')
+		? readSlot(frame, name)
+		: (frame.regs.get(name) ?? UNKNOWN);
 
 	if (value.kind === 'function') {
 		value.fn.read = true;
@@ -323,7 +327,7 @@ function readIdentifier(frame: Frame, name: string): Value {
 
 function assignIdentifier(frame: Frame, name: string, value: Value) {
 	if (name.startsWith('_closure')) {
-		frame.ctx.slots.set(name, value);
+		writeSlot(frame, name, value);
 	} else if (/^r\d+$/.test(name)) {
 		mergeBranchCopy(frame, frame.regs.get(name), value);
 		frame.regs.set(name, value);
@@ -344,7 +348,12 @@ function mergeBranchCopy(frame: Frame, previous: Value | undefined, next: Value)
 }
 
 function read(base: Value, name: string): Value {
-	if (name === 'bind' || name === 'call' || name === 'apply') {
+	// A `bind` read outside a call is `fn.bind.bind(fn)(self, ...partial)`: a partial application, not followed.
+	if (name === 'bind') {
+		return UNKNOWN;
+	}
+
+	if (name === 'call' || name === 'apply') {
 		return base;
 	}
 
@@ -364,8 +373,18 @@ function read(base: Value, name: string): Value {
 }
 
 function elementRead(frame: Frame, node: ts.ElementAccessExpression): Value {
-	const base = evaluate(frame, node.expression);
 	const index = node.argumentExpression;
+
+	// Hermes reads parameters that have defaults through `arguments[i]`.
+	if (
+		ts.isIdentifier(node.expression) &&
+		node.expression.text === 'arguments' &&
+		ts.isNumericLiteral(index)
+	) {
+		return param(frame, Number(index.text));
+	}
+
+	const base = evaluate(frame, node.expression);
 
 	if (ts.isStringLiteral(index)) {
 		return read(base, intern(index.text));
@@ -437,8 +456,8 @@ function functionExpression(frame: Frame, node: ts.FunctionExpression): Value {
 	const name = match === undefined ? undefined : intern(match);
 	// Without an original name, a module-level function is a candidate named later from its export.
 	const key = name ?? (frame.fn ? undefined : `#${node.pos}`);
-	// A module-level hook is walked like a component, its argument standing in for props.
-	const tracked = key !== undefined && (/^[A-Z#]/.test(key) || (!frame.fn && isHookName(key)));
+	// A module-level function (hook or helper) is walked like a component, its argument standing in for props.
+	const tracked = key !== undefined && (/^[A-Z#]/.test(key) || !frame.fn);
 	const fn: FunctionInfo = {
 		node,
 		name,
@@ -446,6 +465,7 @@ function functionExpression(frame: Frame, node: ts.FunctionExpression): Value {
 		owner: void 0,
 		returns: [],
 		read: false,
+		generator: Boolean(node.asteriskToken) || (frame.fn?.generator ?? false),
 	};
 
 	frame.nested.push(fn);
@@ -481,18 +501,20 @@ function binary(frame: Frame, node: ts.BinaryExpression): Value {
 		[left, right],
 		[right, left],
 	] as const) {
-		if (a.kind === 'prop' && b.kind === 'import') {
-			observe(a, { kind: 'compared-ref', ref: b });
+		const prop = asProp(a);
+
+		if (prop && b.kind === 'import') {
+			observe(prop, { kind: 'compared-ref', ref: b });
 		}
 
-		if (a.kind !== 'prop' || b.kind !== 'literal') {
+		if (!prop || b.kind !== 'literal') {
 			continue;
 		}
 
 		const { value } = b;
 
 		observe(
-			a,
+			prop,
 			value === null || value === undefined
 				? { kind: 'guarded' }
 				: { kind: 'compared', value },
@@ -544,13 +566,24 @@ function call(frame: Frame, node: ts.CallExpression): Value {
 		return copyDataProperties(frame, node);
 	}
 
+	const method = ts.isPropertyAccessExpression(callee) ? callee : undefined;
+
+	// `fn.bind(self)` yields the function itself; the outer call applies it.
+	if (method?.name.text === 'bind') {
+		const fn = evaluate(frame, method.expression);
+
+		for (const arg of node.arguments) {
+			evaluate(frame, arg);
+		}
+
+		return fn;
+	}
+
 	const fn = evaluate(frame, callee);
 	const args = node.arguments.map((arg) => evaluate(frame, arg));
 
-	// `fn.bind(self)` yields the function itself; the outer call applies it.
-	return ts.isPropertyAccessExpression(callee) && callee.name.text === 'bind'
-		? fn
-		: apply(frame, fn, args);
+	// `fn.call(self, ...)` passes `self` first.
+	return apply(frame, fn, method?.name.text === 'call' ? args.slice(1) : args);
 }
 
 // Hermes passes builtin args in consecutive registers below `this`: the decompile prints
@@ -578,6 +611,8 @@ function copyDataProperties(frame: Frame, node: ts.CallExpression): Value {
 function apply(frame: Frame, fn: Value, args: Value[]): Value {
 	const [first, second] = args;
 
+	passArguments(fn, args);
+
 	switch (fn.kind) {
 		case 'param':
 			return requireModule(frame, fn.index, first);
@@ -586,7 +621,8 @@ function apply(frame: Frame, fn: Value, args: Value[]): Value {
 		case 'wrapper':
 			return wrap(fn.wrapper, first);
 		case 'prop':
-			observe(fn, { kind: 'called', argCount: args.length });
+		case 'props':
+			observe(asProp(fn)!, { kind: 'called', argCount: args.length });
 
 			return UNKNOWN;
 		case 'builtin':
@@ -614,6 +650,21 @@ function apply(frame: Frame, fn: Value, args: Value[]): Value {
 			bindClassMethods(args);
 
 			return escape(args);
+	}
+}
+
+// A prop passed positionally to a function this build may define takes that parameter's evidence too.
+function passArguments(fn: Value, args: Value[]) {
+	const callee = targetOf(fn);
+
+	if (!callee) return;
+
+	for (const [index, arg] of args.entries()) {
+		const prop = asProp(arg);
+
+		if (prop) {
+			observe(prop, { kind: 'argument', callee, index });
+		}
 	}
 }
 

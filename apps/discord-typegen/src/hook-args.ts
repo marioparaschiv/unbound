@@ -1,6 +1,8 @@
 import type { ComponentRecord, HookCall, PropEvidence } from './types';
 import type { Resolver } from './resolve';
 
+import { isHookName } from './evidence';
+
 /** The props the hooks a component passes its props to read from them, with the hooks' evidence. */
 export type HookReads = (component: ComponentRecord) => Map<string, PropEvidence>;
 
@@ -20,7 +22,9 @@ export function createHookReads(resolve: Resolver): HookReads {
 
 		const resolved = resolve(call.hook);
 
-		return resolved?.kind === 'hook' ? resolved.hook : undefined;
+		return resolved?.kind === 'function' && isHookName(resolved.fn.name)
+			? resolved.fn
+			: undefined;
 	}
 
 	// Memoised before recursing, so a cycle of hooks sees the reads gathered so far and terminates.

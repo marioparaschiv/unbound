@@ -20,6 +20,8 @@ export type FunctionInfo = {
 	returns: Value[];
 	/** Whether a register holding the function was read; an unread one may be a branch copy. */
 	read: boolean;
+	/** Inside a generator, hermes-dec numbers closure slots from another base, so slot names are not trusted. */
+	generator: boolean;
 };
 
 /** An object literal under construction: its literal keys in order (for slot fills), entries and spreads. */
@@ -37,6 +39,8 @@ export type ModuleContext = {
 	text: string;
 	file: ts.SourceFile;
 	slots: Map<string, Value>;
+	/** Every closure slot write with the value it replaced, so a function's writes can be undone. */
+	slotWrites: SlotWrite[];
 	components: Map<string, ComponentRecord>;
 	exports: ExportBinding[];
 	/** Modules whose every export this one copies (`for (k in m) exports[k] = m[k]`). */
@@ -48,15 +52,19 @@ export type ModuleContext = {
 };
 
 export type ExportBinding = { name: string; value: Value };
+export type SlotWrite = { name: string; previous: Value | undefined };
 /** `parent[key] = component`: names an unnamed component after its parent. */
 export type StaticOwner = { component: ComponentRecord; parent: ComponentRecord; key: string };
 export type GetterBinding = { name: string; fn: FunctionInfo };
 
-/** A prop read; `fallback` is the prop that stands in when it is unset (`label ?? accessibilityLabel`). */
+/**
+ * A prop read, or with a numeric name, a positional parameter of a function. `fallback` is the prop that stands in
+ * when it is unset (`label ?? accessibilityLabel`).
+ */
 export type PropValue = {
 	kind: 'prop';
 	component: ComponentRecord;
-	name: string;
+	name: string | number;
 	fallback?: PropValue;
 };
 

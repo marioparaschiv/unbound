@@ -3,11 +3,11 @@ import type * as React from 'react';
 import type * as RN from 'react-native';
 import type { ActionSheetComponent, ActionSheetHeaderPressableTextComponent, ActionSheetHeaderPressableTextProps, ActionSheetProps, ActionSheetRowComponent, ActionSheetRowProps, AlertActionButtonComponent, AlertActionButtonProps, AlertModalComponent, AlertModalProps, BaseTextButtonComponent, BaseTextButtonProps, BottomSheetTitleHeaderComponent, BottomSheetTitleHeaderProps, ButtonIconButtonComponent, ButtonIconButtonProps, ContextMenuComponent, ContextMenuProps, DesignCardComponent, DesignCardProps, DesignTextComponent, DesignTextInputComponent, DesignTextInputProps, DesignTextProps, FormsFormCheckboxComponent, FormsFormCheckboxProps, FormsFormRadioComponent, FormsFormRadioProps, FormsFormSwitchComponent, FormsFormSwitchProps, HeaderActionButtonComponent, HeaderActionButtonProps, PileComponent, PileProps, PressableHighlightComponent, PressableHighlightProps, PressableOpacityComponent, PressableOpacityProps, PromoSheetComponent, PromoSheetProps, SearchFieldComponent, SearchFieldProps, SheetBottomSheetComponent, SheetBottomSheetProps, StackComponent, StackProps, StickyWrapperComponent, StickyWrapperProps, TableCheckboxRowComponent, TableCheckboxRowProps, TableRadioGroupComponent, TableRadioGroupProps, TableRadioRowComponent, TableRadioRowProps, TableRowComponent, TableRowGroupComponent, TableRowGroupProps, TableRowProps, TableRowTrailingTextComponent, TableRowTrailingTextProps, TableSwitchRowComponent, TableSwitchRowProps, TextAreaComponent, TextAreaProps, TextHeadingComponent, TextHeadingProps, VisualEffectViewComponent, VisualEffectViewProps } from './barrels.gen';
 import type { AlertConnectedComponent, AlertConnectedProps, CommonChatPreviewComponent, CommonChatPreviewProps, FastImageComponent, FastImageProps, ImageCarouselComponent, ImageCarouselProps, JumpToPresentButtonComponent, JumpToPresentButtonProps, MemberRolesListComponent, MemberRolesListProps, SafeAreaPaddingViewComponent, SafeAreaPaddingViewProps } from './components_native.gen';
-import type { AppleNeutralIconComponent, AppleNeutralIconProps, AppsIconComponent, AppsIconProps, ArrowAngleRightUpIconComponent, ArrowAngleRightUpIconProps, BackspaceIconComponent, BackspaceIconProps, MobilePhoneIconComponent, MobilePhoneIconProps, PressableScaleComponent, PressableScaleProps, TextIconComponent, TextIconProps, VoidRoleDotComponent, VoidRoleDotProps } from './design.gen';
+import type { AppleNeutralIconComponent, AppleNeutralIconProps, AppsIconComponent, AppsIconProps, ArrowAngleRightUpIconComponent, ArrowAngleRightUpIconProps, BackspaceIconComponent, BackspaceIconProps, MobilePhoneIconComponent, MobilePhoneIconProps, NavigatorCloseButtonComponent, NavigatorCloseButtonProps, NitroCoinSpotIllustrationComponent, NitroCoinSpotIllustrationProps, PressableScaleComponent, PressableScaleProps, TextIconComponent, TextIconProps, VoidRoleDotComponent, VoidRoleDotProps } from './design.gen';
 import type { FlashListBottomSheetFlashListComponent, FlashListBottomSheetFlashListProps, FlashListComponent, FlashListProps } from './discord_common.gen';
 import type { IntlLinkComponent, IntlLinkProps } from './intl.gen';
-import type { AttachmentPreviewComponent, AttachmentPreviewProps, BaseGuildTagChipletComponent, BaseGuildTagChipletProps, BoostProgressBarCoachmarkComponent, BoostProgressBarCoachmarkProps, ChannelBrowserComponent, ChannelBrowserProps, ChatBannerComponent, ChatBannerProps, CodeFieldComponent, CodeFieldProps, ConnectedUserLimitComponent, ConnectedUserLimitProps, DetailedGuildIdentityUserComponent, DetailedGuildIdentityUserProps, GenericHeaderTitleComponent, GenericHeaderTitleProps, GuildPowerupsMarketingHeaderComponent, GuildPowerupsMarketingHeaderProps, GuildProgressOverviewComponent, GuildProgressOverviewProps, GuildSidebarChannelInfoComponent, GuildSidebarChannelInfoProps, GuildSidebarChannelItemComponent, GuildSidebarChannelItemProps, GuildSidebarUserSummaryItemComponent, GuildSidebarUserSummaryItemProps, GuildTooltipActionSheetsGuardComponent, GuildTooltipActionSheetsGuardProps, InstantInviteInviteButtonComponent, InstantInviteInviteButtonProps, NotificationPressableComponent, NotificationPressableProps, OptInChannelBannerComponent, OptInChannelBannerProps, PhoneOrEmailInputComponent, PhoneOrEmailInputProps, PortalKeyboardBottomSheetComponent, PortalKeyboardBottomSheetProps, SearchableSelectActionComponentComponent, SearchableSelectActionComponentProps, UserNameplateRowComponent, UserNameplateRowProps, YouScreenNavIconComponent, YouScreenNavIconProps } from './modules-2.gen';
-import type { BalanceWidgetPillComponent, BalanceWidgetPillProps, DestinationFailedAlertModalComponent, DestinationFailedAlertModalProps, DiscordTagComponent, DiscordTagProps, HeaderAvatarComponent, HeaderAvatarProps, InappropriateConversationWarningBannerComponent, InappropriateConversationWarningBannerProps, PremiumFeaturesBackgroundComponent, PremiumFeaturesBackgroundProps, PremiumUpsellGradientBackgroundComponent, PremiumUpsellGradientBackgroundProps, SafetyWarningBannerComponent, SafetyWarningBannerProps, StickerPickerComponent, StickerPickerProps, StickersStickerComponent, StickersStickerProps, UserProfileApplicationWidgetCardComponent, UserProfileApplicationWidgetCardProps, UserProfileAvatarComponent, UserProfileAvatarProps, UserProfileBannerComponent, UserProfileBannerProps, UserProfileCustomStatusBubbleComponent, UserProfileCustomStatusBubbleProps, UserProfilePreviewComponent, UserProfilePreviewProps, UserProfileVoiceActivityIconComponent, UserProfileVoiceActivityIconProps, VoiceMessageButtonComponent, VoiceMessageButtonProps, WishlistItemCardComponent, WishlistItemCardProps } from './modules-3.gen';
+import type { AttachmentPreviewComponent, AttachmentPreviewProps, BaseGuildTagChipletComponent, BaseGuildTagChipletProps, BoostProgressBarCoachmarkComponent, BoostProgressBarCoachmarkProps, ChannelBrowserComponent, ChannelBrowserProps, ChatBannerComponent, ChatBannerProps, CodeFieldComponent, CodeFieldProps, ConnectedUserLimitComponent, ConnectedUserLimitProps, DetailedGuildIdentityUserComponent, DetailedGuildIdentityUserProps, GenericHeaderTitleComponent, GenericHeaderTitleProps, GuildPowerupsMarketingHeaderComponent, GuildPowerupsMarketingHeaderProps, GuildProgressOverviewComponent, GuildProgressOverviewProps, GuildSidebarChannelInfoComponent, GuildSidebarChannelInfoProps, GuildSidebarChannelItemComponent, GuildSidebarChannelItemProps, GuildSidebarUserSummaryItemComponent, GuildSidebarUserSummaryItemProps, GuildTooltipActionSheetsGuardComponent, GuildTooltipActionSheetsGuardProps, HubProgressHeaderComponent, HubProgressHeaderProps, InstantInviteInviteButtonComponent, InstantInviteInviteButtonProps, NotificationPressableComponent, NotificationPressableProps, OptInChannelBannerComponent, OptInChannelBannerProps, PhoneOrEmailInputComponent, PhoneOrEmailInputProps, PortalKeyboardBottomSheetComponent, PortalKeyboardBottomSheetProps, SearchableSelectActionComponentComponent, SearchableSelectActionComponentProps, UserNameplateRowComponent, UserNameplateRowProps, YouScreenNavIconComponent, YouScreenNavIconProps } from './modules-2.gen';
+import type { BalanceWidgetPillComponent, BalanceWidgetPillProps, DestinationFailedAlertModalComponent, DestinationFailedAlertModalProps, DiscordTagComponent, DiscordTagProps, HeaderAvatarComponent, HeaderAvatarProps, InappropriateConversationWarningBannerComponent, InappropriateConversationWarningBannerProps, PremiumFeaturesBackgroundComponent, PremiumFeaturesBackgroundProps, PremiumUpsellGradientBackgroundComponent, PremiumUpsellGradientBackgroundProps, SafetyWarningBannerComponent, SafetyWarningBannerProps, StickerPickerComponent, StickerPickerProps, StickersStickerComponent, StickersStickerProps, URLCalloutComponent, URLCalloutProps, UserProfileApplicationWidgetCardComponent, UserProfileApplicationWidgetCardProps, UserProfileAvatarComponent, UserProfileAvatarProps, UserProfileBannerComponent, UserProfileBannerProps, UserProfileCustomStatusBubbleComponent, UserProfileCustomStatusBubbleProps, UserProfilePreviewComponent, UserProfilePreviewProps, UserProfileVoiceActivityIconComponent, UserProfileVoiceActivityIconProps, VoiceMessageButtonComponent, VoiceMessageButtonProps, WishlistItemCardComponent, WishlistItemCardProps } from './modules-3.gen';
 import type { HeaderBackButtonComponent, HeaderBackButtonProps, PortalComponent, PortalProps } from './node-modules.gen';
 /**
  * Props of `AccessibilityPreferencesContextProvider` (function). Exports: default.
@@ -50,7 +50,7 @@ export type InviteResolvingComponent = React.ComponentType<InviteResolvingProps>
  * @see modules/accept_invite/native/InviteDetails.tsx
  */
 export type InviteDestinationIconProps = {
-		invite: { guild?: unknown; inviter?: unknown };
+		invite: { channel?: unknown; guild?: unknown; inviter?: unknown; type?: unknown };
 	};
 export type InviteDestinationIconComponent = React.ComponentType<InviteDestinationIconProps>;
 /**
@@ -70,7 +70,7 @@ export type InviteDetailsComponent = React.ComponentType<InviteDetailsProps>;
  * @see modules/accept_invite/native/InviteDetails.tsx
  */
 export type InviteHeaderProps = {
-		invite: { channel?: unknown; guild?: unknown; inviter?: unknown };
+		invite: { channel?: unknown; guild?: unknown; inviter?: unknown; type?: unknown };
 	};
 export type InviteHeaderComponent = React.ComponentType<InviteHeaderProps>;
 /**
@@ -78,7 +78,7 @@ export type InviteHeaderComponent = React.ComponentType<InviteHeaderProps>;
  * @see modules/accept_invite/native/InviteDetails.tsx
  */
 export type InviteJoinContextProps = {
-		invite: { channel?: unknown; inviter?: unknown; state?: unknown; target_user?: unknown };
+		invite: { approximate_member_count?: unknown; approximate_presence_count?: unknown; channel?: unknown; guild?: unknown; inviter?: unknown; state?: unknown; target_type?: unknown; target_user?: unknown; type?: unknown };
 		isGuildMember?: boolean;
 		isRegistration?: boolean;
 	};
@@ -88,7 +88,7 @@ export type InviteJoinContextComponent = React.ComponentType<InviteJoinContextPr
  * @see modules/accept_invite/native/InviteDetails.tsx
  */
 export type InviteMemberCountsProps = {
-		invite?: { approximate_member_count?: unknown; approximate_presence_count?: unknown; guild?: unknown };
+		invite?: { approximate_member_count?: unknown; approximate_presence_count?: unknown; guild?: unknown; inviter?: unknown; state?: unknown };
 		isGuildMember?: boolean;
 	};
 export type InviteMemberCountsComponent = React.ComponentType<InviteMemberCountsProps>;
@@ -151,7 +151,7 @@ export type OrSeparatorComponent = React.ComponentType<OrSeparatorProps>;
  * @see modules/accept_invite/native/components/AcceptInviteModal.tsx
  */
 export type AcceptInviteModalProps = Omit<AcceptInviteContainerProps, 'code' | 'deeplinkAttemptId'> & {
-		code?: unknown;
+		code?: { split?: unknown };
 		deeplinkAttemptId?: string;
 	};
 export type AcceptInviteModalComponent = React.ComponentType<AcceptInviteModalProps & Record<string, unknown>>;
@@ -168,7 +168,7 @@ export type ContextMenuSubmenuActionSheetHeaderComponent = React.ComponentType<C
  * @see modules/action_sheet/native/components/EmojiRow.tsx
  */
 export type ActionSheetEmojiRowProps = {
-		channel?: unknown;
+		channel?: { getGuildId?: unknown; id?: unknown };
 		message: { channel_id?: unknown; id?: unknown };
 	};
 export type ActionSheetEmojiRowComponent = React.ComponentType<ActionSheetEmojiRowProps>;
@@ -179,7 +179,7 @@ export type ActionSheetEmojiRowComponent = React.ComponentType<ActionSheetEmojiR
 export type ForumPostLongPressActionSheetProps = {
 		onClose: (...args: any[]) => unknown;
 		parentChannel?: unknown;
-		thread: { getGuildId?: unknown; id?: unknown };
+		thread: { getGuildId?: unknown; guild_id?: unknown; id?: unknown; isCategory?: unknown; isLockedThread?: unknown; isMediaThread?: unknown; isThread?: unknown; ownerId?: unknown; parent_id?: unknown; threadMetadata?: unknown };
 	};
 export type ForumPostLongPressActionSheetComponent = React.ComponentType<ForumPostLongPressActionSheetProps>;
 /**
@@ -294,10 +294,10 @@ export type ActivityFeedbackActionSheetComponent = React.ComponentType<ActivityF
  * @see modules/activities/native/ActivityShareLinkModal.tsx
  */
 export type ActivityShareLinkModalProps = {
-		applicationId: (...args: any[]) => unknown;
-		customId: (...args: any[]) => unknown;
+		applicationId?: string;
+		customId?: string;
 		linkId?: string;
-		message?: unknown;
+		message?: GenericHeaderTitleProps['subtitle'];
 		onShare: (...args: any[]) => unknown;
 	};
 export type ActivityShareLinkModalComponent = React.ComponentType<ActivityShareLinkModalProps>;
@@ -444,7 +444,7 @@ export type BaseActivityPanelControllerProps = {
 		children?: React.ReactNode;
 		connectedActivityAppId?: string;
 		context: { Provider?: unknown };
-		currentApp?: unknown;
+		currentApp?: { embeddedActivityConfig?: unknown };
 		hasConnectedActivity?: boolean;
 		mode?: 'launching_with_orientation_change' | 'panel' | (string & {});
 		orientationLockStateForApp?: unknown;
@@ -603,7 +603,7 @@ export type MinimizeActivityButtonComponent = React.ComponentType<MinimizeActivi
  */
 export type ActivityLaunchErrorLinkProps = {
 		children?: IntlLinkProps['children'];
-		href?: IntlLinkProps['target'];
+		href?: unknown;
 	};
 export type ActivityLaunchErrorLinkComponent = React.ComponentType<ActivityLaunchErrorLinkProps>;
 /**
@@ -738,7 +738,7 @@ export type ApplicationStreamActivityStatusComponent = React.ComponentType<Appli
  * @see modules/activity_status/native/PresenceActivityStatus.tsx
  */
 export type PresenceActivityStatusProps = {
-		activity?: unknown;
+		activity?: { application_id?: unknown; details?: unknown; flags?: unknown; name?: unknown; party?: unknown; state?: unknown; status_display_type?: unknown; type?: unknown };
 		/** @default false */
 		hideIcon?: boolean;
 		/** @default false */
@@ -792,7 +792,7 @@ export type AgeVerificationExpressiveV2ModalComponent = React.ComponentType<AgeV
 export type MethodsScreenProps = {
 		entryPoint?: unknown;
 		modalSessionId?: string;
-		navigation: (...args: any[]) => unknown;
+		navigation?: unknown;
 		onClose: (...args: any[]) => unknown;
 		onComplete?: (...args: any[]) => unknown;
 	};
@@ -815,7 +815,7 @@ export type AgeVerificationGetStartedModalComponent = React.ComponentType<AgeVer
  * @see modules/age_assurance/native/AgeVerificationIncodeMethodSelectScreen.tsx
  */
 export type AgeVerificationIncodeMethodSelectScreenProps = {
-		onMethodSelected: (...args: any[]) => unknown;
+		onMethodSelected?: (...args: any[]) => unknown;
 		trustedOrigin?: unknown;
 	};
 export type AgeVerificationIncodeMethodSelectScreenComponent = React.ComponentType<AgeVerificationIncodeMethodSelectScreenProps>;
@@ -844,7 +844,7 @@ export type AgeAssuranceFComponent = React.ComponentType<AgeAssuranceFProps>;
  */
 export type AgeAssuranceGetStartedScreenProps = {
 		entryPoint?: unknown;
-		modalSessionId: (...args: any[]) => unknown;
+		modalSessionId?: string;
 		onClose?: (...args: any[]) => unknown;
 	};
 export type AgeAssuranceGetStartedScreenComponent = React.ComponentType<AgeAssuranceGetStartedScreenProps>;
@@ -899,7 +899,7 @@ export type AgeVerificationQuestUnsupportedAlertModalComponent = React.Component
  * @see modules/age_assurance/native/AgeVerificationRetryScreen.tsx
  */
 export type ModulesAgeAssuranceGetStartedScreenProps = {
-		modalSessionId: (...args: any[]) => unknown;
+		modalSessionId?: string;
 		onClose?: (...args: any[]) => unknown;
 	};
 export type ModulesAgeAssuranceGetStartedScreenComponent = React.ComponentType<ModulesAgeAssuranceGetStartedScreenProps>;
@@ -919,7 +919,7 @@ export type AgeVerificationWebViewScreenComponent = React.ComponentType<AgeVerif
  * @see modules/age_assurance/native/AppStoreAgeVerificationScreen.tsx
  */
 export type AppStoreAgeVerificationScreenProps = {
-		modalSessionId: (...args: any[]) => unknown;
+		modalSessionId?: string;
 		onClose?: (...args: any[]) => unknown;
 	};
 export type AppStoreAgeVerificationScreenComponent = React.ComponentType<AppStoreAgeVerificationScreenProps>;
@@ -982,7 +982,7 @@ export type AgeGateUnderageComponent = React.ComponentType<AgeGateUnderageProps>
  * @see modules/age_gate/native/components/AgeGateVerify.tsx
  */
 export type AgeGateVerifyProps = {
-		source?: unknown;
+		source?: 'Access Large Guild Access Underage' | 'Join Large Guild Underage' | 'Large Guild' | 'NSFW Server' | 'NSFW Server Invite' | 'NSFW Server Invite Embed' | (string & {});
 	};
 export type AgeGateVerifyComponent = React.ComponentType<AgeGateVerifyProps>;
 /**
@@ -1014,7 +1014,7 @@ export type ExistingUserAgeGateComponent = React.ComponentType<ExistingUserAgeGa
  */
 export type ExistingUserAgeGateConfirmProps = {
 		age?: unknown;
-		onConfirm: (...args: any[]) => unknown;
+		onConfirm?: (...args: any[]) => unknown;
 	};
 export type ExistingUserAgeGateConfirmComponent = React.ComponentType<ExistingUserAgeGateConfirmProps>;
 /**
@@ -1023,7 +1023,7 @@ export type ExistingUserAgeGateConfirmComponent = React.ComponentType<ExistingUs
  */
 export type ExistingUserAgeGateModalProps = {
 		channelId?: string;
-		source?: 'NSFW Voice Channel' | (string & {});
+		source?: ExistingUserAgeGateProps['source'];
 	};
 export type ExistingUserAgeGateModalComponent = React.ComponentType<ExistingUserAgeGateModalProps>;
 /**
@@ -1089,7 +1089,7 @@ export type AnalyticsLocationProviderComponent = React.ComponentType<AnalyticsLo
  */
 export type AppChannelProps = {
 		applicationId?: string;
-		channel: { guild_id?: unknown; id?: unknown };
+		channel: { application_id?: unknown; guild_id?: unknown; id?: unknown; type?: unknown };
 	};
 export type AppChannelComponent = React.ComponentType<AppChannelProps>;
 /**
@@ -1118,7 +1118,7 @@ export type AppChannelApplicationActionSheetComponent = React.ComponentType<AppC
  */
 export type AppChannelsSProps = {
 		application: TableRowApplicationIconProps['application'];
-		status: { supported?: unknown };
+		status: { reason?: unknown; supported?: unknown };
 	};
 export type AppChannelsSComponent = React.ComponentType<AppChannelsSProps>;
 /**
@@ -1206,7 +1206,7 @@ export type SettingsItemAppIconComponent = React.ComponentType<SettingsItemAppIc
  * @see modules/app_launcher/native/AppLauncherActionSheet.tsx
  */
 export type AppLauncherActionSheetProps = {
-		channel?: unknown;
+		channel?: { getRecipientId?: unknown; isPrivate?: unknown };
 		chatInputRef: { current?: unknown };
 	};
 export type AppLauncherActionSheetComponent = React.ComponentType<AppLauncherActionSheetProps>;
@@ -1225,7 +1225,7 @@ export type AppLauncherButtonIconComponent = React.ComponentType<AppLauncherButt
 export type AppLauncherKeyboardProps = {
 		chatInputRef: PortalKeyboardBottomSheetProps['chatInputRef'];
 		context: AppLauncherNavigatorProps['context'];
-		entrypoint?: 'VOICE' | (string & {});
+		entrypoint?: 'TEXT' | 'VOICE' | (string & {});
 		onClose?: (...args: any[]) => unknown;
 		transitionState?: PortalKeyboardBottomSheetProps['transitionState'];
 	};
@@ -1410,7 +1410,7 @@ export type UsernameTextProps = {
 		/** @default 'text-default' */
 		color?: 'text-default' | (string & {});
 		guildId?: string;
-		user: { discriminator?: unknown; hasUniqueUsername?: unknown; toString?: unknown };
+		user: { discriminator?: unknown; globalName?: unknown; global_name?: unknown; hasUniqueUsername?: unknown; id?: unknown; toString?: unknown; username?: unknown };
 		/** @default 'text-md/medium' */
 		variant?: 'text-md/medium' | (string & {});
 	};
@@ -1483,8 +1483,8 @@ export type AppLauncherOnboardingLayerComponent = React.ComponentType<AppLaunche
  * @see modules/app_launcher/native/onboarding/banner/ApplicationsImage.tsx
  */
 export type ApplicationsImageProps = {
-		firstApplication?: unknown;
-		secondApplication?: unknown;
+		firstApplication?: { bot?: unknown; icon?: unknown; id?: unknown };
+		secondApplication?: { bot?: unknown; icon?: unknown; id?: unknown };
 	};
 export type ApplicationsImageComponent = React.ComponentType<ApplicationsImageProps>;
 /**
@@ -1663,7 +1663,7 @@ export type AppLauncherChannelListActionSheetComponent = React.ComponentType<App
  * @see modules/app_launcher/native/options/channel/AppLauncherChannelListActionSheet.tsx
  */
 export type OptionsChannelIconProps = {
-		channel?: { getGuildId?: unknown };
+		channel?: { getGuildId?: unknown; guild_id?: unknown; id?: unknown; isForumPost?: unknown; isGameInvitesChannel?: unknown; isGuildVocal?: unknown; isMediaChannel?: unknown; isNSFW?: unknown; isSpoilerChannel?: unknown; linkedLobby?: unknown; parent_id?: unknown; permissionOverwrites?: unknown; type?: unknown };
 		/** @default 'sm' */
 		size?: TextIconProps['size'];
 		/** @default 32 */
@@ -1958,7 +1958,7 @@ export type ApplicationViewHeaderComponent = React.ComponentType<ApplicationView
  * @see modules/app_launcher/native/screens/application_view/activity/ActivityDetailContent.tsx
  */
 export type ActivityDetailContentProps = {
-		application: { id?: unknown; maxParticipants?: unknown; max_participants?: unknown; tags?: unknown };
+		application: DetailsHeaderProps['application'];
 		context?: PrimaryEntryPointButtonProps['context'];
 		entrypoint?: 'VOICE' | (string & {});
 		hasCommands?: boolean;
@@ -1997,8 +1997,8 @@ export type ActivityTagComponent = React.ComponentType<ActivityTagProps>;
  */
 export type TryItOutButtonProps = {
 		analyticsLocations?: unknown;
-		applicationId: (...args: any[]) => unknown;
-		botUserId: (...args: any[]) => unknown;
+		applicationId?: string;
+		botUserId?: string;
 		context: { type?: unknown };
 	};
 export type TryItOutButtonComponent = React.ComponentType<TryItOutButtonProps>;
@@ -2018,7 +2018,7 @@ export type ActivityHeroMediaComponent = React.ComponentType<ActivityHeroMediaPr
  * @see modules/app_launcher/native/screens/application_view/app/AppDetailContent.tsx
  */
 export type AppDetailContentProps = {
-		application: ActivityDetailContentProps['application'];
+		application: DetailsHeaderProps['application'];
 		context: ActivityDetailContentProps['context'];
 		entrypoint?: ActivityDetailContentProps['entrypoint'];
 		installOnDemand?: unknown;
@@ -2035,7 +2035,7 @@ export type AppDetailContentComponent = React.ComponentType<AppDetailContentProp
  * @see modules/app_launcher/native/screens/application_view/app/AppDetailContent.tsx
  */
 export type AppCommandRowProps = {
-		command: (...args: any[]) => unknown;
+		command: { applicationId?: unknown; displayDescription?: unknown; displayName?: unknown; integration_types?: unknown };
 		context?: unknown;
 		icon?: TableRowProps['icon'];
 		installOnDemand?: unknown;
@@ -2044,7 +2044,7 @@ export type AppCommandRowProps = {
 		location?: unknown;
 		onExecuteCommand?: (...args: any[]) => unknown;
 		onPressCommand: (...args: any[]) => unknown;
-		section?: unknown;
+		section?: { id?: unknown };
 		sectionName?: string;
 	};
 export type AppCommandRowComponent = React.ComponentType<AppCommandRowProps>;
@@ -2064,7 +2064,7 @@ export type AppPlaceholderCommandRowComponent = React.ComponentType<AppPlacehold
  * @see modules/app_launcher/native/screens/application_view/app/AppDetailsOverflowMenu.tsx
  */
 export type AppDetailsOverflowMenuProps = {
-		application: { id?: unknown };
+		application: { customInstallUrl?: unknown; custom_install_url?: unknown; id?: unknown; installParams?: unknown; install_params?: unknown; integrationTypesConfig?: unknown; integration_types_config?: unknown };
 		onAddAppMenuClick?: (...args: any[]) => unknown;
 	};
 export type AppDetailsOverflowMenuComponent = React.ComponentType<AppDetailsOverflowMenuProps>;
@@ -2081,7 +2081,7 @@ export type AppIComponent = React.ComponentType<AppIProps & Record<string, unkno
  * @see modules/app_launcher/native/screens/application_view/app/DetailsHeader.tsx
  */
 export type DetailsHeaderProps = {
-		application?: unknown;
+		application?: { description?: unknown; flags?: unknown; flags_new?: unknown; id?: unknown; name?: unknown };
 		hideName?: boolean;
 		mainContainerStyle?: React.ComponentProps<typeof RN.View>['style'];
 		viewContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
@@ -2097,7 +2097,7 @@ export type FrecencyCommandsSectionProps = {
 		installOnDemand?: unknown;
 		onExecuteCommand?: AppCommandRowProps['onExecuteCommand'];
 		onPressCommand?: AppCommandRowProps['onPressCommand'];
-		section?: unknown;
+		section?: AppCommandRowProps['section'];
 		sectionName?: AppCommandRowProps['sectionName'];
 	};
 export type FrecencyCommandsSectionComponent = React.ComponentType<FrecencyCommandsSectionProps>;
@@ -2168,7 +2168,7 @@ export type AppLauncherCommandViewFooterComponent = React.ComponentType<AppLaunc
 export type AppLauncherCommandViewInnerProps = {
 		analyticsLocation?: unknown;
 		command?: NoPermsStateProps['command'];
-		context: { channel?: unknown };
+		context: { channel?: unknown; type?: unknown };
 		hasPermissions?: boolean;
 		installOnDemand?: unknown;
 		loading?: boolean;
@@ -2529,7 +2529,7 @@ export type RecommendationBannerEmbeddedComponent = React.ComponentType<Recommen
  * @see modules/app_launcher/native/screens/home/recommendations/RecommendationsBannerCard.tsx
  */
 export type RecommendationsBannerCardProps = {
-		application: { bot?: unknown; description?: unknown; icon?: unknown; id?: unknown; name?: unknown };
+		application: { bot?: unknown; description?: unknown; embeddedActivityConfig?: unknown; embeddedSurfaces?: unknown; embedded_activity_config?: unknown; embedded_surfaces?: unknown; flags?: unknown; flags_new?: unknown; icon?: unknown; id?: unknown; name?: unknown };
 		isFirst?: BaseAppRowProps['isFirstRow'];
 		isLandscape?: boolean;
 		isLast?: BaseAppRowProps['isLastRow'];
@@ -2555,7 +2555,7 @@ export type SearchEmptyStateComponent = React.ComponentType<SearchEmptyStateProp
  * @see modules/app_launcher/native/screens/search/SearchLocalAndGlobalContentView.tsx
  */
 export type SearchCommandRowProps = {
-		application?: unknown;
+		application?: { bot?: unknown; icon?: unknown; id?: unknown; name?: unknown };
 		beforeExecuteCommand?: unknown;
 		command: { displayName?: unknown };
 		context?: unknown;
@@ -2640,7 +2640,7 @@ export type ConnectionDeprecationBottomSheetComponent = React.ComponentType<Conn
  */
 export type ConnectionIconProps = {
 		platform: { icon?: unknown };
-		theme?: unknown;
+		theme?: 'dark' | 'darker' | 'midnight' | (string & {});
 	};
 export type ConnectionIconComponent = React.ComponentType<ConnectionIconProps>;
 /**
@@ -2659,7 +2659,7 @@ export type ApplicationCommandBarProps = {
 		guildId?: string;
 		onPressOption?: (...args: any[]) => unknown;
 		optionStates?: unknown;
-		section?: { botId?: unknown };
+		section?: { application?: unknown; botId?: unknown; icon?: unknown; id?: unknown; type?: unknown };
 	};
 export type ApplicationCommandBarComponent = React.ComponentType<ApplicationCommandBarProps>;
 /**
@@ -2693,7 +2693,7 @@ export type ApplicationCommandItemProps = {
 		/** @default false */
 		highlighted?: boolean;
 		onPress?: PressableOpacityProps['onPress'];
-		section?: { botId?: unknown; name?: unknown };
+		section?: { application?: unknown; botId?: unknown; icon?: unknown; id?: unknown; name?: unknown; type?: unknown };
 		/** @default true */
 		showIcon?: boolean;
 	};
@@ -2748,7 +2748,7 @@ export type CategoryItemProps = {
 		guildId?: string;
 		handlePressCategory: (...args: any[]) => unknown;
 		index?: unknown;
-		section?: { botId?: unknown; name?: unknown };
+		section?: { application?: unknown; botId?: unknown; icon?: unknown; id?: unknown; name?: unknown; type?: unknown };
 	};
 export type CategoryItemComponent = React.ComponentType<CategoryItemProps>;
 /**
@@ -2766,7 +2766,7 @@ export type ApplicationCommandsNComponent = React.ComponentType<ApplicationComma
  */
 export type ApplicationSectionHeaderProps = {
 		guildId?: string;
-		section?: { botId?: unknown; name?: unknown };
+		section?: { application?: unknown; botId?: unknown; icon?: unknown; id?: unknown; name?: unknown; type?: unknown };
 	};
 export type ApplicationSectionHeaderComponent = React.ComponentType<ApplicationSectionHeaderProps>;
 /**
@@ -2790,7 +2790,7 @@ export type ContextMenuCommandAppScreenComponent = React.ComponentType<ContextMe
 export type ContextMenuCommandAppItemProps = {
 		end?: TableRowProps['end'];
 		onPress?: TableRowProps['onPress'];
-		section: { name?: unknown };
+		section: { application?: unknown; icon?: unknown; id?: unknown; name?: unknown; type?: unknown };
 		start?: TableRowProps['start'];
 	};
 export type ContextMenuCommandAppItemComponent = React.ComponentType<ContextMenuCommandAppItemProps>;
@@ -2811,7 +2811,7 @@ export type ContextMenuCommandItemProps = {
 		end?: TableRowProps['end'];
 		item: { displayName?: unknown; type?: unknown };
 		onPress?: TableRowProps['onPress'];
-		section?: { name?: unknown };
+		section?: { application?: unknown; icon?: unknown; id?: unknown; name?: unknown; type?: unknown };
 		start?: TableRowProps['start'];
 	};
 export type ContextMenuCommandItemComponent = React.ComponentType<ContextMenuCommandItemProps>;
@@ -3178,8 +3178,8 @@ export type RegisterIdentityComponent = React.ComponentType<RegisterIdentityProp
 export type RegisterIdentityBaseProps = {
 		controlComponent?: React.ComponentProps<typeof RN.ScrollView>['children'];
 		headerText?: AuthFormViewProps['headerText'];
-		inputMode: RegisterPhoneOrEmailInputProps['inputMode'];
-		setInputMode: (...args: any[]) => unknown;
+		inputMode?: RegisterPhoneOrEmailInputProps['inputMode'];
+		setInputMode?: unknown;
 		subheader?: AuthFormViewProps['subHeader'];
 	};
 export type RegisterIdentityBaseComponent = React.ComponentType<RegisterIdentityBaseProps>;
@@ -3218,7 +3218,7 @@ export type RegisterPhoneOrEmailInputProps = {
 		/** @default false */
 		autoFocus?: boolean;
 		inputError?: unknown;
-		inputMode?: 'phone' | (string & {});
+		inputMode?: PhoneOrEmailInputProps['forceMode'];
 		loginEmail?: unknown;
 		loginPhone?: unknown;
 		onSubmit?: PhoneOrEmailInputProps['onSubmitEditing'];
@@ -3266,9 +3266,9 @@ export type AuthVerifyPhoneProps = {
 		description?: CodeFieldProps['description'];
 		onBail?: RegistrationBailoutButtonProps['onBail'];
 		onClose?: (...args: any[]) => unknown;
-		onPhoneTokenReceived: (...args: any[]) => unknown;
-		phone: (...args: any[]) => unknown;
-		sourceState?: unknown;
+		onPhoneTokenReceived?: (...args: any[]) => unknown;
+		phone?: unknown;
+		sourceState?: 'AGE_GATE' | 'REGISTER_ACCOUNT_INFORMATION' | 'REGISTER_DISPLAY_NAME' | 'REGISTER_IDENTITY' | 'VERIFY_PHONE' | (string & {});
 		title?: CodeFieldProps['title'];
 	};
 export type AuthVerifyPhoneComponent = React.ComponentType<AuthVerifyPhoneProps>;
@@ -3345,7 +3345,7 @@ export type AutocompleteLabelComponent = React.ComponentType<AutocompleteLabelPr
  */
 export type AutocompleterChannelProps = {
 		category?: { name?: unknown };
-		channel: { getGuildId?: unknown; type?: unknown };
+		channel: { getGuildId?: unknown; guild_id?: unknown; id?: unknown; isForumPost?: unknown; isGameInvitesChannel?: unknown; isGuildVocal?: unknown; isMediaChannel?: unknown; isNSFW?: unknown; isObfuscated?: unknown; isSpoilerChannel?: unknown; isThread?: unknown; linkedLobby?: unknown; name?: unknown; parent_id?: unknown; permissionOverwrites?: unknown; recipients?: unknown; type?: unknown };
 		onPress?: (...args: any[]) => unknown;
 	};
 export type AutocompleterChannelComponent = React.ComponentType<AutocompleterChannelProps>;
@@ -3441,7 +3441,7 @@ export type AutocompleterStickerComponent = React.ComponentType<AutocompleterSti
 export type AutocompleterTimestampProps = {
 		/** @default '' */
 		description?: TableRowTrailingTextProps['text'];
-		mention?: unknown;
+		mention?: { format?: unknown; timestamp?: unknown };
 		onPress?: TableRowProps['onPress'];
 	};
 export type AutocompleterTimestampComponent = React.ComponentType<AutocompleterTimestampProps>;
@@ -3621,7 +3621,7 @@ export type BadgeDetailsSheetContentProps = {
 		isViewingOtherUser?: BadgeTierGridProps['isViewingOtherUser'];
 		pagePosition?: { position?: unknown; total?: unknown };
 		targetUsername?: unknown;
-		viewerBadge?: BadgeTierGridProps['badge'];
+		viewerBadge?: BadgeProgressSectionProps['viewerBadge'];
 	};
 export type BadgeDetailsSheetContentComponent = React.ComponentType<BadgeDetailsSheetContentProps>;
 /**
@@ -3700,7 +3700,7 @@ export type BadgeSectionComponent = React.ComponentType<BadgeSectionProps>;
  */
 export type BadgeProgressSectionProps = {
 		badge?: unknown;
-		viewerBadge?: unknown;
+		viewerBadge?: { current_tier?: unknown; next_tier?: unknown; progress?: unknown; tiers?: unknown };
 	};
 export type BadgeProgressSectionComponent = React.ComponentType<BadgeProgressSectionProps>;
 /**
@@ -3708,7 +3708,7 @@ export type BadgeProgressSectionComponent = React.ComponentType<BadgeProgressSec
  * @see modules/badges/native/BadgeRarityPill.tsx
  */
 export type BadgeRarityPillProps = {
-		rarity?: unknown;
+		rarity?: number;
 	};
 export type BadgeRarityPillComponent = React.ComponentType<BadgeRarityPillProps>;
 /**
@@ -3826,7 +3826,7 @@ export type RunAllFlowsComponent = React.ComponentType<RunAllFlowsProps>;
  */
 export type CancelViewProps = {
 		selectedSubscriptionId?: string;
-		useACOM?: (...args: any[]) => unknown;
+		useACOM?: boolean;
 	};
 export type CancelViewComponent = React.ComponentType<CancelViewProps>;
 /**
@@ -3834,7 +3834,7 @@ export type CancelViewComponent = React.ComponentType<CancelViewProps>;
  * @see modules/billing/native/subscription/SimpleRequestSubscriptionActionSheet.tsx
  */
 export type CreateViewProps = {
-		selectedSkuId: (...args: any[]) => unknown;
+		selectedSkuId?: string;
 	};
 export type CreateViewComponent = React.ComponentType<CreateViewProps>;
 /**
@@ -3843,8 +3843,8 @@ export type CreateViewComponent = React.ComponentType<CreateViewProps>;
  */
 export type GiftPurchaseSKUViewProps = {
 		giftMessage?: string;
-		giftRecipientId: DesignTextProps['children'];
-		selectedSkuId?: (...args: any[]) => unknown;
+		giftRecipientId?: DesignTextProps['children'];
+		selectedSkuId?: string;
 	};
 export type GiftPurchaseSKUViewComponent = React.ComponentType<GiftPurchaseSKUViewProps>;
 /**
@@ -3862,7 +3862,7 @@ export type GiftPurchaseSKUViewWrapperComponent = React.ComponentType<GiftPurcha
  * @see modules/billing/native/subscription/SimpleRequestSubscriptionActionSheet.tsx
  */
 export type ModifyViewProps = {
-		selectedSkuId: (...args: any[]) => unknown;
+		selectedSkuId?: string;
 		selectedSubscriptionId?: string;
 	};
 export type ModifyViewComponent = React.ComponentType<ModifyViewProps>;
@@ -3871,7 +3871,7 @@ export type ModifyViewComponent = React.ComponentType<ModifyViewProps>;
  * @see modules/billing/native/subscription/SimpleRequestSubscriptionActionSheet.tsx
  */
 export type PurchaseSKUViewProps = {
-		selectedSkuId?: (...args: any[]) => unknown;
+		selectedSkuId?: string;
 	};
 export type PurchaseSKUViewComponent = React.ComponentType<PurchaseSKUViewProps>;
 /**
@@ -3880,7 +3880,7 @@ export type PurchaseSKUViewComponent = React.ComponentType<PurchaseSKUViewProps>
  */
 export type ResubscribeViewProps = {
 		selectedSubscriptionId?: string;
-		useACOM: (...args: any[]) => unknown;
+		useACOM?: boolean;
 	};
 export type ResubscribeViewComponent = React.ComponentType<ResubscribeViewProps>;
 /**
@@ -3909,7 +3909,7 @@ export type SimpleRequestSubscriptionActionSheetComponent = React.ComponentType<
  * @see modules/blocked_domains/components/native/BlockedDomainActionSheet.tsx
  */
 export type BlockedDomainActionSheetProps = {
-		url?: unknown;
+		url?: URLCalloutProps['url'];
 	};
 export type BlockedDomainActionSheetComponent = React.ComponentType<BlockedDomainActionSheetProps>;
 /**
@@ -3926,8 +3926,8 @@ export type BugReporterNotificationComponent = React.ComponentType<BugReporterNo
  */
 export type BugReporterFeatureProps = {
 		end?: TableRadioRowProps['end'];
-		feature?: unknown;
-		item: { name?: unknown };
+		feature?: { name?: unknown; squad?: unknown };
+		item: { name?: unknown; squad?: unknown };
 		setFeature: (...args: any[]) => unknown;
 		start?: TableRadioRowProps['start'];
 	};
@@ -3937,7 +3937,7 @@ export type BugReporterFeatureComponent = React.ComponentType<BugReporterFeature
  * @see modules/bug_reporter/native/components/BugReporterFeatureActionSheet.tsx
  */
 export type BugReporterFeatureActionSheetProps = {
-		feature?: unknown;
+		feature?: BugReporterFeatureProps['feature'];
 		features: { filter?: unknown };
 		setFeature?: BugReporterFeatureProps['setFeature'];
 	};
@@ -3968,8 +3968,8 @@ export type BugReporterTComponent = React.ComponentType<BugReporterTProps>;
  * @see modules/bug_reporter/native/components/BugReporterModal.tsx
  */
 export type BugCreateScreenProps = {
-		screenshot: (...args: any[]) => unknown;
-		screenshotUri?: (...args: any[]) => unknown;
+		screenshot?: unknown;
+		screenshotUri?: unknown;
 	};
 export type BugCreateScreenComponent = React.ComponentType<BugCreateScreenProps>;
 /**
@@ -4062,7 +4062,7 @@ export type CaptchaTestScreenComponent = React.ComponentType<CaptchaTestScreenPr
 export type ChangelogInlineImageProps = {
 		alt?: FastImageProps['accessibilityLabel'];
 		target?: unknown;
-		title?: unknown;
+		title?: { trim?: unknown };
 	};
 export type ChangelogInlineImageComponent = React.ComponentType<ChangelogInlineImageProps>;
 /**
@@ -4088,7 +4088,7 @@ export type ChannelLongPressActionSheetComponent = React.ComponentType<ChannelLo
  * @see modules/channel/native/ChannelLongPressActionSheet.tsx
  */
 export type ChannelLongPressActionSheetConnectedProps = {
-		channel: { getGuildId?: unknown; id?: unknown; isGroupDM?: unknown; isOwner?: unknown; isThread?: unknown; parent_id?: unknown; recipients?: unknown };
+		channel: { application_id?: unknown; getGuildId?: unknown; guild_id?: unknown; id?: unknown; isCategory?: unknown; isDM?: unknown; isGroupDM?: unknown; isOwner?: unknown; isThread?: unknown; nsfw?: unknown; parent_id?: unknown; recipients?: unknown; type?: unknown };
 		onClose: (...args: any[]) => unknown;
 	};
 export type ChannelLongPressActionSheetConnectedComponent = React.ComponentType<ChannelLongPressActionSheetConnectedProps>;
@@ -4098,7 +4098,7 @@ export type ChannelLongPressActionSheetConnectedComponent = React.ComponentType<
  */
 export type ChannelPickerActionSheetProps = {
 		channels: { find?: unknown; map?: unknown };
-		guild?: unknown;
+		guild?: { rulesChannelId?: unknown };
 		header?: { onClose?: unknown; title?: unknown };
 		noChannelOptionLabel?: TableRadioRowProps['label'];
 		onSelect: (...args: any[]) => unknown;
@@ -4254,7 +4254,7 @@ export type ChannelsWrapperComponent = React.ComponentType<ChannelsWrapperProps 
  * @see modules/channel_list_v2/native/RedesignChannelList.tsx
  */
 export type GuildChannelsProps = Omit<ChannelListProps, 'guild'> & {
-		guild: { id?: unknown };
+		guild: { features?: unknown; gameApplicationIds?: unknown; id?: unknown; mfaLevel?: unknown; premiumProgressBarEnabled?: unknown };
 	};
 export type GuildChannelsComponent = React.ComponentType<GuildChannelsProps>;
 /**
@@ -4339,7 +4339,7 @@ export type ChannelListPanelBackdropComponent = React.ComponentType<ChannelListP
 export type ChannelListStickyHeaderProps = {
 		/** @default true */
 		canOpenGuildActionSheet?: boolean;
-		guild: ConnectedGuildSearchAndInviteInnerProps['guild'];
+		guild: GuildBadgeV2Props['guild'];
 		/** @default false */
 		showCoachmarks?: boolean;
 		/** @default true */
@@ -4357,7 +4357,7 @@ export type ChannelListV2DividerComponent = React.ComponentType<ChannelListV2Div
  * @see modules/channel_list_v2/native/components/GuildSearchAndInvite.tsx
  */
 export type ConnectedGuildSearchAndInviteInnerProps = {
-		guild: { id?: unknown };
+		guild: { features?: unknown; id?: unknown; vanityURLCode?: unknown };
 		/** @default false */
 		useButtonComponent?: GuildSearchAndInviteProps['useButtonComponent'];
 		/** @default false */
@@ -4421,8 +4421,8 @@ export type ItemsDMChannelComponent = React.ComponentType<ItemsDMChannelProps>;
  * @see modules/channel_list_v2/native/items/RedesignCategory.tsx
  */
 export type CategoryChannelProps = {
-		channel: { getGuildId?: unknown; id?: unknown };
-		withMarginTop?: unknown;
+		channel: { getGuildId?: unknown; id?: unknown; type?: unknown };
+		withMarginTop?: boolean;
 	};
 export type CategoryChannelComponent = React.ComponentType<CategoryChannelProps>;
 /**
@@ -4463,7 +4463,7 @@ export type ItemsTextChannelProps = {
 		isSuggestedSection?: boolean;
 		muted?: unknown;
 		selected?: GuildSidebarChannelInfoProps['isChannelSelected'];
-		subtitle?: unknown;
+		subtitle?: { name?: unknown; text?: unknown; type?: unknown };
 	};
 export type ItemsTextChannelComponent = React.ComponentType<ItemsTextChannelProps>;
 /**
@@ -4527,7 +4527,7 @@ export type VoiceChannelProps = {
 		embeddedActivitiesCount?: number;
 		locked?: unknown;
 		selected?: GuildSidebarChannelInfoProps['isChannelSelected'];
-		subtitle?: { text?: unknown; type?: unknown };
+		subtitle?: { name?: unknown; text?: unknown; type?: unknown };
 		voiceStates?: unknown;
 	};
 export type VoiceChannelComponent = React.ComponentType<VoiceChannelProps>;
@@ -4553,8 +4553,8 @@ export type ChannelsUnreadBarComponent = React.ComponentType<ChannelsUnreadBarPr
  * @see modules/channel_list_v2/native/unread_bars/ChannelsUnreadBars.tsx
  */
 export type ChannelUnreadBarsComponentProps = {
-		fastList: { scrollPosValue?: unknown };
-		guild?: unknown;
+		fastList: { scrollPosValue?: unknown; scrollToLocation?: unknown };
+		guild?: { banner?: unknown; features?: unknown; id?: unknown };
 		guildChannels: { id?: unknown };
 		headerHeight?: unknown;
 	};
@@ -4565,7 +4565,7 @@ export type ChannelUnreadBarsComponentComponent = React.ComponentType<ChannelUnr
  */
 export type ActionSheetsAddMembersActionSheetProps = {
 		canSkip?: boolean;
-		channel?: (...args: any[]) => unknown;
+		channel?: { accessPermissions?: unknown; getGuildId?: unknown };
 	};
 export type ActionSheetsAddMembersActionSheetComponent = React.ComponentType<ActionSheetsAddMembersActionSheetProps>;
 /**
@@ -4574,7 +4574,7 @@ export type ActionSheetsAddMembersActionSheetComponent = React.ComponentType<Act
  */
 export type ActionSheetsAddMembersBodyProps = Omit<FlashListBottomSheetFlashListProps, 'channel' | 'guild' | 'inActionSheet' | 'pendingAdditions' | 'permission' | 'setPendingAdditions'> & {
 		channel?: unknown;
-		guild: { id?: unknown };
+		guild: { id?: unknown; parent_id?: unknown; type?: unknown };
 		inActionSheet?: boolean;
 		pendingAdditions?: unknown;
 		permission?: unknown;
@@ -4596,7 +4596,7 @@ export type ChannelMembersActionSheetComponent = React.ComponentType<ChannelMemb
  */
 export type ChannelAccessInfoProps = {
 		channel: { accessPermissions?: unknown; guild_id?: unknown; id?: unknown };
-		guild?: { id?: unknown };
+		guild?: { id?: unknown; ownerId?: unknown };
 	};
 export type ChannelAccessInfoComponent = React.ComponentType<ChannelAccessInfoProps>;
 /**
@@ -4678,9 +4678,9 @@ export type ChannelPermissionsRoleItemComponent = React.ComponentType<ChannelPer
  * @see modules/channel_permissions/native/components/EasyChannelPermissionSettings.tsx
  */
 export type ChannelPermissionSettingsBasicViewProps = {
-		channel?: (...args: any[]) => unknown;
+		channel?: { accessPermissions?: unknown; application_id?: unknown; getGuildId?: unknown; guild_id?: unknown; id?: unknown; isCategory?: unknown; permissionOverwrites?: unknown; type?: unknown };
 		privateToggleState?: TableSwitchRowProps['value'];
-		setPrivateToggleState: (...args: any[]) => unknown;
+		setPrivateToggleState?: unknown;
 	};
 export type ChannelPermissionSettingsBasicViewComponent = React.ComponentType<ChannelPermissionSettingsBasicViewProps>;
 /**
@@ -4742,7 +4742,7 @@ export type ChatViewProps = {
 		/** @default false */
 		disableGradient?: boolean;
 		guildId?: ChatViewPopupsProps['guildId'];
-		screenIndex?: ChatInputProps['screenIndex'];
+		screenIndex?: 'conjure-preview' | 'message-request' | 'new-message' | 'voice-panel' | (string & {});
 		secondaryTextFieldRef?: unknown;
 		setNoExtractUI?: boolean;
 	};
@@ -4870,7 +4870,7 @@ export type ChatInputProps = {
 		isResourceChannel?: boolean;
 		onJumpToPresent?: JumpToPresentButtonProps['onJumpToPresent'];
 		ref?: React.Ref<any>;
-		screenIndex: (...args: any[]) => unknown;
+		screenIndex?: unknown;
 		secondaryTextFieldRef?: unknown;
 		setNoExtractUI?: unknown;
 		threadCreationCallback?: unknown;
@@ -4882,7 +4882,7 @@ export type ChatInputComponent = React.ComponentType<ChatInputProps>;
  */
 export type ChatInputAppCommandManagerProps = {
 		channel: { id?: unknown };
-		chatInputRef?: unknown;
+		chatInputRef: { current?: unknown };
 		chatInputStateRef: { current?: unknown };
 		commandsDisabled?: unknown;
 		ref?: React.Ref<any>;
@@ -5001,10 +5001,10 @@ export type EmojiSuggestionBarLargeAnimatedProps = {
 		cleanUp?: unknown;
 		handlePress?: unknown;
 		handlePressEmojiUnavailable?: EmojiItemProps['onPressEmoji'];
-		lockedEmojis?: unknown;
+		lockedEmojis?: { length?: unknown; slice?: unknown };
 		reducedMotion?: unknown;
-		transitionState?: unknown;
-		unlockedEmojis?: unknown;
+		transitionState?: number;
+		unlockedEmojis?: { length?: unknown; slice?: unknown };
 	};
 export type EmojiSuggestionBarLargeAnimatedComponent = React.ComponentType<EmojiSuggestionBarLargeAnimatedProps>;
 /**
@@ -5075,7 +5075,7 @@ export type FloatingChatInputContainerComponent = React.ComponentType<FloatingCh
  * @see modules/chat_input/native/GiftIconTrinketsAnimation.tsx
  */
 export type GiftIconTrinketsAnimationProps = {
-		trinketsAnimationUrl?: unknown;
+		trinketsAnimationUrl?: { length?: unknown };
 	};
 export type GiftIconTrinketsAnimationComponent = React.ComponentType<GiftIconTrinketsAnimationProps>;
 /**
@@ -5133,7 +5133,7 @@ export type ChatInputImageCarouselComponent = React.ComponentType<ChatInputImage
  * @see modules/chat_input/native/accessories/ChatInputNotificationNudge.tsx
  */
 export type ChatInputNotificationNudgeProps = {
-		channel: { getGuildId?: unknown; id?: unknown; isThread?: unknown };
+		channel: { getGuildId?: unknown; id?: unknown; isDM?: unknown; isThread?: unknown; recipients?: unknown };
 	};
 export type ChatInputNotificationNudgeComponent = React.ComponentType<ChatInputNotificationNudgeProps>;
 /**
@@ -5410,7 +5410,7 @@ export type ChatInputGuardLurkingComponent = React.ComponentType<ChatInputGuardL
  * @see modules/chat_input/native/guard/ChatInputGuardMessageRequest.tsx
  */
 export type ChatInputGuardMessageRequestProps = {
-		channel: (...args: any[]) => unknown;
+		channel: { getRecipientId?: unknown; id?: unknown };
 	};
 export type ChatInputGuardMessageRequestComponent = React.ComponentType<ChatInputGuardMessageRequestProps>;
 /**
@@ -5424,7 +5424,7 @@ export type ChatInputGuardQuarantineDMComponent = React.ComponentType<ChatInputG
  * @see modules/chat_input/native/guard/ChatInputGuardReadonly.tsx
  */
 export type ChatInputGuardReadonlyProps = {
-		channel?: unknown;
+		channel?: { id?: unknown };
 		guildId?: string;
 	};
 export type ChatInputGuardReadonlyComponent = React.ComponentType<ChatInputGuardReadonlyProps>;
@@ -5461,7 +5461,7 @@ export type ChatInputGuardSpamMessageRequestComponent = React.ComponentType<Chat
 export type ChatInputGuardWrapperProps = {
 		canCreateThreads?: boolean;
 		canSendMessages?: boolean;
-		channel: ChatInputGuardLurkingProps['channel'];
+		channel: ChatInputGuardReadonlyProps['channel'];
 		children?: React.ReactNode;
 		isReadonly?: boolean;
 		onJumpToPresent?: ChatInputGuardContainerProps['onJumpToPresent'];
@@ -5487,7 +5487,7 @@ export type GiftCardMobileConsumptionActionSheetComponent = React.ComponentType<
  * @see modules/checkout/native/gifting/LockedRecipientField.tsx
  */
 export type LockedRecipientFieldProps = {
-		user?: unknown;
+		user?: { discriminator?: unknown; globalName?: unknown; global_name?: unknown; username?: unknown };
 	};
 export type LockedRecipientFieldComponent = React.ComponentType<LockedRecipientFieldProps>;
 /**
@@ -5496,7 +5496,7 @@ export type LockedRecipientFieldComponent = React.ComponentType<LockedRecipientF
  */
 export type SelectedUserFieldProps = {
 		onPress?: React.ComponentProps<typeof RN.Pressable>['onPress'];
-		selectedUser?: unknown;
+		selectedUser?: { discriminator?: unknown; globalName?: unknown; global_name?: unknown; username?: unknown };
 		setSelectedUser: (...args: any[]) => unknown;
 	};
 export type SelectedUserFieldComponent = React.ComponentType<SelectedUserFieldProps>;
@@ -5526,7 +5526,7 @@ export type UnifiedGiftModalComponent = React.ComponentType<UnifiedGiftModalProp
  */
 export type UnifiedGiftModalDetailsScreenProps = {
 		lockedRecipient?: unknown;
-		recipientUser?: { id?: unknown };
+		recipientUser?: SelectedUserFieldProps['selectedUser'];
 		renderProductDetails: (...args: any[]) => unknown;
 		renderPurchaseSection: (...args: any[]) => unknown;
 		setRecipientUser?: SelectedUserFieldProps['setSelectedUser'];
@@ -5560,7 +5560,7 @@ export type SyncedLoadingAlertModalProps = {
 		confirmText?: AlertActionButtonProps['text'];
 		content?: AlertModalProps['content'];
 		onCancel?: AlertActionButtonProps['onPress'];
-		onConfirm: (...args: any[]) => unknown;
+		onConfirm?: (...args: any[]) => unknown;
 		title?: AlertModalProps['title'];
 	};
 export type SyncedLoadingAlertModalComponent = React.ComponentType<SyncedLoadingAlertModalProps>;
@@ -5597,7 +5597,7 @@ export type NativeCheckoutStoreProviderWrapperProps = {
 		isGift?: boolean;
 		onOrderCreated?: (...args: any[]) => unknown;
 		onOrderRetryCancellation?: NativeCheckoutStoreProviderProps['onOrderRetryCancellation'];
-		orderRequired?: (...args: any[]) => unknown;
+		orderRequired?: unknown;
 		paymentGateway?: number;
 		skuIds: { length?: unknown };
 	};
@@ -5827,7 +5827,7 @@ export type RarityBadgeComponent = React.ComponentType<RarityBadgeProps>;
  * @see modules/checkpoint/native/components/customization/TraitOptionDetails.tsx
  */
 export type AssetDescriptionProps = {
-		asset: { locked?: unknown; rarity?: unknown };
+		asset: { locked?: unknown; optionId?: unknown; rarity?: unknown; trait?: unknown };
 		hidden?: boolean;
 	};
 export type AssetDescriptionComponent = React.ComponentType<AssetDescriptionProps>;
@@ -5862,7 +5862,7 @@ export type RarityIndicatorComponent = React.ComponentType<RarityIndicatorProps>
  * @see modules/checkpoint/native/components/customization/TraitOptionItem.tsx
  */
 export type TraitOptionImageProps = {
-		traitOption: { asset?: unknown; locked?: unknown };
+		traitOption: { asset?: unknown; locked?: unknown; optionId?: unknown; trait?: unknown };
 	};
 export type TraitOptionImageComponent = React.ComponentType<TraitOptionImageProps>;
 /**
@@ -5962,7 +5962,7 @@ export type OutfitControlsComponent = React.ComponentType<OutfitControlsProps & 
  * @see modules/checkpoint/native/components/customization/TraitPickerControls.tsx
  */
 export type TraitControlsProps = Omit<TraitPickerProps, 'activeCustomizationOption'> & {
-		activeCustomizationOption?: unknown;
+		activeCustomizationOption?: 'outfit_color' | (string & {});
 	};
 export type TraitControlsComponent = React.ComponentType<TraitControlsProps & Record<string, unknown>>;
 /**
@@ -6071,7 +6071,7 @@ export type SynchronizeIconComponent = React.ComponentType<SynchronizeIconProps>
  */
 export type ActiveGuildThemeGradientProps = Omit<GuildThemePresetGradientProps, 'activeGuildTheme' | 'theme'> & {
 		activeGuildTheme: { customUserThemeSettings?: unknown; preset?: unknown; type?: unknown };
-		theme?: unknown;
+		theme?: CustomThemesGradientProps['theme'];
 	};
 export type ActiveGuildThemeGradientComponent = React.ComponentType<ActiveGuildThemeGradientProps & Record<string, unknown>>;
 /**
@@ -6100,7 +6100,7 @@ export type CustomThemesGradientProps = {
 		mixAmount?: unknown;
 		mixColorOverride?: unknown;
 		tall?: unknown;
-		theme?: unknown;
+		theme?: 'dark' | 'darker' | 'midnight' | (string & {});
 		wide?: unknown;
 	};
 export type CustomThemesGradientComponent = React.ComponentType<CustomThemesGradientProps>;
@@ -6146,7 +6146,7 @@ export type GuildThemePresetGradientProps = {
 		mix?: unknown;
 		mixAmount?: unknown;
 		mixColorOverride?: unknown;
-		preset?: unknown;
+		preset?: { darkAppearance?: unknown; lightAppearance?: unknown };
 		tall?: unknown;
 		wide?: unknown;
 	};
@@ -6239,7 +6239,7 @@ export type EditAvatarDecorationRowComponent = React.ComponentType<EditAvatarDec
  */
 export type EditNameplateItemProps = {
 		isSelected?: EditCollectiblesListItemProductProps['isSelected'];
-		nameplate: { label?: unknown; skuId?: unknown };
+		nameplate: { asset?: unknown; label?: unknown; palette?: unknown; skuId?: unknown };
 		setSelectedNameplate: (...args: any[]) => unknown;
 		size?: unknown;
 	};
@@ -6285,7 +6285,7 @@ export type NameplateInnerProps = {
 		isPressed?: boolean;
 		/** @default false */
 		isSquarePreview?: boolean;
-		nameplate: { palette?: unknown };
+		nameplate: { palette?: unknown; skuId?: unknown };
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
 export type NameplateInnerComponent = React.ComponentType<NameplateInnerProps>;
@@ -6296,7 +6296,7 @@ export type NameplateInnerComponent = React.ComponentType<NameplateInnerProps>;
 export type NameplateCardPreviewProps = {
 		/** @default false */
 		animate?: NameplateDummyUserPreviewProps['animate'];
-		item: { type?: unknown };
+		item: { asset?: unknown; label?: unknown; palette?: unknown; skuId?: unknown; type?: unknown };
 	};
 export type NameplateCardPreviewComponent = React.ComponentType<NameplateCardPreviewProps>;
 /**
@@ -6325,12 +6325,12 @@ export type NameplatesNameplatePreviewProps = {
 		guildId?: UsernameWithEffectsProps['guildId'];
 		/** @default true */
 		hasRoundedCorners?: boolean;
-		nameplate?: unknown;
+		nameplate?: { asset?: unknown; label?: unknown; palette?: unknown; skuId?: unknown };
 		nameplateData?: unknown;
 		pendingAvatarSrc?: unknown;
 		pendingDisplayNameStyles?: unknown;
 		pendingGlobalName?: unknown;
-		user?: { id?: unknown };
+		user?: { avatarDecoration?: unknown; discriminator?: unknown; globalName?: unknown; global_name?: unknown; id?: unknown; username?: unknown };
 	};
 export type NameplatesNameplatePreviewComponent = React.ComponentType<NameplatesNameplatePreviewProps>;
 /**
@@ -6339,7 +6339,7 @@ export type NameplatesNameplatePreviewComponent = React.ComponentType<Nameplates
  */
 export type NameplateProductPreviewProps = {
 		avatarDecorationOverride?: unknown;
-		product?: unknown;
+		product?: { items?: unknown };
 	};
 export type NameplateProductPreviewComponent = React.ComponentType<NameplateProductPreviewProps>;
 /**
@@ -6368,7 +6368,7 @@ export type PlaceholderUserComponent = React.ComponentType<PlaceholderUserProps>
  * @see modules/collectibles/native/AvatarDecorationProductPreview.tsx
  */
 export type AvatarDecorationProductPreviewProps = {
-		product?: unknown;
+		product?: { items?: unknown };
 	};
 export type AvatarDecorationProductPreviewComponent = React.ComponentType<AvatarDecorationProductPreviewProps>;
 /**
@@ -6445,7 +6445,7 @@ export type BundleSampleV2Component = React.ComponentType<BundleSampleV2Props>;
  */
 export type BundleSampleV2ComposedProps = {
 		deco?: AvatarDecorationSampleV2Props['item'];
-		nameplate?: { type?: unknown };
+		nameplate?: { asset?: unknown; label?: unknown; palette?: unknown; skuId?: unknown; type?: unknown };
 		pfx?: ProfileEffectSampleProps['item'];
 		/** @default 'small' */
 		size?: 'large' | 'small' | (string & {});
@@ -6630,7 +6630,7 @@ export type AssetTileV2Props = {
 		isDisabled?: ProductPreviewProps['isDisabled'];
 		isPurchased?: ProductPreviewProps['isPurchased'];
 		muteBundleStaticBackground?: ProductPreviewProps['muteBundleStaticBackground'];
-		product?: unknown;
+		product?: { type?: unknown; variants?: unknown };
 		solidBackground?: AssetTileInternalProps['solidBackground'];
 	};
 export type AssetTileV2Component = React.ComponentType<AssetTileV2Props>;
@@ -6679,7 +6679,7 @@ export type CardDetailsV2Props = {
 		hidePrice?: boolean;
 		isDisabled?: PriceDescriptionProps['isDisabled'];
 		preferVCPrice?: PriceDescriptionProps['preferVCPrice'];
-		product?: CardProductVariantsProps['product'];
+		product?: PriceDescriptionProps['product'];
 	};
 export type CardDetailsV2Component = React.ComponentType<CardDetailsV2Props>;
 /**
@@ -6693,7 +6693,7 @@ export type PriceDescriptionProps = {
 		isDisabled?: boolean;
 		isFetchingGoogleSkus?: boolean;
 		preferVCPrice?: boolean;
-		product?: unknown;
+		product?: { type?: unknown; variants?: unknown };
 		styles: { androidTextPadding?: unknown; discountPercentage?: unknown; priceDescription?: unknown; text?: unknown; wheelIcon?: unknown };
 	};
 export type PriceDescriptionComponent = React.ComponentType<PriceDescriptionProps>;
@@ -6715,9 +6715,9 @@ export type CollectiblesShopCardInternalV2Props = {
 		muteBundleStaticBackground?: AssetTileV2Props['muteBundleStaticBackground'];
 		onPress?: (...args: any[]) => unknown;
 		preferVCPrice?: CardDetailsV2Props['preferVCPrice'];
-		product: CardDetailsV2Props['product'];
+		product: AssetTileV2Props['product'];
 		solidBackground?: AssetTileV2Props['solidBackground'];
-		unpublishedAt?: unknown;
+		unpublishedAt?: { getDate?: unknown; getFullYear?: unknown; getMonth?: unknown };
 	};
 export type CollectiblesShopCardInternalV2Component = React.ComponentType<CollectiblesShopCardInternalV2Props>;
 /**
@@ -6743,7 +6743,7 @@ export type CollectiblesShopCardV2InnerProps = {
 		preferVCPrice?: CollectiblesShopCardInternalV2Props['preferVCPrice'];
 		product: CollectiblesShopCardInternalV2Props['product'];
 		solidBackground?: CollectiblesShopCardInternalV2Props['solidBackground'];
-		unpublishedAt?: unknown;
+		unpublishedAt?: CollectiblesShopCardInternalV2Props['unpublishedAt'];
 	};
 export type CollectiblesShopCardV2InnerComponent = React.ComponentType<CollectiblesShopCardV2InnerProps>;
 /**
@@ -6751,7 +6751,7 @@ export type CollectiblesShopCardV2InnerComponent = React.ComponentType<Collectib
  * @see modules/collectibles/native/CollectiblesShopCardVariants.tsx
  */
 export type CardProductVariantsProps = {
-		product: { variants?: unknown };
+		product: { type?: unknown; variants?: unknown };
 	};
 export type CardProductVariantsComponent = React.ComponentType<CardProductVariantsProps>;
 /**
@@ -6759,7 +6759,7 @@ export type CardProductVariantsComponent = React.ComponentType<CardProductVarian
  * @see modules/collectibles/native/CollectiblesShopCardVariants.tsx
  */
 export type CollectiblesVariantCheckmarkProps = {
-		variant?: unknown;
+		variant?: { variantValue?: unknown };
 	};
 export type CollectiblesVariantCheckmarkComponent = React.ComponentType<CollectiblesVariantCheckmarkProps>;
 /**
@@ -6768,7 +6768,7 @@ export type CollectiblesVariantCheckmarkComponent = React.ComponentType<Collecti
  */
 export type CollectiblesVariantOptionProps = {
 		isSelected?: boolean;
-		variant: { variantValue?: unknown };
+		variant: CollectiblesVariantCheckmarkProps['variant'];
 		zIndex?: unknown;
 	};
 export type CollectiblesVariantOptionComponent = React.ComponentType<CollectiblesVariantOptionProps>;
@@ -6810,7 +6810,7 @@ export type ShopCardGridItemProps = {
 		muteBundleStaticBackground?: CollectiblesShopCardV2Props['muteBundleStaticBackground'];
 		preferVCPrice?: CollectiblesShopCardV2Props['preferVCPrice'];
 		product?: CollectiblesShopCardV2Props['product'];
-		unpublishedAt?: unknown;
+		unpublishedAt?: CollectiblesShopCardV2Props['unpublishedAt'];
 	};
 export type ShopCardGridItemComponent = React.ComponentType<ShopCardGridItemProps>;
 /**
@@ -6819,7 +6819,7 @@ export type ShopCardGridItemComponent = React.ComponentType<ShopCardGridItemProp
  */
 export type BundleAssetPreviewProps = {
 		height?: unknown;
-		product: { previewAssets?: unknown };
+		product: { items?: unknown; previewAssets?: unknown };
 		width?: unknown;
 	};
 export type BundleAssetPreviewComponent = React.ComponentType<BundleAssetPreviewProps>;
@@ -6863,7 +6863,7 @@ export type CollectiblesShopCheckoutDetailsComponent = React.ComponentType<Colle
  * @see modules/collectibles/native/CollectiblesShopCheckoutDetails.tsx
  */
 export type NameplateAssetPreviewProps = {
-		item?: unknown;
+		item?: { asset?: unknown; label?: unknown; palette?: unknown; skuId?: unknown };
 	};
 export type NameplateAssetPreviewComponent = React.ComponentType<NameplateAssetPreviewProps>;
 /**
@@ -6881,7 +6881,7 @@ export type ProductDetailsComponent = React.ComponentType<ProductDetailsProps>;
  */
 export type ProductPriceAmountTagProps = {
 		hasShopDiscount?: boolean;
-		product?: unknown;
+		product?: { googleSkuIds?: unknown; prices?: unknown };
 		useOrbPrice?: boolean;
 	};
 export type ProductPriceAmountTagComponent = React.ComponentType<ProductPriceAmountTagProps>;
@@ -6969,7 +6969,7 @@ export type CollectiblesLComponent = React.ComponentType<CollectiblesLProps>;
  * @see modules/collectibles/native/CollectiblesShopGiftPurchaseSection.tsx
  */
 export type CollectiblesShopGiftPurchaseSectionProps = {
-		giftOptions: { gift_style?: unknown; recipient_id?: unknown };
+		giftOptions: { custom_message?: unknown; emoji_id?: unknown; emoji_name?: unknown; gift_style?: unknown; recipient_id?: unknown; reward_sku_ids?: unknown; sound_id?: unknown };
 		giftingOrigin?: number;
 		isPurchaseDisabled?: BaseTextButtonProps['disabled'];
 		product: { skuId?: unknown };
@@ -7149,7 +7149,7 @@ export type SkeletonGridComponent = React.ComponentType<SkeletonGridProps>;
 export type FractionalNitroCoinIllustrationProps = {
 		height?: unknown;
 		/** @default 'contain' */
-		resizeMode?: 'contain' | (string & {});
+		resizeMode?: NitroCoinSpotIllustrationProps['resizeMode'];
 		skuId?: string;
 		width?: unknown;
 	};
@@ -7231,7 +7231,7 @@ export type SkeletonLoadingComponent = React.ComponentType<SkeletonLoadingProps>
 export type AvatarDecorationPreviewProps = {
 		handlePreviewPress?: (...args: any[]) => unknown;
 		onTrackPress?: (...args: any[]) => unknown;
-		product?: unknown;
+		product?: AvatarDecorationProductPreviewProps['product'];
 	};
 export type AvatarDecorationPreviewComponent = React.ComponentType<AvatarDecorationPreviewProps>;
 /**
@@ -7242,7 +7242,7 @@ export type IndividualProductPreviewProps = {
 		avatarDecorationOverride?: unknown;
 		handlePreviewPress?: AvatarDecorationPreviewProps['handlePreviewPress'];
 		onTrackPress?: AvatarDecorationPreviewProps['onTrackPress'];
-		product: { items?: unknown; skuId?: unknown; type?: unknown };
+		product: AvatarDecorationPreviewProps['product'];
 		profileEffectOverride?: unknown;
 		profileFrameOverride?: unknown;
 		width?: ProfileFramePreviewProps['width'];
@@ -7254,7 +7254,7 @@ export type IndividualProductPreviewComponent = React.ComponentType<IndividualPr
  */
 export type CollectiblesNameplatePreviewProps = {
 		avatarDecorationOverride?: unknown;
-		product?: unknown;
+		product?: NameplateProductPreviewProps['product'];
 	};
 export type CollectiblesNameplatePreviewComponent = React.ComponentType<CollectiblesNameplatePreviewProps>;
 /**
@@ -7339,7 +7339,7 @@ export type NitroUpsellComponent = React.ComponentType<NitroUpsellProps>;
 export type OrbsPriceTagProps = {
 		eligibleForShopDiscount?: unknown;
 		isProductDisabled?: boolean;
-		product: { type?: unknown };
+		product: { bundledProducts?: unknown; prices?: unknown; type?: unknown };
 		vcData: { canAfford?: unknown; price?: unknown };
 	};
 export type OrbsPriceTagComponent = React.ComponentType<OrbsPriceTagProps>;
@@ -7411,7 +7411,7 @@ export type HeaderRightComponent = React.ComponentType<HeaderRightProps>;
 export type OrbBadgeCollectedModalProps = {
 		modalKey?: unknown;
 		onPressViewBadge?: OrbBadgeCollectedRootScreenProps['onPressViewBadge'];
-		orbBalancePriorToPurchase?: unknown;
+		orbBalancePriorToPurchase?: BalanceWidgetPillProps['initialRenderedBalance'];
 	};
 export type OrbBadgeCollectedModalComponent = React.ComponentType<OrbBadgeCollectedModalProps>;
 /**
@@ -7528,7 +7528,7 @@ export type ProductDetailsActionSheetInfoComponent = React.ComponentType<Product
  * @see modules/collectibles/native/ProductDetailsActionSheetInfo.tsx
  */
 export type ProductNameAndDescriptionProps = {
-		product: { name?: unknown };
+		product: { bundledProducts?: unknown; name?: unknown; summary?: unknown; type?: unknown };
 	};
 export type ProductNameAndDescriptionComponent = React.ComponentType<ProductNameAndDescriptionProps>;
 /**
@@ -7594,7 +7594,7 @@ export type VCButtonProps = {
 		/** @default false */
 		hasShopDiscount?: boolean;
 		onTrackPress?: (...args: any[]) => unknown;
-		product: { skuId?: unknown };
+		product: { items?: unknown; skuId?: unknown; type?: unknown; variants?: unknown };
 		stageCollectibleChangeForEditProfile?: unknown;
 	};
 export type VCButtonComponent = React.ComponentType<VCButtonProps>;
@@ -7612,7 +7612,7 @@ export type ProductDetailsActionSheetVariantsProps = {
 		/** @default false */
 		disabled?: ModulesCollectiblesVariantOptionProps['disabled'];
 		onVariantSelect: (...args: any[]) => unknown;
-		product: { variants?: unknown };
+		product: { type?: unknown; variants?: unknown };
 		selectedVariantIndex?: unknown;
 	};
 export type ProductDetailsActionSheetVariantsComponent = React.ComponentType<ProductDetailsActionSheetVariantsProps>;
@@ -7629,7 +7629,7 @@ export type CollectiblesVComponent = React.ComponentType<CollectiblesVProps>;
  * @see modules/collectibles/native/ProductDetailsActionSheetVariants.tsx
  */
 export type ModulesCollectiblesVariantCheckmarkProps = {
-		variant?: unknown;
+		variant?: { variantValue?: unknown };
 	};
 export type ModulesCollectiblesVariantCheckmarkComponent = React.ComponentType<ModulesCollectiblesVariantCheckmarkProps>;
 /**
@@ -7640,7 +7640,7 @@ export type ModulesCollectiblesVariantOptionProps = {
 		disabled?: PressableOpacityProps['disabled'];
 		isSelected?: PressableOpacityProps['aria-checked'];
 		onSelect?: PressableOpacityProps['onPress'];
-		variant: { name?: unknown; variantValue?: unknown };
+		variant: ModulesCollectiblesVariantCheckmarkProps['variant'];
 	};
 export type ModulesCollectiblesVariantOptionComponent = React.ComponentType<ModulesCollectiblesVariantOptionProps>;
 /**
@@ -7913,7 +7913,7 @@ export type HeadlessCollectiblesPurchaseFlowProps = {
 		analyticsLocations?: unknown;
 		attempt?: unknown;
 		onBuySettled?: (...args: any[]) => unknown;
-		product: { skuId?: unknown };
+		product: { items?: unknown; skuId?: unknown; type?: unknown; variants?: unknown };
 		stageCollectibleChangeForEditProfile?: unknown;
 	};
 export type HeadlessCollectiblesPurchaseFlowComponent = React.ComponentType<HeadlessCollectiblesPurchaseFlowProps>;
@@ -8027,7 +8027,7 @@ export type WrappedProfileEffectComponent = React.ComponentType<WrappedProfileEf
 export type ProfileEffectLayerIOSProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		animate?: boolean;
-		layerConfig: { position?: unknown; src?: unknown };
+		layerConfig: { height?: unknown; position?: unknown; src?: unknown; width?: unknown };
 		loaded?: unknown;
 		onLoad?: (...args: any[]) => unknown;
 		paused?: boolean;
@@ -8074,10 +8074,10 @@ export type EditProfileFrameRowComponent = React.ComponentType<EditProfileFrameR
 export type LiveProfileFrameProps = {
 		containerHeight?: ProfileFrameLayerProps['containerHeight'];
 		containerWidth?: number;
-		filterLayer?: unknown;
-		frame: { layers?: unknown; skuId?: unknown };
+		filterLayer?: (...args: any[]) => unknown;
+		frame: { innerWidth?: unknown; layers?: unknown; overflowBottom?: unknown; overflowHorizontal?: unknown; overflowTop?: unknown; skuId?: unknown };
 		frameOrder?: unknown;
-		profileThemeType?: unknown;
+		profileThemeType?: 'preview' | (string & {});
 	};
 export type LiveProfileFrameComponent = React.ComponentType<LiveProfileFrameProps>;
 /**
@@ -8351,7 +8351,7 @@ export type ConjureNativeStatusStripProps = {
 		controlling?: unknown;
 		onToggleThinking?: PressableOpacityProps['onPress'];
 		projectId?: ConjureUsageSheetProps['projectId'];
-		projectUsage?: unknown;
+		projectUsage?: { cost_usd?: unknown; turns?: unknown };
 		/** @default false */
 		recalling?: boolean;
 		/** @default false */
@@ -8431,7 +8431,7 @@ export type ConjureTodoListComponent = React.ComponentType<ConjureTodoListProps>
  * @see modules/conjure/agent_activity/native/ConjureTodoList.tsx
  */
 export type TodoAgentsProps = {
-		agents?: unknown;
+		agents?: { length?: unknown; slice?: unknown };
 	};
 export type TodoAgentsComponent = React.ComponentType<TodoAgentsProps>;
 /**
@@ -8448,7 +8448,7 @@ export type TodoMarkerComponent = React.ComponentType<TodoMarkerProps>;
  */
 export type AgentActivityWProps = {
 		id?: string;
-		status?: unknown;
+		status?: 'completed' | (string & {});
 	};
 export type AgentActivityWComponent = React.ComponentType<AgentActivityWProps & Record<string, unknown>>;
 /**
@@ -8533,8 +8533,8 @@ export type ConjureStaffAccessNoticeComponent = React.ComponentType<ConjureStaff
  * @see modules/conjure/builder/native/ConjureStandaloneScreen.tsx
  */
 export type ChatSceneProps = {
-		guildId: ConjureSettingsSheetProps['guildId'];
-		projectId: PreviewFrameProps['projectId'];
+		guildId?: ConjureSettingsSheetProps['guildId'];
+		projectId?: PreviewFrameProps['projectId'];
 	};
 export type ChatSceneComponent = React.ComponentType<ChatSceneProps>;
 /**
@@ -8566,7 +8566,7 @@ export type ProjectListComponent = React.ComponentType<ProjectListProps>;
 export type BuilderProjectRowProps = {
 		onMore?: ConjureHeaderIconButtonProps['onPress'];
 		onPress?: TableRowProps['onPress'];
-		project: { id?: unknown; name?: unknown; updated_at?: unknown };
+		project: ConjureProjectIconProps['project'];
 	};
 export type BuilderProjectRowComponent = React.ComponentType<BuilderProjectRowProps>;
 /**
@@ -8693,7 +8693,7 @@ export type BrComponent = React.ComponentType<BrProps>;
  * @see modules/conjure/chat/native/ConjureNativeChat.tsx
  */
 export type ConjureNativeChatProps = {
-		onRestoreVersion?: (...args: any[]) => unknown;
+		onRestoreVersion?: ChatMessageRowProps['onRestoreVersion'];
 		projectId?: ConjureThinkingOverlayProps['projectId'];
 		/** @default 0 */
 		transcriptTopInset?: number;
@@ -8704,7 +8704,7 @@ export type ConjureNativeChatComponent = React.ComponentType<ConjureNativeChatPr
  * @see modules/conjure/chat/native/ConjureNativeChat.tsx
  */
 export type ContextBoundaryRowProps = {
-		contextSwitch?: unknown;
+		contextSwitch?: { error?: unknown; id?: unknown; status?: unknown };
 		projectId?: string;
 	};
 export type ContextBoundaryRowComponent = React.ComponentType<ContextBoundaryRowProps>;
@@ -8741,7 +8741,7 @@ export type ChatMessageRowProps = {
 		groupStart?: boolean;
 		hostsReminder?: unknown;
 		isNewest?: boolean;
-		message: { acknowledges?: unknown; attachments?: unknown; clarification?: unknown; content?: unknown; contextSwitch?: unknown; created_at?: unknown; ideas?: unknown; interrupted?: unknown; kind?: unknown; projectEvent?: unknown; proposal?: unknown; provisionalTodo?: unknown; publishCta?: unknown; publishNotice?: unknown; render_id?: unknown; restoreProposal?: unknown; role?: unknown; secretRequest?: unknown; settingsRequest?: unknown; steps?: unknown; todos?: unknown; user_id?: unknown };
+		message: { acknowledges?: unknown; attachments?: unknown; awaitingUser?: unknown; clarification?: unknown; content?: unknown; contextSwitch?: unknown; continued?: unknown; created_at?: unknown; disposition?: unknown; finished?: unknown; id?: unknown; ideas?: unknown; intake?: unknown; interrupted?: unknown; kind?: unknown; projectEvent?: unknown; proposal?: unknown; provisionalTodo?: unknown; publishCta?: unknown; publishNotice?: unknown; render_id?: unknown; restoreProposal?: unknown; role?: unknown; secretRequest?: unknown; settingsRequest?: unknown; sourceSha?: unknown; steps?: unknown; stopRequested?: unknown; todos?: unknown; turn_id?: unknown; user_id?: unknown };
 		onAnswerClarification?: ConjureClarificationCardProps['onSubmit'];
 		onApprovePlan?: ProposalCardProps['onApprove'];
 		onAskForIdeas?: ConjureIdeasOfferProps['onAsk'];
@@ -8755,7 +8755,7 @@ export type ChatMessageRowProps = {
 		planSuperseded?: ProposalCardProps['superseded'];
 		planVersion?: unknown;
 		projectId?: AttachmentPillsProps['projectId'];
-		reminder?: unknown;
+		reminder?: ConjureReminderSlotProps['reminder'];
 		replied?: ConjureRepliedMessageProps['replied'];
 		secretRequestStatus?: ConjureSecretRequestCardProps['status'];
 	};
@@ -8791,7 +8791,7 @@ export type ProposalCardProps = {
 		onApprove?: BaseTextButtonProps['onPress'];
 		onToggleExpanded?: ConjureNativeCollapsibleSectionProps['onToggleExpanded'];
 		projectId?: PlanDesignProps['projectId'];
-		proposal: { automod?: unknown; bot_permissions?: unknown; changes?: unknown; commands?: unknown; design_image?: unknown; privileged_intents?: unknown; summary?: unknown; supported_surfaces?: unknown; what_changed?: unknown };
+		proposal: { automod?: unknown; bot?: unknown; bot_permissions?: unknown; changes?: unknown; commands?: unknown; design_image?: unknown; privileged_intents?: unknown; summary?: unknown; supported_surfaces?: unknown; what_changed?: unknown; widget_config?: unknown; widget_preview?: unknown };
 		/** @default false */
 		superseded?: ConjureNativeCollapsibleSectionProps['superseded'];
 		version?: unknown;
@@ -8818,7 +8818,7 @@ export type TimelineRowProps = {
 		inGutter?: ConjureNativeStatusLineProps['inGutter'];
 		/** @default false */
 		live?: ConjureNativeStatusLineProps['live'];
-		node: { attachments?: unknown; detail?: unknown; durationMs?: unknown; status?: unknown };
+		node: { attachments?: unknown; detail?: unknown; durationMs?: unknown; labelKey?: unknown; labelText?: unknown; status?: unknown };
 		projectId?: ConjureNativeStepImagesProps['projectId'];
 	};
 export type TimelineRowComponent = React.ComponentType<TimelineRowProps>;
@@ -8852,7 +8852,7 @@ export type ConjureNativeComposerProps = {
 		onDraftHasTextChange?: (...args: any[]) => unknown;
 		onInterrupt?: ActionButtonsButtonProps['onPress'];
 		onSend: (...args: any[]) => unknown;
-		projectId: ConjureModelSettingsSheetProps['projectId'];
+		projectId?: ConjureModelSettingsSheetProps['projectId'];
 		running?: unknown;
 		/** @default false */
 		stopped?: boolean;
@@ -8863,7 +8863,7 @@ export type ConjureNativeComposerComponent = React.ComponentType<ConjureNativeCo
  * @see modules/conjure/chat/native/ConjureNativeComposer.tsx
  */
 export type ConjureNativeDraftTileProps = {
-		draft: { contentType?: unknown; localId?: unknown; name?: unknown; previewUrl?: unknown; status?: unknown };
+		draft: { contentType?: unknown; errorText?: unknown; localId?: unknown; name?: unknown; previewUrl?: unknown; status?: unknown };
 		onRemove: (...args: any[]) => unknown;
 	};
 export type ConjureNativeDraftTileComponent = React.ComponentType<ConjureNativeDraftTileProps>;
@@ -8878,7 +8878,7 @@ export type ChatQeComponent = React.ComponentType<ChatQeProps>;
  * @see modules/conjure/chat/native/ConjureNativeMarkdown.tsx
  */
 export type ConjureNativeMarkdownProps = {
-		source?: unknown;
+		source?: { split?: unknown };
 	};
 export type ConjureNativeMarkdownComponent = React.ComponentType<ConjureNativeMarkdownProps>;
 /**
@@ -8886,7 +8886,7 @@ export type ConjureNativeMarkdownComponent = React.ComponentType<ConjureNativeMa
  * @see modules/conjure/chat/native/ConjureNativeMarkdown.tsx
  */
 export type ConjureRevealedMarkdownProps = {
-		source?: unknown;
+		source?: { charCodeAt?: unknown; codePointAt?: unknown; length?: unknown; slice?: unknown; startsWith?: unknown };
 		streaming?: unknown;
 	};
 export type ConjureRevealedMarkdownComponent = React.ComponentType<ConjureRevealedMarkdownProps>;
@@ -8932,7 +8932,7 @@ export type StepImageComponent = React.ComponentType<StepImageProps>;
  * @see modules/conjure/chat/native/ConjureProjectEventLine.tsx
  */
 export type ConjureProjectEventLineProps = {
-		event?: unknown;
+		event?: { actor_user_id?: unknown; channel_name?: unknown; guild_id?: unknown; type?: unknown };
 		projectId?: string;
 	};
 export type ConjureProjectEventLineComponent = React.ComponentType<ConjureProjectEventLineProps>;
@@ -8960,7 +8960,7 @@ export type ConjureSelectedMentionComponent = React.ComponentType<ConjureSelecte
  * @see modules/conjure/clarification/native/ConjureClarificationCard.tsx
  */
 export type ConjureClarificationCardProps = {
-		clarification: { questions?: unknown };
+		clarification: { id?: unknown; questions?: unknown };
 		onDismiss?: ButtonIconButtonProps['onPress'];
 		onSubmit?: (...args: any[]) => unknown;
 		projectId?: ConjureImageOptionsProps['projectId'];
@@ -8986,9 +8986,9 @@ export type ConjureClarificationEntityPickerComponent = React.ComponentType<Conj
 export type ConjureImageOptionsProps = {
 		disabled?: ImageOptionTileProps['disabled'];
 		onPick?: ImageOptionTileProps['onPick'];
-		own: (...args: any[]) => unknown;
-		projectId: ImageOptionTileProps['projectId'];
-		question: { multi_select?: unknown; options?: unknown };
+		own: { busy?: unknown; error?: unknown; image?: unknown; onPick?: unknown; onRemove?: unknown; selected?: unknown };
+		projectId?: ImageOptionTileProps['projectId'];
+		question: { multi_select?: unknown; options?: unknown; question?: unknown };
 		selectedIds: { includes?: unknown };
 	};
 export type ConjureImageOptionsComponent = React.ComponentType<ConjureImageOptionsProps>;
@@ -9027,7 +9027,7 @@ export type ImageOptionTileComponent = React.ComponentType<ImageOptionTileProps>
  * @see modules/conjure/create/native/ConjureCreateSheet.tsx
  */
 export type ConjureCreateSheetProps = {
-		guildId: (...args: any[]) => unknown;
+		guildId?: string;
 		onCreated: (...args: any[]) => unknown;
 	};
 export type ConjureCreateSheetComponent = React.ComponentType<ConjureCreateSheetProps>;
@@ -9059,7 +9059,7 @@ export type ConjureDebugAgentTabComponent = React.ComponentType<ConjureDebugAgen
  * @see modules/conjure/debug/native/ConjureDebugAnalytics.tsx
  */
 export type ConjureDebugAgentAnalyticsRowsProps = {
-		analytics: { objects?: unknown; status?: unknown };
+		analytics: { detail?: unknown; objects?: unknown; reason?: unknown; status?: unknown };
 	};
 export type ConjureDebugAgentAnalyticsRowsComponent = React.ComponentType<ConjureDebugAgentAnalyticsRowsProps>;
 /**
@@ -9067,7 +9067,7 @@ export type ConjureDebugAgentAnalyticsRowsComponent = React.ComponentType<Conjur
  * @see modules/conjure/debug/native/ConjureDebugAnalytics.tsx
  */
 export type ConjureDebugWorkerAnalyticsSectionProps = {
-		analytics: { objects?: unknown; status?: unknown };
+		analytics: { detail?: unknown; objects?: unknown; reason?: unknown; status?: unknown };
 	};
 export type ConjureDebugWorkerAnalyticsSectionComponent = React.ComponentType<ConjureDebugWorkerAnalyticsSectionProps>;
 /**
@@ -9179,7 +9179,7 @@ export type ConjureDebugSceneComponent = React.ComponentType<ConjureDebugScenePr
  * @see modules/conjure/debug/native/ConjureDebugWorkerTab.tsx
  */
 export type AiEnvBlockProps = {
-		env?: unknown;
+		env?: 'preview' | (string & {});
 		metrics: { calls?: unknown; errors?: unknown; last_model?: unknown };
 	};
 export type AiEnvBlockComponent = React.ComponentType<AiEnvBlockProps>;
@@ -9189,7 +9189,7 @@ export type AiEnvBlockComponent = React.ComponentType<AiEnvBlockProps>;
  */
 export type BotEnvBlockProps = {
 		bot: { connected?: unknown; dispatch_errors?: unknown; events_received?: unknown; ever_started?: unknown; fatal_reason?: unknown; guild_count?: unknown; last_close_at?: unknown; last_close_code?: unknown; last_event_at?: unknown; last_event_type?: unknown; last_start_reason?: unknown; reconnects?: unknown };
-		env?: unknown;
+		env?: 'preview' | (string & {});
 	};
 export type BotEnvBlockComponent = React.ComponentType<BotEnvBlockProps>;
 /**
@@ -9228,7 +9228,7 @@ export type EnvSectionComponent = React.ComponentType<EnvSectionProps>;
  * @see modules/conjure/debug/native/ConjureDebugWorkerTab.tsx
  */
 export type OutboundEnvBlockProps = {
-		env?: unknown;
+		env?: 'preview' | (string & {});
 		metrics: { errors?: unknown; last_failure?: unknown; requests?: unknown; since?: unknown; status_4xx?: unknown; status_5xx?: unknown };
 	};
 export type OutboundEnvBlockComponent = React.ComponentType<OutboundEnvBlockProps>;
@@ -9237,7 +9237,7 @@ export type OutboundEnvBlockComponent = React.ComponentType<OutboundEnvBlockProp
  * @see modules/conjure/debug/native/ConjureDebugWorkerTab.tsx
  */
 export type RuntimeEnvBlockProps = {
-		env?: unknown;
+		env?: 'preview' | (string & {});
 		runtime: { connections?: unknown; schedules?: unknown };
 	};
 export type RuntimeEnvBlockComponent = React.ComponentType<RuntimeEnvBlockProps>;
@@ -9303,7 +9303,7 @@ export type PerfTraceScreenComponent = React.ComponentType<PerfTraceScreenProps>
 export type SmallerRowProps = {
 		extent?: unknown;
 		onReveal: (...args: any[]) => unknown;
-		row: { depth?: unknown; end?: unknown; parentKey?: unknown; start?: unknown; totalMs?: unknown };
+		row: { count?: unknown; depth?: unknown; end?: unknown; parentKey?: unknown; start?: unknown; totalMs?: unknown };
 	};
 export type SmallerRowComponent = React.ComponentType<SmallerRowProps>;
 /**
@@ -9311,7 +9311,7 @@ export type SmallerRowComponent = React.ComponentType<SmallerRowProps>;
  * @see modules/conjure/debug/perf_trace/native/ConjurePerfTraceModal.tsx
  */
 export type TraceStatsProps = {
-		trace?: unknown;
+		trace?: { as_of?: unknown; spans?: unknown };
 	};
 export type TraceStatsComponent = React.ComponentType<TraceStatsProps>;
 /**
@@ -9319,7 +9319,7 @@ export type TraceStatsComponent = React.ComponentType<TraceStatsProps>;
  * @see modules/conjure/debug/perf_trace/native/ConjurePerfTraceModal.tsx
  */
 export type WaterfallProps = {
-		trace: { dropped?: unknown; started_by?: unknown };
+		trace: TraceStatsProps['trace'];
 	};
 export type WaterfallComponent = React.ComponentType<WaterfallProps>;
 /**
@@ -9329,7 +9329,7 @@ export type WaterfallComponent = React.ComponentType<WaterfallProps>;
 export type WaterfallRowProps = {
 		collapsed?: unknown;
 		extent?: unknown;
-		node: { category?: unknown; children?: unknown; count?: unknown; depth?: unknown; descendants?: unknown; end?: unknown; failed?: unknown; key?: unknown; operation?: unknown; running?: unknown; service?: unknown; start?: unknown };
+		node: { category?: unknown; children?: unknown; count?: unknown; depth?: unknown; descendants?: unknown; end?: unknown; failed?: unknown; key?: unknown; maxMs?: unknown; operation?: unknown; outlivedParent?: unknown; parallel?: unknown; running?: unknown; selfMs?: unknown; service?: unknown; span?: unknown; start?: unknown; totalMs?: unknown };
 		onExpandSubtree: (...args: any[]) => unknown;
 		onSelect: (...args: any[]) => unknown;
 		onToggle: (...args: any[]) => unknown;
@@ -9341,7 +9341,7 @@ export type WaterfallRowComponent = React.ComponentType<WaterfallRowProps>;
  * @see modules/conjure/debug/perf_trace/native/ConjurePerfTraceStatsHeader.tsx
  */
 export type ConjurePerfTraceStatsHeaderProps = {
-		stats: { categories?: unknown };
+		stats: { busyMs?: unknown; categories?: unknown; model?: unknown };
 	};
 export type ConjurePerfTraceStatsHeaderComponent = React.ComponentType<ConjurePerfTraceStatsHeaderProps>;
 /**
@@ -9365,7 +9365,7 @@ export type PerfTraceBComponent = React.ComponentType<PerfTraceBProps>;
  * @see modules/conjure/debug/perf_trace/native/ConjurePerfTraceTab.tsx
  */
 export type ConjurePerfTraceTabProps = {
-		projectId?: string;
+		projectId?: PerfTraceRowProps['projectId'];
 	};
 export type ConjurePerfTraceTabComponent = React.ComponentType<ConjurePerfTraceTabProps>;
 /**
@@ -9374,7 +9374,7 @@ export type ConjurePerfTraceTabComponent = React.ComponentType<ConjurePerfTraceT
  */
 export type PerfTraceRowProps = {
 		projectId?: string;
-		trace: { id?: unknown; name?: unknown; spans?: unknown };
+		trace: { id?: unknown; live?: unknown; name?: unknown; spans?: unknown; started_at?: unknown };
 	};
 export type PerfTraceRowComponent = React.ComponentType<PerfTraceRowProps>;
 /**
@@ -9398,7 +9398,7 @@ export type ConjureDesignFeedbackOverlayComponent = React.ComponentType<ConjureD
 export type ConjureDesignRemarkSheetProps = {
 		onClose: ActionSheetProps['onDismiss'];
 		projectId?: string;
-		target?: unknown;
+		target?: { marker?: unknown; name?: unknown; path?: unknown; rect?: unknown; ref?: unknown; role?: unknown; tag?: unknown; value?: unknown };
 	};
 export type ConjureDesignRemarkSheetComponent = React.ComponentType<ConjureDesignRemarkSheetProps>;
 /**
@@ -9499,9 +9499,9 @@ export type GuildPickersXComponent = React.ComponentType<GuildPickersXProps & Re
  * @see modules/conjure/history/native/ConjureHistorySheet.tsx
  */
 export type ConjureHistorySheetProps = {
-		installScope?: unknown;
-		onRestoreVersion: (...args: any[]) => unknown;
-		projectId: (...args: any[]) => unknown;
+		installScope?: 'user' | (string & {});
+		onRestoreVersion?: (...args: any[]) => unknown;
+		projectId?: string;
 	};
 export type ConjureHistorySheetComponent = React.ComponentType<ConjureHistorySheetProps>;
 /**
@@ -9515,7 +9515,7 @@ export type DatabaseSectionProps = {
 		onRewindToTime: (...args: any[]) => unknown;
 		onSaveBackup: (...args: any[]) => unknown;
 		sharedDatabase?: unknown;
-		versionTitles?: unknown;
+		versionTitles?: { get?: unknown };
 	};
 export type DatabaseSectionComponent = React.ComponentType<DatabaseSectionProps>;
 /**
@@ -9531,7 +9531,7 @@ export type HistoryFComponent = React.ComponentType<HistoryFProps & Record<strin
  * @see modules/conjure/history/native/ConjureHistorySheet.tsx
  */
 export type HistoryDayGroupsProps = {
-		getMs?: unknown;
+		getMs?: (...args: any[]) => unknown;
 		items?: unknown;
 		nowMs?: unknown;
 		renderItem?: (...args: any[]) => React.ReactNode;
@@ -9571,7 +9571,7 @@ export type HistoryIProps = {
 		restorable?: boolean;
 		restored?: boolean;
 		sha?: unknown;
-		subject?: unknown;
+		subject?: { replace?: unknown };
 	};
 export type HistoryIComponent = React.ComponentType<HistoryIProps & Record<string, unknown>>;
 /**
@@ -9592,7 +9592,7 @@ export type VersionsPanelComponent = React.ComponentType<VersionsPanelProps>;
  * @see modules/conjure/history/native/ConjureSaveBackupSheet.tsx
  */
 export type ConjureSaveBackupSheetProps = {
-		environment?: unknown;
+		environment?: 'preview' | (string & {});
 		onSaved: (...args: any[]) => unknown;
 		projectId?: string;
 	};
@@ -9666,7 +9666,7 @@ export type ConjureEffortPickerProps = {
 		/** @default false */
 		hideTitle?: boolean;
 		onChange: (...args: any[]) => unknown;
-		settings: { fast?: unknown; thinking?: unknown; tier?: unknown };
+		settings: { fast?: unknown; models?: unknown; thinking?: unknown; tier?: unknown };
 		tiers?: unknown;
 	};
 export type ConjureEffortPickerComponent = React.ComponentType<ConjureEffortPickerProps>;
@@ -9710,7 +9710,7 @@ export type ConjurePlanAutomodExamplesComponent = React.ComponentType<ConjurePla
  * @see modules/conjure/plan/native/ConjurePlanAutomodExamples.tsx
  */
 export type ExampleRowProps = {
-		example: { content?: unknown; outcome?: unknown };
+		example: { content?: unknown; outcome?: unknown; reason?: unknown; timeout_seconds?: unknown };
 	};
 export type ExampleRowComponent = React.ComponentType<ExampleRowProps>;
 /**
@@ -9866,7 +9866,7 @@ export type StatusCardComponent = React.ComponentType<StatusCardProps>;
  */
 export type ConjurePreviewTargetSheetProps = {
 		onChange: (...args: any[]) => unknown;
-		target?: unknown;
+		target?: { appChannel?: unknown; mode?: unknown; surface?: unknown };
 		targets: { map?: unknown };
 	};
 export type ConjurePreviewTargetSheetComponent = React.ComponentType<ConjurePreviewTargetSheetProps>;
@@ -9876,7 +9876,7 @@ export type ConjurePreviewTargetSheetComponent = React.ComponentType<ConjurePrev
  */
 export type ConjureProjectHeaderTitleProps = {
 		onPressIcon?: PressableOpacityProps['onPress'];
-		project?: unknown;
+		project?: ConjureProjectIconProps['project'];
 		title?: DesignTextProps['children'];
 	};
 export type ConjureProjectHeaderTitleComponent = React.ComponentType<ConjureProjectHeaderTitleProps>;
@@ -9885,7 +9885,7 @@ export type ConjureProjectHeaderTitleComponent = React.ComponentType<ConjureProj
  * @see modules/conjure/projects/native/ConjureProjectIcon.tsx
  */
 export type ConjureProjectIconProps = {
-		project?: unknown;
+		project?: { application_id?: unknown; preview_application_id?: unknown };
 		size?: 'header' | 'list' | (string & {});
 	};
 export type ConjureProjectIconComponent = React.ComponentType<ConjureProjectIconProps>;
@@ -9920,7 +9920,7 @@ export type ProjectGroupComponent = React.ComponentType<ProjectGroupProps>;
  * @see modules/conjure/projects/native/ConjureProjectsSheet.tsx
  */
 export type ProjectsProjectRowProps = {
-		entry: { activity?: unknown; guildId?: unknown; name?: unknown; project?: unknown; projectId?: unknown };
+		entry: { activity?: unknown; guildId?: unknown; guildName?: unknown; name?: unknown; notInServer?: unknown; project?: unknown; projectId?: unknown };
 		fallbackGuildId?: string;
 	};
 export type ProjectsProjectRowComponent = React.ComponentType<ProjectsProjectRowProps>;
@@ -9987,8 +9987,8 @@ export type ConjureDeleteAppChannelAlertProps = {
 		app: { guildId?: unknown; rest?: unknown; targetAppName?: unknown };
 		applicationId?: string;
 		channelId?: string;
-		onAppRemoved: (...args: any[]) => unknown;
-		onDeleteChannel: (...args: any[]) => unknown;
+		onAppRemoved?: (...args: any[]) => unknown;
+		onDeleteChannel?: (...args: any[]) => unknown;
 	};
 export type ConjureDeleteAppChannelAlertComponent = React.ComponentType<ConjureDeleteAppChannelAlertProps>;
 /**
@@ -9997,8 +9997,8 @@ export type ConjureDeleteAppChannelAlertComponent = React.ComponentType<ConjureD
  */
 export type ConjureRemoveAppAlertProps = {
 		action?: 'delete' | (string & {});
-		project: (...args: any[]) => unknown;
-		target: (...args: any[]) => unknown;
+		project: { id?: unknown };
+		target: { appName?: unknown; canRemovePreviewBot?: unknown; channelNames?: unknown; guildName?: unknown; keptChannelNames?: unknown; previewAppName?: unknown; projectName?: unknown };
 	};
 export type ConjureRemoveAppAlertComponent = React.ComponentType<ConjureRemoveAppAlertProps>;
 /**
@@ -10007,9 +10007,9 @@ export type ConjureRemoveAppAlertComponent = React.ComponentType<ConjureRemoveAp
  */
 export type ConjureFirstPublishSheetProps = {
 		description?: unknown;
-		name: ConjureAppIdentitySectionProps['previewName'];
+		name?: ConjureAppIdentitySectionProps['previewName'];
 		onDone: (...args: any[]) => unknown;
-		projectId: (...args: any[]) => unknown;
+		projectId?: string;
 	};
 export type ConjureFirstPublishSheetComponent = React.ComponentType<ConjureFirstPublishSheetProps>;
 /**
@@ -10017,9 +10017,9 @@ export type ConjureFirstPublishSheetComponent = React.ComponentType<ConjureFirst
  * @see modules/conjure/publish/native/ConjurePublishBlockedSheet.tsx
  */
 export type ConjurePublishBlockedSheetProps = {
-		message?: unknown;
+		message?: string;
 		onConfirm?: (...args: any[]) => unknown;
-		reason?: unknown;
+		reason?: 'missing-manage-channels' | 'missing-manage-server' | 'no-preview' | (string & {});
 	};
 export type ConjurePublishBlockedSheetComponent = React.ComponentType<ConjurePublishBlockedSheetProps>;
 /**
@@ -10043,8 +10043,8 @@ export type PublishCtaComponent = React.ComponentType<PublishCtaProps>;
  * @see modules/conjure/publish/native/ConjurePublishNotesSheet.tsx
  */
 export type ConjurePublishNotesSheetProps = {
-		applicationId: (...args: any[]) => unknown;
-		guildId: (...args: any[]) => unknown;
+		applicationId?: string;
+		guildId?: string;
 		initialDraft: { then?: unknown };
 		projectName?: unknown;
 		publish: { then?: unknown };
@@ -10055,7 +10055,7 @@ export type ConjurePublishNotesSheetComponent = React.ComponentType<ConjurePubli
  * @see modules/conjure/publish/native/ConjurePublishNoticeLine.tsx
  */
 export type ConjurePublishNoticeLineProps = {
-		notice?: 'outdated' | (string & {});
+		notice?: PublishedNoticeLineProps['notice'];
 		projectId?: PublishedNoticeLineProps['projectId'];
 	};
 export type ConjurePublishNoticeLineComponent = React.ComponentType<ConjurePublishNoticeLineProps>;
@@ -10072,7 +10072,7 @@ export type OutdatedNoticeLineComponent = React.ComponentType<OutdatedNoticeLine
  * @see modules/conjure/publish/native/ConjurePublishNoticeLine.tsx
  */
 export type PublishedNoticeLineProps = {
-		notice?: unknown;
+		notice?: { channel_skipped?: unknown; update?: unknown };
 		projectId?: string;
 	};
 export type PublishedNoticeLineComponent = React.ComponentType<PublishedNoticeLineProps>;
@@ -10097,7 +10097,7 @@ export type ConjureIdeasOfferComponent = React.ComponentType<ConjureIdeasOfferPr
  * @see modules/conjure/reminders/native/ConjureReminderSlot.tsx
  */
 export type ConjureReminderSlotProps = {
-		reminder?: unknown;
+		reminder?: (...args: any[]) => unknown;
 		renderReminder: (...args: any[]) => unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
@@ -10128,8 +10128,8 @@ export type ReminderLayerComponent = React.ComponentType<ReminderLayerProps>;
  */
 export type ConjureRemixSheetProps = {
 		currentGuildId?: string;
-		onRemixed: (...args: any[]) => unknown;
-		project: (...args: any[]) => unknown;
+		onRemixed?: (...args: any[]) => unknown;
+		project?: unknown;
 	};
 export type ConjureRemixSheetComponent = React.ComponentType<ConjureRemixSheetProps>;
 /**
@@ -10149,7 +10149,7 @@ export type ConjureSecretRequestCardComponent = React.ComponentType<ConjureSecre
  * @see modules/conjure/secrets/native/ConjureSecretsSheet.tsx
  */
 export type ConjureSecretsSheetProps = {
-		projectId: (...args: any[]) => unknown;
+		projectId?: string;
 		request: { copy_values?: unknown; fields?: unknown; note?: unknown };
 	};
 export type ConjureSecretsSheetComponent = React.ComponentType<ConjureSecretsSheetProps>;
@@ -10167,7 +10167,7 @@ export type ConjureSettingsRequestCardComponent = React.ComponentType<ConjureSet
  * @see modules/conjure/settings/native/ConjureSettingsSheet.tsx
  */
 export type ConjureSettingsSheetProps = {
-		guildId?: string;
+		guildId?: ConjureCollaboratorRolesSheetProps['guildId'];
 		initialTab?: 'project' | (string & {});
 		isPreview?: boolean;
 		note?: unknown;
@@ -10213,7 +10213,7 @@ export type ConjurePickerSettingRowProps = {
 		isPreview?: boolean;
 		onChange: (...args: any[]) => unknown;
 		projectId?: string;
-		value?: unknown;
+		value?: string;
 	};
 export type ConjurePickerSettingRowComponent = React.ComponentType<ConjurePickerSettingRowProps>;
 /**
@@ -10307,7 +10307,7 @@ export type ConjureTemplateWizardSheetProps = {
 		guildId?: string;
 		modelSettings?: unknown;
 		onCreated: (...args: any[]) => unknown;
-		template: (...args: any[]) => unknown;
+		template: { id?: unknown; name?: unknown };
 	};
 export type ConjureTemplateWizardSheetComponent = React.ComponentType<ConjureTemplateWizardSheetProps>;
 /**
@@ -10324,7 +10324,7 @@ export type ConjureUsageSheetComponent = React.ComponentType<ConjureUsageSheetPr
  */
 export type UsageRoleRowProps = {
 		label?: DesignTextProps['children'];
-		usage?: unknown;
+		usage?: { cache_creation_input_tokens?: unknown; cache_read_input_tokens?: unknown; input_tokens?: unknown; output_tokens?: unknown };
 	};
 export type UsageRoleRowComponent = React.ComponentType<UsageRoleRowProps>;
 /**
@@ -10340,7 +10340,7 @@ export type PaypalVanityTagComponent = React.ComponentType<PaypalVanityTagProps>
  * @see modules/connections/native/ConnectionMetadataVanityItems.tsx
  */
 export type VanityDateProps = {
-		date?: unknown;
+		date?: string;
 		label?: unknown;
 		locale?: unknown;
 		style?: DesignTextProps['style'];
@@ -10458,10 +10458,10 @@ export type FederatedSocialModalComponent = React.ComponentType<FederatedSocialM
  * @see modules/connections/native/FederatedSocialModal.tsx
  */
 export type FederatedSocialModalScreenProps = {
-		location: (...args: any[]) => unknown;
+		location?: unknown;
 		onClose?: (...args: any[]) => unknown;
-		platformType?: unknown;
-		successRedirect: (...args: any[]) => unknown;
+		platformType?: 'bluesky' | 'mastodon' | (string & {});
+		successRedirect?: unknown;
 	};
 export type FederatedSocialModalScreenComponent = React.ComponentType<FederatedSocialModalScreenProps>;
 /**
@@ -10469,7 +10469,7 @@ export type FederatedSocialModalScreenComponent = React.ComponentType<FederatedS
  * @see modules/connections/native/GuildRoleConnectionsConnectAccountsActionSheet.tsx
  */
 export type ConnectionsChannelNameProps = {
-		channel?: unknown;
+		channel?: { guild_id?: unknown; isForumPost?: unknown; isGameInvitesChannel?: unknown; isGuildVocal?: unknown; isMediaChannel?: unknown; isNSFW?: unknown; isSpoilerChannel?: unknown; linkedLobby?: unknown; parent_id?: unknown; permissionOverwrites?: unknown; type?: unknown };
 		style?: React.ComponentProps<typeof RN.View>['style'];
 	};
 export type ConnectionsChannelNameComponent = React.ComponentType<ConnectionsChannelNameProps>;
@@ -10775,7 +10775,7 @@ export type ContactSyncAComponent = React.ComponentType<ContactSyncAProps>;
 export type ContactSyncLandingScreenProps = {
 		loading?: ContactSyncLandingOnboardingRedesignProps['loading'];
 		onComplete?: (...args: any[]) => unknown;
-		openSettingsSheet?: (...args: any[]) => unknown;
+		openSettingsSheet?: unknown;
 		setLoading: (...args: any[]) => unknown;
 	};
 export type ContactSyncLandingScreenComponent = React.ComponentType<ContactSyncLandingScreenProps>;
@@ -10794,7 +10794,7 @@ export type ContactSyncModalComponent = React.ComponentType<ContactSyncModalProp
  * @see modules/contact_sync/native/components/RedesignContactSyncModal.tsx
  */
 export type ContactSyncNameInputScreen_12386Props = {
-		navigateToLandingPage?: unknown;
+		navigateToLandingPage?: (...args: any[]) => unknown;
 	};
 export type ContactSyncNameInputScreen_12386Component = React.ComponentType<ContactSyncNameInputScreen_12386Props>;
 /**
@@ -11033,10 +11033,10 @@ export type CreateGuildComponent = React.ComponentType<CreateGuildProps>;
  * @see modules/create_guild/native/components/AcceptInviteContainer.tsx
  */
 export type AcceptInviteContainerProps = Omit<AcceptInviteProps, 'code' | 'inviteInstanceId' | 'isRegistration' | 'onPressClose'> & {
-		code: (...args: any[]) => unknown;
-		inviteInstanceId: string;
+		code?: unknown;
+		inviteInstanceId?: string;
 		isRegistration?: boolean;
-		onPressClose: AcceptInviteProps['onPressClose'];
+		onPressClose?: AcceptInviteProps['onPressClose'];
 	};
 export type AcceptInviteContainerComponent = React.ComponentType<AcceptInviteContainerProps & Record<string, unknown>>;
 /**
@@ -11046,9 +11046,9 @@ export type AcceptInviteContainerComponent = React.ComponentType<AcceptInviteCon
 export type CreateGuildContainerProps = Omit<CreateGuildProps, 'autoFocus' | 'guildTemplate' | 'isCommunityIntent' | 'onCreate' | 'onHubGuildInfoSet'> & {
 		/** @default true */
 		autoFocus?: CreateGuildProps['autoFocus'];
-		guildTemplate: (...args: any[]) => unknown;
+		guildTemplate?: unknown;
 		isCommunityIntent?: boolean;
-		onCreate: (...args: any[]) => unknown;
+		onCreate?: (...args: any[]) => unknown;
 		onHubGuildInfoSet?: (...args: any[]) => unknown;
 	};
 export type CreateGuildContainerComponent = React.ComponentType<CreateGuildContainerProps>;
@@ -11058,7 +11058,7 @@ export type CreateGuildContainerComponent = React.ComponentType<CreateGuildConta
  */
 export type CreateGuildModalProps = {
 		channel?: unknown;
-		initialState?: 'join_server' | (string & {});
+		initialState?: JoinServerContainerProps['initialRoute'];
 		onSuccess?: (...args: any[]) => unknown;
 	};
 export type CreateGuildModalComponent = React.ComponentType<CreateGuildModalProps>;
@@ -11308,7 +11308,7 @@ export type CustomTypingIndicatorEditScreenComponent = React.ComponentType<Custo
  * @see modules/custom_typing_indicator/native/CustomTypingIndicatorEditScreen.tsx
  */
 export type CustomTypingIndicatorEditScreenContentProps = {
-		mode: 'profile_pending' | 'try_it_out' | (string & {});
+		mode?: 'try_it_out' | (string & {});
 	};
 export type CustomTypingIndicatorEditScreenContentComponent = React.ComponentType<CustomTypingIndicatorEditScreenContentProps>;
 /**
@@ -11328,7 +11328,7 @@ export type CustomTypingIndicatorEmojiSlotComponent = React.ComponentType<Custom
  * @see modules/custom_typing_indicator/native/CustomTypingIndicatorEmojiSlots.tsx
  */
 export type CustomTypingIndicatorEmojiSlotsProps = {
-		emojis?: unknown;
+		emojis?: { map?: unknown };
 		onChange?: CustomTypingIndicatorEmojiSlotProps['onChange'];
 	};
 export type CustomTypingIndicatorEmojiSlotsComponent = React.ComponentType<CustomTypingIndicatorEmojiSlotsProps>;
@@ -11354,7 +11354,7 @@ export type PlaceholderEmojiGlyphComponent = React.ComponentType<PlaceholderEmoj
  * @see modules/custom_typing_indicator/native/CustomTypingIndicatorGlyph.tsx
  */
 export type CustomTypingIndicatorGlyphProps = {
-		config: { emojis?: unknown };
+		config: { animation?: unknown; emojis?: unknown };
 		size?: CustomTypingIndicatorAnimatedEmojiProps['size'];
 	};
 export type CustomTypingIndicatorGlyphComponent = React.ComponentType<CustomTypingIndicatorGlyphProps>;
@@ -11722,7 +11722,7 @@ export type ExperimentDetailsComponent = React.ComponentType<ExperimentDetailsPr
  */
 export type ExperimentGroupProps = {
 		end?: TableRowProps['end'];
-		experiment: { system?: unknown; title?: unknown };
+		experiment: { system?: unknown; title?: unknown; variants?: unknown };
 		id?: string;
 		override?: { variantId?: unknown };
 		start?: TableRowProps['start'];
@@ -11742,7 +11742,7 @@ export type GuildExperimentDebugViewComponent = React.ComponentType<GuildExperim
  * @see modules/devtools/native/components/screens/DevToolsExperimentsScreen.tsx
  */
 export type UserExperimentDebugViewProps = {
-		experiment: { kind?: unknown; system?: unknown };
+		experiment: { kind?: unknown; name?: unknown; system?: unknown };
 		id?: string;
 		override?: { originalDescriptor?: unknown };
 	};
@@ -11758,7 +11758,7 @@ export type DevToolsGeneratedTestUsersScreenComponent = React.ComponentType<DevT
  * @see modules/devtools/native/components/screens/DevToolsGeneratedTestUsersScreen.tsx
  */
 export type PoolIdInputProps = {
-		onSubmit: (...args: any[]) => unknown;
+		onSubmit?: (...args: any[]) => unknown;
 	};
 export type PoolIdInputComponent = React.ComponentType<PoolIdInputProps>;
 /**
@@ -11796,7 +11796,7 @@ export type DevToolsGuildPowerupsScreenComponent = React.ComponentType<DevToolsG
  * @see modules/devtools/native/components/screens/DevToolsGuildPowerupsScreen.tsx
  */
 export type GuildDCSwitchRowProps = {
-		dc?: unknown;
+		dc?: number;
 		guildId?: string;
 		isDismissed?: TableSwitchRowProps['value'];
 	};
@@ -11806,7 +11806,7 @@ export type GuildDCSwitchRowComponent = React.ComponentType<GuildDCSwitchRowProp
  * @see modules/devtools/native/components/screens/DevToolsGuildPowerupsScreen.tsx
  */
 export type UserDCSwitchRowProps = {
-		dc?: unknown;
+		dc?: number;
 	};
 export type UserDCSwitchRowComponent = React.ComponentType<UserDCSwitchRowProps>;
 /**
@@ -11957,7 +11957,7 @@ export type DevToolsShopScreenComponent = React.ComponentType<DevToolsShopScreen
  */
 export type DevTogglesForCategoryProps = {
 		category?: unknown;
-		query?: unknown;
+		query?: { length?: unknown; toLowerCase?: unknown };
 		title?: TableRowGroupProps['title'];
 	};
 export type DevTogglesForCategoryComponent = React.ComponentType<DevTogglesForCategoryProps>;
@@ -12041,7 +12041,7 @@ export type GuildDirectoryFooterComponent = React.ComponentType<GuildDirectoryFo
  * @see modules/directory_channels/native/components/GuildDirectory.tsx
  */
 export type GuildDirectoryHeaderProps = {
-		guild: { features?: unknown };
+		guild: HubProgressHeaderProps['guild'];
 		onPressSearch?: BaseTextButtonProps['onPress'];
 	};
 export type GuildDirectoryHeaderComponent = React.ComponentType<GuildDirectoryHeaderProps>;
@@ -12160,9 +12160,9 @@ export type DirectoryChannelsLComponent = React.ComponentType<DirectoryChannelsL
  * @see modules/directory_channels/native/components/GuildDirectoryCreateOrAddDescription.tsx
  */
 export type GuildDirectoryCreateOrAddDescriptionProps = {
-		createGuild?: { icon?: unknown; name?: unknown; template?: unknown };
-		directoryChannelId: GuildDirectoryEditDescriptionTemplateProps['directoryChannelId'];
-		directoryGuildName: (...args: any[]) => unknown;
+		createGuild?: unknown;
+		directoryChannelId?: GuildDirectoryEditDescriptionTemplateProps['directoryChannelId'];
+		directoryGuildName?: unknown;
 		guild?: unknown;
 	};
 export type GuildDirectoryCreateOrAddDescriptionComponent = React.ComponentType<GuildDirectoryCreateOrAddDescriptionProps>;
@@ -12186,9 +12186,9 @@ export type GuildDirectoryEditDescriptionModalComponent = React.ComponentType<Gu
  */
 export type GuildDirectoryEditDescriptionTemplateProps = {
 		buttonLabel?: BaseTextButtonProps['text'];
-		directoryChannelId: (...args: any[]) => unknown;
+		directoryChannelId?: string;
 		entry?: { description?: unknown; primaryCategoryId?: unknown };
-		onSubmit: (...args: any[]) => unknown;
+		onSubmit?: (...args: any[]) => unknown;
 	};
 export type GuildDirectoryEditDescriptionTemplateComponent = React.ComponentType<GuildDirectoryEditDescriptionTemplateProps>;
 /**
@@ -12221,7 +12221,7 @@ export type DirectoryChannelsRComponent = React.ComponentType<DirectoryChannelsR
  * @see modules/directory_channels/native/components/GuildDirectoryNicknameUpsellModal.tsx
  */
 export type GuildDirectoryNicknameUpsellProps = {
-		guildId: (...args: any[]) => unknown;
+		guildId?: string;
 		handleClose?: unknown;
 	};
 export type GuildDirectoryNicknameUpsellComponent = React.ComponentType<GuildDirectoryNicknameUpsellProps>;
@@ -12312,7 +12312,7 @@ export type DirectoryChannelsIconComponent = React.ComponentType<DirectoryChanne
 export type SelectedDismissibleContentProps = {
 		bypassAutoDismiss?: boolean;
 		children: (...args: any[]) => unknown;
-		contentTypes?: unknown;
+		contentTypes?: { filter?: unknown };
 		groupName?: unknown;
 	};
 export type SelectedDismissibleContentComponent = React.ComponentType<SelectedDismissibleContentProps>;
@@ -12403,7 +12403,7 @@ export type DisplayNameStylesChatPreviewProps = {
 		guildId?: UsernameWithEffectsProps['guildId'];
 		/** @default false */
 		isTryItOut?: boolean;
-		user: { id?: unknown };
+		user: { avatarDecoration?: unknown; id?: unknown };
 	};
 export type DisplayNameStylesChatPreviewComponent = React.ComponentType<DisplayNameStylesChatPreviewProps>;
 /**
@@ -12499,7 +12499,7 @@ export type ModulesDisplayNameStylesUComponent = React.ComponentType<ModulesDisp
  * @see modules/display_name_styles/native/DisplayNameStylesFontPickerSheet.tsx
  */
 export type DisplayNameStylesFontPickerSheetProps = {
-		displayName?: unknown;
+		displayName?: { replace?: unknown };
 		onSelectFont: (...args: any[]) => unknown;
 		selectedFontId?: string;
 	};
@@ -12614,7 +12614,7 @@ export type DmSettingsUpsellActionSheetComponent = React.ComponentType<DmSetting
  * @see modules/double_tap_to_react/native/DoubleTapEmojiEditNudge.tsx
  */
 export type DoubleTapEmojiEditNudgeProps = {
-		location?: DoubleTapEmojiEditNudgeInnerProps['location'];
+		location?: unknown;
 	};
 export type DoubleTapEmojiEditNudgeComponent = React.ComponentType<DoubleTapEmojiEditNudgeProps>;
 /**
@@ -12622,8 +12622,8 @@ export type DoubleTapEmojiEditNudgeComponent = React.ComponentType<DoubleTapEmoj
  * @see modules/double_tap_to_react/native/DoubleTapEmojiEditNudge.tsx
  */
 export type DoubleTapEmojiEditNudgeInnerProps = {
-		emoji: (...args: any[]) => unknown;
-		location: (...args: any[]) => unknown;
+		emoji: { animated?: unknown; id?: unknown; surrogates?: unknown; url?: unknown };
+		location?: unknown;
 	};
 export type DoubleTapEmojiEditNudgeInnerComponent = React.ComponentType<DoubleTapEmojiEditNudgeInnerProps>;
 /**
@@ -12639,7 +12639,7 @@ export type DoubleTapNitroAlertComponent = React.ComponentType<DoubleTapNitroAle
  * @see modules/double_tap_to_react/native/DoubleTapToReactActionSheet.tsx
  */
 export type DoubleTapToReactActionSheetProps = {
-		emoji?: unknown;
+		emoji?: { id?: unknown; name?: unknown; surrogates?: unknown };
 	};
 export type DoubleTapToReactActionSheetComponent = React.ComponentType<DoubleTapToReactActionSheetProps>;
 /**
@@ -12718,7 +12718,7 @@ export type EmojiButtonComponent = React.ComponentType<EmojiButtonProps>;
  */
 export type SelectDoubleTapEmojiRowProps = {
 		onPressEmoji: (...args: any[]) => unknown;
-		selectedEmoji: { animated?: unknown; id?: unknown; surrogates?: unknown; url?: unknown };
+		selectedEmoji: { animated?: unknown; id?: unknown; name?: unknown; surrogates?: unknown; url?: unknown };
 		style?: React.ComponentProps<typeof RN.View>['style'];
 	};
 export type SelectDoubleTapEmojiRowComponent = React.ComponentType<SelectDoubleTapEmojiRowProps>;
@@ -12738,11 +12738,11 @@ export type BaseEmbeddedAppWebViewProps = {
 		activitySessionId?: string;
 		activityUrl?: unknown;
 		allowPopups?: boolean;
-		applicationId: (...args: any[]) => unknown;
+		applicationId?: string;
 		channelId?: string;
 		deepLinkQueryParams?: unknown;
 		guildId?: string;
-		iframeId: (...args: any[]) => unknown;
+		iframeId?: string;
 		/** @default true */
 		ignoreSilentHardwareSwitch?: boolean;
 		isPipOrGridMode?: boolean;
@@ -12896,7 +12896,7 @@ export type EmojiItemProps = {
 		animateEmoji?: unknown;
 		category?: unknown;
 		disabled?: boolean;
-		emoji: { id?: unknown; name?: unknown; surrogates?: unknown };
+		emoji: { animated?: unknown; id?: unknown; name?: unknown; surrogates?: unknown; url?: unknown };
 		isSectionNitroLocked?: boolean;
 		onLongPressEmoji: (...args: any[]) => unknown;
 		onPressEmoji: (...args: any[]) => unknown;
@@ -13260,7 +13260,7 @@ export type FavoritesGuildCategoryActionSheetComponent = React.ComponentType<Fav
  * @see modules/favorites/native/FavoritesGuildCategoryActionSheet.tsx
  */
 export type FavoritesGuildCategoryActionSheetConnectedProps = {
-		category: { id?: unknown };
+		category: { getGuildId?: unknown; id?: unknown; type?: unknown };
 		onClose: (...args: any[]) => unknown;
 	};
 export type FavoritesGuildCategoryActionSheetConnectedComponent = React.ComponentType<FavoritesGuildCategoryActionSheetConnectedProps>;
@@ -13321,7 +13321,7 @@ export type FavoritesGuildUpsellSheetComponent = React.ComponentType<FavoritesGu
  * @see modules/favorites/native/modal/FavoritesGuildAddChannelModal.tsx
  */
 export type FavoritesGuildAddChannelModalProps = {
-		parentId?: (...args: any[]) => unknown;
+		parentId?: string;
 		source?: unknown;
 	};
 export type FavoritesGuildAddChannelModalComponent = React.ComponentType<FavoritesGuildAddChannelModalProps>;
@@ -13397,7 +13397,7 @@ export type FeedbackActionSheetProps = {
 		headerLabel?: BottomSheetTitleHeaderProps['title'];
 		hideDontShowAgainCheckbox?: boolean;
 		otherKey?: string;
-		ratingOptions?: unknown;
+		ratingOptions?: RatingSelectorProps['ratingOptions'];
 		ratingTextLabels?: unknown;
 		ratingsBodyLabel?: DesignTextProps['children'];
 		reasons?: unknown;
@@ -13420,7 +13420,7 @@ export type FeedbackActionSheetV2Props = {
 		onMount?: (...args: any[]) => unknown;
 		optionsTree: { map?: unknown };
 		ratingBody?: DesignTextProps['children'];
-		ratingOptions?: unknown;
+		ratingOptions?: RatingSelectorProps['ratingOptions'];
 		showHeaderCloseButton?: boolean;
 		trackOpen: (...args: any[]) => unknown;
 		trackReport: (...args: any[]) => unknown;
@@ -13467,7 +13467,7 @@ export type FeedbackModalComponent = React.ComponentType<FeedbackModalProps>;
  */
 export type RatingSelectorProps = {
 		onChangeRating: (...args: any[]) => unknown;
-		ratingOptions?: unknown;
+		ratingOptions?: { map?: unknown };
 		selectedRating?: unknown;
 		textLabels?: unknown;
 	};
@@ -13750,9 +13750,9 @@ export type ForumsForumPostTagsActionSheetProps = {
 		canManageThread?: boolean;
 		onClose?: (...args: any[]) => unknown;
 		onSave?: (...args: any[]) => unknown;
-		parentChannel?: unknown;
+		parentChannel?: { availableTags?: unknown };
 		tags?: unknown;
-		thread?: { id?: unknown };
+		thread?: { appliedTags?: unknown; id?: unknown; isModeratorReportChannel?: unknown; parent_id?: unknown };
 		title?: unknown;
 	};
 export type ForumsForumPostTagsActionSheetComponent = React.ComponentType<ForumsForumPostTagsActionSheetProps>;
@@ -13830,7 +13830,7 @@ export type ForumComposerProps = {
 		onClose: ForumComposerHeaderProps['onClose'];
 		parentChannel?: ForumComposerHeaderProps['channel'];
 		thread?: HorizontalAutocompleteWrapperProps['channel'];
-		threadSettingsDraft?: { appliedTags?: unknown; body?: unknown; name?: unknown };
+		threadSettingsDraft?: { appliedTags?: unknown; name?: unknown };
 	};
 export type ForumComposerComponent = React.ComponentType<ForumComposerProps>;
 /**
@@ -13872,7 +13872,7 @@ export type ForumComposerModalComponent = React.ComponentType<ForumComposerModal
  * @see modules/forums/native/composer/horizontal_autocomplete/HorizontalAutocomplete.tsx
  */
 export type HorizontalAutocompleteChannelProps = {
-		channel: { getGuildId?: unknown; type?: unknown };
+		channel: { getGuildId?: unknown; guild_id?: unknown; id?: unknown; isForumPost?: unknown; isGameInvitesChannel?: unknown; isGuildVocal?: unknown; isMediaChannel?: unknown; isNSFW?: unknown; isObfuscated?: unknown; isSpoilerChannel?: unknown; isThread?: unknown; linkedLobby?: unknown; name?: unknown; parent_id?: unknown; permissionOverwrites?: unknown; recipients?: unknown; type?: unknown };
 		onPress?: HorizontalAutocompleteOptionProps['onPress'];
 	};
 export type HorizontalAutocompleteChannelComponent = React.ComponentType<HorizontalAutocompleteChannelProps>;
@@ -13917,7 +13917,7 @@ export type HorizontalAutocompleteUserProps = {
 		nick?: unknown;
 		onPress?: HorizontalAutocompleteOptionProps['onPress'];
 		status?: unknown;
-		user?: unknown;
+		user?: { discriminator?: unknown; globalName?: unknown; global_name?: unknown; username?: unknown };
 	};
 export type HorizontalAutocompleteUserComponent = React.ComponentType<HorizontalAutocompleteUserProps>;
 /**
@@ -14254,7 +14254,7 @@ export type ExtraMediaIconComponent = React.ComponentType<ExtraMediaIconProps>;
  */
 export type ForumPostGridBodyProps = {
 		hasUnreads?: ForumPostAppliedTagPillsProps['hasUnreads'];
-		media: { length?: unknown; slice?: unknown };
+		media: { length?: unknown; reduce?: unknown; slice?: unknown };
 		thread: MediaGridColumnProps['thread'];
 	};
 export type ForumPostGridBodyComponent = React.ComponentType<ForumPostGridBodyProps>;
@@ -14381,7 +14381,7 @@ export type BurstReactionButtonProps = {
 		accessible?: ReactionButtonProps['accessible'];
 		animate?: unknown;
 		animateCount?: ReactionButtonProps['animateCount'];
-		colors?: unknown;
+		colors?: { length?: unknown };
 		containerStyle?: ReactionButtonProps['containerStyle'];
 		count?: unknown;
 		emoji?: ReactionButtonProps['emoji'];
@@ -14403,7 +14403,7 @@ export type ForumPostReactionButtonProps = {
 		locationAnalyticsObject?: unknown;
 		reaction: { burst_colors?: unknown; burst_count?: unknown; count?: unknown; emoji?: unknown; me?: unknown; me_burst?: unknown };
 		textStyle?: ReactionButtonProps['textStyle'];
-		thread: { id?: unknown };
+		thread: { guild_id?: unknown; id?: unknown; isActiveThread?: unknown; isArchivedThread?: unknown; isMediaThread?: unknown; isThread?: unknown; parent_id?: unknown; threadMetadata?: unknown };
 	};
 export type ForumPostReactionButtonComponent = React.ComponentType<ForumPostReactionButtonProps>;
 /**
@@ -14482,7 +14482,7 @@ export type ForwardMessageFooterProps = {
 		isSending?: BaseTextButtonProps['loading'];
 		message: ForwardPreviewProps['message'];
 		onSend: (...args: any[]) => unknown;
-		selectedDestinations?: unknown;
+		selectedDestinations?: { map?: unknown };
 		sendLabel?: BaseTextButtonProps['text'];
 	};
 export type ForwardMessageFooterComponent = React.ComponentType<ForwardMessageFooterProps>;
@@ -14492,9 +14492,9 @@ export type ForwardMessageFooterComponent = React.ComponentType<ForwardMessageFo
  */
 export type ForwardModalProps = {
 		customSendHandler?: unknown;
-		forwardOptions: (...args: any[]) => unknown;
+		forwardOptions?: unknown;
 		initialSelectedDestinations?: unknown;
-		message: (...args: any[]) => unknown;
+		message: { channel_id?: unknown; id?: unknown };
 		source?: 'checkpoint' | (string & {});
 	};
 export type ForwardModalComponent = React.ComponentType<ForwardModalProps>;
@@ -14562,7 +14562,7 @@ export type PooledFrameComponent = React.ComponentType<PooledFrameProps>;
 export type FrameRenderTargetProps = {
 		frameId?: string;
 		level?: unknown;
-		presentation?: unknown;
+		presentation?: { landscapeSafeAreasConfig?: unknown; layoutMode?: unknown; portraitSafeAreasConfig?: unknown };
 	};
 export type FrameRenderTargetComponent = React.ComponentType<FrameRenderTargetProps>;
 /**
@@ -14586,7 +14586,7 @@ export type FrameSurfaceLoadingComponent = React.ComponentType<FrameSurfaceLoadi
  * @see modules/frames/native/FrameView.tsx
  */
 export type FrameViewProps = {
-		frame: { applicationId?: unknown; data?: unknown; id?: unknown };
+		frame: { applicationId?: unknown; data?: unknown; id?: unknown; surface?: unknown };
 		iframeId?: ComponentOwnedWebViewProps['iframeId'];
 		onActivityCrash?: ComponentOwnedWebViewProps['onActivityCrash'];
 		presentation: { landscapeSafeAreasConfig?: unknown; layoutMode?: unknown; portraitSafeAreasConfig?: unknown };
@@ -14682,7 +14682,7 @@ export type QuestActivityButtonComponent = React.ComponentType<QuestActivityButt
  * @see modules/frames/panel/native/QuestActivityButton.tsx
  */
 export type QuestActivityButtonInnerProps = {
-		quest?: { id?: unknown; userStatus?: unknown };
+		quest?: { config?: unknown; id?: unknown; userStatus?: unknown };
 	};
 export type QuestActivityButtonInnerComponent = React.ComponentType<QuestActivityButtonInnerProps>;
 /**
@@ -14732,8 +14732,8 @@ export type GameClaimCoachmarkComponent = React.ComponentType<GameClaimCoachmark
  */
 export type GameCommunityMultiGuildUpsellCardProps = {
 		cardAction?: 'preview' | (string & {});
-		gameId: (...args: any[]) => unknown;
-		guild: (...args: any[]) => unknown;
+		gameId?: string;
+		guild: GuildBadgeV2Props['guild'];
 		onDismiss?: (...args: any[]) => unknown;
 	};
 export type GameCommunityMultiGuildUpsellCardComponent = React.ComponentType<GameCommunityMultiGuildUpsellCardProps>;
@@ -14807,8 +14807,8 @@ export type GameConsoleEmptyStateComponent = React.ComponentType<GameConsoleEmpt
  * @see modules/game_console/native/GameConsoleDeviceListActionSheet.tsx
  */
 export type GameConsoleListActionSheetProps = {
-		channel: (...args: any[]) => unknown;
-		platform: (...args: any[]) => unknown;
+		channel?: unknown;
+		platform?: unknown;
 	};
 export type GameConsoleListActionSheetComponent = React.ComponentType<GameConsoleListActionSheetProps>;
 /**
@@ -15028,7 +15028,7 @@ export type PollAnnouncementCardComponent = React.ComponentType<PollAnnouncement
  */
 export type GameProfileCommunityServerProps = {
 		closeModal: (...args: any[]) => unknown;
-		game?: unknown;
+		game?: { websites?: unknown };
 		onInviteResolved?: (...args: any[]) => unknown;
 		trackAction: (...args: any[]) => unknown;
 	};
@@ -15114,7 +15114,7 @@ export type NavItemComponent = React.ComponentType<NavItemProps>;
  */
 export type GameProfileGameClaimCtaProps = {
 		game: { linkedApplications?: unknown };
-		trackAction: (...args: any[]) => unknown;
+		trackAction?: unknown;
 	};
 export type GameProfileGameClaimCtaComponent = React.ComponentType<GameProfileGameClaimCtaProps>;
 /**
@@ -15122,7 +15122,7 @@ export type GameProfileGameClaimCtaComponent = React.ComponentType<GameProfileGa
  * @see modules/game_profile/native/components/GameProfileHeader.tsx
  */
 export type GameProfileHeaderProps = {
-		game: { genres?: unknown; getCoverURL?: unknown; getIconURL?: unknown; id?: unknown; l30Rank?: unknown; name?: unknown };
+		game: { genres?: unknown; getBannerURL?: unknown; getCoverURL?: unknown; getIconURL?: unknown; getScreenshotURL?: unknown; id?: unknown; l30Rank?: unknown; name?: unknown; screenshotUrls?: unknown };
 		onHeightMeasured?: (...args: any[]) => unknown;
 		scrollY?: { get?: unknown };
 	};
@@ -15141,7 +15141,7 @@ export type GameProfileHorizontalScrollViewComponent = React.ComponentType<GameP
  */
 export type GameProfileLinkAccountProps = {
 		analyticsLocations?: unknown;
-		game: { getOfficialApplicationId?: unknown };
+		game: { getOfficialApplicationId?: unknown; linkedGames?: unknown; type?: unknown };
 		trackAction: (...args: any[]) => unknown;
 	};
 export type GameProfileLinkAccountComponent = React.ComponentType<GameProfileLinkAccountProps>;
@@ -15156,7 +15156,7 @@ export type GameProfileLinkAccountSkeletonComponent = React.ComponentType<GamePr
  * @see modules/game_profile/native/components/GameProfileMedia.tsx
  */
 export type GameProfileMediaProps = {
-		game?: unknown;
+		game?: { screenshotUrls?: unknown; trailers?: unknown };
 		trackAction?: ImageItemProps['trackAction'];
 	};
 export type GameProfileMediaComponent = React.ComponentType<GameProfileMediaProps>;
@@ -15559,7 +15559,7 @@ export type GameActivityIconComponent = React.ComponentType<GameActivityIconProp
  * @see modules/games/native/GamePlatformBadgeRow.tsx
  */
 export type GamePlatformBadgeRowProps = {
-		platforms?: unknown;
+		platforms?: { length?: unknown };
 	};
 export type GamePlatformBadgeRowComponent = React.ComponentType<GamePlatformBadgeRowProps>;
 /**
@@ -15592,7 +15592,7 @@ export type GIFPickerProps = {
 		hideFavorites?: boolean;
 		/** @default true */
 		inActionSheet?: GIFPickerCategoriesPageProps['inActionSheet'];
-		initialQuery?: { trim?: unknown };
+		initialQuery?: string;
 		keyboardDismissMode?: 'on-drag' | (string & {});
 		onPressGIF: (...args: any[]) => unknown;
 		selectedGifSrc?: unknown;
@@ -15651,7 +15651,7 @@ export type GIFPickerHeaderComponent = React.ComponentType<GIFPickerHeaderProps>
  * @see modules/gif_picker/native/GIFPickerItemActionSheet.tsx
  */
 export type GIFPickerItemActionSheetProps = {
-		item: { height?: unknown; src?: unknown; url?: unknown; width?: unknown };
+		item: { format?: unknown; gifSrc?: unknown; height?: unknown; src?: unknown; url?: unknown; width?: unknown };
 	};
 export type GIFPickerItemActionSheetComponent = React.ComponentType<GIFPickerItemActionSheetProps>;
 /**
@@ -15740,7 +15740,7 @@ export type MobileGoLiveActionSheetComponent = React.ComponentType<MobileGoLiveA
  * @see modules/go_live/native/StreamQualityLiveIndicator.tsx
  */
 export type StreamQualityLiveIndicatorProps = {
-		participant: { user?: unknown };
+		participant: { id?: unknown; maxFrameRate?: unknown; maxResolution?: unknown; user?: unknown };
 		style?: PressableOpacityProps['style'];
 	};
 export type StreamQualityLiveIndicatorComponent = React.ComponentType<StreamQualityLiveIndicatorProps>;
@@ -15749,8 +15749,8 @@ export type StreamQualityLiveIndicatorComponent = React.ComponentType<StreamQual
  * @see modules/group_dm/native/ChatGDMCustomize.tsx
  */
 export type ChatGDMCustomizeProps = {
-		channelId: (...args: any[]) => unknown;
-		onFinish: (...args: any[]) => unknown;
+		channelId?: string;
+		onFinish?: (...args: any[]) => unknown;
 		ref?: React.Ref<any>;
 	};
 export type ChatGDMCustomizeComponent = React.ComponentType<ChatGDMCustomizeProps>;
@@ -15878,7 +15878,7 @@ export type GroupDMRecipientLimitTitleComponent = React.ComponentType<GroupDMRec
  * @see modules/guild/native/GuildBadge.tsx
  */
 export type ModulesGuildBadgeProps = {
-		guild?: unknown;
+		guild?: { features?: unknown };
 		/** @default false */
 		monocolored?: boolean;
 		size?: unknown;
@@ -15892,7 +15892,7 @@ export type ModulesGuildBadgeComponent = React.ComponentType<ModulesGuildBadgePr
  * @see modules/guild/native/GuildBadgeV2.tsx
  */
 export type GuildBadgeV2Props = {
-		guild?: unknown;
+		guild?: { features?: unknown; premiumSubscriberCount?: unknown; premiumSubscriptionCount?: unknown; premiumTier?: unknown };
 		size?: unknown;
 	};
 export type GuildBadgeV2Component = React.ComponentType<GuildBadgeV2Props & Record<string, unknown>>;
@@ -15905,7 +15905,7 @@ export type GuildIconInnerProps = {
 		TABS_altDefaultBackground?: boolean;
 		/** @default false */
 		animate?: boolean;
-		guild?: { getIconSource?: unknown; icon?: unknown };
+		guild?: { getIconSource?: unknown; icon?: unknown; id?: unknown; name?: unknown };
 		/** @default null */
 		icon?: unknown;
 		loadingStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
@@ -15926,7 +15926,7 @@ export type GuildIconInnerComponent = React.ComponentType<GuildIconInnerProps>;
  */
 export type GuildIconWithChannelTypeProps = Omit<GuildIconInnerProps, 'aria-label' | 'channel' | 'size'> & {
 		'aria-label'?: PileProps['aria-label'];
-		channel?: unknown;
+		channel?: { guild_id?: unknown; isForumPost?: unknown; isGameInvitesChannel?: unknown; isGuildVocal?: unknown; isMediaChannel?: unknown; isNSFW?: unknown; isSpoilerChannel?: unknown; linkedLobby?: unknown; parent_id?: unknown; permissionOverwrites?: unknown; type?: unknown };
 		size?: unknown;
 	};
 export type GuildIconWithChannelTypeComponent = React.ComponentType<GuildIconWithChannelTypeProps & Record<string, unknown>>;
@@ -16120,7 +16120,7 @@ export type GuildActionSheetProgressComponent = React.ComponentType<GuildActionS
  * @see modules/guild_action_sheet/native/components/GuildActionSheetTabItems.tsx
  */
 export type GuildActionSheetTabItemsProps = {
-		guild: { id?: unknown };
+		guild: { id?: unknown; vanityURLCode?: unknown };
 	};
 export type GuildActionSheetTabItemsComponent = React.ComponentType<GuildActionSheetTabItemsProps>;
 /**
@@ -16137,7 +16137,7 @@ export type LeaveServerAlertComponent = React.ComponentType<LeaveServerAlertProp
  */
 export type GuildAntiRaidReportModalProps = {
 		guildId?: string;
-		onCloseModal: (...args: any[]) => unknown;
+		onCloseModal?: NavigatorCloseButtonProps['onPress'];
 	};
 export type GuildAntiRaidReportModalComponent = React.ComponentType<GuildAntiRaidReportModalProps>;
 /**
@@ -16271,8 +16271,8 @@ export type GuildSettingsAutoModerationComponent = React.ComponentType<GuildSett
  */
 export type GuildSettingsAutomodRuleProps = {
 		contentContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
-		guildId: (...args: any[]) => unknown;
-		triggerType?: unknown;
+		guildId?: string;
+		triggerType?: number;
 	};
 export type GuildSettingsAutomodRuleComponent = React.ComponentType<GuildSettingsAutomodRuleProps>;
 /**
@@ -16281,7 +16281,7 @@ export type GuildSettingsAutomodRuleComponent = React.ComponentType<GuildSetting
  */
 export type ModerateUserActionSheetProps = {
 		guild?: MemberRolesListProps['guild'];
-		user: { id?: unknown; isNonUserBot?: unknown };
+		user: { bot?: unknown; discriminator?: unknown; globalName?: unknown; global_name?: unknown; id?: unknown; isNonUserBot?: unknown; isProvisional?: unknown; username?: unknown };
 	};
 export type ModerateUserActionSheetComponent = React.ComponentType<ModerateUserActionSheetProps>;
 /**
@@ -16380,7 +16380,7 @@ export type KeywordFilterTriggerFieldsComponent = React.ComponentType<KeywordFil
  */
 export type KeywordsActionSheetProps = {
 		description?: unknown;
-		keywords?: unknown;
+		keywords?: { join?: unknown };
 		maxWordCount?: unknown;
 		onSave: (...args: any[]) => unknown;
 		title?: BottomSheetTitleHeaderProps['title'];
@@ -16417,7 +16417,7 @@ export type MentionSpamTriggerFieldsComponent = React.ComponentType<MentionSpamT
  * @see modules/guild_automod/native/components/RuleActionRows.tsx
  */
 export type RuleActionRowProps = {
-		actionType?: unknown;
+		actionType?: number;
 		onPress?: TableRowProps['onPress'];
 		rule: { actions?: unknown; triggerType?: unknown };
 	};
@@ -16445,8 +16445,8 @@ export type RuleExemptionRowsComponent = React.ComponentType<RuleExemptionRowsPr
  * @see modules/guild_automod/native/components/RuleRow.tsx
  */
 export type ActionPillProps = {
-		action?: unknown;
-		actionType?: unknown;
+		action?: { metadata?: unknown };
+		actionType?: number;
 		triggerType?: unknown;
 	};
 export type ActionPillComponent = React.ComponentType<ActionPillProps>;
@@ -16456,7 +16456,7 @@ export type ActionPillComponent = React.ComponentType<ActionPillProps>;
  */
 export type RuleRowProps = {
 		onPress?: BaseTextButtonProps['onPress'];
-		rule?: { enabled?: unknown };
+		rule?: { actions?: unknown; enabled?: unknown; id?: unknown; name?: unknown; triggerMetadata?: unknown; triggerType?: unknown };
 		triggerType?: number;
 	};
 export type RuleRowComponent = React.ComponentType<RuleRowProps>;
@@ -16683,9 +16683,9 @@ export type MarketingRedesignMeComponent = React.ComponentType<MarketingRedesign
  * @see modules/guild_communication_disabled/native/GuildDisableCommunication.tsx
  */
 export type GuildDisableCommunicationProps = {
-		guildId: (...args: any[]) => unknown;
+		guildId?: string;
 		onClose?: (...args: any[]) => unknown;
-		user: (...args: any[]) => unknown;
+		user: { id?: unknown };
 	};
 export type GuildDisableCommunicationComponent = React.ComponentType<GuildDisableCommunicationProps>;
 /**
@@ -16703,10 +16703,10 @@ export type GuildDisableCommunicationModalComponent = React.ComponentType<GuildD
  * @see modules/guild_communication_disabled/native/GuildEnableCommunicationAlert.tsx
  */
 export type GuildEnableCommunicationAlertProps = Omit<AlertConnectedProps, 'guildId' | 'onCancel' | 'onClose' | 'userId'> & {
-		guildId: (...args: any[]) => unknown;
+		guildId?: string;
 		onCancel?: (...args: any[]) => unknown;
 		onClose?: (...args: any[]) => unknown;
-		userId: (...args: any[]) => unknown;
+		userId?: string;
 	};
 export type GuildEnableCommunicationAlertComponent = React.ComponentType<GuildEnableCommunicationAlertProps & Record<string, unknown>>;
 /**
@@ -16777,7 +16777,7 @@ export type InstantInviteComponent = React.ComponentType<InstantInviteProps>;
  * @see modules/guild_instant_invites/native/InstantInvite.tsx
  */
 export type LinkedChannelInviteProps = {
-		channel: { guild_id?: unknown; id?: unknown; linkedLobby?: unknown };
+		channel: InstantInviteDetailsProps['channel'];
 	};
 export type LinkedChannelInviteComponent = React.ComponentType<LinkedChannelInviteProps>;
 /**
@@ -16801,7 +16801,7 @@ export type InstantInviteCodeComponent = React.ComponentType<InstantInviteCodePr
  * @see modules/guild_instant_invites/native/InstantInviteCode.tsx
  */
 export type InstantInviteDetailsProps = {
-		channel?: unknown;
+		channel?: { isForumPost?: unknown; type?: unknown };
 		expiresAt?: unknown;
 	};
 export type InstantInviteDetailsComponent = React.ComponentType<InstantInviteDetailsProps>;
@@ -16841,7 +16841,7 @@ export type InstantInviteUsesLabelComponent = React.ComponentType<InstantInviteU
  * @see modules/guild_invite/native/AdvancedInstantInvite.tsx
  */
 export type AdvancedInstantInviteProps = {
-		channel?: unknown;
+		channel?: { guild_id?: unknown; isForumPost?: unknown; isGameInvitesChannel?: unknown; isGuildVocal?: unknown; isMediaChannel?: unknown; isNSFW?: unknown; isSpoilerChannel?: unknown; linkedLobby?: unknown; parent_id?: unknown; permissionOverwrites?: unknown; type?: unknown };
 		flags?: unknown;
 		/** @default null */
 		guild?: GuildIconInnerProps['guild'];
@@ -16944,7 +16944,7 @@ export type JoinRequestActionSheetApplicationActionsComponent = React.ComponentT
  */
 export type JoinRequestActionSheetContentProps = {
 		displayProfile?: JoinRequestActionSheetHeaderProps['displayProfile'];
-		joinRequest?: JoinRequestActionSheetApplicationActionsProps['joinRequest'];
+		joinRequest?: JoinRequestActionSheetHeaderProps['joinRequest'];
 		user?: JoinRequestActionSheetHeaderProps['user'];
 	};
 export type JoinRequestActionSheetContentComponent = React.ComponentType<JoinRequestActionSheetContentProps>;
@@ -16954,7 +16954,7 @@ export type JoinRequestActionSheetContentComponent = React.ComponentType<JoinReq
  */
 export type JoinRequestActionSheetHeaderProps = {
 		displayProfile?: UserProfileBannerProps['displayProfile'];
-		joinRequest?: unknown;
+		joinRequest?: { joinRequestId?: unknown };
 		user?: UserProfileAvatarProps['user'];
 	};
 export type JoinRequestActionSheetHeaderComponent = React.ComponentType<JoinRequestActionSheetHeaderProps>;
@@ -17001,7 +17001,7 @@ export type JoinRequestOtherApplicationsComponent = React.ComponentType<JoinRequ
 export type JoinRequestRejectionReasonActionSheetProps = {
 		joinRequest: { guildId?: unknown; joinRequestId?: unknown; userId?: unknown };
 		onDismiss?: SheetBottomSheetProps['onDismiss'];
-		onError: (...args: any[]) => unknown;
+		onError?: (...args: any[]) => unknown;
 	};
 export type JoinRequestRejectionReasonActionSheetComponent = React.ComponentType<JoinRequestRejectionReasonActionSheetProps>;
 /**
@@ -17009,9 +17009,9 @@ export type JoinRequestRejectionReasonActionSheetComponent = React.ComponentType
  * @see modules/guild_member_verification/native/components/MemberVerificationForm.tsx
  */
 export type MemberVerificationFormProps = {
-		guild: (...args: any[]) => unknown;
+		guild: { id?: unknown; rulesChannelId?: unknown; verificationLevel?: unknown };
 		onClose?: (...args: any[]) => unknown;
-		onSuccess: (...args: any[]) => unknown;
+		onSuccess?: (...args: any[]) => unknown;
 	};
 export type MemberVerificationFormComponent = React.ComponentType<MemberVerificationFormProps>;
 /**
@@ -17089,8 +17089,8 @@ export type MemberVerificationAlertPendingComponent = React.ComponentType<Member
  * @see modules/guild_member_verification/native/components/alerts/MemberVerificationAlertRejected.tsx
  */
 export type MemberVerificationAlertRejectedProps = Omit<MemberVerificationAlertProps, 'guildId' | 'onClose' | 'secondaryButton'> & {
-		guildId: (...args: any[]) => unknown;
-		onClose: (...args: any[]) => unknown;
+		guildId?: string;
+		onClose?: (...args: any[]) => unknown;
 		secondaryButton?: unknown;
 	};
 export type MemberVerificationAlertRejectedComponent = React.ComponentType<MemberVerificationAlertRejectedProps & Record<string, unknown>>;
@@ -17593,7 +17593,7 @@ export type PromptOptionButtonComponent = React.ComponentType<PromptOptionButton
  * @see modules/guild_onboarding/native/GuildOnboardingPrompts.tsx
  */
 export type BackgroundImageGradientProps = {
-		color?: unknown;
+		color?: { charAt?: unknown; length?: unknown; slice?: unknown };
 		splashUrl?: unknown;
 	};
 export type BackgroundImageGradientComponent = React.ComponentType<BackgroundImageGradientProps>;
@@ -17617,8 +17617,8 @@ export type GuildOnboardingPromptComponent = React.ComponentType<GuildOnboarding
  * @see modules/guild_onboarding/native/ProviderConnectionCard.tsx
  */
 export type ProviderConnectionCardProps = {
-		connection: (...args: any[]) => unknown;
-		guildId: (...args: any[]) => unknown;
+		connection: { description?: unknown; provider_id?: unknown };
+		guildId?: string;
 		location?: unknown;
 	};
 export type ProviderConnectionCardComponent = React.ComponentType<ProviderConnectionCardProps>;
@@ -17725,7 +17725,7 @@ export type ChatInputMemberActionsComponent = React.ComponentType<ChatInputMembe
  * @see modules/guild_onboarding_home/native/MemberActionChatInputBanner.tsx
  */
 export type MemberActionChatInputBannerProps = {
-		channel: { guild_id?: unknown };
+		channel: { guild_id?: unknown; id?: unknown };
 	};
 export type MemberActionChatInputBannerComponent = React.ComponentType<MemberActionChatInputBannerProps>;
 /**
@@ -17822,7 +17822,7 @@ export type GuildProfileGameIconComponent = React.ComponentType<GuildProfileGame
  * @see modules/guild_profile/native/components/GuildProfileActionSheet.tsx
  */
 export type GuildProfileActionSheetProps = {
-		context?: unknown;
+		context?: GuildProfileCTAProps['context'];
 		guildId?: string;
 		inviteKey?: unknown;
 	};
@@ -17832,9 +17832,9 @@ export type GuildProfileActionSheetComponent = React.ComponentType<GuildProfileA
  * @see modules/guild_profile/native/components/GuildProfileCTA.tsx
  */
 export type GuildProfileCTAProps = {
-		context?: unknown;
+		context?: 'INVITE' | (string & {});
 		inviteKey?: unknown;
-		profile: { visibility?: unknown };
+		profile: { features?: unknown; id?: unknown; tag?: unknown; visibility?: unknown };
 	};
 export type GuildProfileCTAComponent = React.ComponentType<GuildProfileCTAProps>;
 /**
@@ -17862,7 +17862,7 @@ export type FavoriteGameComponent = React.ComponentType<FavoriteGameProps>;
  * @see modules/guild_profile/native/components/GuildProfileGames.tsx
  */
 export type GuildProfileGamesProps = {
-		profile: { gameActivity?: unknown };
+		profile: { gameActivity?: unknown; gameApplicationIds?: unknown; games?: unknown };
 	};
 export type GuildProfileGamesComponent = React.ComponentType<GuildProfileGamesProps>;
 /**
@@ -17879,7 +17879,7 @@ export type GuildProfileGameRowComponent = React.ComponentType<GuildProfileGameR
  * @see modules/guild_profile/native/components/GuildProfileGamesActionSheet.tsx
  */
 export type GuildProfileGamesActionSheetProps = {
-		profile: { gameActivity?: unknown; id?: unknown; name?: unknown };
+		profile: { gameActivity?: unknown; gameApplicationIds?: unknown; games?: unknown; id?: unknown; name?: unknown };
 	};
 export type GuildProfileGamesActionSheetComponent = React.ComponentType<GuildProfileGamesActionSheetProps>;
 /**
@@ -17888,7 +17888,7 @@ export type GuildProfileGamesActionSheetComponent = React.ComponentType<GuildPro
  */
 export type GuildProfileHeaderProps = {
 		guildIconSource?: unknown;
-		profile: { id?: unknown; memberCount?: unknown; name?: unknown; onlineCount?: unknown };
+		profile: { description?: unknown; features?: unknown; icon?: unknown; id?: unknown; memberCount?: unknown; name?: unknown; onlineCount?: unknown; premiumSubscriberCount?: unknown; premiumTier?: unknown };
 	};
 export type GuildProfileHeaderComponent = React.ComponentType<GuildProfileHeaderProps>;
 /**
@@ -17928,7 +17928,7 @@ export type TraitEmojiComponent = React.ComponentType<TraitEmojiProps>;
  * @see modules/guild_profile/native/components/GuildProfileView.tsx
  */
 export type GuildProfileBackgroundProps = {
-		guildProfile: { customBanner?: unknown; id?: unknown };
+		guildProfile: GuildProfileGradientProps['guildProfile'];
 	};
 export type GuildProfileBackgroundComponent = React.ComponentType<GuildProfileBackgroundProps>;
 /**
@@ -17936,7 +17936,7 @@ export type GuildProfileBackgroundComponent = React.ComponentType<GuildProfileBa
  * @see modules/guild_profile/native/components/GuildProfileView.tsx
  */
 export type GuildProfileGradientProps = {
-		guildProfile?: unknown;
+		guildProfile?: { brandColorPrimary?: unknown; icon?: unknown; id?: unknown };
 	};
 export type GuildProfileGradientComponent = React.ComponentType<GuildProfileGradientProps>;
 /**

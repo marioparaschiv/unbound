@@ -12,7 +12,8 @@ import { TYPES_DIR } from '../src/paths';
 
 // Verbatim module slices of discord-350's main.js; each fixture names its source path.
 const FIXTURE_IDS = [
-	17, 5378, 6181, 6722, 6882, 6294, 6295, 6304, 6290, 5085, 4732, 6196, 4428, 4439, 9432,
+	17, 5378, 6181, 6722, 6882, 6294, 6295, 6304, 6290, 5085, 4732, 6196, 4428, 4439, 9432, 6288,
+	6289, 9291, 11732, 16446,
 ];
 const lines = FIXTURE_IDS.flatMap((id) =>
 	readFileSync(join(import.meta.dir, 'fixtures', `module-${id}.txt`), 'utf8').split('\n'),
@@ -194,6 +195,24 @@ describe('imported constants', () => {
 
 	test('an enum imported through an export-star barrel resolves', () => {
 		expect(alias('design.gen.d.ts', 'AnimatedRenderItemProps')).toContain('state?: number;');
+	});
+});
+
+describe('positional arguments', () => {
+	test("a prop passed positionally to another module's function takes that parameter's type", () => {
+		expect(alias('design.gen.d.ts', 'InputProps')).toContain('required?: boolean;');
+	});
+
+	test('a helper comparing its parameter with an imported enum types the prop passed to it', () => {
+		expect(alias('modules.gen.d.ts', 'ChannelUnreadBadgeProps')).toContain(
+			"layout?: 'compact' | 'cozy-drawer' | 'cozy-drawer-smol' | 'minimal' | (string & {});",
+		);
+	});
+
+	test("a positional parameter's default types the prop passed to it", () => {
+		expect(alias('modules.gen.d.ts', 'ChannelUnreadBadgeProps')).toContain(
+			'launchpad?: boolean;',
+		);
 	});
 });
 

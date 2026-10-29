@@ -72,7 +72,11 @@ export type PropObservation =
 	| { kind: 'spread'; target: TargetRef }
 	| { kind: 'member'; name: string }
 	| { kind: 'guarded' }
-	| { kind: 'name-only' };
+	| { kind: 'name-only' }
+	/** Its type is tested at runtime, so it may take several shapes. */
+	| { kind: 'typeof' }
+	/** Passed as positional argument `index` to a function, whose parameter evidence then applies too. */
+	| { kind: 'argument'; callee: TargetRef; index: number };
 
 export type PropEvidence = PropObservation[];
 
@@ -91,6 +95,8 @@ export type ComponentRecord = {
 	kind: ComponentKind;
 	rendersJsx: boolean;
 	props: Map<string, PropEvidence>;
+	/** Per positional parameter index, the evidence the body shows; argument 0 is also the props object. */
+	params: Map<number, PropEvidence>;
 	/** Components the rest props (or the whole props object) are spread into. */
 	restTargets: RestTarget[];
 	/** The props object (or its rest) is handed to a call the walk cannot follow, such as a hook. */
@@ -118,8 +124,8 @@ export type ExportEntry = {
 export type ModuleFacts = {
 	moduleId: number;
 	components: ComponentRecord[];
-	/** Exported `useX` functions, walked like components so a component spreading their result can be typed. */
-	hooks: ComponentRecord[];
+	/** Module-level lowercase functions (hooks and helpers), walked like components so their callers can be typed. */
+	functions: ComponentRecord[];
 	reExports: ReExport[];
 	/** Literal props passed to JSX elements, attached to the target's evidence once targets resolve. */
 	passed: PassedLiteral[];

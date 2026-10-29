@@ -52,19 +52,10 @@ export type BaseTextButtonIconProps = {
 		icon?: unknown;
 		iconOpticalOffsetMargin?: unknown;
 		iconPosition?: unknown;
-		size?: unknown;
+		size?: 'lg' | 'sm' | (string & {});
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
 export type BaseTextButtonIconComponent = React.ComponentType<BaseTextButtonIconProps>;
-/**
- * Props of `CollapsingText` (function). Exports: none.
- * @see design/components/Button/native/BaseTextButton.native.tsx
- */
-export type CollapsingTextProps = {
-		children?: React.ReactNode;
-		collapseText?: unknown;
-	};
-export type CollapsingTextComponent = React.ComponentType<CollapsingTextProps>;
 /**
  * Props of `BasicButtonPill` (function). Exports: BasicButtonPill.
  * @see design/components/Button/native/ButtonPill.native.tsx
@@ -73,7 +64,7 @@ export type BasicButtonPillProps = {
 		children?: React.ComponentProps<typeof RN.View>['children'];
 		expressivePressState?: unknown;
 		expressiveRiveRef?: unknown;
-		pressed?: unknown;
+		pressed?: PillWrapperProps['pressed'];
 		/** @default false */
 		shiny?: PillWrapperProps['shiny'];
 		size?: unknown;
@@ -82,14 +73,6 @@ export type BasicButtonPillProps = {
 		variant?: PillWrapperProps['variant'];
 	};
 export type BasicButtonPillComponent = React.ComponentType<BasicButtonPillProps>;
-/**
- * Props of `ButtonShine` (function). Exports: ButtonShine.
- * @see design/components/Button/native/ButtonShine.native.tsx
- */
-export type ButtonShineProps = {
-		variant?: unknown;
-	};
-export type ButtonShineComponent = React.ComponentType<ButtonShineProps>;
 /**
  * Props of `ToggleButton` (function). Exports: none.
  * @see design/components/Button/native/ToggleButton.native.tsx
@@ -130,7 +113,7 @@ export type PressableCardiOSComponent = React.ComponentType<PressableCardiOSProp
  * @see design/components/Coachmark/native/AnimatedCoachmark.native.tsx
  */
 export type AnimatedCoachmarkProps = {
-		position?: unknown;
+		position?: 'left' | 'right' | 'top' | (string & {});
 		visible?: boolean;
 	};
 export type AnimatedCoachmarkComponent = React.ComponentType<AnimatedCoachmarkProps & Record<string, unknown>>;
@@ -4088,7 +4071,7 @@ export type TabsGradientComponent = React.ComponentType<TabsGradientProps>;
 export type TagGroupTagProps = {
 		inline?: unknown;
 		item: { icon?: unknown; label?: unknown };
-		size?: unknown;
+		size?: TagGraphicProps['size'];
 		variant?: unknown;
 	};
 export type TagGroupTagComponent = React.ComponentType<TagGroupTagProps>;
@@ -4098,7 +4081,7 @@ export type TagGroupTagComponent = React.ComponentType<TagGroupTagProps>;
  */
 export type TagGraphicProps = {
 		graphic: { color?: unknown; source?: unknown; type?: unknown };
-		size?: unknown;
+		size?: 'md' | (string & {});
 	};
 export type TagGraphicComponent = React.ComponentType<TagGraphicProps>;
 /**
@@ -4162,7 +4145,7 @@ export type TagListInputTagComponentComponent = React.ComponentType<TagListInput
  * @see design/components/Tooltip/native/AnimatedTooltip.native.tsx
  */
 export type AnimatedTooltipProps = {
-		position?: unknown;
+		position?: 'left' | 'right' | 'top' | (string & {});
 		visible?: boolean;
 	};
 export type AnimatedTooltipComponent = React.ComponentType<AnimatedTooltipProps & Record<string, unknown>>;
@@ -4199,7 +4182,7 @@ export type BackgroundBlurFillAnimatedProps = {
 		android_fallbackColor?: unknown;
 		animatedProps?: unknown;
 		blurAmount?: unknown;
-		blurStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+		blurStyle?: 'default' | (string & {});
 		blurTheme?: unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		tintColor?: unknown;
@@ -4303,7 +4286,7 @@ export type ActivitiesTogetherSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4317,7 +4300,7 @@ export type AgeVerificationSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4355,7 +4338,7 @@ export type BellSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4381,7 +4364,7 @@ export type BookmarksSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4407,7 +4390,7 @@ export type BountiesPosterSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4495,7 +4478,7 @@ export type ChatControllersSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4509,7 +4492,7 @@ export type CheersSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4523,7 +4506,7 @@ export type CompassSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4549,7 +4532,7 @@ export type DiscountsMegaphoneSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4563,7 +4546,7 @@ export type DisguiseSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4617,7 +4600,7 @@ export type EnvelopeOpenSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4631,7 +4614,7 @@ export type EnvelopeSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4645,7 +4628,7 @@ export type FamilyKeysSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4659,7 +4642,7 @@ export type FamilyShieldSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4673,7 +4656,7 @@ export type FavoritesSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4701,7 +4684,7 @@ export type FindFriendsSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4715,7 +4698,7 @@ export type FistBumpSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4741,7 +4724,7 @@ export type GameDiversityTier10LargeBadgeProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4755,7 +4738,7 @@ export type GameDiversityTier8LargeBadgeProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4769,7 +4752,7 @@ export type GameDiversityTier9LargeBadgeProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4783,7 +4766,7 @@ export type GameTimeTier9LargeBadgeProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4821,7 +4804,7 @@ export type HelloWumpusSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4835,7 +4818,7 @@ export type HoldingGemSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4849,7 +4832,7 @@ export type InkQuillSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4863,7 +4846,7 @@ export type LanternSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4877,7 +4860,7 @@ export type LaptopSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -4903,7 +4886,7 @@ export type MailboxSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4917,7 +4900,7 @@ export type MemberRolesAbstractUIProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4931,7 +4914,7 @@ export type MicrophoneSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4945,7 +4928,7 @@ export type MiniaturesSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4959,7 +4942,7 @@ export type NitroCoinSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4973,7 +4956,7 @@ export type NitroCoinStackSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -4987,7 +4970,7 @@ export type NitroScheduleMessageSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -5001,7 +4984,7 @@ export type NitroWumpusFlightRight3dIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -5027,7 +5010,7 @@ export type PasskeysSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -5079,7 +5062,7 @@ export type QrLoginSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -5093,7 +5076,7 @@ export type QrSuccessSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -5107,7 +5090,7 @@ export type ReactionsSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -5121,7 +5104,7 @@ export type ReminderWatchSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -5135,7 +5118,7 @@ export type SafetyBookletSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -5149,7 +5132,7 @@ export type SafetyChatSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -5163,7 +5146,7 @@ export type ScheduleMessageSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -5177,7 +5160,7 @@ export type SecurityKeySpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -5191,7 +5174,7 @@ export type ServerChannelsAbstractUIProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -5205,7 +5188,7 @@ export type ShieldSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -5255,7 +5238,7 @@ export type StickersSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -5269,7 +5252,7 @@ export type StreamingTier10LargeBadgeProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -5283,7 +5266,7 @@ export type TrafficConeSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -5297,7 +5280,7 @@ export type TreasureChestBannerSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: number | string;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: number | string;
@@ -5311,7 +5294,7 @@ export type WizardHatAndBookSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -5337,7 +5320,7 @@ export type WumpusCouchSpotIllustrationProps = {
 		accessibilityLabel?: FastImageProps['accessibilityLabel'];
 		accessible?: FastImageProps['accessible'];
 		height?: unknown;
-		resizeMode?: unknown;
+		resizeMode?: 'contain' | (string & {});
 		/** @default 1 */
 		scale?: number;
 		width?: unknown;
@@ -5382,7 +5365,7 @@ export type AvatarProps = {
 		autoStatusCutout?: boolean;
 		avatarDecoration?: { asset?: unknown };
 		avatarStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
-		channel?: unknown;
+		channel?: CutoutableAvatarImageProps['channel'];
 		cutout?: unknown;
 		deaf?: unknown;
 		disablePlaceholder?: boolean;
@@ -5397,7 +5380,7 @@ export type AvatarProps = {
 		/** @default false */
 		needsOffscreenAlphaCompositing?: React.ComponentProps<typeof RN.View>['needsOffscreenAlphaCompositing'];
 		size?: unknown;
-		source?: CutoutableAvatarImageProps['source'];
+		source?: unknown;
 		/** @default false */
 		speaking?: boolean;
 		speakingColor?: unknown;
@@ -5536,7 +5519,7 @@ export type VoidButtonComponent = React.ComponentType<VoidButtonProps> & VoidBut
  * @see design/void/Button/native/Button.tsx
  */
 export type ButtonTextProps = {
-		children?: (...args: any[]) => unknown;
+		children?: React.ReactNode;
 		color?: 'brand' | (string & {});
 		disabled?: boolean;
 		look?: 'filled' | (string & {});
@@ -5639,12 +5622,12 @@ export type CutoutAvatarImageComponent = React.ComponentType<CutoutAvatarImagePr
  */
 export type CutoutableAvatarImageProps = {
 		animate?: NativeCutoutAvatarImageProps['animate'];
-		channel?: unknown;
+		channel?: { getApplicationId?: unknown; icon?: unknown; id?: unknown; recipients?: unknown; type?: unknown };
 		cutout?: CutoutAvatarImageProps['cutout'];
 		disablePlaceholder?: boolean;
 		guildId?: string;
 		size?: unknown;
-		source?: (...args: any[]) => unknown;
+		source?: unknown;
 		style?: CutoutAvatarImageProps['style'];
 		user?: { discriminator?: unknown; getAvatarSource?: unknown; id?: unknown };
 	};
@@ -6374,7 +6357,7 @@ export type StatusProps = {
 		isMobileOnline?: boolean;
 		/** @default false */
 		isVROnline?: boolean;
-		size?: unknown;
+		size?: number;
 		status?: 'dnd' | 'idle' | 'invisible' | 'offline' | (string & {});
 		/** @default false */
 		streaming?: boolean;
@@ -6390,7 +6373,7 @@ export type StatusWithTypingProps = {
 		isMobileOnline?: boolean;
 		/** @default false */
 		isVROnline?: boolean;
-		size?: unknown;
+		size?: number;
 		status?: 'dnd' | 'idle' | 'invisible' | 'offline' | (string & {});
 		/** @default false */
 		streaming?: boolean;

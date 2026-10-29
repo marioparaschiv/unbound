@@ -2,6 +2,8 @@ import { ts } from 'ts-morph';
 
 import type { PresenceTest, PropValue, Value } from './values';
 
+import { asProp } from './evidence';
+
 /**
  * A default: an `if (test) jump` on whether a prop is set, then one assignment, run when the test is false.
  * Run while the prop is absent it sets the default; run while it is present it copies the prop over one.
@@ -53,10 +55,11 @@ export function presenceCheck(
 			continue;
 		}
 
-		const value = regs.get(a.text);
+		const held = regs.get(a.text);
+		const value = held && asProp(held);
 		const other = regs.get(b.text);
 
-		if (value?.kind !== 'prop' || other?.kind !== 'literal') {
+		if (!value || other?.kind !== 'literal') {
 			continue;
 		}
 

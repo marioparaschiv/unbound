@@ -3,7 +3,7 @@ import { Project, ts } from 'ts-morph';
 import type { ModuleFacts, ModuleRecord } from './types';
 import type { ModuleContext, Value } from './values';
 
-import { bindExports, isHookName, nameComponents } from './evidence';
+import { bindExports, nameComponents } from './evidence';
 import { walkFunction } from './interpret';
 import { UNKNOWN } from './values';
 
@@ -40,7 +40,7 @@ export function extractModule(project: Project, record: ModuleRecord): ModuleFac
 			return {
 				moduleId: record.id,
 				components: [],
-				hooks: [],
+				functions: [],
 				reExports: [],
 				passed: [],
 				constants: new Map(),
@@ -55,6 +55,7 @@ export function extractModule(project: Project, record: ModuleRecord): ModuleFac
 			text,
 			file,
 			slots: new Map(),
+			slotWrites: [],
 			components: new Map(),
 			exports: [],
 			starExports: [],
@@ -69,17 +70,12 @@ export function extractModule(project: Project, record: ModuleRecord): ModuleFac
 
 		const bound = bindExports(ctx);
 
-		const hooks = [...ctx.components.values()].filter(
-			(component) => isHookName(component.name) && component.exportNames.length > 0,
+		const components = nameComponents(ctx);
+		const functions = [...ctx.components.values()].filter(
+			(component) => !/^[A-Z#]/.test(component.name),
 		);
 
-		return {
-			moduleId: record.id,
-			components: nameComponents(ctx),
-			hooks,
-			...bound,
-			passed: ctx.passed,
-		};
+		return { moduleId: record.id, components, functions, ...bound, passed: ctx.passed };
 	} finally {
 		project.removeSourceFile(source);
 	}

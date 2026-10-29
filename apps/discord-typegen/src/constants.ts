@@ -4,6 +4,7 @@ import type {
 	ImportRef,
 	LiteralValue,
 	ModuleFacts,
+	PropEvidence,
 	PropObservation,
 } from './types';
 import type { Value } from './values';
@@ -108,16 +109,21 @@ function walk(value: ConstantValue, path: string[]): LiteralValue | undefined {
  */
 export function resolveConstantRefs(components: ComponentRecord[], lookup: ConstantLookup) {
 	for (const component of components) {
-		for (const [name, evidence] of component.props) {
-			const resolved = evidence.flatMap((observation) =>
-				resolveObservation(observation, lookup),
-			);
+		resolveAll(component.props, lookup);
+		resolveAll(component.params, lookup);
+	}
+}
 
-			if (resolved.length > 0) {
-				component.props.set(name, resolved);
-			} else {
-				component.props.delete(name);
-			}
+function resolveAll<K>(evidence: Map<K, PropEvidence>, lookup: ConstantLookup) {
+	for (const [key, observations] of evidence) {
+		const resolved = observations.flatMap((observation) =>
+			resolveObservation(observation, lookup),
+		);
+
+		if (resolved.length > 0) {
+			evidence.set(key, resolved);
+		} else {
+			evidence.delete(key);
 		}
 	}
 }
