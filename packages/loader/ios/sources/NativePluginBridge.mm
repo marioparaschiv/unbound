@@ -2632,22 +2632,41 @@ static Value hookValue(Runtime &runtime, const loader::ffi::Type &type,
     return loader::ffi::readValue(runtime, type, bytes.data());
 }
 
-static void logDroppedHookCall(loader::AddonSlot addon, SEL selector, const std::string &call)
+static bool firstHookWarning(loader::AddonSlot addon, const std::string &name,
+                             const std::string &kind)
 {
     static std::mutex            warnedMutex;
     static std::set<std::string> warned;
-    std::string                  name = sel_getName(selector);
+    std::lock_guard<std::mutex>  lock(warnedMutex);
+    return warned.insert(std::to_string(addon) + " " + name + " " + kind).second;
+}
+
+static void logDroppedHookCall(loader::AddonSlot addon, SEL selector, const std::string &call)
+{
+    std::string name = sel_getName(selector);
+    if (!firstHookWarning(addon, name, call))
     {
-        std::lock_guard<std::mutex> lock(warnedMutex);
-        if (!warned.insert(std::to_string(addon) + " " + name + " " + call).second)
-        {
-            return;
-        }
+        return;
     }
     std::string reason =
         "the " + name + " hook answered after its 100 ms limit, so its " + call + " was dropped";
     [Logger error:LOG_CATEGORY_PLUGINS
            format:@"%s", loader::threading::hookFailureMessage(addon, reason).c_str()];
+}
+
+static bool executeRuntimeSynchronously(std::function<void(Runtime &)> callback);
+
+static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selector,
+                            std::function<void(Runtime &)> callback)
+{
+    bool        completed = executeRuntimeSynchronously(std::move(callback));
+    std::string name      = sel_getName(selector);
+    if (!completed && firstHookWarning(state->addon, name, "skipped"))
+    {
+        [Logger warning:LOG_CATEGORY_PLUGINS
+                 format:@"%s", loader::threading::hookSkippedMessage(state->addon, name).c_str()];
+    }
+    return completed;
 }
 
 static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation> &invocation,
@@ -3201,11 +3220,13 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         {
             try
             {
-                executeRuntimeSynchronously(
-                    [invocation, object, selector, state](Runtime &runtime) {
+                runHookCallback(
+                    state, selector, [invocation, object, selector, state](Runtime &runtime) {
                         auto callbacks = state->callbacks.lock();
                         if (!callbacks || !callbacks->before)
+                        {
                             return;
+                        }
                         Object context =
                             hookContext(runtime, invocation, object, selector, true, state->addon);
                         callbacks->before->call(runtime, context);
@@ -3230,7 +3251,8 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             {
                 std::shared_ptr<std::vector<uint8_t>> replacementResult =
                     hookReturnBuffer(invocation);
-                bool completed = executeRuntimeSynchronously(
+                bool completed = runHookCallback(
+                    state, selector,
                     [invocation, object, selector, state, replacementResult](Runtime &runtime) {
                         auto callbacks = state->callbacks.lock();
                         if (!callbacks || !callbacks->replace)
@@ -3511,15 +3533,17 @@ static void dispatchVoidHook(id object, SEL selector)
             {
                 try
                 {
-                    executeRuntimeSynchronously([invocation, object, selector,
-                                                 state](Runtime &runtime) {
-                        auto callbacks = state->callbacks.lock();
-                        if (!callbacks || !callbacks->before)
-                            return;
-                        Object context =
-                            hookContext(runtime, invocation, object, selector, true, state->addon);
-                        callbacks->before->call(runtime, context);
-                    });
+                    runHookCallback(state, selector,
+                                    [invocation, object, selector, state](Runtime &runtime) {
+                                        auto callbacks = state->callbacks.lock();
+                                        if (!callbacks || !callbacks->before)
+                                        {
+                                            return;
+                                        }
+                                        Object context = hookContext(runtime, invocation, object,
+                                                                     selector, true, state->addon);
+                                        callbacks->before->call(runtime, context);
+                                    });
                 }
                 catch (const std::exception &exception)
                 {
@@ -3540,7 +3564,8 @@ static void dispatchVoidHook(id object, SEL selector)
                 {
                     std::shared_ptr<std::vector<uint8_t>> replacementResult =
                         hookReturnBuffer(invocation);
-                    bool completed = executeRuntimeSynchronously(
+                    bool completed = runHookCallback(
+                        state, selector,
                         [invocation, object, selector, state, replacementResult](Runtime &runtime) {
                             auto callbacks = state->callbacks.lock();
                             if (!callbacks || !callbacks->replace)

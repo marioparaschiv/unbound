@@ -67,6 +67,13 @@ std::string hookFailureMessage(AddonSlot addon, const std::string &reason)
     return "Native plugin hook failed in " + addonName(addon) + ": " + reason;
 }
 
+std::string hookSkippedMessage(AddonSlot addon, const std::string &selector)
+{
+    return "Native plugin hook skipped in " + addonName(addon) +
+           ": the JavaScript thread did not answer the " + selector +
+           " hook within 100 ms, so it did not run";
+}
+
 std::string addonName(AddonSlot addon)
 {
     nlohmann::json record = nlohmann::json::parse(addonRecord(addon), nullptr, false);
