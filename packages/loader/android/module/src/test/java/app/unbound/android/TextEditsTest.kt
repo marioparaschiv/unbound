@@ -38,6 +38,17 @@ class TextEditsTest {
         )
 
     @Test
+    fun mapThroughShiftsPositionsAfterALaterRuleEdits() {
+        val insertion = edit(start = 10, end = 10, text = "+embed+")
+        val replacement = edit(start = 2, end = 6, text = "X")
+
+        assertEquals(1, TextEdits.mapThrough(1, listOf(insertion, replacement)))
+        assertEquals(17, TextEdits.mapThrough(10, listOf(insertion)))
+        assertEquals(20, TextEdits.mapThrough(16, listOf(insertion, replacement)))
+        assertEquals(2, TextEdits.mapThrough(4, listOf(replacement)))
+    }
+
+    @Test
     fun appliesEditsOnlyInsideTheText() {
         assertTrue(TextEdits.fits(edit(), 8))
         assertFalse(TextEdits.fits(edit(), 7))

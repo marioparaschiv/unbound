@@ -24,6 +24,8 @@ import {
 	STARTUP_SCAN_DELAYS,
 } from '@unbound-plugins/shared/native/android/views';
 
+import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
+
 import { createBlockBackgroundFinder } from '~/android/block-backgrounds';
 import {
 	codeSlots,
@@ -105,6 +107,7 @@ export function createNativeCards(native: Native) {
 	const pending = new Set<string>();
 	const awaitingSize = new Map<string, NativeJavaReference>();
 	const renderedByView = new Map<string, string>();
+	const retries = createRewriteRetry();
 	const blockBackgrounds = createBlockBackgroundFinder(java);
 	let nextSurface = 0;
 	let disposed = false;
@@ -233,7 +236,7 @@ export function createNativeCards(native: Native) {
 
 		const px = (value: number) => Math.round(value * layout.density);
 
-		inline.define({
+		const defined = inline.define({
 			original: layout.original,
 			rendered,
 			textView: layout.textView,
@@ -257,6 +260,15 @@ export function createNativeCards(native: Native) {
 				offsetY: px(TOP_GAP),
 			})),
 		});
+		const key = viewKey(layout.textView as NativeJavaValue);
+
+		if (!key) return;
+
+		if (defined) {
+			retries.succeeded(key);
+		} else {
+			retries.retry(key, () => schedule(layout.textView));
+		}
 	}
 
 	async function render(textView: NativeJavaReference) {
@@ -413,6 +425,7 @@ export function createNativeCards(native: Native) {
 			hooks.remove(sizeToken);
 			awaitingSize.clear();
 			renderedByView.clear();
+			retries.clear();
 			unsubscribe();
 			layouts.clear();
 			listeners.clear();

@@ -46,7 +46,7 @@ type Entry = InlineDefinition & {
 };
 
 export type InlineSurfaces = {
-	define(definition: InlineDefinition): void;
+	define(definition: InlineDefinition): boolean;
 	isDefined(rendered: string): boolean;
 	definitions(): InlineDefinition[];
 	dispose(): Promise<void>;
@@ -212,11 +212,15 @@ export function createInlineSurfaces(
 
 	return {
 		define(definition) {
-			if (disposed) return;
+			if (disposed) return false;
 
 			const existing = entries.get(definition.rendered);
 
-			active.put(definition.original, definition.rendered, definition.edits);
+			if (!active.put(definition.original, definition.rendered, definition.edits)) {
+				active.reapply(definition.textView);
+
+				return false;
+			}
 
 			if (existing) {
 				const resized = !sameAnchors(existing.slots, definition.slots);
@@ -241,7 +245,7 @@ export function createInlineSurfaces(
 
 				active.reapply(definition.textView);
 
-				return;
+				return true;
 			}
 
 			const entry: Entry = { ...definition, groups: [] };
@@ -255,6 +259,8 @@ export function createInlineSurfaces(
 			for (let index = 0; index < INITIAL_GROUPS; index++) createGroup(entry);
 
 			active.reapply(definition.textView);
+
+			return true;
 		},
 		isDefined: (rendered) => entries.has(rendered),
 		definitions: () => [...entries.values()],
