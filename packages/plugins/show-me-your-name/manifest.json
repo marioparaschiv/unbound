@@ -22,5 +22,12 @@
 	],
 	"version": "1.0.1",
 	"icon": "TextIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "d1faab491d56aea5bdb8ca35eba66838c3ee8ab55ff88ace2351bf579acc4f7024ff252b0e0967ba45792eca7e1e6f472e6bbc28dd76ff7014f778d86dd704b4"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "913TfMOAYRyJTjnPk0NGjFI4LCymdubLMjnBEOYoICRFA68eSw4shDPhO8qJaiDRQbewYnAk0epg2x2xcsd7BQ=="
+	}
 }

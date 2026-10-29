@@ -49,5 +49,12 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "b6c33e70e876c5546e8f0c09ea5f5d130054a4c4ad68d5a830e139f6b9fab169991b55fd2ecde2a1c5c1ad3a664f704791218357ef8cd596f9eb35b0c9051fed"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "gCRFH6rgr+L8OVOYyNuwO1v7O1BIAQ7TbImJ6IeSkAee+VyyNfD3Ul/xuwrH3xejHMydW9kEc2+mVceEvCViAg=="
+	}
 }
