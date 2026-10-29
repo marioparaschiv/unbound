@@ -122,6 +122,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		if (onlyWhenResized && bubbles.has(key) && placedSizes.get(key) === size) return;
 
 		placedSizes.set(key, size);
+		await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]);
 
 		if (await isNested(cell)) return;
 
@@ -202,12 +203,20 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		if (!flushing) setTimeout(() => void flush(), 0);
 	}
 
+	async function clearSeparator(cell: NativeObjectHandle) {
+		if (!disposed)
+			await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]).catch(() => undefined);
+	}
+
 	const hooks = [
 		objc.hook(IOSClass.messageCell, 'setBackgroundColor:', {
 			before: (context) => context.replaceObjectArgument(0, clear),
 		}),
 		objc.hook(IOSClass.separatorCell, 'setBackgroundColor:', {
 			before: (context) => context.replaceObjectArgument(0, clear),
+		}),
+		objc.hook(IOSClass.separatorCell, 'layoutSubviews', {
+			after: ({ self }) => void clearSeparator(self),
 		}),
 		objc.hook(IOSClass.messageCell, 'layoutSubviews', {
 			after: ({ self }) => schedule(self, true),
