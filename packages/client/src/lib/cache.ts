@@ -23,6 +23,8 @@ type CacheState = {
 	moduleFlags: Record<number, number>;
 	// `name.type` of an asset to the id of the module that registers it.
 	assets: Record<string, number>;
+	// Every asset module of this build has registered once, so `assets` names every asset.
+	assetsComplete: boolean;
 };
 
 export const state: CacheState = {
@@ -30,6 +32,7 @@ export const state: CacheState = {
 	modules: storage.get('modules', {}),
 	moduleFlags: storage.get('moduleFlags', {}),
 	assets: storage.get('assets', {}),
+	assetsComplete: storage.get('assetsComplete', false),
 };
 
 if (!isValidCache()) {
@@ -44,7 +47,16 @@ function invalidateCache() {
 	state.modules = {};
 	state.moduleFlags = {};
 	state.assets = {};
+	state.assetsComplete = false;
 
+	save();
+}
+
+/**
+ * @description Records that every asset module of this build has registered, so a name missing from the cache does not exist.
+ */
+export function markAssetsComplete() {
+	state.assetsComplete = true;
 	save();
 }
 
@@ -209,6 +221,7 @@ function save() {
 	storage.set('modules', state.modules);
 	storage.set('moduleFlags', state.moduleFlags);
 	storage.set('assets', state.assets);
+	storage.set('assetsComplete', state.assetsComplete);
 }
 
 export default {
@@ -217,6 +230,7 @@ export default {
 	getCachedAssetModule,
 	addAssetToCache,
 	removeAssetFromCache,
+	markAssetsComplete,
 	getModuleCacheForKey,
 	addCachedIDForKey,
 	markKeyMissing,

@@ -133,9 +133,12 @@ metroRequire(2000);
 
 Object.assign(globalThis, { modules, __r: metroRequire });
 
+const cacheState = { assetsComplete: false };
+
 mock.module('~/lib/cache', () => ({
 	ModuleFlags: { BLACKLISTED: 1 },
 	default: {
+		state: cacheState,
 		moduleIds,
 		hasModuleFlag: () => false,
 		addModuleFlag: () => undefined,
@@ -150,6 +153,9 @@ mock.module('~/lib/cache', () => ({
 		},
 		removeAssetFromCache(key: string) {
 			delete cachedAssets[key];
+		},
+		markAssetsComplete() {
+			cacheState.assetsComplete = true;
 		},
 	},
 }));
@@ -203,6 +209,7 @@ describe('assets', () => {
 		expect(nameOf(assets.getIDByName('swept'))).toBe('swept');
 		expect(cachedAssets['swept.png']).toBe(2004);
 		expect(initializedSince(before)).toEqual([2003, 2004]);
+		expect(cacheState.assetsComplete).toBe(true);
 	});
 
 	test('after the sweep, a missing name initializes nothing', () => {

@@ -92,6 +92,8 @@ export function getIDByName(name: string, type: 'svg' | 'png' = 'png'): number |
 		}
 
 		Cache.removeAssetFromCache(key);
+	} else if (Cache.state.assetsComplete) {
+		return lookup(key);
 	}
 
 	sweep();
@@ -238,6 +240,8 @@ function sweep() {
 			initializeModule(id);
 		}
 	}
+
+	Cache.markAssetsComplete();
 }
 
 // An asset module requires only the registry. Metro clears `dependencyMap` on init, so this holds only before it.
