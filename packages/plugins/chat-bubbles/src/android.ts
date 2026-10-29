@@ -265,24 +265,28 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		},
 	);
 
-	function refreshVisible() {
+	async function refreshVisible() {
 		const root = currentDecorView(java);
 
 		if (!root) return;
 
-		for (const row of findViewsOfClass(java, root, AndroidClass.messageView)) {
+		for (const row of await findViewsOfClass(java, root, AndroidClass.messageView)) {
 			if (!isNested(row)) schedule(row);
 		}
 	}
 
-	refreshVisible();
+	refreshVisible().catch((error) =>
+		console.error(`[${PLUGIN_NAME}] Failed to scan the views on screen:`, error),
+	);
 
 	return {
 		placed: () => tracked.length,
 		refresh() {
 			for (const row of tracked) schedule(row);
 
-			refreshVisible();
+			refreshVisible().catch((error) =>
+				console.error(`[${PLUGIN_NAME}] Failed to scan the views on screen:`, error),
+			);
 		},
 		async dispose() {
 			disposed = true;

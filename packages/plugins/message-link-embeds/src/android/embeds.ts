@@ -34,7 +34,7 @@ import { readViewText } from '@unbound-plugins/shared/native/android/spans';
 import {
 	currentDecorView,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
 import { registerMessageSurface, type SurfaceContent } from '~/components/message-surface';
@@ -479,12 +479,12 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		},
 	);
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || controller.signal.aborted) return;
 
-		for (const messageView of findViewsOfClass(java, decor, MESSAGE_VIEW)) {
+		for (const messageView of await findViewsOfClass(java, decor, MESSAGE_VIEW)) {
 			const messageId = javaText(java.getField(messageView, messageIdField(java)));
 
 			if (messageId) {
@@ -498,7 +498,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	const scans = scheduleStartupScans('Message Link Embeds', scanVisible);
 
 	return {
 		drawn: () => embeds.size,

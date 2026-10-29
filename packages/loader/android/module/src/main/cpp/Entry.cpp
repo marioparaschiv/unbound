@@ -425,6 +425,9 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.runtimeReplaced = env->GetStaticMethodID(bridge, "runtimeReplaced", "()V");
     gCallbacks.javaBatch =
         env->GetStaticMethodID(bridge, "javaBatch", "(Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.javaFindViews = env->GetStaticMethodID(
+        bridge, "javaFindViews",
+        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaCreateAssociationKey =
         env->GetStaticMethodID(bridge, "javaCreateAssociationKey", "()Ljava/lang/String;");
     gCallbacks.javaGetAssociatedObject =
@@ -468,7 +471,7 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.javaDescribe && gCallbacks.javaConstruct && gCallbacks.javaRespondsTo &&
            gCallbacks.javaInvoke && gCallbacks.javaGetField && gCallbacks.javaSetField &&
            gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
-           gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
+           gCallbacks.runtimeReplaced && gCallbacks.javaBatch && gCallbacks.javaFindViews &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
            gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&

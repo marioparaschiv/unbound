@@ -2121,6 +2121,8 @@ export type NativeJavaBridge = {
 	getClass(name: string): NativeJavaHandle;
 	describe(name: string): NativeJavaClassDescription;
 	batch(operations: NativeJavaBatchOperation[]): NativeJavaValue[];
+	/** Runs the operations like `batch`, on the main thread, so views can be read safely. Missing on older loaders. */
+	batchAsync?(operations: NativeJavaBatchOperation[]): NativeCancelablePromise<NativeJavaValue[]>;
 	createAssociationKey(): NativeJavaAssociationKey;
 	getAssociatedObject(
 		handle: NativeJavaReference,
