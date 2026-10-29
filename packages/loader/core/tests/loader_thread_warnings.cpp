@@ -33,5 +33,12 @@ int main()
     assert(!warnings.warning(plugin, "-[UIView bounds]"));
     assert(warnings.warning(plugin, "android.view.View.getWidth()"));
     assert(warnings.warning(kNoAddon, "-[UIView bounds]")->rfind("an unknown plugin", 0) == 0);
+
+    developerMode = false;
+    now += std::chrono::seconds(1);
+    assert(!warnings.warning(plugin, "-[UIView bounds]"));
+    developerMode = true;
+    now += std::chrono::seconds(1);
+    assert(warnings.warning(plugin, "-[UIView bounds]"));
     return 0;
 }

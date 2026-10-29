@@ -116,6 +116,40 @@ export function fixtureScript(guild: string, channel: string): string {
 })()`;
 }
 
+const OFF_MAIN_WARNING = /^(\S+) W \[plugins\] (.+?) called (.+?) off the main thread\./;
+
+export function developerModeScript(enabled: boolean): string {
+	return `(function () {
+	var store = unbound.storage.getStore('unbound');
+	var previous = store.get('developer-mode', false);
+	store.set('developer-mode', ${enabled});
+	return String(previous);
+})()`;
+}
+
+export function offMainLogScript(): string {
+	return `Promise.resolve(unbound.fs.read('Unbound/Logs/unbound.log')).then(function (text) {
+	return JSON.stringify(String(text).split('\\n').filter(function (line) { return line.indexOf('off the main thread') !== -1; }));
+}, function () { return '[]'; })`;
+}
+
+export function parseOffMainWarnings(lines: string[], since: string): Map<string, string[]> {
+	const calls = new Map<string, Set<string>>();
+
+	for (const line of lines) {
+		const match = OFF_MAIN_WARNING.exec(line);
+
+		if (!match || match[1]! < since) continue;
+
+		const plugin = calls.get(match[2]!) ?? new Set<string>();
+
+		plugin.add(match[3]!);
+		calls.set(match[2]!, plugin);
+	}
+
+	return new Map([...calls].map(([plugin, found]) => [plugin, [...found].sort()]));
+}
+
 export function restoreScript(id: string): string {
 	return `Promise.resolve(unbound.plugins.stop(${JSON.stringify(id)})).then(function () { return "stopped"; })`;
 }
@@ -335,6 +369,13 @@ async function main(): Promise<void> {
 		await evaluate(port, fixtureScript(guild, channel));
 	}
 
+	const since = new Date(Date.now() - 2_000).toISOString();
+	const developerMode = (await evaluate(port, developerModeScript(false))) === 'true';
+
+	await new Promise((done) => setTimeout(done, 1_500));
+	await evaluate(port, developerModeScript(true));
+	await new Promise((done) => setTimeout(done, 1_500));
+
 	for (const plugin of catalog) {
 		const result = JSON.parse(await evaluate(port, cycleScript(plugin.id))) as CycleResult;
 		const file = join(out, `${plugin.id}.png`);
@@ -348,6 +389,20 @@ async function main(): Promise<void> {
 		console.error(
 			`${check.lifecycle === 'pass' && check.behavior === 'pass' ? 'pass' : 'FAIL'} ${plugin.id}`,
 		);
+	}
+
+	const warnings = parseOffMainWarnings(
+		JSON.parse(await evaluate(port, offMainLogScript())) as string[],
+		since,
+	);
+
+	if (!developerMode) await evaluate(port, developerModeScript(false));
+
+	for (const check of checks) {
+		const name = catalog.find((plugin) => plugin.id === check.id)?.name;
+		const calls = name ? warnings.get(name) : undefined;
+
+		if (calls?.length) check.offMainCalls = calls;
 	}
 
 	const baseline = readBaseline(
