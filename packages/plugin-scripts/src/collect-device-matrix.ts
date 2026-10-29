@@ -847,6 +847,7 @@ async function main(): Promise<void> {
 		beforeMB: memoryBefore,
 		afterMB: await discordMemory(target, run),
 		relaunched,
+		springBoard: await springBoardMemory(target, run),
 	};
 
 	writeFileSync(join(out, 'memory.json'), `${JSON.stringify(memory, null, '\t')}\n`);
