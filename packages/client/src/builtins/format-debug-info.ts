@@ -27,11 +27,11 @@ export type DebugInfo = {
 export function debugLines(info: DebugInfo): string[] {
 	const loader = [info.loaderOrigin, info.framework]
 		.filter(Boolean)
-		.map((part) => `\`${part}\``)
-		.join(', ');
+		.map((part) => `(\`${part}\`)`)
+		.join(' ');
 
 	return [
-		`- **Unbound:** ${info.client} (\`${info.commit}\`), loader ${info.loader} (${loader})`,
+		`- **Unbound:** ${info.client} (\`${info.commit}\`), loader ${info.loader} ${loader}`,
 		`- **Discord:** ${info.discord} ${info.discordChannel}, build ${info.discordBuild} (${info.appSource})`,
 		`- **Device:** ${info.device} on ${info.platform} ${info.os}`,
 		`- **State:** ${info.flags.join(', ')}`,
