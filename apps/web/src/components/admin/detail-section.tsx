@@ -1,15 +1,15 @@
-import type { ReactNode } from 'react';
+import type { ComponentProps } from 'react';
 
 import Text from '~/components/ui/text';
+import cn from '~/lib/cn';
 
-type DetailSectionProps = {
+type DetailSectionProps = ComponentProps<'section'> & {
 	title: string;
-	children: ReactNode;
 };
 
-function DetailSection({ title, children }: DetailSectionProps) {
+function DetailSection({ title, children, className, ...props }: DetailSectionProps) {
 	return (
-		<section className='flex flex-col gap-3'>
+		<section className={cn('flex flex-col gap-3', className)} {...props}>
 			<Text variant='heading-sm'>{title}</Text>
 			{children}
 		</section>
