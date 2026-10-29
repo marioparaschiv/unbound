@@ -1,17 +1,19 @@
 import { describe, expect, mock, test } from 'bun:test';
 
 type Presence = 'loaded' | 'present' | 'missing' | 'unknown';
+type Handle = { __METRO_LAZY__: boolean };
+type FakeModule = { value: number };
 
-const presences = new WeakMap<object, Presence>();
+const presences = new WeakMap<Handle, Presence>();
 
-mock.module('@unbound-app/api', () => ({
-	metro: { getModulePresence: (handle: object) => presences.get(handle) },
+void mock.module('@unbound-app/api', () => ({
+	metro: { getModulePresence: (handle: Handle) => presences.get(handle) },
 }));
 
 const { ensureModules } = await import('./ensure-modules');
 
 // A lazy handle whose `module` read would load its module, which `ensureModules` must never do.
-function lazy(presence: Presence | undefined, module?: { value: number }) {
+function lazy(presence: Presence | undefined, module?: FakeModule) {
 	const reads: string[] = [];
 	const handle = new Proxy(
 		{ __METRO_LAZY__: true },

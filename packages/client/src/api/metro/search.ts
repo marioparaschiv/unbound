@@ -17,9 +17,9 @@ import type {
 } from '~/api/metro/types';
 import Filters, { type MetroFilter } from '~/api/metro/filters';
 import { createLazyModule } from '~/api/metro/lazy-registry';
+import { filterPresence } from '~/api/metro/presence';
 import { provideFinders } from '~/api/metro/finders';
 import { blacklist, data } from '~/api/metro/state';
-import { filterPresence } from '~/api/metro/presence';
 import { onModuleLoaded } from '~/api/metro/wait';
 import Cache, { ModuleFlags } from '~/lib/cache';
 import { CACHE_KEY } from '~/lib/constants';

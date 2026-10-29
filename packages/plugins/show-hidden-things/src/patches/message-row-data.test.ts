@@ -8,9 +8,9 @@ const HOUR = 60 * 60 * 1000;
 let after: AfterCallback = () => {};
 const members = new Map<string, { communicationDisabledUntil?: string | null }>();
 
-mock.module('@unbound-app/api', () => ({ metro: { getModulePresence: () => 'loaded' } }));
+void mock.module('@unbound-app/api', () => ({ metro: { getModulePresence: () => 'loaded' } }));
 
-mock.module('~/modules', () => ({
+void mock.module('~/modules', () => ({
 	ChannelStore: { getChannel: (id: string) => (id === 'c1' ? { guild_id: 'g1' } : undefined) },
 	GuildMemberStore: {
 		getMember: (guildId: string, userId: string) => members.get(`${guildId}:${userId}`),

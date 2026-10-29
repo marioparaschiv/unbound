@@ -8,7 +8,7 @@ const listeners = new Set<Listener>();
 const searches: SearchOptions[] = [];
 const loaded: Exports = { useMediaShareActions: () => 'loaded' };
 
-mock.module('@unbound-app/api', () => ({
+void mock.module('@unbound-app/api', () => ({
 	metro: {
 		filters: {
 			byProps: (prop: string) => (mdl: Exports) => mdl[prop] !== undefined,
