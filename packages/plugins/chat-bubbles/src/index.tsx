@@ -8,6 +8,7 @@ import { drawIOSBubbles } from '~/ios';
 import { PLUGIN_NAME } from '~/constants';
 
 let dispose: () => void | Promise<void> = () => {};
+let placed: (() => number) | null = null;
 
 function start(context: PluginContext) {
 	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
@@ -18,8 +19,10 @@ function start(context: PluginContext) {
 			: drawIOSBubbles(context.native.objc);
 	const unsubscribe = subscribeAppearance(() => bubbles.refresh());
 
+	placed = bubbles.placed;
 	dispose = () => {
 		unsubscribe();
+		placed = null;
 
 		return bubbles.dispose();
 	};
@@ -33,8 +36,17 @@ function stop() {
 	return stopping;
 }
 
+function selfTest() {
+	if (!placed) {
+		return { ok: false, detail: 'bubbles are not drawing' };
+	}
+
+	return { ok: true, detail: `${placed()} bubbles placed on screen` };
+}
+
 export default {
 	start,
 	stop,
+	selfTest,
 	getSettingsPanel: () => <SettingsPanel />,
 };

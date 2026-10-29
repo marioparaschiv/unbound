@@ -178,6 +178,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 	void refresh();
 
 	return {
+		placed: () => bubbles.size,
 		refresh: () => void refresh(),
 		async dispose() {
 			disposed = true;

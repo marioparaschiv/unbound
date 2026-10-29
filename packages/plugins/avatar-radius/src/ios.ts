@@ -153,6 +153,7 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 	});
 
 	return {
+		rounded: () => fastImages.size,
 		refresh,
 		async dispose() {
 			for (const hook of hooks) hook.remove();

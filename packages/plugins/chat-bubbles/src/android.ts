@@ -264,6 +264,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	refreshVisible();
 
 	return {
+		placed: () => tracked.length,
 		refresh() {
 			for (const row of tracked) schedule(row);
 

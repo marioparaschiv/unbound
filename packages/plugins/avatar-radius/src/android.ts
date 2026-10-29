@@ -357,6 +357,7 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 	}
 
 	return {
+		rounded: () => tracked.length,
 		refresh() {
 			for (const rounded of tracked) apply(rounded).catch(report);
 		},

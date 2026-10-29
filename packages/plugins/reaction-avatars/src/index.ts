@@ -2,6 +2,7 @@ import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabiliti
 import hookMessageCells from '@unbound-plugins/shared/native/message-cell-hooks';
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
@@ -78,4 +79,4 @@ function stop() {
 	return finished;
 }
 
-export default { start, stop };
+export default { start, stop, selfTest: featureSelfTest };
