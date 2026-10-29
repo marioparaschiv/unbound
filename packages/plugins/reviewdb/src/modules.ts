@@ -1,14 +1,10 @@
 import { metro, patcher, storage } from '@unbound-app/api';
 
-export const UserProfileCard = metro.findByFilePath(
+// The profile card's file, else its name for a build that moved it.
+export const UserProfileCardSources = [
 	'modules/user_profile/native/UserProfileCard.tsx',
-	{ interop: false, lazy: true },
-);
-
-export const UserProfileCardByName = metro.findByName('UserProfileCard', {
-	interop: false,
-	lazy: true,
-});
+	metro.filters.byName('UserProfileCard'),
+];
 
 // The same module as `metro.common.Theme`, which its typings do not declare yet.
 export const Theme = metro.findByProps('colors', 'internal', { lazy: true });

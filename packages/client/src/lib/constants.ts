@@ -3,7 +3,7 @@ declare const $$DEV$$: boolean;
 
 /** @internal */
 export const CACHE_KEY = Symbol.for('metro.cache');
-export const CACHE_VERSION = 1;
+export const CACHE_VERSION = 2;
 
 /** Whether this is a development build. Replaced at build time by the build's `transform.define`. */
 export const DEV: boolean = $$DEV$$;

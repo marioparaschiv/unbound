@@ -1,8 +1,8 @@
 import { createLogger } from '@unbound-app/logger';
 
 import { Dispatcher, i18n as Discord, Moment } from '~/api/metro/common';
+import { findByName, filters, onModuleLoaded } from '~/api/metro';
 import { DEV, I18N_BASE_URL } from '~/lib/constants';
-import { findByName } from '~/api/metro';
 import { getStore } from '~/api/storage';
 import fs from '~/api/fs';
 
@@ -45,6 +45,8 @@ let originalMomentCalendar: MomentMethod | null = null;
 let wrappedMomentCalendar: MomentMethod | null = null;
 let originalMomentDefineLocale: MomentMethod | null = null;
 let wrappedMomentDefineLocale: MomentMethod | null = null;
+// Discord loads Moment when it first shows a date; until then there is no locale to sync.
+let momentLoaded = false;
 
 let MessageFormat: MessageFormatConstructor | undefined;
 
@@ -60,7 +62,12 @@ function getMessageFormat() {
 }
 
 function syncMomentLocale(locale: string): void {
-	if (typeof Moment?.locale !== 'function' || typeof Moment?.locales !== 'function') return;
+	if (
+		!momentLoaded ||
+		typeof Moment?.locale !== 'function' ||
+		typeof Moment?.locales !== 'function'
+	)
+		return;
 
 	previousMomentLocale ||= Moment.locale();
 
@@ -257,7 +264,12 @@ export async function init(): Promise<void> {
 	const initialLocale = locale ?? 'en-US';
 
 	currentLocale = initialLocale;
-	syncMomentLocale(initialLocale);
+	subscriptions.push(
+		onModuleLoaded(filters.byProps('isMoment'), () => {
+			momentLoaded = true;
+			syncMomentLocale(currentLocale ?? initialLocale);
+		}),
+	);
 
 	async function handler({ locale }: I18nLoadSuccess) {
 		if (!locale) return;
@@ -326,6 +338,7 @@ export function destroy() {
 		Reflect.apply(originalMomentLocaleSetter, Moment, [previousMomentLocale]);
 	}
 
+	momentLoaded = false;
 	previousMomentLocale = null;
 	originalMomentLocaleSetter = null;
 	wrappedMomentLocaleSetter = null;

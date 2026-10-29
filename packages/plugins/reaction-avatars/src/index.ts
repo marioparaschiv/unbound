@@ -7,7 +7,6 @@ import type { PluginContext } from '@unbound-app/api/native';
 
 import {
 	ChannelStore,
-	findUserSummaryItem,
 	MessageStore,
 	ReactionActions,
 	SelectedChannelStore,
@@ -25,9 +24,9 @@ import { createSession } from '~/native/session';
 let dispose: () => Promise<void> | undefined = () => undefined;
 
 function start(context: PluginContext) {
+	// `UserSummaryItem` is found when a reaction first renders, and the surface renders nothing without it.
 	const modules = {
-		getReactors: ReactionActions.getReactors,
-		UserSummaryItem: findUserSummaryItem(),
+		ReactionActions,
 		ChannelStore,
 		MessageStore,
 		SelectedChannelStore,

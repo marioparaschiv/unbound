@@ -1,55 +1,35 @@
-import { createLogger } from '@unbound-app/logger';
 import noop from '@unbound-app/utils/noop';
 
+import { filters, findByProps, onModuleLoaded } from '~/api/metro';
 import { createPatcher } from '~/api/patcher';
-import { findByProps } from '~/api/metro';
 
 const Patcher = createPatcher('unbound::tracking');
-const Logger = createLogger('Tracking');
 
-/** Disables Discord's analytics trackers. */
+const Metadata = findByProps('trackWithMetadata', { lazy: true });
+const Properties = findByProps('track', 'encodeProperties', { lazy: true });
+
+let stopWaiting: (() => void) | null = null;
+
+/** Disables Discord's analytics trackers as Discord loads them. */
 export function start() {
-	patchMetadataTrackers();
-	patchActionHandlers();
-	patchSuperProperties();
+	Patcher.instead(Metadata, 'trackWithMetadata', noop);
+	Patcher.instead(Properties, 'track', noop);
+
+	stopWaiting = onModuleLoaded(filters.byProps('AnalyticsActionHandlers'), (Handlers) => {
+		const { AnalyticsActionHandlers } = Handlers;
+
+		Patcher.instead(AnalyticsActionHandlers, 'handleConnectionClosed', noop);
+		Patcher.instead(AnalyticsActionHandlers, 'handleConnectionOpen', noop);
+		Patcher.instead(AnalyticsActionHandlers, 'handleFingerprint', noop);
+		Patcher.instead(AnalyticsActionHandlers, 'handleTrack', noop);
+	});
 }
 
 /** Restores Discord's analytics trackers. */
 export function stop() {
+	stopWaiting?.();
+	stopWaiting = null;
 	Patcher.unpatchAll();
-}
-
-function patchMetadataTrackers() {
-	const Metadata = findByProps('trackWithMetadata');
-
-	if (!Metadata) {
-		return Logger.error('Failed to find metadata trackers.');
-	}
-
-	Patcher.instead(Metadata, 'trackWithMetadata', noop);
-}
-
-function patchActionHandlers() {
-	const Handlers = findByProps('AnalyticsActionHandlers');
-
-	if (!Handlers) {
-		return Logger.error('Failed to find action handlers.');
-	}
-
-	Patcher.instead(Handlers.AnalyticsActionHandlers, 'handleConnectionClosed', noop);
-	Patcher.instead(Handlers.AnalyticsActionHandlers, 'handleConnectionOpen', noop);
-	Patcher.instead(Handlers.AnalyticsActionHandlers, 'handleFingerprint', noop);
-	Patcher.instead(Handlers.AnalyticsActionHandlers, 'handleTrack', noop);
-}
-
-function patchSuperProperties() {
-	const Properties = findByProps('track', 'encodeProperties');
-
-	if (!Properties) {
-		return Logger.error('Failed to find super properties.');
-	}
-
-	Patcher.instead(Properties, 'track', noop);
 }
 
 export default { start, stop };

@@ -1,10 +1,10 @@
 import { createLogger } from '@unbound-app/logger';
 import { Platform } from 'react-native';
 
+import { filters, onModuleLoaded } from '~/api/metro';
 import { CLIENT_VERSION } from '~/lib/constants';
 import ErrorFallback from '~/ui/error-boundary';
 import { createPatcher } from '~/api/patcher';
-import { findByName } from '~/api/metro';
 import { reload } from '~/api/native';
 import storage from '~/api/storage';
 
@@ -26,6 +26,8 @@ const Patcher = createPatcher('ErrorBoundary');
 const Logger = createLogger('ErrorBoundary');
 const Settings = storage.getStore('unbound');
 
+let stopWaiting: (() => void) | null = null;
+
 function enterRecoveryMode() {
 	Settings.set('recovery', true);
 	void reload();
@@ -37,14 +39,10 @@ export function start() {
 
 	if (!enabled) return;
 
-	const Boundary = findByName('ErrorBoundary');
+	stopWaiting = onModuleLoaded(filters.byName('ErrorBoundary'), patchBoundary);
+}
 
-	if (!Boundary) {
-		Logger.error('Failed to find ErrorBoundary component');
-
-		return;
-	}
-
+function patchBoundary(Boundary: MetroExport) {
 	Patcher.after(
 		Boundary.prototype,
 		'componentDidCatch',
@@ -83,6 +81,8 @@ export function start() {
 
 /** Removes the error boundary patch. */
 export function stop() {
+	stopWaiting?.();
+	stopWaiting = null;
 	Patcher.unpatchAll();
 }
 

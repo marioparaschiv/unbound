@@ -54,20 +54,12 @@ export const TYPING_INDICATOR_PATH = 'modules/chat/native/TypingIndicator.tsx';
 export const USERS_FAST_LIST_PATH =
 	'modules/main_tabs_v2/native/shared_components/user_list/UsersFastList.tsx';
 
-export const MessageReactionsContent = metro.findByFilePath(
-	'modules/reactions/native/MessageReactionsContent.tsx',
-	{ interop: false, lazy: true },
-);
+export const MESSAGE_REACTIONS_CONTENT_PATH =
+	'modules/reactions/native/MessageReactionsContent.tsx';
 
-export const PollVotesActionSheet = metro.findByFilePath(
-	'modules/polls/native/PollVotesActionSheet.tsx',
-	{ interop: false, lazy: true },
-);
+export const POLL_VOTES_ACTION_SHEET_PATH = 'modules/polls/native/PollVotesActionSheet.tsx';
 
-export const VoiceUserNameItem = metro.findByFilePath(
-	'modules/guild_sidebar/native/VoiceUserNameItem.tsx',
-	{ interop: false, lazy: true },
-);
+export const VOICE_USER_NAME_ITEM_PATH = 'modules/guild_sidebar/native/VoiceUserNameItem.tsx';
 
 export const settings = storage.getStore('unbound.role-color-everywhere');
 

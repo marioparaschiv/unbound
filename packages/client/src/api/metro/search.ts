@@ -8,7 +8,6 @@ import type {
 	MetroInternalOptions,
 	MetroSearchOptions,
 	MetroStoreOptions,
-	MetroLazySearchOptions,
 	MetroBulkItem,
 	MetroStringFindWithOptions,
 	AnyProps,
@@ -17,13 +16,19 @@ import type {
 	MetroFunctionSignatureOrArray,
 } from '~/api/metro/types';
 import Filters, { type MetroFilter } from '~/api/metro/filters';
-import { registerLazyModule } from '~/api/metro/lazy-registry';
+import { createLazyModule } from '~/api/metro/lazy-registry';
+import { filterPresence } from '~/api/metro/presence';
 import { provideFinders } from '~/api/metro/finders';
 import { blacklist, data } from '~/api/metro/state';
+import { onModuleLoaded } from '~/api/metro/wait';
 import Cache, { ModuleFlags } from '~/lib/cache';
 import { CACHE_KEY } from '~/lib/constants';
 
 const Logger = createLogger('Metro');
+
+// Sentinel key no real module owns, used to detect catch-all proxies. Defined once so the probe is
+// a plain property lookup with no per-call allocation. Declared before the registry walk, which reads it.
+const INVALID_EXPORT_SYMBOL = Symbol('is-invalid-export');
 
 // Walk the entire module registry once at import time, wrapping each module factory so we can
 // track the importing module, harden invalid exports, and run our patches as modules initialize.
@@ -184,63 +189,8 @@ export const on = addListener;
 export const off = removeListener;
 
 /**
- * @description Resolves a module matching `filter`, waiting for it to load if it is not yet present.
- * @param filter The filter to match against.
- * @param options Search options, excluding `lazy` and `all`, plus an optional `signal` to abort the wait.
- * @returns The matched module, or a promise that resolves once a matching module is required, or
- * `undefined` if the supplied signal aborts first.
- */
-export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = {}) {
-	const existing = find(filter, options);
-
-	// `find` reports a miss as `null`.
-	if (existing !== null && existing !== void 0) {
-		return existing;
-	}
-
-	const { signal } = options;
-
-	if (signal?.aborted) {
-		return Promise.resolve(void 0);
-	}
-
-	return new Promise((resolve) => {
-		function settle(mdl: any) {
-			remove();
-			signal?.removeEventListener('abort', abort);
-			resolve(mdl);
-		}
-
-		function abort() {
-			settle(void 0);
-		}
-
-		function callback(mdl, id) {
-			// A raw filter, such as `byFilePath`, reads the module record, as `find` does.
-			if (filter.isRaw) {
-				const record = window.modules.get(id);
-
-				return record && filter(record, id) ? settle(mdl) : void 0;
-			}
-
-			if (filter(mdl, id)) {
-				return settle(mdl);
-			}
-
-			if (mdl.default && filter(mdl.default, id)) {
-				return settle((options.interop ?? true) ? mdl.default : mdl);
-			}
-		}
-
-		const remove = addListener(callback);
-
-		signal?.addEventListener('abort', abort, { once: true });
-	});
-}
-
-/**
- * @description Core synchronous module search. Tries the per-key cache fast-path first, then falls
- * back to scanning the registry, degrading gracefully if the supplied filter throws.
+ * @description Core synchronous module search. Modules Discord has initialized are searched first, cached ids
+ * then the registry; only when none matches does it initialize modules, unless `initialize` is false.
  * @param filter The filter to match modules against.
  * @param options Search options controlling interop, caching, esModule unwrapping, and `all`.
  * @returns The first matching module, an array of matches when `all` is set, or `null`.
@@ -248,6 +198,10 @@ export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = 
 export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 	if (!filter) {
 		throw new Error('You must provide a filter to search by.');
+	}
+
+	if (options.lazy) {
+		return searchWithOptions([], options, () => filter);
 	}
 
 	const {
@@ -293,31 +247,21 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 		search.isRaw = true;
 	}
 
-	/****** CACHE ******/
-	const cache = filter[CACHE_KEY] && Cache.getModuleCacheForKey(filter[CACHE_KEY]);
+	const key = filter[CACHE_KEY];
+	const cached = key ? Cache.getModuleCacheForKey(key) : void 0;
 
-	if (cache) {
-		for (const id of cache) {
+	// Tests each module of `ids` in order; an uninitialized one is skipped, or initialized first when `force` is set.
+	function scan(ids: readonly number[], force: boolean) {
+		for (let i = 0, len = ids.length; i < len; i++) {
+			const id = ids[i];
 			const rawModule = window.modules.get(id);
 
-			if (!rawModule) {
+			if (!rawModule || blacklist.has(id)) {
 				continue;
 			}
 
-			if (blacklist.has(id)) {
+			if (!rawModule.isInitialized && (!force || !initializeModule(id))) {
 				continue;
-			}
-
-			if (!rawModule.isInitialized) {
-				if (!initializeModules) {
-					continue;
-				}
-
-				const initialized = initializeModule(id);
-
-				if (!initialized) {
-					continue;
-				}
 			}
 
 			const found = searchExports(search, rawModule, id, esModules, interop, raw);
@@ -333,57 +277,64 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 			result.found.push(found);
 		}
 
+		return null;
+	}
+
+	// An empty list records that a full scan of this build found nothing.
+	if (cached?.length === 0) {
 		return all ? result.found : null;
 	}
 
-	/****** END CACHE ******/
-	if (cacheOnly) {
-		return all ? result.found : null;
+	// One pass collects every match, so an `all` search does not look at initialized modules first.
+	if (all) {
+		if (cached || cacheOnly) {
+			scan(cached ?? [], initializeModules);
+
+			return result.found;
+		}
+
+		scan(Cache.moduleIds, initializeModules);
+
+		if (initializeModules && !result.found.length) {
+			recordMissing(key, result.errored);
+		}
+
+		return result.found;
 	}
 
-	const store = useCache ? data.cache : window.modules;
-	const keys = useCache ? [...store.keys()] : Cache.moduleIds;
+	// Modules Discord has already initialized come first, so a search forces nothing it does not need.
+	let found = cached ? scan(cached, false) : null;
 
-	for (let i = 0, len = keys.length; i < len; i++) {
-		const id = keys[i];
-		const rawModule = store.get(id);
-
-		if (blacklist.has(id)) {
-			continue;
-		}
-
-		if (!rawModule.isInitialized) {
-			if (!initializeModules) {
-				continue;
-			}
-
-			const initialized = initializeModule(id);
-
-			if (!initialized) {
-				continue;
-			}
-		}
-
-		const found = searchExports(search, rawModule, id, esModules, interop, raw);
-
-		if (!found) {
-			continue;
-		}
-
-		if (!all) {
-			return found;
-		}
-
-		result.found.push(found);
+	if (!found && !cacheOnly) {
+		found =
+			(useCache ? scan([...data.cache.keys()], false) : null) ?? scan(Cache.moduleIds, false);
 	}
 
-	if (useCache && !all && !result.found.length) {
-		return find(filter, Object.assign(options, { cache: false }));
-	} else if (useCache && all) {
-		return find(filter, Object.assign(options, { cache: false, initial: result.found }));
+	if (found || !initializeModules) {
+		return found;
 	}
 
-	return all ? result.found : null;
+	// A cached entry, even a stale one, settles the search without a forcing scan of the registry.
+	if (cached) {
+		return scan(cached, true);
+	}
+
+	if (cacheOnly) return null;
+
+	found = scan(Cache.moduleIds, true);
+
+	if (!found) {
+		recordMissing(key, result.errored);
+	}
+
+	return found;
+}
+
+// A filter that threw may have missed its module, so only a clean full scan proves it is absent.
+function recordMissing(key: string | undefined, errored: boolean) {
+	if (key && !errored) {
+		Cache.markKeyMissing(key);
+	}
 }
 
 /**
@@ -619,9 +570,15 @@ function searchExports(
  */
 function searchWithOptions(
 	args: any[],
-	options: MetroInternalOptions,
+	options: MetroInternalOptions & MetroSearchOptions,
 	filter: DiscordFunction | string,
 ) {
+	if (typeof filter === 'string') {
+		filter = Filters[filter] as MetroFilter;
+	}
+
+	if (!filter) return;
+
 	if (options.lazy) {
 		let cache;
 
@@ -631,51 +588,25 @@ function searchWithOptions(
 			return cache;
 		}
 
-		const proxy = new Proxy(
-			{
-				__METRO_LAZY__: true,
-				get module() {
-					return cache;
-				},
+		// A bulk or `all` search stands for several modules, and a `raw` one for a module record, so a
+		// patch on such a proxy resolves it as before instead of waiting.
+		if (options.bulk || options.all || options.raw) {
+			return createLazyModule(resolve);
+		}
+
+		const search = filter(...args);
+		const { esModules, interop } = options;
+
+		return createLazyModule(resolve, {
+			wait: (onLoad) => onModuleLoaded(search, onLoad, { esModules, interop }),
+			adopt(mdl) {
+				cache ??= mdl;
+
+				return cache;
 			},
-			{
-				get(_, prop) {
-					if (!prop || typeof prop !== 'string') return;
-
-					resolve();
-
-					if (prop === 'module') {
-						return cache;
-					}
-
-					return cache?.[prop];
-				},
-				set(_, prop, value) {
-					return Object.defineProperty(resolve() ?? {}, prop, {
-						value,
-						writable: true,
-						configurable: true,
-					});
-				},
-				// The patcher installs its wrapper with `Object.defineProperty`, which must reach the real module.
-				defineProperty(_, prop, descriptor) {
-					const module = resolve();
-
-					return Boolean(module) && Reflect.defineProperty(module, prop, descriptor);
-				},
-			},
-		);
-
-		registerLazyModule(proxy, resolve);
-
-		return proxy;
+			presence: () => filterPresence(search, { esModules, interop }),
+		});
 	}
-
-	if (typeof filter === 'string') {
-		filter = Filters[filter] as MetroFilter;
-	}
-
-	if (!filter) return;
 
 	if (options.bulk) {
 		return bulk(
@@ -697,10 +628,6 @@ function searchWithOptions(
 
 	return find(filter(...args), options);
 }
-
-// Sentinel key no real module owns, used to detect catch-all proxies. Defined once so the probe is
-// a plain property lookup with no per-call allocation.
-const INVALID_EXPORT_SYMBOL = Symbol('is-invalid-export');
 
 /**
  * @description Detects a "catch-all" proxy: an object whose `has` trap claims it contains keys it
@@ -757,4 +684,4 @@ function parseOptions<O, A extends any[] = string[]>(
 	return [args as A, filter(args[args.length - 1]) ? args.pop() : fallback];
 }
 
-provideFinders({ findByProps, findByName, findByFilePath, findByPrototypes, findStore });
+provideFinders({ findByProps, findByName, findByFilePath, findByPrototypes, findStore, find });

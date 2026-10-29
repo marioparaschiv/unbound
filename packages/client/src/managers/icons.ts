@@ -1,9 +1,11 @@
 import type { Addon, IconPack, IconPackManifest, UnboundAsset } from '@unbound-app/types';
 import toError from '@unbound-app/utils/to-error';
 import type { ImageProps } from 'react-native';
+import noop from '@unbound-app/utils/noop';
 
 import { safeRelativePath, isSafeIconPackMain } from '~/lib/addon-paths';
-import { Assets, ReactNative as RN } from '~/api/metro/common';
+import { getByID, onAssetRegistered } from '~/api/assets';
+import { ReactNative as RN } from '~/api/metro/common';
 import { ManagerType } from '~/managers/base';
 import { Addons } from '~/managers/addons';
 import fs from '~/api/fs';
@@ -45,6 +47,9 @@ const defaultPack: IconPack = {
  */
 export class Icons extends Addons<Addon> {
 	extension = 'png';
+
+	// Stops stamping assets that register after the applied pack.
+	private stopStamping = noop;
 
 	constructor() {
 		super(ManagerType.ICONS);
@@ -117,7 +122,7 @@ export class Icons extends Addons<Addon> {
 
 			this.settings.set('applied', pack);
 
-			this.patcher.unpatchAll();
+			this.removePack();
 			await this.applyPack(resolved.id);
 
 			this.emit('enabled', resolved);
@@ -134,7 +139,7 @@ export class Icons extends Addons<Addon> {
 
 		try {
 			this.settings.set('applied', defaultPack);
-			this.patcher.unpatchAll();
+			this.removePack();
 
 			this.emit('disabled', resolved);
 		} catch (error) {
@@ -171,10 +176,17 @@ export class Icons extends Addons<Addon> {
 		}
 	}
 
+	shutdown(): Promise<void> {
+		this.removePack();
+
+		return super.shutdown();
+	}
+
 	/**
 	 * @description Applies a pack: stamps every registered asset with its on-disk override path, then
 	 * patches `Image.render` to swap numeric sources for the pack's files. Stamps are awaited before
-	 * the patch installs, so no image renders against an un-stamped asset.
+	 * the patch installs, so no image renders against an un-stamped asset. Assets that register later
+	 * are stamped as they register.
 	 * @param id The pack id to apply. The `default` pack is a no-op.
 	 */
 	async applyPack(id: string) {
@@ -182,8 +194,11 @@ export class Icons extends Addons<Addon> {
 
 		const stamps: Array<Promise<void>> = [];
 
+		this.stopStamping();
+		this.stopStamping = onAssetRegistered((asset) => void this.stampAsset(id, asset));
+
 		for (let assetId = 1; ; assetId++) {
-			const asset = Assets.getAssetByID(assetId);
+			const asset = getByID(assetId);
 
 			if (!asset) {
 				break;
@@ -199,7 +214,7 @@ export class Icons extends Addons<Addon> {
 
 			if (typeof props?.source !== 'number') return;
 
-			const asset = Assets.getAssetByID(props.source);
+			const asset = getByID(props.source);
 
 			if (asset?.iconPackPath && asset.iconPackScale) {
 				props.source = {
@@ -210,6 +225,12 @@ export class Icons extends Addons<Addon> {
 				};
 			}
 		});
+	}
+
+	private removePack() {
+		this.patcher.unpatchAll();
+		this.stopStamping();
+		this.stopStamping = noop;
 	}
 
 	/**

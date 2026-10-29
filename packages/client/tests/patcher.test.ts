@@ -8,7 +8,7 @@ mock.module('~/api/metro/wrappers', () => ({
 const { after, before, createPatcher, instead, patches, unpatchAll } =
 	await import('~/api/patcher');
 const { flush } = await import('~/lib/hot/live-patch');
-const { registerLazyModule } = await import('~/api/metro/lazy-registry');
+const { createLazyModule } = await import('~/api/metro/lazy-registry');
 
 function createTarget() {
 	const original = (a: number, b: number) => a + b;
@@ -22,19 +22,16 @@ describe('patcher', () => {
 	test('patches made through different lazy proxies of one module all run', () => {
 		const { math } = createTarget();
 
-		function lazyProxy() {
-			const proxy = new Proxy(
-				{},
-				{
-					get: (_, prop) => Reflect.get(math, prop),
-					defineProperty: (_, prop, descriptor) =>
-						Reflect.defineProperty(math, prop, descriptor),
+		function lazyProxy(): typeof math {
+			return createLazyModule(() => math, {
+				wait(onLoad) {
+					onLoad(math);
+
+					return () => {};
 				},
-			);
-
-			registerLazyModule(proxy, () => math);
-
-			return proxy as typeof math;
+				adopt: (mdl) => mdl,
+				presence: () => 'loaded',
+			});
 		}
 		const calls: string[] = [];
 

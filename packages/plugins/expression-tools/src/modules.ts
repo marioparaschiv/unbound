@@ -4,10 +4,8 @@ export const { ActionSheets } = metro.api;
 export const { Clipboard, Dispatcher } = metro.common;
 export const { Guilds, Users } = metro.stores;
 
-export const StickerDetailActionSheet = metro.findByFilePath(
-	'modules/stickers/native/StickerDetailActionSheet.tsx',
-	{ lazy: true },
-);
+export const StickerDetailActionSheetSource =
+	'modules/stickers/native/StickerDetailActionSheet.tsx';
 
 // Each is checked where it is used, so a missing one only disables its button.
 export const StickerSheets = metro.findByProps('hideStickerDetailActionSheet', { lazy: true });

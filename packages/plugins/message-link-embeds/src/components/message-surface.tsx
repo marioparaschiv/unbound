@@ -47,7 +47,7 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 
 		useEffect(() => () => clearTimeout(remount.current), []);
 
-		if (!surface) return <View style={{ height: 1 }} />;
+		if (!surface || !ChatItem) return <View style={{ height: 1 }} />;
 
 		function onItemLayout(event: LayoutChangeEvent) {
 			const collapsed = event.nativeEvent.layout.height < CollapsedRemount.minHeight;

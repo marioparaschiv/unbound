@@ -1,4 +1,4 @@
-import { findMediaShareActions, Patcher } from '~/modules';
+import { onMediaShareActions, Patcher, type MediaShareActions } from '~/modules';
 import { isRecord, type MediaRecord } from '~/media-record';
 import { getPreferredGifUrl } from '~/gif-url';
 import { resolveKlipyGifUrl } from '~/klipy';
@@ -13,21 +13,13 @@ function pointAtGif(source: MediaRecord, gifUrl: string) {
 
 /**
  * @description Points the media viewer's share and save actions at the GIF instead of its video rendition.
- * @returns A function that removes the patches.
+ * @returns A function that stops waiting for more copies of the actions and removes the patches.
  */
 export function patchMediaShareActions(): () => void {
-	const modules = [...new Set(findMediaShareActions())];
+	const unpatches: (() => void)[] = [];
 
-	if (!modules.length) {
-		console.error(
-			'[Fix GIF Downloads: share actions] Skipped, modules not found: useMediaShareActions.',
-		);
-
-		return () => {};
-	}
-
-	const unpatches = modules.map((module) =>
-		Patcher.before(module, 'useMediaShareActions', ({ args }) => {
+	function patch(module: MediaShareActions) {
+		const unpatch = Patcher.before(module, 'useMediaShareActions', ({ args }) => {
 			const [options] = args;
 
 			if (!isRecord(options) || !isRecord(options.source)) return;
@@ -44,10 +36,16 @@ export function patchMediaShareActions(): () => void {
 			void resolveKlipyGifUrl(source).then((resolved) => {
 				if (resolved) pointAtGif(source, resolved);
 			});
-		}),
-	);
+		});
+
+		unpatches.push(unpatch);
+	}
+
+	const stop = onMediaShareActions(patch);
 
 	return () => {
-		for (const unpatch of unpatches) unpatch();
+		stop();
+
+		for (const unpatch of unpatches.splice(0)) unpatch();
 	};
 }

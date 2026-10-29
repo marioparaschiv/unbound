@@ -23,10 +23,11 @@ export type ChatItemProps = {
 	rowGenerator: RowGenerator;
 };
 
+/** Discord's chat row renderers, each `undefined` while it is not found. */
 export type Renderers = {
-	MessageRecord: MetroFunction;
-	RowManager: MetroFunction;
-	ChatItem: ComponentType<ChatItemProps>;
+	MessageRecord?: MetroFunction;
+	RowManager?: MetroFunction;
+	ChatItem?: ComponentType<ChatItemProps>;
 };
 
 type RowInput = {
@@ -107,24 +108,31 @@ function unwrapComponent(
 	return unwrapComponent(holder.type ?? holder.render ?? holder.default, depth + 1);
 }
 
-/**
- * @description Finds the classes and component Discord renders a chat row with. Metro's lazy proxy cannot be constructed or rendered, so these resolve when called.
- * @returns `MessageRecord`, `RowManager`, and the `ChatItem` component, each `undefined` when not found.
- */
-export function findRenderers(): Partial<Renderers> {
-	// A build that moves ChatItem's file still exports these message views beside it.
-	const chatItemModule =
-		metro.findByFilePath('components_native/chat/ChatItem.tsx', { interop: false }) ??
-		metro.findByProps(
-			'DCDMessageView',
-			'DCDSystemMessageView',
-			'DCDAutoModerationSystemMessageView',
-			{ interop: false },
-		);
+export const MessageRecord = metro.find(metro.filters.byName('MessageRecord'), { lazy: true });
+export const RowManager = metro.find(metro.filters.byName('RowManager'), { lazy: true });
+const ChatItemFile = metro.findByFilePath('components_native/chat/ChatItem.tsx', {
+	interop: false,
+	lazy: true,
+});
+// A build that moves ChatItem's file still exports these message views beside it.
+const ChatItemViews = metro.findByProps(
+	'DCDMessageView',
+	'DCDSystemMessageView',
+	'DCDAutoModerationSystemMessageView',
+	{ interop: false, lazy: true },
+);
 
-	return {
-		MessageRecord: metro.findByName('MessageRecord'),
-		RowManager: metro.findByName('RowManager'),
-		ChatItem: unwrapComponent(chatItemModule?.default) ?? unwrapComponent(chatItemModule),
-	};
-}
+// A lazy proxy cannot be constructed or rendered, so each renderer is its handle's module, read when an embed is built.
+export const renderers: Renderers = {
+	get MessageRecord() {
+		return MessageRecord.module ?? undefined;
+	},
+	get RowManager() {
+		return RowManager.module ?? undefined;
+	},
+	get ChatItem() {
+		const chatItemModule = ChatItemFile.module ?? ChatItemViews.module;
+
+		return unwrapComponent(chatItemModule?.default) ?? unwrapComponent(chatItemModule);
+	},
+};

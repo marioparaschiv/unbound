@@ -13,34 +13,34 @@ declare const _default: {
 };
 /** Proxy resolving any property name to its asset id via {@link getIDByName}. */
 export declare const Icons: Record<string, number | undefined>;
-/** Map of discovered asset ids to their resolved {@link UnboundAsset} record. */
+/** Map of registered asset ids to their {@link UnboundAsset} record. */
 export declare const assets: Map<number, UnboundAsset>;
 /**
- * @description Finds the first known asset matching the given predicate.
+ * @description Finds the first asset matching the given predicate, initializing every asset module first.
  * @param filter Predicate run against each asset.
  * @returns The matched {@link UnboundAsset}, or `undefined` if none match.
  */
 export declare function find(filter: (asset: UnboundAsset) => boolean): UnboundAsset | undefined;
 /**
- * @description Returns every known asset.
+ * @description Returns every asset, initializing every asset module first.
  * @returns An array of all registered {@link UnboundAsset} records.
  */
 export declare function getAll(): UnboundAsset[];
 /**
- * @description Looks up a known asset by its id.
+ * @description Looks up a registered asset by its id.
  * @param id The asset id to look up.
  * @returns The matched {@link UnboundAsset}, or `undefined` if none is registered for that id.
  */
 export declare function getByID(id: number): UnboundAsset | undefined;
 /**
- * @description Finds a known asset by its name and type.
+ * @description Finds an asset by its name and type, initializing the module that registers it if needed.
  * @param name The asset name to match.
  * @param type The asset type to match.
  * @returns The matched {@link UnboundAsset}, or `undefined` if none match.
  */
 export declare function getByName(name: string, type?: 'svg' | 'png'): UnboundAsset | undefined;
 /**
- * @description Looks up a known asset's id by its name and type.
+ * @description Looks up an asset's id by its name and type, initializing the module that registers it if needed.
  * @param name The asset name to match.
  * @param type The asset type to match.
  * @returns The matched asset's id, or `undefined` if none match.

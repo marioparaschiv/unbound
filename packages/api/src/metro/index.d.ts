@@ -35,8 +35,8 @@ export declare function addListener(listener: (mdl: any, id: number) => void): (
  */
 export declare function bulk(...items: MetroBulkItem[]): any[];
 /**
- * @description Core synchronous module search. Tries the per-key cache fast-path first, then falls
- * back to scanning the registry, degrading gracefully if the supplied filter throws.
+ * @description Core synchronous module search. Modules Discord has initialized are searched first, cached ids
+ * then the registry; only when none matches does it initialize modules, unless `initialize` is false.
  * @param filter The filter to match modules against.
  * @param options Search options controlling interop, caching, esModule unwrapping, and `all`.
  * @returns The first matching module, an array of matches when `all` is set, or `null`.
@@ -87,14 +87,6 @@ export declare function findByPrototypes<
 	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
 >(...args: T): AnyProps;
 /**
- * @description Resolves a module matching `filter`, waiting for it to load if it is not yet present.
- * @param filter The filter to match against.
- * @param options Search options, excluding `lazy` and `all`, plus an optional `signal` to abort the wait.
- * @returns The matched module, or a promise that resolves once a matching module is required, or
- * `undefined` if the supplied signal aborts first.
- */
-export declare function findLazy(filter: MetroFilter, options?: MetroLazySearchOptions): any;
-/**
  * @description Finds a flux store by name.
  * @template U The union of requested store names.
  * @template T The argument tuple, optionally ending in store search options.
@@ -106,16 +98,47 @@ export declare function findStore<
 	T extends U[] | MetroStringFindWithOptions<U, MetroStoreOptions>,
 >(...args: T): AnyProps;
 /**
+ * @description Reports what is known of a lazy handle's module, without initializing it or resolving the handle.
+ * A plugin should treat `unknown` as present: a patch on the handle waits for the module, so it never applies to nothing.
+ * @param handle A lazy handle, such as a `{ lazy: true }` search, `metro.common.*` or `metro.stores.*`.
+ * @returns The module's {@link MetroModulePresence}, or `undefined` when `handle` is not a handle a patch waits on.
+ */
+export declare function getModulePresence(handle: MetroExport): MetroModulePresence | undefined;
+/**
  * @description Forces a module to initialise via metro's `__r`, blacklisting it if it throws.
  * @param id The id of the module to initialise.
  * @returns `true` if the module is initialised, `false` if it was blacklisted.
  */
 export declare function initializeModule(id: number): boolean;
 /**
+ * @description Calls `onLoad` with the module matching `filter` once it initializes, without ever initializing it.
+ * A module that has already initialized is passed at once; otherwise `onLoad` runs inside the module's factory,
+ * before Discord's code that required it receives its exports.
+ * @param filter The filter to match against.
+ * @param onLoad Receives the matched module, once.
+ * @param options Whether to also match the `default` export (`esModules`) and return it on such a match (`interop`).
+ * @returns A function that stops waiting; it does nothing once `onLoad` has run.
+ */
+export declare function onModuleLoaded(
+	filter: MetroFilter,
+	onLoad: (mdl: MetroExport) => void,
+	options?: MetroModuleLoadedOptions,
+): () => void;
+/**
  * @description Removes a previously registered module listener.
  * @param listener The listener to remove.
  */
 export declare function removeListener(listener: (mdl: any, id: number) => void): void;
+/**
+ * @description Resolves with the module matching `filter` once it initializes, without ever initializing it.
+ * @param filter The filter to match against.
+ * @param options The {@link onModuleLoaded} options, plus a `signal` that abandons the wait.
+ * @returns A promise of the matched module, or of `undefined` if `signal` aborts first.
+ */
+export declare function waitForModule(
+	filter: MetroFilter,
+	options?: MetroWaitForModuleOptions,
+): Promise<MetroExport>;
 /** An object of shape `T` widened with an arbitrary property index. */
 export type AnyProps<T = unknown> = T & Record<PropertyKey, MetroExport>;
 /** How each design component resolves on the running Discord build. */
@@ -181,12 +204,15 @@ export type MetroInternalOptions = {
 	bulk?: boolean;
 	lazy?: boolean;
 };
-/** Search options for {@link findLazy}, adding a `signal` that abandons the wait when aborted. */
-export type MetroLazySearchOptions = {
-	signal?: AbortSignal;
-} & Omit<MetroSearchOptions, 'lazy' | 'all'>;
 /** Convenience alias for a by-property result derived from a union of prop names. */
 export type MetroModule<TProps extends string> = MetroPropertyRecordOrArray<TProps[], TProps>;
+/** Options for {@link onModuleLoaded}: whether to also match a module's `default` export, and to return it on such a match. */
+export type MetroModuleLoadedOptions = Pick<MetroSearchOptions, 'esModules' | 'interop'>;
+/**
+ * What is known of a module without initializing it: `loaded` once initialized, `present` when an earlier search
+ * found it in this build, `missing` when a full search of this build found nothing, and `unknown` otherwise.
+ */
+export type MetroModulePresence = 'loaded' | 'present' | 'missing' | 'unknown';
 /** A bag carrying a `params` array of prop names. */
 export type MetroParamsBag<T extends string> = {
 	params: T[];
@@ -246,6 +272,10 @@ export type MetroStringFindWithOptions<T extends string, Options = MetroSearchOp
 	...T[],
 	Options,
 ];
+/** Options for {@link waitForModule}, adding a `signal` that abandons the wait when aborted. */
+export type MetroWaitForModuleOptions = {
+	signal?: AbortSignal;
+} & MetroModuleLoadedOptions;
 export type SwitchProps = React$1.ComponentProps<DesignModule['FormSwitch']>;
 export * as api from './api';
 export * as common from './common';

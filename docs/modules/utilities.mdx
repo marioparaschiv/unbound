@@ -13,24 +13,26 @@ They describe function shapes, predicate results, color strings, and open-ended 
 `@unbound-app/api` declares them, using the definitions from `@unbound-app/types`.
 
 <Warning>
-	The `@unbound-app/api` package does not export a `./utils` subpath, and the top-level entry does not re-export these types. You can't import them by name from a plugin today. You'll only meet them when you hover over an API function that uses them, or in a type error from one.
+	The `@unbound-app/api` package does not export a `./utils` subpath, and the top-level entry does
+	not re-export these types. You can't import them by name from a plugin today. You'll only meet
+	them when you hover over an API function that uses them, or in a type error from one.
 </Warning>
 
 ### Type reference
 
-| Type | Definition | Meaning |
-| --- | --- | --- |
-| `Fn<T = any>` | `(...args: any) => T` | Any function, returning `T`. |
-| `PromiseFn<T = Promise<any>>` | `(...args: any) => T` | Any function that returns a promise. |
-| `AnyProps<T>` | `T & Record<PropertyKey, any>` | An object of shape `T` that also accepts any other key. |
-| `LiteralUnion<T extends string>` | `T \| (string & {})` | Keeps the literals in `T` for autocomplete but accepts any string. |
-| `HexColor` | `` `#${string}` `` | A hex color string such as `'#5865f2'`. |
-| `RgbaColor` | `` `rgba(${string})` `` | An `rgba(...)` color string. |
-| `ColorString` | `HexColor \| RgbaColor` | Either color form. |
-| `Falsy` | `false \| 0 \| '' \| null \| undefined` | Every falsy value. |
-| `Truthy` | `true \| number \| string \| object \| symbol \| bigint` | Every truthy value. |
-| `PredicateResult` | `Truthy \| Falsy` | What a predicate may return. Any value works and is tested for truthiness. |
-| `Widen<T>` | Conditional type | Turns a literal into its primitive: `1` to `number`, `'a'` to `string`, `true` to `boolean`. Other types pass through. |
+| Type                             | Definition                                               | Meaning                                                                                                                |
+| -------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `Fn<T = any>`                    | `(...args: any) => T`                                    | Any function, returning `T`.                                                                                           |
+| `PromiseFn<T = Promise<any>>`    | `(...args: any) => T`                                    | Any function that returns a promise.                                                                                   |
+| `AnyProps<T>`                    | `T & Record<PropertyKey, any>`                           | An object of shape `T` that also accepts any other key.                                                                |
+| `LiteralUnion<T extends string>` | `T \| (string & {})`                                     | Keeps the literals in `T` for autocomplete but accepts any string.                                                     |
+| `HexColor`                       | `` `#${string}` ``                                       | A hex color string such as `'#5865f2'`.                                                                                |
+| `RgbaColor`                      | `` `rgba(${string})` ``                                  | An `rgba(...)` color string.                                                                                           |
+| `ColorString`                    | `HexColor \| RgbaColor`                                  | Either color form.                                                                                                     |
+| `Falsy`                          | `false \| 0 \| '' \| null \| undefined`                  | Every falsy value.                                                                                                     |
+| `Truthy`                         | `true \| number \| string \| object \| symbol \| bigint` | Every truthy value.                                                                                                    |
+| `PredicateResult`                | `Truthy \| Falsy`                                        | What a predicate may return. Any value works and is tested for truthiness.                                             |
+| `Widen<T>`                       | Conditional type                                         | Turns a literal into its primitive: `1` to `number`, `'a'` to `string`, `true` to `boolean`. Other types pass through. |
 
 ### Where you'll see them
 
@@ -58,5 +60,6 @@ The `native` module types loosely modeled native methods as `Fn` and `PromiseFn`
 <Note>
 	Runtime helpers such as `lazy`, `debounce`, and `uuid` are internal to the Unbound client and are not exposed to plugins.
 
-	To defer a module lookup, pass `{ lazy: true }` to a [Metro](/modules/metro) search: the search runs the first time you access the result. To wait for a module that hasn't loaded yet, use `metro.findLazy(filter)`, which returns the module if it's already present or a promise that resolves once it loads.
+    To defer a module lookup, pass `{ lazy: true }` to a [Metro](/modules/metro) search: the search runs the first time you access the result. To wait for a module that hasn't loaded yet, use `metro.onModuleLoaded(filter, callback)` or `await metro.waitForModule(filter)`. Neither loads the module; both wait for Discord to load it.
+
 </Note>
