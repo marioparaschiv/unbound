@@ -1,6 +1,7 @@
 #import "Utilities.h"
 
 #import <arpa/inet.h>
+#import <dlfcn.h>
 #import <netinet/in.h>
 #import <sys/socket.h>
 #import <sys/sysctl.h>
@@ -21,6 +22,8 @@
 
 using unbound::ios::toNSString;
 using unbound::ios::toStdString;
+
+static void loaderImageAnchor(void) {}
 
 @implementation Utilities
 static NSString *bundle = nil;
@@ -606,9 +609,23 @@ static NSString *bundle = nil;
 
 + (BOOL)isJailbroken
 {
-    if (access("/var/mobile", R_OK) == 0)
+    if (access("/var/mobile", R_OK) == 0 || access("/var/jb", F_OK) == 0)
     {
         return YES;
+    }
+
+    Dl_info info;
+    if (dladdr((const void *) &loaderImageAnchor, &info) && info.dli_fname)
+    {
+        NSString *image = @(info.dli_fname);
+        for (NSString *root in
+             @[ @"/var/jb/", @"/Library/MobileSubstrate/", @"/usr/lib/TweakInject/" ])
+        {
+            if ([image hasPrefix:root] || [image containsString:@"/.jbroot-"])
+            {
+                return YES;
+            }
+        }
     }
 
     return NO;

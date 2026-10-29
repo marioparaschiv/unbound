@@ -72,7 +72,8 @@ export function readDebugInfo(): DebugInfo {
 		: attempt(() => platform?.device.getOSVersionString(), String(Platform.Version));
 
 	return {
-		client: `v${CLIENT_VERSION} ${VERSION}`,
+		client: `v${CLIENT_VERSION}`,
+		commit: String(VERSION),
 		loader: String(loader?.version ?? 'unknown'),
 		loaderOrigin: String(loader?.origin ?? 'unknown origin'),
 		discord: String(bundle.Version ?? 'unknown'),

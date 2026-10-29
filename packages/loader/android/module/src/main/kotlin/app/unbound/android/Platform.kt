@@ -49,7 +49,7 @@ object Platform {
     )
 
     fun describe(appInfo: ApplicationInfo, frameworkName: String): JSONObject = JSONObject()
-        .put("deviceModel", "${Build.MANUFACTURER} ${Build.MODEL}".trim())
+        .put("deviceModel", DeviceName.current(application()))
         .put("osVersion", Build.VERSION.RELEASE)
         .put("isRooted", SU_PATHS.any { File(it).exists() })
         .put("isSystemApp", appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0)
