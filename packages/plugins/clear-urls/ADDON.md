@@ -1,0 +1,3 @@
+Clear URLs removes tracking parameters from the links in your messages. It cleans each link when you send a message and when you edit one. For example, `https://example.com/a?utm_source=x&id=7&fbclid=y` goes out as `https://example.com/a?id=7`.
+
+The plugin has a built-in list of 121 rules. Some rules apply to every link, such as `utm_source`, `fbclid`, and `gclid`. Others apply to one site, such as `si` on `youtu.be` and `open.spotify.com`, or `tag` on Amazon. Parameters that no rule matches stay in the link, and links without parameters stay exactly as you typed them. The plugin has no settings, so you cannot change the rule list.
