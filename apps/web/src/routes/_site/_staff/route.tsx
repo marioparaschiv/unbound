@@ -24,28 +24,31 @@ function StaffLayout() {
 
 	return (
 		<div className='flex flex-col flex-1 gap-8 page-frame'>
-			<Segmented
-				value={active?.id ?? null}
-				className='max-w-full overflow-x-auto hide-scrollbar'
-			>
-				{sections.map((section) => {
-					const Icon = SECTION_ICONS[section.id];
+			{/* A reviewer can open only the queue, so a one-item switcher would be noise. */}
+			{sections.length > 1 ? (
+				<Segmented
+					value={active?.id ?? null}
+					className='max-w-full overflow-x-auto hide-scrollbar'
+				>
+					{sections.map((section) => {
+						const Icon = SECTION_ICONS[section.id];
 
-					return (
-						<SegmentedItem
-							key={section.id}
-							value={section.id}
-							asChild
-							className='gap-2 text-sm'
-						>
-							<Link to={section.to}>
-								<Icon size={16} />
-								<span>{section.label}</span>
-							</Link>
-						</SegmentedItem>
-					);
-				})}
-			</Segmented>
+						return (
+							<SegmentedItem
+								key={section.id}
+								value={section.id}
+								asChild
+								className='gap-2 text-sm'
+							>
+								<Link to={section.to}>
+									<Icon size={16} />
+									<span>{section.label}</span>
+								</Link>
+							</SegmentedItem>
+						);
+					})}
+				</Segmented>
+			) : null}
 			<main className='flex-1 min-w-0'>
 				<Outlet />
 			</main>
