@@ -426,13 +426,13 @@ async function main(): Promise<void> {
 			channel: { type: 'string' },
 			device: { type: 'string' },
 			baseline: { type: 'string' },
-			strict: { type: 'boolean' },
+			lenient: { type: 'boolean' },
 		},
 	});
 
 	if (!values.out) {
 		throw new Error(
-			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>] [--channel <guild id>/<channel id>] [--strict]',
+			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>] [--channel <guild id>/<channel id>] [--lenient]',
 		);
 	}
 
@@ -503,7 +503,7 @@ async function main(): Promise<void> {
 
 	const compared = baseline?.filter((check) => !only || only.has(check.id));
 
-	checks.splice(0, checks.length, ...applyLogPolicy(checks, compared, Boolean(values.strict)));
+	checks.splice(0, checks.length, ...applyLogPolicy(checks, compared, !values.lenient));
 
 	const saved = only && baseline ? mergeChecks(baseline, checks) : checks;
 
