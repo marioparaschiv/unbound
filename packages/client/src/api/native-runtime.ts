@@ -1049,20 +1049,6 @@ function createScopedNativePlugin(
 
 					token.clearReturnValues();
 				},
-				setSizeHeightFloor(self, args, floor) {
-					if (disposed) {
-						throw new NativePluginDisposedError();
-					}
-
-					token.setSizeHeightFloor(self, args, floor);
-				},
-				removeSizeHeightFloor(self, args) {
-					if (disposed) {
-						throw new NativePluginDisposedError();
-					}
-
-					token.removeSizeHeightFloor(self, args);
-				},
 				remove() {
 					token.remove();
 					tokens.delete(token);
