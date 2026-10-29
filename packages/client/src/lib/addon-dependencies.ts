@@ -149,6 +149,26 @@ export function dependentsOf(id: string, installed: readonly DependentAddon[]): 
 }
 
 /**
+ * @description Lists the installed addons that declare a range for this addon the given version falls
+ * outside of, so switching to it may break them.
+ * @param id The addon about to change version.
+ * @param version The version it would run.
+ * @param installed Every installed addon.
+ * @returns The dependents whose declared range the version does not satisfy.
+ */
+export function brokenDependents(
+	id: string,
+	version: string,
+	installed: readonly DependentAddon[],
+): DependentAddon[] {
+	return installed.filter((addon) => {
+		const range = addon.data.dependencies?.[id];
+
+		return addon.id !== id && range !== undefined && !satisfies(version, range);
+	});
+}
+
+/**
  * @description Works out what installing an addon needs from the store, following each dependency's
  * own dependencies, so everything is installed before what needs it.
  * @param dependencies The manifest's `dependencies`.

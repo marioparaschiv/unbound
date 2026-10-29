@@ -156,10 +156,17 @@ describe('updatesResponseSchema', () => {
 		changelog: null,
 		changes: null,
 		changelogs: [],
+		reason: 'withdrawn',
 	};
 
 	test('parses an update entry', () => {
 		expect(updatesResponseSchema.parse({ updates: [update] })).toEqual({ updates: [update] });
+	});
+
+	test('reads an update without a reason as newer', () => {
+		const { reason: _, ...legacy } = update;
+
+		expect(updatesResponseSchema.parse({ updates: [legacy] }).updates[0]?.reason).toBe('newer');
 	});
 
 	test('rejects an uppercase or short digest', () => {

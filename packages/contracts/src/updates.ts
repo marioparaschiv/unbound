@@ -43,8 +43,13 @@ export const versionChangelogSchema = z.pick(addonVersionSchema, {
 	publishedAt: true,
 });
 
+/** Why an update is offered: a newer version, a withdrawn install to roll back, or the same version rebuilt. */
+export const updateReasonSchema = z.enum(['newer', 'withdrawn', 'rebuilt']);
+
 /** The newest compatible release, with `changelogs` covering every version it skips over. */
 export const addonUpdateSchema = z.extend(addonReleaseSchema, {
+	/** Defaults to `newer` so responses from servers that predate it still parse. */
+	reason: z._default(updateReasonSchema, 'newer'),
 	/** Each version newer than the installed one, up to and including `version`, newest first. */
 	changelogs: z._default(
 		z.array(versionChangelogSchema).check(z.maxLength(MAX_UPDATE_CHANGELOGS)),
@@ -61,6 +66,7 @@ export type InstalledAddon = z.infer<typeof installedAddonSchema>;
 export type UpdatesRequest = z.infer<typeof updatesRequestSchema>;
 export type AddonRelease = z.infer<typeof addonReleaseSchema>;
 export type VersionChangelog = z.infer<typeof versionChangelogSchema>;
+export type UpdateReason = z.infer<typeof updateReasonSchema>;
 export type AddonUpdate = z.infer<typeof addonUpdateSchema>;
 export type UpdatesResponse = z.infer<typeof updatesResponseSchema>;
 
@@ -70,6 +76,7 @@ export default {
 	updatesRequestSchema,
 	addonReleaseSchema,
 	versionChangelogSchema,
+	updateReasonSchema,
 	addonUpdateSchema,
 	updatesResponseSchema,
 };

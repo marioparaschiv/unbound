@@ -2,7 +2,13 @@ import { describe, expect, test } from 'bun:test';
 
 import type { DependentAddon, ListedDependency } from './addon-dependencies';
 
-import { dependentsOf, isLibrary, planDependencies, satisfies } from './addon-dependencies';
+import {
+	brokenDependents,
+	dependentsOf,
+	isLibrary,
+	planDependencies,
+	satisfies,
+} from './addon-dependencies';
 
 function addon(
 	id: string,
@@ -70,6 +76,31 @@ describe('libraries and dependents', () => {
 			'plugin.b',
 		]);
 		expect(dependentsOf('plugin.c', installed)).toEqual([]);
+	});
+});
+
+describe('brokenDependents', () => {
+	const installed = [
+		addon('dev.lib'),
+		addon('dev.caret', { 'dev.lib': '^2.0.0' }),
+		addon('dev.range', { 'dev.lib': '>=1.0.0 <3.0.0' }),
+		addon('dev.other', { 'dev.else': '^1.0.0' }),
+		addon('dev.free'),
+	];
+
+	test('lists the dependents whose range the chosen version falls outside of', () => {
+		expect(brokenDependents('dev.lib', '1.4.0', installed).map(({ id }) => id)).toEqual([
+			'dev.caret',
+		]);
+		expect(brokenDependents('dev.lib', '3.0.0', installed).map(({ id }) => id)).toEqual([
+			'dev.caret',
+			'dev.range',
+		]);
+	});
+
+	test('lists nothing when every declared range still fits', () => {
+		expect(brokenDependents('dev.lib', '2.1.0', installed)).toEqual([]);
+		expect(brokenDependents('dev.free', '0.1.0', installed)).toEqual([]);
 	});
 });
 

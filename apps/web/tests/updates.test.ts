@@ -76,6 +76,14 @@ beforeAll(async () => {
 		version: '1.0.0',
 		reason: '1.1.0 and 1.2.0 crash',
 	});
+
+	await seedApprovedAddon(ctx, ownerId, manifest('up.fixed', '1.0.0'));
+	await seedVersion(ctx, ownerId, manifest('up.fixed', '1.1.0'));
+	await serveVersion(ctx, { user: admin, via: 'session' }, 'up.fixed', {
+		version: '1.0.0',
+		reason: '1.1.0 crashes',
+	});
+	await seedVersion(ctx, ownerId, manifest('up.fixed', '1.2.0'));
 });
 
 // Malformed bodies still fit the type: the schema refuses their values, not their shape.
@@ -124,6 +132,7 @@ describe('POST /api/v1/updates', () => {
 				sha256: row?.sha256 ?? '',
 				changelog: 'Changes in 1.10.0.',
 				changes: null,
+				reason: 'newer',
 				changelogs: ['1.10.0', '1.2.0', '1.1.0'].map((version) => ({
 					version,
 					changelog: `Changes in ${version}.`,
@@ -225,7 +234,7 @@ describe('findUpdates', () => {
 		],
 	};
 
-	test('resolves the whole batch in three statements, one when nothing is newer', async () => {
+	test('resolves the whole batch in four statements, one when nothing is newer', async () => {
 		// Drizzle's postgres.js session runs every statement through `unsafe`.
 		const statements = spyOn(ctx.db.$client, 'unsafe');
 
@@ -233,7 +242,7 @@ describe('findUpdates', () => {
 			const { updates } = await findUpdates(ctx, request);
 
 			expect(updates.map((update) => update.id)).toEqual(['up.compat', 'up.newer']);
-			expect(statements).toHaveBeenCalledTimes(3);
+			expect(statements).toHaveBeenCalledTimes(4);
 
 			statements.mockClear();
 
@@ -318,6 +327,34 @@ describe('findUpdates', () => {
 				update.changelogs.map((entry) => entry.version),
 			]),
 		).toEqual([['1.0.0', ['1.0.0']]]);
+	});
+
+	test('tells a withdrawn install from a newer version and a rebuild', async () => {
+		const { updates } = await findUpdates(ctx, {
+			clientVersion: '2.0.0',
+			addons: [
+				{ id: 'up.fixed', version: '1.1.0' },
+				{ id: 'up.rolledback', version: '1.2.0' },
+				{ id: 'up.newer', version: '1.0.0' },
+				{ id: 'up.current', version: '1.0.0', sha256: '0'.repeat(64) },
+			],
+		});
+
+		expect(updates.map((update) => [update.id, update.version, update.reason])).toEqual([
+			['up.current', '1.0.0', 'rebuilt'],
+			['up.fixed', '1.2.0', 'withdrawn'],
+			['up.newer', '1.10.0', 'newer'],
+			['up.rolledback', '1.0.0', 'withdrawn'],
+		]);
+
+		const { updates: fromLive } = await findUpdates(ctx, {
+			clientVersion: '2.0.0',
+			addons: [{ id: 'up.fixed', version: '1.0.0' }],
+		});
+
+		expect(fromLive.map((update) => [update.version, update.reason])).toEqual([
+			['1.2.0', 'newer'],
+		]);
 	});
 
 	test('reads only the listed addons through an index, never a table scan', async () => {

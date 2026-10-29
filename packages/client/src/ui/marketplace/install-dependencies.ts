@@ -1,9 +1,10 @@
-import type { AddonRelease } from '@unbound-app/contracts/updates';
+import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
 import { dependentsOf, planDependencies, type ListedDependency } from '~/lib/addon-dependencies';
 import { confirm, showDialog } from '~/api/dialogs';
 import MarketplaceStore from '~/stores/marketplace';
+import { toRelease } from '~/lib/addon-versions';
 import { Messages, format } from '~/api/i18n';
 import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
@@ -27,12 +28,6 @@ function asDependency(listed: ListedAddon): ListedDependency {
 	const { manifest, version } = listed.latestVersion;
 
 	return { id: listed.id, name: manifest.name, version, dependencies: manifest.dependencies };
-}
-
-function toRelease(listed: ListedAddon): AddonRelease {
-	const { version, manifestUrl, bundleUrl, sha256, changelog, changes } = listed.latestVersion;
-
-	return { id: listed.id, version, manifestUrl, bundleUrl, sha256, changelog, changes };
 }
 
 function describePlan(install: ListedDependency[], update: ListedDependency[]): string {
@@ -59,21 +54,21 @@ function describePlan(install: ListedDependency[], update: ListedDependency[]): 
  * @description Before a plugin installs from the store, installs or updates the plugins it depends on,
  * each after what it needs itself, once the user agrees. Nothing installs when a dependency cannot be
  * satisfied or the user cancels.
- * @param addon The listed plugin about to install.
+ * @param manifest The manifest of the plugin version about to install.
  * @returns Whether its dependencies are in place, so the plugin itself can install.
  */
-export async function installDependencies(addon: ListedAddon): Promise<boolean> {
+export async function installDependencies(manifest: PublishedManifest): Promise<boolean> {
 	const manager = getManager(ManagerKind.Plugins);
 	const listed = listedPlugins();
 	const installed = new Map(
 		manager.getEntities().map((entity) => [entity.id, entity.data.version]),
 	);
 	const plan = planDependencies(
-		addon.latestVersion.manifest.dependencies,
+		manifest.dependencies,
 		installed,
 		new Map([...listed].map(([id, entry]) => [id, asDependency(entry)])),
 	);
-	const name = addon.latestVersion.manifest.name;
+	const { name } = manifest;
 
 	if (plan.unavailable.length) {
 		showDialog({
@@ -107,7 +102,7 @@ export async function installDependencies(addon: ListedAddon): Promise<boolean> 
 		const done = entry
 			? installed.has(dependency.id)
 				? await manager
-						.update(dependency.id, toRelease(entry))
+						.update(dependency.id, toRelease(entry.id, entry.latestVersion))
 						.then(
 							() =>
 								manager.getEntity(dependency.id)?.data.version ===

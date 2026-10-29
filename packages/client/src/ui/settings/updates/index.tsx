@@ -2,7 +2,9 @@ import type { UpdatesState } from '~/stores/updates';
 import type { PendingUpdate } from '~/lib/updates';
 import { Discord } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
+import { automaticUpdates } from '~/lib/updates';
 import { Messages, format } from '~/api/i18n';
+import { getManager } from '~/managers/utils';
 import UpdatesStore from '~/stores/updates';
 import { Screens } from '~/lib/constants';
 import { Page } from '~/ui/components';
@@ -35,7 +37,11 @@ function UpdateRow({ entry }: UpdateRowProps) {
 	const navigation = Discord.useNavigation();
 	const { update } = entry;
 	const summary = headline(update.changelogs[0]?.changelog ?? update.changelog);
-	const jump = `${entry.from} → ${update.version}`;
+	const held = getManager(entry.kind).getHeldVersion(entry.id);
+	const versions = `${entry.from} → ${update.version}`;
+	const jump = held
+		? `${versions} · ${format('UNBOUND_UPDATES_HELD', { version: held })}`
+		: versions;
 
 	return (
 		<Discord.TableRow
@@ -81,6 +87,8 @@ function UpdatesPage() {
 	const updates = state.status === 'ready' ? state.updates : [];
 	const loader = state.status === 'ready' ? state.loader : null;
 	const pending = updates.length > 0 || loader !== null;
+	// Held addons keep their own Update button but sit out Update all.
+	const automatic = automaticUpdates(updates, getManager);
 
 	return (
 		<Page>
@@ -91,9 +99,9 @@ function UpdatesPage() {
 					disabled={state.status === 'checking'}
 					onPress={() => void check()}
 				/>
-				{updates.length ? (
+				{automatic.length ? (
 					<Discord.TableRow
-						label={format('UNBOUND_UPDATES_ALL', { count: updates.length })}
+						label={format('UNBOUND_UPDATES_ALL', { count: automatic.length })}
 						icon={<Discord.TableRowIcon source={Icons.DownloadIcon} />}
 						onPress={() => void applyAll()}
 					/>

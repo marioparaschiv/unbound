@@ -57,6 +57,7 @@ import { Route as ApiV1AddonsIdDelistRouteImport } from './routes/api/v1/addons/
 import { Route as ApiV1AddonsIdMaintainersRouteImport } from './routes/api/v1/addons/$id/maintainers'
 import { Route as ApiV1AddonsIdRelistRouteImport } from './routes/api/v1/addons/$id/relist'
 import { Route as ApiV1AddonsIdTransferRouteImport } from './routes/api/v1/addons/$id/transfer'
+import { Route as ApiV1AddonsIdVersionsRouteImport } from './routes/api/v1/addons/$id/versions'
 import { Route as ApiV1SubmissionsIdReviewRouteImport } from './routes/api/v1/submissions/$id/review'
 import { Route as ApiV1UsersIdBadgesRouteImport } from './routes/api/v1/users/$id/badges'
 import { Route as ApiV1AddonsIdMaintainersUserIdRouteImport } from './routes/api/v1/addons/$id/maintainers/$userId'
@@ -305,6 +306,11 @@ const ApiV1AddonsIdTransferRoute = ApiV1AddonsIdTransferRouteImport.update({
   path: '/$id/transfer',
   getParentRoute: () => ApiV1AddonsRoute,
 } as any)
+const ApiV1AddonsIdVersionsRoute = ApiV1AddonsIdVersionsRouteImport.update({
+  id: '/$id/versions',
+  path: '/$id/versions',
+  getParentRoute: () => ApiV1AddonsRoute,
+} as any)
 const ApiV1SubmissionsIdReviewRoute =
   ApiV1SubmissionsIdReviewRouteImport.update({
     id: '/$id/review',
@@ -379,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
+  '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/admin/addons/': typeof SiteStaffAdminAddonsIndexRoute
@@ -432,6 +439,7 @@ export interface FileRoutesByTo {
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
+  '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/admin/addons': typeof SiteStaffAdminAddonsIndexRoute
@@ -488,6 +496,7 @@ export interface FileRoutesById {
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
+  '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/_site/_staff/admin/addons/': typeof SiteStaffAdminAddonsIndexRoute
@@ -543,6 +552,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/maintainers'
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
+    | '/api/v1/addons/$id/versions'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/admin/addons/'
@@ -596,6 +606,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/maintainers'
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
+    | '/api/v1/addons/$id/versions'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/admin/addons'
@@ -651,6 +662,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/maintainers'
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
+    | '/api/v1/addons/$id/versions'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/_site/_staff/admin/addons/'
@@ -1023,6 +1035,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1AddonsIdTransferRouteImport
       parentRoute: typeof ApiV1AddonsRoute
     }
+    '/api/v1/addons/$id/versions': {
+      id: '/api/v1/addons/$id/versions'
+      path: '/$id/versions'
+      fullPath: '/api/v1/addons/$id/versions'
+      preLoaderRoute: typeof ApiV1AddonsIdVersionsRouteImport
+      parentRoute: typeof ApiV1AddonsRoute
+    }
     '/api/v1/submissions/$id/review': {
       id: '/api/v1/submissions/$id/review'
       path: '/$id/review'
@@ -1140,6 +1159,7 @@ interface ApiV1AddonsRouteChildren {
   ApiV1AddonsIdMaintainersRoute: typeof ApiV1AddonsIdMaintainersRouteWithChildren
   ApiV1AddonsIdRelistRoute: typeof ApiV1AddonsIdRelistRoute
   ApiV1AddonsIdTransferRoute: typeof ApiV1AddonsIdTransferRoute
+  ApiV1AddonsIdVersionsRoute: typeof ApiV1AddonsIdVersionsRoute
 }
 
 const ApiV1AddonsRouteChildren: ApiV1AddonsRouteChildren = {
@@ -1147,6 +1167,7 @@ const ApiV1AddonsRouteChildren: ApiV1AddonsRouteChildren = {
   ApiV1AddonsIdMaintainersRoute: ApiV1AddonsIdMaintainersRouteWithChildren,
   ApiV1AddonsIdRelistRoute: ApiV1AddonsIdRelistRoute,
   ApiV1AddonsIdTransferRoute: ApiV1AddonsIdTransferRoute,
+  ApiV1AddonsIdVersionsRoute: ApiV1AddonsIdVersionsRoute,
 }
 
 const ApiV1AddonsRouteWithChildren = ApiV1AddonsRoute._addFileChildren(

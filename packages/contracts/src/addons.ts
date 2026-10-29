@@ -124,6 +124,11 @@ export const catalogResponseSchema = z.object({
 	addons: z.array(listedAddonSchema),
 });
 
+/** Every live version of one listed addon, newest first. */
+export const addonVersionsResponseSchema = z.object({
+	versions: z.array(addonVersionSchema),
+});
+
 export const maintainerSchema = z.extend(userSummarySchema, {
 	role: maintainerRoleSchema,
 	addedAt: z.iso.datetime(),
@@ -169,6 +174,7 @@ export type ListAddonsQuery = z.infer<typeof listAddonsQuerySchema>;
 export type ListedAddon = z.infer<typeof listedAddonSchema>;
 export type ListAddonsResponse = z.infer<typeof listAddonsResponseSchema>;
 export type CatalogResponse = z.infer<typeof catalogResponseSchema>;
+export type AddonVersionsResponse = z.infer<typeof addonVersionsResponseSchema>;
 export type Maintainer = z.infer<typeof maintainerSchema>;
 export type AddMaintainerRequest = z.infer<typeof addMaintainerRequestSchema>;
 export type MaintainersResponse = z.infer<typeof maintainersResponseSchema>;
@@ -192,6 +198,7 @@ export default {
 	listedAddonSchema,
 	listAddonsResponseSchema,
 	catalogResponseSchema,
+	addonVersionsResponseSchema,
 	maintainerSchema,
 	addMaintainerRequestSchema,
 	maintainersResponseSchema,
