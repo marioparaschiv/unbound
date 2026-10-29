@@ -18,5 +18,12 @@
 	],
 	"version": "1.0.1",
 	"icon": "KeyboardIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "7d313590df2a60acd012e0e8ba4e559210e477b7d9908632666612f00bff1cdf9fa7ed217fd1abc6c988e51ca4deca6561310c6b2929b70ef852b0de5f8864b5"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "7bdI0Ma9qjNiSvrt40iDiBvVl9uArDPgT3Uwu7U/KV6X4Yi6/Clq/V57IMdNh0pPbNa4x77GTPX4D5+b/2i3Ag=="
+	}
 }

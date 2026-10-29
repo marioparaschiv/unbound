@@ -14,5 +14,12 @@
 	],
 	"version": "1.0.1",
 	"icon": "EyeIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "23912241bf8a1b2e80801d352d84ec94fb379b57ddc6ae190715fbea6d50a7cca0718314bc8033625ae8606092f1be6c2705446971405977804bedac51788dc4"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "nmBifGdpK/gNQbjNYBwIoNu1VQXJVwmadmUjzgdIrrB+oBIYe/8KwAQL+dVydI17PMnsXpGTiBTKJiKOP3waAA=="
+	}
 }

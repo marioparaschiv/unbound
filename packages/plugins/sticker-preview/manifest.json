@@ -14,5 +14,12 @@
 	],
 	"version": "1.0.1",
 	"icon": "StickerIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "f85971bbdad3ca9595f8aa5bd2038967d10657ae8cd21dfaf69862d7080d8d0cae998648be7e7a3c059dd9ba37c97159559264299732a12a83d49bbcf489fea3"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "NfI3JdCCfRGG07K6HIeK33YBdpHLN811mnF0laykprzOklSE8WrdWeUVsiyKBfOiWsAEXPMBiVCI1tQNUGzQBw=="
+	}
 }
