@@ -4,7 +4,7 @@
 [![iOS](https://github.com/marioparaschiv/unbound/actions/workflows/loader-ios.yml/badge.svg)](https://github.com/marioparaschiv/unbound/actions/workflows/loader-ios.yml)
 [![Android](https://github.com/marioparaschiv/unbound/actions/workflows/loader-android.yml/badge.svg)](https://github.com/marioparaschiv/unbound/actions/workflows/loader-android.yml)
 
-Unbound Loader injects [Unbound](https://github.com/unbound-app/client) into Discord on iOS and Android. A shared C++ core handles bundle loading, settings, addon lifecycle and runtime scheduling; platform adapters connect those shared services to Theos/ElleKit on iOS and LSPosed/LibXposed or LSPatch on Android.
+Unbound Loader injects [Unbound](https://github.com/unbound-app/client) into Discord on iOS and Android. A shared C++ core handles bundle loading, settings, addon lifecycle and runtime scheduling; platform adapters connect those shared services to Theos/ElleKit on iOS and libxposed (through Vector or LSPatch) on Android.
 
 ## Layout
 
@@ -12,7 +12,7 @@ Unbound Loader injects [Unbound](https://github.com/unbound-app/client) into Dis
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `core/`      | Shared C++20 core: settings store, addon scanning, preload script, bundle updater, load pipeline, `NativePlatform` JSI bridge, native plugin async runtime |
 | `ios/`       | The Theos tweak (ElleKit, rootless) and its iOS app-extension submodules                                                                                   |
-| `android/`   | The LSPosed module (modern libxposed API) and its NDK library, built with Gradle                                                                           |
+| `android/`   | The Xposed module (modern libxposed API) and its NDK library, built with Gradle                                                                            |
 | `bootstrap/` | The shared optional React DevTools bundle (`devtools.js`) for both platforms                                                                               |
 | `vendor/`    | Third-party code: the pinned libffi submodule, nlohmann/json, the React Native JSI headers, Monocypher and a BearSSL subset                                |
 | `apt-repo/`  | Debian package and SideStore-compatible iOS distribution feeds                                                                                             |
@@ -45,11 +45,11 @@ Builds are in the [Releases](https://github.com/marioparaschiv/unbound/releases/
 
 ### Android
 
-**Rooted (LSPosed/Vector):** install `app.unbound.android.lsposed.apk`, enable the module, and scope it to `com.discord`. The module works with every Discord channel.
+**Rooted (Vector):** install `app.unbound.android.xposed.apk`, enable the module, and scope it to `com.discord`. The module works with every Discord channel.
 
-[Add the Unbound LSPosed module to Obtainium](obtainium://app/%7B%22id%22%3A%22app.unbound.android%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20Loader%20%28LSPosed%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eapp%5C%5C%5C%5C.unbound%5C%5C%5C%5C.android%5C%5C%5C%5C.lsposed%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20.%2B%2C%20Android%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D) to receive updates from GitHub Releases. The release workflow requires a persistent Android signing key so installed copies can be updated safely.
+[Add the Unbound Xposed module to Obtainium](obtainium://app/%7B%22id%22%3A%22app.unbound.android%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20Loader%20%28Xposed%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eapp%5C%5C%5C%5C.unbound%5C%5C%5C%5C.android%5C%5C%5C%5C.xposed%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20.%2B%2C%20Android%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D) to receive updates from GitHub Releases. The release workflow requires a persistent Android signing key so installed copies can be updated safely.
 
-Every release of the module is signed with the same key. Check a downloaded APK with `apksigner verify --print-certs app.unbound.android.lsposed.apk`; its certificate SHA-256 digest must be `3923c381141ea804a1a311c69b616ac9c360d4fb0dccb5fbcd09a6b8b78842c5`.
+Every release of the module is signed with the same key. Check a downloaded APK with `apksigner verify --print-certs app.unbound.android.xposed.apk`; its certificate SHA-256 digest must be `3923c381141ea804a1a311c69b616ac9c360d4fb0dccb5fbcd09a6b8b78842c5`.
 
 **Not rooted:** install the pre-patched Discord, which is Discord with the module embedded through LSPatch. It contains Android split APKs, so use Obtainium or a split-APK installer such as SAI. It replaces an existing Play Store Discord because the signature differs. It is built for each Discord channel on Google Play:
 
@@ -195,7 +195,7 @@ The profile runs at the Pixel 7's own 1080×2400 screen, so the emulator's `com.
 Rooting is a one-time manual step, because it patches the system image with third-party tools:
 
 1. Root the AVD with Magisk, for example with rootAVD, and confirm `adb shell su -c id` reports `uid=0(root)`.
-2. Install LSPosed or Vector as a Zygisk module from the Magisk app, then reboot.
+2. Install Vector (the successor to LSPosed) as a Zygisk module from the Magisk app, then reboot.
 3. Install the debug module with `adb -s <serial> install -r android/module/build/outputs/apk/debug/module-debug.apk`, enable it in the framework's manager, and scope it to `com.discord`.
 
 Once one AVD is provisioned, save it as a snapshot so others can skip those steps:
@@ -340,7 +340,7 @@ Every pull request that runs the loader build (`loader-ci.yml`), forks included,
 | Prefix                 | Contents                                                                                                                                                                                                                     |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `unbound/pr/<number>/` | the pull request's client build: the signed `manifest.json` with `bytecodeVersions`, `channel` `pr-<number>` and each bundle's SHA-512, every `unbound.<bytecode>.bundle` and `unbound.js` it emits, and `manifest.json.sig` |
-| `loader/pr/<number>/`  | the rootless `.deb`, `Unbound.ipa`, `app.unbound.android.lsposed.apk` and `Unbound.apks`                                                                                                                                     |
+| `loader/pr/<number>/`  | the rootless `.deb`, `Unbound.ipa`, `app.unbound.android.xposed.apk` and `Unbound.apks`                                                                                                                                      |
 
 Each push overwrites both prefixes and deletes files the new build no longer has, so the links stay the same for the life of the pull request. The client is built with `TMPDIR` on the runner disk so hermesc emits every bytecode version and with `UNBOUND_CHANNEL=pr-<number>`, so a pull request loader never takes another channel's manifest at that URL. It is then signed with the pull request key through `bun run --cwd packages/client sign --dir dist --pr <number>` and checked with `verify-signatures --dir dist --pr <number>` before anything is uploaded. Pull request bundles are never signed with the production key, so only that pull request's loader accepts them. The pull request comment lists the bundle base URL and each loader build under **S3**, next to the artifact links.
 

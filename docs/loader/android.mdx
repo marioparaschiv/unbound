@@ -11,9 +11,9 @@ The Android loader is a [libxposed](https://github.com/libxposed/api) module wit
 There are two ways to run the module. Both use the same module APK, signed with the same key on every release.
 
 <Tabs>
-	<Tab title='Rooted (LSPosed)'>
-		1. Install `app.unbound.android.lsposed.apk` from the latest `discord-<version>-android` release.
-		2. In LSPosed (or Vector), enable the module. Its scope is `com.discord`.
+	<Tab title='Rooted (Vector)'>
+		1. Install `app.unbound.android.xposed.apk` from the latest `discord-<version>-android` release.
+		2. In Vector, or another Xposed framework such as LSPosed, enable the module. Its scope is `com.discord`.
 		3. Force stop Discord and reopen it.
 
 		The module works with every Discord channel. It needs a framework that implements libxposed API 101 or newer.

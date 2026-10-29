@@ -2,6 +2,6 @@
 	"id": "app.unbound.android",
 	"url": "https://github.com/marioparaschiv/unbound",
 	"author": "unbound-app",
-	"name": "Unbound Loader (LSPosed)",
-	"additionalSettings": "{\"apkFilterRegEx\":\"^app\\\\.unbound\\\\.android\\\\.lsposed\\\\.apk$\",\"filterReleaseTitlesByRegEx\":\"^Unbound .+ for Discord .+, Android\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\"}"
+	"name": "Unbound Loader (Xposed)",
+	"additionalSettings": "{\"apkFilterRegEx\":\"^app\\\\.unbound\\\\.android\\\\.xposed\\\\.apk$\",\"filterReleaseTitlesByRegEx\":\"^Unbound .+ for Discord .+, Android\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\"}"
 }

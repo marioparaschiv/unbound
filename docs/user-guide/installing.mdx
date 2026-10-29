@@ -105,7 +105,7 @@ Unbound runs inside the Discord app, so you install a modified Discord rather th
 		Unbound for Android comes in two forms. Both are attached to Unbound's [GitHub releases](https://github.com/marioparaschiv/unbound/releases), and [Obtainium](https://obtainium.imranr.dev) can install them and keep them updated.
 
 		- **Patched Discord**, for devices without root. This is Discord with Unbound already built in.
-		- **The Xposed module**, for rooted devices with LSPosed. It loads Unbound into the Discord app you already have.
+		- **The Xposed module**, for rooted devices with Vector or another Xposed framework. It loads Unbound into the Discord app you already have.
 
 		### Not rooted
 
@@ -156,12 +156,12 @@ Unbound runs inside the Discord app, so you install a modified Discord rather th
 		On a rooted device, Unbound is an Xposed module. You need:
 
 		- Android 7.0 or later.
-		- An Xposed framework, such as LSPosed, that supports Xposed API version 82 or later.
+		- An Xposed framework, such as Vector (the successor to LSPosed), that supports Xposed API version 82 or later.
 		- The official Discord app (`com.discord`) from Google Play. Any channel works: join Discord's beta or alpha on Google Play if you want those builds.
 
 		<Steps>
 			<Step title='Install the Module'>
-				[Add the Unbound module to Obtainium](obtainium://app/%7B%22id%22%3A%22app.unbound.android%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20Loader%20%28LSPosed%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eapp%5C%5C%5C%5C.unbound%5C%5C%5C%5C.android%5C%5C%5C%5C.lsposed%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20.%2B%2C%20Android%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D) and install it, or download `app.unbound.android.lsposed.apk` from the [latest release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest) and install it like any other Android app.
+				[Add the Unbound module to Obtainium](obtainium://app/%7B%22id%22%3A%22app.unbound.android%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20Loader%20%28Xposed%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eapp%5C%5C%5C%5C.unbound%5C%5C%5C%5C.android%5C%5C%5C%5C.xposed%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20.%2B%2C%20Android%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D) and install it, or download `app.unbound.android.xposed.apk` from the [latest release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest) and install it like any other Android app.
 			</Step>
 			<Step title='Enable the Module'>
 				Open your Xposed manager and enable the **Unbound** module.

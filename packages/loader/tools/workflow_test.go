@@ -229,7 +229,7 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		t.Fatal("Android should be built through the cross-platform coordinator on push")
 	}
 	for _, required := range []string{
-		"name=\"app.unbound.android.lsposed.apk\"",
+		"name=\"app.unbound.android.xposed.apk\"",
 		`if [[ "$IOS_VERSION" =~ ^([0-9]+)\.([0-9]+)(\.|_|$) ]]; then`,
 		"candidate=\"${BASH_REMATCH[1]}$(printf '%03d' \"${BASH_REMATCH[2]}\")\"",
 		"version=\"${version:-$latest_version}\"",
@@ -303,7 +303,7 @@ func TestObtainiumConfigTracksTheRootedAndroidModule(t *testing.T) {
 			t.Fatalf("Obtainium release filter %q on %q matched %v, want %v", settings.FilterReleaseTitlesByRegEx, title, matched, wanted)
 		}
 	}
-	matches, err := regexp.MatchString(settings.APKFilterRegEx, "app.unbound.android.lsposed.apk")
+	matches, err := regexp.MatchString(settings.APKFilterRegEx, "app.unbound.android.xposed.apk")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -315,7 +315,7 @@ func TestObtainiumConfigTracksTheRootedAndroidModule(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, required := range []string{
-		"name=\"app.unbound.android.lsposed.apk\"",
+		"name=\"app.unbound.android.xposed.apk\"",
 		"ANDROID_SIGNING_KEYSTORE_BASE64",
 		"ANDROID_SIGNING_STORE_PASSWORD",
 		"ANDROID_SIGNING_KEY_ALIAS",
@@ -732,8 +732,8 @@ func TestObtainiumConfigsTrackOneDiscordChannelEach(t *testing.T) {
 				t.Fatalf("the %s Obtainium release filter matched %q", channel, release)
 			}
 		}
-		if apks.MatchString("app.unbound.android.lsposed.apk") {
-			t.Fatalf("the %s Obtainium config would install the LSPosed module", channel)
+		if apks.MatchString("app.unbound.android.xposed.apk") {
+			t.Fatalf("the %s Obtainium config would install the Xposed module", channel)
 		}
 	}
 	module := readObtainiumConfig(t, "obtainium.json")

@@ -78,16 +78,20 @@ int main()
         return false;
     };
     android.appSource = [] {
-        return std::string("LSPosed");
+        return std::string("Google Play");
     };
     android.isVirtualDevice = [] {
         return true;
+    };
+    android.framework = [] {
+        return std::string("Vector");
     };
 
     const auto androidReport = loader::toolbox::issueReport(android, "Android", "");
     assert(row(androidReport, "Android Version") == "16");
     assert(row(androidReport, "Discord Version") == "unknown");
-    assert(row(androidReport, "App Source") == "LSPosed");
+    assert(row(androidReport, "App Source") == "Google Play");
+    assert(row(androidReport, "Framework") == "Vector");
     assert(row(androidReport, "App Registration") == "User");
     assert(row(androidReport, "Virtual Device") == "Yes");
     assert(androidReport.attachments.empty());

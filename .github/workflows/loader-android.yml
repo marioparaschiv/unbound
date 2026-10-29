@@ -59,10 +59,10 @@ on:
                 type: string
         outputs:
             module_filename:
-                description: 'Filename of the LSPosed module APK'
+                description: 'Filename of the Xposed module APK'
                 value: ${{ jobs.build-module.outputs.module_filename }}
             module_url:
-                description: 'Download URL for the LSPosed module APK artifact'
+                description: 'Download URL for the Xposed module APK artifact'
                 value: ${{ jobs.build-module.outputs.module_url }}
             patched_filename:
                 description: 'Filename of the LSPatch-patched Discord split APKs'
@@ -182,7 +182,7 @@ jobs:
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
     build-module:
-        name: Build LSPosed module
+        name: Build Xposed module
         runs-on: ubuntu-26.04
         timeout-minutes: 12
         env:
@@ -253,7 +253,7 @@ jobs:
               id: collect
               run: |
                   set -euo pipefail
-                  name="app.unbound.android.lsposed.apk"
+                  name="app.unbound.android.xposed.apk"
                   cp android/module/build/outputs/apk/release/module-release.apk "$name"
                   echo "module_filename=$name" >> "$GITHUB_OUTPUT"
 
