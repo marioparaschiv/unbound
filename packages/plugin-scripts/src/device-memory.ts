@@ -86,3 +86,21 @@ export function describeMemory(report: MemoryReport): string | undefined {
 
 	return report.relaunched ? `${line}, Discord relaunched during the run` : line;
 }
+
+export type PluginGrowth = { id: string; memoryDeltaMB?: number };
+
+export const GROWTH_THRESHOLD_MB = 5;
+const LISTED_GROWERS = 5;
+
+/**
+ * @description Picks the plugins whose cycle grew Discord's memory the most.
+ * @param checks Each plugin's check with its measured growth.
+ * @returns Up to five `id (+N MB)` entries at or above the threshold, largest first.
+ */
+export function largestGrowers(checks: PluginGrowth[]): string[] {
+	return checks
+		.filter((check) => (check.memoryDeltaMB ?? 0) >= GROWTH_THRESHOLD_MB)
+		.sort((a, b) => (b.memoryDeltaMB ?? 0) - (a.memoryDeltaMB ?? 0))
+		.slice(0, LISTED_GROWERS)
+		.map((check) => `${check.id} (+${check.memoryDeltaMB} MB)`);
+}

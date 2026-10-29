@@ -11,6 +11,7 @@ export type MeasuredCheck = DeviceCheck & {
 	offMainCalls?: string[];
 	errors?: string[];
 	skippedHooks?: string[];
+	memoryDeltaMB?: number;
 };
 
 const SLOWER_FACTOR = 2;
