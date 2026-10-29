@@ -56,7 +56,7 @@ function DeveloperPage() {
 		throw notFound();
 	}
 
-	const { author, addons, group } = developer;
+	const { author, addons, group, bannerUrl } = developer;
 
 	return (
 		<div className='flex flex-col flex-1 gap-8 page-frame'>
@@ -66,7 +66,11 @@ function DeveloperPage() {
 					className='relative isolate h-28 sm:h-40 overflow-hidden rounded-surface border bg-card animate-reveal'
 					style={staggerStyle(0)}
 				>
-					<AvatarGlow src={author.avatarUrl} className='opacity-60' />
+					{bannerUrl ? (
+						<img src={bannerUrl} alt='' className='size-full object-cover' />
+					) : (
+						<AvatarGlow src={author.avatarUrl} className='opacity-60' />
+					)}
 				</div>
 				<div className='flex sm:flex-row flex-col gap-4 -mt-10 px-4 sm:px-6'>
 					<UserAvatar

@@ -11,7 +11,7 @@ import { isDiscordId } from '~/lib/discord';
 const logger = createLogger('Web', 'Authors');
 
 export type CachedProfile =
-	| { kind: 'found'; user: DiscordUser; fetchedAt: Date }
+	| { kind: 'found'; user: DiscordUser; guildBannerHash: string | null; fetchedAt: Date }
 	| { kind: 'missing'; discordId: DiscordId; fetchedAt: Date };
 
 export type SweepResult = {
@@ -80,7 +80,9 @@ export async function readProfiles(
 							username: row.username,
 							globalName: row.globalName,
 							avatarHash: row.avatarHash,
+							bannerHash: row.bannerHash,
 						},
+						guildBannerHash: row.guildBannerHash,
 						fetchedAt: row.fetchedAt,
 					},
 		);
@@ -126,6 +128,7 @@ async function writeProfile(ctx: AppContext, id: DiscordId, lookup: StoredLookup
 		username: lookup.kind === 'found' ? lookup.user.username : null,
 		globalName: lookup.kind === 'found' ? lookup.user.globalName : null,
 		avatarHash: lookup.kind === 'found' ? lookup.user.avatarHash : null,
+		bannerHash: lookup.kind === 'found' ? lookup.user.bannerHash : null,
 		fetchedAt: ctx.now(),
 	};
 

@@ -7,6 +7,8 @@ import type { Env } from '~/lib/env';
 
 export type GuildMember = {
 	user: DiscordUser;
+	/** The banner they set for this guild alone. */
+	bannerHash: string | null;
 	roleIds: string[];
 };
 
@@ -24,8 +26,10 @@ const memberSchema = z.object({
 		username: z.string().min(1),
 		global_name: z.string().nullish(),
 		avatar: z.string().nullish(),
+		banner: z.string().nullish(),
 	}),
 	roles: z.array(z.string()),
+	banner: z.string().nullish(),
 });
 
 const errorSchema = z.object({ code: z.number().optional(), retry_after: z.number().optional() });
@@ -61,7 +65,9 @@ async function fetchMember(
 					username: member.user.username,
 					globalName: member.user.global_name || null,
 					avatarHash: member.user.avatar ?? null,
+					bannerHash: member.user.banner ?? null,
 				},
+				bannerHash: member.banner ?? null,
 				roleIds: member.roles,
 			};
 		}

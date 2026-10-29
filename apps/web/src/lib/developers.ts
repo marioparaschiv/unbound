@@ -5,7 +5,9 @@ import { compareGroups, TEAM_GROUPS, type StaffRole, type TeamGroup } from '~/li
 import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';
 import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
 import { readTeamMembers, type TeamMemberRow } from '~/lib/team/snapshot';
+import { getBannerUrl, getGuildBannerUrl } from '~/lib/discord';
 import type { DiscordId } from '~/lib/authors/discord-users';
+import { readProfiles } from '~/lib/authors/profiles';
 import { listListedAddons } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
@@ -37,6 +39,11 @@ export type DeveloperProfile = {
 	author: IdentifiedAuthor;
 	addons: MarketplaceAddon[];
 	group: TeamGroup;
+};
+
+export type DeveloperPage = DeveloperProfile & {
+	/** Their Unbound guild banner, else their Discord profile banner; `null` when they have neither. */
+	bannerUrl: string | null;
 };
 
 /** Where a person sits within their group: their staff role's rank, then their manual position. */
@@ -74,6 +81,20 @@ function orderOf(member: TeamMemberRow | undefined): Order {
 		staff: member?.staffRole ? STAFF_RANK[member.staffRole] : UNSTAFFED_RANK,
 		position: member?.position ?? UNPOSITIONED,
 	};
+}
+
+async function readBannerUrl(ctx: AppContext, discordId: DiscordId): Promise<string | null> {
+	const profile = (await readProfiles(ctx, [discordId])).get(discordId);
+
+	if (profile?.kind !== 'found') {
+		return null;
+	}
+
+	if (profile.guildBannerHash) {
+		return getGuildBannerUrl(ctx.env.DISCORD_GUILD_ID, discordId, profile.guildBannerHash);
+	}
+
+	return profile.user.bannerHash ? getBannerUrl(discordId, profile.user.bannerHash) : null;
 }
 
 async function loadPeople(ctx: AppContext): Promise<Map<DiscordId, Person>> {
@@ -201,18 +222,19 @@ export async function listDevelopers(
  * @description Loads a developer's public page.
  * @param ctx The application context.
  * @param discordId The developer's Discord id.
- * @returns The developer, their group and their listed addons, or `undefined` when they are neither on
- * the team nor credited by a listed addon.
+ * @returns The developer, their group, banner and listed addons, or `undefined` when they are neither
+ * on the team nor credited by a listed addon.
  */
 export async function getDeveloper(
 	ctx: AppContext,
 	discordId: DiscordId,
-): Promise<DeveloperProfile | undefined> {
-	const person = (await loadPeople(ctx)).get(discordId);
+): Promise<DeveloperPage | undefined> {
+	const [people, bannerUrl] = await Promise.all([loadPeople(ctx), readBannerUrl(ctx, discordId)]);
+	const person = people.get(discordId);
 
 	if (!person) return;
 
-	return { author: person.author, addons: person.addons, group: person.group };
+	return { author: person.author, addons: person.addons, group: person.group, bannerUrl };
 }
 
 export default { listDevelopers, getDeveloper };

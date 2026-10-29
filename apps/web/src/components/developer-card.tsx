@@ -17,6 +17,7 @@ type DeveloperCardProps = ComponentProps<typeof Card> & {
 function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 	const { author, addonCount } = developer;
 	const badge = author.kind === 'user' ? author.badge : undefined;
+	const username = author.kind === 'manifest' ? null : author.username;
 
 	return (
 		<Card
@@ -38,7 +39,7 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 					name={author.name}
 				/>
 			</div>
-			<CardContent className='flex flex-col gap-0.5 p-3 min-w-0'>
+			<CardContent className='flex flex-col flex-1 gap-0.5 p-3 min-w-0'>
 				<Text variant='heading-sm' className='truncate leading-tight!'>
 					<Link
 						to='/profiles/$discordId'
@@ -48,17 +49,22 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 						{author.name}
 					</Link>
 				</Text>
-				{addonCount > 0 || badge ? (
+				{username || badge ? (
 					<div className='flex items-center gap-2 min-w-0'>
-						{addonCount > 0 ? (
-							<Text variant='text-xs' color='muted'>
-								{addonCount} {addonCount === 1 ? 'addon' : 'addons'}
+						{username ? (
+							<Text variant='text-xs' color='muted' className='truncate'>
+								@{username}
 							</Text>
 						) : null}
 						{badge ? <UserBadge badge={badge} /> : null}
 					</div>
 				) : null}
 			</CardContent>
+			{addonCount > 0 ? (
+				<Text variant='text-xs' color='muted' className='shrink-0 pr-4 tabular-nums'>
+					{addonCount} {addonCount === 1 ? 'addon' : 'addons'}
+				</Text>
+			) : null}
 		</Card>
 	);
 }

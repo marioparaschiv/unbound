@@ -1,0 +1,81 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "4dc0a49e-5564-41b6-8177-408cf06d9542",
+  "prevIds": [
+    "4616b9c3-2e1f-4aa4-8568-a2576d6dd892"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "discord_profile",
+        "banner_hash"
+      ],
+      "writes": [
+        "s|col|public.discord_profile.banner_hash",
+        "n|col|public.discord_profile.banner_hash",
+        "e|col|public.discord_profile.banner_hash"
+      ],
+      "reads": [
+        "n|tbl|public.discord_profile",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "discord_profile",
+        "guild_banner_hash"
+      ],
+      "writes": [
+        "s|col|public.discord_profile.guild_banner_hash",
+        "n|col|public.discord_profile.guild_banner_hash",
+        "e|col|public.discord_profile.guild_banner_hash"
+      ],
+      "reads": [
+        "n|tbl|public.discord_profile",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "discord_profile",
+        "name": "banner_hash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "discord_profile",
+        "name": "guild_banner_hash",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

@@ -35,7 +35,15 @@ const ABSENT = '100000000000000010';
 const STRANGER = '100000000000000011';
 
 const discord = serveDiscord(
-	{ [CONTRIBUTOR]: { username: 'carl', global_name: 'Carl', avatar: 'c4' } },
+	{
+		[CONTRIBUTOR]: {
+			username: 'carl',
+			global_name: 'Carl',
+			avatar: 'c4',
+			banner: 'b4',
+			member_banner: 'g4',
+		},
+	},
 	{
 		guilds: {
 			[GUILD]: {
@@ -175,7 +183,13 @@ describe('syncTeam', () => {
 			.from(discordProfile)
 			.where(eq(discordProfile.discordId, CONTRIBUTOR));
 
-		expect(profile).toMatchObject({ username: 'carl', globalName: 'Carl', avatarHash: 'c4' });
+		expect(profile).toMatchObject({
+			username: 'carl',
+			globalName: 'Carl',
+			avatarHash: 'c4',
+			bannerHash: 'b4',
+			guildBannerHash: 'g4',
+		});
 
 		const events = await ctx.db
 			.select()
