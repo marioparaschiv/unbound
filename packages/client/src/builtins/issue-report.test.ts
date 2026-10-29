@@ -9,6 +9,7 @@ const info = {
 	loaderOrigin: 'libunbound.so',
 	framework: 'Vector',
 	discord: '352.10',
+	discordChannel: 'Stable',
 	discordBuild: '352110',
 	appSource: 'Google Play',
 	react: '19.2.3',

@@ -4,6 +4,7 @@ import {
 	isOlderThanSupported,
 	parseDiscordVersion,
 	shouldWarnAboutDiscordVersion,
+	discordChannel,
 } from './discord-support';
 
 describe('parseDiscordVersion', () => {
@@ -45,5 +46,20 @@ describe('shouldWarnAboutDiscordVersion', () => {
 
 	test('never warns on a supported version', () => {
 		expect(shouldWarnAboutDiscordVersion('350.8', '350.8', '')).toBe(false);
+	});
+});
+
+describe('discordChannel', () => {
+	test('reads the channel from the version suffix', () => {
+		expect(discordChannel('352.10 - Beta')).toEqual({ channel: 'Beta', version: '352.10' });
+		expect(discordChannel('353.0 - Alpha')).toEqual({ channel: 'Alpha', version: '353.0' });
+		expect(discordChannel('351.0')).toEqual({ channel: 'Stable', version: '351.0' });
+	});
+
+	test('counts a TestFlight install as Beta', () => {
+		expect(discordChannel('352.0', 'TestFlight')).toEqual({
+			channel: 'Beta',
+			version: '352.0',
+		});
 	});
 });
