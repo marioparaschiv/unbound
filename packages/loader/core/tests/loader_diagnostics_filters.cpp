@@ -86,6 +86,8 @@ static void checkGesturesAndViewServices()
 static void checkStartupWarnings()
 {
     assert(isIgnoredException("CHHapticErrorCodeServerInitFailedException"));
+    assert(isIgnoredException("DownloadFailed"));
+    assert(isIgnoredException("DownloadTimedOut"));
     assert(!isIgnoredException("NSInvalidArgumentException"));
 
     assert(needsExtensionCheck(false, false, false));

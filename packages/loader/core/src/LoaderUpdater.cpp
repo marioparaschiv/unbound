@@ -527,7 +527,7 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         download_ ? download_(url, candidatePath, headers, kBundleDownloadPolicy) : std::nullopt;
     if (!response)
     {
-        throw std::runtime_error("Bundle download failed");
+        throw std::runtime_error("Could not download " + url);
     }
 
     if (!isAcceptedDownloadStatus(response->status))
