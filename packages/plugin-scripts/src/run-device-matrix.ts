@@ -4,6 +4,7 @@ import { parseArgs } from 'node:util';
 
 import type { MeasuredCheck } from './compare-device-matrix';
 import { describeMemory, largestGrowers, type MemoryReport } from './device-memory';
+import type { SelfTestResult } from './loader-self-test';
 import {
 	MATRIX_CONFIG_PATH,
 	collectorArgs,
@@ -21,6 +22,7 @@ export type DeviceRun = {
 	scrollStuck?: boolean;
 	drops?: string[];
 	memory?: MemoryReport;
+	selfTest?: SelfTestResult;
 	error?: string;
 };
 
@@ -97,6 +99,13 @@ export function renderSummary(runs: DeviceRun[]): string {
 	const toasts = runs
 		.filter((run) => run.scrollToasts?.length)
 		.map((run) => `- ${run.device.name}: ${run.scrollToasts!.join(', ')}`);
+	const loader = runs
+		.filter((run) => run.selfTest)
+		.map(
+			(run) =>
+				`- ${run.device.name}: ${run.selfTest!.ok ? 'pass' : '**fail**'}, ${run.selfTest!.detail}`,
+		);
+	const loaderFailed = runs.some((run) => run.selfTest?.ok === false);
 	const memory = runs.flatMap((run) => {
 		const line = run.memory ? describeMemory(run.memory) : undefined;
 		const growers = largestGrowers(run.checks);
@@ -126,6 +135,7 @@ export function renderSummary(runs: DeviceRun[]): string {
 		runs.every((run) => !run.error)
 			? ['', 'Every plugin passed on every device.']
 			: []),
+		...(loader.length ? ['', '### Loader self-test', '', ...loader] : []),
 		...(toasts.length ? ['', '### Toasts while scrolling', '', ...toasts] : []),
 		...(empty.length ? ['', '### Empty toasts', '', ...empty] : []),
 		...(stuck.length ? ['', '### Scrolling', '', ...stuck] : []),
@@ -144,6 +154,14 @@ function readMemory(out: string): MemoryReport | undefined {
 	const file = join(out, 'memory.json');
 
 	return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as MemoryReport) : undefined;
+}
+
+function readSelfTest(out: string): SelfTestResult | undefined {
+	const file = join(out, 'selftest.json');
+
+	return existsSync(file)
+		? (JSON.parse(readFileSync(file, 'utf8')) as SelfTestResult)
+		: undefined;
 }
 
 function readScroll(out: string): ScrollResult | undefined {
@@ -177,6 +195,7 @@ async function collect(
 	mkdirSync(out, { recursive: true });
 	rmSync(join(out, 'scroll.json'), { force: true });
 	rmSync(join(out, 'memory.json'), { force: true });
+	rmSync(join(out, 'selftest.json'), { force: true });
 
 	const args = [...collectorArgs(device, out, channel, only), ...(lenient ? ['--lenient'] : [])];
 	const child = Bun.spawn(['bun', COLLECTOR, ...args], {
@@ -197,6 +216,7 @@ async function collect(
 	const scroll = readScroll(out);
 	const toasts = {
 		drops,
+		selfTest: readSelfTest(out),
 		memory: readMemory(out),
 		scrollToasts: scroll?.toasts,
 		emptyToasts: scroll?.emptyToasts,

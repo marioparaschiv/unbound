@@ -8,6 +8,14 @@ import { readMatrixConfig } from './matrix-config';
 import { PLUGINS_DIR, REPO_ROOT } from './paths';
 import { dropBaseline, dropReason, relaunchCommands } from './device-drops';
 import { discordMemory } from './device-memory';
+import {
+	SELF_TEST_MARKER,
+	judgeSelfTest,
+	selfTestFinishScript,
+	selfTestStartScript,
+	type SelfTestCounts,
+	type SelfTestResult,
+} from './loader-self-test';
 
 export type CycleResult = {
 	id: string;
@@ -133,6 +141,19 @@ export function fixtureScript(guild: string, channel: string): string {
 	await new Promise(function (resolve) { setTimeout(resolve, 1500); });
 	return 'staged';
 })()`;
+}
+
+const SELF_TEST_SWIPES = 4;
+
+export function withoutSelfTest(errors: Map<string, string[]>): Map<string, string[]> {
+	return new Map(
+		[...errors]
+			.map(
+				([plugin, found]) =>
+					[plugin, found.filter((error) => !error.includes(SELF_TEST_MARKER))] as const,
+			)
+			.filter(([, found]) => found.length > 0),
+	);
 }
 
 const OFF_MAIN_WARNING = /^(\S+) W \[plugins\] (.+?) called (.+?) off the main thread\./;
@@ -713,6 +734,40 @@ async function main(): Promise<void> {
 		return reason;
 	}
 
+	async function selfTest(): Promise<SelfTestResult> {
+		const started = new Date(Date.now() - 1_000).toISOString();
+		const host = await evaluate(port, selfTestStartScript());
+
+		if (host.startsWith('error: ')) return { ok: false, detail: host.slice('error: '.length) };
+
+		await swipeAll(swipeCommands(target, await screenSize(target), SELF_TEST_SWIPES));
+		await Bun.sleep(1_500);
+
+		const counts = JSON.parse(await evaluate(port, selfTestFinishScript())) as SelfTestCounts;
+
+		await Bun.sleep(1_000);
+
+		const lines = JSON.parse(await evaluate(port, pluginLogScript())) as string[];
+
+		return judgeSelfTest(counts, parsePluginErrors(lines, started));
+	}
+
+	let loaderCheck: SelfTestResult;
+
+	try {
+		loaderCheck = await selfTest();
+	} catch (error) {
+		if (!isDisconnect(error)) throw error;
+
+		loaderCheck = {
+			ok: false,
+			detail: `Discord stopped answering during the self-test: ${await recover('the loader self-test')}`,
+		};
+	}
+
+	writeFileSync(join(out, 'selftest.json'), `${JSON.stringify(loaderCheck, null, '\t')}\n`);
+	console.error(`${loaderCheck.ok ? 'pass' : 'FAIL'} loader self-test: ${loaderCheck.detail}`);
+
 	for (const plugin of catalog) {
 		let check: MeasuredCheck | undefined;
 
@@ -801,7 +856,7 @@ async function main(): Promise<void> {
 		await afterRecovery('the log read', () => evaluate(port, pluginLogScript())),
 	) as string[];
 	const warnings = parseOffMainWarnings(logLines, since);
-	const errors = parsePluginErrors(logLines, since);
+	const errors = withoutSelfTest(parsePluginErrors(logLines, since));
 	const skippedHooks = parseSkippedHooks(logLines, since);
 
 	if (!developerMode) await evaluate(port, developerModeScript(false));
