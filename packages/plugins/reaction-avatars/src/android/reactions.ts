@@ -13,7 +13,7 @@ import {
 	MESSAGE_VIEW,
 	messageBindMethod,
 	messageIdField,
-	viewByIdName,
+	viewByIdNameAsync,
 } from '@unbound-plugins/shared/native/android/discord-views';
 import {
 	javaFlag,
@@ -21,11 +21,13 @@ import {
 	javaNumber,
 	javaReference,
 	javaText,
+	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
 import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-classes';
 import {
 	currentDecorView,
 	findViewsOfClass,
+	runOnMain,
 	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 import { metro } from '@unbound-app/api';
@@ -115,12 +117,17 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		return javaFlag(java.invoke(java.getClass(className), 'isInstance', [view]));
 	}
 
-	function children(view: NativeJavaReference): NativeJavaReference[] {
-		const count = javaNumber(java.invoke(view, 'getChildCount', [])) ?? 0;
+	async function children(view: NativeJavaReference): Promise<NativeJavaReference[]> {
+		const found = await java.findViews!(view, 'android.view.View', {
+			maxDepth: 1,
+			maxResults: 256,
+		});
 
-		return Array.from({ length: count }, (_, index) =>
-			javaReference(java.invoke(view, 'getChildAt', [javaInt(index)])),
-		).filter((child): child is NativeJavaReference => child !== null);
+		return found
+			.map((child) => javaReference(child))
+			.filter(
+				(child): child is NativeJavaReference => !!child && !sameJavaReference(child, view),
+			);
 	}
 
 	const reactionViewNamed = (() => {
@@ -160,25 +167,24 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		return field.name;
 	}
 
-	function reactionRow(messageView: NativeJavaReference): NativeJavaReference | null {
-		const accessories = viewByIdName(java, messageView, 'accessories_view');
-		let level = accessories ? [accessories] : [];
+	async function reactionRow(
+		messageView: NativeJavaReference,
+	): Promise<NativeJavaReference | null> {
+		const accessories = await viewByIdNameAsync(java, messageView, 'accessories_view');
 
-		for (let depth = 0; depth < MAX_SEARCH_DEPTH && level.length; depth++) {
-			const row = level.find((view) => isA(REACTION_ROW, view));
+		if (!accessories) return null;
 
-			if (row) return row;
+		const [row] = await java.findViews!(accessories, REACTION_ROW, {
+			maxDepth: MAX_SEARCH_DEPTH,
+			maxResults: 1,
+			stopAtMatch: true,
+		});
 
-			level = level
-				.filter((view) => isA('android.view.ViewGroup', view))
-				.flatMap((view) => children(view));
-		}
-
-		return null;
+		return javaReference(row);
 	}
 
-	function density(view: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(view, 'getResources', []));
+	async function density(view: NativeJavaReference): Promise<number> {
+		const resources = javaReference(await java.invokeAsync(view, 'getResources', []));
 		const metrics = resources
 			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
 			: null;
@@ -219,10 +225,10 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		context: ReactionContext,
 		users: Reactor[],
 	): Promise<Pill> {
-		const scale = density(reactionView);
+		const scale = await density(reactionView);
 		const total = reactionAvatarSelection(context.reaction, context.reactionType).count;
 		const width = reactionAvatarStackWidth(reactionAvatarReservedSlotCount(total));
-		const viewContext = javaReference(java.invoke(reactionView, 'getContext', []));
+		const viewContext = javaReference(await java.invokeAsync(reactionView, 'getContext', []));
 		const host = java.construct('android.widget.FrameLayout', viewContext ? [viewContext] : []);
 		const params = java.construct(LINEAR_PARAMS, [
 			javaInt(Math.round(width * scale)),
@@ -281,16 +287,23 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		const message: Message | undefined = channelId
 			? MessageStore.getMessage(channelId, messageId)
 			: undefined;
-		const row = reactionRow(messageView);
-		const views = row ? children(row).filter(isReactionView) : [];
+		const row = await reactionRow(messageView);
+		const views = row ? (await children(row)).filter(isReactionView) : [];
+		const visibility = await runOnMain(
+			java,
+			views.map(
+				(view) =>
+					({ op: 'invoke', handle: view, name: 'getVisibility', args: [] }) as const,
+			),
+		);
 		const reactions = message?.reactions ?? [];
 		const used = new Set<number>();
 		const changed: Pill[] = [];
 
-		for (const reactionView of views) {
+		for (const [position, reactionView] of views.entries()) {
 			const key = viewKey(reactionView as NativeJavaValue) ?? '';
 			const existing = pills.get(key);
-			const shown = javaNumber(java.invoke(reactionView, 'getVisibility', [])) === VISIBLE;
+			const shown = javaNumber(visibility[position]) === VISIBLE;
 			const field = shown ? emojiField(reactionView) : undefined;
 			const emoji = field ? javaText(java.getField(reactionView, field)) : undefined;
 			const index = reactions.findIndex(

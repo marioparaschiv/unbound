@@ -181,12 +181,19 @@ export function createHost(
 	return java.construct('android.widget.FrameLayout', context ? [context] : []);
 }
 
-function layoutParamsClass(java: InlineHostBridge, container: NativeJavaReference): string {
-	const count = javaNumber(java.invoke(container, 'getChildCount', [])) ?? 0;
+async function layoutParamsClass(
+	java: InlineHostBridge,
+	container: NativeJavaReference,
+): Promise<string> {
+	const count = javaNumber(await java.invokeAsync(container, 'getChildCount', [])) ?? 0;
 
 	for (let index = 0; index < count; index++) {
-		const child = javaReference(java.invoke(container, 'getChildAt', [javaInt(index)]));
-		const params = child ? javaReference(java.invoke(child, 'getLayoutParams', [])) : null;
+		const child = javaReference(
+			await java.invokeAsync(container, 'getChildAt', [javaInt(index)]),
+		);
+		const params = child
+			? javaReference(await java.invokeAsync(child, 'getLayoutParams', []))
+			: null;
 		const name = params ? javaText(java.className(params)) : undefined;
 
 		if (name) {
@@ -203,10 +210,10 @@ async function fillHost(
 	width: number,
 	height: number,
 ): Promise<void> {
-	const count = javaNumber(java.invoke(host, 'getChildCount', [])) ?? 0;
+	const count = javaNumber(await java.invokeAsync(host, 'getChildCount', [])) ?? 0;
 
 	for (let index = 0; index < count; index++) {
-		const child = javaReference(java.invoke(host, 'getChildAt', [javaInt(index)]));
+		const child = javaReference(await java.invokeAsync(host, 'getChildAt', [javaInt(index)]));
 
 		if (!child) {
 			continue;
@@ -241,11 +248,11 @@ export async function placeHost(
 	position: InlinePosition,
 	size: HostSize,
 ): Promise<void> {
-	const params = java.construct(layoutParamsClass(java, container), [
+	const params = java.construct(await layoutParamsClass(java, container), [
 		javaInt(Math.round(size.width)),
 		javaInt(Math.round(size.height)),
 	]);
-	const parent = javaReference(java.invoke(host, 'getParent', []));
+	const parent = javaReference(await java.invokeAsync(host, 'getParent', []));
 
 	const inContainer = sameJavaReference(parent, container);
 
@@ -288,17 +295,20 @@ export async function layoutHostingList(
 	view: NativeJavaReference,
 ): Promise<void> {
 	const recycler = java.getClass('androidx.recyclerview.widget.RecyclerView');
-	let current = javaReference(java.invoke(view, 'getParent', []));
+	let current = javaReference(await java.invokeAsync(view, 'getParent', []));
 
 	for (let depth = 0; current && depth < MAX_ANCESTOR_DEPTH; depth++) {
-		const parent = javaReference(java.invoke(current, 'getParent', []));
+		const parent = javaReference(await java.invokeAsync(current, 'getParent', []));
 		const isList = javaFlag(java.invoke(recycler, 'isInstance', [current]));
 
 		if (isList && parent && !javaFlag(java.invoke(recycler, 'isInstance', [parent]))) {
-			const left = javaNumber(java.invoke(current, 'getLeft', [])) ?? 0;
-			const top = javaNumber(java.invoke(current, 'getTop', [])) ?? 0;
-			const width = javaNumber(java.invoke(current, 'getWidth', [])) ?? 0;
-			const height = javaNumber(java.invoke(current, 'getHeight', [])) ?? 0;
+			const [left, top, width, height] = (
+				await Promise.all(
+					['getLeft', 'getTop', 'getWidth', 'getHeight'].map((name) =>
+						java.invokeAsync(current!, name, []),
+					),
+				)
+			).map((value) => javaNumber(value) ?? 0) as [number, number, number, number];
 
 			await java.invokeAsync(current, 'measure', [
 				javaInt(width | MEASURE_EXACTLY),
@@ -335,7 +345,7 @@ export function hostHasContent(java: InlineHostBridge, host: NativeJavaReference
  * @returns Resolves once it is removed.
  */
 export async function removeHost(java: InlineHostBridge, host: NativeJavaReference): Promise<void> {
-	const parent = javaReference(java.invoke(host, 'getParent', []));
+	const parent = javaReference(await java.invokeAsync(host, 'getParent', []));
 
 	if (parent) {
 		await java.invokeAsync(parent, 'removeView', [host]);
