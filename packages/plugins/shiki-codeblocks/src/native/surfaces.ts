@@ -161,6 +161,11 @@ export function applyTheme(session: Session, surface: Surface): void {
 
 	void Promise.all(pending)
 		.then((tokensByPart) => {
+			session.recovery.mark(
+				surface,
+				isMounted(session, surface) && tokensByPart.some((tokens) => !tokens),
+			);
+
 			if (!isMounted(session, surface) || surface.preferences.theme !== theme) return;
 
 			if (!isOnScreen(session, surface)) return;

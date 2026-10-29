@@ -5,6 +5,7 @@ import {
 	type TextEngine,
 } from '@unbound-plugins/shared/native/text-attachments';
 
+import type { FlatRecovery } from '~/flat-recovery';
 import type { Highlighter } from '~/highlighter';
 import type { CodeBlockPlacement } from '~/fences';
 import type { Preferences } from '~/preferences';
@@ -52,6 +53,7 @@ export type Session = {
 	ui: NativeUI;
 	text: TextAttachmentBridge;
 	highlighter: Highlighter;
+	recovery: FlatRecovery<Surface>;
 	/** Mounted surfaces by label key, oldest first. */
 	surfaces: Map<string, Surface>;
 	/** Labels this plugin is writing to, so its own `setAttributedText:` calls are not re-rendered. */
