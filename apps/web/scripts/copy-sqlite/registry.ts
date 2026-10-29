@@ -50,6 +50,12 @@ export const OPTIONAL_SOURCE_TABLES: ReadonlySet<string> = new Set([
 	'addon_tag',
 ]);
 
+/** The `table.column`s newer than production's SQLite file, which then copy as `NULL`: the Discord banners. */
+export const OPTIONAL_SOURCE_COLUMNS: ReadonlySet<string> = new Set([
+	'discord_profile.banner_hash',
+	'discord_profile.guild_banner_hash',
+]);
+
 /**
  * The `json` columns the app stores whole and never reads into with `->>`, so they copy the NUL and
  * lone surrogates it lets in (`put-sync`'s `anyJsonBody`) instead of refusing them.
@@ -123,6 +129,7 @@ export const tables: TableSpec[] = inReferenceOrder(
 );
 
 export default {
+	OPTIONAL_SOURCE_COLUMNS,
 	OPTIONAL_SOURCE_TABLES,
 	RETIRED_SOURCE_TABLES,
 	SQLITE_ONLY_TABLES,

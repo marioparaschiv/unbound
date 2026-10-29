@@ -4,7 +4,12 @@ import { Database } from 'bun:sqlite';
 import type { SourceValue } from './codecs';
 import type { TableSpec } from './registry';
 
-import { OPTIONAL_SOURCE_TABLES, RETIRED_SOURCE_TABLES, SQLITE_ONLY_TABLES } from './registry';
+import {
+	OPTIONAL_SOURCE_COLUMNS,
+	OPTIONAL_SOURCE_TABLES,
+	RETIRED_SOURCE_TABLES,
+	SQLITE_ONLY_TABLES,
+} from './registry';
 import quote from './quote';
 
 /** A row as canonical text per column, `null` for SQL NULL. */
@@ -47,11 +52,18 @@ function columnsOf(db: Database, table: string) {
 		.map((row) => row.name);
 }
 
-function assertColumns(db: Database, spec: TableSpec) {
+function isOptionalColumn(spec: TableSpec, name: string) {
+	return OPTIONAL_SOURCE_COLUMNS.has(`${spec.name}.${name}`);
+}
+
+// Returns the source's columns once they are known to match the registry.
+function assertColumns(db: Database, spec: TableSpec): string[] {
 	const known = new Set(spec.columns.map((column) => column.name));
 	const source = columnsOf(db, spec.name);
 	const unknown = source.filter((name) => !known.has(name));
-	const missing = [...known].filter((name) => !source.includes(name));
+	const missing = [...known].filter(
+		(name) => !source.includes(name) && !isOptionalColumn(spec, name),
+	);
 
 	if (unknown.length > 0 || missing.length > 0) {
 		throw new Error(
@@ -60,11 +72,15 @@ function assertColumns(db: Database, spec: TableSpec) {
 				`missing ${missing.map((name) => `${spec.name}.${name}`).join(', ') || 'none'}.`,
 		);
 	}
+
+	return source;
 }
 
-function readRows(db: Database, spec: TableSpec): CanonicalRow[] {
+function readRows(db: Database, spec: TableSpec, source: string[]): CanonicalRow[] {
 	const columns = spec.columns
-		.map((column) => column.codec.select(quote(column.name)))
+		.map((column) =>
+			source.includes(column.name) ? column.codec.select(quote(column.name)) : 'NULL',
+		)
 		.join(', ');
 	const order = spec.primaryKey.map(quote).join(', ');
 	const rows = db
@@ -162,14 +178,10 @@ export function readSource(path: string, specs: TableSpec[]): SourceTable[] {
 			return specs.map((spec) => {
 				const present = names.includes(spec.name);
 
-				if (present) {
-					assertColumns(db, spec);
-				}
-
 				return {
 					spec,
 					present,
-					rows: present ? readRows(db, spec) : [],
+					rows: present ? readRows(db, spec, assertColumns(db, spec)) : [],
 					sequence: sequences.get(spec.name),
 				};
 			});
