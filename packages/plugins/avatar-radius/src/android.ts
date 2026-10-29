@@ -1,4 +1,5 @@
 import type {
+	NativeJavaArgument,
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
 	NativeJavaReference,
@@ -73,24 +74,31 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 	const tracked: Rounded[] = [];
 	let disposed = false;
 
-	function isCircle(provider: NativeJavaReference, view: NativeJavaReference): boolean {
+	function onMain(handle: NativeJavaReference, name: string, args: NativeJavaArgument[] = []) {
+		return java.invokeAsync(handle, name, args);
+	}
+
+	async function isCircle(
+		provider: NativeJavaReference,
+		view: NativeJavaReference,
+	): Promise<boolean> {
 		const name = javaText(java.className(provider)) ?? '';
 		const known = circles.get(name);
 
 		if (known !== undefined) return known;
 
-		const context = javaReference(java.invoke(view, 'getContext', []));
+		const context = javaReference(await onMain(view, 'getContext'));
 		const probe = java.construct('android.view.View', context ? [context] : []);
 		const outline = java.construct('android.graphics.Outline', []);
 		const bounds = java.construct('android.graphics.Rect', []);
 
-		java.invoke(probe, 'layout', [
+		await onMain(probe, 'layout', [
 			javaInt(0),
 			javaInt(0),
 			javaInt(PROBE_SIZE),
 			javaInt(PROBE_SIZE),
 		]);
-		java.invoke(provider, 'getOutline', [probe, outline]);
+		await onMain(provider, 'getOutline', [probe, outline]);
 
 		const circle =
 			javaFlag(java.invoke(outline, 'getRect', [bounds])) &&
@@ -109,17 +117,17 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		if (tracked.length > MAX_TRACKED) tracked.shift();
 	}
 
-	function adoptOutline(view: NativeJavaReference): Rounded | null {
+	async function adoptOutline(view: NativeJavaReference): Promise<Rounded | null> {
 		if (!isMissing(java.getAssociatedObject(view, originalOutline))) {
 			return { kind: 'outline', view };
 		}
 
-		const provider = javaReference(java.invoke(view, 'getOutlineProvider', []));
+		const provider = javaReference(await onMain(view, 'getOutlineProvider'));
 
-		if (!provider || !isCircle(provider, view)) return null;
+		if (!provider || !(await isCircle(provider, view))) return null;
 
 		java.setAssociatedObject(view, originalOutline, provider);
-		java.setAssociatedObject(view, originalBackground, java.invoke(view, 'getBackground', []));
+		java.setAssociatedObject(view, originalBackground, await onMain(view, 'getBackground'));
 
 		const rounded: Rounded = { kind: 'outline', view };
 
@@ -155,14 +163,14 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		return javaFlag(java.invoke(region, 'contains', [javaInt(x), javaInt(y)]));
 	}
 
-	function clipsToCircle(view: NativeJavaReference, size: number): boolean {
-		const background = javaReference(java.invoke(view, 'getBackground', []));
+	async function clipsToCircle(view: NativeJavaReference, size: number): Promise<boolean> {
+		const background = javaReference(await onMain(view, 'getBackground'));
 
 		if (!background) return false;
 
 		const outline = java.construct('android.graphics.Outline', []);
 
-		java.invoke(background, 'getOutline', [outline]);
+		await onMain(background, 'getOutline', [outline]);
 
 		const path = javaReference(java.getField(outline, 'mPath'));
 
@@ -184,9 +192,9 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		return !regionContains(region, corner, corner) && regionContains(region, center, center);
 	}
 
-	function squareSize(view: NativeJavaReference): number {
-		const width = javaNumber(java.invoke(view, 'getWidth', [])) ?? 0;
-		const height = javaNumber(java.invoke(view, 'getHeight', [])) ?? 0;
+	async function squareSize(view: NativeJavaReference): Promise<number> {
+		const width = javaNumber(await onMain(view, 'getWidth')) ?? 0;
+		const height = javaNumber(await onMain(view, 'getHeight')) ?? 0;
 
 		return Math.abs(width - height) <= SQUARE_TOLERANCE ? Math.min(width, height) : -1;
 	}
@@ -243,14 +251,19 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 	async function adoptBorder(view: NativeJavaReference): Promise<Rounded | null> {
 		if (!hasBorderRadius(view)) return null;
 
-		let size = squareSize(view);
+		let size = await squareSize(view);
 
 		for (let retry = 0; size === 0 && retry < SIZE_RETRIES; retry++) {
 			await new Promise((resolve) => setTimeout(resolve, SIZE_RETRY_MS));
-			size = squareSize(view);
+			size = await squareSize(view);
 		}
 
-		if (size <= 0 || disposed || !clipsToCircle(view, size) || !mayBeAvatar(imageUrl(view))) {
+		if (
+			size <= 0 ||
+			disposed ||
+			!(await clipsToCircle(view, size)) ||
+			!mayBeAvatar(imageUrl(view))
+		) {
 			return null;
 		}
 
@@ -264,14 +277,14 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		return rounded;
 	}
 
-	function adopt(view: NativeJavaReference): Promise<Rounded | null> | Rounded | null {
+	function adopt(view: NativeJavaReference): Promise<Rounded | null> {
 		if (javaFlag(java.invoke(avatarClass, 'isInstance', [view]))) return adoptOutline(view);
 
 		return adoptBorder(view);
 	}
 
-	function density(view: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(view, 'getResources', []));
+	async function density(view: NativeJavaReference): Promise<number> {
+		const resources = javaReference(await onMain(view, 'getResources'));
 		const metrics = resources
 			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
 			: null;
@@ -283,7 +296,7 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		if (disposed) return;
 
 		const { view } = rounded;
-		const corner = radius() * density(view);
+		const corner = radius() * (await density(view));
 
 		if (rounded.kind === 'border') {
 			await java.invokeAsync(view, 'setBorderRadius', [javaFloat(corner)]);
@@ -350,11 +363,17 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		},
 	);
 
-	const root = currentDecorView(java);
+	async function roundAttached() {
+		const root = currentDecorView(java);
 
-	if (root) {
-		for (const view of findViewsOfClass(java, root, attachClass)) round(view).catch(report);
+		if (!root) return;
+
+		for (const view of await findViewsOfClass(java, root, attachClass)) {
+			if (!disposed) round(view).catch(report);
+		}
 	}
+
+	roundAttached().catch(report);
 
 	return {
 		rounded: () => tracked.length,
